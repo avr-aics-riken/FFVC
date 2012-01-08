@@ -1,0 +1,10 @@
+#! /bin/bash
+platex cbc_UG
+jbibtex cbc_UG
+platex cbc_UG
+platex cbc_UG
+mendex -s myindex cbc_UG.idx
+platex cbc_UG
+dvipdfmx cbc_UG
+mv cbc_UG.pdf cbc_ug.pdf
+open cbc_ug.pdf

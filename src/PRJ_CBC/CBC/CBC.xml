@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<SphereSolver>
+  <Param name="solver_name" dtype="STRING" value="CBC"/>
+  <Elem name="File">
+    <Param name="fname" dtype="STRING" value="FortranFuncCBC.h"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBCDefine.h"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBCInitialize.C"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBCLoop.C"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBCPost.C"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBCUsage.C"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBC.C"/>
+    <Param name="fname" dtype="STRING" value="SklSolverCBC.h"/>
+    <Param name="fname" dtype="STRING" value="CBC_Heat.C"/>
+    <Param name="fname" dtype="STRING" value="CBC_SetBC.C"/>
+    <Param name="fname" dtype="STRING" value="CBC_SetBC.h"/>
+    <Param name="fname" dtype="STRING" value="NS_FS_E_CBC.C"/>
+    <Param name="fname" dtype="STRING" value="NS_FS_E_CDS.C"/>
+    <Param name="fname" dtype="STRING" value="PS_E_CBC.C"/>
+    <Param name="fname" dtype="STRING" value="IF_TRP_VOF.C"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/BCvec_cc.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/BCprs_cc.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/cbc_3d.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/cbc_poisson.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/cbc_utility.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/cbc_pscalar.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CBC/cbc_forcing.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CDS/cds_poisson.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_CDS/cds_vector.f90"/>
+    <Param name="fname" dtype="STRING" value="../../F_VOF/c3d_vof.f90"/>
+  </Elem>
+</SphereSolver>

@@ -1,0 +1,214 @@
+
+%
+\section{インストール}
+\label{sec:install}
+V-Sphereのインストールは，MPI通信ライブラリのインストールが終了したあとに行う．
+V-Sphereは，単精度版と倍精度版を別々に用意する必要がある．
+
+\begin{enumerate}
+
+\item configure\footnote{ここでは，MacOSX，IA-64モード，コンパイラの環境として，/opt/intel/Compiler/11.1/089のディレクトリを仮定，コンパイルオプション\index{コンパイルオプション}として，-O3 を指定．icc, icpc, ifortへのパスは既に指定していると仮定する．特別な仕様のマシン向けのインストールには，makefile.specを使う．これは，特別な仕様のマシン向け（p4-dev）である．\hyperlink{tgt:BGL}{BlueGene/L}の項やV-Sphereのマニュアルを参照のこと．アーキテクチャに相応しいコンパイルオプションがわからない場合は，「CXXFLAGS=-O3」「F90FLAGS=-O3」だけでも可．Intel Compiler C/C++ version 10は，multibyteの文字コードの対応が不充分のため，C/C++のコンパイルオプションで-no-multibyte-charsを明示的に指示する．Mac用のIntel Compiler 11.0では不要だが，Linuxでは必要．
+}
+
+\paragraph{コマンドライン}
+コマンドラインで作業する場合には，次のようにタイプする．インストールディレクトリには\verb|/usr/local/sphere/|を指定している．もし，\verb|/usr/local/|領域へのアクセス権限がない場合には，各ユーザが書き込めるところを指定する．また，LDFLAGSには適切なパスを指定する．
+
+{\small
+\begin{program}
+$ ./configure --prefix=/usr/local/sphere \
+              --with-comp=INTEL \
+              --with-ompi=/opt/openmpi  \
+              CC=icc \
+              CFLAGS='-O3'\
+              CXX=icpc \
+              CXXFLAGS='-O3'\
+              FC=ifort \
+              FCFLAGS='-O3'\
+              F90=ifort \
+              F90FLAGS='-O3'\
+              LDFLAGS=-L/opt/intel/Compiler/11.1/089/lib
+\end{program}
+}
+
+configureでインストール先を指定すると，指定したインストールディレクトリはソースディレクトリの\verb|sphconfig/sph-cfg.xml|に記録される．このファイルは，インストールディレクトリの\verb|config/sph-cfg.xml|にコピーされ，sphPrjToolのresetコマンドで参照される．このため，一旦インストールディレクトリを指定したら，移動したりリネームすると，resetコマンドが正しく機能しなくなるので注意する．
+
+%
+\paragraph{倍精度モジュール}
+倍精度計算をする場合には，V-Sphereは倍精度モジュールとしてコンパイルする必要がある．configure時のオプションに\verb|--with-real=double|を追加する．このオプションにより，C/C++コンパイラに\verb|-DREAL_IS_DOUBLE|，Fortranコンパイラには\verb|-r8|がコンパイルオプションとして自動的に追加される．
+
+\paragraph{シェル}
+次のインストールシェルは，引数としてインストールディレクトリを指定する．
+
+{\small
+\begin{program}
+$ configure.sh /usr/local/sphere
+\end{program}
+}
+
+{\small
+\begin{program}
+------------------------------------
+configure.sh (mpich + float)
+------------------------------------
+#! /bin/sh
+./configure --prefix=$1 \
+            --with-comp=INTEL \
+            --with-mpich=/usr/local/mpich \
+            CC=icc \
+            CFLAGS=-O3\
+            CXX=icpc \
+            CXXFLAGS=-O3\
+            FC=ifort \
+            FCFLAGS=-O3\
+            F90=ifort \
+            F90FLAGS=-O3\
+            LDFLAGS=-L/opt/intel/Compiler/11.0/059/lib
+
+------------------------------------
+configure.sh (mpich + double)
+------------------------------------
+#! /bin/sh
+./configure --prefix=$1 \
+            --with-comp=INTEL \
+            --with-real=double \
+            --with-mpich=/usr/local/mpich \
+            CC=icc \
+            CFLAGS=-O3\
+            CXX=icpc \
+            CXXFLAGS=-O3\
+            FC=ifort \
+            FCFLAGS=-O3\
+            F90=ifort \
+            F90FLAGS=-O3\
+            LDFLAGS=-L/opt/intel/Compiler/11.0/059/lib
+
+------------------------------------
+configure.sh (OpenMPI + float)
+------------------------------------
+#! /bin/sh
+./configure --prefix=$1 \
+            --with-comp=INTEL \
+            --with-ompi=/usr/local/ompi \
+            CC=icc \
+            CFLAGS=-O3\
+            CXX=icpc \
+            CXXFLAGS=-O3\
+            FC=ifort \
+            FCFLAGS=-O3\
+            F90=ifort \
+            F90FLAGS=-O3\
+            LDFLAGS=-L/opt/intel/Compiler/11.0/059/lib
+
+------------------------------------
+configure.sh (OpenMPI + double)
+------------------------------------
+#! /bin/sh
+./configure --prefix=$1 \
+            --with-comp=INTEL \
+            --with-real=double \
+            --with-ompi=/usr/local/ompi \
+            CC=icc \
+            CFLAGS=-O3\
+            CXX=icpc \
+            CXXFLAGS=-O3\
+            FC=ifort \
+            FCFLAGS=-O3\
+            F90=ifort \
+            F90FLAGS=-O3\
+            LDFLAGS=-L/opt/intel/Compiler/11.0/059/lib
+\end{program}
+}
+
+
+\item make
+\footnote{make時にlibimf.soが見つからないなどのメッセージが出る場合は，ユーザのLD\_LIBRARY\_PATHにパス を加えておく．\\
+"LD\_LIBRARY\_PATH=/opt/intel/Compiler/11.0/056/lib:/usr/local/mpich/lib"}
+
+{\small
+\begin{program}
+$ make
+\end{program}
+}
+\vspace{\baselineskip}
+
+\item Install
+{\small
+\begin{program}
+$ sudo make install　または　make install
+\end{program}
+}
+
+V-Sphereライブラリがインストールディレクトリにインストールされると，次に示すようなコンパイルに関する情報がソースディレクトリの\verb|sphconfig/sph-cfg.xml|に記述される．
+{\small
+\begin{program}
+<SphereEnvironment>
+  <Param name="SPHEREDIR" dtype="STRING" value= "/usr/local/sphere"/>
+  <Param name="CXX" dtype="STRING" value="icpc"/>
+  <Param name="CXXFLAGS" dtype="STRING" value="-O3"/>
+  <Param name="CC" dtype="STRING" value="icc"/>
+  <Param name="CFLAGS" dtype="STRING" value="-O3"/>
+  <Param name="FC" dtype="STRING" value="ifort"/>
+  <Param name="FCFLAGS" dtype="STRING" value="-O3"/>
+  <Param name="F90" dtype="STRING" value="ifort"/>
+  <Param name="F90FLAGS" dtype="STRING" value="-O3"/>
+  <Param name="LDFLAGS" dtype="STRING" value="-L/opt/intel/Compiler/11.1/067/lib"/>
+  <Param name="SPH_DEVICE" dtype="STRING" value="Snow_Leopard"/>
+  <Param name="MPICH_DIR" dtype="STRING" value="/usr/local/ompi"/>
+  <Param name="MPICH_CFLAGS" dtype="STRING" value="-I/usr/local/ompi/include"/>
+  <Param name="MPICH_LDFLAGS" dtype="STRING" value="-L/usr/local/ompi/lib"/>
+  <Param name="MPICH_LIBS" dtype="STRING" value="-lmpi"/>
+  <Param name="XML2FLAGS" dtype="STRING" value="-I/usr/include/libxml2"/>
+  <Param name="XML2LIBS" dtype="STRING" value="-lxml2 -lz -lpthread -licucore -lm"/>
+  <Param name="SPHERE_CFLAGS" dtype="STRING" value="-DSKL_TIME_MEASURED -D_CATCH_BAD_ALLOC 
+               -I/usr/local/vsph175/include"/>
+  <Param name="SPHERE_LDFLAGS" dtype="STRING" value="-L/usr/local/vsph175/lib"/>
+  <Param name="SPHERE_LIBS" dtype="STRING" value="-lsphapp -lsphbase -lsphls -lsphfio -lsphdc 
+               -lsphcrd -lsphcfg -lsphftt -lsphvcar"/>
+  <Param name="LIBS" dtype="STRING" value="-lifport -lifcore"/>
+</SphereEnvironment>
+\end{program} 
+}
+
+%
+\paragraph{マニュアルインストール}
+別の方法として，Config.specを編集する．
+ポイントは，libxml2とinstallコマンドのパス．
+{\small
+\begin{program}
+$ xml2-config --libs
+\end{program}
+}
+を実行してメッセージが返ればOK.
+{\small
+\begin{program}
+$ which install
+\end{program}
+}
+インストールコマンドがあればOK.
+その後，
+{\small
+\begin{program}
+$ make -f Makefile.spec
+# make -f Makefile.spec install
+\end{program}
+}
+\vspace{\baselineskip}
+
+\item インストールに失敗する場合\\
+makeに失敗して，何度もインストールしているとMakeで使用する環境変数がおかしくなることがある．
+やり直すときは、コンフィギュレーションをクリアし，最初からインストール作業を行う．
+
+{\small
+\begin{program}
+$ make distclean  （コンフィギュレーションのクリア）
+\end{program}
+}
+
+ただし，再インストールの場合はtarボールから解凍して再試行する方がより安全．
+また，上記の\verb|make distclean|を実行すると，設定ファイルが全て消去される．
+
+\end{enumerate}
+
+%%
+\section{アンインストール}
+V-Sphereをアンインストール\index{アンインストール!V-Sphereの@V-Sphereの---}する場合には，インストールしたディレクトリ（configureでオプション指定したディレクトリ）のsphereを削除する．

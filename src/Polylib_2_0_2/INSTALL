@@ -1,0 +1,29 @@
+/*
+ * Polylib - Polygon Management Library
+ *
+ * Copyright (c) RIKEN, Japan. All right reserved. 2010
+ *
+ * Polylib version 2.0.2       17 Nov. 2010
+ *
+ * Functionality Simulation and Information Team
+ * VCAD System Research Program
+ *
+ * Signatured by Kenji Ono (keno@riken.jp)
+ */
+
+Polylibライブラリのビルドおよびインストール方法
+
+1) 以下の手順でライブラリのビルドを行います．
+
+	> cd src/
+	> make all
+
+   Makefile内で利用しているC++コンパイラはg++です．
+   必要に応じてMakefileを編集しコンパイラを変更して下さい．
+
+2) ビルドされたライブラリファイルは lib/に配置されます．
+   ライブラリファイルは以下の2つです．利用するユーザプロ
+   グラムに応じて使い分けてください．
+
+   libPolylib.a    : 非並列計算用Polylib
+   libMPIPolylib.a : MPI版Polylib

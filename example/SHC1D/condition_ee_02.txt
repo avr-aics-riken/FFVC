@@ -1,0 +1,317 @@
+
+	Welcome to V-SPHERE::CBC 	Version 1.3.0
+
+	FlowBase                 	Version 2.3.0
+
+	Example : Steady 1D Heat Conduction
+
+	Serial Execution
+
+---------------------------------------------------------------------------
+
+
+	>> Global Domain Information
+
+	imax, jmax, kmax    =             7             5             5     >> 175.00 (cells)
+
+	(dx, dy, dz)  [m] / [-] = ( 2.000000e-01  2.000000e-01  2.000000e-01)  /  ( 2.000000e-01  2.000000e-01  2.000000e-01)
+	(ox, oy, oz)  [m] / [-] = (-2.000000e-01 -5.000000e-01 -5.000000e-01)  /  (-2.000000e-01 -5.000000e-01 -5.000000e-01)
+	(Lx, Ly, Lz)  [m] / [-] = ( 1.400000e+00  1.000000e+00  1.000000e+00)  /  ( 1.400000e+00  1.000000e+00  1.000000e+00)
+
+
+---------------------------------------------------------------------------
+
+	>> Voxel file information
+
+
+---------------------------------------------------------------------------
+
+	>> Memory required for Preprocessor :  Global= 12.66 (KB) : Local= 12.66 (KB)
+
+---------------------------------------------------------------------------
+
+	>> XML Table Info.
+
+	 iTable order : State    ID  MatID Label
+	            1 : Fluid     1      1 air
+	            2 : Solid   500     30 rod-L
+	            3 : Solid   520     30 rod-R
+	            4 : Solid   600     30 outer
+	            5 : Solid   610     30 rod
+
+
+---------------------------------------------------------------------------
+
+	>> XML Components
+
+	No. of Inner Boundary  : 6
+	No. of Medium          : 2
+
+	No. of Fluid ID        : 1
+	No. of Solid ID        : 4
+
+	Cell IDs on Guide cell region
+		ID[1] = 600
+
+---------------------------------------------------------------------------
+
+	>> Voxel Model Info.
+
+		  1 : ID = [1]
+		  2 : ID = [500]
+		  3 : ID = [520]
+		  4 : ID = [600]
+		  5 : ID = [610]
+
+---------------------------------------------------------------------------
+
+
+	>> Medium List
+
+	  no :      ID           Medium
+	   1 :       1            Water
+					 density              9.982000e+02 [kg/m^3]
+					 kinematic viscosity  1.004000e-06 [m^2/s]
+					 viscosity            1.002600e-03 [Pa s]
+					 specific heat        4.182000e+03 [J/(Kg K)]
+					 thermal conductivity 5.980000e-01 [W/(m K)]
+					 sound of speed       1.500000e+03 [m/s]
+					 volume expansion     2.070000e-04 [1/K]
+	   2 :      30               Fe
+					 density              1.000000e+00 [kg/m^3]
+					 specific heat        1.000000e+00 [J/(Kg K)]
+					 thermal conductivity 5.000000e+01 [W/(m K)]
+
+
+---------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------
+
+	>> Component List
+
+	  No :      ID            Element      Medium                     Label : BCtype
+	   1 :     520                  1       Solid                insulation : Adiabatic
+	   2 :     610                 12       Solid                 HT_type_B : Heat Transfer type B
+	   3 :     520                  4       Solid                 HT_type_B : Heat Transfer type B
+	   4 :     500                  4       Solid                 HT_type_B : Heat Transfer type B
+	   5 :     500                  1       Solid                IsoThermal : Isothermal
+	   6 :     600                130       Solid               outer_layer : Inactive
+	   7 :       1                 40       Fluid                       air : 
+	   8 :     500                  1       Solid                     rod-L : 
+	   9 :     520                  1       Solid                     rod-R : 
+	  10 :     600                130       Solid                     outer : 
+	  11 :     610                  3       Solid                       rod : 
+
+	This voxel includes    4 solid IDs  [Solid cell ratio inside computational domain :  77.1 percent]
+
+
+---------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------
+
+	>> Component Information
+
+	[Adiabatic]
+	 no                    Label    ID   def
+	  1               insulation   520   600
+
+	[Heat Transfer : Type B]
+	 no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  coef(W/m^2K)  BulkTemp(C)   BulkTemp[-]
+	  2                HT_type_B   610     1       3       5       3       3       3       3  4.8000e-01    1.2000e+01   1.0000e+02   0.0000e+00
+	  3                HT_type_B   520     1       6       6       3       3       3       3  1.6000e-01    1.2000e+01   1.0000e+02   0.0000e+00
+	  4                HT_type_B   500     1       2       2       3       3       3       3  1.6000e-01    1.2000e+01   1.0000e+02   0.0000e+00
+
+	[Iso-Thermal]
+	 no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(C)   Sf.Temp[-]
+	  5               IsoThermal   500   600       2       2       3       3       3       3  4.0000e-02   2.0000e+02   1.0000e+00 
+
+---------------------------------------------------------------------------
+
+	>> Memory required for Solver :  Global= 87.90 (KB) : Local= 87.90 (KB)
+
+---------------------------------------------------------------------------
+
+
+	>> Solver Control Parameters
+
+	Solver Properties
+	     Basic Equation           :   Heat Conduction Equation
+	     Time Variation           :   Unsteady
+	     Shape Approximation      :   Binary
+	     Precision                :   Single Precision 
+	     Kind of Solver           :   Solid Conduction
+	     Flow Algorithm           :   Fractional Step
+	        Time marching scheme  :   Euler Explicit O(dt1)
+	     Heat Algorithm           :   Fractional Step
+	        Time marching scheme  :   Euler Explicit O(dt1)
+	     Reference Frame          :   Stationary
+
+	Unit
+	     Unit of Input Parameter  :   Dimensional
+	             Pressure         :   Gauge Pressure
+	             Temperature      :   Celsius
+
+	Time Control
+	     Start Condition          :   Impulsive start
+	     Acceleration Time        :    0.00000e+00 [sec] /  0.00000e+00 [-]
+	     Averaging Operation      :   OFF
+	     Time Increment dt        :    4.00000e-04 [sec] /  2.00000e-02 [-] : Direct : Diff. Num. = 5.00e-01
+	     Calculation Time         :    2.50000e-02 [sec] /  1.25000e+00 [-]
+
+	Parallel Mode & File IO
+	     Parallel Mode            :   Serial
+	     Unit of File             :   Dimensional
+	     Input Mode               :   Master IO
+	     Output Mode              :   Master IO   Forced
+	     Guide cell for output    :   0
+
+	Logs
+	     Unit for Output          :   Dimensional
+	     Base Logs                :   ON >  history_base.log, history_compo.log, history_dommainflux.log
+	     Iteration Log            :   OFF   
+	     Profiling report         :   OFF   
+	     Wall info. Log           :   OFF   
+	     Sampling Log             :   ON >  sampling.log
+
+	Intervals
+	     Base Info.(stdout)       :              1 [step]
+	     Other Histories          :              1 [step]
+	     Instant data             :            100 [step]
+	     Averaged data            :            100 [step]
+	     Sampled data             :              1 [step]
+
+	Parameter of Linear Equation
+
+	Condition of Wall
+	     No of surface            :   96
+	     Pressure Gradient        :   Neumann Zero
+	     Velocity Profile         :   No Slip
+
+	Derived variables
+	     Total Pressure           :   OFF
+	     Vorticity                :   OFF
+	     Helicity                 :   OFF
+	     2nd Invariant of VGT     :   OFF
+
+	Hidden Parameters
+
+
+---------------------------------------------------------------------------
+
+
+	>> Simulation Parameters
+
+	Reference ID              [-]         :  610
+
+	Ref. Length               [m]         :  1.00000e+00
+	Ref. Velocity             [m/s]       :  5.00000e+01
+	Base Pressure             [Pa]        :  0.00000e+00
+	Ref. Density              [kg/m^3]    :  1.00000e+00
+	Ref. Viscosity            [Pa s]      :  0.00000e+00
+	Ref. Knmtc Viscosity      [m^2/s]     :  0.00000e+00
+	Ref. Specific Heat        [J/(kg K)]  :  1.00000e+00
+	Ref. Thermal Conductivity [W/(m K)]   :  5.00000e+01
+	Ref. Sound Speed          [m/s]       :  0.00000e+00
+	Gravity                   [m/s^2]     :  9.80000e+00
+
+	Spacing                   [m] / [-]   :  2.00000e-01 /  2.00000e-01
+	Time Scale                [sec]       :  2.00000e-02
+
+	Base Temperature          [C] / [-]   :  1.00000e+02 / 0.0
+	Temperature Diff.         [C] / [-]   :  1.00000e+02 / 1.0
+
+
+	Prandtl  number           [-]         :  0.00000e+00
+	Reynolds number           [-]         :  1.00000e+00
+	Peclet   number           [-]         :  1.00000e+00
+	Grashof  number           [-]         :  0.00000e+00
+
+
+---------------------------------------------------------------------------
+
+
+	>> Initial Values for Physical Variables
+
+	Initial  Density     [kg/m^3]/ [-]   :  1.00000e+00 /  1.00000e+00
+	Initial  Velocity.U  [m/s]   / [-]   :  0.00000e+00 /  0.00000e+00
+	Initial          .V  [m/s]   / [-]   :  0.00000e+00 /  0.00000e+00
+	Initial          .W  [m/s]   / [-]   :  0.00000e+00 /  0.00000e+00
+	Dynamic  Pressure    [Pa]    / [-]   :  1.25000e+03 /  1.00000e+00
+	Initial  Pressure    [Pa_g]  / [-]   :  0.00000e+00 /  0.00000e+00
+	Initial  Temperature [C]     / [-]   :  1.50000e+02 /  5.00000e-01
+
+
+---------------------------------------------------------------------------
+
+
+	>> Effective cells and Open Area of Computational Domain
+
+	Fluid cell  inside whole Computational domain =              40 ( 22.9 percent)
+	Active cell                                   =               5 (  2.9 percent)
+
+	Face :      Element (Open ratio)
+	  X- :            0 (  0.00 percent)
+	  X+ :            0 (  0.00 percent)
+	  Y- :            0 (  0.00 percent)
+	  Y+ :            0 (  0.00 percent)
+	  Z- :            0 (  0.00 percent)
+	  Z+ :            0 (  0.00 percent)
+
+
+---------------------------------------------------------------------------
+
+	>> Outer Boundary Conditions
+
+	      Set X- up as Wall : (fixedwall)
+			Cell ID = 600 / Medium = 30
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set X+ up as Wall : (fixedwall)
+			Cell ID = 600 / Medium = 30
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set Y- up as Wall : (slidewall)
+			Cell ID = 600 / Medium = 30
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set Y+ up as Wall : (fixedwall)
+			Cell ID = 600 / Medium = 30
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set Z- up as Wall : (fixedwall)
+			Cell ID = 600 / Medium = 30
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set Z+ up as Wall : (fixedWall)
+			Cell ID = 600 / Medium = 30
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+
+---------------------------------------------------------------------------
+
+
+	>> Monitor Information
+
+	  Output Type     : Gather
+	  Specified Unit  : Dimensional
+
+	  1 : Line	 division=5  [center]
+		Variables : Temperature 
+		   Method : Interpolation
+		     Mode : Solid
+		    order :            X            Y            Z  :   rank : comment
+		        1 :   1.000000e-01   0.000000e+00   0.000000e+00  :      0 : point_0
+		        2 :   3.000000e-01   0.000000e+00   0.000000e+00  :      0 : point_1
+		        3 :   5.000000e-01   0.000000e+00   0.000000e+00  :      0 : point_2
+		        4 :   7.000000e-01   0.000000e+00   0.000000e+00  :      0 : point_3
+		        5 :   9.000000e-01   0.000000e+00   0.000000e+00  :      0 : point_4
+
+

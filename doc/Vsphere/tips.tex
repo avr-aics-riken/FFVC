@@ -1,0 +1,106 @@
+
+\section{コンパイルエラー}
+\label{sec:compile_error}
+
+%
+\subsection{VMware上のFedora 14でのコンパイル}
+\label{VMware}
+
+\begin{indentation}{3zw}{0zw}
+VMware上でFedrora14 32bitがゲストOSの場合，V-Sphere Ver. 1.8.4のコンパイルがうまくいかない場合がある．
+その場合，以下の手順で成功する事例がある．
+
+\begin{program}
+$ aclocal
+$ autoconf
+$ automake -a
+$ configure [option...]
+$ make
+\end{program}
+\end{indentation}
+
+\subsection{Fedoraにmpich2をインストールした場合のトラブル}
+\begin{indentation}{3zw}{0zw}
+Linux OSがFedoraで，並列ライブラリとしてmpich2をインストールした場合，
+V-Sphereのインストールでリンクエラーとなる場合がある．
+
+その場合，以下のいずれかの手順で成功する事例がある．
+
+\subsubsection{方法1}
+mpich2のコンパイララッパーを使用する．
+
+mpich2は、configure時に指定したコンパイラをラップした
+コンパイルコマンドがbin配下にインストールされる．
+
+mpich2のインストールディレクトリが/usr/local/mpich2/の場合，/usr/local/mpich2/bin配下に
+mpif77，mpif90，mpicc，mpic++等のコマンドが格納されている．
+これらのコマンドは、mpich2がintelコンパイラでmakeされて
+いれば、内部的にintelコンパイラがコールされ，かつ，MPI
+プログラムに必要なライブラリを自動的にリンクしてくれる．
+
+そこで、V-Sphereのconfigure時に，\\
+\hspace{1cm}CC=icc\\
+\hspace{1cm}CXX=icpc\\
+\hspace{1cm}FC=ifort\\
+\hspace{1cm}F90=ifort\\
+の代わりに，\\
+\hspace{1cm}CC=/usr/local/mpich2/bin/mpicc\\
+\hspace{1cm}CXX=/usr/local/mpich2/bin/mpic++\\
+\hspace{1cm}FC=/usr/local/mpich2/bin/mpif77\\
+\hspace{1cm}F90=/usr/local/mpich2/bin/mpif90\\
+をそれぞれ指定すると，リンクエラーは解消される．
+
+\subsubsection{方法2}
+不足しているライブラリを強制的にリンクする．
+
+mpich2の場合、libmplとlibpthreadをリンクする必要が
+あるので，これらのリンク指示をMakefile等に
+追記することで，リンクエラーを回避する．
+
+以下のファイルを編集する必要がある．
+
+\paragraph{V-Sphereコンパイル時}
+configure実行後に，src/utility/sphDataGather/Makefileの
+以下を修正する．\\
+218、219行目の「-lmpich」の記述の後に「-lmpl -lpthread」を
+追加\\
+例）\\
+dataGather\_LDADD = -lsphcfg -lmpich -lmpl -lpthread -L/usr/local/mpich2-install/lib -lxml2 -lz -lm\\
+sphDataGather\_LDADD = -lsphcfg -lmpich -lmpl -lpthread -L/usr/local/mpich2-install/lib -lxml2 -lz -lm
+
+\paragraph{ソルバープロジェクト（CBC）}
+project\_local\_settingsの「LIBS=」の行に「-lmpl -lpthread」を追加\\
+（例）\\
+LIBS=-lifport -lifcore -lmpl -lpthread
+
+\end{indentation}
+
+\subsection{FedoraにOpenMPIをインストールする場合のトラブル}
+\subsubsection{OpenMPIのコンフィギュア}
+\begin{indentation}{3zw}{0zw}
+Linux OSがFedoraで，並列ライブラリとしてOpenMPIのインストールがうまくいかない場合，OpenMPIのconfigure時に，
+\begin{program}
+--enable-contrib-no-build=vt
+\end{program}
+オプションを付加すると，成功する事例がある．
+\end{indentation}
+
+\subsubsection{OpenMPIのインストール}
+\begin{indentation}{3zw}{0zw}
+Linux OSがFedoraで，並列ライブラリとしてOpenMPIをルート権限が必要な場所に
+\begin{program}
+$ sudo make install
+\end{program}
+でインストールする場合，
+\begin{program}
+icc: command not found
+\end{program}
+というインストールエラーが出る場合がある．\\
+
+その場合，以下の手順で成功する事例がある．\\
+
+rootユーザの.bashrcや.bash\_profielにintelコンパイラのPATHなどの環境設定を記述する．その後，rootユーザとして，
+\begin{program}
+# make install
+\end{program}
+\end{indentation}

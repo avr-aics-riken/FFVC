@@ -1,0 +1,508 @@
+
+%
+\section{sphPrjToolを用いた開発環境の構築}
+
+本節では，V-Sphereを用いた開発を行う場合の環境を設定する．ツールとして，sphPrjTool\index{sphPrjTool}を用いる．sphPrjToolの詳細については，V-Sphereのマニュアル04\_UtilityToolsを参照のこと．
+また，PRJ\_CBCが提供されている場合は，「CBC\_UG.pdf」の「2.3.2 sphPrjToolを用いた簡単なインストール」を参照のこと．
+
+%
+\subsection{sphPrjTool}
+\label{sec:sphPrjTool}
+
+例として，CBCソルバークラスについて説明する．
+以下のようなソースツリーを想定する．
+
+\begin{indentation}{3zw}{0zw}
+\small
+\begin{program}
+CBC-x.x.x
+  |
+  +- src                          ソースコード
+      +- project_local_settings   プロジェクトのコンパイル環境設定
+      +  F_CBC                    CBCクラスのFortranファイル
+      +- F_CPC                    CPCクラスのFortranファイル
+      +- F_VOF                    VOFクラスのFortranファイル
+      +- FB                       FlowBaseクラス（ユーザー定義クラス群）
+      +- IP                       組み込み例題クラス群
+\end{program}
+\end{indentation}
+\vspace{\baselineskip}
+
+%
+\subsubsection{プロジェクトの作成とソースファイルの登録}
+まず，src直下のディレクトリでsphPrjToolを起動し，プロジェクト名とソルバーキーワードを登録，登録内容を確認してセーブする．
+{\small
+\begin{program}
+$ cd src 
+$ sphPrjTool
+sphPrjTool> help
+sphPrjTool> new -p PRJ_CBC
+sphPrjTool> new -s CBC
+sphPrjTool> print
+sphPrjTool> save
+sphPrjTool> quit
+\end{program}
+}
+
+\noindent 以下に，printの出力結果を示す．
+
+{\small
+\begin{program}
+sphPrjTool> print         
+Project Name : PRJ_CBC
+  Compile Environment
+    CC                  : icc
+    CFLAGS              : -O3
+    CXX                 : icpc
+    CXXFLAGS            : -O3
+    FC                  : ifort
+    FCFLAGS             : -O3
+    F90                 : ifort
+    F90FLAGS            : -O3
+    LDFLAGS             : -L/opt/intel/composerxe/lib
+    LIBS                : -lifport -lifcore
+    SPH_USR_DEF_LIBS    : 
+    UDEF_OPT            : -DTD_USE_NAMESPACE -DNON_POLYLIB -DNON_CUTLIB
+    UDEF_INC_PATH       : -I../../Cutlib_2_0_0/include -I../../Polylib_2_0_2/include
+    UDEF_LIB_PATH       : -L../../Polylib_2_0_2/lib -L../../Cutlib_2_0_0/lib
+    UDEF_LIB_UPPER      : 
+    UDEF_LIB_LOWER      : 
+    Use Module.
+        Generate parallel module.
+
+    ---
+    Reference only (Unmodifiable):
+    SPHEREDIR           : /usr/local/sphere
+    SPH_DEVICE          : Snow_Leopard
+    MPICH_DIR           : /opt/openmpi
+    MPICH_CFLAGS        : -I/opt/openmpi/include
+    MPICH_LDFLAGS       : -L/opt/openmpi/lib
+    MPICH_LIBS          : -lmpi
+    XML2FLAGS           : -I/opt/local/include/libxml2
+    XML2LIBS            : -L/opt/local/lib -lxml2 -lz -lpthread -liconv -lm
+    SPHERE_CFLAGS       : -DSKL_TIME_MEASURED -D_CATCH_BAD_ALLOC -I/usr/local/vsph184_float_64/include
+    SPHERE_LDFLAGS      : -L/usr/local/vsph184_float_64/lib
+    SPHERE_LIBS         : -lsphapp -lsphbase -lsphls -lsphfio -lsphdc -lsphcrd -lsphcfg 
+                          -lsphftt -lsphvcar
+    SKL_REAL is float. (REALOPT = float)
+    ---
+
+  Regist Solver
+    Name : CBC
+      Regist file :
+        FortranFuncCBC.h
+        SklSolverCBCDefine.h
+        SklSolverCBCInitialize.C
+        SklSolverCBCLoop.C
+        SklSolverCBCPost.C
+        SklSolverCBCUsage.C
+        SklSolverCBC.C
+        SklSolverCBC.h
+\end{program}
+}
+
+\noindent この作業で，作業ディレクトリでは以下のようなファイル構成になる．
+
+{\small
+\begin{program}
+PRJ_CBC/
+   |
+   +app/Makefile
+   |    SklCreateSolver.C
+   |    SklDeleteSolver.C
+   |    SklFactoryCBC.C
+   |    SklFactoryCBC.h
+   |    SklSolverType.h
+   |
+   +bin/
+   |
+   +CBC/CBC.xml
+   |    FortranFuncCBC.h
+   |    Makefile
+   |    SklSolverCBC.C
+   |    SklSolverCBC.h
+   |    SklSolverCBCDefine.h
+   |    SklSolverCBCInitialize.C
+   |    SklSolverCBCLoop.C
+   |    SklSolverCBCPost.C
+   |    SklSolverCBCUsage.C
+   |
+   Makefile
+   PRJ_CBC.xml               プロジェクト設定ファイル
+   project_local_settings    コンパイル時に利用する環境設定ファイル
+   
+\end{program}
+}
+
+\noindent 次に，プロジェクト設定ファイルを指定して起動する．
+{\small
+\begin{program}
+$ cd PRJ_CBC
+$ sphPrjTool PRJ_CBC.xml  
+\end{program}
+}
+\noindent または，sphPrjTool\index{sphPrjTool}起動後に\\
+
+{\small
+\noindent \verb|> load PRJ_CBC.xml|\\
+\\
+}
+\noindent とすると，ファイルの登録や環境設定が行える．詳細は，マニュアルおよびヘルプコマンドを参照のこと．
+新規にソースファイルをSOLVER\_NAMEにリンクする場合には，下記の操作を行う．
+ファイル名は必ず絶対パスか，sphPrjToolを起動したディレクトリからの相対パスを指定する．内部的には，プロジェクトディレクトリ\footnote{プロジェクト情報が格納されるディレクトリ．つまり，プロジェクトのコンフィギュレーションファイル（プロジェクト名.xml）の存在するディレクトリ．}を基点として相対パスで記述される．
+\footnote{.[Ch]は接尾辞Cまたはhをもつファイルをプロジェクトにリンクし，.f90は接尾辞f90をもつファイルをプロジェクトにリンクすることを意味する．}
+{\small
+\begin{program}
+sphPrjTool> regist -f SOLVER_NAME *.[Ch]
+sphPrjTool> regist -f SOLVER_NAME *.f90
+sphPrjTool> save
+\end{program}
+}
+sphPrjToolを使って，プロジェクト設定ファイルを修正・保存すると，環境設定ファイルproject\_local\_settingsファイルの内容が修正内容に応じて変更される．したがって，project\_local\_settingsファイルを直接編集して環境設定を行った場合は，プロジェクト設定ファイルを修正・保存するとproject\_local\_settingsファイルの内容がリセットされてしまうので，注意すること．
+
+%
+\subsubsection{PLSファイルの設定}
+project\_local\_settingsファイルは，上記の作業でPRJ\_CBCの直下に生成される．もし，複数のプロジェクトで共通の設定を利用する場合には，src直下に移動することも考えられる．その場合には，プロジェクトの設定で，次のようにproject\_local\_settingsファイルの読み込み先を変更する．
+
+{\small
+\begin{program}
+$ pwd
+CBC-x.x.x/src/PRJ_CBC
+
+$ mv project_local_settings ..
+
+$ sphPrjTool PRJ_CBC.xml  
+sphPrjTool> setpls ../project_local_settings
+sphPrjTool> save
+sphPrjTool> quit
+\end{program}
+}
+
+\noindent これにより，プロジェクト情報は次のように表示される．
+
+{\small
+\begin{program}
+sphPrjTool> print
+    ...
+    project_local_settings="../project_local_settings". (Relative path from Prj-Dir)
+    ...
+\end{program}
+}
+
+%
+\subsubsection{並列モジュールの指定}
+並列版のソルバー実行モジュールを作成する場合には，moduleコマンドを用いて指定する．
+{\small
+\begin{program}
+sphPrjTool> module parallel
+sphPrjTool> print
+    ...
+    Generate parallel module.
+    ...
+\end{program}
+}
+
+%
+\subsubsection{ユーザ定義のオプション指定}
+reset localsetting コマンドでリセットされないユーザが指定オプションは環境変数で指定する．
+詳細はV-Sphereマニュアルを参照．
+
+{\small
+\begin{program}
+sphPrjTool> env UDEF_*
+sphPrjTool> print
+   ...
+   UDEF_OPT=-DTD_USE_NAMESPACE -DNON_POLYLIB -DNON_CUTLIB
+   UDEF_INC_PATH=-I../../Cutlib_2_0_0/include -I../../Polylib_2_0_2/include
+   UDEF_LIB_PATH=-L../../Polylib_2_0_2/lib -L../../Cutlib_2_0_0/lib
+   UDEF_LIB_UPPER=
+   UDEF_LIB_LOWER=
+   ...
+\end{program}
+}
+
+%
+\section{ユーザ定義の非ソルバーモジュールの導入}
+\label{sec:non-solver module}
+
+非ソルバーモジュールとして，ユーザ定義クラス\index{ゆーざていぎくらす@ユーザ定義クラス}を作成する．
+ユーザ定義クラスは，ソルバークラス内で使用するユーザが作成したクラス群である．
+
+PRJ\_CBCディレクトリでsphPrjToolを起動し，非ソルバーモジュールをプロジェクトに組み込む．複数のモジュールを利用する場合には，ライブラリのリンク順を考慮する必要があるため\footnote{Makefile 中のSPH\_SOLV\_FLAGS などの順序が重要となる．}，モジュール間の依存関係による読み込む．モジュールを登録するとき，基底クラスを後で登録する点に注意する．ここでは，CBC $\gg$ IP $\gg$ FBのような依存関係がある（左のモジュールは右に依存している）．
+
+{\small
+\begin{program}
+$ sphPrjTool PRJ_CBC.xml
+sphPrjTool> new -o IP
+sphPrjTool> new -o FB
+sphPrjTool> save
+sphPrjTool> quit
+\end{program}
+}
+
+\noindent プロジェクト情報は次のように表示される．
+
+{\small
+\begin{program}
+sphPrjTool> print
+  ...
+  Regist NonSolver
+    Name : IP
+    Name : FB
+\end{program}
+}
+
+次に，ソルバークラスと非ソルバーモジュールにソースファイルを登録する．
+{\small
+\begin{program}
+$ sphPrjTool PRJ_CBC.xml  
+sphPrjTool> regist -f IP ../IP/*.[Ch]
+sphPrjTool> regist -f FB ../FB/*.[Ch]
+\end{program}
+}
+\noindent または，FB.xmlファイルなどを直接編集した後，sphPrjToolで再度PRJ\_CBC.xmlファイルをロードとセーブすると変更が反映される．
+
+\begin{indentation}{3zw}{0zw}
+\small
+\begin{program}
+CBC-x.x.x
+  |
+  +- src                          ソースコード
+      +- project_local_settings   プロジェクトのコンパイル環境設定
+      +  F_CBC                    CBCクラスのFortranファイル
+      +- F_CPC                    CPCクラスのFortranファイル
+      +- F_VOF                    VOFクラスのFortranファイル
+      +- FB                       FlowBaseクラス（ユーザー定義クラス群）
+      +- IP                       組み込み例題クラス群
+      |
+      +- PRJ_CBC	                 CBCプロジェクト
+         +- app                  アプリケーションコンパイルディレクトリ
+         +- bin                  バイナリモジュール格納ディレクトリ
+         |
+         +- CBC                  CBCソルバークラスのソースファイル
+         |   +- CBC.xml          CBCクラスのコンパイル環境設定
+         |
+         +- FB                   非ソルバークラスディレクトリ　FlowBase
+         |   +- FB.xml           FBクラスのコンパイル環境設定  
+         |
+         +- IP                   非ソルバークラスディレクトリ　組み込み例題クラス群
+         |   +- IP.xml           IPクラスのコンパイル環境設定 
+         |
+         +- Makefile             アプリケーションコンパイル用 Linux/Mac
+            PRJ_CBC.xml          CBCのコンパイル設定
+
+\end{program}
+\end{indentation}
+
+
+%%%%%%
+\begin{comment}
+\subsection{ユーザ定義の基底クラスの導入}
+本節では，ユーザ定義基底クラス\index{ゆーざていぎきていくらす@ユーザ定義基底クラス}を用いたソルバーの構築方法について記述する\footnote{本節の内容は古いので，作業については確認のこと}．
+UDBCをユーザが定義した基底クラスとし，CBS3D\_ICクラスがUDBCクラスを継承しているとする．
+UDBCクラスの雛型は，別のディレクトリに保存しておき，sphPrjTool\index{sphPrjTool}で PROJECT\_NAME/UDBC を作成後にファイルをコピーする．
+\footnote{派生クラスのプロジェクトを作成するときの注意点\\ プロジェクトにソルバクラスを登録するとき，基底クラスを後で登録すること．
+これは，ライブラリのリンク順に影響するため．Makefile 中のSPH\_SOLV\_FLAGS などの順序が重要となる．}\quad
+UDBCクラスは，SklSolverBase\index{SklSolverBase}クラスを継承し，CBS3D\_ICクラスはSklSolverUDBC クラスを継承する．
+UDBCクラスは，単体でもコンパイルは可能であるが，動作としては何もしない．\\
+
+\subsubsection{Example}
+
+作業ディレクトリsph\_v164を作成し，プロジェクトS4DとソルバークラスCBS3D\_ICとユーザー定義基底クラスUDBCを登録する．その後，UDBCクラスとCBS3D\_ICのファイルを登録する．\footnote{XML2LIBSのオプションは，Linuxの場合には-lconv は不要．}
+{\small
+\begin{program}
+$ mkdir sph_v164	；ディレクトリの作成
+$ cd sph_v164		
+$ sphPrjTool		；プロジェクトツールの起動
+
+sphPrjTool> new -p S4D			；プロジェクトの作成
+sphPrjTool> new -s CBS3D_IC		；登録順に注意
+sphPrjTool> new -s UDBC			；
+sphPrjTool> print				；作業内容の確認
+
+Project Name : S4D
+  Compile Environment2
+    CC                  : icc
+    CFLAGS              : -O3 -axT
+    CXX                 : icpc
+    CXXFLAGS            : -O3 -axT
+    FC                  : ifort
+    FCFLAGS             : -O3 -axT
+    F90                 : ifort
+    F90FLAGS            : -O3 -axT
+    LDFLAGS             : -L/opt/intel/fce/10.1/lib
+    LIBS                : -lifport -lifcore
+    XML2FLAGS           : -I/usr/include/libxml2　　；必要に応じて以下2行を検討する
+    XML2LIBS            : -L/usr/lib -lxml2 -lz -lpthread -liconv -lm
+    SPH_USR_DEF_LIBS    : 
+    UDEF_OPT            : -DTD_USE_NAMESPACE -DNON_POLYLIB -DNON_CUTLIB
+    UDEF_INC_PATH       : -I../../Cutlib_2_0_0/include -I../../Polylib_2_0_2/include
+    UDEF_LIB_PATH       : -L../../Polylib_2_0_2/lib -L../../Cutlib_2_0_0/lib
+    UDEF_LIB_UPPER      : 
+    UDEF_LIB_LOWER      : 
+    ---
+    Generate non-parallel module.
+
+  Regist Solver
+    Name : CBS3D_IC
+      Regist file :
+        FortranFuncCBS3D_IC.h
+        SklSolverCBS3D_ICDefine.h
+        SklSolverCBS3D_ICInitialize.C
+        SklSolverCBS3D_ICLoop.C
+        SklSolverCBS3D_ICPost.C
+        SklSolverCBS3D_ICUsage.C
+        SklSolverCBS3D_IC.C
+        SklSolverCBS3D_IC.h
+    Name : UDBC
+      Regist file :
+        FortranFuncFB.h
+        SklSolverFBDefine.h
+        SklSolverFBInitialize.C
+        SklSolverFBLoop.C
+        SklSolverFBPost.C
+        SklSolverFBUsage.C
+        SklSolverFB.C
+        SklSolverFB.h
+
+sphPrjTool> save		；ディスクに内容を保存
+sphPrjTool> quit		；終了
+\end{program}
+}
+\begin{enumerate}
+\item 前述の操作で，CBS3D\_IC, UDBCには，それぞれ雛型のファイルが生成される．
+\item UDBCクラスのオリジナルファイルは，別ディレクトリに保存されていると仮定する．オリジナルファイルを全て上書きでコピーする．
+\item CBS3D\_ICクラスのオリジナルファイルは，別ディレクトリに保存されていると仮定する．オリジナルファイルを全て上書きでコピーする．
+\item 確認
+{\small
+\begin{program}
+$ cd S4D				；作業ディレクトリの変更
+$ sphPrjTool S4D.xml	；設定を読み込んで起動
+
+sphPrjTool> print
+
+Project Name : S4D
+  Compile Environment
+    CC                  : icc
+    CFLAGS              : -O3 -axT
+    CXX                 : icpc
+    CXXFLAGS            : -O3 -axT
+    FC                  : ifort
+    FCFLAGS             : -O3 -axT
+    F90                 : ifort
+    F90FLAGS            : -O3 -xT
+    LDFLAGS             : -L/opt/intel/fce/10.1/lib
+    LIBS                : -lifport -lifcore
+    SPH_USR_DEF_LIBS    : 
+    ---
+    Generate non-parallel module.
+
+  Regist Solver
+    Name : CBS3D_IC
+      Regist file :
+        BasketIPaxis.h
+        CubeBin3D.C
+        ...
+        ...
+
+    Name : FB
+      Regist file :
+        Basket.h
+        BinaryVox.C
+        BinaryVox.h
+        BndOuter.h
+        ...
+        ...
+
+sphPrjTool> quit
+\end{program}
+}
+\item コンパイル時のヘッダ情報の参照のため，S4D.xmlの環境変数にインクルードパスを追加する．
+{\small
+\begin{program}
+<Param name="CXXFLAGS" dtype="STRING" value="-O3 -axT -I../UDBC -I../CBS3D_IC"/>
+
+$ sphPrjTool S4D.xml
+sphPrjTool> print
+sphPrjTool> save
+sphPrjTool> quit
+\end{program}
+}
+または，
+{\small
+\begin{program}
+$ sphPrjTool S4D.xml
+sphPrjTool> env CXXFLAGS “-O3 -axT -I../UDBC -I../CBS3D_IC”
+\end{program}
+}
+以上で，S4Dディレクトリでmakeが可能になり，コンパイルに成功すると，S4D/bin/ 配下に実行モジュールsphereが生成される．
+さらに，HCUBEクラスを組み込むと以下のようになる．\footnote{S4D.xmlを編集して，新しいソルバクラスを追加する場合には，FBクラスからの派生クラスはその前に登録しなければならない点に注意する．}
+{\small
+\begin{program}
+$ sphPrjTool S4D.xml
+sphPrjTool> new -s HCUBE
+sphPrjTool> print
+sphPrjTool> save
+sphPrjTool> quit
+\end{program}
+}
+S4D.xmlは下記のようになる．
+{\small
+\begin{program}
+<Elem name="SolverClass">
+  <Elem name="CBS3D_IC">
+  </Elem>
+  <Elem name="UDBC">
+  </Elem>
+  <Elem name="HCUBE">
+  </Elem>
+</Elem>
+\end{program}
+}
+HCUBEとFBの順番を入れ替え，sphPrjTool\index{sphPrjTool}で読み込み保存し直す．
+{\small
+\begin{program}
+<Elem name="SolverClass">
+  <Elem name="CBS3D_IC">
+  </Elem>
+  <Elem name="HCUBE">
+  </Elem>
+  <Elem name="UDBC">
+  </Elem>
+</Elem>
+\end{program}
+}
+HCUBEにファイルをコピーする．
+	S4D.xmlファイルのCXXFLAGSに，-I../HCUBE　を追加する．
+	sphPrjToolでS4D.xmlを読み込んでから保存する．
+{\small
+\begin{program}
+$ cd S4D
+$ make allclean
+$ make
+\end{program}
+}
+以上の操作により，ディレクトリ構成は下記のようになる．
+{\small
+\begin{program}
+TARGET_PROJECT -/Makefile
+		 project_local_setting
+		 TARGET_PROJECT.xml
+		 Makefile
+		|
+		+app
+		|
+		+bin
+		|
+		+dev
+		|
+		+UDBC
+		|
+		+CBS3D_IC
+		|
+		+HCUBE
+\end{program}
+}
+\end{enumerate}
+\end{comment}
+%%%%%%

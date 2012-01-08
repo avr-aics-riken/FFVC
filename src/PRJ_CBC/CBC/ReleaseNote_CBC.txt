@@ -1,0 +1,172 @@
+Release Note
+
+	CBC ( Cartesian Base Class )
+	
+	2009-2011　 Copyright (c) RIKEN, Japan. All rights reserved.
+
+Ver 1.4.9   4 Dec. 2011
+  - Polylib対応
+  
+Ver 1.4.8  29 Nov. 2011
+  - Cut-Distanceの場合に，sbx/svxファイルの選択を可能にした
+  
+Ver 1.4.7  28 Nov. 2011
+  - CBC : Cartesian class of Binary shape approximation on Collocated mesh -> Cartesian Base Class
+
+Ver 1.4.6  12 Nov. 2011
+  - BinaryVoxelクラスのクラス名をVoxInfoに変更
+  - CPC -> CDS(Cut Distance Scheme?)に変更
+  
+Ver 1.4.5   5 Nov. 2011
+  - 外部速度境界条件の指定を変更
+  
+Ver 1.4.4   3 Nov. 2011
+  - 内部速度境界条件の指定を変更
+      ・周期境界を独立にコールする
+      ・ステップに1回だけコールする関数と圧力反復過程で毎回コールする関数に分離
+  - 圧力反復過程での速度の同期を外に出す
+  
+Ver 1.4.3  29 Oct. 2011
+  - cbc_norm_v_div_max_()の導入
+  
+Ver 1.4.2  28 Oct. 2011
+  - 時間計測ラベルの再構築
+  
+Ver 1.4.1  25 Oct. 2011
+  - Poissonの係数をマイナスからプラスに変更
+  
+Ver 1.4.0  23 Oct. 2011
+  - セルフェイス変数の削除
+  
+Ver 1.3.9  19 Sep. 2011
+  - CPCスキームを導入，Polylib, Cutlib
+  - IP_Polygonクラスでポリゴンのみをロードして，DomainInfoの情報から計算空間を設定する例題を提供
+  
+Ver 1.3.8   6 Sep. 2011
+  - IP_PPLT2D, IP_CYLINDER, IP_STEPクラスを追加
+  
+Ver 1.3.7  21 July 2011
+  - BV情報を外側一層拡大し，探索，再構築
+  - getLocalCmpIdx(), getGlobalCmpIdx()のアルゴリズムを変更
+  - 温度計算時の各媒質毎の初期値指定
+  
+Ver 1.3.6   7 July 2011
+  - グローバルなインデクスの保持をint配列に変更．アクセスメソッド導入．
+  
+Ver 1.3.5  20 June 2011
+  - Windows対応の修正
+  - SetBC3D::mod_Pvec_CF() cbc_vibc_drchlt_cf_()でループ範囲が不定になるバグを修正．
+  
+Ver 1.3.4   8 June 2011
+  - 熱境界条件の導入
+  
+Ver 1.3.3  15 Mar. 2011
+  - IP_Rectクラスで既存クラスを置き換え
+  
+Ver 1.3.2   1 Mar. 2011
+  - IP_Rectクラスを導入
+  
+Ver 1.3.1  21 Jan. 2011
+  - 性能測定モードを導入．C.Hide.PM_Test==ONのとき，反復回数を固定
+  
+Ver 1.3.0  11 Jan. 2011
+  - IP_SHC1Dを復活
+  
+Ver 1.2.9  29 Dec. 2010
+  - svx/sbxのファイル入力処理をV-Xpad/Pitの仕様に合わせて変更
+  
+Ver 1.2.8  23 Dec. 2010
+  - 出力タイミング管理をTriggerクラスからInterval_Managerクラスに変更
+  
+Ver 1.2.7  16 Dec. 2010
+  - モニタ用のクラスを更新
+  - PMクラスを更新
+  - 速度の対流項MUSCLのminmodリミターを導入
+
+Ver 1.2.6  11 Dec. 2010
+  - Debug用のdiv_uのファイル出力機能を追加
+  
+Ver 1.2.5  10 Dec. 2010
+  - BvoxScan()でのIDチェックで，(XML!=Scaned) から (XML>=Scaned)に変更．領域内に無いセルIDをガイドセル上に指定可能にする
+  - 圧力損失コンポーネントの体積率をbcdの8ビットに量子化して保持
+
+Ver 1.2.4   4 Dec. 2010
+  - 温度計算のエンコードビットH_DIAGの導入
+  
+Ver 1.2.3  23 Nov. 2010
+  - 反復制御方式を変更
+
+Ver 1.2.2  21 Nov. 2010
+  - 性能測定のマーキング方式を変更
+  - 有効セルに対して平均する >> AverageOperation(void)を変更
+  
+Ver 1.2.1  31 Oct. 2010
+  - Log_Iterationのポリシー変更
+  
+Ver 1.1.9  17 Oct. 2010
+  - XMLタグ <BC_TBL>をhoge.xmlの中に導入
+  
+Ver 1.1.8   7 Oct. 2010
+  - プロファイリングのON/OFF
+  - 周期境界条件のリオーガナイズ
+  
+Ver 1.1.7   23 Sep. 2010
+  - 渦度とヘリシティを追加
+
+Ver 1.1.6   21 Sep. 2010
+  - 速度勾配テンソルの第２不変量のルーチン cbc_i2vgt_() をcbc_utility.f90へ
+  - XMLパラメータをV-Xpadの選択リストの形式と合わせる
+
+Ver 1.1.5   15 Sep. 2010
+  - INOUT境界条件の実装
+  
+Ver 1.1.4   12 Sep. 2010
+  - 内部周期境界の実装（逐次のみ）
+
+Ver 1.1.3   29 Aug. 2010
+  - 壁関数の導入
+  - 履歴のファイルポインタをグローバルに変更
+  
+Ver 1.1.2   20 Aug. 2010
+  - INFLOW > SPECVEL にキーワードを変更（関連メソッドも）
+  - bcp >> bcp + bcdに分離，bcdはIDのみを管理
+  
+Ver 1.1.1   11 Aug. 2010
+  - OBC_OUTFLOWのガイドセルはSOLIDのみに変更 >> cbc_update_vec_cf()の圧力勾配をビットフラグで評価
+  
+Ver 1.1.0   30 July 2010
+  - getFindex*()の引数をint型に修正
+  
+Ver 1.0.9   28 July 2010
+  - 圧力反復過程の反復ソースと発散値のワークをdc_wk2で共用
+  - 射影ステップをビットフラグ処理
+  
+Ver 1.0.8   21 July 2010
+  - 周期境界条件の再実装（標準，ディリクレ型，双方向型）
+  
+Ver 1.0.7    9 July 2010
+  - ガイドセル一層が不要なポリシーに変更
+
+Ver 1.0.6    6 July 2010
+  - FS_EE_EE, Cavity3D, LDC112の逐次実行確認
+  - ビット操作のメソッドをマクロに変更
+
+Ver 1.0.5   29 June 2010 @Paris, Lisboa
+  - V-Sphere 1.7.9改対応．タイムステップ制御をFBクラスで行う
+  - インターバル制御をFBクラスで行う
+
+Ver 1.0.4   14 Apr. 2010 @Munich
+  - 圧力境界条件について，内部境界と外部境界の扱いを統一化．指定は従来を踏襲
+
+Ver 1.0.3    8 Apr. 2010
+  - 固体内の圧力についてはラプラスを解く方針に変更
+  - Vsphere 1.7.8へ対応．IsParallel()で並列非並列の分岐
+
+Ver 1.0.2   30 Mar. 2010 @Maui
+  - 冗長なbool関数をvoid型へ変換
+  
+Ver 1.0.1   26 Mar. 2010
+  - コメントの整備
+
+Ver 1.0.0   26 Mar. 2010
+  - C3Dクラスから移植

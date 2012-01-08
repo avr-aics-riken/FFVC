@@ -1,0 +1,302 @@
+Release Note
+
+	FB class ( Flow Base )
+	
+	2007-2011　 Copyright (c) RIKEN, Japan. All rights reserved.
+
+Ver 2.4.6  　4 Dec. 2011
+  - condition, profiling, history名を固定に変更 > getXML_History()
+
+Ver 2.4.5  29 Nov. 2011
+  - Cut-Distanceの場合に，sbx/svxファイルの選択を可能にした
+
+Ver 2.4.4  28 Nov. 2011
+  - Monitor_List > if (Unit==Dimensional)のとき，Sampling_Intervalの値が無次元になるバグを修正
+  - いくつかのtypo修正
+  - PLANAR >> CUT_INFO
+
+Ver 2.4.3  12 Nov. 2011
+  - BinaryVoxelクラスのクラス名をVoxInfoに変更
+  
+Ver 2.4.2  31 Oct. 2011
+  - getXML_FileIO()で並列入力対応 -> setMultiInput()
+  - Model_Settingで指定した媒質とコンポーネントのStateの不一致をチェック -> ParseMat::chkState_Mat_Cmp()
+  
+Ver 2.4.1  25 Oct. 2011
+  - Poissonの係数をマイナスからプラスに変更
+
+Ver 2.4.0  23 Oct. 2011
+  - 使用メモリの変数を long > unsigned longへ変更
+  - CalcIndex()をFileIOからCore_Utilityへ移動
+  - CDSソルバ対応　>　VoxInfo.C
+  - BndOuter.h/C 外部境界の流出量モニタの変数とメソッド追加
+  - Core_Utilityクラス　shiftVout3D(), shiftVout3D()
+  - Interval_Managerクラスの時間積算を，初期値からの増分に変更
+
+Ver 2.3.9  19 Sep. 2011
+  - Cylinder, Step, Polygon, PPLT2Dの例題クラスを追加
+  - BinaryVoxelにcutlibインクルード　>> encPbit_Neumann_from_Cut()
+  - NO_SFACEを破棄，VLD_CNVGを追加
+  - 収束判定時に有効なセルをVLD_CNVGにエンコード対象とする > encPbit_Neumann_from_Cut()
+  
+Ver 2.3.8  21 July 2011
+  - BV情報を外側一層拡大し，探索，再構築
+  - 流体の媒質に体膨張率を必須とする
+  - コンポーネントが複数ある場合の登録漏れのバグ修正
+  - IP_Ductの円形断面の場合のバグ修正
+  - 温度計算時の各媒質毎の初期値指定
+  - コンポーネント数がゼロの場合の警告
+
+Ver 2.3.7   7 July 2011
+  - エンコードビット数に応じたコンポーネント数の上限の排他性をチェックを導入
+    ParseBC::setControlVars()
+  - F&S cellの両方に対して不活性セルを適用
+  - CompoListのBV用の構造体を破棄し，メソッドに切り替え．unsigned -> intに変更
+  - コンポーネントのサーチをキーIDベースに変更
+  
+Ver 2.3.6  20 June 2011
+  - Windows対応の修正
+  
+Ver 2.3.5   8 June 2011
+  - 熱境界条件の導入
+  - BndOuter.hで境界条件保持用の共用体を廃止．代わりにgetter/setterで対応
+  - Guide Cell IDのキーワード変更
+
+Ver 2.3.4   1 Mar. 2011
+  - IP_Rectクラスを導入
+  
+Ver 2.3.3  21 Feb. 2011
+  - 性能測定モードを導入（Hidden parameter）
+  - 組み込み例題の列挙定数をIntrinsicクラスへ移動
+  
+Ver 2.3.2  14 Feb. 2011
+  - サンプリングのファイル指定をMonitorListセクションに移動
+  - 部分周期境界のパーサーを変更
+  - 統計出力をソートし，平均時間の降順に変更
+  
+Ver 2.3.1  22 Jan. 2011
+  - 外部境界の速度指定を統一的に扱い，Harmonicを無次元でも指定できるように拡張
+  - BoundaryOuterクラスをカプセル化の途中
+  
+Ver 2.3.0  12 Jan. 2011
+  - IP_SHC1Dを復活
+  - Interval_Manager::resetTrigger()追加
+  
+Ver 2.2.9   4 Jan. 2011
+  - IntervalパラメータをFile_IO, Logに分離
+  
+Ver 2.2.8  29 Dec. 2010
+  - ReferenceFrameクラスをプリミティブな構成に変更．CBCソルバークラスのメンバ変数にする
+  - FileIOクラスを修正
+  - Monitor機能の有次元・無次元データのサンプリングを選択可能に変更
+  - V-Xpad/Pitの仕様に合わせ，VoxelFileの入力方法を変更
+  
+Ver 2.2.7  26 Dec. 2010
+  - Unitの構造体を導入
+  
+Ver 2.2.6  23 Dec. 2010
+  - Interval_Managerクラスを刷新（旧TGクラスとControlクラスの一部）
+  
+Ver 2.2.5  16 Dec. 2010
+  - モニタ用のクラスを更新
+  - PMクラスを更新
+  - DataHolderクラスの追加
+  
+Ver 2.2.4  11 Dec. 2010
+  - Debug用のdiv_uのファイル出力機能を追加
+
+Ver 2.2.3  10 Dec. 2010
+  - 速度の内部境界条件の指定方法を変更
+  - BCインデックスIDのビット幅割り付けを変更
+  - VF値をBCindex IDに追加
+
+Ver 2.2.2   4 Dec. 2010
+  - Δtの処理をクラス化 >> DTcntl class
+  - Inactiveセルの指定を導入
+  - encActive()でのポリシー変更　FLOW_ONLY, SOLID_CONDUCTION,とそれ以外に分類
+  - 温度計算のエンコードビットH_DIAGの導入
+  
+Ver 2.2.1  25 Nov. 2010
+  - 反復制御方式を変更
+  - PMクラス 逐次実行部分の割合表示と詳細度レベルを追加
+  
+Ver 2.2.0  21 Nov. 2010
+  - PerfMonitor/PerfWatchクラスの変更
+  
+Ver 2.1.9  14 Nov. 2010
+  - V-Xpadの選択リストに併せてパース方式を変更 >> Interval, Reference_Frame, Time_Control
+  - FBUtilityのメソッドをCore_Utilityへ移動
+  - BVの温度ビットフラグ変更
+
+Ver 2.1.8  31 Oct. 2010
+  - Log_Iterationのポリシー変更
+  - getXML_Interval(), _Time_Controle()の排他性をチェック
+  
+Ver 2.1.6  19 Oct. 2010
+  - Polylib, Cutlibのメモリ表示追加
+
+Ver 2.1.5   7 Oct. 2010
+  - プロファイリングのON/OFF
+  - 周期境界条件のリオーガナイズ
+
+Ver 2.1.4  23 Sep. 2010
+  - ユーティリティの一部をCBCソルバークラスに移動
+
+Ver 2.1.3  21 Sep. 2010
+  - 速度勾配テンソルの第２不変量のルーチン cbc_i2vgt_()
+  - XMLパラメータをV-Xpadの選択リストの形式と合わせる
+
+Ver 2.1.2  15 Sep. 2010
+  - INOUT境界条件の実装
+
+Ver 2.1.1  12 Sep. 2010
+  - 内部周期境界条件の実装（逐次実行のみ）
+  
+Ver 2.1.0   1 Sep. 2010
+  - Cell IDのゼロを指定IDに変更するオプション getXML_ChangeID()
+  
+Ver 2.0.9  27 Aug. 2010
+  - 壁関数の導入
+  - XML > Wall_treatment
+
+Ver 2.0.8  20 Aug. 2010
+  - INFLOW > SPECVEL にキーワードを変更（関連メソッドも）
+  - コンポーネントの面積のカウント方法を変更
+      BinaryVoxel::cal_Compo_Area_Normal(), countVfaceEdge()
+  - コンポーネントのビットフラグ識別子を分割 bcp >> bcp + bcd
+
+Ver 2.0.7  11 Aug. 2010
+  - OBC_OUTFLOWのガイドセルはSOLIDのみに変更
+  - getOutFlowVec3D()に境界条件種別の分岐処理を追加
+
+Ver 2.0.6  31 July 2010
+  - Algoritm, VersionのXML記述の変更
+  - getFindex*()の引数をint型に修正
+  - getXML_Scaling()を追加
+
+Ver 2.0.5  25 July 2010
+  - 周期境界条件の再実装（標準，ディリクレ型，双方向型）
+  - 分散並列入出力のバグ修正
+  - 外部境界の対称条件を流束形式で実装
+  - Intrinsicクラス getXML()
+  - Control::getXML_Pointer()を拡張
+  - 組み込み例題の識別子をIP_Define.hへ移動
+  
+Ver 2.0.4  17 July 2010
+  - MonitorListクラスで，ライン指定の場合の領域外参照のエラーを修正
+  - ライン指定の場合の場合，分割数+1のサンプリング点になる
+
+Ver 2.0.3   7 July 2010
+  - ファイル入出力のパラメータをまとめる >> getXML_FileIO()
+  - 渦度と総圧のオプションをまとめる >> getXML_derived()
+  - LES option >> getXML_LESoption()
+  - ソルバーの特徴を決めるパラメータ >> getXML_Solver_Property()
+  - 時間の制御 >> getXML_Time_Control()
+  - 平均値操作 >> getXML_Average_option()
+  - struct Initial_Value, Average_param, Mode_set, Interval_Monitor
+  - 周期境界条件の圧力差のオプション
+
+Ver 2.0.2   6 July 2010
+  - bc_mask30 = '3fff+ffff' 32bit
+  - FLOP count policy >> http://folding.stanford.edu/English/FAQ-flops
+      +,-,* 1  flop
+      /     2  flops > 1, 
+      sqrt  15 flops
+      rsqrt 16 flops
+      log   20 flops
+      exp   20 flops
+      min   2  flops > 1, minps/minss
+      max   2  flops > 1, maxps/maxss
+      abs   2  flops > 1
+
+Ver 2.0.1   1 July 2010
+  - BoundaryOuterクラスのメンバ変数を全てpublicに変更
+
+Ver 2.0.0  29 June 2010
+  - CBCソルバークラス用に再編成
+
+-----
+Ver 1.9.0  20 Feb. 2010
+  - PerformanceMonitor classの導入
+
+Ver 1.8.2  26 Dec. 2009
+  - 圧力有次元出力で桁落ち対策のためゲージ圧の設定を導入
+
+Ver 1.8.0  11 Dec. 2009
+  - Trigger 出力タイミングを計るクラス
+      getXML_Interval()
+      サンプリングデータのgather
+  - 時間指定によるプログラムの終了
+      Calculation_timeタグによる指定により，ステップ制御を上書き
+
+Ver 1.7.4  7 Dec. 2009
+  - MonitorList class, MonitorCompo class
+      座標値の入力によりモニタ情報を取得するクラス（座標値入力，点群とライン）
+      追加 Vec3<T> class, vec3_func.h, vec3f_func.h from libtt
+      サンプリング点の位置をボクセルID(=255)で出力
+  
+Ver 1.5.0  22 Apr. 2009
+  - FileIOクラスのロード系関数で，任意のサイズに対応するため引数にsizeを追加
+  
+Ver 1.4.9  17 Apr. 2009
+  - ReferenceFrameクラス
+      FileIOクラスからControlクラスのインクルードを抑制するため，Controlクラスのメンバへポインタ経由でアクセスする
+      また，setV00()のみ移動
+      FileIOクラスからControlクラスの参照を中止　> マルチレベルでの利用の利便性のため
+
+Ver 1.4.8   6 Apr. 2009
+  - Historyクラス
+  - Coreクラス
+      Fortranコードも移す
+  - Parallel_nodeクラス
+
+Ver 1.4.7  24 Mar. 2009
+  - IPクラス群をFB群にのみ依存するように変更
+      defineをCBS3D_ICDefine.hからFBDefine.hへ移動
+
+Ver 1.4.0  12 Feb. 2009
+  - FileIOクラスをFBに追加
+      
+Ver 1.3.6  19 Jan. 2009
+  - IterationCtlクラス導入
+
+Ver 1.3.4   7 Jan. 2009
+  - Model_Setting
+      Steerタグ内に移す．
+	
+Ver 1.3.2  20 Oct. 2008
+  - doxygen対応
+	
+Ver 1.2.5   2 Oct. 2008
+  - MARKERを使わないアルゴリズムへ変更
+    
+Ver 1.2.0   29 Apr. 2008
+  - FBクラスを "is a" から"has a"の構造に変更
+	
+Ver 1.0.0   15 Nov. 2007
+  - Public version
+	
+-----
+Ver beta 1.0.6 19 Oct. 2007
+  - getXMLDimension()
+  - 境界条件名称をCBS3D_ICに併せて変更
+
+Ver beta 1.0.5	 19 June 2007
+  - Control::getXML_Para_Init()へ温度初期条件取得の追加
+  - 変数の値のレンジを超過した場合の処理
+      Control::getXML_VarRange()
+  - XML > blowing/suctionの指定を削除．Vspecの法線方向と指定速度ベクトルの方向から判断
+  - Vsphere ver. 1.2.4対応
+      ParseMat.Cで，Material_Tableの取得方法変更
+  - USER例題でレイノルズ数が設定されない処理になっていたバグ
+  - ParseBC::printCompo()
+      blowing/suctionの情報追加
+  - ParseBC::getHeatGeneration(), getXML_IBC_CnstTemp()
+       keywordとメッセージを更新
+
+Ver beta 1.0.4    16 May 2007
+  - UGとの対応をとる
+  - sphBase 1.2.3対応
+
+Ver beta 1.0.0    11 Feb. 2007
+  - First version

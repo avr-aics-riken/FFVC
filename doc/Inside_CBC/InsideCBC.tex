@@ -1,0 +1,221 @@
+\documentclass[a4paper,10pt,oneside,fleqn]{jsbook}
+%
+\usepackage{amsmath,amssymb,bm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage{makeidx}
+\usepackage{txfonts}
+\usepackage{indentfirst}
+\usepackage{indent}
+\usepackage{booktabs}
+\usepackage{comment}
+\usepackage{cite}
+\usepackage{subfigure}
+\usepackage{alltt}
+\usepackage{eclbkbox,fancybox}
+\usepackage{float}
+%
+\newcounter{program}
+\newenvironment{program}%
+{\vspace{0.5\baselineskip}\VerbatimEnvironment%
+%\begin{breakbox}\setlength{\baselineskip}{0pt}\begin{Verbatim}}%
+\begin{breakbox}\setlength{\baselineskip}{.25\normalbaselineskip}\begin{Verbatim}}%
+{\end{Verbatim}\end{breakbox}\vspace{0.8\baselineskip}}
+
+\makeindex
+%
+\newcommand{\diff}{\mathrm{d}}  %微分記号
+\newcommand{\divergence}{\mathrm{div}\,}  %ダイバージェンス
+\newcommand{\grad}{\mathrm{grad}\,}  %グラディエント
+\newcommand{\rot}{\mathrm{rot}\,}  %ローテーション
+%
+\setlength{\textwidth}{\fullwidth}
+\setlength{\textheight}{44\baselineskip}
+\addtolength{\textheight}{\topskip}
+\setlength{\voffset}{-0.6in}
+\setlength{\mathindent}{1.5cm} %数式のインデント設定
+\setcounter{secnumdepth}{3} %subsubsectionまで番号付け
+\setcounter{tocdepth}{4} %目次の深さ設定
+\renewcommand\citemid{; } %citeのオプション
+
+%subfigure
+\renewcommand{\subfigtopskip}{5pt}	% 図の上の隙間。上図の副題と下図の間
+\renewcommand{\subfigbottomskip}{5pt} % 図の下の隙間。副題と本題の間
+\renewcommand{\subfigcapskip}{10pt}	% 図と副題の間
+\renewcommand{\subcapsize}{\small} % 副題の文字の大きさ
+
+%
+\usepackage{atbegshi}
+\AtBeginShipoutFirst{\special{pdf:tounicode EUC-UCS2}}
+\usepackage[dvipdfm,bookmarks=true,bookmarksnumbered=true]{hyperref}
+%
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\vspace*{3cm}
+{\huge \textbf{Inside of CBC Solver class}}\\
+\vspace{1cm}
+
+{\large \textbf{Ver. 0.6.8}}\\
+\vspace{1.5cm}
+
+{\large \textbf{Functionality Simulation and Information Team}\\
+\large \textbf{VCAD System Research Program}\\
+\large \textbf{RIKEN}\\
+\vspace{1cm}
+}
+
+{\large 2-1, Hirosawa, Wako, 351-0198, Japan}\\
+\vspace{0.5cm}
+
+\url{http://vcad-hpsv.riken.jp/}\\
+\vspace{1cm}
+
+September 2011\\
+\vspace{4cm}
+
+\includegraphics[width=4cm,bb=-80 0 220 500]{RIKEN_logo_300x500.eps}
+
+\end{center}
+\end{titlepage}
+\newpage
+
+%
+\frontmatter
+
+\begin{tabular}{llllr}
+First Edition  &  Version 0.6.0  & 10 Feb.  & 2011\\
+               &  Version 0.6.1  & 30 June  & 2011\\
+               &  Version 0.6.2  &  9 July  & 2011\\
+               &  Version 0.6.3  & 11 July  & 2011\\
+               &  Version 0.6.4  & 22 July  & 2011\\
+               &  Version 0.6.5  & 28 July  & 2011\\
+               &  Version 0.6.6  & 31 July  & 2011\\
+               &  Version 0.6.7  &  3 Sep.  & 2011\\
+               &  Version 0.6.8  & 17 Sep.  & 2011
+
+
+\end{tabular}
+
+\vspace{15cm}
+
+\begin{description}
+\item[ ] \textbf{COPYRIGHT}\\
+(c) Copyright RIKEN 2007-2011. All rights reserved.\\
+
+\item[ ] \textbf{DISCLAIMER}\\
+You shall comply with the conditions of the license when you use this program.\\
+The license is available at http://vcad-hpsv.riken.jp/permission.html
+\end{description}
+%
+
+\tableofcontents
+%
+%
+\mainmatter
+
+%
+\chapter{インストール}
+\begin{abstract}
+事前に必要なMPI通信ライブラリとV-Sphereのインストール，および基本的なCBCソルバークラスのインストールについてはV-Sphereユーザガイドを参照.
+この章では，CBCソルバークラスの詳細なインストールとコンパイルについて説明する．
+\end{abstract}
+\include{InsideCBC_Install}
+
+%
+\chapter{基礎方程式と解析方法の概要}
+\begin{abstract}
+本章では，CBCソルバークラスが扱う流体の基礎方程式と解法アルゴリズム，離散化について概略を述べる．
+\end{abstract}
+\include{InsideCBC_Eqs}
+
+%
+\chapter{EBCスキームと境界条件処理}
+\label{chpt:ebcs}
+\begin{abstract}
+この章では，直交 Euler 格子のコロケート変数配置の場合に，任意位置の境界条件を効率よく処理する方法として，スキーム中に境界条件を実装方法について述べる．
+\end{abstract}
+\include{InsideCBC_EBCS}
+
+%
+\chapter{境界条件と媒質設定}
+\begin{abstract}
+本章では，CBCソルバークラスで設定できる境界条件と媒質情報の設定について説明する．まず境界条件と媒質を指定するXMLタグの構造について述べた後，流れと熱の境界条件について説明する．\ref{chpt:ebcs}章で説明したDirichlet型とNeumann型の基本的な境界条件を用いた物理的な境界条件について述べる．また，パラメータの設定については\ref{chpt:m_medium}章で詳しく説明する．
+\end{abstract}
+\include{InsideCBC_BC}
+
+%
+\chapter{多媒質の熱流体解析}
+\label{chpt:m_medium}
+\begin{abstract}
+この章では，流れと熱の解析方法，特に固体熱伝導と温度の移流拡散方程式の連成を考慮した定式化，および熱境界条件の導入方法について解説する．まず，単媒質の場合の熱流動について述べ，その後，多媒質の場合について述べる．
+
+本章では，熱流動を媒質数により次のように分類して説明する．
+\begin{itemize}
+\item 単媒質\\
+解くべき流体（固体）の媒質数が１つのみの場合で，セルの物性値$\rho,\, C_p,\, \lambda$は一定である．ただし，境界条件の媒質は複数あってもよい．
+
+\item 多媒質\\
+解くべき媒質数が複数ある場合で，流動とともに媒質位置が変化する．つまり，物性値$\rho,\, C_p,\, \lambda$がセル毎に変化するため，物性値の配列が必要となる．
+流体の媒質は一つのみの場合であっても，解くべき固体要素があれば共役熱移動問題となる．また，固体の多媒質もこのカテゴリで扱う．
+\end{itemize}
+\end{abstract}
+\include{InsideCBC_MultiMedium}
+
+%
+\chapter{ドライバ}
+{\begin{abstract}
+本章では，発達したチャネル流などの解析を実施する際に用いられるドライバ部分の実装について説明する．
+\end{abstract}
+\include{InsideCBC_Driver}
+
+%
+\chapter{物理量のモニタリングクラス}
+{\begin{abstract}
+本章では，計算中の任意点の物理量をモニターする仕組みについて解説する．
+\end{abstract}
+\include{InsideCBC_sampling}
+
+%
+\chapter{計算性能モニタクラス}
+{\begin{abstract}
+本章では，性能測定モジュールの機能について説明する．
+\end{abstract}
+\include{InsideCBC_PM}
+
+%
+\chapter{データ保持クラス}
+{\begin{abstract}
+本章では，測定データを基に得られた実験式を条件とするような場合に利用するデータ保持機能について説明する．
+\end{abstract}
+\include{InsideCBC_DH}
+
+%
+\chapter{コンポーネントの実装}
+\begin{abstract}
+本章では，CBCソルバークラスにおけるコンポーネントの実装について説明する．
+\end{abstract}
+\include{InsideCBC_Compo}
+
+%
+\chapter{Appendix}
+\include{InsideCBC_appdx}
+
+%
+\chapter{アップデート情報}
+\begin{abstract}
+本ユーザガイドのアップデート情報について記す．
+\end{abstract}
+\include{InsideCBC_update}
+
+%
+\bibliographystyle{junsrt}
+\bibliography{InsideCBC}
+
+\newpage
+\printindex
+%
+%
+\end{document}

@@ -1,0 +1,311 @@
+
+	Welcome to V-SPHERE::CBC 	Version 1.3.8
+
+	FlowBase                 	Version 2.3.8
+
+	Example : Parallel Plate 2D
+
+	Serial Execution
+
+---------------------------------------------------------------------------
+
+
+	>> Global Domain Information
+
+	imax, jmax, kmax    =           100            50             3     >>  15.00 (K cells)
+
+	(dx, dy, dz)  [m] / [-] = ( 2.000000e-02  2.000000e-02  2.000000e-02)  /  ( 2.000000e-02  2.000000e-02  2.000000e-02)
+	(ox, oy, oz)  [m] / [-] = (-1.000000e+00  0.000000e+00 -3.000000e-02)  /  (-1.000000e+00  0.000000e+00 -3.000000e-02)
+	(Lx, Ly, Lz)  [m] / [-] = ( 2.000000e+00  1.000000e+00  6.000000e-02)  /  ( 2.000000e+00  1.000000e+00  6.000000e-02)
+
+
+---------------------------------------------------------------------------
+
+	>> Voxel file information
+
+
+---------------------------------------------------------------------------
+
+	>> Memory required for Preprocessor :  Global=806.20 (KB) : Local=806.20 (KB)
+
+---------------------------------------------------------------------------
+
+	>> XML Table Info.
+
+	 iTable order : State    ID  MatID Label
+	            1 : Fluid     1    800 air
+	            2 : Solid   600    600 wall
+
+
+---------------------------------------------------------------------------
+
+	>> XML Components
+
+	No. of Inner Boundary  : 0
+	No. of Medium          : 2
+
+	No. of Fluid ID        : 1
+	No. of Solid ID        : 1
+
+	Cell IDs on Guide cell region
+		ID[1] = 1
+		ID[2] = 600
+
+---------------------------------------------------------------------------
+
+	>> Voxel Model Info.
+
+		  1 : ID = [1]
+		  2 : ID = [600]
+
+---------------------------------------------------------------------------
+
+
+	>> Medium List
+
+	  no :      ID           Medium
+	   1 :     800              Air
+					 density              1.176300e+00 [kg/m^3]
+					 kinematic viscosity  1.583000e-05 [m^2/s]
+					 viscosity            1.862000e-05 [Pa s]
+					 specific heat        1.007000e+03 [J/(Kg K)]
+					 thermal conductivity 2.614000e-02 [W/(m K)]
+					 sound of speed       3.400000e+02 [m/s]
+					 volume expansion     4.000000e-05 [1/K]
+	   2 :     600               Fe
+					 density              7.870000e+03 [kg/m^3]
+					 specific heat        4.420000e+02 [J/(Kg K)]
+					 thermal conductivity 8.030000e+01 [W/(m K)]
+
+
+---------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------
+
+	>> Component List
+
+	  No :      ID            Element      Medium                    Label : BCtype
+	   1 :       1              15000       Fluid                      air : 
+	   2 :     600                  0       Solid                     wall : 
+
+	This voxel includes    1 solid ID  [Solid cell ratio inside computational domain :   0.0 percent]
+
+
+---------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------
+
+	>> Component Information
+
+---------------------------------------------------------------------------
+
+	>> Memory required for Solver :  Global=  6.34 (MB) : Local=  6.34 (MB)
+
+---------------------------------------------------------------------------
+
+
+	>> Solver Control Parameters
+
+	Solver Properties
+	     Basic Equation           :   Incompressible Flow Navier-Stokes Equations
+	     Time Variation           :   Unsteady
+	     Shape Approximation      :   Binary
+	     Precision                :   Single Precision 
+	     Kind of Solver           :   Flow Only (Non Heat)
+	     Flow Algorithm           :   Fractional Step
+	        Time marching scheme  :   Euler Explicit O(dt1)
+	     Heat Algorithm           :   
+	        Time marching scheme  :   
+	     Convective flux scheme   :   MUSCL O(dx3)
+	         Limiter Function     :   Minmod
+	     Reference Frame          :   Stationary
+
+	Unit
+	     Unit of Input Parameter  :   Non-Dimensional
+	             Pressure         :   Gauge Pressure
+	             Temperature      :   Celsius
+
+	Time Control
+	     Start Condition          :   Impulsive start
+	     Acceleration Time        :    0.00000e+00 [sec] /  0.00000e+00 [-]
+	     Averaging Operation      :   OFF
+	     Time Increment dt        :    4.00000e-03 [sec] /  4.00000e-03 [-] : CFL [ 0.20000] with Reference velocity
+	     Calculation Time         :    1.01000e+02 [sec] /  1.01000e+02 [-]
+
+	Parallel Mode & File IO
+	     Parallel Mode            :   Serial
+	     Unit of File             :   Non-Dimensional
+	     Input Mode               :   Master IO
+	     Output Mode              :   Master IO   Forced
+	     Guide cell for output    :   0
+
+	Logs
+	     Unit for Output          :   Non-Dimensional
+	     Base Logs                :   ON >  history_base.log, history_compo.log, history_dommainflux.log
+	     Iteration Log            :   OFF   
+	     Profiling report         :   ON >  profiling.txt
+	     Wall info. Log           :   OFF   
+
+	Intervals
+	     Base Info.(stdout)       :              1 [step]
+	     Other Histories          :              1 [step]
+	     Instant data             :           5000 [step]
+	     Averaged data            :   2.000000e+02 [-]
+	     Sampled data             :   1.000000e+01 [-]
+
+	Parameter of Linear Equation
+	     1st Pressure Iteration 
+	       Iteration max          :   50
+	       Convergence eps        :   1.000e-03
+	       Coef. of Relax./Accel. :   1.200e+00
+	       Norm type              :   V - Max. Norm of Divergence
+	       Linear Solver          :   2-colored SOR SMA (Stride Memory Access)
+
+	Condition of Wall
+	     No of surface            :   1200
+	     Pressure Gradient        :   Neumann Zero
+	     Velocity Profile         :   No Slip
+
+	Derived variables
+	     Total Pressure           :   OFF
+	     Vorticity                :   OFF
+	     Helicity                 :   OFF
+	     2nd Invariant of VGT     :   OFF
+
+	Hidden Parameters
+
+
+---------------------------------------------------------------------------
+
+
+	>> Simulation Parameters
+
+	Reference ID              [-]         :  1
+
+	Ref. Length               [m]         :  1.00000e+00
+	Ref. Velocity             [m/s]       :  1.00000e+00
+	Base Pressure             [Pa]        :  0.00000e+00
+	Ref. Density              [kg/m^3]    :  1.17630e+00
+	Ref. Viscosity            [Pa s]      :  1.86200e-05
+	Ref. Knmtc Viscosity      [m^2/s]     :  1.58300e-05
+	Ref. Specific Heat        [J/(kg K)]  :  1.00700e+03
+	Ref. Thermal Conductivity [W/(m K)]   :  2.61400e-02
+	Ref. Sound Speed          [m/s]       :  3.40000e+02
+	Gravity                   [m/s^2]     :  9.80000e+00
+
+	Spacing                   [m] / [-]   :  2.00000e-02 /  2.00000e-02
+	Time Scale                [sec]       :  1.00000e+00
+
+
+
+	Prandtl  number           [-]         :  7.10000e-01
+	Reynolds number           [-]         :  1.00000e+02
+
+
+---------------------------------------------------------------------------
+
+
+	>> Initial Values for Physical Variables
+
+	Initial  Density     [kg/m^3]/ [-]   :  1.17630e+00 /  1.00000e+00
+	Initial  Velocity.U  [m/s]   / [-]   :  0.00000e+00 /  0.00000e+00
+	Initial          .V  [m/s]   / [-]   :  0.00000e+00 /  0.00000e+00
+	Initial          .W  [m/s]   / [-]   :  0.00000e+00 /  0.00000e+00
+	Dynamic  Pressure    [Pa]    / [-]   :  5.88150e-01 /  1.00000e+00
+	Initial  Pressure    [Pa_g]  / [-]   :  0.00000e+00 /  0.00000e+00
+
+
+---------------------------------------------------------------------------
+
+
+	>> Effective cells and Open Area of Computational Domain
+
+	Fluid cell  inside whole Computational domain =           15000 (100.0 percent)
+	Active cell                                   =           15000 (100.0 percent)
+
+	Face :      Element (Open ratio)
+	  X- :          150 (100.00 percent)
+	  X+ :          150 (100.00 percent)
+	  Y- :            0 (  0.00 percent)
+	  Y+ :            0 (  0.00 percent)
+	  Z- :         5000 (100.00 percent)
+	  Z+ :         5000 (100.00 percent)
+
+
+---------------------------------------------------------------------------
+
+	>> Outer Boundary Conditions
+
+	      Set X- up as Periodic : (periodic_upstream)
+			Guide Cell ID = 1 / Medium = 800
+			Pressure Difference = 1.411560e-01 [Pa]    /  1.200000e-01 [-]
+			Pressure Gradient   = 7.057800e-02 [Pa/m]  /  6.000000e-02 [-]
+
+	      Set X+ up as Periodic : (periodic_downstream)
+			Guide Cell ID = 1 / Medium = 800
+			Pressure Difference = 1.411560e-01 [Pa]    /  1.200000e-01 [-]
+			Pressure Gradient   = 7.057800e-02 [Pa/m]  /  6.000000e-02 [-]
+
+	      Set Y- up as Wall : (wall)
+			Guide Cell ID = 600 / Medium = 600
+			Velocity V( 0.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 0.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set Y+ up as Wall : (slidewall)
+			Guide Cell ID = 600 / Medium = 600
+			Velocity V( 1.000e+00,  0.000e+00,  0.000e+00) [m/s] / V( 1.000e+00,  0.000e+00,  0.000e+00) [-]
+			Presure Gradient is zero
+
+	      Set Z- up as Periodic : (periodic)
+			Guide Cell ID = 1 / Medium = 800
+			Simple periodic copy
+
+	      Set Z+ up as Periodic : (periodic)
+			Guide Cell ID = 1 / Medium = 800
+			Simple periodic copy
+
+
+---------------------------------------------------------------------------
+
+
+	>> Monitor Information
+
+	  Output Type             : Gather
+	  Base Name of Otput File : sample.log
+	  Specified Unit          : Non Dimensional
+
+	  1 : Line	 division=26  [x=0]
+		Variables : Velocity 
+		   Method : Interpolation
+		     Mode : Fluid
+		    order :            X              Y              Z    :   rank : comment
+		        1 :   0.000000e+00   2.000000e-07   0.000000e+00  :      0 : point_0
+		        2 :   0.000000e+00   4.000019e-02   0.000000e+00  :      0 : point_1
+		        3 :   0.000000e+00   8.000017e-02   0.000000e+00  :      0 : point_2
+		        4 :   0.000000e+00   1.200002e-01   0.000000e+00  :      0 : point_3
+		        5 :   0.000000e+00   1.600001e-01   0.000000e+00  :      0 : point_4
+		        6 :   0.000000e+00   2.000001e-01   0.000000e+00  :      0 : point_5
+		        7 :   0.000000e+00   2.400001e-01   0.000000e+00  :      0 : point_6
+		        8 :   0.000000e+00   2.800001e-01   0.000000e+00  :      0 : point_7
+		        9 :   0.000000e+00   3.200001e-01   0.000000e+00  :      0 : point_8
+		       10 :   0.000000e+00   3.600001e-01   0.000000e+00  :      0 : point_9
+		       11 :   0.000000e+00   4.000001e-01   0.000000e+00  :      0 : point_10
+		       12 :   0.000000e+00   4.400000e-01   0.000000e+00  :      0 : point_11
+		       13 :   0.000000e+00   4.800000e-01   0.000000e+00  :      0 : point_12
+		       14 :   0.000000e+00   5.200000e-01   0.000000e+00  :      0 : point_13
+		       15 :   0.000000e+00   5.599999e-01   0.000000e+00  :      0 : point_14
+		       16 :   0.000000e+00   6.000000e-01   0.000000e+00  :      0 : point_15
+		       17 :   0.000000e+00   6.399999e-01   0.000000e+00  :      0 : point_16
+		       18 :   0.000000e+00   6.799999e-01   0.000000e+00  :      0 : point_17
+		       19 :   0.000000e+00   7.199999e-01   0.000000e+00  :      0 : point_18
+		       20 :   0.000000e+00   7.599999e-01   0.000000e+00  :      0 : point_19
+		       21 :   0.000000e+00   7.999999e-01   0.000000e+00  :      0 : point_20
+		       22 :   0.000000e+00   8.399999e-01   0.000000e+00  :      0 : point_21
+		       23 :   0.000000e+00   8.799998e-01   0.000000e+00  :      0 : point_22
+		       24 :   0.000000e+00   9.199998e-01   0.000000e+00  :      0 : point_23
+		       25 :   0.000000e+00   9.599998e-01   0.000000e+00  :      0 : point_24
+		       26 :   0.000000e+00   9.999998e-01   0.000000e+00  :      0 : point_25
+
+

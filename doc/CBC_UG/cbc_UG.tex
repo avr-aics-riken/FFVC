@@ -1,0 +1,234 @@
+\documentclass[a4paper,10pt,oneside,fleqn]{jsbook}
+%
+\usepackage{amsmath,amssymb,bm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage{makeidx}
+\usepackage{txfonts}
+\usepackage{indentfirst}
+\usepackage{indent}
+\usepackage{booktabs}
+\usepackage{comment}
+\usepackage{cite}
+\usepackage{subfigure}
+\usepackage{float}
+\usepackage{alltt}
+\usepackage{eclbkbox,fancybox}
+%
+\newcounter{program}
+%\bkcounttrue
+\newenvironment{program}%
+{\vspace{0.5\baselineskip}\VerbatimEnvironment%
+%\begin{breakbox}\setlength{\baselineskip}{0pt}\begin{Verbatim}}%
+\begin{breakbox}\setlength{\baselineskip}{.25\normalbaselineskip}\begin{Verbatim}}%
+{\end{Verbatim}\end{breakbox}\vspace{0.8\baselineskip}}
+
+\makeindex
+%
+\newcommand{\diff}{\mathrm{d}}  %微分記号
+\newcommand{\divergence}{\mathrm{div}\,}  %ダイバージェンス
+\newcommand{\grad}{\mathrm{grad}\,}  %グラディエント
+\newcommand{\rot}{\mathrm{rot}\,}  %ローテーション
+%
+\setlength{\textwidth}{\fullwidth}
+\setlength{\textheight}{44\baselineskip}
+\addtolength{\textheight}{\topskip}
+\setlength{\voffset}{-0.6in}
+\setlength{\mathindent}{1.5cm} %数式のインデント設定
+\setcounter{secnumdepth}{2} %subsectionまで番号付け
+\setcounter{tocdepth}{4} %目次の深さ設定
+\renewcommand\citemid{; } %citeのオプション
+
+%subfigure
+\renewcommand{\subfigtopskip}{5pt}	% 図の上の隙間。上図の副題と下図の間
+\renewcommand{\subfigbottomskip}{5pt} % 図の下の隙間。副題と本題の間
+\renewcommand{\subfigcapskip}{10pt}	% 図と副題の間
+\renewcommand{\subcapsize}{\small} % 副題の文字の大きさ
+
+%
+\usepackage{atbegshi}
+\AtBeginShipoutFirst{\special{pdf:tounicode EUC-UCS2}}
+\usepackage[dvipdfm,bookmarks=true,bookmarksnumbered=true]{hyperref}
+%
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\vspace*{3cm}
+{\huge \textbf{User Guide of CBC Solver Class}}\\
+\vspace{1cm}
+
+{\large \textbf{Ver. 1.1.9}}\\
+\vspace{1.5cm}
+
+{\large \textbf{Functionality Simulation and Information Team}\\
+\large \textbf{VCAD System Research Program}\\
+\large \textbf{RIKEN}\\
+\vspace{1cm}
+}
+
+
+\url{http://vcad-hpsv.riken.jp/}\\
+\vspace{1cm}
+
+November 2011\\
+\vspace{4cm}
+
+\includegraphics[width=4cm,bb=-80 0 220 500]{RIKEN_logo_300x500.eps}
+
+\end{center}
+\end{titlepage}
+\newpage
+
+%
+\frontmatter
+
+\begin{tabular}{llllr}
+First Edition  &  version 1.0.0  &  9 Oct.  & 2010\\
+               &  version 1.1.0  & 30 June  & 2011\\
+               &  version 1.1.1  &  9 July  & 2011\\
+               &  version 1.1.2  & 11 July  & 2011\\
+               &  version 1.1.3  & 22 July  & 2011\\
+               &  version 1.1.4  & 28 July  & 2011\\
+               &  version 1.1.5  & 31 Aug.  & 2011\\
+               &  version 1.1.6  &  5 Sep.  & 2011\\
+               &  version 1.1.7  &  6 Sep.  & 2011\\
+               &  version 1.1.8  & 19 Sep.  & 2011\\
+               &  version 1.1.9  &  7 Nov.  & 2011
+               
+
+\end{tabular}
+
+\vspace{15cm}
+
+\begin{description}
+\item[ ] \textbf{COPYRIGHT}\\
+(c) Copyright RIKEN 2007-2011. All rights reserved.\\
+2-1, Hirosawa, Wako, 351-0198, Japan\\
+
+\item[ ] \textbf{DISCLAIMER}\\
+You shall comply with the conditions of the license when you use this program.\\
+The license is available at http://vcad-hpsv.riken.jp/permission.html
+\end{description}
+%
+
+\tableofcontents
+%
+%
+\mainmatter
+
+
+%%%
+\chapter{CBCソルバークラスの概要}
+\label{chpt:intro}
+{\begin{abstract}
+本ユーザーガイドでは，物理シミュレータ開発のアプリケーションミドルウェアV-Sphereを用いて開発した三次元非定常非圧縮熱流体解析ソルバーCBCについて，その利用方法を説明します．
+\end{abstract}
+%
+\include{CBC_Intro}
+
+
+
+%%%
+\chapter{インストール}
+\label{chpt:install}
+\begin{abstract}
+この章では，MPI通信ライブラリ，V-Sphere，CBCソルバークラスのインストールとコンパイルについて説明します．MPI通信ライブラリ，V-Sphereの詳細なインストールについては，V-Sphereユーザガイド（\verb|Vsphere_UG.pdf|）を，CBCソルバークラスの詳細についてはCBCソルバークラス説明書（\verb|Inside_CBC.pdf|）を参照してください．
+\end{abstract}
+%
+\include{CBC_Install}
+
+
+
+%%%
+\chapter{基礎方程式と解析方法}
+\label{chpt:eqs}
+\begin{abstract}
+本章では，CBCソルバークラスが扱う流体の基礎方程式について簡単に説明します．詳細はCBCソルバークラス説明書（\verb|Inside_CBC.pdf|）を参照してください．
+\end{abstract}
+%
+\include{CBC_Eqs}
+
+
+
+%%%
+\chapter{解析モデルの作成}
+\label{chpt:model}
+\begin{abstract}
+この章では，解析モデルの作成方法を説明します．解析モデルの作成については，2種類の方法があります．まず最初にSTLやOBJなどのフォーマットの形状データを基に，ボクセル作成アプリケーションV-Xgenで行う解析モデルの作成法について説明します．次に，組み込み例題を用いたモデルの扱いについて説明します．
+\end{abstract}
+%
+\include{CBC_Model}
+
+
+
+%%%
+\chapter{制御と物理パラメータ}
+\label{chpt:param}
+\begin{abstract}
+V-Sphereシステム上の入力パラメータは，データベースなどでの再利用性を考慮し，XML(eXtensible Markup Language)形式で記述します．XMLはタグ構造のデータ記述言語で，階層的な要素の記述が可能なマークアップ言語です．このXMLデータをV-Sphere内部でツリー状のオブジェクトとして構文解析および操作します．
+本章では，CBCソルバークラスの制御と物理パラメータ（これをコンフィギュレーションファイル\index{ふぁいる@ファイル!こんふぃぎゅれーしょん@コンフィギュレーション---}と呼びます）について説明します．境界条件の詳細については，CBCソルバークラス説明書をご覧ください．
+\end{abstract}
+%
+\include{CBC_Param}
+
+
+
+%%%
+\chapter{境界条件}
+\label{chpt:BC}
+\begin{abstract}
+本章では，CBCソルバークラスで設定できる境界条件の設定について説明します．
+まず境界条件と媒質を指定するXMLタグの構造について述べた後，流れと熱の境界条件について説明します．
+\end{abstract}
+%
+\include{CBC_BC}
+%
+
+
+
+%%%
+\chapter{モニタリング機能}
+\label{chpt:monitor}
+\begin{abstract}
+CBCソルバークラスには，計算中の任意点の物理量をモニターする仕組みがあります．本章では，その指定方法について説明します．
+\end{abstract}
+%
+\include{CBC_monitor}
+
+%\chapter{パラメータ入力}
+%\label{chpt:vxpit}
+%\include{CBC_vxpit}
+
+
+
+%%%
+\chapter{ソルバーの実行}
+\label{chpt:solver}
+\begin{abstract}
+CBCソルバークラスの実行方法と出力ファイルについて説明します．
+\end{abstract}
+%
+\include{CBC_Execution}
+
+
+
+%%%
+\chapter{アップデート情報}
+\label{chpt:update}
+\begin{abstract}
+本ユーザガイドのアップデート情報について記します．
+\end{abstract}
+%
+\include{CBC_update}
+
+%
+\bibliographystyle{junsrt}
+\bibliography{cbc_UG}
+
+\newpage
+\printindex
+%
+%
+\end{document}

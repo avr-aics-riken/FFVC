@@ -1,0 +1,37 @@
+#
+# SPHERE - Skeleton for PHysical and Engineering REsearch
+#
+# Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+#
+#
+CC=icc
+CFLAGS=-O3
+CXX=icpc
+CXXFLAGS=-O3
+FC=ifort
+FCFLAGS=-O3
+F90=ifort
+F90FLAGS=-O3
+LDFLAGS=-L/opt/intel/composerxe/lib
+LIBS=-lifport -lifcore
+SPH_USR_DEF_LIBS=
+UDEF_OPT=-DTD_USE_NAMESPACE
+UDEF_INC_PATH=-I../../Cutlib-2.0.2/include -I../../Polylib_2_0_2/include -I/opt/openmpi/include
+UDEF_LIB_PATH=-L../../Polylib_2_0_2/lib -L../../Cutlib-2.0.2/lib
+UDEF_LIB_UPPER=
+UDEF_LIB_LOWER=
+SPHEREDIR=/usr/local/sphere
+SPH_DEVICE=Snow_Leopard
+MPICH_DIR=/opt/openmpi
+MPICH_CFLAGS=-I/opt/openmpi/include
+MPICH_LDFLAGS=-L/opt/openmpi/lib
+MPICH_LIBS=-lmpi
+XML2FLAGS=-I/usr/include/libxml2
+XML2LIBS=-lxml2 -lz -lpthread -liconv -lm
+SPHERE_CFLAGS=-DSKL_TIME_MEASURED -D_CATCH_BAD_ALLOC -I/usr/local/vsph184b_float_64/include
+SPHERE_LDFLAGS=-L/usr/local/vsph184b_float_64/lib
+SPHERE_LIBS=-lsphapp -lsphbase -lsphls -lsphfio -lsphdc -lsphcrd -lsphcfg -lsphftt -lsphvcar -lMPIPolylib -lcutlib
+REALOPT=
+SPH_EXTERNAL_HEADER_PATH=-I../../FB -I../../F_CBC -I../../IP 
+SPH_PARA_MODULE=MPI
+SPH_CSM_MODULE=none

@@ -1,0 +1,36 @@
+-----
+CBC SolverClass on V-Sphere
+
+Kenji Ono 	keno@riken.jp
+VCAD Research Program, RIKEN
+July 2011
+-----
+
+このソースに含まれるコード群は，非定常物理シミュレーションのアプリケーション開発のフレームワークとして設計されたV-Sphere上で動作するソルバークラス群です．本ソースをコンパイルする前に，並列ライブラリ，V-Sphereをインストールしておく必要があります．
+
+
+--- Ingredients
+
+BUILD		コンパイルのメモ
+COPYING	コピーライト
+README		このファイル
+RELEASE	リリースノート
+
+doc/		ドキュメント
+
+doxygen/        Doxygenドキュメント
+	
+example/		例題
+	
+src/		ソース群
+	F_CBC			CBCソルバークラスのコアサブルーチン群（f90）
+	F_CPC			CPCソルバークラスのコアサブルーチン群（f90）
+	FB				流体解析の基本クラスライブラリ
+	IP				組み込み例題群
+	PRJ_CBC		CBCソルバー
+
+xsd/
+	CBC_xxx_FB_xxx.xsd	V-Xpit用の構造ファイル
+
+--- Reporting Bugs
+	http://vcad-hpsv.riken.jp/

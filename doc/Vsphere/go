@@ -1,0 +1,10 @@
+#! /bin/bash
+platex Sphere_UG
+jbibtex Sphere_UG
+platex Sphere_UG
+platex Sphere_UG
+mendex -s myindex Sphere_UG.idx
+platex Sphere_UG
+dvipdfmx Sphere_UG
+mv Sphere_UG.pdf vsphere_ug.pdf
+open vsphere_ug.pdf

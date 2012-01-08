@@ -1,0 +1,180 @@
+\documentclass[a4paper,10pt,oneside,fleqn]{jsbook}
+%
+\usepackage{amsmath,amssymb,bm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage{makeidx}
+\usepackage{txfonts}
+\usepackage{indentfirst}
+\usepackage{indent}
+\usepackage{booktabs}
+\usepackage{comment}
+\usepackage{cite}
+\usepackage{ulem}
+\usepackage{alltt}
+\usepackage{eclbkbox,fancybox}
+
+% プログラム環境
+\newcounter{program}
+%\bkcounttrue
+\newenvironment{program}%
+{\vspace{0.5\baselineskip}\VerbatimEnvironment%
+%\begin{breakbox}\setlength{\baselineskip}{0pt}\begin{Verbatim}}%
+\begin{breakbox}\setlength{\baselineskip}{.25\normalbaselineskip}\begin{Verbatim}}%
+{\end{Verbatim}\end{breakbox}\vspace{0.8\baselineskip}}
+
+%
+\makeindex
+%
+\newcommand{\diff}{\mathrm{d}}  %微分記号
+\newcommand{\divergence}{\mathrm{div}\,}  %ダイバージェンス
+\newcommand{\grad}{\mathrm{grad}\,}  %グラディエント
+\newcommand{\rot}{\mathrm{rot}\,}  %ローテーション
+%
+\setlength{\textwidth}{\fullwidth}
+\setlength{\textheight}{44\baselineskip}
+\addtolength{\textheight}{\topskip}
+\setlength{\voffset}{-0.6in}
+\setlength{\mathindent}{1.5cm} %数式のインデント設定
+\setcounter{secnumdepth}{2} %subsectionまで番号付け
+\setcounter{tocdepth}{2} %目次の深さ設定
+\renewcommand\citemid{; } %citeのオプション
+
+%
+\usepackage{atbegshi}
+\AtBeginShipoutFirst{\special{pdf:tounicode EUC-UCS2}}
+\usepackage[dvipdfm,bookmarks=true,bookmarksnumbered=true]{hyperref}
+%
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\vspace*{3cm}
+{\huge \textbf{User Guide of V-Sphere}}\\
+\vspace{1cm}
+
+{\large \textbf{Ver. 1.2.2}}\\
+\vspace{1.5cm}
+
+{\large \textbf{Functionality Simulation and Information Team}\\
+\large \textbf{VCAD System Research Program}\\
+\large \textbf{RIKEN}\\
+\vspace{1cm}
+}
+
+{\large 2-1, Hirosawa, Wako, 351-0198, Japan}\\
+\vspace{0.5cm}
+
+{http://vcad-hpsv.riken.jp/}\\
+\vspace{1cm}
+
+June 2011\\
+\vspace{4cm}
+
+\includegraphics[width=4cm,bb=-80 0 220 500]{RIKEN_logo_300x500.png}
+
+\end{center}
+\end{titlepage}
+\newpage
+
+
+%
+\frontmatter
+
+\begin{tabular}{lllr}
+First Edition  &  version 1.0.0  &  5 Mar.  &  2009\\
+               &  version 1.1.0  &  5 Jan.  &  2010\\
+               &  version 1.2.0  & 10 May   &  2011\\
+               &  version 1.2.1  &  6 June  &  2011\\
+               &  version 1.2.2  & 20 June  &  2011
+\end{tabular}
+
+\vspace{14cm}
+
+\begin{description}
+\item[ ] \textbf{COPYRIGHT}\\
+(c) Copyright RIKEN 2007-2011. All rights reserved.\\
+
+\item[ ] \textbf{DISCLAIMER}\\
+You shall comply with the conditions of the license when you use this program.\\
+The license is available at http://vcad-hpsv.riken.jp/permission.html
+\end{description}
+%
+
+\tableofcontents
+%
+%
+\mainmatter
+
+%%%
+\chapter{イントロダクション}
+{\begin{abstract}
+物理現象の解析や工業製品の設計のため，シミュレーションは不可欠な技術となっている．特に，製品開発ではコストや性能の検討のため，高精度な計算結果を迅速に得たいというエンジニアの要求が高くなっている．また，複雑な物理現象の解明のため，異なる物理現象の連成解析や非線形マルチスケール現象を扱うシミュレーション研究が進んでいる．これらの先端的な研究は，必然的に分散並列の大規模解析となる傾向にある．
+従来から，流体解析や構造解析では領域分割型の並列計算法が研究され，並列化粒度の大きな効率のよい計算手法が提案されてきた．これらはMPIを用いた並列プログラムであるが，デバッグを含めたコード開発とメンテナンスが難しい点が問題であり，開発支援の仕組みが必要となっている．
+この問題点を緩和する目的のために，オブジェクト指向プログラミング\index{おぶじぇくとしこうぷろぐらみんぐ@オブジェクト指向プログラミング}（Object-Oriented Programming\index{Object-Oriented Programming}, OOP）によるクラスライブラリ，フレームワークなどの並列プログラミング支援環境が研究されてきた．
+
+この章では，OOPを用いて構築された様々な物理現象シミュレータ開発のためのフレームワークV-Sphereの概要について述べる．
+\end{abstract}
+%
+\include{chapter1}
+
+
+%%%
+\chapter{並列ライブラリ}
+\begin{abstract}
+MPI通信ライブラリ\index{えむぴーあいつうしんらいぶらり@MPI通信ライブラリ}のインストール概要について説明する．
+MPI通信ライブラリは，mpich1\index{mpich}~\cite{mpich1}, mpich2\index{mpich2}~\cite{mpich2}, OpenMPI\index{OpenMPI}~\cite{openmpi}など，いずれでも良い．
+本章ではmich1, mpich2, OpenMPIについてインストール方法を記す．
+\end{abstract}
+%
+\include{chapter2}
+
+
+
+%%%
+\chapter{V-Sphere}
+\begin{abstract}
+この章では，V-Sphereのインストール概要について説明する．
+\end{abstract}
+%
+\include{chapter3}
+
+%
+\chapter{プロジェクトツールを用いた開発環境の構築}
+\begin{abstract}
+この章では，ソルバークラスの開発を行うために，プロジェクトツールを用いた環境構築について説明する．
+ソルバーの開発を行わない，エンドユーザは本章は読み飛ばして構わない．
+\end{abstract}
+%
+\include{chapter4}
+
+%
+\chapter{各種プラットホーム対応}
+\begin{abstract}
+この章では，各種プラットホームにおけるインストールについて説明する．
+\end{abstract}
+%
+\include{chapter5}
+
+%
+\chapter{Tips}
+\begin{abstract}
+コンパイルなどについて役に立つと思われる情報について記す．
+\end{abstract}
+%
+\include{tips}
+
+%
+\chapter{アップデート}
+\include{update}
+
+%
+\bibliographystyle{junsrt}
+\bibliography{Sphere_UG}
+
+\newpage
+\printindex
+%
+%
+\end{document}
