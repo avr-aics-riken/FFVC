@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -59,22 +59,23 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   if (C.Sampling.log == ON) MO.set_V00(v00);
 
   // 速度成分の最大値
-  TIMING__ PM.start(tm_vmax);
+  TIMING_start(tm_vmax);
   flop_count = 0.0;
   cbc_vmax_(&vMax, sz, gc, v00, v, &flop_count);
-  TIMING__ PM.stop(tm_vmax, flop_count);
+  TIMING_stop(tm_vmax, flop_count);
 
   if( para_mng->IsParallel() ){
-    TIMING__ PM.start(tm_vmax_comm);
+    TIMING_start(tm_vmax_comm);
     SKL_REAL vMax_tmp = vMax;
     if( !para_mng->Allreduce(&vMax_tmp, &vMax, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) assert(0);
-    TIMING__ PM.stop( tm_vmax_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+    TIMING_stop( tm_vmax_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
   }
 
 
   // Flow
   if ( C.KindOfSolver != SOLID_CONDUCTION ) {
-    TIMING__ PM.start(tm_flow_sct);
+    TIMING_start(tm_flow_sct);
+    
     switch (C.AlgorithmF) {
       case Control::Flow_FS_EE_EE:
       case Control::Flow_FS_AB2:
@@ -83,7 +84,9 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
           NS_FS_E_CBC();
         }
         else if (C.Mode.ShapeAprx == CUT_INFO) {
+#ifndef BINARY_VOXEL
           NS_FS_E_CDS();
+#endif
         }          
         break;
         
@@ -93,53 +96,52 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       default:
         break;
     }
-    TIMING__ PM.stop(tm_flow_sct, 0.0);
+    TIMING_stop(tm_flow_sct, 0.0);
   }
   
   // Heat
   if ( C.isHeatProblem() ) {
-    TIMING__ PM.start(tm_heat_sct);
+    TIMING_start(tm_heat_sct);
     PS_E_CBC();
-    TIMING__ PM.stop(tm_heat_sct, 0.0);
+    TIMING_stop(tm_heat_sct, 0.0);
   }
   
   // Interface Equation
   if ( C.BasicEqs == INCMP_2PHASE ) {
-    TIMING__ PM.start(tm_vof_sct);
+    TIMING_start(tm_vof_sct);
     IF_TRP_VOF();
-    TIMING__ PM.stop(tm_vof_sct, 0.0);
+    TIMING_stop(tm_vof_sct, 0.0);
   }
   
   
 
   // >>> ステップループのユーティリティ
-  TIMING__ PM.start(tm_loop_uty_sct);
-
+  TIMING_start(tm_loop_uty_sct);
   
   //  >>> ステップループのユーティリティ 1
-  TIMING__ PM.start(tm_loop_uty_sct_1);
+  TIMING_start(tm_loop_uty_sct_1);
   
   // 時間平均値操作
   if ( (C.Mode.Average == ON) && SklUtil::IsStartAverage(this, C.Interval[Interval_Manager::tg_avstart].getIntervalTime()) ) {
-    TIMING__ PM.start(tm_average_time);
+    TIMING_start(tm_average_time);
     flop_count=0.0;
     Averaging_Time();
-    TIMING__ PM.stop(tm_average_time, flop_count);
+    TIMING_stop(tm_average_time, flop_count);
   }
   
   // 空間平均値操作と変動量
-  TIMING__ PM.start(tm_average_space);
+  TIMING_start(tm_average_space);
   flop_count=0.0;
   for (int i=0; i<6; i++) avrms[i] = 0.0;
   Averaging_Space(avrms, flop_count);
-  TIMING__ PM.stop(tm_average_space, flop_count);
+  TIMING_stop(tm_average_space, flop_count);
   
   if ( para_mng->IsParallel() ) {
     SKL_REAL tmp[6];
-    TIMING__ PM.start(tm_average_space_comm);
+    TIMING_start(tm_average_space_comm);
     for (int n=0; n<6; n++) tmp[n] = avrms[n];
     para_mng->Allreduce(tmp, avrms, 6, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 速度，圧力，温度の3変数 x (平均値+変動値)
-    TIMING__ PM.stop(tm_average_space_comm, 2.0*np_f*6.0*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数 x 6変数
+    TIMING_stop(tm_average_space_comm, 2.0*np_f*6.0*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数 x 6変数
   }
   
   avrms[0] = sqrt(avrms[0]/(SKL_REAL)G_Acell);  // 速度の変動量のRMS
@@ -150,7 +152,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   avrms[5] = avrms[5]/(SKL_REAL)G_Acell;        // 温度の空間平均
   
   //  <<< ステップループのユーティリティ 1
-  TIMING__ PM.stop(tm_loop_uty_sct_1, 0.0);
+  TIMING_stop(tm_loop_uty_sct_1, 0.0);
   
   
 
@@ -158,7 +160,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   // 1ステップ後のモニタ処理 -------------------------------
   
   //  >>> ステップループのユーティリティ 2
-  TIMING__ PM.start(tm_loop_uty_sct_2);
+  TIMING_start(tm_loop_uty_sct_2);
   
   // Historyクラスのタイムスタンプを更新
   H->updateTimeStamp(loop_step, (SKL_REAL)loop_time, vMax);
@@ -166,15 +168,16 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   // 基本履歴情報をコンソールに出力
   if ( C.Mode.Log_Base == ON) {
     if ( C.Interval[Interval_Manager::tg_console].isTriggered(loop_step, loop_time) ) {
-      TIMING__ PM.start(tm_hstry_stdout);
+      TIMING_start(tm_hstry_stdout);
       Hostonly_ H->printHistory(mp, avrms, IC, &C);
-      TIMING__ PM.stop(tm_hstry_stdout, 0.0);
+      TIMING_stop(tm_hstry_stdout, 0.0);
     }
   }
   
   // 瞬時値のデータ出力
   if ( C.Interval[Interval_Manager::tg_instant].isTriggered(loop_step, loop_time) ) {
-    TIMING__ PM.start(tm_file_out);
+    TIMING_start(tm_file_out);
+    
     flop_count=0.0;
     switch (C.FIO.FileOut) {
       case Control::IO_normal:
@@ -194,7 +197,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
         FileOutput(Control::IO_forced, flop_count);
         break;
     }
-    TIMING__ PM.stop(tm_file_out, flop_count);  
+    TIMING_stop(tm_file_out, flop_count);  
   }
   
   // 平均値のデータ出力 >　アルゴいまいち
@@ -213,7 +216,8 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       if ( !C.Interval[Interval_Manager::tg_average].initTrigger(loop_step, loop_time, (double)SklGetDeltaT(), Interval_Manager::tg_average) ) assert(0);
       if ( C.Interval[Interval_Manager::tg_average].isTriggered(loop_step, loop_time) ) {
 
-        TIMING__ PM.start(tm_file_out);
+        TIMING_start(tm_file_out);
+        
         flop_count=0.0;
         switch (C.FIO.FileOut) {
           case Control::IO_normal:
@@ -233,7 +237,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
             AverageOutput(Control::IO_forced, flop_count);
             break;
         }
-        TIMING__ PM.stop(tm_file_out, flop_count);
+        TIMING_stop(tm_file_out, flop_count);
       }
     }
   }
@@ -243,60 +247,60 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     
     // 基本履歴情報
     if ( C.Mode.Log_Base == ON ) {
-      TIMING__ PM.start(tm_hstry_base);
+      TIMING_start(tm_hstry_base);
       Hostonly_ H->printHistory(fp_b, avrms, IC, &C);
-      TIMING__ PM.stop(tm_hstry_base, 0.0);
+      TIMING_stop(tm_hstry_base, 0.0);
     }
     
     // 壁面履歴情報
     if ( C.Mode.Log_Wall == ON ) {
-      TIMING__ PM.start(tm_hstry_wall);
+      TIMING_start(tm_hstry_wall);
       Hostonly_ H->printHistoryWall(fp_w, range_Yp, range_Ut);
-      TIMING__ PM.stop(tm_hstry_wall, 0.0);
+      TIMING_stop(tm_hstry_wall, 0.0);
     }
     
     // 流量収支履歴
     if ( C.Mode.Log_Base == ON ) {
-      TIMING__ PM.start(tm_hstry_dmfx);
+      TIMING_start(tm_hstry_dmfx);
       Hostonly_ H->printHistoryDomfx(fp_d, &C);
-      TIMING__ PM.stop(tm_hstry_dmfx, 0.0);
+      TIMING_stop(tm_hstry_dmfx, 0.0);
     }
   }
   
   if (C.Mode.TP == ON ) {
-    TIMING__ PM.start(tm_total_prs);
+    TIMING_start(tm_total_prs);
     CU.TotalPressure(tp, v, p, &C, "collocated", v00, flop_count);
-    TIMING__ PM.stop(tm_total_prs, flop_count);
+    TIMING_stop(tm_total_prs, flop_count);
   }
   
   // コンポーネント履歴
   if ( C.Mode.Log_Base == ON ) {
     if ( C.Interval[Interval_Manager::tg_history].isTriggered(loop_step, loop_time) ) {
-      TIMING__ PM.start(tm_compo_monitor);
+      TIMING_start(tm_compo_monitor);
       flop_count=0.0;
       MO.samplingInnerBoundary();
-      TIMING__ PM.stop(tm_compo_monitor, flop_count);
+      TIMING_stop(tm_compo_monitor, flop_count);
 
-      TIMING__ PM.start(tm_hstry_compo);
+      TIMING_start(tm_hstry_compo);
       Hostonly_ H->printHistoryCompo(fp_c, cmp, &C);
-      TIMING__ PM.stop(tm_hstry_compo, 0.0);
+      TIMING_stop(tm_hstry_compo, 0.0);
     }
   }
   
   // サンプリング履歴
   if (C.Sampling.log == ON  || MO.hasCellMonitor(cmp, C.NoBC)) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
-      TIMING__ PM.start(tm_sampling);
+      TIMING_start(tm_sampling);
       MO.sampling();
-      TIMING__ PM.stop(tm_sampling, 0.0);
+      TIMING_stop(tm_sampling, 0.0);
       
-      TIMING__ PM.start(tm_hstry_sampling);
+      TIMING_start(tm_hstry_sampling);
       MO.print(loop_step, (SKL_REAL)loop_time);
-      TIMING__ PM.stop(tm_hstry_sampling, 0.0);
+      TIMING_stop(tm_hstry_sampling, 0.0);
     }
   }
   
-  TIMING__ PM.stop(tm_loop_uty_sct_2, 0.0);
+  TIMING_stop(tm_loop_uty_sct_2, 0.0);
   //  <<< ステップループのユーティリティ 2
 
   
@@ -323,8 +327,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     }
   }
   
-  
-  TIMING__ PM.stop(tm_loop_uty_sct, 0.0);
+  TIMING_stop(tm_loop_uty_sct, 0.0);
   //  <<< ステップループのユーティリティ
   
   return 1;

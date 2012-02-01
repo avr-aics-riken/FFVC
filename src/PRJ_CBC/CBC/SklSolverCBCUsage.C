@@ -27,4 +27,3 @@ SklSolverCBC::SklSolverUsage(const char* cmd) {
 
   return true;
 }
-

@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 !
@@ -598,7 +598,7 @@
     v_ref2 = 1.5*v_ref
     w_ref2 = 1.5*w_ref
     
-    flop = flop + real( ix*jx*kx*133 )
+    flop = flop + real(ix*jx*kx)*133.0
 
     do k=1,kx
     do j=1,jx
@@ -767,7 +767,7 @@
     v_ref2 = 1.5*v_ref
     w_ref2 = 1.5*w_ref
     
-    flop = flop + real(ix*jx*kx*73)
+    flop = flop + real(ix*jx*kx)*73.0
 
     do k=1,kx
     do j=1,jx

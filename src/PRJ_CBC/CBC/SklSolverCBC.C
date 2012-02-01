@@ -114,6 +114,7 @@ SklSolverCBC::SklSolverCBC() {
   pn.ID = 0; 
   for (int i=0; i<NOFACE; i++) pn.nID[i] = -1;
   ModeTiming = OFF;
+
 }
 
 //@fn SklSolverCBC::SklSolverCBC()
@@ -217,16 +218,17 @@ SklSolverCBC::SklSolverCBC(int sType) {
   pn.ID = 0; 
   for (int i=0; i<6; i++) pn.nID[i] = -1;
   ModeTiming = OFF;
+
 }
 
 //@fn SklSolverCBC::~SklSolverCBC()
 //@brief デストラクタ
 SklSolverCBC::~SklSolverCBC() {
-  if( m_condition ) delete [] m_condition;
-  if( m_log )       delete [] m_log;
-  if( GC_bv )       delete [] GC_bv;
-  if( cmp )         delete [] cmp;
-  if( mat )         delete [] mat;
+  if( m_condition )  delete [] m_condition;
+  if( m_log )        delete [] m_log;
+  if( GC_bv )        delete [] GC_bv;
+  if( cmp )          delete [] cmp;
+  if( mat )          delete [] mat;
   
   if ( mp ) fclose(mp);
   
@@ -331,182 +333,218 @@ void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, SKL_REAL& flop)
 
 }
 
+//@fn void SklSolverCBC::set_label(void)
+//@brief タイミング測定区間にラベルを与えるラッパー
+//@param[in] key キー番号
+//@param[in] label ラベル
+//@param[in] type  測定対象タイプ(COMM or CALC)
+//@param[in] exclusive 排他測定フラグ(ディフォルトtrue)
+//void SklSolverCBC::set_label(unsigned key, const string& label, PerfMonitor::Type type, bool exclusive)
+void SklSolverCBC::set_label(unsigned key, char* label, PerfMonitor::Type type, bool exclusive)
+{
+  // Performance Monitorへの登録
+  string tmp(label);
+  PM.setProperties(key, tmp, type, exclusive); 
+
+  // K用プロファイラの文字列登録
+  //timing_label[key] = label;
+  strcpy(tm_label_ptr[key], label);
+}
+
 //@fn void SklSolverCBC::set_timing_label(void)
 //@brief タイミング測定区間にラベルを与える
 void SklSolverCBC::set_timing_label(void)
 {
-  // 非排他, 計算
-  PM.setProperties(tm_init_sct,           "Initialization",          PerfMonitor::CALC);
+  // タイミングラベルの確保
+  //tm_label_ptr = new std::string[tm_END];
+  // ラベルの設定
+  set_label(tm_init_sct,           "Initialization Section",  PerfMonitor::CALC, false);
+  set_label(tm_init_alloc,         "Allocate Arrays",         PerfMonitor::CALC);
   
-  PM.setProperties(tm_vmax,               "Search Vmax",             PerfMonitor::CALC);
-  PM.setProperties(tm_vmax_comm,          "A.R. Vmax",               PerfMonitor::COMM); // 通信
+  set_label(tm_voxel_prep_sct,     "Voxel Prep. Section",     PerfMonitor::CALC, false);
+  set_label(tm_voxel_load,         "Loading Voxel File",      PerfMonitor::CALC);
+  set_label(tm_polygon_load,       "Loading Polygon File",    PerfMonitor::CALC);
+  set_label(tm_cutinfo,            "Cut Information",         PerfMonitor::CALC);
+  // end of Voxel Prep. Section
   
-  PM.setProperties(tm_flow_sct,           "Flow Sct.",               PerfMonitor::CALC, false); 
-  {
-    PM.setProperties(tm_frctnl_stp_sct,     "NS: F-Step Sct.",         PerfMonitor::CALC, false); 
-    {
-      PM.setProperties(tm_frctnl_stp_sct_1,   "NS: F-Step Sct:1",        PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_flip_bf,            "Flip Bit for In/Out BC",  PerfMonitor::CALC);
-        PM.setProperties(tm_spec_vel,           "Assign BC Velocity",      PerfMonitor::CALC);
-        PM.setProperties(tm_WallFunc,           "Friction Velocity",       PerfMonitor::CALC);
-      }
-      PM.setProperties(tm_frctnl_stp_sct_2,   "NS: F-Step Sct:2",        PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_pseudo_vec,         "Pseudo Velocity",         PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_flux,          "Pseudo Vel. Flux BC",     PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_ee,            "Pvec. Euler Explicit",    PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_ab,            "Pvec. Adams-Bashforth",   PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_abcn,          "Pvec. AB+CN",             PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_abcn_df_ee,    "Pvec. AB+CN Diff. EE",    PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_abcn_df_ee_BC, "Pvec. AB+CN Diff. EE-BC", PerfMonitor::CALC);
-      }
-      PM.setProperties(tm_frctnl_stp_sct_3,   "NS: F-Step Sct:3",        PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_forcing,            "Forcing Pvec. Dir.",     PerfMonitor::CALC);
-        PM.setProperties(tm_buoyancy,           "Buoyancy",                PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_BC,            "Pseudo Velocity BC",      PerfMonitor::CALC);
-        PM.setProperties(tm_pvec_comm,          "Sync. Pseudo Velocity",   PerfMonitor::COMM); // 通信
-      }
-      PM.setProperties(tm_frctnl_stp_sct_4,   "NS: F-Step Sct:4",        PerfMonitor::CALC, false);
-      {
-        // CN
-      }
-    } // fractional step section
-    
-    PM.setProperties(tm_poi_src_sct,        "Poisson: Source Sct.",    PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_div_pvec,           "Divergence of Pvec.",     PerfMonitor::CALC);
-      PM.setProperties(tm_poi_src_vbc,        "Poisson Src. VBC",        PerfMonitor::CALC);
-      PM.setProperties(tm_poi_src_nrm,        "Poisson Src. Norm",       PerfMonitor::CALC);
-      PM.setProperties(tm_poi_src_comm,       "A.R. Poisson Src.",       PerfMonitor::COMM); // 通信
-    } // Poisson source section
-    
-    PM.setProperties(tm_poi_itr_sct,        "Poisson: Itr. Sct.",      PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_hstry_itr,           "History Iteration",       PerfMonitor::CALC);
-      
-      PM.setProperties(tm_poi_itr_sct_1,       "Poisson: Itr. Sct:1",     PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_force_src,         "Forcing Source",          PerfMonitor::CALC);
-      }
-      
-      PM.setProperties(tm_poi_itr_sct_2,       "Poisson: Itr. Sct:2",     PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
-      {
-        PM.setProperties(tm_poi_Jacobi,         "Poisson Jacobi",          PerfMonitor::CALC);
-        PM.setProperties(tm_poi_PSOR,           "Poisson PSOR",            PerfMonitor::CALC);
-        PM.setProperties(tm_poi_setup,          "Poisson Setup for Itr.",  PerfMonitor::CALC);
-        PM.setProperties(tm_poi_SOR2SMA,        "Poisson SOR2 (SMA)",      PerfMonitor::CALC);
-        PM.setProperties(tm_poi_SOR2CMA,        "Poisson SOR2 (CMA)",      PerfMonitor::CALC);
-        PM.setProperties(tm_poi_BC,             "Poisson BC",              PerfMonitor::CALC);
-      }
-      
-      PM.setProperties(tm_poi_itr_sct_3,       "Poisson: Itr. Sct:3",     PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
-      {
-        PM.setProperties(tm_poi_comm,           "Sync. Pressure",          PerfMonitor::COMM); // 通信
-        PM.setProperties(tm_poi_res_comm,       "A.R. Poisson Residual",   PerfMonitor::COMM); // 通信
-      }
-      
-      PM.setProperties(tm_poi_itr_sct_4,       "Poisson: Itr. Sct:4",     PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_prj_vec,            "Projection Velocity",    PerfMonitor::CALC);
-        PM.setProperties(tm_prj_vec_bc,         "Projection Velocity BC", PerfMonitor::CALC);
-        PM.setProperties(tm_prj_frc_mod_cf,     "Prjctn Force Modify CF", PerfMonitor::CALC);
-        PM.setProperties(tm_prj_frc_mod_cc,     "Prjctn Force Modify CC", PerfMonitor::CALC); // 計算と通信の両方
-        PM.setProperties(tm_vec_BC,             "Velocity BC",            PerfMonitor::CALC);
-      }
+  set_label(tm_restart,            "Restart Process",         PerfMonitor::CALC);
+  
+  // end of Initialization Section
+  
+  
+  // Loop section
+  set_label(tm_loop_sct,           "Time-Step Loop Section",  PerfMonitor::CALC, false); 
+  
+  set_label(tm_vmax,               "Search Vmax",             PerfMonitor::CALC);
+  set_label(tm_vmax_comm,          "A.R. Vmax",               PerfMonitor::COMM);
+  
+  set_label(tm_flow_sct,           "Flow Section",            PerfMonitor::CALC, false); 
+  
+  set_label(tm_frctnl_stp_sct,     "NS: F-Step Section",      PerfMonitor::CALC, false); 
+  
+  set_label(tm_frctnl_stp_sct_1,   "NS: F-Step Sct:1",        PerfMonitor::CALC, false);
+  set_label(tm_flip_bf,            "Flip Bit for In/Out BC",  PerfMonitor::CALC);
+  set_label(tm_spec_vel,           "Assign BC Velocity",      PerfMonitor::CALC);
+  set_label(tm_WallFunc,           "Friction Velocity",       PerfMonitor::CALC);
+  // end of NS: F-Step Sct:1
 
-      PM.setProperties(tm_poi_itr_sct_5,       "Poisson: Itr. Sct:5",     PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_norm_div_max,       "Poisson Norm Div. max",     PerfMonitor::CALC);
-        PM.setProperties(tm_norm_div_l2,        "Poisson Norm Div. L2",      PerfMonitor::CALC);
-        PM.setProperties(tm_norm_div_max_dbg,   "Poi. Norm Div. Max Dbg",    PerfMonitor::CALC);
-        PM.setProperties(tm_norm_comm,          "A.R. Poisson Norm",         PerfMonitor::COMM); // 通信
-      }
-    } // Poisson Iteration section
+  set_label(tm_frctnl_stp_sct_2,   "NS: F-Step Sct:2",        PerfMonitor::CALC, false);
+  set_label(tm_pseudo_vec,         "Pseudo Velocity",         PerfMonitor::CALC);
+  set_label(tm_pvec_flux,          "Pseudo Vel. Flux BC",     PerfMonitor::CALC);
+  set_label(tm_pvec_ee,            "Pvec. Euler Explicit",    PerfMonitor::CALC);
+  set_label(tm_pvec_ab,            "Pvec. Adams-Bashforth",   PerfMonitor::CALC);
+  set_label(tm_pvec_abcn,          "Pvec. AB+CN",             PerfMonitor::CALC);
+  set_label(tm_pvec_abcn_df_ee,    "Pvec. AB+CN Diff. EE",    PerfMonitor::CALC);
+  set_label(tm_pvec_abcn_df_ee_BC, "Pvec. AB+CN Diff. EE-BC", PerfMonitor::CALC);
+  // end of NS: F-Step Sct:2
+  
+  set_label(tm_frctnl_stp_sct_3,   "NS: F-Step Sct:3",        PerfMonitor::CALC, false);
+  set_label(tm_forcing,            "Forcing Pvec. Dir.",      PerfMonitor::CALC);
+  set_label(tm_buoyancy,           "Buoyancy",                PerfMonitor::CALC);
+  set_label(tm_pvec_BC,            "Pseudo Velocity BC",      PerfMonitor::CALC);
+  set_label(tm_pvec_comm,          "Sync. Pseudo Velocity",   PerfMonitor::COMM);
+  // end of NS: F-Step Sct:3
+
+  set_label(tm_frctnl_stp_sct_4,   "NS: F-Step Sct:4",        PerfMonitor::CALC, false);
+  // end of NS: F-Step Sct:4
+  
+  // end of NS: F-Step Section
     
-    PM.setProperties(tm_NS_loop_post_sct,   "NS: Loop Post Sct.",      PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_vectors_comm,       "Sync. Velocity",          PerfMonitor::COMM); // 通信
-      PM.setProperties(tm_domain_monitor,     "Domain Monitor",          PerfMonitor::CALC);
-      PM.setProperties(tm_VBC_update,         "Velocity BC Update",      PerfMonitor::CALC);
-      PM.setProperties(tm_LES_eddy,           "Eddy Viscosity",          PerfMonitor::CALC);
-      PM.setProperties(tm_LES_eddy_comm,      "Sync. Eddy Viscosity",    PerfMonitor::COMM); // 通信
-    }
-  } // Flow section
-  
-  
-  PM.setProperties(tm_heat_sct,           "Heat Sct.",               PerfMonitor::CALC, false);
-  {
-    PM.setProperties(tm_heat_convection_sct,"Thermal Convection Sct.", PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_heat_spec_temp,     "Thermal Assign BC Temp.", PerfMonitor::CALC);
-      PM.setProperties(tm_heat_cnv,           "Thermal Convection",      PerfMonitor::CALC);
-      PM.setProperties(tm_heat_cnv_BC,        "Thermal Convection BC",   PerfMonitor::CALC);
-      PM.setProperties(tm_heat_cnv_EE,        "Thermal Convection EE",   PerfMonitor::CALC);
-    }
-    PM.setProperties(tm_heat_diffusion_sct, "Thermal Diffusion Sct.",  PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_heat_diff_OBC,      "Thermal Diff. Outer BC",  PerfMonitor::CALC);
-      PM.setProperties(tm_heat_diff_sct_1,    "Thermal Diffusion Sct:1", PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_heat_diff_IBC_vol,  "Thermal Diff. IBC Vol",   PerfMonitor::CALC);
-        PM.setProperties(tm_heat_diff_comm,     "Sync. Thermal",           PerfMonitor::COMM); // 通信
-      }
-      PM.setProperties(tm_heat_diff_sct_2,    "Thermal Diffusion Sct:2", PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_heat_diff_IBC_face, "Thermal Diff. IBC Face",  PerfMonitor::CALC);
-        PM.setProperties(tm_heat_diff_OBC_face, "Thermal Diff. OBC Face",  PerfMonitor::CALC);
-        PM.setProperties(tm_heat_diff_QBC_comm, "Sync. Thermal & QBC",     PerfMonitor::COMM); // 通信
-      }
-      PM.setProperties(tm_heat_diff_sct_3,    "Thermal Diffusion Sct:3", PerfMonitor::CALC, false);
-      {
-        PM.setProperties(tm_heat_diff_EE,       "Thermal Diff. EE",        PerfMonitor::CALC);
-        PM.setProperties(tm_heat_diff_PSOR,     "Thermal Diff. PSOR",      PerfMonitor::CALC);
-        PM.setProperties(tm_heat_update_comm,   "Sync. Thermal Update",    PerfMonitor::COMM); // 通信
-        PM.setProperties(tm_heat_diff_res_comm, "A.R. Thermal Diff. Res.", PerfMonitor::COMM); // 通信
-      }
-    }
+  set_label(tm_poi_src_sct,        "Poisson: Source Section", PerfMonitor::CALC, false);
+  set_label(tm_div_pvec,           "Divergence of Pvec.",     PerfMonitor::CALC);
+  set_label(tm_poi_src_vbc,        "Poisson Src. VBC",        PerfMonitor::CALC);
+  set_label(tm_poi_src_nrm,        "Poisson Src. Norm",       PerfMonitor::CALC);
+  set_label(tm_poi_src_comm,       "A.R. Poisson Src.",       PerfMonitor::COMM);
+  // end of Poisson: Source Section
     
-    PM.setProperties(tm_heat_loop_post_sct, "Thermal Loop Post Sct.",  PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_heat_range,         "Thermal Range Cut",       PerfMonitor::CALC);
-    }
-  } // Heat section
+  set_label(tm_poi_itr_sct,        "Poisson: Iteration Sct.", PerfMonitor::CALC, false);
+  set_label(tm_hstry_itr,          "History Iteration",       PerfMonitor::CALC);
+      
+  set_label(tm_poi_itr_sct_1,      "Poisson: Itr. Sct:1",     PerfMonitor::CALC, false);
+  set_label(tm_force_src,          "Forcing Source",          PerfMonitor::CALC);
+  // end of Poisson: Itr. Sct:1
+      
+  set_label(tm_poi_itr_sct_2,      "Poisson: Itr. Sct:2",     PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
+  set_label(tm_poi_Jacobi,         "Poisson Jacobi",          PerfMonitor::CALC);
+  set_label(tm_poi_PSOR,           "Poisson PSOR",            PerfMonitor::CALC);
+  set_label(tm_poi_setup,          "Poisson Setup for Itr.",  PerfMonitor::CALC);
+  set_label(tm_poi_SOR2SMA,        "Poisson SOR2 (SMA)",      PerfMonitor::CALC);
+  set_label(tm_poi_SOR2CMA,        "Poisson SOR2 (CMA)",      PerfMonitor::CALC);
+  set_label(tm_poi_BC,             "Poisson BC",              PerfMonitor::CALC);
+  // end of Poisson: Itr. Sct:2
+      
+  set_label(tm_poi_itr_sct_3,      "Poisson: Itr. Sct:3",     PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
+  set_label(tm_poi_comm,           "Sync. Pressure",          PerfMonitor::COMM);
+  set_label(tm_poi_res_comm,       "A.R. Poisson Residual",   PerfMonitor::COMM);
+  // end of Poisson: Itr. Sct:3
+      
+  set_label(tm_poi_itr_sct_4,      "Poisson: Itr. Sct:4",     PerfMonitor::CALC, false);
+  set_label(tm_prj_vec,            "Projection Velocity",     PerfMonitor::CALC);
+  set_label(tm_prj_vec_bc,         "Projection Velocity BC",  PerfMonitor::CALC);
+  set_label(tm_prj_frc_mod_cf,     "Prjctn Force Modify CF",  PerfMonitor::CALC);
+  set_label(tm_prj_frc_mod_cc,     "Prjctn Force Modify CC",  PerfMonitor::CALC); // 計算と通信の両方
+  set_label(tm_vec_BC,             "Velocity BC",             PerfMonitor::CALC);
+  // end of Poisson: Itr. Sct:4
+      
+  set_label(tm_poi_itr_sct_5,      "Poisson: Itr. Sct:5",     PerfMonitor::CALC, false);
+  set_label(tm_norm_div_max,       "Poisson Norm Div. max",   PerfMonitor::CALC);
+  set_label(tm_norm_div_l2,        "Poisson Norm Div. L2",    PerfMonitor::CALC);
+  set_label(tm_norm_div_max_dbg,   "Poi. Norm Div. Max Dbg",  PerfMonitor::CALC);
+  set_label(tm_norm_comm,          "A.R. Poisson Norm",       PerfMonitor::COMM);
+  // end of Poisson: Itr. Sct:5
   
-  PM.setProperties(tm_vof_sct,            "VOF Sct.",                PerfMonitor::CALC, false);
-  {
-    PM.setProperties(tm_vof_cnv,            "VOF Convection",          PerfMonitor::CALC);
-    PM.setProperties(tm_vof_cnv_comm,       "Sync. VOF Convection",    PerfMonitor::COMM); // 通信
-  } // VOF section
-  
-  PM.setProperties(tm_loop_uty_sct,       "Loop Utility Sct.",       PerfMonitor::CALC, false);
-  {
-    PM.setProperties(tm_loop_uty_sct_1,     "Loop Utility Sct:1",       PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_average_time,       "Averaging Time",          PerfMonitor::CALC);
-      PM.setProperties(tm_average_space,      "Averaging Space",         PerfMonitor::CALC);
-      PM.setProperties(tm_average_space_comm, "Sync. Average Value",     PerfMonitor::COMM); // 通信
-    }
+  // end of Poisson: Iteration Sct.
     
-    PM.setProperties(tm_loop_uty_sct_2,     "Loop Utility Sct:2",       PerfMonitor::CALC, false);
-    {
-      PM.setProperties(tm_hstry_stdout,       "History Stdout",          PerfMonitor::CALC);
-      PM.setProperties(tm_file_out,           "File Output",             PerfMonitor::CALC);
-      PM.setProperties(tm_hstry_base,         "History Base",            PerfMonitor::CALC);
-      PM.setProperties(tm_hstry_wall,         "History Wall Info",       PerfMonitor::CALC);
-      PM.setProperties(tm_hstry_dmfx,         "History Domain Flux",     PerfMonitor::CALC);
-      PM.setProperties(tm_total_prs,          "Total Pressure",          PerfMonitor::CALC);
-      PM.setProperties(tm_compo_monitor,      "Component Monitoring",    PerfMonitor::CALC);
-      PM.setProperties(tm_hstry_compo,        "History Component",       PerfMonitor::CALC);
-      PM.setProperties(tm_sampling,           "Sampling",                PerfMonitor::CALC);
-      PM.setProperties(tm_hstry_sampling,     "History Sampling",        PerfMonitor::CALC);
-    }
-  }
+  set_label(tm_NS_loop_post_sct,   "NS: Loop Post Section",   PerfMonitor::CALC, false);
+  set_label(tm_vectors_comm,       "Sync. Velocity",          PerfMonitor::COMM);
+  set_label(tm_domain_monitor,     "Domain Monitor",          PerfMonitor::CALC);
+  set_label(tm_VBC_update,         "Velocity BC Update",      PerfMonitor::CALC);
+  set_label(tm_LES_eddy,           "Eddy Viscosity",          PerfMonitor::CALC);
+  set_label(tm_LES_eddy_comm,      "Sync. Eddy Viscosity",    PerfMonitor::COMM);
+  // end of NS: Loop Post Section
+  
+  // end of Flow section
+  
+  
+  set_label(tm_heat_sct,           "Heat Section",            PerfMonitor::CALC, false);
+
+  set_label(tm_heat_convection_sct,"Thermal Convection Sct.", PerfMonitor::CALC, false);
+  set_label(tm_heat_spec_temp,     "Thermal Assign BC Temp.", PerfMonitor::CALC);
+  set_label(tm_heat_cnv,           "Thermal Convection",      PerfMonitor::CALC);
+  set_label(tm_heat_cnv_BC,        "Thermal Convection BC",   PerfMonitor::CALC);
+  set_label(tm_heat_cnv_EE,        "Thermal Convection EE",   PerfMonitor::CALC);
+  // end of Thermal Convection Sct.
+
+  set_label(tm_heat_diffusion_sct, "Thermal Diffusion Sct.",  PerfMonitor::CALC, false);
+  set_label(tm_heat_diff_OBC,      "Thermal Diff. Outer BC",  PerfMonitor::CALC);
+  // end of Thermal Diffusion Sct.
+  
+  set_label(tm_heat_diff_sct_1,    "Thermal Diffusion Sct:1", PerfMonitor::CALC, false);
+  set_label(tm_heat_diff_IBC_vol,  "Thermal Diff. IBC Vol",   PerfMonitor::CALC);
+  set_label(tm_heat_diff_comm,     "Sync. Thermal",           PerfMonitor::COMM);
+  // end of Thermal Diffusion Sct:1
+
+  set_label(tm_heat_diff_sct_2,    "Thermal Diffusion Sct:2", PerfMonitor::CALC, false);
+  set_label(tm_heat_diff_IBC_face, "Thermal Diff. IBC Face",  PerfMonitor::CALC);
+  set_label(tm_heat_diff_OBC_face, "Thermal Diff. OBC Face",  PerfMonitor::CALC);
+  set_label(tm_heat_diff_QBC_comm, "Sync. Thermal & QBC",     PerfMonitor::COMM);
+  // end of Thermal Diffusion Sct:2
+
+  set_label(tm_heat_diff_sct_3,    "Thermal Diffusion Sct:3", PerfMonitor::CALC, false);
+  set_label(tm_heat_diff_EE,       "Thermal Diff. EE",        PerfMonitor::CALC);
+  set_label(tm_heat_diff_PSOR,     "Thermal Diff. PSOR",      PerfMonitor::CALC);
+  set_label(tm_heat_update_comm,   "Sync. Thermal Update",    PerfMonitor::COMM);
+  set_label(tm_heat_diff_res_comm, "A.R. Thermal Diff. Res.", PerfMonitor::COMM);
+  // end of Thermal Diffusion Sct:3
+    
+  set_label(tm_heat_loop_post_sct, "Thermal Loop Post Sct.",  PerfMonitor::CALC, false);
+  set_label(tm_heat_range,         "Thermal Range Cut",       PerfMonitor::CALC);
+  // end of Thermal Loop Post Sct.
+  
+  // end of Heat Section
+  
+  
+  set_label(tm_vof_sct,            "VOF Section",             PerfMonitor::CALC, false);
+  set_label(tm_vof_cnv,            "VOF Convection",          PerfMonitor::CALC);
+  set_label(tm_vof_cnv_comm,       "Sync. VOF Convection",    PerfMonitor::COMM);
+  // end of VOF section
+  
+  
+  set_label(tm_loop_uty_sct,       "Loop Utility Section",    PerfMonitor::CALC, false);
+  
+  set_label(tm_loop_uty_sct_1,     "Loop Utility Sct:1",      PerfMonitor::CALC, false);
+  set_label(tm_average_time,       "Averaging Time",          PerfMonitor::CALC);
+  set_label(tm_average_space,      "Averaging Space",         PerfMonitor::CALC);
+  set_label(tm_average_space_comm, "Sync. Average Value",     PerfMonitor::COMM);
+  // end of Loop Utility Sct:1
+    
+  set_label(tm_loop_uty_sct_2,     "Loop Utility Sct:2",       PerfMonitor::CALC, false);
+  set_label(tm_hstry_stdout,       "History Stdout",          PerfMonitor::CALC);
+  set_label(tm_file_out,           "File Output",             PerfMonitor::CALC);
+  set_label(tm_hstry_base,         "History Base",            PerfMonitor::CALC);
+  set_label(tm_hstry_wall,         "History Wall Info",       PerfMonitor::CALC);
+  set_label(tm_hstry_dmfx,         "History Domain Flux",     PerfMonitor::CALC);
+  set_label(tm_total_prs,          "Total Pressure",          PerfMonitor::CALC);
+  set_label(tm_compo_monitor,      "Component Monitoring",    PerfMonitor::CALC);
+  set_label(tm_hstry_compo,        "History Component",       PerfMonitor::CALC);
+  set_label(tm_sampling,           "Sampling",                PerfMonitor::CALC);
+  set_label(tm_hstry_sampling,     "History Sampling",        PerfMonitor::CALC);
+  // end of Loop Utility Sct:2
+
+  // end of Loop Utility Section
+  
+  
+  // end of Loop Section
+  
   
   // 共通にまとめて利用
-  PM.setProperties(tm_copy_array,         "Copy Array",              PerfMonitor::CALC);
-  PM.setProperties(tm_assign_const,       "assign Const. to Array",  PerfMonitor::CALC);
+  set_label(tm_copy_array,         "Copy Array",              PerfMonitor::CALC);
+  set_label(tm_assign_const,       "assign Const. to Array",  PerfMonitor::CALC);
+  
+  // debug
+  //for (int i=0; i<tm_END; i++) {
+  //  printf("%3d %s\n", i, tm_label_ptr[i]);
+  //}
 }
 
 //@fn void SklSolverCBC::Averaging_Time(void)
@@ -870,17 +908,17 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
       
     case JACOBI:
       // >>> Poisson Iteration section 2
-      TIMING__ PM.start(tm_poi_itr_sct_2);
-      
+      TIMING_start(tm_poi_itr_sct_2);
+
       // Jacobi反復法のワーク
       if( !(wkj = dc_wkj->GetData()) ) assert(0);
       
       // 反復処理
-      TIMING__ PM.start(tm_assign_const);
+      TIMING_start(tm_assign_const);
       SklInitializeSKL_REAL(dc_wkj->GetData(), 0.0, dc_wkj->GetArrayLength());
-      TIMING__ PM.stop(tm_assign_const, 0.0);
+      TIMING_stop(tm_assign_const, 0.0);
       
-      TIMING__ PM.start(tm_poi_Jacobi);
+      TIMING_start(tm_poi_Jacobi);
       flop_count = 0.0;
       if (IC->get_LoopType() == SKIP_LOOP) {
         cbc_jacobi_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, wkj, &flop_count);
@@ -888,25 +926,25 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
       else {
         cbc_jacobi_if_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, wkj, &flop_count);
       }
-      TIMING__ PM.stop(tm_poi_Jacobi, flop_count);
+      TIMING_stop(tm_poi_Jacobi, flop_count);
       
       // 境界条件
-      TIMING__ PM.start(tm_poi_BC);
+      TIMING_start(tm_poi_BC);
       BC.OuterPBC(dc_p);
       if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(dc_p, dc_bcd);
-      TIMING__ PM.stop(tm_poi_BC, 0.0);
+      TIMING_stop(tm_poi_BC, 0.0);
       
-      TIMING__ PM.stop(tm_poi_itr_sct_2, 0.0);
+      TIMING_stop(tm_poi_itr_sct_2, 0.0);
       // <<< Poisson Iteration subsection 2
       
       
       
       // >>> Poisson Iteration section 3
-      TIMING__ PM.start(tm_poi_itr_sct_3);
-      
+      TIMING_start(tm_poi_itr_sct_3);
+
       // 同期処理
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_poi_comm);
+        TIMING_start(tm_poi_comm);
         if (cm_mode == 0 ) {
           if( !dc_p->CommBndCell(1) ) assert(0); // 1 layer communication
         }
@@ -914,27 +952,27 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
           if( !dc_p->CommBndCell2(1, wait_num, req) ) assert(0); // 1 layer communication
           para_mng->WaitAll(wait_num, req);
         }
-        TIMING__ PM.stop(tm_poi_comm, comm_size);
+        TIMING_stop(tm_poi_comm, comm_size);
       }
       
       // 残差の集約
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_poi_res_comm);
+        TIMING_start(tm_poi_res_comm);
         SKL_REAL tmp = r;
         para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING__ PM.stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
       }
-      
-      TIMING__ PM.stop(tm_poi_itr_sct_3, 0.0);
+
+      TIMING_stop(tm_poi_itr_sct_3, 0.0);
       // <<< Poisson Iteration subsection 3
       break;
       
     case SOR:
       // >>> Poisson Iteration section 2
-      TIMING__ PM.start(tm_poi_itr_sct_2);
+      TIMING_start(tm_poi_itr_sct_2);
       
       // 反復処理
-      TIMING__ PM.start(tm_poi_PSOR);
+      TIMING_start(tm_poi_PSOR);
       flop_count = 0.0;
       if (IC->get_LoopType() == SKIP_LOOP) {
         cbc_psor_if_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, &flop_count);
@@ -943,28 +981,28 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
         cbc_psor_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, &flop_count);
         //r = PSOR(p, src0, src1, bcp, IC, flop_count); //実装速度比較
       }
-      TIMING__ PM.stop(tm_poi_PSOR, flop_count);
+      TIMING_stop(tm_poi_PSOR, flop_count);
       
       //cbc_psor_index3_(p, sz, gc, &omg, &r, ws, (int*)bcp, idx3, (int*)&C.Fcell, &flop_count);
       //cbc_psor_index_(p, sz, gc, &omg, &r, ws, (int*)bcp, (int*)idx, (int*)&C.Fcell, &flop_count);
       
       // 境界条件
-      TIMING__ PM.start(tm_poi_BC);
+      TIMING_start(tm_poi_BC);
       BC.OuterPBC(dc_p);
       if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(dc_p, dc_bcd);
-      TIMING__ PM.stop(tm_poi_BC, 0.0);
+      TIMING_stop(tm_poi_BC, 0.0);
       
-      TIMING__ PM.stop(tm_poi_itr_sct_2, 0.0);
+      TIMING_stop(tm_poi_itr_sct_2, 0.0);
       // <<< Poisson Iteration subsection 2
       
       
       
       // >>> Poisson Iteration section 3
-      TIMING__ PM.start(tm_poi_itr_sct_3);
-      
+      TIMING_start(tm_poi_itr_sct_3);
+
       // 同期処理
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_poi_comm);
+        TIMING_start(tm_poi_comm);
         if (cm_mode == 0 ) {
           if( !dc_p->CommBndCell(1) ) assert(0); // 1 layer communication
         }
@@ -972,24 +1010,25 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
           if( !dc_p->CommBndCell2(1, wait_num, req) ) assert(0); // 1 layer communication
           para_mng->WaitAll(wait_num, req);
         }
-        TIMING__ PM.stop(tm_poi_comm, comm_size);
+        TIMING_stop(tm_poi_comm, comm_size);
       }
       
       // 残差の集約
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_poi_res_comm);
+        TIMING_start(tm_poi_res_comm);
         SKL_REAL tmp = r;
         para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING__ PM.stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
       }
-      
-      TIMING__ PM.stop(tm_poi_itr_sct_3, 0.0);
+
+      TIMING_stop(tm_poi_itr_sct_3, 0.0);
       // <<< Poisson Iteration subsection 3
       break;
       
     case SOR2SMA:
       // 2色のマルチカラーのセットアップ
-      TIMING__ PM.start(tm_poi_setup);
+      TIMING_start(tm_poi_setup);
+
       int nID[6], sidx[3], ip;
       
       if ( para_mng->IsParallel() ){
@@ -1002,15 +1041,15 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
         sidx[0] = sidx[1] = sidx[2] = 1;
         ip = 0;
       }
-      TIMING__ PM.stop(tm_poi_setup, 0.0);
+      TIMING_stop(tm_poi_setup, 0.0);
       
       // 各カラー毎の間に同期
       r = 0.0;          // 色間で積算する
       for (int color=0; color<2; color++) {
         // >>> Poisson Iteration section 2
-        TIMING__ PM.start(tm_poi_itr_sct_2);
+        TIMING_start(tm_poi_itr_sct_2);
         
-        TIMING__ PM.start(tm_poi_SOR2SMA);
+        TIMING_start(tm_poi_SOR2SMA);
         flop_count = 0.0; // 色間で積算しない
         if (IC->get_LoopType() == SKIP_LOOP) {
           cbc_psor2sma_core_if_(p, sz, gc, &ip, &color, &omg, &r, src0, src1, (int*)bcp, &flop_count);
@@ -1018,30 +1057,30 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
         else {
           cbc_psor2sma_core_(p, sz, gc, &ip, &color, &omg, &r, src0, src1, (int*)bcp, &flop_count);
         }
-        TIMING__ PM.stop(tm_poi_SOR2SMA, flop_count);
+        TIMING_stop(tm_poi_SOR2SMA, flop_count);
         
         // 境界条件
-        TIMING__ PM.start(tm_poi_BC);
+        TIMING_start(tm_poi_BC);
         BC.OuterPBC(dc_p);
         if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(dc_p, dc_bcd);
-        TIMING__ PM.stop(tm_poi_BC, 0.0);
-        
-        TIMING__ PM.stop(tm_poi_itr_sct_2, 0.0);
+        TIMING_stop(tm_poi_BC, 0.0);
+
+        TIMING_stop(tm_poi_itr_sct_2, 0.0);
         // <<< Poisson Iteration subsection 2
         
         
         
         // >>> Poisson Iteration section 3
-        TIMING__ PM.start(tm_poi_itr_sct_3);
+        TIMING_start(tm_poi_itr_sct_3);
         
         // 残差の集約と同期処理
         if ( para_mng->IsParallel() ) {
-          TIMING__ PM.start(tm_poi_res_comm);
+          TIMING_start(tm_poi_res_comm);
           SKL_REAL tmp = r;
           para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-          TIMING__ PM.stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL)*0.5 ); // 双方向 x ノード数 check
+          TIMING_stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL)*0.5 ); // 双方向 x ノード数 check
           
-          TIMING__ PM.start(tm_poi_comm);
+          TIMING_start(tm_poi_comm);
           if (cm_mode == 0 ) {
             if( !dc_p->CommBndCell(1) ) assert(0); // 1 layer communication
           }
@@ -1049,10 +1088,10 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
             cbc_sma_comm_     (p, sz, gc, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req, &para_key);
             cbc_sma_comm_wait_(p, sz, gc, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req);
           }
-          TIMING__ PM.stop(tm_poi_comm, comm_size*0.5);
+          TIMING_stop(tm_poi_comm, comm_size*0.5);
         }
         
-        TIMING__ PM.stop(tm_poi_itr_sct_3, 0.0);
+        TIMING_stop(tm_poi_itr_sct_3, 0.0);
         // <<< Poisson Iteration subsection 3
       }
       break;
@@ -1172,42 +1211,42 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   
   
   // >>> Fractional step sub-section 7
-  TIMING__ PM.start(tm_frctnl_stp_sct_7);
+  TIMING_start(tm_frctnl_stp_sct_7);
   
   // 反復処理
   switch (IC->get_LS()) {
       
     case JACOBI:
-      TIMING__ PM.start(tm_pvec_cn_Jacobi);
+      TIMING_start(tm_pvec_cn_Jacobi);
       flop_count = 0.0;
       SklInitializeSKL_REAL(dc_vf0->GetData(), 0.0, dc_vf0->GetArrayLength());
       cbc_vis_cn_jcb_(vc, sz, gc, dh, &dt, v00, &rei, &omg, wv, (int*)bcv, wk, &half, &r, &flop_count); 
-      TIMING__ PM.stop(tm_pvec_cn_Jacobi, flop_count);
+      TIMING_stop(tm_pvec_cn_Jacobi, flop_count);
       
-      TIMING__ PM.start(tm_pvec_cn_mod);
+      TIMING_start(tm_pvec_cn_mod);
       BC.mod_Vis_CN(vc, wv, half, bcv, wk, tm, dt, omg, &C, &r, IC->get_LS(), v00, flop_count);
-      TIMING__ PM.stop(tm_pvec_cn_mod, flop_count);
+      TIMING_stop(tm_pvec_cn_mod, flop_count);
       
-      TIMING__ PM.start(tm_copy_array);
+      TIMING_start(tm_copy_array);
       CU.copy_SKL_REAL(vc, vf0, dc_vc->GetArrayLength());
-      TIMING__ PM.stop(tm_copy_array, 0.0);
+      TIMING_stop(tm_copy_array, 0.0);
       break;
       
     case SOR:
-      TIMING__ PM.start(tm_pvec_cn_PSOR);
+      TIMING_start(tm_pvec_cn_PSOR);
       flop_count = 0.0;
       cbc_vis_cn_sor_(vc, sz, gc, dh, &dt, v00, &rei, &omg, wv, (int*)bcv, &half, &r, &flop_count);
-      TIMING__ PM.stop(tm_pvec_cn_PSOR, flop_count);
+      TIMING_stop(tm_pvec_cn_PSOR, flop_count);
       
-      TIMING__ PM.start(tm_pvec_cn_mod);
+      TIMING_start(tm_pvec_cn_mod);
       BC.mod_Vis_CN(vc, wv, half, bcv, wk, tm, dt, omg, &C, &r, IC->get_LS(), v00, flop_count);
-      TIMING__ PM.stop(tm_pvec_cn_mod, flop_count);
+      TIMING_stop(tm_pvec_cn_mod, flop_count);
       break;
       
     case SOR2SMA: // SOR2は同期処理も行う
-      TIMING__ PM.start(tm_pvec_cn_SOR2SMA);
+      TIMING_start(tm_pvec_cn_SOR2SMA);
       
-      TIMING__ PM.stop(tm_pvec_cn_SOR2SMA, flop_count);
+      TIMING_stop(tm_pvec_cn_SOR2SMA, flop_count);
       break;
       
     default:
@@ -1216,26 +1255,26 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   }
   
   // 境界条件
-  TIMING__ PM.start(tm_pvec_BC);
+  TIMING_start(tm_pvec_BC);
   flop_count=0.0;
   BC.OuterVBC(dc_vc, p0, bcv, &C, v00, flop_count);
   BC.assign_Velocity(v, bcv, tm, &C, v00);
-  TIMING__ PM.stop(tm_pvec_BC, flop_count);
+  TIMING_stop(tm_pvec_BC, flop_count);
   
-  TIMING__ PM.stop(tm_frctnl_stp_sct_7, 0.0);
+  TIMING_stop(tm_frctnl_stp_sct_7, 0.0);
   // <<< Fractional step subsection 7
   
   
   
   // >>> Fractional step sub-section 8
-  TIMING__ PM.start(tm_frctnl_stp_sct_8);
+  TIMING_start(tm_frctnl_stp_sct_8);
   
   // 同期処理
   if ( para_mng->IsParallel() ) {
     switch (IC->get_LS()) {
       case JACOBI:
       case SOR:
-        TIMING__ PM.start(tm_pvec_cn_comm);
+        TIMING_start(tm_pvec_cn_comm);
         if (cm_mode == 0 ) {
           if( !dc_vc->CommBndCell(guide) ) assert(0);
         }
@@ -1243,23 +1282,23 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
           if( !dc_vc->CommBndCell2(guide, wait_num, req) ) assert(0);
           para_mng->WaitAll(wait_num, req);
         }
-        TIMING__ PM.stop(tm_pvec_cn_comm, (SKL_REAL)sizeof(SKL_REAL)*2.0, 1);
+        TIMING_stop(tm_pvec_cn_comm, (SKL_REAL)sizeof(SKL_REAL)*2.0, 1);
         break;
     }
   }
   
   // Residual reduction
   if ( para_mng->IsParallel() ) {
-    TIMING__ PM.start(tm_pvec_cn_res_comm);
+    TIMING_start(tm_pvec_cn_res_comm);
     SKL_REAL tmp = r;
     para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // In fact, CN is MAX norm
-    TIMING__ PM.stop(tm_pvec_cn_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) );
+    TIMING_stop(tm_pvec_cn_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) );
   }
   
   // 残差の保存
   IC->set_normValue( sqrt(r/(SKL_REAL)G_Acell) );
   
-  TIMING__ PM.stop(tm_frctnl_stp_sct_8, 0.0);
+  TIMING_stop(tm_frctnl_stp_sct_8, 0.0);
   // <<< Fractional step subsection 8
 }*/
 
@@ -1287,45 +1326,45 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
   switch (IC->get_normType()) {
     case ItrCtl::v_div_max:
       // >>> Poisson Iteration subsection 5
-      TIMING__ PM.start(tm_poi_itr_sct_5);
+      TIMING_start(tm_poi_itr_sct_5);
       
-      TIMING__ PM.start(tm_norm_div_max);
+      TIMING_start(tm_norm_div_max);
       flop_count=0.0;
       cbc_norm_v_div_max_(&nrm, sz, gc, src1, &coef, (int*)bcp, &flop_count);
-      TIMING__ PM.stop(tm_norm_div_max, flop_count);
+      TIMING_stop(tm_norm_div_max, flop_count);
       
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_norm_comm);
+        TIMING_start(tm_norm_comm);
         tmp = nrm;
         para_mng->Allreduce(&tmp, &nrm, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // 最大値
-        TIMING__ PM.stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
       }
       convergence = nrm;
       IC->set_normValue( convergence );
       
-      TIMING__ PM.stop(tm_poi_itr_sct_5, 0.0);
+      TIMING_stop(tm_poi_itr_sct_5, 0.0);
       // <<< Poisson Iteration subsection 5
       break;
       
     case ItrCtl::v_div_l2:
       // >>> Poisson Iteration subsection 5
-      TIMING__ PM.start(tm_poi_itr_sct_5);
+      TIMING_start(tm_poi_itr_sct_5);
       
-      TIMING__ PM.start(tm_norm_div_l2);
+      TIMING_start(tm_norm_div_l2);
       flop_count=0.0;
       rms = CU.norm_v_div_l2(size, guide, coef, src1, bcp, flop_count);
-      TIMING__ PM.stop(tm_norm_div_l2, flop_count);
+      TIMING_stop(tm_norm_div_l2, flop_count);
       
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_norm_comm);
+        TIMING_start(tm_norm_comm);
         tmp = rms;
         para_mng->Allreduce(&tmp, &rms, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 和
-        TIMING__ PM.stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
       }
       convergence = sqrt(rms/np_f); //RMS
       IC->set_normValue( convergence );
       
-      TIMING__ PM.stop(tm_poi_itr_sct_5, 0.0);
+      TIMING_stop(tm_poi_itr_sct_5, 0.0);
       // <<< Poisson Iteration subsection 5
       break;
       
@@ -1336,23 +1375,23 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       
     case ItrCtl::v_div_max_dbg:
       // >>> Poisson Iteration subsection 5
-      TIMING__ PM.start(tm_poi_itr_sct_5);
+      TIMING_start(tm_poi_itr_sct_5);
       
-      TIMING__ PM.start(tm_norm_div_max_dbg);
+      TIMING_start(tm_norm_div_max_dbg);
       flop_count=0.0;
       int index[3];
       CU.norm_v_div_dbg(nrm, rms, index, size, guide, coef, src1, bcp, flop_count);
-      TIMING__ PM.stop(tm_norm_div_max_dbg, flop_count);
+      TIMING_stop(tm_norm_div_max_dbg, flop_count);
       
       //@todo ここで，最大値のグローバルなindexの位置を計算する
       
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_norm_comm);
+        TIMING_start(tm_norm_comm);
         tmp = nrm;
         para_mng->Allreduce(&tmp, &nrm, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // 最大値
         tmp = rms;
         para_mng->Allreduce(&tmp, &rms, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 和
-        TIMING__ PM.stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL)*2.0 ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL)*2.0 ); // 双方向 x ノード数
       }
       rms = sqrt(rms/np_f); // RMS
       convergence = nrm; // ノルムは最大値を返す
@@ -1363,7 +1402,7 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
         fflush(fp_i);
       }
       
-      TIMING__ PM.stop(tm_poi_itr_sct_5, 0.0);
+      TIMING_stop(tm_poi_itr_sct_5, 0.0);
       // <<< Poisson Iteration subsection 5
       break;
       

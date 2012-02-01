@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 
@@ -297,7 +297,7 @@
     kx = sz(3)
     dgr = dt*gr*rei*rei
     
-    flop = flop + real(ix*jx*kx*2 + 3)
+    flop = flop + real(ix*jx*kx)*2.0 + 3.0
 
     do k=1,kx
     do j=1,jx

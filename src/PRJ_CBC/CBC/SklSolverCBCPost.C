@@ -57,4 +57,3 @@ SklSolverCBC::SklSolverPost() {
 
   return true;
 }
-

@@ -2,8 +2,13 @@ Release Note
 
 	CBC ( Cartesian Base Class )
 	
-	2009-2011　 Copyright (c) RIKEN, Japan. All rights reserved.
+	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.5.0  28 Jan. 2012
+  - -DBINARY_VOXELにより、Cutlib, Polylibがコンパイルされていなくても対応
+  - Kのプロファイラ対応 -D__K_FPCOLL オプション
+  - 初期化プロセスのタイミング区間挿入
+  
 Ver 1.4.9   4 Dec. 2011
   - Polylib対応
   

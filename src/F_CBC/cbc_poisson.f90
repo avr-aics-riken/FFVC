@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 !
@@ -33,7 +33,7 @@
     jx = sz(2)
     kx = sz(3)
     b2 = 0.0
-    flop = flop + real(ix*jx*kx*2) ! 20100706
+    flop = flop + real(ix*jx*kx)*2.0
 
     do k=1,kx
     do j=1,jx
@@ -75,7 +75,7 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix*jx*kx*22)
+    flop = flop + real(ix*jx*kx)*22.0
 
     do k=1,kx
     do j=1,jx
@@ -170,7 +170,7 @@
     end do
     end do
     
-    flop = flop + real(c*22)
+    flop = flop + real(c)*22.0
 
     return
     end subroutine cbc_psor_if
@@ -204,7 +204,7 @@
 
 		res = 0.0 ! absolute
     
-    flop = flop + real(idx_sz*22)
+    flop = flop + real(idx_sz)*22.0
 
     do m=1, idx_sz
       i = index(1, m)
@@ -266,7 +266,7 @@
 
 		res = 0.0 ! absolute
     
-    flop = flop + real(idx_sz*22)
+    flop = flop + real(idx_sz)*22.0
 
     do m=1, idx_sz
       ldx = index(m)
@@ -330,7 +330,7 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix*jx*kx*22)
+    flop = flop + real(ix*jx*kx)*22.0
 
     do k=1,kx
     do j=1,jx
@@ -442,7 +442,7 @@
     end do
     end do
     
-    flop = flop + real(c*22)
+    flop = flop + real(c)*22.0
 
     return
     end subroutine cbc_jacobi_if
@@ -508,7 +508,7 @@
     end do
     end do
     
-    flop = flop + real(w*22)
+    flop = flop + real(w)*22.0
 
     return
     end subroutine cbc_psor2sma_core
@@ -577,7 +577,7 @@
     end do
     end do
     
-    flop = flop + real(w*22)
+    flop = flop + real(w)*22.0
 
     return
     end subroutine cbc_psor2sma_core_if

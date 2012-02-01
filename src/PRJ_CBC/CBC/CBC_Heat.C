@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -115,34 +115,36 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
     case SOR:
       
       // >>> Passive scalar Diffusion subsection 3
-      TIMING__ PM.start(tm_heat_diff_sct_3);
+      TIMING_start(tm_heat_diff_sct_3);
       
       // 反復処理
-      TIMING__ PM.start(tm_heat_diff_PSOR);
+      TIMING_start(tm_heat_diff_PSOR);
+      
       flop_count = 0.0;
       res = ps_Diff_SM_PSOR(t, b2, dt, qbc, bh2, ws, IC, flop_count);
-      TIMING__ PM.stop(tm_heat_diff_PSOR, flop_count);
+      
+      TIMING_stop(tm_heat_diff_PSOR, flop_count);
       
       // 外部境界条件
-      TIMING__ PM.start(tm_heat_diff_OBC);
+      TIMING_start(tm_heat_diff_OBC);
       BC.OuterTBC(dc_t);
-      TIMING__ PM.stop(tm_heat_diff_OBC, 0.0);
+      TIMING_stop(tm_heat_diff_OBC, 0.0);
       
       // 温度の同期
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_heat_update_comm);
+        TIMING_start(tm_heat_update_comm);
         dc_t->CommBndCell(guide);
-        TIMING__ PM.stop(tm_heat_update_comm, comm_size*(SKL_REAL)guide);
+        TIMING_stop(tm_heat_update_comm, comm_size*(SKL_REAL)guide);
       }
       
       // 残差の集約
       if ( para_mng->IsParallel() ) {
-        TIMING__ PM.start(tm_heat_diff_res_comm);
+        TIMING_start(tm_heat_diff_res_comm);
         SKL_REAL tmp_wk[2], m_tmp[2];
         tmp_wk[0] = m_tmp[0] = res;
         tmp_wk[1] = m_tmp[1] = b2;
         para_mng->Allreduce(tmp_wk, m_tmp, 2, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING__ PM.stop( tm_heat_diff_res_comm, 2.0*np_f*2.0*(SKL_REAL)sizeof(SKL_REAL) );
+        TIMING_stop( tm_heat_diff_res_comm, 2.0*np_f*2.0*(SKL_REAL)sizeof(SKL_REAL) );
         
         res = sqrt( m_tmp[0]/(SKL_REAL)G_Acell ); // 残差のRMS
         b2  = sqrt( m_tmp[1]/(SKL_REAL)G_Acell ); // ソースベクトルのRMS
@@ -153,7 +155,7 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
       nrm = ( IC->get_normType() == ItrCtl::t_res_l2_r ) ? res_r : res;
       IC->set_normValue( nrm );
       
-      TIMING__ PM.stop(tm_heat_diff_sct_3, 0.0);
+      TIMING_stop(tm_heat_diff_sct_3, 0.0);
       // <<< Passive scalar Diffusion subsection 3
       break;
 

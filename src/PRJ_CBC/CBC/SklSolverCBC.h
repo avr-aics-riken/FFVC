@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -52,6 +52,11 @@
 #include "IP_Cylinder.h"
 #include "IP_Polygon.h"
 
+// K用のプロファイラ
+#ifdef __K_FPCOLL
+#include "fjcoll.h"
+#endif
+
 // Polylib
 #include "Polylib.h"
 #include "MPIPolylib.h"
@@ -93,7 +98,7 @@ public:
   Intrinsic*      Ex; // pointer to a base class
   CompoList*      cmp;
   MaterialList*   mat;
-  
+
   // Polylib
   MPIPolylib*     PL;
   POLYLIB_STAT	  poly_stat;
@@ -186,10 +191,10 @@ public:
   SklVoxDataSet *m_outI2VGT;
   SklVoxDataSet *m_outHlcty;
   SklVoxDataSet *m_outDiv;
-  
+
   // (6, ix+guide*2, jx+guide*2, kx+guide*2)
   float* cut; // Cutlibで確保する配列のポインタを受け取る
-  
+
   // Fluid cell
   SklScalar<int> *dc_index3;      // index test; 
   SklScalar<unsigned> *dc_index;  // index test; 
@@ -202,6 +207,10 @@ public:
   
   // timing management
   unsigned ModeTiming;
+  
+  // プロファイラ用のラベル
+  //std::string* timing_label;
+  char tm_label_ptr[tm_END][TM_LABEL_MAX];
   
 protected:
   SklSolverCBC();
@@ -296,6 +305,8 @@ public:
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
+  //void set_label            (unsigned key, const string& label, PerfMonitor::Type type, bool exclusive=true);
+  void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void set_Parallel_Info    (void);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
@@ -326,6 +337,35 @@ public:
     RF.copyV00(g);
     for (int i=0; i<4; i++) v00[i]=(SKL_REAL)g[i];
   }
+  
+  //@fn プロファイラのラベル取り出し
+  //@param 格納番号
+  inline const char* get_tm_label(unsigned key) {
+    return (const char*)tm_label_ptr[key];
+    //return timing_label[key].c_str();
+  }
+  
+  //@fn タイミング測定開始
+  //@param 格納番号
+  inline void TIMING_start(unsigned key) {
+    TIMING__ PM.start(key);
+    start_collection( get_tm_label(key) );
+  }
+  
+  //@fn タイミング測定終了
+  //@param 格納番号
+  //@param[in] flopPerTask 「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
+  //@param[in] iterationCount  実行「タスク」数 (ディフォルト1)
+  inline void TIMING_stop(unsigned key, SKL_REAL flopPerTask=0.0, unsigned iterationCount=1) {
+    stop_collection( get_tm_label(key) );
+    TIMING__ PM.stop(key, flopPerTask, iterationCount);
+  }
+
+#ifndef __K_FPCOLL
+  //@fn K用プロファイラのスタブ -D__K_FPCOLLがオプション指定されないと、こちらが有効
+  void start_collection(const char*) {}
+  void stop_collection (const char*) {}
+#endif
   
 };
 

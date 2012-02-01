@@ -123,3 +123,4 @@ parameter ( obc_periodic = 5 ) ! FBDefine.h OBC_PERIODIC
 ! 体積率
 parameter ( top_vf      = 20) ! FBDefine.h TOP_VF
 parameter ( forcing_bit = 28) ! FBDefine.h FORCING_BIT
+

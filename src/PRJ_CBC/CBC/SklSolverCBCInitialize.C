@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -189,9 +189,11 @@ SklSolverCBC::SklSolverInitialize() {
     set_timing_label();
   }
   
-  TIMING__ PM.start(tm_init_sct);
+  // タイミング測定開始
+  TIMING_start(tm_init_sct); 
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
+  TIMING_start(tm_init_alloc); 
   allocArray_prep(TotalMemory, PrepMemory);
   if( !(ws  = dc_ws->GetData()) )   assert(0);
   if( !(mid = dc_mid->GetData()) )  assert(0);
@@ -202,7 +204,7 @@ SklSolverCBC::SklSolverInitialize() {
     if( !(bh1 = dc_bh1->GetData()) )  assert(0);
     if( !(bh2 = dc_bh2->GetData()) )  assert(0);
   }
-  
+  TIMING_stop(tm_init_alloc); 
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成 --------------------------------------------------------
   Hostonly_ {
@@ -212,14 +214,18 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(mp,"\t>> Voxel file information\n\n");
   }
   
+  TIMING_start(tm_voxel_prep_sct);
+  
   // BinaryとCut-Distanceの分岐
   if ( C.isCDS() ) { // Cut-Distance Scheme
     
+#ifndef BINARY_VOXEL    
     // PolylibとCutlibのセットアップ
     if ( C.Mode.Example == id_Users ) {
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
       
       // 媒質ファイルが指定された場合の処理
+      TIMING_start(tm_voxel_load);
       if ( C.Mode.Medium_Spec == ON ) {
         if ( C.vxFormat == Control::Sphere_SVX ) {
           F.readSVX(this, fp, "SphereSVX", G_size, guide, dc_mid);
@@ -231,15 +237,18 @@ SklSolverCBC::SklSolverInitialize() {
       else { // 媒質ファイルを使わない場合，指定された媒質番号で初期化
         SklInitializeInt(dc_mid->GetData(), (int)C.Mode.Base_Medium, dc_mid->GetArrayLength());
       }
+      TIMING_stop(tm_voxel_load);
 
     }
     else { // Intrinsic problem
       setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       Ex->setup(mid, &C, G_org);
     }
+#endif
   }
   else { // Binary
     
+    TIMING_start(tm_voxel_load);
     if ( C.Mode.Example == id_Users ) {
       if ( C.vxFormat == Control::Sphere_SVX ) {
         F.readSVX(this, fp, "SphereSVX", G_size, guide, dc_mid);
@@ -251,6 +260,8 @@ SklSolverCBC::SklSolverInitialize() {
     else { // Intrinsic problem　ユーザ問題も組み込み例題クラスの一つとして実装されている
       Ex->setup(mid, &C, G_org);
     }
+    TIMING_stop(tm_voxel_load);
+    
   }
   
   // midのガイドセル同期
@@ -350,11 +361,13 @@ SklSolverCBC::SklSolverInitialize() {
     Vinfo.adjCellID_on_GC(face, dc_mid, BC.get_OBC_Ptr(face)->get_BCtype(), 
                          BC.get_OBC_Ptr(face)->get_GuideID(), BC.get_OBC_Ptr(face)->get_PrdcMode());
   }
-  
+
+#ifndef BINARY_VOXEL
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
   if ( C.isCDS() ) {
     Vinfo.setOBC_Cut(&BC, cutPos);
   }
+#endif
   
 #ifdef DEBUG
   // カット情報から壁面IDセット
@@ -656,9 +669,13 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
+  
+  TIMING_stop(tm_voxel_prep_sct);
+  // ここまでがボクセル準備の時間セクション
 
   
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
+  TIMING_start(tm_init_alloc);
   allocArray_main (TotalMemory);
   
   allocArray_Collocate (TotalMemory);
@@ -696,6 +713,8 @@ SklSolverCBC::SklSolverInitialize() {
   // index test; if ( !allocArray_index(TotalMemory) ) return -1;
   // index test; if ( !Vinfo.make_index_list(dc_index, bcd) ) return -1;
   
+  TIMING_stop(tm_init_alloc);
+  
   
   // リスタート 瞬時値と平均値に分けて処理　------------------
   if ( C.Start==Control::re_start) {
@@ -704,7 +723,9 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ fprintf(mp, "\t>> Restart from Previous Calculation Results\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculation Results\n\n");
     
+    TIMING_start(tm_restart);
     load_Restart_file(fp); // 瞬時値のロード
+    TIMING_stop(tm_restart);
     
     Hostonly_ fprintf(mp,"\n");
     Hostonly_ fprintf(fp,"\n");
@@ -768,7 +789,9 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 平均値のロード
   if ( C.Start==Control::re_start) {
+    TIMING_start(tm_restart);
     load_Restart_avr_file(fp);
+    TIMING_stop(tm_restart);
   }
   
   // データクラスのポイント
@@ -1047,9 +1070,8 @@ SklSolverCBC::SklSolverInitialize() {
   Ex->PostInit(checkTime, &C);
   
   Hostonly_ if ( fp ) fclose(fp);
-  
-
-  TIMING__ PM.stop(tm_init_sct, 0.0);
+   
+  TIMING_stop(tm_init_sct);
 
   return 1;
 }
@@ -2628,6 +2650,7 @@ bool SklSolverCBC::hasLinearSolver(unsigned L)
   return false;
 }
 
+#ifndef BINARY_VOXEL
 /**
  @fn void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
  @brief Polylibを準備し，ポリゴンをロードする
@@ -2681,11 +2704,13 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   
   // Polylib: STLデータ読み込み
+  TIMING_start(tm_polygon_load);
   poly_stat = PL->load_rank0( C.PolylibConfigName );
   if( poly_stat != PLSTAT_OK ) {
     fprintf(mp,"\tRank [%d]: p_polylib->load_rank0() failed.", pn.ID);
     assert(0);
   }
+  TIMING_stop(tm_polygon_load);
   
   // 階層情報表示
   PL->show_group_hierarchy();
@@ -2783,11 +2808,15 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   //stamped_printf("cut : dx(%e %e %e) dimensional\n", poly_dx[0], poly_dx[1], poly_dx[2]);
   
   // Cutlibの配列は各方向(引数)のサイズ
+  TIMING_start(tm_init_alloc);
   cutPos = new CutPos32Array(n_cell); // 6*(float)
   cutBid = new CutBid8Array(n_cell);  // 2*(int32_t)
+  TIMING_stop(tm_init_alloc);
   
+  TIMING_start(tm_cutinfo);
   CutInfoCell(poly_org, poly_dx, PL, cutPos, cutBid); // ガイドセルを含む全領域で交点を計算
   //CutInfoCell(ista, nlen, poly_org, poly_dx, PL, cutPos, cutBid);
+  TIMING_stop(tm_cutinfo);
   
   // 使用メモリ量　
   unsigned long cut_mem, G_cut_mem;
@@ -2879,7 +2908,9 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   cut_org[2] = (float)( C.org[2] - C.dx[2]*guide )*C.RefLength;
   
   // Cutlibの配列は各方向(引数)のサイズ
+  TIMING_start(tm_init_alloc);
   cutPos = new CutPos32Array(n_cell); // 6*(float)
+  TIMING_stop(tm_init_alloc);
   
   // 使用メモリ量　
   unsigned long cut_mem, G_cut_mem;
@@ -2903,3 +2934,4 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
 }
+#endif

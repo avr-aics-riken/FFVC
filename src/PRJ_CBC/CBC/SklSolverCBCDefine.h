@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -12,11 +12,22 @@
 //@brief SklSolverCBC Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#define VERS_CBC   149
+#define VERS_CBC   150
+#define TM_LABEL_MAX 24
   
 // 計算性能測定キー番号
 enum timing_key {
   tm_init_sct,
+    tm_init_alloc,
+  
+    tm_voxel_prep_sct,
+      tm_voxel_load,
+      tm_polygon_load,
+      tm_cutinfo,
+  
+    tm_restart,
+  
+  tm_loop_sct,
   
   tm_vmax,          
   tm_vmax_comm,

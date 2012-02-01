@@ -43,16 +43,16 @@ void SklSolverCBC::IF_TRP_VOF(void)
   if( !(v   = dc_vf0->GetData()) )  assert(0);
   
   // convection
-  TIMING__ PM.start(tm_vof_cnv);
+  TIMING_start(tm_vof_cnv);
   vof_uwd_(vof, sz, gc, v00, &dt, dh, v, ws, (int*)bcv, &flop_count);
-  TIMING__ PM.stop(tm_vof_cnv, flop_count);
+  TIMING_stop(tm_vof_cnv, flop_count);
   
-  TIMING__ PM.start(tm_vof_cnv_comm);
+  TIMING_start(tm_vof_cnv_comm);
   dc_vof->CommBndCell(guide);
-  TIMING__ PM.stop(tm_vof_cnv_comm, 0.0);
+  TIMING_stop(tm_vof_cnv_comm, 0.0);
   
   // variable range cutoff
-  //TIMING__ PM.start(tm_vof_range);
+  //TIMING_start(tm_vof_range);
   //CU.CutOffRange (t, cmp, bcp, &C);
-  //TIMING__ PM.stop(tm_vof_range, flop_task);
+  //TIMING_stop(tm_vof_range, flop_task);
 }

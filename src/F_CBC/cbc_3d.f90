@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 
@@ -1463,7 +1463,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(ix*jx*kx*95) + 2.0
+    flop = flop + real(ix*jx*kx)*95.0 + 2.0
 
     do k=1,kx
     do j=1,jx
@@ -1588,7 +1588,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flopc = flopc + real(ix*jx*kx*49) ! flopはd_o_o_p.hで使われている
+    flopc = flopc + real(ix*jx*kx)*49.0 ! flopはd_o_o_p.hで使われている
 
     do k=1,kx
     do j=1,jx
@@ -1646,7 +1646,7 @@
     jx = sz(2)
     kx = sz(3)
 
-    flop = flop + real(9*ix*jx*kx)
+    flop = flop + real(ix*jx*kx)*9.0
     
     do k=1,kx
     do j=1,jx
@@ -1703,7 +1703,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(5 + 48*ix*jx*kx) ! 20100628
+    flop = flop + real(ix*jx*kx)*48.0 + 5.0
     
     do k=1,kx
     do j=1,jx
@@ -2027,7 +2027,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(8 + 52*ix*jx*kx)
+    flop = flop + real(ix*jx*kx)*52.0 + 8.0
     
     do k=1,kx
     do j=1,jx
@@ -2306,7 +2306,7 @@
     end do
     end do
     
-    flop = flop + real(8 + 48*m)
+    flop = flop + real(m)*48.0 + 8.0
 
     return
     end subroutine cbc_vis_cn_mod_sor
