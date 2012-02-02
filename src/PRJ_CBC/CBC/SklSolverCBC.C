@@ -339,24 +339,32 @@ void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, SKL_REAL& flop)
 //@param[in] label ラベル
 //@param[in] type  測定対象タイプ(COMM or CALC)
 //@param[in] exclusive 排他測定フラグ(ディフォルトtrue)
-//void SklSolverCBC::set_label(unsigned key, const string& label, PerfMonitor::Type type, bool exclusive)
 void SklSolverCBC::set_label(unsigned key, char* label, PerfMonitor::Type type, bool exclusive)
 {
+  // 文字数がTM_LABEL_MAX-1を超えるものはカット
+  int len = strlen(label);
+  char label_tmp[TM_LABEL_MAX];
+  
+  if ( len>TM_LABEL_MAX-1 ) {
+    strncpy(label_tmp, label, TM_LABEL_MAX-1);
+    printf("\tWarning: Length of timing label must be less than %d\n", TM_LABEL_MAX-1);
+  }
+  else {
+    strcpy(label_tmp, label);
+  }
+  
   // Performance Monitorへの登録
-  string tmp(label);
+  string tmp(label_tmp);
   PM.setProperties(key, tmp, type, exclusive); 
 
   // K用プロファイラの文字列登録
-  //timing_label[key] = label;
-  strcpy(tm_label_ptr[key], label);
+  strcpy(tm_label_ptr[key], label_tmp);
 }
 
 //@fn void SklSolverCBC::set_timing_label(void)
 //@brief タイミング測定区間にラベルを与える
 void SklSolverCBC::set_timing_label(void)
 {
-  // タイミングラベルの確保
-  //tm_label_ptr = new std::string[tm_END];
   // ラベルの設定
   set_label(tm_init_sct,           "Initialization Section",  PerfMonitor::CALC, false);
   set_label(tm_init_alloc,         "Allocate Arrays",         PerfMonitor::CALC);
@@ -1056,6 +1064,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
         }
         else {
           cbc_psor2sma_core_(p, sz, gc, &ip, &color, &omg, &r, src0, src1, (int*)bcp, &flop_count);
+          //PSOR2sma_core(p, ip, color, src0, src1, bcp, IC, flop_count);
         }
         TIMING_stop(tm_poi_SOR2SMA, flop_count);
         
@@ -1416,7 +1425,7 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
 
 /* test用のコア fortranのcbc_psor()と等価
  インラインメソッドとマクロの実行性能比較テスト
-
+*/
 SKL_REAL SklSolverCBC::PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop)
 {
   int i,j,k;
@@ -1486,4 +1495,74 @@ SKL_REAL SklSolverCBC::PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigne
   
 	return res;
 }
-*/
+
+
+SKL_REAL SklSolverCBC::PSOR2sma_core(SKL_REAL* p, int ip, int color, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop)
+{
+  int i,j,k;
+  unsigned m_p, m_w, m_e, m_s, m_n, m_b, m_t;
+  SKL_REAL a_p, g_w, g_e, g_s, g_n, g_b, g_t;
+  SKL_REAL t_p, t_w, t_e, t_s, t_n, t_b, t_t;
+  SKL_REAL dd, dp, ss;
+  SKL_REAL omg;
+  SKL_REAL res; // 残差の自乗和
+  unsigned register s;
+  
+  omg = IC->get_omg();
+  res = 0.0;
+  flop += (SKL_REAL)(ixc*jxc*kxc)* 22.0;
+  
+  for (k=1; k<=kxc; k++) {
+    for (j=1; j<=jxc; j++) {
+      for (i=1+(k+j+color+ip)%2; i<=ixc; i+=2) {
+        m_p = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m_w = SklUtil::getFindexS3D(size, guide, i-1, j  , k  );
+        m_e = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
+        m_s = SklUtil::getFindexS3D(size, guide, i  , j-1, k  );
+        m_n = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
+        m_b = SklUtil::getFindexS3D(size, guide, i  , j  , k-1);
+        m_t = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        
+        //m_p = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j  , k  );
+        //m_w = F_INDEX_S3D(ixc, jxc, kxc, guide, i-1, j  , k  );
+        //m_e = F_INDEX_S3D(ixc, jxc, kxc, guide, i+1, j  , k  );
+        //m_s = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j-1, k  );
+        //m_n = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j+1, k  );
+        //m_b = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j  , k-1);
+        //m_t = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j  , k+1);
+        
+        t_p = p[m_p];
+        t_w = p[m_w];
+        t_e = p[m_e];
+        t_s = p[m_s];
+        t_n = p[m_n];
+        t_b = p[m_b];
+        t_t = p[m_t];
+        
+        s   = bp[m_p];
+        a_p = GET_SHIFT_F(s, ACTIVE_BIT);
+        g_w = GET_SHIFT_F(s, BC_NDAG_W);
+        g_e = GET_SHIFT_F(s, BC_NDAG_E);
+        g_s = GET_SHIFT_F(s, BC_NDAG_S);
+        g_n = GET_SHIFT_F(s, BC_NDAG_N);
+        g_b = GET_SHIFT_F(s, BC_NDAG_B);
+        g_t = GET_SHIFT_F(s, BC_NDAG_T);
+        
+        dd = 1.0 / (SKL_REAL)( (s>>BC_DIAG) & 0x7 ); // 3bitを取り出す
+        ss = g_w * t_w  // west  
+           + g_e * t_e  // east  
+           + g_s * t_s  // south 
+           + g_n * t_n  // north 
+           + g_b * t_b  // bottom
+           + g_t * t_t  // top
+           - src0[m_p] + src1[m_p];
+        
+        dp = dd * ss - t_p;
+        p[m_p] = t_p + omg * dp;
+        res += dp * dp * a_p;
+      }
+    }
+  }
+  
+	return res;
+}

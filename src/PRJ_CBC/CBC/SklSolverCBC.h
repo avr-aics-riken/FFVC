@@ -209,7 +209,6 @@ public:
   unsigned ModeTiming;
   
   // プロファイラ用のラベル
-  //std::string* timing_label;
   char tm_label_ptr[tm_END][TM_LABEL_MAX];
   
 protected:
@@ -305,7 +304,6 @@ public:
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
-  //void set_label            (unsigned key, const string& label, PerfMonitor::Type type, bool exclusive=true);
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void set_Parallel_Info    (void);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
@@ -319,7 +317,8 @@ public:
   void PS_E_CBC             (void);
   void PS_EE_EI_CBC         (void);
   
-  //SKL_REAL PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
+  SKL_REAL PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
+  SKL_REAL PSOR2sma_core(SKL_REAL* p, int ip, int color, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
   
   // CBC_Heat.C
 	SKL_REAL ps_Diff_SM_EE    (SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, SKL_REAL& flop);
@@ -342,7 +341,6 @@ public:
   //@param 格納番号
   inline const char* get_tm_label(unsigned key) {
     return (const char*)tm_label_ptr[key];
-    //return timing_label[key].c_str();
   }
   
   //@fn タイミング測定開始
