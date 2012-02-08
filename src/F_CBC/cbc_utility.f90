@@ -12,7 +12,7 @@
 !<
 
 !  *****************************************************
-!> @subroutine cbc_vmax (ds, sz, g, div, coef, bp, flop)
+!> @subroutine cbc_norm_v_div_max (ds, sz, g, div, coef, bp, flop)
 !! @brief 速度成分の最大値を計算する
 !! @param ds 最大値
 !! @param sz 配列長
