@@ -33,7 +33,7 @@
     jx = sz(2)
     kx = sz(3)
     b2 = 0.0
-    flop = flop + real(ix*jx*kx)*2.0
+    flop = flop + real(ix)*real(jx)*real(kx)*3.0
 
     do k=1,kx
     do j=1,jx
@@ -75,7 +75,7 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix*jx*kx)*22.0
+    flop = flop + real(ix)*real(jx)*real(kx)*28.0
 
     do k=1,kx
     do j=1,jx
@@ -170,7 +170,7 @@
     end do
     end do
     
-    flop = flop + real(c)*22.0
+    flop = flop + real(c)*28.0
 
     return
     end subroutine cbc_psor_if
@@ -204,7 +204,7 @@
 
 		res = 0.0 ! absolute
     
-    flop = flop + real(idx_sz)*22.0
+    flop = flop + real(idx_sz)*28.0
 
     do m=1, idx_sz
       i = index(1, m)
@@ -266,7 +266,7 @@
 
 		res = 0.0 ! absolute
     
-    flop = flop + real(idx_sz)*22.0
+    flop = flop + real(idx_sz)*28.0
 
     do m=1, idx_sz
       ldx = index(m)
@@ -330,7 +330,7 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix*jx*kx)*22.0
+    flop = flop + real(ix)*real(jx)*real(kx)*28.0
 
     do k=1,kx
     do j=1,jx
@@ -442,7 +442,7 @@
     end do
     end do
     
-    flop = flop + real(c)*22.0
+    flop = flop + real(c)*28.0
 
     return
     end subroutine cbc_jacobi_if
@@ -465,7 +465,7 @@
     subroutine cbc_psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
     include 'cbc_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, idx, w
+    integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
     real                                                      ::  omg, dd, ss, dp, res, flop, pp
@@ -476,7 +476,7 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    w = 0
+    flop = flop + real(ix)*real(jx)*real(kx)*28.0*0.5
 
     do k=1,kx
     do j=1,jx
@@ -503,12 +503,9 @@
       dp = (dd*ss - pp)
       p(i,j,k) = pp + omg*dp
       res = res + dp*dp*real(ibits(idx, Active, 1))
-      w = w+1
     end do
     end do
     end do
-    
-    flop = flop + real(w)*22.0
 
     return
     end subroutine cbc_psor2sma_core
@@ -577,7 +574,7 @@
     end do
     end do
     
-    flop = flop + real(w)*22.0
+    flop = flop + real(w)*28.0
 
     return
     end subroutine cbc_psor2sma_core_if

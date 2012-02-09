@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 !
@@ -11,7 +11,7 @@
 !> @author keno, FSI Team, VCAD, RIKEN
 !<
 
-!  *****************************************************
+!  ***************************************************************
 !> @subroutine cbc_norm_v_div_max (ds, sz, g, div, coef, bp, flop)
 !! @brief 速度成分の最大値を計算する
 !! @param ds 最大値
@@ -36,7 +36,7 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + real(ix*jx*kx*4)
+    flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
     do k=1,kx
     do j=1,jx
@@ -74,19 +74,19 @@
     vm1 = 0.0
     vm2 = 0.0
     vm3 = 0.0
-    flop = flop + real(ix*jx*kx*9 + 2)
+    flop = flop + real(ix)*real(jx)*real(kx)*21.0 + 6.0
 
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      vm1 = max(vm1, abs(v(i,j,k,1)-v00(1) ) ) ! 3 flop
+      vm1 = max(vm1, abs(v(i,j,k,1)-v00(1) ) )
       vm2 = max(vm2, abs(v(i,j,k,2)-v00(2) ) )
       vm3 = max(vm3, abs(v(i,j,k,3)-v00(3) ) )
     end do
     end do
     end do
     
-    v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 2 flop
+    v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 6 flop
 
     return
     end subroutine cbc_vmax
@@ -132,7 +132,7 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix*jx*kx*68)
+    flop = flop + real(ix)*real(jx)*real(kx)*68.0 + 8.0
 
     do k=1,kx
     do j=1,jx
@@ -287,7 +287,7 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix*jx*kx*27)
+    flop = flop + real(ix)*real(jx)*real(kx)*27.0 + 8.0
 
     do k=1,kx
     do j=1,jx
@@ -431,7 +431,7 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix*jx*kx*33)
+    flop = flop + real(ix)*real(jx)*real(kx)*33.0 + 8.0
 
     do k=1,kx
     do j=1,jx

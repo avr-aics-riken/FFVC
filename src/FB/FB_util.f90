@@ -48,7 +48,7 @@
         end do
         end do
         end do
-        flop = flop + real(ix*jx*kx*13)
+        flop = flop + real(ix)*real(jx)*real(kx)*16.0
         
       case(1)  ! Collocated
         do k=1-g,kx+g
@@ -61,7 +61,7 @@
         end do
         end do
         end do
-        flop = flop + real(ix*jx*kx*10)
+        flop = flop + real(ix)*real(jx0*real(kx)*10.0
         
       case default
     end select scheme

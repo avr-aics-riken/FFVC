@@ -2,7 +2,7 @@ Release Note
 
 	FB class ( Flow Base )
 	
-	2007-2011　 Copyright (c) RIKEN, Japan. All rights reserved.
+	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
 Ver 2.4.6  　4 Dec. 2011
   - condition, profiling, history名を固定に変更 > getXML_History()

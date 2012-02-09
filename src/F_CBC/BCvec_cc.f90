@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 
@@ -112,20 +112,21 @@
     subroutine cbc_vobc_outflow (v, sz, g, c, bv, face, v0, flop)
     implicit none
     include 'cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, face, ix, jx, kx, m
+    integer                                                     ::  i, j, k, g, idx, face, ix, jx, kx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  Ue, Uw, Un, Us, Ut, Ub
     real                                                        ::  Ve, Vw, Vn, Vs, Vt, Vb
     real                                                        ::  We, Ww, Wn, Ws, Wt, Wb
-    real                                                        ::  flop, c
+    real                                                        ::  flop, c, rix, rjx, rkx
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, v0
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
-    m = 0
+    rix = real(jx)*real(kx)
+    rjx = real(ix)*real(kx)
+    rkx = real(ix)*real(jx)
     
     FACES : select case (face)
     case (X_minus)
@@ -144,10 +145,10 @@
           v(i-1,j  ,k  ,1) = Uw - c*(Ue-Uw)
           v(i-1,j  ,k  ,2) = Vw - c*(Ve-Vw)
           v(i-1,j  ,k  ,3) = Ww - c*(We-Ww)
-          m = m+1
         endif
       end do
       end do
+      flop = flop + rix*9.0
       
     case (X_plus)
       if ( c<0.0 ) c=0.0
@@ -165,10 +166,10 @@
           v(i+1,j  ,k  ,1) = Ue - c*(Ue-Uw)
           v(i+1,j  ,k  ,2) = Ve - c*(Ve-Vw)
           v(i+1,j  ,k  ,3) = We - c*(We-Ww)
-          m = m+1
         endif
       end do
       end do
+      flop = flop + rix*9.0
       
     case (Y_minus)
     if ( c>0.0 ) c=0.0
@@ -186,10 +187,10 @@
           v(i  ,j-1,k  ,1) = Us - c*(Un-Us)
           v(i  ,j-1,k  ,2) = Vs - c*(Vn-Vs)
           v(i  ,j-1,k  ,3) = Ws - c*(Wn-Ws)
-          m = m+1
         endif
       end do
       end do
+      flop = flop + rjx*9.0
       
     case (Y_plus)
       if ( c<0.0 ) c=0.0
@@ -207,10 +208,10 @@
           v(i  ,j+1,k  ,1) = Un - c*(Un-Us)
           v(i  ,j+1,k  ,2) = Vn - c*(Vn-Vs)
           v(i  ,j+1,k  ,3) = Wn - c*(Wn-Ws)
-          m = m+1
         endif
       end do
       end do
+      flop = flop + rjx*9.0
       
     case (Z_minus)
     if ( c>0.0 ) c=0.0
@@ -228,10 +229,10 @@
           v(i  ,j  ,k-1,1) = Ub - c*(Ut-Ub)
           v(i  ,j  ,k-1,2) = Vb - c*(Vt-Vb)
           v(i  ,j  ,k-1,3) = Wb - c*(Wt-Wb)
-          m = m+1
         endif
       end do
       end do
+      flop = flop + rkx*9.0
       
     case (Z_plus)
       if ( c<0.0 ) c=0.0
@@ -249,15 +250,13 @@
           v(i  ,j  ,k+1,1) = Ut - c*(Ut-Ub)
           v(i  ,j  ,k+1,2) = Vt - c*(Vt-Vb)
           v(i  ,j  ,k+1,3) = Wt - c*(Wt-Wb)
-          m = m+1
         endif
       end do
       end do
+      flop = flop + rkx*9.0
       
     case default
     end select FACES
-    
-    flop = flop + real(m*9)
     
     return
     end subroutine cbc_vobc_outflow
@@ -283,13 +282,16 @@
     real                                                      ::  c1, c2, c3, v0, v1, v2, v3, v4
     real                                                      ::  uu, vv, ww
     real                                                      ::  u_ref, v_ref, w_ref
-    real                                                      ::  d1, d2, d3, d4, r, flop
+    real                                                      ::  d1, d2, d3, d4, r, flop, rix, rjx, rkx
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    rix = real(jx)*real(kx)
+    rjx = real(ix)*real(kx)
+    rkx = real(ix)*real(jx)
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
@@ -333,7 +335,7 @@
       end do
       end do
       
-      flop = flop + real(jx*kx*49)
+      flop = flop + rix*44.0
       
     case (X_plus)
       do k=1,kx
@@ -373,7 +375,7 @@
       end do
       end do
       
-      flop = flop + real(jx*kx*49)
+      flop = flop + rix*44.0
       
     case (Y_minus)
       do k=1,kx
@@ -413,7 +415,7 @@
       end do
       end do
       
-      flop = flop + real(ix*kx*49)
+      flop = flop + rjx*44.0
       
     case (Y_plus)
       do k=1,kx
@@ -453,7 +455,7 @@
       end do
       end do
       
-      flop = flop + real(ix*kx*49)
+      flop = flop + rjx*44.0
       
     case (Z_minus)
       do j=1,jx
@@ -493,7 +495,7 @@
       end do
       end do
       
-      flop = flop + real(ix*jx*49)
+      flop = flop + rkx*44.0
       
     case (Z_plus)
       do j=1,jx
@@ -533,7 +535,7 @@
       end do
       end do
       
-      flop = flop + real(ix*jx*49)
+      flop = flop + rkx*44.0
       
     case default
     end select FACES
@@ -879,14 +881,12 @@
           Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
           if ( cf>0.0 ) cf=0.0
           Uw_t = Uw - cf*(Ue-Uw)
-          flop = flop + 7.0
         endif
         
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then
           Ue = Uw - (Vn - Vs + Wt - Wb)
           if ( cf<0.0 ) cf=0.0
           Ue_t = Ue - cf*(Ue-Uw)
-          flop = flop + 7.0
         endif
         
         ! Y方向 ---------------------------------------
@@ -894,14 +894,12 @@
           Vs = Vn + (Ue - Uw + Wt - Wb)
           if ( cf>0.0 ) cf=0.0
           Vs_t = Vs - cf*(Vn-Vs)
-          flop = flop + 7.0
         endif
         
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
           Vn = Vs - (Ue - Uw + Wt - Wb)
           if ( cf<0.0 ) cf=0.0
           Vn_t = Vn - cf*(Vn-Vs)
-          flop = flop + 7.0
         endif
         
         ! Z方向 ---------------------------------------
@@ -909,23 +907,22 @@
           Wb = Wt + (Ue - Uw + Vn - Vs)
           if ( cf>0.0 ) cf=0.0
           Wb_t = Wb - cf*(Wt-Wb)
-          flop = flop + 7.0
         endif
         
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
           Wt = Wb - (Ue - Uw + Vn - Vs)
           if ( cf<0.0 ) cf=0.0
           Wt_t = Wt - cf*(Wt-Wb)
-          flop = flop + 7.0
         endif
 
         ! VBCの面だけUe_tなどは値をもつ
         div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) * coef ! 対象セルは流体なのでマスク不要
-        flop = flop + 7.0
       end if
     end do
     end do
     end do
+
+    flop = flop + 49.0 + 36.0
 
     return
     end subroutine cbc_div_ibc_oflow_pvec
@@ -1013,7 +1010,7 @@
 
     av(1) = a1
     av(2) = real(m)
-    flop = flop + real(m*2)
+    flop = flop + real(m)*2.0
 
     call SklIsParallel(iret)
     if ( iret == 1 ) then
@@ -1045,7 +1042,7 @@
     subroutine cbc_div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none
     include 'cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, m, odr
+    integer                                                     ::  i, j, k, g, bvx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
@@ -1059,8 +1056,6 @@
     u_bc_ref = vec(1) + v00(1)
     v_bc_ref = vec(2) + v00(2)
     w_bc_ref = vec(3) + v00(3)
-    
-    m = 0
     
     do k=st(3),ed(3)
     do j=st(2),ed(2)
@@ -1083,12 +1078,11 @@
 
         ! VBCの面だけUe_tなどは値をもつ
         div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) * coef ! 対象セルは流体なのでマスク不要
-        m = m+1
       end if
     end do
     end do
     end do
-    flop = flop + real(m*7)
+    flop = flop + real(ed(1)-st(1)+1)*(ed(2)-st(2)+1)*(ed(3)-st(3)+1)*7.0
 
     return
     end subroutine cbc_div_ibc_drchlt
@@ -1234,7 +1228,7 @@
     real                                                        ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
     real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                        ::  u_ref, v_ref, w_ref
+    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx
     real, dimension(0:3)                                        ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
@@ -1243,6 +1237,9 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    rix = real(jx)*real(kx)
+    rjx = real(ix)*real(kx)
+    rkx = real(ix)*real(jx)
     
     ! 参照速度
     u_ref = v00(1)
@@ -1263,10 +1260,10 @@
           Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
           Uw_t = Uw - v_out*(Ue-Uw)
           div(i,j,k) = div(i,j,k) - Uw_t * coef
-          flop = flop + 9.0
         endif
       end do
       end do
+      flop = flop + rix*(36.0 + 9.0)
       
     case (X_plus)
       if ( v_out<0.0 ) v_out=0.0
@@ -1281,11 +1278,11 @@
           Ue = Uw - (Vn - Vs + Wt - Wb)
           Ue_t = Ue - v_out*(Ue-Uw)
           div(i,j,k) = div(i,j,k) + Ue_t * coef
-          flop = flop + 9.0
         endif
       end do
       end do
-      
+      flop = flop + rix*(36.0 + 9.0)
+
     case (Y_minus)
       if ( v_out>0.0 ) v_out=0.0
       j = 1
@@ -1299,10 +1296,10 @@
           Vs = Vn + (Ue - Uw + Wt - Wb)
           Vs_t = Vs - v_out*(Vn-Vs)
           div(i,j,k) = div(i,j,k) - Vs_t * coef
-          flop = flop + 9.0
         endif
       end do
       end do
+      flop = flop + rjx*(36.0 + 9.0)
       
     case (Y_plus)
       if ( v_out<0.0 ) v_out=0.0
@@ -1317,10 +1314,10 @@
           Vn = Vs - (Ue - Uw + Wt - Wb)
           Vn_t = Vn - v_out*(Vn-Vs)
           div(i,j,k) = div(i,j,k) + Vn_t * coef
-          flop = flop + 9.0
         endif
       end do
       end do
+      flop = flop + rjx*(36.0 + 9.0)
     
     case (Z_minus)
       if ( v_out>0.0 ) v_out=0.0
@@ -1335,10 +1332,10 @@
           Wb = Wt + (Ue - Uw + Vn - Vs)
           Wb_t = Wb - v_out*(Wt-Wb)
           div(i,j,k) = div(i,j,k) - Wb_t * coef
-          flop = flop + 9.0
         endif
       end do
       end do
+      flop = flop + rkx*(36.0 + 9.0)
       
     case (Z_plus)
       if ( v_out<0.0 ) v_out=0.0
@@ -1353,10 +1350,10 @@
           Wt = Wb - (Ue - Uw + Vn - Vs)
           Wt_t = Wt - v_out*(Wt-Wb)
           div(i,j,k) = div(i,j,k) + Wt_t * coef
-          flop = flop + 9.0
         endif
       end do
       end do
+      flop = flop + rkx*(36.0 + 9.0)
     
     case default
     end select FACES
@@ -1385,6 +1382,7 @@
     integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, coef, dv, a1, a2, a3, u_ref, v_ref, w_ref, rc
+    real                                                        ::  rix, rjx, rkx
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  aa
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
@@ -1393,6 +1391,9 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    rix = real(jx)*real(kx)
+    rjx = real(ix)*real(kx)
+    rkx = real(ix)*real(jx)
 
     a1 = 0.0   ! sum
     a2 = 1.0e6 ! min
@@ -1417,10 +1418,10 @@
           a2 = min(a2, dv)
           a3 = max(a3, dv)
           div(i,j,k) = 0.0 ! 対象セルは発散をゼロにする
-          flop = flop + 5.0
         endif
       end do
       end do
+      flop = flop + rix*9.0
       
     case (X_plus)
       i = ix
@@ -1433,10 +1434,10 @@
           a2 = min(a2, dv)
           a3 = max(a3, dv)
           div(i,j,k) = 0.0
-          flop = flop + 5.0
         endif
       end do
       end do
+      flop = flop + rix*9.0
       
     case (Y_minus)
       j = 1
@@ -1449,10 +1450,10 @@
           a2 = min(a2, dv)
           a3 = max(a3, dv)
           div(i,j,k) = 0.0
-          flop = flop + 5.0
         endif
       end do
       end do
+      flop = flop + rjx*9.0
       
     case (Y_plus)
       j = jx
@@ -1465,10 +1466,10 @@
           a2 = min(a2, dv)
           a3 = max(a3, dv)
           div(i,j,k) = 0.0
-          flop = flop + 5.0
         endif
       end do
       end do
+      flop = flop + rjx*9.0
     
     case (Z_minus)
       k = 1
@@ -1481,10 +1482,10 @@
           a2 = min(a2, dv)
           a3 = max(a3, dv)
           div(i,j,k) = 0.0
-          flop = flop + 5.0
         endif
       end do
       end do
+      flop = flop + rkx*9.0
       
     case (Z_plus)
       k = kx
@@ -1497,10 +1498,10 @@
           a2 = min(a2, dv)
           a3 = max(a3, dv)
           div(i,j,k) = 0.0
-          flop = flop + 5.0
         endif
       end do
       end do
+      flop = flop + rkx*9.0
     
     case default
     end select FACES

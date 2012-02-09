@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 
@@ -12,6 +12,7 @@
 
 ! b  = (3.0-ck)/(1.0-ck), ck=1/3
 ! w_?; セル界面フラグ　(0-wall face / 1-fluid)
+! 4*sign + 18 + abs*6 + min*6 + max*6 
 
       s4 = sign(1.0, d4)
       s3 = sign(1.0, d3)
@@ -24,5 +25,3 @@
       g3 = s2*max(0.0, min(abs(d2), s2*b*d3))
       g2 = s2*max(0.0, min(abs(d2), s2*b*d1))
       g1 = s1*max(0.0, min(abs(d1), s1*b*d2))
-
-      flop = flop + 52.0

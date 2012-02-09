@@ -72,6 +72,8 @@
       ck = 1.0/3.0
       b  = (3.0-ck)/(1.0-ck)
     endif
+
+    flop = flop + real(ix)*real(jx)*real(kx)*(36.0+ (61.0+muscl)*3.0 + 5.0 ) + 26.0
     
     do k=1,kx
     do j=1,jx
@@ -94,7 +96,6 @@
       w_s = real(b_s1 * b_p)
       w_t = real(b_t1 * b_p)
       w_b = real(b_b1 * b_p)
-      flop = flop + 6.0
       
       ! 変数のロード
       Fp0 = t(i  ,j  ,k  )
@@ -168,7 +169,6 @@
       VPs = 0.5*(Vp0+Vs1)*w_s + v_ref*(1.0-w_s)
       WPt = 0.5*(Wp0+Wt1)*w_t + w_ref*(1.0-w_t)
       WPb = 0.5*(Wp0+Wb1)*w_b + w_ref*(1.0-w_b)
-      flop = flop + 36.0
 
       ! X方向 ---------------------------------------
       ! 壁面の扱い　共役熱移動の場合は，固体セル内部の値をそのまま使う
@@ -200,7 +200,6 @@
       ! 境界条件の面の寄与はスキップ
       cnv = 0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_e * a_e &
           - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_w * a_w
-      flop = flop + 59.0
 
       ! Y方向 ---------------------------------------
       ! 壁面の扱い
@@ -230,7 +229,6 @@
       
       cnv = 0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_n * a_n &
           - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_s * a_s + cnv
-      flop = flop + 60.0
 
       ! Z方向 ---------------------------------------
       ! 壁面の扱い
@@ -262,7 +260,6 @@
           - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_b * a_b + cnv
 
       ws(i,j,k) = ( -cnv*dh1 ) * actv
-      flop = flop + 63.0
     end do
     end do
     end do
@@ -297,7 +294,7 @@
     kx = sz(3)
     dgr = dt*gr*rei*rei
     
-    flop = flop + real(ix*jx*kx)*2.0 + 3.0
+    flop = flop + real(ix)*real(jx)*real(kx)*3.0 + 3.0
 
     do k=1,kx
     do j=1,jx
@@ -344,7 +341,7 @@
     dth1 = dt/dh
     dth2 = dth1*pei/dh
     res  = 0.0
-    flop = flop + real(ix*jx*kx)*50.0
+    flop = flop + real(ix)*real(jx)*real(kx)*50.0 + 17.0
 
     do k=1,kx
     do j=1,jx

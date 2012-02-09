@@ -2,7 +2,7 @@
 !
 !   SPHERE - Skeleton for PHysical and Engineering REsearch
 !  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 !
 !   *********************************************************
 
@@ -45,4 +45,4 @@
       Wb = 0.5*( Wp0 + Wb0 )*b_b + (1.0-b_b)*w_ref
       Wt = 0.5*( Wp0 + Wt0 )*b_t + (1.0-b_t)*w_ref
 
-      flop = flop + 36.0
+      !36 flops

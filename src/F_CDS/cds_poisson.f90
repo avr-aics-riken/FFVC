@@ -10,7 +10,7 @@
 !> @brief Poisson routines for CDS
 !> @author keno, FSI Team, VCAD, RIKEN
     
-!  ***********************************************************************
+!  *********************************************************************
 !> @subroutine cds_psor (p, sz, g, omg, res, div, bnd, cut, e, para_key)
 !! @brief Poissonから導かれた連立一次方程式をSOR法で解く
 !! @param p 圧力
