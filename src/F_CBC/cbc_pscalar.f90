@@ -73,7 +73,10 @@
       b  = (3.0-ck)/(1.0-ck)
     endif
 
-    flop = flop + real(ix)*real(jx)*real(kx)*(36.0+ (61.0+muscl)*3.0 + 5.0 ) + 26.0
+    ! /*3 + 2 = 26 ! DP 41
+    ! loop : 6+1+6+36 + ( 4+36+32+4+17 )*3dir + 2 + 3 = 333
+    flop = flop + real(ix)*real(jx)*real(kx)*333.0 + 26.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*333.0 + 41.0 ! DP
     
     do k=1,kx
     do j=1,jx
@@ -95,7 +98,7 @@
       w_n = real(b_n1 * b_p)
       w_s = real(b_s1 * b_p)
       w_t = real(b_t1 * b_p)
-      w_b = real(b_b1 * b_p)
+      w_b = real(b_b1 * b_p) ! real*6 flop
       
       ! 変数のロード
       Fp0 = t(i  ,j  ,k  )
@@ -114,7 +117,7 @@
       
       idx = bh1(i,j,k)
       hdx = bh2(i,j,k)
-      actv= ibits(hdx, State, 1) ! 対流マスクなのでbh2の状態を参照
+      actv= real(ibits(hdx, State, 1)) ! 1 flop 対流マスクなのでbh2の状態を参照
       
       ! セル状態 (0-solid / 1-fluid)
       b_w2= ibits(bh1(i-2,j  ,k  ), State, 1)
@@ -150,7 +153,7 @@
       a_n = real(ibits(hdx, adbtc_N, 1))
       a_s = real(ibits(hdx, adbtc_S, 1))
       a_t = real(ibits(hdx, adbtc_T, 1))
-      a_b = real(ibits(hdx, adbtc_B, 1))
+      a_b = real(ibits(hdx, adbtc_B, 1)) ! real*6 = 6 flop
 
       Up0 = v(i  ,j  ,k  ,1)
       Uw1 = v(i-1,j  ,k  ,1)
@@ -162,7 +165,7 @@
       Wb1 = v(i  ,j  ,k-1,3)
       Wt1 = v(i  ,j  ,k+1,3)
       
-      ! 界面速度（スタガード位置）
+      ! 界面速度（スタガード位置）> 36 flop
       UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
       UPw = 0.5*(Up0+Uw1)*w_w + u_ref*(1.0-w_w)
       VPn = 0.5*(Vp0+Vn1)*w_n + v_ref*(1.0-w_n)
@@ -182,22 +185,22 @@
       d4 = Fe2 - Fe1
       d3 = Fe1 - Fp0
       d2 = Fp0 - Fw1
-      d1 = Fw1 - Fw2
+      d1 = Fw1 - Fw2 ! 4 flop
       
-      include 'muscl.h'
+      include 'muscl.h' ! 36 flop
       
       Fr_r = Fe1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
       Fr_l = Fp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
       Fl_r = Fp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Fl_l = Fw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Fl_l = Fw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss ! 32 flop
       
-      ! 流束　壁面上で速度ゼロ->対流熱流束がゼロになる
+      ! 流束　壁面上で速度ゼロ->対流熱流束がゼロになる >  4 flop
       cr  = UPe - u_ref
       cl  = UPw - u_ref
       acr = abs(cr)
       acl = abs(cl)
       
-      ! 境界条件の面の寄与はスキップ
+      ! 境界条件の面の寄与はスキップ > 17 flop
       cnv = 0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_e * a_e &
           - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_w * a_w
 
@@ -294,7 +297,7 @@
     kx = sz(3)
     dgr = dt*gr*rei*rei
     
-    flop = flop + real(ix)*real(jx)*real(kx)*3.0 + 3.0
+    flop = flop + real(ix)*real(jx)*real(kx)*4.0 + 3.0
 
     do k=1,kx
     do j=1,jx
@@ -341,7 +344,11 @@
     dth1 = dt/dh
     dth2 = dth1*pei/dh
     res  = 0.0
-    flop = flop + real(ix)*real(jx)*real(kx)*50.0 + 17.0
+    
+    ! /*2 + 1 = 17 flop ! DP 27 flop
+    ! loop : 6 + 6 + 1 + 51 = 64 flop
+    flop = flop + real(ix)*real(jx)*real(kx)*64.0 + 17.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*64.0 + 27.0
 
     do k=1,kx
     do j=1,jx
@@ -361,16 +368,16 @@
       a_s = real(ibits(idx, adbtc_S, 1))
       a_n = real(ibits(idx, adbtc_N, 1))
       a_b = real(ibits(idx, adbtc_B, 1))
-      a_t = real(ibits(idx, adbtc_T, 1))
+      a_t = real(ibits(idx, adbtc_T, 1)) ! real*6 = 6 flop
       
       g_w = real(ibits(idx, gma_W, 1))
       g_e = real(ibits(idx, gma_E, 1))
       g_s = real(ibits(idx, gma_S, 1))
       g_n = real(ibits(idx, gma_N, 1))
       g_b = real(ibits(idx, gma_B, 1))
-      g_t = real(ibits(idx, gma_T, 1))
+      g_t = real(ibits(idx, gma_T, 1)) ! real*6 = 6 flop
 
-      g_p = real(ibits(idx, h_diag, 3))  ! diagonal
+      g_p = real(ibits(idx, h_diag, 3))  ! diagonal > 1 flop
       
       delta =(dth2*( g_w * a_w * t_w  & ! west  
                    + g_e * a_e * t_e  & ! east  

@@ -32,6 +32,7 @@ SklSolverCBC::SklSolverInitialize() {
   unsigned  n=0;
   FILE* fp = NULL;
   SKL_REAL flop_task=0.0;
+  size_t d_size=0;
   
   ws = v = t = p = NULL;
   mid = NULL;
@@ -822,16 +823,16 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
     SKL_REAL f_min, f_max;
-    fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v);
+    fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v, &flop_task);
     Hostonly_ fprintf(mp, "\t\tV: min=%13.6e max=%13.6e\n", f_min, f_max);
     Hostonly_ fprintf(fp, "\t\tV: min=%13.6e max=%13.6e\n", f_min, f_max);
     
-    fb_minmax_s_ (&f_min, &f_max, sz, gc, p);
+    fb_minmax_s_ (&f_min, &f_max, sz, gc, p, &flop_task);
     Hostonly_ fprintf(mp, "\t\tP: min=%13.6e max=%13.6e\n", f_min, f_max);
     Hostonly_ fprintf(fp, "\t\tP: min=%13.6e max=%13.6e\n", f_min, f_max);
     
     if ( C.isHeatProblem() ) {
-      fb_minmax_s_ (&f_min, &f_max, sz, gc, t);
+      fb_minmax_s_ (&f_min, &f_max, sz, gc, t, &flop_task);
       Hostonly_ fprintf(mp, "\t\tT: min=%13.6e max=%13.6e\n", f_min, f_max);
       Hostonly_ fprintf(fp, "\t\tT: min=%13.6e max=%13.6e\n", f_min, f_max);
     }
@@ -928,7 +929,9 @@ SklSolverCBC::SklSolverInitialize() {
     else {
       ip = C.iv.Pressure;
     }
-    SklInitializeSKL_REAL(dc_p->GetData(), ip, dc_p->GetArrayLength());
+    //SklInitializeSKL_REAL(dc_p->GetData(), ip, dc_p->GetArrayLength());
+    d_size = dc_p->GetArrayLength();
+    fb_set_value_real_(dc_p->GetData(), (int*)&d_size, &ip);
 		BC.OuterPBC(dc_p);
     
 		// 温度
@@ -940,7 +943,9 @@ SklSolverCBC::SklSolverInitialize() {
       else {
         it = C.iv.Temperature;
       }
-      SklInitializeSKL_REAL(dc_t->GetData(), it, dc_t->GetArrayLength());
+      //SklInitializeSKL_REAL(dc_t->GetData(), it, dc_t->GetArrayLength());
+      d_size = dc_t->GetArrayLength();
+      fb_set_value_real_(dc_t->GetData(), (int*)&d_size, &it);
       
       // コンポーネントの初期値
       for (unsigned m=C.NoBC+1; m<=C.NoCompo; m++) {

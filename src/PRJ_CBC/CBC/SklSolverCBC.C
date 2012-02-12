@@ -895,6 +895,8 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
   SKL_REAL comm_size;              /// 通信面1面あたりの通信量
   unsigned int wait_num=0;
   int req[12];
+  size_t d_size = 0;
+  SKL_REAL clear_value=0.0;
 	
 	p = src0 = src1 = wkj = p0 = NULL;
 	bcp = NULL;
@@ -923,7 +925,9 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
       
       // 反復処理
       TIMING_start(tm_assign_const);
-      SklInitializeSKL_REAL(dc_wkj->GetData(), 0.0, dc_wkj->GetArrayLength());
+      //SklInitializeSKL_REAL(dc_wkj->GetData(), 0.0, dc_wkj->GetArrayLength());
+      d_size = dc_wkj->GetArrayLength();
+      fb_set_value_real_(wkj, (int*)&d_size, &clear_value);
       TIMING_stop(tm_assign_const, 0.0);
       
       TIMING_start(tm_poi_Jacobi);
@@ -1228,7 +1232,8 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
     case JACOBI:
       TIMING_start(tm_pvec_cn_Jacobi);
       flop_count = 0.0;
-      SklInitializeSKL_REAL(dc_vf0->GetData(), 0.0, dc_vf0->GetArrayLength());
+      //SklInitializeSKL_REAL(dc_vf0->GetData(), 0.0, dc_vf0->GetArrayLength());
+      fb_set_value_real_(dc_vf0->GetData(), dc_vf0->GetArrayLength(), 0.0);
       cbc_vis_cn_jcb_(vc, sz, gc, dh, &dt, v00, &rei, &omg, wv, (int*)bcv, wk, &half, &r, &flop_count); 
       TIMING_stop(tm_pvec_cn_Jacobi, flop_count);
       

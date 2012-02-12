@@ -74,7 +74,7 @@
     vm1 = 0.0
     vm2 = 0.0
     vm3 = 0.0
-    flop = flop + real(ix)*real(jx)*real(kx)*21.0 + 6.0
+    flop = flop + real(ix)*real(jx)*real(kx)*9.0 + 2.0
 
     do k=1,kx
     do j=1,jx
@@ -86,7 +86,7 @@
     end do
     end do
     
-    v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 6 flop
+    v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 2 flop
 
     return
     end subroutine cbc_vmax
@@ -132,7 +132,8 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*68.0 + 8.0
+    flop = flop + real(ix)*real(jx)*real(kx)*72.0 + 8.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*72.0 + 13.0 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -163,7 +164,7 @@
       Wb1 = v(i  ,j  ,k-1,3)
       Wt1 = v(i  ,j  ,k+1,3)
       
-      ! セル状態 (0-solid / 1-fluid)
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
       
       b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
@@ -173,7 +174,7 @@
       b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
       
-      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid)
+      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
       w_e = real(b_e1) * actv
       w_w = real(b_w1) * actv
       w_n = real(b_n1) * actv
@@ -181,7 +182,7 @@
       w_t = real(b_t1) * actv
       w_b = real(b_b1) * actv
       
-      ! セルセンターからの壁面修正速度
+      ! セルセンターからの壁面修正速度 > 6 flop
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
@@ -287,7 +288,8 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*27.0 + 8.0
+    flop = flop + real(ix)*real(jx)*real(kx)*34.0 + 8.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*34.0 + 13.0 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -318,7 +320,7 @@
       Wb1 = v(i  ,j  ,k-1,3)
       Wt1 = v(i  ,j  ,k+1,3)
       
-      ! セル状態 (0-solid / 1-fluid)
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
       
       b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
@@ -328,7 +330,7 @@
       b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
       
-      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid)
+      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
       w_e = real(b_e1) * actv
       w_w = real(b_w1) * actv
       w_n = real(b_n1) * actv
@@ -336,7 +338,7 @@
       w_t = real(b_t1) * actv
       w_b = real(b_b1) * actv
       
-      ! セルセンターからの壁面修正速度
+      ! セルセンターからの壁面修正速度 > 6 flop
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
@@ -378,11 +380,11 @@
         Wb1 = wq
       end if
       
-      r1 = h*( (Wn1-Ws1) - (Vt1-Vb1) )
+      r1 = h*( (Wn1-Ws1) - (Vt1-Vb1) ) ! 12 flop
       r2 = h*( (Ut1-Ub1) - (We1-Ww1) )
       r3 = h*( (Ve1-Vw1) - (Un1-Us1) )
       
-      rot(i,j,k,1) = r1 * actv
+      rot(i,j,k,1) = r1 * actv ! 3 flop
       rot(i,j,k,2) = r2 * actv
       rot(i,j,k,3) = r3 * actv
     end do
@@ -431,7 +433,8 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*33.0 + 8.0
+    flop = flop + real(ix)*real(jx)*real(kx)*40.0 + 8.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*40.0 + 13.0 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -462,7 +465,7 @@
       Wb1 = v(i  ,j  ,k-1,3)
       Wt1 = v(i  ,j  ,k+1,3)
       
-      ! セル状態 (0-solid / 1-fluid)
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
       
       b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
@@ -472,7 +475,7 @@
       b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
       
-      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid)
+      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
       w_e = real(b_e1) * actv
       w_w = real(b_w1) * actv
       w_n = real(b_n1) * actv
@@ -480,7 +483,7 @@
       w_t = real(b_t1) * actv
       w_b = real(b_b1) * actv
       
-      ! セルセンターからの壁面修正速度
+      ! セルセンターからの壁面修正速度 > 6 flop
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
@@ -522,15 +525,15 @@
         Wb1 = wq
       end if
       
-      r1 = h*( (Wn1-Ws1) - (Vt1-Vb1) )
+      r1 = h*( (Wn1-Ws1) - (Vt1-Vb1) ) ! 12 flop
       r2 = h*( (Ut1-Ub1) - (We1-Ww1) )
       r3 = h*( (Ve1-Vw1) - (Un1-Us1) )
       
-      u1 = Up0 - u_ref
+      u1 = Up0 - u_ref ! 3 flop
       u2 = Vp0 - v_ref
       u3 = Wp0 - w_ref
       
-      ht(i,j,k) = (u1*r1 + u2*r2 + u3*r3) * actv
+      ht(i,j,k) = (u1*r1 + u2*r2 + u3*r3) * actv ! 6 flop
     end do
     end do
     end do

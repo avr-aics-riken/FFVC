@@ -16,6 +16,8 @@
 #include "Skl.h"
 #include "SklSolverBase.h"
 #include "parallel/SklParaComponent.h"
+#include "FB_Ffunc.h"
+#include "limits.h"
 
 class Alloc {
   

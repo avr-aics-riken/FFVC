@@ -50,6 +50,8 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   SKL_REAL comm_size;                 /// 通信面1面あたりの通信量
   int wall_prof = (int)C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = (int)C.CnvScheme;  /// 対流項スキーム
+  SKL_REAL clear_value = 0.0;
+  size_t d_size=0;
   
   comm_size = CU.count_comm_size(size, 1);
   
@@ -102,8 +104,13 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   
   // n stepの値を保持 >> In use (dc_v0, dc_p0)
   TIMING_start(tm_copy_array);
-  CU.copy_SKL_REAL(v0, v, dc_v0->GetArrayLength());
-  CU.copy_SKL_REAL(p0, p, dc_p0->GetArrayLength());
+  d_size = dc_v0->GetArrayLength();
+  fb_copy_real_(v0, v, (int*)&d_size);
+  
+  d_size = dc_p0->GetArrayLength();
+  fb_copy_real_(p0, p, (int*)&d_size);
+  //CU.copy_SKL_REAL(v0, v, dc_v0->GetArrayLength());
+  //CU.copy_SKL_REAL(p0, p, dc_p0->GetArrayLength());
   TIMING_stop(tm_copy_array, 0.0, 2);
 
   // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
@@ -266,7 +273,9 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   if ( C.AlgorithmF == Control::Flow_FS_AB_CN ) {
     
     TIMING_start(tm_copy_array);
-    CU.copy_SKL_REAL(wv, vc, dc_wv->GetArrayLength());
+    d_size = dc_wv->GetArrayLength();
+    fb_copy_real_(wv, vc, (int*)&d_size);
+    //CU.copy_SKL_REAL(wv, vc, dc_wv->GetArrayLength());
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
@@ -289,12 +298,16 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  CU.copy_SKL_REAL(v, vc, dc_v->GetArrayLength());
+  d_size = dc_v->GetArrayLength();
+  fb_copy_real_(v, vc, (int*)&d_size);
+  //CU.copy_SKL_REAL(v, vc, dc_v->GetArrayLength());
   TIMING_stop(tm_copy_array, 0.0);
   
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
-  SklInitializeSKL_REAL(dc_ws->GetData(), 0.0, dc_ws->GetArrayLength());
+  //SklInitializeSKL_REAL(dc_ws->GetData(), 0.0, dc_ws->GetArrayLength());
+  d_size = dc_ws->GetArrayLength();
+  fb_set_value_real_(src0, (int*)&d_size, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
   
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
@@ -352,7 +365,9 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     
     // 反復ソース項のゼロクリア => src1
     TIMING_start(tm_assign_const);
-    SklInitializeSKL_REAL(dc_wk2->GetData(), 0.0, dc_wk2->GetArrayLength());
+    //SklInitializeSKL_REAL(dc_wk2->GetData(), 0.0, dc_wk2->GetArrayLength());
+    d_size = dc_wk2->GetArrayLength();
+    fb_set_value_real_(src1, (int*)&d_size, &clear_value);
     TIMING_stop(tm_assign_const, 0.0);
     
     // Forcingコンポーネントによるソース項の寄与分

@@ -33,7 +33,8 @@
     jx = sz(2)
     kx = sz(3)
     b2 = 0.0
-    flop = flop + real(ix)*real(jx)*real(kx)*3.0
+    
+    flop = flop + real(ix)*real(jx)*real(kx)*4.0
 
     do k=1,kx
     do j=1,jx
@@ -75,7 +76,8 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix)*real(jx)*real(kx)*28.0
+    flop = flop + real(ix)*real(jx)*real(kx)*36.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*41.0 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -170,7 +172,8 @@
     end do
     end do
     
-    flop = flop + real(c)*28.0
+    flop = flop + real(c)*36.0
+    ! flop = flop + real(c)*41.0 ! DP
 
     return
     end subroutine cbc_psor_if
@@ -204,7 +207,8 @@
 
 		res = 0.0 ! absolute
     
-    flop = flop + real(idx_sz)*28.0
+    flop = flop + real(idx_sz)*36.0
+    ! flop = flop + real(idx_sz)*36.0 ! DP
 
     do m=1, idx_sz
       i = index(1, m)
@@ -266,7 +270,8 @@
 
 		res = 0.0 ! absolute
     
-    flop = flop + real(idx_sz)*28.0
+    flop = flop + real(idx_sz)*36.0
+    ! flop = flop + real(idx_sz)*36.0 ! DP
 
     do m=1, idx_sz
       ldx = index(m)
@@ -330,7 +335,8 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix)*real(jx)*real(kx)*28.0
+    flop = flop + real(ix)*real(jx)*real(kx)*36.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*36.0 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -442,7 +448,8 @@
     end do
     end do
     
-    flop = flop + real(c)*28.0
+    flop = flop + real(c)*36.0
+    ! flop = flop + real(c)*41.0 ! DP
 
     return
     end subroutine cbc_jacobi_if
@@ -476,7 +483,8 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    flop = flop + real(ix)*real(jx)*real(kx)*28.0*0.5
+    flop = flop + real(ix)*real(jx)*real(kx)*36.0*0.5
+    ! flop = flop + real(ix)*real(jx)*real(kx)*41.0*0.5 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -574,7 +582,8 @@
     end do
     end do
     
-    flop = flop + real(w)*28.0
+    flop = flop + real(w)*36.0
+    ! flop = flop + real(w)*41.0 ! DP
 
     return
     end subroutine cbc_psor2sma_core_if

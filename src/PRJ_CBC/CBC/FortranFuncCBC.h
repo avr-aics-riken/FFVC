@@ -39,6 +39,12 @@
 // BCvec_cc.f90
 #define cbc_vibc_drchlt_        CBC_VIBC_DRCHLT
 #define cbc_vibc_outflow_       CBC_VIBC_OUTFLOW
+#define cbc_pvec_vibc_specv_    CBC_PVEC_VIBC_SPECV
+#define cbc_pvec_vibc_oflow_    CBC_PVEC_VIBC_OFLOW
+#define cbc_pvec_vobc_specv_    CBC_PVEC_VOBC_SPECV
+#define cbc_pvec_vobc_oflow_    CBC_PVEC_VOBC_OFLOW
+#define cbc_pvec_vobc_wall_     CBC_PVEC_VOBC_WALL
+#define cbc_pvec_vobc_symtrc_   CBC_PVEC_VOBC_SYMTRC
 #define cbc_vobc_drchlt_        CBC_VOBC_DRCHLT
 #define cbc_vobc_outflow_       CBC_VOBC_OUTFLOW
 #define cbc_vobc_tfree_         CBC_VOBC_TFREE
@@ -57,14 +63,11 @@
 // cbc_3d.f90
 #define cbc_ab2_                CBC_AB2
 #define cbc_div_                CBC_DIV
-
 #define cbc_eddy_viscosity_     CBC_EDDY_VISCOSITY
 #define cbc_ee_                 CBC_EE
 #define cbc_friction_velocity_  CBC_FRICTION_VELOCITY
 #define cbc_pvec_muscl_         CBC_PVEC_MUSCL
 #define cbc_pvec_les_           CBC_PVEC_LES
-#define cbc_pvec_vibc_          CBC_PVEC_VIBC
-#define cbc_pvec_vobc_          CBC_PVEC_VOBC
 #define cbc_update_vec_         CBC_UPDATE_VEC
 #define cbc_vis_cn_jcb_         CBC_VIS_CN_JCB
 #define cbc_vis_cn_mod_jcb_     CBC_VIS_CN_MOD_JCB
@@ -136,6 +139,18 @@ extern "C" {
   // BCvec_cc.f90
   void cbc_vibc_drchlt_       (SKL_REAL* v, int* sz, int* g, int* st, int* ed, SKL_REAL* v00, int* bv, int* odr, SKL_REAL* vec);
   void cbc_vibc_outflow_      (SKL_REAL* vc,int* sz, int* g, int* st, int* ed, int* bv, int* odr);
+  void cbc_pvec_vibc_specv_   (SKL_REAL* wv, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
+                               int* bv, int* odr, SKL_REAL* vec, int* v_mode, SKL_REAL* flop);
+  void cbc_pvec_vibc_oflow_   (SKL_REAL* wv, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
+                               int* bv, int* odr, SKL_REAL* vec, int* v_mode, SKL_REAL* flop);
+  void cbc_pvec_vobc_specv_   (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
+                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
+  void cbc_pvec_vobc_oflow_   (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
+                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
+  void cbc_pvec_vobc_wall_    (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
+                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
+  void cbc_pvec_vobc_symtrc_  (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
+                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
   void cbc_vobc_drchlt_       (SKL_REAL* v, int* sz, int* g, SKL_REAL* v00, int* bv, int* face, SKL_REAL* vec);
   void cbc_vobc_outflow_      (SKL_REAL* v, int* sz, int* g, SKL_REAL* c, int* bv, int* face, SKL_REAL* v0, SKL_REAL* flop);
   void cbc_vobc_tfree_        (SKL_REAL* v, int* sz, int* g, int* face, int* bv, SKL_REAL* v00, SKL_REAL* flop);
@@ -166,10 +181,6 @@ extern "C" {
                                SKL_REAL* range_Yp, SKL_REAL* range_Ut, SKL_REAL* v00, SKL_REAL* flop);
   void cbc_pvec_muscl_        (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, int* c_scheme, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
                                int* bv, int* bp, int* v_mode, SKL_REAL* ut, int* wall_type, SKL_REAL* flop);
-  void cbc_pvec_vibc_         (SKL_REAL* wv, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
-                               int* bv, int* odr, SKL_REAL* vec, int* v_mode, int* ofi, SKL_REAL* flop);
-  void cbc_pvec_vobc_         (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
-                               int* bv, SKL_REAL* vec, int* v_mode, int* ofi, int* face, SKL_REAL* flop);
   void cbc_update_vec_        (SKL_REAL* v, SKL_REAL* div, int* sz, int* g, SKL_REAL* dt, SKL_REAL* dh, SKL_REAL* vc, SKL_REAL* p, int* bp, int* bv, 
                                SKL_REAL* v00, SKL_REAL* coef, SKL_REAL* flop);
   void cbc_vis_cn_jcb_        (SKL_REAL* vc, int* sz, int* g, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, 

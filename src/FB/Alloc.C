@@ -46,7 +46,7 @@ bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_va
   dims[1] = sz[0]; 
   dims[2] = sz[1]; 
   dims[3] = sz[2];
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar4DEx<SKL_REAL>*>(
@@ -62,7 +62,12 @@ bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_va
 			return false;
 		}
     nx = dc_var->GetArrayLength();
-		if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+		//if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc += (long)( nx*sizeof(SKL_REAL) );
   
@@ -103,7 +108,7 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, c
   dims[1] = sz[1]; 
   dims[2] = sz[2];
   dims[3] = dlen;
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar4D<SKL_REAL>*>(
@@ -119,7 +124,12 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, c
 			return false;
 		}
     nx = dc_var->GetArrayLength();
-		if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+		//if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc += (long)( nx*sizeof(SKL_REAL) );
   
@@ -158,7 +168,7 @@ bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, c
   dims[0] = sz[0]; 
   dims[1] = sz[1]; 
   dims[2] = sz[2];
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar3D<SKL_REAL>*>(
@@ -174,8 +184,13 @@ bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, c
 			return false;
 		}
     nx = dc_var->GetArrayLength();
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
     if ( nx != 0 ) {
-      if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+      //if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+      fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
     }
   }
   mc += (long)( nx*sizeof(SKL_REAL) );
@@ -215,7 +230,7 @@ bool Alloc::alloc_Int_S3D(SklSolverBase* obj, SklScalar3D<int>* &dc_var, const c
   dims[0] = sz[0]; 
   dims[1] = sz[1]; 
   dims[2] = sz[2];
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar3D<int>*>(
@@ -231,7 +246,12 @@ bool Alloc::alloc_Int_S3D(SklSolverBase* obj, SklScalar3D<int>* &dc_var, const c
 			return false;
 		}
     nx = dc_var->GetArrayLength();
-    if( !obj->SklInitializeInt(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    //if( !obj->SklInitializeInt(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_int_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(int) );
   
@@ -270,7 +290,7 @@ bool Alloc::alloc_Uint_S3D(SklSolverBase* obj, SklScalar3D<unsigned>* &dc_var, c
   dims[0] = sz[0]; 
   dims[1] = sz[1]; 
   dims[2] = sz[2];
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar3D<unsigned>*>(
@@ -286,7 +306,12 @@ bool Alloc::alloc_Uint_S3D(SklSolverBase* obj, SklScalar3D<unsigned>* &dc_var, c
 			return false;
 		}
     nx = dc_var->GetArrayLength();
-    if( !obj->SklInitializeUInt(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    //if( !obj->SklInitializeUInt(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_int_((int*)dc_var->GetData(), (int*)&nx, (int*)&init);
   }
   mc = (long)( nx*sizeof(unsigned) );
   
@@ -325,7 +350,7 @@ bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, c
   dims[0] = sz[0]; 
   dims[1] = sz[1]; 
   dims[2] = sz[2];
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklVector3D<SKL_REAL>*>(
@@ -341,7 +366,12 @@ bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, c
 			return false;
 		}
     nx = dc_var->GetArrayLength();
-    if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    //if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(SKL_REAL) );
   
@@ -380,7 +410,7 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_va
   dims[0] = sz[0]; 
   dims[1] = sz[1]; 
   dims[2] = sz[2];
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklVector3DEx<SKL_REAL>*>(
@@ -396,7 +426,12 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_va
 			return false;
 		}
     nx = dc_var->GetArrayLength();
-    if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    //if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(SKL_REAL) );
   
@@ -432,8 +467,7 @@ bool Alloc::alloc_Int_S1D(SklSolverBase* obj, SklScalar<int>* &dc_var, const cha
   SklParaManager* para_mng = para_cmp->GetParaManager(para_key);
   
   size_t dims = sz; 
-
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar<int>*>(
@@ -449,7 +483,12 @@ bool Alloc::alloc_Int_S1D(SklSolverBase* obj, SklScalar<int>* &dc_var, const cha
                                                      return false;
                                                    }
     nx = dc_var->GetArrayLength();
-    if( !obj->SklInitializeInt(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    //if( !obj->SklInitializeInt(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_int_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(int) );
   
@@ -485,8 +524,7 @@ bool Alloc::alloc_Uint_S1D(SklSolverBase* obj, SklScalar<unsigned>* &dc_var, con
   SklParaManager* para_mng = para_cmp->GetParaManager(para_key);
   
   size_t dims = sz; 
-  
-  unsigned nx = 0;
+  size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklScalar<unsigned>*>(
@@ -502,7 +540,12 @@ bool Alloc::alloc_Uint_S1D(SklSolverBase* obj, SklScalar<unsigned>* &dc_var, con
                                                    return false;
                                                  }
     nx = dc_var->GetArrayLength();
-    if( !obj->SklInitializeUInt(dc_var->GetData(), init, nx) ) return false;
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    //if( !obj->SklInitializeUInt(dc_var->GetData(), init, nx) ) return false;
+    fb_set_value_int_((int*)dc_var->GetData(), (int*)&nx, (int*)&init);
   }
   mc = (long)( nx*sizeof(unsigned) );
   

@@ -29,7 +29,7 @@
     subroutine cds_psor (p, sz, g, omg, res, div, bnd, cut, e, para_key)
     implicit none
     include 'sklparaf.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, dtype
+    integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  dp, r1, e, ee, omg, cpd, res, s0, tmp
     real                                                      ::  m1, m2, m3, m4, m5, m6

@@ -45,4 +45,4 @@
       Wb = 0.5*( Wp0 + Wb0 )*b_b + (1.0-b_b)*w_ref
       Wt = 0.5*( Wp0 + Wt0 )*b_t + (1.0-b_t)*w_ref
 
-      !36 flops
+      ! real*6 + 6*6 = 42 flops

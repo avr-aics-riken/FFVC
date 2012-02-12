@@ -12,7 +12,7 @@
 //@brief FlowBase Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#define FB_VERS 246
+#define FB_VERS 247
 
 // precision
 #define SPH_SINGLE 4

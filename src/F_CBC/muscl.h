@@ -12,9 +12,9 @@
 
 ! b  = (3.0-ck)/(1.0-ck), ck=1/3
 ! w_?; セル界面フラグ　(0-wall face / 1-fluid)
-! 4*sign + 18 + abs*6 + min*6 + max*6 
+! 6*6 = 36 flops 
 
-      s4 = sign(1.0, d4)
+      s4 = sign(1.0, d4) ! sign is zero flop
       s3 = sign(1.0, d3)
       s2 = sign(1.0, d2)
       s1 = sign(1.0, d1)

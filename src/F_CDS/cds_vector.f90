@@ -30,7 +30,7 @@
     subroutine cds_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, cut, flop)
     implicit none
     include '../F_CBC/cbc_f_params.h'
-    integer                                                     ::  i, j, k, l, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode
+    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode
     integer, dimension(3)                                       ::  sz
     real                                                        ::  dh, dh1, dh2, ck, cnv_u, cnv_v, cnv_w, b, flop
     real                                                        ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, ss, beta, vcs

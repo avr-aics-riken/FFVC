@@ -146,6 +146,7 @@ depend:
 ../../FB/Alloc.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../FB/Alloc.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/Alloc.o: /usr/local/sphere/include/coord/SklCoord.h
+../../FB/Alloc.o: ../../FB/FB_Ffunc.h
 ../../FB/VoxInfo.o: ../../FB/VoxInfo.h /usr/local/sphere/include/Skl.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/VoxInfo.o: ../../FB/FBUtility.h

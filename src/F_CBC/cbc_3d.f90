@@ -99,10 +99,15 @@
     wm1 = 2.0*(1.0-wls)
     wm2 = 2.0*wls-1.0
     
-    flop = flop + real(ix)*real(jx)*real(kx)*
-! loop外　42
-! 対流項の各方向　( 36 + muscl*3 + 50*3 + 12 ) * 3dir
-! 粘性項 36+36+15 + (64+sqrt)
+! /*4 + 7 = 8*4+7  = 39 flops
+! /*4 + 7 = 13*4+7 = 59 flops ! DP
+! ループ内セットアップ   6 + 36 + 6 = 42 flops
+! 対流項の各方向　( 8+6+6+8 + 88*3 + 12 ) * 3dir = 912
+! 粘性項 36+67+36 + 15 = 154 ! DP 36+92+36 + 15 = 179
+! Total : 39 + 42 + 912 + 154 = 1147 ! DP 59 + 42 + 912 + 179 = 1192
+
+    flop = flop + real(ix)*real(jx)*real(kx)*1147.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*1192.0 ! DP
     
     do k=1,kx
     do j=1,jx
@@ -132,7 +137,7 @@
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
       b_t2= ibits(bv(i  ,j  ,k+2), State, 1)
       
-      ! セル界面のフラグ (0-wall face / 1-fluid)
+      ! セル界面のフラグ (0-wall face / 1-fluid) > real*6= 6 flops
       w_e = real(b_e1 * b_p)
       w_w = real(b_w1 * b_p)
       w_n = real(b_n1 * b_p)
@@ -154,7 +159,7 @@
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
       
-      ! 界面速度（スタガード位置）
+      ! 界面速度（スタガード位置） > 36 flops
       UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
       UPw = 0.5*(Up0+Uw1)*w_w + u_ref*(1.0-w_w)
       VPn = 0.5*(Vp0+Vn1)*w_n + v_ref*(1.0-w_n)
@@ -162,7 +167,7 @@
       WPt = 0.5*(Wp0+Wt1)*w_t + w_ref*(1.0-w_t)
       WPb = 0.5*(Wp0+Wb1)*w_b + w_ref*(1.0-w_b)
       
-      ! セルセンターからの壁面修正速度
+      ! セルセンターからの壁面修正速度 > 6 flops
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
@@ -170,7 +175,7 @@
       ! X方向 ---------------------------------------
       
       ! 速度指定の場合にMUSCLスキームの参照先として，固体内にテンポラリに与えた値を使う
-      if ( (b_e2 == 0)  ) then
+      if ( (b_e2 == 0)  ) then  ! 8 flops
         Ue2 = 2.0*u_ref - v(i+1,j  ,k  ,1)
         Ve2 = wm1*v_ref + v(i+1,j  ,k  ,2)*wm2
         We2 = wm1*w_ref + v(i+1,j  ,k  ,3)*wm2
@@ -179,7 +184,7 @@
       endif
       
       ! 壁面の場合の参照速度の修正
-      if ( b_e1 == 0 ) then
+      if ( b_e1 == 0 ) then  ! 6 flops
         Ue1 = uq
         Ve1 = wm1*v_ref + Vp0*wm2
         We1 = wm1*w_ref + Wp0*wm2
@@ -187,7 +192,7 @@
         !We1 = wq
       endif
       
-      if ( b_w1 == 0 ) then
+      if ( b_w1 == 0 ) then ! 6 flops
         Uw1 = uq
         Vw1 = wm1*v_ref + Vp0*wm2
         Ww1 = wm1*w_ref + Wp0*wm2
@@ -195,7 +200,7 @@
         !Ww1 = wq
       end if
       
-      if ( (b_w2 == 0)  ) then
+      if ( (b_w2 == 0)  ) then ! 8 flops
         Uw2 = 2.0*u_ref - v(i-1,j  ,k  ,1)
         Vw2 = wm1*v_ref + v(i-1,j  ,k  ,2)*wm2
         Ww2 = wm1*w_ref + v(i-1,j  ,k  ,3)*wm2
@@ -221,7 +226,7 @@
       Ulr = Up0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
       Ull = Uw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_e
-      fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w
+      fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 8*4+7*2 = 88 flops
 
       d4 = Ve2-Ve1
       d3 = Ve1-Vp0
@@ -235,7 +240,7 @@
       Vlr = Vp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
       Vll = Vw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_e
-      fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w
+      fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w ! > 88 flops
 
       d4 = We2-We1
       d3 = We1-Wp0
@@ -249,12 +254,12 @@
       Wlr = Wp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
       Wll = Ww1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_e
-      fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w
+      fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w ! > 88 flops
       
       ! 流束の加算　VBCでない面の寄与のみを評価する
       cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
       cnv_v = cnv_v + fv_r*c_e - fv_l*c_w
-      cnv_w = cnv_w + fw_r*c_e - fw_l*c_w
+      cnv_w = cnv_w + fw_r*c_e - fw_l*c_w ! > 4*3 = 12 flops
 			
       ! Y方向 ---------------------------------------
       
@@ -452,7 +457,7 @@
       ww_n = ( Wn1 - Wp0 ) * dh2
       ww_s = ( Wp0 - Ws1 ) * dh2
       ww_t = ( Wt1 - Wp0 ) * dh2
-      ww_b = ( Wp0 - Wb1 ) * dh2
+      ww_b = ( Wp0 - Wb1 ) * dh2 ! > (2*6)*3 = 36 flops
       
       if ( v_mode == 2 ) then ! 壁法則の場合の壁面摩擦による剪断応力の置換
         if ( ibits(bpx, facing_W, 6) /= 0 ) then ! 6面のうちのどれか方向フラグが立っている場合，つまり壁面隣接セル
@@ -505,7 +510,7 @@
           endif
           
         endif
-      endif
+      endif ! > 9 + sqrt*1 + /*3 + 4*6 = 9+10+8*3+24 = 67 ! DP 9+20+13*3+24 = 92
       
       beta = 1.0;
       !if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
@@ -531,9 +536,9 @@
            + ww_n * c_n &
            - ww_s * c_s &
            + ww_t * c_t &
-           - ww_b * c_b ) * dh1
+           - ww_b * c_b ) * dh1 ! > 2*6*3 = 36 flops
 			
-      ! 対流項と粘性項の和
+      ! 対流項と粘性項の和 > 5*3 = 15 flops
       wv(i,j,k,1) = -cnv_u*dh1 + beta*EX*vcs
       wv(i,j,k,2) = -cnv_v*dh1 + beta*EY*vcs
       wv(i,j,k,3) = -cnv_w*dh1 + beta*EZ*vcs
@@ -543,836 +548,6 @@
 
     return
     end subroutine cbc_pvec_muscl
-
-!  ***********************************************************************************************
-!> @subroutine cbc_pvec_vibc (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, v_mode, ofi, flop)
-!! @brief 内部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param dh 格子幅
-!! @param v00 参照速度
-!! @param rei Reynolds数の逆数
-!! @param v 速度ベクトル（u^n, セルセンタ）
-!! @param bv BCindex V
-!! @param odr 内部境界処理時の速度境界条件のエントリ
-!! @param vec 指定する速度ベクトル
-!! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
-!! @param ofi 識別子 (0=specvel, 1=outlfow, 2-wall, 3-symmetric, 4-periodic)
-!! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度
-!! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
-!! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
-!<
-    subroutine cbc_pvec_vibc (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, v_mode, ofi, flop)
-    implicit none
-    include 'cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, ofi, odr, v_mode
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
-    real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref
-    real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
-    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
-    real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    
-    if      ( v_mode == 0 ) then 
-        vcs=0.0
-    else if ( v_mode == 1 ) then 
-        vcs=1.0
-    else if ( v_mode == 2 ) then 
-        vcs=1.0
-    end if
-    
-    dh1= 1.0/dh
-    dh2= rei*dh1*dh1*vcs
-
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    
-    ! u_bcは境界速度
-    u_bc = vec(1)
-    v_bc = vec(2)
-    w_bc = vec(3)
-    
-    ! u_bc_refは参照座標系での境界速度
-    u_bc_ref = u_bc + u_ref
-    v_bc_ref = v_bc + v_ref
-    w_bc_ref = w_bc + w_ref
-    
-    flop = flop + real(ed(1)-st(1)+1)*real(ed(2)-st(2)+1)*real(ed(3)-st(3)+1) &
-        *( (24.0*2.0 + 12.0)*3.0 + 17.0*3.0 + 15.0 ) + 14.0
-    
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
-      bvx = bv(i,j,k)
-
-      if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
-        cnv_u = 0.0
-        cnv_v = 0.0
-        cnv_w = 0.0
-        
-        ! セル状態 (0-solid / 1-fluid)
-        b_p = ibits(bvx,             State, 1)
-        b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
-        b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
-        b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
-        b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
-        b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
-        b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
-      
-        ! セル界面のフラグ (0-wall face / 1-fluid)
-        w_e = real(b_e1 * b_p)
-        w_w = real(b_w1 * b_p)
-        w_n = real(b_n1 * b_p)
-        w_s = real(b_s1 * b_p)
-        w_t = real(b_t1 * b_p)
-        w_b = real(b_b1 * b_p)
-        
-        ! 変数のロード
-        Up0 = v(i  ,j  ,k  ,1)
-        Vp0 = v(i  ,j  ,k  ,2)
-        Wp0 = v(i  ,j  ,k  ,3)
-      
-        Uw1 = 0.0
-        Ue1 = 0.0
-        Us1 = 0.0
-        Un1 = 0.0
-        Ub1 = 0.0
-        Ut1 = 0.0
-        Vw1 = 0.0
-        Ve1 = 0.0
-        Vs1 = 0.0
-        Vn1 = 0.0
-        Vb1 = 0.0
-        Vt1 = 0.0
-        Ww1 = 0.0
-        We1 = 0.0
-        Ws1 = 0.0
-        Wn1 = 0.0
-        Wb1 = 0.0
-        Wt1 = 0.0
-      
-        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC) 
-        c_e = 0.0
-        c_w = 0.0
-        c_n = 0.0
-        c_s = 0.0
-        c_t = 0.0
-        c_b = 0.0
-        if ( ibits(bvx, bc_face_E, bitw_5) == odr ) c_e = 1.0
-        if ( ibits(bvx, bc_face_W, bitw_5) == odr ) c_w = 1.0
-        if ( ibits(bvx, bc_face_N, bitw_5) == odr ) c_n = 1.0
-        if ( ibits(bvx, bc_face_S, bitw_5) == odr ) c_s = 1.0
-        if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
-        if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
-			
-        ! X方向 ---------------------------------------
-        if ( c_w == 1.0 ) then
-          if ( ofi == id_specvel ) then
-            Uw1  = u_bc_ref
-            Vw1  = v_bc_ref
-            Ww1  = w_bc_ref
-            cl   = u_bc
-            acl  = abs(cl)
-            fu_l = 0.5*(cl*(Up0+Uw1) - acl*(Up0-Uw1))
-            fv_l = 0.5*(cl*(Vp0+Vw1) - acl*(Vp0-Vw1))
-            fw_l = 0.5*(cl*(Wp0+Ww1) - acl*(Wp0-Ww1))
-            
-          else if ( ofi == id_outflow ) then
-            Uw1  = Up0
-            Vw1  = Vp0
-            Ww1  = Wp0
-            cl   = u_bc
-            if ( cl>0.0 ) cl=0.0
-            fu_l = cl*Up0
-            fv_l = cl*Vp0
-            fw_l = cl*Wp0
-          endif
-        end if
-        
-        if ( c_e == 1.0 ) then
-          if ( ofi == id_specvel ) then
-            Ue1  = u_bc_ref
-            Ve1  = v_bc_ref
-            We1  = w_bc_ref
-            cr   = u_bc
-            acr  = abs(cr)
-            fu_r = 0.5*(cr*(Ue1+Up0) - acr*(Ue1-Up0))
-            fv_r = 0.5*(cr*(Ve1+Vp0) - acr*(Ve1-Vp0))
-            fw_r = 0.5*(cr*(We1+Wp0) - acr*(We1-Wp0))
-            
-          else if ( ofi == id_outflow ) then
-            Ue1  = Up0
-            Ve1  = Vp0
-            We1  = Wp0
-            cr   = u_bc
-            if ( cr<0.0 ) cr=0.0
-            fu_r = cr*Up0
-            fv_r = cr*Vp0
-            fw_r = cr*Wp0
-          endif
-        end if
-        
-        cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
-        cnv_v = cnv_v + fv_r*c_e - fv_l*c_w
-        cnv_w = cnv_w + fw_r*c_e - fw_l*c_w
-			
-        ! Y方向 ---------------------------------------
-        if ( c_s == 1.0 ) then
-          if ( ofi == id_specvel ) then
-            Us1  = u_bc_ref
-            Vs1  = v_bc_ref
-            Ws1  = w_bc_ref
-            cl   = v_bc
-            acl  = abs(cl)
-            fu_l = 0.5*(cl*(Up0+Us1) - acl*(Up0-Us1))
-            fv_l = 0.5*(cl*(Vp0+Vs1) - acl*(Vp0-Vs1))
-            fw_l = 0.5*(cl*(Wp0+Ws1) - acl*(Wp0-Ws1))
-            
-          else if ( ofi == id_outflow ) then
-            Us1  = Up0
-            Vs1  = Vp0
-            Ws1  = Wp0
-            cl   = v_bc
-            if ( cl>0.0 ) cl=0.0
-            fu_l = cl*Up0
-            fv_l = cl*Vp0
-            fw_l = cl*Wp0
-          endif
-        end if
-        
-        if ( c_n == 1.0 ) then
-          if ( ofi == id_specvel ) then
-            Un1  = u_bc_ref
-            Vn1  = v_bc_ref
-            Wn1  = w_bc_ref
-            cr   = v_bc
-            acr  = abs(cr)
-            fu_r = 0.5*(cr*(Un1+Up0) - acr*(Un1-Up0))
-            fv_r = 0.5*(cr*(Vn1+Vp0) - acr*(Vn1-Vp0))
-            fw_r = 0.5*(cr*(Wn1+Wp0) - acr*(Wn1-Wp0))
-            
-          else if ( ofi == id_outflow ) then
-            Un1  = Up0
-            Vn1  = Vp0
-            Wn1  = Wp0
-            cr   = v_bc
-            if ( cr<0.0 ) cr=0.0
-            fu_r = cr*Up0
-            fv_r = cr*Vp0
-            fw_r = cr*Wp0
-          endif
-        end if
-        
-        cnv_u = cnv_u + fu_r*c_n - fu_l*c_s
-        cnv_v = cnv_v + fv_r*c_n - fv_l*c_s
-        cnv_w = cnv_w + fw_r*c_n - fw_l*c_s
-			
-        ! Z方向 ---------------------------------------
-        if ( c_b == 1.0 ) then
-          if ( ofi == id_specvel ) then
-            Ub1  = u_bc_ref
-            Vb1  = v_bc_ref
-            Wb1  = w_bc_ref
-            cl   = w_bc
-            acl  = abs(cl)
-            fu_l = 0.5*(cl*(Up0+Ub1) - acl*(Up0-Ub1))
-            fv_l = 0.5*(cl*(Vp0+Vb1) - acl*(Vp0-Vb1))
-            fw_l = 0.5*(cl*(Wp0+Wb1) - acl*(Wp0-Wb1))
-            
-          else if ( ofi == id_outflow ) then
-            Ub1  = Up0
-            Vb1  = Vp0
-            Wb1  = Wp0
-            cl   = w_bc
-            if ( cl>0.0 ) cl=0.0
-            fu_l = cl*Up0
-            fv_l = cl*Vp0
-            fw_l = cl*Wp0
-          endif
-        end if
-
-        if ( c_t == 1.0 ) then
-          if ( ofi == id_specvel ) then
-            Ut1  = u_bc_ref
-            Vt1  = v_bc_ref
-            Wt1  = w_bc_ref
-            cr   = w_bc
-            acr  = abs(cr)
-            fu_r = 0.5*(cr*(Ut1+Up0) - acr*(Ut1-Up0))
-            fv_r = 0.5*(cr*(Vt1+Vp0) - acr*(Vt1-Vp0))
-            fw_r = 0.5*(cr*(Wt1+Wp0) - acr*(Wt1-Wp0))
-            
-          else if ( ofi == id_outflow ) then
-            Ut1  = Up0
-            Vt1  = Vp0
-            Wt1  = Wp0
-            cr   = w_bc
-            if ( cr<0.0 ) cr=0.0
-            fu_r = cr*Up0
-            fv_r = cr*Vp0
-            fw_r = cr*Wp0
-          endif
-        end if
-        
-        cnv_u = cnv_u + fu_r*c_t - fu_l*c_b
-        cnv_v = cnv_v + fv_r*c_t - fv_l*c_b
-        cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
-      
-        ! 粘性項
-        EX = ( Ue1 - Up0 ) * c_e &
-           + ( Uw1 - Up0 ) * c_w &
-           + ( Un1 - Up0 ) * c_n &
-           + ( Us1 - Up0 ) * c_s &
-           + ( Ut1 - Up0 ) * c_t &
-           + ( Ub1 - Up0 ) * c_b
-        EY = ( Ve1 - Vp0 ) * c_e &
-           + ( Vw1 - Vp0 ) * c_w &
-           + ( Vn1 - Vp0 ) * c_n &
-           + ( Vs1 - Vp0 ) * c_s &
-           + ( Vt1 - Vp0 ) * c_t &
-           + ( Vb1 - Vp0 ) * c_b
-        EZ = ( We1 - Wp0 ) * c_e &
-           + ( Ww1 - Wp0 ) * c_w &
-           + ( Wn1 - Wp0 ) * c_n &
-           + ( Ws1 - Wp0 ) * c_s &
-           + ( Wt1 - Wp0 ) * c_t &
-           + ( Wb1 - Wp0 ) * c_b
-
-        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-      endif
-    end do
-    end do
-    end do
-    
-    return
-    end subroutine cbc_pvec_vibc
-
-!  *****************************************************************************************
-!> @subroutine cbc_pvec_vobc (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, ofi, face, flop)
-!! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v00 参照速度
-!! @param rei Reynolds数の逆数
-!! @param v0 速度ベクトル（n-step）
-!! @param bv BCindex V
-!! @param vec 指定する速度ベクトル
-!! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
-!! @param ofi 識別子 (0=specvel, 1=outlfow, 2-wall, 3-symmetric)
-!! @param face 外部境界処理のときの面番号
-!! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
-!! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
-!<
-    subroutine cbc_pvec_vobc (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, ofi, face, flop)
-    implicit none
-    include 'cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, ofi, face, v_mode
-    integer                                                     ::  ix, jx, kx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref
-    real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
-    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
-    real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real                                                        ::  Ue0, Uw0, Vs0, Vn0, Wb0, Wt0
-    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v0, wv
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    
-    if      ( v_mode == 0 ) then 
-        vcs=0.0
-    else if ( v_mode == 1 ) then 
-        vcs=1.0
-    else if ( v_mode == 2 ) then 
-        vcs=1.0
-    end if
-    
-    dh1= 1.0/dh
-    dh2= rei*dh1*dh1*vcs
-
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    
-    ! u_bcは境界速度
-    u_bc = vec(1)
-    v_bc = vec(2)
-    w_bc = vec(3)
-    
-    ! u_bc_refは参照座標系での境界速度
-    u_bc_ref = u_bc + u_ref
-    v_bc_ref = v_bc + v_ref
-    w_bc_ref = w_bc + w_ref
-    
-    flop = flop + 14.0
-    
-    FACES : select case (face)
-    case (X_minus)
-      i = 1
-      do k=1,kx
-      do j=1,jx
-        bvx = bv(i,j,k)
-        
-        if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          Up0 = v0(i  ,j  ,k  ,1)
-          Vp0 = v0(i  ,j  ,k  ,2)
-          Wp0 = v0(i  ,j  ,k  ,3)
-          Uw1 = 0.0
-          Vw1 = 0.0
-          Ww1 = 0.0
-          
-          if ( ofi == id_specvel ) then
-            Uw1  = u_bc_ref
-            Vw1  = v_bc_ref
-            Ww1  = w_bc_ref
-            !cl   = u_bc
-            !acl  = abs(cl)
-            !fu_l = 0.5*(cl*(Up0+Uw1) - acl*(Up0-Uw1))
-            !fv_l = 0.5*(cl*(Vp0+Vw1) - acl*(Vp0-Vw1))
-            !fw_l = 0.5*(cl*(Wp0+Ww1) - acl*(Wp0-Ww1))
-            fu_l = u_bc * u_bc_ref
-            fv_l = v_bc * v_bc_ref
-            fw_l = w_bc * w_bc_ref
-            flop = flop + 3.0
-            
-          else if ( ofi == id_outflow ) then
-            include 'd_o_o_p.h'
-            Uw1  = v0(i-1,j  ,k  ,1)
-            Vw1  = v0(i-1,j  ,k  ,2)
-            Ww1  = v0(i-1,j  ,k  ,3)
-            cl   = Ue + (Vn - Vs + Wt - Wb) - u_ref
-            if ( cl>0.0 ) cl=0.0
-            fu_l = cl * Up0
-            fv_l = cl * Vp0
-            fw_l = cl * Wp0
-            flop = flop + 44.0
-            
-          else if ( ofi == id_wall ) then
-            Uw1  = 2.0*u_bc_ref - Up0
-            Vw1  = 2.0*v_bc_ref - Vp0
-            Ww1  = 2.0*w_bc_ref - Wp0
-            fu_l = 0.0
-            fv_l = 0.0
-            fw_l = 0.0
-            flop = flop + 6.0
-            
-          else if ( ofi == id_symmetric ) then
-            Uw1  = -Up0
-            Vw1  =  Vp0
-            Ww1  =  Wp0
-            fu_l = 0.0
-            fv_l = 0.0
-            fw_l = 0.0
-          endif
-          
-          cnv_u = - fu_l
-          cnv_v = - fv_l
-          cnv_w = - fw_l
-          
-          EX = Uw1 - Up0
-          EY = Vw1 - Vp0
-          EZ = Ww1 - Wp0
-
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-          flop = flop + 21.0
-        endif
-      end do
-      end do
-      
-    case (X_plus)
-      i = ix
-      do k=1,kx
-      do j=1,jx
-        bvx = bv(i,j,k)
-        
-        if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          Up0 = v0(i  ,j  ,k  ,1)
-          Vp0 = v0(i  ,j  ,k  ,2)
-          Wp0 = v0(i  ,j  ,k  ,3)
-          Ue1 = 0.0
-          Ve1 = 0.0
-          We1 = 0.0
-          
-          if ( ofi == id_specvel ) then ! 実装が違うのでチェック
-            Ue1  = u_bc_ref
-            Ve1  = v_bc_ref
-            We1  = w_bc_ref
-            cr   = u_bc
-            acr  = abs(cr)
-            fu_r = 0.5*(cr*(Ue1+Up0) - acr*(Ue1-Up0))
-            fv_r = 0.5*(cr*(Ve1+Vp0) - acr*(Ve1-Vp0))
-            fw_r = 0.5*(cr*(We1+Wp0) - acr*(We1-Wp0))
-            flop = flop + 20.0
-            
-          else if ( ofi == id_outflow ) then
-            include 'd_o_o_p.h'
-            Ue1  = v0(i+1,j  ,k  ,1)
-            Ve1  = v0(i+1,j  ,k  ,2)
-            We1  = v0(i+1,j  ,k  ,3)
-            cr   = Uw - (Vn - Vs + Wt - Wb) - u_ref
-            if ( cr<0.0 ) cr=0.0
-            fu_r = cr * Up0
-            fv_r = cr * Vp0
-            fw_r = cr * Wp0
-            flop = flop + 44.0
-            
-          else if ( ofi == id_wall ) then
-            Ue1  = 2.0*u_bc_ref - Up0
-            Ve1  = 2.0*v_bc_ref - Vp0
-            We1  = 2.0*w_bc_ref - Wp0
-            fu_r = 0.0
-            fv_r = 0.0
-            fw_r = 0.0
-            flop = flop + 6.0
-            
-          else if ( ofi == id_symmetric ) then
-            Ue1  = -Up0
-            Ve1  =  Vp0
-            We1  =  Wp0
-            fu_r = 0.0
-            fv_r = 0.0
-            fw_r = 0.0
-          endif
-        
-          cnv_u = fu_r
-          cnv_v = fv_r
-          cnv_w = fw_r
-
-          EX = Ue1 - Up0
-          EY = Ve1 - Vp0
-          EZ = We1 - Wp0
-
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-        endif
-        flop = flop + 21.0
-      end do
-      end do
-      
-    case (Y_minus)
-      j = 1
-      do k=1,kx
-      do i=1,ix
-        bvx = bv(i,j,k)
-        
-        if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          Up0 = v0(i  ,j  ,k  ,1)
-          Vp0 = v0(i  ,j  ,k  ,2)
-          Wp0 = v0(i  ,j  ,k  ,3)
-          Us1 = 0.0
-          Vs1 = 0.0
-          Ws1 = 0.0
-          
-          if ( ofi == id_specvel ) then
-            Us1  = u_bc_ref
-            Vs1  = v_bc_ref
-            Ws1  = w_bc_ref
-            cl   = v_bc
-            acl  = abs(cl)
-            fu_l = 0.5*(cl*(Up0+Us1) - acl*(Up0-Us1))
-            fv_l = 0.5*(cl*(Vp0+Vs1) - acl*(Vp0-Vs1))
-            fw_l = 0.5*(cl*(Wp0+Ws1) - acl*(Wp0-Ws1))
-            flop = flop + 20.0
-            
-          else if ( ofi == id_outflow ) then
-            include 'd_o_o_p.h'
-            Us1  = v0(i  ,j-1,k  ,1)
-            Vs1  = v0(i  ,j-1,k  ,2)
-            Ws1  = v0(i  ,j-1,k  ,3)
-            cl   = Vn + (Ue - Uw + Wt - Wb) - v_ref
-            if ( cl>0.0 ) cl=0.0
-            fu_l = cl * Up0
-            fv_l = cl * Vp0
-            fw_l = cl * Wp0
-            flop = flop + 44.0
-            
-          else if ( ofi == id_wall ) then
-            Us1  = 2.0*u_bc_ref - Up0
-            Vs1  = 2.0*v_bc_ref - Vp0
-            Ws1  = 2.0*w_bc_ref - Wp0
-            fu_l = 0.0
-            fv_l = 0.0
-            fw_l = 0.0
-            flop = flop + 6.0
-            
-          else if ( ofi == id_symmetric ) then
-            Us1  =  Up0
-            Vs1  = -Vp0
-            Ws1  =  Wp0
-            fu_l = 0.0
-            fv_l = 0.0
-            fw_l = 0.0
-          endif
-
-          cnv_u = - fu_l
-          cnv_v = - fv_l
-          cnv_w = - fw_l
-        
-          EX = Us1 - Up0
-          EY = Vs1 - Vp0
-          EZ = Ws1 - Wp0
-          
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-          flop = flop + 21.0
-        endif
-      end do
-      end do
-      
-    case (Y_plus)
-      j = jx
-      do k=1,kx
-      do i=1,ix
-        bvx = bv(i,j,k)
-        
-        if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          Up0 = v0(i  ,j  ,k  ,1)
-          Vp0 = v0(i  ,j  ,k  ,2)
-          Wp0 = v0(i  ,j  ,k  ,3)
-          Un1 = 0.0
-          Vn1 = 0.0
-          Wn1 = 0.0
-          
-          if ( ofi == id_specvel ) then
-            Un1  = u_bc_ref
-            Vn1  = v_bc_ref
-            Wn1  = w_bc_ref
-            cr   = v_bc
-            acr  = abs(cr)
-            fu_r = 0.5*(cr*(Un1+Up0) - acr*(Un1-Up0))
-            fv_r = 0.5*(cr*(Vn1+Vp0) - acr*(Vn1-Vp0))
-            fw_r = 0.5*(cr*(Wn1+Wp0) - acr*(Wn1-Wp0))
-            flop = flop + 20.0
-            
-          else if ( ofi == id_outflow ) then
-            include 'd_o_o_p.h'
-            Un1  = v0(i  ,j+1,k  ,1)
-            Vn1  = v0(i  ,j+1,k  ,2)
-            Wn1  = v0(i  ,j+1,k  ,3)
-            cr   = Vs - (Ue - Uw + Wt - Wb) - v_ref
-            if ( cr<0.0 ) cr=0.0
-            fu_r = cr * Up0
-            fv_r = cr * Vp0
-            fw_r = cr * Wp0
-            flop = flop + 44.0
-            
-          else if ( ofi == id_wall ) then
-            Un1  = 2.0*u_bc_ref - Up0
-            Vn1  = 2.0*v_bc_ref - Vp0
-            Wn1  = 2.0*w_bc_ref - Wp0
-            fu_r = 0.0
-            fv_r = 0.0
-            fw_r = 0.0
-            flop = flop + 6.0
-            
-          else if ( ofi == id_symmetric ) then
-            Un1  =  Up0
-            Vn1  = -Vp0
-            Wn1  =  Wp0
-            fu_r = 0.0
-            fv_r = 0.0
-            fw_r = 0.0
-          endif
-
-          cnv_u = fu_r
-          cnv_v = fv_r
-          cnv_w = fw_r
-
-          EX = Un1 - Up0
-          EY = Vn1 - Vp0
-          EZ = Wn1 - Wp0
-          
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-          flop = flop + 21.0
-        endif
-      end do
-      end do
-      
-    case (Z_minus)
-      k = 1
-      do j=1,jx
-      do i=1,ix
-        bvx = bv(i,j,k)
-        
-        if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          Up0 = v0(i  ,j  ,k  ,1)
-          Vp0 = v0(i  ,j  ,k  ,2)
-          Wp0 = v0(i  ,j  ,k  ,3)
-          Ub1 = 0.0
-          Vb1 = 0.0
-          Wb1 = 0.0
-          
-          if ( ofi == id_specvel ) then
-            Ub1  = u_bc_ref
-            Vb1  = v_bc_ref
-            Wb1  = w_bc_ref
-            cl   = w_bc
-            acl  = abs(cl)
-            fu_l = 0.5*(cl*(Up0+Ub1) - acl*(Up0-Ub1))
-            fv_l = 0.5*(cl*(Vp0+Vb1) - acl*(Vp0-Vb1))
-            fw_l = 0.5*(cl*(Wp0+Wb1) - acl*(Wp0-Wb1))
-            flop = flop + 20.0
-            
-          else if ( ofi == id_outflow ) then
-            include 'd_o_o_p.h'
-            Ub1  = v0(i  ,j  ,k-1,1)
-            Vb1  = v0(i  ,j  ,k-1,2)
-            Wb1  = v0(i  ,j  ,k-1,3)
-            cl   = Wt + (Ue - Uw + Vn - Vs) - w_ref
-            if ( cl>0.0 ) cl=0.0
-            fu_l = cl * Up0
-            fv_l = cl * Vp0
-            fw_l = cl * Wp0
-            flop = flop + 44.0
-            
-          else if ( ofi == id_wall ) then
-            Ub1  = 2.0*u_bc_ref - Up0
-            Vb1  = 2.0*v_bc_ref - Vp0
-            Wb1  = 2.0*w_bc_ref - Wp0
-            fu_l = 0.0
-            fv_l = 0.0
-            fw_l = 0.0
-            flop = flop + 6.0
-            
-          else if ( ofi == id_symmetric ) then
-            Ub1  =  Up0
-            Vb1  =  Vp0
-            Wb1  = -Wp0
-            fu_l = 0.0
-            fv_l = 0.0
-            fw_l = 0.0
-          endif
-
-          cnv_u = - fu_l
-          cnv_v = - fv_l
-          cnv_w = - fw_l
-          
-          EX = Ub1 - Up0
-          EY = Vb1 - Vp0
-          EZ = Wb1 - Wp0
-          
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-          flop = flop + 21.0
-        endif
-      end do
-      end do
-      
-    case (Z_plus)
-      k = kx
-      do j=1,jx
-      do i=1,ix
-        bvx = bv(i,j,k)
-        
-        if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          Up0 = v0(i  ,j  ,k  ,1)
-          Vp0 = v0(i  ,j  ,k  ,2)
-          Wp0 = v0(i  ,j  ,k  ,3)
-          Ut1 = 0.0
-          Vt1 = 0.0
-          Wt1 = 0.0
-          
-          if ( ofi == id_specvel ) then
-            Ut1  = u_bc_ref
-            Vt1  = v_bc_ref
-            Wt1  = w_bc_ref
-            cr   = w_bc
-            acr  = abs(cr)
-            fu_r = 0.5*(cr*(Ut1+Up0) - acr*(Ut1-Up0))
-            fv_r = 0.5*(cr*(Vt1+Vp0) - acr*(Vt1-Vp0))
-            fw_r = 0.5*(cr*(Wt1+Wp0) - acr*(Wt1-Wp0))
-            flop = flop + 20.0
-            
-          else if ( ofi == id_outflow ) then
-            include 'd_o_o_p.h'
-            Ut1  = v0(i  ,j  ,k+1,1)
-            Vt1  = v0(i  ,j  ,k+1,2)
-            Wt1  = v0(i  ,j  ,k+1,3)
-            cr   = Wb - (Ue - Uw + Vn - Vs) - w_ref
-            if ( cr<0.0 ) cr=0.0
-            fu_r = cr * Up0
-            fv_r = cr * Vp0
-            fw_r = cr * Wp0
-            flop = flop + 44.0
-            
-          else if ( ofi == id_wall ) then
-            Ut1  = 2.0*u_bc_ref - Up0
-            Vt1  = 2.0*v_bc_ref - Vp0
-            Wt1  = 2.0*w_bc_ref - Wp0
-            fu_r = 0.0
-            fv_r = 0.0
-            fw_r = 0.0
-            flop = flop + 6.0
-            
-          else if ( ofi == id_symmetric ) then
-            Ut1  =  Up0
-            Vt1  =  Vp0
-            Wt1  = -Wp0
-            fu_r = 0.0
-            fv_r = 0.0
-            fw_r = 0.0
-          endif
-
-          cnv_u = fu_r
-          cnv_v = fv_r
-          cnv_w = fw_r
-          
-          EX = Ut1 - Up0
-          EY = Vt1 - Vp0
-          EZ = Wt1 - Wp0
-          
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 )
-          flop = flop + 21.0
-        endif
-      end do
-      end do
-      
-    case default
-    end select FACES
-    
-    return
-    end subroutine cbc_pvec_vobc
 
 !  **********************************************************************************
 !> @subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, coef, flop)
@@ -1419,7 +594,10 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(ix)*real(jx)*real(kx)*95.0 + 8.0
+    
+    ! loop : 2 + 6 + 6 + 36 + 18 + 25 + 15 = 108
+    flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 8.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 13.0 ! DP
 
     do k=1,kx
     do j=1,jx
@@ -1436,7 +614,7 @@
       c5 = 1.0
       c6 = 1.0
       
-      ! Neumann条件のとき，0.0
+      ! Neumann条件のとき，0.0 > 6 flop
       N_w = real(ibits(bpx, bc_n_W, 1))  ! w
       N_e = real(ibits(bpx, bc_n_E, 1))  ! e
       N_s = real(ibits(bpx, bc_n_S, 1))  ! s
@@ -1455,7 +633,7 @@
       Wb0 = vc(i  ,j  ,k-1,3)
       Wt0 = vc(i  ,j  ,k+1,3)      
       
-      ! 壁面による修正 (0-solid / 1-fluid)
+      ! 壁面による修正 (0-solid / 1-fluid) > 6 flop
       b_w = real( ibits(bv(i-1,j  ,k  ), State, 1) )
       b_e = real( ibits(bv(i+1,j  ,k  ), State, 1) )
       b_s = real( ibits(bv(i  ,j-1,k  ), State, 1) )
@@ -1544,7 +722,9 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop  = flop + real(ix)*real(jx)*real(kx)*49.0
+    
+    ! loop : 1 + 42 + 13
+    flop  = flop + real(ix)*real(jx)*real(kx)*56.0
 
     do k=1,kx
     do j=1,jx
@@ -1552,7 +732,7 @@
       bvx = bv(i,j,k)
       actv= real(ibits(bvx, State, 1))
       
-      include 'd_o_o_p.h' ! 36flops
+      include 'd_o_o_p.h' ! 42flops
       
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC) 
       c_e = 1.0
@@ -1602,7 +782,7 @@
     jx = sz(2)
     kx = sz(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*9.0
+    flop = flop + real(ix)*real(jx)*real(kx)*10.0
     
     do k=1,kx
     do j=1,jx

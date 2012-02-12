@@ -4,6 +4,11 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.4.7  12 Feb. 2012
+  - fb_minmax_s(), fb_minmax_v()にflop追加
+  - 圧縮性のdtの計算関数を削除
+  - fb_set_value_real(), fb_set_value_int()を追加．SklInitializeSKL_REALの代わりに最適化が効くメソッド
+  
 Ver 2.4.6  　4 Dec. 2011
   - condition, profiling, history名を固定に変更 > getXML_History()
 
