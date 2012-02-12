@@ -164,8 +164,8 @@
             <Param dtype="STRING" name="Temperature" value="Celsius"/>
         </Elem>
         <Elem name="Version_Info">
-            <Param dtype="INT" name="CBC" value="150"/>
-            <Param dtype="INT" name="Flow_Base" value="246"/>
+            <Param dtype="INT" name="CBC" value="151"/>
+            <Param dtype="INT" name="Flow_Base" value="247"/>
         </Elem>
     </Steer>
     <Parameter>
