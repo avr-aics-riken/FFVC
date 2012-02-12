@@ -102,12 +102,13 @@
 ! /*4 + 7 = 8*4+7  = 39 flops
 ! /*4 + 7 = 13*4+7 = 59 flops ! DP
 ! ループ内セットアップ   6 + 36 + 6 = 42 flops
-! 対流項の各方向　( 8+6+6+8 + 88*3 + 12 ) * 3dir = 912
-! 粘性項 36+67+36 + 15 = 154 ! DP 36+92+36 + 15 = 179
-! Total : 39 + 42 + 912 + 154 = 1147 ! DP 59 + 42 + 912 + 179 = 1192
+! 対流項の各方向　( 8+6+6+8 + 90*3 + 12 ) * 3dir = 930
+! 粘性項 36 + 36 + 15 = 87
+! 粘性項置換部　67 ! DP 92
+! Total : 39 + 42 + 930 + 87 = 1098 ! DP 59 + 42 + 930 + 87 = 1118
 
-    flop = flop + real(ix)*real(jx)*real(kx)*1147.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*1192.0 ! DP
+    flop = flop + real(ix)*real(jx)*real(kx)*1098.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*1118.0 ! DP
     
     do k=1,kx
     do j=1,jx
@@ -226,7 +227,7 @@
       Ulr = Up0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
       Ull = Uw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_e
-      fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 8*4+7*2 = 88 flops
+      fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 8*4+7*2 = 90 flops
 
       d4 = Ve2-Ve1
       d3 = Ve1-Vp0
@@ -240,7 +241,7 @@
       Vlr = Vp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
       Vll = Vw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_e
-      fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w ! > 88 flops
+      fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w ! > 90 flops
 
       d4 = We2-We1
       d3 = We1-Wp0
@@ -254,7 +255,7 @@
       Wlr = Wp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
       Wll = Ww1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_e
-      fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w ! > 88 flops
+      fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w ! > 90 flops
       
       ! 流束の加算　VBCでない面の寄与のみを評価する
       cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
@@ -509,8 +510,11 @@
             vv_b = u_tau * e2*e2
           endif
           
+          ! > 9 + sqrt*1 + /*3 + 4*6 = 9+10+8*3+24 = 67 ! DP 9+20+13*3+24 = 92
+          flop = flop + 67
+          ! flop = flop + 92 ! DP
         endif
-      endif ! > 9 + sqrt*1 + /*3 + 4*6 = 9+10+8*3+24 = 67 ! DP 9+20+13*3+24 = 92
+      endif 
       
       beta = 1.0;
       !if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
@@ -782,16 +786,16 @@
     jx = sz(2)
     kx = sz(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*10.0
+    flop = flop + real(ix)*real(jx)*real(kx)*8.0
     
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      actv = real(ibits(bd(i,j,k), State, 1))
+      actv = dt * real(ibits(bd(i,j,k), State, 1))
 
-      vc(i,j,k,1) = v(i,j,k,1) + dt*vc(i,j,k,1)* actv
-      vc(i,j,k,2) = v(i,j,k,2) + dt*vc(i,j,k,2)* actv
-      vc(i,j,k,3) = v(i,j,k,3) + dt*vc(i,j,k,3)* actv
+      vc(i,j,k,1) = v(i,j,k,1) + vc(i,j,k,1)* actv
+      vc(i,j,k,2) = v(i,j,k,2) + vc(i,j,k,2)* actv
+      vc(i,j,k,3) = v(i,j,k,3) + vc(i,j,k,3)* actv
     end do
     end do
     end do

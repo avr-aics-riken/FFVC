@@ -788,7 +788,7 @@
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx
+    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx, m
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v0, wv
     real, dimension(0:3)                                        ::  v00
@@ -835,6 +835,7 @@
     
     FACES : select case (face)
     case (X_minus)
+      m = 0.0
       i = 1
       do k=1,kx
       do j=1,jx
@@ -856,13 +857,16 @@
           wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
           wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
           wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*15.0
+      flop = flop + m*15.0
+      ! flop = flop + rix*15.0
       
     case (X_plus)
+      m = 0.0
       i = ix
       do k=1,kx
       do j=1,jx
@@ -884,12 +888,16 @@
           wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
           wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
           wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
-      flop = flop + rix*15.0
+
+      flop = flop + m*15.0
+      ! flop = flop + rix*15.0
       
     case (Y_minus)
+      m = 0.0
       j = 1
       do k=1,kx
       do i=1,ix
@@ -911,13 +919,16 @@
           wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
           wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
           wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*15.0
+      flop = flop + m*15.0
+      ! flop = flop + rjx*15.0
       
     case (Y_plus)
+      m = 0.0
       j = jx
       do k=1,kx
       do i=1,ix
@@ -939,13 +950,16 @@
           wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
           wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
           wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*15.0
+      flop = flop + m*15.0
+      ! flop = flop + rjx*15.0
       
     case (Z_minus)
+      m = 0.0
       k = 1
       do j=1,jx
       do i=1,ix
@@ -967,13 +981,16 @@
           wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
           wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
           wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
-      
-      flop = flop + rkx*15.0
+
+      flop = flop + m*15.0
+      ! flop = flop + rkx*15.0
       
     case (Z_plus)
+      m = 0.0
       k = kx
       do j=1,jx
       do i=1,ix
@@ -995,10 +1012,13 @@
           wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
           wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
           wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
-      flop = flop + rkx*15.0
+
+      flop = flop + m*15.0
+      ! flop = flop + rkx*15.0
       
     case default
     end select FACES
