@@ -47,6 +47,9 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     C.Interval[i].resetTrigger();
   }
   
+  // Loop section
+  TIMING_start(tm_loop_sct);
+  
   // 時間進行
   SklIncrementTime();
   unsigned loop_step = SklGetTotalStep();
@@ -329,6 +332,8 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   
   TIMING_stop(tm_loop_uty_sct, 0.0);
   //  <<< ステップループのユーティリティ
+  
+  TIMING_stop(tm_loop_sct, 0.0);
   
   return 1;
 }

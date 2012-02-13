@@ -38,8 +38,9 @@
     real                                                        ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
     real                                                        ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
     real                                                        ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-    real                                                        ::  ck, u_ref, v_ref, w_ref, dh, dh1, dh2, flop, vcs
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2
+    real                                                        ::  ck, dh, dh1, dh2, flop, vcs
+    real                                                        ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
+    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4, tmp1, tmp2
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                        ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
     real                                                        ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
@@ -72,6 +73,9 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
+    u_ref2 = 2.0*u_ref
+    v_ref2 = 2.0*v_ref
+    w_ref2 = 2.0*w_ref
     
     ck = 0.0
     b  = 0.0
@@ -89,6 +93,11 @@
       stop
     endif
     
+    ss_4 = 0.25*ss
+    
+    cm1 = 1.0 - ck
+    cm2 = 1.0 + ck
+    
     ! 壁面条件
     if ( wall_type == 0 ) then ! no slip
       wls = 0.0
@@ -99,16 +108,16 @@
     wm1 = 2.0*(1.0-wls)
     wm2 = 2.0*wls-1.0
     
-! /*4 + 7 = 8*4+7  = 39 flops
-! /*4 + 7 = 13*4+7 = 59 flops ! DP
-! ループ内セットアップ   6 + 36 + 6 = 42 flops
-! 対流項の各方向　( 8+6+6+8 + 90*3 + 12 ) * 3dir = 930
-! 粘性項 36 + 36 + 15 = 87
+! /*4 + 12 = 8*4+13  = 45 flops
+! /*4 + 12 = 13*4+13 = 65 flops ! DP
+! ループ内セットアップ   6 + 36 + 2 = 44 flops
+! 対流項の各方向　( 7+6+7 + 78*3 + 12 ) * 3dir = 798
+! 粘性項 36 + 36 + 12 = 84
 ! 粘性項置換部　67 ! DP 92
-! Total : 39 + 42 + 930 + 87 = 1098 ! DP 59 + 42 + 930 + 87 = 1118
+! Total : 45 + 44 + 798 + 84 = 971 ! DP 65 + 44 + 798 + 84 = 991
 
-    flop = flop + real(ix)*real(jx)*real(kx)*1098.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*1118.0 ! DP
+    flop = flop + real(ix)*real(jx)*real(kx)*798.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*991.0 ! DP
     
     do k=1,kx
     do j=1,jx
@@ -168,45 +177,48 @@
       WPt = 0.5*(Wp0+Wt1)*w_t + w_ref*(1.0-w_t)
       WPb = 0.5*(Wp0+Wb1)*w_b + w_ref*(1.0-w_b)
       
-      ! セルセンターからの壁面修正速度 > 6 flops
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
+      ! セルセンターからの壁面修正速度 > 2 flops
+      uq = u_ref2 - Up0
+      vq = v_ref2 - Vp0
+      wq = w_ref2 - Wp0
 			
       ! X方向 ---------------------------------------
       
       ! 速度指定の場合にMUSCLスキームの参照先として，固体内にテンポラリに与えた値を使う
-      if ( (b_e2 == 0)  ) then  ! 8 flops
-        Ue2 = 2.0*u_ref - v(i+1,j  ,k  ,1)
+      if ( (b_e2 == 0)  ) then  ! 7 flops
+        Ue2 = u_ref2 - v(i+1,j  ,k  ,1)
         Ve2 = wm1*v_ref + v(i+1,j  ,k  ,2)*wm2
         We2 = wm1*w_ref + v(i+1,j  ,k  ,3)*wm2
-        !Ve2 = 2.0*v_ref - v(i+1,j  ,k  ,2)
-        !We2 = 2.0*w_ref - v(i+1,j  ,k  ,3)
+        !Ve2 = v_ref2 - v(i+1,j  ,k  ,2)
+        !We2 = w_ref2 - v(i+1,j  ,k  ,3)
       endif
       
       ! 壁面の場合の参照速度の修正
-      if ( b_e1 == 0 ) then  ! 6 flops
+      tmp1 = wm1*v_ref + Vp0*wm2 ! 6 flops
+      tmp2 = wm1*w_ref + Wp0*wm2
+      
+      if ( b_e1 == 0 ) then  
         Ue1 = uq
-        Ve1 = wm1*v_ref + Vp0*wm2
-        We1 = wm1*w_ref + Wp0*wm2
+        Ve1 = tmp1
+        We1 = tmp2
         !Ve1 = vq
         !We1 = wq
       endif
       
-      if ( b_w1 == 0 ) then ! 6 flops
+      if ( b_w1 == 0 ) then
         Uw1 = uq
-        Vw1 = wm1*v_ref + Vp0*wm2
-        Ww1 = wm1*w_ref + Wp0*wm2
+        Vw1 = tmp1
+        Ww1 = tmp2
         !Vw1 = vq
         !Ww1 = wq
       end if
       
-      if ( (b_w2 == 0)  ) then ! 8 flops
-        Uw2 = 2.0*u_ref - v(i-1,j  ,k  ,1)
+      if ( (b_w2 == 0)  ) then ! 7 flops
+        Uw2 = u_ref2 - v(i-1,j  ,k  ,1)
         Vw2 = wm1*v_ref + v(i-1,j  ,k  ,2)*wm2
         Ww2 = wm1*w_ref + v(i-1,j  ,k  ,3)*wm2
-        !Vw2 = 2.0*v_ref - v(i-1,j  ,k  ,2)
-        !Ww2 = 2.0*w_ref - v(i-1,j  ,k  ,3)
+        !Vw2 = v_ref2 - v(i-1,j  ,k  ,2)
+        !Ww2 = w_ref2 - v(i-1,j  ,k  ,3)
       end if
       
       ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
@@ -222,12 +234,12 @@
       
       include 'muscl.h'
       
-      Urr = Ue1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Url = Up0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Ulr = Up0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Ull = Uw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Urr = Ue1 - (cm1*g6+cm2*g5)*ss_4
+      Url = Up0 + (cm1*g3+cm2*g4)*ss_4
+      Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
+      Ull = Uw1 + (cm1*g1+cm2*g2)*ss_4
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_e
-      fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 8*4+7*2 = 90 flops
+      fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 5*4+7*2 = 78 flops
 
       d4 = Ve2-Ve1
       d3 = Ve1-Vp0
@@ -236,12 +248,12 @@
       
       include 'muscl.h'
       
-      Vrr = Ve1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Vrl = Vp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Vlr = Vp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Vll = Vw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Vrr = Ve1 - (cm1*g6+cm2*g5)*ss_4
+      Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
+      Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
+      Vll = Vw1 + (cm1*g1+cm2*g2)*ss_4
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_e
-      fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w ! > 90 flops
+      fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w
 
       d4 = We2-We1
       d3 = We1-Wp0
@@ -250,12 +262,12 @@
       
       include 'muscl.h'
       
-      Wrr = We1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Wrl = Wp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Wlr = Wp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Wll = Ww1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Wrr = We1 - (cm1*g6+cm2*g5)*ss_4
+      Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
+      Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
+      Wll = Ww1 + (cm1*g1+cm2*g2)*ss_4
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_e
-      fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w ! > 90 flops
+      fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w
       
       ! 流束の加算　VBCでない面の寄与のみを評価する
       cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
@@ -266,34 +278,37 @@
       
       if ( (b_n2 == 0)  ) then
         Un2 = wm1*u_ref + v(i  ,j+1,k  ,1)*wm2
-        Vn2 = 2.0*v_ref - v(i  ,j+1,k  ,2)
+        Vn2 = v_ref2 - v(i  ,j+1,k  ,2)
         Wn2 = wm1*w_ref + v(i  ,j+1,k  ,3)*wm2
-        !Un2 = 2.0*u_ref - v(i  ,j+1,k  ,1)
-        !Wn2 = 2.0*w_ref - v(i  ,j+1,k  ,3)
+        !Un2 = u_ref2 - v(i  ,j+1,k  ,1)
+        !Wn2 = w_ref2 - v(i  ,j+1,k  ,3)
       endif
       
+      tmp1 = wm1*u_ref + Up0*wm2
+      tmp2 = wm1*w_ref + Wp0*wm2
+      
       if ( b_n1 == 0 ) then
-        Un1 = wm1*u_ref + Up0*wm2
+        Un1 = tmp1
         Vn1 = vq
-        Wn1 = wm1*w_ref + Wp0*wm2
+        Wn1 = tmp2
         !Un1 = uq
         !Wn1 = wq
       endif
       
       if ( b_s1 == 0 ) then
-        Us1 = wm1*u_ref + Up0*wm2
+        Us1 = tmp1
         Vs1 = vq
-        Ws1 = wm1*w_ref + Wp0*wm2
+        Ws1 = tmp2
         !Us1 = uq
         !Ws1 = wq
       endif
       
       if ( (b_s2 == 0)  ) then
         Us2 = wm1*u_ref + v(i  ,j-1,k  ,1)*wm2
-        Vs2 = 2.0*v_ref - v(i  ,j-1,k  ,2)
+        Vs2 = v_ref2 - v(i  ,j-1,k  ,2)
         Ws2 = wm1*w_ref + v(i  ,j-1,k  ,3)*wm2
-        !Us2 = 2.0*u_ref - v(i  ,j-1,k  ,1)
-        !Ws2 = 2.0*w_ref - v(i  ,j-1,k  ,3)
+        !Us2 = u_ref2 - v(i  ,j-1,k  ,1)
+        !Ws2 = w_ref2 - v(i  ,j-1,k  ,3)
       endif
       
       ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
@@ -309,10 +324,10 @@
       
       include 'muscl.h'
       
-      Urr = Un1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Url = Up0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Ulr = Up0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Ull = Us1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Urr = Un1 - (cm1*g6+cm2*g5)*ss_4
+      Url = Up0 + (cm1*g3+cm2*g4)*ss_4
+      Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
+      Ull = Us1 + (cm1*g1+cm2*g2)*ss_4
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_n
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_s
 
@@ -323,10 +338,10 @@
       
       include 'muscl.h'
       
-      Vrr = Vn1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Vrl = Vp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Vlr = Vp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Vll = Vs1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Vrr = Vn1 - (cm1*g6+cm2*g5)*ss_4
+      Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
+      Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
+      Vll = Vs1 + (cm1*g1+cm2*g2)*ss_4
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_n
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_s
 
@@ -337,10 +352,10 @@
       
       include 'muscl.h'
       
-      Wrr = Wn1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Wrl = Wp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Wlr = Wp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Wll = Ws1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Wrr = Wn1 - (cm1*g6+cm2*g5)*ss_4
+      Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
+      Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
+      Wll = Ws1 + (cm1*g1+cm2*g2)*ss_4
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_n
       fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_s
       
@@ -355,22 +370,25 @@
       if ( (b_t2 == 0)  ) then
         Ut2 = wm1*u_ref + v(i  ,j  ,k+1,1)*wm2
         Vt2 = wm1*v_ref + v(i  ,j  ,k+1,2)*wm2
-        Wt2 = 2.0*w_ref - v(i  ,j  ,k+1,3)
-        !Ut2 = 2.0*u_ref - v(i  ,j  ,k+1,1)
-        !Vt2 = 2.0*v_ref - v(i  ,j  ,k+1,2)
+        Wt2 = w_ref2 - v(i  ,j  ,k+1,3)
+        !Ut2 = u_ref2 - v(i  ,j  ,k+1,1)
+        !Vt2 = v_ref2 - v(i  ,j  ,k+1,2)
       end if
       
+      tmp1 = wm1*u_ref + Up0*wm2
+      tmp2 = wm1*v_ref + Vp0*wm2
+      
       if ( b_t1 == 0 ) then
-        Ut1 = wm1*u_ref + Up0*wm2
-        Vt1 = wm1*v_ref + Vp0*wm2
+        Ut1 = tmp1
+        Vt1 = tmp2
         Wt1 = wq
         !Ut1 = uq
         !Vt1 = vq
       end if
       
       if ( b_b1 == 0 ) then
-        Ub1 = wm1*u_ref + Up0*wm2
-        Vb1 = wm1*v_ref + Vp0*wm2
+        Ub1 = tmp1
+        Vb1 = tmp2
         Wb1 = wq
         !Ub1 = uq
         !Vb1 = vq
@@ -379,9 +397,9 @@
       if ( (b_b2 == 0)  ) then
         Ub2 = wm1*u_ref + v(i  ,j  ,k-1,1)*wm2
         Vb2 = wm1*v_ref + v(i  ,j  ,k-1,2)*wm2
-        Wb2 = 2.0*w_ref - v(i  ,j  ,k-1,3)
-        !Ub2 = 2.0*u_ref - v(i  ,j  ,k-1,1)
-        !Vb2 = 2.0*v_ref - v(i  ,j  ,k-1,2)
+        Wb2 = w_ref2 - v(i  ,j  ,k-1,3)
+        !Ub2 = u_ref2 - v(i  ,j  ,k-1,1)
+        !Vb2 = v_ref2 - v(i  ,j  ,k-1,2)
       end if
       
       ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
@@ -397,10 +415,10 @@
       
       include 'muscl.h'
       
-      Urr = Ut1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Url = Up0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Ulr = Up0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Ull = Ub1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Urr = Ut1 - (cm1*g6+cm2*g5)*ss_4
+      Url = Up0 + (cm1*g3+cm2*g4)*ss_4
+      Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
+      Ull = Ub1 + (cm1*g1+cm2*g2)*ss_4
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_t
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_b
 
@@ -411,10 +429,10 @@
       
       include 'muscl.h'
             
-      Vrr = Vt1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Vrl = Vp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Vlr = Vp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Vll = Vb1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Vrr = Vt1 - (cm1*g6+cm2*g5)*ss_4
+      Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
+      Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
+      Vll = Vb1 + (cm1*g1+cm2*g2)*ss_4
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_t
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_b
 
@@ -425,10 +443,10 @@
       
       include 'muscl.h'
             
-      Wrr = Wt1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Wrl = Wp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Wlr = Wp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Wll = Wb1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Wrr = Wt1 - (cm1*g6+cm2*g5)*ss_4
+      Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
+      Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
+      Wll = Wb1 + (cm1*g1+cm2*g2)*ss_4
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_t
       fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_b
       
@@ -542,7 +560,7 @@
            + ww_t * c_t &
            - ww_b * c_b ) * dh1 ! > 2*6*3 = 36 flops
 			
-      ! 対流項と粘性項の和 > 5*3 = 15 flops
+      ! 対流項と粘性項の和 > 4*3 = 12 flops
       wv(i,j,k,1) = -cnv_u*dh1 + beta*EX*vcs
       wv(i,j,k,2) = -cnv_v*dh1 + beta*EY*vcs
       wv(i,j,k,3) = -cnv_w*dh1 + beta*EZ*vcs
