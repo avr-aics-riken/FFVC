@@ -790,6 +790,7 @@
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
     real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx, m
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                        ::  u_bc_ref2, v_bc_ref2, w_bc_ref2
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v0, wv
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  vec
@@ -829,9 +830,13 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    ! /*1 + 6 = 14 flops ! DP 19 flops
-    flop = flop + 14.0
-    ! flop = flop + 19.0 ! DP
+    u_bc_ref2 = 2.0*u_bc_ref
+    v_bc_ref2 = 2.0*v_bc_ref
+    w_bc_ref2 = 2.0*w_bc_ref
+    
+    ! /*1 + 9 = 17 flops ! DP 22 flops
+    flop = flop + 17.0
+    ! flop = flop + 22.0 ! DP
     
     FACES : select case (face)
     case (X_minus)
@@ -846,9 +851,9 @@
           Vp0 = v0(i  ,j  ,k  ,2)
           Wp0 = v0(i  ,j  ,k  ,3)
           
-          Uw1  = 2.0*u_bc_ref - Up0
-          Vw1  = 2.0*v_bc_ref - Vp0
-          Ww1  = 2.0*w_bc_ref - Wp0
+          Uw1  = u_bc_ref2 - Up0
+          Vw1  = v_bc_ref2 - Vp0
+          Ww1  = w_bc_ref2 - Wp0
           
           EX = Uw1 - Up0
           EY = Vw1 - Vp0
@@ -862,8 +867,7 @@
       end do
       end do
       
-      flop = flop + m*15.0
-      ! flop = flop + rix*15.0
+      flop = flop + m*12.0
       
     case (X_plus)
       m = 0.0
@@ -877,9 +881,9 @@
           Vp0 = v0(i  ,j  ,k  ,2)
           Wp0 = v0(i  ,j  ,k  ,3)
 
-          Ue1  = 2.0*u_bc_ref - Up0
-          Ve1  = 2.0*v_bc_ref - Vp0
-          We1  = 2.0*w_bc_ref - Wp0
+          Ue1  = u_bc_ref2 - Up0
+          Ve1  = v_bc_ref2 - Vp0
+          We1  = w_bc_ref2 - Wp0
 
           EX = Ue1 - Up0
           EY = Ve1 - Vp0
@@ -893,8 +897,7 @@
       end do
       end do
 
-      flop = flop + m*15.0
-      ! flop = flop + rix*15.0
+      flop = flop + m*12.0
       
     case (Y_minus)
       m = 0.0
@@ -908,9 +911,9 @@
           Vp0 = v0(i  ,j  ,k  ,2)
           Wp0 = v0(i  ,j  ,k  ,3)
 
-          Us1  = 2.0*u_bc_ref - Up0
-          Vs1  = 2.0*v_bc_ref - Vp0
-          Ws1  = 2.0*w_bc_ref - Wp0
+          Us1  = u_bc_ref2 - Up0
+          Vs1  = v_bc_ref2 - Vp0
+          Ws1  = w_bc_ref2 - Wp0
         
           EX = Us1 - Up0
           EY = Vs1 - Vp0
@@ -924,8 +927,7 @@
       end do
       end do
       
-      flop = flop + m*15.0
-      ! flop = flop + rjx*15.0
+      flop = flop + m*12.0
       
     case (Y_plus)
       m = 0.0
@@ -939,9 +941,9 @@
           Vp0 = v0(i  ,j  ,k  ,2)
           Wp0 = v0(i  ,j  ,k  ,3)
 
-          Un1  = 2.0*u_bc_ref - Up0
-          Vn1  = 2.0*v_bc_ref - Vp0
-          Wn1  = 2.0*w_bc_ref - Wp0
+          Un1  = u_bc_ref2 - Up0
+          Vn1  = v_bc_ref2 - Vp0
+          Wn1  = w_bc_ref2 - Wp0
 
           EX = Un1 - Up0
           EY = Vn1 - Vp0
@@ -955,8 +957,7 @@
       end do
       end do
       
-      flop = flop + m*15.0
-      ! flop = flop + rjx*15.0
+      flop = flop + m*12.0
       
     case (Z_minus)
       m = 0.0
@@ -970,9 +971,9 @@
           Vp0 = v0(i  ,j  ,k  ,2)
           Wp0 = v0(i  ,j  ,k  ,3)
 
-          Ub1  = 2.0*u_bc_ref - Up0
-          Vb1  = 2.0*v_bc_ref - Vp0
-          Wb1  = 2.0*w_bc_ref - Wp0
+          Ub1  = u_bc_ref2 - Up0
+          Vb1  = v_bc_ref2 - Vp0
+          Wb1  = w_bc_ref2 - Wp0
           
           EX = Ub1 - Up0
           EY = Vb1 - Vp0
@@ -986,8 +987,7 @@
       end do
       end do
 
-      flop = flop + m*15.0
-      ! flop = flop + rkx*15.0
+      flop = flop + m*12.0
       
     case (Z_plus)
       m = 0.0
@@ -1001,9 +1001,9 @@
           Vp0 = v0(i  ,j  ,k  ,2)
           Wp0 = v0(i  ,j  ,k  ,3)
 
-          Ut1  = 2.0*u_bc_ref - Up0
-          Vt1  = 2.0*v_bc_ref - Vp0
-          Wt1  = 2.0*w_bc_ref - Wp0
+          Ut1  = u_bc_ref2 - Up0
+          Vt1  = v_bc_ref2 - Vp0
+          Wt1  = w_bc_ref2 - Wp0
           
           EX = Ut1 - Up0
           EY = Vt1 - Vp0
@@ -1017,8 +1017,7 @@
       end do
       end do
 
-      flop = flop + m*15.0
-      ! flop = flop + rkx*15.0
+      flop = flop + m*12.0
       
     case default
     end select FACES
