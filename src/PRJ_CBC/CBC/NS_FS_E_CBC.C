@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -109,8 +109,6 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   
   d_size = dc_p0->GetArrayLength();
   fb_copy_real_(p0, p, (int*)&d_size);
-  //CU.copy_SKL_REAL(v0, v, dc_v0->GetArrayLength());
-  //CU.copy_SKL_REAL(p0, p, dc_p0->GetArrayLength());
   TIMING_stop(tm_copy_array, 0.0, 2);
 
   // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
@@ -173,7 +171,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     default:
       assert(0);
   }
-  
+
   // 時間積分
   switch (C.AlgorithmF) {
     case Control::Flow_FS_EE_EE:
@@ -275,7 +273,6 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     TIMING_start(tm_copy_array);
     d_size = dc_wv->GetArrayLength();
     fb_copy_real_(wv, vc, (int*)&d_size);
-    //CU.copy_SKL_REAL(wv, vc, dc_wv->GetArrayLength());
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
@@ -300,12 +297,10 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_start(tm_copy_array);
   d_size = dc_v->GetArrayLength();
   fb_copy_real_(v, vc, (int*)&d_size);
-  //CU.copy_SKL_REAL(v, vc, dc_v->GetArrayLength());
   TIMING_stop(tm_copy_array, 0.0);
   
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
-  //SklInitializeSKL_REAL(dc_ws->GetData(), 0.0, dc_ws->GetArrayLength());
   d_size = dc_ws->GetArrayLength();
   fb_set_value_real_(src0, (int*)&d_size, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
@@ -365,7 +360,6 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     
     // 反復ソース項のゼロクリア => src1
     TIMING_start(tm_assign_const);
-    //SklInitializeSKL_REAL(dc_wk2->GetData(), 0.0, dc_wk2->GetArrayLength());
     d_size = dc_wk2->GetArrayLength();
     fb_set_value_real_(src1, (int*)&d_size, &clear_value);
     TIMING_stop(tm_assign_const, 0.0);

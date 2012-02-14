@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -30,8 +30,10 @@ public:
   ~Core_Utility() {}
  
 public:
-  static bool shiftVin3D  (SklVector3D<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
-  static bool shiftVout3D (SklVector3DEx<SKL_REAL>* dst, const SklVector3D<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  static bool shiftVin3D  (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  static bool shiftVout3D (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  static bool shiftVin3D  (SklVector3D<SKL_REAL>* dst,   const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  static bool shiftVout3D (SklVector3DEx<SKL_REAL>* dst, const SklVector3D<SKL_REAL>* src,   SKL_REAL v00[3], unsigned stepAvr=1);
   
   SKL_REAL count_comm_size (unsigned sz[3], unsigned guide) const;
   SKL_REAL norm_v_div_l2   (unsigned sz[3], unsigned guide, SKL_REAL coef, SKL_REAL* src, unsigned* bp, SKL_REAL& flop) const;

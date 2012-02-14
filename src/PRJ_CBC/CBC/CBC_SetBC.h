@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -48,9 +48,9 @@ protected:
   void Pobc_Prdc_Simple         (SklScalar3D<SKL_REAL>* d_p, int face);
   void ps_IBC_ConstTemp         (SKL_REAL* t, unsigned* bh2, int n);
   void Tobc_Prdc_Simple         (SklScalar3D<SKL_REAL>* d_t, int face);
-  void Vibc_Prdc                (SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir);
-  void Vobc_Prdc                (SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_face);
-  void Vobc_Prdc_CF             (SklVector3D<SKL_REAL>* d_v, int face);
+  void Vibc_Prdc                (SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir);
+  void Vobc_Prdc                (SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm_face);
+  void Vobc_Prdc_CF             (SklVector3DEx<SKL_REAL>* d_v, int face);
   
 public:
   void assign_Temp          (SKL_REAL* t, unsigned* bh, SKL_REAL tm, Control* C);
@@ -61,7 +61,7 @@ public:
   void InnerTBCface         (SKL_REAL* qbc, unsigned* bx, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
   void InnerTBCvol          (SKL_REAL* t, unsigned* bx, SKL_REAL dt, SKL_REAL& flop);
   void InnerVBC             (SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS=false);
-  void InnerVBC_Periodic    (SklVector3D<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd);
+  void InnerVBC_Periodic    (SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd);
   void mod_div              (SKL_REAL* div, unsigned* bv, SKL_REAL coef, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS=false);
   void mod_Psrc_Forcing     (SKL_REAL* src, SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL& flop);
   void mod_Psrc_VBC         (SKL_REAL* dv, SKL_REAL* vc, SKL_REAL* v0, SKL_REAL coef, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, 
@@ -75,7 +75,7 @@ public:
   void OuterTBC             (SklScalar3D<SKL_REAL>* d_t);
   void OuterTBCface         (SKL_REAL* qbc, unsigned* bx, SKL_REAL* t, SKL_REAL* t0, Control* C, SKL_REAL& flop);
   void OuterVBC             (SKL_REAL* v, SKL_REAL* vc, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop);
-  void OuterVBC_Periodic    (SklVector3D<SKL_REAL>* d_v);
+  void OuterVBC_Periodic    (SklVector3DEx<SKL_REAL>* d_v);
   void OuterVBC_Pseudo      (SKL_REAL* vc, SKL_REAL* v0, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop);
   void ps_BC_Convection     (SKL_REAL* ws, unsigned* bh1, SKL_REAL* v, SKL_REAL* t, SKL_REAL tm, Control* C, SKL_REAL* v00, SKL_REAL& flop);
   void setBCIperiodic       (SklScalar3D<unsigned>* d_bx);

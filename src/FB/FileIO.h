@@ -70,7 +70,10 @@ public:
                           const unsigned Unit, SKL_REAL& flop) const;
   void cnv_TP_ND2D       (SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, SKL_REAL& flop) const;
   void cnv_V_D2ND        (SklVector3D<SKL_REAL>* dst, const SKL_REAL Ref_v) const;
+  void cnv_V_D2ND        (SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v) const;
   void cnv_V_ND2D        (SklVector3DEx<SKL_REAL>* dst, const SklVector3D<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
+                          SKL_REAL& flop, unsigned stepAvr=1) const;
+  void cnv_V_ND2D        (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
                           SKL_REAL& flop, unsigned stepAvr=1) const;
   void loadSphScalar3D   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const;
@@ -78,10 +81,14 @@ public:
                           SklScalar4D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const;
   void loadSphVector3D   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklVector3D<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const;
+  void loadSphVector3D   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
+                          SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const;
   void loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const;
   void loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklVector3D<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const;
+  void loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
+                          SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const;
   void readSBX           (SklSolverBase* obj, FILE* fp, const char* file_attr, unsigned* size, unsigned guide, 
                           SklScalar3D<unsigned char>* dc_mid) const;
   void readSBX           (SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned* size, unsigned guide, 

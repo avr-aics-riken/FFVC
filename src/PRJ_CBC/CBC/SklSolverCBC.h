@@ -141,16 +141,16 @@ public:
   SKL_REAL convergence_prev, convergence_rate;
   SKL_REAL range_Ut[2], range_Yp[2];
   
-  // (ix+guide*2, jx+guide*2, kx+guide*2, 3)
-  SklVector3D<SKL_REAL>   *dc_v;
-  SklVector3D<SKL_REAL>   *dc_vc;
-  SklVector3D<SKL_REAL>   *dc_v0;
-  SklVector3D<SKL_REAL>   *dc_wv;
-  SklVector3D<SKL_REAL>   *dc_abf;
-  SklVector3D<SKL_REAL>   *dc_vf0;
+  // (3, ix+guide*2, jx+guide*2, kx+guide*2)
+  SklVector3DEx<SKL_REAL>   *dc_v;
+  SklVector3DEx<SKL_REAL>   *dc_vc;
+  SklVector3DEx<SKL_REAL>   *dc_v0;
+  SklVector3DEx<SKL_REAL>   *dc_wv;
+  SklVector3DEx<SKL_REAL>   *dc_abf;
+  SklVector3DEx<SKL_REAL>   *dc_vf0;
   
-  // (ix, jx, kx, 3)
-  SklVector3D<SKL_REAL>   *dc_av;
+  // (3, ix, jx, kx)
+  SklVector3DEx<SKL_REAL>   *dc_av;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
   SklVector3DEx<SKL_REAL> *dc_wvex;
@@ -283,7 +283,7 @@ public:
   void allocArray_RK        (unsigned long &total);
   
   void AverageOutput        (unsigned mode, SKL_REAL& flop);
-  void Averaging_Time       (void);
+  void Averaging_Time       (SKL_REAL& flop);
   void Averaging_Space      (SKL_REAL* avr, SKL_REAL& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Array* cutPos);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);

@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -12,7 +12,7 @@
 //@brief FlowBase Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#define FB_VERS 247
+#define FB_VERS 248
 
 // precision
 #define SPH_SINGLE 4

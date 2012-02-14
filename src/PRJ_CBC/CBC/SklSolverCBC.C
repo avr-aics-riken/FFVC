@@ -58,7 +58,7 @@ SklSolverCBC::SklSolverCBC() {
   convergence_prev = 1.0;
   convergence_rate = 0.0;
   
-  // (ix+guide*2, jx+guide*2, kx+guide*2, 3)
+  // (3, ix+guide*2, jx+guide*2, kx+guide*2)
   dc_v   = NULL;
   dc_vc  = NULL;
   dc_v0  = NULL;
@@ -66,7 +66,7 @@ SklSolverCBC::SklSolverCBC() {
   dc_abf = NULL;
   dc_vf0 = NULL;
   
-  // (ix, jx, kx, 3)
+  // (3, ix, jx, kx)
   dc_av  = NULL;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
@@ -162,7 +162,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   convergence_prev = 1.0;
   convergence_rate = 0.0;
   
-  // (ix+guide*2, jx+guide*2, kx+guide*2, 3)
+  // (3, ix+guide*2, jx+guide*2, kx+guide*2)
   dc_v   = NULL;
   dc_vc  = NULL;
   dc_v0  = NULL;
@@ -170,7 +170,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   dc_abf = NULL;
   dc_vf0 = NULL;
   
-  // (ix, jx, kx, 3)
+  // (3, ix, jx, kx)
   dc_av  = NULL;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
@@ -549,24 +549,41 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_copy_array,         "Copy Array",              PerfMonitor::CALC);
   set_label(tm_assign_const,       "assign Const. to Array",  PerfMonitor::CALC);
   
-  // debug
-  //for (int i=0; i<tm_END; i++) {
-  //  printf("%3d %s\n", i, tm_label_ptr[i]);
-  //}
 }
 
-//@fn void SklSolverCBC::Averaging_Time(void)
+//@fn void SklSolverCBC::Averaging_Time(SKL_REAL& flop)
 //@brief 時間平均操作を行う
-void SklSolverCBC::Averaging_Time(void)
+void SklSolverCBC::Averaging_Time(SKL_REAL& flop)
 {
   SklIncrementAverageStep();
   SklIncrementAverageTime();
   
-  if( !SklUtil::avrS3D(dc_ap, dc_p) ) assert(0);
-  if( !SklUtil::avrV3D(dc_av, dc_v) ) assert(0);
+  SKL_REAL *p, *ap;
+  SKL_REAL *v, *av;
+  SKL_REAL *t, *at;
+  p = ap = NULL;
+  v = av = NULL;
+  t = at = NULL;
+  
+  if( !(v  = dc_v->GetData()) )   assert(0);
+  if( !(av = dc_av->GetData()) )  assert(0);
+  if( !(p  = dc_p->GetData()) )   assert(0);
+  if( !(ap = dc_ap->GetData()) )  assert(0);
+  
+  fb_average_s_(ap, sz, gc, p, &flop);
+  fb_average_v_(av, sz, gc, v, &flop);
+  
   if ( C.isHeatProblem() ) {
-    if( !SklUtil::avrS3D(dc_at, dc_t) ) assert(0);
+    if( !(t  = dc_t->GetData()) )  assert(0);
+    if( !(at = dc_at->GetData()) ) assert(0);
+    fb_average_s_(at, sz, gc, t, &flop);
   }
+  
+  //if( !SklUtil::avrS3D(dc_ap, dc_p) ) assert(0);
+  //if( !SklUtil::avrV3D(dc_av, dc_v) ) assert(0);
+  //if ( C.isHeatProblem() ) {
+  //  if( !SklUtil::avrS3D(dc_at, dc_t) ) assert(0);
+  //}
 }
 
 //@fn void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)

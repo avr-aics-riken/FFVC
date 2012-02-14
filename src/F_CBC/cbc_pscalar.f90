@@ -45,7 +45,7 @@
     real                                                        ::  Fr_r, Fr_l, Fl_r, Fl_l
     real                                                        ::  cr, cl, acr, acl, cnv, ss, b
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  t, ws
     real, dimension(0:3)                                        ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh1, bh2, bv
@@ -73,7 +73,7 @@
       b  = (3.0-ck)/(1.0-ck)
     endif
 
-    ! /*3 + 2 = 26 ! DP 41
+    ! /3 + 2 = 26 ! DP 41
     ! loop : 6+1+6+36 + ( 4+36+32+4+17 )*3dir + 2 + 3 = 333
     flop = flop + real(ix)*real(jx)*real(kx)*333.0 + 26.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*333.0 + 41.0 ! DP
@@ -155,15 +155,15 @@
       a_t = real(ibits(hdx, adbtc_T, 1))
       a_b = real(ibits(hdx, adbtc_B, 1)) ! real*6 = 6 flop
 
-      Up0 = v(i  ,j  ,k  ,1)
-      Uw1 = v(i-1,j  ,k  ,1)
-      Ue1 = v(i+1,j  ,k  ,1)
-      Vp0 = v(i  ,j  ,k  ,2)
-      Vs1 = v(i  ,j-1,k  ,2)
-      Vn1 = v(i  ,j+1,k  ,2)
-      Wp0 = v(i  ,j  ,k  ,3)
-      Wb1 = v(i  ,j  ,k-1,3)
-      Wt1 = v(i  ,j  ,k+1,3)
+      Up0 = v(1, i  ,j  ,k  )
+      Vp0 = v(2, i  ,j  ,k  )
+      Wp0 = v(3, i  ,j  ,k  )
+      Uw1 = v(1, i-1,j  ,k  )
+      Ue1 = v(1, i+1,j  ,k  )
+      Vs1 = v(2, i  ,j-1,k  )
+      Vn1 = v(2, i  ,j+1,k  )
+      Wb1 = v(3, i  ,j  ,k-1)
+      Wt1 = v(3, i  ,j  ,k+1)
       
       ! 界面速度（スタガード位置）> 36 flop
       UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
@@ -288,7 +288,7 @@
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  dt, gr, rei, dgr, flop
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
 
@@ -302,7 +302,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-        v(i,j,k,3) = v(i,j,k,3) + dgr*t(i,j,k) * real(ibits(bd(i,j,k), State, 1))
+        v(3,i,j,k) = v(3,i,j,k) + dgr*t(i,j,k) * real(ibits(bd(i,j,k), State, 1))
     end do
     end do
     end do
@@ -335,7 +335,7 @@
     real                                                      ::  g_p, g_w, g_e, g_s, g_n, g_b, g_t
     real                                                      ::       a_w, a_e, a_s, a_n, a_b, a_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t, ws
-    real, dimension(3,1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)  ::  qbc
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  qbc
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bh
 
     ix = sz(1)
@@ -345,7 +345,7 @@
     dth2 = dth1*pei/dh
     res  = 0.0
     
-    ! /*2 + 1 = 17 flop ! DP 27 flop
+    ! /2 + 1 = 17 flop ! DP 27 flop
     ! loop : 6 + 6 + 1 + 51 = 64 flop
     flop = flop + real(ix)*real(jx)*real(kx)*64.0 + 17.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*64.0 + 27.0

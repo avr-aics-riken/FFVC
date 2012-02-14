@@ -16,6 +16,8 @@
 
 #ifdef _WIN32
 // FB_util.f90
+#define fb_average_s_         FB_AVERAGE_S
+#define fb_average_v_         FB_AVERAGE_V
 #define fb_copy_real_         FB_COPY_REAL
 #define fb_limit_scalar_      FB_LIMIT_SCALAR
 #define fb_minmax_v_          FB_MINMAX_V
@@ -29,6 +31,8 @@
 
 extern "C" {
 	// FB_util.f90
+  void fb_average_s_     (SKL_REAL* avr, int* sz, int* g, SKL_REAL* s, SKL_REAL* flop);
+  void fb_average_v_     (SKL_REAL* avr, int* sz, int* g, SKL_REAL* v, SKL_REAL* flop);
   void fb_copy_real_     (SKL_REAL* dst, SKL_REAL* src, int* sz);
   void fb_limit_scalar_  (SKL_REAL* t, int* sz, int* g);
   void fb_minmax_s_      (SKL_REAL* f_min, SKL_REAL* f_max, int* sz, int* g, SKL_REAL* s, SKL_REAL* flop);

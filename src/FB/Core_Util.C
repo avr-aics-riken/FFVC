@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -11,6 +11,127 @@
 
 #include "Core_Util.h"
 extern SklParaComponent* ParaCmpo;
+
+/**
+ @fn bool Core_Utility::shiftVin3D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr)
+ @brief srcのデータにある速度成分v00[3]を加えdstにコピー
+ @param dst       コピー先データ
+ @param src       コピー元データ
+ @param v00       減算値
+ @param stepAvr   積算値
+ @return    true=success, false=fault
+ @note dst[index] = ( src[index] + v00 ) * stepAvr
+ */
+bool Core_Utility::shiftVin3D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr)
+{
+  if( !dst || !src || !v00 ) return false;
+  
+  const unsigned* dst_sz = dst->GetSize();  // dimension size /wo guide cell
+  const unsigned* src_sz = src->GetSize();
+  if(   (src_sz[0] != dst_sz[0])
+     || (src_sz[1] != dst_sz[1])
+     || (src_sz[2] != dst_sz[2]) ) return false;
+  
+  SKL_REAL* dst_data = dst->GetData();
+  const SKL_REAL* src_data = src->GetData();
+  if( !dst_data || !src_data ) return false;
+  
+  dst_sz = dst->_GetSize();  // dimension size /w guide cell
+  src_sz = src->_GetSize();
+  unsigned dst_gc = dst->GetVCellSize();
+  unsigned src_gc = src->GetVCellSize();
+  unsigned sta, ix, jx, kx;
+  int diff;
+  
+  CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
+  
+  SKL_REAL  ra = 1.0, va[3];
+  ra=(SKL_REAL)stepAvr;     // input
+  for (int i=0; i<3; i++) va[i] = v00[i]*ra;
+  
+  unsigned long idx, lsz[3];
+  lsz[0] = src_sz[0];
+  lsz[1] = src_sz[1];
+  lsz[2] = src_sz[2];
+  
+  register unsigned i, j, k;
+  
+  for(k=sta; k<kx; k++){
+    unsigned kk = k+diff;
+    for(j=sta; j<jx; j++){
+      unsigned jj = j+diff;
+      for(i=sta; i<ix; i++){
+        // idx : indecies for SklVector3DEx
+        idx = 3*(lsz[0]*lsz[1]*kk + lsz[0]*jj + i+diff);
+        dst_data[idx  ] = src_data[idx  ]*ra + va[0];
+        dst_data[idx+1] = src_data[idx+1]*ra + va[1];
+        dst_data[idx+2] = src_data[idx+2]*ra + va[2];
+      }
+    }
+  }
+  
+  return true;
+}
+
+/**
+ @fn bool Core_Utility::shiftVout3D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr)
+ @brief shiftVin3D()の逆演算
+ @param dst       コピー先データ
+ @param src       コピー元データ
+ @param v00       減算値
+ @param stepAvr   積算値
+ @return    true=success, false=fault
+ @note dst[index] = ( src[index] * stepAvr ) - v00
+ */
+bool Core_Utility::shiftVout3D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr)
+{
+  if( !dst || !src || !v00 ) return false;
+  
+  const unsigned* dst_sz = dst->GetSize();  // dimension size /wo guide cell
+  const unsigned* src_sz = src->GetSize();
+  if(   (src_sz[0] != dst_sz[0])
+     || (src_sz[1] != dst_sz[1])
+     || (src_sz[2] != dst_sz[2]) ) return false;
+  
+  SKL_REAL* dst_data = dst->GetData();
+  const SKL_REAL* src_data = src->GetData();
+  if( !dst_data || !src_data ) return false;
+  
+  dst_sz = dst->_GetSize();  // dimension size /w guide cell
+  src_sz = src->_GetSize();
+  unsigned dst_gc = dst->GetVCellSize();
+  unsigned src_gc = src->GetVCellSize();
+  unsigned sta, ix, jx, kx;
+  int diff;
+  
+  CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
+  
+  SKL_REAL  ra = 1.0;
+  ra=1.0/(SKL_REAL)stepAvr; // output
+  
+  unsigned long idx, lsz[3];
+  lsz[0] = src_sz[0];
+  lsz[1] = src_sz[1];
+  lsz[2] = src_sz[2];
+  
+  register unsigned i, j, k;
+  
+  for(k=sta; k<kx; k++){
+    unsigned kk = k+diff;
+    for(j=sta; j<jx; j++){
+      unsigned jj = j+diff;
+      for(i=sta; i<ix; i++){
+        // idx : indecies for SklVector3DEx
+        idx = 3*(lsz[0]*lsz[1]*k + lsz[0]*j + i);
+        dst_data[idx  ] = src_data[idx  ]*ra - v00[0];
+        dst_data[idx+1] = src_data[idx+1]*ra - v00[1];
+        dst_data[idx+2] = src_data[idx+2]*ra - v00[2];
+      }
+    }
+  }
+  
+  return true;
+}
 
 /**
  @fn bool Core_Utility::shiftVin3D(SklVector3D<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr)
@@ -366,9 +487,9 @@ void Core_Utility::delta_Vector(unsigned sz[3], unsigned guide, SKL_REAL* vn, SK
     for (j=1; j<=(int)sz[1]; j++) {
       for (i=1; i<=(int)sz[0]; i++) {
         m  = SklUtil::getFindexS3D(sz, guide, i, j, k);
-        m0 = SklUtil::getFindexV3D(sz, guide, i, j, k, 0);
-        m1 = SklUtil::getFindexV3D(sz, guide, i, j, k, 1);
-        m2 = SklUtil::getFindexV3D(sz, guide, i, j, k, 2);
+        m0 = SklUtil::getFindexV3DEx(sz, guide, 0, i, j, k);
+        m1 = SklUtil::getFindexV3DEx(sz, guide, 1, i, j, k);
+        m2 = SklUtil::getFindexV3DEx(sz, guide, 2, i, j, k);
         b = GET_SHIFT_F(bx[m], ACTIVE_BIT);
         u = vn[m0];
         v = vn[m1];

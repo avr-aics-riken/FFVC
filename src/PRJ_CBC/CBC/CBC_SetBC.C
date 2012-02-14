@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -764,11 +764,11 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_t, int face)
 }
 
 /**
- @fn void SetBC3D::OuterVBC_Periodic(SklVector3D<SKL_REAL>* d_v)
+ @fn void SetBC3D::OuterVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v)
  @brief 速度の外部境界条件処理
  @param d_v 速度ベクトルのデータクラス
  */
-void SetBC3D::OuterVBC_Periodic(SklVector3D<SKL_REAL>* d_v)
+void SetBC3D::OuterVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v)
 {
   SKL_REAL *v=NULL;
   if ( !(v = d_v->GetData()) ) assert(0);
@@ -865,12 +865,12 @@ void SetBC3D::OuterVBC_Pseudo(SKL_REAL* vc, SKL_REAL* v0, unsigned* bv, SKL_REAL
 }
 
 /**
- @fn void SetBC3D::InnerVBC_Periodic(SklVector3D<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd)
+ @fn void SetBC3D::InnerVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd)
  @brief 速度ベクトルの内部周期境界条件処理
  @param d_v 速度ベクトルのデータクラス
  @param d_bd BCindex ID
  */
-void SetBC3D::InnerVBC_Periodic(SklVector3D<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd)
+void SetBC3D::InnerVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd)
 {
   SKL_REAL *v=NULL;
   if ( !(v = d_v->GetData()) ) assert(0);
@@ -1349,7 +1349,7 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
   SKL_REAL f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
   SKL_REAL dh1 = 1.0/dh;
   SKL_REAL u_ref, v_ref, w_ref, t_p;
-  unsigned m_e, m_w, m_n, m_s, m_t, m_b;
+  unsigned m_e, m_w, m_n, m_s, m_t, m_b, m_0;
   
   u_ref = v00[1];
   v_ref = v00[2];
@@ -1367,8 +1367,9 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
         t_p = t[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
-          m_w = SklUtil::getFindexV3D(size, guide, i-1, j, k, 0);
-          c = 0.5*(v[m_w]+v[m]) - u_ref;
+          m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
+          m_w = SklUtil::getFindexV3DEx(size, guide, 0, i-1, j, k);
+          c = 0.5*(v[m_w]+v[m_0]) - u_ref;
           if ( c>0.0 ) c=0.0;
           f_w = c*t_p;
           va += f_w;
@@ -1376,8 +1377,9 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
-          m_e = SklUtil::getFindexV3D(size, guide, i+1, j, k, 0);
-          c = 0.5*(v[m_e]+v[m]) - u_ref;
+          m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
+          m_e = SklUtil::getFindexV3DEx(size, guide, 0, i+1, j, k);
+          c = 0.5*(v[m_e]+v[m_0]) - u_ref;
           if ( c<0.0 ) c=0.0;
           f_e = c*t_p;
           va += f_e;
@@ -1385,8 +1387,9 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
-          m_s = SklUtil::getFindexV3D(size, guide, i, j-1, k, 1);
-          c = 0.5*(v[m_s]+v[m]) - v_ref;
+          m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
+          m_s = SklUtil::getFindexV3DEx(size, guide, 1, i, j-1, k);
+          c = 0.5*(v[m_s]+v[m_0]) - v_ref;
           if ( c>0.0 ) c=0.0;
           f_s = c*t_p;
           va += f_s;
@@ -1394,8 +1397,9 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
-          m_n = SklUtil::getFindexV3D(size, guide, i, j+1, k, 1);
-          c = 0.5*(v[m_n]+v[m]) - v_ref;
+          m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
+          m_n = SklUtil::getFindexV3DEx(size, guide, 1, i, j+1, k);
+          c = 0.5*(v[m_n]+v[m_0]) - v_ref;
           if ( c<0.0 ) c=0.0;
           f_n = c*t_p;
           va += f_n;
@@ -1403,8 +1407,9 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
-          m_b = SklUtil::getFindexV3D(size, guide, i, j, k-1, 2);
-          c = 0.5*(v[m_b]+v[m]) - w_ref;
+          m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
+          m_b = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k-1);
+          c = 0.5*(v[m_b]+v[m_0]) - w_ref;
           if ( c>0.0 ) c=0.0;
           f_b = c*t_p;
           va += f_b;
@@ -1412,8 +1417,9 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
-          m_t = SklUtil::getFindexV3D(size, guide, i, j, k+1, 2);
-          c = 0.5*(v[m_t]+v[m]) - w_ref;
+          m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
+          m_t = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k+1);
+          c = 0.5*(v[m_t]+v[m_0]) - w_ref;
           if ( c<0.0 ) c=0.0;
           f_t = c*t_p;
           va += f_t;
@@ -1459,7 +1465,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
   SKL_REAL f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
   SKL_REAL dh1 = 1.0/dh;
   SKL_REAL u_ref, v_ref, w_ref, t_p;
-  unsigned m_e, m_w, m_n, m_s, m_t, m_b;
+  unsigned m_e, m_w, m_n, m_s, m_t, m_b, m_0;
   
   u_ref = v00[1];
   v_ref = v00[2];
@@ -1476,8 +1482,9 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           for (j=1; j<=jxc; j++) {
             m   = SklUtil::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_w = SklUtil::getFindexV3D(size, guide, i-1, j, k, 0);
-            c = 0.5*(v[m_w]+v[m]) - u_ref;
+            m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
+            m_w = SklUtil::getFindexV3DEx(size, guide, 0, i-1, j, k);
+            c = 0.5*(v[m_w]+v[m_0]) - u_ref;
             t_p = (c < 0.0) ? t[m] : t_nd; // 流出の場合には内部の値，流入の場合には参照値
             f_w = c*t_p;
             va += f_w;
@@ -1496,8 +1503,9 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           for (j=1; j<=jxc; j++) {
             m = SklUtil::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_e = SklUtil::getFindexV3D(size, guide, i+1, j, k, 0);
-            c = 0.5*(v[m_e]+v[m]) - u_ref;
+            m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
+            m_e = SklUtil::getFindexV3DEx(size, guide, 0, i+1, j, k);
+            c = 0.5*(v[m_e]+v[m_0]) - u_ref;
             t_p = (c > 0.0) ? t[m] : t_nd;
             f_e = c*t_p;
             va += f_e;
@@ -1516,8 +1524,9 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           for (i=1; i<=ixc; i++) {
             m = SklUtil::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_s = SklUtil::getFindexV3D(size, guide, i, j-1, k, 1);
-            c = 0.5*(v[m_s]+v[m]) - v_ref;
+            m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
+            m_s = SklUtil::getFindexV3DEx(size, guide, 1, i, j-1, k);
+            c = 0.5*(v[m_s]+v[m_0]) - v_ref;
             t_p = (c < 0.0) ? t[m] : t_nd;
             f_s = c*t_p;
             va += f_s;
@@ -1536,8 +1545,9 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           for (i=1; i<=ixc; i++) {
             m = SklUtil::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_n = SklUtil::getFindexV3D(size, guide, i, j+1, k, 1);
-            c = 0.5*(v[m_n]+v[m]) - v_ref;
+            m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
+            m_n = SklUtil::getFindexV3DEx(size, guide, 1, i, j+1, k);
+            c = 0.5*(v[m_n]+v[m_0]) - v_ref;
             t_p = (c > 0.0) ? t[m] : t_nd;
             f_n = c*t_p;
             va += f_n;
@@ -1556,8 +1566,9 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           for (i=1; i<=ixc; i++) {
             m = SklUtil::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_b = SklUtil::getFindexV3D(size, guide, i, j, k-1, 2);
-            c = 0.5*(v[m_b]+v[m]) - w_ref;
+            m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
+            m_b = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k-1);
+            c = 0.5*(v[m_b]+v[m_0]) - w_ref;
             t_p = (c < 0.0) ? t[m] : t_nd;
             f_b = c*t_p;
             va += f_b;
@@ -1576,8 +1587,9 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           for (i=1; i<=ixc; i++) {
             m = SklUtil::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_t = SklUtil::getFindexV3D(size, guide, i, j, k+1, 2);
-            c = 0.5*(v[m_t]+v[m]) - w_ref;
+            m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
+            m_t = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k+1);
+            c = 0.5*(v[m_t]+v[m_0]) - w_ref;
             t_p = (c > 0.0) ? t[m] : t_nd;
             f_t = c*t_p;
             va += f_t;
@@ -4145,13 +4157,13 @@ void SetBC3D::mod_div(SKL_REAL* div, unsigned* bv, SKL_REAL coef, SKL_REAL tm, S
 }
 
 /**
- @fn void SetBC3D::Vobc_Prdc_CF(SklVector3D<SKL_REAL>* d_v, int face)
+ @fn void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<SKL_REAL>* d_v, int face)
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル（セルフェイス）
  @param face 面番号
  @note cbc_update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
  */
-void SetBC3D::Vobc_Prdc_CF(SklVector3D<SKL_REAL>* d_v, int face)
+void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<SKL_REAL>* d_v, int face)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
 
@@ -4186,8 +4198,8 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3D<SKL_REAL>* d_v, int face)
             for (j=1; j<=jxc; j++) {
               for (i=1-gd; i<=0; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i    , j, k, l);
-                  m1 = SklUtil::getFindexV3D(size, guide, ixc+i, j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i    , j, k);
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, ixc+i, j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4202,8 +4214,8 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3D<SKL_REAL>* d_v, int face)
             for (j=1-gd; j<=0; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j     , k, l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i, jxc+j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j    , k);
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, jxc+j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4218,8 +4230,8 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3D<SKL_REAL>* d_v, int face)
             for (j=1; j<=jxc; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j, k     , l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i, j, kxc+k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k    );
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kxc+k);
                   v[m0] = v[m1];
                 }
               }
@@ -4232,13 +4244,13 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3D<SKL_REAL>* d_v, int face)
 }
 
 /**
- @fn void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_face)
+ @fn void SetBC3D::Vobc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm_face)
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
  @param face 面番号
  @param no_comm_face 通信面数
  */
-void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_face)
+void SetBC3D::Vobc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm_face)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -4285,8 +4297,8 @@ void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_f
             for (j=1; j<=jxc; j++) {
               for (i=1-gd; i<=0; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i    , j, k, l);
-                  m1 = SklUtil::getFindexV3D(size, guide, ixc+i, j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i    , j, k);
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, ixc+i, j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4301,8 +4313,8 @@ void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_f
             for (j=1; j<=jxc; j++) {
               for (i=ixc+1; i<=ixc+gd; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i    , j, k, l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i-ixc, j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i    , j, k);
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i-ixc, j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4317,8 +4329,8 @@ void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_f
             for (j=1-gd; j<=0; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j    , k, l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i, jxc+j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j    , k);
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, jxc+j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4333,8 +4345,8 @@ void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_f
             for (j=jxc+1; j<=jxc+gd; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j    , k, l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i, j-jxc, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j    , k);
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j-jxc, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4349,8 +4361,8 @@ void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_f
             for (j=1; j<=jxc; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j, k    , l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i, j, kxc+k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k    );
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kxc+k);
                   v[m0] = v[m1];
                 }
               }
@@ -4365,8 +4377,8 @@ void SetBC3D::Vobc_Prdc(SklVector3D<SKL_REAL>* d_v, int face, unsigned no_comm_f
             for (j=1; j<=jxc; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j, k    , l);
-                  m1 = SklUtil::getFindexV3D(size, guide, i, j, k-kxc, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k    );
+                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k-kxc);
                   v[m0] = v[m1];
                 }
               }
@@ -4402,7 +4414,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned
 }
 
 /**
- @fn void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
+ @fn void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
  @brief 速度の内部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
  @param st コンポーネント範囲の開始インデクス
@@ -4411,7 +4423,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned
  @param odr 下流面のidが格納されているコンポーネントエントリ
  @param dir ドライバの設置方向
  */
-void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
+void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if( para_mng->IsParallel() ){
@@ -4425,7 +4437,7 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
 
   gd = (int)guide;
   
-  if ( !(v = d_v->GetData()) )   assert(0);
+  if ( !(v = d_v->GetData()) )  assert(0);
   if ( !(bx= d_bd->GetData()) ) assert(0);
   
   switch (dir) {
@@ -4438,8 +4450,8 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
               m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (ii=1-gd; ii<=0; ii++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, ii,   j, k, l);
-                  m2 = SklUtil::getFindexV3D(size, guide, i+ii, j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, ii,   j, k);
+                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i+ii, j, k);
                   v[m0] = v[m2];
                 }
               }
@@ -4458,8 +4470,8 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
               m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (ii=ixc+1; ii<=ixc+gd; ii++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, ii,         j, k, l);
-                  m2 = SklUtil::getFindexV3D(size, guide, i+ii-ixc-1, j, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, ii,         j, k);
+                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i+ii-ixc-1, j, k);
                   v[m0] = v[m2];
                 }
               }              
@@ -4478,8 +4490,8 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
               m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (jj=1-gd; jj<=0; jj++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, jj,   k, l);
-                  m2 = SklUtil::getFindexV3D(size, guide, i, j+jj, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, jj,   k);
+                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j+jj, k);
                   v[m0] = v[m2];
                 }
               }              
@@ -4498,8 +4510,8 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
               m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (jj=jxc+1; jj<=jxc+gd; jj++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, jj,         k, l);
-                  m2 = SklUtil::getFindexV3D(size, guide, i, j+jj-jxc-1, k, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, jj,         k);
+                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j+jj-jxc-1, k);
                   v[m0] = v[m2];
                 }
               }              
@@ -4518,8 +4530,8 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
               m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (kk=1-gd; kk<=0; kk++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j, kk,   l);
-                  m2 = SklUtil::getFindexV3D(size, guide, i, j, k+kk, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kk  );
+                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k+kk);
                   v[m0] = v[m2];
                 }
               }         
@@ -4538,8 +4550,8 @@ void SetBC3D::Vibc_Prdc(SklVector3D<SKL_REAL>* d_v, int* st, int* ed, SklScalar3
               m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (kk=kxc+1; kk<=kxc+gd; kk++) {
-                  m0 = SklUtil::getFindexV3D(size, guide, i, j, kk,         l);
-                  m2 = SklUtil::getFindexV3D(size, guide, i, j, k+kk-kxc-1, l);
+                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kk        );
+                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k+kk-kxc-1);
                   v[m0] = v[m2];
                 }
               }         

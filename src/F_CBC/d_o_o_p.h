@@ -14,21 +14,19 @@
 !    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
 !    real                                                        ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
 !    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-!    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v0
+!    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0
 !    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 
       ! 各セルフェイス位置の変数ロード
-      Up0 = v0(i  ,j  ,k  ,1)
-      Uw0 = v0(i-1,j  ,k  ,1)
-      Ue0 = v0(i+1,j  ,k  ,1)
-
-      Vp0 = v0(i  ,j  ,k  ,2)
-      Vs0 = v0(i  ,j-1,k  ,2)
-      Vn0 = v0(i  ,j+1,k  ,2)
-
-      Wp0 = v0(i  ,j  ,k  ,3)
-      Wb0 = v0(i  ,j  ,k-1,3)
-      Wt0 = v0(i  ,j  ,k+1,3)
+      Up0 = v0(1, i  ,j  ,k  )
+      Vp0 = v0(2, i  ,j  ,k  )
+      Wp0 = v0(3, i  ,j  ,k  )
+      Uw0 = v0(1, i-1,j  ,k  )
+      Ue0 = v0(1, i+1,j  ,k  )
+      Vs0 = v0(2, i  ,j-1,k  )
+      Vn0 = v0(2, i  ,j+1,k  )
+      Wb0 = v0(3, i  ,j  ,k-1)
+      Wt0 = v0(3, i  ,j  ,k+1)
 
       ! 壁面による修正 (0-solid / 1-fluid)
       b_w = real( ibits(bv(i-1,j  ,k  ), State, 1) )
