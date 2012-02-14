@@ -4,6 +4,9 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.5.2  14 Feb. 2012
+  - SklVector3D >> SklVector3DEx
+
 Ver 1.5.1  12 Feb. 2012
   - Kのflop countを元にカウントしなおし
   - cbc_pvec_vobcをcbc_pvec_vobc_specv, cbc_pvec_vobc_oflow, cbc_pvec_vobc_wall, cbc_pvec_vobc_symtrcに分離

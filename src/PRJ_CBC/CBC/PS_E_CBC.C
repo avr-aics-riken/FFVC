@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -61,7 +61,6 @@ void SklSolverCBC::PS_E_CBC(void)
   TIMING_start(tm_copy_array);
   d_size = dc_t0->GetArrayLength();
   fb_copy_real_(t0, t, (int*)&d_size);
-  //CU.copy_SKL_REAL(t0, t, dc_t0->GetArrayLength());
   TIMING_stop(tm_copy_array, 0.0);
   
   // 速度指定境界条件の参照値を代入する
@@ -94,7 +93,6 @@ void SklSolverCBC::PS_E_CBC(void)
     TIMING_start(tm_copy_array);
     d_size = dc_ws->GetArrayLength();
     fb_copy_real_(ws, t0, (int*)&d_size);
-    //CU.copy_SKL_REAL(ws, t0, dc_ws->GetArrayLength());
     TIMING_stop(tm_copy_array, 0.0);
   }
 
@@ -140,7 +138,6 @@ void SklSolverCBC::PS_E_CBC(void)
   
   // 熱流束境界条件のクリア qbcは積算するため
   TIMING_start(tm_assign_const);
-  //SklInitializeSKL_REAL(dc_qbc->GetData(), 0.0, dc_qbc->GetArrayLength());
   d_size = dc_qbc->GetArrayLength();
   fb_set_value_real_(qbc, (int*)&d_size, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
@@ -207,7 +204,6 @@ void SklSolverCBC::PS_E_CBC(void)
     TIMING_start(tm_copy_array);
     d_size = dc_t->GetArrayLength();
     fb_copy_real_(t, ws, (int*)&d_size);
-    //CU.copy_SKL_REAL(t, ws, dc_t->GetArrayLength());
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICt->LoopCount=0; ICt->LoopCount< ICt->get_ItrMax(); ICt->LoopCount++) {

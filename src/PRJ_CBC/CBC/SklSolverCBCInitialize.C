@@ -2434,16 +2434,16 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_V3D(this, dc_v, "vel", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_v, "vel", size, guide, 0.0, mc) ) assert(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3D(this, dc_vc, "vc", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_vc, "vc", size, guide, 0.0, mc) ) assert(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3D(this, dc_v0, "v0", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_v0, "v0", size, guide, 0.0, mc) ) assert(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3D(this, dc_wv, "wv", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_wv, "wv", size, guide, 0.0, mc) ) assert(0);
   total+= mc;
   
   if ( !A.alloc_Real_V3DEx(this, dc_wvex, "wvex", size, guide, 0.0, mc) ) assert(0);
@@ -2527,7 +2527,7 @@ void SklSolverCBC::allocArray_heat (unsigned long &total)
 void SklSolverCBC::allocArray_AB2 (unsigned long &total)
 {
   unsigned long mc=0;
-  if ( !A.alloc_Real_V3D(this, dc_abf, "abf", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_abf, "abf", size, guide, 0.0, mc) ) assert(0);
   total+= mc;
 }
 
@@ -2581,7 +2581,7 @@ void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
     if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) assert(0);
     total += mc;
     
-    if ( !A.alloc_Real_V3D(this, dc_av, "avrv", size, guide, 0.0, mc) ) assert(0);
+    if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) assert(0);
     total += mc;
     
     if ( C.isHeatProblem() ) {
@@ -2613,7 +2613,7 @@ void SklSolverCBC::allocArray_Collocate(unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_V3D(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) assert(0);
   total+= mc;
 }
 

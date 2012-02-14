@@ -41,7 +41,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   SKL_REAL dt = SklGetDeltaT();       /// 時間積分幅
   SKL_REAL flop_count;                /// 浮動小数演算数
   SKL_REAL convergence=0.0;           /// 定常収束モニター量
-  SKL_REAL coef = C.dh / dt;         /// Poissonソース項の係数
+  SKL_REAL coef = C.dh / dt;          /// Poissonソース項の係数
   SKL_REAL Re = C.Reynolds;           /// レイノルズ数
   SKL_REAL rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   SKL_REAL b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
@@ -62,8 +62,6 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   
   // >>> Fractional step section
   TIMING_start(tm_frctnl_stp_sct);
-  
-  
   
   // >>> Fractional step sub-section 1
   TIMING_start(tm_frctnl_stp_sct_1); 

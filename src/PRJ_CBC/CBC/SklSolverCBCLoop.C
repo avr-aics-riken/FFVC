@@ -101,7 +101,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     }
     TIMING_stop(tm_flow_sct, 0.0);
   }
-  
+
   // Heat
   if ( C.isHeatProblem() ) {
     TIMING_start(tm_heat_sct);
@@ -128,7 +128,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   if ( (C.Mode.Average == ON) && SklUtil::IsStartAverage(this, C.Interval[Interval_Manager::tg_avstart].getIntervalTime()) ) {
     TIMING_start(tm_average_time);
     flop_count=0.0;
-    Averaging_Time();
+    Averaging_Time(flop_count);
     TIMING_stop(tm_average_time, flop_count);
   }
   

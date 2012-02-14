@@ -210,9 +210,9 @@ protected:
   ///
   Vec3r getVector(const SKL_REAL* v, Vec3i index) {
     Vec3r vRet;
-    vRet.x = v[SklUtil::getFindexV3D(size, guide, index.x, index.y, index.z, 0)];
-    vRet.y = v[SklUtil::getFindexV3D(size, guide, index.x, index.y, index.z, 1)];
-    vRet.z = v[SklUtil::getFindexV3D(size, guide, index.x, index.y, index.z, 2)];
+    vRet.x = v[SklUtil::getFindexV3DEx(size, guide, index.x, index.y, index.z, 0)];
+    vRet.y = v[SklUtil::getFindexV3DEx(size, guide, index.x, index.y, index.z, 1)];
+    vRet.z = v[SklUtil::getFindexV3DEx(size, guide, index.x, index.y, index.z, 2)];
     return vRet;
   }
 
