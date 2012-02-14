@@ -159,6 +159,8 @@ enum timing_key {
       tm_sampling,
       tm_hstry_sampling,
   
+  tm_statistic,
+  
   tm_END
 };  
 

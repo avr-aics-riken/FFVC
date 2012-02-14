@@ -16,6 +16,8 @@
 bool
 SklSolverCBC::SklSolverPost() {
 
+  
+  
   TIMING__ { 
     FILE* fp = NULL;
     
@@ -27,7 +29,9 @@ SklSolverCBC::SklSolverPost() {
     }
     
     // 測定結果の集計(gathreメソッドは全ノードで呼ぶこと)
+    TIMING_start(tm_statistic);
     PM.gather();
+    TIMING_stop(tm_statistic, 0.0);
     
     Hostonly_ {
       // 結果出力(排他測定のみ)

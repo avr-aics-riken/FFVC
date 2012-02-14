@@ -142,6 +142,7 @@ void PerfMonitor::print(FILE* fp)
     }
   }
    */
+  
   // タイムコスト順表示
   for (int j = 0; j < m_nWatch; j++) {
     int i = m_order[j];
@@ -187,11 +188,6 @@ void PerfMonitor::print(FILE* fp)
   int np = para_mng->GetNodeNum(pn.procGrp);
   
   if ( np > 1 ) {
-    //double s = sum_time_comm / tot; // 各測定区間の通信時間の和を全時間で割る
-    //fprintf(fp,"\t%-*s|                              %6.2f\n", maxLabelLen, "   Communication Part", 100.0*s);
-
-  // Amdahle's Law
-    //double ratio = 1.0 / ( s + (1.0-s)/(double)np );
     fprintf(fp,"\t%-*s| \t\t\t                                                                   %7.2f %s\n", 
             maxLabelLen, "   Performance", flop_serial*(double)np, unit.c_str());
   }

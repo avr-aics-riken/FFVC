@@ -549,6 +549,9 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_copy_array,         "Copy Array",              PerfMonitor::CALC);
   set_label(tm_assign_const,       "assign Const. to Array",  PerfMonitor::CALC);
   
+  // 統計処理
+  set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC);
+  
   // debug
   //for (int i=0; i<tm_END; i++) {
   //  printf("%3d %s\n", i, tm_label_ptr[i]);
