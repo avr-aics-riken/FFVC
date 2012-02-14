@@ -550,7 +550,7 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_assign_const,       "assign Const. to Array",  PerfMonitor::CALC);
   
   // 統計処理
-  set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC);
+  set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC, false);
 
 }
 
