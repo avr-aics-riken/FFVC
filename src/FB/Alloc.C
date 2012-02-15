@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -66,7 +66,6 @@ bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_va
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-		//if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc += (long)( nx*sizeof(SKL_REAL) );
@@ -128,7 +127,6 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, c
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-		//if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc += (long)( nx*sizeof(SKL_REAL) );
@@ -189,7 +187,6 @@ bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, c
       return false;
     }
     if ( nx != 0 ) {
-      //if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
       fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
     }
   }
@@ -250,7 +247,6 @@ bool Alloc::alloc_Int_S3D(SklSolverBase* obj, SklScalar3D<int>* &dc_var, const c
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    //if( !obj->SklInitializeInt(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_int_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(int) );
@@ -310,7 +306,6 @@ bool Alloc::alloc_Uint_S3D(SklSolverBase* obj, SklScalar3D<unsigned>* &dc_var, c
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    //if( !obj->SklInitializeUInt(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_int_((int*)dc_var->GetData(), (int*)&nx, (int*)&init);
   }
   mc = (long)( nx*sizeof(unsigned) );
@@ -370,7 +365,6 @@ bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, c
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    //if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(SKL_REAL) );
@@ -430,7 +424,6 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_va
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    //if( !obj->SklInitializeSKL_REAL(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(SKL_REAL) );
@@ -487,7 +480,6 @@ bool Alloc::alloc_Int_S1D(SklSolverBase* obj, SklScalar<int>* &dc_var, const cha
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    //if( !obj->SklInitializeInt(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_int_(dc_var->GetData(), (int*)&nx, &init);
   }
   mc = (long)( nx*sizeof(int) );
@@ -544,7 +536,6 @@ bool Alloc::alloc_Uint_S1D(SklSolverBase* obj, SklScalar<unsigned>* &dc_var, con
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    //if( !obj->SklInitializeUInt(dc_var->GetData(), init, nx) ) return false;
     fb_set_value_int_((int*)dc_var->GetData(), (int*)&nx, (int*)&init);
   }
   mc = (long)( nx*sizeof(unsigned) );

@@ -566,5 +566,5 @@ void Core_Utility::TotalPressure (SKL_REAL* tp, SKL_REAL* v, SKL_REAL* p, Contro
     assert(0);
   }
   
-  fb_totalp_ (tp, (int*)m_size, (int*)&guide, v, p, v00, &flag, &flop);
+  fb_totalp_ (tp, (int*)m_size, (int*)&guide, v, p, v00, &flop);
 }

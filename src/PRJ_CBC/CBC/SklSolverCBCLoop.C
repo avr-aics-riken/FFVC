@@ -272,7 +272,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   
   if (C.Mode.TP == ON ) {
     TIMING_start(tm_total_prs);
-    CU.TotalPressure(tp, v, p, &C, "collocated", v00, flop_count);
+    fb_totalp_ (tp, sz, gc, v, p, v00, &flop_count);
     TIMING_stop(tm_total_prs, flop_count);
   }
   

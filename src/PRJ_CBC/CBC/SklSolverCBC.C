@@ -796,7 +796,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
       if( !(p  = dc_p->GetData()) )   assert(0);
       if( !(tp = dc_p0->GetData()) )  assert(0);
       
-      CU.TotalPressure(tp, v, p, &C, "collocated", v00, flop);
+      fb_totalp_ (tp, sz, gc, v, p, v00, &flop);
       
       // convert non-dimensional to dimensional, iff file is dimensional
       if (C.Unit.File == DIMENSIONAL) {
