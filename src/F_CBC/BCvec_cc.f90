@@ -33,7 +33,7 @@
 !<
     subroutine cbc_pvec_vibc_oflow (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, v_mode, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, v_mode
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p
     integer, dimension(3)                                       ::  sz, st, ed
@@ -284,7 +284,7 @@
 !<
     subroutine cbc_pvec_vibc_specv (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, v_mode, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, v_mode
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p
     integer, dimension(3)                                       ::  sz, st, ed
@@ -532,7 +532,7 @@
 !<
     subroutine cbc_pvec_vobc_symtrc (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, face, v_mode
     integer                                                     ::  ix, jx, kx
     integer, dimension(3)                                       ::  sz
@@ -780,7 +780,7 @@
 !<
     subroutine cbc_pvec_vobc_wall  (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, face, v_mode
     integer                                                     ::  ix, jx, kx
     integer, dimension(3)                                       ::  sz
@@ -1045,7 +1045,7 @@
 !<
     subroutine cbc_pvec_vobc_oflow (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, face, v_mode
     integer                                                     ::  ix, jx, kx
     integer, dimension(3)                                       ::  sz
@@ -1364,7 +1364,7 @@
 !<
     subroutine cbc_pvec_vobc_specv (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, face, v_mode
     integer                                                     ::  ix, jx, kx
     integer, dimension(3)                                       ::  sz
@@ -1662,7 +1662,7 @@
 !<
     subroutine cbc_vobc_update (v, sz, g, vc, face)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, ix, jx, kx, face
     integer, dimension(3)                                       ::  sz
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, vc
@@ -1752,7 +1752,7 @@
 !<
     subroutine cbc_vobc_outflow (v, sz, g, c, bv, face, v0, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, face, ix, jx, kx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  Ue, Uw, Un, Us, Ut, Ub
@@ -1921,7 +1921,7 @@
 !<
     subroutine cbc_vobc_tfree (v, sz, g, face, bv, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  b0, b1, b2, b3, b4, b5
@@ -2205,7 +2205,7 @@
 !<
     subroutine cbc_vibc_drchlt (v, sz, g, st, ed, v00, bv, odr, vec)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
@@ -2284,7 +2284,7 @@
 !<
     subroutine cbc_vobc_drchlt (v, sz, g, v00, bv, face, vec)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, face, ix, jx, kx, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
@@ -2401,7 +2401,7 @@
 !<
     subroutine cbc_vibc_outflow (v, sz, g, st, ed, bv, odr)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up, Vp, Wp
@@ -2488,7 +2488,7 @@
 !<
     subroutine cbc_div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, coef, bv, odr, v0, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef, m
@@ -2595,7 +2595,7 @@
 !<
     subroutine cbc_div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, avr, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     include 'sklparaf.h'
     integer                                                     ::  i, j, k, g, bvx, m, odr, iret, ierr
     integer, dimension(3)                                       ::  sz, st, ed
@@ -2693,7 +2693,7 @@
 !<
     subroutine cbc_div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef
@@ -2756,7 +2756,7 @@
 !<
     subroutine cbc_div_obc_drchlt (div, sz, g, face, v00, coef, bv, vec, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, coef, rix, rjx, rkx
@@ -2882,7 +2882,7 @@
 !<
     subroutine cbc_div_obc_oflow_pvec (div, sz, g, face, v00, v_out, coef, bv, v0, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, coef, v_out
@@ -3046,7 +3046,7 @@
 !<
     subroutine cbc_div_obc_oflow_vec (div, sz, g, face, v00, coef, bv, aa, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, coef, dv, a1, a2, a3, u_ref, v_ref, w_ref, rc

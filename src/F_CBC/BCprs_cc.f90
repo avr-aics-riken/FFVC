@@ -22,7 +22,7 @@
 !<
     subroutine cbc_pobc_drchlt (p, sz, g, face, pv)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
@@ -91,7 +91,7 @@
 !<
     subroutine cbc_pobc_neumann (p, sz, g, face)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p

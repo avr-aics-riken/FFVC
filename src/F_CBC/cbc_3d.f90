@@ -30,7 +30,7 @@
 !<
     subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
@@ -593,7 +593,7 @@
 !<
     subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, coef, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  dh, dt, dd, flop, coef, actv, r_actv
@@ -724,7 +724,7 @@
 !<
     subroutine cbc_div (div, sz, g, coef, v0, bv, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  coef, flop
@@ -793,7 +793,7 @@
 !<
     subroutine cbc_ee (vc, sz, g, dt, v, bd, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, actv, dt
@@ -839,7 +839,7 @@
 !<
     subroutine cbc_vis_ee (vc, sz, g, dh, dt, v00, rei, wv, v, bx, cf, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz
@@ -1006,7 +1006,7 @@
 !<
     subroutine cbc_vis_ee_vbc (vc, sz, g, st, ed, dh, dt, v00, rei, v, bx, odr, cf, vec, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, m, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
@@ -1164,7 +1164,7 @@
 !<
     subroutine cbc_vis_cn_sor (v, sz, g, dh, dt, v00, rei, omg, vc, bx, cf, dv, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz
@@ -1309,7 +1309,7 @@
 !<
     subroutine cbc_vis_cn_mod_sor (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, cf, dv, vec, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, m
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz, st, ed
@@ -1495,7 +1495,7 @@
 !<
     subroutine cbc_eddy_viscosity (vt, sz, g, dh, re, cs, v, bx, vt_range, yp_range, v00)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, m
     integer, dimension(3)                                       ::  sz
     real, dimension(2)                                          ::  vt_range, yp_range
@@ -1625,7 +1625,7 @@
 !<
     subroutine cbc_ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
@@ -1685,7 +1685,7 @@
 !<
     subroutine cbc_vis_cn_jcb (v, sz, g, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz
@@ -1833,7 +1833,7 @@
 !<
     subroutine cbc_vis_cn_mod_jcb (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, vec, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, m
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz, st, ed
@@ -2014,7 +2014,7 @@
 !<
     subroutine cbc_friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     include 'sklparaf.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, itr, itrMax, iret, ierr
     integer, dimension(3)                                       ::  sz

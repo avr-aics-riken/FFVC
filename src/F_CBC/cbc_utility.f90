@@ -24,7 +24,7 @@
 !<
     subroutine cbc_norm_v_div_max (ds, sz, g, div, coef, bp, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ds, flop, r, coef
@@ -105,7 +105,7 @@
 !<
     subroutine cbc_i2vgt (q, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -268,7 +268,7 @@
 !<
     subroutine cbc_rot_v (rot, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -416,7 +416,7 @@
 !<
     subroutine cbc_helicity (ht, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1

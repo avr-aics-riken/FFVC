@@ -22,7 +22,7 @@
 !<
     subroutine cbc_div_cnst (div, sz, g, b2, bp, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  b2, dv, flop
@@ -63,7 +63,7 @@
 !<
     subroutine cbc_psor (p, sz, g, omg, res, src0, src1, bp, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -125,7 +125,7 @@
 !<
     subroutine cbc_psor_if (p, sz, g, omg, res, src0, src1, bp, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx, c
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -195,7 +195,7 @@
 !<
     subroutine cbc_psor_index3 (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, m, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -259,7 +259,7 @@
 !<
     subroutine cbc_psor_index (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, m, g, idx, idx_sz, ldx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -322,7 +322,7 @@
 !<
     subroutine cbc_jacobi (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -393,7 +393,7 @@
 !<
     subroutine cbc_jacobi_if (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, c, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -471,7 +471,7 @@
 !<
     subroutine cbc_psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -535,7 +535,7 @@
 !<
     subroutine cbc_psor2sma_core_if (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx, w
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b

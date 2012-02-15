@@ -26,7 +26,7 @@
 !<
     subroutine vof_uwd (f, sz, g, v00, dt, dh, v, q, bx, flop)
     implicit none
-    include '../F_CBC/cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                   :: i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     :: sz
     real                                                      :: ur, ul, vr, vl, wr, wl, dt, dh, dth

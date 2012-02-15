@@ -26,7 +26,7 @@
 !<
     subroutine cbc_pvec_hex (v, sz, g, st, ed, bd, odr, v00, vec, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, m, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  bt, flop, qtz
@@ -95,7 +95,7 @@
 !<
     subroutine cbc_psrc_hex (src, sz, g, st, ed, dh, bd, odr, v00, nv, c, v, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, m, odr, pick
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, dh
@@ -256,7 +256,7 @@
 !<
     subroutine cbc_update_vcf_hex (vf, sz, g, st, ed, dt, bd, odr, v00, nv, c, v, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr, m, q
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, dt, u_ref, v_ref, w_ref, nx, ny, nz
@@ -398,7 +398,7 @@
 !<
     subroutine cbc_update_vcc_hex (v, sz, g, st, ed, dt, bd, odr, v00, nv, c, vm, flop)
     implicit none
-    include 'cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr, m
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, dt, r, u_ref, v_ref, w_ref, nx, ny, nz

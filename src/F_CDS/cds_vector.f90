@@ -29,7 +29,7 @@
 !<
     subroutine cds_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, cut, flop)
     implicit none
-    include '../F_CBC/cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode
     integer, dimension(3)                                       ::  sz
     real                                                        ::  dh, dh1, dh2, ck, cnv_u, cnv_v, cnv_w, b, flop
@@ -564,7 +564,7 @@
 !<
     subroutine cds_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, cut, v00, coef, flop)
     implicit none
-    include '../F_CBC/cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  dh, dt, dd, flop, coef, actv, r_actv
@@ -739,7 +739,7 @@
 !<
     subroutine cds_div (div, sz, g, coef, v, bv, cut, v00, flop)
     implicit none
-    include '../F_CBC/cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
@@ -899,7 +899,7 @@
 !<
     subroutine cds_eddy_viscosity (vt, sz, g, dh, re, cs, v, cut, vt_range, yp_range, v00)
     implicit none
-    include '../F_CBC/cbc_f_params.h'
+    include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, m
     integer, dimension(3)                                       ::  sz
     real, dimension(2)                                          ::  vt_range, yp_range
