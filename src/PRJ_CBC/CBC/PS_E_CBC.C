@@ -42,7 +42,7 @@ void SklSolverCBC::PS_E_CBC(void)
   SKL_REAL clear_value = 0.0;
   size_t d_size=0;
   
-  comm_size = CU.count_comm_size(size, guide);
+  comm_size = count_comm_size(size, guide);
   
   // >>> Passive scalar Convection section
   TIMING_start(tm_heat_convection_sct);
@@ -239,7 +239,14 @@ void SklSolverCBC::PS_E_CBC(void)
   
   // 変数のカットオフオプション
   TIMING_start(tm_heat_range);
-  CU.CutOffRange (t, cmp, bh1, &C);
+  switch ( C.Hide.Range_Limit ) {
+    case Control::Range_Normal:
+      break;
+      
+    case Control::Range_Cutoff:  // this case includes cutoff for suction
+      fb_limit_scalar_(t, sz, gc);
+      break;
+  }
   TIMING_stop(tm_heat_range, 0.0);
   
   TIMING_stop(tm_heat_loop_post_sct, 0.0);

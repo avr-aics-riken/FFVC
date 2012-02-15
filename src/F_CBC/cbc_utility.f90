@@ -11,6 +11,103 @@
 !> @author keno, FSI Team, VCAD, RIKEN
 !<
 
+!  ************************************************************************
+!> @subroutine cbc_norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
+!! @brief 有効セルに対する発散の最大値と自乗和を計算，絶対値の最大値の位置を返す
+!! @param ds 残差の絶対値
+!! @param rm 残差の自乗和
+!! @param idx ノルムの最大値の位置
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param div 発散値のベース
+!! @param coef 係数
+!! @param bp BCindex P
+!! @param flop
+!<
+    subroutine cbc_norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
+    integer, dimension(3)                                     ::  sz, idx
+    real                                                      ::  ds, flop, r, coef, rm, d
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+    ds = 0.0
+    i0 = 0
+    j0 = 0
+    k0 = 0
+    ds = 0.0
+    rm = 0.0
+
+    flop = flop + real(ix)*real(jx)*real(kx)*5.0
+
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      d = abs(r)
+      rm = rm + r*r
+      
+      if ( d > ds ) then
+        i0 = i
+        j0 = j
+        k0 = k
+        ds = d
+      endif
+    end do
+    end do
+    end do
+    
+    idx(1) = i0
+    idx(2) = j0
+    idx(3) = k0
+
+    return
+    end subroutine cbc_norm_v_div_dbg
+   
+!  ***************************************************************
+!> @subroutine cbc_norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
+!! @brief 速度成分の最大値を計算する
+!! @param ds 最大値
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param div 速度の発散
+!! @param coef 係数
+!! @param bp BCindex P
+!! @param flop
+!<
+    subroutine cbc_norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    real                                                      ::  ds, flop, r, coef
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+    ds = 0.0
+
+    flop = flop + real(ix)*real(jx)*real(kx)*5.0
+
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      ds = ds + r*r
+    end do
+    end do
+    end do
+
+    return
+    end subroutine cbc_norm_v_div_l2
+
 !  ***************************************************************
 !> @subroutine cbc_norm_v_div_max (ds, sz, g, div, coef, bp, flop)
 !! @brief 速度成分の最大値を計算する

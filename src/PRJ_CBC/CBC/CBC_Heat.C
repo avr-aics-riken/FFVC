@@ -97,7 +97,7 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
   SKL_REAL b2=0.0;              /// 反復式のソースベクトルのノルム
   SKL_REAL flop_count=0.0;
   SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
-  SKL_REAL comm_size = CU.count_comm_size(size, guide);       /// 通信面1面あたりの通信量
+  SKL_REAL comm_size = count_comm_size(size, guide);       /// 通信面1面あたりの通信量
   SKL_REAL dt = SklGetDeltaT(); /// 時間積分幅
   SKL_REAL res_r =0.0;
   SKL_REAL nrm = 0.0;

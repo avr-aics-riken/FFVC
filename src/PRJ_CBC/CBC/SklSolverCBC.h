@@ -319,6 +319,7 @@ public:
   
   SKL_REAL PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
   SKL_REAL PSOR2sma_core(SKL_REAL* p, int ip, int color, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
+  SKL_REAL count_comm_size (unsigned sz[3], unsigned guide) const;
   
   // CBC_Heat.C
 	SKL_REAL ps_Diff_SM_EE    (SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, SKL_REAL& flop);

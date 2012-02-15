@@ -53,7 +53,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   SKL_REAL clear_value = 0.0;
   size_t d_size=0;
   
-  comm_size = CU.count_comm_size(size, 1);
+  comm_size = count_comm_size(size, 1);
   
   int v_mode=0;
   

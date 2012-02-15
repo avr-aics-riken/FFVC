@@ -618,18 +618,18 @@ void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
   SKL_REAL m_var[2];
   
   // 速度
-  CU.delta_Vector(size, guide, v, v0, bd, m_var, flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
+  fb_delta_v_(m_var, sz, gc, v, v0, (int*)&bd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
   avr[var_Velocity]   = m_var[0]; // 0
   avr[var_Velocity+3] = m_var[1]; // 3
   
   // 圧力
-  CU.delta_Scalar(size, guide, p, p0, bd, m_var, flop);
+  fb_delta_s_(m_var, sz, gc, p, p0, (int*)&bd, &flop);
   avr[var_Pressure]   = m_var[0]; // 1
   avr[var_Pressure+3] = m_var[1]; // 4
   
   // 温度
   if ( C.isHeatProblem() ) {
-    CU.delta_Scalar(size, guide, t, t0, bd, m_var, flop);
+    fb_delta_s_(m_var, sz, gc, t, t0, (int*)&bd, &flop);
     avr[var_Temperature]   = m_var[0]; // 2
     avr[var_Temperature+3] = m_var[1]; // 5
   }
@@ -923,7 +923,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
   idx = NULL;
   omg = IC->get_omg();
 	r = 0.0;
-  comm_size = CU.count_comm_size(size, guide);
+  comm_size = count_comm_size(size, guide);
   
 	if( !(p   = dc_p->GetData()) )   assert(0); // 圧力 p^{n+1}
   if( !(p0  = dc_p0->GetData()) )  assert(0); // 圧力 p^n
@@ -1206,6 +1206,49 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, SKL_REAL b2)
 }
 
 /**
+ @fn SKL_REAL SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
+ @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
+ @retval 通信量(Byte)
+ @param sz 配列サイズ
+ @param guide ガイドセル
+ */
+SKL_REAL SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  SKL_REAL c = 0.0;
+  
+  // 内部面のみをカウントする
+  for (unsigned n=0; n<6; n++) {
+    if ( pn.nID[n] >= 0 ) {
+      
+      switch (n) {
+        case X_MINUS:
+        case X_PLUS:
+          c += (SKL_REAL)(sz[1]*sz[2]);
+          break;
+          
+        case Y_MINUS:
+        case Y_PLUS:
+          c += (SKL_REAL)(sz[0]*sz[2]);
+          break;
+          
+        case Z_MINUS:
+        case Z_PLUS:
+          c += (SKL_REAL)(sz[0]*sz[1]);
+          break;
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ){
+    SKL_REAL tmp = c;
+    if ( !para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp) ) assert(0);
+  }
+  
+  return c*(SKL_REAL)sizeof(SKL_REAL); // Byte
+}
+
+/**
  @fn void SklSolverCBC::CN_Itr(ItrCtl* IC)
  @brief 線形ソルバーの選択実行
  @param IC ItrCtlクラス
@@ -1386,7 +1429,7 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       
       TIMING_start(tm_norm_div_l2);
       flop_count=0.0;
-      rms = CU.norm_v_div_l2(size, guide, coef, src1, bcp, flop_count);
+      cbc_norm_v_div_l2_(&rms, sz, gc, src1, &coef, (int*)bcp, &flop_count);
       TIMING_stop(tm_norm_div_l2, flop_count);
       
       if ( para_mng->IsParallel() ) {
@@ -1414,7 +1457,10 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       TIMING_start(tm_norm_div_max_dbg);
       flop_count=0.0;
       int index[3];
-      CU.norm_v_div_dbg(nrm, rms, index, size, guide, coef, src1, bcp, flop_count);
+      index[0] = 0;
+      index[1] = 0;
+      index[2] = 0;
+      cbc_norm_v_div_dbg_(&nrm, &rms, index, sz, gc, src1, &coef, (int*)bcp, &flop_count);
       TIMING_stop(tm_norm_div_max_dbg, flop_count);
       
       //@todo ここで，最大値のグローバルなindexの位置を計算する

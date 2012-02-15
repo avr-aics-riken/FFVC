@@ -30,6 +30,8 @@
 #define cbc_psrc_pbc_           CBC_PSRC_PBC
 
 // cbc_utility.f90
+#define cbc_norm_v_div_dbg_     CBC_NORM_V_DIV_DBG
+#define cbc_norm_v_div_l2_      CBC_NORM_V_DIV_L2
 #define cbc_norm_v_div_max_     CBC_NORM_V_DIV_MAX
 #define cbc_helicity_           CBC_HELICITY
 #define cbc_i2vgt_              CBC_I2VGT
@@ -130,6 +132,8 @@ extern "C" {
                              SKL_REAL* cf_z, int* key);
   
   // cbc_utility.f90
+  void cbc_norm_v_div_dbg_ (SKL_REAL* ds, SKL_REAL* rm, int* index, int* sz, int* g, SKL_REAL* div, SKL_REAL* coef, int* bp, SKL_REAL* flop);
+  void cbc_norm_v_div_l2_  (SKL_REAL* rms,   int* sz, int* g, SKL_REAL* div, SKL_REAL* coef, int* bp, SKL_REAL* flop);
   void cbc_norm_v_div_max_ (SKL_REAL* ds,    int* sz, int* g, SKL_REAL* div, SKL_REAL* coef, int* bp, SKL_REAL* flop);
   void cbc_helicity_       (SKL_REAL* ht,    int* sz, int* g, SKL_REAL* dh, SKL_REAL* v, int* bv, SKL_REAL* v00, SKL_REAL* flop);
   void cbc_i2vgt_          (SKL_REAL* q,     int* sz, int* g, SKL_REAL* dh, SKL_REAL* v, int* bv, SKL_REAL* v00, SKL_REAL* flop);
