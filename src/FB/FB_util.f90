@@ -19,7 +19,6 @@
 !! @param g ガイドセル長
 !! @param vn ベクトル値 n+1 step
 !! @param vo ベクトル値 n step
-!! @param v00 参照速度
 !! @param bx BCindex
 !! @param flop 浮動小数演算数
 !<
@@ -46,7 +45,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    actv = real(ibits(bx(i,j,k), State,  1))
+    actv = real(ibits(bx(i,j,k), State, 1))
     
     u = vn(1,i,j,k)
     v = vn(2,i,j,k)
@@ -187,88 +186,6 @@
 
   return
   end subroutine fb_average_s
-
-!  *****************************************************************
-!> @subroutine fb_shift_v_out (dst, sz, g, src, v00, step_avr, flop)
-!! @brief ベクトル値に移動速度を補正して出力バッファに渡す
-!! @param dst 出力バッファ
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param src ベクトル値
-!! @param v00 参照速度
-!! @param step_avr 積算回数
-!! @param flop 浮動小数演算数
-!<
-  subroutine fb_shift_v_out (dst, sz, g, src, v00, step_avr, flop)
-  implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g
-  integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, step_avr, ra
-  real, dimension(0:3)                                      ::  v00
-  real, dimension(3, sz(1), sz(2), sz(3))                   ::  dst
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  src
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-  
-  ra = 1.0/real(step_avr)
-
-  flop = flop + real(ix)*real(jx)*real(kx)*6.0 + 8.0
-
-  do k=1,kx
-  do j=1,jx
-  do i=1,ix
-    dst(1,i,j,k) = src(1,i,j,k)*ra - v00(1)
-    dst(2,i,j,k) = src(2,i,j,k)*ra - v00(2)
-    dst(3,i,j,k) = src(3,i,j,k)*ra - v00(3)
-  end do
-  end do
-  end do
-
-  return
-  end subroutine fb_shift_v_out
-  
-!  ****************************************************************
-!> @subroutine fb_shift_v_in (dst, sz, g, src, v00, step_avr, flop)
-!! @brief 入力バッファの値に移動速度を補正してベクトル値に渡す
-!! @param dst ベクトル値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param src 入力バッファ
-!! @param v00 参照速度
-!! @param step_avr 積算回数
-!! @param flop 浮動小数演算数
-!<
-  subroutine fb_shift_v_in (dst, sz, g, src, step_avr, flop)
-  implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g
-  integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, step_avr, ra
-  real, dimension(0:3)                                      ::  v00
-  real, dimension(3, sz(1), sz(2), sz(3))                   ::  src
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  dst
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-  
-  ra = real(step_avr)
-
-  flop = flop + real(ix)*real(jx)*real(kx)*6.0 + 1.0
-
-  do k=1,kx
-  do j=1,jx
-  do i=1,ix
-    dst(1,i,j,k) = (src(1,i,j,k) + v00(1)) * ra
-    dst(2,i,j,k) = (src(2,i,j,k) + v00(2)) * ra
-    dst(3,i,j,k) = (src(3,i,j,k) + v00(3)) * ra
-  end do
-  end do
-  end do
-
-  return
-  end subroutine fb_shift_v_in
 
 !  ***************************************
 !> @subroutine fb_copy_real (dst, src, sz)

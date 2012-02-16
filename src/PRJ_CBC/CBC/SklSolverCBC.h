@@ -35,7 +35,6 @@
 #include "IterationCtl.h"
 #include "History.h"
 #include "CBC_SetBC.h"
-#include "Core_Util.h"
 #include "Parallel_node.h"
 #include "Alloc.h"
 #include "FileIO.h"
@@ -88,7 +87,7 @@ public:
   ItrCtl          IC[ItrCtl::ic_END];
   Alloc           A;
   FileIO          F;
-  Core_Utility    CU;
+  //Core_Utility    CU;
   MonitorList     MO;
   PerfMonitor     PM;
   DTcntl          DT;

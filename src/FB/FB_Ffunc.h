@@ -44,8 +44,6 @@ extern "C" {
   void fb_set_value_int_ (int* var, int* sz, int* init);
   void fb_set_value_real_(SKL_REAL* var, int* sz, SKL_REAL* init);
   void fb_set_vector_    (SKL_REAL* var, int* sz, int* g, SKL_REAL* val);
-  void fb_shift_v_in_    (SKL_REAL* dst, int* sz, int* g, SKL_REAL* src, SKL_REAL* v00, int* step_avr, SKL_REAL* flop);
-  void fb_shift_v_out_   (SKL_REAL* dst, int* sz, int* g, SKL_REAL* src, SKL_REAL* v00, int* step_avr, SKL_REAL* flop);
   void fb_totalp_        (SKL_REAL* tp,  int* sz, int* g, SKL_REAL* v, SKL_REAL* p, SKL_REAL* v00, SKL_REAL* flop);
 }
 

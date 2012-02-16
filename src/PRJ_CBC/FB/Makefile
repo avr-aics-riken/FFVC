@@ -16,7 +16,6 @@ CXXSRCS = \
        ../../FB/Component.C \
        ../../FB/Control.C \
        ../../FB/Control_Rect.C \
-       ../../FB/Core_Util.C \
        ../../FB/FBUtility.C \
        ../../FB/FileIO.C \
        ../../FB/History.C \
@@ -451,83 +450,6 @@ depend:
 ../../FB/Control_Rect.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/Control_Rect.o: ../../FB/Sampling.h ../../FB/BndOuter.h
 ../../FB/Control_Rect.o: ../../FB/DTcntl.h ../../FB/Interval_Mngr.h
-../../FB/Core_Util.o: ../../FB/Core_Util.h /usr/local/sphere/include/Skl.h
-../../FB/Core_Util.o: /usr/local/sphere/include/endianUtil.h
-../../FB/Core_Util.o: /usr/local/sphere/include/SklSolverBase.h
-../../FB/Core_Util.o: /usr/local/sphere/include/SklBase.h
-../../FB/Core_Util.o: /usr/local/sphere/include/SklDefine.h
-../../FB/Core_Util.o: /usr/local/sphere/include/SklReservWord.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklSolverConfig.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgSteer.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgInFile.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgHistory.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgParameter.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklIBCConfig.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklOBCConfig.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklMBoxConfig.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklMDMConfig.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/Core_Util.o: /usr/local/sphere/include/base/SklFileIOCntl.h
-../../FB/Core_Util.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/Core_Util.o: /usr/local/sphere/include/base/SklOutputDataSet.h
-../../FB/Core_Util.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
-../../FB/Core_Util.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
-../../FB/Core_Util.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklDataManager.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklScalar.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklAray.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaComponent.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
-../../FB/Core_Util.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklVector2D.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklVector3D.h
-../../FB/Core_Util.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
-../../FB/Core_Util.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
-../../FB/Core_Util.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
-../../FB/Core_Util.o: /usr/local/sphere/include/coord/SklCrdMngr.h
-../../FB/Core_Util.o: /usr/local/sphere/include/coord/SklCoord.h
-../../FB/Core_Util.o: ../../FB/FBDefine.h ../../FB/FB_Ffunc.h
-../../FB/Core_Util.o: ../../FB/Control.h ../../FB/mydebug.h
-../../FB/Core_Util.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
-../../FB/Core_Util.o: ../../FB/Component.h ../../FB/IterationCtl.h
-../../FB/Core_Util.o: ../../FB/Parallel_node.h ../../FB/Ref_Frame.h
-../../FB/Core_Util.o: ../../FB/FBUtility.h ../../FB/Monitor.h ../../FB/vec3.h
-../../FB/Core_Util.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
-../../FB/Core_Util.o: ../../FB/MonCompo.h ../../FB/basic_func.h
-../../FB/Core_Util.o: ../../FB/Sampling.h ../../FB/BndOuter.h
-../../FB/Core_Util.o: ../../FB/DTcntl.h ../../FB/Interval_Mngr.h
 ../../FB/FBUtility.o: ../../FB/FBUtility.h /usr/local/sphere/include/Skl.h
 ../../FB/FBUtility.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/FBUtility.o: /usr/local/sphere/include/SklSolverBase.h
@@ -669,14 +591,7 @@ depend:
 ../../FB/FileIO.o: ../../FB/Parallel_node.h
 ../../FB/FileIO.o: /usr/local/sphere/include/fileio/SklSbxDataSet.h
 ../../FB/FileIO.o: ../../FB/FBUtility.h ../../FB/Component.h
-../../FB/FileIO.o: ../../FB/Core_Util.h ../../FB/FB_Ffunc.h
-../../FB/FileIO.o: ../../FB/Control.h ../../FB/Material.h
-../../FB/FileIO.o: ../../FB/IterationCtl.h ../../FB/Ref_Frame.h
-../../FB/FileIO.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-../../FB/FileIO.o: ../../FB/vec3f_func.h ../../FB/MonCompo.h
-../../FB/FileIO.o: ../../FB/basic_func.h ../../FB/Sampling.h
-../../FB/FileIO.o: ../../FB/BndOuter.h ../../FB/DTcntl.h
-../../FB/FileIO.o: ../../FB/Interval_Mngr.h
+../../FB/FileIO.o: ../../FB/FB_Ffunc.h
 ../../FB/History.o: ../../FB/History.h ../../FB/IterationCtl.h
 ../../FB/History.o: /usr/local/sphere/include/Skl.h
 ../../FB/History.o: /usr/local/sphere/include/endianUtil.h

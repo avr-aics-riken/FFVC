@@ -13,15 +13,15 @@
 extern SklParaComponent* ParaCmpo;
 
 /**
- @fn void FileIO::cnv_Div(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL coef, SKL_REAL& flop) const
+ @fn void FileIO::cnv_Div(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL coef, SKL_REAL& flop)
  @brief ファイル出力時，発散値を計算する
  @param dst 単位変換のデータクラス
  @param src 単位変換前のデータクラス
  @param coef 係数
  @param flop 浮動小数演算数
- @see SklUtil::cpyS3D(), Core_Utility::norm_v_div_max()
+ @see SklUtil::cpyS3D()
  */
-void FileIO::cnv_Div(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL coef, SKL_REAL& flop) const
+void FileIO::cnv_Div(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL coef, SKL_REAL& flop)
 {
   if( !dst || !src ) assert(0);
   
@@ -71,7 +71,7 @@ void FileIO::cnv_Div(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* sr
 
 /**
  @fn void FileIO::cnv_V_ND2D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
- SKL_REAL& flop, unsigned stepAvr) const
+ SKL_REAL& flop, unsigned stepAvr)
  @brief 速度データについて，無次元から有次元単位に変換
  @param dst 単位変換後のデータクラス
  @param src 単位変換前のデータクラス
@@ -79,31 +79,31 @@ void FileIO::cnv_Div(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* sr
  @param Ref_v 代表速度(m/s)
  @param flop 浮動小数演算数
  @param stepAvr 時間平均をとったステップ数
- @see Core_Util::shiftVout3D()
+ @see FBUtility::shiftVout3D()
  */
 void FileIO::cnv_V_ND2D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
-                        SKL_REAL& flop, unsigned stepAvr) const
+                        SKL_REAL& flop, unsigned stepAvr)
 {
   if( !dst || !src || !v00 ) assert(0);
     
-    const unsigned* dst_sz = dst->GetSize();  // dimension size /wo guide cell
-    const unsigned* src_sz = src->GetSize();
-    if(   (src_sz[0] != dst_sz[0])
+  const unsigned* dst_sz = dst->GetSize();  // dimension size /wo guide cell
+  const unsigned* src_sz = src->GetSize();
+  if(   (src_sz[0] != dst_sz[0])
        || (src_sz[1] != dst_sz[1])
        || (src_sz[2] != dst_sz[2]) ) assert(0);
       
-      SKL_REAL* dst_data = dst->GetData();
-      const SKL_REAL* src_data = src->GetData();
-      if( !dst_data || !src_data ) assert(0);
+  SKL_REAL* dst_data = dst->GetData();
+  const SKL_REAL* src_data = src->GetData();
+  if( !dst_data || !src_data ) assert(0);
         
-        dst_sz = dst->_GetSize();  // dimension size /w guide cell
-        src_sz = src->_GetSize();
-        unsigned dst_gc = dst->GetVCellSize();
-        unsigned src_gc = src->GetVCellSize();
-        unsigned sta, ix, jx, kx;
+  dst_sz = dst->_GetSize();  // dimension size /w guide cell
+  src_sz = src->_GetSize();
+  unsigned dst_gc = dst->GetVCellSize();
+  unsigned src_gc = src->GetVCellSize();
+  unsigned sta, ix, jx, kx;
   int diff;
   
-  Core_Utility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
+  FBUtility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
   
   const SKL_REAL ra = 1.0/(SKL_REAL)stepAvr; // output
   
@@ -131,74 +131,7 @@ void FileIO::cnv_V_ND2D(SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_RE
 }
 
 /**
- @fn void FileIO::cnv_V_ND2D(SklVector3DEx<SKL_REAL>* dst, const SklVector3D<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
-                             SKL_REAL& flop, unsigned stepAvr) const
- @brief 速度データについて，無次元から有次元単位に変換
- @param dst 単位変換後のデータクラス
- @param src 単位変換前のデータクラス
- @param v00 参照速度
- @param Ref_v 代表速度(m/s)
- @param flop 浮動小数演算数
- @param stepAvr 時間平均をとったステップ数
- @see Core_Util::shiftVout3D()
- */
-void FileIO::cnv_V_ND2D(SklVector3DEx<SKL_REAL>* dst, const SklVector3D<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
-                        SKL_REAL& flop, unsigned stepAvr) const
-{
-  if( !dst || !src || !v00 ) assert(0);
-  
-  const unsigned* dst_sz = dst->GetSize();  // dimension size /wo guide cell
-  const unsigned* src_sz = src->GetSize();
-  if(   (src_sz[0] != dst_sz[0])
-     || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) assert(0);
-  
-  SKL_REAL* dst_data = dst->GetData();
-  const SKL_REAL* src_data = src->GetData();
-  if( !dst_data || !src_data ) assert(0);
-  
-  dst_sz = dst->_GetSize();  // dimension size /w guide cell
-  src_sz = src->_GetSize();
-  unsigned dst_gc = dst->GetVCellSize();
-  unsigned src_gc = src->GetVCellSize();
-  unsigned sta, ix, jx, kx;
-  int diff;
-  
-  Core_Utility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
-  
-  const SKL_REAL ra = 1.0/(SKL_REAL)stepAvr; // output
-  
-  unsigned long src_idx, dst_idx, src_lsz[3], dst_lsz[3];
-  src_lsz[0] = src_sz[0];
-  src_lsz[1] = src_sz[1];
-  src_lsz[2] = src_sz[2];
-  dst_lsz[0] = dst_sz[0];
-  dst_lsz[1] = dst_sz[1];
-  dst_lsz[2] = dst_sz[2];
-  unsigned long s1 = src_lsz[0]*src_lsz[1]*src_lsz[2];
-  unsigned long s2 = s1*2;
-  register unsigned i, j, k;
-  flop += (SKL_REAL)((kx-sta)*(jx-sta)*(ix-sta)*9);
-  
-  for(k=sta; k<kx; k++){
-    unsigned kk = k+diff;
-    for(j=sta; j<jx; j++){
-      unsigned jj = j+diff;
-      for(i=sta; i<ix; i++){
-        // src_idx : indecies for SklVector3D
-        src_idx = src_lsz[0]*src_lsz[1]*kk + src_lsz[0]*jj + (i+diff);
-        // dst_idx : indecies for SklVector3DEx
-        dst_idx = 3*(dst_lsz[0]*dst_lsz[1]*k + dst_lsz[0]*j + i);
-        dst_data[dst_idx  ] = (src_data[src_idx   ]*ra - v00[0]) * Ref_v;
-        dst_data[dst_idx+1] = (src_data[src_idx+s1]*ra - v00[1]) * Ref_v;
-        dst_data[dst_idx+2] = (src_data[src_idx+s2]*ra - v00[2]) * Ref_v;
-      }
-    }
-  }
-}
-
-/**
- @fn void FileIO::cnv_TP_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, SKL_REAL& flop) const
+ @fn void FileIO::cnv_TP_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, SKL_REAL& flop)
  @brief 全圧データについて，無次元から有次元単位に変換する
  @param dst 単位変換のデータクラス
  @param src 単位変換前のデータクラス
@@ -207,7 +140,7 @@ void FileIO::cnv_V_ND2D(SklVector3DEx<SKL_REAL>* dst, const SklVector3D<SKL_REAL
  @param flop 浮動小数演算数
  @see SklUtil::cpyS3D()
  */
-void FileIO::cnv_TP_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, SKL_REAL& flop) const
+void FileIO::cnv_TP_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, SKL_REAL& flop)
 {
   if( !dst || !src ) assert(0);
   
@@ -256,7 +189,7 @@ void FileIO::cnv_TP_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>
     }
   }
   else {
-    Core_Utility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
+    FBUtility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
     
     for(k=sta; k<kx; k++){
       unsigned kk = k+diff;
@@ -273,21 +206,21 @@ void FileIO::cnv_TP_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>
 }
 
 /**
- @fn void FileIO::cnv_V_D2ND(SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v) const
+ @fn void FileIO::cnv_V_D2ND(SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v)
  @brief 速度データについて，有次元単位から無次元に変換する
  @param dst 単位変換のデータクラス
  @param Ref_v 代表速度(m/s)
  */
-void FileIO::cnv_V_D2ND(SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v) const
+void FileIO::cnv_V_D2ND(SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v)
 {
   if( !dst ) assert(0);
     
-    //const unsigned* dst_sz = dst->GetSize();
-    SKL_REAL* dst_data = dst->GetData();
-    if( !dst_data ) assert(0);
+  //const unsigned* dst_sz = dst->GetSize();
+  SKL_REAL* dst_data = dst->GetData();
+  if( !dst_data ) assert(0);
       
-      const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
-      register unsigned i, j, k, l;
+  const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
+  register unsigned i, j, k, l;
   SKL_REAL c = 1.0/Ref_v;
   
   unsigned long idx, lsz[3];
@@ -311,49 +244,14 @@ void FileIO::cnv_V_D2ND(SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v) cons
 }
 
 /**
- @fn void FileIO::cnv_V_D2ND(SklVector3D<SKL_REAL>* dst, const SKL_REAL Ref_v) const
- @brief 速度データについて，有次元単位から無次元に変換する
- @param dst 単位変換のデータクラス
- @param Ref_v 代表速度(m/s)
- */
-void FileIO::cnv_V_D2ND(SklVector3D<SKL_REAL>* dst, const SKL_REAL Ref_v) const
-{
-  if( !dst ) assert(0);
-  
-  //const unsigned* dst_sz = dst->GetSize();
-  SKL_REAL* dst_data = dst->GetData();
-  if( !dst_data ) assert(0);
-  
-  const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
-  register unsigned i, j, k, l;
-  SKL_REAL c = 1.0/Ref_v;
-  
-  unsigned long idx, dst_lsz[3];
-  dst_lsz[0] = dst_sz[0];
-  dst_lsz[1] = dst_sz[1];
-  dst_lsz[2] = dst_sz[2];
-    
-  for (l=0; l<3; l++) {
-    for(k=0; k<dst_sz[2]; k++){
-      for(j=0; j<dst_sz[1]; j++){
-        for(i=0; i<dst_sz[0]; i++){
-          idx = dst_lsz[0]*dst_lsz[1]*dst_lsz[2]*l  + dst_lsz[0]*dst_lsz[1]*k  + dst_lsz[0]*j + i;
-          dst_data[idx] *= c;
-        }
-      }
-    }
-  }
-}
-
-/**
- @fn void FileIO::cnv_T_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, const unsigned Unit) const
+ @fn void FileIO::cnv_T_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, const unsigned Unit)
  @brief 温度データについて，Unitで指定される有次元単位から無次元に変換する
  @param dst 単位変換のデータクラス
  @param Base_tmp 基準温度(K or C)
  @param Diff_tmp 代表温度差(K or C)
  @param Unit 温度単位(K or C)
  */
-void FileIO::cnv_T_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, const unsigned Unit) const
+void FileIO::cnv_T_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, const unsigned Unit)
 {
   if( !dst ) assert(0);
   
@@ -381,7 +279,7 @@ void FileIO::cnv_T_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, con
 
 /**
  @fn void FileIO::cnv_T_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Base_tmp, constSKL_REAL Diff_tmp, 
-                             const unsigned Unit, SKL_REAL& flop) const
+                             const unsigned Unit, SKL_REAL& flop)
  @brief ファイル出力時，温度データについて，無次元からUnitで指定される有次元単位に変換する
  @param dst 単位変換のデータクラス
  @param src 単位変換前のデータクラス
@@ -392,7 +290,7 @@ void FileIO::cnv_T_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, con
  @see SklUtil::cpyS3D()
  */
 void FileIO::cnv_T_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, 
-                        const unsigned Unit, SKL_REAL& flop) const
+                        const unsigned Unit, SKL_REAL& flop)
 {
   if( !dst || !src ) assert(0);
   
@@ -442,7 +340,7 @@ void FileIO::cnv_T_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>*
     }
   }
   else {
-    Core_Utility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
+    FBUtility::CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
     
     for(k=sta; k<kx; k++){
       unsigned kk = k+diff;
@@ -460,7 +358,7 @@ void FileIO::cnv_T_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>*
 }
 
 /**
- @fn void FileIO::cnv_P_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, const unsigned mode) const
+ @fn void FileIO::cnv_P_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, const unsigned mode)
  @brief 圧力データについて，有次元から無次元に変換する
  @param dst 単位変換のデータクラス
  @param Base_prs 基準圧力(Pa)
@@ -468,7 +366,7 @@ void FileIO::cnv_T_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>*
  @param Ref_v 代表速度(m/s)
  @param mode unit of pressure
  */
-void FileIO::cnv_P_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, const unsigned mode) const
+void FileIO::cnv_P_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, const unsigned mode)
 {
   if( !dst ) assert(0);
   
@@ -496,7 +394,7 @@ void FileIO::cnv_P_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, con
 
 /**
  @fn void FileIO::cnv_P_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, 
-                            const SKL_REAL Ref_v, const unsigned mode, SKL_REAL& flop) const
+                            const SKL_REAL Ref_v, const unsigned mode, SKL_REAL& flop)
  @brief ファイル出力時，圧力データについて無次元から有次元単位に変換する
  @param dst 単位変換のデータクラス
  @param src 単位変換前のデータクラス
@@ -508,7 +406,7 @@ void FileIO::cnv_P_D2ND(SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, con
  @see SklUtil::cpyS3D()
  */
 void FileIO::cnv_P_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, 
-                        const SKL_REAL Ref_v, const unsigned mode, SKL_REAL& flop) const
+                        const SKL_REAL Ref_v, const unsigned mode, SKL_REAL& flop)
 {
   if( !dst || !src ) assert(0);
   
@@ -557,7 +455,7 @@ void FileIO::cnv_P_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>*
 
 /**
  @fn void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide,
-                                  SklScalar4D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const
+                                  SklScalar4D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode)
  @brief sphスカラー4Dファイルをロードする
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -570,7 +468,7 @@ void FileIO::cnv_P_ND2D(SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>*
  @param Dmode 次元（無次元-0 / 有次元-1）
  */
 void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                             SklScalar4D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const
+                             SklScalar4D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode)
 {
   if ( !obj )   assert(0);
   // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
@@ -605,7 +503,7 @@ void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, co
 
 /**
  @fn void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                     SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, const SKL_REAL* v00, unsigned Dmode) const
+                                     SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, const SKL_REAL* v00, unsigned Dmode)
  @brief 平均値のsphベクトル3Dファイルをロードする
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -619,73 +517,23 @@ void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, co
  @param Dmode 次元（無次元-0 / 有次元-1）
  */
 void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL* v00, unsigned Dmode) const
-{
-  if ( !obj )   assert(0);
-    // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-    if ( !dc_v )  assert(0);
-      if ( !fname ) assert(0);
-        
-        SklParaComponent* para_cmp = ParaCmpo;
-        SklParaManager* para_mng = para_cmp->GetParaManager();
-        SklVoxDataSet* sphV = NULL;
-        
-        if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
-          Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
-          Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
-          assert(0);
-        }
-  
-  if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
-    Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    assert(0);
-  }
-  
-  SklVector3DEx<SKL_REAL>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklVector3DEx<SKL_REAL>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-    if( !Core_Utility::shiftVin3D(dc_v, dc_tmp, &v00[1], (unsigned)step) ) assert(0);
-      //if( !(DataMngr.RegistData("avrv", dc_av)) ) assert(0);
-      
-      Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-      Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-      
-      if (sphV) { delete sphV; sphV=NULL; }
-}
-
-/**
- @fn void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                     SklVector3D<SKL_REAL>* dc_v, int& step, SKL_REAL& time, const SKL_REAL* v00, unsigned Dmode) const
- @brief 平均値のsphベクトル3Dファイルをロードする
- @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
- @param fp ファイルポインタ（ファイル出力）
- @param fname InFileのattrラベル名
- @param size グローバルなサイズ
- @param guide ガイドセルサイズ
- @param dc_v  結果を保持するデータクラス
- @param step ステップ
- @param time 時刻
- @param v00 格子速度
- @param Dmode 次元（無次元-0 / 有次元-1）
- */
-void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                SklVector3D<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL* v00, unsigned Dmode) const
+                                SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL* v00, unsigned Dmode)
 {
   if ( !obj )   assert(0);
   // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
   if ( !dc_v )  assert(0);
   if ( !fname ) assert(0);
-  
+        
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   SklVoxDataSet* sphV = NULL;
-  
+        
   if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
     assert(0);
   }
-
+  
   if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
@@ -694,18 +542,18 @@ void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
   
   SklVector3DEx<SKL_REAL>* dc_tmp;
   if( !(dc_tmp = dynamic_cast<SklVector3DEx<SKL_REAL>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  if( !Core_Utility::shiftVin3D(dc_v, dc_tmp, &v00[1], (unsigned)step) ) assert(0);
+  if( !FBUtility::shiftVin3D(dc_v, dc_tmp, &v00[1], (unsigned)step) ) assert(0);
   //if( !(DataMngr.RegistData("avrv", dc_av)) ) assert(0);
-  
+      
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  
+      
   if (sphV) { delete sphV; sphV=NULL; }
 }
 
 /**
  @fn void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                     SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const
+                                     SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode)
  @brief 平均値のsphスカラー3Dファイルをロードする
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -718,7 +566,7 @@ void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
  @param Dmode 次元（無次元-0 / 有次元-1）
  */
 void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const
+                                SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode)
 {
   if ( !obj )   assert(0);
   // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
@@ -755,7 +603,7 @@ void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
 
 /**
  @fn void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                  SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const
+                                  SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode)
  @brief sphベクトル3Dファイルをロードする
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -769,72 +617,23 @@ void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
  @param Dmode 次元（無次元-0 / 有次元-1）
  */
 void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                             SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const
-{
-  if ( !obj )   assert(0);
-    // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-    if ( !dc_v )  assert(0);
-      if ( !fname ) assert(0);
-        
-        SklParaComponent* para_cmp = ParaCmpo;
-        SklParaManager* para_mng = para_cmp->GetParaManager();
-        SklVoxDataSet* sphV = NULL;
-        
-        if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
-          Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
-          Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
-          assert(0);
-        }
-  
-  if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
-    Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    assert(0);
-  }
-  
-  SklVector3DEx<SKL_REAL>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklVector3DEx<SKL_REAL>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-    if( !Core_Utility::shiftVin3D(dc_v, dc_tmp, &v00[1]) ) assert(0);
-      
-      Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-      Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-      
-      if (sphV) { delete sphV; sphV=NULL; }
-}
-
-/**
- @fn void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                  SklVector3D<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const
- @brief sphベクトル3Dファイルをロードする
- @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
- @param fp ファイルポインタ（ファイル出力）
- @param fname InFileのattrラベル名
- @param size グローバルなサイズ
- @param guide ガイドセルサイズ
- @param dc_v  結果を保持するデータクラス
- @param step ステップ
- @param time 時刻
- @param v00[4]
- @param Dmode 次元（無次元-0 / 有次元-1）
- */
-void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                             SklVector3D<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode) const
+                             SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode)
 {
   if ( !obj )   assert(0);
   // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
   if ( !dc_v )  assert(0);
   if ( !fname ) assert(0);
-  
+        
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   SklVoxDataSet* sphV = NULL;
-  
+        
   if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
     assert(0);
   }
-
+  
   if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
@@ -843,17 +642,17 @@ void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, co
   
   SklVector3DEx<SKL_REAL>* dc_tmp;
   if( !(dc_tmp = dynamic_cast<SklVector3DEx<SKL_REAL>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  if( !Core_Utility::shiftVin3D(dc_v, dc_tmp, &v00[1]) ) assert(0);
-  
+  if( !FBUtility::shiftVin3D(dc_v, dc_tmp, &v00[1]) ) assert(0);
+      
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  
+      
   if (sphV) { delete sphV; sphV=NULL; }
 }
 
 /**
  @fn void FileIO::loadSphScalar3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                                  SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const
+                                  SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode)
  @brief sphスカラー3Dファイルをロードする
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -866,7 +665,7 @@ void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, co
  @param Dmode 次元（無次元-0 / 有次元-1）
  */
 void FileIO::loadSphScalar3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                             SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode) const
+                             SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode)
 {
   if ( !obj )   assert(0);
   // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
@@ -901,7 +700,7 @@ void FileIO::loadSphScalar3D(SklSolverBase* obj, FILE* fp, const char* fname, co
 
 /**
  @fn void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide,
-                          SklScalar3D<int>* dc_mid, const bool vf_mode, SklScalar3D<SKL_REAL>* dc_ws) const
+                          SklScalar3D<int>* dc_mid, const bool vf_mode, SklScalar3D<SKL_REAL>* dc_ws)
  @brief svxファイルをロードする
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -915,7 +714,7 @@ void FileIO::loadSphScalar3D(SklSolverBase* obj, FILE* fp, const char* fname, co
     - cpyS3DCenter(dc_ws, dc_tmp_svx) が倍精度のときの挙動
  */
 void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* size, unsigned guide, 
-                     SklScalar3D<int>* dc_mid, bool vf_mode, SklScalar3D<SKL_REAL>* dc_ws) const
+                     SklScalar3D<int>* dc_mid, bool vf_mode, SklScalar3D<SKL_REAL>* dc_ws)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -997,7 +796,7 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
 
 /**
  @fn void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned* size, unsigned guide, 
-                          SklScalar3D<int>* dc_mid, SklScalar3D<SKL_REAL>* dc_vol) const
+                          SklScalar3D<int>* dc_mid, SklScalar3D<SKL_REAL>* dc_vol)
  @brief SBXファイルの読み込み
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -1008,7 +807,7 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
  @param dc_vol volume rateを保持するデータクラス
  */
 void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned* size, unsigned guide, 
-                     SklScalar3D<int>* dc_mid, SklScalar3D<SKL_REAL>* dc_vol) const
+                     SklScalar3D<int>* dc_mid, SklScalar3D<SKL_REAL>* dc_vol)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -1041,7 +840,7 @@ void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned
 
 /**
  @fn void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* file_attr, unsigned* size, unsigned guide, 
-                  SklScalar3D<unsigned char>* dc_mid) const
+                  SklScalar3D<unsigned char>* dc_mid)
  @brief SBXファイルの読み込み
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -1051,7 +850,7 @@ void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned
  @param dc_mid IDを保持するデータクラス
  */
 void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* file_attr, unsigned* size, unsigned guide, 
-                     SklScalar3D<unsigned char>* dc_mid) const
+                     SklScalar3D<unsigned char>* dc_mid)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -1075,7 +874,7 @@ void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* file_attr, unsign
 
 /**
  @fn void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, 
-                              SklScalar3D<int>* mid_data, SklScalar3D<SKL_REAL>* vol_data) const
+                              SklScalar3D<int>* mid_data, SklScalar3D<SKL_REAL>* vol_data)
  @brief SBXデータのロード
  @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -1086,7 +885,7 @@ void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* file_attr, unsign
  @param vol_data volume rateを保持するデータクラス
  */
 void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, 
-                         SklScalar3D<int>* mid_data, SklScalar3D<SKL_REAL>* vol_data) const
+                         SklScalar3D<int>* mid_data, SklScalar3D<SKL_REAL>* vol_data)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -1282,7 +1081,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
 }
 
 /**
- @fn void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, SklScalar3D<unsigned char>* data) const
+ @fn void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, SklScalar3D<unsigned char>* data)
  @brief SBXデータのロード
  @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param fp ファイルポインタ（ファイル出力）
@@ -1296,7 +1095,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
                          const char* name,
                          unsigned* size,
                          unsigned guide,
-                         SklScalar3D<unsigned char>* data) const
+                         SklScalar3D<unsigned char>* data)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -1366,7 +1165,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
 
 /**
  @fn void FileIO::writeRawSPH(const SKL_REAL *vf, const unsigned* size, const unsigned gc, const SKL_REAL* org, const SKL_REAL* ddx,
-                              const unsigned m_ModePrecision) const
+                              const unsigned m_ModePrecision)
  @brief sphファイルの書き出し　ただし，ガイドセルは１
  @param vf スカラデータ
  @param size 配列サイズ
@@ -1377,7 +1176,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
  @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
  */
 void FileIO::writeRawSPH(const SKL_REAL *vf, const unsigned* size, const unsigned gc, const SKL_REAL* org, const SKL_REAL* ddx, 
-                         const unsigned m_ModePrecision) const
+                         const unsigned m_ModePrecision)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   

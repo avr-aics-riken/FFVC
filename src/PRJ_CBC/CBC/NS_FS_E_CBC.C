@@ -122,7 +122,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
 
-  
+
   
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
@@ -262,7 +262,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_frctnl_stp_sct_3, 0.0);
   // <<< Fractional step subsection 3
   
-  
+
   
   // >>> Fractional step sub-section 4
   TIMING_start(tm_frctnl_stp_sct_4);
@@ -287,7 +287,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_frctnl_stp_sct, 0.0);
   // <<< Fractional step section
   
-  
+
   
   // Poissonのソース部分
   // >>> Poisson Source section
@@ -339,7 +339,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
   
-  
+
   
   // VP-Iteration
   // >>> Poisson Iteration section
@@ -480,4 +480,5 @@ void SklSolverCBC::NS_FS_E_CBC(void)
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section
+
 }

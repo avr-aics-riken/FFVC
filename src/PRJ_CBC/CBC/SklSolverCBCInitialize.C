@@ -129,7 +129,6 @@ SklSolverCBC::SklSolverInitialize() {
   M.setParallelInfo   (pn);
   BC.setParallelInfo  (pn);
   C.setParallelInfo   (pn);
-  CU.setParallelInfo  (pn);
   F.setParallelInfo   (pn);
   MO.setParallelInfo  (pn);
   TIMING__ PM.setParallelInfo  (pn);
@@ -236,7 +235,9 @@ SklSolverCBC::SklSolverInitialize() {
         }
       }
       else { // 媒質ファイルを使わない場合，指定された媒質番号で初期化
-        SklInitializeInt(dc_mid->GetData(), (int)C.Mode.Base_Medium, dc_mid->GetArrayLength());
+        //SklInitializeInt(dc_mid->GetData(), (int)C.Mode.Base_Medium, dc_mid->GetArrayLength());
+        d_size = dc_mid->GetArrayLength();
+        fb_set_value_int_(dc_mid->GetData(), (int*)&d_size, (int*)mid);
       }
       TIMING_stop(tm_voxel_load);
 
@@ -929,7 +930,7 @@ SklSolverCBC::SklSolverInitialize() {
     else {
       ip = C.iv.Pressure;
     }
-    //SklInitializeSKL_REAL(dc_p->GetData(), ip, dc_p->GetArrayLength());
+
     d_size = dc_p->GetArrayLength();
     fb_set_value_real_(dc_p->GetData(), (int*)&d_size, &ip);
 		BC.OuterPBC(dc_p);
@@ -943,7 +944,7 @@ SklSolverCBC::SklSolverInitialize() {
       else {
         it = C.iv.Temperature;
       }
-      //SklInitializeSKL_REAL(dc_t->GetData(), it, dc_t->GetArrayLength());
+
       d_size = dc_t->GetArrayLength();
       fb_set_value_real_(dc_t->GetData(), (int*)&d_size, &it);
       

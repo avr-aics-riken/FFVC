@@ -572,21 +572,15 @@ void SklSolverCBC::Averaging_Time(SKL_REAL& flop)
   if( !(av = dc_av->GetData()) )  assert(0);
   if( !(p  = dc_p->GetData()) )   assert(0);
   if( !(ap = dc_ap->GetData()) )  assert(0);
-  
+
   fb_average_s_(ap, sz, gc, p, &flop);
   fb_average_v_(av, sz, gc, v, &flop);
-  
+
   if ( C.isHeatProblem() ) {
     if( !(t  = dc_t->GetData()) )  assert(0);
     if( !(at = dc_at->GetData()) ) assert(0);
     fb_average_s_(at, sz, gc, t, &flop);
   }
-  
-  //if( !SklUtil::avrS3D(dc_ap, dc_p) ) assert(0);
-  //if( !SklUtil::avrV3D(dc_av, dc_v) ) assert(0);
-  //if ( C.isHeatProblem() ) {
-  //  if( !SklUtil::avrS3D(dc_at, dc_t) ) assert(0);
-  //}
 }
 
 //@fn void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
@@ -618,18 +612,18 @@ void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
   SKL_REAL m_var[2];
   
   // 速度
-  fb_delta_v_(m_var, sz, gc, v, v0, (int*)&bd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
+  fb_delta_v_(m_var, sz, gc, v, v0, (int*)bd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
   avr[var_Velocity]   = m_var[0]; // 0
   avr[var_Velocity+3] = m_var[1]; // 3
-  
+
   // 圧力
-  fb_delta_s_(m_var, sz, gc, p, p0, (int*)&bd, &flop);
+  fb_delta_s_(m_var, sz, gc, p, p0, (int*)bd, &flop);
   avr[var_Pressure]   = m_var[0]; // 1
   avr[var_Pressure+3] = m_var[1]; // 4
-  
+
   // 温度
   if ( C.isHeatProblem() ) {
-    fb_delta_s_(m_var, sz, gc, t, t0, (int*)&bd, &flop);
+    fb_delta_s_(m_var, sz, gc, t, t0, (int*)bd, &flop);
     avr[var_Temperature]   = m_var[0]; // 2
     avr[var_Temperature+3] = m_var[1]; // 5
   }
@@ -680,7 +674,7 @@ void SklSolverCBC::AverageOutput (unsigned mode, SKL_REAL& flop)
       F.cnv_V_ND2D(dc_wvex, dc_av, &v00[1], C.RefVelocity, flop, stepAvr);
     }
     else {
-      if( !Core_Utility::shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) assert(0);
+      if( !FBUtility::shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) assert(0);
     }
     if( !WriteFile(m_outAvrUVW, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
@@ -765,7 +759,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
       F.cnv_V_ND2D(dc_wvex, dc_v, &v00[1], C.RefVelocity, flop);
     }
     else {
-      if( !Core_Utility::shiftVout3D(dc_wvex, dc_v, &v00[1]) ) assert(0);
+      if( !FBUtility::shiftVout3D(dc_wvex, dc_v, &v00[1]) ) assert(0);
     }
     if( !WriteFile(m_outUVW, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
@@ -832,7 +826,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
         F.cnv_V_ND2D(dc_wvex, dc_wv, vz, RefVL, flop);
       }
       else {
-        if( !Core_Utility::shiftVout3D(dc_wvex, dc_wv, vz) ) assert(0);
+        if( !FBUtility::shiftVout3D(dc_wvex, dc_wv, vz) ) assert(0);
       }
       if( !WriteFile(m_outVrt, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
@@ -945,7 +939,6 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
       
       // 反復処理
       TIMING_start(tm_assign_const);
-      //SklInitializeSKL_REAL(dc_wkj->GetData(), 0.0, dc_wkj->GetArrayLength());
       d_size = dc_wkj->GetArrayLength();
       fb_set_value_real_(wkj, (int*)&d_size, &clear_value);
       TIMING_stop(tm_assign_const, 0.0);
