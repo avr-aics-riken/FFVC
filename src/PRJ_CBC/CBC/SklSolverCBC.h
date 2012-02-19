@@ -87,7 +87,6 @@ public:
   ItrCtl          IC[ItrCtl::ic_END];
   Alloc           A;
   FileIO          F;
-  //Core_Utility    CU;
   MonitorList     MO;
   PerfMonitor     PM;
   DTcntl          DT;

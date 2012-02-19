@@ -43,7 +43,7 @@
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref
+    real                                                        ::  u_ref, v_ref, w_ref, m
     real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
@@ -78,12 +78,10 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    ! /1 + 3+3 = 14 flops ! DP 19 flops
-    ! loop :  6 + (3+3+12)*3dir + 17*3 + 12 = 123 flops
+    flop = flop + 14.0 ! DP 19 flops
     
-    flop = flop + real(ed(1)-st(1)+1)*real(ed(2)-st(2)+1)*real(ed(3)-st(3)+1) * 123.0 + 14.0
-    ! flop = flop + real(ed(1)-st(1)+1)*real(ed(2)-st(2)+1)*real(ed(3)-st(3)+1) * 123.0 + 19.0 ! DP
-    
+    m = 0.0
+
     do k=st(3),ed(3)
     do j=st(2),ed(2)
     do i=st(1),ed(1)
@@ -253,10 +251,15 @@
         wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
         wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
         wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        m = m + 1.0
       endif
     end do
     end do
     end do
+
+    ! loop :  6 + (3+3+12)*3dir + 17*3 + 12 = 123 flops
+
+    flop = flop + m*123.0
     
     return
     end subroutine cbc_pvec_vibc_oflow
@@ -294,7 +297,7 @@
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref
+    real                                                        ::  u_ref, v_ref, w_ref, m1, m2
     real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
@@ -329,11 +332,10 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    ! /1 + 3+3 = 14 flops ! DP 19 flops
-    ! loop :  6 + ((18+1)*2 + 12)*3dir + 17*3 + 12 = 219 flops
-    
-    flop = flop + real(ed(1)-st(1)+1)*real(ed(2)-st(2)+1)*real(ed(3)-st(3)+1) * 219.0 + 14.0
-    ! flop = flop + real(ed(1)-st(1)+1)*real(ed(2)-st(2)+1)*real(ed(3)-st(3)+1) * 219.0 + 19.0 ! DP
+    flop = flop + 14.0 ! DP 19 flop
+
+    m1 = 0.0
+    m2 = 0.0
     
     do k=st(3),ed(3)
     do j=st(2),ed(2)
@@ -410,6 +412,7 @@
           fu_l = 0.5*(cl*(Up0+Uw1) - acl*(Up0-Uw1))
           fv_l = 0.5*(cl*(Vp0+Vw1) - acl*(Vp0-Vw1))
           fw_l = 0.5*(cl*(Wp0+Ww1) - acl*(Wp0-Ww1)) ! 18+1 flops
+          m2 = m2 + 1.0
         end if
         
         if ( c_e == 1.0 ) then
@@ -421,6 +424,7 @@
           fu_r = 0.5*(cr*(Ue1+Up0) - acr*(Ue1-Up0))
           fv_r = 0.5*(cr*(Ve1+Vp0) - acr*(Ve1-Vp0))
           fw_r = 0.5*(cr*(We1+Wp0) - acr*(We1-Wp0)) ! 18+1 flops
+          m2 = m2 + 1.0
         end if
         
         cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
@@ -437,6 +441,7 @@
           fu_l = 0.5*(cl*(Up0+Us1) - acl*(Up0-Us1))
           fv_l = 0.5*(cl*(Vp0+Vs1) - acl*(Vp0-Vs1))
           fw_l = 0.5*(cl*(Wp0+Ws1) - acl*(Wp0-Ws1))
+          m2 = m2 + 1.0
         end if
         
         if ( c_n == 1.0 ) then
@@ -448,6 +453,7 @@
           fu_r = 0.5*(cr*(Un1+Up0) - acr*(Un1-Up0))
           fv_r = 0.5*(cr*(Vn1+Vp0) - acr*(Vn1-Vp0))
           fw_r = 0.5*(cr*(Wn1+Wp0) - acr*(Wn1-Wp0))
+          m2 = m2 + 1.0
         end if
         
         cnv_u = cnv_u + fu_r*c_n - fu_l*c_s
@@ -464,6 +470,7 @@
           fu_l = 0.5*(cl*(Up0+Ub1) - acl*(Up0-Ub1))
           fv_l = 0.5*(cl*(Vp0+Vb1) - acl*(Vp0-Vb1))
           fw_l = 0.5*(cl*(Wp0+Wb1) - acl*(Wp0-Wb1))
+          m2 = m2 + 1.0
         end if
 
         if ( c_t == 1.0 ) then
@@ -475,6 +482,7 @@
           fu_r = 0.5*(cr*(Ut1+Up0) - acr*(Ut1-Up0))
           fv_r = 0.5*(cr*(Vt1+Vp0) - acr*(Vt1-Vp0))
           fw_r = 0.5*(cr*(Wt1+Wp0) - acr*(Wt1-Wp0))
+          m2 = m2 + 1.0
         end if
         
         cnv_u = cnv_u + fu_r*c_t - fu_l*c_b
@@ -504,11 +512,16 @@
         wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
         wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
         wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        m1 = m1 + 1.0
       endif
     end do
     end do
     end do
     
+    ! loop :  (6 + 12*3 + 17*3 + 12)*m1 + 19*m2
+
+    flop = flop + real(ed(1)-st(1)+1)*real(ed(2)-st(2)+1)*real(ed(3)-st(3)+1) * 219.0 + 14.0
+
     return
     end subroutine cbc_pvec_vibc_specv
     
@@ -540,7 +553,7 @@
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx
+    real                                                        ::  u_ref, v_ref, w_ref, m
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
     real, dimension(0:3)                                        ::  v00
@@ -550,10 +563,6 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
     
     if      ( v_mode == 0 ) then 
         vcs=0.0
@@ -581,9 +590,9 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    ! /1 + 6 = 14 flops ! DP 19 flops
-    flop = flop + 14.0
-    ! flop = flop + 19.0 ! DP
+    flop = flop + 14.0 ! DP 19 flop
+
+    m = 0.0
     
     FACES : select case (face)
     case (X_minus)
@@ -608,11 +617,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*10.0
+      flop = flop + m*10.0
       
     case (X_plus)
       i = ix
@@ -636,11 +646,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*10.0
+      flop = flop + m*10.0
       
     case (Y_minus)
       j = 1
@@ -664,11 +675,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*10.0
+      flop = flop + m*10.0
       
     case (Y_plus)
       j = jx
@@ -692,11 +704,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*10.0
+      flop = flop + m*10.0
       
     case (Z_minus)
       k = 1
@@ -720,11 +733,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*10.0
+      flop = flop + m*10.0
       
     case (Z_plus)
       k = kx
@@ -748,11 +762,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*10.0
+      flop = flop + m*10.0
       
     case default
     end select FACES
@@ -788,7 +803,7 @@
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx, m
+    real                                                        ::  u_ref, v_ref, w_ref, m
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                        ::  u_bc_ref2, v_bc_ref2, w_bc_ref2
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
@@ -799,10 +814,6 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
     
     if      ( v_mode == 0 ) then 
         vcs=0.0
@@ -834,13 +845,12 @@
     v_bc_ref2 = 2.0*v_bc_ref
     w_bc_ref2 = 2.0*w_bc_ref
     
-    ! /1 + 9 = 17 flops ! DP 22 flops
-    flop = flop + 17.0
-    ! flop = flop + 22.0 ! DP
+    flop = flop + 17.0 ! DP 22 flops
+
+    m = 0.0
     
     FACES : select case (face)
     case (X_minus)
-      m = 0.0
       i = 1
       do k=1,kx
       do j=1,jx
@@ -870,7 +880,6 @@
       flop = flop + m*12.0
       
     case (X_plus)
-      m = 0.0
       i = ix
       do k=1,kx
       do j=1,jx
@@ -900,7 +909,6 @@
       flop = flop + m*12.0
       
     case (Y_minus)
-      m = 0.0
       j = 1
       do k=1,kx
       do i=1,ix
@@ -930,7 +938,6 @@
       flop = flop + m*12.0
       
     case (Y_plus)
-      m = 0.0
       j = jx
       do k=1,kx
       do i=1,ix
@@ -960,7 +967,6 @@
       flop = flop + m*12.0
       
     case (Z_minus)
-      m = 0.0
       k = 1
       do j=1,jx
       do i=1,ix
@@ -990,7 +996,6 @@
       flop = flop + m*12.0
       
     case (Z_plus)
-      m = 0.0
       k = kx
       do j=1,jx
       do i=1,ix
@@ -1053,7 +1058,7 @@
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx
+    real                                                        ::  u_ref, v_ref, w_ref, m
     real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
@@ -1068,10 +1073,6 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
     
     if      ( v_mode == 0 ) then 
         vcs=0.0
@@ -1099,9 +1100,9 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    ! /1 + 6 = 14 flops ! DP 19 flops
-    flop = flop + 14.0
-    ! flop = flop + 19.0 ! DP
+    flop = flop + 14.0 ! DP 19 flops
+
+    m = 0.0
     
     FACES : select case (face)
     case (X_minus)
@@ -1137,11 +1138,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*68.0
+      flop = flop + m*68.0
       
     case (X_plus)
       i = ix
@@ -1176,11 +1178,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*68.0
+      flop = flop + m*68.0
       
     case (Y_minus)
       j = 1
@@ -1215,11 +1218,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*68.0
+      flop = flop + m*68.0
       
     case (Y_plus)
       j = jx
@@ -1254,11 +1258,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*68.0
+      flop = flop + m*68.0
       
     case (Z_minus)
       k = 1
@@ -1293,11 +1298,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*68.0
+      flop = flop + m*68.0
       
     case (Z_plus)
       k = kx
@@ -1332,11 +1338,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*68.0
+      flop = flop + m*68.0
       
     case default
     end select FACES
@@ -1372,7 +1379,7 @@
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx
+    real                                                        ::  u_ref, v_ref, w_ref, m
     real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
@@ -1384,10 +1391,6 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
     
     if      ( v_mode == 0 ) then 
         vcs=0.0
@@ -1415,9 +1418,9 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    ! /1 + 6 = 14 flops ! DP 19 flops
-    flop = flop + 14.0
-    ! flop = flop + 19.0 ! DP
+    flop = flop + 14.0 ! DP 19 flop
+
+    m = 0.0
     
     FACES : select case (face)
     case (X_minus)
@@ -1454,11 +1457,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*21.0
+      flop = flop + m*21.0
       
     case (X_plus)
       i = ix
@@ -1491,11 +1495,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*34.0
+      flop = flop + m*34.0
       
     case (Y_minus)
       j = 1
@@ -1528,11 +1533,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*34.0
+      flop = flop + m*34.0
       
     case (Y_plus)
       j = jx
@@ -1565,11 +1571,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*34.0
+      flop = flop + m*34.0
       
     case (Z_minus)
       k = 1
@@ -1602,11 +1609,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*34.0
+      flop = flop + m*34.0
       
     case (Z_plus)
       k = kx
@@ -1639,11 +1647,12 @@
           wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
           wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
           wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 )
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*34.0
+      flop = flop + m*34.0
       
     case default
     end select FACES
@@ -1982,7 +1991,7 @@
       end do
       end do
       
-      flop = flop + rix*50.0 ! 8 + real*6 + 20 + 16
+      flop = flop + rix*50.0
       
     case (X_plus)
       do k=1,kx
@@ -2485,6 +2494,7 @@
 !! @param v0 セルセンター速度　u^n
 !! @param[out] flop flop count
 !! @note 流出境界面ではu_e^{n+1}=u_e^n-cf*(u_e^n-u_w^n)を予測値としてdivの寄与として加算．u_e^nの値は連続の式から計算する．
+!! @note flop countはコスト軽減のため近似
 !<
     subroutine cbc_div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, coef, bv, odr, v0, flop)
     implicit none
@@ -2572,7 +2582,7 @@
     end do
     end do
 
-    flop = flop + m*91.0 ! 42 + 7*6 + 7
+    flop = flop + m*91.0
 
     return
     end subroutine cbc_div_ibc_oflow_pvec
@@ -2592,15 +2602,16 @@
 !! @param[out] avr 平均流出速度（面直方向のみ）
 !! @param[out] flop flop count
 !! @note div(u)=0から，内部流出境界のセルで計算されたdivの値が流出速度となる
+!! @note flop countはコスト軽減のため近似
 !<
     subroutine cbc_div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, avr, flop)
     implicit none
     include '../FB/cbc_f_params.h'
     include 'sklparaf.h'
-    integer                                                     ::  i, j, k, g, bvx, m, odr, iret, ierr
+    integer                                                     ::  i, j, k, g, bvx, odr, iret, ierr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef, rc
-    real                                                        ::  u_ref, v_ref, w_ref, dv, a1, avr
+    real                                                        ::  u_ref, v_ref, w_ref, dv, a1, avr, m
     real, dimension(0:3)                                        ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
@@ -2611,10 +2622,10 @@
     v_ref = v00(2)
     w_ref = v00(3)
     a1 = 0.0
-    m = 0
+    m = 0.0
     rc = 1.0/coef
-    flop = flop + 8.0
-    ! flop = flop + 13.0 ! DP
+
+    flop = flop + 8.0 ! DP 13 flop
     
     do k=st(3),ed(3)
     do j=st(2),ed(2)
@@ -2622,47 +2633,41 @@
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
         dv = div(i,j,k) * rc
-        flop = flop + 1.0
         
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then ! u_w
           a1 = a1 + dv - u_ref
-          m = m+1
         endif
         
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then ! u_e
           a1 = a1 - dv - u_ref
-          m = m+1
         endif
         
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
           a1 = a1 + dv - v_ref
-          m = m+1
         endif
         
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
           a1 = a1 - dv - v_ref
-          m = m+1
         endif
         
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
           a1 = a1 + dv - w_ref
-          m = m+1
         endif
         
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
           a1 = a1 - dv - w_ref
-          m = m+1
         endif
 
         div(i,j,k) = 0.0 ! 対象セルは発散をゼロにする
+        m = m + 1.0
       end if
     end do
     end do
     end do
 
     av(1) = a1
-    av(2) = real(m)
-    flop = flop + real(m)*2.0
+    av(2) = m
+    flop = flop + m*13.0
 
     call SklIsParallel(iret)
     if ( iret == 1 ) then
@@ -2689,7 +2694,7 @@
 !! @param bv BCindex V
 !! @param odr 速度境界条件のエントリ
 !! @param vec 指定する速度ベクトル
-!! @param[out] flop flop count
+!! @param[out] flop flop count 近似
 !<
     subroutine cbc_div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none
@@ -2698,7 +2703,7 @@
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref, m
     real, dimension(3)                                          ::  vec
     real, dimension(0:3)                                        ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
@@ -2709,6 +2714,8 @@
     v_bc_ref = vec(2) + v00(2)
     w_bc_ref = vec(3) + v00(3)
     
+    m = 0.0
+
     do k=st(3),ed(3)
     do j=st(2),ed(2)
     do i=st(1),ed(1)
@@ -2735,7 +2742,7 @@
     end do
     end do
     
-    flop = flop + real(ed(1)-st(1)+1)*(ed(2)-st(2)+1)*(ed(3)-st(3)+1)*7.0 + 3.0
+    flop = flop + m*7.0 + 3.0
 
     return
     end subroutine cbc_div_ibc_drchlt
@@ -2769,6 +2776,7 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+
     rix = real(jx)*real(kx)
     rjx = real(ix)*real(kx)
     rkx = real(ix)*real(jx)
@@ -2890,7 +2898,7 @@
     real                                                        ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
     real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                        ::  u_ref, v_ref, w_ref, rix, rjx, rkx
+    real                                                        ::  u_ref, v_ref, w_ref, m
     real, dimension(0:3)                                        ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
@@ -2899,14 +2907,13 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
     
     ! 参照速度
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
+
+    m = 0.0
 
     FACES : select case (face)
     case (X_minus)
@@ -2922,11 +2929,12 @@
           Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
           Uw_t = Uw - v_out*(Ue-Uw)
           div(i,j,k) = div(i,j,k) - Uw_t * coef
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*51.0 ! 42 + 9
+      flop = flop + m*51.0 ! 42 + 9
       
     case (X_plus)
       if ( v_out<0.0 ) v_out=0.0
@@ -2941,11 +2949,12 @@
           Ue = Uw - (Vn - Vs + Wt - Wb)
           Ue_t = Ue - v_out*(Ue-Uw)
           div(i,j,k) = div(i,j,k) + Ue_t * coef
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rix*51.0
+      flop = flop + m*51.0
 
     case (Y_minus)
       if ( v_out>0.0 ) v_out=0.0
@@ -2960,11 +2969,12 @@
           Vs = Vn + (Ue - Uw + Wt - Wb)
           Vs_t = Vs - v_out*(Vn-Vs)
           div(i,j,k) = div(i,j,k) - Vs_t * coef
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*51.0
+      flop = flop + m*51.0
       
     case (Y_plus)
       if ( v_out<0.0 ) v_out=0.0
@@ -2979,11 +2989,12 @@
           Vn = Vs - (Ue - Uw + Wt - Wb)
           Vn_t = Vn - v_out*(Vn-Vs)
           div(i,j,k) = div(i,j,k) + Vn_t * coef
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rjx*51.0
+      flop = flop + m*51.0
     
     case (Z_minus)
       if ( v_out>0.0 ) v_out=0.0
@@ -2998,11 +3009,12 @@
           Wb = Wt + (Ue - Uw + Vn - Vs)
           Wb_t = Wb - v_out*(Wt-Wb)
           div(i,j,k) = div(i,j,k) - Wb_t * coef
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*51.0
+      flop = flop + m*51.0
       
     case (Z_plus)
       if ( v_out<0.0 ) v_out=0.0
@@ -3017,11 +3029,12 @@
           Wt = Wb - (Ue - Uw + Vn - Vs)
           Wt_t = Wt - v_out*(Wt-Wb)
           div(i,j,k) = div(i,j,k) + Wt_t * coef
+          m = m + 1.0
         endif
       end do
       end do
       
-      flop = flop + rkx*51.0
+      flop = flop + m*51.0
     
     case default
     end select FACES
@@ -3040,7 +3053,7 @@
 !! @param coef 係数
 !! @param bv BCindex V
 !! @param[out] aa 領域境界の積算値
-!! @param[out] flop flop count
+!! @param[out] flop flop count 近似
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !!       div(u)=0から，内部流出境界のセルで計算されたdivが流出速度となる
 !<
@@ -3068,8 +3081,8 @@
     a3 =-1.0e6 ! max
     
     rc = 1.0/coef
-    flop = flop + 8.0
-    !flop = flop + 13.0 ! DP
+
+    flop = flop + 8.0 ! DP 13 flop
     
     ! 参照速度
     u_ref = v00(1)
