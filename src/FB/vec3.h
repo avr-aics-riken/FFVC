@@ -130,14 +130,14 @@ public:
   
   /**
    @fn Vec3<T> operator*(T s) const
-   @brief multiply scalar: Vec3.x -= s
+   @brief multiply scalar: Vec3.x *= s
    */
 	Vec3<T> operator*(T s) const {
 		return Vec3<T>(x*s, y*s, z*s);
 	}
   
   /**
-   @fn Vec3<T> operator*(T s) const
+   @fn Vec3<T> operator/(T s) const
    @brief divided by scalar: Vec3.x /= s
    */
 	Vec3<T> operator/(T s) const {

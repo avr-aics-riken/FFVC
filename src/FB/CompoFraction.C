@@ -11,12 +11,209 @@
 
 #include "CompoFraction.h"
 
+//@fn void CompoFraction::subdivision(int st[], int ed[], float* vf)
+//@brief 体積率が(0,1)の間のセルに対してサブディビジョンを実施
+//@param st 開始インデクス
+//@param ed 終了インデクス
+//@param vf フラクション
+void CompoFraction::subdivision(int st[], int ed[], float* vf)
+{
+  Vec3f base;
+  Vec3f p;
+  unsigned m;
+  float c, r, h, ff;
+  int ix, jx, kx, gc, dv;
+  
+  // for optimization > variables defined outside
+  ix = (int)size[0];
+  jx = (int)size[1];
+  kx = (int)size[2];
+  gc = (int)guide;
+  dv = division;
+  h  = pch.x/(float)dv;
+  ff = 1.0/(float)(dv*dv);
+  
+  for (int k=st[2]; k<ed[2]; k++) {
+    for (int j=st[1]; j<ed[1]; j++) {
+      for (int i=st[0]; i<ed[0]; i++) {
+        m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+        r = vf[m];
+        
+        if ( (r>0.0) && (r<1.0) ) {
+          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base = org +  base * pch;
+          
+          if ( smode == RECT ) {
+            c = 0.0;
+            for (int k1=0; k1<dv; k1++) {
+              p.z = base.z + ((float)k1+0.5)*h;
+              
+              for (int j1=0; j1<dv; j1++) {
+                p.y = base.y + ((float)j1+0.5)*h;
+                
+                for (int i1=0; i1<dv; i1++) {
+                  p.x = base.x + ((float)i1+0.5)*h;
+                  
+                  c += judge_rect(p);
+                }
+              }
+            } // k1
+            vf[m] = c*ff; // 1/(dv*dv)
+          }
+          else { // Cylinder
+            c = 0.0;
+            for (int k1=0; k1<dv; k1++) {
+              p.z = base.z + ((float)k1+0.5)*h;
+              
+              for (int j1=0; j1<dv; j1++) {
+                p.y = base.y + ((float)j1+0.5)*h;
+                
+                for (int i1=0; i1<dv; i1++) {
+                  p.x = base.x + ((float)i1+0.5)*h;
+                  
+                  c += judge_cylinder(p);
+                }
+              }
+            } // k1
+            vf[m] = c*ff; // 1/(dv*dv)
+          }
+        } // if sub-divide
+        
+      }
+    }
+  } // k
+}
 
-//@fn Vec3f CompoFraction::get_alpha_beta(const Vec3f w)
-//@brief 単位ベクトルwがz軸の単位ベクトルと作る角度を返す
-//@param w z軸にあわせるベクトル
-//@ret 回転角度
-Vec3f CompoFraction::get_alpha_beta(const Vec3f& w)
+//@fn float CompoFraction::judge_cylinder(Vec3f p)
+//@brief 円筒形状の内外判定
+//@param p テスト点座標
+//@ret 内部のときに1.0を返す
+float CompoFraction::judge_cylinder(Vec3f p)
+{
+  Vec3f q = transform(angle, p);
+  
+  if (q.z > depth) return 0.0;
+  float r = sqrtf(q.x*q.x + q.y*q.y);
+  
+  return (r<=radius) ? 1.0 : 0.0;
+}
+
+//@fn float CompoFraction::judge_rect(Vec3f p)
+//@brief 矩形形状の内外判定
+//@param p テスト点座標
+//@ret 内部のときに1.0を返す
+float CompoFraction::judge_rect(Vec3f p)
+{
+  Vec3f q = transform(angle, p);
+  
+  if (q.z > depth) return 0.0;
+  if (q.x > fabs(0.5*width)) return 0.0;
+  if (q.y > fabs(0.5*height)) return 0.0;
+  
+  return 1.0;
+}
+
+//@fn void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
+//@brief セルの8頂点の内外判定を行い，0, 1, otherに分類
+//@param st 開始インデクス
+//@param en 終了インデクス
+//@param vf フラクション
+void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
+{
+  Vec3f base, o;
+  Vec3f p[8];
+  unsigned m;
+  float c, h;
+  int ix, jx, kx, gc;
+  
+  // for optimization > variables defined outside
+  ix = (int)size[0];
+  jx = (int)size[1];
+  kx = (int)size[2];
+  gc = (int)guide;
+  o = org;
+  h = pch.x;
+  
+  if ( smode == RECT ) {
+    // Rect cylinder
+    for (int k=st[2]; k<ed[2]; k++) {
+      for (int j=st[1]; j<ed[1]; j++) {
+        for (int i=st[0]; i<ed[0]; i++) {
+          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base = o +    base * h;
+          p[0] =        base;     // (0,0,0) 
+          p[1] = shift1(base, h); // (1,0,0)
+          p[2] = shift2(base, h); // (0,1,0)
+          p[3] = shift3(base, h); // (1,1,0)
+          p[4] = shift4(base, h); // (0,0,1)
+          p[5] = shift5(base, h); // (1,0,1)
+          p[6] = shift6(base, h); // (0,1,1)
+          p[7] = shift7(base, h); // (1,1,1)
+          
+          c = 0.0;
+          for (int l=0; l<8; l++) {
+            c += judge_rect(p[l]);
+          }
+          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+          vf[m] = c*0.125; // 1/8
+        }
+      }
+    }
+    
+  }
+  else {
+    // Circular cylinder
+    for (int k=st[2]; k<ed[2]; k++) {
+      for (int j=st[1]; j<ed[1]; j++) {
+        for (int i=st[0]; i<ed[0]; i++) {
+          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base = o +    base * h;
+          p[0] =        base;     // (0,0,0) 
+          p[1] = shift1(base, h); // (1,0,0)
+          p[2] = shift2(base, h); // (0,1,0)
+          p[3] = shift3(base, h); // (1,1,0)
+          p[4] = shift4(base, h); // (0,0,1)
+          p[5] = shift5(base, h); // (1,0,1)
+          p[6] = shift6(base, h); // (0,1,1)
+          p[7] = shift7(base, h); // (1,1,1)
+          
+          c = 0.0;
+          for (int l=0; l<8; l++) {
+            c += judge_cylinder(p[l]);
+          }
+          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+          vf[m] = c*0.125; // 1/8
+        }
+      }
+    }
+    
+  }
+}
+
+//@fn void CompoFraction::get_angle(void)
+//@brief 回転角度を計算する
+void CompoFraction::get_angle(void)
+{
+  getAlphaBeta();
+  
+  // 矩形の場合
+  if ( smode == RECT ) getGamma();
+}
+
+//@fn void CompoFraction::getGamma(void)
+//@brief 単位ベクトルdirが回転した後，x軸の単位ベクトルと作る角度を返す
+void CompoFraction::getGamma(void) 
+{
+  Vec3f x(1.0, 0.0, 0.0);
+  
+  // dirの回転
+  Vec3f p = transform(angle, dir);
+  angle.z = acos( dot(x, p)/p.length() );
+}
+
+//@fn void CompoFraction::getAlphaBeta(void)
+//@brief 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
+void CompoFraction::getAlphaBeta(void)
 {
   float alpha, beta, c;
   Vec3f p;
@@ -24,60 +221,37 @@ Vec3f CompoFraction::get_alpha_beta(const Vec3f& w)
   
   // yz面への射影
   p.x = 0.0;
-  p.y = w.y;
-  p.z = w.z;
+  p.y = nv.y;
+  p.z = nv.z;
   
   c = p.length();
-  beta  = acos( vec3f_dot(&w, &p)/c );
-  alpha = acos( vec3f_dot(&z, &p)/c );
+  beta  = acos( dot(nv, p)/c );
+  alpha = acos( dot(z,  p)/c );
   
-  return Vec3f(alpha, beta, 0.0);
+  angle.assign(alpha, beta, 0.0);
 }
 
-//@fn float CompoFraction::get_gamma(const Vec3f u, const Vec3f angle)
-//@brief 単位ベクトルuが回転した後，x軸の単位ベクトルと作る角度を返す
-//@param u 方向ベクトル
-//@param angle 回転角度
-//@ret 回転角度
-float CompoFraction::get_gamma(const Vec3f& u, const Vec3f& angle)
-{
-  float gamma;
-  Vec3f p;
-  Vec3f x(1.0, 0.0, 0.0);
-  
-  // uの射影
-  p = transform(angle, u);
-  
-  gamma = acos( vec3f_dot(&x, &p)/p.length() );
-  
-  return gamma;
-}
-
-//@fn Vec3f CompoFraction::transform(const Vec3f angle, const Vec3f u)
-//@brief 角度angle(alpha, beta, 0.0)でベクトルuを回転する
-//@param angle 回転角度
+//@fn Vec3f CompoFraction::transform(const Vec3f p, const Vec3f u)
+//@brief 角度p(alpha, beta, 0.0)でベクトルuを回転する
+//@param p 回転角度
 //@param u 方向ベクトル
 //@ret 角度
-Vec3f CompoFraction::transform(const Vec3f angle, const Vec3f u)
+Vec3f CompoFraction::transform(const Vec3f p, const Vec3f u)
 {
-  Vec3f a, b, c, *p;
+  Vec3f a, b, c;
   
-  p = &angle;
-  
+  // line vector expression
   a.x =  cos(p.y)*cos(p.z);
-  a.y =  cos(p.y)*sin(p.z);
-  a.z = -sin(p.y);
+  a.y =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
+  a.z =  sin(p.x)*sin(p.z) + cos(p.x)*sin(p.y)*cos(p.z);
   
-  b.x = sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
-  b.y = sin(p.x)*sin(p.y)*sin(p.z) - cos(p.x)*cos(p.z);
-  b.z = sin(p.x)*cos(p.y);
+  b.x =  cos(p.y)*sin(p.z);
+  b.y =  sin(p.x)*sin(p.y)*sin(p.z) - cos(p.x)*cos(p.z);
+  b.z = -sin(p.x)*cos(p.z) + cos(p.x)*sin(p.y)*sin(p.z);
   
-  c.x =  sin(p.x)*sin(p.z) + cos(p.x)*sin(p.y)*cos(p.z);
-  c.y = -sin(p.x)*cos(p.z) + cos(p.x)*sin(p.y)*sin(p.z);
+  c.x = -sin(p.y);
+  c.y =  sin(p.x)*cos(p.y);
   c.z =  cos(p.x)*cos(p.y);
   
-  return Vec3f(
-  a.x * u.x + b.x * u.y + c.x * u.z, 
-  a.y * u.x + b.y * u.y + c.y * u.z, 
-  a.z * u.x + b.z * u.y + c.z * u.z);
+  return Vec3f( dot(a, u), dot(b, u), dot(c, u) );
 }

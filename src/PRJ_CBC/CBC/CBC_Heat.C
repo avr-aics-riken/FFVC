@@ -72,7 +72,7 @@ void SklSolverCBC::Buoyancy(SKL_REAL* v, SKL_REAL dgr, SKL_REAL* t, unsigned* bd
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
         m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        l = SklUtil::getFindexV3D(size, guide, i  , j  , k  , 2); // k方向が重力方向
+        l = SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  ); // k方向が重力方向
         v[l] += dgr*t[m]* GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の計算なので，状態を参照
       }
     }
