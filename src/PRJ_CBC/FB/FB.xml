@@ -10,6 +10,8 @@
     <Param name="fname" dtype="STRING" value="../../FB/BndOuter.h"/>
     <Param name="fname" dtype="STRING" value="../../FB/Component.C"/>
     <Param name="fname" dtype="STRING" value="../../FB/Component.h"/>
+    <Param name="fname" dtype="STRING" value="../../FB/CompoFractiopn.C"/>
+    <Param name="fname" dtype="STRING" value="../../FB/CompoFractiopn.h"/>
     <Param name="fname" dtype="STRING" value="../../FB/Control.C"/>
     <Param name="fname" dtype="STRING" value="../../FB/Control.h"/>
     <Param name="fname" dtype="STRING" value="../../FB/Control_Rect.C"/>

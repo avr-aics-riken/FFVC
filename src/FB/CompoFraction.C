@@ -11,6 +11,20 @@
 
 #include "CompoFraction.h"
 
+//@fn void CompoFraction::get_fraction(int st[], int ed[], float* vf)
+//@brief コンポーネントの体積率を計算
+//@param st 開始インデクス
+//@param ed 終了インデクス
+//@param vf フラクション
+void CompoFraction::get_fraction(int st[], int ed[], float* vf)
+{
+  get_angle();
+  
+  vertex8(st, ed, vf);
+  
+  subdivision(st, ed, vf);
+}
+
 //@fn void CompoFraction::subdivision(int st[], int ed[], float* vf)
 //@brief 体積率が(0,1)の間のセルに対してサブディビジョンを実施
 //@param st 開始インデクス
@@ -113,12 +127,12 @@ float CompoFraction::judge_rect(Vec3f p)
   return 1.0;
 }
 
-//@fn void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
+//@fn void CompoFraction::vertex8(int st[], int ed[], float* vf)
 //@brief セルの8頂点の内外判定を行い，0, 1, otherに分類
 //@param st 開始インデクス
 //@param en 終了インデクス
 //@param vf フラクション
-void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
+void CompoFraction::vertex8(int st[], int ed[], float* vf)
 {
   Vec3f base, o;
   Vec3f p[8];
@@ -142,13 +156,13 @@ void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           base = o +    base * h;
           p[0] =        base;     // (0,0,0) 
-          p[1] = shift1(base, h); // (1,0,0)
-          p[2] = shift2(base, h); // (0,1,0)
-          p[3] = shift3(base, h); // (1,1,0)
-          p[4] = shift4(base, h); // (0,0,1)
-          p[5] = shift5(base, h); // (1,0,1)
-          p[6] = shift6(base, h); // (0,1,1)
-          p[7] = shift7(base, h); // (1,1,1)
+          p[1] = shift_f1(base, h); // (1,0,0)
+          p[2] = shift_f2(base, h); // (0,1,0)
+          p[3] = shift_f3(base, h); // (1,1,0)
+          p[4] = shift_f4(base, h); // (0,0,1)
+          p[5] = shift_f5(base, h); // (1,0,1)
+          p[6] = shift_f6(base, h); // (0,1,1)
+          p[7] = shift_f7(base, h); // (1,1,1)
           
           c = 0.0;
           for (int l=0; l<8; l++) {
@@ -169,13 +183,13 @@ void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           base = o +    base * h;
           p[0] =        base;     // (0,0,0) 
-          p[1] = shift1(base, h); // (1,0,0)
-          p[2] = shift2(base, h); // (0,1,0)
-          p[3] = shift3(base, h); // (1,1,0)
-          p[4] = shift4(base, h); // (0,0,1)
-          p[5] = shift5(base, h); // (1,0,1)
-          p[6] = shift6(base, h); // (0,1,1)
-          p[7] = shift7(base, h); // (1,1,1)
+          p[1] = shift_f1(base, h); // (1,0,0)
+          p[2] = shift_f2(base, h); // (0,1,0)
+          p[3] = shift_f3(base, h); // (1,1,0)
+          p[4] = shift_f4(base, h); // (0,0,1)
+          p[5] = shift_f5(base, h); // (1,0,1)
+          p[6] = shift_f6(base, h); // (0,1,1)
+          p[7] = shift_f7(base, h); // (1,1,1)
           
           c = 0.0;
           for (int l=0; l<8; l++) {
@@ -194,31 +208,12 @@ void CompoFraction::vertex8_fraction(int st[], int ed[], float* vf)
 //@brief 回転角度を計算する
 void CompoFraction::get_angle(void)
 {
-  getAlphaBeta();
-  
-  // 矩形の場合
-  if ( smode == RECT ) getGamma();
-}
-
-//@fn void CompoFraction::getGamma(void)
-//@brief 単位ベクトルdirが回転した後，x軸の単位ベクトルと作る角度を返す
-void CompoFraction::getGamma(void) 
-{
-  Vec3f x(1.0, 0.0, 0.0);
-  
-  // dirの回転
-  Vec3f p = transform(angle, dir);
-  angle.z = acos( dot(x, p)/p.length() );
-}
-
-//@fn void CompoFraction::getAlphaBeta(void)
-//@brief 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
-void CompoFraction::getAlphaBeta(void)
-{
   float alpha, beta, c;
   Vec3f p;
+  Vec3f x(1.0, 0.0, 0.0);
   Vec3f z(0.0, 0.0, 1.0);
   
+  // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
   // yz面への射影
   p.x = 0.0;
   p.y = nv.y;
@@ -229,6 +224,13 @@ void CompoFraction::getAlphaBeta(void)
   alpha = acos( dot(z,  p)/c );
   
   angle.assign(alpha, beta, 0.0);
+  
+  // 矩形の場合，　単位ベクトルdirが回転した後，x軸の単位ベクトルと作る角度を返す
+  if ( smode == RECT ) {
+
+    Vec3f p = transform(angle, dir); // dirの回転
+    angle.z = acos( dot(x, p)/p.length() );
+  }
 }
 
 //@fn Vec3f CompoFraction::transform(const Vec3f p, const Vec3f u)

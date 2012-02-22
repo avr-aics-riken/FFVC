@@ -674,7 +674,7 @@ void SklSolverCBC::AverageOutput (unsigned mode, SKL_REAL& flop)
       F.cnv_V_ND2D(dc_wvex, dc_av, &v00[1], C.RefVelocity, flop, stepAvr);
     }
     else {
-      if( !FBUtility::shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) assert(0);
+      if( !F.shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) assert(0);
     }
     if( !WriteFile(m_outAvrUVW, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
@@ -759,7 +759,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
       F.cnv_V_ND2D(dc_wvex, dc_v, &v00[1], C.RefVelocity, flop);
     }
     else {
-      if( !FBUtility::shiftVout3D(dc_wvex, dc_v, &v00[1]) ) assert(0);
+      if( !F.shiftVout3D(dc_wvex, dc_v, &v00[1]) ) assert(0);
     }
     if( !WriteFile(m_outUVW, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
@@ -826,7 +826,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
         F.cnv_V_ND2D(dc_wvex, dc_wv, vz, RefVL, flop);
       }
       else {
-        if( !FBUtility::shiftVout3D(dc_wvex, dc_wv, vz) ) assert(0);
+        if( !F.shiftVout3D(dc_wvex, dc_wv, vz) ) assert(0);
       }
       if( !WriteFile(m_outVrt, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");

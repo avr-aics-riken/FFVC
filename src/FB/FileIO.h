@@ -90,5 +90,47 @@ public:
                           SklScalar3D<int>* dc_mid, bool vf_mode=false, SklScalar3D<SKL_REAL>* dc_ws=NULL);
   void writeRawSPH       (const SKL_REAL *vf, const unsigned* size, const unsigned gc, const SKL_REAL* org, const SKL_REAL* ddx, 
                           const unsigned m_ModePrecision);
+  
+  bool shiftVin3D  (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  bool shiftVout3D (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  
+  /**
+   @fn inline void CalcIndex(cosnt unsigned dst_ilen, const unsigned dst_jlen, const unsigned dst_klen, cosnt unsigned dst_gc, const unsigned src_gc, 
+   unsigned& dst_ix, unsigned& dst_jx, unsigned& dst_kx, int& diff, unsigned& sta)
+   @brief calculation of index, this method is taken from SklUtil class
+   @param dst_ilen dimension size /w guide cell for dst
+   @param dst_jlen 
+   @param dst_klen 
+   @param dst_gc size of guide cell
+   @param src_gc 
+   @param dst_ix return value
+   @param dst_jx 
+   @param dst_kx 
+   @param diff 
+   @param sta 
+   */
+  inline void CalcIndex(const unsigned dst_ilen,
+                               const unsigned dst_jlen,
+                               const unsigned dst_klen,
+                               const unsigned dst_gc,
+                               const unsigned src_gc,
+                               unsigned& dst_ix,
+                               unsigned& dst_jx,
+                               unsigned& dst_kx,
+                               int& diff,
+                               unsigned& sta) {
+    diff = src_gc - dst_gc;
+    if( src_gc >= dst_gc ){
+      sta = 0;
+      dst_ix = dst_ilen; dst_jx = dst_jlen; dst_kx = dst_klen;
+    }
+    else {
+      sta = abs(diff);
+      dst_ix = dst_ilen+diff; 
+      dst_jx = dst_jlen+diff; 
+      dst_kx = dst_klen+diff;
+    }
+  }
+  
 };
 #endif // _SKL_FB_FILE_IO_H_

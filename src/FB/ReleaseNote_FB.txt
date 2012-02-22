@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.4.9  22 Feb. 2012
+  - コンポーネントの体積率を求めるCompoFractionクラスを導入
+
 Ver 2.4.8  15 Feb. 2012
   - SklVector3D >> SklVector3DExへ変更 >> Core_Util.C, FB_util.f90, FileIO.C, Smapling.h
   - SklUtil::avrS3D, avrV3Dの代替関数fb_average_s/v
