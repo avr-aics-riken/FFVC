@@ -16,9 +16,9 @@
 
 #include <math.h>
 
+#include "FBDefine.h"
 #include "Skl.h"
 #include "SklSolverBase.h"
-#include "FBDefine.h"
 #include "mydebug.h"
 #include "config/SklSolverConfig.h"
 #include "SklUtil.h"

@@ -14,8 +14,6 @@
 
 #include <string>
 
-#include "Skl.h"
-#include "SklSolverBase.h"
 #include "FBDefine.h"
 #include "mydebug.h"
 

@@ -12,9 +12,9 @@
 //@brief FlowBase DTcntl class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Skl.h"
+#include <string>
+
 #include "FBDefine.h"
-#include "string.h"
 #include "stdio.h"
 
 class DTcntl {//: public Parallel_Node {

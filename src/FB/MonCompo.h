@@ -14,10 +14,8 @@
 
 #include <string>
 
-#include "Skl.h"
-#include "SklSolverBase.h"
-#include "SklUtil.h"
 #include "FBDefine.h"
+#include "SklUtil.h"
 #include "mydebug.h"
 #include "vec3.h"
 #include "Parallel_node.h"

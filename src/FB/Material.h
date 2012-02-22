@@ -12,9 +12,8 @@
 //@brief FlowBase Material class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include <string.h>
+#include <string>
 
-#include "Skl.h"
 #include "FBDefine.h"
 #include "mydebug.h"
 

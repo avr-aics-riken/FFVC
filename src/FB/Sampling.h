@@ -13,9 +13,7 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include "FBDefine.h"
-#include "Skl.h"
-#include "SklSolverBase.h"
-#include "SklUtil.h"
+#include "FBUtility.h"
 #include "vec3.h"
 #include "basic_func.h"
 
@@ -188,7 +186,7 @@ protected:
   ///    @param[in] index セルインデックス
   ///
   bool isFluid(Vec3i index) {
-    return IS_FLUID(bcd[SklUtil::getFindexS3D(size, guide, index.x, index.y, index.z)]);
+    return IS_FLUID(bcd[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)]);
   }
 
   /// セルでのスカラー値を取得.
@@ -198,7 +196,7 @@ protected:
   ///    @return セルでのスカラー値
   ///
   REAL_TYPE getScalar(const REAL_TYPE* s, Vec3i index) {
-    return s[SklUtil::getFindexS3D(size, guide, index.x, index.y, index.z)];
+    return s[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)];
   }
 
   /// セルでのベクトル値を取得.
@@ -209,9 +207,9 @@ protected:
   ///
   Vec3r getVector(const REAL_TYPE* v, Vec3i index) {
     Vec3r vRet;
-    vRet.x = v[SklUtil::getFindexV3DEx(size, guide, index.x, index.y, index.z, 0)];
-    vRet.y = v[SklUtil::getFindexV3DEx(size, guide, index.x, index.y, index.z, 1)];
-    vRet.z = v[SklUtil::getFindexV3DEx(size, guide, index.x, index.y, index.z, 2)];
+    vRet.x = v[FBUtility::getFindexV3DEx(size, guide, index.x, index.y, index.z, 0)];
+    vRet.y = v[FBUtility::getFindexV3DEx(size, guide, index.x, index.y, index.z, 1)];
+    vRet.z = v[FBUtility::getFindexV3DEx(size, guide, index.x, index.y, index.z, 2)];
     return vRet;
   }
 

@@ -394,14 +394,14 @@ Vec3r InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
   i = base_s.x;
   j = base.y;
   k = base.z;
-  r[0] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  ) ];
-  r[1] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i+1, j  , k  ) ];
-  r[2] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i  , j+1, k  ) ];
-  r[3] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i+1, j+1, k  ) ];
-  r[4] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k+1) ];
-  r[5] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i+1, j  , k+1) ];
-  r[6] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i  , j+1, k+1) ];
-  r[7] = v[ SklUtil::getFindexV3DEx(size, guide, 0, i+1, j+1, k+1) ];
+  r[0] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  ) ];
+  r[1] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i+1, j  , k  ) ];
+  r[2] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i  , j+1, k  ) ];
+  r[3] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i+1, j+1, k  ) ];
+  r[4] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k+1) ];
+  r[5] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i+1, j  , k+1) ];
+  r[6] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i  , j+1, k+1) ];
+  r[7] = v[ FBUtility::getFindexV3DEx(size, guide, 0, i+1, j+1, k+1) ];
   vRet.x = Trilinear(t, r);
 
   t[0] = coef[0];
@@ -410,14 +410,14 @@ Vec3r InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
   i = base.x;
   j = base_s.y;
   k = base.z;
-  r[0] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  ) ];
-  r[1] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i+1, j  , k  ) ];
-  r[2] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i  , j+1, k  ) ];
-  r[3] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i+1, j+1, k  ) ];
-  r[4] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k+1) ];
-  r[5] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i+1, j  , k+1) ];
-  r[6] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i  , j+1, k+1) ];
-  r[7] = v[ SklUtil::getFindexV3DEx(size, guide, 1, i+1, j+1, k+1) ];
+  r[0] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  ) ];
+  r[1] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i+1, j  , k  ) ];
+  r[2] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i  , j+1, k  ) ];
+  r[3] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i+1, j+1, k  ) ];
+  r[4] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k+1) ];
+  r[5] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i+1, j  , k+1) ];
+  r[6] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i  , j+1, k+1) ];
+  r[7] = v[ FBUtility::getFindexV3DEx(size, guide, 1, i+1, j+1, k+1) ];
   vRet.y = Trilinear(t, r);
 
   t[0] = coef[0];
@@ -426,14 +426,14 @@ Vec3r InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
   i = base.x;
   j = base.y;
   k = base_s.z;
-  r[0] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  ) ];
-  r[1] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i+1, j  , k  ) ];
-  r[2] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i  , j+1, k  ) ];
-  r[3] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i+1, j+1, k  ) ];
-  r[4] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k+1) ];
-  r[5] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i+1, j  , k+1) ];
-  r[6] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i  , j+1, k+1) ];
-  r[7] = v[ SklUtil::getFindexV3DEx(size, guide, 2, i+1, j+1, k+1) ];
+  r[0] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  ) ];
+  r[1] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i+1, j  , k  ) ];
+  r[2] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i  , j+1, k  ) ];
+  r[3] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i+1, j+1, k  ) ];
+  r[4] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k+1) ];
+  r[5] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i+1, j  , k+1) ];
+  r[6] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i  , j+1, k+1) ];
+  r[7] = v[ FBUtility::getFindexV3DEx(size, guide, 2, i+1, j+1, k+1) ];
   vRet.z = Trilinear(t, r);
 
   return vRet;

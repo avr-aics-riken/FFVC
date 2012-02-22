@@ -492,8 +492,7 @@ CBC_Heat.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 CBC_Heat.o: /usr/local/sphere/include/coord/SklCoord.h SklSolverCBCDefine.h
 CBC_Heat.o: FortranFuncCBC.h /usr/local/sphere/include/SklTiming.h
 CBC_Heat.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
-CBC_SetBC.o: CBC_SetBC.h FortranFuncCBC.h /usr/local/sphere/include/Skl.h
-CBC_SetBC.o: /usr/local/sphere/include/endianUtil.h SklSolverCBCDefine.h
+CBC_SetBC.o: CBC_SetBC.h FortranFuncCBC.h SklSolverCBCDefine.h
 NS_FS_E_CBC.o: SklSolverCBC.h /usr/local/sphere/include/Skl.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/endianUtil.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/SklSolverBase.h

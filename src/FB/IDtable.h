@@ -12,7 +12,6 @@
 //@brief FlowBase IDtable class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Skl.h"
 #include "FBDefine.h"
 #include "mydebug.h"
 

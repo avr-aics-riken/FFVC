@@ -12,9 +12,6 @@
 //@brief FlowBase Parallel_Node class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Skl.h"
-#include "SklSolverBase.h"
-
 typedef struct {
   int procGrp;    // プロセスグループ番号
   int ID;         // 自ノードのランク番号

@@ -12,7 +12,7 @@
 //@brief FlowBase Fortran function Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Skl.h"
+#include "FBDefine.h"
 
 #ifdef _WIN32
 // FB_util.f90

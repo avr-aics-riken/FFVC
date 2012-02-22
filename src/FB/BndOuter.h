@@ -14,7 +14,6 @@
 //@todo 平均速度のみ，1/2(min+max)は未処理
 //@note メンバ変数に追加したら，dataCopy()処理にも加えること
 
-#include "Skl.h"
 #include "FBDefine.h"
 
 class BoundaryOuter {

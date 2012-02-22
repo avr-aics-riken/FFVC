@@ -14,12 +14,14 @@
 
 #include "Skl.h"
 #include "SklSolverBase.h"
-#include "Parallel_node.h"
 #include "FBDefine.h"
+#include "Parallel_node.h"
+
 
 #include <cassert>
 #include <cstdio>
 #include <cstdarg>
+#include <string>
 
 #ifndef _WIN32
 #include <sys/time.h>

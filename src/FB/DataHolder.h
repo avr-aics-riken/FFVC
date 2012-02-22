@@ -16,6 +16,7 @@
 #include <cstdarg>
 #include "FBDefine.h"
 #include "Skl.h"
+#include "SklSolverBase.h"
 #include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
 
