@@ -12,18 +12,18 @@
 #include "CBC_SetBC.h"
 
 /**
- @fn void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<SKL_REAL>* d_t)
+ @fn void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
  @brief 初期温度を代入
  @param n エントリ
  @param bx BCindex ID
  @param d_t 
  */
-void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<SKL_REAL>* d_t)
+void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
 {
   int i,j,k;
   unsigned register m, id;
-  SKL_REAL ref;
-  SKL_REAL *t=NULL;
+  REAL_TYPE ref;
+  REAL_TYPE *t=NULL;
   
   if ( !(t = d_t->GetData()) ) assert(0);
   
@@ -118,7 +118,7 @@ void SetBC3D::checkDriver(FILE* fp)
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_Forcing(SKL_REAL* src, SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL &flop)
+ @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部によるPoisosn式のソース項の修正
  @param[out] src 外力項によるPoisson方程式のソース項
  @param v セルセンター速度ベクトル n+1
@@ -127,10 +127,10 @@ void SetBC3D::checkDriver(FILE* fp)
  @param v00
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(SKL_REAL* src, SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
-  SKL_REAL vec[3];
+  REAL_TYPE vec[3];
   
   for (unsigned n=1; n<=NoBC; n++) {
     vec[0] = cmp[n].nv[0];
@@ -159,7 +159,7 @@ void SetBC3D::mod_Psrc_Forcing(SKL_REAL* src, SKL_REAL* v, unsigned* bd, Control
 }
 
 /**
- @fn void SetBC3D::mod_Pvec_Forcing(SKL_REAL* vc, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL &flop)
+ @fn void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部による疑似速度方向の修正
  @param[in/out] vc セルセンターの疑似速度
  @param bd BCindex ID
@@ -167,10 +167,10 @@ void SetBC3D::mod_Psrc_Forcing(SKL_REAL* src, SKL_REAL* v, unsigned* bd, Control
  @param v00
  @param[out] flop
  */
-void SetBC3D::mod_Pvec_Forcing(SKL_REAL* vc, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL &flop)
+void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
-  SKL_REAL vec[3];
+  REAL_TYPE vec[3];
   
   for (unsigned n=1; n<=NoBC; n++) {
     vec[0] = cmp[n].nv[0];
@@ -199,7 +199,7 @@ void SetBC3D::mod_Pvec_Forcing(SKL_REAL* vc, unsigned* bd, Control* C, SKL_REAL*
 }
 
 /**
- @fn void SetBC3D::mod_Vcf_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt, SKL_REAL* v00, SKL_REAL &flop)
+ @fn void SetBC3D::mod_Vcf_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部によるセルフェイス速度の射影プロセスの修正
  @param[in/out] v 速度
  @param bd BCindex ID
@@ -208,10 +208,10 @@ void SetBC3D::mod_Pvec_Forcing(SKL_REAL* vc, unsigned* bd, Control* C, SKL_REAL*
  @param v00
  @param[out] flop
  */
-void SetBC3D::mod_Vcf_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt, SKL_REAL* v00, SKL_REAL &flop)
+void SetBC3D::mod_Vcf_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
-  SKL_REAL vec[3];
+  REAL_TYPE vec[3];
   
   for (unsigned n=1; n<=NoBC; n++) {
 
@@ -241,7 +241,7 @@ void SetBC3D::mod_Vcf_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt
 }
 
 /**
- @fn void SetBC3D::mod_Vcc_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt, SKL_REAL* v00, SKL_REAL &flop)
+ @fn void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部によるセルセンタ速度の射影プロセスの修正
  @param[in/out] v セルセンターの速度
  @param bd BCindex ID
@@ -251,12 +251,12 @@ void SetBC3D::mod_Vcf_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt
  @param[out] flop
  @todo 同期は外に出す
  */
-void SetBC3D::mod_Vcc_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt, SKL_REAL* v00, SKL_REAL &flop)
+void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int st[3], ed[3];
-  SKL_REAL vec[3];
-  SKL_REAL vm[2]; // モニター用
+  REAL_TYPE vec[3];
+  REAL_TYPE vm[2]; // モニター用
   
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isFORCING() ) {
@@ -285,13 +285,13 @@ void SetBC3D::mod_Vcc_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt
       }
       
       if ( para_mng->IsParallel() ) {
-        SKL_REAL c_tmp[2];
+        REAL_TYPE c_tmp[2];
         c_tmp[0] = vm[0];
         c_tmp[1] = vm[1];
         para_mng->Allreduce(c_tmp, vm, 2, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
       }
-      vm[0] /= (SKL_REAL)cmp[n].getElement();
-      vm[1] /= (SKL_REAL)cmp[n].getElement();
+      vm[0] /= (REAL_TYPE)cmp[n].getElement();
+      vm[1] /= (REAL_TYPE)cmp[n].getElement();
       cmp[n].val[var_Velocity] = vm[0]; // 平均速度
       cmp[n].val[var_Pressure] = vm[1]; // 平均圧力損失量
     }
@@ -299,15 +299,15 @@ void SetBC3D::mod_Vcc_Forcing(SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt
 }
 
 /**
- @fn void SetBC3D::OuterPBC(SklScalar3D<SKL_REAL>* d_p)
+ @fn void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
  @brief 圧力の外部境界条件
  @param d_p 圧力のデータクラス
  */
-void SetBC3D::OuterPBC(SklScalar3D<SKL_REAL>* d_p)
+void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
 {
   unsigned uod, F;
-  SKL_REAL pv=0.0;
-  SKL_REAL *p=NULL;
+  REAL_TYPE pv=0.0;
+  REAL_TYPE *p=NULL;
   
   if ( !(p = d_p->GetData()) ) assert(0);
   
@@ -349,12 +349,12 @@ void SetBC3D::OuterPBC(SklScalar3D<SKL_REAL>* d_p)
 }
 
 /**
- @fn void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_p, int face)
+ @fn void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
  @brief 圧力の外部周期境界条件（単純なコピー）
  @param d_p 圧力
  @param face 面番号
  */
-void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_p, int face)
+void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -390,7 +390,7 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_p, int face)
   else { // Serial
     int i,j,k;
     unsigned m0, m1;
-    SKL_REAL* p=NULL;
+    REAL_TYPE* p=NULL;
     if ( !(p = d_p->GetData()) ) assert(0);
     
     switch (face) {
@@ -470,21 +470,21 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_p, int face)
 }
 
 /**
- @fn void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<SKL_REAL>* d_p, int face, SKL_REAL pv, unsigned uod)
+ @fn void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_TYPE pv, unsigned uod)
  @brief 圧力の外部周期境界条件（双方向に圧力差を設定）
  @param d_p 圧力のデータクラス
  @param face 面番号
  @param pv 圧力差
  @param uod 上流面 or 下流面
  */
-void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<SKL_REAL>* d_p, int face, SKL_REAL pv, unsigned uod)
+void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_TYPE pv, unsigned uod)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned m0, m1;
   unsigned no_comm_face = 1; //通信面数
   
-  SKL_REAL pd, *p=NULL;
+  REAL_TYPE pd, *p=NULL;
   if ( !(p = d_p->GetData()) ) assert(0);
   
   // 上流面か下流面かで，圧力差の方向を逆転する
@@ -643,12 +643,12 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<SKL_REAL>* d_p, int face, SKL_RE
 }
 
 /**
- @fn void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_pt, int face)
+ @fn void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_pt, int face)
  @brief 温度の外部周期境界条件（単純なコピー）
  @param d_t 温度のデータクラス
  @param face 面番号
  */
-void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_t, int face)
+void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -684,7 +684,7 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_t, int face)
   else { // Serial
     int i,j,k;
     unsigned m0, m1;
-    SKL_REAL* t=NULL;
+    REAL_TYPE* t=NULL;
     if ( !(t = d_t->GetData()) ) assert(0);
     
     switch (face) {
@@ -764,13 +764,13 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<SKL_REAL>* d_t, int face)
 }
 
 /**
- @fn void SetBC3D::OuterVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v)
+ @fn void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
  @brief 速度の外部境界条件処理
  @param d_v 速度ベクトルのデータクラス
  */
-void SetBC3D::OuterVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v)
+void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
 {
-  SKL_REAL *v=NULL;
+  REAL_TYPE *v=NULL;
   if ( !(v = d_v->GetData()) ) assert(0);
   
   for (int face=0; face<NOFACE; face++) {
@@ -785,7 +785,7 @@ void SetBC3D::OuterVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v)
 }
 
 /**
- @fn void SetBC3D::OuterVBC(SKL_REAL* v, SKL_REAL* vc, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop)
+ @fn void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 速度の外部境界条件処理(タイムステップに一度)
  @param[out] v 速度ベクトル v^{n+1}
  @param vc 速度ベクトル v^*
@@ -796,10 +796,10 @@ void SetBC3D::OuterVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v)
  @param v00
  @param flop
  */
-void SetBC3D::OuterVBC(SKL_REAL* v, SKL_REAL* vc, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop)
+void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
 {
-  SKL_REAL vec[3];
-  SKL_REAL v_cnv;
+  REAL_TYPE vec[3];
+  REAL_TYPE v_cnv;
   
   for (int face=0; face<NOFACE; face++) {
 
@@ -834,7 +834,7 @@ void SetBC3D::OuterVBC(SKL_REAL* v, SKL_REAL* vc, unsigned* bv, SKL_REAL tm, SKL
 }
 
 /**
- @fn void SetBC3D::OuterVBC_Pseudo(SKL_REAL* vc, SKL_REAL* v0, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop)
+ @fn void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 疑似速度の外部境界条件処理
  @param[out] vc 疑似速度ベクトル v^*
  @param v0 速度ベクトル v^n
@@ -845,9 +845,9 @@ void SetBC3D::OuterVBC(SKL_REAL* v, SKL_REAL* vc, unsigned* bv, SKL_REAL tm, SKL
  @param v00
  @param flop
  */
-void SetBC3D::OuterVBC_Pseudo(SKL_REAL* vc, SKL_REAL* v0, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop)
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
 {
-  SKL_REAL v_cnv;
+  REAL_TYPE v_cnv;
   
   for (int face=0; face<NOFACE; face++) {
     
@@ -865,14 +865,14 @@ void SetBC3D::OuterVBC_Pseudo(SKL_REAL* vc, SKL_REAL* v0, unsigned* bv, SKL_REAL
 }
 
 /**
- @fn void SetBC3D::InnerVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd)
+ @fn void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
  @brief 速度ベクトルの内部周期境界条件処理
  @param d_v 速度ベクトルのデータクラス
  @param d_bd BCindex ID
  */
-void SetBC3D::InnerVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd)
+void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
 {
-  SKL_REAL *v=NULL;
+  REAL_TYPE *v=NULL;
   if ( !(v = d_v->GetData()) ) assert(0);
   
   int st[3], ed[3];
@@ -887,7 +887,7 @@ void SetBC3D::InnerVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsign
 }
 
 /**
- @fn void SetBC3D::InnerVBC(SKL_REAL* v, unsigned* bv, SklScalar3D<unsigned>* d_bd, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS)
+ @fn void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, SklScalar3D<unsigned>* d_bd, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
  @brief 速度ベクトルの内部境界条件処理(タイムステップに一度)
  @param v 速度ベクトル
  @param bv BCindex V
@@ -896,10 +896,10 @@ void SetBC3D::InnerVBC_Periodic(SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsign
  @param flop
  @param isCDS (false-CBC, true-CDS)
  */
-void SetBC3D::InnerVBC(SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS)
+void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
 {
   int st[3], ed[3];
-  SKL_REAL vec[3];
+  REAL_TYPE vec[3];
   
   if ( !isCDS ) { // Binary
     for (int n=1; n<=NoBC; n++) {
@@ -929,17 +929,17 @@ void SetBC3D::InnerVBC(SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, SK
 }
 
 /**
- @fn void SetBC3D::OuterTBC(SklScalar3D<SKL_REAL>* d_t)
+ @fn void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
  @brief 温度の外部境界条件処理の分岐
  @param d_t 温度のデータクラス
  @note 
     - 対流フェイズに関する境界条件はps_Convection_BC()，本メソッドは周期境界と拡散フェイズに関するもの
     - OBC_SYMMETRICは，断熱マスクで処理するため，不要
  */
-void SetBC3D::OuterTBC(SklScalar3D<SKL_REAL>* d_t)
+void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
 {
   unsigned F=0;
-  SKL_REAL *t=NULL;
+  REAL_TYPE *t=NULL;
   
   if ( !(t = d_t->GetData()) ) assert(0);
   
@@ -967,7 +967,7 @@ void SetBC3D::OuterTBC(SklScalar3D<SKL_REAL>* d_t)
 }
 
 /**
- @fn SKL_REAL SetBC3D::setDirectForcing(SKL_REAL* v, unsigned* bx, unsigned n, SKL_REAL v00)
+ @fn REAL_TYPE SetBC3D::setDirectForcing(REAL_TYPE* v, unsigned* bx, unsigned n, REAL_TYPE v00)
  @brief 内部領域の速度のディリクレ境界をセットする
  @param v 速度ベクトル
  @param bx BCindex
@@ -977,11 +977,11 @@ void SetBC3D::OuterTBC(SklScalar3D<SKL_REAL>* d_t)
  @note
     - 内部境界はセル面直を仮定
  
-SKL_REAL SetBC3D::setDirectForcing(SKL_REAL* v, unsigned* bx, unsigned n, SKL_REAL v00)
+REAL_TYPE SetBC3D::setDirectForcing(REAL_TYPE* v, unsigned* bx, unsigned n, REAL_TYPE v00)
 {
   int i,j,k;
   unsigned s;
-  SKL_REAL vel, vec[3];
+  REAL_TYPE vel, vec[3];
   
   vel   = FBUtility::convD2ND_V(cmp[n].D1.Velocity, RefV)  * v00;
   vec[0]= cmp[n].nv[0]*vel;
@@ -1011,7 +1011,7 @@ SKL_REAL SetBC3D::setDirectForcing(SKL_REAL* v, unsigned* bx, unsigned n, SKL_RE
 }*/
 
 /**
- @fn void SetBC3D::InnerTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn void SetBC3D::InnerTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 拡散部分に関する温度の内部境界処理
  @param qbc 境界条件熱流束
  @param bh1 BCindex H1
@@ -1020,7 +1020,7 @@ SKL_REAL SetBC3D::setDirectForcing(SKL_REAL* v, unsigned* bx, unsigned n, SKL_RE
  @param flop 浮動小数演算数
  @note 内部境界の断熱BCは断熱マスクで処理
  */
-void SetBC3D::InnerTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+void SetBC3D::InnerTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   unsigned F, H;
   
@@ -1053,7 +1053,7 @@ void SetBC3D::InnerTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* 
 }
 
 /**
- @fn void SetBC3D::OuterTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* t0, Control* C, SKL_REAL& flop)
+ @fn void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop)
  @brief 拡散部分に関する温度の外部部境界処理（固体壁の場合）
  @param qbc 境界条件熱流束
  @param bh1 BCindex H1
@@ -1062,7 +1062,7 @@ void SetBC3D::InnerTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* 
  @param flop 浮動小数演算数
  @note 断熱BCは断熱マスクで処理
  */
-void SetBC3D::OuterTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* t0, Control* C, SKL_REAL& flop)
+void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop)
 {
   unsigned H;
   
@@ -1094,14 +1094,14 @@ void SetBC3D::OuterTBCface(SKL_REAL* qbc, unsigned* bh1, SKL_REAL* t, SKL_REAL* 
 }
 
 /**
- @fn void SetBC3D::InnerTBCvol(SKL_REAL* t, unsigned* bh2, SKL_REAL dt, SKL_REAL& flop)
+ @fn void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
  @brief セルに対する温度の内部境界をセットする
  @param t 温度
  @param bh2 BCindex H2
  @param dt 時間積分幅
  @param flop 浮動小数演算数
  */
-void SetBC3D::InnerTBCvol(SKL_REAL* t, unsigned* bh2, SKL_REAL dt, SKL_REAL& flop)
+void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
 {
   for (unsigned n=1; n<=NoBC; n++) {
 
@@ -1118,7 +1118,7 @@ void SetBC3D::InnerTBCvol(SKL_REAL* t, unsigned* bh2, SKL_REAL dt, SKL_REAL& flo
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_HeatGen_SM(SKL_REAL* t, unsigned* bh2, int n, SKL_REAL dt, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* t, unsigned* bh2, int n, REAL_TYPE dt, REAL_TYPE& flop)
  @brief 発熱境界条件
  @param t 温度場
  @param bh2 BCindex H2
@@ -1128,11 +1128,11 @@ void SetBC3D::InnerTBCvol(SKL_REAL* t, unsigned* bh2, SKL_REAL dt, SKL_REAL& flo
  @note
     - 発熱密度はControl::setParameters()で計算 D2に発熱密度が保存されている
  */
-SKL_REAL SetBC3D::ps_IBC_HeatGen_SM(SKL_REAL* t, unsigned* bh2, int n, SKL_REAL dt, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* t, unsigned* bh2, int n, REAL_TYPE dt, REAL_TYPE& flop)
 {
   int i,j,k;
   unsigned register s, m, c=0;
-  SKL_REAL hs;
+  REAL_TYPE hs;
   int st[3], ed[3];
 
   //odr= cmp[n].getMatOdr();
@@ -1152,23 +1152,23 @@ SKL_REAL SetBC3D::ps_IBC_HeatGen_SM(SKL_REAL* t, unsigned* bh2, int n, SKL_REAL 
       }
     }
   }
-  flop += (SKL_REAL)c*2.0;
+  flop += (REAL_TYPE)c*2.0;
   
   return (c*hs); // 無次元の総発熱量(単位体積あたり)
 }
 
 /**
- @fn void SetBC3D::ps_IBC_ConstTemp(SKL_REAL* t, unsigned* bh2, int n)
+ @fn void SetBC3D::ps_IBC_ConstTemp(REAL_TYPE* t, unsigned* bh2, int n)
  @brief 温度一定の境界条件
  @param t 温度場
  @param bh2 BCindex H2
  @param n 境界条件コンポーネントのエントリ番号
  */
-void SetBC3D::ps_IBC_ConstTemp(SKL_REAL* t, unsigned* bh2, int n)
+void SetBC3D::ps_IBC_ConstTemp(REAL_TYPE* t, unsigned* bh2, int n)
 {
   int i,j,k;
   unsigned m;
-  SKL_REAL tmp;
+  REAL_TYPE tmp;
   int st[3], ed[3];
 
   tmp = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp);
@@ -1186,7 +1186,7 @@ void SetBC3D::ps_IBC_ConstTemp(SKL_REAL* t, unsigned* bh2, int n)
 }
 
 /**
- @fn void SetBC3D::ps_BC_Convection(SKL_REAL* ws, unsigned* bh1, SKL_REAL* v, SKL_REAL* t, SKL_REAL tm, Control* C, SKL_REAL* v00, SKL_REAL& flop)
+ @fn void SetBC3D::ps_BC_Convection(REAL_TYPE* ws, unsigned* bh1, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 対流項計算時の流束型の境界条件処理
  @param ws 温度の増分
  @param bh1 BCindex H1
@@ -1199,9 +1199,9 @@ void SetBC3D::ps_IBC_ConstTemp(SKL_REAL* t, unsigned* bh2, int n)
  @note
     - 熱量(-)はvalに保存
  */
-void SetBC3D::ps_BC_Convection(SKL_REAL* ws, unsigned* bh1, SKL_REAL* v, SKL_REAL* t, SKL_REAL tm, Control* C, SKL_REAL* v00, SKL_REAL& flop)
+void SetBC3D::ps_BC_Convection(REAL_TYPE* ws, unsigned* bh1, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
 {
-  SKL_REAL vec[3];
+  REAL_TYPE vec[3];
   
   // 外部
   for (int face=0; face<NOFACE; face++) {
@@ -1240,7 +1240,7 @@ void SetBC3D::ps_BC_Convection(SKL_REAL* ws, unsigned* bh1, SKL_REAL* v, SKL_REA
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_SpecVH(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL v00, SKL_REAL* vec, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_SpecVH(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE v00, REAL_TYPE* vec, REAL_TYPE& flop)
  @brief 内部領域の速度と温度の指定境界条件
  @retval 熱量(-)
  @param ws 温度増分
@@ -1252,16 +1252,16 @@ void SetBC3D::ps_BC_Convection(SKL_REAL* ws, unsigned* bh1, SKL_REAL* v, SKL_REA
  @note
     - モニタ量の熱量va(無次元)は系に対する流入量なので，基準温度に対する熱量
  */
-SKL_REAL SetBC3D::ps_IBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL v00, SKL_REAL* vec, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE v00, REAL_TYPE* vec, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL va=0.0;
-  SKL_REAL hu, hv, hw, tc, dhd=dh*RefL;
+  REAL_TYPE va=0.0;
+  REAL_TYPE hu, hv, hw, tc, dhd=dh*RefL;
   int st[3], ed[3];
-  SKL_REAL f_e, f_w, f_n, f_s, f_t, f_b, ff;
-  SKL_REAL dh1 = 1.0/dh;
+  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff;
+  REAL_TYPE dh1 = 1.0/dh;
 	
   tc  = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
   hu  = vec[0]*tc;
@@ -1314,10 +1314,10 @@ SKL_REAL SetBC3D::ps_IBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL v00
     }
   }
   
-  flop += (SKL_REAL)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1)*7 ); // 近似
+  flop += (REAL_TYPE)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1)*7 ); // 近似
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -1325,7 +1325,7 @@ SKL_REAL SetBC3D::ps_IBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL v00
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v, SKL_REAL* t, SKL_REAL* v00, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 内部領域のOutflowの境界条件処理
  @retval 熱量(W)
  @param ws 温度増分
@@ -1338,17 +1338,17 @@ SKL_REAL SetBC3D::ps_IBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL v00
  @note
     - モニタ量の熱量va(W)は系に対する流入量なので，基準温度に対する熱量
  */
-SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v, SKL_REAL* t, SKL_REAL* v00, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL va=0.0;
-  SKL_REAL dhd=dh*RefL;
+  REAL_TYPE va=0.0;
+  REAL_TYPE dhd=dh*RefL;
   int st[3], ed[3];
-  SKL_REAL f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
-  SKL_REAL dh1 = 1.0/dh;
-  SKL_REAL u_ref, v_ref, w_ref, t_p;
+  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
+  REAL_TYPE dh1 = 1.0/dh;
+  REAL_TYPE u_ref, v_ref, w_ref, t_p;
   unsigned m_e, m_w, m_n, m_s, m_t, m_b, m_0;
   
   u_ref = v00[1];
@@ -1434,7 +1434,7 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -1442,7 +1442,7 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v, SKL_REAL* t, SKL_REAL* v00, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 外部領域のOutflow, In_out, T_Freeの境界条件処理
  @retval 熱量(-)
  @param ws 温度増分
@@ -1455,16 +1455,16 @@ SKL_REAL SetBC3D::ps_IBC_Outflow(SKL_REAL* ws, unsigned* bh1, int n, SKL_REAL* v
  @note
     - モニタ量の熱量va(-)は系に対する流入量なので，基準温度に対する熱量
  */
-SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v, SKL_REAL* t, SKL_REAL* v00, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL va=0.0, t_nd;
-  SKL_REAL dhd=dh*RefL;
-  SKL_REAL f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
-  SKL_REAL dh1 = 1.0/dh;
-  SKL_REAL u_ref, v_ref, w_ref, t_p;
+  REAL_TYPE va=0.0, t_nd;
+  REAL_TYPE dhd=dh*RefL;
+  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
+  REAL_TYPE dh1 = 1.0/dh;
+  REAL_TYPE u_ref, v_ref, w_ref, t_p;
   unsigned m_e, m_w, m_n, m_s, m_t, m_b, m_0;
   
   u_ref = v00[1];
@@ -1493,7 +1493,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*13);
+      flop += (REAL_TYPE)(jxc*kxc*13);
       break;
       
     case X_PLUS:
@@ -1514,7 +1514,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*13);
+      flop += (REAL_TYPE)(jxc*kxc*13);
       break;
       
     case Y_MINUS:
@@ -1535,7 +1535,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*13);
+      flop += (REAL_TYPE)(ixc*kxc*13);
       break;
       
     case Y_PLUS:
@@ -1556,7 +1556,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*13);
+      flop += (REAL_TYPE)(ixc*kxc*13);
       break;
       
     case Z_MINUS:
@@ -1577,7 +1577,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*13);
+      flop += (REAL_TYPE)(ixc*jxc*13);
       break;
       
     case Z_PLUS:
@@ -1598,12 +1598,12 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*13);
+      flop += (REAL_TYPE)(ixc*jxc*13);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -1611,7 +1611,7 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 外部領域の速度指定の境界条件処理
  @retval 熱量(-)
  @param ws 温度増分
@@ -1624,16 +1624,16 @@ SKL_REAL SetBC3D::ps_OBC_Free(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* v
  @note
     - モニタ量の熱量va(-)は系に対する流入量なので，基準温度に対する熱量
  */
-SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL va=0.0, t_nd;
-  SKL_REAL f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
-  SKL_REAL dh1 = 1.0/dh;
-  SKL_REAL u_ref, v_ref, w_ref;
-  SKL_REAL vec[3];
+  REAL_TYPE va=0.0, t_nd;
+  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
+  REAL_TYPE dh1 = 1.0/dh;
+  REAL_TYPE u_ref, v_ref, w_ref;
+  REAL_TYPE vec[3];
   
   u_ref = v00[1];
   v_ref = v00[2];
@@ -1660,7 +1660,7 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*9 + 2);
+      flop += (REAL_TYPE)(jxc*kxc*9 + 2);
       break;
       
     case X_PLUS:
@@ -1680,7 +1680,7 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*9 + 2);
+      flop += (REAL_TYPE)(jxc*kxc*9 + 2);
       break;
       
     case Y_MINUS:
@@ -1700,7 +1700,7 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*9 + 2);
+      flop += (REAL_TYPE)(ixc*kxc*9 + 2);
       break;
       
     case Y_PLUS:
@@ -1720,7 +1720,7 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*9 + 2);
+      flop += (REAL_TYPE)(ixc*kxc*9 + 2);
       break;
       
     case Z_MINUS:
@@ -1740,7 +1740,7 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*9 + 2);
+      flop += (REAL_TYPE)(ixc*jxc*9 + 2);
       break;
       
     case Z_PLUS:
@@ -1760,12 +1760,12 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*9 + 2);
+      flop += (REAL_TYPE)(ixc*jxc*9 + 2);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -1773,7 +1773,7 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 外部領域の等温熱流束の境界条件処理
  @retval 熱量(-)
  @param qbc 境界条件熱流束
@@ -1786,12 +1786,12 @@ SKL_REAL SetBC3D::ps_OBC_SpecVH(SKL_REAL* ws, unsigned* bh1, int face, SKL_REAL*
  - モニタ量の熱量va(-)は系に対する流入出量
  - 流入を正にとる
  */
-SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL q, pp, sf, va=0.0;
+  REAL_TYPE q, pp, sf, va=0.0;
   
   sf = FBUtility::convK2ND(obc[face].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
   pp = (2.0*lambda) / (dh*RefV*rho*cp);
@@ -1811,7 +1811,7 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case X_PLUS:
@@ -1828,7 +1828,7 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case Y_MINUS:
@@ -1845,7 +1845,7 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Y_PLUS:
@@ -1862,7 +1862,7 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Z_MINUS:
@@ -1879,7 +1879,7 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
       
     case Z_PLUS:
@@ -1896,12 +1896,12 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -1909,7 +1909,7 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE& flop)
  @brief 外部領域の熱流束指定の境界条件処理
  @retval 熱量(-)
  @param qbc 境界条件熱流束
@@ -1920,12 +1920,12 @@ SKL_REAL SetBC3D::ps_OBC_IsoThermal(SKL_REAL* qbc, unsigned* bh1, int face, SKL_
     - モニタ量の熱量va(-)は系に対する流入出量
     - 流入を正にとる
  */
-SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL q, va=0.0;
+  REAL_TYPE q, va=0.0;
   
   q = obc[face].get_Heatflux() / (RefV*DiffTemp*rho*cp); // [W/m^2]を無次元化
   
@@ -1942,7 +1942,7 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*2);
+      flop += (REAL_TYPE)(jxc*kxc*2);
       break;
       
     case X_PLUS:
@@ -1957,7 +1957,7 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*2);
+      flop += (REAL_TYPE)(jxc*kxc*2);
       break;
       
     case Y_MINUS:
@@ -1972,7 +1972,7 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*2);
+      flop += (REAL_TYPE)(ixc*kxc*2);
       break;
       
     case Y_PLUS:
@@ -1987,7 +1987,7 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*2);
+      flop += (REAL_TYPE)(ixc*kxc*2);
       break;
       
     case Z_MINUS:
@@ -2002,7 +2002,7 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*2);
+      flop += (REAL_TYPE)(ixc*jxc*2);
       break;
       
     case Z_PLUS:
@@ -2017,12 +2017,12 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*2);
+      flop += (REAL_TYPE)(ixc*jxc*2);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -2030,7 +2030,7 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 外部領域の熱伝達境界の境界条件処理
  @retval 熱量(-)
  @param qbc 境界条件熱流束
@@ -2044,12 +2044,12 @@ SKL_REAL SetBC3D::ps_OBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int face, SKL_RE
     - 流入を正にとる
     - TypeS/B共用
  */
-SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL ht, bt, q, va=0.0;
+  REAL_TYPE ht, bt, q, va=0.0;
   
   ht = obc[face].get_CoefHT() / (RefV*rho*cp);  // 熱伝達係数
   bt = FBUtility::convK2ND(obc[face].get_Temp(), BaseTemp, DiffTemp); // 温度．保持されている温度はKelvin
@@ -2069,7 +2069,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case X_PLUS:
@@ -2086,7 +2086,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case Y_MINUS:
@@ -2103,7 +2103,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Y_PLUS:
@@ -2120,7 +2120,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Z_MINUS:
@@ -2137,7 +2137,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
       
     case Z_PLUS:
@@ -2154,12 +2154,12 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -2167,7 +2167,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 外部領域の熱伝達境界の境界条件処理
  @retval 熱量(-)
  @param qbc 境界条件熱流束
@@ -2180,13 +2180,13 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face,
     - モニタ量の熱量va(-)は系に対する流入出量
     - 流入を正にとる
  */
-SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL ht, sf, q, va=0.0;
-  SKL_REAL a1, b1, c1;
+  REAL_TYPE ht, sf, q, va=0.0;
+  REAL_TYPE a1, b1, c1;
   
   a1 = obc[face].ca[CompoList::alpha];
   b1 = obc[face].ca[CompoList::beta];
@@ -2223,7 +2223,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case X_PLUS:
@@ -2254,7 +2254,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case Y_MINUS:
@@ -2285,7 +2285,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Y_PLUS:
@@ -2316,7 +2316,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Z_MINUS:
@@ -2347,7 +2347,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
       
     case Z_PLUS:
@@ -2378,12 +2378,12 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -2391,7 +2391,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 外部領域の熱伝達境界の境界条件処理
  @retval 熱量(-)
  @param qbc 境界条件熱流束
@@ -2404,13 +2404,13 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face,
  - モニタ量の熱量va(-)は系に対する流入出量
  - 流入を正にとる
  */
-SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned register s, m;
-  SKL_REAL ht, ht1, ht3, sf, q, va=0.0;
-  SKL_REAL a1, a2, a3, a4, b1, b2, b3, b4, c1, c2;
+  REAL_TYPE ht, ht1, ht3, sf, q, va=0.0;
+  REAL_TYPE a1, a2, a3, a4, b1, b2, b3, b4, c1, c2;
   
   a1 = obc[face].ca[CompoList::vert_laminar_alpha];    // vertical, upper, laminar
   a2 = obc[face].ca[CompoList::vert_turbulent_alpha];  // vertical, upper, turbulent
@@ -2459,7 +2459,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case X_PLUS:
@@ -2490,7 +2490,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(jxc*kxc*4);
+      flop += (REAL_TYPE)(jxc*kxc*4);
       break;
       
     case Y_MINUS:
@@ -2521,7 +2521,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Y_PLUS:
@@ -2552,7 +2552,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
           }          
         }
       }
-      flop += (SKL_REAL)(ixc*kxc*4);
+      flop += (REAL_TYPE)(ixc*kxc*4);
       break;
       
     case Z_MINUS:
@@ -2583,7 +2583,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
       
     case Z_PLUS:
@@ -2614,12 +2614,12 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
           }
         }
       }
-      flop += (SKL_REAL)(ixc*jxc*4);
+      flop += (REAL_TYPE)(ixc*jxc*4);
       break;
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -2627,7 +2627,7 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE& flop)
  @brief 内部領域の熱流束指定境界条件
  @retval 熱量(W)
  @param qbc 境界条件熱流束
@@ -2638,13 +2638,13 @@ SKL_REAL SetBC3D::ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face,
     - モニタ量の熱量vaは系に対する流入量なので，基準温度に対する熱量
     - 流入量を正にとる
  */
-SKL_REAL SetBC3D::ps_IBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned odr;
   unsigned register s, m;
-  SKL_REAL va=0.0, q;
+  REAL_TYPE va=0.0, q;
   int st[3], ed[3];
   
   odr= cmp[n].getMatOdr();
@@ -2699,7 +2699,7 @@ SKL_REAL SetBC3D::ps_IBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL&
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -2707,7 +2707,7 @@ SKL_REAL SetBC3D::ps_IBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL&
 }
 
 /**
- @fn SKL_REAL SetBC3D::setHeatTransferN_SM(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsigned n, SKL_REAL* t0)
+ @fn REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, unsigned n, REAL_TYPE* t0)
  @brief 単媒質の場合の熱伝達境界条件タイプN　共役熱移動の場合
  @retval sum of heat flux (W/m^2)
  @param qbc 境界条件熱流束
@@ -2717,14 +2717,14 @@ SKL_REAL SetBC3D::ps_IBC_Heatflux(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL&
  @param t0 n時刻の温度場
  @todo qsumの方向チェック
  
-SKL_REAL SetBC3D::setHeatTransferN_SM(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsigned n, SKL_REAL* t0)
+REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, unsigned n, REAL_TYPE* t0)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned s, odr, d;
   unsigned m0, mi, mj, mk;
-  SKL_REAL ht, qsum, tmp, c;
-  SKL_REAL qi, qj, qk;
+  REAL_TYPE ht, qsum, tmp, c;
+  REAL_TYPE qi, qj, qk;
 
   qsum = 0.0;
   odr= cmp[n].getMatOdr();
@@ -2773,7 +2773,7 @@ SKL_REAL SetBC3D::setHeatTransferN_SM(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, 
 }*/
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_Transfer_S_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 単媒質の場合の熱伝達温境界条件タイプS　流体の流動のみを解く場合
  @retval 熱流束の和 (W/m^2)
  @param qbc 境界条件熱流束
@@ -2786,12 +2786,12 @@ SKL_REAL SetBC3D::setHeatTransferN_SM(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, 
     - 熱流束は加算（他の条件と合成）
     - pセルは流体セル
  */
-SKL_REAL SetBC3D::ps_IBC_Transfer_S_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned s, odr, m;
-  SKL_REAL ht, sf, va=0.0, q;
+  REAL_TYPE ht, sf, va=0.0, q;
   int st[3], ed[3];
 
   odr= cmp[n].getMatOdr();
@@ -2860,7 +2860,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_S_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -2868,7 +2868,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_S_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_Transfer_SN_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 単媒質の場合の熱伝達温境界条件タイプSN（自然対流）　流体のみを解く場合
  @retval 熱流束の和 (W/m^2)
  @param qbc 境界条件熱流束
@@ -2881,13 +2881,13 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_S_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
     - 熱流束は加算（他の条件と合成）
     - pセルは流体セル
  */
-SKL_REAL SetBC3D::ps_IBC_Transfer_SN_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned s, m;
-  SKL_REAL ht, ht1, ht3, sf, q, va=0.0;
-  SKL_REAL a1, a2, a3, a4, b1, b2, b3, b4, c1, c2;
+  REAL_TYPE ht, ht1, ht3, sf, q, va=0.0;
+  REAL_TYPE a1, a2, a3, a4, b1, b2, b3, b4, c1, c2;
   int st[3], ed[3];
   
   a1 = cmp[n].ca[CompoList::vert_laminar_alpha];    // vertical, upper, laminar
@@ -3030,7 +3030,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_SN_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL
   }
   
   if( para_mng->IsParallel() ){
-    SKL_REAL tmp = va;
+    REAL_TYPE tmp = va;
     para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
   }
   
@@ -3038,7 +3038,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_SN_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_Transfer_SF_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 単媒質の場合の熱伝達温境界条件タイプSF（強制対流）　流体のみを解く場合
  @retval 熱流束の和 (W/m^2)
  @param qbc 境界条件熱流束
@@ -3051,13 +3051,13 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_SN_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL
     - 熱流束は加算（他の条件と合成）
     - pセルは流体セル
  */
-SKL_REAL SetBC3D::ps_IBC_Transfer_SF_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned s, m;
-  SKL_REAL ht, sf, q, va=0.0;
-  SKL_REAL a1, b1, c1;
+  REAL_TYPE ht, sf, q, va=0.0;
+  REAL_TYPE a1, b1, c1;
   int st[3], ed[3];
   
   a1 = cmp[n].ca[CompoList::alpha];
@@ -3188,7 +3188,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_SF_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL
   }
 
   if( para_mng->IsParallel() ){
-    SKL_REAL tmp = va;
+    REAL_TYPE tmp = va;
     para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
   }
 
@@ -3196,7 +3196,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_SF_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL
 }
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_Transfer_B_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 単媒質の場合の熱伝達境界条件タイプB 固体のみを解く場合
  @retval 熱流束の和 (W/m^2)
  @param qbc 境界条件熱流束
@@ -3209,12 +3209,12 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_SF_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL
     - 熱流束は加算（他の条件と合成）
     - pセルは固体セル
  */
-SKL_REAL SetBC3D::ps_IBC_Transfer_B_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned s, odr, m;
-  SKL_REAL ht, bt, q, va=0.0;
+  REAL_TYPE ht, bt, q, va=0.0;
   int st[3], ed[3];
 
   //odr= cmp[n].getMatOdr();
@@ -3283,7 +3283,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_B_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -3291,7 +3291,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_B_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
 }
 
 /**
- @fn SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsigned n, SKL_REAL* t0)
+ @fn REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, unsigned n, REAL_TYPE* t0)
  @brief 単媒質の場合の熱伝達境界条件タイプB
  @retval sum of heat flux (W/m^2)
  @param qbc 境界条件熱流束
@@ -3300,7 +3300,7 @@ SKL_REAL SetBC3D::ps_IBC_Transfer_B_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
  @param n 境界条件コンポーネントのエントリ番号
  @param t0 n時刻の温度場
  
-SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsigned n, SKL_REAL* t0)
+REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, unsigned n, REAL_TYPE* t0)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
@@ -3308,8 +3308,8 @@ SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, uns
   int wi, wj, wk;
   unsigned li, lj, lk;
   unsigned ni, nj, nk;
-  SKL_REAL qi, qj, qk, pp, bt, qsum=0.0, tmp, c;
-  SKL_REAL di, dj, dk; // outer normal
+  REAL_TYPE qi, qj, qk, pp, bt, qsum=0.0, tmp, c;
+  REAL_TYPE di, dj, dk; // outer normal
   
   pp = cmp[n].get_CoefHT() / RefV;
   bt = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
@@ -3326,7 +3326,7 @@ SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, uns
             t[ SklUtil::getFindexS3D(size, guide, i+wi, j, k) ] = bt; // 流体セルにバルク温度を代入
             li = SklUtil::getFindexS3D(size, guide, i+1-wi, j, k); // 固体セルのセルインデクス
             ni = DECODE_MAT( bx[li] ); // 固体セルのマテリアルのオーダーを得る
-            di = 2.0*(SKL_REAL)wi-1.0;
+            di = 2.0*(REAL_TYPE)wi-1.0;
             qi = pp / (mat[ni].P[p_density] * mat[ni].P[p_specific_heat]) * (t0[li]-bt) * di;
             qbc[SklUtil::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
             qsum += qi*di;
@@ -3336,7 +3336,7 @@ SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, uns
             t[ SklUtil::getFindexS3D(size, guide, i, j+wj, k) ] = bt;
             lj = SklUtil::getFindexS3D(size, guide, i, j+1-wj, k);
             nj = DECODE_MAT( bx[lj] );
-            dj = 2.0*(SKL_REAL)wj-1.0;
+            dj = 2.0*(REAL_TYPE)wj-1.0;
             qj = pp / (mat[nj].P[p_density] * mat[nj].P[p_specific_heat]) * (t0[lj]-bt) * dj;
             qbc[SklUtil::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
             qsum += qj*dj;
@@ -3346,7 +3346,7 @@ SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, uns
             t[ SklUtil::getFindexS3D(size, guide, i, j, k+wk) ] = bt;
             lk = SklUtil::getFindexS3D(size, guide, i, j, k+1-wk);
             nk = DECODE_MAT( bx[lk] );
-            dk = 2.0*(SKL_REAL)wk-1.0;
+            dk = 2.0*(REAL_TYPE)wk-1.0;
             qk = pp / (mat[nk].P[p_density] * mat[nk].P[p_specific_heat]) * (t0[lk]-bt) * dk;
             qbc[SklUtil::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
             qsum += qk*dk;
@@ -3366,7 +3366,7 @@ SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, uns
 }*/
 
 /**
- @fn SKL_REAL SetBC3D::ps_IBC_IsoThermal_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 単媒質の場合の等温境界条件
  @retval 熱流束の和 (W/m^2)
  @param qbc 境界条件熱流束
@@ -3378,12 +3378,12 @@ SKL_REAL SetBC3D::setHeatTransferB(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, uns
     - 熱流束は加算（他の条件と合成）
     - pセルは等温壁をもつ計算セルで，等温のセルは相手方
  */
-SKL_REAL SetBC3D::ps_IBC_IsoThermal_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop)
+REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned s, m, odr;
-  SKL_REAL q, pp, sf, va=0.0;
+  REAL_TYPE q, pp, sf, va=0.0;
   int st[3], ed[3];
 
   odr= cmp[n].getMatOdr();
@@ -3452,7 +3452,7 @@ SKL_REAL SetBC3D::ps_IBC_IsoThermal_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
   }
   
   if( para_mng->IsParallel() ){
-		SKL_REAL tmp = va;
+		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
   
@@ -3460,7 +3460,7 @@ SKL_REAL SetBC3D::ps_IBC_IsoThermal_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
 }
 
 /**
- @fn SKL_REAL SetBC3D::setIsoThermal(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsigned n, SKL_REAL* t0)
+ @fn REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, unsigned n, REAL_TYPE* t0)
  @brief 単媒質の場合の等温境界条件
  @retval sum of heat flux (W/m^2)
  @param qbc 境界条件熱流束
@@ -3469,7 +3469,7 @@ SKL_REAL SetBC3D::ps_IBC_IsoThermal_SM(SKL_REAL* qbc, unsigned* bh1, int n, SKL_
  @param n 境界条件コンポーネントのエントリ番号
  @param t0 n時刻の温度場
  
-SKL_REAL SetBC3D::setIsoThermal(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsigned n, SKL_REAL* t0)
+REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, unsigned n, REAL_TYPE* t0)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
@@ -3477,8 +3477,8 @@ SKL_REAL SetBC3D::setIsoThermal(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsign
   int wi, wj, wk;
   unsigned li, lj, lk;
   unsigned ni, nj, nk;
-  SKL_REAL qi, qj, qk, pp, st, qsum=0.0, tmp, c;
-  SKL_REAL di, dj, dk; // outer normal
+  REAL_TYPE qi, qj, qk, pp, st, qsum=0.0, tmp, c;
+  REAL_TYPE di, dj, dk; // outer normal
 
   pp = 2.0/(dh*RefV*RefL);
   st = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
@@ -3495,7 +3495,7 @@ SKL_REAL SetBC3D::setIsoThermal(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsign
             t[ SklUtil::getFindexS3D(size, guide, i+wi, j, k) ] = st; // 等温セルに指定温度を代入
             li = SklUtil::getFindexS3D(size, guide, i+1-wi, j, k); // 計算側のセルインデクス
             ni = DECODE_MAT( bx[li] ); // 計算セルのマテリアルのオーダーを得る
-            di = 1.0-2.0*(SKL_REAL)wi;
+            di = 1.0-2.0*(REAL_TYPE)wi;
             qi = -pp * mat[ni].P[p_thermal_conductivity] / (mat[ni].P[p_density] * mat[ni].P[p_specific_heat]) * (t0[li]-st) * di;
             qbc[SklUtil::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
             qsum += qi*di;
@@ -3505,7 +3505,7 @@ SKL_REAL SetBC3D::setIsoThermal(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsign
             t[ SklUtil::getFindexS3D(size, guide, i, j+wj, k) ] = st;
             lj = SklUtil::getFindexS3D(size, guide, i, j+1-wj, k);
             nj = DECODE_MAT( bx[lj] );
-            dj = 1.0-2.0*(SKL_REAL)wj;
+            dj = 1.0-2.0*(REAL_TYPE)wj;
             qj = -pp * mat[nj].P[p_thermal_conductivity] / (mat[nj].P[p_density] * mat[nj].P[p_specific_heat]) * (t0[lj]-st) * dj;
             qbc[SklUtil::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
             qsum += qj*dj;
@@ -3515,7 +3515,7 @@ SKL_REAL SetBC3D::setIsoThermal(SKL_REAL* qbc, SKL_REAL* t, unsigned* bx, unsign
             t[ SklUtil::getFindexS3D(size, guide, i, j, k+wk) ] = st;
             lk = SklUtil::getFindexS3D(size, guide, i, j, k+1-wk);
             nk = DECODE_MAT( bx[lk] );
-            dk = 1.0-2.0*(SKL_REAL)wk;
+            dk = 1.0-2.0*(REAL_TYPE)wk;
             qk = -pp * mat[nk].P[p_thermal_conductivity] / (mat[nk].P[p_density] * mat[nk].P[p_specific_heat]) * (t0[lk]-st) * dk;
             qbc[SklUtil::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
             qsum += qk*dk;
@@ -3675,7 +3675,7 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
 }
 
 /**
- @fn SetBC3D::setRadiant(SKL_REAL* qbc, unsigned* bx, unsigned n, SKL_REAL* t)
+ @fn SetBC3D::setRadiant(REAL_TYPE* qbc, unsigned* bx, unsigned n, REAL_TYPE* t)
  @brief 輻射境界条件
  @param qbc 境界条件熱流束
  @param bx BCindex
@@ -3684,12 +3684,12 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
  @note
     - 未使用，形式のみ
  
-void SetBC3D::setRadiant(SKL_REAL* qbc, unsigned* bx, unsigned n, SKL_REAL* t)
+void SetBC3D::setRadiant(REAL_TYPE* qbc, unsigned* bx, unsigned n, REAL_TYPE* t)
 {
   int i,j,k;
   unsigned s;
   unsigned m0, mi, mj, mk;
-  SKL_REAL ht;
+  REAL_TYPE ht;
 
   ht = cmp[n].get_CoefHT() / (mat[n].P[p_density]*mat[n].P[p_specific_heat]);
 
@@ -3712,7 +3712,7 @@ void SetBC3D::setRadiant(SKL_REAL* qbc, unsigned* bx, unsigned n, SKL_REAL* t)
 }*/
 
 /**
- @fn void SetBC3D::mod_Pvec_Flux(SKL_REAL* wv, SKL_RAEL* v, unsigned* bv, SKL_REAL tm, Control* C, int v_mode, SKL_REAL* v00, SKL_REAL& flop, bool isCDS)
+ @fn void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, SKL_RAEL* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
  @brief 速度境界条件による流束の修正
  @param[in/out] wv 疑似ベクトル
  @param v 速度ベクトル u^n
@@ -3724,9 +3724,9 @@ void SetBC3D::setRadiant(SKL_REAL* qbc, unsigned* bx, unsigned n, SKL_REAL* t)
  @param[out] flop
  @param isCDS (false-CBC, true-CDS)
  */
-void SetBC3D::mod_Pvec_Flux(SKL_REAL* wv, SKL_REAL* v, unsigned* bv, SKL_REAL tm, Control* C, int v_mode, SKL_REAL* v00, SKL_REAL& flop, bool isCDS)
+void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
 {
-  SKL_REAL vec[3];
+  REAL_TYPE vec[3];
   int st[3], ed[3], order;
   unsigned typ;
   
@@ -3793,7 +3793,7 @@ void SetBC3D::mod_Pvec_Flux(SKL_REAL* wv, SKL_REAL* v, unsigned* bv, SKL_REAL tm
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_VBC(SKL_REAL* div, SKL_REAL* vc, SKL_REAL* v0, SKL_REAL coef, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL &flop, bool isCDS)
+ @fn void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
  @brief 速度境界条件によるPoisosn式のソース項の修正
  @param[out] div divergence field
  @param vc セルセンタ疑似速度
@@ -3807,10 +3807,10 @@ void SetBC3D::mod_Pvec_Flux(SKL_REAL* wv, SKL_REAL* v, unsigned* bv, SKL_REAL tm
  @param[out] flop
  @param isCDS (false-CBC, true-CDS)
  */
-void SetBC3D::mod_Psrc_VBC(SKL_REAL* div, SKL_REAL* vc, SKL_REAL* v0, SKL_REAL coef, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL &flop, bool isCDS)
+void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
 {
   int st[3], ed[3];
-  SKL_REAL vec[3], dummy, vel;
+  REAL_TYPE vec[3], dummy, vel;
   unsigned typ;
   
   // 内部境界条件による修正
@@ -3876,7 +3876,7 @@ void SetBC3D::mod_Psrc_VBC(SKL_REAL* div, SKL_REAL* vc, SKL_REAL* v0, SKL_REAL c
 }
 
 /**
- @fn SKL_REAL SetBC3D::extractVel_IBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief コンポーネントから速度境界条件の成分を取り出す
  @param n コンポーネントのインデクス
  @param[out] vec[3] ベクトル成分
@@ -3884,10 +3884,10 @@ void SetBC3D::mod_Psrc_VBC(SKL_REAL* div, SKL_REAL* vc, SKL_REAL* v0, SKL_REAL c
  @param v00
  @param[in/out] flop
  */
-SKL_REAL SetBC3D::extractVel_IBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop)
+REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
 {
-  SKL_REAL a, b, vel;
-  const SKL_REAL c_pai = (SKL_REAL)(2.0*asin(1.0));
+  REAL_TYPE a, b, vel;
+  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
   
   a = cmp[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
   b = 2.0*c_pai*cmp[n].ca[CompoList::frequency]* RefL/RefV * tm + cmp[n].ca[CompoList::initphase];
@@ -3901,7 +3901,7 @@ SKL_REAL SetBC3D::extractVel_IBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v0
 }
 
 /**
- @fn SKL_REAL SetBC3D::extractVel_OBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop)
+ @fn REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 外部境界条件リストから速度境界条件の成分を取り出す
  @param n コンポーネントのインデクス
  @param[out] vec[3] ベクトル成分
@@ -3909,10 +3909,10 @@ SKL_REAL SetBC3D::extractVel_IBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v0
  @param v00
  @param[in/out] flop
  */
-SKL_REAL SetBC3D::extractVel_OBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop)
+REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
 {
-  SKL_REAL a, b, vel;
-  const SKL_REAL c_pai = (SKL_REAL)(2.0*asin(1.0));
+  REAL_TYPE a, b, vel;
+  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
   
   a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
   b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * tm + obc[n].ca[CompoList::initphase];
@@ -3926,7 +3926,7 @@ SKL_REAL SetBC3D::extractVel_OBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v0
 }
 
 /**
- @fn void SetBC3D::mod_Vis_EE(SKL_REAL* vc, SKL_REAL* v0, SKL_REAL cf, unsigned* bx, SKL_REAL tm, SKL_REAL dt, SKL_REAL* v00, SKL_REAL& flop)
+ @fn void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief Euler陽解法のときの速度境界条件による粘性項の修正
  @param[out] vc 疑似ベクトル
  @param v0 コロケートの速度ベクトル (n step)
@@ -3938,10 +3938,10 @@ SKL_REAL SetBC3D::extractVel_OBC(int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v0
  @param[out] flop
  @todo symmetricのときの修正
  */
-void SetBC3D::mod_Vis_EE(SKL_REAL* vc, SKL_REAL* v0, SKL_REAL cf, unsigned* bx, SKL_REAL tm, SKL_REAL dt, SKL_REAL* v00, SKL_REAL& flop)
+void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   int st[3], ed[3];
-  SKL_REAL vec[3], dummy;
+  REAL_TYPE vec[3], dummy;
   unsigned typ;
   
   for (int n=1; n<=NoBC; n++) {
@@ -3959,7 +3959,7 @@ void SetBC3D::mod_Vis_EE(SKL_REAL* vc, SKL_REAL* v0, SKL_REAL cf, unsigned* bx, 
 }
 
 /**
- @fn void SetBC3D::mod_Vis_CN(SKL_REAL* vc, SKL_REAL* wv, SKL_REAL cf, unsigned* bx, SKL_REAL* wk, SKL_REAL tm, SKL_REAL dt, SKL_REAL omg, Control* C, SKL_REAL* res, SKL_REAL* v00, SKL_REAL& flop)
+ @fn void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* bx, REAL_TYPE* wk, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE omg, Control* C, REAL_TYPE* res, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief CN法のときの速度境界条件による粘性項の修正
  @param[out] vc pseudo vector
  @param wv convective term and explicit viscous term of pseudo vector
@@ -3975,12 +3975,12 @@ void SetBC3D::mod_Vis_EE(SKL_REAL* vc, SKL_REAL* v0, SKL_REAL cf, unsigned* bx, 
  @param v00
  @param[out] flop
  
-void SetBC3D::mod_Vis_CN(SKL_REAL* vc, SKL_REAL* wv, SKL_REAL cf, unsigned* bx, SKL_REAL* wk, SKL_REAL tm, SKL_REAL dt, SKL_REAL omg, Control* C, SKL_REAL* res, unsigned LS, SKL_REAL* v00, SKL_REAL& flop)
+void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* bx, REAL_TYPE* wk, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE omg, Control* C, REAL_TYPE* res, unsigned LS, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   int st[3], ed[3];
-  SKL_REAL vel, vec[3], a, b;
+  REAL_TYPE vel, vec[3], a, b;
   unsigned typ;
-  const SKL_REAL c_pai = (SKL_REAL)(2.0*asin(1.0));
+  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
   
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isVBC() ) {
@@ -4072,7 +4072,7 @@ void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
 }
 
 /**
- @fn void SetBC3D::mod_div(SKL_REAL* div, unsigned* bv, SKL_REAL coef, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS)
+ @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
  @brief 速度境界条件による速度の発散の修正ほか
  @param div div((u)*(-h/dt)
  @param bv BCindex V
@@ -4083,9 +4083,9 @@ void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
  @param isCDS (false-CBC, true-CDS)
  @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
 */
-void SetBC3D::mod_div(SKL_REAL* div, unsigned* bv, SKL_REAL coef, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS)
+void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
 {
-  SKL_REAL vel, vec[3], dummy;
+  REAL_TYPE vel, vec[3], dummy;
   int st[3], ed[3];
   unsigned typ=0;
   
@@ -4157,13 +4157,13 @@ void SetBC3D::mod_div(SKL_REAL* div, unsigned* bv, SKL_REAL coef, SKL_REAL tm, S
 }
 
 /**
- @fn void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<SKL_REAL>* d_v, int face)
+ @fn void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル（セルフェイス）
  @param face 面番号
  @note cbc_update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
  */
-void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<SKL_REAL>* d_v, int face)
+void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
 
@@ -4188,7 +4188,7 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<SKL_REAL>* d_v, int face)
     int i,j,k, gd;
     unsigned l, m0, m1;
     gd = (int)guide;
-    SKL_REAL* v=NULL;
+    REAL_TYPE* v=NULL;
     if ( !(v = d_v->GetData()) ) assert(0);
     
     switch (face) {
@@ -4244,13 +4244,13 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<SKL_REAL>* d_v, int face)
 }
 
 /**
- @fn void SetBC3D::Vobc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm_face)
+ @fn void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_comm_face)
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
  @param face 面番号
  @param no_comm_face 通信面数
  */
-void SetBC3D::Vobc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm_face)
+void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_comm_face)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -4287,7 +4287,7 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm
     int i,j,k, gd;
     unsigned l, m0, m1;
     gd = (int)guide;
-    SKL_REAL* v=NULL;
+    REAL_TYPE* v=NULL;
     if ( !(v = d_v->GetData()) ) assert(0);
     
     switch (face) {
@@ -4391,16 +4391,16 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm
 }
 
 /**
- @fn void SetBC3D::InnerPBC_Periodic(SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned>* d_bcd)
+ @fn void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd)
  @brief 圧力の内部境界条件処理
  @param d_p 圧力のデータクラス
  @param d_bcd BCindex ID
  */
-void SetBC3D::InnerPBC_Periodic(SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned>* d_bcd)
+void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd)
 {
   int dir;
   int st[3], ed[3];
-  SKL_REAL pv;
+  REAL_TYPE pv;
   
   for (unsigned n=1; n<=NoBC; n++) {
     cmp[n].getCompoBV(st, ed);
@@ -4414,7 +4414,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned
 }
 
 /**
- @fn void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
+ @fn void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
  @brief 速度の内部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
  @param st コンポーネント範囲の開始インデクス
@@ -4423,7 +4423,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned
  @param odr 下流面のidが格納されているコンポーネントエントリ
  @param dir ドライバの設置方向
  */
-void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
+void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if( para_mng->IsParallel() ){
@@ -4433,7 +4433,7 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScala
     
   int i,j,k, gd, ii, jj, kk;
   unsigned l, m0, m1, m2, *bx=NULL;
-  SKL_REAL* v=NULL;
+  REAL_TYPE* v=NULL;
 
   gd = (int)guide;
   
@@ -4564,7 +4564,7 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScala
 }
 
 /**
- @fn void SetBC3D::Pibc_Prdc(SklScalar3D<SKL_REAL>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, SKL_REAL pd)
+ @fn void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
  @brief 圧力の内部周期境界条件（一方向の圧力差）
  @param d_p 圧力のデータクラス
  @param st コンポーネント範囲の開始インデクス
@@ -4574,7 +4574,7 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScala
  @param dir ドライバの設置方向
  @param pd 圧力差
  */
-void SetBC3D::Pibc_Prdc(SklScalar3D<SKL_REAL>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, SKL_REAL pd)
+void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if( para_mng->IsParallel() ){
@@ -4584,7 +4584,7 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<SKL_REAL>* d_p, int* st, int* ed, SklScalar3
   
   int i,j,k;
   unsigned m0, m1, *bx=NULL;
-  SKL_REAL* p=NULL;
+  REAL_TYPE* p=NULL;
   
   if ( !(p = d_p->GetData()) ) assert(0);
   if ( !(bx= d_bcd->GetData()) ) assert(0);
@@ -4683,7 +4683,7 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<SKL_REAL>* d_p, int* st, int* ed, SklScalar3
 }
 
 /**
- @fn void SetBC3D::assign_Velocity(SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, bool clear)
+ @fn void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
  @brief 速度指定境界条件に必要な参照速度をセットする
  @param v セルセンタ速度ベクトル (n step)
  @param bv BCindex V
@@ -4691,9 +4691,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<SKL_REAL>* d_p, int* st, int* ed, SklScalar3
  @param v00
  @param clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
  */
-void SetBC3D::assign_Velocity(SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, bool clear)
+void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
 {
-  SKL_REAL flop, vec[3];
+  REAL_TYPE flop, vec[3];
   int st[3], ed[3];
   unsigned typ;
 
@@ -4881,16 +4881,16 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
 }
 
 /**
- @fn void SetBC3D::assign_Temp(SKL_REAL* t, unsigned* bh1, SKL_REAL tm, Control* C)
+ @fn void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
  @brief 温度指定境界条件に必要な温度をセットする
  @param t 温度場
  @param bh BCindex H1
  @param tm 無次元時刻
  @param C
  */
-void SetBC3D::assign_Temp(SKL_REAL* t, unsigned* bh1, SKL_REAL tm, Control* C)
+void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
 {
-  SKL_REAL flop, tc;
+  REAL_TYPE flop, tc;
   int st[3], ed[3];
   unsigned typ;
   

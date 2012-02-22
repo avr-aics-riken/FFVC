@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -43,7 +43,7 @@ class Intrinsic : public Parallel_Node {
 public:
   unsigned size[3];
   unsigned imax, jmax, kmax, guide;
-  SKL_REAL RefL;
+  REAL_TYPE RefL;
   
   enum dim_mode {
     dim_2d = 1,
@@ -62,15 +62,15 @@ public:
   
   virtual const char* getExampleName(void) { return NULL; };
   
-  virtual void genVFfromBcx(SKL_REAL* VF, unsigned* bx);
-  virtual void initCond(SKL_REAL* v, SKL_REAL* p) {};
-  virtual void PostInit(SKL_REAL &checkTime, Control* R) {};
+  virtual void genVFfromBcx(REAL_TYPE* VF, unsigned* bx);
+  virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
+  virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};
   virtual void printExample(FILE* fp, const char* str);
   virtual void printParaInfo(FILE* mp, FILE* fp, Control* R);
   virtual void printPara(FILE* fp, Control* R);
-  virtual void setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3]) {};
-  virtual void setup(int* mid, Control* R, SKL_REAL* G_org) {};
-  virtual void writeSVX(SKL_REAL *vf, int *id, Control* R);
+  virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org) {};
+  virtual void writeSVX(REAL_TYPE *vf, int *id, Control* R);
   virtual void writeSVX(int *id, Control* R);
   
   void setControlVars(Control* R);

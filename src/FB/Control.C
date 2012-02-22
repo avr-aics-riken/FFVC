@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -12,7 +12,7 @@
 #include "Control.h"
 
 /**
- @fn void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, SKL_REAL from[3], SKL_REAL to[3], int& nDivision)
+ @fn void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision)
  @brief XMLに記述されたモニタ座標情報(Line)を取得
  @param M MonitorList クラスオブジェクトのポインタ
  @param elmL2 コンフィギュレーションツリーのポインタ
@@ -21,7 +21,7 @@
  @param nDivision Line分割数
  @note データは無次元化して保持
  */
-void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, SKL_REAL from[3], SKL_REAL to[3], int& nDivision)
+void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision)
 {
   const CfgElem *elmL3=NULL;
   
@@ -69,7 +69,7 @@ void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, SKL_REAL fro
 void Control::getXML_Mon_Pointset(MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet)
 {
   const CfgElem *elmL3=NULL;
-  SKL_REAL v[3];
+  REAL_TYPE v[3];
   const char* str=NULL;
   char tmpstr[20];
   
@@ -121,7 +121,7 @@ void Control::getXML_Monitor(MonitorList* M)
   const char* method=NULL;
   const char* mode=NULL;
   const CfgParam * param=NULL;
-  SKL_REAL f_val=0.0;
+  REAL_TYPE f_val=0.0;
   //int nvar=0;
   MonitorCompo::Type type;
   vector<string> variables;
@@ -285,7 +285,7 @@ void Control::getXML_Monitor(MonitorList* M)
       M->setPointSet(label, variables, method, mode, pointSet);
     }
     else {
-      SKL_REAL from[3], to[3];
+      REAL_TYPE from[3], to[3];
       int nDivision;
       getXML_Mon_Line(M, elmL2, from, to, nDivision);
       M->setLine(label, variables, method, mode, from, to, nDivision);
@@ -334,7 +334,7 @@ const CfgElem* Control::getXML_Pointer(const char* key, string section)
 void Control::getXML_Time_Control(DTcntl* DT)
 {
   const CfgElem *elmL1=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   int ss=0;
   const char *str=NULL;
   
@@ -574,7 +574,7 @@ void Control::getXML_Steer_1(DTcntl* DT)
   getXML_Time_Control(DT);
 
   // 精度
-  if ( sizeof(SKL_REAL) == sizeof(double) ) {
+  if ( sizeof(REAL_TYPE) == sizeof(double) ) {
     Mode.Precision = SPH_DOUBLE;
   }
   else {
@@ -676,7 +676,7 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
 }
 
 /**
- @fn SKL_REAL Control::OpenDomainRatio(unsigned dir, SKL_REAL area, const unsigned Dims, unsigned* G_size)
+ @fn REAL_TYPE Control::OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size)
  @brief 外部境界の各方向の開口率（流体部分の比率）
  @retval 開口率
  @param dir 方向
@@ -684,9 +684,9 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
  @param Dims 次元数
  @param G_Size 計算領域全体の分割数
  */
-SKL_REAL Control::OpenDomainRatio(unsigned dir, SKL_REAL area, const unsigned Dims, unsigned* G_size)
+REAL_TYPE Control::OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size)
 {
-  SKL_REAL r = 0.0, base=0.0;
+  REAL_TYPE r = 0.0, base=0.0;
   unsigned m_imax, m_jmax, m_kmax;
   
   m_imax = G_size[0];
@@ -696,19 +696,19 @@ SKL_REAL Control::OpenDomainRatio(unsigned dir, SKL_REAL area, const unsigned Di
   switch (dir) {
     case X_MINUS:
     case X_PLUS:
-      (2==Dims) ? base=(SKL_REAL)m_jmax : base=(SKL_REAL)(m_jmax*m_kmax);
+      (2==Dims) ? base=(REAL_TYPE)m_jmax : base=(REAL_TYPE)(m_jmax*m_kmax);
       r = area / base*100.0;
       break;
       
     case Y_MINUS:
     case Y_PLUS:
-      (2==Dims) ? base=(SKL_REAL)m_imax : base=(SKL_REAL)(m_imax*m_kmax);
+      (2==Dims) ? base=(REAL_TYPE)m_imax : base=(REAL_TYPE)(m_imax*m_kmax);
       r = area / base*100.0;
       break;
       
     case Z_MINUS:
     case Z_PLUS:
-      (2==Dims) ? base=1.0 : base=(SKL_REAL)(m_imax*m_jmax);
+      (2==Dims) ? base=1.0 : base=(REAL_TYPE)(m_imax*m_jmax);
       r = area / base*100.0;
       break;
   }
@@ -744,7 +744,7 @@ void Control::printInitValues(FILE* fp)
     assert(0);
   }
 
-  SKL_REAL DynamicPrs = 0.5*RefDensity * RefVelocity * RefVelocity;
+  REAL_TYPE DynamicPrs = 0.5*RefDensity * RefVelocity * RefVelocity;
 
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Initial Values for Physical Variables\n\n");
@@ -876,7 +876,7 @@ void Control::getXML_Convection(void)
 }
 
 /**
- @fn void Control::setDomainInfo(unsigned* m_sz, SKL_REAL* m_org, SKL_REAL* m_pch, SKL_REAL* m_wth)
+ @fn void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth)
  @brief 無次元の領域情報をセットする
  @param m_sz 領域分割数（計算領域内部のみ）
  @param m_org 基点
@@ -886,7 +886,7 @@ void Control::getXML_Convection(void)
  @note
     - setGiudeCell()の前にコール
  */
-void Control::setDomainInfo(unsigned* m_sz, SKL_REAL* m_org, SKL_REAL* m_pch, SKL_REAL* m_wth)
+void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth)
 {
   // set parameters
   imax = m_sz[0];
@@ -974,7 +974,7 @@ void Control::getXML_Para_ND(void)
  */
 void Control::getXML_Para_Temp(void)
 {
-  SKL_REAL Base, Diff;
+  REAL_TYPE Base, Diff;
 
   const CfgElem *elmL1=NULL;
   
@@ -1001,14 +1001,14 @@ void Control::getXML_Para_Temp(void)
 }
 
 /**
- @fn void Control::printDomainInfo(FILE* fp, FILE* mp, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx)
+ @fn void Control::printDomainInfo(FILE* fp, FILE* mp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
  @brief 領域情報をfp, mpに出力する
  @param fp file pointer
  @param G_size global size
  @param G_org global original point
  @param G_Lbx global bbox of computational domain
  */
-void Control::printDomainInfo(FILE* mp, FILE* fp, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx)
+void Control::printDomainInfo(FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
 {
   if ( !fp || !mp ) {
     stamped_printf("\tFail to write into file\n");
@@ -1019,14 +1019,14 @@ void Control::printDomainInfo(FILE* mp, FILE* fp, unsigned* G_size, SKL_REAL* G_
 }
 
 /**
- @fn void Control::printDomain(FILE* fp, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx)
+ @fn void Control::printDomain(FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
  @brief グローバルな領域情報を表示する
  @param fp file pointer
  @param G_size global size
  @param G_org global original point
  @param G_Lbx global bbox of computational domain
  */
-void Control::printDomain(FILE* fp, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx)
+void Control::printDomain(FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
 {
   fprintf(fp,"\timax, jmax, kmax    = %13d %13d %13d     >> ", G_size[0], G_size[1], G_size[2]);
   printVoxelSize(G_size, fp);
@@ -1061,14 +1061,14 @@ void Control::printVoxelSize(unsigned* gs, FILE* fp)
 {
   if( !fp ) assert(0);
   
-  SKL_REAL PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
+  REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
   KB = 1000.0;
   MB = 1000.0*KB;
   GB = 1000.0*MB;
   TB = 1000.0*GB;
   PB = 1000.0*TB;
   
-  total = (SKL_REAL)gs[0] * (SKL_REAL)gs[1] * (SKL_REAL)gs[2];
+  total = (REAL_TYPE)gs[0] * (REAL_TYPE)gs[1] * (REAL_TYPE)gs[2];
 
   if ( total > PB ) {
     fprintf (fp,"%6.2f (P cells)\n", total / PB);
@@ -1103,7 +1103,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
   const CfgElem* elmL2=NULL;
   const char *str=NULL, *slvr=NULL;
   int itr=0;
-  SKL_REAL tmp=0.0;
+  REAL_TYPE tmp=0.0;
   unsigned LinearSolver=0;
 
   if ( (elmL2 = elmL1->GetElemFirst(key)) ) {
@@ -1117,13 +1117,13 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Epsilon' of %s in Criteria\n", key);
       assert(0);
     }
-    IC[order].set_eps((SKL_REAL)tmp);
+    IC[order].set_eps((REAL_TYPE)tmp);
     
     if( !elmL2->GetValue("Omega", &tmp) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Omega' of %s in Criteria\n", key);
       assert(0);
     }
-    IC[order].set_omg((SKL_REAL)tmp);
+    IC[order].set_omg((REAL_TYPE)tmp);
     
 		if( !elmL2->GetValue("norm", &str) ) {
 			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Norm' of %s in Criteria\n", key);
@@ -1229,7 +1229,7 @@ void Control::getXML_ReferenceFrame(ReferenceFrame* RF)
   }
   else if ( !strcasecmp(str, "translational") ) {
     RF->setFrame(ReferenceFrame::frm_translation);
-    SKL_REAL xyz[3];
+    REAL_TYPE xyz[3];
     if ( !SklUtil::getVecParams(elmL1, "u", "v", "w", xyz) ) {
       Hostonly_ stamped_printf("\tParsing error : Missing param 'u', 'v', 'w' or Invalid values for Translational Reference_Frame\n");
       assert(0);
@@ -1498,7 +1498,7 @@ void Control::getXML_Average_option(void)
 {
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   if ( !(elmL1 = getXML_Pointer("Average_option", "steer")) ) assert(0);
   
@@ -1552,7 +1552,7 @@ void Control::getXML_LES_option(void)
 {
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   if ( !(elmL1 = getXML_Pointer("LES_Option", "steer")) ) assert(0);
   
@@ -1667,7 +1667,7 @@ void Control::getXML_FileIO(void)
 
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
-  SKL_REAL f_val=0.0;
+  REAL_TYPE f_val=0.0;
 
   if ( !(elmL1 = getXML_Pointer("File_IO", "steer")) ) assert(0);
 
@@ -2022,7 +2022,7 @@ void Control::getXML_PMtest(void)
 void Control::getXML_Scaling(void)
 {
   const CfgElem *elemTop=NULL;
-  SKL_REAL ct=0.0;
+  REAL_TYPE ct=0.0;
   Hide.Scaling_Factor = 1.0;
   
   elemTop = CF->GetTop(STEER);
@@ -2046,21 +2046,21 @@ void Control::getXML_InnerItr(void)
 }
 
 /**
- @fn SKL_REAL Control::getCellSize(unsigned* G_size)
+ @fn REAL_TYPE Control::getCellSize(unsigned* G_size)
  @brief 計算内部領域の全セル数を返す
  @param G_size 計算領域全体の分割数
  */
-SKL_REAL Control::getCellSize(unsigned* G_size)
+REAL_TYPE Control::getCellSize(unsigned* G_size)
 {
-  SKL_REAL cell_max=0.0;
+  REAL_TYPE cell_max=0.0;
   
   switch (NoDimension) {
     case 2:
-      cell_max = (SKL_REAL)G_size[0] * (SKL_REAL)G_size[1];
+      cell_max = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1];
       break;
       
     case 3:
-      cell_max = (SKL_REAL)G_size[0] * (SKL_REAL)G_size[1] * (SKL_REAL)G_size[2];
+      cell_max = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
       break;
   }
   return cell_max;
@@ -2081,13 +2081,13 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
     assert(0);
   }
   
-  SKL_REAL cell_max = getCellSize(G_size);
+  REAL_TYPE cell_max = getCellSize(G_size);
 
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Effective cells and Open Area of Computational Domain\n\n");
 
-  fprintf(fp,"\tFluid cell  inside whole Computational domain = %15d (%5.1f percent)\n", G_Fcell, (SKL_REAL)G_Fcell/cell_max *100.0);
-  fprintf(fp,"\tActive cell                                   = %15d (%5.1f percent)\n", G_Acell, (SKL_REAL)G_Acell/cell_max *100.0);
+  fprintf(fp,"\tFluid cell  inside whole Computational domain = %15d (%5.1f percent)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
+  fprintf(fp,"\tActive cell                                   = %15d (%5.1f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
   
   fprintf(fp,"\n\tFace :      Element (Open ratio)\n");
   for (unsigned i=0; i<NoDimension*2; i++) {
@@ -2294,7 +2294,7 @@ void Control::getXML_Para_Init(void)
 		Hostonly_ stamped_printf("\tParsing error : 3 Params should be found in Initial_State Velocity\n");
 		assert(0);
   }
-	SKL_REAL v[3];
+	REAL_TYPE v[3];
 	for (unsigned n=0; n<3; n++) v[n]=0.0;
 	if ( !(elmL2->GetVctValue("u", "v", "w", &v[0], &v[1], &v[2])) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get velocity params in 'Initial_State'\n");
@@ -2396,7 +2396,7 @@ void Control::getXML_Log(void)
 {
   const CfgElem *elmL1=NULL;
 	const char *str=NULL;
-  SKL_REAL f_val=0.0;
+  REAL_TYPE f_val=0.0;
   
   if ( !(elmL1 = getXML_Pointer("Log", "steer")) ) assert(0);
   
@@ -2577,7 +2577,7 @@ void Control::printParaConditions(FILE* fp)
   }
   fprintf(fp,"\n");
 
-  //SKL_REAL ay, ap;
+  //REAL_TYPE ay, ap;
   //ay = yaw/180.0*2.0*asin(1.0);
   //ap = pitch/180.0*2.0*asin(1.0);
   //fprintf(fp,"\tYaw   Angle               [rad]/[deg] : %12.5e / %12.5e\n", ay, yaw);
@@ -2612,7 +2612,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     assert(0);
   }
 
-  SKL_REAL dt = (SKL_REAL)DT->get_DT();
+  REAL_TYPE dt = (REAL_TYPE)DT->get_DT();
   bool  err=true;
   double itm=0.0;
 
@@ -2892,9 +2892,9 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   // Time Increment
-  SKL_REAL d_R = dh*dh*Reynolds/6.0; // 拡散数
-  SKL_REAL d_P = dh*dh*Peclet/6.0;   // 拡散数
-  SKL_REAL cfl = (SKL_REAL)DT->get_CFL();
+  REAL_TYPE d_R = dh*dh*Reynolds/6.0; // 拡散数
+  REAL_TYPE d_P = dh*dh*Peclet/6.0;   // 拡散数
+  REAL_TYPE cfl = (REAL_TYPE)DT->get_CFL();
   switch ( DT->get_Scheme() ) {
     case DTcntl::dt_direct:
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : Direct ", dt*Tscale, dt);
@@ -2931,14 +2931,14 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     }
     case DTcntl::dt_cfl_dfn_max_v:
     {
-      SKL_REAL a, b, c;
-      a = (SKL_REAL)DT->dtCFL(1.0);
-      b = (SKL_REAL)DT->dtDFN((double)Reynolds);
+      REAL_TYPE a, b, c;
+      a = (REAL_TYPE)DT->dtCFL(1.0);
+      b = (REAL_TYPE)DT->dtDFN((double)Reynolds);
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : CFL & Diffusion number with Maximum velocity (in case of v=1.0 for Ref.)\n", dt*Tscale, dt);
       fprintf(fp,"\t                              :             CFL number                    : %8.5f [-]\n", cfl);
       fprintf(fp,"\t                              :             dt restricted by Diffusion number (Reynolds)   : %8.5f [-]\n", d_R);
       if ( isHeatProblem() ) {
-        c = (SKL_REAL)DT->dtDFN((double)Peclet);
+        c = (REAL_TYPE)DT->dtDFN((double)Peclet);
         fprintf(fp,"\t                              :             dt restricted by Diffusion number (Peclet)     : %8.5f [-]\n", d_P);
       }
     }
@@ -3288,8 +3288,8 @@ void Control::printLS(FILE* fp, ItrCtl* IC)
  */
 void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF)
 {
-  SKL_REAL rho, nyu, cp, lambda, beta, mu, snd_spd=0.0;
-  SKL_REAL c1, c2, c3;
+  REAL_TYPE rho, nyu, cp, lambda, beta, mu, snd_spd=0.0;
+  REAL_TYPE c1, c2, c3;
   unsigned m;
 
   // get reference values
@@ -3452,7 +3452,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
   } // end of NoBC
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度
-  SKL_REAL a, vol;
+  REAL_TYPE a, vol;
   a = dh*RefLength;
   vol = a*a*a;
   
@@ -3460,17 +3460,17 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
     if ( cmp[n].getType()==HEAT_SRC ) {
       m = cmp[n].getMatOdr();
       if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt) {
-        cmp[n].set_HeatDensity( cmp[n].get_HeatValue() / ((SKL_REAL)cmp[n].getElement()*vol) );
+        cmp[n].set_HeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
       else { // 発熱密度
-        cmp[n].set_HeatValue( cmp[n].get_HeatDensity() * ((SKL_REAL)cmp[n].getElement()*vol) );
+        cmp[n].set_HeatValue( cmp[n].get_HeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
     }
   }
   
   // Darcy係数（単媒質）
   // C[0-2]; 有次元，C[3-5]; 無次元係数
-  SKL_REAL ki;
+  REAL_TYPE ki;
   for (int n=1; n<=NoBC; n++) {
     if ( cmp[n].getType()==DARCY ) {
       m = cmp[n].getMatOdr();
@@ -3482,7 +3482,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
   }
   
   // Pressure Loss
-  SKL_REAL DensityOfMedium, cf[6];
+  REAL_TYPE DensityOfMedium, cf[6];
   for (int n=1; n<=NoBC; n++) {
     if ( cmp[n].getType()==HEX ) {
       m = cmp[n].getMatOdr();
@@ -3654,14 +3654,14 @@ const char* Control::getVoxelFileName(void)
 }
 
 /**
- @fn void Control::convertHexCoef(SKL_REAL* cf, SKL_REAL Density)
+ @fn void Control::convertHexCoef(REAL_TYPE* cf, REAL_TYPE Density)
  @brief 熱交換器パラメータの変換（水と水銀）
  @param cf パラメータ値
  @param Density ヘッドの単位
  */
-void Control::convertHexCoef(SKL_REAL* cf, SKL_REAL Density)
+void Control::convertHexCoef(REAL_TYPE* cf, REAL_TYPE Density)
 {
-  SKL_REAL cc[6], s;
+  REAL_TYPE cc[6], s;
   
   s = (Density*RefLength*Gravity)/(RefDensity*cf[5]*1e-3);
   cc[0] = s*cf[0];                            // c1
@@ -3675,13 +3675,13 @@ void Control::convertHexCoef(SKL_REAL* cf, SKL_REAL Density)
 }
 
 /**
- @fn void Control::convertHexCoef(SKL_REAL* cf)
+ @fn void Control::convertHexCoef(REAL_TYPE* cf)
  @brief 熱交換器パラメータの変換（Pa）
  @param cf パラメータ値
  */
-void Control::convertHexCoef(SKL_REAL* cf)
+void Control::convertHexCoef(REAL_TYPE* cf)
 {
-  SKL_REAL cc[6], s;
+  REAL_TYPE cc[6], s;
   
   s = RefLength/(RefDensity*cf[5]*1e-3);
   cc[0] = s*cf[0];

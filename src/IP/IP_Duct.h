@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -20,8 +20,8 @@ protected:
   typedef struct {
     unsigned shape;
     int direction;
-    SKL_REAL diameter;
-    SKL_REAL length;
+    REAL_TYPE diameter;
+    REAL_TYPE length;
   } Driver_property;
   
   Driver_property driver;
@@ -43,8 +43,8 @@ public:
 public:
   virtual bool getXML(SklSolverConfig* CF, Control* R);
   
-  virtual void setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3]);
-  virtual void setup(int* mid, Control* R, SKL_REAL* G_org);
+  virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org);
   virtual void printPara(FILE* fp, Control* R);
   
   virtual const char* getExampleName(void) {

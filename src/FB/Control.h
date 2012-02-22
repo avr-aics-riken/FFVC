@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -70,7 +70,7 @@ public:
     unsigned Change_ID;
     unsigned Range_Limit;
     unsigned PM_Test;
-    SKL_REAL Scaling_Factor;
+    REAL_TYPE Scaling_Factor;
   } Hidden_Parameter;
   
   /// File IO control
@@ -85,19 +85,19 @@ public:
   typedef struct {
     unsigned Calc;
     unsigned Model;
-    SKL_REAL Cs;
-    SKL_REAL damping_factor;
+    REAL_TYPE Cs;
+    REAL_TYPE damping_factor;
   } LES_Parameter;
   
   // 初期値
   typedef struct {
-    SKL_REAL Density;
-    SKL_REAL Energy;
-    SKL_REAL Pressure;
-    SKL_REAL Temperature;
-    SKL_REAL VecU;
-    SKL_REAL VecV;
-    SKL_REAL VecW;
+    REAL_TYPE Density;
+    REAL_TYPE Energy;
+    REAL_TYPE Pressure;
+    REAL_TYPE Temperature;
+    REAL_TYPE VecU;
+    REAL_TYPE VecV;
+    REAL_TYPE VecW;
   } Initial_Value;
   
   // 単位
@@ -233,7 +233,7 @@ public:
             vxFormat,
             Wcell;
 	
-  SKL_REAL  BasePrs,
+  REAL_TYPE  BasePrs,
             BaseTemp,
             DiffTemp,
             dh,
@@ -416,8 +416,8 @@ protected:
   
   const CfgElem* getXML_Pointer(const char* key, string section);
   
-  void convertHexCoef        (SKL_REAL* cf);
-  void convertHexCoef        (SKL_REAL* cf, SKL_REAL DensityMode);
+  void convertHexCoef        (REAL_TYPE* cf);
+  void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
   void findXMLCriteria       (const CfgElem *elmL1, const char* key, unsigned order, ItrCtl* IC);
   void getXML_Algorithm      (void);
   void getXML_Average_option (void);
@@ -431,7 +431,7 @@ protected:
   void getXML_KindOfSolver   (const CfgElem *elmL1);
   void getXML_LES_option     (void);
   void getXML_Log            (void);
-  void getXML_Mon_Line       (MonitorList* M, const CfgElem *elmL2, SKL_REAL from[3], SKL_REAL to[3], int& nDivision);
+  void getXML_Mon_Line       (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
   void getXML_Mon_Pointset   (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
   void getXML_Para_ND        (void);
   void getXML_Para_Ref       (void);
@@ -461,8 +461,8 @@ public:
   
   const char* getVoxelFileName(void);
   
-  SKL_REAL getCellSize(unsigned* m_size);
-  SKL_REAL OpenDomainRatio(unsigned dir, SKL_REAL area, const unsigned Dims, unsigned* G_size);
+  REAL_TYPE getCellSize(unsigned* m_size);
+  REAL_TYPE OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
   void getXML_InnerItr          (void);
@@ -472,12 +472,12 @@ public:
   void getXML_Steer_1           (DTcntl* DT);
   void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
   void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
-  void printDomain              (FILE* fp, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx);
+  void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printDomain_debug        (void);
-  void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx);
+  void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
   void select_Itr_Impl          (ItrCtl* IC);
-  void setDomainInfo            (unsigned* m_sz, SKL_REAL* m_org, SKL_REAL* m_pch, SKL_REAL* m_wth);
+  void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
   void setParameters            (MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF);
   void tell_Avr_Interval_2_Sphere(void);
   void tell_Interval_2_Sphere   (void);
@@ -531,21 +531,21 @@ public:
     return ( CUT_INFO == Mode.ShapeAprx ) ? true : false;
   }
   
-  //@fn SKL_REAL getRcpPeclet(void) const
+  //@fn REAL_TYPE getRcpPeclet(void) const
   //@brief ペクレ数の逆数を計算
-  SKL_REAL getRcpPeclet(void) const {
+  REAL_TYPE getRcpPeclet(void) const {
     return ( 1.0 / Peclet );
   }
   
-  //@fn SKL_REAL getRcpReynolds(void) const
+  //@fn REAL_TYPE getRcpReynolds(void) const
   //@brief レイノルズ数の逆数を計算
-  SKL_REAL getRcpReynolds(void) const {
+  REAL_TYPE getRcpReynolds(void) const {
     return ( (Mode.PDE == PDE_NS) ? (1.0 / Reynolds) : 0.0 );
   }
 
-  //@fn void normalizeCord(SKL_REAL x[3])
+  //@fn void normalizeCord(REAL_TYPE x[3])
   //@brief 座標値を無次元化する
-  void normalizeCord(SKL_REAL x[3]) {
+  void normalizeCord(REAL_TYPE x[3]) {
     x[0] /= RefLength;
     x[1] /= RefLength;
     x[2] /= RefLength;

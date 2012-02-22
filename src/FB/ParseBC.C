@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -163,7 +163,7 @@ void ParseBC::getXML_Medium_InitTemp(void)
   int id;
   const char* p=NULL;
   unsigned Cell_state;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   // Check Model_Setting section
   elemTop = CF->GetTop(PARAMETER);
@@ -557,14 +557,14 @@ unsigned ParseBC::oppositDir(unsigned dir)
 }
 
 /**
- @fn void ParseBC::printCompoInfo(FILE* mp, FILE* fp, SKL_REAL* nv, int* gci, MaterialList* mat)
+ @fn void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
  @brief コンポーネントの情報を表示する
  @param mp 標準出力
  @param nv ボクセルモデルから計算した法線
  @param gci グローバルなコンポーネントのインデクス
  @param mat MaterialList
  */
-void ParseBC::printCompoInfo(FILE* mp, FILE* fp, SKL_REAL* nv, int* gci, MaterialList* mat)
+void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
 {
   if( !fp || !mp ) assert(0);
 
@@ -628,13 +628,13 @@ void ParseBC::setRefMedium(MaterialList* mat, Control* Cref)
 }
 
 /**
- @fn void ParseBC::printCompo(FILE* fp, SKL_REAL* nv, int* gci, MaterialList* mat)
+ @fn void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
  @brief コンポーネントの情報を表示する
  @param nv ボクセルモデルから計算した法線
  @param gci グローバルなコンポーネントのインデクス
  @param mat MaterialList
  */
-void ParseBC::printCompo(FILE* fp, SKL_REAL* nv, int* gci, MaterialList* mat)
+void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
 {
   unsigned n, m;
   bool flag;
@@ -1140,11 +1140,11 @@ void ParseBC::printCompo(FILE* fp, SKL_REAL* nv, int* gci, MaterialList* mat)
 }
 
 /**
- @fn void ParseBC::printOBCinfo(FILE* mp, FILE* fp, SKL_REAL* G_Lbx)
+ @fn void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
  @brief 外部境界を表示
  @param G_Lbx グローバルの領域の大きさ
  */
-void ParseBC::printOBCinfo(FILE* mp, FILE* fp, SKL_REAL* G_Lbx)
+void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
 {
   
 #ifdef DEBUG
@@ -1183,13 +1183,13 @@ void ParseBC::receiveCfgPtr(SklSolverConfig* cfg)
 }
 
 /**
- @fn void ParseBC::getUnitVec(SKL_REAL* v)
+ @fn void ParseBC::getUnitVec(REAL_TYPE* v)
  @brief 単位ベクトルを計算して戻す
  @param [in/out] v
  */
-void ParseBC::getUnitVec(SKL_REAL* v)
+void ParseBC::getUnitVec(REAL_TYPE* v)
 {
-	SKL_REAL a;
+	REAL_TYPE a;
 	
 	a = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 	if ( a > 0.0 ) {
@@ -1284,16 +1284,16 @@ void ParseBC::setControlVars(Control* Cref)
 }
 
 /**
- @fn void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref SKL_REAL* G_Lbx, unsigned face)
+ @fn void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref REAL_TYPE* G_Lbx, unsigned face)
  @brief 速度の外部境界条件処理の表示
  @param fp
  @param ref
  @param G_Lbx グローバルの領域の大きさ
  @param face 面番号
  */
-void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, SKL_REAL* G_Lbx, unsigned face)
+void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned face)
 {
-  SKL_REAL a, b, c;
+  REAL_TYPE a, b, c;
   
   fprintf(fp,"\t\t\tGuide Cell ID = %d / Medium = %d\n", ref->get_GuideID(), ref->get_GuideMedium());
   
@@ -1548,12 +1548,12 @@ void ParseBC::chkKeywordIBC(const char *keyword, unsigned m)
 }
 
 /**
- @fn void ParseBC::printFaceOBC(FILE* fp, SKL_REAL* G_Lbx)
+ @fn void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
  @brief 外部境界条件の各面の情報を表示する
  @param fp
  @param G_Lbx グローバルの領域の大きさ
  */
-void ParseBC::printFaceOBC(FILE* fp, SKL_REAL* G_Lbx)
+void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
 {
   for (unsigned i=0; i<NOFACE; i++) {
     fprintf(fp,"\t      Set %s up as %s : (%s)\n", Control::getDirection(i).c_str(), getOBCstr(bc[i].get_BCtype()).c_str(), OBCname[i]);
@@ -1712,8 +1712,8 @@ unsigned ParseBC::getXML_Vel_profile(const CfgElem *elmL, const char* err_str)
  */
 void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
 {
-  SKL_REAL vel, ct;
-  SKL_REAL v[3];
+  REAL_TYPE vel, ct;
+  REAL_TYPE v[3];
   const char* str=NULL;
   
   // 速度境界条件のタイプ
@@ -1805,7 +1805,7 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
 {
   const CfgParam* param=NULL;
 	const char *str=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
 
   if ( !strcasecmp(kind, "HeatTransfer_B") ) {
     BaseBc[n].set_HTmode(HT_B);
@@ -1891,8 +1891,8 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
  */
 void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
 {
-  SKL_REAL vel, ct;
-  SKL_REAL v[3];
+  REAL_TYPE vel, ct;
+  REAL_TYPE v[3];
   const char* str=NULL;
   
   // 速度境界条件のタイプ
@@ -1947,7 +1947,7 @@ void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
 }
 
 /**
- @fn void ParseBC::getXML_Vel_Params(const CfgElem *elmL, unsigned prof, SKL_REAL* ca, SKL_REAL vel, const char* err_str)
+ @fn void ParseBC::getXML_Vel_Params(const CfgElem *elmL, unsigned prof, REAL_TYPE* ca, REAL_TYPE vel, const char* err_str)
  @brief 速度のパラメータを取得する
  @param elmL 
  @param prof 速度プロファイル
@@ -1959,9 +1959,9 @@ void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
     - 速度プロファイルは単振動と一定値の場合で係数の保持パターンが異なる
     - 内部境界の場合には，流量指定と速度指定があるので分岐処理（未実装）
  */
-void ParseBC::getXML_Vel_Params(const CfgElem *elmL, unsigned prof, SKL_REAL* ca, SKL_REAL vel, const char* err_str)
+void ParseBC::getXML_Vel_Params(const CfgElem *elmL, unsigned prof, REAL_TYPE* ca, REAL_TYPE vel, const char* err_str)
 {
-  SKL_REAL ct=0.0;
+  REAL_TYPE ct=0.0;
 
   if ( prof == CompoList::vel_harmonic) {
     ca[CompoList::amplitude] = vel;
@@ -2007,7 +2007,7 @@ void ParseBC::getXML_Vel_Params(const CfgElem *elmL, unsigned prof, SKL_REAL* ca
  */
 void ParseBC::getXML_OBC_Trcfree(const CfgElem *elmL, unsigned n)
 {
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   BaseBc[n].set_pType(P_DIRICHLET);
   BaseBc[n].p = 0.0; // ゲージ圧zero 固定
@@ -2046,7 +2046,7 @@ void ParseBC::getXML_OBC_Trcfree(const CfgElem *elmL, unsigned n)
 */
 void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
 {
-  SKL_REAL ct;
+  REAL_TYPE ct;
   int def;
   const char* str=NULL;
   
@@ -2146,7 +2146,7 @@ void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
 void ParseBC::getXML_OBC_InOut(const CfgElem *elmL, unsigned n)
 {
 	const char *str=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   // 流出速度のタイプ
   if ( !elmL->GetValue(CfgIdt("velocity_type"), &str) ) {
@@ -2190,7 +2190,7 @@ void ParseBC::getXML_OBC_InOut(const CfgElem *elmL, unsigned n)
 void ParseBC::getXML_OBC_Outflow(const CfgElem *elmL, unsigned n)
 {
 	const char *str=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   // 圧力境界のタイプ  default
   BaseBc[n].set_pType(P_GRAD_ZERO);
@@ -2254,7 +2254,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
 {
   int def;
 	const char *str=NULL;
-  SKL_REAL ct;
+  REAL_TYPE ct;
   
   // 圧力境界のタイプ default
   compo[n].set_sw_P_BCtype( P_GRAD_ZERO );
@@ -2309,7 +2309,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
 void ParseBC::getXML_IBC_Periodic(const CfgElem *elmL, unsigned n)
 {
   int dir=0;
-  SKL_REAL ct=0.0;
+  REAL_TYPE ct=0.0;
   const char *str=NULL;
 
   // 上流側の方向
@@ -2363,9 +2363,9 @@ void ParseBC::getXML_IBC_Periodic(const CfgElem *elmL, unsigned n)
  */
 void ParseBC::getXML_IBC_SpecVel(const CfgElem *elmL, unsigned n)
 {
-  SKL_REAL ct, vel;
+  REAL_TYPE ct, vel;
   const char* str=NULL;
-  SKL_REAL v[3];
+  REAL_TYPE v[3];
   
   // 速度指定タイプ
   compo[n].set_sw_V_profile( getXML_Vel_profile(elmL, "InnerBoundary > Specified_Velocity") );
@@ -2526,7 +2526,7 @@ void ParseBC::getXML_IBC_HT_S(const CfgElem *elmL, unsigned n)
   compo[n].set_CoefHT( get_BCval_real(elmL, "Coef_of_Heat_Transfer") );
   
   // 表面温度
-  SKL_REAL st = get_BCval_real(elmL, "Surface_Temperature");
+  REAL_TYPE st = get_BCval_real(elmL, "Surface_Temperature");
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
@@ -2552,7 +2552,7 @@ void ParseBC::getXML_IBC_HT_SN(const CfgElem *elmL, unsigned n)
   }
   
   // 表面温度
-  SKL_REAL st = get_BCval_real(elmL, "Surface_Temperature");
+  REAL_TYPE st = get_BCval_real(elmL, "Surface_Temperature");
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   // 面指定
@@ -2611,7 +2611,7 @@ void ParseBC::getXML_IBC_HT_SF(const CfgElem *elmL, unsigned n)
   }
   
   // 表面温度
-  SKL_REAL st = get_BCval_real(elmL, "Surface_Temperature");
+  REAL_TYPE st = get_BCval_real(elmL, "Surface_Temperature");
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   // 面指定
@@ -2665,7 +2665,7 @@ void ParseBC::getXML_IBC_HT_B(const CfgElem *elmL, unsigned n)
   compo[n].set_CoefHT( get_BCval_real(elmL, "Coef_of_Heat_Transfer") );
 
   // バルク温度
-  SKL_REAL st = get_BCval_real(elmL, "Bulk_Temperature");
+  REAL_TYPE st = get_BCval_real(elmL, "Bulk_Temperature");
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
@@ -2689,7 +2689,7 @@ void ParseBC::getXML_IBC_IsoTherm(const CfgElem *elmL, unsigned n)
   }
   
   // 表面温度
-  SKL_REAL tmp = get_BCval_real(elmL, "temperature");
+  REAL_TYPE tmp = get_BCval_real(elmL, "temperature");
 	compo[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
 	
   // 面指定
@@ -2740,7 +2740,7 @@ void ParseBC::getXML_IBC_Radiant(const CfgElem *elmL, unsigned n)
  */
 void ParseBC::getXML_IBC_HeatSrc(const CfgElem *elmL, unsigned n)
 {
-  SKL_REAL hsrc=0.0f;
+  REAL_TYPE hsrc=0.0f;
   const char *str=NULL;
   
   // check number of Param
@@ -2799,7 +2799,7 @@ void ParseBC::getXML_IBC_CnstTemp(const CfgElem *elmL, unsigned n)
   }
   
   // 温度
-  SKL_REAL tmp = get_BCval_real(elmL, "temperature");
+  REAL_TYPE tmp = get_BCval_real(elmL, "temperature");
   compo[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
@@ -2886,7 +2886,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   const CfgParam* param=NULL;
   const char *pnt=NULL;
   const char *str=NULL;
-  SKL_REAL v[3];
+  REAL_TYPE v[3];
   
   // reference 
   if ( elmL->GetValue(CfgIdt("reference"), &pnt) ) {
@@ -2995,7 +2995,7 @@ void ParseBC::getDarcy(const CfgElem *elmL, unsigned n)
 {
   if ( !elmL ) assert(0);
   
-  SKL_REAL v[3];
+  REAL_TYPE v[3];
 	int d;
   
   for (unsigned n=0; n<3; n++) v[n]=0.0;
@@ -3025,7 +3025,7 @@ void ParseBC::getDarcy(const CfgElem *elmL, unsigned n)
 void ParseBC::getXML_IBC_IBM_DF(const CfgElem *elmL, unsigned n)
 {
 	int d;
-  SKL_REAL v[3];
+  REAL_TYPE v[3];
   
   // check number of Elem
   if ((d = elmL->GetParamSize()) != 4) {    
@@ -3038,7 +3038,7 @@ void ParseBC::getXML_IBC_IBM_DF(const CfgElem *elmL, unsigned n)
   compo[n].addVec(v);
   
   // Velocity
-  SKL_REAL ct = get_BCval_real(elmL, "Velocity");
+  REAL_TYPE ct = get_BCval_real(elmL, "Velocity");
   if ( Unit_Param == DIMENSIONAL ) {
     compo[n].set_Velocity( ct );
   }
@@ -3058,7 +3058,7 @@ void ParseBC::getXML_IBC_IBM_DF(const CfgElem *elmL, unsigned n)
 void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
 {
   const char *str=NULL, *str_u=NULL;
-  SKL_REAL v[3], ct;
+  REAL_TYPE v[3], ct;
   
   // check number of Elem
   if ( elmL->GetParamSize() != 11) {    
@@ -3125,7 +3125,7 @@ void ParseBC::getFan(const CfgElem *elmL, unsigned n)
   if ( !elmL ) assert(0);
   
   const CfgParam* param=NULL;
-  SKL_REAL hsrc=0.0f;
+  REAL_TYPE hsrc=0.0f;
   
   // check number of Param
   if (elmL->GetParamSize() != 1) {    
@@ -3153,7 +3153,7 @@ void ParseBC::getFan(const CfgElem *elmL, unsigned n)
   compo[n].set_HeatValue( hsrc );
   
   if ( Unit_Param == DIMENSIONAL ) {
-    compo[n].set_HeatDensity( hsrc*RefLength/(RefVelocity*(SKL_REAL)fabs(DiffTemp)) );
+    compo[n].set_HeatDensity( hsrc*RefLength/(RefVelocity*(REAL_TYPE)fabs(DiffTemp)) );
   }
   else {
     compo[n].set_HeatDensity( hsrc );
@@ -3576,17 +3576,17 @@ void ParseBC::set_Deface(const CfgElem *elmL, unsigned n, const char* str)
 }
 
 /**
- @fn SKL_REAL ParseBC::get_BCval_real(const CfgElem *elmL, const char* key)
- @brief 境界条件の値(SKL_REAL型)を取得し，返す
+ @fn REAL_TYPE ParseBC::get_BCval_real(const CfgElem *elmL, const char* key)
+ @brief 境界条件の値(REAL_TYPE型)を取得し，返す
  @param elmL
  @param key キーワード
  */
-SKL_REAL ParseBC::get_BCval_real(const CfgElem *elmL, const char* key)
+REAL_TYPE ParseBC::get_BCval_real(const CfgElem *elmL, const char* key)
 {
-  SKL_REAL df=0.0f;
+  REAL_TYPE df=0.0f;
   
   if ( !elmL->GetValue(key, &df) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid SKL_REAL value for '%s'\n", key);
+		Hostonly_ stamped_printf("\tParsing error : Invalid REAL_TYPE value for '%s'\n", key);
 		assert(0);
 	}
   return df;
@@ -3610,14 +3610,14 @@ int ParseBC::get_BCval_int(const CfgElem *elmL, const char* key)
 }
 
 /**
- @fn void ParseBC::get_Vec(const CfgElem *elmL, unsigned n, const char* str, SKL_REAL* v)
+ @fn void ParseBC::get_Vec(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
  @brief 内部境界条件のベクトル値を取得し，登録する
  @param elmL
  @param n オーダー
  @param v[out] ベクトルパラメータ
  @param str エラー表示用文字列
  */
-void ParseBC::get_Vec(const CfgElem *elmL, unsigned n, const char* str, SKL_REAL* v)
+void ParseBC::get_Vec(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
 {
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   

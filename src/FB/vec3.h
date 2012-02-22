@@ -4,14 +4,14 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
 //@file vec3.h
 //@brief FlowBase Vec3<T> class Header
 //@author T. Tawara and keno, FSI Team, VCAD, RIKEN
-//@note add Vec3r Vec3<SKL_REAL>
+//@note add Vec3r Vec3<REAL_TYPE>
 
 #include <iostream>
 #include <math.h>
@@ -225,7 +225,7 @@ public:
 typedef Vec3<unsigned char> Vec3uc;
 typedef Vec3<int> Vec3i;
 typedef Vec3<float> Vec3f;
-typedef Vec3<SKL_REAL> Vec3r;
+typedef Vec3<REAL_TYPE> Vec3r;
 
 //=========================================================================
 

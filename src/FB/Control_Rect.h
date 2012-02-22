@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -18,7 +18,7 @@ class ControlRect : public Control {
 public:
   unsigned jdim, kdim, ldim;
   int GhostPoints, InterfacialPoints;
-  SKL_REAL xdist, ydist, zdist;
+  REAL_TYPE xdist, ydist, zdist;
   
 public:
   ControlRect(){

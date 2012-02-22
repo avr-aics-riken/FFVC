@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -12,13 +12,13 @@
 #include "History.h"
 
 /**
- @fn void History::updateTimeStamp(const unsigned m_stp, const SKL_REAL m_tm, const SKL_REAL vMax)
+ @fn void History::updateTimeStamp(const unsigned m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax)
  @brief タイムスタンプの更新
  @param m_stp ステップ数
  @param m_tm 時刻
  @param vMax 速度最大値成分
  */
-void History::updateTimeStamp(const unsigned m_stp, const SKL_REAL m_tm, const SKL_REAL vMax)
+void History::updateTimeStamp(const unsigned m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax)
 {
   step  = m_stp;
   time  = m_tm;
@@ -36,7 +36,7 @@ void History::printHistoryItrTitle(FILE* fp) const
 }
 
 /**
- @fn void History::printHistoryItr(FILE* fp, const unsigned itr, const SKL_REAL nrm, const int* idx) const
+ @fn void History::printHistoryItr(FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx) const
  @brief コンポーネントモニタの履歴出力
  @param fp 出力ファイルポインタ
  @param itr 反復回数
@@ -44,7 +44,7 @@ void History::printHistoryItrTitle(FILE* fp) const
  @param div 発散の最大値
  @param idx divの最大値の発生セルインデクス
  */
-void History::printHistoryItr(FILE* fp, const unsigned itr, const SKL_REAL nrm, const int* idx) const
+void History::printHistoryItr(FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx) const
 {
 	fprintf(fp, "                                           %8d %13.6e (%12d, %12d, %12d)\n", itr+1, nrm, idx[0], idx[1], idx[2]);
 }
@@ -121,14 +121,14 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C) co
 }
 
 /**
- @fn void History::printHistory(FILE* fp, const SKL_REAL* delta, const ItrCtl* IC, const Control* C) const
+ @fn void History::printHistory(FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C) const
  @brief 標準履歴の出力
  @param fp 出力ファイルポインタ
  @param delta 1タイムステップの変化量と平均値　（0-pressure, 1-velocity, 2-temperature)
  @param IC ItrCtlクラスのポインタ
  @param C Controlクラスへのポインタ
  */
-void History::printHistory(FILE* fp, const SKL_REAL* delta, const ItrCtl* IC, const Control* C) const
+void History::printHistory(FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C) const
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
@@ -243,8 +243,8 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
  */
 void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C) const
 {
-  SKL_REAL c, pp, dr, dp;
-  const SKL_REAL p0 = RefDensity * RefVelocity * RefVelocity;
+  REAL_TYPE c, pp, dr, dp;
+  const REAL_TYPE p0 = RefDensity * RefVelocity * RefVelocity;
   
   fprintf(fp, "%8d %14.6e", step, printTime());
   
@@ -332,8 +332,8 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C) const
  */
 void History::printHistoryDomfx(FILE* fp, const Control* C) const
 {
-  const SKL_REAL sgn=-1.0;
-  SKL_REAL balance=0.0, s=1.0;
+  const REAL_TYPE sgn=-1.0;
+  REAL_TYPE balance=0.0, s=1.0;
   
   for (int i=0; i<NOFACE; i++) {
     s *= sgn;
@@ -373,14 +373,14 @@ void History::printHistoryWallTitle(FILE* fp) const
 }
 
 /**
- @fn void History::printHistoryWall(FILE* fp, SKL_REAL* range_Yp, SKL_REAL* range_Ut) const
+ @fn void History::printHistoryWall(FILE* fp, REAL_TYPE* range_Yp, REAL_TYPE* range_Ut) const
  @brief 壁面履歴の出力
  @param fp 出力ファイルポインタ
  @param range_Yp 壁座標の最小最大値
  @param range_Ut 摩擦速度の最小最大値
  @todo 有次元と無次元の表示
  */
-void History::printHistoryWall(FILE* fp, SKL_REAL* range_Yp, SKL_REAL* range_Ut) const
+void History::printHistoryWall(FILE* fp, REAL_TYPE* range_Yp, REAL_TYPE* range_Ut) const
 {
   fprintf(fp, "%8d %14.6e ", step, printTime() );
           

@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 20010-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 20010-2012
  *
  */
 
@@ -20,37 +20,37 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
   // Dimensions
-  SKL_REAL *v =NULL;    /// セルセンタ速度 v^n -> v^{n+1}
-  SKL_REAL *v0=NULL;    /// セルセンタ速度 v^nの保持
-  SKL_REAL *vc=NULL;    /// 疑似速度ベクトル
-  SKL_REAL *wv=NULL;    /// ワーク　陰解法の時の疑似速度ベクトル，射影ステップの境界条件
-  SKL_REAL *p =NULL;    /// 圧力 p^n -> p^{n+1}
-  SKL_REAL *p0=NULL;    /// 圧力 p^nの保持
-  SKL_REAL *src0=NULL;  /// Poissonのソース項0　速度境界を考慮
-  SKL_REAL *src1=NULL;  /// Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値
+  REAL_TYPE *v =NULL;    /// セルセンタ速度 v^n -> v^{n+1}
+  REAL_TYPE *v0=NULL;    /// セルセンタ速度 v^nの保持
+  REAL_TYPE *vc=NULL;    /// 疑似速度ベクトル
+  REAL_TYPE *wv=NULL;    /// ワーク　陰解法の時の疑似速度ベクトル，射影ステップの境界条件
+  REAL_TYPE *p =NULL;    /// 圧力 p^n -> p^{n+1}
+  REAL_TYPE *p0=NULL;    /// 圧力 p^nの保持
+  REAL_TYPE *src0=NULL;  /// Poissonのソース項0　速度境界を考慮
+  REAL_TYPE *src1=NULL;  /// Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値
   unsigned *bcd=NULL;   /// IDのビットフラグ
   unsigned *bcp=NULL;   /// 圧力のビットフラグ
   unsigned *bcv=NULL;   /// 速度のビットフラグ
-  SKL_REAL *wss=NULL;   /// ワーク　壁関数利用時のWSS，ベクトル出力時のテンポラリ
-  SKL_REAL *t0=NULL;    /// 温度 t^n 
-  SKL_REAL *vt=NULL;    /// 渦粘性係数
-  SKL_REAL *abf=NULL;   /// Adams-Bashforth用のワーク
+  REAL_TYPE *wss=NULL;   /// ワーク　壁関数利用時のWSS，ベクトル出力時のテンポラリ
+  REAL_TYPE *t0=NULL;    /// 温度 t^n 
+  REAL_TYPE *vt=NULL;    /// 渦粘性係数
+  REAL_TYPE *abf=NULL;   /// Adams-Bashforth用のワーク
   
   // local variables
-  SKL_REAL tm = SklGetTotalTime();    /// 計算開始からの積算時刻
-  SKL_REAL dt = SklGetDeltaT();       /// 時間積分幅
-  SKL_REAL flop_count;                /// 浮動小数演算数
-  SKL_REAL convergence=0.0;           /// 定常収束モニター量
-  SKL_REAL coef = C.dh / dt;          /// Poissonソース項の係数
-  SKL_REAL Re = C.Reynolds;           /// レイノルズ数
-  SKL_REAL rei = C.getRcpReynolds();  /// レイノルズ数の逆数
-  SKL_REAL b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
-  SKL_REAL half = 0.5;                /// 定数                          
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
-  SKL_REAL comm_size;                 /// 通信面1面あたりの通信量
+  REAL_TYPE tm = SklGetTotalTime();    /// 計算開始からの積算時刻
+  REAL_TYPE dt = SklGetDeltaT();       /// 時間積分幅
+  REAL_TYPE flop_count;                /// 浮動小数演算数
+  REAL_TYPE convergence=0.0;           /// 定常収束モニター量
+  REAL_TYPE coef = C.dh / dt;          /// Poissonソース項の係数
+  REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
+  REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
+  REAL_TYPE b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
+  REAL_TYPE half = 0.5;                /// 定数                          
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
+  REAL_TYPE comm_size;                 /// 通信面1面あたりの通信量
   int wall_prof = (int)C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = (int)C.CnvScheme;  /// 対流項スキーム
-  SKL_REAL clear_value = 0.0;
+  REAL_TYPE clear_value = 0.0;
   size_t d_size=0;
   
   comm_size = count_comm_size(size, 1);
@@ -238,7 +238,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // 浮力項
   if ( C.isHeatProblem() && (C.Mode.Buoyancy == BOUSSINESQ) ) {
     TIMING_start(tm_buoyancy);
-    SKL_REAL dgr = dt*C.Grashof*rei*rei;
+    REAL_TYPE dgr = dt*C.Grashof*rei*rei;
     flop_count = 3.0;
     Buoyancy(vc, dgr, t0, bcd, flop_count);
     TIMING_stop(tm_buoyancy, flop_count);
@@ -331,9 +331,9 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     
     if ( para_mng->IsParallel() ) {
       TIMING_start(tm_poi_src_comm);
-      SKL_REAL m_tmp = b2;
+      REAL_TYPE m_tmp = b2;
       para_mng->Allreduce(&m_tmp, &b2, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-      TIMING_stop(tm_poi_src_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+      TIMING_stop(tm_poi_src_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
   }
   
@@ -440,7 +440,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   if ( para_mng->IsParallel() ) {
     TIMING_start(tm_vectors_comm);
     dc_v->CommBndCell(guide);
-    TIMING_stop(tm_vectors_comm, 2*comm_size*(SKL_REAL)guide*3.0);
+    TIMING_stop(tm_vectors_comm, 2*comm_size*(REAL_TYPE)guide*3.0);
   }
   
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
@@ -466,7 +466,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     if ( para_mng->IsParallel() ) {
       TIMING_start(tm_LES_eddy_comm);
       if( !dc_vt->CommBndCell(guide) ) assert(0);
-      TIMING_stop(tm_LES_eddy_comm, comm_size*(SKL_REAL)guide);
+      TIMING_stop(tm_LES_eddy_comm, comm_size*(REAL_TYPE)guide);
     }
   }
   

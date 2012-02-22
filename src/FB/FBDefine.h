@@ -14,6 +14,14 @@
 
 #define FB_VERS 249
 
+// 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
+#ifndef REAL_TYPE_DOUBLE
+#define REAL_TYPE float
+#else
+#define REAL_TYPE double
+#endif // REAL_IS_FLOAT
+
+
 // precision
 #define SPH_SINGLE 4
 #define SPH_DOUBLE 8
@@ -248,7 +256,7 @@
 #define BIT_IS_SHIFT(a,b) ( ( (a >> b) & 0x1 ) ? true : false )
 
 // BCindex aの第bビットをREALにキャストして返す
-#define GET_SHIFT_F(a,b) ( (SKL_REAL)( (a>>b) & 0x1 ) )
+#define GET_SHIFT_F(a,b) ( (REAL_TYPE)( (a>>b) & 0x1 ) )
 
 // BCindexにエンコードされたFaceBCのインデクスを返す
 #define GET_FACE_BC(a,b) ( (a>>b) & MASK_5 )

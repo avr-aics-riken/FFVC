@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -248,26 +248,26 @@ SklSolverCBC::~SklSolverCBC() {
 
 }
 
-//@fn void swap_ptr_SKL_REAL(SKL_REAL* a, SKL_REAL* b)
+//@fn void swap_ptr_REAL_TYPE(REAL_TYPE* a, REAL_TYPE* b)
 //@brief ポインタを入れ換える
-void SklSolverCBC::swap_ptr_SKL_REAL(SKL_REAL* a, SKL_REAL* b)
+void SklSolverCBC::swap_ptr_REAL_TYPE(REAL_TYPE* a, REAL_TYPE* b)
 {
   if ( !a || !b ) assert(0);
-  SKL_REAL* c=NULL;
+  REAL_TYPE* c=NULL;
   c = a;
   a = b;
   b = c;
 }
 
 /**
- @fn void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, SKL_REAL& flop)
+ @fn void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, REAL_TYPE& flop)
  @brief 外部計算領域の各面における総流量と対流流出速度を計算する
  @param ptr BoundaryOuterクラスのポインタ
  @param R Controlクラスのポインタ
  @param flop
  @note 流出境界のみ和をとる，その他は既知
  */
-void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, SKL_REAL& flop)
+void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, REAL_TYPE& flop)
 {
   if ( !ptr ) assert(0);
   BoundaryOuter* obc=NULL;
@@ -275,10 +275,10 @@ void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, SKL_REAL& flop)
   obc = ptr;
   
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  SKL_REAL dh, ddh;
-  SKL_REAL vv[3], ec;
-  SKL_REAL u_sum, u_min, u_max, u_avr;
-  SKL_REAL tmp_sum, tmp_min, tmp_max;
+  REAL_TYPE dh, ddh;
+  REAL_TYPE vv[3], ec;
+  REAL_TYPE u_sum, u_min, u_max, u_avr;
+  REAL_TYPE tmp_sum, tmp_min, tmp_max;
   int ofv;
   
 	dh = R->dh;
@@ -290,7 +290,7 @@ void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, SKL_REAL& flop)
     ofv = obc[face].get_ofv();
     
     // OUTFLOW, SPEC_VELのときの有効セル数
-    ec = (SKL_REAL)obc[face].get_ValidCell();
+    ec = (REAL_TYPE)obc[face].get_ValidCell();
     
     // 各プロセスの外部領域面の速度をvv[]にコピー
     obc[face].getDomainV(vv);
@@ -554,16 +554,16 @@ void SklSolverCBC::set_timing_label(void)
 
 }
 
-//@fn void SklSolverCBC::Averaging_Time(SKL_REAL& flop)
+//@fn void SklSolverCBC::Averaging_Time(REAL_TYPE& flop)
 //@brief 時間平均操作を行う
-void SklSolverCBC::Averaging_Time(SKL_REAL& flop)
+void SklSolverCBC::Averaging_Time(REAL_TYPE& flop)
 {
   SklIncrementAverageStep();
   SklIncrementAverageTime();
   
-  SKL_REAL *p, *ap;
-  SKL_REAL *v, *av;
-  SKL_REAL *t, *at;
+  REAL_TYPE *p, *ap;
+  REAL_TYPE *v, *av;
+  REAL_TYPE *t, *at;
   p = ap = NULL;
   v = av = NULL;
   t = at = NULL;
@@ -583,19 +583,19 @@ void SklSolverCBC::Averaging_Time(SKL_REAL& flop)
   }
 }
 
-//@fn void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
+//@fn void SklSolverCBC::Averaging_Space(REAL_TYPE* avr, REAL_TYPE& flop)
 //@brief 空間平均操作と変動量の計算を行う
 //@param avr[out] 平均値と変動値
 //@param flop[out] 浮動小数演算数
 //@note スカラ値は算術平均，ベクトル値は自乗和
-void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
+void SklSolverCBC::Averaging_Space(REAL_TYPE* avr, REAL_TYPE& flop)
 {
-  SKL_REAL *v =NULL;
-  SKL_REAL *v0=NULL;
-  SKL_REAL *p =NULL;
-  SKL_REAL *p0=NULL;
-  SKL_REAL *t =NULL;
-  SKL_REAL *t0=NULL;
+  REAL_TYPE *v =NULL;
+  REAL_TYPE *v0=NULL;
+  REAL_TYPE *p =NULL;
+  REAL_TYPE *p0=NULL;
+  REAL_TYPE *t =NULL;
+  REAL_TYPE *t0=NULL;
   unsigned *bd=NULL;
   
   if( !(v  = dc_v->GetData()) )   assert(0);
@@ -609,7 +609,7 @@ void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
     if( !(t0 = dc_t0->GetData()) ) assert(0);
   }
   
-  SKL_REAL m_var[2];
+  REAL_TYPE m_var[2];
   
   // 速度
   fb_delta_v_(m_var, sz, gc, v, v0, (int*)bd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
@@ -630,17 +630,17 @@ void SklSolverCBC::Averaging_Space(SKL_REAL* avr, SKL_REAL& flop)
   
 }
 
-//@fn void SklSolverCBC::AverageOutput (unsigned mode, SKL_REAL& flop)
+//@fn void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
 //@brief 時間平均値のファイル出力
 //@param mode 強制出力
 //@param flop 浮動小数演算数
-void SklSolverCBC::AverageOutput (unsigned mode, SKL_REAL& flop)
+void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
 {
   bool forceFlag=false;
   bool correct_flag=false; // no correction
   unsigned guide_zero=0;  // for averaged fields
   unsigned stepAvr = SklGetAverageTotalStep();
-  SKL_REAL timeAvr;
+  REAL_TYPE timeAvr;
   
   if (C.Unit.File == DIMENSIONAL) {
     timeAvr = SklGetAverageTotalTime() * C.Tscale;
@@ -700,13 +700,13 @@ void SklSolverCBC::AverageOutput (unsigned mode, SKL_REAL& flop)
 }
 
 /**
- @fn void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
+ @fn void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
  @brief ファイル出力
  @param mode 強制出力
  @param flop 浮動小数点演算数
  @note dc_p0をワークとして使用
  */
-void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
+void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -714,7 +714,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
   bool forceFlag=false;
   bool correct_flag=false; // no correction
   unsigned step = SklGetTotalStep();
-  SKL_REAL time;
+  REAL_TYPE time;
 
   if (C.Unit.File == DIMENSIONAL) {
     time = SklGetTotalTime() * C.Tscale;
@@ -727,7 +727,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
   
   // Divergence デバッグ用なので無次元のみ
   if( m_outDiv ){
-    SKL_REAL coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
+    REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
     F.cnv_Div(dc_ws, dc_wk2, coef, flop);
     
     if( !WriteFile(m_outDiv, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
@@ -785,7 +785,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
   // Total Pressure
   if (C.Mode.TP == ON ) {
     if( m_outTP ){
-      SKL_REAL  *v, *p, *tp;
+      REAL_TYPE  *v, *p, *tp;
       if( !(v  = dc_v->GetData()) )   assert(0);
       if( !(p  = dc_p->GetData()) )   assert(0);
       if( !(tp = dc_p0->GetData()) )  assert(0);
@@ -809,7 +809,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
   // Vorticity
   if (C.Mode.VRT == ON ) {
     if( m_outVrt ){
-      SKL_REAL  *v, *wv, vz[3];
+      REAL_TYPE  *v, *wv, vz[3];
       unsigned *bcv=NULL;
       v = wv = NULL;
       
@@ -822,7 +822,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
       
       // convert non-dimensional to dimensional, iff file is dimensional
       if (C.Unit.File == DIMENSIONAL) {
-        SKL_REAL RefVL = C.RefVelocity/C.RefLength;
+        REAL_TYPE RefVL = C.RefVelocity/C.RefLength;
         F.cnv_V_ND2D(dc_wvex, dc_wv, vz, RefVL, flop);
       }
       else {
@@ -838,7 +838,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
   // 2nd Invariant of Velocity Gradient Tensor
   if (C.Mode.I2VGT == ON ) {
     if( m_outI2VGT ){
-      SKL_REAL  *v=NULL, *q=NULL;
+      REAL_TYPE  *v=NULL, *q=NULL;
       unsigned *bcv=NULL;
       
       if( !(v  = dc_v->GetData()) )   assert(0);
@@ -859,7 +859,7 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
   // Helicity
   if (C.Mode.Helicity == ON ) {
     if( m_outHlcty ){
-      SKL_REAL  *v=NULL, *q=NULL;
+      REAL_TYPE  *v=NULL, *q=NULL;
       unsigned *bcv=NULL;
       
       if( !(v  = dc_v->GetData()) )   assert(0);
@@ -890,27 +890,27 @@ void SklSolverCBC::FileOutput (unsigned mode, SKL_REAL& flop)
 }
 
 /**
- @fn void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
+ @fn void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
  @brief 線形ソルバーの選択実行
  @param IC ItrCtlクラス
  @param b2 ソースベクトルの自乗和
  */
-void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
+void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
 	
-	SKL_REAL omg, r;
-	SKL_REAL *p, *src0, *wkj, *p0, *src1;
+	REAL_TYPE omg, r;
+	REAL_TYPE *p, *src0, *wkj, *p0, *src1;
 	unsigned *bcp;
   int *idx3;
   unsigned *idx;
-  SKL_REAL flop_count=0.0;
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
-  SKL_REAL comm_size;              /// 通信面1面あたりの通信量
+  REAL_TYPE flop_count=0.0;
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
+  REAL_TYPE comm_size;              /// 通信面1面あたりの通信量
   unsigned int wait_num=0;
   int req[12];
   size_t d_size = 0;
-  SKL_REAL clear_value=0.0;
+  REAL_TYPE clear_value=0.0;
 	
 	p = src0 = src1 = wkj = p0 = NULL;
 	bcp = NULL;
@@ -983,9 +983,9 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
       // 残差の集約
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_poi_res_comm);
-        SKL_REAL tmp = r;
+        REAL_TYPE tmp = r;
         para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
 
       TIMING_stop(tm_poi_itr_sct_3, 0.0);
@@ -1041,9 +1041,9 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
       // 残差の集約
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_poi_res_comm);
-        SKL_REAL tmp = r;
+        REAL_TYPE tmp = r;
         para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
 
       TIMING_stop(tm_poi_itr_sct_3, 0.0);
@@ -1102,9 +1102,9 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
         // 残差の集約と同期処理
         if ( para_mng->IsParallel() ) {
           TIMING_start(tm_poi_res_comm);
-          SKL_REAL tmp = r;
+          REAL_TYPE tmp = r;
           para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-          TIMING_stop(tm_poi_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL)*0.5 ); // 双方向 x ノード数 check
+          TIMING_stop(tm_poi_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
           
           TIMING_start(tm_poi_comm);
           if (cm_mode == 0 ) {
@@ -1131,26 +1131,26 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, SKL_REAL b2)
   // 残差の保存 
   /// @note Control::p_res_l2_r/aのときのみ，それ以外はNorm_Poissonで計算
   if ( (IC->get_normType() == ItrCtl::p_res_l2_r) || (IC->get_normType() == ItrCtl::p_res_l2_a) ) {
-    SKL_REAL res_a = sqrt( r /(SKL_REAL)G_Acell ); // 残差のRMS
-    SKL_REAL bb  = sqrt( b2/(SKL_REAL)G_Acell ); // ソースベクトルのRMS
-    SKL_REAL res_r = ( bb == 0.0 ) ? res_a : res_a/bb;
-    SKL_REAL nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;
+    REAL_TYPE res_a = sqrt( r /(REAL_TYPE)G_Acell ); // 残差のRMS
+    REAL_TYPE bb  = sqrt( b2/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
+    REAL_TYPE res_r = ( bb == 0.0 ) ? res_a : res_a/bb;
+    REAL_TYPE nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;
     IC->set_normValue( nrm );
   }
 }
 
 /**
- @fn void SklSolverCBC::LS_Planar(ItrCtl* IC, SKL_REAL b2)
+ @fn void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
  @brief 線形ソルバーの選択実行
  @param IC ItrCtlクラス
  @param b2 ソースベクトルのL2ノルム
  */
-void SklSolverCBC::LS_Planar(ItrCtl* IC, SKL_REAL b2)
+void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-	SKL_REAL omg, r;
-	SKL_REAL *p, *ws, *p0;
+	REAL_TYPE omg, r;
+	REAL_TYPE *p, *ws, *p0;
   unsigned *bcv;
 	
 	p = ws = cut = p0 = NULL;
@@ -1199,16 +1199,16 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, SKL_REAL b2)
 }
 
 /**
- @fn SKL_REAL SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
+ @fn REAL_TYPE SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
  @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
  @retval 通信量(Byte)
  @param sz 配列サイズ
  @param guide ガイドセル
  */
-SKL_REAL SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
+REAL_TYPE SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  SKL_REAL c = 0.0;
+  REAL_TYPE c = 0.0;
   
   // 内部面のみをカウントする
   for (unsigned n=0; n<6; n++) {
@@ -1217,28 +1217,28 @@ SKL_REAL SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
       switch (n) {
         case X_MINUS:
         case X_PLUS:
-          c += (SKL_REAL)(sz[1]*sz[2]);
+          c += (REAL_TYPE)(sz[1]*sz[2]);
           break;
           
         case Y_MINUS:
         case Y_PLUS:
-          c += (SKL_REAL)(sz[0]*sz[2]);
+          c += (REAL_TYPE)(sz[0]*sz[2]);
           break;
           
         case Z_MINUS:
         case Z_PLUS:
-          c += (SKL_REAL)(sz[0]*sz[1]);
+          c += (REAL_TYPE)(sz[0]*sz[1]);
           break;
       }
     }
   }
   
   if( para_mng->IsParallel() ){
-    SKL_REAL tmp = c;
+    REAL_TYPE tmp = c;
     if ( !para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp) ) assert(0);
   }
   
-  return c*(SKL_REAL)sizeof(SKL_REAL); // Byte
+  return c*(REAL_TYPE)sizeof(REAL_TYPE); // Byte
 }
 
 /**
@@ -1250,22 +1250,22 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
 	
-	SKL_REAL *vc, *wv, *wk, *v, *p0, *v0, *vf0;
+	REAL_TYPE *vc, *wv, *wk, *v, *p0, *v0, *vf0;
 	unsigned *bcv, *bcd;
   unsigned int wait_num=0;
   int req[12];
 	
   vc = wv = wk = v = p0 = v0 = vf0 = NULL;
 	bcv = bcd = NULL;
-  SKL_REAL tm = SklGetTotalTime();   /// 計算開始からの積算時刻
-  SKL_REAL dt = SklGetDeltaT();      /// 時間積分幅
-  SKL_REAL omg = IC->get_omg();      /// 加速係数
-  SKL_REAL rei = C.getRcpReynolds(); /// レイノルズ数の逆数
-	SKL_REAL r = 0.0;                  /// 残差
-  SKL_REAL flop_count=0.0;           /// 浮動小数演算数
-  SKL_REAL half=0.5;                 /// 定数
-  SKL_REAL machine_epsilon = (C.Mode.Precision == SPH_SINGLE) ? SINGLE_EPSILON : DOUBLE_EPSILON;
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
+  REAL_TYPE tm = SklGetTotalTime();   /// 計算開始からの積算時刻
+  REAL_TYPE dt = SklGetDeltaT();      /// 時間積分幅
+  REAL_TYPE omg = IC->get_omg();      /// 加速係数
+  REAL_TYPE rei = C.getRcpReynolds(); /// レイノルズ数の逆数
+	REAL_TYPE r = 0.0;                  /// 残差
+  REAL_TYPE flop_count=0.0;           /// 浮動小数演算数
+  REAL_TYPE half=0.5;                 /// 定数
+  REAL_TYPE machine_epsilon = (C.Mode.Precision == SPH_SINGLE) ? SINGLE_EPSILON : DOUBLE_EPSILON;
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   
 	if( !(vc  = dc_vc->GetData()) )  assert(0);
 	if( !(wv  = dc_wv->GetData()) )  assert(0);
@@ -1288,7 +1288,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
     case JACOBI:
       TIMING_start(tm_pvec_cn_Jacobi);
       flop_count = 0.0;
-      //SklInitializeSKL_REAL(dc_vf0->GetData(), 0.0, dc_vf0->GetArrayLength());
+      //SklInitializeREAL_TYPE(dc_vf0->GetData(), 0.0, dc_vf0->GetArrayLength());
       fb_set_value_real_(dc_vf0->GetData(), dc_vf0->GetArrayLength(), 0.0);
       cbc_vis_cn_jcb_(vc, sz, gc, dh, &dt, v00, &rei, &omg, wv, (int*)bcv, wk, &half, &r, &flop_count); 
       TIMING_stop(tm_pvec_cn_Jacobi, flop_count);
@@ -1298,7 +1298,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
       TIMING_stop(tm_pvec_cn_mod, flop_count);
       
       TIMING_start(tm_copy_array);
-      CU.copy_SKL_REAL(vc, vf0, dc_vc->GetArrayLength());
+      CU.copy_REAL_TYPE(vc, vf0, dc_vc->GetArrayLength());
       TIMING_stop(tm_copy_array, 0.0);
       break;
       
@@ -1352,7 +1352,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
           if( !dc_vc->CommBndCell2(guide, wait_num, req) ) assert(0);
           para_mng->WaitAll(wait_num, req);
         }
-        TIMING_stop(tm_pvec_cn_comm, (SKL_REAL)sizeof(SKL_REAL)*2.0, 1);
+        TIMING_stop(tm_pvec_cn_comm, (REAL_TYPE)sizeof(REAL_TYPE)*2.0, 1);
         break;
     }
   }
@@ -1360,34 +1360,34 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   // Residual reduction
   if ( para_mng->IsParallel() ) {
     TIMING_start(tm_pvec_cn_res_comm);
-    SKL_REAL tmp = r;
+    REAL_TYPE tmp = r;
     para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // In fact, CN is MAX norm
-    TIMING_stop(tm_pvec_cn_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) );
+    TIMING_stop(tm_pvec_cn_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) );
   }
   
   // 残差の保存
-  IC->set_normValue( sqrt(r/(SKL_REAL)G_Acell) );
+  IC->set_normValue( sqrt(r/(REAL_TYPE)G_Acell) );
   
   TIMING_stop(tm_frctnl_stp_sct_8, 0.0);
   // <<< Fractional step subsection 8
 }*/
 
 /**
- @fn SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
+ @fn REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
  @brief Poissonのノルムを計算する
  @retval 収束値
  @param IC ItrCtlクラス
  @note src1に発散がストアされている
  */
-SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
+REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-  SKL_REAL nrm, rms, convergence, flop_count;
-  SKL_REAL coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
-  SKL_REAL tmp;
-  SKL_REAL *src1=NULL;  /// 発散値
+  REAL_TYPE nrm, rms, convergence, flop_count;
+  REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
+  REAL_TYPE tmp;
+  REAL_TYPE *src1=NULL;  /// 発散値
   unsigned *bcp=NULL;
   
   if( !(bcp = dc_bcp->GetData()) )  assert(0);
@@ -1407,7 +1407,7 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
         TIMING_start(tm_norm_comm);
         tmp = nrm;
         para_mng->Allreduce(&tmp, &nrm, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // 最大値
-        TIMING_stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
       convergence = nrm;
       IC->set_normValue( convergence );
@@ -1429,7 +1429,7 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
         TIMING_start(tm_norm_comm);
         tmp = rms;
         para_mng->Allreduce(&tmp, &rms, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 和
-        TIMING_stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
       convergence = sqrt(rms/np_f); //RMS
       IC->set_normValue( convergence );
@@ -1464,7 +1464,7 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
         para_mng->Allreduce(&tmp, &nrm, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // 最大値
         tmp = rms;
         para_mng->Allreduce(&tmp, &rms, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 和
-        TIMING_stop(tm_norm_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL)*2.0 ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数
       }
       rms = sqrt(rms/np_f); // RMS
       convergence = nrm; // ノルムは最大値を返す
@@ -1490,20 +1490,20 @@ SKL_REAL SklSolverCBC::Norm_Poisson(ItrCtl* IC)
 /* test用のコア fortranのcbc_psor()と等価
  インラインメソッドとマクロの実行性能比較テスト
 */
-SKL_REAL SklSolverCBC::PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop)
+REAL_TYPE SklSolverCBC::PSOR(REAL_TYPE* p, REAL_TYPE* src0, REAL_TYPE* src1, unsigned* bp, ItrCtl* IC, REAL_TYPE& flop)
 {
   int i,j,k;
   unsigned m_p, m_w, m_e, m_s, m_n, m_b, m_t;
-  SKL_REAL a_p, g_w, g_e, g_s, g_n, g_b, g_t;
-  SKL_REAL t_p, t_w, t_e, t_s, t_n, t_b, t_t;
-  SKL_REAL dd, dp, ss;
-  SKL_REAL omg;
-  SKL_REAL res; // 残差の自乗和
+  REAL_TYPE a_p, g_w, g_e, g_s, g_n, g_b, g_t;
+  REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
+  REAL_TYPE dd, dp, ss;
+  REAL_TYPE omg;
+  REAL_TYPE res; // 残差の自乗和
   unsigned register s;
 
   omg = IC->get_omg();
   res = 0.0;
-  flop += (SKL_REAL)(ixc*jxc*kxc)* 22.0;
+  flop += (REAL_TYPE)(ixc*jxc*kxc)* 22.0;
   
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
@@ -1541,7 +1541,7 @@ SKL_REAL SklSolverCBC::PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigne
         g_b = GET_SHIFT_F(s, BC_NDAG_B);
         g_t = GET_SHIFT_F(s, BC_NDAG_T);
         
-        dd = 1.0 / (SKL_REAL)( (s>>BC_DIAG) & 0x7 ); // 3bitを取り出す
+        dd = 1.0 / (REAL_TYPE)( (s>>BC_DIAG) & 0x7 ); // 3bitを取り出す
         ss = g_w * t_w  // west  
            + g_e * t_e  // east  
            + g_s * t_s  // south 
@@ -1561,20 +1561,20 @@ SKL_REAL SklSolverCBC::PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigne
 }
 
 
-SKL_REAL SklSolverCBC::PSOR2sma_core(SKL_REAL* p, int ip, int color, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop)
+REAL_TYPE SklSolverCBC::PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE* src0, REAL_TYPE* src1, unsigned* bp, ItrCtl* IC, REAL_TYPE& flop)
 {
   int i,j,k;
   unsigned m_p, m_w, m_e, m_s, m_n, m_b, m_t;
-  SKL_REAL a_p, g_w, g_e, g_s, g_n, g_b, g_t;
-  SKL_REAL t_p, t_w, t_e, t_s, t_n, t_b, t_t;
-  SKL_REAL dd, dp, ss;
-  SKL_REAL omg;
-  SKL_REAL res; // 残差の自乗和
+  REAL_TYPE a_p, g_w, g_e, g_s, g_n, g_b, g_t;
+  REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
+  REAL_TYPE dd, dp, ss;
+  REAL_TYPE omg;
+  REAL_TYPE res; // 残差の自乗和
   unsigned register s;
   
   omg = IC->get_omg();
   res = 0.0;
-  flop += (SKL_REAL)(ixc*jxc*kxc)* 22.0;
+  flop += (REAL_TYPE)(ixc*jxc*kxc)* 22.0;
   
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
@@ -1612,7 +1612,7 @@ SKL_REAL SklSolverCBC::PSOR2sma_core(SKL_REAL* p, int ip, int color, SKL_REAL* s
         g_b = GET_SHIFT_F(s, BC_NDAG_B);
         g_t = GET_SHIFT_F(s, BC_NDAG_T);
         
-        dd = 1.0 / (SKL_REAL)( (s>>BC_DIAG) & 0x7 ); // 3bitを取り出す
+        dd = 1.0 / (REAL_TYPE)( (s>>BC_DIAG) & 0x7 ); // 3bitを取り出す
         ss = g_w * t_w  // west  
            + g_e * t_e  // east  
            + g_s * t_s  // south 

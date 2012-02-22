@@ -51,14 +51,14 @@ void FBUtility::displayMemory(const char* mode, const unsigned long Memory, cons
  */
 void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp)
 {
-  const SKL_REAL mem = (SKL_REAL)Memory;
-  const SKL_REAL lmem= (SKL_REAL)l_memory;
-  const SKL_REAL KB = 1024.0;
-  const SKL_REAL MB = 1024.0*KB;
-  const SKL_REAL GB = 1024.0*MB;
-  const SKL_REAL TB = 1024.0*GB;
-  const SKL_REAL PB = 1024.0*TB;
-  const SKL_REAL factor = 1.05; // estimate 5% for addtional
+  const REAL_TYPE mem = (REAL_TYPE)Memory;
+  const REAL_TYPE lmem= (REAL_TYPE)l_memory;
+  const REAL_TYPE KB = 1024.0;
+  const REAL_TYPE MB = 1024.0*KB;
+  const REAL_TYPE GB = 1024.0*MB;
+  const REAL_TYPE TB = 1024.0*GB;
+  const REAL_TYPE PB = 1024.0*TB;
+  const REAL_TYPE factor = 1.05; // estimate 5% for addtional
 
   if ( !strcasecmp(mode,"prep") ) {
     fprintf (fp,"\t>> Memory required for Preprocessor : ");

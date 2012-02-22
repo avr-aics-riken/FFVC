@@ -2,8 +2,11 @@ Release Note
 
 	Intrinsic class ( Intrinsic Problem )
 	
-	2007-2011　 Copyright (c) RIKEN, Japan. All rights reserved.
+	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.1.6    22 Feb. 2012
+  - SKL_REAL >> REAL_TYPE in FBDefine.h
+  
 Ver 1.1.5    19 Sep. 2011
   - Polygonクラスを追加
   

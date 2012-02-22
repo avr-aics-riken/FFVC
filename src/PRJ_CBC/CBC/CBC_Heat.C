@@ -24,7 +24,7 @@
 #include "SklSolverCBC.h"
 
 /**
- @fn void SklSolverCBC::ps_ConvectionEE(SKL_REAL* tc, SKL_REAL dt, unsigned* bd, SKL_REAL* t0, SKL_REAL& flop)
+ @fn void SklSolverCBC::ps_ConvectionEE(REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 移流項のEuler陽解法による時間積分
  @param tc[in/out] 対流項の流束の和/部分段階の温度
  @param dt 時間積分幅
@@ -34,12 +34,12 @@
  @note
     - tc = t0 + dt/dh*sum_flux(n)
  */
-void SklSolverCBC::ps_ConvectionEE(SKL_REAL* tc, SKL_REAL dt, unsigned* bd, SKL_REAL* t0, SKL_REAL& flop)
+void SklSolverCBC::ps_ConvectionEE(REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop)
 {
   int i,j,k;
   unsigned register m;
   
-  flop += (SKL_REAL)(ixc*jxc*kxc*3);
+  flop += (REAL_TYPE)(ixc*jxc*kxc*3);
   
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
@@ -52,7 +52,7 @@ void SklSolverCBC::ps_ConvectionEE(SKL_REAL* tc, SKL_REAL dt, unsigned* bd, SKL_
 }
 
 /**
- @fn void SklSolverCBC::Buoyancy(SKL_REAL* v, SKL_REAL dgr, SKL_REAL* t, unsigned* bd, SKL_REAL& flop)
+ @fn void SklSolverCBC::Buoyancy(REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned* bd, REAL_TYPE& flop)
  @brief Boussinesq浮力項の計算
  @retval 浮動小数演算数
  @param v 速度
@@ -61,12 +61,12 @@ void SklSolverCBC::ps_ConvectionEE(SKL_REAL* tc, SKL_REAL dt, unsigned* bd, SKL_
  @param bd BCindex ID
  @param flop 浮動小数点演算数
  */
-void SklSolverCBC::Buoyancy(SKL_REAL* v, SKL_REAL dgr, SKL_REAL* t, unsigned* bd, SKL_REAL& flop)
+void SklSolverCBC::Buoyancy(REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned* bd, REAL_TYPE& flop)
 {
   int i,j,k;
   unsigned register m, l;
   
-  flop += (SKL_REAL)(ixc*jxc*kxc*2);
+  flop += (REAL_TYPE)(ixc*jxc*kxc*2);
   
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
@@ -88,19 +88,19 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-  SKL_REAL *t=NULL;             /// 温度 n+1 step
-  SKL_REAL *t0=NULL;             /// 温度 n step
-  SKL_REAL *qbc=NULL;           /// 境界条件の熱流束
-  SKL_REAL *ws=NULL;            /// 対流項のみの部分段階
+  REAL_TYPE *t=NULL;             /// 温度 n+1 step
+  REAL_TYPE *t0=NULL;             /// 温度 n step
+  REAL_TYPE *qbc=NULL;           /// 境界条件の熱流束
+  REAL_TYPE *ws=NULL;            /// 対流項のみの部分段階
   unsigned *bh2=NULL;           /// BCindex H2
-	SKL_REAL res=0.0;             /// 残差
-  SKL_REAL b2=0.0;              /// 反復式のソースベクトルのノルム
-  SKL_REAL flop_count=0.0;
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
-  SKL_REAL comm_size = count_comm_size(size, guide);       /// 通信面1面あたりの通信量
-  SKL_REAL dt = SklGetDeltaT(); /// 時間積分幅
-  SKL_REAL res_r =0.0;
-  SKL_REAL nrm = 0.0;
+	REAL_TYPE res=0.0;             /// 残差
+  REAL_TYPE b2=0.0;              /// 反復式のソースベクトルのノルム
+  REAL_TYPE flop_count=0.0;
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
+  REAL_TYPE comm_size = count_comm_size(size, guide);       /// 通信面1面あたりの通信量
+  REAL_TYPE dt = SklGetDeltaT(); /// 時間積分幅
+  REAL_TYPE res_r =0.0;
+  REAL_TYPE nrm = 0.0;
   
   unsigned int wait_num=0;
   int req[12];
@@ -134,20 +134,20 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_heat_update_comm);
         dc_t->CommBndCell(guide);
-        TIMING_stop(tm_heat_update_comm, comm_size*(SKL_REAL)guide);
+        TIMING_stop(tm_heat_update_comm, comm_size*(REAL_TYPE)guide);
       }
       
       // 残差の集約
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_heat_diff_res_comm);
-        SKL_REAL tmp_wk[2], m_tmp[2];
+        REAL_TYPE tmp_wk[2], m_tmp[2];
         tmp_wk[0] = m_tmp[0] = res;
         tmp_wk[1] = m_tmp[1] = b2;
         para_mng->Allreduce(tmp_wk, m_tmp, 2, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING_stop( tm_heat_diff_res_comm, 2.0*np_f*2.0*(SKL_REAL)sizeof(SKL_REAL) );
+        TIMING_stop( tm_heat_diff_res_comm, 2.0*np_f*2.0*(REAL_TYPE)sizeof(REAL_TYPE) );
         
-        res = sqrt( m_tmp[0]/(SKL_REAL)G_Acell ); // 残差のRMS
-        b2  = sqrt( m_tmp[1]/(SKL_REAL)G_Acell ); // ソースベクトルのRMS
+        res = sqrt( m_tmp[0]/(REAL_TYPE)G_Acell ); // 残差のRMS
+        b2  = sqrt( m_tmp[1]/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
       }
       
       // 残差の保存
@@ -167,7 +167,7 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
 }
 
 /**
- @fn SKL_REAL SklSolverCBC::ps_Diff_SM_EE(SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, unsigned* bx, SKL_REAL* ws, SKL_REAL& flop)
+ @fn REAL_TYPE SklSolverCBC::ps_Diff_SM_EE(REAL_TYPE* t, REAL_TYPE dt, REAL_TYPE* qbc, unsigned* bx, REAL_TYPE* ws, REAL_TYPE& flop)
  @brief 単媒質に対する熱伝導方程式をEuler陽解法で解く
  @retval 拡散項の変化量Δθの絶対値
  @param t n+1時刻の温度場
@@ -177,20 +177,20 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
  @param ws 部分段階の温度
  @param flop 浮動小数点演算数
  */
-SKL_REAL SklSolverCBC::ps_Diff_SM_EE(SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, SKL_REAL& flop)
+REAL_TYPE SklSolverCBC::ps_Diff_SM_EE(REAL_TYPE* t, REAL_TYPE dt, REAL_TYPE* qbc, unsigned* bh2, REAL_TYPE* ws, REAL_TYPE& flop)
 {
   int i, j, k;
   unsigned m_p, m_w, m_e, m_s, m_n, m_b, m_t;
-  SKL_REAL g_p, g_w, g_e, g_s, g_n, g_b, g_t;
-  SKL_REAL t_p, t_w, t_e, t_s, t_n, t_b, t_t;
-  SKL_REAL      a_w, a_e, a_s, a_n, a_b, a_t;
-  SKL_REAL dth1, dth2, delta, res;
+  REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
+  REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
+  REAL_TYPE      a_w, a_e, a_s, a_n, a_b, a_t;
+  REAL_TYPE dth1, dth2, delta, res;
   unsigned register s;
 
   dth1 = dt/C.dh;
   dth2 = dth1*C.getRcpPeclet()/C.dh;
   res  = 0.0;
-  flop += (SKL_REAL)(ixc*jxc*kxc)* 50.0;
+  flop += (REAL_TYPE)(ixc*jxc*kxc)* 50.0;
 
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
@@ -227,7 +227,7 @@ SKL_REAL SklSolverCBC::ps_Diff_SM_EE(SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, un
         a_b = GET_SHIFT_F(s, ADIABATIC_B);
         a_t = GET_SHIFT_F(s, ADIABATIC_T);
         
-        g_p = (SKL_REAL)( (s>>H_DIAG) & 0x7 ); // 3bitを取り出す
+        g_p = (REAL_TYPE)( (s>>H_DIAG) & 0x7 ); // 3bitを取り出す
 
         delta = (dth2*( g_w * a_w * t_w  // west  
                       + g_e * a_e * t_e  // east  
@@ -254,7 +254,7 @@ SKL_REAL SklSolverCBC::ps_Diff_SM_EE(SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, un
 }
 
 /**
- @fn SKL_REAL SklSolverCBC::ps_Diff_SM_PSOR(SKL_REAL* t, SKL_REAL& b2, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, ItrCtl* IC, SKL_REAL& flop)
+ @fn REAL_TYPE SklSolverCBC::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, REAL_TYPE dt, REAL_TYPE* qbc, unsigned* bh2, REAL_TYPE* ws, ItrCtl* IC, REAL_TYPE& flop)
  @brief 単媒質に対する熱伝導方程式をEuler陰解法で解く
  @retval ローカルノードの変化量の自乗和
  @param t n+1時刻の温度場
@@ -268,24 +268,24 @@ SKL_REAL SklSolverCBC::ps_Diff_SM_EE(SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, un
  @todo 
     - 残差確認，並列時と逐次の比較
  */
-SKL_REAL SklSolverCBC::ps_Diff_SM_PSOR(SKL_REAL* t, SKL_REAL& b2, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, ItrCtl* IC, SKL_REAL& flop)
+REAL_TYPE SklSolverCBC::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, REAL_TYPE dt, REAL_TYPE* qbc, unsigned* bh2, REAL_TYPE* ws, ItrCtl* IC, REAL_TYPE& flop)
 {
   int i,j,k;
   unsigned m_p, m_w, m_e, m_s, m_n, m_b, m_t;
-  SKL_REAL g_p, g_w, g_e, g_s, g_n, g_b, g_t;
-  SKL_REAL t_p, t_w, t_e, t_s, t_n, t_b, t_t;
-  SKL_REAL a_p, a_w, a_e, a_s, a_n, a_b, a_t;
-  SKL_REAL dth1, dth2;
-  SKL_REAL s0, dd, delta, sb;
-  SKL_REAL omg;
-  SKL_REAL res; // 残差の自乗和
+  REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
+  REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
+  REAL_TYPE a_p, a_w, a_e, a_s, a_n, a_b, a_t;
+  REAL_TYPE dth1, dth2;
+  REAL_TYPE s0, dd, delta, sb;
+  REAL_TYPE omg;
+  REAL_TYPE res; // 残差の自乗和
   unsigned register s;
 
   dth1 = dt/C.dh;
   dth2 = dth1*C.getRcpPeclet()/C.dh;
   omg = IC->get_omg();
   res = b2 = 0.0;
-  flop += (SKL_REAL)(ixc*jxc*kxc)* 58.0;
+  flop += (REAL_TYPE)(ixc*jxc*kxc)* 58.0;
 
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
@@ -322,7 +322,7 @@ SKL_REAL SklSolverCBC::ps_Diff_SM_PSOR(SKL_REAL* t, SKL_REAL& b2, SKL_REAL dt, S
         a_b = GET_SHIFT_F(s, ADIABATIC_B);
         a_t = GET_SHIFT_F(s, ADIABATIC_T);
 
-        g_p = (SKL_REAL)( (s>>H_DIAG) & 0x7 ); // 3bitを取り出す
+        g_p = (REAL_TYPE)( (s>>H_DIAG) & 0x7 ); // 3bitを取り出す
         dd = 1.0 / (1.0 + dth2*g_p);
         
         sb = -dth1*(-(1.0-g_w)*a_w * qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )]

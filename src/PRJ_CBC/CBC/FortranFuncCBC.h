@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -9,7 +9,7 @@
 //@brief SklSolverCBC class
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Skl.h"
+#include "FBDefine.h"
 
 #ifndef _SKL_FORTRAN_FUNC_CBC_H_
 #define _SKL_FORTRAN_FUNC_CBC_H_
@@ -109,132 +109,132 @@
 
 extern "C" {
   // cbc_poisson.f90
-  void cbc_div_cnst_        (SKL_REAL* dv, int* sz, int* g, SKL_REAL* b2, int* bp, SKL_REAL* flop);
-  void cbc_jacobi_          (SKL_REAL* p,  int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, SKL_REAL* s1, 
-                             int* bp, SKL_REAL* wk, SKL_REAL* flop);
-  void cbc_jacobi_if_       (SKL_REAL* p,  int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, SKL_REAL* s1, 
-                             int* bp, SKL_REAL* wk, SKL_REAL* flop);
-  void cbc_psor_            (SKL_REAL* p,  int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, SKL_REAL* s1, 
-                             int* bp, SKL_REAL* flop);
-  void cbc_psor_if_         (SKL_REAL* p,  int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, SKL_REAL* s1, 
-                             int* bp, SKL_REAL* flop);
-  void cbc_psor_index3_     (SKL_REAL* p,  int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, SKL_REAL* s1, 
-                             int* bp, int* index, int* idx_sz, SKL_REAL* flop);
-  void cbc_psor_index_      (SKL_REAL* p,  int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, SKL_REAL* s1, 
-                             int* bp, int* index, int* idx_sz, SKL_REAL* flop);
-  void cbc_psor2sma_core_   (SKL_REAL* p,  int* sz, int* g, int* ip, int* color, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, 
-                             SKL_REAL* s1, int* bp, SKL_REAL* flop);
-	void cbc_psor2sma_core_if_(SKL_REAL* p,  int* sz, int* g, int* ip, int* color, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* s0, 
-                             SKL_REAL* s1, int* bp, SKL_REAL* flop);
-  void cbc_sma_comm_        (SKL_REAL* p, int* sz, int* g, int* col, int* ip, int* cf_sz, SKL_REAL* cf_x, SKL_REAL* cf_y, 
-                             SKL_REAL* cf_z, int* key, int* para_key);
-  void cbc_sma_comm_wait_   (SKL_REAL* p, int* sz, int* g, int* col, int* ip, int* cf_sz, SKL_REAL* cf_x, SKL_REAL* cf_y, 
-                             SKL_REAL* cf_z, int* key);
+  void cbc_div_cnst_        (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* b2, int* bp, REAL_TYPE* flop);
+  void cbc_jacobi_          (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+                             int* bp, REAL_TYPE* wk, REAL_TYPE* flop);
+  void cbc_jacobi_if_       (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+                             int* bp, REAL_TYPE* wk, REAL_TYPE* flop);
+  void cbc_psor_            (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+                             int* bp, REAL_TYPE* flop);
+  void cbc_psor_if_         (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+                             int* bp, REAL_TYPE* flop);
+  void cbc_psor_index3_     (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+                             int* bp, int* index, int* idx_sz, REAL_TYPE* flop);
+  void cbc_psor_index_      (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+                             int* bp, int* index, int* idx_sz, REAL_TYPE* flop);
+  void cbc_psor2sma_core_   (REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
+                             REAL_TYPE* s1, int* bp, REAL_TYPE* flop);
+	void cbc_psor2sma_core_if_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
+                             REAL_TYPE* s1, int* bp, REAL_TYPE* flop);
+  void cbc_sma_comm_        (REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
+                             REAL_TYPE* cf_z, int* key, int* para_key);
+  void cbc_sma_comm_wait_   (REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
+                             REAL_TYPE* cf_z, int* key);
   
   // cbc_utility.f90
-  void cbc_norm_v_div_dbg_ (SKL_REAL* ds, SKL_REAL* rm, int* index, int* sz, int* g, SKL_REAL* div, SKL_REAL* coef, int* bp, SKL_REAL* flop);
-  void cbc_norm_v_div_l2_  (SKL_REAL* rms,   int* sz, int* g, SKL_REAL* div, SKL_REAL* coef, int* bp, SKL_REAL* flop);
-  void cbc_norm_v_div_max_ (SKL_REAL* ds,    int* sz, int* g, SKL_REAL* div, SKL_REAL* coef, int* bp, SKL_REAL* flop);
-  void cbc_helicity_       (SKL_REAL* ht,    int* sz, int* g, SKL_REAL* dh, SKL_REAL* v, int* bv, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_i2vgt_          (SKL_REAL* q,     int* sz, int* g, SKL_REAL* dh, SKL_REAL* v, int* bv, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_rot_v_          (SKL_REAL* rot,   int* sz, int* g, SKL_REAL* dh, SKL_REAL* v, int* bv, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_vmax_           (SKL_REAL* v_max, int* sz, int* g, SKL_REAL* v00, SKL_REAL* v, SKL_REAL* flop);
+  void cbc_norm_v_div_dbg_ (REAL_TYPE* ds, REAL_TYPE* rm, int* index, int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, REAL_TYPE* flop);
+  void cbc_norm_v_div_l2_  (REAL_TYPE* rms,   int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, REAL_TYPE* flop);
+  void cbc_norm_v_div_max_ (REAL_TYPE* ds,    int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, REAL_TYPE* flop);
+  void cbc_helicity_       (REAL_TYPE* ht,    int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_i2vgt_          (REAL_TYPE* q,     int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_rot_v_          (REAL_TYPE* rot,   int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_vmax_           (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* flop);
   
   // BCvec_cc.f90
-  void cbc_vibc_drchlt_       (SKL_REAL* v, int* sz, int* g, int* st, int* ed, SKL_REAL* v00, int* bv, int* odr, SKL_REAL* vec);
-  void cbc_vibc_outflow_      (SKL_REAL* vc,int* sz, int* g, int* st, int* ed, int* bv, int* odr);
-  void cbc_pvec_vibc_specv_   (SKL_REAL* wv, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
-                               int* bv, int* odr, SKL_REAL* vec, int* v_mode, SKL_REAL* flop);
-  void cbc_pvec_vibc_oflow_   (SKL_REAL* wv, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
-                               int* bv, int* odr, SKL_REAL* vec, int* v_mode, SKL_REAL* flop);
-  void cbc_pvec_vobc_specv_   (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
-                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
-  void cbc_pvec_vobc_oflow_   (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
-                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
-  void cbc_pvec_vobc_wall_    (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
-                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
-  void cbc_pvec_vobc_symtrc_  (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v,
-                               int* bv, SKL_REAL* vec, int* v_mode, int* face, SKL_REAL* flop);
-  void cbc_vobc_drchlt_       (SKL_REAL* v, int* sz, int* g, SKL_REAL* v00, int* bv, int* face, SKL_REAL* vec);
-  void cbc_vobc_outflow_      (SKL_REAL* v, int* sz, int* g, SKL_REAL* c, int* bv, int* face, SKL_REAL* v0, SKL_REAL* flop);
-  void cbc_vobc_tfree_        (SKL_REAL* v, int* sz, int* g, int* face, int* bv, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_vobc_update_       (SKL_REAL* v, int* sz, int* g, SKL_REAL*vc, int* face);
-  void cbc_div_ibc_drchlt_    (SKL_REAL* div, int* sz, int* g, int* st, int* ed, SKL_REAL* v00, SKL_REAL* coef, int* bv, int* odr, 
-                               SKL_REAL* vec, SKL_REAL* flop);
-  void cbc_div_ibc_oflow_pvec_(SKL_REAL* div, int* sz, int* g, int* st, int* ed, SKL_REAL* v00, SKL_REAL* v_cnv, SKL_REAL* coef, 
-                               int* bv, int* odr, SKL_REAL* v0, SKL_REAL* flop);
-  void cbc_div_ibc_oflow_vec_ (SKL_REAL* div, int* sz, int* g, int* st, int* ed, SKL_REAL* v00, SKL_REAL* coef, int* bv, int* odr, 
-                               SKL_REAL* avr, SKL_REAL* flop);
-  void cbc_div_obc_drchlt_    (SKL_REAL* div, int* sz, int* g, int* face, SKL_REAL* v00, SKL_REAL* coef, int* bv, SKL_REAL* vec, SKL_REAL* flop);
-  void cbc_div_obc_oflow_pvec_(SKL_REAL* div, int* sz, int* g, int* face, SKL_REAL* v00, SKL_REAL* v_out, SKL_REAL* coef, int* bv, 
-                               SKL_REAL* v0, SKL_REAL* flop);
-  //void cbc_div_obc_oflow_pvec_(SKL_REAL* div, int* sz, int* g, int* face, SKL_REAL* v00, SKL_REAL* coef, int* bv, SKL_REAL* v0, SKL_REAL* flop);
-  void cbc_div_obc_oflow_vec_ (SKL_REAL* div, int* sz, int* g, int* face, SKL_REAL* v00, SKL_REAL* coef, int* bv, SKL_REAL* aa, SKL_REAL* flop);
+  void cbc_vibc_drchlt_       (REAL_TYPE* v, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, int* bv, int* odr, REAL_TYPE* vec);
+  void cbc_vibc_outflow_      (REAL_TYPE* vc,int* sz, int* g, int* st, int* ed, int* bv, int* odr);
+  void cbc_pvec_vibc_specv_   (REAL_TYPE* wv, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
+                               int* bv, int* odr, REAL_TYPE* vec, int* v_mode, REAL_TYPE* flop);
+  void cbc_pvec_vibc_oflow_   (REAL_TYPE* wv, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
+                               int* bv, int* odr, REAL_TYPE* vec, int* v_mode, REAL_TYPE* flop);
+  void cbc_pvec_vobc_specv_   (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
+                               int* bv, REAL_TYPE* vec, int* v_mode, int* face, REAL_TYPE* flop);
+  void cbc_pvec_vobc_oflow_   (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
+                               int* bv, REAL_TYPE* vec, int* v_mode, int* face, REAL_TYPE* flop);
+  void cbc_pvec_vobc_wall_    (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
+                               int* bv, REAL_TYPE* vec, int* v_mode, int* face, REAL_TYPE* flop);
+  void cbc_pvec_vobc_symtrc_  (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
+                               int* bv, REAL_TYPE* vec, int* v_mode, int* face, REAL_TYPE* flop);
+  void cbc_vobc_drchlt_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* v00, int* bv, int* face, REAL_TYPE* vec);
+  void cbc_vobc_outflow_      (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* c, int* bv, int* face, REAL_TYPE* v0, REAL_TYPE* flop);
+  void cbc_vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, int* bv, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_vobc_update_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE*vc, int* face);
+  void cbc_div_ibc_drchlt_    (REAL_TYPE* div, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, int* odr, 
+                               REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_div_ibc_oflow_pvec_(REAL_TYPE* div, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, REAL_TYPE* v_cnv, REAL_TYPE* coef, 
+                               int* bv, int* odr, REAL_TYPE* v0, REAL_TYPE* flop);
+  void cbc_div_ibc_oflow_vec_ (REAL_TYPE* div, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, int* odr, 
+                               REAL_TYPE* avr, REAL_TYPE* flop);
+  void cbc_div_obc_drchlt_    (REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_div_obc_oflow_pvec_(REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* v_out, REAL_TYPE* coef, int* bv, 
+                               REAL_TYPE* v0, REAL_TYPE* flop);
+  //void cbc_div_obc_oflow_pvec_(REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, REAL_TYPE* v0, REAL_TYPE* flop);
+  void cbc_div_obc_oflow_vec_ (REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, REAL_TYPE* aa, REAL_TYPE* flop);
   
   // BCprs_cc.f90
-  void cbc_pobc_drchlt_  (SKL_REAL* p, int* sz, int* g, int* face, SKL_REAL* pv);
-  void cbc_pobc_neumann_ (SKL_REAL* p, int* sz, int* g, int* face);
+  void cbc_pobc_drchlt_  (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* pv);
+  void cbc_pobc_neumann_ (REAL_TYPE* p, int* sz, int* g, int* face);
   
   // cbc_3d.f90
-  void cbc_ab2_               (SKL_REAL* vc, int* sz, int* g, SKL_REAL* dt, SKL_REAL* v, SKL_REAL* ab, int* bd, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_div_               (SKL_REAL* dv, int* sz, int* g, SKL_REAL* coef, SKL_REAL* vc, int* bv, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_eddy_viscosity_    (SKL_REAL* vt, int* sz, int* g, SKL_REAL* dh, SKL_REAL* re, SKL_REAL* cs, SKL_REAL* v, int* bx, 
-                               SKL_REAL* vt_range, SKL_REAL* yp_range, SKL_REAL* v00);
-  void cbc_ee_                (SKL_REAL* vc, int* sz, int* g, SKL_REAL* dt, SKL_REAL* v, int* bd, SKL_REAL* flop);
-  void cbc_friction_velocity_ (SKL_REAL* ut, int* sz, int* g, SKL_REAL* dh, SKL_REAL* re, SKL_REAL* v, int* bp, 
-                               SKL_REAL* range_Yp, SKL_REAL* range_Ut, SKL_REAL* v00, SKL_REAL* flop);
-  void cbc_pvec_muscl_        (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, int* c_scheme, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
-                               int* bv, int* bp, int* v_mode, SKL_REAL* ut, int* wall_type, SKL_REAL* flop);
-  void cbc_update_vec_        (SKL_REAL* v, SKL_REAL* div, int* sz, int* g, SKL_REAL* dt, SKL_REAL* dh, SKL_REAL* vc, SKL_REAL* p, int* bp, int* bv, 
-                               SKL_REAL* v00, SKL_REAL* coef, SKL_REAL* flop);
-  void cbc_vis_cn_jcb_        (SKL_REAL* vc, int* sz, int* g, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, 
-                               SKL_REAL* omg, SKL_REAL* wv, int* bx, SKL_REAL* wk, SKL_REAL* coef, SKL_REAL* res, SKL_REAL* flop);
-  void cbc_vis_cn_mod_jcb_    (SKL_REAL* vc, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, 
-                               SKL_REAL* omg, SKL_REAL* wv, int* bx, SKL_REAL* wk, SKL_REAL* coef, SKL_REAL* res, SKL_REAL* vec, SKL_REAL* flop);
-  void cbc_vis_cn_mod_sor_    (SKL_REAL* vc, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, 
-                               SKL_REAL* omg, SKL_REAL* wv, int* bx, SKL_REAL* coef, SKL_REAL* res, SKL_REAL* vec, SKL_REAL* flop);
-  void cbc_vis_cn_sor_        (SKL_REAL* vc, int* sz, int* g, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, 
-                               SKL_REAL* omg, SKL_REAL* wv, int* bx, SKL_REAL* coef, SKL_REAL* res, SKL_REAL* flop);
-  void cbc_vis_ee_            (SKL_REAL* vc, int* sz, int* g, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* wv, 
-                               SKL_REAL* v, int* bx, SKL_REAL* coef, SKL_REAL* flop);
-  void cbc_vis_ee_vbc_        (SKL_REAL* vc, int* sz, int* g, int* st, int* ed, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* v00, SKL_REAL* rei, 
-                               SKL_REAL* v0, int* bx, int* odr, SKL_REAL* coef, SKL_REAL* vec, SKL_REAL* flop);
+  void cbc_ab2_               (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, REAL_TYPE* ab, int* bd, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_div_               (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* vc, int* bv, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_eddy_viscosity_    (REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, int* bx, 
+                               REAL_TYPE* vt_range, REAL_TYPE* yp_range, REAL_TYPE* v00);
+  void cbc_ee_                (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, int* bd, REAL_TYPE* flop);
+  void cbc_friction_velocity_ (REAL_TYPE* ut, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* v, int* bp, 
+                               REAL_TYPE* range_Yp, REAL_TYPE* range_Ut, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_pvec_muscl_        (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
+                               int* bv, int* bp, int* v_mode, REAL_TYPE* ut, int* wall_type, REAL_TYPE* flop);
+  void cbc_update_vec_        (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p, int* bp, int* bv, 
+                               REAL_TYPE* v00, REAL_TYPE* coef, REAL_TYPE* flop);
+  void cbc_vis_cn_jcb_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
+                               REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* flop);
+  void cbc_vis_cn_mod_jcb_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
+                               REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_vis_cn_mod_sor_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
+                               REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_vis_cn_sor_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
+                               REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* flop);
+  void cbc_vis_ee_            (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* wv, 
+                               REAL_TYPE* v, int* bx, REAL_TYPE* coef, REAL_TYPE* flop);
+  void cbc_vis_ee_vbc_        (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
+                               REAL_TYPE* v0, int* bx, int* odr, REAL_TYPE* coef, REAL_TYPE* vec, REAL_TYPE* flop);
 
   // cbc_forcing.f90
-  void cbc_psrc_hex_          (SKL_REAL* src,int* sz, int* g, int* st, int* ed, SKL_REAL* dh, int* bd, int* odr, SKL_REAL* v00, 
-                               SKL_REAL* nv, SKL_REAL* c, SKL_REAL* v, SKL_REAL* flop);
-  void cbc_pvec_hex_          (SKL_REAL* v,  int* sz, int* g, int* st, int* ed, int* bd, int* odr, SKL_REAL* v00, SKL_REAL* vec, SKL_REAL* flop);
-  void cbc_update_vcc_hex_    (SKL_REAL* v,  int* sz, int* g, int* st, int* ed, SKL_REAL* dt, int* bd, int* odr, SKL_REAL* v00, 
-                               SKL_REAL* nv, SKL_REAL* c, SKL_REAL* vm, SKL_REAL* flop);
-  void cbc_update_vcf_hex_    (SKL_REAL* vf, int* sz, int* g, int* st, int* ed, SKL_REAL* dt, int* bd, int* odr, SKL_REAL* v00, 
-                               SKL_REAL* nv, SKL_REAL* c, SKL_REAL* v, SKL_REAL* flop);
+  void cbc_psrc_hex_          (REAL_TYPE* src,int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, int* bd, int* odr, REAL_TYPE* v00, 
+                               REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* v, REAL_TYPE* flop);
+  void cbc_pvec_hex_          (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, int* bd, int* odr, REAL_TYPE* v00, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_update_vcc_hex_    (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, REAL_TYPE* dt, int* bd, int* odr, REAL_TYPE* v00, 
+                               REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* vm, REAL_TYPE* flop);
+  void cbc_update_vcf_hex_    (REAL_TYPE* vf, int* sz, int* g, int* st, int* ed, REAL_TYPE* dt, int* bd, int* odr, REAL_TYPE* v00, 
+                               REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* v, REAL_TYPE* flop);
   
   // cbc_pscalar.f90
-  void cbc_ps_muscl_      (SKL_REAL* ws, int* sz, int* g, SKL_REAL* dh, int* c_scheme, SKL_REAL* v00, SKL_REAL* v, SKL_REAL* t, int* bv, 
-                           int* bh1, int* bh2, int* swt, SKL_REAL* flop);
-  void cbc_ps_buoyancy_   (SKL_REAL* v, int* sz, int* g, SKL_REAL* dt, SKL_REAL* gr, SKL_REAL* rei, SKL_REAL* t, int* bd, SKL_REAL* flop);
-  void cbc_ps_diff_ee_    (SKL_REAL* t, int* sz, int* g, SKL_REAL* res, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* pei, SKL_REAL* qbc, 
-                           int* bh, SKL_REAL* ws, SKL_REAL* flop);
-  void cbc_hbc_drchlt_    (SKL_REAL* t,  int* sz, int* g, int* st, int* ed, int* bh, int* odr, SKL_REAL* tc);
+  void cbc_ps_muscl_      (REAL_TYPE* ws, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* t, int* bv, 
+                           int* bh1, int* bh2, int* swt, REAL_TYPE* flop);
+  void cbc_ps_buoyancy_   (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* gr, REAL_TYPE* rei, REAL_TYPE* t, int* bd, REAL_TYPE* flop);
+  void cbc_ps_diff_ee_    (REAL_TYPE* t, int* sz, int* g, REAL_TYPE* res, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* pei, REAL_TYPE* qbc, 
+                           int* bh, REAL_TYPE* ws, REAL_TYPE* flop);
+  void cbc_hbc_drchlt_    (REAL_TYPE* t,  int* sz, int* g, int* st, int* ed, int* bh, int* odr, REAL_TYPE* tc);
   
   // cds_poisson.f90
-  void cds_div_cc_        (SKL_REAL* div, int* sz, int* g, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* b2, SKL_REAL* vc, SKL_REAL* bnd, 
-                          SKL_REAL* cut, SKL_REAL* v00, int* mode);
-  void cds_div_cf_        (SKL_REAL* div, int* sz, int* g, SKL_REAL* dh, SKL_REAL* dt, SKL_REAL* b2, SKL_REAL* bnd, 
-                          SKL_REAL* cut, SKL_REAL* v00, int* mode);
-  void cds_psor_          (SKL_REAL* p,   int* sz, int* g, SKL_REAL* omg, SKL_REAL* res, SKL_REAL* div, SKL_REAL* bnd, SKL_REAL* cut, 
-                          SKL_REAL* epsilon, int* para_key);
+  void cds_div_cc_        (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* b2, REAL_TYPE* vc, REAL_TYPE* bnd, 
+                          REAL_TYPE* cut, REAL_TYPE* v00, int* mode);
+  void cds_div_cf_        (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* b2, REAL_TYPE* bnd, 
+                          REAL_TYPE* cut, REAL_TYPE* v00, int* mode);
+  void cds_psor_          (REAL_TYPE* p,   int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* div, REAL_TYPE* bnd, REAL_TYPE* cut, 
+                          REAL_TYPE* epsilon, int* para_key);
   
   // c3d_vof.f90
-  void vof_uwd_    (SKL_REAL* f, int* sz, int* g, SKL_REAL* v00, SKL_REAL* dt, SKL_REAL* dh, SKL_REAL* v, SKL_REAL* q, int* bx, SKL_REAL* flop);
-  void vof_muscl_  (SKL_REAL* f, int* sz, int* g, SKL_REAL* v00, SKL_REAL* dt, SKL_REAL* dh, SKL_REAL* v, SKL_REAL* q, int* bx, SKL_REAL* flop);
+  void vof_uwd_    (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, REAL_TYPE* flop);
+  void vof_muscl_  (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, REAL_TYPE* flop);
   
   // cds_vector.f90
-  void cds_div_           (SKL_REAL* div, int* sz, int* g, SKL_REAL* coef, SKL_REAL* v, int* bv, float* cut, SKL_REAL* v00, SKL_REAL* flop);
-  void cds_pvec_muscl_    (SKL_REAL* wv, int* sz, int* g, SKL_REAL* dh, int* c_scheme, SKL_REAL* v00, SKL_REAL* rei, SKL_REAL* v, 
-                           int* bv, int* bp, int* v_mode, float* cut, SKL_REAL* flop);
-  void cds_update_vec_    (SKL_REAL* v, SKL_REAL* div, int* sz, int* g, SKL_REAL* dt, SKL_REAL* dh, SKL_REAL* vc, SKL_REAL* p, 
-                           int* bp, int* bv, float* cut, SKL_REAL* v00, SKL_REAL* coef, SKL_REAL* flop);
+  void cds_div_           (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cds_pvec_muscl_    (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
+                           int* bv, int* bp, int* v_mode, float* cut, REAL_TYPE* flop);
+  void cds_update_vec_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p, 
+                           int* bp, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* coef, REAL_TYPE* flop);
 }
 
 #endif // _SKL_FORTRAN_FUNC_CBC_H_

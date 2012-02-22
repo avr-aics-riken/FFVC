@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -31,9 +31,9 @@ using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class ParseBC : public Parallel_Node {
 private:
-  SKL_REAL RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
-  SKL_REAL RefLength, BasePrs;
-  SKL_REAL rho, nyu, cp, lambda, beta; // 無次元化の参照値
+  REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
+  REAL_TYPE RefLength, BasePrs;
+  REAL_TYPE rho, nyu, cp, lambda, beta; // 無次元化の参照値
   
   unsigned ix, jx, kx, guide;
   unsigned KindOfSolver;
@@ -96,8 +96,8 @@ protected:
   void chkKeywordOBC        (const char *keyword, unsigned m);
   void getFan               (const CfgElem *elmL, unsigned n);
   void getDarcy             (const CfgElem *elmL, unsigned n);
-  void get_Vec              (const CfgElem *elmL, unsigned n, const char* str, SKL_REAL* v);
-  void getUnitVec           (SKL_REAL* v);
+  void get_Vec              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  void getUnitVec           (REAL_TYPE* v);
   void getXML_Cell_Monitor  (const CfgElem *elmL, unsigned n, Control* C);
   void getXML_IBC_Adiabatic (const CfgElem *elmL, unsigned n);
   void getXML_IBC_CnstTemp  (const CfgElem *elmL, unsigned n);
@@ -122,11 +122,11 @@ protected:
   void getXML_OBC_SpecVH    (const CfgElem *elmL, unsigned n);
   void getXML_OBC_Trcfree   (const CfgElem *elmL, unsigned n);
   void getXML_OBC_Wall      (const CfgElem *elmL, unsigned n);
-  void getXML_Vel_Params    (const CfgElem *elmL, unsigned type, SKL_REAL* ca, SKL_REAL vel, const char* err_str);
+  void getXML_Vel_Params    (const CfgElem *elmL, unsigned type, REAL_TYPE* ca, REAL_TYPE vel, const char* err_str);
   void printBaseOBC         (FILE* fp);
-  void printCompo           (FILE* fp, SKL_REAL* nv, int* ci, MaterialList* mat);
-  void printFaceOBC         (FILE* fp, SKL_REAL* G_Lbx);
-  void printOBC             (FILE* fp, BoundaryOuter* ref, SKL_REAL* G_Lbx, unsigned face);
+  void printCompo           (FILE* fp, REAL_TYPE* nv, int* ci, MaterialList* mat);
+  void printFaceOBC         (FILE* fp, REAL_TYPE* G_Lbx);
+  void printOBC             (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned face);
   void set_Deface           (const CfgElem *elmL, unsigned n, const char* str);
   
   const CfgElem* selectFace (int face, const CfgElem* elmTop);
@@ -175,7 +175,7 @@ public:
   
   int get_BCval_int       (const CfgElem *elmL, const char* key);
   
-  SKL_REAL get_BCval_real (const CfgElem *elmL, const char* key);
+  REAL_TYPE get_BCval_real (const CfgElem *elmL, const char* key);
   
   unsigned count_Outer_Cell_ID (unsigned* medium);
   
@@ -183,8 +183,8 @@ public:
   void getXML_Model       (void);
   void getXML_Phase       (void);
   void loadOuterBC        (void);
-  void printCompoInfo     (FILE* mp, FILE* fp, SKL_REAL* nv, int* ci, MaterialList* mat);
-  void printOBCinfo       (FILE* mp, FILE* fp, SKL_REAL* G_Lbx);
+  void printCompoInfo     (FILE* mp, FILE* fp, REAL_TYPE* nv, int* ci, MaterialList* mat);
+  void printOBCinfo       (FILE* mp, FILE* fp, REAL_TYPE* G_Lbx);
   void printTable         (FILE* fp);
   void receiveCompoPtr    (CompoList* CMP);
   void receiveCfgPtr      (SklSolverConfig* cfg);

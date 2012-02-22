@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -31,10 +31,10 @@ protected:
   int *ix, *jx, *kx, *gc;
   int dim_sz[3], ixc, jxc, kxc;
   
-  SKL_REAL dh, accel, Dp1, Dp2, mach, BasePrs;
-  SKL_REAL RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
-  SKL_REAL Lbx[3], Rayleigh, Grashof, Prandtl;
-  SKL_REAL rho, nyu, cp, lambda, beta;
+  REAL_TYPE dh, accel, Dp1, Dp2, mach, BasePrs;
+  REAL_TYPE RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
+  REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
+  REAL_TYPE rho, nyu, cp, lambda, beta;
   
   unsigned imax, jmax, kmax, guide, size[3];
   unsigned Example, NoBC, Unit_Temp, Unit_Prs;
@@ -80,7 +80,7 @@ public:
   virtual ~SetBC() {}
 
 public:
-	SKL_REAL getVrefOut (SKL_REAL tm);
+	REAL_TYPE getVrefOut (REAL_TYPE tm);
   
   void setControlVars (Control* Cref, MaterialList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
   void set_InOut_flag (void);

@@ -20,26 +20,26 @@ void SklSolverCBC::PS_E_CBC(void)
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
   // Dimensions
-  SKL_REAL *v=NULL;   /// 速度
-  SKL_REAL *t=NULL;   /// 温度 n+1 step
-  SKL_REAL *t0=NULL;  /// 温度 n step
-  SKL_REAL *qbc=NULL; /// 境界条件の熱流束
-  SKL_REAL *ws=NULL;  /// 対流項の寄与分，熱伝導計算時には前ステップの値
+  REAL_TYPE *v=NULL;   /// 速度
+  REAL_TYPE *t=NULL;   /// 温度 n+1 step
+  REAL_TYPE *t0=NULL;  /// 温度 n step
+  REAL_TYPE *qbc=NULL; /// 境界条件の熱流束
+  REAL_TYPE *ws=NULL;  /// 対流項の寄与分，熱伝導計算時には前ステップの値
   unsigned *bh1=NULL; /// BCindex H1
   unsigned *bh2=NULL; /// BCindex H2
   unsigned *bcv=NULL; /// 速度のビットフラグ
   
   // local variables
-  SKL_REAL tm = SklGetTotalTime();  /// 計算開始からの積算時刻
-  SKL_REAL dt = SklGetDeltaT();     /// 時間積分幅
-  SKL_REAL flop_count=0.0;          /// 浮動小数演算数
-  SKL_REAL pei=C.getRcpPeclet();    /// ペクレ数の逆数　
-  SKL_REAL res=0.0;                 /// 残差
-  SKL_REAL convergence=0.0;         /// 定常収束モニター量
-  SKL_REAL comm_size = 0.0;         /// 通信面1面あたりの通信量を全ノードで積算した通信量(Byte)
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp);
+  REAL_TYPE tm = SklGetTotalTime();  /// 計算開始からの積算時刻
+  REAL_TYPE dt = SklGetDeltaT();     /// 時間積分幅
+  REAL_TYPE flop_count=0.0;          /// 浮動小数演算数
+  REAL_TYPE pei=C.getRcpPeclet();    /// ペクレ数の逆数　
+  REAL_TYPE res=0.0;                 /// 残差
+  REAL_TYPE convergence=0.0;         /// 定常収束モニター量
+  REAL_TYPE comm_size = 0.0;         /// 通信面1面あたりの通信量を全ノードで積算した通信量(Byte)
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp);
   ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 拡散項の反復
-  SKL_REAL clear_value = 0.0;
+  REAL_TYPE clear_value = 0.0;
   size_t d_size=0;
   
   comm_size = count_comm_size(size, guide);
@@ -125,7 +125,7 @@ void SklSolverCBC::PS_E_CBC(void)
   if ( para_mng->IsParallel() ) {
     TIMING_start(tm_heat_diff_comm);
     dc_ws->CommBndCell(guide);
-    TIMING_stop(tm_heat_diff_comm, comm_size*(SKL_REAL)guide);
+    TIMING_stop(tm_heat_diff_comm, comm_size*(REAL_TYPE)guide);
   }
   
   TIMING_stop(tm_heat_diff_sct_1, 0.0);
@@ -184,17 +184,17 @@ void SklSolverCBC::PS_E_CBC(void)
     if ( para_mng->IsParallel() ) {
       TIMING_start(tm_heat_update_comm);
       dc_t->CommBndCell(guide);
-      TIMING_stop(tm_heat_update_comm, comm_size*(SKL_REAL)guide);
+      TIMING_stop(tm_heat_update_comm, comm_size*(REAL_TYPE)guide);
     }
     
     // 残差の集約
     if ( para_mng->IsParallel() ) {
       TIMING_start(tm_heat_diff_res_comm);
-      SKL_REAL tmp = res;
+      REAL_TYPE tmp = res;
       para_mng->Allreduce(&tmp, &res, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-      TIMING_stop( tm_heat_diff_res_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+      TIMING_stop( tm_heat_diff_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
-    ICt->set_normValue( sqrt(res/(SKL_REAL)G_Acell) ); // RMS
+    ICt->set_normValue( sqrt(res/(REAL_TYPE)G_Acell) ); // RMS
     
     TIMING_stop(tm_heat_diff_sct_3, 0.0);
     // <<< Passive scalar Diffusion subsection 3

@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -43,7 +43,7 @@ void PerfWatch::start()
 ///
 ///   @note m_countには, iterationCountではなく, 「測定回数」を積算
 ///
-void PerfWatch::stop(SKL_REAL flopPerTask, unsigned iterationCount)
+void PerfWatch::stop(REAL_TYPE flopPerTask, unsigned iterationCount)
 {
   if (!m_started) {
     printError("PerfWatch::stop()",  "not started\n");

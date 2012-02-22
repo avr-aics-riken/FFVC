@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -22,9 +22,9 @@ private:
   unsigned SubType;      /// SKIP LOOP or MASK LOOP
   unsigned ItrMax;       /// 最大反復数
   unsigned LinearSolver; /// 線形ソルバーの種類
-  SKL_REAL eps;          /// 収束閾値
-  SKL_REAL omg;          /// 加速/緩和係数
-  SKL_REAL NormValue;    /// ノルムの値
+  REAL_TYPE eps;          /// 収束閾値
+  REAL_TYPE omg;          /// 加速/緩和係数
+  REAL_TYPE NormValue;    /// ノルムの値
   
 public:
   /// 反復制御リスト
@@ -72,21 +72,21 @@ public:
   // @brief ループ実装の種類を返す
   unsigned get_LoopType(void) const { return SubType; }
   
-  // @fn SKL_REAL get_omg(void) const
+  // @fn REAL_TYPE get_omg(void) const
   // @brief 緩和/加速係数を返す
-  SKL_REAL get_omg(void) const { return omg; }
+  REAL_TYPE get_omg(void) const { return omg; }
   
-  // @fn SKL_REAL get_eps(void) const
+  // @fn REAL_TYPE get_eps(void) const
   // @brief 収束閾値を返す
-  SKL_REAL get_eps(void) const { return eps; }
+  REAL_TYPE get_eps(void) const { return eps; }
   
   // @fn unsigned get_normType(void) const
   // @brief ノルムのタイプを返す
   unsigned get_normType(void) const { return NormType; }
   
-  // @fn SKL_REAL get_normValue(void) const
+  // @fn REAL_TYPE get_normValue(void) const
   // @brief keyに対応するノルムの値を返す
-  SKL_REAL get_normValue(void) const { return NormValue; }
+  REAL_TYPE get_normValue(void) const { return NormValue; }
   
   // @fn void set_LS(unsigned key)
   // @brief 線形ソルバの種類を設定する
@@ -100,21 +100,21 @@ public:
   // @brief ループ実装の種類を設定する
   void set_LoopType(unsigned key) { SubType=key; }
   
-  // @fn void set_omg(SKL_REAL r)
+  // @fn void set_omg(REAL_TYPE r)
   // @brief 緩和/加速係数を保持
-  void set_omg(SKL_REAL r) { omg = r; }
+  void set_omg(REAL_TYPE r) { omg = r; }
   
-  // @fn void set_eps(SKL_REAL r)
+  // @fn void set_eps(REAL_TYPE r)
   // @brief 収束閾値を保持
-  void set_eps(SKL_REAL r) { eps = r; }
+  void set_eps(REAL_TYPE r) { eps = r; }
   
   // @fn void set_normType(unsigned n) 
   // @brief ノルムのタイプを保持
   void set_normType(unsigned n) { NormType = n; }
   
-  // @fn void set_normValue(SKL_REAL r)
+  // @fn void set_normValue(REAL_TYPE r)
   // @brief ノルム値を保持
-  void set_normValue(SKL_REAL r) { NormValue = r; }
+  void set_normValue(REAL_TYPE r) { NormValue = r; }
 };
 
 #endif // _SKL_FB_ITRCTL_H_

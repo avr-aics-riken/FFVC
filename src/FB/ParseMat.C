@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -326,14 +326,14 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
 }
 
 /**
- @fn void ParseMat::getPvalue(const CfgParam* p, SKL_REAL &value)
+ @fn void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
  @brief paramの値を返す
  @param p param要素
  @param value 値
  */
-void ParseMat::getPvalue(const CfgParam* p, SKL_REAL &value)
+void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
 {
-  SKL_REAL f;
+  REAL_TYPE f;
   
   if ( !(p->GetData( &f )) ) {
     stamped_printf("\tParsing error : Invalid float value for in Medium\n");

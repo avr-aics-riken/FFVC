@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -34,17 +34,17 @@ protected:
   unsigned pType;       /// 外部境界の圧力指定(ディリクレ，勾配ゼロ)
   unsigned vType;       /// 速度プロファイル（constant, harmonic, zero）
   unsigned valid_cell;  /// 境界面で流量計算に有効なセル数（Fluid cell）
-  SKL_REAL var1;        /// 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
-  SKL_REAL var2;        /// 多目的用の変数(温度)
-  SKL_REAL dm[3];       /// ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
+  REAL_TYPE var1;       /// 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
+  REAL_TYPE var2;       /// 多目的用の変数(温度)
+  REAL_TYPE dm[3];      /// ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
   
 public: 
   unsigned mon_ref;     /// IN_OUT境界条件のときのBC格納番号
   unsigned Face_inout;  /// 
-  SKL_REAL nv[3];       /// 
-  SKL_REAL ca[5];       /// 
-  SKL_REAL cb[5];       /// 
-  SKL_REAL p;           ///  
+  REAL_TYPE nv[3];      /// 
+  REAL_TYPE ca[5];      /// 
+  REAL_TYPE cb[5];      /// 
+  REAL_TYPE p;          ///  
   
   enum periodic_dir {
     prdc_upstream,
@@ -79,9 +79,9 @@ public:
   int get_GuideMedium(void)   const { return gc_medium; };
   int get_HTmodeRef(void)     const { return HTref; };
   
-  SKL_REAL get_CoefHT(void)   const { return var1; };
-  SKL_REAL get_Heatflux(void) const { return var1; };
-  SKL_REAL get_Temp(void)     const { return var1; };
+  REAL_TYPE get_CoefHT(void)   const { return var1; };
+  REAL_TYPE get_Heatflux(void) const { return var1; };
+  REAL_TYPE get_Temp(void)     const { return var1; };
   
   unsigned get_FaceMode(void) const { return Face_mode; };
   unsigned get_HTmode(void)   const { return HTmode; };
@@ -93,28 +93,28 @@ public:
   unsigned get_vType(void)    const { return vType; };
   unsigned get_ValidCell(void)const { return valid_cell; };
   
-  //@fn void getDomainV(SKL_REAL* vv)
+  //@fn void getDomainV(REAL_TYPE* vv)
   //@brief ローカルのモニタ積算値
   //@ret vv[3] (0-sum, 1-min, 2-max)
   //@param face 外部境界面番号
-  void getDomainV(SKL_REAL* vv) {
+  void getDomainV(REAL_TYPE* vv) {
     vv[0] = dm[0];
     vv[1] = dm[1];
     vv[2] = dm[2];
   }
   
-  void addVec         (SKL_REAL* vec);
+  void addVec         (REAL_TYPE* vec);
   void dataCopy       (BoundaryOuter* src);
   void set_BC_ID      (int key);
   void set_BCtype     (int key);
-  void set_CoefHT     (SKL_REAL val);
-  void set_DomainV    (SKL_REAL* vv, int face, bool mode=false);
+  void set_CoefHT     (REAL_TYPE val);
+  void set_DomainV    (REAL_TYPE* vv, int face, bool mode=false);
   void set_DriverDir  (int key);
   void set_DriverIndex(int key);
   void set_FaceMode   (unsigned key);
   void set_GuideID    (int key);
   void set_GuideMedium(int key);
-  void set_Heatflux   (SKL_REAL val);
+  void set_Heatflux   (REAL_TYPE val);
   void set_HTmode     (unsigned key);
   void set_HTmodeRef  (int key);
   void set_hType      (unsigned key);
@@ -122,7 +122,7 @@ public:
   void set_ofv        (unsigned key);
   void set_PrdcMode   (unsigned key);
   void set_pType      (unsigned key);
-  void set_Temp       (SKL_REAL val);
+  void set_Temp       (REAL_TYPE val);
   void set_vType      (unsigned key);
   void set_ValidCell  (unsigned val);
   

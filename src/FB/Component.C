@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -11,9 +11,9 @@
 
 #include "Component.h"
 
-//@fn void CompoList::setInitTemp(SKL_REAL key)
+//@fn void CompoList::setInitTemp(REAL_TYPE key)
 //@brief 初期温度の指定
-void CompoList::setInitTemp(SKL_REAL key) {
+void CompoList::setInitTemp(REAL_TYPE key) {
   temp_init = key;
 }
 
@@ -95,107 +95,107 @@ void CompoList::set_sw_Heatgen(unsigned key)
   usw = key;
 }
 
-//@fn void CompoList::set_Pressure(SKL_REAL var)
+//@fn void CompoList::set_Pressure(REAL_TYPE var)
 //@brief 圧力値の保持
-void CompoList::set_Pressure(SKL_REAL var)
+void CompoList::set_Pressure(REAL_TYPE var)
 {
   var1 = var;
 }
 
-//@fn void CompoList::set_Mon_Temp(SKL_REAL var)
+//@fn void CompoList::set_Mon_Temp(REAL_TYPE var)
 //@brief モニタ温度の保持
-void CompoList::set_Mon_Temp(SKL_REAL var)
+void CompoList::set_Mon_Temp(REAL_TYPE var)
 {
   var_m = var;
 }
 
-//@fn void CompoList::set_Mon_Heatflux(SKL_REAL var)
+//@fn void CompoList::set_Mon_Heatflux(REAL_TYPE var)
 //@brief モニタ熱流束の保持
-void CompoList::set_Mon_Heatflux(SKL_REAL var)
+void CompoList::set_Mon_Heatflux(REAL_TYPE var)
 {
   var_m = var;
 }
 
-//@fn void CompoList::set_Mon_Calorie(SKL_REAL var)
+//@fn void CompoList::set_Mon_Calorie(REAL_TYPE var)
 //@brief モニタ熱量の保持
-void CompoList::set_Mon_Calorie(SKL_REAL var)
+void CompoList::set_Mon_Calorie(REAL_TYPE var)
 {
   var_m = var;
 }
 
-//@fn void CompoList::set_CoefRadEps(SKL_REAL var)
+//@fn void CompoList::set_CoefRadEps(REAL_TYPE var)
 //@brief 輻射のイプシロンの保持
-void CompoList::set_CoefRadEps(SKL_REAL var)
+void CompoList::set_CoefRadEps(REAL_TYPE var)
 {
   var1 = var;
 }
 
-//@fn void CompoList::CoefRadPrj(SKL_REAL var)
+//@fn void CompoList::CoefRadPrj(REAL_TYPE var)
 //@brief 輻射の射出係数の保持
-void CompoList::set_CoefRadPrj(SKL_REAL var)
+void CompoList::set_CoefRadPrj(REAL_TYPE var)
 {
   var2 = var;
 }
 
-//@fn void CompoList::set_CoefMassflow(SKL_REAL var)
+//@fn void CompoList::set_CoefMassflow(REAL_TYPE var)
 //@brief 流量の有次元化係数の保持
-void CompoList::set_CoefMassflow(SKL_REAL var)
+void CompoList::set_CoefMassflow(REAL_TYPE var)
 {
   var1 = var;
 }
 
-//@fn void CompoList::CoefPrsLoss(SKL_REAL var)
+//@fn void CompoList::CoefPrsLoss(REAL_TYPE var)
 //@brief 圧力損失の有次元化係数の保持
-void CompoList::set_CoefPrsLoss(SKL_REAL var)
+void CompoList::set_CoefPrsLoss(REAL_TYPE var)
 {
   var2 = var;
 }
 
-//@fn void CompoList::set_HeatDensity(SKL_REAL var)
+//@fn void CompoList::set_HeatDensity(REAL_TYPE var)
 //@brief 吸発熱密度の保持
-void CompoList::set_HeatDensity(SKL_REAL var)
+void CompoList::set_HeatDensity(REAL_TYPE var)
 {
   var3 = var;
 }
 
-//@fn void CompoList::set_HeatValue(SKL_REAL var)
+//@fn void CompoList::set_HeatValue(REAL_TYPE var)
 //@brief 吸発熱量の保持
-void CompoList::set_HeatValue(SKL_REAL var)
+void CompoList::set_HeatValue(REAL_TYPE var)
 {
   var2 = var;
 }
 
-//@fn void CompoList::set_Temp(SKL_REAL var)
+//@fn void CompoList::set_Temp(REAL_TYPE var)
 //@brief 温度の保持
-void CompoList::set_Temp(SKL_REAL var)
+void CompoList::set_Temp(REAL_TYPE var)
 {
   var3 = var;
 }
 
-//@fn void CompoList::set_CoefHT(SKL_REAL var)
+//@fn void CompoList::set_CoefHT(REAL_TYPE var)
 //@brief 熱伝達係数の保持
-void CompoList::set_CoefHT(SKL_REAL var)
+void CompoList::set_CoefHT(REAL_TYPE var)
 {
   var2 = var;
 }
 
-//@fn void CompoList::set_Heatflux(SKL_REAL var)
+//@fn void CompoList::set_Heatflux(REAL_TYPE var)
 //@brief 熱流束の保持
-void CompoList::set_Heatflux(SKL_REAL var)
+void CompoList::set_Heatflux(REAL_TYPE var)
 {
   var2 = var;
 }
 
-//@fn void CompoList::set_Massflow(SKL_REAL var)
+//@fn void CompoList::set_Massflow(REAL_TYPE var)
 //@brief 流量の保持
-void CompoList::set_Massflow(SKL_REAL var)
+void CompoList::set_Massflow(REAL_TYPE var)
 {
   var1 = var;
 }
 
-//@fn void CompoList::set_Velocity(SKL_REAL var)
+//@fn void CompoList::set_Velocity(REAL_TYPE var)
 //@brief 速度の保持
-void CompoList::set_Velocity(SKL_REAL var)
+void CompoList::set_Velocity(REAL_TYPE var)
 {
   var1 = var;
 }
@@ -285,9 +285,9 @@ bool CompoList::isVFraction(void) const
   return false;
 }
 
-//@fn void CompoList::addVec(SKL_REAL* vec)
+//@fn void CompoList::addVec(REAL_TYPE* vec)
 //@brief ベクトルのコピー
-void CompoList::addVec(SKL_REAL* vec) {
+void CompoList::addVec(REAL_TYPE* vec) {
   nv[0] = vec[0];
   nv[1] = vec[1];
   nv[2] = vec[2];

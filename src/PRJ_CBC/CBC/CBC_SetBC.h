@@ -23,66 +23,66 @@ public:
   virtual ~SetBC3D() {}
   
 protected:
-  SKL_REAL extractVel_IBC        (int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop);
-  SKL_REAL extractVel_OBC        (int n, SKL_REAL* vec, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop);
-  SKL_REAL ps_IBC_Heatflux       (SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL& flop);
-  SKL_REAL ps_IBC_HeatGen_SM     (SKL_REAL* t,   unsigned* bh2, int n, SKL_REAL dt, SKL_REAL& flop);
-  SKL_REAL ps_IBC_IsoThermal_SM  (SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_IBC_Transfer_B_SM  (SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_IBC_Transfer_S_SM  (SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_IBC_Transfer_SF_SM (SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_IBC_Transfer_SN_SM (SKL_REAL* qbc, unsigned* bh1, int n, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_IBC_Outflow        (SKL_REAL* ws,  unsigned* bh1, int n, SKL_REAL* v, SKL_REAL* t, SKL_REAL* v00, SKL_REAL& flop);
-  SKL_REAL ps_IBC_SpecVH         (SKL_REAL* ws,  unsigned* bh1, int n, SKL_REAL v00, SKL_REAL* vec, SKL_REAL& flop);
-  SKL_REAL ps_OBC_Free           (SKL_REAL* ws,  unsigned* bh1, int face, SKL_REAL* v, SKL_REAL* t, SKL_REAL* v00, SKL_REAL& flop);
-  SKL_REAL ps_OBC_Heatflux       (SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL& flop);
-  SKL_REAL ps_OBC_SpecVH         (SKL_REAL* ws,  unsigned* bh1, int face, SKL_REAL* t, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop);
-  SKL_REAL ps_OBC_HeatTransfer_BS(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_OBC_HeatTransfer_SF(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_OBC_HeatTransfer_SN(SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  SKL_REAL ps_OBC_IsoThermal     (SKL_REAL* qbc, unsigned* bh1, int face, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
+  REAL_TYPE extractVel_IBC        (int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop);
+  REAL_TYPE extractVel_OBC        (int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_Heatflux       (REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_HeatGen_SM     (REAL_TYPE* t,   unsigned* bh2, int n, REAL_TYPE dt, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_IsoThermal_SM  (REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_Transfer_B_SM  (REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_Transfer_S_SM  (REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_Transfer_SF_SM (REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_Transfer_SN_SM (REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_Outflow        (REAL_TYPE* ws,  unsigned* bh1, int n, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE* v00, REAL_TYPE& flop);
+  REAL_TYPE ps_IBC_SpecVH         (REAL_TYPE* ws,  unsigned* bh1, int n, REAL_TYPE v00, REAL_TYPE* vec, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_Free           (REAL_TYPE* ws,  unsigned* bh1, int face, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE* v00, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_Heatflux       (REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_SpecVH         (REAL_TYPE* ws,  unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  REAL_TYPE ps_OBC_IsoThermal     (REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
   
   void flip_ObcMask             (int face, unsigned* bv, unsigned flag);
-  void Pibc_Prdc                (SklScalar3D<SKL_REAL>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, SKL_REAL pv);
-  void Pobc_Prdc_Directional    (SklScalar3D<SKL_REAL>* d_p, int face, SKL_REAL pv, unsigned uod);
-  void Pobc_Prdc_Simple         (SklScalar3D<SKL_REAL>* d_p, int face);
-  void ps_IBC_ConstTemp         (SKL_REAL* t, unsigned* bh2, int n);
-  void Tobc_Prdc_Simple         (SklScalar3D<SKL_REAL>* d_t, int face);
-  void Vibc_Prdc                (SklVector3DEx<SKL_REAL>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir);
-  void Vobc_Prdc                (SklVector3DEx<SKL_REAL>* d_v, int face, unsigned no_comm_face);
-  void Vobc_Prdc_CF             (SklVector3DEx<SKL_REAL>* d_v, int face);
+  void Pibc_Prdc                (SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pv);
+  void Pobc_Prdc_Directional    (SklScalar3D<REAL_TYPE>* d_p, int face, REAL_TYPE pv, unsigned uod);
+  void Pobc_Prdc_Simple         (SklScalar3D<REAL_TYPE>* d_p, int face);
+  void ps_IBC_ConstTemp         (REAL_TYPE* t, unsigned* bh2, int n);
+  void Tobc_Prdc_Simple         (SklScalar3D<REAL_TYPE>* d_t, int face);
+  void Vibc_Prdc                (SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir);
+  void Vobc_Prdc                (SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_comm_face);
+  void Vobc_Prdc_CF             (SklVector3DEx<REAL_TYPE>* d_v, int face);
   
 public:
-  void assign_Temp          (SKL_REAL* t, unsigned* bh, SKL_REAL tm, Control* C);
-  void assign_Velocity      (SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, bool clear=false);
+  void assign_Temp          (REAL_TYPE* t, unsigned* bh, REAL_TYPE tm, Control* C);
+  void assign_Velocity      (REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear=false);
   void checkDriver          (FILE* fp);
   void flipDir_OBC          (unsigned* bv, Control* C);
-  void InnerPBC_Periodic    (SklScalar3D<SKL_REAL>* d_p, SklScalar3D<unsigned>* d_bcd);
-  void InnerTBCface         (SKL_REAL* qbc, unsigned* bx, SKL_REAL* t, SKL_REAL* t0, SKL_REAL& flop);
-  void InnerTBCvol          (SKL_REAL* t, unsigned* bx, SKL_REAL dt, SKL_REAL& flop);
-  void InnerVBC             (SKL_REAL* v, unsigned* bv, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS=false);
-  void InnerVBC_Periodic    (SklVector3DEx<SKL_REAL>* d_v, SklScalar3D<unsigned>* d_bd);
-  void mod_div              (SKL_REAL* div, unsigned* bv, SKL_REAL coef, SKL_REAL tm, SKL_REAL* v00, SKL_REAL& flop, bool isCDS=false);
-  void mod_Psrc_Forcing     (SKL_REAL* src, SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL& flop);
-  void mod_Psrc_VBC         (SKL_REAL* dv, SKL_REAL* vc, SKL_REAL* v0, SKL_REAL coef, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, 
-                             SKL_REAL* v00, SKL_REAL& flop, bool isCDS=false);
-  void mod_Pvec_Flux        (SKL_REAL* wv, SKL_REAL* v, unsigned* bv, SKL_REAL tm, Control* C, int v_mode, SKL_REAL* v00, SKL_REAL& flop, bool isCDS=false);
-  void mod_Pvec_Forcing     (SKL_REAL* vc, unsigned* bd, Control* C, SKL_REAL* v00, SKL_REAL& flop);
-  void mod_Vcc_Forcing      (SKL_REAL* v,  unsigned* bd, Control* C, SKL_REAL dt, SKL_REAL* v00, SKL_REAL& flop);
-  void mod_Vcf_Forcing      (SKL_REAL* v, unsigned* bd, Control* C, SKL_REAL dt, SKL_REAL* v00, SKL_REAL& flop);
-  void mod_Vis_EE           (SKL_REAL* vc, SKL_REAL* v0, SKL_REAL cf, unsigned* bx, SKL_REAL tm, SKL_REAL dt, SKL_REAL* v00, SKL_REAL& flop);
-  void OuterPBC             (SklScalar3D<SKL_REAL>* d_p);
-  void OuterTBC             (SklScalar3D<SKL_REAL>* d_t);
-  void OuterTBCface         (SKL_REAL* qbc, unsigned* bx, SKL_REAL* t, SKL_REAL* t0, Control* C, SKL_REAL& flop);
-  void OuterVBC             (SKL_REAL* v, SKL_REAL* vc, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop);
-  void OuterVBC_Periodic    (SklVector3DEx<SKL_REAL>* d_v);
-  void OuterVBC_Pseudo      (SKL_REAL* vc, SKL_REAL* v0, unsigned* bv, SKL_REAL tm, SKL_REAL dt, Control* C, SKL_REAL* v00, SKL_REAL& flop);
-  void ps_BC_Convection     (SKL_REAL* ws, unsigned* bh1, SKL_REAL* v, SKL_REAL* t, SKL_REAL tm, Control* C, SKL_REAL* v00, SKL_REAL& flop);
+  void InnerPBC_Periodic    (SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd);
+  void InnerTBCface         (REAL_TYPE* qbc, unsigned* bx, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
+  void InnerTBCvol          (REAL_TYPE* t, unsigned* bx, REAL_TYPE dt, REAL_TYPE& flop);
+  void InnerVBC             (REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
+  void InnerVBC_Periodic    (SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd);
+  void mod_div              (REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
+  void mod_Psrc_Forcing     (REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Psrc_VBC         (REAL_TYPE* dv, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, 
+                             REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
+  void mod_Pvec_Flux        (REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
+  void mod_Pvec_Forcing     (REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Vcc_Forcing      (REAL_TYPE* v,  unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Vcf_Forcing      (REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Vis_EE           (REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop);
+  void OuterPBC             (SklScalar3D<REAL_TYPE>* d_p);
+  void OuterTBC             (SklScalar3D<REAL_TYPE>* d_t);
+  void OuterTBCface         (REAL_TYPE* qbc, unsigned* bx, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop);
+  void OuterVBC             (REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
+  void OuterVBC_Periodic    (SklVector3DEx<REAL_TYPE>* d_v);
+  void OuterVBC_Pseudo      (REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
+  void ps_BC_Convection     (REAL_TYPE* ws, unsigned* bh1, REAL_TYPE* v, REAL_TYPE* t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
   void setBCIperiodic       (SklScalar3D<unsigned>* d_bx);
-  void setInitialTemp_Compo (unsigned n, unsigned* bx, SklScalar3D<SKL_REAL>* d_t);
-  void updateOuter          (SKL_REAL* v, SKL_REAL* vc);
+  void setInitialTemp_Compo (unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t);
+  void updateOuter          (REAL_TYPE* v, REAL_TYPE* vc);
   
-  SKL_REAL setDirectForcing (SKL_REAL* v, unsigned* bx, int n, SKL_REAL v00);
+  REAL_TYPE setDirectForcing (REAL_TYPE* v, unsigned* bx, int n, REAL_TYPE v00);
 };
 
 #endif // _SKL_C3D_SETBC_H_

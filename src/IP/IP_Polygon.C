@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -12,7 +12,7 @@
 #include "IP_Polygon.h"
 
 /**
- @fn bool IP_Polygon::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3])
+ @fn bool IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
  @brief 領域情報を設定する
  @param R Controlクラスのポインタ
  @param sz グローバル計算領域のセルサイズ
@@ -20,11 +20,11 @@
  @param wth グローバル計算領域のbounding boxサイズ
  @param pch セルピッチ
  */
-void IP_Polygon::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3])
+void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
-  wth[0] = pch[0]*(SKL_REAL)sz[0];
-  wth[1] = pch[1]*(SKL_REAL)sz[1];
-  wth[2] = pch[2]*(SKL_REAL)sz[2];
+  wth[0] = pch[0]*(REAL_TYPE)sz[0];
+  wth[1] = pch[1]*(REAL_TYPE)sz[1];
+  wth[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // チェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
@@ -40,13 +40,13 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL
 }
 
 /**
- @fn void IP_Polygon::setup(int* mid, Control* R, SKL_REAL* G_org)
+ @fn void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
  */
-void IP_Polygon::setup(int* mid, Control* R, SKL_REAL* G_org)
+void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
   int i,m;
   int mid_fluid=1;        /// 流体

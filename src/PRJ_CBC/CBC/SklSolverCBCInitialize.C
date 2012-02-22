@@ -26,12 +26,12 @@ SklSolverCBC::SklSolverInitialize() {
   const SklParaManager* para_mng = para_cmp->GetParaManager();
   
   unsigned long TotalMemory, PrepMemory, G_TotalMemory, G_PrepMemory, tmp_memory;
-  SKL_REAL  *ws, *v, *t, *p;
+  REAL_TYPE  *ws, *v, *t, *p;
   int       *mid;
   unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
   unsigned  n=0;
   FILE* fp = NULL;
-  SKL_REAL flop_task=0.0;
+  REAL_TYPE flop_task=0.0;
   size_t d_size=0;
   
   ws = v = t = p = NULL;
@@ -583,7 +583,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // セル数の情報を表示する
   Hostonly_ {
-    SKL_REAL cr = (SKL_REAL)G_Wcell/(SKL_REAL)(G_size[0]*G_size[1]*G_size[2]) *100.0;
+    REAL_TYPE cr = (REAL_TYPE)G_Wcell/(REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]) *100.0;
     fprintf(mp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %5.1f percent]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
     fprintf(fp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %5.1f percent]\n\n", 
@@ -742,7 +742,7 @@ SklSolverCBC::SklSolverInitialize() {
     
     double g[4];
     RF.copyV00(g);
-    for (int i=0; i<4; i++) v00[i]=(SKL_REAL)g[i];
+    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
   }
   
   // セッションの初期時刻をセット
@@ -754,7 +754,7 @@ SklSolverCBC::SklSolverInitialize() {
   double m_dt    = (double)SklGetDeltaT();
   double m_tm    = (double)SklGetTotalTime();
   unsigned m_stp = SklGetTotalStep();
-  SKL_REAL tm = (SKL_REAL)m_tm;
+  REAL_TYPE tm = (REAL_TYPE)m_tm;
 
   if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) ) {  // 基本履歴のコンソールへの出力
     Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
@@ -823,7 +823,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.Start == Control::re_start ) {
     Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
-    SKL_REAL f_min, f_max;
+    REAL_TYPE f_min, f_max;
     fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v, &flop_task);
     Hostonly_ fprintf(mp, "\t\tV: min=%13.6e max=%13.6e\n", f_min, f_max);
     Hostonly_ fprintf(fp, "\t\tV: min=%13.6e max=%13.6e\n", f_min, f_max);
@@ -848,7 +848,7 @@ SklSolverCBC::SklSolverInitialize() {
     if( !( cf_x = SklAllocateSKL_REAL( cf_sz[0]*4, true ) ) ) return -1;
     if( !( cf_y = SklAllocateSKL_REAL( cf_sz[1]*4, true ) ) ) return -1;
     if( !( cf_z = SklAllocateSKL_REAL( cf_sz[2]*4, true ) ) ) return -1;
-    TotalMemory += (unsigned long)( (cf_sz[0]*4+cf_sz[1]*4+cf_sz[2]*4)*sizeof(SKL_REAL) );
+    TotalMemory += (unsigned long)( (cf_sz[0]*4+cf_sz[1]*4+cf_sz[2]*4)*sizeof(REAL_TYPE) );
   }
 
   
@@ -863,7 +863,7 @@ SklSolverCBC::SklSolverInitialize() {
     para_cmp->Allreduce(&tmp_memory, &G_TotalMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
   }
   Hostonly_ {
-    unsigned long mc = (unsigned long)( dc_wvex->GetArrayLength() * sizeof(SKL_REAL) ); // temporaty array for vector output, see prepOutput();
+    unsigned long mc = (unsigned long)( dc_wvex->GetArrayLength() * sizeof(REAL_TYPE) ); // temporaty array for vector output, see prepOutput();
     FBUtility::displayMemory("solver", G_TotalMemory, TotalMemory, fp, mp);
   }
   
@@ -897,8 +897,8 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 初期条件の条件設定
 	if ( C.Start == Control::initial_start ) {
-		SKL_REAL dt_init=1.0, tm_init=0.0;
-		SKL_REAL U0[3];
+		REAL_TYPE dt_init=1.0, tm_init=0.0;
+		REAL_TYPE U0[3];
     
 		// 速度の初期条件の設定
     if (C.Unit.Param == DIMENSIONAL) {
@@ -918,12 +918,12 @@ SklSolverCBC::SklSolverInitialize() {
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
     BC.OuterVBC_Periodic(dc_v);
-		BC.OuterVBC(v, v, bcv, tm, (SKL_REAL)m_dt, &C, v00, flop_task);
+		BC.OuterVBC(v, v, bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
     BC.InnerVBC(v, bcv, tm, v00, flop_task);
     BC.InnerVBC_Periodic(dc_v, dc_bcd);
     
 		// 圧力
-    SKL_REAL ip;
+    REAL_TYPE ip;
     if (C.Unit.Param == DIMENSIONAL) {
       ip = FBUtility::convD2ND_P(C.iv.Pressure, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
     }
@@ -937,7 +937,7 @@ SklSolverCBC::SklSolverInitialize() {
     
 		// 温度
 		if ( C.isHeatProblem() ) {
-      SKL_REAL it;
+      REAL_TYPE it;
       if (C.Unit.Param == DIMENSIONAL) {
         it = FBUtility::convK2ND(C.iv.Temperature, C.BaseTemp, C.DiffTemp);
       }
@@ -962,11 +962,11 @@ SklSolverCBC::SklSolverInitialize() {
       BC.InnerPBC_Periodic(dc_p, dc_bcd);
       
       // 外部境界条件
-      BC.OuterVBC(v, v, bcv, tm, (SKL_REAL)m_dt, &C, v00, flop_task);
+      BC.OuterVBC(v, v, bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
       BC.OuterVBC_Periodic(dc_v);
       
       //流出境界の流出速度の算出
-      SKL_REAL coef = C.dh/(SKL_REAL)m_dt;
+      REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
       BC.mod_div(ws, bcv, coef, tm, v00, flop_task);
       DomainMonitor(BC.get_OBC_Ptr(), &C, flop_task);
       
@@ -984,7 +984,7 @@ SklSolverCBC::SklSolverInitialize() {
     
     // VOF
     if ( C.BasicEqs == INCMP_2PHASE ) {
-      SKL_REAL* vof=NULL;
+      REAL_TYPE* vof=NULL;
       if( !(vof = dc_vof->GetData()) )  return -1;
       setVOF(vof, bcd);
       if ( !dc_vof->CommBndCell(guide) ) return -1;
@@ -1219,7 +1219,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Arra
   Vinfo->countCellState(C.Fcell, G_Fcell, bcd, FLUID);
   
   // set local active cell ratio
-  C.Eff_Cell_Ratio = (SKL_REAL)C.Acell / C.getCellSize(size);
+  C.Eff_Cell_Ratio = (REAL_TYPE)C.Acell / C.getCellSize(size);
   
   // コンポーネントのインデクスの再構築
   Vinfo->resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem(), GC_bv);
@@ -1598,8 +1598,8 @@ void SklSolverCBC::VoxelInitialize(void)
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
   unsigned m_sz[3];
-  SKL_REAL m_org[3], m_pch[3], m_wth[3];
-  SKL_REAL scaling = C.Hide.Scaling_Factor;
+  REAL_TYPE m_org[3], m_pch[3], m_wth[3];
+  REAL_TYPE scaling = C.Hide.Scaling_Factor;
   
   for (int i=0; i<3; i++) {
     m_org[i] = m_pch[i] = m_wth[i] =0.0;
@@ -1625,8 +1625,8 @@ void SklSolverCBC::VoxelInitialize(void)
       }
 
       for (int i=0; i<3; i++) {
-        m_org[i] = (SKL_REAL)f_org[i]*scaling;
-        m_pch[i] = (SKL_REAL)f_pch[i]*scaling;
+        m_org[i] = (REAL_TYPE)f_org[i]*scaling;
+        m_pch[i] = (REAL_TYPE)f_pch[i]*scaling;
       }
     }
     else { // SBX
@@ -1640,8 +1640,8 @@ void SklSolverCBC::VoxelInitialize(void)
       }
       for (int i=0; i<3; i++) {
         m_sz[i]  = (unsigned)l_sz[i];
-        m_org[i] = (SKL_REAL)d_org[i]*scaling;
-        m_pch[i] = (SKL_REAL)d_pch[i]*scaling;
+        m_org[i] = (REAL_TYPE)d_org[i]*scaling;
+        m_pch[i] = (REAL_TYPE)d_pch[i]*scaling;
       }
     }
     
@@ -1653,7 +1653,7 @@ void SklSolverCBC::VoxelInitialize(void)
     
     // 全計算領域のbounding boxサイズ
     for (int i=0; i<3; i++) {
-      m_wth[i] = (SKL_REAL)m_sz[i] * m_pch[i];
+      m_wth[i] = (REAL_TYPE)m_sz[i] * m_pch[i];
     }
   }
   else { // 組み込み例題の場合
@@ -1712,8 +1712,8 @@ void SklSolverCBC::VoxelInitialize(void)
   // ノードローカルな値の設定　（無次元値）
   for(int i=0; i<3; i++) {
     m_sz[i] = sz_para[i];
-    m_wth[i] = (SKL_REAL)m_sz[i]*m_pch[i];
-    m_org[i] += m_pch[i]*(SKL_REAL)(pn.st_idx[i]-1);
+    m_wth[i] = (REAL_TYPE)m_sz[i]*m_pch[i];
+    m_org[i] += m_pch[i]*(REAL_TYPE)(pn.st_idx[i]-1);
   }
   
   //stamped_printf("Local : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
@@ -1733,25 +1733,25 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   int nID[6], np=0;
   FILE *fp=NULL;
-  SKL_REAL vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
-  SKL_REAL d1, d2, d3, d, r;
+  REAL_TYPE vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
+  REAL_TYPE d1, d2, d3, d, r;
   int ix, jx, kx;
   
   np=para_mng->GetNodeNum(pn.procGrp);
-  d = 1.0/(SKL_REAL)np;
+  d = 1.0/(REAL_TYPE)np;
   if ( para_mng->IsParallel() ) {
-    r = 1.0/(SKL_REAL)(np-1);
+    r = 1.0/(REAL_TYPE)(np-1);
   }
   else {
     r = 1.0;
   }
   
   unsigned* m_size=NULL; if( !(m_size = new unsigned[np*3]) ) assert(0); // use new to assign variable array, and release at the end of this method
-  SKL_REAL* m_org=NULL;  if( !(m_org  = new SKL_REAL[np*3]) ) assert(0);
-  SKL_REAL* m_Lbx=NULL;  if( !(m_Lbx  = new SKL_REAL[np*3]) ) assert(0);
+  REAL_TYPE* m_org=NULL;  if( !(m_org  = new REAL_TYPE[np*3]) ) assert(0);
+  REAL_TYPE* m_Lbx=NULL;  if( !(m_Lbx  = new REAL_TYPE[np*3]) ) assert(0);
   unsigned* st_buf=NULL; if( !(st_buf = new unsigned[np*3]) ) assert(0);
   unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[np*3]) ) assert(0);
-  SKL_REAL *bf_srf=NULL; if( !(bf_srf = new SKL_REAL[np]) )   assert(0);
+  REAL_TYPE *bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[np]) )   assert(0);
   unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[np]) )   assert(0);
   unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[np]) )   assert(0);
   unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[np]) )   assert(0);
@@ -1776,25 +1776,25 @@ void SklSolverCBC::gather_DomainInfo(void)
     bf_fcl[0] = C.Fcell;
     bf_wcl[0] = C.Wcell;
     bf_acl[0] = C.Acell;
-    memcpy(m_org, C.org, 3*sizeof(SKL_REAL));
-    memcpy(m_Lbx, C.Lbx, 3*sizeof(SKL_REAL));
+    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
+    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
   }
   
   // Info. of computational domain
-  vol = (SKL_REAL)(G_size[0]*G_size[1]*G_size[2]);
-  srf = (SKL_REAL)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
+  vol = (REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]);
+  srf = (REAL_TYPE)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
   
   // amount of communication in each node
   ix = size[0];
   jx = size[1];
   kx = size[2];
-  m_srf = (SKL_REAL)(2*(ix*jx + jx*kx + kx*ix));
-  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (SKL_REAL)(jx*kx);  // remove face which does not join communication
-  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (SKL_REAL)(ix*kx);
-  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (SKL_REAL)(ix*jx);
-  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (SKL_REAL)(jx*kx);
-  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (SKL_REAL)(ix*kx);
-  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (SKL_REAL)(ix*jx);
+  m_srf = (REAL_TYPE)(2*(ix*jx + jx*kx + kx*ix));
+  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (REAL_TYPE)(jx*kx);  // remove face which does not join communication
+  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
+  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
+  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(jx*kx);
+  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
+  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
   
   if ( para_mng->IsParallel() ) {
     if ( !para_mng->Gather(&m_srf,  1,        SKL_ARRAY_DTYPE_REAL, 
@@ -1810,7 +1810,7 @@ void SklSolverCBC::gather_DomainInfo(void)
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    m_vol += (SKL_REAL)(ix*jx*kx);
+    m_vol += (REAL_TYPE)(ix*jx*kx);
     m_srf += bf_srf[i];
     m_efv += bf_acl[i];
   }
@@ -1824,9 +1824,9 @@ void SklSolverCBC::gather_DomainInfo(void)
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    d1 = (SKL_REAL)(ix*jx*kx) - m_vol;
+    d1 = (REAL_TYPE)(ix*jx*kx) - m_vol;
     d2 = bf_srf[i] - m_srf;
-    d3 = (SKL_REAL)bf_acl[i] - m_efv;
+    d3 = (REAL_TYPE)bf_acl[i] - m_efv;
     vol_dv += d1*d1;
     srf_dv += d2*d2;
     efv_dv += d3*d3;
@@ -1876,9 +1876,9 @@ void SklSolverCBC::gather_DomainInfo(void)
     fprintf(fp,"\tDomain size         = %7d %7d %7d\n", G_size[0], G_size[1], G_size[2]);
     fprintf(fp,"\tNumber of voxels    = %12.6e\n", vol);
     fprintf(fp,"\tNumber of surface   = %12.6e\n", srf);
-    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (SKL_REAL)G_Acell, 100.0*(SKL_REAL)G_Acell/vol);
-    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (SKL_REAL)G_Fcell, 100.0*(SKL_REAL)G_Fcell/vol);
-    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (SKL_REAL)G_Wcell, 100.0*(SKL_REAL)G_Wcell/vol);
+    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
+    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
+    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
     if ( np == 1 ) {
       fprintf(fp,"\tDivision :          = %d : %s\n", np, "Serial");
     }
@@ -1898,15 +1898,15 @@ void SklSolverCBC::gather_DomainInfo(void)
     fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     
-    SKL_REAL tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
+    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
     for (int i=0; i<np; i++) {
       ix = m_size[3*i];
       jx = m_size[3*i+1];
       kx = m_size[3*i+2];
-      tmp_vol = (SKL_REAL)(ix*jx*kx);
-      tmp_acl = (SKL_REAL)bf_acl[i];
-      tmp_fcl = (SKL_REAL)bf_fcl[i];
-      tmp_wcl = (SKL_REAL)bf_wcl[i];
+      tmp_vol = (REAL_TYPE)(ix*jx*kx);
+      tmp_acl = (REAL_TYPE)bf_acl[i];
+      tmp_fcl = (REAL_TYPE)bf_fcl[i];
+      tmp_wcl = (REAL_TYPE)bf_wcl[i];
       fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
       fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
       fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
@@ -2036,7 +2036,7 @@ void SklSolverCBC::connectExample(Control* Cref)
 void SklSolverCBC::load_Restart_file (FILE* fp)
 {
   int step;
-  SKL_REAL time;
+  REAL_TYPE time;
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
   F.loadSphScalar3D(this, fp, "Pressure", G_size, guide, dc_p, step, time, C.Unit.File);
@@ -2055,7 +2055,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
   // Instantaneous Velocity fields
   F.loadSphVector3D(this, fp, "Velocity", G_size, guide, dc_v, step, time, v00, C.Unit.File);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-  if ( (step != SklGetTotalStep()) || (time != (SKL_REAL)SklGetTotalTime()) ) {
+  if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     assert(0);
@@ -2070,7 +2070,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
   if ( C.isHeatProblem() ) {
     F.loadSphScalar3D(this, fp, "Temperature", G_size, guide, dc_t, step, time, C.Unit.File);
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-    if ( (step != SklGetTotalStep()) || (time != (SKL_REAL)SklGetTotalTime()) ) {
+    if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       assert(0);
@@ -2094,7 +2094,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
 void SklSolverCBC::load_Restart_avr_file (FILE* fp)
 {
   int step;
-  SKL_REAL time;
+  REAL_TYPE time;
 
   step = SklGetBaseStep();
   time = SklGetBaseTime();
@@ -2139,7 +2139,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
   // Velocity
   F.loadSphVector3DAvr(this, fp, "AvrVelocity", G_size, guide, dc_av, step, time, v00, C.Unit.File);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-  if ( (step != SklGetAverageBaseStep()) || ((SKL_REAL)time != SklGetAverageBaseTime()) ) {
+  if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     assert(0);
@@ -2153,7 +2153,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
   if ( C.isHeatProblem() ) {
     F.loadSphScalar3DAvr(this, fp, "AvrTemperature", G_size, guide, dc_at, step, time, C.Unit.File);
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-    if ( (step != SklGetAverageBaseStep()) || ((SKL_REAL)time != SklGetAverageBaseTime()) ) {
+    if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       assert(0);
@@ -2204,11 +2204,11 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
  */
 void SklSolverCBC::prepOutput (void)
 {
-  SKL_REAL org[3], pit[3];
+  REAL_TYPE org[3], pit[3];
   
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
   for (int i=0; i<3; i++) {
-    org[i] = C.org[i] - C.dx[i]*(SKL_REAL)C.GuideOut;
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
     pit[i] = C.dx[i];
   }
   
@@ -2619,12 +2619,12 @@ void SklSolverCBC::allocArray_Collocate(unsigned long &total)
 }
 
 /**
- @fn void SklSolverCBC::setVOF(SKL_REAL* vof, unsigned* bx)
+ @fn void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
  @brief VOF値を気体(0.0)と液体(1.0)で初期化
  @param vof VOF function
  @param bx BCindex ID
  */
-void SklSolverCBC::setVOF(SKL_REAL* vof, unsigned* bx)
+void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
 {
   int i,j,k;
   unsigned s, odr, m0;

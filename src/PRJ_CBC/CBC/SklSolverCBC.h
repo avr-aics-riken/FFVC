@@ -11,7 +11,7 @@
  @author keno, FSI Team, VCAD, RIKEN
  
  @note 
- - 有効セル数の変数をC++からFortranに渡すとき，unsignedから直接SKL_REAL*にキャスト(SKL_REAL*)&varとすると値がおかしくなる．
+ - 有効セル数の変数をC++からFortranに渡すとき，unsignedから直接REAL_TYPE*にキャスト(REAL_TYPE*)&varとすると値がおかしくなる．
  (int*)&varでintで渡して，fortran内で型変換して利用する．
  */
 
@@ -80,7 +80,7 @@ public:
   int para_key;
   unsigned G_Fcell, G_Acell, G_Wcell;
   unsigned G_size[3];
-  SKL_REAL G_Lbx[3], G_org[3];
+  REAL_TYPE G_Lbx[3], G_org[3];
   
   Control         C;
   SetBC3D         BC;
@@ -116,12 +116,12 @@ public:
   int *jx, jxc;
   int *kx, kxc;
   int *gc;
-  SKL_REAL *dh;
-  SKL_REAL *dh0;
-  SKL_REAL *x0;
-  SKL_REAL *y0;
-  SKL_REAL *z0;
-  SKL_REAL v00[4];
+  REAL_TYPE *dh;
+  REAL_TYPE *dh0;
+  REAL_TYPE *x0;
+  REAL_TYPE *y0;
+  REAL_TYPE *z0;
+  REAL_TYPE v00[4];
   
   int sz[3];
   unsigned size[3];
@@ -135,24 +135,24 @@ public:
   FILE *fp_d;  // 流量収支情報
   FILE *fp_i;  // 反復履歴情報
   
-  SKL_REAL checkTime;
-  SKL_REAL convergence_prev, convergence_rate;
-  SKL_REAL range_Ut[2], range_Yp[2];
+  REAL_TYPE checkTime;
+  REAL_TYPE convergence_prev, convergence_rate;
+  REAL_TYPE range_Ut[2], range_Yp[2];
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
-  SklVector3DEx<SKL_REAL>   *dc_v;
-  SklVector3DEx<SKL_REAL>   *dc_vc;
-  SklVector3DEx<SKL_REAL>   *dc_v0;
-  SklVector3DEx<SKL_REAL>   *dc_wv;
-  SklVector3DEx<SKL_REAL>   *dc_abf;
-  SklVector3DEx<SKL_REAL>   *dc_vf0;
+  SklVector3DEx<REAL_TYPE>   *dc_v;
+  SklVector3DEx<REAL_TYPE>   *dc_vc;
+  SklVector3DEx<REAL_TYPE>   *dc_v0;
+  SklVector3DEx<REAL_TYPE>   *dc_wv;
+  SklVector3DEx<REAL_TYPE>   *dc_abf;
+  SklVector3DEx<REAL_TYPE>   *dc_vf0;
   
   // (3, ix, jx, kx)
-  SklVector3DEx<SKL_REAL>   *dc_av;
+  SklVector3DEx<REAL_TYPE>   *dc_av;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
-  SklVector3DEx<SKL_REAL> *dc_wvex;
-  SklVector3DEx<SKL_REAL> *dc_qbc;
+  SklVector3DEx<REAL_TYPE> *dc_wvex;
+  SklVector3DEx<REAL_TYPE> *dc_qbc;
   
   // (ix+guide*2, jx+guide*2, kx+guide*2)
   SklScalar3D<int>        *dc_mid;
@@ -161,20 +161,20 @@ public:
   SklScalar3D<unsigned>   *dc_bcv;
   SklScalar3D<unsigned>   *dc_bh1;
   SklScalar3D<unsigned>   *dc_bh2;
-  SklScalar3D<SKL_REAL>   *dc_ws;
-  SklScalar3D<SKL_REAL>   *dc_p;
-  SklScalar3D<SKL_REAL>   *dc_wk2;
-  SklScalar3D<SKL_REAL>   *dc_dp;
-  SklScalar3D<SKL_REAL>   *dc_p0;
-  SklScalar3D<SKL_REAL>   *dc_t;
-  SklScalar3D<SKL_REAL>   *dc_t0;
-  SklScalar3D<SKL_REAL>   *dc_wkj;
-  SklScalar3D<SKL_REAL>   *dc_vt;
-  SklScalar3D<SKL_REAL>   *dc_vof;
+  SklScalar3D<REAL_TYPE>   *dc_ws;
+  SklScalar3D<REAL_TYPE>   *dc_p;
+  SklScalar3D<REAL_TYPE>   *dc_wk2;
+  SklScalar3D<REAL_TYPE>   *dc_dp;
+  SklScalar3D<REAL_TYPE>   *dc_p0;
+  SklScalar3D<REAL_TYPE>   *dc_t;
+  SklScalar3D<REAL_TYPE>   *dc_t0;
+  SklScalar3D<REAL_TYPE>   *dc_wkj;
+  SklScalar3D<REAL_TYPE>   *dc_vt;
+  SklScalar3D<REAL_TYPE>   *dc_vof;
   
   // (ix, jx, kx)
-  SklScalar3D<SKL_REAL>   *dc_ap;
-  SklScalar3D<SKL_REAL>   *dc_at;
+  SklScalar3D<REAL_TYPE>   *dc_ap;
+  SklScalar3D<REAL_TYPE>   *dc_at;
   
   // out file object
   SklVoxDataSet *m_outPrs;
@@ -199,9 +199,9 @@ public:
   
   // for tuning
   int cf_sz[3];  //buffer size
-  SKL_REAL *cf_x; //comm buffer of each dir
-  SKL_REAL *cf_y;
-  SKL_REAL *cf_z;
+  REAL_TYPE *cf_x; //comm buffer of each dir
+  REAL_TYPE *cf_y;
+  REAL_TYPE *cf_z;
   
   // timing management
   unsigned ModeTiming;
@@ -264,7 +264,7 @@ public:
   bool hasLinearSolver (unsigned L);
   
   float min_distance     (float* cut, FILE* fp);
-  SKL_REAL Norm_Poisson     (ItrCtl* IC);
+  REAL_TYPE Norm_Poisson     (ItrCtl* IC);
   
   void allocArray_AB2       (unsigned long &total);
   void allocArray_average   (unsigned long &total, FILE* fp);
@@ -280,14 +280,14 @@ public:
   void allocArray_prep      (unsigned long &total, unsigned long &prep);
   void allocArray_RK        (unsigned long &total);
   
-  void AverageOutput        (unsigned mode, SKL_REAL& flop);
-  void Averaging_Time       (SKL_REAL& flop);
-  void Averaging_Space      (SKL_REAL* avr, SKL_REAL& flop);
+  void AverageOutput        (unsigned mode, REAL_TYPE& flop);
+  void Averaging_Time       (REAL_TYPE& flop);
+  void Averaging_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Array* cutPos);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);
-  void DomainMonitor        (BoundaryOuter* ptr, Control* R, SKL_REAL& flop);
-  void FileOutput           (unsigned mode, SKL_REAL& flop);
+  void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
+  void FileOutput           (unsigned mode, REAL_TYPE& flop);
   void gather_DomainInfo    (void);
   void getEnlargedIndex     (int& m_st, int& m_ed, unsigned st_i, unsigned len, unsigned m_x, unsigned dir, int m_id);
   void getGlobalCmpIdx      (VoxInfo* Vinfo);
@@ -295,8 +295,8 @@ public:
   void IF_TRP_VOF           (void);
   void load_Restart_avr_file(FILE* fp);
   void load_Restart_file    (FILE* fp);
-  void LS_Binary            (ItrCtl* IC, SKL_REAL b2);
-  void LS_Planar            (ItrCtl* IC, SKL_REAL b2);
+  void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
+  void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
   void setBCinfo            (ParseBC* B);
   void setEnsComponent      (void);
@@ -306,8 +306,8 @@ public:
   void set_Parallel_Info    (void);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
-  void setVOF               (SKL_REAL* vof, unsigned* bx);
-  void swap_ptr_SKL_REAL    (SKL_REAL* a, SKL_REAL* b);
+  void setVOF               (REAL_TYPE* vof, unsigned* bx);
+  void swap_ptr_REAL_TYPE    (REAL_TYPE* a, REAL_TYPE* b);
   
   void NS_FS_E_CBC          (void);
   void NS_FS_E_CDS          (void);
@@ -315,16 +315,16 @@ public:
   void PS_E_CBC             (void);
   void PS_EE_EI_CBC         (void);
   
-  SKL_REAL PSOR(SKL_REAL* p, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
-  SKL_REAL PSOR2sma_core(SKL_REAL* p, int ip, int color, SKL_REAL* src0, SKL_REAL* src1, unsigned* bp, ItrCtl* IC, SKL_REAL& flop);
-  SKL_REAL count_comm_size (unsigned sz[3], unsigned guide) const;
+  REAL_TYPE PSOR(REAL_TYPE* p, REAL_TYPE* src0, REAL_TYPE* src1, unsigned* bp, ItrCtl* IC, REAL_TYPE& flop);
+  REAL_TYPE PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE* src0, REAL_TYPE* src1, unsigned* bp, ItrCtl* IC, REAL_TYPE& flop);
+  REAL_TYPE count_comm_size (unsigned sz[3], unsigned guide) const;
   
   // CBC_Heat.C
-	SKL_REAL ps_Diff_SM_EE    (SKL_REAL* t, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, SKL_REAL& flop);
-  SKL_REAL ps_Diff_SM_PSOR  (SKL_REAL* t, SKL_REAL& b2, SKL_REAL dt, SKL_REAL* qbc, unsigned* bh2, SKL_REAL* ws, ItrCtl* IC, SKL_REAL& flop);
+	REAL_TYPE ps_Diff_SM_EE    (REAL_TYPE* t, REAL_TYPE dt, REAL_TYPE* qbc, unsigned* bh2, REAL_TYPE* ws, REAL_TYPE& flop);
+  REAL_TYPE ps_Diff_SM_PSOR  (REAL_TYPE* t, REAL_TYPE& b2, REAL_TYPE dt, REAL_TYPE* qbc, unsigned* bh2, REAL_TYPE* ws, ItrCtl* IC, REAL_TYPE& flop);
 
-  void Buoyancy         (SKL_REAL* v, SKL_REAL dgr, SKL_REAL* t, unsigned* bd, SKL_REAL& flop);
-  void ps_ConvectionEE  (SKL_REAL* tc, SKL_REAL dt, unsigned* bd, SKL_REAL* t0, SKL_REAL& flop);
+  void Buoyancy         (REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned* bd, REAL_TYPE& flop);
+  void ps_ConvectionEE  (REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop);
   void ps_LS            (ItrCtl* IC);
   
   //@fn 時刻をRFクラスからv00[4]にコピーする
@@ -333,7 +333,7 @@ public:
     double g[4];
     RF.setV00(m_time);
     RF.copyV00(g);
-    for (int i=0; i<4; i++) v00[i]=(SKL_REAL)g[i];
+    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
   }
   
   //@fn プロファイラのラベル取り出し
@@ -353,7 +353,7 @@ public:
   //@param 格納番号
   //@param[in] flopPerTask 「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
   //@param[in] iterationCount  実行「タスク」数 (ディフォルト1)
-  inline void TIMING_stop(unsigned key, SKL_REAL flopPerTask=0.0, unsigned iterationCount=1) {
+  inline void TIMING_stop(unsigned key, REAL_TYPE flopPerTask=0.0, unsigned iterationCount=1) {
     stop_collection( get_tm_label(key) );
     TIMING__ PM.stop(key, flopPerTask, iterationCount);
   }

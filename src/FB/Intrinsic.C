@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -71,12 +71,12 @@ void Intrinsic::printPara(FILE* fp, Control* R)
 }
 
 /**
- @fn void Intrinsic::genVFfromBcx(SKL_REAL* VF, unsigned* bx)
+ @fn void Intrinsic::genVFfromBcx(REAL_TYPE* VF, unsigned* bx)
  @brief BCindexから体積率を計算する．Fluid=1.0, Solid=0.0
  @param VF 体積占有率（マスク）
  @param bx BCindex
  */
-void Intrinsic::genVFfromBcx(SKL_REAL* VF, unsigned* bx)
+void Intrinsic::genVFfromBcx(REAL_TYPE* VF, unsigned* bx)
 {
   int i,j,k;
   unsigned m;
@@ -92,13 +92,13 @@ void Intrinsic::genVFfromBcx(SKL_REAL* VF, unsigned* bx)
 }
 
 /**
- @fn void Intrinsic::writeSVX(SKL_REAL *vf, int *id, Control* R)
+ @fn void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
  @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
  @param vf 体積占有率
  @param id ID情報
  @param R コントロールクラスのポインタ
  */
-void Intrinsic::writeSVX(SKL_REAL *vf, int *id, Control* R)
+void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
 

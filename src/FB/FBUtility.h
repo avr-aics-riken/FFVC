@@ -35,73 +35,73 @@ public:
   static void printVersion  (FILE* fp, const char* str, const unsigned ver);
 
 	/**
-   @fn static SKL_REAL convND2Kelvin(const SKL_REAL var, const SKL_REAL base, const SKL_REAL diff)
+   @fn static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff)
    @brief 無次元温度varを有次元(Kelvin)にして返す
    @param var 無次元温度
    @param base Control::BaseTemp
    @param diff Control::DiffTemp
    */
-  static SKL_REAL convND2Kelvin(const SKL_REAL var, const SKL_REAL base, const SKL_REAL diff) {
+  static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) {
     return ( base + diff*var );
   }
   
   /**
-   @fn static SKL_REAL convD2ND(const SKL_REAL var, const SKL_REAL base, const SKL_REAL diff, const unsigned Unit)
+   @fn static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit)
    @brief 有次元温度varを無次元にして返す
    @param var 有次元温度(Kelvin or Celsius)
    @param base Control::BaseTemp
    @param diff Control::DiffTemp
    @param Unit 温度の単位
    */
-  static SKL_REAL convD2ND(const SKL_REAL var, const SKL_REAL base, const SKL_REAL diff, const unsigned Unit) {
-    SKL_REAL tmp = convTemp2K(var, Unit);
-    return ( (tmp - base) / (SKL_REAL)fabs(diff) );
+  static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit) {
+    REAL_TYPE tmp = convTemp2K(var, Unit);
+    return ( (tmp - base) / (REAL_TYPE)fabs(diff) );
   }
   
   /**
-   @fn static SKL_REAL convK2ND(const SKL_REAL var, const SKL_REAL base, const SKL_REAL diff)
+   @fn static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff)
    @brief 有次元温度var(Kelvin)を無次元にして返す
    @param var 有次元温度(Kelvin)
    @param base Control::BaseTemp
    @param diff Control::DiffTemp
    */
-  static SKL_REAL convK2ND(const SKL_REAL var, const SKL_REAL base, const SKL_REAL diff) {
-    return ( (var - base) / (SKL_REAL)fabs(diff) );
+  static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) {
+    return ( (var - base) / (REAL_TYPE)fabs(diff) );
   }
 
   /**
-   @fn static inline SKL_REAL convK2Temp(const SKL_REAL var, const unsigned Unit)
+   @fn static inline REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit)
    @brief 有次元の温度varを指定された温度単位にして返す
    @param var 有次元温度(Kelvin)
    @param Unit 温度の単位
    */
-  static SKL_REAL convK2Temp(const SKL_REAL var, const unsigned Unit) {
+  static REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit) {
     return ( (Unit==CompoList::Unit_KELVIN) ? var : var-KELVIN );
   }
   
   /**
-   @fn static SKL_REAL convTemp2K(const SKL_REAL var, const unsigned Unit)
+   @fn static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit)
    @brief 有次元の温度varを(Kelvin)にして返す
    @param var 有次元温度(Kelvin or Celsius)
    @param Unit 温度の単位
    */
-  static SKL_REAL convTemp2K(const SKL_REAL var, const unsigned Unit) {
+  static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit) {
     return ( (Unit==CompoList::Unit_KELVIN) ? var : var+KELVIN );
   }
   
   /**
-   @fn static SKL_REAL convD2ND_V(const SKL_REAL var, const SKL_REAL refv)
+   @fn static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE refv)
    @brief 有次元速度を無次元にして返す
    @retval 無次元速度
    @param var 有次元速度
    @param refv 代表速度
    */
-  static SKL_REAL convD2ND_V(const SKL_REAL var, const SKL_REAL RefV) {
+  static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE RefV) {
     return ( var / RefV );
   }
   
   /**
-   @fn static SKL_REAL convD2ND_Hsrc(SKL_REAL var, SKL_REAL RefV, SKL_REAL RefL, SKL_REAL diff, SKL_REAL rho, SKL_REAL C)
+   @fn static REAL_TYPE convD2ND_Hsrc(REAL_TYPE var, REAL_TYPE RefV, REAL_TYPE RefL, REAL_TYPE diff, REAL_TYPE rho, REAL_TYPE C)
    @brief 発熱量(W/m^3)を無次元にして返す
    @param var 有次元発熱量(W/m^3)
    @param RefV 代表速度
@@ -110,17 +110,17 @@ public:
    @param rho 媒質密度
    @param C 媒質比熱
    */
-  static SKL_REAL convD2ND_Hsrc(const SKL_REAL var, 
-                                       const SKL_REAL RefV, 
-                                       const SKL_REAL RefL, 
-                                       const SKL_REAL diff, 
-                                       const SKL_REAL rho, 
-                                       const SKL_REAL C) {
+  static REAL_TYPE convD2ND_Hsrc(const REAL_TYPE var, 
+                                       const REAL_TYPE RefV, 
+                                       const REAL_TYPE RefL, 
+                                       const REAL_TYPE diff, 
+                                       const REAL_TYPE rho, 
+                                       const REAL_TYPE C) {
     return ( var*RefL / (RefV*diff*rho*C) );
   }
   
   /**
-   @fn static SKL_REAL convND2D_Hsrc(const SKL_REAL var, const SKL_REAL RefV, const SKL_REAL RefL, const SKL_REAL diff, const SKL_REAL rho, const SKL_REAL C)
+   @fn static REAL_TYPE convND2D_Hsrc(const REAL_TYPE var, const REAL_TYPE RefV, const REAL_TYPE RefL, const REAL_TYPE diff, const REAL_TYPE rho, const REAL_TYPE C)
    @brief 発熱量を有次元(W/m^3)にして返す
    @param var 無次元発熱量
    @param RefV 代表速度
@@ -129,17 +129,17 @@ public:
    @param rho 媒質密度
    @param C 媒質比熱
    */
-  static SKL_REAL convND2D_Hsrc(const SKL_REAL var, 
-                                       const SKL_REAL RefV, 
-                                       const SKL_REAL RefL, 
-                                       const SKL_REAL diff, 
-                                       const SKL_REAL rho, 
-                                       const SKL_REAL C) {
+  static REAL_TYPE convND2D_Hsrc(const REAL_TYPE var, 
+                                       const REAL_TYPE RefV, 
+                                       const REAL_TYPE RefL, 
+                                       const REAL_TYPE diff, 
+                                       const REAL_TYPE rho, 
+                                       const REAL_TYPE C) {
     return ( var* RefV*diff*rho*C / RefL );
   }
   
   /**
-   @fn static SKL_REAL convD2ND_P(const SKL_REAL var, const SKL_REAL bp, const SKL_REAL rho, const SKL_REAL RefV, const unsigned mode)
+   @fn static REAL_TYPE convD2ND_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV, const unsigned mode)
    @brief 圧力を無次元にして返す
    @param var 有次元圧力(absolute or gauge)
    @param bp 基準圧力
@@ -147,17 +147,17 @@ public:
    @param RefV 代表速度
    @param mode (absolute or gauge)
    */
-  static SKL_REAL convD2ND_P(const SKL_REAL var, 
-                                    const SKL_REAL bp, 
-                                    const SKL_REAL rho, 
-                                    const SKL_REAL RefV, 
+  static REAL_TYPE convD2ND_P(const REAL_TYPE var, 
+                                    const REAL_TYPE bp, 
+                                    const REAL_TYPE rho, 
+                                    const REAL_TYPE RefV, 
                                     const unsigned mode) {
-    const SKL_REAL a = (mode==CompoList::Absolute) ? (var-bp) : var;
+    const REAL_TYPE a = (mode==CompoList::Absolute) ? (var-bp) : var;
     return (  a / (RefV*RefV*rho) );
   }
   
   /**
-   @fn static SKL_REAL convND2D_P(const SKL_REAL var, const SKL_REAL bp, const SKL_REAL rho, const SKL_REAL RefV)
+   @fn static REAL_TYPE convND2D_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV)
    @brief 圧力を有次元(absolute or gauge)にして返す
    @param var 無次元圧力
    @param bp 基準圧力
@@ -165,8 +165,8 @@ public:
    @param RefV 代表速度
    @param mode (absolute or gauge)
    */
-  static SKL_REAL convND2D_P(const SKL_REAL var, const SKL_REAL bp, const SKL_REAL rho, const SKL_REAL RefV, const unsigned mode) {
-    const SKL_REAL a = var * (RefV*RefV*rho);
+  static REAL_TYPE convND2D_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV, const unsigned mode) {
+    const REAL_TYPE a = var * (RefV*RefV*rho);
     return ( (mode==CompoList::Absolute) ? bp+a : a );
   }
   

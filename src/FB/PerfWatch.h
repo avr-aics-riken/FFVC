@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -15,6 +15,7 @@
 #include "Skl.h"
 #include "SklSolverBase.h"
 #include "Parallel_node.h"
+#include "FBDefine.h"
 
 #include <cassert>
 #include <cstdio>
@@ -105,7 +106,7 @@ public:
   ///
   ///   @note m_countには, iterationCountではなく, 「測定回数」を積算
   ///
-  void stop(SKL_REAL flopPerTask, unsigned iterationCount);
+  void stop(REAL_TYPE flopPerTask, unsigned iterationCount);
 
   /// 測定結果情報をノード０に集約.
   void gather();

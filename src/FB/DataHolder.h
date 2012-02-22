@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -14,6 +14,7 @@
 
 #include <cstdio>
 #include <cstdarg>
+#include "FBDefine.h"
 #include "Skl.h"
 #include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
@@ -25,7 +26,7 @@ using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 
 /// データ格納用コンテナ. 時刻値をキーとしたマップ.
-typedef std::map<SKL_REAL,SKL_REAL> DATA_MAP;
+typedef std::map<REAL_TYPE,REAL_TYPE> DATA_MAP;
 
 
 /**
@@ -41,8 +42,8 @@ protected:
 
   unsigned m_dataSize; ///< データ数
 
-  SKL_REAL m_minKey;   ///< 時刻最小値
-  SKL_REAL m_maxKey;   ///< 時刻最大値
+  REAL_TYPE m_minKey;   ///< 時刻最小値
+  REAL_TYPE m_maxKey;   ///< 時刻最大値
 
 public:
 
@@ -65,14 +66,14 @@ public:
   ///   @param key 時刻値
   ///   @return 指定した時刻に対する値
   ///
-  SKL_REAL getValue(SKL_REAL key) const;
+  REAL_TYPE getValue(REAL_TYPE key) const;
 
   /// 時刻を指定して値を取得する.
   ///   getValueメソッドと同じ.
   ///   @param key 時刻値
   ///   @return 指定した時刻に対する値
   ///
-  SKL_REAL get_value(SKL_REAL key) const {
+  REAL_TYPE get_value(REAL_TYPE key) const {
     return getValue(key);
   }
 
@@ -89,13 +90,13 @@ public:
   ///   指定された倍率を全てのデータに掛ける．
   ///   @param ratio 倍率
   ///
-  void scale(SKL_REAL ratio);
+  void scale(REAL_TYPE ratio);
 
   /// 時刻の最小値を取得.
   ///
   ///   @return 時刻の最小値
   ///
-  SKL_REAL getMin() const {
+  REAL_TYPE getMin() const {
     return m_minKey;
   }
 
@@ -103,7 +104,7 @@ public:
   ///
   ///   @return 時刻の最大値
   ///
-  SKL_REAL getMax() const {
+  REAL_TYPE getMax() const {
     return m_maxKey;
   }
 

@@ -13,9 +13,9 @@
 extern SklParaComponent* ParaCmpo;
 
 /**
- @fn bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                                  SKL_REAL init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
- @brief SklScalar4DEx<SKL_REAL>データクラスをアロケートする
+ @fn bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                                  REAL_TYPE init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
+ @brief SklScalar4DEx<REAL_TYPE>データクラスをアロケートする
  @retval エラーコード
  @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param dc_var データクラス
@@ -30,8 +30,8 @@ extern SklParaComponent* ParaCmpo;
  @note
     - SklParaComponent()はSklSolverBaseクラスのメソッドなので，SklSolverBaseから派生したクラスのオブジェクトポインタを受け取る
  */
-bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                             SKL_REAL init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
+bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                             REAL_TYPE init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
 {
   if ( !obj )   return false;
   if ( dc_var ) return false; // アロケート済みの場合
@@ -49,7 +49,7 @@ bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_va
   size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
-    if( !(dc_var = dynamic_cast<SklScalar4DEx<SKL_REAL>*>(
+    if( !(dc_var = dynamic_cast<SklScalar4DEx<REAL_TYPE>*>(
                                                           obj->SklAllocateArray(
                                                                                 para_mng,
                                                                                 label,
@@ -68,15 +68,15 @@ bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_va
     }
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
-  mc += (long)( nx*sizeof(SKL_REAL) );
+  mc += (long)( nx*sizeof(REAL_TYPE) );
   
   return true;
 }
 
 /**
- @fn bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                                SKL_REAL init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
- @brief SklScalar4D<SKL_REAL>データクラスをアロケートする
+ @fn bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                                REAL_TYPE init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
+ @brief SklScalar4D<REAL_TYPE>データクラスをアロケートする
  @retval エラーコード
  @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param dc_var データクラス
@@ -91,8 +91,8 @@ bool Alloc::alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<SKL_REAL>* &dc_va
  @note
     - SklParaComponent()はSklSolverBaseクラスのメソッドなので，SklSolverBaseから派生したクラスのオブジェクトポインタを受け取る
  */
-bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                           SKL_REAL init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
+bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                           REAL_TYPE init, unsigned long &mc, unsigned dlen, int para_key, int m_procGrp)
 {
   if ( !obj )   return false;
   if ( dc_var ) return false; // アロケート済みの場合
@@ -110,7 +110,7 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, c
   size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
-    if( !(dc_var = dynamic_cast<SklScalar4D<SKL_REAL>*>(
+    if( !(dc_var = dynamic_cast<SklScalar4D<REAL_TYPE>*>(
                                                         obj->SklAllocateArray(
                                                                               para_mng,
                                                                               label,
@@ -129,15 +129,15 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, c
     }
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
-  mc += (long)( nx*sizeof(SKL_REAL) );
+  mc += (long)( nx*sizeof(REAL_TYPE) );
   
   return true;
 }
 
 /**
- @fn bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                                SKL_REAL init, unsigned long &mc, int para_key, int m_procGrp)
- @brief SklScalar3D<SKL_REAL>データクラスをアロケートする
+ @fn bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                                REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
+ @brief SklScalar3D<REAL_TYPE>データクラスをアロケートする
  @retval エラーコード
  @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param dc_var データクラス
@@ -151,8 +151,8 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<SKL_REAL>* &dc_var, c
  @note
     - SklParaComponent()はSklSolverBaseクラスのメソッドなので，SklSolverBaseから派生したクラスのオブジェクトポインタを受け取る
  */
-bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                           SKL_REAL init, unsigned long &mc, int para_key, int m_procGrp)
+bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                           REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
 {
   if ( !obj )   return false;
   if ( dc_var ) return false; // アロケート済みの場合
@@ -169,7 +169,7 @@ bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, c
   size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
-    if( !(dc_var = dynamic_cast<SklScalar3D<SKL_REAL>*>(
+    if( !(dc_var = dynamic_cast<SklScalar3D<REAL_TYPE>*>(
                                                         obj->SklAllocateArray(
                                                                               para_mng,
                                                                               label,
@@ -190,7 +190,7 @@ bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<SKL_REAL>* &dc_var, c
       fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
     }
   }
-  mc += (long)( nx*sizeof(SKL_REAL) );
+  mc += (long)( nx*sizeof(REAL_TYPE) );
   
   return true;
 }
@@ -314,9 +314,9 @@ bool Alloc::alloc_Uint_S3D(SklSolverBase* obj, SklScalar3D<unsigned>* &dc_var, c
 }
 
 /**
- @fn bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                                SKL_REAL init, unsigned long &mc, int para_key, int m_procGrp)
- @brief SklVector3D<SKL_REAL>データクラスをアロケートする
+ @fn bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                                REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
+ @brief SklVector3D<REAL_TYPE>データクラスをアロケートする
  @retval エラーコード
  @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param dc_var データクラス
@@ -330,8 +330,8 @@ bool Alloc::alloc_Uint_S3D(SklSolverBase* obj, SklScalar3D<unsigned>* &dc_var, c
  @note
     - SklParaComponent()はSklSolverBaseクラスのメソッドなので，SklSolverBaseから派生したクラスのオブジェクトポインタを受け取る
  */
-bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                           SKL_REAL init, unsigned long &mc, int para_key, int m_procGrp)
+bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                           REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
 {
   if ( !obj )    return false;
   if ( dc_var ) return false; // アロケート済みの場合
@@ -348,7 +348,7 @@ bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, c
   size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
-    if( !(dc_var = dynamic_cast<SklVector3D<SKL_REAL>*>(
+    if( !(dc_var = dynamic_cast<SklVector3D<REAL_TYPE>*>(
                                                         obj->SklAllocateArray(
                                                                               para_mng,
                                                                               label,
@@ -367,15 +367,15 @@ bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, c
     }
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
-  mc = (long)( nx*sizeof(SKL_REAL) );
+  mc = (long)( nx*sizeof(REAL_TYPE) );
   
   return true;
 }
 
 /**
- @fn bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                                  SKL_REAL init, unsigned long &mc, int para_key, int m_procGrp)
- @brief SklVector3DEx<SKL_REAL>データクラスをアロケートする
+ @fn bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                                  REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
+ @brief SklVector3DEx<REAL_TYPE>データクラスをアロケートする
  @retval エラーコード
  @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
  @param dc_var データクラス
@@ -389,8 +389,8 @@ bool Alloc::alloc_Real_V3D(SklSolverBase* obj, SklVector3D<SKL_REAL>* &dc_var, c
  @note
     - SklParaComponent()はSklSolverBaseクラスのメソッドなので，SklSolverBaseから派生したクラスのオブジェクトポインタを受け取る
  */
-bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                             SKL_REAL init, unsigned long &mc, int para_key, int m_procGrp)
+bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                             REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
 {
   if ( !obj )    return false;
   if ( dc_var ) return false; // アロケート済みの場合
@@ -407,7 +407,7 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_va
   size_t nx = 0;
   
   if ( !obj->SklIsCheckMode() ) {
-    if( !(dc_var = dynamic_cast<SklVector3DEx<SKL_REAL>*>(
+    if( !(dc_var = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(
                                                           obj->SklAllocateArray(
                                                                                 para_mng,
                                                                                 label,
@@ -426,7 +426,7 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<SKL_REAL>* &dc_va
     }
     fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
   }
-  mc = (long)( nx*sizeof(SKL_REAL) );
+  mc = (long)( nx*sizeof(REAL_TYPE) );
   
   return true;
 }

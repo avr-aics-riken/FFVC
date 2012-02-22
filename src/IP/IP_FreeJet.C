@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -28,9 +28,9 @@ bool FreeJet::getXML(SklSolverConfig* CF, Control* R)
   return true;
 }
 
-bool FreeJet::setDomain(Control* R, unsigned* G_size, SKL_REAL* G_org, SKL_REAL* G_Lbx)
+bool FreeJet::setDomain(Control* R, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
 {
-  SKL_REAL px, py, pz;
+  REAL_TYPE px, py, pz;
   px = py = pz = 0.0;
   
   // check Dimension
@@ -40,9 +40,9 @@ bool FreeJet::setDomain(Control* R, unsigned* G_size, SKL_REAL* G_org, SKL_REAL*
   }
   
   // Setting depends on Example,  INTRINSIC
-  px         = 1.0 / (SKL_REAL)imax;
-  py         = 1.0 / (SKL_REAL)jmax;
-  pz         = 1.0 / (SKL_REAL)kmax;
+  px         = 1.0 / (REAL_TYPE)imax;
+  py         = 1.0 / (REAL_TYPE)jmax;
+  pz         = 1.0 / (REAL_TYPE)kmax;
   R->dh      = px;      // Non-dimensional values
   R->dx[0]   = px;
   R->dx[1]   = py;
@@ -72,7 +72,7 @@ bool FreeJet::getParaXML(SklSolverConfig* CF, Control* R)
   return true;
 }
 
-void FreeJet::PostInit(SKL_REAL &checkTime, Control* R)
+void FreeJet::PostInit(REAL_TYPE &checkTime, Control* R)
 {
   checkTime = R->PlotIntvl;  // first check time
 }
@@ -92,11 +92,11 @@ bool FreeJet::printPara(FILE* fp, Control* R)
   return true;
 }
 
-void FreeJet::setup(int* mid, Control* R, SKL_REAL* G_org)
+void FreeJet::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
   unsigned i0, j0, j1, jd;
   unsigned m;
-  SKL_REAL  fj0, fj1;
+  REAL_TYPE  fj0, fj1;
   int i,j,k;
   
   // Inner

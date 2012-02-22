@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -85,7 +85,7 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
 ///
 void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
                            const char* methodStr, const char* modeStr,
-                           SKL_REAL from[3], SKL_REAL to[3], int nDivision)
+                           REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
 {
   type = LINE;
   label = labelStr;
@@ -110,7 +110,7 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
   for (int m = 0; m < nPoint; m++) {
     ostringstream oss;
     oss << "point_" << m;
-    crd[m] = st + dd * (SKL_REAL)m;
+    crd[m] = st + dd * (REAL_TYPE)m;
     if (!check_region(m, g_org, g_box, true)) assert(0);
     comment[m] = oss.str();
   }
@@ -206,23 +206,23 @@ void MonitorCompo::allocSamplingArray()
 {
   if ( nPoint == 0 ) assert(0); // サンプリング点数
   
-  const SKL_REAL DUMMY = 1.0e10;
-  //const SKL_REAL DUMMY = 0.0;
+  const REAL_TYPE DUMMY = 1.0e10;
+  //const REAL_TYPE DUMMY = 0.0;
   
   if (variable[VELOCITY]) {
     if (!(vel = new Vec3r[nPoint])) assert(0);
     for (int i = 0; i < nPoint; i++) vel[i] = Vec3r(DUMMY, DUMMY, DUMMY);
   }
   if (variable[PRESSURE]) {
-    if (!(prs = new SKL_REAL[nPoint])) assert(0);
+    if (!(prs = new REAL_TYPE[nPoint])) assert(0);
     for (int i = 0; i < nPoint; i++) prs[i] = DUMMY;
   }
   if (variable[TEMPERATURE]) {
-    if (!(tmp = new SKL_REAL[nPoint])) assert(0);
+    if (!(tmp = new REAL_TYPE[nPoint])) assert(0);
     for (int i = 0; i < nPoint; i++) tmp[i] = DUMMY;
   }
   if (variable[TOTAL_PRESSURE]) {
-    if (!(tp = new SKL_REAL[nPoint])) assert(0);
+    if (!(tp = new REAL_TYPE[nPoint])) assert(0);
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
   }
   if (variable[VORTICITY]) {
@@ -441,9 +441,9 @@ void MonitorCompo::sampling()
 /// サンプリングした変数をノード0に集約.
 void MonitorCompo::gatherSampled()
 {
-  SKL_REAL* vSendBuf = NULL;
-  SKL_REAL* vRecvBuf = NULL;
-  SKL_REAL* sRecvBuf = NULL;
+  REAL_TYPE* vSendBuf = NULL;
+  REAL_TYPE* vRecvBuf = NULL;
+  REAL_TYPE* sRecvBuf = NULL;
   
   if (variable[VELOCITY])       gatherSampledVector(vel, vSendBuf, vRecvBuf);
   if (variable[PRESSURE])       gatherSampledScalar(prs, sRecvBuf);
@@ -462,13 +462,13 @@ void MonitorCompo::gatherSampled()
 ///   @param[in,out] s スカラー変数配列
 ///   @param  sRecvBuf  通信用work領域
 ///
-void MonitorCompo::gatherSampledScalar(SKL_REAL* s, SKL_REAL* sRecvBuf)
+void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int np = para_mng->GetNodeNum(pn.procGrp);
   
   if (pn.ID == 0 && !sRecvBuf) {
-    if (!(sRecvBuf = new SKL_REAL[nPoint*np])) assert(0);
+    if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) assert(0);
   }
   
   if (!para_mng->Gather(s, nPoint, SKL_ARRAY_DTYPE_REAL,
@@ -492,17 +492,17 @@ void MonitorCompo::gatherSampledScalar(SKL_REAL* s, SKL_REAL* sRecvBuf)
 ///   @param[in,out] v ベクトル変数配列
 ///   @param  vSendBuf,vRecvBuf  通信用work領域
 ///
-void MonitorCompo::gatherSampledVector(Vec3r* v, SKL_REAL* vSendBuf, SKL_REAL* vRecvBuf)
+void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int np = para_mng->GetNodeNum(pn.procGrp);
   
   if (!vSendBuf) {
-    if (!(vSendBuf = new SKL_REAL[nPoint*3*np])) assert(0);
+    if (!(vSendBuf = new REAL_TYPE[nPoint*3*np])) assert(0);
   }
   
   if (pn.ID == 0 && !vRecvBuf) {
-    if (!(vRecvBuf = new SKL_REAL[nPoint*3*np])) assert(0);
+    if (!(vRecvBuf = new REAL_TYPE[nPoint*3*np])) assert(0);
   }
   
   for (int m = 0; m < nPoint; m++) {
@@ -610,7 +610,7 @@ void MonitorCompo::writeHeader(bool gathered)
 ///   @param[in] tm   サンプリング時の計算時刻
 ///   @param[in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
 ///
-void MonitorCompo::print(unsigned step, SKL_REAL tm, bool gathered)
+void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
 {
   assert(fp);
   
@@ -730,8 +730,8 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   for (int i = 0; i < np; i++) sum += nPointList[i];
   assert(sum ==nPoint);
   
-  SKL_REAL* buf;
-  if (!(buf = new SKL_REAL[nPoint*3])) assert(0);
+  REAL_TYPE* buf;
+  if (!(buf = new REAL_TYPE[nPoint*3])) assert(0);
   for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
   
   int m0 = 0;
@@ -797,9 +797,9 @@ void MonitorCompo::samplingInnerBoundary()
 ///   @param[in] s スカラー変数配列
 ///   @return モニタ領域内平均値
 ///
-SKL_REAL MonitorCompo::averageScalar(SKL_REAL* s)
+REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 {
-  SKL_REAL sum= 0.0;
+  REAL_TYPE sum= 0.0;
   for (int i = 0; i < nPoint; i++) {
     if (rank[i] == pn.ID) sum+= s[i];
   }
@@ -816,7 +816,7 @@ SKL_REAL MonitorCompo::averageScalar(SKL_REAL* s)
 ///
 Vec3r MonitorCompo::averageVector(Vec3r* v)
 {
-  SKL_REAL sum[3] = { 0.0, 0.0, 0.0 };
+  REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
   for (int i = 0; i < nPoint; i++) {
     if (rank[i] == pn.ID) {
       sum[0] += v[i].x;
@@ -831,7 +831,7 @@ Vec3r MonitorCompo::averageVector(Vec3r* v)
 
 
 /// Allreduceによる総和(実数配列上書き，work配列指定).
-bool MonitorCompo::allReduceSum(SKL_REAL* array, int n, SKL_REAL* sendBuf)
+bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if (!para_mng->IsParallel()) return true;
@@ -842,12 +842,12 @@ bool MonitorCompo::allReduceSum(SKL_REAL* array, int n, SKL_REAL* sendBuf)
 
 
 /// Allreduceによる総和(実数配列上書き).
-bool MonitorCompo::allReduceSum(SKL_REAL* array, int n)
+bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if (!para_mng->IsParallel()) return true;
   
-  SKL_REAL* sendBuf = new SKL_REAL[n];
+  REAL_TYPE* sendBuf = new REAL_TYPE[n];
   bool ret = allReduceSum(array, n, sendBuf);
   delete[] sendBuf;
   

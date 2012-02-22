@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -73,7 +73,7 @@ void ControlRect::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, Referen
  */
 void ControlRect::setInitialConditions(void)
 {
-  SKL_REAL a = (SpecificHeatRatio-1.0) + 0.5* (iv.VecU*iv.VecU + iv.VecV*iv.VecV + iv.VecW*iv.VecW);
+  REAL_TYPE a = (SpecificHeatRatio-1.0) + 0.5* (iv.VecU*iv.VecU + iv.VecV*iv.VecV + iv.VecW*iv.VecW);
   
   if ( Unit.Param == DIMENSIONAL ) {
     iv.Density  /= RefDensity;

@@ -58,41 +58,41 @@ protected:
   
   void loadSBXfile (SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, SklScalar3D<unsigned char>* data);
   void loadSBXfile (SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, SklScalar3D<int>* mid_data, 
-                    SklScalar3D<SKL_REAL>* vol_data = NULL);
+                    SklScalar3D<REAL_TYPE>* vol_data = NULL);
   
 public:
-  void cnv_Div           (SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL coef, SKL_REAL& flop);
-  void cnv_P_D2ND        (SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_prs, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, const unsigned mode);
-  void cnv_P_ND2D        (SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, 
-                          const SKL_REAL Base_prs, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, const unsigned mode, SKL_REAL& flop);
-  void cnv_T_D2ND        (SklScalar3D<SKL_REAL>* dst, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, const unsigned Unit);
-  void cnv_T_ND2D        (SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Base_tmp, const SKL_REAL Diff_tmp, 
-                          const unsigned Unit, SKL_REAL& flop);
-  void cnv_TP_ND2D       (SklScalar3D<SKL_REAL>* dst, const SklScalar3D<SKL_REAL>* src, const SKL_REAL Ref_rho, const SKL_REAL Ref_v, SKL_REAL& flop);
-  void cnv_V_D2ND        (SklVector3DEx<SKL_REAL>* dst, const SKL_REAL Ref_v);
-  void cnv_V_ND2D        (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, const SKL_REAL v00[3], const SKL_REAL Ref_v, 
-                          SKL_REAL& flop, unsigned stepAvr=1);
+  void cnv_Div           (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE coef, REAL_TYPE& flop);
+  void cnv_P_D2ND        (SklScalar3D<REAL_TYPE>* dst, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const unsigned mode);
+  void cnv_P_ND2D        (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, 
+                          const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const unsigned mode, REAL_TYPE& flop);
+  void cnv_T_D2ND        (SklScalar3D<REAL_TYPE>* dst, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const unsigned Unit);
+  void cnv_T_ND2D        (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, 
+                          const unsigned Unit, REAL_TYPE& flop);
+  void cnv_TP_ND2D       (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop);
+  void cnv_V_D2ND        (SklVector3DEx<REAL_TYPE>* dst, const REAL_TYPE Ref_v);
+  void cnv_V_ND2D        (SklVector3DEx<REAL_TYPE>* dst, const SklVector3DEx<REAL_TYPE>* src, const REAL_TYPE v00[3], const REAL_TYPE Ref_v, 
+                          REAL_TYPE& flop, unsigned stepAvr=1);
   void loadSphScalar3D   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode);
+                          SklScalar3D<REAL_TYPE>* dc_s, int& step, REAL_TYPE& time, unsigned Dmode);
   void loadSphScalar4D   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklScalar4D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode);
+                          SklScalar4D<REAL_TYPE>* dc_s, int& step, REAL_TYPE& time, unsigned Dmode);
   void loadSphVector3D   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode);
+                          SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, REAL_TYPE *v00, unsigned Dmode);
   void loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklScalar3D<SKL_REAL>* dc_s, int& step, SKL_REAL& time, unsigned Dmode);
+                          SklScalar3D<REAL_TYPE>* dc_s, int& step, REAL_TYPE& time, unsigned Dmode);
   void loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklVector3DEx<SKL_REAL>* dc_v, int& step, SKL_REAL& time, SKL_REAL *v00, unsigned Dmode);
+                          SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, REAL_TYPE *v00, unsigned Dmode);
   void readSBX           (SklSolverBase* obj, FILE* fp, const char* file_attr, unsigned* size, unsigned guide, 
                           SklScalar3D<unsigned char>* dc_mid);
   void readSBX           (SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned* size, unsigned guide, 
-                          SklScalar3D<int>* dc_mid, SklScalar3D<SKL_REAL>* dc_vol = NULL);
+                          SklScalar3D<int>* dc_mid, SklScalar3D<REAL_TYPE>* dc_vol = NULL);
   void readSVX           (SklSolverBase* obj, FILE* fp, const char* fname, unsigned* size, unsigned guide, 
-                          SklScalar3D<int>* dc_mid, bool vf_mode=false, SklScalar3D<SKL_REAL>* dc_ws=NULL);
-  void writeRawSPH       (const SKL_REAL *vf, const unsigned* size, const unsigned gc, const SKL_REAL* org, const SKL_REAL* ddx, 
+                          SklScalar3D<int>* dc_mid, bool vf_mode=false, SklScalar3D<REAL_TYPE>* dc_ws=NULL);
+  void writeRawSPH       (const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, 
                           const unsigned m_ModePrecision);
   
-  bool shiftVin3D  (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
-  bool shiftVout3D (SklVector3DEx<SKL_REAL>* dst, const SklVector3DEx<SKL_REAL>* src, SKL_REAL v00[3], unsigned stepAvr=1);
+  bool shiftVin3D  (SklVector3DEx<REAL_TYPE>* dst, const SklVector3DEx<REAL_TYPE>* src, REAL_TYPE v00[3], unsigned stepAvr=1);
+  bool shiftVout3D (SklVector3DEx<REAL_TYPE>* dst, const SklVector3DEx<REAL_TYPE>* src, REAL_TYPE v00[3], unsigned stepAvr=1);
   
   /**
    @fn inline void CalcIndex(cosnt unsigned dst_ilen, const unsigned dst_jlen, const unsigned dst_klen, cosnt unsigned dst_gc, const unsigned src_gc, 

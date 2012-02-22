@@ -78,7 +78,7 @@ depend:
 
 # DO NOT DELETE
 
-../../FB/Alloc.o: ../../FB/Alloc.h ../../FB/mydebug.h
+../../FB/Alloc.o: ../../FB/Alloc.h ../../FB/FBDefine.h ../../FB/mydebug.h
 ../../FB/Alloc.o: /usr/local/sphere/include/Skl.h
 ../../FB/Alloc.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/Alloc.o: /usr/local/sphere/include/SklSolverBase.h
@@ -297,9 +297,9 @@ depend:
 ../../FB/Component.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/Component.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/Component.o: ../../FB/FBDefine.h ../../FB/mydebug.h
-../../FB/CompoFraction.o: ../../FB/CompoFraction.h ../../FB/vec3.h
-../../FB/CompoFraction.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
-../../FB/CompoFraction.o: ../../FB/FBDefine.h
+../../FB/CompoFraction.o: ../../FB/CompoFraction.h ../../FB/FBDefine.h
+../../FB/CompoFraction.o: ../../FB/vec3.h ../../FB/vec3_func.h
+../../FB/CompoFraction.o: ../../FB/vec3f_func.h
 ../../FB/Control.o: ../../FB/Control.h /usr/local/sphere/include/Skl.h
 ../../FB/Control.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/Control.o: /usr/local/sphere/include/SklSolverBase.h

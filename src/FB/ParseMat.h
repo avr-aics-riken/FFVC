@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -34,7 +34,7 @@ private:
   unsigned NoCompo, NoBaseMat, NoBC, NoID, Unit_Temp;
   unsigned NoMaterial, NoFluid, NoSolid, KOS;
   unsigned imax, jmax, kmax, guide, size[3];
-  SKL_REAL BaseTemp, DiffTemp;
+  REAL_TYPE BaseTemp, DiffTemp;
   
   SklSolverConfig*  CF;  // for XML parsing
   MaterialList*     mat;
@@ -78,7 +78,7 @@ protected:
   unsigned missingMessage(int m, unsigned key);
   
   void chkList(FILE* fp, CompoList* compo, unsigned basicEq);
-  void getPvalue(const CfgParam* p, SKL_REAL &value);
+  void getPvalue(const CfgParam* p, REAL_TYPE &value);
   void printMatList(FILE* fp, unsigned Max, MaterialList* mlist);
   void printRelation(FILE* fp, CompoList* compo);
   void readMedium(const CfgElem *elmL2, int m);

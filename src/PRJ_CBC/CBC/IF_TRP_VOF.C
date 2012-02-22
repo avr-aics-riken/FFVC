@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -20,15 +20,15 @@ void SklSolverCBC::IF_TRP_VOF(void)
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
   // local variables
-  SKL_REAL tm = SklGetTotalTime();  /// 計算開始からの積算時刻
-  SKL_REAL dt = SklGetDeltaT();     /// 時間積分幅
-  SKL_REAL flop_count=0.0;          /// 浮動小数演算数
-  SKL_REAL nrm=0.0;
+  REAL_TYPE tm = SklGetTotalTime();  /// 計算開始からの積算時刻
+  REAL_TYPE dt = SklGetDeltaT();     /// 時間積分幅
+  REAL_TYPE flop_count=0.0;          /// 浮動小数演算数
+  REAL_TYPE nrm=0.0;
   
   // Dimensions
-  SKL_REAL *v;    
-  SKL_REAL *vof;  
-  SKL_REAL *ws;   
+  REAL_TYPE *v;    
+  REAL_TYPE *vof;  
+  REAL_TYPE *ws;   
   unsigned *bcv;  
 
   v = vof = NULL;

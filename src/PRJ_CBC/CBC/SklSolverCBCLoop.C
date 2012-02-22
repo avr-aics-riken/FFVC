@@ -20,15 +20,15 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   SklParaComponent* para_cmp = SklGetParaComponent();
   const SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  SKL_REAL flop_count=0.0;      /// 浮動小数演算数
-  SKL_REAL avrms[6];            /// 平均値 [0]; vel, [1]; prs, [2]; temp, 変動値 [3]; vel, [4]; prs, [5]; temp
-  SKL_REAL vMax=0.0;            /// 最大速度成分
-  SKL_REAL *v=NULL;             /// 速度（セルセンタ）
-  SKL_REAL *p=NULL;             /// 圧力
-  SKL_REAL *t=NULL;             /// 温度
-  SKL_REAL *tp=NULL;            /// 全圧
+  REAL_TYPE flop_count=0.0;      /// 浮動小数演算数
+  REAL_TYPE avrms[6];            /// 平均値 [0]; vel, [1]; prs, [2]; temp, 変動値 [3]; vel, [4]; prs, [5]; temp
+  REAL_TYPE vMax=0.0;            /// 最大速度成分
+  REAL_TYPE *v=NULL;             /// 速度（セルセンタ）
+  REAL_TYPE *p=NULL;             /// 圧力
+  REAL_TYPE *t=NULL;             /// 温度
+  REAL_TYPE *tp=NULL;            /// 全圧
   unsigned *bcd=NULL;           /// BCindex ID
-  SKL_REAL np_f = (SKL_REAL)para_mng->GetNodeNum(pn.procGrp);
+  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp);
   
   // point Data
   if( !(v = dc_v->GetData()) )     assert(0);
@@ -69,9 +69,9 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
 
   if( para_mng->IsParallel() ){
     TIMING_start(tm_vmax_comm);
-    SKL_REAL vMax_tmp = vMax;
+    REAL_TYPE vMax_tmp = vMax;
     if( !para_mng->Allreduce(&vMax_tmp, &vMax, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) assert(0);
-    TIMING_stop( tm_vmax_comm, 2.0*np_f*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数
+    TIMING_stop( tm_vmax_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
   }
 
 
@@ -140,19 +140,19 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   TIMING_stop(tm_average_space, flop_count);
 
   if ( para_mng->IsParallel() ) {
-    SKL_REAL tmp[6];
+    REAL_TYPE tmp[6];
     TIMING_start(tm_average_space_comm);
     for (int n=0; n<6; n++) tmp[n] = avrms[n];
     para_mng->Allreduce(tmp, avrms, 6, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 速度，圧力，温度の3変数 x (平均値+変動値)
-    TIMING_stop(tm_average_space_comm, 2.0*np_f*6.0*(SKL_REAL)sizeof(SKL_REAL) ); // 双方向 x ノード数 x 6変数
+    TIMING_stop(tm_average_space_comm, 2.0*np_f*6.0*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 6変数
   }
 
-  avrms[0] = sqrt(avrms[0]/(SKL_REAL)G_Acell);  // 速度の変動量のRMS
-  avrms[1] = sqrt(avrms[1]/(SKL_REAL)G_Acell);  // 圧力の変動量のRMS
-  avrms[2] = sqrt(avrms[2]/(SKL_REAL)G_Acell);  // 温度の変動量のRMS
-  avrms[3] = sqrt(avrms[3]/(SKL_REAL)G_Acell);  // 速度の空間RMS
-  avrms[4] = avrms[4]/(SKL_REAL)G_Acell;        // 圧力の空間平均
-  avrms[5] = avrms[5]/(SKL_REAL)G_Acell;        // 温度の空間平均
+  avrms[0] = sqrt(avrms[0]/(REAL_TYPE)G_Acell);  // 速度の変動量のRMS
+  avrms[1] = sqrt(avrms[1]/(REAL_TYPE)G_Acell);  // 圧力の変動量のRMS
+  avrms[2] = sqrt(avrms[2]/(REAL_TYPE)G_Acell);  // 温度の変動量のRMS
+  avrms[3] = sqrt(avrms[3]/(REAL_TYPE)G_Acell);  // 速度の空間RMS
+  avrms[4] = avrms[4]/(REAL_TYPE)G_Acell;        // 圧力の空間平均
+  avrms[5] = avrms[5]/(REAL_TYPE)G_Acell;        // 温度の空間平均
   
   //  <<< ステップループのユーティリティ 1
   TIMING_stop(tm_loop_uty_sct_1, 0.0);
@@ -165,7 +165,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   TIMING_start(tm_loop_uty_sct_2);
   
   // Historyクラスのタイムスタンプを更新
-  H->updateTimeStamp(loop_step, (SKL_REAL)loop_time, vMax);
+  H->updateTimeStamp(loop_step, (REAL_TYPE)loop_time, vMax);
   
   // 基本履歴情報をコンソールに出力
   if ( C.Mode.Log_Base == ON) {
@@ -299,7 +299,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       TIMING_stop(tm_sampling, 0.0);
       
       TIMING_start(tm_hstry_sampling);
-      MO.print(loop_step, (SKL_REAL)loop_time);
+      MO.print(loop_step, (REAL_TYPE)loop_time);
       TIMING_stop(tm_hstry_sampling, 0.0);
     }
   }

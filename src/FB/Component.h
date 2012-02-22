@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -117,19 +117,19 @@ protected:
   int      st[3];    /// コンポーネントインデクスBV範囲の始点
   int      ed[3];    /// コンポーネントインデクスBV範囲の終点
   int      def;      /// BC指定時の面を挟む相手先のセルID
-  SKL_REAL var1;     /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
-  SKL_REAL var2;     /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
-  SKL_REAL var3;     /// パラメータ保持 (Heat Density, Temperature)
-  SKL_REAL var_m;    /// モニタの値を保持
-  SKL_REAL temp_init;/// 温度の初期値
+  REAL_TYPE var1;     /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
+  REAL_TYPE var2;     /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
+  REAL_TYPE var3;     /// パラメータ保持 (Heat Density, Temperature)
+  REAL_TYPE var_m;    /// モニタの値を保持
+  REAL_TYPE temp_init;/// 温度の初期値
   
 public:
-  SKL_REAL dir;
-  SKL_REAL area;
-  SKL_REAL nv[3];
-  SKL_REAL val[var_END];
-  SKL_REAL ca[6];
-  SKL_REAL cb[6];
+  REAL_TYPE dir;
+  REAL_TYPE area;
+  REAL_TYPE nv[3];
+  REAL_TYPE val[var_END];
+  REAL_TYPE ca[6];
+  REAL_TYPE cb[6];
   unsigned sub_domain;
   char     name[LABEL];
   
@@ -165,21 +165,21 @@ public:
   bool isVecForcing(void) const;
   bool isVFraction (void) const;
   
-  SKL_REAL get_CoefRadEps(void)  const { return var1; };
-  SKL_REAL get_CoefRadPrj(void)  const { return var2; };
-  SKL_REAL get_CoefMassflow(void)const { return var1; };
-  SKL_REAL get_CoefPrsLoss(void) const { return var2; };
-  SKL_REAL get_CoefHT(void)      const { return var2; };
-  SKL_REAL get_Heatflux(void)    const { return var2; };
-  SKL_REAL get_HeatDensity(void) const { return var3; };
-  SKL_REAL get_HeatValue(void)   const { return var2; };
-  SKL_REAL get_Massflow(void)    const { return var1; };
-  SKL_REAL get_Mon_Calorie(void) const { return var_m; };
-  SKL_REAL get_Mon_Heatflux(void)const { return var_m; };
-  SKL_REAL get_Mon_Temp(void)    const { return var_m; };
-  SKL_REAL get_Pressure(void)    const { return var1; };
-  SKL_REAL get_Temp(void)        const { return var3; };
-  SKL_REAL get_Velocity(void)    const { return var1; };
+  REAL_TYPE get_CoefRadEps(void)  const { return var1; };
+  REAL_TYPE get_CoefRadPrj(void)  const { return var2; };
+  REAL_TYPE get_CoefMassflow(void)const { return var1; };
+  REAL_TYPE get_CoefPrsLoss(void) const { return var2; };
+  REAL_TYPE get_CoefHT(void)      const { return var2; };
+  REAL_TYPE get_Heatflux(void)    const { return var2; };
+  REAL_TYPE get_HeatDensity(void) const { return var3; };
+  REAL_TYPE get_HeatValue(void)   const { return var2; };
+  REAL_TYPE get_Massflow(void)    const { return var1; };
+  REAL_TYPE get_Mon_Calorie(void) const { return var_m; };
+  REAL_TYPE get_Mon_Heatflux(void)const { return var_m; };
+  REAL_TYPE get_Mon_Temp(void)    const { return var_m; };
+  REAL_TYPE get_Pressure(void)    const { return var1; };
+  REAL_TYPE get_Temp(void)        const { return var3; };
+  REAL_TYPE get_Velocity(void)    const { return var1; };
   
   unsigned get_sw_Heatgen(void)  const { return usw; };
   unsigned get_sw_HexDir(void)   const { return usw; };
@@ -190,7 +190,7 @@ public:
   string getVarStr (void) const;
   string getBCstr  (void) const;
   
-  void addVec              (SKL_REAL* vec);
+  void addVec              (REAL_TYPE* vec);
   void setAttrb            (unsigned key);
   void setCompoBV_ed       (unsigned odr, int val);
   void setCompoBV_st       (unsigned odr, int val);
@@ -199,7 +199,7 @@ public:
   void setEns              (unsigned key);
   void setHtype            (unsigned key);
   void setID               (unsigned key);
-  void setInitTemp         (SKL_REAL var);
+  void setInitTemp         (REAL_TYPE var);
   void setMatOdr           (unsigned key);
   void setName             (const char* pnt);
   void setOutflowType      (unsigned key);
@@ -209,31 +209,31 @@ public:
   void setState            (int key);
   void setStateCellMonitor (unsigned key);
   void setType             (unsigned key);
-  void set_CoefMassflow    (SKL_REAL var);
-  void set_CoefHT          (SKL_REAL var);
-  void set_CoefPrsLoss     (SKL_REAL var);
-  void set_CoefRadEps      (SKL_REAL var);
-  void set_CoefRadPrj      (SKL_REAL var);
-  void set_Heatflux        (SKL_REAL var);
-  void set_HeatDensity     (SKL_REAL var);
-  void set_HeatValue       (SKL_REAL var);
+  void set_CoefMassflow    (REAL_TYPE var);
+  void set_CoefHT          (REAL_TYPE var);
+  void set_CoefPrsLoss     (REAL_TYPE var);
+  void set_CoefRadEps      (REAL_TYPE var);
+  void set_CoefRadPrj      (REAL_TYPE var);
+  void set_Heatflux        (REAL_TYPE var);
+  void set_HeatDensity     (REAL_TYPE var);
+  void set_HeatValue       (REAL_TYPE var);
   void set_HSRC_policy     (bool kind);
-  void set_Massflow        (SKL_REAL var);
-  void set_Mon_Calorie     (SKL_REAL var);
-  void set_Mon_Heatflux    (SKL_REAL var);
-  void set_Mon_Temp        (SKL_REAL var);
-  void set_Pressure        (SKL_REAL var);
+  void set_Massflow        (REAL_TYPE var);
+  void set_Mon_Calorie     (REAL_TYPE var);
+  void set_Mon_Heatflux    (REAL_TYPE var);
+  void set_Mon_Temp        (REAL_TYPE var);
+  void set_Pressure        (REAL_TYPE var);
   void set_sw_Heatgen      (unsigned key);
   void set_sw_HexDir       (unsigned key);
   void set_sw_HTmodeRef    (unsigned key);
   void set_sw_P_BCtype     (unsigned key);
   void set_sw_V_profile    (unsigned key);
-  void set_Temp            (SKL_REAL var);
+  void set_Temp            (REAL_TYPE var);
   void set_VBC_policy      (bool kind);
-  void set_Velocity        (SKL_REAL var);
+  void set_Velocity        (REAL_TYPE var);
   
-  //@fn SKL_REAL getInitTemp(void) const
-  inline SKL_REAL getInitTemp(void) const {
+  //@fn REAL_TYPE getInitTemp(void) const
+  inline REAL_TYPE getInitTemp(void) const {
     return temp_init;
   }
   

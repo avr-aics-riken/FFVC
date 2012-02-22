@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -21,7 +21,7 @@ bool IP_Cylinder::getXML(SklSolverConfig* CF, Control* R)
 {
   const CfgElem *elemTop=NULL, *elmL1=NULL;
   const char *str=NULL;
-  SKL_REAL ct=0.0;
+  REAL_TYPE ct=0.0;
   
   if ( !(elemTop = CF->GetTop(PARAMETER)) ) return false;
   
@@ -105,7 +105,7 @@ void IP_Cylinder::printPara(FILE* fp, Control* R)
 }
 
 /**
- @fn bool IP_Cylinder::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3])
+ @fn bool IP_Cylinder::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
  @brief Cylinderの領域情報を設定する
  @param R Controlクラスのポインタ
  @param sz グローバル計算領域のセルサイズ
@@ -113,11 +113,11 @@ void IP_Cylinder::printPara(FILE* fp, Control* R)
  @param wth グローバル計算領域のbounding boxサイズ
  @param pch セルピッチ
  */
-void IP_Cylinder::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3])
+void IP_Cylinder::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
-  wth[0] = pch[0]*(SKL_REAL)sz[0];
-  wth[1] = pch[1]*(SKL_REAL)sz[1];
-  wth[2] = pch[2]*(SKL_REAL)sz[2];
+  wth[0] = pch[0]*(REAL_TYPE)sz[0];
+  wth[1] = pch[1]*(REAL_TYPE)sz[1];
+  wth[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // チェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
@@ -140,13 +140,13 @@ void IP_Cylinder::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REA
 }
 
 /**
- @fn void IP_Cylinder::setup(int* mid, Control* R, SKL_REAL* G_org)
+ @fn void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org)
  @brief Cylinderの計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
  */
-void IP_Cylinder::setup(int* mid, Control* R, SKL_REAL* G_org)
+void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
   int i,j,k, gd;
   int mid_fluid=1;        /// 流体
@@ -154,8 +154,8 @@ void IP_Cylinder::setup(int* mid, Control* R, SKL_REAL* G_org)
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
   unsigned m;
-  SKL_REAL x, y, z, dh, len, ht;
-  SKL_REAL ox, oy, oz, Lx, Ly, Lz;
+  REAL_TYPE x, y, z, dh, len, ht;
+  REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   
   ox = R->org[0];
   oy = R->org[1];

@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -39,7 +39,7 @@ public:
   struct MonitorPoint {
     Vec3r crd;      ///< モニタ点座標
     string label;   ///< モニタ点ラベル
-    MonitorPoint(const SKL_REAL v[3], const char* str) : crd(v), label(str) {}
+    MonitorPoint(const REAL_TYPE v[3], const char* str) : crd(v), label(str) {}
     ~MonitorPoint() {}
   };
   
@@ -49,12 +49,12 @@ public:
     unsigned unitTemp;       /// 温度単位指定フラグ (Kelvin / Celsius)
     unsigned modePrecision;  /// 出力精度指定フラグ (単精度，倍精度)
     unsigned unitPrs;        /// 圧力単位指定フラグ (絶対値，ゲージ圧)
-    SKL_REAL refVelocity;    /// 代表速度
-    SKL_REAL baseTemp;       /// 基準温度
-    SKL_REAL diffTemp;       /// 代表温度差
-    SKL_REAL refDensity;     /// 基準密度
-    SKL_REAL refLength;      /// 代表長さ
-    SKL_REAL basePrs;        /// 基準圧力
+    REAL_TYPE refVelocity;    /// 代表速度
+    REAL_TYPE baseTemp;       /// 基準温度
+    REAL_TYPE diffTemp;       /// 代表温度差
+    REAL_TYPE refDensity;     /// 基準密度
+    REAL_TYPE refLength;      /// 代表長さ
+    REAL_TYPE basePrs;        /// 基準圧力
     Vec3r v00;               /// 参照（座標系移動）速度
   };
   
@@ -108,9 +108,9 @@ protected:
   FILE* fp;          ///< 出力ファイルポインタ
   
   // サンプリング元データ
-  SKL_REAL* vSource;  ///< 速度サンプリング元データ
-  SKL_REAL* pSource;  ///< 圧力サンプリング元データ
-  SKL_REAL* tSource;  ///< 温度サンプリング元データ
+  REAL_TYPE* vSource;  ///< 速度サンプリング元データ
+  REAL_TYPE* pSource;  ///< 圧力サンプリング元データ
+  REAL_TYPE* tSource;  ///< 温度サンプリング元データ
   
   
   Vec3r* crd;      ///< モニタ点座標配列
@@ -119,9 +119,9 @@ protected:
   int* pointStatus;///< 不正モニタ点フラグ配列
   
   Vec3r* vel;      ///< 速度サンプリング結果配列
-  SKL_REAL* prs;   ///< 圧力サンプリング結果配列
-  SKL_REAL* tmp;   ///< 温度サンプリング結果配列
-  SKL_REAL* tp;    ///< 全圧サンプリング結果配列
+  REAL_TYPE* prs;   ///< 圧力サンプリング結果配列
+  REAL_TYPE* tmp;   ///< 温度サンプリング結果配列
+  REAL_TYPE* tp;    ///< 全圧サンプリング結果配列
   Vec3r* vor;      ///< 渦度サンプリング結果配列
   
   CompoList* cmp;  ///< 内部境界条件指定の場合の対応するコンポーネントへのポインタ
@@ -228,7 +228,7 @@ public:
   ///
   void setLine(const char* labelStr, vector<string>& variables,
                const char* methodStr, const char* modeStr,
-               SKL_REAL from[3], SKL_REAL to[3], int nDivision);
+               REAL_TYPE from[3], REAL_TYPE to[3], int nDivision);
   
   /// 内部境界条件としてモニタ点を登録.
   ///
@@ -243,7 +243,7 @@ public:
   ///   @param[in] p 圧力変数配列
   ///   @param[in] t 温度変数配列
   ///
-  void setDataPtrs(SKL_REAL* v, SKL_REAL* p, SKL_REAL* t) {
+  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t) {
     vSource = v;
     pSource = p;
     tSource = t;
@@ -271,7 +271,7 @@ public:
   ///
   ///   @note 内部でノード0に集計するため全プロセスから呼ぶこと
   ///
-  void print_gather(unsigned step, SKL_REAL tm) { 
+  void print_gather(unsigned step, REAL_TYPE tm) { 
     gatherSampled();
     if (pn.ID == 0) print(step, tm, true);
   }
@@ -283,7 +283,7 @@ public:
   ///
   ///   @note 全プロセスから呼ぶこと
   ///
-  void print_distribute(unsigned step, SKL_REAL tm) {
+  void print_distribute(unsigned step, REAL_TYPE tm) {
     print(step, tm, false);
   }
   
@@ -333,14 +333,14 @@ protected:
   ///   @param[in,out] s スカラー変数配列
   ///   @param  sRecvBuf  通信用work領域
   ///
-  void gatherSampledScalar(SKL_REAL* s, SKL_REAL* sRecvBuf);
+  void gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf);
   
   /// サンプリングしたベクトル変数をノード0に集約.
   ///
   ///   @param[in,out] v ベクトル変数配列
   ///   @param  vSendBuf,vRecvBuf  通信用work領域
   ///
-  void gatherSampledVector(Vec3r* v, SKL_REAL* vSendBuf, SKL_REAL* vRecvBuf);
+  void gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
   
   /// モニタ対象物理量の設定.
   ///
@@ -393,7 +393,7 @@ protected:
   ///   @param[in] s スカラー変数配列
   ///   @return モニタ領域内平均値
   ///
-  SKL_REAL averageScalar(SKL_REAL* s);
+  REAL_TYPE averageScalar(REAL_TYPE* s);
   
   /// 内部境界条件として指定されたモニタ領域内でベクトル変数を平均.
   ///
@@ -415,7 +415,7 @@ protected:
   ///   @param[in] tm   サンプリング時の計算時刻
   ///   @param[in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
   ///
-  void print(unsigned step, SKL_REAL tm, bool gathered);
+  void print(unsigned step, REAL_TYPE tm, bool gathered);
   
   /// モニタ結果出力ファイルにヘッダ部を出力.
   ///
@@ -425,46 +425,46 @@ protected:
   
   /// >>> 出力変換 --------------------------------
   /// 座標の単位変換
-  SKL_REAL convCrd(SKL_REAL xyz) const {
+  REAL_TYPE convCrd(REAL_TYPE xyz) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? xyz*refVar.refLength : xyz );
   }
   
   /// 時間の単位変換
-  SKL_REAL convTime(SKL_REAL tm) const {
+  REAL_TYPE convTime(REAL_TYPE tm) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? tm*refVar.refLength/refVar.refVelocity : tm );
   }
   
   /// 速度成分の単位変換
-  SKL_REAL convVel(SKL_REAL vel) const {
+  REAL_TYPE convVel(REAL_TYPE vel) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? vel*refVar.refVelocity : vel ); 
   }
   
   /// 圧力の単位変換
-  SKL_REAL convPrs(SKL_REAL prs) const {
+  REAL_TYPE convPrs(REAL_TYPE prs) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convND2D_P(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
   }
   
   /// 温度の単位変換
-  SKL_REAL convTmp(SKL_REAL tmp) const {
+  REAL_TYPE convTmp(REAL_TYPE tmp) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convK2Temp(FBUtility::convND2Kelvin(tmp, refVar.baseTemp, refVar.diffTemp), refVar.unitTemp) : tmp);
   }
   
   /// 全圧の単位変換
-  SKL_REAL convTP(SKL_REAL tp) const {
+  REAL_TYPE convTP(REAL_TYPE tp) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? tp * (refVar.refVelocity * refVar.refVelocity * refVar.refDensity) : tp );
   }
   
   /// 渦度成分の単位変換
-  SKL_REAL convVor(SKL_REAL vor) const {
+  REAL_TYPE convVor(REAL_TYPE vor) const {
     return ( (refVar.modeUnit==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor ); 
   }
   
   /// >>> 集約 --------------------------------
   /// Allreduceによる総和(実数配列上書き，work配列指定).
-  bool allReduceSum(SKL_REAL* array, int n, SKL_REAL* sendBuf);
+  bool allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf);
   
   /// Allreduceによる総和(実数配列上書き).
-  bool allReduceSum(SKL_REAL* array, int n);
+  bool allReduceSum(REAL_TYPE* array, int n);
   
   /// Allreduceによる総和(整数配列上書き，work配列指定).
   bool allReduceSum(int* array, int n, int* sendBuf);

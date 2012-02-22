@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -42,7 +42,7 @@ protected:
   SklSolverConfig* CF;  /// XMLツリーのポインタ
   
   int* colorList;       /// ボクセルモデルに含まれるIDのリスト(Global)
-  SKL_REAL* vox_nv;     /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
+  REAL_TYPE* vox_nv;     /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
   
   CompoList*      cmp;  /// コンポーネントリスト
   MaterialList*   mat;  /// マテリアルリスト
@@ -106,7 +106,7 @@ protected:
   void getIDrange            (const CfgElem *elmL2, const char* keyword, unsigned* var);
   void getNormalSign         (unsigned n, int* gi, unsigned* bx, int* dir);
   void getOffset             (int* st, int* ofst);
-  void getQuadrant           (unsigned* q, SKL_REAL t1, SKL_REAL t2);
+  void getQuadrant           (unsigned* q, REAL_TYPE t1, REAL_TYPE t2);
   void resizeBVcell          (int* st, int* ed, unsigned n, unsigned* bx, int* gcbv);
   void resizeBVface          (int* st, int* ed, unsigned n, unsigned* bx, int* gcbv);
   void setInactive_Compo     (unsigned id, int def, int* mid, unsigned* bh1, unsigned* bh2);
@@ -167,10 +167,10 @@ public:
   void alloc_voxel_nv        (unsigned len);
   void chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
   void chkBCIndexV           (unsigned* bcv, const char* fname);
-  void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, SKL_REAL dhd, int* gi);
+  void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);
   void copyBCIbase           (unsigned* dst, unsigned* src);
   void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
-  void countOpenAreaOfDomain (unsigned* bx, SKL_REAL* OpenArea);
+  void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
   void gatherGlobalIndex     (int* gcbv);
   void printScanedCell       (FILE* fp);
   void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);
@@ -190,9 +190,9 @@ public:
   //@retval colorListのポインタ
 	const int* getColorList() const { return colorList; }
 	
-  //@fn SKL_REAL* get_vox_nv_ptr(void)
+  //@fn REAL_TYPE* get_vox_nv_ptr(void)
   //@brief vox_nvのポインタを返す
-  SKL_REAL* get_vox_nv_ptr(void) { return vox_nv; }
+  REAL_TYPE* get_vox_nv_ptr(void) { return vox_nv; }
 };
 
 #endif // _SKL_SOLVER_BINVOX_H_

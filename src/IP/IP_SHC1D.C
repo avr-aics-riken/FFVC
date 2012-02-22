@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -14,7 +14,7 @@
 #include "IP_SHC1D.h"
 
 /**
- @fn void IP_SHC1D::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3])
+ @fn void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
  @brief Cavity3Dの領域情報を設定する
  @param R Controlクラスのポインタ
  @param sz グローバル計算領域のセルサイズ
@@ -22,7 +22,7 @@
  @param wth グローバル計算領域のbounding boxサイズ
  @param pch セルピッチ
  */
-void IP_SHC1D::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL wth[3], SKL_REAL pch[3])
+void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
   // forced
   if (R->Unit.Param != DIMENSIONAL) {
@@ -30,11 +30,11 @@ void IP_SHC1D::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL w
     assert(0);
   }
 	
-	pch[0] = 1.0 / (SKL_REAL)(sz[0]-2);
+	pch[0] = 1.0 / (REAL_TYPE)(sz[0]-2);
   pch[1] = pch[0];
   pch[2] = pch[0];
 	
-  wth[0] = pch[0]*(SKL_REAL)sz[0];
+  wth[0] = pch[0]*(REAL_TYPE)sz[0];
   wth[1] = 5.0*pch[1];
   wth[2] = 5.0*pch[2];
   org[0] = -1.0*pch[0];
@@ -49,13 +49,13 @@ void IP_SHC1D::setDomain(Control* R, unsigned sz[3], SKL_REAL org[3], SKL_REAL w
 }
 
 /**
- @fn void IP_SHC1D::setup(int* mid, Control* R, SKL_REAL* G_org)
+ @fn void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org)
  @brief モデルIDのセットアップ
  @param mid ボクセル配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
  */
-void IP_SHC1D::setup(int* mid, Control* R, SKL_REAL* G_org)
+void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
   unsigned i, j, k, m;
   int gd;

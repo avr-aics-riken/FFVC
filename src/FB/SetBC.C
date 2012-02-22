@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -49,7 +49,7 @@ void SetBC::setControlVars(Control* Cref, MaterialList* mat, CompoList* cmp, Ref
   rei       = Cref->getRcpReynolds();
   Peclet    = Cref->Peclet;
   Example   = Cref->Mode.Example;
-  accel     = (SKL_REAL)RF->getAccel();
+  accel     = (REAL_TYPE)RF->getAccel();
   mach      = Cref->Mach;
   RefV      = Cref->RefVelocity;
   RefL      = Cref->RefLength;
@@ -98,21 +98,21 @@ void SetBC::setControlVars(Control* Cref, MaterialList* mat, CompoList* cmp, Ref
 }
 
 /**
- @fn SKL_REAL SetBC::getVrefOut(SKL_REAL tm)
+ @fn REAL_TYPE SetBC::getVrefOut(REAL_TYPE tm)
  @brief 静止座標系のときの流出速度制御の値を計算する
  @param tm 時刻
  @retval 流出境界速度
  @todo experimental
  */
-SKL_REAL SetBC::getVrefOut(SKL_REAL tm)
+REAL_TYPE SetBC::getVrefOut(REAL_TYPE tm)
 {
-	SKL_REAL u0;
+	REAL_TYPE u0;
 	
 	if ( accel == 0.0 ) {
 		u0=0.0;
 	}
 	else {
-    const SKL_REAL c_pai = (SKL_REAL)(2.0*asin(1.0));
+    const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
 		u0 = 0.5*(1.0-cos(2.0*c_pai*tm/accel));
 		if ( tm > accel ) u0 = 0.0;
 	}

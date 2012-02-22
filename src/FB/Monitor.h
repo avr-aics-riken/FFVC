@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -95,7 +95,7 @@ public:
   ///
   void setLine(const char* labelStr, vector<string>& variables,
                const char* methodStr, const char* modeStr,
-               SKL_REAL from[3], SKL_REAL to[3], int nDivision);
+               REAL_TYPE from[3], REAL_TYPE to[3], int nDivision);
   
   /// 内部境界条件としてのモニタ指定の有無を調べる.
   ///
@@ -134,16 +134,16 @@ public:
   ///   @param[in] modePrecision  出力精度指定フラグ (単精度，倍精度)
   ///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
   ///
-  void setControlVars(unsigned* bcd, SKL_REAL g_org[3], SKL_REAL g_lbx[3],
-                      SKL_REAL org[3], SKL_REAL dx[3], SKL_REAL lbx[3],
+  void setControlVars(unsigned* bcd, REAL_TYPE g_org[3], REAL_TYPE g_lbx[3],
+                      REAL_TYPE org[3], REAL_TYPE dx[3], REAL_TYPE lbx[3],
                       unsigned rs[3], unsigned gc,
-                      SKL_REAL refVelocity, SKL_REAL baseTemp, SKL_REAL diffTemp,
-                      SKL_REAL refDensity, SKL_REAL refLength, SKL_REAL basePrs,
+                      REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp,
+                      REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs,
                       unsigned unitTemp, unsigned modePrecision, unsigned unitPrs);
   
   /// 参照速度のコピー
   ///   @param[in] v00 座標系移動速度
-  void set_V00(SKL_REAL v00[4]);
+  void set_V00(REAL_TYPE v00[4]);
   
   /// サンプリング元データの登録.
   ///
@@ -151,7 +151,7 @@ public:
   ///   @param[in] p 圧力変数配列
   ///   @param[in] t 温度変数配列
   ///
-  void setDataPtrs(SKL_REAL* v, SKL_REAL* p, SKL_REAL* t=NULL) {
+  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t=NULL) {
     for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t);
   }
   
@@ -206,7 +206,7 @@ public:
   ///
   ///   @note gatherの場合も全プロセスから呼ぶこと
   ///
-  void print(unsigned step, SKL_REAL tm);
+  void print(unsigned step, REAL_TYPE tm);
   
   /// XMLにより指定されるモニタ点位置にID=255を書き込む.
   ///
@@ -221,7 +221,7 @@ protected:
   ///   @param[in,out] from Line始点
   ///   @param[in,out] to   Line終点
   ///
-  void clipLine(SKL_REAL from[3], SKL_REAL to[3]);
+  void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
   
   /// 出力タイプ文字列の取得.
   string getOutputTypeStr();

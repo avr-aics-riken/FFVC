@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -17,7 +17,7 @@
 ///   @param[in] index 計算位置のセルインデックス
 ///   @return 渦度ベクトル
 ///
-Vec3r Sampling::calcVorticity(const SKL_REAL* v, Vec3i index)
+Vec3r Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
 {
   if (isFluid(index)) {
   
@@ -31,9 +31,9 @@ Vec3r Sampling::calcVorticity(const SKL_REAL* v, Vec3i index)
     Vec3r v_zm = isFluid(shift_zm(index)) ? getVector(v, shift_zm(index)) : v1;
     Vec3r v_zp = isFluid(shift_zp(index)) ? getVector(v, shift_zp(index)) : v1;
 
-    SKL_REAL hx = 0.5 / pch.x;
-    SKL_REAL hy = 0.5 / pch.y;
-    SKL_REAL hz = 0.5 / pch.z;
+    REAL_TYPE hx = 0.5 / pch.x;
+    REAL_TYPE hy = 0.5 / pch.y;
+    REAL_TYPE hz = 0.5 / pch.z;
 
     Vec3r omg;
     omg.x = (v_yp.z - v_ym.z)*hy - (v_zp.y - v_zm.y)*hz;
@@ -70,7 +70,7 @@ Nearest::Nearest(Mode mode, unsigned size[], unsigned guide,
 ///
 ///   @param[in] s サンプリング元スカラー変数配列
 ///
-SKL_REAL Nearest::samplingScalar(const SKL_REAL* s)
+REAL_TYPE Nearest::samplingScalar(const REAL_TYPE* s)
 {
   return getScalar(s, cIndex);
 }
@@ -80,7 +80,7 @@ SKL_REAL Nearest::samplingScalar(const SKL_REAL* s)
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r Nearest::samplingVelocity(const SKL_REAL* v)
+Vec3r Nearest::samplingVelocity(const REAL_TYPE* v)
 {
   return getVector(v, cIndex);
 }
@@ -91,7 +91,7 @@ Vec3r Nearest::samplingVelocity(const SKL_REAL* v)
 ///   @param[in] v サンプリング元速度配列
 ///   @param[in] p サンプリング元圧力配列
 ///
-SKL_REAL Nearest::samplingTotalPressure(const SKL_REAL* v, const SKL_REAL* p)
+REAL_TYPE Nearest::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
   return calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));
 }
@@ -101,7 +101,7 @@ SKL_REAL Nearest::samplingTotalPressure(const SKL_REAL* v, const SKL_REAL* p)
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r Nearest::samplingVorticity(const SKL_REAL* v)
+Vec3r Nearest::samplingVorticity(const REAL_TYPE* v)
 {
   return calcVorticity(v, cIndex);
 }
@@ -145,9 +145,9 @@ Smoothing::Smoothing(Mode mode, unsigned size[], unsigned guide,
 ///
 ///   @param[in] s サンプリング元スカラー変数配列
 ///
-SKL_REAL Smoothing::samplingScalar(const SKL_REAL* s)
+REAL_TYPE Smoothing::samplingScalar(const REAL_TYPE* s)
 {
-  SKL_REAL sRet = getScalar(s, cIndex);
+  REAL_TYPE sRet = getScalar(s, cIndex);
   if (add_xm) sRet += getScalar(s, shift_xm(cIndex));
   if (add_xp) sRet += getScalar(s, shift_xp(cIndex));
   if (add_ym) sRet += getScalar(s, shift_ym(cIndex));
@@ -164,7 +164,7 @@ SKL_REAL Smoothing::samplingScalar(const SKL_REAL* s)
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r Smoothing::samplingVelocity(const SKL_REAL* v)
+Vec3r Smoothing::samplingVelocity(const REAL_TYPE* v)
 {
   Vec3r vRet = getVector(v, cIndex);
   if (add_xm) vRet += getVector(v, shift_xm(cIndex));
@@ -184,9 +184,9 @@ Vec3r Smoothing::samplingVelocity(const SKL_REAL* v)
 ///   @param[in] v サンプリング元速度配列
 ///   @param[in] p サンプリング元圧力配列
 ///
-SKL_REAL Smoothing::samplingTotalPressure(const SKL_REAL* v, const SKL_REAL* p)
+REAL_TYPE Smoothing::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
-  SKL_REAL tp = calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));
+  REAL_TYPE tp = calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));
   if (add_xm) {
     tp += calcTotalPressure(getVector(v, shift_xm(cIndex)), getScalar(p, shift_xm(cIndex)));
   }
@@ -215,7 +215,7 @@ SKL_REAL Smoothing::samplingTotalPressure(const SKL_REAL* v, const SKL_REAL* p)
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r Smoothing::samplingVorticity(const SKL_REAL* v)
+Vec3r Smoothing::samplingVorticity(const REAL_TYPE* v)
 {
   Vec3r omg = calcVorticity(v, cIndex);
   if (add_xm) omg += calcVorticity(v, shift_xm(cIndex));
@@ -251,9 +251,9 @@ Interpolation::Interpolation(Mode mode, unsigned size[], unsigned guide,
   base.x = (int)(c.x + 0.5);
   base.y = (int)(c.y + 0.5);
   base.z = (int)(c.z + 0.5);
-  coef[0] = c.x + 0.5 - (SKL_REAL)base[0];
-  coef[1] = c.y + 0.5 - (SKL_REAL)base[1];
-  coef[2] = c.z + 0.5 - (SKL_REAL)base[2];
+  coef[0] = c.x + 0.5 - (REAL_TYPE)base[0];
+  coef[1] = c.y + 0.5 - (REAL_TYPE)base[1];
+  coef[2] = c.z + 0.5 - (REAL_TYPE)base[2];
 
   onBoundary = false;
   if (checkBoundary(base))         onBoundary = true;
@@ -271,11 +271,11 @@ Interpolation::Interpolation(Mode mode, unsigned size[], unsigned guide,
 ///
 ///   @param[in] s サンプリング元スカラー変数配列
 ///
-SKL_REAL Interpolation::samplingScalar(const SKL_REAL* s)
+REAL_TYPE Interpolation::samplingScalar(const REAL_TYPE* s)
 {
   if (onBoundary) return getScalar(s, cIndex);  // nearest
 
-  SKL_REAL r[8];
+  REAL_TYPE r[8];
   r[0] = getScalar(s, base);          // (0, 0, 0)
   r[1] = getScalar(s, shift1(base));  // (1, 0, 0)
   r[2] = getScalar(s, shift2(base));  // (0, 1, 0)
@@ -292,7 +292,7 @@ SKL_REAL Interpolation::samplingScalar(const SKL_REAL* s)
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r Interpolation::samplingVelocity(const SKL_REAL* v)
+Vec3r Interpolation::samplingVelocity(const REAL_TYPE* v)
 {
   if (onBoundary) return getVector(v, cIndex);  // nearest
 
@@ -314,11 +314,11 @@ Vec3r Interpolation::samplingVelocity(const SKL_REAL* v)
 ///   @param[in] v サンプリング元速度配列
 ///   @param[in] p サンプリング元圧力配列
 ///
-SKL_REAL Interpolation::samplingTotalPressure(const SKL_REAL* v, const SKL_REAL* p)
+REAL_TYPE Interpolation::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
   if (onBoundary) return calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));  // nearest
 
-  SKL_REAL r[8];
+  REAL_TYPE r[8];
   r[0] = calcTotalPressure(getVector(v, base), getScalar(p, base));
   r[1] = calcTotalPressure(getVector(v, shift1(base)), getScalar(p, shift1(base)));
   r[2] = calcTotalPressure(getVector(v, shift2(base)), getScalar(p, shift2(base)));
@@ -335,7 +335,7 @@ SKL_REAL Interpolation::samplingTotalPressure(const SKL_REAL* v, const SKL_REAL*
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r Interpolation::samplingVorticity(const SKL_REAL* v)
+Vec3r Interpolation::samplingVorticity(const REAL_TYPE* v)
 {
   if (onBoundary) return calcVorticity(v, cIndex);  // nearest
 
@@ -371,9 +371,9 @@ InterpolationStgV::InterpolationStgV(Mode mode, unsigned size[], unsigned guide,
   base_s[0] = (int)(c.x);
   base_s[1] = (int)(c.y);
   base_s[2] = (int)(c.z);
-  coef_s[0] = c.x - (SKL_REAL)base_s[0];
-  coef_s[1] = c.y - (SKL_REAL)base_s[1];
-  coef_s[2] = c.z - (SKL_REAL)base_s[2];
+  coef_s[0] = c.x - (REAL_TYPE)base_s[0];
+  coef_s[1] = c.y - (REAL_TYPE)base_s[1];
+  coef_s[2] = c.z - (REAL_TYPE)base_s[2];
 }
 
 
@@ -381,11 +381,11 @@ InterpolationStgV::InterpolationStgV(Mode mode, unsigned size[], unsigned guide,
 ///
 ///   @param[in] v サンプリング元速度配列
 ///
-Vec3r InterpolationStgV::samplingVelocity(const SKL_REAL* v)
+Vec3r InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
 {
   Vec3r vRet;
-  SKL_REAL t[3];
-  SKL_REAL r[8];
+  REAL_TYPE t[3];
+  REAL_TYPE r[8];
   int i, j, k;
 
   t[0] = coef_s[0];

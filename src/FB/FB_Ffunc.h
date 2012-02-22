@@ -33,18 +33,18 @@
 
 extern "C" {
 	// FB_util.f90
-  void fb_average_s_     (SKL_REAL* avr, int* sz, int* g, SKL_REAL* s, SKL_REAL* flop);
-  void fb_average_v_     (SKL_REAL* avr, int* sz, int* g, SKL_REAL* v, SKL_REAL* flop);
-  void fb_copy_real_     (SKL_REAL* dst, SKL_REAL* src, int* sz);
-  void fb_delta_s_       (SKL_REAL* d, int* sz, int* g, SKL_REAL* sn, SKL_REAL* so, int* bx, SKL_REAL* flop);
-  void fb_delta_v_       (SKL_REAL* d, int* sz, int* g, SKL_REAL* vn, SKL_REAL* vo, int* bx, SKL_REAL* flop);
-  void fb_limit_scalar_  (SKL_REAL* t, int* sz, int* g);
-  void fb_minmax_s_      (SKL_REAL* f_min, SKL_REAL* f_max, int* sz, int* g, SKL_REAL* s, SKL_REAL* flop);
-  void fb_minmax_v_      (SKL_REAL* f_min, SKL_REAL* f_max, int* sz, int* g, SKL_REAL* v00, SKL_REAL* v, SKL_REAL* flop);
+  void fb_average_s_     (REAL_TYPE* avr, int* sz, int* g, REAL_TYPE* s, REAL_TYPE* flop);
+  void fb_average_v_     (REAL_TYPE* avr, int* sz, int* g, REAL_TYPE* v, REAL_TYPE* flop);
+  void fb_copy_real_     (REAL_TYPE* dst, REAL_TYPE* src, int* sz);
+  void fb_delta_s_       (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* sn, REAL_TYPE* so, int* bx, REAL_TYPE* flop);
+  void fb_delta_v_       (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* vn, REAL_TYPE* vo, int* bx, REAL_TYPE* flop);
+  void fb_limit_scalar_  (REAL_TYPE* t, int* sz, int* g);
+  void fb_minmax_s_      (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* s, REAL_TYPE* flop);
+  void fb_minmax_v_      (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* flop);
   void fb_set_value_int_ (int* var, int* sz, int* init);
-  void fb_set_value_real_(SKL_REAL* var, int* sz, SKL_REAL* init);
-  void fb_set_vector_    (SKL_REAL* var, int* sz, int* g, SKL_REAL* val);
-  void fb_totalp_        (SKL_REAL* tp,  int* sz, int* g, SKL_REAL* v, SKL_REAL* p, SKL_REAL* v00, SKL_REAL* flop);
+  void fb_set_value_real_(REAL_TYPE* var, int* sz, REAL_TYPE* init);
+  void fb_set_vector_    (REAL_TYPE* var, int* sz, int* g, REAL_TYPE* val);
+  void fb_totalp_        (REAL_TYPE* tp,  int* sz, int* g, REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* v00, REAL_TYPE* flop);
 }
 
 #endif // _SKL_FORTRAN_FUNC_FB_H_

@@ -4,7 +4,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -16,7 +16,7 @@
 #include <cassert>
 using namespace std;
 
-#include "Skl.h"
+#include "FBDefine.h"
 #include "Parallel_node.h"
 #include "PerfWatch.h"
 
@@ -110,7 +110,7 @@ public:
   ///   @param[in] flopPerTask 「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
   ///   @param[in] iterationCount  実行「タスク」数 (ディフォルト1)
   ///
-  void stop(unsigned key, SKL_REAL flopPerTask=0.0, unsigned iterationCount=1) {
+  void stop(unsigned key, REAL_TYPE flopPerTask=0.0, unsigned iterationCount=1) {
     if (key >= m_nWatch) {
       fprintf(stderr, "\tPerfMonitor::stop() error, out of range key\n");
       assert(0);

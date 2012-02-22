@@ -12,11 +12,9 @@
 //@brief Component Fraction class Header
 //@author keno, AICS, RIKEN
 
-// テンポラリに使用
-#define SKL_REAL float
 
-#include "vec3.h"
 #include "FBDefine.h"
+#include "vec3.h"
 
 class CompoFraction {
 public:

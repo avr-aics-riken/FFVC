@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -54,8 +54,8 @@ void DataHolder::readData(FILE* fp)
       printError("cnnnot parse line: %s\n", buf);
       assert(0);
     }
-    SKL_REAL key = (SKL_REAL)k;
-    SKL_REAL val = (SKL_REAL)v;
+    REAL_TYPE key = (REAL_TYPE)k;
+    REAL_TYPE val = (REAL_TYPE)v;
 
     // 重複を確認
     if (m_data.find(key) != m_data.end()) {
@@ -118,7 +118,7 @@ bool DataHolder::isCommentLine(const char* p)
 ///   @param key 時刻値
 ///   @return 指定した時刻に対する値
 ///
-SKL_REAL DataHolder::getValue(SKL_REAL key) const
+REAL_TYPE DataHolder::getValue(REAL_TYPE key) const
 {
   // キーが最小値以下の場合
   if (key <= m_minKey) {
@@ -132,12 +132,12 @@ SKL_REAL DataHolder::getValue(SKL_REAL key) const
 
   // 上記以外は線形補間
   DATA_MAP::const_iterator it = m_data.lower_bound(key);
-  SKL_REAL key1 = it->first;
-  SKL_REAL val1 = it->second;
+  REAL_TYPE key1 = it->first;
+  REAL_TYPE val1 = it->second;
   if (key == key1) return val1;
   it--;
-  SKL_REAL key0 = it->first;
-  SKL_REAL val0 = it->second;
+  REAL_TYPE key0 = it->first;
+  REAL_TYPE val0 = it->second;
   return (val1 - val0) * (key - key0) / (key1 - key0) + val0;
 }
 
@@ -147,7 +147,7 @@ SKL_REAL DataHolder::getValue(SKL_REAL key) const
 ///   指定された倍率を全てのデータに掛ける．
 ///   @param ratio 倍率
 ///
-void DataHolder::scale(SKL_REAL ratio)
+void DataHolder::scale(REAL_TYPE ratio)
 {
   DATA_MAP::iterator it;
   for (it = m_data.begin(); it != m_data.end(); it++) {

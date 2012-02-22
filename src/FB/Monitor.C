@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -29,11 +29,11 @@
 ///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
 ///
 void MonitorList::setControlVars(unsigned* bcd,
-                                 SKL_REAL g_org[3], SKL_REAL g_lbx[3],
-                                 SKL_REAL org[3], SKL_REAL dx[3], SKL_REAL lbx[3],
+                                 REAL_TYPE g_org[3], REAL_TYPE g_lbx[3],
+                                 REAL_TYPE org[3], REAL_TYPE dx[3], REAL_TYPE lbx[3],
                                  unsigned rs[3], unsigned gc,
-                                 SKL_REAL refVelocity, SKL_REAL baseTemp, SKL_REAL diffTemp, 
-                                 SKL_REAL refDensity, SKL_REAL refLength, SKL_REAL basePrs, 
+                                 REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp, 
+                                 REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs, 
                                  unsigned unitTemp, unsigned modePrecision, unsigned unitPrs) 
 {
   this->bcd = bcd;
@@ -62,7 +62,7 @@ void MonitorList::setControlVars(unsigned* bcd,
 /// 参照速度のコピー
 ///   @param[in] v00 参照（座標系移動）速度
 ///
-void MonitorList::set_V00(SKL_REAL v00[4]) 
+void MonitorList::set_V00(REAL_TYPE v00[4]) 
 {
   refVar.v00.x = v00[1];
   refVar.v00.y = v00[2];
@@ -160,7 +160,7 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str)
 ///
 ///   @note gatherの場合も全プロセスから呼ぶこと
 ///
-void MonitorList::print(unsigned step, SKL_REAL tm)
+void MonitorList::print(unsigned step, REAL_TYPE tm)
 {
   for (int i = 0; i < nGroup; i++) {
     if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
@@ -215,7 +215,7 @@ void MonitorList::setPointSet(const char* str, vector<string>& variables,
 ///
 void MonitorList::setLine(const char* str, vector<string>& variables,
                           const char* method, const char* mode,
-                          SKL_REAL from[3], SKL_REAL to[3], int nDivision)
+                          REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
 {
   clipLine(from, to);
   
@@ -279,7 +279,7 @@ string MonitorList::getOutputTypeStr()
 ///   @param[in,out] from Line始点
 ///   @param[in,out] to   Line終点
 ///
-void MonitorList::clipLine(SKL_REAL from[3], SKL_REAL to[3])
+void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 {
   const char* OUT_OF_REGION = "out of region";
   Vec3r st(from);
@@ -290,12 +290,12 @@ void MonitorList::clipLine(SKL_REAL from[3], SKL_REAL to[3])
   
   
   // 境界上に端点が存在する場合は、少し計算領域内にずらす
-  SKL_REAL eps = 1.0e-5;
+  REAL_TYPE eps = 1.0e-5;
   r0 += eps * pch;
   r1 -= eps * pch;
   
-  SKL_REAL t_st = 0.0;
-  SKL_REAL t_ed = 1.0;
+  REAL_TYPE t_st = 0.0;
+  REAL_TYPE t_ed = 1.0;
   
   try {
     if (d.x == 0) {

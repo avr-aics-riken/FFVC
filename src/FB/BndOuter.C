@@ -1,7 +1,7 @@
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
+ * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
  *
  */
 
@@ -11,13 +11,13 @@
 
 #include "BndOuter.h"
 
-//@fn void set_DomainV(SKL_REAL* vv, int face, bool mode)
+//@fn void set_DomainV(REAL_TYPE* vv, int face, bool mode)
 //@brief モニタ値を保持する
 //@param vv 指定速度ベクトル
 //@param face 面番号
 //@param mode true-outflow, false-others(default)
 //@note falseの場合は，各軸方向への寄与は成分のみ
-void BoundaryOuter::set_DomainV(SKL_REAL* vv, int face, bool mode)
+void BoundaryOuter::set_DomainV(REAL_TYPE* vv, int face, bool mode)
 {
   if ( mode ) {
     dm[0] = vv[0];
@@ -25,7 +25,7 @@ void BoundaryOuter::set_DomainV(SKL_REAL* vv, int face, bool mode)
     dm[2] = vv[2];
   }
   else {
-    SKL_REAL a;
+    REAL_TYPE a;
     
     switch (face) {
       case X_MINUS:
@@ -64,23 +64,23 @@ void BoundaryOuter::set_HTmodeRef(int key)
   HTref = key;
 }
 
-//@fn void set_CoefHT(SKL_REAL val)
+//@fn void set_CoefHT(REAL_TYPE val)
 //@brief 熱伝達係数の保持
-void BoundaryOuter::set_CoefHT(SKL_REAL val)
+void BoundaryOuter::set_CoefHT(REAL_TYPE val)
 {
   var1 = val;
 }
 
-//@fn void set_Temp(SKL_REAL val)
+//@fn void set_Temp(REAL_TYPE val)
 //@brief 温度の保持
-void BoundaryOuter::set_Temp(SKL_REAL val)
+void BoundaryOuter::set_Temp(REAL_TYPE val)
 {
   var1 = val;
 }
 
-//@fn void set_Heatflux(SKL_REAL val)
+//@fn void set_Heatflux(REAL_TYPE val)
 //@brief 熱流束の保持
-void BoundaryOuter::set_Heatflux(SKL_REAL val)
+void BoundaryOuter::set_Heatflux(REAL_TYPE val)
 {
   var1 = val;
 }
@@ -183,9 +183,9 @@ void BoundaryOuter::set_vType(unsigned key)
   vType  = key;
 }
 
-//@fn void addVec(SKL_REAL* vec)
+//@fn void addVec(REAL_TYPE* vec)
 //@brief ベクトルのコピー
-void BoundaryOuter::addVec(SKL_REAL* vec) 
+void BoundaryOuter::addVec(REAL_TYPE* vec) 
 {
   nv[0] = vec[0];
   nv[1] = vec[1];
