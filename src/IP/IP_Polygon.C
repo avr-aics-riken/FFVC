@@ -29,13 +29,13 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TY
   // チェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    assert(0);
+    Exit(0);
   }
   if ( ((unsigned)(wth[0]/pch[0]) != sz[0]) ||
        ((unsigned)(wth[1]/pch[1]) != sz[1]) ||
        ((unsigned)(wth[2]/pch[2]) != sz[2]) ) {
     Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
-    assert(0);
+    Exit(0);
   }
 }
 

@@ -48,14 +48,14 @@ void SklSolverCBC::PS_E_CBC(void)
   TIMING_start(tm_heat_convection_sct);
 
   // point Data
-  if( !(v   = dc_v->GetData()) )    assert(0);
-  if( !(t   = dc_t->GetData()) )    assert(0);
-  if( !(t0  = dc_t0->GetData()) )   assert(0);
-  if( !(qbc = dc_qbc->GetData()) )  assert(0);
-  if( !(ws  = dc_ws->GetData()) )   assert(0);
-  if( !(bh1 = dc_bh1->GetData()) )  assert(0);
-  if( !(bh2 = dc_bh2->GetData()) )  assert(0);
-  if( !(bcv = dc_bcv->GetData()) )  assert(0);
+  if( !(v   = dc_v->GetData()) )    Exit(0);
+  if( !(t   = dc_t->GetData()) )    Exit(0);
+  if( !(t0  = dc_t0->GetData()) )   Exit(0);
+  if( !(qbc = dc_qbc->GetData()) )  Exit(0);
+  if( !(ws  = dc_ws->GetData()) )   Exit(0);
+  if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
+  if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
+  if( !(bcv = dc_bcv->GetData()) )  Exit(0);
   
   // n stepの値をdc_t0に保持，dc_tはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
@@ -222,7 +222,7 @@ void SklSolverCBC::PS_E_CBC(void)
           
         default:
           stamped_printf("\tInvalid convergence type\n");
-          assert(0);
+          Exit(0);
       }
       
       if ( convergence < ICt->get_eps() ) break;

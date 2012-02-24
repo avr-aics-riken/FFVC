@@ -67,32 +67,32 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_start(tm_frctnl_stp_sct_1); 
   
   // point Data
-  if( !(v   = dc_v->GetData()) )   assert(0);
-  if( !(v0  = dc_v0->GetData()) )  assert(0);
-  if( !(vc  = dc_vc->GetData()) )  assert(0);
-  if( !(wv  = dc_wv->GetData()) )  assert(0);
-  if( !(p   = dc_p->GetData()) )   assert(0);
-  if( !(p0  = dc_p0->GetData()) )  assert(0);
-  if( !(src0= dc_ws->GetData()) )  assert(0);
-  if( !(src1= dc_wk2->GetData()) ) assert(0); // div(u)の値を保持，出力のところまでは再利用しないこと
-  if( !(bcd = dc_bcd->GetData()) ) assert(0);
-  if( !(bcp = dc_bcp->GetData()) ) assert(0);
-  if( !(bcv = dc_bcv->GetData()) ) assert(0);
-  if( !(wss = dc_wvex->GetData())) assert(0);
+  if( !(v   = dc_v->GetData()) )   Exit(0);
+  if( !(v0  = dc_v0->GetData()) )  Exit(0);
+  if( !(vc  = dc_vc->GetData()) )  Exit(0);
+  if( !(wv  = dc_wv->GetData()) )  Exit(0);
+  if( !(p   = dc_p->GetData()) )   Exit(0);
+  if( !(p0  = dc_p0->GetData()) )  Exit(0);
+  if( !(src0= dc_ws->GetData()) )  Exit(0);
+  if( !(src1= dc_wk2->GetData()) ) Exit(0); // div(u)の値を保持，出力のところまでは再利用しないこと
+  if( !(bcd = dc_bcd->GetData()) ) Exit(0);
+  if( !(bcp = dc_bcp->GetData()) ) Exit(0);
+  if( !(bcv = dc_bcv->GetData()) ) Exit(0);
+  if( !(wss = dc_wvex->GetData())) Exit(0);
   
   // 温度計算
   if ( C.isHeatProblem() ) {
-    if( !(t0 = dc_t->GetData()) ) assert(0);
+    if( !(t0 = dc_t->GetData()) ) Exit(0);
   }
   
   // LES計算
   if ( C.LES.Calc ==ON ) {
-    if( !(vt  = dc_vt->GetData()) )  assert(0); //
+    if( !(vt  = dc_vt->GetData()) )  Exit(0); //
   }
   
   // AB法
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) {
-    if( !(abf = dc_abf->GetData()) )  assert(0);
+    if( !(abf = dc_abf->GetData()) )  Exit(0);
   }
   
   // IN_OUT境界条件のときのフラグ処理
@@ -169,7 +169,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
       break;
       
     default:
-      assert(0);
+      Exit(0);
   }
   
   // 時間積分
@@ -216,7 +216,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
       break;
       
     default:
-      assert(0);
+      Exit(0);
   }
   
   TIMING_stop(tm_frctnl_stp_sct_2, 0.0);
@@ -255,7 +255,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // 疑似ベクトルの同期
   if ( para_mng->IsParallel() ) {
     TIMING_start(tm_pvec_comm);
-    if ( !dc_vc->CommBndCell(1) ) assert(0);
+    if ( !dc_vc->CommBndCell(1) ) Exit(0);
     TIMING_stop(tm_pvec_comm, comm_size*1.0*3.0); // ガイドセル数 x ベクトル
   }
   
@@ -465,7 +465,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     
     if ( para_mng->IsParallel() ) {
       TIMING_start(tm_LES_eddy_comm);
-      if( !dc_vt->CommBndCell(guide) ) assert(0);
+      if( !dc_vt->CommBndCell(guide) ) Exit(0);
       TIMING_stop(tm_LES_eddy_comm, comm_size*(REAL_TYPE)guide);
     }
   }

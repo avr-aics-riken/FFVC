@@ -103,7 +103,7 @@ void FreeJet::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=0; k<=(int)(kmax+1); k++) {
     for (j=0; j<=(int)(jmax+1); j++) {
       for (i=0; i<=(int)(imax+1); i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }
     }
@@ -120,7 +120,7 @@ void FreeJet::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=0; k<(int)(kmax+2*guide); k++) {
     for (j=0; j<(int)(jmax+2*guide); j++) {
       for (i=0; i<=(int)(guide-1); i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 600;
       }
     }
@@ -130,7 +130,7 @@ void FreeJet::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=0; k<(int)(kmax+2*guide); k++) {
     for (j=(int)(j0+guide-1); j<=(int)(j1+guide-1); j++) {
       for (i=0; i<=(int)(guide-1); i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 0;
       }
     }

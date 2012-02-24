@@ -18,6 +18,8 @@
 #include "vec3_func.h"
 #include "vec3f_func.h"
 
+namespace FB {
+  
 //=========================================================================
 // class Vec3<T>
 //=========================================================================
@@ -313,5 +315,7 @@ inline std::ostream& operator<<(std::ostream& os, const Vec3uc& v) {
 inline bool lessVec3f(const Vec3f& a, const Vec3f& b) {
 	return (a.lengthSquared() < b.lengthSquared()) ? true : false;
 }
+  
+} // namespace FB
 
 #endif  // _SKL_FB_vec3_h

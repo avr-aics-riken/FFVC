@@ -67,15 +67,15 @@ void IP_Rect::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
   if ( even == ON ) {
     if ( sz[0]/2*2 != sz[0] ) {
       printf("\tDimension size must be even for x direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-      assert(0);
+      Exit(0);
     }
     if ( sz[1]/2*2 != sz[1] ) {
       printf("\tDimension size must be even for y direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-      assert(0);
+      Exit(0);
     }
     if ( sz[2]/2*2 != sz[2] ) {
       printf("\tDimension size must be even for z direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -96,7 +96,7 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=1; k<=(int)kmax; k++) {
     for (j=1; j<=(int)jmax; j++) {
       for (i=1; i<=(int)imax; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }
     }

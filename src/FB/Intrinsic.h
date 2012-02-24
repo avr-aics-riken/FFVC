@@ -16,7 +16,6 @@
 #include "SklSolverBase.h"
 #include "FBDefine.h"
 #include "BndOuter.h"
-#include "mydebug.h"
 #include "Control.h"
 #include "Component.h"
 #include "FBUtility.h"

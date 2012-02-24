@@ -27,7 +27,7 @@ void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE
   // forced
   if (R->Unit.Param != DIMENSIONAL) {
     Hostonly_ printf("\tError : SHC1D class is designed for only dimensional parameter\n");
-    assert(0);
+    Exit(0);
   }
 	
 	pch[0] = 1.0 / (REAL_TYPE)(sz[0]-2);
@@ -44,7 +44,7 @@ void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE
   // Setting depends on Example,  INTRINSIC
   if ( (sz[1] != 5) || (sz[2] != 5) ) {
     printf("\tSHC1D case requires jmax = kmax = 5\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -71,7 +71,7 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=1-gd; k<=(int)kmax+gd; k++) {
     for (j=1-gd; j<=(int)jmax+gd; j++) {
       for (i=1-gd; i<=(int)imax+gd; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_inactive;
       }
     }
@@ -81,7 +81,7 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=2; k<=kmax-1; k++) {
     for (j=2; j<=jmax-1; j++) {
       for (i=2; i<=imax-1; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_fluid;
       }
     }
@@ -90,20 +90,20 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org)
   // fin
   j = k = 3;
   for (i=3; i<=imax-2; i++) {
-    m = SklUtil::getFindexS3D(size, guide, i, j, k);
+    m = FBUtility::getFindexS3D(size, guide, i, j, k);
     mid[m] = mid_fin;
   }
 
   // iso-thermal fin
   i = 2;
   j = k = 3;
-  m = SklUtil::getFindexS3D(size, guide, i, j, k);
+  m = FBUtility::getFindexS3D(size, guide, i, j, k);
   mid[m] = mid_isothermal;
   
   // adiabatic fin
   i = imax-1;
   j = k = 3;
-  m = SklUtil::getFindexS3D(size, guide, i, j, k);
+  m = FBUtility::getFindexS3D(size, guide, i, j, k);
   mid[m] = mid_adiabatic;  
   
 }

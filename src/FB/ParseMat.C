@@ -21,8 +21,8 @@
  */
 void ParseMat::setControlVars(Control* Cref, IDtable* itbl, MaterialList* m_mat, SklSolverConfig* cfg)
 {
-  if ( !itbl ) assert(0);
-  if ( !cfg )  assert(0);
+  if ( !itbl ) Exit(0);
+  if ( !cfg )  Exit(0);
   
   NoCompo        = Cref->NoCompo;
   NoBC           = Cref->NoBC;
@@ -55,13 +55,13 @@ void ParseMat::getXMLmaterial(void)
   // Check Model_Setting section
   if ( !(elmL1 = CF->GetTop(MDMTBL)) ) {
     stamped_printf("\tParsing error : Missing Medium_Table tree\n");
-    assert(0);
+    Exit(0);
   }
 
   // check # of Elem
   if ( (NoBaseMat=elmL1->GetElemSize()) == 0 ) {
     printf("\tNo description was found in 'Medium_Table'\n");
-    assert(0);
+    Exit(0);
   }
 
   // Instance MaterialList valid only inside of this class
@@ -76,11 +76,11 @@ void ParseMat::getXMLmaterial(void)
       // ID
       if ( !elmL2->isSetID() ) {
         printf("\tParsing error : No ID section for Medium in 'Medium_Table'\n");
-        assert(0);
+        Exit(0);
       }
       if ( -1 == (id=elmL2->GetID()) ) {
         printf("\tParsing error : No valid ID for Medium in 'Medium_Table'\n");
-        assert(0);
+        Exit(0);
       }
       BaseMat[i].setMatID( (unsigned)id );
       
@@ -89,7 +89,7 @@ void ParseMat::getXMLmaterial(void)
       else if ( !strcasecmp(p, "Solid") ) BaseMat[i].setState(SOLID);
       else {
         printf("\tInvalid medium keyword 'solid/fluid'\n");
-        assert(0);
+        Exit(0);
       }
 
       // Material name
@@ -104,7 +104,7 @@ void ParseMat::getXMLmaterial(void)
     }
     else {
       printf("\tInvalid keyword in Medium_Table : [%s]\n", p);
-      assert(0);
+      Exit(0);
     }
     
     elmL2 = elmL1->GetElemNext(elmL2);
@@ -123,7 +123,7 @@ void ParseMat::getXMLmaterial(void)
           fprintf(mp,"\n\t>> Base Material List\n\n");
         }
         printMatList(mp, NoBaseMat, BaseMat);
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -179,13 +179,13 @@ void ParseMat::makeMaterialList(void)
     matid = iTable[i].getMatID();
     if ( !isIDinList(matid) ) {
       stamped_printf("\tMedium ID [%d] described in 'Model_Setting' can not find in 'Medium_Table'\n", matid);
-      assert(0);
+      Exit(0);
     }
-    if ( !copyMaterials( odr, matid ) ) assert(0);
+    if ( !copyMaterials( odr, matid ) ) Exit(0);
     if ( odr == NoMaterial ) return;
   }
   stamped_printf("\tError\n");
-  assert(0);
+  Exit(0);
 }
 
 /**
@@ -203,7 +203,7 @@ void ParseMat::makeLinkCmpMat(CompoList* compo)
     // IDに対応したMatIDをiTableから取得する
     if ( 0 == (id_mat = getMatIDinTable(id)) ) {
       stamped_printf("\tSomething wrong! Medium ID = %d\n", id_mat);
-      assert(0);
+      Exit(0);
     }
     
     // MatIDのMaterialListのエントリ番号
@@ -278,7 +278,7 @@ void ParseMat::chkList(FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq)
  */
 void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
 {
-  if( !fp ) assert(0);
+  if( !fp ) Exit(0);
   
   if ( basicEq == INCMP_2PHASE ) {
     fprintf(fp,"\t  No :      ID            Element      Medium   Phase                     Label : BCtype\n");
@@ -337,7 +337,7 @@ void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
   
   if ( !(p->GetData( &f )) ) {
     stamped_printf("\tParsing error : Invalid float value for in Medium\n");
-    assert(0);
+    Exit(0);
   }
   value = f;
 }
@@ -366,7 +366,7 @@ void ParseMat::readMedium(const CfgElem *elmL2, int m)
     Pname = param->GetName();
     if ( -1 == (key = MaterialList::getKey(Pname)) ) {
       printf("\tParameter error : Invalid keyword in 'Medium_Table' : [%s]\n", Pname);
-      assert(0);
+      Exit(0);
     }
     ChkList[key] = true;
     
@@ -374,7 +374,7 @@ void ParseMat::readMedium(const CfgElem *elmL2, int m)
   }
   
   // Check
-  if ( !chkList4Solver(m) ) assert(0);
+  if ( !chkList4Solver(m) ) Exit(0);
   
   // load value
   param   = elmL2->GetParamFirst();
@@ -590,6 +590,6 @@ void ParseMat::chkState_Mat_Cmp(CompoList* compo)
   
   if ( c>0 ) {
     Hostonly_ printf("\tMedium ID described in 'Model_Setting is not consistent with the state of Solid/Fluid. See above lines marked '<'.'\n\n");
-    assert(0);
+    Exit(0);
   }
 }

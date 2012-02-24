@@ -15,7 +15,7 @@
 
 #include "math.h"
 #include "stdio.h"
-#include <assert.h>
+#include "FBDefine.h"
 
 class Interval_Manager {
 protected:

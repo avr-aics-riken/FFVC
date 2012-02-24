@@ -13,7 +13,6 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include "FBDefine.h"
-#include "mydebug.h"
 
 class IDtable {
 private:

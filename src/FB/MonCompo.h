@@ -13,6 +13,8 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include <string>
+#include <vector>
+#include <cassert>
 
 #include "FBDefine.h"
 #include "SklUtil.h"
@@ -246,8 +248,8 @@ public:
     pSource = p;
     tSource = t;
     if (variable[TEMPERATURE] && !tSource) {
-      Hostonly_ stmpd_printf("\tError : Temperature monitoring source not assigned.\n");
-      assert(0);
+      Hostonly_ stamped_printf("\tError : Temperature monitoring source not assigned.\n");
+      Exit(0);
     }
   }
   

@@ -23,17 +23,17 @@ extern SklParaComponent* ParaCmpo;
  */
 void FileIO::cnv_Div(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE coef, REAL_TYPE& flop)
 {
-  if( !dst || !src ) assert(0);
+  if( !dst || !src ) Exit(0);
   
   const unsigned* dst_sz = dst->GetSize();
   const unsigned* src_sz = src->GetSize();
   if(   (src_sz[0] != dst_sz[0])
      || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) assert(0);
+     || (src_sz[2] != dst_sz[2]) ) Exit(0);
   
   REAL_TYPE* dst_data = dst->GetData();
   const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) assert(0);
+  if( !dst_data || !src_data ) Exit(0);
   
   dst_sz = dst->_GetSize();
   src_sz = src->_GetSize();
@@ -65,7 +65,7 @@ void FileIO::cnv_Div(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* 
     flop += (REAL_TYPE)(dst_sz[0]*dst_sz[1]*dst_sz[2]);
   }
   else {
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -84,17 +84,17 @@ void FileIO::cnv_Div(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* 
 void FileIO::cnv_V_ND2D(SklVector3DEx<REAL_TYPE>* dst, const SklVector3DEx<REAL_TYPE>* src, const REAL_TYPE v00[3], const REAL_TYPE Ref_v, 
                         REAL_TYPE& flop, unsigned stepAvr)
 {
-  if( !dst || !src || !v00 ) assert(0);
+  if( !dst || !src || !v00 ) Exit(0);
     
   const unsigned* dst_sz = dst->GetSize();  // dimension size /wo guide cell
   const unsigned* src_sz = src->GetSize();
   if(   (src_sz[0] != dst_sz[0])
        || (src_sz[1] != dst_sz[1])
-       || (src_sz[2] != dst_sz[2]) ) assert(0);
+       || (src_sz[2] != dst_sz[2]) ) Exit(0);
       
   REAL_TYPE* dst_data = dst->GetData();
   const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) assert(0);
+  if( !dst_data || !src_data ) Exit(0);
         
   dst_sz = dst->_GetSize();  // dimension size /w guide cell
   src_sz = src->_GetSize();
@@ -142,17 +142,17 @@ void FileIO::cnv_V_ND2D(SklVector3DEx<REAL_TYPE>* dst, const SklVector3DEx<REAL_
  */
 void FileIO::cnv_TP_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop)
 {
-  if( !dst || !src ) assert(0);
+  if( !dst || !src ) Exit(0);
   
   const unsigned* dst_sz = dst->GetSize();
   const unsigned* src_sz = src->GetSize();
   if(   (src_sz[0] != dst_sz[0])
      || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) assert(0);
+     || (src_sz[2] != dst_sz[2]) ) Exit(0);
   
   REAL_TYPE* dst_data = dst->GetData();
   const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) assert(0);
+  if( !dst_data || !src_data ) Exit(0);
   
   dst_sz = dst->_GetSize();
   src_sz = src->_GetSize();
@@ -213,11 +213,11 @@ void FileIO::cnv_TP_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYP
  */
 void FileIO::cnv_V_D2ND(SklVector3DEx<REAL_TYPE>* dst, const REAL_TYPE Ref_v)
 {
-  if( !dst ) assert(0);
+  if( !dst ) Exit(0);
     
   //const unsigned* dst_sz = dst->GetSize();
   REAL_TYPE* dst_data = dst->GetData();
-  if( !dst_data ) assert(0);
+  if( !dst_data ) Exit(0);
       
   const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
   register unsigned i, j, k, l;
@@ -253,11 +253,11 @@ void FileIO::cnv_V_D2ND(SklVector3DEx<REAL_TYPE>* dst, const REAL_TYPE Ref_v)
  */
 void FileIO::cnv_T_D2ND(SklScalar3D<REAL_TYPE>* dst, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const unsigned Unit)
 {
-  if( !dst ) assert(0);
+  if( !dst ) Exit(0);
   
   //const unsigned* dst_sz = dst->GetSize();
   REAL_TYPE* dst_data = dst->GetData();
-  if( !dst_data ) assert(0);
+  if( !dst_data ) Exit(0);
   
   const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
   register unsigned i, j, k;
@@ -292,17 +292,17 @@ void FileIO::cnv_T_D2ND(SklScalar3D<REAL_TYPE>* dst, const REAL_TYPE Base_tmp, c
 void FileIO::cnv_T_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, 
                         const unsigned Unit, REAL_TYPE& flop)
 {
-  if( !dst || !src ) assert(0);
+  if( !dst || !src ) Exit(0);
   
   const unsigned* dst_sz = dst->GetSize();
   const unsigned* src_sz = src->GetSize();
   if(   (src_sz[0] != dst_sz[0])
      || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) assert(0);
+     || (src_sz[2] != dst_sz[2]) ) Exit(0);
   
   REAL_TYPE* dst_data = dst->GetData();
   const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) assert(0);
+  if( !dst_data || !src_data ) Exit(0);
   
   dst_sz = dst->_GetSize();
   src_sz = src->_GetSize();
@@ -368,11 +368,11 @@ void FileIO::cnv_T_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE
  */
 void FileIO::cnv_P_D2ND(SklScalar3D<REAL_TYPE>* dst, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const unsigned mode)
 {
-  if( !dst ) assert(0);
+  if( !dst ) Exit(0);
   
   //const unsigned* dst_sz = dst->GetSize();
   REAL_TYPE* dst_data = dst->GetData();
-  if( !dst_data ) assert(0);
+  if( !dst_data ) Exit(0);
   
   const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
   register unsigned i, j, k;
@@ -408,17 +408,17 @@ void FileIO::cnv_P_D2ND(SklScalar3D<REAL_TYPE>* dst, const REAL_TYPE Base_prs, c
 void FileIO::cnv_P_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, 
                         const REAL_TYPE Ref_v, const unsigned mode, REAL_TYPE& flop)
 {
-  if( !dst || !src ) assert(0);
+  if( !dst || !src ) Exit(0);
   
   const unsigned* dst_sz = dst->GetSize();
   const unsigned* src_sz = src->GetSize();
   if(   (src_sz[0] != dst_sz[0])
      || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) assert(0);
+     || (src_sz[2] != dst_sz[2]) ) Exit(0);
   
   REAL_TYPE* dst_data = dst->GetData();
   const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) assert(0);
+  if( !dst_data || !src_data ) Exit(0);
   
   dst_sz = dst->_GetSize();
   src_sz = src->_GetSize();
@@ -449,7 +449,7 @@ void FileIO::cnv_P_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE
     flop += (REAL_TYPE)(dst_sz[0]*dst_sz[1]*dst_sz[2]*4);
   }
   else {
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -470,10 +470,10 @@ void FileIO::cnv_P_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE
 void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                              SklScalar4D<REAL_TYPE>* dc_s, int& step, REAL_TYPE& time, unsigned Dmode)
 {
-  if ( !obj )   assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-  if ( !dc_s )  assert(0);
-  if ( !fname ) assert(0);
+  if ( !obj )   Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !dc_s )  Exit(0);
+  if ( !fname ) Exit(0);
   
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -482,18 +482,18 @@ void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, co
   if( !(sphS=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphS->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphS->GetFileName());
-    assert(0);
+    Exit(0);
   }
 
   if ( !SklUtil::getTimeStamp(sphS, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphS->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   SklScalar4D<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklScalar4D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  //if( !SklUtil::cpyS4D(dc_s, dc_tmp) ) assert(0);
+  if( !(dc_tmp = dynamic_cast<SklScalar4D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
+  //if( !SklUtil::cpyS4D(dc_s, dc_tmp) ) Exit(0);
   
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -519,10 +519,10 @@ void FileIO::loadSphScalar4D(SklSolverBase* obj, FILE* fp, const char* fname, co
 void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                                 SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, REAL_TYPE* v00, unsigned Dmode)
 {
-  if ( !obj )   assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-  if ( !dc_v )  assert(0);
-  if ( !fname ) assert(0);
+  if ( !obj )   Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !dc_v )  Exit(0);
+  if ( !fname ) Exit(0);
         
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -531,19 +531,19 @@ void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
   if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   SklVector3DEx<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  if( !shiftVin3D(dc_v, dc_tmp, &v00[1], (unsigned)step) ) assert(0);
-  //if( !(DataMngr.RegistData("avrv", dc_av)) ) assert(0);
+  if( !(dc_tmp = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
+  if( !shiftVin3D(dc_v, dc_tmp, &v00[1], (unsigned)step) ) Exit(0);
+  //if( !(DataMngr.RegistData("avrv", dc_av)) ) Exit(0);
       
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -568,10 +568,10 @@ void FileIO::loadSphVector3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
 void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                                 SklScalar3D<REAL_TYPE>* dc_s, int& step, REAL_TYPE& time, unsigned Dmode)
 {
-  if ( !obj )   assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-  if ( !dc_s )  assert(0);
-  if ( !fname ) assert(0);
+  if ( !obj )   Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !dc_s )  Exit(0);
+  if ( !fname ) Exit(0);
   
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -580,20 +580,20 @@ void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
   if( !(sphS=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphS->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphS->GetFileName());
-    assert(0);
+    Exit(0);
   }
 
   if ( !SklUtil::getTimeStamp(sphS, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphS->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   SklScalar3D<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklScalar3D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  if( !SklUtil::scaleAvrS3D(dc_tmp, (unsigned)step, true) ) assert(0); // true => INPUT
-  if( !SklUtil::cpyS3D(dc_s, dc_tmp) ) assert(0);
-  //if( !(DataMngr.RegistData("avrp", dc_ap)) ) assert(0);
+  if( !(dc_tmp = dynamic_cast<SklScalar3D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
+  if( !SklUtil::scaleAvrS3D(dc_tmp, (unsigned)step, true) ) Exit(0); // true => INPUT
+  if( !SklUtil::cpyS3D(dc_s, dc_tmp) ) Exit(0);
+  //if( !(DataMngr.RegistData("avrp", dc_ap)) ) Exit(0);
   
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -619,10 +619,10 @@ void FileIO::loadSphScalar3DAvr(SklSolverBase* obj, FILE* fp, const char* fname,
 void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                              SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, REAL_TYPE *v00, unsigned Dmode)
 {
-  if ( !obj )   assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-  if ( !dc_v )  assert(0);
-  if ( !fname ) assert(0);
+  if ( !obj )   Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !dc_v )  Exit(0);
+  if ( !fname ) Exit(0);
         
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -631,18 +631,18 @@ void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, co
   if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   SklVector3DEx<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  if( !shiftVin3D(dc_v, dc_tmp, &v00[1]) ) assert(0);
+  if( !(dc_tmp = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
+  if( !shiftVin3D(dc_v, dc_tmp, &v00[1]) ) Exit(0);
       
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -667,10 +667,10 @@ void FileIO::loadSphVector3D(SklSolverBase* obj, FILE* fp, const char* fname, co
 void FileIO::loadSphScalar3D(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                              SklScalar3D<REAL_TYPE>* dc_s, int& step, REAL_TYPE& time, unsigned Dmode)
 {
-  if ( !obj )   assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-  if ( !dc_s )  assert(0);
-  if ( !fname ) assert(0);
+  if ( !obj )   Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !dc_s )  Exit(0);
+  if ( !fname ) Exit(0);
   
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -679,18 +679,18 @@ void FileIO::loadSphScalar3D(SklSolverBase* obj, FILE* fp, const char* fname, co
   if( !(sphS=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
     Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphS->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphS->GetFileName());
-    assert(0);
+    Exit(0);
   }
   
   if ( !SklUtil::getTimeStamp(sphS, step, time) ) {
     Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphS->GetFileName());
     Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    assert(0);
+    Exit(0);
   }
 
   SklScalar3D<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklScalar3D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) assert(0);
-  if( !SklUtil::cpyS3D(dc_s, dc_tmp) ) assert(0);
+  if( !(dc_tmp = dynamic_cast<SklScalar3D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
+  if( !SklUtil::cpyS3D(dc_s, dc_tmp) ) Exit(0);
 
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -719,10 +719,10 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if ( !obj )   assert(0);
-  if (!dc_mid)  assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
-  if ( !fname ) assert(0);
+  if ( !obj )   Exit(0);
+  if (!dc_mid)  Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !fname ) Exit(0);
   
   SklVoxDataSet* svxSet = NULL;
 
@@ -731,7 +731,7 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
       printf     ("\tError: during SVX file reading\n");
       fprintf(fp, "\tError: during SVX file reading\n");
     }
-    assert(0);
+    Exit(0);
   }
 
   Hostonly_ {
@@ -747,7 +747,7 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
       printf     ("\tThis SVX file does not include Medium ID\n");
       fprintf(fp, "\tThis SVX file does not include Medium ID\n");
     }
-    assert(0);
+    Exit(0);
   }
   else {
     Hostonly_ {
@@ -756,13 +756,13 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
     }
   }
   SklScalar3D<int>* dc_tmp_mid;
-  if ( !(dc_tmp_mid = dynamic_cast<SklScalar3D<int>*>(svxSet->GetData(SklVoxDataSet::SVX_MID))) ) assert(0);
-  if ( !SklUtil::cpyS3DCenter(dc_mid, dc_tmp_mid) ) assert(0);
+  if ( !(dc_tmp_mid = dynamic_cast<SklScalar3D<int>*>(svxSet->GetData(SklVoxDataSet::SVX_MID))) ) Exit(0);
+  if ( !SklUtil::cpyS3DCenter(dc_mid, dc_tmp_mid) ) Exit(0);
   if (dc_tmp_mid) { delete dc_tmp_mid; dc_tmp_mid; }
   
   // Volume Fraction　オプション
   if (vf_mode == true) {
-    if (!dc_ws)   assert(0);
+    if (!dc_ws)   Exit(0);
     if ( svxSet->GetData(0) ) { // 含まれている場合
       if ( sizeof(REAL_TYPE) == sizeof(double) ) {
         Hostonly_ printf("double is not supported at this moment\n");
@@ -774,8 +774,8 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
         fprintf(fp, "\tVolume Fraction");
       }
       SklScalar3D<REAL_TYPE>* dc_tmp_svx;
-      if ( !(dc_tmp_svx = dynamic_cast<SklScalar3D<REAL_TYPE>*>(svxSet->GetData(SklVoxDataSet::SVX_VOLUME))) ) assert(0);
-      if ( !SklUtil::cpyS3DCenter(dc_ws, dc_tmp_svx) ) assert(0);
+      if ( !(dc_tmp_svx = dynamic_cast<SklScalar3D<REAL_TYPE>*>(svxSet->GetData(SklVoxDataSet::SVX_VOLUME))) ) Exit(0);
+      if ( !SklUtil::cpyS3DCenter(dc_ws, dc_tmp_svx) ) Exit(0);
       if (dc_tmp_svx) { delete dc_tmp_svx; dc_tmp_svx=NULL; }
     }
     else {
@@ -812,10 +812,10 @@ void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if ( !obj )   assert(0);
-  if (!dc_mid)  assert(0);
-  if (!mid_str) assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !obj )   Exit(0);
+  if (!dc_mid)  Exit(0);
+  if (!mid_str) Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
   
   const unsigned int* mid_sz = dc_mid->_GetSize();
   
@@ -855,10 +855,10 @@ void FileIO::readSBX(SklSolverBase* obj, FILE* fp, const char* file_attr, unsign
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if ( !obj )   assert(0);
-  if (!dc_mid)  assert(0);
-  if (!file_attr) assert(0);
-  // if ( !fp )    assert(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !obj )   Exit(0);
+  if (!dc_mid)  Exit(0);
+  if (!file_attr) Exit(0);
+  // if ( !fp )    Exit(0); 並列時にはfpをオープンしない．ホストのみ
   
   unsigned char* dataP = dc_mid->GetData();
   const unsigned int* mid_sz = dc_mid->_GetSize();
@@ -890,10 +890,10 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if ( !obj )   assert(0);
-  if (!name)   assert(0);
-  if (!mid_data)   assert(0);
-  // if ( !fp )   assert(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !obj )   Exit(0);
+  if (!name)   Exit(0);
+  if (!mid_data)   Exit(0);
+  // if ( !fp )   Exit(0); 並列時にはfpをオープンしない．ホストのみ
   
   SklSbxDataSet* sbxSet = NULL;
   
@@ -901,7 +901,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
   if ( !(sbxSet=dynamic_cast<SklSbxDataSet*>(obj->LoadFile(para_mng, name, guide, pn.procGrp))) ) {
     Hostonly_ printf     ("\tError: during SBX reading : %s\n", name);
     Hostonly_ fprintf(fp, "\tError: during SBX reading : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   const char* sbx_fname = sbxSet->GetFileName();
   if (sbx_fname) {
@@ -916,7 +916,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
   if ( !(sbxSet->GetSize(ix, jx, kx)) ) {
     Hostonly_ printf     ("\tSize in SBX file is out of order : %s\n", name);
     Hostonly_ fprintf(fp, "\tSize in SBX file is out of order : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   
   // Get SBX Data
@@ -934,7 +934,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
                                     pn.procGrp))) ) {
                                       Hostonly_ printf     ("Error : SBX AllocateArray(sbx) fault : %s\n", name);
                                       Hostonly_ fprintf(fp, "Error : SBX AllocateArray(sbx) fault : %s\n", name);
-                                      assert(0);
+                                      Exit(0);
                                     }
   
   if (vsz == SklVoxDataSet::TYPE_CHAR) {
@@ -942,7 +942,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
     if ( !(dc_tmp_char = dynamic_cast<SklScalar3D<unsigned char>*>(sbxSet->GetData(SklVoxDataSet::SBX_DATA))) ) {
       Hostonly_ printf     ("Error : SBX Data GetData fault : %s\n", name);
       Hostonly_ fprintf(fp, "Error : SBX Data GetData fault : %s\n", name);
-      assert(0);
+      Exit(0);
     }
     const unsigned char* src_ds = dc_tmp_char->GetData();
     int* dest_ds = dc_tmp_sbx->GetData();
@@ -954,12 +954,12 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
     if (lowerBits < 0 || lowerBits > 8) {
       Hostonly_ printf     ("Error : SBX LowerBits[=%d] fault : %s\n", lowerBits, name);
       Hostonly_ fprintf(fp, "Error : SBX LowerBits[=%d] fault : %s\n", lowerBits, name);
-      assert(0);
+      Exit(0);
     }
     if (upperBits < 0 || upperBits > 8) {
       Hostonly_ printf     ("Error : SBX UpperBits[=%d] fault : %s\n", upperBits, name);
       Hostonly_ fprintf(fp, "Error : SBX UpperBits[=%d] fault : %s\n", upperBits, name);
-      assert(0);
+      Exit(0);
     }
     
     Hostonly_ printf     ("\tSBX Data type : 1 byte ");
@@ -984,7 +984,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
       default:
         Hostonly_ printf     ("-> bit encoding error\n");
         Hostonly_ fprintf(fp, "-> bit encoding error\n");
-        assert(0);
+        Exit(0);
     }
     
     for (register unsigned i=0; i<dc_tmp_char->GetArrayLength(); i++) {
@@ -1007,7 +1007,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
       if (!sbx_vol) {
         Hostonly_ printf     ("Error : SBX AllocateArray(sbx_vol) fault : %s\n", name);
         Hostonly_ fprintf(fp, "Error : SBX AllocateArray(sbx_vol) fault : %s\n", name);
-        assert(0);
+        Exit(0);
       }
       REAL_TYPE* dest_vol = sbx_vol->GetData();
       for (register unsigned i=0; i<dc_tmp_char->GetArrayLength(); i++) {
@@ -1021,7 +1021,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
       if (!SklUtil::cpyS3DOverlap(vol_data, sbx_vol)) {
         Hostonly_ printf     ("Error : SBX Data cpyS3DOverlap[REAL_TYPE] fault : %s\n", name);
         Hostonly_ fprintf(fp, "Error : SBX Data cpyS3DOverlap[REAL_TYPE] fault : %s\n", name);
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -1032,7 +1032,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
     if ( !(dc_tmp_short = dynamic_cast<SklScalar3D<unsigned short>*>(sbxSet->GetData(SklVoxDataSet::SBX_DATA))) ) {
       Hostonly_ printf     ("Error : SBX Data GetData fault : %s\n", name);
       Hostonly_ fprintf(fp, "Error : SBX Data GetData fault : %s\n", name);
-      assert(0);
+      Exit(0);
     }
     const unsigned short* src_ds = dc_tmp_short->GetData();
     int* dest_ds = dc_tmp_sbx->GetData();
@@ -1047,7 +1047,7 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
     if ( !(dc_tmp_int = dynamic_cast<SklScalar3D<unsigned int>*>(sbxSet->GetData(SklVoxDataSet::SBX_DATA))) ) {
       Hostonly_ printf     ("Error : SBX Data GetData fault : %s\n", name);
       Hostonly_ fprintf(fp, "Error : SBX Data GetData fault : %s\n", name);
-      assert(0);
+      Exit(0);
     }
     const unsigned int* src_ds = dc_tmp_int->GetData();
     int* dest_ds = dc_tmp_sbx->GetData();
@@ -1057,14 +1057,14 @@ void FileIO::loadSBXfile(SklSolverBase* obj, FILE* fp, const char* name, unsigne
   if (!dc_tmp_sbx) {
     Hostonly_ printf     ("Error : can't set dc_tmp_sbx : %s\n", name);
     Hostonly_ fprintf(fp, "Error : can't set dc_tmp_sbx : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   
   // copy data
   if (!SklUtil::cpyS3DOverlap(mid_data, dc_tmp_sbx)) {
     Hostonly_ printf     ("Error : SBX Data cpyS3DOverlap[int] fault : %s\n", name);
     Hostonly_ fprintf(fp, "Error : SBX Data cpyS3DOverlap[int] fault : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   
   Hostonly_ printf     ("\tget sbx data : %s\n", name);
@@ -1100,10 +1100,10 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if ( !obj )  assert(0);
-  if (!name)   assert(0);
-  if (!data)   assert(0);
-  // if ( !fp )   assert(0); 並列時にはfpをオープンしない．ホストのみ
+  if ( !obj )  Exit(0);
+  if (!name)   Exit(0);
+  if (!data)   Exit(0);
+  // if ( !fp )   Exit(0); 並列時にはfpをオープンしない．ホストのみ
   
   SklSbxDataSet* sbxSet = NULL;
   
@@ -1111,7 +1111,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
   if ( !(sbxSet=dynamic_cast<SklSbxDataSet*>(obj->LoadFile(para_mng, name, guide, pn.procGrp))) ) {
     Hostonly_ printf     ("\tError: during SBX reading : %s\n", name);
     Hostonly_ fprintf(fp, "\tError: during SBX reading : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   
   const char* sbx_fname = sbxSet->GetFileName();
@@ -1133,25 +1133,25 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
     if ( !(dc_src_char = dynamic_cast<SklScalar3D<unsigned char>*>(sbxSet->GetData(SklVoxDataSet::SBX_DATA))) ) {
       Hostonly_ printf     ("Error : SBX Data GetData fault : %s\n", name);
       Hostonly_ fprintf(fp, "Error : SBX Data GetData fault : %s\n", name);
-      assert(0);
+      Exit(0);
     }
     
     // copy data
     if (!SklUtil::cpyS3DOverlap(data, dc_src_char)) {
       Hostonly_ printf     ("Error : SBX Data cpyS3DOverlap fault : %s\n", name);
       Hostonly_ fprintf(fp, "Error : SBX Data cpyS3DOverlap fault : %s\n", name);
-      assert(0);
+      Exit(0);
     }
   }
   else if (vsz == SklVoxDataSet::TYPE_SHORT) {
     Hostonly_ printf     ("Error : SBX Data Type[short] fault : %s\n", name);
     Hostonly_ fprintf(fp, "Error : SBX Data Type[short] fault : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   else if (vsz == SklVoxDataSet::TYPE_INT) {
     Hostonly_ printf     ("Error : SBX Data Type[int] fault : %s\n", name);
     Hostonly_ fprintf(fp, "Error : SBX Data Type[int] fault : %s\n", name);
-    assert(0);
+    Exit(0);
   }
   
   Hostonly_ printf     ("\tget sbx data : %s\n", name);
@@ -1164,8 +1164,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
 }
 
 /**
- @fn void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx,
-                              const unsigned m_ModePrecision)
+ @fn void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
  @brief sphファイルの書き出し　ただし，ガイドセルは１
  @param vf スカラデータ
  @param size 配列サイズ
@@ -1175,8 +1174,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
  @param m_ModePrecision 浮動小数点の精度
  @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
  */
-void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, 
-                         const unsigned m_ModePrecision)
+void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -1197,7 +1195,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   ofstream ofs(sph_fname, ios::out | ios::binary);
   if (!ofs) {
     cout << "\tCan't open " << sph_fname << " file" << endl;
-    assert(0);
+    Exit(0);
   }
   
   ix = size[0]+2*gc;
@@ -1224,7 +1222,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
     for (j=0; j<=jx; j++) {
       for (i=0; i<=ix; i++) {
         l = ix_l*jx_l*k + ix_l*j + i;
-        m = SklUtil::getFindexS3D(size, gc, i, j, k);
+        m = FBUtility::getFindexS3D(size, gc, i, j, k);
         f[l] = (REAL_TYPE)vf[m];
       }
     }

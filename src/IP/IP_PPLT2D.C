@@ -25,22 +25,22 @@ void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYP
   // forced
   if (R->Unit.Param != NONDIMENSIONAL) {
     Hostonly_ printf("\tError : PPLT2D class is designed for only non-dimensional parameter\n");
-    assert(0);
+    Exit(0);
   }
 
   // 分割数を取得する
-  if ( !SklUtil::getCellInfo(R->NoDimension, sz, org, pch, wth) ) assert(0);
+  if ( !SklUtil::getCellInfo(R->NoDimension, sz, org, pch, wth) ) Exit(0);
   
   // Z方向のチェック
   if ( sz[2] != 3 ) {
     Hostonly_ printf("\tError : The size of Z-direction must be 3.\n");
-    assert(0);
+    Exit(0);
   }
   
   // 領域アスペクト比のチェック
   if ( sz[0] != sz[1]*2 ) {
     Hostonly_ printf("\tError : The number of division must be 2:1 (=X:Y)\n");
-    assert(0);
+    Exit(0);
   }
 
   // 二次元の領域設定
@@ -54,7 +54,7 @@ void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYP
   
   if ( pch[0] != pch[1] ) {
     Hostonly_ printf("\tVoxel width must be same between X and Y direction.\n");
-    assert(0);
+    Exit(0);
   }
   
   // Z方向は3層に合わせて調整
@@ -79,7 +79,7 @@ void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=1; k<=(int)kmax; k++) {
     for (j=1; j<=(int)jmax; j++) {
       for (i=1; i<=(int)imax; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }
     }

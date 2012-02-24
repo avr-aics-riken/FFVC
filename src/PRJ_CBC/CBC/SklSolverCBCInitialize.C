@@ -33,6 +33,7 @@ SklSolverCBC::SklSolverInitialize() {
   FILE* fp = NULL;
   REAL_TYPE flop_task=0.0;
   size_t d_size=0;
+  float *cvf=NULL; /// コンポーネントの体積率
   
   ws = v = t = p = NULL;
   mid = NULL;
@@ -162,7 +163,7 @@ SklSolverCBC::SklSolverInitialize() {
   C.getXML_Steer_2(IC, &RF);
   
   // 組み込み例題の固有パラメータ
-  if ( !Ex->getXML(m_solvCfg, &C) ) assert(0);
+  if ( !Ex->getXML(m_solvCfg, &C) ) Exit(0);
 
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
   ix      = (int*)&C.imax;
@@ -195,15 +196,16 @@ SklSolverCBC::SklSolverInitialize() {
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start(tm_init_alloc); 
   allocArray_prep(TotalMemory, PrepMemory);
-  if( !(ws  = dc_ws->GetData()) )   assert(0);
-  if( !(mid = dc_mid->GetData()) )  assert(0);
-  if( !(bcd = dc_bcd->GetData()) )  assert(0);
-  if( !(bcp = dc_bcp->GetData()) )  assert(0);
-  if( !(bcv = dc_bcv->GetData()) )  assert(0);
+  if( !(ws  = dc_ws->GetData()) )   Exit(0);
+  if( !(mid = dc_mid->GetData()) )  Exit(0);
+  if( !(bcd = dc_bcd->GetData()) )  Exit(0);
+  if( !(bcp = dc_bcp->GetData()) )  Exit(0);
+  if( !(bcv = dc_bcv->GetData()) )  Exit(0);
   if ( C.isHeatProblem() ) {
-    if( !(bh1 = dc_bh1->GetData()) )  assert(0);
-    if( !(bh2 = dc_bh2->GetData()) )  assert(0);
+    if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
+    if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
   }
+  if( !(cvf = dc_cvf->GetData()) )  Exit(0);
   TIMING_stop(tm_init_alloc); 
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成 --------------------------------------------------------
@@ -320,7 +322,7 @@ SklSolverCBC::SklSolverInitialize() {
   // VoxInfoクラスで利用する変数をコピー
   if ( !Vinfo.receiveCfgPtr(m_solvCfg) ) {
     Hostonly_ stamped_printf("\tError during sending an object pointer of XML tree to VoxInfo class\n");
-    assert(0);
+    Exit(0);
   }
   Vinfo.setParallelInfo(pn);
   Vinfo.setControlVars(size, guide);
@@ -487,41 +489,41 @@ SklSolverCBC::SklSolverInitialize() {
       
     case 1:
       Hostonly_ stamped_printf("\tdt selection error(1) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      assert(0);
+      Exit(0);
       break;
       
     case 2:
       Hostonly_ stamped_printf("\tdt selection error(2) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      assert(0);
+      Exit(0);
       break;
       
     case 3:
       Hostonly_ stamped_printf("\tdt selection error(3) : 'Kind of Solver' includes flow effect. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      assert(0);
+      Exit(0);
       break;
       
     case 4:
       Hostonly_ stamped_printf("\tdt selection error(4) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      assert(0);
+      Exit(0);
       break;
       
     case 5:
       Hostonly_ stamped_printf("\tdt selection error(5) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      assert(0);
+      Exit(0);
       break;
       
     case 6:
       Hostonly_ stamped_printf("\tdt selection error(6) : CFL max V and Diffusion ; Not implemented yet\n");
-      assert(0);
+      Exit(0);
       break;
       
     case 7:
       Hostonly_ stamped_printf("\tdt selection error(7) : CFL max V for cp ;  Not implemented yet\n");
-      assert(0);
+      Exit(0);
       break;
       
     default:
-      assert(0);
+      Exit(0);
       break;
   }
   
@@ -534,7 +536,7 @@ SklSolverCBC::SklSolverInitialize() {
                                                              DT.get_DT(), Interval_Manager::tg_compute, 
                                                              (double)(C.RefLength/C.RefVelocity)) ) {
     Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
-    assert(0);
+    Exit(0);
   }
   C.LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
   SklSetMaxStep( C.LastStep );
@@ -644,7 +646,7 @@ SklSolverCBC::SklSolverInitialize() {
     if ( cmp[n].getElement() == 0 ) {
       Hostonly_ printf("\tError : No element was found in Component[%d]\n", n);
       fflush(stdout);
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -654,14 +656,14 @@ SklSolverCBC::SklSolverInitialize() {
       if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
         fflush(stdout);
-        assert(0);
+        Exit(0);
       }
     }
     if ( cmp[n].getType() == HT_SF ) {
       if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
         fflush(stdout);
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -671,6 +673,25 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
+  
+  
+  // test
+  FB::Vec3f pch(C.dx);
+  FB::Vec3f org(C.org);
+  int subsampling = 10;
+  CompoFraction* CF = new CompoFraction(size, guide, pch, org, subsampling);
+  
+  int f_st[3], f_ed[3];
+  f_st[0] = 1;
+  f_st[1] = 1;
+  f_st[2] = 1;
+  f_ed[0] = size[0];
+  f_ed[1] = size[1];
+  f_ed[2] = size[2];
+  CF->get_fraction(f_st, f_ed, cvf);
+  F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
+  
+  Exit(0);
   
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
@@ -758,31 +779,31 @@ SklSolverCBC::SklSolverInitialize() {
 
   if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) ) {  // 基本履歴のコンソールへの出力
     Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
-    assert(0);
+    Exit(0);
   }
   if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) ) {  // 履歴のファイルへの出力
     Hostonly_ printf("\t Error : Interval for History output is asigned to zero.\n");
-    assert(0);
+    Exit(0);
   }
   if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) ) {  // 瞬時値ファイル
     Hostonly_ printf("\t Error : Interval for Instantaneous output is asigned to zero.\n");
-    assert(0);
+    Exit(0);
   }
   if ( C.Mode.Average == ON ) {
     //if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) {  // 平均値ファイル
     //  Hostonly_ printf("\t Error : Interval for Average output is asigned to zero.\n");
-    //  assert(0);
+    //  Exit(0);
     //}
     // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
     if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) ) {  // 平均値開始
       Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
-      assert(0);
+      Exit(0);
     }
   }
   if ( C.Sampling.log == ON ) {
     if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) ) {  // サンプリング履歴
       Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
-      assert(0);
+      Exit(0);
     }    
   }
     
@@ -1155,7 +1176,7 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
   if ( (sc=Vinfo->scanCell(mid, count, cell_id, C.Hide.Change_ID)) > C.NoID ) {
     Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is grater than one described in 'Model_Setting'(%d)\n", 
                            sc, C.NoID);
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -1174,19 +1195,19 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Arra
   unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
   bcv = bh1 = bh2 = bcp = bcd = NULL;
   
-  if( !(bcd = dc_bcd->GetData()) )  assert(0);
-  if( !(bcp = dc_bcp->GetData()) )  assert(0);
-  if( !(bcv = dc_bcv->GetData()) )  assert(0);
+  if( !(bcd = dc_bcd->GetData()) )  Exit(0);
+  if( !(bcp = dc_bcp->GetData()) )  Exit(0);
+  if( !(bcv = dc_bcv->GetData()) )  Exit(0);
   if ( C.isHeatProblem() ) {
-    if( !(bh1 = dc_bh1->GetData()) )  assert(0);
-    if( !(bh2 = dc_bh2->GetData()) )  assert(0);
+    if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
+    if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
   }
   
   // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
   Vinfo->setBCIndex_base1(bcd, mid);
   
   // bcdの同期
-  if( !dc_bcd->CommBndCell(guide) ) assert(0);
+  if( !dc_bcd->CommBndCell(guide) ) Exit(0);
   
   // C.Acell > ノードローカルの有効セル数　
   // G_Acell > グローバルなアクティブセル数
@@ -1362,7 +1383,7 @@ void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, unsigned st_i, unsigne
       
     default:
       Hostonly_ stamped_printf("\tError : DIRECTION\n");
-      assert(0);
+      Exit(0);
   }
   
   // BVが-方向のガイドセル内のみにある場合
@@ -1461,7 +1482,7 @@ void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, unsigned st_i, unsigne
     else                 m_dir = "Z";
     
     Hostonly_ stamped_printf("\tError : Unexpected case for ID=%d, (%d - %d): %s\n", m_id, st_i, ed_i, m_dir.c_str());
-    assert(0);
+    Exit(0);
   }
   
 }
@@ -1492,7 +1513,7 @@ void SklSolverCBC::getLocalCmpIdx(void)
     // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
     if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
       Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
-      assert(0);
+      Exit(0);
     }
     // debug; printf("st=(%3d %3d %3d) : len=(%3d %3d %3d)\n",st_i[0], st_i[1], st_i[2], len[0], len[1], len[2]);
     
@@ -1612,7 +1633,7 @@ void SklSolverCBC::VoxelInitialize(void)
     
     if ( !(fname = C.getVoxelFileName()) ) {
       Hostonly_ stamped_printf("\tRead error : A file name of voxel model is invalid.\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( C.vxFormat == Control::Sphere_SVX ) {
@@ -1621,7 +1642,7 @@ void SklSolverCBC::VoxelInitialize(void)
       
       if ( !getSVXHeaderInfo(fname, &type, m_sz, f_org, f_pch) ) {
         Hostonly_ stamped_printf("\tRead error : Header of the voxel file '%s' could not read.\n", fname);
-        assert(0);
+        Exit(0);
       }
 
       for (int i=0; i<3; i++) {
@@ -1636,7 +1657,7 @@ void SklSolverCBC::VoxelInitialize(void)
       
       if ( !getSBXHeaderInfo(fname, &dims, &vlen, &dtype, &gcell, &rlen, &crddef, &aux, &blksz, l_sz, d_org, d_pch) ) {
         Hostonly_ stamped_printf("\tRead error : Header of the voxel file '%s' could not read.\n", fname);
-        assert(0);
+        Exit(0);
       }
       for (int i=0; i<3; i++) {
         m_sz[i]  = (unsigned)l_sz[i];
@@ -1659,7 +1680,7 @@ void SklSolverCBC::VoxelInitialize(void)
   else { // 組み込み例題の場合
     
     // 分割数，基点，ピッチを取得する
-    if ( !SklUtil::getCellInfo(C.NoDimension, m_sz, m_org, m_pch, m_wth) ) assert(0);
+    if ( !SklUtil::getCellInfo(C.NoDimension, m_sz, m_org, m_pch, m_wth) ) Exit(0);
     
     // 有次元の場合に無次元化
     if (C.Unit.Param == DIMENSIONAL ) {
@@ -1698,12 +1719,12 @@ void SklSolverCBC::VoxelInitialize(void)
   // 分割数を計算し，sz_paraで取得
   if( SKL_PARACMPO_SUCCESS != para_cmp->SklVoxelInit(m_sz[0], m_sz[1], m_sz[2], idiv, jdiv, kdiv, pn.procGrp)) {
     stamped_printf("\tID %d : Voxel Initialize error.\n", pn.ID);
-    assert(0);
+    Exit(0);
   }
   const unsigned int* sz_para = para_mng->GetVoxelSize();
   if( !sz_para ){
     stamped_printf("\tID %d : Can't get voxel size.\n", pn.ID);
-    assert(0);
+    Exit(0);
   }
   
   // 並列処理時のランク情報と各ノードのスタートインデクスを計算
@@ -1746,30 +1767,30 @@ void SklSolverCBC::gather_DomainInfo(void)
     r = 1.0;
   }
   
-  unsigned* m_size=NULL; if( !(m_size = new unsigned[np*3]) ) assert(0); // use new to assign variable array, and release at the end of this method
-  REAL_TYPE* m_org=NULL;  if( !(m_org  = new REAL_TYPE[np*3]) ) assert(0);
-  REAL_TYPE* m_Lbx=NULL;  if( !(m_Lbx  = new REAL_TYPE[np*3]) ) assert(0);
-  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[np*3]) ) assert(0);
-  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[np*3]) ) assert(0);
-  REAL_TYPE *bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[np]) )   assert(0);
-  unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[np]) )   assert(0);
-  unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[np]) )   assert(0);
-  unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[np]) )   assert(0);
+  unsigned* m_size=NULL; if( !(m_size = new unsigned[np*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
+  REAL_TYPE* m_org=NULL;  if( !(m_org  = new REAL_TYPE[np*3]) ) Exit(0);
+  REAL_TYPE* m_Lbx=NULL;  if( !(m_Lbx  = new REAL_TYPE[np*3]) ) Exit(0);
+  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[np*3]) ) Exit(0);
+  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[np*3]) ) Exit(0);
+  REAL_TYPE *bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[np]) )   Exit(0);
+  unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[np]) )   Exit(0);
+  unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[np]) )   Exit(0);
+  unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[np]) )   Exit(0);
   
   // 領域情報の収集
   if ( para_mng->IsParallel() ) {
     if ( !para_mng->Gather(size,    3, SKL_ARRAY_DTYPE_UINT, 
-                           m_size,  3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) assert(0);
+                           m_size,  3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(C.org,   3, SKL_ARRAY_DTYPE_REAL, 
-                           m_org,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) assert(0);
+                           m_org,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(C.Lbx,   3, SKL_ARRAY_DTYPE_REAL, 
-                           m_Lbx,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) assert(0);
+                           m_Lbx,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(&C.Fcell,1, SKL_ARRAY_DTYPE_UINT, 
-                           bf_fcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) assert(0);
+                           bf_fcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(&C.Wcell,1, SKL_ARRAY_DTYPE_UINT, 
-                           bf_wcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) assert(0);
+                           bf_wcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(&C.Acell,1, SKL_ARRAY_DTYPE_UINT, 
-                           bf_acl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) assert(0);
+                           bf_acl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
   }
   else { // serial
     memcpy(m_size, size, 3*sizeof(unsigned));
@@ -1798,7 +1819,7 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   if ( para_mng->IsParallel() ) {
     if ( !para_mng->Gather(&m_srf,  1,        SKL_ARRAY_DTYPE_REAL, 
-                           bf_srf,  1,        SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) assert(0);
+                           bf_srf,  1,        SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
   }
   else {
     bf_srf[0] = m_srf;
@@ -1837,7 +1858,7 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   if ( !(fp=fopen("DomainInfo.txt", "w")) ) {
     stamped_printf("\tSorry, can't open 'DomainInfo.txt' file. Write failed.\n");
-    assert(0);
+    Exit(0);
   }
   
   // 全体情報の表示
@@ -1858,8 +1879,8 @@ void SklSolverCBC::gather_DomainInfo(void)
     
     if( para_mng->IsParallel() ) {
       for (unsigned n=1; n<=C.NoBC; n++) {
-        if( !para_mng->Gather(cmp[n].getCompoBV_adrs_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) assert(0);
-        if( !para_mng->Gather(cmp[n].getCompoBV_adrs_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) assert(0);
+        if( !para_mng->Gather(cmp[n].getCompoBV_adrs_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        if( !para_mng->Gather(cmp[n].getCompoBV_adrs_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
       
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
@@ -1959,7 +1980,7 @@ void SklSolverCBC::set_Parallel_Info(void)
     }
     else {
       stamped_printf("\tID %d : not parallel process.\n", pn.ID);
-      assert(0);
+      Exit(0);
     }
     
     for(int i=0; i<6; i++) pn.nID[i] = nID[i];
@@ -1989,7 +2010,7 @@ void SklSolverCBC::getXMLExample(Control* Cref)
   const char *keyword=NULL;
   ParseSteer Tree(m_solvCfg);
   
-  if ( !(keyword=Tree.getParam("Example")) ) assert(0);
+  if ( !(keyword=Tree.getParam("Example")) ) Exit(0);
   
   if     ( !strcasecmp(keyword, "Users") )                    Cref->Mode.Example = id_Users;
   else if( !strcasecmp(keyword, "Parallel_Plate_2D") )        Cref->Mode.Example = id_PPLT2D;
@@ -2002,7 +2023,7 @@ void SklSolverCBC::getXMLExample(Control* Cref)
   else if( !strcasecmp(keyword, "Polygon") )                  Cref->Mode.Example = id_Polygon;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2024,7 +2045,7 @@ void SklSolverCBC::connectExample(Control* Cref)
   else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2058,7 +2079,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-    assert(0);
+    Exit(0);
   }
   
   // convert from dimensional to non-dimensional, iff file is dimensional
@@ -2073,7 +2094,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-      assert(0);
+      Exit(0);
     }
     
     // convert from dimensional to non-dimensional, iff file is dimensional
@@ -2142,7 +2163,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
   if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-    assert(0);
+    Exit(0);
   }
   
   // convert from dimensional to non-dimensional, iff file is dimensional
@@ -2156,7 +2177,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
     if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-      assert(0);
+      Exit(0);
     }
     
     // convert from dimensional to non-dimensional, iff file is dimensional
@@ -2228,12 +2249,12 @@ void SklSolverCBC::prepOutput (void)
       if ( SklCfgCheckOutFile("Divergence") ) {
         if( !(m_outDiv = InitFile("Divergence", size, org, pit, dc_ws)) ) {
           Hostonly_ stamped_printf("\tInit failed.\n");
-          assert(0);
+          Exit(0);
         }
       }
       else {
         Hostonly_ stamped_printf("\tMissing 'Divergence' in OutFile\n");
-        assert(0);
+        Exit(0);
       }
     }
 		    
@@ -2241,24 +2262,24 @@ void SklSolverCBC::prepOutput (void)
 		if ( SklCfgCheckOutFile("Pressure") ) {
 			if( !(m_outPrs = InitFile("Pressure", size, org, pit, dc_ws)) ) {
 				Hostonly_ stamped_printf("\tInit failed.\n");
-				assert(0);
+				Exit(0);
 			}
 		}
 		else {
 			Hostonly_ stamped_printf("\tMissing 'Pressure' in OutFile\n");
-			assert(0);
+			Exit(0);
 		}
     
     // Velocity
 		if ( SklCfgCheckOutFile("Velocity") ) {
 			if( !(m_outUVW = InitFile("Velocity", size, org, pit, dc_wvex)) ) {
 				Hostonly_ stamped_printf("\tInit failed.\n");
-				assert(0);
+				Exit(0);
 			}
 		}
 		else {
 			Hostonly_ stamped_printf("\tMissing 'Velocity' in OutFile\n");
-			assert(0);
+			Exit(0);
 		}
 		
 		// Total pressure
@@ -2266,12 +2287,12 @@ void SklSolverCBC::prepOutput (void)
 			if ( SklCfgCheckOutFile("TotalPressure") ) {
 				if( !(m_outTP = InitFile("TotalPressure", size, org, pit, dc_ws)) ) {
 					Hostonly_ stamped_printf("\tInit failed.\n");
-					assert(0);
+					Exit(0);
 				}
 			}
 			else {
 				Hostonly_ stamped_printf("\tMissing 'TotalPressure' in OutFile\n");
-				assert(0);
+				Exit(0);
 			}
 		}
 		
@@ -2280,12 +2301,12 @@ void SklSolverCBC::prepOutput (void)
 			if ( SklCfgCheckOutFile("Vorticity") ) {
 				if( !(m_outVrt = InitFile("Vorticity", size, org, pit, dc_wvex)) ) {
 					Hostonly_ stamped_printf("\tInit failed.\n");
-					assert(0);
+					Exit(0);
 				}
 			}
 			else {
 				Hostonly_ stamped_printf("\tMissing 'Vorticity' in OutFile\n");
-				assert(0);
+				Exit(0);
 			}
 		}
     
@@ -2294,12 +2315,12 @@ void SklSolverCBC::prepOutput (void)
 			if ( SklCfgCheckOutFile("2ndInvrntVGT") ) {
 				if( !(m_outI2VGT = InitFile("2ndInvrntVGT", size, org, pit, dc_ws)) ) {
 					Hostonly_ stamped_printf("\tInit failed.\n");
-					assert(0);
+					Exit(0);
 				}
 			}
 			else {
 				Hostonly_ stamped_printf("\tMissing '2ndInvrntVGT' in OutFile\n");
-				assert(0);
+				Exit(0);
 			}
 		}
     
@@ -2308,12 +2329,12 @@ void SklSolverCBC::prepOutput (void)
 			if ( SklCfgCheckOutFile("Helicity") ) {
 				if( !(m_outHlcty = InitFile("Helicity", size, org, pit, dc_ws)) ) {
 					Hostonly_ stamped_printf("\tInit failed.\n");
-					assert(0);
+					Exit(0);
 				}
 			}
 			else {
 				Hostonly_ stamped_printf("\tMissing 'Helicity' in OutFile\n");
-				assert(0);
+				Exit(0);
 			}
 		}
     
@@ -2322,12 +2343,12 @@ void SklSolverCBC::prepOutput (void)
 			if ( SklCfgCheckOutFile("VOF") ) {
 				if( !(m_outVrt = InitFile("VOF", size, org, pit, dc_vof)) ) {
 					Hostonly_ stamped_printf("\tInit failed.\n");
-					assert(0);
+					Exit(0);
 				}
 			}
 			else {
 				Hostonly_ stamped_printf("\tMissing 'VOF' in OutFile\n");
-				assert(0);
+				Exit(0);
 			}
 		}
 	}
@@ -2336,12 +2357,12 @@ void SklSolverCBC::prepOutput (void)
     if ( SklCfgCheckOutFile("Temperature") ) {
       if( !(m_outTmp = InitFile("Temperature", size, org, pit, dc_ws)) ) {
         Hostonly_ stamped_printf("\tInit failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
     else {
       Hostonly_ stamped_printf("\tMissing 'Temperature' in OutFile\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -2352,23 +2373,23 @@ void SklSolverCBC::prepOutput (void)
 		if ( SklCfgCheckOutFile("AvrPressure") ) {
 			if( !(m_outAvrPrs = InitFile("AvrPressure", size, org, pit, dc_ws)) ) {
 				Hostonly_ stamped_printf("\tInit failed.\n");
-				assert(0);
+				Exit(0);
 			}
 		}
 		else {
 			Hostonly_ stamped_printf("\tMissing 'AvrPressure' in OutFile\n");
-			assert(0);
+			Exit(0);
 		}
     
 		if ( SklCfgCheckOutFile("AvrVelocity") ) {
 			if( !(m_outAvrUVW = InitFile("AvrVelocity", size, org, pit, dc_wvex)) ) {
 				Hostonly_ stamped_printf("\tInit failed.\n");
-				assert(0);
+				Exit(0);
 			}
 		}
 		else {
 			Hostonly_ stamped_printf("\tMissing 'AvrVelocity' in OutFile\n");
-			assert(0);
+			Exit(0);
 		}
 	}
   
@@ -2376,12 +2397,12 @@ void SklSolverCBC::prepOutput (void)
     if ( SklCfgCheckOutFile("AvrTemperature") ) {
       if( !(m_outAvrTmp = InitFile("AvrTemperature", size, org, pit, dc_ws)) ) {
         Hostonly_ stamped_printf("\tInit failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
     else {
       Hostonly_ stamped_printf("\tMissing 'AvrTemperature' in OutFile\n");
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -2396,34 +2417,38 @@ void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_S3D(this, dc_ws, "ws", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_ws, "ws", size, guide, 0.0, mc) ) Exit(0);
   prep += mc;
   total+= mc;
   
-  if ( !A.alloc_Int_S3D(this, dc_mid, "mid", size, guide, 0, mc) ) assert(0);
+  if ( !A.alloc_Int_S3D(this, dc_mid, "mid", size, guide, 0, mc) ) Exit(0);
   prep += mc;
   
-  if ( !A.alloc_Uint_S3D(this, dc_bcd, "bcd", size, guide, 0, mc) ) assert(0);
-  prep += mc;
-  total+= mc;
-  
-  if ( !A.alloc_Uint_S3D(this, dc_bcp, "bcp", size, guide, 0, mc) ) assert(0);
+  if ( !A.alloc_Uint_S3D(this, dc_bcd, "bcd", size, guide, 0, mc) ) Exit(0);
   prep += mc;
   total+= mc;
   
-  if ( !A.alloc_Uint_S3D(this, dc_bcv, "bcv", size, guide, 0, mc) ) assert(0);
+  if ( !A.alloc_Uint_S3D(this, dc_bcp, "bcp", size, guide, 0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
+  
+  if ( !A.alloc_Uint_S3D(this, dc_bcv, "bcv", size, guide, 0, mc) ) Exit(0);
   prep += mc;
   total+= mc;
   
   if ( C.isHeatProblem() ) {
-    if ( !A.alloc_Uint_S3D(this, dc_bh1, "bch1", size, guide, 0, mc) ) assert(0);
+    if ( !A.alloc_Uint_S3D(this, dc_bh1, "bch1", size, guide, 0, mc) ) Exit(0);
     prep += mc;
     total+= mc;
     
-    if ( !A.alloc_Uint_S3D(this, dc_bh2, "bch2", size, guide, 0, mc) ) assert(0);
+    if ( !A.alloc_Uint_S3D(this, dc_bh2, "bch2", size, guide, 0, mc) ) Exit(0);
     prep += mc;
     total+= mc;
   }
+  
+  if ( !A.alloc_Float_S3D(this, dc_cvf, "cvf", size, guide, 0.0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
 }
 
 /**
@@ -2435,28 +2460,28 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_v, "vel", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_v, "vel", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_vc, "vc", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_vc, "vc", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_v0, "v0", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_v0, "v0", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_wv, "wv", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_wv, "wv", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_wvex, "wvex", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_wvex, "wvex", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_S3D(this, dc_p, "prs", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_p, "prs", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_S3D(this, dc_p0, "prs0", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_p0, "prs0", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_S3D(this, dc_wk2, "wk2", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_wk2, "wk2", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2470,7 +2495,7 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
  unsigned long mc=0;
  unsigned idx_sz = C.Fcell * 3;
  
- if ( !A.alloc_Int_S1D(this, dc_index3, "index3", idx_sz, 0, 0.0, mc) ) assert(0);
+ if ( !A.alloc_Int_S1D(this, dc_index3, "index3", idx_sz, 0, 0.0, mc) ) Exit(0);
  total+= mc;
  }
 
@@ -2484,7 +2509,7 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
  unsigned long mc=0;
  unsigned idx_sz = C.Fcell;
  
- if ( !A.alloc_Uint_S1D(this, dc_index, "index", idx_sz, 0, 0, mc) ) assert(0);
+ if ( !A.alloc_Uint_S1D(this, dc_index, "index", idx_sz, 0, 0, mc) ) Exit(0);
  total+= mc;
  }
 
@@ -2497,7 +2522,7 @@ void SklSolverCBC::allocArray_interface (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_S3D(this, dc_vof, "vof", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_vof, "vof", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2510,13 +2535,13 @@ void SklSolverCBC::allocArray_heat (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_S3D(this, dc_t, "tmp", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_t, "tmp", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_S3D(this, dc_t0, "tmp0", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_t0, "tmp0", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_qbc, "qbc", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_qbc, "qbc", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2528,7 +2553,7 @@ void SklSolverCBC::allocArray_heat (unsigned long &total)
 void SklSolverCBC::allocArray_AB2 (unsigned long &total)
 {
   unsigned long mc=0;
-  if ( !A.alloc_Real_V3DEx(this, dc_abf, "abf", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_abf, "abf", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2541,7 +2566,7 @@ void SklSolverCBC::allocArray_Jacobi (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_S3D(this, dc_wkj, "wkj", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_wkj, "wkj", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2554,7 +2579,7 @@ void SklSolverCBC::allocArray_RK (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_S3D(this, dc_dp, "dp", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_dp, "dp", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2576,17 +2601,17 @@ void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
         (!SklCfgCheckInFile("AvrTemperature") && C.isHeatProblem()) ) {
       Hostonly_ stamped_printf     ("\tRestart mode and averaging, but there is no InFile description for an average file. \n");
       Hostonly_ stamped_fprintf(fp, "\tRestart mode and averaging, but there is no InFile description for an average file. \n");
-      assert(0);
+      Exit(0);
     }
     
-    if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) assert(0);
+    if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) Exit(0);
     total += mc;
     
-    if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) assert(0);
+    if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) Exit(0);
     total += mc;
     
     if ( C.isHeatProblem() ) {
-      if ( !A.alloc_Real_S3D(this, dc_at, "avrt", size, guide, 0.0, mc) ) assert(0);
+      if ( !A.alloc_Real_S3D(this, dc_at, "avrt", size, guide, 0.0, mc) ) Exit(0);
       total += mc;
     }
   }
@@ -2601,7 +2626,7 @@ void SklSolverCBC::allocArray_LES (unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_S3D(this, dc_vt, "eddy", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_S3D(this, dc_vt, "eddy", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2614,7 +2639,7 @@ void SklSolverCBC::allocArray_Collocate(unsigned long &total)
 {
   unsigned long mc=0;
   
-  if ( !A.alloc_Real_V3DEx(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) assert(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2632,7 +2657,7 @@ void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
   for (k=1; k<=(int)size[2]; k++) {
     for (j=1; j<=(int)size[1]; j++) {
       for (i=1; i<=(int)size[0]; i++) {
-        m0 = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bx[m0];
         odr = DECODE_CMP(s);
         if ( cmp[odr].getState() == FLUID ) {
@@ -2706,7 +2731,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
                                      );
   if( poly_stat != PLSTAT_OK ) {
     fprintf(mp,"\tRank [%d]: p_polylib->init_parallel_info() failed.", pn.ID);
-    assert(0);
+    Exit(0);
   }
   
   // Polylib: STLデータ読み込み
@@ -2714,7 +2739,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   poly_stat = PL->load_rank0( C.PolylibConfigName );
   if( poly_stat != PLSTAT_OK ) {
     fprintf(mp,"\tRank [%d]: p_polylib->load_rank0() failed.", pn.ID);
-    assert(0);
+    Exit(0);
   }
   TIMING_stop(tm_polygon_load);
   
@@ -2774,14 +2799,14 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
    poly_stat = PL->save_rank0( &fname, "stl_b" );
    if( poly_stat != PLSTAT_OK ) {
    Hostonly_ fprintf(mp, "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", pn.ID, fname.c_str());
-   assert(0);
+   Exit(0);
    }
    }
    else {
    poly_stat = PL->save_parallel( &fname, "stl_b" );
    if( poly_stat != PLSTAT_OK ) {
    fprintf(mp, "Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", pn.ID, fname.c_str());
-   assert(0);
+   Exit(0);
    }
    }
    */

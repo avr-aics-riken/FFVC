@@ -135,6 +135,67 @@ bool Alloc::alloc_Real_S4D(SklSolverBase* obj, SklScalar4D<REAL_TYPE>* &dc_var, 
 }
 
 /**
+ @fn bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<float>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+ REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
+ @brief SklScalar3D<float>データクラスをアロケートする
+ @retval エラーコード
+ @param obj SklSolverBaseクラスのオブジェクトのポインタ (this)
+ @param dc_var データクラス
+ @param label データクラスに付与するキーワード
+ @param sz 計算内部領域のサイズ
+ @param gc ガイドセルサイズ
+ @param init 初期値
+ @param mc メモリ使用量のカウンタ
+ @param para_key コンポーネントの識別ID
+ @param m_procGrp プロセスグループ
+ @note
+ - SklParaComponent()はSklSolverBaseクラスのメソッドなので，SklSolverBaseから派生したクラスのオブジェクトポインタを受け取る
+ */
+bool Alloc::alloc_Float_S3D(SklSolverBase* obj, SklScalar3D<float>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                           float init, unsigned long &mc, int para_key, int m_procGrp)
+{
+  if ( !obj )   return false;
+  if ( dc_var ) return false; // アロケート済みの場合
+  if ( !label ) return false;
+  if ( !sz )    return false;
+  
+  SklParaComponent* para_cmp = ParaCmpo;
+  SklParaManager* para_mng = para_cmp->GetParaManager(para_key);
+  
+  size_t dims[3];
+  dims[0] = sz[0]; 
+  dims[1] = sz[1]; 
+  dims[2] = sz[2];
+  size_t nx = 0;
+  
+  if ( !obj->SklIsCheckMode() ) {
+    if( !(dc_var = dynamic_cast<SklScalar3D<float>*>(
+                                                         obj->SklAllocateArray(
+                                                                               para_mng,
+                                                                               label,
+                                                                               SKL_CLASS_SCALAR3D,
+                                                                               SKL_ARRAY_DTYPE_FLOAT,
+                                                                               dims,
+                                                                               gc,
+                                                                               m_procGrp))) ) {
+                                                           stamped_printf("Error : Alloc::alloc_Float_S3D(%s)\n", label);
+                                                           return false;
+                                                         }
+    nx = dc_var->GetArrayLength();
+    if ( nx > LONG_MAX ) {
+      stamped_printf("Error : Allocation index overflow %ld\n", nx);
+      return false;
+    }
+    if ( nx != 0 ) {
+      fb_set_value_real_(dc_var->GetData(), (int*)&nx, &init);
+    }
+  }
+  mc += (long)( nx*sizeof(float) );
+  
+  return true;
+}
+
+/**
  @fn bool Alloc::alloc_Real_S3D(SklSolverBase* obj, SklScalar3D<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
                                 REAL_TYPE init, unsigned long &mc, int para_key, int m_procGrp)
  @brief SklScalar3D<REAL_TYPE>データクラスをアロケートする

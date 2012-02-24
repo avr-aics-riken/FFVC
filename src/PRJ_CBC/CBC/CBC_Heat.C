@@ -44,7 +44,7 @@ void SklSolverCBC::ps_ConvectionEE(REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, RE
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         tc[m] = t0[m] + dt * tc[m] * GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の評価は流動なので，状態を参照
       }
     }
@@ -71,8 +71,8 @@ void SklSolverCBC::Buoyancy(REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned*
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        l = SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  ); // k方向が重力方向
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        l = FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  ); // k方向が重力方向
         v[l] += dgr*t[m]* GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の計算なので，状態を参照
       }
     }
@@ -105,11 +105,11 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
   unsigned int wait_num=0;
   int req[12];
   
-  if( !(t   = dc_t->GetData()) )    assert(0);
-  if( !(t0  = dc_t0->GetData()) )   assert(0);
-  if( !(qbc = dc_qbc->GetData()) )  assert(0);
-  if( !(bh2 = dc_bh2->GetData()) )  assert(0);
-  if( !(ws  = dc_ws->GetData()) )   assert(0);
+  if( !(t   = dc_t->GetData()) )    Exit(0);
+  if( !(t0  = dc_t0->GetData()) )   Exit(0);
+  if( !(qbc = dc_qbc->GetData()) )  Exit(0);
+  if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
+  if( !(ws  = dc_ws->GetData()) )   Exit(0);
 	
   switch (IC->get_LS()) {
     case SOR:
@@ -161,7 +161,7 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
 
     default:
       printf("\tInvalid Linear Solver for Heat\n");
-      assert(0);
+      Exit(0);
       break;
   }
 }
@@ -195,13 +195,13 @@ REAL_TYPE SklSolverCBC::ps_Diff_SM_EE(REAL_TYPE* t, REAL_TYPE dt, REAL_TYPE* qbc
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
-        m_p = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        m_w = SklUtil::getFindexS3D(size, guide, i-1, j  , k  );
-        m_e = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
-        m_s = SklUtil::getFindexS3D(size, guide, i  , j-1, k  );
-        m_n = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
-        m_b = SklUtil::getFindexS3D(size, guide, i  , j  , k-1);
-        m_t = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+        m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+        m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         
         t_p = t[m_p];
         t_w = t[m_w];
@@ -237,12 +237,12 @@ REAL_TYPE SklSolverCBC::ps_Diff_SM_EE(REAL_TYPE* t, REAL_TYPE dt, REAL_TYPE* qbc
                       + g_t * a_t * t_t  // top   
                       - g_p *       t_p
                       )
-                - dth1*(-(1.0-g_w)*a_w * qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )]
-                        +(1.0-g_e)*a_e * qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )]
-                        -(1.0-g_s)*a_s * qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )]
-                        +(1.0-g_n)*a_n * qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )]
-                        -(1.0-g_b)*a_b * qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)]
-                        +(1.0-g_t)*a_t * qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )]
+                - dth1*(-(1.0-g_w)*a_w * qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )]
+                        +(1.0-g_e)*a_e * qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )]
+                        -(1.0-g_s)*a_s * qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )]
+                        +(1.0-g_n)*a_n * qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )]
+                        -(1.0-g_b)*a_b * qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)]
+                        +(1.0-g_t)*a_t * qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )]
                         ) )* GET_SHIFT_F(s, ACTIVE_BIT);
         t[m_p] = ws[m_p] + delta;
         res += delta*delta;
@@ -290,13 +290,13 @@ REAL_TYPE SklSolverCBC::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, REAL_TYPE d
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
-        m_p = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        m_w = SklUtil::getFindexS3D(size, guide, i-1, j  , k  );
-        m_e = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
-        m_s = SklUtil::getFindexS3D(size, guide, i  , j-1, k  );
-        m_n = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
-        m_b = SklUtil::getFindexS3D(size, guide, i  , j  , k-1);
-        m_t = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+        m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+        m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         
         t_p = t[m_p];
         t_w = t[m_w];
@@ -325,12 +325,12 @@ REAL_TYPE SklSolverCBC::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, REAL_TYPE d
         g_p = (REAL_TYPE)( (s>>H_DIAG) & 0x7 ); // 3bitを取り出す
         dd = 1.0 / (1.0 + dth2*g_p);
         
-        sb = -dth1*(-(1.0-g_w)*a_w * qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )]
-                    +(1.0-g_e)*a_e * qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )]
-                    -(1.0-g_s)*a_s * qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )]
-                    +(1.0-g_n)*a_n * qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )]
-                    -(1.0-g_b)*a_b * qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)]
-                    +(1.0-g_t)*a_t * qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )]
+        sb = -dth1*(-(1.0-g_w)*a_w * qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )]
+                    +(1.0-g_e)*a_e * qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )]
+                    -(1.0-g_s)*a_s * qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )]
+                    +(1.0-g_n)*a_n * qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )]
+                    -(1.0-g_b)*a_b * qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)]
+                    +(1.0-g_t)*a_t * qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )]
                     );
         b2 += sb*sb * a_p;
         s0 = sb + ws[m_p]

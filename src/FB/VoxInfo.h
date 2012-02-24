@@ -12,18 +12,18 @@
 //@brief FlowBase VoxInfo class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
+#include <math.h>
+
 #include "Skl.h"
 #include "FBUtility.h"
 #include "Component.h"
 #include "Material.h"
-#include "SklUtil.h"
 #include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
 #include "parallel/SklParaComponent.h"
 #include "IDtable.h"
 #include "SetBC.h"
 #include "BndOuter.h"
-#include <math.h>
 
 // Cutlib
 #include "Cutlib.h"
@@ -42,7 +42,7 @@ protected:
   SklSolverConfig* CF;  /// XMLツリーのポインタ
   
   int* colorList;       /// ボクセルモデルに含まれるIDのリスト(Global)
-  REAL_TYPE* vox_nv;     /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
+  REAL_TYPE* vox_nv;    /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
   
   CompoList*      cmp;  /// コンポーネントリスト
   MaterialList*   mat;  /// マテリアルリスト
@@ -147,7 +147,7 @@ protected:
     for (unsigned n=NoBC+1; n<=NoCompo; n++) {
       if (cmp[n].getID() == mid) return cmp[n].getState();
     }
-    assert(0);
+    Exit(0);
     return 0;
   }
   

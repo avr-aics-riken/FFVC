@@ -37,10 +37,10 @@ void SklSolverCBC::IF_TRP_VOF(void)
   dt = NULL;
 
   // point Data
-  if( !(ws  = dc_ws->GetData()) )   assert(0);
-  if( !(bcv = dc_bcv->GetData()) )  assert(0);
-  if( !(vof = dc_vof->GetData()) )  assert(0);
-  if( !(v   = dc_vf0->GetData()) )  assert(0);
+  if( !(ws  = dc_ws->GetData()) )   Exit(0);
+  if( !(bcv = dc_bcv->GetData()) )  Exit(0);
+  if( !(vof = dc_vof->GetData()) )  Exit(0);
+  if( !(v   = dc_vf0->GetData()) )  Exit(0);
   
   // convection
   TIMING_start(tm_vof_cnv);

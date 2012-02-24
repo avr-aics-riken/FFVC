@@ -19,10 +19,10 @@
 void ControlRect::getXMLTemporarySize(void)
 {  
   ParseSteer Tree(CF);
-  if ( !Tree.IsSetElem("Temporary_Grid_Size") ) assert(0);
-  if ( !Tree.getEParam("jdim", jdim))   assert(0);
-  if ( !Tree.getEParam("kdim", kdim))   assert(0);
-  if ( !Tree.getEParam("ldim", ldim))   assert(0);
+  if ( !Tree.IsSetElem("Temporary_Grid_Size") ) Exit(0);
+  if ( !Tree.getEParam("jdim", jdim))   Exit(0);
+  if ( !Tree.getEParam("kdim", kdim))   Exit(0);
+  if ( !Tree.getEParam("ldim", ldim))   Exit(0);
 }
 
 /**
@@ -32,7 +32,7 @@ void ControlRect::getXMLTemporarySize(void)
 void ControlRect::getXMLInterfacialpoint(void)
 {
   ParseSteer Tree(CF);
-  if ( !Tree.getParam("No_Interfacial_Point", InterfacialPoints)) assert(0);
+  if ( !Tree.getParam("No_Interfacial_Point", InterfacialPoints)) Exit(0);
 }
 
 /**
@@ -42,7 +42,7 @@ void ControlRect::getXMLInterfacialpoint(void)
 void ControlRect::getXMLGhostPoint(void)
 {
   ParseSteer Tree(CF);
-  if ( !Tree.getParam("No_Ghost_Point", GhostPoints)) assert(0);
+  if ( !Tree.getParam("No_Ghost_Point", GhostPoints)) Exit(0);
 }
 
 /**
@@ -52,10 +52,10 @@ void ControlRect::getXMLGhostPoint(void)
 void ControlRect::getXMLEquallySpace(void)
 {
   ParseSteer Tree(CF);
-  if ( !Tree.IsSetElem("Equally_Spaced_Region") ) assert(0);
-  if ( !Tree.getEParam("x_dist", xdist))   assert(0);
-  if ( !Tree.getEParam("y_dist", ydist))   assert(0);
-  if ( !Tree.getEParam("z_dist", zdist))   assert(0);
+  if ( !Tree.IsSetElem("Equally_Spaced_Region") ) Exit(0);
+  if ( !Tree.getEParam("x_dist", xdist))   Exit(0);
+  if ( !Tree.getEParam("y_dist", ydist))   Exit(0);
+  if ( !Tree.getEParam("z_dist", zdist))   Exit(0);
 }
 
 /**

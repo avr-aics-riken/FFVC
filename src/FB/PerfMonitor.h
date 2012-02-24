@@ -13,7 +13,6 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include <cstdio>
-#include <cassert>
 using namespace std;
 
 #include "FBDefine.h"
@@ -86,7 +85,7 @@ public:
   void setProperties(unsigned key, const string& label, Type type, bool exclusive=true) {
     if (key >= m_nWatch) {
       fprintf(stderr, "\tPerfMonitor::setProperties() error, out of range key\n");
-      assert(0);
+      Exit(0);
     }
     m_watchArray[key].setProperties(label, type, exclusive);
     m_watchArray[key].setParallelInfo(pn);
@@ -99,7 +98,7 @@ public:
   void start(unsigned key) {
     if (key >= m_nWatch) {
       fprintf(stderr, "\tPerfMonitor::start() error, out of range key\n");
-      assert(0);
+      Exit(0);
     }
     m_watchArray[key].start();
   }
@@ -113,7 +112,7 @@ public:
   void stop(unsigned key, REAL_TYPE flopPerTask=0.0, unsigned iterationCount=1) {
     if (key >= m_nWatch) {
       fprintf(stderr, "\tPerfMonitor::stop() error, out of range key\n");
-      assert(0);
+      Exit(0);
     }
     m_watchArray[key].stop(flopPerTask, iterationCount);
   }
@@ -125,7 +124,7 @@ public:
   void gather() {
     if (m_gathered) {
       fprintf(stderr, "\tPerfMonitor::gather() error, already gathered\n");
-      assert(0);
+      Exit(0);
     }
     m_total.stop(0.0, 1);
     for (int i = 0; i < m_nWatch; i++) {

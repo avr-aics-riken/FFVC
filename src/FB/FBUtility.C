@@ -73,7 +73,7 @@ void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, 
     fprintf (fp,"\t>> Memory required for Cut : ");
   }
   else {
-    assert(0);
+    Exit(0);
   }
 
   // Global memory

@@ -127,7 +127,7 @@ void MonitorList::write_ID(int* id)
         if (!monGroup[i]->check_region(m, org, box)) continue;
         //>>>
         Vec3i index = monGroup[i]->getSamplingCellIndex(m);
-        id[SklUtil::getFindexS3D(size, guide, index.x, index.y, index.z)] = 255;
+        id[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)] = 255;
       }
     }
   }
@@ -174,7 +174,7 @@ void MonitorList::print(unsigned step, REAL_TYPE tm)
           break;
           
         default:
-          assert(0);
+          Exit(0);
       }
     }
   }
@@ -267,7 +267,7 @@ string MonitorList::getOutputTypeStr()
       break;
       
     default:
-      assert(0);
+      Exit(0);
   }
   
   return str;
@@ -347,7 +347,7 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
       printf("Line [%14.6e %14.6e %14.6e]-[%14.6e %14.6e %14.6e] is %s\n", // %12.4 >> %14.6
              from[0], from[1], from[2], to[0], to[1], to[2], str);
     }
-    assert(0);
+    Exit(0);
   }
   
   ed = st + t_ed * d;

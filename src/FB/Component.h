@@ -15,7 +15,6 @@
 #include <string>
 
 #include "FBDefine.h"
-#include "mydebug.h"
 
 using namespace std;
 

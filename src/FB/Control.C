@@ -25,18 +25,18 @@ void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, REAL_TYPE fr
 {
   const CfgElem *elmL3=NULL;
   
-  if ( !elmL2->GetValue("division", &nDivision) ) assert(0);
-  if ( nDivision == 0 ) assert(0);
+  if ( !elmL2->GetValue("division", &nDivision) ) Exit(0);
+  if ( nDivision == 0 ) Exit(0);
   
   // load parameter of 'from' and 'to'
   if ( !elmL2->GetValue("from", &elmL3) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'from' in 'line' >> %s\n", elmL3->GetName());
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !elmL3->GetVctValue("x", "y", "z", &from[0], &from[1], &from[2]) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'from'\n");
-      assert(0);
+      Exit(0);
     }
     if (Sampling.unit == DIMENSIONAL) {
       normalizeCord(from);
@@ -44,12 +44,12 @@ void Control::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, REAL_TYPE fr
   }
   if ( !elmL2->GetValue("to", &elmL3) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'to' in 'line' >> %s\n", elmL3->GetName());
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !elmL3->GetVctValue("x", "y", "z", &to[0], &to[1], &to[2]) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'to'\n");
-      assert(0);
+      Exit(0);
     }
     if (Sampling.unit == DIMENSIONAL) {
       normalizeCord(to);
@@ -82,11 +82,11 @@ void Control::getXML_Mon_Pointset(MonitorList* M, const CfgElem *elmL2, vector<M
     
     if ( strcasecmp("set", elmL3->GetName()) ) { // not agree
       Hostonly_ stamped_printf("\tParsing error : fail to get 'set' in 'point_set' >> %s\n", elmL3->GetName());
-      assert(0);
+      Exit(0);
     }
     if ( !elmL3->GetVctValue("x", "y", "z", &v[0], &v[1], &v[2]) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'point_set'\n");
-      assert(0);
+      Exit(0);
     }
     if (Sampling.unit == DIMENSIONAL) {
       normalizeCord(v);
@@ -133,13 +133,13 @@ void Control::getXML_Monitor(MonitorList* M)
   // ログ出力
   if ( !elmL1->GetValue(CfgIdt("log"), &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log' in 'Monitor_List'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "on") )   Sampling.log = ON;
   else if( !strcasecmp(str, "off") )  Sampling.log = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Monitor_List'\n");
-    assert(0);
+    Exit(0);
   }
   
   if ( Sampling.log == OFF ) return;
@@ -147,14 +147,14 @@ void Control::getXML_Monitor(MonitorList* M)
   // 出力ファイル名
   if ( !elmL1->GetValue(CfgIdt("output_file"), &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_File' in 'Monitor_List'\n");
-    assert(0);
+    Exit(0);
   }
   strcpy(HistoryMonitorName, str);
   
   // 集約モード
   if ( !elmL1->GetValue(CfgIdt("output_mode"), &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'Monitor_List'\n");
-    assert(0);
+    Exit(0);
   }
   if ( !strcasecmp("gather", str)) {
     Sampling.out_mode = MonitorList::GATHER;
@@ -166,13 +166,13 @@ void Control::getXML_Monitor(MonitorList* M)
   }
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyord for 'Output_Mode'\n");
-    assert(0);
+    Exit(0);
   }
   
   // サンプリング間隔
   if ( !elmL1->GetValue("Sampling_Interval_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval_Type' in 'Monitor_List'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -183,7 +183,7 @@ void Control::getXML_Monitor(MonitorList* M)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Sampling_Interval_Type' in 'Monitor_List'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("Sampling_Interval", &f_val) ) {
@@ -191,14 +191,14 @@ void Control::getXML_Monitor(MonitorList* M)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval' in 'Monitor_List'\n");
-      assert(0);
+      Exit(0);
     }
   }
   
   // 単位指定
   if ( !elmL1->GetValue("Unit", &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit' in 'Monitor_List'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "Dimensional") ) {
     Sampling.unit = DIMENSIONAL;
@@ -210,7 +210,7 @@ void Control::getXML_Monitor(MonitorList* M)
   }
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit' section\n");
-    assert(0);
+    Exit(0);
   }
   
   // サンプリングの指定単位が有次元の場合に，無次元に変換
@@ -229,19 +229,19 @@ void Control::getXML_Monitor(MonitorList* M)
       type = MonitorCompo::POINT_SET;
       if ( 0 == elmL2->GetElemSize() ) {
         Hostonly_ stamped_printf("\tParsing error : At least, 1 elem of 'set' should be found in 'point_set'\n");
-        assert(0);
+        Exit(0);
       }
     }
     else if ( !strcasecmp(p, "line") ) {
       type = MonitorCompo::LINE;
       if ( 2 != elmL2->GetElemSize() ) {
         Hostonly_ stamped_printf("\tParsing error : 2 elems (from/to) should be found in 'line'\n");
-        assert(0);
+        Exit(0);
       }
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in 'Monitor_List'\n");
-      assert(0);
+      Exit(0);
     }
     
     // Labelの取得．ラベルなしでもエラーではない
@@ -256,26 +256,26 @@ void Control::getXML_Monitor(MonitorList* M)
       str=NULL;
       if ( !param->GetData(&str) ) {
         Hostonly_ stamped_printf("\tParsing error : fail to get 'variable' in 'Monitor_List'\n");
-        assert(0);
+        Exit(0);
       }
       variables.push_back(str);
       param = elmL2->GetParamNext(param, "variable");
     }
     if (variables.size() == 0) {
       Hostonly_ stamped_printf("\tParsing error : No 'variable' in 'Monitor_List'\n");
-      assert(0);
+      Exit(0);
     }
     
     // method
     if (!elmL2->GetValue("sampling_method", &method)) {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in 'Monitor_List'\n");
-      assert(0);
+      Exit(0);
     }
     
     // mode
     if (!elmL2->GetValue("sampling_mode", &mode)) {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in 'Monitor_List'\n");
-      assert(0);
+      Exit(0);
     }
     
     // get coordinate
@@ -314,12 +314,12 @@ const CfgElem* Control::getXML_Pointer(const char* key, string section)
   }
   else {
     Hostonly_ printf("No section '%s'\n", section.c_str());
-    assert(0);
+    Exit(0);
   }
   
 	if( !(elmL1 = elemTop->GetElemFirst(key)) ) {
     Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", key);
-    assert(0);
+    Exit(0);
   }
 
   return elmL1;
@@ -343,7 +343,7 @@ void Control::getXML_Time_Control(DTcntl* DT)
   // 加速時間
   if ( !elmL1->GetValue("Acceleration_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Acceleration_Type' in 'Time_Control'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -354,7 +354,7 @@ void Control::getXML_Time_Control(DTcntl* DT)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Acceleration_Type' in 'Time_Control'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("Acceleration", &ct) ) {
@@ -362,18 +362,18 @@ void Control::getXML_Time_Control(DTcntl* DT)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Acceleration' in 'Time_Control'\n");
-      assert(0);
+      Exit(0);
     }
   }
   
   // 時間積分幅を取得する
   if ( !elmL1->GetValue("Dt_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Dt_Type' in 'Time_Control'\n");
-    assert(0);
+    Exit(0);
   }
   if ( !elmL1->GetValue("Delta_t", &ct) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Delta_t' in 'Time_Control'\n");
-    assert(0);
+    Exit(0);
   }
   // Directで有次元の場合は，無次元化
   double ts = RefLength / RefVelocity;
@@ -389,13 +389,13 @@ void Control::getXML_Time_Control(DTcntl* DT)
   
   if ( !DT->set_Scheme(str, cc) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to set DELTA_T\n");
-    assert(0);
+    Exit(0);
   }
   
   // 計算する時間を取得する
   if ( !elmL1->GetValue("Period_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Period_Type' in 'Time_Control'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -406,7 +406,7 @@ void Control::getXML_Time_Control(DTcntl* DT)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Period_Type' in 'Time_Control'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("Calculation_Period", &ct) ) {
@@ -414,7 +414,7 @@ void Control::getXML_Time_Control(DTcntl* DT)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Calculation_Period' in 'Time_Control'\n");
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -435,18 +435,18 @@ void Control::getXML_Solver_Properties(void)
   // getXML_VarArrangement() 変数配置（stg / cc / node）を取得，下のガイドセルの値の設定に影響
   Mode.VarArrange = CELL_CENTER;
   
-  if ( !(elmL1 = getXML_Pointer("Solver_Property", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Solver_Property", "steer")) ) Exit(0);
   
   // 形状近似度の取得
   if ( !elmL1->GetValue("Shape_Approximation", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Shape_Approximation' in 'Solver_Property'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Binary") )       Mode.ShapeAprx = BINARY;
   else if( !strcasecmp(str, "cut_distance") ) Mode.ShapeAprx = CUT_INFO;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Shape_Approximation'\n");
-    assert(0);
+    Exit(0);
   }
   
   // Cut-Distanceの場合
@@ -455,31 +455,31 @@ void Control::getXML_Solver_Properties(void)
     // ポリゴンファイル名を取得
     if ( !elmL1->GetValue("Polylib_Configuration_File", &str) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid char* value in 'Solver_Property'\n");
-      assert(0);
+      Exit(0);
     }
     strcpy(PolylibConfigName, str);
     
     // 媒質指定モード
     if ( !elmL1->GetValue("Medium_File", &str) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Medium_File' in 'Solver_Property'\n");
-      assert(0);
+      Exit(0);
     }
     if     ( !strcasecmp(str, "Yes") ) Mode.Medium_Spec = ON;
     else if( !strcasecmp(str, "No") )  Mode.Medium_Spec = OFF;
     else {
       Hostonly_ stamped_printf("\tInvalid keyword is described for 'Medium_File'\n");
-      assert(0);
+      Exit(0);
     }
     
     // 媒質ファイルを使わない場合の媒質番号の指定
     if ( Mode.Medium_Spec == OFF ) {
       if ( !elmL1->GetValue("Base_Medium", &ct) ) {
         Hostonly_ stamped_printf("\tParsing error : Invalid value for 'Base_Medium' in 'Solver_Property'\n");
-        assert(0);
+        Exit(0);
       }
       if (ct<1) {
         Hostonly_ stamped_printf("\tParsing error : Base_Medium must be positive\n");
-        assert(0);
+        Exit(0);
       }
       Mode.Base_Medium = (unsigned)ct;
     }
@@ -489,19 +489,19 @@ void Control::getXML_Solver_Properties(void)
   // 支配方程式の型（PDE_NS / Euler）を取得
   if ( !elmL1->GetValue("PDE_type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'PDE_type' in 'Solver_Property'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Navier_Stokes") )  Mode.PDE = PDE_NS;
   else if( !strcasecmp(str, "Euler") )          Mode.PDE = PDE_EULER;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'PDE_type'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 基礎方程式の種類を取得する
   if ( !elmL1->GetValue("Basic_Equation", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Basic_Equation' in 'Solver_Property'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Incompressible") )           BasicEqs = INCMP;
   else if( !strcasecmp(str, "Limited_Compressible") )     BasicEqs = LTDCMP;
@@ -509,19 +509,19 @@ void Control::getXML_Solver_Properties(void)
   else if( !strcasecmp(str, "Incompressible_Two_Phase") ) BasicEqs = INCMP_2PHASE;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Basic_Equation'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 非定常計算，または定常計算の種別を取得する
   if ( !elmL1->GetValue("Time_Variation", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Time_Variation' in 'Solver_Property'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Steady") )    Mode.Steady = TV_Steady;
   else if( !strcasecmp(str, "Unsteady") )  Mode.Steady = TV_Unsteady;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Time_Variation'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 対流項スキームの種類の取得
@@ -546,7 +546,7 @@ void Control::getXML_Solver_Properties(void)
         break;
         
       default:
-        assert(0);
+        Exit(0);
     }
   }  
 }
@@ -625,7 +625,7 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
       
     default:
       Hostonly_ stamped_printf("\tParsing error : Start section\n");
-      assert(0);
+      Exit(0);
   }
 
   // Reference frame information : Solver defined element >> SPHERE defined
@@ -741,7 +741,7 @@ void Control::printInitValues(FILE* fp)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
 
   REAL_TYPE DynamicPrs = 0.5*RefDensity * RefVelocity * RefVelocity;
@@ -803,12 +803,12 @@ void Control::getXML_Algorithm(void)
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
 
-  if ( !(elmL1 = getXML_Pointer("Algorithm", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Algorithm", "steer")) ) Exit(0);
 
   // Flow
   if ( !elmL1->GetValue("Flow", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Flow' in 'Algorithm'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "FS_C_EE_D_EE") )     AlgorithmF = Flow_FS_EE_EE;
   else if( !strcasecmp(str, "FS_C_RK_D_CN") )     AlgorithmF = Flow_FS_RK_CN;
@@ -816,20 +816,20 @@ void Control::getXML_Algorithm(void)
   else if( !strcasecmp(str, "FS_C_AB_D_CN") )     AlgorithmF = Flow_FS_AB_CN;
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Flow' in 'Algorithm'\n");
-    assert(0);
+    Exit(0);
   }
   
   // Heat
   if ( isHeatProblem() ) {
     if ( !elmL1->GetValue("Heat", &str) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Heat' in 'Algorithm'\n");
-      assert(0);
+      Exit(0);
     }
     if     ( !strcasecmp(str, "C_EE_D_EE") )    AlgorithmH = Heat_EE_EE;
     else if( !strcasecmp(str, "C_EE_D_EI") )    AlgorithmH = Heat_EE_EI;
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Heat' in 'Algorithm'\n");
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -843,34 +843,34 @@ void Control::getXML_Convection(void)
 	const CfgElem *elmL1=NULL;
 	const char *str=NULL;
 	
-  if ( !(elmL1 = getXML_Pointer("Convection_Term", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Convection_Term", "steer")) ) Exit(0);
 	
 	// scheme
 	if ( !elmL1->GetValue("scheme", &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Scheme' in 'Convection'\n");
-		assert(0);
+		Exit(0);
 	}
 	
 	if     ( !strcasecmp(str, "O1_Upwind") )    CnvScheme = O1_upwind;
   else if( !strcasecmp(str, "O3_muscl") )     CnvScheme = O3_muscl;
   else if( !strcasecmp(str, "O2_central") )   CnvScheme = O2_central;
-  else if( !strcasecmp(str, "O4_central") ) { CnvScheme = O4_central; assert(0); }  // not yet implemented
+  else if( !strcasecmp(str, "O4_central") ) { CnvScheme = O4_central; Exit(0); }  // not yet implemented
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Scheme\n");
-    assert(0);
+    Exit(0);
   }
 	
 	// Limiter
 	if ( CnvScheme == O3_muscl ) {
 		if ( !elmL1->GetValue("limiter", &str) ) {
 			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Limiter' in 'Convection'\n");
-			assert(0);
+			Exit(0);
 		}
 		if     ( !strcasecmp(str, "No_Limiter") ) Limiter = No_Limiter;
 		else if( !strcasecmp(str, "Minmod") )     Limiter = MinMod;
 		else {
 			Hostonly_ stamped_printf("\tInvalid keyword is described for Limiter\n");
-			assert(0);
+			Exit(0);
 		}
 	}
 }
@@ -919,14 +919,14 @@ void Control::getXML_VarArrangement(void)
   const char *keyword=NULL;
   ParseSteer Tree(CF);
 
-  if ( !(keyword=Tree.getParam("Grid_System")) ) assert(0);
+  if ( !(keyword=Tree.getParam("Grid_System")) ) Exit(0);
 
   if     ( !strcasecmp(keyword, "staggered") )   Mode.VarArrange = STAGGERED;
   else if( !strcasecmp(keyword, "collocated") )  Mode.VarArrange = CELL_CENTER;
   else if( !strcasecmp(keyword, "node") )        Mode.VarArrange = NODE;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Grid_System\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -939,13 +939,13 @@ void Control::getXML_Para_Ref(void)
 {
   ParsePara Tree(CF);
 
-  if ( !Tree.IsSetElem("Reference") ) assert(0);
+  if ( !Tree.IsSetElem("Reference") ) Exit(0);
 
-  if ( !Tree.getEParam("Length",    RefLength))   assert(0);
-  if ( !Tree.getEParam("Velocity",  RefVelocity)) assert(0);
-  if ( !Tree.getEParam("Gravity",   Gravity))     assert(0);
-	if ( !Tree.getEParam("Base_Pressure", BasePrs)) assert(0);
-  if ( !Tree.getEParam("Ref_ID", RefID) )         assert(0);
+  if ( !Tree.getEParam("Length",    RefLength))   Exit(0);
+  if ( !Tree.getEParam("Velocity",  RefVelocity)) Exit(0);
+  if ( !Tree.getEParam("Gravity",   Gravity))     Exit(0);
+	if ( !Tree.getEParam("Base_Pressure", BasePrs)) Exit(0);
+  if ( !Tree.getEParam("Ref_ID", RefID) )         Exit(0);
 }
 
 /**
@@ -960,11 +960,11 @@ void Control::getXML_Para_ND(void)
 {
   ParsePara Tree(CF);
 
-  if ( !Tree.IsSetElem("Reference") ) assert(0);
+  if ( !Tree.IsSetElem("Reference") ) Exit(0);
 
  if (KindOfSolver==FLOW_ONLY) {
-    if ( !Tree.getEParam("Reynolds", Reynolds)) assert(0);
-    if ( !Tree.getEParam("Prandtl",  Prandtl))  assert(0);
+    if ( !Tree.getEParam("Reynolds", Reynolds)) Exit(0);
+    if ( !Tree.getEParam("Prandtl",  Prandtl))  Exit(0);
  }
 }
 
@@ -978,20 +978,20 @@ void Control::getXML_Para_Temp(void)
 
   const CfgElem *elmL1=NULL;
   
-  if ( !(elmL1 = getXML_Pointer("Temperature", "parameter")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Temperature", "parameter")) ) Exit(0);
   
   if( !elmL1->GetValue("Base", &Base) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Base'\n");
-    assert(0);
+    Exit(0);
   }
   if( !elmL1->GetValue("Difference", &Diff) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Difference'\n");
-    assert(0);
+    Exit(0);
   }
 
   if( Diff < 0.0f ){
     Hostonly_ stamped_printf("\tTemperature difference must be positive.\n");
-    assert(0);
+    Exit(0);
   }
   DiffTemp = Diff;
   
@@ -1012,7 +1012,7 @@ void Control::printDomainInfo(FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G
 {
   if ( !fp || !mp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
   printDomain(mp, G_size, G_org, G_Lbx);
   printDomain(fp, G_size, G_org, G_Lbx);
@@ -1059,7 +1059,7 @@ void Control::printDomain_debug(void)
  */
 void Control::printVoxelSize(unsigned* gs, FILE* fp)
 {
-  if( !fp ) assert(0);
+  if( !fp ) Exit(0);
   
   REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
   KB = 1000.0;
@@ -1109,35 +1109,35 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
   if ( (elmL2 = elmL1->GetElemFirst(key)) ) {
     if( !elmL2->GetValue("Iteration", &itr) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid integer value for 'Iteration' of %s in Criteria\n", key);
-      assert(0);
+      Exit(0);
     }
     IC[order].set_ItrMax((unsigned)itr);
     
     if( !elmL2->GetValue("Epsilon", &tmp) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Epsilon' of %s in Criteria\n", key);
-      assert(0);
+      Exit(0);
     }
     IC[order].set_eps((REAL_TYPE)tmp);
     
     if( !elmL2->GetValue("Omega", &tmp) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Omega' of %s in Criteria\n", key);
-      assert(0);
+      Exit(0);
     }
     IC[order].set_omg((REAL_TYPE)tmp);
     
 		if( !elmL2->GetValue("norm", &str) ) {
 			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Norm' of %s in Criteria\n", key);
-			assert(0);
+			Exit(0);
     }
     
     if( !elmL2->GetValue("Linear_Solver", &slvr) ) {
 			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Linear_Solver' of %s in Criteria\n", key);
-			assert(0);
+			Exit(0);
     }
   }
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword of '%s' in Iteration_Flow/Heat\n", key);
-    assert(0);
+    Exit(0);
   }
   
   // 線形ソルバーの種類
@@ -1147,7 +1147,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
   else if( !strcasecmp(slvr, "SOR2CMA") )   IC[order].set_LS(SOR2CMA);
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
-    assert(0);
+    Exit(0);
   }
   
   // normのタイプ
@@ -1172,7 +1172,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
         }
         else {
           Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str);
-          assert(0);
+          Exit(0);
         }
       }
 			break;
@@ -1186,7 +1186,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
 			}
 			else {
 				Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for heat iteration\n", str);
-				assert(0);
+				Exit(0);
 			}
 			break;
       
@@ -1196,7 +1196,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
 			}
 			else {
 				Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for heat iteration\n", str);
-				assert(0);
+				Exit(0);
 			}
 			break;
 	}
@@ -1216,12 +1216,12 @@ void Control::getXML_ReferenceFrame(ReferenceFrame* RF)
 
   if( !(elmL1 = elemTop->GetElemFirst("Reference_Frame")) ) {
     Hostonly_ stamped_printf("\tParsing error : Missing the section of Reference_Frame\n");
-    assert(0);
+    Exit(0);
   }
   
   if ( !elmL1->GetValue("Reference_Frame_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Reference_Frame_Type' in 'Reference_Frame'\n");
-    assert(0);
+    Exit(0);
   }
 
   if ( !strcasecmp(str, "stationary") ) {
@@ -1232,13 +1232,13 @@ void Control::getXML_ReferenceFrame(ReferenceFrame* RF)
     REAL_TYPE xyz[3];
     if ( !SklUtil::getVecParams(elmL1, "u", "v", "w", xyz) ) {
       Hostonly_ stamped_printf("\tParsing error : Missing param 'u', 'v', 'w' or Invalid values for Translational Reference_Frame\n");
-      assert(0);
+      Exit(0);
     }
     RF->setGridVel((double*)xyz);
   }
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Reference_Frame_Type' in 'Reference_Frame'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -1254,13 +1254,13 @@ void Control::getXML_Iteration(ItrCtl* IC)
   elemTop = CF->GetTop(STEER);
   if( !(elmL1 = elemTop->GetElemFirst("Iteration")) ) {
     Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Iteration'\n");
-    assert(0);
+    Exit(0);
   }
 
   // Flow
   if( !(elmL2 = elmL1->GetElemFirst("Flow")) ) {
     Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Flow' in 'Iteration'\n");
-    assert(0);
+    Exit(0);
   }
   
   switch (AlgorithmF) {
@@ -1268,7 +1268,7 @@ void Control::getXML_Iteration(ItrCtl* IC)
     case Flow_FS_AB2:
       if( elmL2->GetElemSize() != 1 ) {  // check number of Elem
         Hostonly_ stamped_printf("\tOne criterion should be specified for 1st order.\n");
-        assert(0);
+        Exit(0);
       }
       findXMLCriteria(elmL2, "Poisson", ItrCtl::ic_prs_pr, IC);
       break;
@@ -1276,7 +1276,7 @@ void Control::getXML_Iteration(ItrCtl* IC)
     case Flow_FS_AB_CN:
       if( elmL2->GetElemSize() != 2 ) {  // check number of Elem
         Hostonly_ stamped_printf("\tTwo criterions should be specified\n");
-        assert(0);
+        Exit(0);
       }
       findXMLCriteria(elmL2, "Poisson", ItrCtl::ic_prs_pr, IC);
       findXMLCriteria(elmL2, "NS_CN",   ItrCtl::ic_vis_cn, IC);
@@ -1285,7 +1285,7 @@ void Control::getXML_Iteration(ItrCtl* IC)
     case Flow_FS_RK_CN:
       if( elmL2->GetElemSize() != 2 ) {  // check number of Elem
         Hostonly_ stamped_printf("\tTwo criterions should be specified for 2nd order.\n");
-        assert(0);
+        Exit(0);
       }
       findXMLCriteria(elmL2, "Poisson",     ItrCtl::ic_prs_pr, IC);
       findXMLCriteria(elmL2, "Poisson_2nd", ItrCtl::ic_prs_cr, IC);
@@ -1294,7 +1294,7 @@ void Control::getXML_Iteration(ItrCtl* IC)
 
     default:
       Hostonly_ stamped_printf("\tSomething wrong in 'Iteration' > 'Flow'\n");
-      assert(0);
+      Exit(0);
   }
 
   // Heat
@@ -1302,7 +1302,7 @@ void Control::getXML_Iteration(ItrCtl* IC)
     
     if( !(elmL2 = elmL1->GetElemFirst("Heat")) ) {
       Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Heat' in 'Iteration'\n");
-      assert(0);
+      Exit(0);
     }
     
     switch (AlgorithmH) {
@@ -1312,14 +1312,14 @@ void Control::getXML_Iteration(ItrCtl* IC)
       case Heat_EE_EI:
         if( elmL2->GetElemSize() != 1 ) {  // check number of Elem
           Hostonly_ stamped_printf("\tOne criteria should be specified for Euler Implicit (Temperature).\n");
-          assert(0);
+          Exit(0);
         }
         findXMLCriteria(elmL2, "Euler_Implicit", ItrCtl::ic_tdf_ei, IC);
         break;
 
       default:
       Hostonly_ stamped_printf("\tSomething wrong in Iteration_Heat\n");
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -1363,7 +1363,7 @@ void Control::select_Itr_Impl(ItrCtl* IC)
       
     default:
       Hostonly_ stamped_printf("\tSomething wrong in Iteration_Flow\n");
-      assert(0);
+      Exit(0);
   }
   
   // Heat
@@ -1381,7 +1381,7 @@ void Control::select_Itr_Impl(ItrCtl* IC)
         
       default:
         Hostonly_ stamped_printf("\tSomething wrong in Iteration_Heat\n");
-        assert(0);
+        Exit(0);
     }
   }
 }
@@ -1423,21 +1423,21 @@ void Control::getXML_History(void)
       if ( !strcasecmp( tt, "log_base" ) ) {
         if ( !(history_fname = history->GetFileName()) ) {
           Hostonly_ stamped_printf("\tParsing error : Filename in HistoryFile description\n");
-          assert(0);
+          Exit(0);
         }
         strcpy(HistoryName, history_fname);
       }
       else if ( !strcasecmp( tt, "log_compo" ) ) {
         if ( !(history_fname = history->GetFileName()) ) {
           Hostonly_ stamped_printf("\tParsing error : Filename in HistoryFile description\n");
-          assert(0);
+          Exit(0);
         }
         strcpy(HistoryCompoName, history_fname);
       }
       else if ( !strcasecmp( tt, "log_domainflux" ) ) {
         if ( !(history_fname = history->GetFileName()) ) {
           Hostonly_ stamped_printf("\tParsing error : Filename in HistoryFile description\n");
-          assert(0);
+          Exit(0);
         }
         strcpy(HistoryDomfxName, history_fname);
       }
@@ -1447,7 +1447,7 @@ void Control::getXML_History(void)
       if ( !strcasecmp( tt, "log_wall_info" ) ) {
         if ( !(history_fname = history->GetFileName()) ) {
           Hostonly_ stamped_printf("\tParsing error : Filename in HistoryFile description\n");
-          assert(0);
+          Exit(0);
         }
         strcpy(HistoryWallName, history_fname);
       }
@@ -1457,7 +1457,7 @@ void Control::getXML_History(void)
       if ( !strcasecmp( tt, "log_iteration" ) ) {
         if ( !(history_fname = history->GetFileName()) ) {
           Hostonly_ stamped_printf("\tParsing error : Filename in HistoryFile description\n");
-          assert(0);
+          Exit(0);
         }
         strcpy(HistoryItrName, history_fname);
       }
@@ -1477,7 +1477,7 @@ void Control::getXML_Dimension(void)
   const char *keyword=NULL;
   ParseSteer Tree(CF);
 
-  if ( !(keyword=Tree.getParam("Dimension")) ) assert(0);
+  if ( !(keyword=Tree.getParam("Dimension")) ) Exit(0);
 
   if     ( !strcasecmp(keyword, "3D") )  NoDimension = 3;
   else if( !strcasecmp(keyword, "2D") )  NoDimension = 2;
@@ -1485,7 +1485,7 @@ void Control::getXML_Dimension(void)
   else if( !strcasecmp(keyword, "0D") )  NoDimension = 0;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Dimension\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -1500,25 +1500,25 @@ void Control::getXML_Average_option(void)
   const char* str=NULL;
   REAL_TYPE ct;
   
-  if ( !(elmL1 = getXML_Pointer("Average_option", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Average_option", "steer")) ) Exit(0);
   
   // 平均値操作
   if ( !elmL1->GetValue("Operation", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Operation' in 'Average_option'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )   Mode.Average = ON;
   else if( !strcasecmp(str, "off") )  Mode.Average = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Operation'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 平均操作開始時間
   if ( Mode.Average == ON ) {
     if ( !elmL1->GetValue("Start_Type", &str) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Start_Type' in 'Average_option'\n");
-      assert(0);
+      Exit(0);
     }
     else {
       if ( !strcasecmp(str, "step") ) {
@@ -1529,7 +1529,7 @@ void Control::getXML_Average_option(void)
       }
       else {
         Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Start_Type' in 'Average_option'\n");
-        assert(0);
+        Exit(0);
       }
       
       if ( elmL1->GetValue("Start", &ct) ) {
@@ -1537,7 +1537,7 @@ void Control::getXML_Average_option(void)
       }
       else {
         Hostonly_ stamped_printf("\tParsing error : fail to get 'Start' in 'Average_option'\n");
-        assert(0);
+        Exit(0);
       }
     }    
   }
@@ -1554,18 +1554,18 @@ void Control::getXML_LES_option(void)
   const char* str=NULL;
   REAL_TYPE ct;
   
-  if ( !(elmL1 = getXML_Pointer("LES_Option", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("LES_Option", "steer")) ) Exit(0);
   
   // 計算オプション
   if ( !elmL1->GetValue("LES_Calculation", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'LES_Calculation' in 'LES_Option'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )    LES.Calc = ON;
   else if( !strcasecmp(str, "off") )   LES.Calc = OFF;
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'LES'\n");
-    assert(0);
+    Exit(0);
   }
   
   if ( LES.Calc == OFF ) return;
@@ -1573,7 +1573,7 @@ void Control::getXML_LES_option(void)
   // モデル
   if( !elmL1->GetValue("model", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Model' in 'LES_Option'\n");
-    assert(0);
+    Exit(0);
   }
   if      ( !strcasecmp(str, "smagorinsky") )  LES.Model = Smagorinsky;
   else if ( !strcasecmp(str, "Low_Reynolds") ) LES.Model = Low_Reynolds;
@@ -1582,14 +1582,14 @@ void Control::getXML_LES_option(void)
   // Cs係数
   if( !elmL1->GetValue("Cs", &ct) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Cs' in 'LES_Option'\n");
-    assert(0);
+    Exit(0);
   }
   LES.Cs = ct;
   
   // Cs係数
   if( !elmL1->GetValue("Damping_Factor", &ct) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Damping_Factor' in 'LES_Option'\n");
-    assert(0);
+    Exit(0);
   }
   LES.damping_factor = ct;
 
@@ -1604,54 +1604,54 @@ void Control::getXML_Derived(void)
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
   
-  if ( !(elmL1 = getXML_Pointer("Derived_Variable", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Derived_Variable", "steer")) ) Exit(0);
   
   // 全圧
   if ( !elmL1->GetValue("Total_Pressure", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Derived_Variable'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  Mode.TP = ON;
   else if( !strcasecmp(str, "off") ) Mode.TP = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 渦度ベクトル
   if ( !elmL1->GetValue("Vorticity", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Vorticity' in 'Derived_Variable'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  Mode.VRT = ON;
   else if( !strcasecmp(str, "off") ) Mode.VRT = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Vorticity'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 速度勾配テンソルの第2不変量
   if ( !elmL1->GetValue("2nd_Invariant_of_VGT", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '2nd_Invariant_of_VGT' in 'Derived_Variable'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  Mode.I2VGT = ON;
   else if( !strcasecmp(str, "off") ) Mode.I2VGT = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '2nd_Invariant_of_VGT'\n");
-    assert(0);
+    Exit(0);
   }
   
   // ヘリシティ
   if ( !elmL1->GetValue("Helicity", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Helicity' in 'Derived_Variable'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  Mode.Helicity = ON;
   else if( !strcasecmp(str, "off") ) Mode.Helicity = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Helicity'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -1669,79 +1669,79 @@ void Control::getXML_FileIO(void)
   const char* str=NULL;
   REAL_TYPE f_val=0.0;
 
-  if ( !(elmL1 = getXML_Pointer("File_IO", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("File_IO", "steer")) ) Exit(0);
 
   // 出力単位
   if ( !elmL1->GetValue("Unit_of_file", &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit_of_File' in 'File_IO'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "Dimensional") )      Unit.File = DIMENSIONAL;
   else if( !strcasecmp(str, "Non_Dimensional") )  Unit.File = NONDIMENSIONAL;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit_of_File' section in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
 
   // 出力ガイドセルモード
   if ( !elmL1->GetValue("Guide_Out", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Guide_Out' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "without") )  GuideOut = 0;
   else if( !strcasecmp(str, "with") )     GuideOut = (unsigned)guide;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Guide_Out'\n");
-    assert(0);
+    Exit(0);
   }
 
   // ファイル出力モード
   if ( !elmL1->GetValue("Output_Mode", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Normal") )     FIO.FileOut = IO_normal;
   else if( !strcasecmp(str, "Forced") )     FIO.FileOut = IO_forced;
   else if( !strcasecmp(str, "Every_Time") ) FIO.FileOut = IO_everytime;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Output_Mode'\n");
-    assert(0);
+    Exit(0);
   }
 
   // デバッグ用のdiv(u)の出力指定
   if ( !elmL1->GetValue("Debug_divergence", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Debug_Divergence' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "on") )    FIO.Div_Debug = ON;
   else if( !strcasecmp(str, "off") )   FIO.Div_Debug = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Debug_Divergence'\n");
-    assert(0);
+    Exit(0);
   }
 
   // 入力ファイルの並列処理方式を選択
   if ( !elmL1->GetValue("Parallel_Input", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Parallel_Input' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Master") )  FIO.IO_Input = IO_GATHER;
   else if( !strcasecmp(str, "Local") )   FIO.IO_Input = IO_DISTRIBUTE;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Parallel_Input'\n");
-    assert(0);
+    Exit(0);
   }
 
   // 出力ファイルの並列処理方式を選択
   if ( !elmL1->GetValue("Parallel_Output", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Parallel_Output' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Master") )  FIO.IO_Output = IO_GATHER;
   else if( !strcasecmp(str, "Local") )   FIO.IO_Output = IO_DISTRIBUTE;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Parallel_Output'\n");
-    assert(0);
+    Exit(0);
   }
 
   // 入力ファイル情報の記述形式をチェックする
@@ -1749,7 +1749,7 @@ void Control::getXML_FileIO(void)
     const char *attr, *format, *fname;
     if ( !infile->GetData(&attr, &format, &fname) ) {
       Hostonly_ stamped_printf("\tParsing error : InFile description\n");
-      assert(0);
+      Exit(0);
     }
     
     // V-Sphereフレームワークにパラメータを設定
@@ -1771,15 +1771,15 @@ void Control::getXML_FileIO(void)
     unsigned interval;
     if ( !(attr = outfile->GetAttr()) ) {
       Hostonly_ stamped_printf("\tParsing error : OutFile description\n");
-      assert(0);
+      Exit(0);
     }
     if ( !(format = outfile->GetFormat()) ) {
       Hostonly_ stamped_printf("\tParsing error : OutFile description\n");
-      assert(0);
+      Exit(0);
     }
     if( !(fname = outfile->GetBaseName()) ) {
       Hostonly_ stamped_printf("\tParsing error : OutFile description\n");
-      assert(0);
+      Exit(0);
     }
     
     // V-Sphereフレームワークにパラメータを設定
@@ -1799,7 +1799,7 @@ void Control::getXML_FileIO(void)
   // インターバル 瞬時値
   if ( !elmL1->GetValue("Instant_Interval_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Instant_Interval_Type' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -1810,7 +1810,7 @@ void Control::getXML_FileIO(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Instant_Interval_Type' in 'File_IO'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("Instant_Interval", &f_val) ) {
@@ -1818,14 +1818,14 @@ void Control::getXML_FileIO(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Instant_Interval' in 'File_IO'\n");
-      assert(0);
+      Exit(0);
     }
   }
 
   // インターバル　平均値
   if ( !elmL1->GetValue("Averaged_Interval_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Averaged_Interval_Type' in 'File_IO'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -1836,7 +1836,7 @@ void Control::getXML_FileIO(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Averaged_Interval_Type' in 'File_IO'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("Averaged_Interval", &f_val) ) {
@@ -1844,7 +1844,7 @@ void Control::getXML_FileIO(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Averaged_Interval' in 'File_IO'\n");
-      assert(0);
+      Exit(0);
     }
   }
 
@@ -1863,7 +1863,7 @@ void Control::tell_Interval_2_Sphere(void)
     const char *attr;
     if ( !(attr = outfile->GetAttr()) ) {
       Hostonly_ stamped_printf("\tParsing error : OutFile description\n");
-      assert(0);
+      Exit(0);
     }
     
     if      ( !strcasecmp(attr, "velocity") )       outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
@@ -1893,7 +1893,7 @@ void Control::tell_Avr_Interval_2_Sphere(void)
     const char *attr;
     if ( !(attr = outfile->GetAttr()) ) {
       Hostonly_ stamped_printf("\tParsing error : OutFile description\n");
-      assert(0);
+      Exit(0);
     }
     
     if      ( !strcasecmp(attr, "avrvelocity") )    outfile->SetInterval( Interval[Interval_Manager::tg_average].getIntervalStep() );
@@ -1913,19 +1913,19 @@ void Control::getXML_Version(void)
   const CfgElem *elmL1=NULL;
   int ct;
   
-  if ( !(elmL1 = getXML_Pointer("Version_Info", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Version_Info", "steer")) ) Exit(0);
   
   // FlowBase
   if ( !elmL1->GetValue("Flow_Base", &ct) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid value for 'Flow_Base' in 'Version_Info'\n");
-    assert(0);
+    Exit(0);
   }
   FB_version = (unsigned)ct;
   
   // FlowBase
   if ( !elmL1->GetValue("CBC", &ct) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid value for 'CBC' in 'Version_Info'\n");
-    assert(0);
+    Exit(0);
   }
   version = (unsigned)ct;
 }
@@ -1941,25 +1941,25 @@ void Control::getXML_Wall_type(void)
   
   if ( !(elmL1 = getXML_Pointer("Treatment_of_wall", "steer")) ) {
     Hostonly_ stamped_printf("\tNo 'Treatment_of_wall' tag.\n");
-    assert(0);
+    Exit(0);
   }
   
   // 圧力のタイプ
   if ( !elmL1->GetValue(CfgIdt("Pressure_Gradient"), &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Pressure_Gradient' in 'Treatment_of_wall'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "grad_zero") )   Mode.PrsNeuamnnType = P_GRAD_ZERO;
   else if( !strcasecmp(str, "grad_NS") )     Mode.PrsNeuamnnType = P_GRAD_NS;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Pressure_Gradient'\n");
-    assert(0);
+    Exit(0);
   }
   
   // 壁面摩擦応力の計算モード
   if ( !elmL1->GetValue(CfgIdt("Velocity_Profile"), &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Velocity_Profile' in 'Treatment_of_wall'\n");
-		assert(0);
+		Exit(0);
 	}
   
   if     ( !strcasecmp(str, "no_slip") )     Mode.Wall_profile = No_Slip;
@@ -1967,7 +1967,7 @@ void Control::getXML_Wall_type(void)
   else if( !strcasecmp(str, "Law_of_Wall") ) Mode.Wall_profile = Log_Law;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Velocity_Profile'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -1986,7 +1986,7 @@ void Control::getXML_ChangeID(void)
   
   if ( ct < 0 ) {
     Hostonly_ printf("Error : ID should be positive [%d]\n", ct);
-    assert(0);
+    Exit(0);
   }
   else {
     Hide.Change_ID = (unsigned)ct;
@@ -2010,7 +2010,7 @@ void Control::getXML_PMtest(void)
   else if( !strcasecmp(str, "off") )  Hide.PM_Test = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Performance_Test'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2031,7 +2031,7 @@ void Control::getXML_Scaling(void)
   Hide.Scaling_Factor = ( ct <= 0.0 ) ? 0.0 : ct;
   if ( Hide.Scaling_Factor <= 0.0 ) {
     Hostonly_ printf("Error : Scaling factor should be positive [%f]\n", ct);
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2042,7 +2042,7 @@ void Control::getXML_Scaling(void)
 void Control::getXML_InnerItr(void)
 {
   ParseSteer Tree(CF);
-  if ( !Tree.getParam("Inner_Iteration", InnerItr) ) assert(0);
+  if ( !Tree.getParam("Inner_Iteration", InnerItr) ) Exit(0);
 }
 
 /**
@@ -2078,7 +2078,7 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
 {
   if( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
   
   REAL_TYPE cell_max = getCellSize(G_size);
@@ -2149,7 +2149,7 @@ void Control::getXML_KindOfSolver(const CfgElem *elmL1)
   
   if ( !elmL1->GetValue("Kind_of_solver", &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Kind_of_solver' in 'Solver_Property'\n");
-		assert(0);
+		Exit(0);
 	}
 
   if     ( !strcasecmp(str, "Flow_Only") )                KindOfSolver = FLOW_ONLY;
@@ -2159,21 +2159,21 @@ void Control::getXML_KindOfSolver(const CfgElem *elmL1)
   else if( !strcasecmp(str, "Solid_Conduction") )         KindOfSolver = SOLID_CONDUCTION;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Kind_of_Solver\n");
-    assert(0);
+    Exit(0);
   }
   
   // Buoyancy option
   if ( (KindOfSolver==THERMAL_FLOW) || (KindOfSolver==THERMAL_FLOW_NATURAL) || (KindOfSolver==CONJUGATE_HEAT_TRANSFER) ) {
     if ( !elmL1->GetValue("Buoyancy", &str) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Buoyancy' in 'Solver_Property'\n");
-      assert(0);
+      Exit(0);
     }
     if     ( !strcasecmp(str, "Boussinesq") )   Mode.Buoyancy = BOUSSINESQ;
     else if( !strcasecmp(str, "Low_Mach") )     Mode.Buoyancy = LOW_MACH;
     else if( !strcasecmp(str, "No_Buoyancy") )  Mode.Buoyancy = NO_BUOYANCY;
     else {
       Hostonly_ stamped_printf("\tInvalid keyword is described for 'Buoyancy'\n");
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -2187,40 +2187,40 @@ void Control::getXML_Unit(void)
   const CfgElem *elmL1=NULL;
 	const char *str=NULL;
   
-  if ( !(elmL1 = getXML_Pointer("Unit", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Unit", "steer")) ) Exit(0);
   
   if ( !elmL1->GetValue("Unit_of_input_parameter", &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit_of_Input_Parameter' in 'Unit'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "Dimensional") )      Unit.Param = DIMENSIONAL;
   else if( !strcasecmp(str, "Non_Dimensional") )  Unit.Param = NONDIMENSIONAL;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit_of_Input_Parameter' section\n");
-    assert(0);
+    Exit(0);
   }
     
   if ( !elmL1->GetValue("pressure", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Pressure' in 'Unit'\n");
-    assert(0);
+    Exit(0);
   }
   if     ( !strcasecmp(str, "Gauge")  )   Unit.Prs = CompoList::Gauge;
   else if( !strcasecmp(str, "Absolute") ) Unit.Prs = CompoList::Absolute;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described at 'Pressure' in 'Unit'\n");
-    assert(0);
+    Exit(0);
   }
   
   if ( isHeatProblem() ) {
     if ( !elmL1->GetValue("temperature", &str) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Temperature' in 'Unit'\n");
-      assert(0);
+      Exit(0);
     }
     if     ( !strcasecmp(str, "Celsius") )  Unit.Temp = CompoList::Unit_CELSIUS;
     else if( !strcasecmp(str, "Kelvin") )   Unit.Temp = CompoList::Unit_KELVIN;
     else {
       Hostonly_ stamped_printf("\tInvalid keyword is described at 'Temperature' in 'Unit'\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -2235,13 +2235,13 @@ void Control::getXML_CheckParameter(void)
   const char *keyword=NULL;
   ParseSteer Tree(CF);
   
-  if ( !(keyword=Tree.getParam("Check_Parameter")) ) assert(0);
+  if ( !(keyword=Tree.getParam("Check_Parameter")) ) Exit(0);
   
   if     ( !strcasecmp(keyword, "On") )   CheckParam = ON;
   else if( !strcasecmp(keyword, "Off") )  CheckParam = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Check_Parameter'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2252,10 +2252,10 @@ void Control::getXML_CheckParameter(void)
 void Control::getXML_Para_Wind(void)
 {
   ParsePara Tree(CF);
-  if ( !Tree.IsSetElem("Wind_Direction") )      assert(0);
-  if ( !Tree.getEParam("yaw_angle",     yaw))   assert(0);
-  if ( !Tree.getEParam("pitch_angle", pitch))   assert(0);
-  if ( !Tree.getEParam("roll_angle", roll))     assert(0);
+  if ( !Tree.IsSetElem("Wind_Direction") )      Exit(0);
+  if ( !Tree.getEParam("yaw_angle",     yaw))   Exit(0);
+  if ( !Tree.getEParam("pitch_angle", pitch))   Exit(0);
+  if ( !Tree.getEParam("roll_angle", roll))     Exit(0);
 }
 
 /**
@@ -2271,34 +2271,34 @@ void Control::getXML_Para_Init(void)
 {	
 	const CfgElem *elmL1=NULL, *elmL2=NULL;
 
-  if ( !(elmL1=getXML_Pointer("Initial_State", "parameter")) ) assert(0);
+  if ( !(elmL1=getXML_Pointer("Initial_State", "parameter")) ) Exit(0);
 	
   // Density
 	if( !elmL1->GetValue("Density", &iv.Density) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Density'\n");
-    assert(0);
+    Exit(0);
   }
 	
   // Pressure
 	if( !elmL1->GetValue("Pressure", &iv.Pressure) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Pressure'\n");
-    assert(0);
+    Exit(0);
   }
 	
   // Velocity
 	if ( !(elmL2  = elmL1->GetElemFirst("Velocity")) ) {
 		Hostonly_ stamped_printf("\tParsing error : No 'Velocity' section in 'Initial_State'\n");
-		assert(0);
+		Exit(0);
 	}
 	if (elmL2->GetParamSize() != 3) {    // check number of Param
 		Hostonly_ stamped_printf("\tParsing error : 3 Params should be found in Initial_State Velocity\n");
-		assert(0);
+		Exit(0);
   }
 	REAL_TYPE v[3];
 	for (unsigned n=0; n<3; n++) v[n]=0.0;
 	if ( !(elmL2->GetVctValue("u", "v", "w", &v[0], &v[1], &v[2])) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get velocity params in 'Initial_State'\n");
-    assert(0);
+    Exit(0);
   }
   iv.VecU = v[0];
   iv.VecV = v[1];
@@ -2308,7 +2308,7 @@ void Control::getXML_Para_Init(void)
   if ( isHeatProblem() ) {
     if( !elmL1->GetValue("Temperature", &iv.Temperature) ) {
 			Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Temperature'\n");
-			assert(0);
+			Exit(0);
 		}
   }
 }
@@ -2324,14 +2324,14 @@ void Control::getXML_TimeMarching(void)
   const char *keyword=NULL;
   ParseSteer Tree(CF);
 
-  if ( !(keyword=Tree.getParam("Time_Integration")) ) assert(0);
+  if ( !(keyword=Tree.getParam("Time_Integration")) ) Exit(0);
 
   if     ( !strcasecmp(keyword, "1st_order") ) MarchingScheme = TM_O_1ST;
   else if( !strcasecmp(keyword, "2nd_order") ) MarchingScheme = TM_O_2ND;
   else if( !strcasecmp(keyword, "3rd_order") ) MarchingScheme = TM_O_3RD;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Time_Integration'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2398,75 +2398,75 @@ void Control::getXML_Log(void)
 	const char *str=NULL;
   REAL_TYPE f_val=0.0;
   
-  if ( !(elmL1 = getXML_Pointer("Log", "steer")) ) assert(0);
+  if ( !(elmL1 = getXML_Pointer("Log", "steer")) ) Exit(0);
   
   // 出力単位
   if ( !elmL1->GetValue("Unit_of_Log", &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit_of_Log' in 'Unit'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "Dimensional") )      Unit.Log = DIMENSIONAL;
   else if( !strcasecmp(str, "Non_Dimensional") )  Unit.Log = NONDIMENSIONAL;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit_of_Log' section\n");
-    assert(0);
+    Exit(0);
   }
   
   // Log_Base
   if ( !elmL1->GetValue(CfgIdt("Log_Base"), &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log_Base' in 'Log'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "on") )   Mode.Log_Base = ON;
   else if( !strcasecmp(str, "off") )  Mode.Log_Base = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Log_File'\n");
-    assert(0);
+    Exit(0);
   }
   
   // Log_Iteration
   if ( !elmL1->GetValue(CfgIdt("Log_Iteration"), &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log_Iteration' in 'Log'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "on") )   Mode.Log_Itr = ON;
   else if( !strcasecmp(str, "off") )  Mode.Log_Itr = OFF;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Log_Iteration'\n");
-    assert(0);
+    Exit(0);
   }
   
   // Log_Wall_Info
   if ( Mode.Wall_profile == Log_Law ) {
     if ( !elmL1->GetValue(CfgIdt("Log_Wall_Info"), &str) ) {
       Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log_Wall_Info' in 'Log'\n");
-      assert(0);
+      Exit(0);
     }
     if     ( !strcasecmp(str, "on") )   Mode.Log_Wall = ON;
     else if( !strcasecmp(str, "off") )  Mode.Log_Wall = OFF;
     else {
       Hostonly_ stamped_printf("\tInvalid keyword is described for 'Log_Wall_Info'\n");
-      assert(0);
+      Exit(0);
     }
   }
   
   // Log_Profiling
   if ( !elmL1->GetValue(CfgIdt("Log_Profiling"), &str) ) {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log_Profiling' in 'Log'\n");
-		assert(0);
+		Exit(0);
 	}
   if     ( !strcasecmp(str, "on") )     Mode.Profiling = ON;
   else if( !strcasecmp(str, "off") )    Mode.Profiling = OFF;
   else if( !strcasecmp(str, "detail") ) Mode.Profiling = DETAIL;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Log_Profiling'\n");
-    assert(0);
+    Exit(0);
   }
   
   // Interval console
   if ( !elmL1->GetValue("Console_Interval_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Console_Interval_Type' in 'Log'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -2477,7 +2477,7 @@ void Control::getXML_Log(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Console_Interval_Type' in 'Log'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("Console_Interval", &f_val) ) {
@@ -2485,14 +2485,14 @@ void Control::getXML_Log(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Console_Interval' in 'Log'\n");
-      assert(0);
+      Exit(0);
     }
   }
   
   // Interval file_history
   if ( !elmL1->GetValue("History_Interval_Type", &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'History_Interval_Type' in 'Log'\n");
-    assert(0);
+    Exit(0);
   }
   else {
     if ( !strcasecmp(str, "step") ) {
@@ -2503,7 +2503,7 @@ void Control::getXML_Log(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'History_Interval_Type' in 'Log'\n");
-      assert(0);
+      Exit(0);
     }
     
     if ( elmL1->GetValue("History_Interval", &f_val) ) {
@@ -2511,7 +2511,7 @@ void Control::getXML_Log(void)
     }
     else {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'History_Interval' in 'Log'\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -2534,7 +2534,7 @@ void Control::getXML_VarRange(void)
   else if( !strcasecmp(str, "cutoff") )   Hide.Range_Limit = Range_Cutoff;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for 'Variable Range'\n");
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -2547,7 +2547,7 @@ void Control::printParaConditions(FILE* fp)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
 
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -2609,7 +2609,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 {
   if( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
 
   REAL_TYPE dt = (REAL_TYPE)DT->get_DT();
@@ -2978,7 +2978,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     fprintf(fp,"\t     Parallel Mode            :   Equal Partitioning\n");
   }
   else {
-    assert(0);
+    Exit(0);
   }
   
   fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
@@ -3232,7 +3232,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   
   fflush(fp);
 
-  if (err==false) assert(0);
+  if (err==false) Exit(0);
 }
 
 /**
@@ -3263,7 +3263,7 @@ void Control::printLS(FILE* fp, ItrCtl* IC)
       
     default:
       stamped_printf("Error: Linear Solver section\n");
-      assert(0);
+      Exit(0);
   }
 }
 
@@ -3326,7 +3326,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
     }
     else {
       Hostonly_ printf("Error : Solid conduction(ND)\n");
-			assert(0);
+			Exit(0);
     }
   }
   else if (KindOfSolver == FLOW_ONLY) {
@@ -3345,7 +3345,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
         }
         else {
           Hostonly_ printf("Error : Thermal flow /wo buoyancy(ND)\n");
-					assert(0);
+					Exit(0);
         }
         break;
 
@@ -3363,7 +3363,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
         }
         else {
           Hostonly_ printf("Error : Thermal flow /w buoyancy(ND)\n");
-					assert(0);
+					Exit(0);
         }
         break;
     }
@@ -3384,7 +3384,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
         }
         else {
           Hostonly_ printf("Error : Natural Convection(ND)\n");
-					assert(0);
+					Exit(0);
         }
         break;
       default:
@@ -3441,7 +3441,7 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
       if ( cmp[n].isPolicy_Massflow() ) {
         if ( Unit.Param != DIMENSIONAL ) {
           Hostonly_ stamped_printf("Error: Non-dimensional condition\n");
-          assert(0);
+          Exit(0);
         }
         else {
           cmp[n].ca[CompoList::amplitude] = cmp[n].get_Velocity();
@@ -3616,35 +3616,35 @@ const char* Control::getVoxelFileName(void)
   }
   else {
     stamped_printf("\tParsing error : InFile attr [%s] is invalid.\n", infile->GetAttr());
-    assert(0);
+    Exit(0);
   }
   
   // フォーマットのチェック
 	if ( !(format = infile->GetFormat()) ) {
 		stamped_printf("\tParsing error : Invalid format at InFile description\n");
-		assert(0);
+		Exit(0);
 	}
   if ( !strcasecmp(format, "svx") ) {
     if ( vxFormat != Sphere_SVX ) {
       stamped_printf("\tParsing error : Specification of Voxel file format is not consistent.\n");
-      assert(0);
+      Exit(0);
     }
   }
 	else if ( !strcasecmp(format, "sbx") ) {
     if ( vxFormat != Sphere_SBX ) {
       stamped_printf("\tParsing error : Specification of Voxel file format is not consistent.\n");
-      assert(0);
+      Exit(0);
     }
   }
   else {
 		stamped_printf("\tParsing error : Invalid format for input voxel: %s\n", format);
-		assert(0);
+		Exit(0);
 	}
   
   //ファイル名取得
   if( !(fname = infile->GetFileName()) ) {
     stamped_printf("\tParsing error : InFile description\n");
-    assert(0);
+    Exit(0);
   }
   
   // sbx/svxファイルはシリアル入力のみ対応なので，マルチモードはoff

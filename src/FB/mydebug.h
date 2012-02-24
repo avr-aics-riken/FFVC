@@ -12,13 +12,16 @@
 //@brief FlowBase mydebug Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include <assert.h>
+#include <stdlib.h>
 
 #ifdef DEBUG
 #define debug_message() printf("%s (%d):\n",__FILE__, __LINE__)
 #else
 #define debug_message()
 #endif
+
+#define Exit(x) \
+((void)printf("exit at %s:%u\n", __FILE__, __LINE__), exit((x)))
 
 #define message() printf("\t%s (%d):\n",__FILE__, __LINE__)
 #define mark() printf("%s (%d):\n",__FILE__, __LINE__)

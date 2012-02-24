@@ -31,15 +31,15 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp);
   
   // point Data
-  if( !(v = dc_v->GetData()) )     assert(0);
-  if( !(p = dc_p->GetData()) )     assert(0);
-  if( !(bcd = dc_bcd->GetData()) ) assert(0);
+  if( !(v = dc_v->GetData()) )     Exit(0);
+  if( !(p = dc_p->GetData()) )     Exit(0);
+  if( !(bcd = dc_bcd->GetData()) ) Exit(0);
   
   if ( C.isHeatProblem() ) {
-    if( !(t = dc_t->GetData()) )   assert(0);
+    if( !(t = dc_t->GetData()) )   Exit(0);
   }
   if (C.Mode.TP == ON ) {
-    if( !(tp = dc_p0->GetData()) ) assert(0);
+    if( !(tp = dc_p0->GetData()) ) Exit(0);
   }
   
   // トリガーのリセット
@@ -70,7 +70,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   if( para_mng->IsParallel() ){
     TIMING_start(tm_vmax_comm);
     REAL_TYPE vMax_tmp = vMax;
-    if( !para_mng->Allreduce(&vMax_tmp, &vMax, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) assert(0);
+    if( !para_mng->Allreduce(&vMax_tmp, &vMax, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) Exit(0);
     TIMING_stop( tm_vmax_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
   }
 
@@ -215,7 +215,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
 
     if ( j_flag ) {
       // 初期化は1回だけ
-      if ( !C.Interval[Interval_Manager::tg_average].initTrigger(loop_step, loop_time, (double)SklGetDeltaT(), Interval_Manager::tg_average) ) assert(0);
+      if ( !C.Interval[Interval_Manager::tg_average].initTrigger(loop_step, loop_time, (double)SklGetDeltaT(), Interval_Manager::tg_average) ) Exit(0);
       if ( C.Interval[Interval_Manager::tg_average].isTriggered(loop_step, loop_time) ) {
 
         TIMING_start(tm_file_out);

@@ -91,6 +91,8 @@ SklSolverCBC::SklSolverCBC() {
   dc_vt   = NULL;
   dc_vof  = NULL;
   
+  dc_cvf  = NULL;
+  
   // (ix, jx, kx)
   dc_ap  = NULL;
   dc_at  = NULL;
@@ -195,6 +197,8 @@ SklSolverCBC::SklSolverCBC(int sType) {
   dc_vt   = NULL;
   dc_vof  = NULL;
   
+  dc_cvf  = NULL;
+  
   // (ix, jx, kx)
   dc_ap  = NULL;
   dc_at  = NULL;
@@ -252,7 +256,7 @@ SklSolverCBC::~SklSolverCBC() {
 //@brief ポインタを入れ換える
 void SklSolverCBC::swap_ptr_REAL_TYPE(REAL_TYPE* a, REAL_TYPE* b)
 {
-  if ( !a || !b ) assert(0);
+  if ( !a || !b ) Exit(0);
   REAL_TYPE* c=NULL;
   c = a;
   a = b;
@@ -269,7 +273,7 @@ void SklSolverCBC::swap_ptr_REAL_TYPE(REAL_TYPE* a, REAL_TYPE* b)
  */
 void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, REAL_TYPE& flop)
 {
-  if ( !ptr ) assert(0);
+  if ( !ptr ) Exit(0);
   BoundaryOuter* obc=NULL;
   
   obc = ptr;
@@ -568,17 +572,17 @@ void SklSolverCBC::Averaging_Time(REAL_TYPE& flop)
   v = av = NULL;
   t = at = NULL;
   
-  if( !(v  = dc_v->GetData()) )   assert(0);
-  if( !(av = dc_av->GetData()) )  assert(0);
-  if( !(p  = dc_p->GetData()) )   assert(0);
-  if( !(ap = dc_ap->GetData()) )  assert(0);
+  if( !(v  = dc_v->GetData()) )   Exit(0);
+  if( !(av = dc_av->GetData()) )  Exit(0);
+  if( !(p  = dc_p->GetData()) )   Exit(0);
+  if( !(ap = dc_ap->GetData()) )  Exit(0);
 
   fb_average_s_(ap, sz, gc, p, &flop);
   fb_average_v_(av, sz, gc, v, &flop);
 
   if ( C.isHeatProblem() ) {
-    if( !(t  = dc_t->GetData()) )  assert(0);
-    if( !(at = dc_at->GetData()) ) assert(0);
+    if( !(t  = dc_t->GetData()) )  Exit(0);
+    if( !(at = dc_at->GetData()) ) Exit(0);
     fb_average_s_(at, sz, gc, t, &flop);
   }
 }
@@ -598,15 +602,15 @@ void SklSolverCBC::Averaging_Space(REAL_TYPE* avr, REAL_TYPE& flop)
   REAL_TYPE *t0=NULL;
   unsigned *bd=NULL;
   
-  if( !(v  = dc_v->GetData()) )   assert(0);
-  if( !(v0 = dc_v0->GetData()) )  assert(0);
-  if( !(p  = dc_p->GetData()) )   assert(0);
-  if( !(p0 = dc_p0->GetData()) )  assert(0);
-  if( !(bd = dc_bcd->GetData()) ) assert(0);
+  if( !(v  = dc_v->GetData()) )   Exit(0);
+  if( !(v0 = dc_v0->GetData()) )  Exit(0);
+  if( !(p  = dc_p->GetData()) )   Exit(0);
+  if( !(p0 = dc_p0->GetData()) )  Exit(0);
+  if( !(bd = dc_bcd->GetData()) ) Exit(0);
   
   if ( C.isHeatProblem() ) {
-    if( !(t  = dc_t->GetData()) )  assert(0);
-    if( !(t0 = dc_t0->GetData()) ) assert(0);
+    if( !(t  = dc_t->GetData()) )  Exit(0);
+    if( !(t0 = dc_t0->GetData()) ) Exit(0);
   }
   
   REAL_TYPE m_var[2];
@@ -658,12 +662,12 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
       F.cnv_P_ND2D(dc_ws, dc_ap, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs, flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_ap) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_ap) ) Exit(0);
     }
-    if( !SklUtil::scaleAvrS3D(dc_ws, stepAvr, false) ) assert(0); // false => OUTPUT
+    if( !SklUtil::scaleAvrS3D(dc_ws, stepAvr, false) ) Exit(0); // false => OUTPUT
     if( !WriteFile(m_outAvrPrs, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -674,11 +678,11 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
       F.cnv_V_ND2D(dc_wvex, dc_av, &v00[1], C.RefVelocity, flop, stepAvr);
     }
     else {
-      if( !F.shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) assert(0);
+      if( !F.shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) Exit(0);
     }
     if( !WriteFile(m_outAvrUVW, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -689,12 +693,12 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
       F.cnv_T_ND2D(dc_ws, dc_at, C.BaseTemp, C.DiffTemp, C.Unit.Temp, flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_at) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_at) ) Exit(0);
     }
-    if( !SklUtil::scaleAvrS3D(dc_ws, stepAvr, false) ) assert(0); // false => OUTPUT
+    if( !SklUtil::scaleAvrS3D(dc_ws, stepAvr, false) ) Exit(0); // false => OUTPUT
     if( !WriteFile(m_outAvrTmp, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
 }
@@ -732,7 +736,7 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
     
     if( !WriteFile(m_outDiv, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -743,12 +747,12 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       F.cnv_P_ND2D(dc_ws, dc_p, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs, flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_p) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_p) ) Exit(0);
     }
     
     if( !WriteFile(m_outPrs, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
 
@@ -759,11 +763,11 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       F.cnv_V_ND2D(dc_wvex, dc_v, &v00[1], C.RefVelocity, flop);
     }
     else {
-      if( !F.shiftVout3D(dc_wvex, dc_v, &v00[1]) ) assert(0);
+      if( !F.shiftVout3D(dc_wvex, dc_v, &v00[1]) ) Exit(0);
     }
     if( !WriteFile(m_outUVW, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
 
@@ -774,11 +778,11 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       F.cnv_T_ND2D(dc_ws, dc_t, C.BaseTemp, C.DiffTemp, C.Unit.Temp, flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_t) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_t) ) Exit(0);
     }
     if( !WriteFile(m_outTmp, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
-      assert(0);
+      Exit(0);
     }
   }
   
@@ -786,9 +790,9 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   if (C.Mode.TP == ON ) {
     if( m_outTP ){
       REAL_TYPE  *v, *p, *tp;
-      if( !(v  = dc_v->GetData()) )   assert(0);
-      if( !(p  = dc_p->GetData()) )   assert(0);
-      if( !(tp = dc_p0->GetData()) )  assert(0);
+      if( !(v  = dc_v->GetData()) )   Exit(0);
+      if( !(p  = dc_p->GetData()) )   Exit(0);
+      if( !(tp = dc_p0->GetData()) )  Exit(0);
       
       fb_totalp_ (tp, sz, gc, v, p, v00, &flop);
       
@@ -797,11 +801,11 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
         F.cnv_TP_ND2D(dc_ws, dc_p0, C.RefDensity, C.RefVelocity, flop);
       }
       else {
-        if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) assert(0);
+        if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
       }
       if( !WriteFile(m_outTP, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -813,9 +817,9 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       unsigned *bcv=NULL;
       v = wv = NULL;
       
-      if( !(v  = dc_v->GetData()) )   assert(0);
-      if( !(wv = dc_wv->GetData()) )  assert(0);
-      if( !(bcv= dc_bcv->GetData()) ) assert(0);
+      if( !(v  = dc_v->GetData()) )   Exit(0);
+      if( !(wv = dc_wv->GetData()) )  Exit(0);
+      if( !(bcv= dc_bcv->GetData()) ) Exit(0);
       for (int i=0; i<3; i++) vz[i]=0.0;
       
       cbc_rot_v_(wv, sz, gc, dh, v, (int*)bcv, v00, &flop);
@@ -826,11 +830,11 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
         F.cnv_V_ND2D(dc_wvex, dc_wv, vz, RefVL, flop);
       }
       else {
-        if( !F.shiftVout3D(dc_wvex, dc_wv, vz) ) assert(0);
+        if( !F.shiftVout3D(dc_wvex, dc_wv, vz) ) Exit(0);
       }
       if( !WriteFile(m_outVrt, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -841,17 +845,17 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       REAL_TYPE  *v=NULL, *q=NULL;
       unsigned *bcv=NULL;
       
-      if( !(v  = dc_v->GetData()) )   assert(0);
-      if( !(q  = dc_p0->GetData()) )  assert(0);
-      if( !(bcv= dc_bcv->GetData()) ) assert(0);
+      if( !(v  = dc_v->GetData()) )   Exit(0);
+      if( !(q  = dc_p0->GetData()) )  Exit(0);
+      if( !(bcv= dc_bcv->GetData()) ) Exit(0);
       
       cbc_i2vgt_ (q, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
       // 無次元で出力
-      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
       if( !WriteFile(m_outI2VGT, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -862,17 +866,17 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       REAL_TYPE  *v=NULL, *q=NULL;
       unsigned *bcv=NULL;
       
-      if( !(v  = dc_v->GetData()) )   assert(0);
-      if( !(q  = dc_p0->GetData()) )  assert(0);
-      if( !(bcv= dc_bcv->GetData()) ) assert(0);
+      if( !(v  = dc_v->GetData()) )   Exit(0);
+      if( !(q  = dc_p0->GetData()) )  Exit(0);
+      if( !(bcv= dc_bcv->GetData()) ) Exit(0);
       
       cbc_helicity_(q, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
       // 無次元で出力
-      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
       if( !WriteFile(m_outHlcty, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -880,10 +884,10 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   // Interface Function
   if ( C.BasicEqs == INCMP_2PHASE ) {
     if( m_outVOF ){
-      if( !SklUtil::cpyS3D(dc_ws, dc_vof) ) assert(0);
+      if( !SklUtil::cpyS3D(dc_ws, dc_vof) ) Exit(0);
       if( !WriteFile(m_outVOF, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
   }
@@ -919,11 +923,11 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 	r = 0.0;
   comm_size = count_comm_size(size, guide);
   
-	if( !(p   = dc_p->GetData()) )   assert(0); // 圧力 p^{n+1}
-  if( !(p0  = dc_p0->GetData()) )  assert(0); // 圧力 p^n
-	if( !(src0= dc_ws->GetData()) )  assert(0); // 非反復のソース項
-  if( !(src1= dc_wk2->GetData()) ) assert(0); // 反復毎に変化するソース項
-	if( !(bcp = dc_bcp->GetData()) ) assert(0); // ビットフラグ
+	if( !(p   = dc_p->GetData()) )   Exit(0); // 圧力 p^{n+1}
+  if( !(p0  = dc_p0->GetData()) )  Exit(0); // 圧力 p^n
+	if( !(src0= dc_ws->GetData()) )  Exit(0); // 非反復のソース項
+  if( !(src1= dc_wk2->GetData()) ) Exit(0); // 反復毎に変化するソース項
+	if( !(bcp = dc_bcp->GetData()) ) Exit(0); // ビットフラグ
   // index test; if( !(idx3 = dc_index3->GetData()) ) return false;
   // index test; if( !(idx = dc_index->GetData()) ) return false;
   
@@ -935,7 +939,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       TIMING_start(tm_poi_itr_sct_2);
 
       // Jacobi反復法のワーク
-      if( !(wkj = dc_wkj->GetData()) ) assert(0);
+      if( !(wkj = dc_wkj->GetData()) ) Exit(0);
       
       // 反復処理
       TIMING_start(tm_assign_const);
@@ -971,10 +975,10 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_poi_comm);
         if (cm_mode == 0 ) {
-          if( !dc_p->CommBndCell(1) ) assert(0); // 1 layer communication
+          if( !dc_p->CommBndCell(1) ) Exit(0); // 1 layer communication
         }
         else {
-          if( !dc_p->CommBndCell2(1, wait_num, req) ) assert(0); // 1 layer communication
+          if( !dc_p->CommBndCell2(1, wait_num, req) ) Exit(0); // 1 layer communication
           para_mng->WaitAll(wait_num, req);
         }
         TIMING_stop(tm_poi_comm, comm_size);
@@ -1029,10 +1033,10 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_poi_comm);
         if (cm_mode == 0 ) {
-          if( !dc_p->CommBndCell(1) ) assert(0); // 1 layer communication
+          if( !dc_p->CommBndCell(1) ) Exit(0); // 1 layer communication
         }
         else {
-          if( !dc_p->CommBndCell2(1, wait_num, req) ) assert(0); // 1 layer communication
+          if( !dc_p->CommBndCell2(1, wait_num, req) ) Exit(0); // 1 layer communication
           para_mng->WaitAll(wait_num, req);
         }
         TIMING_stop(tm_poi_comm, comm_size);
@@ -1108,7 +1112,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
           
           TIMING_start(tm_poi_comm);
           if (cm_mode == 0 ) {
-            if( !dc_p->CommBndCell(1) ) assert(0); // 1 layer communication
+            if( !dc_p->CommBndCell(1) ) Exit(0); // 1 layer communication
           }
           else {
             cbc_sma_comm_     (p, sz, gc, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req, &para_key);
@@ -1124,7 +1128,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       
     default:
       printf("\tInvalid Linear Solver for Pressure\n");
-      assert(0);
+      Exit(0);
       break;
   }
 
@@ -1161,10 +1165,10 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
   unsigned int wait_num=0;
   int req[12];
 	
-	if( !(p   = dc_p->GetData()) )   assert(0);
-	if( !(ws  = dc_ws->GetData()) )  assert(0);
-  if( !(p0  = dc_p0->GetData()) )  assert(0);
-  if( !(bcv = dc_bcv->GetData()) ) assert(0);
+	if( !(p   = dc_p->GetData()) )   Exit(0);
+	if( !(ws  = dc_ws->GetData()) )  Exit(0);
+  if( !(p0  = dc_p0->GetData()) )  Exit(0);
+  if( !(bcv = dc_bcv->GetData()) ) Exit(0);
   
   // 反復処理
   switch (IC->get_LS()) {
@@ -1174,7 +1178,7 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
       
     default:
       stamped_printf("\tInvalid Linear Solver for Pressure\n");
-      assert(0);
+      Exit(0);
       break;
   }
   
@@ -1186,10 +1190,10 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
   switch (IC->get_LS()) {
     case SOR:
       if (cm_mode == 0 ) {
-        if( !dc_p->CommBndCell(guide) ) assert(0);
+        if( !dc_p->CommBndCell(guide) ) Exit(0);
       }
       else {
-        if( !dc_p->CommBndCell2(guide, wait_num, req) ) assert(0);
+        if( !dc_p->CommBndCell2(guide, wait_num, req) ) Exit(0);
         para_mng->WaitAll(wait_num, req);
       }
       break;
@@ -1235,7 +1239,7 @@ REAL_TYPE SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
   
   if( para_mng->IsParallel() ){
     REAL_TYPE tmp = c;
-    if ( !para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp) ) assert(0);
+    if ( !para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp) ) Exit(0);
   }
   
   return c*(REAL_TYPE)sizeof(REAL_TYPE); // Byte
@@ -1267,15 +1271,15 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   REAL_TYPE machine_epsilon = (C.Mode.Precision == SPH_SINGLE) ? SINGLE_EPSILON : DOUBLE_EPSILON;
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   
-	if( !(vc  = dc_vc->GetData()) )  assert(0);
-	if( !(wv  = dc_wv->GetData()) )  assert(0);
-  if( !(wk  = dc_vf0->GetData()) ) assert(0); // assign vf0 as working array
-  if( !(v   = dc_v->GetData()) )   assert(0);
-  if( !(bcv = dc_bcv->GetData()) ) assert(0);
-  if( !(bcd = dc_bcd->GetData()) ) assert(0);
-  if( !(p0  = dc_p0->GetData()) )  assert(0);
-  if( !(v0  = dc_v0->GetData()) )  assert(0);
-  if( !(vf0 = dc_vf0->GetData()) ) assert(0);
+	if( !(vc  = dc_vc->GetData()) )  Exit(0);
+	if( !(wv  = dc_wv->GetData()) )  Exit(0);
+  if( !(wk  = dc_vf0->GetData()) ) Exit(0); // assign vf0 as working array
+  if( !(v   = dc_v->GetData()) )   Exit(0);
+  if( !(bcv = dc_bcv->GetData()) ) Exit(0);
+  if( !(bcd = dc_bcd->GetData()) ) Exit(0);
+  if( !(p0  = dc_p0->GetData()) )  Exit(0);
+  if( !(v0  = dc_v0->GetData()) )  Exit(0);
+  if( !(vf0 = dc_vf0->GetData()) ) Exit(0);
   
   
   
@@ -1321,7 +1325,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
       
     default:
       printf("\tInvalid Linear Solver for Velocity_CN\n");
-      assert(0);
+      Exit(0);
   }
   
   // 境界条件
@@ -1346,10 +1350,10 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
       case SOR:
         TIMING_start(tm_pvec_cn_comm);
         if (cm_mode == 0 ) {
-          if( !dc_vc->CommBndCell(guide) ) assert(0);
+          if( !dc_vc->CommBndCell(guide) ) Exit(0);
         }
         else {
-          if( !dc_vc->CommBndCell2(guide, wait_num, req) ) assert(0);
+          if( !dc_vc->CommBndCell2(guide, wait_num, req) ) Exit(0);
           para_mng->WaitAll(wait_num, req);
         }
         TIMING_stop(tm_pvec_cn_comm, (REAL_TYPE)sizeof(REAL_TYPE)*2.0, 1);
@@ -1390,8 +1394,8 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
   REAL_TYPE *src1=NULL;  /// 発散値
   unsigned *bcp=NULL;
   
-  if( !(bcp = dc_bcp->GetData()) )  assert(0);
-  if( !(src1 = dc_wk2->GetData()) ) assert(0);
+  if( !(bcp = dc_bcp->GetData()) )  Exit(0);
+  if( !(src1 = dc_wk2->GetData()) ) Exit(0);
   
   switch (IC->get_normType()) {
     case ItrCtl::v_div_max:
@@ -1481,7 +1485,7 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       
     default:
       stamped_printf("\tInvalid convergence type\n");
-      assert(0);
+      Exit(0);
   }
   
   return convergence;
@@ -1508,13 +1512,13 @@ REAL_TYPE SklSolverCBC::PSOR(REAL_TYPE* p, REAL_TYPE* src0, REAL_TYPE* src1, uns
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
-        m_p = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        m_w = SklUtil::getFindexS3D(size, guide, i-1, j  , k  );
-        m_e = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
-        m_s = SklUtil::getFindexS3D(size, guide, i  , j-1, k  );
-        m_n = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
-        m_b = SklUtil::getFindexS3D(size, guide, i  , j  , k-1);
-        m_t = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+        m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+        m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         
         //m_p = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j  , k  );
         //m_w = F_INDEX_S3D(ixc, jxc, kxc, guide, i-1, j  , k  );
@@ -1579,13 +1583,13 @@ REAL_TYPE SklSolverCBC::PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1+(k+j+color+ip)%2; i<=ixc; i+=2) {
-        m_p = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        m_w = SklUtil::getFindexS3D(size, guide, i-1, j  , k  );
-        m_e = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
-        m_s = SklUtil::getFindexS3D(size, guide, i  , j-1, k  );
-        m_n = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
-        m_b = SklUtil::getFindexS3D(size, guide, i  , j  , k-1);
-        m_t = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+        m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+        m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         
         //m_p = F_INDEX_S3D(ixc, jxc, kxc, guide, i  , j  , k  );
         //m_w = F_INDEX_S3D(ixc, jxc, kxc, guide, i-1, j  , k  );

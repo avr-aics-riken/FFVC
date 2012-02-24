@@ -20,10 +20,10 @@
  */
 void SetBC::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
 {
-  if ( !m_CMP ) assert(0);
+  if ( !m_CMP ) Exit(0);
   cmp = m_CMP;
   
-  if ( !m_MAT ) assert(0);
+  if ( !m_MAT ) Exit(0);
   mat = m_MAT;
 }
 

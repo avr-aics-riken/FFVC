@@ -90,7 +90,7 @@ bool Interval_Manager::initTrigger(const unsigned stp, const double tm, const do
     // フレームワークに対するダミー用の値をいれておく >> Control::tell_Interval_2_Sphere()
     if ( intvl_step == 0 ) {
       if ( id == tg_compute ) {
-        if ( tscale == 0.0 ) assert(0);
+        if ( tscale == 0.0 ) Exit(0);
         intvl_step = intvl_tm/(delta_t*tscale);
       }
       else {

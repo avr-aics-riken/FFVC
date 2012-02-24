@@ -30,7 +30,7 @@ void PerfMonitor::print(FILE* fp)
 
   if (!m_gathered) {
     fprintf(stderr, "\tPerfMonitor::print() error, not gathered infomation\n");
-    assert(0);
+    Exit(0);
   }
   
   // 合計 > tot
@@ -59,7 +59,7 @@ void PerfMonitor::print(FILE* fp)
   
   // 反復あたりのタイムコスト
   double *m_tcost = NULL;
-  if ( !(m_tcost = new double[m_nWatch]) ) assert(0);
+  if ( !(m_tcost = new double[m_nWatch]) ) Exit(0);
   
   for (int i = 0; i < m_nWatch; i++) {
     PerfWatch& w = m_watchArray[i];
@@ -74,7 +74,7 @@ void PerfMonitor::print(FILE* fp)
   
   // 降順ソート O(n^2) Brute force　
   unsigned *m_order = NULL;
-  if ( !(m_order = new unsigned[m_nWatch]) ) assert(0);
+  if ( !(m_order = new unsigned[m_nWatch]) ) Exit(0);
   
   for (int i=0; i<m_nWatch; i++) {
     m_order[i] = i;
@@ -207,7 +207,7 @@ void PerfMonitor::printDetail(FILE* fp)
 
   if (!m_gathered) {
     fprintf(stderr, "\tPerfMonitor::printDetail() error, not gathered infomation\n");
-    assert(0);
+    Exit(0);
   }
 
   fprintf(fp, "\n-----------------------------------------------------------------\n");

@@ -10,7 +10,6 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include "DataHolder.h"
-#include <cassert>
 
 #define BUF_SIZE 256
 
@@ -29,7 +28,7 @@ DataHolder::DataHolder(const char* label, const char* file, int id) :
   FILE* fp;
   if (!(fp = fopen(file, "r"))) {
     printError("cannot open data file.\n");
-    assert(0);
+    Exit(0);
   }
   readData(fp);
 
@@ -52,7 +51,7 @@ void DataHolder::readData(FILE* fp)
     if (sscanf(buf, "%lf %lf", &k, &v) != 2 &&     // 空白区切り
         sscanf(buf, "%lf , %lf", &k, &v) != 2) {   // カンマ区切り
       printError("cnnnot parse line: %s\n", buf);
-      assert(0);
+      Exit(0);
     }
     REAL_TYPE key = (REAL_TYPE)k;
     REAL_TYPE val = (REAL_TYPE)v;
@@ -60,7 +59,7 @@ void DataHolder::readData(FILE* fp)
     // 重複を確認
     if (m_data.find(key) != m_data.end()) {
       printError("duplicated key value in line: %s\n", buf);
-      assert(0);
+      Exit(0);
     }
 
     m_data.insert(DATA_MAP::value_type(key, val));
@@ -71,7 +70,7 @@ void DataHolder::readData(FILE* fp)
 
   if (m_dataSize == 0) {
     printError("no data in file.\n");
-    assert(0);
+    Exit(0);
   }
 
   DATA_MAP::iterator it;
@@ -224,7 +223,7 @@ bool DataHolderManager::receiveCfgPtr(SklSolverConfig* cfg)
 void DataHolderManager::readData()
 {
   const CfgElem* elemTop = m_cfg->GetTop(PARAMETER);
-  if (!elemTop) assert(0);
+  if (!elemTop) Exit(0);
   const CfgElem* elemDH = elemTop->GetElemFirst("Data_Holder");
   while (elemDH) {
     const CfgParam* param = elemDH->GetParamFirst();
@@ -233,7 +232,7 @@ void DataHolderManager::readData()
       const char* file;
       if (!param->GetData(&file)) {
         printError("name=\"%s\": cannnot parse 'value'\n", label);
-        assert(0);
+        Exit(0);
       }
 //    printf("label=%s, file=%s\n", label, file);
       DataHolder* dh = new DataHolder(label, file, pn.ID);

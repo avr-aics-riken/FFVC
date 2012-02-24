@@ -90,7 +90,7 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C) co
       }
       else {
         printf("\n\tError : Norm selection type=%d\n", ICv->get_normType());
-        assert(0);
+        Exit(0);
       }
     }
     

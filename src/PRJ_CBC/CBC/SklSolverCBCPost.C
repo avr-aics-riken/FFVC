@@ -24,7 +24,7 @@ SklSolverCBC::SklSolverPost() {
     Hostonly_ {
       if ( !(fp=fopen("profiling.txt", "w")) ) {
         stamped_printf("\tSorry, can't open 'profiling.txt' file. Write failed.\n");
-        assert(0);
+        Exit(0);
       }
     }
     

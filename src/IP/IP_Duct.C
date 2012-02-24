@@ -111,7 +111,7 @@ void IP_Duct::printPara(FILE* fp, Control* R)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
   
   string dir;
@@ -163,13 +163,13 @@ void IP_Duct::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
   // チェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    assert(0);
+    Exit(0);
   }
   if ( ((unsigned)(wth[0]/pch[0]) != sz[0]) ||
        ((unsigned)(wth[1]/pch[1]) != sz[1]) ||
        ((unsigned)(wth[2]/pch[2]) != sz[2]) ) {
     Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
-    assert(0);
+    Exit(0);
   }
 
 }
@@ -207,7 +207,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=1; k<=(int)kmax; k++) { 
     for (j=1; j<=(int)jmax; j++) {
       for (i=1; i<=(int)imax; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_solid;
       }
     }
@@ -218,7 +218,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
     for (k=1; k<=(int)kmax; k++) {
       for (j=1; j<=(int)jmax; j++) {
         for (i=1; i<=(int)imax; i++) {
-          m = SklUtil::getFindexS3D(size, guide, i, j, k);
+          m = FBUtility::getFindexS3D(size, guide, i, j, k);
           mid[m] = mid_fluid;
         }
       }
@@ -231,7 +231,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               y = oy + 0.5*dh + dh*(j-1);
               z = oz + 0.5*dh + dh*(k-1);
               if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_fluid;
@@ -245,7 +245,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               x = ox + 0.5*dh + dh*(i-1);
               z = oz + 0.5*dh + dh*(k-1);
               if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_fluid;
@@ -259,7 +259,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               x = ox + 0.5*dh + dh*(i-1);
               y = oy + 0.5*dh + dh*(j-1);
               if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) mid[m] = mid_fluid;
@@ -279,7 +279,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
-                m = SklUtil::getFindexS3D(size, guide, i, j, k);
+                m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -302,7 +302,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
-                m = SklUtil::getFindexS3D(size, guide, i, j, k);
+                m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -325,7 +325,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
-                m = SklUtil::getFindexS3D(size, guide, i, j, k);
+                m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -348,7 +348,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
-                m = SklUtil::getFindexS3D(size, guide, i, j, k);
+                m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -371,7 +371,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
-                m = SklUtil::getFindexS3D(size, guide, i, j, k);
+                m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -394,7 +394,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
-                m = SklUtil::getFindexS3D(size, guide, i, j, k);
+                m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -423,8 +423,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i,   j, k);
-              m1= SklUtil::getFindexS3D(size, guide, i+1, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i,   j, k);
+              m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
                 mid[m] = mid_driver_face;
               }
@@ -437,8 +437,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i,   j, k);
-              m1= SklUtil::getFindexS3D(size, guide, i-1, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i,   j, k);
+              m1= FBUtility::getFindexS3D(size, guide, i-1, j, k);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
                 mid[m] = mid_driver_face;
               }
@@ -451,8 +451,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j,   k);
-              m1= SklUtil::getFindexS3D(size, guide, i, j+1, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j,   k);
+              m1= FBUtility::getFindexS3D(size, guide, i, j+1, k);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
                 mid[m] = mid_driver_face;
               }
@@ -465,8 +465,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j,   k);
-              m1= SklUtil::getFindexS3D(size, guide, i, j-1, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j,   k);
+              m1= FBUtility::getFindexS3D(size, guide, i, j-1, k);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
                 mid[m] = mid_driver_face;
               }
@@ -479,8 +479,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
-              m1= SklUtil::getFindexS3D(size, guide, i, j, k+1);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              m1= FBUtility::getFindexS3D(size, guide, i, j, k+1);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
                 mid[m] = mid_driver_face;
               }
@@ -493,8 +493,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org)
         for (k=1; k<=(int)kmax; k++) {
           for (j=1; j<=(int)jmax; j++) {
             for (i=1; i<=(int)imax; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
-              m1= SklUtil::getFindexS3D(size, guide, i, j, k-1);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              m1= FBUtility::getFindexS3D(size, guide, i, j, k-1);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
                 mid[m] = mid_driver_face;
               }

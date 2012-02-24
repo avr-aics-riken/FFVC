@@ -20,15 +20,15 @@ void PerfWatch::start()
 {
   if (m_label.empty()) {
     printError("PerfWatch::start()",  "properties not set\n");
-    assert(0);
+    Exit(0);
   }
   if (m_started) {
     printError("PerfWatch::start()",  "already started\n");
-    assert(0);
+    Exit(0);
   }
   if (m_exclusive && ExclusiveStarted) {
     printError("PerfWatch::start()",  "exclusive sections overlapped\n");
-    assert(0);
+    Exit(0);
   }
   m_started = true;
   if (m_exclusive) ExclusiveStarted = true;
@@ -47,7 +47,7 @@ void PerfWatch::stop(REAL_TYPE flopPerTask, unsigned iterationCount)
 {
   if (!m_started) {
     printError("PerfWatch::stop()",  "not started\n");
-    assert(0);
+    Exit(0);
   }
   m_time += getTime() - m_startTime;
   m_flop += (double)flopPerTask * iterationCount;
@@ -62,21 +62,21 @@ void PerfWatch::gather()
 {
   if (m_gathered) {
     printError("PerfWatch::gather()",  "already gathered\n");
-    assert(0);
+    Exit(0);
   }
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   m_np = para_mng->GetNodeNum(pn.procGrp);
   
-  if (!(m_timeArray = new double[m_np])) assert(0);
-  if (!(m_flopArray = new double[m_np])) assert(0);
-  if (!(m_countArray = new unsigned long[m_np])) assert(0);
+  if (!(m_timeArray = new double[m_np])) Exit(0);
+  if (!(m_flopArray = new double[m_np])) Exit(0);
+  if (!(m_countArray = new unsigned long[m_np])) Exit(0);
   if (para_mng->IsParallel()) {
     if (!para_mng->Gather(&m_time, 1, SKL_ARRAY_DTYPE_DOUBLE,
-                      m_timeArray, 1, SKL_ARRAY_DTYPE_DOUBLE, 0, pn.procGrp)) assert(0);
+                      m_timeArray, 1, SKL_ARRAY_DTYPE_DOUBLE, 0, pn.procGrp)) Exit(0);
     if (!para_mng->Gather(&m_flop, 1, SKL_ARRAY_DTYPE_DOUBLE,
-                      m_flopArray, 1, SKL_ARRAY_DTYPE_DOUBLE, 0, pn.procGrp)) assert(0);
+                      m_flopArray, 1, SKL_ARRAY_DTYPE_DOUBLE, 0, pn.procGrp)) Exit(0);
     if (!para_mng->Gather(&m_count, 1, SKL_ARRAY_DTYPE_ULONG,
-                      m_countArray, 1, SKL_ARRAY_DTYPE_ULONG, 0, pn.procGrp)) assert(0);
+                      m_countArray, 1, SKL_ARRAY_DTYPE_ULONG, 0, pn.procGrp)) Exit(0);
   }
   else {
     m_timeArray[0] = m_time;
@@ -152,11 +152,11 @@ void PerfWatch::printDatail(FILE* fp, double totalTime)
 {
   if (pn.ID != 0) {
     printError("PerfWatch::printDetail()",  "call from non-root node\n");
-    assert(0);
+    Exit(0);
   }
   if (!m_gathered) {
     printError("PerfWatch::printDetail()",  "nt gathered information\n");
-    assert(0);
+    Exit(0);
   }
 
   double tMax = 0.0;

@@ -21,7 +21,7 @@ void Intrinsic::printExample(FILE* fp, const char* str)
 {
   if( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
   fprintf(fp,"\n\tExample : %s\n\n", str); fflush(fp);
 
@@ -65,7 +65,7 @@ void Intrinsic::printPara(FILE* fp, Control* R)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
-    assert(0);
+    Exit(0);
   }
   // describe method
 }
@@ -84,7 +84,7 @@ void Intrinsic::genVFfromBcx(REAL_TYPE* VF, unsigned* bx)
   for (k=0; k<=(int)(kmax+1); k++) {
     for (j=0; j<=(int)(jmax+1); j++) {
       for (i=0; i<=(int)(imax+1); i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         VF[m] = GET_SHIFT_F( bx[m], STATE_BIT );
       }
     }
@@ -116,7 +116,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
   ofstream ofs(svx_fname, ios::out | ios::binary);
   if (!ofs) {
     cout << "\tCan't open " << svx_fname << " file" << endl;
-    assert(0);
+    Exit(0);
   }
 
   ix = imax+2;  // +2 means guide cell for IP model
@@ -139,7 +139,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
     for (j=0; j<=(int)(jmax+1); j++) {
       for (i=0; i<=(int)(imax+1); i++) {
         l = (unsigned)(ix*jx*k + ix*j + i);
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         q[l] = id[m];
         f[l] = (float)vf[m];
       }
@@ -220,7 +220,7 @@ void Intrinsic::writeSVX(int *id, Control* R)
   ofstream ofs(svx_fname, ios::out | ios::binary);
   if (!ofs) {
     cout << "\tCan't open " << svx_fname << " file" << endl;
-    assert(0);
+    Exit(0);
   }
   
   ix = imax+2;  // +2 means guide cell for IP model
@@ -242,7 +242,7 @@ void Intrinsic::writeSVX(int *id, Control* R)
     for (j=0; j<=(int)(jmax+1); j++) {
       for (i=0; i<=(int)(imax+1); i++) {
         l = (unsigned)(ix*jx*k + ix*j + i);
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         q[l] = id[m];
       }
     }

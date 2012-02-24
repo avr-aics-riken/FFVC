@@ -13,7 +13,6 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include "FBDefine.h"
-#include "mydebug.h"
 #include "Skl.h"
 #include "SklSolverBase.h"
 #include "parallel/SklParaComponent.h"
@@ -46,6 +45,8 @@ public:
                         unsigned init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
   bool alloc_Uint_S3D  (SklSolverBase* obj, SklScalar3D<unsigned>*    &dc_var, const char* label, unsigned* sz, unsigned gc, 
                         unsigned init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
+  bool alloc_Float_S3D (SklSolverBase* obj, SklScalar3D<float>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
+                        float init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
 };
 
 #endif // _SKL_FB_ALLOC_H_

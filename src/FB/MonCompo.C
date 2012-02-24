@@ -35,14 +35,14 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
   }
   
   nPoint = pointSet.size();
-  if (nPoint == 0) assert(0); // サンプリング点数
+  if (nPoint == 0) Exit(0); // サンプリング点数
   
   allocArray();
   allocSamplingArray();
   
   for (int m = 0; m < nPoint; m++) {
     crd[m] = pointSet[m].crd;
-    if (!check_region(m, g_org, g_box, true)) assert(0);
+    if (!check_region(m, g_org, g_box, true)) Exit(0);
     comment[m] = pointSet[m].label;
   }
   
@@ -64,7 +64,7 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
           break;
           
         default:
-          assert(0);
+          Exit(0);
       }
     }
   }
@@ -98,7 +98,7 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
   }
   
   nPoint = nDivision + 1;
-  if (nPoint < 2) assert(0);
+  if (nPoint < 2) Exit(0);
   
   allocArray();
   allocSamplingArray();
@@ -111,7 +111,7 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
     ostringstream oss;
     oss << "point_" << m;
     crd[m] = st + dd * (REAL_TYPE)m;
-    if (!check_region(m, g_org, g_box, true)) assert(0);
+    if (!check_region(m, g_org, g_box, true)) Exit(0);
     comment[m] = oss.str();
   }
   
@@ -133,7 +133,7 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
           break;
           
         default:
-          assert(0);
+          Exit(0);
       }
     }
   }
@@ -177,7 +177,7 @@ void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
     ostringstream oss;
     oss << "point_" << m;
     comment[m] = oss.str();
-    if (!check_region(m, g_org, g_box, true)) assert(0);
+    if (!check_region(m, g_org, g_box, true)) Exit(0);
     if (rank[m] == pn.ID) {
       mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
     }
@@ -197,36 +197,36 @@ void MonitorCompo::checkMonitorPoints()
     }
   }
   
-  if (!allReduceSum(pointStatus, nPoint)) assert(0);
+  if (!allReduceSum(pointStatus, nPoint)) Exit(0);
 }
 
 
 /// サンプリング値を格納する配列の確保.
 void MonitorCompo::allocSamplingArray()
 {
-  if ( nPoint == 0 ) assert(0); // サンプリング点数
+  if ( nPoint == 0 ) Exit(0); // サンプリング点数
   
   const REAL_TYPE DUMMY = 1.0e10;
   //const REAL_TYPE DUMMY = 0.0;
   
   if (variable[VELOCITY]) {
-    if (!(vel = new Vec3r[nPoint])) assert(0);
+    if (!(vel = new Vec3r[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) vel[i] = Vec3r(DUMMY, DUMMY, DUMMY);
   }
   if (variable[PRESSURE]) {
-    if (!(prs = new REAL_TYPE[nPoint])) assert(0);
+    if (!(prs = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) prs[i] = DUMMY;
   }
   if (variable[TEMPERATURE]) {
-    if (!(tmp = new REAL_TYPE[nPoint])) assert(0);
+    if (!(tmp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tmp[i] = DUMMY;
   }
   if (variable[TOTAL_PRESSURE]) {
-    if (!(tp = new REAL_TYPE[nPoint])) assert(0);
+    if (!(tp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
   }
   if (variable[VORTICITY]) {
-    if (!(vor = new Vec3r[nPoint])) assert(0);
+    if (!(vor = new Vec3r[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) vor[i] = Vec3r(DUMMY, DUMMY, DUMMY);
   }
 }
@@ -235,14 +235,14 @@ void MonitorCompo::allocSamplingArray()
 /// モニタリング管理用配列の確保.
 void MonitorCompo::allocArray()
 {
-  if (nPoint == 0) assert(0); // サンプリング点数
+  if (nPoint == 0) Exit(0); // サンプリング点数
   
-  if (!(crd  = new Vec3r[nPoint]))    assert(0);
-  if (!(rank = new int[nPoint]))      assert(0);
-  if (!(comment = new string[nPoint])) assert(0);
-  if (!(pointStatus = new int[nPoint])) assert(0);
+  if (!(crd  = new Vec3r[nPoint]))    Exit(0);
+  if (!(rank = new int[nPoint]))      Exit(0);
+  if (!(comment = new string[nPoint])) Exit(0);
+  if (!(pointStatus = new int[nPoint])) Exit(0);
   
-  if (!(mon = new Sampling*[nPoint])) assert(0);
+  if (!(mon = new Sampling*[nPoint])) Exit(0);
   for (int i = 0; i < nPoint; i++) mon[i] = NULL;
 }
 
@@ -263,7 +263,7 @@ bool MonitorCompo::check_region(unsigned m, Vec3r org, Vec3r box, bool flag)
       (crd[m].y>(org.y+box.y))  ||
       (crd[m].z< org.z)         ||
       (crd[m].z>(org.z+box.z)) ) {
-    if (flag) { stmpd_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", pn.ID, crd[m].x, crd[m].y, crd[m].z); } // %12.4 >> %14.6
+    if (flag) { stamped_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", pn.ID, crd[m].x, crd[m].y, crd[m].z); } // %12.4 >> %14.6
     return false;
   }
   return true;
@@ -283,7 +283,7 @@ string MonitorCompo::getTypeStr()
     case INNER_BOUNDARY:
       str = "Inner Boundary"; break;
     default:
-      assert(0);
+      Exit(0);
   }
   
   return str;
@@ -303,7 +303,7 @@ string MonitorCompo::getMethodStr()
     case SMOOTHING:
       str = "Smoothing"; break;
     default:
-      assert(0);
+      Exit(0);
   }
   
   return str;
@@ -323,7 +323,7 @@ string MonitorCompo::getModeStr()
     case Sampling::SOLID_ONLY:
       str = "Solid"; break;
     default:
-      assert(0);
+      Exit(0);
   }
   
   return str;
@@ -357,8 +357,8 @@ void MonitorCompo::setMonitorVar(const char* str)
   else if (!strcasecmp("total_pressure", str))  variable[TOTAL_PRESSURE] = true;
   else if (!strcasecmp("vorticity", str))       variable[VORTICITY] = true;
   else {
-    Hostonly_ stmpd_printf("\tError : Invalid variable keyword [%s]\n", str);
-    assert(0);
+    Hostonly_ stamped_printf("\tError : Invalid variable keyword [%s]\n", str);
+    Exit(0);
   }
 }
 
@@ -373,8 +373,8 @@ void MonitorCompo::setSamplingMethod(const char* str)
   else if (!strcasecmp("interpolation", str)) method = INTERPOLATION;
   else if (!strcasecmp("smoothing", str))     method = SMOOTHING;
   else {
-    Hostonly_ stmpd_printf("\tError : Invalid samping_method keyword [%s]\n", str);
-    assert(0);
+    Hostonly_ stamped_printf("\tError : Invalid samping_method keyword [%s]\n", str);
+    Exit(0);
   }
 }
 
@@ -389,8 +389,8 @@ void MonitorCompo::setSamplingMode(const char* str)
   else if (!strcasecmp("fluid", str)) mode = Sampling::FLUID_ONLY;
   else if (!strcasecmp("solid", str)) mode = Sampling::SOLID_ONLY;
   else {
-    Hostonly_ stmpd_printf("\tError : Invalid samping_mode keyword [%s]\n", str);
-    assert(0);
+    Hostonly_ stamped_printf("\tError : Invalid samping_mode keyword [%s]\n", str);
+    Exit(0);
   }
 }
 
@@ -402,7 +402,7 @@ void MonitorCompo::setSamplingMode(const char* str)
 void MonitorCompo::setRankArray()
 {
   int* sendBuf =  new int[nPoint];
-  if (!sendBuf) assert(0);
+  if (!sendBuf) Exit(0);
   
   for (int m = 0; m < nPoint; m++) {
     sendBuf[m] = -1;
@@ -413,7 +413,7 @@ void MonitorCompo::setRankArray()
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if (para_mng->IsParallel()) {
     if (!para_mng->Allreduce(sendBuf, rank, nPoint, SKL_ARRAY_DTYPE_INT,
-                             SKL_MAX, pn.procGrp)) assert(0);
+                             SKL_MAX, pn.procGrp)) Exit(0);
   }
   else {
     for (int m = 0; m < nPoint; m++) rank[m] = sendBuf[m];
@@ -468,12 +468,12 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
   int np = para_mng->GetNodeNum(pn.procGrp);
   
   if (pn.ID == 0 && !sRecvBuf) {
-    if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) assert(0);
+    if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) Exit(0);
   }
   
   if (!para_mng->Gather(s, nPoint, SKL_ARRAY_DTYPE_REAL,
                         sRecvBuf, nPoint, SKL_ARRAY_DTYPE_REAL,
-                        0, pn.procGrp)) assert(0);
+                        0, pn.procGrp)) Exit(0);
   
   if (pn.ID == 0) {
     for (int i = 0; i < np; i++) {
@@ -498,11 +498,11 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
   int np = para_mng->GetNodeNum(pn.procGrp);
   
   if (!vSendBuf) {
-    if (!(vSendBuf = new REAL_TYPE[nPoint*3*np])) assert(0);
+    if (!(vSendBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
   }
   
   if (pn.ID == 0 && !vRecvBuf) {
-    if (!(vRecvBuf = new REAL_TYPE[nPoint*3*np])) assert(0);
+    if (!(vRecvBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
   }
   
   for (int m = 0; m < nPoint; m++) {
@@ -513,7 +513,7 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
   
   if (!para_mng->Gather(vSendBuf, nPoint*3, SKL_ARRAY_DTYPE_REAL,
                         vRecvBuf, nPoint*3, SKL_ARRAY_DTYPE_REAL,
-                        0, pn.procGrp)) assert(0);
+                        0, pn.procGrp)) Exit(0);
   
   if (pn.ID == 0) {
     for (int i = 0; i < np; i++) {
@@ -538,7 +538,7 @@ void MonitorCompo::openFile(const char* str, bool gathered)
 {
   if (gathered) {
     if (!(fp = fopen(str, "w"))) {
-      perror(str); assert(0);
+      perror(str); Exit(0);
     }
     writeHeader(true);
   }
@@ -549,7 +549,7 @@ void MonitorCompo::openFile(const char* str, bool gathered)
     string::size_type pos = fileName.rfind(".");
     fileName.insert(pos, rankStr.str());
     if (!(fp = fopen(fileName.c_str(), "w"))) {
-      perror(fileName.c_str()); assert(0);
+      perror(fileName.c_str()); Exit(0);
     }
     writeHeader(false);
   }
@@ -706,7 +706,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   int st[3], ed[3];
   
   int* nPointList;
-  if (!(nPointList = new int[np])) assert(0);
+  if (!(nPointList = new int[np])) Exit(0);
   for (int i = 0; i < np; i++) nPointList[i] = 0;
   
   cmp.getCompoBV(st, ed);
@@ -715,7 +715,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          if ((bcd[SklUtil::getFindexS3D(size, guide, i, j, k)] & MASK_CMP_ID) == n) {
+          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_CMP_ID) == n) {
             nPointList[pn.ID]++;
           }
         }
@@ -723,15 +723,15 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
     }
   }
   
-  if (!allReduceSum(nPointList, np)) assert(0);
+  if (!allReduceSum(nPointList, np)) Exit(0);
   
   //check
   int sum = 0;
   for (int i = 0; i < np; i++) sum += nPointList[i];
-  assert(sum ==nPoint);
+  assert(sum == nPoint);
   
   REAL_TYPE* buf;
-  if (!(buf = new REAL_TYPE[nPoint*3])) assert(0);
+  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
   for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
   
   int m0 = 0;
@@ -746,7 +746,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          if ((bcd[SklUtil::getFindexS3D(size, guide, i, j, k)] & MASK_CMP_ID) == n) {
+          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_CMP_ID) == n) {
             buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
             buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
             buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
@@ -757,7 +757,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
     }
   }
   
-  if (!allReduceSum(buf, nPoint*3)) assert(0);
+  if (!allReduceSum(buf, nPoint*3)) Exit(0);
   
   for (m = 0; m < nPoint; m++) {
     crd[m].x = buf[m*3+0];

@@ -25,7 +25,7 @@ void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   // forced
   if (R->Unit.Param != NONDIMENSIONAL) {
     Hostonly_ printf("\tError : PMT class is designed for only non-dimensional parameter\n");
-    assert(0);
+    Exit(0);
   }
   
   // 性能測定モードをOnにする
@@ -34,11 +34,11 @@ void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   // 等ピッチのチェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    assert(0);
+    Exit(0);
   }
   if ( pch[0] <= 0.0 ) {
     Hostonly_ printf("Error : 'VoxelPitch' must be grater than zero.\n");
-    assert(0);
+    Exit(0);
   }
   
   wth[0] = pch[0]*(REAL_TYPE)sz[0];
@@ -52,7 +52,7 @@ void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   // Setting depends on Example,  INTRINSIC
   if ( (sz[0]/2*2 != sz[0]) || (sz[1]/2*2 != sz[1]) || (sz[2]/2*2 != sz[2]) ) {
     printf("\tDimension size must be even for all direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-    assert(0);
+    Exit(0);
   }
 }
 
@@ -72,7 +72,7 @@ void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=1; k<=(int)kmax; k++) {
     for (j=1; j<=(int)jmax; j++) {
       for (i=1; i<=(int)imax; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }
     }

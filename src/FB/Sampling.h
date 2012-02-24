@@ -17,6 +17,8 @@
 #include "vec3.h"
 #include "basic_func.h"
 
+using namespace FB;
+
 /**
  * Samplingクラス
  *

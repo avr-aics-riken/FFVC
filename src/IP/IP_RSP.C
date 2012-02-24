@@ -25,22 +25,22 @@ void IP_RSP::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   // forced
   if (R->Unit.Param != DIMENSIONAL) {
     Hostonly_ printf("\tError : RSP class is designed for only dimensional parameter\n");
-    assert(0);
+    Exit(0);
   }
 
   // 分割数を取得する
-  if ( !SklUtil::getCellInfo(R->NoDimension, sz, org, pch, wth) ) assert(0);
+  if ( !FBUtility::getCellInfo(R->NoDimension, sz, org, pch, wth) ) Exit(0);
   
   // Z方向のチェック
   if ( sz[2] != 3 ) {
     Hostonly_ printf("\tError : The size of Z-direction must be 3.\n");
-    assert(0);
+    Exit(0);
   }
   
   // 領域アスペクト比のチェック
   if ( sz[0]*5 != sz[1] ) {
     Hostonly_ printf("\tError : The number of division must be 1:5 (=X:Y)\n");
-    assert(0);
+    Exit(0);
   }
 
   // 二次元の領域設定
@@ -54,7 +54,7 @@ void IP_RSP::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   
   if ( (pch[0]-pch[1])/pch[0] > 1.0e-3 ) { // 桁落ち防止
     Hostonly_ printf("\tVoxel width must be same between X(%e) and Y(%e) direction.\n", pch[0], pch[1]);
-    assert(0);
+    Exit(0);
   }
   
   // Z方向は3層に合わせて調整
@@ -82,7 +82,7 @@ void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org)
   for (k=1; k<=(int)kmax; k++) {
     for (j=1; j<=(int)jmax; j++) {
       for (i=1; i<=(int)imax; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }
     }

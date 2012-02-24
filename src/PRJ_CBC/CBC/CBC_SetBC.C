@@ -25,7 +25,7 @@ void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TY
   REAL_TYPE ref;
   REAL_TYPE *t=NULL;
   
-  if ( !(t = d_t->GetData()) ) assert(0);
+  if ( !(t = d_t->GetData()) ) Exit(0);
   
   ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
   id = cmp[n].getID();
@@ -33,7 +33,7 @@ void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TY
   for (k=1; k<=kxc; k++) {
     for (j=1; j<=jxc; j++) {
       for (i=1; i<=ixc; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         if ( DECODE_ID(bx[m]) == id ) {
           t[m] = ref; 
         }
@@ -80,7 +80,7 @@ void SetBC3D::checkDriver(FILE* fp)
             printf("\tDriver direction is different between OBC[%s] and Component[%s].", 
                     FBUtility::getDirection(o_dir).c_str(),
                     FBUtility::getDirection(c_dir).c_str());
-            assert(0);
+            Exit(0);
           }
           
           // 位置のチェック  IDは，流入面に対して面直1層の指定
@@ -101,7 +101,7 @@ void SetBC3D::checkDriver(FILE* fp)
               break;
               
             default:
-              assert(0);
+              Exit(0);
               break;
           }
           o_pos = obc[face].get_DriverIndex();
@@ -109,7 +109,7 @@ void SetBC3D::checkDriver(FILE* fp)
           if ( o_pos != c_pos ) {
             fprintf(fp, "\tDriver Lid Position is different between OBC[%d] and Component[%d].", o_pos, c_pos);
             printf("\tDriver Lid Position is different between OBC[%d] and Component[%d].", o_pos, c_pos);
-            assert(0);
+            Exit(0);
           }
         }
       }
@@ -145,11 +145,11 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Contr
         break;
         
       case FAN:
-        assert(0);
+        Exit(0);
         break;
         
       case DARCY:
-        assert(0);
+        Exit(0);
         break;
         
       default:
@@ -185,11 +185,11 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYP
         break;
         
       case FAN:
-        assert(0);
+        Exit(0);
         break;
         
       case DARCY:
-        assert(0);
+        Exit(0);
         break;
         
       default:
@@ -227,11 +227,11 @@ void SetBC3D::mod_Vcf_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE 
         break;
         
       case FAN:
-        assert(0);
+        Exit(0);
         break;
         
       case DARCY:
-        assert(0);
+        Exit(0);
         break;
         
       default:
@@ -273,11 +273,11 @@ void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE 
           break;
           
         case FAN:
-          assert(0);
+          Exit(0);
           break;
           
         case DARCY:
-          assert(0);
+          Exit(0);
           break;
           
         default:
@@ -309,7 +309,7 @@ void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
   REAL_TYPE pv=0.0;
   REAL_TYPE *p=NULL;
   
-  if ( !(p = d_p->GetData()) ) assert(0);
+  if ( !(p = d_p->GetData()) ) Exit(0);
   
   for (int face=0; face<NOFACE; face++) {
     F = obc[face].get_BCtype();
@@ -363,27 +363,27 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
     
     switch (face) {
       case X_MINUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case X_PLUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_MINUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_PLUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_MINUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_PLUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
     }
   }
@@ -391,15 +391,15 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
     int i,j,k;
     unsigned m0, m1;
     REAL_TYPE* p=NULL;
-    if ( !(p = d_p->GetData()) ) assert(0);
+    if ( !(p = d_p->GetData()) ) Exit(0);
     
     switch (face) {
       case X_MINUS:
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, 0  , j  , k  );
-              m1 = SklUtil::getFindexS3D(size, guide, ixc, j  , k  );
+              m0 = FBUtility::getFindexS3D(size, guide, 0  , j  , k  );
+              m1 = FBUtility::getFindexS3D(size, guide, ixc, j  , k  );
               p[m0] = p[m1];
             }
           }
@@ -410,8 +410,8 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, ixc+1, j, k);
-              m1 = SklUtil::getFindexS3D(size, guide, 1,     j, k);
+              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, 1,     j, k);
               p[m0] = p[m1];
             }
           }
@@ -422,8 +422,8 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, 0  , k);
-              m1 = SklUtil::getFindexS3D(size, guide, i, jxc, k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0  , k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, jxc, k);
               p[m0] = p[m1];
             }
           }
@@ -434,8 +434,8 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, jxc+1, k);
-              m1 = SklUtil::getFindexS3D(size, guide, i, 1    , k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, 1    , k);
               p[m0] = p[m1];
             }
           }
@@ -446,8 +446,8 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, 0  );
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, kxc);
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0  );
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, kxc);
               p[m0] = p[m1];
             }
           }
@@ -458,8 +458,8 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, kxc+1);
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, 1    );
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, 1    );
               p[m0] = p[m1];
             }
           }
@@ -485,7 +485,7 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
   unsigned no_comm_face = 1; //通信面数
   
   REAL_TYPE pd, *p=NULL;
-  if ( !(p = d_p->GetData()) ) assert(0);
+  if ( !(p = d_p->GetData()) ) Exit(0);
   
   // 上流面か下流面かで，圧力差の方向を逆転する
   pd = ( uod == BoundaryOuter::prdc_upstream ) ? pv : -pv;
@@ -493,11 +493,11 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
   if ( para_mng->IsParallel() ) {
     switch (face) {
       case X_MINUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, 0   , j  , k  );
+              m0 = FBUtility::getFindexS3D(size, guide, 0   , j  , k  );
               p[m0] += pd;
             }
           }
@@ -505,11 +505,11 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         break;
         
       case X_PLUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, ixc+1, j, k);
+              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
               p[m0] += pd;
             }
           }
@@ -517,11 +517,11 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         break;
         
       case Y_MINUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, 0   , k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0   , k);
               p[m0] += pd;
             }
           }
@@ -529,11 +529,11 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         break;
         
       case Y_PLUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, jxc+1, k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
               p[m0] += pd;
             }
           }
@@ -541,11 +541,11 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         break;
         
       case Z_MINUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, 0   );
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0   );
               p[m0] += pd;
             }
           }
@@ -553,11 +553,11 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         break;
         
       case Z_PLUS:
-        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_p->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, kxc+1);
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
               p[m0] += pd;
             }
           }
@@ -571,8 +571,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, 0   , j  , k  );
-              m1 = SklUtil::getFindexS3D(size, guide, ixc, j  , k  );
+              m0 = FBUtility::getFindexS3D(size, guide, 0   , j  , k  );
+              m1 = FBUtility::getFindexS3D(size, guide, ixc, j  , k  );
               p[m0] = p[m1] + pd;
             }
           }
@@ -583,8 +583,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, ixc+1, j, k);
-              m1 = SklUtil::getFindexS3D(size, guide, 1,      j, k);
+              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, 1,      j, k);
               p[m0] = p[m1] + pd;
             }
           }
@@ -595,8 +595,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, 0   , k);
-              m1 = SklUtil::getFindexS3D(size, guide, i, jxc, k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0   , k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, jxc, k);
               p[m0] = p[m1] + pd;
             }
           }
@@ -607,8 +607,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, jxc+1, k);
-              m1 = SklUtil::getFindexS3D(size, guide, i, 1     , k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, 1     , k);
               p[m0] = p[m1] + pd;
             }
           }
@@ -619,8 +619,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, 0   );
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, kxc);
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0   );
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, kxc);
               p[m0] = p[m1] + pd;
             }
           }
@@ -631,8 +631,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, kxc+1);
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, 1     );
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, 1     );
               p[m0] = p[m1] + pd;
             }
           }
@@ -657,27 +657,27 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
     
     switch (face) {
       case X_MINUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case X_PLUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_MINUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_PLUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_MINUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_PLUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
     }
   }
@@ -685,15 +685,15 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
     int i,j,k;
     unsigned m0, m1;
     REAL_TYPE* t=NULL;
-    if ( !(t = d_t->GetData()) ) assert(0);
+    if ( !(t = d_t->GetData()) ) Exit(0);
     
     switch (face) {
       case X_MINUS:
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, 0   , j  , k  );
-              m1 = SklUtil::getFindexS3D(size, guide, ixc, j  , k  );
+              m0 = FBUtility::getFindexS3D(size, guide, 0   , j  , k  );
+              m1 = FBUtility::getFindexS3D(size, guide, ixc, j  , k  );
               t[m0] = t[m1];
             }
           }
@@ -704,8 +704,8 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m0 = SklUtil::getFindexS3D(size, guide, ixc+1, j, k);
-              m1 = SklUtil::getFindexS3D(size, guide, 1,      j, k);
+              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, 1,      j, k);
               t[m0] = t[m1];
             }
           }
@@ -716,8 +716,8 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, 0   , k);
-              m1 = SklUtil::getFindexS3D(size, guide, i, jxc, k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0   , k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, jxc, k);
               t[m0] = t[m1];
             }
           }
@@ -728,8 +728,8 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
         if( pn.nID[face] < 0 ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, jxc+1, k);
-              m1 = SklUtil::getFindexS3D(size, guide, i, 1     , k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, 1     , k);
               t[m0] = t[m1];
             }
           }
@@ -740,8 +740,8 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, 0   );
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, kxc);
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0   );
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, kxc);
               t[m0] = t[m1];
             }
           }
@@ -752,8 +752,8 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
         if( pn.nID[face] < 0 ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, kxc+1);
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, 1     );
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, 1     );
               t[m0] = t[m1];
             }
           }
@@ -771,7 +771,7 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
 void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
 {
   REAL_TYPE *v=NULL;
-  if ( !(v = d_v->GetData()) ) assert(0);
+  if ( !(v = d_v->GetData()) ) Exit(0);
   
   for (int face=0; face<NOFACE; face++) {
     
@@ -873,7 +873,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_T
 void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
 {
   REAL_TYPE *v=NULL;
-  if ( !(v = d_v->GetData()) ) assert(0);
+  if ( !(v = d_v->GetData()) ) Exit(0);
   
   int st[3], ed[3];
   
@@ -941,7 +941,7 @@ void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
   unsigned F=0;
   REAL_TYPE *t=NULL;
   
-  if ( !(t = d_t->GetData()) ) assert(0);
+  if ( !(t = d_t->GetData()) ) Exit(0);
   
   for (int face=0; face<NOFACE; face++) {
     F = obc[face].get_BCtype();
@@ -991,16 +991,16 @@ REAL_TYPE SetBC3D::setDirectForcing(REAL_TYPE* v, unsigned* bx, unsigned n, REAL
   for (k=cmp[n].ci.st[2]-1; k<=cmp[n].ci.ed[2]; k++) {
     for (j=cmp[n].ci.st[1]-1; j<=cmp[n].ci.ed[1]; j++) {
       for (i=cmp[n].ci.st[0]-1; i<=cmp[n].ci.ed[0]; i++) {
-        s = bx[ SklUtil::getFindexS3D(size, guide, i, j, k) ];
+        s = bx[ FBUtility::getFindexS3D(size, guide, i, j, k) ];
         if ( (s & BIT_MASK_10) == n ) {
 					if ( BIT_IS_SHIFT(s, VFACE_I) ) {
-						v[SklUtil::getFindexV3D(size, guide, i, j, k, 0)] = vec[0];
+						v[FBUtility::getFindexV3D(size, guide, i, j, k, 0)] = vec[0];
 					}
 					if ( BIT_IS_SHIFT(s, VFACE_J) ) {
-						v[SklUtil::getFindexV3D(size, guide, i, j, k, 1)] = vec[1];
+						v[FBUtility::getFindexV3D(size, guide, i, j, k, 1)] = vec[1];
 					}
 					if ( BIT_IS_SHIFT(s, VFACE_K) ) {
-						v[SklUtil::getFindexV3D(size, guide, i, j, k, 2)] = vec[2];
+						v[FBUtility::getFindexV3D(size, guide, i, j, k, 2)] = vec[2];
 					}
         }
       }
@@ -1144,7 +1144,7 @@ REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* t, unsigned* bh2, int n, REAL_TY
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         if ( (bh2[m] & MASK_CMP_ID) == n ) {
           t[m] += dt*hs;
           c++; 
@@ -1178,7 +1178,7 @@ void SetBC3D::ps_IBC_ConstTemp(REAL_TYPE* t, unsigned* bh2, int n)
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         if ( (bh2[m] & MASK_CMP_ID) == n ) t[m] = tmp;
       }
     }
@@ -1275,7 +1275,7 @@ REAL_TYPE SetBC3D::ps_IBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE 
       for (i=st[0]; i<=ed[0]; i++) {
         
         f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bh1[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
@@ -1362,13 +1362,13 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
       for (i=st[0]; i<=ed[0]; i++) {
         
         f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bh1[m];
         t_p = t[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
-          m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
-          m_w = SklUtil::getFindexV3DEx(size, guide, 0, i-1, j, k);
+          m_0 = FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
+          m_w = FBUtility::getFindexV3DEx(size, guide, 0, i-1, j, k);
           c = 0.5*(v[m_w]+v[m_0]) - u_ref;
           if ( c>0.0 ) c=0.0;
           f_w = c*t_p;
@@ -1377,8 +1377,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
-          m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
-          m_e = SklUtil::getFindexV3DEx(size, guide, 0, i+1, j, k);
+          m_0 = FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
+          m_e = FBUtility::getFindexV3DEx(size, guide, 0, i+1, j, k);
           c = 0.5*(v[m_e]+v[m_0]) - u_ref;
           if ( c<0.0 ) c=0.0;
           f_e = c*t_p;
@@ -1387,8 +1387,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
-          m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
-          m_s = SklUtil::getFindexV3DEx(size, guide, 1, i, j-1, k);
+          m_0 = FBUtility::getFindexV3DEx(size, guide, 1, i, j  , k);
+          m_s = FBUtility::getFindexV3DEx(size, guide, 1, i, j-1, k);
           c = 0.5*(v[m_s]+v[m_0]) - v_ref;
           if ( c>0.0 ) c=0.0;
           f_s = c*t_p;
@@ -1397,8 +1397,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
-          m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
-          m_n = SklUtil::getFindexV3DEx(size, guide, 1, i, j+1, k);
+          m_0 = FBUtility::getFindexV3DEx(size, guide, 1, i, j  , k);
+          m_n = FBUtility::getFindexV3DEx(size, guide, 1, i, j+1, k);
           c = 0.5*(v[m_n]+v[m_0]) - v_ref;
           if ( c<0.0 ) c=0.0;
           f_n = c*t_p;
@@ -1407,8 +1407,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
-          m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
-          m_b = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k-1);
+          m_0 = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
+          m_b = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k-1);
           c = 0.5*(v[m_b]+v[m_0]) - w_ref;
           if ( c>0.0 ) c=0.0;
           f_b = c*t_p;
@@ -1417,8 +1417,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
-          m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
-          m_t = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k+1);
+          m_0 = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
+          m_t = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k+1);
           c = 0.5*(v[m_t]+v[m_0]) - w_ref;
           if ( c<0.0 ) c=0.0;
           f_t = c*t_p;
@@ -1480,10 +1480,10 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
         i=1; // 最外層のID
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m   = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m   = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
-            m_w = SklUtil::getFindexV3DEx(size, guide, 0, i-1, j, k);
+            m_0 = FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
+            m_w = FBUtility::getFindexV3DEx(size, guide, 0, i-1, j, k);
             c = 0.5*(v[m_w]+v[m_0]) - u_ref;
             t_p = (c < 0.0) ? t[m] : t_nd; // 流出の場合には内部の値，流入の場合には参照値
             f_w = c*t_p;
@@ -1501,10 +1501,10 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
         i=ixc;
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_0 = SklUtil::getFindexV3DEx(size, guide, 0, i  , j, k);
-            m_e = SklUtil::getFindexV3DEx(size, guide, 0, i+1, j, k);
+            m_0 = FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
+            m_e = FBUtility::getFindexV3DEx(size, guide, 0, i+1, j, k);
             c = 0.5*(v[m_e]+v[m_0]) - u_ref;
             t_p = (c > 0.0) ? t[m] : t_nd;
             f_e = c*t_p;
@@ -1522,10 +1522,10 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
         j=1;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
-            m_s = SklUtil::getFindexV3DEx(size, guide, 1, i, j-1, k);
+            m_0 = FBUtility::getFindexV3DEx(size, guide, 1, i, j  , k);
+            m_s = FBUtility::getFindexV3DEx(size, guide, 1, i, j-1, k);
             c = 0.5*(v[m_s]+v[m_0]) - v_ref;
             t_p = (c < 0.0) ? t[m] : t_nd;
             f_s = c*t_p;
@@ -1543,10 +1543,10 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
         j=jxc;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_0 = SklUtil::getFindexV3DEx(size, guide, 1, i, j  , k);
-            m_n = SklUtil::getFindexV3DEx(size, guide, 1, i, j+1, k);
+            m_0 = FBUtility::getFindexV3DEx(size, guide, 1, i, j  , k);
+            m_n = FBUtility::getFindexV3DEx(size, guide, 1, i, j+1, k);
             c = 0.5*(v[m_n]+v[m_0]) - v_ref;
             t_p = (c > 0.0) ? t[m] : t_nd;
             f_n = c*t_p;
@@ -1564,10 +1564,10 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
         k=1;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
-            m_b = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k-1);
+            m_0 = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
+            m_b = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k-1);
             c = 0.5*(v[m_b]+v[m_0]) - w_ref;
             t_p = (c < 0.0) ? t[m] : t_nd;
             f_b = c*t_p;
@@ -1585,10 +1585,10 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
         k=kxc;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            m_0 = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k  );
-            m_t = SklUtil::getFindexV3DEx(size, guide, 2, i, j, k+1);
+            m_0 = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
+            m_t = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k+1);
             c = 0.5*(v[m_t]+v[m_0]) - w_ref;
             t_p = (c > 0.0) ? t[m] : t_nd;
             f_t = c*t_p;
@@ -1652,7 +1652,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
         i=1; // 最外層のID
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m   = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m   = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             va += f_w;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
@@ -1672,7 +1672,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
         i=ixc;
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             va += f_e;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
@@ -1692,7 +1692,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
         j=1;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             va += f_s;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
@@ -1712,7 +1712,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
         j=jxc;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             va += f_n;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
@@ -1732,7 +1732,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
         k=1;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             va += f_b;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
@@ -1752,7 +1752,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
         k=kxc;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             va += f_t;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
@@ -1802,12 +1802,12 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
         i=1; // 最外層のID
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = pp * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
             va += q; 
-            t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 等温セルに指定温度を代入
+            t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 等温セルに指定温度を代入
           }
         }
       }
@@ -1819,12 +1819,12 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
         i=ixc;
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = pp * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
             va -= q; 
-            t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
           }
         }
       }
@@ -1836,12 +1836,12 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
         j=1;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = pp * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
           }
         }
       }
@@ -1853,12 +1853,12 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
         j=jxc;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = pp * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
           }
         }
       }
@@ -1870,12 +1870,12 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
         k=1;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = pp * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
           }
         }
       }
@@ -1887,12 +1887,12 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
         k=kxc;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = pp * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
           }
         }
       }
@@ -1935,9 +1935,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
         i=1; // 最外層のID
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
             va += q;
           }
         }
@@ -1950,9 +1950,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
         i=ixc;
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
             va -= q;
           }
         }
@@ -1965,9 +1965,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
         j=1;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
           }
         }
@@ -1980,9 +1980,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
         j=jxc;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
             va -= q;
           }
         }
@@ -1995,9 +1995,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
         k=1;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
           }
         }
@@ -2010,9 +2010,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
         k=kxc;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
             va -= q;
           }
         }
@@ -2060,12 +2060,12 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
         i=1; // 最外層のID
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = ht * (bt - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
             va += q; 
-            t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = bt; // 隣接流体セルにバルク温度を代入
+            t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = bt; // 隣接流体セルにバルク温度を代入
           }
         }
       }
@@ -2077,12 +2077,12 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
         i=ixc;
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = ht * (t0[m] - bt);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = bt;
+            t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = bt;
           }
         }
       }
@@ -2094,12 +2094,12 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
         j=1;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = ht * (bt - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = bt;
+            t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = bt;
           }
         }
       }
@@ -2111,12 +2111,12 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
         j=jxc;
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = ht * (t0[m] - bt);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = bt;
+            t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = bt;
           }
         }
       }
@@ -2128,12 +2128,12 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
         k=1;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = ht * (bt - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = bt;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = bt;
           }
         }
       }
@@ -2145,12 +2145,12 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
         k=kxc;
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bh1[m];
             q = ht * (t0[m] - bt);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = bt;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = bt;
           }
         }
       }
@@ -2201,24 +2201,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (sf - 0.0); // 基準温度との温度差
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
               va += q; // マイナス面の正の値は流入
-              t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
+              t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
             }
           }
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (sf - t0[m]); // 基準温度との温度差
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf;
             }
           }          
         }
@@ -2232,24 +2232,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (0.0 - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
               va -= q; // プラス面の正の値は流出
-              t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             }
           }          
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (t0[m] - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
               va -= q; // プラス面の正の値は流出
-              t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             }
           }          
         }
@@ -2263,24 +2263,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (sf - 0.0);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             }
           }          
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (sf - t0[m]);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             }
           }          
         }
@@ -2294,24 +2294,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (0.0 - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             }
           }          
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (t0[m] - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             }
           }          
         }
@@ -2325,24 +2325,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (sf - 0.0);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;              
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;              
             }
           }
         }
         else { // Local
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (sf - t0[m]);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
             }
           }
         }
@@ -2356,24 +2356,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (0.0 - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;              
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;              
             }
           }
         }
         else { // Local
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht * (t0[m] - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
             }
           }
         }
@@ -2437,24 +2437,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (sf - 0.0); // 基準温度との温度差
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q; // マイナス面の正の値は流入
               va += q; // マイナス面の正の値は流入
-              t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
+              t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
             }
           }
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (sf - t0[m]); // 基準温度との温度差
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf;
             }
           }          
         }
@@ -2468,24 +2468,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (0.0 - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
               va -= q; // プラス面の正の値は流出
-              t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             }
           }          
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (j=1; j<=jxc; j++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (t0[m] - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
               va -= q; // プラス面の正の値は流出
-              t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             }
           }          
         }
@@ -2499,24 +2499,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (sf - 0.0);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             }
           }          
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (sf - t0[m]);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             }
           }          
         }
@@ -2530,24 +2530,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (0.0 - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             }
           }          
         }
         else { // Local
           for (k=1; k<=kxc; k++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (t0[m] - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             }
           }          
         }
@@ -2561,24 +2561,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht3 * (sf - 0.0);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;              
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;              
             }
           }
         }
         else { // Local
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht3 * (sf - t0[m]);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
             }
           }
         }
@@ -2592,24 +2592,24 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (0.0 - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;              
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;              
             }
           }
         }
         else { // Local
           for (j=1; j<=jxc; j++) {
             for (i=1; i<=ixc; i++) {
-              m = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = bh1[m];
               q = ht1 * (t0[m] - sf);
-              qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+              qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
               va -= q;
-              t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+              t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
             }
           }
         }
@@ -2656,41 +2656,41 @@ REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TY
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
 
-        m = SklUtil::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bh1[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
           va += q; // マイナス面の正の値は流入
           flop += 2.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
           va -= q; // プラス面の正の値は流出
           flop += 2.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
           va += q;
           flop += 2.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
           va -= q;
           flop += 2.0;
         }
 
         if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
           va += q;
           flop += 1.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
           va -= q;
           flop += 2.0;
         }
@@ -2734,27 +2734,27 @@ REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* b
   for (k=(int)cmp[n].ci.st[2]-1; k<=(int)cmp[n].ci.ed[2]; k++) {
     for (j=(int)cmp[n].ci.st[1]-1; j<=(int)cmp[n].ci.ed[1]; j++) {
       for (i=(int)cmp[n].ci.st[0]-1; i<=(int)cmp[n].ci.ed[0]; i++) {
-        m0 = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        mi = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
-        mj = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
-        mk = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        mi = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        mj = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        mk = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         s = bx[m0];
         if ( (s & BIT_MASK_10) == n ) {
           if ( BIT_IS_SHIFT(s, QFACE_I) ) {
             qi = ht*(t[m0]-t[mi]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
             d = BIT_SHIFT(s, DIR_I);
             qsum += qi * ( (0==d) ? 1.0 : -1.0 );
           }
           if ( BIT_IS_SHIFT(s, QFACE_J) ) {
             qj = ht*(t[m0]-t[mj]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
             d = BIT_SHIFT(s, DIR_J);
             qsum += qj * ( (0==d) ? 1.0 : -1.0 );
           }
           if ( BIT_IS_SHIFT(s, QFACE_K) ) {
             qk = ht*(t[m0]-t[mk]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
             d = BIT_SHIFT(s, DIR_K);
             qsum += qk * ( (0==d) ? 1.0 : -1.0 );
           }
@@ -2805,54 +2805,54 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bh1[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
           q = ht * (sf - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
           va += q; // マイナス面の正の値は流入
-          t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 表面温度を代入
+          t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 表面温度を代入
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
           q = ht * (t0[m] - sf);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
           va -= q; // プラス面の正の値は流出
-          t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
           q = ht * (sf - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
           va += q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
           q = ht * (t0[m] - sf);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
           va -= q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
           q = ht * (sf - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
           va += q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
           q = ht * (t0[m] - sf);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
           va -= q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
           flop += 4.0;
         }
       }
@@ -2915,54 +2915,54 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
       for (j=st[1]; j<=ed[1]; j++) {
         for (i=st[0]; i<=ed[0]; i++) {
           
-          m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+          m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = bh1[m];
           
           if ( GET_FACE_BC(s, BC_FACE_W) == n ) { // vertical
             q = ht1 * (sf - 0.0); // 基準温度との温度差
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
             va += q; // マイナス面の正の値は流入
-            t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
+            t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_E) == n ) { // vertical
             q = ht1 * (0.0 - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
             va -= q; // プラス面の正の値は流出
-            t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_S) == n ) { // vertical
             q = ht1 * (sf - 0.0);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_N) == n ) { // vertical
             q = ht1 * (0.0 - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_B) == n ) { // horizontal
             q = ht3 * (sf - 0.0);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_T) == n ) { // horizontal
             q = ht1 * (0.0 - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
             flop += 4.0;
           }
         }
@@ -2974,54 +2974,54 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
       for (j=st[1]; j<=ed[1]; j++) {
         for (i=st[0]; i<=ed[0]; i++) {
           
-          m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+          m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = bh1[m];
           
           if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
             q = ht1 * (sf - t0[m]); // 基準温度との温度差
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
             va += q; // マイナス面の正の値は流入
-            t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
+            t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
             q = ht1 * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
             va -= q; // プラス面の正の値は流出
-            t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
             q = ht1 * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
             q = ht1 * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
             q = ht3 * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
             q = ht1 * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
             flop += 4.0;
           }
         }
@@ -3073,54 +3073,54 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
       for (j=st[1]; j<=ed[1]; j++) {
         for (i=st[0]; i<=ed[0]; i++) {
           
-          m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+          m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = bh1[m];
           
           if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
             q = ht * (sf - 0.0); // 基準温度との温度差
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
             va += q; // マイナス面の正の値は流入
-            t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
+            t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
             q = ht * (0.0 - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
             va -= q; // プラス面の正の値は流出
-            t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
             q = ht * (sf - 0.0);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
             q = ht * (0.0 - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
             q = ht * (sf - 0.0);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
             q = ht * (0.0 - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
             flop += 4.0;
           }
         }
@@ -3132,54 +3132,54 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
       for (j=st[1]; j<=ed[1]; j++) {
         for (i=st[0]; i<=ed[0]; i++) {
           
-          m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+          m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = bh1[m];
           
           if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
             q = ht * (sf - t0[m]); // 基準温度との温度差
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
             va += q; // マイナス面の正の値は流入
-            t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
+            t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
             q = ht * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
             va -= q; // プラス面の正の値は流出
-            t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
             q = ht * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
             q = ht * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
             q = ht * (sf - t0[m]);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
             flop += 4.0;
           }
           
           if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
             q = ht * (t0[m] - sf);
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
             va -= q;
-            t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+            t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
             flop += 4.0;
           }
         }
@@ -3228,54 +3228,54 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bh1[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
           q = ht * (bt - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
           va += q; // マイナス面の正の値は流入
-          t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = bt; // 隣接流体セルにバルク温度を代入
+          t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = bt; // 隣接流体セルにバルク温度を代入
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
           q = ht * (t0[m] - bt);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
           va -= q; // プラス面の正の値は流出
-          t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = bt;
+          t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = bt;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
           q = ht * (bt - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
           va += q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = bt;
+          t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = bt;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
           q = ht * (t0[m] - bt);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
           va -= q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = bt;
+          t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = bt;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
           q = ht * (bt - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
           va += q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = bt;
+          t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = bt;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
           q = ht * (t0[m] - bt);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
           va -= q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = bt;
+          t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = bt;
           flop += 4.0;
         }
       }
@@ -3317,38 +3317,38 @@ REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, 
   for (k=(int)cmp[n].ci.st[2]-1; k<=(int)cmp[n].ci.ed[2]; k++) {
     for (j=(int)cmp[n].ci.st[1]-1; j<=(int)cmp[n].ci.ed[1]; j++) {
       for (i=(int)cmp[n].ci.st[0]-1; i<=(int)cmp[n].ci.ed[0]; i++) {
-        m0 = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bx[m0];
         if ( (s & BIT_MASK_10) == n ) {
           
           if ( BIT_IS_SHIFT(s, QFACE_I) ) {
             wi = BIT_SHIFT(s, DIR_I);
-            t[ SklUtil::getFindexS3D(size, guide, i+wi, j, k) ] = bt; // 流体セルにバルク温度を代入
-            li = SklUtil::getFindexS3D(size, guide, i+1-wi, j, k); // 固体セルのセルインデクス
+            t[ FBUtility::getFindexS3D(size, guide, i+wi, j, k) ] = bt; // 流体セルにバルク温度を代入
+            li = FBUtility::getFindexS3D(size, guide, i+1-wi, j, k); // 固体セルのセルインデクス
             ni = DECODE_MAT( bx[li] ); // 固体セルのマテリアルのオーダーを得る
             di = 2.0*(REAL_TYPE)wi-1.0;
             qi = pp / (mat[ni].P[p_density] * mat[ni].P[p_specific_heat]) * (t0[li]-bt) * di;
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
             qsum += qi*di;
           }
           if ( BIT_IS_SHIFT(s, QFACE_J) ) {
             wj = BIT_SHIFT(s, DIR_J);
-            t[ SklUtil::getFindexS3D(size, guide, i, j+wj, k) ] = bt;
-            lj = SklUtil::getFindexS3D(size, guide, i, j+1-wj, k);
+            t[ FBUtility::getFindexS3D(size, guide, i, j+wj, k) ] = bt;
+            lj = FBUtility::getFindexS3D(size, guide, i, j+1-wj, k);
             nj = DECODE_MAT( bx[lj] );
             dj = 2.0*(REAL_TYPE)wj-1.0;
             qj = pp / (mat[nj].P[p_density] * mat[nj].P[p_specific_heat]) * (t0[lj]-bt) * dj;
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
             qsum += qj*dj;
           }
           if ( BIT_IS_SHIFT(s, QFACE_K) ) {
             wk = BIT_SHIFT(s, DIR_K);
-            t[ SklUtil::getFindexS3D(size, guide, i, j, k+wk) ] = bt;
-            lk = SklUtil::getFindexS3D(size, guide, i, j, k+1-wk);
+            t[ FBUtility::getFindexS3D(size, guide, i, j, k+wk) ] = bt;
+            lk = FBUtility::getFindexS3D(size, guide, i, j, k+1-wk);
             nk = DECODE_MAT( bx[lk] );
             dk = 2.0*(REAL_TYPE)wk-1.0;
             qk = pp / (mat[nk].P[p_density] * mat[nk].P[p_specific_heat]) * (t0[lk]-bt) * dk;
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
             qsum += qk*dk;
           }
         }
@@ -3397,54 +3397,54 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         
-        m = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bh1[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
           q = pp * (sf - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
           va += q; // マイナス面の正の値は流入
-          t[SklUtil::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 等温セルに指定温度を代入
+          t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 等温セルに指定温度を代入
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
           q = pp * (t0[m] - sf);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
           va -= q; // プラス面の正の値は流出
-          t[SklUtil::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
           q = pp * (sf - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
           va += q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
           q = pp * (t0[m] - sf);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
           va -= q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
           q = pp * (sf - t0[m]);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
           va += q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
           flop += 4.0;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
           q = pp * (t0[m] - sf);
-          qbc[SklUtil::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
+          qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
           va -= q;
-          t[SklUtil::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+          t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
           flop += 4.0;
         }
       }
@@ -3486,38 +3486,38 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, uns
   for (k=(int)cmp[n].ci.st[2]-1; k<=(int)cmp[n].ci.ed[2]; k++) {
     for (j=(int)cmp[n].ci.st[1]-1; j<=(int)cmp[n].ci.ed[1]; j++) {
       for (i=(int)cmp[n].ci.st[0]-1; i<=(int)cmp[n].ci.ed[0]; i++) {
-        m0 = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
+        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bx[m0];
         if ( (s & BIT_MASK_10) == n ) {
 
           if ( BIT_IS_SHIFT(s, QFACE_I) ) {
             wi = BIT_SHIFT(s, DIR_I);
-            t[ SklUtil::getFindexS3D(size, guide, i+wi, j, k) ] = st; // 等温セルに指定温度を代入
-            li = SklUtil::getFindexS3D(size, guide, i+1-wi, j, k); // 計算側のセルインデクス
+            t[ FBUtility::getFindexS3D(size, guide, i+wi, j, k) ] = st; // 等温セルに指定温度を代入
+            li = FBUtility::getFindexS3D(size, guide, i+1-wi, j, k); // 計算側のセルインデクス
             ni = DECODE_MAT( bx[li] ); // 計算セルのマテリアルのオーダーを得る
             di = 1.0-2.0*(REAL_TYPE)wi;
             qi = -pp * mat[ni].P[p_thermal_conductivity] / (mat[ni].P[p_density] * mat[ni].P[p_specific_heat]) * (t0[li]-st) * di;
-            qbc[SklUtil::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
             qsum += qi*di;
           }
           if ( BIT_IS_SHIFT(s, QFACE_J) ) {
             wj = BIT_SHIFT(s, DIR_J);
-            t[ SklUtil::getFindexS3D(size, guide, i, j+wj, k) ] = st;
-            lj = SklUtil::getFindexS3D(size, guide, i, j+1-wj, k);
+            t[ FBUtility::getFindexS3D(size, guide, i, j+wj, k) ] = st;
+            lj = FBUtility::getFindexS3D(size, guide, i, j+1-wj, k);
             nj = DECODE_MAT( bx[lj] );
             dj = 1.0-2.0*(REAL_TYPE)wj;
             qj = -pp * mat[nj].P[p_thermal_conductivity] / (mat[nj].P[p_density] * mat[nj].P[p_specific_heat]) * (t0[lj]-st) * dj;
-            qbc[SklUtil::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
             qsum += qj*dj;
           }
           if ( BIT_IS_SHIFT(s, QFACE_K) ) {
             wk = BIT_SHIFT(s, DIR_K);
-            t[ SklUtil::getFindexS3D(size, guide, i, j, k+wk) ] = st;
-            lk = SklUtil::getFindexS3D(size, guide, i, j, k+1-wk);
+            t[ FBUtility::getFindexS3D(size, guide, i, j, k+wk) ] = st;
+            lk = FBUtility::getFindexS3D(size, guide, i, j, k+1-wk);
             nk = DECODE_MAT( bx[lk] );
             dk = 1.0-2.0*(REAL_TYPE)wk;
             qk = -pp * mat[nk].P[p_thermal_conductivity] / (mat[nk].P[p_density] * mat[nk].P[p_specific_heat]) * (t0[lk]-st) * dk;
-            qbc[SklUtil::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
+            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
             qsum += qk*dk;
           }
         }
@@ -3548,7 +3548,7 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
   
   gd = (int)guide;
   
-  if ( !(bx = d_bx->GetData()) ) assert(0);
+  if ( !(bx = d_bx->GetData()) ) Exit(0);
 
   if( para_mng->IsParallel() ){
     for (int face=0; face<NOFACE; face++) {
@@ -3556,27 +3556,27 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
 
       switch (face) {
         case X_MINUS:
-          if ( !d_bx->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, guide) ) assert(0);
+          if ( !d_bx->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
           break;
           
         case X_PLUS:
-          if ( !d_bx->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, guide) ) assert(0);
+          if ( !d_bx->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, guide) ) Exit(0);
           break;
           
         case Y_MINUS:
-          if ( !d_bx->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, guide) ) assert(0);
+          if ( !d_bx->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
           break;
           
         case Y_PLUS:
-          if ( !d_bx->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, guide) ) assert(0);
+          if ( !d_bx->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, guide) ) Exit(0);
           break;
           
         case Z_MINUS:
-          if ( !d_bx->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, guide) ) assert(0);
+          if ( !d_bx->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
           break;
           
         case Z_PLUS:
-          if ( !d_bx->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, guide) ) assert(0);
+          if ( !d_bx->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, guide) ) Exit(0);
           break;
       }
     }
@@ -3591,8 +3591,8 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
             for (k=1; k<=kxc; k++) {
               for (j=1; j<=jxc; j++) {
                 for (i=1-gd; i<=0; i++) {
-                  m0 = SklUtil::getFindexS3D(size, guide, i     , j, k);
-                  m1 = SklUtil::getFindexS3D(size, guide, i+ixc, j, k);
+                  m0 = FBUtility::getFindexS3D(size, guide, i     , j, k);
+                  m1 = FBUtility::getFindexS3D(size, guide, i+ixc, j, k);
                   bx[m0] = bx[m1];
                 }
               }
@@ -3605,8 +3605,8 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
             for (k=1; k<=kxc; k++) {
               for (j=1; j<=jxc; j++) {
                 for (i=ixc+1; i<=ixc+gd; i++) {
-                  m0 = SklUtil::getFindexS3D(size, guide, i     , j, k);
-                  m1 = SklUtil::getFindexS3D(size, guide, i-ixc, j, k);
+                  m0 = FBUtility::getFindexS3D(size, guide, i     , j, k);
+                  m1 = FBUtility::getFindexS3D(size, guide, i-ixc, j, k);
                   bx[m0] = bx[m1];
                 }
               }
@@ -3619,8 +3619,8 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
             for (k=1; k<=kxc; k++) {
               for (j=1-gd; j<=0; j++) {
                 for (i=1; i<=ixc; i++) {
-                  m0 = SklUtil::getFindexS3D(size, guide, i, j     , k);
-                  m1 = SklUtil::getFindexS3D(size, guide, i, j+jxc, k);
+                  m0 = FBUtility::getFindexS3D(size, guide, i, j     , k);
+                  m1 = FBUtility::getFindexS3D(size, guide, i, j+jxc, k);
                   bx[m0] = bx[m1];
                 }
               }
@@ -3633,8 +3633,8 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
             for (k=1; k<=kxc; k++) {
               for (j=jxc+1; j<=jxc+gd; j++) {
                 for (i=1; i<=ixc; i++) {
-                  m0 = SklUtil::getFindexS3D(size, guide, i, j     , k);
-                  m1 = SklUtil::getFindexS3D(size, guide, i, j-jxc, k);
+                  m0 = FBUtility::getFindexS3D(size, guide, i, j     , k);
+                  m1 = FBUtility::getFindexS3D(size, guide, i, j-jxc, k);
                   bx[m0] = bx[m1];
                 }
               }
@@ -3647,8 +3647,8 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
             for (k=1-gd; k<=0; k++) {
               for (j=1; j<=jxc; j++) {
                 for (i=1; i<=ixc; i++) {
-                  m0 = SklUtil::getFindexS3D(size, guide, i, j, k     );
-                  m1 = SklUtil::getFindexS3D(size, guide, i, j, k+kxc);
+                  m0 = FBUtility::getFindexS3D(size, guide, i, j, k     );
+                  m1 = FBUtility::getFindexS3D(size, guide, i, j, k+kxc);
                   bx[m0] = bx[m1];
                 }
               }
@@ -3661,8 +3661,8 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
             for (k=kxc+1; k<=kxc+gd; k++) {
               for (j=1; j<=jxc; j++) {
                 for (i=1; i<=ixc; i++) {
-                  m0 = SklUtil::getFindexS3D(size, guide, i, j, k     );
-                  m1 = SklUtil::getFindexS3D(size, guide, i, j, k-kxc);
+                  m0 = FBUtility::getFindexS3D(size, guide, i, j, k     );
+                  m1 = FBUtility::getFindexS3D(size, guide, i, j, k-kxc);
                   bx[m0] = bx[m1];
                 }
               }
@@ -3696,15 +3696,15 @@ void SetBC3D::setRadiant(REAL_TYPE* qbc, unsigned* bx, unsigned n, REAL_TYPE* t)
   for (k=(int)cmp[n].ci.st[2]-1; k<=(int)cmp[n].ci.ed[2]; k++) {
     for (j=(int)cmp[n].ci.st[1]-1; j<=(int)cmp[n].ci.ed[1]; j++) {
       for (i=(int)cmp[n].ci.st[0]-1; i<=(int)cmp[n].ci.ed[0]; i++) {
-        m0 = SklUtil::getFindexS3D(size, guide, i  , j  , k  );
-        mi = SklUtil::getFindexS3D(size, guide, i+1, j  , k  );
-        mj = SklUtil::getFindexS3D(size, guide, i  , j+1, k  );
-        mk = SklUtil::getFindexS3D(size, guide, i  , j  , k+1);
+        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        mi = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        mj = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        mk = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         s = bx[m0];
         if ( (s & BIT_MASK_10) == n ) {
-          if ( BIT_IS_SHIFT(s, QFACE_I) ) qbc[SklUtil::getFindexV3D(size, guide, 0, i, j, k)] = ht*(t[m0]-t[mi]);
-          if ( BIT_IS_SHIFT(s, QFACE_J) ) qbc[SklUtil::getFindexV3D(size, guide, 1, i, j, k)] = ht*(t[m0]-t[mj]);
-          if ( BIT_IS_SHIFT(s, QFACE_K) ) qbc[SklUtil::getFindexV3D(size, guide, 2, i, j, k)] = ht*(t[m0]-t[mk]);
+          if ( BIT_IS_SHIFT(s, QFACE_I) ) qbc[FBUtility::getFindexV3D(size, guide, 0, i, j, k)] = ht*(t[m0]-t[mi]);
+          if ( BIT_IS_SHIFT(s, QFACE_J) ) qbc[FBUtility::getFindexV3D(size, guide, 1, i, j, k)] = ht*(t[m0]-t[mj]);
+          if ( BIT_IS_SHIFT(s, QFACE_K) ) qbc[FBUtility::getFindexV3D(size, guide, 2, i, j, k)] = ht*(t[m0]-t[mk]);
         }
       }
     }
@@ -4025,7 +4025,7 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* b
           
         default:
           printf("\tInvalid Linear Solver for Velocity_CN\n");
-          assert(0);
+          Exit(0);
       }
 
     }
@@ -4172,15 +4172,15 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
     
     switch (face) {
       case X_MINUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_MINUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_MINUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
     }
   }
@@ -4189,7 +4189,7 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
     unsigned l, m0, m1;
     gd = (int)guide;
     REAL_TYPE* v=NULL;
-    if ( !(v = d_v->GetData()) ) assert(0);
+    if ( !(v = d_v->GetData()) ) Exit(0);
     
     switch (face) {
       case X_MINUS:
@@ -4198,8 +4198,8 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
             for (j=1; j<=jxc; j++) {
               for (i=1-gd; i<=0; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i    , j, k);
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, ixc+i, j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i    , j, k);
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, ixc+i, j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4214,8 +4214,8 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
             for (j=1-gd; j<=0; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j    , k);
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, jxc+j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j    , k);
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i, jxc+j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4230,8 +4230,8 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
             for (j=1; j<=jxc; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k    );
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kxc+k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j, k    );
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i, j, kxc+k);
                   v[m0] = v[m1];
                 }
               }
@@ -4259,27 +4259,27 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
     
     switch (face) {
       case X_MINUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case X_PLUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_MINUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Y_PLUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_MINUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
       case Z_PLUS:
-        if ( !d_v->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) assert(0);
+        if ( !d_v->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
     }
   }
@@ -4288,7 +4288,7 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
     unsigned l, m0, m1;
     gd = (int)guide;
     REAL_TYPE* v=NULL;
-    if ( !(v = d_v->GetData()) ) assert(0);
+    if ( !(v = d_v->GetData()) ) Exit(0);
     
     switch (face) {
       case X_MINUS:
@@ -4297,8 +4297,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
             for (j=1; j<=jxc; j++) {
               for (i=1-gd; i<=0; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i    , j, k);
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, ixc+i, j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i    , j, k);
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, ixc+i, j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4313,8 +4313,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
             for (j=1; j<=jxc; j++) {
               for (i=ixc+1; i<=ixc+gd; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i    , j, k);
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i-ixc, j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i    , j, k);
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i-ixc, j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4329,8 +4329,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
             for (j=1-gd; j<=0; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j    , k);
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, jxc+j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j    , k);
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i, jxc+j, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4345,8 +4345,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
             for (j=jxc+1; j<=jxc+gd; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j    , k);
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j-jxc, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j    , k);
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i, j-jxc, k);
                   v[m0] = v[m1];
                 }
               }
@@ -4361,8 +4361,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
             for (j=1; j<=jxc; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k    );
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kxc+k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j, k    );
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i, j, kxc+k);
                   v[m0] = v[m1];
                 }
               }
@@ -4377,8 +4377,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
             for (j=1; j<=jxc; j++) {
               for (i=1; i<=ixc; i++) {
                 for (l=0; l<3; l++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k    );
-                  m1 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k-kxc);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j, k    );
+                  m1 = FBUtility::getFindexV3DEx(size, guide, l, i, j, k-kxc);
                   v[m0] = v[m1];
                 }
               }
@@ -4428,7 +4428,7 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if( para_mng->IsParallel() ){
     Hostonly_ printf("Error : 'Vibc_Prdc' method is limited to use for serial execution\n.");
-    assert(0);
+    Exit(0);
   }
     
   int i,j,k, gd, ii, jj, kk;
@@ -4437,8 +4437,8 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
 
   gd = (int)guide;
   
-  if ( !(v = d_v->GetData()) )  assert(0);
-  if ( !(bx= d_bd->GetData()) ) assert(0);
+  if ( !(v = d_v->GetData()) )  Exit(0);
+  if ( !(bx= d_bd->GetData()) ) Exit(0);
   
   switch (dir) {
     case X_MINUS:
@@ -4447,11 +4447,11 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
         for (k=st[2]; k<=ed[2]; k++) {
           for (j=st[1]; j<=ed[1]; j++) {
             for (l=0; l<3; l++) {
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (ii=1-gd; ii<=0; ii++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, ii,   j, k);
-                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i+ii, j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, ii,   j, k);
+                  m2 = FBUtility::getFindexV3DEx(size, guide, l, i+ii, j, k);
                   v[m0] = v[m2];
                 }
               }
@@ -4467,11 +4467,11 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
         for (k=st[2]; k<=ed[2]; k++) {
           for (j=st[1]; j<=ed[1]; j++) {
             for (l=0; l<3; l++) {
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (ii=ixc+1; ii<=ixc+gd; ii++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, ii,         j, k);
-                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i+ii-ixc-1, j, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, ii,         j, k);
+                  m2 = FBUtility::getFindexV3DEx(size, guide, l, i+ii-ixc-1, j, k);
                   v[m0] = v[m2];
                 }
               }              
@@ -4487,11 +4487,11 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
         for (k=st[2]; k<=ed[2]; k++) {
           for (i=st[0]; i<=ed[0]; i++) {
             for (l=0; l<3; l++) {
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (jj=1-gd; jj<=0; jj++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, jj,   k);
-                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j+jj, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, jj,   k);
+                  m2 = FBUtility::getFindexV3DEx(size, guide, l, i, j+jj, k);
                   v[m0] = v[m2];
                 }
               }              
@@ -4507,11 +4507,11 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
         for (k=st[2]; k<=ed[2]; k++) {
           for (i=st[0]; i<=ed[0]; i++) {
             for (l=0; l<3; l++) {
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (jj=jxc+1; jj<=jxc+gd; jj++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, jj,         k);
-                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j+jj-jxc-1, k);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, jj,         k);
+                  m2 = FBUtility::getFindexV3DEx(size, guide, l, i, j+jj-jxc-1, k);
                   v[m0] = v[m2];
                 }
               }              
@@ -4527,11 +4527,11 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
         for (j=st[1]; j<=ed[1]; j++) {
           for (i=st[0]; i<=ed[0]; i++) {
             for (l=0; l<3; l++) {
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (kk=1-gd; kk<=0; kk++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kk  );
-                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k+kk);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j, kk  );
+                  m2 = FBUtility::getFindexV3DEx(size, guide, l, i, j, k+kk);
                   v[m0] = v[m2];
                 }
               }         
@@ -4547,11 +4547,11 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
         for (j=st[1]; j<=ed[1]; j++) {
           for (i=st[0]; i<=ed[0]; i++) {
             for (l=0; l<3; l++) {
-              m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( DECODE_CMP(bx[m1]) == odr ) {
                 for (kk=kxc+1; kk<=kxc+gd; kk++) {
-                  m0 = SklUtil::getFindexV3DEx(size, guide, l, i, j, kk        );
-                  m2 = SklUtil::getFindexV3DEx(size, guide, l, i, j, k+kk-kxc-1);
+                  m0 = FBUtility::getFindexV3DEx(size, guide, l, i, j, kk        );
+                  m2 = FBUtility::getFindexV3DEx(size, guide, l, i, j, k+kk-kxc-1);
                   v[m0] = v[m2];
                 }
               }         
@@ -4579,15 +4579,15 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if( para_mng->IsParallel() ){
     Hostonly_ printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
-    assert(0);
+    Exit(0);
   }
   
   int i,j,k;
   unsigned m0, m1, *bx=NULL;
   REAL_TYPE* p=NULL;
   
-  if ( !(p = d_p->GetData()) ) assert(0);
-  if ( !(bx= d_bcd->GetData()) ) assert(0);
+  if ( !(p = d_p->GetData()) ) Exit(0);
+  if ( !(bx= d_bcd->GetData()) ) Exit(0);
   
   switch (dir) {
     case X_MINUS:
@@ -4595,9 +4595,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
         i = st[0];
         for (k=st[2]; k<=ed[2]; k++) {
           for (j=st[1]; j<=ed[1]; j++) {
-            m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
             if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = SklUtil::getFindexS3D(size, guide, 0, j, k);
+              m0 = FBUtility::getFindexS3D(size, guide, 0, j, k);
               p[m0] = p[m1] + pd;
             }
           }
@@ -4610,9 +4610,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
         i = st[0];
         for (k=st[2]; k<=ed[2]; k++) {
           for (j=st[1]; j<=ed[1]; j++) {
-            m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
             if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = SklUtil::getFindexS3D(size, guide, ixc+1, j, k);
+              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
               p[m0] = p[m1] + pd;              
             }
           }
@@ -4625,9 +4625,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
         j = st[1];
         for (k=st[2]; k<=ed[2]; k++) {
           for (i=st[0]; i<=ed[0]; i++) {
-            m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
             if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, 0, k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0, k);
               p[m0] = p[m1] + pd;
             }
           }
@@ -4640,9 +4640,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
         j = st[1];
         for (k=st[2]; k<=ed[2]; k++) {
           for (i=st[0]; i<=ed[0]; i++) {
-            m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
             if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, jxc+1, k);
+              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
               p[m0] = p[m1] + pd;
             }
           }
@@ -4655,9 +4655,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
         k = st[2];
         for (j=st[1]; j<=ed[1]; j++) {
           for (i=st[0]; i<=ed[0]; i++) {
-            m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
             if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, 0);
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0);
               p[m0] = p[m1] + pd;
             }
           }
@@ -4670,9 +4670,9 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
         k = st[2];
         for (j=st[1]; j<=ed[1]; j++) {
           for (i=st[0]; i<=ed[0]; i++) {
-            m1 = SklUtil::getFindexS3D(size, guide, i, j, k);
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
             if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = SklUtil::getFindexS3D(size, guide, i, j, kxc+1);
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
               p[m0] = p[m1] + pd;
             }
           }
@@ -4755,7 +4755,7 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
       if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, 1  , j, k);
+            m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4776,7 +4776,7 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
       if( pn.nID[X_PLUS] < 0 ){
         for (k=1; k<=kxc; k++) {
           for (j=1; j<=jxc; j++) {
-            m = SklUtil::getFindexS3D(size, guide, ixc  , j, k);
+            m = FBUtility::getFindexS3D(size, guide, ixc  , j, k);
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4797,7 +4797,7 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
       if( pn.nID[Y_MINUS] < 0 ){
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, 1  , k);
+            m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4818,7 +4818,7 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
       if( pn.nID[Y_PLUS] < 0 ){
         for (k=1; k<=kxc; k++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, jxc  , k);
+            m = FBUtility::getFindexS3D(size, guide, i, jxc  , k);
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4839,7 +4839,7 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
       if( pn.nID[Z_MINUS] < 0 ){
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, 1  );
+            m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4860,7 +4860,7 @@ void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
       if( pn.nID[Z_PLUS] < 0 ){
         for (j=1; j<=jxc; j++) {
           for (i=1; i<=ixc; i++) {
-            m = SklUtil::getFindexS3D(size, guide, i, j, kxc  );
+            m = FBUtility::getFindexS3D(size, guide, i, j, kxc  );
             s = bv[m];
             
             if ( IS_FLUID(s) ) {

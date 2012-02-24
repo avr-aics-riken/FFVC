@@ -12,6 +12,8 @@
 //@brief FlowBase Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
+#include "mydebug.h"
+
 #define FB_VERS 249
 
 // 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度

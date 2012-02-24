@@ -16,8 +16,6 @@
 #include <vector>
 
 #include "FBDefine.h"
-#include "SklUtil.h"
-#include "mydebug.h"
 #include "vec3.h"
 #include "Parallel_node.h"
 #include "MonCompo.h"

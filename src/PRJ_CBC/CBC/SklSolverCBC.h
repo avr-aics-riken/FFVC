@@ -18,13 +18,13 @@
 #ifndef _SKL_SOLVER_CBC_CLASS_H_
 #define _SKL_SOLVER_CBC_CLASS_H_
 
+#include "FBDefine.h"
 #include "Skl.h"
 #include "SklSolverBase.h"
 #include "SklSolverCBCDefine.h"
 #include "FortranFuncCBC.h"
 #include "SklTiming.h"
 #include "FB_Ffunc.h"
-#include "FBDefine.h"
 #include "Control.h"
 #include "ParseBC.h"
 #include "ParseMat.h"
@@ -41,6 +41,7 @@
 #include "Monitor.h"
 #include "PerfMonitor.h"
 #include "DTcntl.h"
+#include "CompoFraction.h"
 
 #include "IP_Duct.h"
 #include "IP_PPLT2D.h"
@@ -51,7 +52,7 @@
 #include "IP_Cylinder.h"
 #include "IP_Polygon.h"
 
-// K用のプロファイラ
+// K-profiler
 #ifdef __K_FPCOLL
 #include "fjcoll.h"
 #endif
@@ -61,10 +62,12 @@
 #include "MPIPolylib.h"
 #include "file_io/PolylibConfig.h"
 #include "file_io/TriMeshIO.h"
-using namespace PolylibNS;
 
 // Cutlib
 #include "Cutlib.h"
+
+
+using namespace PolylibNS;
 using namespace cutlib;
 
 class SklSolverCBC : public SklSolverBase {
@@ -171,6 +174,8 @@ public:
   SklScalar3D<REAL_TYPE>   *dc_wkj;
   SklScalar3D<REAL_TYPE>   *dc_vt;
   SklScalar3D<REAL_TYPE>   *dc_vof;
+  
+  SklScalar3D<float>   *dc_cvf;
   
   // (ix, jx, kx)
   SklScalar3D<REAL_TYPE>   *dc_ap;
