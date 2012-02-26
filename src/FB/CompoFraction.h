@@ -101,7 +101,7 @@ protected:
   inline float judge_cylinder(const FB::Vec3f p) {
     FB::Vec3f q = transform(angle, p);
     
-    if (q.z > depth) return 0.0;
+    if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     float r = sqrtf(q.x*q.x + q.y*q.y);
     
     return (r<=radius) ? 1.0 : 0.0;
@@ -114,7 +114,7 @@ protected:
   inline float judge_rect(const FB::Vec3f p) {
     FB::Vec3f q = transform(angle, p);
     
-    if (q.z > depth) return 0.0;
+    if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     if (q.x > fabs(0.5*width)) return 0.0;
     if (q.y > fabs(0.5*height)) return 0.0;
     

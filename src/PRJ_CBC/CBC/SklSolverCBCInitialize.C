@@ -686,6 +686,8 @@ SklSolverCBC::SklSolverInitialize() {
   float cmp_radius = 0.12;
   FB::Vec3f cmp_nv(0.0, 0.0, 1.0);
   FB::Vec3f cmp_ctr(0.0, 0.0, 0.0);
+  printf("org =(%f %f %f)\n", org.x, org.y, org.z);
+  printf("dx  =(%f %f %f)\n", pch.x, pch.y, pch.z);
   
   cmp_nv.normalize();
   

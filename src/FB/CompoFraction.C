@@ -42,7 +42,7 @@ void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_dept
 //@param vf フラクション
 void CompoFraction::get_fraction(int st[], int ed[], float* vf)
 {
-  get_angle();
+  get_angle(); printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
   
   vertex8(st, ed, vf);
   
@@ -172,6 +172,7 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
         for (int i=st[0]; i<ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           b    = o    + base * ph;
+          
           p[0] =          b;      // (0,0,0) 
           p[1] = shift_f1(b, ph); // (1,0,0)
           p[2] = shift_f2(b, ph); // (0,1,0)
@@ -199,6 +200,7 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
         for (int i=st[0]; i<ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           b    = o +    base * ph;
+
           p[0] =          b;      // (0,0,0) 
           p[1] = shift_f1(b, ph); // (1,0,0)
           p[2] = shift_f2(b, ph); // (0,1,0)
@@ -262,11 +264,11 @@ FB::Vec3f CompoFraction::transform(const FB::Vec3f p, const FB::Vec3f u)
   // line vector expression
   a.x =  cos(p.y)*cos(p.z);
   a.y =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
-  a.z =  sin(p.x)*sin(p.z) + cos(p.x)*sin(p.y)*cos(p.z);
+  a.z =  cos(p.x)*sin(p.y)*cos(p.z) + sin(p.x)*sin(p.z);
   
   b.x =  cos(p.y)*sin(p.z);
-  b.y =  sin(p.x)*sin(p.y)*sin(p.z) - cos(p.x)*cos(p.z);
-  b.z = -sin(p.x)*cos(p.z) + cos(p.x)*sin(p.y)*sin(p.z);
+  b.y =  sin(p.x)*sin(p.y)*sin(p.z) + cos(p.x)*cos(p.z);
+  b.z =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
   
   c.x = -sin(p.y);
   c.y =  sin(p.x)*cos(p.y);
