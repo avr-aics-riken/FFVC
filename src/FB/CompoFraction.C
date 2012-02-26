@@ -11,6 +11,29 @@
 
 #include "CompoFraction.h"
 
+//@fn void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height)
+//@brief 矩形の形状パラメータをセットする
+void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height)
+{
+  smode  = RECT;
+  nv     = m_nv;
+  center = m_ctr;
+  dir    = m_dir;
+  depth  = m_depth;
+  width  = m_width;
+  height = m_height;
+}
+
+//@fn void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius)
+//@brief 円筒の形状パラメータをセットする
+void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius)
+{
+  smode  = CYLINDER;
+  nv     = m_nv;
+  center = m_ctr;
+  depth  = m_depth;
+  radius = m_radius;
+}
 
 //@fn void CompoFraction::get_fraction(int st[], int ed[], float* vf)
 //@brief コンポーネントの体積率を計算

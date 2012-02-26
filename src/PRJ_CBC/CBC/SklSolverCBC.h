@@ -41,7 +41,6 @@
 #include "Monitor.h"
 #include "PerfMonitor.h"
 #include "DTcntl.h"
-#include "CompoFraction.h"
 
 #include "IP_Duct.h"
 #include "IP_PPLT2D.h"

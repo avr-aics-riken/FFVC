@@ -459,6 +459,7 @@ depend:
 ../../FB/FileIO.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/FileIO.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/FileIO.o: ../../FB/FBDefine.h ../../FB/mydebug.h
+../../FB/FileIO.o: /usr/local/sphere/include/SklUtil.h
 ../../FB/FileIO.o: ../../FB/Parallel_node.h
 ../../FB/FileIO.o: /usr/local/sphere/include/fileio/SklSbxDataSet.h
 ../../FB/FileIO.o: ../../FB/FBUtility.h ../../FB/Component.h
@@ -932,11 +933,146 @@ depend:
 ../../FB/Monitor.o: ../../FB/Monitor.h ../../FB/FBDefine.h ../../FB/mydebug.h
 ../../FB/Monitor.o: ../../FB/vec3.h ../../FB/vec3_func.h
 ../../FB/Monitor.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-../../FB/Monitor.o: ../../FB/MonCompo.h ../../FB/basic_func.h
-../../FB/Monitor.o: ../../FB/FBUtility.h ../../FB/Component.h
-../../FB/Monitor.o: ../../FB/Sampling.h
+../../FB/Monitor.o: ../../FB/MonCompo.h /usr/local/sphere/include/SklUtil.h
+../../FB/Monitor.o: /usr/local/sphere/include/SklSolverBase.h
+../../FB/Monitor.o: /usr/local/sphere/include/Skl.h
+../../FB/Monitor.o: /usr/local/sphere/include/endianUtil.h
+../../FB/Monitor.o: /usr/local/sphere/include/SklBase.h
+../../FB/Monitor.o: /usr/local/sphere/include/SklDefine.h
+../../FB/Monitor.o: /usr/local/sphere/include/SklReservWord.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklSolverConfig.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgDatas.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgBase.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgBase.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgSteer.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgInFile.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgHistory.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgOutFile.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgParameter.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklIBCConfig.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklOBCConfig.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklMBoxConfig.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklMDMConfig.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
+../../FB/Monitor.o: /usr/local/sphere/include/base/SklFileIOCntl.h
+../../FB/Monitor.o: /usr/local/sphere/include/config/SklCfgDatas.h
+../../FB/Monitor.o: /usr/local/sphere/include/base/SklOutputDataSet.h
+../../FB/Monitor.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
+../../FB/Monitor.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
+../../FB/Monitor.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklDataManager.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklArayBase.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklScalar.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklAray.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaManager.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaIF.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaComponent.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
+../../FB/Monitor.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklVector2D.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklVector3D.h
+../../FB/Monitor.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
+../../FB/Monitor.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
+../../FB/Monitor.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
+../../FB/Monitor.o: /usr/local/sphere/include/coord/SklCrdMngr.h
+../../FB/Monitor.o: /usr/local/sphere/include/coord/SklCoord.h
+../../FB/Monitor.o: ../../FB/basic_func.h ../../FB/FBUtility.h
+../../FB/Monitor.o: ../../FB/Component.h ../../FB/Sampling.h
 ../../FB/MonCompo.o: ../../FB/MonCompo.h ../../FB/FBDefine.h
-../../FB/MonCompo.o: ../../FB/mydebug.h ../../FB/vec3.h ../../FB/vec3_func.h
+../../FB/MonCompo.o: ../../FB/mydebug.h /usr/local/sphere/include/SklUtil.h
+../../FB/MonCompo.o: /usr/local/sphere/include/SklSolverBase.h
+../../FB/MonCompo.o: /usr/local/sphere/include/Skl.h
+../../FB/MonCompo.o: /usr/local/sphere/include/endianUtil.h
+../../FB/MonCompo.o: /usr/local/sphere/include/SklBase.h
+../../FB/MonCompo.o: /usr/local/sphere/include/SklDefine.h
+../../FB/MonCompo.o: /usr/local/sphere/include/SklReservWord.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklSolverConfig.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgDatas.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgBase.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgBase.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgSteer.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgInFile.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgHistory.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgOutFile.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgParameter.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklIBCConfig.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklOBCConfig.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklMBoxConfig.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklMDMConfig.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
+../../FB/MonCompo.o: /usr/local/sphere/include/base/SklFileIOCntl.h
+../../FB/MonCompo.o: /usr/local/sphere/include/config/SklCfgDatas.h
+../../FB/MonCompo.o: /usr/local/sphere/include/base/SklOutputDataSet.h
+../../FB/MonCompo.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
+../../FB/MonCompo.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
+../../FB/MonCompo.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklDataManager.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklArayBase.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklScalar.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklAray.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaManager.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaIF.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaComponent.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
+../../FB/MonCompo.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklVector2D.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklVector3D.h
+../../FB/MonCompo.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
+../../FB/MonCompo.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
+../../FB/MonCompo.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
+../../FB/MonCompo.o: /usr/local/sphere/include/coord/SklCrdMngr.h
+../../FB/MonCompo.o: /usr/local/sphere/include/coord/SklCoord.h
+../../FB/MonCompo.o: ../../FB/vec3.h ../../FB/vec3_func.h
 ../../FB/MonCompo.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/MonCompo.o: ../../FB/basic_func.h ../../FB/FBUtility.h
 ../../FB/MonCompo.o: ../../FB/Component.h ../../FB/Sampling.h

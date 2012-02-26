@@ -41,6 +41,7 @@ protected:
   float height;    ///< 矩形の高さ
   float radius;    ///< 半径
   FB::Vec3f nv;    ///< 法線方向ベクトル（流出方向）
+  FB::Vec3f center;///< 形状の中心座標（前面の中心位置）
   FB::Vec3f dir;   ///< 矩形の方向規定の参照ベクトル
   
 public:
@@ -121,7 +122,9 @@ protected:
   }
   
 public:
-  void get_fraction(int st[], int ed[], float* vf);
+  void get_fraction  (int st[], int ed[], float* vf);
+  void setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height);
+  void setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius);
   
 };
 

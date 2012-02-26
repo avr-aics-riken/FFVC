@@ -10,6 +10,7 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include "SklSolverCBC.h"
+#include "CompoFraction.h"
 
 //@fn int SklSolverCBC::SklSolverInitialize()
 //@brief 前処理
@@ -680,6 +681,15 @@ SklSolverCBC::SklSolverInitialize() {
   FB::Vec3f org(C.org);
   int subsampling = 10;
   CompoFraction* CF = new CompoFraction(size, guide, pch, org, subsampling);
+  
+  float cmp_depth  = 0.15;
+  float cmp_radius = 0.12;
+  FB::Vec3f cmp_nv(0.0, 0.0, 1.0);
+  FB::Vec3f cmp_ctr(0.0, 0.0, 0.0);
+  
+  cmp_nv.normalize();
+  
+  CF->setShapeParam(cmp_nv, cmp_ctr, cmp_depth, cmp_radius);
   
   int f_st[3], f_ed[3];
   f_st[0] = 1;
