@@ -15,7 +15,7 @@
 //@brief 矩形の形状パラメータをセットする
 void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height)
 {
-  smode  = RECT;
+  smode  = RECT_CYL;
   nv     = m_nv;
   center = m_ctr;
   dir    = m_dir;
@@ -28,7 +28,7 @@ void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_
 //@brief 円筒の形状パラメータをセットする
 void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius)
 {
-  smode  = CYLINDER;
+  smode  = CIRC_CYL;
   nv     = m_nv;
   center = m_ctr;
   depth  = m_depth;
@@ -69,11 +69,11 @@ void CompoFraction::subdivision(int st[], int ed[], float* vf)
   gc = guide;
   dv = division;
   h  = pch.x/(float)dv;
-  ff = 1.0/(float)(dv*dv);
+  ff = 1.0/(float)(dv*dv*dv);
   o  = org;
   ph = pch.x;
   
-  if ( smode == RECT ) {
+  if ( smode == RECT_CYL ) {
     
     for (int k=st[2]; k<ed[2]; k++) {
       for (int j=st[1]; j<ed[1]; j++) {
@@ -149,6 +149,7 @@ void CompoFraction::subdivision(int st[], int ed[], float* vf)
 //@param st 開始インデクス
 //@param en 終了インデクス
 //@param vf フラクション
+//@note テスト候補のループ範囲（st[], ed[]）内で，テストセルの8頂点座標を生成し，形状の範囲内かどうかを判定する
 void CompoFraction::vertex8(int st[], int ed[], float* vf)
 {
   FB::Vec3f base, o, b;
@@ -165,7 +166,7 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
   o  = org;
   ph = pch.x;
   
-  if ( smode == RECT ) {
+  if ( smode == RECT_CYL ) {
     // Rect cylinder
     for (int k=st[2]; k<ed[2]; k++) {
       for (int j=st[1]; j<ed[1]; j++) {
@@ -224,10 +225,12 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
 }
 
 //@fn void CompoFraction::get_angle(void)
-//@brief 回転角度を計算する
+//@brief 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
+//@note 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
 void CompoFraction::get_angle(void)
 {
-  float alpha, beta, c;
+  float alpha, beta, c, d, d_yz, d_xz;
+  float eps = 1.0e-5, f_yz, f_xz;
   FB::Vec3f p;
   FB::Vec3f x(1.0, 0.0, 0.0);
   FB::Vec3f z(0.0, 0.0, 1.0);
@@ -237,23 +240,49 @@ void CompoFraction::get_angle(void)
   p.x = 0.0;
   p.y = nv.y;
   p.z = nv.z;
-  
   c = p.length();
-  beta  = acos( dot(nv, p)/c );
-  alpha = acos( dot(z,  p)/c );
+  d_yz = (c==0.0) ? 0.0 : dot(z, p)/c;
+  d = acos( d_yz );
+  f_yz = fabs(d_yz+1.0);
+  if ( f_yz<eps ) { // x軸から見てnvとzが反対方向の場合には，xz面の回転を採用する．判定は誤差を考慮
+    alpha = 0.0;
+  }
+  else {
+    alpha = (nv.y >= 0.0) ? d : -d;
+  }
+  
+  // xz面への射影
+  p.x = nv.x;
+  p.y = 0.0;
+  p.z = nv.z;
+  c = p.length();
+  d_xz = (c==0.0) ? 0.0 : dot(z, p)/c;
+  d = acos( d_xz );
+  f_xz = fabs(d_xz+1.0);
+  if ( f_xz<eps ) { // y軸から見てnvとzが反対方向の場合には，d_yzで判断
+    beta = (f_yz<eps) ? d : 0.0; // 既にx軸から見て反対方向である場合にはπとする
+  }
+  else {
+    beta = (nv.x >= 0.0) ? -d : d;
+  }
+  
   
   angle.assign(alpha, beta, 0.0);
+  printf("A: %f %f %f\n", angle.x, angle.y, angle.z);
   
   // 矩形の場合，　単位ベクトルdirが回転した後，x軸の単位ベクトルと作る角度を返す
-  if ( smode == RECT ) {
-
-    FB::Vec3f p = transform(angle, dir); // dirの回転
-    angle.z = acos( dot(x, p)/p.length() );
+  if ( smode == RECT_CYL ) {
+    float d_xy;
+    FB::Vec3f q = transform(angle, dir); // 回転によりxy平面上に射影される
+    c = q.length();
+    d_xy = (c==0.0) ? 0.0 : dot(x, q)/c;
+    d = acos( d_xy );
+    angle.z = (q.y >= 0.0) ? -d : d;
   }
 }
 
 //@fn FB::Vec3f CompoFraction::transform(const Vec3f p, const Vec3f u)
-//@brief 角度p(alpha, beta, 0.0)でベクトルuを回転する
+//@brief 回転ベクトルp(alpha, beta, gamma)でベクトルuを回転する
 //@param p 回転角度
 //@param u 方向ベクトル
 //@ret 角度

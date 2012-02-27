@@ -148,8 +148,6 @@ public:
   SklVector3DEx<REAL_TYPE>   *dc_wv;
   SklVector3DEx<REAL_TYPE>   *dc_abf;
   SklVector3DEx<REAL_TYPE>   *dc_vf0;
-  
-  // (3, ix, jx, kx)
   SklVector3DEx<REAL_TYPE>   *dc_av;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
@@ -163,22 +161,19 @@ public:
   SklScalar3D<unsigned>   *dc_bcv;
   SklScalar3D<unsigned>   *dc_bh1;
   SklScalar3D<unsigned>   *dc_bh2;
-  SklScalar3D<REAL_TYPE>   *dc_ws;
-  SklScalar3D<REAL_TYPE>   *dc_p;
-  SklScalar3D<REAL_TYPE>   *dc_wk2;
-  SklScalar3D<REAL_TYPE>   *dc_dp;
-  SklScalar3D<REAL_TYPE>   *dc_p0;
-  SklScalar3D<REAL_TYPE>   *dc_t;
-  SklScalar3D<REAL_TYPE>   *dc_t0;
-  SklScalar3D<REAL_TYPE>   *dc_wkj;
-  SklScalar3D<REAL_TYPE>   *dc_vt;
-  SklScalar3D<REAL_TYPE>   *dc_vof;
-  
-  SklScalar3D<float>   *dc_cvf;
-  
-  // (ix, jx, kx)
-  SklScalar3D<REAL_TYPE>   *dc_ap;
-  SklScalar3D<REAL_TYPE>   *dc_at;
+  SklScalar3D<REAL_TYPE>  *dc_ws;
+  SklScalar3D<REAL_TYPE>  *dc_p;
+  SklScalar3D<REAL_TYPE>  *dc_wk2;
+  SklScalar3D<REAL_TYPE>  *dc_dp;
+  SklScalar3D<REAL_TYPE>  *dc_p0;
+  SklScalar3D<REAL_TYPE>  *dc_t;
+  SklScalar3D<REAL_TYPE>  *dc_t0;
+  SklScalar3D<REAL_TYPE>  *dc_wkj;
+  SklScalar3D<REAL_TYPE>  *dc_vt;
+  SklScalar3D<REAL_TYPE>  *dc_vof;
+  SklScalar3D<REAL_TYPE>  *dc_ap;
+  SklScalar3D<REAL_TYPE>  *dc_at;
+  SklScalar3D<float>      *dc_cvf;
   
   // out file object
   SklVoxDataSet *m_outPrs;

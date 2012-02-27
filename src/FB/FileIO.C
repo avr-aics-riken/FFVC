@@ -1165,7 +1165,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
 
 /**
  @fn void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
- @brief sphファイルの書き出し　ただし，ガイドセルは１
+ @brief sphファイルの書き出し（内部領域のみ）
  @param vf スカラデータ
  @param size 配列サイズ
  @param gc ガイドセル
@@ -1180,7 +1180,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   int sz, dType, stp, svType;
   int ix, jx, kx, i, j, k;
-  unsigned long m, l, nx, ix_l, jx_l, kx_l;
+  unsigned long m, l, nx;
   REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
   long long szl[3], stpl;
   
@@ -1198,19 +1198,19 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
     Exit(0);
   }
   
-  ix = size[0]+2*gc;
-  jx = size[1]+2*gc;
-  kx = size[2]+2*gc;
-  ix_l = ix;
-  jx_l = jx;
-  kx_l = kx;
-  nx = ix_l * jx_l * kx_l;
-  ox = org[0]-ddx[0]*(REAL_TYPE)gc;
-  oy = org[1]-ddx[1]*(REAL_TYPE)gc;
-  oz = org[2]-ddx[2]*(REAL_TYPE)gc;
+  ix = size[0]; //+2*gc;
+  jx = size[1]; //+2*gc;
+  kx = size[2]; //+2*gc;
+  nx = ix * jx * kx;
+  ox = org[0]; //-ddx[0]*(REAL_TYPE)gc;
+  oy = org[1]; //-ddx[1]*(REAL_TYPE)gc;
+  oz = org[2]; //-ddx[2]*(REAL_TYPE)gc;
   dx = ddx[0];
   dy = ddx[1];
   dz = ddx[2];
+  //printf("org: %f %f %f\n", ox, oy, oz);
+  //printf("dx : %f %f %f\n", dx, dy, dz);
+  
   svType = kind_scalar;
   if ( sizeof(REAL_TYPE) == sizeof(double) ) {
     for (i=0; i<3; i++)   szl[i] = (long long)size[i];
@@ -1218,10 +1218,10 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   REAL_TYPE *f = new REAL_TYPE[nx];
   
-  for (k=0; k<=kx; k++) {
-    for (j=0; j<=jx; j++) {
-      for (i=0; i<=ix; i++) {
-        l = ix_l*jx_l*k + ix_l*j + i;
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        l = ix*jx*(k-1) + ix*(j-1) + i-1;
         m = FBUtility::getFindexS3D(size, gc, i, j, k);
         f[l] = (REAL_TYPE)vf[m];
       }

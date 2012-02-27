@@ -21,8 +21,8 @@ class CompoFraction {
 public:
   /// サンプリング形状
   enum Shapes {
-    RECT,      ///< 矩形領域
-    CYLINDER,  ///< 円筒領域
+    RECT_CYL,  ///< 矩形領域
+    CIRC_CYL,  ///< 円筒領域
   };
   
 protected:
@@ -115,8 +115,8 @@ protected:
     FB::Vec3f q = transform(angle, p);
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
-    if (q.x > fabs(0.5*width)) return 0.0;
-    if (q.y > fabs(0.5*height)) return 0.0;
+    if ( fabs(q.x) > 0.5*width )  return 0.0;
+    if ( fabs(q.y) > 0.5*height ) return 0.0;
     
     return 1.0;
   }
