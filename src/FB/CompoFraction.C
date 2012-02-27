@@ -229,7 +229,7 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
 //@note 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
 void CompoFraction::get_angle(void)
 {
-  float alpha, beta, c, d, d_yz, d_xz;
+  float alpha, beta, c, d, c_alp, c_bta;
   float eps = 1.0e-5, f_yz, f_xz;
   FB::Vec3f p;
   FB::Vec3f x(1.0, 0.0, 0.0);
@@ -241,14 +241,20 @@ void CompoFraction::get_angle(void)
   p.y = nv.y;
   p.z = nv.z;
   c = p.length();
-  d_yz = (c==0.0) ? 0.0 : dot(z, p)/c;
-  d = acos( d_yz );
-  f_yz = fabs(d_yz+1.0);
-  if ( f_yz<eps ) { // x軸から見てnvとzが反対方向の場合には，xz面の回転を採用する．判定は誤差を考慮
-    alpha = 0.0;
+  
+  if ( c != 0.0 ) {
+    c_alp = dot(z, p)/c;
+    d = acos( c_alp );
+    f_yz = c_alp+1.0;
+    if ( f_yz<eps ) { // x軸から見てnvとzが反対方向の場合には，xz面の回転を採用する．判定は誤差を考慮
+      alpha = 0.0;
+    }
+    else {
+      alpha = (nv.y >= 0.0) ? d : -d;
+    } 
   }
   else {
-    alpha = (nv.y >= 0.0) ? d : -d;
+    alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
   }
   
   // xz面への射影
@@ -256,24 +262,30 @@ void CompoFraction::get_angle(void)
   p.y = 0.0;
   p.z = nv.z;
   c = p.length();
-  d_xz = (c==0.0) ? 0.0 : dot(z, p)/c;
-  d = acos( d_xz );
-  f_xz = fabs(d_xz+1.0);
-  if ( f_xz<eps ) { // y軸から見てnvとzが反対方向の場合には，d_yzで判断
-    beta = (f_yz<eps) ? d : 0.0; // 既にx軸から見て反対方向である場合にはπとする
+  
+  if ( c != 0.0 ) {
+    c_bta = dot(z, p)/c;
+    d = acos( c_bta );
+    f_xz = c_bta+1.0;
+    beta = (nv.x >= 0.0) ? -d : d;
   }
   else {
-    beta = (nv.x >= 0.0) ? -d : d;
+    beta = 0.0;
+  }
+  
+  // x軸とy軸の両方から見てz軸と反対の場合にだけ，y軸回りのみ回転する
+  if ( (f_yz<eps) && (f_xz<eps) ) {
+    alpha = 0.0;
+    beta  = acos(-1.0);
   }
   
   
   angle.assign(alpha, beta, 0.0);
-  printf("A: %f %f %f\n", angle.x, angle.y, angle.z);
   
   // 矩形の場合，　単位ベクトルdirが回転した後，x軸の単位ベクトルと作る角度を返す
   if ( smode == RECT_CYL ) {
     float d_xy;
-    FB::Vec3f q = transform(angle, dir); // 回転によりxy平面上に射影される
+    FB::Vec3f q = rotate(angle, transf(center, dir)); // 回転によりxy平面上に射影される
     c = q.length();
     d_xy = (c==0.0) ? 0.0 : dot(x, q)/c;
     d = acos( d_xy );
@@ -281,12 +293,12 @@ void CompoFraction::get_angle(void)
   }
 }
 
-//@fn FB::Vec3f CompoFraction::transform(const Vec3f p, const Vec3f u)
+//@fn FB::Vec3f CompoFraction::rotate(const Vec3f p, const Vec3f u)
 //@brief 回転ベクトルp(alpha, beta, gamma)でベクトルuを回転する
 //@param p 回転角度
 //@param u 方向ベクトル
 //@ret 角度
-FB::Vec3f CompoFraction::transform(const FB::Vec3f p, const FB::Vec3f u)
+FB::Vec3f CompoFraction::rotate(const FB::Vec3f p, const FB::Vec3f u)
 {
   FB::Vec3f a, b, c;
   

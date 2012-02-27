@@ -67,11 +67,11 @@ public:
   ~CompoFraction() {}
   
 protected:
-  void get_angle       (void);
-  void subdivision     (int st[], int ed[], float* vf);
-  void vertex8         (int st[], int ed[], float* vf);
+  void get_angle     (void);
+  void subdivision   (int st[], int ed[], float* vf);
+  void vertex8       (int st[], int ed[], float* vf);
   
-  FB::Vec3f transform  (const FB::Vec3f angle, const FB::Vec3f u);
+  FB::Vec3f rotate   (const FB::Vec3f angle, const FB::Vec3f u);
   
   /// セルインデックスを(1,0,0)シフト
   FB::Vec3f shift_f1(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); }
@@ -99,7 +99,7 @@ protected:
   //@param p テスト点座標
   //@ret 内部のときに1.0を返す
   inline float judge_cylinder(const FB::Vec3f p) {
-    FB::Vec3f q = transform(angle, p);
+    FB::Vec3f q = rotate(angle, transf(center, p));
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     float r = sqrtf(q.x*q.x + q.y*q.y);
@@ -112,13 +112,21 @@ protected:
   //@param p テスト点座標
   //@ret 内部のときに1.0を返す
   inline float judge_rect(const FB::Vec3f p) {
-    FB::Vec3f q = transform(angle, p);
+    FB::Vec3f q = rotate(angle, transf(center, p));
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     if ( fabs(q.x) > 0.5*width )  return 0.0;
     if ( fabs(q.y) > 0.5*height ) return 0.0;
     
     return 1.0;
+  }
+  
+  //@fn inline FB::Vec3f transf(const FB::Vec3f t, const FB::Vec3f q)
+  //@brief qをtだけ平行移動したベクトルを返す
+  //@param t 並行移動量
+  //@param q 変換するベクトル
+  inline FB::Vec3f transf(const FB::Vec3f t, const FB::Vec3f q) {
+    return ( q-t );
   }
   
 public:
