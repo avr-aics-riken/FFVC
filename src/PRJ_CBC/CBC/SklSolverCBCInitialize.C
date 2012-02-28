@@ -681,18 +681,22 @@ SklSolverCBC::SklSolverInitialize() {
   FB::Vec3f org(C.org);
   int subsampling = 10;
   CompoFraction* CF = new CompoFraction(size, guide, pch, org, subsampling);
+  CF->setParallelInfo(pn);
   
   float cmp_depth  = 0.07;
-  float cmp_radius = 0.12;
-  FB::Vec3f cmp_nv(1.0, 0.0, 1.0);
-  FB::Vec3f cmp_ctr(0.15, 0.2, 0.0);
+  float cmp_r_fan  = 0.12;
+  float cmp_r_boss = 0.06;
+  float cmp_width  = 0.2;
+  float cmp_height = 0.15;
+  FB::Vec3f cmp_nv (0.0, -1.0, 0.0);
+  FB::Vec3f cmp_ctr(0.2, 0.0, -0.1);
+  FB::Vec3f cmp_dir(0.0, 0.0, 1.0); // nvと直交
   printf("org =(%f %f %f)\n", org.x, org.y, org.z);
   //printf("dx  =(%f %f %f)\n", pch.x, pch.y, pch.z);
   printf("nv  =(%f %f %f)\n", cmp_nv.x, cmp_nv.y, cmp_nv.z);
   
-  cmp_nv.normalize();
-  
-  CF->setShapeParam(cmp_nv, cmp_ctr, cmp_depth, cmp_radius);
+  //CF->setShapeParam(cmp_nv, cmp_ctr, cmp_depth, cmp_r_fan, cmp_r_boss);
+  CF->setShapeParam(cmp_nv, cmp_ctr, cmp_dir, cmp_depth, cmp_width, cmp_height);
   
   int f_st[3], f_ed[3];
   f_st[0] = 1;

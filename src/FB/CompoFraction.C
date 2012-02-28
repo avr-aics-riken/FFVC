@@ -22,17 +22,30 @@ void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_
   depth  = m_depth;
   width  = m_width;
   height = m_height;
+  
+  nv.normalize();
+  dir.normalize();
+  if ( (nv.length() == 0.0) || (dir.length() == 0.0) ) {
+    Hostonly_ stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
+    Exit(0);
+  }
+  
+  if ( dot(nv, dir) != 0.0 ) {
+    Hostonly_ stamped_printf("\tError : Invalid parameter of Heat Exchanger : non-orthogonal vectors\n");
+    Exit(0);
+  }
 }
 
-//@fn void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius)
+//@fn void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_r_fan, float m_r_boss)
 //@brief 円筒の形状パラメータをセットする
-void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius)
+void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_r_fan, float m_r_boss)
 {
   smode  = CIRC_CYL;
   nv     = m_nv;
   center = m_ctr;
   depth  = m_depth;
-  radius = m_radius;
+  r_fan  = m_r_fan;
+  r_boss = m_r_boss;
 }
 
 //@fn void CompoFraction::get_fraction(int st[], int ed[], float* vf)
@@ -42,7 +55,8 @@ void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_dept
 //@param vf フラクション
 void CompoFraction::get_fraction(int st[], int ed[], float* vf)
 {
-  get_angle(); printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
+  get_angle(); 
+  printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
   
   vertex8(st, ed, vf);
   
@@ -99,7 +113,7 @@ void CompoFraction::subdivision(int st[], int ed[], float* vf)
                 }
               }
             } // k1
-            vf[m] = c*ff; // 1/(dv*dv)
+            vf[m] = c*ff;
           }
           
         }
@@ -133,7 +147,7 @@ void CompoFraction::subdivision(int st[], int ed[], float* vf)
                 }
               }
             } // k1
-            vf[m] = c*ff; // 1/(dv*dv)
+            vf[m] = c*ff;
           }
           
         }
@@ -232,7 +246,6 @@ void CompoFraction::get_angle(void)
   float alpha, beta, c, d, c_alp, c_bta;
   float eps = 1.0e-5, f_yz, f_xz;
   FB::Vec3f p;
-  FB::Vec3f x(1.0, 0.0, 0.0);
   FB::Vec3f z(0.0, 0.0, 1.0);
   
   // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
@@ -246,12 +259,7 @@ void CompoFraction::get_angle(void)
     c_alp = dot(z, p)/c;
     d = acos( c_alp );
     f_yz = c_alp+1.0;
-    if ( f_yz<eps ) { // x軸から見てnvとzが反対方向の場合には，xz面の回転を採用する．判定は誤差を考慮
-      alpha = 0.0;
-    }
-    else {
-      alpha = (nv.y >= 0.0) ? d : -d;
-    } 
+    alpha = (nv.y >= 0.0) ? d : -d;
   }
   else {
     alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
@@ -279,17 +287,34 @@ void CompoFraction::get_angle(void)
     beta  = acos(-1.0);
   }
   
-  
   angle.assign(alpha, beta, 0.0);
   
-  // 矩形の場合，　単位ベクトルdirが回転した後，x軸の単位ベクトルと作る角度を返す
+  
+  // 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
   if ( smode == RECT_CYL ) {
-    float d_xy;
-    FB::Vec3f q = rotate(angle, transf(center, dir)); // 回転によりxy平面上に射影される
+    float c_gma, f_xy;
+    FB::Vec3f x(1.0, 0.0, 0.0);
+    
+    FB::Vec3f q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
+    
+    printf("dir: %f %f %f\n", q.x, q.y, q.z);
     c = q.length();
-    d_xy = (c==0.0) ? 0.0 : dot(x, q)/c;
-    d = acos( d_xy );
-    angle.z = (q.y >= 0.0) ? -d : d;
+    
+    if ( c != 0.0 ) {
+      c_gma = dot(x, q)/c;
+      d = acos( c_gma );
+      f_xy = c_gma+1.0;
+      if ( f_xy<eps ) {
+        angle.z = 0.0;
+      }
+      else {
+        angle.z = (q.y >= 0.0) ? -d : d;
+      }
+    }
+    else {
+      Hostonly_ stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
+      Exit(0);
+    }
   }
 }
 

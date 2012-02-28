@@ -16,16 +16,17 @@
 #include "FBDefine.h"
 #include "FBUtility.h"
 #include "vec3.h"
+#include "Parallel_node.h"
 
-class CompoFraction {
-public:
-  /// サンプリング形状
+class CompoFraction : public Parallel_Node {
+  
+protected:
+  // サンプリング形状
   enum Shapes {
     RECT_CYL,  ///< 矩形領域
     CIRC_CYL,  ///< 円筒領域
   };
   
-protected:
   // ローカル計算領域情報
   int size[3];     ///< セル(ローカル)サイズ
   int guide;       ///< ガイドセル数
@@ -39,7 +40,8 @@ protected:
   float depth;     ///< 厚さ
   float width;     ///< 矩形の幅（dir方向)
   float height;    ///< 矩形の高さ
-  float radius;    ///< 半径
+  float r_fan;     ///< ファン半径
+  float r_boss;    ///< ボス半径
   FB::Vec3f nv;    ///< 法線方向ベクトル（流出方向）
   FB::Vec3f center;///< 形状の中心座標（前面の中心位置）
   FB::Vec3f dir;   ///< 矩形の方向規定の参照ベクトル
@@ -73,26 +75,13 @@ protected:
   
   FB::Vec3f rotate   (const FB::Vec3f angle, const FB::Vec3f u);
   
-  /// セルインデックスを(1,0,0)シフト
-  FB::Vec3f shift_f1(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); }
-  
-  /// セルインデックスを(0,1,0)シフト
-  FB::Vec3f shift_f2(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z  ); }
-  
-  /// セルインデックスを(1,1,0)シフト
-  FB::Vec3f shift_f3(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z  ); }
-  
-  /// セルインデックスを(0,0,1)シフト
-  FB::Vec3f shift_f4(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y  , index.z+h); }
-  
-  /// セルインデックスを(1,0,1)シフト
-  FB::Vec3f shift_f5(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z+h); }
-  
-  /// セルインデックスを(0,1,1)シフト
-  FB::Vec3f shift_f6(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z+h); }
-  
-  /// セルインデックスを(1,1,1)シフト
-  FB::Vec3f shift_f7(const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); }
+  FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); } /// セルインデックスを(1,0,0)シフト
+  FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z  ); } /// セルインデックスを(0,1,0)シフト
+  FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z  ); } /// セルインデックスを(1,1,0)シフト
+  FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y  , index.z+h); } /// セルインデックスを(0,0,1)シフト
+  FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z+h); } /// セルインデックスを(1,0,1)シフト
+  FB::Vec3f shift_f6 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z+h); } /// セルインデックスを(0,1,1)シフト
+  FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); } /// セルインデックスを(1,1,1)シフト
   
   //@fn inline float judge_cylinder(const FB::Vec3f p)
   //@brief 円筒形状の内外判定
@@ -104,7 +93,7 @@ protected:
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     float r = sqrtf(q.x*q.x + q.y*q.y);
     
-    return (r<=radius) ? 1.0 : 0.0;
+    return ( (r<=r_fan) && (r>r_boss) ) ? 1.0 : 0.0;
   }
   
   //@fn inline float judge_rect(const FB::Vec3f p)
@@ -132,7 +121,7 @@ protected:
 public:
   void get_fraction  (int st[], int ed[], float* vf);
   void setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height);
-  void setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_radius);
+  void setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_r_fan, float m_r_boss);
   
 };
 

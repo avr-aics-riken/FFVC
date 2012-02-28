@@ -235,6 +235,7 @@ depend:
 ../../FB/CompoFraction.o: ../../FB/mydebug.h ../../FB/FBUtility.h
 ../../FB/CompoFraction.o: ../../FB/Component.h ../../FB/vec3.h
 ../../FB/CompoFraction.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
+../../FB/CompoFraction.o: ../../FB/Parallel_node.h
 ../../FB/Control.o: ../../FB/Control.h ../../FB/FBDefine.h ../../FB/mydebug.h
 ../../FB/Control.o: /usr/local/sphere/include/Skl.h
 ../../FB/Control.o: /usr/local/sphere/include/endianUtil.h
