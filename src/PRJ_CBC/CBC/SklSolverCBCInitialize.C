@@ -1419,7 +1419,6 @@ void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, unsigned st_i, unsigne
         m_ed = 0;
       }
     }
-    //debug; Hostonly_ printf("(1) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
   }
   
   // BVが+方向のガイドセル内のみにある場合

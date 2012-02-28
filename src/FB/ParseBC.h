@@ -21,11 +21,12 @@
 #include "Control.h"
 #include "Component.h"
 #include "IDtable.h"
-#include "SklUtil.h"
 #include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
 #include "parallel/SklParaComponent.h"
 #include "Material.h"
+#include "vec3.h"
+
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class ParseBC : public Parallel_Node {
@@ -95,7 +96,9 @@ protected:
   void chkKeywordOBC        (const char *keyword, unsigned m);
   void getFan               (const CfgElem *elmL, unsigned n);
   void getDarcy             (const CfgElem *elmL, unsigned n);
-  void get_Vec              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  void get_NV               (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  void get_Dir              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  void get_Center           (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
   void getUnitVec           (REAL_TYPE* v);
   void getXML_Cell_Monitor  (const CfgElem *elmL, unsigned n, Control* C);
   void getXML_IBC_Adiabatic (const CfgElem *elmL, unsigned n);
@@ -166,6 +169,14 @@ protected:
   //@brief コンポーネントのBV情報ed_zを返す
   int getGlCompoBV_ed_z(unsigned odr, int* gci) {
     return ( gci[6*odr+5] );
+  }
+  
+  //@fn void copyVec(REAL_TYPE* dst, REAL_TYPE* src)
+  //@brief ベクトルのコピー
+  void copyVec(REAL_TYPE* dst, REAL_TYPE* src) {
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
   }
   
 public:

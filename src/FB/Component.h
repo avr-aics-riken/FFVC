@@ -99,21 +99,21 @@ public:
   };
   
 protected:
-  unsigned ID;       /// セルID
-  unsigned type;     /// 
-  unsigned element;  /// 要素数
-  unsigned attrb;    /// 
-  unsigned h_type;   /// 
-  unsigned variable; ///
-  unsigned mat_odr;  /// 
-  unsigned ens;      /// 
-  unsigned phase;    /// 
-  unsigned var_u1;   /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
-  unsigned usw;      ///
-  int      state;    ///
-  int      st[3];    /// コンポーネントインデクスBV範囲の始点
-  int      ed[3];    /// コンポーネントインデクスBV範囲の終点
-  int      def;      /// BC指定時の面を挟む相手先のセルID
+  unsigned ID;        /// セルID
+  unsigned type;      /// 
+  unsigned element;   /// 要素数
+  unsigned attrb;     /// 
+  unsigned h_type;    /// 
+  unsigned variable;  ///
+  unsigned mat_odr;   /// 
+  unsigned ens;       /// 
+  unsigned phase;     /// 
+  unsigned var_u1;    /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
+  unsigned usw;       ///
+  int      state;     ///
+  int      st[3];     /// コンポーネントインデクスBV範囲の始点
+  int      ed[3];     /// コンポーネントインデクスBV範囲の終点
+  int      def;       /// BC指定時の面を挟む相手先のセルID
   REAL_TYPE var1;     /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
   REAL_TYPE var2;     /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
   REAL_TYPE var3;     /// パラメータ保持 (Heat Density, Temperature)
@@ -121,14 +121,19 @@ protected:
   REAL_TYPE temp_init;/// 温度の初期値
   
 public:
-  REAL_TYPE dir;
-  REAL_TYPE area;
-  REAL_TYPE nv[3];
-  REAL_TYPE val[var_END];
-  REAL_TYPE ca[6];
-  REAL_TYPE cb[6];
-  unsigned sub_domain;
-  char     name[LABEL];
+  REAL_TYPE dir;          ///< 吹き出し，吸い込みの方向
+  REAL_TYPE area;         ///< 断面積
+  REAL_TYPE nv[3];        ///< 法線方向ベクトル（流出方向）
+  REAL_TYPE oc[3];        ///< 形状の中心座標（前面の中心位置）
+  REAL_TYPE dr[3];        ///< 補助方向ベクトル（nvと直交）
+  REAL_TYPE depth;        ///< 厚さ（nv方向）
+  REAL_TYPE shp_p1;       ///< 矩形の幅（dr方向), ファン半径
+  REAL_TYPE shp_p2;       ///< 矩形の高さ, ボス半径
+  REAL_TYPE val[var_END]; ///< データ保持用ワーク
+  REAL_TYPE ca[6];        ///< 係数セット a
+  REAL_TYPE cb[6];        ///< 係数セット b
+  char      name[LABEL];  ///< ラベル
+  
   
   CompoList() {
     ID = type = element = variable = mat_odr = attrb = 0;
@@ -139,17 +144,19 @@ public:
     dir = area = 0.0;
     usw = OFF;
     var_u1 = 0;
-    sub_domain = 0;
     phase = 0;
     for (int i=0; i<3; i++) {
-      nv[i]=0.0;
-      st[i]=0.0;
-      ed[i]=0.0;
+      nv[i] = 0.0;
+      st[i] = 0;
+      ed[i] = 0;
+      oc[i] = 0.0;
+      dr[i] = 0.0;
     }
     for (int i=0; i<var_END; i++) val[i]=0.0;
     for (int i=0; i<6; i++) ca[i] = cb[i] = 0.0;
     for (int n=0; n<LABEL; n++) name[n]='\0';
     var1 = var2 = var3 = var_m = temp_init = 0.0;
+    depth = shp_p1 = shp_p2 = 0.0;
   }
   ~CompoList() {}
   
@@ -187,7 +194,6 @@ public:
   string getVarStr (void) const;
   string getBCstr  (void) const;
   
-  void addVec              (REAL_TYPE* vec);
   void setAttrb            (unsigned key);
   void setCompoBV_ed       (unsigned odr, int val);
   void setCompoBV_st       (unsigned odr, int val);
@@ -230,47 +236,33 @@ public:
   void set_Velocity        (REAL_TYPE var);
   
   //@fn REAL_TYPE getInitTemp(void) const
-  inline REAL_TYPE getInitTemp(void) const {
-    return temp_init;
-  }
+  inline REAL_TYPE getInitTemp(void) const { return temp_init; }
   
   //@fn int getDef(void) const
   inline int getDef(void) const { return def; };
   
   //@fn unsigned getPeriodicDir(void) const
-  inline unsigned getPeriodicDir(void) const {
-    return var_u1;
-  }
+  inline unsigned getPeriodicDir(void) const { return var_u1; }
   
   //@fn unsigned getPrsUnit(void) const
-  inline unsigned getPrsUnit(void) const {
-    return var_u1;
-  }
+  inline unsigned getPrsUnit(void) const { return var_u1; }
   
   //@fn unsigned getOutflowType(void) const
-  inline unsigned getOutflowType(void) const {
-    return var_u1;
-  }
+  inline unsigned getOutflowType(void) const { return var_u1; }
   
   //@fn unsigned getStateCellMonitor(void) const
-  inline unsigned getStateCellMonitor(void) const {
-    return var_u1;
-  }
+  inline unsigned getStateCellMonitor(void) const { return var_u1; }
   
   //@fn unsigned getPhase(void) const
   //@brief return pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
-  inline unsigned getPhase(void) const {
-    return phase;
-  }
+  inline unsigned getPhase(void) const { return phase; }
   
   /**
    @fn void encodeVarType (unsigned var)
    @brief メンバ変数variableに変数の種類をエンコードする
    @param var 変数タイプを表すビット数
    */
-  inline void encodeVarType (unsigned var) { 
-    variable |= (0x1 << var); 
-  }
+  inline void encodeVarType (unsigned var) { variable |= (0x1 << var); }
   
   /**
    @fn bool isVarEncoded (unsigned var) const
@@ -336,51 +328,35 @@ public:
   
   //@fn int getCompoBV_st_x(void)
   //@brief コンポーネントのBV情報st_xを返す
-  inline int getCompoBV_st_x(void) {
-    return (st[0]);
-  }
+  inline int getCompoBV_st_x(void) { return (st[0]); }
   
   //@fn int getCompoBV_st_y(void)
   //@brief コンポーネントのBV情報st_yを返す
-  inline int getCompoBV_st_y(void) {
-    return (st[1]);
-  }
+  inline int getCompoBV_st_y(void) { return (st[1]); }
   
   //@fn int getCompoBV_st_z(void)
   //@brief コンポーネントのBV情報st_zを返す
-  inline int getCompoBV_st_z(void) {
-    return (st[2]);
-  }
+  inline int getCompoBV_st_z(void) { return (st[2]); }
   
   //@fn int getCompoBV_ed_x(void)
   //@brief コンポーネントのBV情報ed_xを返す
-  inline int getCompoBV_ed_x(void) {
-    return (ed[0]);
-  }
+  inline int getCompoBV_ed_x(void) { return (ed[0]); }
   
   //@fn int getCompoBV_ed_y(void)
   //@brief コンポーネントのBV情報ed_yを返す
-  inline int getCompoBV_ed_y(void) {
-    return (ed[1]);
-  }
+  inline int getCompoBV_ed_y(void) { return (ed[1]); }
   
   //@fn int getCompoBV_ed_z(void)
   //@brief コンポーネントのBV情報ed_zを返す
-  inline int getCompoBV_ed_z(void) {
-    return (ed[2]);
-  }
+  inline int getCompoBV_ed_z(void) { return (ed[2]); }
   
   //@fn int* getCompoBV_adrs_st(void)
   //@brief コンポーネントのBV情報stのアドレスを返す
-  int* getCompoBV_adrs_st(void) {
-    return (st);
-  }
+  int* getCompoBV_adrs_st(void) { return (st); }
   
   //@fn int* getCompoBV_adrs_ed(void)
   //@brief コンポーネントのBV情報edのアドレスを返す
-  int* getCompoBV_adrs_ed(void) {
-    return (ed);
-  }
+  int* getCompoBV_adrs_ed(void) { return (ed); }
 };
 
 #endif // _SKL_FB_COMPO_H_

@@ -752,24 +752,46 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
 	// Heat Exchanger
   if ( isComponent(HEX) ) {
     fprintf(fp, "\n\t[Pressure Loss]\n");
-    fprintf(fp, "\t no                    Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed   normal_x   normal_y   normal_z\n");
     
+    fprintf(fp, "\t no                    Label    ID    normal_x   normal_y   normal_z      dir_x      dir_y      dir_z        O_x        O_y        O_z\n");
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %10.3e %10.3e %10.3e\n", 
+        fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
                 n, compo[n].name, compo[n].getID(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci),  
-								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2]);
+								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
+                compo[n].dr[0], compo[n].dr[1], compo[n].dr[2],
+                compo[n].oc[0], compo[n].oc[1], compo[n].oc[2]);
       }
     }
     fprintf(fp, "\n");
-    fprintf(fp, "\t no                    Label    ID        (Computed Normal form ID)  Area[m*m]         c1         c2         c3         c4  u_th[m/s]  thick[mm]     vec_forcing\n");
+    
+    fprintf(fp, "\t                                     Depth[m]   Width[m]  Height[m]  Area[m*m]\n");
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
-        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
-                n, compo[n].name, compo[n].getID(), nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area,
+        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e\n", 
+                n, compo[n].name, compo[n].getID(),
+								compo[n].depth, compo[n].shp_p1, compo[n].shp_p2, compo[n].area);
+      }
+    }
+    fprintf(fp, "\n");
+    
+    fprintf(fp, "\t                                      i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == HEX ) {
+        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
+                n, compo[n].name, compo[n].getID(),
+                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
+                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
+                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+      }
+    }
+    fprintf(fp, "\n");
+    
+    fprintf(fp, "\t no                    Label    ID         c1         c2         c3         c4  u_th[m/s]  thick[mm]     vec_forcing\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == HEX ) {
+        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
+                n, compo[n].name, compo[n].getID(),
             compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4]*RefVelocity, compo[n].ca[5]*RefLength*1000.0,
             (compo[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
       }
@@ -1720,7 +1742,7 @@ void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
   BaseBc[n].set_vType( getXML_Vel_profile(elmL, "Basic_BCs > Wall") );
   
   // 法線ベクトル
-  get_Vec(elmL, n, "Basic_BCs > Wall", v);
+  get_NV(elmL, n, "Basic_BCs > Wall", v);
   BaseBc[n].addVec(v);
   
   // 速度の指定モードの特定
@@ -1899,7 +1921,7 @@ void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
   BaseBc[n].set_vType( getXML_Vel_profile(elmL, "Basic_BCs > Specified_Velocity") );
   
   // 法線ベクトル
-  get_Vec(elmL, n, "Basic_BCs > Specified_Velocity", v);
+  get_NV(elmL, n, "Basic_BCs > Specified_Velocity", v);
   BaseBc[n].addVec(v);
   
   // 速度の指定モードの特定
@@ -2402,8 +2424,8 @@ void ParseBC::getXML_IBC_SpecVel(const CfgElem *elmL, unsigned n)
   set_Deface(elmL, n, "InnerBoundary > Specified_Velocity");
 
   // 法線ベクトル
-  get_Vec(elmL, n, "InnerBoundary > Specified_Velocity", v);
-  compo[n].addVec(v);
+  get_NV(elmL, n, "InnerBoundary > Specified_Velocity", v);
+  copyVec(compo[n].nv, v);
 
   // 速度パラメータの読み込み
   getXML_Vel_Params(elmL, compo[n].get_sw_V_profile(), compo[n].ca, vel, "InnerBoundary > Specified_Velocity");
@@ -2903,8 +2925,8 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   }
   
   // 法線ベクトル
-  get_Vec(elmL, n, "InnerBoundary > Cell_Monitor", v);
-  compo[n].addVec(v);
+  get_NV(elmL, n, "InnerBoundary > Cell_Monitor", v);
+  copyVec(compo[n].nv, v);
   
   // Variables
   if ( !( elmL2 = elmL->GetElemFirst("Variables") ) ) {
@@ -3034,8 +3056,8 @@ void ParseBC::getXML_IBC_IBM_DF(const CfgElem *elmL, unsigned n)
   }
   
   // 法線ベクトル
-  get_Vec(elmL, n, "InnerBoundary > Forcing", v);
-  compo[n].addVec(v);
+  get_NV(elmL, n, "InnerBoundary > Forcing", v);
+  copyVec(compo[n].nv, v);
   
   // Velocity
   REAL_TYPE ct = get_BCval_real(elmL, "Velocity");
@@ -3061,7 +3083,7 @@ void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
   REAL_TYPE v[3], ct;
   
   // check number of Elem
-  if ( elmL->GetParamSize() != 11) {    
+  if ( elmL->GetParamSize() != 20) {    
     Hostonly_ stamped_printf("\tParsing error : 11 params should be found in 'Pressure_Loss'\n");
     Exit(0);
   }
@@ -3089,8 +3111,21 @@ void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
   }
   
   // 法線ベクトルの取得
-  get_Vec(elmL, n, "InnerBoundary > Pressure_Loss", v);
-  compo[n].addVec(v);
+  get_NV(elmL, n, "InnerBoundary > Pressure_Loss : Normal Vector", v);
+  copyVec(compo[n].nv, v);
+  
+  // 方向ベクトルの取得
+  get_Dir(elmL, n, "InnerBoundary > Pressure_Loss : Dir. Vector", v);
+  copyVec(compo[n].dr, v);
+  
+  // 中心座標の取得
+  get_Center(elmL, n, "InnerBoundary > Pressure_Loss : Center", v);
+  copyVec(compo[n].oc, v);
+  
+  // 形状パラメータ
+  compo[n].depth  = get_BCval_real(elmL, "depth");
+  compo[n].shp_p1 = get_BCval_real(elmL, "width");
+  compo[n].shp_p2 = get_BCval_real(elmL, "height");
 
   // 圧力損失パラメータ
 	compo[n].ca[0] = get_BCval_real(elmL, "c1");
@@ -3610,18 +3645,56 @@ int ParseBC::get_BCval_int(const CfgElem *elmL, const char* key)
 }
 
 /**
- @fn void ParseBC::get_Vec(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
- @brief 内部境界条件のベクトル値を取得し，登録する
+ @fn void ParseBC::get_NV(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
+ @brief 内部境界条件の法線ベクトル値を取得し，登録する
  @param elmL
  @param n オーダー
  @param v[out] ベクトルパラメータ
  @param str エラー表示用文字列
  */
-void ParseBC::get_Vec(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
+void ParseBC::get_NV(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
 {
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
   if ( !elmL->GetVctValue("Normal_x", "Normal_y", "Normal_z", &v[0], &v[1], &v[2]) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
+    Exit(0);
+  }
+  getUnitVec(v);
+}
+
+/**
+ @fn void ParseBC::get_Dir(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
+ @brief 内部境界条件の方向ベクトル値を取得し，登録する
+ @param elmL
+ @param n オーダー
+ @param v[out] ベクトルパラメータ
+ @param str エラー表示用文字列
+ */
+void ParseBC::get_Dir(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
+{
+  for (unsigned i=0; i<3; i++) v[i]=0.0f;
+  
+  if ( !elmL->GetVctValue("Dir_x", "Dir_y", "Dir_z", &v[0], &v[1], &v[2]) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
+    Exit(0);
+  }
+  getUnitVec(v);
+}
+
+/**
+ @fn void ParseBC::get_Center(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
+ @brief 内部境界条件の座標値を取得し，登録する
+ @param elmL
+ @param n オーダー
+ @param v[out] ベクトルパラメータ
+ @param str エラー表示用文字列
+ */
+void ParseBC::get_Center(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
+{
+  for (unsigned i=0; i<3; i++) v[i]=0.0f;
+  
+  if ( !elmL->GetVctValue("Center_x", "Center_y", "Center_z", &v[0], &v[1], &v[2]) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
     Exit(0);
   }

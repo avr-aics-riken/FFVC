@@ -285,14 +285,6 @@ bool CompoList::isVFraction(void) const
   return false;
 }
 
-//@fn void CompoList::addVec(REAL_TYPE* vec)
-//@brief ベクトルのコピー
-void CompoList::addVec(REAL_TYPE* vec) {
-  nv[0] = vec[0];
-  nv[1] = vec[1];
-  nv[2] = vec[2];
-}
-
 //@fn void CompoList::setPeriodicDir(unsigned key)
 //@brief 周期境界の上流方向を保持する
 void CompoList::setPeriodicDir(unsigned key) {
