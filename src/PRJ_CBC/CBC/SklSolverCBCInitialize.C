@@ -468,7 +468,7 @@ SklSolverCBC::SklSolverInitialize() {
     dc_bh2->CommBndCell(guide);
   }
   
-  // 法線計算のためのワーク配列
+  // 法線計算のためのワーク配列 >> 不要にする
   if ( C.NoBC != 0 ) {
     Vinfo.alloc_voxel_nv((C.NoBC+1)*3);
     

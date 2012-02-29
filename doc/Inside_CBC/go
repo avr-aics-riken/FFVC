@@ -1,6 +1,6 @@
 #! /bin/bash
 platex InsideCBC
-jbibtex InsideCBC
+bibtex InsideCBC
 platex InsideCBC
 platex InsideCBC
 mendex -s myindex InsideCBC.idx

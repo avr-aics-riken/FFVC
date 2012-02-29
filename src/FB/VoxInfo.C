@@ -2750,7 +2750,7 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
   def = cmp[n].getDef();
   
   switch ( cmp[n].getType() ) {
-    case SPEC_VEL:
+    /*case SPEC_VEL:
     case SPEC_VEL_WH:
     case OUTFLOW:
       countNrml_from_FaceBC(n, bv, cijk, area);
@@ -2758,6 +2758,7 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
       aj = (SKL_REAL)cijk[1];
       ak = (SKL_REAL)cijk[2];
       break;
+     */
       
     case HEATFLUX:
     case TRANSFER:
@@ -2769,8 +2770,8 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
       break;
       
     case CELL_MONITOR:
-    case HEX:
-    case FAN:
+    //case HEX:
+    //case FAN:
     case DARCY:
       countVolumeEdge(n, bd, cijk);
       getNormalSign(n, gi, bd, dir);

@@ -94,7 +94,6 @@ protected:
   
   void chkKeywordIBC        (const char *keyword, unsigned m);
   void chkKeywordOBC        (const char *keyword, unsigned m);
-  void getFan               (const CfgElem *elmL, unsigned n);
   void getDarcy             (const CfgElem *elmL, unsigned n);
   void get_NV               (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
   void get_Dir              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
@@ -103,6 +102,7 @@ protected:
   void getXML_Cell_Monitor  (const CfgElem *elmL, unsigned n, Control* C);
   void getXML_IBC_Adiabatic (const CfgElem *elmL, unsigned n);
   void getXML_IBC_CnstTemp  (const CfgElem *elmL, unsigned n);
+  void getXML_IBC_Fan       (const CfgElem *elmL, unsigned n);
   void getXML_IBC_IBM_DF    (const CfgElem *elmL, unsigned n);
   void getXML_IBC_HeatFlux  (const CfgElem *elmL, unsigned n);
   void getXML_IBC_HeatSrc   (const CfgElem *elmL, unsigned n);

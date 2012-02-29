@@ -753,7 +753,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   if ( isComponent(HEX) ) {
     fprintf(fp, "\n\t[Pressure Loss]\n");
     
-    fprintf(fp, "\t no                    Label    ID    normal_x   normal_y   normal_z      dir_x      dir_y      dir_z        O_x        O_y        O_z\n");
+    fprintf(fp, "\t no                    Label    ID    normal_x   normal_y   normal_z      dir_x      dir_y      dir_z     O_x[m]     O_y[m]     O_z[m]\n");
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
@@ -2277,6 +2277,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
   int def;
 	const char *str=NULL;
   REAL_TYPE ct;
+  REAL_TYPE v[3];
   
   // 圧力境界のタイプ default
   compo[n].set_sw_P_BCtype( P_GRAD_ZERO );
@@ -2305,6 +2306,11 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
   
   // 流出速度のタイプ
   compo[n].setOutflowType(V_AVERAGE);
+  
+  // 法線ベクトルの取得
+  get_NV(elmL, n, "InnerBoundary > Outflow : Normal Vector", v);
+  copyVec(compo[n].nv, v);
+  
   /*
   if ( !elmL->GetValue(CfgIdt("velocity_type"), &str) ) {
     Hostonly_ printf("\tParsing error : fail to get 'Velocity_Type' in 'InnerBoundary > Outflow'\n");
@@ -3149,13 +3155,12 @@ void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
 }
 
 /**
- @fn void ParseBC::getFan(const CfgElem *elmL, unsigned n)
+ @fn void ParseBC::getXML_IBC_Fan(const CfgElem *elmL, unsigned n)
  @brief Fanのパラメータを取得する
  @param elmL Forcing_Volumeのレベル
  @param n コンポーネントリストのエントリ番号
- @todo 未確認
  */
-void ParseBC::getFan(const CfgElem *elmL, unsigned n)
+void ParseBC::getXML_IBC_Fan(const CfgElem *elmL, unsigned n)
 {
   if ( !elmL ) Exit(0);
   
@@ -3319,7 +3324,7 @@ void ParseBC::setCompoList(Control* C)
       }
     }
     else if ( tp == FAN ) {
-      getFan(elmL2, odr);
+      getXML_IBC_Fan(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
         Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
@@ -3698,7 +3703,6 @@ void ParseBC::get_Center(const CfgElem *elmL, unsigned n, const char* str, REAL_
     Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
     Exit(0);
   }
-  getUnitVec(v);
 }
 
 /**
