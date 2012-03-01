@@ -659,9 +659,8 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
     
     for(n=1; n<=NoBC; n++){
       if ( (compo[n].getType() == SPEC_VEL) || (compo[n].getType() == SPEC_VEL_WH) )  {
-        fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e %10s ",
-                n, compo[n].name, compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                ( compo[n].dir > 0.0 ) ? " Blowing" : " Suction");
+        fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e ",
+                n, compo[n].name, compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2]);
         if ( compo[n].get_sw_V_profile() == CompoList::vel_zero ) {
           fprintf(fp,"%12.4e ", 0.0);
         }

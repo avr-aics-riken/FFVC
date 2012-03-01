@@ -238,7 +238,6 @@ SklSolverCBC::SklSolverInitialize() {
         }
       }
       else { // 媒質ファイルを使わない場合，指定された媒質番号で初期化
-        //SklInitializeInt(dc_mid->GetData(), (int)C.Mode.Base_Medium, dc_mid->GetArrayLength());
         d_size = dc_mid->GetArrayLength();
         fb_set_value_int_(dc_mid->GetData(), (int*)&d_size, (int*)mid);
       }
@@ -384,6 +383,50 @@ SklSolverCBC::SklSolverInitialize() {
   
   // セルIDのノード間同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
+  
+  
+  // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
+  int subsampling = 10; // fixed number
+  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
+  CF.setParallelInfo(pn);
+  
+  int f_st[3], f_ed[3];
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    switch ( cmp[n].getType() ) {
+      case HEX:
+        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+        break;
+        
+      case FAN:
+        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+        break;
+        
+      case DARCY:
+        Exit(0);
+        break;
+        
+      default:
+        break;
+    }
+    
+    CF.get_Bbox();
+    
+    f_st[0] = 1;
+    f_st[1] = 1;
+    f_st[2] = 1;
+    f_ed[0] = size[0];
+    f_ed[1] = size[1];
+    f_ed[2] = size[2];
+    
+    CF.get_angle(); 
+    CF.vertex8(f_st, f_ed, cvf);
+    CF.subdivision(f_st, f_ed, cvf);
+    
+  }
+
+  F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
+  
 
   // コンポーネントのローカルインデクスをcmp.ciに保存
   getLocalCmpIdx();
@@ -674,39 +717,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
-  
-  
-  // test
-  FB::Vec3f pch(C.dx);
-  FB::Vec3f org(C.org);
-  int subsampling = 10;
-  CompoFraction* CF = new CompoFraction(size, guide, pch, org, subsampling);
-  CF->setParallelInfo(pn);
-  
-  float cmp_depth  = 0.07;
-  float cmp_r_fan  = 0.12;
-  float cmp_r_boss = 0.06;
-  float cmp_width  = 0.2;
-  float cmp_height = 0.15;
-  FB::Vec3f cmp_nv (0.0, -1.0, 0.0);
-  FB::Vec3f cmp_ctr(0.2, 0.0, -0.1);
-  FB::Vec3f cmp_dir(0.0, 0.0, 1.0); // nvと直交
-  printf("org =(%f %f %f)\n", org.x, org.y, org.z);
-  //printf("dx  =(%f %f %f)\n", pch.x, pch.y, pch.z);
-  printf("nv  =(%f %f %f)\n", cmp_nv.x, cmp_nv.y, cmp_nv.z);
-  
-  //CF->setShapeParam(cmp_nv, cmp_ctr, cmp_depth, cmp_r_fan, cmp_r_boss);
-  CF->setShapeParam(cmp_nv, cmp_ctr, cmp_dir, cmp_depth, cmp_width, cmp_height);
-  
-  int f_st[3], f_ed[3];
-  f_st[0] = 1;
-  f_st[1] = 1;
-  f_st[2] = 1;
-  f_ed[0] = size[0];
-  f_ed[1] = size[1];
-  f_ed[2] = size[2];
-  CF->get_fraction(f_st, f_ed, cvf);
-  F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
+
   
   Exit(0);
   

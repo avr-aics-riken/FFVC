@@ -2805,13 +2805,6 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
   vox_nv[3*n+2] = ( (cijk[2]==0) ? 0.0 : nvz );
   
   cmp[n].area = a * dhd * dhd;  // dhd は有次元値，近似的な面積
-  
-  SKL_REAL pa;
-  pa = vox_nv[3*n+0] * cmp[n].nv[0]
-  + vox_nv[3*n+1] * cmp[n].nv[1]
-  + vox_nv[3*n+2] * cmp[n].nv[2];
-  if ( pa >= 0.0 ) cmp[n].dir = +1.0;  // blowing
-  else             cmp[n].dir = -1.0;  // suction
 }
 
 /**

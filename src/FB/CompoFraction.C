@@ -11,9 +11,76 @@
 
 #include "CompoFraction.h"
 
-//@fn void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height)
+//@fn void CompoFraction::bbox_rect_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+//@brief 直方体領域のbboxを計算
+void CompoFraction::bbox_rect_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+{
+  FB::Vec3f p[8], o, u, v, w;
+  
+  o = center;
+  u = dir;
+  
+  v = cross(w, u).normalize();
+  
+  p[0] = o - 0.5*width*u - 0.5*height*v;
+  p[1] = p[0] + depth *w;
+  p[2] = p[1] + width *u;
+  p[3] = p[0] + width *u;
+  p[4] = p[0] + height*v;
+  p[5] = p[4] + depth *w;
+  p[6] = p[5] + width *u;
+  p[7] = p[4] + width *u;
+  
+  for (int i=0; i<8; i++) {
+    get_min(mn, p[i]);
+    get_max(mx, p[i]);
+  }
+}
+
+//@fn void CompoFraction::bbox_circ_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+//@brief 円筒領域のbboxを計算
+//@note 標準位置で円周上の点をサンプリングし，逆変換後，min/max
+void CompoFraction::bbox_circ_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+{
+  FB::Vec3f r, q;
+  int div_r = 500; // 周上の分割数
+  float x, y;
+  double d;
+  double dth = 2.0*acos(1.0)/(double)div_r; // radian
+  printf("acos(1.0) = %f\n", acos(1.0));
+  
+  for (int i=0; i<div_r; i++) {
+    d = dth * (double)i;
+    x = r_fan * cos(d);
+    y = r_fan * sin(d);
+    
+    q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
+    
+    get_min(mn, q);
+    get_max(mx, q);
+  }
+  
+}
+
+//@fn void CompoFraction::get_Bbox(void)
+//@brief 形状のbboxを求める
+void CompoFraction::get_Bbox(void)
+{
+  box_min.assign(1.0e6, 1.0e6, 1.0e6);
+  box_max.assign(-1.0e6, -1.0e6, -1.0e6);
+  
+  if ( smode == RECT_CYL ) {
+    bbox_rect_cylinder(box_min, box_max);
+  }
+  else {
+    bbox_circ_cylinder(box_min, box_max);
+  }
+}
+
+
+//@fn void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
 //@brief 矩形の形状パラメータをセットする
-void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_dir, float m_depth, float m_width, float m_height)
+void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
 {
   smode  = RECT_CYL;
   nv     = m_nv;
@@ -36,9 +103,9 @@ void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, FB::Vec3f m_
   }
 }
 
-//@fn void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_r_fan, float m_r_boss)
+//@fn void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
 //@brief 円筒の形状パラメータをセットする
-void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_depth, float m_r_fan, float m_r_boss)
+void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
 {
   smode  = CIRC_CYL;
   nv     = m_nv;
@@ -46,21 +113,12 @@ void CompoFraction::setShapeParam (FB::Vec3f m_nv, FB::Vec3f m_ctr, float m_dept
   depth  = m_depth;
   r_fan  = m_r_fan;
   r_boss = m_r_boss;
-}
-
-//@fn void CompoFraction::get_fraction(int st[], int ed[], float* vf)
-//@brief コンポーネントの体積率を計算
-//@param st 開始インデクス
-//@param ed 終了インデクス
-//@param vf フラクション
-void CompoFraction::get_fraction(int st[], int ed[], float* vf)
-{
-  get_angle(); 
-  printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
   
-  vertex8(st, ed, vf);
-  
-  subdivision(st, ed, vf);
+  nv.normalize();
+  if ( nv.length() == 0.0 ) {
+    Hostonly_ stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
+    Exit(0);
+  }
 }
 
 //@fn void CompoFraction::subdivision(int st[], int ed[], float* vf)
@@ -316,6 +374,8 @@ void CompoFraction::get_angle(void)
       Exit(0);
     }
   }
+  
+  printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 }
 
 //@fn FB::Vec3f CompoFraction::rotate(const Vec3f p, const Vec3f u)
@@ -338,6 +398,31 @@ FB::Vec3f CompoFraction::rotate(const FB::Vec3f p, const FB::Vec3f u)
   
   c.x = -sin(p.y);
   c.y =  sin(p.x)*cos(p.y);
+  c.z =  cos(p.x)*cos(p.y);
+  
+  return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );
+}
+
+//@fn FB::Vec3f CompoFraction::rotate_inv(const Vec3f p, const Vec3f u)
+//@brief 回転ベクトルp(alpha, beta, gamma)に対して，-pでベクトルuを回転する
+//@param p 回転角度
+//@param u 方向ベクトル
+//@ret 角度
+FB::Vec3f CompoFraction::rotate_inv(const FB::Vec3f p, const FB::Vec3f u)
+{
+  FB::Vec3f a, b, c;
+  
+  // line vector expression
+  a.x =  cos(p.y)*cos(p.z);
+  a.y =  cos(p.y)*sin(p.z);
+  a.z = -sin(p.y);
+  
+  b.x =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
+  b.y =  sin(p.x)*sin(p.y)*sin(p.z) + cos(p.x)*cos(p.z);
+  b.z =  sin(p.x)*cos(p.y);
+
+  c.x =  cos(p.x)*sin(p.y)*cos(p.z) + sin(p.x)*sin(p.z);
+  c.y =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
   c.z =  cos(p.x)*cos(p.y);
   
   return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );

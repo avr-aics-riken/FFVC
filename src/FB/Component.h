@@ -121,7 +121,6 @@ protected:
   REAL_TYPE temp_init;/// 温度の初期値
   
 public:
-  REAL_TYPE dir;          ///< 吹き出し，吸い込みの方向
   REAL_TYPE area;         ///< 断面積
   REAL_TYPE nv[3];        ///< 法線方向ベクトル（流出方向）
   REAL_TYPE oc[3];        ///< 形状の中心座標（前面の中心位置）
@@ -141,7 +140,7 @@ public:
     state = -1;
     def = 0;
     ens = OFF;
-    dir = area = 0.0;
+    area = 0.0;
     usw = OFF;
     var_u1 = 0;
     phase = 0;
