@@ -282,13 +282,13 @@ public:
   void AverageOutput        (unsigned mode, REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
   void Averaging_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
-  void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Array* cutPos);
+  void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
   void FileOutput           (unsigned mode, REAL_TYPE& flop);
   void gather_DomainInfo    (void);
-  void getEnlargedIndex     (int& m_st, int& m_ed, unsigned st_i, unsigned len, unsigned m_x, unsigned dir, int m_id);
+  void getEnlargedIndex     (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
   void getGlobalCmpIdx      (VoxInfo* Vinfo);
   void getLocalCmpIdx       (void);
   void IF_TRP_VOF           (void);

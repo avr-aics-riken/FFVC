@@ -77,6 +77,7 @@ protected:
   unsigned count_ValidCell_OBC (int face, unsigned* bv);
   unsigned encodeFace          (unsigned order, unsigned id, int* m, unsigned* bx, const unsigned attrb, unsigned type=0);
   unsigned encodeOrder         (unsigned order, unsigned id, int* m, unsigned* bx);
+  unsigned encodeOrder         (unsigned order, float* vf, unsigned* bx);
   unsigned encPbit_D_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
   unsigned encPbit_N_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
   unsigned encPbit_N_Cut       (unsigned* bx, CutPos32Array* cutPos);
@@ -176,7 +177,7 @@ public:
   void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);
   void setAdiabatic4SF       (unsigned* bh);
   void setBCIndexH           (unsigned* bd, unsigned* bh1, unsigned* bh2, int* mid, SetBC* BC, unsigned kos);
-  void setBCIndex_base1      (unsigned* bd, int* mid);
+  void setBCIndex_base1      (unsigned* bd, int* mid, float* cvf);
   void setBCIndex_base2      (unsigned* bd, int* mid, SetBC* BC, unsigned& Lcell, unsigned& Gcell, unsigned KOS);
   void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS);
   void setCmpFraction        (CompoList* compo, unsigned* bx);

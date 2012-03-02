@@ -2212,6 +2212,40 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
 }
 
 /**
+ @fn unsigned VoxInfo::encodeOrder(unsigned order, float* vf, unsigned* bx)
+ @brief bx[]へCompoListのエントリをエンコードする
+ @param order エンコードするエントリ
+ @param vf 体積率
+ @param bx BCindex ID
+ @retval エンコードした個数
+ */
+unsigned VoxInfo::encodeOrder(unsigned order, float* vf, unsigned* bx)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  int i,j,k;
+  unsigned register m, g=0;
+  
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        if ( vf[m] > 0.0 )  {
+          bx[m] |= order; // bx[m]の下位6bitにエントリをエンコード  >> ParseBC:sertControlVars()でビット幅をチェック
+          g++;
+        }
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ) {
+    unsigned tmp = g;
+    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  
+  return g;
+}
+
+/**
  @fn unsigned VoxInfo::countState(unsigned id, int* mid)
  @brief 媒質idの数を数え，値を返す
  @retval 計算空間内における媒質idの数
@@ -2750,15 +2784,18 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
   def = cmp[n].getDef();
   
   switch ( cmp[n].getType() ) {
-    /*case SPEC_VEL:
+    case SPEC_VEL:
     case SPEC_VEL_WH:
     case OUTFLOW:
+      return;
+      /*
       countNrml_from_FaceBC(n, bv, cijk, area);
       ai = (SKL_REAL)cijk[0];
       aj = (SKL_REAL)cijk[1];
       ak = (SKL_REAL)cijk[2];
+       */
       break;
-     */
+     
       
     case HEATFLUX:
     case TRANSFER:
@@ -2768,10 +2805,12 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
       aj = (SKL_REAL)cijk[1];
       ak = (SKL_REAL)cijk[2];
       break;
+    
+    case HEX:
+    case FAN:
+      return;
       
     case CELL_MONITOR:
-    //case HEX:
-    //case FAN:
     case DARCY:
       countVolumeEdge(n, bd, cijk);
       getNormalSign(n, gi, bd, dir);
@@ -4160,13 +4199,14 @@ unsigned VoxInfo::find_mat_odr(unsigned mat_id)
 }
 
 /**
- @fn void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid)
+ @fn void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
  @brief bx[]に各境界条件の共通のビット情報をエンコードする（その1）
  @param bx BCindex ID
  @param mid ID配列
+ @param cvf コンポーネントの体積率
  @note 事前に，cmp[]へMaterialListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
  */
-void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid)
+void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
 {
   unsigned odr, nx, id;
   unsigned register s;
@@ -4204,12 +4244,15 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid)
       case PERIODIC:
       case CELL_MONITOR:
       case IBM_DF:
-      case HEX:
-      case FAN:
       case DARCY:
       case HEAT_SRC: // 熱のBCもここで処理しておく
       case CNST_TEMP:
         cmp[n].setElement( encodeOrder(n, id, mid, bx) );
+        break;
+        
+      case HEX:
+      case FAN:
+        cmp[n].setElement( encodeOrder(n, cvf, bx) );
         break;
     }
   }

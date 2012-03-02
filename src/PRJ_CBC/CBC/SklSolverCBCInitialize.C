@@ -386,13 +386,15 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
-  int subsampling = 10; // fixed number
+  int subsampling = 10; // 体積率のサブサンプリングの基数
   CompoFraction CF(size, guide, C.dx, C.org, subsampling);
   CF.setParallelInfo(pn);
-  
+
   int f_st[3], f_ed[3];
   
   for (int n=1; n<=C.NoBC; n++) {
+    
+    // 形状パラメータのセット
     switch ( cmp[n].getType() ) {
       case HEX:
         CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
@@ -410,16 +412,25 @@ SklSolverCBC::SklSolverInitialize() {
         break;
     }
     
-    CF.get_Bbox();
-    
-    f_st[0] = 1;
-    f_st[1] = 1;
-    f_st[2] = 1;
-    f_ed[0] = size[0];
-    f_ed[1] = size[1];
-    f_ed[2] = size[2];
-    
+    // 回転角度の計算
     CF.get_angle(); 
+    
+    // bboxと投影面積の計算
+    cmp[n].area = CF.get_BboxArea();
+    
+    // インデクスの計算
+    CF.bbox_index(f_st, f_ed);
+
+    int m_st, m_ed, m_len;
+    for (unsigned d=0; d<3; d++) {
+      m_st = m_ed = 0;
+      m_len = f_ed[d] - f_st[d] + 1;
+      getEnlargedIndex(m_st, m_ed, f_st[d]-1, m_len, size[d], d); // C index expression
+      cmp[n].setCompoBV_st(d, m_st);
+      cmp[n].setCompoBV_ed(d, m_ed);
+    }
+
+    // 体積率
     CF.vertex8(f_st, f_ed, cvf);
     CF.subdivision(f_st, f_ed, cvf);
     
@@ -458,7 +469,7 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
-  VoxEncode(&Vinfo, &M, mid, cutPos);
+  VoxEncode(&Vinfo, &M, mid, cvf, cutPos);
   
   // Select implementation of SOR iteration by Eff_Cell_Ratio
   C.select_Itr_Impl(IC);
@@ -1209,16 +1220,17 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
 }
 
 /**
- @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Array* cutPos)
+ @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
  @brief BCIndexにビット情報をエンコードする
  @param Vinfo
  @param M
  @param mid Voxel IDの配列
+ @param vf コンポーネントの体積率 
  @param cutPos カット情報コンテナ
  @note
     - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
  */
-void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Array* cutPos)
+void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
 {
   unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
   bcv = bh1 = bh2 = bcp = bcd = NULL;
@@ -1232,7 +1244,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, CutPos32Arra
   }
   
   // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
-  Vinfo->setBCIndex_base1(bcd, mid);
+  Vinfo->setBCIndex_base1(bcd, mid, vf);
   
   // bcdの同期
   if( !dc_bcd->CommBndCell(guide) ) Exit(0);
@@ -1374,7 +1386,7 @@ void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
 }
 
 /**
- @fn void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, unsigned st_i, unsigned len, unsigned mx, unsigned dir, int m_id)
+ @fn void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned mx, const unsigned dir, const int m_id)
  @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
  @param m_st 拡大された開始点（Fortranインデクス）
  @param m_ed 拡大された終了点（Fortranインデクス）
@@ -1384,7 +1396,7 @@ void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
  @param dir 方向
  @param m_id キーID
  */
-void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, unsigned st_i, unsigned len, unsigned m_x, unsigned dir, int m_id)
+void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id)
 {
   unsigned ed_i = st_i + len - 1;
   unsigned n_st = st_i - 1;
@@ -1550,18 +1562,11 @@ void SklSolverCBC::getLocalCmpIdx(void)
       // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
     }
     else {
-      
-      string m_dir;
+
       int m_st, m_ed;
       
       for (unsigned d=0; d<3; d++) {
-        
-        if      ( d == 0 ) m_dir = "X";
-        else if ( d == 1 ) m_dir = "Y";
-        else               m_dir = "Z";
-        
         m_st = m_ed = 0;
-        
         getEnlargedIndex(m_st, m_ed, st_i[d], len[d], size[d], d, id);
         cmp[m].setCompoBV_st(d, m_st);
         cmp[m].setCompoBV_ed(d, m_ed);

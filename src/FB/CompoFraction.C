@@ -11,17 +11,39 @@
 
 #include "CompoFraction.h"
 
-//@fn void CompoFraction::bbox_rect_cylinder(FB::Vec3f mn, FB::Vec3f mx)
-//@brief 直方体領域のbboxを計算
-void CompoFraction::bbox_rect_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+//@fn void CompoFraction::bbox_index(int* st, int* ed)
+//@brief コンポーネントの属するセルインデクスを求める
+void CompoFraction::bbox_index(int* st, int* ed)
+{
+  find_index(st, box_min);
+  find_index(ed, box_max);
+  //printf("(%d %d %d) - (%d %d %d)\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
+}
+
+//@fn void CompoFraction::find_index(int* w, const FB::Vec3f p)
+//@brief 点pの属するセルインデクスを求める
+void CompoFraction::find_index(int* w, const FB::Vec3f p)
+{
+  FB::Vec3f q = (p-org)/pch;
+  
+  w[0] = (int)ceil(q.x);
+  w[1] = (int)ceil(q.y);
+  w[2] = (int)ceil(q.z);
+}
+
+//@fn void CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
+//@brief 直方体領域のbboxを計算し、投影面積を計算
+float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 {
   FB::Vec3f p[8], o, u, v, w;
   
   o = center;
   u = dir;
+  w = nv;
   
   v = cross(w, u).normalize();
   
+  // 直方体の8頂点の生成
   p[0] = o - 0.5*width*u - 0.5*height*v;
   p[1] = p[0] + depth *w;
   p[2] = p[1] + width *u;
@@ -35,46 +57,67 @@ void CompoFraction::bbox_rect_cylinder(FB::Vec3f mn, FB::Vec3f mx)
     get_min(mn, p[i]);
     get_max(mx, p[i]);
   }
+  
+  // 投影面積
+  float a = (p[0]-p[3]).length();
+  float b = (p[0]-p[4]).length();
+
+  return a*b;
 }
 
-//@fn void CompoFraction::bbox_circ_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+//@fn void CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 //@brief 円筒領域のbboxを計算
 //@note 標準位置で円周上の点をサンプリングし，逆変換後，min/max
-void CompoFraction::bbox_circ_cylinder(FB::Vec3f mn, FB::Vec3f mx)
+float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 {
   FB::Vec3f r, q;
   int div_r = 500; // 周上の分割数
   float x, y;
   double d;
-  double dth = 2.0*acos(1.0)/(double)div_r; // radian
-  printf("acos(1.0) = %f\n", acos(1.0));
+  double pi = 2.0*asin(1.0);
+  double dth = 2.0*pi/(double)div_r; // radian
   
   for (int i=0; i<div_r; i++) {
     d = dth * (double)i;
     x = r_fan * cos(d);
     y = r_fan * sin(d);
     
+    // 表面
     q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
+    get_min(mn, q);
+    get_max(mx, q);
     
+    // 裏面
+    q = rotate_inv(angle, r.assign(x, y, depth)) + center;
     get_min(mn, q);
     get_max(mx, q);
   }
   
+  // 投影面積
+  float a = (float)(pi*(r_fan*r_fan-r_boss*r_boss));
+  
+  return a;
 }
 
-//@fn void CompoFraction::get_Bbox(void)
-//@brief 形状のbboxを求める
-void CompoFraction::get_Bbox(void)
+//@fn void CompoFraction::get_BboxArea(void)
+//@brief 形状のbboxと投影面積を求める
+float CompoFraction::get_BboxArea(void)
 {
   box_min.assign(1.0e6, 1.0e6, 1.0e6);
   box_max.assign(-1.0e6, -1.0e6, -1.0e6);
+  float a;
   
   if ( smode == RECT_CYL ) {
-    bbox_rect_cylinder(box_min, box_max);
+    a = bbox_rect_cylinder(box_min, box_max);
   }
   else {
-    bbox_circ_cylinder(box_min, box_max);
+    a = bbox_circ_cylinder(box_min, box_max);
   }
+  
+  printf("min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
+  printf("max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
+  
+  return a;
 }
 
 
@@ -121,12 +164,12 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   }
 }
 
-//@fn void CompoFraction::subdivision(int st[], int ed[], float* vf)
+//@fn void CompoFraction::subdivision(const int st[], const int ed[], float* vf)
 //@brief 体積率が(0,1)の間のセルに対してサブディビジョンを実施
 //@param st 開始インデクス
 //@param ed 終了インデクス
 //@param vf フラクション
-void CompoFraction::subdivision(int st[], int ed[], float* vf)
+void CompoFraction::subdivision(const int st[], const int ed[], float* vf)
 {
   FB::Vec3f base, b;
   FB::Vec3f p, o;
@@ -216,13 +259,14 @@ void CompoFraction::subdivision(int st[], int ed[], float* vf)
   
 } 
 
-//@fn void CompoFraction::vertex8(int st[], int ed[], float* vf)
+//@fn void CompoFraction::vertex8(const int st[], const int ed[], float* vf)
 //@brief セルの8頂点の内外判定を行い，0, 1, otherに分類
 //@param st 開始インデクス
 //@param en 終了インデクス
 //@param vf フラクション
 //@note テスト候補のループ範囲（st[], ed[]）内で，テストセルの8頂点座標を生成し，形状の範囲内かどうかを判定する
-void CompoFraction::vertex8(int st[], int ed[], float* vf)
+//@note vfは加算するので、初期化しておく
+void CompoFraction::vertex8(const int st[], const int ed[], float* vf)
 {
   FB::Vec3f base, o, b;
   FB::Vec3f p[8];
@@ -256,11 +300,12 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
           p[7] = shift_f7(b, ph); // (1,1,1)
           
           c = 0.0;
+          
           for (int l=0; l<8; l++) {
             c += judge_rect(p[l]);
           }
           m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
-          vf[m] = c*0.125; // 1/8
+          vf[m] += c*0.125; // 1/8
         }
       }
     }
@@ -284,11 +329,12 @@ void CompoFraction::vertex8(int st[], int ed[], float* vf)
           p[7] = shift_f7(b, ph); // (1,1,1)
           
           c = 0.0;
+          
           for (int l=0; l<8; l++) {
             c += judge_cylinder(p[l]);
           }
           m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
-          vf[m] = c*0.125; // 1/8
+          vf[m] += c*0.125; // 1/8
         }
       }
     }
@@ -355,7 +401,6 @@ void CompoFraction::get_angle(void)
     
     FB::Vec3f q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
     
-    printf("dir: %f %f %f\n", q.x, q.y, q.z);
     c = q.length();
     
     if ( c != 0.0 ) {

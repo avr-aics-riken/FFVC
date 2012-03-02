@@ -71,8 +71,10 @@ public:
   ~CompoFraction() {}
   
 protected:
-  void bbox_rect_cylinder(FB::Vec3f mn, FB::Vec3f mx);
-  void bbox_circ_cylinder(FB::Vec3f mn, FB::Vec3f mx);
+  float bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx);
+  float bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx);
+  
+  void find_index(int* w, const FB::Vec3f p);
   
   FB::Vec3f rotate    (const FB::Vec3f p, const FB::Vec3f u);
   FB::Vec3f rotate_inv(const FB::Vec3f p, const FB::Vec3f u);
@@ -86,14 +88,14 @@ protected:
   FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); } /// セルインデックスを(1,1,1)シフト
   
   //@fn inline void get_min()
-  inline void get_min(FB::Vec3f mn, FB::Vec3f p) {
+  inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) {
     mn.x = (mn.x < p.x) ? mn.x : p.x;
     mn.y = (mn.y < p.y) ? mn.y : p.y;
     mn.z = (mn.z < p.z) ? mn.z : p.z;
   }
   
   //@fn inline void get_max()
-  inline void get_max(FB::Vec3f mx, FB::Vec3f p) {
+  inline void get_max(FB::Vec3f& mx, const FB::Vec3f p) {
     mx.x = (mx.x > p.x) ? mx.x : p.x;
     mx.y = (mx.y > p.y) ? mx.y : p.y;
     mx.z = (mx.z > p.z) ? mx.z : p.z;
@@ -127,12 +129,14 @@ protected:
   }
   
 public:
+  float get_BboxArea (void);
+  
+  void bbox_index(int* st, int* ed);
   void get_angle     (void);
-  void get_Bbox      (void);
   void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height);
   void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss);
-  void subdivision   (int st[], int ed[], float* vf);
-  void vertex8       (int st[], int ed[], float* vf);
+  void subdivision   (const int st[], const int ed[], float* vf);
+  void vertex8       (const int st[], const int ed[], float* vf);
 };
 
 #endif // _SKL_FB_FRACTION_H_

@@ -750,16 +750,16 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   // Forcing ---------------------------------------------------
 	// Heat Exchanger
   if ( isComponent(HEX) ) {
-    fprintf(fp, "\n\t[Pressure Loss]\n");
+    fprintf(fp, "\n\t[Heat Exchanger]\n");
     
-    fprintf(fp, "\t no                    Label    ID    normal_x   normal_y   normal_z      dir_x      dir_y      dir_z     O_x[m]     O_y[m]     O_z[m]\n");
+    fprintf(fp, "\t no                    Label    ID    normal_x   normal_y   normal_z     O_x[m]     O_y[m]     O_z[m]      dir_x      dir_y      dir_z\n");
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
                 n, compo[n].name, compo[n].getID(),
 								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                compo[n].dr[0], compo[n].dr[1], compo[n].dr[2],
-                compo[n].oc[0], compo[n].oc[1], compo[n].oc[2]);
+                compo[n].oc[0], compo[n].oc[1], compo[n].oc[2],
+                compo[n].dr[0], compo[n].dr[1], compo[n].dr[2]);
       }
     }
     fprintf(fp, "\n");
@@ -797,6 +797,54 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
     }
   }
 
+  // Fan
+  if ( isComponent(FAN) ) {
+    fprintf(fp, "\n\t[Fan]\n");
+    
+    fprintf(fp, "\t no                    Label    ID    normal_x   normal_y   normal_z      O_x[m]     O_y[m]     O_z[m]\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == FAN ) {
+        fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
+                n, compo[n].name, compo[n].getID(),
+								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
+                compo[n].oc[0], compo[n].oc[1], compo[n].oc[2]);
+      }
+    }
+    fprintf(fp, "\n");
+    
+    fprintf(fp, "\t                                     Depth[m]     Fan[m]    Boss[m]  Area[m*m]\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == FAN ) {
+        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e\n", 
+                n, compo[n].name, compo[n].getID(),
+								compo[n].depth, compo[n].shp_p1, compo[n].shp_p2, compo[n].area);
+      }
+    }
+    fprintf(fp, "\n");
+    
+    fprintf(fp, "\t                                      i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == FAN ) {
+        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
+                n, compo[n].name, compo[n].getID(),
+                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
+                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
+                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+      }
+    }
+    fprintf(fp, "\n");
+    /*
+    fprintf(fp, "\t no                    Label    ID         c1         c2         c3         c4  u_th[m/s]  thick[mm]     vec_forcing\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == FAN ) {
+        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
+                n, compo[n].name, compo[n].getID(),
+                compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4]*RefVelocity, compo[n].ca[5]*RefLength*1000.0,
+                (compo[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
+      }
+    }*/
+  }
+  
 	// Darcy Law
   if ( isComponent(DARCY) ) {
     fprintf(fp, "\n\t[DARCY MODEL]\n");
@@ -3163,40 +3211,55 @@ void ParseBC::getXML_IBC_Fan(const CfgElem *elmL, unsigned n)
 {
   if ( !elmL ) Exit(0);
   
-  const CfgParam* param=NULL;
-  REAL_TYPE hsrc=0.0f;
+  REAL_TYPE v[3];
+  const char *str_u=NULL;
   
   // check number of Param
-  if (elmL->GetParamSize() != 1) {    
+  if (elmL->GetParamSize() != 10) {    
     Hostonly_ stamped_printf("\tParsing error : 1 param should be found in Heat_Volume > Heat_Generation\n");
     Exit(0);
   }
   
-  // Parsing
-  param = elmL->GetParamFirst();
-  while (param) {
-    if( !(strcasecmp(param->GetName(), "Watt")) ) {
-      if ( !(param->GetData( &hsrc )) ) {
-        Hostonly_ stamped_printf("\tParsing error : Invalid float value for Watt in Heat_Volume section > Heat_Generation\n");
-        Exit(0);
-      }
-    }
-    else {
-      Hostonly_ stamped_printf("\tParsing error : Missing param Heat_Generation in Heat_Volume section > Heat_Generation\n");
-      Exit(0);
-    }
-    param = elmL->GetParamNext(param); // ahead next pointer
+  // 入力単位の指定
+  if ( !elmL->GetValue("unit", &str_u) ) {
+		Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
+		Exit(0);
+	}
+  if ( !strcasecmp("mmaq", str_u) ) {
+    compo[n].setPrsUnit(CompoList::unit_mmAq);
   }
-  
-  // Normalize
-  compo[n].set_HeatValue( hsrc );
-  
-  if ( Unit_Param == DIMENSIONAL ) {
-    compo[n].set_HeatDensity( hsrc*RefLength/(RefVelocity*(REAL_TYPE)fabs(DiffTemp)) );
+  else if ( !strcasecmp("mmhg", str_u) ) {
+    compo[n].setPrsUnit(CompoList::unit_mmHg);
+  }
+  else if ( !strcasecmp("pa", str_u) ) {
+    compo[n].setPrsUnit(CompoList::unit_Pa);
+  }
+  else if ( !strcasecmp("non_dimension", str_u) ) {
+    compo[n].setPrsUnit(CompoList::unit_NonDimensional);
   }
   else {
-    compo[n].set_HeatDensity( hsrc );
+    Hostonly_ stamped_printf("\tDescribed unit is out of scope.\n");
+    Exit(0);
   }
+  
+  // 法線ベクトルの取得
+  get_NV(elmL, n, "InnerBoundary > Pressure_Loss : Normal Vector", v);
+  copyVec(compo[n].nv, v);
+  
+  // 中心座標の取得
+  get_Center(elmL, n, "InnerBoundary > Pressure_Loss : Center", v);
+  copyVec(compo[n].oc, v);
+  
+  // 形状パラメータ
+  compo[n].depth  = get_BCval_real(elmL, "depth");
+  compo[n].shp_p1 = get_BCval_real(elmL, "fan_radius");
+  compo[n].shp_p2 = get_BCval_real(elmL, "boss_radius");
+  
+  if ( compo[n].shp_p1 <= compo[n].shp_p2 ) {
+    Hostonly_ stamped_printf("\tError : Radius of boss is greater than fan.\n");
+    Exit(0);
+  }
+  
 }
 
 /**
