@@ -84,6 +84,7 @@ float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
     
     // 表面
     q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
+    //printf("%f %f %f >> %f %f %f\n",r.x, r.y, r.z, q.x, q.y, q.z);
     get_min(mn, q);
     get_max(mx, q);
     
@@ -288,7 +289,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf)
       for (int j=st[1]; j<ed[1]; j++) {
         for (int i=st[0]; i<ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
-          b    = o    + base * ph;
+          b    = o + base * ph;
           
           p[0] =          b;      // (0,0,0) 
           p[1] = shift_f1(b, ph); // (1,0,0)
@@ -317,7 +318,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf)
       for (int j=st[1]; j<ed[1]; j++) {
         for (int i=st[0]; i<ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
-          b    = o +    base * ph;
+          b    = o + base * ph;
 
           p[0] =          b;      // (0,0,0) 
           p[1] = shift_f1(b, ph); // (1,0,0)
@@ -404,11 +405,11 @@ void CompoFraction::get_angle(void)
     c = q.length();
     
     if ( c != 0.0 ) {
-      c_gma = dot(x, q)/c;
+      c_gma = dot(x, q)/c; printf("gma=%f\n",c_gma);
       d = acos( c_gma );
       f_xy = c_gma+1.0;
       if ( f_xy<eps ) {
-        angle.z = 0.0;
+        angle.z = 2.0*asin(1.0); // 反対方向なのでπ
       }
       else {
         angle.z = (q.y >= 0.0) ? -d : d;

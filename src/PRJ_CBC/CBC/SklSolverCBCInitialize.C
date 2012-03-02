@@ -420,6 +420,7 @@ SklSolverCBC::SklSolverInitialize() {
     
     // インデクスの計算
     CF.bbox_index(f_st, f_ed);
+    printf("(%d %d %d)-(%d %d %d)\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
 
     int m_st, m_ed, m_len;
     for (unsigned d=0; d<3; d++) {
@@ -430,6 +431,13 @@ SklSolverCBC::SklSolverInitialize() {
       cmp[n].setCompoBV_ed(d, m_ed);
     }
 
+    f_st[0] = 1;
+    f_st[1] = 1;
+    f_st[2] = 1;
+    f_ed[0] = size[0];
+    f_ed[1] = size[1];
+    f_ed[2] = size[2];
+    
     // 体積率
     CF.vertex8(f_st, f_ed, cvf);
     CF.subdivision(f_st, f_ed, cvf);
