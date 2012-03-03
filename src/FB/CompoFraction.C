@@ -17,11 +17,11 @@ void CompoFraction::bbox_index(int* st, int* ed)
 {
   find_index(st, box_min);
   find_index(ed, box_max);
-  //printf("(%d %d %d) - (%d %d %d)\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
 }
 
 //@fn void CompoFraction::find_index(int* w, const FB::Vec3f p)
 //@brief 点pの属するセルインデクスを求める
+//@note Fortran index
 void CompoFraction::find_index(int* w, const FB::Vec3f p)
 {
   FB::Vec3f q = (p-org)/pch;
@@ -71,7 +71,7 @@ float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 {
   FB::Vec3f r, q;
-  int div_r = 500; // 周上の分割数
+  int div_r = 1000; // 周上の分割数
   float x, y;
   double d;
   double pi = 2.0*asin(1.0);
@@ -84,7 +84,6 @@ float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
     
     // 表面
     q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
-    //printf("%f %f %f >> %f %f %f\n",r.x, r.y, r.z, q.x, q.y, q.z);
     get_min(mn, q);
     get_max(mx, q);
     
@@ -115,8 +114,10 @@ float CompoFraction::get_BboxArea(void)
     a = bbox_circ_cylinder(box_min, box_max);
   }
   
-  printf("min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
-  printf("max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
+#ifdef DEBUG
+  stamped_printf("bbox min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
+  stamped_printf("bbox max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
+#endif
   
   return a;
 }
@@ -191,9 +192,9 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf)
   
   if ( smode == RECT_CYL ) {
     
-    for (int k=st[2]; k<ed[2]; k++) {
-      for (int j=st[1]; j<ed[1]; j++) {
-        for (int i=st[0]; i<ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
           r = vf[m];
           
@@ -225,9 +226,9 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf)
   }
   else { // Cylinder
     
-    for (int k=st[2]; k<ed[2]; k++) {
-      for (int j=st[1]; j<ed[1]; j++) {
-        for (int i=st[0]; i<ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
           r = vf[m];
           
@@ -285,9 +286,9 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf)
   
   if ( smode == RECT_CYL ) {
     // Rect cylinder
-    for (int k=st[2]; k<ed[2]; k++) {
-      for (int j=st[1]; j<ed[1]; j++) {
-        for (int i=st[0]; i<ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           b    = o + base * ph;
           
@@ -314,9 +315,9 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf)
   }
   else {
     // Circular cylinder
-    for (int k=st[2]; k<ed[2]; k++) {
-      for (int j=st[1]; j<ed[1]; j++) {
-        for (int i=st[0]; i<ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           b    = o + base * ph;
 
@@ -350,7 +351,7 @@ void CompoFraction::get_angle(void)
 {
   float alpha, beta, c, d, c_alp, c_bta;
   float eps = 1.0e-5, f_yz, f_xz;
-  FB::Vec3f p;
+  FB::Vec3f p, q;
   FB::Vec3f z(0.0, 0.0, 1.0);
   
   // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
@@ -365,15 +366,15 @@ void CompoFraction::get_angle(void)
     d = acos( c_alp );
     f_yz = c_alp+1.0;
     alpha = (nv.y >= 0.0) ? d : -d;
+    //printf("c_alp = %f / d = %f / alpha = %f / f_yz = %f\n", c_alp, d, alpha, f_yz);
   }
   else {
     alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
   }
   
-  // xz面への射影
-  p.x = nv.x;
-  p.y = 0.0;
-  p.z = nv.z;
+  // 参照ベクトルをalphaだけ回転して評価ベクトルを生成 > xz面への射影
+  q.assign(alpha, 0.0, 0.0);
+  p = rotate(q, nv);
   c = p.length();
   
   if ( c != 0.0 ) {
@@ -381,6 +382,7 @@ void CompoFraction::get_angle(void)
     d = acos( c_bta );
     f_xz = c_bta+1.0;
     beta = (nv.x >= 0.0) ? -d : d;
+    //printf("c_bta = %f / d = %f / beta = %f / f_xz = %f\n", c_bta, d, beta, f_xz);
   }
   else {
     beta = 0.0;
@@ -400,12 +402,11 @@ void CompoFraction::get_angle(void)
     float c_gma, f_xy;
     FB::Vec3f x(1.0, 0.0, 0.0);
     
-    FB::Vec3f q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
-    
+    q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
     c = q.length();
     
     if ( c != 0.0 ) {
-      c_gma = dot(x, q)/c; printf("gma=%f\n",c_gma);
+      c_gma = dot(x, q)/c;
       d = acos( c_gma );
       f_xy = c_gma+1.0;
       if ( f_xy<eps ) {
@@ -420,8 +421,10 @@ void CompoFraction::get_angle(void)
       Exit(0);
     }
   }
+#ifdef DEBUG
+  stamped_printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
+#endif
   
-  printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 }
 
 //@fn FB::Vec3f CompoFraction::rotate(const Vec3f p, const Vec3f u)

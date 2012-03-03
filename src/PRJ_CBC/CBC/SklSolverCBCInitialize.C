@@ -420,32 +420,17 @@ SklSolverCBC::SklSolverInitialize() {
     
     // インデクスの計算
     CF.bbox_index(f_st, f_ed);
-    printf("(%d %d %d)-(%d %d %d)\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
-
-    int m_st, m_ed, m_len;
-    for (unsigned d=0; d<3; d++) {
-      m_st = m_ed = 0;
-      m_len = f_ed[d] - f_st[d] + 1;
-      getEnlargedIndex(m_st, m_ed, f_st[d]-1, m_len, size[d], d); // C index expression
-      cmp[n].setCompoBV_st(d, m_st);
-      cmp[n].setCompoBV_ed(d, m_ed);
-    }
-
-    f_st[0] = 1;
-    f_st[1] = 1;
-    f_st[2] = 1;
-    f_ed[0] = size[0];
-    f_ed[1] = size[1];
-    f_ed[2] = size[2];
+    cmp[n].setCompoBV_st(f_st);
+    cmp[n].setCompoBV_ed(f_ed);
     
     // 体積率
-    CF.vertex8(f_st, f_ed, cvf);
+    CF.vertex8    (f_st, f_ed, cvf);
     CF.subdivision(f_st, f_ed, cvf);
     
   }
-
+#ifdef DEBUG
   F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
-  
+#endif  
 
   // コンポーネントのローカルインデクスをcmp.ciに保存
   getLocalCmpIdx();
@@ -1919,8 +1904,8 @@ void SklSolverCBC::gather_DomainInfo(void)
     
     if( para_mng->IsParallel() ) {
       for (unsigned n=1; n<=C.NoBC; n++) {
-        if( !para_mng->Gather(cmp[n].getCompoBV_adrs_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-        if( !para_mng->Gather(cmp[n].getCompoBV_adrs_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        if( !para_mng->Gather(cmp[n].getCompoBV_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        if( !para_mng->Gather(cmp[n].getCompoBV_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
       
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",

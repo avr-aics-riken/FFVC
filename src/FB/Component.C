@@ -46,157 +46,151 @@ void CompoList::setDef(int key) {
 //@brief コンポーネントのBV情報の始点を設定する
 //@param odr 方向　(0-i, 1-j, 2-k)
 //@param val 値
-void CompoList::setCompoBV_st(unsigned odr, int val)
-{
+void CompoList::setCompoBV_st(unsigned odr, int val) {
   st[odr] = val;
+}
+
+//@fn void CompoList::setCompoBV_st(int val[])
+//@brief コンポーネントのBV情報の始点を設定する
+void CompoList::setCompoBV_st(int val[]) {
+  st[0] = val[0];
+  st[1] = val[1];
+  st[2] = val[2];
 }
 
 //@fn void CompoList::setCompoBV_ed(unsigned odr, int val)
 //@brief コンポーネントのBV情報の終点を設定する
 //@param odr 方向　(0-i, 1-j, 2-k)
 //@param val 値
-void CompoList::setCompoBV_ed(unsigned odr, int val)
-{
+void CompoList::setCompoBV_ed(unsigned odr, int val) {
   ed[odr] = val;
+}
+
+//@fn void CompoList::setCompoBV_ed(int val[])
+//@brief コンポーネントのBV情報の始点を設定する
+void CompoList::setCompoBV_ed(int val[]) {
+  ed[0] = val[0];
+  ed[1] = val[1];
+  ed[2] = val[2];
 }
 
 //@fn void CompoList::set_sw_V_profile(unsigned key)
 //@brief 速度プロファイル指定モードの保持
-void CompoList::set_sw_V_profile(unsigned key)
-{
+void CompoList::set_sw_V_profile(unsigned key) {
   usw = key;
 }
 
 //@fn void CompoList::set_sw_P_BCtype(unsigned key)
 //@brief 圧力境界条件タイプ指定モードの保持
-void CompoList::set_sw_P_BCtype(unsigned key)
-{
+void CompoList::set_sw_P_BCtype(unsigned key) {
   usw = key;
 }
 
 //@fn void CompoList::set_sw_HTmodeRef(unsigned key)
 //@brief 熱伝達の参照指定モードの保持
-void CompoList::set_sw_HTmodeRef(unsigned key)
-{
+void CompoList::set_sw_HTmodeRef(unsigned key) {
   usw = key;
 }
 
 //@fn void CompoList::set_sw_HexDir (unsigned key)
 //@brief 熱交換機の方向指定モードの保持
-void CompoList::set_sw_HexDir (unsigned key)
-{
+void CompoList::set_sw_HexDir (unsigned key) {
   usw = key;
 }
 
 //@fn void CompoList::set_sw_Heatgen(unsigned key)
 //@brief 発熱量指定モードの保持
-void CompoList::set_sw_Heatgen(unsigned key)
-{
+void CompoList::set_sw_Heatgen(unsigned key) {
   usw = key;
 }
 
 //@fn void CompoList::set_Pressure(REAL_TYPE var)
 //@brief 圧力値の保持
-void CompoList::set_Pressure(REAL_TYPE var)
-{
+void CompoList::set_Pressure(REAL_TYPE var) {
   var1 = var;
 }
 
 //@fn void CompoList::set_Mon_Temp(REAL_TYPE var)
 //@brief モニタ温度の保持
-void CompoList::set_Mon_Temp(REAL_TYPE var)
-{
+void CompoList::set_Mon_Temp(REAL_TYPE var) {
   var_m = var;
 }
 
 //@fn void CompoList::set_Mon_Heatflux(REAL_TYPE var)
 //@brief モニタ熱流束の保持
-void CompoList::set_Mon_Heatflux(REAL_TYPE var)
-{
+void CompoList::set_Mon_Heatflux(REAL_TYPE var) {
   var_m = var;
 }
 
 //@fn void CompoList::set_Mon_Calorie(REAL_TYPE var)
 //@brief モニタ熱量の保持
-void CompoList::set_Mon_Calorie(REAL_TYPE var)
-{
+void CompoList::set_Mon_Calorie(REAL_TYPE var) {
   var_m = var;
 }
 
 //@fn void CompoList::set_CoefRadEps(REAL_TYPE var)
 //@brief 輻射のイプシロンの保持
-void CompoList::set_CoefRadEps(REAL_TYPE var)
-{
+void CompoList::set_CoefRadEps(REAL_TYPE var) {
   var1 = var;
 }
 
 //@fn void CompoList::CoefRadPrj(REAL_TYPE var)
 //@brief 輻射の射出係数の保持
-void CompoList::set_CoefRadPrj(REAL_TYPE var)
-{
+void CompoList::set_CoefRadPrj(REAL_TYPE var) {
   var2 = var;
 }
 
 //@fn void CompoList::set_CoefMassflow(REAL_TYPE var)
 //@brief 流量の有次元化係数の保持
-void CompoList::set_CoefMassflow(REAL_TYPE var)
-{
+void CompoList::set_CoefMassflow(REAL_TYPE var) {
   var1 = var;
 }
 
 //@fn void CompoList::CoefPrsLoss(REAL_TYPE var)
 //@brief 圧力損失の有次元化係数の保持
-void CompoList::set_CoefPrsLoss(REAL_TYPE var)
-{
+void CompoList::set_CoefPrsLoss(REAL_TYPE var) {
   var2 = var;
 }
 
 //@fn void CompoList::set_HeatDensity(REAL_TYPE var)
 //@brief 吸発熱密度の保持
-void CompoList::set_HeatDensity(REAL_TYPE var)
-{
+void CompoList::set_HeatDensity(REAL_TYPE var) {
   var3 = var;
 }
 
 //@fn void CompoList::set_HeatValue(REAL_TYPE var)
 //@brief 吸発熱量の保持
-void CompoList::set_HeatValue(REAL_TYPE var)
-{
+void CompoList::set_HeatValue(REAL_TYPE var) {
   var2 = var;
 }
 
 //@fn void CompoList::set_Temp(REAL_TYPE var)
 //@brief 温度の保持
-void CompoList::set_Temp(REAL_TYPE var)
-{
+void CompoList::set_Temp(REAL_TYPE var) {
   var3 = var;
 }
 
 //@fn void CompoList::set_CoefHT(REAL_TYPE var)
 //@brief 熱伝達係数の保持
-void CompoList::set_CoefHT(REAL_TYPE var)
-{
+void CompoList::set_CoefHT(REAL_TYPE var) {
   var2 = var;
 }
 
 //@fn void CompoList::set_Heatflux(REAL_TYPE var)
 //@brief 熱流束の保持
-void CompoList::set_Heatflux(REAL_TYPE var)
-{
+void CompoList::set_Heatflux(REAL_TYPE var) {
   var2 = var;
 }
 
 //@fn void CompoList::set_Massflow(REAL_TYPE var)
 //@brief 流量の保持
-void CompoList::set_Massflow(REAL_TYPE var)
-{
+void CompoList::set_Massflow(REAL_TYPE var) {
   var1 = var;
 }
 
 //@fn void CompoList::set_Velocity(REAL_TYPE var)
 //@brief 速度の保持
-void CompoList::set_Velocity(REAL_TYPE var)
-{
+void CompoList::set_Velocity(REAL_TYPE var) {
   var1 = var;
 }
 

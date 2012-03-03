@@ -194,8 +194,10 @@ public:
   string getBCstr  (void) const;
   
   void setAttrb            (unsigned key);
-  void setCompoBV_ed       (unsigned odr, int val);
   void setCompoBV_st       (unsigned odr, int val);
+  void setCompoBV_ed       (unsigned odr, int val);
+  void setCompoBV_st       (int val[]);
+  void setCompoBV_ed       (int val[]);
   void setDef              (int key);
   void setElement          (unsigned key);
   void setEns              (unsigned key);
@@ -349,13 +351,13 @@ public:
   //@brief コンポーネントのBV情報ed_zを返す
   inline int getCompoBV_ed_z(void) { return (ed[2]); }
   
-  //@fn int* getCompoBV_adrs_st(void)
+  //@fn int* getCompoBV_st(void)
   //@brief コンポーネントのBV情報stのアドレスを返す
-  int* getCompoBV_adrs_st(void) { return (st); }
+  int* getCompoBV_st(void) { return (st); }
   
-  //@fn int* getCompoBV_adrs_ed(void)
+  //@fn int* getCompoBV_ed(void)
   //@brief コンポーネントのBV情報edのアドレスを返す
-  int* getCompoBV_adrs_ed(void) { return (ed); }
+  int* getCompoBV_ed(void) { return (ed); }
 };
 
 #endif // _SKL_FB_COMPO_H_
