@@ -194,10 +194,10 @@ public:
   string getBCstr  (void) const;
   
   void setAttrb            (unsigned key);
-  void setCompoBV_st       (unsigned odr, int val);
-  void setCompoBV_ed       (unsigned odr, int val);
-  void setCompoBV_st       (int val[]);
-  void setCompoBV_ed       (int val[]);
+  void setBbox_st       (unsigned odr, int val);
+  void setBbox_ed       (unsigned odr, int val);
+  void setBbox_st       (int val[]);
+  void setBbox_ed       (int val[]);
   void setDef              (int key);
   void setElement          (unsigned key);
   void setEns              (unsigned key);
@@ -316,9 +316,9 @@ public:
     return ( (ens == ON) ? true : false );
   }
   
-  //@fn void getCompoBV(int* m_st, int* m_ed)
+  //@fn void getBbox(int* m_st, int* m_ed)
   //@brief コンポーネントのBV情報を返す
-  inline void getCompoBV(int* m_st, int* m_ed) {
+  inline void getBbox(int* m_st, int* m_ed) {
     m_st[0] = st[0];
     m_st[1] = st[1];
     m_st[2] = st[2];
@@ -327,37 +327,13 @@ public:
     m_ed[2] = ed[2];
   }
   
-  //@fn int getCompoBV_st_x(void)
-  //@brief コンポーネントのBV情報st_xを返す
-  inline int getCompoBV_st_x(void) { return (st[0]); }
-  
-  //@fn int getCompoBV_st_y(void)
-  //@brief コンポーネントのBV情報st_yを返す
-  inline int getCompoBV_st_y(void) { return (st[1]); }
-  
-  //@fn int getCompoBV_st_z(void)
-  //@brief コンポーネントのBV情報st_zを返す
-  inline int getCompoBV_st_z(void) { return (st[2]); }
-  
-  //@fn int getCompoBV_ed_x(void)
-  //@brief コンポーネントのBV情報ed_xを返す
-  inline int getCompoBV_ed_x(void) { return (ed[0]); }
-  
-  //@fn int getCompoBV_ed_y(void)
-  //@brief コンポーネントのBV情報ed_yを返す
-  inline int getCompoBV_ed_y(void) { return (ed[1]); }
-  
-  //@fn int getCompoBV_ed_z(void)
-  //@brief コンポーネントのBV情報ed_zを返す
-  inline int getCompoBV_ed_z(void) { return (ed[2]); }
-  
-  //@fn int* getCompoBV_st(void)
+  //@fn int* getBbox_st(void)
   //@brief コンポーネントのBV情報stのアドレスを返す
-  int* getCompoBV_st(void) { return (st); }
+  int* getBbox_st(void) { return (st); }
   
-  //@fn int* getCompoBV_ed(void)
+  //@fn int* getBbox_ed(void)
   //@brief コンポーネントのBV情報edのアドレスを返す
-  int* getCompoBV_ed(void) { return (ed); }
+  int* getBbox_ed(void) { return (ed); }
 };
 
 #endif // _SKL_FB_COMPO_H_

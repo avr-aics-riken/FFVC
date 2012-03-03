@@ -42,33 +42,33 @@ void CompoList::setDef(int key) {
   def = key;
 }
 
-//@fn void CompoList::setCompoBV_st(unsigned odr, int val)
+//@fn void CompoList::setBbox_st(unsigned odr, int val)
 //@brief コンポーネントのBV情報の始点を設定する
 //@param odr 方向　(0-i, 1-j, 2-k)
 //@param val 値
-void CompoList::setCompoBV_st(unsigned odr, int val) {
+void CompoList::setBbox_st(unsigned odr, int val) {
   st[odr] = val;
 }
 
-//@fn void CompoList::setCompoBV_st(int val[])
+//@fn void CompoList::setBbox_st(int val[])
 //@brief コンポーネントのBV情報の始点を設定する
-void CompoList::setCompoBV_st(int val[]) {
+void CompoList::setBbox_st(int val[]) {
   st[0] = val[0];
   st[1] = val[1];
   st[2] = val[2];
 }
 
-//@fn void CompoList::setCompoBV_ed(unsigned odr, int val)
+//@fn void CompoList::setBbox_ed(unsigned odr, int val)
 //@brief コンポーネントのBV情報の終点を設定する
 //@param odr 方向　(0-i, 1-j, 2-k)
 //@param val 値
-void CompoList::setCompoBV_ed(unsigned odr, int val) {
+void CompoList::setBbox_ed(unsigned odr, int val) {
   ed[odr] = val;
 }
 
-//@fn void CompoList::setCompoBV_ed(int val[])
+//@fn void CompoList::setBbox_ed(int val[])
 //@brief コンポーネントのBV情報の始点を設定する
-void CompoList::setCompoBV_ed(int val[]) {
+void CompoList::setBbox_ed(int val[]) {
   ed[0] = val[0];
   ed[1] = val[1];
   ed[2] = val[2];
@@ -199,8 +199,7 @@ void CompoList::set_Velocity(REAL_TYPE var) {
  @brief コンポーネントタイプがモニタかどうかを調べる
  @retval モニタであればtrue
  */
-bool CompoList::isMONITOR(void) const
-{
+bool CompoList::isMONITOR(void) const {
   return ( (type == CELL_MONITOR) ? true : false );
 }
 
@@ -264,12 +263,9 @@ bool CompoList::isHBC(void) const
   return false;
 }
 
-/**
- @fn bool CompoList::isVFraction(void) const
- @brief 体積率の必要なコンポーネントかどうか
- */
-bool CompoList::isVFraction(void) const
-{
+//@fn bool CompoList::isVFraction(void) const
+//@brief 体積率の必要なコンポーネントかどうか
+bool CompoList::isVFraction(void) const {
   if ((type == HEAT_SRC) ||
       (type == CNST_TEMP) ||
       (type == IBM_DF) ||

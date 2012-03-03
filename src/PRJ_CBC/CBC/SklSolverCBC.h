@@ -72,7 +72,7 @@ using namespace cutlib;
 class SklSolverCBC : public SklSolverBase {
 
 protected:
-  int* GC_bv; // グローバルなコンポーネントBV
+  int* GC_bv; // グローバルなコンポーネントBbox
   
 public:
   // Timing
@@ -268,6 +268,7 @@ public:
   void allocArray_AB2       (unsigned long &total);
   void allocArray_average   (unsigned long &total, FILE* fp);
   void allocArray_Collocate (unsigned long &total);
+  void allocArray_compoVF   (unsigned long &total, unsigned long &prep);
   void allocArray_forcing   (unsigned long &total);
   void allocArray_heat      (unsigned long &total);
   void allocArray_index     (unsigned long &total);
@@ -298,6 +299,7 @@ public:
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
   void setBCinfo            (ParseBC* B);
+  void setComponentVF       (float* cvf);
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);

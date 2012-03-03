@@ -197,6 +197,8 @@ SklSolverCBC::SklSolverInitialize() {
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start(tm_init_alloc); 
   allocArray_prep(TotalMemory, PrepMemory);
+  TIMING_stop(tm_init_alloc); 
+  
   if( !(ws  = dc_ws->GetData()) )   Exit(0);
   if( !(mid = dc_mid->GetData()) )  Exit(0);
   if( !(bcd = dc_bcd->GetData()) )  Exit(0);
@@ -206,8 +208,7 @@ SklSolverCBC::SklSolverInitialize() {
     if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
     if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
   }
-  if( !(cvf = dc_cvf->GetData()) )  Exit(0);
-  TIMING_stop(tm_init_alloc); 
+  
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成 --------------------------------------------------------
   Hostonly_ {
@@ -385,53 +386,23 @@ SklSolverCBC::SklSolverInitialize() {
   if( !dc_mid->CommBndCell(guide) ) return -1;
   
   
-  // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
-  int subsampling = 10; // 体積率のサブサンプリングの基数
-  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
-  CF.setParallelInfo(pn);
-
-  int f_st[3], f_ed[3];
   
+  // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
+  bool cmp_flag=false;
   for (int n=1; n<=C.NoBC; n++) {
-    
-    // 形状パラメータのセット
-    switch ( cmp[n].getType() ) {
-      case HEX:
-        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
-        break;
-        
-      case FAN:
-        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
-    }
-    
-    // 回転角度の計算
-    CF.get_angle(); 
-    
-    // bboxと投影面積の計算
-    cmp[n].area = CF.get_BboxArea();
-    
-    // インデクスの計算
-    CF.bbox_index(f_st, f_ed);
-    cmp[n].setCompoBV_st(f_st);
-    cmp[n].setCompoBV_ed(f_ed);
-    
-    // 体積率
-    CF.vertex8    (f_st, f_ed, cvf);
-    CF.subdivision(f_st, f_ed, cvf);
-    
+    if ( cmp[n].isVFraction() ) cmp_flag = true;
   }
-#ifdef DEBUG
-  F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
-#endif  
+  
+  if (cmp_flag == true ) {
+    TIMING_start(tm_init_alloc);
+    allocArray_compoVF(TotalMemory, PrepMemory);
+    TIMING_stop(tm_init_alloc); 
+    if( !(cvf = dc_cvf->GetData()) )  Exit(0);
+  }
+  setComponentVF(cvf);
 
+  
+  
   // コンポーネントのローカルインデクスをcmp.ciに保存
   getLocalCmpIdx();
   
@@ -468,7 +439,7 @@ SklSolverCBC::SklSolverInitialize() {
   C.select_Itr_Impl(IC);
   
   // コンポーネントの体積率をセットし，圧力損失コンポの場合にはFORCING_BITをONにする
-  Vinfo.setCmpFraction(cmp, bcd);
+  Vinfo.setCmpFraction(cmp, bcd, cvf);
   
 #ifdef DEBUG
   // CompoListとMaterialListの関連を表示
@@ -1321,6 +1292,7 @@ void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
 
   int st_i, st_j, st_k, ed_i, ed_j, ed_k;
   int node_st_i, node_st_j, node_st_k;
+  int st[3], ed[3];
 
   // グローバルインデクスの配列インスタンス
   GC_bv = new int[6*(C.NoCompo+1)];
@@ -1344,12 +1316,13 @@ void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
       GC_bv[6*m+5] = 0;
     }
     else { // コンポーネントが存在する場合
-      st_i = cmp[m].getCompoBV_st_x();
-      st_j = cmp[m].getCompoBV_st_y();
-      st_k = cmp[m].getCompoBV_st_z();
-      ed_i = cmp[m].getCompoBV_ed_x();
-      ed_j = cmp[m].getCompoBV_ed_y();
-      ed_k = cmp[m].getCompoBV_ed_z();
+      cmp[m].getBbox(st, ed);
+      st_i = st[0];
+      st_j = st[1];
+      st_k = st[2];
+      ed_i = ed[0];
+      ed_j = ed[1];
+      ed_k = ed[2];
       
       if( para_mng->IsParallel() ){
         node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
@@ -1520,6 +1493,65 @@ void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, c
 }
 
 /**
+ @fn void SklSolverCBC::setComponentVF(float* cvf)
+ @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
+ @param cvf 体積率
+ */
+void SklSolverCBC::setComponentVF(float* cvf)
+{
+  int subsampling = 50; // 体積率のサブサンプリングの基数
+  int f_st[3], f_ed[3];
+  
+  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
+  CF.setParallelInfo(pn);
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    // 形状パラメータのセット
+    switch ( cmp[n].getType() ) {
+      case HEX:
+        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+        break;
+        
+      case FAN:
+        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+        break;
+        
+      case DARCY:
+        Exit(0);
+        break;
+        
+      default:
+        break;
+    }
+    
+    // 回転角度の計算
+    CF.get_angle(); 
+    
+    // bboxと投影面積の計算
+    cmp[n].area = CF.get_BboxArea();
+    
+    // インデクスの計算
+    CF.bbox_index(f_st, f_ed);
+    
+    // インデクスの登録
+    cmp[n].setBbox_st(f_st);
+    cmp[n].setBbox_ed(f_ed);
+    cmp[n].setEns(ON); 
+    
+    // 体積率
+    CF.vertex8    (f_st, f_ed, cvf);
+    CF.subdivision(f_st, f_ed, cvf);
+    
+  }
+//#ifdef DEBUG
+  F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
+//#endif
+  
+}
+
+
+/**
  @fn void SklSolverCBC::getLocalCmpIdx(void)
  @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
  @note
@@ -1536,45 +1568,45 @@ void SklSolverCBC::getLocalCmpIdx(void)
   for (unsigned m=1; m<=C.NoBC; m++) {
     id = (int)cmp[m].getID();
     
-    for (int d=0; d<3; d++) {
-      st_i[d] = 0;
-      len[d] = 0;
+    switch ( cmp[m].getType() ) {
+      case HEX:
+      case FAN:
+        break; // 体積率でエンコード済み
+        
+      default:
+        for (int d=0; d<3; d++) {
+          st_i[d] = 0;
+          len[d] = 0;
+        }
+        
+        // コンポーネント範囲
+        // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
+        if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
+          Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
+          Exit(0);
+        }
+        
+        // ノード内にコンポーネントがあるかどうかをチェック
+        if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
+          cmp[m].setEns(OFF);
+          // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
+        }
+        else {
+          
+          int m_st, m_ed;
+          
+          for (unsigned d=0; d<3; d++) {
+            m_st = m_ed = 0;
+            getEnlargedIndex(m_st, m_ed, st_i[d], len[d], size[d], d, id);
+            cmp[m].setBbox_st(d, m_st);
+            cmp[m].setBbox_ed(d, m_ed);
+          }
+          cmp[m].setEns(ON); // コンポーネントあり
+        }
+        
+        break;
     }
     
-    // コンポーネント範囲
-    // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
-    if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
-      Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
-      Exit(0);
-    }
-    // debug; printf("st=(%3d %3d %3d) : len=(%3d %3d %3d)\n",st_i[0], st_i[1], st_i[2], len[0], len[1], len[2]);
-    
-    // ノード内にコンポーネントがあるかどうかをチェック
-    if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
-      cmp[m].setEns(OFF);
-      // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
-    }
-    else {
-
-      int m_st, m_ed;
-      
-      for (unsigned d=0; d<3; d++) {
-        m_st = m_ed = 0;
-        getEnlargedIndex(m_st, m_ed, st_i[d], len[d], size[d], d, id);
-        cmp[m].setCompoBV_st(d, m_st);
-        cmp[m].setCompoBV_ed(d, m_ed);
-      }
-      cmp[m].setEns(ON); // コンポーネントあり
-    }
-    /* debug;
-    printf("Rank=%3d: Local  index[%3d] = (%3d %3d %3d) - (%3d %3d %3d) : %d\n", pn.ID, m, 
-           cmp[m].getCompoBV_st_x(),
-           cmp[m].getCompoBV_st_y(),
-           cmp[m].getCompoBV_st_z(),
-           cmp[m].getCompoBV_ed_x(),
-           cmp[m].getCompoBV_ed_y(),
-           cmp[m].getCompoBV_ed_z(), cmp[m].isEns() );
-     */
   }
 }
 
@@ -1904,8 +1936,8 @@ void SklSolverCBC::gather_DomainInfo(void)
     
     if( para_mng->IsParallel() ) {
       for (unsigned n=1; n<=C.NoBC; n++) {
-        if( !para_mng->Gather(cmp[n].getCompoBV_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-        if( !para_mng->Gather(cmp[n].getCompoBV_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        if( !para_mng->Gather(cmp[n].getBbox_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        if( !para_mng->Gather(cmp[n].getBbox_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
       
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
@@ -2470,6 +2502,17 @@ void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
     prep += mc;
     total+= mc;
   }
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
+ @brief コンポーネント体積率の配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ @param prep 前処理に使用するメモリ量
+ */
+void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
+{
+  unsigned long mc=0;
   
   if ( !A.alloc_Float_S3D(this, dc_cvf, "cvf", size, guide, 0.0, mc) ) Exit(0);
   prep += mc;

@@ -125,10 +125,6 @@ void VoxInfo::setControlVars(unsigned* r_size, unsigned r_guide)
   size[0] = r_size[0];
   size[1] = r_size[1];
   size[2] = r_size[2];
-  ix = (int)r_size[0];
-  jx = (int)r_size[1];
-  kx = (int)r_size[2];
-  gd = (int)guide;
 }
 
 /**
@@ -148,6 +144,11 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
   int target;
   int i,j,k;
   size_t m;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   // ID[0]を置換するオプションが指定されている場合（ID_replaceに値がセット）
   if ( ID_replace != 0 ) {
@@ -329,7 +330,7 @@ void VoxInfo::resizeCompoBV(unsigned* bd, unsigned* bv, unsigned* bh1, unsigned*
   
   for (unsigned n=1; n<=NoBC; n++) {
     id = cmp[n].getID();
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     typ = cmp[n].getType();
     
     // デフォルトで流れ計算パートのBC
@@ -380,7 +381,7 @@ void VoxInfo::resizeCompoBV(unsigned* bd, unsigned* bv, unsigned* bh1, unsigned*
 
 /**
  @fn void VoxInfo::gatherGlobalIndex(int* gcbv)
- @brief コンポーネントのグローバルインデクスを集約し，
+ @brief コンポーネントのグローバルインデクスを集約
  @param gcbv グローバルなBVインデクス
  */
 void VoxInfo::gatherGlobalIndex(int* gcbv)
@@ -512,9 +513,9 @@ void VoxInfo::resizeBVface(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
   int nst[3], ned[3];
   
   // 初期値はローカルノードの大きさ
-  nst[0] = ix;
-  nst[1] = jx;
-  nst[2] = kx;
+  nst[0] = (int)size[0];
+  nst[1] = (int)size[1];
+  nst[2] = (int)size[2];
   ned[0] = 0;
   ned[1] = 0;
   ned[2] = 0;
@@ -588,12 +589,12 @@ void VoxInfo::resizeBVface(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
     st[i] = nst[i];
     ed[i] = ned[i];
   }
-  cmp[n].setCompoBV_st(0, st[0]);
-  cmp[n].setCompoBV_st(1, st[1]);
-  cmp[n].setCompoBV_st(2, st[2]);
-  cmp[n].setCompoBV_ed(0, ed[0]);
-  cmp[n].setCompoBV_ed(1, ed[1]);
-  cmp[n].setCompoBV_ed(2, ed[2]);
+  cmp[n].setBbox_st(0, st[0]);
+  cmp[n].setBbox_st(1, st[1]);
+  cmp[n].setBbox_st(2, st[2]);
+  cmp[n].setBbox_ed(0, ed[0]);
+  cmp[n].setBbox_ed(1, ed[1]);
+  cmp[n].setBbox_ed(2, ed[2]);
   
   // コンポーネントBVの更新
   updateGlobalIndex(st, ed, n, gcbv);
@@ -617,9 +618,9 @@ void VoxInfo::resizeBVcell(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
   int nst[3], ned[3];
   
   // 初期値はローカルノードの大きさ
-  nst[0] = ix;
-  nst[1] = jx;
-  nst[2] = kx;
+  nst[0] = (int)size[0];
+  nst[1] = (int)size[1];
+  nst[2] = (int)size[2];
   ned[0] = 0;
   ned[1] = 0;
   ned[2] = 0;
@@ -648,12 +649,12 @@ void VoxInfo::resizeBVcell(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
     st[i] = nst[i];
     ed[i] = ned[i];
   }
-  cmp[n].setCompoBV_st(0, st[0]);
-  cmp[n].setCompoBV_st(1, st[1]);
-  cmp[n].setCompoBV_st(2, st[2]);
-  cmp[n].setCompoBV_ed(0, ed[0]);
-  cmp[n].setCompoBV_ed(1, ed[1]);
-  cmp[n].setCompoBV_ed(2, ed[2]);
+  cmp[n].setBbox_st(0, st[0]);
+  cmp[n].setBbox_st(1, st[1]);
+  cmp[n].setBbox_st(2, st[2]);
+  cmp[n].setBbox_ed(0, ed[0]);
+  cmp[n].setBbox_ed(1, ed[1]);
+  cmp[n].setBbox_ed(2, ed[2]);
   
   // コンポーネントBVの更新
   updateGlobalIndex(st, ed, n, gcbv);
@@ -852,6 +853,11 @@ void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid,
   int i, j, k;
   unsigned m;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   // 断熱マスクを非断熱(1)に初期化する
   for (k=0; k<=kx+1; k++) {
     for (j=0; j<=jx+1; j++) {
@@ -989,6 +995,11 @@ unsigned VoxInfo::encQfaceHT_S(unsigned order, unsigned id, int* mid, unsigned* 
   unsigned s_e, s_w, s_n, s_s, s_t, s_b;
   unsigned register s1, s2, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -1124,6 +1135,11 @@ unsigned VoxInfo::encQfaceHT_B(unsigned order, unsigned id, int* mid, unsigned* 
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   unsigned s_e, s_w, s_n, s_s, s_t, s_b;
   unsigned register s1, s2, d;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   idd = (int)id;
   
@@ -1261,6 +1277,11 @@ unsigned VoxInfo::encQfaceISO_SF(unsigned order, unsigned id, int* mid, unsigned
   unsigned s_e, s_w, s_n, s_s, s_t, s_b;
   unsigned register s1, s2, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -1397,6 +1418,11 @@ unsigned VoxInfo::encQfaceISO_SS(unsigned order, unsigned id, int* mid, unsigned
   unsigned s_e, s_w, s_n, s_s, s_t, s_b;
   unsigned register s1, s2, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -1532,6 +1558,11 @@ unsigned VoxInfo::encQface(unsigned order, unsigned id, int* mid, unsigned* bcd,
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   unsigned register s1, s2, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -1636,6 +1667,11 @@ void VoxInfo::setAmask_Solid(unsigned* bh)
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned register s, s_e, s_w, s_n, s_s, s_t, s_b;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -1705,6 +1741,11 @@ void VoxInfo::setAmask_Thermal(unsigned* bh)
   int i,j,k;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned register s, s_e, s_w, s_n, s_s, s_t, s_b;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
@@ -1783,6 +1824,11 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   unsigned register s, q;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   idd = (int)id;
   
@@ -2008,6 +2054,11 @@ void VoxInfo::encQfaceSVO(unsigned order, unsigned id, int* mid, unsigned* bcd, 
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   unsigned register s1, s2, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -2157,6 +2208,11 @@ bool VoxInfo::chkIDinside(unsigned id, int* mid, unsigned* bx)
   int i, j, k;
   unsigned m;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -2188,6 +2244,11 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k, idd;
   unsigned register m, g=0;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   idd = (int)id;
   
@@ -2225,6 +2286,11 @@ unsigned VoxInfo::encodeOrder(unsigned order, float* vf, unsigned* bx)
   int i,j,k;
   unsigned register m, g=0;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -2258,6 +2324,11 @@ unsigned VoxInfo::countState(unsigned id, int* mid)
   int i,j,k;
   unsigned m;
   unsigned g=0, tmp=0;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   // サーチ範囲はノードローカルの計算セル内
   for (k=1; k<=kx; k++) {
@@ -2293,6 +2364,11 @@ unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid,
   int i,j,k, c_p;
   unsigned s, m, c=0, g=0;
   int idd = (int)id;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
@@ -2340,6 +2416,11 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
   int i,j,k;
   unsigned m, c=0, g=0;
   unsigned register s;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   switch ( KOS ) {
     case FLOW_ONLY:
@@ -2416,6 +2497,11 @@ void VoxInfo::encHbit(unsigned* bh1, unsigned* bh2)
   unsigned register m, s1, s2;
   unsigned s_e, s_w, s_n, s_s, s_t, s_b, ss;
   unsigned a_e, a_w, a_n, a_s, a_t, a_b;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   // 初期化
   for (k=0; k<=kx+1; k++) {
@@ -2517,6 +2603,11 @@ void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
   
   Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   // ガイドセルを含む全領域
   for (k=1-gd; k<=kx+gd; k++) {
     for (j=1-gd; j<=jx+gd; j++) {
@@ -2556,6 +2647,11 @@ void VoxInfo::chkBCIndexV(unsigned* bcv, const char* fname)
     Exit(0);
   }
   Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   // ガイドセルを含む全領域
   for (k=1-gd; k<=kx+gd; k++) {
@@ -2623,6 +2719,11 @@ void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, con
   int i,j,k;
   unsigned m;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   // described in Fortran index
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
@@ -2660,6 +2761,11 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, SKL_REAL* OpenArea)
   int i,j,k;
   unsigned m0, m1, g;
   unsigned m_area[NOFACE], tmp[NOFACE];
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   for (i=0; i<NOFACE; i++) {
     OpenArea[i]=0.0;
@@ -2788,12 +2894,6 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
     case SPEC_VEL_WH:
     case OUTFLOW:
       return;
-      /*
-      countNrml_from_FaceBC(n, bv, cijk, area);
-      ai = (SKL_REAL)cijk[0];
-      aj = (SKL_REAL)cijk[1];
-      ak = (SKL_REAL)cijk[2];
-       */
       break;
      
       
@@ -2809,6 +2909,7 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
     case HEX:
     case FAN:
       return;
+      break;
       
     case CELL_MONITOR:
     case DARCY:
@@ -2916,7 +3017,7 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
   int i,j,k;
   
   // コンポーネントのローカルインデクス
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   // 対象コンポーネント領域のBbox領域の大きさ（セル数）
   ni = (unsigned)(gi[3] - gi[0]);
@@ -3060,7 +3161,7 @@ void VoxInfo::countFace_S(unsigned n, unsigned* bx, int* cc)
   
   c[0] = c[1] = c[2] = 0;
 	
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -3114,7 +3215,7 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
   c[0] = c[1] = c[2] = 0;
   ar = 0;
   
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -3222,7 +3323,7 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
   if ( cmp[n].isEns() ) {
     
     // コンポーネントのローカルインデクス
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     getOffset(st, ofst);
     
     // Face between i and i+1
@@ -3309,20 +3410,22 @@ void VoxInfo::checkColorTable(FILE* fp, unsigned size, int* table)
 }
 
 /**
- @fn void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx)
+ @fn void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx, float* vf)
  @brief bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
  @param cmp コンポーネントリスト
  @param bx BCindex ID
+ @param vf 体積率
  */
-void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx)
+void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx, float* vf)
 {
 	unsigned m, s;
   int i,j,k;
   int st[3], ed[3];
+  int f;
   
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isVFraction() ) { // 対象のコンポーネント
-      cmp[n].getCompoBV(st, ed);
+      cmp[n].getBbox(st, ed);
       
       for (k=st[2]; k<=ed[2]; k++) {
         for (j=st[1]; j<=ed[1]; j++) {
@@ -3330,7 +3433,9 @@ void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx)
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bx[m];
             if ( ( s & MASK_CMP_ID) == n ) {
-              s |= (255 << TOP_VF); // バイナリボクセルの1.0を8ビットで量子化
+              f = (int)floorf(vf[m]*255.0 + 0.5); // 0.0<vf<1.0 の四捨五入 > 8ビットで量子化
+              if ( f > 255 ) assert(0);
+              s |= (f << TOP_VF); // 8ビットで量子化
               if ( cmp[n].isFORCING() ) s = onBit(s, FORCING_BIT);
               bx[m] = s;
             }
@@ -3353,6 +3458,11 @@ bool VoxInfo::make_index3_list(SklScalar<int>* dc_index3, unsigned* bx)
   int i,j,k;
   unsigned m, l;
   int* index;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   if ( !(index = dc_index3->GetData()) ) return false;
   
@@ -3386,6 +3496,11 @@ bool VoxInfo::make_index_list(SklScalar<unsigned>* dc_index, unsigned* bx)
   int i,j,k;
   unsigned m, l;
   unsigned* idx;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   if ( !(idx = dc_index->GetData()) ) return false;
   
@@ -3421,6 +3536,11 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
   int i,j,k;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned register s;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   // ノイマンフラグ
   for (k=1; k<=kx; k++) {
@@ -3556,6 +3676,10 @@ void VoxInfo::encPbit_OBC(int face, unsigned* bx, string key, bool dir)
   unsigned m;
   unsigned register s;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   switch (face) {
     case X_MINUS:
       if( pn.nID[X_MINUS] < 0 ){
@@ -3763,6 +3887,11 @@ unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned*
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   unsigned register s, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -3888,6 +4017,11 @@ unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned*
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   unsigned register s, d;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   idd = (int)id;
   
   for (k=1; k<=kx; k++) {
@@ -4005,6 +4139,11 @@ void VoxInfo::encPbit(unsigned* bx)
   unsigned register s;
   bool exclusive;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   // ディリクレ条件とノイマン条件の排他性のチェック
   exclusive = true;
   for (k=1; k<=kx; k++) {
@@ -4112,6 +4251,11 @@ void VoxInfo::find_isolated_Fcell(unsigned order, int* mid, unsigned* bx)
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned key[6];
   int val[6];
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
@@ -4225,6 +4369,32 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
     bx[m] |= ((unsigned)md << TOP_CELL_ID) ;
   }
   
+  // 体積率コンポーネントのみ
+  int st[3], ed[3];
+  for (unsigned n=1; n<=NoBC; n++) {
+    id = cmp[n].getID();
+    
+    // 体積率コンポーネントのオーバーラップは考慮していないので、エラーが生じる可能性あり
+    unsigned m;
+    switch ( cmp[n].getType() ) {
+      case HEX:
+      case FAN:
+        cmp[n].getBbox(st, ed);
+        for (int k=st[2]; k<=ed[2]; k++) {
+          for (int j=st[1]; j<=ed[1]; j++) {
+            for (int i=st[0]; i<=ed[0]; i++) {
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              if ( cvf[m] > 0.0 ) {
+                bx[m] |= (id << TOP_CELL_ID) ;
+                mid[m] = (int)id;
+              }
+            }
+          }
+        }
+        break;
+    }
+  }
+  
   // MaterialListのエントリをエンコードする
   for (unsigned n=1; n<=NoCompo; n++) {
     odr = cmp[n].getMatOdr();
@@ -4247,12 +4417,9 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
       case DARCY:
       case HEAT_SRC: // 熱のBCもここで処理しておく
       case CNST_TEMP:
-        cmp[n].setElement( encodeOrder(n, id, mid, bx) );
-        break;
-        
       case HEX:
       case FAN:
-        cmp[n].setElement( encodeOrder(n, cvf, bx) );
+        cmp[n].setElement( encodeOrder(n, id, mid, bx) );
         break;
     }
   }
@@ -4368,6 +4535,11 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
   int i, j, k;
   unsigned m, mt, sw, cw;
   unsigned register s;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   ( "fluid" == key ) ? sw=1 : sw=0;
   ( "check" == chk ) ? cw=1 : cw=0;
@@ -4632,6 +4804,11 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
   unsigned m, m0, m1;
   int* mid=NULL;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   if ( !(mid = d_mid->GetData()) ) Exit(0);
   
   // 周期境界以外
@@ -4875,7 +5052,7 @@ void VoxInfo::adjCellID_Prdc_Inner(SklScalar3D<int>* d_mid)
   int st[3], ed[3], dir, id;
   
   for (unsigned n=1; n<=NoBC; n++) {
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     dir = (int)cmp[n].getPeriodicDir();
     id  = cmp[n].getID();
     if ( cmp[n].getType() == PERIODIC ) {
@@ -4903,6 +5080,11 @@ void VoxInfo::copyID_Prdc_Inner(SklScalar3D<int>* d_mid, int* st, int* ed, int i
   int i, j, k, ii, jj, kk;
   unsigned m0, m1, m2;
   int* mid=NULL;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   if ( !(mid = d_mid->GetData()) ) Exit(0);
   
@@ -5029,6 +5211,11 @@ void VoxInfo::encAmask_SymtrcBC(int face, unsigned* bh2)
   int register i, j, k;
   unsigned register m;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   switch (face) {
     case X_MINUS:
       if( pn.nID[face] < 0 ){
@@ -5119,6 +5306,11 @@ void VoxInfo::setAmask_InActive(unsigned id, int* mid, unsigned* bh)
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   int idd = (int)id;
   
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -5170,6 +5362,11 @@ void VoxInfo::setInactive_Compo(unsigned id, int def, int* mid, unsigned* bh1, u
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   int idd = (int)id;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
@@ -5251,6 +5448,11 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, CutPos32Array* cutPos)
   unsigned m_p;
   unsigned register s;
   float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   // ノイマンフラグ
   for (k=1; k<=kx; k++) {
@@ -5408,6 +5610,11 @@ unsigned VoxInfo::markSolid_from_Cut(int* mid, CutPos32Array* cutPos)
   unsigned m_p, c=0;
   float pos[6], q;
 
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -5466,6 +5673,11 @@ void VoxInfo::encCut_OBC(int face, CutPos32Array* cutPos)
 {
   int i, j, k;
   float pos=0.5f;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   switch (face) {
     case X_MINUS:
@@ -5550,6 +5762,11 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
   int i, j, k;
   unsigned m1, m2, g=0;
   unsigned register s1, s2;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
   
   switch (face) {
     case X_MINUS:

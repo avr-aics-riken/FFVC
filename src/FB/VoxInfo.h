@@ -38,7 +38,6 @@ protected:
   unsigned NoVoxID;     /// 含まれるIDの数(Local/Global)
   unsigned NoBC;        /// 境界条件数
   unsigned NoCompo;     /// コンポーネントの総数
-  int ix, jx, kx, gd;   /// サイズとガイドセル
   SklSolverConfig* CF;  /// XMLツリーのポインタ
   
   int* colorList;       /// ボクセルモデルに含まれるIDのリスト(Global)
@@ -58,7 +57,6 @@ public:
     vox_nv = NULL;
     cmp = NULL;
     mat = NULL;
-    ix = jx = kx = gd = 0;
   }
   
   ~VoxInfo() {
@@ -180,7 +178,7 @@ public:
   void setBCIndex_base1      (unsigned* bd, int* mid, float* cvf);
   void setBCIndex_base2      (unsigned* bd, int* mid, SetBC* BC, unsigned& Lcell, unsigned& Gcell, unsigned KOS);
   void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS);
-  void setCmpFraction        (CompoList* compo, unsigned* bx);
+  void setCmpFraction        (CompoList* compo, unsigned* bx, float* vf);
   void setControlVars        (unsigned* r_size, unsigned r_guide);
   void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);
   void setOBC_Cut            (SetBC* BC, CutPos32Array* cutPos);

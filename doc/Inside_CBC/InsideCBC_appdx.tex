@@ -85,9 +85,9 @@ a_3 & b_3 & c_3
 {\bm T}_{xyz} \,=\, {\bm T}_z\, {\bm T}_y\, {\bm T}_x \,=\,
 \left[
 \begin{array}{ccc}
-C_y C_z & S_x S_y C_z - C_x S_z & S_x S_z + C_x S_y C_z\\
-C_y S_z & S_x S_y S_z + C_x C_z & C_x S_y S_z - S_x C_z\\
--S_y & S_x C_y & C_x C_y
+C_y\,C_z & S_x\,S_y\,C_z\,-\,C_x\,S_z & C_x\,S_y\,C_z\,+\,S_x\,S_z\\
+C_y\,S_z & S_x\,S_y\,S_z\,+\,C_x\,C_z & C_x\,S_y\,S_z\,-\,S_x\,C_z\\
+-\,S_y & S_x\,C_y & C_x\,C_y
 \end{array}
 \right]
 \label{eq:Txyz}
@@ -98,7 +98,37 @@ C_y S_z & S_x S_y S_z + C_x C_z & C_x S_y S_z - S_x C_z\\
 行列積は一般に$\bm{AB} \neq \bm{BA}$なので，行列を作用させる順番で答えが異なる．
 したがって，回転の順番を変えると，同じ角度であっても異なる位置に変換されることになるので注意．
 
-%
+また，逆変換の回転行列は，
+
+\begin{equation}
+{\bm T}_{zyx} \,=\, {\bm T}_x\, {\bm T}_y\, {\bm T}_z \,=\,
+\left[
+\begin{array}{ccc}
+C_y\,C_z & C_y\,S_z & -S_y\\
+S_x\,S_y\,C_z\,-\,C_x\,S_z & S_x\,S_y\,S_z\,+\,C_x\,C_z & S_x\,C_y\\
+C_x\,S_y\,C_z\,+\,S_x\,S_z & C_x\,S_y\,S_z\,-\,S_x\,C_z & C_x\,C_y
+\end{array}
+\right]
+\label{eq:Tzyx}
+\end{equation}
+
+%%
+\subsection{座標軸まわりの回転角度}
+\textbf{式(\ref{eq:matrix def})}に示した行列要素から座標軸ごとの回転角度を求める．
+$\theta_x,\,\theta_y,\,\theta_z$をそれぞれ$\alpha,\,\beta,\,\gamma$とする．
+
+\begin{enumerate}
+\item コンポーネントの流出方向の指定ベクトル$\overrightarrow{n}$がz軸の単位ベクトル$\overrightarrow{e}_3$と作る角度$\alpha$を求める．$\overrightarrow{n}$をyz面へ射影したベクトルと$\overrightarrow{e}_3$と内積をとり，方向角を求める．射影ベクトルの大きさがゼロの場合には回転角はゼロとする．
+\item 回転角$(\alpha,\, 0.0,\, 0.0)$でベクトル$\overrightarrow{n}$を回転し，xz面へ射影したベクトルとz軸の単位ベクトルと作る角度$\beta$を求める．ベクトル$\overrightarrow{n}$がx軸とy軸の両方から見て$\overrightarrow{e}_3$と反対の場合にだけ，y軸回りのみ回転する．
+\item 矩形形状の場合には，さらに方向ベクトルの向きも合わせる．回転角$(\alpha,\, \beta,\, 0.0)$でベクトル$\overrightarrow{n}$を回転すると，xy平面へ射影されたベクトルとなる．この射影されたベクトルとx軸の単位ベクトル$\overrightarrow{e}_1$と作る角度$\gamma$を求める．
+\end{enumerate}
+
+
+
+
+
+%%%
+\begin{comment}
 \subsection{任意方向の回転軸まわりの回転}
 回転軸が決まっていて，それを軸にした回転運動を求める．
 座標軸は原点を通るものとし，回転軸の軸ベクトルを$\bm u =(u_1,\, u_2,\, u_3)$とする．
@@ -260,7 +290,7 @@ $\alpha,\,\gamma$については，\textbf{式(\ref{eq:Txyz})}の$a_1,\,a_2,\,b_
 \end{enumerate}
 
 
-%%
+%
 \hypertarget{tgt:affin}{\section{アフィン変換}}
 2つの6面体があり，一方の6面体をもう一方の6面体にはめ込むように移動・回転・変形を行う~\cite{shimada:00:cadcg}．
 平行6面体の8コの頂点の内，1つの頂点を共有する3辺の4頂点の座標を考える．
@@ -349,3 +379,6 @@ C_3 \,=\, (X_2\,Y_3 - X_3\,Y_2)/\Delta
        & + & X_4\,Y_2\,Z_3 & - & X_4\,Y_3\,Z_2 \\
 \end{array}
 \]
+
+\end{comment}
+%%%

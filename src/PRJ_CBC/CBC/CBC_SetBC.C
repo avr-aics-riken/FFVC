@@ -55,6 +55,7 @@ void SetBC3D::checkDriver(FILE* fp)
   int o_dir, c_dir;
   int o_pos, c_pos;
   int node_st_i, node_st_j, node_st_k;
+  int* st = NULL;
   
   node_st_i = node_st_j = node_st_k = 0;
   
@@ -83,21 +84,23 @@ void SetBC3D::checkDriver(FILE* fp)
             Exit(0);
           }
           
+          st = cmp[n].getBbox_st();
+          
           // 位置のチェック  IDは，流入面に対して面直1層の指定
           switch (c_dir) {
             case X_MINUS:
             case X_PLUS:
-              c_pos = node_st_i + cmp[n].getCompoBV_st_x();
+              c_pos = node_st_i + st[0];
               break;
               
             case Y_MINUS:
             case Y_PLUS:
-              c_pos = node_st_j + cmp[n].getCompoBV_st_y();
+              c_pos = node_st_j + st[1];
               break;
               
             case Z_MINUS:
             case Z_PLUS:
-              c_pos = node_st_k + cmp[n].getCompoBV_st_z();
+              c_pos = node_st_k + st[2];
               break;
               
             default:
@@ -137,7 +140,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Contr
     vec[1] = cmp[n].nv[1];
     vec[2] = cmp[n].nv[2];
     
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     
     switch ( cmp[n].getType() ) {
       case HEX:
@@ -177,7 +180,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYP
     vec[1] = cmp[n].nv[1];
     vec[2] = cmp[n].nv[2];
 
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     
     switch ( cmp[n].getType() ) {
       case HEX:
@@ -215,7 +218,7 @@ void SetBC3D::mod_Vcf_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE 
   
   for (unsigned n=1; n<=NoBC; n++) {
 
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     
     vec[0] = cmp[n].nv[0];
     vec[1] = cmp[n].nv[1];
@@ -261,7 +264,7 @@ void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE 
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isFORCING() ) {
       
-      cmp[n].getCompoBV(st, ed);
+      cmp[n].getBbox(st, ed);
       
       vec[0] = cmp[n].nv[0];
       vec[1] = cmp[n].nv[1];
@@ -878,7 +881,7 @@ void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsig
   int st[3], ed[3];
   
   for (int n=1; n<=NoBC; n++) {
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     
     if ( cmp[n].getType() == PERIODIC ) {
       Vibc_Prdc(d_v, st, ed, d_bd, n, (int)cmp[n].getPeriodicDir());
@@ -903,7 +906,7 @@ void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00,
   
   if ( !isCDS ) { // Binary
     for (int n=1; n<=NoBC; n++) {
-      cmp[n].getCompoBV(st, ed);
+      cmp[n].getBbox(st, ed);
       
       switch ( cmp[n].getType() ) {
         case SPEC_VEL:
@@ -1139,7 +1142,7 @@ REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* t, unsigned* bh2, int n, REAL_TY
   //hs = dt * FBUtility::convD2ND_Hsrc(cmp[n].get_HeatDensity(), RefV, RefL, DiffTemp, mat[odr].P[p_density], mat[odr].P[p_specific_heat]);
   hs = FBUtility::convD2ND_Hsrc(cmp[n].get_HeatDensity(), RefV, RefL, DiffTemp, rho, cp);
 
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
 	
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -1173,7 +1176,7 @@ void SetBC3D::ps_IBC_ConstTemp(REAL_TYPE* t, unsigned* bh2, int n)
 
   tmp = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp);
 
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
 	
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -1268,7 +1271,7 @@ REAL_TYPE SetBC3D::ps_IBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE 
   hv  = vec[1]*tc;
   hw  = vec[2]*tc;
   
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
 	
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -1355,7 +1358,7 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
   v_ref = v00[2];
   w_ref = v00[3];
   
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
 	
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -2650,7 +2653,7 @@ REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TY
   odr= cmp[n].getMatOdr();
   q = cmp[n].get_Heatflux() / (RefV*DiffTemp*rho*cp); // [W/m^2]を無次元化
 
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
 	
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -2799,7 +2802,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
   ht = cmp[n].get_CoefHT() / (RefV*rho*cp); // Ref_IDで指定される物性値
   sf = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
 
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -2908,7 +2911,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
   ht3 = ( Rayleigh < c2 ) ? ht*a3*pow(Rayleigh, b3) : ht*a4*pow(Rayleigh, b4); // lower
   sf = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
   
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   if ( cmp[n].get_sw_HTmodeRef() == CompoList::HT_mode_bulk ) {
     for (k=st[2]; k<=ed[2]; k++) {
@@ -3066,7 +3069,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
   ht = lambda / (RefV*RefL*rho*cp) * a1*pow(Reynolds, b1) * pow(Prandtl, c1);    // Ref_IDで指定される物性値 
   sf = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
   
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   if ( cmp[n].get_sw_HTmodeRef() == CompoList::HT_mode_bulk ) {
     for (k=st[2]; k<=ed[2]; k++) {
@@ -3222,7 +3225,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
   ht = cmp[n].get_CoefHT() / (RefV*rho*cp);  // Ref_IDで指定される物性値
   bt = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
 
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -3391,7 +3394,7 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
   //pp = (2.0*mat[odr].P[p_thermal_conductivity]) / (dh*RefV*RefL*mat[odr].P[p_density]*mat[odr].P[p_specific_heat]); // property of solid cell
   pp = (2.0*lambda) / (dh*RefV*rho*cp); // Ref_IDで指定される物性値
 
-  cmp[n].getCompoBV(st, ed);
+  cmp[n].getBbox(st, ed);
   
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
@@ -3736,7 +3739,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
       
       if( cmp[n].isEns() ) {
         typ = cmp[n].getType();
-        cmp[n].getCompoBV(st, ed);
+        cmp[n].getBbox(st, ed);
         
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
@@ -3817,7 +3820,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   if ( !isCDS ) { // Binary
     for (int n=1; n<=NoBC; n++) {
       typ = cmp[n].getType();
-      cmp[n].getCompoBV(st, ed);
+      cmp[n].getBbox(st, ed);
       
       switch (typ) {
         case SPEC_VEL:
@@ -3953,7 +3956,7 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* b
       vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity];
     }
     
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     cbc_vis_ee_vbc_(vc, dim_sz, gc, st, ed, &dh, &dt, v00, &rei, v0, (int*)bx, &n, &cf, vec, &flop);
   }
 }
@@ -3985,7 +3988,7 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* b
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isVBC() ) {
       
-      cmp[n].getCompoBV(st, ed);
+      cmp[n].getBbox(st, ed);
       
       typ = cmp[n].getType();
       if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
@@ -4094,7 +4097,7 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
     for (int n=1; n<=NoBC; n++) {
       typ = cmp[n].getType();
       
-      cmp[n].getCompoBV(st, ed);
+      cmp[n].getBbox(st, ed);
       vel = 0.0;
       
       switch (typ) {
@@ -4403,7 +4406,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigne
   REAL_TYPE pv;
   
   for (unsigned n=1; n<=NoBC; n++) {
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     dir = (int)cmp[n].getPeriodicDir();
     pv = FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, rho, RefV, Unit_Prs);
     
@@ -4701,7 +4704,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYP
   for (int n=1; n<=NoBC; n++) {
     typ = cmp[n].getType();
 
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     
     switch (typ) {
       case SPEC_VEL:
@@ -4898,7 +4901,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
   for (unsigned n=1; n<=NoBC; n++) {
     typ = cmp[n].getType();
 
-    cmp[n].getCompoBV(st, ed);
+    cmp[n].getBbox(st, ed);
     
     switch (typ) {
       case SPEC_VEL_WH:

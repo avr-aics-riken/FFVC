@@ -847,18 +847,26 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   
 	// Darcy Law
   if ( isComponent(DARCY) ) {
-    fprintf(fp, "\n\t[DARCY MODEL]\n");
-    fprintf(fp, "\t no                    Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed        (Computed Normal form ID)  Area[m*m]   Prmblty_x   Prmblty_y   Prmblty_z[m^2]    Prmblty_x   Prmblty_y   Prmblty_z[-]\n");
-
+    fprintf(fp, "\n\t[Darcy medium]\n");
+    
+    fprintf(fp, "\t no                    Label    ID        (Computed Normal form ID)  Area[m*m]   Prmblty_x   Prmblty_y   Prmblty_z[m^2]    Prmblty_x   Prmblty_y   Prmblty_z[-]\n");
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == DARCY ) {
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %10.3e %10.3e %10.3e %10.3e %11.4e %11.4e %11.4e       %11.4e %11.4e %11.4e\n", 
+        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %11.4e %11.4e %11.4e       %11.4e %11.4e %11.4e\n", 
+                n, compo[n].name, compo[n].getID(), 
+                nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area, 
+								compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4], compo[n].ca[5]);
+      }
+    }
+    
+    fprintf(fp, "\t                                      i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+    for(n=1; n<=NoBC; n++) {
+      if ( compo[n].getType() == DARCY ) {
+        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
                 n, compo[n].name, compo[n].getID(),
                 getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
                 getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
-                nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area, 
-								compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4], compo[n].ca[5]);
+                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
       }
     }
   }

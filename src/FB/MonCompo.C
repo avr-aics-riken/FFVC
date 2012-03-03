@@ -709,7 +709,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   if (!(nPointList = new int[np])) Exit(0);
   for (int i = 0; i < np; i++) nPointList[i] = 0;
   
-  cmp.getCompoBV(st, ed);
+  cmp.getBbox(st, ed);
   
   if (cmp.isEns()) {
     for (int k = st[2]; k <= ed[2]; k++) {

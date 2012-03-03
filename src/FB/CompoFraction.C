@@ -366,7 +366,6 @@ void CompoFraction::get_angle(void)
     d = acos( c_alp );
     f_yz = c_alp+1.0;
     alpha = (nv.y >= 0.0) ? d : -d;
-    //printf("c_alp = %f / d = %f / alpha = %f / f_yz = %f\n", c_alp, d, alpha, f_yz);
   }
   else {
     alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
@@ -382,7 +381,6 @@ void CompoFraction::get_angle(void)
     d = acos( c_bta );
     f_xz = c_bta+1.0;
     beta = (nv.x >= 0.0) ? -d : d;
-    //printf("c_bta = %f / d = %f / beta = %f / f_xz = %f\n", c_bta, d, beta, f_xz);
   }
   else {
     beta = 0.0;
