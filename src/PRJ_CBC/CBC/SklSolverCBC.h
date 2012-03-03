@@ -168,7 +168,6 @@ public:
   SklScalar3D<REAL_TYPE>  *dc_p0;
   SklScalar3D<REAL_TYPE>  *dc_t;
   SklScalar3D<REAL_TYPE>  *dc_t0;
-  SklScalar3D<REAL_TYPE>  *dc_wkj;
   SklScalar3D<REAL_TYPE>  *dc_vt;
   SklScalar3D<REAL_TYPE>  *dc_vof;
   SklScalar3D<REAL_TYPE>  *dc_ap;
@@ -274,7 +273,6 @@ public:
   void allocArray_index     (unsigned long &total);
   void allocArray_index3    (unsigned long &total);
   void allocArray_interface (unsigned long &total);
-  void allocArray_Jacobi    (unsigned long &total);
   void allocArray_LES       (unsigned long &total);
   void allocArray_main      (unsigned long &total);
   void allocArray_prep      (unsigned long &total, unsigned long &prep);

@@ -1141,8 +1141,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
   }
   
   // 線形ソルバーの種類
-  if     ( !strcasecmp(slvr, "Jacobi") )    IC[order].set_LS(JACOBI);
-  else if( !strcasecmp(slvr, "SOR") )       IC[order].set_LS(SOR);
+  if     ( !strcasecmp(slvr, "SOR") )       IC[order].set_LS(SOR);
   else if( !strcasecmp(slvr, "SOR2SMA") )   IC[order].set_LS(SOR2SMA);
   else if( !strcasecmp(slvr, "SOR2CMA") )   IC[order].set_LS(SOR2CMA);
   else {
@@ -1338,25 +1337,25 @@ void Control::select_Itr_Impl(ItrCtl* IC)
   switch (AlgorithmF) {
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
-      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) || (ICp1->get_LS() == JACOBI) ) {
+      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) ) {
         ICp1->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
       }
       break;
       
     case Flow_FS_RK_CN:
-      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) || (ICp1->get_LS() == JACOBI) ) {
+      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) ) {
         ICp1->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
       }
-      if ( (ICp2->get_LS() == SOR) || (ICp2->get_LS() == SOR2SMA) || (ICp2->get_LS() == JACOBI) ) {
+      if ( (ICp2->get_LS() == SOR) || (ICp2->get_LS() == SOR2SMA) ) {
         ICp2->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
       }
       break;
       
     case Flow_FS_AB_CN:
-      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) || (ICp1->get_LS() == JACOBI) ) {
+      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) ) {
         ICp1->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
       }
-      if ( (ICv->get_LS() == SOR) || (ICv->get_LS() == SOR2SMA) || (ICv->get_LS() == JACOBI) ) {
+      if ( (ICv->get_LS() == SOR) || (ICv->get_LS() == SOR2SMA) ) {
         ICv->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
       }
       break;
@@ -1374,7 +1373,7 @@ void Control::select_Itr_Impl(ItrCtl* IC)
         break;
         
       case Heat_EE_EI:
-        if ( (ICt->get_LS() == SOR) || (ICt->get_LS() == SOR2SMA) || (ICt->get_LS() == JACOBI) ) {
+        if ( (ICt->get_LS() == SOR) || (ICt->get_LS() == SOR2SMA) ) {
           ICt->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
         }
         break;
@@ -3244,10 +3243,6 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 void Control::printLS(FILE* fp, ItrCtl* IC)
 {
   switch (IC->get_LS()) {
-      
-    case JACOBI:
-      fprintf(fp,"\t       Linear Solver          :   Jacobi Relaxation\n");
-      break;
       
     case SOR:
       fprintf(fp,"\t       Linear Solver          :   Point SOR method\n");

@@ -87,7 +87,6 @@ SklSolverCBC::SklSolverCBC() {
   dc_p0   = NULL;
   dc_t    = NULL;
   dc_t0   = NULL;
-  dc_wkj  = NULL;
   dc_vt   = NULL;
   dc_vof  = NULL;
   
@@ -193,7 +192,6 @@ SklSolverCBC::SklSolverCBC(int sType) {
   dc_p0   = NULL;
   dc_t    = NULL;
   dc_t0   = NULL;
-  dc_wkj  = NULL;
   dc_vt   = NULL;
   dc_vof  = NULL;
   
@@ -437,7 +435,6 @@ void SklSolverCBC::set_timing_label(void)
   // end of Poisson: Itr. Sct:1
       
   set_label(tm_poi_itr_sct_2,      "Poisson: Itr. Sct:2",     PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
-  set_label(tm_poi_Jacobi,         "Poisson Jacobi",          PerfMonitor::CALC);
   set_label(tm_poi_PSOR,           "Poisson PSOR",            PerfMonitor::CALC);
   set_label(tm_poi_setup,          "Poisson Setup for Itr.",  PerfMonitor::CALC);
   set_label(tm_poi_SOR2SMA,        "Poisson SOR2 (SMA)",      PerfMonitor::CALC);
@@ -904,7 +901,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
 	
 	REAL_TYPE omg, r;
-	REAL_TYPE *p, *src0, *wkj, *p0, *src1;
+	REAL_TYPE *p, *src0, *p0, *src1;
 	unsigned *bcp;
   int *idx3;
   unsigned *idx;
@@ -916,7 +913,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   size_t d_size = 0;
   REAL_TYPE clear_value=0.0;
 	
-	p = src0 = src1 = wkj = p0 = NULL;
+	p = src0 = src1 = p0 = NULL;
 	bcp = NULL;
   idx = NULL;
   omg = IC->get_omg();
@@ -928,73 +925,9 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 	if( !(src0= dc_ws->GetData()) )  Exit(0); // 非反復のソース項
   if( !(src1= dc_wk2->GetData()) ) Exit(0); // 反復毎に変化するソース項
 	if( !(bcp = dc_bcp->GetData()) ) Exit(0); // ビットフラグ
-  // index test; if( !(idx3 = dc_index3->GetData()) ) return false;
-  // index test; if( !(idx = dc_index->GetData()) ) return false;
   
   // 反復処理
   switch (IC->get_LS()) {
-      
-    case JACOBI:
-      // >>> Poisson Iteration section 2
-      TIMING_start(tm_poi_itr_sct_2);
-
-      // Jacobi反復法のワーク
-      if( !(wkj = dc_wkj->GetData()) ) Exit(0);
-      
-      // 反復処理
-      TIMING_start(tm_assign_const);
-      d_size = dc_wkj->GetArrayLength();
-      fb_set_value_real_(wkj, (int*)&d_size, &clear_value);
-      TIMING_stop(tm_assign_const, 0.0);
-      
-      TIMING_start(tm_poi_Jacobi);
-      flop_count = 0.0;
-      if (IC->get_LoopType() == SKIP_LOOP) {
-        cbc_jacobi_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, wkj, &flop_count);
-      }
-      else {
-        cbc_jacobi_if_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, wkj, &flop_count);
-      }
-      TIMING_stop(tm_poi_Jacobi, flop_count);
-      
-      // 境界条件
-      TIMING_start(tm_poi_BC);
-      BC.OuterPBC(dc_p);
-      if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(dc_p, dc_bcd);
-      TIMING_stop(tm_poi_BC, 0.0);
-      
-      TIMING_stop(tm_poi_itr_sct_2, 0.0);
-      // <<< Poisson Iteration subsection 2
-      
-      
-      
-      // >>> Poisson Iteration section 3
-      TIMING_start(tm_poi_itr_sct_3);
-
-      // 同期処理
-      if ( para_mng->IsParallel() ) {
-        TIMING_start(tm_poi_comm);
-        if (cm_mode == 0 ) {
-          if( !dc_p->CommBndCell(1) ) Exit(0); // 1 layer communication
-        }
-        else {
-          if( !dc_p->CommBndCell2(1, wait_num, req) ) Exit(0); // 1 layer communication
-          para_mng->WaitAll(wait_num, req);
-        }
-        TIMING_stop(tm_poi_comm, comm_size);
-      }
-      
-      // 残差の集約
-      if ( para_mng->IsParallel() ) {
-        TIMING_start(tm_poi_res_comm);
-        REAL_TYPE tmp = r;
-        para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
-      }
-
-      TIMING_stop(tm_poi_itr_sct_3, 0.0);
-      // <<< Poisson Iteration subsection 3
-      break;
       
     case SOR:
       // >>> Poisson Iteration section 2
@@ -1003,17 +936,9 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       // 反復処理
       TIMING_start(tm_poi_PSOR);
       flop_count = 0.0;
-      if (IC->get_LoopType() == SKIP_LOOP) {
-        cbc_psor_if_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, &flop_count);
-      }
-      else {
-        cbc_psor_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, &flop_count);
-        //r = PSOR(p, src0, src1, bcp, IC, flop_count); //実装速度比較
-      }
+      cbc_psor_(p, sz, gc, &omg, &r, src0, src1, (int*)bcp, &flop_count);
+      //r = PSOR(p, src0, src1, bcp, IC, flop_count); //実装速度比較
       TIMING_stop(tm_poi_PSOR, flop_count);
-      
-      //cbc_psor_index3_(p, sz, gc, &omg, &r, ws, (int*)bcp, idx3, (int*)&C.Fcell, &flop_count);
-      //cbc_psor_index_(p, sz, gc, &omg, &r, ws, (int*)bcp, (int*)idx, (int*)&C.Fcell, &flop_count);
       
       // 境界条件
       TIMING_start(tm_poi_BC);
@@ -1080,13 +1005,8 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
         
         TIMING_start(tm_poi_SOR2SMA);
         flop_count = 0.0; // 色間で積算しない
-        if (IC->get_LoopType() == SKIP_LOOP) {
-          cbc_psor2sma_core_if_(p, sz, gc, &ip, &color, &omg, &r, src0, src1, (int*)bcp, &flop_count);
-        }
-        else {
-          cbc_psor2sma_core_(p, sz, gc, &ip, &color, &omg, &r, src0, src1, (int*)bcp, &flop_count);
-          //PSOR2sma_core(p, ip, color, src0, src1, bcp, IC, flop_count);
-        }
+        cbc_psor2sma_core_(p, sz, gc, &ip, &color, &omg, &r, src0, src1, (int*)bcp, &flop_count);
+        //PSOR2sma_core(p, ip, color, src0, src1, bcp, IC, flop_count);
         TIMING_stop(tm_poi_SOR2SMA, flop_count);
         
         // 境界条件

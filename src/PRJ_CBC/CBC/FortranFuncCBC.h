@@ -17,17 +17,10 @@
 #ifdef _WIN32
 // cbc_poisson.f90
 #define cbc_div_cnst_           CBC_DIV_CNST
-#define cbc_jacobi_             CBC_JACOBI
-#define cbc_jacobi_if_          CBC_JACOBI_IF
 #define cbc_psor_               CBC_PSOR
-#define cbc_psor_if_            CBC_PSOR_IF
-#define cbc_psor_index3_        CBC_PSOR_INDEX3
-#define cbc_psor_index_         CBC_PSOR_INDEX
-#define cbc_psor2sma_core_if_   CBC_PSOR2SMA_CORE_IF
 #define cbc_psor2sma_core_      CBC_PSOR2SMA_CORE
 #define cbc_sma_comm_           CBC_SMA_COMM
 #define cbc_sma_comm_wait_      CBC_SMA_COMM_WAIT
-#define cbc_psrc_pbc_           CBC_PSRC_PBC
 
 // cbc_utility.f90
 #define cbc_norm_v_div_dbg_     CBC_NORM_V_DIV_DBG
@@ -110,21 +103,9 @@
 extern "C" {
   // cbc_poisson.f90
   void cbc_div_cnst_        (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* b2, int* bp, REAL_TYPE* flop);
-  void cbc_jacobi_          (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
-                             int* bp, REAL_TYPE* wk, REAL_TYPE* flop);
-  void cbc_jacobi_if_       (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
-                             int* bp, REAL_TYPE* wk, REAL_TYPE* flop);
   void cbc_psor_            (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
                              int* bp, REAL_TYPE* flop);
-  void cbc_psor_if_         (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
-                             int* bp, REAL_TYPE* flop);
-  void cbc_psor_index3_     (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
-                             int* bp, int* index, int* idx_sz, REAL_TYPE* flop);
-  void cbc_psor_index_      (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
-                             int* bp, int* index, int* idx_sz, REAL_TYPE* flop);
   void cbc_psor2sma_core_   (REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
-                             REAL_TYPE* s1, int* bp, REAL_TYPE* flop);
-	void cbc_psor2sma_core_if_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
                              REAL_TYPE* s1, int* bp, REAL_TYPE* flop);
   void cbc_sma_comm_        (REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
                              REAL_TYPE* cf_z, int* key, int* para_key);

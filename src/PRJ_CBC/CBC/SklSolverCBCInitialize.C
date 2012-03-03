@@ -385,7 +385,7 @@ SklSolverCBC::SklSolverInitialize() {
   // セルIDのノード間同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
   
-  
+
   
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   bool cmp_flag=false;
@@ -398,10 +398,11 @@ SklSolverCBC::SklSolverInitialize() {
     allocArray_compoVF(TotalMemory, PrepMemory);
     TIMING_stop(tm_init_alloc); 
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
+    
+    setComponentVF(cvf);
   }
-  setComponentVF(cvf);
-
   
+
   
   // コンポーネントのローカルインデクスをcmp.ciに保存
   getLocalCmpIdx();
@@ -694,8 +695,6 @@ SklSolverCBC::SklSolverInitialize() {
   gather_DomainInfo();
 
   
-  Exit(0);
-  
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
 
@@ -724,10 +723,6 @@ SklSolverCBC::SklSolverInitialize() {
   
   if ( C.BasicEqs == INCMP_2PHASE ) {
     allocArray_interface(TotalMemory);
-  }
-  
-  if ( hasLinearSolver(JACOBI) ) {
-    allocArray_Jacobi (TotalMemory);
   }
   
   // 時間平均用の配列をアロケート
@@ -2622,19 +2617,6 @@ void SklSolverCBC::allocArray_AB2 (unsigned long &total)
 {
   unsigned long mc=0;
   if ( !A.alloc_Real_V3DEx(this, dc_abf, "abf", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_Jacobi (unsigned long &total)
- @brief Jacobi法に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_Jacobi (unsigned long &total)
-{
-  unsigned long mc=0;
-  
-  if ( !A.alloc_Real_S3D(this, dc_wkj, "wkj", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
 

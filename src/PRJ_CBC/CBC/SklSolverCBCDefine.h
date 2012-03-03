@@ -73,8 +73,7 @@ enum timing_key {
       tm_poi_itr_sct_1,
         tm_force_src,
   
-      tm_poi_itr_sct_2,
-        tm_poi_Jacobi,      
+      tm_poi_itr_sct_2,     
         tm_poi_PSOR,
         tm_poi_setup,
         tm_poi_SOR2SMA,
