@@ -851,6 +851,10 @@
     
     FACES : select case (face)
     case (X_minus)
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:m) &
+!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Uw1,Vw1,Ww1,EX,EY,EZ) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx,u_bc_ref2,v_bc_ref2,w_bc_ref2,dh2)
       i = 1
       do k=1,kx
       do j=1,jx
@@ -876,10 +880,15 @@
         endif
       end do
       end do
+include '../FB/omp_tail.h'
       
       flop = flop + m*12.0
       
     case (X_plus)
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:m) &
+!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ue1,Ve1,We1,EX,EY,EZ) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       i = ix
       do k=1,kx
       do j=1,jx
@@ -905,10 +914,15 @@
         endif
       end do
       end do
+include '../FB/omp_tail.h'
 
       flop = flop + m*12.0
       
     case (Y_minus)
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:m) &
+!$OMP&   PRIVATE(i, j, k, bvx, Up0, Vp0, Wp0, Us1, Vs1, Ws1, EX, EY, EZ) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       j = 1
       do k=1,kx
       do i=1,ix
@@ -926,7 +940,7 @@
           EX = Us1 - Up0
           EY = Vs1 - Vp0
           EZ = Ws1 - Wp0
-          
+
           wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
           wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
           wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
@@ -934,10 +948,15 @@
         endif
       end do
       end do
+include '../FB/omp_tail.h'
       
       flop = flop + m*12.0
       
     case (Y_plus)
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:m) &
+!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Un1,Vn1,Wn1,EX,EY,EZ) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       j = jx
       do k=1,kx
       do i=1,ix
@@ -963,10 +982,15 @@
         endif
       end do
       end do
+include '../FB/omp_tail.h'
       
       flop = flop + m*12.0
       
     case (Z_minus)
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:m) &
+!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ub1,Vb1,Wb1,EX,EY,EZ) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       k = 1
       do j=1,jx
       do i=1,ix
@@ -992,10 +1016,15 @@
         endif
       end do
       end do
+include '../FB/omp_tail.h'
 
       flop = flop + m*12.0
       
     case (Z_plus)
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:m) &
+!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ut1,Vt1,Wt1,EX,EY,EZ) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       k = kx
       do j=1,jx
       do i=1,ix
@@ -1021,6 +1050,7 @@
         endif
       end do
       end do
+include '../FB/omp_tail.h'
 
       flop = flop + m*12.0
       
@@ -1682,6 +1712,9 @@
     
     FACES : select case (face)
     case (X_minus)
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(i,j,k) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       i = 0
       do k=1,kx
       do j=1,jx
@@ -1690,8 +1723,12 @@
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (X_plus)
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(i,j,k) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       i = ix+1
       do k=1,kx
       do j=1,jx
@@ -1700,8 +1737,12 @@
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Y_minus)
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(i,j,k) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       j = 0
       do k=1,kx
       do i=1,ix
@@ -1710,8 +1751,12 @@
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Y_plus)
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(i,j,k) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       j = jx+1
       do k=1,kx
       do i=1,ix
@@ -1720,8 +1765,12 @@
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Z_minus)
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(i,j,k) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       k = 0
       do j=1,jx
       do i=1,ix
@@ -1730,8 +1779,12 @@
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Z_plus)
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(i,j,k) &
+!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       k = kx+1
       do j=1,jx
       do i=1,ix
@@ -1740,6 +1793,7 @@
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case default
     end select FACES

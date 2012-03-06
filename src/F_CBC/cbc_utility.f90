@@ -45,6 +45,11 @@
 
     flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:rm) &
+!$OMP&   PRIVATE(r, d) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, ds, coef) &
+!$OMP&   SHARED(ds, i0, j0, k0)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -61,6 +66,7 @@
     end do
     end do
     end do
+include '../FB/omp_tail.h'
     
     idx(1) = i0
     idx(2) = j0
@@ -96,6 +102,10 @@
 
     flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:ds) &
+!$OMP&   PRIVATE(r) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, coef)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -104,6 +114,7 @@
     end do
     end do
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine cbc_norm_v_div_l2
@@ -135,6 +146,10 @@
 
     flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(max:ds) &
+!$OMP&   PRIVATE(r) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, coef)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -143,6 +158,7 @@
     end do
     end do
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine cbc_norm_v_div_max
@@ -161,7 +177,7 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  vm1, vm2, vm3, v_max, flop
+    real                                                      ::  vm1, vm2, vm3, v_max, flop, vx, vy, vz
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(0:3)                                      ::  v00
 
@@ -171,17 +187,24 @@
     vm1 = 0.0
     vm2 = 0.0
     vm3 = 0.0
+    vx = v00(1)
+    vy = v00(2)
+    vz = v00(3)
     flop = flop + real(ix)*real(jx)*real(kx)*9.0 + 2.0
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(max:vm1, max:vm2, max:vm3) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      vm1 = max(vm1, abs(v(1,i,j,k)-v00(1) ) )
-      vm2 = max(vm2, abs(v(2,i,j,k)-v00(2) ) )
-      vm3 = max(vm3, abs(v(3,i,j,k)-v00(3) ) )
+      vm1 = max(vm1, abs(v(1,i,j,k)-vx ) )
+      vm2 = max(vm2, abs(v(2,i,j,k)-vy ) )
+      vm3 = max(vm3, abs(v(3,i,j,k)-vz ) )
     end do
     end do
     end do
+include '../FB/omp_tail.h'
     
     v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 2 flop
 

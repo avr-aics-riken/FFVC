@@ -34,46 +34,64 @@
     
     FACES : select case (face)
     case (X_minus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(jx,kx,pv)
       do k=1,kx
       do j=1,jx
         p(0,j,k) = pv
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (X_plus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(jx,kx,pv)
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = pv
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Y_minus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,kx,pv)
       do k=1,kx
       do i=1,ix
         p(i,0,k) = pv
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Y_plus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,kx,pv)
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = pv
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Z_minus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,jx,pv)
       do j=1,jx
       do i=1,ix
         p(i,j,0) = pv
       end do
       end do
+include '../FB/omp_tail.h'
     
     case (Z_plus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,jx,pv)
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = pv
       end do
       end do
+include '../FB/omp_tail.h'
       
     case default
     end select FACES
@@ -102,46 +120,64 @@
     
     FACES : select case (face)
     case (X_minus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(jx,kx)
       do k=1,kx
       do j=1,jx
         p(0,j,k) = p(1,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (X_plus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(jx,kx)
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = p(ix,j,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Y_minus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,kx)
       do k=1,kx
       do i=1,ix
         p(i,0,k) = p(i,1,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Y_plus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,kx)
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = p(i,jx,k)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case (Z_minus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,jx)
       do j=1,jx
       do i=1,ix
         p(i,j,0) = p(i,j,1)
       end do
       end do
+include '../FB/omp_tail.h'
     
     case (Z_plus)
+include '../FB/omp_head.h'
+!$OMP   FIRSTPRIVATE(ix,jx)
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = p(i,j,kx)
       end do
       end do
+include '../FB/omp_tail.h'
       
     case default
     end select FACES

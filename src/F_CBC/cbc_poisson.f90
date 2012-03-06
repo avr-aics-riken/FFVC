@@ -36,15 +36,7 @@
     
     flop = flop + real(ix)*real(jx)*real(kx)*4.0
 
-!$OMP PARALLEL
-
-#ifdef _CYCLIC
-!$OMP DO SCHEDULE(static,2) &
-#elif defined _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#else
-!$OMP DO &
-#endif
+include '../FB/omp_head.h'
 
 !$OMP    REDUCTION(+:b2) &
 !$OMP&   PRIVATE(dv) &
@@ -57,8 +49,7 @@
     end do
     end do
     end do
-!$OMP END DO
-!$OMP END PARALLEL
+include '../FB/omp_tail.h'
 
     return
     end subroutine cbc_div_cnst
@@ -94,15 +85,7 @@
     flop = flop + real(ix)*real(jx)*real(kx)*36.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*41.0 ! DP
 
-!$OMP PARALLEL
-
-#if defined _CYCLIC
-!$OMP DO SCHEDULE(static,2) &
-#elif defined _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#else
-!$OMP DO &
-#endif
+include '../FB/omp_head.h'
 
 !$OMP    REDUCTION(+:res) &
 !$OMP&   PRIVATE(ndag_w,ndag_e,ndag_s,ndag_n,ndag_b,ndag_t,dd,pp,ss,dp,idx) &
@@ -134,8 +117,7 @@
     end do
     end do
     end do
-!$OMP END DO
-!$OMP END PARALLEL
+include '../FB/omp_tail.h'
 
     return
     end subroutine cbc_psor
@@ -172,15 +154,7 @@
     flop = flop + real(ix)*real(jx)*real(kx)*36.0*0.5
     ! flop = flop + real(ix)*real(jx)*real(kx)*41.0*0.5 ! DP
 
-!$OMP PARALLEL
-
-#if defined _CYCLIC
-!$OMP DO SCHEDULE(static,2) &
-#elif defined _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#else
-!$OMP DO &
-#endif
+include '../FB/omp_head.h'
 
 !$OMP    REDUCTION(+:res) &
 !$OMP&   PRIVATE(ndag_w,ndag_e,ndag_s,ndag_n,ndag_b,ndag_t,dd,pp,ss,dp,idx) &
@@ -213,8 +187,7 @@
     end do
     end do
     end do
-!$OMP END DO
-!$OMP END PARALLEL
+include '../FB/omp_tail.h'
 
     return
     end subroutine cbc_psor2sma_core
