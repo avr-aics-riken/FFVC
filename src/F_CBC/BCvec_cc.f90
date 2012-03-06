@@ -851,10 +851,11 @@
     
     FACES : select case (face)
     case (X_minus)
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:m) &
-!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Uw1,Vw1,Ww1,EX,EY,EZ) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx,u_bc_ref2,v_bc_ref2,w_bc_ref2,dh2)
+!$OMP PARALLEL
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m) &
+!$OMP PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Uw1,Vw1,Ww1,EX,EY,EZ) &
+!$OMP FIRSTPRIVATE(ix,jx,kx,u_bc_ref2,v_bc_ref2,w_bc_ref2,dh2)
       i = 1
       do k=1,kx
       do j=1,jx
@@ -880,15 +881,17 @@ include '../FB/omp_head.h'
         endif
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
       
       flop = flop + m*12.0
       
     case (X_plus)
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:m) &
-!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ue1,Ve1,We1,EX,EY,EZ) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
+!$OMP PARALLEL
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m) &
+!$OMP PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ue1,Ve1,We1,EX,EY,EZ) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       i = ix
       do k=1,kx
       do j=1,jx
@@ -914,7 +917,8 @@ include '../FB/omp_head.h'
         endif
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
       flop = flop + m*12.0
       
@@ -948,7 +952,8 @@ include '../FB/omp_head.h'
         endif
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
       
       flop = flop + m*12.0
       
@@ -982,7 +987,8 @@ include '../FB/omp_head.h'
         endif
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
       
       flop = flop + m*12.0
       
@@ -1016,7 +1022,8 @@ include '../FB/omp_head.h'
         endif
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
       flop = flop + m*12.0
       
@@ -1050,7 +1057,8 @@ include '../FB/omp_head.h'
         endif
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
       flop = flop + m*12.0
       

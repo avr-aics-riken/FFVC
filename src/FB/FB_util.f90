@@ -42,6 +42,10 @@
   av = 0.0
   rm = 0.0
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:av, +:rm) &
+!$OMP&   PRIVATE(actv, u, v, w, x, y, z) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx)
   do k=1,kx
   do j=1,jx
   do i=1,ix 
@@ -59,6 +63,7 @@
   end do
   end do
   end do
+include '../FB/omp_tail.h'
 
   d(1) = rm
   d(2) = av
@@ -96,7 +101,11 @@
 
   av = 0.0
   rm = 0.0
-  
+
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(+:av, +:rm) &
+!$OMP&   PRIVATE(actv, s, a) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx)
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -110,6 +119,7 @@
   end do
   end do
   end do
+include '../FB/omp_tail.h'
   
   d(1) = rm
   d(2) = av
@@ -140,6 +150,8 @@
 
   flop = flop + real(ix)*real(jx)*real(kx)*3.0
 
+include '../FB/omp_head.h'
+!$OMP    FIRSTPRIVATE(ix, jx, kx)
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -149,6 +161,7 @@
   end do
   end do
   end do
+include '../FB/omp_tail.h'
 
   return
   end subroutine fb_average_v
@@ -176,6 +189,8 @@
 
   flop = flop + real(ix)*real(jx)*real(kx)*1.0
 
+include '../FB/omp_head.h'
+!$OMP    FIRSTPRIVATE(ix, jx, kx)
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -183,6 +198,7 @@
   end do
   end do
   end do
+include '../FB/omp_tail.h'
 
   return
   end subroutine fb_average_s
@@ -202,9 +218,12 @@
 
     ix = sz
 
+include '../FB/omp_head.h'
+!$OMP    FIRSTPRIVATE(ix)
     do i=1, ix
       dst(i) = src(i)
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_copy_real
@@ -225,9 +244,12 @@
 
     ix = sz
 
+include '../FB/omp_head.h'
+!$OMP    FIRSTPRIVATE(ix)
     do i=1, ix
       var(i) = init
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_set_value_int
@@ -248,9 +270,12 @@
 
     ix = sz
 
+include '../FB/omp_head.h'
+!$OMP    FIRSTPRIVATE(ix)
     do i=1, ix
       var(i) = init
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_set_value_real
@@ -270,7 +295,7 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  u1, u2, u3, flop
+    real                                                      ::  u1, u2, u3, flop, vx, vy, vz
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, tp
     real, dimension(0:3)                                      ::  v00
@@ -278,17 +303,24 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    vx = v00(1)
+    vy = v00(2)
+    vz = v00(3)
 
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(u1, u2, u3, vx, vy, vz) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      u1 = v(1,i,j,k) - v00(1)
-      u2 = v(2,i,j,k) - v00(2)
-      u3 = v(3,i,j,k) - v00(3)
+      u1 = v(1,i,j,k) - vx
+      u2 = v(2,i,j,k) - vy
+      u3 = v(3,i,j,k) - vz
       tp(i,j,k) = 0.5*(u1*u1 + u2*u2 + u3*u3) + p(i,j,k)
     end do
     end do
     end do
+include '../FB/omp_tail.h'
         
     flop = flop + real(ix)*real(jx)*real(kx)*10.0
     
@@ -310,13 +342,16 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  v_min, v_max, u1, u2, u3, uu, flop
+    real                                                      ::  v_min, v_max, u1, u2, u3, uu, flop, vx, vy, vz
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    vx = v00(1)
+    vy = v00(2)
+    vz = v00(3)
     v_min =  1.0e6
     v_max = -1.0e6
     
@@ -324,18 +359,23 @@
     flop = flop + real(ix)*real(jx)*real(kx)*20.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(min:v_min, max:v_max) &
+!$OMP&   PRIVATE(u1, u2, u3, vx, vy, vz, uu) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-			u1 = v(1,i,j,k)-v00(1)
-			u2 = v(2,i,j,k)-v00(2)
-			u3 = v(3,i,j,k)-v00(3)
+			u1 = v(1,i,j,k)-vx
+			u2 = v(2,i,j,k)-vy
+			u3 = v(3,i,j,k)-vz
 			uu = sqrt( u1*u1 + u2*u2 + u3*u3 )
       v_min = min(v_min, uu)
       v_max = max(v_max, uu)
     end do
     end do
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_minmax_v
@@ -366,6 +406,9 @@
     flop = flop + real(ix)*real(jx)*real(kx)*20.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*2.0 ! DP
 
+include '../FB/omp_head.h'
+!$OMP    REDUCTION(min:f_min, max:f_max) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -374,6 +417,7 @@
     end do
     end do
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_minmax_s
@@ -390,22 +434,30 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
+    real                                                      ::  u1, u2, u3
     real, dimension(3)                                        ::  val
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  var
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    u1 = val(1)
+    u2 = val(2)
+    u3 = val(3)
 
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(u1, u2, u3) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx, g)
     do k=1-g, kx+g
     do j=1-g, jx+g
     do i=1-g, ix+g
-        var(1,i,j,k) = val(1)
-        var(2,i,j,k) = val(2)
-        var(3,i,j,k) = val(3)
+        var(1,i,j,k) = u1
+        var(2,i,j,k) = u2
+        var(3,i,j,k) = u3
     end do
     end do
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_set_vector
@@ -421,20 +473,26 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
+    real                                                      ::  tmp
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
+
+include '../FB/omp_head.h'
+!$OMP    PRIVATE(tmp) &
+!$OMP&   FIRSTPRIVATE(ix, jx, kx)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      if (t(i,j,k)<0.0) t(i,j,k)=0.0
-      if (t(i,j,k)>1.0) t(i,j,k)=1.0
+      tmp = t(i,j,k)
+      if (tmp<0.0) t(i,j,k)=0.0
+      if (tmp>1.0) t(i,j,k)=1.0
     end do
     end do
     end do
+include '../FB/omp_tail.h'
 
     return
     end subroutine fb_limit_scalar

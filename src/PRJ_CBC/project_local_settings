@@ -11,7 +11,7 @@ CXXFLAGS=-O3
 FC=ifort
 FCFLAGS=-O3
 F90=ifort
-F90FLAGS=-O3 -Warn unused -fpp
+F90FLAGS=-O3 -Warn unused -fpp -openmp -openmp-report=2
 LDFLAGS=-L/opt/intel/composerxe/lib
 LIBS=-lifport -lifcore
 SPH_USR_DEF_LIBS=
