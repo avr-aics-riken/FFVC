@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.5.0   7 Mar. 2012
+  - OpenMP対応
+
 Ver 2.4.9  22 Feb. 2012
   - コンポーネントの体積率を求めるCompoFractionクラスを導入
   - SKL_REAL >> REAL_TYPE に変更し，FBDefine.hで定義

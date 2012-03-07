@@ -45,11 +45,11 @@
 
     flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:rm) &
-!$OMP&   PRIVATE(r, d) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, ds, coef) &
-!$OMP&   SHARED(ds, i0, j0, k0)
+!$OMP PARALLEL &
+!$OMP PRIVATE(r, d) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
+!$OMP SHARED(ds, i0, j0, k0)
+!$OMP DO REDUCTION(+:rm) SCHEDULE(dynamic,1)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -58,15 +58,18 @@ include '../FB/omp_head.h'
       rm = rm + r*r
       
       if ( d > ds ) then
+!$OMP CRITICAL
         i0 = i
         j0 = j
         k0 = k
         ds = d
+!$OMP END CRITICAL
       endif
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
     
     idx(1) = i0
     idx(2) = j0
@@ -102,10 +105,10 @@ include '../FB/omp_tail.h'
 
     flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:ds) &
-!$OMP&   PRIVATE(r) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, coef)
+!$OMP PARALLEL &
+!$OMP PRIVATE(r) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, coef)
+!$OMP DO REDUCTION(+:ds) SCHEDULE(dynamic,1)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -114,7 +117,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_norm_v_div_l2
@@ -146,10 +150,12 @@ include '../FB/omp_tail.h'
 
     flop = flop + real(ix)*real(jx)*real(kx)*5.0
 
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(max:ds) &
-!$OMP&   PRIVATE(r) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, coef)
+!$OMP PARALLEL &
+!$OMP PRIVATE(r) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, coef)
+! $OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(static) &
+!$OMP REDUCTION(max:ds)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -158,7 +164,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_norm_v_div_max
@@ -192,9 +199,13 @@ include '../FB/omp_tail.h'
     vz = v00(3)
     flop = flop + real(ix)*real(jx)*real(kx)*9.0 + 2.0
 
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(max:vm1, max:vm2, max:vm3) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
+! $OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(static) &
+!$OMP REDUCTION(max:vm1) &
+!$OMP REDUCTION(max:vm2) &
+!$OMP REDUCTION(max:vm3)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -204,7 +215,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
     
     v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 2 flop
 
@@ -255,6 +267,18 @@ include '../FB/omp_tail.h'
     flop = flop + real(ix)*real(jx)*real(kx)*72.0 + 8.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*72.0 + 13.0 ! DP
 
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv, uq, vq, wq) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(d11, d22, d33, d12, d13, d23) &
+!$OMP PRIVATE(w12, w13, w23) &
+!$OMP PRIVATE(q11, q22, q33, q12, q13, q23) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+!$OMP DO SCHEDULE(dynamic,1)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -370,6 +394,8 @@ include '../FB/omp_tail.h'
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_i2vgt
@@ -415,6 +441,16 @@ include '../FB/omp_tail.h'
     flop = flop + real(ix)*real(jx)*real(kx)*34.0 + 8.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*34.0 + 13.0 ! DP
 
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv, uq, vq, wq) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(r1, r2, r3) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+!$OMP DO SCHEDULE(dynamic,1)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -518,6 +554,8 @@ include '../FB/omp_tail.h'
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_rot_v
@@ -564,6 +602,16 @@ include '../FB/omp_tail.h'
     flop = flop + real(ix)*real(jx)*real(kx)*40.0 + 8.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*40.0 + 13.0 ! DP
 
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv, uq, vq, wq) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(r1, r2, r3, u1, u2, u3) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+!$OMP DO SCHEDULE(dynamic,1)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -669,6 +717,8 @@ include '../FB/omp_tail.h'
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_helicity

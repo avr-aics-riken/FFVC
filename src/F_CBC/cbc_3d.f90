@@ -121,27 +121,27 @@
     
     vflop = 0.0;
 
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2) &
-!$OMP&   PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
-!$OMP&   PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
-!$OMP&   PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
-!$OMP&   PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
-!$OMP&   PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
-!$OMP&   PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
-!$OMP&   PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
-!$OMP&   PRIVATE(cr, cl, acr, acl, beta, ss) &
-!$OMP&   PRIVATE(d1, d2, d3, d4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
-!$OMP&   PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
-!$OMP&   PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
-!$OMP&   PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
-!$OMP&   PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
-!$OMP&   PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t) &
-!$OMP&   PRIVATE(u1, u2, u3, ug, e1, e2, e3, u_tau) &
-
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls, vflop) &
-!$OMP&   FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, dh, v_mode) &
-!$OMP&   LASTPRIVATE(vflop)
+!$OMP PARALLEL &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2) &
+!$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
+!$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
+!$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
+!$OMP PRIVATE(cr, cl, acr, acl, beta) &
+!$OMP PRIVATE(d1, d2, d3, d4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
+!$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
+!$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
+!$OMP PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
+!$OMP PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
+!$OMP PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t) &
+!$OMP PRIVATE(u1, u2, u3, ug, e1, e2, e3, u_tau) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, dh, v_mode)
+! !$OMP DO SCHEDULE(dynamic,1) REDUCTION(+:vflop)
+!$OMP DO SCHEDULE(static) REDUCTION(+:vflop)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -551,9 +551,8 @@ include '../FB/omp_head.h'
             vv_b = u_tau * e2*e2
           endif
           
+          vflop = vflop + 67.0
           ! > 9 + sqrt*1 + /3 + 4*6 = 9+10+8*3+24 = 67 ! DP 9+20+13*3+24 = 92
-          vflop = 67
-          ! vflop = 92 ! DP
         endif
       endif 
       
@@ -590,7 +589,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     flop = flop + vflop
 
@@ -648,15 +648,17 @@ include '../FB/omp_tail.h'
     ! flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 13.0 ! DP
 
 
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(bpx, bvx, actv, r_actv) &
-!$OMP&   PRIVATE(c1, c2, c3, c4, c5, c6) &
-!$OMP&   PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
-!$OMP&   PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
-!$OMP&   PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
-!$OMP&   PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
-!$OMP&   PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref, coef)
+!$OMP PARALLEL &
+!$OMP PRIVATE(bpx, bvx, actv, r_actv) &
+!$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
+!$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref, coef)
+! !$OMP DO SCHEDULE(dynamic,1)
+!$OMP DO SCHEDULE(static)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -741,7 +743,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_update_vec
@@ -785,13 +788,15 @@ include '../FB/omp_tail.h'
     ! loop : 1 + 42 + 13
     flop  = flop + real(ix)*real(jx)*real(kx)*56.0
 
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(bvx, actv, r_actv) &
-!$OMP&   PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
-!$OMP&   PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
-!$OMP&   PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
-!$OMP&   PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, coef)
+!$OMP PARALLEL &
+!$OMP PRIVATE(bvx, actv) &
+!$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, coef)
+! !$OMP DO SCHEDULE(dynamic,1)
+!$OMP DO SCHEDULE(static)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -819,7 +824,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_div
@@ -851,9 +857,11 @@ include '../FB/omp_tail.h'
 
     flop = flop + real(ix)*real(jx)*real(kx)*8.0
 
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(actv) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, dt)
+!$OMP PARALLEL &
+!$OMP PRIVATE(actv) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dt)
+! $OMP DO SCHEDULE(dynamic,1)
+!$OMP DO SCHEDULE(static)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -865,7 +873,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_ee

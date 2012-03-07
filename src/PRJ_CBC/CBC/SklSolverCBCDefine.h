@@ -12,7 +12,7 @@
 //@brief SklSolverCBC Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#define VERS_CBC   153
+#define VERS_CBC   154
 #define TM_LABEL_MAX 24
   
 // 計算性能測定キー番号

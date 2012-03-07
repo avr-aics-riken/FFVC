@@ -36,11 +36,12 @@
     
     flop = flop + real(ix)*real(jx)*real(kx)*4.0
 
-include '../FB/omp_head.h'
-
-!$OMP    REDUCTION(+:b2) &
-!$OMP&   PRIVATE(dv) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx,dv)
+!$OMP PARALLEL &
+!$OMP PRIVATE(dv) &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+! $OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(static) &
+!$OMP REDUCTION(+:b2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -49,7 +50,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_div_cnst
@@ -85,11 +87,12 @@ include '../FB/omp_tail.h'
     flop = flop + real(ix)*real(jx)*real(kx)*36.0
     ! flop = flop + real(ix)*real(jx)*real(kx)*41.0 ! DP
 
-include '../FB/omp_head.h'
-
-!$OMP    REDUCTION(+:res) &
-!$OMP&   PRIVATE(ndag_w,ndag_e,ndag_s,ndag_n,ndag_b,ndag_t,dd,pp,ss,dp,idx) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx,color,ip,omg)
+!$OMP PARALLEL &
+!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, omg)
+! $OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(static) &
+!$OMP REDUCTION(+:res)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -117,7 +120,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_psor
@@ -154,11 +158,12 @@ include '../FB/omp_tail.h'
     flop = flop + real(ix)*real(jx)*real(kx)*36.0*0.5
     ! flop = flop + real(ix)*real(jx)*real(kx)*41.0*0.5 ! DP
 
-include '../FB/omp_head.h'
-
-!$OMP    REDUCTION(+:res) &
-!$OMP&   PRIVATE(ndag_w,ndag_e,ndag_s,ndag_n,ndag_b,ndag_t,dd,pp,ss,dp,idx) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx,color,ip,omg)
+!$OMP PARALLEL &
+!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, pp, ss, dp, idx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
+! $OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(static) &
+!$OMP REDUCTION(+:res)
     do k=1,kx
     do j=1,jx
     do i=1+mod(k+j+color+ip,2), ix, 2
@@ -187,7 +192,8 @@ include '../FB/omp_head.h'
     end do
     end do
     end do
-include '../FB/omp_tail.h'
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_psor2sma_core

@@ -4,6 +4,9 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.5.4   7 Mar. 2012
+  - OpenMP対応
+  
 Ver 1.5.3  22 Feb. 2012
   - SKL_REAL >> REAL_TYPE in FBDefine.h
   

@@ -848,15 +848,19 @@
     flop = flop + 17.0 ! DP 22 flops
 
     m = 0.0
-    
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2) &
+!$OMP PRIVATE(i, j, k, bvx, Up0, Vp0, Wp0, EX, EY, EZ) &
+!$OMP PRIVATE(Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(We1, Ww1, Ws1, Wn1, Wb1, Wt1)
+
     FACES : select case (face)
     case (X_minus)
-!$OMP PARALLEL
-!$OMP DO SCHEDULE(dynamic,1) &
-!$OMP REDUCTION(+:m) &
-!$OMP PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Uw1,Vw1,Ww1,EX,EY,EZ) &
-!$OMP FIRSTPRIVATE(ix,jx,kx,u_bc_ref2,v_bc_ref2,w_bc_ref2,dh2)
       i = 1
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -882,17 +886,11 @@
       end do
       end do
 !$OMP END DO
-!$OMP END PARALLEL
-      
-      flop = flop + m*12.0
       
     case (X_plus)
-!$OMP PARALLEL
-!$OMP DO SCHEDULE(dynamic,1) &
-!$OMP REDUCTION(+:m) &
-!$OMP PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ue1,Ve1,We1,EX,EY,EZ) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       i = ix
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -918,16 +916,11 @@
       end do
       end do
 !$OMP END DO
-!$OMP END PARALLEL
-
-      flop = flop + m*12.0
       
     case (Y_minus)
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:m) &
-!$OMP&   PRIVATE(i, j, k, bvx, Up0, Vp0, Wp0, Us1, Vs1, Ws1, EX, EY, EZ) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       j = 1
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -953,16 +946,11 @@ include '../FB/omp_head.h'
       end do
       end do
 !$OMP END DO
-!$OMP END PARALLEL
-      
-      flop = flop + m*12.0
       
     case (Y_plus)
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:m) &
-!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Un1,Vn1,Wn1,EX,EY,EZ) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       j = jx
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -988,16 +976,11 @@ include '../FB/omp_head.h'
       end do
       end do
 !$OMP END DO
-!$OMP END PARALLEL
-      
-      flop = flop + m*12.0
       
     case (Z_minus)
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:m) &
-!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ub1,Vb1,Wb1,EX,EY,EZ) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       k = 1
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1023,16 +1006,11 @@ include '../FB/omp_head.h'
       end do
       end do
 !$OMP END DO
-!$OMP END PARALLEL
-
-      flop = flop + m*12.0
       
     case (Z_plus)
-include '../FB/omp_head.h'
-!$OMP    REDUCTION(+:m) &
-!$OMP&   PRIVATE(i,j,k,bvx,Up0,Vp0,Wp0,Ut1,Vt1,Wt1,EX,EY,EZ) &
-!$OMP&   FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2)
       k = kx
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1058,12 +1036,13 @@ include '../FB/omp_head.h'
       end do
       end do
 !$OMP END DO
-!$OMP END PARALLEL
-
-      flop = flop + m*12.0
-      
+  
     case default
     end select FACES
+    
+!$OMP END PARALLEL
+
+    flop = flop + m*12.0
     
     return
     end subroutine cbc_pvec_vobc_wall
@@ -1718,12 +1697,14 @@ include '../FB/omp_head.h'
     jx = sz(2)
     kx = sz(3)
     
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+    
     FACES : select case (face)
     case (X_minus)
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(i,j,k) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       i = 0
+!$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
         v(1,i,j,k) = vc(1,i,j,k)
@@ -1731,13 +1712,11 @@ include '../FB/omp_head.h'
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (X_plus)
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(i,j,k) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       i = ix+1
+!$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
         v(1,i,j,k) = vc(1,i,j,k)
@@ -1745,13 +1724,11 @@ include '../FB/omp_head.h'
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Y_minus)
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(i,j,k) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       j = 0
+!$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
         v(1,i,j,k) = vc(1,i,j,k)
@@ -1759,13 +1736,11 @@ include '../FB/omp_head.h'
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Y_plus)
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(i,j,k) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       j = jx+1
+!$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
         v(1,i,j,k) = vc(1,i,j,k)
@@ -1773,13 +1748,11 @@ include '../FB/omp_head.h'
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Z_minus)
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(i,j,k) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       k = 0
+!$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
         v(1,i,j,k) = vc(1,i,j,k)
@@ -1787,13 +1760,11 @@ include '../FB/omp_head.h'
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Z_plus)
-include '../FB/omp_head.h'
-!$OMP    PRIVATE(i,j,k) &
-!$OMP&   FIRSTPRIVATE(ix,jx,kx)
       k = kx+1
+!$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
         v(1,i,j,k) = vc(1,i,j,k)
@@ -1801,10 +1772,12 @@ include '../FB/omp_head.h'
         v(3,i,j,k) = vc(3,i,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case default
     end select FACES
+
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_vobc_update
@@ -2977,10 +2950,20 @@ include '../FB/omp_tail.h'
 
     m = 0.0
 
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k, v_out, bvx) &
+!$OMP PRIVATE(Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, face, coef)
+
     FACES : select case (face)
     case (X_minus)
       if ( v_out>0.0 ) v_out=0.0
       i = 1
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2995,12 +2978,13 @@ include '../FB/omp_tail.h'
         endif
       end do
       end do
-      
-      flop = flop + m*51.0 ! 42 + 9
+!$OMP END DO
       
     case (X_plus)
       if ( v_out<0.0 ) v_out=0.0
       i = ix
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -3015,12 +2999,13 @@ include '../FB/omp_tail.h'
         endif
       end do
       end do
-      
-      flop = flop + m*51.0
+!$OMP END DO
 
     case (Y_minus)
       if ( v_out>0.0 ) v_out=0.0
       j = 1
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3035,12 +3020,13 @@ include '../FB/omp_tail.h'
         endif
       end do
       end do
-      
-      flop = flop + m*51.0
+!$OMP END DO
       
     case (Y_plus)
       if ( v_out<0.0 ) v_out=0.0
       j = jx
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3055,12 +3041,13 @@ include '../FB/omp_tail.h'
         endif
       end do
       end do
-      
-      flop = flop + m*51.0
+!$OMP END DO
     
     case (Z_minus)
       if ( v_out>0.0 ) v_out=0.0
       k = 1
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3075,12 +3062,13 @@ include '../FB/omp_tail.h'
         endif
       end do
       end do
-      
-      flop = flop + m*51.0
+!$OMP END DO
       
     case (Z_plus)
       if ( v_out<0.0 ) v_out=0.0
       k = kx
+!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP REDUCTION(+:m)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3095,11 +3083,14 @@ include '../FB/omp_tail.h'
         endif
       end do
       end do
-      
-      flop = flop + m*51.0
+!$OMP END DO
     
     case default
     end select FACES
+
+!$OMP END PARALLEL
+    
+    flop = flop + m*51.0
 
     return
     end subroutine cbc_div_obc_oflow_pvec

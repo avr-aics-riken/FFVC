@@ -31,71 +31,70 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, pv)
+
     FACES : select case (face)
     case (X_minus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(jx,kx,pv)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do j=1,jx
         p(0,j,k) = pv
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (X_plus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(jx,kx,pv)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = pv
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Y_minus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,kx,pv)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do i=1,ix
         p(i,0,k) = pv
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Y_plus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,kx,pv)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = pv
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Z_minus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,jx,pv)
+!$OMP DO SCHEDULE(dynamic,1)
       do j=1,jx
       do i=1,ix
         p(i,j,0) = pv
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
     
     case (Z_plus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,jx,pv)
+!$OMP DO SCHEDULE(dynamic,1)
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = pv
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case default
     end select FACES
-    
+
+!$OMP END PARALLEL
+
     return
     end subroutine cbc_pobc_drchlt
     
@@ -117,70 +116,69 @@ include '../FB/omp_tail.h'
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
     FACES : select case (face)
     case (X_minus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(jx,kx)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do j=1,jx
         p(0,j,k) = p(1,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (X_plus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(jx,kx)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = p(ix,j,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Y_minus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,kx)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do i=1,ix
         p(i,0,k) = p(i,1,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Y_plus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,kx)
+!$OMP DO SCHEDULE(dynamic,1)
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = p(i,jx,k)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case (Z_minus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,jx)
+!$OMP DO SCHEDULE(dynamic,1)
       do j=1,jx
       do i=1,ix
         p(i,j,0) = p(i,j,1)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
     
     case (Z_plus)
-include '../FB/omp_head.h'
-!$OMP   FIRSTPRIVATE(ix,jx)
+!$OMP DO SCHEDULE(dynamic,1)
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = p(i,j,kx)
       end do
       end do
-include '../FB/omp_tail.h'
+!$OMP END DO
       
     case default
     end select FACES
-    
+
+!$OMP END PARALLEL
+
     return
     end subroutine cbc_pobc_neumann
