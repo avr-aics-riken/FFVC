@@ -49,7 +49,17 @@
 !$OMP PRIVATE(r, d) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
 !$OMP SHARED(ds, i0, j0, k0)
-!$OMP DO REDUCTION(+:rm) SCHEDULE(dynamic,1)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
+!$OMP DO SCHEDULE(static) &
+#endif
+!$OMP REDUCTION(+:rm)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -108,7 +118,17 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(r) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef)
-!$OMP DO REDUCTION(+:ds) SCHEDULE(dynamic,1)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
+!$OMP DO SCHEDULE(static) &
+#endif
+!$OMP REDUCTION(+:ds) 
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -153,8 +173,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(r) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef)
-! $OMP DO SCHEDULE(dynamic,1) &
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(max:ds)
     do k=1,kx
     do j=1,jx
@@ -201,8 +229,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
-! $OMP DO SCHEDULE(dynamic,1) &
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(max:vm1) &
 !$OMP REDUCTION(max:vm2) &
 !$OMP REDUCTION(max:vm3)
@@ -278,7 +314,16 @@
 !$OMP PRIVATE(w12, w13, w23) &
 !$OMP PRIVATE(q11, q22, q33, q12, q13, q23) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -450,7 +495,16 @@
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(r1, r2, r3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -611,7 +665,16 @@
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(r1, r2, r3, u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
     do k=1,kx
     do j=1,jx
     do i=1,ix

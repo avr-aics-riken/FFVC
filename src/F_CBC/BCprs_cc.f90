@@ -37,7 +37,15 @@
 
     FACES : select case (face)
     case (X_minus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do j=1,jx
         p(0,j,k) = pv
@@ -46,7 +54,15 @@
 !$OMP END DO
       
     case (X_plus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = pv
@@ -55,7 +71,15 @@
 !$OMP END DO
       
     case (Y_minus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do i=1,ix
         p(i,0,k) = pv
@@ -64,7 +88,15 @@
 !$OMP END DO
       
     case (Y_plus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = pv
@@ -73,7 +105,15 @@
 !$OMP END DO
       
     case (Z_minus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do j=1,jx
       do i=1,ix
         p(i,j,0) = pv
@@ -82,7 +122,15 @@
 !$OMP END DO
     
     case (Z_plus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = pv
@@ -122,7 +170,15 @@
 
     FACES : select case (face)
     case (X_minus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do j=1,jx
         p(0,j,k) = p(1,j,k)
@@ -131,7 +187,15 @@
 !$OMP END DO
       
     case (X_plus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = p(ix,j,k)
@@ -140,7 +204,15 @@
 !$OMP END DO
       
     case (Y_minus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do i=1,ix
         p(i,0,k) = p(i,1,k)
@@ -149,7 +221,15 @@
 !$OMP END DO
       
     case (Y_plus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = p(i,jx,k)
@@ -158,7 +238,15 @@
 !$OMP END DO
       
     case (Z_minus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do j=1,jx
       do i=1,ix
         p(i,j,0) = p(i,j,1)
@@ -167,7 +255,15 @@
 !$OMP END DO
     
     case (Z_plus)
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = p(i,j,kx)

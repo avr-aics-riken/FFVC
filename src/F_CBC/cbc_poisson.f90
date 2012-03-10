@@ -39,8 +39,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(dv) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
-! $OMP DO SCHEDULE(dynamic,1) &
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(+:b2)
     do k=1,kx
     do j=1,jx
@@ -90,8 +98,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg)
-! $OMP DO SCHEDULE(dynamic,1) &
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(+:res)
     do k=1,kx
     do j=1,jx
@@ -161,8 +177,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, pp, ss, dp, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
-! $OMP DO SCHEDULE(dynamic,1) &
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(+:res)
     do k=1,kx
     do j=1,jx

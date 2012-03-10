@@ -45,7 +45,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(actv, u, v, w, x, y, z) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
   do k=1,kx
@@ -108,7 +117,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(actv, s, a) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
 !$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
   do k=1,kx
@@ -158,7 +176,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -199,7 +226,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -230,7 +266,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
     do i=1, ix
       dst(i) = src(i)
     end do
@@ -258,7 +303,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
     do i=1, ix
       var(i) = init
     end do
@@ -286,7 +340,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
     do i=1, ix
       var(i) = init
     end do
@@ -326,7 +389,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(u1, u2, u3, vx, vy, vz) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
+!$OMP DO SCHEDULE(static)
+#endif
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -380,7 +452,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(u1, u2, u3, vx, vy, vz, uu) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
+!$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(min:v_min) &
 !$OMP REDUCTION(max:v_max)
     do k=1,kx
@@ -429,7 +510,16 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto) &
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided) &
+#else
+!$OMP DO SCHEDULE(static) &
+#endif
 !$OMP REDUCTION(min:f_min) &
 !$OMP REDUCTION(max:f_max)
     do k=1,kx
@@ -472,7 +562,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
     do k=1-g, kx+g
     do j=1-g, jx+g
     do i=1-g, ix+g
@@ -509,7 +608,16 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(tmp) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#else
 !$OMP DO SCHEDULE(static)
+#endif
     do k=1,kx
     do j=1,jx
     do i=1,ix
