@@ -52,8 +52,10 @@
 !$OMP DO SCHEDULE(auto) &
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided) &
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
@@ -124,8 +126,10 @@
 !$OMP DO SCHEDULE(auto) &
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided) &
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
@@ -183,8 +187,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
   do k=1,kx
   do j=1,jx
@@ -233,8 +239,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
   do k=1,kx
   do j=1,jx
@@ -249,23 +257,27 @@
   return
   end subroutine fb_average_s
 
-!  ***************************************
-!> @subroutine fb_copy_real (dst, src, sz)
-!! @brief ベクトル値を設定する
+!  ********************************************
+!> @subroutine fb_copy_real_s (dst, src, sz, g)
+!! @brief スカラー値をコピーする
 !! @param dst コピー先
 !! @param src コピー元
-!! @param sz 配列長（一次元）
+!! @param sz 配列長
+!! @param g ガイドセル長
 !! @note realはコンパイラオプションでdouble precision にもなる
 !<
-    subroutine fb_copy_real (dst, src, sz)
+    subroutine fb_copy_real_s (dst, src, sz, g)
     implicit none
-    integer                                                   ::  i, ix, sz
-    real, dimension(sz)                                       ::  dst, src
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  dst, src
 
-    ix = sz
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -273,73 +285,141 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
-    do i=1, ix
-      dst(i) = src(i)
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      dst(i,j,k) = src(i,j,k)
+    end do
+    end do
     end do
 !$OMP END DO
 !$OMP END PARALLEL
 
     return
-    end subroutine fb_copy_real
+    end subroutine fb_copy_real_s
+
+!  ********************************************
+!> @subroutine fb_copy_real_v (dst, src, sz, g)
+!! @brief ベクトル値をコピーする
+!! @param dst コピー先
+!! @param src コピー元
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @note realはコンパイラオプションでdouble precision にもなる
+!<
+    subroutine fb_copy_real_v (dst, src, sz, g)
+    implicit none
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  dst, src
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      dst(1,i,j,k) = src(1,i,j,k)
+      dst(2,i,j,k) = src(2,i,j,k)
+      dst(3,i,j,k) = src(3,i,j,k)
+    end do
+    end do
+    end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine fb_copy_real_v
+    
+!  *******************************************
+!> @subroutine fb_set_int_s (var, sz, g, init)
+!! @brief ベクトル値を設定する
+!! @param var 配列の先頭ポインタ
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param val 初期値
+!! @note realはコンパイラオプションでdouble precision にもなる
+!<
+    subroutine fb_set_int_s(var, sz, g, init)
+    implicit none
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    integer                                                   ::  init
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  var
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, init)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      var(i,j,k) = init
+    end do
+    end do
+    end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine fb_set_int_s
     
 !  ********************************************
-!> @subroutine fb_set_value_int (var, sz, init)
-!! @brief ベクトル値を設定する
+!> @subroutine fb_set_real_s(var, sz, g, init)
+!! @brief スカラー値を設定する
 !! @param var 配列の先頭ポインタ
-!! @param sz 配列長（一次元）
+!! @param sz 配列長
+!! @param g guide cell
 !! @param val 初期値
 !! @note realはコンパイラオプションでdouble precision にもなる
 !<
-    subroutine fb_set_value_int (var, sz, init)
+    subroutine fb_set_real_s(var, sz, g, init)
     implicit none
-    integer                                                   ::  i, ix, sz
-    integer                                                   ::  init
-    integer, dimension(sz)                                    ::  var
-
-    ix = sz
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix)
-
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
-#else
-!$OMP DO SCHEDULE(static)
-#endif
-    do i=1, ix
-      var(i) = init
-    end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-    return
-    end subroutine fb_set_value_int
-    
-!  *********************************************
-!> @subroutine fb_set_value_real (var, sz, init)
-!! @brief ベクトル値を設定する
-!! @param var 配列の先頭ポインタ
-!! @param sz 配列長（一次元）
-!! @param val 初期値
-!! @note realはコンパイラオプションでdouble precision にもなる
-!<
-    subroutine fb_set_value_real (var, sz, init)
-    implicit none
-    integer                                                   ::  i, ix, sz
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
     real                                                      ::  init
-    real, dimension(sz)                                       ::  var
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  var
 
-    ix = sz
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix)
+!$OMP FIRSTPRIVATE(ix, jx, kx, init)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -347,17 +427,72 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
-    do i=1, ix
-      var(i) = init
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      var(i,j,k) = init
+    end do
+    end do
     end do
 !$OMP END DO
 !$OMP END PARALLEL
 
     return
-    end subroutine fb_set_value_real
+    end subroutine fb_set_real_s
+
+!  ********************************************
+!> @subroutine fb_set_real_v(var, sz, g, init)
+!! @brief ベクトル値を設定する
+!! @param var 配列の先頭ポインタ
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param val 初期値
+!! @note realはコンパイラオプションでdouble precision にもなる
+!<
+    subroutine fb_set_real_v(var, sz, g, init)
+    implicit none
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    real                                                      ::  init
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  var
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, init)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _AUTO
+!$OMP DO SCHEDULE(auto)
+#elif defined _GUIDED
+!$OMP DO SCHEDULE(guided)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      var(1,i,j,k) = init
+      var(2,i,j,k) = init
+      var(3,i,j,k) = init
+    end do
+    end do
+    end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine fb_set_real_v
     
 !  **************************************************
 !> @subroutine fb_totalp (tp, sz, g, v, p, v00, flop)
@@ -387,8 +522,8 @@
     vz = v00(3)
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(u1, u2, u3, vx, vy, vz) &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP PRIVATE(u1, u2, u3) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -396,8 +531,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
     do k=1,kx
     do j=1,jx
@@ -450,8 +587,8 @@
     ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(u1, u2, u3, vx, vy, vz, uu) &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP PRIVATE(u1, u2, u3, uu) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
@@ -459,8 +596,10 @@
 !$OMP DO SCHEDULE(auto) &
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided) &
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
 !$OMP REDUCTION(min:v_min) &
 !$OMP REDUCTION(max:v_max)
@@ -517,8 +656,10 @@
 !$OMP DO SCHEDULE(auto) &
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided) &
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
 !$OMP REDUCTION(min:f_min) &
 !$OMP REDUCTION(max:f_max)
@@ -560,7 +701,7 @@
     u3 = val(3)
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(u1, u2, u3) &
+!$OMP FIRSTPRIVATE(u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g)
 
 #ifdef _DYNAMIC
@@ -569,8 +710,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
     do k=1-g, kx+g
     do j=1-g, jx+g
@@ -615,8 +758,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
     do k=1,kx
     do j=1,jx

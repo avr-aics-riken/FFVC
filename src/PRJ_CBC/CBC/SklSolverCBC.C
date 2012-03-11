@@ -584,12 +584,12 @@ void SklSolverCBC::Averaging_Time(REAL_TYPE& flop)
   }
 }
 
-//@fn void SklSolverCBC::Averaging_Space(REAL_TYPE* avr, REAL_TYPE& flop)
+//@fn void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE& flop)
 //@brief 空間平均操作と変動量の計算を行う
 //@param avr[out] 平均値と変動値
 //@param flop[out] 浮動小数演算数
 //@note スカラ値は算術平均，ベクトル値は自乗和
-void SklSolverCBC::Averaging_Space(REAL_TYPE* avr, REAL_TYPE& flop)
+void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE& flop)
 {
   REAL_TYPE *v =NULL;
   REAL_TYPE *v0=NULL;

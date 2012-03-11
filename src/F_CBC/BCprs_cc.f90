@@ -43,8 +43,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do j=1,jx
@@ -60,8 +62,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do j=1,jx
@@ -77,8 +81,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do i=1,ix
@@ -94,8 +100,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do i=1,ix
@@ -111,8 +119,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do j=1,jx
       do i=1,ix
@@ -128,8 +138,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do j=1,jx
       do i=1,ix
@@ -176,8 +188,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do j=1,jx
@@ -193,8 +207,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do j=1,jx
@@ -210,8 +226,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do i=1,ix
@@ -227,8 +245,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do k=1,kx
       do i=1,ix
@@ -244,8 +264,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do j=1,jx
       do i=1,ix
@@ -261,8 +283,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
       do j=1,jx
       do i=1,ix

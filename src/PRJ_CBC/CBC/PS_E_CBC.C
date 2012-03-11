@@ -40,7 +40,6 @@ void SklSolverCBC::PS_E_CBC(void)
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp);
   ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 拡散項の反復
   REAL_TYPE clear_value = 0.0;
-  size_t d_size=0;
   
   comm_size = count_comm_size(size, guide);
   
@@ -59,8 +58,7 @@ void SklSolverCBC::PS_E_CBC(void)
   
   // n stepの値をdc_t0に保持，dc_tはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
-  d_size = dc_t0->GetArrayLength();
-  fb_copy_real_(t0, t, (int*)&d_size);
+  fb_copy_real_s_(t0, t, sz, gc);
   TIMING_stop(tm_copy_array, 0.0);
   
   // 速度指定境界条件の参照値を代入する
@@ -91,8 +89,7 @@ void SklSolverCBC::PS_E_CBC(void)
   }
   else { // 熱伝導の場合，対流項の寄与分はないので前ステップの値
     TIMING_start(tm_copy_array);
-    d_size = dc_ws->GetArrayLength();
-    fb_copy_real_(ws, t0, (int*)&d_size);
+    fb_copy_real_s_(ws, t0, sz, gc);
     TIMING_stop(tm_copy_array, 0.0);
   }
 
@@ -138,8 +135,7 @@ void SklSolverCBC::PS_E_CBC(void)
   
   // 熱流束境界条件のクリア qbcは積算するため
   TIMING_start(tm_assign_const);
-  d_size = dc_qbc->GetArrayLength();
-  fb_set_value_real_(qbc, (int*)&d_size, &clear_value);
+  fb_set_real_v_(qbc, sz, gc, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
   
   // 内部境界条件　熱流束型の境界条件は時間進行の前
@@ -202,8 +198,7 @@ void SklSolverCBC::PS_E_CBC(void)
   else { // 陰解法
     // 反復初期値
     TIMING_start(tm_copy_array);
-    d_size = dc_t->GetArrayLength();
-    fb_copy_real_(t, ws, (int*)&d_size);
+    fb_copy_real_s_(t, ws, sz, gc);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICt->LoopCount=0; ICt->LoopCount< ICt->get_ItrMax(); ICt->LoopCount++) {

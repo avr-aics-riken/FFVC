@@ -147,8 +147,10 @@
 !$OMP DO SCHEDULE(auto) &
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided) &
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
 !$OMP REDUCTION(+:vflop)
     do k=1,kx
@@ -673,8 +675,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
     do k=1,kx
     do j=1,jx
@@ -819,8 +823,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
     do k=1,kx
     do j=1,jx
@@ -892,8 +898,10 @@
 !$OMP DO SCHEDULE(auto)
 #elif defined _GUIDED
 !$OMP DO SCHEDULE(guided)
-#else
+#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
 #endif
     do k=1,kx
     do j=1,jx

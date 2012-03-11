@@ -33,12 +33,6 @@ public:
                         int init,      unsigned long &mc, int para_key=-1, int m_procGrp=0);
 	bool alloc_Real_S3D  (SklSolverBase* obj, SklScalar3D<REAL_TYPE>*   &dc_var, const char* label, unsigned* sz, unsigned gc, 
                         REAL_TYPE init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Real_S4D  (SklSolverBase* obj, SklScalar4D<REAL_TYPE>*   &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        REAL_TYPE init, unsigned long &mc, unsigned dlen, int para_key=-1, int m_procGrp=0);
-  bool alloc_Real_S4DEx(SklSolverBase* obj, SklScalar4DEx<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        REAL_TYPE init, unsigned long &mc, unsigned dlen, int para_key=-1, int m_procGrp=0);
-  bool alloc_Real_V3D  (SklSolverBase* obj, SklVector3D<REAL_TYPE>*   &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        REAL_TYPE init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
   bool alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
                         REAL_TYPE init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
   bool alloc_Uint_S1D  (SklSolverBase* obj, SklScalar<unsigned>*      &dc_var, const char* label, unsigned  sz, unsigned gc, 

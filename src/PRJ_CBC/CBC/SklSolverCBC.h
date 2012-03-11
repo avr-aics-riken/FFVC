@@ -280,7 +280,7 @@ public:
   
   void AverageOutput        (unsigned mode, REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
-  void Averaging_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
+  void Variation_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);

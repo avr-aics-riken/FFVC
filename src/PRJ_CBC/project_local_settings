@@ -4,14 +4,15 @@
 # Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 #
 #
+OMP_FLAGS=-openmp -openmp-report=2
 CC=icc
 CFLAGS=-O3
 CXX=icpc
-CXXFLAGS=-O3 -openmp -openmp-report=2
+CXXFLAGS=-O3 $(OMP_FLAGS)
 FC=ifort
 FCFLAGS=-O3
 F90=ifort
-F90FLAGS=-O3 -Warn unused -fpp -openmp -openmp-report=2 -D_AUTO
+F90FLAGS=-O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
 LDFLAGS=-L/opt/intel/composerxe/lib
 LIBS=-lifport -lifcore
 SPH_USR_DEF_LIBS=

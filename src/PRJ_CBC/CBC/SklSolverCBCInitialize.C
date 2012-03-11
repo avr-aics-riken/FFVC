@@ -240,7 +240,7 @@ SklSolverCBC::SklSolverInitialize() {
       }
       else { // 媒質ファイルを使わない場合，指定された媒質番号で初期化
         d_size = dc_mid->GetArrayLength();
-        fb_set_value_int_(dc_mid->GetData(), (int*)&d_size, (int*)mid);
+        fb_set_int_s_(dc_mid->GetData(), (int*)&d_size, (int*)mid);
       }
       TIMING_stop(tm_voxel_load);
 
@@ -950,8 +950,7 @@ SklSolverCBC::SklSolverInitialize() {
       ip = C.iv.Pressure;
     }
 
-    d_size = dc_p->GetArrayLength();
-    fb_set_value_real_(dc_p->GetData(), (int*)&d_size, &ip);
+    fb_set_real_s_(dc_p->GetData(), sz, gc, &ip);
 		BC.OuterPBC(dc_p);
     
 		// 温度
@@ -964,8 +963,7 @@ SklSolverCBC::SklSolverInitialize() {
         it = C.iv.Temperature;
       }
 
-      d_size = dc_t->GetArrayLength();
-      fb_set_value_real_(dc_t->GetData(), (int*)&d_size, &it);
+      fb_set_real_s_(dc_t->GetData(), sz, gc, &it);
       
       // コンポーネントの初期値
       for (unsigned m=C.NoBC+1; m<=C.NoCompo; m++) {

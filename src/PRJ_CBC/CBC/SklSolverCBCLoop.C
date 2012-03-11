@@ -136,7 +136,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   TIMING_start(tm_average_space);
   flop_count=0.0;
   for (int i=0; i<6; i++) avrms[i] = 0.0;
-  Averaging_Space(avrms, flop_count);
+  Variation_Space(avrms, flop_count);
   TIMING_stop(tm_average_space, flop_count);
 
   if ( para_mng->IsParallel() ) {
