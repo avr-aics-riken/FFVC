@@ -143,8 +143,8 @@ enum timing_key {
 
     tm_loop_uty_sct_1,
       tm_average_time,
-      tm_average_space,
-      tm_average_space_comm,
+      tm_stat_space,
+      tm_stat_space_comm,
   
     tm_loop_uty_sct_2,
       tm_hstry_stdout,

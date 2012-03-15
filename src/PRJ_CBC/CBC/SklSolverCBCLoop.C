@@ -133,18 +133,18 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   }
 
   // 空間平均値操作と変動量
-  TIMING_start(tm_average_space);
+  TIMING_start(tm_stat_space);
   flop_count=0.0;
   for (int i=0; i<6; i++) avrms[i] = 0.0;
   Variation_Space(avrms, flop_count);
-  TIMING_stop(tm_average_space, flop_count);
+  TIMING_stop(tm_stat_space, flop_count);
 
   if ( para_mng->IsParallel() ) {
     REAL_TYPE tmp[6];
-    TIMING_start(tm_average_space_comm);
+    TIMING_start(tm_stat_space_comm);
     for (int n=0; n<6; n++) tmp[n] = avrms[n];
     para_mng->Allreduce(tmp, avrms, 6, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 速度，圧力，温度の3変数 x (平均値+変動値)
-    TIMING_stop(tm_average_space_comm, 2.0*np_f*6.0*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 6変数
+    TIMING_stop(tm_stat_space_comm, 2.0*np_f*6.0*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 6変数
   }
 
   avrms[0] = sqrt(avrms[0]/(REAL_TYPE)G_Acell);  // 速度の変動量のRMS

@@ -523,8 +523,8 @@ void SklSolverCBC::set_timing_label(void)
   
   set_label(tm_loop_uty_sct_1,     "Loop Utility Sct:1",      PerfMonitor::CALC, false);
   set_label(tm_average_time,       "Averaging Time",          PerfMonitor::CALC);
-  set_label(tm_average_space,      "Averaging Space",         PerfMonitor::CALC);
-  set_label(tm_average_space_comm, "Sync. Average Value",     PerfMonitor::COMM);
+  set_label(tm_stat_space,         "Variation Space",         PerfMonitor::CALC);
+  set_label(tm_stat_space_comm,    "Sync. Variation",         PerfMonitor::COMM);
   // end of Loop Utility Sct:1
     
   set_label(tm_loop_uty_sct_2,     "Loop Utility Sct:2",       PerfMonitor::CALC, false);
@@ -910,7 +910,6 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   REAL_TYPE comm_size;              /// 通信面1面あたりの通信量
   unsigned int wait_num=0;
   int req[12];
-  size_t d_size = 0;
   REAL_TYPE clear_value=0.0;
 	
 	p = src0 = src1 = p0 = NULL;

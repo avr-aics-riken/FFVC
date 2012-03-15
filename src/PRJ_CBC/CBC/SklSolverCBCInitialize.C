@@ -33,7 +33,6 @@ SklSolverCBC::SklSolverInitialize() {
   unsigned  n=0;
   FILE* fp = NULL;
   REAL_TYPE flop_task=0.0;
-  size_t d_size=0;
   float *cvf=NULL; /// コンポーネントの体積率
   
   ws = v = t = p = NULL;
@@ -239,8 +238,7 @@ SklSolverCBC::SklSolverInitialize() {
         }
       }
       else { // 媒質ファイルを使わない場合，指定された媒質番号で初期化
-        d_size = dc_mid->GetArrayLength();
-        fb_set_int_s_(dc_mid->GetData(), (int*)&d_size, (int*)mid);
+        fb_set_int_s_(dc_mid->GetData(), (int*)sz, (int*)&gc, (int*)mid);
       }
       TIMING_stop(tm_voxel_load);
 

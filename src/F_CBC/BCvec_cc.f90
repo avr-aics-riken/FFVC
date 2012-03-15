@@ -861,10 +861,6 @@
       i = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -901,10 +897,6 @@
       i = ix
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -941,10 +933,6 @@
       j = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -981,10 +969,6 @@
       j = jx
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -1021,10 +1005,6 @@
       k = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -1061,10 +1041,6 @@
       k = kx
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -1766,10 +1742,6 @@
       i = 0
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static)
 #else
@@ -1788,10 +1760,6 @@
       i = ix+1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static)
 #else
@@ -1810,10 +1778,6 @@
       j = 0
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static)
 #else
@@ -1832,10 +1796,6 @@
       j = jx+1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static)
 #else
@@ -1854,10 +1814,6 @@
       k = 0
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static)
 #else
@@ -1876,10 +1832,6 @@
       k = kx+1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto)
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided)
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static)
 #else
@@ -3084,10 +3036,6 @@
       i = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -3115,10 +3063,6 @@
       i = ix
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -3146,10 +3090,6 @@
       j = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -3177,10 +3117,6 @@
       j = jx
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -3208,10 +3144,6 @@
       k = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
@@ -3239,10 +3171,6 @@
       k = kx
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _AUTO
-!$OMP DO SCHEDULE(auto) &
-#elif defined _GUIDED
-!$OMP DO SCHEDULE(guided) &
 #elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
 #else
