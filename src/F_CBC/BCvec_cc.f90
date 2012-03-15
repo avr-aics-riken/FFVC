@@ -2322,7 +2322,7 @@
     subroutine cbc_vibc_drchlt (v, sz, g, st, ed, v00, bv, odr, vec)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, odr
+    integer                                                     ::  i, j, k, g, idx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
@@ -2335,9 +2335,27 @@
     v_bc_ref = vec(2) + v00(2)
     w_bc_ref = vec(3) + v00(3)
     
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
+!$OMP PRIVATE(idx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
       idx = bv(i,j,k)
 
       if ( 0 /= iand(idx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
@@ -2382,6 +2400,8 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_vibc_drchlt
@@ -2418,9 +2438,20 @@
     v_bc_ref = vec(2) + v00(2)
     w_bc_ref = vec(3) + v00(3)
     
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref) &
+!$OMP PRIVATE(i, j, k, bvx)
+
     FACES : select case (face)
     case (X_minus)
       i = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2431,9 +2462,17 @@
         endif
       end do
       end do
+!$OMP END DO
       
     case (X_plus)
       i = ix
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2444,9 +2483,17 @@
         endif
       end do
       end do
+!$OMP END DO
       
     case (Y_minus)
       j = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2457,9 +2504,17 @@
         endif
       end do
       end do
+!$OMP END DO
       
     case (Y_plus)
       j = jx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2470,9 +2525,17 @@
         endif
       end do
       end do
+!$OMP END DO
       
     case (Z_minus)
       k = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2483,9 +2546,17 @@
         endif
       end do
       end do
+!$OMP END DO
       
     case (Z_plus)
       k = kx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2496,15 +2567,18 @@
         endif
       end do
       end do
+!$OMP END DO
       
     case default
     end select FACES
+
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_vobc_drchlt
     
-!  ************************************************************
-!> @subroutine cbc_vibc_outflow (v, sz, g, st, ed, cf, bv, odr)
+!  ********************************************************
+!> @subroutine cbc_vibc_outflow (v, sz, g, st, ed, bv, odr)
 !! @brief 速度指定境界条件を設定するために必要な参照値を，流出下流のセル（固体セル）にセットする
 !! @param[out] v 速度 u^{n+1}
 !! @param sz 配列長
@@ -2518,15 +2592,33 @@
     subroutine cbc_vibc_outflow (v, sz, g, st, ed, bv, odr)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, odr
+    integer                                                     ::  i, j, k, g, idx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up, Vp, Wp
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
+!$OMP PRIVATE(idx, Up, Vp, Wp)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
     
       idx = bv(i,j,k)
       if ( 0 /= iand(idx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
@@ -2581,6 +2673,8 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_vibc_outflow
@@ -2606,7 +2700,7 @@
     subroutine cbc_div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, coef, bv, odr, v0, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr
+    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef, m
     real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
@@ -2624,11 +2718,34 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+
     m = 0.0
     
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, coef, cf) &
+!$OMP PRIVATE(bvx) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
+!$OMP PRIVATE(Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
 
@@ -2688,14 +2805,16 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     flop = flop + m*91.0
 
     return
     end subroutine cbc_div_ibc_oflow_pvec
     
-!  *************************************************************************************
-!> @subroutine cbc_div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, avr, flop)
+!  ************************************************************************************
+!> @subroutine cbc_div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, av, flop)
 !! @brief 内部流出境界条件によるn+1時刻の速度の発散の修正と流量の積算
 !! @param[in/out] div 速度の発散
 !! @param sz 配列長
@@ -2706,23 +2825,22 @@
 !! @param coef 係数 h/dt
 !! @param bv BCindex V
 !! @param odr 速度境界条件のエントリ
-!! @param[out] avr 平均流出速度（面直方向のみ）
+!! @param[out] av 積算流量と面積
 !! @param[out] flop flop count
 !! @note div(u)=0から，内部流出境界のセルで計算されたdivの値が流出速度となる
 !! @note flop countはコスト軽減のため近似
 !<
-    subroutine cbc_div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, avr, flop)
+    subroutine cbc_div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, av, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    include 'sklparaf.h'
-    integer                                                     ::  i, j, k, g, bvx, odr, iret, ierr
+    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef, rc
-    real                                                        ::  u_ref, v_ref, w_ref, dv, a1, avr, m
+    real                                                        ::  u_ref, v_ref, w_ref, dv, a1, m
     real, dimension(0:3)                                        ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    real, dimension(2)                                          ::  av, tmp
+    real, dimension(2)                                          ::  av
     
     ! 参照速度
     u_ref = v00(1)
@@ -2732,11 +2850,31 @@
     m = 0.0
     rc = 1.0/coef
 
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+
     flop = flop + 8.0 ! DP 13 flop
-    
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, rc, odr) &
+!$OMP PRIVATE(bvx, dv)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(+:m)
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
         dv = div(i,j,k) * rc
@@ -2771,19 +2909,12 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     av(1) = a1
     av(2) = m
     flop = flop + m*13.0
-
-    call SklIsParallel(iret)
-    if ( iret == 1 ) then
-      tmp(1) = av(1)
-      tmp(2) = av(2)
-      call SklAllreduce(tmp, av, 2, SKL_REAL, SKL_SUM, SKL_DEFAULT_GROUP, ierr)
-    end if
-
-    avr = av(1)/av(2)
 
     return
     end subroutine cbc_div_ibc_oflow_vec
@@ -2806,7 +2937,7 @@
     subroutine cbc_div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr
+    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
@@ -2820,12 +2951,32 @@
     u_bc_ref = vec(1) + v00(1)
     v_bc_ref = vec(2) + v00(2)
     w_bc_ref = vec(3) + v00(3)
-    
-    m = 0.0
 
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+    
+    m = real( (ie-is)*(je-js)*(ke-ks) )
+    flop = flop + m*7.0 + 3.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr, coef) &
+!$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
         Ue_t = 0.0
@@ -2848,8 +2999,8 @@
     end do
     end do
     end do
-    
-    flop = flop + m*7.0 + 3.0
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_div_ibc_drchlt
@@ -2895,9 +3046,21 @@
     
     flop = flop + 6.0
 
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, rix, rjx, rkx) &
+!$OMP PRIVATE(i, j, k, bvx)
+
     FACES : select case (face)
     case (X_minus)
       i = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:flop)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2906,11 +3069,20 @@
         endif
       end do
       end do
-      
+!$OMP END DO
+
       flop = flop + rix*3.0 ! 2+ real*1
       
     case (X_plus)
       i = ix
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:flop)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2919,11 +3091,20 @@
         endif
       end do
       end do
+!$OMP END DO
       
       flop = flop + rix*3.0 ! 2+ real*1
       
     case (Y_minus)
       j = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:flop)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2932,11 +3113,20 @@
         endif
       end do
       end do
+!$OMP END DO
       
       flop = flop + rjx*3.0 ! 2+ real*1
       
     case (Y_plus)
       j = jx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:flop)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2945,11 +3135,20 @@
         endif
       end do
       end do
+!$OMP END DO
       
       flop = flop + rjx*3.0 ! 2+ real*1
     
     case (Z_minus)
       k = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:flop)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2958,11 +3157,20 @@
         endif
       end do
       end do
+!$OMP END DO
       
       flop = flop + rkx*3.0 ! 2+ real*1
       
     case (Z_plus)
       k = kx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:flop)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2971,11 +3179,14 @@
         endif
       end do
       end do
+!$OMP END DO
       
       flop = flop + rkx*3.0 ! 2+ real*1
     
     case default
     end select FACES
+
+!$OMP END PARALLEL
 
     return
     end subroutine cbc_div_obc_drchlt
@@ -3250,9 +3461,23 @@
     v_ref = v00(2)
     w_ref = v00(3)
     
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, rc) &
+!$OMP PRIVATE(i, j, k, bvx, dv)
+
     FACES : select case (face)
     case (X_minus)
       i = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(min:a2) &
+!$OMP REDUCTION(max:a3)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -3265,11 +3490,22 @@
         endif
       end do
       end do
+!$OMP END DO
       
       flop = flop + rix*5.0
       
     case (X_plus)
       i = ix
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(min:a2) &
+!$OMP REDUCTION(max:a3)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -3282,10 +3518,22 @@
         endif
       end do
       end do
+!$OMP END DO
+
       flop = flop + rix*5.0
       
     case (Y_minus)
       j = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(min:a2) &
+!$OMP REDUCTION(max:a3)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3298,10 +3546,22 @@
         endif
       end do
       end do
+!$OMP END DO
+
       flop = flop + rjx*5.0
       
     case (Y_plus)
       j = jx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(min:a2) &
+!$OMP REDUCTION(max:a3)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3314,10 +3574,22 @@
         endif
       end do
       end do
+!$OMP END DO
+
       flop = flop + rjx*5.0
     
     case (Z_minus)
       k = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(min:a2) &
+!$OMP REDUCTION(max:a3)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3330,10 +3602,22 @@
         endif
       end do
       end do
+!$OMP END DO
+
       flop = flop + rkx*5.0
       
     case (Z_plus)
       k = kx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(min:a2) &
+!$OMP REDUCTION(max:a3)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3346,10 +3630,14 @@
         endif
       end do
       end do
+!$OMP END DO
+
       flop = flop + rkx*5.0
     
     case default
     end select FACES
+
+!$OMP END PARALLEL
     
     aa(1) = a1
     aa(2) = a2

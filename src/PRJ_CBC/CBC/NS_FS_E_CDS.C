@@ -387,10 +387,39 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     TIMING_stop(tm_prj_vec, flop_count);
     
     // セルフェイス速度の境界条件による修正
+    REAL_TYPE m_av[2];
     TIMING_start(tm_prj_vec_bc);
     flop_count=0.0;
-    BC.mod_div(src1, bcv, coef, tm, v00, flop_count, true);
+    BC.mod_div(src1, bcv, coef, tm, v00, m_av, flop_count, true);
     TIMING_stop(tm_prj_vec_bc, flop_count);
+    
+    // セルフェイス速度の境界条件の通信部分
+    if ( !C.isCDS() ) { // Binary
+      for (int n=1; n<=C.NoBC; n++) {
+        REAL_TYPE tmp[2];
+        unsigned typ = cmp[n].getType();
+        
+        switch (typ) {
+          case OUTFLOW:
+            if ( para_mng->IsParallel() ) {
+              TIMING_start(tm_prj_vec_bc_comm);
+              tmp[0] = m_av[0];
+              tmp[1] = m_av[1];
+              para_mng->Allreduce(tmp, m_av, 2, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+              TIMING_stop(tm_prj_vec_bc_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+            }
+            cmp[n].val[var_Velocity] = m_av[0]/m_av[1]; // 無次元平均流速
+            break;
+            
+          default:
+            break;
+        }
+      }
+    }
+    else { // Cut-Distance
+      ;
+    }
+
     
     // Forcingコンポーネントによるセルセンター速度の修正
     if ( C.isForcing() == ON ) {

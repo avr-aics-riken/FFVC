@@ -145,7 +145,7 @@ extern "C" {
   void cbc_div_ibc_oflow_pvec_(REAL_TYPE* div, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, REAL_TYPE* v_cnv, REAL_TYPE* coef, 
                                int* bv, int* odr, REAL_TYPE* v0, REAL_TYPE* flop);
   void cbc_div_ibc_oflow_vec_ (REAL_TYPE* div, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, int* odr, 
-                               REAL_TYPE* avr, REAL_TYPE* flop);
+                               REAL_TYPE* av, REAL_TYPE* flop);
   void cbc_div_obc_drchlt_    (REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, REAL_TYPE* vec, REAL_TYPE* flop);
   void cbc_div_obc_oflow_pvec_(REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* v_out, REAL_TYPE* coef, int* bv, 
                                REAL_TYPE* v0, REAL_TYPE* flop);

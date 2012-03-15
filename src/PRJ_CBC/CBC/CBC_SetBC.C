@@ -4075,20 +4075,21 @@ void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
 }
 
 /**
- @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+ @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
  @brief 速度境界条件による速度の発散の修正ほか
  @param div div((u)*(-h/dt)
  @param bv BCindex V
  @param coef 係数 h/dt
  @param tm 無次元時刻
  @param v00
+ @param avr 平均値計算のテンポラリ値
  @param flop
  @param isCDS (false-CBC, true-CDS)
  @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
 */
-void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
 {
-  REAL_TYPE vel, vec[3], dummy;
+  REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
   unsigned typ=0;
   
@@ -4098,12 +4099,10 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
       typ = cmp[n].getType();
       
       cmp[n].getBbox(st, ed);
-      vel = 0.0;
       
       switch (typ) {
         case OUTFLOW:
-          cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, &vel, &flop);
-          cmp[n].val[var_Velocity] = vel; // 無次元平均流速
+          cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, avr, &flop);
           break;
           
         case SPEC_VEL:

@@ -982,7 +982,8 @@ SklSolverCBC::SklSolverInitialize() {
       
       //流出境界の流出速度の算出
       REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
-      BC.mod_div(ws, bcv, coef, tm, v00, flop_task);
+      REAL_TYPE m_av[2];
+      BC.mod_div(ws, bcv, coef, tm, v00, m_av, flop_task);
       DomainMonitor(BC.get_OBC_Ptr(), &C, flop_task);
       
       //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
