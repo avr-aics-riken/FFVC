@@ -2273,45 +2273,6 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
 }
 
 /**
- @fn unsigned VoxInfo::encodeOrder(unsigned order, float* vf, unsigned* bx)
- @brief bx[]へCompoListのエントリをエンコードする
- @param order エンコードするエントリ
- @param vf 体積率
- @param bx BCindex ID
- @retval エンコードした個数
- */
-unsigned VoxInfo::encodeOrder(unsigned order, float* vf, unsigned* bx)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k;
-  unsigned register m, g=0;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        if ( vf[m] > 0.0 )  {
-          bx[m] |= order; // bx[m]の下位6bitにエントリをエンコード  >> ParseBC:sertControlVars()でビット幅をチェック
-          g++;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  return g;
-}
-
-/**
  @fn unsigned VoxInfo::countState(unsigned id, int* mid)
  @brief 媒質idの数を数え，値を返す
  @retval 計算空間内における媒質idの数
@@ -3448,80 +3409,6 @@ void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx, float* vf)
 }
 
 /**
- @fn bool VoxInfo::make_index3_list(SklScalar<int>* dc_index3, unsigned* bx)
- @brief setup index list
- @param index3 
- @param bx BCindex ID
- */
-bool VoxInfo::make_index3_list(SklScalar<int>* dc_index3, unsigned* bx)
-{
-  int i,j,k;
-  unsigned m, l;
-  int* index;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  if ( !(index = dc_index3->GetData()) ) return false;
-  
-  l = 0;
-  
-  // described in Fortran index
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        if ( IS_FLUID(bx[m]) ) { // IS_Fluid() > 0=SOLID, 1=FLUID
-          index[3*l  ] = (int)i;
-          index[3*l+1] = (int)j;
-          index[3*l+2] = (int)k;
-          l++;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-/**
- @fn bool VoxInfo::make_index_list(SklScalar<int>* dc_index, unsigned* bx)
- @brief setup index list
- @param index 
- @param bx BCindex ID
- */
-bool VoxInfo::make_index_list(SklScalar<unsigned>* dc_index, unsigned* bx)
-{
-  int i,j,k;
-  unsigned m, l;
-  unsigned* idx;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  if ( !(idx = dc_index->GetData()) ) return false;
-  
-  l = 0;
-  
-  // described in Fortran index
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        if ( IS_FLUID(bx[m]) ) { //  IS_Fluid() > 0=SOLID, 1=FLUID
-          idx[l] = idx[l] | i | (j<<10) | (k<<20) ;
-          l++;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-/**
  @fn unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
  @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをエンコードする
  @param[in/out] bx BCindex P
@@ -4358,7 +4245,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
   
   nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide); // ガイドセルを含む全領域を対象にする
   
-  // 状態の初期化 >> FLOW
+  // 状態の初期化
   for (unsigned m=0; m<nx; m++) {
     bx[m] = onBit( bx[m], STATE_BIT );
   }
@@ -4384,7 +4271,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
           for (int j=st[1]; j<=ed[1]; j++) {
             for (int i=st[0]; i<=ed[0]; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              if ( cvf[m] > 0.0 ) {
+              if ( (cvf[m] > 0.0) && IS_FLUID(bx[m]) ) { // 流体でコンポーネントの体積率があるとき
                 bx[m] |= (id << TOP_CELL_ID) ;
                 mid[m] = (int)id;
               }

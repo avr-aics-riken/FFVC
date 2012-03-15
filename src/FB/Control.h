@@ -121,6 +121,7 @@ public:
     unsigned hsrc;
     unsigned outflow;
     unsigned periodic;
+    unsigned fraction;
   } Ens_of_Compo;
   
   /// 偏微分方程式の型
@@ -407,6 +408,7 @@ public:
     EnsCompo.forcing = 0;
     EnsCompo.outflow = 0;
     EnsCompo.periodic= 0;
+    EnsCompo.fraction= 0;
   }
   virtual ~Control() {}
   
@@ -511,6 +513,12 @@ public:
   //@brief 流出コンポーネントがあれば1を返す
   unsigned isOutflow(void) const {
     return EnsCompo.outflow;
+  }
+  
+  //@fn unsigned isVfraction(void) const
+  //@brief 体積率コンポーネントがあれば1を返す
+  unsigned isVfraction(void) const {
+    return EnsCompo.fraction;
   }
   
   //@fn bool isHeatProblem(void) const

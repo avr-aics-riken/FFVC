@@ -121,16 +121,17 @@ void SetBC3D::checkDriver(FILE* fp)
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
- @brief 圧力損失部によるPoisosn式のソース項の修正
+ @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+ @brief 圧力損失部によるPoisosn式のソース項の修正 \gamma^F
  @param[out] src 外力項によるPoisson方程式のソース項
  @param v セルセンター速度ベクトル n+1
  @param bd BCindex ID
+ @param cvf コンポーネントの体積率
  @param C コントロールクラスのポインタ
  @param v00
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -144,7 +145,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Contr
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_psrc_hex_(src, dim_sz, gc, st, ed, &dh, (int*)bd, (int*)&n, v00, vec, &cmp[n].ca[0], v, &flop);
+        cbc_psrc_hex_(src, dim_sz, gc, st, ed, &dh, (int*)bd, cvf, (int*)&n, v00, vec, &cmp[n].ca[0], v, &flop);
         break;
         
       case FAN:
@@ -162,15 +163,16 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Contr
 }
 
 /**
- @fn void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+ @fn void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部による疑似速度方向の修正
  @param[in/out] vc セルセンターの疑似速度
  @param bd BCindex ID
+ @param cvf コンポーネントの体積率
  @param C コントロールクラスのポインタ
- @param v00
+ @param v00 
  @param[out] flop
  */
-void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -184,7 +186,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYP
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_pvec_hex_(vc, dim_sz, gc, st, ed, (int*)bd, (int*)&n, v00, vec, &flop);
+        cbc_pvec_hex_(vc, dim_sz, gc, st, ed, (int*)bd, (int*)&n, cvf, v00, vec, &flop);
         break;
         
       case FAN:
@@ -202,59 +204,20 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYP
 }
 
 /**
- @fn void SetBC3D::mod_Vcf_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
- @brief 圧力損失部によるセルフェイス速度の射影プロセスの修正
- @param[in/out] v 速度
- @param bd BCindex ID
- @param C コントロールクラスのポインタ
- @param dt 時間積分幅
- @param v00
- @param[out] flop
- */
-void SetBC3D::mod_Vcf_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
-{
-  int st[3], ed[3];
-  REAL_TYPE vec[3];
-  
-  for (unsigned n=1; n<=NoBC; n++) {
-
-    cmp[n].getBbox(st, ed);
-    
-    vec[0] = cmp[n].nv[0];
-    vec[1] = cmp[n].nv[1];
-    vec[2] = cmp[n].nv[2];
-    
-    switch ( cmp[n].getType() ) {
-      case HEX:
-        cbc_update_vcf_hex_(v, dim_sz, gc, st, ed, &dt, (int*)bd, (int*)&n, v00, vec, &cmp[n].ca[0], v, &flop);
-        break;
-        
-      case FAN:
-        Exit(0);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
- @brief 圧力損失部によるセルセンタ速度の射影プロセスの修正
+ @fn void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE coef, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
+ @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
  @param[in/out] v セルセンターの速度
  @param bd BCindex ID
+ @param cvf コンポーネントの体積率
+ @param div div((u)*(-h/dt)
+ @param coef 係数 h/dt
  @param C コントロールクラスのポインタ
  @param dt 時間積分幅
  @param v00
  @param[out] flop
  @todo 同期は外に出す
  */
-void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE coef, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int st[3], ed[3];
@@ -272,7 +235,7 @@ void SetBC3D::mod_Vcc_Forcing(REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE 
       
       switch ( cmp[n].getType() ) {
         case HEX:
-          cbc_update_vcc_hex_(v, dim_sz, gc, st, ed, &dt, (int*)bd, (int*)&n, v00, vec, &cmp[n].ca[0], vm, &flop);
+          cbc_update_hex_(v, dim_sz, gc, st, ed, &dt, (int*)bd, (int*)&n, v00, vec, &cmp[n].ca[0], vm, &flop);
           break;
           
         case FAN:

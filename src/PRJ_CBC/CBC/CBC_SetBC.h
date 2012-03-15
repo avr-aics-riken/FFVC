@@ -63,13 +63,12 @@ public:
   void InnerVBC             (REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
   void InnerVBC_Periodic    (SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd);
   void mod_div              (REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS=false);
-  void mod_Psrc_Forcing     (REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Psrc_Forcing     (REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
   void mod_Psrc_VBC         (REAL_TYPE* dv, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, 
                              REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
   void mod_Pvec_Flux        (REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS=false);
-  void mod_Pvec_Forcing     (REAL_TYPE* vc, unsigned* bd, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
-  void mod_Vcc_Forcing      (REAL_TYPE* v,  unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop);
-  void mod_Vcf_Forcing      (REAL_TYPE* v, unsigned* bd, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Pvec_Forcing     (REAL_TYPE* vc, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE& flop);
+  void mod_Vdiv_Forcing     (REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE coef, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop);
   void mod_Vis_EE           (REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop);
   void OuterPBC             (SklScalar3D<REAL_TYPE>* d_p);
   void OuterTBC             (SklScalar3D<REAL_TYPE>* d_t);

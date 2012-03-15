@@ -35,6 +35,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   REAL_TYPE *t0=NULL;    /// 温度 t^n 
   REAL_TYPE *vt=NULL;    /// 渦粘性係数
   REAL_TYPE *abf=NULL;   /// Adams-Bashforth用のワーク
+  float* cvf=NULL;       /// コンポーネントの体積率
   
   // local variables
   REAL_TYPE tm = SklGetTotalTime();    /// 計算開始からの積算時刻
@@ -92,6 +93,11 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // AB法
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) {
     if( !(abf = dc_abf->GetData()) )  Exit(0);
+  }
+  
+  // コンポーネントの体積率
+  if ( C.isVfraction() ) {
+    if( !(cvf = dc_cvf->GetData()) )  Exit(0);
   }
   
   // IN_OUT境界条件のときのフラグ処理
@@ -227,7 +233,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   if ( C.isForcing() == ON ) {
     TIMING_start(tm_forcing);
     flop_count = 0.0;
-    BC.mod_Pvec_Forcing(vc, bcd, &C, v00, flop_count);
+    BC.mod_Pvec_Forcing(vc, bcd, cvf, &C, v00, flop_count);
     TIMING_stop(tm_forcing, flop_count);
   }
   
@@ -361,7 +367,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     if ( C.isForcing() == ON ) {
       TIMING_start(tm_force_src);
       flop_count=0.0;
-      BC.mod_Psrc_Forcing(src1, v, bcd, &C, v00, flop_count);
+      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, &C, v00, flop_count);
       TIMING_stop(tm_force_src, flop_count);
     }
     

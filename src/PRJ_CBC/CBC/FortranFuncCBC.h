@@ -182,9 +182,10 @@ extern "C" {
                                REAL_TYPE* v0, int* bx, int* odr, REAL_TYPE* coef, REAL_TYPE* vec, REAL_TYPE* flop);
 
   // cbc_forcing.f90
-  void cbc_psrc_hex_          (REAL_TYPE* src,int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, int* bd, int* odr, REAL_TYPE* v00, 
+  void cbc_psrc_hex_          (REAL_TYPE* src,int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, int* bd, float* cvf, int* odr, REAL_TYPE* v00, 
                                REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* v, REAL_TYPE* flop);
-  void cbc_pvec_hex_          (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, int* bd, int* odr, REAL_TYPE* v00, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_pvec_hex_          (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, int* bd, int* odr, float* cvf, REAL_TYPE* v00, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_update_hex_        (REAL_TYPE* div, int* sz, int* g, int* st, int* ed, dh, bd, vf, odr, v00, coef, dt, nv, c, v, flop)
   void cbc_update_vcc_hex_    (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, REAL_TYPE* dt, int* bd, int* odr, REAL_TYPE* v00, 
                                REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* vm, REAL_TYPE* flop);
   void cbc_update_vcf_hex_    (REAL_TYPE* vf, int* sz, int* g, int* st, int* ed, REAL_TYPE* dt, int* bd, int* odr, REAL_TYPE* v00, 

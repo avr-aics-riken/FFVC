@@ -35,6 +35,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   REAL_TYPE *t0=NULL;    /// 温度 t^n 
   REAL_TYPE *vt=NULL;    /// 渦粘性係数
   REAL_TYPE *abf=NULL;   /// Adams-Bashforth用のワーク
+  float* cvf=NULL;       /// コンポーネントの体積率
   
   // local variables
   REAL_TYPE tm = SklGetTotalTime();    /// 計算開始からの積算時刻
@@ -49,7 +50,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   REAL_TYPE comm_size;                 /// 通信面1面あたりの通信量
   int wall_prof = (int)C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
-  int cnv_scheme = (int)C.CnvScheme;  /// 対流項スキーム
+  int cnv_scheme = (int)C.CnvScheme;   /// 対流項スキーム
   REAL_TYPE clear_value = 0.0;
   
   comm_size = count_comm_size(size, 1);
@@ -92,6 +93,11 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   // AB法
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) {
     if( !(abf = dc_abf->GetData()) )  Exit(0);
+  }
+  
+  // コンポーネントの体積率
+  if ( C.isVfraction() ) {
+    if( !(cvf = dc_cvf->GetData()) )  Exit(0);
   }
   
   // IN_OUT境界条件のときのフラグ処理
@@ -227,7 +233,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   if ( C.isForcing() == ON ) {
     TIMING_start(tm_forcing);
     flop_count = 0.0;
-    BC.mod_Pvec_Forcing(vc, bcd, &C, v00, flop_count);
+    BC.mod_Pvec_Forcing(vc, bcd, cvf, &C, v00, flop_count);
     TIMING_stop(tm_forcing, flop_count);
   }
   
@@ -360,7 +366,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     if ( C.isForcing() == ON ) {
       TIMING_start(tm_force_src);
       flop_count=0.0;
-      BC.mod_Psrc_Forcing(src1, v, bcd, &C, v00, flop_count);
+      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, &C, v00, flop_count);
       TIMING_stop(tm_force_src, flop_count);
     }
     
@@ -419,11 +425,11 @@ void SklSolverCBC::NS_FS_E_CBC(void)
       ;
     }
     
-    // Forcingコンポーネントによるセルセンター速度の修正
+    // Forcingコンポーネントによるセルセンター速度と発散値の修正
     if ( C.isForcing() == ON ) {
       TIMING_start(tm_prj_frc_mod_cc);
       flop_count=0.0;
-      BC.mod_Vcc_Forcing(v, bcd, &C, dt, v00, flop_count);
+      BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, coef, &C, dt, v00, flop_count);
       TIMING_stop(tm_prj_frc_mod_cc, flop_count);
     }
 

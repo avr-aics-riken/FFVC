@@ -75,7 +75,6 @@ protected:
   unsigned count_ValidCell_OBC (int face, unsigned* bv);
   unsigned encodeFace          (unsigned order, unsigned id, int* m, unsigned* bx, const unsigned attrb, unsigned type=0);
   unsigned encodeOrder         (unsigned order, unsigned id, int* m, unsigned* bx);
-  unsigned encodeOrder         (unsigned order, float* vf, unsigned* bx);
   unsigned encPbit_D_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
   unsigned encPbit_N_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
   unsigned encPbit_N_Cut       (unsigned* bx, CutPos32Array* cutPos);
@@ -152,8 +151,6 @@ protected:
   
 public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
-  bool make_index_list       (SklScalar<unsigned>* dc_index, unsigned* bx);
-  bool make_index3_list      (SklScalar<int>* dc_index3, unsigned* bx);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);

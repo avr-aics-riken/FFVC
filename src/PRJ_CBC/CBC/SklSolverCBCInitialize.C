@@ -383,15 +383,9 @@ SklSolverCBC::SklSolverInitialize() {
   // セルIDのノード間同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
   
-
   
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
-  bool cmp_flag=false;
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].isVFraction() ) cmp_flag = true;
-  }
-  
-  if (cmp_flag == true ) {
+  if ( C.isVfraction() ) {
     TIMING_start(tm_init_alloc);
     allocArray_compoVF(TotalMemory, PrepMemory);
     TIMING_stop(tm_init_alloc); 
@@ -725,12 +719,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 時間平均用の配列をアロケート
   allocArray_average (TotalMemory, fp);
-  
-  // index list
-  // index test; if ( !allocArray_index3(TotalMemory) ) return -1;
-  // index test; if ( !Vinfo.make_index3_list(dc_index3, bcd) ) return -1;
-  // index test; if ( !allocArray_index(TotalMemory) ) return -1;
-  // index test; if ( !Vinfo.make_index_list(dc_index, bcd) ) return -1;
+
   
   TIMING_stop(tm_init_alloc);
   
@@ -1134,6 +1123,13 @@ void SklSolverCBC::setEnsComponent(void)
     if ( cmp[n].getType() == OUTFLOW ) c++;
   }
   if ( c>0 ) C.EnsCompo.outflow = ON;
+  
+  // 体積率コンポーネント
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isVFraction() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.fraction = ON;
 }
 
 /**
