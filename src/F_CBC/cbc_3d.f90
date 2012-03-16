@@ -604,8 +604,8 @@
     return
     end subroutine cbc_pvec_muscl
 
-!  **********************************************************************************
-!> @subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, coef, flop)
+!  ****************************************************************************
+!> @subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
 !! @brief 次ステップのセルセンターの速度を更新
 !! @param[out] v n+1時刻の速度ベクトル
 !! @param[out] div 速度の発散値
@@ -618,13 +618,12 @@
 !! @param bp BCindex P
 !! @param bv BCindex V
 !! @param v00 参照速度
-!! @param coef 係数
 !! @param[out] flop flop count
 !! @note 
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !!    - VBC(OUTFLOW, SPEC_VEL)の参照セルでは不定値となるが，InnerVBC()で上書き
 !<
-    subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, coef, flop)
+    subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
     implicit none
     include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
@@ -649,10 +648,11 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
+    coef = dh/dt
     
     ! loop : 2 + 6 + 6 + 36 + 18 + 25 + 15 = 108
-    flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 8.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 13.0 ! DP
+    flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 16.0
+    ! flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 26.0 ! DP
 
 
 !$OMP PARALLEL &

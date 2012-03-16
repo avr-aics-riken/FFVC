@@ -12,32 +12,107 @@
 #include "CBC_SetBC.h"
 
 /**
- @fn void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
- @brief 初期温度を代入
- @param n エントリ
- @param bx BCindex ID
- @param d_t 
+ @fn void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
+ @brief 温度指定境界条件に必要な温度をセットする
+ @param t 温度場
+ @param bh BCindex H1
+ @param tm 無次元時刻
+ @param C
  */
-void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
+void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
 {
-  int i,j,k;
-  unsigned register m, id;
-  REAL_TYPE ref;
-  REAL_TYPE *t=NULL;
+  REAL_TYPE flop, tc;
+  int st[3], ed[3];
+  unsigned typ;
   
-  if ( !(t = d_t->GetData()) ) Exit(0);
+  // 内部境界条件による修正
+  for (unsigned n=1; n<=NoBC; n++) {
+    typ = cmp[n].getType();
+    
+    cmp[n].getBbox(st, ed);
+    
+    switch (typ) {
+      case SPEC_VEL_WH:
+        tc  = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
+        cbc_hbc_drchlt_(t, dim_sz, gc, st, ed, (int*)bh1, (int*)&n, &tc);
+        break;
+    }
+  }
+  /*
+   // 外部境界条件
+   int n = OBC_MASK;
+   for (int face=0; face<NOFACE; face++) {
+   typ = obc[face].get_BCtype();
+   getOuterLoopIdx(face, st, ed);
+   
+   // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+   if( pn.nID[face] >= 0 ) continue;
+   
+   if ( typ == OBC_SPEC_VEL ) {
+   if ( !clear ) {
+   extractVel_OBC(face, vec, tm, flop);
+   }
+   else {
+   vec[0] = v00[1];
+   vec[1] = v00[2];
+   vec[2] = v00[3];
+   }
+   cbc_vbc_drchlt_cc_(v, dim_sz, gc, st, ed, v00, (int*)bv, &n, vec);
+   }
+   }*/
+}
+
+/**
+ @fn void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
+ @brief 速度指定境界条件に必要な参照速度をセットする
+ @param v セルセンタ速度ベクトル (n step)
+ @param bv BCindex V
+ @param tm 無次元時刻
+ @param v00
+ @param clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
+ */
+void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
+{
+  REAL_TYPE flop, vec[3];
+  int st[3], ed[3];
+  unsigned typ;
   
-  ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
-  id = cmp[n].getID();
-	
-  for (k=1; k<=kxc; k++) {
-    for (j=1; j<=jxc; j++) {
-      for (i=1; i<=ixc; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( DECODE_ID(bx[m]) == id ) {
-          t[m] = ref; 
+  // 内部境界条件による修正
+  for (int n=1; n<=NoBC; n++) {
+    typ = cmp[n].getType();
+    
+    cmp[n].getBbox(st, ed);
+    
+    switch (typ) {
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
+        if ( !clear ) {
+          extractVel_IBC(n, vec, tm, v00, flop);
         }
+        else {
+          vec[0] = vec[1] = vec[2] = 0.0;
+        }
+        cbc_vibc_drchlt_(v, dim_sz, gc, st, ed, v00, (int*)bv, &n, vec);
+        break;
+    }
+  }
+  
+  // 外部境界条件
+  for (int face=0; face<NOFACE; face++) {
+    typ = obc[face].get_BCtype();
+    getOuterLoopIdx(face, st, ed);
+    
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    if( pn.nID[face] >= 0 ) continue;
+    
+    if ( typ == OBC_SPEC_VEL ) {
+      if ( !clear ) {
+        extractVel_OBC(face, vec, tm, v00, flop);
       }
+      else {
+        vec[0] = vec[1] = vec[2] = 0.0;
+      }
+      cbc_vobc_drchlt_(v, dim_sz, gc, v00, (int*)bv, &face, vec);
     }
   }
 }
@@ -121,17 +196,529 @@ void SetBC3D::checkDriver(FILE* fp)
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+ @fn REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
+ @brief コンポーネントから速度境界条件の成分を取り出す
+ @param n コンポーネントのインデクス
+ @param[out] vec[3] ベクトル成分
+ @param tm 時刻
+ @param v00
+ @param[in/out] flop
+ */
+REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
+{
+  REAL_TYPE a, b, vel;
+  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
+  
+  a = cmp[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
+  b = 2.0*c_pai*cmp[n].ca[CompoList::frequency]* RefL/RefV * tm + cmp[n].ca[CompoList::initphase];
+  vel = ( a*sin(b) + cmp[n].ca[CompoList::bias]/RefV ) * v00[0];
+  vec[0] = cmp[n].nv[0] * vel;
+  vec[1] = cmp[n].nv[1] * vel;
+  vec[2] = cmp[n].nv[2] * vel;
+  flop += 14.0;
+  
+  return vel;
+}
+
+/**
+ @fn REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
+ @brief 外部境界条件リストから速度境界条件の成分を取り出す
+ @param n コンポーネントのインデクス
+ @param[out] vec[3] ベクトル成分
+ @param tm 時刻
+ @param v00
+ @param[in/out] flop
+ */
+REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
+{
+  REAL_TYPE a, b, vel;
+  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
+  
+  a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
+  b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * tm + obc[n].ca[CompoList::initphase];
+  vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
+  vec[0] = obc[n].nv[0] * vel;
+  vec[1] = obc[n].nv[1] * vel;
+  vec[2] = obc[n].nv[2] * vel;
+  flop += 14.0;
+  
+  return vel;
+}
+
+/**
+ @fn void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
+ @brief 外部境界のIN_OUT境界条件の時のフラグを，流入出の方向に合わせてスイッチする
+ @param bv BCindex V
+ @param C
+ */
+void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
+{
+  unsigned F;
+  
+  for (int face=0; face<NOFACE; face++) {
+    F = obc[face].get_BCtype();
+    
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    if( pn.nID[face] >= 0 ) continue;
+    
+    if ( F == OBC_IN_OUT ) {
+      
+      // 流入・流出の方向を決定
+      switch (face) {
+        case X_MINUS:
+        case Y_MINUS:
+        case Z_MINUS:
+          obc[face].Face_inout = ( C->V_Dface[face] >= 0.0 ) ? ALT_IN : ALT_OUT;
+          break;
+          
+        case X_PLUS:
+        case Y_PLUS:
+        case Z_PLUS:
+          obc[face].Face_inout = ( C->V_Dface[face] <  0.0 ) ? ALT_IN : ALT_OUT;
+          break;
+      }
+      
+      // OBC_MASKをセット
+      flip_ObcMask(face, bv, obc[face].Face_inout);
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
+ @brief 外部境界に接するセルにおいて，bv[]にビットフラグをセットする
+ @param face 外部境界面番号
+ @param bv BCindex V
+ @param flag 流入か流出のフラグ
+ */
+void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
+{
+  int i, j, k;
+  unsigned m;
+  unsigned register s;
+  
+  switch (face) {
+    case X_MINUS:
+      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+        for (k=1; k<=kxc; k++) {
+          for (j=1; j<=jxc; j++) {
+            m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
+            s = bv[m];
+            
+            if ( IS_FLUID(s) ) {
+              if ( flag == ALT_OUT ) {
+                s |=  (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
+              }
+              else {
+                s &= ~(OBC_MASK << BC_FACE_W); // Wの5ビットをクリアする
+              }
+              bv[m]= s;
+            }
+          }
+        }        
+      }
+      break;
+      
+    case X_PLUS:
+      if( pn.nID[X_PLUS] < 0 ){
+        for (k=1; k<=kxc; k++) {
+          for (j=1; j<=jxc; j++) {
+            m = FBUtility::getFindexS3D(size, guide, ixc  , j, k);
+            s = bv[m];
+            
+            if ( IS_FLUID(s) ) {
+              if ( flag == ALT_OUT ) {
+                s |= (OBC_MASK << BC_FACE_E);
+              }
+              else {
+                s &= ~(OBC_MASK << BC_FACE_E);
+              }
+              bv[m]= s;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Y_MINUS:
+      if( pn.nID[Y_MINUS] < 0 ){
+        for (k=1; k<=kxc; k++) {
+          for (i=1; i<=ixc; i++) {
+            m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
+            s = bv[m];
+            
+            if ( IS_FLUID(s) ) {
+              if ( flag == ALT_OUT ) {
+                s |= (OBC_MASK << BC_FACE_S);
+              }
+              else {
+                s &= ~(OBC_MASK << BC_FACE_S);
+              }
+              bv[m]= s;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Y_PLUS:
+      if( pn.nID[Y_PLUS] < 0 ){
+        for (k=1; k<=kxc; k++) {
+          for (i=1; i<=ixc; i++) {
+            m = FBUtility::getFindexS3D(size, guide, i, jxc  , k);
+            s = bv[m];
+            
+            if ( IS_FLUID(s) ) {
+              if ( flag == ALT_OUT ) {
+                s |= (OBC_MASK << BC_FACE_N);
+              }
+              else {
+                s &= ~(OBC_MASK << BC_FACE_N);
+              }
+              bv[m]= s;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Z_MINUS:
+      if( pn.nID[Z_MINUS] < 0 ){
+        for (j=1; j<=jxc; j++) {
+          for (i=1; i<=ixc; i++) {
+            m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
+            s = bv[m];
+            
+            if ( IS_FLUID(s) ) {
+              if ( flag == ALT_OUT ) {
+                s |= (OBC_MASK << BC_FACE_B);
+              }
+              else {
+                s &= ~(OBC_MASK << BC_FACE_B);
+              }
+              bv[m]= s;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Z_PLUS:
+      if( pn.nID[Z_PLUS] < 0 ){
+        for (j=1; j<=jxc; j++) {
+          for (i=1; i<=ixc; i++) {
+            m = FBUtility::getFindexS3D(size, guide, i, j, kxc  );
+            s = bv[m];
+            
+            if ( IS_FLUID(s) ) {
+              if ( flag == ALT_OUT ) {
+                s |= (OBC_MASK << BC_FACE_T);
+              }
+              else {
+                s &= ~(OBC_MASK << BC_FACE_T);
+              }
+              bv[m]= s;
+            }
+          }
+        }
+      }
+      break;
+  } // end of switch
+  
+}
+
+/**
+ @fn void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
+ @brief セルに対する温度の内部境界をセットする
+ @param t 温度
+ @param bh2 BCindex H2
+ @param dt 時間積分幅
+ @param flop 浮動小数演算数
+ */
+void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
+{
+  for (unsigned n=1; n<=NoBC; n++) {
+    
+    switch ( cmp[n].getType() ) {
+      case HEAT_SRC:
+        cmp[n].set_Mon_Calorie( ps_IBC_HeatGen_SM(t, bh2, n, dt, flop) );
+        break;
+        
+      case CNST_TEMP:
+        ps_IBC_ConstTemp(t, bh2, n);
+        break;
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
+ @brief 速度ベクトルの内部周期境界条件処理
+ @param d_v 速度ベクトルのデータクラス
+ @param d_bd BCindex ID
+ */
+void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
+{
+  REAL_TYPE *v=NULL;
+  if ( !(v = d_v->GetData()) ) Exit(0);
+  
+  int st[3], ed[3];
+  
+  for (int n=1; n<=NoBC; n++) {
+    cmp[n].getBbox(st, ed);
+    
+    if ( cmp[n].getType() == PERIODIC ) {
+      Vibc_Prdc(d_v, st, ed, d_bd, n, (int)cmp[n].getPeriodicDir());
+    }    
+  }
+}
+
+/**
+ @fn void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, SklScalar3D<unsigned>* d_bd, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+ @brief 速度ベクトルの内部境界条件処理(タイムステップに一度)
+ @param v 速度ベクトル
+ @param bv BCindex V
+ @param tm
+ @param v00
+ @param flop
+ @param isCDS (false-CBC, true-CDS)
+ */
+void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+{
+  int st[3], ed[3];
+  REAL_TYPE vec[3];
+  
+  if ( !isCDS ) { // Binary
+    for (int n=1; n<=NoBC; n++) {
+      cmp[n].getBbox(st, ed);
+      
+      switch ( cmp[n].getType() ) {
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          extractVel_IBC(n, vec, tm, v00, flop);
+          cbc_vibc_drchlt_(v, dim_sz, gc, st, ed, v00, (int*)bv, &n, vec);
+          break;
+          
+        case OUTFLOW:
+          cbc_vibc_outflow_(v, dim_sz, gc, st, ed, (int*)bv, &n);
+          break;
+          
+        default:
+          break;
+      }  
+    }
+  }
+  else { // Cut-Distance
+    ;
+  }
+  
+  
+}
+
+/**
+ @fn void SetBC3D::InnerTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
+ @brief 拡散部分に関する温度の内部境界処理
+ @param qbc 境界条件熱流束
+ @param bh1 BCindex H1
+ @param t n+1時刻の温度場
+ @param t0 温度
+ @param flop 浮動小数演算数
+ @note 内部境界の断熱BCは断熱マスクで処理
+ */
+void SetBC3D::InnerTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
+{
+  unsigned F, H;
+  
+  for (unsigned n=1; n<=NoBC; n++) {
+    F = cmp[n].getType();
+    
+    switch ( F ) {
+      case HEATFLUX:
+        cmp[n].set_Mon_Heatflux( ps_IBC_Heatflux(qbc, bh1, n, flop) );
+        break;
+        
+      case TRANSFER:
+        H = cmp[n].getHtype();
+        //if      ( H == HT_N)  cmp[n].cmp[n].set_Mon_Calorie( setHeatTransferN_SM(qbc, t, bx, n, t0, flop) );
+        if      ( H == HT_S)  cmp[n].set_Mon_Calorie( ps_IBC_Transfer_S_SM (qbc, bh1, n, t, t0, flop) );
+        else if ( H == HT_SN) cmp[n].set_Mon_Calorie( ps_IBC_Transfer_SN_SM(qbc, bh1, n, t, t0, flop) );
+        else if ( H == HT_SF) cmp[n].set_Mon_Calorie( ps_IBC_Transfer_SF_SM(qbc, bh1, n, t, t0, flop) );
+        else if ( H == HT_B)  cmp[n].set_Mon_Calorie( ps_IBC_Transfer_B_SM (qbc, bh1, n, t, t0, flop) );
+        break;
+        
+      case ISOTHERMAL:
+        cmp[n].set_Mon_Calorie( ps_IBC_IsoThermal_SM(qbc, bh1, n, t, t0, flop) );
+        break;
+        
+      case RADIANT:
+        //setRadiant(qbc, bx, n, t0);
+        break;
+    }    
+  }
+}
+
+/**
+ @fn void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd)
+ @brief 圧力の内部境界条件処理
+ @param d_p 圧力のデータクラス
+ @param d_bcd BCindex ID
+ */
+void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd)
+{
+  int dir;
+  int st[3], ed[3];
+  REAL_TYPE pv;
+  
+  for (unsigned n=1; n<=NoBC; n++) {
+    cmp[n].getBbox(st, ed);
+    dir = (int)cmp[n].getPeriodicDir();
+    pv = FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, rho, RefV, Unit_Prs);
+    
+    if ( cmp[n].getType() == PERIODIC ) {
+      Pibc_Prdc(d_p, st, ed, d_bcd, n, dir, pv);
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
+ @brief 速度境界条件による速度の発散の修正ほか
+ @param div div((u)*(-h/dt)
+ @param bv BCindex V
+ @param coef 係数 h/dt
+ @param tm 無次元時刻
+ @param v00
+ @param avr 平均値計算のテンポラリ値
+ @param flop
+ @param isCDS (false-CBC, true-CDS)
+ @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
+ */
+void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
+{
+  REAL_TYPE vec[3], dummy;
+  int st[3], ed[3];
+  unsigned typ=0;
+  
+  // 内部境界条件による修正
+  if ( !isCDS ) { // Binary
+    for (int n=1; n<=NoBC; n++) {
+      typ = cmp[n].getType();
+      
+      cmp[n].getBbox(st, ed);
+      
+      switch (typ) {
+        case OUTFLOW:
+          cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, avr, &flop);
+          break;
+          
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
+          cbc_div_ibc_drchlt_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, vec, &flop);
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  else { // Cut-Distance
+    ;
+  }
+  
+  
+  // 外部境界条件による修正
+  for (int face=0; face<NOFACE; face++) {
+    typ = obc[face].get_BCtype();
+    
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    if( pn.nID[face] >= 0 ) {
+      vec[0] = 0.0;   // sum
+      vec[1] = 1.0e6; // min
+      vec[2] =-1.0e6; // max
+      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく
+      continue;
+    }
+    
+    switch (typ) {
+      case OBC_OUTFLOW:
+      case OBC_TRC_FREE:
+      case OBC_IN_OUT:
+        cbc_div_obc_oflow_vec_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop); // vecは流用
+        obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
+        break;
+        
+      case OBC_SPEC_VEL:
+      case OBC_WALL:
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        obc[face].set_DomainV(vec, face); // 速度の形式
+        break;
+        
+      case OBC_SYMMETRIC:
+        vec[0] = vec[1] = vec[2] = 0.0;
+        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        obc[face].set_DomainV(vec, face); // 速度の形式
+        break;
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE dt, REAL_TYPE &flop)
+ @brief 圧力損失部による疑似速度方向の修正
+ @param[in/out] vc 疑似速度ベクトル
+ @param[in] v 速度ベクトル n-step
+ @param bd BCindex ID
+ @param cvf コンポーネントの体積率
+ @param v00 参照速度
+ @param dt 時間積分幅
+ @param[in/out] flop
+ */
+void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE dt, REAL_TYPE &flop)
+{
+  int st[3], ed[3];
+  REAL_TYPE vec[3];
+  
+  for (unsigned n=1; n<=NoBC; n++) {
+    vec[0] = cmp[n].nv[0];
+    vec[1] = cmp[n].nv[1];
+    vec[2] = cmp[n].nv[2];
+    
+    cmp[n].getBbox(st, ed);
+    
+    switch ( cmp[n].getType() ) {
+      case HEX:
+        cbc_hex_force_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dt, vec, &cmp[n].ca[0], &flop);
+        cbc_hex_dir_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, (int*)&n, v00, vec, &flop);
+        break;
+        
+      case FAN:
+        Exit(0);
+        break;
+        
+      case DARCY:
+        Exit(0);
+        break;
+        
+      default:
+        break;
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE coef, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部によるPoisosn式のソース項の修正 \gamma^F
  @param[out] src 外力項によるPoisson方程式のソース項
- @param v セルセンター速度ベクトル n+1
+ @param v 速度ベクトル n+1
  @param bd BCindex ID
  @param cvf コンポーネントの体積率
- @param C コントロールクラスのポインタ
- @param v00
+ @param coef 係数 dh/dt
+ @param v00 参照速度
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE coef, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -145,7 +732,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_psrc_hex_(src, dim_sz, gc, st, ed, &dh, (int*)bd, cvf, (int*)&n, v00, vec, &cmp[n].ca[0], v, &flop);
+        cbc_hex_psrc_(src, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &coef, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:
@@ -163,66 +750,23 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
 }
 
 /**
- @fn void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
- @brief 圧力損失部による疑似速度方向の修正
- @param[in/out] vc セルセンターの疑似速度
- @param bd BCindex ID
- @param cvf コンポーネントの体積率
- @param C コントロールクラスのポインタ
- @param v00 
- @param[out] flop
- */
-void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, unsigned* bd, float* cvf, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
-{
-  int st[3], ed[3];
-  REAL_TYPE vec[3];
-  
-  for (unsigned n=1; n<=NoBC; n++) {
-    vec[0] = cmp[n].nv[0];
-    vec[1] = cmp[n].nv[1];
-    vec[2] = cmp[n].nv[2];
-
-    cmp[n].getBbox(st, ed);
-    
-    switch ( cmp[n].getType() ) {
-      case HEX:
-        cbc_pvec_hex_(vc, dim_sz, gc, st, ed, (int*)bd, (int*)&n, cvf, v00, vec, &flop);
-        break;
-        
-      case FAN:
-        Exit(0);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE coef, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
+ @fn void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE &flop)
  @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
  @param[in/out] v セルセンターの速度
  @param bd BCindex ID
  @param cvf コンポーネントの体積率
- @param div div((u)*(-h/dt)
- @param coef 係数 h/dt
- @param C コントロールクラスのポインタ
+ @param div div((u)*(dh/dt)
  @param dt 時間積分幅
- @param v00
+ @param dh 格子幅
+ @param v00 参照速度
+ @param vm モニター用配列
  @param[out] flop
- @todo 同期は外に出す
  */
-void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE coef, Control* C, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE &flop)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int st[3], ed[3];
   REAL_TYPE vec[3];
-  REAL_TYPE vm[2]; // モニター用
+  REAL_TYPE coef = dh/dt;
   
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isFORCING() ) {
@@ -235,7 +779,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
       
       switch ( cmp[n].getType() ) {
         case HEX:
-          cbc_update_hex_(v, dim_sz, gc, st, ed, &dt, (int*)bd, (int*)&n, v00, vec, &cmp[n].ca[0], vm, &flop);
+          cbc_hex_force_vec_(v, div, dim_sz, gc, st, ed, (int*)bd, cvf, (int*)&n, v00, &dt, &dh, vec, &cmp[n].ca[0], am, &flop);
           break;
           
         case FAN:
@@ -249,18 +793,204 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
         default:
           break;
       }
-      
-      if ( para_mng->IsParallel() ) {
-        REAL_TYPE c_tmp[2];
-        c_tmp[0] = vm[0];
-        c_tmp[1] = vm[1];
-        para_mng->Allreduce(c_tmp, vm, 2, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-      }
-      vm[0] /= (REAL_TYPE)cmp[n].getElement();
-      vm[1] /= (REAL_TYPE)cmp[n].getElement();
-      cmp[n].val[var_Velocity] = vm[0]; // 平均速度
-      cmp[n].val[var_Pressure] = vm[1]; // 平均圧力損失量
     }
+  }
+}
+
+/**
+ @fn void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, SKL_RAEL* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+ @brief 速度境界条件による流束の修正
+ @param[in/out] wv 疑似ベクトル
+ @param v 速度ベクトル u^n
+ @param bv BCindex V
+ @param tm 無次元時刻
+ @param C
+ @param v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
+ @param v00
+ @param[out] flop
+ @param isCDS (false-CBC, true-CDS)
+ */
+void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+{
+  REAL_TYPE vec[3];
+  int st[3], ed[3], order;
+  unsigned typ;
+  
+  // 内部境界（流束形式）
+  if ( !isCDS ) { // Binary
+    for (int n=1; n<=NoBC; n++) {
+      
+      if( cmp[n].isEns() ) {
+        typ = cmp[n].getType();
+        cmp[n].getBbox(st, ed);
+        
+        if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
+          extractVel_IBC(n, vec, tm, v00, flop);
+          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop);
+        }
+        else if ( typ==OUTFLOW ) {
+          vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
+          cbc_pvec_vibc_oflow_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop);
+        }      
+      }
+    }
+  }
+  else { // Cut-Distance
+    ;
+  }
+  
+  
+  // 流束形式の外部境界条件
+  for (int face=0; face<NOFACE; face++) {
+    typ = obc[face].get_BCtype();
+    
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    if( pn.nID[face] >= 0 ) continue;
+    
+    switch ( typ ) {
+      case OBC_SPEC_VEL:
+        extractVel_OBC(face, vec, tm, v00, flop);
+        cbc_pvec_vobc_specv_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        break;
+        
+      case OBC_WALL:
+        extractVel_OBC(face, vec, tm, v00, flop);
+        cbc_pvec_vobc_wall_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        break;
+        
+      case OBC_SYMMETRIC:
+        cbc_pvec_vobc_symtrc_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        break;
+        
+      case OBC_OUTFLOW:
+        vec[0] = vec[1] = vec[2] = C->V_Dface[face];
+        cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        break;
+        
+      case OBC_IN_OUT:
+        if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
+          vec[0] = vec[1] = vec[2] = C->V_Dface[face];
+          cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        }
+        break;
+    }
+  }
+  
+}
+
+/**
+ @fn void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
+ @brief 速度境界条件によるPoisosn式のソース項の修正
+ @param[out] div divergence field
+ @param vc セルセンタ疑似速度
+ @param v0 セルセンタ速度 u^n
+ @param coef 係数
+ @param bv BCindex V
+ @param tm 
+ @param dt
+ @param C
+ @param v00
+ @param[out] flop
+ @param isCDS (false-CBC, true-CDS)
+ */
+void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
+{
+  int st[3], ed[3];
+  REAL_TYPE vec[3], dummy, vel;
+  unsigned typ;
+  
+  // 内部境界条件による修正
+  if ( !isCDS ) { // Binary
+    for (int n=1; n<=NoBC; n++) {
+      typ = cmp[n].getType();
+      cmp[n].getBbox(st, ed);
+      
+      switch (typ) {
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          dummy = extractVel_IBC(n, vec, tm, v00, flop);
+          cbc_div_ibc_drchlt_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, vec, &flop);
+          break;
+          
+        case OUTFLOW:
+          vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
+          cbc_div_ibc_oflow_pvec_(div, dim_sz, gc, st, ed, v00, &vel, &coef, (int*)bv, &n, v0, &flop);
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  else { // Cut-Distance
+    ;
+  }
+  
+  
+  // 外部境界条件による修正
+  for (int face=0; face<NOFACE; face++) {
+    typ = obc[face].get_BCtype();
+    
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    if( pn.nID[face] >= 0 ) continue;
+    
+    switch ( typ ) {
+      case OBC_SPEC_VEL:
+      case OBC_WALL:
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        break;
+        
+      case OBC_SYMMETRIC:
+        vec[0] = vec[1] = vec[2] = 0.0;
+        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        break;
+        
+      case OBC_OUTFLOW:
+        vel = C->V_Dface[face] * dt / dh;
+        cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
+        break;
+        
+      case OBC_IN_OUT:
+        if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
+          vel = C->V_Dface[face] * dt / dh;
+          cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
+        }
+        break;
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop)
+ @brief Euler陽解法のときの速度境界条件による粘性項の修正
+ @param[out] vc 疑似ベクトル
+ @param v0 コロケートの速度ベクトル (n step)
+ @param cf 係数
+ @param bx BCindex for V
+ @param tm 無次元時刻
+ @param dt 時間積分幅
+ @param v00
+ @param[out] flop
+ @todo symmetricのときの修正
+ */
+void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop)
+{
+  int st[3], ed[3];
+  REAL_TYPE vec[3], dummy;
+  unsigned typ;
+  
+  for (int n=1; n<=NoBC; n++) {
+    typ = cmp[n].getType();
+    if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
+      dummy = extractVel_IBC(n, vec, tm, v00, flop);
+    }
+    else if ( typ==OUTFLOW ) {
+      vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity];
+    }
+    
+    cmp[n].getBbox(st, ed);
+    cbc_vis_ee_vbc_(vc, dim_sz, gc, st, ed, &dh, &dt, v00, &rei, v0, (int*)bx, &n, &cf, vec, &flop);
   }
 }
 
@@ -310,6 +1040,186 @@ void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
           cbc_pobc_drchlt_ (p, dim_sz, gc, &face, &pv);
         }
       }
+    }
+  }
+}
+
+/**
+ @fn void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
+ @brief 速度の外部境界条件処理
+ @param d_v 速度ベクトルのデータクラス
+ */
+void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
+{
+  REAL_TYPE *v=NULL;
+  if ( !(v = d_v->GetData()) ) Exit(0);
+  
+  for (int face=0; face<NOFACE; face++) {
+    
+    if ( obc[face].get_BCtype() == OBC_PERIODIC ) {
+      unsigned pm = obc[face].get_PrdcMode();
+      if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional)) { // BoundaryOuter::prdc_Driverに対しては処理不要
+        Vobc_Prdc(d_v, face, guide); // セルフェイスの値の周期処理は不要
+      }
+    }
+  }  
+}
+
+/**
+ @fn void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
+ @brief 速度の外部境界条件処理(タイムステップに一度)
+ @param[out] v 速度ベクトル v^{n+1}
+ @param vc 速度ベクトル v^*
+ @param bv BCindex V
+ @param tm
+ @param dt 
+ @param C
+ @param v00
+ @param flop
+ */
+void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
+{
+  REAL_TYPE vec[3];
+  REAL_TYPE v_cnv;
+  
+  for (int face=0; face<NOFACE; face++) {
+
+    if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    // @note ここでスキップする場合には，tfreeの処理でMPI通信をしないこと（参加しないノードがあるためエラーとなる）
+    
+    switch ( obc[face].get_BCtype() ) {
+      case OBC_OUTFLOW:
+        cbc_vobc_update_(v, dim_sz, gc, vc, &face);
+        break;
+        
+      case OBC_SPEC_VEL:
+        extractVel_OBC(face, vec, tm, v00, flop);
+        cbc_vobc_drchlt_(v, dim_sz, gc, v00, (int*)bv, &face, vec);
+        break;
+        
+      case OBC_TRC_FREE:
+        cbc_vobc_tfree_(v, dim_sz, gc, &face, (int*)bv, v00, &flop);
+        break;
+        
+      case OBC_IN_OUT:
+        if ( obc[face].Face_inout == ALT_IN ) {
+          cbc_vobc_tfree_(v, dim_sz, gc, &face, (int*)bv, v00, &flop);
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+  }  
+}
+
+/**
+ @fn void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
+ @brief 疑似速度の外部境界条件処理
+ @param[out] vc 疑似速度ベクトル v^*
+ @param v0 速度ベクトル v^n
+ @param bv BCindex V
+ @param tm
+ @param dt 
+ @param C
+ @param v00
+ @param flop
+ */
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
+{
+  REAL_TYPE v_cnv;
+  
+  for (int face=0; face<NOFACE; face++) {
+    
+    if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
+    
+    switch ( obc[face].get_BCtype() ) {
+      case OBC_OUTFLOW:
+        v_cnv = C->V_Dface[face] * dt / dh;
+        cbc_vobc_outflow_(vc, dim_sz, gc, &v_cnv, (int*)bv, &face, v0, &flop);
+        break;
+    }
+    
+  }  
+}
+
+/**
+ @fn void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
+ @brief 温度の外部境界条件処理の分岐
+ @param d_t 温度のデータクラス
+ @note 
+    - 対流フェイズに関する境界条件はps_Convection_BC()，本メソッドは周期境界と拡散フェイズに関するもの
+    - OBC_SYMMETRICは，断熱マスクで処理するため，不要
+ */
+void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
+{
+  unsigned F=0;
+  REAL_TYPE *t=NULL;
+  
+  if ( !(t = d_t->GetData()) ) Exit(0);
+  
+  for (int face=0; face<NOFACE; face++) {
+    F = obc[face].get_BCtype();
+
+    // 周期境界条件
+    if ( F == OBC_PERIODIC ) {
+      
+      switch ( obc[face].get_PrdcMode() ) {
+        case BoundaryOuter::prdc_Simple:
+        case BoundaryOuter::prdc_Directional:
+          Tobc_Prdc_Simple(d_t, face);
+          break;
+          
+        case BoundaryOuter::prdc_Driver:
+          // nothing
+          break;
+      }
+    }
+    else { // 周期境界条件以外の処理
+      // 対流項寄与分はps_BC_Convection()に実装
+    }    
+  }
+}
+
+/**
+ @fn void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop)
+ @brief 拡散部分に関する温度の外部部境界処理（固体壁の場合）
+ @param qbc 境界条件熱流束
+ @param bh1 BCindex H1
+ @param t n+1時刻の温度場
+ @param t0 n時刻の温度場
+ @param flop 浮動小数演算数
+ @note 断熱BCは断熱マスクで処理
+ */
+void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop)
+{
+  unsigned H;
+  
+  for (int face=0; face<NOFACE; face++) {
+    
+    // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
+    
+    H = obc[face].get_HTmode();
+    
+    if ( obc[face].get_BCtype() == OBC_WALL ) {
+      switch ( obc[face].get_hType() ) { // 熱境界条件の種類
+        case HEATFLUX:
+          C->H_Dface[face] = ps_OBC_Heatflux(qbc, bh1, face, flop);
+          break;
+          
+        case TRANSFER:
+          if      ( H == HT_S)  C->H_Dface[face] = ps_OBC_HeatTransfer_BS(qbc, bh1, face, t, t0, flop);
+          else if ( H == HT_SN) C->H_Dface[face] = ps_OBC_HeatTransfer_SN(qbc, bh1, face, t, t0, flop);
+          else if ( H == HT_SF) C->H_Dface[face] = ps_OBC_HeatTransfer_SF(qbc, bh1, face, t, t0, flop);
+          else if ( H == HT_B)  C->H_Dface[face] = ps_OBC_HeatTransfer_BS(qbc, bh1, face, t, t0, flop);
+          break;
+          
+        case ISOTHERMAL:
+          C->H_Dface[face] = ps_OBC_IsoThermal(qbc, bh1, face, t, t0, flop);
+          break;
+      }      
     }
   }
 }
@@ -609,326 +1519,121 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
 }
 
 /**
- @fn void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_pt, int face)
- @brief 温度の外部周期境界条件（単純なコピー）
- @param d_t 温度のデータクラス
- @param face 面番号
+ @fn void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
+ @brief 圧力の内部周期境界条件（一方向の圧力差）
+ @param d_p 圧力のデータクラス
+ @param st コンポーネント範囲の開始インデクス
+ @param ed コンポーネント範囲の終了インデクス
+ @param d_bcd BCindex ID
+ @param odr 下流面のidが格納されているコンポーネントエントリ
+ @param dir ドライバの設置方向
+ @param pd 圧力差
  */
-void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
+void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
-  if ( para_mng->IsParallel() ) {
-    unsigned no_comm_face = guide; //通信面数
-    
-    switch (face) {
-      case X_MINUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
-        break;
-        
-      case X_PLUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
-        break;
-        
-      case Y_MINUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
-        break;
-        
-      case Y_PLUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
-        break;
-        
-      case Z_MINUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
-        break;
-        
-      case Z_PLUS:
-        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
-        break;
-    }
+  if( para_mng->IsParallel() ){
+    Hostonly_ printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
+    Exit(0);
   }
-  else { // Serial
-    int i,j,k;
-    unsigned m0, m1;
-    REAL_TYPE* t=NULL;
-    if ( !(t = d_t->GetData()) ) Exit(0);
-    
-    switch (face) {
-      case X_MINUS:
-        if( pn.nID[face] < 0 ) {
-          for (k=1; k<=kxc; k++) {
-            for (j=1; j<=jxc; j++) {
-              m0 = FBUtility::getFindexS3D(size, guide, 0   , j  , k  );
-              m1 = FBUtility::getFindexS3D(size, guide, ixc, j  , k  );
-              t[m0] = t[m1];
+  
+  int i,j,k;
+  unsigned m0, m1, *bx=NULL;
+  REAL_TYPE* p=NULL;
+  
+  if ( !(p = d_p->GetData()) ) Exit(0);
+  if ( !(bx= d_bcd->GetData()) ) Exit(0);
+  
+  switch (dir) {
+    case X_MINUS:
+      if ( pn.nID[dir] < 0 ) {
+        i = st[0];
+        for (k=st[2]; k<=ed[2]; k++) {
+          for (j=st[1]; j<=ed[1]; j++) {
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
+            if ( DECODE_CMP(bx[m1]) == odr ) {
+              m0 = FBUtility::getFindexS3D(size, guide, 0, j, k);
+              p[m0] = p[m1] + pd;
             }
           }
         }
-        break;
-        
-      case X_PLUS:
-        if( pn.nID[face] < 0 ) {
-          for (k=1; k<=kxc; k++) {
-            for (j=1; j<=jxc; j++) {
+      }
+      break;
+      
+    case X_PLUS:
+      if ( pn.nID[dir] < 0 ) {
+        i = st[0];
+        for (k=st[2]; k<=ed[2]; k++) {
+          for (j=st[1]; j<=ed[1]; j++) {
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
+            if ( DECODE_CMP(bx[m1]) == odr ) {
               m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
-              m1 = FBUtility::getFindexS3D(size, guide, 1,      j, k);
-              t[m0] = t[m1];
+              p[m0] = p[m1] + pd;              
             }
           }
         }
-        break;
-        
-      case Y_MINUS:
-        if( pn.nID[face] < 0 ) {
-          for (k=1; k<=kxc; k++) {
-            for (i=1; i<=ixc; i++) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, 0   , k);
-              m1 = FBUtility::getFindexS3D(size, guide, i, jxc, k);
-              t[m0] = t[m1];
+      }
+      break;
+      
+    case Y_MINUS:
+      if ( pn.nID[dir] < 0 ) {
+        j = st[1];
+        for (k=st[2]; k<=ed[2]; k++) {
+          for (i=st[0]; i<=ed[0]; i++) {
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
+            if ( DECODE_CMP(bx[m1]) == odr ) {
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0, k);
+              p[m0] = p[m1] + pd;
             }
           }
         }
-        break;
-        
-      case Y_PLUS:
-        if( pn.nID[face] < 0 ) {
-          for (k=1; k<=kxc; k++) {
-            for (i=1; i<=ixc; i++) {
+      }
+      break;
+      
+    case Y_PLUS:
+      if ( pn.nID[dir] < 0 ) {
+        j = st[1];
+        for (k=st[2]; k<=ed[2]; k++) {
+          for (i=st[0]; i<=ed[0]; i++) {
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
+            if ( DECODE_CMP(bx[m1]) == odr ) {
               m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
-              m1 = FBUtility::getFindexS3D(size, guide, i, 1     , k);
-              t[m0] = t[m1];
+              p[m0] = p[m1] + pd;
             }
           }
         }
-        break;
-        
-      case Z_MINUS:
-        if( pn.nID[face] < 0 ) {
-          for (j=1; j<=jxc; j++) {
-            for (i=1; i<=ixc; i++) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0   );
-              m1 = FBUtility::getFindexS3D(size, guide, i, j, kxc);
-              t[m0] = t[m1];
+      }
+      break;
+      
+    case Z_MINUS:
+      if ( pn.nID[dir] < 0 ) {
+        k = st[2];
+        for (j=st[1]; j<=ed[1]; j++) {
+          for (i=st[0]; i<=ed[0]; i++) {
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
+            if ( DECODE_CMP(bx[m1]) == odr ) {
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0);
+              p[m0] = p[m1] + pd;
             }
           }
         }
-        break;
-        
-      case Z_PLUS:
-        if( pn.nID[face] < 0 ) {
-          for (j=1; j<=jxc; j++) {
-            for (i=1; i<=ixc; i++) {
+      }
+      break;
+      
+    case Z_PLUS:
+      if ( pn.nID[dir] < 0 ) {
+        k = st[2];
+        for (j=st[1]; j<=ed[1]; j++) {
+          for (i=st[0]; i<=ed[0]; i++) {
+            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
+            if ( DECODE_CMP(bx[m1]) == odr ) {
               m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
-              m1 = FBUtility::getFindexS3D(size, guide, i, j, 1     );
-              t[m0] = t[m1];
+              p[m0] = p[m1] + pd;
             }
           }
         }
-        break;
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
- @brief 速度の外部境界条件処理
- @param d_v 速度ベクトルのデータクラス
- */
-void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
-{
-  REAL_TYPE *v=NULL;
-  if ( !(v = d_v->GetData()) ) Exit(0);
-  
-  for (int face=0; face<NOFACE; face++) {
-    
-    if ( obc[face].get_BCtype() == OBC_PERIODIC ) {
-      unsigned pm = obc[face].get_PrdcMode();
-      if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional)) { // BoundaryOuter::prdc_Driverに対しては処理不要
-        Vobc_Prdc(d_v, face, guide); // セルフェイスの値の周期処理は不要
       }
-    }
-  }  
-}
-
-/**
- @fn void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
- @brief 速度の外部境界条件処理(タイムステップに一度)
- @param[out] v 速度ベクトル v^{n+1}
- @param vc 速度ベクトル v^*
- @param bv BCindex V
- @param tm
- @param dt 
- @param C
- @param v00
- @param flop
- */
-void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
-{
-  REAL_TYPE vec[3];
-  REAL_TYPE v_cnv;
-  
-  for (int face=0; face<NOFACE; face++) {
-
-    if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    // @note ここでスキップする場合には，tfreeの処理でMPI通信をしないこと（参加しないノードがあるためエラーとなる）
-    
-    switch ( obc[face].get_BCtype() ) {
-      case OBC_OUTFLOW:
-        cbc_vobc_update_(v, dim_sz, gc, vc, &face);
-        break;
-        
-      case OBC_SPEC_VEL:
-        extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_vobc_drchlt_(v, dim_sz, gc, v00, (int*)bv, &face, vec);
-        break;
-        
-      case OBC_TRC_FREE:
-        cbc_vobc_tfree_(v, dim_sz, gc, &face, (int*)bv, v00, &flop);
-        break;
-        
-      case OBC_IN_OUT:
-        if ( obc[face].Face_inout == ALT_IN ) {
-          cbc_vobc_tfree_(v, dim_sz, gc, &face, (int*)bv, v00, &flop);
-        }
-        break;
-        
-      default:
-        break;
-    }
-    
-  }  
-}
-
-/**
- @fn void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
- @brief 疑似速度の外部境界条件処理
- @param[out] vc 疑似速度ベクトル v^*
- @param v0 速度ベクトル v^n
- @param bv BCindex V
- @param tm
- @param dt 
- @param C
- @param v00
- @param flop
- */
-void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE& flop)
-{
-  REAL_TYPE v_cnv;
-  
-  for (int face=0; face<NOFACE; face++) {
-    
-    if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
-    
-    switch ( obc[face].get_BCtype() ) {
-      case OBC_OUTFLOW:
-        v_cnv = C->V_Dface[face] * dt / dh;
-        cbc_vobc_outflow_(vc, dim_sz, gc, &v_cnv, (int*)bv, &face, v0, &flop);
-        break;
-    }
-    
-  }  
-}
-
-/**
- @fn void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
- @brief 速度ベクトルの内部周期境界条件処理
- @param d_v 速度ベクトルのデータクラス
- @param d_bd BCindex ID
- */
-void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsigned>* d_bd)
-{
-  REAL_TYPE *v=NULL;
-  if ( !(v = d_v->GetData()) ) Exit(0);
-  
-  int st[3], ed[3];
-  
-  for (int n=1; n<=NoBC; n++) {
-    cmp[n].getBbox(st, ed);
-    
-    if ( cmp[n].getType() == PERIODIC ) {
-      Vibc_Prdc(d_v, st, ed, d_bd, n, (int)cmp[n].getPeriodicDir());
-    }    
-  }
-}
-
-/**
- @fn void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, SklScalar3D<unsigned>* d_bd, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
- @brief 速度ベクトルの内部境界条件処理(タイムステップに一度)
- @param v 速度ベクトル
- @param bv BCindex V
- @param tm
- @param v00
- @param flop
- @param isCDS (false-CBC, true-CDS)
- */
-void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
-{
-  int st[3], ed[3];
-  REAL_TYPE vec[3];
-  
-  if ( !isCDS ) { // Binary
-    for (int n=1; n<=NoBC; n++) {
-      cmp[n].getBbox(st, ed);
-      
-      switch ( cmp[n].getType() ) {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_vibc_drchlt_(v, dim_sz, gc, st, ed, v00, (int*)bv, &n, vec);
-          break;
-          
-        case OUTFLOW:
-          cbc_vibc_outflow_(v, dim_sz, gc, st, ed, (int*)bv, &n);
-          break;
-          
-        default:
-          break;
-      }  
-    }
-  }
-  else { // Cut-Distance
-    ;
-  }
-
-
-}
-
-/**
- @fn void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
- @brief 温度の外部境界条件処理の分岐
- @param d_t 温度のデータクラス
- @note 
-    - 対流フェイズに関する境界条件はps_Convection_BC()，本メソッドは周期境界と拡散フェイズに関するもの
-    - OBC_SYMMETRICは，断熱マスクで処理するため，不要
- */
-void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
-{
-  unsigned F=0;
-  REAL_TYPE *t=NULL;
-  
-  if ( !(t = d_t->GetData()) ) Exit(0);
-  
-  for (int face=0; face<NOFACE; face++) {
-    F = obc[face].get_BCtype();
-
-    // 周期境界条件
-    if ( F == OBC_PERIODIC ) {
-      
-      switch ( obc[face].get_PrdcMode() ) {
-        case BoundaryOuter::prdc_Simple:
-        case BoundaryOuter::prdc_Directional:
-          Tobc_Prdc_Simple(d_t, face);
-          break;
-          
-        case BoundaryOuter::prdc_Driver:
-          // nothing
-          break;
-      }
-    }
-    else { // 周期境界条件以外の処理
-      // 対流項寄与分はps_BC_Convection()に実装
-    }    
+      break;
   }
 }
 
@@ -975,113 +1680,6 @@ REAL_TYPE SetBC3D::setDirectForcing(REAL_TYPE* v, unsigned* bx, unsigned n, REAL
 
   return (vel);
 }*/
-
-/**
- @fn void SetBC3D::InnerTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
- @brief 拡散部分に関する温度の内部境界処理
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param t n+1時刻の温度場
- @param t0 温度
- @param flop 浮動小数演算数
- @note 内部境界の断熱BCは断熱マスクで処理
- */
-void SetBC3D::InnerTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop)
-{
-  unsigned F, H;
-  
-  for (unsigned n=1; n<=NoBC; n++) {
-    F = cmp[n].getType();
-    
-    switch ( F ) {
-      case HEATFLUX:
-        cmp[n].set_Mon_Heatflux( ps_IBC_Heatflux(qbc, bh1, n, flop) );
-        break;
-        
-      case TRANSFER:
-        H = cmp[n].getHtype();
-        //if      ( H == HT_N)  cmp[n].cmp[n].set_Mon_Calorie( setHeatTransferN_SM(qbc, t, bx, n, t0, flop) );
-        if      ( H == HT_S)  cmp[n].set_Mon_Calorie( ps_IBC_Transfer_S_SM (qbc, bh1, n, t, t0, flop) );
-        else if ( H == HT_SN) cmp[n].set_Mon_Calorie( ps_IBC_Transfer_SN_SM(qbc, bh1, n, t, t0, flop) );
-        else if ( H == HT_SF) cmp[n].set_Mon_Calorie( ps_IBC_Transfer_SF_SM(qbc, bh1, n, t, t0, flop) );
-        else if ( H == HT_B)  cmp[n].set_Mon_Calorie( ps_IBC_Transfer_B_SM (qbc, bh1, n, t, t0, flop) );
-        break;
-        
-      case ISOTHERMAL:
-        cmp[n].set_Mon_Calorie( ps_IBC_IsoThermal_SM(qbc, bh1, n, t, t0, flop) );
-        break;
-        
-      case RADIANT:
-        //setRadiant(qbc, bx, n, t0);
-        break;
-    }    
-  }
-}
-
-/**
- @fn void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop)
- @brief 拡散部分に関する温度の外部部境界処理（固体壁の場合）
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @param flop 浮動小数演算数
- @note 断熱BCは断熱マスクで処理
- */
-void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYPE* t0, Control* C, REAL_TYPE& flop)
-{
-  unsigned H;
-  
-  for (int face=0; face<NOFACE; face++) {
-    
-    // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
-    
-    H = obc[face].get_HTmode();
-    
-    if ( obc[face].get_BCtype() == OBC_WALL ) {
-      switch ( obc[face].get_hType() ) { // 熱境界条件の種類
-        case HEATFLUX:
-          C->H_Dface[face] = ps_OBC_Heatflux(qbc, bh1, face, flop);
-          break;
-          
-        case TRANSFER:
-          if      ( H == HT_S)  C->H_Dface[face] = ps_OBC_HeatTransfer_BS(qbc, bh1, face, t, t0, flop);
-          else if ( H == HT_SN) C->H_Dface[face] = ps_OBC_HeatTransfer_SN(qbc, bh1, face, t, t0, flop);
-          else if ( H == HT_SF) C->H_Dface[face] = ps_OBC_HeatTransfer_SF(qbc, bh1, face, t, t0, flop);
-          else if ( H == HT_B)  C->H_Dface[face] = ps_OBC_HeatTransfer_BS(qbc, bh1, face, t, t0, flop);
-          break;
-          
-        case ISOTHERMAL:
-          C->H_Dface[face] = ps_OBC_IsoThermal(qbc, bh1, face, t, t0, flop);
-          break;
-      }      
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
- @brief セルに対する温度の内部境界をセットする
- @param t 温度
- @param bh2 BCindex H2
- @param dt 時間積分幅
- @param flop 浮動小数演算数
- */
-void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
-{
-  for (unsigned n=1; n<=NoBC; n++) {
-
-    switch ( cmp[n].getType() ) {
-      case HEAT_SRC:
-        cmp[n].set_Mon_Calorie( ps_IBC_HeatGen_SM(t, bh2, n, dt, flop) );
-        break;
-
-      case CNST_TEMP:
-        ps_IBC_ConstTemp(t, bh2, n);
-        break;
-    }
-  }
-}
 
 /**
  @fn REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* t, unsigned* bh2, int n, REAL_TYPE dt, REAL_TYPE& flop)
@@ -3501,6 +4099,37 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, uns
 }*/
 
 /**
+ @fn void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
+ @brief 初期温度を代入
+ @param n エントリ
+ @param bx BCindex ID
+ @param d_t 
+ */
+void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
+{
+  int i,j,k;
+  unsigned register m, id;
+  REAL_TYPE ref;
+  REAL_TYPE *t=NULL;
+  
+  if ( !(t = d_t->GetData()) ) Exit(0);
+  
+  ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
+  id = cmp[n].getID();
+	
+  for (k=1; k<=kxc; k++) {
+    for (j=1; j<=jxc; j++) {
+      for (i=1; i<=ixc; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        if ( DECODE_ID(bx[m]) == id ) {
+          t[m] = ref; 
+        }
+      }
+    }
+  }
+}
+
+/**
  @fn void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
  @brief 周期境界の場合のインデクスの同期
  @param bx BCindexのデータクラス
@@ -3678,253 +4307,6 @@ void SetBC3D::setRadiant(REAL_TYPE* qbc, unsigned* bx, unsigned n, REAL_TYPE* t)
 }*/
 
 /**
- @fn void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, SKL_RAEL* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
- @brief 速度境界条件による流束の修正
- @param[in/out] wv 疑似ベクトル
- @param v 速度ベクトル u^n
- @param bv BCindex V
- @param tm 無次元時刻
- @param C
- @param v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
- @param v00
- @param[out] flop
- @param isCDS (false-CBC, true-CDS)
- */
-void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
-{
-  REAL_TYPE vec[3];
-  int st[3], ed[3], order;
-  unsigned typ;
-  
-  // 内部境界（流束形式）
-  if ( !isCDS ) { // Binary
-    for (int n=1; n<=NoBC; n++) {
-      
-      if( cmp[n].isEns() ) {
-        typ = cmp[n].getType();
-        cmp[n].getBbox(st, ed);
-        
-        if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
-          extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop);
-        }
-        else if ( typ==OUTFLOW ) {
-          vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
-          cbc_pvec_vibc_oflow_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop);
-        }      
-      }
-    }
-  }
-  else { // Cut-Distance
-    ;
-  }
-
-
-  // 流束形式の外部境界条件
-  for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-    
-    switch ( typ ) {
-      case OBC_SPEC_VEL:
-        extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_pvec_vobc_specv_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
-        break;
-        
-      case OBC_WALL:
-        extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_pvec_vobc_wall_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
-        break;
-        
-      case OBC_SYMMETRIC:
-        cbc_pvec_vobc_symtrc_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
-        break;
-        
-      case OBC_OUTFLOW:
-        vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-        cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
-        break;
-        
-      case OBC_IN_OUT:
-        if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
-          vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-          cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
-        }
-        break;
-    }
-  }
-  
-}
-
-/**
- @fn void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
- @brief 速度境界条件によるPoisosn式のソース項の修正
- @param[out] div divergence field
- @param vc セルセンタ疑似速度
- @param v0 セルセンタ速度 u^n
- @param coef 係数
- @param bv BCindex V
- @param tm 
- @param dt
- @param C
- @param v00
- @param[out] flop
- @param isCDS (false-CBC, true-CDS)
- */
-void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
-{
-  int st[3], ed[3];
-  REAL_TYPE vec[3], dummy, vel;
-  unsigned typ;
-  
-  // 内部境界条件による修正
-  if ( !isCDS ) { // Binary
-    for (int n=1; n<=NoBC; n++) {
-      typ = cmp[n].getType();
-      cmp[n].getBbox(st, ed);
-      
-      switch (typ) {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          dummy = extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_div_ibc_drchlt_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, vec, &flop);
-          break;
-          
-        case OUTFLOW:
-          vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-          cbc_div_ibc_oflow_pvec_(div, dim_sz, gc, st, ed, v00, &vel, &coef, (int*)bv, &n, v0, &flop);
-          break;
-          
-        default:
-          break;
-      }
-    }
-  }
-  else { // Cut-Distance
-    ;
-  }
-
-  
-  // 外部境界条件による修正
-  for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-
-    switch ( typ ) {
-      case OBC_SPEC_VEL:
-      case OBC_WALL:
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
-        break;
-      
-      case OBC_SYMMETRIC:
-        vec[0] = vec[1] = vec[2] = 0.0;
-        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
-        break;
-        
-      case OBC_OUTFLOW:
-        vel = C->V_Dface[face] * dt / dh;
-        cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
-        break;
-        
-      case OBC_IN_OUT:
-        if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
-          vel = C->V_Dface[face] * dt / dh;
-          cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
-        }
-        break;
-    }
-  }
-}
-
-/**
- @fn REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
- @brief コンポーネントから速度境界条件の成分を取り出す
- @param n コンポーネントのインデクス
- @param[out] vec[3] ベクトル成分
- @param tm 時刻
- @param v00
- @param[in/out] flop
- */
-REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
-{
-  REAL_TYPE a, b, vel;
-  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
-  
-  a = cmp[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
-  b = 2.0*c_pai*cmp[n].ca[CompoList::frequency]* RefL/RefV * tm + cmp[n].ca[CompoList::initphase];
-  vel = ( a*sin(b) + cmp[n].ca[CompoList::bias]/RefV ) * v00[0];
-  vec[0] = cmp[n].nv[0] * vel;
-  vec[1] = cmp[n].nv[1] * vel;
-  vec[2] = cmp[n].nv[2] * vel;
-  flop += 14.0;
-
-  return vel;
-}
-
-/**
- @fn REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
- @brief 外部境界条件リストから速度境界条件の成分を取り出す
- @param n コンポーネントのインデクス
- @param[out] vec[3] ベクトル成分
- @param tm 時刻
- @param v00
- @param[in/out] flop
- */
-REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
-{
-  REAL_TYPE a, b, vel;
-  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
-  
-  a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
-  b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * tm + obc[n].ca[CompoList::initphase];
-  vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
-  vec[0] = obc[n].nv[0] * vel;
-  vec[1] = obc[n].nv[1] * vel;
-  vec[2] = obc[n].nv[2] * vel;
-  flop += 14.0;
-
-  return vel;
-}
-
-/**
- @fn void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop)
- @brief Euler陽解法のときの速度境界条件による粘性項の修正
- @param[out] vc 疑似ベクトル
- @param v0 コロケートの速度ベクトル (n step)
- @param cf 係数
- @param bx BCindex for V
- @param tm 無次元時刻
- @param dt 時間積分幅
- @param v00
- @param[out] flop
- @todo symmetricのときの修正
- */
-void SetBC3D::mod_Vis_EE(REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE cf, unsigned* bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE& flop)
-{
-  int st[3], ed[3];
-  REAL_TYPE vec[3], dummy;
-  unsigned typ;
-  
-  for (int n=1; n<=NoBC; n++) {
-    typ = cmp[n].getType();
-    if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
-      dummy = extractVel_IBC(n, vec, tm, v00, flop);
-    }
-    else if ( typ==OUTFLOW ) {
-      vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity];
-    }
-    
-    cmp[n].getBbox(st, ed);
-    cbc_vis_ee_vbc_(vc, dim_sz, gc, st, ed, &dh, &dt, v00, &rei, v0, (int*)bx, &n, &cf, vec, &flop);
-  }
-}
-
-/**
  @fn void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* bx, REAL_TYPE* wk, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE omg, Control* C, REAL_TYPE* res, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief CN法のときの速度境界条件による粘性項の修正
  @param[out] vc pseudo vector
@@ -3999,123 +4381,121 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* b
 }*/
 
 /**
- @fn void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
- @brief 外部境界のIN_OUT境界条件の時のフラグを，流入出の方向に合わせてスイッチする
- @param bv BCindex V
- @param C
+ @fn void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_pt, int face)
+ @brief 温度の外部周期境界条件（単純なコピー）
+ @param d_t 温度のデータクラス
+ @param face 面番号
  */
-void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
+void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
 {
-  unsigned F;
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-  for (int face=0; face<NOFACE; face++) {
-    F = obc[face].get_BCtype();
+  if ( para_mng->IsParallel() ) {
+    unsigned no_comm_face = guide; //通信面数
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-    
-    if ( F == OBC_IN_OUT ) {
-      
-      // 流入・流出の方向を決定
-      switch (face) {
-        case X_MINUS:
-        case Y_MINUS:
-        case Z_MINUS:
-          obc[face].Face_inout = ( C->V_Dface[face] >= 0.0 ) ? ALT_IN : ALT_OUT;
-          break;
-          
-        case X_PLUS:
-        case Y_PLUS:
-        case Z_PLUS:
-          obc[face].Face_inout = ( C->V_Dface[face] <  0.0 ) ? ALT_IN : ALT_OUT;
-          break;
-      }
-      
-      // OBC_MASKをセット
-      flip_ObcMask(face, bv, obc[face].Face_inout);
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
- @brief 速度境界条件による速度の発散の修正ほか
- @param div div((u)*(-h/dt)
- @param bv BCindex V
- @param coef 係数 h/dt
- @param tm 無次元時刻
- @param v00
- @param avr 平均値計算のテンポラリ値
- @param flop
- @param isCDS (false-CBC, true-CDS)
- @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
-*/
-void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
-{
-  REAL_TYPE vec[3], dummy;
-  int st[3], ed[3];
-  unsigned typ=0;
-  
-  // 内部境界条件による修正
-  if ( !isCDS ) { // Binary
-    for (int n=1; n<=NoBC; n++) {
-      typ = cmp[n].getType();
-      
-      cmp[n].getBbox(st, ed);
-      
-      switch (typ) {
-        case OUTFLOW:
-          cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, avr, &flop);
-          break;
-          
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
-          cbc_div_ibc_drchlt_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, vec, &flop);
-          break;
-          
-        default:
-          break;
-      }
-    }
-  }
-  else { // Cut-Distance
-    ;
-  }
-
-  
-  // 外部境界条件による修正
-  for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) {
-      vec[0] = 0.0;   // sum
-      vec[1] = 1.0e6; // min
-      vec[2] =-1.0e6; // max
-      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく
-      continue;
-    }
-    
-    switch (typ) {
-      case OBC_OUTFLOW:
-      case OBC_TRC_FREE:
-      case OBC_IN_OUT:
-        cbc_div_obc_oflow_vec_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop); // vecは流用
-        obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
+    switch (face) {
+      case X_MINUS:
+        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
         break;
         
-      case OBC_SPEC_VEL:
-      case OBC_WALL:
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
-        obc[face].set_DomainV(vec, face); // 速度の形式
+      case X_PLUS:
+        if ( !d_t->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
         break;
         
-      case OBC_SYMMETRIC:
-        vec[0] = vec[1] = vec[2] = 0.0;
-        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
-        obc[face].set_DomainV(vec, face); // 速度の形式
+      case Y_MINUS:
+        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
+        break;
+        
+      case Y_PLUS:
+        if ( !d_t->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
+        break;
+        
+      case Z_MINUS:
+        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
+        break;
+        
+      case Z_PLUS:
+        if ( !d_t->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, no_comm_face) ) Exit(0);
+        break;
+    }
+  }
+  else { // Serial
+    int i,j,k;
+    unsigned m0, m1;
+    REAL_TYPE* t=NULL;
+    if ( !(t = d_t->GetData()) ) Exit(0);
+    
+    switch (face) {
+      case X_MINUS:
+        if( pn.nID[face] < 0 ) {
+          for (k=1; k<=kxc; k++) {
+            for (j=1; j<=jxc; j++) {
+              m0 = FBUtility::getFindexS3D(size, guide, 0   , j  , k  );
+              m1 = FBUtility::getFindexS3D(size, guide, ixc, j  , k  );
+              t[m0] = t[m1];
+            }
+          }
+        }
+        break;
+        
+      case X_PLUS:
+        if( pn.nID[face] < 0 ) {
+          for (k=1; k<=kxc; k++) {
+            for (j=1; j<=jxc; j++) {
+              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
+              m1 = FBUtility::getFindexS3D(size, guide, 1,      j, k);
+              t[m0] = t[m1];
+            }
+          }
+        }
+        break;
+        
+      case Y_MINUS:
+        if( pn.nID[face] < 0 ) {
+          for (k=1; k<=kxc; k++) {
+            for (i=1; i<=ixc; i++) {
+              m0 = FBUtility::getFindexS3D(size, guide, i, 0   , k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, jxc, k);
+              t[m0] = t[m1];
+            }
+          }
+        }
+        break;
+        
+      case Y_PLUS:
+        if( pn.nID[face] < 0 ) {
+          for (k=1; k<=kxc; k++) {
+            for (i=1; i<=ixc; i++) {
+              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
+              m1 = FBUtility::getFindexS3D(size, guide, i, 1     , k);
+              t[m0] = t[m1];
+            }
+          }
+        }
+        break;
+        
+      case Z_MINUS:
+        if( pn.nID[face] < 0 ) {
+          for (j=1; j<=jxc; j++) {
+            for (i=1; i<=ixc; i++) {
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0   );
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, kxc);
+              t[m0] = t[m1];
+            }
+          }
+        }
+        break;
+        
+      case Z_PLUS:
+        if( pn.nID[face] < 0 ) {
+          for (j=1; j<=jxc; j++) {
+            for (i=1; i<=ixc; i++) {
+              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
+              m1 = FBUtility::getFindexS3D(size, guide, i, j, 1     );
+              t[m0] = t[m1];
+            }
+          }
+        }
         break;
     }
   }
@@ -4356,29 +4736,6 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
 }
 
 /**
- @fn void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd)
- @brief 圧力の内部境界条件処理
- @param d_p 圧力のデータクラス
- @param d_bcd BCindex ID
- */
-void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd)
-{
-  int dir;
-  int st[3], ed[3];
-  REAL_TYPE pv;
-  
-  for (unsigned n=1; n<=NoBC; n++) {
-    cmp[n].getBbox(st, ed);
-    dir = (int)cmp[n].getPeriodicDir();
-    pv = FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, rho, RefV, Unit_Prs);
-    
-    if ( cmp[n].getType() == PERIODIC ) {
-      Pibc_Prdc(d_p, st, ed, d_bcd, n, dir, pv);
-    }
-  }
-}
-
-/**
  @fn void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
  @brief 速度の内部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
@@ -4528,370 +4885,3 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
   }
 }
 
-/**
- @fn void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
- @brief 圧力の内部周期境界条件（一方向の圧力差）
- @param d_p 圧力のデータクラス
- @param st コンポーネント範囲の開始インデクス
- @param ed コンポーネント範囲の終了インデクス
- @param d_bcd BCindex ID
- @param odr 下流面のidが格納されているコンポーネントエントリ
- @param dir ドライバの設置方向
- @param pd 圧力差
- */
-void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if( para_mng->IsParallel() ){
-    Hostonly_ printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
-    Exit(0);
-  }
-  
-  int i,j,k;
-  unsigned m0, m1, *bx=NULL;
-  REAL_TYPE* p=NULL;
-  
-  if ( !(p = d_p->GetData()) ) Exit(0);
-  if ( !(bx= d_bcd->GetData()) ) Exit(0);
-  
-  switch (dir) {
-    case X_MINUS:
-      if ( pn.nID[dir] < 0 ) {
-        i = st[0];
-        for (k=st[2]; k<=ed[2]; k++) {
-          for (j=st[1]; j<=ed[1]; j++) {
-            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
-            if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = FBUtility::getFindexS3D(size, guide, 0, j, k);
-              p[m0] = p[m1] + pd;
-            }
-          }
-        }
-      }
-      break;
-      
-    case X_PLUS:
-      if ( pn.nID[dir] < 0 ) {
-        i = st[0];
-        for (k=st[2]; k<=ed[2]; k++) {
-          for (j=st[1]; j<=ed[1]; j++) {
-            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
-            if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = FBUtility::getFindexS3D(size, guide, ixc+1, j, k);
-              p[m0] = p[m1] + pd;              
-            }
-          }
-        }
-      }
-      break;
-      
-    case Y_MINUS:
-      if ( pn.nID[dir] < 0 ) {
-        j = st[1];
-        for (k=st[2]; k<=ed[2]; k++) {
-          for (i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
-            if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, 0, k);
-              p[m0] = p[m1] + pd;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Y_PLUS:
-      if ( pn.nID[dir] < 0 ) {
-        j = st[1];
-        for (k=st[2]; k<=ed[2]; k++) {
-          for (i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
-            if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, jxc+1, k);
-              p[m0] = p[m1] + pd;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Z_MINUS:
-      if ( pn.nID[dir] < 0 ) {
-        k = st[2];
-        for (j=st[1]; j<=ed[1]; j++) {
-          for (i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
-            if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, j, 0);
-              p[m0] = p[m1] + pd;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Z_PLUS:
-      if ( pn.nID[dir] < 0 ) {
-        k = st[2];
-        for (j=st[1]; j<=ed[1]; j++) {
-          for (i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(size, guide, i, j, k);
-            if ( DECODE_CMP(bx[m1]) == odr ) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, j, kxc+1);
-              p[m0] = p[m1] + pd;
-            }
-          }
-        }
-      }
-      break;
-  }
-}
-
-/**
- @fn void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
- @brief 速度指定境界条件に必要な参照速度をセットする
- @param v セルセンタ速度ベクトル (n step)
- @param bv BCindex V
- @param tm 無次元時刻
- @param v00
- @param clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
- */
-void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
-{
-  REAL_TYPE flop, vec[3];
-  int st[3], ed[3];
-  unsigned typ;
-
-  // 内部境界条件による修正
-  for (int n=1; n<=NoBC; n++) {
-    typ = cmp[n].getType();
-
-    cmp[n].getBbox(st, ed);
-    
-    switch (typ) {
-      case SPEC_VEL:
-      case SPEC_VEL_WH:
-        if ( !clear ) {
-          extractVel_IBC(n, vec, tm, v00, flop);
-        }
-        else {
-          vec[0] = vec[1] = vec[2] = 0.0;
-        }
-        cbc_vibc_drchlt_(v, dim_sz, gc, st, ed, v00, (int*)bv, &n, vec);
-        break;
-    }
-  }
-  
-  // 外部境界条件
-  for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
-    getOuterLoopIdx(face, st, ed);
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-    
-    if ( typ == OBC_SPEC_VEL ) {
-      if ( !clear ) {
-        extractVel_OBC(face, vec, tm, v00, flop);
-      }
-      else {
-        vec[0] = vec[1] = vec[2] = 0.0;
-      }
-      cbc_vobc_drchlt_(v, dim_sz, gc, v00, (int*)bv, &face, vec);
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
- @brief 外部境界に接するセルにおいて，bv[]にビットフラグをセットする
- @param face 外部境界面番号
- @param bv BCindex V
- @param flag 流入か流出のフラグ
- */
-void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
-{
-  int i, j, k;
-  unsigned m;
-  unsigned register s;
-  
-  switch (face) {
-    case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
-        for (k=1; k<=kxc; k++) {
-          for (j=1; j<=jxc; j++) {
-            m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |=  (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_W); // Wの5ビットをクリアする
-              }
-              bv[m]= s;
-            }
-          }
-        }        
-      }
-      break;
-      
-    case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
-        for (k=1; k<=kxc; k++) {
-          for (j=1; j<=jxc; j++) {
-            m = FBUtility::getFindexS3D(size, guide, ixc  , j, k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_E);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_E);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
-        for (k=1; k<=kxc; k++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_S);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_S);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
-        for (k=1; k<=kxc; k++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, jxc  , k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_N);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_N);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
-        for (j=1; j<=jxc; j++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_B);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_B);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
-        for (j=1; j<=jxc; j++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, j, kxc  );
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_T);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_T);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-  } // end of switch
-
-}
-
-/**
- @fn void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
- @brief 温度指定境界条件に必要な温度をセットする
- @param t 温度場
- @param bh BCindex H1
- @param tm 無次元時刻
- @param C
- */
-void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
-{
-  REAL_TYPE flop, tc;
-  int st[3], ed[3];
-  unsigned typ;
-  
-  // 内部境界条件による修正
-  for (unsigned n=1; n<=NoBC; n++) {
-    typ = cmp[n].getType();
-
-    cmp[n].getBbox(st, ed);
-    
-    switch (typ) {
-      case SPEC_VEL_WH:
-        tc  = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
-        cbc_hbc_drchlt_(t, dim_sz, gc, st, ed, (int*)bh1, (int*)&n, &tc);
-        break;
-    }
-  }
-  /*
-  // 外部境界条件
-  int n = OBC_MASK;
-  for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
-    getOuterLoopIdx(face, st, ed);
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-    
-    if ( typ == OBC_SPEC_VEL ) {
-      if ( !clear ) {
-        extractVel_OBC(face, vec, tm, flop);
-      }
-      else {
-        vec[0] = v00[1];
-        vec[1] = v00[2];
-        vec[2] = v00[3];
-      }
-      cbc_vbc_drchlt_cc_(v, dim_sz, gc, st, ed, v00, (int*)bv, &n, vec);
-    }
-  }*/
-}

@@ -94,7 +94,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) {
     if( !(abf = dc_abf->GetData()) )  Exit(0);
   }
-  
+  mark();
   // コンポーネントの体積率
   if ( C.isVfraction() ) {
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
@@ -124,7 +124,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
   
-  
+  mark();
   
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
@@ -224,7 +224,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_2, 0.0);
   // <<< Fractional step subsection 2
   
-  
+  mark();
   
   // >>> Fractional step sub-section 3
   TIMING_start(tm_frctnl_stp_sct_3);
@@ -233,7 +233,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   if ( C.isForcing() == ON ) {
     TIMING_start(tm_forcing);
     flop_count = 0.0;
-    BC.mod_Pvec_Forcing(vc, bcd, cvf, &C, v00, flop_count);
+    BC.mod_Pvec_Forcing(vc, v, bcd, cvf, v00, dt, flop_count);
     TIMING_stop(tm_forcing, flop_count);
   }
   
@@ -264,7 +264,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_3, 0.0);
   // <<< Fractional step subsection 3
   
-  
+  mark();
   
   // >>> Fractional step sub-section 4
   TIMING_start(tm_frctnl_stp_sct_4);
@@ -340,7 +340,6 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // <<< Poisson Source section
   
   
-  
   // VP-Iteration
   // >>> Poisson Iteration section
   TIMING_start(tm_poi_itr_sct);
@@ -352,7 +351,6 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   }
   
   for (ICp->LoopCount=0; ICp->LoopCount< ICp->get_ItrMax(); ICp->LoopCount++) {
-    
     
     
     // >>> Poisson Iteration subsection 1
@@ -367,7 +365,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     if ( C.isForcing() == ON ) {
       TIMING_start(tm_force_src);
       flop_count=0.0;
-      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, &C, v00, flop_count);
+      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, coef, v00, flop_count);
       TIMING_stop(tm_force_src, flop_count);
     }
     
@@ -393,46 +391,66 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     TIMING_stop(tm_prj_vec, flop_count);
     
     // セルフェイス速度の境界条件による修正
-    REAL_TYPE m_av[2];
+    REAL_TYPE m_av[C.NoBC][2];
     TIMING_start(tm_prj_vec_bc);
     flop_count=0.0;
-    BC.mod_div(src1, bcv, coef, tm, v00, m_av, flop_count, true);
+    BC.mod_div(src1, bcv, coef, tm, v00, m_av[C.NoBC], flop_count);
     TIMING_stop(tm_prj_vec_bc, flop_count);
     
     // セルフェイス速度の境界条件の通信部分
-    if ( !C.isCDS() ) { // Binary
-      for (int n=1; n<=C.NoBC; n++) {
-        REAL_TYPE tmp[2];
-        unsigned typ = cmp[n].getType();
+    if ( C.isOutflow() == ON ) {
+      if ( !C.isCDS() ) { // Binary
+        if ( para_mng->IsParallel() ) {
+          REAL_TYPE tmp[C.NoBC][2];
+          
+          TIMING_start(tm_prj_vec_bc_comm);
+          for (int n=1; n<=C.NoBC; n++) {
+            tmp[n][0] = m_av[n][0];
+            tmp[n][1] = m_av[n][1];
+          }
+          para_mng->Allreduce(tmp, m_av, 2*C.NoBC, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+          TIMING_stop(tm_prj_vec_bc_comm, 2.0*(REAL_TYPE)C.NoBC*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+        }
         
-        switch (typ) {
-          case OUTFLOW:
-            if ( para_mng->IsParallel() ) {
-              TIMING_start(tm_prj_vec_bc_comm);
-              tmp[0] = m_av[0];
-              tmp[1] = m_av[1];
-              para_mng->Allreduce(tmp, m_av, 2, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-              TIMING_stop(tm_prj_vec_bc_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
-            }
-            cmp[n].val[var_Velocity] = m_av[0]/m_av[1]; // 無次元平均流速
-            break;
-            
-          default:
-            break;
+        for (int n=1; n<=C.NoBC; n++) {
+          if ( cmp[n].getType() == OUTFLOW ) {
+            cmp[n].val[var_Velocity] = m_av[n][0]/m_av[n][1]; // 無次元平均流速
+          }
         }
       }
+      else { // Cut-Distance
+        ;
+      }
     }
-    else { // Cut-Distance
-      ;
-    }
-
     
-    // Forcingコンポーネントによるセルセンター速度の修正
+    // Forcingコンポーネントによる速度と発散値の修正
     if ( C.isForcing() == ON ) {
-      TIMING_start(tm_prj_frc_mod_cc);
+      REAL_TYPE vm[C.NoBC][2]; // モニター用
+      REAL_TYPE tmp[C.NoBC][2];
+      
+      TIMING_start(tm_prj_frc_mod);
       flop_count=0.0;
-      BC.mod_Vcc_Forcing(v, bcd, &C, dt, v00, flop_count);
-      TIMING_stop(tm_prj_frc_mod_cc, flop_count);
+      BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, dt, C.dh, v00, vm[C.NoBC], flop_count);
+      TIMING_stop(tm_prj_frc_mod, flop_count);
+      
+      // 通信部分
+      TIMING_start(tm_prj_frc_mod_comm);
+      if ( para_mng->IsParallel() ) {
+        for (int n=1; n<=C.NoBC; n++) {
+          tmp[n][0] = vm[n][0];
+          tmp[n][1] = vm[n][1];
+        }
+        para_mng->Allreduce(tmp, vm, 2*C.NoBC, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+      }
+      for (int n=1; n<=C.NoBC; n++) {
+        if ( cmp[n].isFORCING() ) {
+          vm[n][0] /= (REAL_TYPE)cmp[n].getElement();
+          vm[n][1] /= (REAL_TYPE)cmp[n].getElement();
+          cmp[n].val[var_Velocity] = vm[n][0]; // 平均速度
+          cmp[n].val[var_Pressure] = vm[n][1]; // 平均圧力損失量
+        }
+      }
+      TIMING_stop(tm_prj_frc_mod_comm, 2.0*(REAL_TYPE)C.NoBC*(REAL_TYPE)sizeof(REAL_TYPE)*2.0);
     }
 
     // 周期型の速度境界条件

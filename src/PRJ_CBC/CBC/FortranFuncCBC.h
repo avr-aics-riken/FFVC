@@ -167,7 +167,7 @@ extern "C" {
   void cbc_pvec_muscl_        (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
                                int* bv, int* bp, int* v_mode, REAL_TYPE* ut, int* wall_type, REAL_TYPE* flop);
   void cbc_update_vec_        (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p, int* bp, int* bv, 
-                               REAL_TYPE* v00, REAL_TYPE* coef, REAL_TYPE* flop);
+                               REAL_TYPE* v00, REAL_TYPE* flop);
   void cbc_vis_cn_jcb_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
                                REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* flop);
   void cbc_vis_cn_mod_jcb_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
@@ -182,14 +182,14 @@ extern "C" {
                                REAL_TYPE* v0, int* bx, int* odr, REAL_TYPE* coef, REAL_TYPE* vec, REAL_TYPE* flop);
 
   // cbc_forcing.f90
-  void cbc_psrc_hex_          (REAL_TYPE* src,int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, int* bd, float* cvf, int* odr, REAL_TYPE* v00, 
-                               REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* v, REAL_TYPE* flop);
-  void cbc_pvec_hex_          (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, int* bd, int* odr, float* cvf, REAL_TYPE* v00, REAL_TYPE* vec, REAL_TYPE* flop);
-  void cbc_update_hex_        (REAL_TYPE* div, int* sz, int* g, int* st, int* ed, dh, bd, vf, odr, v00, coef, dt, nv, c, v, flop)
-  void cbc_update_vcc_hex_    (REAL_TYPE* v,  int* sz, int* g, int* st, int* ed, REAL_TYPE* dt, int* bd, int* odr, REAL_TYPE* v00, 
-                               REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* vm, REAL_TYPE* flop);
-  void cbc_update_vcf_hex_    (REAL_TYPE* vf, int* sz, int* g, int* st, int* ed, REAL_TYPE* dt, int* bd, int* odr, REAL_TYPE* v00, 
-                               REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* v, REAL_TYPE* flop);
+  void cbc_hex_dir_pvec_      (REAL_TYPE* v,   int* sz, int* g, int* st, int* ed, int* bd, float* vf, int* odr, 
+                               REAL_TYPE* v00, REAL_TYPE* vec, REAL_TYPE* flop);
+  void cbc_hex_psrc_          (REAL_TYPE* src, int* sz, int* g, int* st, int* ed, int* bd, float* vf, REAL_TYPE* v, int* odr, 
+                               REAL_TYPE* v00, REAL_TYPE* coef, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* flop);
+  void cbc_hex_force_pvec_    (REAL_TYPE* vc,  int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* v, int* odr, 
+                               REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* flop);
+  void cbc_hex_force_vec_     (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, int* odr, 
+                               REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* am, REAL_TYPE* flop);
   
   // cbc_pscalar.f90
   void cbc_ps_muscl_      (REAL_TYPE* ws, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* t, int* bv, 
