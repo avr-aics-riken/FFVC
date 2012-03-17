@@ -233,7 +233,7 @@ public:
             vxFormat,
             Wcell;
 	
-  REAL_TYPE  BasePrs,
+  REAL_TYPE BasePrs,
             BaseTemp,
             DiffTemp,
             dh,

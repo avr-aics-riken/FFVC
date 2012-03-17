@@ -195,20 +195,20 @@ void CompoList::set_Velocity(REAL_TYPE var) {
 }
 
 /**
- @fn bool CompoList::isMONITOR(void) const
+ @fn bool CompoList::isMONITOR(void)
  @brief コンポーネントタイプがモニタかどうかを調べる
  @retval モニタであればtrue
  */
-bool CompoList::isMONITOR(void) const {
+bool CompoList::isMONITOR(void) {
   return ( (type == CELL_MONITOR) ? true : false );
 }
 
 /**
- @fn bool CompoList::isVBC(void) const
+ @fn bool CompoList::isVBC(void)
  @brief 内部境界条件タイプが速度指定かどうかを調べる
  @retval VBCであればtrue
  */
-bool CompoList::isVBC(void) const
+bool CompoList::isVBC(void)
 {
   if ((type == SPEC_VEL) ||
       (type == SPEC_VEL_WH) ||
@@ -221,11 +221,11 @@ bool CompoList::isVBC(void) const
 }
 
 /**
- @fn bool CompoList::isFORCING(void) const
+ @fn bool CompoList::isFORCING(void)
  @brief 境界条件タイプがFORCINGかどうかを調べる
  @retval FORCINGであればtrue
  */
-bool CompoList::isFORCING(void) const
+bool CompoList::isFORCING(void)
 {
   if ((type == HEX) || 
       (type == FAN) || 
@@ -234,11 +234,11 @@ bool CompoList::isFORCING(void) const
 }
 
 /**
- @fn bool CompoList::isHsrc(void) const
+ @fn bool CompoList::isHsrc(void)
  @brief 境界条件タイプが熱源かどうかを調べる
  @retval FORCINGであればtrue
  */
-bool CompoList::isHsrc(void) const
+bool CompoList::isHsrc(void)
 {
   if ((type == HEAT_SRC) || 
       (type == CNST_TEMP) ) return true;
@@ -246,11 +246,11 @@ bool CompoList::isHsrc(void) const
 }
 
 /**
- @fn bool CompoList::isHBC(void) const
+ @fn bool CompoList::isHBC(void)
  @brief 境界条件タイプが熱境界条件かどうかを調べる
  @retval HBCであればtrue
  */
-bool CompoList::isHBC(void) const
+bool CompoList::isHBC(void)
 {
   if ((type == ADIABATIC)  || 
       (type == HEATFLUX)   ||
@@ -263,9 +263,9 @@ bool CompoList::isHBC(void) const
   return false;
 }
 
-//@fn bool CompoList::isVFraction(void) const
+//@fn bool CompoList::isVFraction(void)
 //@brief 体積率の必要なコンポーネントかどうか
-bool CompoList::isVFraction(void) const {
+bool CompoList::isVFraction(void) {
   if ((type == HEAT_SRC) ||
       (type == CNST_TEMP) ||
       (type == IBM_DF) ||
@@ -371,11 +371,11 @@ void CompoList::setHtype(unsigned key) { h_type = key; }
 void CompoList::setName(const char* pnt) { strcpy(name, pnt); }
 
 /**
- @fn bool CompoList::isVecForcing(void) const
+ @fn bool CompoList::isVecForcing(void)
  @brief ベクトル強制をするかどうかを調べる
  @retval ベクトルを強制する場合true
  */
-bool CompoList::isVecForcing(void) const
+bool CompoList::isVecForcing(void)
 {
   if ( isFORCING() ) {
     if ( usw==ON) return true;
@@ -384,11 +384,11 @@ bool CompoList::isVecForcing(void) const
 }
 
 /**
- @fn string CompoList::getVarStr(void) const
+ @fn string CompoList::getVarStr(void)
  @brief 変数名を返す
  @retval 変数の文字列
  */
-string CompoList::getVarStr(void) const
+string CompoList::getVarStr(void)
 {
   string var;
   
@@ -407,10 +407,10 @@ string CompoList::getVarStr(void) const
 }
 
 /**
- @fn string CompoList::getBCstr(void) const
+ @fn string CompoList::getBCstr(void)
  @brief BCのラベル名を返す
  */
-string CompoList::getBCstr(void) const
+string CompoList::getBCstr(void)
 {
   string bc;
   if      ( type == ADIABATIC )     bc = "Adiabatic";

@@ -296,9 +296,9 @@ SklSolverCBC::SklSolverInitialize() {
   // BCのテーブル取得と表示, NoMaterialをセットする
   Hostonly_ {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp, "\t>> XML Table Info.\n\n");
+    fprintf(mp, "\t>> Table Information\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp, "\t>> XML Table Info.\n\n");
+    fprintf(fp, "\t>> Table Information\n\n");
   }
   setIDtables(&B, fp, mp);
   
@@ -308,9 +308,9 @@ SklSolverCBC::SklSolverInitialize() {
   // XMLから得られた内部BCコンポーネント数を表示
   Hostonly_ {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\t>> XML Components\n\n");
+    fprintf(mp,"\t>> Components\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> XML Components\n\n");
+    fprintf(fp,"\t>> Components\n\n");
     
     C.printNoCompo(fp);
     fprintf(fp,"\n"); fflush(fp);
@@ -332,9 +332,9 @@ SklSolverCBC::SklSolverInitialize() {
   // スキャンしたセルIDの情報を表示する
   Hostonly_ {
     fprintf(mp, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\t>> Voxel Model Info.\n\n");
+    fprintf(mp,"\t>> Voxel Model Information\n\n");
     fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> Voxel Model Info.\n\n");
+    fprintf(fp,"\t>> Voxel Model Information\n\n");
     
 		Vinfo.printScanedCell(fp);
 		fflush(fp);
@@ -383,7 +383,7 @@ SklSolverCBC::SklSolverInitialize() {
   // セルIDのノード間同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
   
-  
+
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   if ( C.isVfraction() ) {
     TIMING_start(tm_init_alloc);
@@ -393,7 +393,6 @@ SklSolverCBC::SklSolverInitialize() {
     
     setComponentVF(cvf);
   }
-  
 
   
   // コンポーネントのローカルインデクスをcmp.ciに保存
@@ -426,14 +425,15 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
+
   VoxEncode(&Vinfo, &M, mid, cvf, cutPos);
-  
+
   // Select implementation of SOR iteration by Eff_Cell_Ratio
   C.select_Itr_Impl(IC);
-  
-  // コンポーネントの体積率をセットし，圧力損失コンポの場合にはFORCING_BITをONにする
+
+  // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
   Vinfo.setCmpFraction(cmp, bcd, cvf);
-  
+
 #ifdef DEBUG
   // CompoListとMaterialListの関連を表示
   Hostonly_ M.printRelation(mp, fp, cmp);
@@ -681,7 +681,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 各コンポーネントが存在するかどうかを保持しておく
-  setEnsComponent();
+  //setEnsComponent();
   
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
@@ -1087,186 +1087,470 @@ SklSolverCBC::SklSolverInitialize() {
   return 1;
 }
 
-
 /**
- @fn void SklSolverCBC::setEnsComponent(void)
- @brief コンポーネントが存在するかを保持しておく
+ @fn void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
+ @brief 前処理に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ @param prep 前処理に使用するメモリ量
  */
-void SklSolverCBC::setEnsComponent(void)
+void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
 {
-  unsigned c;
+  unsigned long mc=0;
   
-  // Forcing > HEX, FAN, DARCY
-  c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].isFORCING() ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.forcing = ON;
+  if ( !A.alloc_Real_S3D(this, dc_ws, "ws", size, guide, 0.0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
   
-  // Heat source > HEAT_SRC, CNST_TEMP
-  c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].isHsrc() ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.hsrc = ON;
+  if ( !A.alloc_Int_S3D(this, dc_mid, "mid", size, guide, 0, mc) ) Exit(0);
+  prep += mc;
   
-  // 周期境界 > PERIODIC
-  c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].getType() == PERIODIC ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.periodic = ON;
+  if ( !A.alloc_Uint_S3D(this, dc_bcd, "bcd", size, guide, 0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
   
-  // 流出境界 > OUTFLOW
-  c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].getType() == OUTFLOW ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.outflow = ON;
+  if ( !A.alloc_Uint_S3D(this, dc_bcp, "bcp", size, guide, 0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
   
-  // 体積率コンポーネント
-  c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].isVFraction() ) c++;
+  if ( !A.alloc_Uint_S3D(this, dc_bcv, "bcv", size, guide, 0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
+  
+  if ( C.isHeatProblem() ) {
+    if ( !A.alloc_Uint_S3D(this, dc_bh1, "bch1", size, guide, 0, mc) ) Exit(0);
+    prep += mc;
+    total+= mc;
+    
+    if ( !A.alloc_Uint_S3D(this, dc_bh2, "bch2", size, guide, 0, mc) ) Exit(0);
+    prep += mc;
+    total+= mc;
   }
-  if ( c>0 ) C.EnsCompo.fraction = ON;
 }
 
 /**
- @fn void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
- @brief ボクセルをスキャンし情報を表示する
- @param Vinfo
- @param B
- @param mid 
- @param fp 
- @note
-    - ボクセルデータに含まれるID数をカウント
-    - XMLに記述されたパラメータと比較
+ @fn void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
+ @brief コンポーネント体積率の配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ @param prep 前処理に使用するメモリ量
  */
-void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
+void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
 {
-  // 外部境界面の媒質IDとその個数を取得
-  unsigned cell_id[NOFACE], count=0;
-  for (int i=0; i<NOFACE; i++) cell_id[i] = 0;
+  unsigned long mc=0;
   
-  count = B->count_Outer_Cell_ID(cell_id);
+  if ( !A.alloc_Float_S3D(this, dc_cvf, "cvf", size, guide, 0.0, mc) ) Exit(0);
+  prep += mc;
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_main (unsigned long &total)
+ @brief 主計算部分に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_main (unsigned long &total)
+{
+  unsigned long mc=0;
   
-  Hostonly_ {
-    fprintf(fp, "\tCell IDs on Guide cell region\n");
-    for ( int i=0; i<count; i++) {
-      fprintf(fp, "\t\tID[%d] = %d\n", i+1, cell_id[i]);
+  if ( !A.alloc_Real_V3DEx(this, dc_v, "vel", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_vc, "vc", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_v0, "v0", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_wv, "wv", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_wvex, "wvex", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_S3D(this, dc_p, "prs", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_S3D(this, dc_p0, "prs0", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_S3D(this, dc_wk2, "wk2", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_index3 (unsigned long &total)
+ @brief Index計算に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_index3 (unsigned long &total)
+{
+  unsigned long mc=0;
+  unsigned idx_sz = C.Fcell * 3;
+  
+  if ( !A.alloc_Int_S1D(this, dc_index3, "index3", idx_sz, 0, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_index (unsigned long &total)
+ @brief Index計算に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_index(unsigned long &total)
+{
+  unsigned long mc=0;
+  unsigned idx_sz = C.Fcell;
+  
+  if ( !A.alloc_Uint_S1D(this, dc_index, "index", idx_sz, 0, 0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_interface (unsigned long &total)
+ @brief allocation for interface equation
+ @param total memory requirement in main solver
+ */
+void SklSolverCBC::allocArray_interface (unsigned long &total)
+{
+  unsigned long mc=0;
+  
+  if ( !A.alloc_Real_S3D(this, dc_vof, "vof", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_heat (unsigned long &total)
+ @brief 熱の主計算部分に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_heat (unsigned long &total)
+{
+  unsigned long mc=0;
+  
+  if ( !A.alloc_Real_S3D(this, dc_t, "tmp", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_S3D(this, dc_t0, "tmp0", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_qbc, "qbc", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_AB2 (unsigned long &total)
+ @brief Adams-Bashforth法に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_AB2 (unsigned long &total)
+{
+  unsigned long mc=0;
+  if ( !A.alloc_Real_V3DEx(this, dc_abf, "abf", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_RK (unsigned long &total)
+ @brief Runge-Kutta法に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_RK (unsigned long &total)
+{
+  unsigned long mc=0;
+  
+  if ( !A.alloc_Real_S3D(this, dc_dp, "dp", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
+ @brief 平均値処理に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ @param fp ファイルポインタ
+ @note
+ - 配列長は計算内部領域のみなので，関連する処理に注意
+ */
+void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
+{
+  unsigned long mc=0;
+  
+  if ( C.Mode.Average == ON ) {
+    if ( !SklCfgCheckInFile("AvrPressure") || // 時間平均を指定しているが，出力ファイル記述がない場合
+        !SklCfgCheckInFile("AvrVelocity") ||
+        (!SklCfgCheckInFile("AvrTemperature") && C.isHeatProblem()) ) {
+      Hostonly_ stamped_printf     ("\tRestart mode and averaging, but there is no InFile description for an average file. \n");
+      Hostonly_ stamped_fprintf(fp, "\tRestart mode and averaging, but there is no InFile description for an average file. \n");
+      Exit(0);
     }
-    fprintf(mp, "\tCell IDs on Guide cell region\n");
-    for ( int i=0; i<count; i++) {
-      fprintf(mp, "\t\tID[%d] = %d\n", i+1, cell_id[i]);
+    
+    if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) Exit(0);
+    total += mc;
+    
+    if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) Exit(0);
+    total += mc;
+    
+    if ( C.isHeatProblem() ) {
+      if ( !A.alloc_Real_S3D(this, dc_at, "avrt", size, guide, 0.0, mc) ) Exit(0);
+      total += mc;
     }
   }
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_LES (unsigned long &total)
+ @brief LES計算に用いる配列のアロケーション
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_LES (unsigned long &total)
+{
+  unsigned long mc=0;
   
-  // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
-  unsigned sc=0;
-  if ( (sc=Vinfo->scanCell(mid, count, cell_id, C.Hide.Change_ID)) > C.NoID ) {
-    Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is grater than one described in 'Model_Setting'(%d)\n", 
-                           sc, C.NoID);
+  if ( !A.alloc_Real_S3D(this, dc_vt, "eddy", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_Collocate(unsigned long &total)
+ @brief コロケート格子用のセルフェイスの配列
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_Collocate(unsigned long &total)
+{
+  unsigned long mc=0;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) Exit(0);
+  total+= mc;
+}
+
+
+/**
+ @fn void SklSolverCBC::connectExample(Control* Cref)
+ @brief 組み込み例題のインスタンス
+ @param Cref Controlクラスのポインタ
+ */
+void SklSolverCBC::connectExample(Control* Cref)
+{
+  if      ( Cref->Mode.Example == id_Users )   Ex = dynamic_cast<Intrinsic*>(new IP_Users);
+  else if ( Cref->Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
+  else if ( Cref->Mode.Example == id_SHC1D)    Ex = dynamic_cast<Intrinsic*>(new IP_SHC1D);
+  else if ( Cref->Mode.Example == id_Duct )    Ex = dynamic_cast<Intrinsic*>(new IP_Duct);
+  else if ( Cref->Mode.Example == id_PMT )     Ex = dynamic_cast<Intrinsic*>(new IP_PMT);
+  else if ( Cref->Mode.Example == id_Rect )    Ex = dynamic_cast<Intrinsic*>(new IP_Rect);
+  else if ( Cref->Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
+  else if ( Cref->Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
+  else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
+  else {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
     Exit(0);
   }
 }
 
-/**
- @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
- @brief BCIndexにビット情報をエンコードする
- @param Vinfo
- @param M
- @param mid Voxel IDの配列
- @param vf コンポーネントの体積率 
- @param cutPos カット情報コンテナ
- @note
-    - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
- */
-void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
-{
-  unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
-  bcv = bh1 = bh2 = bcp = bcd = NULL;
-  
-  if( !(bcd = dc_bcd->GetData()) )  Exit(0);
-  if( !(bcp = dc_bcp->GetData()) )  Exit(0);
-  if( !(bcv = dc_bcv->GetData()) )  Exit(0);
-  if ( C.isHeatProblem() ) {
-    if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
-    if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
-  }
-  
-  // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
-  Vinfo->setBCIndex_base1(bcd, mid, vf);
-  
-  // bcdの同期
-  if( !dc_bcd->CommBndCell(guide) ) Exit(0);
-  
-  // C.Acell > ノードローカルの有効セル数　
-  // G_Acell > グローバルなアクティブセル数
-  Vinfo->setBCIndex_base2(bcd, mid, &BC, C.Acell, G_Acell, C.KindOfSolver);
-  
-  // STATEとACTIVEビットのコピー
-  Vinfo->copyBCIbase(bcp, bcd);
-  Vinfo->copyBCIbase(bcv, bcd);
-  if ( C.isHeatProblem() ) {
-    Vinfo->copyBCIbase(bh1, bcd);
-    Vinfo->copyBCIbase(bh2, bcd);
-  }
-  
-  // BCIndexP に圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cutPos, C.isCDS()); 
-  //Vinfo->chkBCIndexP(bcd, bcp, "BCindexP.txt");
-  
-  // BCIndexV に速度計算のビット情報をエンコードする -----
-  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, C.isCDS());
-  // debug; Vinfo->chkBCIndexV(bcv, "BCindexV.txt");
-
-  // BCIndexT に温度計算のビット情報をエンコードする -----
-  if ( C.isHeatProblem() ) {
-    Vinfo->setBCIndexH(bcd, bh1, bh2, mid, &BC, C.KindOfSolver);
-    // debug; Vinfo->chkBCIndexH(bcv, "BCindexH.txt");
-  }
-
-  // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
-  Vinfo->countCellState(C.Wcell, G_Wcell, bcd, SOLID);
-  Vinfo->countCellState(C.Fcell, G_Fcell, bcd, FLUID);
-  
-  // set local active cell ratio
-  C.Eff_Cell_Ratio = (REAL_TYPE)C.Acell / C.getCellSize(size);
-  
-  // コンポーネントのインデクスの再構築
-  Vinfo->resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem(), GC_bv);
-}
 
 /**
- @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
- @brief XMLから境界条件数やID情報を取得し，表示する
- @param B
- @param fp
- @param mp 
+ @fn void SklSolverCBC::gather_DomainInfo(void)
+ @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
  */
-void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
+void SklSolverCBC::gather_DomainInfo(void)
 {
-  // C.NoBC, C.NoID, C.NoCompoを取得
-  // NoID = scanXMLmodel();
-  // NoCompo = NoBC + NoID;
-	// ParseBCクラス内でiTable[NoID+1]を確保
-  B->setControlVars(&C);
-
-  // XMLファイルのModel_SettingからボクセルIDの情報を取得
-  B->getXML_Model();
-
-  // XMLから得られたIDテーブルを表示
-  Hostonly_ {
-    B->printTable(fp);
-    fprintf(fp,"\n"); fflush(fp);
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
+  int nID[6], np=0;
+  FILE *fp=NULL;
+  REAL_TYPE vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
+  REAL_TYPE d1, d2, d3, d, r;
+  int ix, jx, kx;
+  
+  np=para_mng->GetNodeNum(pn.procGrp);
+  d = 1.0/(REAL_TYPE)np;
+  if ( para_mng->IsParallel() ) {
+    r = 1.0/(REAL_TYPE)(np-1);
+  }
+  else {
+    r = 1.0;
+  }
+  
+  unsigned* m_size=NULL; if( !(m_size = new unsigned[np*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
+  REAL_TYPE* m_org=NULL;  if( !(m_org  = new REAL_TYPE[np*3]) ) Exit(0);
+  REAL_TYPE* m_Lbx=NULL;  if( !(m_Lbx  = new REAL_TYPE[np*3]) ) Exit(0);
+  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[np*3]) ) Exit(0);
+  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[np*3]) ) Exit(0);
+  REAL_TYPE *bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[np]) )   Exit(0);
+  unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[np]) )   Exit(0);
+  unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[np]) )   Exit(0);
+  unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[np]) )   Exit(0);
+  
+  // 領域情報の収集
+  if ( para_mng->IsParallel() ) {
+    if ( !para_mng->Gather(size,    3, SKL_ARRAY_DTYPE_UINT, 
+                           m_size,  3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+    if ( !para_mng->Gather(C.org,   3, SKL_ARRAY_DTYPE_REAL, 
+                           m_org,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
+    if ( !para_mng->Gather(C.Lbx,   3, SKL_ARRAY_DTYPE_REAL, 
+                           m_Lbx,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
+    if ( !para_mng->Gather(&C.Fcell,1, SKL_ARRAY_DTYPE_UINT, 
+                           bf_fcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+    if ( !para_mng->Gather(&C.Wcell,1, SKL_ARRAY_DTYPE_UINT, 
+                           bf_wcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+    if ( !para_mng->Gather(&C.Acell,1, SKL_ARRAY_DTYPE_UINT, 
+                           bf_acl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+  }
+  else { // serial
+    memcpy(m_size, size, 3*sizeof(unsigned));
+    bf_fcl[0] = C.Fcell;
+    bf_wcl[0] = C.Wcell;
+    bf_acl[0] = C.Acell;
+    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
+    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
+  }
+  
+  // Info. of computational domain
+  vol = (REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]);
+  srf = (REAL_TYPE)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
+  
+  // amount of communication in each node
+  ix = size[0];
+  jx = size[1];
+  kx = size[2];
+  m_srf = (REAL_TYPE)(2*(ix*jx + jx*kx + kx*ix));
+  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (REAL_TYPE)(jx*kx);  // remove face which does not join communication
+  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
+  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
+  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(jx*kx);
+  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
+  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
+  
+  if ( para_mng->IsParallel() ) {
+    if ( !para_mng->Gather(&m_srf,  1,        SKL_ARRAY_DTYPE_REAL, 
+                           bf_srf,  1,        SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
+  }
+  else {
+    bf_srf[0] = m_srf;
+  }
+  
+  // mean of domain
+  m_vol = m_srf = m_efv = 0.0;
+  for (int i=0; i<np; i++) {
+    ix = m_size[3*i];
+    jx = m_size[3*i+1];
+    kx = m_size[3*i+2];
+    m_vol += (REAL_TYPE)(ix*jx*kx);
+    m_srf += bf_srf[i];
+    m_efv += bf_acl[i];
+  }
+  m_vol *= d;
+  m_srf *= d;
+  m_efv *= d;
+  
+  // std. deviation of domain
+  vol_dv = srf_dv = efv_dv = 0.0;
+  for (int i=0; i<np; i++) {
+    ix = m_size[3*i];
+    jx = m_size[3*i+1];
+    kx = m_size[3*i+2];
+    d1 = (REAL_TYPE)(ix*jx*kx) - m_vol;
+    d2 = bf_srf[i] - m_srf;
+    d3 = (REAL_TYPE)bf_acl[i] - m_efv;
+    vol_dv += d1*d1;
+    srf_dv += d2*d2;
+    efv_dv += d3*d3;
+  }
+  vol_dv = sqrt(vol_dv*r);
+  srf_dv = sqrt(srf_dv*r);
+  efv_dv = sqrt(efv_dv*r);
+  
+  if ( !(fp=fopen("DomainInfo.txt", "w")) ) {
+    stamped_printf("\tSorry, can't open 'DomainInfo.txt' file. Write failed.\n");
+    Exit(0);
+  }
+  
+  // 全体情報の表示
+  C.printDomain(fp, G_size, G_org, G_Lbx);
+  
+  // ローカルノードの情報を表示
+  for (int i=0; i<np; i++) {
+    Hostonly_ {
+      fprintf(fp,"Domain %4d\n", i);
+      fprintf(fp,"\t ix, jx,  kx        [-] =  %13d %13d %13d\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
+      fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
+              m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
+      fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
+              m_Lbx[i*3]*C.RefLength,  m_Lbx[i*3+1]*C.RefLength,  m_Lbx[i*3+2]*C.RefLength, m_Lbx[i*3],  m_Lbx[i*3+1],  m_Lbx[i*3+2]);
+      
+      if (C.NoBC != 0) fprintf(fp, "\t no            Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+    }
     
-    B->printTable(mp);
-    fprintf(mp,"\n"); fflush(mp);
+    if( para_mng->IsParallel() ) {
+      for (unsigned n=1; n<=C.NoBC; n++) {
+        if( !para_mng->Gather(cmp[n].getBbox_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        if( !para_mng->Gather(cmp[n].getBbox_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        
+        Hostonly_ {
+          fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
+                  n, cmp[n].name, cmp[n].getID(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+        }
+      }
+    }
   }
-
-  // 流体と固体の媒質数，NoMaterialをセットする
-  B->setMedium(&C);
+  
+  Hostonly_ {
+    fprintf(fp, "\n");
+    fprintf(fp,"\n\t--------------------------------------------------\n");
+    fprintf(fp,"\tReport of Whole Domain Statistics\n");
+    fprintf(fp,"\tDomain size         = %7d %7d %7d\n", G_size[0], G_size[1], G_size[2]);
+    fprintf(fp,"\tNumber of voxels    = %12.6e\n", vol);
+    fprintf(fp,"\tNumber of surface   = %12.6e\n", srf);
+    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
+    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
+    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
+    if ( np == 1 ) {
+      fprintf(fp,"\tDivision :          = %d : %s\n", np, "Serial");
+    }
+    else {
+      fprintf(fp,"\tDivision :          = %d : %s\n", np, (para_mng->IsEv()) ? "Equal segregation" : "Multi-Box division");
+    }
+    fprintf(fp,"\n\t--------------------------------------------------\n");
+    fprintf(fp,"\tDomain Statistics per MPI process\n");
+    fprintf(fp,"\tMean volume in each domain           = %12.6e\n", m_vol);
+    fprintf(fp,"\tStd. deviation of domain             = %12.6e\n", vol_dv);
+    fprintf(fp,"\tMean comm. in each domain            = %12.6e\n", m_srf);
+    fprintf(fp,"\tStd. deviation of surface            = %12.6e\n", srf_dv);
+    fprintf(fp,"\tMean effective volume in each domain = %12.6e\n", m_efv);
+    fprintf(fp,"\tStd. deviation of effective volume   = %12.6e\n", efv_dv);
+    fprintf(fp,"\n");
+    
+    fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
+    fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+    
+    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
+    for (int i=0; i<np; i++) {
+      ix = m_size[3*i];
+      jx = m_size[3*i+1];
+      kx = m_size[3*i+2];
+      tmp_vol = (REAL_TYPE)(ix*jx*kx);
+      tmp_acl = (REAL_TYPE)bf_acl[i];
+      tmp_fcl = (REAL_TYPE)bf_fcl[i];
+      tmp_wcl = (REAL_TYPE)bf_wcl[i];
+      fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
+      fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
+      fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
+      fprintf(fp,"%8.3f %8.3f ", 100.0*tmp_fcl/tmp_vol, 100.0*tmp_wcl/tmp_vol);
+      fprintf(fp,"%12.4e      %8.3f ", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
+      fprintf(fp,"%12.4e      %8.3f  %s\n", 0.0, 0.0, (tmp_acl/tmp_vol>THRESHOLD_SOR_IMPLEMENTATION) ? "Mask-loop" : "Skip-loop");
+    }
+    fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+  }
+  
+  if (fp) fclose(fp);
+  
+  if( m_size ) { delete [] m_size; m_size=NULL; }
+  if( m_org  ) { delete [] m_org;  m_org =NULL; }
+  if( m_Lbx  ) { delete [] m_Lbx;  m_Lbx =NULL; }
+  if( st_buf ) { delete [] st_buf; st_buf=NULL; }
+  if( ed_buf ) { delete [] ed_buf; ed_buf=NULL; }
+  if( bf_srf ) { delete [] bf_srf; bf_srf=NULL; }
+  if( bf_fcl ) { delete [] bf_fcl; bf_fcl=NULL; }
+  if( bf_wcl ) { delete [] bf_wcl; bf_wcl=NULL; }
+  if( bf_acl ) { delete [] bf_acl; bf_acl=NULL; }
 }
 
 /**
@@ -1277,11 +1561,11 @@ void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
-
+  
   int st_i, st_j, st_k, ed_i, ed_j, ed_k;
   int node_st_i, node_st_j, node_st_k;
   int st[3], ed[3];
-
+  
   // グローバルインデクスの配列インスタンス
   GC_bv = new int[6*(C.NoCompo+1)];
   
@@ -1338,6 +1622,95 @@ void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
   // コンポーネントBVの更新
   Vinfo->gatherGlobalIndex(GC_bv);
 }
+
+
+/**
+ @fn void SklSolverCBC::getLocalCmpIdx(void)
+ @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
+ @note
+ - 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
+ - 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
+ - 内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
+ */
+void SklSolverCBC::getLocalCmpIdx(void)
+{
+  unsigned st_i[3], len[3];
+  int id;
+  int m_st[3], m_ed[3];
+  
+  for (unsigned m=1; m<=C.NoBC; m++) {
+    id = (int)cmp[m].getID();
+    
+    switch ( cmp[m].getType() ) {
+      case HEX:
+      case FAN:
+        break; // 体積率でエンコード済み
+        
+      default:
+        for (int d=0; d<3; d++) {
+          st_i[d] = 0;
+          len[d] = 0;
+        }
+        
+        // コンポーネント範囲
+        // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
+        if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
+          Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
+          Exit(0);
+        }
+        
+        // ノード内にコンポーネントがあるかどうかをチェック
+        if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
+          cmp[m].setEns(OFF);
+          // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
+        }
+        else {
+          
+          int m_st, m_ed;
+          
+          for (unsigned d=0; d<3; d++) {
+            m_st = m_ed = 0;
+            getEnlargedIndex(m_st, m_ed, st_i[d], len[d], size[d], d, id);
+            cmp[m].setBbox_st(d, m_st);
+            cmp[m].setBbox_ed(d, m_ed);
+          }
+          cmp[m].setEns(ON); // コンポーネントあり
+        }
+        
+        break;
+    }
+    
+  }
+}
+
+
+/**
+ @fn void SklSolverCBC::getXMLExample(Control* Cref)
+ @brief 組み込み例題の設定
+ @param Cref Controlクラスのポインタ
+ */
+void SklSolverCBC::getXMLExample(Control* Cref)
+{
+  const char *keyword=NULL;
+  ParseSteer Tree(m_solvCfg);
+  
+  if ( !(keyword=Tree.getParam("Example")) ) Exit(0);
+  
+  if     ( !strcasecmp(keyword, "Users") )                    Cref->Mode.Example = id_Users;
+  else if( !strcasecmp(keyword, "Parallel_Plate_2D") )        Cref->Mode.Example = id_PPLT2D;
+  else if( !strcasecmp(keyword, "Duct") )                     Cref->Mode.Example = id_Duct;
+  else if( !strcasecmp(keyword, "SHC1D"))                     Cref->Mode.Example = id_SHC1D;
+  else if( !strcasecmp(keyword, "Performance_Test") )         Cref->Mode.Example = id_PMT;
+  else if( !strcasecmp(keyword, "Rectangular") )              Cref->Mode.Example = id_Rect;
+  else if( !strcasecmp(keyword, "Cylinder") )                 Cref->Mode.Example = id_Cylinder;
+  else if( !strcasecmp(keyword, "Back_Step") )                Cref->Mode.Example = id_Step;
+  else if( !strcasecmp(keyword, "Polygon") )                  Cref->Mode.Example = id_Polygon;
+  else {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
+    Exit(0);
+  }
+}
+
 
 /**
  @fn void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned mx, const unsigned dir, const int m_id)
@@ -1481,617 +1854,16 @@ void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, c
 }
 
 /**
- @fn void SklSolverCBC::setComponentVF(float* cvf)
- @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
- @param cvf 体積率
+ @fn bool SklSolverCBC::hasLinearSolver(unsigned L)
+ @brief 種類Lの線形ソルバを利用する場合，trueを返す
+ @param L 線形ソルバの種類
  */
-void SklSolverCBC::setComponentVF(float* cvf)
+bool SklSolverCBC::hasLinearSolver(unsigned L)
 {
-  int subsampling = 50; // 体積率のサブサンプリングの基数
-  int f_st[3], f_ed[3];
+  for (int i=0; i<ItrCtl::ic_END; i++)
+    if ( IC[i].get_LS() == L ) return true;
   
-  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
-  CF.setParallelInfo(pn);
-  
-  for (int n=1; n<=C.NoBC; n++) {
-    
-    // 形状パラメータのセット
-    switch ( cmp[n].getType() ) {
-      case HEX:
-        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
-        break;
-        
-      case FAN:
-        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
-    }
-    
-    // 回転角度の計算
-    CF.get_angle(); 
-    
-    // bboxと投影面積の計算
-    cmp[n].area = CF.get_BboxArea();
-    
-    // インデクスの計算
-    CF.bbox_index(f_st, f_ed);
-    
-    // インデクスの登録
-    cmp[n].setBbox_st(f_st);
-    cmp[n].setBbox_ed(f_ed);
-    cmp[n].setEns(ON); 
-    
-    // 体積率
-    CF.vertex8    (f_st, f_ed, cvf);
-    CF.subdivision(f_st, f_ed, cvf);
-    
-  }
-//#ifdef DEBUG
-  F.writeRawSPH(cvf, size, guide, C.org, C.dx, SPH_SINGLE);
-//#endif
-  
-}
-
-
-/**
- @fn void SklSolverCBC::getLocalCmpIdx(void)
- @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
- @note
-    - 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
-    - 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
-    - 内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
- */
-void SklSolverCBC::getLocalCmpIdx(void)
-{
-  unsigned st_i[3], len[3];
-  int id;
-  int m_st[3], m_ed[3];
-  
-  for (unsigned m=1; m<=C.NoBC; m++) {
-    id = (int)cmp[m].getID();
-    
-    switch ( cmp[m].getType() ) {
-      case HEX:
-      case FAN:
-        break; // 体積率でエンコード済み
-        
-      default:
-        for (int d=0; d<3; d++) {
-          st_i[d] = 0;
-          len[d] = 0;
-        }
-        
-        // コンポーネント範囲
-        // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
-        if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
-          Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
-          Exit(0);
-        }
-        
-        // ノード内にコンポーネントがあるかどうかをチェック
-        if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
-          cmp[m].setEns(OFF);
-          // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
-        }
-        else {
-          
-          int m_st, m_ed;
-          
-          for (unsigned d=0; d<3; d++) {
-            m_st = m_ed = 0;
-            getEnlargedIndex(m_st, m_ed, st_i[d], len[d], size[d], d, id);
-            cmp[m].setBbox_st(d, m_st);
-            cmp[m].setBbox_ed(d, m_ed);
-          }
-          cmp[m].setEns(ON); // コンポーネントあり
-        }
-        
-        break;
-    }
-    
-  }
-}
-
-/**
- @fn void SklSolverCBC::setBCinfo(ParseBC* B)
- @brief ParseBCクラスをセットアップし，外部境界条件を読み込み，Controlクラスに保持する
- @param B
- */
-void SklSolverCBC::setBCinfo(ParseBC* B)
-{
-  // CompoListクラスのオブジェクトポインタを渡す
-  B->receiveCompoPtr(cmp);
-
-  // XMLの情報を元にCompoListの情報を設定する
-  B->setCompoList(&C);
-
-  // BoundaryOuterクラスのポインタを渡す
-  B->setObcPtr(BC.get_OBC_Ptr());
-
-  // XMLファイルをパースして，外部境界条件を保持する
-  B->loadOuterBC();
-  
-  // KOSと境界条件種類の整合性をチェック
-  B->chkBCconsistency(C.KindOfSolver);
-}
-
-/**
- @fn void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
- @brief ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
- @param B
- @param M 
- @param mp
- @param fp 
- */
-void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
-{
-  // ParseMatクラスの環境設定 
-  M->setControlVars(&C, B->get_IDtable_Ptr(), mat, m_solvCfg);
-  
-  // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
-  M->getXMLmaterial();
-  
-#ifdef DEBUG
-  // Materialの基本リストを表示
-  Hostonly_ M->printBaseMaterialList(mp, fp);
-#endif
-  
-  // MaterialListを作成する
-  M->makeMaterialList();
-  
-  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
-  M->makeLinkCmpMat(cmp);
-  
-  // 媒質テーブルの表示
-  Hostonly_ M->printMaterialList(mp, fp);
-  
-  // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
-  M->chkState_Mat_Cmp(cmp);
-}
-
-//@fn void SklSolverCBC::VoxelInitialize(void)
-//@brief 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する
-//@note パラメータScaling_Factorで強制的にスケールを変更可能
-void SklSolverCBC::VoxelInitialize(void)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  unsigned m_sz[3];
-  REAL_TYPE m_org[3], m_pch[3], m_wth[3];
-  REAL_TYPE scaling = C.Hide.Scaling_Factor;
-  
-  for (int i=0; i<3; i++) {
-    m_org[i] = m_pch[i] = m_wth[i] =0.0;
-    m_sz[i] = 0;
-  }
-  
-  // ユーザ問題の場合
-  if ( C.Mode.Example == id_Users ) {
-    const char* fname=NULL;
-    
-    if ( !(fname = C.getVoxelFileName()) ) {
-      Hostonly_ stamped_printf("\tRead error : A file name of voxel model is invalid.\n");
-      Exit(0);
-    }
-    
-    if ( C.vxFormat == Control::Sphere_SVX ) {
-      unsigned type;
-      float f_org[3], f_pch[3];
-      
-      if ( !getSVXHeaderInfo(fname, &type, m_sz, f_org, f_pch) ) {
-        Hostonly_ stamped_printf("\tRead error : Header of the voxel file '%s' could not read.\n", fname);
-        Exit(0);
-      }
-
-      for (int i=0; i<3; i++) {
-        m_org[i] = (REAL_TYPE)f_org[i]*scaling;
-        m_pch[i] = (REAL_TYPE)f_pch[i]*scaling;
-      }
-    }
-    else { // SBX
-      unsigned dtype, dims, vlen, gcell, rlen, crddef, aux;
-      unsigned long long blksz, l_sz[3];
-      double d_org[3], d_pch[3];
-      
-      if ( !getSBXHeaderInfo(fname, &dims, &vlen, &dtype, &gcell, &rlen, &crddef, &aux, &blksz, l_sz, d_org, d_pch) ) {
-        Hostonly_ stamped_printf("\tRead error : Header of the voxel file '%s' could not read.\n", fname);
-        Exit(0);
-      }
-      for (int i=0; i<3; i++) {
-        m_sz[i]  = (unsigned)l_sz[i];
-        m_org[i] = (REAL_TYPE)d_org[i]*scaling;
-        m_pch[i] = (REAL_TYPE)d_pch[i]*scaling;
-      }
-    }
-    
-    // ファイルに記述されたヘッダは有次元であるため，無次元化する
-    for (int i=0; i<3; i++) {
-      m_org[i] /= C.RefLength;
-      m_pch[i] /= C.RefLength;
-    }
-    
-    // 全計算領域のbounding boxサイズ
-    for (int i=0; i<3; i++) {
-      m_wth[i] = (REAL_TYPE)m_sz[i] * m_pch[i];
-    }
-  }
-  else { // 組み込み例題の場合
-    
-    // 分割数，基点，ピッチを取得する
-    if ( !SklUtil::getCellInfo(C.NoDimension, m_sz, m_org, m_pch, m_wth) ) Exit(0);
-    
-    // 有次元の場合に無次元化
-    if (C.Unit.Param == DIMENSIONAL ) {
-      for (int i=0; i<3; i++) {
-        m_org[i] /= C.RefLength;
-        m_pch[i] /= C.RefLength;
-        m_wth[i] /= C.RefLength;
-      }
-    }
-    
-    // 各例題のパラメータ設定
-    Ex->setDomain(&C, m_sz, m_org, m_wth, m_pch);
-  }
-  
-  //stamped_printf("Model read : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
-  
-  // 以下は，共通処理
-  int idiv, jdiv, kdiv;
-  idiv = jdiv = kdiv = 0;
-  
-  // グローバルな値の保持 （無次元値）
-  for (int i=0; i<3; i++) {
-    G_size[i] = m_sz[i];
-    G_org[i]  = m_org[i];
-    G_Lbx[i]  = m_wth[i];
-  }
-  
-  // 分割数をXMLから取得，指定なければ自動分割する
-  if( para_cmp->IsParallel() ){
-    if( !GetCfgVoxelDivisionMethod(idiv, jdiv, kdiv) ) idiv = jdiv = kdiv = 0;
-  }
-  else {
-    idiv = jdiv = kdiv = 1;
-  }
-  
-  // 分割数を計算し，sz_paraで取得
-  if( SKL_PARACMPO_SUCCESS != para_cmp->SklVoxelInit(m_sz[0], m_sz[1], m_sz[2], idiv, jdiv, kdiv, pn.procGrp)) {
-    stamped_printf("\tID %d : Voxel Initialize error.\n", pn.ID);
-    Exit(0);
-  }
-  const unsigned int* sz_para = para_mng->GetVoxelSize();
-  if( !sz_para ){
-    stamped_printf("\tID %d : Can't get voxel size.\n", pn.ID);
-    Exit(0);
-  }
-  
-  // 並列処理時のランク情報と各ノードのスタートインデクスを計算
-  set_Parallel_Info();
-  
-  // ノードローカルな値の設定　（無次元値）
-  for(int i=0; i<3; i++) {
-    m_sz[i] = sz_para[i];
-    m_wth[i] = (REAL_TYPE)m_sz[i]*m_pch[i];
-    m_org[i] += m_pch[i]*(REAL_TYPE)(pn.st_idx[i]-1);
-  }
-  
-  //stamped_printf("Local : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
-  
-  // コントロールクラスのメンバ変数で値を保持
-  C.setDomainInfo(m_sz, m_org, m_pch, m_wth);
-}
-
-/**
- @fn void SklSolverCBC::gather_DomainInfo(void)
- @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
- */
-void SklSolverCBC::gather_DomainInfo(void)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  int nID[6], np=0;
-  FILE *fp=NULL;
-  REAL_TYPE vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
-  REAL_TYPE d1, d2, d3, d, r;
-  int ix, jx, kx;
-  
-  np=para_mng->GetNodeNum(pn.procGrp);
-  d = 1.0/(REAL_TYPE)np;
-  if ( para_mng->IsParallel() ) {
-    r = 1.0/(REAL_TYPE)(np-1);
-  }
-  else {
-    r = 1.0;
-  }
-  
-  unsigned* m_size=NULL; if( !(m_size = new unsigned[np*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
-  REAL_TYPE* m_org=NULL;  if( !(m_org  = new REAL_TYPE[np*3]) ) Exit(0);
-  REAL_TYPE* m_Lbx=NULL;  if( !(m_Lbx  = new REAL_TYPE[np*3]) ) Exit(0);
-  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[np*3]) ) Exit(0);
-  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[np*3]) ) Exit(0);
-  REAL_TYPE *bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[np]) )   Exit(0);
-  unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[np]) )   Exit(0);
-  unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[np]) )   Exit(0);
-  unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[np]) )   Exit(0);
-  
-  // 領域情報の収集
-  if ( para_mng->IsParallel() ) {
-    if ( !para_mng->Gather(size,    3, SKL_ARRAY_DTYPE_UINT, 
-                           m_size,  3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-    if ( !para_mng->Gather(C.org,   3, SKL_ARRAY_DTYPE_REAL, 
-                           m_org,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
-    if ( !para_mng->Gather(C.Lbx,   3, SKL_ARRAY_DTYPE_REAL, 
-                           m_Lbx,   3, SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
-    if ( !para_mng->Gather(&C.Fcell,1, SKL_ARRAY_DTYPE_UINT, 
-                           bf_fcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-    if ( !para_mng->Gather(&C.Wcell,1, SKL_ARRAY_DTYPE_UINT, 
-                           bf_wcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-    if ( !para_mng->Gather(&C.Acell,1, SKL_ARRAY_DTYPE_UINT, 
-                           bf_acl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-  }
-  else { // serial
-    memcpy(m_size, size, 3*sizeof(unsigned));
-    bf_fcl[0] = C.Fcell;
-    bf_wcl[0] = C.Wcell;
-    bf_acl[0] = C.Acell;
-    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
-    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
-  }
-  
-  // Info. of computational domain
-  vol = (REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]);
-  srf = (REAL_TYPE)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
-  
-  // amount of communication in each node
-  ix = size[0];
-  jx = size[1];
-  kx = size[2];
-  m_srf = (REAL_TYPE)(2*(ix*jx + jx*kx + kx*ix));
-  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (REAL_TYPE)(jx*kx);  // remove face which does not join communication
-  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
-  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
-  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(jx*kx);
-  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
-  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
-  
-  if ( para_mng->IsParallel() ) {
-    if ( !para_mng->Gather(&m_srf,  1,        SKL_ARRAY_DTYPE_REAL, 
-                           bf_srf,  1,        SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
-  }
-  else {
-    bf_srf[0] = m_srf;
-  }
-  
-  // mean of domain
-  m_vol = m_srf = m_efv = 0.0;
-  for (int i=0; i<np; i++) {
-    ix = m_size[3*i];
-    jx = m_size[3*i+1];
-    kx = m_size[3*i+2];
-    m_vol += (REAL_TYPE)(ix*jx*kx);
-    m_srf += bf_srf[i];
-    m_efv += bf_acl[i];
-  }
-  m_vol *= d;
-  m_srf *= d;
-  m_efv *= d;
-  
-  // std. deviation of domain
-  vol_dv = srf_dv = efv_dv = 0.0;
-  for (int i=0; i<np; i++) {
-    ix = m_size[3*i];
-    jx = m_size[3*i+1];
-    kx = m_size[3*i+2];
-    d1 = (REAL_TYPE)(ix*jx*kx) - m_vol;
-    d2 = bf_srf[i] - m_srf;
-    d3 = (REAL_TYPE)bf_acl[i] - m_efv;
-    vol_dv += d1*d1;
-    srf_dv += d2*d2;
-    efv_dv += d3*d3;
-  }
-  vol_dv = sqrt(vol_dv*r);
-  srf_dv = sqrt(srf_dv*r);
-  efv_dv = sqrt(efv_dv*r);
-  
-  if ( !(fp=fopen("DomainInfo.txt", "w")) ) {
-    stamped_printf("\tSorry, can't open 'DomainInfo.txt' file. Write failed.\n");
-    Exit(0);
-  }
-  
-  // 全体情報の表示
-  C.printDomain(fp, G_size, G_org, G_Lbx);
-  
-  // ローカルノードの情報を表示
-  for (int i=0; i<np; i++) {
-    Hostonly_ {
-      fprintf(fp,"Domain %4d\n", i);
-      fprintf(fp,"\t ix, jx,  kx        [-] =  %13d %13d %13d\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
-      fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
-              m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
-      fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
-              m_Lbx[i*3]*C.RefLength,  m_Lbx[i*3+1]*C.RefLength,  m_Lbx[i*3+2]*C.RefLength, m_Lbx[i*3],  m_Lbx[i*3+1],  m_Lbx[i*3+2]);
-      
-      if (C.NoBC != 0) fprintf(fp, "\t no            Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
-    }
-    
-    if( para_mng->IsParallel() ) {
-      for (unsigned n=1; n<=C.NoBC; n++) {
-        if( !para_mng->Gather(cmp[n].getBbox_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-        if( !para_mng->Gather(cmp[n].getBbox_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-      
-        Hostonly_ {
-          fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].name, cmp[n].getID(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
-        }
-      }
-    }
-  }
-  
-  Hostonly_ {
-    fprintf(fp, "\n");
-    fprintf(fp,"\n\t--------------------------------------------------\n");
-    fprintf(fp,"\tReport of Whole Domain Statistics\n");
-    fprintf(fp,"\tDomain size         = %7d %7d %7d\n", G_size[0], G_size[1], G_size[2]);
-    fprintf(fp,"\tNumber of voxels    = %12.6e\n", vol);
-    fprintf(fp,"\tNumber of surface   = %12.6e\n", srf);
-    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
-    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
-    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
-    if ( np == 1 ) {
-      fprintf(fp,"\tDivision :          = %d : %s\n", np, "Serial");
-    }
-    else {
-      fprintf(fp,"\tDivision :          = %d : %s\n", np, (para_mng->IsEv()) ? "Equal segregation" : "Multi-Box division");
-    }
-    fprintf(fp,"\n\t--------------------------------------------------\n");
-    fprintf(fp,"\tDomain Statistics per MPI process\n");
-    fprintf(fp,"\tMean volume in each domain           = %12.6e\n", m_vol);
-    fprintf(fp,"\tStd. deviation of domain             = %12.6e\n", vol_dv);
-    fprintf(fp,"\tMean comm. in each domain            = %12.6e\n", m_srf);
-    fprintf(fp,"\tStd. deviation of surface            = %12.6e\n", srf_dv);
-    fprintf(fp,"\tMean effective volume in each domain = %12.6e\n", m_efv);
-    fprintf(fp,"\tStd. deviation of effective volume   = %12.6e\n", efv_dv);
-    fprintf(fp,"\n");
-    
-    fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
-    fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
-    
-    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
-    for (int i=0; i<np; i++) {
-      ix = m_size[3*i];
-      jx = m_size[3*i+1];
-      kx = m_size[3*i+2];
-      tmp_vol = (REAL_TYPE)(ix*jx*kx);
-      tmp_acl = (REAL_TYPE)bf_acl[i];
-      tmp_fcl = (REAL_TYPE)bf_fcl[i];
-      tmp_wcl = (REAL_TYPE)bf_wcl[i];
-      fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
-      fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
-      fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
-      fprintf(fp,"%8.3f %8.3f ", 100.0*tmp_fcl/tmp_vol, 100.0*tmp_wcl/tmp_vol);
-      fprintf(fp,"%12.4e      %8.3f ", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
-      fprintf(fp,"%12.4e      %8.3f  %s\n", 0.0, 0.0, (tmp_acl/tmp_vol>THRESHOLD_SOR_IMPLEMENTATION) ? "Mask-loop" : "Skip-loop");
-    }
-    fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
-  }
-  
-  if (fp) fclose(fp);
-  
-  if( m_size ) { delete [] m_size; m_size=NULL; }
-  if( m_org  ) { delete [] m_org;  m_org =NULL; }
-  if( m_Lbx  ) { delete [] m_Lbx;  m_Lbx =NULL; }
-  if( st_buf ) { delete [] st_buf; st_buf=NULL; }
-  if( ed_buf ) { delete [] ed_buf; ed_buf=NULL; }
-  if( bf_srf ) { delete [] bf_srf; bf_srf=NULL; }
-  if( bf_fcl ) { delete [] bf_fcl; bf_fcl=NULL; }
-  if( bf_wcl ) { delete [] bf_wcl; bf_wcl=NULL; }
-  if( bf_acl ) { delete [] bf_acl; bf_acl=NULL; }
-}
-
-/**
- @fn void SklSolverCBC::set_Parallel_Info(void)
- @brief 並列処理時のプロセッサの隣接ランクを計算する
- */
-void SklSolverCBC::set_Parallel_Info(void)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  int nID[6], sidx[3];
-  
-  if( para_mng->IsParallel() ){
-    if (para_mng->IsEv()) {
-      nID[X_MINUS] = para_mng->GetCommID(-1, 0, 0);
-      nID[Y_MINUS] = para_mng->GetCommID( 0,-1, 0);
-      nID[Z_MINUS] = para_mng->GetCommID( 0, 0,-1);
-      nID[X_PLUS]  = para_mng->GetCommID( 1, 0, 0);
-      nID[Y_PLUS]  = para_mng->GetCommID( 0, 1, 0);
-      nID[Z_PLUS]  = para_mng->GetCommID( 0, 0, 1);
-    }
-    else if (para_mng->IsMb()) {
-      nID[X_MINUS] = para_mng->IsCommID(-1, 0, 0);
-      nID[Y_MINUS] = para_mng->IsCommID( 0,-1, 0);
-      nID[Z_MINUS] = para_mng->IsCommID( 0, 0,-1);
-      nID[X_PLUS]  = para_mng->IsCommID( 1, 0, 0);
-      nID[Y_PLUS]  = para_mng->IsCommID( 0, 1, 0);
-      nID[Z_PLUS]  = para_mng->IsCommID( 0, 0, 1);
-    }
-    else {
-      stamped_printf("\tID %d : not parallel process.\n", pn.ID);
-      Exit(0);
-    }
-    
-    for(int i=0; i<6; i++) pn.nID[i] = nID[i];
-  }
-  
-  if( para_mng->IsParallel() ){
-    sidx[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0, pn.procGrp) + 1;
-    sidx[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1, pn.procGrp) + 1;
-    sidx[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2, pn.procGrp) + 1;
-  } 
-  else {
-    sidx[0] = sidx[1] = sidx[2] = 1;
-  }
-  
-  for(int i=0; i<3; i++) pn.st_idx[i] = sidx[i];
-  
-  //debug; printf("%d : [%d %d %d %d %d %d] [%d %d %d]\n", pn.ID, pn.nID[0],pn.nID[1],pn.nID[2],pn.nID[3],pn.nID[4],pn.nID[5],pn.st_idx[0], pn.st_idx[1],pn.st_idx[2]);
-}
-
-/**
- @fn void SklSolverCBC::getXMLExample(Control* Cref)
- @brief 組み込み例題の設定
- @param Cref Controlクラスのポインタ
- */
-void SklSolverCBC::getXMLExample(Control* Cref)
-{
-  const char *keyword=NULL;
-  ParseSteer Tree(m_solvCfg);
-  
-  if ( !(keyword=Tree.getParam("Example")) ) Exit(0);
-  
-  if     ( !strcasecmp(keyword, "Users") )                    Cref->Mode.Example = id_Users;
-  else if( !strcasecmp(keyword, "Parallel_Plate_2D") )        Cref->Mode.Example = id_PPLT2D;
-  else if( !strcasecmp(keyword, "Duct") )                     Cref->Mode.Example = id_Duct;
-  else if( !strcasecmp(keyword, "SHC1D"))                     Cref->Mode.Example = id_SHC1D;
-  else if( !strcasecmp(keyword, "Performance_Test") )         Cref->Mode.Example = id_PMT;
-  else if( !strcasecmp(keyword, "Rectangular") )              Cref->Mode.Example = id_Rect;
-  else if( !strcasecmp(keyword, "Cylinder") )                 Cref->Mode.Example = id_Cylinder;
-  else if( !strcasecmp(keyword, "Back_Step") )                Cref->Mode.Example = id_Step;
-  else if( !strcasecmp(keyword, "Polygon") )                  Cref->Mode.Example = id_Polygon;
-  else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
-    Exit(0);
-  }
-}
-
-/**
- @fn void SklSolverCBC::connectExample(Control* Cref)
- @brief 組み込み例題のインスタンス
- @param Cref Controlクラスのポインタ
- */
-void SklSolverCBC::connectExample(Control* Cref)
-{
-  if      ( Cref->Mode.Example == id_Users )   Ex = dynamic_cast<Intrinsic*>(new IP_Users);
-  else if ( Cref->Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
-  else if ( Cref->Mode.Example == id_SHC1D)    Ex = dynamic_cast<Intrinsic*>(new IP_SHC1D);
-  else if ( Cref->Mode.Example == id_Duct )    Ex = dynamic_cast<Intrinsic*>(new IP_Duct);
-  else if ( Cref->Mode.Example == id_PMT )     Ex = dynamic_cast<Intrinsic*>(new IP_PMT);
-  else if ( Cref->Mode.Example == id_Rect )    Ex = dynamic_cast<Intrinsic*>(new IP_Rect);
-  else if ( Cref->Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
-  else if ( Cref->Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
-  else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
-  else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
-    Exit(0);
-  }
+  return false;
 }
 
 /**
@@ -2161,7 +1933,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
 {
   int step;
   REAL_TYPE time;
-
+  
   step = SklGetBaseStep();
   time = SklGetBaseTime();
   
@@ -2190,7 +1962,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
       return;
     }
   }
-    
+  
   // Pressure
   F.loadSphScalar3DAvr(this, fp, "AvrPressure", G_size, guide, dc_ap, step, time, C.Unit.File);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2232,6 +2004,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
   }
 }
 
+
 /**
  @fn float SklSolverCBC::min_distance(float* cut, FILE* fp)
  @brief 距離の最小値を求め，閾値以上にする
@@ -2263,6 +2036,7 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
   }
   return min_g;
 }
+
 
 /**
  @fn void SklSolverCBC::prepOutput(void)
@@ -2302,7 +2076,7 @@ void SklSolverCBC::prepOutput (void)
         Exit(0);
       }
     }
-		    
+    
     // Pressure
 		if ( SklCfgCheckOutFile("Pressure") ) {
 			if( !(m_outPrs = InitFile("Pressure", size, org, pit, dc_ws)) ) {
@@ -2452,238 +2226,197 @@ void SklSolverCBC::prepOutput (void)
   }
 }
 
+
 /**
- @fn void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
- @brief 前処理に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- @param prep 前処理に使用するメモリ量
+ @fn void SklSolverCBC::setBCinfo(ParseBC* B)
+ @brief ParseBCクラスをセットアップし，外部境界条件を読み込み，Controlクラスに保持する
+ @param B
  */
-void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
+void SklSolverCBC::setBCinfo(ParseBC* B)
 {
-  unsigned long mc=0;
+  // CompoListクラスのオブジェクトポインタを渡す
+  B->receiveCompoPtr(cmp);
+
+  // XMLの情報を元にCompoListの情報を設定する
+  B->setCompoList(&C);
   
-  if ( !A.alloc_Real_S3D(this, dc_ws, "ws", size, guide, 0.0, mc) ) Exit(0);
-  prep += mc;
-  total+= mc;
+  // 各コンポーネントが存在するかどうかを保持しておく
+  setEnsComponent();
+
+  // BoundaryOuterクラスのポインタを渡す
+  B->setObcPtr(BC.get_OBC_Ptr());
+
+  // XMLファイルをパースして，外部境界条件を保持する
+  B->loadOuterBC();
   
-  if ( !A.alloc_Int_S3D(this, dc_mid, "mid", size, guide, 0, mc) ) Exit(0);
-  prep += mc;
-  
-  if ( !A.alloc_Uint_S3D(this, dc_bcd, "bcd", size, guide, 0, mc) ) Exit(0);
-  prep += mc;
-  total+= mc;
-  
-  if ( !A.alloc_Uint_S3D(this, dc_bcp, "bcp", size, guide, 0, mc) ) Exit(0);
-  prep += mc;
-  total+= mc;
-  
-  if ( !A.alloc_Uint_S3D(this, dc_bcv, "bcv", size, guide, 0, mc) ) Exit(0);
-  prep += mc;
-  total+= mc;
-  
-  if ( C.isHeatProblem() ) {
-    if ( !A.alloc_Uint_S3D(this, dc_bh1, "bch1", size, guide, 0, mc) ) Exit(0);
-    prep += mc;
-    total+= mc;
-    
-    if ( !A.alloc_Uint_S3D(this, dc_bh2, "bch2", size, guide, 0, mc) ) Exit(0);
-    prep += mc;
-    total+= mc;
-  }
+  // KOSと境界条件種類の整合性をチェック
+  B->chkBCconsistency(C.KindOfSolver);
 }
 
 /**
- @fn void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
- @brief コンポーネント体積率の配列のアロケーション
- @param total ソルバーに使用するメモリ量
- @param prep 前処理に使用するメモリ量
+ @fn void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+ @brief ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
+ @param B
+ @param M 
+ @param mp
+ @param fp 
  */
-void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
+void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
 {
-  unsigned long mc=0;
+  // ParseMatクラスの環境設定 
+  M->setControlVars(&C, B->get_IDtable_Ptr(), mat, m_solvCfg);
   
-  if ( !A.alloc_Float_S3D(this, dc_cvf, "cvf", size, guide, 0.0, mc) ) Exit(0);
-  prep += mc;
-  total+= mc;
+  // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
+  M->getXMLmaterial();
+  
+#ifdef DEBUG
+  // Materialの基本リストを表示
+  Hostonly_ M->printBaseMaterialList(mp, fp);
+#endif
+  
+  // MaterialListを作成する
+  M->makeMaterialList();
+  
+  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
+  M->makeLinkCmpMat(cmp);
+  
+  // 媒質テーブルの表示
+  Hostonly_ M->printMaterialList(mp, fp);
+  
+  // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
+  M->chkState_Mat_Cmp(cmp);
 }
 
 /**
- @fn void SklSolverCBC::allocArray_main (unsigned long &total)
- @brief 主計算部分に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
+ @fn void SklSolverCBC::set_Parallel_Info(void)
+ @brief 並列処理時のプロセッサの隣接ランクを計算する
  */
-void SklSolverCBC::allocArray_main (unsigned long &total)
+void SklSolverCBC::set_Parallel_Info(void)
 {
-  unsigned long mc=0;
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  int nID[6], sidx[3];
   
-  if ( !A.alloc_Real_V3DEx(this, dc_v, "vel", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_V3DEx(this, dc_vc, "vc", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_V3DEx(this, dc_v0, "v0", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_V3DEx(this, dc_wv, "wv", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_V3DEx(this, dc_wvex, "wvex", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_S3D(this, dc_p, "prs", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_S3D(this, dc_p0, "prs0", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_S3D(this, dc_wk2, "wk2", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_index3 (unsigned long &total)
- @brief Index計算に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
- void SklSolverCBC::allocArray_index3 (unsigned long &total)
- {
- unsigned long mc=0;
- unsigned idx_sz = C.Fcell * 3;
- 
- if ( !A.alloc_Int_S1D(this, dc_index3, "index3", idx_sz, 0, 0.0, mc) ) Exit(0);
- total+= mc;
- }
-
-/**
- @fn void SklSolverCBC::allocArray_index (unsigned long &total)
- @brief Index計算に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
- void SklSolverCBC::allocArray_index(unsigned long &total)
- {
- unsigned long mc=0;
- unsigned idx_sz = C.Fcell;
- 
- if ( !A.alloc_Uint_S1D(this, dc_index, "index", idx_sz, 0, 0, mc) ) Exit(0);
- total+= mc;
- }
-
-/**
- @fn void SklSolverCBC::allocArray_interface (unsigned long &total)
- @brief allocation for interface equation
- @param total memory requirement in main solver
- */
-void SklSolverCBC::allocArray_interface (unsigned long &total)
-{
-  unsigned long mc=0;
-  
-  if ( !A.alloc_Real_S3D(this, dc_vof, "vof", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_heat (unsigned long &total)
- @brief 熱の主計算部分に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_heat (unsigned long &total)
-{
-  unsigned long mc=0;
-  
-  if ( !A.alloc_Real_S3D(this, dc_t, "tmp", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_S3D(this, dc_t0, "tmp0", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-  
-  if ( !A.alloc_Real_V3DEx(this, dc_qbc, "qbc", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_AB2 (unsigned long &total)
- @brief Adams-Bashforth法に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_AB2 (unsigned long &total)
-{
-  unsigned long mc=0;
-  if ( !A.alloc_Real_V3DEx(this, dc_abf, "abf", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_RK (unsigned long &total)
- @brief Runge-Kutta法に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_RK (unsigned long &total)
-{
-  unsigned long mc=0;
-  
-  if ( !A.alloc_Real_S3D(this, dc_dp, "dp", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
- @brief 平均値処理に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- @param fp ファイルポインタ
- @note
-    - 配列長は計算内部領域のみなので，関連する処理に注意
- */
-void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
-{
-  unsigned long mc=0;
-  
-  if ( C.Mode.Average == ON ) {
-    if ( !SklCfgCheckInFile("AvrPressure") || // 時間平均を指定しているが，出力ファイル記述がない場合
-        !SklCfgCheckInFile("AvrVelocity") ||
-        (!SklCfgCheckInFile("AvrTemperature") && C.isHeatProblem()) ) {
-      Hostonly_ stamped_printf     ("\tRestart mode and averaging, but there is no InFile description for an average file. \n");
-      Hostonly_ stamped_fprintf(fp, "\tRestart mode and averaging, but there is no InFile description for an average file. \n");
+  if( para_mng->IsParallel() ){
+    if (para_mng->IsEv()) {
+      nID[X_MINUS] = para_mng->GetCommID(-1, 0, 0);
+      nID[Y_MINUS] = para_mng->GetCommID( 0,-1, 0);
+      nID[Z_MINUS] = para_mng->GetCommID( 0, 0,-1);
+      nID[X_PLUS]  = para_mng->GetCommID( 1, 0, 0);
+      nID[Y_PLUS]  = para_mng->GetCommID( 0, 1, 0);
+      nID[Z_PLUS]  = para_mng->GetCommID( 0, 0, 1);
+    }
+    else if (para_mng->IsMb()) {
+      nID[X_MINUS] = para_mng->IsCommID(-1, 0, 0);
+      nID[Y_MINUS] = para_mng->IsCommID( 0,-1, 0);
+      nID[Z_MINUS] = para_mng->IsCommID( 0, 0,-1);
+      nID[X_PLUS]  = para_mng->IsCommID( 1, 0, 0);
+      nID[Y_PLUS]  = para_mng->IsCommID( 0, 1, 0);
+      nID[Z_PLUS]  = para_mng->IsCommID( 0, 0, 1);
+    }
+    else {
+      stamped_printf("\tID %d : not parallel process.\n", pn.ID);
       Exit(0);
     }
     
-    if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) Exit(0);
-    total += mc;
+    for(int i=0; i<6; i++) pn.nID[i] = nID[i];
+  }
+  
+  if( para_mng->IsParallel() ){
+    sidx[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0, pn.procGrp) + 1;
+    sidx[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1, pn.procGrp) + 1;
+    sidx[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2, pn.procGrp) + 1;
+  } 
+  else {
+    sidx[0] = sidx[1] = sidx[2] = 1;
+  }
+  
+  for(int i=0; i<3; i++) pn.st_idx[i] = sidx[i];
+  
+  //debug; printf("%d : [%d %d %d %d %d %d] [%d %d %d]\n", pn.ID, pn.nID[0],pn.nID[1],pn.nID[2],pn.nID[3],pn.nID[4],pn.nID[5],pn.st_idx[0], pn.st_idx[1],pn.st_idx[2]);
+}
+
+
+
+/**
+ @fn void SklSolverCBC::setComponentVF(float* cvf)
+ @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
+ @param cvf 体積率
+ */
+void SklSolverCBC::setComponentVF(float* cvf)
+{
+  int subsampling = 20; // 体積率のサブサンプリングの基数
+  int f_st[3], f_ed[3];
+  double flop;
+  
+  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
+  CF.setParallelInfo(pn);
+  
+  for (int n=1; n<=C.NoBC; n++) {
     
-    if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) Exit(0);
-    total += mc;
+    // 形状パラメータのセット
+    switch ( cmp[n].getType() ) {
+      case HEX:
+        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+        break;
+        
+      case FAN:
+        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+        break;
+        
+      case DARCY:
+        Exit(0);
+        break;
+        
+      default:
+        break;
+    }
     
-    if ( C.isHeatProblem() ) {
-      if ( !A.alloc_Real_S3D(this, dc_at, "avrt", size, guide, 0.0, mc) ) Exit(0);
-      total += mc;
+    // 回転角度の計算
+    CF.get_angle(); 
+    
+    // bboxと投影面積の計算
+    cmp[n].area = CF.get_BboxArea();
+    
+    // インデクスの計算
+    CF.bbox_index(f_st, f_ed);
+    
+    // インデクスの登録
+    cmp[n].setBbox_st(f_st);
+    cmp[n].setBbox_ed(f_ed);
+    cmp[n].setEns(ON); 
+    
+    // 体積率
+    TIMING_start(tm_cmp_vertex8);
+    flop = 0.0;
+    CF.vertex8    (f_st, f_ed, cvf, flop);
+    TIMING_stop(tm_cmp_vertex8, (REAL_TYPE)flop);
+    
+    TIMING_start(tm_cmp_subdivision);
+    flop = 0.0;
+    CF.subdivision(f_st, f_ed, cvf, flop);
+    TIMING_stop(tm_cmp_subdivision, (REAL_TYPE)flop);
+    
+  }
+#ifdef DEBUG
+  REAL_TYPE org[3], pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      org[i] *= C.RefLength;
+      pit[i] *= C.RefLength;
     }
   }
-}
-
-/**
- @fn void SklSolverCBC::allocArray_LES (unsigned long &total)
- @brief LES計算に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_LES (unsigned long &total)
-{
-  unsigned long mc=0;
+  F.writeRawSPH(cvf, size, guide, org, pit, SPH_SINGLE);
+#endif
   
-  if ( !A.alloc_Real_S3D(this, dc_vt, "eddy", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_Collocate(unsigned long &total)
- @brief コロケート格子用のセルフェイスの配列
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_Collocate(unsigned long &total)
-{
-  unsigned long mc=0;
-  
-  if ( !A.alloc_Real_V3DEx(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
 }
 
 /**
@@ -2712,16 +2445,78 @@ void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
 }
 
 /**
- @fn bool SklSolverCBC::hasLinearSolver(unsigned L)
- @brief 種類Lの線形ソルバを利用する場合，trueを返す
- @param L 線形ソルバの種類
+ @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
+ @brief XMLから境界条件数やID情報を取得し，表示する
+ @param B
+ @param fp
+ @param mp 
  */
-bool SklSolverCBC::hasLinearSolver(unsigned L)
+void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
 {
-  for (int i=0; i<ItrCtl::ic_END; i++)
-    if ( IC[i].get_LS() == L ) return true;
+  // C.NoBC, C.NoID, C.NoCompoを取得
+  // NoID = scanXMLmodel();
+  // NoCompo = NoBC + NoID;
+	// ParseBCクラス内でiTable[NoID+1]を確保
+  B->setControlVars(&C);
+  
+  // XMLファイルのModel_SettingからボクセルIDの情報を取得
+  B->getXML_Model();
+  
+  // XMLから得られたIDテーブルを表示
+  Hostonly_ {
+    B->printTable(fp);
+    fprintf(fp,"\n"); fflush(fp);
+    
+    B->printTable(mp);
+    fprintf(mp,"\n"); fflush(mp);
+  }
+  
+  // 流体と固体の媒質数，NoMaterialをセットする
+  B->setMedium(&C);
+}
 
-  return false;
+/**
+ @fn void SklSolverCBC::setEnsComponent(void)
+ @brief コンポーネントが存在するかを保持しておく
+ */
+void SklSolverCBC::setEnsComponent(void)
+{
+  unsigned c;
+  
+  // Forcing > HEX, FAN, DARCY
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isFORCING() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.forcing = ON;
+  
+  // Heat source > HEAT_SRC, CNST_TEMP
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isHsrc() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.hsrc = ON;
+  
+  // 周期境界 > PERIODIC
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getType() == PERIODIC ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.periodic = ON;
+  
+  // 流出境界 > OUTFLOW
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getType() == OUTFLOW ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.outflow = ON;
+  
+  // 体積率コンポーネント
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isVFraction() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.fraction = ON;
 }
 
 #ifndef BINARY_VOXEL
@@ -3009,3 +2804,245 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   
 }
 #endif
+
+/**
+ @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
+ @brief BCIndexにビット情報をエンコードする
+ @param Vinfo
+ @param M
+ @param mid Voxel IDの配列
+ @param vf コンポーネントの体積率 
+ @param cutPos カット情報コンテナ
+ @note
+ - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
+ */
+void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
+{
+  unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
+  bcv = bh1 = bh2 = bcp = bcd = NULL;
+  
+  if( !(bcd = dc_bcd->GetData()) )  Exit(0);
+  if( !(bcp = dc_bcp->GetData()) )  Exit(0);
+  if( !(bcv = dc_bcv->GetData()) )  Exit(0);
+  if ( C.isHeatProblem() ) {
+    if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
+    if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
+  }
+
+  // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
+  Vinfo->setBCIndex_base1(bcd, mid, vf);
+
+  // bcdの同期
+  if( !dc_bcd->CommBndCell(guide) ) Exit(0);
+  
+  // C.Acell > ノードローカルの有効セル数　
+  // G_Acell > グローバルなアクティブセル数
+  Vinfo->setBCIndex_base2(bcd, mid, &BC, C.Acell, G_Acell, C.KindOfSolver);
+  
+  // STATEとACTIVEビットのコピー
+  Vinfo->copyBCIbase(bcp, bcd);
+  Vinfo->copyBCIbase(bcv, bcd);
+  if ( C.isHeatProblem() ) {
+    Vinfo->copyBCIbase(bh1, bcd);
+    Vinfo->copyBCIbase(bh2, bcd);
+  }
+  
+  // BCIndexP に圧力計算のビット情報をエンコードする -----
+  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cutPos, C.isCDS()); 
+  //Vinfo->chkBCIndexP(bcd, bcp, "BCindexP.txt");
+  
+  // BCIndexV に速度計算のビット情報をエンコードする -----
+  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, C.isCDS());
+  // debug; Vinfo->chkBCIndexV(bcv, "BCindexV.txt");
+  
+  // BCIndexT に温度計算のビット情報をエンコードする -----
+  if ( C.isHeatProblem() ) {
+    Vinfo->setBCIndexH(bcd, bh1, bh2, mid, &BC, C.KindOfSolver);
+    // debug; Vinfo->chkBCIndexH(bcv, "BCindexH.txt");
+  }
+  
+  // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
+  Vinfo->countCellState(C.Wcell, G_Wcell, bcd, SOLID);
+  Vinfo->countCellState(C.Fcell, G_Fcell, bcd, FLUID);
+  
+  // set local active cell ratio
+  C.Eff_Cell_Ratio = (REAL_TYPE)C.Acell / C.getCellSize(size);
+  
+  // コンポーネントのインデクスの再構築
+  Vinfo->resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem(), GC_bv);
+}
+
+
+//@fn void SklSolverCBC::VoxelInitialize(void)
+//@brief 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する
+//@note パラメータScaling_Factorで強制的にスケールを変更可能
+void SklSolverCBC::VoxelInitialize(void)
+{
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
+  unsigned m_sz[3];
+  REAL_TYPE m_org[3], m_pch[3], m_wth[3];
+  REAL_TYPE scaling = C.Hide.Scaling_Factor;
+  
+  for (int i=0; i<3; i++) {
+    m_org[i] = m_pch[i] = m_wth[i] =0.0;
+    m_sz[i] = 0;
+  }
+  
+  // ユーザ問題の場合
+  if ( C.Mode.Example == id_Users ) {
+    const char* fname=NULL;
+    
+    if ( !(fname = C.getVoxelFileName()) ) {
+      Hostonly_ stamped_printf("\tRead error : A file name of voxel model is invalid.\n");
+      Exit(0);
+    }
+    
+    if ( C.vxFormat == Control::Sphere_SVX ) {
+      unsigned type;
+      float f_org[3], f_pch[3];
+      
+      if ( !getSVXHeaderInfo(fname, &type, m_sz, f_org, f_pch) ) {
+        Hostonly_ stamped_printf("\tRead error : Header of the voxel file '%s' could not read.\n", fname);
+        Exit(0);
+      }
+      
+      for (int i=0; i<3; i++) {
+        m_org[i] = (REAL_TYPE)f_org[i]*scaling;
+        m_pch[i] = (REAL_TYPE)f_pch[i]*scaling;
+      }
+    }
+    else { // SBX
+      unsigned dtype, dims, vlen, gcell, rlen, crddef, aux;
+      unsigned long long blksz, l_sz[3];
+      double d_org[3], d_pch[3];
+      
+      if ( !getSBXHeaderInfo(fname, &dims, &vlen, &dtype, &gcell, &rlen, &crddef, &aux, &blksz, l_sz, d_org, d_pch) ) {
+        Hostonly_ stamped_printf("\tRead error : Header of the voxel file '%s' could not read.\n", fname);
+        Exit(0);
+      }
+      for (int i=0; i<3; i++) {
+        m_sz[i]  = (unsigned)l_sz[i];
+        m_org[i] = (REAL_TYPE)d_org[i]*scaling;
+        m_pch[i] = (REAL_TYPE)d_pch[i]*scaling;
+      }
+    }
+    
+    // ファイルに記述されたヘッダは有次元であるため，無次元化する
+    for (int i=0; i<3; i++) {
+      m_org[i] /= C.RefLength;
+      m_pch[i] /= C.RefLength;
+    }
+    
+    // 全計算領域のbounding boxサイズ
+    for (int i=0; i<3; i++) {
+      m_wth[i] = (REAL_TYPE)m_sz[i] * m_pch[i];
+    }
+  }
+  else { // 組み込み例題の場合
+    
+    // 分割数，基点，ピッチを取得する
+    if ( !SklUtil::getCellInfo(C.NoDimension, m_sz, m_org, m_pch, m_wth) ) Exit(0);
+    
+    // 有次元の場合に無次元化
+    if (C.Unit.Param == DIMENSIONAL ) {
+      for (int i=0; i<3; i++) {
+        m_org[i] /= C.RefLength;
+        m_pch[i] /= C.RefLength;
+        m_wth[i] /= C.RefLength;
+      }
+    }
+    
+    // 各例題のパラメータ設定
+    Ex->setDomain(&C, m_sz, m_org, m_wth, m_pch);
+  }
+  
+  //stamped_printf("Model read : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
+  
+  // 以下は，共通処理
+  int idiv, jdiv, kdiv;
+  idiv = jdiv = kdiv = 0;
+  
+  // グローバルな値の保持 （無次元値）
+  for (int i=0; i<3; i++) {
+    G_size[i] = m_sz[i];
+    G_org[i]  = m_org[i];
+    G_Lbx[i]  = m_wth[i];
+  }
+  
+  // 分割数をXMLから取得，指定なければ自動分割する
+  if( para_cmp->IsParallel() ){
+    if( !GetCfgVoxelDivisionMethod(idiv, jdiv, kdiv) ) idiv = jdiv = kdiv = 0;
+  }
+  else {
+    idiv = jdiv = kdiv = 1;
+  }
+  
+  // 分割数を計算し，sz_paraで取得
+  if( SKL_PARACMPO_SUCCESS != para_cmp->SklVoxelInit(m_sz[0], m_sz[1], m_sz[2], idiv, jdiv, kdiv, pn.procGrp)) {
+    stamped_printf("\tID %d : Voxel Initialize error.\n", pn.ID);
+    Exit(0);
+  }
+  const unsigned int* sz_para = para_mng->GetVoxelSize();
+  if( !sz_para ){
+    stamped_printf("\tID %d : Can't get voxel size.\n", pn.ID);
+    Exit(0);
+  }
+  
+  // 並列処理時のランク情報と各ノードのスタートインデクスを計算
+  set_Parallel_Info();
+  
+  // ノードローカルな値の設定　（無次元値）
+  for(int i=0; i<3; i++) {
+    m_sz[i] = sz_para[i];
+    m_wth[i] = (REAL_TYPE)m_sz[i]*m_pch[i];
+    m_org[i] += m_pch[i]*(REAL_TYPE)(pn.st_idx[i]-1);
+  }
+  
+  //stamped_printf("Local : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
+  
+  // コントロールクラスのメンバ変数で値を保持
+  C.setDomainInfo(m_sz, m_org, m_pch, m_wth);
+}
+
+
+/**
+ @fn void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
+ @brief ボクセルをスキャンし情報を表示する
+ @param Vinfo
+ @param B
+ @param mid 
+ @param fp 
+ @note
+ - ボクセルデータに含まれるID数をカウント
+ - XMLに記述されたパラメータと比較
+ */
+void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
+{
+  // 外部境界面の媒質IDとその個数を取得
+  unsigned cell_id[NOFACE], count=0;
+  for (int i=0; i<NOFACE; i++) cell_id[i] = 0;
+  
+  count = B->count_Outer_Cell_ID(cell_id);
+  
+  Hostonly_ {
+    fprintf(fp, "\tCell IDs on Guide cell region\n");
+    for ( int i=0; i<count; i++) {
+      fprintf(fp, "\t\tID[%d] = %d\n", i+1, cell_id[i]);
+    }
+    fprintf(mp, "\tCell IDs on Guide cell region\n");
+    for ( int i=0; i<count; i++) {
+      fprintf(mp, "\t\tID[%d] = %d\n", i+1, cell_id[i]);
+    }
+  }
+  
+  // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
+  unsigned sc=0;
+  if ( (sc=Vinfo->scanCell(mid, count, cell_id, C.Hide.Change_ID)) > C.NoID ) {
+    Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is grater than one described in 'Model_Setting'(%d)\n", 
+                             sc, C.NoID);
+    Exit(0);
+  }
+}
+

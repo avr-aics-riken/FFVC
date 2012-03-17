@@ -142,7 +142,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
         //cbc_pvec_les_(vc, sz, gc, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop_count);
       }
       else {
-        cbc_pvec_muscl_(vc, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, src0, &wall_prof, &flop_count); 
+        cbc_pvec_muscl_(vc, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, src0, &wall_prof, (int*)bcd, cvf, &flop_count); 
       }
       TIMING_stop(tm_pseudo_vec, flop_count);
 
@@ -160,7 +160,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
         //cbc_pvec_les_(wv, sz, gc, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop_count);
       }
       else {
-        cbc_pvec_muscl_(wv, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, src0, &wall_prof, &flop_count); 
+        cbc_pvec_muscl_(wv, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, src0, &wall_prof, (int*)bcd, cvf, &flop_count); 
       }
       TIMING_stop(tm_pseudo_vec, flop_count);
       
@@ -365,7 +365,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     if ( C.isForcing() == ON ) {
       TIMING_start(tm_force_src);
       flop_count=0.0;
-      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, coef, v00, flop_count);
+      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, C.dh, v00, flop_count);
       TIMING_stop(tm_force_src, flop_count);
     }
 
@@ -434,8 +434,8 @@ void SklSolverCBC::NS_FS_E_CBC(void)
       TIMING_stop(tm_prj_frc_mod, flop_count);
       
       // 通信部分
-      TIMING_start(tm_prj_frc_mod_comm);
       if ( para_mng->IsParallel() ) {
+        TIMING_start(tm_prj_frc_mod_comm);
         for (int n=1; n<=C.NoBC; n++) {
           tmp[n][0] = vm[n][0];
           tmp[n][1] = vm[n][1];

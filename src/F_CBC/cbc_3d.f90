@@ -10,8 +10,8 @@
 !> @brief subroutines for CBC
 !> @author keno, FSI Team, VCAD, RIKEN
 
-!  ******************************************************************************************************
-!> @subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, flop)
+!  ***************************************************************************************************************
+!> @subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
 !! @brief 対流項と粘性項の計算
 !! @param[out] wv 疑似ベクトルの空間項の評価値
 !! @param sz 配列長
@@ -26,12 +26,13 @@
 !! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
 !! @param ut 摩擦速度
 !! @param wall_type 壁面条件 (0=no_slip, 1=slip)
+!! @param bd BCindex ID
 !! @param[out] flop
 !<
-    subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, flop)
+    subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type
+    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
     real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb, u1, u2, u3, ug, e1, e2, e3, u_tau
@@ -51,8 +52,9 @@
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ut
+    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cvf
     real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp, bd
     
     ix = sz(1)
     jx = sz(2)
@@ -122,7 +124,7 @@
     vflop = 0.0;
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2, bdx) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -564,9 +566,11 @@
       endif 
       
       beta = 1.0;
-      !if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
-      !  beta = 1.0 - real(ibits( bdx, top_vf, bitw_vf )) * qtz ! 1-体積率
-      !endif
+      bdx = bd(i,j,k)
+      if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
+        ! beta = 1.0 - real(ibits( bdx, top_vf, bitw_vf )) * qtz ! 1-体積率
+        beta = 1.0 - cvf(i,j,k)
+      endif
       
       EX = ( uu_e * c_e &
            - uu_w * c_w &
@@ -768,7 +772,7 @@
 !! @param div 速度の発散値
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param coef 係数
+!! @param coef 係数 dh/dt
 !! @param v0 疑似ベクトル
 !! @param bv BCindex V
 !! @param v00 参照速度

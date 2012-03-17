@@ -76,16 +76,13 @@ protected:
   
   void find_index(int* w, const FB::Vec3f p);
   
-  FB::Vec3f rotate    (const FB::Vec3f p, const FB::Vec3f u);
-  FB::Vec3f rotate_inv(const FB::Vec3f p, const FB::Vec3f u);
-  
-  FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); } /// セルインデックスを(1,0,0)シフト
-  FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z  ); } /// セルインデックスを(0,1,0)シフト
-  FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z  ); } /// セルインデックスを(1,1,0)シフト
-  FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y  , index.z+h); } /// セルインデックスを(0,0,1)シフト
-  FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z+h); } /// セルインデックスを(1,0,1)シフト
-  FB::Vec3f shift_f6 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z+h); } /// セルインデックスを(0,1,1)シフト
-  FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); } /// セルインデックスを(1,1,1)シフト
+  inline FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); } /// セルインデックスを(1,0,0)シフト
+  inline FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z  ); } /// セルインデックスを(0,1,0)シフト
+  inline FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z  ); } /// セルインデックスを(1,1,0)シフト
+  inline FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y  , index.z+h); } /// セルインデックスを(0,0,1)シフト
+  inline FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z+h); } /// セルインデックスを(1,0,1)シフト
+  inline FB::Vec3f shift_f6 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z+h); } /// セルインデックスを(0,1,1)シフト
+  inline FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); } /// セルインデックスを(1,1,1)シフト
   
   //@fn inline void get_min()
   inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) {
@@ -105,8 +102,9 @@ protected:
   //@brief 円筒形状の内外判定
   //@param p テスト点座標
   //@ret 内部のときに1.0を返す
+  //@note 186 flop
   inline float judge_cylinder(const FB::Vec3f p) {
-    FB::Vec3f q = rotate(angle, p-center);
+    FB::Vec3f q = rotate(angle, p-center); // 181 flop
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     float r = sqrtf(q.x*q.x + q.y*q.y);
@@ -118,14 +116,67 @@ protected:
   //@brief 矩形形状の内外判定
   //@param p テスト点座標
   //@ret 内部のときに1.0を返す
+  //@note 183 flop
   inline float judge_rect(const FB::Vec3f p) {
-    FB::Vec3f q = rotate(angle, p-center);
+    FB::Vec3f q = rotate(angle, p-center); // 181 flop
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     if ( fabs(q.x) > 0.5*width )  return 0.0;
     if ( fabs(q.y) > 0.5*height ) return 0.0;
     
     return 1.0;
+  }
+  
+  //@fn inline FB::Vec3f CompoFraction::rotate(const Vec3f p, const Vec3f u)
+  //@brief 回転ベクトルp(alpha, beta, gamma)でベクトルuを回転する
+  //@param p 回転角度
+  //@param u 方向ベクトル
+  //@ret 角度
+  //@note sin, cos = 5flop, dot=5flop, total 181flop
+  inline FB::Vec3f rotate(const FB::Vec3f p, const FB::Vec3f u)
+  {
+    FB::Vec3f a, b, c;
+    
+    // line vector expression
+    a.x =  cos(p.y)*cos(p.z);
+    a.y =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
+    a.z =  cos(p.x)*sin(p.y)*cos(p.z) + sin(p.x)*sin(p.z);
+    
+    b.x =  cos(p.y)*sin(p.z);
+    b.y =  sin(p.x)*sin(p.y)*sin(p.z) + cos(p.x)*cos(p.z);
+    b.z =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
+    
+    c.x = -sin(p.y);
+    c.y =  sin(p.x)*cos(p.y);
+    c.z =  cos(p.x)*cos(p.y);
+    
+    return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );
+  }
+  
+  //@fn inline FB::Vec3f CompoFraction::rotate_inv(const Vec3f p, const Vec3f u)
+  //@brief 回転ベクトルp(alpha, beta, gamma)に対して，-pでベクトルuを回転する
+  //@param p 回転角度
+  //@param u 方向ベクトル
+  //@ret 角度
+  //@note sin, cos = 5flop, dot=5flop, total 181flop
+  inline FB::Vec3f rotate_inv(const FB::Vec3f p, const FB::Vec3f u)
+  {
+    FB::Vec3f a, b, c;
+    
+    // line vector expression
+    a.x =  cos(p.y)*cos(p.z);
+    a.y =  cos(p.y)*sin(p.z);
+    a.z = -sin(p.y);
+    
+    b.x =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
+    b.y =  sin(p.x)*sin(p.y)*sin(p.z) + cos(p.x)*cos(p.z);
+    b.z =  sin(p.x)*cos(p.y);
+    
+    c.x =  cos(p.x)*sin(p.y)*cos(p.z) + sin(p.x)*sin(p.z);
+    c.y =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
+    c.z =  cos(p.x)*cos(p.y);
+    
+    return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );
   }
   
 public:
@@ -135,8 +186,8 @@ public:
   void get_angle     (void);
   void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height);
   void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss);
-  void subdivision   (const int st[], const int ed[], float* vf);
-  void vertex8       (const int st[], const int ed[], float* vf);
+  void subdivision   (const int st[], const int ed[], float* vf, double& flop);
+  void vertex8       (const int st[], const int ed[], float* vf, double& flop);
 };
 
 #endif // _SKL_FB_FRACTION_H_

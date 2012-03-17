@@ -690,7 +690,6 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float*
     switch ( cmp[n].getType() ) {
       case HEX:
         cbc_hex_force_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dt, vec, &cmp[n].ca[0], &flop);
-        cbc_hex_dir_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, (int*)&n, v00, vec, &flop);
         break;
         
       case FAN:
@@ -708,17 +707,17 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float*
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE coef, REAL_TYPE* v00, REAL_TYPE &flop)
+ @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 圧力損失部によるPoisosn式のソース項の修正 \gamma^F
  @param[out] src 外力項によるPoisson方程式のソース項
  @param v 速度ベクトル n+1
  @param bd BCindex ID
  @param cvf コンポーネントの体積率
- @param coef 係数 dh/dt
+ @param dh 格子幅
  @param v00 参照速度
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE coef, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -732,7 +731,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_hex_psrc_(src, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &coef, vec, &cmp[n].ca[0], &flop);
+        cbc_hex_psrc_(src, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dh, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:

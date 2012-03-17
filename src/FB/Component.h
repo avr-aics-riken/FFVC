@@ -160,13 +160,13 @@ public:
   ~CompoList() {}
   
 public:
-  bool isFORCING   (void) const; 
-  bool isHBC       (void) const;
-  bool isHsrc      (void) const;
-  bool isMONITOR   (void) const;
-  bool isVBC       (void) const;
-  bool isVecForcing(void) const;
-  bool isVFraction (void) const;
+  bool isFORCING   (void); 
+  bool isHBC       (void);
+  bool isHsrc      (void);
+  bool isMONITOR   (void);
+  bool isVBC       (void);
+  bool isVecForcing(void);
+  bool isVFraction (void);
   
   REAL_TYPE get_CoefRadEps(void)  const { return var1; };
   REAL_TYPE get_CoefRadPrj(void)  const { return var2; };
@@ -190,14 +190,14 @@ public:
   unsigned get_sw_V_profile(void)const { return usw; };
   unsigned get_sw_P_BCtype(void) const { return usw; };
   
-  string getVarStr (void) const;
-  string getBCstr  (void) const;
+  string getVarStr (void);
+  string getBCstr  (void);
   
   void setAttrb            (unsigned key);
-  void setBbox_st       (unsigned odr, int val);
-  void setBbox_ed       (unsigned odr, int val);
-  void setBbox_st       (int val[]);
-  void setBbox_ed       (int val[]);
+  void setBbox_st          (unsigned odr, int val);
+  void setBbox_ed          (unsigned odr, int val);
+  void setBbox_st          (int val[]);
+  void setBbox_ed          (int val[]);
   void setDef              (int key);
   void setElement          (unsigned key);
   void setEns              (unsigned key);

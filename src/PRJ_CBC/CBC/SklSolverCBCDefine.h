@@ -25,6 +25,9 @@ enum timing_key {
       tm_polygon_load,
       tm_cutinfo,
   
+    tm_cmp_vertex8,
+    tm_cmp_subdivision,
+  
     tm_restart,
   
   tm_loop_sct,

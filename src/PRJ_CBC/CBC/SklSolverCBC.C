@@ -375,6 +375,8 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_voxel_load,         "Loading Voxel File",      PerfMonitor::CALC);
   set_label(tm_polygon_load,       "Loading Polygon File",    PerfMonitor::CALC);
   set_label(tm_cutinfo,            "Cut Information",         PerfMonitor::CALC);
+  set_label(tm_cmp_vertex8,        "Compo Vertex8",           PerfMonitor::CALC);
+  set_label(tm_cmp_subdivision,    "Compo Subdivision",       PerfMonitor::CALC);
   // end of Voxel Prep. Section
   
   set_label(tm_restart,            "Restart Process",         PerfMonitor::CALC);
@@ -409,7 +411,7 @@ void SklSolverCBC::set_timing_label(void)
   // end of NS: F-Step Sct:2
   
   set_label(tm_frctnl_stp_sct_3,   "NS: F-Step Sct:3",        PerfMonitor::CALC, false);
-  set_label(tm_forcing,            "Forcing Pvec. Dir.",      PerfMonitor::CALC);
+  set_label(tm_forcing,            "Forcing Pseudo Velocity", PerfMonitor::CALC);
   set_label(tm_buoyancy,           "Buoyancy",                PerfMonitor::CALC);
   set_label(tm_pvec_BC,            "Pseudo Velocity BC",      PerfMonitor::CALC);
   set_label(tm_pvec_comm,          "Sync. Pseudo Velocity",   PerfMonitor::COMM);
@@ -451,8 +453,8 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_prj_vec,            "Projection Velocity",     PerfMonitor::CALC);
   set_label(tm_prj_vec_bc,         "Projection Velocity BC",  PerfMonitor::CALC);
   set_label(tm_prj_vec_bc_comm,    "A.R. Projection VBC",     PerfMonitor::COMM);
-  set_label(tm_prj_frc_mod,        "Prjctn Force Modify",     PerfMonitor::CALC);
-  set_label(tm_prj_frc_mod_comm,   "A.R. Forcing",            PerfMonitor::COMM);
+  set_label(tm_prj_frc_mod,        "Projection Forcing",      PerfMonitor::CALC);
+  set_label(tm_prj_frc_mod_comm,   "A.R. Projection Forcing", PerfMonitor::COMM);
   set_label(tm_vec_BC,             "Velocity BC",             PerfMonitor::CALC);
   // end of Poisson: Itr. Sct:4
       
