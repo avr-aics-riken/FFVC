@@ -195,7 +195,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start(tm_init_alloc); 
-  allocArray_prep(TotalMemory, PrepMemory);
+  allocArray_prep(PrepMemory, TotalMemory);
   TIMING_stop(tm_init_alloc); 
   
   if( !(ws  = dc_ws->GetData()) )   Exit(0);
@@ -387,11 +387,11 @@ SklSolverCBC::SklSolverInitialize() {
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   if ( C.isVfraction() ) {
     TIMING_start(tm_init_alloc);
-    allocArray_compoVF(TotalMemory, PrepMemory);
+    allocArray_compoVF(PrepMemory, TotalMemory);
     TIMING_stop(tm_init_alloc); 
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
     
-    setComponentVF(cvf);
+    setComponentVF(cvf, PrepMemory, TotalMemory);
   }
 
   
@@ -1088,12 +1088,12 @@ SklSolverCBC::SklSolverInitialize() {
 }
 
 /**
- @fn void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
+ @fn void SklSolverCBC::allocArray_prep (unsigned long &prep, unsigned long &total)
  @brief 前処理に用いる配列のアロケーション
  @param total ソルバーに使用するメモリ量
  @param prep 前処理に使用するメモリ量
  */
-void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
+void SklSolverCBC::allocArray_prep (unsigned long &prep, unsigned long &total)
 {
   unsigned long mc=0;
   
@@ -1128,12 +1128,12 @@ void SklSolverCBC::allocArray_prep (unsigned long &total, unsigned long &prep)
 }
 
 /**
- @fn void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
+ @fn void SklSolverCBC::allocArray_compoVF (unsigned long &prep, unsigned long &total)
  @brief コンポーネント体積率の配列のアロケーション
  @param total ソルバーに使用するメモリ量
  @param prep 前処理に使用するメモリ量
  */
-void SklSolverCBC::allocArray_compoVF (unsigned long &total, unsigned long &prep)
+void SklSolverCBC::allocArray_compoVF (unsigned long &prep, unsigned long &total)
 {
   unsigned long mc=0;
   
@@ -1173,34 +1173,6 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
   total+= mc;
   
   if ( !A.alloc_Real_S3D(this, dc_wk2, "wk2", size, guide, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_index3 (unsigned long &total)
- @brief Index計算に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_index3 (unsigned long &total)
-{
-  unsigned long mc=0;
-  unsigned idx_sz = C.Fcell * 3;
-  
-  if ( !A.alloc_Int_S1D(this, dc_index3, "index3", idx_sz, 0, 0.0, mc) ) Exit(0);
-  total+= mc;
-}
-
-/**
- @fn void SklSolverCBC::allocArray_index (unsigned long &total)
- @brief Index計算に用いる配列のアロケーション
- @param total ソルバーに使用するメモリ量
- */
-void SklSolverCBC::allocArray_index(unsigned long &total)
-{
-  unsigned long mc=0;
-  unsigned idx_sz = C.Fcell;
-  
-  if ( !A.alloc_Uint_S1D(this, dc_index, "index", idx_sz, 0, 0, mc) ) Exit(0);
   total+= mc;
 }
 
@@ -2339,15 +2311,18 @@ void SklSolverCBC::set_Parallel_Info(void)
 
 
 /**
- @fn void SklSolverCBC::setComponentVF(float* cvf)
+ @fn void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total)
  @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
  @param cvf 体積率
+ @param m_prep  前処理用のメモリサイズ
+ @param m_total 本計算用のメモリリサイズ
  */
-void SklSolverCBC::setComponentVF(float* cvf)
+void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total)
 {
   int subsampling = 20; // 体積率のサブサンプリングの基数
   int f_st[3], f_ed[3];
   double flop;
+  unsigned long m_cmp_size=0;
   
   CompoFraction CF(size, guide, C.dx, C.org, subsampling);
   CF.setParallelInfo(pn);
@@ -2397,7 +2372,29 @@ void SklSolverCBC::setComponentVF(float* cvf)
     CF.subdivision(f_st, f_ed, cvf, flop);
     TIMING_stop(tm_cmp_subdivision, (REAL_TYPE)flop);
     
+    //ワーク用の配列を確保
+    if ( cmp[n].isEns() ) {
+      size_t array_size = (f_ed[0]-f_st[0]+1)*(f_ed[1]-f_st[1]+1)*(f_ed[2]-f_st[2]+1)*3;
+      cmp[n].v_ptr = new (REAL_TYPE)[array_size];
+      m_cmp_size += array_size;
+    }
+    
   }
+  
+  // 使用メモリ量　
+  unsigned long cmp_mem, G_cmp_mem;
+  G_cmp_mem = cmp_mem = m_cmp_size * sizeof(REAL_TYPE);
+  m_prep += cmp_mem;
+  m_total+= cmp_mem;
+  
+  if( para_cmp->IsParallel() ) {
+    para_cmp->Allreduce(&cmp_mem, &G_cmp_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+  }
+  
+  Hostonly_  {
+    FBUtility::displayMemory("Component work", G_cmp_mem, cmp_mem, fp, mp);
+  }
+  
 #ifdef DEBUG
   REAL_TYPE org[3], pit[3];
   

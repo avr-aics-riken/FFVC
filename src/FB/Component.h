@@ -113,6 +113,7 @@ protected:
   int      state;     ///
   int      st[3];     /// コンポーネントインデクスBV範囲の始点
   int      ed[3];     /// コンポーネントインデクスBV範囲の終点
+  int      c_size[3]; /// コンポーネントワーク配列の大きさ
   int      def;       /// BC指定時の面を挟む相手先のセルID
   REAL_TYPE var1;     /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
   REAL_TYPE var2;     /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
@@ -132,6 +133,7 @@ public:
   REAL_TYPE ca[6];        ///< 係数セット a
   REAL_TYPE cb[6];        ///< 係数セット b
   char      name[LABEL];  ///< ラベル
+  REAL_TYPE* v_ptr;       ///< ワーク配列のポインタ
   
   
   CompoList() {
@@ -150,12 +152,14 @@ public:
       ed[i] = 0;
       oc[i] = 0.0;
       dr[i] = 0.0;
+      c_size[i] = 0;
     }
     for (int i=0; i<var_END; i++) val[i]=0.0;
     for (int i=0; i<6; i++) ca[i] = cb[i] = 0.0;
     for (int n=0; n<LABEL; n++) name[n]='\0';
     var1 = var2 = var3 = var_m = temp_init = 0.0;
     depth = shp_p1 = shp_p2 = 0.0;
+    v_ptr = NULL;
   }
   ~CompoList() {}
   

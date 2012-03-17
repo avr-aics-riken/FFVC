@@ -708,7 +708,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float*
 
 /**
  @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE &flop)
- @brief 圧力損失部によるPoisosn式のソース項の修正 \gamma^F
+ @brief 圧力損失部によるPoisosn式のソース項 \gamma^F の修正とワーク用の速度を保持
  @param[out] src 外力項によるPoisson方程式のソース項
  @param v 速度ベクトル n+1
  @param bd BCindex ID
@@ -728,6 +728,8 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
     vec[2] = cmp[n].nv[2];
     
     cmp[n].getBbox(st, ed);
+    
+    cbc_force_keep_vec_(cmp[n].v_ptr, dim_sz, gc, cmp_size, v);
     
     switch ( cmp[n].getType() ) {
       case HEX:

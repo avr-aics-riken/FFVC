@@ -267,7 +267,7 @@ public:
   void allocArray_AB2       (unsigned long &total);
   void allocArray_average   (unsigned long &total, FILE* fp);
   void allocArray_Collocate (unsigned long &total);
-  void allocArray_compoVF   (unsigned long &total, unsigned long &prep);
+  void allocArray_compoVF   (unsigned long &prep, unsigned long &total);
   void allocArray_forcing   (unsigned long &total);
   void allocArray_heat      (unsigned long &total);
   void allocArray_index     (unsigned long &total);
@@ -275,7 +275,7 @@ public:
   void allocArray_interface (unsigned long &total);
   void allocArray_LES       (unsigned long &total);
   void allocArray_main      (unsigned long &total);
-  void allocArray_prep      (unsigned long &total, unsigned long &prep);
+  void allocArray_prep      (unsigned long &prep, unsigned long &total);
   void allocArray_RK        (unsigned long &total);
   
   void AverageOutput        (unsigned mode, REAL_TYPE& flop);
@@ -297,7 +297,7 @@ public:
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
   void setBCinfo            (ParseBC* B);
-  void setComponentVF       (float* cvf);
+  void setComponentVF       (float* cvf, unsigned long& m_prep, unsigned long& m_total);
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
