@@ -99,10 +99,6 @@ SklSolverCBC::SklSolverCBC() {
   // Cut
   cut = NULL;
   
-  // Fluid cell
-  dc_index3 = NULL; // index test; 
-  dc_index  = NULL; // index test; 
-  
   m_outPrs = m_outUVW = m_outTmp = m_outVrt = m_outTP = NULL;
   m_outAvrPrs = m_outAvrUVW = m_outAvrTmp = m_outVOF = NULL;
   m_outI2VGT = m_outHlcty = m_outDiv = NULL;
@@ -204,10 +200,6 @@ SklSolverCBC::SklSolverCBC(int sType) {
   // Cut
   cut = NULL;
   
-  // Fluid cell
-  dc_index3 = NULL; // index test; 
-  dc_index  = NULL; // index test; 
-  
   m_outPrs = m_outUVW = m_outTmp = m_outVrt = m_outTP = NULL;
   m_outAvrPrs = m_outAvrUVW = m_outAvrTmp = m_outVOF = NULL;
   m_outI2VGT = m_outHlcty = m_outDiv = NULL;
@@ -248,17 +240,6 @@ SklSolverCBC::~SklSolverCBC() {
     if (fp_w) fclose(fp_w);
   }
 
-}
-
-//@fn void swap_ptr_REAL_TYPE(REAL_TYPE* a, REAL_TYPE* b)
-//@brief ポインタを入れ換える
-void SklSolverCBC::swap_ptr_REAL_TYPE(REAL_TYPE* a, REAL_TYPE* b)
-{
-  if ( !a || !b ) Exit(0);
-  REAL_TYPE* c=NULL;
-  c = a;
-  a = b;
-  b = c;
 }
 
 /**
@@ -906,8 +887,6 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 	REAL_TYPE omg, r;
 	REAL_TYPE *p, *src0, *p0, *src1;
 	unsigned *bcp;
-  int *idx3;
-  unsigned *idx;
   REAL_TYPE flop_count=0.0;
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   REAL_TYPE comm_size;              /// 通信面1面あたりの通信量
@@ -917,7 +896,6 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 	
 	p = src0 = src1 = p0 = NULL;
 	bcp = NULL;
-  idx = NULL;
   omg = IC->get_omg();
 	r = 0.0;
   comm_size = count_comm_size(size, guide);

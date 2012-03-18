@@ -719,8 +719,9 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float*
  */
 void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE &flop)
 {
-  int st[3], ed[3];
+  int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
+  REAL_TYPE* w_ptr=NULL;
   
   for (unsigned n=1; n<=NoBC; n++) {
     vec[0] = cmp[n].nv[0];
@@ -728,12 +729,14 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
     vec[2] = cmp[n].nv[2];
     
     cmp[n].getBbox(st, ed);
+    cmp[n].get_cmp_sz(csz);
+    w_ptr = cmp[n].get_w_ptr();
     
-    cbc_force_keep_vec_(cmp[n].v_ptr, dim_sz, gc, cmp_size, v);
-    
+    if ( cmp[n].isFORCING() ) cbc_force_keep_vec_(w_ptr, csz, st, ed, v, dim_sz, gc);
+    mark();
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_hex_psrc_(src, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dh, vec, &cmp[n].ca[0], &flop);
+        cbc_hex_psrc_(src, dim_sz, gc, st, ed, (int*)bd, cvf, w_ptr, csz, (int*)&n, v00, &dh, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:
@@ -765,14 +768,17 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
  */
 void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE &flop)
 {
-  int st[3], ed[3];
+  int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
+  REAL_TYPE* w_ptr=NULL;
   REAL_TYPE coef = dh/dt;
   
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].isFORCING() ) {
       
       cmp[n].getBbox(st, ed);
+      cmp[n].get_cmp_sz(csz);
+      w_ptr = cmp[n].get_w_ptr();
       
       vec[0] = cmp[n].nv[0];
       vec[1] = cmp[n].nv[1];
@@ -780,7 +786,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
       
       switch ( cmp[n].getType() ) {
         case HEX:
-          cbc_hex_force_vec_(v, div, dim_sz, gc, st, ed, (int*)bd, cvf, (int*)&n, v00, &dt, &dh, vec, &cmp[n].ca[0], am, &flop);
+          cbc_hex_force_vec_(v, div, dim_sz, gc, st, ed, (int*)bd, cvf, w_ptr, csz, (int*)&n, v00, &dt, &dh, vec, &cmp[n].ca[0], am, &flop);
           break;
           
         case FAN:

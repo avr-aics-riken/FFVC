@@ -120,6 +120,7 @@ protected:
   REAL_TYPE var3;     /// パラメータ保持 (Heat Density, Temperature)
   REAL_TYPE var_m;    /// モニタの値を保持
   REAL_TYPE temp_init;/// 温度の初期値
+  REAL_TYPE* w_ptr;   ///< ワーク配列のポインタ
   
 public:
   REAL_TYPE area;         ///< 断面積
@@ -133,8 +134,6 @@ public:
   REAL_TYPE ca[6];        ///< 係数セット a
   REAL_TYPE cb[6];        ///< 係数セット b
   char      name[LABEL];  ///< ラベル
-  REAL_TYPE* v_ptr;       ///< ワーク配列のポインタ
-  
   
   CompoList() {
     ID = type = element = variable = mat_odr = attrb = 0;
@@ -159,7 +158,7 @@ public:
     for (int n=0; n<LABEL; n++) name[n]='\0';
     var1 = var2 = var3 = var_m = temp_init = 0.0;
     depth = shp_p1 = shp_p2 = 0.0;
-    v_ptr = NULL;
+    w_ptr = NULL;
   }
   ~CompoList() {}
   
@@ -222,6 +221,7 @@ public:
   void set_CoefPrsLoss     (REAL_TYPE var);
   void set_CoefRadEps      (REAL_TYPE var);
   void set_CoefRadPrj      (REAL_TYPE var);
+  void set_cmp_sz          (void);
   void set_Heatflux        (REAL_TYPE var);
   void set_HeatDensity     (REAL_TYPE var);
   void set_HeatValue       (REAL_TYPE var);
@@ -338,6 +338,26 @@ public:
   //@fn int* getBbox_ed(void)
   //@brief コンポーネントのBV情報edのアドレスを返す
   int* getBbox_ed(void) { return (ed); }
+  
+  //@fn void get_cmp_sz(int* m_sz)
+  //@brief コンポーネントのサイズを返す
+  void get_cmp_sz(int* m_sz) { 
+    m_sz[0] = c_size[0];
+    m_sz[1] = c_size[1];
+    m_sz[2] = c_size[2];
+  }
+  
+  //@fn void set_w_ptr(REAL_TYPE* m_ptr)
+  //@brief ワーク用のポインタをセット
+  void set_w_ptr(REAL_TYPE* m_ptr) {
+    w_ptr = m_ptr;
+  }
+  
+  //@fn REAL_TYPE* get_w_ptr(void)
+  //@brief ワーク用のポインタをセット
+  REAL_TYPE* get_w_ptr(void) {
+    return w_ptr;
+  }
 };
 
 #endif // _SKL_FB_COMPO_H_

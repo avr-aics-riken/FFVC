@@ -72,6 +72,9 @@ void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, 
   else if ( !strcasecmp(mode,"cut") ) {
     fprintf (fp,"\t>> Memory required for Cut : ");
   }
+  else if ( !strcasecmp(mode,"component") ) {
+    fprintf (fp,"\t>> Memory required for Component : ");
+  }
   else {
     Exit(0);
   }

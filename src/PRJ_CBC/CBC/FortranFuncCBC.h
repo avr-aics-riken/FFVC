@@ -72,6 +72,7 @@
 #define cbc_vis_ee_vbc_         CBC_VIS_EE_VBC
 
 // cbc_forcing.f90
+#define cbc_force_keep_vec_     CBC_FORCE_KEEP_VEC
 #define cbc_hex_psrc_           CBC_HEX_PSRC
 #define cbc_hex_force_pvec_     CBC_HEX_FORCE_PVEC
 #define cbc_hex_force_vec_      CBC_HEX_FORCE_VEC
@@ -181,11 +182,12 @@ extern "C" {
                                REAL_TYPE* v0, int* bx, int* odr, REAL_TYPE* coef, REAL_TYPE* vec, REAL_TYPE* flop);
 
   // cbc_forcing.f90
-  void cbc_hex_psrc_          (REAL_TYPE* src, int* sz, int* g, int* st, int* ed, int* bd, float* vf, REAL_TYPE* v, int* odr, 
+  void cbc_force_keep_vec_    (REAL_TYPE* wk, int* c_sz, int* st, int* ed, REAL_TYPE* v, int* sz, int* g);
+  void cbc_hex_psrc_          (REAL_TYPE* src, int* sz, int* g, int* st, int* ed, int* bd, float* vf, REAL_TYPE* wk, int* c_sz, int* odr, 
                                REAL_TYPE* v00, REAL_TYPE* dh, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* flop);
   void cbc_hex_force_pvec_    (REAL_TYPE* vc,  int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* v, int* odr, 
                                REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* flop);
-  void cbc_hex_force_vec_     (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, int* odr, 
+  void cbc_hex_force_vec_     (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* wk, int* c_sz, int* odr, 
                                REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* am, REAL_TYPE* flop);
   
   // cbc_pscalar.f90

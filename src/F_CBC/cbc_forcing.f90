@@ -10,8 +10,67 @@
 !> @brief subroutines for CBC
 !> @author keno, FSI Team, VCAD, RIKEN
 
-!  ***********************************************************************************
-!> @subroutine cbc_hex_psrc (src, sz, g, st, ed, bd, vf, v, odr, v00, dh, nv, c, flop)
+!  *********************************************************
+!> @subroutine cbc_force_keep_vec (wk, cz, st, ed, v, sz, g)
+!! @brief コンポーネントのワーク配列に速度ベクトルを保持
+!! @param wk テンポラリのワークベクトル
+!! @param cz コンポーネントの配列長
+!! @param st ループの開始インデクス
+!! @param ed ループの終了インデクス
+!! @param v 速度ベクトル (n+1,k)
+!! @param sz 配列長
+!! @param g ガイドセル長
+!<
+    subroutine cbc_force_keep_vec (wk, cz, st, ed, v, sz, g)
+    implicit none
+    integer                                                     ::  i, j, k, g, ii, jj, kk
+    integer                                                     ::  is, ie, js, je, ks, ke
+    integer, dimension(3)                                       ::  sz, cz, st, ed
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(3, -1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2)      ::  wk
+
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke) &
+!$OMP PRIVATE(ii, jj, kk)
+
+! ガイドセルも含めてコピーする
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    do k=ks-2,ke+2
+      kk = k - ks + 1
+
+    do j=js-2,je+2
+      jj = j - js + 1
+
+    do i=is-2,ie+2
+      ii = i - is + 1
+
+      wk(1,ii,jj,kk) = v(1,i,j,k)
+      wk(2,ii,jj,kk) = v(2,i,j,k)
+      wk(3,ii,jj,kk) = v(3,i,j,k)
+    end do
+    end do
+    end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine cbc_force_keep_vec
+
+!  ****************************************************************************************
+!> @subroutine cbc_hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
 !! @brief 圧力損失部におけるPoissonのソース項を計算する
 !! @param[out] src ソース項
 !! @param sz 配列長
@@ -20,7 +79,8 @@
 !! @param ed ループの終了インデクス
 !! @param bd BCindex ID
 !! @param vf コンポーネントの体積率
-!! @param v 速度ベクトル n+1
+!! @param wk テンポラリのワークベクトル 速度ベクトル (n+1,k)
+!! @param cz コンポーネントの配列長
 !! @param odr 速度境界条件のエントリ
 !! @param v00 参照速度
 !! @param dh 格子幅
@@ -28,12 +88,12 @@
 !! @param c 圧力損失部の係数
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_psrc (src, sz, g, st, ed, bd, vf, v, odr, v00, dh, nv, c, flop)
+    subroutine cbc_hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, odr
+    integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
+    integer, dimension(3)                                       ::  sz, st, ed, cz
     real                                                        ::  flop, dh, cf
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
@@ -50,9 +110,9 @@
     real                                                        ::  c1, c2, c3, c4, ep, pick, qq
     real                                                        ::  q_w, q_e, q_s, q_n, q_b, q_t, q_p
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
+    real, dimension(3, -1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
@@ -80,7 +140,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
-!$OMP PRIVATE(idx, pick, es) &
+!$OMP PRIVATE(idx, pick, es, ii, jj, kk) &
 !$OMP PRIVATE(be, bw, bn, bs, bt, bb, b0) &
 !$OMP PRIVATE(u_w, u_e, u_s, u_n, u_b, u_t, u_p) &
 !$OMP PRIVATE(v_w, v_e, v_s, v_n, v_b, v_t, v_p) &
@@ -102,8 +162,14 @@
 !$OMP DO SCHEDULE(hoge)
 #endif
     do k=ks-1,ke+1
+      kk = k - ks + 1
+
     do j=js-1,je+1
+      jj = j - js + 1
+
     do i=is-1,ie+1
+      ii = i - is + 1
+
       ! 自セルが流体で、かつ周囲1セルの範囲にコンポーネントが存在する場合のみ有効
       pick = 0.0
       qq = q_p + q_w + q_e + q_s + q_n + q_b + q_t
@@ -240,10 +306,10 @@
     return
     end subroutine cbc_hex_force_pvec
 
-!  ************************************************************************************************
-!> @subroutine cbc_hex_force_vec (v, div, sz, g, st, ed, bd, vf, odr, v00, dt, dh, nv, c, am, flop)
+!  ********************************************************************************************************
+!> @subroutine cbc_hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
 !! @brief 圧力損失部における速度の修正と発散値の修正
-!! @param[in/out] v 速度ベクトルn+1
+!! @param[in/out] v 速度ベクトル(n+1,k+1)
 !! @param[in/out] div 速度の発散
 !! @param sz 配列長
 !! @param g ガイドセル長
@@ -251,6 +317,8 @@
 !! @param ed ループの終了インデクス
 !! @param bd BCindex ID
 !! @param vf コンポーネントの体積率
+!! @param wk テンポラリのワークベクトル 速度ベクトル (n+1,k)
+!! @param cz コンポーネントの配列長
 !! @param odr 速度境界条件のエントリ
 !! @param v00 参照速度
 !! @param dt 時間積分幅
@@ -260,12 +328,12 @@
 !! @param am 平均速度と圧損量
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_force_vec (v, div, sz, g, st, ed, bd, vf, odr, v00, dt, dh, nv, c, am, flop)
+    subroutine cbc_hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, odr
+    integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
+    integer, dimension(3)                                       ::  sz, st, ed, cz
     real                                                        ::  flop, dt, dh, cf1, cf2, beta
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
@@ -285,6 +353,7 @@
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
+    real, dimension(3, -1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
@@ -317,7 +386,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf1, cf2) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
-!$OMP PRIVATE(idx, es, beta, pick) &
+!$OMP PRIVATE(idx, es, beta, pick, ii, jj, kk) &
 !$OMP PRIVATE(be, bw, bn, bs, bt, bb, b0) &
 !$OMP PRIVATE(u_w, u_e, u_s, u_n, u_b, u_t, u_p) &
 !$OMP PRIVATE(v_w, v_e, v_s, v_n, v_b, v_t, v_p) &
@@ -341,8 +410,13 @@
 !$OMP REDUCTION(+:am1) &
 !$OMP REDUCTION(+:am2)
     do k=ks-1,ke+1
+      kk = k - ks + 1
+
     do j=js-1,je+1
+      jj = j - js + 1
+
     do i=is-1,ie+1
+      ii = i - is + 1
 
       ! 自セルが流体で、かつ周囲1セルの範囲にコンポーネントが存在する場合のみ有効
       pick = 0.0

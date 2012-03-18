@@ -11,378 +11,6 @@
 
 #include "Component.h"
 
-//@fn void CompoList::setInitTemp(REAL_TYPE key)
-//@brief 初期温度の指定
-void CompoList::setInitTemp(REAL_TYPE key) {
-  temp_init = key;
-}
-
-//@fn void CompoList::setStateCellMonitor(unsigned key)
-//@brief セルモニタスイッチ ON/OFF
-void CompoList::setStateCellMonitor(unsigned key) {
-  var_u1 = key;
-}
-
-//@fn void CompoList::setOutflowType(unsigned key)
-//@brief 流出速度のタイプを指定する
-//@note V_AVERAGE | V_MINMAX
-void CompoList::setOutflowType(unsigned key) {
-  var_u1 = key;
-}
-
-//@fn void CompoList::setsetPrsUnit(unsigned key)
-//@brief 圧力の単位を指定する
-void CompoList::setPrsUnit(unsigned key) {
-  var_u1 = key;
-}
-
-//@fn void CompoList::setDef(int key)
-//@brief 指定セルを保持する
-void CompoList::setDef(int key) {
-  def = key;
-}
-
-//@fn void CompoList::setBbox_st(unsigned odr, int val)
-//@brief コンポーネントのBV情報の始点を設定する
-//@param odr 方向　(0-i, 1-j, 2-k)
-//@param val 値
-void CompoList::setBbox_st(unsigned odr, int val) {
-  st[odr] = val;
-}
-
-//@fn void CompoList::setBbox_st(int val[])
-//@brief コンポーネントのBV情報の始点を設定する
-void CompoList::setBbox_st(int val[]) {
-  st[0] = val[0];
-  st[1] = val[1];
-  st[2] = val[2];
-}
-
-//@fn void CompoList::setBbox_ed(unsigned odr, int val)
-//@brief コンポーネントのBV情報の終点を設定する
-//@param odr 方向　(0-i, 1-j, 2-k)
-//@param val 値
-void CompoList::setBbox_ed(unsigned odr, int val) {
-  ed[odr] = val;
-}
-
-//@fn void CompoList::setBbox_ed(int val[])
-//@brief コンポーネントのBV情報の始点を設定する
-void CompoList::setBbox_ed(int val[]) {
-  ed[0] = val[0];
-  ed[1] = val[1];
-  ed[2] = val[2];
-}
-
-//@fn void CompoList::set_sw_V_profile(unsigned key)
-//@brief 速度プロファイル指定モードの保持
-void CompoList::set_sw_V_profile(unsigned key) {
-  usw = key;
-}
-
-//@fn void CompoList::set_sw_P_BCtype(unsigned key)
-//@brief 圧力境界条件タイプ指定モードの保持
-void CompoList::set_sw_P_BCtype(unsigned key) {
-  usw = key;
-}
-
-//@fn void CompoList::set_sw_HTmodeRef(unsigned key)
-//@brief 熱伝達の参照指定モードの保持
-void CompoList::set_sw_HTmodeRef(unsigned key) {
-  usw = key;
-}
-
-//@fn void CompoList::set_sw_HexDir (unsigned key)
-//@brief 熱交換機の方向指定モードの保持
-void CompoList::set_sw_HexDir (unsigned key) {
-  usw = key;
-}
-
-//@fn void CompoList::set_sw_Heatgen(unsigned key)
-//@brief 発熱量指定モードの保持
-void CompoList::set_sw_Heatgen(unsigned key) {
-  usw = key;
-}
-
-//@fn void CompoList::set_Pressure(REAL_TYPE var)
-//@brief 圧力値の保持
-void CompoList::set_Pressure(REAL_TYPE var) {
-  var1 = var;
-}
-
-//@fn void CompoList::set_Mon_Temp(REAL_TYPE var)
-//@brief モニタ温度の保持
-void CompoList::set_Mon_Temp(REAL_TYPE var) {
-  var_m = var;
-}
-
-//@fn void CompoList::set_Mon_Heatflux(REAL_TYPE var)
-//@brief モニタ熱流束の保持
-void CompoList::set_Mon_Heatflux(REAL_TYPE var) {
-  var_m = var;
-}
-
-//@fn void CompoList::set_Mon_Calorie(REAL_TYPE var)
-//@brief モニタ熱量の保持
-void CompoList::set_Mon_Calorie(REAL_TYPE var) {
-  var_m = var;
-}
-
-//@fn void CompoList::set_CoefRadEps(REAL_TYPE var)
-//@brief 輻射のイプシロンの保持
-void CompoList::set_CoefRadEps(REAL_TYPE var) {
-  var1 = var;
-}
-
-//@fn void CompoList::CoefRadPrj(REAL_TYPE var)
-//@brief 輻射の射出係数の保持
-void CompoList::set_CoefRadPrj(REAL_TYPE var) {
-  var2 = var;
-}
-
-//@fn void CompoList::set_CoefMassflow(REAL_TYPE var)
-//@brief 流量の有次元化係数の保持
-void CompoList::set_CoefMassflow(REAL_TYPE var) {
-  var1 = var;
-}
-
-//@fn void CompoList::CoefPrsLoss(REAL_TYPE var)
-//@brief 圧力損失の有次元化係数の保持
-void CompoList::set_CoefPrsLoss(REAL_TYPE var) {
-  var2 = var;
-}
-
-//@fn void CompoList::set_HeatDensity(REAL_TYPE var)
-//@brief 吸発熱密度の保持
-void CompoList::set_HeatDensity(REAL_TYPE var) {
-  var3 = var;
-}
-
-//@fn void CompoList::set_HeatValue(REAL_TYPE var)
-//@brief 吸発熱量の保持
-void CompoList::set_HeatValue(REAL_TYPE var) {
-  var2 = var;
-}
-
-//@fn void CompoList::set_Temp(REAL_TYPE var)
-//@brief 温度の保持
-void CompoList::set_Temp(REAL_TYPE var) {
-  var3 = var;
-}
-
-//@fn void CompoList::set_CoefHT(REAL_TYPE var)
-//@brief 熱伝達係数の保持
-void CompoList::set_CoefHT(REAL_TYPE var) {
-  var2 = var;
-}
-
-//@fn void CompoList::set_Heatflux(REAL_TYPE var)
-//@brief 熱流束の保持
-void CompoList::set_Heatflux(REAL_TYPE var) {
-  var2 = var;
-}
-
-//@fn void CompoList::set_Massflow(REAL_TYPE var)
-//@brief 流量の保持
-void CompoList::set_Massflow(REAL_TYPE var) {
-  var1 = var;
-}
-
-//@fn void CompoList::set_Velocity(REAL_TYPE var)
-//@brief 速度の保持
-void CompoList::set_Velocity(REAL_TYPE var) {
-  var1 = var;
-}
-
-/**
- @fn bool CompoList::isMONITOR(void)
- @brief コンポーネントタイプがモニタかどうかを調べる
- @retval モニタであればtrue
- */
-bool CompoList::isMONITOR(void) {
-  return ( (type == CELL_MONITOR) ? true : false );
-}
-
-/**
- @fn bool CompoList::isVBC(void)
- @brief 内部境界条件タイプが速度指定かどうかを調べる
- @retval VBCであればtrue
- */
-bool CompoList::isVBC(void)
-{
-  if ((type == SPEC_VEL) ||
-      (type == SPEC_VEL_WH) ||
-      (type == OUTFLOW) ||
-      (type == IBM_DF) ||
-      (type == HEX) ||
-      (type == FAN) ||
-      (type == DARCY) ) return true;
-  return false;
-}
-
-/**
- @fn bool CompoList::isFORCING(void)
- @brief 境界条件タイプがFORCINGかどうかを調べる
- @retval FORCINGであればtrue
- */
-bool CompoList::isFORCING(void)
-{
-  if ((type == HEX) || 
-      (type == FAN) || 
-      (type == DARCY) ) return true;
-  return false;
-}
-
-/**
- @fn bool CompoList::isHsrc(void)
- @brief 境界条件タイプが熱源かどうかを調べる
- @retval FORCINGであればtrue
- */
-bool CompoList::isHsrc(void)
-{
-  if ((type == HEAT_SRC) || 
-      (type == CNST_TEMP) ) return true;
-  return false;
-}
-
-/**
- @fn bool CompoList::isHBC(void)
- @brief 境界条件タイプが熱境界条件かどうかを調べる
- @retval HBCであればtrue
- */
-bool CompoList::isHBC(void)
-{
-  if ((type == ADIABATIC)  || 
-      (type == HEATFLUX)   ||
-      (type == TRANSFER)   ||
-      (type == ISOTHERMAL) ||
-      (type == RADIANT)    ||
-      (type == SPEC_VEL_WH)||
-      (type == HEAT_SRC)   ||
-      (type == CNST_TEMP) ) return true;
-  return false;
-}
-
-//@fn bool CompoList::isVFraction(void)
-//@brief 体積率の必要なコンポーネントかどうか
-bool CompoList::isVFraction(void) {
-  if ((type == HEAT_SRC) ||
-      (type == CNST_TEMP) ||
-      (type == IBM_DF) ||
-      (type == HEX) ||
-      (type == FAN) ||
-      (type == DARCY) )  return true;
-  return false;
-}
-
-//@fn void CompoList::setPeriodicDir(unsigned key)
-//@brief 周期境界の上流方向を保持する
-void CompoList::setPeriodicDir(unsigned key) {
-  var_u1 = key;
-}
-
-/**
- @fn void CompoList::void setEns(bool key)
- @brief コンポーネントが自ノードに存在しているかどうかをセットする
- */
-void CompoList::setEns(unsigned key) {
-  ens = key;
-}
-
-/**
- @fn void CompoList::setPhase(unsigned m_phase)
- @brief set pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
- */
-void CompoList::setPhase(unsigned m_phase) {
-  phase = m_phase;
-}
-
-/**
- @fn void CompoList::setAttrb(unsigned key)
- @brief attrbをセットする
- @param key アトリビュート
- */
-void CompoList::setAttrb(unsigned key) { attrb = key; }
-
-//@fn void CompoList::set_VBC_policy(bool kind)
-//@brief 速度指定ポリシーをセットする
-//@param kind ポリシー種別　true-速度指定, false-流量指定
-void CompoList::set_VBC_policy(bool kind)
-{
-  attrb = ( kind ) ? BC_type_velocity : BC_type_massflow;
-}
-
-//@fn void CompoList::set_HSRC_policy(bool kind)
-//@brief 発熱項の指定ポリシーをセットする
-//@param kind ポリシー種別　true-発熱量指定, false-発熱密度指定
-void CompoList::set_HSRC_policy(bool kind)
-{
-  usw = ( kind ) ? hsrc_watt : hsrc_density;
-}
-
-/**
- @fn void CompoList::setElement(unsigned key)
- @brief elementをセットする
- @param key 要素数 element
- */
-void CompoList::setElement(unsigned key) { element = key; }
-
-/**
- @fn void CompoList::setID(unsigned key)
- @brief IDをセットする
- @param key 媒質ID ID
- */
-void CompoList::setID(unsigned key) { ID = key; }
-
-/**
- @fn void CompoList::setMatOdr (unsigned key)
- @brief mat_odrをセットする
- @param key MaterialListのエントリ番号
- */
-void CompoList::setMatOdr(unsigned key) { mat_odr = key; }
-
-/**
- @fn void CompoList::setState  (int key)
- @brief stateをセットする
- @param key セルの状態 SOLID/FLUID
- */
-void CompoList::setState(int key) { state = key; }
-
-/**
- @fn void CompoList::setType(int key)
- @brief typeをセットする
- @param key 境界条件の種類
- */
-void CompoList::setType(unsigned key) { type = key; }
-
-/**
- @fn void CompoList::setHtype(int key)
- @brief h_typeをセットする
- @param key 境界条件の種類
- */
-void CompoList::setHtype(unsigned key) { h_type = key; }
-
-/**
- @fn void CompoList::setName(const char* pnt)
- @brief ラベル名をセットする
- @param pnt ラベル名のアドレス
- @attention NULL check
- */
-void CompoList::setName(const char* pnt) { strcpy(name, pnt); }
-
-/**
- @fn bool CompoList::isVecForcing(void)
- @brief ベクトル強制をするかどうかを調べる
- @retval ベクトルを強制する場合true
- */
-bool CompoList::isVecForcing(void)
-{
-  if ( isFORCING() ) {
-    if ( usw==ON) return true;
-  }
-  return false;
-}
-
 /**
  @fn string CompoList::getVarStr(void)
  @brief 変数名を返す
@@ -430,12 +58,407 @@ string CompoList::getBCstr(void)
   else if ( type == PERIODIC )      bc = "Periodic";
   else if ( type == INACTIVE )      bc = "Inactive";
   else if ( type == TRANSFER ) {
-    if      ( h_type == HT_N )          bc = "Heat Transfer type N";
-    else if ( h_type == HT_S )          bc = "Heat Transfer type S";
-    else if ( h_type == HT_SN)          bc = "Heat Transfer type SN (Natural convection)";
-    else if ( h_type == HT_SF)          bc = "Heat Transfer type SF (Forced convection)";
-    else if ( h_type == HT_B )          bc = "Heat Transfer type B";
+    if      ( h_type == HT_N )      bc = "Heat Transfer type N";
+    else if ( h_type == HT_S )      bc = "Heat Transfer type S";
+    else if ( h_type == HT_SN)      bc = "Heat Transfer type SN (Natural convection)";
+    else if ( h_type == HT_SF)      bc = "Heat Transfer type SF (Forced convection)";
+    else if ( h_type == HT_B )      bc = "Heat Transfer type B";
   }
-  else                            bc = "";
+  else                              bc = "";
   return bc;
 }
+
+/**
+ @fn bool CompoList::isFORCING(void)
+ @brief 境界条件タイプがFORCINGかどうかを調べる
+ @retval FORCINGであればtrue
+ */
+bool CompoList::isFORCING(void)
+{
+  if ((type == HEX) || 
+      (type == FAN) || 
+      (type == DARCY) ) return true;
+  return false;
+}
+
+/**
+ @fn bool CompoList::isHBC(void)
+ @brief 境界条件タイプが熱境界条件かどうかを調べる
+ @retval HBCであればtrue
+ */
+bool CompoList::isHBC(void)
+{
+  if ((type == ADIABATIC)  || 
+      (type == HEATFLUX)   ||
+      (type == TRANSFER)   ||
+      (type == ISOTHERMAL) ||
+      (type == RADIANT)    ||
+      (type == SPEC_VEL_WH)||
+      (type == HEAT_SRC)   ||
+      (type == CNST_TEMP) ) return true;
+  return false;
+}
+
+/**
+ @fn bool CompoList::isHsrc(void)
+ @brief 境界条件タイプが熱源かどうかを調べる
+ @retval FORCINGであればtrue
+ */
+bool CompoList::isHsrc(void)
+{
+  if ((type == HEAT_SRC) || 
+      (type == CNST_TEMP) ) return true;
+  return false;
+}
+
+/**
+ @fn bool CompoList::isMONITOR(void)
+ @brief コンポーネントタイプがモニタかどうかを調べる
+ @retval モニタであればtrue
+ */
+bool CompoList::isMONITOR(void) {
+  return ( (type == CELL_MONITOR) ? true : false );
+}
+
+/**
+ @fn bool CompoList::isVBC(void)
+ @brief 内部境界条件タイプが速度指定かどうかを調べる
+ @retval VBCであればtrue
+ */
+bool CompoList::isVBC(void)
+{
+  if ((type == SPEC_VEL) ||
+      (type == SPEC_VEL_WH) ||
+      (type == OUTFLOW) ||
+      (type == IBM_DF) ||
+      (type == HEX) ||
+      (type == FAN) ||
+      (type == DARCY) ) return true;
+  return false;
+}
+
+/**
+ @fn bool CompoList::isVecForcing(void)
+ @brief ベクトル強制をするかどうかを調べる
+ @retval ベクトルを強制する場合true
+ */
+bool CompoList::isVecForcing(void)
+{
+  if ( isFORCING() ) {
+    if ( usw==ON) return true;
+  }
+  return false;
+}
+
+//@fn bool CompoList::isVFraction(void)
+//@brief 体積率の必要なコンポーネントかどうか
+bool CompoList::isVFraction(void) {
+  if ((type == HEAT_SRC) ||
+      (type == CNST_TEMP) ||
+      (type == IBM_DF) ||
+      (type == HEX) ||
+      (type == FAN) ||
+      (type == DARCY) )  return true;
+  return false;
+}
+
+
+//@fn void CompoList::setAttrb(unsigned key)
+//@brief attrbをセットする
+//@param key アトリビュート
+void CompoList::setAttrb(unsigned key) { attrb = key; }
+
+//@fn void CompoList::setBbox_st(unsigned odr, int val)
+//@brief コンポーネントのBV情報の始点を設定する
+//@param odr 方向　(0-i, 1-j, 2-k)
+//@param val 値
+void CompoList::setBbox_st(unsigned odr, int val) {
+  st[odr] = val;
+}
+
+//@fn void CompoList::setBbox_st(int val[])
+//@brief コンポーネントのBV情報の始点を設定する
+void CompoList::setBbox_st(int val[]) {
+  st[0] = val[0];
+  st[1] = val[1];
+  st[2] = val[2];
+}
+
+//@fn void CompoList::setBbox_ed(unsigned odr, int val)
+//@brief コンポーネントのBV情報の終点を設定する
+//@param odr 方向　(0-i, 1-j, 2-k)
+//@param val 値
+void CompoList::setBbox_ed(unsigned odr, int val) {
+  ed[odr] = val;
+}
+
+//@fn void CompoList::setBbox_ed(int val[])
+//@brief コンポーネントのBV情報の始点を設定する
+void CompoList::setBbox_ed(int val[]) {
+  ed[0] = val[0];
+  ed[1] = val[1];
+  ed[2] = val[2];
+}
+
+//@fn void CompoList::setDef(int key)
+//@brief 指定セルを保持する
+void CompoList::setDef(int key) {
+  def = key;
+}
+
+//@fn void CompoList::setElement(unsigned key)
+//@brief elementをセットする
+//@param key 要素数 element
+void CompoList::setElement(unsigned key) { 
+  element = key; 
+}
+
+//@fn void CompoList::void setEns(bool key)
+//@brief コンポーネントが自ノードに存在しているかどうかをセットする
+void CompoList::setEns(unsigned key) {
+  ens = key;
+}
+
+//@fn void CompoList::setHtype(int key)
+//@brief h_typeをセットする
+//@param key 境界条件の種類
+void CompoList::setHtype(unsigned key) { 
+  h_type = key; 
+}
+
+//@fn void CompoList::setID(unsigned key)
+//@brief IDをセットする
+//@param key 媒質ID ID
+void CompoList::setID(unsigned key) { 
+  ID = key; 
+}
+
+//@fn void CompoList::setInitTemp(REAL_TYPE key)
+//@brief 初期温度の指定
+void CompoList::setInitTemp(REAL_TYPE key) {
+  temp_init = key;
+}
+
+//@fn void CompoList::setMatOdr (unsigned key)
+//@brief mat_odrをセットする
+//@param key MaterialListのエントリ番号
+void CompoList::setMatOdr(unsigned key) { 
+  mat_odr = key; 
+}
+
+/**
+ @fn void CompoList::setName(const char* pnt)
+ @brief ラベル名をセットする
+ @param pnt ラベル名のアドレス
+ @attention NULL check
+ */
+void CompoList::setName(const char* pnt) { 
+  strcpy(name, pnt); 
+}
+
+//@fn void CompoList::setOutflowType(unsigned key)
+//@brief 流出速度のタイプを指定する
+//@note V_AVERAGE | V_MINMAX
+void CompoList::setOutflowType(unsigned key) {
+  var_u1 = key;
+}
+
+//@fn void CompoList::setPeriodicDir(unsigned key)
+//@brief 周期境界の上流方向を保持する
+void CompoList::setPeriodicDir(unsigned key) {
+  var_u1 = key;
+}
+
+//@fn void CompoList::setPhase(unsigned m_phase)
+//@brief set pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
+void CompoList::setPhase(unsigned m_phase) {
+  phase = m_phase;
+}
+
+//@fn void CompoList::setsetPrsUnit(unsigned key)
+//@brief 圧力の単位を指定する
+void CompoList::setPrsUnit(unsigned key) {
+  var_u1 = key;
+}
+
+//@fn void CompoList::setState  (int key)
+//@brief stateをセットする
+//@param key セルの状態 SOLID/FLUID
+void CompoList::setState(int key) { 
+  state = key; 
+}
+
+//@fn void CompoList::setStateCellMonitor(unsigned key)
+//@brief セルモニタスイッチ ON/OFF
+void CompoList::setStateCellMonitor(unsigned key) {
+  var_u1 = key;
+}
+
+//@fn void CompoList::setType(int key)
+//@brief typeをセットする
+//@param key 境界条件の種類
+void CompoList::setType(unsigned key) { 
+  type = key; 
+}
+
+
+//@fn void CompoList::set_cmp_sz(void)
+//@brief コンポーネントのサイズを計算
+//@note ガイドセルは片側2層を仮定(c_sizeには含めない)
+void CompoList::set_cmp_sz(void) {
+  c_size[0] = ed[0] - st[0] + 1;
+  c_size[1] = ed[1] - st[1] + 1;
+  c_size[2] = ed[2] - st[2] + 1;
+}
+
+
+//@fn void CompoList::set_CoefHT(REAL_TYPE var)
+//@brief 熱伝達係数の保持
+void CompoList::set_CoefHT(REAL_TYPE var) {
+  var2 = var;
+}
+
+//@fn void CompoList::set_CoefRadEps(REAL_TYPE var)
+//@brief 輻射のイプシロンの保持
+void CompoList::set_CoefRadEps(REAL_TYPE var) {
+  var1 = var;
+}
+
+//@fn void CompoList::CoefRadPrj(REAL_TYPE var)
+//@brief 輻射の射出係数の保持
+void CompoList::set_CoefRadPrj(REAL_TYPE var) {
+  var2 = var;
+}
+
+//@fn void CompoList::set_CoefMassflow(REAL_TYPE var)
+//@brief 流量の有次元化係数の保持
+void CompoList::set_CoefMassflow(REAL_TYPE var) {
+  var1 = var;
+}
+
+//@fn void CompoList::CoefPrsLoss(REAL_TYPE var)
+//@brief 圧力損失の有次元化係数の保持
+void CompoList::set_CoefPrsLoss(REAL_TYPE var) {
+  var2 = var;
+}
+
+//@fn void CompoList::set_HeatDensity(REAL_TYPE var)
+//@brief 吸発熱密度の保持
+void CompoList::set_HeatDensity(REAL_TYPE var) {
+  var3 = var;
+}
+
+//@fn void CompoList::set_Heatflux(REAL_TYPE var)
+//@brief 熱流束の保持
+void CompoList::set_Heatflux(REAL_TYPE var) {
+  var2 = var;
+}
+
+//@fn void CompoList::set_HeatValue(REAL_TYPE var)
+//@brief 吸発熱量の保持
+void CompoList::set_HeatValue(REAL_TYPE var) {
+  var2 = var;
+}
+
+//@fn void CompoList::set_HSRC_policy(bool kind)
+//@brief 発熱項の指定ポリシーをセットする
+//@param kind ポリシー種別　true-発熱量指定, false-発熱密度指定
+void CompoList::set_HSRC_policy(bool kind) {
+  usw = ( kind ) ? hsrc_watt : hsrc_density;
+}
+
+//@fn void CompoList::set_Massflow(REAL_TYPE var)
+//@brief 流量の保持
+void CompoList::set_Massflow(REAL_TYPE var) {
+  var1 = var;
+}
+
+//@fn void CompoList::set_Mon_Temp(REAL_TYPE var)
+//@brief モニタ温度の保持
+void CompoList::set_Mon_Temp(REAL_TYPE var) {
+  var_m = var;
+}
+
+//@fn void CompoList::set_Mon_Heatflux(REAL_TYPE var)
+//@brief モニタ熱流束の保持
+void CompoList::set_Mon_Heatflux(REAL_TYPE var) {
+  var_m = var;
+}
+
+//@fn void CompoList::set_Mon_Calorie(REAL_TYPE var)
+//@brief モニタ熱量の保持
+void CompoList::set_Mon_Calorie(REAL_TYPE var) {
+  var_m = var;
+}
+
+//@fn void CompoList::set_Pressure(REAL_TYPE var)
+//@brief 圧力値の保持
+void CompoList::set_Pressure(REAL_TYPE var) {
+  var1 = var;
+}
+
+//@fn void CompoList::set_sw_V_profile(unsigned key)
+//@brief 速度プロファイル指定モードの保持
+void CompoList::set_sw_V_profile(unsigned key) {
+  usw = key;
+}
+
+//@fn void CompoList::set_sw_P_BCtype(unsigned key)
+//@brief 圧力境界条件タイプ指定モードの保持
+void CompoList::set_sw_P_BCtype(unsigned key) {
+  usw = key;
+}
+
+//@fn void CompoList::set_sw_HTmodeRef(unsigned key)
+//@brief 熱伝達の参照指定モードの保持
+void CompoList::set_sw_HTmodeRef(unsigned key) {
+  usw = key;
+}
+
+//@fn void CompoList::set_sw_HexDir (unsigned key)
+//@brief 熱交換機の方向指定モードの保持
+void CompoList::set_sw_HexDir (unsigned key) {
+  usw = key;
+}
+
+//@fn void CompoList::set_sw_Heatgen(unsigned key)
+//@brief 発熱量指定モードの保持
+void CompoList::set_sw_Heatgen(unsigned key) {
+  usw = key;
+}
+
+
+
+
+
+//@fn void CompoList::set_Temp(REAL_TYPE var)
+//@brief 温度の保持
+void CompoList::set_Temp(REAL_TYPE var) {
+  var3 = var;
+}
+
+
+
+//@fn void CompoList::set_Velocity(REAL_TYPE var)
+//@brief 速度の保持
+void CompoList::set_Velocity(REAL_TYPE var) {
+  var1 = var;
+}
+
+//@fn void CompoList::set_VBC_policy(bool kind)
+//@brief 速度指定ポリシーをセットする
+//@param kind ポリシー種別　true-速度指定, false-流量指定
+void CompoList::set_VBC_policy(bool kind)
+{
+  attrb = ( kind ) ? BC_type_velocity : BC_type_massflow;
+}
+
+
+
+
+
+
+
+
+
+

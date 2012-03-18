@@ -190,10 +190,6 @@ public:
 
   // (6, ix+guide*2, jx+guide*2, kx+guide*2)
   float* cut; // Cutlibで確保する配列のポインタを受け取る
-
-  // Fluid cell
-  SklScalar<int> *dc_index3;      // index test; 
-  SklScalar<unsigned> *dc_index;  // index test; 
   
   // for tuning
   int cf_sz[3];  //buffer size
@@ -270,8 +266,6 @@ public:
   void allocArray_compoVF   (unsigned long &prep, unsigned long &total);
   void allocArray_forcing   (unsigned long &total);
   void allocArray_heat      (unsigned long &total);
-  void allocArray_index     (unsigned long &total);
-  void allocArray_index3    (unsigned long &total);
   void allocArray_interface (unsigned long &total);
   void allocArray_LES       (unsigned long &total);
   void allocArray_main      (unsigned long &total);
@@ -297,7 +291,7 @@ public:
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
   void setBCinfo            (ParseBC* B);
-  void setComponentVF       (float* cvf, unsigned long& m_prep, unsigned long& m_total);
+  void setComponentVF       (float* cvf, unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
@@ -306,7 +300,6 @@ public:
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setVOF               (REAL_TYPE* vof, unsigned* bx);
-  void swap_ptr_REAL_TYPE    (REAL_TYPE* a, REAL_TYPE* b);
   
   void NS_FS_E_CBC          (void);
   void NS_FS_E_CDS          (void);

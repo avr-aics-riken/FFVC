@@ -432,7 +432,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
       flop_count=0.0;
       BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, dt, C.dh, v00, vm[C.NoBC], flop_count);
       TIMING_stop(tm_prj_frc_mod, flop_count);
-      
+      mark();
       // 通信部分
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_prj_frc_mod_comm);

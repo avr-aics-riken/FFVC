@@ -391,7 +391,7 @@ SklSolverCBC::SklSolverInitialize() {
     TIMING_stop(tm_init_alloc); 
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
     
-    setComponentVF(cvf, PrepMemory, TotalMemory);
+    setComponentVF(cvf, PrepMemory, TotalMemory, fp);
   }
 
   
@@ -2311,14 +2311,17 @@ void SklSolverCBC::set_Parallel_Info(void)
 
 
 /**
- @fn void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total)
+ @fn void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total, FILE* fp)
  @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
  @param cvf 体積率
  @param m_prep  前処理用のメモリサイズ
  @param m_total 本計算用のメモリリサイズ
+ @param fp
  */
-void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total)
+void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total, FILE* fp)
 {
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  
   int subsampling = 20; // 体積率のサブサンプリングの基数
   int f_st[3], f_ed[3];
   double flop;
@@ -2329,56 +2332,57 @@ void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned lo
   
   for (int n=1; n<=C.NoBC; n++) {
     
-    // 形状パラメータのセット
-    switch ( cmp[n].getType() ) {
-      case HEX:
-        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
-        break;
-        
-      case FAN:
-        CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
-    }
-    
-    // 回転角度の計算
-    CF.get_angle(); 
-    
-    // bboxと投影面積の計算
-    cmp[n].area = CF.get_BboxArea();
-    
-    // インデクスの計算
-    CF.bbox_index(f_st, f_ed);
-    
-    // インデクスの登録
-    cmp[n].setBbox_st(f_st);
-    cmp[n].setBbox_ed(f_ed);
-    cmp[n].setEns(ON); 
-    
-    // 体積率
-    TIMING_start(tm_cmp_vertex8);
-    flop = 0.0;
-    CF.vertex8    (f_st, f_ed, cvf, flop);
-    TIMING_stop(tm_cmp_vertex8, (REAL_TYPE)flop);
-    
-    TIMING_start(tm_cmp_subdivision);
-    flop = 0.0;
-    CF.subdivision(f_st, f_ed, cvf, flop);
-    TIMING_stop(tm_cmp_subdivision, (REAL_TYPE)flop);
-    
-    //ワーク用の配列を確保
-    if ( cmp[n].isEns() ) {
-      size_t array_size = (f_ed[0]-f_st[0]+1)*(f_ed[1]-f_st[1]+1)*(f_ed[2]-f_st[2]+1)*3;
-      cmp[n].v_ptr = new (REAL_TYPE)[array_size];
+    if ( cmp[n].isFORCING() ) {
+      // 形状パラメータのセット
+      switch ( cmp[n].getType() ) {
+        case HEX:
+          CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+          break;
+          
+        case FAN:
+          CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+          
+        default:
+          break;
+      }
+      
+      // 回転角度の計算
+      CF.get_angle(); 
+      
+      // bboxと投影面積の計算
+      cmp[n].area = CF.get_BboxArea();
+      
+      // インデクスの計算
+      CF.bbox_index(f_st, f_ed);
+      
+      // インデクスの登録
+      cmp[n].setBbox_st(f_st);
+      cmp[n].setBbox_ed(f_ed);
+      cmp[n].set_cmp_sz(); // array_sizeの内点と一致
+      cmp[n].setEns(ON); 
+      
+      // 体積率
+      TIMING_start(tm_cmp_vertex8);
+      flop = 0.0;
+      CF.vertex8    (f_st, f_ed, cvf, flop);
+      TIMING_stop(tm_cmp_vertex8, (REAL_TYPE)flop);
+      
+      TIMING_start(tm_cmp_subdivision);
+      flop = 0.0;
+      CF.subdivision(f_st, f_ed, cvf, flop);
+      TIMING_stop(tm_cmp_subdivision, (REAL_TYPE)flop);
+      
+      // ワーク用の配列を確保
+      int gd=2; // 両側それぞれ2セル
+      size_t array_size = (f_ed[0]-f_st[0]+1+2*gd)*(f_ed[1]-f_st[1]+1+2*gd)*(f_ed[2]-f_st[2]+1+2*gd)*3;
+      cmp[n].set_w_ptr( new REAL_TYPE(array_size) );
       m_cmp_size += array_size;
     }
-    
   }
   
   // 使用メモリ量　
@@ -2392,7 +2396,7 @@ void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned lo
   }
   
   Hostonly_  {
-    FBUtility::displayMemory("Component work", G_cmp_mem, cmp_mem, fp, mp);
+    FBUtility::displayMemory("component", G_cmp_mem, cmp_mem, fp, mp);
   }
   
 #ifdef DEBUG
