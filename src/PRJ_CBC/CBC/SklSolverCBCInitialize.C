@@ -221,8 +221,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // BinaryとCut-Distanceの分岐
   if ( C.isCDS() ) { // Cut-Distance Scheme
-    
-#ifndef BINARY_VOXEL    
+       
     // PolylibとCutlibのセットアップ
     if ( C.Mode.Example == id_Users ) {
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
@@ -247,7 +246,6 @@ SklSolverCBC::SklSolverInitialize() {
       setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       Ex->setup(mid, &C, G_org);
     }
-#endif
   }
   else { // Binary
     
@@ -1336,7 +1334,6 @@ void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_t
       size_t array_size = (c_sz[0]+2*gd) * (c_sz[1]+2*gd) * (c_sz[2]+2*gd) * 3;
       component_array[n] = new REAL_TYPE[array_size];
       m_cmp_size += array_size;
-      printf("%d : %d %d %d %p\n", n, c_sz[0], c_sz[1], c_sz[2], component_array[n]);
     }
   }
   
@@ -2421,7 +2418,6 @@ void SklSolverCBC::setComponentVF(float* cvf)
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
       cmp[n].setEns(ON);
-      printf("compoVF : %d : %d %d %d\n", n, f_ed[0]-f_st[0]+1, f_ed[1]-f_st[1]+1, f_ed[2]-f_st[2]+1);
       
       // 体積率
       TIMING_start(tm_cmp_vertex8);
@@ -2557,7 +2553,6 @@ void SklSolverCBC::setEnsComponent(void)
   if ( c>0 ) C.EnsCompo.fraction = ON;
 }
 
-#ifndef BINARY_VOXEL
 /**
  @fn void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
  @brief Polylibを準備し，ポリゴンをロードする
@@ -2841,7 +2836,6 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
 }
-#endif
 
 /**
  @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)

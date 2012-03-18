@@ -27,6 +27,7 @@
 !! @param ut 摩擦速度
 !! @param wall_type 壁面条件 (0=no_slip, 1=slip)
 !! @param bd BCindex ID
+!! @param cvf コンポーネント体積率
 !! @param[out] flop
 !<
     subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)

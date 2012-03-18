@@ -467,7 +467,12 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     // ノルムの計算
     convergence = Norm_Poisson(ICp);
     
-    
+    /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
+     TIMING_start(tm_prj_frc_dir);
+     flop_count=0.0;
+     BC.mod_Dir_Forcing(v, bcd, cvf, v00, flop_count);
+     TIMING_stop(tm_prj_frc_dir, flop_count);
+     */
     
     // 収束判定　性能測定モードのときは収束判定を行わない
     if ( (C.Hide.PM_Test == OFF) && (convergence < ICp->get_eps()) ) break;

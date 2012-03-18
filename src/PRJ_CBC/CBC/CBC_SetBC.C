@@ -665,6 +665,49 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
 }
 
 /**
+ @fn void SetBC3D::mod_Dir_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE &flop)
+ @brief 圧力損失部による速度の方向修正
+ @param[in/out] v 速度
+ @param bd BCindex ID
+ @param cvf コンポーネントの体積率
+ @param v00 参照速度
+ @param[out] flop
+ */
+void SetBC3D::mod_Dir_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE &flop)
+{
+  int st[3], ed[3];
+  REAL_TYPE vec[3];
+  
+  for (unsigned n=1; n<=NoBC; n++) {
+    if ( cmp[n].isFORCING() ) {
+      
+      cmp[n].getBbox(st, ed);
+      
+      vec[0] = cmp[n].nv[0];
+      vec[1] = cmp[n].nv[1];
+      vec[2] = cmp[n].nv[2];
+      
+      switch ( cmp[n].getType() ) {
+        case HEX:
+          if ( cmp[n].get_sw_HexDir() ) cbc_hex_dir_ (v, dim_sz, gc, st, ed, (int*)bd, cvf, (int*)&n, v00, vec, &flop);
+          break;
+          
+        case FAN:
+          Exit(0);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+}
+
+/**
  @fn void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE dt, REAL_TYPE &flop)
  @brief 圧力損失部による疑似速度方向の修正
  @param[in/out] vc 疑似速度ベクトル
@@ -677,20 +720,19 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
  */
 void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE dt, REAL_TYPE &flop)
 {
-  int st[3], ed[3], dir;
+  int st[3], ed[3];
   REAL_TYPE vec[3];
   
   for (unsigned n=1; n<=NoBC; n++) {
     vec[0] = cmp[n].nv[0];
     vec[1] = cmp[n].nv[1];
     vec[2] = cmp[n].nv[2];
-    dir = (int)cmp[n].get_sw_HexDir();
     
     cmp[n].getBbox(st, ed);
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_hex_force_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dt, vec, &cmp[n].ca[0], &dir, &flop);
+        cbc_hex_force_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dt, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:

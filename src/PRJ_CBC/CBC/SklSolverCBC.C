@@ -442,6 +442,7 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_prj_vec_bc_comm,    "A.R. Projection VBC",     PerfMonitor::COMM);
   set_label(tm_prj_frc_mod,        "Projection Forcing",      PerfMonitor::CALC);
   set_label(tm_prj_frc_mod_comm,   "A.R. Projection Forcing", PerfMonitor::COMM);
+  set_label(tm_prj_frc_dir,        "Forcing Direction",       PerfMonitor::CALC);
   set_label(tm_vec_BC,             "Velocity BC",             PerfMonitor::CALC);
   // end of Poisson: Itr. Sct:4
       

@@ -93,6 +93,7 @@ enum timing_key {
         tm_prj_vec_bc_comm,
         tm_prj_frc_mod,
         tm_prj_frc_mod_comm,
+        tm_prj_frc_dir,
         tm_vec_BC,
   
       tm_poi_itr_sct_5,

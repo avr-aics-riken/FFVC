@@ -87,9 +87,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
           NS_FS_E_CBC();
         }
         else if (C.Mode.ShapeAprx == CUT_INFO) {
-#ifndef BINARY_VOXEL
           NS_FS_E_CDS();
-#endif
         }          
         break;
         
