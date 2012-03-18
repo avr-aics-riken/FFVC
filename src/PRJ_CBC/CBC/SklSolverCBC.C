@@ -99,6 +99,9 @@ SklSolverCBC::SklSolverCBC() {
   // Cut
   cut = NULL;
   
+  // コンポーネント配列
+  component_array=NULL;
+  
   m_outPrs = m_outUVW = m_outTmp = m_outVrt = m_outTP = NULL;
   m_outAvrPrs = m_outAvrUVW = m_outAvrTmp = m_outVOF = NULL;
   m_outI2VGT = m_outHlcty = m_outDiv = NULL;
@@ -199,6 +202,9 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   // Cut
   cut = NULL;
+  
+  // コンポーネント配列
+  component_array=NULL;
   
   m_outPrs = m_outUVW = m_outTmp = m_outVrt = m_outTP = NULL;
   m_outAvrPrs = m_outAvrUVW = m_outAvrTmp = m_outVOF = NULL;

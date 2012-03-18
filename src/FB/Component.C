@@ -162,87 +162,65 @@ bool CompoList::isVFraction(void) {
   return false;
 }
 
-
-//@fn void CompoList::setAttrb(unsigned key)
+//@fn void CompoList::setAttrb(const unsigned key)
 //@brief attrbをセットする
 //@param key アトリビュート
-void CompoList::setAttrb(unsigned key) { attrb = key; }
+void CompoList::setAttrb(const unsigned key) { attrb = key; }
 
-//@fn void CompoList::setBbox_st(unsigned odr, int val)
-//@brief コンポーネントのBV情報の始点を設定する
-//@param odr 方向　(0-i, 1-j, 2-k)
-//@param val 値
-void CompoList::setBbox_st(unsigned odr, int val) {
-  st[odr] = val;
+//@fn void CompoList::setBbox(int m_st[], int m_ed[])
+//@brief コンポーネントのBV情報を設定する
+void CompoList::setBbox(const int m_st[], const int m_ed[]) {
+  st[0] = m_st[0];
+  st[1] = m_st[1];
+  st[2] = m_st[2];
+  ed[0] = m_ed[0];
+  ed[1] = m_ed[1];
+  ed[2] = m_ed[2];
 }
 
-//@fn void CompoList::setBbox_st(int val[])
-//@brief コンポーネントのBV情報の始点を設定する
-void CompoList::setBbox_st(int val[]) {
-  st[0] = val[0];
-  st[1] = val[1];
-  st[2] = val[2];
-}
-
-//@fn void CompoList::setBbox_ed(unsigned odr, int val)
-//@brief コンポーネントのBV情報の終点を設定する
-//@param odr 方向　(0-i, 1-j, 2-k)
-//@param val 値
-void CompoList::setBbox_ed(unsigned odr, int val) {
-  ed[odr] = val;
-}
-
-//@fn void CompoList::setBbox_ed(int val[])
-//@brief コンポーネントのBV情報の始点を設定する
-void CompoList::setBbox_ed(int val[]) {
-  ed[0] = val[0];
-  ed[1] = val[1];
-  ed[2] = val[2];
-}
-
-//@fn void CompoList::setDef(int key)
+//@fn void CompoList::setDef(const int key)
 //@brief 指定セルを保持する
-void CompoList::setDef(int key) {
+void CompoList::setDef(const int key) {
   def = key;
 }
 
-//@fn void CompoList::setElement(unsigned key)
+//@fn void CompoList::setElement(const unsigned key)
 //@brief elementをセットする
 //@param key 要素数 element
-void CompoList::setElement(unsigned key) { 
+void CompoList::setElement(const unsigned key) { 
   element = key; 
 }
 
-//@fn void CompoList::void setEns(bool key)
+//@fn void CompoList::void setEns(const bool key)
 //@brief コンポーネントが自ノードに存在しているかどうかをセットする
-void CompoList::setEns(unsigned key) {
+void CompoList::setEns(const unsigned key) {
   ens = key;
 }
 
-//@fn void CompoList::setHtype(int key)
+//@fn void CompoList::setHtype(const int key)
 //@brief h_typeをセットする
 //@param key 境界条件の種類
-void CompoList::setHtype(unsigned key) { 
+void CompoList::setHtype(const unsigned key) { 
   h_type = key; 
 }
 
-//@fn void CompoList::setID(unsigned key)
+//@fn void CompoList::setID(const unsigned key)
 //@brief IDをセットする
 //@param key 媒質ID ID
-void CompoList::setID(unsigned key) { 
+void CompoList::setID(const unsigned key) { 
   ID = key; 
 }
 
-//@fn void CompoList::setInitTemp(REAL_TYPE key)
+//@fn void CompoList::setInitTemp(const REAL_TYPE key)
 //@brief 初期温度の指定
-void CompoList::setInitTemp(REAL_TYPE key) {
+void CompoList::setInitTemp(const REAL_TYPE key) {
   temp_init = key;
 }
 
-//@fn void CompoList::setMatOdr (unsigned key)
+//@fn void CompoList::setMatOdr (const unsigned key)
 //@brief mat_odrをセットする
 //@param key MaterialListのエントリ番号
-void CompoList::setMatOdr(unsigned key) { 
+void CompoList::setMatOdr(const unsigned key) { 
   mat_odr = key; 
 }
 
@@ -256,48 +234,48 @@ void CompoList::setName(const char* pnt) {
   strcpy(name, pnt); 
 }
 
-//@fn void CompoList::setOutflowType(unsigned key)
+//@fn void CompoList::setOutflowType(const unsigned key)
 //@brief 流出速度のタイプを指定する
 //@note V_AVERAGE | V_MINMAX
-void CompoList::setOutflowType(unsigned key) {
+void CompoList::setOutflowType(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setPeriodicDir(unsigned key)
+//@fn void CompoList::setPeriodicDir(const unsigned key)
 //@brief 周期境界の上流方向を保持する
-void CompoList::setPeriodicDir(unsigned key) {
+void CompoList::setPeriodicDir(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setPhase(unsigned m_phase)
+//@fn void CompoList::setPhase(const unsigned m_phase)
 //@brief set pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
-void CompoList::setPhase(unsigned m_phase) {
+void CompoList::setPhase(const unsigned m_phase) {
   phase = m_phase;
 }
 
-//@fn void CompoList::setsetPrsUnit(unsigned key)
+//@fn void CompoList::setsetPrsUnit(const unsigned key)
 //@brief 圧力の単位を指定する
-void CompoList::setPrsUnit(unsigned key) {
+void CompoList::setPrsUnit(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setState  (int key)
+//@fn void CompoList::setState  (const int key)
 //@brief stateをセットする
 //@param key セルの状態 SOLID/FLUID
-void CompoList::setState(int key) { 
+void CompoList::setState(const int key) { 
   state = key; 
 }
 
-//@fn void CompoList::setStateCellMonitor(unsigned key)
+//@fn void CompoList::setStateCellMonitor(const unsigned key)
 //@brief セルモニタスイッチ ON/OFF
-void CompoList::setStateCellMonitor(unsigned key) {
+void CompoList::setStateCellMonitor(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setType(int key)
+//@fn void CompoList::setType(const int key)
 //@brief typeをセットする
 //@param key 境界条件の種類
-void CompoList::setType(unsigned key) { 
+void CompoList::setType(const unsigned key) { 
   type = key; 
 }
 
@@ -312,153 +290,137 @@ void CompoList::set_cmp_sz(void) {
 }
 
 
-//@fn void CompoList::set_CoefHT(REAL_TYPE var)
+//@fn void CompoList::set_CoefHT(const REAL_TYPE var)
 //@brief 熱伝達係数の保持
-void CompoList::set_CoefHT(REAL_TYPE var) {
+void CompoList::set_CoefHT(const REAL_TYPE var) {
   var2 = var;
 }
 
-//@fn void CompoList::set_CoefRadEps(REAL_TYPE var)
+//@fn void CompoList::set_CoefRadEps(const REAL_TYPE var)
 //@brief 輻射のイプシロンの保持
-void CompoList::set_CoefRadEps(REAL_TYPE var) {
+void CompoList::set_CoefRadEps(const REAL_TYPE var) {
   var1 = var;
 }
 
-//@fn void CompoList::CoefRadPrj(REAL_TYPE var)
+//@fn void CompoList::CoefRadPrj(const REAL_TYPE var)
 //@brief 輻射の射出係数の保持
-void CompoList::set_CoefRadPrj(REAL_TYPE var) {
+void CompoList::set_CoefRadPrj(const REAL_TYPE var) {
   var2 = var;
 }
 
-//@fn void CompoList::set_CoefMassflow(REAL_TYPE var)
+//@fn void CompoList::set_CoefMassflow(const REAL_TYPE var)
 //@brief 流量の有次元化係数の保持
-void CompoList::set_CoefMassflow(REAL_TYPE var) {
+void CompoList::set_CoefMassflow(const REAL_TYPE var) {
   var1 = var;
 }
 
-//@fn void CompoList::CoefPrsLoss(REAL_TYPE var)
+//@fn void CompoList::CoefPrsLoss(const REAL_TYPE var)
 //@brief 圧力損失の有次元化係数の保持
-void CompoList::set_CoefPrsLoss(REAL_TYPE var) {
+void CompoList::set_CoefPrsLoss(const REAL_TYPE var) {
   var2 = var;
 }
 
-//@fn void CompoList::set_HeatDensity(REAL_TYPE var)
+//@fn void CompoList::set_HeatDensity(const REAL_TYPE var)
 //@brief 吸発熱密度の保持
-void CompoList::set_HeatDensity(REAL_TYPE var) {
+void CompoList::set_HeatDensity(const REAL_TYPE var) {
   var3 = var;
 }
 
-//@fn void CompoList::set_Heatflux(REAL_TYPE var)
+//@fn void CompoList::set_Heatflux(const REAL_TYPE var)
 //@brief 熱流束の保持
-void CompoList::set_Heatflux(REAL_TYPE var) {
+void CompoList::set_Heatflux(const REAL_TYPE var) {
   var2 = var;
 }
 
-//@fn void CompoList::set_HeatValue(REAL_TYPE var)
+//@fn void CompoList::set_HeatValue(const REAL_TYPE var)
 //@brief 吸発熱量の保持
-void CompoList::set_HeatValue(REAL_TYPE var) {
+void CompoList::set_HeatValue(const REAL_TYPE var) {
   var2 = var;
 }
 
-//@fn void CompoList::set_HSRC_policy(bool kind)
+//@fn void CompoList::set_HSRC_policy(const bool kind)
 //@brief 発熱項の指定ポリシーをセットする
 //@param kind ポリシー種別　true-発熱量指定, false-発熱密度指定
-void CompoList::set_HSRC_policy(bool kind) {
+void CompoList::set_HSRC_policy(const bool kind) {
   usw = ( kind ) ? hsrc_watt : hsrc_density;
 }
 
-//@fn void CompoList::set_Massflow(REAL_TYPE var)
+//@fn void CompoList::set_Massflow(const REAL_TYPE var)
 //@brief 流量の保持
-void CompoList::set_Massflow(REAL_TYPE var) {
+void CompoList::set_Massflow(const REAL_TYPE var) {
   var1 = var;
 }
 
-//@fn void CompoList::set_Mon_Temp(REAL_TYPE var)
+//@fn void CompoList::set_Mon_Temp(const REAL_TYPE var)
 //@brief モニタ温度の保持
-void CompoList::set_Mon_Temp(REAL_TYPE var) {
+void CompoList::set_Mon_Temp(const REAL_TYPE var) {
   var_m = var;
 }
 
-//@fn void CompoList::set_Mon_Heatflux(REAL_TYPE var)
+//@fn void CompoList::set_Mon_Heatflux(const REAL_TYPE var)
 //@brief モニタ熱流束の保持
-void CompoList::set_Mon_Heatflux(REAL_TYPE var) {
+void CompoList::set_Mon_Heatflux(const REAL_TYPE var) {
   var_m = var;
 }
 
-//@fn void CompoList::set_Mon_Calorie(REAL_TYPE var)
+//@fn void CompoList::set_Mon_Calorie(const REAL_TYPE var)
 //@brief モニタ熱量の保持
-void CompoList::set_Mon_Calorie(REAL_TYPE var) {
+void CompoList::set_Mon_Calorie(const REAL_TYPE var) {
   var_m = var;
 }
 
-//@fn void CompoList::set_Pressure(REAL_TYPE var)
+//@fn void CompoList::set_Pressure(const REAL_TYPE var)
 //@brief 圧力値の保持
-void CompoList::set_Pressure(REAL_TYPE var) {
+void CompoList::set_Pressure(const REAL_TYPE var) {
   var1 = var;
 }
 
-//@fn void CompoList::set_sw_V_profile(unsigned key)
+//@fn void CompoList::set_sw_V_profile(const unsigned key)
 //@brief 速度プロファイル指定モードの保持
-void CompoList::set_sw_V_profile(unsigned key) {
+void CompoList::set_sw_V_profile(const unsigned key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_P_BCtype(unsigned key)
+//@fn void CompoList::set_sw_P_BCtype(const unsigned key)
 //@brief 圧力境界条件タイプ指定モードの保持
-void CompoList::set_sw_P_BCtype(unsigned key) {
+void CompoList::set_sw_P_BCtype(const unsigned key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_HTmodeRef(unsigned key)
+//@fn void CompoList::set_sw_HTmodeRef(const unsigned key)
 //@brief 熱伝達の参照指定モードの保持
-void CompoList::set_sw_HTmodeRef(unsigned key) {
+void CompoList::set_sw_HTmodeRef(const unsigned key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_HexDir (unsigned key)
+//@fn void CompoList::set_sw_HexDir (const unsigned key)
 //@brief 熱交換機の方向指定モードの保持
-void CompoList::set_sw_HexDir (unsigned key) {
+void CompoList::set_sw_HexDir (const unsigned key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_Heatgen(unsigned key)
+//@fn void CompoList::set_sw_Heatgen(const unsigned key)
 //@brief 発熱量指定モードの保持
-void CompoList::set_sw_Heatgen(unsigned key) {
+void CompoList::set_sw_Heatgen(const unsigned key) {
   usw = key;
 }
 
-
-
-
-
-//@fn void CompoList::set_Temp(REAL_TYPE var)
+//@fn void CompoList::set_Temp(const REAL_TYPE var)
 //@brief 温度の保持
-void CompoList::set_Temp(REAL_TYPE var) {
+void CompoList::set_Temp(const REAL_TYPE var) {
   var3 = var;
 }
 
-
-
-//@fn void CompoList::set_Velocity(REAL_TYPE var)
+//@fn void CompoList::set_Velocity(const REAL_TYPE var)
 //@brief 速度の保持
-void CompoList::set_Velocity(REAL_TYPE var) {
+void CompoList::set_Velocity(const REAL_TYPE var) {
   var1 = var;
 }
 
-//@fn void CompoList::set_VBC_policy(bool kind)
+//@fn void CompoList::set_VBC_policy(const bool kind)
 //@brief 速度指定ポリシーをセットする
 //@param kind ポリシー種別　true-速度指定, false-流量指定
-void CompoList::set_VBC_policy(bool kind)
+void CompoList::set_VBC_policy(const bool kind)
 {
   attrb = ( kind ) ? BC_type_velocity : BC_type_massflow;
 }
-
-
-
-
-
-
-
-
-
-

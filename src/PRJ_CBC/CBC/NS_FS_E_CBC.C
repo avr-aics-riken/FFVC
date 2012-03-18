@@ -365,7 +365,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     if ( C.isForcing() == ON ) {
       TIMING_start(tm_force_src);
       flop_count=0.0;
-      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, C.dh, v00, flop_count);
+      BC.mod_Psrc_Forcing(src1, v, bcd, cvf, C.dh, v00, component_array, flop_count);
       TIMING_stop(tm_force_src, flop_count);
     }
 
@@ -430,9 +430,9 @@ void SklSolverCBC::NS_FS_E_CBC(void)
       
       TIMING_start(tm_prj_frc_mod);
       flop_count=0.0;
-      BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, dt, C.dh, v00, vm[C.NoBC], flop_count);
+      BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, dt, C.dh, v00, vm[C.NoBC], component_array, flop_count);
       TIMING_stop(tm_prj_frc_mod, flop_count);
-      mark();
+
       // 通信部分
       if ( para_mng->IsParallel() ) {
         TIMING_start(tm_prj_frc_mod_comm);

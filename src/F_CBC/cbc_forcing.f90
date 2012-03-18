@@ -136,6 +136,8 @@
     je = ed(2)
     ks = st(3)
     ke = ed(3)
+    
+
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
@@ -185,13 +187,13 @@
 !$OMP END DO
 !$OMP END PARALLEL
     
-    flop = flop + (ie-is+3)*(je-js+3)*(ke-ks+3)*200.0
+    flop = flop + (cz(1)+2)*(cz(2)+2)*(cz(3)+2)*200.0
 
     return
     end subroutine cbc_hex_psrc
 
-!  ****************************************************************************************
-!> @subroutine cbc_hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
+!  ************************************************************************************************
+!> @subroutine cbc_hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, dir_sw, flop)
 !! @brief 擬似速度ベクトルの方向の修正、および外力項の付加
 !! @param[in/out] vc 擬似速度ベクトル
 !! @param sz 配列長
@@ -206,15 +208,16 @@
 !! @param dt 時間積分幅
 !! @param nv 法線ベクトル
 !! @param c 圧力損失部の係数
+!! @param dir_sw 方向強制スイッチ
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
+    subroutine cbc_hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, dir_sw, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, odr
+    integer                                                     ::  i, j, k, g, idx, odr, dir_sw
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  flop, dt, cf
+    real                                                        ::  flop, dt, cf, dsw
     real                                                        ::  u_ref, v_ref, w_ref, es
     real                                                        ::  u_p, v_p, w_p, g_p, d_p, Fx_p, Fy_p, Fz_p
     real                                                        ::  nx, ny, nz, b0, d_b, r_bt, uu, u1, u2, u3
@@ -238,6 +241,7 @@
     c4 = c(4)
     ep = c(5)         ! threshold
     cf = 0.5*dt
+    dsw = real(dir_sw)
 
     is = st(1)
     ie = ed(1)
@@ -267,7 +271,7 @@
       es = 0.0
 
       if ( ibits(idx, 0, bitw_cmp) == odr ) es=1.0 ! コンポーネントは流体であることが保証されている
-      bes = b0*es ! 体積率とコンポーネントの両方でチェック
+      bes = b0*es * dsw ! 体積率とコンポーネントの両方でチェック
 
       ! 圧損による外力の計算(v^n)
       u_p = v(1,i,j,k) - u_ref
@@ -301,7 +305,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + (ie-is+1)*(je-js+1)*(ke-ks+1)*55.0
+    flop = flop + (ie-is+1)*(je-js+1)*(ke-ks+1)*56.0
 
     return
     end subroutine cbc_hex_force_pvec

@@ -174,6 +174,9 @@ public:
   SklScalar3D<REAL_TYPE>  *dc_at;
   SklScalar3D<float>      *dc_cvf;
   
+  // コンポーネントワーク配列のアドレス管理
+  REAL_TYPE** component_array;
+  
   // out file object
   SklVoxDataSet *m_outPrs;
   SklVoxDataSet *m_outUVW;
@@ -271,6 +274,7 @@ public:
   void allocArray_main      (unsigned long &total);
   void allocArray_prep      (unsigned long &prep, unsigned long &total);
   void allocArray_RK        (unsigned long &total);
+  void allocComponentArray  (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   
   void AverageOutput        (unsigned mode, REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
@@ -291,7 +295,7 @@ public:
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
   void setBCinfo            (ParseBC* B);
-  void setComponentVF       (float* cvf, unsigned long& m_prep, unsigned long& m_total, FILE* fp);
+  void setComponentVF       (float* cvf);
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);

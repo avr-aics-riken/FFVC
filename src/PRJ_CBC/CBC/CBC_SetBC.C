@@ -677,19 +677,20 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
  */
 void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE dt, REAL_TYPE &flop)
 {
-  int st[3], ed[3];
+  int st[3], ed[3], dir;
   REAL_TYPE vec[3];
   
   for (unsigned n=1; n<=NoBC; n++) {
     vec[0] = cmp[n].nv[0];
     vec[1] = cmp[n].nv[1];
     vec[2] = cmp[n].nv[2];
+    dir = (int)cmp[n].get_sw_HexDir();
     
     cmp[n].getBbox(st, ed);
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_hex_force_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dt, vec, &cmp[n].ca[0], &flop);
+        cbc_hex_force_pvec_(vc, dim_sz, gc, st, ed, (int*)bd, cvf, v, (int*)&n, v00, &dt, vec, &cmp[n].ca[0], &dir, &flop);
         break;
         
       case FAN:
@@ -707,7 +708,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float*
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE &flop)
+ @fn void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE** c_array, REAL_TYPE &flop)
  @brief 圧力損失部によるPoisosn式のソース項 \gamma^F の修正とワーク用の速度を保持
  @param[out] src 外力項によるPoisson方程式のソース項
  @param v 速度ベクトル n+1
@@ -715,9 +716,10 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* vc, REAL_TYPE* v, unsigned* bd, float*
  @param cvf コンポーネントの体積率
  @param dh 格子幅
  @param v00 参照速度
+ @param c_array コンポーネントワーク配列の管理ポインタ
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE** c_array, REAL_TYPE &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -730,10 +732,10 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
     
     cmp[n].getBbox(st, ed);
     cmp[n].get_cmp_sz(csz);
-    w_ptr = cmp[n].get_w_ptr();
+    w_ptr = c_array[n];
     
     if ( cmp[n].isFORCING() ) cbc_force_keep_vec_(w_ptr, csz, st, ed, v, dim_sz, gc);
-    mark();
+
     switch ( cmp[n].getType() ) {
       case HEX:
         cbc_hex_psrc_(src, dim_sz, gc, st, ed, (int*)bd, cvf, w_ptr, csz, (int*)&n, v00, &dh, vec, &cmp[n].ca[0], &flop);
@@ -754,7 +756,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
 }
 
 /**
- @fn void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE &flop)
+ @fn void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE** c_array, REAL_TYPE &flop)
  @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
  @param[in/out] v セルセンターの速度
  @param bd BCindex ID
@@ -763,10 +765,11 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
  @param dt 時間積分幅
  @param dh 格子幅
  @param v00 参照速度
- @param vm モニター用配列
+ @param am モニター用配列
+ @param c_array コンポーネントワーク配列の管理ポインタ
  @param[out] flop
  */
-void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE* div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE** c_array, REAL_TYPE &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -778,7 +781,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
       
       cmp[n].getBbox(st, ed);
       cmp[n].get_cmp_sz(csz);
-      w_ptr = cmp[n].get_w_ptr();
+      w_ptr = c_array[n];
       
       vec[0] = cmp[n].nv[0];
       vec[1] = cmp[n].nv[1];

@@ -4453,7 +4453,7 @@ void VoxInfo::printScanedCell(FILE* fp)
 }
 
 /**
- @fn void VoxInfo::resizeBVface(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv)
+ @fn void VoxInfo::resizeBVface(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
  @brief コンポーネントリストに登録されたセルフェイスBCのBV情報をリサイズする
  @param st 開始インデクス
  @param ed 終了インデクス
@@ -4461,7 +4461,7 @@ void VoxInfo::printScanedCell(FILE* fp)
  @param bx BCindex
  @param gcbv グローバルなBVインデクス
  */
-void VoxInfo::resizeBVface(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv)
+void VoxInfo::resizeBVface(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -4542,23 +4542,14 @@ void VoxInfo::resizeBVface(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
   }
   
   // replace
-  for (i=0; i<3; i++) {
-    st[i] = nst[i];
-    ed[i] = ned[i];
-  }
-  cmp[n].setBbox_st(0, st[0]);
-  cmp[n].setBbox_st(1, st[1]);
-  cmp[n].setBbox_st(2, st[2]);
-  cmp[n].setBbox_ed(0, ed[0]);
-  cmp[n].setBbox_ed(1, ed[1]);
-  cmp[n].setBbox_ed(2, ed[2]);
+  cmp[n].setBbox(nst, ned);
   
   // コンポーネントBVの更新
-  updateGlobalIndex(st, ed, n, gcbv);
+  updateGlobalIndex(nst, ned, n, gcbv);
 }
 
 /**
- @fn void VoxInfo::resizeBVcell(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv)
+ @fn void VoxInfo::resizeBVcell(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
  @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
  @param st 開始インデクス
  @param ed 終了インデクス
@@ -4566,7 +4557,7 @@ void VoxInfo::resizeBVface(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
  @param bx BCindex
  @param gcbv グローバルなBVインデクス
  */
-void VoxInfo::resizeBVcell(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv)
+void VoxInfo::resizeBVcell(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -4602,19 +4593,10 @@ void VoxInfo::resizeBVcell(int* st, int* ed, unsigned n, unsigned* bx, int* gcbv
   }
   
   // replace
-  for (i=0; i<3; i++) {
-    st[i] = nst[i];
-    ed[i] = ned[i];
-  }
-  cmp[n].setBbox_st(0, st[0]);
-  cmp[n].setBbox_st(1, st[1]);
-  cmp[n].setBbox_st(2, st[2]);
-  cmp[n].setBbox_ed(0, ed[0]);
-  cmp[n].setBbox_ed(1, ed[1]);
-  cmp[n].setBbox_ed(2, ed[2]);
+  cmp[n].setBbox(nst, ned);
   
   // コンポーネントBVの更新
-  updateGlobalIndex(st, ed, n, gcbv);
+  updateGlobalIndex(nst, ned, n, gcbv);
 }
 
 /**
@@ -5736,14 +5718,14 @@ void VoxInfo::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
 }
 
 /**
- @fn void VoxInfo::updateGlobalIndex(int* st, int* ed, unsigned n, int* gcbv)
+ @fn void VoxInfo::updateGlobalIndex(const int* st, const int* ed, unsigned n, int* gcbv)
  @brief BV情報をst[], ed[]に更新する
  @param st 開始インデクス
  @param ed 終了インデクス
  @param n CompoListのエントリ
  @param gcbv グローバルなBVインデクス
  */
-void VoxInfo::updateGlobalIndex(int* st, int* ed, unsigned n, int* gcbv)
+void VoxInfo::updateGlobalIndex(const int* st, const int* ed, unsigned n, int* gcbv)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
@@ -5751,41 +5733,42 @@ void VoxInfo::updateGlobalIndex(int* st, int* ed, unsigned n, int* gcbv)
   
   // コンポーネントが存在しない場合
   if ( !cmp[n].isEns() ) {
-    st[0] = 0;
-    st[1] = 0;
-    st[2] = 0;
-    ed[0] = 0;
-    ed[1] = 0;
-    ed[2] = 0;
+    //st[0] = 0;
+    //st[1] = 0;
+    //st[2] = 0;
+    //ed[0] = 0;
+    //ed[1] = 0;
+    //ed[2] = 0;
     
-    // Global index
     gcbv[6*n+0] = 0;
     gcbv[6*n+1] = 0;
     gcbv[6*n+2] = 0;
     gcbv[6*n+3] = 0;
     gcbv[6*n+4] = 0;
     gcbv[6*n+5] = 0;
+    
+    return;
   }
+
+  if( para_mng->IsParallel() ){
+    node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
+    node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
+    node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
+    
+    gcbv[6*n+0] = node_st_i + st[0];
+    gcbv[6*n+1] = node_st_j + st[1];
+    gcbv[6*n+2] = node_st_k + st[2];
+    gcbv[6*n+3] = node_st_i + ed[0];
+    gcbv[6*n+4] = node_st_j + ed[1];
+    gcbv[6*n+5] = node_st_k + ed[2];
+  } 
   else {
-    if( para_mng->IsParallel() ){
-      node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
-      node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
-      node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
-      
-      gcbv[6*n+0] = node_st_i + st[0];
-      gcbv[6*n+1] = node_st_j + st[1];
-      gcbv[6*n+2] = node_st_k + st[2];
-      gcbv[6*n+3] = node_st_i + ed[0];
-      gcbv[6*n+4] = node_st_j + ed[1];
-      gcbv[6*n+5] = node_st_k + ed[2];
-    } 
-    else {
-      gcbv[6*n+0] = st[0];
-      gcbv[6*n+1] = st[1];
-      gcbv[6*n+2] = st[2];
-      gcbv[6*n+3] = ed[0];
-      gcbv[6*n+4] = ed[1];
-      gcbv[6*n+5] = ed[2];
-    }
+    gcbv[6*n+0] = st[0];
+    gcbv[6*n+1] = st[1];
+    gcbv[6*n+2] = st[2];
+    gcbv[6*n+3] = ed[0];
+    gcbv[6*n+4] = ed[1];
+    gcbv[6*n+5] = ed[2];
   }
+
 }

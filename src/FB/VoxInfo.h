@@ -105,12 +105,13 @@ protected:
   void getNormalSign         (unsigned n, int* gi, unsigned* bx, int* dir);
   void getOffset             (int* st, int* ofst);
   void getQuadrant           (unsigned* q, REAL_TYPE t1, REAL_TYPE t2);
-  void resizeBVcell          (int* st, int* ed, unsigned n, unsigned* bx, int* gcbv);
-  void resizeBVface          (int* st, int* ed, unsigned n, unsigned* bx, int* gcbv);
+  void resizeBVcell          (const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv);
+  void resizeBVface          (const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv);
   void setInactive_Compo     (unsigned id, int def, int* mid, unsigned* bh1, unsigned* bh2);
   void setAmask_InActive     (unsigned id, int* mid, unsigned* bh);
   void setAmask_Solid        (unsigned* bh);
   void setAmask_Thermal      (unsigned* bh);
+  void updateGlobalIndex     (const int* st, const int* ed, unsigned n, int* gcbv);
   
   /**
    @fn inline unsigned offBit(unsigned idx, const unsigned shift)
@@ -180,7 +181,6 @@ public:
   void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);
   void setOBC_Cut            (SetBC* BC, CutPos32Array* cutPos);
   void setWorkList           (CompoList* m_CMP, MaterialList* m_MAT);
-  void updateGlobalIndex     (int* st, int* ed, unsigned n, int* gcbv);
   
   //@fn const int* getColorList() const
   //@retval colorListのポインタ

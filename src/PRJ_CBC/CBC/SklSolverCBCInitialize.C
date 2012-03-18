@@ -391,7 +391,7 @@ SklSolverCBC::SklSolverInitialize() {
     TIMING_stop(tm_init_alloc); 
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
     
-    setComponentVF(cvf, PrepMemory, TotalMemory, fp);
+    setComponentVF(cvf);
   }
 
   
@@ -426,7 +426,11 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
 
+  // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode(&Vinfo, &M, mid, cvf, cutPos);
+  
+  // コンポーネント配列の確保
+  allocComponentArray(PrepMemory, TotalMemory, fp);
 
   // Select implementation of SOR iteration by Eff_Cell_Ratio
   C.select_Itr_Impl(IC);
@@ -1293,6 +1297,63 @@ void SklSolverCBC::allocArray_Collocate(unsigned long &total)
   total+= mc;
 }
 
+/**
+ @fn void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
+ @brief コンポーネントのワーク用配列のアロケート
+ @param cutPos カット情報コンテナ
+ @param m_prep  前処理用のメモリサイズ
+ @param m_total 本計算用のメモリリサイズ
+ @param fp
+ @note
+ - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
+ */
+void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
+{
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  
+  // 管理用のポインタ配列の確保
+  component_array = new REAL_TYPE* [C.NoBC];
+  
+  for (int i=0; i<C.NoBC; i++) {
+    component_array[i] = NULL;
+  }
+  
+  
+  // リサイズ後のインデクスサイズの登録と配列領域の確保
+  int c_sz[3];
+  int gd=2; // 両側それぞれ2セル
+  unsigned long m_cmp_size=0;
+  
+  for (int n=1; n<=C.NoBC; n++) {
+
+    if ( cmp[n].isFORCING() ) {
+
+      // インデクスサイズをリサイズしたst[], ed[]から計算
+      cmp[n].set_cmp_sz();
+      cmp[n].get_cmp_sz(c_sz);
+      
+      // ワーク用の配列を確保
+      size_t array_size = (c_sz[0]+2*gd) * (c_sz[1]+2*gd) * (c_sz[2]+2*gd) * 3;
+      component_array[n] = new REAL_TYPE[array_size];
+      m_cmp_size += array_size;
+      printf("%d : %d %d %d %p\n", n, c_sz[0], c_sz[1], c_sz[2], component_array[n]);
+    }
+  }
+  
+  // 使用メモリ量　
+  unsigned long cmp_mem, G_cmp_mem;
+  G_cmp_mem = cmp_mem = m_cmp_size * sizeof(REAL_TYPE);
+  m_prep += cmp_mem;
+  m_total+= cmp_mem;
+  
+  if( para_cmp->IsParallel() ) {
+    para_cmp->Allreduce(&cmp_mem, &G_cmp_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+  }
+  
+  Hostonly_  {
+    FBUtility::displayMemory("component", G_cmp_mem, cmp_mem, fp, mp);
+  }
+}
 
 /**
  @fn void SklSolverCBC::connectExample(Control* Cref)
@@ -1637,15 +1698,17 @@ void SklSolverCBC::getLocalCmpIdx(void)
           // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
         }
         else {
-          
-          int m_st, m_ed;
-          
+
           for (unsigned d=0; d<3; d++) {
-            m_st = m_ed = 0;
-            getEnlargedIndex(m_st, m_ed, st_i[d], len[d], size[d], d, id);
-            cmp[m].setBbox_st(d, m_st);
-            cmp[m].setBbox_ed(d, m_ed);
+            int tmp_st=0;
+            int tmp_ed=0;
+            
+            getEnlargedIndex(tmp_st, tmp_ed, st_i[d], len[d], size[d], d, id);
+            
+            m_st[d] = tmp_st;
+            m_ed[d] = tmp_ed;
           }
+          cmp[m].setBbox(m_st, m_ed);
           cmp[m].setEns(ON); // コンポーネントあり
         }
         
@@ -2311,21 +2374,16 @@ void SklSolverCBC::set_Parallel_Info(void)
 
 
 /**
- @fn void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total, FILE* fp)
+ @fn void SklSolverCBC::setComponentVF(float* cvf)
  @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
  @param cvf 体積率
- @param m_prep  前処理用のメモリサイズ
- @param m_total 本計算用のメモリリサイズ
- @param fp
+ @note インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
  */
-void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned long& m_total, FILE* fp)
+void SklSolverCBC::setComponentVF(float* cvf)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  
   int subsampling = 20; // 体積率のサブサンプリングの基数
   int f_st[3], f_ed[3];
   double flop;
-  unsigned long m_cmp_size=0;
   
   CompoFraction CF(size, guide, C.dx, C.org, subsampling);
   CF.setParallelInfo(pn);
@@ -2357,14 +2415,13 @@ void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned lo
       // bboxと投影面積の計算
       cmp[n].area = CF.get_BboxArea();
       
-      // インデクスの計算
+      // インデクスの計算 > resize later
       CF.bbox_index(f_st, f_ed);
       
-      // インデクスの登録
-      cmp[n].setBbox_st(f_st);
-      cmp[n].setBbox_ed(f_ed);
-      cmp[n].set_cmp_sz(); // array_sizeの内点と一致
-      cmp[n].setEns(ON); 
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+      printf("compoVF : %d : %d %d %d\n", n, f_ed[0]-f_st[0]+1, f_ed[1]-f_st[1]+1, f_ed[2]-f_st[2]+1);
       
       // 体積率
       TIMING_start(tm_cmp_vertex8);
@@ -2376,27 +2433,7 @@ void SklSolverCBC::setComponentVF(float* cvf, unsigned long& m_prep, unsigned lo
       flop = 0.0;
       CF.subdivision(f_st, f_ed, cvf, flop);
       TIMING_stop(tm_cmp_subdivision, (REAL_TYPE)flop);
-      
-      // ワーク用の配列を確保
-      int gd=2; // 両側それぞれ2セル
-      size_t array_size = (f_ed[0]-f_st[0]+1+2*gd)*(f_ed[1]-f_st[1]+1+2*gd)*(f_ed[2]-f_st[2]+1+2*gd)*3;
-      cmp[n].set_w_ptr( new REAL_TYPE(array_size) );
-      m_cmp_size += array_size;
     }
-  }
-  
-  // 使用メモリ量　
-  unsigned long cmp_mem, G_cmp_mem;
-  G_cmp_mem = cmp_mem = m_cmp_size * sizeof(REAL_TYPE);
-  m_prep += cmp_mem;
-  m_total+= cmp_mem;
-  
-  if( para_cmp->IsParallel() ) {
-    para_cmp->Allreduce(&cmp_mem, &G_cmp_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
-  }
-  
-  Hostonly_  {
-    FBUtility::displayMemory("component", G_cmp_mem, cmp_mem, fp, mp);
   }
   
 #ifdef DEBUG
@@ -2814,11 +2851,16 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
  @param mid Voxel IDの配列
  @param vf コンポーネントの体積率 
  @param cutPos カット情報コンテナ
+ @param m_prep  前処理用のメモリサイズ
+ @param m_total 本計算用のメモリリサイズ
+ @param fp
  @note
  - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
  */
 void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
 {
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  
   unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
   bcv = bh1 = bh2 = bcp = bcd = NULL;
   
