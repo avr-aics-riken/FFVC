@@ -614,7 +614,7 @@
     v_ref2 = 1.5*v_ref
     w_ref2 = 1.5*w_ref
     
-    flop = flop + real(ix*jx*kx)*133.0
+    flop = flop + real(ix)*real(jx)*real(kx)*133.0
 
     do k=1,kx
     do j=1,jx
@@ -658,12 +658,18 @@
       d6 = cut(6,i,j,k) ! d_{k}^+
       
       ! 交点がある場合-> q=0.0
-      q1 = aint(d1) 
-      q2 = aint(d2)
-      q3 = aint(d3)
-      q4 = aint(d4)
-      q5 = aint(d5)
-      q6 = aint(d6)
+      q1 = 1.0
+      q2 = 1.0
+      q3 = 1.0
+      q4 = 1.0
+      q5 = 1.0
+      q6 = 1.0
+      if (d1 < 1.0) q1 = 0.0 ! q1 = aint(d1) 
+      if (d2 < 1.0) q2 = 0.0 ! q2 = aint(d2)
+      if (d3 < 1.0) q3 = 0.0 ! q3 = aint(d3)
+      if (d4 < 1.0) q4 = 0.0 ! q4 = aint(d4)
+      if (d5 < 1.0) q5 = 0.0 ! q5 = aint(d5)
+      if (d6 < 1.0) q6 = 0.0 ! q6 = aint(d6)
       
       ! c=0.0(VBC), 1.0(Fluid); VBCは内部と外部の両方
       if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c1 = 0.0
