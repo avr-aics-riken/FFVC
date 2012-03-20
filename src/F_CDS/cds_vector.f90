@@ -206,7 +206,7 @@
       v_R = 0.5*(Vp0+Ve1)
       w_R = 0.5*(Wp0+We1)
       
-      UPw = u_L
+      UPw = u_L ! consideration interpolating cel face value if near wall
       UPe = u_R
       
       ! カットがある場合の参照セルの値の計算  >  21*4=84 flop
@@ -560,8 +560,8 @@
 		return
     end subroutine cds_pvec_muscl
 
-!  ***************************************************************************************
-!> @subroutine cds_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, cut, v00, coef, flop)
+!  *********************************************************************************
+!> @subroutine cds_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, cut, v00, flop)
 !! @brief 次のステップのセルセンターの速度を更新し，発散値を計算する
 !! @param[out] v n+1時刻のセルセンターの速度ベクトル
 !! @param div 発散値
@@ -575,46 +575,75 @@
 !! @param bv BCindex V
 !! @param cut カット情報(float)
 !! @param v00 参照速度
-!! @param coef 係数
 !! @param[out] flop flop count
 !<
-    subroutine cds_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, cut, v00, coef, flop)
+    subroutine cds_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, cut, v00, flop)
     implicit none
     include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  dh, dt, dd, flop, coef, actv, r_actv
-    real                                                        ::  pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt
+    real                                                        ::  pc, gpx, gpy, gpz
+    real                                                        ::  gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r
+    real                                                        ::  gpw_c, gpe_c, gps_c, gpn_c, gpb_c, gpt_c
+    real                                                        ::  gpw, gpe, gps, gpn, gpb, gpt
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                        ::  Ue_f, Uw_f, Vn_f, Vs_f, Wt_f, Wb_f
+    real                                                        ::  Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r
     real                                                        ::  Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c
     real                                                        ::  d1, d2, d3, d4, d5, d6
+    real                                                        ::  w1, w2, w3, w4, w5, w6
     real                                                        ::  q1, q2, q3, q4, q5, q6
+    real                                                        ::  r_q1, r_q2, r_q3, r_q4, r_q5, r_q6
     real                                                        ::  c1, c2, c3, c4, c5, c6
     real                                                        ::  h1, h2, h3, h4, h5, h6
     real                                                        ::  N_e, N_w, N_n, N_s, N_t, N_b
-    real                                                        ::  u_ref2, v_ref2, w_ref2
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vc, v
-    real, dimension(0:3)                                        ::  v00
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, vc
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp, bv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
+    real, dimension(0:3)                                        ::  v00
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     dd = dt/dh
+    coef = dh/dt
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    u_ref2 = 1.5*u_ref
-    v_ref2 = 1.5*v_ref
-    w_ref2 = 1.5*w_ref
     
-    flop = flop + real(ix)*real(jx)*real(kx)*133.0
+    flop = flop + real(ix)*real(jx)*real(kx)*222.0 + 16.0
+
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref, coef) &
+!$OMP PRIVATE(bpx, bvx, actv, r_actv) &
+!$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
+!$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
+!$OMP PRIVATE(d1, d2, d3, d4, d5, d6) &
+!$OMP PRIVATE(w1, w2, w3, w4, w5, w6) &
+!$OMP PRIVATE(q1, q2, q3, q4, q5, q6) &
+!$OMP PRIVATE(r_q1, r_q2, r_q3, r_q4, r_q5, r_q6) &
+!$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
+!$OMP PRIVATE(h1, h2, h3, h4, h5, h6) &
+!$OMP PRIVATE(gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r) &
+!$OMP PRIVATE(gpw_c, gpe_c, gps_c, gpn_c, gpb_c, gpt_c) &
+!$OMP PRIVATE(gpw, gpe, gps, gpn, gpb, gpt) &
+!$OMP PRIVATE(pc, gpx, gpy, gpz) &
+!$OMP PRIVATE(Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r) &
+!$OMP PRIVATE(Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
 
     do k=1,kx
     do j=1,jx
@@ -624,13 +653,6 @@
       actv = real(ibits(bvx, State, 1))
       r_actv = 1.0 - actv
       
-      c1 = 1.0
-      c2 = 1.0
-      c3 = 1.0
-      c4 = 1.0
-      c5 = 1.0
-      c6 = 1.0
-      
       ! Neumann条件のとき，0.0
       N_w = real(ibits(bpx, bc_n_W, 1))  ! w
       N_e = real(ibits(bpx, bc_n_E, 1))  ! e
@@ -639,15 +661,15 @@
       N_b = real(ibits(bpx, bc_n_B, 1))  ! b
       N_t = real(ibits(bpx, bc_n_T, 1))  ! t
       
-      Up0 = vc(i  ,j  ,k  ,1)
-      Vp0 = vc(i  ,j  ,k  ,2)
-      Wp0 = vc(i  ,j  ,k  ,3)
-      Uw0 = vc(i-1,j  ,k  ,1)
-      Ue0 = vc(i+1,j  ,k  ,1)
-      Vs0 = vc(i  ,j-1,k  ,2)
-      Vn0 = vc(i  ,j+1,k  ,2)
-      Wb0 = vc(i  ,j  ,k-1,3)
-      Wt0 = vc(i  ,j  ,k+1,3)
+      Up0 = vc(1, i  ,j  ,k  )
+      Vp0 = vc(2, i  ,j  ,k  )
+      Wp0 = vc(3, i  ,j  ,k  )
+      Uw0 = vc(1, i-1,j  ,k  )
+      Ue0 = vc(1, i+1,j  ,k  )
+      Vs0 = vc(2, i  ,j-1,k  )
+      Vn0 = vc(2, i  ,j+1,k  )
+      Wb0 = vc(3, i  ,j  ,k-1)
+      Wt0 = vc(3, i  ,j  ,k+1)
       
       ! 距離情報 [0, 1]
       d1 = cut(1,i,j,k) ! d_{i}^-
@@ -656,8 +678,14 @@
       d4 = cut(4,i,j,k) ! d_{j}^+
       d5 = cut(5,i,j,k) ! d_{k}^-
       d6 = cut(6,i,j,k) ! d_{k}^+
+      w1 = d1 - 0.5
+      w2 = d2 - 0.5
+      w3 = d3 - 0.5
+      w4 = d4 - 0.5
+      w5 = d5 - 0.5
+      w6 = d6 - 0.5
       
-      ! 交点がある場合-> q=0.0
+      ! if cut -> q=0.0
       q1 = 1.0
       q2 = 1.0
       q3 = 1.0
@@ -670,8 +698,20 @@
       if (d4 < 1.0) q4 = 0.0 ! q4 = aint(d4)
       if (d5 < 1.0) q5 = 0.0 ! q5 = aint(d5)
       if (d6 < 1.0) q6 = 0.0 ! q6 = aint(d6)
+      r_q1 = 1.0 - q1
+      r_q2 = 1.0 - q2
+      r_q3 = 1.0 - q3
+      r_q4 = 1.0 - q4
+      r_q5 = 1.0 - q5
+      r_q6 = 1.0 - q6
       
       ! c=0.0(VBC), 1.0(Fluid); VBCは内部と外部の両方
+      c1 = 1.0
+      c2 = 1.0
+      c3 = 1.0
+      c4 = 1.0
+      c5 = 1.0
+      c6 = 1.0
       if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c1 = 0.0
       if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) c2 = 0.0
       if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c3 = 0.0
@@ -686,68 +726,83 @@
       h5 = 1.0/(d5 + 0.5)
       h6 = 1.0/(d6 + 0.5)
       
-      ! 圧力勾配
-      pc  = p(i,  j,  k  )
-      pxw = (pc - p(i-1,j  ,k  )) * N_w
-      pxe = (p(i+1,j  ,k  ) - pc) * N_e
-      pys = (pc - p(i  ,j-1,k  )) * N_s
-      pyn = (p(i  ,j+1,k  ) - pc) * N_n
-      pzb = (pc - p(i  ,j  ,k-1)) * N_b
-      pzt = (p(i  ,j  ,k+1) - pc) * N_t
-      px = 0.5*(pxe + pxw)
-      py = 0.5*(pyn + pys)
-      pz = 0.5*(pzt + pzb)
+      ! Reference pressure gradient
+      pc    = p(i,  j,  k  )
+      gpw_r = (pc - p(i-1,j  ,k  )) * N_w * q1
+      gpe_r = (p(i+1,j  ,k  ) - pc) * N_e * q2
+      gps_r = (pc - p(i  ,j-1,k  )) * N_s * q3
+      gpn_r = (p(i  ,j+1,k  ) - pc) * N_n * q4
+      gpb_r = (pc - p(i  ,j  ,k-1)) * N_b * q5
+      gpt_r = (p(i  ,j  ,k+1) - pc) * N_t * q6
       
-      ! 両側流体の場合のセルフェイス速度
-      Uw_f = (Uw0 + Up0) * 0.50
-      Ue_f = (Ue0 + Up0) * 0.50
-      Vs_f = (Vs0 + Vp0) * 0.50
-      Vn_f = (Vn0 + Vp0) * 0.50
-      Wt_f = (Wt0 + Wp0) * 0.50
-      Wb_f = (Wb0 + Wp0) * 0.50
+      ! Correction of pressure gradient by wall effect
+      gpw_c = h1 * w1 * gpe_r
+      gpe_c = h2 * w2 * gpw_r
+      gps_c = h3 * w3 * gpn_r
+      gpn_c = h4 * w4 * gps_r
+      gpb_c = h5 * w5 * gpt_r
+      gpt_c = h6 * w6 * gpb_r
       
-      ! 交点がある場合の補正 stable
-      Uw_c = (u_ref2 + (d1-1.0)*Ue_f )*h1
-      Ue_c = (u_ref2 + (d2-1.0)*Uw_f )*h2
-      Vs_c = (v_ref2 + (d3-1.0)*Vn_f )*h3
-      Vn_c = (v_ref2 + (d4-1.0)*Vs_f )*h4
-      Wb_c = (w_ref2 + (d5-1.0)*Wt_f )*h5
-      Wt_c = (w_ref2 + (d6-1.0)*Wb_f )*h6
+      ! Cell face gradient
+      gpw = gpw_r + r_q1 * gpw_c
+      gpe = gpe_r + r_q2 * gpe_c
+      gps = gps_r + r_q3 * gps_c
+      gpn = gpn_r + r_q4 * gpn_c
+      gpb = gpb_r + r_q5 * gpb_c
+      gpt = gpt_r + r_q6 * gpt_c
       
-      ! カットがある場合のcompactな壁面修正
-      !Uw_c = (0.5*u_ref + (d1-0.5)*Up0 )/d1 
-      !Ue_c = (0.5*u_ref + (d2-0.5)*Up0 )/d2
-      !Vs_c = (0.5*v_ref + (d3-0.5)*Vp0 )/d3
-      !Vn_c = (0.5*v_ref + (d4-0.5)*Vp0 )/d4
-      !Wb_c = (0.5*w_ref + (d5-0.5)*Wp0 )/d5
-      !Wt_c = (0.5*w_ref + (d6-0.5)*Wp0 )/d6
+      ! Cell center gradient
+      gpx = 0.5*(gpe + gpw)
+      gpy = 0.5*(gpn + gps)
+      gpz = 0.5*(gpt + gpb)
       
-      ! セルフェイス速度 q=0.0(交点), 1.0(Fluid)
-      Uw = q1*Uw_f + (1.0-q1)*Uw_c - dd * pxw
-      Ue = q2*Ue_f + (1.0-q2)*Ue_c - dd * pxe
-      Vs = q3*Vs_f + (1.0-q3)*Vs_c - dd * pys
-      Vn = q4*Vn_f + (1.0-q4)*Vn_c - dd * pyn
-      Wb = q5*Wb_f + (1.0-q5)*Wb_c - dd * pzb
-      Wt = q6*Wt_f + (1.0-q6)*Wt_c - dd * pzt
+      ! Reference velocity at cell face, if cut -> q=0.0
+      Uw_r = 0.5 * (Uw0 + Up0) * q1 + r_q1 * Up0
+      Ue_r = 0.5 * (Ue0 + Up0) * q2 + r_q2 * Up0
+      Vs_r = 0.5 * (Vs0 + Vp0) * q3 + r_q3 * Vp0
+      Vn_r = 0.5 * (Vn0 + Vp0) * q4 + r_q4 * Vp0
+      Wb_r = 0.5 * (Wb0 + Wp0) * q5 + r_q5 * Wp0
+      Wt_r = 0.5 * (Wt0 + Wp0) * q6 + r_q6 * Wp0
+      
+      ! Correction of cell face velocity by wall effect
+      Uw_c = h1 * w1 * Ue_r
+      Ue_c = h2 * w2 * Uw_r
+      Vs_c = h3 * w3 * Vn_r
+      Vn_c = h4 * w4 * Vs_r
+      Wb_c = h5 * w5 * Wt_r
+      Wt_c = h6 * w6 * Wb_r
+      
+      ! Cell face velocity
+      Uw = q1 * Uw_r + r_q1 * Uw_c 
+      Ue = q2 * Ue_r + r_q2 * Ue_c 
+      Vs = q3 * Vs_r + r_q3 * Vs_c 
+      Vn = q4 * Vn_r + r_q4 * Vn_c 
+      Wb = q5 * Wb_r + r_q5 * Wb_c 
+      Wt = q6 * Wt_r + r_q6 * Wt_c 
       
       ! 発散値 VBCの寄与は除外
-      div(i,j,k) = (Ue * c2 - Uw * c1 &
-                  + Vn * c4 - Vs * c3 &
-                  + Wt * c6 - Wb * c5) * coef * actv
+      div(i,j,k) = ((Ue - dd * gpe)* c2 &
+                   -(Uw - dd * gpw)* c1 &
+                   +(Vn - dd * gpn)* c4 &
+                   -(Vs - dd * gps)* c3 &
+                   +(Wt - dd * gpt)* c6 &
+                   -(Wb - dd * gpb)* c5 ) * coef * actv
       
       ! セルセンタの速度更新
-      v(i,j,k,1) = ( Up0-px*dd )*actv + r_actv*u_ref
-      v(i,j,k,2) = ( Vp0-py*dd )*actv + r_actv*v_ref
-      v(i,j,k,3) = ( Wp0-pz*dd )*actv + r_actv*w_ref
+      v(1,i,j,k) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
+      v(2,i,j,k) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
+      v(3,i,j,k) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
     
     return 
     end subroutine cds_update_vec
 
 !  *************************************************************
-!> @subroutine cds_div (div, sz, g, coef, v, bv, cut, v00, flop)
+!> @subroutine cds_div (div, sz, g, coef, v, bv, cut, flop)
 !! @brief 速度の発散を計算する
 !! @param div 速度の発散値
 !! @param sz 配列長
@@ -759,37 +814,53 @@
 !! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine cds_div (div, sz, g, coef, v, bv, cut, v00, flop)
+    subroutine cds_div (div, sz, g, coef, v, bv, cut, flop)
     implicit none
     include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
-    real                                                        ::  Ue1, Uw1, Vn1, Vs1, Wt1, Wb1
+    real                                                        ::  Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r
+    real                                                        ::  Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c
     real                                                        ::  c1, c2, c3, c4, c5, c6
     real                                                        ::  d1, d2, d3, d4, d5, d6
     real                                                        ::  h1, h2, h3, h4, h5, h6
     real                                                        ::  q1, q2, q3, q4, q5, q6
-    real                                                        ::  u_ref, v_ref, w_ref, coef, flop, actv
-    real                                                        ::  u_ref2, v_ref2, w_ref2
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
+    real                                                        ::  r_q1, r_q2, r_q3, r_q4, r_q5, r_q6
+    real                                                        ::  coef, flop, actv, r_actv
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-		real, dimension(0:3)                                        ::  v00
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-		u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    u_ref2 = 1.5*u_ref
-    v_ref2 = 1.5*v_ref
-    w_ref2 = 1.5*w_ref
     
-    flop = flop + real(ix*jx*kx)*73.0
+    flop = flop + real(ix)*real(jx)*real(kx)*140.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
+!$OMP PRIVATE(bvx, actv, r_actv) &
+!$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
+!$OMP PRIVATE(d1, d2, d3, d4, d5, d6) &
+!$OMP PRIVATE(w1, w2, w3, w4, w5, w6) &
+!$OMP PRIVATE(q1, q2, q3, q4, q5, q6) &
+!$OMP PRIVATE(r_q1, r_q2, r_q3, r_q4, r_q5, r_q6) &
+!$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
+!$OMP PRIVATE(h1, h2, h3, h4, h5, h6) &
+!$OMP PRIVATE(Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r) &
+!$OMP PRIVATE(Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
 
     do k=1,kx
     do j=1,jx
@@ -797,15 +868,15 @@
       bvx = bv(i,j,k)
       actv= real(ibits(bvx, State, 1))
       
-      Up0 = v(i  ,j  ,k  ,1)
-      Vp0 = v(i  ,j  ,k  ,2)
-      Wp0 = v(i  ,j  ,k  ,3)
-      Uw0 = v(i-1,j  ,k  ,1)
-      Ue0 = v(i+1,j  ,k  ,1)
-      Vs0 = v(i  ,j-1,k  ,2)
-      Vn0 = v(i  ,j+1,k  ,2)
-      Wb0 = v(i  ,j  ,k-1,3)
-      Wt0 = v(i  ,j  ,k+1,3)
+      Up0 = v(1, i  ,j  ,k  )
+      Vp0 = v(2, i  ,j  ,k  )
+      Wp0 = v(3, i  ,j  ,k  )
+      Uw0 = v(1, i-1,j  ,k  )
+      Ue0 = v(1, i+1,j  ,k  )
+      Vs0 = v(2, i  ,j-1,k  )
+      Vn0 = v(2, i  ,j+1,k  )
+      Wb0 = v(3, i  ,j  ,k-1)
+      Wt0 = v(3, i  ,j  ,k+1)
       
       d1 = cut(1,i,j,k) ! d_{i}^-
       d2 = cut(2,i,j,k) ! d_{i}^+
@@ -813,14 +884,32 @@
       d4 = cut(4,i,j,k) ! d_{j}^+
       d5 = cut(5,i,j,k) ! d_{k}^-
       d6 = cut(6,i,j,k) ! d_{k}^+
+      w1 = d1 - 0.5
+      w2 = d2 - 0.5
+      w3 = d3 - 0.5
+      w4 = d4 - 0.5
+      w5 = d5 - 0.5
+      w6 = d6 - 0.5
       
-      ! 交点がある場合，切り捨て -> q?=0.0
-      q1 = aint(d1)
-      q2 = aint(d2)
-      q3 = aint(d3)
-      q4 = aint(d4)
-      q5 = aint(d5)
-      q6 = aint(d6)
+      ! if cut -> q=0.0
+      q1 = 1.0
+      q2 = 1.0
+      q3 = 1.0
+      q4 = 1.0
+      q5 = 1.0
+      q6 = 1.0
+      if (d1 < 1.0) q1 = 0.0 ! q1 = aint(d1) 
+      if (d2 < 1.0) q2 = 0.0 ! q2 = aint(d2)
+      if (d3 < 1.0) q3 = 0.0 ! q3 = aint(d3)
+      if (d4 < 1.0) q4 = 0.0 ! q4 = aint(d4)
+      if (d5 < 1.0) q5 = 0.0 ! q5 = aint(d5)
+      if (d6 < 1.0) q6 = 0.0 ! q6 = aint(d6)
+      r_q1 = 1.0 - q1
+      r_q2 = 1.0 - q2
+      r_q3 = 1.0 - q3
+      r_q4 = 1.0 - q4
+      r_q5 = 1.0 - q5
+      r_q6 = 1.0 - q6
       
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c = 1.0(Normal) / 0.0(BC)
       c1 = 1.0
@@ -843,57 +932,37 @@
       h5 = 1.0/(d5 + 0.5)
       h6 = 1.0/(d6 + 0.5)
       
-      !Uw1_t = (u_ref + (d1-1.0)*Up0 )/d1
-      !Ue1_t = (u_ref + (d2-1.0)*Up0 )/d2
-      !Vs1_t = (v_ref + (d3-1.0)*Vp0 )/d3
-      !Vn1_t = (v_ref + (d4-1.0)*Vp0 )/d4
-      !Wb1_t = (w_ref + (d5-1.0)*Wp0 )/d5
-      !Wt1_t = (w_ref + (d6-1.0)*Wp0 )/d6
+      ! Reference velocity at cell face, if cut -> q=0.0
+      Uw_r = 0.5 * (Uw0 + Up0) * q1 + r_q1 * Up0
+      Ue_r = 0.5 * (Ue0 + Up0) * q2 + r_q2 * Up0
+      Vs_r = 0.5 * (Vs0 + Vp0) * q3 + r_q3 * Vp0
+      Vn_r = 0.5 * (Vn0 + Vp0) * q4 + r_q4 * Vp0
+      Wb_r = 0.5 * (Wb0 + Wp0) * q5 + r_q5 * Wp0
+      Wt_r = 0.5 * (Wt0 + Wp0) * q6 + r_q6 * Wp0
       
-      !Uw0 = q1*Uw0 + (1.0-q1)*Uw1_t
-      !Ue0 = q2*Ue0 + (1.0-q2)*Ue1_t
-      !Vs0 = q3*Vs0 + (1.0-q3)*Vs1_t
-      !Vn0 = q4*Vn0 + (1.0-q4)*Vn1_t
-      !Wb0 = q5*Wb0 + (1.0-q5)*Wb1_t
-      !Wt0 = q6*Wt0 + (1.0-q6)*Wt1_t
+      ! Correction of cell face velocity by wall effect
+      Uw_c = h1 * w1 * Ue_r
+      Ue_c = h2 * w2 * Uw_r
+      Vs_c = h3 * w3 * Vn_r
+      Vn_c = h4 * w4 * Vs_r
+      Wb_c = h5 * w5 * Wt_r
+      Wt_c = h6 * w6 * Wb_r
       
-      ! 流体セルの場合
-      Uw1 = (Uw0 + Up0) * 0.50
-      Ue1 = (Ue0 + Up0) * 0.50
-      Vs1 = (Vs0 + Vp0) * 0.50
-      Vn1 = (Vn0 + Vp0) * 0.50
-      Wb1 = (Wb0 + Wp0) * 0.50
-      Wt1 = (Wt0 + Wp0) * 0.50
-      
-      ! 交点がある場合の補正 stable
-      Uw = (u_ref2 + (d1-1.0)*Ue1 )*h1
-      Ue = (u_ref2 + (d2-1.0)*Uw1 )*h2
-      Vs = (v_ref2 + (d3-1.0)*Vn1 )*h3
-      Vn = (v_ref2 + (d4-1.0)*Vs1 )*h4
-      Wb = (w_ref2 + (d5-1.0)*Wt1 )*h5
-      Wt = (w_ref2 + (d6-1.0)*Wb1 )*h6
-      
-      ! 交点がある場合の補正 compact
-      !Uw = (0.5*u_ref + (d1-0.5)*Up0 )/d1
-      !Ue = (0.5*u_ref + (d2-0.5)*Up0 )/d2
-      !Vs = (0.5*v_ref + (d3-0.5)*Vp0 )/d3
-      !Vn = (0.5*v_ref + (d4-0.5)*Vp0 )/d4
-      !Wb = (0.5*w_ref + (d5-0.5)*Wp0 )/d5
-      !Wt = (0.5*w_ref + (d6-0.5)*Wp0 )/d6
-      
-      ! 壁面の補正済みの値
-      Uw = q1*Uw1 + (1.0-q1)*Uw
-      Ue = q2*Ue1 + (1.0-q2)*Ue
-      Vs = q3*Vs1 + (1.0-q3)*Vs
-      Vn = q4*Vn1 + (1.0-q4)*Vn
-      Wb = q5*Wb1 + (1.0-q5)*Wb
-      Wt = q6*Wt1 + (1.0-q6)*Wt
+      ! Cell face velocity
+      Uw = q1 * Uw_r + r_q1 * Uw_c 
+      Ue = q2 * Ue_r + r_q2 * Ue_c 
+      Vs = q3 * Vs_r + r_q3 * Vs_c 
+      Vn = q4 * Vn_r + r_q4 * Vn_c 
+      Wb = q5 * Wb_r + r_q5 * Wb_c 
+      Wt = q6 * Wt_r + r_q6 * Wt_c
       
       ! VBCの場合には寄与をキャンセル
       div(i,j,k) = ( Ue * c2 - Uw * c1 + Vn * c4 - Vs * c3 + Wt * c6 - Wb * c5 ) * coef * actv
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine cds_div

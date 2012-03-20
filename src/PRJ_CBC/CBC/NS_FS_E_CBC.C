@@ -140,6 +140,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
 
       if ( C.LES.Calc == ON ) {
         //cbc_pvec_les_(vc, sz, gc, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop_count);
+        Exit(0);
       }
       else {
         cbc_pvec_muscl_(vc, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, src0, &wall_prof, (int*)bcd, cvf, &flop_count); 

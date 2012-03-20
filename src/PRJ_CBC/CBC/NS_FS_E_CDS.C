@@ -94,7 +94,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) {
     if( !(abf = dc_abf->GetData()) )  Exit(0);
   }
-  mark();
+
   // コンポーネントの体積率
   if ( C.isVfraction() ) {
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
@@ -124,7 +124,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
   
-  mark();
+
   
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
@@ -134,12 +134,13 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     case Control::Flow_FS_EE_EE:
     case Control::Flow_FS_AB2:
       TIMING_start(tm_pseudo_vec);
+      
       flop_count = 0.0;
       v_mode = (C.Mode.Wall_profile == Control::Log_Law) ? 2 : 1;
       
       if ( C.LES.Calc == ON ) {
         Hostonly_ printf("not inplemented yet. sorry:-)\n");
-        exit(0);
+        Exit(0);
       }
       else {
         cds_pvec_muscl_(vc, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, cut, &flop_count); 
@@ -224,7 +225,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_2, 0.0);
   // <<< Fractional step subsection 2
   
-  mark();
+
   
   // >>> Fractional step sub-section 3
   TIMING_start(tm_frctnl_stp_sct_3);
@@ -264,7 +265,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_3, 0.0);
   // <<< Fractional step subsection 3
   
-  mark();
+
   
   // >>> Fractional step sub-section 4
   TIMING_start(tm_frctnl_stp_sct_4);
@@ -284,7 +285,6 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   
   TIMING_stop(tm_frctnl_stp_sct_4, 0.0);
   // <<< Fractional step subsection 4
-  
   
   TIMING_stop(tm_frctnl_stp_sct, 0.0);
   // <<< Fractional step section
@@ -308,7 +308,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
   TIMING_start(tm_div_pvec);
   flop_count = 0.0;
-  cds_div_(src0, sz, gc, &coef, vc, (int*)bcv, cut, v00, &flop_count);
+  cds_div_(src0, sz, gc, &coef, vc, (int*)bcv, cut, &flop_count);
   TIMING_stop(tm_div_pvec, flop_count);
   
   // Poissonソース項の速度境界条件（VBC）面による修正
@@ -338,6 +338,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
+  
   
   
   // VP-Iteration
@@ -384,10 +385,10 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
     
-    // 速度のスカラポテンシャルによる射影と発散値
+    // 速度のスカラポテンシャルによる射影と発散値 src1は，反復毎のソース項をワークとして利用
     TIMING_start(tm_prj_vec);
     flop_count = 0.0;
-    cds_update_vec_ (v, src1, sz, gc, &dt, dh, vc, p, (int*)bcp, (int*)bcv, cut, v00, &coef, &flop_count); // src1は，反復毎のソース項をワークとして利用
+    cds_update_vec_(v, src1, sz, gc, &dt, dh, vc, p, (int*)bcp, (int*)bcv, cut, v00, &flop_count);
     TIMING_stop(tm_prj_vec, flop_count);
     
     // セルフェイス速度の境界条件による修正

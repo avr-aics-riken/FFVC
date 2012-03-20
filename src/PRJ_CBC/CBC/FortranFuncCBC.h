@@ -94,9 +94,10 @@
 #define vof_muscl_              VOF_MUSCL
 
 // cds_vector.f90
-#define cds_div_                CDS_DIV
-#define cds_pvec_muscl          CDS_PVEC_MUSCL
+#define cds_pvec_muscl_         CDS_PVEC_MUSCL
 #define cds_update_vec_         CDS_UPDATE_VEC
+#define cds_div_                CDS_DIV
+
 
 #endif // _WIN32
 
@@ -213,11 +214,11 @@ extern "C" {
   void vof_muscl_  (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, REAL_TYPE* flop);
   
   // cds_vector.f90
-  void cds_div_           (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* flop);
   void cds_pvec_muscl_    (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
                            int* bv, int* bp, int* v_mode, float* cut, REAL_TYPE* flop);
   void cds_update_vec_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p, 
-                           int* bp, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* coef, REAL_TYPE* flop);
+                           int* bp, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cds_div_           (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* flop);
 }
 
 #endif // _SKL_FORTRAN_FUNC_CBC_H_
