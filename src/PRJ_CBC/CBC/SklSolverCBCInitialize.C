@@ -1368,6 +1368,7 @@ void SklSolverCBC::connectExample(Control* Cref)
   else if ( Cref->Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
   else if ( Cref->Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
   else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
+  else if ( Cref->Mode.Example == id_Sphere )  Ex = dynamic_cast<Intrinsic*>(new IP_Sphere);
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
     Exit(0);
@@ -1737,6 +1738,7 @@ void SklSolverCBC::getXMLExample(Control* Cref)
   else if( !strcasecmp(keyword, "Cylinder") )                 Cref->Mode.Example = id_Cylinder;
   else if( !strcasecmp(keyword, "Back_Step") )                Cref->Mode.Example = id_Step;
   else if( !strcasecmp(keyword, "Polygon") )                  Cref->Mode.Example = id_Polygon;
+  else if( !strcasecmp(keyword, "Sphere") )                   Cref->Mode.Example = id_Sphere;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
     Exit(0);

@@ -23,6 +23,7 @@
 #include <fstream>
 #include "Parallel_node.h"
 #include "SklUtil.h"
+#include "vec3.h"
 extern SklParaComponent* ParaCmpo;
 
 enum Intrinsic_class {
@@ -34,7 +35,8 @@ enum Intrinsic_class {
   id_Rect,
   id_Cylinder,
   id_Step,
-  id_Polygon
+  id_Polygon,
+  id_Sphere
 };
 
 class Intrinsic : public Parallel_Node {
@@ -49,7 +51,7 @@ public:
     dim_3d
   };
   
-  Intrinsic() {
+  Intrinsic() { 
     for (unsigned i=0; i<3; i++) size[i]=0.0;
     imax = jmax = kmax = guide = 0;
     RefL = 0.0;

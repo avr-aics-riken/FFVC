@@ -38,11 +38,7 @@ bool IP_Sphere::getXML(SklSolverConfig* CF, Control* R)
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Offset' in 'Intrinsic_Example'\n");
     return false;
   }
-  if ( offset < 0.0 ) {
-    Hostonly_ stamped_printf("\tParsing error : offset must be positive.\n");
-    return false;
-  }
-  
+
   // radius
   if ( elmL1->GetValue(CfgIdt("radius"), &ct) ) {
     radius = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
@@ -103,8 +99,6 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
 void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL_TYPE m_wth[3], REAL_TYPE m_pch[3])
 {
   pch = m_pch;
-
-  sz  = (int)m_sz;
   
   // チェック
   if ( (pch.x != pch.y) || (pch.y != pch.z) ) {
@@ -113,50 +107,30 @@ void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL
   }
   
   // 領域サイズ
-  wth = pch * (float)sz;
+  wth.x = pch.x * (float)m_sz[0];
+  wth.y = pch.y * (float)m_sz[1];
+  wth.z = pch.z * (float)m_sz[2];
+  
   m_wth[0] = wth.x;
   m_wth[1] = wth.y;
   m_wth[2] = wth.z;
   
-  // 領域中心座標
-  ctr.x = offset;
-  ctr.y = 0.0;
-  ctr.z = 0.0;
-  
-  // 球の中心座標
-  os.x = 0.0;
-  os.y = 0.0;
-  os.z = 0.0;
-  
   // 領域の基点
-  org = ctr - 0.5*wth;
+  org = - 0.5*wth;
   m_org[0] = org.x;
   m_org[1] = org.y;
   m_org[2] = org.z;
-  
-  // 球のbbox
-  box_min.x = os.x - radius;
 
 }
 
-//@fn void IP_Sphere::bbox_index(int* st, int* ed)
-//@brief コンポーネントの属するセルインデクスを求める
-void IP_Sphere::bbox_index(int* st, int* ed)
-{
-  find_index(st, box_min);
-  find_index(ed, box_max);
-}
-
-//@fn void IP_Sphere::find_index(int* w, const FB::Vec3f p)
+//@fn FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p)
 //@brief 点pの属するセルインデクスを求める
 //@note Fortran index
-void IP_Sphere::find_index(int* w, const FB::Vec3f p)
+FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p)
 {
   FB::Vec3f q = (p-org)/pch;
-  
-  w[0] = (int)ceil(q.x);
-  w[1] = (int)ceil(q.y);
-  w[2] = (int)ceil(q.z);
+
+  return FB::Vec3i( ceil(q.x), ceil(q.y), ceil(q.z) );
 }
 
 /**
@@ -174,9 +148,14 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
   unsigned m;
-  REAL_TYPE x, y, z, dh, len, ht;
+  REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
+  
+  FB::Vec3f base, b, t;
+  REAL_TYPE ph = pch.x;
+  REAL_TYPE r;
+  REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
   ox = R->org[0];
@@ -191,19 +170,109 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
   oy_g = G_org[1];
   oz_g = G_org[2];
 
-  // length, widthなどは有次元値
-  len = ox_g + (drv_length+width)/R->RefLength; // グローバルな無次元位置
-  ht  = oy_g + height/R->RefLength;
+  // 領域の基点
+  org.x -= offset;
+  G_org[0] = org.x;
   
-  // Initialize  内部領域をfluidにしておく
-  for (k=1; k<=(int)kmax; k++) { 
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  
+  // 領域中心座標
+  ctr.x = -offset;
+  ctr.y = 0.0;
+  ctr.z = 0.0;
+  
+  // 球の中心座標
+  os.x = 0.0;
+  os.y = 0.0;
+  os.z = 0.0;
+  
+  // 球のbbox
+  box_min = os - rs;
+  box_max = os + rs;
+  box_st = find_index(box_min);
+  box_ed = find_index(box_max);
+
+  /*
+  printf("pitch : %f %f %f\n", pch.x, pch.y, pch.z);
+  printf("width : %f %f %f\n", wth.x, wth.y, wth.z);
+  printf("center: %f %f %f\n", ctr.x, ctr.y, ctr.z);
+  printf("radius: %f\n", radius);
+  printf("offset: %f\n", offset);
+  printf("origin: %f %f %f\n", org.x, org.y, org.z);
+  printf("b_min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
+  printf("b_max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
+  printf("index : %d %d %d - %d %d %d\n", box_st.x, box_st.y, box_st.z, box_ed.x, box_ed.y, box_ed.z);
+  */
+  
+  // 媒質設定
+  for (k=0; k<=(int)kmax+1; k++) { 
+    for (j=0; j<=(int)jmax+1; j++) {
+      for (i=0; i<=(int)imax+1; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_fluid;
       }
     }
   }
+  
+  // 球内部
+  for (k=box_st.z; k<=box_ed.z; k++) { 
+    for (j=box_st.y; j<=box_ed.y; j++) {
+      for (i=box_st.x; i<=box_ed.x; i++) {
+       
+        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
+        b = org + base*ph - os;
+        r = b.length();
+        
+        if ( r <= rs ) {
+          m = FBUtility::getFindexS3D(size, guide, i, j, k);
+          mid[m] = mid_solid;
+        }
+      }
+    }
+  }
+  
+  // カット情報
+  FB::Vec3f p[7];
+  float lb[7], s;
+  
+  for (k=box_st.z; k<=box_ed.z; k++) { 
+    for (j=box_st.y; j<=box_ed.y; j++) {
+      for (i=box_st.x; i<=box_ed.x; i++) {
+        
+        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
+        b = org + base*ph - os;
+        
+        p[0].assign(b.x   , b.y   , b.z   ); // p
+        p[1].assign(b.x-ph, b.y   , b.z   ); // w 
+        p[2].assign(b.x+ph, b.y   , b.z   ); // e
+        p[3].assign(b.x   , b.y-ph, b.z   ); // s
+        p[4].assign(b.x   , b.y+ph, b.z   ); // n
+        p[5].assign(b.x   , b.y   , b.z-ph); // b
+        p[6].assign(b.x   , b.y   , b.z+ph); // t
+        
+        for (int l=0; l<7; l++) {
+          lb[l] = ( p[l].length() <= rs ) ? -1.0 : 1.0;
+        }
+        
+        // cut test
+        for (int l=1; l<=6; l++) {
+          if ( lb[0]*lb[l] < 0.0 ) {
+            s = cut_line(p[0], l);
+            printf("%8.5f %8.5f %8.5f > %3.1f : %8.5f %8.5f %8.5f > %3.1f : %d : %f\n", b.x, b.y, b.z, lb[0], p[l].x, p[l].y, p[l].z, lb[l], l, s);
+          }
+        }
+      }
+    }
+  }
+  
+  
+  
+  
+  
+  // driver設定 iff ドライバ長が正の場合
+  if ( drv_length < 0.0 ) return;
+  
+  // lengthは有次元値
+  len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
@@ -241,10 +310,93 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
-        if ( (x < len) && (y < ht) ) {
+        if ( x < len ) {
           mid[m] = mid_solid;
         }
       }
     }
+  }
+}
+
+/**
+ @fn float IP_Sphere::cut_line(const FB::Vec3f b, const int dir)
+ @brief 計算領域のセルIDを設定する
+ @param b 基点座標
+ @param dir テスト方向
+ */
+float IP_Sphere::cut_line(const FB::Vec3f b, const int dir)
+{
+  float x, y, z, s1, s2, c1, c2, c3, c4, e1, e2, e3;
+  
+  // unit vector
+  switch (dir) {
+    case 1:
+      e1 =-1.0;
+      e2 = 0.0;
+      e3 = 0.0;
+      break;
+      
+    case 2:
+      e1 = 1.0;
+      e2 = 0.0;
+      e3 = 0.0;
+      break;
+      
+    case 3:
+      e1 = 0.0;
+      e2 =-1.0;
+      e3 = 0.0;
+      break;
+      
+    case 4:
+      e1 = 0.0;
+      e2 = 1.0;
+      e3 = 0.0;
+      break;
+      
+    case 5:
+      e1 = 0.0;
+      e2 = 0.0;
+      e3 =-1.0;
+      break;
+      
+    case 6:
+      e1 = 0.0;
+      e2 = 0.0;
+      e3 = 1.0;
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+  x = b.x;
+  y = b.y;
+  z = b.z;
+  
+  c1 = x*e1 + y*e2 + z*e3;
+  c2 = x*x*e1*e1 + y*y*e2*e2 + z*z*e3*e3;
+  c3 = x*y*e1*e2 + y*z*e2*e3 + z*x*e3*e1;
+  c4 = sqrtf( 4.0*c2 + 8.0*c3 );
+  
+  s1 = -c1 + c4;
+  s2 = -c1 - c4;
+  
+  int f=0;
+  int d=0;
+  if ( (s1>=0.0) && (s1<1.0) ) { f++; d=1; }
+  if ( (s2>=0.0) && (s2<1.0) ) { f++; d=2; }
+  
+  if ( f != 1 ) {
+    stamped_printf("Solution error %f %f\n" ,s1, s2);
+    Exit(0);
+  }
+  
+  if ( d == 1 ) {
+    return s1;
+  }
+  else {
+    return s2;
   }
 }

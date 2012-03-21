@@ -50,6 +50,7 @@
 #include "IP_Step.h"
 #include "IP_Cylinder.h"
 #include "IP_Polygon.h"
+#include "IP_Sphere.h"
 
 // K-profiler
 #ifdef __K_FPCOLL

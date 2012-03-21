@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.5.2  21 Mar. 2012
+  - IP_Sphereクラス導入
+  
 Ver 2.5.1  11 Mar. 2012
   - fb_copy_real >> fb_copy_real_s/vに変更。1重ループの場合、int(4byte)でループ長不足が生じる可能性
   - fb_set_value_int() >> fb_set_int_s()

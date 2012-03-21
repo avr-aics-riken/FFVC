@@ -18,6 +18,7 @@ CXXSRCS = \
        ../../IP/IP_Cylinder.C \
        ../../IP/IP_Step.C \
        ../../IP/IP_Polygon.C \
+       ../../IP/IP_Sphere.C \
 
 
 FCSRCS = \
@@ -67,3 +68,4 @@ depend:
 ../../IP/IP_Cylinder.o: ../../IP/IP_Cylinder.h ../../IP/IP_Define.h
 ../../IP/IP_Step.o: ../../IP/IP_Step.h ../../IP/IP_Define.h
 ../../IP/IP_Polygon.o: ../../IP/IP_Polygon.h ../../IP/IP_Define.h
+../../IP/IP_Sphere.o: ../../IP/IP_Sphere.h ../../IP/IP_Define.h

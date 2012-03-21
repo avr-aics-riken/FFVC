@@ -230,7 +230,7 @@ typedef Vec3<float> Vec3f;
 typedef Vec3<REAL_TYPE> Vec3r;
 
 //=========================================================================
-
+  
 /**
  @fn inline Vec3f operator*(float s, const Vec3f& v)
  @brief multiply s

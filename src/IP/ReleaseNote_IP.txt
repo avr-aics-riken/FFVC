@@ -4,6 +4,10 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+
+Ver 1.1.7    21 Mar. 2012
+  - IP_Sphere classを追加
+  
 Ver 1.1.6    22 Feb. 2012
   - SKL_REAL >> REAL_TYPE in FBDefine.h
   

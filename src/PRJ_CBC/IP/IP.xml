@@ -18,5 +18,7 @@
     <Param name="fname" dtype="STRING" value="../../IP/IP_Step.h"/>
     <Param name="fname" dtype="STRING" value="../../IP/IP_Polygon.C"/>
     <Param name="fname" dtype="STRING" value="../../IP/IP_Polygon.h"/>
+    <Param name="fname" dtype="STRING" value="../../IP/IP_Sphere.C"/>
+    <Param name="fname" dtype="STRING" value="../../IP/IP_Sphere.h"/>
   </Elem>
 </SphereNonSolver>

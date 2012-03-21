@@ -26,17 +26,18 @@ protected:
   FB::Vec3f wth;        ///< 計算領域の大きさ
   FB::Vec3f ctr;        ///< 計算領域のセンター
   FB::Vec3f os;         ///< 球の中心座標
-  FB::Vec3i sz;         ///< 領域分割数
   FB::Vec3f box_min;    ///< Bounding boxの最小値
   FB::Vec3f box_max;    ///< Bounding boxの最大値
+  FB::Vec3i box_st;     ///< Bounding boxの始点インデクス
+  FB::Vec3i box_ed;     ///< Bounding boxの終点インデクス
   
 public:
-  IP_Shere(){
+  IP_Sphere(){
     offset = 0.0;
     radius = 0.0;
     drv_length = 0.0;
   }
-  ~IP_Shere() {}
+  ~IP_Sphere() {}
 
 public:
   virtual bool getXML(SklSolverConfig* CF, Control* R);
@@ -48,5 +49,9 @@ public:
   virtual const char* getExampleName(void) {
     return ("Sphere");
   }
+  
+  FB::Vec3i find_index(const FB::Vec3f p);
+  
+  float cut_line(const FB::Vec3f b, const int dir);
 };
 #endif // _SKL_IP_SHERE_H_

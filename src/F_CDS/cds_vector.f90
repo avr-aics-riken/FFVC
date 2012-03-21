@@ -54,7 +54,6 @@
 		real                                                        ::  EX, EY, EZ, delta_x, delta_y, delta_z
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
-    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cvf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
     real, dimension(0:3)                                        ::  v00
     
@@ -122,6 +121,14 @@
 !$OMP PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
 !$OMP PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
 !$OMP PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
 
     do k=1,kx
     do j=1,jx
@@ -826,6 +833,7 @@
     real                                                        ::  c1, c2, c3, c4, c5, c6
     real                                                        ::  d1, d2, d3, d4, d5, d6
     real                                                        ::  h1, h2, h3, h4, h5, h6
+    real                                                        ::  w1, w2, w3, w4, w5, w6
     real                                                        ::  q1, q2, q3, q4, q5, q6
     real                                                        ::  r_q1, r_q2, r_q3, r_q4, r_q5, r_q6
     real                                                        ::  coef, flop, actv, r_actv
