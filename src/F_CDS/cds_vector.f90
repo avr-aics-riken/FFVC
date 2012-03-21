@@ -838,7 +838,7 @@
     jx = sz(2)
     kx = sz(3)
     
-    flop = flop + real(ix)*real(jx)*real(kx)*140.0
+    flop = flop + real(ix)*real(jx)*real(kx)*229.0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
@@ -932,13 +932,27 @@
       h5 = 1.0/(d5 + 0.5)
       h6 = 1.0/(d6 + 0.5)
       
+      Uw_r = (1.0 - 0.5 / d1) * Up0
+      Ue_r = (1.0 - 0.5 / d2) * Up0
+      Vs_r = (1.0 - 0.5 / d3) * Vp0
+      Vn_r = (1.0 - 0.5 / d4) * Vp0
+      Wb_r = (1.0 - 0.5 / d5) * Wp0
+      Wt_r = (1.0 - 0.5 / d6) * Wp0
+      
+      if ( d1 < 0.5 ) Uw_r = 0.0
+      if ( d2 < 0.5 ) Ue_r = 0.0
+      if ( d3 < 0.5 ) Vs_r = 0.0
+      if ( d4 < 0.5 ) Vn_r = 0.0
+      if ( d5 < 0.5 ) Wb_r = 0.0
+      if ( d6 < 0.5 ) Wt_r = 0.0
+      
       ! Reference velocity at cell face, if cut -> q=0.0
-      Uw_r = 0.5 * (Uw0 + Up0) * q1 + r_q1 * Up0
-      Ue_r = 0.5 * (Ue0 + Up0) * q2 + r_q2 * Up0
-      Vs_r = 0.5 * (Vs0 + Vp0) * q3 + r_q3 * Vp0
-      Vn_r = 0.5 * (Vn0 + Vp0) * q4 + r_q4 * Vp0
-      Wb_r = 0.5 * (Wb0 + Wp0) * q5 + r_q5 * Wp0
-      Wt_r = 0.5 * (Wt0 + Wp0) * q6 + r_q6 * Wp0
+      Uw_r = 0.5 * (Uw0 + Up0) * q1 + r_q1 * Uw_r
+      Ue_r = 0.5 * (Ue0 + Up0) * q2 + r_q2 * Ue_r
+      Vs_r = 0.5 * (Vs0 + Vp0) * q3 + r_q3 * Vs_r
+      Vn_r = 0.5 * (Vn0 + Vp0) * q4 + r_q4 * Vn_r
+      Wb_r = 0.5 * (Wb0 + Wp0) * q5 + r_q5 * Wb_r
+      Wt_r = 0.5 * (Wt0 + Wp0) * q6 + r_q6 * Wt_r
       
       ! Correction of cell face velocity by wall effect
       Uw_c = h1 * w1 * Ue_r
