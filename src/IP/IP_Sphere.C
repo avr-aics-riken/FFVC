@@ -256,7 +256,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
         // cut test
         for (int l=1; l<=6; l++) {
           if ( lb[0]*lb[l] < 0.0 ) {
-            s = cut_line(p[0], l);
+            s = cut_line(p[0], l, rs);
             printf("%8.5f %8.5f %8.5f > %3.1f : %8.5f %8.5f %8.5f > %3.1f : %d : %f\n", b.x, b.y, b.z, lb[0], p[l].x, p[l].y, p[l].z, lb[l], l, s);
           }
         }
@@ -319,12 +319,13 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
 }
 
 /**
- @fn float IP_Sphere::cut_line(const FB::Vec3f b, const int dir)
+ @fn float IP_Sphere::cut_line(const FB::Vec3f b, const int dir, const float r)
  @brief 計算領域のセルIDを設定する
  @param b 基点座標
  @param dir テスト方向
+ @param r radius
  */
-float IP_Sphere::cut_line(const FB::Vec3f b, const int dir)
+float IP_Sphere::cut_line(const FB::Vec3f b, const int dir, const float r)
 {
   float x, y, z, s1, s2, c1, c2, c3, c4, e1, e2, e3;
   
@@ -376,9 +377,9 @@ float IP_Sphere::cut_line(const FB::Vec3f b, const int dir)
   z = b.z;
   
   c1 = x*e1 + y*e2 + z*e3;
-  c2 = x*x*e1*e1 + y*y*e2*e2 + z*z*e3*e3;
-  c3 = x*y*e1*e2 + y*z*e2*e3 + z*x*e3*e1;
-  c4 = sqrtf( 4.0*c2 + 8.0*c3 );
+  c2 = x*x*(e1*e1-1.0) + y*y*(e2*e2-1.0) + z*z*(e3*e3-1.0) + r*r;
+  c3 = 2.0*( x*y*e1*e2 + y*z*e2*e3 + z*x*e3*e1 );
+  c4 = 2.0 * sqrtf( c2 + c3 );
   
   s1 = -c1 + c4;
   s2 = -c1 - c4;

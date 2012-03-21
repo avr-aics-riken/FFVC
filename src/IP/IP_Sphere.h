@@ -52,6 +52,6 @@ public:
   
   FB::Vec3i find_index(const FB::Vec3f p);
   
-  float cut_line(const FB::Vec3f b, const int dir);
+  float cut_line(const FB::Vec3f b, const int dir, const float r);
 };
 #endif // _SKL_IP_SHERE_H_
