@@ -150,15 +150,6 @@ SklSolverCBC::SklSolverInitialize() {
     }
   }
 
-  // 領域情報の表示
-  Hostonly_ {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\n\t>> Global Domain Information\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n\t>> Global Domain Information\n\n");
-    C.printDomainInfo(mp, fp, G_size, G_org, G_Lbx);
-  }
-
   // XMLパラメータの取得
   C.getXML_Steer_2(IC, &RF);
   
@@ -243,8 +234,14 @@ SklSolverCBC::SklSolverInitialize() {
 
     }
     else { // Intrinsic problem
+      // cutをアロケートする
       setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-      Ex->setup(mid, &C, G_org);
+      if ( C.Mode.Example == id_Sphere ) {
+        Ex->setup_cut(mid, &C, G_org, cut);
+      }
+      else {
+        Ex->setup(mid, &C, G_org);
+      }
     }
   }
   else { // Binary
@@ -268,6 +265,15 @@ SklSolverCBC::SklSolverInitialize() {
   // midのガイドセル同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
   
+  
+  // 領域情報の表示
+  Hostonly_ {
+    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp,"\n\t>> Global Domain Information\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n\t>> Global Domain Information\n\n");
+    C.printDomainInfo(mp, fp, G_size, G_org, G_Lbx);
+  }
   
   // メモリ消費量の情報を表示
   Hostonly_ {
@@ -362,14 +368,13 @@ SklSolverCBC::SklSolverInitialize() {
     Vinfo.adjCellID_on_GC(face, dc_mid, BC.get_OBC_Ptr(face)->get_BCtype(), 
                          BC.get_OBC_Ptr(face)->get_GuideID(), BC.get_OBC_Ptr(face)->get_PrdcMode());
   }
-
-#ifndef BINARY_VOXEL
+  
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
   if ( C.isCDS() ) {
-    Vinfo.setOBC_Cut(&BC, cutPos);
+    Vinfo.setOBC_Cut(&BC, cut);
   }
-#endif
   
+
 #ifdef DEBUG
   // カット情報から壁面IDセット
   if ( C.isCDS() ) {
@@ -417,15 +422,15 @@ SklSolverCBC::SklSolverInitialize() {
   }
   setMaterialList(&B, &M, mp, fp);
 
-  
+    
   // BCIndexへのエンコード処理
   Hostonly_  {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
-
+  
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
-  VoxEncode(&Vinfo, &M, mid, cvf, cutPos);
+  VoxEncode(&Vinfo, &M, mid, cvf, cut);
   
   // コンポーネント配列の確保
   allocComponentArray(PrepMemory, TotalMemory, fp);
@@ -435,7 +440,7 @@ SklSolverCBC::SklSolverInitialize() {
 
   // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
   Vinfo.setCmpFraction(cmp, bcd, cvf);
-
+  
 #ifdef DEBUG
   // CompoListとMaterialListの関連を表示
   Hostonly_ M.printRelation(mp, fp, cmp);
@@ -600,9 +605,9 @@ SklSolverCBC::SklSolverInitialize() {
   // セル数の情報を表示する
   Hostonly_ {
     REAL_TYPE cr = (REAL_TYPE)G_Wcell/(REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]) *100.0;
-    fprintf(mp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %5.1f percent]\n\n", 
+    fprintf(mp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %8.4f percent]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
-    fprintf(fp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %5.1f percent]\n\n", 
+    fprintf(fp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %8.4f percent]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
   }
   
@@ -2771,7 +2776,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
 
 /**
  @fn void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
- @brief Polylibを準備し，ポリゴンをロードする
+ @brief IP用にカット領域をアロケートする
  @param m_prep  前処理用のメモリサイズ
  @param m_total 本計算用のメモリリサイズ
  @param fp
@@ -2789,31 +2794,16 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
   size_t n_cell[3];
-  size_t ista[3];
-  size_t nlen[3];
   size_t size_n_cell;
-  float  cut_org[3], cut_dx[3];
   
   for ( unsigned i=0; i<3; i++) {
     n_cell[i] = size[i] + 2*guide; // 分割数+ガイドセル
   }
   size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+
   
-  ista[0] = ista[1] = ista[2] = guide;
-  nlen[0] = size[0];
-  nlen[1] = size[1];
-  nlen[2] = size[2];
-  
-  cut_dx[0]  = (float)C.dx[0]*C.RefLength;
-  cut_dx[1]  = (float)C.dx[1]*C.RefLength;
-  cut_dx[2]  = (float)C.dx[2]*C.RefLength;
-  cut_org[0] = (float)( C.org[0] - C.dx[0]*guide )*C.RefLength;
-  cut_org[1] = (float)( C.org[1] - C.dx[1]*guide )*C.RefLength;
-  cut_org[2] = (float)( C.org[2] - C.dx[2]*guide )*C.RefLength;
-  
-  // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
-  cutPos = new CutPos32Array(n_cell); // 6*(float)
+  cut = new float [size_n_cell*6]; // 6*(float)
   TIMING_stop(tm_init_alloc);
   
   // 使用メモリ量　
@@ -2831,8 +2821,6 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
   // 初期値のセット
-  cut = (float*)cutPos->getDataPointer();
-  
   for (size_t i=0; i<size_n_cell*6; i++) {
     cut[i] = 1.0f;
   }
@@ -2840,20 +2828,20 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
 }
 
 /**
- @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
+ @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, float* cut)
  @brief BCIndexにビット情報をエンコードする
  @param Vinfo
  @param M
  @param mid Voxel IDの配列
  @param vf コンポーネントの体積率 
- @param cutPos カット情報コンテナ
+ @param cut カット情報
  @param m_prep  前処理用のメモリサイズ
  @param m_total 本計算用のメモリリサイズ
  @param fp
  @note
  - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
  */
-void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, CutPos32Array* cutPos)
+void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, float* cut)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   
@@ -2870,7 +2858,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, C
 
   // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
   Vinfo->setBCIndex_base1(bcd, mid, vf);
-
+  
   // bcdの同期
   if( !dc_bcd->CommBndCell(guide) ) Exit(0);
   
@@ -2887,7 +2875,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, C
   }
   
   // BCIndexP に圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cutPos, C.isCDS()); 
+  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cut, C.isCDS()); 
   //Vinfo->chkBCIndexP(bcd, bcp, "BCindexP.txt");
   
   // BCIndexV に速度計算のビット情報をエンコードする -----

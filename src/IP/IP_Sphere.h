@@ -41,17 +41,17 @@ public:
 
 public:
   virtual bool getXML(SklSolverConfig* CF, Control* R);
-  
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org);
   virtual void printPara(FILE* fp, Control* R);
-  
   virtual const char* getExampleName(void) {
     return ("Sphere");
   }
   
+  void setup(int* mid, Control* R, REAL_TYPE* G_org);
+  void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut);
+  
   FB::Vec3i find_index(const FB::Vec3f p);
   
-  float cut_line(const FB::Vec3f b, const int dir, const float r);
+  float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
 };
 #endif // _SKL_IP_SHERE_H_

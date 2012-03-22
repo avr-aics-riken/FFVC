@@ -452,36 +452,40 @@ void Control::getXML_Solver_Properties(void)
   // Cut-Distanceの場合
   if ( Mode.ShapeAprx == CUT_INFO ) {
     
-    // ポリゴンファイル名を取得
-    if ( !elmL1->GetValue("Polylib_Configuration_File", &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : Invalid char* value in 'Solver_Property'\n");
-      Exit(0);
-    }
-    strcpy(PolylibConfigName, str);
-    
-    // 媒質指定モード
-    if ( !elmL1->GetValue("Medium_File", &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Medium_File' in 'Solver_Property'\n");
-      Exit(0);
-    }
-    if     ( !strcasecmp(str, "Yes") ) Mode.Medium_Spec = ON;
-    else if( !strcasecmp(str, "No") )  Mode.Medium_Spec = OFF;
-    else {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for 'Medium_File'\n");
-      Exit(0);
-    }
-    
-    // 媒質ファイルを使わない場合の媒質番号の指定
-    if ( Mode.Medium_Spec == OFF ) {
-      if ( !elmL1->GetValue("Base_Medium", &ct) ) {
-        Hostonly_ stamped_printf("\tParsing error : Invalid value for 'Base_Medium' in 'Solver_Property'\n");
+    if ( Mode.Example == 0 ) { // id_Users = 0
+      
+      // ポリゴンファイル名を取得
+      if ( !elmL1->GetValue("Polylib_Configuration_File", &str) ) {
+        Hostonly_ stamped_printf("\tParsing error : Invalid char* value in 'Solver_Property'\n");
         Exit(0);
       }
-      if (ct<1) {
-        Hostonly_ stamped_printf("\tParsing error : Base_Medium must be positive\n");
+      strcpy(PolylibConfigName, str);
+      
+      // 媒質指定モード
+      if ( !elmL1->GetValue("Medium_File", &str) ) {
+        Hostonly_ stamped_printf("\tParsing error : fail to get 'Medium_File' in 'Solver_Property'\n");
         Exit(0);
       }
-      Mode.Base_Medium = (unsigned)ct;
+      if     ( !strcasecmp(str, "Yes") ) Mode.Medium_Spec = ON;
+      else if( !strcasecmp(str, "No") )  Mode.Medium_Spec = OFF;
+      else {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for 'Medium_File'\n");
+        Exit(0);
+      }
+      
+      // 媒質ファイルを使わない場合の媒質番号の指定
+      if ( Mode.Medium_Spec == OFF ) {
+        if ( !elmL1->GetValue("Base_Medium", &ct) ) {
+          Hostonly_ stamped_printf("\tParsing error : Invalid value for 'Base_Medium' in 'Solver_Property'\n");
+          Exit(0);
+        }
+        if (ct<1) {
+          Hostonly_ stamped_printf("\tParsing error : Base_Medium must be positive\n");
+          Exit(0);
+        }
+        Mode.Base_Medium = (unsigned)ct;
+      }
+      
     }
     
   }
@@ -2085,8 +2089,8 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Effective cells and Open Area of Computational Domain\n\n");
 
-  fprintf(fp,"\tFluid cell  inside whole Computational domain = %15d (%5.1f percent)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
-  fprintf(fp,"\tActive cell                                   = %15d (%5.1f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
+  fprintf(fp,"\tFluid cell  inside whole Computational domain = %15d (%8.4f percent)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
+  fprintf(fp,"\tActive cell                                   = %15d (%8.4f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
   
   fprintf(fp,"\n\tFace :      Element (Open ratio)\n");
   for (unsigned i=0; i<NoDimension*2; i++) {

@@ -179,6 +179,7 @@ public:
    @return      1次元インデックス
    */
   static inline unsigned getFindexS3D(const unsigned* sz, unsigned gc, int i, int j, int k) {
+    //return ( (sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + (sz[0]+gc*2)*(j+gc-1) + i+gc-1 );
     int t1 = gc*2;
     int t2 = gc-1;
     int t3 = sz[0]+t1;
@@ -201,6 +202,26 @@ public:
     int t2 = gc-1;
     int t3 = sz[0]+t1;
     return ( 3*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) + l );
+    //return ( 3*(sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + 3*(sz[0]+gc*2)*(j+gc-1) + 3*(i+gc-1) + l );
+  }
+  
+  /**
+   @fn static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k)
+   @brief Fortranの3次元cut用インデックスから1次元インデックスを取得する
+   @param sz    I,J,K方向サイズ（ガイドセルを含まない）
+   @param gc    ガイドセル
+   @param l     方向インデックス[0,5]
+   @param i     I方向インデックス（ガイドセルを含まない）
+   @param j     J方向インデックス（ガイドセルを含まない）
+   @param k     K方向インデックス（ガイドセルを含まない）
+   @return      1次元インデックス
+   */
+  static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k) {
+    int t1 = gc*2;
+    int t2 = gc-1;
+    int t3 = sz[0]+t1;
+    return ( 6*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) + l );
+    //return ( 3*(sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + 3*(sz[0]+gc*2)*(j+gc-1) + 3*(i+gc-1) + l );
   }
 };
 

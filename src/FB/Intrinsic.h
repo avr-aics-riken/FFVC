@@ -71,6 +71,7 @@ public:
   virtual void printPara(FILE* fp, Control* R);
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org) {};
+  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut) {};
   virtual void writeSVX(REAL_TYPE *vf, int *id, Control* R);
   virtual void writeSVX(int *id, Control* R);
   
