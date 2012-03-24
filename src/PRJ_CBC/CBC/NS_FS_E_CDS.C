@@ -124,7 +124,6 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
   
-
   
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
@@ -137,7 +136,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
       
       flop_count = 0.0;
       v_mode = (C.Mode.Wall_profile == Control::Log_Law) ? 2 : 1;
-      
+
       if ( C.LES.Calc == ON ) {
         Hostonly_ printf("not inplemented yet. sorry:-)\n");
         Exit(0);
@@ -146,7 +145,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
         cds_pvec_muscl_(vc, sz, gc, dh, &cnv_scheme, v00, &rei, v0, (int*)bcv, (int*)bcp, &v_mode, cut, &flop_count); 
       }
       TIMING_stop(tm_pseudo_vec, flop_count);
-      
+
       TIMING_start(tm_pvec_flux);
       flop_count = 0.0;
       BC.mod_Pvec_Flux(vc, v0, bcv, tm, &C, v_mode, v00, flop_count);
@@ -174,7 +173,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     default:
       Exit(0);
   }
-  
+
   // 時間積分
   switch (C.AlgorithmF) {
     case Control::Flow_FS_EE_EE:
@@ -289,7 +288,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   TIMING_stop(tm_frctnl_stp_sct, 0.0);
   // <<< Fractional step section
   
-  
+
   
   // Poissonのソース部分
   // >>> Poisson Source section
@@ -350,7 +349,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     Hostonly_ H->printHistoryItrTitle(fp_i);
     TIMING_stop(tm_hstry_itr, 0.0);
   }
-  
+
   for (ICp->LoopCount=0; ICp->LoopCount< ICp->get_ItrMax(); ICp->LoopCount++) {
     
     
@@ -377,11 +376,11 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     
     TIMING_stop(tm_poi_itr_sct_1, 0.0);
     // <<< Poisson Iteration subsection 1
-    
+
     // 線形ソルバー
     LS_Binary(ICp, b2);
     
-    
+
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
     

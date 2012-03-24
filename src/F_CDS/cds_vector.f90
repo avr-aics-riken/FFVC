@@ -52,7 +52,7 @@
     real                                                        ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
     real                                                        ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
 		real                                                        ::  EX, EY, EZ, delta_x, delta_y, delta_z
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
     real, dimension(0:3)                                        ::  v00
@@ -188,6 +188,7 @@
       hb = 1.0/(0.5 + cp_b) ! for (k-1)
       ht = 1.0/(0.5 + cp_t) ! for (k+1)
       htt= 1.0/(0.5 + ct_t) ! for (k+2)
+      
 			
       ! X方向  > 4 + 12 + 84 + 232 = 332 flop ---------------------------------------
       

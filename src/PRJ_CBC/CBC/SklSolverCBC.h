@@ -143,15 +143,13 @@ public:
   REAL_TYPE range_Ut[2], range_Yp[2];
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
-  SklVector3DEx<REAL_TYPE>   *dc_v;
-  SklVector3DEx<REAL_TYPE>   *dc_vc;
-  SklVector3DEx<REAL_TYPE>   *dc_v0;
-  SklVector3DEx<REAL_TYPE>   *dc_wv;
-  SklVector3DEx<REAL_TYPE>   *dc_abf;
-  SklVector3DEx<REAL_TYPE>   *dc_vf0;
-  SklVector3DEx<REAL_TYPE>   *dc_av;
-  
-  // (3, ix+guide*2, jx+guide*2, kx+guide*2)
+  SklVector3DEx<REAL_TYPE> *dc_v;
+  SklVector3DEx<REAL_TYPE> *dc_vc;
+  SklVector3DEx<REAL_TYPE> *dc_v0;
+  SklVector3DEx<REAL_TYPE> *dc_wv;
+  SklVector3DEx<REAL_TYPE> *dc_abf;
+  SklVector3DEx<REAL_TYPE> *dc_vf0;
+  SklVector3DEx<REAL_TYPE> *dc_av;
   SklVector3DEx<REAL_TYPE> *dc_wvex;
   SklVector3DEx<REAL_TYPE> *dc_qbc;
   
@@ -305,6 +303,7 @@ public:
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setVOF               (REAL_TYPE* vof, unsigned* bx);
+  void write_distance       (float* cut);
   
   void NS_FS_E_CBC          (void);
   void NS_FS_E_CDS          (void);

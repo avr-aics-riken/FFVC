@@ -60,6 +60,13 @@ bool IP_Sphere::getXML(SklSolverConfig* CF, Control* R)
     return false;
   }
   
+  if ( drv_length > 0.0 ) {
+    drv_mode = ON;
+  }
+  else {
+    drv_mode = OFF;
+  }
+  
   return true;
 }
 
@@ -81,7 +88,7 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
   
   fprintf(fp,"\tOffset                 [m] / [-]   : %12.5e / %12.5e\n", offset, offset/RefL);
   fprintf(fp,"\tRadius of Sphere       [m] / [-]   : %12.5e / %12.5e\n", radius, radius/RefL);
-  if ( drv_length > 0.0 ) {
+  if ( drv_mode == ON ) {
     fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv_length, drv_length/RefL);
   }
 }
@@ -179,28 +186,11 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
   ctr.y = 0.0;
   ctr.z = 0.0;
   
-  // 球の中心座標
-  os.x = 0.0;
-  os.y = 0.0;
-  os.z = 0.0;
-  
-  // 球のbbox
-  box_min = os - rs;
-  box_max = os + rs;
+  // 球のbbox 球の中心座標はゼロ
+  box_min = - rs;
+  box_max = + rs;
   box_st = find_index(box_min);
   box_ed = find_index(box_max);
-  
-  /*
-   printf("pitch : %f %f %f\n", pch.x, pch.y, pch.z);
-   printf("width : %f %f %f\n", wth.x, wth.y, wth.z);
-   printf("center: %f %f %f\n", ctr.x, ctr.y, ctr.z);
-   printf("radius: %f\n", radius);
-   printf("offset: %f\n", offset);
-   printf("origin: %f %f %f\n", org.x, org.y, org.z);
-   printf("b_min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
-   printf("b_max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
-   printf("index : %d %d %d - %d %d %d\n", box_st.x, box_st.y, box_st.z, box_ed.x, box_ed.y, box_ed.z);
-   */
   
   // 媒質設定
   size_t m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
@@ -215,7 +205,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
       for (i=box_st.x; i<=box_ed.x; i++) {
         
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org + base*ph - os;
+        b = org + base*ph;
         r = b.length();
         
         if ( r <= rs ) {
@@ -228,7 +218,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
 
   
   // driver設定 iff ドライバ長が正の場合
-  if ( drv_length < 0.0 ) return;
+  if ( drv_mode == OFF ) return;
   
   // lengthは有次元値
   len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
@@ -292,7 +282,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
   int mid_solid=2;        /// 固体
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
-  unsigned m;
+  size_t m;
   REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
@@ -325,28 +315,12 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
   ctr.y = 0.0;
   ctr.z = 0.0;
   
-  // 球の中心座標
-  os.x = 0.0;
-  os.y = 0.0;
-  os.z = 0.0;
-  
   // 球のbbox
-  box_min = os - rs;
-  box_max = os + rs;
+  box_min = - rs;
+  box_max = + rs;
   box_st = find_index(box_min);
   box_ed = find_index(box_max);
 
-  /*
-  printf("pitch : %f %f %f\n", pch.x, pch.y, pch.z);
-  printf("width : %f %f %f\n", wth.x, wth.y, wth.z);
-  printf("center: %f %f %f\n", ctr.x, ctr.y, ctr.z);
-  printf("radius: %f\n", radius);
-  printf("offset: %f\n", offset);
-  printf("origin: %f %f %f\n", org.x, org.y, org.z);
-  printf("b_min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
-  printf("b_max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
-  printf("index : %d %d %d - %d %d %d\n", box_st.x, box_st.y, box_st.z, box_ed.x, box_ed.y, box_ed.z);
-  */
   
   // 媒質設定
   size_t m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
@@ -361,7 +335,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
       for (i=box_st.x; i<=box_ed.x; i++) {
        
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org + base*ph - os;
+        b = org + base*ph;
         r = b.length();
         
         if ( r <= rs ) {
@@ -381,7 +355,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
       for (i=box_st.x; i<=box_ed.x; i++) {
         
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org + base*ph - os;
+        b = org + base*ph;
         
         p[0].assign(b.x   , b.y   , b.z   ); // p
         p[1].assign(b.x-ph, b.y   , b.z   ); // w 
@@ -392,14 +366,17 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
         p[6].assign(b.x   , b.y   , b.z+ph); // t
         
         for (int l=0; l<7; l++) {
-          lb[l] = ( p[l].length() <= rs ) ? -1.0 : 1.0;
+          lb[l] = ( p[l].length() <= rs ) ? -1.0 : 1.0; // 内側がマイナス
         }
         
         // cut test
         for (int l=1; l<=6; l++) {
           if ( lb[0]*lb[l] < 0.0 ) {
             s = cut_line(p[0], l, rs, ph);
-            //printf("%8.5f %8.5f %8.5f > %3.1f : %8.5f %8.5f %8.5f > %3.1f : %d : %f\n", b.x, b.y, b.z, lb[0], p[l].x, p[l].y, p[l].z, lb[l], l, s);
+      
+            m = FBUtility::getFindexS3Dcut(size, guide, l-1, i, j, k); // 注意！　インデクスが1-6
+            cut[m] = s;
+
             if ( r_min > s ) r_min = s;
             if ( r_max < s ) r_max = s;
           }
@@ -415,7 +392,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
 
   
   // driver設定 iff ドライバ長が正の場合
-  if ( drv_length < 0.0 ) return;
+  if ( drv_mode == OFF ) return;
   
   // lengthは有次元値
   len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
@@ -474,44 +451,51 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
  */
 float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
 {
-  float x, y, z, s1, s2, e1, e2, e3, a, b, c;
+  float x, y, z, s;
+  float xc, yc, zc;
+
+  x = p.x;
+  y = p.y;
+  z = p.z;
   
-  // unit vector
+  s = 0.0;
+  
+  // 基点座標の符号で好転座標を判断
   switch (dir) {
-    case 1:
-      e1 =-1.0;
-      e2 = 0.0;
-      e3 = 0.0;
+    case 1: // X-
+      xc = sqrtf(r*r - y*y - z*z);
+      if ( x < 0.0 ) xc *= -1.0;
+      s = fabs(xc-x);
       break;
       
-    case 2:
-      e1 = 1.0;
-      e2 = 0.0;
-      e3 = 0.0;
+    case 2: // X+
+      xc = sqrtf(r*r - y*y - z*z);
+      if ( x < 0.0 ) xc *= -1.0;
+      s = fabs(xc-x);
       break;
       
-    case 3:
-      e1 = 0.0;
-      e2 =-1.0;
-      e3 = 0.0;
+    case 3: // Y-
+      yc = sqrtf(r*r - x*x - z*z);
+      if ( y < 0.0 ) yc *= -1.0;
+      s = fabs(yc-y);
       break;
       
-    case 4:
-      e1 = 0.0;
-      e2 = 1.0;
-      e3 = 0.0;
+    case 4: // Y+
+      yc = sqrtf(r*r - x*x - z*z);
+      if ( y < 0.0 ) yc *= -1.0;
+      s = fabs(yc-y);
       break;
       
-    case 5:
-      e1 = 0.0;
-      e2 = 0.0;
-      e3 =-1.0;
+    case 5: // Z-
+      zc = sqrtf(r*r - x*x - y*y);
+      if ( z < 0.0 ) zc *= -1.0;
+      s = fabs(zc-z);
       break;
       
-    case 6:
-      e1 = 0.0;
-      e2 = 0.0;
-      e3 = 1.0;
+    case 6: // Z+
+      zc = sqrtf(r*r - x*x - y*y);
+      if ( z < 0.0 ) zc *= -1.0;
+      s = fabs(zc-z);
       break;
       
     default:
@@ -519,38 +503,5 @@ float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const
       break;
   }
   
-  x = p.x;
-  y = p.y;
-  z = p.z;
-  
-  a = 1.0;
-  b = 2.0 * (x*e1 + y*e2 + z*e3);
-  c = x*x + y*y + z*z - r*r;
-  
-  s1 = 0.5 * (-b + sqrtf(b*b-4.0*a*c) );
-  s2 = 0.5 * (-b - sqrtf(b*b-4.0*a*c) );
-  
-  // [0, 1]の実根を拾う
-  int f=0;
-  int d=0;
-  if ( (s1>=0.0) && (s1<dh) ) { f++; d=1; }
-  if ( (s2>=0.0) && (s2<dh) ) { f++; d=(d==0)?2:3; }
-  
-  if ( f == 0 ) {
-    printf("Solution error %f %f : (%f, %f, %f) %d\n" ,s1, s2, x, y, z, dir);
-    float g1 = (x+s1*e1)*(x+s1*e1) + (y+s1*e2)*(y+s1*e2) + (z+s1*e3)*(z+s1*e3);
-    float g2 = (x+s2*e1)*(x+s2*e1) + (y+s2*e2)*(y+s2*e2) + (z+s2*e3)*(z+s2*e3);
-    printf("g1= %f  g2= %f\n", g1, g2);
-    Exit(0);
-  }
-  
-  if ( d == 1 ) {
-    return s1/dh;
-  }
-  else if (d == 2 ) {
-    return s2/dh;
-  }
-  else {
-    return (s1<s2) ? s1/dh : s2/dh;
-  }
+  return s/dh;
 }

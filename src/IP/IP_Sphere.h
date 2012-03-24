@@ -21,11 +21,11 @@ protected:
   REAL_TYPE offset;     ///< オフセット距離
   REAL_TYPE radius;     ///< 球の半径
   REAL_TYPE drv_length; ///< ドライバの長さ
+  int drv_mode;         ///< ドライバのON/OFF
   FB::Vec3f pch;        ///< セル幅
   FB::Vec3f org;        ///< 計算領域の基点
   FB::Vec3f wth;        ///< 計算領域の大きさ
   FB::Vec3f ctr;        ///< 計算領域のセンター
-  FB::Vec3f os;         ///< 球の中心座標
   FB::Vec3f box_min;    ///< Bounding boxの最小値
   FB::Vec3f box_max;    ///< Bounding boxの最大値
   FB::Vec3i box_st;     ///< Bounding boxの始点インデクス
@@ -36,6 +36,7 @@ public:
     offset = 0.0;
     radius = 0.0;
     drv_length = 0.0;
+    drv_mode = OFF;
   }
   ~IP_Sphere() {}
 

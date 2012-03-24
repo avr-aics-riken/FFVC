@@ -221,7 +221,6 @@ public:
     int t2 = gc-1;
     int t3 = sz[0]+t1;
     return ( 6*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) + l );
-    //return ( 3*(sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + 3*(sz[0]+gc*2)*(j+gc-1) + 3*(i+gc-1) + l );
   }
 };
 

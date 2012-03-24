@@ -1585,7 +1585,7 @@ void VoxInfo::encCut_OBC(int face, float* cut)
 {
   int i, j, k;
   float pos=0.5f;
-  unsigned m;
+  size_t m;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
@@ -3556,7 +3556,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
-  unsigned m_p, m;
+  size_t m_p, m;
   unsigned register s;
   float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
   

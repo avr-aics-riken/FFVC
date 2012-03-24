@@ -688,7 +688,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 各コンポーネントが存在するかどうかを保持しておく
-  //setEnsComponent();
+  setEnsComponent();
   
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
@@ -697,6 +697,7 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
 
+  // debug; write_distance(cut);
   
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
   TIMING_start(tm_init_alloc);
@@ -2043,6 +2044,55 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
   }
 }
 
+/**
+ @fn void SklSolverCBC::write_distance(float* cut)
+ @brief 距離の最小値を求め，閾値以上にする
+ @retval 最小距離
+ @param cut カット情報
+ */
+void SklSolverCBC::write_distance(float* cut)
+{
+
+  float* tmp =NULL;
+  tmp = new float [(size[0]+2*guide)*(size[1]+2*guide)*(size[2]+2*guide)];
+  
+  size_t m, n;
+  float s;
+  
+  for (int k=1; k<=size[2]; k++) { 
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        n = FBUtility::getFindexS3D(size, guide, i, j, k);
+        
+        s = 1.0e6;
+        for (int l=0; l<6; l++) {
+          m = FBUtility::getFindexS3Dcut(size, guide, l, i, j, k);
+          if ( cut[m] < s ) s = cut[m];
+        }
+        tmp[n] = s;
+      }
+    }
+  }
+  
+  REAL_TYPE org[3], pit[3];
+  
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      org[i] *= C.RefLength;
+      pit[i] *= C.RefLength;
+    }
+  }
+  F.writeRawSPH(tmp, size, guide, org, pit, SPH_SINGLE);
+}
+
 
 /**
  @fn float SklSolverCBC::min_distance(float* cut, FILE* fp)
@@ -2793,10 +2843,10 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
     fprintf(mp,"\t>> Cut Info\n\n");
   }
   
-  size_t n_cell[3];
+  unsigned n_cell[3];
   size_t size_n_cell;
   
-  for ( unsigned i=0; i<3; i++) {
+  for (int i=0; i<3; i++) {
     n_cell[i] = size[i] + 2*guide; // 分割数+ガイドセル
   }
   size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
@@ -2880,7 +2930,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, f
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
   Vinfo->setBCIndexV(bcv, mid, &BC, bcp, C.isCDS());
-  // debug; Vinfo->chkBCIndexV(bcv, "BCindexV.txt");
+  //Vinfo->chkBCIndexV(bcv, "BCindexV.txt");
   
   // BCIndexT に温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() ) {

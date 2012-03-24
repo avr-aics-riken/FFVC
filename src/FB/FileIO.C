@@ -219,21 +219,28 @@ void FileIO::cnv_V_D2ND(SklVector3DEx<REAL_TYPE>* dst, const REAL_TYPE Ref_v)
   REAL_TYPE* dst_data = dst->GetData();
   if( !dst_data ) Exit(0);
       
-  const unsigned* dst_sz = dst->_GetSize(); // with guide cell -> ix+vc*2
+  const unsigned* dst_sz = dst->GetSize(); // without guide cell
+  unsigned gc = dst->GetVCellSize();
   register unsigned i, j, k, l;
   REAL_TYPE c = 1.0/Ref_v;
   
-  unsigned long idx, lsz[3];
-  lsz[0] = dst_sz[0];
-  lsz[1] = dst_sz[1];
-  lsz[2] = dst_sz[2];
   
-  for (l=0; l<3; l++) {
-    for(k=0; k<dst_sz[2]; k++){
-      for(j=0; j<dst_sz[1]; j++){
-        for(i=0; i<dst_sz[0]; i++){
-          // idx : indecies for SklVector3DEx
-          idx = 3*(lsz[0]*lsz[1]*k + lsz[0]*j + i);
+  int sz[3];
+  sz[0] = dst_sz[0];
+  sz[1] = dst_sz[1];
+  sz[2] = dst_sz[2];
+  
+  int t1 = gc*2;
+  int t2 = gc-1;
+  int t3 = sz[0]+t1;
+  
+  size_t idx;
+  
+  for(k=1; k<=sz[2]; k++){
+    for(j=1; j<=sz[1]; j++){
+      for(i=1; i<=sz[0]; i++){
+        for (l=0; l<3; l++) {
+          idx = 3*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) + l;
           dst_data[idx  ] *= c;
           dst_data[idx+1] *= c;
           dst_data[idx+2] *= c;
