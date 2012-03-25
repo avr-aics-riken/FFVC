@@ -36,6 +36,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   REAL_TYPE *vt=NULL;    /// 渦粘性係数
   REAL_TYPE *abf=NULL;   /// Adams-Bashforth用のワーク
   float* cvf=NULL;       /// コンポーネントの体積率
+  int d_length;          /// 一次元配列長
   
   // local variables
   REAL_TYPE tm = SklGetTotalTime();    /// 計算開始からの積算時刻
@@ -109,8 +110,11 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   
   // n stepの値を保持 >> In use (dc_v0, dc_p0)
   TIMING_start(tm_copy_array);
-  fb_copy_real_v_(v0, v, sz, gc);
-  fb_copy_real_s_(p0, p, sz, gc);
+  d_length = (int)dc_v0->GetArrayLength();
+  fb_copy_real_(v0, v, &d_length);
+  
+  d_length = (int)dc_p0->GetArrayLength();
+  fb_copy_real_(p0, p, &d_length);
   TIMING_stop(tm_copy_array, 0.0, 2);
 
   // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
@@ -274,7 +278,8 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   if ( C.AlgorithmF == Control::Flow_FS_AB_CN ) {
     
     TIMING_start(tm_copy_array);
-    fb_copy_real_v_(wv, vc, sz, gc);
+    d_length = (int)dc_wv->GetArrayLength();
+    fb_copy_real_(wv, vc, &d_length);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
@@ -297,12 +302,14 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  fb_copy_real_v_(v, vc, sz, gc);
+  d_length = (int)dc_v->GetArrayLength();
+  fb_copy_real_(v, vc, &d_length);
   TIMING_stop(tm_copy_array, 0.0);
   
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
-  fb_set_real_s_(src0, sz, gc, &clear_value);
+  d_length = (int)dc_ws->GetArrayLength();
+  fb_set_real_(src0, &d_length, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
   
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
@@ -359,7 +366,8 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     
     // 反復ソース項のゼロクリア => src1
     TIMING_start(tm_assign_const);
-    fb_set_real_s_(src1, sz, gc, &clear_value);
+    d_length = (int)dc_wk2->GetArrayLength();
+    fb_set_real_(src1, &d_length, &clear_value);
     TIMING_stop(tm_assign_const, 0.0);
 
     // Forcingコンポーネントによるソース項の寄与分

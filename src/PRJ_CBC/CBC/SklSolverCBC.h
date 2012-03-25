@@ -288,8 +288,8 @@ public:
   void getGlobalCmpIdx      (VoxInfo* Vinfo);
   void getLocalCmpIdx       (void);
   void IF_TRP_VOF           (void);
-  void load_Restart_avr_file(FILE* fp);
-  void load_Restart_file    (FILE* fp);
+  void load_Restart_avr_file(FILE* fp, REAL_TYPE& flop);
+  void load_Restart_file    (FILE* fp, REAL_TYPE& flop);
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);

@@ -11,6 +11,333 @@
 !! @author keno, FSI Team, VCAD, RIKEN
 !<
 
+!  ****************************************************************************
+!> @subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!! @brief 温度値を無次元から有次元へ変換し，scale倍して出力
+!! @param dst 有次元
+!! @param src 無次元
+!! @param sz 配列長（一次元）
+!! @param Base_tmp 基準温度(K or C)
+!! @param Diff_tmp 代表温度差(K or C)
+!! @param klv 絶対温度への変換（入力Cのときklv=273.15, Kのときklv=0）
+!! @param scale 倍数（瞬時値のとき1.0）
+!! @param flop 浮動小数演算数
+!<
+  subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+  implicit none
+  integer                                                   ::  i, sz
+  real                                                      ::  flop, dp, scale
+  real                                                      ::  Base_tmp, Diff_tmp, klv
+  real, dimension(sz)                                       ::  dst, src
+
+  dp = scale * abs(Diff_tmp)
+  flop = flop + real(sz) * 3.0 + 2.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz, dp, Base_tmp, klv)
+   
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+  do i=1,sz
+    dst(i) = src(i) * dp - klv + Base_tmp
+  end do
+!$OMP END DO
+
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_tmp_nd2d
+  
+!  ****************************************************************************
+!> @subroutine fb_tmp_d2nd (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!! @brief 温度値を有次元から無次元へ変換し，scale倍して出力
+!! @param dst 無次元
+!! @param src 有次元
+!! @param sz 配列長（一次元）
+!! @param Base_tmp 基準温度(K or C)
+!! @param Diff_tmp 代表温度差(K or C)
+!! @param klv 絶対温度への変換（入力Cのときklv=273.15, Kのときklv=0）
+!! @param scale 倍数（瞬時値のとき1.0）
+!! @param flop 浮動小数演算数
+!<
+  subroutine fb_tmp_d2nd (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+  implicit none
+  integer                                                   ::  i, sz
+  real                                                      ::  flop, dp, scale
+  real                                                      ::  Base_tmp, Diff_tmp, klv
+  real, dimension(sz)                                       ::  dst, src
+
+  dp = scale / abs(Diff_tmp)
+  flop = flop + real(sz) * 3.0 + 10.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz, dp, Base_tmp, klv)
+   
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+  do i=1,sz
+    dst(i) = ( src(i) + klv - Base_tmp ) * dp
+  end do
+!$OMP END DO
+
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_tmp_d2nd
+  
+!  *****************************************************************************
+!> @subroutine fb_prs_d2nd (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!! @brief 圧力値を有次元から無次元へ変換し，scale倍して出力
+!! @param dst 無次元
+!! @param src 有次元
+!! @param sz 配列長（一次元）
+!! @param Base_prs 基準圧力(Pa) 基準圧がゼロのとき，ゲージ圧
+!! @param Ref_rho 代表密度(kg/m^3)
+!! @param Ref_v 代表速度(m/s)
+!! @param scale 倍数（瞬時値のとき1.0）
+!! @param flop 浮動小数演算数
+!<
+  subroutine fb_prs_d2nd (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+  implicit none
+  integer                                                   ::  i, sz
+  real                                                      ::  flop, dp, scale
+  real                                                      ::  Base_prs, Ref_rho, Ref_v
+  real, dimension(sz)                                       ::  dst, src
+
+  dp = scale / (Ref_rho * Ref_v * Ref_v)
+  flop = flop + real(sz) * 3.0 + 10.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz, dp, Base_prs)
+   
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+  do i=1,sz
+    dst(i) = ( src(i) - Base_prs ) * dp
+  end do
+!$OMP END DO
+
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_prs_d2nd
+  
+!  *****************************************************************************
+!> @subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!! @brief 圧力値を無次元から有次元へ変換し，scale倍して出力
+!! @param dst 有次元
+!! @param src 無次元
+!! @param sz 配列長（一次元）
+!! @param Base_prs 基準圧力(Pa)
+!! @param Ref_rho 代表密度(kg/m^3)
+!! @param Ref_v 代表速度(m/s)
+!! @param mode 圧力の変換モード（１−絶対圧，2-ゲージ圧）
+!! @param scale 倍数（瞬時値のとき1.0）
+!! @param flop 浮動小数演算数
+!<
+  subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+  implicit none
+  integer                                                   ::  i, sz
+  real                                                      ::  flop, dp, scale
+  real                                                      ::  Base_prs, Ref_rho, Ref_v
+  real, dimension(sz)                                       ::  dst, src
+
+  dp = Ref_rho * Ref_v * Ref_v * scale
+  flop = flop + real(sz) * 3.0 + 2.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz, dp, Base_prs)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+  do i=1,sz
+    dst(i) = ( src(i) * dp + Base_prs ) 
+  end do
+!$OMP END DO
+
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_prs_nd2d
+  
+!  ************************************************
+!> @subroutine fb_xcopy (dst, src, sz, scale, flop)
+!! @brief 値をscale倍してコピーする
+!! @param dst 出力
+!! @param src 入力
+!! @param sz 配列長（一次元）
+!! @param scale 倍数
+!! @param flop 浮動小数演算数
+!<
+  subroutine fb_xcopy (dst, src, sz, scale, flop)
+  implicit none
+  integer                                                   ::  i, sz
+  real                                                      ::  flop, scale
+  real, dimension(sz)                                       ::  dst, src
+
+  flop = flop + real(sz)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do i=1,sz
+    dst(i) = src(i) * scale
+  end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_xcopy
+  
+!  **********************************************************************
+!> @subroutine fb_shift_refv_in (dst, sz, g, src, v00, scale, refv, flop)
+!! @brief 速度ベクトルの格子速度変換
+!! @param dst 移動系へ変換されたベクトル（平均場の場合は積算値）
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param src 静止系のベクトル
+!! @param v00 参照速度
+!! @param sacle 倍数　（瞬時値の場合には1）
+!! @param refv 代表速度
+!! @param flop 浮動小数演算数
+!! @note dst[] = ( src[]/refv + v00 ) * scale, 有次元のときrefvは次元速度，無次元のとき1.0
+!<
+  subroutine fb_shift_refv_in (dst, sz, g, src, v00, scale, refv, flop)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  flop, scale, u_ref, v_ref, w_ref, refv, rr
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  dst, src
+  real, dimension(0:3)                                      ::  v00
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  
+  u_ref = v00(1)
+  v_ref = v00(2)
+  w_ref = v00(3)
+  
+  rr = 1.0/refv
+  
+  flop = flop + real(ix)*real(jx)*real(kx)*9.0 + 8.0
+
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix 
+    dst(1,i,j,k) = ( src(1,i,j,k) * rr + u_ref ) * scale
+    dst(2,i,j,k) = ( src(2,i,j,k) * rr + v_ref ) * scale
+    dst(3,i,j,k) = ( src(3,i,j,k) * rr + w_ref ) * scale
+  end do
+  end do
+  end do
+  
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_shift_refv_in
+  
+!  *************************************************************************
+!> @subroutine fb_shift_refv_out (dst, sz, g, src, v00, scale, unit_v, flop)
+!! @brief 速度ベクトルの格子速度変換をして，scale倍する
+!! @param dst 静止系へ変換されたベクトル
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param src 移動格子系のベクトル（平均場の場合は積算値）
+!! @param v00 参照速度
+!! @param scale 倍数（瞬時値の場合には1）
+!! @param unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
+!! @param flop 浮動小数演算数
+!! @note dst[] = ( src[] * stepAvr ) - v00
+!<
+  subroutine fb_shift_refv_out (dst, sz, g, src, v00, scale, unit_v, flop)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  flop, u_ref, v_ref, w_ref, unit_v, scale
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  dst, src
+  real, dimension(0:3)                                      ::  v00
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  
+  u_ref = v00(1)
+  v_ref = v00(2)
+  w_ref = v00(3)
+  
+  flop = flop + real(ix)*real(jx)*real(kx)*9.0
+
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, unit_v)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix 
+    dst(1,i,j,k) = ( src(1,i,j,k) * scale - u_ref ) * unit_v
+    dst(2,i,j,k) = ( src(2,i,j,k) * scale - v_ref ) * unit_v
+    dst(3,i,j,k) = ( src(3,i,j,k) * scale - w_ref ) * unit_v
+  end do
+  end do
+  end do
+  
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_shift_refv_out
+  
 !  ***************************************************
 !> @subroutine fb_delta_v (d, sz, g, vn, vo, bx, flop)
 !! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
@@ -161,8 +488,7 @@
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop
-  real, dimension(3, sz(1), sz(2), sz(3))                   ::  avr
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, avr
 
   ix = sz(1)
   jx = sz(2)
@@ -209,8 +535,7 @@
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop
-  real, dimension(sz(1), sz(2), sz(3))                      ::  avr
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s, avr
 
   ix = sz(1)
   jx = sz(2)
@@ -240,6 +565,77 @@
 
   return
   end subroutine fb_average_s
+
+!  *******************************************
+!> @subroutine fb_average (avr, src, sz, flop)
+!! @brief 値を加算する
+!! @param avr 加算値
+!! @param src 元の値
+!! @param sz 配列長（一次元）
+!! @param flop 浮動小数演算数
+!<
+  subroutine fb_average (avr, src, sz, flop)
+  implicit none
+  integer                                                   ::  i, sz
+  real                                                      ::  flop
+  real, dimension(sz)                                       ::  src, avr
+
+  flop = flop + real(sz)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do i=1,sz
+    avr(i) = avr(i) + src(i)
+  end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_average
+  
+!  ***************************************
+!> @subroutine fb_copy_real (dst, src, sz)
+!! @brief 値を一次元インデクスでコピーする
+!! @param dst コピー先
+!! @param src コピー元
+!! @param sz 配列長（一次元）
+!! @note realはコンパイラオプションでdouble precision にもなる
+!<
+    subroutine fb_copy_real (dst, src, sz)
+    implicit none
+    integer                                                   ::  i, sz
+    real, dimension(sz)                                       ::  dst, src
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+    do i=1,sz
+      dst(i) = src(i)
+    end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine fb_copy_real
 
 !  ********************************************
 !> @subroutine fb_copy_real_s (dst, src, sz, g)
@@ -326,6 +722,39 @@
 
     return
     end subroutine fb_copy_real_v
+
+!  **************************************
+!> @subroutine fb_set_int (var, sz, init)
+!! @brief ベクトル値を設定する
+!! @param var 配列の先頭ポインタ
+!! @param sz 配列長（一次元）
+!! @param val 初期値
+!<
+    subroutine fb_set_int (var, sz, init)
+    implicit none
+    integer                                                   ::  i, sz, init
+    integer, dimension(sz)                                    ::  var
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz, init)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+    do i=1,sz
+      var(i) = init
+    end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine fb_set_int
     
 !  *******************************************
 !> @subroutine fb_set_int_s (var, sz, g, init)
@@ -369,6 +798,41 @@
 
     return
     end subroutine fb_set_int_s
+
+!  ***************************************
+!> @subroutine fb_set_real (var, sz, init)
+!! @brief 値を設定する
+!! @param var 配列の先頭ポインタ
+!! @param sz 配列長（一次元）
+!! @param val 初期値
+!! @note realはコンパイラオプションでdouble precision にもなる
+!<
+    subroutine fb_set_real (var, sz, init)
+    implicit none
+    integer                                                   ::  i, sz
+    real                                                      ::  init
+    real, dimension(sz)                                       ::  var
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz, init)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+    do i=1,sz
+      var(i) = init
+    end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+    return
+    end subroutine fb_set_real
     
 !  ********************************************
 !> @subroutine fb_set_real_s(var, sz, g, init)
@@ -413,28 +877,33 @@
     return
     end subroutine fb_set_real_s
 
-!  ********************************************
-!> @subroutine fb_set_real_v(var, sz, g, init)
+!  ******************************************
+!> @subroutine fb_set_real_v(var, sz, g, vec)
 !! @brief ベクトル値を設定する
 !! @param var 配列の先頭ポインタ
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param val 初期値
+!! @param vec 初期値
 !! @note realはコンパイラオプションでdouble precision にもなる
 !<
-    subroutine fb_set_real_v(var, sz, g, init)
+    subroutine fb_set_real_v(var, sz, g, vec)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  init
+    real                                                      ::  u_ref, v_ref, w_ref
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  var
+    real, dimension(3)                                        ::  vec
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    
+    u_ref = vec(1)
+    v_ref = vec(2)
+    w_ref = vec(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, init)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -446,9 +915,9 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      var(1,i,j,k) = init
-      var(2,i,j,k) = init
-      var(3,i,j,k) = init
+      var(1,i,j,k) = u_ref
+      var(2,i,j,k) = v_ref
+      var(3,i,j,k) = w_ref
     end do
     end do
     end do

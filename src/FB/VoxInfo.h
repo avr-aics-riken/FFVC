@@ -164,6 +164,7 @@ public:
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
   void alloc_voxel_nv        (unsigned len);
+  void chkBCIndexD           (unsigned* bcd, const char* fname);
   void chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
   void chkBCIndexV           (unsigned* bcv, const char* fname);
   void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);

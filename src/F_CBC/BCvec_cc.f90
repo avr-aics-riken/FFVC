@@ -570,12 +570,22 @@
     dh1= 1.0/dh
     dh2= 2.0*rei*dh1*dh1*vcs
     
-    flop = flop + 14.0 ! DP 19 flop
+    flop = flop + 15.0 ! DP 20 flop
 
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh2, face) &
+!$OMP PRIVATE(i, j, k, bvx, Up0, Vp0, Wp0)
     
     FACES : select case (face)
     case (X_minus)
       i = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -586,10 +596,19 @@
         endif
       end do
       end do
-      
+!$OMP END DO
+
+      flop = flop + rix*2.0
       
     case (X_plus)
       i = ix
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -600,10 +619,19 @@
         endif
       end do
       end do
-      
+!$OMP END DO
+    
+      flop = flop + rix*2.0
       
     case (Y_minus)
       j = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -614,10 +642,19 @@
         endif
       end do
       end do
+!$OMP END DO
       
+      flop = flop + rjx*2.0
       
     case (Y_plus)
       j = jx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -628,11 +665,19 @@
         endif
       end do
       end do
+!$OMP END DO
       
-      flop = flop + m*10.0
+      flop = flop + rjx*2.0
       
     case (Z_minus)
       k = 1
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -643,10 +688,19 @@
         endif
       end do
       end do
+!$OMP END DO
       
+      flop = flop + rkx*2.0
       
     case (Z_plus)
       k = kx
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -657,11 +711,15 @@
         endif
       end do
       end do
+!$OMP END DO
       
+      flop = flop + rkx*2.0
       
     case default
     end select FACES
     
+!$OMP END PARALLEL
+
     return
     end subroutine cbc_pvec_vobc_symtrc
     
@@ -740,7 +798,7 @@
     m = 0.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref2, v_bc_ref2, w_bc_ref2, dh2, face) &
 !$OMP PRIVATE(i, j, k, bvx, Up0, Vp0, Wp0, EX, EY, EZ) &
 !$OMP PRIVATE(Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
@@ -989,7 +1047,6 @@
 !! @param face 外部境界処理のときの面番号
 !! @param[out] flop
 !! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
-!! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
 !<
     subroutine cbc_pvec_vobc_oflow (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
     implicit none
@@ -1010,8 +1067,8 @@
     real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
     real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    real, dimension(3)                                          ::  vec
     
     ix = sz(1)
     jx = sz(2)
@@ -1047,9 +1104,33 @@
 
     m = 0.0
     
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, dh1, dh2) &
+!$OMP PRIVATE(i, j, k, face, bvx) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(Ue0, Uw0, Vs0, Vn0, Wb0, Wt0) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, cr, cl) &
+!$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
+!$OMP PRIVATE(EX, EY, EZ)
+    
     FACES : select case (face)
     case (X_minus)
       i = 1
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+      
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -1085,11 +1166,21 @@
         endif
       end do
       end do
-      
-      flop = flop + m*68.0
+!$OMP END DO
+
       
     case (X_plus)
       i = ix
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+      
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -1125,11 +1216,21 @@
         endif
       end do
       end do
-      
-      flop = flop + m*68.0
+!$OMP END DO
+
       
     case (Y_minus)
       j = 1
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+      
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1165,11 +1266,21 @@
         endif
       end do
       end do
-      
-      flop = flop + m*68.0
+!$OMP END DO
+
       
     case (Y_plus)
       j = jx
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+      
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1205,11 +1316,21 @@
         endif
       end do
       end do
-      
-      flop = flop + m*68.0
+!$OMP END DO
+
       
     case (Z_minus)
       k = 1
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1245,11 +1366,21 @@
         endif
       end do
       end do
-      
-      flop = flop + m*68.0
+!$OMP END DO
+
       
     case (Z_plus)
       k = kx
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:m)
+      
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1285,12 +1416,16 @@
         endif
       end do
       end do
-      
-      flop = flop + m*68.0
+!$OMP END DO
+
       
     case default
     end select FACES
     
+!$OMP END PARALLEL
+
+    flop = flop + m*68.0
+      
     return
     end subroutine cbc_pvec_vobc_oflow
     
@@ -1625,7 +1760,7 @@
     
 !$OMP PARALLEL &
 !$OMP PRIVATE(i, j, k) &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face)
     
     FACES : select case (face)
     case (X_minus)
@@ -1775,10 +1910,26 @@
     rjx = real(ix)*real(kx)
     rkx = real(ix)*real(jx)
     
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, c) &
+!$OMP PRIVATE(i, j, k, idx) &
+!$OMP PRIVATE(Ue, Uw, Un, Us, Ut, Ub) &
+!$OMP PRIVATE(Ve, Vw, Vn, Vs, Vt, Vb) &
+!$OMP PRIVATE(We, Ww, Wn, Ws, Wt, Wb)
+    
     FACES : select case (face)
     case (X_minus)
       if ( c>0.0 ) c=0.0
       i = 1
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      
       do k=1,kx
       do j=1,jx
         idx = bv(i,j,k)
@@ -1796,11 +1947,22 @@
         endif
       end do
       end do
+!$OMP END DO
+      
       flop = flop + rix*9.0
       
     case (X_plus)
       if ( c<0.0 ) c=0.0
       i = ix
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      
       do k=1,kx
       do j=1,jx
         idx = bv(i,j,k)
@@ -1818,11 +1980,22 @@
         endif
       end do
       end do
+!$OMP END DO
+      
       flop = flop + rix*9.0
       
     case (Y_minus)
     if ( c>0.0 ) c=0.0
       j = 1
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      
       do k=1,kx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1840,11 +2013,22 @@
         endif
       end do
       end do
+!$OMP END DO
+      
       flop = flop + rjx*9.0
       
     case (Y_plus)
       if ( c<0.0 ) c=0.0
       j = jx
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      
       do k=1,kx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1862,11 +2046,22 @@
         endif
       end do
       end do
+!$OMP END DO
+      
       flop = flop + rjx*9.0
       
     case (Z_minus)
     if ( c>0.0 ) c=0.0
       k = 1
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      
       do j=1,jx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1884,11 +2079,22 @@
         endif
       end do
       end do
+!$OMP END DO
+      
       flop = flop + rkx*9.0
       
     case (Z_plus)
       if ( c<0.0 ) c=0.0
       k = kx
+      
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      
       do j=1,jx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1906,10 +2112,14 @@
         endif
       end do
       end do
+!$OMP END DO
+      
       flop = flop + rkx*9.0
       
     case default
     end select FACES
+    
+!$OMP END PARALLEL
     
     return
     end subroutine cbc_vobc_outflow
@@ -2329,7 +2539,7 @@
     w_bc_ref = vec(3) + v00(3)
     
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, face) &
 !$OMP PRIVATE(i, j, k, bvx)
 
     FACES : select case (face)
@@ -2937,7 +3147,7 @@
     flop = flop + 6.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, face) &
 !$OMP PRIVATE(i, j, k, bvx)
 
     FACES : select case (face)
@@ -3346,7 +3556,7 @@
     w_ref = v00(3)
     
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, rc) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, rc, face) &
 !$OMP PRIVATE(i, j, k, bvx, dv)
 
     FACES : select case (face)

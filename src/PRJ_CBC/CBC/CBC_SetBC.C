@@ -468,6 +468,7 @@ void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsig
     cmp[n].getBbox(st, ed);
     
     if ( cmp[n].getType() == PERIODIC ) {
+      mark();
       Vibc_Prdc(d_v, st, ed, d_bd, n, (int)cmp[n].getPeriodicDir());
     }    
   }
@@ -1110,6 +1111,7 @@ void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
   for (int face=0; face<NOFACE; face++) {
     
     if ( obc[face].get_BCtype() == OBC_PERIODIC ) {
+      mark();
       unsigned pm = obc[face].get_PrdcMode();
       if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional)) { // BoundaryOuter::prdc_Driverに対しては処理不要
         Vobc_Prdc(d_v, face, guide); // セルフェイスの値の周期処理は不要

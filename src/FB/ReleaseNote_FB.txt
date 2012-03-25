@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.5.3  25 Mar. 2012
+  - FileIOまわりをFortran化+バグ修正
+  
 Ver 2.5.2  21 Mar. 2012
   - IP_Sphereクラス導入
   

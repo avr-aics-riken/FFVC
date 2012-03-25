@@ -758,6 +758,8 @@
       v(1,i,j,k) = ( Up0-px*dd )*actv + r_actv*u_ref
       v(2,i,j,k) = ( Vp0-py*dd )*actv + r_actv*v_ref
       v(3,i,j,k) = ( Wp0-pz*dd )*actv + r_actv*w_ref
+      
+      !if ( (i>=99) .and. (i<=103) .and. (j==100) .and. (k<=4) ) write (*,'(3I5,3F)') i,j,k,v(1,i,j,k),v(2,i,j,k),v(3,i,j,k)
     end do
     end do
     end do

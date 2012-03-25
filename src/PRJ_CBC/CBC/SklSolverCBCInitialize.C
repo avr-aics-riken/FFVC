@@ -693,6 +693,9 @@ SklSolverCBC::SklSolverInitialize() {
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
 
+  //Vinfo.chkBCIndexD(bcd, "BCindexD.txt");
+  //Vinfo.chkBCIndexP(bcd, bcp, "BCindexP.txt");
+  //Vinfo.chkBCIndexV(bcv, "BCindexV.txt");
   
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
@@ -740,7 +743,7 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculation Results\n\n");
     
     TIMING_start(tm_restart);
-    load_Restart_file(fp); // 瞬時値のロード
+    load_Restart_file(fp, flop_task); // 瞬時値のロード
     TIMING_stop(tm_restart);
     
     Hostonly_ fprintf(mp,"\n");
@@ -806,7 +809,7 @@ SklSolverCBC::SklSolverInitialize() {
   // 平均値のロード
   if ( C.Start==Control::re_start) {
     TIMING_start(tm_restart);
-    load_Restart_avr_file(fp);
+    if ( C.Mode.Average == ON ) load_Restart_avr_file(fp, flop_task);
     TIMING_stop(tm_restart);
   }
   
@@ -938,6 +941,7 @@ SklSolverCBC::SklSolverInitialize() {
     
 		// 圧力
     REAL_TYPE ip;
+    int d_length;
     if (C.Unit.Param == DIMENSIONAL) {
       ip = FBUtility::convD2ND_P(C.iv.Pressure, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
     }
@@ -945,7 +949,8 @@ SklSolverCBC::SklSolverInitialize() {
       ip = C.iv.Pressure;
     }
 
-    fb_set_real_s_(dc_p->GetData(), sz, gc, &ip);
+    d_length = (int)dc_p->GetArrayLength();
+    fb_set_real_(dc_p->GetData(), &d_length, &ip);
 		BC.OuterPBC(dc_p);
     
 		// 温度
@@ -958,7 +963,8 @@ SklSolverCBC::SklSolverInitialize() {
         it = C.iv.Temperature;
       }
 
-      fb_set_real_s_(dc_t->GetData(), sz, gc, &it);
+      d_length = (int)dc_t->GetArrayLength();
+      fb_set_real_(dc_t->GetData(), &d_length, &it);
       
       // コンポーネントの初期値
       for (unsigned m=C.NoBC+1; m<=C.NoCompo; m++) {
@@ -1907,31 +1913,29 @@ bool SklSolverCBC::hasLinearSolver(unsigned L)
 }
 
 /**
- @fn void SklSolverCBC::load_Restart_file (FILE* fp)
+ @fn void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
  @brief リスタート時の瞬時値ファイル読み込み
  @param fp ファイルポインタ
+ @param flop
  */
-void SklSolverCBC::load_Restart_file (FILE* fp)
+void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
 {
   int step;
   REAL_TYPE time;
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
-  F.loadSphScalar3D(this, fp, "Pressure", G_size, guide, dc_p, step, time, C.Unit.File);
+  REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+  F.loadPressure(this, fp, "Pressure", G_size, guide, dc_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
   
   // v00[]に値をセット
   copyV00fromRF((double)time);
-  
-  // 有次元ファイルの場合，無次元に変換する
-  if (C.Unit.File == DIMENSIONAL) {
-    F.cnv_P_D2ND(dc_p, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
-  }
+
   
   // Instantaneous Velocity fields
-  F.loadSphVector3D(this, fp, "Velocity", G_size, guide, dc_v, step, time, v00, C.Unit.File);
+  F.loadVelocity(this, fp, "Velocity", G_size, guide, dc_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
@@ -1939,24 +1943,15 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
     Exit(0);
   }
   
-  // convert from dimensional to non-dimensional, iff file is dimensional
-  if (C.Unit.File == DIMENSIONAL) {
-    F.cnv_V_D2ND(dc_v, C.RefVelocity);
-  }
-  
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() ) {
-    F.loadSphScalar3D(this, fp, "Temperature", G_size, guide, dc_t, step, time, C.Unit.File);
+    REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+    F.loadTemperature(this, fp, "Temperature", G_size, guide, dc_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       Exit(0);
-    }
-    
-    // convert from dimensional to non-dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_T_D2ND(dc_t, C.BaseTemp, C.DiffTemp, C.Unit.Temp);
     }
   }
   
@@ -1965,11 +1960,12 @@ void SklSolverCBC::load_Restart_file (FILE* fp)
 }
 
 /**
- @fn void SklSolverCBC::load_Restart_avr_file (FILE* fp)
+ @fn void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
  @brief リスタート時の平均値ファイル読み込み
  @param fp ファイルポインタ
+ @param flop
  */
-void SklSolverCBC::load_Restart_avr_file (FILE* fp)
+void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
 {
   int step;
   REAL_TYPE time;
@@ -1977,15 +1973,12 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
   step = SklGetBaseStep();
   time = SklGetBaseTime();
   
-  if ( C.Mode.Average == OFF ) return;
-  
-  
   if ( C.Interval[Interval_Manager::tg_avstart].isStep() ) {
     if ( step > C.Interval[Interval_Manager::tg_avstart].getIntervalStep() ) {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tStep : base=%d current=%d total=%d\n", SklGetBaseStep(), SklGetCurrentStep(), SklGetTotalStep());
-      Hostonly_ fprintf(fp, "\tStep : base=%d current=%d total=%d\n", SklGetBaseStep(), SklGetCurrentStep(), SklGetTotalStep());
+      Hostonly_ printf     ("\tStep : base=%d current=%d total=%d\n", step, SklGetCurrentStep(), SklGetTotalStep());
+      Hostonly_ fprintf(fp, "\tStep : base=%d current=%d total=%d\n", step, SklGetCurrentStep(), SklGetTotalStep());
     }
     else {
       return;
@@ -1995,51 +1988,40 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp)
     if ( time > C.Interval[Interval_Manager::tg_avstart].getIntervalTime() ) {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-] total=%e[-]\n", SklGetBaseTime()*C.Tscale, SklGetBaseTime(), SklGetCurrentTime(), SklGetTotalTime());
-      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-] total=%e[-]\n", SklGetBaseTime()*C.Tscale, SklGetBaseTime(), SklGetCurrentTime(), SklGetTotalTime());
+      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-] total=%e[-]\n", time*C.Tscale, time, SklGetCurrentTime(), SklGetTotalTime());
+      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-] total=%e[-]\n", time*C.Tscale, time, SklGetCurrentTime(), SklGetTotalTime());
     }
     else {
       return;
     }
   }
   
-  // Pressure
-  F.loadSphScalar3DAvr(this, fp, "AvrPressure", G_size, guide, dc_ap, step, time, C.Unit.File);
+  // Pressure > step, timeは戻り値を使用
+  REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+  F.loadPressure(this, fp, "AvrPressure", G_size, guide, dc_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, false);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetAverageBaseStep(step);
   SklSetAverageBaseTime(time);
   
-  // convert from dimensional to non-dimensional, iff file is dimensional
-  if (C.Unit.File == DIMENSIONAL) {
-    F.cnv_P_D2ND(dc_ap, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
-  }
   
   // Velocity
-  F.loadSphVector3DAvr(this, fp, "AvrVelocity", G_size, guide, dc_av, step, time, v00, C.Unit.File);
+  F.loadVelocity(this, fp, "AvrVelocity", G_size, guide, dc_av, step, time, v00, C.Unit.File, C.RefVelocity, flop, false);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-  if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
+  if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) { // 圧力とちがう場合
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
   }
   
-  // convert from dimensional to non-dimensional, iff file is dimensional
-  if (C.Unit.File == DIMENSIONAL) {
-    F.cnv_V_D2ND(dc_av, C.RefVelocity);
-  }
   
   if ( C.isHeatProblem() ) {
-    F.loadSphScalar3DAvr(this, fp, "AvrTemperature", G_size, guide, dc_at, step, time, C.Unit.File);
+    REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+    F.loadTemperature(this, fp, "AvrTemperature", G_size, guide, dc_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, false);
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       Exit(0);
-    }
-    
-    // convert from dimensional to non-dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_T_D2ND(dc_at, C.BaseTemp, C.DiffTemp, C.Unit.Temp);
     }
   }
 }

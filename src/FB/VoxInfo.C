@@ -421,6 +421,52 @@ void VoxInfo::checkColorTable(FILE* fp, unsigned size, int* table)
 }
 
 /**
+ @fn void VoxInfo::chkBCIndexD(unsigned* bcd, const char* fname)
+ @brief BCindexを表示する（デバッグ用）
+ @param bcv BCindex D
+ @param fname 出力用ファイル名
+ */
+void VoxInfo::chkBCIndexD(unsigned* bcd, const char* fname)
+{
+  int i,j,k;
+  unsigned m, s, d;
+  FILE *fp=NULL;
+  
+  if ( !(fp=fopen(fname,"w")) ) {
+    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
+    Exit(0);
+  }
+  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  // ガイドセルを含む全領域
+  //for (k=1-gd; k<=kx+gd; k++) {
+  //for (j=1-gd; j<=jx+gd; j++) {
+  //for (i=1-gd; i<=ix+gd; i++) {
+  for (k=1; k<=5; k++) {
+    for (j=100; j<=100; j++) {
+      for (i=96; i<=106; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        s = bcd[m];
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n", 
+                          i, j, k, IS_FLUID(s), 
+                          DECODE_CMP(s),
+                          DECODE_ID(s), 
+                          DECODE_MAT(s), 
+                          DECODE_VF(s), 
+                          (s>>FORCING_BIT)&0x1);
+      }
+    }
+  }
+  fflush(fp);
+  fclose(fp);
+}
+
+/**
  @fn void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
  @brief BCindexを表示する（デバッグ用）
  @param bcd BCindex ID
@@ -446,9 +492,12 @@ void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
   int gd = (int)guide;
   
   // ガイドセルを含む全領域
-  for (k=1-gd; k<=kx+gd; k++) {
-    for (j=1-gd; j<=jx+gd; j++) {
-      for (i=1-gd; i<=ix+gd; i++) {
+  //for (k=1-gd; k<=kx+gd; k++) {
+    //for (j=1-gd; j<=jx+gd; j++) {
+      //for (i=1-gd; i<=ix+gd; i++) {
+  for (k=1; k<=5; k++) {
+    for (j=100; j<=100; j++) {
+      for (i=96; i<=106; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         d = bcd[m];
         s = bcp[m];
@@ -466,7 +515,6 @@ void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
   fflush(fp);
   fclose(fp);
 }
-
 
 /**
  @fn void VoxInfo::chkBCIndexV(unsigned* bcv, const char* fname)
@@ -492,9 +540,12 @@ void VoxInfo::chkBCIndexV(unsigned* bcv, const char* fname)
   int gd = (int)guide;
   
   // ガイドセルを含む全領域
-  for (k=1-gd; k<=kx+gd; k++) {
-    for (j=1-gd; j<=jx+gd; j++) {
-      for (i=1-gd; i<=ix+gd; i++) {
+  //for (k=1-gd; k<=kx+gd; k++) {
+    //for (j=1-gd; j<=jx+gd; j++) {
+      //for (i=1-gd; i<=ix+gd; i++) {
+  for (k=1; k<=5; k++) {
+    for (j=100; j<=100; j++) {
+      for (i=96; i<=106; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bcv[m];
         Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: VBC(ewnstb) [%2d %2d %2d %2d %2d %2d] : idx=%d\n", 
@@ -5487,7 +5538,8 @@ void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned& Lcel
   // コンポーネントに登録された媒質のセル数を数え，elementにセットする
   for (unsigned n=NoBC+1; n<=NoCompo; n++) {
     id = cmp[n].getID();
-    cmp[n].setElement( countState(id, mid) );
+    //cmp[n].setElement( countState(id, mid) );
+    cmp[n].setElement( encodeOrder(n, id, mid, bx) );
   }
   
   

@@ -564,14 +564,21 @@ void SklSolverCBC::Averaging_Time(REAL_TYPE& flop)
   if( !(av = dc_av->GetData()) )  Exit(0);
   if( !(p  = dc_p->GetData()) )   Exit(0);
   if( !(ap = dc_ap->GetData()) )  Exit(0);
+  
+  int d_length;
 
-  fb_average_s_(ap, sz, gc, p, &flop);
-  fb_average_v_(av, sz, gc, v, &flop);
+  d_length = (int)dc_ap->GetArrayLength();
+  fb_average_(ap, p, &d_length, &flop);
+  
+  d_length = (int)dc_av->GetArrayLength();
+  fb_average_(av, v, &d_length, &flop);
 
   if ( C.isHeatProblem() ) {
     if( !(t  = dc_t->GetData()) )  Exit(0);
     if( !(at = dc_at->GetData()) ) Exit(0);
-    fb_average_s_(at, sz, gc, t, &flop);
+    
+    d_length = (int)dc_at->GetArrayLength();
+    fb_average_(at, t, &d_length, &flop);
   }
 }
 
@@ -631,8 +638,19 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
   bool forceFlag=false;
   bool correct_flag=false; // no correction
   unsigned guide_zero=0;  // for averaged fields
-  unsigned stepAvr = SklGetAverageTotalStep();
-  REAL_TYPE timeAvr;
+  int stepAvr = (int)SklGetAverageTotalStep();
+  REAL_TYPE timeAvr, unit_velocity, scale;
+  int d_length;
+  
+  REAL_TYPE *vo = NULL;
+  REAL_TYPE *av = NULL;
+  REAL_TYPE *ws = NULL;
+  REAL_TYPE *ap = NULL;
+  if( !(vo = dc_wvex->GetData()) ) Exit(0);
+  if( !(av = dc_av->GetData()) )   Exit(0);
+  if( !(ws = dc_ws->GetData()) )   Exit(0);
+  if( !(ap = dc_ap->GetData()) )   Exit(0);
+  
   
   if (C.Unit.File == DIMENSIONAL) {
     timeAvr = SklGetAverageTotalTime() * C.Tscale;
@@ -643,17 +661,21 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
   
   if ( mode == Control::IO_forced ) forceFlag = true;
   
+  scale = 1.0 / (REAL_TYPE)stepAvr;
+  
   // Pressure
   if( m_outAvrPrs ){
-    // convert non-dimensional to dimensional, iff file is dimensional
+    d_length = (int)dc_ws->GetArrayLength();
+    
     if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_P_ND2D(dc_ws, dc_ap, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs, flop);
+      REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+      fb_prs_nd2d_(ws, ap, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_ap) ) Exit(0);
+      fb_xcopy_(ws, ap, &d_length, &scale, &flop);
     }
-    if( !SklUtil::scaleAvrS3D(dc_ws, stepAvr, false) ) Exit(0); // false => OUTPUT
-    if( !WriteFile(m_outAvrPrs, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
+    
+    if( !WriteFile(m_outAvrPrs, stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
       Exit(0);
     }
@@ -661,14 +683,10 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
   
   // Velocity
   if( m_outAvrUVW ){
-    // convert non-dimensional to dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_V_ND2D(dc_wvex, dc_av, &v00[1], C.RefVelocity, flop, stepAvr);
-    }
-    else {
-      if( !F.shiftVout3D(dc_wvex, dc_av, &v00[1], stepAvr) ) Exit(0);
-    }
-    if( !WriteFile(m_outAvrUVW, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
+    unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+    fb_shift_refv_out_(vo, sz, gc, av, v00, &scale, &unit_velocity, &flop);
+    
+    if( !WriteFile(m_outAvrUVW, stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
       Exit(0);
     }
@@ -676,15 +694,19 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
   
   // Temperature
   if( C.isHeatProblem() && m_outAvrTmp ){
-    // convert non-dimensional to dimensional, iff file is dimensional
+    REAL_TYPE *at = NULL;
+    if( !(at = dc_ap->GetData()) )   Exit(0);
+    d_length = (int)dc_ws->GetArrayLength();
+    
     if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_T_ND2D(dc_ws, dc_at, C.BaseTemp, C.DiffTemp, C.Unit.Temp, flop);
+      REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+      fb_tmp_nd2d_(ws, at, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_at) ) Exit(0);
+      fb_xcopy_(ws, at, &d_length, &scale, &flop);
     }
-    if( !SklUtil::scaleAvrS3D(dc_ws, stepAvr, false) ) Exit(0); // false => OUTPUT
-    if( !WriteFile(m_outAvrTmp, (int)stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
+    
+    if( !WriteFile(m_outAvrTmp, stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
       Exit(0);
     }
@@ -706,7 +728,20 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   bool forceFlag=false;
   bool correct_flag=false; // no correction
   unsigned step = SklGetTotalStep();
-  REAL_TYPE time;
+  REAL_TYPE time, unit_velocity;
+  REAL_TYPE scale = 1.0;
+  int d_length;
+  
+  REAL_TYPE *vo = NULL;
+  REAL_TYPE *v  = NULL;
+  REAL_TYPE *ws = NULL;
+  REAL_TYPE *p  = NULL;
+  
+  if( !(vo = dc_wvex->GetData()) ) Exit(0);
+  if( !(v  = dc_v->GetData()) )    Exit(0);
+  if( !(ws = dc_ws->GetData()) )   Exit(0);
+  if( !(p  = dc_p->GetData()) )    Exit(0);
+  
 
   if (C.Unit.File == DIMENSIONAL) {
     time = SklGetTotalTime() * C.Tscale;
@@ -730,12 +765,14 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   
   // Pressure
   if( m_outPrs ){
-    // convert non-dimensional to dimensional, iff file is dimensional
+    d_length = (int)dc_ws->GetArrayLength();
+    
     if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_P_ND2D(dc_ws, dc_p, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs, flop);
+      REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+      fb_prs_nd2d_(ws, p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_p) ) Exit(0);
+      fb_xcopy_(ws, p, &d_length, &scale, &flop);
     }
     
     if( !WriteFile(m_outPrs, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
@@ -746,13 +783,9 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
 
   // Velocity
   if( m_outUVW ){
-    // convert non-dimensional to dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_V_ND2D(dc_wvex, dc_v, &v00[1], C.RefVelocity, flop);
-    }
-    else {
-      if( !F.shiftVout3D(dc_wvex, dc_v, &v00[1]) ) Exit(0);
-    }
+    unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+    fb_shift_refv_out_(vo, sz, gc, v, v00, &scale, &unit_velocity, &flop);
+    
     if( !WriteFile(m_outUVW, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
       Exit(0);
@@ -761,12 +794,16 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
 
   // Tempearture
   if( C.isHeatProblem() && m_outTmp ){
-    // convert non-dimensional to dimensional, iff file is dimensional
+    REAL_TYPE *t  = NULL;
+    if( !(t  = dc_t->GetData()) )    Exit(0);
+    d_length = (int)dc_ws->GetArrayLength();
+    
     if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_T_ND2D(dc_ws, dc_t, C.BaseTemp, C.DiffTemp, C.Unit.Temp, flop);
+      REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+      fb_tmp_nd2d_(ws, t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
     else {
-      if( !SklUtil::cpyS3D(dc_ws, dc_t) ) Exit(0);
+      fb_xcopy_(ws, t, &d_length, &scale, &flop);
     }
     if( !WriteFile(m_outTmp, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
       stamped_printf("\tFile output was failed.\n");
@@ -777,8 +814,7 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   // Total Pressure
   if (C.Mode.TP == ON ) {
     if( m_outTP ){
-      REAL_TYPE  *v, *p, *tp;
-      if( !(v  = dc_v->GetData()) )   Exit(0);
+      REAL_TYPE  *p, *tp;
       if( !(p  = dc_p->GetData()) )   Exit(0);
       if( !(tp = dc_p0->GetData()) )  Exit(0);
       
@@ -800,26 +836,20 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   
   // Vorticity
   if (C.Mode.VRT == ON ) {
-    if( m_outVrt ){
-      REAL_TYPE  *v, *wv, vz[3];
+    if( m_outVrt ) {
+      REAL_TYPE *vrt= NULL;
       unsigned *bcv=NULL;
-      v = wv = NULL;
       
-      if( !(v  = dc_v->GetData()) )   Exit(0);
-      if( !(wv = dc_wv->GetData()) )  Exit(0);
-      if( !(bcv= dc_bcv->GetData()) ) Exit(0);
-      for (int i=0; i<3; i++) vz[i]=0.0;
+      if( !(bcv = dc_bcv->GetData()) ) Exit(0);
+      if( !(vrt = dc_wv->GetData()) )  Exit(0);
       
-      cbc_rot_v_(wv, sz, gc, dh, v, (int*)bcv, v00, &flop);
+      cbc_rot_v_(vrt, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
-      // convert non-dimensional to dimensional, iff file is dimensional
-      if (C.Unit.File == DIMENSIONAL) {
-        REAL_TYPE RefVL = C.RefVelocity/C.RefLength;
-        F.cnv_V_ND2D(dc_wvex, dc_wv, vz, RefVL, flop);
-      }
-      else {
-        if( !F.shiftVout3D(dc_wvex, dc_wv, vz) ) Exit(0);
-      }
+      REAL_TYPE  vz[3];
+      vz[0] = vz[1] = vz[2] = 0.0;
+      unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
+      fb_shift_refv_out_(vo, sz, gc, vrt, vz, &scale, &unit_velocity, &flop);
+      
       if( !WriteFile(m_outVrt, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
         Exit(0);
@@ -840,7 +870,9 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       cbc_i2vgt_ (q, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
       // 無次元で出力
-      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
+      d_length = (int)dc_ws->GetArrayLength();
+      fb_xcopy_(ws, q, &d_length, &scale, &flop);
+
       if( !WriteFile(m_outI2VGT, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
         Exit(0);
@@ -861,7 +893,9 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
       cbc_helicity_(q, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
       // 無次元で出力
-      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
+      d_length = (int)dc_ws->GetArrayLength();
+      fb_xcopy_(ws, q, &d_length, &scale, &flop);
+      
       if( !WriteFile(m_outHlcty, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
         stamped_printf("\tFile output was failed.\n");
         Exit(0);

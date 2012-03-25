@@ -4,6 +4,9 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.5.7  25 Mar. 2012
+  - FileIOまわりを変更
+  
 Ver 1.5.6  21 Mar. 2012
   - IP_Sphereクラス導入
   
