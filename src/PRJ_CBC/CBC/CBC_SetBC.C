@@ -657,7 +657,7 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
         
       case OBC_SYMMETRIC:
         vec[0] = vec[1] = vec[2] = 0.0;
-        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        // fluxはゼロなので処理不要　cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
         obc[face].set_DomainV(vec, face); // 速度の形式
         break;
     }
@@ -911,7 +911,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
         break;
         
       case OBC_SYMMETRIC:
-        cbc_pvec_vobc_symtrc_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        cbc_pvec_vobc_symtrc_(wv, dim_sz, gc, &dh, &rei, v, (int*)bv, &v_mode, &face, &flop);
         break;
         
       case OBC_OUTFLOW:
@@ -994,8 +994,9 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         break;
         
       case OBC_SYMMETRIC:
-        vec[0] = vec[1] = vec[2] = 0.0;
-        cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        // 境界面の法線速度はゼロなので，修正不要 移動格子の場合は必要
+        //vec[0] = vec[1] = vec[2] = 0.0;
+        //cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
         break;
         
       case OBC_OUTFLOW:

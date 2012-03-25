@@ -525,44 +525,39 @@
     return
     end subroutine cbc_pvec_vibc_specv
     
-!  *******************************************************************************************
-!> @subroutine cbc_pvec_vobc_symtrc (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
+!  *********************************************************************************
+!> @subroutine cbc_pvec_vobc_symtrc (wv, sz, g, dh, rei, v0, bv, v_mode, face, flop)
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
 !! @param[out] wv 疑似ベクトルの空間項の評価値
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param dh 格子幅
-!! @param v00 参照速度
 !! @param rei Reynolds数の逆数
 !! @param v0 速度ベクトル（n-step）
 !! @param bv BCindex V
-!! @param vec 指定する速度ベクトル
 !! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
 !! @param face 外部境界処理のときの面番号
 !! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
-!! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
+!! @note 境界面で対流流束はゼロ，粘性流束のみ
 !<
-    subroutine cbc_pvec_vobc_symtrc (wv, sz, g, dh, v00, rei, v0, bv, vec, v_mode, face, flop)
+    subroutine cbc_pvec_vobc_symtrc (wv, sz, g, dh, rei, v0, bv, v_mode, face, flop)
     implicit none
     include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, face, v_mode
     integer                                                     ::  ix, jx, kx
     integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  dh, dh1, dh2, flop, vcs, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, m
-    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                        ::  dh, dh1, dh2, flop, vcs, rei
+    real                                                        ::  rix, rjx, rkx, Up0, Vp0, Wp0
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+
+    rix = real(jx)*real(kx)
+    rjx = real(ix)*real(kx)
+    rkx = real(ix)*real(jx)
     
     if      ( v_mode == 0 ) then 
         vcs=0.0
@@ -573,26 +568,10 @@
     end if
     
     dh1= 1.0/dh
-    dh2= rei*dh1*dh1*vcs
-
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    
-    ! u_bcは境界速度
-    u_bc = vec(1)
-    v_bc = vec(2)
-    w_bc = vec(3)
-    
-    ! u_bc_refは参照座標系での境界速度
-    u_bc_ref = u_bc + u_ref
-    v_bc_ref = v_bc + v_ref
-    w_bc_ref = w_bc + w_ref
+    dh2= 2.0*rei*dh1*dh1*vcs
     
     flop = flop + 14.0 ! DP 19 flop
 
-    m = 0.0
     
     FACES : select case (face)
     case (X_minus)
@@ -603,26 +582,11 @@
         
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
           Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
-          
-          Uw1  = -Up0
-          Vw1  =  Vp0
-          Ww1  =  Wp0
-          
-          EX = Uw1 - Up0
-          EY = Vw1 - Vp0
-          EZ = Ww1 - Wp0
-
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
-          m = m + 1.0
+          wv(1,i,j,k) = wv(1,i,j,k) + Up0*dh2
         endif
       end do
       end do
       
-      flop = flop + m*10.0
       
     case (X_plus)
       i = ix
@@ -632,26 +596,11 @@
         
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
           Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
-          
-          Ue1  = -Up0
-          Ve1  =  Vp0
-          We1  =  Wp0
-
-          EX = Ue1 - Up0
-          EY = Ve1 - Vp0
-          EZ = We1 - Wp0
-
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
-          m = m + 1.0
+          wv(1,i,j,k) = wv(1,i,j,k) - Up0*dh2
         endif
       end do
       end do
       
-      flop = flop + m*10.0
       
     case (Y_minus)
       j = 1
@@ -660,27 +609,12 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
           Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
-
-          Us1  =  Up0
-          Vs1  = -Vp0
-          Ws1  =  Wp0
-        
-          EX = Us1 - Up0
-          EY = Vs1 - Vp0
-          EZ = Ws1 - Wp0
-          
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
-          m = m + 1.0
+          wv(2,i,j,k) = wv(2,i,j,k) + Vp0*dh2
         endif
       end do
       end do
       
-      flop = flop + m*10.0
       
     case (Y_plus)
       j = jx
@@ -689,22 +623,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
           Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
-
-          Un1  =  Up0
-          Vn1  = -Vp0
-          Wn1  =  Wp0
-
-          EX = Un1 - Up0
-          EY = Vn1 - Vp0
-          EZ = Wn1 - Wp0
-          
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
-          m = m + 1.0
+          wv(2,i,j,k) = wv(2,i,j,k) - Vp0*dh2
         endif
       end do
       end do
@@ -718,27 +638,12 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
           Wp0 = v0(3,i,j,k)
-
-          Ub1  =  Up0
-          Vb1  =  Vp0
-          Wb1  = -Wp0
-          
-          EX = Ub1 - Up0
-          EY = Vb1 - Vp0
-          EZ = Wb1 - Wp0
-          
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
-          m = m + 1.0
+          wv(3,i,j,k) = wv(3,i,j,k) + Wp0*dh2
         endif
       end do
       end do
       
-      flop = flop + m*10.0
       
     case (Z_plus)
       k = kx
@@ -747,27 +652,12 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
           Wp0 = v0(3,i,j,k)
-
-          Ut1  =  Up0
-          Vt1  =  Vp0
-          Wt1  = -Wp0
-          
-          EX = Ut1 - Up0
-          EY = Vt1 - Vp0
-          EZ = Wt1 - Wp0
-          
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
-          m = m + 1.0
+          wv(3,i,j,k) = wv(3,i,j,k) - Wp0*dh2
         endif
       end do
       end do
       
-      flop = flop + m*10.0
       
     case default
     end select FACES
@@ -3047,20 +2937,19 @@
     flop = flop + 6.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, rix, rjx, rkx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref) &
 !$OMP PRIVATE(i, j, k, bvx)
 
     FACES : select case (face)
     case (X_minus)
       i = 1
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:flop)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -3076,13 +2965,12 @@
     case (X_plus)
       i = ix
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:flop)
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -3098,13 +2986,12 @@
     case (Y_minus)
       j = 1
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:flop)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3120,13 +3007,12 @@
     case (Y_plus)
       j = jx
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:flop)
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3142,13 +3028,12 @@
     case (Z_minus)
       k = 1
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:flop)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -3164,13 +3049,12 @@
     case (Z_plus)
       k = kx
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:flop)
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
