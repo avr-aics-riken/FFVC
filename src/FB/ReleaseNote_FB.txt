@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.5.4  27 Mar. 2012
+  - Control classをsingletonに変更
+  
 Ver 2.5.3  25 Mar. 2012
   - FileIOまわりをFortran化+バグ修正
   

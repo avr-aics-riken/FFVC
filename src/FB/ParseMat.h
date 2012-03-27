@@ -21,11 +21,10 @@
 #include "Component.h"
 #include "FBUtility.h"
 #include "config/SklSolverConfig.h"
-#include "Parallel_node.h"
 #include "config/SklSolverConfig.h"
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
-class  ParseMat : public Parallel_Node {
+class  ParseMat {
 private:
   bool ChkList[property_END];  // # of parameters in MaterialList must be less than # of property_END
   

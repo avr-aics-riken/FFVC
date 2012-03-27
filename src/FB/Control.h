@@ -136,7 +136,7 @@ public:
 
 
 
-class Control : public Parallel_Node {
+class Control {
 protected:
   SklSolverConfig* CF;  // for XML parsing
   

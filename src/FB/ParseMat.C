@@ -118,10 +118,10 @@ void ParseMat::getXMLmaterial(void)
       if ( BaseMat[l].getMatID() == md ) {
         stamped_printf("\tDuplicate Medium id[%d]=%d in Base MaterialList\n", l, md);
         FILE* mp=stdout;
-        Hostonly_  {
-          fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-          fprintf(mp,"\n\t>> Base Material List\n\n");
-        }
+
+        fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+        fprintf(mp,"\n\t>> Base Material List\n\n");
+
         printMatList(mp, NoBaseMat, BaseMat);
         Exit(0);
       }
@@ -508,14 +508,14 @@ bool ParseMat::chkStateList(CompoList* compo)
  */
 void ParseMat::printBaseMaterialList(FILE* mp, FILE* fp)
 {
-  Hostonly_  {
-    fprintf(mp, "DEBUG : \n");
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\n\t>> Base Material List\n\n");
-    fprintf(fp, "DEBUG : \n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n\t>> Base Material List\n\n");
-  }
+
+  fprintf(mp, "DEBUG : \n");
+  fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(mp,"\n\t>> Base Material List\n\n");
+  fprintf(fp, "DEBUG : \n");
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n\t>> Base Material List\n\n");
+
   printMatList(mp, NoBaseMat, BaseMat);
   printMatList(fp, NoBaseMat, BaseMat);
 }
@@ -568,28 +568,28 @@ void ParseMat::chkState_Mat_Cmp(CompoList* compo)
   unsigned m_id, m_state, m_odr;
   unsigned c=0;
   
-  Hostonly_ printf("\t  no :   ID  mat_odr mat_ID         mat_Name  : mat_State : specified_state\n");
+  printf("\t  no :   ID  mat_odr mat_ID         mat_Name  : mat_State : specified_state\n");
                     
   for (unsigned i=1; i<=NoCompo; i++) {
     m_odr = compo[i].getMatOdr();
     m_id = compo[i].getID();
     m_state = compo[i].getState();
 
-    Hostonly_ printf("\t%4d : %4d %8d %6d %16s  :     %s : %s", i, m_id, m_odr, mat[m_odr].getMatID(), mat[m_odr].getName(), 
+    printf("\t%4d : %4d %8d %6d %16s  :     %s : %s", i, m_id, m_odr, mat[m_odr].getMatID(), mat[m_odr].getName(), 
                      (mat[m_odr].getState() == FLUID ) ? "Fluid" : "Solid",
                      (m_state == FLUID ) ? "Fluid" : "Solid");
     if (mat[m_odr].getState() != m_state) {
-      Hostonly_ printf(" <\n");
+      printf(" <\n");
       c++;
     }
     else {
-      Hostonly_ printf("\n");
+      printf("\n");
     }
   }
   printf("\n");
   
   if ( c>0 ) {
-    Hostonly_ printf("\tMedium ID described in 'Model_Setting is not consistent with the state of Solid/Fluid. See above lines marked '<'.'\n\n");
+    printf("\tMedium ID described in 'Model_Setting is not consistent with the state of Solid/Fluid. See above lines marked '<'.'\n\n");
     Exit(0);
   }
 }

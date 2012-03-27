@@ -136,9 +136,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 並列情報のコピー
   B.setParallelInfo   (pn);
-  M.setParallelInfo   (pn);
   BC.setParallelInfo  (pn);
-  C.setParallelInfo   (pn);
   F.setParallelInfo   (pn);
   MO.setParallelInfo  (pn);
   TIMING__ PM.setParallelInfo  (pn);
@@ -3048,9 +3046,9 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   TIMING_stop(tm_polygon_load);
   
-  // 階層情報表示
-  PL->show_group_hierarchy();
-  PL->show_group_hierarchy(fp);
+  // 階層情報表示 debug
+  //PL->show_group_hierarchy();
+  //PL->show_group_hierarchy(fp);
   
   // IDの表示
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
@@ -3152,8 +3150,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   nlen[1] = size[1];
   nlen[2] = size[2];
   
-  //stamped_printf("cut : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
-  //stamped_printf("cut : dx(%e %e %e) dimensional\n", poly_dx[0], poly_dx[1], poly_dx[2]);
+  stamped_printf("cut : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
+  stamped_printf("cut : dx(%e %e %e) dimensional\n", poly_dx[0], poly_dx[1], poly_dx[2]);
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
