@@ -32,7 +32,6 @@
 #include "VoxInfo.h"
 #include "SklUtil.h"
 #include "IP_Users.h"
-#include "IterationCtl.h"
 #include "History.h"
 #include "CBC_SetBC.h"
 #include "Parallel_node.h"
@@ -66,6 +65,7 @@
 // Cutlib
 #include "Cutlib.h"
 
+#include "omp.h"
 
 using namespace PolylibNS;
 using namespace cutlib;
@@ -257,6 +257,7 @@ public:
   virtual void set_timing_label     (void);
   virtual void VoxelInitialize      (void);
   
+  bool chkMediumConsistency(void);
   bool hasLinearSolver (unsigned L);
   
   float min_distance     (float* cut, FILE* fp);
@@ -283,10 +284,14 @@ public:
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
   void FileOutput           (unsigned mode, REAL_TYPE& flop);
+  void fixed_parameters     (void);
   void gather_DomainInfo    (void);
   void getEnlargedIndex     (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
   void getGlobalCmpIdx      (VoxInfo* Vinfo);
   void getLocalCmpIdx       (void);
+  void getXML_Monitor       (SklSolverConfig* CF, MonitorList* M);
+  void getXML_Mon_Line      (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
+  void getXML_Mon_Pointset  (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
   void IF_TRP_VOF           (void);
   void load_Restart_avr_file(FILE* fp, REAL_TYPE& flop);
   void load_Restart_file    (FILE* fp, REAL_TYPE& flop);
@@ -300,6 +305,7 @@ public:
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void set_Parallel_Info    (void);
+  void setParallelism       (void);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setVOF               (REAL_TYPE* vof, unsigned* bx);
@@ -359,6 +365,14 @@ public:
   void start_collection(const char*) {}
   void stop_collection (const char*) {}
 #endif
+  
+  //@fn void normalizeCord(REAL_TYPE x[3])
+  //@brief 座標値を無次元化する
+  void normalizeCord(REAL_TYPE x[3]) {
+    x[0] /= C.RefLength;
+    x[1] /= C.RefLength;
+    x[2] /= C.RefLength;
+  }
   
 };
 

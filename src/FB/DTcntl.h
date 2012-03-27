@@ -17,7 +17,7 @@
 #include "FBDefine.h"
 #include "stdio.h"
 
-class DTcntl {//: public Parallel_Node {
+class DTcntl {
 public:
   enum dt_Type {
     dt_direct=1,      // 入力値がΔt

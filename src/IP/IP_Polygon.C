@@ -19,24 +19,25 @@
  @param org グローバル計算領域の基点
  @param wth グローバル計算領域のbounding boxサイズ
  @param pch セルピッチ
+ @note 基点，領域サイズ，ピッチが有効，分割数はそれらから計算
  */
 void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
-  wth[0] = pch[0]*(REAL_TYPE)sz[0];
-  wth[1] = pch[1]*(REAL_TYPE)sz[1];
-  wth[2] = pch[2]*(REAL_TYPE)sz[2];
+  if ( !R->isCDS() ) {
+    Hostonly_ stamped_printf("\tError : User specified Polygon problem, though shape approximation is not 'cut_distance'\n");
+    Exit(0);
+  }
   
-  // チェック
+  // 等分割のチェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
-  if ( ((unsigned)(wth[0]/pch[0]) != sz[0]) ||
-       ((unsigned)(wth[1]/pch[1]) != sz[1]) ||
-       ((unsigned)(wth[2]/pch[2]) != sz[2]) ) {
-    Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
-    Exit(0);
-  }
+  
+  // 分割数を計算
+  sz[0] = (unsigned)ceil(wth[0]/pch[0]);
+  sz[1] = (unsigned)ceil(wth[1]/pch[1]);
+  sz[2] = (unsigned)ceil(wth[2]/pch[2]);
 }
 
 /**
@@ -50,7 +51,6 @@ void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
   int i,m;
   int mid_fluid=1;        /// 流体
-  int mid_solid=2;        /// 固体
   
   // Initialize  全領域をfluidにしておく
   m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);

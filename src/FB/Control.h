@@ -23,8 +23,6 @@
 #include "SklUtil.h"
 #include "Material.h"
 #include "Component.h"
-#include "IterationCtl.h"
-#include "Parallel_node.h"
 #include "Ref_Frame.h"
 #include "FBUtility.h"
 #include "Monitor.h"
@@ -33,6 +31,110 @@
 #include "Interval_Mngr.h"
 
 using namespace SklCfg;  // to use SklSolverConfig* cfg
+
+
+class ItrCtl {
+private:
+  unsigned NormType;     /// ノルムの種類
+  unsigned SubType;      /// SKIP LOOP or MASK LOOP
+  unsigned ItrMax;       /// 最大反復数
+  unsigned LinearSolver; /// 線形ソルバーの種類
+  REAL_TYPE eps;         /// 収束閾値
+  REAL_TYPE omg;         /// 加速/緩和係数
+  REAL_TYPE NormValue;   /// ノルムの値
+  
+public:
+  /// 反復制御リスト
+  enum itr_cntl_key {
+    ic_prs_pr,
+    ic_prs_cr,
+    ic_vis_cn,
+    ic_tdf_ei,
+    ic_tdf_cn,
+    ic_END
+  };
+  
+  /// 反復法の収束基準種別
+  enum norm_type { 
+    v_div_max,
+    v_div_max_dbg,
+    v_div_l2,
+    v_res_l2_a,
+    v_res_l2_r,
+    p_res_l2_a,
+    p_res_l2_r,
+    t_res_l2_a,
+    t_res_l2_r
+  };
+  
+  unsigned LoopCount;     /// 反復回数
+  
+  ItrCtl() {
+    NormType = 0;
+    ItrMax = LoopCount = LinearSolver = SubType = 0;
+    eps = omg = 0.0;
+  }
+  ~ItrCtl() {}
+  
+public:
+  // @fn unsigned get_LS(void) const
+  // @brief 線形ソルバの種類を返す
+  unsigned get_LS(void) const { return LinearSolver; }
+  
+  // @fn unsigned get_ItrMax(void) const
+  // @brief 最大反復回数を返す
+  unsigned get_ItrMax(void) const { return ItrMax; }
+  
+  // @fn unsigned get_LoopType(void) const
+  // @brief ループ実装の種類を返す
+  unsigned get_LoopType(void) const { return SubType; }
+  
+  // @fn REAL_TYPE get_omg(void) const
+  // @brief 緩和/加速係数を返す
+  REAL_TYPE get_omg(void) const { return omg; }
+  
+  // @fn REAL_TYPE get_eps(void) const
+  // @brief 収束閾値を返す
+  REAL_TYPE get_eps(void) const { return eps; }
+  
+  // @fn unsigned get_normType(void) const
+  // @brief ノルムのタイプを返す
+  unsigned get_normType(void) const { return NormType; }
+  
+  // @fn REAL_TYPE get_normValue(void) const
+  // @brief keyに対応するノルムの値を返す
+  REAL_TYPE get_normValue(void) const { return NormValue; }
+  
+  // @fn void set_LS(unsigned key)
+  // @brief 線形ソルバの種類を設定する
+  void set_LS(unsigned key) { LinearSolver=key; }
+  
+  // @fn void set_ItrMax(unsigned key)
+  // @brief 最大反復回数を設定する
+  void set_ItrMax(unsigned key) { ItrMax=key; }
+  
+  // @fn void set_LoopType(unsigned key)
+  // @brief ループ実装の種類を設定する
+  void set_LoopType(unsigned key) { SubType=key; }
+  
+  // @fn void set_omg(REAL_TYPE r)
+  // @brief 緩和/加速係数を保持
+  void set_omg(REAL_TYPE r) { omg = r; }
+  
+  // @fn void set_eps(REAL_TYPE r)
+  // @brief 収束閾値を保持
+  void set_eps(REAL_TYPE r) { eps = r; }
+  
+  // @fn void set_normType(unsigned n) 
+  // @brief ノルムのタイプを保持
+  void set_normType(unsigned n) { NormType = n; }
+  
+  // @fn void set_normValue(REAL_TYPE r)
+  // @brief ノルム値を保持
+  void set_normValue(REAL_TYPE r) { NormValue = r; }
+};
+
+
 
 class Control : public Parallel_Node {
 protected:
@@ -43,7 +145,6 @@ public:
   // 各種モード　パラメータ
   typedef struct {
     unsigned Average;
-    unsigned Base_Medium;
     unsigned Buoyancy;
     unsigned Example;
     unsigned Helicity;
@@ -51,7 +152,6 @@ public:
     unsigned Log_Base;
     unsigned Log_Itr;
     unsigned Log_Wall;
-    unsigned Medium_Spec;
     unsigned PDE;
     unsigned Precision;
     unsigned Profiling;
@@ -59,9 +159,9 @@ public:
     unsigned ShapeAprx;
     unsigned Steady;
     unsigned TP;
-    unsigned VarArrange;
     unsigned VRT;
     unsigned Wall_profile;
+    int Base_Medium;
   } Mode_set;
   
   // 隠しパラメータ
@@ -203,6 +303,20 @@ public:
     Sphere_SBX
   };
   
+  /// 並列化モード
+  enum Parallel_mode {
+    Serial=1,
+    OpenMP,
+    FlatMPI,
+    Hybrid
+  };
+  
+  /// 空間分割モード
+  enum Partitioning {
+    Equal=1,
+    Mbx
+  };
+  
   unsigned  Acell,
             AlgorithmF,
             AlgorithmH,
@@ -214,7 +328,6 @@ public:
             guide,
             GuideOut,
             imax, jmax, kmax,
-            InnerItr,
             KindOfSolver,
             LastStep,
             Limiter,
@@ -227,6 +340,10 @@ public:
             NoMediumFluid,
             NoMediumSolid,
             NoWallSurface,
+            num_process,
+            num_thread,
+            Parallelism,
+            Partition,
             RefID,
             Start,
             version,
@@ -300,7 +417,6 @@ public:
     guide = 0;
     GuideOut = 0;
     imax = jmax = kmax = 0;
-    InnerItr = 0;
     KindOfSolver = 0;
     LastStep = 0;
     Limiter = 0;
@@ -313,6 +429,10 @@ public:
     NoMediumFluid = 0;
     NoMediumSolid = 0;
     NoWallSurface = 0;
+    num_process = 0;
+    num_thread = 0;
+    Parallelism = 0;
+    Partition = 0;
     RefID = 0;
     Start = 0;
     version = 0;
@@ -361,6 +481,7 @@ public:
     iv.Temperature = 0.0;
     
     Mode.Average = 0;
+    Mode.Base_Medium = 0;
     Mode.Buoyancy = 0;
     Mode.Example = 0;
     Mode.Helicity = 0;
@@ -375,7 +496,6 @@ public:
     Mode.ShapeAprx = 0;
     Mode.Steady = 0;
     Mode.TP = 0;
-    Mode.VarArrange = 0;
     Mode.VRT = 0;
     Mode.Wall_profile = 0;
     
@@ -432,8 +552,6 @@ protected:
   void getXML_KindOfSolver   (const CfgElem *elmL1);
   void getXML_LES_option     (void);
   void getXML_Log            (void);
-  void getXML_Mon_Line       (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
-  void getXML_Mon_Pointset   (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
   void getXML_Para_ND        (void);
   void getXML_Para_Ref       (void);
   void getXML_Para_Temp      (void);
@@ -445,7 +563,6 @@ protected:
   void getXML_Time_Control   (DTcntl* DT);
   void getXML_TimeMarching   (void);
   void getXML_Unit           (void);
-  void getXML_VarArrangement (void);
   void getXML_VarRange       (void);
   void getXML_Wall_type      (void);
   void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
@@ -457,7 +574,6 @@ protected:
   void setDimParameters      (void);
 
 public:
-  bool chkMediumConsistency(void);
   bool receiveCfgPtr(SklSolverConfig* cfg);
   
   const char* getVoxelFileName(void);
@@ -466,15 +582,12 @@ public:
   REAL_TYPE OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
-  void getXML_InnerItr          (void);
-  void getXML_History           (void);
-  void getXML_Monitor           (MonitorList* M);
   void getXML_Para_Init         (void);
+  void getXML_Polygon           (void);
   void getXML_Steer_1           (DTcntl* DT);
   void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
   void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
   void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
-  void printDomain_debug        (void);
   void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
   void select_Itr_Impl          (ItrCtl* IC);
@@ -489,7 +602,6 @@ public:
 	string getNormString(unsigned d);
   
   unsigned countCompo  (CompoList* cmp, unsigned label);
-  unsigned getNoInFiles(const char* key);
   
   //@fn unsigned isForcing(void) const
   //@brief Forcingコンポーネントがあれば1を返す

@@ -34,12 +34,18 @@ SklSolverCBC::SklSolverInitialize() {
   FILE* fp = NULL;
   REAL_TYPE flop_task=0.0;
   float *cvf=NULL; /// コンポーネントの体積率
+  int  d_length;
   
   ws = v = t = p = NULL;
   mid = NULL;
   bcd = bcv = bh1 = bh2 = bcp = NULL;
   TotalMemory = PrepMemory = 0;
   G_TotalMemory = G_PrepMemory = 0;
+  
+  
+  // 固定パラメータ
+  fixed_parameters();
+  
   
   // 前処理段階のみに使用するオブジェクトをインスタンス
   VoxInfo Vinfo;
@@ -48,6 +54,9 @@ SklSolverCBC::SklSolverInitialize() {
 
   // 並列処理時のランク番号をセット．デフォルトで，procGrp = 0;
   pn.ID = para_mng->GetMyID(pn.procGrp);
+  
+  // 並列処理モード
+  setParallelism();
   
   // condition fileのオープン
   Hostonly_ {
@@ -135,21 +144,6 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING__ PM.setParallelInfo  (pn);
   Ex->setParallelInfo (pn);  // 続く処理より先に初期化しておく
 
-  // Serial or Parallel environment
-  if( para_mng->IsParallel() ){
-    int np=para_mng->GetNodeNum(pn.procGrp);
-    Hostonly_ {
-      fprintf(mp, "\tParallel Execution : %d\n", np);
-      fprintf(fp, "\tParallel Execution : %d\n", np);
-    }
-  }
-  else {
-    Hostonly_ {
-      fprintf(mp, "\tSerial Execution\n");
-      fprintf(fp, "\tSerial Execution\n");
-    }
-  }
-
   // XMLパラメータの取得
   C.getXML_Steer_2(IC, &RF);
   
@@ -183,7 +177,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // タイミング測定開始
   TIMING_start(tm_init_sct); 
-  
+
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start(tm_init_alloc); 
   allocArray_prep(PrepMemory, TotalMemory);
@@ -212,25 +206,19 @@ SklSolverCBC::SklSolverInitialize() {
   
   // BinaryとCut-Distanceの分岐
   if ( C.isCDS() ) { // Cut-Distance Scheme
-       
-    // PolylibとCutlibのセットアップ
-    if ( C.Mode.Example == id_Users ) {
+    
+    if ( C.Mode.Example == id_Polygon ) {
+      
+      // パラメータの取得
+      C.getXML_Polygon();
+      
+      // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
       
-      // 媒質ファイルが指定された場合の処理
-      TIMING_start(tm_voxel_load);
-      if ( C.Mode.Medium_Spec == ON ) {
-        if ( C.vxFormat == Control::Sphere_SVX ) {
-          F.readSVX(this, fp, "SphereSVX", G_size, guide, dc_mid);
-        }
-        else {
-          F.readSBX(this, fp, "SphereSBX", G_size, guide, dc_mid);
-        }
-      }
-      else { // 媒質ファイルを使わない場合，指定された媒質番号で初期化
-        fb_set_int_s_(dc_mid->GetData(), (int*)sz, (int*)&gc, (int*)mid);
-      }
-      TIMING_stop(tm_voxel_load);
+      // 媒質ファイルを使わない場合，指定された媒質番号で初期化
+      d_length = (int)dc_mid->GetArrayLength();
+      int init_id = C.Mode.Base_Medium;
+      fb_set_int_(mid, &d_length, &init_id);
 
     }
     else { // Intrinsic problem
@@ -265,7 +253,7 @@ SklSolverCBC::SklSolverInitialize() {
   // midのガイドセル同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
   
-  
+
   // 領域情報の表示
   Hostonly_ {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
@@ -408,8 +396,8 @@ SklSolverCBC::SklSolverInitialize() {
   Vinfo.adjCellID_Prdc_Inner(dc_mid);
 
   // 媒質数とKindOfSolverの整合性をチェックする
-  if ( !C.chkMediumConsistency() ) {
-    Hostonly_ stamped_printf("\tControl::chkMediumConsistency()\n");
+  if ( !chkMediumConsistency() ) {
+    Hostonly_ stamped_printf("\tchkMediumConsistency()\n");
     return -1;
   }
   
@@ -627,15 +615,12 @@ SklSolverCBC::SklSolverInitialize() {
   
   // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
   // 機能がOFFの場合には直ちに戻る
-  C.getXML_Monitor(&MO);
+  getXML_Monitor(m_solvCfg, &MO);
   
   // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込んで出力する
   if (C.Sampling.log == ON  || MO.hasCellMonitor(cmp, C.NoBC)) {
     MO.write_ID(mid);
   }
-  
-  // History出力の指定
-  C.getXML_History();
   
   // 内部境界条件として指定されたモニタ設定を登録
   MO.setInnerBoundary(cmp, C.NoBC);
@@ -659,7 +644,7 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(mp,"\t>> Component Information\n");
     B.printCompoInfo(mp, fp, Vinfo.get_vox_nv_ptr(), GC_bv, mat);
   }
-  
+
   // コンポーネント数がゼロの場合のチェック
   for (unsigned n=1; n<=C.NoBC; n++) {
     if ( cmp[n].getElement() == 0 ) {
@@ -668,7 +653,7 @@ SklSolverCBC::SklSolverInitialize() {
       Exit(0);
     }
   }
-  
+
   // Check consistency of boundary condition
   for (unsigned n=1; n<=C.NoBC; n++) {
     if ( cmp[n].getType() == HT_SN ) {
@@ -686,10 +671,10 @@ SklSolverCBC::SklSolverInitialize() {
       }
     }
   }
-  
+
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();
-  
+
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
 
@@ -701,7 +686,7 @@ SklSolverCBC::SklSolverInitialize() {
   // ここまでがボクセル準備の時間セクション
 
   // debug; write_distance(cut);
-  
+
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
   TIMING_start(tm_init_alloc);
   allocArray_main (TotalMemory);
@@ -727,7 +712,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.BasicEqs == INCMP_2PHASE ) {
     allocArray_interface(TotalMemory);
   }
-  
+
   // 時間平均用の配列をアロケート
   allocArray_average (TotalMemory, fp);
 
@@ -802,10 +787,10 @@ SklSolverCBC::SklSolverInitialize() {
       Exit(0);
     }    
   }
-    
+
   // V-Sphereに出力インターバルを通知
   C.tell_Interval_2_Sphere();
-  
+
   // 平均値のロード
   if ( C.Start==Control::re_start) {
     TIMING_start(tm_restart);
@@ -1365,6 +1350,59 @@ void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_t
 }
 
 /**
+ @fn bool SklSolverCBC::chkMediumConsistency(void)
+ @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
+ @retval エラーコード
+ @note NoMediumSolidなどは，ParseBC::setMedium()で取得
+ */
+bool SklSolverCBC::chkMediumConsistency(void)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  unsigned long nmSolid = C.NoMediumSolid;
+  unsigned long nmFluid = C.NoMediumFluid;
+  
+  if( para_mng->IsParallel() ){
+    unsigned long nms = nmSolid;
+    unsigned long nmf = nmFluid;
+    if( !para_mng->Allreduce(&nms, &nmSolid, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp) ) return false;
+    if( !para_mng->Allreduce(&nmf, &nmFluid, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp) ) return false;
+  }
+  
+  if ( (nmFluid == 0) && (nmSolid == 0) ) {
+    Hostonly_ printf("\tError : No medium\n");
+    return false;
+  }
+  
+  switch (C.KindOfSolver) {
+    case FLOW_ONLY:
+    case THERMAL_FLOW:
+    case THERMAL_FLOW_NATURAL:
+      
+      if ( nmFluid == 0 ) {
+        Hostonly_ printf("\tError : No FLUID medium\n");
+        return false;
+      }
+      break;
+      
+    case CONJUGATE_HEAT_TRANSFER:
+      if ( ( nmFluid == 0 ) || ( nmSolid == 0 ) ) {
+        Hostonly_ printf("\tError : Fluid/Solid should have at least one medium.\n");
+        return false;
+      }
+      break;
+      
+    case SOLID_CONDUCTION:
+      if ( nmSolid == 0 ) {
+        Hostonly_ printf("\tError : No Solid medium\n");
+        return false;
+      }
+      break;
+  };
+  
+  return true;
+}
+
+/**
  @fn void SklSolverCBC::connectExample(Control* Cref)
  @brief 組み込み例題のインスタンス
  @param Cref Controlクラスのポインタ
@@ -1387,6 +1425,32 @@ void SklSolverCBC::connectExample(Control* Cref)
   }
 }
 
+/**
+ @fn void SklSolverCBC::fixed_parameters(void)
+ @brief 固定パラメータの設定
+ */
+void SklSolverCBC::fixed_parameters(void)
+{
+  // 次元
+  C.NoDimension = 3;
+  
+  // 精度
+  if ( sizeof(REAL_TYPE) == sizeof(double) ) {
+    C.Mode.Precision = SPH_DOUBLE;
+  }
+  else {
+    C.Mode.Precision = SPH_SINGLE;
+  }
+  
+  // ログファイル名
+  strcpy(C.HistoryName,      "history_base.txt");
+  strcpy(C.HistoryCompoName, "history_compo.txt");
+  strcpy(C.HistoryDomfxName, "history_domainflux.txt");
+  strcpy(C.HistoryWallName,  "history_log_wall.txt");
+  strcpy(C.HistoryItrName,   "history_iteration.txt");
+  
+  
+}
 
 /**
  @fn void SklSolverCBC::gather_DomainInfo(void)
@@ -1757,6 +1821,290 @@ void SklSolverCBC::getXMLExample(Control* Cref)
   }
 }
 
+/**
+ @fn void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
+ @brief XMLに記述されたモニタ座標情報を取得し，リストに保持する
+ @param M MonitorList クラスオブジェクトのポインタ
+ */
+void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
+{
+  const CfgElem *elemTop=NULL, *elmL1=NULL, *elmL2=NULL;
+  const char* p=NULL;
+  const char* str=NULL;
+  const char* label=NULL;
+  const char* method=NULL;
+  const char* mode=NULL;
+  const CfgParam * param=NULL;
+  REAL_TYPE f_val=0.0;
+  //int nvar=0;
+  MonitorCompo::Type type;
+  vector<string> variables;
+  
+  // Monitor_List section is already confirmed
+  elemTop = CF->GetTop(STEER);
+  elmL1 = elemTop->GetElemFirst("Monitor_List");
+  
+  // ログ出力
+  if ( !elmL1->GetValue(CfgIdt("log"), &str) ) {
+		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log' in 'Monitor_List'\n");
+		Exit(0);
+	}
+  if     ( !strcasecmp(str, "on") )   C.Sampling.log = ON;
+  else if( !strcasecmp(str, "off") )  C.Sampling.log = OFF;
+  else {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for 'Monitor_List'\n");
+    Exit(0);
+  }
+  
+  if ( C.Sampling.log == OFF ) return;
+  
+  // 出力ファイル名
+  if ( !elmL1->GetValue(CfgIdt("output_file"), &str) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_File' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  strcpy(C.HistoryMonitorName, str);
+  
+  // 集約モード
+  if ( !elmL1->GetValue(CfgIdt("output_mode"), &str) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  if ( !strcasecmp("gather", str)) {
+    C.Sampling.out_mode = MonitorList::GATHER;
+    M->setOutputType(MonitorList::GATHER);
+  }
+  else if ( !strcasecmp("distribute", str)) {
+    C.Sampling.out_mode = MonitorList::DISTRIBUTE;
+    M->setOutputType(MonitorList::DISTRIBUTE);
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyord for 'Output_Mode'\n");
+    Exit(0);
+  }
+  
+  // サンプリング間隔
+  if ( !elmL1->GetValue("Sampling_Interval_Type", &str) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval_Type' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  else {
+    if ( !strcasecmp(str, "step") ) {
+      C.Interval[Interval_Manager::tg_sampled].setMode_Step();
+    }
+    else if ( !strcasecmp(str, "time") ) {
+      C.Interval[Interval_Manager::tg_sampled].setMode_Time();
+    }
+    else {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Sampling_Interval_Type' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    if ( elmL1->GetValue("Sampling_Interval", &f_val) ) {
+      C.Interval[Interval_Manager::tg_sampled].setInterval((double)f_val);
+    }
+    else {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval' in 'Monitor_List'\n");
+      Exit(0);
+    }
+  }
+  
+  // 単位指定
+  if ( !elmL1->GetValue("Unit", &str) ) {
+		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit' in 'Monitor_List'\n");
+		Exit(0);
+	}
+  if     ( !strcasecmp(str, "Dimensional") ) {
+    C.Sampling.unit = DIMENSIONAL;
+    M->setSamplingUnit(DIMENSIONAL);
+  }
+  else if( !strcasecmp(str, "Non_Dimensional") ) {
+    C.Sampling.unit = NONDIMENSIONAL;
+    M->setSamplingUnit(NONDIMENSIONAL);
+  }
+  else {
+    Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit' section\n");
+    Exit(0);
+  }
+  
+  // サンプリングの指定単位が有次元の場合に，無次元に変換
+  if ( C.Sampling.unit == DIMENSIONAL ) {
+    C.Interval[Interval_Manager::tg_sampled].normalizeInterval(C.Tscale);
+  }
+  
+  // モニターリストの読み込み
+  elmL2 = elmL1->GetElemFirst();
+  
+  while (elmL2) {
+    
+    // sampling type & param check
+    p = elmL2->GetName();
+    if ( !strcasecmp(p, "point_set") ) {
+      type = MonitorCompo::POINT_SET;
+      if ( 0 == elmL2->GetElemSize() ) {
+        Hostonly_ stamped_printf("\tParsing error : At least, 1 elem of 'set' should be found in 'point_set'\n");
+        Exit(0);
+      }
+    }
+    else if ( !strcasecmp(p, "line") ) {
+      type = MonitorCompo::LINE;
+      if ( 2 != elmL2->GetElemSize() ) {
+        Hostonly_ stamped_printf("\tParsing error : 2 elems (from/to) should be found in 'line'\n");
+        Exit(0);
+      }
+    }
+    else {
+      Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // Labelの取得．ラベルなしでもエラーではない
+    if ( !(label = elmL2->GetComment()) ) {
+      Hostonly_ stamped_printf("\tParsing warning : No commnet in '%s'\n", p);
+    }
+    
+    // variable
+    variables.clear();
+    param = elmL2->GetParamFirst("variable");
+    while (param) {
+      str=NULL;
+      if ( !param->GetData(&str) ) {
+        Hostonly_ stamped_printf("\tParsing error : fail to get 'variable' in 'Monitor_List'\n");
+        Exit(0);
+      }
+      variables.push_back(str);
+      param = elmL2->GetParamNext(param, "variable");
+    }
+    if (variables.size() == 0) {
+      Hostonly_ stamped_printf("\tParsing error : No 'variable' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // method
+    if (!elmL2->GetValue("sampling_method", &method)) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // mode
+    if (!elmL2->GetValue("sampling_mode", &mode)) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // get coordinate
+    if ( type == MonitorCompo::POINT_SET ) {
+      vector<MonitorCompo::MonitorPoint> pointSet;
+      getXML_Mon_Pointset(M, elmL2, pointSet);
+      M->setPointSet(label, variables, method, mode, pointSet);
+    }
+    else {
+      REAL_TYPE from[3], to[3];
+      int nDivision;
+      getXML_Mon_Line(M, elmL2, from, to, nDivision);
+      M->setLine(label, variables, method, mode, from, to, nDivision);
+    }
+    
+    elmL2 = elmL1->GetElemNext(elmL2); // ahead on the next pointer
+  }
+  
+}
+
+/**
+ @fn void SklSolverCBC::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision)
+ @brief XMLに記述されたモニタ座標情報(Line)を取得
+ @param M MonitorList クラスオブジェクトのポインタ
+ @param elmL2 コンフィギュレーションツリーのポインタ
+ @param from Line始点座標
+ @param to   Line終点座標
+ @param nDivision Line分割数
+ @note データは無次元化して保持
+ */
+void SklSolverCBC::getXML_Mon_Line(MonitorList* M, const CfgElem* elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision)
+{
+  const CfgElem *elmL3=NULL;
+  
+  if ( !elmL2->GetValue("division", &nDivision) ) Exit(0);
+  if ( nDivision == 0 ) Exit(0);
+  
+  // load parameter of 'from' and 'to'
+  if ( !elmL2->GetValue("from", &elmL3) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'from' in 'line' >> %s\n", elmL3->GetName());
+    Exit(0);
+  }
+  else {
+    if ( !elmL3->GetVctValue("x", "y", "z", &from[0], &from[1], &from[2]) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'from'\n");
+      Exit(0);
+    }
+    if (C.Sampling.unit == DIMENSIONAL) {
+      normalizeCord(from);
+    }
+  }
+  if ( !elmL2->GetValue("to", &elmL3) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'to' in 'line' >> %s\n", elmL3->GetName());
+    Exit(0);
+  }
+  else {
+    if ( !elmL3->GetVctValue("x", "y", "z", &to[0], &to[1], &to[2]) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'to'\n");
+      Exit(0);
+    }
+    if (C.Sampling.unit == DIMENSIONAL) {
+      normalizeCord(to);
+    }
+  }
+}
+
+/**
+ @fn void SklSolverCBC::getXML_Mon_Pointset(MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet)
+ @brief XMLに記述されたモニタ座標情報を取得(PointSet)
+ @param M MonitorList クラスオブジェクトのポインタ
+ @param m order
+ @param elmL2 コンフィギュレーションツリーのポインタ
+ @param pointSet PointSet配列
+ @note データは無次元化して保持
+ */
+void SklSolverCBC::getXML_Mon_Pointset(MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet)
+{
+  const CfgElem *elmL3=NULL;
+  REAL_TYPE v[3];
+  const char* str=NULL;
+  char tmpstr[20];
+  
+  v[0] = v[1] = v[2] = 0.0;
+  
+  // load parameter for a set
+  elmL3 = elmL2->GetElemFirst();
+  
+  for (unsigned j=0; j<elmL2->GetElemSize(); j++) {
+    
+    if ( strcasecmp("set", elmL3->GetName()) ) { // not agree
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'set' in 'point_set' >> %s\n", elmL3->GetName());
+      Exit(0);
+    }
+    if ( !elmL3->GetVctValue("x", "y", "z", &v[0], &v[1], &v[2]) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'point_set'\n");
+      Exit(0);
+    }
+    if (C.Sampling.unit == DIMENSIONAL) {
+      normalizeCord(v);
+    }
+    
+    // set Labelの取得．ラベルなしでもエラーではない
+    if ( !(str = elmL3->GetComment()) ) {
+      Hostonly_ stamped_printf("\tParsing warning : No commnet for 'set'\n");
+    }
+    if ( !str ) {
+      sprintf(tmpstr, "point_%d",j);
+      str = tmpstr;
+    }
+    
+    pointSet.push_back(MonitorCompo::MonitorPoint(v, str));
+    
+    elmL3 = elmL2->GetElemNext(elmL3); // ahead on the next pointer
+  }  
+}
 
 /**
  @fn void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned mx, const unsigned dir, const int m_id)
@@ -2358,55 +2706,6 @@ void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
   M->chkState_Mat_Cmp(cmp);
 }
 
-/**
- @fn void SklSolverCBC::set_Parallel_Info(void)
- @brief 並列処理時のプロセッサの隣接ランクを計算する
- */
-void SklSolverCBC::set_Parallel_Info(void)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  int nID[6], sidx[3];
-  
-  if( para_mng->IsParallel() ){
-    if (para_mng->IsEv()) {
-      nID[X_MINUS] = para_mng->GetCommID(-1, 0, 0);
-      nID[Y_MINUS] = para_mng->GetCommID( 0,-1, 0);
-      nID[Z_MINUS] = para_mng->GetCommID( 0, 0,-1);
-      nID[X_PLUS]  = para_mng->GetCommID( 1, 0, 0);
-      nID[Y_PLUS]  = para_mng->GetCommID( 0, 1, 0);
-      nID[Z_PLUS]  = para_mng->GetCommID( 0, 0, 1);
-    }
-    else if (para_mng->IsMb()) {
-      nID[X_MINUS] = para_mng->IsCommID(-1, 0, 0);
-      nID[Y_MINUS] = para_mng->IsCommID( 0,-1, 0);
-      nID[Z_MINUS] = para_mng->IsCommID( 0, 0,-1);
-      nID[X_PLUS]  = para_mng->IsCommID( 1, 0, 0);
-      nID[Y_PLUS]  = para_mng->IsCommID( 0, 1, 0);
-      nID[Z_PLUS]  = para_mng->IsCommID( 0, 0, 1);
-    }
-    else {
-      stamped_printf("\tID %d : not parallel process.\n", pn.ID);
-      Exit(0);
-    }
-    
-    for(int i=0; i<6; i++) pn.nID[i] = nID[i];
-  }
-  
-  if( para_mng->IsParallel() ){
-    sidx[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0, pn.procGrp) + 1;
-    sidx[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1, pn.procGrp) + 1;
-    sidx[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2, pn.procGrp) + 1;
-  } 
-  else {
-    sidx[0] = sidx[1] = sidx[2] = 1;
-  }
-  
-  for(int i=0; i<3; i++) pn.st_idx[i] = sidx[i];
-  
-  //debug; printf("%d : [%d %d %d %d %d %d] [%d %d %d]\n", pn.ID, pn.nID[0],pn.nID[1],pn.nID[2],pn.nID[3],pn.nID[4],pn.nID[5],pn.st_idx[0], pn.st_idx[1],pn.st_idx[2]);
-}
-
 
 
 /**
@@ -2593,6 +2892,102 @@ void SklSolverCBC::setEnsComponent(void)
 }
 
 /**
+ @fn void SklSolverCBC::set_Parallel_Info(void)
+ @brief 並列処理時のプロセッサの隣接ランクを計算する
+ */
+void SklSolverCBC::set_Parallel_Info(void)
+{
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  int nID[6], sidx[3];
+  
+  if( para_mng->IsParallel() ){
+    if (para_mng->IsEv()) {
+      nID[X_MINUS] = para_mng->GetCommID(-1, 0, 0);
+      nID[Y_MINUS] = para_mng->GetCommID( 0,-1, 0);
+      nID[Z_MINUS] = para_mng->GetCommID( 0, 0,-1);
+      nID[X_PLUS]  = para_mng->GetCommID( 1, 0, 0);
+      nID[Y_PLUS]  = para_mng->GetCommID( 0, 1, 0);
+      nID[Z_PLUS]  = para_mng->GetCommID( 0, 0, 1);
+    }
+    else if (para_mng->IsMb()) {
+      nID[X_MINUS] = para_mng->IsCommID(-1, 0, 0);
+      nID[Y_MINUS] = para_mng->IsCommID( 0,-1, 0);
+      nID[Z_MINUS] = para_mng->IsCommID( 0, 0,-1);
+      nID[X_PLUS]  = para_mng->IsCommID( 1, 0, 0);
+      nID[Y_PLUS]  = para_mng->IsCommID( 0, 1, 0);
+      nID[Z_PLUS]  = para_mng->IsCommID( 0, 0, 1);
+    }
+    else {
+      stamped_printf("\tID %d : not parallel process.\n", pn.ID);
+      Exit(0);
+    }
+    
+    for(int i=0; i<6; i++) pn.nID[i] = nID[i];
+  }
+  
+  if( para_mng->IsParallel() ){
+    sidx[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0, pn.procGrp) + 1;
+    sidx[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1, pn.procGrp) + 1;
+    sidx[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2, pn.procGrp) + 1;
+  } 
+  else {
+    sidx[0] = sidx[1] = sidx[2] = 1;
+  }
+  
+  for(int i=0; i<3; i++) pn.st_idx[i] = sidx[i];
+  
+  //debug; printf("%d : [%d %d %d %d %d %d] [%d %d %d]\n", pn.ID, pn.nID[0],pn.nID[1],pn.nID[2],pn.nID[3],pn.nID[4],pn.nID[5],pn.st_idx[0], pn.st_idx[1],pn.st_idx[2]);
+}
+
+/**
+ @fn void SklSolverCBC::setParallelism(void)
+ @brief 並列化と分割の方法を保持
+ */
+void SklSolverCBC::setParallelism(void)
+{
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
+  C.num_thread  = omp_get_max_threads();
+  
+  // Serial or Parallel environment
+  if( para_mng->IsParallel() ){
+    C.num_process = para_mng->GetNodeNum(pn.procGrp);
+    
+    if ( C.num_thread > 1 ) {
+      C.Parallelism = Control::OpenMP;
+    }
+    else {
+      C.Parallelism = Control::Serial;
+    }
+  }
+  else {
+    C.num_process = 1;
+    
+    if ( C.num_thread > 1 ) {
+      C.Parallelism = Control::OpenMP;
+    }
+    else {
+      C.Parallelism = Control::Serial;
+    }
+  }
+
+  
+  // 空間分割
+  if (para_mng->IsMb()) {
+    C.Partition = Control::Mbx;
+  }
+  else if (para_mng->IsEv()) {
+    C.Partition = Control::Equal;
+  }
+  else {
+    Exit(0);
+  }
+  
+}
+
+/**
  @fn void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
  @brief Polylibを準備し，ポリゴンをロードする
  @param m_prep  前処理用のメモリサイズ
@@ -2656,6 +3051,18 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   // 階層情報表示
   PL->show_group_hierarchy();
   PL->show_group_hierarchy(fp);
+  
+  // IDの表示
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  Hostonly_ printf("\t  ID : Polygon Group\n");
+  
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+    std::string m_pg = (*it)->get_name();
+    int m_id = (*it)->get_id();
+    Hostonly_ printf("\t %3d : %s\n", m_id, m_pg.c_str());
+  }
   
   Hostonly_ {
     printf("\n");
@@ -2999,7 +3406,7 @@ void SklSolverCBC::VoxelInitialize(void)
       m_wth[i] = (REAL_TYPE)m_sz[i] * m_pch[i];
     }
   }
-  else { // 組み込み例題の場合
+  else { // その他の組み込み例題の場合
     
     // 分割数，基点，ピッチを取得する
     if ( !SklUtil::getCellInfo(C.NoDimension, m_sz, m_org, m_pch, m_wth) ) Exit(0);
@@ -3013,11 +3420,16 @@ void SklSolverCBC::VoxelInitialize(void)
       }
     }
     
+    // sacaling
+    for (int i=0; i<3; i++) {
+      m_org[i] *= scaling;
+      m_pch[i] *= scaling;
+      m_wth[i] *= scaling;
+    }
+    
     // 各例題のパラメータ設定
     Ex->setDomain(&C, m_sz, m_org, m_wth, m_pch);
   }
-  
-  //stamped_printf("Model read : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
   
   // 以下は，共通処理
   int idiv, jdiv, kdiv;
