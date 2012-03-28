@@ -23,14 +23,133 @@
 #include "SklUtil.h"
 #include "Material.h"
 #include "Component.h"
-#include "Ref_Frame.h"
 #include "FBUtility.h"
 #include "Monitor.h"
 #include "BndOuter.h"
-#include "DTcntl.h"
 #include "Interval_Mngr.h"
 
 using namespace SklCfg;  // to use SklSolverConfig* cfg
+
+
+class DTcntl {
+public:
+  enum dt_Type {
+    dt_direct=1,      // 入力値がΔt
+    dt_cfl_ref_v,     // dt < c dx/U0
+    dt_cfl_max_v,     // dt < c dx/Umax
+    dt_dfn,           // 拡散数制限
+    dt_cfl_dfn_ref_v, // dt = min( c dx/U0, diffusion number )
+    dt_cfl_dfn_max_v, // dt = min( c dx/Umax, diffusion number )
+    dt_cfl_max_v_cp   // 圧縮性　dt < (cfl+soundSpeed) dx/Umax
+  };
+  
+private:
+  unsigned scheme;  // Δtのスキーム種別
+  unsigned KOS;     // Kind of Solver
+  unsigned mode;    // 入力パラメータの次元モード（無次元/有次元）
+  double   CFL;     // Δtの決定に使うCFLなど
+  double   deltaT;  // Δt（無次元）
+  double   dh;      // 格子幅（無次元）
+  double   Reynolds;// レイノルズ数
+  double   Peclet;  // ペクレ数
+  
+public:
+  DTcntl() {
+    scheme = 0;
+    CFL = 0.0;
+    KOS = 0;
+    mode = 0;
+    deltaT = 0.0;
+    dh = Reynolds = Peclet = 0.0;
+  }
+  ~DTcntl() {}
+  
+public:
+  //@fn unsigned get_Scheme(void) const
+  unsigned get_Scheme(void) const { return scheme; };
+  
+  //@fn double get_dt(void) const
+  double get_DT(void) const { return deltaT; };
+  
+  //@fn Sdouble get_CFL(void) const
+  double get_CFL(void) const { return CFL; };
+  
+  //@fn double DTcntl::dtCFL(const double Uref) const
+  //@brief CFL数で指定されるdtを計算
+  //@param Uref 速度の参照値（無次元）
+  double dtCFL(const double Uref) const {
+    double v = (Uref < 1.0) ? 1.0 : Uref; // 1.0 is non-dimensional reference velocity
+    return (dh*CFL / v);
+  }
+
+  //@fn double DTcntl::dtDFN(const double coef)
+  //@brief 拡散数のdt制限
+  //@param coef 係数 (Reynolds number or Peclet number)
+  double dtDFN(const double coef) const { return coef * dh*dh/6.0; }
+  
+  bool chkDtSelect(void);
+  bool set_Scheme (const char* str, const double val);
+  
+  unsigned set_DT (const double vRef);
+  void set_Vars   (const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe);
+};
+
+
+
+class ReferenceFrame {
+  
+protected:
+  unsigned Frame;    /// 参照座標系
+  double TimeAccel;  /// 加速時間（無次元）
+  double v00[4];     /// 参照速度（無次元
+  double GridVel[3]; /// 座標系の移動速度（無次元）
+  
+public:
+  /// 参照系の定義
+  enum frame_type {
+    frm_static,
+    frm_translation,
+    frm_rotation
+  };
+  
+  ReferenceFrame(){
+    Frame     = 0;
+    TimeAccel = 0.0;
+    v00[0] = v00[1] = v00[2] = v00[3] = 0.0;
+    GridVel[0] = GridVel[1] = GridVel[2] = 0.0;
+  }
+  ~ReferenceFrame() {}
+  
+  void setAccel  (const double m_timeAccel);
+  void setFrame  (const unsigned m_frame);
+  void setGridVel(const double* m_Gvel);
+  void setV00    (const double time, const bool init=false);
+  
+  //@fn unsigned getFrame(void) const
+  //@brief Frameを返す
+  unsigned getFrame(void) const {
+    return Frame;
+  }
+  
+  //@fn double getAccel(void) const
+  //@brief Frameを返す
+  double getAccel(void) const {
+    return TimeAccel;
+  }
+  
+  //@fn void copyV00(double* m_v0) const
+  //@brief v00をコピーする
+  void copyV00(double* m_v0) const {
+    for (int i=0; i<4; i++) m_v0[i] = v00[i];
+  }
+  
+  //@fn void copyGridVel(double* m_gv) const
+  //@brief GridVelをコピーする
+  void copyGridVel(double* m_gv) const {
+    for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
+  }
+};
+
 
 
 class ItrCtl {

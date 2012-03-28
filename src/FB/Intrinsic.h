@@ -77,4 +77,21 @@ public:
   
   void setControlVars(Control* R);
 };
+
+
+class IP_Users : public Intrinsic {
+public:
+  IP_Users(){}
+  ~IP_Users() {}
+  
+protected:
+  
+public:
+  // @fn const char* getExampleName(void)
+  // @brief ユーザー例題の名称を返す
+  const char* getExampleName(void) {
+    return ("User's problem");
+  }
+};
+
 #endif // _SKL_FB_INTRNSC_H_

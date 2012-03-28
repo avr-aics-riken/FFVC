@@ -21,7 +21,7 @@
 #include "Component.h"
 #include "FBUtility.h"
 #include "config/SklSolverConfig.h"
-#include "config/SklSolverConfig.h"
+
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class  ParseMat {

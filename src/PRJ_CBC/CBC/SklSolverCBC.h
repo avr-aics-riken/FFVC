@@ -31,7 +31,6 @@
 #include "FBUtility.h"
 #include "VoxInfo.h"
 #include "SklUtil.h"
-#include "IP_Users.h"
 #include "History.h"
 #include "CBC_SetBC.h"
 #include "Parallel_node.h"
@@ -39,7 +38,6 @@
 #include "FileIO.h"
 #include "Monitor.h"
 #include "PerfMonitor.h"
-#include "DTcntl.h"
 
 #include "IP_Duct.h"
 #include "IP_PPLT2D.h"

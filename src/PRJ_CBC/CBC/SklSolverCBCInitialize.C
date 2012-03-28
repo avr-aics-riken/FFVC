@@ -3001,14 +3001,14 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   unsigned poly_gc[3];
   float    poly_org[3], poly_dx[3];
   poly_gc[0]  = poly_gc[1] = poly_gc[2] = guide;
-  poly_dx[0]  = (float)C.dx[0]*C.RefLength;
-  poly_dx[1]  = (float)C.dx[1]*C.RefLength;
-  poly_dx[2]  = (float)C.dx[2]*C.RefLength;
-  poly_org[0] = (float)C.org[0]*C.RefLength;
-  poly_org[1] = (float)C.org[1]*C.RefLength;
-  poly_org[2] = (float)C.org[2]*C.RefLength;
+  poly_dx[0]  = (float)C.dx[0]*C.RefLength*10.0;
+  poly_dx[1]  = (float)C.dx[1]*C.RefLength*10.0;
+  poly_dx[2]  = (float)C.dx[2]*C.RefLength*10.0;
+  poly_org[0] = -1.0; //(float)C.org[0]*C.RefLength;
+  poly_org[1] = -1.0; //(float)C.org[1]*C.RefLength;
+  poly_org[2] = -1.0; //(float)C.org[2]*C.RefLength;
   
-  //stamped_printf("poly : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
+  stamped_printf("poly : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
   
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -3047,8 +3047,9 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   TIMING_stop(tm_polygon_load);
   
   // 階層情報表示 debug
-  //PL->show_group_hierarchy();
-  //PL->show_group_hierarchy(fp);
+  PL->show_group_hierarchy();
+  PL->show_group_hierarchy(fp);
+  
   
   // IDの表示
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
@@ -3060,7 +3061,9 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     Hostonly_ printf("\t %3d : %s\n", m_id, m_pg.c_str());
+    PL->show_group_info(m_pg);
   }
+  delete pg_roots;
   
   Hostonly_ {
     printf("\n");
@@ -3081,30 +3084,30 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     FBUtility::displayMemory("Polygon", G_poly_mem, poly_mem, fp, mp);
   }
   
-  /* Triangle display
+  // Triangle display
    PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
    t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
    m_min = t1 - t2;      // 1層外側まで
    m_max = t1 + t3 + t2; // 
    printf("min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
    printf("max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
-   vector<Triangle*>* trias = PL->search_polygons("root", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+   vector<Triangle*>* trias = PL->search_polygons("Tube", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
    
-   PolylibNS::Vec3f *p, nrl, *n;
+   PolylibNS::Vec3f *p, nrl, n;
    int c=0;
-   vector<Triangle*>::iterator it;
-   for (it = trias->begin(); it != trias->end(); it++) {
-   p = (*it)->get_vertex();
-   n = &(*it)->get_normal();
+   vector<Triangle*>::iterator it2;
+   for (it2 = trias->begin(); it2 != trias->end(); it2++) {
+   p = (*it2)->get_vertex();
+   n = (*it2)->get_normal();
    printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++, 
    p[0].t[0], p[0].t[1], p[0].t[2],
    p[1].t[0], p[1].t[1], p[1].t[2],
    p[2].t[0], p[2].t[1], p[2].t[2],
-   (*n).t[0], (*n).t[1], (*n).t[2]);
+   n.t[0], n.t[1], n.t[2]);
    }
    
-   delete trias; */ //後始末
-  
+   delete trias;  //後始末
+
   
   /* Polylib: STLデータ書き出しテスト
    unsigned poly_out_para = IO_GATHER; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
@@ -3141,7 +3144,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   for ( unsigned i=0; i<3; i++) {
     n_cell[i] = size[i] + 2*guide; // 分割数+ガイドセル
-    poly_org[i] -= poly_dx[i]*guide;   // ガイドセル分だけシフト
+    //poly_org[i] -= poly_dx[i]*guide;   // ガイドセル分だけシフト
   }
   size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   

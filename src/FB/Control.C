@@ -12,6 +12,235 @@
 #include "Control.h"
 
 /**
+ @fn bool DTcntl::chkDtSelect(void)
+ @brief 時間積分幅とKindOfSolver種別の整合性をチェック
+ */
+bool DTcntl::chkDtSelect(void)
+{
+  switch (KOS) {
+    case FLOW_ONLY:
+    case THERMAL_FLOW:
+    case THERMAL_FLOW_NATURAL:
+    case CONJUGATE_HEAT_TRANSFER:
+      break;
+      
+    case SOLID_CONDUCTION:
+      if ( (scheme != dt_direct) && (scheme != dt_dfn) ) {
+        return false;
+      }
+      break;
+  }
+  return true;
+}
+
+/**
+ @fn bool DTcntl::set_Scheme(const char* str, const double val)
+ @brief Δtのスキームを設定する
+ @retval 設定の成否
+ @param str キーワード
+ @param val 値
+ @note 現時点では，Δtは一定値のみ
+ */
+bool DTcntl::set_Scheme(const char* str, const double val)
+{
+  if ( !str ) return false;
+  
+  if ( !strcasecmp(str, "Direct") ) {
+    scheme = dt_direct;
+  }
+  else if ( !strcasecmp(str, "CFL_Reference_Velocity") ) {
+    scheme = dt_cfl_ref_v;
+  }
+  //else if ( !strcasecmp(str, "CFL_MaxV") ) {
+  //  scheme = dt_cfl_max_v;
+  //}
+  else if ( !strcasecmp(str, "Diffusion") ) {
+    scheme = dt_dfn;
+  }
+  else if ( !strcasecmp(str, "CFL_Diffusion_Reference_Velocity") ) {
+    scheme = dt_cfl_dfn_ref_v;
+  }
+  //else if ( !strcasecmp(str, "CFL_DFN_MaxV") ) {
+  //  scheme = dt_cfl_dfn_max_v;
+  //}
+  //else if ( !strcasecmp(str, "CFL_MaxV_CP") ) {
+  //  scheme = dt_cfl_max_v_cp;
+  //}
+  else {
+    return false;
+  }
+  
+  CFL = val;
+  
+  return true;
+}
+
+/**
+ @fn void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
+ @brief 基本変数をコピー
+ @param m_kos ソルバーの種類
+ @param m_mode 次元モード
+ @param m_dh 無次元格子幅
+ @param re レイノルズ数
+ @param pe ペクレ数
+ */
+void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
+{
+  KOS      = m_kos;
+  mode     = m_mode;
+  dh       = m_dh;
+  Reynolds = re;
+  Peclet   = pe; 
+}
+
+/**
+ @fn unsigned DTcntl::set_DT(const double vRef)
+ @brief 各種モードに対応する時間積分幅を設定する
+ @retval return code
+ @param vRef 速度の参照値（無次元）
+ @note deltaTは無次元
+ */
+unsigned DTcntl::set_DT(const double vRef)
+{
+  double dtC, dtD, a, b;
+  
+  switch ( scheme ) {
+    case dt_direct:
+      deltaT = CFL;
+      break;
+      
+    case dt_cfl_ref_v:
+      if ( KOS == SOLID_CONDUCTION ) return 1;
+      deltaT = dtCFL( vRef );
+      break;
+      
+    case dt_cfl_max_v:
+      if ( KOS == SOLID_CONDUCTION ) return 2;
+      deltaT = dtCFL(vRef);
+      break;
+      
+    case dt_dfn:
+      if ( KOS != SOLID_CONDUCTION ) return 3;
+      deltaT = dtDFN( Peclet );
+      break;
+      
+    case dt_cfl_dfn_ref_v:
+      switch (KOS) {
+        case FLOW_ONLY:
+          dtC = dtCFL( vRef );
+          dtD = dtDFN( Reynolds );
+          deltaT = (dtC > dtD) ? dtD : dtC;
+          break;
+          
+        case THERMAL_FLOW:
+        case THERMAL_FLOW_NATURAL:
+        case CONJUGATE_HEAT_TRANSFER:
+          dtC = dtCFL( vRef );
+          a = dtDFN( Reynolds );
+          b = dtDFN( Peclet );
+          dtD = (a > b) ? b : a;
+          deltaT = (dtC > dtD) ? dtD : dtC;
+          break;
+          
+        case SOLID_CONDUCTION:
+          return 4;
+          break;
+      }
+      break;
+      
+    case dt_cfl_dfn_max_v:
+      return 6;
+      break;
+      
+    case dt_cfl_max_v_cp:
+      return 7;
+      break;
+  }
+  
+  return 0;
+}
+
+
+/**
+ @fn void ReferenceFrame::setFrame(const unsigned m_frame)
+ @brief 変数をセットする
+ @param m_frame 参照フレームの種類
+ */
+void ReferenceFrame::setFrame(const unsigned m_frame)
+{
+  Frame = m_frame;
+}
+
+/**
+ @fn void ReferenceFrame::setAccel(const double m_timeAccel)
+ @brief 変数をセットする
+ @param m_timeAccel 加速時間（無次元）
+ */
+void ReferenceFrame::setAccel(const double m_timeAccel)
+{
+  TimeAccel = m_timeAccel;
+}
+
+/**
+ @fn void ReferenceFrame::setGridVel(const double* m_Gvel)
+ @brief 変数をセットする
+ @param m_Gvel 格子速度成分の単位方向ベクトル
+ */
+void ReferenceFrame::setGridVel(const double* m_Gvel)
+{
+  GridVel[0] = m_Gvel[0];
+  GridVel[1] = m_Gvel[1];
+  GridVel[2] = m_Gvel[2];
+}
+
+/**
+ @fn void setV00(const double time, const bool init)
+ @brief 参照速度を計算する
+ @param time 時刻（無次元）
+ @param init フラグ
+ @todo 回転
+ */
+void ReferenceFrame::setV00(const double time, const bool init) 
+{
+  if (init == true) {
+    printf("\tReference velocity is set to 1.0 for checking.\n\n");
+    v00[0]=1.0;
+  }
+  else {
+    if ( TimeAccel == 0.0 ) {
+      v00[0] = 1.0;
+    }
+    else {
+      const double c_pai = (double)(2.0*asin(1.0));
+      v00[0] = 0.5*(1.0-cos(c_pai*time/(TimeAccel)));
+      if ( time > (TimeAccel) ) v00[0] = 1.0;
+    }
+  }
+  
+  double u0 = v00[0];
+  
+  switch (Frame) {
+    case frm_static:
+      v00[1] = 0.0;
+      v00[2] = 0.0;
+      v00[3] = 0.0;
+      break;
+      
+    case frm_translation:
+      v00[1] = u0*GridVel[0];  // v0x
+      v00[2] = u0*GridVel[1];  // v0y
+      v00[3] = u0*GridVel[2];  // v0z
+      break;
+      
+    case frm_rotation:
+      break;
+  }
+  
+}
+
+
+
+/**
  @fn void Control::convertHexCoef(REAL_TYPE* cf, REAL_TYPE Density)
  @brief 熱交換器パラメータの変換（水と水銀）
  @param cf パラメータ値

@@ -23,7 +23,6 @@
 #include "SklUtil.h"
 #include "Intrinsic.h"
 #include "Parallel_node.h"
-#include "Ref_Frame.h"
 
 class SetBC : public Parallel_Node {
 protected:
