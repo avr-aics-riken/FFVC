@@ -21,13 +21,13 @@
   q_b = 0.0
   q_t = 0.0
 
-  if ( ibits(idx,             0, bitw_cmp) == odr ) q_p = 1.0
-  if ( ibits(bd(i-1,j  ,k  ), 0, bitw_cmp) == odr ) q_w = 1.0
-  if ( ibits(bd(i+1,j  ,k  ), 0, bitw_cmp) == odr ) q_e = 1.0
-  if ( ibits(bd(i  ,j-1,k  ), 0, bitw_cmp) == odr ) q_s = 1.0
-  if ( ibits(bd(i  ,j+1,k  ), 0, bitw_cmp) == odr ) q_n = 1.0
-  if ( ibits(bd(i  ,j  ,k-1), 0, bitw_cmp) == odr ) q_b = 1.0
-  if ( ibits(bd(i  ,j  ,k+1), 0, bitw_cmp) == odr ) q_t = 1.0
+  if ( ibits(idx,             0, bitw_6) == odr ) q_p = 1.0
+  if ( ibits(bd(i-1,j  ,k  ), 0, bitw_6) == odr ) q_w = 1.0
+  if ( ibits(bd(i+1,j  ,k  ), 0, bitw_6) == odr ) q_e = 1.0
+  if ( ibits(bd(i  ,j-1,k  ), 0, bitw_6) == odr ) q_s = 1.0
+  if ( ibits(bd(i  ,j+1,k  ), 0, bitw_6) == odr ) q_n = 1.0
+  if ( ibits(bd(i  ,j  ,k-1), 0, bitw_6) == odr ) q_b = 1.0
+  if ( ibits(bd(i  ,j  ,k+1), 0, bitw_6) == odr ) q_t = 1.0
 
   b0 = vf(i,j,k)
   bw = 0.5*( b0 + vf(i-1,j  ,k  ) )

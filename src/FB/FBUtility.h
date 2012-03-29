@@ -221,6 +221,24 @@ public:
     int t3 = sz[0]+t1;
     return ( 6*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) + l );
   }
+  
+  /**
+   @fn static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int l, int i, int j, int k)
+   @brief Fortranの3次元cut用Bid8インデックスから1次元インデックスを取得する
+   @param sz    I,J,K方向サイズ（ガイドセルを含まない）
+   @param gc    ガイドセル
+   @param i     I方向インデックス（ガイドセルを含まない）
+   @param j     J方向インデックス（ガイドセルを含まない）
+   @param k     K方向インデックス（ガイドセルを含まない）
+   @return      1次元インデックス
+   */
+  static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int i, int j, int k) {
+    int t1 = gc*2;
+    int t2 = gc-1;
+    int t3 = sz[0]+t1;
+    return ( 2*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) );
+  }
+  
 };
 
 #endif // _SKL_FB_UTY_H_

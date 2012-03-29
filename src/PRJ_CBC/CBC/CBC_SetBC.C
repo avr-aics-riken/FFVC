@@ -1764,7 +1764,7 @@ REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* t, unsigned* bh2, int n, REAL_TY
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( (bh2[m] & MASK_CMP_ID) == n ) {
+        if ( (bh2[m] & MASK_6) == n ) {
           t[m] += dt*hs;
           c++; 
         }
@@ -1798,7 +1798,7 @@ void SetBC3D::ps_IBC_ConstTemp(REAL_TYPE* t, unsigned* bh2, int n)
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( (bh2[m] & MASK_CMP_ID) == n ) t[m] = tmp;
+        if ( (bh2[m] & MASK_6) == n ) t[m] = tmp;
       }
     }
   }

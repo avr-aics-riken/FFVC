@@ -127,11 +127,9 @@
 #define FORCING_BIT   28 //  外力モデルの識別子
 
 // マスクのビット幅
-#define MASK_CMP_ID   0x3f // 6 bit幅
-#define MASK_MAT      0x3f // 6 bit幅
-#define MASK_CELL_ID  0xff // 8 bit幅
-#define MASK_VF       0xff // 8 bit幅
-#define MASK_5        0x1f // 5 bit幅
+#define MASK_6     0x3f // 6 bit幅
+#define MASK_8     0xff // 8 bit幅
+#define MASK_5     0x1f // 5 bit幅
 
 // エンコードビット　P
 #define BC_D_T     29
@@ -243,16 +241,16 @@
 #define BIT_SHIFT(a,b) ( (a >> b) & 0x1 )
 
 // コンポーネントエントリを返す (uint a)
-#define DECODE_CMP(a) ( (a >> TOP_CMP_ID) & MASK_CMP_ID )
+#define DECODE_CMP(a) ( (a >> TOP_CMP_ID) & MASK_6 )
 
 // ID番号を返す (uint a)
-#define DECODE_ID(a) ( (a >> TOP_CELL_ID) & MASK_CELL_ID )
+#define DECODE_ID(a) ( (a >> TOP_CELL_ID) & MASK_8 )
 
 // MaterialListへのエントリを返す (uint a)
-#define DECODE_MAT(a) ( (a >> TOP_MATERIAL) & MASK_MAT )
+#define DECODE_MAT(a) ( (a >> TOP_MATERIAL) & MASK_6 )
 
 // Volume Fraction[0-255]を返す (uint a)
-#define DECODE_VF(a) ( (a >> TOP_VF) & MASK_VF )
+#define DECODE_VF(a) ( (a >> TOP_VF) & MASK_8 )
 
 // BCindex aの第bビットがONかどうかを調べ，ONのとき，trueを返す
 #define BIT_IS_SHIFT(a,b) ( ( (a >> b) & 0x1 ) ? true : false )

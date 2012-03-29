@@ -81,6 +81,7 @@ protected:
   unsigned encQfaceISO_SF      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   unsigned encQfaceISO_SS      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   unsigned encVbit_IBC         (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp);
+  unsigned encVbit_IBC_Cut     (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp);
   unsigned find_mat_odr        (unsigned mat_id);
   
   void checkColorTable       (FILE* fp, unsigned size, int* table);

@@ -444,12 +444,9 @@ void VoxInfo::chkBCIndexD(unsigned* bcd, const char* fname)
   int gd = (int)guide;
   
   // ガイドセルを含む全領域
-  //for (k=1-gd; k<=kx+gd; k++) {
-  //for (j=1-gd; j<=jx+gd; j++) {
-  //for (i=1-gd; i<=ix+gd; i++) {
-  for (k=1; k<=5; k++) {
-    for (j=100; j<=100; j++) {
-      for (i=96; i<=106; i++) {
+  for (k=1-gd; k<=kx+gd; k++) {
+    for (j=1-gd; j<=jx+gd; j++) {
+      for (i=1-gd; i<=ix+gd; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bcd[m];
         Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n", 
@@ -492,16 +489,13 @@ void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
   int gd = (int)guide;
   
   // ガイドセルを含む全領域
-  //for (k=1-gd; k<=kx+gd; k++) {
-    //for (j=1-gd; j<=jx+gd; j++) {
-      //for (i=1-gd; i<=ix+gd; i++) {
-  for (k=1; k<=5; k++) {
-    for (j=100; j<=100; j++) {
-      for (i=96; i<=106; i++) {
+  for (k=1-gd; k<=kx+gd; k++) {
+    for (j=1-gd; j<=jx+gd; j++) {
+      for (i=1-gd; i<=ix+gd; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         d = bcd[m];
         s = bcp[m];
-        q = d & MASK_CMP_ID;
+        q = d & MASK_6;
         id = cmp[q].getID();
         Hostonly_ fprintf(fp, "[%4d %4d %4d], cmp[%3d]=%3d, mat[%3d], state=%1d: D(ewnstb) [%d %d %d %d %d %d] N [%d %d %d %d %d %d] NDAG [%d %d %d %d %d %d] DIAG=%1d :idx=%d\n", 
                           i, j, k, q, id, DECODE_MAT(d), IS_FLUID(d), 
@@ -540,12 +534,9 @@ void VoxInfo::chkBCIndexV(unsigned* bcv, const char* fname)
   int gd = (int)guide;
   
   // ガイドセルを含む全領域
-  //for (k=1-gd; k<=kx+gd; k++) {
-    //for (j=1-gd; j<=jx+gd; j++) {
-      //for (i=1-gd; i<=ix+gd; i++) {
-  for (k=1; k<=5; k++) {
-    for (j=100; j<=100; j++) {
-      for (i=96; i<=106; i++) {
+  for (k=1-gd; k<=kx+gd; k++) {
+    for (j=1-gd; j<=jx+gd; j++) {
+      for (i=1-gd; i<=ix+gd; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = bcv[m];
         Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: VBC(ewnstb) [%2d %2d %2d %2d %2d %2d] : idx=%d\n", 
@@ -1151,8 +1142,8 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
           mi = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
           s0 = bx[m0];
           si = bx[mi];
-          if ( ( ((s0 & MASK_CMP_ID) == n) && ((si & MASK_CMP_ID) != n) )
-              ||  ( ((s0 & MASK_CMP_ID) != n) && ((si & MASK_CMP_ID) == n) ) ) {
+          if ( ( ((s0 & MASK_6) == n) && ((si & MASK_6) != n) )
+              ||  ( ((s0 & MASK_6) != n) && ((si & MASK_6) == n) ) ) {
             if ( IS_FLUID(si) && IS_FLUID(s0) ) c[0]++;
           }
         }
@@ -1169,8 +1160,8 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
           mj = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
           s0 = bx[m0];
           sj = bx[mj];
-          if ( ( ((s0 & MASK_CMP_ID) == n) && ((sj & MASK_CMP_ID) != n) )
-              ||  ( ((s0 & MASK_CMP_ID) != n) && ((sj & MASK_CMP_ID) == n) ) ) {
+          if ( ( ((s0 & MASK_6) == n) && ((sj & MASK_6) != n) )
+              ||  ( ((s0 & MASK_6) != n) && ((sj & MASK_6) == n) ) ) {
             if ( IS_FLUID(sj) && IS_FLUID(s0) ) c[1]++;
           }
         }
@@ -1187,8 +1178,8 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
           mk = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
           s0 = bx[m0];
           sk = bx[mk];
-          if ( ( ((s0 & MASK_CMP_ID) == n) && ((sk & MASK_CMP_ID) != n) )
-              ||  ( ((s0 & MASK_CMP_ID) != n) && ((sk & MASK_CMP_ID) == n) ) ) {
+          if ( ( ((s0 & MASK_6) == n) && ((sk & MASK_6) != n) )
+              ||  ( ((s0 & MASK_6) != n) && ((sk & MASK_6) == n) ) ) {
             if ( IS_FLUID(sk) && IS_FLUID(s0) ) c[2]++;
           }
         }
@@ -3739,6 +3730,234 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
 }
 
 /**
+ @fn unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp)
+ @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
+ @retval エンコードしたセル数
+ @param order cmp[]のエントリ番号
+ @param id  CellID
+ @param mid ボクセル配列
+ @param bv BCindex V
+ @param deface 面を指定するid
+ @param bp BCindex P
+ @note 対象セルは流体セルであること
+ */
+unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  int i,j,k, idd;
+  unsigned g=0;
+  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  unsigned register s, q;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  idd = (int)id;
+  
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        c_p = mid[m_p];
+        
+        s = bv[m_p];
+        q = bp[m_p];
+        
+        if ( (c_p == deface) && IS_FLUID(s) ) { // テストセルが流体，かつdeface
+          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
+          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          // X-
+          if ( c_w == idd ) {
+            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+              if ( !IS_FLUID( bv[m_w] ) ) { // 流入出セルが固体であるかをチェックする
+                s |= (order << BC_FACE_W);
+                q = offBit(q, FACING_W);
+                g++;
+              }
+              else {
+                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
+                Exit(0);
+              }
+            }
+          }
+          
+          // X+
+          if ( c_e == idd ) {
+            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+              if ( !IS_FLUID( bv[m_e] ) ) { 
+                s |= (order << BC_FACE_E);
+                q = offBit(q, FACING_E);
+                g++;
+              }
+              else {
+                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
+                Exit(0);
+              }
+            }
+          }
+          
+          // Y-
+          if ( c_s == idd ) {
+            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+              if ( !IS_FLUID( bv[m_s] ) ) { 
+                s |= (order << BC_FACE_S);
+                q = offBit(q, FACING_S);
+                g++;
+              }
+              else {
+                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
+                Exit(0);
+              }
+            }
+          }
+          
+          // Y+
+          if ( c_n == idd ) {
+            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+              if ( !IS_FLUID( bv[m_n] ) ) { 
+                s |= (order << BC_FACE_N);
+                q = offBit(q, FACING_N);
+                g++;
+              }
+              else {
+                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
+                Exit(0);
+              }
+            }
+          }
+          
+          // Z-
+          if ( c_b == idd ) {
+            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+              if ( !IS_FLUID( bv[m_b] ) ) { 
+                s |= (order << BC_FACE_B);
+                q = offBit(q, FACING_B);
+                g++;
+              }
+              else {
+                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
+                Exit(0);
+              }
+            }
+          }
+          
+          // Z+
+          if ( c_t == idd ) {
+            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+              if ( !IS_FLUID( bv[m_t] ) ) { 
+                s |= (order << BC_FACE_T);
+                q = offBit(q, FACING_T);
+                g++;
+              }
+              else {
+                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
+                Exit(0);
+              }
+            }
+          }
+          
+          bv[m_p] = s;
+          bp[m_p] = q;
+        }
+      } // i-loop
+    }
+  }
+  
+  // iddセルのSTATE_BITをFLUIDに変更
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        c_p = mid[m_p];
+        
+        s = bv[m_p];
+        
+        if ( (c_p == deface) && IS_FLUID(s) ) {
+          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
+          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          // X-
+          if ( c_w == idd ) {
+            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+              bv[m_w] = onBit( bv[m_w], STATE_BIT );
+            }
+          }
+          
+          // X+
+          if ( c_e == idd ) {
+            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+              bv[m_e] = onBit( bv[m_e], STATE_BIT );
+            }
+          }
+          
+          // Y-
+          if ( c_s == idd ) {
+            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+              bv[m_s] = onBit( bv[m_s], STATE_BIT );
+            }
+          }
+          
+          // Y+
+          if ( c_n == idd ) {
+            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+              bv[m_n] = onBit( bv[m_n], STATE_BIT );
+            }
+          }
+          
+          // Z-
+          if ( c_b == idd ) {
+            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+              bv[m_b] = onBit( bv[m_b], STATE_BIT );
+            }
+          }
+          
+          // Z+
+          if ( c_t == idd ) {
+            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+              bv[m_t] = onBit( bv[m_t], STATE_BIT );
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // 対象面数の集約
+  if( para_mng->IsParallel() ) {
+    unsigned tmp = g;
+    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  return g;
+}
+
+
+/**
  @fn void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, string chk, unsigned* bp, unsigned BCtype)
  @brief 外部境界に接するセルにおいて，各種速度境界条件に対応する媒質をチェックし，bv[]にビットフラグをセットする
  @param face 外部境界面番号
@@ -4387,7 +4606,7 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( (bx[m] & MASK_CMP_ID) == n ) {
+        if ( (bx[m] & MASK_6) == n ) {
           tx = (SKL_REAL)(i+m_sz[0]) - cn[0]; // グローバルインデクスで評価
           ty = (SKL_REAL)(j+m_sz[1]) - cn[1];
           tz = (SKL_REAL)(k+m_sz[2]) - cn[2];
@@ -4643,7 +4862,7 @@ void VoxInfo::resizeBVcell(const int* st, const int* ed, unsigned n, unsigned* b
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bx[m];
         
-        if ( ( s & MASK_CMP_ID) == n ) {
+        if ( ( s & MASK_6) == n ) {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -5600,7 +5819,12 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool 
       case SPEC_VEL:
       case SPEC_VEL_WH:
       case OUTFLOW:
-        cmp[n].setElement( encVbit_IBC(n, id, mid, bv, deface, bp) ); // bdへのエンコードはsetBCindexP()で済み
+        if (isCDS) { // cut
+          cmp[n].setElement( encVbit_IBC_Cut(n, id, mid, bv, deface, bp) );
+        }
+        else { // binary
+          cmp[n].setElement( encVbit_IBC(n, id, mid, bv, deface, bp) ); // bdへのエンコードはsetBCindexP()で済み
+        }
         break;
     }    
   }
@@ -5631,7 +5855,7 @@ void VoxInfo::setCmpFraction(CompoList* cmp, unsigned* bx, float* vf)
           for (i=st[0]; i<=ed[0]; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bx[m];
-            if ( ( s & MASK_CMP_ID) == n ) {
+            if ( ( s & MASK_6) == n ) {
               f = (int)floorf(vf[m]*255.0 + 0.5); // 0.0<vf<1.0 の四捨五入 > 8ビットで量子化
               if ( f > 255 ) assert(0);
               s |= (f << TOP_VF); // 8ビットで量子化

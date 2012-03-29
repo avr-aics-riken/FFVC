@@ -569,7 +569,7 @@
       beta = 1.0;
       bdx = bd(i,j,k)
       if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
-        ! beta = 1.0 - real(ibits( bdx, top_vf, bitw_vf )) * qtz ! 1-体積率
+        ! beta = 1.0 - real(ibits( bdx, top_vf, bitw_8 )) * qtz ! 1-体積率
         beta = 1.0 - cvf(i,j,k)
       endif
       

@@ -98,6 +98,7 @@ SklSolverCBC::SklSolverCBC() {
   
   // Cut
   cut = NULL;
+  cut_id = NULL;
   
   // コンポーネント配列
   component_array=NULL;
@@ -202,6 +203,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   // Cut
   cut = NULL;
+  cut_id = NULL;
   
   // コンポーネント配列
   component_array=NULL;

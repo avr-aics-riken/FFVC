@@ -715,7 +715,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_CMP_ID) == n) {
+          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_6) == n) {
             nPointList[pn.ID]++;
           }
         }
@@ -746,7 +746,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_CMP_ID) == n) {
+          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_6) == n) {
             buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
             buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
             buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;

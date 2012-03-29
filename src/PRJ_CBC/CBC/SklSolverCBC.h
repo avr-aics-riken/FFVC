@@ -104,7 +104,8 @@ public:
 
   // Cutlib
   CutPos32Array* cutPos;
-  CutBid8Array*  cutBid;
+  //CutBid8Array*  cutBid;
+  CutBid5Array*  cutBid;
   
   // for parallel
   Parallel_Info pn;
@@ -190,6 +191,7 @@ public:
 
   // (6, ix+guide*2, jx+guide*2, kx+guide*2)
   float* cut; // Cutlibで確保する配列のポインタを受け取る
+  int* cut_id;   // カット点のID
   
   // for tuning
   int cf_sz[3];  //buffer size
@@ -298,6 +300,7 @@ public:
   void prepOutput           (void);
   void setBCinfo            (ParseBC* B);
   void setComponentVF       (float* cvf);
+  void setVIBC_from_Cut     (void);
   void setEnsComponent      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);

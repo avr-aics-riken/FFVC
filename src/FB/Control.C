@@ -1926,6 +1926,7 @@ void Control::getXML_Unit(void)
     Exit(0);
   }
 
+  if( !strcasecmp(str, "Gauge") )         Unit.Prs = Unit_Gauge;
   else if( !strcasecmp(str, "Absolute") ) Unit.Prs = Unit_Absolute;
   else {
     stamped_printf("\tInvalid keyword is described at 'Pressure' in 'Unit'\n");

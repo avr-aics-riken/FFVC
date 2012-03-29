@@ -382,6 +382,8 @@ SklSolverCBC::SklSolverInitialize() {
     setComponentVF(cvf);
   }
 
+  // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
+  setVIBC_from_Cut();
   
   // コンポーネントのローカルインデクスをcmp.ciに保存
   getLocalCmpIdx();
@@ -632,6 +634,8 @@ SklSolverCBC::SklSolverInitialize() {
   
   // mid[]を解放する  ---------------------------
   DataMngr.DeleteDataObj("mid");
+
+  
   
   // コンポーネントの内容リストを表示する
   Hostonly_ {
@@ -669,21 +673,17 @@ SklSolverCBC::SklSolverInitialize() {
     }
   }
 
-  // 各コンポーネントが存在するかどうかを保持しておく
-  setEnsComponent();
-
   // 各ノードの領域情報をファイル出力
   gather_DomainInfo();
 
-  //Vinfo.chkBCIndexD(bcd, "BCindexD.txt");
-  //Vinfo.chkBCIndexP(bcd, bcp, "BCindexP.txt");
-  //Vinfo.chkBCIndexV(bcv, "BCindexV.txt");
   
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
 
   // debug; write_distance(cut);
 
+  
+  
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
   TIMING_start(tm_init_alloc);
   allocArray_main (TotalMemory);
@@ -715,7 +715,7 @@ SklSolverCBC::SklSolverInitialize() {
 
   
   TIMING_stop(tm_init_alloc);
-  
+
   
   // リスタート 瞬時値と平均値に分けて処理　------------------
   if ( C.Start==Control::re_start) {
@@ -743,7 +743,7 @@ SklSolverCBC::SklSolverInitialize() {
     RF.copyV00(g);
     for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
   }
-  
+
   // セッションの初期時刻をセット
   for (int i=0; i<Interval_Manager::tg_END; i++) {
     C.Interval[i].setTime_init( (double)SklGetBaseTime() );
@@ -807,10 +807,8 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.Start==Control::re_start) {
     
     if (C.Mode.ShapeAprx == BINARY) {
-      //BC.mod_Vec_CF(vf, bcv, bcd, tm, &C, v00, flop_task);
     }
     else if (C.Mode.ShapeAprx == CUT_INFO) {
-      //BC.mod_Vec_CF(vf, bcv, bcd, tm, &C, v00, flop_task);
     }
     else {
       Hostonly_ stamped_printf("Invalid Shape Approximation\n");
@@ -837,7 +835,7 @@ SklSolverCBC::SklSolverInitialize() {
       Hostonly_ fprintf(fp, "\t\tT: min=%13.6e max=%13.6e\n", f_min, f_max);
     }
 	}
-  
+
   // 通信バッファの大きさの設定とアロケート
   if ( hasLinearSolver(SOR2SMA) ) {
     cf_sz[0] = (C.jmax+1) * (C.kmax+1) / 2;
@@ -865,7 +863,6 @@ SklSolverCBC::SklSolverInitialize() {
     unsigned long mc = (unsigned long)( dc_wvex->GetArrayLength() * sizeof(REAL_TYPE) ); // temporaty array for vector output, see prepOutput();
     FBUtility::displayMemory("solver", G_TotalMemory, TotalMemory, fp, mp);
   }
-  
   
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ {
@@ -2657,7 +2654,7 @@ void SklSolverCBC::setBCinfo(ParseBC* B)
   B->setCompoList(&C);
   
   // 各コンポーネントが存在するかどうかを保持しておく
-  setEnsComponent();
+  //setEnsComponent();
 
   // BoundaryOuterクラスのポインタを渡す
   B->setObcPtr(BC.get_OBC_Ptr());
@@ -2746,7 +2743,7 @@ void SklSolverCBC::setComponentVF(float* cvf)
       // bboxと投影面積の計算
       cmp[n].area = CF.get_BboxArea();
       
-      // インデクスの計算 > resize later
+      // インデクスの計算 > あとで，VoxEncode()でresize
       CF.bbox_index(f_st, f_ed);
       
       // インデクスのサイズ登録と存在フラグ
@@ -2766,6 +2763,7 @@ void SklSolverCBC::setComponentVF(float* cvf)
     }
   }
   
+  // 確認のための出力
 #ifdef DEBUG
   REAL_TYPE org[3], pit[3];
   
@@ -2784,6 +2782,35 @@ void SklSolverCBC::setComponentVF(float* cvf)
   }
   F.writeRawSPH(cvf, size, guide, org, pit, SPH_SINGLE);
 #endif
+  
+}
+
+
+/**
+ @fn void SklSolverCBC::setVIBC_from_Cut(void)
+ @brief ポリゴンからVBCのboxなどをセット
+ @note インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+ */
+void SklSolverCBC::setVIBC_from_Cut(void)
+{
+  int f_st[3], f_ed[3];
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    if ( cmp[n].isVBC_IO() ) {
+      
+      // bboxと投影面積の計算
+      // cmp[n].area = 
+      
+      // インデクスの計算 > あとで，VoxEncode()でresize
+      //CF.bbox_index(f_st, f_ed);
+      
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+      
+    }
+  }
   
 }
 
@@ -3006,8 +3033,6 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   poly_org[1] = (float)C.org[1]*C.RefLength;
   poly_org[2] = (float)C.org[2]*C.RefLength;
   
-  //stamped_printf("poly : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
-  
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Polylib configuration\n\n");
@@ -3157,7 +3182,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
   cutPos = new CutPos32Array(n_cell); // 6*(float)
-  cutBid = new CutBid8Array(n_cell);  // 2*(int32_t)
+  cutBid = new CutBid5Array(n_cell);  // (int32_t)
+  //cutBid = new CutBid8Array(n_cell);  // 2*(int32_t)
   TIMING_stop(tm_init_alloc);
   
   TIMING_start(tm_cutinfo);
@@ -3179,27 +3205,52 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     FBUtility::displayMemory("Cut", G_cut_mem, cut_mem, fp, mp);
   }
   
+  // カットとID情報をポイント
+  cut = (float*)cutPos->getDataPointer();
+  
+  cut_id = (int*)cutBid->getDataPointer();
+  
   // テスト
-  int m, z=0;
-  float pos6[6], d_min=1.0;
+  int z=0;
+  float *pos;
+  float d_min=1.0;
+  float pos6[6];
   BidType bid6[6];
+  int bd, b0, b1, b2, b3, b4, b5;
+  size_t mp, mb;
   
   for (int k=ista[2]; k<=ista[2]+nlen[2]-1; k++) {
     for (int j=ista[1]; j<=ista[1]+nlen[1]-1; j++) {
       for (int i=ista[0]; i<=ista[0]+nlen[0]-1; i++) {
         
-        cutPos->getPos(i+guide-1,j+guide-1,k+guide-1, pos6);
-        cutBid->getBid(i+guide-1,j+guide-1,k+guide-1, bid6);
+        //cutPos->getPos(i+guide-1,j+guide-1,k+guide-1, pos6);
+        //cutBid->getBid(i+guide-1,j+guide-1,k+guide-1, bid6);
+        mp = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+        pos = &cut[mp];
+        
+        mb = FBUtility::getFindexS3D(size, guide, i, j, k);
+        bd = cut_id[mb];
         
         if ( (pos6[0]+pos6[1]+pos6[2]+pos6[3]+pos6[4]+pos6[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
           //if ( (bid6[0]+bid6[1]+bid6[2]+bid6[3]+bid6[4]+bid6[5]) >0 ) { // これも有効
+          
+          b0 = (bd >> 0)  & MASK_5;
+          b1 = (bd >> 5)  & MASK_5;
+          b2 = (bd >> 10) & MASK_5;
+          b3 = (bd >> 15) & MASK_5;
+          b4 = (bd >> 20) & MASK_5;
+          b5 = (bd >> 25) & MASK_5;
+          
           for (int n=0; n<6; n++) {
             if (pos6[n] > 0.0) d_min = min(d_min, pos6[n]);
           }
           z++;
-          //printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-          //     pos6[0], pos6[1], pos6[2], pos6[3], pos6[4], pos6[5],
-          //     bid6[0], bid6[1], bid6[2], bid6[3], bid6[4], bid6[5]);
+          //if ( (bid6[0]==2) || (bid6[1]==2) || (bid6[2]==2) || (bid6[3]==2) || (bid6[4]==2) || (bid6[5]==2) ) 
+          if ( (b0==2) || (b1==2) || (b2==2) || (b3==2) || (b4==2) || (b5==2) ) 
+          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
+               //pos6[0], pos6[1], pos6[2], pos6[3], pos6[4], pos6[5],
+               //bid6[0], bid6[1], bid6[2], bid6[3], bid6[4], bid6[5]);
         }
       }
     }
@@ -3333,7 +3384,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, f
   // set local active cell ratio
   C.Eff_Cell_Ratio = (REAL_TYPE)C.Acell / C.getCellSize(size);
   
-  // コンポーネントのインデクスの再構築
+  // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
   Vinfo->resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem(), GC_bv);
 }
 

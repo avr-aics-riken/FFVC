@@ -1342,7 +1342,7 @@ void ParseBC::setControlVars(Control* Cref)
   Cref->NoCompo = NoCompo = NoBC + NoID;
 
   unsigned m, s;
-  s = MASK_CMP_ID; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
+  s = MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
   m = log10(s+1)/log10(2);
   if ( NoCompo > s ) {
     printf("Error : No. of Component (= NoBC + NoID) must be less or equal %d(%dbit-width)\n", s, m);

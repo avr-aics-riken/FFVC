@@ -151,6 +151,7 @@ public:
   bool isHsrc      (void);
   bool isMONITOR   (void);
   bool isVBC       (void);
+  bool isVBC_IO    (void);
   bool isVecForcing(void);
   bool isVFraction (void);
   

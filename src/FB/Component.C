@@ -111,6 +111,15 @@ bool CompoList::isHsrc(void)
   return false;
 }
 
+//@fn bool CompoList::isVBC_IO(void)
+bool CompoList::isVBC_IO(void)
+{
+  if ((type == SPEC_VEL) ||
+      (type == SPEC_VEL_WH) ||
+      (type == OUTFLOW) ) return true;
+  return false;
+}
+
 /**
  @fn bool CompoList::isMONITOR(void)
  @brief コンポーネントタイプがモニタかどうかを調べる
