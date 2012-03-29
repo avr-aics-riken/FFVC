@@ -13,10 +13,7 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include <string>
-
 #include "FBDefine.h"
-
-using namespace std;
 
 class CompoList {
 public:
@@ -76,18 +73,6 @@ public:
     alpha,
     beta,
     gamma
-  };
-  
-  /// 圧力単位
-  enum Unit_Pressure {
-    Gauge=1,
-    Absolute
-  };
-  
-  /// 温度単位
-  enum Temp_Unit {
-    Unit_KELVIN=1,
-    Unit_CELSIUS
   };
   
   /// 境界条件の入力単位指定
@@ -191,8 +176,8 @@ public:
   unsigned get_sw_V_profile(void)const { return usw; };
   unsigned get_sw_P_BCtype(void) const { return usw; };
   
-  string getVarStr (void);
-  string getBCstr  (void);
+  std::string getVarStr (void);
+  std::string getBCstr  (void);
   
   void setAttrb            (const unsigned key);
   void setBbox             (const int m_st[], const int m_ed[]);

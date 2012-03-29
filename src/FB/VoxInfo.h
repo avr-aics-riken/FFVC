@@ -25,10 +25,6 @@
 #include "SetBC.h"
 #include "BndOuter.h"
 
-// Cutlib
-#include "Cutlib.h"
-using namespace cutlib;
-
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class VoxInfo : public Parallel_Node {
@@ -77,7 +73,6 @@ protected:
   unsigned encodeOrder         (unsigned order, unsigned id, int* m, unsigned* bx);
   unsigned encPbit_D_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
   unsigned encPbit_N_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
-  unsigned encPbit_N_Cut       (unsigned* bx, CutPos32Array* cutPos);
   unsigned encPbit_N_Cut       (unsigned* bx, float* cut);
   unsigned encPbit_N_Binary    (unsigned* bx);
   unsigned encQface            (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface, bool flag);
@@ -95,7 +90,6 @@ protected:
   void countVolumeEdge       (unsigned n, unsigned* bx, int* cc);
   void encActive             (unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned KOS);
   void encAmask_SymtrcBC     (int face, unsigned* bh2);
-  void encCut_OBC            (int face, CutPos32Array* cutPos);
   void encCut_OBC            (int face, float* cut);
   void encHbit               (unsigned* bh1, unsigned* bh2);
   void encPbit               (unsigned* bx);
@@ -159,7 +153,7 @@ public:
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
-  unsigned markSolid_from_Cut(int* mid, CutPos32Array* cutPos);
+  unsigned markSolid_from_Cut(int* mid, float* cut);
   
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
@@ -182,7 +176,6 @@ public:
   void setCmpFraction        (CompoList* compo, unsigned* bx, float* vf);
   void setControlVars        (unsigned* r_size, unsigned r_guide);
   void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);
-  void setOBC_Cut            (SetBC* BC, CutPos32Array* cutPos);
   void setOBC_Cut            (SetBC* BC, float* cut);
   void setWorkList           (CompoList* m_CMP, MaterialList* m_MAT);
   

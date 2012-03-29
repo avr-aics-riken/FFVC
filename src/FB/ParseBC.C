@@ -45,7 +45,7 @@ unsigned ParseBC::scanXMLmodel(void)
 
   elemTop = CF->GetTop(STEER);
   if( !(elmL1 = elemTop->GetElemFirst("Model_Setting")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
+    stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
     Exit(0);
   }
   n = (unsigned)elmL1->GetParamSize();
@@ -73,7 +73,7 @@ void ParseBC::getXML_Model(void)
   // Check Model_Setting section
   elemTop = CF->GetTop(STEER);
   if( !(elmL1 = elemTop->GetElemFirst("Model_Setting")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
+    stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
     Exit(0);
   }
 
@@ -90,24 +90,24 @@ void ParseBC::getXML_Model(void)
       iTable[i].setState(FLUID);
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Model_Setting'\n");
+      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Model_Setting'\n");
       Exit(0);
     }
 
     // ID
     if ( !param->isSetID() ) {
-      Hostonly_ stamped_printf("\tParsing error : No ID for statement in 'Model_Setting'\n");
+      stamped_printf("\tParsing error : No ID for statement in 'Model_Setting'\n");
       Exit(0);
     }
     if ( -1 == (id=param->GetID()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid ID for statement in 'Model_Setting'\n");
+      stamped_printf("\tParsing error : No valid ID for statement in 'Model_Setting'\n");
       Exit(0);
     }
     iTable[i].setID((unsigned)id);
 
     // MatID
     if ( !param->GetData( &id ) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid Medium ID for statement in 'Model_Setting'\n");
+      stamped_printf("\tParsing error : No valid Medium ID for statement in 'Model_Setting'\n");
       Exit(0);
     }
     iTable[i].setMatID((unsigned)id);
@@ -115,7 +115,7 @@ void ParseBC::getXML_Model(void)
     // label
     pnt = NULL;
     if ( !(pnt = param->GetComment()) ) {
-      Hostonly_ stamped_printf("\tNo comment for statement in 'Model_Setting'\n");
+      stamped_printf("\tNo comment for statement in 'Model_Setting'\n");
     }
     else {
       iTable[i].setLabel(pnt);
@@ -168,7 +168,7 @@ void ParseBC::getXML_Medium_InitTemp(void)
   // Check Model_Setting section
   elemTop = CF->GetTop(PARAMETER);
   if( !(elmL1 = elemTop->GetElemFirst("Init_Temp_of_Medium")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Init_Temp_of_Medium'\n");
+    stamped_printf("\tParsing error : Missing the section of 'Init_Temp_of_Medium'\n");
     Exit(0);
   }
   
@@ -187,17 +187,17 @@ void ParseBC::getXML_Medium_InitTemp(void)
       Cell_state = FLUID;
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
+      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
       Exit(0);
     }
     
     // ID
     if ( !param->isSetID() ) {
-      Hostonly_ stamped_printf("\tParsing error : No ID for statement in 'Init_Temp_of_Medium'\n");
+      stamped_printf("\tParsing error : No ID for statement in 'Init_Temp_of_Medium'\n");
       Exit(0);
     }
     if ( -1 == (id=param->GetID()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid ID for statement in 'Init_Temp_of_Medium'\n");
+      stamped_printf("\tParsing error : No valid ID for statement in 'Init_Temp_of_Medium'\n");
       Exit(0);
     }
     
@@ -208,12 +208,12 @@ void ParseBC::getXML_Medium_InitTemp(void)
       if ( compo[m].getID() == (unsigned)id ) {
         m_flag = true;
         if ( compo[m].getState() != Cell_state ) {
-          Hostonly_ stamped_printf("\tError : Inconsistent the cell state between 'Model_Setting' and 'Init_Temp_of_Medium' : Medium ID=%d\n", id);
+          stamped_printf("\tError : Inconsistent the cell state between 'Model_Setting' and 'Init_Temp_of_Medium' : Medium ID=%d\n", id);
           Exit(0);
         }
         
         if ( !param->GetData(&ct) ) {
-          Hostonly_ stamped_printf("\tParsing error : No initial temperature in 'Init_Temp_of_Medium'\n");
+          stamped_printf("\tParsing error : No initial temperature in 'Init_Temp_of_Medium'\n");
           Exit(0);
         }
         compo[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
@@ -222,7 +222,7 @@ void ParseBC::getXML_Medium_InitTemp(void)
     }
     //check
     if ( !m_flag ) {
-      Hostonly_ stamped_printf("\tError : could not find ID=%d in ComponentList\n", id);
+      stamped_printf("\tError : could not find ID=%d in ComponentList\n", id);
       Exit(0);
     }
     
@@ -246,7 +246,7 @@ void ParseBC::setMedium(Control* Cref)
       if ( iTable[i].getState() == FLUID ) check = true;
     }
     if ( !check ) {
-      Hostonly_ stamped_printf("\tVoxel model should have at least one FLUID.\n");
+      stamped_printf("\tVoxel model should have at least one FLUID.\n");
       Exit(0);
     }
   }
@@ -279,7 +279,7 @@ unsigned ParseBC::getNoMaterial(void)
   bool *count = new bool[NoID+1];
 
   if( !count ) {
-    Hostonly_ fprintf(stderr, "\tMemory allocation error.(Medium counter)\n");
+    fprintf(stderr, "\tMemory allocation error.(Medium counter)\n");
     return m;
   }
 
@@ -322,18 +322,18 @@ void ParseBC::loadOuterBC(void)
   
   for (unsigned i=0; i<NoBaseBC; i++) {
     if ( !(Ename = elmL2->GetName()) ) {
-      Hostonly_ printf("\tParsing error : No Elem name in 'Basic_BCs'\n");
+      printf("\tParsing error : No Elem name in 'Basic_BCs'\n");
       Exit(0);
     }
     chkKeywordOBC(Ename, i); // BCTypeに境界条件の種別をセットする
 
     // 境界条件番号
     if ( !elmL2->isSetID() ) {
-      Hostonly_ printf("\tParsing error : No ID section in Basic_BCs\n");
+      printf("\tParsing error : No ID section in Basic_BCs\n");
       Exit(0);
     }
     if ( -1 == (id=elmL2->GetID()) ) {
-      Hostonly_ printf("\tParsing error : No valid ID for Basic_BCs\n");
+      printf("\tParsing error : No valid ID for Basic_BCs\n");
       Exit(0);
     }
     
@@ -376,7 +376,7 @@ void ParseBC::loadOuterBC(void)
   
   // 各フェイスに境界条件設定する
   if ( !(elmL1 = elemTop->GetElemFirst("Face_BC")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing 'Face_BC' description\n");
+    stamped_printf("\tParsing error : Missing 'Face_BC' description\n");
     Exit(0);
   }
   
@@ -389,11 +389,11 @@ void ParseBC::loadOuterBC(void)
     
     // 境界条件番号を取得
     if ( !elmL2->isSetID() ) {
-      Hostonly_ printf("\tParsing error : No ID section in Basic_BCs\n");
+      printf("\tParsing error : No ID section in Basic_BCs\n");
       Exit(0);
     }
     if ( -1 == (id=elmL2->GetID()) ) {
-      Hostonly_ printf("\tParsing error : No valid ID for Basic_BCs\n");
+      printf("\tParsing error : No valid ID for Basic_BCs\n");
       Exit(0);
     }
     
@@ -410,16 +410,16 @@ void ParseBC::loadOuterBC(void)
     
     // セルIDの取得
     if ( !(param = elmL2->GetParamFirst("Guide_Cell_ID")) ) {
-      Hostonly_ stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC'\n");
+      stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC'\n");
       Exit(0);
     }
     else {
       if ( !param->isSetID() ) {
-        Hostonly_ stamped_printf("\tParsing error : No ID section in 'Guide_Cell_ID'\n");
+        stamped_printf("\tParsing error : No ID section in 'Guide_Cell_ID'\n");
         Exit(0);
       }
       if ( 1 > (cid = param->GetID()) ) {
-        Hostonly_ stamped_printf("\tParsing error : Invalid Outer Guide Cell ID[%d] that shoud be > 0\n", cid);
+        stamped_printf("\tParsing error : Invalid Outer Guide Cell ID[%d] that shoud be > 0\n", cid);
         Exit(0);
       }
       
@@ -437,7 +437,7 @@ void ParseBC::loadOuterBC(void)
   // チェック
   for (int face=0; face<NOFACE; face++) {
     if ( (id=bc[face].get_BC_ID()) == 0 ) {
-      Hostonly_ printf("\tFace BC : id=%d is not listed in 'Basic_BCs' section\n", id);
+      printf("\tFace BC : id=%d is not listed in 'Basic_BCs' section\n", id);
       Exit(0);
     }
   }
@@ -459,7 +459,7 @@ void ParseBC::loadOuterBC(void)
       if ( bc[n].get_BCtype() == OBC_PERIODIC ) {
         n_pair = oppositDir(n);
         if ( bc[n_pair].get_BCtype() != OBC_PERIODIC ) {
-          Hostonly_ printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+          printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
           Exit(0);
         }
       }
@@ -473,26 +473,26 @@ void ParseBC::loadOuterBC(void)
         switch (bc[n].get_PrdcMode()) {
           case BoundaryOuter::prdc_Simple:
             if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Simple ) { 
-              Hostonly_ printf("\tFace BC : No consistent SIMPLE Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+              printf("\tFace BC : No consistent SIMPLE Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             break;
             
           case BoundaryOuter::prdc_Directional:
             if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Directional ) {
-              Hostonly_ printf("\tFace BC : No consistent DIRECTIONAL Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+              printf("\tFace BC : No consistent DIRECTIONAL Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             if ( bc[n].p != bc[n_pair].p ) { // 同じ値が入っていること
-              Hostonly_ printf("\tFace BC : Pressure difference value is not same in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+              printf("\tFace BC : Pressure difference value is not same in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_upstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_downstream) ) {
-              Hostonly_ printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
+              printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
               Exit(0);
             }
             if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_downstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_upstream) ) {
-              Hostonly_ printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
+              printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
               Exit(0);
             }
               
@@ -510,7 +510,7 @@ void ParseBC::loadOuterBC(void)
           
           // 他方は周期境界以外であること
           if ( bc[n_pair].get_BCtype() == OBC_PERIODIC ) {
-            Hostonly_ printf("\tFace BC : %s direction should be non periodic BC\n", FBUtility::getDirection(n_pair).c_str());
+            printf("\tFace BC : %s direction should be non periodic BC\n", FBUtility::getDirection(n_pair).c_str());
             Exit(0);
           }
           
@@ -518,7 +518,7 @@ void ParseBC::loadOuterBC(void)
           for (unsigned c=1; c<=NoBC; c++) {
             if ( compo[c].getType() == PERIODIC ) {
               if ( (int)compo[c].getPeriodicDir() != bc[n].get_DriverDir() ) {
-                Hostonly_ printf("\tPeriodic Driver BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+                printf("\tPeriodic Driver BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
                 Exit(0);
               }
               else {
@@ -527,7 +527,7 @@ void ParseBC::loadOuterBC(void)
             }
           }
           if (cflag != 1) {
-            Hostonly_ printf("\tPeriodic Driver BC can not detemine uniquely\n");
+            printf("\tPeriodic Driver BC can not detemine uniquely\n");
             Exit(0);
           }
         }        
@@ -679,7 +679,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
     // with constant temperature
     if ( isComponent(SPEC_VEL_WH) ) {
       fprintf(fp, "\n\t[SPECIFIED_VELOCITY with constant temperature]\n");
-      fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+      fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
       for(n=1; n<=NoBC; n++) {
         if ( compo[n].getType() == SPEC_VEL_WH )  {
@@ -921,7 +921,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   // Heat Transfer S
   if ( HeatProblem && isCompoTransfer(HT_S) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type S]\n");
-    fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_S ) {
@@ -939,7 +939,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   // Heat Transfer SN
   if ( HeatProblem && isCompoTransfer(HT_SN) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type SN]\n"); 
-    fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_SN ) {
@@ -978,7 +978,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   if ( HeatProblem && isCompoTransfer(HT_SF) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type SF]\n");
     fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", 
-            (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_SF ) {
@@ -1013,7 +1013,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   if ( HeatProblem && isCompoTransfer(HT_B)) {
     fprintf(fp, "\n\t[Heat Transfer : Type B]\n");
     fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  coef(W/m^2K)  BulkTemp(%s)   BulkTemp[-]\n", 
-            (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_B ) {
@@ -1032,7 +1032,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   if ( HeatProblem && isComponent(ISOTHERMAL)) {
     fprintf(fp, "\n\t[Iso-Thermal]\n");
     fprintf(fp, "\t no                    Label    ID   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n", 
-            (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == ISOTHERMAL ) {
@@ -1088,7 +1088,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   if ( HeatProblem && isComponent(CNST_TEMP)) {
     fprintf(fp, "\n\t[Constant Temperature]\n");
     fprintf(fp, "\t no                    Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp[%s]      Temp[-]\n", 
-            (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C");
+            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == CNST_TEMP ) {
@@ -1240,7 +1240,7 @@ void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
 void ParseBC::receiveCompoPtr(CompoList* CMP)
 {
   if ( !CMP ) {
-    Hostonly_ stamped_printf("\tAn object of CompoList class is NULL\n");
+    stamped_printf("\tAn object of CompoList class is NULL\n");
     Exit(0);
   }
   compo = CMP;
@@ -1253,7 +1253,7 @@ void ParseBC::receiveCompoPtr(CompoList* CMP)
 void ParseBC::receiveCfgPtr(SklSolverConfig* cfg) 
 { 
   if ( !cfg ) {
-    Hostonly_ stamped_printf("\tAn object of Configuration Tree is NULL\n");
+    stamped_printf("\tAn object of Configuration Tree is NULL\n");
     Exit(0);
   }
   CF = cfg;
@@ -1299,11 +1299,11 @@ void ParseBC::setObcPtr(BoundaryOuter* ptr)
   elemTop = elmL1 = NULL;
   
   if( !(elemTop = CF->GetTop(OUTERBND)) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
+    stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
     Exit(0);
   }
   if( !(elmL1 = elemTop->GetElemFirst("Basic_BCs")) ) {
-    Hostonly_ printf("\tParsing error : No Basic_BCs was found.\n");
+    printf("\tParsing error : No Basic_BCs was found.\n");
     Exit(0);
   }
   
@@ -1345,14 +1345,14 @@ void ParseBC::setControlVars(Control* Cref)
   s = MASK_CMP_ID; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
   m = log10(s+1)/log10(2);
   if ( NoCompo > s ) {
-    Hostonly_ printf("Error : No. of Component (= NoBC + NoID) must be less or equal %d(%dbit-width)\n", s, m);
+    printf("Error : No. of Component (= NoBC + NoID) must be less or equal %d(%dbit-width)\n", s, m);
     Exit(0);
   }
 
   s = MASK_5-1; // 0と31を除く
   m = log10(s+2)/log10(2);
   if ( NoBC > s ) {
-    Hostonly_ printf("Error : No. of BC must be less or equal %d(%dbit-width)\n", s, m);
+    printf("Error : No. of BC must be less or equal %d(%dbit-width)\n", s, m);
     Exit(0);
   }
 
@@ -1462,7 +1462,7 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned 
       if ( HeatProblem ) {
         fprintf(fp, "\t\t\tSpecified Temperature  = %12.6e [%s] / %12.6e [-] \n", 
                 FBUtility::convK2Temp(ref->get_Temp(), Unit_Temp),
-                (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C", 
+                (Unit_Temp==Unit_KELVIN) ? "K" : "C", 
                 FBUtility::convK2ND(ref->get_Temp(), BaseTemp, DiffTemp));
       }
       break;
@@ -1565,7 +1565,7 @@ void ParseBC::chkKeywordOBC(const char *keyword, unsigned m)
   else if( !strcasecmp(keyword, "Periodic"))            BaseBc[m].set_BCtype(OBC_PERIODIC);
   else if( !strcasecmp(keyword, "Traction_Free"))       BaseBc[m].set_BCtype(OBC_TRC_FREE);
   else {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword is described '%s'\n", keyword);
+    stamped_printf("\tParsing error : Invalid keyword is described '%s'\n", keyword);
     Exit(0);
   }
 }
@@ -1619,7 +1619,7 @@ void ParseBC::chkKeywordIBC(const char *keyword, unsigned m)
   else if( !strcasecmp(keyword, "inactive") )             compo[m].setType(INACTIVE);
   else if( !strcasecmp(keyword, "Periodic") )             compo[m].setType(PERIODIC);
   else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described '%s'\n", keyword);
+    stamped_printf("\tInvalid keyword is described '%s'\n", keyword);
     Exit(0);
   }
 }
@@ -1667,7 +1667,7 @@ bool ParseBC::chkID(void)
     q = BaseBc[i].get_BC_ID();
     for (j=i+1; j<NoBaseBC; j++) {
       if ( q == BaseBc[j].get_BC_ID() ) {
-        Hostonly_ printf("Parse Error : Reduplication of Outer Boundary ID=%d\n", q);
+        printf("Parse Error : Reduplication of Outer Boundary ID=%d\n", q);
         err = false;
       }
     }
@@ -1762,7 +1762,7 @@ unsigned ParseBC::getXML_Vel_profile(const CfgElem *elmL, const char* err_str)
 	const char *str=NULL;
   
   if ( !elmL->GetValue(CfgIdt("Profile"), &str) ) {
-    Hostonly_ printf("\tParsing error : fail to get 'Profile' in '%s'\n", err_str);
+    printf("\tParsing error : fail to get 'Profile' in '%s'\n", err_str);
     Exit(0);
   }
 	if ( !strcasecmp("constant", str) ) {
@@ -1775,7 +1775,7 @@ unsigned ParseBC::getXML_Vel_profile(const CfgElem *elmL, const char* err_str)
 		return CompoList::vel_zero;
 	}
 	else {
-		Hostonly_ printf("\tParsing error : Invalid string value for '%s > Profile' : %s\n", str, err_str);
+		printf("\tParsing error : Invalid string value for '%s > Profile' : %s\n", str, err_str);
 		Exit(0);
 	}
   return 0;
@@ -1802,7 +1802,7 @@ void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
   
   // 速度の指定モードの特定
   if ( !elmL->GetValue(CfgIdt("specified_type"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid Specified_Type in 'Basic_BCs > Specified_Type'\n");
+    stamped_printf("\tParsing error : Invalid Specified_Type in 'Basic_BCs > Specified_Type'\n");
     Exit(0);
   }
   if ( !strcasecmp("velocity", str) ) {
@@ -1812,13 +1812,13 @@ void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
 		//compo[n].set_VBC_policy(false);
 	//}
 	else {
-		Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str);
+		printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str);
 		Exit(0);
 	}
   
   // 指定値の取得
   if ( !elmL->GetValue(CfgIdt("specified_value"), &ct) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in 'Basic_BCs > Specified_Value'\n");
+    stamped_printf("\tParsing error : Invalid value in 'Basic_BCs > Specified_Value'\n");
     Exit(0);
   }
   vel = ( Unit_Param == DIMENSIONAL ) ? ct : ct * RefVelocity; // 有次元値で保持
@@ -1832,11 +1832,11 @@ void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
     char *str2=NULL;
     
     if ( !elmL->GetValue(CfgIdt("heat_type"), &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Heat_Type' in 'Basic_BCs > wall'\n");
+      stamped_printf("\tParsing error : fail to get 'Heat_Type' in 'Basic_BCs > wall'\n");
       Exit(0);
     }
     if ( Unit_Param != DIMENSIONAL ) {
-      Hostonly_ stamped_printf("\tError: Heat condition must be given by dimensional value\n");
+      stamped_printf("\tError: Heat condition must be given by dimensional value\n");
       Exit(0);
     }
     
@@ -1865,7 +1865,7 @@ void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
     }
      */
     else {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Heat_type' : %s\n", str);
+      stamped_printf("\tParsing error : Invalid string value for 'Heat_type' : %s\n", str);
       Exit(0);
     }    
   }
@@ -1904,7 +1904,7 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
     BaseBc[n].set_HTmode(HT_SF);
     BaseBc[n].set_Temp( get_BCval_real(elmL, "Surface_temperature") );
     if ( !elmL->GetValue(CfgIdt("ref_temp_mode"), &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : Invalid int value for 'ref_temp_mode' in 'Basic_BCs > wall'\n");
+      stamped_printf("\tParsing error : Invalid int value for 'ref_temp_mode' in 'Basic_BCs > wall'\n");
       Exit(0);
     }
     if ( !strcasecmp("bulk_temperature", str) ) {
@@ -1914,7 +1914,7 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
       BaseBc[n].set_HTmodeRef( CompoList::HT_mode_local );
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'ref_temp_mode' : %s\n", str);
+      stamped_printf("\tParsing error : Invalid string value for 'ref_temp_mode' : %s\n", str);
       Exit(0);
     }
     // coefficients
@@ -1927,7 +1927,7 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
     BaseBc[n].set_Temp( get_BCval_real(elmL, "Surface_temperature") );
     // reference mode
     if ( !elmL->GetValue(CfgIdt("ref_temp_mode"), &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : Invalid int value for 'ref_temp_mode' in 'Basic_BCs > wall'\n");
+      stamped_printf("\tParsing error : Invalid int value for 'ref_temp_mode' in 'Basic_BCs > wall'\n");
       Exit(0);
     }
     if ( !strcasecmp("bulk_temperature", str) ) {
@@ -1937,7 +1937,7 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
       BaseBc[n].set_HTmodeRef( CompoList::HT_mode_local );
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'ref_temp_mode' : %s\n", str);
+      stamped_printf("\tParsing error : Invalid string value for 'ref_temp_mode' : %s\n", str);
       Exit(0);
     }
     // Vertical and upper face values
@@ -1955,7 +1955,7 @@ void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
     BaseBc[n].cb[4] = get_BCval_real(elmL, "lower_Ra_critial");
   }
   else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get HeatTransfer Type in 'Basic_BCs > wall'\n");
+    stamped_printf("\tParsing error : fail to get HeatTransfer Type in 'Basic_BCs > wall'\n");
     Exit(0);
   }
 }
@@ -1981,7 +1981,7 @@ void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
   
   // 速度の指定モードの特定
   if ( !elmL->GetValue(CfgIdt("specified_type"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid Specified_Type in 'Basic_BCs > Specified_Type'\n");
+    stamped_printf("\tParsing error : Invalid Specified_Type in 'Basic_BCs > Specified_Type'\n");
     Exit(0);
   }
   if ( !strcasecmp("velocity", str) ) {
@@ -1991,13 +1991,13 @@ void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
   //compo[n].set_VBC_policy(false);
 	//}
 	else {
-		Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str);
+		printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str);
 		Exit(0);
 	}
 	
   // 指定値の取得
   if ( !elmL->GetValue(CfgIdt("specified_value"), &ct) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in 'Basic_BCs > Specified_Value'\n");
+    stamped_printf("\tParsing error : Invalid value in 'Basic_BCs > Specified_Value'\n");
     Exit(0);
   }
   vel = ( Unit_Param == DIMENSIONAL ) ? ct : ct * RefVelocity; // 有次元値で保持
@@ -2008,12 +2008,12 @@ void ParseBC::getXML_OBC_SpecVH(const CfgElem *elmL, unsigned n)
   // heat problem
   if ( HeatProblem ) {
     if ( Unit_Param != DIMENSIONAL ) {
-      Hostonly_ stamped_printf("\tError: Heat condition must be given by dimensional value\n");
+      stamped_printf("\tError: Heat condition must be given by dimensional value\n");
       Exit(0);
     }
     
     if ( !elmL->GetValue(CfgIdt("temperature"), &ct) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Temperature' in 'Basic_BCs > Specified_Velocity'\n");
+      stamped_printf("\tParsing error : fail to get 'Temperature' in 'Basic_BCs > Specified_Velocity'\n");
       Exit(0);
     }
     else {
@@ -2044,19 +2044,19 @@ void ParseBC::getXML_Vel_Params(const CfgElem *elmL, unsigned prof, REAL_TYPE* c
     ca[CompoList::amplitude] = vel;
     
     if ( !elmL->GetValue(CfgIdt("frequency"), &ct) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Frequency' in '%s'\n", err_str);
+      stamped_printf("\tParsing error : fail to get 'Frequency' in '%s'\n", err_str);
       Exit(0);
     }
     ca[CompoList::frequency] = ct;
     
     if ( !elmL->GetValue(CfgIdt("initial_phase"), &ct) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Initial_phase' in '%s'\n", err_str);
+      stamped_printf("\tParsing error : fail to get 'Initial_phase' in '%s'\n", err_str);
       Exit(0);
     }
     ca[CompoList::initphase] = ct;
     
     if ( !elmL->GetValue(CfgIdt("constant_bias"), &ct) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Constant_Bias' in '%s'\n", err_str);
+      stamped_printf("\tParsing error : fail to get 'Constant_Bias' in '%s'\n", err_str);
       Exit(0);
     }
     ca[CompoList::bias] = ct;
@@ -2095,11 +2095,11 @@ void ParseBC::getXML_OBC_Trcfree(const CfgElem *elmL, unsigned n)
       BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'ambient_temperature' in 'Basic_BCs > IN_OUT'\n");
+      stamped_printf("\tParsing error : fail to get 'ambient_temperature' in 'Basic_BCs > IN_OUT'\n");
       Exit(0);
     }
     if ( Unit_Param != DIMENSIONAL ) {
-      Hostonly_ stamped_printf("\tError: Heat condition must be given by dimensional value\n");
+      stamped_printf("\tError: Heat condition must be given by dimensional value\n");
       Exit(0);
     }
   }
@@ -2109,7 +2109,7 @@ void ParseBC::getXML_OBC_Trcfree(const CfgElem *elmL, unsigned n)
     BaseBc[n].p = ct;
   }
   else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'pressure_value' in 'Basic_BCs > Traction_Free'\n");
+    stamped_printf("\tParsing error : fail to get 'pressure_value' in 'Basic_BCs > Traction_Free'\n");
     Exit(0);
   } */
 }
@@ -2140,7 +2140,7 @@ void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
     }
   }
   else {
-     Hostonly_ printf("\tParsing error : No 'mode' section in 'Basic_BCs > periodic'\n");
+     printf("\tParsing error : No 'mode' section in 'Basic_BCs > periodic'\n");
      Exit(0);
   }
   
@@ -2150,7 +2150,7 @@ void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
       BaseBc[n].p = ct;
     }
     else {
-      Hostonly_ printf("\tParsing error : No 'Pressure_Difference' keyword in 'Basic_BCs > Periodic'\n");
+      printf("\tParsing error : No 'Pressure_Difference' keyword in 'Basic_BCs > Periodic'\n");
       Exit(0);
     }
     if ( elmL->GetValue(CfgIdt("flow_direction"), &str)) {
@@ -2161,12 +2161,12 @@ void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
         BaseBc[n].set_FaceMode(BoundaryOuter::prdc_downstream);
       }
       else {
-        Hostonly_ printf("\tParsing error : Invalid keyword in 'Basic_BCs > Periodic > Flow_Direction'\n");
+        printf("\tParsing error : Invalid keyword in 'Basic_BCs > Periodic > Flow_Direction'\n");
         Exit(0);
       }
     }
     else {
-      Hostonly_ printf("\tParsing error : No 'Flow_Direction' keyword in 'Basic_BCs > Periodic'\n");
+      printf("\tParsing error : No 'Flow_Direction' keyword in 'Basic_BCs > Periodic'\n");
       Exit(0);
     }
   }
@@ -2193,13 +2193,13 @@ void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
         def = Z_PLUS;
       }
       else {
-        Hostonly_ printf("\tParsing error : Invalid keyword in 'Basic_BCs > Periodic > Driver_Direction'\n");
+        printf("\tParsing error : Invalid keyword in 'Basic_BCs > Periodic > Driver_Direction'\n");
         Exit(0);
       }
       BaseBc[n].set_DriverDir(def);
     }
     else {
-      Hostonly_ printf("\tParsing error : No 'Driver_Direction' keyword in 'Basic_BCs > Periodic'\n");
+      printf("\tParsing error : No 'Driver_Direction' keyword in 'Basic_BCs > Periodic'\n");
       Exit(0);
     }
     
@@ -2207,7 +2207,7 @@ void ParseBC::getXML_OBC_Periodic(const CfgElem *elmL, unsigned n)
       BaseBc[n].set_DriverIndex(def);
     }
     else {
-      Hostonly_ printf("\tParsing error : Invalid 'Driver_Lid_Index' keyword in 'Basic_BCs > Periodic'\n");
+      printf("\tParsing error : Invalid 'Driver_Lid_Index' keyword in 'Basic_BCs > Periodic'\n");
       Exit(0);
     }
     
@@ -2227,7 +2227,7 @@ void ParseBC::getXML_OBC_InOut(const CfgElem *elmL, unsigned n)
   
   // 流出速度のタイプ
   if ( !elmL->GetValue(CfgIdt("velocity_type"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Velocity_Type' in 'Basic_BCs > IN_OUT'\n");
+    stamped_printf("\tParsing error : fail to get 'Velocity_Type' in 'Basic_BCs > IN_OUT'\n");
     Exit(0);
   }
   if ( !strcasecmp("average", str) ) {
@@ -2237,7 +2237,7 @@ void ParseBC::getXML_OBC_InOut(const CfgElem *elmL, unsigned n)
 		BaseBc[n].set_ofv(V_MINMAX);
 	}
 	else {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
+		stamped_printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
 		Exit(0);
 	}
   
@@ -2247,11 +2247,11 @@ void ParseBC::getXML_OBC_InOut(const CfgElem *elmL, unsigned n)
       BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'ambient_temperature' in 'Basic_BCs > IN_OUT'\n");
+      stamped_printf("\tParsing error : fail to get 'ambient_temperature' in 'Basic_BCs > IN_OUT'\n");
       Exit(0);
     }
     if ( Unit_Param != DIMENSIONAL ) {
-      Hostonly_ stamped_printf("\tError: Heat condition must be given by dimensional value\n");
+      stamped_printf("\tError: Heat condition must be given by dimensional value\n");
       Exit(0);
     }
   }
@@ -2285,7 +2285,7 @@ void ParseBC::getXML_OBC_Outflow(const CfgElem *elmL, unsigned n)
       BaseBc[n].set_pType(P_GRAD_ZERO);
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Pressure_Type' : %s\n", str);
+      stamped_printf("\tParsing error : Invalid string value for 'Pressure_Type' : %s\n", str);
       Exit(0);
     }
   }
@@ -2293,7 +2293,7 @@ void ParseBC::getXML_OBC_Outflow(const CfgElem *elmL, unsigned n)
   
   // 流出速度のタイプ
   if ( !elmL->GetValue(CfgIdt("velocity_type"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Velocity_Type' in 'Basic_BCs > outflow'\n");
+    stamped_printf("\tParsing error : fail to get 'Velocity_Type' in 'Basic_BCs > outflow'\n");
     Exit(0);
   }
   if ( !strcasecmp("average", str) ) {
@@ -2303,7 +2303,7 @@ void ParseBC::getXML_OBC_Outflow(const CfgElem *elmL, unsigned n)
 		BaseBc[n].set_ofv(V_MINMAX);
 	}
 	else {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
+		stamped_printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
 		Exit(0);
 	}
   
@@ -2314,7 +2314,7 @@ void ParseBC::getXML_OBC_Outflow(const CfgElem *elmL, unsigned n)
         BaseBc[n].p = ct;
       }
       else {
-        Hostonly_ stamped_printf("\tParsing error : fail to get 'pressure_value' in 'Basic_BCs > outflow'\n");
+        stamped_printf("\tParsing error : fail to get 'pressure_value' in 'Basic_BCs > outflow'\n");
         Exit(0);
       }
     }
@@ -2339,7 +2339,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
   
   // Hidden parameter
   if ( elmL->GetValue(CfgIdt("pressure_type"), &str) ) {
-    //Hostonly_ printf("\tParsing error : fail to get 'Pressure_Type' in 'InnerBoundary > Outflow'\n");
+    //printf("\tParsing error : fail to get 'Pressure_Type' in 'InnerBoundary > Outflow'\n");
     //Exit(0);
     if ( !strcasecmp("dirichlet", str) ) {
       compo[n].set_sw_P_BCtype( P_DIRICHLET );
@@ -2348,7 +2348,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
       compo[n].set_sw_P_BCtype( P_GRAD_ZERO );
     }
     else {
-      Hostonly_ printf("\tParsing error : Invalid string value for 'Pressure_Type' : %s\n", str);
+      printf("\tParsing error : Invalid string value for 'Pressure_Type' : %s\n", str);
       Exit(0);
     }
     if ( compo[n].get_sw_P_BCtype() == P_DIRICHLET ) {
@@ -2368,7 +2368,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
   
   /*
   if ( !elmL->GetValue(CfgIdt("velocity_type"), &str) ) {
-    Hostonly_ printf("\tParsing error : fail to get 'Velocity_Type' in 'InnerBoundary > Outflow'\n");
+    printf("\tParsing error : fail to get 'Velocity_Type' in 'InnerBoundary > Outflow'\n");
     Exit(0);
   }
   if ( !strcasecmp("average", str) ) {
@@ -2378,7 +2378,7 @@ void ParseBC::getXML_IBC_Outflow(const CfgElem *elmL, unsigned n)
 		compo[n].flag = V_MINMAX;
 	}
 	else {
-		Hostonly_ printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
+		printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
 		Exit(0);
 	}*/
 }
@@ -2397,7 +2397,7 @@ void ParseBC::getXML_IBC_Periodic(const CfgElem *elmL, unsigned n)
 
   // 上流側の方向
   if ( !elmL->GetValue(CfgIdt("upstream_direction"), &str) ) {
-		Hostonly_ printf("\tParsing error : fail to get 'upstream_direction' in 'InnerBoundary > Periodic'\n");
+		printf("\tParsing error : fail to get 'upstream_direction' in 'InnerBoundary > Periodic'\n");
     Exit(0);
   }
   if ( !strcasecmp("x_minus", str) ) {
@@ -2419,7 +2419,7 @@ void ParseBC::getXML_IBC_Periodic(const CfgElem *elmL, unsigned n)
     dir = Z_PLUS;
   }
   else {
-    Hostonly_ stamped_printf("\tParsing error : Invalid direction in 'InnerBoundary > Periodic'\n");
+    stamped_printf("\tParsing error : Invalid direction in 'InnerBoundary > Periodic'\n");
     Exit(0);
   }
 	compo[n].setPeriodicDir((unsigned)dir);
@@ -2429,7 +2429,7 @@ void ParseBC::getXML_IBC_Periodic(const CfgElem *elmL, unsigned n)
     compo[n].ca[0] = ct;
   }
   else {
-    Hostonly_ printf("\tParsing error : Invalid value of 'Pressure difference' in 'InnerBoundary > Periodic'\n");
+    printf("\tParsing error : Invalid value of 'Pressure difference' in 'InnerBoundary > Periodic'\n");
     Exit(0);
   }
   
@@ -2455,7 +2455,7 @@ void ParseBC::getXML_IBC_SpecVel(const CfgElem *elmL, unsigned n)
   
   // 速度の指定モードの特定
   if ( !elmL->GetValue(CfgIdt("specified_type"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid Specified_Type in 'InnerBoundary > Specified_Type'\n");
+    stamped_printf("\tParsing error : Invalid Specified_Type in 'InnerBoundary > Specified_Type'\n");
     Exit(0);
   }
   if ( !strcasecmp("velocity", str) ) {
@@ -2465,13 +2465,13 @@ void ParseBC::getXML_IBC_SpecVel(const CfgElem *elmL, unsigned n)
 		compo[n].set_VBC_policy(false);
 	}
 	else {
-		Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str);
+		printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str);
 		Exit(0);
 	}
   
   // 指定値の取得
   if ( !elmL->GetValue(CfgIdt("specified_value"), &ct) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in 'InnerBoundary > Specified_Value'\n");
+    stamped_printf("\tParsing error : Invalid value in 'InnerBoundary > Specified_Value'\n");
     Exit(0);
   }
   if ( compo[n].isPolicy_Massflow() ) { // 流量指定の場合
@@ -2494,13 +2494,13 @@ void ParseBC::getXML_IBC_SpecVel(const CfgElem *elmL, unsigned n)
   // heat problem
   if ( HeatProblem ) {
     if ( !elmL->GetValue(CfgIdt("temperature"), &ct) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Temperature' in 'InnerBoundary > SPEC_VEL'\n");
+      stamped_printf("\tParsing error : fail to get 'Temperature' in 'InnerBoundary > SPEC_VEL'\n");
       Exit(0);
     }
     else {
       compo[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
       if ( Unit_Param != DIMENSIONAL ) {
-        Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+        stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
         Exit(0);
       }
       compo[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
@@ -2518,7 +2518,7 @@ void ParseBC::getXML_IBC_Adiabatic(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() != 1) {    
-    Hostonly_ stamped_printf("\tParsing error : 1 param should be found in 'InnerBoundary > Adiabatic'\n");
+    stamped_printf("\tParsing error : 1 param should be found in 'InnerBoundary > Adiabatic'\n");
     Exit(0);
   }
   
@@ -2530,7 +2530,7 @@ void ParseBC::getXML_IBC_Adiabatic(const CfgElem *elmL, unsigned n)
     compo[n].set_Heatflux( 0.0f );
   }
   else {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
     Exit(0);
   }
 }
@@ -2546,7 +2546,7 @@ void ParseBC::getXML_IBC_HeatFlux(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() != 2) {    
-    Hostonly_ stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > Direct_Heat_Flux'\n");
+    stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > Direct_Heat_Flux'\n");
     Exit(0);
   }
   
@@ -2555,7 +2555,7 @@ void ParseBC::getXML_IBC_HeatFlux(const CfgElem *elmL, unsigned n)
   compo[n].set_Heatflux( get_BCval_real(elmL, "Heat_Flux") );
 
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }
 }
@@ -2572,7 +2572,7 @@ void ParseBC::getXML_IBC_HT_N(const CfgElem *elmL, unsigned n)
   
   // check number of Param
   if (elmL->GetParamSize() != 2) {    
-    Hostonly_ stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > HeatTransfer_N'\n");
+    stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > HeatTransfer_N'\n");
     Exit(0);
   }
   
@@ -2583,7 +2583,7 @@ void ParseBC::getXML_IBC_HT_N(const CfgElem *elmL, unsigned n)
 	compo[n].set_CoefHT( get_BCval_real(elmL, "Coef_of_Heat_Transfer") );
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }
 }
@@ -2598,7 +2598,7 @@ void ParseBC::getXML_IBC_HT_S(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() != 3) {    
-    Hostonly_ stamped_printf("\tParsing error : 3 params should be found in 'HeatTransfer_S'\n");
+    stamped_printf("\tParsing error : 3 params should be found in 'HeatTransfer_S'\n");
     Exit(0);
   }
   
@@ -2613,7 +2613,7 @@ void ParseBC::getXML_IBC_HT_S(const CfgElem *elmL, unsigned n)
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }
 }
@@ -2630,7 +2630,7 @@ void ParseBC::getXML_IBC_HT_SN(const CfgElem *elmL, unsigned n)
   
   // check number of Param
   if (elmL->GetParamSize() != 13) {    
-    Hostonly_ stamped_printf("\tParsing error : 13 params should be found in 'InnerBoundary > HeatTransfer_SN'\n");
+    stamped_printf("\tParsing error : 13 params should be found in 'InnerBoundary > HeatTransfer_SN'\n");
     Exit(0);
   }
   
@@ -2643,7 +2643,7 @@ void ParseBC::getXML_IBC_HT_SN(const CfgElem *elmL, unsigned n)
   
   // type
   if ( !elmL->GetValue(CfgIdt("Ref_Temp_Mode"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid int value for 'Ref_Temp_Mode' in 'InnerBoundary > HeatTransfer_SN'\n");
+    stamped_printf("\tParsing error : Invalid int value for 'Ref_Temp_Mode' in 'InnerBoundary > HeatTransfer_SN'\n");
     Exit(0);
   }
   if ( !strcasecmp("bulk_temperature", str) ) {
@@ -2653,7 +2653,7 @@ void ParseBC::getXML_IBC_HT_SN(const CfgElem *elmL, unsigned n)
 		compo[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
 	}
 	else {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Ref_Temp_Mode' : %s\n", str);
+		stamped_printf("\tParsing error : Invalid string value for 'Ref_Temp_Mode' : %s\n", str);
 		Exit(0);
 	}
   
@@ -2672,7 +2672,7 @@ void ParseBC::getXML_IBC_HT_SN(const CfgElem *elmL, unsigned n)
   compo[n].cb[CompoList::lower_Ra_critial]      = get_BCval_real(elmL, "lower_Ra_critial");
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }
 }
@@ -2689,7 +2689,7 @@ void ParseBC::getXML_IBC_HT_SF(const CfgElem *elmL, unsigned n)
   
   // check number of Param
   if (elmL->GetParamSize() != 6) {    
-    Hostonly_ stamped_printf("\tParsing error : 6 params should be found in 'InnerBoundary > HeatTransfer_SF'\n");
+    stamped_printf("\tParsing error : 6 params should be found in 'InnerBoundary > HeatTransfer_SF'\n");
     Exit(0);
   }
   
@@ -2702,7 +2702,7 @@ void ParseBC::getXML_IBC_HT_SF(const CfgElem *elmL, unsigned n)
   
   // type
   if ( !elmL->GetValue(CfgIdt("Ref_Temp_Mode"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid int value for 'Ref_Temp_Mode' in 'InnerBoundary > HeatTransfer_SF'\n");
+    stamped_printf("\tParsing error : Invalid int value for 'Ref_Temp_Mode' in 'InnerBoundary > HeatTransfer_SF'\n");
     Exit(0);
   }
   if ( !strcasecmp("bulk_temperature", str) ) {
@@ -2712,7 +2712,7 @@ void ParseBC::getXML_IBC_HT_SF(const CfgElem *elmL, unsigned n)
 		compo[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
 	}
 	else {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'type' : %s\n", str);
+		stamped_printf("\tParsing error : Invalid string value for 'type' : %s\n", str);
 		Exit(0);
 	}
   
@@ -2722,7 +2722,7 @@ void ParseBC::getXML_IBC_HT_SF(const CfgElem *elmL, unsigned n)
   compo[n].ca[CompoList::gamma] = get_BCval_real(elmL, "gamma");
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }
 }
@@ -2737,7 +2737,7 @@ void ParseBC::getXML_IBC_HT_B(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() != 3) {    
-    Hostonly_ stamped_printf("\tParsing error : 3 params should be found in 'InnerBoundary > HeatTransfer_B'\n");
+    stamped_printf("\tParsing error : 3 params should be found in 'InnerBoundary > HeatTransfer_B'\n");
     Exit(0);
   }
   
@@ -2752,7 +2752,7 @@ void ParseBC::getXML_IBC_HT_B(const CfgElem *elmL, unsigned n)
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
     Exit(0);
   }
 }
@@ -2767,7 +2767,7 @@ void ParseBC::getXML_IBC_IsoTherm(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() != 2) {    
-    Hostonly_ stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > IsoThermal'\n");
+    stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > IsoThermal'\n");
     Exit(0);
   }
   
@@ -2779,7 +2779,7 @@ void ParseBC::getXML_IBC_IsoTherm(const CfgElem *elmL, unsigned n)
   set_Deface(elmL, n, "InnerBoundary > IsoThermal");
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
     Exit(0);
   }
 }
@@ -2794,7 +2794,7 @@ void ParseBC::getXML_IBC_Radiant(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() == 0) {    
-    Hostonly_ stamped_printf("\tParsing error : Missing Elements in 'InnerBoundary > Radiant'\n");
+    stamped_printf("\tParsing error : Missing Elements in 'InnerBoundary > Radiant'\n");
     Exit(0);
   }
   
@@ -2808,7 +2808,7 @@ void ParseBC::getXML_IBC_Radiant(const CfgElem *elmL, unsigned n)
   compo[n].set_CoefRadPrj( get_BCval_real(elmL, "projection") );
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }
 }
@@ -2828,13 +2828,13 @@ void ParseBC::getXML_IBC_HeatSrc(const CfgElem *elmL, unsigned n)
   
   // check number of Param
   if (elmL->GetParamSize() != 2) {    
-    Hostonly_ stamped_printf("\tParsing error : 2 params should be found in 'Heat_Source'\n");
+    stamped_printf("\tParsing error : 2 params should be found in 'Heat_Source'\n");
     Exit(0);
   }
   
   // type
   if ( !elmL->GetValue(CfgIdt("type"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid int value for 'type' in 'InnerBoundary > Heat_Source'\n");
+    stamped_printf("\tParsing error : Invalid int value for 'type' in 'InnerBoundary > Heat_Source'\n");
     Exit(0);
   }
   if ( !strcasecmp("heat_release_value", str) ) {
@@ -2844,13 +2844,13 @@ void ParseBC::getXML_IBC_HeatSrc(const CfgElem *elmL, unsigned n)
 		compo[n].set_HSRC_policy(false);
 	}
 	else {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'type' : %s\n", str);
+		stamped_printf("\tParsing error : Invalid string value for 'type' : %s\n", str);
 		Exit(0);
 	}
 
   // 放熱量
   if ( !elmL->GetValue(CfgIdt("value"), &hsrc) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Heat_Generation_Density' or 'Heat_Release_Value' in 'Heat_Generation'\n");
+    stamped_printf("\tParsing error : Invalid float value for 'Heat_Generation_Density' or 'Heat_Release_Value' in 'Heat_Generation'\n");
     Exit(0);
   }
   
@@ -2861,7 +2861,7 @@ void ParseBC::getXML_IBC_HeatSrc(const CfgElem *elmL, unsigned n)
     compo[n].set_HeatValue( hsrc ); // 発熱量
   }
   if ( Unit_Param != DIMENSIONAL ) { 
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n"); 
+    stamped_printf("\tWarning: Heat condition must be a dimensional value\n"); 
     Exit(0);
   }
   
@@ -2877,7 +2877,7 @@ void ParseBC::getXML_IBC_CnstTemp(const CfgElem *elmL, unsigned n)
 {
   // check number of Param
   if (elmL->GetParamSize() != 1) {    
-    Hostonly_ stamped_printf("\tParsing error : 1 param should be found in 'Specified_Temperature'\n");
+    stamped_printf("\tParsing error : 1 param should be found in 'Specified_Temperature'\n");
     Exit(0);
   }
   
@@ -2886,7 +2886,7 @@ void ParseBC::getXML_IBC_CnstTemp(const CfgElem *elmL, unsigned n)
   compo[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
-    Hostonly_ stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
+    stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
     Exit(0);
   }
 }
@@ -2905,47 +2905,53 @@ const CfgElem* ParseBC::selectFace(int face, const CfgElem* elemTop)
   switch (face) {
     case X_MINUS:
       if( !(elmL1 = elemTop->GetElemFirst("X_MINUS")) ) {
-        Hostonly_ stamped_printf("\tParsing error : Missing the section of 'X_MINUS'\n");
+        stamped_printf("\tParsing error : Missing the section of 'X_MINUS'\n");
+        Exit(0);
       }
       break;
       
     case X_PLUS:
       if( !(elmL1 = elemTop->GetElemFirst("X_PLUS")) ) {
-        Hostonly_ stamped_printf("\tParsing error : Missing the section of 'X_PLUS'\n");
+        stamped_printf("\tParsing error : Missing the section of 'X_PLUS'\n");
+        Exit(0);
       }
       break;
       
     case Y_MINUS:
       if( !(elmL1 = elemTop->GetElemFirst("Y_MINUS")) ) {
-        Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Y_MINUS'\n");
+        stamped_printf("\tParsing error : Missing the section of 'Y_MINUS'\n");
+        Exit(0);
       }
       break;
       
     case Y_PLUS:
       if( !(elmL1 = elemTop->GetElemFirst("Y_PLUS")) ) {
-        Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Y_PLUS'\n");
+        stamped_printf("\tParsing error : Missing the section of 'Y_PLUS'\n");
+        Exit(0);
       }
       break;
       
     case Z_MINUS:
       if( !(elmL1 = elemTop->GetElemFirst("Z_MINUS")) ) {
-        Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Z_MINUS'\n");
+        stamped_printf("\tParsing error : Missing the section of 'Z_MINUS'\n");
+        Exit(0);
       }
       break;
       
     case Z_PLUS:
       if( !(elmL1 = elemTop->GetElemFirst("Z_PLUS")) ) {
-        Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Z_PLUS'\n");
+        stamped_printf("\tParsing error : Missing the section of 'Z_PLUS'\n");
+        Exit(0);
       }
       break;
       
     default:
-      Hostonly_ stamped_printf("\tParsing error : the section of 'Face_BC'\n");
+      stamped_printf("\tParsing error : the section of 'Face_BC'\n");
       Exit(0);
   }
   
   if ( !(cmt = elmL1->GetComment()) ) {
-    Hostonly_ stamped_printf("\tParsing error : No comment in 'Face_BC' section\n");
+    stamped_printf("\tParsing error : No comment in 'Face_BC' section\n");
     elmL1 = NULL; // means error
     return elmL1;
   }
@@ -2980,7 +2986,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
       compo[n].setStateCellMonitor(OFF);
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt);
+      stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt);
       Exit(0);
     }
   }
@@ -2991,7 +2997,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   
   // Variables
   if ( !( elmL2 = elmL->GetElemFirst("Variables") ) ) {
-    Hostonly_ stamped_printf("\tParsing error : No 'Variables' keyword in 'Cell_Monitor'\n");
+    stamped_printf("\tParsing error : No 'Variables' keyword in 'Cell_Monitor'\n");
     Exit(0);
   }
   
@@ -3000,7 +3006,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   
   // 速度
   if ( !elmL2->GetValue("velocity", &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Velocity' in 'Cell_Monitor'\n");
+    stamped_printf("\tParsing error : fail to get 'Velocity' in 'Cell_Monitor'\n");
     Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  {
@@ -3009,13 +3015,13 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   }
   else if( !strcasecmp(str, "off") ) {;} // nothing
   else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for 'Velocity'\n");
+    stamped_printf("\tInvalid keyword is described for 'Velocity'\n");
     Exit(0);
   }
   
   // 圧力
   if ( !elmL2->GetValue("pressure", &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Pressure' in 'Cell_Monitor'\n");
+    stamped_printf("\tParsing error : fail to get 'Pressure' in 'Cell_Monitor'\n");
     Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  {
@@ -3024,14 +3030,14 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   }
   else if( !strcasecmp(str, "off") ) {;} // nothing
   else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for 'Pressure'\n");
+    stamped_printf("\tInvalid keyword is described for 'Pressure'\n");
     Exit(0);
   }
   
   // 温度
   if ( HeatProblem ) {
     if ( !elmL2->GetValue("temperature", &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Temperature' in 'Cell_Monitor'\n");
+      stamped_printf("\tParsing error : fail to get 'Temperature' in 'Cell_Monitor'\n");
       Exit(0);
     }
     if     ( !strcasecmp(str, "on") )  {
@@ -3040,7 +3046,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
     }
     else if( !strcasecmp(str, "off") ) {;} // nothing
     else {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for 'Temperature'\n");
+      stamped_printf("\tInvalid keyword is described for 'Temperature'\n");
       Exit(0);
     }
   }
@@ -3048,7 +3054,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   // 全圧
   if ( C->Mode.TP == ON ) {
     if ( !elmL2->GetValue("total_pressure", &str) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
+      stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
       Exit(0);
     }
     if     ( !strcasecmp(str, "on") )  {
@@ -3057,7 +3063,7 @@ void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
     }
     else if( !strcasecmp(str, "off") ) {;} // nothing
     else {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
+      stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
       Exit(0);
     }
   }
@@ -3085,13 +3091,13 @@ void ParseBC::getDarcy(const CfgElem *elmL, unsigned n)
   
   // check number of Elem
   if ((d = elmL->GetParamSize()) != 3) {    
-    Hostonly_ stamped_printf("\tParsing error : 3 params should be found in 'Darcy' : %d\n", d);
+    stamped_printf("\tParsing error : 3 params should be found in 'Darcy' : %d\n", d);
     Exit(0);
   }
   
   // 透過率の取得
   if ( !elmL->GetVctValue("permeability_x", "permeability_y", "permeability_z", &v[0], &v[1], &v[2]) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get permeability params in 'Darcy'\n");
+    stamped_printf("\tParsing error : fail to get permeability params in 'Darcy'\n");
     Exit(0);
   }
   compo[n].ca[0] = v[0];
@@ -3112,7 +3118,7 @@ void ParseBC::getXML_IBC_IBM_DF(const CfgElem *elmL, unsigned n)
   
   // check number of Elem
   if ((d = elmL->GetParamSize()) != 4) {    
-    Hostonly_ stamped_printf("\tParsing error : 4 params should be found in 'InnerBoundary > Forcing' : %d\n", d);
+    stamped_printf("\tParsing error : 4 params should be found in 'InnerBoundary > Forcing' : %d\n", d);
     Exit(0);
   }
   
@@ -3145,13 +3151,13 @@ void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
   
   // check number of Elem
   if ( elmL->GetParamSize() != 20) {    
-    Hostonly_ stamped_printf("\tParsing error : 11 params should be found in 'Pressure_Loss'\n");
+    stamped_printf("\tParsing error : 11 params should be found in 'Pressure_Loss'\n");
     Exit(0);
   }
   
   // 入力単位の指定
   if ( !elmL->GetValue("unit", &str_u) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
+		stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
 		Exit(0);
 	}
   if ( !strcasecmp("mmaq", str_u) ) {
@@ -3167,7 +3173,7 @@ void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
     compo[n].setPrsUnit(CompoList::unit_NonDimensional);
   }
   else {
-    Hostonly_ stamped_printf("\tDescribed unit is out of scope.\n");
+    stamped_printf("\tDescribed unit is out of scope.\n");
     Exit(0);
   }
   
@@ -3198,7 +3204,7 @@ void ParseBC::getXML_IBC_PrsLoss(const CfgElem *elmL, unsigned n)
   
   // 熱交換器の方向強制オプション
   if ( !elmL->GetValue("vector", &str) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'vector' in 'Pressure_Loss'\n");
+		stamped_printf("\tParsing error : Invalid string for 'vector' in 'Pressure_Loss'\n");
 		Exit(0);
 	}
   if ( !strcasecmp("directional", str) ) {
@@ -3224,13 +3230,13 @@ void ParseBC::getXML_IBC_Fan(const CfgElem *elmL, unsigned n)
   
   // check number of Param
   if (elmL->GetParamSize() != 10) {    
-    Hostonly_ stamped_printf("\tParsing error : 1 param should be found in Heat_Volume > Heat_Generation\n");
+    stamped_printf("\tParsing error : 1 param should be found in Heat_Volume > Heat_Generation\n");
     Exit(0);
   }
   
   // 入力単位の指定
   if ( !elmL->GetValue("unit", &str_u) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
+		stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
 		Exit(0);
 	}
   if ( !strcasecmp("mmaq", str_u) ) {
@@ -3246,7 +3252,7 @@ void ParseBC::getXML_IBC_Fan(const CfgElem *elmL, unsigned n)
     compo[n].setPrsUnit(CompoList::unit_NonDimensional);
   }
   else {
-    Hostonly_ stamped_printf("\tDescribed unit is out of scope.\n");
+    stamped_printf("\tDescribed unit is out of scope.\n");
     Exit(0);
   }
   
@@ -3264,7 +3270,7 @@ void ParseBC::getXML_IBC_Fan(const CfgElem *elmL, unsigned n)
   compo[n].shp_p2 = get_BCval_real(elmL, "boss_radius");
   
   if ( compo[n].shp_p1 <= compo[n].shp_p2 ) {
-    Hostonly_ stamped_printf("\tError : Radius of boss is greater than fan.\n");
+    stamped_printf("\tError : Radius of boss is greater than fan.\n");
     Exit(0);
   }
   
@@ -3282,7 +3288,7 @@ int ParseBC::getNBC(void)
   
   nobc = CF->GetSize(INNERBND);
   if ( nobc == 0 ) {
-    Hostonly_ printf("\tNo Inner Boundary Conditions\n\n");
+    printf("\tNo Inner Boundary Conditions\n\n");
   }
   
   return nobc;
@@ -3316,7 +3322,7 @@ void ParseBC::setCompoList(Control* C)
   for (unsigned odr=1; odr<=NoBC; odr++) {
     
     if ( !(ename = elmL2->GetName()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No Elem name in 'InnerBoundary'\n");
+      stamped_printf("\tParsing error : No Elem name in 'InnerBoundary'\n");
       Exit(0);
     }
     
@@ -3325,24 +3331,24 @@ void ParseBC::setCompoList(Control* C)
     
     // IDの取得
     if ( !elmL2->isSetID() ) {
-      Hostonly_ stamped_printf("\tParsing error : No ID section in '%s'\n", ename);
+      stamped_printf("\tParsing error : No ID section in '%s'\n", ename);
       Exit(0);
     }
     if ( -1 == (ide=elmL2->GetID()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid ID in '%s'\n", ename);
+      stamped_printf("\tParsing error : No valid ID in '%s'\n", ename);
       Exit(0);
     }
     
     // IDがiTableの中にリストアップされているかを調べる
     if ( !isIDinTable(ide) ) {
-      Hostonly_ stamped_printf("\tParsing error : ID[%d] described in '%s' is not included in 'Model_Setting'\n", ide, ename);
+      stamped_printf("\tParsing error : ID[%d] described in '%s' is not included in 'Model_Setting'\n", ide, ename);
       Exit(0);
     }
     
     // Labelの取得．ラベルなしでもエラーではない
     pnt = NULL;
     if ( !(pnt = elmL2->GetComment()) ) {
-      Hostonly_ stamped_printf("\tWarning : No commnet in '%s'\n", ename);
+      stamped_printf("\tWarning : No commnet in '%s'\n", ename);
     }
     else {
       compo[odr].setName(pnt);
@@ -3359,91 +3365,91 @@ void ParseBC::setCompoList(Control* C)
     
     if ( tp == SPEC_VEL ) {
       if ( compo[odr].getState() != SOLID ) {
-        Hostonly_ printf("\tID Error : SPEC_VEL ID must be Solid\n");
+        printf("\tID Error : SPEC_VEL ID must be Solid\n");
         Exit(0);
       }
       getXML_IBC_SpecVel(elmL2, odr);
       if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of a pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+        stamped_printf("Parse Error : Reduplication of a pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
         Exit(0);
       }      
     }
     else if ( tp == OUTFLOW ) {
       if ( compo[odr].getState() != SOLID ) {
-        Hostonly_ printf("\tID Error : OUTFLOW ID must be Solid\n");
+        printf("\tID Error : OUTFLOW ID must be Solid\n");
         Exit(0);
       }
       getXML_IBC_Outflow(elmL2, odr);
       if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of a pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+        stamped_printf("Parse Error : Reduplication of a pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
         Exit(0);
       }      
     }
     else if ( tp == OUTFLOW ) {
       getXML_IBC_IBM_DF(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( tp == HEX ) {
       getXML_IBC_PrsLoss(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( tp == FAN ) {
       getXML_IBC_Fan(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( tp == DARCY ) {
       getDarcy(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( tp == CELL_MONITOR ) {
       getXML_Cell_Monitor(elmL2, odr, C);
       if ( !isIDinCompo(ide, odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( tp == INACTIVE ) {
       if ( !isIDinCompo(ide, odr) ) { // IDのみの重複チェック
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( tp == PERIODIC ) {
       getXML_IBC_Periodic(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
-        Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);
       }
     }
     else if ( HeatProblem ) { // Incase of Heat problem
       if ( C->KindOfSolver == FLOW_ONLY ) {
-        Hostonly_ stamped_printf("Parse Error : Heat BC is not allowed on FLOW_ONLY mode.\n");
+        stamped_printf("Parse Error : Heat BC is not allowed on FLOW_ONLY mode.\n");
         Exit(0);
       }
       
       if ( tp == ADIABATIC ) {
         getXML_IBC_Adiabatic(elmL2, odr);
         if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-          Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+          stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
           Exit(0);
         }        
       }
       else if ( tp == HEATFLUX ) {
         getXML_IBC_HeatFlux(elmL2, odr);
         if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-          Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+          stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
           Exit(0);
         }        
       }
@@ -3452,7 +3458,7 @@ void ParseBC::setCompoList(Control* C)
           case HT_N:
             getXML_IBC_HT_N(elmL2, odr);
             if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
               Exit(0);
             }
             break;
@@ -3460,7 +3466,7 @@ void ParseBC::setCompoList(Control* C)
           case HT_S:
             getXML_IBC_HT_S(elmL2, odr);
             if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
               Exit(0);
             }
             break;
@@ -3468,7 +3474,7 @@ void ParseBC::setCompoList(Control* C)
           case HT_SN:
             getXML_IBC_HT_SN(elmL2, odr);
             if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
               Exit(0);
             }
             break;
@@ -3476,7 +3482,7 @@ void ParseBC::setCompoList(Control* C)
           case HT_SF:
             getXML_IBC_HT_SF(elmL2, odr);
             if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
               Exit(0);
             }
             break;
@@ -3484,7 +3490,7 @@ void ParseBC::setCompoList(Control* C)
           case HT_B:
             getXML_IBC_HT_B(elmL2, odr);
             if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
               Exit(0);
             }
             break;
@@ -3493,21 +3499,21 @@ void ParseBC::setCompoList(Control* C)
       else if ( tp == ISOTHERMAL ) {
         getXML_IBC_IsoTherm(elmL2, odr);
         if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-          Hostonly_ stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
+          stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
           Exit(0);
         }
       }
       else if ( tp == RADIANT ) {
         getXML_IBC_Radiant(elmL2, odr);
         if ( !isIDinCompo(ide, odr) ) {
-          Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+          stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
           Exit(0);
         }
       }
       else if ( tp == HEAT_SRC ) {
         getXML_IBC_HeatSrc(elmL2, odr);
         if ( !isIDinCompo(ide, odr) ) {
-          Hostonly_ stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
+          stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
           Exit(0);
         }
       }
@@ -3515,7 +3521,7 @@ void ParseBC::setCompoList(Control* C)
         getXML_IBC_CnstTemp(elmL2, odr);
       }
       else {
-        Hostonly_ printf("\tError : Invalid Inner BC keyword [%d]\n", tp);
+        printf("\tError : Invalid Inner BC keyword [%d]\n", tp);
         Exit(0);
       }
     }
@@ -3577,7 +3583,7 @@ void ParseBC::getXML_Phase(void)
 	
 	elemTop = CF->GetTop(STEER);
 	if( !(elmL1 = elemTop->GetElemFirst("Phase_Idetification")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Phase_Idetification'\n");
+    stamped_printf("\tParsing error : Missing the section of 'Phase_Idetification'\n");
     Exit(0);
   }
 	
@@ -3595,23 +3601,23 @@ void ParseBC::getXML_Phase(void)
       m_phase = LIQUID;
     }
     else {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword '%s' in 'Phase_Idetification'\n", p);
+      stamped_printf("\tParsing error : No valid keyword '%s' in 'Phase_Idetification'\n", p);
       Exit(0);
     }
     
     // ID
     if ( !param->isSetID() ) {
-      Hostonly_ stamped_printf("\tParsing error : No ID for statement in 'Phase_Idetification'\n");
+      stamped_printf("\tParsing error : No ID for statement in 'Phase_Idetification'\n");
       Exit(0);
     }
     if ( -1 == (id=param->GetID()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid ID for statement in 'Phase_Idetification'\n");
+      stamped_printf("\tParsing error : No valid ID for statement in 'Phase_Idetification'\n");
       Exit(0);
     }
     
     // IDがiTableの中にリストアップされているかを調べる
     if ( !isIDinTable(id) ) {
-      Hostonly_ stamped_printf("\tParsing error : ID[%d] described in 'id' is not included in 'Model_Setting'\n", id);
+      stamped_printf("\tParsing error : ID[%d] described in 'id' is not included in 'Model_Setting'\n", id);
       Exit(0);
     }
     
@@ -3630,7 +3636,7 @@ void ParseBC::getXML_Phase(void)
     if ( compo[n].getState() == FLUID ) {
       tmp = compo[n].getPhase();
       if ( (tmp!=GAS) && (tmp!=LIQUID) ) {
-        Hostonly_ stamped_printf("\tcomponent [%d] is fluid, but not identified by gas or liquid.\n", n);
+        stamped_printf("\tcomponent [%d] is fluid, but not identified by gas or liquid.\n", n);
         sw = false;
       }
     }
@@ -3648,7 +3654,7 @@ void ParseBC::chkBCconsistency(unsigned kos)
   if (kos == FLOW_ONLY) {
     for (int n=1; n<NoBC; n++) {
       if ( compo[n].isHBC() ) {
-        Hostonly_ stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Inner_Boundary'\n");
+        stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Inner_Boundary'\n");
         Exit(0);
       }
     }
@@ -3656,7 +3662,7 @@ void ParseBC::chkBCconsistency(unsigned kos)
   else if (kos == SOLID_CONDUCTION) {
     for (int n=1; n<NoBC; n++) {
       if ( compo[n].isVBC() ) {
-        Hostonly_ stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Inner_Boundary'\n");
+        stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Inner_Boundary'\n");
         Exit(0);
       }
     }
@@ -3675,11 +3681,11 @@ void ParseBC::set_Deface(const CfgElem *elmL, unsigned n, const char* str)
   int def=0;
   
   if ( !elmL->GetValue(CfgIdt("def_face"), &def) ) {
-		Hostonly_ stamped_printf("\tParsing error : fail to get 'def_face' in '%s'\n", str);
+		stamped_printf("\tParsing error : fail to get 'def_face' in '%s'\n", str);
     Exit(0);
   }
 	if ( !isIDinTable(def) ) { // IDがiTableの中にリストアップされているかを調べる
-		Hostonly_ stamped_printf("\tParsing error : ID[%d] described in 'def_face' is not included in 'Model_Setting'\n", def);
+		stamped_printf("\tParsing error : ID[%d] described in 'def_face' is not included in 'Model_Setting'\n", def);
 		Exit(0);
 	}
 	compo[n].setDef(def);
@@ -3696,7 +3702,7 @@ REAL_TYPE ParseBC::get_BCval_real(const CfgElem *elmL, const char* key)
   REAL_TYPE df=0.0f;
   
   if ( !elmL->GetValue(key, &df) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid REAL_TYPE value for '%s'\n", key);
+		stamped_printf("\tParsing error : Invalid REAL_TYPE value for '%s'\n", key);
 		Exit(0);
 	}
   return df;
@@ -3713,7 +3719,7 @@ int ParseBC::get_BCval_int(const CfgElem *elmL, const char* key)
   int df=0;
   
   if ( !elmL->GetValue(key, &df) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", key);
+		stamped_printf("\tParsing error : Invalid float value for '%s'\n", key);
 		Exit(0);
 	}
   return df;
@@ -3732,7 +3738,7 @@ void ParseBC::get_NV(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
   if ( !elmL->GetVctValue("Normal_x", "Normal_y", "Normal_z", &v[0], &v[1], &v[2]) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
+    stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
     Exit(0);
   }
   getUnitVec(v);
@@ -3751,7 +3757,7 @@ void ParseBC::get_Dir(const CfgElem *elmL, unsigned n, const char* str, REAL_TYP
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
   if ( !elmL->GetVctValue("Dir_x", "Dir_y", "Dir_z", &v[0], &v[1], &v[2]) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
+    stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
     Exit(0);
   }
   getUnitVec(v);
@@ -3770,7 +3776,7 @@ void ParseBC::get_Center(const CfgElem *elmL, unsigned n, const char* str, REAL_
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
   if ( !elmL->GetVctValue("Center_x", "Center_y", "Center_z", &v[0], &v[1], &v[2]) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
+    stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
     Exit(0);
   }
 }
@@ -3798,7 +3804,7 @@ unsigned ParseBC::count_Outer_Cell_ID(unsigned* cid)
   
   // 各フェイスの媒質IDを調べる
   if ( !(elmL1 = elemTop->GetElemFirst("Face_BC")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing 'Face_BC' description\n");
+    stamped_printf("\tParsing error : Missing 'Face_BC' description\n");
     Exit(0);
   }
   
@@ -3808,21 +3814,21 @@ unsigned ParseBC::count_Outer_Cell_ID(unsigned* cid)
     
     // セルIDの取得
     if ( !(param = elmL2->GetParamFirst("Guide_Cell_ID")) ) {
-      Hostonly_ stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC' : %s\n", FBUtility::getDirection(face).c_str());
+      stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC' : %s\n", FBUtility::getDirection(face).c_str());
       Exit(0);
     }
     else {
       if ( !param->isSetID() ) {
-        Hostonly_ stamped_printf("\tParsing error : No ID section in 'Guide_Cell_ID' : %s\n", FBUtility::getDirection(face).c_str());
+        stamped_printf("\tParsing error : No ID section in 'Guide_Cell_ID' : %s\n", FBUtility::getDirection(face).c_str());
         Exit(0);
       }
       if ( 1 > (md=param->GetID()) ) {
-        Hostonly_ stamped_printf("\tParsing error : Invalid Outer Guide Cell ID[%d] that shoud be > 0 : %s\n", md, FBUtility::getDirection(face).c_str());
+        stamped_printf("\tParsing error : Invalid Outer Guide Cell ID[%d] that shoud be > 0 : %s\n", md, FBUtility::getDirection(face).c_str());
         Exit(0);
       }
       
       if ( !isIDinTable(md) ) {
-        Hostonly_ stamped_printf("\tParsing error : ID[%d] described in '%s' is not listed on 'Model_Setting'\n", md, FBUtility::getDirection(face).c_str());
+        stamped_printf("\tParsing error : ID[%d] described in '%s' is not listed on 'Model_Setting'\n", md, FBUtility::getDirection(face).c_str());
         Exit(0);
       }
       

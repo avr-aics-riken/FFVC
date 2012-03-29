@@ -1429,7 +1429,7 @@ void Control::getXML_Para_Temp(void)
   }
   DiffTemp = Diff;
   
-  if ( Unit.Temp == CompoList::Unit_CELSIUS ) {
+  if ( Unit.Temp == Unit_CELSIUS ) {
     BaseTemp = Base + KELVIN;
   }
 }
@@ -1925,8 +1925,8 @@ void Control::getXML_Unit(void)
     stamped_printf("\tParsing error : Invalid string for 'Pressure' in 'Unit'\n");
     Exit(0);
   }
-  if     ( !strcasecmp(str, "Gauge")  )   Unit.Prs = CompoList::Gauge;
-  else if( !strcasecmp(str, "Absolute") ) Unit.Prs = CompoList::Absolute;
+
+  else if( !strcasecmp(str, "Absolute") ) Unit.Prs = Unit_Absolute;
   else {
     stamped_printf("\tInvalid keyword is described at 'Pressure' in 'Unit'\n");
     Exit(0);
@@ -1937,8 +1937,8 @@ void Control::getXML_Unit(void)
       stamped_printf("\tParsing error : Invalid string for 'Temperature' in 'Unit'\n");
       Exit(0);
     }
-    if     ( !strcasecmp(str, "Celsius") )  Unit.Temp = CompoList::Unit_CELSIUS;
-    else if( !strcasecmp(str, "Kelvin") )   Unit.Temp = CompoList::Unit_KELVIN;
+    if     ( !strcasecmp(str, "Celsius") )  Unit.Temp = Unit_CELSIUS;
+    else if( !strcasecmp(str, "Kelvin") )   Unit.Temp = Unit_KELVIN;
     else {
       stamped_printf("\tInvalid keyword is described at 'Temperature' in 'Unit'\n");
       Exit(0);
@@ -2189,14 +2189,14 @@ void Control::printInitValues(FILE* fp)
   fprintf(fp,"\tInitial          .V  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecV,    iv.VecV/RefVelocity);
   fprintf(fp,"\tInitial          .W  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecW,    iv.VecW/RefVelocity);
   fprintf(fp,"\tDynamic  Pressure    [Pa]    / [-]   : %12.5e / %12.5e\n", DynamicPrs,             1.0);
-  if (Unit.Prs == CompoList::Absolute) {
+  if (Unit.Prs == Unit_Absolute) {
     fprintf(fp,"\tInitial  Pressure    [Pa]    / [-]   : %12.5e / %12.5e\n", iv.Pressure, (iv.Pressure-BasePrs)/DynamicPrs);
   }
   else {
     fprintf(fp,"\tInitial  Pressure    [Pa_g]  / [-]   : %12.5e / %12.5e\n", iv.Pressure, iv.Pressure/DynamicPrs);
   }
   if ( isHeatProblem() ) {
-    fprintf(fp,"\tInitial  Temperature [%s]     / [-]   : %12.5e / %12.5e\n", (Unit.Temp==CompoList::Unit_KELVIN) ? "K" : "C",
+    fprintf(fp,"\tInitial  Temperature [%s]     / [-]   : %12.5e / %12.5e\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C",
 						FBUtility::convK2Temp(iv.Temperature, Unit.Temp), 
 						FBUtility::convK2ND(iv.Temperature, BaseTemp, DiffTemp));
   }
@@ -2281,8 +2281,8 @@ void Control::printParaConditions(FILE* fp)
   fprintf(fp,"\tTime Scale                [sec]       : %12.5e\n", Tscale);
   fprintf(fp,"\n");
   if ( isHeatProblem() ) {
-    fprintf(fp,"\tBase Temperature          [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==CompoList::Unit_KELVIN) ? "K" : "C", FBUtility::convK2Temp(BaseTemp, Unit.Temp), 0.0);
-    fprintf(fp,"\tTemperature Diff.         [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==CompoList::Unit_KELVIN) ? "K" : "C", DiffTemp, 1.0);
+    fprintf(fp,"\tBase Temperature          [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C", FBUtility::convK2Temp(BaseTemp, Unit.Temp), 0.0);
+    fprintf(fp,"\tTemperature Diff.         [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C", DiffTemp, 1.0);
   }
   fprintf(fp,"\n");
   
@@ -2538,8 +2538,8 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   // 単位系
   fprintf(fp,"\n\tUnit\n");
   fprintf(fp,"\t     Unit of Input Parameter  :   %s\n", (Unit.Param == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
-  fprintf(fp,"\t             Pressure         :   %s\n", (Unit.Prs == CompoList::Absolute) ? "Absolute Pressure" : "Gauge Pressure");
-  fprintf(fp,"\t             Temperature      :   %s\n", (Unit.Temp == CompoList::Unit_KELVIN) ? "Kelvin" : "Celsius");
+  fprintf(fp,"\t             Pressure         :   %s\n", (Unit.Prs == Unit_Absolute) ? "Absolute Pressure" : "Gauge Pressure");
+  fprintf(fp,"\t             Temperature      :   %s\n", (Unit.Temp == Unit_KELVIN) ? "Kelvin" : "Celsius");
   
   // 時間制御
   fprintf(fp,"\n\tTime Control\n");

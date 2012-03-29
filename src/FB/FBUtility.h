@@ -13,11 +13,10 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include <math.h>
-
+#include <string>
 #include "FBDefine.h"
-#include "Component.h"
 
-class FBUtility{
+class FBUtility {
 
 public:
   FBUtility() {}
@@ -27,7 +26,7 @@ protected:
   static void MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp);
   
 public:  
-  static string getDirection(const unsigned dir);
+  static std::string getDirection(const unsigned dir);
   
   static void displayMemory (const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp, FILE* mp);
   static void printVersion  (FILE* fp, const char* str, const unsigned ver);
@@ -74,7 +73,7 @@ public:
    @param Unit 温度の単位
    */
   static REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit) {
-    return ( (Unit==CompoList::Unit_KELVIN) ? var : var-KELVIN );
+    return ( (Unit==Unit_KELVIN) ? var : var-KELVIN );
   }
   
   /**
@@ -84,7 +83,7 @@ public:
    @param Unit 温度の単位
    */
   static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit) {
-    return ( (Unit==CompoList::Unit_KELVIN) ? var : var+KELVIN );
+    return ( (Unit==Unit_KELVIN) ? var : var+KELVIN );
   }
   
   /**
@@ -150,7 +149,7 @@ public:
                                     const REAL_TYPE rho, 
                                     const REAL_TYPE RefV, 
                                     const unsigned mode) {
-    const REAL_TYPE a = (mode==CompoList::Absolute) ? (var-bp) : var;
+    const REAL_TYPE a = (mode==Unit_Absolute) ? (var-bp) : var;
     return (  a / (RefV*RefV*rho) );
   }
   
@@ -165,7 +164,7 @@ public:
    */
   static REAL_TYPE convND2D_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV, const unsigned mode) {
     const REAL_TYPE a = var * (RefV*RefV*rho);
-    return ( (mode==CompoList::Absolute) ? bp+a : a );
+    return ( (mode==Unit_Absolute) ? bp+a : a );
   }
   
   /**

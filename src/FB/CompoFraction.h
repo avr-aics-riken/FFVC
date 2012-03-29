@@ -16,9 +16,8 @@
 #include "FBDefine.h"
 #include "FBUtility.h"
 #include "vec3.h"
-#include "Parallel_node.h"
 
-class CompoFraction : public Parallel_Node {
+class CompoFraction {
   
 protected:
   // サンプリング形状

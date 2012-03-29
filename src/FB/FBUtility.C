@@ -13,13 +13,13 @@
 
 
 /**
- @fn string FBUtility::getDirection(const unsigned dir)
+ @fn std::string FBUtility::getDirection(const unsigned dir)
  @brief dirの方向ラベルを返す
  @param dir 方向
  */
-string FBUtility::getDirection(const unsigned dir)
+std::string FBUtility::getDirection(const unsigned dir)
 {
-  string face;
+  std::string face;
   if      (dir == X_MINUS) face = "X-";
   else if (dir == X_PLUS)  face = "X+";
   else if (dir == Y_MINUS) face = "Y-";

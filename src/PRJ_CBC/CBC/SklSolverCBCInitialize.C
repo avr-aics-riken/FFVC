@@ -135,7 +135,6 @@ SklSolverCBC::SklSolverInitialize() {
   Ex->setControlVars (&C);
   
   // 並列情報のコピー
-  B.setParallelInfo   (pn);
   BC.setParallelInfo  (pn);
   F.setParallelInfo   (pn);
   MO.setParallelInfo  (pn);
@@ -362,9 +361,9 @@ SklSolverCBC::SklSolverInitialize() {
   
 
 #ifdef DEBUG
-  // カット情報から壁面IDセット
+  // カット情報からボクセルモデルの固体をIDセット　デバッグ用
   if ( C.isCDS() ) {
-    unsigned zc = Vinfo.markSolid_from_Cut(mid, cutPos);
+    unsigned zc = Vinfo.markSolid_from_Cut(mid, cut);
     Hostonly_ printf("\tCut cell = %d\n", zc);
   }
 #endif
@@ -2270,7 +2269,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
   REAL_TYPE time;
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
-  REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+  REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   F.loadPressure(this, fp, "Pressure", G_size, guide, dc_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
@@ -2291,7 +2290,7 @@ void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
   
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() ) {
-    REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     F.loadTemperature(this, fp, "Temperature", G_size, guide, dc_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2343,7 +2342,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
   }
   
   // Pressure > step, timeは戻り値を使用
-  REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+  REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   F.loadPressure(this, fp, "AvrPressure", G_size, guide, dc_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, false);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetAverageBaseStep(step);
@@ -2361,7 +2360,7 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
   
   
   if ( C.isHeatProblem() ) {
-    REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     F.loadTemperature(this, fp, "AvrTemperature", G_size, guide, dc_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, false);
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
@@ -2436,7 +2435,7 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
   unsigned mm, g, i;
   mm = (size[2]+2*guide)*(size[1]+2*guide)*(size[0]+2*guide)*6;
   g = 0;
-  eps = 1.0e-1;
+  eps = 4.0e-3;
   
   min_g = 1.0;
   for (i=0; i<mm; i++) {
@@ -2448,8 +2447,8 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
     }
   }
   if ( g>0 ) {
-    Hostonly_ fprintf(fp, "\t%d %s modified to %5.3e (non-dimnensional distance)\n", g, (g>1)?"cuts were":"cut was", eps);
-    Hostonly_ printf("\t%d %s modified to %5.3e (non-dimnensional distance)\n", g, (g>1)?"cuts were":"cut was", eps);
+    Hostonly_ fprintf(fp, "\n\t%d %s modified to %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
+    Hostonly_ printf("\n\t%d %s modified to %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
   }
   return min_g;
 }
@@ -2719,7 +2718,6 @@ void SklSolverCBC::setComponentVF(float* cvf)
   double flop;
   
   CompoFraction CF(size, guide, C.dx, C.org, subsampling);
-  CF.setParallelInfo(pn);
   
   for (int n=1; n<=C.NoBC; n++) {
     
@@ -3001,14 +2999,14 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   unsigned poly_gc[3];
   float    poly_org[3], poly_dx[3];
   poly_gc[0]  = poly_gc[1] = poly_gc[2] = guide;
-  poly_dx[0]  = (float)C.dx[0]*C.RefLength*10.0;
-  poly_dx[1]  = (float)C.dx[1]*C.RefLength*10.0;
-  poly_dx[2]  = (float)C.dx[2]*C.RefLength*10.0;
-  poly_org[0] = -1.0; //(float)C.org[0]*C.RefLength;
-  poly_org[1] = -1.0; //(float)C.org[1]*C.RefLength;
-  poly_org[2] = -1.0; //(float)C.org[2]*C.RefLength;
+  poly_dx[0]  = (float)C.dx[0]*C.RefLength;
+  poly_dx[1]  = (float)C.dx[1]*C.RefLength;
+  poly_dx[2]  = (float)C.dx[2]*C.RefLength;
+  poly_org[0] = (float)C.org[0]*C.RefLength;
+  poly_org[1] = (float)C.org[1]*C.RefLength;
+  poly_org[2] = (float)C.org[2]*C.RefLength;
   
-  stamped_printf("poly : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
+  //stamped_printf("poly : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
   
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -3047,8 +3045,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   TIMING_stop(tm_polygon_load);
   
   // 階層情報表示 debug
-  PL->show_group_hierarchy();
-  PL->show_group_hierarchy(fp);
+  //PL->show_group_hierarchy();
+  //PL->show_group_hierarchy(fp);
   
   
   // IDの表示
@@ -3061,7 +3059,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     Hostonly_ printf("\t %3d : %s\n", m_id, m_pg.c_str());
-    PL->show_group_info(m_pg);
+    //PL->show_group_info(m_pg);
   }
   delete pg_roots;
   
@@ -3084,7 +3082,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     FBUtility::displayMemory("Polygon", G_poly_mem, poly_mem, fp, mp);
   }
   
-  // Triangle display
+  /* Triangle display
    PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
    t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
    m_min = t1 - t2;      // 1層外側まで
@@ -3097,17 +3095,17 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
    int c=0;
    vector<Triangle*>::iterator it2;
    for (it2 = trias->begin(); it2 != trias->end(); it2++) {
-   p = (*it2)->get_vertex();
-   n = (*it2)->get_normal();
-   printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++, 
-   p[0].t[0], p[0].t[1], p[0].t[2],
-   p[1].t[0], p[1].t[1], p[1].t[2],
-   p[2].t[0], p[2].t[1], p[2].t[2],
-   n.t[0], n.t[1], n.t[2]);
+     p = (*it2)->get_vertex();
+     n = (*it2)->get_normal();
+     printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++, 
+            p[0].t[0], p[0].t[1], p[0].t[2],
+            p[1].t[0], p[1].t[1], p[1].t[2],
+            p[2].t[0], p[2].t[1], p[2].t[2],
+            n.t[0], n.t[1], n.t[2]);
    }
    
-   delete trias;  //後始末
-
+   delete trias;  //後始末 
+   */
   
   /* Polylib: STLデータ書き出しテスト
    unsigned poly_out_para = IO_GATHER; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
@@ -3153,8 +3151,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   nlen[1] = size[1];
   nlen[2] = size[2];
   
-  stamped_printf("cut : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
-  stamped_printf("cut : dx(%e %e %e) dimensional\n", poly_dx[0], poly_dx[1], poly_dx[2]);
+  //stamped_printf("cut : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
+  //stamped_printf("cut : dx(%e %e %e) dimensional\n", poly_dx[0], poly_dx[1], poly_dx[2]);
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);

@@ -12,13 +12,13 @@
 #include "Component.h"
 
 /**
- @fn string CompoList::getVarStr(void)
+ @fn std::string CompoList::getVarStr(void)
  @brief 変数名を返す
  @retval 変数の文字列
  */
-string CompoList::getVarStr(void)
+std::string CompoList::getVarStr(void)
 {
-  string var;
+  std::string var;
   
   if ( isVarEncoded(var_Velocity) )         var += "Velocity ";              // 0
   if ( isVarEncoded(var_Pressure) )         var += "Pressure ";              // 1
@@ -35,12 +35,12 @@ string CompoList::getVarStr(void)
 }
 
 /**
- @fn string CompoList::getBCstr(void)
+ @fn std::string CompoList::getBCstr(void)
  @brief BCのラベル名を返す
  */
-string CompoList::getBCstr(void)
+std::string CompoList::getBCstr(void)
 {
-  string bc;
+  std::string bc;
   if      ( type == ADIABATIC )     bc = "Adiabatic";
   else if ( type == HEATFLUX )      bc = "Direct Heat Flux";
   else if ( type == ISOTHERMAL )    bc = "Isothermal";

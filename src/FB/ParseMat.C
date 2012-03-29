@@ -307,7 +307,7 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
       }
     }
     else {
-      fprintf(fp,"\t  No :      ID            Element      Medium    Init.Temp(%s)                    Label : BCtype\n", (Unit_Temp==CompoList::Unit_KELVIN) ? "K" : "C" );
+      fprintf(fp,"\t  No :      ID            Element      Medium    Init.Temp(%s)                    Label : BCtype\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C" );
       for (unsigned i=1; i<=NoBC; i++) {
         fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;

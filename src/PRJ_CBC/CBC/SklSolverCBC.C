@@ -668,7 +668,7 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     
     if (C.Unit.File == DIMENSIONAL) {
-      REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+      REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
       fb_prs_nd2d_(ws, ap, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
     }
     else {
@@ -699,7 +699,7 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     
     if (C.Unit.File == DIMENSIONAL) {
-      REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
       fb_tmp_nd2d_(ws, at, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
     else {
@@ -768,7 +768,7 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     
     if (C.Unit.File == DIMENSIONAL) {
-      REAL_TYPE bp = ( C.Unit.Prs == CompoList::Absolute ) ? C.BasePrs : 0.0;
+      REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
       fb_prs_nd2d_(ws, p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
     }
     else {
@@ -799,7 +799,7 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     
     if (C.Unit.File == DIMENSIONAL) {
-      REAL_TYPE klv = ( C.Unit.Temp == CompoList::Unit_KELVIN ) ? 0.0 : KELVIN;
+      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
       fb_tmp_nd2d_(ws, t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
     else {

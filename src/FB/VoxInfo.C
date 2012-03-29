@@ -1540,92 +1540,6 @@ void VoxInfo::encAmask_SymtrcBC(int face, unsigned* bh2)
   }
 }
 
-
-/**
- @fn void VoxInfo::encCut_OBC(int face, CutPos32Array* cutPos)
- @brief 外部境界が壁面ガイドセルの場合に距離情報をセットする
- @param face 外部境界面番号
- @param[in/out] cutPos 距離情報コンテナ
- */
-void VoxInfo::encCut_OBC(int face, CutPos32Array* cutPos)
-{
-  int i, j, k;
-  float pos=0.5f;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  switch (face) {
-    case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
-        i=1;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
-            cutPos->setPos(i+guide-1, j+guide-1, k+guide-1, X_MINUS, pos); 
-          }
-        }        
-      }
-      break;
-      
-    case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
-            cutPos->setPos(i+guide-1, j+guide-1, k+guide-1, X_PLUS, pos); 
-          }
-        }
-      }
-      break;
-      
-    case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
-            cutPos->setPos(i+guide-1, j+guide-1, k+guide-1, Y_MINUS, pos); 
-          }
-        }
-      }
-      break;
-      
-    case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
-            cutPos->setPos(i+guide-1, j+guide-1, k+guide-1, Y_PLUS, pos); 
-          }
-        }
-      }
-      break;
-      
-    case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
-            cutPos->setPos(i+guide-1, j+guide-1, k+guide-1, Z_MINUS, pos); 
-          }
-        }
-      }
-      break;
-      
-    case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
-            cutPos->setPos(i+guide-1, j+guide-1, k+guide-1, Z_PLUS, pos); 
-          }
-        }
-      }
-      break;
-  }
-}
-
 /**
  @fn void VoxInfo::encCut_OBC(int face, float* cut)
  @brief 外部境界が壁面ガイドセルの場合に距離情報をセットする
@@ -3430,170 +3344,6 @@ void VoxInfo::encPbit(unsigned* bx)
 }
 
 /**
- @fn unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, CutPos32Array* cutPos)
- @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
- @param[in/out] bx BCindex P
- @param[in] cutPos 距離情報コンテナ
- @retval 固体表面セル数
- @note 
- - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
- */
-unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, CutPos32Array* cutPos)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k;
-  unsigned m_p;
-  unsigned register s;
-  float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  // ノイマンフラグ
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) ) {
-          
-          // 外部境界面は除外 pn.nID[X_MINUS] < 0 のときが外部境界面，0-myrank, 0>other rank
-          // X_MINUS
-          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
-            cp_w = cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, X_MINUS); 
-            if (cp_w != 1.0) {          // 交点があるなら壁面なのでノイマン条件をセット
-              s = offBit( s, BC_N_W );
-            }
-          }
-          
-          // X_PLUS
-          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
-            cp_e = cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, X_PLUS); 
-            if (cp_e != 1.0) {
-              s = offBit( s, BC_N_E );
-            }
-          }
-          
-          // Y_MINUS
-          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
-            cp_s = cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, Y_MINUS); 
-            if (cp_s != 1.0) {
-              s = offBit( s, BC_N_S );
-            }
-          }
-          
-          // Y_PLUS
-          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
-            cp_n = cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, Y_PLUS); 
-            if (cp_n != 1.0) {
-              s = offBit( s, BC_N_N );
-            }
-          }
-          
-          // Z_MINUS
-          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
-            cp_b = cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, Z_MINUS); 
-            if (cp_b != 1.0) {
-              s = offBit( s, BC_N_B );
-            }
-          }
-          
-          // Z_PLUS
-          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
-            cp_t = cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, Z_PLUS); 
-            if (cp_t != 1.0) {
-              s = offBit( s, BC_N_T );
-            }
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  // wall locationフラグ
-  unsigned c = 0;
-  float pos[6], q;
-  
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) ) {
-          cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, pos);
-          
-          if ( pos[X_MINUS] != 1.0 ) { s = onBit( s, FACING_W ); c++; }
-          if ( pos[X_PLUS]  != 1.0 ) { s = onBit( s, FACING_E ); c++; }
-          if ( pos[Y_MINUS] != 1.0 ) { s = onBit( s, FACING_S ); c++; }
-          if ( pos[Y_PLUS]  != 1.0 ) { s = onBit( s, FACING_N ); c++; }
-          if ( pos[Z_MINUS] != 1.0 ) { s = onBit( s, FACING_B ); c++; }
-          if ( pos[Z_PLUS]  != 1.0 ) { s = onBit( s, FACING_T ); c++; }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = c;
-    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  // 収束判定の有効フラグ
-  float q0, q1, q2, q3, q4, q5;
-  unsigned g=0;
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) ) {
-          cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, pos);
-          q0 = floor(pos[0]);
-          q1 = floor(pos[1]);
-          q2 = floor(pos[2]);
-          q3 = floor(pos[3]);
-          q4 = floor(pos[4]);
-          q5 = floor(pos[5]);
-          
-          // 収束判定の有効フラグ 全周カットがあるセルは孤立セルとして固体セルへ変更
-          if ( (q0+q1+q2+q3+q4+q5) == 0.0 ) {
-            s = offBit(s, VLD_CNVG);    // Out of scope
-            s = offBit(s, STATE_BIT );  // Solid
-            s = offBit(s, ACTIVE_BIT ); // Inactive
-            g++;
-          }
-          else {
-            s = onBit(s, VLD_CNVG);
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  Hostonly_ printf("\tThe cell of which all faces are cut (%d) >> Inactive and SOLID cell\n", g);
-  
-  return c;
-}
-
-/**
  @fn unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
  @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
  @param[in/out] bx BCindex P
@@ -3756,7 +3506,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
     para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
   }
   
-  Hostonly_ printf("\tThe cell of which all faces are cut (%d) >> Inactive and SOLID cell\n", g);
+  Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
   
   return c;
 }
@@ -4327,7 +4077,7 @@ void VoxInfo::find_isolated_Fcell(unsigned order, int* mid, unsigned* bx)
             }
             int max_mid = val[max_loc]; // 最頻値のID
             
-            Hostonly_ printf("\tReplace isolated fluid cell :: mid(%d,%d,%d)\t original ID=%d >> modified ID=%d (%d/6)\n", i,j,k, mid[m_p], max_mid, cnt);
+            Hostonly_ printf("\n\tReplace isolated fluid cell :: mid(%d,%d,%d)\t original ID=%d >> modified ID=%d (%d/6)\n", i,j,k, mid[m_p], max_mid, cnt);
             
             // 媒質オーダーの変更
             mid[m_p] = max_mid;
@@ -4703,37 +4453,38 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
 }
 
 /**
- @fn unsigned VoxInfo::markSolid_from_Cut(int* mid, CutPos32Array* cutPos)
+ @fn unsigned VoxInfo::markSolid_from_Cut(int* mid, float* cut)
  @brief ボクセルモデルにカット情報から得られた固体情報を転写する
  @param[in/out] mid セルID
- @param[in] cutPos 距離情報コンテナ
+ @param[in] cut 距離情報
  @retval 固体セル数
  @note for debugging
  */
-unsigned VoxInfo::markSolid_from_Cut(int* mid, CutPos32Array* cutPos)
+unsigned VoxInfo::markSolid_from_Cut(int* mid, float* cut)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k;
-  unsigned m_p, c=0;
-  float pos[6], q;
+  unsigned c=0;
+  float *pos;
+  float q;
+  size_t m_p, m;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int gd = (int)guide;
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         
-        cutPos->getPos(i+guide-1, j+guide-1, k+guide-1, pos);
+        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+        m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+        pos = &cut[m];
         
         // セルのどこかに交点があれば，壁
         q = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
         
         if ( q < 6.0 ) {
-          mid[m_p]=2;
+          mid[m_p] = 2;
           c++;
         }
       }
@@ -5993,27 +5744,6 @@ void VoxInfo::setInactive_Compo(unsigned id, int def, int* mid, unsigned* bh1, u
   }
 }
 
-/**
- @fn void VoxInfo::setOBC_Cut(SetBC* BC, CutPos32Array* cutPos)
- @brief 外部境界のガイドセルが固体の場合に距離情報をセット
- @param BC SetBCクラスのポインタ
- @param[in/out] cutPos 距離情報コンテナ
- */
-void VoxInfo::setOBC_Cut(SetBC* BC, CutPos32Array* cutPos)
-{
-  BoundaryOuter* m_obc=NULL;
-  unsigned F;
-  
-  for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->get_OBC_Ptr(face);
-    F = m_obc->get_BCtype();
-    
-    if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) ) {
-      encCut_OBC(face, cutPos);
-    }
-  }
-  
-}
 
 /**
  @fn void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)

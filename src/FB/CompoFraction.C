@@ -138,12 +138,12 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   nv.normalize();
   dir.normalize();
   if ( (nv.length() == 0.0) || (dir.length() == 0.0) ) {
-    Hostonly_ stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
+    stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
     Exit(0);
   }
   
   if ( dot(nv, dir) != 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Invalid parameter of Heat Exchanger : non-orthogonal vectors\n");
+    stamped_printf("\tError : Invalid parameter of Heat Exchanger : non-orthogonal vectors\n");
     Exit(0);
   }
 }
@@ -161,7 +161,7 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   
   nv.normalize();
   if ( nv.length() == 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
+    stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
     Exit(0);
   }
 }
@@ -424,7 +424,7 @@ void CompoFraction::get_angle(void)
       }
     }
     else {
-      Hostonly_ stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
+      stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
       Exit(0);
     }
   }

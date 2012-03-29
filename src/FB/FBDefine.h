@@ -269,6 +269,7 @@
 // alternative
 #define F_INDEX_S3D(ix, jx, kx, gc, i, j, k) ( ((ix)+(gc)*2)*((jx)+(gc)*2)*((k)+(gc)-1) + ((ix)+(gc)*2)*((j)+(gc)-1) + (i)+(gc)-1 )
 
+// 変数の種類
 enum Kind_of_vars {
   var_Velocity,
   var_Pressure,
@@ -281,6 +282,18 @@ enum Kind_of_vars {
   var_Density_Avr,
   var_TotalP_Avr,
   var_END
+};
+
+/// 圧力単位
+enum Unit_Pressure {
+  Unit_Gauge=1,
+  Unit_Absolute
+};
+
+/// 温度単位
+enum Temp_Unit {
+  Unit_KELVIN=1,
+  Unit_CELSIUS
 };
 
 #endif // _SKL_SOLVER_FB_DEFINE_H_

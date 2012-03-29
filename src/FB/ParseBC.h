@@ -22,14 +22,13 @@
 #include "Component.h"
 #include "IDtable.h"
 #include "config/SklSolverConfig.h"
-#include "Parallel_node.h"
 #include "parallel/SklParaComponent.h"
 #include "Material.h"
 #include "vec3.h"
 
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
-class ParseBC : public Parallel_Node {
+class ParseBC {
 private:
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;
