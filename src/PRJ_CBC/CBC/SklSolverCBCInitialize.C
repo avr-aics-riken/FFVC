@@ -383,7 +383,9 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
-  setVIBC_from_Cut();
+  if ( C.isCDS() ) {
+    setVIBC_from_Cut();
+  }
   
   // コンポーネントのローカルインデクスをcmp.ciに保存
   getLocalCmpIdx();
@@ -2797,10 +2799,11 @@ void SklSolverCBC::setVIBC_from_Cut(void)
   
   for (int n=1; n<=C.NoBC; n++) {
     
-    if ( cmp[n].isVBC_IO() ) {
+    if ( cmp[n].isVBC_IO() ) { // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
       
       // bboxと投影面積の計算
       // cmp[n].area = 
+      
       
       // インデクスの計算 > あとで，VoxEncode()でresize
       //CF.bbox_index(f_st, f_ed);

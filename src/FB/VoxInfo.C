@@ -3730,7 +3730,8 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
 }
 
 /**
- @fn unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, unsigned bc_dir)
+ @fn unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, 
+                                       unsigned bc_dir, int st[3], int ed[3])
  @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
  @retval エンコードしたセル数
  @param order cmp[]のエントリ番号
@@ -3743,9 +3744,12 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
  @param cut_id カット点ID
  @param vec 境界面の法線
  @param bc_dir BCの位置，指定法線と同じ側(1)か反対側(2)
- @note 指定法線とセルのカット方向が
+ @param st コンポーネントbboxの開始セル
+ @param ed コンポーネントbboxの終端セル
+ @note 指定法線とセルのカット方向ベクトルの内積で判断
  */
-unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, unsigned bc_dir)
+unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, 
+                                  unsigned bc_dir, int st[3], int ed[3])
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int    idd;
@@ -3756,6 +3760,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
   int    bid;
   size_t m_p, m_c;
   int    c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  bool m_flag;
   
   FB::Vec3f nv(vec);
   
@@ -3775,6 +3780,13 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
   int jx = (int)size[1];
   int kx = (int)size[2];
   
+  st[0] = ix;
+  st[1] = jx;
+  st[2] = kx;
+  ed[0] = 0;
+  ed[1] = 0;
+  ed[2] = 0;
+  
   idd = (int)id;
   
   for (int k=1; k<=kx; k++) {
@@ -3791,6 +3803,8 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
           s   = bv[m_p];
           q   = bp[m_p];
           
+          m_flag = false;
+          
           if ( IS_FLUID(s) && (deface == mid[m_p]) ) { // 流体でdefaceであるセルがテスト対象
             // 各方向のID
             c_w = (bid >> 0)  & MASK_5;
@@ -3805,6 +3819,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_W);
               q = offBit(q, FACING_W);
               g++;
+              m_flag = true;
             }
             
             // X+
@@ -3812,6 +3827,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_E);
               q = offBit(q, FACING_E);
               g++;
+              m_flag = true;
             }
             
             // Y-
@@ -3819,6 +3835,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_S);
               q = offBit(q, FACING_S);
               g++;
+              m_flag = true;
             }
             
             // Y+
@@ -3826,6 +3843,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_N);
               q = offBit(q, FACING_N);
               g++;
+              m_flag = true;
             }
             
             // Z-
@@ -3833,6 +3851,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_B);
               q = offBit(q, FACING_B);
               g++;
+              m_flag = true;
             }
             
             // Z+
@@ -3840,11 +3859,17 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_T);
               q = offBit(q, FACING_T);
               g++;
+              m_flag = true;
             }
           } // if fluid
           
           bv[m_p] = s;
           bp[m_p] = q;
+          
+          // min, max
+          if ( m_flag ) {
+            vec3_min(st, st, );
+          }
           
         } // if cut
         
