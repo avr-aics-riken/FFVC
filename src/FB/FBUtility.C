@@ -100,7 +100,7 @@ void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, 
     fprintf (fp,"%6.2f (B)", mem *factor);
   }
   else {
-    fprintf (fp,"Caution! Memory required : %d (Byte)", mem *factor);
+    fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
   }
   
   // Local memory
@@ -124,7 +124,7 @@ void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, 
     fprintf (fp,"%6.2f (B)\n", lmem *factor);
   }
   else {
-    fprintf (fp,"Caution! Memory required : %d (Byte)\n", lmem *factor);
+    fprintf (fp,"Caution! Memory required : %d (Byte)\n", (int)(lmem *factor) );
   }
 
   fflush(fp);

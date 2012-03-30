@@ -38,6 +38,7 @@ private:
   unsigned KindOfSolver;
   unsigned NoCompo, NoBC, NoID, NoBaseBC;
   unsigned Unit_Param, monitor, Unit_Temp, Unit_Prs, Mode_Gradp;
+  bool isCDS;
   
   SklSolverConfig*  CF;  // for XML parsing
   CompoList*        compo;
@@ -61,7 +62,7 @@ public:
     Unit_Temp = 0;
     Unit_Prs = 0;
     Mode_Gradp = 0;
-    HeatProblem = false;
+    HeatProblem = isCDS = false;
     CF = NULL;
     bc = NULL;
     compo = NULL;
@@ -205,16 +206,18 @@ public:
   void setRefMedium       (MaterialList* mat, Control* Cref);
   void setRefValue        (MaterialList* mat, CompoList* cmp, Control* C);
   
-  IDtable* get_IDtable_Ptr(void);
+  
+  //@fn IDtable* ParseBC::get_IDtable_Ptr(void)
+  IDtable* get_IDtable_Ptr(void) {
+    return iTable;
+  }
   
   //@fn BoundaryOuter* get_BaseBC_Ptr(void)
-  //@brief 基本境界リストのポインタを返す
   BoundaryOuter* get_BaseBC_Ptr(void) { 
     return BaseBc;
   }
   
   //@fn unsigned get_NoBaseBC(void)
-  //@brief 基本境界条件数を返す
   unsigned get_NoBaseBC(void) {
     return NoBaseBC;
   }

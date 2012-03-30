@@ -475,16 +475,15 @@ void SetBC3D::InnerVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v, SklScalar3D<unsig
 }
 
 /**
- @fn void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, SklScalar3D<unsigned>* d_bd, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+ @fn void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, SklScalar3D<unsigned>* d_bd, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 速度ベクトルの内部境界条件処理(タイムステップに一度)
  @param v 速度ベクトル
  @param bv BCindex V
  @param tm
  @param v00
  @param flop
- @param isCDS (false-CBC, true-CDS)
  */
-void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -582,7 +581,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigne
 }
 
 /**
- @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
+ @fn void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop)
  @brief 速度境界条件による速度の発散の修正ほか
  @param div div((u)*(-h/dt)
  @param bv BCindex V
@@ -591,10 +590,9 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigne
  @param v00
  @param avr 平均値計算のテンポラリ値
  @param flop
- @param isCDS (false-CBC, true-CDS)
  @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
  */
-void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop, bool isCDS)
+void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, REAL_TYPE& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -851,7 +849,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
 }
 
 /**
- @fn void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, SKL_RAEL* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+ @fn void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, SKL_RAEL* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop)
  @brief 速度境界条件による流束の修正
  @param[in/out] wv 疑似ベクトル
  @param v 速度ベクトル u^n
@@ -861,9 +859,8 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
  @param v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
  @param v00
  @param[out] flop
- @param isCDS (false-CBC, true-CDS)
  */
-void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop, bool isCDS)
+void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, REAL_TYPE& flop)
 {
   REAL_TYPE vec[3];
   int st[3], ed[3], order;
@@ -932,7 +929,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
 }
 
 /**
- @fn void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
+ @fn void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
  @brief 速度境界条件によるPoisosn式のソース項の修正
  @param[out] div divergence field
  @param vc セルセンタ疑似速度
@@ -944,9 +941,8 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
  @param C
  @param v00
  @param[out] flop
- @param isCDS (false-CBC, true-CDS)
  */
-void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop, bool isCDS)
+void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE coef, unsigned* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], dummy, vel;

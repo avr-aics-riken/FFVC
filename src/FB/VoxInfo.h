@@ -24,6 +24,7 @@
 #include "IDtable.h"
 #include "SetBC.h"
 #include "BndOuter.h"
+#include "vec3.h"
 
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
@@ -81,7 +82,7 @@ protected:
   unsigned encQfaceISO_SF      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   unsigned encQfaceISO_SS      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   unsigned encVbit_IBC         (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp);
-  unsigned encVbit_IBC_Cut     (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp);
+  unsigned encVbit_IBC_Cut     (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, unsigned bc_dir);
   unsigned find_mat_odr        (unsigned mat_id);
   
   void checkColorTable       (FILE* fp, unsigned size, int* table);
@@ -110,24 +111,15 @@ protected:
   void setAmask_Thermal      (unsigned* bh);
   void updateGlobalIndex     (const int* st, const int* ed, unsigned n, int* gcbv);
   
-  /**
-   @fn inline unsigned offBit(unsigned idx, const unsigned shift)
-   @brief BCindexの第shiftビットをOFFにする
-   @retval エンコードした値
-   @param idx BCindex
-   @param shift 指定ビット
-   */
+
+  //@fn inline unsigned offBit(unsigned idx, const unsigned shift)
+  //@brief idxの第shiftビットをOFFにする
   inline unsigned offBit(unsigned idx, const unsigned shift) {
     return ( idx & (~(0x1<<shift)) );
   }
   
-  /**
-   @fn inline unsigned onBit(unsigned idx, const unsigned shift)
-   @brief BCindexの第shiftビットをONにする
-   @retval エンコードした値
-   @param idx BCindex
-   @param shift 指定ビット
-   */
+  //@fn inline unsigned onBit(unsigned idx, const unsigned shift)
+  //@brief idxの第shiftビットをONにする
   inline unsigned onBit(unsigned idx, const unsigned shift) {
     return ( idx | (0x1<<shift) );
   }
@@ -173,7 +165,7 @@ public:
   void setBCIndexH           (unsigned* bd, unsigned* bh1, unsigned* bh2, int* mid, SetBC* BC, unsigned kos);
   void setBCIndex_base1      (unsigned* bd, int* mid, float* cvf);
   void setBCIndex_base2      (unsigned* bd, int* mid, SetBC* BC, unsigned& Lcell, unsigned& Gcell, unsigned KOS);
-  void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS);
+  void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float* cut, int* cut_id, bool isCDS);
   void setCmpFraction        (CompoList* compo, unsigned* bx, float* vf);
   void setControlVars        (unsigned* r_size, unsigned r_guide);
   void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);

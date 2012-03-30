@@ -62,6 +62,9 @@ void SetBC::setControlVars(Control* Cref, MaterialList* mat, CompoList* cmp, Ref
   Rayleigh  = Cref->Rayleigh;
   Grashof   = Cref->Grashof;
   Prandtl   = Cref->Prandtl;
+  
+  isCDS = Cref->isCDS();
+  
   for (int i=0; i<3; i++) Lbx[i] = Cref->Lbx[i];
   
   if ( Cref->isHeatProblem() ) pei = Cref->getRcpPeclet();

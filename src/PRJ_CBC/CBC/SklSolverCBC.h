@@ -104,8 +104,8 @@ public:
 
   // Cutlib
   CutPos32Array* cutPos;
-  //CutBid8Array*  cutBid;
   CutBid5Array*  cutBid;
+  //CutBid8Array*  cutBid;
   
   // for parallel
   Parallel_Info pn;
@@ -279,7 +279,7 @@ public:
   void AverageOutput        (unsigned mode, REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
   void Variation_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
-  void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, float* cut);
+  void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);

@@ -170,7 +170,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
       
       TIMING_start(tm_pvec_flux);
       flop_count = 0.0;
-      BC.mod_Pvec_Flux(wv, v0, bcv, tm, &C, v_mode, v00, flop_count, true);
+      BC.mod_Pvec_Flux(wv, v0, bcv, tm, &C, v_mode, v00, flop_count);
       TIMING_stop(tm_pvec_flux, flop_count);
       break;
       
@@ -320,7 +320,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop_count = 0.0;
-  BC.mod_Psrc_VBC(src0, vc, v0, coef, bcv, tm, dt, &C, v00, flop_count, true);
+  BC.mod_Psrc_VBC(src0, vc, v0, coef, bcv, tm, dt, &C, v00, flop_count);
   TIMING_stop(tm_poi_src_vbc, flop_count);
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
@@ -510,7 +510,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // 流出境界のガイドセル値の更新
   TIMING_start(tm_VBC_update);
   flop_count = 0.0;
-  BC.InnerVBC(v, bcv, tm, v00, flop_count, true);
+  BC.InnerVBC(v, bcv, tm, v00, flop_count);
   BC.OuterVBC(v, vc, bcv, tm, dt, &C, v00, flop_count);
   TIMING_stop(tm_VBC_update, flop_count);
   

@@ -83,6 +83,12 @@ public:
     unit_NonDimensional
   };
   
+  /// BC位置
+  enum BC_Location {
+    same_direction=1,
+    opposite_direction
+  };
+  
 protected:
   unsigned ID;        /// セルID
   unsigned type;      /// 
@@ -181,6 +187,7 @@ public:
   std::string getBCstr  (void);
   
   void setAttrb            (const unsigned key);
+  void setBClocation       (const unsigned key);
   void setBbox             (const int m_st[], const int m_ed[]);
   void setDef              (const int key);
   void setElement          (const unsigned key);
@@ -224,6 +231,7 @@ public:
   inline REAL_TYPE getInitTemp(void) const        { return temp_init; }
   inline int getDef(void) const                   { return def; };
   inline int getState(void) const                 { return state; }
+  inline unsigned getBClocation(void) const       { return attrb; }
   inline unsigned getPeriodicDir(void) const      { return var_u1; }
   inline unsigned getPrsUnit(void) const          { return var_u1; }
   inline unsigned getOutflowType(void) const      { return var_u1; }
@@ -236,6 +244,7 @@ public:
   inline unsigned getAttrb(void) const            { return attrb; }
   inline bool isPolicy_Massflow(void) const       { return (attrb==BC_type_massflow) ? true : false; }
   inline bool isPolicy_HeatDensity(void) const    { return (usw==hsrc_density) ? true : false; }
+  
   inline bool isEns(void) const                   { return ( (ens == ON) ? true : false ); }
   
   //@fn unsigned getPhase(void) const

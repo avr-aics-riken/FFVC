@@ -36,7 +36,7 @@ protected:
   
   unsigned imax, jmax, kmax, guide, size[3];
   unsigned Example, NoBC, Unit_Temp, Unit_Prs;
-  bool     inout_flag;
+  bool     inout_flag, isCDS;
   
   BoundaryOuter   obc[NOFACE];
   CompoList*      cmp;
@@ -63,7 +63,7 @@ public:
     rho = nyu = cp = lambda = beta = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
     Example = NoBC = Unit_Temp = Unit_Prs = 0;
-    inout_flag = false;
+    inout_flag = isCDS = false;
     
     for (int i=0; i<3; i++) {
       dim_sz[i] = 0;

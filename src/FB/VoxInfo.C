@@ -3651,7 +3651,7 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
     }
   }
   
-  // iddセルのSTATE_BITをFLUIDに変更
+  // iddセルのSTATE_BITをFLUIDに変更 >> bvのみ違う参照をさせるため
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -3730,7 +3730,7 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
 }
 
 /**
- @fn unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp)
+ @fn unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, unsigned bc_dir)
  @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
  @retval エンコードしたセル数
  @param order cmp[]のエントリ番号
@@ -3739,212 +3739,116 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
  @param bv BCindex V
  @param deface 面を指定するid
  @param bp BCindex P
- @note 対象セルは流体セルであること
+ @param cut 距離情報
+ @param cut_id カット点ID
+ @param vec 境界面の法線
+ @param bc_dir BCの位置，指定法線と同じ側(1)か反対側(2)
+ @note 指定法線とセルのカット方向が
  */
-unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp)
+unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, unsigned bc_dir)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k, idd;
+  int    idd;
   unsigned g=0;
-  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  
   unsigned register s, q;
+  float *pos;
+  int    bid;
+  size_t m_p, m_c;
+  int    c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  
+  FB::Vec3f nv(vec);
+  
+  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
+  if ( bc_dir == CompoList::opposite_direction ) {
+    nv *= -1.0;
+  }
+  
+  FB::Vec3f e_w(-1.0,  0.0,  0.0);
+  FB::Vec3f e_e(+1.0,  0.0,  0.0);
+  FB::Vec3f e_s( 0.0, -1.0,  0.0);
+  FB::Vec3f e_n( 0.0, +1.0,  0.0);
+  FB::Vec3f e_b( 0.0,  0.0, -1.0);
+  FB::Vec3f e_t( 0.0,  0.0, +1.0);
   
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int gd = (int)guide;
   
   idd = (int)id;
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        c_p = mid[m_p];
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         
-        s = bv[m_p];
-        q = bp[m_p];
+        m_c = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+        pos = &cut[m_c];
         
-        if ( (c_p == deface) && IS_FLUID(s) ) { // テストセルが流体，かつdeface
-          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
+
+          m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+          bid = cut_id[m_p];
+          s   = bv[m_p];
+          q   = bp[m_p];
           
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          // X-
-          if ( c_w == idd ) {
-            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
-              if ( !IS_FLUID( bv[m_w] ) ) { // 流入出セルが固体であるかをチェックする
-                s |= (order << BC_FACE_W);
-                q = offBit(q, FACING_W);
-                g++;
-              }
-              else {
-                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
-                Exit(0);
-              }
+          if ( IS_FLUID(s) && (deface == mid[m_p]) ) { // 流体でdefaceであるセルがテスト対象
+            // 各方向のID
+            c_w = (bid >> 0)  & MASK_5;
+            c_e = (bid >> 5)  & MASK_5;
+            c_s = (bid >> 10) & MASK_5;
+            c_n = (bid >> 15) & MASK_5;
+            c_b = (bid >> 20) & MASK_5;
+            c_t = (bid >> 25) & MASK_5;
+            
+            // X-
+            if ( (c_w == idd) && (dot(e_w, nv) < 0.0) ) {
+              s |= (order << BC_FACE_W);
+              q = offBit(q, FACING_W);
+              g++;
             }
-          }
-          
-          // X+
-          if ( c_e == idd ) {
-            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
-              if ( !IS_FLUID( bv[m_e] ) ) { 
-                s |= (order << BC_FACE_E);
-                q = offBit(q, FACING_E);
-                g++;
-              }
-              else {
-                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
-                Exit(0);
-              }
+            
+            // X+
+            if ( (c_e == idd) && (dot(e_e, nv) < 0.0) ) {
+              s |= (order << BC_FACE_E);
+              q = offBit(q, FACING_E);
+              g++;
             }
-          }
-          
-          // Y-
-          if ( c_s == idd ) {
-            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
-              if ( !IS_FLUID( bv[m_s] ) ) { 
-                s |= (order << BC_FACE_S);
-                q = offBit(q, FACING_S);
-                g++;
-              }
-              else {
-                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
-                Exit(0);
-              }
+            
+            // Y-
+            if ( (c_s == idd) && (dot(e_s, nv) < 0.0) ) {
+              s |= (order << BC_FACE_S);
+              q = offBit(q, FACING_S);
+              g++;
             }
-          }
-          
-          // Y+
-          if ( c_n == idd ) {
-            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
-              if ( !IS_FLUID( bv[m_n] ) ) { 
-                s |= (order << BC_FACE_N);
-                q = offBit(q, FACING_N);
-                g++;
-              }
-              else {
-                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
-                Exit(0);
-              }
+            
+            // Y+
+            if ( (c_n == idd) && (dot(e_n, nv) < 0.0) ) {
+              s |= (order << BC_FACE_N);
+              q = offBit(q, FACING_N);
+              g++;
             }
-          }
-          
-          // Z-
-          if ( c_b == idd ) {
-            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
-              if ( !IS_FLUID( bv[m_b] ) ) { 
-                s |= (order << BC_FACE_B);
-                q = offBit(q, FACING_B);
-                g++;
-              }
-              else {
-                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
-                Exit(0);
-              }
+            
+            // Z-
+            if ( (c_b == idd) && (dot(e_b, nv) < 0.0) ) {
+              s |= (order << BC_FACE_B);
+              q = offBit(q, FACING_B);
+              g++;
             }
-          }
-          
-          // Z+
-          if ( c_t == idd ) {
-            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
-              if ( !IS_FLUID( bv[m_t] ) ) { 
-                s |= (order << BC_FACE_T);
-                q = offBit(q, FACING_T);
-                g++;
-              }
-              else {
-                Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
-                Exit(0);
-              }
+            
+            // Z+
+            if ( (c_t == idd) && (dot(e_t, nv) < 0.0) ) {
+              s |= (order << BC_FACE_T);
+              q = offBit(q, FACING_T);
+              g++;
             }
-          }
+          } // if fluid
           
           bv[m_p] = s;
           bp[m_p] = q;
-        }
+          
+        } // if cut
+        
       } // i-loop
-    }
-  }
-  
-  // iddセルのSTATE_BITをFLUIDに変更
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        c_p = mid[m_p];
-        
-        s = bv[m_p];
-        
-        if ( (c_p == deface) && IS_FLUID(s) ) {
-          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          // X-
-          if ( c_w == idd ) {
-            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
-              bv[m_w] = onBit( bv[m_w], STATE_BIT );
-            }
-          }
-          
-          // X+
-          if ( c_e == idd ) {
-            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
-              bv[m_e] = onBit( bv[m_e], STATE_BIT );
-            }
-          }
-          
-          // Y-
-          if ( c_s == idd ) {
-            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
-              bv[m_s] = onBit( bv[m_s], STATE_BIT );
-            }
-          }
-          
-          // Y+
-          if ( c_n == idd ) {
-            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
-              bv[m_n] = onBit( bv[m_n], STATE_BIT );
-            }
-          }
-          
-          // Z-
-          if ( c_b == idd ) {
-            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
-              bv[m_b] = onBit( bv[m_b], STATE_BIT );
-            }
-          }
-          
-          // Z+
-          if ( c_t == idd ) {
-            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
-              bv[m_t] = onBit( bv[m_t], STATE_BIT );
-            }
-          }
-        }
-      }
     }
   }
   
@@ -5658,7 +5562,7 @@ void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid,
  @param mid ID配列
  @param BC SetBCクラスのポインタ
  @param cut 距離情報
- @param isCDS 形状近似がCut-Distance-> true
+ @param isCDS CDS->true
  @retval 表面セル数
  */
 unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS)
@@ -5757,15 +5661,17 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
 }
 
 /**
- @fn void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS)
+ @fn void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float* cut, int* cut_id, bool isCDS)
  @brief bv[]に境界条件のビット情報をエンコードする
  @param bv BCindex V
  @param mid ID配列
  @param BC SetBCクラスのポインタ
  @param bp BCindex P
- @param isCDS 形状近似がCut-Distance-> true
+ @param cut 距離情報
+ @param cut_id カット点ID
+ @param isCDS CDS->true
  */
-void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS)
+void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float* cut, int* cut_id, bool isCDS)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;
@@ -5808,19 +5714,26 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool 
   }
   
   // 内部境界のコンポーネントのエンコード
-  unsigned n, id;
+  unsigned n, id, m_dir;
   int deface;
+  float vec[3];
   
   for (n=1; n<=NoBC; n++) {
     id = cmp[n].getID();
     deface = cmp[n].getDef();
+    
+    vec[0] = (float)cmp[n].nv[0];
+    vec[1] = (float)cmp[n].nv[1];
+    vec[2] = (float)cmp[n].nv[2];
+    
+    m_dir = cmp[n].getBClocation();
     
     switch ( cmp[n].getType() ) {
       case SPEC_VEL:
       case SPEC_VEL_WH:
       case OUTFLOW:
         if (isCDS) { // cut
-          cmp[n].setElement( encVbit_IBC_Cut(n, id, mid, bv, deface, bp) );
+          cmp[n].setElement( encVbit_IBC_Cut(n, id, mid, bv, deface, bp, cut, cut_id, vec, m_dir) );
         }
         else { // binary
           cmp[n].setElement( encVbit_IBC(n, id, mid, bv, deface, bp) ); // bdへのエンコードはsetBCindexP()で済み

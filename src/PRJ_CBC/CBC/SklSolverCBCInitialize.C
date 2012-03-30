@@ -417,7 +417,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
-  VoxEncode(&Vinfo, &M, mid, cvf, cut);
+  VoxEncode(&Vinfo, &M, mid, cvf);
   
   // コンポーネント配列の確保
   allocComponentArray(PrepMemory, TotalMemory, fp);
@@ -3214,8 +3214,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   int z=0;
   float *pos;
   float d_min=1.0;
-  float pos6[6];
-  BidType bid6[6];
+  //BidType bid6[6];
   int bd, b0, b1, b2, b3, b4, b5;
   size_t mp, mb;
   
@@ -3223,7 +3222,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     for (int j=ista[1]; j<=ista[1]+nlen[1]-1; j++) {
       for (int i=ista[0]; i<=ista[0]+nlen[0]-1; i++) {
         
-        //cutPos->getPos(i+guide-1,j+guide-1,k+guide-1, pos6);
+        //cutPos->getPos(i+guide-1,j+guide-1,k+guide-1, pos);
         //cutBid->getBid(i+guide-1,j+guide-1,k+guide-1, bid6);
         mp = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
         pos = &cut[mp];
@@ -3231,24 +3230,24 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
         mb = FBUtility::getFindexS3D(size, guide, i, j, k);
         bd = cut_id[mb];
         
-        if ( (pos6[0]+pos6[1]+pos6[2]+pos6[3]+pos6[4]+pos6[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
-          //if ( (bid6[0]+bid6[1]+bid6[2]+bid6[3]+bid6[4]+bid6[5]) >0 ) { // これも有効
+        if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
+        //if ( (bid6[0]+bid6[1]+bid6[2]+bid6[3]+bid6[4]+bid6[5]) >0 ) { // これも有効
           
-          b0 = (bd >> 0)  & MASK_5;
-          b1 = (bd >> 5)  & MASK_5;
-          b2 = (bd >> 10) & MASK_5;
-          b3 = (bd >> 15) & MASK_5;
-          b4 = (bd >> 20) & MASK_5;
-          b5 = (bd >> 25) & MASK_5;
+          //b0 = (bd >> 0)  & MASK_5;
+          //b1 = (bd >> 5)  & MASK_5;
+          //b2 = (bd >> 10) & MASK_5;
+          //b3 = (bd >> 15) & MASK_5;
+          //b4 = (bd >> 20) & MASK_5;
+          //b5 = (bd >> 25) & MASK_5;
           
           for (int n=0; n<6; n++) {
-            if (pos6[n] > 0.0) d_min = min(d_min, pos6[n]);
+            if (pos[n] > 0.0) d_min = min(d_min, pos[n]);
           }
           z++;
-          //if ( (bid6[0]==2) || (bid6[1]==2) || (bid6[2]==2) || (bid6[3]==2) || (bid6[4]==2) || (bid6[5]==2) ) 
-          if ( (b0==2) || (b1==2) || (b2==2) || (b3==2) || (b4==2) || (b5==2) ) 
-          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
+          
+          //if ( (b0==3) || (b1==3) || (b2==3) || (b3==3) || (b4==3) || (b5==3) ) 
+          //printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+          //       pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
                //pos6[0], pos6[1], pos6[2], pos6[3], pos6[4], pos6[5],
                //bid6[0], bid6[1], bid6[2], bid6[3], bid6[4], bid6[5]);
         }
@@ -3258,7 +3257,6 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   Hostonly_ printf("\n\tMinimum dist. = %5.3e  : # of cut = %d : %f [percent]\n", d_min, z, (float)z/(float)size_n_cell*100.0);
   
   // カットの最小値を閾値以上にする
-  cut = (float*)cutPos->getDataPointer();
   min_distance(cut, fp);
   
 }
@@ -3317,20 +3315,15 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
 }
 
 /**
- @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, float* cut)
+ @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
  @brief BCIndexにビット情報をエンコードする
  @param Vinfo
  @param M
  @param mid Voxel IDの配列
  @param vf コンポーネントの体積率 
- @param cut カット情報
- @param m_prep  前処理用のメモリサイズ
- @param m_total 本計算用のメモリリサイズ
- @param fp
- @note
- - bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
+ @note bcdに対して，共通の処理を行い，それをbcp, bcv, bchにコピーし，その後個別処理を行う．
  */
-void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, float* cut)
+void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   
@@ -3368,7 +3361,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf, f
   //Vinfo->chkBCIndexP(bcd, bcp, "BCindexP.txt");
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
-  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, C.isCDS());
+  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, cut, cut_id, C.isCDS());
   //Vinfo->chkBCIndexV(bcv, "BCindexV.txt");
   
   // BCIndexT に温度計算のビット情報をエンコードする -----
