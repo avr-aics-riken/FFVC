@@ -2523,9 +2523,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( (compo[n].getType() == SPEC_VEL) || (compo[n].getType() == SPEC_VEL_WH) )  {
         fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e\n",
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area);
       }
     }
@@ -2577,9 +2577,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
         if ( compo[n].getType() == SPEC_VEL_WH )  {
           fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                   n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                  getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                  getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                  getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci),  
+                  getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                  getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                  getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci),  
 									FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp), 
 									FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
         }
@@ -2596,9 +2596,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == OUTFLOW )  {
         fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d ",
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 (compo[n].getOutflowType() == V_AVERAGE) ? "Average " : "Minmax ");
         if (compo[n].get_sw_P_BCtype() == P_DIRICHLET) {
           fprintf(fp, "%12.4e;", FBUtility::convND2D_P(compo[n].get_Pressure(), BasePrs, RefDensity, RefVelocity, Unit_Prs) );
@@ -2621,9 +2621,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == IBM_DF )  {
         fprintf(fp,"\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n",
                 n, compo[n].name, compo[n].getID(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
       }
     }
     fprintf(fp, "\n");
@@ -2671,9 +2671,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
                 n, compo[n].name, compo[n].getID(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
       }
     }
     fprintf(fp, "\n");
@@ -2719,9 +2719,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
                 n, compo[n].name, compo[n].getID(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
       }
     }
     fprintf(fp, "\n");
@@ -2756,9 +2756,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == DARCY ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
                 n, compo[n].name, compo[n].getID(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
       }
     }
   }
@@ -2785,9 +2785,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == HEATFLUX ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(),
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, compo[n].get_Heatflux(), compo[n].get_Heatflux()/(RefVelocity*DiffTemp*rho*cp));
       }
     }
@@ -2802,9 +2802,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getHtype() == HT_N ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, compo[n].get_CoefHT());
       }
     }
@@ -2819,9 +2819,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getHtype() == HT_S ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, compo[n].get_CoefHT(), FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp) );
       }
@@ -2837,9 +2837,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp),
                 (compo[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
@@ -2879,9 +2879,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
                 compo[n].name, 
                 compo[n].getID(), 
                 compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp),
                 (compo[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
@@ -2911,9 +2911,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getHtype() == HT_B ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, compo[n].get_CoefHT(), FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp) );
       }
@@ -2930,9 +2930,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == ISOTHERMAL ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
 								compo[n].area, FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp) );
       }
@@ -2948,9 +2948,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == RADIANT ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].area, compo[n].get_CoefRadEps(), compo[n].get_CoefRadPrj());
       }
     }
@@ -2967,9 +2967,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == HEAT_SRC ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 compo[n].get_HeatValue(), 
                 FBUtility::convD2ND_Hsrc(compo[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[h_odr].P[p_density], mat[h_odr].P[p_specific_heat]));
       }
@@ -2986,9 +2986,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == CNST_TEMP ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                 n, compo[n].name, compo[n].getID(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
                 FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp), 
                 FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp));
       }
@@ -3004,9 +3004,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
       if ( compo[n].getType() == CELL_MONITOR ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %10.3e %10.3e %10.3e %10.3e  %s\n", 
                 n, compo[n].name, compo[n].getID(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci), 
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
 								nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area, compo[n].getVarStr().c_str());
       }
     }
@@ -3058,9 +3058,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
         
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d     ", 
                 n, compo[n].name, compo[n].getID(), 
-                getGlCompoBV_st_x(n, gci), getGlCompoBV_ed_x(n, gci), 
-                getGlCompoBV_st_y(n, gci), getGlCompoBV_ed_y(n, gci), 
-                getGlCompoBV_st_z(n, gci), getGlCompoBV_ed_z(n, gci));
+                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
+                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
         fprintf(fp,"%12.6e / %12.6e ", compo[n].ca[0], FBUtility::convD2ND_P(compo[n].ca[0], BasePrs, RefDensity, RefVelocity, Unit_Prs));
         fprintf(fp, "%7s\n", FBUtility::getDirection(dir_in).c_str());
         
@@ -3081,17 +3081,17 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
         switch ( dir_in ) {
           case X_MINUS:
           case X_PLUS:
-            pp_in = getGlCompoBV_st_x(n, gci);
+            pp_in = getCmpGbbox_st_x(n, gci);
             break;
             
           case Y_MINUS:
           case Y_PLUS:
-            pp_in = getGlCompoBV_st_y(n, gci);
+            pp_in = getCmpGbbox_st_y(n, gci);
             break;
             
           case Z_MINUS:
           case Z_PLUS:
-            pp_in = getGlCompoBV_st_z(n, gci);
+            pp_in = getCmpGbbox_st_z(n, gci);
             break;
         }
         

@@ -3027,69 +3027,6 @@ void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, 
 
 
 /**
- @fn void Control::select_Itr_Impl(ItrCtl* IC)
- @brief choose implementation of SOR
- */
-void Control::select_Itr_Impl(ItrCtl* IC)
-{
-  ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復 Euler陽解法, RKの予測フェイズ
-  ItrCtl* ICp2 = &IC[ItrCtl::ic_prs_cr];  /// 圧力のPoisson反復 RKの修正フェイズ
-  ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
-  
-  // Flow
-  switch (AlgorithmF) {
-    case Flow_FS_EE_EE:
-    case Flow_FS_AB2:
-      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) ) {
-        ICp1->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
-      }
-      break;
-      
-    case Flow_FS_RK_CN:
-      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) ) {
-        ICp1->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
-      }
-      if ( (ICp2->get_LS() == SOR) || (ICp2->get_LS() == SOR2SMA) ) {
-        ICp2->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
-      }
-      break;
-      
-    case Flow_FS_AB_CN:
-      if ( (ICp1->get_LS() == SOR) || (ICp1->get_LS() == SOR2SMA) ) {
-        ICp1->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
-      }
-      if ( (ICv->get_LS() == SOR) || (ICv->get_LS() == SOR2SMA) ) {
-        ICv->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
-      }
-      break;
-      
-    default:
-      stamped_printf("\tSomething wrong in Iteration_Flow\n");
-      Exit(0);
-  }
-  
-  // Heat
-  if ( isHeatProblem() ) {
-    ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
-    switch (AlgorithmH) {
-      case Heat_EE_EE:
-        break;
-        
-      case Heat_EE_EI:
-        if ( (ICt->get_LS() == SOR) || (ICt->get_LS() == SOR2SMA) ) {
-          ICt->set_LoopType( (Eff_Cell_Ratio < THRESHOLD_SOR_IMPLEMENTATION) ? SKIP_LOOP : MASK_LOOP );
-        }
-        break;
-        
-      default:
-        stamped_printf("\tSomething wrong in Iteration_Heat\n");
-        Exit(0);
-    }
-  }
-}
-
-
-/**
  @fn void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF)
  @brief 無次元パラメータを各種モードに応じて設定する
  @param mat

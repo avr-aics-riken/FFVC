@@ -451,6 +451,29 @@ POLYLIB_STAT PolygonGroup::show_group_info(
 	return PLSTAT_OK;
 }
 
+// add keno 20120331
+float PolygonGroup::get_group_area( void ) {
+  
+  float m_area=0.0, a;
+  
+	vector<PrivateTriangle*>* tmp_list = m_polygons->get_tri_list();
+  
+	vector<PrivateTriangle*>::iterator it;
+
+	for (it = tmp_list->begin(); it != tmp_list->end(); it++) {
+    a = (*it)->get_area();
+		m_area += a;
+	}
+	return m_area;
+}
+
+int PolygonGroup::get_group_num_tria( void ) {
+  
+	vector<PrivateTriangle*>* tmp_list = m_polygons->get_tri_list();
+  
+	return (int)tmp_list->size();
+}// add keno 20120331
+
 // protected //////////////////////////////////////////////////////////////////
 POLYLIB_STAT PolygonGroup::setup_attribute (
 	Polylib					*polylib,

@@ -135,39 +135,39 @@ protected:
   
   string getOBCstr          (unsigned id);
   
-  //@fn int getGlCompoBV_st_x(unsigned odr, int* gci)
-  //@brief コンポーネントのBV情報st_xを返す
-  int getGlCompoBV_st_x(unsigned odr, int* gci) {
+  //@fn int getCmpGbbox_st_x(unsigned odr, int* gci)
+  //@brief コンポーネントのBbox情報st_xを返す
+  int getCmpGbbox_st_x(unsigned odr, int* gci) {
     return ( gci[6*odr+0] );
   }
   
-  //@fn int getGlCompoBV_st_y(unsigned odr, int* gci)
-  //@brief コンポーネントのBV情報st_yを返す
-  int getGlCompoBV_st_y(unsigned odr, int* gci) {
+  //@fn int getCmpGbbox_st_y(unsigned odr, int* gci)
+  //@brief コンポーネントのBbox情報st_yを返す
+  int getCmpGbbox_st_y(unsigned odr, int* gci) {
     return ( gci[6*odr+1] );
   }
   
-  //@fn int getGlCompoBV_st_z(unsigned odr, int* gci)
-  //@brief コンポーネントのBV情報st_zを返す
-  int getGlCompoBV_st_z(unsigned odr, int* gci) {
+  //@fn int getCmpGbbox_st_z(unsigned odr, int* gci)
+  //@brief コンポーネントのBbox情報st_zを返す
+  int getCmpGbbox_st_z(unsigned odr, int* gci) {
     return ( gci[6*odr+2] );
   }
   
-  //@fn int getGlCompoBV_ed_x(unsigned odr, int* gci)
-  //@brief コンポーネントのBV情報st_xを返す
-  int getGlCompoBV_ed_x(unsigned odr, int* gci) {
+  //@fn int getCmpGbbox_ed_x(unsigned odr, int* gci)
+  //@brief コンポーネントのBbox情報st_xを返す
+  int getCmpGbbox_ed_x(unsigned odr, int* gci) {
     return ( gci[6*odr+3] );
   }
   
-  //@fn int getGlCompoBV_ed_y(unsigned odr, int* gci)
-  //@brief コンポーネントのBV情報ed_yを返す
-  int getGlCompoBV_ed_y(unsigned odr, int* gci) {
+  //@fn int getCmpGbbox_ed_y(unsigned odr, int* gci)
+  //@brief コンポーネントのBbox情報ed_yを返す
+  int getCmpGbbox_ed_y(unsigned odr, int* gci) {
     return ( gci[6*odr+4] );
   }
   
-  //@fn int getGlCompoBV_ed_z(unsigned odr, int* gci)
-  //@brief コンポーネントのBV情報ed_zを返す
-  int getGlCompoBV_ed_z(unsigned odr, int* gci) {
+  //@fn int getCmpGbbox_ed_z(unsigned odr, int* gci)
+  //@brief コンポーネントのBbox情報ed_zを返す
+  int getCmpGbbox_ed_z(unsigned odr, int* gci) {
     return ( gci[6*odr+5] );
   }
   

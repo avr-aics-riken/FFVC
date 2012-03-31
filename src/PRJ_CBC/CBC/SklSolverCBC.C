@@ -23,7 +23,7 @@ SklSolverCBC::SklSolverCBC() {
   cmp = NULL;
   mat = NULL;
   Ex  = NULL;
-  GC_bv= NULL;
+  compo_global_bbox= NULL;
   
   // Polylib
   PL = NULL;
@@ -128,7 +128,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   cmp = NULL;
   mat = NULL;
   Ex  = NULL;
-  GC_bv= NULL;
+  compo_global_bbox= NULL;
   
   // Polylib
   PL = NULL;
@@ -228,7 +228,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
 SklSolverCBC::~SklSolverCBC() {
   if( m_condition )  delete [] m_condition;
   if( m_log )        delete [] m_log;
-  if( GC_bv )        delete [] GC_bv;
+  if( compo_global_bbox )        delete [] compo_global_bbox;
   if( cmp )          delete [] cmp;
   if( mat )          delete [] mat;
   

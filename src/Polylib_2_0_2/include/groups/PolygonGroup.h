@@ -265,6 +265,13 @@ public:
 	POLYLIB_STAT show_group_info(
 		int irank = -1
 	);
+  
+  // add keno 20120331
+  /// ポリゴングループの要素数を返す
+  int get_group_num_tria( void );
+  
+  /// ポリゴンの面積を積算して返す
+  float get_group_area( void );
 
 	//=======================================================================
 	// Setter/Getter

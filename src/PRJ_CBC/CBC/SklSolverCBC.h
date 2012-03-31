@@ -71,7 +71,7 @@ using namespace cutlib;
 class SklSolverCBC : public SklSolverBase {
 
 protected:
-  int* GC_bv; // グローバルなコンポーネントBbox
+  int* compo_global_bbox; // グローバルなコンポーネントBbox 表示に利用
   
 public:
   // Timing
@@ -105,7 +105,6 @@ public:
   // Cutlib
   CutPos32Array* cutPos;
   CutBid5Array*  cutBid;
-  //CutBid8Array*  cutBid;
   
   // for parallel
   Parallel_Info pn;
@@ -208,42 +207,6 @@ public:
 protected:
   SklSolverCBC();
   
-  //@fn int getGlCompoBV_st_x(unsigned odr)
-  //@brief コンポーネントのBV情報st_xを返す
-  inline int getGlCompoBV_st_x(unsigned odr) {
-    return ( GC_bv[6*odr+0] );
-  }
-  
-  //@fn int getGlCompoBV_st_y(unsigned odr)
-  //@brief コンポーネントのBV情報st_yを返す
-  inline int getGlCompoBV_st_y(unsigned odr) {
-    return ( GC_bv[6*odr+1] );
-  }
-  
-  //@fn int getGlCompoBV_st_z(unsigned odr)
-  //@brief コンポーネントのBV情報st_zを返す
-  inline int getGlCompoBV_st_z(unsigned odr) {
-    return ( GC_bv[6*odr+2] );
-  }
-  
-  //@fn int getGlCompoBV_ed_x(unsigned odr)
-  //@brief コンポーネントのBV情報st_xを返す
-  inline int getGlCompoBV_ed_x(unsigned odr) {
-    return ( GC_bv[6*odr+3] );
-  }
-  
-  //@fn int getGlCompoBV_ed_y(unsigned odr)
-  //@brief コンポーネントのBV情報ed_yを返す
-  inline int getGlCompoBV_ed_y(unsigned odr) {
-    return ( GC_bv[6*odr+4] );
-  }
-  
-  //@fn int getGlCompoBV_ed_z(unsigned odr)
-  //@brief コンポーネントのBV情報ed_zを返す
-  inline int getGlCompoBV_ed_z(unsigned odr) {
-    return ( GC_bv[6*odr+5] );
-  }
-  
 public:
   SklSolverCBC                      (int sType);
   virtual ~SklSolverCBC             (void);
@@ -283,12 +246,10 @@ public:
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
+  void EnlargeIndex         (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
   void FileOutput           (unsigned mode, REAL_TYPE& flop);
   void fixed_parameters     (void);
   void gather_DomainInfo    (void);
-  void getEnlargedIndex     (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
-  void getGlobalCmpIdx      (VoxInfo* Vinfo);
-  void getLocalCmpIdx       (void);
   void getXML_Monitor       (SklSolverConfig* CF, MonitorList* M);
   void getXML_Mon_Line      (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
   void getXML_Mon_Pointset  (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
@@ -298,17 +259,23 @@ public:
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
+  void resizeBVcell         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
+  void resizeBVface         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
+  void resizeCompoBV        (const unsigned* bd, const unsigned* bv, const unsigned* bh1, const unsigned* bh2, const unsigned kos, const bool isHeat);
+  void setBbox_of_VIBC_Cut  (VoxInfo* Vinfo, const unsigned* bv);
   void setBCinfo            (ParseBC* B);
   void setComponentVF       (float* cvf);
-  void setVIBC_from_Cut     (void);
   void setEnsComponent      (void);
+  void setGlobalCmpIdx      (void);
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
+  void setLocalCmpIdx_Binary(void);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void set_Parallel_Info    (void);
   void setParallelism       (void);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
+  void setVIBC_from_Cut     (VoxInfo* Vinfo, const unsigned* bv);
   void setVOF               (REAL_TYPE* vof, unsigned* bx);
   void write_distance       (float* cut);
   

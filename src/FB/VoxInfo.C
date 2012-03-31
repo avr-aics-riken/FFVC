@@ -319,12 +319,72 @@ int* VoxInfo::allocTable(unsigned size)
  */
 void VoxInfo::alloc_voxel_nv(unsigned len)
 {
-  vox_nv = new SKL_REAL[len];
+  vox_nv = new REAL_TYPE[len];
   if ( !vox_nv ) Exit(0);
 }
 
 /**
- @fn void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, SKL_REAL dhd, int* gi)
+ @fn void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
+ @brief コンポーネントの断面積を求める
+ @param n エントリ番号
+ @param bd BCindex ID
+ @param bv BCindex V
+ @param bh1 BCindex H1
+ @param PL MPIPolylibクラス
+ @note ポリゴン情報は有次元とする
+ */
+void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
+{
+  using namespace PolylibNS;
+  
+  unsigned id;
+  REAL_TYPE a;
+  int def;
+
+  id  = cmp[n].getID();
+  def = cmp[n].getDef();
+  
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  switch ( cmp[n].getType() ) {
+    case SPEC_VEL:
+    case SPEC_VEL_WH:
+    case OUTFLOW:
+      
+      printf("\t  ID : Polygon Group : Area (m*m)\n");
+      
+      for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+        std::string m_pg = (*it)->get_name();
+        int m_id = (*it)->get_id();
+        cmp[n].area = (*it)->get_group_area();
+        //printf("\t %3d : %s : %e : %d\n", m_id, m_pg.c_str(), cmp[n].area, (*it)->get_group_num_tria());
+      }
+      
+      return;
+      break;
+      
+      
+    case HEATFLUX:
+    case TRANSFER:
+    case ISOTHERMAL:
+      break;
+      
+    case HEX:
+    case FAN:
+      return;
+      break;
+      
+    case CELL_MONITOR:
+    case DARCY:
+      break;
+  }
+  
+  delete pg_roots;
+}
+
+/**
+ @fn void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi)
  @brief コンポーネントの断面積と法線を求める
  @param n エントリ番号
  @param bd BCindex ID
@@ -333,12 +393,12 @@ void VoxInfo::alloc_voxel_nv(unsigned len)
  @param dhd 有次元格子幅
  @param gi コンポーネントのグローバルインデクス
  */
-void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, SKL_REAL dhd, int* gi)
+void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi)
 {
   unsigned id;
-  SKL_REAL a, nvx, nvy, nvz;
+  REAL_TYPE a, nvx, nvy, nvz;
   int cijk[3], dir[3], def, area=0;
-  SKL_REAL ai, aj, ak;
+  REAL_TYPE ai, aj, ak;
   
   cijk[0] = cijk[1] = cijk[2] = 0;
   dir[0] = dir[1] = dir[2] = 0;
@@ -358,9 +418,9 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
     case TRANSFER:
     case ISOTHERMAL:
       countNrml_from_FaceBC(n, bh1, cijk, area);
-      ai = (SKL_REAL)cijk[0];
-      aj = (SKL_REAL)cijk[1];
-      ak = (SKL_REAL)cijk[2];
+      ai = (REAL_TYPE)cijk[0];
+      aj = (REAL_TYPE)cijk[1];
+      ak = (REAL_TYPE)cijk[2];
       break;
       
     case HEX:
@@ -372,14 +432,14 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
     case DARCY:
       countVolumeEdge(n, bd, cijk);
       getNormalSign(n, gi, bd, dir);
-      ai = 0.5*(SKL_REAL)cijk[0]; // 両面あるので半分にする?
-      aj = 0.5*(SKL_REAL)cijk[1];
-      ak = 0.5*(SKL_REAL)cijk[2];
+      ai = 0.5*(REAL_TYPE)cijk[0]; // 両面あるので半分にする?
+      aj = 0.5*(REAL_TYPE)cijk[1];
+      ak = 0.5*(REAL_TYPE)cijk[2];
       break;
   }
   
   a = sqrt( ai*ai + aj*aj + ak*ak );
-  if ( a == 0.0 ) a = (SKL_REAL)area;
+  if ( a == 0.0 ) a = (REAL_TYPE)area;
   
   if ( a != 0.0 ) {
     nvx = ai / a;
@@ -391,9 +451,9 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
   }
   
   if ( cmp[n].isFORCING() || cmp[n].isMONITOR() ) {
-    nvx *= (SKL_REAL)dir[0];
-    nvy *= (SKL_REAL)dir[1];
-    nvz *= (SKL_REAL)dir[2];
+    nvx *= (REAL_TYPE)dir[0];
+    nvy *= (REAL_TYPE)dir[1];
+    nvz *= (REAL_TYPE)dir[2];
   }
   
   // following 3 lines are to avoid -0.0 for display and to take acdount suction/blowing
@@ -888,8 +948,8 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
 {
 	SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b, s;
-  SKL_REAL c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  SKL_REAL dw, de, ds, dn, db, dt;
+  REAL_TYPE c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  REAL_TYPE dw, de, ds, dn, db, dt;
   int i,j,k, c[3];
 	int st[3], ed[3];
   
@@ -1201,12 +1261,12 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
 
 
 /**
- @fn void VoxInfo::countOpenAreaOfDomain(unsigned* bx, SKL_REAL* OpenArea)
+ @fn void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
  @brief  計算領域の外部境界で外側1層と内側の両方が流体セル数の場合にカウントする
  @param bx BCindex ID
  @param OpenArea 開口セル数
  */
-void VoxInfo::countOpenAreaOfDomain(unsigned* bx, SKL_REAL* OpenArea)
+void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
@@ -1314,7 +1374,7 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, SKL_REAL* OpenArea)
     para_mng->Allreduce(tmp, m_area, NOFACE, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
   }
   
-  for (i=0; i<NOFACE; i++) OpenArea[i] = (SKL_REAL)m_area[i];
+  for (i=0; i<NOFACE; i++) OpenArea[i] = (REAL_TYPE)m_area[i];
 }
 
 
@@ -3730,37 +3790,38 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
 }
 
 /**
- @fn unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, 
-                                       unsigned bc_dir, int st[3], int ed[3])
+ @fn unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order, const unsigned id, unsigned* bv, unsigned* bp, const float* cut, 
+                                        const int* cut_id, const float* vec, const unsigned bc_dir)
  @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
  @retval エンコードしたセル数
- @param order cmp[]のエントリ番号
+ @param order cmp[]のインデクス
  @param id  CellID
- @param mid ボクセル配列
  @param bv BCindex V
- @param deface 面を指定するid
  @param bp BCindex P
  @param cut 距離情報
  @param cut_id カット点ID
  @param vec 境界面の法線
  @param bc_dir BCの位置，指定法線と同じ側(1)か反対側(2)
- @param st コンポーネントbboxの開始セル
- @param ed コンポーネントbboxの終端セル
  @note 指定法線とセルのカット方向ベクトルの内積で判断
  */
-unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, 
-                                  unsigned bc_dir, int st[3], int ed[3])
+unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order, 
+                                  const unsigned id, 
+                                  unsigned* bv, 
+                                  unsigned* bp, 
+                                  const float* cut, 
+                                  const int* cut_id, 
+                                  const float* vec, 
+                                  const unsigned bc_dir)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int    idd;
   unsigned g=0;
   
   unsigned register s, q;
-  float *pos;
+  const float *pos;
   int    bid;
   size_t m_p, m_c;
   int    c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  bool m_flag;
   
   FB::Vec3f nv(vec);
   
@@ -3780,13 +3841,6 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
   int jx = (int)size[1];
   int kx = (int)size[2];
   
-  st[0] = ix;
-  st[1] = jx;
-  st[2] = kx;
-  ed[0] = 0;
-  ed[1] = 0;
-  ed[2] = 0;
-  
   idd = (int)id;
   
   for (int k=1; k<=kx; k++) {
@@ -3803,9 +3857,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
           s   = bv[m_p];
           q   = bp[m_p];
           
-          m_flag = false;
-          
-          if ( IS_FLUID(s) && (deface == mid[m_p]) ) { // 流体でdefaceであるセルがテスト対象
+          if ( IS_FLUID(s) ) { // 流体でdefaceであるセルがテスト対象
             // 各方向のID
             c_w = (bid >> 0)  & MASK_5;
             c_e = (bid >> 5)  & MASK_5;
@@ -3819,7 +3871,6 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_W);
               q = offBit(q, FACING_W);
               g++;
-              m_flag = true;
             }
             
             // X+
@@ -3827,7 +3878,6 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_E);
               q = offBit(q, FACING_E);
               g++;
-              m_flag = true;
             }
             
             // Y-
@@ -3835,7 +3885,6 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_S);
               q = offBit(q, FACING_S);
               g++;
-              m_flag = true;
             }
             
             // Y+
@@ -3843,7 +3892,6 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_N);
               q = offBit(q, FACING_N);
               g++;
-              m_flag = true;
             }
             
             // Z-
@@ -3851,7 +3899,6 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_B);
               q = offBit(q, FACING_B);
               g++;
-              m_flag = true;
             }
             
             // Z+
@@ -3859,17 +3906,11 @@ unsigned VoxInfo::encVbit_IBC_Cut(unsigned order, unsigned id, int* mid, unsigne
               s |= (order << BC_FACE_T);
               q = offBit(q, FACING_T);
               g++;
-              m_flag = true;
             }
           } // if fluid
           
           bv[m_p] = s;
           bp[m_p] = q;
-          
-          // min, max
-          if ( m_flag ) {
-            vec3_min(st, st, );
-          }
           
         } // if cut
         
@@ -4263,6 +4304,74 @@ unsigned VoxInfo::find_mat_odr(unsigned mat_id)
   return 0;
 }
 
+/**
+ @fn void VoxInfo::findVIBC(const int odr, const unsigned* bv, int* st, int* ed)
+ @brief VBCのbboxを取得する
+ @param odr[in] コンポーネント配列のインデクス
+ @param bv[in] BCindex V
+ @param st[out] コンポーネントbboxの開始セル
+ @param ed[out] コンポーネントbboxの終端セル
+ */
+void VoxInfo::findVIBC(const int odr, const unsigned* bv, int* st, int* ed)
+{
+  unsigned s;
+  size_t m;
+  bool m_flag;
+  int tmp[3];
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+
+  st[0] = ix;
+  st[1] = jx;
+  st[2] = kx;
+  ed[0] = 0;
+  ed[1] = 0;
+  ed[2] = 0;
+  
+  // search
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bv[m];
+        
+        m_flag = false;
+        
+        // X-
+        if ( GET_FACE_BC(s, BC_FACE_W) == odr ) m_flag = true;
+        
+        // X+
+        if ( GET_FACE_BC(s, BC_FACE_E) == odr ) m_flag = true;
+        
+        // Y-
+        if ( GET_FACE_BC(s, BC_FACE_S) == odr ) m_flag = true;
+        
+        // Y+
+        if ( GET_FACE_BC(s, BC_FACE_N) == odr ) m_flag = true;
+        
+        // Z-
+        if ( GET_FACE_BC(s, BC_FACE_B) == odr ) m_flag = true;
+        
+        // Z+
+        if ( GET_FACE_BC(s, BC_FACE_T) == odr ) m_flag = true;
+        
+        // min, max
+        if ( m_flag ) {
+          tmp[0] = i;
+          tmp[1] = j;
+          tmp[2] = k;
+          vec3_min(st, st, tmp);
+          vec3_max(ed, ed, tmp);
+        }
+        
+      }
+    }
+  }
+
+}
 
 /**
  @fn unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx)
@@ -4315,67 +4424,6 @@ unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid,
   return g;
 }
 
-
-/**
- @fn void VoxInfo::gatherGlobalIndex(int* gcbv)
- @brief コンポーネントのグローバルインデクスを集約
- @param gcbv グローバルなBVインデクス
- */
-void VoxInfo::gatherGlobalIndex(int* gcbv)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
-  int* m_gArray = NULL;
-  int* m_eArray = NULL;
-  unsigned array_size = 6*(NoCompo+1);
-  int np = para_mng->GetNodeNum(pn.procGrp);
-  int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
-  
-  if ( !(m_gArray = new int[np*6]) ) Exit(0);
-  if ( !(m_eArray = new int[np]  ) ) Exit(0);
-  
-  for (unsigned n=1; n<=NoBC; n++) {
-    if (para_mng->IsParallel()) {
-      es = ( cmp[n].isEns() ) ? 1 : 0;
-      if (!para_mng->Gather(&es, 1, SKL_ARRAY_DTYPE_INT, m_eArray, 1, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
-      if (!para_mng->Gather(&gcbv[6*n], 6, SKL_ARRAY_DTYPE_INT, m_gArray, 6, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
-      
-      if (pn.ID == 0) { // マスターノードのみ
-        
-        // 初期値
-        gcbv[6*n+0] = 100000000;
-        gcbv[6*n+1] = 100000000;
-        gcbv[6*n+2] = 100000000;
-        gcbv[6*n+3] = 0;
-        gcbv[6*n+4] = 0;
-        gcbv[6*n+5] = 0;
-        
-        for (int m=0; m<np; m++) {
-          if ( m_eArray[m]==1 ) { // コンポーネントの存在ランクのみを対象とする
-            st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
-            st_y = m_gArray[6*m+1];
-            st_z = m_gArray[6*m+2];
-            ed_x = m_gArray[6*m+3];
-            ed_y = m_gArray[6*m+4];
-            ed_z = m_gArray[6*m+5];
-            
-            if( st_x < gcbv[6*n+0] ) { gcbv[6*n+0] = st_x; } // 最大値と最小値を求める
-            if( st_y < gcbv[6*n+1] ) { gcbv[6*n+1] = st_y; }
-            if( st_z < gcbv[6*n+2] ) { gcbv[6*n+2] = st_z; }
-            if( ed_x > gcbv[6*n+3] ) { gcbv[6*n+3] = ed_x; }
-            if( ed_y > gcbv[6*n+4] ) { gcbv[6*n+4] = ed_y; }
-            if( ed_z > gcbv[6*n+5] ) { gcbv[6*n+5] = ed_z; }
-          }
-        }
-      }
-    }
-    //debug; printf("final : %d %d %d - %d %d %d\n", gcbv[6*n+0], gcbv[6*n+1], gcbv[6*n+2], gcbv[6*n+3], gcbv[6*n+4], gcbv[6*n+5]);
-  }
-  
-  // destroy
-  if (m_gArray) delete[] m_gArray;
-  if (m_eArray) delete[] m_eArray;
-}
 
 /**
  @fn void VoxInfo::getIDrange(const CfgElem *elmL2, const char* keyword, unsigned* var)
@@ -4444,13 +4492,13 @@ void VoxInfo::getOffset(int* st, int* ofst)
 
 
 /**
- @fn void VoxInfo::getQuadrant(unsigned* q, SKL_REAL t1, SKL_REAL t2)
+ @fn void VoxInfo::getQuadrant(unsigned* q, REAL_TYPE t1, REAL_TYPE t2)
  @brief 局所座標(t1, t2)がどの象限になるかを調べる
  @param q 象限番号，戻り値
  @param t1 第一座標
  @param t2 第二座標
  */
-void VoxInfo::getQuadrant(unsigned* q, SKL_REAL t1, SKL_REAL t2)
+void VoxInfo::getQuadrant(unsigned* q, REAL_TYPE t1, REAL_TYPE t2)
 {
   if (t1 == 0.0) { // 線上は両方の象限に加える
     if (t2 == 0.0) {
@@ -4508,7 +4556,7 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
   unsigned m, q_ij[5], q_ik[5], tmp[5];
   int st[3], ed[3];
   unsigned ni, nj, nk;
-  SKL_REAL cn[3], tx, ty, tz;
+  REAL_TYPE cn[3], tx, ty, tz;
   int m_sz[3], l_dir[3];
   int i,j,k;
   
@@ -4521,9 +4569,9 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
   nk = (unsigned)(gi[5] - gi[2]);
   
   // グローバルインデクスでの対象コンポーネント領域の中心座標
-  cn[0] = 0.5*(SKL_REAL)ni + (SKL_REAL)gi[0];  
-  cn[1] = 0.5*(SKL_REAL)nj + (SKL_REAL)gi[1];
-  cn[2] = 0.5*(SKL_REAL)nk + (SKL_REAL)gi[2];
+  cn[0] = 0.5*(REAL_TYPE)ni + (REAL_TYPE)gi[0];  
+  cn[1] = 0.5*(REAL_TYPE)nj + (REAL_TYPE)gi[1];
+  cn[2] = 0.5*(REAL_TYPE)nk + (REAL_TYPE)gi[2];
   
   m_sz[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0) + 1;
   m_sz[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1) + 1;
@@ -4536,9 +4584,9 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
       for (i=st[0]; i<=ed[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         if ( (bx[m] & MASK_6) == n ) {
-          tx = (SKL_REAL)(i+m_sz[0]) - cn[0]; // グローバルインデクスで評価
-          ty = (SKL_REAL)(j+m_sz[1]) - cn[1];
-          tz = (SKL_REAL)(k+m_sz[2]) - cn[2];
+          tx = (REAL_TYPE)(i+m_sz[0]) - cn[0]; // グローバルインデクスで評価
+          ty = (REAL_TYPE)(j+m_sz[1]) - cn[1];
+          tz = (REAL_TYPE)(k+m_sz[2]) - cn[2];
           
           getQuadrant(q_ij, tx, ty); // Quadrant IJ
           getQuadrant(q_ik, tx, tz); // Quadrant IK
@@ -4661,222 +4709,6 @@ void VoxInfo::printScanedCell(FILE* fp)
       Exit(0);
     }
   }
-}
-
-/**
- @fn void VoxInfo::resizeBVface(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
- @brief コンポーネントリストに登録されたセルフェイスBCのBV情報をリサイズする
- @param st 開始インデクス
- @param ed 終了インデクス
- @param n CompoListのエントリ
- @param bx BCindex
- @param gcbv グローバルなBVインデクス
- */
-void VoxInfo::resizeBVface(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
-  int i,j,k;
-  unsigned register s, m;
-  int nst[3], ned[3];
-  
-  // 初期値はローカルノードの大きさ
-  nst[0] = (int)size[0];
-  nst[1] = (int)size[1];
-  nst[2] = (int)size[2];
-  ned[0] = 0;
-  ned[1] = 0;
-  ned[2] = 0;
-  
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
-        
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m];
-        
-        if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-      }
-    }
-  }
-  
-  // replace
-  cmp[n].setBbox(nst, ned);
-  
-  // コンポーネントBVの更新
-  updateGlobalIndex(nst, ned, n, gcbv);
-}
-
-/**
- @fn void VoxInfo::resizeBVcell(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
- @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
- @param st 開始インデクス
- @param ed 終了インデクス
- @param n CompoListのエントリ
- @param bx BCindex
- @param gcbv グローバルなBVインデクス
- */
-void VoxInfo::resizeBVcell(const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
-  int i,j,k;
-  unsigned register s, m;
-  int nst[3], ned[3];
-  
-  // 初期値はローカルノードの大きさ
-  nst[0] = (int)size[0];
-  nst[1] = (int)size[1];
-  nst[2] = (int)size[2];
-  ned[0] = 0;
-  ned[1] = 0;
-  ned[2] = 0;
-  
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
-        
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m];
-        
-        if ( ( s & MASK_6) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-      }
-    }
-  }
-  
-  // replace
-  cmp[n].setBbox(nst, ned);
-  
-  // コンポーネントBVの更新
-  updateGlobalIndex(nst, ned, n, gcbv);
-}
-
-/**
- @fn void VoxInfo::resizeCompoBV(unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv)
- @brief コンポーネントリストに登録されたBV情報をリサイズする
- @param bd  BCindex bcd
- @param bv  BCindex bcv
- @param bh1 BCindex bh1
- @param bh2 BCindex bh2
- @param kos KOS
- @param isHeat 熱問題のときtrue
- @param gcbv グローバルなBVインデクス
- */
-void VoxInfo::resizeCompoBV(unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
-  int st[3], ed[3];
-  unsigned typ, id;
-  
-  for (unsigned n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
-    cmp[n].getBbox(st, ed);
-    typ = cmp[n].getType();
-    
-    // デフォルトで流れ計算パートのBC
-    switch ( typ ) {
-      case SPEC_VEL:
-      case SPEC_VEL_WH:
-      case OUTFLOW:
-        resizeBVface(st, ed, n, bv, gcbv); // 速度のBCindex　セルフェイス位置でのflux型BC
-        break;
-        
-      case PERIODIC:
-      case CELL_MONITOR:
-      case IBM_DF:
-      case HEX:
-      case FAN:
-      case DARCY:
-        resizeBVcell(st, ed, n, bd, gcbv); // セルセンタ位置でのBC
-        break;
-    }
-    
-    // 熱計算のパート
-    if ( isHeat ) {
-      switch ( typ ) {
-        case ADIABATIC:
-        case HEATFLUX:
-        case SPEC_VEL_WH:
-        case OUTFLOW:
-        case TRANSFER:
-        case ISOTHERMAL:
-          resizeBVface(st, ed, n, bh1, gcbv);
-          break;
-          
-        case RADIANT:
-          break;
-          
-        case HEAT_SRC:
-        case CNST_TEMP:
-        case PERIODIC:
-          resizeBVcell(st, ed, n, bh2, gcbv);
-          break;
-      }            
-    }
-  }
-  
-  // グローバルインデクスの集約
-  gatherGlobalIndex(gcbv);
 }
 
 
@@ -5758,7 +5590,7 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float
       case SPEC_VEL_WH:
       case OUTFLOW:
         if (isCDS) { // cut
-          cmp[n].setElement( encVbit_IBC_Cut(n, id, mid, bv, deface, bp, cut, cut_id, vec, m_dir) );
+          cmp[n].setElement( encVbit_IBC_Cut(n, id, bv, bp, cut, cut_id, vec, m_dir) );
         }
         else { // binary
           cmp[n].setElement( encVbit_IBC(n, id, mid, bv, deface, bp) ); // bdへのエンコードはsetBCindexP()で済み
@@ -5906,7 +5738,6 @@ void VoxInfo::setInactive_Compo(unsigned id, int def, int* mid, unsigned* bh1, u
   }
 }
 
-
 /**
  @fn void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
  @brief 外部境界のガイドセルが固体の場合に距離情報をセット
@@ -5942,60 +5773,4 @@ void VoxInfo::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
   
   if ( !m_MAT ) Exit(0);
   mat = m_MAT;
-}
-
-/**
- @fn void VoxInfo::updateGlobalIndex(const int* st, const int* ed, unsigned n, int* gcbv)
- @brief BV情報をst[], ed[]に更新する
- @param st 開始インデクス
- @param ed 終了インデクス
- @param n CompoListのエントリ
- @param gcbv グローバルなBVインデクス
- */
-void VoxInfo::updateGlobalIndex(const int* st, const int* ed, unsigned n, int* gcbv)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
-  int node_st_i, node_st_j, node_st_k;
-  
-  // コンポーネントが存在しない場合
-  if ( !cmp[n].isEns() ) {
-    //st[0] = 0;
-    //st[1] = 0;
-    //st[2] = 0;
-    //ed[0] = 0;
-    //ed[1] = 0;
-    //ed[2] = 0;
-    
-    gcbv[6*n+0] = 0;
-    gcbv[6*n+1] = 0;
-    gcbv[6*n+2] = 0;
-    gcbv[6*n+3] = 0;
-    gcbv[6*n+4] = 0;
-    gcbv[6*n+5] = 0;
-    
-    return;
-  }
-
-  if( para_mng->IsParallel() ){
-    node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
-    node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
-    node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
-    
-    gcbv[6*n+0] = node_st_i + st[0];
-    gcbv[6*n+1] = node_st_j + st[1];
-    gcbv[6*n+2] = node_st_k + st[2];
-    gcbv[6*n+3] = node_st_i + ed[0];
-    gcbv[6*n+4] = node_st_j + ed[1];
-    gcbv[6*n+5] = node_st_k + ed[2];
-  } 
-  else {
-    gcbv[6*n+0] = st[0];
-    gcbv[6*n+1] = st[1];
-    gcbv[6*n+2] = st[2];
-    gcbv[6*n+3] = ed[0];
-    gcbv[6*n+4] = ed[1];
-    gcbv[6*n+5] = ed[2];
-  }
-
 }

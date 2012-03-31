@@ -709,7 +709,6 @@ public:
   void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
-  void select_Itr_Impl          (ItrCtl* IC);
   void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
   void setParameters            (MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF);
   void tell_Avr_Interval_2_Sphere(void);

@@ -26,6 +26,9 @@
 #include "BndOuter.h"
 #include "vec3.h"
 
+#include "Polylib.h"
+#include "MPIPolylib.h"
+
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class VoxInfo : public Parallel_Node {
@@ -82,7 +85,8 @@ protected:
   unsigned encQfaceISO_SF      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   unsigned encQfaceISO_SS      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   unsigned encVbit_IBC         (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp);
-  unsigned encVbit_IBC_Cut     (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp, float* cut, int* cut_id, float* vec, unsigned bc_dir);
+  unsigned encVbit_IBC_Cut     (const unsigned order, const unsigned id, unsigned* bv, unsigned* bp, const float* cut, const int* cut_id, 
+                                const float* vec, const unsigned bc_dir);
   unsigned find_mat_odr        (unsigned mat_id);
   
   void checkColorTable       (FILE* fp, unsigned size, int* table);
@@ -158,7 +162,8 @@ public:
   void copyBCIbase           (unsigned* dst, unsigned* src);
   void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
   void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
-  void gatherGlobalIndex     (int* gcbv);
+  void findVIBC              (const int id, const unsigned* bv, int* st, int* ed);
+  void get_Compo_Area_Cut    (unsigned n, PolylibNS::MPIPolylib* PL);
   void printScanedCell       (FILE* fp);
   void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);
   void setAdiabatic4SF       (unsigned* bh);

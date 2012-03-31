@@ -229,10 +229,6 @@
 #define GAS        2
 #define LIQUID     3
 
-#define THRESHOLD_SOR_IMPLEMENTATION 0.5
-#define MASK_LOOP 1
-#define SKIP_LOOP 2
-
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)
 #define IS_FLUID(a) ( ((a >> STATE_BIT) & 0x1) ? true : false )

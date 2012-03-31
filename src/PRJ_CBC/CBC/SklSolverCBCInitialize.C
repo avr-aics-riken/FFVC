@@ -359,6 +359,15 @@ SklSolverCBC::SklSolverInitialize() {
     Vinfo.setOBC_Cut(&BC, cut);
   }
   
+  // ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
+  Hostonly_  {
+    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp,"\n\t>> Medium List\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n\t>> Medium List\n\n");
+  }
+  setMaterialList(&B, &M, mp, fp);
+  
 
 #ifdef DEBUG
   // カット情報からボクセルモデルの固体をIDセット　デバッグ用
@@ -381,17 +390,10 @@ SklSolverCBC::SklSolverInitialize() {
     
     setComponentVF(cvf);
   }
-
-  // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
-  if ( C.isCDS() ) {
-    setVIBC_from_Cut();
-  }
   
-  // コンポーネントのローカルインデクスをcmp.ciに保存
-  getLocalCmpIdx();
+  // コンポーネントのローカルインデクスを保存
+  setLocalCmpIdx_Binary();
   
-  // コンポーネントのインデクス情報を取得
-  getGlobalCmpIdx(&Vinfo);
   
   // 内部周期境界の場合のガイドセルのコピー処理
   Vinfo.adjCellID_Prdc_Inner(dc_mid);
@@ -401,17 +403,8 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ stamped_printf("\tchkMediumConsistency()\n");
     return -1;
   }
-  
-  // ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
-  Hostonly_  {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\n\t>> Medium List\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n\t>> Medium List\n\n");
-  }
-  setMaterialList(&B, &M, mp, fp);
 
-    
+  
   // BCIndexへのエンコード処理
   Hostonly_  {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
@@ -421,11 +414,13 @@ SklSolverCBC::SklSolverInitialize() {
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode(&Vinfo, &M, mid, cvf);
   
-  // コンポーネント配列の確保
+  // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
+  if ( C.isCDS() ) {
+    setBbox_of_VIBC_Cut(&Vinfo, bcv);
+  }
+  
+  // 体積力を使う場合のコンポーネント配列の確保
   allocComponentArray(PrepMemory, TotalMemory, fp);
-
-  // Select implementation of SOR iteration by Eff_Cell_Ratio
-  C.select_Itr_Impl(IC);
 
   // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
   Vinfo.setCmpFraction(cmp, bcd, cvf);
@@ -481,7 +476,12 @@ SklSolverCBC::SklSolverInitialize() {
     
     // コンポーネントで指定されるID面の法線を計算，向きはblowing/suctionにより決まる．　bcdをセットしたあとに処理
     for (unsigned n=1; n<=C.NoBC; n++) {
-      Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &GC_bv[n*6]);
+      if ( C.isCDS() ) {
+        Vinfo.get_Compo_Area_Cut(n, PL);
+      }
+      else {
+        Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &compo_global_bbox[n*6]);
+      }
     }
   }
 
@@ -638,6 +638,8 @@ SklSolverCBC::SklSolverInitialize() {
   DataMngr.DeleteDataObj("mid");
 
   
+  // コンポーネントのグローバルインデクス情報を取得
+  setGlobalCmpIdx();
   
   // コンポーネントの内容リストを表示する
   Hostonly_ {
@@ -645,7 +647,7 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(fp,"\t>> Component Information\n");
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(mp,"\t>> Component Information\n");
-    B.printCompoInfo(mp, fp, Vinfo.get_vox_nv_ptr(), GC_bv, mat);
+    B.printCompoInfo(mp, fp, Vinfo.get_vox_nv_ptr(), compo_global_bbox, mat);
   }
 
   // コンポーネント数がゼロの場合のチェック
@@ -1422,6 +1424,147 @@ void SklSolverCBC::connectExample(Control* Cref)
 }
 
 /**
+ @fn void SklSolverCBC::EnlargeIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned mx, const unsigned dir, const int m_id)
+ @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
+ @param m_st 拡大された開始点（Fortranインデクス）
+ @param m_ed 拡大された終了点（Fortranインデクス）
+ @param st_i 開始点（Cインデクス）
+ @param len コンポーネントの存在長さ
+ @param m_x 軸方向のサイズ
+ @param dir 方向
+ @param m_id キーID
+ */
+void SklSolverCBC::EnlargeIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id)
+{
+  unsigned ed_i = st_i + len - 1;
+  unsigned n_st = st_i - 1;
+  unsigned n_ed = ed_i + 1;
+  unsigned max_c1 = m_x + guide;
+  
+  unsigned label_st, label_ed;
+  
+  switch (dir) {
+    case 0:
+      label_st = X_MINUS;
+      label_ed = X_PLUS;
+      break;
+      
+    case 1:
+      label_st = Y_MINUS;
+      label_ed = Y_PLUS;
+      break;
+      
+    case 2:
+      label_st = Z_MINUS;
+      label_ed = Z_PLUS;
+      break;
+      
+    default:
+      Hostonly_ stamped_printf("\tError : DIRECTION\n");
+      Exit(0);
+  }
+  
+  // BVが-方向のガイドセル内のみにある場合
+  if ( ed_i < guide ) { 
+    if( pn.nID[label_st] < 0 ){ // 計算領域の外部面に接する場合は，対象外
+      m_st = 0;
+      m_ed = 0;
+    }
+    else { // 計算領域内部にある場合（並列時）
+      if ( n_ed == guide ) { // ガイドセル1層外側の場合
+        m_st = 1; // F index
+        m_ed = 1; // F index
+      }
+      else {
+        m_st = 0;
+        m_ed = 0;
+      }
+    }
+  }
+  
+  // BVが+方向のガイドセル内のみにある場合
+  else if ( st_i >= max_c1 ) {
+    if( pn.nID[label_ed] < 0 ){ // 計算領域の外部面に接する場合は，対象外
+      m_st = 0;
+      m_ed = 0;
+    }
+    else {
+      if ( n_st == (max_c1 - 1) ) { // ガイドセル1層外側の場合
+        m_st = m_x; // F index
+        m_ed = m_x; // F index
+      }
+      else {
+        m_st = 0;
+        m_ed = 0;
+      }
+    }
+    //debug; Hostonly_ printf("(2) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
+  }
+  
+  // BVが内部領域のみにある場合（逐次・並列で同じ処理）
+  else if ( (st_i >= guide) && (ed_i < max_c1) ) {
+    if ( st_i == guide ) { // 最外層セル
+      m_st = 1; // F index
+    }
+    else {
+      m_st = n_st + 1 - guide; // F index
+    }
+    
+    if ( ed_i == (max_c1 - 1) ) { // 最外層セル
+      m_ed = m_x; // F index
+    }
+    else { // 内部
+      m_ed = n_ed + 1 - guide; // F index
+    }
+    //debug; Hostonly_ printf("(3) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
+  }
+  
+  // BVが両方向のガイドセルにまたがる場合（逐次・並列で同じ処理）
+  else if ( (st_i < guide) && (ed_i >= max_c1) ) {
+    m_st = 1; // F index
+    m_ed = m_x; // F index
+    //debug; Hostonly_ printf("(4) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
+  }
+  
+  // BVが-方向のガイドセルから内部領域にある場合
+  else if ( (st_i < guide) && (ed_i < max_c1) ) {
+    m_st = 1; // F index
+    
+    if ( ed_i == (max_c1 - 1) ) { // 最外層セル
+      m_ed = m_x; // F index
+    }
+    else { // 内部
+      m_ed = n_ed + 1 - guide; // F index
+    }
+    //debug; Hostonly_ printf("(5) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
+  }
+  
+  // BVが+方向のガイドセルから内部領域にある場合
+  else if ( (st_i < max_c1) && (ed_i >= max_c1) ) {
+    m_ed = m_x; // F index
+    
+    if ( st_i == guide ) { // 端点
+      m_st = 1; // F index
+    }
+    else { // 内部
+      m_st = n_st + 1 - guide; // F index
+    }
+    //debug; Hostonly_ printf("(6) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
+  }
+  
+  else {
+    string m_dir;
+    if      ( dir == 0 ) m_dir = "X";
+    else if ( dir == 1 ) m_dir = "Y";
+    else                 m_dir = "Z";
+    
+    Hostonly_ stamped_printf("\tError : Unexpected case for ID=%d, (%d - %d): %s\n", m_id, st_i, ed_i, m_dir.c_str());
+    Exit(0);
+  }
+  
+}
+
+/**
  @fn void SklSolverCBC::fixed_parameters(void)
  @brief 固定パラメータの設定
  */
@@ -1638,7 +1781,6 @@ void SklSolverCBC::gather_DomainInfo(void)
       fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
       fprintf(fp,"%8.3f %8.3f ", 100.0*tmp_fcl/tmp_vol, 100.0*tmp_wcl/tmp_vol);
       fprintf(fp,"%12.4e      %8.3f ", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
-      fprintf(fp,"%12.4e      %8.3f  %s\n", 0.0, 0.0, (tmp_acl/tmp_vol>THRESHOLD_SOR_IMPLEMENTATION) ? "Mask-loop" : "Skip-loop");
     }
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
   }
@@ -1654,138 +1796,6 @@ void SklSolverCBC::gather_DomainInfo(void)
   if( bf_fcl ) { delete [] bf_fcl; bf_fcl=NULL; }
   if( bf_wcl ) { delete [] bf_wcl; bf_wcl=NULL; }
   if( bf_acl ) { delete [] bf_acl; bf_acl=NULL; }
-}
-
-/**
- @fn void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
- @brief コンポーネントのローカルなBV情報からグローバルなBV情報を求める
- */
-void SklSolverCBC::getGlobalCmpIdx(VoxInfo* Vinfo)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  int st_i, st_j, st_k, ed_i, ed_j, ed_k;
-  int node_st_i, node_st_j, node_st_k;
-  int st[3], ed[3];
-  
-  // グローバルインデクスの配列インスタンス
-  GC_bv = new int[6*(C.NoCompo+1)];
-  
-  // ローカルインデクスからグローバルインデクスに変換
-  for (unsigned m=1; m<=C.NoCompo; m++) {
-    
-    if ( !cmp[m].isEns() ) { // コンポーネントが存在しないノードはゼロを代入
-      st_i = 0;
-      st_j = 0;
-      st_k = 0;
-      ed_i = 0;
-      ed_j = 0;
-      ed_k = 0;
-      
-      GC_bv[6*m+0] = 0;
-      GC_bv[6*m+1] = 0;
-      GC_bv[6*m+2] = 0;
-      GC_bv[6*m+3] = 0;
-      GC_bv[6*m+4] = 0;
-      GC_bv[6*m+5] = 0;
-    }
-    else { // コンポーネントが存在する場合
-      cmp[m].getBbox(st, ed);
-      st_i = st[0];
-      st_j = st[1];
-      st_k = st[2];
-      ed_i = ed[0];
-      ed_j = ed[1];
-      ed_k = ed[2];
-      
-      if( para_mng->IsParallel() ){
-        node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
-        node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
-        node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
-        
-        GC_bv[6*m+0] = node_st_i + st_i;
-        GC_bv[6*m+1] = node_st_j + st_j;
-        GC_bv[6*m+2] = node_st_k + st_k;
-        GC_bv[6*m+3] = node_st_i + ed_i;
-        GC_bv[6*m+4] = node_st_j + ed_j;
-        GC_bv[6*m+5] = node_st_k + ed_k;
-      } 
-      else {
-        GC_bv[6*m+0] = st_i;
-        GC_bv[6*m+1] = st_j;
-        GC_bv[6*m+2] = st_k;
-        GC_bv[6*m+3] = ed_i;
-        GC_bv[6*m+4] = ed_j;
-        GC_bv[6*m+5] = ed_k;
-      }
-    }
-  }
-  
-  // コンポーネントBVの更新
-  Vinfo->gatherGlobalIndex(GC_bv);
-}
-
-
-/**
- @fn void SklSolverCBC::getLocalCmpIdx(void)
- @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
- @note
- - 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
- - 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
- - 内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
- */
-void SklSolverCBC::getLocalCmpIdx(void)
-{
-  unsigned st_i[3], len[3];
-  int id;
-  int m_st[3], m_ed[3];
-  
-  for (unsigned m=1; m<=C.NoBC; m++) {
-    id = (int)cmp[m].getID();
-    
-    switch ( cmp[m].getType() ) {
-      case HEX:
-      case FAN:
-        break; // 体積率でエンコード済み
-        
-      default:
-        for (int d=0; d<3; d++) {
-          st_i[d] = 0;
-          len[d] = 0;
-        }
-        
-        // コンポーネント範囲
-        // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
-        if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
-          Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
-          Exit(0);
-        }
-        
-        // ノード内にコンポーネントがあるかどうかをチェック
-        if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
-          cmp[m].setEns(OFF);
-          // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
-        }
-        else {
-
-          for (unsigned d=0; d<3; d++) {
-            int tmp_st=0;
-            int tmp_ed=0;
-            
-            getEnlargedIndex(tmp_st, tmp_ed, st_i[d], len[d], size[d], d, id);
-            
-            m_st[d] = tmp_st;
-            m_ed[d] = tmp_ed;
-          }
-          cmp[m].setBbox(m_st, m_ed);
-          cmp[m].setEns(ON); // コンポーネントあり
-        }
-        
-        break;
-    }
-    
-  }
 }
 
 
@@ -2103,147 +2113,6 @@ void SklSolverCBC::getXML_Mon_Pointset(MonitorList* M, const CfgElem *elmL2, vec
 }
 
 /**
- @fn void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned mx, const unsigned dir, const int m_id)
- @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
- @param m_st 拡大された開始点（Fortranインデクス）
- @param m_ed 拡大された終了点（Fortranインデクス）
- @param st_i 開始点（Cインデクス）
- @param len コンポーネントの存在長さ
- @param m_x 軸方向のサイズ
- @param dir 方向
- @param m_id キーID
- */
-void SklSolverCBC::getEnlargedIndex(int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id)
-{
-  unsigned ed_i = st_i + len - 1;
-  unsigned n_st = st_i - 1;
-  unsigned n_ed = ed_i + 1;
-  unsigned max_c1 = m_x + guide;
-  
-  unsigned label_st, label_ed;
-  
-  switch (dir) {
-    case 0:
-      label_st = X_MINUS;
-      label_ed = X_PLUS;
-      break;
-      
-    case 1:
-      label_st = Y_MINUS;
-      label_ed = Y_PLUS;
-      break;
-      
-    case 2:
-      label_st = Z_MINUS;
-      label_ed = Z_PLUS;
-      break;
-      
-    default:
-      Hostonly_ stamped_printf("\tError : DIRECTION\n");
-      Exit(0);
-  }
-  
-  // BVが-方向のガイドセル内のみにある場合
-  if ( ed_i < guide ) { 
-    if( pn.nID[label_st] < 0 ){ // 計算領域の外部面に接する場合は，対象外
-      m_st = 0;
-      m_ed = 0;
-    }
-    else { // 計算領域内部にある場合（並列時）
-      if ( n_ed == guide ) { // ガイドセル1層外側の場合
-        m_st = 1; // F index
-        m_ed = 1; // F index
-      }
-      else {
-        m_st = 0;
-        m_ed = 0;
-      }
-    }
-  }
-  
-  // BVが+方向のガイドセル内のみにある場合
-  else if ( st_i >= max_c1 ) {
-    if( pn.nID[label_ed] < 0 ){ // 計算領域の外部面に接する場合は，対象外
-      m_st = 0;
-      m_ed = 0;
-    }
-    else {
-      if ( n_st == (max_c1 - 1) ) { // ガイドセル1層外側の場合
-        m_st = m_x; // F index
-        m_ed = m_x; // F index
-      }
-      else {
-        m_st = 0;
-        m_ed = 0;
-      }
-    }
-    //debug; Hostonly_ printf("(2) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが内部領域のみにある場合（逐次・並列で同じ処理）
-  else if ( (st_i >= guide) && (ed_i < max_c1) ) {
-    if ( st_i == guide ) { // 最外層セル
-      m_st = 1; // F index
-    }
-    else {
-      m_st = n_st + 1 - guide; // F index
-    }
-    
-    if ( ed_i == (max_c1 - 1) ) { // 最外層セル
-      m_ed = m_x; // F index
-    }
-    else { // 内部
-      m_ed = n_ed + 1 - guide; // F index
-    }
-    //debug; Hostonly_ printf("(3) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが両方向のガイドセルにまたがる場合（逐次・並列で同じ処理）
-  else if ( (st_i < guide) && (ed_i >= max_c1) ) {
-    m_st = 1; // F index
-    m_ed = m_x; // F index
-    //debug; Hostonly_ printf("(4) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが-方向のガイドセルから内部領域にある場合
-  else if ( (st_i < guide) && (ed_i < max_c1) ) {
-    m_st = 1; // F index
-    
-    if ( ed_i == (max_c1 - 1) ) { // 最外層セル
-      m_ed = m_x; // F index
-    }
-    else { // 内部
-      m_ed = n_ed + 1 - guide; // F index
-    }
-    //debug; Hostonly_ printf("(5) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが+方向のガイドセルから内部領域にある場合
-  else if ( (st_i < max_c1) && (ed_i >= max_c1) ) {
-    m_ed = m_x; // F index
-    
-    if ( st_i == guide ) { // 端点
-      m_st = 1; // F index
-    }
-    else { // 内部
-      m_st = n_st + 1 - guide; // F index
-    }
-    //debug; Hostonly_ printf("(6) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  else {
-    string m_dir;
-    if      ( dir == 0 ) m_dir = "X";
-    else if ( dir == 1 ) m_dir = "Y";
-    else                 m_dir = "Z";
-    
-    Hostonly_ stamped_printf("\tError : Unexpected case for ID=%d, (%d - %d): %s\n", m_id, st_i, ed_i, m_dir.c_str());
-    Exit(0);
-  }
-  
-}
-
-/**
  @fn bool SklSolverCBC::hasLinearSolver(unsigned L)
  @brief 種類Lの線形ソルバを利用する場合，trueを返す
  @param L 線形ソルバの種類
@@ -2370,55 +2239,6 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
   }
 }
 
-/**
- @fn void SklSolverCBC::write_distance(float* cut)
- @brief 距離の最小値を求め，閾値以上にする
- @retval 最小距離
- @param cut カット情報
- */
-void SklSolverCBC::write_distance(float* cut)
-{
-
-  float* tmp =NULL;
-  tmp = new float [(size[0]+2*guide)*(size[1]+2*guide)*(size[2]+2*guide)];
-  
-  size_t m, n;
-  float s;
-  
-  for (int k=1; k<=size[2]; k++) { 
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
-        n = FBUtility::getFindexS3D(size, guide, i, j, k);
-        
-        s = 1.0e6;
-        for (int l=0; l<6; l++) {
-          m = FBUtility::getFindexS3Dcut(size, guide, l, i, j, k);
-          if ( cut[m] < s ) s = cut[m];
-        }
-        tmp[n] = s;
-      }
-    }
-  }
-  
-  REAL_TYPE org[3], pit[3];
-  
-  
-  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
-  for (int i=0; i<3; i++) {
-    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
-    pit[i] = C.dx[i];
-  }
-  
-  // 出力ファイルの指定が有次元の場合
-  if ( C.Unit.File == DIMENSIONAL ) {
-    for (int i=0; i<3; i++) {
-      org[i] *= C.RefLength;
-      pit[i] *= C.RefLength;
-    }
-  }
-  F.writeRawSPH(tmp, size, guide, org, pit, SPH_SINGLE);
-}
-
 
 /**
  @fn float SklSolverCBC::min_distance(float* cut, FILE* fp)
@@ -2446,8 +2266,8 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
     }
   }
   if ( g>0 ) {
-    Hostonly_ fprintf(fp, "\n\t%d %s modified to %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
-    Hostonly_ printf("\n\t%d %s modified to %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
+    Hostonly_ fprintf(fp, "\n\t%d %s modified to minumun value %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
+    Hostonly_ printf("\n\t%d %s modified to minumun value %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
   }
   return min_g;
 }
@@ -2641,6 +2461,204 @@ void SklSolverCBC::prepOutput (void)
   }
 }
 
+/**
+ @fn void SklSolverCBC::resizeBVface(const int* st, const int* ed, const unsigned n, const unsigned* bx)
+ @brief コンポーネントリストに登録されたセルフェイスBCのBV情報をリサイズする
+ @param st 開始インデクス
+ @param ed 終了インデクス
+ @param n CompoListのエントリ
+ @param bx BCindex
+ */
+void SklSolverCBC::resizeBVface(const int* st, const int* ed, const unsigned n, const unsigned* bx)
+{
+  int i,j,k;
+  unsigned register s, m;
+  int nst[3], ned[3];
+  
+  // 初期値はローカルノードの大きさ
+  nst[0] = (int)size[0];
+  nst[1] = (int)size[1];
+  nst[2] = (int)size[2];
+  ned[0] = 0;
+  ned[1] = 0;
+  ned[2] = 0;
+  
+  for (k=st[2]; k<=ed[2]; k++) {
+    for (j=st[1]; j<=ed[1]; j++) {
+      for (i=st[0]; i<=ed[0]; i++) {
+        
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m];
+        
+        if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+      }
+    }
+  }
+  
+  // replace
+  cmp[n].setBbox(nst, ned);
+}
+
+/**
+ @fn void SklSolverCBC::resizeBVcell(const int* st, const int* ed, const unsigned n, const unsigned* bx)
+ @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+ @param st 開始インデクス
+ @param ed 終了インデクス
+ @param n CompoListのエントリ
+ @param bx BCindex
+ */
+void SklSolverCBC::resizeBVcell(const int* st, const int* ed, const unsigned n, const unsigned* bx)
+{
+  int i,j,k;
+  unsigned register s, m;
+  int nst[3], ned[3];
+  
+  // 初期値はローカルノードの大きさ
+  nst[0] = (int)size[0];
+  nst[1] = (int)size[1];
+  nst[2] = (int)size[2];
+  ned[0] = 0;
+  ned[1] = 0;
+  ned[2] = 0;
+  
+  for (k=st[2]; k<=ed[2]; k++) {
+    for (j=st[1]; j<=ed[1]; j++) {
+      for (i=st[0]; i<=ed[0]; i++) {
+        
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m];
+        
+        if ( ( s & MASK_6) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+      }
+    }
+  }
+  
+  // replace
+  cmp[n].setBbox(nst, ned);
+}
+
+/**
+ @fn void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const unsigned* bh1, const unsigned* bh2, const unsigned kos, const bool isHeat)
+ @brief コンポーネントリストに登録されたBV情報をリサイズする
+ @param bd  BCindex bcd
+ @param bv  BCindex bcv
+ @param bh1 BCindex bh1
+ @param bh2 BCindex bh2
+ @param kos KOS
+ @param isHeat 熱問題のときtrue
+ */
+void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const unsigned* bh1, const unsigned* bh2, const unsigned kos, const bool isHeat)
+{
+  int st[3], ed[3];
+  unsigned typ, id;
+  
+  for (unsigned n=1; n<=C.NoBC; n++) {
+    id = cmp[n].getID();
+    cmp[n].getBbox(st, ed);
+    typ = cmp[n].getType();
+    
+    // デフォルトで流れ計算パートのBC
+    switch ( typ ) {
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
+      case OUTFLOW:
+        resizeBVface(st, ed, n, bv); // 速度のBCindex　セルフェイス位置でのflux型BC
+        break;
+        
+      case PERIODIC:
+      case CELL_MONITOR:
+      case IBM_DF:
+      case HEX:
+      case FAN:
+      case DARCY:
+        resizeBVcell(st, ed, n, bd); // セルセンタ位置でのBC
+        break;
+    }
+    
+    // 熱計算のパート
+    if ( isHeat ) {
+      switch ( typ ) {
+        case ADIABATIC:
+        case HEATFLUX:
+        case SPEC_VEL_WH:
+        case OUTFLOW:
+        case TRANSFER:
+        case ISOTHERMAL:
+          resizeBVface(st, ed, n, bh1);
+          break;
+          
+        case RADIANT:
+          break;
+          
+        case HEAT_SRC:
+        case CNST_TEMP:
+        case PERIODIC:
+          resizeBVcell(st, ed, n, bh2);
+          break;
+      }            
+    }
+    
+  }
+}
 
 /**
  @fn void SklSolverCBC::setBCinfo(ParseBC* B)
@@ -2667,41 +2685,6 @@ void SklSolverCBC::setBCinfo(ParseBC* B)
   // KOSと境界条件種類の整合性をチェック
   B->chkBCconsistency(C.KindOfSolver);
 }
-
-/**
- @fn void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
- @brief ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
- @param B
- @param M 
- @param mp
- @param fp 
- */
-void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
-{
-  // ParseMatクラスの環境設定 
-  M->setControlVars(&C, B->get_IDtable_Ptr(), mat, m_solvCfg);
-  
-  // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
-  M->getXMLmaterial();
-  
-#ifdef DEBUG
-  // Materialの基本リストを表示
-  Hostonly_ M->printBaseMaterialList(mp, fp);
-#endif
-  
-  // MaterialListを作成する
-  M->makeMaterialList();
-  
-  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
-  M->makeLinkCmpMat(cmp);
-  
-  // 媒質テーブルの表示
-  Hostonly_ M->printMaterialList(mp, fp);
-  
-  // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
-  M->chkState_Mat_Cmp(cmp);
-}
-
 
 
 /**
@@ -2787,31 +2770,62 @@ void SklSolverCBC::setComponentVF(float* cvf)
   
 }
 
+/**
+ @fn void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+ @brief ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
+ @param B
+ @param M 
+ @param mp
+ @param fp 
+ */
+void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+{
+  // ParseMatクラスの環境設定 
+  M->setControlVars(&C, B->get_IDtable_Ptr(), mat, m_solvCfg);
+  
+  // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
+  M->getXMLmaterial();
+  
+#ifdef DEBUG
+  // Materialの基本リストを表示
+  Hostonly_ M->printBaseMaterialList(mp, fp);
+#endif
+  
+  // MaterialListを作成する
+  M->makeMaterialList();
+  
+  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
+  M->makeLinkCmpMat(cmp);
+  
+  // 媒質テーブルの表示
+  Hostonly_ M->printMaterialList(mp, fp);
+  
+  // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
+  M->chkState_Mat_Cmp(cmp);
+}
+
 
 /**
- @fn void SklSolverCBC::setVIBC_from_Cut(void)
- @brief ポリゴンからVBCのboxなどをセット
+ @fn void SklSolverCBC::setBbox_of_VIBC_Cut(VoxInfo* Vinfo, const unsigned* bv)
+ @brief ポリゴンからVBCのboxをセット
+ @param Vinfo
+ @param bv BCindex V
  @note インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
  */
-void SklSolverCBC::setVIBC_from_Cut(void)
+void SklSolverCBC::setBbox_of_VIBC_Cut(VoxInfo* Vinfo, const unsigned* bv)
 {
   int f_st[3], f_ed[3];
   
   for (int n=1; n<=C.NoBC; n++) {
     
     if ( cmp[n].isVBC_IO() ) { // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
-      
-      // bboxと投影面積の計算
-      // cmp[n].area = 
-      
-      
+
       // インデクスの計算 > あとで，VoxEncode()でresize
-      //CF.bbox_index(f_st, f_ed);
+      Vinfo->findVIBC(n, bv, f_st, f_ed);
       
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
       cmp[n].setEns(ON);
-      
     }
   }
   
@@ -2916,6 +2930,188 @@ void SklSolverCBC::setEnsComponent(void)
   }
   if ( c>0 ) C.EnsCompo.fraction = ON;
 }
+
+/**
+ @fn void SklSolverCBC::setGlobalCmpIdx(void)
+ @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
+ */
+void SklSolverCBC::setGlobalCmpIdx(void)
+{
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
+  int st_i, st_j, st_k, ed_i, ed_j, ed_k;
+  int node_st_i, node_st_j, node_st_k;
+  int st[3], ed[3];
+  
+  // グローバルインデクスの配列インスタンス
+  compo_global_bbox = new int[6*(C.NoCompo+1)];
+  int* cgb = compo_global_bbox;
+  
+  // ローカルインデクスからグローバルインデクスに変換
+  for (unsigned m=1; m<=C.NoCompo; m++) {
+    
+    if ( !cmp[m].isEns() ) { // コンポーネントが存在しないノードはゼロを代入
+      cgb[6*m+0] = 0;
+      cgb[6*m+1] = 0;
+      cgb[6*m+2] = 0;
+      cgb[6*m+3] = 0;
+      cgb[6*m+4] = 0;
+      cgb[6*m+5] = 0;
+    }
+    else { // コンポーネントが存在する場合
+      cmp[m].getBbox(st, ed);
+      st_i = st[0];
+      st_j = st[1];
+      st_k = st[2];
+      ed_i = ed[0];
+      ed_j = ed[1];
+      ed_k = ed[2];
+      
+      if( para_mng->IsParallel() ){
+        node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
+        node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
+        node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
+        
+        cgb[6*m+0] = node_st_i + st_i;
+        cgb[6*m+1] = node_st_j + st_j;
+        cgb[6*m+2] = node_st_k + st_k;
+        cgb[6*m+3] = node_st_i + ed_i;
+        cgb[6*m+4] = node_st_j + ed_j;
+        cgb[6*m+5] = node_st_k + ed_k;
+      } 
+      else {
+        cgb[6*m+0] = st_i;
+        cgb[6*m+1] = st_j;
+        cgb[6*m+2] = st_k;
+        cgb[6*m+3] = ed_i;
+        cgb[6*m+4] = ed_j;
+        cgb[6*m+5] = ed_k;
+      }
+    }
+  }
+  
+  // 領域全体のbboxを求める
+  int* m_gArray = NULL;
+  int* m_eArray = NULL;
+  unsigned array_size = 6*(C.NoCompo+1);
+  int np = para_mng->GetNodeNum(pn.procGrp);
+  int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
+  
+  if ( !(m_gArray = new int[np*6]) ) Exit(0);
+  if ( !(m_eArray = new int[np]  ) ) Exit(0);
+  
+  for (unsigned n=1; n<=C.NoBC; n++) {
+    if (para_mng->IsParallel()) {
+      es = ( cmp[n].isEns() ) ? 1 : 0;
+      if (!para_mng->Gather(&es, 1, SKL_ARRAY_DTYPE_INT, m_eArray, 1, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
+      if (!para_mng->Gather(&cgb[6*n], 6, SKL_ARRAY_DTYPE_INT, m_gArray, 6, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
+      
+      if (pn.ID == 0) { // マスターノードのみ
+        
+        // 初期値
+        cgb[6*n+0] = 100000000;
+        cgb[6*n+1] = 100000000;
+        cgb[6*n+2] = 100000000;
+        cgb[6*n+3] = 0;
+        cgb[6*n+4] = 0;
+        cgb[6*n+5] = 0;
+        
+        for (int m=0; m<np; m++) {
+          if ( m_eArray[m]==1 ) { // コンポーネントの存在ランクのみを対象とする
+            st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
+            st_y = m_gArray[6*m+1];
+            st_z = m_gArray[6*m+2];
+            ed_x = m_gArray[6*m+3];
+            ed_y = m_gArray[6*m+4];
+            ed_z = m_gArray[6*m+5];
+            
+            if( st_x < cgb[6*n+0] ) { cgb[6*n+0] = st_x; } // 最大値と最小値を求める
+            if( st_y < cgb[6*n+1] ) { cgb[6*n+1] = st_y; }
+            if( st_z < cgb[6*n+2] ) { cgb[6*n+2] = st_z; }
+            if( ed_x > cgb[6*n+3] ) { cgb[6*n+3] = ed_x; }
+            if( ed_y > cgb[6*n+4] ) { cgb[6*n+4] = ed_y; }
+            if( ed_z > cgb[6*n+5] ) { cgb[6*n+5] = ed_z; }
+          }
+        }
+      }
+    }
+    //debug; printf("final : %d %d %d - %d %d %d\n", gcbv[6*n+0], gcbv[6*n+1], gcbv[6*n+2], gcbv[6*n+3], gcbv[6*n+4], gcbv[6*n+5]);
+  }
+  
+  // destroy
+  if (m_gArray) {
+    delete[] m_gArray;
+    m_gArray = NULL;
+  }
+  if (m_eArray) {
+    delete[] m_eArray;
+    m_eArray = NULL;
+  }
+}
+
+
+/**
+ @fn void SklSolverCBC::setLocalCmpIdx_Binary(void)
+ @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
+ @note
+ - 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
+ - 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
+ - 内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
+ */
+void SklSolverCBC::setLocalCmpIdx_Binary(void)
+{
+  unsigned st_i[3], len[3];
+  int id;
+  int m_st[3], m_ed[3];
+  
+  for (unsigned m=1; m<=C.NoBC; m++) {
+    id = (int)cmp[m].getID();
+    
+    switch ( cmp[m].getType() ) {
+      case HEX:
+      case FAN:
+        break; // 体積率でエンコード済み
+        
+      default:
+        for (int d=0; d<3; d++) {
+          st_i[d] = 0;
+          len[d] = 0;
+        }
+        
+        // コンポーネント範囲
+        // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
+        if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) {
+          Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
+          Exit(0);
+        }
+        
+        // ノード内にコンポーネントがあるかどうかをチェック
+        if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
+          cmp[m].setEns(OFF);
+          // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
+        }
+        else {
+          
+          for (unsigned d=0; d<3; d++) {
+            int tmp_st=0;
+            int tmp_ed=0;
+            
+            EnlargeIndex(tmp_st, tmp_ed, st_i[d], len[d], size[d], d, id);
+            
+            m_st[d] = tmp_st;
+            m_ed[d] = tmp_ed;
+          }
+          cmp[m].setBbox(m_st, m_ed);
+          cmp[m].setEns(ON); // コンポーネントあり
+        }
+        
+        break;
+    }
+    
+  }
+}
+
 
 /**
  @fn void SklSolverCBC::set_Parallel_Info(void)
@@ -3087,7 +3283,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     Hostonly_ printf("\t %3d : %s\n", m_id, m_pg.c_str());
-    //PL->show_group_info(m_pg);
+    //PL->show_group_info(m_pg); debug
   }
   delete pg_roots;
   
@@ -3328,8 +3524,6 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
  */
 void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  
   unsigned  *bcv, *bh1, *bh2, *bcp, *bcd;
   bcv = bh1 = bh2 = bcp = bcd = NULL;
   
@@ -3381,7 +3575,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   C.Eff_Cell_Ratio = (REAL_TYPE)C.Acell / C.getCellSize(size);
   
   // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
-  Vinfo->resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem(), GC_bv);
+  resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem());
 }
 
 
@@ -3563,3 +3757,51 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
   }
 }
 
+/**
+ @fn void SklSolverCBC::write_distance(float* cut)
+ @brief 距離の最小値を求め，閾値以上にする
+ @retval 最小距離
+ @param cut カット情報
+ */
+void SklSolverCBC::write_distance(float* cut)
+{
+  
+  float* tmp =NULL;
+  tmp = new float [(size[0]+2*guide)*(size[1]+2*guide)*(size[2]+2*guide)];
+  
+  size_t m, n;
+  float s;
+  
+  for (int k=1; k<=size[2]; k++) { 
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        n = FBUtility::getFindexS3D(size, guide, i, j, k);
+        
+        s = 1.0e6;
+        for (int l=0; l<6; l++) {
+          m = FBUtility::getFindexS3Dcut(size, guide, l, i, j, k);
+          if ( cut[m] < s ) s = cut[m];
+        }
+        tmp[n] = s;
+      }
+    }
+  }
+  
+  REAL_TYPE org[3], pit[3];
+  
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      org[i] *= C.RefLength;
+      pit[i] *= C.RefLength;
+    }
+  }
+  F.writeRawSPH(tmp, size, guide, org, pit, SPH_SINGLE);
+}
