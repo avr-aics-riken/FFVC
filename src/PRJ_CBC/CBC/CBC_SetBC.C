@@ -867,7 +867,23 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
   unsigned typ;
   
   // 内部境界（流束形式）
-  if ( !isCDS ) { // Binary
+  if ( isCDS ) { // Cut-Distance
+    for (int n=1; n<=NoBC; n++) {
+      
+      if( cmp[n].isEns() ) {
+        typ = cmp[n].getType();
+        cmp[n].getBbox(st, ed);
+
+        if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
+          extractVel_IBC(n, vec, tm, v00, flop);
+          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop); // Binaryと同じ
+        }
+        else if ( typ==OUTFLOW ) {
+        }      
+      }
+    }
+  }
+  else { // Binary
     for (int n=1; n<=NoBC; n++) {
       
       if( cmp[n].isEns() ) {
@@ -884,9 +900,6 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
         }      
       }
     }
-  }
-  else { // Cut-Distance
-    ;
   }
   
   
@@ -949,7 +962,27 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   unsigned typ;
   
   // 内部境界条件による修正
-  if ( !isCDS ) { // Binary
+  if ( isCDS ) { // Cut-Distance
+    for (int n=1; n<=NoBC; n++) {
+      typ = cmp[n].getType();
+      cmp[n].getBbox(st, ed);
+
+      switch (typ) {
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          dummy = extractVel_IBC(n, vec, tm, v00, flop);
+          cbc_div_ibc_drchlt_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, vec, &flop);
+          break;
+          
+        case OUTFLOW:
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  else { // Binary
     for (int n=1; n<=NoBC; n++) {
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
@@ -970,9 +1003,6 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
           break;
       }
     }
-  }
-  else { // Cut-Distance
-    ;
   }
   
   

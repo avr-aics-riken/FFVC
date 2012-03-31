@@ -2677,6 +2677,249 @@ void VoxInfo::encQfaceSVO(unsigned order, unsigned id, int* mid, unsigned* bcd, 
   }
 }
 
+/**
+ @fn void VoxInfo::encPbit(unsigned* bx)
+ @brief ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
+ @param bx BCindex P
+ @note
+ - ディリクレ条件とノイマン条件の排他性のチェック
+ - 非対角要素と対角要素の係数をエンコードする
+ */
+void VoxInfo::encPbit(unsigned* bx)
+{
+  int i, j, k;
+  unsigned m, coef, flag, nx;
+  unsigned s_e, s_w, s_n, s_s, s_t, s_b, ss;
+  unsigned d_e, d_w, d_n, d_s, d_t, d_b;
+  unsigned register s;
+  bool exclusive;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  // ディリクレ条件とノイマン条件の排他性のチェック
+  exclusive = true;
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m];
+        flag = 0;
+        
+        // ノイマン条件：値がゼロのとき，BCがセットされている
+        s_e = BIT_SHIFT(s, BC_N_E); 
+        s_w = BIT_SHIFT(s, BC_N_W);
+        s_n = BIT_SHIFT(s, BC_N_N);
+        s_s = BIT_SHIFT(s, BC_N_S);
+        s_t = BIT_SHIFT(s, BC_N_T);
+        s_b = BIT_SHIFT(s, BC_N_B);
+        
+        // ディリクレ条件：値がゼロのとき，BCがセットされている
+        d_e = BIT_SHIFT(s, BC_D_E); 
+        d_w = BIT_SHIFT(s, BC_D_W);
+        d_n = BIT_SHIFT(s, BC_D_N);
+        d_s = BIT_SHIFT(s, BC_D_S);
+        d_t = BIT_SHIFT(s, BC_D_T);
+        d_b = BIT_SHIFT(s, BC_D_B);
+        
+        // 非対角要素の係数をエンコード
+        if ( (s_e * d_e) == 0 ) s = offBit( s, BC_NDAG_E );
+        if ( (s_w * d_w) == 0 ) s = offBit( s, BC_NDAG_W );
+        if ( (s_n * d_n) == 0 ) s = offBit( s, BC_NDAG_N );
+        if ( (s_s * d_s) == 0 ) s = offBit( s, BC_NDAG_S );
+        if ( (s_t * d_t) == 0 ) s = offBit( s, BC_NDAG_T );
+        if ( (s_b * d_b) == 0 ) s = offBit( s, BC_NDAG_B );
+        
+        bx[m] = s;
+        
+        if ( (s_e==0) && (d_e==0) ) flag++;
+        if ( (s_w==0) && (d_w==0) ) flag++;
+        if ( (s_n==0) && (d_n==0) ) flag++;
+        if ( (s_s==0) && (d_s==0) ) flag++;
+        if ( (s_t==0) && (d_t==0) ) flag++;
+        if ( (s_b==0) && (d_b==0) ) flag++;
+        
+        if ( flag != 0) {
+          Hostonly_ printf("\tDirichlet and Neumann BC are specified on the same face in cell (%d,%d,%d)\n", i,j,k);
+          exclusive = false;
+        }
+      }
+    }
+  }
+  if ( !exclusive ) Exit(0);
+  
+  // 対角要素の係数のチェックとエンコード
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m];
+        
+        s_e = BIT_SHIFT(s, BC_N_E); // 0-Neumann / 1-normal
+        s_w = BIT_SHIFT(s, BC_N_W);
+        s_n = BIT_SHIFT(s, BC_N_N);
+        s_s = BIT_SHIFT(s, BC_N_S);
+        s_t = BIT_SHIFT(s, BC_N_T);
+        s_b = BIT_SHIFT(s, BC_N_B);
+        
+        ss = s_e + s_w + s_n + s_s + s_t + s_b;
+        bx[m] = s | (ss<<BC_DIAG);
+        
+        if ( (ss == 0) && (BIT_IS_SHIFT(s,ACTIVE_BIT)) ) { 
+          Hostonly_ printf("\tError : Coefficient of diagonal element is zero at (%d,%d,%d) : (wesnbt)[%1d %1d %1d %1d %1d %1d]\n", i,j,k,
+                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i-1, j, k)]),
+                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i+1, j, k)]),
+                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j-1, k)]),
+                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j+1, k)]),
+                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j, k-1)]),
+                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j, k+1)]) );
+        }
+        
+      }
+    }
+  }
+  
+  // ゼロ割防止のためのダミー係数 >> 全領域
+  nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  for (m=0; m<nx; m++) {
+    s = bx[m];
+    if ( ((s>>BC_DIAG) & 0x7) == 0 ) { // 0x7 = 3 bit
+      bx[m] = s | (0x1<<BC_DIAG);
+    }
+  }
+}
+
+
+/**
+ @fn unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
+ @brief 計算領域内部のコンポーネントのDirichletフラグをbcp[]にエンコードする
+ @retval エンコードしたセル数
+ @param order cmp[]のエントリ番号
+ @param id  CellID
+ @param mid ボクセル配列
+ @param bcd BCindex ID
+ @param bcp BCindex P
+ @param deface 面を指定するid
+ @note
+ - 対象セルが流体セルの場合，隣接する面にDirichletフラグをエンコードする
+ - 同種のBCは1セルに一つだけ
+ */
+unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  int i,j,k, idd;
+  unsigned g=0, tmp=0, m;
+  unsigned m_e, m_w, m_n, m_s, m_t, m_b;
+  unsigned s_e, s_w, s_n, s_s, s_t, s_b;
+  int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  unsigned register s, d;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  idd = (int)id;
+  
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        d = bcd[m];
+        s = bcp[m];
+        c_p = mid[m];
+        
+        if ( IS_FLUID( s ) && (c_p == deface) ) { // 対象セルが流体セル，かつdefaceである
+          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
+          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          s_e = bcp[m_e];
+          s_w = bcp[m_w];
+          s_n = bcp[m_n];
+          s_s = bcp[m_s];
+          s_t = bcp[m_t];
+          s_b = bcp[m_b];
+          
+          // X_MINUS
+          if ( c_w == idd ) { // Wセルが指定IDかどうかを先にチェック
+            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) { // 続いて領域チェック 外部境界面は除外
+              d |= order; // dにorderをエンコード
+              s = offBit( s, BC_D_W );
+              g++;
+            }
+          }
+          
+          // X_PLUS
+          if ( c_e == idd ) {
+            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+              d |= order;
+              s = offBit( s, BC_D_E );
+              g++;
+            }
+          }
+          
+          // Y_MINUS
+          if ( c_s == idd ) {
+            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+              d |= order;
+              s = offBit( s, BC_D_S );
+              g++;
+            }
+          }
+          
+          // Y_PLUS
+          if ( c_n == idd ) {
+            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+              d |= order;
+              s = offBit( s, BC_D_N );
+              g++;
+            }
+          }
+          
+          // Z_MINUS
+          if ( c_b == idd ) {
+            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+              d |= order;
+              s = offBit( s, BC_D_B );
+              g++;
+            }
+          }
+          
+          // Z_PLUS
+          if ( c_t == idd ) {
+            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+              d |= order;
+              s = offBit( s, BC_D_T );
+              g++;
+            }
+          }
+          
+          bcd[m] = d;
+          bcp[m] = s;
+        }
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ) {
+    tmp = g;
+    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  return g;
+}
 
 
 /**
@@ -2814,6 +3057,301 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
   }
   
   return c;
+}
+
+/**
+ @fn unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
+ @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
+ @param[in/out] bx BCindex P
+ @param[in] cut 距離情報
+ @retval 固体表面セル数
+ @note 
+ - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
+ - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ */
+unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  int i,j,k;
+  size_t m_p, m;
+  unsigned register s;
+  float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
+  float* ct;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  // ノイマンフラグ
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m_p];
+        
+        if ( IS_FLUID( s ) ) {
+          
+          m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+          ct = &cut[m];
+
+          // X_MINUS
+          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+            if (ct[0] < 1.0) {          // 交点があるなら壁面なのでノイマン条件をセット
+              s = offBit( s, BC_N_W );
+            }
+          }
+          
+          // X_PLUS
+          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            if (ct[1] < 1.0) {
+              s = offBit( s, BC_N_E );
+            }
+          }
+          
+          // Y_MINUS
+          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            if (ct[2] < 1.0) {
+              s = offBit( s, BC_N_S );
+            }
+          }
+          
+          // Y_PLUS
+          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            if (ct[3] < 1.0) {
+              s = offBit( s, BC_N_N );
+            }
+          }
+          
+          // Z_MINUS
+          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            if (ct[4] < 1.0) {
+              s = offBit( s, BC_N_B );
+            }
+          }
+          
+          // Z_PLUS
+          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            if (ct[5] < 1.0) {
+              s = offBit( s, BC_N_T );
+            }
+          }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  // wall locationフラグ
+  unsigned c = 0;
+  float* pos; 
+  float q;
+  
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m_p];
+        
+        if ( IS_FLUID( s ) ) {
+          m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+          pos = &cut[m];
+          
+          if ( pos[X_MINUS] != 1.0 ) { s = onBit( s, FACING_W ); c++; }
+          if ( pos[X_PLUS]  != 1.0 ) { s = onBit( s, FACING_E ); c++; }
+          if ( pos[Y_MINUS] != 1.0 ) { s = onBit( s, FACING_S ); c++; }
+          if ( pos[Y_PLUS]  != 1.0 ) { s = onBit( s, FACING_N ); c++; }
+          if ( pos[Z_MINUS] != 1.0 ) { s = onBit( s, FACING_B ); c++; }
+          if ( pos[Z_PLUS]  != 1.0 ) { s = onBit( s, FACING_T ); c++; }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ) {
+    unsigned tmp = c;
+    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  
+  // 収束判定の有効フラグ
+  float q0, q1, q2, q3, q4, q5;
+  unsigned g=0;
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m_p];
+        
+        if ( IS_FLUID( s ) ) {
+          m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+          pos = &cut[m];
+          
+          q0 = floor(pos[0]);
+          q1 = floor(pos[1]);
+          q2 = floor(pos[2]);
+          q3 = floor(pos[3]);
+          q4 = floor(pos[4]);
+          q5 = floor(pos[5]);
+          
+          // 収束判定の有効フラグ 全周カットがあるセルは孤立セルとして固体セルへ変更
+          if ( (q0+q1+q2+q3+q4+q5) == 0.0 ) {
+            s = offBit(s, VLD_CNVG);    // Out of scope
+            s = offBit(s, STATE_BIT );  // Solid
+            s = offBit(s, ACTIVE_BIT ); // Inactive
+            g++;
+          }
+          else {
+            s = onBit(s, VLD_CNVG);
+          }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  
+  if( para_mng->IsParallel() ) {
+    unsigned tmp = g;
+    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  
+  Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
+  
+  return c;
+}
+
+/**
+ @fn unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
+ @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
+ @retval エンコードしたセル数
+ @param order cmp[]のエントリ
+ @param id  CellID
+ @param mid ボクセル配列
+ @param bcd BCindex ID
+ @param bcp BCindex P
+ @param deface 面を指定するid
+ @note
+ - 対象セルが流体セル，かつターゲットの隣接セルが固体の場合，隣接する面にNeumannフラグをエンコードする
+ - 同種のBCは1セルに一つだけ
+ */
+unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  int i,j,k, idd;
+  unsigned g=0, tmp=0, m;
+  unsigned m_e, m_w, m_n, m_s, m_t, m_b;
+  unsigned s_e, s_w, s_n, s_s, s_t, s_b;
+  int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  unsigned register s, d;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  idd = (int)id;
+  
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      for (i=1; i<=ix; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        d = bcd[m];
+        s = bcp[m];
+        c_p = mid[m];
+        
+        if ( IS_FLUID( s ) && (c_p == deface) ) { // 対象セルが流体セル，かつdefaceである
+          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
+          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          s_e = bcp[m_e];
+          s_w = bcp[m_w];
+          s_n = bcp[m_n];
+          s_s = bcp[m_s];
+          s_t = bcp[m_t];
+          s_b = bcp[m_b];
+          
+          // 外部境界面は除外
+          // X_MINUS
+          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+            if ( !IS_FLUID( s_w ) && (c_w == idd) ) { // Wセルが指定ID，かつ固体である
+              d |= order; // dにエントリをエンコード
+              s = offBit( s, BC_N_W );
+              g++;
+            }
+          }
+          
+          // X_PLUS
+          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            if ( !IS_FLUID( s_e ) && (c_e == idd) ) {
+              d |= order;
+              s = offBit( s, BC_N_E );
+              g++;
+            }
+          }
+          
+          // Y_MINUS
+          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            if ( !IS_FLUID( s_s ) && (c_s == idd) ) {
+              d |= order;
+              s = offBit( s, BC_N_S );
+              g++;
+            }
+          }
+          
+          // Y_PLUS
+          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            if ( !IS_FLUID( s_n ) && (c_n == idd) ) {
+              d |= order;
+              s = offBit( s, BC_N_N );
+              g++;
+            }
+          }
+          
+          // Z_MINUS
+          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            if ( !IS_FLUID( s_b ) && (c_b == idd) ) {
+              d |= order;
+              s = offBit( s, BC_N_B );
+              g++;
+            }
+          }
+          
+          // Z_PLUS
+          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            if ( !IS_FLUID( s_t ) && (c_t == idd) ) {
+              d |= order;
+              s = offBit( s, BC_N_T );
+              g++;
+            }
+          }
+          
+          bcd[m] = d;
+          bcp[m] = s;
+        }
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ) {
+    tmp = g;
+    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  return g;
 }
 
 /**
@@ -3019,547 +3557,6 @@ void VoxInfo::encPbit_OBC(int face, unsigned* bx, string key, bool dir)
       }
       break;
   } // end of switch
-}
-
-/**
- @fn unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
- @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
- @retval エンコードしたセル数
- @param order cmp[]のエントリ
- @param id  CellID
- @param mid ボクセル配列
- @param bcd BCindex ID
- @param bcp BCindex P
- @param deface 面を指定するid
- @note
- - 対象セルが流体セル，かつターゲットの隣接セルが固体の場合，隣接する面にNeumannフラグをエンコードする
- - 同種のBCは1セルに一つだけ
- */
-unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k, idd;
-  unsigned g=0, tmp=0, m;
-  unsigned m_e, m_w, m_n, m_s, m_t, m_b;
-  unsigned s_e, s_w, s_n, s_s, s_t, s_b;
-  int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  unsigned register s, d;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  idd = (int)id;
-  
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        d = bcd[m];
-        s = bcp[m];
-        c_p = mid[m];
-        
-        if ( IS_FLUID( s ) && (c_p == deface) ) { // 対象セルが流体セル，かつdefaceである
-          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          s_e = bcp[m_e];
-          s_w = bcp[m_w];
-          s_n = bcp[m_n];
-          s_s = bcp[m_s];
-          s_t = bcp[m_t];
-          s_b = bcp[m_b];
-          
-          // 外部境界面は除外
-          // X_MINUS
-          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
-            if ( !IS_FLUID( s_w ) && (c_w == idd) ) { // Wセルが指定ID，かつ固体である
-              d |= order; // dにエントリをエンコード
-              s = offBit( s, BC_N_W );
-              g++;
-            }
-          }
-          
-          // X_PLUS
-          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
-            if ( !IS_FLUID( s_e ) && (c_e == idd) ) {
-              d |= order;
-              s = offBit( s, BC_N_E );
-              g++;
-            }
-          }
-          
-          // Y_MINUS
-          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
-            if ( !IS_FLUID( s_s ) && (c_s == idd) ) {
-              d |= order;
-              s = offBit( s, BC_N_S );
-              g++;
-            }
-          }
-          
-          // Y_PLUS
-          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
-            if ( !IS_FLUID( s_n ) && (c_n == idd) ) {
-              d |= order;
-              s = offBit( s, BC_N_N );
-              g++;
-            }
-          }
-          
-          // Z_MINUS
-          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
-            if ( !IS_FLUID( s_b ) && (c_b == idd) ) {
-              d |= order;
-              s = offBit( s, BC_N_B );
-              g++;
-            }
-          }
-          
-          // Z_PLUS
-          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
-            if ( !IS_FLUID( s_t ) && (c_t == idd) ) {
-              d |= order;
-              s = offBit( s, BC_N_T );
-              g++;
-            }
-          }
-          
-          bcd[m] = d;
-          bcp[m] = s;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  return g;
-}
-
-/**
- @fn unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
- @brief 計算領域内部のコンポーネントのDirichletフラグをbcp[]にエンコードする
- @retval エンコードしたセル数
- @param order cmp[]のエントリ番号
- @param id  CellID
- @param mid ボクセル配列
- @param bcd BCindex ID
- @param bcp BCindex P
- @param deface 面を指定するid
- @note
- - 対象セルが流体セルの場合，隣接する面にDirichletフラグをエンコードする
- - 同種のBCは1セルに一つだけ
- */
-unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k, idd;
-  unsigned g=0, tmp=0, m;
-  unsigned m_e, m_w, m_n, m_s, m_t, m_b;
-  unsigned s_e, s_w, s_n, s_s, s_t, s_b;
-  int      c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  unsigned register s, d;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  idd = (int)id;
-  
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        d = bcd[m];
-        s = bcp[m];
-        c_p = mid[m];
-        
-        if ( IS_FLUID( s ) && (c_p == deface) ) { // 対象セルが流体セル，かつdefaceである
-          m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          s_e = bcp[m_e];
-          s_w = bcp[m_w];
-          s_n = bcp[m_n];
-          s_s = bcp[m_s];
-          s_t = bcp[m_t];
-          s_b = bcp[m_b];
-          
-          // X_MINUS
-          if ( c_w == idd ) { // Wセルが指定IDかどうかを先にチェック
-            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) { // 続いて領域チェック 外部境界面は除外
-              d |= order; // dにorderをエンコード
-              s = offBit( s, BC_D_W );
-              g++;
-            }
-          }
-          
-          // X_PLUS
-          if ( c_e == idd ) {
-            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
-              d |= order;
-              s = offBit( s, BC_D_E );
-              g++;
-            }
-          }
-          
-          // Y_MINUS
-          if ( c_s == idd ) {
-            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
-              d |= order;
-              s = offBit( s, BC_D_S );
-              g++;
-            }
-          }
-          
-          // Y_PLUS
-          if ( c_n == idd ) {
-            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
-              d |= order;
-              s = offBit( s, BC_D_N );
-              g++;
-            }
-          }
-          
-          // Z_MINUS
-          if ( c_b == idd ) {
-            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
-              d |= order;
-              s = offBit( s, BC_D_B );
-              g++;
-            }
-          }
-          
-          // Z_PLUS
-          if ( c_t == idd ) {
-            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
-              d |= order;
-              s = offBit( s, BC_D_T );
-              g++;
-            }
-          }
-          
-          bcd[m] = d;
-          bcp[m] = s;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  return g;
-}
-
-/**
- @fn void VoxInfo::encPbit(unsigned* bx)
- @brief ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
- @param bx BCindex P
- @note
- - ディリクレ条件とノイマン条件の排他性のチェック
- - 非対角要素と対角要素の係数をエンコードする
- */
-void VoxInfo::encPbit(unsigned* bx)
-{
-  int i, j, k;
-  unsigned m, coef, flag, nx;
-  unsigned s_e, s_w, s_n, s_s, s_t, s_b, ss;
-  unsigned d_e, d_w, d_n, d_s, d_t, d_b;
-  unsigned register s;
-  bool exclusive;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  // ディリクレ条件とノイマン条件の排他性のチェック
-  exclusive = true;
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m];
-        flag = 0;
-        
-        // ノイマン条件：値がゼロのとき，BCがセットされている
-        s_e = BIT_SHIFT(s, BC_N_E); 
-        s_w = BIT_SHIFT(s, BC_N_W);
-        s_n = BIT_SHIFT(s, BC_N_N);
-        s_s = BIT_SHIFT(s, BC_N_S);
-        s_t = BIT_SHIFT(s, BC_N_T);
-        s_b = BIT_SHIFT(s, BC_N_B);
-        
-        // ディリクレ条件：値がゼロのとき，BCがセットされている
-        d_e = BIT_SHIFT(s, BC_D_E); 
-        d_w = BIT_SHIFT(s, BC_D_W);
-        d_n = BIT_SHIFT(s, BC_D_N);
-        d_s = BIT_SHIFT(s, BC_D_S);
-        d_t = BIT_SHIFT(s, BC_D_T);
-        d_b = BIT_SHIFT(s, BC_D_B);
-        
-        // 非対角要素の係数をエンコード
-        if ( (s_e * d_e) == 0 ) s = offBit( s, BC_NDAG_E );
-        if ( (s_w * d_w) == 0 ) s = offBit( s, BC_NDAG_W );
-        if ( (s_n * d_n) == 0 ) s = offBit( s, BC_NDAG_N );
-        if ( (s_s * d_s) == 0 ) s = offBit( s, BC_NDAG_S );
-        if ( (s_t * d_t) == 0 ) s = offBit( s, BC_NDAG_T );
-        if ( (s_b * d_b) == 0 ) s = offBit( s, BC_NDAG_B );
-        
-        bx[m] = s;
-        
-        if ( (s_e==0) && (d_e==0) ) flag++;
-        if ( (s_w==0) && (d_w==0) ) flag++;
-        if ( (s_n==0) && (d_n==0) ) flag++;
-        if ( (s_s==0) && (d_s==0) ) flag++;
-        if ( (s_t==0) && (d_t==0) ) flag++;
-        if ( (s_b==0) && (d_b==0) ) flag++;
-        
-        if ( flag != 0) {
-          Hostonly_ printf("\tDirichlet and Neumann BC are specified on the same face in cell (%d,%d,%d)\n", i,j,k);
-          exclusive = false;
-        }
-      }
-    }
-  }
-  if ( !exclusive ) Exit(0);
-  
-  // 対角要素の係数のチェックとエンコード
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m];
-        
-        s_e = BIT_SHIFT(s, BC_N_E); // 0-Neumann / 1-normal
-        s_w = BIT_SHIFT(s, BC_N_W);
-        s_n = BIT_SHIFT(s, BC_N_N);
-        s_s = BIT_SHIFT(s, BC_N_S);
-        s_t = BIT_SHIFT(s, BC_N_T);
-        s_b = BIT_SHIFT(s, BC_N_B);
-        
-        ss = s_e + s_w + s_n + s_s + s_t + s_b;
-        bx[m] = s | (ss<<BC_DIAG);
-        
-        if ( (ss == 0) && (BIT_IS_SHIFT(s,ACTIVE_BIT)) ) { 
-          Hostonly_ printf("\tError : Coefficient of diagonal element is zero at (%d,%d,%d) : (wesnbt)[%1d %1d %1d %1d %1d %1d]\n", i,j,k,
-                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i-1, j, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i+1, j, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j-1, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j+1, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j, k-1)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(size, guide, i, j, k+1)]) );
-        }
-        
-      }
-    }
-  }
-  
-  // ゼロ割防止のためのダミー係数 >> 全領域
-  nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  for (m=0; m<nx; m++) {
-    s = bx[m];
-    if ( ((s>>BC_DIAG) & 0x7) == 0 ) { // 0x7 = 3 bit
-      bx[m] = s | (0x1<<BC_DIAG);
-    }
-  }
-}
-
-/**
- @fn unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
- @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
- @param[in/out] bx BCindex P
- @param[in] cut 距離情報
- @retval 固体表面セル数
- @note 
- - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
- */
-unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k;
-  size_t m_p, m;
-  unsigned register s;
-  float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  // ノイマンフラグ
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) ) {
-          
-          // 外部境界面は除外 pn.nID[X_MINUS] < 0 のときが外部境界面，0-myrank, 0>other rank
-          // X_MINUS
-          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-            if (cut[m] < 1.0) {          // 交点があるなら壁面なのでノイマン条件をセット
-              s = offBit( s, BC_N_W );
-            }
-          }
-          
-          // X_PLUS
-          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 1, i, j, k);
-            if (cut[m] < 1.0) {
-              s = offBit( s, BC_N_E );
-            }
-          }
-          
-          // Y_MINUS
-          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 2, i, j, k);
-            if (cut[m] < 1.0) {
-              s = offBit( s, BC_N_S );
-            }
-          }
-          
-          // Y_PLUS
-          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 3, i, j, k);
-            if (cut[m] < 1.0) {
-              s = offBit( s, BC_N_N );
-            }
-          }
-          
-          // Z_MINUS
-          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 4, i, j, k);
-            if (cut[m] < 1.0) {
-              s = offBit( s, BC_N_B );
-            }
-          }
-          
-          // Z_PLUS
-          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 5, i, j, k);
-            if (cut[m] < 1.0) {
-              s = offBit( s, BC_N_T );
-            }
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  // wall locationフラグ
-  unsigned c = 0;
-  float* pos; 
-  float q;
-  
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) ) {
-          m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-          pos = &cut[m];
-          
-          if ( pos[X_MINUS] != 1.0 ) { s = onBit( s, FACING_W ); c++; }
-          if ( pos[X_PLUS]  != 1.0 ) { s = onBit( s, FACING_E ); c++; }
-          if ( pos[Y_MINUS] != 1.0 ) { s = onBit( s, FACING_S ); c++; }
-          if ( pos[Y_PLUS]  != 1.0 ) { s = onBit( s, FACING_N ); c++; }
-          if ( pos[Z_MINUS] != 1.0 ) { s = onBit( s, FACING_B ); c++; }
-          if ( pos[Z_PLUS]  != 1.0 ) { s = onBit( s, FACING_T ); c++; }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = c;
-    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  // 収束判定の有効フラグ
-  float q0, q1, q2, q3, q4, q5;
-  unsigned g=0;
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) ) {
-          m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-          pos = &cut[m];
-
-          q0 = floor(pos[0]);
-          q1 = floor(pos[1]);
-          q2 = floor(pos[2]);
-          q3 = floor(pos[3]);
-          q4 = floor(pos[4]);
-          q5 = floor(pos[5]);
-          
-          // 収束判定の有効フラグ 全周カットがあるセルは孤立セルとして固体セルへ変更
-          if ( (q0+q1+q2+q3+q4+q5) == 0.0 ) {
-            s = offBit(s, VLD_CNVG);    // Out of scope
-            s = offBit(s, STATE_BIT );  // Solid
-            s = offBit(s, ACTIVE_BIT ); // Inactive
-            g++;
-          }
-          else {
-            s = onBit(s, VLD_CNVG);
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
-  
-  return c;
 }
 
 /**
