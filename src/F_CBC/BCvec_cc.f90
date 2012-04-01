@@ -526,7 +526,7 @@
 
     return
     end subroutine cbc_pvec_vibc_specv
-    
+
 !  *********************************************************************************
 !> @subroutine cbc_pvec_vobc_symtrc (wv, sz, g, dh, rei, v0, bv, v_mode, face, flop)
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
@@ -3061,7 +3061,7 @@
     ks = st(3)
     ke = ed(3)
     
-    m = real( (ie-is)*(je-js)*(ke-ks) )
+    m = real( (ie-is+1)*(je-js+1)*(ke-ks+1) )
     flop = flop + m*7.0 + 3.0
 
 !$OMP PARALLEL &
@@ -3069,13 +3069,13 @@
 !$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:m)
+
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -3095,12 +3095,13 @@
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) Wb_t = w_bc_ref
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) Wt_t = w_bc_ref
 
-        ! VBCの面だけUe_tなどは値をもつ
-        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) * coef ! 対象セルは流体なのでマスク不要
+        ! VBCの面だけUe_tなどは値をもつ  対象セルは流体なのでマスク不要
+        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) * coef
       end if
     end do
     end do
     end do
+    
 !$OMP END DO
 !$OMP END PARALLEL
 
@@ -3741,3 +3742,284 @@
 
     return
     end subroutine cbc_div_obc_oflow_vec
+
+!  ****************************************************************************************
+!> @subroutine cds_pvec_vibc_specv (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
+!! @brief 内部速度境界条件による対流項と粘性項の流束の修正
+!! @param[out] wv 疑似ベクトルの空間項の評価値
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param st ループの開始インデクス
+!! @param ed ループの終了インデクス
+!! @param dh 格子幅
+!! @param v00 参照速度
+!! @param rei Reynolds数の逆数
+!! @param v 速度ベクトル（u^n, セルセンタ）
+!! @param bv BCindex V
+!! @param odr 内部境界処理時の速度境界条件のエントリ
+!! @param vec 指定する速度ベクトル
+!! @param[out] flop
+!! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度，カット位置に関わらず指定速度で流束を計算
+!! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
+!<
+    subroutine cds_pvec_vibc_specv (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p
+    integer, dimension(3)                                       ::  sz, st, ed
+    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real                                                        ::  dh, dh1, dh2, flop, EX, EY, EZ, rei
+    real                                                        ::  u_ref, v_ref, w_ref, m1, m2, r1, r2
+    real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
+    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    real, dimension(0:3)                                        ::  v00
+    real, dimension(3)                                          ::  vec
+    
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+    
+    dh1= 1.0/dh
+    dh2= rei*dh1*dh1
+
+    ! 参照座標系の速度
+    u_ref = v00(1)
+    v_ref = v00(2)
+    w_ref = v00(3)
+    
+    ! u_bcは境界速度
+    u_bc = vec(1)
+    v_bc = vec(2)
+    w_bc = vec(3)
+    
+    ! u_bc_refは参照座標系での境界速度
+    u_bc_ref = u_bc + u_ref
+    v_bc_ref = v_bc + v_ref
+    w_bc_ref = w_bc + w_ref
+    
+    r1 = 0.0
+    r2 = 0.0
+    
+    flop = flop + 14.0 ! DP 19 flop
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref) &
+!$OMP FIRSTPRIVATE(dh1, dh2, odr) &
+!$OMP PRIVATE(m1, m2, bvx, cnv_u, cnv_v, cnv_w, EX, EY, EZ, cr, cl, acr, acl) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l)
+
+    m1 = 0.0
+    m2 = 0.0
+    
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge) &
+#endif
+!$OMP REDUCTION(+:r1) &
+!$OMP REDUCTION(+:r2)
+    
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
+      bvx = bv(i,j,k)
+
+      if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
+        cnv_u = 0.0
+        cnv_v = 0.0
+        cnv_w = 0.0
+        
+        ! セル状態 (0-solid / 1-fluid)
+        b_p = ibits(bvx,             State, 1)
+        b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
+        b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
+        b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
+        b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
+        b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
+        b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
+        
+        ! 変数のロード
+        Up0 = v(1,i,j,k)
+        Vp0 = v(2,i,j,k)
+        Wp0 = v(3,i,j,k)
+      
+        Uw1 = 0.0
+        Ue1 = 0.0
+        Us1 = 0.0
+        Un1 = 0.0
+        Ub1 = 0.0
+        Ut1 = 0.0
+        Vw1 = 0.0
+        Ve1 = 0.0
+        Vs1 = 0.0
+        Vn1 = 0.0
+        Vb1 = 0.0
+        Vt1 = 0.0
+        Ww1 = 0.0
+        We1 = 0.0
+        Ws1 = 0.0
+        Wn1 = 0.0
+        Wb1 = 0.0
+        Wt1 = 0.0
+      
+        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC) 
+        c_e = 0.0
+        c_w = 0.0
+        c_n = 0.0
+        c_s = 0.0
+        c_t = 0.0
+        c_b = 0.0
+        if ( ibits(bvx, bc_face_E, bitw_5) == odr ) c_e = 1.0
+        if ( ibits(bvx, bc_face_W, bitw_5) == odr ) c_w = 1.0
+        if ( ibits(bvx, bc_face_N, bitw_5) == odr ) c_n = 1.0
+        if ( ibits(bvx, bc_face_S, bitw_5) == odr ) c_s = 1.0
+        if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
+        if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
+      
+        ! X方向 ---------------------------------------
+        if ( c_w == 1.0 ) then
+          Uw1  = u_bc_ref
+          Vw1  = v_bc_ref
+          Ww1  = w_bc_ref
+          cl   = u_bc
+          acl  = abs(cl)
+          fu_l = 0.5*(cl*(Up0+Uw1) - acl*(Up0-Uw1))
+          fv_l = 0.5*(cl*(Vp0+Vw1) - acl*(Vp0-Vw1))
+          fw_l = 0.5*(cl*(Wp0+Ww1) - acl*(Wp0-Ww1)) ! 18+1 flops
+          m2 = m2 + 1.0
+        end if
+        
+        if ( c_e == 1.0 ) then
+          Ue1  = u_bc_ref
+          Ve1  = v_bc_ref
+          We1  = w_bc_ref
+          cr   = u_bc
+          acr  = abs(cr)
+          fu_r = 0.5*(cr*(Ue1+Up0) - acr*(Ue1-Up0))
+          fv_r = 0.5*(cr*(Ve1+Vp0) - acr*(Ve1-Vp0))
+          fw_r = 0.5*(cr*(We1+Wp0) - acr*(We1-Wp0)) ! 18+1 flops
+          m2 = m2 + 1.0
+        end if
+        
+        cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
+        cnv_v = cnv_v + fv_r*c_e - fv_l*c_w
+        cnv_w = cnv_w + fw_r*c_e - fw_l*c_w ! 12 flops
+			
+        ! Y方向 ---------------------------------------
+        if ( c_s == 1.0 ) then
+          Us1  = u_bc_ref
+          Vs1  = v_bc_ref
+          Ws1  = w_bc_ref
+          cl   = v_bc
+          acl  = abs(cl)
+          fu_l = 0.5*(cl*(Up0+Us1) - acl*(Up0-Us1))
+          fv_l = 0.5*(cl*(Vp0+Vs1) - acl*(Vp0-Vs1))
+          fw_l = 0.5*(cl*(Wp0+Ws1) - acl*(Wp0-Ws1))
+          m2 = m2 + 1.0
+        end if
+        
+        if ( c_n == 1.0 ) then
+          Un1  = u_bc_ref
+          Vn1  = v_bc_ref
+          Wn1  = w_bc_ref
+          cr   = v_bc
+          acr  = abs(cr)
+          fu_r = 0.5*(cr*(Un1+Up0) - acr*(Un1-Up0))
+          fv_r = 0.5*(cr*(Vn1+Vp0) - acr*(Vn1-Vp0))
+          fw_r = 0.5*(cr*(Wn1+Wp0) - acr*(Wn1-Wp0))
+          m2 = m2 + 1.0
+        end if
+        
+        cnv_u = cnv_u + fu_r*c_n - fu_l*c_s
+        cnv_v = cnv_v + fv_r*c_n - fv_l*c_s
+        cnv_w = cnv_w + fw_r*c_n - fw_l*c_s
+			
+        ! Z方向 ---------------------------------------
+        if ( c_b == 1.0 ) then
+          Ub1  = u_bc_ref
+          Vb1  = v_bc_ref
+          Wb1  = w_bc_ref
+          cl   = w_bc
+          acl  = abs(cl)
+          fu_l = 0.5*(cl*(Up0+Ub1) - acl*(Up0-Ub1))
+          fv_l = 0.5*(cl*(Vp0+Vb1) - acl*(Vp0-Vb1))
+          fw_l = 0.5*(cl*(Wp0+Wb1) - acl*(Wp0-Wb1))
+          m2 = m2 + 1.0
+        end if
+
+        if ( c_t == 1.0 ) then
+          Ut1  = u_bc_ref
+          Vt1  = v_bc_ref
+          Wt1  = w_bc_ref
+          cr   = w_bc
+          acr  = abs(cr)
+          fu_r = 0.5*(cr*(Ut1+Up0) - acr*(Ut1-Up0))
+          fv_r = 0.5*(cr*(Vt1+Vp0) - acr*(Vt1-Vp0))
+          fw_r = 0.5*(cr*(Wt1+Wp0) - acr*(Wt1-Wp0))
+          m2 = m2 + 1.0
+        end if
+        
+        cnv_u = cnv_u + fu_r*c_t - fu_l*c_b
+        cnv_v = cnv_v + fv_r*c_t - fv_l*c_b
+        cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
+      
+        ! 粘性項
+        EX = ( Ue1 - Up0 ) * c_e &
+           + ( Uw1 - Up0 ) * c_w &
+           + ( Un1 - Up0 ) * c_n &
+           + ( Us1 - Up0 ) * c_s &
+           + ( Ut1 - Up0 ) * c_t &
+           + ( Ub1 - Up0 ) * c_b ! 17 flops
+        EY = ( Ve1 - Vp0 ) * c_e &
+           + ( Vw1 - Vp0 ) * c_w &
+           + ( Vn1 - Vp0 ) * c_n &
+           + ( Vs1 - Vp0 ) * c_s &
+           + ( Vt1 - Vp0 ) * c_t &
+           + ( Vb1 - Vp0 ) * c_b
+        EZ = ( We1 - Wp0 ) * c_e &
+           + ( Ww1 - Wp0 ) * c_w &
+           + ( Wn1 - Wp0 ) * c_n &
+           + ( Ws1 - Wp0 ) * c_s &
+           + ( Wt1 - Wp0 ) * c_t &
+           + ( Wb1 - Wp0 ) * c_b
+
+        wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
+        wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
+        wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        m1 = m1 + 1.0
+        
+      endif
+    end do
+    end do
+    end do
+!$OMP END DO
+
+    r1 = m1
+    r2 = m2
+    
+!$OMP END PARALLEL
+
+    ! loop :  (12*3 + 17*3 + 12)*m1 + 19*m2 = 99*m1 + 19*m2
+
+    flop = flop + real(r1)*99.0 + real(r2)*19.0
+
+    return
+    end subroutine cds_pvec_vibc_specv
+    

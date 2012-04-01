@@ -51,6 +51,8 @@
 #define cbc_div_obc_oflow_pvec_ CBC_DIV_OBC_OFLOW_PVEC
 #define cbc_div_obc_oflow_vec_  CBC_DIV_OBC_OFLOW_VEC
 
+#define cds_pvec_vibc_specv_    CDS_PVEC_VIBC_SPECV
+
 // BCprs_cc.f90
 #define cbc_pobc_drchlt_        CBC_POBC_DRCHLT
 #define cbc_pobc_neumann_       CBC_POBC_NEUMANN
@@ -153,6 +155,9 @@ extern "C" {
                                REAL_TYPE* v0, REAL_TYPE* flop);
   //void cbc_div_obc_oflow_pvec_(REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, REAL_TYPE* v0, REAL_TYPE* flop);
   void cbc_div_obc_oflow_vec_ (REAL_TYPE* div, int* sz, int* g, int* face, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, REAL_TYPE* aa, REAL_TYPE* flop);
+  
+  void cds_pvec_vibc_specv_   (REAL_TYPE* wv, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
+                               int* bv, int* odr, REAL_TYPE* vec, REAL_TYPE* flop);
   
   // BCprs_cc.f90
   void cbc_pobc_drchlt_  (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* pv);

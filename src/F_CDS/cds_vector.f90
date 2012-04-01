@@ -52,6 +52,7 @@
     real                                                        ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
     real                                                        ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
 		real                                                        ::  EX, EY, EZ, delta_x, delta_y, delta_z
+    real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
@@ -98,7 +99,7 @@
     cm1 = 1.0 - ck
     cm2 = 1.0 + ck
     
-    flop = flop + real(ix)*real(jx)*real(kx)*1227.0 + 34.0
+    flop = flop + real(ix)*real(jx)*real(kx)*1245.0 + 34.0
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
@@ -120,7 +121,8 @@
 !$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
 !$OMP PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
 !$OMP PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
-!$OMP PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t)
+!$OMP PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t) &
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -156,6 +158,18 @@
       if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
+      lmt_w = 1.0
+      lmt_e = 1.0
+      lmt_s = 1.0
+      lmt_n = 1.0
+      lmt_b = 1.0
+      lmt_t = 1.0
+      if ( ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0 ) lmt_w = 0.0
+      if ( ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0 ) lmt_e = 0.0
+      if ( ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0 ) lmt_s = 0.0
+      if ( ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0 ) lmt_n = 0.0
+      if ( ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0 ) lmt_b = 0.0
+      if ( ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0 ) lmt_t = 0.0
       
       ! カット情報
 			cw_w = cut(1,i-1,j  ,k  ) ! d_{i-1}^-
@@ -190,7 +204,7 @@
       htt= 1.0/(0.5 + ct_t) ! for (k+2)
       
 			
-      ! X方向  > 4 + 12  + 16 + 76 + 232 = 340 flop ---------------------------------------
+      ! X方向  > 4 + 12  + 16 + 76 + 238 = 346 flop ---------------------------------------
       
       ! cut flag >  4 flop
       tmp1 = 1.0
@@ -260,7 +274,7 @@
       Ve2 = tmp4*Ve2 + r_tmp4*Ve2_t
       We2 = tmp4*We2 + r_tmp4*We2_t
       
-      ! 界面の左右の状態を計算  > 4+ (4+36+20+16)*3 = 232 flop
+      ! 界面の左右の状態を計算  > 4+ (4+36+22+16)*3 = 238 flop
       cr  = UPe - u_ref
       cl  = UPw - u_ref
       acr = abs(cr)
@@ -273,10 +287,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Urr = Ue1 - (cm1*g6+cm2*g5)*ss_4
+      Urr = Ue1 - (cm1*g6+cm2*g5)*ss_4*lmt_e
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
-      Ull = Uw1 + (cm1*g1+cm2*g2)*ss_4
+      Ull = Uw1 + (cm1*g1+cm2*g2)*ss_4*lmt_w
       cnv_u = 0.5*(cr*(Urr+Url) - acr*(Urr-Url))*c_e &
             - 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull))*c_w + cnv_u
       
@@ -287,10 +301,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Vrr = Ve1 - (cm1*g6+cm2*g5)*ss_4
+      Vrr = Ve1 - (cm1*g6+cm2*g5)*ss_4*lmt_e
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
-      Vll = Vw1 + (cm1*g1+cm2*g2)*ss_4
+      Vll = Vw1 + (cm1*g1+cm2*g2)*ss_4*lmt_w
       cnv_v = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl))*c_e &
             - 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll))*c_w + cnv_v
             
@@ -301,10 +315,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Wrr = We1 - (cm1*g6+cm2*g5)*ss_4
+      Wrr = We1 - (cm1*g6+cm2*g5)*ss_4*lmt_e
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
-      Wll = Ww1 + (cm1*g1+cm2*g2)*ss_4
+      Wll = Ww1 + (cm1*g1+cm2*g2)*ss_4*lmt_w
       cnv_w = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl))*c_e &
             - 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll))*c_w + cnv_w
 			
@@ -390,10 +404,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Urr = Un1 - (cm1*g6+cm2*g5)*ss_4
+      Urr = Un1 - (cm1*g6+cm2*g5)*ss_4*lmt_n
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
-      Ull = Us1 + (cm1*g1+cm2*g2)*ss_4
+      Ull = Us1 + (cm1*g1+cm2*g2)*ss_4*lmt_s
       cnv_u = 0.5*(cr*(Urr+Url) - acr*(Urr-Url))*c_n &
             - 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull))*c_s + cnv_u
       
@@ -404,10 +418,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Vrr = Vn1 - (cm1*g6+cm2*g5)*ss_4
+      Vrr = Vn1 - (cm1*g6+cm2*g5)*ss_4*lmt_n
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
-      Vll = Vs1 + (cm1*g1+cm2*g2)*ss_4
+      Vll = Vs1 + (cm1*g1+cm2*g2)*ss_4*lmt_s
       cnv_v = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl))*c_n &
             - 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll))*c_s + cnv_v
 
@@ -418,10 +432,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Wrr = Wn1 - (cm1*g6+cm2*g5)*ss_4
+      Wrr = Wn1 - (cm1*g6+cm2*g5)*ss_4*lmt_n
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
-      Wll = Ws1 + (cm1*g1+cm2*g2)*ss_4
+      Wll = Ws1 + (cm1*g1+cm2*g2)*ss_4*lmt_s
       cnv_w = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl))*c_n &
             - 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll))*c_s + cnv_w
 			
@@ -507,10 +521,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Urr = Ut1 - (cm1*g6+cm2*g5)*ss_4
+      Urr = Ut1 - (cm1*g6+cm2*g5)*ss_4*lmt_t
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
-      Ull = Ub1 + (cm1*g1+cm2*g2)*ss_4
+      Ull = Ub1 + (cm1*g1+cm2*g2)*ss_4*lmt_b
       cnv_u = 0.5*(cr*(Urr+Url) - acr*(Urr-Url))*c_t &
             - 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull))*c_b + cnv_u
 
@@ -521,10 +535,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Vrr = Vt1 - (cm1*g6+cm2*g5)*ss_4
+      Vrr = Vt1 - (cm1*g6+cm2*g5)*ss_4*lmt_t
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
-      Vll = Vb1 + (cm1*g1+cm2*g2)*ss_4
+      Vll = Vb1 + (cm1*g1+cm2*g2)*ss_4*lmt_b
       cnv_v = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl))*c_t &
             - 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll))*c_b + cnv_v
 
@@ -535,10 +549,10 @@
       
       include '../F_CBC/muscl.h'
       
-      Wrr = Wt1 - (cm1*g6+cm2*g5)*ss_4
+      Wrr = Wt1 - (cm1*g6+cm2*g5)*ss_4*lmt_t
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
-      Wll = Wb1 + (cm1*g1+cm2*g2)*ss_4
+      Wll = Wb1 + (cm1*g1+cm2*g2)*ss_4*lmt_b
       cnv_w = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl))*c_t &
             - 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll))*c_b + cnv_w
 
@@ -730,12 +744,12 @@
       q4 = 1.0
       q5 = 1.0
       q6 = 1.0
-      if (d1 < 1.0) q1 = 0.0 ! q1 = aint(d1) 
-      if (d2 < 1.0) q2 = 0.0 ! q2 = aint(d2)
-      if (d3 < 1.0) q3 = 0.0 ! q3 = aint(d3)
-      if (d4 < 1.0) q4 = 0.0 ! q4 = aint(d4)
-      if (d5 < 1.0) q5 = 0.0 ! q5 = aint(d5)
-      if (d6 < 1.0) q6 = 0.0 ! q6 = aint(d6)
+      if (d1 < 1.0) q1 = 0.0
+      if (d2 < 1.0) q2 = 0.0
+      if (d3 < 1.0) q3 = 0.0
+      if (d4 < 1.0) q4 = 0.0
+      if (d5 < 1.0) q5 = 0.0
+      if (d6 < 1.0) q6 = 0.0
       r_q1 = 1.0 - q1
       r_q2 = 1.0 - q2
       r_q3 = 1.0 - q3
@@ -830,6 +844,7 @@
       v(1,i,j,k) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
       v(2,i,j,k) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
       v(3,i,j,k) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
+    
     end do
     end do
     end do
@@ -937,12 +952,12 @@
       q4 = 1.0
       q5 = 1.0
       q6 = 1.0
-      if (d1 < 1.0) q1 = 0.0 ! q1 = aint(d1) 
-      if (d2 < 1.0) q2 = 0.0 ! q2 = aint(d2)
-      if (d3 < 1.0) q3 = 0.0 ! q3 = aint(d3)
-      if (d4 < 1.0) q4 = 0.0 ! q4 = aint(d4)
-      if (d5 < 1.0) q5 = 0.0 ! q5 = aint(d5)
-      if (d6 < 1.0) q6 = 0.0 ! q6 = aint(d6)
+      if (d1 < 1.0) q1 = 0.0 
+      if (d2 < 1.0) q2 = 0.0
+      if (d3 < 1.0) q3 = 0.0
+      if (d4 < 1.0) q4 = 0.0
+      if (d5 < 1.0) q5 = 0.0
+      if (d6 < 1.0) q6 = 0.0
       r_q1 = 1.0 - q1
       r_q2 = 1.0 - q2
       r_q3 = 1.0 - q3
@@ -978,7 +993,7 @@
       Wb_r = (1.0 - 0.5 / d5) * Wp0
       Wt_r = (1.0 - 0.5 / d6) * Wp0
       
-      if ( d1 < 0.5 ) Uw_r = 0.0
+      if ( d1 < 0.5 ) Uw_r = 0.0 ! u_ref
       if ( d2 < 0.5 ) Ue_r = 0.0
       if ( d3 < 0.5 ) Vs_r = 0.0
       if ( d4 < 0.5 ) Vn_r = 0.0

@@ -488,7 +488,24 @@ void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00,
   int st[3], ed[3];
   REAL_TYPE vec[3];
   
-  if ( !isCDS ) { // Binary
+  if ( isCDS ) { // Cut-Distance
+    for (int n=1; n<=NoBC; n++) {
+      cmp[n].getBbox(st, ed);
+      
+      switch ( cmp[n].getType() ) {
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          break;
+          
+        case OUTFLOW:
+          break;
+          
+        default:
+          break;
+      }  
+    }
+  }
+  else { // Binary
     for (int n=1; n<=NoBC; n++) {
       cmp[n].getBbox(st, ed);
       
@@ -507,9 +524,6 @@ void SetBC3D::InnerVBC(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00,
           break;
       }  
     }
-  }
-  else { // Cut-Distance
-    ;
   }
   
   
@@ -599,7 +613,29 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
   unsigned typ=0;
   
   // 内部境界条件による修正
-  if ( !isCDS ) { // Binary
+  if ( isCDS ) { // Cut-Distance
+    for (int n=1; n<=NoBC; n++) {
+      typ = cmp[n].getType();
+      
+      cmp[n].getBbox(st, ed);
+      
+      switch (typ) {
+        case OUTFLOW:
+          //cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, avr, &flop);
+          break;
+          
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
+          cbc_div_ibc_drchlt_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, vec, &flop);
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  else { // Binary
     for (int n=1; n<=NoBC; n++) {
       typ = cmp[n].getType();
       
@@ -620,9 +656,6 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
           break;
       }
     }
-  }
-  else { // Cut-Distance
-    ;
   }
   
   
@@ -876,7 +909,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
 
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop); // Binaryと同じ
+          cds_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW ) {
         }      
