@@ -179,7 +179,7 @@ void CompoList::setAttrb(const unsigned key) { attrb = key; }
 //@fn void CompoList::setBClocation(const unsigned key)
 //@brief BCの方向をセットする
 //@param key CDSの場合のBCの方向
-void CompoList::setBClocation(const unsigned key) { attrb = key; }
+void CompoList::setBClocation(const unsigned key) { bc_dir = key; }
 
 //@fn void CompoList::setBbox(int m_st[], int m_ed[])
 //@brief コンポーネントのBV情報を設定する

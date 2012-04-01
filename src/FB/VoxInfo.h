@@ -162,7 +162,7 @@ public:
   void copyBCIbase           (unsigned* dst, unsigned* src);
   void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
   void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
-  void findVIBC              (const int id, const unsigned* bv, int* st, int* ed);
+  void findVIBCbbox          (const int id, const unsigned* bv, int* st, int* ed);
   void get_Compo_Area_Cut    (unsigned n, PolylibNS::MPIPolylib* PL);
   void printScanedCell       (FILE* fp);
   void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);

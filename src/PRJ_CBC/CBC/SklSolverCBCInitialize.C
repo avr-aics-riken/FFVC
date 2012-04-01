@@ -2821,7 +2821,7 @@ void SklSolverCBC::setBbox_of_VIBC_Cut(VoxInfo* Vinfo, const unsigned* bv)
     if ( cmp[n].isVBC_IO() ) { // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
 
       // インデクスの計算 > あとで，VoxEncode()でresize
-      Vinfo->findVIBC(n, bv, f_st, f_ed);
+      Vinfo->findVIBCbbox(n, bv, f_st, f_ed);
       
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
@@ -3225,12 +3225,15 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   unsigned poly_gc[3];
   float    poly_org[3], poly_dx[3];
   poly_gc[0]  = poly_gc[1] = poly_gc[2] = guide;
+  
+  // 有次元スケールで処理する
   poly_dx[0]  = (float)C.dx[0]*C.RefLength;
   poly_dx[1]  = (float)C.dx[1]*C.RefLength;
   poly_dx[2]  = (float)C.dx[2]*C.RefLength;
   poly_org[0] = (float)C.org[0]*C.RefLength;
   poly_org[1] = (float)C.org[1]*C.RefLength;
   poly_org[2] = (float)C.org[2]*C.RefLength;
+  printf("polylib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
   
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -3360,34 +3363,24 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   
   size_t n_cell[3];
-  size_t ista[3];
-  size_t nlen[3];
-  size_t size_n_cell;
   
   for ( unsigned i=0; i<3; i++) {
-    n_cell[i] = size[i] + 2*guide; // 分割数+ガイドセル
-    //poly_org[i] -= poly_dx[i]*guide;   // ガイドセル分だけシフト
+    n_cell[i] = size[i] + 2*guide;          // 分割数+ガイドセル両側
+    poly_org[i] -= poly_dx[i]*(float)guide; // ガイドセル分だけシフト
   }
-  size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
-  ista[0] = ista[1] = ista[2] = guide;
-  nlen[0] = size[0];
-  nlen[1] = size[1];
-  nlen[2] = size[2];
+  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
-  //stamped_printf("cut : org(%e %e %e) dimensional\n", poly_org[0], poly_org[1], poly_org[2]);
-  //stamped_printf("cut : dx(%e %e %e) dimensional\n", poly_dx[0], poly_dx[1], poly_dx[2]);
+  printf("cutlib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
   cutPos = new CutPos32Array(n_cell); // 6*(float)
   cutBid = new CutBid5Array(n_cell);  // (int32_t)
-  //cutBid = new CutBid8Array(n_cell);  // 2*(int32_t)
   TIMING_stop(tm_init_alloc);
   
   TIMING_start(tm_cutinfo);
   CutInfoCell(poly_org, poly_dx, PL, cutPos, cutBid); // ガイドセルを含む全領域で交点を計算
-  //CutInfoCell(ista, nlen, poly_org, poly_dx, PL, cutPos, cutBid);
   TIMING_stop(tm_cutinfo);
   
   // 使用メモリ量　
@@ -3406,23 +3399,19 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   // カットとID情報をポイント
   cut = (float*)cutPos->getDataPointer();
-  
   cut_id = (int*)cutBid->getDataPointer();
   
   // テスト
   int z=0;
   float *pos;
   float d_min=1.0;
-  //BidType bid6[6];
   int bd, b0, b1, b2, b3, b4, b5;
   size_t mp, mb;
   
-  for (int k=ista[2]; k<=ista[2]+nlen[2]-1; k++) {
-    for (int j=ista[1]; j<=ista[1]+nlen[1]-1; j++) {
-      for (int i=ista[0]; i<=ista[0]+nlen[0]-1; i++) {
+  for (int k=0; k<=size[2]+1; k++) {
+    for (int j=0; j<=size[1]+1; j++) {
+      for (int i=0; i<=size[0]+1; i++) {
         
-        //cutPos->getPos(i+guide-1,j+guide-1,k+guide-1, pos);
-        //cutBid->getBid(i+guide-1,j+guide-1,k+guide-1, bid6);
         mp = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
         pos = &cut[mp];
         
@@ -3430,26 +3419,28 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
         bd = cut_id[mb];
         
         if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
-        //if ( (bid6[0]+bid6[1]+bid6[2]+bid6[3]+bid6[4]+bid6[5]) >0 ) { // これも有効
           
-          //b0 = (bd >> 0)  & MASK_5;
-          //b1 = (bd >> 5)  & MASK_5;
-          //b2 = (bd >> 10) & MASK_5;
-          //b3 = (bd >> 15) & MASK_5;
-          //b4 = (bd >> 20) & MASK_5;
-          //b5 = (bd >> 25) & MASK_5;
+#if 0 // debug
+          b0 = (bd >> 0)  & MASK_5;
+          b1 = (bd >> 5)  & MASK_5;
+          b2 = (bd >> 10) & MASK_5;
+          b3 = (bd >> 15) & MASK_5;
+          b4 = (bd >> 20) & MASK_5;
+          b5 = (bd >> 25) & MASK_5;
+#endif
           
           for (int n=0; n<6; n++) {
             if (pos[n] > 0.0) d_min = min(d_min, pos[n]);
           }
           z++;
           
+#if 0 // debug
           //if ( (b0==3) || (b1==3) || (b2==3) || (b3==3) || (b4==3) || (b5==3) ) 
-          //printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-          //       pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
-               //pos6[0], pos6[1], pos6[2], pos6[3], pos6[4], pos6[5],
-               //bid6[0], bid6[1], bid6[2], bid6[3], bid6[4], bid6[5]);
-        }
+          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
+#endif
+          
+        }  
       }
     }
   }
@@ -3660,7 +3651,7 @@ void SklSolverCBC::VoxelInitialize(void)
       }
     }
     
-    // sacaling
+    // sacaling もし指定があれば
     for (int i=0; i<3; i++) {
       m_org[i] *= scaling;
       m_pch[i] *= scaling;
@@ -3708,7 +3699,7 @@ void SklSolverCBC::VoxelInitialize(void)
   for(int i=0; i<3; i++) {
     m_sz[i] = sz_para[i];
     m_wth[i] = (REAL_TYPE)m_sz[i]*m_pch[i];
-    m_org[i] += m_pch[i]*(REAL_TYPE)(pn.st_idx[i]-1);
+    m_org[i] += m_pch[i]*(REAL_TYPE)(pn.st_idx[i]-1); // セル（1，1，1）の小さい方のコーナー座標
   }
   
   //stamped_printf("Local : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);

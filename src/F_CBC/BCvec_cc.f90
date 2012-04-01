@@ -484,7 +484,7 @@
           fv_r = 0.5*(cr*(Vt1+Vp0) - acr*(Vt1-Vp0))
           fw_r = 0.5*(cr*(Wt1+Wp0) - acr*(Wt1-Wp0))
           m2 = m2 + 1.0
-          if ( (i==24) .and. (j==69) .and. (k==3) ) write (*,*) 't', Wt1, fw_r
+          if ( (i==24) .and. (j==69) .and. (k==4) ) write (*,*) 't', Wt1, fw_r
         end if
         
         cnv_u = cnv_u + fu_r*c_t - fu_l*c_b

@@ -3818,7 +3818,8 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
   const float *pos;
   int    bid;
   size_t m_p, m_c;
-  int    c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int    id_e, id_w, id_n, id_s, id_t, id_b;
+  float pp;
   
   FB::Vec3f nv(vec);
   
@@ -3846,8 +3847,9 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
         
         m_c = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
         pos = &cut[m_c];
+        pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
         
-        if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
+        if ( pp < 6.0 ) { // 6方向のうちいずれかにカットがある
 
           m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
           bid = cut_id[m_p];
@@ -3856,50 +3858,51 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
           
           if ( IS_FLUID(s) ) { // 流体でdefaceであるセルがテスト対象
             // 各方向のID
-            c_w = (bid >> 0)  & MASK_5;
-            c_e = (bid >> 5)  & MASK_5;
-            c_s = (bid >> 10) & MASK_5;
-            c_n = (bid >> 15) & MASK_5;
-            c_b = (bid >> 20) & MASK_5;
-            c_t = (bid >> 25) & MASK_5;
+            id_w = (bid >> 0)  & MASK_5;
+            id_e = (bid >> 5)  & MASK_5;
+            id_s = (bid >> 10) & MASK_5;
+            id_n = (bid >> 15) & MASK_5;
+            id_b = (bid >> 20) & MASK_5;
+            id_t = (bid >> 25) & MASK_5;
             
             // X-
-            if ( (c_w == idd) && (dot(e_w, nv) < 0.0) ) {
+            if ( (id_w == idd) && (dot(e_w, nv) < 0.0) ) {
               s |= (order << BC_FACE_W);
               q = offBit(q, FACING_W);
               g++;
             }
             
             // X+
-            if ( (c_e == idd) && (dot(e_e, nv) < 0.0) ) {
+            if ( (id_e == idd) && (dot(e_e, nv) < 0.0) ) {
               s |= (order << BC_FACE_E);
               q = offBit(q, FACING_E);
               g++;
             }
             
             // Y-
-            if ( (c_s == idd) && (dot(e_s, nv) < 0.0) ) {
+            if ( (id_s == idd) && (dot(e_s, nv) < 0.0) ) {
               s |= (order << BC_FACE_S);
               q = offBit(q, FACING_S);
               g++;
             }
             
             // Y+
-            if ( (c_n == idd) && (dot(e_n, nv) < 0.0) ) {
+            if ( (id_n == idd) && (dot(e_n, nv) < 0.0) ) {
               s |= (order << BC_FACE_N);
               q = offBit(q, FACING_N);
               g++;
             }
             
             // Z-
-            if ( (c_b == idd) && (dot(e_b, nv) < 0.0) ) {
+            if ( (id_b == idd) && (dot(e_b, nv) < 0.0) ) {
               s |= (order << BC_FACE_B);
               q = offBit(q, FACING_B);
               g++;
             }
             
             // Z+
-            if ( (c_t == idd) && (dot(e_t, nv) < 0.0) ) {
+            if ( (id_t == idd) && (dot(e_t, nv) < 0.0) ) {
+              printf("t %3d : %e  dir=%d\n", k, dot(e_t, nv), bc_dir);
               s |= (order << BC_FACE_T);
               q = offBit(q, FACING_T);
               g++;
@@ -3914,6 +3917,31 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
       } // i-loop
     }
   }
+  
+  // check for debug
+# if 0
+  int m_flag;
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bv[m_p];
+        
+        m_flag = 0;
+        
+        if ( GET_FACE_BC(s, BC_FACE_W) == order ) m_flag = 1;
+        if ( GET_FACE_BC(s, BC_FACE_E) == order ) m_flag = 2;
+        if ( GET_FACE_BC(s, BC_FACE_S) == order ) m_flag = 3;
+        if ( GET_FACE_BC(s, BC_FACE_N) == order ) m_flag = 4;
+        if ( GET_FACE_BC(s, BC_FACE_B) == order ) m_flag = 5;
+        if ( GET_FACE_BC(s, BC_FACE_T) == order ) m_flag = 6;
+        
+        if ( m_flag != 0 ) printf("%3d %3d %3d >> %d\n", i, j, k, m_flag);
+      }
+    }
+  }
+#endif
   
   // 対象面数の集約
   if( para_mng->IsParallel() ) {
@@ -4302,14 +4330,14 @@ unsigned VoxInfo::find_mat_odr(unsigned mat_id)
 }
 
 /**
- @fn void VoxInfo::findVIBC(const int odr, const unsigned* bv, int* st, int* ed)
+ @fn void VoxInfo::findVIBCbbox(const int odr, const unsigned* bv, int* st, int* ed)
  @brief VBCのbboxを取得する
  @param odr[in] コンポーネント配列のインデクス
  @param bv[in] BCindex V
  @param st[out] コンポーネントbboxの開始セル
  @param ed[out] コンポーネントbboxの終端セル
  */
-void VoxInfo::findVIBC(const int odr, const unsigned* bv, int* st, int* ed)
+void VoxInfo::findVIBCbbox(const int odr, const unsigned* bv, int* st, int* ed)
 {
   unsigned s;
   size_t m;

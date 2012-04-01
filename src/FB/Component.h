@@ -101,6 +101,7 @@ protected:
   unsigned phase;     /// 
   unsigned var_u1;    /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
   unsigned usw;       ///
+  unsigned bc_dir;    /// VBCの指定方向
   int      state;     ///
   int      st[3];     /// コンポーネントインデクスBV範囲の始点
   int      ed[3];     /// コンポーネントインデクスBV範囲の終点
@@ -126,7 +127,7 @@ public:
   char      name[LABEL];  ///< ラベル
   
   CompoList() {
-    ID = type = element = variable = mat_odr = attrb = 0;
+    ID = type = element = variable = mat_odr = attrb = bc_dir = 0;
     h_type = 0;
     state = -1;
     def = 0;
@@ -231,7 +232,7 @@ public:
   inline REAL_TYPE getInitTemp(void) const        { return temp_init; }
   inline int getDef(void) const                   { return def; };
   inline int getState(void) const                 { return state; }
-  inline unsigned getBClocation(void) const       { return attrb; }
+  inline unsigned getBClocation(void) const       { return bc_dir; }
   inline unsigned getPeriodicDir(void) const      { return var_u1; }
   inline unsigned getPrsUnit(void) const          { return var_u1; }
   inline unsigned getOutflowType(void) const      { return var_u1; }

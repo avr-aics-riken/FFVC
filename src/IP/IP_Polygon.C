@@ -35,9 +35,9 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TY
   }
   
   // 分割数を計算
-  sz[0] = (unsigned)ceil(wth[0]/pch[0]);
-  sz[1] = (unsigned)ceil(wth[1]/pch[1]);
-  sz[2] = (unsigned)ceil(wth[2]/pch[2]);
+  //sz[0] = (unsigned)ceil(wth[0]/pch[0]);
+  //sz[1] = (unsigned)ceil(wth[1]/pch[1]);
+  //sz[2] = (unsigned)ceil(wth[2]/pch[2]);
 }
 
 /**
