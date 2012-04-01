@@ -3233,7 +3233,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   poly_org[0] = (float)C.org[0]*C.RefLength;
   poly_org[1] = (float)C.org[1]*C.RefLength;
   poly_org[2] = (float)C.org[2]*C.RefLength;
-  printf("polylib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
+  // debug; printf("polylib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
   
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -3371,7 +3371,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
-  printf("cutlib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
+  // debug; printf("cutlib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);

@@ -45,9 +45,9 @@
     real                                                        ::  hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt
     real                                                        ::  d1, d2, d3, d4, s1, s2, s3, s4, g1, g2, g3, g4, g5, g6
     real                                                        ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b, r1, r2, r3, r4
     real                                                        ::  tmp1, tmp2, tmp3, tmp4, r_tmp1, r_tmp2, r_tmp3, r_tmp4, cm1, cm2, ss_4
-    real                                                        ::  u_L, u_R, v_L, v_R, w_L, w_R, cr, cl, acr, acl
+    real                                                        ::  u_L, u_R, v_L, v_R, w_L, w_R, cr, cl, acr, acl, refL, refR
     real                                                        ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
     real                                                        ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
     real                                                        ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
@@ -98,17 +98,17 @@
     cm1 = 1.0 - ck
     cm2 = 1.0 + ck
     
-    flop = flop + real(ix)*real(jx)*real(kx)*1203.0 + 34.0
+    flop = flop + real(ix)*real(jx)*real(kx)*1227.0 + 34.0
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx) &
-!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b, r1, r2, r3, r4) &
 !$OMP PRIVATE(cp_e, cp_w, cp_n, cp_s, cp_t, cp_b, ce_e, cw_w, cn_n, cs_s, ct_t, cb_b) &
 !$OMP PRIVATE(hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt) &
 !$OMP PRIVATE(tmp1, tmp2, tmp3, tmp4, r_tmp1, r_tmp2, r_tmp3, r_tmp4) &
-!$OMP PRIVATE(u_L, u_R, v_L, v_R, w_L, w_R, cr, cl, acr, acl) &
+!$OMP PRIVATE(u_L, u_R, v_L, v_R, w_L, w_R, cr, cl, acr, acl, refL, refR) &
 !$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -190,9 +190,9 @@
       htt= 1.0/(0.5 + ct_t) ! for (k+2)
       
 			
-      ! X方向  > 4 + 12 + 84 + 232 = 332 flop ---------------------------------------
+      ! X方向  > 4 + 12  + 16 + 76 + 232 = 340 flop ---------------------------------------
       
-      ! flag >  4 flop
+      ! cut flag >  4 flop
       tmp1 = 1.0
       tmp2 = 1.0
       tmp3 = 1.0
@@ -214,38 +214,48 @@
       v_R = 0.5*(Vp0+Ve1)
       w_R = 0.5*(Wp0+We1)
       
-      UPw = u_L ! consideration interpolating cel face value if near wall
-      UPe = u_R
       
-      ! カットがある場合の参照セルの値の計算  >  21*4=84 flop
+      ! 参照値の補間 >  16 flop
+      refL = u_L*tmp2 + r_tmp2*Up0
+      UPe = ( (cp_e-0.5)*refL + 0.5*u_ref )*he
+      
+      refR = u_R*tmp3 + r_tmp3*Up0
+      UPw = ( (cp_w-0.5)*refR + 0.5*u_ref )*hw
+      
+      
+      ! カットがある場合の参照セルの値の計算  >  19*4=76 flop
       ! d_{i-1}^-
-      Uw2_t = (u_ref2 + (cw_w-1.0)*u_L )*hww
-      Vw2_t = (v_ref2 + (cw_w-1.0)*v_L )*hww
-      Ww2_t = (w_ref2 + (cw_w-1.0)*w_L )*hww
+      r1 = cw_w-1.0
+      Uw2_t = (u_ref2 + r1*u_L )*hww
+      Vw2_t = (v_ref2 + r1*v_L )*hww
+      Ww2_t = (w_ref2 + r1*w_L )*hww
       Uw2 = tmp1*Uw2 + r_tmp1*Uw2_t
       Vw2 = tmp1*Vw2 + r_tmp1*Vw2_t
       Ww2 = tmp1*Ww2 + r_tmp1*Ww2_t
       
       ! d_{i}^-
-      Uw1_t = (u_ref2 + (cp_w-1.0)*u_R )*hw
-      Vw1_t = (v_ref2 + (cp_w-1.0)*v_R )*hw
-      Ww1_t = (w_ref2 + (cp_w-1.0)*w_R )*hw
+      r2 = cp_w-1.0
+      Uw1_t = (u_ref2 + r2*u_R )*hw
+      Vw1_t = (v_ref2 + r2*v_R )*hw
+      Ww1_t = (w_ref2 + r2*w_R )*hw
       Uw1 = tmp2*Uw1 + r_tmp2*Uw1_t
       Vw1 = tmp2*Vw1 + r_tmp2*Vw1_t
       Ww1 = tmp2*Ww1 + r_tmp2*Ww1_t
       
       ! d_{i}^+
-      Ue1_t = (u_ref2 + (cp_e-1.0)*u_L )*he
-      Ve1_t = (v_ref2 + (cp_e-1.0)*v_L )*he
-      We1_t = (w_ref2 + (cp_e-1.0)*w_L )*he
+      r3 = cp_e-1.0
+      Ue1_t = (u_ref2 + r3*u_L )*he
+      Ve1_t = (v_ref2 + r3*v_L )*he
+      We1_t = (w_ref2 + r3*w_L )*he
       Ue1 = tmp3*Ue1 + r_tmp3*Ue1_t
       Ve1 = tmp3*Ve1 + r_tmp3*Ve1_t
       We1 = tmp3*We1 + r_tmp3*We1_t
       
       ! d_{i+1}^+
-      Ue2_t = (u_ref2 + (ce_e-1.0)*u_R )*hee
-      Ve2_t = (v_ref2 + (ce_e-1.0)*v_R )*hee
-      We2_t = (w_ref2 + (ce_e-1.0)*w_R )*hee
+      r4 = ce_e-1.0
+      Ue2_t = (u_ref2 + r4*u_R )*hee
+      Ve2_t = (v_ref2 + r4*v_R )*hee
+      We2_t = (w_ref2 + r4*w_R )*hee
       Ue2 = tmp4*Ue2 + r_tmp4*Ue2_t
       Ve2 = tmp4*Ve2 + r_tmp4*Ve2_t
       We2 = tmp4*We2 + r_tmp4*We2_t
@@ -321,38 +331,48 @@
       v_R = 0.5*(Vp0+Vn1)
       w_R = 0.5*(Wp0+Wn1)
       
-      VPs = v_L
-      VPn = v_R
+      
+      ! 参照値の補間 >  16 flop
+      refL = v_L*tmp2 + r_tmp2*Vp0
+      VPn = ( (cp_n-0.5)*refL + 0.5*v_ref )*hn
+      
+      refR = v_R*tmp3 + r_tmp3*Vp0
+      VPs = ( (cp_s-0.5)*refR + 0.5*v_ref )*hs
+      
       
       ! カットがある場合の参照セルの値の計算
       ! d_{j-1}^-
-      Us2_t = (u_ref2 + (cs_s-1.0)*u_L )*hss
-      Vs2_t = (v_ref2 + (cs_s-1.0)*v_L )*hss
-      Ws2_t = (w_ref2 + (cs_s-1.0)*w_L )*hss
+      r1 = cs_s-1.0
+      Us2_t = (u_ref2 + r1*u_L )*hss
+      Vs2_t = (v_ref2 + r1*v_L )*hss
+      Ws2_t = (w_ref2 + r1*w_L )*hss
       Us2 = tmp1*Us2 + r_tmp1*Us2_t
       Vs2 = tmp1*Vs2 + r_tmp1*Vs2_t
       Ws2 = tmp1*Ws2 + r_tmp1*Ws2_t
       
       ! d_{j}^-
-      Us1_t = (u_ref2 + (cp_s-1.0)*u_R )*hs
-      Vs1_t = (v_ref2 + (cp_s-1.0)*v_R )*hs
-      Ws1_t = (w_ref2 + (cp_s-1.0)*w_R )*hs
+      r2 = cp_s-1.0
+      Us1_t = (u_ref2 + r2*u_R )*hs
+      Vs1_t = (v_ref2 + r2*v_R )*hs
+      Ws1_t = (w_ref2 + r2*w_R )*hs
       Us1 = tmp2*Us1 + r_tmp2*Us1_t
       Vs1 = tmp2*Vs1 + r_tmp2*Vs1_t
       Ws1 = tmp2*Ws1 + r_tmp2*Ws1_t
       
       ! d_{j}^+
-      Un1_t = (u_ref2 + (cp_n-1.0)*u_L )*hn
-      Vn1_t = (v_ref2 + (cp_n-1.0)*v_L )*hn
-      Wn1_t = (w_ref2 + (cp_n-1.0)*w_L )*hn
+      r3 = cp_n-1.0
+      Un1_t = (u_ref2 + r3*u_L )*hn
+      Vn1_t = (v_ref2 + r3*v_L )*hn
+      Wn1_t = (w_ref2 + r3*w_L )*hn
       Un1 = tmp3*Un1 + r_tmp3*Un1_t
       Vn1 = tmp3*Vn1 + r_tmp3*Vn1_t
       Wn1 = tmp3*Wn1 + r_tmp3*Wn1_t
       
       ! d_{j+1}^+
-      Un2_t = (u_ref2 + (cn_n-1.0)*u_R )*hnn
-      Vn2_t = (v_ref2 + (cn_n-1.0)*v_R )*hnn
-      Wn2_t = (w_ref2 + (cn_n-1.0)*w_R )*hnn
+      r4 = cn_n-1.0
+      Un2_t = (u_ref2 + r4*u_R )*hnn
+      Vn2_t = (v_ref2 + r4*v_R )*hnn
+      Wn2_t = (w_ref2 + r4*w_R )*hnn
       Un2 = tmp4*Un2 + r_tmp4*Un2_t
       Vn2 = tmp4*Vn2 + r_tmp4*Vn2_t
       Wn2 = tmp4*Wn2 + r_tmp4*Wn2_t
@@ -428,38 +448,48 @@
       v_R = 0.5*(Vp0+Vt1)
       w_R = 0.5*(Wp0+Wt1)
       
-      WPb = w_L
-      WPt = w_R
+      
+      ! 参照値の補間 >  16 flop
+      refL = w_L*tmp2 + r_tmp2*Wp0
+      WPt = ( (cp_t-0.5)*refL + 0.5*w_ref )*ht
+      
+      refR = w_R*tmp3 + r_tmp3*Wp0
+      WPb = ( (cp_b-0.5)*refR + 0.5*w_ref )*hb
+      
       
       ! カットがある場合の参照セルの値の計算
       ! d_{k-1}^-
-      Ub2_t = (u_ref2 + (cb_b-1.0)*u_L )*hbb
-      Vb2_t = (v_ref2 + (cb_b-1.0)*v_L )*hbb
-      Wb2_t = (w_ref2 + (cb_b-1.0)*w_L )*hbb
+      r1 = cb_b-1.0
+      Ub2_t = (u_ref2 + r1*u_L )*hbb
+      Vb2_t = (v_ref2 + r1*v_L )*hbb
+      Wb2_t = (w_ref2 + r1*w_L )*hbb
       Ub2 = tmp1*Ub2 + r_tmp1*Ub2_t
       Vb2 = tmp1*Vb2 + r_tmp1*Vb2_t
       Wb2 = tmp1*Wb2 + r_tmp1*Wb2_t
       
       ! d_{k}^-
-      Ub1_t = (u_ref2 + (cp_b-1.0)*u_R )*hb
-      Vb1_t = (v_ref2 + (cp_b-1.0)*v_R )*hb
-      Wb1_t = (w_ref2 + (cp_b-1.0)*w_R )*hb
+      r2 = cp_b-1.0
+      Ub1_t = (u_ref2 + r2*u_R )*hb
+      Vb1_t = (v_ref2 + r2*v_R )*hb
+      Wb1_t = (w_ref2 + r2*w_R )*hb
       Ub1 = tmp2*Ub1 + r_tmp2*Ub1_t
       Vb1 = tmp2*Vb1 + r_tmp2*Vb1_t
       Wb1 = tmp2*Wb1 + r_tmp2*Wb1_t
       
       ! d_{k}^+
-      Ut1_t = (u_ref2 + (cp_t-1.0)*u_L )*ht
-      Vt1_t = (v_ref2 + (cp_t-1.0)*v_L )*ht
-      Wt1_t = (w_ref2 + (cp_t-1.0)*w_L )*ht
+      r3 = cp_t-1.0
+      Ut1_t = (u_ref2 + r3*u_L )*ht
+      Vt1_t = (v_ref2 + r3*v_L )*ht
+      Wt1_t = (w_ref2 + r3*w_L )*ht
       Ut1 = tmp3*Ut1 + r_tmp3*Ut1_t
       Vt1 = tmp3*Vt1 + r_tmp3*Vt1_t
       Wt1 = tmp3*Wt1 + r_tmp3*Wt1_t
       
       ! d_{k+1}^+
-      Ut2_t = (u_ref2 + (ct_t-1.0)*u_R )*htt
-      Vt2_t = (v_ref2 + (ct_t-1.0)*v_R )*htt
-      Wt2_t = (w_ref2 + (ct_t-1.0)*w_R )*htt
+      r4 = ct_t-1.0
+      Ut2_t = (u_ref2 + r4*u_R )*htt
+      Vt2_t = (v_ref2 + r4*v_R )*htt
+      Wt2_t = (w_ref2 + r4*w_R )*htt
       Ut2 = tmp4*Ut2 + r_tmp4*Ut2_t
       Vt2 = tmp4*Vt2 + r_tmp4*Vt2_t
       Wt2 = tmp4*Wt2 + r_tmp4*Wt2_t
