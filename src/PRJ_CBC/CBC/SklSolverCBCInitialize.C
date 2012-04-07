@@ -2254,7 +2254,7 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
   unsigned mm, g, i;
   mm = (size[2]+2*guide)*(size[1]+2*guide)*(size[0]+2*guide)*6;
   g = 0;
-  eps = 4.0e-3;
+  eps = 4.0e-2; // 1.0/255.0 * 10
   
   min_g = 1.0;
   for (i=0; i<mm; i++) {
