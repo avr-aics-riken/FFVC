@@ -41,9 +41,9 @@
     real                                                        ::  Ue1_t, Ue2_t, Uw1_t, Uw2_t, Us1_t, Us2_t, Un1_t, Un2_t, Ub1_t, Ub2_t, Ut1_t, Ut2_t
     real                                                        ::  Ve1_t, Ve2_t, Vw1_t, Vw2_t, Vs1_t, Vs2_t, Vn1_t, Vn2_t, Vb1_t, Vb2_t, Vt1_t, Vt2_t
     real                                                        ::  We1_t, We2_t, Ww1_t, Ww2_t, Ws1_t, Ws2_t, Wn1_t, Wn2_t, Wb1_t, Wb2_t, Wt1_t, Wt2_t
-    real                                                        ::  cp_e, cp_w, cp_n, cp_s, cp_t, cp_b, ce_e, cw_w, cn_n, cs_s, ct_t, cb_b
-    real                                                        ::  hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt
-    real                                                        ::  d1, d2, d3, d4, s1, s2, s3, s4, g1, g2, g3, g4, g5, g6
+    real                                                        ::  d1, d2, d3, d4, d5, d6, d1w, d2e, d3s, d4n, d5b, d6t
+    real                                                        ::  h1, h2, h3, h4, h5, h6, h1w, h2e, h3s, h4n, h5b, h6t
+    real                                                        ::  dv1, dv2, dv3, dv4, s1, s2, s3, s4, g1, g2, g3, g4, g5, g6
     real                                                        ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b, r1, r2, r3, r4
     real                                                        ::  tmp1, tmp2, tmp3, tmp4, r_tmp1, r_tmp2, r_tmp3, r_tmp4, cm1, cm2, ss_4
@@ -106,8 +106,8 @@
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b, r1, r2, r3, r4) &
-!$OMP PRIVATE(cp_e, cp_w, cp_n, cp_s, cp_t, cp_b, ce_e, cw_w, cn_n, cs_s, ct_t, cb_b) &
-!$OMP PRIVATE(hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt) &
+!$OMP PRIVATE(d1, d2, d3, d4, d5, d6, d1w, d2e, d3s, d4n, d5b, d6t) &
+!$OMP PRIVATE(h1, h2, h3, h4, h5, h6, h1w, h2e, h3s, h4n, h5b, h6t) &
 !$OMP PRIVATE(tmp1, tmp2, tmp3, tmp4, r_tmp1, r_tmp2, r_tmp3, r_tmp4) &
 !$OMP PRIVATE(u_L, u_R, v_L, v_R, w_L, w_R, cr, cl, acr, acl, refL, refR) &
 !$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
@@ -117,7 +117,7 @@
 !$OMP PRIVATE(Ue1_t, Ue2_t, Uw1_t, Uw2_t, Us1_t, Us2_t, Un1_t, Un2_t, Ub1_t, Ub2_t, Ut1_t, Ut2_t) &
 !$OMP PRIVATE(Ve1_t, Ve2_t, Vw1_t, Vw2_t, Vs1_t, Vs2_t, Vn1_t, Vn2_t, Vb1_t, Vb2_t, Vt1_t, Vt2_t) &
 !$OMP PRIVATE(We1_t, We2_t, Ww1_t, Ww2_t, Ws1_t, Ws2_t, Wn1_t, Wn2_t, Wb1_t, Wb2_t, Wt1_t, Wt2_t) &
-!$OMP PRIVATE(d1, d2, d3, d4, s1, s2, s3, s4, g1, g2, g3, g4, g5, g6) &
+!$OMP PRIVATE(dv1, dv2, dv3, dv3, s1, s2, s3, s4, g1, g2, g3, g4, g5, g6) &
 !$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
 !$OMP PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
 !$OMP PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
@@ -158,6 +158,8 @@
       if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
+
+      ! vspec, outflowBCの場合に延びたステンシルを参照する悪影響を回避，１次精度におとす
       lmt_w = 1.0
       lmt_e = 1.0
       lmt_s = 1.0
@@ -172,107 +174,132 @@
       if ( ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0 ) lmt_t = 0.0
       
       ! カット情報
-			cw_w = cut(1,i-1,j  ,k  ) ! d_{i-1}^-
-      cp_w = cut(1,i  ,j  ,k  ) ! d_{i}^-
-      cp_e = cut(2,i  ,j  ,k  ) ! d_{i}^+
-      ce_e = cut(2,i+1,j  ,k  ) ! d_{i+1}^+
+			d1w= cut(1,i-1,j  ,k  ) ! d_{i-1}^-
+      d1 = cut(1,i  ,j  ,k  ) ! d_{i}^-
+      d2 = cut(2,i  ,j  ,k  ) ! d_{i}^+
+      d2e= cut(2,i+1,j  ,k  ) ! d_{i+1}^+
 			
-			cs_s = cut(3,i  ,j-1,k  ) ! d_{j-1}^-
-      cp_s = cut(3,i  ,j  ,k  ) ! d_{j}^-
-      cp_n = cut(4,i  ,j  ,k  ) ! d_{j}^+
-      cn_n = cut(4,i  ,j+1,k  ) ! d_{j+1}^+
+			d3s= cut(3,i  ,j-1,k  ) ! d_{j-1}^-
+      d3 = cut(3,i  ,j  ,k  ) ! d_{j}^-
+      d4 = cut(4,i  ,j  ,k  ) ! d_{j}^+
+      d4n= cut(4,i  ,j+1,k  ) ! d_{j+1}^+
 
-			cb_b = cut(5,i  ,j  ,k-1) ! d_{k-1}^-
-      cp_b = cut(5,i  ,j  ,k  ) ! d_{k}^-
-      cp_t = cut(6,i  ,j  ,k  ) ! d_{k}^+
-      ct_t = cut(6,i  ,j  ,k+1) ! d_{k+1}^+
+			d5b= cut(5,i  ,j  ,k-1) ! d_{k-1}^-
+      d5 = cut(5,i  ,j  ,k  ) ! d_{k}^-
+      d6 = cut(6,i  ,j  ,k  ) ! d_{k}^+
+      d6t= cut(6,i  ,j  ,k+1) ! d_{k+1}^+
       
       ! 外挿時の分母 >  12*9 flop
-      hww= 1.0/(0.5 + cw_w) ! for (i-2)
-      hw = 1.0/(0.5 + cp_w) ! for (i-1)
-      he = 1.0/(0.5 + cp_e) ! for (i+1)
-      hee= 1.0/(0.5 + ce_e) ! for (i+2)
+      h1w= 1.0/(0.5 + d1w) ! for (i-2)
+      h1 = 1.0/(0.5 + d1 ) ! for (i-1)
+      h2 = 1.0/(0.5 + d2 ) ! for (i+1)
+      h2e= 1.0/(0.5 + d2e) ! for (i+2)
       
-      hss= 1.0/(0.5 + cs_s) ! for (j-2)
-      hs = 1.0/(0.5 + cp_s) ! for (j-1)
-      hn = 1.0/(0.5 + cp_n) ! for (j+1)
-      hnn= 1.0/(0.5 + cn_n) ! for (j+2)
+      h3s= 1.0/(0.5 + d3s) ! for (j-2)
+      h3 = 1.0/(0.5 + d3 ) ! for (j-1)
+      h4 = 1.0/(0.5 + d4 ) ! for (j+1)
+      h4n= 1.0/(0.5 + d4n) ! for (j+2)
       
-      hbb= 1.0/(0.5 + cb_b) ! for (k-2)
-      hb = 1.0/(0.5 + cp_b) ! for (k-1)
-      ht = 1.0/(0.5 + cp_t) ! for (k+1)
-      htt= 1.0/(0.5 + ct_t) ! for (k+2)
+      h5b= 1.0/(0.5 + d5b) ! for (k-2)
+      h5 = 1.0/(0.5 + d5 ) ! for (k-1)
+      h6 = 1.0/(0.5 + d6 ) ! for (k+1)
+      h6t= 1.0/(0.5 + d6t) ! for (k+2)
       
+      q1 = 1.0
+      q2 = 1.0
+      q3 = 1.0
+      q4 = 1.0
+      q5 = 1.0
+      q6 = 1.0
+      q1w= 1.0
+      q2e= 1.0
+      q3s= 1.0
+      q4n= 1.0
+      q5b= 1.0
+      q6t= 1.0
+      if (d1  < 1.0) q1 = 0.0 
+      if (d2  < 1.0) q2 = 0.0
+      if (d3  < 1.0) q3 = 0.0
+      if (d4  < 1.0) q4 = 0.0
+      if (d5  < 1.0) q5 = 0.0
+      if (d6  < 1.0) q6 = 0.0
+      if (d1w < 1.0) q1w= 0.0
+      if (d2e < 1.0) q2e= 0.0
+      if (d3s < 1.0) q3s= 0.0
+      if (d4n < 1.0) q4n= 0.0
+      if (d5b < 1.0) q5b= 0.0
+      if (d6t < 1.0) q6t= 0.0
+      r_q1 = 1.0 - q1
+      r_q2 = 1.0 - q2
+      r_q3 = 1.0 - q3
+      r_q4 = 1.0 - q4
+      r_q5 = 1.0 - q5
+      r_q6 = 1.0 - q6
+      r_q1w= 1.0 - q1w
+      r_q2e= 1.0 - q2e
+      r_q3s= 1.0 - q3s
+      r_q4n= 1.0 - q4n
+      r_q5b= 1.0 - q5b
+      r_q6t= 1.0 - q6t
+
+      w1 = d1 - 0.5
+      w2 = d2 - 0.5
+      w3 = d3 - 0.5
+      w4 = d4 - 0.5
+      w5 = d5 - 0.5
+      w6 = d6 - 0.5
 			
-      ! X方向  > 4 + 12  + 16 + 76 + 238 = 346 flop ---------------------------------------
+      ! X方向  > 30  + 16 + 76 + 238 = 346 flop ---------------------------------------
       
-      ! cut flag >  4 flop
-      tmp1 = 1.0
-      tmp2 = 1.0
-      tmp3 = 1.0
-      tmp4 = 1.0
-      if ( cw_w < 1.0 ) tmp1=0.0
-      if ( cp_w < 1.0 ) tmp2=0.0
-      if ( cp_e < 1.0 ) tmp3=0.0
-      if ( ce_e < 1.0 ) tmp4=0.0
-      r_tmp1 = 1.0-tmp1
-      r_tmp2 = 1.0-tmp2
-      r_tmp3 = 1.0-tmp3
-      r_tmp4 = 1.0-tmp4
+      ! 流体部分のセルフェイス位置の値を内挿 >  30 flop
+      u_L = 0.5 * (Up0 + Uw1) * q1 + r_q1 * u_ref
+      v_L = 0.5 * (Vp0 + Vw1) * q1 + r_q1 * v_ref
+      w_L = 0.5 * (Wp0 + Ww1) * q1 + r_q1 * w_ref
+
+      u_R = 0.5 * (Up0 + Ue1) * q2 + r_q2 * u_ref
+      v_R = 0.5 * (Vp0 + Ve1) * q2 + r_q2 * v_ref
+      w_R = 0.5 * (Wp0 + We1) * q2 + r_q2 * w_ref
       
-      ! 流体部分のセルフェイス位置の値を内挿 >  12 flop
-      u_L = 0.5*(Up0+Uw1)
-      v_L = 0.5*(Vp0+Vw1)
-      w_L = 0.5*(Wp0+Ww1)
-      u_R = 0.5*(Up0+Ue1)
-      v_R = 0.5*(Vp0+Ve1)
-      w_R = 0.5*(Wp0+We1)
-      
-      
-      ! 参照値の補間 >  16 flop
-      refL = u_L*tmp2 + r_tmp2*Up0
-      UPe = ( (cp_e-0.5)*refL + 0.5*u_ref )*he
-      
-      refR = u_R*tmp3 + r_tmp3*Up0
-      UPw = ( (cp_w-0.5)*refR + 0.5*u_ref )*hw
-      
+      ! セルフェイスの速度 >  6 flop
+      UPe = h2 * (w2 * u_L + u_ref)
+      UPw = h1 * (w1 * u_R + u_ref)
       
       ! カットがある場合の参照セルの値の計算  >  19*4=76 flop
-      ! d_{i-1}^-
-      r1 = cw_w-1.0
-      Uw2_t = (u_ref2 + r1*u_L )*hww
-      Vw2_t = (v_ref2 + r1*v_L )*hww
-      Ww2_t = (w_ref2 + r1*w_L )*hww
-      Uw2 = tmp1*Uw2 + r_tmp1*Uw2_t
-      Vw2 = tmp1*Vw2 + r_tmp1*Vw2_t
-      Ww2 = tmp1*Ww2 + r_tmp1*Ww2_t
+      ! u_{i-1}
+      r1 = d1 - 1.0
+      Uw1_t = (u_ref2 + r1 * u_R) * h1
+      Vw1_t = (v_ref2 + r1 * v_R) * h1
+      Ww1_t = (w_ref2 + r1 * w_R) * h1
+      Uw1 = q1 * Uw1 + r_q1 * Uw1_t
+      Vw1 = q1 * Vw1 + r_q1 * Vw1_t
+      Ww1 = q1 * Ww1 + r_q1 * Ww1_t
       
-      ! d_{i}^-
-      r2 = cp_w-1.0
-      Uw1_t = (u_ref2 + r2*u_R )*hw
-      Vw1_t = (v_ref2 + r2*v_R )*hw
-      Ww1_t = (w_ref2 + r2*w_R )*hw
-      Uw1 = tmp2*Uw1 + r_tmp2*Uw1_t
-      Vw1 = tmp2*Vw1 + r_tmp2*Vw1_t
-      Ww1 = tmp2*Ww1 + r_tmp2*Ww1_t
-      
-      ! d_{i}^+
-      r3 = cp_e-1.0
-      Ue1_t = (u_ref2 + r3*u_L )*he
-      Ve1_t = (v_ref2 + r3*v_L )*he
-      We1_t = (w_ref2 + r3*w_L )*he
-      Ue1 = tmp3*Ue1 + r_tmp3*Ue1_t
-      Ve1 = tmp3*Ve1 + r_tmp3*Ve1_t
-      We1 = tmp3*We1 + r_tmp3*We1_t
-      
-      ! d_{i+1}^+
-      r4 = ce_e-1.0
-      Ue2_t = (u_ref2 + r4*u_R )*hee
-      Ve2_t = (v_ref2 + r4*v_R )*hee
-      We2_t = (w_ref2 + r4*w_R )*hee
-      Ue2 = tmp4*Ue2 + r_tmp4*Ue2_t
-      Ve2 = tmp4*Ve2 + r_tmp4*Ve2_t
-      We2 = tmp4*We2 + r_tmp4*We2_t
+      ! u_{i+1}
+      r2 = d2 - 1.0
+      Ue1_t = (u_ref2 + r2 * u_L) * h2
+      Ve1_t = (v_ref2 + r2 * v_L) * h2
+      We1_t = (w_ref2 + r2 * w_L) * h2
+      Ue1 = q2 * Ue1 + r_q2 * Ue1_t
+      Ve1 = q2 * Ve1 + r_q2 * Ve1_t
+      We1 = q2 * We1 + r_q2 * We1_t
+
+      ! u_{i-2}
+      r3 = d1w - 1.0
+      Uw2_t = (u_ref2 + r3 * u_L) * h1w
+      Vw2_t = (v_ref2 + r3 * v_L) * h1w
+      Ww2_t = (w_ref2 + r3 * w_L) * h1w
+      Uw2 = q1w * Uw2 + r_q1w * Uw2_t
+      Vw2 = q1w * Vw2 + r_q1w * Vw2_t
+      Ww2 = q1w * Ww2 + r_q1w * Ww2_t
+
+      ! u_{i+2}
+      r4 = d2e - 1.0
+      Ue2_t = (u_ref2 + r4 * u_R) * h2e
+      Ve2_t = (v_ref2 + r4 * v_R) * h2e
+      We2_t = (w_ref2 + r4 * w_R) * h2e
+      Ue2 = q2e * Ue2 + r_qe2 * Ue2_t
+      Ve2 = q2e * Ve2 + r_qe2 * Ve2_t
+      We2 = q2e * We2 + r_qe2 * We2_t
       
       ! 界面の左右の状態を計算  > 4+ (4+36+22+16)*3 = 238 flop
       cr  = UPe - u_ref
@@ -280,10 +307,10 @@
       acr = abs(cr)
       acl = abs(cl)
       
-      d4 = Ue2-Ue1
-      d3 = Ue1-Up0
-      d2 = Up0-Uw1
-      d1 = Uw1-Uw2
+      dv3 = Ue2-Ue1
+      dv3 = Ue1-Up0
+      dv2 = Up0-Uw1
+      dv1 = Uw1-Uw2
       
       include '../F_CBC/muscl.h'
       
@@ -294,10 +321,10 @@
       cnv_u = 0.5*(cr*(Urr+Url) - acr*(Urr-Url))*c_e &
             - 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull))*c_w + cnv_u
       
-      d4 = Ve2-Ve1
-      d3 = Ve1-Vp0
-      d2 = Vp0-Vw1
-      d1 = Vw1-Vw2
+      dv3 = Ve2-Ve1
+      dv3 = Ve1-Vp0
+      dv2 = Vp0-Vw1
+      dv1 = Vw1-Vw2
       
       include '../F_CBC/muscl.h'
       
@@ -308,10 +335,10 @@
       cnv_v = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl))*c_e &
             - 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll))*c_w + cnv_v
             
-      d4 = We2-We1
-      d3 = We1-Wp0
-      d2 = Wp0-Ww1
-      d1 = Ww1-Ww2
+      dv3 = We2-We1
+      dv3 = We1-Wp0
+      dv2 = Wp0-Ww1
+      dv1 = Ww1-Ww2
       
       include '../F_CBC/muscl.h'
       
@@ -328,10 +355,10 @@
       tmp2 = 1.0
       tmp3 = 1.0
       tmp4 = 1.0
-      if ( cs_s < 1.0 ) tmp1=0.0
-      if ( cp_s < 1.0 ) tmp2=0.0
-      if ( cp_n < 1.0 ) tmp3=0.0
-      if ( cn_n < 1.0 ) tmp4=0.0
+      if ( d3s < 1.0 ) tmp1=0.0
+      if ( d3 < 1.0 ) tmp2=0.0
+      if ( d4 < 1.0 ) tmp3=0.0
+      if ( d4n < 1.0 ) tmp4=0.0
       r_tmp1 = 1.0-tmp1
       r_tmp2 = 1.0-tmp2
       r_tmp3 = 1.0-tmp3
@@ -348,45 +375,45 @@
       
       ! 参照値の補間 >  16 flop
       refL = v_L*tmp2 + r_tmp2*Vp0
-      VPn = ( (cp_n-0.5)*refL + 0.5*v_ref )*hn
+      VPn = ( (d4-0.5)*refL + 0.5*v_ref )*h4
       
       refR = v_R*tmp3 + r_tmp3*Vp0
-      VPs = ( (cp_s-0.5)*refR + 0.5*v_ref )*hs
+      VPs = ( (d3-0.5)*refR + 0.5*v_ref )*h3
       
       
       ! カットがある場合の参照セルの値の計算
       ! d_{j-1}^-
-      r1 = cs_s-1.0
-      Us2_t = (u_ref2 + r1*u_L )*hss
-      Vs2_t = (v_ref2 + r1*v_L )*hss
-      Ws2_t = (w_ref2 + r1*w_L )*hss
+      r1 = d3s-1.0
+      Us2_t = (u_ref2 + r1*u_L )*h3s
+      Vs2_t = (v_ref2 + r1*v_L )*h3s
+      Ws2_t = (w_ref2 + r1*w_L )*h3s
       Us2 = tmp1*Us2 + r_tmp1*Us2_t
       Vs2 = tmp1*Vs2 + r_tmp1*Vs2_t
       Ws2 = tmp1*Ws2 + r_tmp1*Ws2_t
       
       ! d_{j}^-
-      r2 = cp_s-1.0
-      Us1_t = (u_ref2 + r2*u_R )*hs
-      Vs1_t = (v_ref2 + r2*v_R )*hs
-      Ws1_t = (w_ref2 + r2*w_R )*hs
+      r2 = d3-1.0
+      Us1_t = (u_ref2 + r2*u_R )*h3
+      Vs1_t = (v_ref2 + r2*v_R )*h3
+      Ws1_t = (w_ref2 + r2*w_R )*h3
       Us1 = tmp2*Us1 + r_tmp2*Us1_t
       Vs1 = tmp2*Vs1 + r_tmp2*Vs1_t
       Ws1 = tmp2*Ws1 + r_tmp2*Ws1_t
       
       ! d_{j}^+
-      r3 = cp_n-1.0
-      Un1_t = (u_ref2 + r3*u_L )*hn
-      Vn1_t = (v_ref2 + r3*v_L )*hn
-      Wn1_t = (w_ref2 + r3*w_L )*hn
+      r3 = d4-1.0
+      Un1_t = (u_ref2 + r3*u_L )*h4
+      Vn1_t = (v_ref2 + r3*v_L )*h4
+      Wn1_t = (w_ref2 + r3*w_L )*h4
       Un1 = tmp3*Un1 + r_tmp3*Un1_t
       Vn1 = tmp3*Vn1 + r_tmp3*Vn1_t
       Wn1 = tmp3*Wn1 + r_tmp3*Wn1_t
       
       ! d_{j+1}^+
-      r4 = cn_n-1.0
-      Un2_t = (u_ref2 + r4*u_R )*hnn
-      Vn2_t = (v_ref2 + r4*v_R )*hnn
-      Wn2_t = (w_ref2 + r4*w_R )*hnn
+      r4 = d4n-1.0
+      Un2_t = (u_ref2 + r4*u_R )*h4n
+      Vn2_t = (v_ref2 + r4*v_R )*h4n
+      Wn2_t = (w_ref2 + r4*w_R )*h4n
       Un2 = tmp4*Un2 + r_tmp4*Un2_t
       Vn2 = tmp4*Vn2 + r_tmp4*Vn2_t
       Wn2 = tmp4*Wn2 + r_tmp4*Wn2_t
@@ -397,10 +424,10 @@
       acr = abs(cr)
       acl = abs(cl)
       
-      d4 = Un2-Un1
-      d3 = Un1-Up0
-      d2 = Up0-Us1
-      d1 = Us1-Us2
+      dv3 = Un2-Un1
+      dv3 = Un1-Up0
+      dv2 = Up0-Us1
+      dv1 = Us1-Us2
       
       include '../F_CBC/muscl.h'
       
@@ -411,10 +438,10 @@
       cnv_u = 0.5*(cr*(Urr+Url) - acr*(Urr-Url))*c_n &
             - 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull))*c_s + cnv_u
       
-      d4 = Vn2-Vn1
-      d3 = Vn1-Vp0
-      d2 = Vp0-Vs1
-      d1 = Vs1-Vs2
+      dv3 = Vn2-Vn1
+      dv3 = Vn1-Vp0
+      dv2 = Vp0-Vs1
+      dv1 = Vs1-Vs2
       
       include '../F_CBC/muscl.h'
       
@@ -425,10 +452,10 @@
       cnv_v = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl))*c_n &
             - 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll))*c_s + cnv_v
 
-      d4 = Wn2-Wn1
-      d3 = Wn1-Wp0
-      d2 = Wp0-Ws1
-      d1 = Ws1-Ws2
+      dv3 = Wn2-Wn1
+      dv3 = Wn1-Wp0
+      dv2 = Wp0-Ws1
+      dv1 = Ws1-Ws2
       
       include '../F_CBC/muscl.h'
       
@@ -445,10 +472,10 @@
       tmp2 = 1.0
       tmp3 = 1.0
       tmp4 = 1.0
-      if ( cb_b < 1.0 ) tmp1=0.0
-      if ( cp_b < 1.0 ) tmp2=0.0
-      if ( cp_t < 1.0 ) tmp3=0.0
-      if ( ct_t < 1.0 ) tmp4=0.0
+      if ( d5b < 1.0 ) tmp1=0.0
+      if ( d5 < 1.0 ) tmp2=0.0
+      if ( d6 < 1.0 ) tmp3=0.0
+      if ( d6t < 1.0 ) tmp4=0.0
       r_tmp1 = 1.0-tmp1
       r_tmp2 = 1.0-tmp2
       r_tmp3 = 1.0-tmp3
@@ -465,45 +492,45 @@
       
       ! 参照値の補間 >  16 flop
       refL = w_L*tmp2 + r_tmp2*Wp0
-      WPt = ( (cp_t-0.5)*refL + 0.5*w_ref )*ht
+      WPt = ( (d6-0.5)*refL + 0.5*w_ref )*h6
       
       refR = w_R*tmp3 + r_tmp3*Wp0
-      WPb = ( (cp_b-0.5)*refR + 0.5*w_ref )*hb
+      WPb = ( (d5-0.5)*refR + 0.5*w_ref )*h5
       
       
       ! カットがある場合の参照セルの値の計算
       ! d_{k-1}^-
-      r1 = cb_b-1.0
-      Ub2_t = (u_ref2 + r1*u_L )*hbb
-      Vb2_t = (v_ref2 + r1*v_L )*hbb
-      Wb2_t = (w_ref2 + r1*w_L )*hbb
+      r1 = d5b-1.0
+      Ub2_t = (u_ref2 + r1*u_L )*h5b
+      Vb2_t = (v_ref2 + r1*v_L )*h5b
+      Wb2_t = (w_ref2 + r1*w_L )*h5b
       Ub2 = tmp1*Ub2 + r_tmp1*Ub2_t
       Vb2 = tmp1*Vb2 + r_tmp1*Vb2_t
       Wb2 = tmp1*Wb2 + r_tmp1*Wb2_t
       
       ! d_{k}^-
-      r2 = cp_b-1.0
-      Ub1_t = (u_ref2 + r2*u_R )*hb
-      Vb1_t = (v_ref2 + r2*v_R )*hb
-      Wb1_t = (w_ref2 + r2*w_R )*hb
+      r2 = d5-1.0
+      Ub1_t = (u_ref2 + r2*u_R )*h5
+      Vb1_t = (v_ref2 + r2*v_R )*h5
+      Wb1_t = (w_ref2 + r2*w_R )*h5
       Ub1 = tmp2*Ub1 + r_tmp2*Ub1_t
       Vb1 = tmp2*Vb1 + r_tmp2*Vb1_t
       Wb1 = tmp2*Wb1 + r_tmp2*Wb1_t
       
       ! d_{k}^+
-      r3 = cp_t-1.0
-      Ut1_t = (u_ref2 + r3*u_L )*ht
-      Vt1_t = (v_ref2 + r3*v_L )*ht
-      Wt1_t = (w_ref2 + r3*w_L )*ht
+      r3 = d6-1.0
+      Ut1_t = (u_ref2 + r3*u_L )*h6
+      Vt1_t = (v_ref2 + r3*v_L )*h6
+      Wt1_t = (w_ref2 + r3*w_L )*h6
       Ut1 = tmp3*Ut1 + r_tmp3*Ut1_t
       Vt1 = tmp3*Vt1 + r_tmp3*Vt1_t
       Wt1 = tmp3*Wt1 + r_tmp3*Wt1_t
       
       ! d_{k+1}^+
-      r4 = ct_t-1.0
-      Ut2_t = (u_ref2 + r4*u_R )*htt
-      Vt2_t = (v_ref2 + r4*v_R )*htt
-      Wt2_t = (w_ref2 + r4*w_R )*htt
+      r4 = d6t-1.0
+      Ut2_t = (u_ref2 + r4*u_R )*h6t
+      Vt2_t = (v_ref2 + r4*v_R )*h6t
+      Wt2_t = (w_ref2 + r4*w_R )*h6t
       Ut2 = tmp4*Ut2 + r_tmp4*Ut2_t
       Vt2 = tmp4*Vt2 + r_tmp4*Vt2_t
       Wt2 = tmp4*Wt2 + r_tmp4*Wt2_t
@@ -514,10 +541,10 @@
       acr = abs(cr)
       acl = abs(cl)
 
-      d4 = Ut2-Ut1
-      d3 = Ut1-Up0
-      d2 = Up0-Ub1
-      d1 = Ub1-Ub2
+      dv3 = Ut2-Ut1
+      dv3 = Ut1-Up0
+      dv2 = Up0-Ub1
+      dv1 = Ub1-Ub2
       
       include '../F_CBC/muscl.h'
       
@@ -528,10 +555,10 @@
       cnv_u = 0.5*(cr*(Urr+Url) - acr*(Urr-Url))*c_t &
             - 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull))*c_b + cnv_u
 
-      d4 = Vt2-Vt1
-      d3 = Vt1-Vp0
-      d2 = Vp0-Vb1
-      d1 = Vb1-Vb2
+      dv3 = Vt2-Vt1
+      dv3 = Vt1-Vp0
+      dv2 = Vp0-Vb1
+      dv1 = Vb1-Vb2
       
       include '../F_CBC/muscl.h'
       
@@ -542,10 +569,10 @@
       cnv_v = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl))*c_t &
             - 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll))*c_b + cnv_v
 
-      d4 = Wt2-Wt1
-      d3 = Wt1-Wp0
-      d2 = Wp0-Wb1
-      d1 = Wb1-Wb2
+      dv3 = Wt2-Wt1
+      dv3 = Wt1-Wp0
+      dv2 = Wp0-Wb1
+      dv1 = Wb1-Wb2
       
       include '../F_CBC/muscl.h'
       
@@ -579,9 +606,9 @@
       ww_t = ( Wt1 - Wp0 )
       ww_b = ( Wp0 - Wb1 )
       
-      delta_x = 2.0/(cp_e + cp_w)
-      delta_y = 2.0/(cp_n + cp_s)
-      delta_z = 2.0/(cp_t + cp_b)
+      delta_x = 2.0 / (d2 + d1)
+      delta_y = 2.0 / (d4 + d3)
+      delta_z = 2.0 / (d6 + d5)
       
       Ex = ( (uu_e * c_e - uu_w * c_w) * delta_x &
            + (uu_n * c_n - uu_s * c_s) * delta_y &
@@ -875,7 +902,6 @@
     real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                        ::  Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r
-    real                                                        ::  Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c
     real                                                        ::  c1, c2, c3, c4, c5, c6
     real                                                        ::  d1, d2, d3, d4, d5, d6
     real                                                        ::  h1, h2, h3, h4, h5, h6
@@ -892,7 +918,7 @@
     jx = sz(2)
     kx = sz(3)
     
-    flop = flop + real(ix)*real(jx)*real(kx)*229.0
+    flop = flop + real(ix)*real(jx)*real(kx)*109.0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
@@ -905,7 +931,6 @@
 !$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
 !$OMP PRIVATE(h1, h2, h3, h4, h5, h6) &
 !$OMP PRIVATE(Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r) &
-!$OMP PRIVATE(Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb)
 
 #ifdef _DYNAMIC
@@ -986,43 +1011,21 @@
       h5 = 1.0/(d5 + 0.5)
       h6 = 1.0/(d6 + 0.5)
       
-      Uw_r = (1.0 - 0.5 / d1) * Up0
-      Ue_r = (1.0 - 0.5 / d2) * Up0
-      Vs_r = (1.0 - 0.5 / d3) * Vp0
-      Vn_r = (1.0 - 0.5 / d4) * Vp0
-      Wb_r = (1.0 - 0.5 / d5) * Wp0
-      Wt_r = (1.0 - 0.5 / d6) * Wp0
-      
-      if ( d1 < 0.5 ) Uw_r = 0.0 ! u_ref
-      if ( d2 < 0.5 ) Ue_r = 0.0
-      if ( d3 < 0.5 ) Vs_r = 0.0
-      if ( d4 < 0.5 ) Vn_r = 0.0
-      if ( d5 < 0.5 ) Wb_r = 0.0
-      if ( d6 < 0.5 ) Wt_r = 0.0
-      
-      ! Reference velocity at cell face, if cut -> q=0.0
-      Uw_r = 0.5 * (Uw0 + Up0) * q1 + r_q1 * Uw_r
-      Ue_r = 0.5 * (Ue0 + Up0) * q2 + r_q2 * Ue_r
-      Vs_r = 0.5 * (Vs0 + Vp0) * q3 + r_q3 * Vs_r
-      Vn_r = 0.5 * (Vn0 + Vp0) * q4 + r_q4 * Vn_r
-      Wb_r = 0.5 * (Wb0 + Wp0) * q5 + r_q5 * Wb_r
-      Wt_r = 0.5 * (Wt0 + Wp0) * q6 + r_q6 * Wt_r
-      
-      ! Correction of cell face velocity by wall effect
-      Uw_c = h1 * w1 * Ue_r
-      Ue_c = h2 * w2 * Uw_r
-      Vs_c = h3 * w3 * Vn_r
-      Vn_c = h4 * w4 * Vs_r
-      Wb_c = h5 * w5 * Wt_r
-      Wt_c = h6 * w6 * Wb_r
-      
-      ! Cell face velocity
-      Uw = q1 * Uw_r + r_q1 * Uw_c 
-      Ue = q2 * Ue_r + r_q2 * Ue_c 
-      Vs = q3 * Vs_r + r_q3 * Vs_c 
-      Vn = q4 * Vn_r + r_q4 * Vn_c 
-      Wb = q5 * Wb_r + r_q5 * Wb_c 
-      Wt = q6 * Wt_r + r_q6 * Wt_c
+      ! reference side at cell face, if cut -> q=0.0
+      Uw_r = 0.5 * (Uw0 + Up0) * q1 !+ r_q1 * 0.0
+      Ue_r = 0.5 * (Ue0 + Up0) * q2 !+ r_q2 * Up0
+      Vs_r = 0.5 * (Vs0 + Vp0) * q3 !+ r_q3 * Vp0
+      Vn_r = 0.5 * (Vn0 + Vp0) * q4 !+ r_q4 * Vp0
+      Wb_r = 0.5 * (Wb0 + Wp0) * q5 !+ r_q5 * Wp0
+      Wt_r = 0.5 * (Wt0 + Wp0) * q6 !+ r_q6 * Wp0
+
+      ! Correction of cell face velocity to be interpolated
+      Uw = h1 * w1 * Ue_r
+      Ue = h2 * w2 * Uw_r
+      Vs = h3 * w3 * Vn_r
+      Vn = h4 * w4 * Vs_r
+      Wb = h5 * w5 * Wt_r
+      Wt = h6 * w6 * Wb_r
       
       ! VBCの場合には寄与をキャンセル
       div(i,j,k) = ( Ue * c2 - Uw * c1 + Vn * c4 - Vs * c3 + Wt * c6 - Wb * c5 ) * coef * actv

@@ -14,14 +14,14 @@
 ! w_?; セル界面フラグ　(0-wall face / 1-fluid)
 ! 6*6 = 36 flops 
 
-      s4 = sign(1.0, d4) ! sign is zero flop
-      s3 = sign(1.0, d3)
-      s2 = sign(1.0, d2)
-      s1 = sign(1.0, d1)
+      s4 = sign(1.0, dv3) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
 
-      g6 = s4*max(0.0, min(abs(d4), s4*b*d3))
-      g5 = s3*max(0.0, min(abs(d3), s3*b*d4))
-      g4 = s3*max(0.0, min(abs(d3), s3*b*d2))
-      g3 = s2*max(0.0, min(abs(d2), s2*b*d3))
-      g2 = s2*max(0.0, min(abs(d2), s2*b*d1))
-      g1 = s1*max(0.0, min(abs(d1), s1*b*d2))
+      g6 = s4 * max(0.0, min( abs(dv3), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv3))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))

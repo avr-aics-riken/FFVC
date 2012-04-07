@@ -87,8 +87,6 @@
 #define cbc_hbc_drchlt_         CBC_HBC_DRCHLT
 
 // cds_poisson.f90
-#define cds_div_cc_             CDS_DIV_CC
-#define cds_div_cf_             CDS_DIV_CF
 #define cds_psor_               CDS_PSOR
 
 // c3d_vof.f90
@@ -207,10 +205,6 @@ extern "C" {
   void cbc_hbc_drchlt_    (REAL_TYPE* t,  int* sz, int* g, int* st, int* ed, int* bh, int* odr, REAL_TYPE* tc);
   
   // cds_poisson.f90
-  void cds_div_cc_        (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* b2, REAL_TYPE* vc, REAL_TYPE* bnd, 
-                          REAL_TYPE* cut, REAL_TYPE* v00, int* mode);
-  void cds_div_cf_        (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* b2, REAL_TYPE* bnd, 
-                          REAL_TYPE* cut, REAL_TYPE* v00, int* mode);
   void cds_psor_          (REAL_TYPE* p,   int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* div, REAL_TYPE* bnd, REAL_TYPE* cut, 
                           REAL_TYPE* epsilon, int* para_key);
   
