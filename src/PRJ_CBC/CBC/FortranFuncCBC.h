@@ -140,7 +140,7 @@ extern "C" {
                                int* bv, int* v_mode, int* face, REAL_TYPE* flop);
   void cbc_vobc_drchlt_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* v00, int* bv, int* face, REAL_TYPE* vec);
   void cbc_vobc_outflow_      (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* c, int* bv, int* face, REAL_TYPE* v0, REAL_TYPE* flop);
-  void cbc_vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, int* bv, REAL_TYPE* v00, REAL_TYPE* flop);
+  void cbc_vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, REAL_TYPE* flop);
   void cbc_vobc_update_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE*vc, int* face);
   void cbc_div_ibc_drchlt_    (REAL_TYPE* div, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, REAL_TYPE* coef, int* bv, int* odr, 
                                REAL_TYPE* vec, REAL_TYPE* flop);

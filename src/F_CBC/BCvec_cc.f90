@@ -574,7 +574,7 @@
     
     flop = flop + 15.0 ! DP 20 flop
 
-!$OMP PARALLEL &
+!$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh2, face) &
 !$OMP PRIVATE(i, j, k, bvx, Up0, Vp0, Wp0)
     
@@ -602,6 +602,7 @@
 
       flop = flop + rix*2.0
       
+
     case (X_plus)
       i = ix
 #ifdef _DYNAMIC
@@ -625,6 +626,7 @@
     
       flop = flop + rix*2.0
       
+
     case (Y_minus)
       j = 1
 #ifdef _DYNAMIC
@@ -648,6 +650,7 @@
       
       flop = flop + rjx*2.0
       
+
     case (Y_plus)
       j = jx
 #ifdef _DYNAMIC
@@ -671,6 +674,7 @@
       
       flop = flop + rjx*2.0
       
+
     case (Z_minus)
       k = 1
 #ifdef _DYNAMIC
@@ -694,6 +698,7 @@
       
       flop = flop + rkx*2.0
       
+
     case (Z_plus)
       k = kx
 #ifdef _DYNAMIC
@@ -717,6 +722,7 @@
       
       flop = flop + rkx*2.0
       
+
     case default
     end select FACES
     
@@ -2126,30 +2132,25 @@
     return
     end subroutine cbc_vobc_outflow
 
-!  **********************************************************
-!> @subroutine cbc_vobc_tfree (v, sz, g, face, bv, v00, flop)
+!  *************************************************
+!> @subroutine cbc_vobc_tfree (v, sz, g, face, flop)
 !! @brief 速度の外部境界：　トラクションフリー
 !! @param v 速度ベクトル
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param face 外部境界面の番号
-!! @param bv BCindex V
-!! @param v00 参照速度
 !! @param flop 浮動小数演算数
+!! @note トラクションフリー面は全て流体のこと
 !<
-    subroutine cbc_vobc_tfree (v, sz, g, face, bv, v00, flop)
+    subroutine cbc_vobc_tfree (v, sz, g, face, flop)
     implicit none
     include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g, ii, jj, kk
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  b0, b1, b2, b3, b4, b5
-    real, dimension(0:3)                                      ::  v00
-    real                                                      ::  c1, c2, c3, v0, v1, v2, v3, v4
+    real                                                      ::  v1, v2, v3, v4
     real                                                      ::  uu, vv, ww
-    real                                                      ::  u_ref, v_ref, w_ref
-    real                                                      ::  d1, d2, d3, d4, r, flop, rix, rjx, rkx
+    real                                                      ::  flop, rix, rjx, rkx
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
@@ -2157,15 +2158,11 @@
     rix = real(jx)*real(kx)
     rjx = real(ix)*real(kx)
     rkx = real(ix)*real(jx)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, g) &
-!$OMP PRIVATE(i, j, k, ii, jj, kk, c1, c2, c3, v0, v1, v2, v3, v4) &
-!$OMP PRIVATE(b0, b1, b2, b3, b4, b5, uu, vv, ww) &
-!$OMP PRIVATE(d1, d2, d3, d4, r) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rix, rjx, rkx, g) &
+!$OMP PRIVATE(i, j, k, ii, jj, kk, v1, v2, v3, v4) &
+!$OMP PRIVATE(uu, vv, ww) &
 !$OMP REDUCTION(+:flop)
 
     FACES : select case (face)
@@ -2182,32 +2179,15 @@
 
       do k=1,kx
       do j=1,jx
-        c1 = v(1, i, j, k)
-        c2 = v(2, i, j, k)
-        c3 = v(3, i, j, k)
-        
-        v0=        v(1, i-1, j  , k  )
-        v1= 0.5 * (v(1, i-1, j+1, k  ) + v(1, i, j+1, k  ))
-        v2= 0.5 * (v(1, i-1, j-1, k  ) + v(1, i, j-1, k  ))
-        v3= 0.5 * (v(1, i-1, j  , k+1) + v(1, i, j  , k+1))
-        v4= 0.5 * (v(1, i-1, j  , k-1) + v(1, i, j  , k-1))
-        
-        b0 = real( ibits(bv(i-1, j  , k  ), State, 1) * ibits(bv(i, j  , k  ), State, 1) )
-        b1 = real( ibits(bv(i-1, j+1, k  ), State, 1) * ibits(bv(i, j+1, k  ), State, 1) )
-        b2 = real( ibits(bv(i-1, j-1, k  ), State, 1) * ibits(bv(i, j-1, k  ), State, 1) )
-        b3 = real( ibits(bv(i-1, j  , k+1), State, 1) * ibits(bv(i, j  , k+1), State, 1) )
-        b4 = real( ibits(bv(i-1, j  , k-1), State, 1) * ibits(bv(i, j  , k-1), State, 1) )
-        
-        r  = 2.0 * u_ref - 0.5 * (v0 + c1)
-        d1 = v1 * b1 + (1.0 - b1) * r
-        d2 = v2 * b2 + (1.0 - b2) * r
-        d3 = v3 * b3 + (1.0 - b3) * r
-        d4 = v4 * b4 + (1.0 - b4) * r
-        
-        b5 = 1.0 - b0
-        uu =  c1                    * b0 + b5 * u_ref
-        vv = (c2 + 0.5 * (d1 - d2)) * b0 + b5 * v_ref
-        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
+
+        v1 = 0.5 * (v(1, i-1, j+1, k  ) + v(1, i, j+1, k  ))
+        v2 = 0.5 * (v(1, i-1, j-1, k  ) + v(1, i, j-1, k  ))
+        v3 = 0.5 * (v(1, i-1, j  , k+1) + v(1, i, j  , k+1))
+        v4 = 0.5 * (v(1, i-1, j  , k-1) + v(1, i, j  , k-1))
+
+        uu = v(1, i, j, k)
+        vv = v(2, i, j, k) + 0.5 * (v1 - v2)
+        ww = v(3, i, j, k) + 0.5 * (v3 - v4)
 
         do ii=1-g, 0
           v(1, ii, j, k) = uu
@@ -2219,7 +2199,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*50.0
+      flop = flop + rix*12.0
       
 
     case (X_plus)
@@ -2235,32 +2215,15 @@
 
       do k=1,kx
       do j=1,jx
-        c1 = v(1, i, j, k)
-        c2 = v(2, i, j, k)
-        c3 = v(3, i, j, k)
-        
-        v0 =        v(1, i+1, j  , k  )
+
         v1 = 0.5 * (v(1, i+1, j+1, k  ) + v(1, i, j+1, k  ))
         v2 = 0.5 * (v(1, i+1, j-1, k  ) + v(1, i, j-1, k  ))
         v3 = 0.5 * (v(1, i+1, j  , k+1) + v(1, i, j  , k+1))
         v4 = 0.5 * (v(1, i+1, j  , k-1) + v(1, i, j  , k-1))
 
-        b0 = real( ibits(bv(i+1, j  , k  ), State, 1) * ibits(bv(i, j  , k  ), State, 1) )
-        b1 = real( ibits(bv(i+1, j+1, k  ), State, 1) * ibits(bv(i, j+1, k  ), State, 1) )
-        b2 = real( ibits(bv(i+1, j-1, k  ), State, 1) * ibits(bv(i, j-1, k  ), State, 1) )
-        b3 = real( ibits(bv(i+1, j  , k+1), State, 1) * ibits(bv(i, j  , k+1), State, 1) )
-        b4 = real( ibits(bv(i+1, j  , k-1), State, 1) * ibits(bv(i, j  , k-1), State, 1) )
-        
-        r  = 2.0 * u_ref - 0.5 * (v0 + c1)
-        d1 = v1 * b1 + (1.0 - b1) * r
-        d2 = v2 * b2 + (1.0 - b2) * r
-        d3 = v3 * b3 + (1.0 - b3) * r
-        d4 = v4 * b4 + (1.0 - b4) * r
-
-        b5 = 1.0 - b0
-        uu =  c1                    * b0 + b5 * u_ref
-        vv = (c2 + 0.5 * (d1 - d2)) * b0 + b5 * v_ref
-        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
+        uu = v(1, i, j, k)
+        vv = v(2, i, j, k) - 0.5 * (v1 - v2)
+        ww = v(3, i, j, k) - 0.5 * (v3 - v4)
         
         do ii=ix+1, ix+g
           v(1, ii, j, k) = uu
@@ -2272,7 +2235,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*50.0
+      flop = flop + rix*12.0
       
 
     case (Y_minus)
@@ -2288,32 +2251,15 @@
 
       do k=1,kx
       do i=1,ix
-        c1 = v(1, i, j, k)
-        c2 = v(2, i, j, k)
-        c3 = v(3, i, j, k)
 
-        v0 =        v(2, i  , j-1, k  )
         v1 = 0.5 * (v(2, i+1, j-1, k  ) + v(2, i+1, j, k  ))
         v2 = 0.5 * (v(2, i-1, j-1, k  ) + v(2, i-1, j, k  ))
         v3 = 0.5 * (v(2, i  , j-1, k+1) + v(2, i  , j, k+1))
         v4 = 0.5 * (v(2, i  , j-1, k-1) + v(2, i  , j, k-1))
-
-        b0 = real( ibits(bv(i  , j-1, k  ), State, 1) * ibits(bv(i  , j, k  ), State, 1) )
-        b1 = real( ibits(bv(i+1, j-1, k  ), State, 1) * ibits(bv(i+1, j, k  ), State, 1) )
-        b2 = real( ibits(bv(i-1, j-1, k  ), State, 1) * ibits(bv(i-1, j, k  ), State, 1) )
-        b3 = real( ibits(bv(i  , j-1, k+1), State, 1) * ibits(bv(i  , j, k+1), State, 1) )
-        b4 = real( ibits(bv(i  , j-1, k-1), State, 1) * ibits(bv(i  , j, k-1), State, 1) )
         
-        r  = 2.0 * v_ref - 0.5 * (v0 + c2)
-        d1 = v1 * b1 + (1.0 - b1) * r
-        d2 = v2 * b2 + (1.0 - b2) * r
-        d3 = v3 * b3 + (1.0 - b3) * r
-        d4 = v4 * b4 + (1.0 - b4) * r
-
-        b5 = 1.0 - b0
-        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
-        vv =  c2                    * b0 + b5 * v_ref
-        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
+        uu = v(1, i, j, k) + 0.5 * (v1 - v2)
+        vv = v(2, i, j, k)
+        ww = v(3, i, j, k) + 0.5 * (v3 - v4)
                 
         do jj=1-g, 0
           v(1, i, jj, k) = uu
@@ -2325,7 +2271,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*50.0
+      flop = flop + rjx*12.0
       
 
     case (Y_plus)
@@ -2341,32 +2287,15 @@
 
       do k=1,kx
       do i=1,ix
-        c1 = v(1, i, j, k)
-        c2 = v(2, i, j, k)
-        c3 = v(3, i, j, k)
-        
-        v0 =        v(2, i  , j+1, k  )
+
         v1 = 0.5 * (v(2, i+1, j+1, k  ) + v(2, i+1, j, k  ))
         v2 = 0.5 * (v(2, i-1, j+1, k  ) + v(2, i-1, j, k  ))
         v3 = 0.5 * (v(2, i  , j+1, k+1) + v(2, i  , j, k+1))
         v4 = 0.5 * (v(2, i  , j+1, k-1) + v(2, i  , j, k-1))
 
-        b0 = real( ibits(bv(i  , j+1, k  ), State, 1) * ibits(bv(i  , j, k  ), State, 1) )
-        b1 = real( ibits(bv(i+1, j+1, k  ), State, 1) * ibits(bv(i+1, j, k  ), State, 1) )
-        b2 = real( ibits(bv(i-1, j+1, k  ), State, 1) * ibits(bv(i-1, j, k  ), State, 1) )
-        b3 = real( ibits(bv(i  , j+1, k+1), State, 1) * ibits(bv(i  , j, k+1), State, 1) )
-        b4 = real( ibits(bv(i  , j+1, k-1), State, 1) * ibits(bv(i  , j, k-1), State, 1) )
-        
-        r  = 2.0 * v_ref - 0.5 * (v0 + c2)
-        d1 = v1 * b1 + (1.0 - b1) * r
-        d2 = v2 * b2 + (1.0 - b2) * r
-        d3 = v3 * b3 + (1.0 - b3) * r
-        d4 = v4 * b4 + (1.0 - b4) * r
-
-        b5 = 1.0 - b0
-        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
-        vv =  c2                    * b0 + b5 * v_ref
-        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
+        uu = v(1, i, j, k) - 0.5 * (v1 - v2)
+        vv = v(2, i, j, k)
+        ww = v(3, i, j, k) - 0.5 * (v3 - v4)
                 
         do jj=jx+1, jx+g
           v(1, i, jj, k) = uu
@@ -2378,7 +2307,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rjx*50.0
+      flop = flop + rjx*12.0
       
 
     case (Z_minus)
@@ -2394,32 +2323,15 @@
 
       do j=1,jx
       do i=1,ix
-        c1 = v(1, i, j, k)
-        c2 = v(2, i, j, k)
-        c3 = v(3, i, j, k)
 
-        v0 =        v(3, i  , j  , k-1)
         v1 = 0.5 * (v(3, i+1, j  , k-1) + v(3, i+1, j  , k))
         v2 = 0.5 * (v(3, i-1, j  , k-1) + v(3, i-1, j  , k))
         v3 = 0.5 * (v(3, i  , j+1, k-1) + v(3, i  , j+1, k))
         v4 = 0.5 * (v(3, i  , j-1, k-1) + v(3, i  , j-1, k))
-        
-        b0 = real( ibits(bv(i  , j  , k-1), State, 1) * ibits(bv(i  , j  , k), State, 1) )
-        b1 = real( ibits(bv(i+1, j  , k-1), State, 1) * ibits(bv(i+1, j  , k), State, 1) )
-        b2 = real( ibits(bv(i-1, j  , k-1), State, 1) * ibits(bv(i-1, j  , k), State, 1) )
-        b3 = real( ibits(bv(i  , j+1, k-1), State, 1) * ibits(bv(i  , j+1, k), State, 1) )
-        b4 = real( ibits(bv(i  , j-1, k-1), State, 1) * ibits(bv(i  , j-1, k), State, 1) )
-        
-        r  = 2.0 * w_ref - 0.5 * (v0 + c3)
-        d1 = v1 * b1 + (1.0 - b1) * r
-        d2 = v2 * b2 + (1.0 - b2) * r
-        d3 = v3 * b3 + (1.0 - b3) * r
-        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0 - b0
-        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
-        vv = (c2 + 0.5 * (d3 - d4)) * b0 + b5 * v_ref
-        ww =  c3                    * b0 + b5 * w_ref
+        uu = v(1, i, j, k) + 0.5 * (v1 - v2)
+        vv = v(2, i, j, k) + 0.5 * (v3 - v4)
+        ww = v(3, i, j, k)
                 
         do kk=1-g, 0
           v(1, i, j, kk) = uu
@@ -2431,7 +2343,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rkx*50.0
+      flop = flop + rkx*12.0
       
 
     case (Z_plus)
@@ -2447,32 +2359,15 @@
 
       do j=1,jx
       do i=1,ix
-        c1 = v(1, i, j, k)
-        c2 = v(2, i, j, k)
-        c3 = v(3, i, j, k)
-        
-        v0=        v(3, i  , j  , k+1)
+
         v1= 0.5 * (v(3, i+1, j  , k+1) + v(3, i+1, j  , k))
         v2= 0.5 * (v(3, i-1, j  , k+1) + v(3, i-1, j  , k))
         v3= 0.5 * (v(3, i  , j+1, k+1) + v(3, i  , j+1, k))
         v4= 0.5 * (v(3, i  , j-1, k+1) + v(3, i  , j-1, k))
-        
-        b0 = real( ibits(bv(i  , j  , k+1), State, 1) * ibits(bv(i  , j  , k), State, 1) )
-        b1 = real( ibits(bv(i+1, j  , k+1), State, 1) * ibits(bv(i+1, j  , k), State, 1) )
-        b2 = real( ibits(bv(i-1, j  , k+1), State, 1) * ibits(bv(i-1, j  , k), State, 1) )
-        b3 = real( ibits(bv(i  , j+1, k+1), State, 1) * ibits(bv(i  , j+1, k), State, 1) )
-        b4 = real( ibits(bv(i  , j-1, k+1), State, 1) * ibits(bv(i  , j-1, k), State, 1) )
-        
-        r  = 2.0 * w_ref - 0.5 * (v0 + c3)
-        d1 = v1 * b1 + (1.0 - b1) * r
-        d2 = v2 * b2 + (1.0 - b2) * r
-        d3 = v3 * b3 + (1.0 - b3) * r
-        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0 - b0
-        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
-        vv = (c2 + 0.5 * (d3 - d4)) * b0 + b5 * v_ref
-        ww =  c3                    * b0 + b5 * w_ref
+        uu = v(1, i, j, k) - 0.5 * (v1 - v2)
+        vv = v(2, i, j, k) - 0.5 * (v3 - v4)
+        ww = v(3, i, j, k)
                 
         do kk=kx+1, kx+g
           v(1, i, j, kk) = uu
@@ -2484,7 +2379,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rkx*50.0
+      flop = flop + rkx*12.0
       
 
     case default
@@ -3853,7 +3748,6 @@
     implicit none
     include '../FB/cbc_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
@@ -3903,7 +3797,6 @@
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref) &
 !$OMP FIRSTPRIVATE(dh1, dh2, odr) &
 !$OMP PRIVATE(m1, m2, bvx, cnv_u, cnv_v, cnv_w, EX, EY, EZ, cr, cl, acr, acl) &
-!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_p) &
 !$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
 !$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
@@ -3932,15 +3825,6 @@
         cnv_u = 0.0
         cnv_v = 0.0
         cnv_w = 0.0
-        
-        ! セル状態 (0-solid / 1-fluid)
-        b_p = ibits(bvx,             State, 1)
-        b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
-        b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
-        b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
-        b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
-        b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
-        b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
         
         ! 変数のロード
         Up0 = v(1,i,j,k)

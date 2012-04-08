@@ -1212,12 +1212,12 @@ void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, 
         break;
         
       case OBC_TRC_FREE:
-        cbc_vobc_tfree_(v, dim_sz, gc, &face, (int*)bv, v00, &flop);
+        cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
         break;
         
       case OBC_IN_OUT:
         if ( obc[face].Face_inout == ALT_IN ) {
-          cbc_vobc_tfree_(v, dim_sz, gc, &face, (int*)bv, v00, &flop);
+          cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
         }
         break;
         
