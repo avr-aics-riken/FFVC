@@ -217,7 +217,7 @@ extern "C" {
                            int* bv, int* bp, int* v_mode, float* cut, REAL_TYPE* flop);
   void cds_update_vec_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p, 
                            int* bp, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* flop);
-  void cds_div_           (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* flop);
+  void cds_div_           (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* v00, REAL_TYPE* flop);
 }
 
 #endif // _SKL_FORTRAN_FUNC_CBC_H_

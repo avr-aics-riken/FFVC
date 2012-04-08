@@ -47,7 +47,7 @@
     real                                                        ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
     real                                                        ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
     real                                                        ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
-    real                                                        ::  d1, d2, d3, d4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
+    real                                                        ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
     real                                                        ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
     real                                                        ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
@@ -134,7 +134,7 @@
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
 !$OMP PRIVATE(cr, cl, acr, acl, beta) &
-!$OMP PRIVATE(d1, d2, d3, d4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
+!$OMP PRIVATE(dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
 !$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
 !$OMP PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
@@ -260,10 +260,10 @@
       acr = abs(cr)
       acl = abs(cl)
       
-      d4 = Ue2-Ue1
-      d3 = Ue1-Up0
-      d2 = Up0-Uw1
-      d1 = Uw1-Uw2
+      dv4 = Ue2-Ue1
+      dv3 = Ue1-Up0
+      dv2 = Up0-Uw1
+      dv1 = Uw1-Uw2
       
       include 'muscl.h'
       
@@ -274,10 +274,10 @@
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_e
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 5*4+7*2 = 78 flops
 
-      d4 = Ve2-Ve1
-      d3 = Ve1-Vp0
-      d2 = Vp0-Vw1
-      d1 = Vw1-Vw2
+      dv4 = Ve2-Ve1
+      dv3 = Ve1-Vp0
+      dv2 = Vp0-Vw1
+      dv1 = Vw1-Vw2
       
       include 'muscl.h'
       
@@ -288,10 +288,10 @@
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_e
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w
 
-      d4 = We2-We1
-      d3 = We1-Wp0
-      d2 = Wp0-Ww1
-      d1 = Ww1-Ww2
+      dv4 = We2-We1
+      dv3 = We1-Wp0
+      dv2 = Wp0-Ww1
+      dv1 = Ww1-Ww2
       
       include 'muscl.h'
       
@@ -350,10 +350,10 @@
       acr = abs(cr)
       acl = abs(cl)
       
-      d4 = Un2-Un1
-      d3 = Un1-Up0
-      d2 = Up0-Us1
-      d1 = Us1-Us2
+      dv4 = Un2-Un1
+      dv3 = Un1-Up0
+      dv2 = Up0-Us1
+      dv1 = Us1-Us2
       
       include 'muscl.h'
       
@@ -364,10 +364,10 @@
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_n
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_s
 
-      d4 = Vn2-Vn1
-      d3 = Vn1-Vp0
-      d2 = Vp0-Vs1
-      d1 = Vs1-Vs2
+      dv4 = Vn2-Vn1
+      dv3 = Vn1-Vp0
+      dv2 = Vp0-Vs1
+      dv1 = Vs1-Vs2
       
       include 'muscl.h'
       
@@ -378,10 +378,10 @@
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_n
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_s
 
-      d4 = Wn2-Wn1
-      d3 = Wn1-Wp0
-      d2 = Wp0-Ws1
-      d1 = Ws1-Ws2
+      dv4 = Wn2-Wn1
+      dv3 = Wn1-Wp0
+      dv2 = Wp0-Ws1
+      dv1 = Ws1-Ws2
       
       include 'muscl.h'
       
@@ -441,10 +441,10 @@
       acr = abs(cr)
       acl = abs(cl)
 
-      d4 = Ut2-Ut1
-      d3 = Ut1-Up0
-      d2 = Up0-Ub1
-      d1 = Ub1-Ub2
+      dv4 = Ut2-Ut1
+      dv3 = Ut1-Up0
+      dv2 = Up0-Ub1
+      dv1 = Ub1-Ub2
       
       include 'muscl.h'
       
@@ -455,10 +455,10 @@
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_t
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_b
 
-      d4 = Vt2-Vt1
-      d3 = Vt1-Vp0
-      d2 = Vp0-Vb1
-      d1 = Vb1-Vb2
+      dv4 = Vt2-Vt1
+      dv3 = Vt1-Vp0
+      dv2 = Vp0-Vb1
+      dv1 = Vb1-Vb2
       
       include 'muscl.h'
             
@@ -469,10 +469,10 @@
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_t
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_b
 
-      d4 = Wt2-Wt1
-      d3 = Wt1-Wp0
-      d2 = Wp0-Wb1
-      d1 = Wb1-Wb2
+      dv4 = Wt2-Wt1
+      dv3 = Wt1-Wp0
+      dv2 = Wp0-Wb1
+      dv1 = Wb1-Wb2
       
       include 'muscl.h'
             

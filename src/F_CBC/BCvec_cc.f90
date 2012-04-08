@@ -2140,7 +2140,7 @@
     subroutine cbc_vobc_tfree (v, sz, g, face, bv, v00, flop)
     implicit none
     include '../FB/cbc_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, ii, jj, kk
     integer, dimension(3)                                     ::  sz
     real                                                      ::  b0, b1, b2, b3, b4, b5
     real, dimension(0:3)                                      ::  v00
@@ -2160,250 +2160,337 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, g) &
+!$OMP PRIVATE(i, j, k, ii, jj, kk, c1, c2, c3, v0, v1, v2, v3, v4) &
+!$OMP PRIVATE(b0, b1, b2, b3, b4, b5, uu, vv, ww) &
+!$OMP PRIVATE(d1, d2, d3, d4, r) &
+!$OMP REDUCTION(+:flop)
+
     FACES : select case (face)
     case (X_minus)
+      i = 1
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
       do k=1,kx
       do j=1,jx
-        c1 = v(1, 1,j,k)
-        c2 = v(2, 1,j,k)
-        c3 = v(3, 1,j,k)
+        c1 = v(1, i, j, k)
+        c2 = v(2, i, j, k)
+        c3 = v(3, i, j, k)
         
-        v0=      v(0,j  ,k  ,1)
-        v1= 0.5*(v(0,j+1,k  ,1)+v(1,j+1,k  ,1))
-        v2= 0.5*(v(0,j-1,k  ,1)+v(1,j-1,k  ,1))
-        v3= 0.5*(v(0,j  ,k+1,1)+v(1,j  ,k+1,1))
-        v4= 0.5*(v(0,j  ,k-1,1)+v(1,j  ,k-1,1))
+        v0=        v(1, i-1, j  , k  )
+        v1= 0.5 * (v(1, i-1, j+1, k  ) + v(1, i, j+1, k  ))
+        v2= 0.5 * (v(1, i-1, j-1, k  ) + v(1, i, j-1, k  ))
+        v3= 0.5 * (v(1, i-1, j  , k+1) + v(1, i, j  , k+1))
+        v4= 0.5 * (v(1, i-1, j  , k-1) + v(1, i, j  , k-1))
         
-        b0 = real( ibits(bv(0,j  ,k  ), State, 1) * ibits(bv(1,j  ,k  ), State, 1) )
-        b1 = real( ibits(bv(0,j+1,k  ), State, 1) * ibits(bv(1,j+1,k  ), State, 1) )
-        b2 = real( ibits(bv(0,j-1,k  ), State, 1) * ibits(bv(1,j-1,k  ), State, 1) )
-        b3 = real( ibits(bv(0,j  ,k+1), State, 1) * ibits(bv(1,j  ,k+1), State, 1) )
-        b4 = real( ibits(bv(0,j  ,k-1), State, 1) * ibits(bv(1,j  ,k-1), State, 1) )
+        b0 = real( ibits(bv(i-1, j  , k  ), State, 1) * ibits(bv(i, j  , k  ), State, 1) )
+        b1 = real( ibits(bv(i-1, j+1, k  ), State, 1) * ibits(bv(i, j+1, k  ), State, 1) )
+        b2 = real( ibits(bv(i-1, j-1, k  ), State, 1) * ibits(bv(i, j-1, k  ), State, 1) )
+        b3 = real( ibits(bv(i-1, j  , k+1), State, 1) * ibits(bv(i, j  , k+1), State, 1) )
+        b4 = real( ibits(bv(i-1, j  , k-1), State, 1) * ibits(bv(i, j  , k-1), State, 1) )
         
-        r  = 2.0*u_ref - 0.5*(v0+c1)
-        d1 = v1*b1 + (1.0-b1)*r
-        d2 = v2*b2 + (1.0-b2)*r
-        d3 = v3*b3 + (1.0-b3)*r
-        d4 = v4*b4 + (1.0-b4)*r
+        r  = 2.0 * u_ref - 0.5 * (v0 + c1)
+        d1 = v1 * b1 + (1.0 - b1) * r
+        d2 = v2 * b2 + (1.0 - b2) * r
+        d3 = v3 * b3 + (1.0 - b3) * r
+        d4 = v4 * b4 + (1.0 - b4) * r
         
-        b5 = 1.0-b0
-        uu =  c1               *b0 + b5*u_ref
-        vv = (c2 + 0.5*(d1-d2))*b0 + b5*v_ref
-        ww = (c3 + 0.5*(d3-d4))*b0 + b5*w_ref
+        b5 = 1.0 - b0
+        uu =  c1                    * b0 + b5 * u_ref
+        vv = (c2 + 0.5 * (d1 - d2)) * b0 + b5 * v_ref
+        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
 
-        do i=1-g, 0
-          v(1,i,j,k) = uu
-          v(2,i,j,k) = vv
-          v(3,i,j,k) = ww
+        do ii=1-g, 0
+          v(1, ii, j, k) = uu
+          v(2, ii, j, k) = vv
+          v(3, ii, j, k) = ww
         end do
+
       end do
       end do
+!$OMP END DO
       
       flop = flop + rix*50.0
       
+
     case (X_plus)
+      i = ix
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
       do k=1,kx
       do j=1,jx
-        c1 = v(1, ix,j,k)
-        c2 = v(2, ix,j,k)
-        c3 = v(3, ix,j,k)
+        c1 = v(1, i, j, k)
+        c2 = v(2, i, j, k)
+        c3 = v(3, i, j, k)
         
-        v0=      v(ix+1,j  ,k  ,1)
-        v1= 0.5*(v(ix+1,j+1,k  ,1)+v(ix,j+1,k  ,1))
-        v2= 0.5*(v(ix+1,j-1,k  ,1)+v(ix,j-1,k  ,1))
-        v3= 0.5*(v(ix+1,j  ,k+1,1)+v(ix,j  ,k+1,1))
-        v4= 0.5*(v(ix+1,j  ,k-1,1)+v(ix,j  ,k-1,1))
+        v0 =        v(1, i+1, j  , k  )
+        v1 = 0.5 * (v(1, i+1, j+1, k  ) + v(1, i, j+1, k  ))
+        v2 = 0.5 * (v(1, i+1, j-1, k  ) + v(1, i, j-1, k  ))
+        v3 = 0.5 * (v(1, i+1, j  , k+1) + v(1, i, j  , k+1))
+        v4 = 0.5 * (v(1, i+1, j  , k-1) + v(1, i, j  , k-1))
 
-        b0 = real( ibits(bv(ix+1,j  ,k  ), State, 1) * ibits(bv(ix,j  ,k  ), State, 1) )
-        b1 = real( ibits(bv(ix+1,j+1,k  ), State, 1) * ibits(bv(ix,j+1,k  ), State, 1) )
-        b2 = real( ibits(bv(ix+1,j-1,k  ), State, 1) * ibits(bv(ix,j-1,k  ), State, 1) )
-        b3 = real( ibits(bv(ix+1,j  ,k+1), State, 1) * ibits(bv(ix,j  ,k+1), State, 1) )
-        b4 = real( ibits(bv(ix+1,j  ,k-1), State, 1) * ibits(bv(ix,j  ,k-1), State, 1) )
+        b0 = real( ibits(bv(i+1, j  , k  ), State, 1) * ibits(bv(i, j  , k  ), State, 1) )
+        b1 = real( ibits(bv(i+1, j+1, k  ), State, 1) * ibits(bv(i, j+1, k  ), State, 1) )
+        b2 = real( ibits(bv(i+1, j-1, k  ), State, 1) * ibits(bv(i, j-1, k  ), State, 1) )
+        b3 = real( ibits(bv(i+1, j  , k+1), State, 1) * ibits(bv(i, j  , k+1), State, 1) )
+        b4 = real( ibits(bv(i+1, j  , k-1), State, 1) * ibits(bv(i, j  , k-1), State, 1) )
         
-        r  = 2.0*u_ref - 0.5*(v0+c1)
-        d1 = v1*b1 + (1.0-b1)*r
-        d2 = v2*b2 + (1.0-b2)*r
-        d3 = v3*b3 + (1.0-b3)*r
-        d4 = v4*b4 + (1.0-b4)*r
+        r  = 2.0 * u_ref - 0.5 * (v0 + c1)
+        d1 = v1 * b1 + (1.0 - b1) * r
+        d2 = v2 * b2 + (1.0 - b2) * r
+        d3 = v3 * b3 + (1.0 - b3) * r
+        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0-b0
-        uu =  c1               *b0 + b5*u_ref
-        vv = (c2 + 0.5*(d1-d2))*b0 + b5*v_ref
-        ww = (c3 + 0.5*(d3-d4))*b0 + b5*w_ref
+        b5 = 1.0 - b0
+        uu =  c1                    * b0 + b5 * u_ref
+        vv = (c2 + 0.5 * (d1 - d2)) * b0 + b5 * v_ref
+        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
         
-        do i=ix+1, ix+g
-          v(1,i,j,k) = uu
-          v(2,i,j,k) = vv
-          v(3,i,j,k) = ww
+        do ii=ix+1, ix+g
+          v(1, ii, j, k) = uu
+          v(2, ii, j, k) = vv
+          v(3, ii, j, k) = ww
         end do
+
       end do
       end do
+!$OMP END DO
       
       flop = flop + rix*50.0
       
+
     case (Y_minus)
+      j = 1
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
       do k=1,kx
       do i=1,ix
-        c1 = v(1, i,1,k)
-        c2 = v(2, i,1,k)
-        c3 = v(3, i,1,k)
+        c1 = v(1, i, j, k)
+        c2 = v(2, i, j, k)
+        c3 = v(3, i, j, k)
 
-        v0=      v(i  ,0,k  ,2)
-        v1= 0.5*(v(i+1,0,k  ,2)+v(i+1,1,k  ,2))
-        v2= 0.5*(v(i-1,0,k  ,2)+v(i-1,1,k  ,2))
-        v3= 0.5*(v(i  ,0,k+1,2)+v(i  ,1,k+1,2))
-        v4= 0.5*(v(i  ,0,k-1,2)+v(i  ,1,k-1,2))
+        v0 =        v(2, i  , j-1, k  )
+        v1 = 0.5 * (v(2, i+1, j-1, k  ) + v(2, i+1, j, k  ))
+        v2 = 0.5 * (v(2, i-1, j-1, k  ) + v(2, i-1, j, k  ))
+        v3 = 0.5 * (v(2, i  , j-1, k+1) + v(2, i  , j, k+1))
+        v4 = 0.5 * (v(2, i  , j-1, k-1) + v(2, i  , j, k-1))
 
-        b0 = real( ibits(bv(i  ,0,k  ), State, 1) * ibits(bv(i  ,1,k  ), State, 1) )
-        b1 = real( ibits(bv(i+1,0,k  ), State, 1) * ibits(bv(i+1,1,k  ), State, 1) )
-        b2 = real( ibits(bv(i-1,0,k  ), State, 1) * ibits(bv(i-1,1,k  ), State, 1) )
-        b3 = real( ibits(bv(i  ,0,k+1), State, 1) * ibits(bv(i  ,1,k+1), State, 1) )
-        b4 = real( ibits(bv(i  ,0,k-1), State, 1) * ibits(bv(i  ,1,k-1), State, 1) )
+        b0 = real( ibits(bv(i  , j-1, k  ), State, 1) * ibits(bv(i  , j, k  ), State, 1) )
+        b1 = real( ibits(bv(i+1, j-1, k  ), State, 1) * ibits(bv(i+1, j, k  ), State, 1) )
+        b2 = real( ibits(bv(i-1, j-1, k  ), State, 1) * ibits(bv(i-1, j, k  ), State, 1) )
+        b3 = real( ibits(bv(i  , j-1, k+1), State, 1) * ibits(bv(i  , j, k+1), State, 1) )
+        b4 = real( ibits(bv(i  , j-1, k-1), State, 1) * ibits(bv(i  , j, k-1), State, 1) )
         
-        r  = 2.0*v_ref - 0.5*(v0+c2)
-        d1 = v1*b1 + (1.0-b1)*r
-        d2 = v2*b2 + (1.0-b2)*r
-        d3 = v3*b3 + (1.0-b3)*r
-        d4 = v4*b4 + (1.0-b4)*r
+        r  = 2.0 * v_ref - 0.5 * (v0 + c2)
+        d1 = v1 * b1 + (1.0 - b1) * r
+        d2 = v2 * b2 + (1.0 - b2) * r
+        d3 = v3 * b3 + (1.0 - b3) * r
+        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0-b0
-        uu = (c1 + 0.5*(d1-d2))*b0 + b5*u_ref
-        vv =  c2               *b0 + b5*v_ref
-        ww = (c3 + 0.5*(d3-d4))*b0 + b5*w_ref
+        b5 = 1.0 - b0
+        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
+        vv =  c2                    * b0 + b5 * v_ref
+        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
                 
-        do j=1-g, 0
-          v(1,i,j,k) = uu
-          v(2,i,j,k) = vv
-          v(3,i,j,k) = ww
+        do jj=1-g, 0
+          v(1, i, jj, k) = uu
+          v(2, i, jj, k) = vv
+          v(3, i, jj, k) = ww
         end do
+
       end do
       end do
+!$OMP END DO
       
       flop = flop + rjx*50.0
       
+
     case (Y_plus)
+      j = jx
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
       do k=1,kx
       do i=1,ix
-        c1 = v(1, i,jx,k)
-        c2 = v(2, i,jx,k)
-        c3 = v(3, i,jx,k)
+        c1 = v(1, i, j, k)
+        c2 = v(2, i, j, k)
+        c3 = v(3, i, j, k)
         
-        v0=      v(i  ,jx+1,k  ,2)
-        v1= 0.5*(v(i+1,jx+1,k  ,2)+v(i+1,jx,k  ,2))
-        v2= 0.5*(v(i-1,jx+1,k  ,2)+v(i-1,jx,k  ,2))
-        v3= 0.5*(v(i  ,jx+1,k+1,2)+v(i  ,jx,k+1,2))
-        v4= 0.5*(v(i  ,jx+1,k-1,2)+v(i  ,jx,k-1,2))
+        v0 =        v(2, i  , j+1, k  )
+        v1 = 0.5 * (v(2, i+1, j+1, k  ) + v(2, i+1, j, k  ))
+        v2 = 0.5 * (v(2, i-1, j+1, k  ) + v(2, i-1, j, k  ))
+        v3 = 0.5 * (v(2, i  , j+1, k+1) + v(2, i  , j, k+1))
+        v4 = 0.5 * (v(2, i  , j+1, k-1) + v(2, i  , j, k-1))
 
-        b0 = real( ibits(bv(i  ,jx+1,k  ), State, 1) * ibits(bv(i  ,jx,k  ), State, 1) )
-        b1 = real( ibits(bv(i+1,jx+1,k  ), State, 1) * ibits(bv(i+1,jx,k  ), State, 1) )
-        b2 = real( ibits(bv(i-1,jx+1,k  ), State, 1) * ibits(bv(i-1,jx,k  ), State, 1) )
-        b3 = real( ibits(bv(i  ,jx+1,k+1), State, 1) * ibits(bv(i  ,jx,k+1), State, 1) )
-        b4 = real( ibits(bv(i  ,jx+1,k-1), State, 1) * ibits(bv(i  ,jx,k-1), State, 1) )
+        b0 = real( ibits(bv(i  , j+1, k  ), State, 1) * ibits(bv(i  , j, k  ), State, 1) )
+        b1 = real( ibits(bv(i+1, j+1, k  ), State, 1) * ibits(bv(i+1, j, k  ), State, 1) )
+        b2 = real( ibits(bv(i-1, j+1, k  ), State, 1) * ibits(bv(i-1, j, k  ), State, 1) )
+        b3 = real( ibits(bv(i  , j+1, k+1), State, 1) * ibits(bv(i  , j, k+1), State, 1) )
+        b4 = real( ibits(bv(i  , j+1, k-1), State, 1) * ibits(bv(i  , j, k-1), State, 1) )
         
-        r  = 2.0*v_ref - 0.5*(v0+c2)
-        d1 = v1*b1 + (1.0-b1)*r
-        d2 = v2*b2 + (1.0-b2)*r
-        d3 = v3*b3 + (1.0-b3)*r
-        d4 = v4*b4 + (1.0-b4)*r
+        r  = 2.0 * v_ref - 0.5 * (v0 + c2)
+        d1 = v1 * b1 + (1.0 - b1) * r
+        d2 = v2 * b2 + (1.0 - b2) * r
+        d3 = v3 * b3 + (1.0 - b3) * r
+        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0-b0
-        uu = (c1 + 0.5*(d1-d2))*b0 + b5*u_ref
-        vv =  c2               *b0 + b5*v_ref
-        ww = (c3 + 0.5*(d3-d4))*b0 + b5*w_ref
+        b5 = 1.0 - b0
+        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
+        vv =  c2                    * b0 + b5 * v_ref
+        ww = (c3 + 0.5 * (d3 - d4)) * b0 + b5 * w_ref
                 
-        do j=jx+1, jx+g
-          v(1,i,j,k) = uu
-          v(2,i,j,k) = vv
-          v(3,i,j,k) = ww
+        do jj=jx+1, jx+g
+          v(1, i, jj, k) = uu
+          v(2, i, jj, k) = vv
+          v(3, i, jj, k) = ww
         end do
+
       end do
       end do
-      
+!$OMP END DO
+
       flop = flop + rjx*50.0
       
+
     case (Z_minus)
+      k = 1
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
       do j=1,jx
       do i=1,ix
-        c1 = v(1, i,j,1)
-        c2 = v(2, i,j,1)
-        c3 = v(3, i,j,1)
+        c1 = v(1, i, j, k)
+        c2 = v(2, i, j, k)
+        c3 = v(3, i, j, k)
 
-        v0=      v(i  ,j  ,0,3)
-        v1= 0.5*(v(i+1,j  ,0,3)+v(i+1,j  ,1,3))
-        v2= 0.5*(v(i-1,j  ,0,3)+v(i-1,j  ,1,3))
-        v3= 0.5*(v(i  ,j+1,0,3)+v(i  ,j+1,1,3))
-        v4= 0.5*(v(i  ,j-1,0,3)+v(i  ,j-1,1,3))
+        v0 =        v(3, i  , j  , k-1)
+        v1 = 0.5 * (v(3, i+1, j  , k-1) + v(3, i+1, j  , k))
+        v2 = 0.5 * (v(3, i-1, j  , k-1) + v(3, i-1, j  , k))
+        v3 = 0.5 * (v(3, i  , j+1, k-1) + v(3, i  , j+1, k))
+        v4 = 0.5 * (v(3, i  , j-1, k-1) + v(3, i  , j-1, k))
         
-        b0 = real( ibits(bv(i  ,j  ,0), State, 1) * ibits(bv(i  ,j  ,1), State, 1) )
-        b1 = real( ibits(bv(i+1,j  ,0), State, 1) * ibits(bv(i+1,j  ,1), State, 1) )
-        b2 = real( ibits(bv(i-1,j  ,0), State, 1) * ibits(bv(i-1,j  ,1), State, 1) )
-        b3 = real( ibits(bv(i  ,j+1,0), State, 1) * ibits(bv(i  ,j+1,1), State, 1) )
-        b4 = real( ibits(bv(i  ,j-1,0), State, 1) * ibits(bv(i  ,j-1,1), State, 1) )
+        b0 = real( ibits(bv(i  , j  , k-1), State, 1) * ibits(bv(i  , j  , k), State, 1) )
+        b1 = real( ibits(bv(i+1, j  , k-1), State, 1) * ibits(bv(i+1, j  , k), State, 1) )
+        b2 = real( ibits(bv(i-1, j  , k-1), State, 1) * ibits(bv(i-1, j  , k), State, 1) )
+        b3 = real( ibits(bv(i  , j+1, k-1), State, 1) * ibits(bv(i  , j+1, k), State, 1) )
+        b4 = real( ibits(bv(i  , j-1, k-1), State, 1) * ibits(bv(i  , j-1, k), State, 1) )
         
-        r  = 2.0*w_ref - 0.5*(v0+c3)
-        d1 = v1*b1 + (1.0-b1)*r
-        d2 = v2*b2 + (1.0-b2)*r
-        d3 = v3*b3 + (1.0-b3)*r
-        d4 = v4*b4 + (1.0-b4)*r
+        r  = 2.0 * w_ref - 0.5 * (v0 + c3)
+        d1 = v1 * b1 + (1.0 - b1) * r
+        d2 = v2 * b2 + (1.0 - b2) * r
+        d3 = v3 * b3 + (1.0 - b3) * r
+        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0-b0
-        uu = (c1 + 0.5*(d1-d2))*b0 + b5*u_ref
-        vv = (c2 + 0.5*(d3-d4))*b0 + b5*v_ref
-        ww =  c3               *b0 + b5*w_ref
+        b5 = 1.0 - b0
+        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
+        vv = (c2 + 0.5 * (d3 - d4)) * b0 + b5 * v_ref
+        ww =  c3                    * b0 + b5 * w_ref
                 
-        do k=1-g, 0
-          v(1,i,j,k) = uu
-          v(2,i,j,k) = vv
-          v(3,i,j,k) = ww
+        do kk=1-g, 0
+          v(1, i, j, kk) = uu
+          v(2, i, j, kk) = vv
+          v(3, i, j, kk) = ww
         end do
+
       end do
       end do
-      
+!$OMP END DO
+
       flop = flop + rkx*50.0
       
+
     case (Z_plus)
+      k = kx
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
       do j=1,jx
       do i=1,ix
-        c1 = v(1, i,j,kx)
-        c2 = v(2, i,j,kx)
-        c3 = v(3, i,j,kx)
+        c1 = v(1, i, j, k)
+        c2 = v(2, i, j, k)
+        c3 = v(3, i, j, k)
         
-        v0=      v(i  ,j  ,kx+1,3)
-        v1= 0.5*(v(i+1,j  ,kx+1,3)+v(i+1,j  ,kx,3))
-        v2= 0.5*(v(i-1,j  ,kx+1,3)+v(i-1,j  ,kx,3))
-        v3= 0.5*(v(i  ,j+1,kx+1,3)+v(i  ,j+1,kx,3))
-        v4= 0.5*(v(i  ,j-1,kx+1,3)+v(i  ,j-1,kx,3))
+        v0=        v(3, i  , j  , k+1)
+        v1= 0.5 * (v(3, i+1, j  , k+1) + v(3, i+1, j  , k))
+        v2= 0.5 * (v(3, i-1, j  , k+1) + v(3, i-1, j  , k))
+        v3= 0.5 * (v(3, i  , j+1, k+1) + v(3, i  , j+1, k))
+        v4= 0.5 * (v(3, i  , j-1, k+1) + v(3, i  , j-1, k))
         
-        b0 = real( ibits(bv(i  ,j  ,kx+1), State, 1) * ibits(bv(i  ,j  ,kx), State, 1) )
-        b1 = real( ibits(bv(i+1,j  ,kx+1), State, 1) * ibits(bv(i+1,j  ,kx), State, 1) )
-        b2 = real( ibits(bv(i-1,j  ,kx+1), State, 1) * ibits(bv(i-1,j  ,kx), State, 1) )
-        b3 = real( ibits(bv(i  ,j+1,kx+1), State, 1) * ibits(bv(i  ,j+1,kx), State, 1) )
-        b4 = real( ibits(bv(i  ,j-1,kx+1), State, 1) * ibits(bv(i  ,j-1,kx), State, 1) )
+        b0 = real( ibits(bv(i  , j  , k+1), State, 1) * ibits(bv(i  , j  , k), State, 1) )
+        b1 = real( ibits(bv(i+1, j  , k+1), State, 1) * ibits(bv(i+1, j  , k), State, 1) )
+        b2 = real( ibits(bv(i-1, j  , k+1), State, 1) * ibits(bv(i-1, j  , k), State, 1) )
+        b3 = real( ibits(bv(i  , j+1, k+1), State, 1) * ibits(bv(i  , j+1, k), State, 1) )
+        b4 = real( ibits(bv(i  , j-1, k+1), State, 1) * ibits(bv(i  , j-1, k), State, 1) )
         
-        r  = 2.0*w_ref - 0.5*(v0+c3)
-        d1 = v1*b1 + (1.0-b1)*r
-        d2 = v2*b2 + (1.0-b2)*r
-        d3 = v3*b3 + (1.0-b3)*r
-        d4 = v4*b4 + (1.0-b4)*r
+        r  = 2.0 * w_ref - 0.5 * (v0 + c3)
+        d1 = v1 * b1 + (1.0 - b1) * r
+        d2 = v2 * b2 + (1.0 - b2) * r
+        d3 = v3 * b3 + (1.0 - b3) * r
+        d4 = v4 * b4 + (1.0 - b4) * r
 
-        b5 = 1.0-b0
-        uu = (c1 + 0.5*(d1-d2))*b0 + b5*u_ref
-        vv = (c2 + 0.5*(d3-d4))*b0 + b5*v_ref
-        ww =  c3               *b0 + b5*w_ref
+        b5 = 1.0 - b0
+        uu = (c1 + 0.5 * (d1 - d2)) * b0 + b5 * u_ref
+        vv = (c2 + 0.5 * (d3 - d4)) * b0 + b5 * v_ref
+        ww =  c3                    * b0 + b5 * w_ref
                 
-        do k=kx+1, kx+g
-          v(1,i,j,k) = uu
-          v(2,i,j,k) = vv
-          v(3,i,j,k) = ww
+        do kk=kx+1, kx+g
+          v(1, i, j, kk) = uu
+          v(2, i, j, kk) = vv
+          v(3, i, j, kk) = ww
         end do
+
       end do
       end do
-      
+!$OMP END DO
+
       flop = flop + rkx*50.0
       
+
     case default
     end select FACES
+
+!$OMP END PARALLEL
 
     return 
     end subroutine cbc_vobc_tfree

@@ -162,6 +162,7 @@
 #define FACING_E   4
 #define FACING_W   3
 #define VLD_CNVG   2
+#define VIBC_1ST   1
 
 // エンコードビット　V, H1
 #define BC_FACE_T  25

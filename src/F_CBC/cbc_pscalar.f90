@@ -41,7 +41,7 @@
     real                                                        ::  ck, u_ref, v_ref, w_ref, dh, dh1, flop, actv
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                        ::  a_e, a_w, a_n, a_s, a_t, a_b
-    real                                                        ::  d1, d2, d3, d4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4
+    real                                                        ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4
     real                                                        ::  Fr_r, Fr_l, Fl_r, Fl_l
     real                                                        ::  cr, cl, acr, acl, cnv, ss, b
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
@@ -182,10 +182,10 @@
         if ( b_w2 == 0 ) Fw2 = Fw1
       endif
       
-      d4 = Fe2 - Fe1
-      d3 = Fe1 - Fp0
-      d2 = Fp0 - Fw1
-      d1 = Fw1 - Fw2 ! 4 flop
+      dv4 = Fe2 - Fe1
+      dv3 = Fe1 - Fp0
+      dv2 = Fp0 - Fw1
+      dv1 = Fw1 - Fw2 ! 4 flop
       
       include 'muscl.h' ! 36 flop
       
@@ -213,10 +213,10 @@
         if ( b_s2 == 0 ) Fs2 = Fs1
       endif
       
-      d4 = Fn2 - Fn1
-      d3 = Fn1 - Fp0
-      d2 = Fp0 - Fs1
-      d1 = Fs1 - Fs2
+      dv4 = Fn2 - Fn1
+      dv3 = Fn1 - Fp0
+      dv2 = Fp0 - Fs1
+      dv1 = Fs1 - Fs2
       
       include 'muscl.h'
       
@@ -242,10 +242,10 @@
         if ( b_b2 == 0 ) Fb2 = Fb1
       endif
       
-      d4 = Ft2 - Ft1
-      d3 = Ft1 - Fp0
-      d2 = Fp0 - Fb1
-      d1 = Fb1 - Fb2
+      dv4 = Ft2 - Ft1
+      dv3 = Ft1 - Fp0
+      dv2 = Fp0 - Fb1
+      dv1 = Fb1 - Fb2
       
       include 'muscl.h'
       

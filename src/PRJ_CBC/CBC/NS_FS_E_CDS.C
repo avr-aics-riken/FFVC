@@ -314,7 +314,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
   TIMING_start(tm_div_pvec);
   flop_count = 0.0;
-  cds_div_(src0, sz, gc, &coef, vc, (int*)bcv, cut, &flop_count);
+  cds_div_(src0, sz, gc, &coef, vc, (int*)bcv, cut, v00, &flop_count);
   TIMING_stop(tm_div_pvec, flop_count);
   
   // Poissonソース項の速度境界条件（VBC）面による修正

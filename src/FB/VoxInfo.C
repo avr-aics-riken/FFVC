@@ -3792,14 +3792,14 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
  @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
  @retval エンコードしたセル数
  @param order cmp[]のインデクス
- @param id  CellID
+ @param id 境界条件ID
  @param bv BCindex V
  @param bp BCindex P
  @param cut 距離情報
  @param cut_id カット点ID
  @param vec 境界面の法線
  @param bc_dir BCの位置，指定法線と同じ側(1)か反対側(2)
- @note 指定法線とセルのカット方向ベクトルの内積で判断
+ @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVIBC_1STにマスクビットを立てる
  */
 unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order, 
                                   const unsigned id, 
@@ -3856,7 +3856,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
           s   = bv[m_p];
           q   = bp[m_p];
           
-          if ( IS_FLUID(s) ) { // 流体でdefaceであるセルがテスト対象
+          if ( IS_FLUID(s) ) { // 流体かつdefaceであるセルがテスト対象
             // 各方向のID
             id_w = (bid >> 0)  & MASK_5;
             id_e = (bid >> 5)  & MASK_5;
@@ -3869,6 +3869,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_w == idd) && (dot(e_w, nv) < 0.0) ) {
               s |= (order << BC_FACE_W);
               q = offBit(q, FACING_W);
+              q = onBit(q, VIBC_1ST);
               g++;
             }
             
@@ -3876,6 +3877,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_e == idd) && (dot(e_e, nv) < 0.0) ) {
               s |= (order << BC_FACE_E);
               q = offBit(q, FACING_E);
+              q = onBit(q, VIBC_1ST);
               g++;
             }
             
@@ -3883,6 +3885,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_s == idd) && (dot(e_s, nv) < 0.0) ) {
               s |= (order << BC_FACE_S);
               q = offBit(q, FACING_S);
+              q = onBit(q, VIBC_1ST);
               g++;
             }
             
@@ -3890,6 +3893,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_n == idd) && (dot(e_n, nv) < 0.0) ) {
               s |= (order << BC_FACE_N);
               q = offBit(q, FACING_N);
+              q = onBit(q, VIBC_1ST);
               g++;
             }
             
@@ -3897,14 +3901,15 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_b == idd) && (dot(e_b, nv) < 0.0) ) {
               s |= (order << BC_FACE_B);
               q = offBit(q, FACING_B);
+              q = onBit(q, VIBC_1ST);
               g++;
             }
             
             // Z+
             if ( (id_t == idd) && (dot(e_t, nv) < 0.0) ) {
-              printf("t %3d : %e  dir=%d\n", k, dot(e_t, nv), bc_dir);
               s |= (order << BC_FACE_T);
               q = offBit(q, FACING_T);
+              q = onBit(q, VIBC_1ST);
               g++;
             }
           } // if fluid
@@ -3986,7 +3991,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (j=1; j<=jx; j++) {
             m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
-            mt= FBUtility::getFindexS3D(size, guide, 0  , j, k);
+            
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -3998,7 +4003,8 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
               
               // チェック
               if ( cw == 1 ) {
-                //if ( IS_FLUID(bv[m]) ) {
+                mt= FBUtility::getFindexS3D(size, guide, 0  , j, k);
+                
                 if ( sw==1 ) { // ガイドセルが流体であることを要求
                   if ( !IS_FLUID(bv[mt]) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary X- is required\n");
@@ -4010,8 +4016,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
                     Hostonly_ printf("Error : Solid cell at Outer boundary X- is required\n");
                     Exit(0);
                   }
-                }            
-                //}              
+                }             
               }
               
             }// IS_FLUID
@@ -4025,7 +4030,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (j=1; j<=jx; j++) {
             m = FBUtility::getFindexS3D(size, guide, ix  , j, k);
-            mt= FBUtility::getFindexS3D(size, guide, ix+1, j, k);
+            
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4038,7 +4043,8 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
               
               // チェック
               if ( cw == 1 ) {
-                //if ( IS_FLUID(bv[m]) ) {
+                mt= FBUtility::getFindexS3D(size, guide, ix+1, j, k);
+                
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary X+ is required\n");
@@ -4050,8 +4056,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
                     Hostonly_ printf("Error : Solid cell at Outer boundary X+ is required\n");
                     Exit(0);
                   }
-                }            
-                //}
+                }
               }
               
             }// IS_FLUID
@@ -4065,7 +4070,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
-            mt= FBUtility::getFindexS3D(size, guide, i, 0  , k);
+            
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4078,7 +4083,8 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
               
               // チェック
               if ( cw == 1 ) {
-                //if ( IS_FLUID(bv[m]) ) {
+                mt= FBUtility::getFindexS3D(size, guide, i, 0  , k);
+                
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Y- is required\n");
@@ -4090,8 +4096,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
                     Hostonly_ printf("Error : Solid cell at Outer boundary Y- is required\n");
                     Exit(0);
                   }
-                }            
-                //} 
+                }
               }
               
             }// IS_FLUID
@@ -4105,7 +4110,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, jx  , k);
-            mt= FBUtility::getFindexS3D(size, guide, i, jx+1, k);
+            
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4118,7 +4123,8 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
               
               // チェック
               if ( cw == 1 ) {
-                //if ( IS_FLUID(bv[m]) ) {
+                mt= FBUtility::getFindexS3D(size, guide, i, jx+1, k);
+                
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Y+ is required\n");
@@ -4130,8 +4136,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
                     Hostonly_ printf("Error : Solid cell at Outer boundary Y+ is required\n");
                     Exit(0);
                   }
-                }            
-                //}
+                }
               }
               
             }// IS_FLUID
@@ -4145,7 +4150,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (j=1; j<=jx; j++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
-            mt= FBUtility::getFindexS3D(size, guide, i, j, 0  );
+            
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4158,7 +4163,8 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
               
               // チェック
               if ( cw == 1 ) {
-                //if ( IS_FLUID(bv[m]) ) {
+                mt= FBUtility::getFindexS3D(size, guide, i, j, 0  );
+                
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Z- is required\n");
@@ -4170,8 +4176,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
                     Hostonly_ printf("Error : Solid cell at Outer boundary Z- is required\n");
                     Exit(0);
                   }
-                }            
-                //}
+                }
               }
               
             }// IS_FLUID
@@ -4185,7 +4190,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (j=1; j<=jx; j++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, kx  );
-            mt= FBUtility::getFindexS3D(size, guide, i, j, kx+1);
+            
             s = bv[m];
             
             if ( IS_FLUID(s) ) {
@@ -4198,7 +4203,8 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
               
               // チェック
               if ( cw == 1 ) {
-                //if ( IS_FLUID(bv[m]) ) {
+                mt= FBUtility::getFindexS3D(size, guide, i, j, kx+1);
+                
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Z+ is required\n");
@@ -4210,8 +4216,7 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
                     Hostonly_ printf("Error : Solid cell at Outer boundary Z+ is required\n");
                     Exit(0);
                   }
-                }            
-                //}              
+                }
               }
               
             }// IS_FLUID

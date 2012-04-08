@@ -24,7 +24,7 @@ integer     ::  obc_periodic, obc_outflow, obc_mask
 integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec
 integer     ::  facing_t, facing_b, facing_n, facing_s, facing_e, facing_w, vld_cnvg
 integer     ::  gma_T, gma_B, gma_N, gma_S, gma_E, gma_W, h_diag
-integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5
+integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vibc_1st
 
 parameter ( bc_mask30 = Z'3fffffff') ! 16進表記，VBCの6面(30bit)をまとめたマスク
 parameter ( bitw_8 = 8)  ! FBDefine.h MASK_8 8bit幅
@@ -77,6 +77,7 @@ parameter ( facing_s = 5 ) ! FBDefine.h FACING_S
 parameter ( facing_e = 4 ) ! FBDefine.h FACING_E
 parameter ( facing_w = 3 ) ! FBDefine.h FACING_W
 parameter ( vld_cnvg = 2 ) ! FBDefine.h VLD_CNVG
+parameter ( vibc_1st = 1 ) ! FBDefine.h VIBC_1ST
 
 ! 速度，温度1のビットフラグ
 parameter ( bc_face_T = 25 ) ! FBDefine.h BC_FACE_T
