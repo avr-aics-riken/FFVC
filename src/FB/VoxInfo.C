@@ -3060,16 +3060,17 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
 }
 
 /**
- @fn unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
+ @fn unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence)
  @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
  @param[in/out] bx BCindex P
  @param[in] cut 距離情報
+ @param convergence カットのあるセルは収束判定をしないオプション（trueの時）
  @retval 固体表面セル数
  @note 
  - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
  - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
  */
-unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
+unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
@@ -3220,6 +3221,49 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut)
   }
   
   Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
+  
+  
+  // カットのあるセルの収束判定をしないオプション
+  if ( convergence ) {
+    
+    for (k=1; k<=kx; k++) {
+      for (j=1; j<=jx; j++) {
+        for (i=1; i<=ix; i++) {
+          m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
+          s = bx[m_p];
+          
+          if ( IS_FLUID( s ) ) {
+            m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
+            pos = &cut[m];
+            
+            q0 = floor(pos[0]);
+            q1 = floor(pos[1]);
+            q2 = floor(pos[2]);
+            q3 = floor(pos[3]);
+            q4 = floor(pos[4]);
+            q5 = floor(pos[5]);
+            
+            // 収束判定の有効フラグ 
+            if ( (q0+q1+q2+q3+q4+q5) < 6.0 ) {
+              s = offBit(s, VLD_CNVG);    // Out of scope
+              g++;
+            }
+            
+            bx[m_p] = s;
+          }
+        }
+      }
+    }
+    
+    if( para_mng->IsParallel() ) {
+      unsigned tmp = g;
+      para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    }
+    
+    Hostonly_ printf("\tThe number of cells which are excludedd to convergence judgement by cut = %d\n\n", g);
+    
+  }
+  
   
   return c;
 }
@@ -5467,7 +5511,7 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
     surface = encPbit_N_Binary(bcp);    // Binary
   }
   else {
-    surface = encPbit_N_Cut(bcp, cut);  // Cut-Distance
+    surface = encPbit_N_Cut(bcp, cut, true);  // Cut-Distance
   }
   
   // 外部境界のビットフラグをエンコード
@@ -5489,7 +5533,7 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
         break;
         
       case OBC_TRC_FREE:
-        encPbit_OBC(face, bcp, "Dirichlet", false);
+        encPbit_OBC(face, bcp, "Neumann", false); // test
         break;
         
       case OBC_OUTFLOW:

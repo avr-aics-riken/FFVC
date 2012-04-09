@@ -771,3 +771,173 @@
 
     return
     end subroutine cbc_helicity
+
+!  *******************************************************
+!> @subroutine cbc_face_avr_sampling (p, sz, g, face, avr)
+!! @brief 指定面の平均圧力を求める
+!! @param p 圧力
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param face 外部境界面の番号
+!! @param avr 平均値
+!<
+    subroutine cbc_face_avr_sampling (p, sz, g, face, avr)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer, dimension(3)                                     ::  sz
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
+    real                                                      ::  avr
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+    
+    avr = 0.0
+
+!$OMP PARALLEL REDUCTION(+:avr) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, avr, face)
+
+    FACES : select case (face)
+    
+    case (X_minus)
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      do k=1,kx
+      do j=1,jx
+        avr = avr + p(1,j,k)
+      end do
+      end do
+!$OMP END DO
+      
+    case (X_plus)
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      do k=1,kx
+      do j=1,jx
+        avr = avr + p(ix,j,k)
+      end do
+      end do
+!$OMP END DO
+      
+    case (Y_minus)
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      do k=1,kx
+      do i=1,ix
+        avr = avr + p(i,1,k)
+      end do
+      end do
+!$OMP END DO
+      
+    case (Y_plus)
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      do k=1,kx
+      do i=1,ix
+        avr = avr + p(i,jx,k)
+      end do
+      end do
+!$OMP END DO
+      
+    case (Z_minus)
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      do j=1,jx
+      do i=1,ix
+        avr = avr + p(i,j,1)
+      end do
+      end do
+!$OMP END DO
+    
+    case (Z_plus)
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+      do j=1,jx
+      do i=1,ix
+        avr = avr + p(i,j,kx)
+      end do
+      end do
+!$OMP END DO
+      
+    case default
+    end select FACES
+
+!$OMP END PARALLEL
+
+    return
+    end subroutine cbc_face_avr_sampling
+
+!  **********************************************
+!> @subroutine cbc_shift_pressure (p, sz, g, avr)
+!! @brief 圧力を指定値だけシフトする
+!! @param p 圧力
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param avr 平均値
+!<
+    subroutine cbc_shift_pressure (p, sz, g, avr)
+    implicit none
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
+    real                                                      ::  avr
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, avr)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+      p(i,j,k) = p(i,j,k) - avr
+    end do
+    end do
+    end do
+!$OMP END DO
+
+!$OMP END PARALLEL
+
+    return
+    end subroutine cbc_shift_pressure

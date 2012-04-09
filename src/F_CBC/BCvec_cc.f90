@@ -2311,7 +2311,6 @@
       
 
     case (Z_minus)
-      k = 1
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -2324,14 +2323,14 @@
       do j=1,jx
       do i=1,ix
 
-        v1 = 0.5 * (v(3, i+1, j  , k-1) + v(3, i+1, j  , k))
-        v2 = 0.5 * (v(3, i-1, j  , k-1) + v(3, i-1, j  , k))
-        v3 = 0.5 * (v(3, i  , j+1, k-1) + v(3, i  , j+1, k))
-        v4 = 0.5 * (v(3, i  , j-1, k-1) + v(3, i  , j-1, k))
+        v1 = 0.5 * (v(3, i+1, j  , 0) + v(3, i+1, j  , 1))
+        v2 = 0.5 * (v(3, i-1, j  , 0) + v(3, i-1, j  , 1))
+        v3 = 0.5 * (v(3, i  , j+1, 0) + v(3, i  , j+1, 1))
+        v4 = 0.5 * (v(3, i  , j-1, 0) + v(3, i  , j-1, 1))
 
-        uu = v(1, i, j, k) + 0.5 * (v1 - v2)
-        vv = v(2, i, j, k) + 0.5 * (v3 - v4)
-        ww = v(3, i, j, k)
+        uu = v(1, i, j, 1) + 0.5 * (v1 - v2)
+        vv = v(2, i, j, 1) + 0.5 * (v3 - v4)
+        ww = v(3, i, j, 1)
                 
         do kk=1-g, 0
           v(1, i, j, kk) = uu
@@ -2390,6 +2389,207 @@
     return 
     end subroutine cbc_vobc_tfree
 
+!  *********************************************
+!> @subroutine cbc_vobc_neumann (v, sz, g, face)
+!! @brief 速度の外部境界：　トラクションフリー
+!! @param v 速度ベクトル
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param face 外部境界面の番号
+!<
+    subroutine cbc_vobc_neumann (v, sz, g, face)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer, dimension(3)                                     ::  sz
+    real                                                      ::  uu, vv, ww
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g) &
+!$OMP PRIVATE(i, j, k, uu, vv, ww)
+
+    FACES : select case (face)
+    case (X_minus)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+      do k=1,kx
+      do j=1,jx
+
+        uu = v(1, 1, j, k)
+        vv = v(2, 1, j, k)
+        ww = v(3, 1, j, k)
+
+        do i=1-g, 0
+          v(1, i, j, k) = uu
+          v(2, i, j, k) = vv
+          v(3, i, j, k) = ww
+        end do
+
+      end do
+      end do
+!$OMP END DO
+      
+
+    case (X_plus)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+      do k=1,kx
+      do j=1,jx
+
+        uu = v(1, ix, j, k)
+        vv = v(2, ix, j, k)
+        ww = v(3, ix, j, k)
+        
+        do i=ix+1, ix+g
+          v(1, i, j, k) = uu
+          v(2, i, j, k) = vv
+          v(3, i, j, k) = ww
+        end do
+
+      end do
+      end do
+!$OMP END DO
+      
+
+    case (Y_minus)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+      do k=1,kx
+      do i=1,ix
+        
+        uu = v(1, i, 1, k)
+        vv = v(2, i, 1, k)
+        ww = v(3, i, 1, k)
+                
+        do j=1-g, 0
+          v(1, i, j, k) = uu
+          v(2, i, j, k) = vv
+          v(3, i, j, k) = ww
+        end do
+
+      end do
+      end do
+!$OMP END DO
+      
+
+    case (Y_plus)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+      do k=1,kx
+      do i=1,ix
+
+        uu = v(1, i, jx, k)
+        vv = v(2, i, jx, k)
+        ww = v(3, i, jx, k)
+                
+        do j=jx+1, jx+g
+          v(1, i, j, k) = uu
+          v(2, i, j, k) = vv
+          v(3, i, j, k) = ww
+        end do
+
+      end do
+      end do
+!$OMP END DO
+      
+
+    case (Z_minus)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+      do j=1,jx
+      do i=1,ix
+
+        uu = v(1, i, j, 1)
+        vv = v(2, i, j, 1)
+        ww = v(3, i, j, 1)
+                
+        do k=1-g, 0
+          v(1, i, j, k) = uu
+          v(2, i, j, k) = vv
+          v(3, i, j, k) = ww
+        end do
+
+      end do
+      end do
+!$OMP END DO
+      
+
+    case (Z_plus)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+      do j=1,jx
+      do i=1,ix
+
+        uu = v(1, i, j, kx)
+        vv = v(2, i, j, kx)
+        ww = v(3, i, j, kx)
+                
+        do k=kx+1, kx+g
+          v(1, i, j, k) = uu
+          v(2, i, j, k) = vv
+          v(3, i, j, k) = ww
+        end do
+
+      end do
+      end do
+!$OMP END DO
+      
+
+    case default
+    end select FACES
+
+!$OMP END PARALLEL
+
+    return 
+    end subroutine cbc_vobc_neumann
+    
 !  *****************************************************************
 !> @subroutine cbc_vibc_drchlt (v, sz, g, st, ed, v00, bv, odr, vec)
 !! @brief 計算領域内部の速度指定境界条件を設定するために必要な参照値をセットする
@@ -3993,4 +4193,192 @@
 
     return
     end subroutine cds_pvec_vibc_specv
+
+!  ********************************************************************************
+!> @subroutine cds_pvec_vibc_specv (wv, sz, g, st, ed, dh, v00, bv, odr, vec, flop)
+!! @brief 内部速度境界条件による対流項と粘性項の流束の修正
+!! @param[out] wv 疑似ベクトルの空間項の評価値
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param st ループの開始インデクス
+!! @param ed ループの終了インデクス
+!! @param dh 格子幅
+!! @param v00 参照速度
+!! @param rei Reynolds数の逆数
+!! @param v 速度ベクトル（u^n, セルセンタ）
+!! @param bv BCindex V
+!! @param odr 内部境界処理時の速度境界条件のエントリ
+!! @param vec 指定する速度ベクトル
+!! @param[out] flop
+!! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度，カット位置に関わらず指定速度で流束を計算
+!! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
+!<
+    subroutine cds_pvec_vibc_specv2 (wv, sz, g, st, ed, dh, v00, bv, odr, vec, flop)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+    integer, dimension(3)                                       ::  sz, st, ed
+    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real                                                        ::  dh, dh1, flop
+    real                                                        ::  u_ref, v_ref, w_ref, m1, r1
+    real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
+    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                        ::  fxu_r, fxu_l, fxv_r, fxv_l, fxw_r, fxw_l
+    real                                                        ::  fyu_r, fyu_l, fyv_r, fyv_l, fyw_r, fyw_l
+    real                                                        ::  fzu_r, fzu_l, fzv_r, fzv_l, fzw_r, fzw_l
+    real                                                        ::  cx1, cx2, cx3, cy1, cy2, cy3, cz1, cz2, cz3
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  wv
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    real, dimension(0:3)                                        ::  v00
+    real, dimension(3)                                          ::  vec
+    
+    is = st(1)
+    ie = ed(1)
+    js = st(2)
+    je = ed(2)
+    ks = st(3)
+    ke = ed(3)
+    
+    dh1= 1.0/dh
+
+    ! 参照座標系の速度
+    u_ref = v00(1)
+    v_ref = v00(2)
+    w_ref = v00(3)
+    
+    ! u_bcは境界速度
+    u_bc = vec(1)
+    v_bc = vec(2)
+    w_bc = vec(3)
+    
+    ! u_bc_refは参照座標系での境界速度
+    u_bc_ref = u_bc + u_ref
+    v_bc_ref = v_bc + v_ref
+    w_bc_ref = w_bc + w_ref
+    
+    cx1 = u_bc * u_bc_ref
+    cx2 = u_bc * v_bc_ref
+    cx3 = u_bc * w_bc_ref
+    
+    cy1 = v_bc * u_bc_ref
+    cy2 = v_bc * v_bc_ref
+    cy3 = v_bc * w_bc_ref
+    
+    cz1 = w_bc * u_bc_ref
+    cz2 = w_bc * v_bc_ref
+    cz3 = w_bc * w_bc_ref
+    
+    m1 = 0.0
+    
+    flop = flop + 20.0 ! DP 25 flop
+
+!$OMP PARALLEL REDUCTION(+:m1) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, dh1, odr) &
+!$OMP FIRSTPRIVATE(cx1, cx2, cx3, cy1, cy2, cy3, cz1, cz2, cz3) &
+!$OMP PRIVATE(m1, bvx, cnv_u, cnv_v, cnv_w) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP PRIVATE(fxu_r, fxu_l, fxv_r, fxv_l, fxw_r, fxw_l) &
+!$OMP PRIVATE(fyu_r, fyu_l, fyv_r, fyv_l, fyw_r, fyw_l) &
+!$OMP PRIVATE(fzu_r, fzu_l, fzv_r, fzv_l, fzw_r, fzw_l)
+    
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+    
+    do k=ks,ke
+    do j=js,je
+    do i=is,ie
+      bvx = bv(i,j,k)
+
+      if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
+        cnv_u = 0.0
+        cnv_v = 0.0
+        cnv_w = 0.0
+      
+        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC) 
+        c_e = 0.0
+        c_w = 0.0
+        c_n = 0.0
+        c_s = 0.0
+        c_t = 0.0
+        c_b = 0.0
+        if ( ibits(bvx, bc_face_E, bitw_5) == odr ) c_e = 1.0
+        if ( ibits(bvx, bc_face_W, bitw_5) == odr ) c_w = 1.0
+        if ( ibits(bvx, bc_face_N, bitw_5) == odr ) c_n = 1.0
+        if ( ibits(bvx, bc_face_S, bitw_5) == odr ) c_s = 1.0
+        if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
+        if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
+      
+        ! X方向 ---------------------------------------
+        if ( c_w == 1.0 ) then
+          fxu_l = cx1
+          fxv_l = cx2
+          fxw_l = cx3
+        end if
+        
+        if ( c_e == 1.0 ) then
+          fxu_r = cx1
+          fxv_r = cx2
+          fxw_r = cx3
+        end if
+        
+        cnv_u = cnv_u + fxu_r*c_e - fxu_l*c_w
+        cnv_v = cnv_v + fxv_r*c_e - fxv_l*c_w
+        cnv_w = cnv_w + fxw_r*c_e - fxw_l*c_w ! 12 flops
+			
+        ! Y方向 ---------------------------------------
+        if ( c_s == 1.0 ) then
+          fyu_l = cy1
+          fyv_l = cy2
+          fyw_l = cy3
+        end if
+        
+        if ( c_n == 1.0 ) then
+          fyu_r = cy1
+          fyv_r = cy2
+          fyw_r = cy3
+        end if
+        
+        cnv_u = cnv_u + fyu_r*c_n - fyu_l*c_s
+        cnv_v = cnv_v + fyv_r*c_n - fyv_l*c_s
+        cnv_w = cnv_w + fyw_r*c_n - fyw_l*c_s
+			
+        ! Z方向 ---------------------------------------
+        if ( c_b == 1.0 ) then
+          fzu_l = cz1
+          fzv_l = cz2
+          fzw_l = cz3
+        end if
+
+        if ( c_t == 1.0 ) then
+          fzu_r = cz1
+          fzv_r = cz2
+          fzw_r = cz3
+        end if
+        
+        cnv_u = cnv_u + fzu_r*c_t - fzu_l*c_b
+        cnv_v = cnv_v + fzv_r*c_t - fzv_l*c_b
+        cnv_w = cnv_w + fzw_r*c_t - fzw_l*c_b
+
+        wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 )
+        wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 )
+        wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 ) ! 6 flops
+        m1 = m1 + 1.0
+        
+      endif
+    end do
+    end do
+    end do
+!$OMP END DO
+    
+!$OMP END PARALLEL
+
+    flop = flop + real(m1)*42.0
+
+    return
+    end subroutine cds_pvec_vibc_specv2
     

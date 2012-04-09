@@ -77,7 +77,7 @@ protected:
   unsigned encodeOrder         (unsigned order, unsigned id, int* m, unsigned* bx);
   unsigned encPbit_D_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
   unsigned encPbit_N_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
-  unsigned encPbit_N_Cut       (unsigned* bx, float* cut);
+  unsigned encPbit_N_Cut       (unsigned* bx, float* cut, const bool convergence);
   unsigned encPbit_N_Binary    (unsigned* bx);
   unsigned encQface            (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface, bool flag);
   unsigned encQfaceHT_B        (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);

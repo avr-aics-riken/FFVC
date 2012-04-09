@@ -910,6 +910,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
           cds_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &flop);
+          cds_pvec_vibc_specv2_(wv, dim_sz, gc, st, ed, &dh, v00, (int*)bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW ) {
         }      
@@ -1212,7 +1213,8 @@ void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, 
         break;
         
       case OBC_TRC_FREE:
-        cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
+        //cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
+        cbc_vobc_neumann_(v, dim_sz, gc, &face);
         break;
         
       case OBC_IN_OUT:
