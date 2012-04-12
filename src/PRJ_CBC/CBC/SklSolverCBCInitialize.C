@@ -219,8 +219,9 @@ SklSolverCBC::SklSolverInitialize() {
 
     }
     else { // Intrinsic problem
-      // cutをアロケートする
+      // cutをアロケートし，初期値1.0をセット
       setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      
       if ( C.Mode.Example == id_Sphere ) {
         Ex->setup_cut(mid, &C, G_org, cut);
       }

@@ -909,8 +909,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
 
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
-          cds_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &flop);
-          cds_pvec_vibc_specv2_(wv, dim_sz, gc, st, ed, &dh, v00, (int*)bv, &n, vec, &flop);
+          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW ) {
         }      
@@ -926,11 +925,11 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
         
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop);
+          cbc_pvec_vibc_specv_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW ) {
           vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
-          cbc_pvec_vibc_oflow_(wv, dim_sz, gc, st, ed, &dh, v00, &rei, v, (int*)bv, &n, vec, &v_mode, &flop);
+          cbc_pvec_vibc_oflow_(wv, dim_sz, gc, st, ed, &dh, &rei, v, (int*)bv, &n, vec, &flop);
         }      
       }
     }
@@ -947,27 +946,27 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
     switch ( typ ) {
       case OBC_SPEC_VEL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_pvec_vobc_specv_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        cbc_pvec_vobc_specv_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &face, &flop);
         break;
         
       case OBC_WALL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_pvec_vobc_wall_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        cbc_pvec_vobc_wall_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &face, &flop);
         break;
         
       case OBC_SYMMETRIC:
-        cbc_pvec_vobc_symtrc_(wv, dim_sz, gc, &dh, &rei, v, (int*)bv, &v_mode, &face, &flop);
+        cbc_pvec_vobc_symtrc_(wv, dim_sz, gc, &dh, &rei, v, (int*)bv, &face, &flop);
         break;
         
       case OBC_OUTFLOW:
         vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-        cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+        cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &face, &flop);
         break;
         
       case OBC_IN_OUT:
         if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
           vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-          cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &v_mode, &face, &flop);
+          cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &face, &flop);
         }
         break;
     }

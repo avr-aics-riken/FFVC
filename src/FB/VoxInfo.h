@@ -96,7 +96,6 @@ protected:
   void countVolumeEdge       (unsigned n, unsigned* bx, int* cc);
   void encActive             (unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned KOS);
   void encAmask_SymtrcBC     (int face, unsigned* bh2);
-  void encCut_OBC            (int face, float* cut);
   void encHbit               (unsigned* bh1, unsigned* bh2);
   void encPbit               (unsigned* bx);
   void encPbit_OBC           (int face, unsigned* bx, string key, bool dir);

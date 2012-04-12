@@ -796,7 +796,7 @@
     avr = 0.0
 
 !$OMP PARALLEL REDUCTION(+:avr) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, avr, face)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face)
 
     FACES : select case (face)
     

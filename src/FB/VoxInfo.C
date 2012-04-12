@@ -1592,98 +1592,6 @@ void VoxInfo::encAmask_SymtrcBC(int face, unsigned* bh2)
 }
 
 /**
- @fn void VoxInfo::encCut_OBC(int face, float* cut)
- @brief 外部境界が壁面ガイドセルの場合に距離情報をセットする
- @param face 外部境界面番号
- @param[in/out] cutPos 距離情報コンテナ
- */
-void VoxInfo::encCut_OBC(int face, float* cut)
-{
-  int i, j, k;
-  float pos=0.5f;
-  size_t m;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  switch (face) {
-    case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
-        i=1;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-            cut[m] = pos; 
-          }
-        }        
-      }
-      break;
-      
-    case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 1, i, j, k);
-            cut[m] = pos;
-          }
-        }
-      }
-      break;
-      
-    case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 2, i, j, k);
-            cut[m] = pos; 
-          }
-        }
-      }
-      break;
-      
-    case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 3, i, j, k);
-            cut[m] = pos;
-          }
-        }
-      }
-      break;
-      
-    case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 4, i, j, k);
-            cut[m] = pos;
-          }
-        }
-      }
-      break;
-      
-    case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, 5, i, j, k);
-            cut[m] = pos;
-          }
-        }
-      }
-      break;
-  }
-}
-
-/**
  @fn void VoxInfo::encHbit(unsigned* bh1, unsigned* bh2)
  @brief セルの各面を調べ，境界条件が設定されていれば，ビットをON
  @param bh1 BCindex H1
@@ -5823,12 +5731,87 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   BoundaryOuter* m_obc=NULL;
   unsigned F;
   
+  const float pos=0.5f;
+  size_t m;
+  
+  const int ix = (int)size[0];
+  const int jx = (int)size[1];
+  const int kx = (int)size[2];
+  
   for (int face=0; face<NOFACE; face++) {
     m_obc = BC->get_OBC_Ptr(face);
     F = m_obc->get_BCtype();
     
     if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) ) {
-      encCut_OBC(face, cut);
+      
+      switch (face) {
+        case X_MINUS:
+          if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+            for (int k=1; k<=kx; k++) {
+              for (int j=1; j<=jx; j++) {
+                m = FBUtility::getFindexS3Dcut(size, guide, X_MINUS, 1, j, k);
+                cut[m] = pos; 
+              }
+            }        
+          }
+          break;
+          
+        case X_PLUS:
+          if( pn.nID[X_PLUS] < 0 ){
+            for (int k=1; k<=kx; k++) {
+              for (int j=1; j<=jx; j++) {
+                m = FBUtility::getFindexS3Dcut(size, guide, X_PLUS, ix, j, k);
+                cut[m] = pos;
+              }
+            }
+          }
+          break;
+          
+        case Y_MINUS:
+          if( pn.nID[Y_MINUS] < 0 ){
+            for (int k=1; k<=kx; k++) {
+              for (int i=1; i<=ix; i++) {
+                m = FBUtility::getFindexS3Dcut(size, guide, Y_MINUS, i, 1, k);
+                cut[m] = pos; 
+              }
+            }
+          }
+          break;
+          
+        case Y_PLUS:
+          if( pn.nID[Y_PLUS] < 0 ){
+            for (int k=1; k<=kx; k++) {
+              for (int i=1; i<=ix; i++) {
+                m = FBUtility::getFindexS3Dcut(size, guide, Y_PLUS, i, jx, k);
+                cut[m] = pos;
+              }
+            }
+          }
+          break;
+          
+        case Z_MINUS:
+          if( pn.nID[Z_MINUS] < 0 ){
+            for (int j=1; j<=jx; j++) {
+              for (int i=1; i<=ix; i++) {
+                m = FBUtility::getFindexS3Dcut(size, guide, Z_MINUS, i, j, 1);
+                cut[m] = pos;
+              }
+            }
+          }
+          break;
+          
+        case Z_PLUS:
+          if( pn.nID[Z_PLUS] < 0 ){
+            for (int j=1; j<=jx; j++) {
+              for (int i=1; i<=ix; i++) {
+                m = FBUtility::getFindexS3Dcut(size, guide, Z_PLUS, i, j, kx);
+                cut[m] = pos;
+              }
+            }
+          }
+          break;
+      }
+      
     }
   }
   
