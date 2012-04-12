@@ -209,7 +209,6 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
   HTmode    = src->HTmode;
   Prdc_mode = src->Prdc_mode;
   Face_mode = src->Face_mode;
-  Face_inout= src->Face_inout;
   drv_dir   = src->drv_dir;
   drv_lid   = src->drv_lid;
   p         = src->p;

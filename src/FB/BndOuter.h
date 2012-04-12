@@ -39,7 +39,6 @@ protected:
   
 public: 
   unsigned mon_ref;     /// IN_OUT境界条件のときのBC格納番号
-  unsigned Face_inout;  /// 
   REAL_TYPE nv[3];      /// 
   REAL_TYPE ca[5];      /// 
   REAL_TYPE cb[5];      /// 
@@ -60,7 +59,7 @@ public:
     BCtype = BC_ID = drv_dir = HTref = 0;
     drv_lid = 0;
     mon_ref = pType = vType = hType = oflowType = 0;
-    HTmode = gc_medium = gc_id = Prdc_mode = Face_mode = Face_inout = 0;
+    HTmode = gc_medium = gc_id = Prdc_mode = Face_mode = 0;
     p = var1 = var2 = 0.0;
     valid_cell = 0;
 		for (int i=0; i<5; i++) ca[i] = cb[i] = 0.0;

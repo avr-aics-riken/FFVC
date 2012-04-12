@@ -101,13 +101,6 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     if( !(cvf = dc_cvf->GetData()) )  Exit(0);
   }
   
-  // IN_OUT境界条件のときのフラグ処理
-  if ( BC.has_InOut() ) {
-    TIMING_start(tm_flip_bf);
-    BC.flipDir_OBC(bcv, &C);
-    TIMING_stop(tm_flip_bf, 0.0);
-  }
-  
   // n stepの値を保持 >> In use (dc_v0, dc_p0)
   TIMING_start(tm_copy_array);
   d_length = (int)dc_v0->GetArrayLength();

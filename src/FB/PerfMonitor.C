@@ -47,6 +47,21 @@ void PerfMonitor::print(FILE* fp)
 
   fprintf(fp, "\n\t-----------------------------------------------------------------\n");
   fprintf(fp, "\tReport of Timing Statistics\n");
+  fprintf(fp, "\n");
+  fprintf(fp,"\tParallel Mode                    :   %s ", parallel_mode.c_str());
+  if (parallel_mode == "Serial") {
+    fprintf(fp, "\n");
+  } else if (parallel_mode == "Flat MPI") {
+    fprintf(fp, "(%d processes)\n", num_process);
+  } else if (parallel_mode == "OpenMP") {
+    fprintf(fp, "(%d threads)\n", num_threads);
+  } else if (parallel_mode == "Hybrid") {
+    fprintf(fp, "(%d processes x %d threads)\n", num_threads, num_process);
+  } else {
+    fprintf(fp, "Error\n");
+    Exit(0);
+  }
+  fprintf(fp, "\n");
   fprintf(fp, "\tTotal execution time            = %12.6e [sec]\n", m_total.m_time);
   fprintf(fp, "\tTotal time of measured sections = %12.6e [sec]\n", tot);
   fprintf(fp, "\n");

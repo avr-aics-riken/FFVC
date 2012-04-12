@@ -2990,7 +2990,6 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int gd = (int)guide;
   
   // ノイマンフラグ
   for (k=1; k<=kx; k++) {
@@ -3005,46 +3004,46 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
           ct = &cut[m];
 
           // X_MINUS
-          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+          //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
             if (ct[0] < 1.0) {          // 交点があるなら壁面なのでノイマン条件をセット
               s = offBit( s, BC_N_W );
             }
-          }
+          //}
           
           // X_PLUS
-          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+          //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
             if (ct[1] < 1.0) {
               s = offBit( s, BC_N_E );
             }
-          }
+          //}
           
           // Y_MINUS
-          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+          //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
             if (ct[2] < 1.0) {
               s = offBit( s, BC_N_S );
             }
-          }
+          //}
           
           // Y_PLUS
-          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+          //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
             if (ct[3] < 1.0) {
               s = offBit( s, BC_N_N );
             }
-          }
+          //}
           
           // Z_MINUS
-          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+          //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
             if (ct[4] < 1.0) {
               s = offBit( s, BC_N_B );
             }
-          }
+          //}
           
           // Z_PLUS
-          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+          //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
             if (ct[5] < 1.0) {
               s = offBit( s, BC_N_T );
             }
-          }
+          //}
           
           bx[m_p] = s;
         }
@@ -3239,58 +3238,58 @@ unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned*
           
           // 外部境界面は除外
           // X_MINUS
-          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+          //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
             if ( !IS_FLUID( s_w ) && (c_w == idd) ) { // Wセルが指定ID，かつ固体である
               d |= order; // dにエントリをエンコード
               s = offBit( s, BC_N_W );
               g++;
             }
-          }
+          //}
           
           // X_PLUS
-          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+          //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
             if ( !IS_FLUID( s_e ) && (c_e == idd) ) {
               d |= order;
               s = offBit( s, BC_N_E );
               g++;
             }
-          }
+          //}
           
           // Y_MINUS
-          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+          //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
             if ( !IS_FLUID( s_s ) && (c_s == idd) ) {
               d |= order;
               s = offBit( s, BC_N_S );
               g++;
             }
-          }
+          //}
           
           // Y_PLUS
-          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+          //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
             if ( !IS_FLUID( s_n ) && (c_n == idd) ) {
               d |= order;
               s = offBit( s, BC_N_N );
               g++;
             }
-          }
+          //}
           
           // Z_MINUS
-          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+          //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
             if ( !IS_FLUID( s_b ) && (c_b == idd) ) {
               d |= order;
               s = offBit( s, BC_N_B );
               g++;
             }
-          }
+          //}
           
           // Z_PLUS
-          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+          //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
             if ( !IS_FLUID( s_t ) && (c_t == idd) ) {
               d |= order;
               s = offBit( s, BC_N_T );
               g++;
             }
-          }
+          //}
           
           bcd[m] = d;
           bcp[m] = s;
@@ -3565,7 +3564,7 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
           
           // X-
           if ( c_w == idd ) {
-            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+            //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
               if ( !IS_FLUID( bv[m_w] ) ) { // 流入出セルが固体であるかをチェックする
                 s |= (order << BC_FACE_W);
                 q = offBit(q, FACING_W);
@@ -3575,12 +3574,12 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
                 Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
                 Exit(0);
               }
-            }
+            //}
           }
           
           // X+
           if ( c_e == idd ) {
-            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
               if ( !IS_FLUID( bv[m_e] ) ) { 
                 s |= (order << BC_FACE_E);
                 q = offBit(q, FACING_E);
@@ -3590,12 +3589,12 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
                 Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
                 Exit(0);
               }
-            }
+            //}
           }
           
           // Y-
           if ( c_s == idd ) {
-            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
               if ( !IS_FLUID( bv[m_s] ) ) { 
                 s |= (order << BC_FACE_S);
                 q = offBit(q, FACING_S);
@@ -3605,12 +3604,12 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
                 Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
                 Exit(0);
               }
-            }
+            //}
           }
           
           // Y+
           if ( c_n == idd ) {
-            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
               if ( !IS_FLUID( bv[m_n] ) ) { 
                 s |= (order << BC_FACE_N);
                 q = offBit(q, FACING_N);
@@ -3620,12 +3619,12 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
                 Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
                 Exit(0);
               }
-            }
+            //}
           }
           
           // Z-
           if ( c_b == idd ) {
-            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
               if ( !IS_FLUID( bv[m_b] ) ) { 
                 s |= (order << BC_FACE_B);
                 q = offBit(q, FACING_B);
@@ -3635,12 +3634,12 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
                 Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
                 Exit(0);
               }
-            }
+            //}
           }
           
           // Z+
           if ( c_t == idd ) {
-            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
               if ( !IS_FLUID( bv[m_t] ) ) { 
                 s |= (order << BC_FACE_T);
                 q = offBit(q, FACING_T);
@@ -3650,7 +3649,7 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
                 Hostonly_ printf("Error : SpecVel/Outflow face should be solid at [%d,%d,%d]\n",i,j,k);
                 Exit(0);
               }
-            }
+            //}
           }
           
           bv[m_p] = s;
@@ -3686,44 +3685,44 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
           
           // X-
           if ( c_w == idd ) {
-            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+            //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
               bv[m_w] = onBit( bv[m_w], STATE_BIT );
-            }
+            //}
           }
           
           // X+
           if ( c_e == idd ) {
-            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
               bv[m_e] = onBit( bv[m_e], STATE_BIT );
-            }
+            //}
           }
           
           // Y-
           if ( c_s == idd ) {
-            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
               bv[m_s] = onBit( bv[m_s], STATE_BIT );
-            }
+            //}
           }
           
           // Y+
           if ( c_n == idd ) {
-            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
               bv[m_n] = onBit( bv[m_n], STATE_BIT );
-            }
+            //}
           }
           
           // Z-
           if ( c_b == idd ) {
-            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
               bv[m_b] = onBit( bv[m_b], STATE_BIT );
-            }
+            //}
           }
           
           // Z+
           if ( c_t == idd ) {
-            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
               bv[m_t] = onBit( bv[m_t], STATE_BIT );
-            }
+            //}
           }
         }
       }
@@ -4233,8 +4232,8 @@ void VoxInfo::find_isolated_Fcell(unsigned order, int* mid, unsigned* bx)
           
           // 隣接セルがすべて固体の場合
           if ( !IS_FLUID(bx[m_e]) && !IS_FLUID(bx[m_w]) &&
-              !IS_FLUID(bx[m_n]) && !IS_FLUID(bx[m_s]) &&
-              !IS_FLUID(bx[m_t]) && !IS_FLUID(bx[m_b]) ) {
+               !IS_FLUID(bx[m_n]) && !IS_FLUID(bx[m_s]) &&
+               !IS_FLUID(bx[m_t]) && !IS_FLUID(bx[m_b]) ) {
             
             // 最頻値を求める
             for (unsigned l=0; l<6; l++) key[l]=1; // 頻度
@@ -5476,7 +5475,6 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
         
         // 外部境界値を指定
       case OBC_PERIODIC:
-      case OBC_IN_OUT:
         break;
         
       default:
@@ -5551,10 +5549,6 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float
       case OBC_SPEC_VEL:
       case OBC_OUTFLOW:
         encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
-        break;
-        
-      case OBC_IN_OUT:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 流束形式/境界値指定
         break;
         
       case OBC_TRC_FREE:

@@ -79,7 +79,6 @@ public:
   
 protected:
   bool chkID              (void);
-  bool isAlterOBC         (void);
   bool isComponent        (unsigned label);
   bool isCompoTransfer    (unsigned label);
   bool isIDinTable        (int candidate);

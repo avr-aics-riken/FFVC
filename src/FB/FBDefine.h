@@ -101,8 +101,7 @@
 #define OBC_SPEC_VEL  4
 #define OBC_PERIODIC  5
 #define OBC_TRC_FREE  6
-#define OBC_IN_OUT    7
-#define OBC_FAR_FIELD 8
+#define OBC_FAR_FIELD 7
 
 // 面の番号
 #define X_MINUS 0
@@ -111,10 +110,6 @@
 #define Y_PLUS  3
 #define Z_MINUS 4
 #define Z_PLUS  5
-
-// IN_OUT境界条件の方向
-#define ALT_IN  1
-#define ALT_OUT 2
 
 // エンコードビット　共通
 #define ACTIVE_BIT 31

@@ -245,187 +245,6 @@ REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE
   return vel;
 }
 
-/**
- @fn void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
- @brief 外部境界のIN_OUT境界条件の時のフラグを，流入出の方向に合わせてスイッチする
- @param bv BCindex V
- @param C
- */
-void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
-{
-  unsigned F;
-  
-  for (int face=0; face<NOFACE; face++) {
-    F = obc[face].get_BCtype();
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-    
-    if ( F == OBC_IN_OUT ) {
-      
-      // 流入・流出の方向を決定
-      switch (face) {
-        case X_MINUS:
-        case Y_MINUS:
-        case Z_MINUS:
-          obc[face].Face_inout = ( C->V_Dface[face] >= 0.0 ) ? ALT_IN : ALT_OUT;
-          break;
-          
-        case X_PLUS:
-        case Y_PLUS:
-        case Z_PLUS:
-          obc[face].Face_inout = ( C->V_Dface[face] <  0.0 ) ? ALT_IN : ALT_OUT;
-          break;
-      }
-      
-      // OBC_MASKをセット
-      flip_ObcMask(face, bv, obc[face].Face_inout);
-    }
-  }
-}
-
-/**
- @fn void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
- @brief 外部境界に接するセルにおいて，bv[]にビットフラグをセットする
- @param face 外部境界面番号
- @param bv BCindex V
- @param flag 流入か流出のフラグ
- */
-void SetBC3D::flip_ObcMask(int face, unsigned* bv, unsigned flag)
-{
-  int i, j, k;
-  unsigned m;
-  unsigned register s;
-  
-  switch (face) {
-    case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
-        for (k=1; k<=kxc; k++) {
-          for (j=1; j<=jxc; j++) {
-            m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |=  (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_W); // Wの5ビットをクリアする
-              }
-              bv[m]= s;
-            }
-          }
-        }        
-      }
-      break;
-      
-    case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
-        for (k=1; k<=kxc; k++) {
-          for (j=1; j<=jxc; j++) {
-            m = FBUtility::getFindexS3D(size, guide, ixc  , j, k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_E);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_E);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
-        for (k=1; k<=kxc; k++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_S);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_S);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
-        for (k=1; k<=kxc; k++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, jxc  , k);
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_N);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_N);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
-        for (j=1; j<=jxc; j++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_B);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_B);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-      
-    case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
-        for (j=1; j<=jxc; j++) {
-          for (i=1; i<=ixc; i++) {
-            m = FBUtility::getFindexS3D(size, guide, i, j, kxc  );
-            s = bv[m];
-            
-            if ( IS_FLUID(s) ) {
-              if ( flag == ALT_OUT ) {
-                s |= (OBC_MASK << BC_FACE_T);
-              }
-              else {
-                s &= ~(OBC_MASK << BC_FACE_T);
-              }
-              bv[m]= s;
-            }
-          }
-        }
-      }
-      break;
-  } // end of switch
-  
-}
 
 /**
  @fn void SetBC3D::InnerTBCvol(REAL_TYPE* t, unsigned* bh2, REAL_TYPE dt, REAL_TYPE& flop)
@@ -674,7 +493,6 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
     
     switch (typ) {
       case OBC_OUTFLOW:
-      case OBC_IN_OUT:
         cbc_div_obc_oflow_vec_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop); // vecは流用
         obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
         break;
@@ -966,13 +784,6 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
         vec[0] = vec[1] = vec[2] = C->V_Dface[face];
         cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &face, &flop);
         break;
-        
-      case OBC_IN_OUT:
-        if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
-          vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-          cbc_pvec_vobc_oflow_(wv, dim_sz, gc, &dh, v00, &rei, v, (int*)bv, vec, &face, &flop);
-        }
-        break;
     }
   }
   
@@ -1068,13 +879,6 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
         break;
         
-      case OBC_IN_OUT:
-        if ( obc[face].Face_inout == ALT_OUT ) { // 流出のときのみOUTFLOWと同様の処理
-          vel = C->V_Dface[face] * dt / dh;
-          cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
-        }
-        break;
-        
       case OBC_TRC_FREE:
       case OBC_FAR_FIELD:
         // 境界値を与え，通常スキームで計算するので不要
@@ -1156,15 +960,6 @@ void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
       
       switch ( F ) {
           
-        case OBC_IN_OUT:
-          if ( obc[face].Face_inout == ALT_OUT ) {
-            cbc_pobc_neumann_(p, dim_sz, gc, &face);
-          }
-          else {
-            cbc_pobc_drchlt_ (p, dim_sz, gc, &face, &pv);
-          }
-          break;
-          
         case OBC_TRC_FREE:
           cbc_pobc_drchlt_ (p, dim_sz, gc, &face, &pv);
           break;
@@ -1237,12 +1032,6 @@ void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, 
         
       case OBC_FAR_FIELD:
         cbc_vobc_neumann_(v, dim_sz, gc, &face);
-        break;
-        
-      case OBC_IN_OUT:
-        if ( obc[face].Face_inout == ALT_IN ) {
-          cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
-        }
         break;
         
       default:
@@ -1915,7 +1704,6 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* ws, unsigned* bh1, REAL_TYPE* v, REAL_
         C->H_Dface[face] = ps_OBC_Free(ws, bh1, face, v, t, v00, flop);
         break;
         
-      case OBC_IN_OUT:
       case OBC_TRC_FREE:
       case OBC_FAR_FIELD:
         C->H_Dface[face] = ps_OBC_Free(ws, bh1, face, v, t, v00, flop);

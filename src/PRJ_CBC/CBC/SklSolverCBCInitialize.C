@@ -562,9 +562,6 @@ SklSolverCBC::SklSolverInitialize() {
   // パラメータの無次元表示（正規化）に必要な参照物理量の設定
   B.setRefMedium(mat, &C);
   
-  // 流入出フラグを設定
-  BC.set_InOut_flag();
-  
 #ifdef DEBUG
   // チェックのため，全計算セルのBCIndexの内容を表示する
   if ( !Vinfo.chkBCIndexP(bcd, bcp, "BCindex.txt") ) {

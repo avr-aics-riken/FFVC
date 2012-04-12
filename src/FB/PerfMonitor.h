@@ -52,6 +52,12 @@ private:
   PerfWatch  m_total;       ///< 全計算時間用測定時計
 
   bool m_gathered;          ///< 想定結果集計済みフラグ
+  
+  string parallel_mode;     ///< 並列動作モード（"Serial", "OpenMP", "Flat MPI", "Hybrid"）
+  
+  int num_threads;          ///< 並列スレッド数
+  
+  int num_process;          ///< 並列プロセス数
 
 public:
   /// コンストラクタ.
@@ -89,6 +95,18 @@ public:
     }
     m_watchArray[key].setProperties(label, type, exclusive);
     m_watchArray[key].setParallelInfo(pn);
+  }
+  
+  /// 並列モードを設定
+  ///
+  /// @param[in] p_mode 並列モード
+  /// @param[in] n_thread
+  /// @param[in] n_proc
+  ///
+  void setParallelMode(const string& p_mode, const int n_thread, const int n_proc) {
+    parallel_mode = p_mode;
+    num_threads   = n_thread;
+    num_process   = n_proc;
   }
 
   /// 測定スタート.

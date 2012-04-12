@@ -42,8 +42,7 @@ enum timing_key {
   tm_flow_sct,
     tm_frctnl_stp_sct,
   
-      tm_frctnl_stp_sct_1,
-        tm_flip_bf,       
+      tm_frctnl_stp_sct_1,       
         tm_spec_vel,
         tm_WallFunc,
   

@@ -108,7 +108,6 @@ void ParseBC::chkKeywordOBC(const char *keyword, unsigned m)
   if     ( !strcasecmp(keyword, "Wall") )               BaseBc[m].set_BCtype(OBC_WALL);
   else if( !strcasecmp(keyword, "Outflow"))             BaseBc[m].set_BCtype(OBC_OUTFLOW);
   else if( !strcasecmp(keyword, "Specified_Velocity"))  BaseBc[m].set_BCtype(OBC_SPEC_VEL);
-  else if( !strcasecmp(keyword, "In_Out"))              BaseBc[m].set_BCtype(OBC_IN_OUT);
   else if( !strcasecmp(keyword, "Symmetric"))           BaseBc[m].set_BCtype(OBC_SYMMETRIC);
   else if( !strcasecmp(keyword, "Periodic"))            BaseBc[m].set_BCtype(OBC_PERIODIC);
   else if( !strcasecmp(keyword, "Traction_Free"))       BaseBc[m].set_BCtype(OBC_TRC_FREE);
@@ -387,7 +386,6 @@ string ParseBC::getOBCstr(unsigned id)
   if     ( id == OBC_WALL )      bc = "Wall";
   else if( id == OBC_OUTFLOW )   bc = "Outflow";
   else if( id == OBC_SPEC_VEL )  bc = "Specified_Velocity";
-  else if( id == OBC_IN_OUT )    bc = "In_Out";
   else if( id == OBC_SYMMETRIC ) bc = "Symmetric";
   else if( id == OBC_PERIODIC )  bc = "Periodic";
   else if( id == OBC_TRC_FREE )  bc = "Traction_Free";
@@ -2172,18 +2170,6 @@ unsigned ParseBC::getXML_Vel_profile(const CfgElem *elmL, const char* err_str)
   return 0;
 }
 
-/**
- @fn bool ParseBC::isAlterOBC(void)
- @brief IN/OUT境界条件かどうかを判定する
- */
-bool ParseBC::isAlterOBC(void)
-{
-  for (unsigned i=0; i<6; i++) {
-    if ( bc[i].get_BCtype() == OBC_IN_OUT ) return true;     
-  }
-  return false;
-}
-
 
 /**
  @fn bool ParseBC::isComponent(unsigned label)
@@ -2322,10 +2308,6 @@ void ParseBC::loadOuterBC(void)
         
       case OBC_PERIODIC:
         getXML_OBC_Periodic(elmL2, i);
-        break;
-        
-      case OBC_IN_OUT:
-        getXML_OBC_InOut(elmL2, i);
         break;
         
       case OBC_SYMMETRIC:
@@ -3046,29 +3028,6 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
     }
     fprintf(fp, "\n");
     
-    // check
-    if ( isAlterOBC() ) { // if there is ALT BC
-      unsigned cc=0, cs=0;
-      for(n=1; n<=NoBC; n++) {
-        if ( compo[n].getType() == CELL_MONITOR ) {
-          if ( compo[n].getStateCellMonitor() == ON ) {
-            cc++;
-            cs = n;
-          }
-        }
-      }
-      if ( cc != 1 ) {
-        fprintf(fp, "Reference monitor can not be uniquely determined. ");
-        fprintf(fp, "Reference candidates = %d.    ", cc);
-        fprintf(fp, "Check 'Monitor' section in XML\n\n");
-        Exit(0);
-      }
-      // set reference monitor no.
-      for (unsigned i=0; i<6; i++) {
-        if ( bc[i].get_vType() == OBC_IN_OUT ) bc[i].set_MonRef(cs);
-      }
-    }
-    
     fprintf(fp, "\t no                    Label    ID   normal_x   normal_y   normal_z Reference\n");
     for(n=1; n<=NoBC; n++){
       if ( compo[n].getType() == CELL_MONITOR )  {
@@ -3294,15 +3253,6 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned 
       if ( HeatProblem ) {
       }
       fprintf(fp,"\t\t\tNumber of Element = %d\n",ref->get_ValidCell());
-      break;
-      
-    case OBC_IN_OUT:
-      fprintf(fp,"\t\t\tAlternate Outflow and Traction free : Reference Monitor # = %d\n", ref->get_MonRef());
-			fprintf(fp,"\t\t\t with %s convective velocity\n", (ref->get_ofv() == V_AVERAGE) ? "Average" : "Minmax" );
-      
-      if ( HeatProblem ) {
-        fprintf(fp, "\t\t\t    Ambient Temperature  = %12.6e \n", ref->get_Temp());
-      }
       break;
       
     case OBC_TRC_FREE:

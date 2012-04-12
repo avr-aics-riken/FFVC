@@ -384,7 +384,6 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_frctnl_stp_sct,     "NS: F-Step Section",      PerfMonitor::CALC, false); 
   
   set_label(tm_frctnl_stp_sct_1,   "NS: F-Step Sct:1",        PerfMonitor::CALC, false);
-  set_label(tm_flip_bf,            "Flip Bit for In/Out BC",  PerfMonitor::CALC);
   set_label(tm_spec_vel,           "Assign BC Velocity",      PerfMonitor::CALC);
   set_label(tm_WallFunc,           "Friction Velocity",       PerfMonitor::CALC);
   // end of NS: F-Step Sct:1

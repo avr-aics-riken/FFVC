@@ -81,7 +81,6 @@ public:
 	REAL_TYPE getVrefOut (REAL_TYPE tm);
   
   void setControlVars (Control* Cref, MaterialList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
-  void set_InOut_flag (void);
   void setWorkList    (CompoList* m_CMP, MaterialList* m_MAT);
   
   //@fn bool has_InOut(void)

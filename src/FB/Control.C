@@ -2407,13 +2407,6 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       err=false;
   }
   
-  // Pressure shift
-  if (Mode.Pshift == -1) {
-    fprintf(fp,"\t     Pressure Shift           :   Off\n");
-  } else {
-    fprintf(fp,"\t     Pressure Shift           :   %s\n", getDirection(Mode.Pshift).c_str());
-  }
-  
   // Shape approximation
   switch (Mode.ShapeAprx) {
     case BINARY:
@@ -2559,6 +2552,12 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       err=false;
   }
   
+  // Pressure shift
+  if (Mode.Pshift == -1) {
+    fprintf(fp,"\t     Pressure Shift           :   Off\n");
+  } else {
+    fprintf(fp,"\t     Pressure Shift           :   %s\n", getDirection(Mode.Pshift).c_str());
+  }
   
   // 単位系
   fprintf(fp,"\n\tUnit\n");

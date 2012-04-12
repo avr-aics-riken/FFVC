@@ -42,7 +42,6 @@ protected:
   REAL_TYPE ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
   REAL_TYPE ps_OBC_IsoThermal     (REAL_TYPE* qbc, unsigned* bh1, int face, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
   
-  void flip_ObcMask             (int face, unsigned* bv, unsigned flag);
   void Pibc_Prdc                (SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pv);
   void Pobc_Prdc_Directional    (SklScalar3D<REAL_TYPE>* d_p, int face, REAL_TYPE pv, unsigned uod);
   void Pobc_Prdc_Simple         (SklScalar3D<REAL_TYPE>* d_p, int face);
@@ -56,7 +55,6 @@ public:
   void assign_Temp          (REAL_TYPE* t, unsigned* bh, REAL_TYPE tm, Control* C);
   void assign_Velocity      (REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear=false);
   void checkDriver          (FILE* fp);
-  void flipDir_OBC          (unsigned* bv, Control* C);
   void InnerPBC_Periodic    (SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigned>* d_bcd);
   void InnerTBCface         (REAL_TYPE* qbc, unsigned* bx, REAL_TYPE* t, REAL_TYPE* t0, REAL_TYPE& flop);
   void InnerTBCvol          (REAL_TYPE* t, unsigned* bx, REAL_TYPE dt, REAL_TYPE& flop);

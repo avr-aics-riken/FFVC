@@ -170,18 +170,3 @@ void SetBC::getOuterLoopIdx(int face, int* st, int* ed)
       break;
   }
 }
-
-/**
- @fn void SetBC3D::flipDir_OBC(unsigned* bv, Control* C)
- @brief 外部境界に流入出境界条件が設定されている場合にフラグを立てておく
- */
-void SetBC::set_InOut_flag(void)
-{
-  for (int face=0; face<NOFACE; face++) {
-    
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( pn.nID[face] >= 0 ) continue;
-    
-    if ( obc[face].get_BCtype() == OBC_IN_OUT ) inout_flag = true;
-  }
-}
