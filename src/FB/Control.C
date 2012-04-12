@@ -1679,7 +1679,24 @@ void Control::getXML_Solver_Properties(void)
       default:
         Exit(0);
     }
-  }  
+  }
+  
+  // 平均値の引き戻しオプション
+  if ( !elmL1->GetValue("Pressure_Shift", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Pressure_Shift' in 'Solver_Property'\n");
+    Exit(0);
+  }
+  if     ( !strcasecmp(str, "off") )     Mode.Pshift = -1;
+  else if( !strcasecmp(str, "x_minus") ) Mode.Pshift = X_MINUS;
+  else if( !strcasecmp(str, "x_plus") )  Mode.Pshift = X_PLUS;
+  else if( !strcasecmp(str, "y_minus") ) Mode.Pshift = Y_MINUS;
+  else if( !strcasecmp(str, "y_plus") )  Mode.Pshift = Y_PLUS;
+  else if( !strcasecmp(str, "z_minus") ) Mode.Pshift = Z_MINUS;
+  else if( !strcasecmp(str, "z_plus") )  Mode.Pshift = Z_PLUS;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Pressure_Shift'\n");
+    Exit(0);
+  }
 }
 
 /**
@@ -2388,6 +2405,13 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     default:
       stamped_printf("Error: Time Variation[%d]\n", Mode.Steady);
       err=false;
+  }
+  
+  // Pressure shift
+  if (Mode.Pshift == -1) {
+    fprintf(fp,"\t     Pressure Shift           :   Off\n");
+  } else {
+    fprintf(fp,"\t     Pressure Shift           :   %s\n", getDirection(Mode.Pshift).c_str());
   }
   
   // Shape approximation

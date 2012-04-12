@@ -538,6 +538,14 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   }
   convergence_prev = convergence;
   
+  // 圧力値の引き戻しオプション
+  if ( C.Mode.Pshift != -1 ) {
+    TIMING_start(tm_pressure_shift);
+    flop_count = 0.0;
+    Pressure_Shift(p);
+    TIMING_stop(tm_pressure_shift, flop_count);
+  }
+  
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section
 }

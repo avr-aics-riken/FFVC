@@ -537,6 +537,11 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     convergence_rate = 1.0;
   }
   convergence_prev = convergence;
+  
+  // 圧力値の引き戻しオプション
+  if ( C.Mode.Pshift != -1 ) {
+    Pressure_Shift(p);
+  }
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section

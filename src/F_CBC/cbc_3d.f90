@@ -51,6 +51,7 @@
     real                                                        ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
     real                                                        ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
+    real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ut
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cvf
@@ -125,6 +126,8 @@
     vflop = 0.0;
 
 !$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, dh, v_mode) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2, bdx) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -141,8 +144,7 @@
 !$OMP PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
 !$OMP PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t) &
 !$OMP PRIVATE(u1, u2, u3, ug, e1, e2, e3, u_tau) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, dh, v_mode)
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
@@ -201,6 +203,29 @@
       if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
+      
+      ! 延びたステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
+      lmt_w = 1.0
+      lmt_e = 1.0
+      lmt_s = 1.0
+      lmt_n = 1.0
+      lmt_b = 1.0
+      lmt_t = 1.0
+
+      if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+      
+      ! 外部境界条件の場合
+      if ( (i == 1)  .and. (ibits(bp(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (i == ix) .and. (ibits(bp(ix+1, j   , k   ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (j == 1)  .and. (ibits(bp(i   , 0   , k   ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (j == jx) .and. (ibits(bp(i   , jx+1, k   ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
       
       ! 界面速度（スタガード位置） > 36 flops
       UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
@@ -267,10 +292,10 @@
       
       include 'muscl.h'
       
-      Urr = Ue1 - (cm1*g6+cm2*g5)*ss_4
+      Urr = Ue1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
-      Ull = Uw1 + (cm1*g1+cm2*g2)*ss_4
+      Ull = Uw1 + (cm1*g1+cm2*g2)*ss_4 * lmt_w
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_e
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_w ! > 4 + 4 + 36 + 5*4+7*2 = 78 flops
 
@@ -281,10 +306,10 @@
       
       include 'muscl.h'
       
-      Vrr = Ve1 - (cm1*g6+cm2*g5)*ss_4
+      Vrr = Ve1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
-      Vll = Vw1 + (cm1*g1+cm2*g2)*ss_4
+      Vll = Vw1 + (cm1*g1+cm2*g2)*ss_4 * lmt_w
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_e
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_w
 
@@ -295,10 +320,10 @@
       
       include 'muscl.h'
       
-      Wrr = We1 - (cm1*g6+cm2*g5)*ss_4
+      Wrr = We1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
-      Wll = Ww1 + (cm1*g1+cm2*g2)*ss_4
+      Wll = Ww1 + (cm1*g1+cm2*g2)*ss_4 * lmt_w
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_e
       fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_w
       
@@ -357,10 +382,10 @@
       
       include 'muscl.h'
       
-      Urr = Un1 - (cm1*g6+cm2*g5)*ss_4
+      Urr = Un1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
-      Ull = Us1 + (cm1*g1+cm2*g2)*ss_4
+      Ull = Us1 + (cm1*g1+cm2*g2)*ss_4 * lmt_s
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_n
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_s
 
@@ -371,10 +396,10 @@
       
       include 'muscl.h'
       
-      Vrr = Vn1 - (cm1*g6+cm2*g5)*ss_4
+      Vrr = Vn1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
-      Vll = Vs1 + (cm1*g1+cm2*g2)*ss_4
+      Vll = Vs1 + (cm1*g1+cm2*g2)*ss_4 * lmt_s
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_n
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_s
 
@@ -385,10 +410,10 @@
       
       include 'muscl.h'
       
-      Wrr = Wn1 - (cm1*g6+cm2*g5)*ss_4
+      Wrr = Wn1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
-      Wll = Ws1 + (cm1*g1+cm2*g2)*ss_4
+      Wll = Ws1 + (cm1*g1+cm2*g2)*ss_4 * lmt_s
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_n
       fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_s
       
@@ -448,10 +473,10 @@
       
       include 'muscl.h'
       
-      Urr = Ut1 - (cm1*g6+cm2*g5)*ss_4
+      Urr = Ut1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
-      Ull = Ub1 + (cm1*g1+cm2*g2)*ss_4
+      Ull = Ub1 + (cm1*g1+cm2*g2)*ss_4 * lmt_b
       fu_r = 0.5*(cr*(Urr+Url) - acr*(Urr-Url)) * w_t
       fu_l = 0.5*(cl*(Ulr+Ull) - acl*(Ulr-Ull)) * w_b
 
@@ -462,10 +487,10 @@
       
       include 'muscl.h'
             
-      Vrr = Vt1 - (cm1*g6+cm2*g5)*ss_4
+      Vrr = Vt1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
-      Vll = Vb1 + (cm1*g1+cm2*g2)*ss_4
+      Vll = Vb1 + (cm1*g1+cm2*g2)*ss_4 * lmt_b
       fv_r = 0.5*(cr*(Vrr+Vrl) - acr*(Vrr-Vrl)) * w_t
       fv_l = 0.5*(cl*(Vlr+Vll) - acl*(Vlr-Vll)) * w_b
 
@@ -476,10 +501,10 @@
       
       include 'muscl.h'
             
-      Wrr = Wt1 - (cm1*g6+cm2*g5)*ss_4
+      Wrr = Wt1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
-      Wll = Wb1 + (cm1*g1+cm2*g2)*ss_4
+      Wll = Wb1 + (cm1*g1+cm2*g2)*ss_4 * lmt_b
       fw_r = 0.5*(cr*(Wrr+Wrl) - acr*(Wrr-Wrl)) * w_t
       fw_l = 0.5*(cl*(Wlr+Wll) - acl*(Wlr-Wll)) * w_b
       

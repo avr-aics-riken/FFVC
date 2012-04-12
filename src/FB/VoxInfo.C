@@ -3751,7 +3751,7 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
  @param cut_id カット点ID
  @param vec 境界面の法線
  @param bc_dir BCの位置，指定法線と同じ側(1)か反対側(2)
- @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVIBC_1STにマスクビットを立てる
+ @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
  */
 unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order, 
                                   const unsigned id, 
@@ -3821,7 +3821,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_w == idd) && (dot(e_w, nv) < 0.0) ) {
               s |= (order << BC_FACE_W);
               q = offBit(q, FACING_W);
-              q = onBit(q, VIBC_1ST);
+              q = onBit(q, VBC_UWD);
               g++;
             }
             
@@ -3829,7 +3829,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_e == idd) && (dot(e_e, nv) < 0.0) ) {
               s |= (order << BC_FACE_E);
               q = offBit(q, FACING_E);
-              q = onBit(q, VIBC_1ST);
+              q = onBit(q, VBC_UWD);
               g++;
             }
             
@@ -3837,7 +3837,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_s == idd) && (dot(e_s, nv) < 0.0) ) {
               s |= (order << BC_FACE_S);
               q = offBit(q, FACING_S);
-              q = onBit(q, VIBC_1ST);
+              q = onBit(q, VBC_UWD);
               g++;
             }
             
@@ -3845,7 +3845,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_n == idd) && (dot(e_n, nv) < 0.0) ) {
               s |= (order << BC_FACE_N);
               q = offBit(q, FACING_N);
-              q = onBit(q, VIBC_1ST);
+              q = onBit(q, VBC_UWD);
               g++;
             }
             
@@ -3853,7 +3853,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_b == idd) && (dot(e_b, nv) < 0.0) ) {
               s |= (order << BC_FACE_B);
               q = offBit(q, FACING_B);
-              q = onBit(q, VIBC_1ST);
+              q = onBit(q, VBC_UWD);
               g++;
             }
             
@@ -3861,7 +3861,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
             if ( (id_t == idd) && (dot(e_t, nv) < 0.0) ) {
               s |= (order << BC_FACE_T);
               q = offBit(q, FACING_T);
-              q = onBit(q, VIBC_1ST);
+              q = onBit(q, VBC_UWD);
               g++;
             }
           } // if fluid
@@ -3910,7 +3910,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
 
 
 /**
- @fn void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, string chk, unsigned* bp, unsigned BCtype)
+ @fn void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw, string chk, unsigned* bp, const bool enc_uwd)
  @brief 外部境界に接するセルにおいて，各種速度境界条件に対応する媒質をチェックし，bv[]にビットフラグをセットする
  @param face 外部境界面番号
  @param bv BCindex V
@@ -3918,21 +3918,20 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
  @param enc_sw trueのとき，エンコードする．falseの場合にはガイドセルの状態チェックのみ
  @param chk ガイドセルの状態をチェックするかどうかを指定
  @param bp BCindex P
- @param BCtype 外部境界条件の種類
+ @param enc_uwd trueのとき，1次精度のスイッチオン
  @note 
  - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
  - adjCellID_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
  */
-void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, string chk, unsigned* bp, unsigned BCtype)
+void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw, string chk, unsigned* bp, const bool enc_uwd)
 {
   int i, j, k;
   unsigned m, mt, sw, cw;
-  unsigned register s;
+  unsigned register s, q;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int gd = (int)guide;
   
   ( "fluid" == key ) ? sw=1 : sw=0;
   ( "check" == chk ) ? cw=1 : cw=0;
@@ -3943,19 +3942,22 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (j=1; j<=jx; j++) {
             m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
+            mt= FBUtility::getFindexS3D(size, guide, 0  , j, k);
             
             s = bv[m];
+            q = bp[mt];
             
             if ( IS_FLUID(s) ) {
               // エンコード処理
               if ( enc_sw ) {
-                s = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
-                bv[m]= s;
+                bv[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
               }
+              
+              // 外部境界で安定化のため，スキームを1次精度にする
+              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
               // チェック
               if ( cw == 1 ) {
-                mt= FBUtility::getFindexS3D(size, guide, 0  , j, k);
                 
                 if ( sw==1 ) { // ガイドセルが流体であることを要求
                   if ( !IS_FLUID(bv[mt]) ) {
@@ -3982,20 +3984,23 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (j=1; j<=jx; j++) {
             m = FBUtility::getFindexS3D(size, guide, ix  , j, k);
+            mt= FBUtility::getFindexS3D(size, guide, ix+1, j, k);
             
             s = bv[m];
+            q = bp[mt];
             
             if ( IS_FLUID(s) ) {
               
               // エンコード処理
               if ( enc_sw ) {
-                s = s | (OBC_MASK << BC_FACE_E);
-                bv[m]= s;
+                bv[m]  = s | (OBC_MASK << BC_FACE_E);
               }
+              
+              // 外部境界で安定化のため，スキームを1次精度にする
+              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
               // チェック
               if ( cw == 1 ) {
-                mt= FBUtility::getFindexS3D(size, guide, ix+1, j, k);
                 
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
@@ -4022,20 +4027,23 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
+            mt= FBUtility::getFindexS3D(size, guide, i, 0  , k);
             
             s = bv[m];
+            q = bp[mt];
             
             if ( IS_FLUID(s) ) {
               
               // エンコード処理
               if ( enc_sw ) {
-                s = s | (OBC_MASK << BC_FACE_S);
-                bv[m]= s;
+                bv[m]  = s | (OBC_MASK << BC_FACE_S);
               }
+              
+              // 外部境界で安定化のため，スキームを1次精度にする
+              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
               // チェック
               if ( cw == 1 ) {
-                mt= FBUtility::getFindexS3D(size, guide, i, 0  , k);
                 
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
@@ -4062,20 +4070,23 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (k=1; k<=kx; k++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, jx  , k);
+            mt= FBUtility::getFindexS3D(size, guide, i, jx+1, k);
             
             s = bv[m];
+            q = bp[mt];
             
             if ( IS_FLUID(s) ) {
               
               // エンコード処理
               if ( enc_sw ) {
-                s = s | (OBC_MASK << BC_FACE_N);
-                bv[m]= s;
+                bv[m]  = s | (OBC_MASK << BC_FACE_N);
               }
+              
+              // 外部境界で安定化のため，スキームを1次精度にする
+              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
               // チェック
               if ( cw == 1 ) {
-                mt= FBUtility::getFindexS3D(size, guide, i, jx+1, k);
                 
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
@@ -4102,20 +4113,23 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (j=1; j<=jx; j++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
+            mt= FBUtility::getFindexS3D(size, guide, i, j, 0  );
             
             s = bv[m];
+            q = bp[mt];
             
             if ( IS_FLUID(s) ) {
               
               // エンコード処理
               if ( enc_sw ) {
-                s = s | (OBC_MASK << BC_FACE_B);
-                bv[m]= s;
+                bv[m]  = s | (OBC_MASK << BC_FACE_B);
               }
+              
+              // 外部境界で安定化のため，スキームを1次精度にする
+              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
               // チェック
               if ( cw == 1 ) {
-                mt= FBUtility::getFindexS3D(size, guide, i, j, 0  );
                 
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
@@ -4142,20 +4156,23 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, bool enc_sw, strin
         for (j=1; j<=jx; j++) {
           for (i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, kx  );
+            mt= FBUtility::getFindexS3D(size, guide, i, j, kx+1);
             
             s = bv[m];
+            q = bp[mt];
             
             if ( IS_FLUID(s) ) {
               
               // エンコード処理
               if ( enc_sw ) {
-                s = s | (OBC_MASK << BC_FACE_T);
-                bv[m]= s;
+                bv[m]  = s | (OBC_MASK << BC_FACE_T);
               }
+              
+              // 外部境界で安定化のため，スキームを1次精度にする
+              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
               // チェック
               if ( cw == 1 ) {
-                mt= FBUtility::getFindexS3D(size, guide, i, j, kx+1);
                 
                 if ( sw==1 ) {
                   if ( !IS_FLUID(bv[mt]) ) {
@@ -5441,7 +5458,11 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
         break;
         
       case OBC_TRC_FREE:
-        encPbit_OBC(face, bcp, "Neumann", false); // test
+        encPbit_OBC(face, bcp, "Dirichlet", false); // test
+        break;
+        
+      case OBC_FAR_FIELD:
+        encPbit_OBC(face, bcp, "Neumann", false);
         break;
         
       case OBC_OUTFLOW:
@@ -5524,24 +5545,28 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float
     switch ( F ) {
       case OBC_SYMMETRIC:
       case OBC_WALL:
-        encVbit_OBC(face, bv, "solid", true, "check", bp, F); // 流束形式
+        encVbit_OBC(face, bv, "solid", true, "check", bp, false); // 流束形式
         break;
         
       case OBC_SPEC_VEL:
       case OBC_OUTFLOW:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp, F); // 流束形式
+        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
         break;
         
       case OBC_IN_OUT:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, F); // 流束形式/境界値指定
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 流束形式/境界値指定
         break;
         
       case OBC_TRC_FREE:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, F); // 境界値指定
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
+        break;
+        
+      case OBC_FAR_FIELD:
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
         break;
         
       case OBC_PERIODIC:
-        encVbit_OBC(face, bv, "fluid", false, "no_check", bp, F); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
+        encVbit_OBC(face, bv, "fluid", false, "no_check", bp, false); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
         break;
         
       default:

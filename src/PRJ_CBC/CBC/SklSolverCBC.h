@@ -259,6 +259,7 @@ public:
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void prepOutput           (void);
+  void Pressure_Shift       (REAL_TYPE* p);
   void resizeBVcell         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
   void resizeBVface         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
   void resizeCompoBV        (const unsigned* bd, const unsigned* bv, const unsigned* bh1, const unsigned* bh2, const unsigned kos, const bool isHeat);

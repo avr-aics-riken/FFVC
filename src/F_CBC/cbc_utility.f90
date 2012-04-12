@@ -787,16 +787,20 @@
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
-    real                                                      ::  avr
+    real                                                      ::  avr, rix, rjx, rkx
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     
+    rix = real(jx)*real(kx)
+    rjx = real(ix)*real(kx)
+    rkx = real(ix)*real(jx)
+    
     avr = 0.0
 
 !$OMP PARALLEL REDUCTION(+:avr) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, rix, rjx, rkx)
 
     FACES : select case (face)
     
@@ -814,6 +818,9 @@
       end do
       end do
 !$OMP END DO
+
+      avr = avr / rix
+      
       
     case (X_plus)
 #ifdef _DYNAMIC
@@ -829,6 +836,9 @@
       end do
       end do
 !$OMP END DO
+
+      avr = avr / rix
+      
       
     case (Y_minus)
 #ifdef _DYNAMIC
@@ -844,6 +854,9 @@
       end do
       end do
 !$OMP END DO
+
+      avr = avr / rjx
+      
       
     case (Y_plus)
 #ifdef _DYNAMIC
@@ -859,6 +872,9 @@
       end do
       end do
 !$OMP END DO
+
+      avr = avr / rjx
+      
       
     case (Z_minus)
 #ifdef _DYNAMIC
@@ -874,6 +890,9 @@
       end do
       end do
 !$OMP END DO
+
+      avr = avr / rkx
+      
     
     case (Z_plus)
 #ifdef _DYNAMIC
@@ -889,6 +908,8 @@
       end do
       end do
 !$OMP END DO
+      
+      avr = avr / rkx
       
     case default
     end select FACES

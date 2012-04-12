@@ -463,6 +463,7 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_VBC_update,         "Velocity BC Update",      PerfMonitor::CALC);
   set_label(tm_LES_eddy,           "Eddy Viscosity",          PerfMonitor::CALC);
   set_label(tm_LES_eddy_comm,      "Sync. Eddy Viscosity",    PerfMonitor::COMM);
+  set_label(tm_pressure_shift,     "pressure Shift",          PerfMonitor::COMM);
   // end of NS: Loop Post Section
   
   // end of Flow section
@@ -1432,6 +1433,18 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
   }
   
   return convergence;
+}
+
+//@fn void SklSolverCBC::Pressure_Shift(REAL_TYPE* p)
+//@brief 圧力の引き戻し操作を行う
+void SklSolverCBC::Pressure_Shift(REAL_TYPE* p)
+{
+  REAL_TYPE base=0.0;
+  
+  int n = C.Mode.Pshift;
+  
+  cbc_face_avr_sampling_(p, sz, gc, &n, &base);
+  cbc_shift_pressure_(p, sz, gc, &base);
 }
 
 /* test用のコア fortranのcbc_psor()と等価

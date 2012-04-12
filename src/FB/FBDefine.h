@@ -14,7 +14,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 254
+#define FB_VERS 255
 
 // 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
 #ifndef REAL_TYPE_DOUBLE
@@ -102,6 +102,7 @@
 #define OBC_PERIODIC  5
 #define OBC_TRC_FREE  6
 #define OBC_IN_OUT    7
+#define OBC_FAR_FIELD 8
 
 // 面の番号
 #define X_MINUS 0
@@ -162,7 +163,7 @@
 #define FACING_E   4
 #define FACING_W   3
 #define VLD_CNVG   2
-#define VIBC_1ST   1
+#define VBC_UWD    1
 
 // エンコードビット　V, H1
 #define BC_FACE_T  25

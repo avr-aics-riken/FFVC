@@ -100,7 +100,7 @@ protected:
   void encPbit               (unsigned* bx);
   void encPbit_OBC           (int face, unsigned* bx, string key, bool dir);
   void encQfaceSVO           (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
-  void encVbit_OBC           (int face, unsigned* bv, string key, bool enc_sw, string chk, unsigned* bp, unsigned BCtype);
+  void encVbit_OBC           (int face, unsigned* bv, string key, const bool enc_sw, string chk, unsigned* bp, const bool enc_uwd);
   void find_isolated_Fcell   (unsigned order, int* mid, unsigned* bx);
   void getIDrange            (const CfgElem *elmL2, const char* keyword, unsigned* var);
   void getNormalSign         (unsigned n, int* gi, unsigned* bx, int* dir);

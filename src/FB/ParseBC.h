@@ -117,6 +117,7 @@ protected:
   void getXML_IBC_PrsLoss   (const CfgElem *elmL, unsigned n);
   void getXML_IBC_Radiant   (const CfgElem *elmL, unsigned n);
   void getXML_IBC_SpecVel   (const CfgElem *elmL, unsigned n);
+  void getXML_OBC_FarField  (const CfgElem *elmL, unsigned n);
   void getXML_OBC_HT        (const CfgElem *elmL, unsigned n, const char* kind);
   void getXML_OBC_InOut     (const CfgElem *elmL, unsigned n);
   void getXML_OBC_Outflow   (const CfgElem *elmL, unsigned n);

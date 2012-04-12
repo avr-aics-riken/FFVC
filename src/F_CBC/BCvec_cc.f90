@@ -2544,7 +2544,6 @@
     integer                                                   ::  i, j, k, ix, jx, kx, face, g, ii, jj, kk
     integer, dimension(3)                                     ::  sz
     real                                                      ::  v1, v2, v3, v4
-    real                                                      ::  uu, vv, ww
     real                                                      ::  flop, rix, rjx, rkx
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
 
@@ -2557,8 +2556,7 @@
 
 !$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rix, rjx, rkx, g, face) &
-!$OMP PRIVATE(i, j, k, ii, jj, kk, v1, v2, v3, v4) &
-!$OMP PRIVATE(uu, vv, ww)
+!$OMP PRIVATE(i, j, k, ii, jj, kk, v1, v2, v3, v4)
 
     FACES : select case (face)
     case (X_minus)
@@ -2579,15 +2577,9 @@
         v3 = 0.5 * (v(1, i-1, j  , k+1) + v(1, i, j  , k+1))
         v4 = 0.5 * (v(1, i-1, j  , k-1) + v(1, i, j  , k-1))
 
-        uu = v(1, i, j, k)
-        vv = v(2, i, j, k) + 0.5 * (v1 - v2)
-        ww = v(3, i, j, k) + 0.5 * (v3 - v4)
-
-        do ii=1-g, 0
-          v(1, ii, j, k) = uu
-          v(2, ii, j, k) = vv
-          v(3, ii, j, k) = ww
-        end do
+        v(1, i-1, j, k) = v(1, i, j, k)
+        v(2, i-1, j, k) = v(2, i, j, k) + 0.5 * (v1 - v2)
+        v(3, i-1, j, k) = v(3, i, j, k) + 0.5 * (v3 - v4)
 
       end do
       end do
@@ -2613,16 +2605,10 @@
         v2 = 0.5 * (v(1, i+1, j-1, k  ) + v(1, i, j-1, k  ))
         v3 = 0.5 * (v(1, i+1, j  , k+1) + v(1, i, j  , k+1))
         v4 = 0.5 * (v(1, i+1, j  , k-1) + v(1, i, j  , k-1))
-
-        uu = v(1, i, j, k)
-        vv = v(2, i, j, k) - 0.5 * (v1 - v2)
-        ww = v(3, i, j, k) - 0.5 * (v3 - v4)
         
-        do ii=ix+1, ix+g
-          v(1, ii, j, k) = uu
-          v(2, ii, j, k) = vv
-          v(3, ii, j, k) = ww
-        end do
+        v(1, i+1, j, k) = v(1, i, j, k)
+        v(2, i+1, j, k) = v(2, i, j, k) - 0.5 * (v1 - v2)
+        v(3, i+1, j, k) = v(3, i, j, k) - 0.5 * (v3 - v4)
 
       end do
       end do
@@ -2648,16 +2634,10 @@
         v2 = 0.5 * (v(2, i-1, j-1, k  ) + v(2, i-1, j, k  ))
         v3 = 0.5 * (v(2, i  , j-1, k+1) + v(2, i  , j, k+1))
         v4 = 0.5 * (v(2, i  , j-1, k-1) + v(2, i  , j, k-1))
-        
-        uu = v(1, i, j, k) + 0.5 * (v1 - v2)
-        vv = v(2, i, j, k)
-        ww = v(3, i, j, k) + 0.5 * (v3 - v4)
                 
-        do jj=1-g, 0
-          v(1, i, jj, k) = uu
-          v(2, i, jj, k) = vv
-          v(3, i, jj, k) = ww
-        end do
+        v(1, i, j-1, k) = v(1, i, j, k) + 0.5 * (v1 - v2)
+        v(2, i, j-1, k) = v(2, i, j, k)
+        v(3, i, j-1, k) = v(3, i, j, k) + 0.5 * (v3 - v4)
 
       end do
       end do
@@ -2683,16 +2663,10 @@
         v2 = 0.5 * (v(2, i-1, j+1, k  ) + v(2, i-1, j, k  ))
         v3 = 0.5 * (v(2, i  , j+1, k+1) + v(2, i  , j, k+1))
         v4 = 0.5 * (v(2, i  , j+1, k-1) + v(2, i  , j, k-1))
-
-        uu = v(1, i, j, k) - 0.5 * (v1 - v2)
-        vv = v(2, i, j, k)
-        ww = v(3, i, j, k) - 0.5 * (v3 - v4)
                 
-        do jj=jx+1, jx+g
-          v(1, i, jj, k) = uu
-          v(2, i, jj, k) = vv
-          v(3, i, jj, k) = ww
-        end do
+        v(1, i, j+1, k) = v(1, i, j, k) - 0.5 * (v1 - v2)
+        v(2, i, j+1, k) = v(2, i, j, k)
+        v(3, i, j+1, k) = v(3, i, j, k) - 0.5 * (v3 - v4)
 
       end do
       end do
@@ -2702,7 +2676,8 @@
       
 
     case (Z_minus)
-
+      k=1
+      
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2713,20 +2688,14 @@
       do j=1,jx
       do i=1,ix
 
-        v1 = 0.5 * (v(3, i+1, j  , 0) + v(3, i+1, j  , 1))
-        v2 = 0.5 * (v(3, i-1, j  , 0) + v(3, i-1, j  , 1))
-        v3 = 0.5 * (v(3, i  , j+1, 0) + v(3, i  , j+1, 1))
-        v4 = 0.5 * (v(3, i  , j-1, 0) + v(3, i  , j-1, 1))
-
-        uu = v(1, i, j, 1) + 0.5 * (v1 - v2)
-        vv = v(2, i, j, 1) + 0.5 * (v3 - v4)
-        ww = v(3, i, j, 1)
+        v1 = 0.5 * (v(3, i+1, j  , k-1) + v(3, i+1, j  , k))
+        v2 = 0.5 * (v(3, i-1, j  , k-1) + v(3, i-1, j  , k))
+        v3 = 0.5 * (v(3, i  , j+1, k-1) + v(3, i  , j+1, k))
+        v4 = 0.5 * (v(3, i  , j-1, k-1) + v(3, i  , j-1, k))
                 
-        do kk=1-g, 0
-          v(1, i, j, kk) = uu
-          v(2, i, j, kk) = vv
-          v(3, i, j, kk) = ww
-        end do
+        v(1, i, j, k-1) = v(1, i, j, k) + 0.5 * (v1 - v2)
+        v(2, i, j, k-1) = v(2, i, j, k) + 0.5 * (v3 - v4)
+        v(3, i, j, k-1) = v(3, i, j, k)
 
       end do
       end do
@@ -2752,16 +2721,10 @@
         v2= 0.5 * (v(3, i-1, j  , k+1) + v(3, i-1, j  , k))
         v3= 0.5 * (v(3, i  , j+1, k+1) + v(3, i  , j+1, k))
         v4= 0.5 * (v(3, i  , j-1, k+1) + v(3, i  , j-1, k))
-
-        uu = v(1, i, j, k) - 0.5 * (v1 - v2)
-        vv = v(2, i, j, k) - 0.5 * (v3 - v4)
-        ww = v(3, i, j, k)
                 
-        do kk=kx+1, kx+g
-          v(1, i, j, kk) = uu
-          v(2, i, j, kk) = vv
-          v(3, i, j, kk) = ww
-        end do
+        v(1, i, j, k+1) = v(1, i, j, k) - 0.5 * (v1 - v2)
+        v(2, i, j, k+1) = v(2, i, j, k) - 0.5 * (v3 - v4)
+        v(3, i, j, k+1) = v(3, i, j, k)
 
       end do
       end do

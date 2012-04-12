@@ -674,7 +674,6 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
     
     switch (typ) {
       case OBC_OUTFLOW:
-      case OBC_TRC_FREE:
       case OBC_IN_OUT:
         cbc_div_obc_oflow_vec_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop); // vecは流用
         obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
@@ -689,8 +688,13 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
         
       case OBC_SYMMETRIC:
         vec[0] = vec[1] = vec[2] = 0.0;
-        // fluxはゼロなので処理不要　cbc_div_obc_drchlt_(div, dim_sz, gc, &face, v00, &coef, (int*)bv, vec, &flop);
+        // fluxはゼロなので処理不要
         obc[face].set_DomainV(vec, face); // 速度の形式
+        break;
+        
+      case OBC_FAR_FIELD:
+      case OBC_TRC_FREE:
+        // nothing
         break;
     }
   }
@@ -1070,6 +1074,11 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
           cbc_div_obc_oflow_pvec_(div, dim_sz, gc, &face, v00, &vel, &coef, (int*)bv, v0, &flop);
         }
         break;
+        
+      case OBC_TRC_FREE:
+      case OBC_FAR_FIELD:
+        // 境界値を与え，通常スキームで計算するので不要
+        break;
     }
   }
 }
@@ -1145,13 +1154,24 @@ void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
     else { // 周期境界条件以外の処理
       if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
       
-      if ( F == OBC_IN_OUT ) {
-        if ( obc[face].Face_inout == ALT_OUT ) {
-          cbc_pobc_neumann_(p, dim_sz, gc, &face);
-        }
-        else {
+      switch ( F ) {
+          
+        case OBC_IN_OUT:
+          if ( obc[face].Face_inout == ALT_OUT ) {
+            cbc_pobc_neumann_(p, dim_sz, gc, &face);
+          }
+          else {
+            cbc_pobc_drchlt_ (p, dim_sz, gc, &face, &pv);
+          }
+          break;
+          
+        case OBC_TRC_FREE:
           cbc_pobc_drchlt_ (p, dim_sz, gc, &face, &pv);
-        }
+          break;
+          
+        case OBC_FAR_FIELD:
+          cbc_pobc_neumann_(p, dim_sz, gc, &face);
+          break;
       }
     }
   }
@@ -1212,7 +1232,10 @@ void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, 
         break;
         
       case OBC_TRC_FREE:
-        //cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
+        cbc_vobc_tfree_(v, dim_sz, gc, &face, &flop);
+        break;
+        
+      case OBC_FAR_FIELD:
         cbc_vobc_neumann_(v, dim_sz, gc, &face);
         break;
         
@@ -1894,6 +1917,7 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* ws, unsigned* bh1, REAL_TYPE* v, REAL_
         
       case OBC_IN_OUT:
       case OBC_TRC_FREE:
+      case OBC_FAR_FIELD:
         C->H_Dface[face] = ps_OBC_Free(ws, bh1, face, v, t, v00, flop);
         break;
 

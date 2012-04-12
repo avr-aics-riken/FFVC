@@ -4,6 +4,10 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.5.5  12 Apr. 2012
+  - 平均値の引き戻しオプション　Pressure_Shift
+  - FAR_FIELD 遠方境界
+  
 Ver 2.5.4  27 Mar. 2012
   - Control classをsingletonに変更
   

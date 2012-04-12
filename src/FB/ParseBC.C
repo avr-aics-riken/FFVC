@@ -112,6 +112,7 @@ void ParseBC::chkKeywordOBC(const char *keyword, unsigned m)
   else if( !strcasecmp(keyword, "Symmetric"))           BaseBc[m].set_BCtype(OBC_SYMMETRIC);
   else if( !strcasecmp(keyword, "Periodic"))            BaseBc[m].set_BCtype(OBC_PERIODIC);
   else if( !strcasecmp(keyword, "Traction_Free"))       BaseBc[m].set_BCtype(OBC_TRC_FREE);
+  else if( !strcasecmp(keyword, "Far_Field"))           BaseBc[m].set_BCtype(OBC_FAR_FIELD);
   else {
     stamped_printf("\tParsing error : Invalid keyword is described '%s'\n", keyword);
     Exit(0);
@@ -390,6 +391,7 @@ string ParseBC::getOBCstr(unsigned id)
   else if( id == OBC_SYMMETRIC ) bc = "Symmetric";
   else if( id == OBC_PERIODIC )  bc = "Periodic";
   else if( id == OBC_TRC_FREE )  bc = "Traction_Free";
+  else if( id == OBC_FAR_FIELD ) bc = "Far_Field";
   else                           bc = "";
   return bc;
 }
@@ -1492,6 +1494,43 @@ void ParseBC::getXML_Model(void)
   };
 }
 
+/**
+ @fn void ParseBC::getXML_OBC_FarField(const CfgElem *elmL, unsigned n)
+ @brief 外部境界の遠方境界のパラメータを取得する
+ @param elmL 
+ @param n 面番号
+ */
+void ParseBC::getXML_OBC_FarField(const CfgElem *elmL, unsigned n)
+{
+  REAL_TYPE ct;
+ 
+  BaseBc[n].set_pType(P_GRAD_ZERO);
+  BaseBc[n].p = 0.0; // ダミー値
+  
+  // 外部雰囲気温
+  if ( HeatProblem ) {
+    if ( elmL->GetValue(CfgIdt("ambient_temperature"), &ct) ) {
+      BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    }
+    else {
+      stamped_printf("\tParsing error : fail to get 'ambient_temperature' in 'Basic_BCs > Far_Field'\n");
+      Exit(0);
+    }
+    if ( Unit_Param != DIMENSIONAL ) {
+      stamped_printf("\tError: Heat condition must be given by dimensional value\n");
+      Exit(0);
+    }
+  }
+  
+  /* 圧力の値
+   if ( elmL->GetValue(CfgIdt("pressure_value"), &ct) ) {
+   BaseBc[n].p = ct;
+   }
+   else {
+   stamped_printf("\tParsing error : fail to get 'pressure_value' in 'Basic_BCs > Traction_Free'\n");
+   Exit(0);
+   } */
+}
 
 /*
  @fn void ParseBC::getXML_OBC_HT(const CfgElem *elmL, unsigned n, const char* kind)
@@ -1880,15 +1919,6 @@ void ParseBC::getXML_OBC_Trcfree(const CfgElem *elmL, unsigned n)
       Exit(0);
     }
   }
-  
-  /* 圧力の値
-   if ( elmL->GetValue(CfgIdt("pressure_value"), &ct) ) {
-   BaseBc[n].p = ct;
-   }
-   else {
-   stamped_printf("\tParsing error : fail to get 'pressure_value' in 'Basic_BCs > Traction_Free'\n");
-   Exit(0);
-   } */
 }
 
 /**
@@ -2284,6 +2314,10 @@ void ParseBC::loadOuterBC(void)
         
       case OBC_TRC_FREE:
         getXML_OBC_Trcfree(elmL2, i);
+        break;
+        
+      case OBC_FAR_FIELD:
+        getXML_OBC_FarField(elmL2, i);
         break;
         
       case OBC_PERIODIC:
@@ -3277,6 +3311,9 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned 
       if ( HeatProblem ) {
         fprintf(fp, "\t\t\t    Ambient Temperature  = %12.6e \n", ref->get_Temp());
       }
+      break;
+      
+    case OBC_FAR_FIELD:
       break;
       
     case OBC_PERIODIC:
