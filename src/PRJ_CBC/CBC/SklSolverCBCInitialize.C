@@ -57,6 +57,30 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 並列処理モード
   setParallelism();
+  std::string para_mode;
+  
+  switch (C.Parallelism) {
+    case Control::Serial:
+      para_mode = "Serial";
+      break;
+      
+    case Control::OpenMP:
+      para_mode = "OpenMP";
+      break;
+      
+    case Control::FlatMPI:
+      para_mode = "FlatMPI";
+      break;
+      
+    case Control::Hybrid:
+      para_mode = "Hybrid";
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  PM.setParallelMode(para_mode, C.num_thread, C.num_process);
   
   // condition fileのオープン
   Hostonly_ {
@@ -3176,10 +3200,10 @@ void SklSolverCBC::setParallelism(void)
     C.num_process = para_mng->GetNodeNum(pn.procGrp);
     
     if ( C.num_thread > 1 ) {
-      C.Parallelism = Control::OpenMP;
+      C.Parallelism = Control::Hybrid;
     }
     else {
-      C.Parallelism = Control::Serial;
+      C.Parallelism = Control::FlatMPI;
     }
   }
   else {
