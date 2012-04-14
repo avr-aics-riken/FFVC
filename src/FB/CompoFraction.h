@@ -20,12 +20,6 @@
 class CompoFraction {
   
 protected:
-  // サンプリング形状
-  enum Shapes {
-    RECT_CYL,  ///< 矩形領域
-    CIRC_CYL,  ///< 円筒領域
-  };
-  
   // ローカル計算領域情報
   int size[3];     ///< セル(ローカル)サイズ
   int guide;       ///< ガイドセル数
@@ -35,7 +29,7 @@ protected:
   FB::Vec3f angle; ///< 変換の回転角度
   
   // 形状パラメータ
-  Shapes smode;      ///< 形状モード
+  int smode;         ///< 形状モード
   float depth;       ///< 厚さ
   float width;       ///< 矩形の幅（dir方向)
   float height;      ///< 矩形の高さ
@@ -108,7 +102,7 @@ protected:
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     float r = sqrtf(q.x*q.x + q.y*q.y);
     
-    return ( (r<=r_fan) && (r>r_boss) ) ? 1.0 : 0.0;
+    return ( (r<=r_fan) && (r>=r_boss) ) ? 1.0 : 0.0;
   }
   
   //@fn inline float judge_rect(const FB::Vec3f p)
@@ -184,9 +178,37 @@ public:
   void bbox_index(int* st, int* ed);
   void get_angle     (void);
   void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height);
-  void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss);
+  void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss=0.0f);
   void subdivision   (const int st[], const int ed[], float* vf, double& flop);
   void vertex8       (const int st[], const int ed[], float* vf, double& flop);
 };
+
+
+class ShapeMonitor : public CompoFraction {
+
+public:
+  ShapeMonitor() {}
+  
+  /// コンストラクタ
+  ///   @param[in] size,guide ローカルセル数，ガイドセル数
+  ///   @param[in] crd  モニタ点座標
+  ///   @param[in] org,pch  ローカル領域基点座標，セル幅
+  ///   @param[in] div サブディビジョンの分割数
+  ShapeMonitor(unsigned size[], unsigned guide, float pch[], float org[], int div) {
+    this->size[0]  = (int)size[0];
+    this->size[1]  = (int)size[1];
+    this->size[2]  = (int)size[2];
+    this->guide    = (int)guide;
+    this->pch      = pch;
+    this->org      = org;
+    this->division = div;
+  }
+  
+  ~ShapeMonitor() {}
+  
+public:
+  void inside_decision(const int st[], const int ed[], float* vf, int* mid, const int m_id);
+};
+
 
 #endif // _SKL_FB_FRACTION_H_

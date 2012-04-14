@@ -432,118 +432,6 @@ void ParseBC::getUnitVec(REAL_TYPE* v)
 	}
 }
 
-/**
- @fn void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
- @brief XMLファイルからMonitorの設定内容をパースし，パラメータを保持する
- @param elmL コンフィギュレーションツリーのポインタ
- @param n コンポーネントリストに登録するエントリ番号のベース
- @param C Control class
- @note Referenceは，隠しコマンドに
- */
-void ParseBC::getXML_Cell_Monitor(const CfgElem *elmL, unsigned n, Control* C)
-{
-  int nvc=0;
-  const CfgElem *elmL2=NULL;
-  const CfgParam* param=NULL;
-  const char *pnt=NULL;
-  const char *str=NULL;
-  REAL_TYPE v[3];
-  
-  // reference 
-  if ( elmL->GetValue(CfgIdt("reference"), &pnt) ) {
-    if ( !strcasecmp("yes", pnt) ) {
-      compo[n].setStateCellMonitor(ON);
-    }
-    else if ( !strcasecmp("no", pnt) ) {
-      compo[n].setStateCellMonitor(OFF);
-    }
-    else {
-      stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt);
-      Exit(0);
-    }
-  }
-  
-  // 法線ベクトル
-  get_NV(elmL, n, "InnerBoundary > Cell_Monitor", v);
-  copyVec(compo[n].nv, v);
-  
-  // Variables
-  if ( !( elmL2 = elmL->GetElemFirst("Variables") ) ) {
-    stamped_printf("\tParsing error : No 'Variables' keyword in 'Cell_Monitor'\n");
-    Exit(0);
-  }
-  
-  // モニタする変数と数を取得
-  nvc = 0;
-  
-  // 速度
-  if ( !elmL2->GetValue("velocity", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'Velocity' in 'Cell_Monitor'\n");
-    Exit(0);
-  }
-  if     ( !strcasecmp(str, "on") )  {
-    compo[n].encodeVarType(var_Velocity);
-    nvc++;
-  }
-  else if( !strcasecmp(str, "off") ) {;} // nothing
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Velocity'\n");
-    Exit(0);
-  }
-  
-  // 圧力
-  if ( !elmL2->GetValue("pressure", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'Pressure' in 'Cell_Monitor'\n");
-    Exit(0);
-  }
-  if     ( !strcasecmp(str, "on") )  {
-    compo[n].encodeVarType(var_Pressure);
-    nvc++;
-  }
-  else if( !strcasecmp(str, "off") ) {;} // nothing
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Pressure'\n");
-    Exit(0);
-  }
-  
-  // 温度
-  if ( HeatProblem ) {
-    if ( !elmL2->GetValue("temperature", &str) ) {
-      stamped_printf("\tParsing error : fail to get 'Temperature' in 'Cell_Monitor'\n");
-      Exit(0);
-    }
-    if     ( !strcasecmp(str, "on") )  {
-      compo[n].encodeVarType(var_Temperature);
-      nvc++;
-    }
-    else if( !strcasecmp(str, "off") ) {;} // nothing
-    else {
-      stamped_printf("\tInvalid keyword is described for 'Temperature'\n");
-      Exit(0);
-    }
-  }
-  
-  // 全圧
-  if ( C->Mode.TP == ON ) {
-    if ( !elmL2->GetValue("total_pressure", &str) ) {
-      stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
-      Exit(0);
-    }
-    if     ( !strcasecmp(str, "on") )  {
-      compo[n].encodeVarType(var_TotalP);
-      nvc++;
-    }
-    else if( !strcasecmp(str, "off") ) {;} // nothing
-    else {
-      stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
-      Exit(0);
-    }
-  }
-  
-  // モニタ面に対して指定された変数の個数（モニタの個数）を取得
-  compo[n].setAttrb(nvc);
-}
-
 
 /**
  @fn void ParseBC::getXML_IBC_Adiabatic(const CfgElem *elmL, unsigned n)
@@ -996,6 +884,160 @@ void ParseBC::getXML_IBC_IsoTherm(const CfgElem *elmL, unsigned n)
     stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
     Exit(0);
   }
+}
+
+/**
+ @fn void ParseBC::getXML_IBC_Monitor(const CfgElem *elmL, unsigned n, Control* C)
+ @brief XMLファイルからMonitorの設定内容をパースし，パラメータを保持する
+ @param elmL コンフィギュレーションツリーのポインタ
+ @param n コンポーネントリストに登録するエントリ番号のベース
+ @param C Control class
+ @note Referenceは，隠しコマンドに
+ */
+void ParseBC::getXML_IBC_Monitor(const CfgElem *elmL, unsigned n, Control* C)
+{
+  int nvc=0;
+  const CfgElem *elmL2=NULL;
+  const CfgParam* param=NULL;
+  const char *pnt=NULL;
+  const char *str=NULL;
+  REAL_TYPE v[3];
+  
+  // モードと形状
+  if ( elmL->GetValue(CfgIdt("shape"), &pnt) ) {
+    if ( !strcasecmp("cylinder", pnt) ) {
+      compo[n].set_Shape(SHAPE_CYLINDER);
+    }
+    else if ( !strcasecmp("box", pnt) ) {
+      compo[n].set_Shape(SHAPE_BOX);
+    }
+    else if ( !strcasecmp("voxel_model", pnt) ) {
+      compo[n].set_Shape(SHAPE_VOXEL);
+    }
+    else {
+      stamped_printf("\tParsing error : Invalid string value for 'Shape' : %s\n", pnt);
+      Exit(0);
+    }
+  }
+  
+  // reference 
+  if ( elmL->GetValue(CfgIdt("reference"), &pnt) ) {
+    if ( !strcasecmp("yes", pnt) ) {
+      compo[n].setStateCellMonitor(ON);
+    }
+    else if ( !strcasecmp("no", pnt) ) {
+      compo[n].setStateCellMonitor(OFF);
+    }
+    else {
+      stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt);
+      Exit(0);
+    }
+  }
+  
+  // 法線ベクトル
+  get_NV(elmL, n, "InnerBoundary > Cell_Monitor : Normal", v);
+  copyVec(compo[n].nv, v);
+  
+  unsigned shp = compo[n].get_Shape();
+  
+  if ( (shp == SHAPE_BOX) || (shp == SHAPE_CYLINDER) ) {
+    // 中心座標の取得
+    get_Center(elmL, n, "InnerBoundary > Cell_Monitor : Center", v);
+    copyVec(compo[n].oc, v);
+  }
+  
+  if ( shp == SHAPE_BOX ) {
+    // 方向ベクトルの取得
+    get_Dir(elmL, n, "InnerBoundary > Cell_Monitor : Dir. Vector", v);
+    copyVec(compo[n].dr, v);
+    
+    // 形状パラメータ
+    compo[n].depth  = get_BCval_real(elmL, "depth");
+    compo[n].shp_p1 = get_BCval_real(elmL, "width");
+    compo[n].shp_p2 = get_BCval_real(elmL, "height");
+  }
+  
+  if ( shp == SHAPE_CYLINDER ) {
+    // 形状パラメータ
+    compo[n].depth  = get_BCval_real(elmL, "depth");
+    compo[n].shp_p1 = get_BCval_real(elmL, "radius");
+  }
+  
+  // Variables
+  if ( !( elmL2 = elmL->GetElemFirst("Variables") ) ) {
+    stamped_printf("\tParsing error : No 'Variables' keyword in 'Cell_Monitor'\n");
+    Exit(0);
+  }
+  
+  // モニタする変数と数を取得
+  nvc = 0;
+  
+  // 速度
+  if ( !elmL2->GetValue("velocity", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Velocity' in 'Cell_Monitor'\n");
+    Exit(0);
+  }
+  if     ( !strcasecmp(str, "on") )  {
+    compo[n].encodeVarType(var_Velocity);
+    nvc++;
+  }
+  else if( !strcasecmp(str, "off") ) {;} // nothing
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Velocity'\n");
+    Exit(0);
+  }
+  
+  // 圧力
+  if ( !elmL2->GetValue("pressure", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Pressure' in 'Cell_Monitor'\n");
+    Exit(0);
+  }
+  if     ( !strcasecmp(str, "on") )  {
+    compo[n].encodeVarType(var_Pressure);
+    nvc++;
+  }
+  else if( !strcasecmp(str, "off") ) {;} // nothing
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Pressure'\n");
+    Exit(0);
+  }
+  
+  // 温度
+  if ( HeatProblem ) {
+    if ( !elmL2->GetValue("temperature", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Temperature' in 'Cell_Monitor'\n");
+      Exit(0);
+    }
+    if     ( !strcasecmp(str, "on") )  {
+      compo[n].encodeVarType(var_Temperature);
+      nvc++;
+    }
+    else if( !strcasecmp(str, "off") ) {;} // nothing
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Temperature'\n");
+      Exit(0);
+    }
+  }
+  
+  // 全圧
+  if ( C->Mode.TP == ON ) {
+    if ( !elmL2->GetValue("total_pressure", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
+      Exit(0);
+    }
+    if     ( !strcasecmp(str, "on") )  {
+      compo[n].encodeVarType(var_TotalP);
+      nvc++;
+    }
+    else if( !strcasecmp(str, "off") ) {;} // nothing
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
+      Exit(0);
+    }
+  }
+  
+  // モニタ面に対して指定された変数の個数（モニタの個数）を取得
+  compo[n].setAttrb(nvc);
 }
 
 
@@ -3637,7 +3679,7 @@ void ParseBC::setCompoList(Control* C)
         Exit(0);
       }      
     }
-    else if ( tp == OUTFLOW ) {
+    else if ( tp == IBM_DF ) {
       getXML_IBC_IBM_DF(elmL2, odr);
       if ( !isIDinCompo(ide, odr) ) {
         stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
@@ -3666,7 +3708,7 @@ void ParseBC::setCompoList(Control* C)
       }
     }
     else if ( tp == CELL_MONITOR ) {
-      getXML_Cell_Monitor(elmL2, odr, C);
+      getXML_IBC_Monitor(elmL2, odr, C);
       if ( !isIDinCompo(ide, odr) ) {
         stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
         Exit(0);

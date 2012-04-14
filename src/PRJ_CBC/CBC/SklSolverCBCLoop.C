@@ -290,7 +290,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   }
   
   // サンプリング履歴
-  if (C.Sampling.log == ON  || MO.hasCellMonitor(cmp, C.NoBC)) {
+  if ( C.Sampling.log == ON  || C.isMonitor() ) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
       TIMING_start(tm_sampling);
       MO.sampling();

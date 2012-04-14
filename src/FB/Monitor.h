@@ -93,16 +93,6 @@ public:
                const char* methodStr, const char* modeStr,
                REAL_TYPE from[3], REAL_TYPE to[3], int nDivision);
   
-  /// 内部境界条件としてのモニタ指定の有無を調べる.
-  ///
-  ///   @param[in] cmp コンポーネント配列
-  ///   @param[in] nBC コンポーネント数
-  ///
-  bool hasCellMonitor(CompoList* cmp, int nBC) {
-    for (int i = 1; i <= nBC; i++) if (cmp[i].isMONITOR()) return true;
-    return false;
-  }
-  
   /// 内部境界条件としてモニタ点を登録.
   ///
   ///   @param[in] cmp コンポーネント配列

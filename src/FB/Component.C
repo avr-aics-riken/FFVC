@@ -273,6 +273,11 @@ void CompoList::setPrsUnit(const unsigned key) {
   var_u1 = key;
 }
 
+//@fn void CompoList::set_Shape(const unsigned key)
+void CompoList::set_Shape(const unsigned key) { 
+  shape = key; 
+}
+
 //@fn void CompoList::setState  (const int key)
 //@brief stateをセットする
 //@param key セルの状態 SOLID/FLUID

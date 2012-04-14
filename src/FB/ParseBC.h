@@ -98,7 +98,6 @@ protected:
   void get_Dir              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
   void get_Center           (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
   void getUnitVec           (REAL_TYPE* v);
-  void getXML_Cell_Monitor  (const CfgElem *elmL, unsigned n, Control* C);
   void getXML_IBC_Adiabatic (const CfgElem *elmL, unsigned n);
   void getXML_IBC_CnstTemp  (const CfgElem *elmL, unsigned n);
   void getXML_IBC_Fan       (const CfgElem *elmL, unsigned n);
@@ -111,6 +110,7 @@ protected:
   void getXML_IBC_HT_SF     (const CfgElem *elmL, unsigned n);
   void getXML_IBC_HT_SN     (const CfgElem *elmL, unsigned n);
   void getXML_IBC_IsoTherm  (const CfgElem *elmL, unsigned n);
+  void getXML_IBC_Monitor   (const CfgElem *elmL, unsigned n, Control* C);
   void getXML_IBC_Outflow   (const CfgElem *elmL, unsigned n);
   void getXML_IBC_Periodic  (const CfgElem *elmL, unsigned n);
   void getXML_IBC_PrsLoss   (const CfgElem *elmL, unsigned n);

@@ -15,6 +15,7 @@
 #include <string>
 #include "FBDefine.h"
 
+
 class CompoList {
 public:
   /// 速度指定方法
@@ -88,6 +89,7 @@ public:
     same_direction=1,
     opposite_direction
   };
+
   
 protected:
   unsigned ID;        /// セルID
@@ -107,11 +109,13 @@ protected:
   int      ed[3];     /// コンポーネントインデクスBV範囲の終点
   int      c_size[3]; /// コンポーネントワーク配列の大きさ
   int      def;       /// BC指定時の面を挟む相手先のセルID
+  int      shape;     /// 形状パラメータ
   REAL_TYPE var1;     /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
   REAL_TYPE var2;     /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
   REAL_TYPE var3;     /// パラメータ保持 (Heat Density, Temperature)
   REAL_TYPE var_m;    /// モニタの値を保持
   REAL_TYPE temp_init;/// 温度の初期値
+  
   
 public:
   REAL_TYPE area;         ///< 断面積
@@ -129,7 +133,7 @@ public:
   CompoList() {
     ID = type = element = variable = mat_odr = attrb = bc_dir = 0;
     h_type = 0;
-    state = -1;
+    state = shape = -1;
     def = 0;
     ens = OFF;
     area = 0.0;
@@ -220,6 +224,7 @@ public:
   void set_Mon_Heatflux    (const REAL_TYPE var);
   void set_Mon_Temp        (const REAL_TYPE var);
   void set_Pressure        (const REAL_TYPE var);
+  void set_Shape           (const unsigned key);
   void set_sw_Heatgen      (const unsigned key);
   void set_sw_HexDir       (const unsigned key);
   void set_sw_HTmodeRef    (const unsigned key);
@@ -236,6 +241,7 @@ public:
   inline unsigned getPeriodicDir(void) const      { return var_u1; }
   inline unsigned getPrsUnit(void) const          { return var_u1; }
   inline unsigned getOutflowType(void) const      { return var_u1; }
+  inline unsigned get_Shape(void) const           { return shape; }
   inline unsigned getStateCellMonitor(void) const { return var_u1; }
   inline unsigned getElement(void) const          { return element; }
   inline unsigned getID(void) const               { return ID; }

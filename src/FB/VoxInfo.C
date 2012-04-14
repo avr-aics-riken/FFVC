@@ -1705,19 +1705,18 @@ void VoxInfo::encHbit(unsigned* bh1, unsigned* bh2)
 unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* bx)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int i,j,k, idd;
+  int idd;
   unsigned register m, g=0;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int gd = (int)guide;
   
   idd = (int)id;
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         if ( mid[m] == idd )  {
           bx[m] |= order; // bx[m]の下位6bitにエントリをエンコード  >> ParseBC:sertControlVars()でビット幅をチェック
@@ -1731,7 +1730,7 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
     unsigned tmp = g;
     para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
   }
-  
+
   return g;
 }
 
@@ -5152,7 +5151,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
   
   // セルIDをエンコード
   for (unsigned m=0; m<nx; m++) {
-    md= mid[m];
+    md = mid[m];
     bx[m] |= ((unsigned)md << TOP_CELL_ID) ;
   }
 
@@ -5180,6 +5179,21 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
           }
         }
         break;
+        
+      case CELL_MONITOR:
+        cmp[n].getBbox(st, ed);
+        
+        for (int k=st[2]; k<=ed[2]; k++) {
+          for (int j=st[1]; j<=ed[1]; j++) {
+            for (int i=st[0]; i<=ed[0]; i++) {
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              if ( mid[m] == (int)id ) {
+                bx[m] |= (id << TOP_CELL_ID) ;
+              }
+            }
+          }
+        }
+        break;
     }
   }
 
@@ -5192,7 +5206,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
       if ( mid[m] == (int)id ) bx[m] |= (odr << TOP_MATERIAL);
     }
   }
-  
+
   // CompoListのエントリ　セル要素のみ
   for (unsigned n=1; n<=NoBC; n++) {
     id = cmp[n].getID();
@@ -5210,6 +5224,39 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
         break;
     }
   }
+  
+  
+  for (unsigned n=1; n<=NoBC; n++) {
+    int nst[3], ned[3];
+    nst[0] = (int)size[0];
+    nst[1] = (int)size[1];
+    nst[2] = (int)size[2];
+    ned[0] = 0;
+    ned[1] = 0;
+    ned[2] = 0;
+    unsigned m;
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
+        
+        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        s = bx[m];
+        
+        if ( ( s & MASK_6) == n ) {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+      }
+    }
+  }
+    printf("check2 >> %d %d %d - %d %d %d\n", nst[0], nst[1], nst[2], ned[0], ned[1], ned[2]);
+  }
+  
+  
   
   
   // 状態のエンコード

@@ -4,6 +4,9 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.6.0  14 Apr. 2012
+  - Cell_Monitor指定の方法を変更
+  
 Ver 1.5.9  12 Apr. 2012
   - 速度のBCについて，粘性項を考慮したモードのみとする
   - 外部境界条件部分で1次精度風上に落とすフラグをVIBC_1ST >> VBC_UWD

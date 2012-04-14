@@ -14,7 +14,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 255
+#define FB_VERS 256
 
 // 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
 #ifndef REAL_TYPE_DOUBLE
@@ -225,6 +225,11 @@
 #define FLUID      1
 #define GAS        2
 #define LIQUID     3
+
+// モニタの形状
+#define SHAPE_CYLINDER 1
+#define SHAPE_BOX      2
+#define SHAPE_VOXEL    3
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)

@@ -274,6 +274,7 @@ public:
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void set_Parallel_Info    (void);
   void setParallelism       (void);
+  void setShapeMonitor      (int* mid);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setVIBC_from_Cut     (VoxInfo* Vinfo, const unsigned* bv);

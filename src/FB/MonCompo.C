@@ -710,7 +710,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   for (int i = 0; i < np; i++) nPointList[i] = 0;
   
   cmp.getBbox(st, ed);
-  
+
   if (cmp.isEns()) {
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {

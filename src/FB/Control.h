@@ -342,6 +342,7 @@ public:
     unsigned outflow;
     unsigned periodic;
     unsigned fraction;
+    unsigned monitor;
   } Ens_of_Compo;
   
   /// 偏微分方程式の型
@@ -650,6 +651,7 @@ public:
     EnsCompo.outflow = 0;
     EnsCompo.periodic= 0;
     EnsCompo.fraction= 0;
+    EnsCompo.monitor = 0;
   }
   virtual ~Control() {}
   
@@ -739,6 +741,12 @@ public:
   //@brief 部分周期境界コンポーネントがあれば1を返す
   unsigned isPeriodic(void) const {
     return EnsCompo.periodic;
+  }
+
+  //@fn unsigned isMonitor(void) const
+  //@brief モニタコンポーネントがあれば1を返す
+  unsigned isMonitor(void) const {
+    return EnsCompo.monitor;
   }
   
   //@fn unsigned isOutflow(void) const

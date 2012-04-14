@@ -316,8 +316,10 @@ SklSolverCBC::SklSolverInitialize() {
   }
   setIDtables(&B, fp, mp);
   
+  
   // VoxInfoクラスへ値をセット
   Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
+  
   
   // XMLから得られた内部BCコンポーネント数を表示
   Hostonly_ {
@@ -359,7 +361,7 @@ SklSolverCBC::SklSolverInitialize() {
   // ボクセルモデルのIDがXMLに記述されたIDに含まれていること
 	Hostonly_ {
 		if ( !Vinfo.chkIDconsistency(B.get_IDtable_Ptr(), C.NoID) ) {
-			stamped_printf("\tID in between XML and scaned is not consistent\n");
+			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
 			return -1;
 		}
 	}
@@ -370,14 +372,21 @@ SklSolverCBC::SklSolverInitialize() {
   BC.setWorkList(cmp, mat);
   Vinfo.setWorkList(cmp, mat);
 
+  
   // ParseBCクラスのセットアップ，CompoListの設定，外部境界条件の読み込み保持
   setBCinfo(&B);
+  
   
   // ガイドセル上にXMLで指定するセルIDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) {
     Vinfo.adjCellID_on_GC(face, dc_mid, BC.get_OBC_Ptr(face)->get_BCtype(), 
                          BC.get_OBC_Ptr(face)->get_GuideID(), BC.get_OBC_Ptr(face)->get_PrdcMode());
   }
+  
+  
+  // Cell_Monitorの指定がある場合，モニタ位置をセット
+  if ( C.isMonitor() ) setShapeMonitor(mid);
+  Ex->writeSVX(mid, &C);
   
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
   if ( C.isCDS() ) {
@@ -394,7 +403,7 @@ SklSolverCBC::SklSolverInitialize() {
   setMaterialList(&B, &M, mp, fp);
   
 
-#ifdef DEBUG
+#if 0
   // カット情報からボクセルモデルの固体をIDセット　デバッグ用
   if ( C.isCDS() ) {
     unsigned zc = Vinfo.markSolid_from_Cut(mid, cut);
@@ -450,7 +459,7 @@ SklSolverCBC::SklSolverInitialize() {
   // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
   Vinfo.setCmpFraction(cmp, bcd, cvf);
   
-#ifdef DEBUG
+#if 0
   // CompoListとMaterialListの関連を表示
   Hostonly_ M.printRelation(mp, fp, cmp);
 #endif
@@ -472,9 +481,8 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   
-#ifdef DEBUG
-  // チェック comment out
-  //FBUtility::chkGamma(C.imax, C.jmax, C.kmax, C.guide, bch);
+#if 0
+  FBUtility::chkGamma(C.imax, C.jmax, C.kmax, C.guide, bch);
 #endif
   
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
@@ -640,8 +648,8 @@ SklSolverCBC::SklSolverInitialize() {
   // 機能がOFFの場合には直ちに戻る
   getXML_Monitor(m_solvCfg, &MO);
   
-  // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込んで出力する
-  if (C.Sampling.log == ON  || MO.hasCellMonitor(cmp, C.NoBC)) {
+  // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
+  if (C.Sampling.log == ON  || C.isMonitor() ) {
     MO.write_ID(mid);
   }
   
@@ -649,11 +657,11 @@ SklSolverCBC::SklSolverInitialize() {
   MO.setInnerBoundary(cmp, C.NoBC);
     
   // 組み込み例題 or MonitorListの場合に，svxファイルを出力する．
-  if ( (C.Mode.Example != id_Users) || ( (C.Mode.Example == id_Users) && (C.Sampling.log == ON  || MO.hasCellMonitor(cmp, C.NoBC)) ) ) {
+  if ( (C.Mode.Example != id_Users) || ( (C.Mode.Example == id_Users) && (C.Sampling.log == ON  || C.isMonitor()) ) ) {
     Hostonly_ printf("\n\twrite ID which includes Monitor List ID\n\n");
     
     // 性能測定モードがオフのときのみ出力
-    if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
+    //if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
   }
   
   // mid[]を解放する  ---------------------------
@@ -908,7 +916,7 @@ SklSolverCBC::SklSolverInitialize() {
     }
     
     // モニタ情報の表示
-    if ( C.Sampling.log == ON || MO.hasCellMonitor(cmp, C.NoBC) ) {
+    if ( C.Sampling.log == ON || C.isMonitor() ) {
       MO.printMonitorInfo(mp, C.HistoryMonitorName);
       MO.printMonitorInfo(fp, C.HistoryMonitorName);
     }
@@ -1077,7 +1085,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
     
   // サンプリング元となるデータ配列の登録
-  if ( (C.Sampling.log == ON) || MO.hasCellMonitor(cmp, C.NoBC) ) {
+  if ( (C.Sampling.log == ON) || C.isMonitor() ) {
     if ( C.isHeatProblem() ) {
       MO.setDataPtrs(dc_v->GetData(), dc_p->GetData(), dc_t->GetData());
     }
@@ -2283,13 +2291,13 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
     c = cut[i]; 
     if( min_g > c ) min_g = c;
     if ( c < eps ) {
-      cut[i] = eps;
+      cut[i] = 0.0f;
       g++;
     }
   }
   if ( g>0 ) {
-    Hostonly_ fprintf(fp, "\n\t%d %s modified to minumun value %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
-    Hostonly_ printf("\n\t%d %s modified to minumun value %5.3e (non-dimnensional distance)\n\n", g, (g>1)?"cuts were":"cut was", eps);
+    Hostonly_ fprintf(fp, "\n\t%d cuts less than %5.3e were modified to 0.0 (in non-dimnensional distance)\n\n", g, eps);
+    Hostonly_ printf     ("\n\t%d cuts less than %5.3e were modified to 0.0 (in non-dimnensional distance)\n\n", g, eps);
   }
   return min_g;
 }
@@ -2594,7 +2602,7 @@ void SklSolverCBC::resizeBVcell(const int* st, const int* ed, const unsigned n, 
   ned[0] = 0;
   ned[1] = 0;
   ned[2] = 0;
-  
+
   for (k=st[2]; k<=ed[2]; k++) {
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
@@ -2613,7 +2621,7 @@ void SklSolverCBC::resizeBVcell(const int* st, const int* ed, const unsigned n, 
       }
     }
   }
-  
+
   // replace
   cmp[n].setBbox(nst, ned);
 }
@@ -2647,7 +2655,6 @@ void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const u
         break;
         
       case PERIODIC:
-      case CELL_MONITOR:
       case IBM_DF:
       case HEX:
       case FAN:
@@ -2696,7 +2703,7 @@ void SklSolverCBC::setBCinfo(ParseBC* B)
   B->setCompoList(&C);
   
   // 各コンポーネントが存在するかどうかを保持しておく
-  //setEnsComponent();
+  setEnsComponent();
 
   // BoundaryOuterクラスのポインタを渡す
   B->setObcPtr(BC.get_OBC_Ptr());
@@ -2741,6 +2748,7 @@ void SklSolverCBC::setComponentVF(float* cvf)
           break;
           
         default:
+          Exit(0);
           break;
       }
       
@@ -2771,7 +2779,7 @@ void SklSolverCBC::setComponentVF(float* cvf)
   }
   
   // 確認のための出力
-#ifdef DEBUG
+#if 0
   REAL_TYPE org[3], pit[3];
   
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
@@ -2791,6 +2799,7 @@ void SklSolverCBC::setComponentVF(float* cvf)
 #endif
   
 }
+
 
 /**
  @fn void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
@@ -2853,61 +2862,6 @@ void SklSolverCBC::setBbox_of_VIBC_Cut(VoxInfo* Vinfo, const unsigned* bv)
   
 }
 
-/**
- @fn void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
- @brief VOF値を気体(0.0)と液体(1.0)で初期化
- @param vof VOF function
- @param bx BCindex ID
- */
-void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
-{
-  int i,j,k;
-  unsigned s, odr, m0;
-  
-  for (k=1; k<=(int)size[2]; k++) {
-    for (j=1; j<=(int)size[1]; j++) {
-      for (i=1; i<=(int)size[0]; i++) {
-        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        s = bx[m0];
-        odr = DECODE_CMP(s);
-        if ( cmp[odr].getState() == FLUID ) {
-          vof[m0] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
-        }
-      }
-    }
-  }
-}
-
-/**
- @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
- @brief XMLから境界条件数やID情報を取得し，表示する
- @param B
- @param fp
- @param mp 
- */
-void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
-{
-  // C.NoBC, C.NoID, C.NoCompoを取得
-  // NoID = scanXMLmodel();
-  // NoCompo = NoBC + NoID;
-	// ParseBCクラス内でiTable[NoID+1]を確保
-  B->setControlVars(&C);
-  
-  // XMLファイルのModel_SettingからボクセルIDの情報を取得
-  B->getXML_Model();
-  
-  // XMLから得られたIDテーブルを表示
-  Hostonly_ {
-    B->printTable(fp);
-    fprintf(fp,"\n"); fflush(fp);
-    
-    B->printTable(mp);
-    fprintf(mp,"\n"); fflush(mp);
-  }
-  
-  // 流体と固体の媒質数，NoMaterialをセットする
-  B->setMedium(&C);
-}
 
 /**
  @fn void SklSolverCBC::setEnsComponent(void)
@@ -2951,7 +2905,46 @@ void SklSolverCBC::setEnsComponent(void)
     if ( cmp[n].isVFraction() ) c++;
   }
   if ( c>0 ) C.EnsCompo.fraction = ON;
+  
+  // モニタ
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isMONITOR() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.monitor = ON;
 }
+
+/**
+ @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
+ @brief XMLから境界条件数やID情報を取得し，表示する
+ @param B
+ @param fp
+ @param mp 
+ */
+void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
+{
+  // C.NoBC, C.NoID, C.NoCompoを取得
+  // NoID = scanXMLmodel();
+  // NoCompo = NoBC + NoID;
+	// ParseBCクラス内でiTable[NoID+1]を確保
+  B->setControlVars(&C);
+  
+  // XMLファイルのModel_SettingからボクセルIDの情報を取得
+  B->getXML_Model();
+  
+  // XMLから得られたIDテーブルを表示
+  Hostonly_ {
+    B->printTable(fp);
+    fprintf(fp,"\n"); fflush(fp);
+    
+    B->printTable(mp);
+    fprintf(mp,"\n"); fflush(mp);
+  }
+  
+  // 流体と固体の媒質数，NoMaterialをセットする
+  B->setMedium(&C);
+}
+
 
 /**
  @fn void SklSolverCBC::setGlobalCmpIdx(void)
@@ -3230,6 +3223,122 @@ void SklSolverCBC::setParallelism(void)
   }
   
 }
+
+/**
+ @fn void SklSolverCBC::setShapeMonitor(int* mid)
+ @brief Cell_Monitorで指定するIDでモニタ部分を指定するためのしかけ
+ @param mid ID配列
+ */
+void SklSolverCBC::setShapeMonitor(int* mid)
+{
+  int subsampling = 20; // 体積率のサブサンプリングの基数
+  int f_st[3], f_ed[3];
+  
+  float ctr[3];
+  float nv[3];
+  float dr[3];
+  float m_depth;
+  float m_radius;
+  float m_width;
+  float m_height;
+
+  // 作業用の配列
+  unsigned n_cell[3];
+  size_t size_n_cell;
+  
+  for (int i=0; i<3; i++) {
+    n_cell[i] = size[i] + 2*guide; // 分割数+ガイドセル
+  }
+  size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  
+  float* wk = new float [size_n_cell];
+  
+  memset(wk, 0, sizeof(float)*size_n_cell);
+  
+  
+  // ShapeMonitorのインスタンス
+  ShapeMonitor SM(size, guide, C.dx, C.org, subsampling);
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    if (cmp[n].isMONITOR()) {
+
+      // 形状パラメータのセット
+      nv[0]   = cmp[n].nv[0];
+      nv[1]   = cmp[n].nv[1];
+      nv[2]   = cmp[n].nv[2];
+      dr[0]   = cmp[n].dr[0];
+      dr[1]   = cmp[n].dr[1];
+      dr[2]   = cmp[n].dr[2];
+      ctr[0]  = cmp[n].oc[0]/C.RefLength;
+      ctr[1]  = cmp[n].oc[1]/C.RefLength;
+      ctr[2]  = cmp[n].oc[2]/C.RefLength;
+      m_depth = cmp[n].depth/C.RefLength;
+      m_radius= cmp[n].shp_p1/C.RefLength;
+      m_width = cmp[n].shp_p1/C.RefLength;
+      m_height= cmp[n].shp_p2/C.RefLength;
+      
+      switch ( cmp[n].get_Shape() ) {
+        case SHAPE_BOX:
+          SM.setShapeParam(nv, ctr, dr, m_depth, m_width, m_height);
+          break;
+          
+        case SHAPE_CYLINDER:
+          SM.setShapeParam(nv, ctr, m_depth, m_radius);
+          break;
+          
+        default:
+          Exit(0);
+          break;
+      }
+      
+      // 回転角度の計算
+      SM.get_angle(); 
+      
+      // bboxと投影面積の計算
+      cmp[n].area = SM.get_BboxArea();
+      
+      // インデクスの計算 > あとで，VoxEncode()でresize
+      SM.bbox_index(f_st, f_ed);
+      printf("%d %d %d - %d %d %d\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
+      
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+      
+      double dummy=0.0;
+      SM.vertex8(f_st, f_ed, wk, dummy);
+      
+      int id = (int)cmp[n].getID();
+      SM.inside_decision(f_st, f_ed, wk, mid, id);
+      
+    }
+  }
+  
+  // 確認のための出力
+#if 1
+  REAL_TYPE org[3], pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      org[i] *= C.RefLength;
+      pit[i] *= C.RefLength;
+    }
+  }
+  F.writeRawSPH((float*)mid, size, guide, org, pit, SPH_SINGLE);
+#endif
+  
+  // 配列の解放
+  if ( wk ) delete [] wk;
+}
+
 
 /**
  @fn void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
@@ -3525,6 +3634,33 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
 }
+
+
+/**
+ @fn void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
+ @brief VOF値を気体(0.0)と液体(1.0)で初期化
+ @param vof VOF function
+ @param bx BCindex ID
+ */
+void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
+{
+  int i,j,k;
+  unsigned s, odr, m0;
+  
+  for (k=1; k<=(int)size[2]; k++) {
+    for (j=1; j<=(int)size[1]; j++) {
+      for (i=1; i<=(int)size[0]; i++) {
+        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        s = bx[m0];
+        odr = DECODE_CMP(s);
+        if ( cmp[odr].getState() == FLUID ) {
+          vof[m0] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
+        }
+      }
+    }
+  }
+}
+
 
 /**
  @fn void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
