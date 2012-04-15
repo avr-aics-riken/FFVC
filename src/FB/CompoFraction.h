@@ -69,13 +69,13 @@ protected:
   
   void find_index(int* w, const FB::Vec3f p);
   
-  inline FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); } /// セルインデックスを(1,0,0)シフト
-  inline FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z  ); } /// セルインデックスを(0,1,0)シフト
-  inline FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z  ); } /// セルインデックスを(1,1,0)シフト
-  inline FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y  , index.z+h); } /// セルインデックスを(0,0,1)シフト
-  inline FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z+h); } /// セルインデックスを(1,0,1)シフト
-  inline FB::Vec3f shift_f6 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z+h); } /// セルインデックスを(0,1,1)シフト
-  inline FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); } /// セルインデックスを(1,1,1)シフト
+  inline FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z  ); } /// インデックスを(1,0,0)シフト
+  inline FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z  ); } /// インデックスを(0,1,0)シフト
+  inline FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z  ); } /// インデックスを(1,1,0)シフト
+  inline FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y  , index.z+h); } /// インデックスを(0,0,1)シフト
+  inline FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y  , index.z+h); } /// インデックスを(1,0,1)シフト
+  inline FB::Vec3f shift_f6 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x  , index.y+h, index.z+h); } /// インデックスを(0,1,1)シフト
+  inline FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) { return FB::Vec3f(index.x+h, index.y+h, index.z+h); } /// インデックスを(1,1,1)シフト
   
   //@fn inline void get_min()
   inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) {
@@ -193,21 +193,19 @@ public:
   ///   @param[in] size,guide ローカルセル数，ガイドセル数
   ///   @param[in] crd  モニタ点座標
   ///   @param[in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param[in] div サブディビジョンの分割数
-  ShapeMonitor(unsigned size[], unsigned guide, float pch[], float org[], int div) {
+  ShapeMonitor(unsigned size[], unsigned guide, float pch[], float org[]) {
     this->size[0]  = (int)size[0];
     this->size[1]  = (int)size[1];
     this->size[2]  = (int)size[2];
     this->guide    = (int)guide;
     this->pch      = pch;
     this->org      = org;
-    this->division = div;
   }
   
   ~ShapeMonitor() {}
   
 public:
-  void inside_decision(const int st[], const int ed[], float* vf, int* mid, const int m_id);
+  void setID(const int st[], const int ed[], int* mid, int m_id);
 };
 
 

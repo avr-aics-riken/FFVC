@@ -237,8 +237,7 @@ void MonitorList::setInnerBoundary(CompoList *cmp, int nBC)
 {
   for (int i = 1; i <= nBC; i++) {
     if (cmp[i].isMONITOR()) {
-      MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
-                                         size, guide, refVar, bcd);
+      MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box, size, guide, refVar, bcd);
       m->setInnerBoundary(i, cmp[i]);
       
       monGroup.push_back(m);

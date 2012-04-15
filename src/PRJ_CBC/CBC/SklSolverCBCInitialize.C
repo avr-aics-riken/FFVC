@@ -386,7 +386,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
   if ( C.isMonitor() ) setShapeMonitor(mid);
-  Ex->writeSVX(mid, &C);
+  
   
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
   if ( C.isCDS() ) {
@@ -649,19 +649,19 @@ SklSolverCBC::SklSolverInitialize() {
   getXML_Monitor(m_solvCfg, &MO);
   
   // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
-  if (C.Sampling.log == ON  || C.isMonitor() ) {
+  if (C.Sampling.log == ON || C.isMonitor() ) {
     MO.write_ID(mid);
   }
-  
+
   // 内部境界条件として指定されたモニタ設定を登録
   MO.setInnerBoundary(cmp, C.NoBC);
-    
+  mark();
   // 組み込み例題 or MonitorListの場合に，svxファイルを出力する．
   if ( (C.Mode.Example != id_Users) || ( (C.Mode.Example == id_Users) && (C.Sampling.log == ON  || C.isMonitor()) ) ) {
     Hostonly_ printf("\n\twrite ID which includes Monitor List ID\n\n");
     
     // 性能測定モードがオフのときのみ出力
-    //if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
+    if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
   }
   
   // mid[]を解放する  ---------------------------
@@ -1612,12 +1612,12 @@ void SklSolverCBC::fixed_parameters(void)
   }
   
   // ログファイル名
-  strcpy(C.HistoryName,      "history_base.txt");
-  strcpy(C.HistoryCompoName, "history_compo.txt");
-  strcpy(C.HistoryDomfxName, "history_domainflux.txt");
-  strcpy(C.HistoryWallName,  "history_log_wall.txt");
-  strcpy(C.HistoryItrName,   "history_iteration.txt");
-  
+  strcpy(C.HistoryName,        "history_base.txt");
+  strcpy(C.HistoryCompoName,   "history_compo.txt");
+  strcpy(C.HistoryDomfxName,   "history_domainflux.txt");
+  strcpy(C.HistoryWallName,    "history_log_wall.txt");
+  strcpy(C.HistoryItrName,     "history_iteration.txt");
+  strcpy(C.HistoryMonitorName, "sample.log");
   
 }
 
@@ -1894,12 +1894,13 @@ void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
   
   if ( C.Sampling.log == OFF ) return;
   
-  // 出力ファイル名
+  /* 出力ファイル名
   if ( !elmL1->GetValue(CfgIdt("output_file"), &str) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_File' in 'Monitor_List'\n");
     Exit(0);
   }
   strcpy(C.HistoryMonitorName, str);
+  */
   
   // 集約モード
   if ( !elmL1->GetValue(CfgIdt("output_mode"), &str) ) {
@@ -3231,7 +3232,6 @@ void SklSolverCBC::setParallelism(void)
  */
 void SklSolverCBC::setShapeMonitor(int* mid)
 {
-  int subsampling = 20; // 体積率のサブサンプリングの基数
   int f_st[3], f_ed[3];
   
   float ctr[3];
@@ -3241,23 +3241,9 @@ void SklSolverCBC::setShapeMonitor(int* mid)
   float m_radius;
   float m_width;
   float m_height;
-
-  // 作業用の配列
-  unsigned n_cell[3];
-  size_t size_n_cell;
-  
-  for (int i=0; i<3; i++) {
-    n_cell[i] = size[i] + 2*guide; // 分割数+ガイドセル
-  }
-  size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
-  
-  float* wk = new float [size_n_cell];
-  
-  memset(wk, 0, sizeof(float)*size_n_cell);
-  
   
   // ShapeMonitorのインスタンス
-  ShapeMonitor SM(size, guide, C.dx, C.org, subsampling);
+  ShapeMonitor SM(size, guide, C.dx, C.org);
   
   for (int n=1; n<=C.NoBC; n++) {
     
@@ -3267,12 +3253,15 @@ void SklSolverCBC::setShapeMonitor(int* mid)
       nv[0]   = cmp[n].nv[0];
       nv[1]   = cmp[n].nv[1];
       nv[2]   = cmp[n].nv[2];
+      
       dr[0]   = cmp[n].dr[0];
       dr[1]   = cmp[n].dr[1];
       dr[2]   = cmp[n].dr[2];
+      
       ctr[0]  = cmp[n].oc[0]/C.RefLength;
       ctr[1]  = cmp[n].oc[1]/C.RefLength;
       ctr[2]  = cmp[n].oc[2]/C.RefLength;
+      
       m_depth = cmp[n].depth/C.RefLength;
       m_radius= cmp[n].shp_p1/C.RefLength;
       m_width = cmp[n].shp_p1/C.RefLength;
@@ -3300,43 +3289,18 @@ void SklSolverCBC::setShapeMonitor(int* mid)
       
       // インデクスの計算 > あとで，VoxEncode()でresize
       SM.bbox_index(f_st, f_ed);
-      printf("%d %d %d - %d %d %d\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
+      //stamped_printf("%d %d %d - %d %d %d\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
       
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
       cmp[n].setEns(ON);
       
-      double dummy=0.0;
-      SM.vertex8(f_st, f_ed, wk, dummy);
-      
       int id = (int)cmp[n].getID();
-      SM.inside_decision(f_st, f_ed, wk, mid, id);
+      SM.setID(f_st, f_ed, mid, id);
       
     }
   }
   
-  // 確認のための出力
-#if 1
-  REAL_TYPE org[3], pit[3];
-  
-  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
-  for (int i=0; i<3; i++) {
-    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
-    pit[i] = C.dx[i];
-  }
-  
-  // 出力ファイルの指定が有次元の場合
-  if ( C.Unit.File == DIMENSIONAL ) {
-    for (int i=0; i<3; i++) {
-      org[i] *= C.RefLength;
-      pit[i] *= C.RefLength;
-    }
-  }
-  F.writeRawSPH((float*)mid, size, guide, org, pit, SPH_SINGLE);
-#endif
-  
-  // 配列の解放
-  if ( wk ) delete [] wk;
 }
 
 

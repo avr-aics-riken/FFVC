@@ -704,18 +704,28 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int np = para_mng->GetNodeNum(pn.procGrp);
   int st[3], ed[3];
+  unsigned s;
   
   int* nPointList;
   if (!(nPointList = new int[np])) Exit(0);
   for (int i = 0; i < np; i++) nPointList[i] = 0;
   
   cmp.getBbox(st, ed);
+  stamped_printf("check3 >> %d %d %d - %d %d %d\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
 
   if (cmp.isEns()) {
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_6) == n) {
+          s = bcd[FBUtility::getFindexS3D(size, guide, i, j, k)];
+          Hostonly_ printf("[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n", 
+                            i, j, k, IS_FLUID(s), 
+                            DECODE_CMP(s),
+                            DECODE_ID(s), 
+                            DECODE_MAT(s), 
+                            DECODE_VF(s), 
+                            (s>>FORCING_BIT)&0x1);
+          if ((s & MASK_6) == n) {
             nPointList[pn.ID]++;
           }
         }

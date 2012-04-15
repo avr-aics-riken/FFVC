@@ -434,102 +434,88 @@ void CompoFraction::get_angle(void)
   
 }
 
-//@fn void CompoFraction::inside_decision(const int st[], const int ed[], float* vf, int* mid, const int id)
-//@brief 50％をしきい値に内外判定
+//@fn void ShapeMonitor::setID(const int st[], const int ed[], int* mid, int id)
+//@brief セルの8頂点の内外判定より50%以上のセルにIDを設定する
 //@param st 開始インデクス
 //@param en 終了インデクス
-//@param vf フラクション
-//@param mid ID配列
-//@param id セットするID
-void ShapeMonitor::inside_decision(const int st[], const int ed[], float* vf, int* mid, const int id)
+//@param mid
+//@pram id
+void ShapeMonitor::setID(const int st[], const int ed[], int* mid, int id)
 {
-  FB::Vec3f base, b;
-  FB::Vec3f p, o;
+  FB::Vec3f base, o, b;
+  FB::Vec3f p[8];
   unsigned m;
-  float c, r, h, ff, ph;
-  int ix, jx, kx, gc, dv;
+  float c, ph;
+  int ix, jx, kx, gc;
   
   // for optimization > variables defined outside
   ix = size[0];
   jx = size[1];
   kx = size[2];
   gc = guide;
-  dv = division;
-  h  = pch.x/(float)dv;
-  ff = 1.0/(float)(dv*dv*dv);
   o  = org;
   ph = pch.x;
   
   if ( smode == SHAPE_BOX ) {
-    
+    // Rect cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
-          r = vf[m];
+          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          b    = o + base * ph;
           
-          if ( (r>0.0) && (r<1.0) ) {
-            base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
-            b = o + base * ph;
-            
-            c = 0.0;
-            for (int k1=0; k1<dv; k1++) {
-              p.z = b.z + ((float)k1+0.5)*h;
-              
-              for (int j1=0; j1<dv; j1++) {
-                p.y = b.y + ((float)j1+0.5)*h;
-                
-                for (int i1=0; i1<dv; i1++) {
-                  p.x = b.x + ((float)i1+0.5)*h;
-                  
-                  c += judge_rect(p);
-                }
-              }
-            }
-            
-            if ( c*ff >= 0.5 ) mid[m] = id;
+          p[0] =          b;      // (0,0,0) 
+          p[1] = shift_f1(b, ph); // (1,0,0)
+          p[2] = shift_f2(b, ph); // (0,1,0)
+          p[3] = shift_f3(b, ph); // (1,1,0)
+          p[4] = shift_f4(b, ph); // (0,0,1)
+          p[5] = shift_f5(b, ph); // (1,0,1)
+          p[6] = shift_f6(b, ph); // (0,1,1)
+          p[7] = shift_f7(b, ph); // (1,1,1)
+          
+          c = 0.0;
+          
+          for (int l=0; l<8; l++) {
+            c += judge_rect(p[l]);
           }
-          
+          if ( c>=4.0) {
+            m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+            mid[m] = id;
+          }
         }
       }
     }
-  }
-  else { // Cylinder
 
+  }
+  else {
+    // Circular cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
-          r = vf[m];
+          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          b    = o + base * ph;
           
-          if ( (r>0.0) && (r<1.0) ) {
-            base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
-            base = o + base * ph;
-            
-            c = 0.0;
-            for (int k1=0; k1<dv; k1++) {
-              p.z = base.z + ((float)k1+0.5)*h;
-              
-              for (int j1=0; j1<dv; j1++) {
-                p.y = base.y + ((float)j1+0.5)*h;
-                
-                for (int i1=0; i1<dv; i1++) {
-                  p.x = base.x + ((float)i1+0.5)*h;
-                  
-                  c += judge_cylinder(p);
-                }
-              }
-            }
-            
-            if ( c*ff >= 0.5 ) {
-              mid[m] = id;
-            }
+          p[0] =          b;      // (0,0,0) 
+          p[1] = shift_f1(b, ph); // (1,0,0)
+          p[2] = shift_f2(b, ph); // (0,1,0)
+          p[3] = shift_f3(b, ph); // (1,1,0)
+          p[4] = shift_f4(b, ph); // (0,0,1)
+          p[5] = shift_f5(b, ph); // (1,0,1)
+          p[6] = shift_f6(b, ph); // (0,1,1)
+          p[7] = shift_f7(b, ph); // (1,1,1)
+          
+          c = 0.0;
+          
+          for (int l=0; l<8; l++) {
+            c += judge_cylinder(p[l]);
           }
-          
+          if ( c>=4.0) {
+            m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+            mid[m] = id;
+          }
         }
       }
     }
-    
-  } // endif
-  
+
+  }
 }

@@ -5182,6 +5182,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
         
       case CELL_MONITOR:
         cmp[n].getBbox(st, ed);
+        //stamped_printf("check1 >> %d %d %d - %d %d %d\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
         
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
@@ -5226,6 +5227,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
   }
   
   
+  /*
   for (unsigned n=1; n<=NoBC; n++) {
     int nst[3], ned[3];
     nst[0] = (int)size[0];
@@ -5235,28 +5237,30 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
     ned[1] = 0;
     ned[2] = 0;
     unsigned m;
-  for (int k=st[2]; k<=ed[2]; k++) {
-    for (int j=st[1]; j<=ed[1]; j++) {
-      for (int i=st[0]; i<=ed[0]; i++) {
-        
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bx[m];
-        
-        if ( ( s & MASK_6) == n ) {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
+    if (cmp[n].isMONITOR() ) {
+      for (int k=st[2]; k<=ed[2]; k++) {
+        for (int j=st[1]; j<=ed[1]; j++) {
+          for (int i=st[0]; i<=ed[0]; i++) {
+            
+            m = FBUtility::getFindexS3D(size, guide, i, j, k);
+            s = bx[m];
+            
+            if ( ( s & MASK_6) == n ) {
+              if( i < nst[0] ) { nst[0] = i; }
+              if( i > ned[0] ) { ned[0] = i; }
+              if( j < nst[1] ) { nst[1] = j; }
+              if( j > ned[1] ) { ned[1] = j; }
+              if( k < nst[2] ) { nst[2] = k; }
+              if( k > ned[2] ) { ned[2] = k; }
+            }
+          }
         }
       }
+    stamped_printf("check2 >> %d %d %d - %d %d %d\n", nst[0], nst[1], nst[2], ned[0], ned[1], ned[2]);
     }
   }
-    printf("check2 >> %d %d %d - %d %d %d\n", nst[0], nst[1], nst[2], ned[0], ned[1], ned[2]);
-  }
   
-  
+  */
   
   
   // 状態のエンコード

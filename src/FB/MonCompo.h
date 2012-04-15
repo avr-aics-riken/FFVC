@@ -235,7 +235,7 @@ public:
   ///   @param[in] n コンポーネントエントリ
   ///   @param[in] cmp コンポーネント
   ///
-  void setInnerBoundary(int no, CompoList& cmp);
+  void setInnerBoundary(int n, CompoList& cmp);
   
   /// サンプリング元データの登録.
   ///
