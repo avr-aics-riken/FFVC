@@ -57,7 +57,7 @@ public:
     rhocp           = RefVelocity * DiffTemp * RefDensity * RefSpecificHeat;
     dynamic_p       = RefVelocity * RefVelocity * RefDensity;
     base_mf         = RefVelocity * RefLength * RefLength;
-    
+
     time  = 0.0;
     v_max = 0.0;
     step  = 0;

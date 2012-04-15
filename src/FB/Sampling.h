@@ -202,9 +202,9 @@ protected:
   ///
   Vec3r getVector(const REAL_TYPE* v, Vec3i index) {
     Vec3r vRet;
-    vRet.x = v[FBUtility::getFindexV3DEx(size, guide, index.x, index.y, index.z, 0)];
-    vRet.y = v[FBUtility::getFindexV3DEx(size, guide, index.x, index.y, index.z, 1)];
-    vRet.z = v[FBUtility::getFindexV3DEx(size, guide, index.x, index.y, index.z, 2)];
+    vRet.x = v[FBUtility::getFindexV3DEx(size, guide, 0, index.x, index.y, index.z)];
+    vRet.y = v[FBUtility::getFindexV3DEx(size, guide, 1, index.x, index.y, index.z)];
+    vRet.z = v[FBUtility::getFindexV3DEx(size, guide, 2, index.x, index.y, index.z)];
     return vRet;
   }
 

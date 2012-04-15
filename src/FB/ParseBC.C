@@ -3087,16 +3087,16 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
   // Monitor ---------------------------------------------------
   if ( isComponent(CELL_MONITOR) ) {
     fprintf(fp, "\n\t[Monitor]\n");
-    fprintf(fp, "\t no                    Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed        (Computed Normal form ID)  Area[m*m]  Variables\n");
+    fprintf(fp, "\t no                    Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  Variables\n");
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == CELL_MONITOR ) {
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %10.3e %10.3e %10.3e %10.3e  %s\n", 
+        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e  %s\n", 
                 n, compo[n].name, compo[n].getID(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-								nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area, compo[n].getVarStr().c_str());
+								compo[n].area, compo[n].getVarStr().c_str());
       }
     }
     fprintf(fp, "\n");
