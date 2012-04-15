@@ -1284,11 +1284,11 @@ void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
   unsigned long mc=0;
   
   if ( C.Mode.Average == ON ) {
-    if ( !SklCfgCheckInFile("AvrPressure") || // 時間平均を指定しているが，出力ファイル記述がない場合
-        !SklCfgCheckInFile("AvrVelocity") ||
-        (!SklCfgCheckInFile("AvrTemperature") && C.isHeatProblem()) ) {
-      Hostonly_ stamped_printf     ("\tRestart mode and averaging, but there is no InFile description for an average file. \n");
-      Hostonly_ stamped_fprintf(fp, "\tRestart mode and averaging, but there is no InFile description for an average file. \n");
+    if ( !SklCfgCheckOutFile("AvrPressure") || // 時間平均を指定しているが，出力ファイル記述がない場合
+         !SklCfgCheckOutFile("AvrVelocity") || 
+        (!SklCfgCheckOutFile("AvrTemperature") && C.isHeatProblem()) ) {
+      Hostonly_ stamped_printf     ("\tAveraging, but there is no OutFile description for an average file. \n");
+      Hostonly_ stamped_fprintf(fp, "\tAveraging, but there is no OutFile description for an average file. \n");
       Exit(0);
     }
     
