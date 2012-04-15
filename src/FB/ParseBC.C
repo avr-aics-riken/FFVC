@@ -196,6 +196,18 @@ unsigned ParseBC::count_Outer_Cell_ID(unsigned* cid)
   return count;
 }
 
+//@fn void ParseBC::dbg_printBaseOBC(FILE* fp)
+//@brief 基本境界条件リストを表示する
+void ParseBC::dbg_printBaseOBC(FILE* fp)
+{
+  fprintf(fp, "\n\nDEBUG : Basic Boundary Conditions\n");
+  fprintf(fp, "\t\t   #   Variable     id  \n");
+  for (unsigned i=0; i<NoBaseBC; i++) {
+    fprintf(fp, "\t\t%4d   %3d\n", i, BaseBc[i].get_BC_ID());
+  }
+  fflush(fp);
+}
+
 /**
  @fn int ParseBC::get_BCval_int(const CfgElem *elmL, const char* key)
  @brief 境界条件の値(int型)を取得し，返す
@@ -2546,20 +2558,6 @@ unsigned ParseBC::oppositDir(unsigned dir)
 }
 
 
-//@fn void ParseBC::printBaseOBC(FILE* fp)
-//@brief 基本境界条件リストを表示する
-//@param fp
-void ParseBC::printBaseOBC(FILE* fp)
-{
-  fprintf(fp, "\n\nDEBUG : Basic Boundary Conditions\n");
-  fprintf(fp, "\t\t   #   Variable     id  \n");
-  for (unsigned i=0; i<NoBaseBC; i++) {
-    fprintf(fp, "\t\t%4d   %3d\n", i, BaseBc[i].get_BC_ID());
-  }
-  fflush(fp);
-}
-
-
 /**
  @fn void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
  @brief コンポーネントの情報を表示する
@@ -3369,9 +3367,9 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned 
 void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
 {
   
-#ifdef DEBUG
-  printBaseOBC(mp);
-  printBaseOBC(fp);
+#if 0
+  dbg_printBaseOBC(mp);
+  dbg_printBaseOBC(fp);
 #endif
   
   printFaceOBC(mp, G_Lbx);

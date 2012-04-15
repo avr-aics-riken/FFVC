@@ -94,10 +94,13 @@ public:
   void getXMLmaterial        (void);
   void makeLinkCmpMat        (CompoList* compo);
   void makeMaterialList      (void);
-  void printBaseMaterialList (FILE* mp, FILE* fp);
   void printMaterialList     (FILE* mp, FILE* fp);
-  void printRelation         (FILE* mp, FILE* fp, CompoList* compo);
   void setControlVars        (Control* Cref, IDtable* itbl, MaterialList* m_mat, SklSolverConfig* cfg);
+  
+  // ----------> debug function
+  void dbg_printBaseMaterialList (FILE* mp, FILE* fp);
+  void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo);
+  
 };
 
 #endif // _SKL_FB_PARSE_M_H_

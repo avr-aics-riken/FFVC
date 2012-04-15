@@ -406,7 +406,7 @@ SklSolverCBC::SklSolverInitialize() {
 #if 0
   // カット情報からボクセルモデルの固体をIDセット　デバッグ用
   if ( C.isCDS() ) {
-    unsigned zc = Vinfo.markSolid_from_Cut(mid, cut);
+    unsigned zc = Vinfo.dbg_markSolid_from_Cut(mid, cut);
     Hostonly_ printf("\tCut cell = %d\n", zc);
   }
 #endif
@@ -461,7 +461,7 @@ SklSolverCBC::SklSolverInitialize() {
   
 #if 0
   // CompoListとMaterialListの関連を表示
-  Hostonly_ M.printRelation(mp, fp, cmp);
+  Hostonly_ M.dbg_printRelation(mp, fp, cmp);
 #endif
   
   // CompoListとMaterialListのstate(Fluid / Solid)を比較しチェックする
@@ -479,11 +479,7 @@ SklSolverCBC::SklSolverInitialize() {
     }
     return -1;
   }
-  
-  
-#if 0
-  FBUtility::chkGamma(C.imax, C.jmax, C.kmax, C.guide, bch);
-#endif
+
   
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
   BC.setBCIperiodic(dc_bcd);
@@ -594,10 +590,10 @@ SklSolverCBC::SklSolverInitialize() {
   // パラメータの無次元表示（正規化）に必要な参照物理量の設定
   B.setRefMedium(mat, &C);
   
-#ifdef DEBUG
+#if 0
   // チェックのため，全計算セルのBCIndexの内容を表示する
-  if ( !Vinfo.chkBCIndexP(bcd, bcp, "BCindex.txt") ) {
-    Hostonly_ stamped_printf("\tVoxInfo::chkBCIndexP()\n");
+  if ( !Vinfo.dbg_chkBCIndexP(bcd, bcp, "BCindex.txt") ) {
+    Hostonly_ stamped_printf("\tVoxInfo::dbg_chkBCIndexP()\n");
     return -1;
   }
 #endif
@@ -714,8 +710,9 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
 
-  // debug; write_distance(cut);
-
+#if 0
+  write_distance(cut);
+#endif
   
   
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
@@ -2818,9 +2815,9 @@ void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
   // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
   M->getXMLmaterial();
   
-#ifdef DEBUG
+#if 0
   // Materialの基本リストを表示
-  Hostonly_ M->printBaseMaterialList(mp, fp);
+  Hostonly_ M->dbg_printBaseMaterialList(mp, fp);
 #endif
   
   // MaterialListを作成する
@@ -3052,7 +3049,7 @@ void SklSolverCBC::setGlobalCmpIdx(void)
         }
       }
     }
-    //debug; printf("final : %d %d %d - %d %d %d\n", gcbv[6*n+0], gcbv[6*n+1], gcbv[6*n+2], gcbv[6*n+3], gcbv[6*n+4], gcbv[6*n+5]);
+
   }
   
   // destroy
@@ -3175,7 +3172,6 @@ void SklSolverCBC::set_Parallel_Info(void)
   
   for(int i=0; i<3; i++) pn.st_idx[i] = sidx[i];
   
-  //debug; printf("%d : [%d %d %d %d %d %d] [%d %d %d]\n", pn.ID, pn.nID[0],pn.nID[1],pn.nID[2],pn.nID[3],pn.nID[4],pn.nID[5],pn.st_idx[0], pn.st_idx[1],pn.st_idx[2]);
 }
 
 /**
@@ -3289,7 +3285,6 @@ void SklSolverCBC::setShapeMonitor(int* mid)
       
       // インデクスの計算 > あとで，VoxEncode()でresize
       SM.bbox_index(f_st, f_ed);
-      //stamped_printf("%d %d %d - %d %d %d\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
       
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
@@ -3328,7 +3323,6 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   poly_org[0] = (float)C.org[0]*C.RefLength;
   poly_org[1] = (float)C.org[1]*C.RefLength;
   poly_org[2] = (float)C.org[2]*C.RefLength;
-  // debug; printf("polylib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
   
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -3367,9 +3361,10 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   TIMING_stop(tm_polygon_load);
   
   // 階層情報表示 debug
-  //PL->show_group_hierarchy();
-  //PL->show_group_hierarchy(fp);
-  
+#if 0
+  PL->show_group_hierarchy();
+  PL->show_group_hierarchy(fp);
+#endif
   
   // IDの表示
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
@@ -3381,8 +3376,11 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     Hostonly_ printf("\t %3d : %s\n", m_id, m_pg.c_str());
-    //PL->show_group_info(m_pg); debug
+#if 0
+    PL->show_group_info(m_pg); debug
+#endif
   }
+  
   delete pg_roots;
   
   Hostonly_ {
@@ -3404,7 +3402,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     FBUtility::displayMemory("Polygon", G_poly_mem, poly_mem, fp, mp);
   }
   
-  /* Triangle display
+  // Triangle display
+#if 0
    PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
    t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
    m_min = t1 - t2;      // 1層外側まで
@@ -3427,27 +3426,28 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
    }
    
    delete trias;  //後始末 
-   */
+#endif
   
-  /* Polylib: STLデータ書き出しテスト
+  // Polylib: STLデータ書き出しテスト
+#if 0
    unsigned poly_out_para = IO_GATHER; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
    string fname;
    
-   if ( poly_out_para == IO_GATHER ) {
-   poly_stat = PL->save_rank0( &fname, "stl_b" );
-   if( poly_stat != PLSTAT_OK ) {
-   Hostonly_ fprintf(mp, "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", pn.ID, fname.c_str());
-   Exit(0);
-   }
-   }
-   else {
-   poly_stat = PL->save_parallel( &fname, "stl_b" );
-   if( poly_stat != PLSTAT_OK ) {
-   fprintf(mp, "Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", pn.ID, fname.c_str());
-   Exit(0);
-   }
-   }
-   */
+  if ( poly_out_para == IO_GATHER ) {
+    poly_stat = PL->save_rank0( &fname, "stl_b" );
+    if( poly_stat != PLSTAT_OK ) {
+      Hostonly_ fprintf(mp, "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", pn.ID, fname.c_str());
+      Exit(0);
+    }
+  }
+  else {
+    poly_stat = PL->save_parallel( &fname, "stl_b" );
+    if( poly_stat != PLSTAT_OK ) {
+      fprintf(mp, "Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", pn.ID, fname.c_str());
+      Exit(0);
+    }
+  }
+#endif
   
   // Cutlib
   Hostonly_ {
@@ -3466,7 +3466,6 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
-  // debug; printf("cutlib : dx=(%e %e %e) org=(%e %e %e)\n", poly_dx[0], poly_dx[1], poly_dx[2], poly_org[0], poly_org[1], poly_org[2]);
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
@@ -3530,7 +3529,6 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
           z++;
           
 #if 0 // debug
-          //if ( (b0==3) || (b1==3) || (b2==3) || (b3==3) || (b4==3) || (b5==3) ) 
           printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
                  pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
 #endif
@@ -3667,17 +3665,23 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   }
   
   // BCIndexP に圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cut, C.isCDS()); 
-  //Vinfo->chkBCIndexP(bcd, bcp, "BCindexP.txt");
+  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cut, C.isCDS());
+#if 0
+  Vinfo->dbg_chkBCIndexP(bcd, bcp, "BCindexP.txt");
+#endif
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
   Vinfo->setBCIndexV(bcv, mid, &BC, bcp, cut, cut_id, C.isCDS());
-  //Vinfo->chkBCIndexV(bcv, "BCindexV.txt");
+#if 0
+  Vinfo->dbg_chkBCIndexV(bcv, "BCindexV.txt");
+#endif
   
   // BCIndexT に温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() ) {
     Vinfo->setBCIndexH(bcd, bh1, bh2, mid, &BC, C.KindOfSolver);
-    // debug; Vinfo->chkBCIndexH(bcv, "BCindexH.txt");
+#if 0
+    Vinfo->dbg_chkBCIndexH(bcv, "BCindexH.txt");
+#endif
   }
   
   // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)

@@ -524,97 +524,6 @@ void VoxInfo::chkBCIndexD(unsigned* bcd, const char* fname)
 }
 
 /**
- @fn void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
- @brief BCindexを表示する（デバッグ用）
- @param bcd BCindex ID
- @param bcp BCindex P
- @param fname 出力用ファイル名
- */
-void VoxInfo::chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
-{
-  unsigned m, id, q, s, d;
-  int i,j,k;
-  FILE *fp=NULL;
-  
-  if ( !(fp=fopen(fname,"w")) ) {
-    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
-    Exit(0);
-  }
-  
-  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  // ガイドセルを含む全領域
-  for (k=1-gd; k<=kx+gd; k++) {
-    for (j=1-gd; j<=jx+gd; j++) {
-      for (i=1-gd; i<=ix+gd; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        d = bcd[m];
-        s = bcp[m];
-        q = d & MASK_6;
-        id = cmp[q].getID();
-        Hostonly_ fprintf(fp, "[%4d %4d %4d], cmp[%3d]=%3d, mat[%3d], state=%1d: D(ewnstb) [%d %d %d %d %d %d] N [%d %d %d %d %d %d] NDAG [%d %d %d %d %d %d] DIAG=%1d :idx=%d\n", 
-                          i, j, k, q, id, DECODE_MAT(d), IS_FLUID(d), 
-                          (s>>BC_D_E)&0x1, (s>>BC_D_W)&0x1, (s>>BC_D_N)&0x1, (s>>BC_D_S)&0x1, (s>>BC_D_T)&0x1, (s>>BC_D_B)&0x1, 
-                          (s>>BC_N_E)&0x1, (s>>BC_N_W)&0x1, (s>>BC_N_N)&0x1, (s>>BC_N_S)&0x1, (s>>BC_N_T)&0x1, (s>>BC_N_B)&0x1, 
-                          (s>>BC_NDAG_E)&0x1, (s>>BC_NDAG_W)&0x1, (s>>BC_NDAG_N)&0x1, (s>>BC_NDAG_S)&0x1, (s>>BC_NDAG_T)&0x1, (s>>BC_NDAG_B)&0x1, 
-                          (s>>BC_DIAG)&0x7, s);
-      }
-    }
-  }
-  fflush(fp);
-  fclose(fp);
-}
-
-/**
- @fn void VoxInfo::chkBCIndexV(unsigned* bcv, const char* fname)
- @brief BCindexを表示する（デバッグ用）
- @param bcv BCindex V
- @param fname 出力用ファイル名
- */
-void VoxInfo::chkBCIndexV(unsigned* bcv, const char* fname)
-{
-  int i,j,k;
-  unsigned m, s, d;
-  FILE *fp=NULL;
-  
-  if ( !(fp=fopen(fname,"w")) ) {
-    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
-    Exit(0);
-  }
-  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  // ガイドセルを含む全領域
-  for (k=1-gd; k<=kx+gd; k++) {
-    for (j=1-gd; j<=jx+gd; j++) {
-      for (i=1-gd; i<=ix+gd; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        s = bcv[m];
-        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: VBC(ewnstb) [%2d %2d %2d %2d %2d %2d] : idx=%d\n", 
-                          i, j, k, IS_FLUID(s), 
-                          (s>>BC_FACE_E)&0x1f, // 5-bit
-                          (s>>BC_FACE_W)&0x1f, 
-                          (s>>BC_FACE_N)&0x1f, 
-                          (s>>BC_FACE_S)&0x1f, 
-                          (s>>BC_FACE_T)&0x1f, 
-                          (s>>BC_FACE_B)&0x1f, s);
-      }
-    }
-  }
-  fflush(fp);
-  fclose(fp);
-}
-
-/**
  @fn bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoID)
  @brief XMLとスキャンしたボクセルIDの同一性をチェック
  @retval エラーコード
@@ -1414,6 +1323,99 @@ unsigned VoxInfo::countState(unsigned id, int* mid)
   
   return g;
 }
+
+
+/**
+ @fn void VoxInfo::dbg_chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
+ @brief BCindexを表示する（デバッグ用）
+ @param bcd BCindex ID
+ @param bcp BCindex P
+ @param fname 出力用ファイル名
+ */
+void VoxInfo::dbg_chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
+{
+  unsigned m, id, q, s, d;
+  int i,j,k;
+  FILE *fp=NULL;
+  
+  if ( !(fp=fopen(fname,"w")) ) {
+    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
+    Exit(0);
+  }
+  
+  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  // ガイドセルを含む全領域
+  for (k=1-gd; k<=kx+gd; k++) {
+    for (j=1-gd; j<=jx+gd; j++) {
+      for (i=1-gd; i<=ix+gd; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        d = bcd[m];
+        s = bcp[m];
+        q = d & MASK_6;
+        id = cmp[q].getID();
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], cmp[%3d]=%3d, mat[%3d], state=%1d: D(ewnstb) [%d %d %d %d %d %d] N [%d %d %d %d %d %d] NDAG [%d %d %d %d %d %d] DIAG=%1d :idx=%d\n", 
+                          i, j, k, q, id, DECODE_MAT(d), IS_FLUID(d), 
+                          (s>>BC_D_E)&0x1, (s>>BC_D_W)&0x1, (s>>BC_D_N)&0x1, (s>>BC_D_S)&0x1, (s>>BC_D_T)&0x1, (s>>BC_D_B)&0x1, 
+                          (s>>BC_N_E)&0x1, (s>>BC_N_W)&0x1, (s>>BC_N_N)&0x1, (s>>BC_N_S)&0x1, (s>>BC_N_T)&0x1, (s>>BC_N_B)&0x1, 
+                          (s>>BC_NDAG_E)&0x1, (s>>BC_NDAG_W)&0x1, (s>>BC_NDAG_N)&0x1, (s>>BC_NDAG_S)&0x1, (s>>BC_NDAG_T)&0x1, (s>>BC_NDAG_B)&0x1, 
+                          (s>>BC_DIAG)&0x7, s);
+      }
+    }
+  }
+  fflush(fp);
+  fclose(fp);
+}
+
+/**
+ @fn void VoxInfo::dbg_chkBCIndexV(unsigned* bcv, const char* fname)
+ @brief BCindexを表示する（デバッグ用）
+ @param bcv BCindex V
+ @param fname 出力用ファイル名
+ */
+void VoxInfo::dbg_chkBCIndexV(unsigned* bcv, const char* fname)
+{
+  int i,j,k;
+  unsigned m, s, d;
+  FILE *fp=NULL;
+  
+  if ( !(fp=fopen(fname,"w")) ) {
+    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
+    Exit(0);
+  }
+  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  // ガイドセルを含む全領域
+  for (k=1-gd; k<=kx+gd; k++) {
+    for (j=1-gd; j<=jx+gd; j++) {
+      for (i=1-gd; i<=ix+gd; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        s = bcv[m];
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: VBC(ewnstb) [%2d %2d %2d %2d %2d %2d] : idx=%d\n", 
+                          i, j, k, IS_FLUID(s), 
+                          (s>>BC_FACE_E)&0x1f, // 5-bit
+                          (s>>BC_FACE_W)&0x1f, 
+                          (s>>BC_FACE_N)&0x1f, 
+                          (s>>BC_FACE_S)&0x1f, 
+                          (s>>BC_FACE_T)&0x1f, 
+                          (s>>BC_FACE_B)&0x1f, s);
+      }
+    }
+  }
+  fflush(fp);
+  fclose(fp);
+}
+
 
 /**
  @fn void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned KOS)
@@ -4646,14 +4648,13 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
 }
 
 /**
- @fn unsigned VoxInfo::markSolid_from_Cut(int* mid, float* cut)
+ @fn unsigned VoxInfo::dbg_markSolid_from_Cut(int* mid, float* cut)
  @brief ボクセルモデルにカット情報から得られた固体情報を転写する
  @param[in/out] mid セルID
  @param[in] cut 距離情報
  @retval 固体セル数
- @note for debugging
  */
-unsigned VoxInfo::markSolid_from_Cut(int* mid, float* cut)
+unsigned VoxInfo::dbg_markSolid_from_Cut(int* mid, float* cut)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned c=0;
@@ -5182,7 +5183,6 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
         
       case CELL_MONITOR:
         cmp[n].getBbox(st, ed);
-        //stamped_printf("check1 >> %d %d %d - %d %d %d\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
         
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
@@ -5225,42 +5225,6 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
         break;
     }
   }
-  
-  
-  /*
-  for (unsigned n=1; n<=NoBC; n++) {
-    int nst[3], ned[3];
-    nst[0] = (int)size[0];
-    nst[1] = (int)size[1];
-    nst[2] = (int)size[2];
-    ned[0] = 0;
-    ned[1] = 0;
-    ned[2] = 0;
-    unsigned m;
-    if (cmp[n].isMONITOR() ) {
-      for (int k=st[2]; k<=ed[2]; k++) {
-        for (int j=st[1]; j<=ed[1]; j++) {
-          for (int i=st[0]; i<=ed[0]; i++) {
-            
-            m = FBUtility::getFindexS3D(size, guide, i, j, k);
-            s = bx[m];
-            
-            if ( ( s & MASK_6) == n ) {
-              if( i < nst[0] ) { nst[0] = i; }
-              if( i > ned[0] ) { ned[0] = i; }
-              if( j < nst[1] ) { nst[1] = j; }
-              if( j > ned[1] ) { ned[1] = j; }
-              if( k < nst[2] ) { nst[2] = k; }
-              if( k > ned[2] ) { ned[2] = k; }
-            }
-          }
-        }
-      }
-    stamped_printf("check2 >> %d %d %d - %d %d %d\n", nst[0], nst[1], nst[2], ned[0], ned[1], ned[2]);
-    }
-  }
-  
-  */
   
   
   // 状態のエンコード
@@ -5318,8 +5282,7 @@ void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned& Lcel
   // コンポーネントに登録された媒質のセル数を数え，elementにセットする
   for (unsigned n=NoBC+1; n<=NoCompo; n++) {
     id = cmp[n].getID();
-    //cmp[n].setElement( countState(id, mid) );
-    cmp[n].setElement( encodeOrder(n, id, mid, bx) );
+    cmp[n].setElement( countState(id, mid) );
   }
   
   
@@ -5553,18 +5516,20 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
   // 全周Neumannフラグのセルと排他性をチェックし，反復行列の非対角要素/対角要素をエンコードする
   encPbit(bcp);
   
-  /* debug
-   int i,j,k,m;
-   float w, q;
-   i=1;
-   for (k=1; k<=kx; k++) {
-   for (j=1; j<=jx; j++) {
-   m = FBUtility::getFindexS3D(size, guide, i, j, k);
-   w = GET_SHIFT_F(bcp[m], BC_N_W);
-   q = GET_SHIFT_F(bcp[m], BC_NDAG_W);
-   printf("(1, %3d, %3d) N=%f Coef_W=%f\n", j,k,w,q);
-   }
-   }*/
+  // debug
+#if 0
+  int i,j,k,m;
+  float w, q;
+  i=1;
+  for (k=1; k<=kx; k++) {
+    for (j=1; j<=jx; j++) {
+      m = FBUtility::getFindexS3D(size, guide, i, j, k);
+      w = GET_SHIFT_F(bcp[m], BC_N_W);
+      q = GET_SHIFT_F(bcp[m], BC_NDAG_W);
+      printf("(1, %3d, %3d) N=%f Coef_W=%f\n", j,k,w,q);
+    }
+  }
+#endif
   
   return surface;
 }

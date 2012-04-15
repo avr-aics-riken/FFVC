@@ -93,6 +93,7 @@ protected:
   
   void chkKeywordIBC        (const char *keyword, unsigned m);
   void chkKeywordOBC        (const char *keyword, unsigned m);
+  void dbg_printBaseOBC     (FILE* fp);
   void getDarcy             (const CfgElem *elmL, unsigned n);
   void get_NV               (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
   void get_Dir              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
@@ -125,7 +126,6 @@ protected:
   void getXML_OBC_Trcfree   (const CfgElem *elmL, unsigned n);
   void getXML_OBC_Wall      (const CfgElem *elmL, unsigned n);
   void getXML_Vel_Params    (const CfgElem *elmL, unsigned type, REAL_TYPE* ca, REAL_TYPE vel, const char* err_str);
-  void printBaseOBC         (FILE* fp);
   void printCompo           (FILE* fp, REAL_TYPE* nv, int* ci, MaterialList* mat);
   void printFaceOBC         (FILE* fp, REAL_TYPE* G_Lbx);
   void printOBC             (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned face);

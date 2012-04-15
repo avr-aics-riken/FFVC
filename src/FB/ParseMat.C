@@ -210,6 +210,16 @@ bool ParseMat::copyMaterials(unsigned& odr, unsigned id)
 }
 
 /**
+ @fn void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
+ @brief CompoList[]とMaterialList[]のチェック
+ */
+void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
+{
+  printRelation(mp, compo);
+  printRelation(fp, compo);
+}
+
+/**
  @fn unsigned ParseMat::getMatIDinTable(unsigned id)
  @brief iTable[]にidが含まれるかどうかを調べる
  @retval 含まれれば対応するMatID，そうでなければ0を返す
@@ -424,11 +434,10 @@ unsigned ParseMat::missingMessage(int m, unsigned key)
 
 
 /**
- @fn void ParseMat::printBaseMaterialList(FILE* mp, FILE* fp)
+ @fn void ParseMat::dbg_printBaseMaterialList(FILE* mp, FILE* fp)
  @brief 基本媒質情報の表示
- @note debug function
  */
-void ParseMat::printBaseMaterialList(FILE* mp, FILE* fp)
+void ParseMat::dbg_printBaseMaterialList(FILE* mp, FILE* fp)
 {
 
   fprintf(mp, "DEBUG : \n");
@@ -488,17 +497,6 @@ void ParseMat::printMatList(FILE* fp, unsigned Max, MaterialList* mlist)
   }
   fprintf(fp,"\n");
   fflush(fp);
-}
-
-/**
- @fn void ParseMat::printRelation(FILE* mp, FILE* fp, CompoList* compo)
- @brief CompoList[]とMaterialList[]のチェック
- @note debug function
- */
-void ParseMat::printRelation(FILE* mp, FILE* fp, CompoList* compo)
-{
-  printRelation(mp, compo);
-  printRelation(fp, compo);
 }
 
 /**

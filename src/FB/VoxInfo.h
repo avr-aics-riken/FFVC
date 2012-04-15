@@ -149,14 +149,11 @@ public:
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
-  unsigned markSolid_from_Cut(int* mid, float* cut);
   
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
   void alloc_voxel_nv        (unsigned len);
   void chkBCIndexD           (unsigned* bcd, const char* fname);
-  void chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
-  void chkBCIndexV           (unsigned* bcv, const char* fname);
   void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);
   void copyBCIbase           (unsigned* dst, unsigned* src);
   void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
@@ -183,6 +180,11 @@ public:
   //@fn REAL_TYPE* get_vox_nv_ptr(void)
   //@brief vox_nvのポインタを返す
   REAL_TYPE* get_vox_nv_ptr(void) { return vox_nv; }
+  
+  // ----> debug function
+  unsigned dbg_markSolid_from_Cut(int* mid, float* cut);
+  void dbg_chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
+  void dbg_chkBCIndexV           (unsigned* bcv, const char* fname);
 };
 
 #endif // _SKL_SOLVER_BINVOX_H_
