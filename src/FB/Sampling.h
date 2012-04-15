@@ -27,13 +27,6 @@ using namespace FB;
 class Sampling {
 public:
 
-  /// サンプリングモード型
-  enum Mode {
-    ALL,         ///< 全タイプのセルを対象
-    FLUID_ONLY,  ///< 流体セルのみを対象
-    SOLID_ONLY,  ///< 固体セルのみを対象
-  };
-
   /// モニタ点状態型
   enum PointStatus {
     POINT_STATUS_OK,   ///< 正常
@@ -42,9 +35,9 @@ public:
   };
 
 protected:
-  Mode mode;    ///< サンプリングモード
+  int mode;          ///< サンプリングモード
 
-  Vec3i cIndex;  ///< モニタ点を含むセルのインデックス
+  Vec3i cIndex;      ///< モニタ点を含むセルのインデックス
 
   unsigned size[3];  ///< セル(ローカル)サイズ
   unsigned guide;    ///< ガイドセル数
@@ -66,7 +59,7 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  Sampling(Mode mode, unsigned size[], unsigned guide,
+  Sampling(int mode, unsigned size[], unsigned guide,
            Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) {
     this->mode = mode;
     this->size[0] = size[0];
@@ -88,8 +81,8 @@ public:
 
   /// モニタ点の状態を返す.
   PointStatus checkMonitorPoint() {
-    if      (mode == FLUID_ONLY && !isFluid(cIndex)) return UNEXPECTED_SOLID;
-    else if (mode == SOLID_ONLY &&  isFluid(cIndex)) return UNEXPECTED_FLUID;
+    if      (mode == SAMPLING_FLUID_ONLY && !isFluid(cIndex)) return UNEXPECTED_SOLID;
+    else if (mode == SAMPLING_SOLID_ONLY &&  isFluid(cIndex)) return UNEXPECTED_FLUID;
     else return POINT_STATUS_OK;   // mode == ALL
   }
 
@@ -242,7 +235,7 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  Nearest(Mode mode, unsigned size[], unsigned guide,
+  Nearest(int mode, unsigned size[], unsigned guide,
           Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd);
 
   /// デストラクタ.
@@ -307,8 +300,8 @@ protected:
   ///    @param[in] index セルインデックス
   ///
   bool permitToAdd(Vec3i index) {
-    if      (mode == FLUID_ONLY) return isFluid(index);
-    else if (mode == SOLID_ONLY) return !isFluid(index);
+    if      (mode == SAMPLING_FLUID_ONLY) return isFluid(index);
+    else if (mode == SAMPLING_SOLID_ONLY) return !isFluid(index);
     else return true;  // モードがallの場合はセルのfluid/solidは考慮しない
   }
 
@@ -331,7 +324,7 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  Smoothing(Mode mode, unsigned size[], unsigned guide,
+  Smoothing(int mode, unsigned size[], unsigned guide,
             Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) ;
 
   /// デストラクタ.
@@ -389,8 +382,8 @@ protected:
 
   /// そのセルがモードと違うかどうか調べる.
   bool checkBoundary(Vec3i index) {
-    if      (mode == FLUID_ONLY) return !isFluid(index);
-    else if (mode == SOLID_ONLY) return isFluid(index);
+    if      (mode == SAMPLING_FLUID_ONLY) return !isFluid(index);
+    else if (mode == SAMPLING_SOLID_ONLY) return isFluid(index);
     else return false;  // モードがallの場合はセルのfluid/solidは考慮しない
   }
 
@@ -414,7 +407,7 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  Interpolation(Mode mode, unsigned size[], unsigned guide,
+  Interpolation(int mode, unsigned size[], unsigned guide,
                 Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd);
 
   /// デストラクタ.
@@ -476,7 +469,7 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  InterpolationStgV(Mode mode, unsigned size[], unsigned guide,
+  InterpolationStgV(int mode, unsigned size[], unsigned guide,
                     Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd);
 
   /// デストラクタ.

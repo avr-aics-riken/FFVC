@@ -61,66 +61,66 @@ public:
   ~History() {}
   
 protected:
-  //@fn REAL_TYPE printTime(void) const
+  //@fn REAL_TYPE printTime(void)
   //@brief モードに対応する時刻を返す
-  REAL_TYPE printTime(void) const {
+  REAL_TYPE printTime(void) {
     return ( (Unit_Log == DIMENSIONAL) ? time*Tscale : time );
   }
   
-  //@fn REAL_TYPE printVmax(void) const
+  //@fn REAL_TYPE printVmax(void)
   //@brief モードに対応する速度最大値を返す
-  REAL_TYPE printVmax(void) const {
+  REAL_TYPE printVmax(void) {
     return ( (Unit_Log == DIMENSIONAL) ? v_max*RefVelocity : v_max );
   }
   
-  //@fn REAL_TYPE printLen(const REAL_TYPE var) const
+  //@fn REAL_TYPE printLen(const REAL_TYPE var)t
   //@brief モードに対応する長さを返す
-  REAL_TYPE printLen(const REAL_TYPE var) const {
+  REAL_TYPE printLen(const REAL_TYPE var) {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefLength : var );
   }
   
-  //@fn REAL_TYPE printVel(const REAL_TYPE var) const
+  //@fn REAL_TYPE printVel(const REAL_TYPE var)
   //@brief モードに対応する速度値を返す
-  REAL_TYPE printVel(const REAL_TYPE var) const {
+  REAL_TYPE printVel(const REAL_TYPE var) {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
   
-  //@fn REAL_TYPE printMF(const REAL_TYPE var) const
+  //@fn REAL_TYPE printMF(const REAL_TYPE var)
   //@brief モードに対応する流量を返す
-  REAL_TYPE printMF(const REAL_TYPE var) const {
+  REAL_TYPE printMF(const REAL_TYPE var) {
     const REAL_TYPE cf = RefVelocity * RefLength * RefLength;
     return ( (Unit_Log == DIMENSIONAL) ? var*cf : var );
   }
   
-  //@fn REAL_TYPE printQF(const REAL_TYPE var) const
+  //@fn REAL_TYPE printQF(const REAL_TYPE var)
   //@brief モードに対応する熱量を返す(面表素)
-  REAL_TYPE printQF(const REAL_TYPE var) const {
+  REAL_TYPE printQF(const REAL_TYPE var) {
     return ( (Unit_Log == DIMENSIONAL) ? var*dhd*dhd*rhocp : var*dh*dh );
   }
   
-  //@fn REAL_TYPE printQV(const REAL_TYPE var) const
+  //@fn REAL_TYPE printQV(const REAL_TYPE var)
   //@brief モードに対応する熱量を返す(体積要素)
-  REAL_TYPE printQV(const REAL_TYPE var) const {
+  REAL_TYPE printQV(const REAL_TYPE var) {
     return ( (Unit_Log == DIMENSIONAL) ? var*dhd*dhd*dhd*rhocp : var*dh*dh*dh );
   }
   
-  //@fn REAL_TYPE printHflux(const REAL_TYPE var) const
+  //@fn REAL_TYPE printHflux(const REAL_TYPE var)
   //@brief モードに対応する熱流束を返す
-  REAL_TYPE printHflux(const REAL_TYPE var) const {
+  REAL_TYPE printHflux(const REAL_TYPE var) {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
   
 public:
-  void printHistory          (FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C) const;
-  void printHistoryTitle     (FILE* fp, const ItrCtl* IC, const Control* C) const;
-  void printHistoryCompo     (FILE* fp, const CompoList* cmp, const Control* C) const;
-  void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C) const;
-  void printHistoryDomfx     (FILE* fp, const Control* C) const;
-  void printHistoryDomfxTitle(FILE* fp, const Control* C) const;
-  void printHistoryItr       (FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx) const;
-  void printHistoryItrTitle  (FILE* fp) const;
-  void printHistoryWall      (FILE* fp, REAL_TYPE* range_Yp, REAL_TYPE* range_Ut) const;
-  void printHistoryWallTitle (FILE* fp) const;
+  void printHistory          (FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C);
+  void printHistoryTitle     (FILE* fp, const ItrCtl* IC, const Control* C);
+  void printHistoryCompo     (FILE* fp, const CompoList* cmp, const Control* C);
+  void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);
+  void printHistoryDomfx     (FILE* fp, const Control* C);
+  void printHistoryDomfxTitle(FILE* fp, const Control* C);
+  void printHistoryItr       (FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx);
+  void printHistoryItrTitle  (FILE* fp);
+  void printHistoryWall      (FILE* fp, REAL_TYPE* range_Yp, REAL_TYPE* range_Ut);
+  void printHistoryWallTitle (FILE* fp);
   void updateTimeStamp       (const unsigned m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
 };
 

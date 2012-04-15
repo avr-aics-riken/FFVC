@@ -49,12 +49,12 @@ public:
     unsigned unitTemp;       /// 温度単位指定フラグ (Kelvin / Celsius)
     unsigned modePrecision;  /// 出力精度指定フラグ (単精度，倍精度)
     unsigned unitPrs;        /// 圧力単位指定フラグ (絶対値，ゲージ圧)
-    REAL_TYPE refVelocity;    /// 代表速度
-    REAL_TYPE baseTemp;       /// 基準温度
-    REAL_TYPE diffTemp;       /// 代表温度差
-    REAL_TYPE refDensity;     /// 基準密度
-    REAL_TYPE refLength;      /// 代表長さ
-    REAL_TYPE basePrs;        /// 基準圧力
+    REAL_TYPE refVelocity;   /// 代表速度
+    REAL_TYPE baseTemp;      /// 基準温度
+    REAL_TYPE diffTemp;      /// 代表温度差
+    REAL_TYPE refDensity;    /// 基準密度
+    REAL_TYPE refLength;     /// 代表長さ
+    REAL_TYPE basePrs;       /// 基準圧力
     Vec3r v00;               /// 参照（座標系移動）速度
   };
   
@@ -75,20 +75,14 @@ public:
     NUM_VAR,
   };
   
-  /// サンプリング方法型
-  enum Method {
-    NEAREST,         /// モニタ点を含むセルでの値
-    INTERPOLATION,   /// 三重線形補間
-    SMOOTHING,       /// 局所平均
-  };
   
 protected:
   int nPoint;             ///< モニタ点数
   bool variable[NUM_VAR]; ///< モニタ変数フラグ
   string label;           ///< グループのラベル
   Type type;              ///< モニタ点指定タイプ
-  Method method;          ///< サンプリング方法
-  Sampling::Mode mode;    ///< サンプリングモード
+  int method;             ///< サンプリング方法
+  int mode;               ///< サンプリングモード
   
   Sampling** mon;    ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
   
@@ -119,9 +113,9 @@ protected:
   int* pointStatus;///< 不正モニタ点フラグ配列
   
   Vec3r* vel;      ///< 速度サンプリング結果配列
-  REAL_TYPE* prs;   ///< 圧力サンプリング結果配列
-  REAL_TYPE* tmp;   ///< 温度サンプリング結果配列
-  REAL_TYPE* tp;    ///< 全圧サンプリング結果配列
+  REAL_TYPE* prs;  ///< 圧力サンプリング結果配列
+  REAL_TYPE* tmp;  ///< 温度サンプリング結果配列
+  REAL_TYPE* tp;   ///< 全圧サンプリング結果配列
   Vec3r* vor;      ///< 渦度サンプリング結果配列
   
   CompoList* cmp;  ///< 内部境界条件指定の場合の対応するコンポーネントへのポインタ

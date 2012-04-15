@@ -707,6 +707,7 @@ public:
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
   void getXML_Para_Init         (void);
   void getXML_Polygon           (void);
+  void getXML_Sampling          (void);
   void getXML_Steer_1           (DTcntl* DT);
   void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
   void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);

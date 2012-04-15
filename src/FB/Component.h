@@ -92,43 +92,45 @@ public:
 
   
 protected:
-  unsigned ID;        /// セルID
-  unsigned type;      /// 
-  unsigned element;   /// 要素数
-  unsigned attrb;     /// 
-  unsigned h_type;    /// 
-  unsigned variable;  ///
-  unsigned mat_odr;   /// 
-  unsigned ens;       /// 
-  unsigned phase;     /// 
-  unsigned var_u1;    /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
-  unsigned usw;       ///
-  unsigned bc_dir;    /// VBCの指定方向
-  int      state;     ///
-  int      st[3];     /// コンポーネントインデクスBV範囲の始点
-  int      ed[3];     /// コンポーネントインデクスBV範囲の終点
-  int      c_size[3]; /// コンポーネントワーク配列の大きさ
-  int      def;       /// BC指定時の面を挟む相手先のセルID
-  int      shape;     /// 形状パラメータ
-  REAL_TYPE var1;     /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
-  REAL_TYPE var2;     /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
-  REAL_TYPE var3;     /// パラメータ保持 (Heat Density, Temperature)
-  REAL_TYPE var_m;    /// モニタの値を保持
-  REAL_TYPE temp_init;/// 温度の初期値
+  unsigned ID;              /// セルID
+  unsigned type;            /// 
+  unsigned element;         /// 要素数
+  unsigned attrb;           /// 
+  unsigned h_type;          /// 
+  unsigned variable;        ///
+  unsigned mat_odr;         /// 
+  unsigned ens;             /// 
+  unsigned phase;           /// 
+  unsigned var_u1;          /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
+  unsigned usw;             ///
+  unsigned bc_dir;          /// VBCの指定方向
+  int      state;           ///
+  int      st[3];           /// コンポーネントインデクスBV範囲の始点
+  int      ed[3];           /// コンポーネントインデクスBV範囲の終点
+  int      c_size[3];       /// コンポーネントワーク配列の大きさ
+  int      def;             /// BC指定時の面を挟む相手先のセルID
+  int      shape;           /// 形状パラメータ
+  int      sampling_method; /// サンプリングの方法（NEAREST, INTERPOLATION, SMOOTHING）
+  int      sampling_mode;   /// サンプリングモード（ALL, FLOW, SOLID）
+  REAL_TYPE var1;           /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
+  REAL_TYPE var2;           /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
+  REAL_TYPE var3;           /// パラメータ保持 (Heat Density, Temperature)
+  REAL_TYPE var_m;          /// モニタの値を保持
+  REAL_TYPE temp_init;      /// 温度の初期値
   
   
 public:
-  REAL_TYPE area;         ///< 断面積
-  REAL_TYPE nv[3];        ///< 法線方向ベクトル（流出方向）
-  REAL_TYPE oc[3];        ///< 形状の中心座標（前面の中心位置）
-  REAL_TYPE dr[3];        ///< 補助方向ベクトル（nvと直交）
-  REAL_TYPE depth;        ///< 厚さ（nv方向）
-  REAL_TYPE shp_p1;       ///< 矩形の幅（dr方向), ファン半径
-  REAL_TYPE shp_p2;       ///< 矩形の高さ, ボス半径
-  REAL_TYPE val[var_END]; ///< データ保持用ワーク
-  REAL_TYPE ca[6];        ///< 係数セット a
-  REAL_TYPE cb[6];        ///< 係数セット b
-  char      name[LABEL];  ///< ラベル
+  REAL_TYPE area;           ///< 断面積
+  REAL_TYPE nv[3];          ///< 法線方向ベクトル（流出方向）
+  REAL_TYPE oc[3];          ///< 形状の中心座標（前面の中心位置）
+  REAL_TYPE dr[3];          ///< 補助方向ベクトル（nvと直交）
+  REAL_TYPE depth;          ///< 厚さ（nv方向）
+  REAL_TYPE shp_p1;         ///< 矩形の幅（dr方向), ファン半径
+  REAL_TYPE shp_p2;         ///< 矩形の高さ, ボス半径
+  REAL_TYPE val[var_END];   ///< データ保持用ワーク
+  REAL_TYPE ca[6];          ///< 係数セット a
+  REAL_TYPE cb[6];          ///< 係数セット b
+  char      name[LABEL];    ///< ラベル
   
   CompoList() {
     ID = type = element = variable = mat_odr = attrb = bc_dir = 0;
@@ -224,7 +226,9 @@ public:
   void set_Mon_Heatflux    (const REAL_TYPE var);
   void set_Mon_Temp        (const REAL_TYPE var);
   void set_Pressure        (const REAL_TYPE var);
-  void set_Shape           (const unsigned key);
+  void set_SamplingMethod  (const int key);
+  void set_SamplingMode    (const int key);
+  void set_Shape           (const int key);
   void set_sw_Heatgen      (const unsigned key);
   void set_sw_HexDir       (const unsigned key);
   void set_sw_HTmodeRef    (const unsigned key);
@@ -235,13 +239,17 @@ public:
   void set_Velocity        (const REAL_TYPE var);
   
   inline REAL_TYPE getInitTemp(void) const        { return temp_init; }
+  
   inline int getDef(void) const                   { return def; };
   inline int getState(void) const                 { return state; }
+  inline int get_Shape(void) const                { return shape; }
+  inline int get_SamplingMethod(void) const       { return sampling_method; }
+  inline int get_SamplingMode(void) const         { return sampling_mode; }
+  
   inline unsigned getBClocation(void) const       { return bc_dir; }
   inline unsigned getPeriodicDir(void) const      { return var_u1; }
   inline unsigned getPrsUnit(void) const          { return var_u1; }
   inline unsigned getOutflowType(void) const      { return var_u1; }
-  inline unsigned get_Shape(void) const           { return shape; }
   inline unsigned getStateCellMonitor(void) const { return var_u1; }
   inline unsigned getElement(void) const          { return element; }
   inline unsigned getID(void) const               { return ID; }
@@ -249,6 +257,7 @@ public:
   inline unsigned getType (void) const            { return type; }
   inline unsigned getHtype (void) const           { return h_type; }
   inline unsigned getAttrb(void) const            { return attrb; }
+  
   inline bool isPolicy_Massflow(void) const       { return (attrb==BC_type_massflow) ? true : false; }
   inline bool isPolicy_HeatDensity(void) const    { return (usw==hsrc_density) ? true : false; }
   

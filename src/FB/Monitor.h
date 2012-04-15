@@ -102,7 +102,7 @@ public:
   
   /// モニタ情報を出力.
   ///   @param[in] str 出力ファイルの基本名
-  void printMonitorInfo(FILE* fp, const char* str);
+  void printMonitorInfo(FILE* fp, const char* str, const bool verbose);
   
   /// 必要なパラメータのコピー.
   ///

@@ -385,7 +385,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
-  if ( C.isMonitor() ) setShapeMonitor(mid);
+  if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) setShapeMonitor(mid);
   
   
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
@@ -640,20 +640,21 @@ SklSolverCBC::SklSolverInitialize() {
                     C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
                     C.Unit.Temp, C.Mode.Precision, C.Unit.Prs);
   
+  
   // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
-  // 機能がOFFの場合には直ちに戻る
-  getXML_Monitor(m_solvCfg, &MO);
+  if ( C.Sampling.log == ON ) getXML_Monitor(m_solvCfg, &MO);
+  
   
   // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
-  if (C.Sampling.log == ON || C.isMonitor() ) {
+  if (C.Sampling.log == ON ) {
     MO.write_ID(mid);
   }
 
   // 内部境界条件として指定されたモニタ設定を登録
-  MO.setInnerBoundary(cmp, C.NoBC);
-  mark();
+   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
+
   // 組み込み例題 or MonitorListの場合に，svxファイルを出力する．
-  if ( (C.Mode.Example != id_Users) || ( (C.Mode.Example == id_Users) && (C.Sampling.log == ON  || C.isMonitor()) ) ) {
+  if ( (C.Mode.Example != id_Users) || ( (C.Mode.Example == id_Users) && (C.Sampling.log == ON) ) ) {
     Hostonly_ printf("\n\twrite ID which includes Monitor List ID\n\n");
     
     // 性能測定モードがオフのときのみ出力
@@ -913,14 +914,27 @@ SklSolverCBC::SklSolverInitialize() {
     }
     
     // モニタ情報の表示
-    if ( C.Sampling.log == ON || C.isMonitor() ) {
-      MO.printMonitorInfo(mp, C.HistoryMonitorName);
-      MO.printMonitorInfo(fp, C.HistoryMonitorName);
+    if ( C.Sampling.log == ON ) {
+      
+      MO.printMonitorInfo(mp, C.HistoryMonitorName, false); // ヘッダのみ
+      
+      FILE *fp_mon=NULL;
+      Hostonly_ {
+        if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
+          stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
+          return -1;
+        }
+      }
+      
+      MO.printMonitorInfo(fp_mon, C.HistoryMonitorName, true);  // 詳細モード
+      Hostonly_ if ( fp_mon ) fclose(fp_mon);
     }
   }
   
+  
   // ドライバ条件のチェック
   BC.checkDriver(fp);
+  
   
   // 初期条件の条件設定
 	if ( C.Start == Control::initial_start ) {
@@ -1082,7 +1096,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
     
   // サンプリング元となるデータ配列の登録
-  if ( (C.Sampling.log == ON) || C.isMonitor() ) {
+  if ( C.Sampling.log == ON ) {
     if ( C.isHeatProblem() ) {
       MO.setDataPtrs(dc_v->GetData(), dc_p->GetData(), dc_t->GetData());
     }
@@ -1877,27 +1891,7 @@ void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
   elemTop = CF->GetTop(STEER);
   elmL1 = elemTop->GetElemFirst("Monitor_List");
   
-  // ログ出力
-  if ( !elmL1->GetValue(CfgIdt("log"), &str) ) {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Log' in 'Monitor_List'\n");
-		Exit(0);
-	}
-  if     ( !strcasecmp(str, "on") )   C.Sampling.log = ON;
-  else if( !strcasecmp(str, "off") )  C.Sampling.log = OFF;
-  else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for 'Monitor_List'\n");
-    Exit(0);
-  }
-  
-  if ( C.Sampling.log == OFF ) return;
-  
-  /* 出力ファイル名
-  if ( !elmL1->GetValue(CfgIdt("output_file"), &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_File' in 'Monitor_List'\n");
-    Exit(0);
-  }
-  strcpy(C.HistoryMonitorName, str);
-  */
+  // ログ出力のON/OFFはControl::getXML_Sampling()で取得済み
   
   // 集約モード
   if ( !elmL1->GetValue(CfgIdt("output_mode"), &str) ) {
@@ -1965,6 +1959,13 @@ void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
   if ( C.Sampling.unit == DIMENSIONAL ) {
     C.Interval[Interval_Manager::tg_sampled].normalizeInterval(C.Tscale);
   }
+  
+  // 指定モニタ個数のチェック
+  if ( (elmL1->GetElemSize() < 1) && (C.isMonitor() == OFF) ) {
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in XML. \n");
+    Exit(0);
+  }
+  
   
   // モニターリストの読み込み
   elmL2 = elmL1->GetElemFirst();
@@ -2909,7 +2910,16 @@ void SklSolverCBC::setEnsComponent(void)
   for (int n=1; n<=C.NoBC; n++) {
     if ( cmp[n].isMONITOR() ) c++;
   }
-  if ( c>0 ) C.EnsCompo.monitor = ON;
+  // MONITOR_LISTでCELL_MONITORが指定されている場合，C.EnsCompo.monitor==ON
+  if ( (C.isMonitor() == ON) && (c < 1) ) {
+    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is specified, however any MONITOR can not be found.\n");
+    Exit(0);
+  }
+  if ( (C.isMonitor() == OFF) && (c > 0) ) {
+    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is NOT specified, however MONITOR section is found in InnerBoundary.\n");
+    Exit(0);
+  }
+
 }
 
 /**

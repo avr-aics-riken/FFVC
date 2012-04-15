@@ -11,268 +11,6 @@
 
 #include "Monitor.h"
 
-
-/// 必要なパラメータのコピー.
-///
-///   @param[in] bcd BCindex ID
-///   @param[in] g_org,g_lbx  グローバル領域基点座標，領域サイズ
-///   @param[in] org,dx,lbx   ローカル領域基点座標，セル幅，領域サイズ
-///   @param[in] rs, gc       ローカルセルサイズ，ガイドセル数
-///   @param[in] refVelocity    代表速度
-///   @param[in] baseTemp       基準温度
-///   @param[in] diffTemp       代表温度差
-///   @param[in] refDensity     基準密度
-///   @param[in] refLength      代表長さ
-///   @param[in] basePrs        基準圧力
-///   @param[in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
-///   @param[in] modePrecision  出力精度指定フラグ (単精度，倍精度)
-///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
-///
-void MonitorList::setControlVars(unsigned* bcd,
-                                 REAL_TYPE g_org[3], REAL_TYPE g_lbx[3],
-                                 REAL_TYPE org[3], REAL_TYPE dx[3], REAL_TYPE lbx[3],
-                                 unsigned rs[3], unsigned gc,
-                                 REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp, 
-                                 REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs, 
-                                 unsigned unitTemp, unsigned modePrecision, unsigned unitPrs) 
-{
-  this->bcd = bcd;
-  this->g_org = g_org;
-  this->g_box = g_lbx;
-  this->org = org;
-  this->pch = dx;
-  this->box = lbx;
-  
-  size[0] = rs[0];
-  size[1] = rs[1];
-  size[2] = rs[2];
-  guide = gc;
-  
-  refVar.refVelocity = refVelocity;
-  refVar.baseTemp    = baseTemp;
-  refVar.diffTemp    = diffTemp;
-  refVar.refDensity  = refDensity;
-  refVar.refLength   = refLength;
-  refVar.basePrs     = basePrs;
-  refVar.unitTemp    = unitTemp;
-  refVar.unitPrs     = unitPrs;
-  refVar.modePrecision = modePrecision;
-}
-
-/// 参照速度のコピー
-///   @param[in] v00 参照（座標系移動）速度
-///
-void MonitorList::set_V00(REAL_TYPE v00[4]) 
-{
-  refVar.v00.x = v00[1];
-  refVar.v00.y = v00[2];
-  refVar.v00.z = v00[3];
-}
-
-
-/// 出力ファイルオープン.
-///
-///    @param str ファイル名テンプレート
-///
-///    @note 出力タイプによらず全プロセスから呼んでも問題ない
-///
-void MonitorList::openFile(const char* str)
-{
-  if ((outputType == GATHER && pn.ID == 0) ||
-      outputType == DISTRIBUTE) {
-    for (int i = 0; i < nGroup; i++) {
-      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
-        string fileName(str);
-        string label("_");
-        label = label + monGroup[i]->getLabel();
-        string::size_type pos = fileName.rfind(".");
-        fileName.insert(pos, label);
-        if (outputType == GATHER) {
-          monGroup[i]->openFile(fileName.c_str(), true);
-        }
-        else {
-          monGroup[i]->openFile(fileName.c_str(), false);
-        }
-      }
-    }
-  }
-}
-
-
-/// 出力ファイルクローズ.
-///
-///    @note 出力タイプによらず全プロセスから呼んでも問題ない
-///
-void MonitorList::closeFile()
-{
-  if ((outputType == GATHER && pn.ID == 0) ||
-      outputType == DISTRIBUTE) {
-    for (int i = 0; i < nGroup; i++) {
-      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) monGroup[i]->closeFile();
-    }
-  }
-}
-
-
-/// XMLにより指定されるモニタ点位置にID=255を書き込む.
-///
-///   @param[in] id セルID配列
-///
-void MonitorList::write_ID(int* id)
-{
-  for (int i = 0; i < nGroup; i++) {
-    for (int m = 0; m < monGroup[i]->getSize(); m++) {
-      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
-        //<<<
-        if (!monGroup[i]->check_region(m, org, box)) continue;
-        //>>>
-        Vec3i index = monGroup[i]->getSamplingCellIndex(m);
-        id[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)] = 255;
-      }
-    }
-  }
-}
-
-
-/// モニタ情報を出力.
-void MonitorList::printMonitorInfo(FILE* fp, const char* str)
-{
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp, "\n\t>> Monitor Information\n\n");
-  
-  fprintf(fp, "\t  Output Type              : %s\n", getOutputTypeStr().c_str());
-  fprintf(fp, "\t  Base Name of Output File : %s\n", str);
-  fprintf(fp, "\t  Specified Unit           : %s\n\n", (refVar.modeUnit == DIMENSIONAL) ? "Dimensional" : "Non Dimensional");
-  
-  for (int i = 0; i < nGroup; i++) {
-    monGroup[i]->printInfo(fp, i);
-  }
-  
-  fprintf(fp,"\n");
-  fflush(fp);
-}
-
-
-/// モニタ結果出力(Line, PointSet指定).
-///
-///   @param[in] step サンプリング時の計算ステップ
-///   @param[in] tm   サンプリング時の計算時刻
-///
-///   @note gatherの場合も全プロセスから呼ぶこと
-///
-void MonitorList::print(unsigned step, REAL_TYPE tm)
-{
-  for (int i = 0; i < nGroup; i++) {
-    if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
-      switch (outputType) {
-        case GATHER:
-          monGroup[i]->print_gather(step, tm);
-          break;
-          
-        case DISTRIBUTE:
-          monGroup[i]->print_distribute(step, tm);
-          break;
-          
-        default:
-          Exit(0);
-      }
-    }
-  }
-  
-}
-
-
-/// PointSet登録.
-///
-///   @param[in] str ラベル文字列
-///   @param[in] variables モニタ変数vector
-///   @param[in] method method文字列
-///   @param[in] mode   mode文字列
-///   @param[in] pointSet  PointSet
-///
-void MonitorList::setPointSet(const char* str, vector<string>& variables,
-                              const char* method, const char* mode,
-                              vector<MonitorCompo::MonitorPoint>& pointSet)
-{
-  MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
-                                     size, guide, refVar, bcd);
-  m->setPointSet(str, variables, method, mode, pointSet);
-  
-  monGroup.push_back(m);
-  nGroup = monGroup.size();
-}
-
-
-/// Line点登録.
-///
-///   @param[in] str ラベル文字列
-///   @param[in] variables モニタ変数vector
-///   @param[in] method method文字列
-///   @param[in] mode   mode文字列
-///   @param[in] from Line始点
-///   @param[in] to   Line終点
-///   @param[in] nDivision 分割数(モニタ点数-1)
-///
-void MonitorList::setLine(const char* str, vector<string>& variables,
-                          const char* method, const char* mode,
-                          REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
-{
-  clipLine(from, to);
-  
-  MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
-                                     size, guide, refVar, bcd);
-  m->setLine(str, variables, method, mode, from, to, nDivision);
-  
-  monGroup.push_back(m);
-  nGroup = monGroup.size();
-}
-
-
-/// 内部境界条件としてモニタ点を登録.
-///
-///   @param[in] cmp コンポーネント配列
-///   @param[in] nBC コンポーネント数
-///
-void MonitorList::setInnerBoundary(CompoList *cmp, int nBC)
-{
-  for (int i = 1; i <= nBC; i++) {
-    if (cmp[i].isMONITOR()) {
-      MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box, size, guide, refVar, bcd);
-      m->setInnerBoundary(i, cmp[i]);
-      
-      monGroup.push_back(m);
-    }
-  }
-  nGroup = monGroup.size();
-}
-
-
-/// 出力タイプ文字列の取得.
-string MonitorList::getOutputTypeStr()
-{
-  string str;
-  
-  switch (outputType) {
-    case GATHER:
-      str = "Gather";
-      break;
-      
-    case DISTRIBUTE:
-      str = "Distribute";
-      break;
-      
-    case NONE:
-      str = "Non";
-      break;
-      
-    default:
-      Exit(0);
-  }
-  
-  return str;
-}
-
-
 /// Line指定の端点座標をグローバル計算領域内にクリッピング.
 ///
 ///   @param[in,out] from Line始点
@@ -358,4 +96,270 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
   to[0]   = ed.x;
   to[1]   = ed.y;
   to[2]   = ed.z;
+}
+
+
+/// 出力ファイルクローズ.
+///
+///    @note 出力タイプによらず全プロセスから呼んでも問題ない
+///
+void MonitorList::closeFile()
+{
+  if ((outputType == GATHER && pn.ID == 0) ||
+      outputType == DISTRIBUTE) {
+    for (int i = 0; i < nGroup; i++) {
+      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) monGroup[i]->closeFile();
+    }
+  }
+}
+
+
+/// 出力タイプ文字列の取得.
+string MonitorList::getOutputTypeStr()
+{
+  string str;
+  
+  switch (outputType) {
+    case GATHER:
+      str = "Gather";
+      break;
+      
+    case DISTRIBUTE:
+      str = "Distribute";
+      break;
+      
+    case NONE:
+      str = "Non";
+      break;
+      
+    default:
+      Exit(0);
+  }
+  
+  return str;
+}
+
+
+/// 出力ファイルオープン.
+///
+///    @param str ファイル名テンプレート
+///
+///    @note 出力タイプによらず全プロセスから呼んでも問題ない
+///
+void MonitorList::openFile(const char* str)
+{
+  if ((outputType == GATHER && pn.ID == 0) ||
+      outputType == DISTRIBUTE) {
+    for (int i = 0; i < nGroup; i++) {
+      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
+        string fileName(str);
+        string label("_");
+        label = label + monGroup[i]->getLabel();
+        string::size_type pos = fileName.rfind(".");
+        fileName.insert(pos, label);
+        if (outputType == GATHER) {
+          monGroup[i]->openFile(fileName.c_str(), true);
+        }
+        else {
+          monGroup[i]->openFile(fileName.c_str(), false);
+        }
+      }
+    }
+  }
+}
+
+/// モニタ結果出力(Line, PointSet指定).
+///
+///   @param[in] step サンプリング時の計算ステップ
+///   @param[in] tm   サンプリング時の計算時刻
+///
+///   @note gatherの場合も全プロセスから呼ぶこと
+///
+void MonitorList::print(unsigned step, REAL_TYPE tm)
+{
+  for (int i = 0; i < nGroup; i++) {
+    if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
+      switch (outputType) {
+        case GATHER:
+          monGroup[i]->print_gather(step, tm);
+          break;
+          
+        case DISTRIBUTE:
+          monGroup[i]->print_distribute(step, tm);
+          break;
+          
+        default:
+          Exit(0);
+      }
+    }
+  }
+  
+}
+
+
+/// モニタ情報を出力.
+void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose)
+{
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp, "\n\t>> Monitor Information\n\n");
+  
+  fprintf(fp, "\t  Output Type              : %s\n", getOutputTypeStr().c_str());
+  fprintf(fp, "\t  Base Name of Output File : %s\n", str);
+  fprintf(fp, "\t  Specified Unit           : %s\n\n", (refVar.modeUnit == DIMENSIONAL) ? "Dimensional" : "Non Dimensional");
+  
+  if ( verbose ) {
+    for (int i = 0; i < nGroup; i++) {
+      monGroup[i]->printInfo(fp, i);
+    }
+  }
+  
+  fprintf(fp,"\n");
+  fflush(fp);
+}
+
+
+
+
+/// 必要なパラメータのコピー.
+///
+///   @param[in] bcd BCindex ID
+///   @param[in] g_org,g_lbx  グローバル領域基点座標，領域サイズ
+///   @param[in] org,dx,lbx   ローカル領域基点座標，セル幅，領域サイズ
+///   @param[in] rs, gc       ローカルセルサイズ，ガイドセル数
+///   @param[in] refVelocity    代表速度
+///   @param[in] baseTemp       基準温度
+///   @param[in] diffTemp       代表温度差
+///   @param[in] refDensity     基準密度
+///   @param[in] refLength      代表長さ
+///   @param[in] basePrs        基準圧力
+///   @param[in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
+///   @param[in] modePrecision  出力精度指定フラグ (単精度，倍精度)
+///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
+///
+void MonitorList::setControlVars(unsigned* bcd,
+                                 REAL_TYPE g_org[3], REAL_TYPE g_lbx[3],
+                                 REAL_TYPE org[3], REAL_TYPE dx[3], REAL_TYPE lbx[3],
+                                 unsigned rs[3], unsigned gc,
+                                 REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp, 
+                                 REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs, 
+                                 unsigned unitTemp, unsigned modePrecision, unsigned unitPrs) 
+{
+  this->bcd = bcd;
+  this->g_org = g_org;
+  this->g_box = g_lbx;
+  this->org = org;
+  this->pch = dx;
+  this->box = lbx;
+  
+  size[0] = rs[0];
+  size[1] = rs[1];
+  size[2] = rs[2];
+  guide = gc;
+  
+  refVar.refVelocity = refVelocity;
+  refVar.baseTemp    = baseTemp;
+  refVar.diffTemp    = diffTemp;
+  refVar.refDensity  = refDensity;
+  refVar.refLength   = refLength;
+  refVar.basePrs     = basePrs;
+  refVar.unitTemp    = unitTemp;
+  refVar.unitPrs     = unitPrs;
+  refVar.modePrecision = modePrecision;
+}
+
+/// 参照速度のコピー
+///   @param[in] v00 参照（座標系移動）速度
+///
+void MonitorList::set_V00(REAL_TYPE v00[4]) 
+{
+  refVar.v00.x = v00[1];
+  refVar.v00.y = v00[2];
+  refVar.v00.z = v00[3];
+}
+
+
+
+/// PointSet登録.
+///
+///   @param[in] str ラベル文字列
+///   @param[in] variables モニタ変数vector
+///   @param[in] method method文字列
+///   @param[in] mode   mode文字列
+///   @param[in] pointSet  PointSet
+///
+void MonitorList::setPointSet(const char* str, vector<string>& variables,
+                              const char* method, const char* mode,
+                              vector<MonitorCompo::MonitorPoint>& pointSet)
+{
+  MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
+                                     size, guide, refVar, bcd);
+  m->setPointSet(str, variables, method, mode, pointSet);
+  
+  monGroup.push_back(m);
+  nGroup = monGroup.size();
+}
+
+
+/// Line点登録.
+///
+///   @param[in] str ラベル文字列
+///   @param[in] variables モニタ変数vector
+///   @param[in] method method文字列
+///   @param[in] mode   mode文字列
+///   @param[in] from Line始点
+///   @param[in] to   Line終点
+///   @param[in] nDivision 分割数(モニタ点数-1)
+///
+void MonitorList::setLine(const char* str, vector<string>& variables,
+                          const char* method, const char* mode,
+                          REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
+{
+  clipLine(from, to);
+  
+  MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
+                                     size, guide, refVar, bcd);
+  m->setLine(str, variables, method, mode, from, to, nDivision);
+  
+  monGroup.push_back(m);
+  nGroup = monGroup.size();
+}
+
+
+/// 内部境界条件としてモニタ点を登録.
+///
+///   @param[in] cmp コンポーネント配列
+///   @param[in] nBC コンポーネント数
+///
+void MonitorList::setInnerBoundary(CompoList *cmp, int nBC)
+{
+  for (int i = 1; i <= nBC; i++) {
+    if (cmp[i].isMONITOR()) {
+      MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box, size, guide, refVar, bcd);
+      m->setInnerBoundary(i, cmp[i]);
+      
+      monGroup.push_back(m);
+    }
+  }
+  nGroup = monGroup.size();
+}
+
+
+
+/// XMLにより指定されるモニタ点位置にID=255を書き込む.
+///
+///   @param[in] id セルID配列
+///
+void MonitorList::write_ID(int* id)
+{
+  for (int i = 0; i < nGroup; i++) {
+    for (int m = 0; m < monGroup[i]->getSize(); m++) {
+      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
+        //<<<
+        if (!monGroup[i]->check_region(m, org, box)) continue;
+        //>>>
+        Vec3i index = monGroup[i]->getSamplingCellIndex(m);
+        id[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)] = 255;
+      }
+    }
+  }
 }

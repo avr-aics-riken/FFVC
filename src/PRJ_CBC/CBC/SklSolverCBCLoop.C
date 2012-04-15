@@ -276,8 +276,8 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   }
   
   // コンポーネント履歴
-  if ( C.Mode.Log_Base == ON ) {
-    if ( C.Interval[Interval_Manager::tg_history].isTriggered(loop_step, loop_time) ) {
+  if ( C.Sampling.log == ON ) {
+    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
       TIMING_start(tm_compo_monitor);
       flop_count=0.0;
       MO.samplingInnerBoundary();
@@ -290,7 +290,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   }
   
   // サンプリング履歴
-  if ( C.Sampling.log == ON  || C.isMonitor() ) {
+  if ( C.Sampling.log == ON ) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
       TIMING_start(tm_sampling);
       MO.sampling();

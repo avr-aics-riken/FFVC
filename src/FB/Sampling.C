@@ -59,7 +59,7 @@ Vec3r Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-Nearest::Nearest(Mode mode, unsigned size[], unsigned guide,
+Nearest::Nearest(int mode, unsigned size[], unsigned guide,
                  Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
 {
@@ -120,7 +120,7 @@ Vec3r Nearest::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-Smoothing::Smoothing(Mode mode, unsigned size[], unsigned guide,
+Smoothing::Smoothing(int mode, unsigned size[], unsigned guide,
                      Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
 {
@@ -243,7 +243,7 @@ Vec3r Smoothing::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-Interpolation::Interpolation(Mode mode, unsigned size[], unsigned guide,
+Interpolation::Interpolation(int mode, unsigned size[], unsigned guide,
                              Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
 {
@@ -363,7 +363,7 @@ Vec3r Interpolation::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-InterpolationStgV::InterpolationStgV(Mode mode, unsigned size[], unsigned guide,
+InterpolationStgV::InterpolationStgV(int mode, unsigned size[], unsigned guide,
                              Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
   : Interpolation(mode, size, guide, crd, org, pch, v00, bcd)
 {

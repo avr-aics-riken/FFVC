@@ -273,8 +273,18 @@ void CompoList::setPrsUnit(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::set_Shape(const unsigned key)
-void CompoList::set_Shape(const unsigned key) { 
+//@fn void CompoList::set_SamplingMethod(const int key)
+void CompoList::set_SamplingMethod(const int key) { 
+  sampling_method = key; 
+}
+
+//@fn void CompoList::set_SamplingMode(const int key)
+void CompoList::set_SamplingMode(const int key) { 
+  sampling_mode = key; 
+}
+
+//@fn void CompoList::set_Shape(const int key)
+void CompoList::set_Shape(const int key) { 
   shape = key; 
 }
 

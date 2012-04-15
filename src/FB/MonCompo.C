@@ -12,192 +12,19 @@
 #include "MonCompo.h"
 #include <sstream>
 
-/// PointSet登録.
-///
-///   @param[in] labelStr ラベル文字列
-///   @param[in] variables モニタ変数vector
-///   @param[in] methodStr method文字列
-///   @param[in] modeStr   mode文字列
-///   @param[in] pointSet  PointSet
-///
-void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
-                               const char* methodStr, const char* modeStr,
-                               vector<MonitorPoint>& pointSet)
+
+/// モニタリング管理用配列の確保.
+void MonitorCompo::allocArray()
 {
-  type = POINT_SET;
-  label = labelStr;
-  setSamplingMethod(methodStr);
-  setSamplingMode(modeStr);
-  
-  vector<string>::const_iterator it;
-  for (it = variables.begin(); it != variables.end(); it++) {
-    setMonitorVar((*it).c_str());
-  }
-  
-  nPoint = pointSet.size();
   if (nPoint == 0) Exit(0); // サンプリング点数
   
-  allocArray();
-  allocSamplingArray();
+  if (!(crd  = new Vec3r[nPoint]))    Exit(0);
+  if (!(rank = new int[nPoint]))      Exit(0);
+  if (!(comment = new string[nPoint])) Exit(0);
+  if (!(pointStatus = new int[nPoint])) Exit(0);
   
-  for (int m = 0; m < nPoint; m++) {
-    crd[m] = pointSet[m].crd;
-    if (!check_region(m, g_org, g_box, true)) Exit(0);
-    comment[m] = pointSet[m].label;
-  }
-  
-  setRankArray();
-  
-  for (int m = 0; m < nPoint; m++) {
-    if (rank[m] == pn.ID) {
-      switch (method) {
-        case NEAREST:
-          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-          break;
-          
-        case INTERPOLATION:
-          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-          break;
-          
-        case SMOOTHING:
-          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-          break;
-          
-        default:
-          Exit(0);
-      }
-    }
-  }
-  
-  checkMonitorPoints();
-}
-
-
-/// Line登録.
-///
-///   @param[in] labelStr ラベル文字列
-///   @param[in] variables モニタ変数vector
-///   @param[in] methodStr method文字列
-///   @param[in] modeStr   mode文字列
-///   @param[in] from Line始点
-///   @param[in] to   Line終点
-///   @param[in] nDivision 分割数(モニタ点数-1)
-///
-void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
-                           const char* methodStr, const char* modeStr,
-                           REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
-{
-  type = LINE;
-  label = labelStr;
-  setSamplingMethod(methodStr);
-  setSamplingMode(modeStr);
-  
-  vector<string>::const_iterator it;
-  for (it = variables.begin(); it != variables.end(); it++) {
-    setMonitorVar((*it).c_str());
-  }
-  
-  nPoint = nDivision + 1;
-  if (nPoint < 2) Exit(0);
-  
-  allocArray();
-  allocSamplingArray();
-  
-  Vec3r st(from), ed(to);
-  Vec3r dd = ed - st;
-  dd /= nPoint - 1;
-  
-  for (int m = 0; m < nPoint; m++) {
-    ostringstream oss;
-    oss << "point_" << m;
-    crd[m] = st + dd * (REAL_TYPE)m;
-    if (!check_region(m, g_org, g_box, true)) Exit(0);
-    comment[m] = oss.str();
-  }
-  
-  setRankArray();
-  
-  for (int m = 0; m < nPoint; m++) {
-    if (rank[m] == pn.ID) {
-      switch (method) {
-        case NEAREST:
-          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-          break;
-          
-        case INTERPOLATION:
-          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-          break;
-          
-        case SMOOTHING:
-          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-          break;
-          
-        default:
-          Exit(0);
-      }
-    }
-  }
-  
-  checkMonitorPoints();
-}
-
-
-/// 内部境界条件としてモニタ点を登録.
-///
-///   @param[in] n コンポーネントエントリ
-///   @param[in] cmp コンポーネント
-///
-void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
-{
-  ostringstream oss;
-  oss << "InnerBoundary" << n;
-  type = INNER_BOUNDARY;
-  label = oss.str();
-  method = NEAREST;
-  mode = Sampling::ALL;
-  
-  this->cmp = &cmp;
-  
-  if (cmp.isVarEncoded(var_Velocity))    variable[VELOCITY] = true;
-  if (cmp.isVarEncoded(var_Pressure))    variable[PRESSURE] = true;
-  if (cmp.isVarEncoded(var_Temperature)) variable[TEMPERATURE] = true;
-  if (cmp.isVarEncoded(var_TotalP))      variable[TOTAL_PRESSURE] = true;
-  //if (cmp.isVarEncoded(var_Vorticity))   variable[TOTAL_VORTICITY] = true;
-  
-  
-  nPoint = cmp.getElement();
-  allocArray();
-  allocSamplingArray();
-  
-  setIBPoints(n, cmp);
-  
-  setRankArray();
-  
-  for (int m = 0; m < nPoint; m++) {
-    ostringstream oss;
-    oss << "point_" << m;
-    comment[m] = oss.str();
-    if (!check_region(m, g_org, g_box, true)) Exit(0);
-    if (rank[m] == pn.ID) {
-      mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-    }
-  }
-  
-  checkMonitorPoints();
-}
-
-
-/// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定.
-void MonitorCompo::checkMonitorPoints()
-{
-  for (int m = 0; m < nPoint; m++) {
-    pointStatus[m] = 0;
-    if (rank[m] == pn.ID) {
-      pointStatus[m] = mon[m]->checkMonitorPoint();
-    }
-  }
-  
-  if (!allReduceSum(pointStatus, nPoint)) Exit(0);
+  if (!(mon = new Sampling*[nPoint])) Exit(0);
+  for (int i = 0; i < nPoint; i++) mon[i] = NULL;
 }
 
 
@@ -225,26 +52,115 @@ void MonitorCompo::allocSamplingArray()
     if (!(tp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
   }
-  if (variable[VORTICITY]) {
-    if (!(vor = new Vec3r[nPoint])) Exit(0);
-    for (int i = 0; i < nPoint; i++) vor[i] = Vec3r(DUMMY, DUMMY, DUMMY);
-  }
+  //if (variable[VORTICITY]) {
+  //  if (!(vor = new Vec3r[nPoint])) Exit(0);
+  //  for (int i = 0; i < nPoint; i++) vor[i] = Vec3r(DUMMY, DUMMY, DUMMY);
+  //}
 }
 
 
-/// モニタリング管理用配列の確保.
-void MonitorCompo::allocArray()
+/// Allreduceによる総和(実数配列上書き，work配列指定).
+bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
 {
-  if (nPoint == 0) Exit(0); // サンプリング点数
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if (!para_mng->IsParallel()) return true;
   
-  if (!(crd  = new Vec3r[nPoint]))    Exit(0);
-  if (!(rank = new int[nPoint]))      Exit(0);
-  if (!(comment = new string[nPoint])) Exit(0);
-  if (!(pointStatus = new int[nPoint])) Exit(0);
-  
-  if (!(mon = new Sampling*[nPoint])) Exit(0);
-  for (int i = 0; i < nPoint; i++) mon[i] = NULL;
+  for (int i = 0; i < n; i++) sendBuf[i] = array[i];
+  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 }
+
+
+/// Allreduceによる総和(実数配列上書き).
+bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if (!para_mng->IsParallel()) return true;
+  
+  REAL_TYPE* sendBuf = new REAL_TYPE[n];
+  bool ret = allReduceSum(array, n, sendBuf);
+  delete[] sendBuf;
+  
+  return ret;
+}
+
+
+/// Allreduceによる総和(整数配列上書き，work配列指定).
+bool MonitorCompo::allReduceSum(int* array, int n, int* sendBuf)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if (!para_mng->IsParallel()) return true;
+  
+  for (int i = 0; i < n; i++) sendBuf[i] = array[i];
+  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+}
+
+
+/// Allreduceによる総和(整数配列上書き).
+bool MonitorCompo::allReduceSum(int* array, int n)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if (!para_mng->IsParallel()) return true;
+  
+  int* sendBuf = new int[n];
+  bool ret = allReduceSum(array, n, sendBuf);
+  delete[] sendBuf;
+  
+  return ret;
+}
+
+
+/// 内部境界条件として指定されたモニタ領域内でスカラー変数を平均.
+///
+///   @param[in] s スカラー変数配列
+///   @return モニタ領域内平均値
+///
+REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
+{
+  REAL_TYPE sum= 0.0;
+  for (int i = 0; i < nPoint; i++) {
+    if (rank[i] == pn.ID) sum+= s[i];
+  }
+  allReduceSum(&sum, 1);
+  
+  return sum / nPoint;
+}
+
+
+/// 内部境界条件として指定されたモニタ領域内でベクトル変数を平均.
+///
+///   @param[in] v ベクトル変数配列
+///   @return モニタ領域内平均値
+///
+Vec3r MonitorCompo::averageVector(Vec3r* v)
+{
+  REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
+  for (int i = 0; i < nPoint; i++) {
+    if (rank[i] == pn.ID) {
+      sum[0] += v[i].x;
+      sum[1] += v[i].y;
+      sum[2] += v[i].z;
+    }
+  }
+  allReduceSum(sum, 3);
+  
+  return Vec3r(sum) / nPoint;
+}
+
+
+
+/// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定.
+void MonitorCompo::checkMonitorPoints()
+{
+  for (int m = 0; m < nPoint; m++) {
+    pointStatus[m] = 0;
+    if (rank[m] == pn.ID) {
+      pointStatus[m] = mon[m]->checkMonitorPoint();
+    }
+  }
+  
+  if (!allReduceSum(pointStatus, nPoint)) Exit(0);
+}
+
 
 
 /// モニタ点が指定領域内にあるかを判定.
@@ -270,172 +186,14 @@ bool MonitorCompo::check_region(unsigned m, Vec3r org, Vec3r box, bool flag)
 }
 
 
-/// モニタ点指定方法文字列の取得.
-string MonitorCompo::getTypeStr()
-{
-  string str;
-  
-  switch (type) {
-    case POINT_SET:
-      str = "Point_set"; break;
-    case LINE:
-      str = "Line"; break;
-    case INNER_BOUNDARY:
-      str = "Inner Boundary"; break;
-    default:
-      Exit(0);
-  }
-  
-  return str;
+/// 出力ファイルクローズ.
+void MonitorCompo::closeFile()
+{ 
+  assert(fp);
+  fclose(fp);
 }
 
 
-/// サンプリング方法文字列の取得.
-string MonitorCompo::getMethodStr()
-{
-  string str;
-  
-  switch (method) {
-    case NEAREST:
-      str = "Nearest"; break;
-    case INTERPOLATION:
-      str = "Interpolation"; break;
-    case SMOOTHING:
-      str = "Smoothing"; break;
-    default:
-      Exit(0);
-  }
-  
-  return str;
-}
-
-
-/// サンプリングモード文字列の取得.
-string MonitorCompo::getModeStr()
-{
-  string str;
-  
-  switch (mode) {
-    case Sampling::ALL:
-      str = "All"; break;
-    case Sampling::FLUID_ONLY:
-      str = "Fluid"; break;
-    case Sampling::SOLID_ONLY:
-      str = "Solid"; break;
-    default:
-      Exit(0);
-  }
-  
-  return str;
-}
-
-
-/// モニタ変数を結合した文字列の取得.
-string MonitorCompo::getVarStr() 
-{
-  string var;
-  
-  if (variable[VELOCITY])        var += "Velocity ";
-  if (variable[PRESSURE])        var += "Pressure ";
-  if (variable[TEMPERATURE])     var += "Temperature ";
-  if (variable[TOTAL_PRESSURE])  var += "TotalPressure ";
-  if (variable[VORTICITY])       var += "Vorticity ";
-  
-  return var;
-}
-
-
-/// モニタ対象物理量の設定.
-///
-///    @param[in] str モニタ対象物理量文字列
-///
-void MonitorCompo::setMonitorVar(const char* str) 
-{
-  if      (!strcasecmp("velocity", str))        variable[VELOCITY] = true;
-  else if (!strcasecmp("pressure", str))        variable[PRESSURE] = true;
-  else if (!strcasecmp("temperature", str))     variable[TEMPERATURE] = true;
-  else if (!strcasecmp("total_pressure", str))  variable[TOTAL_PRESSURE] = true;
-  else if (!strcasecmp("vorticity", str))       variable[VORTICITY] = true;
-  else {
-    Hostonly_ stamped_printf("\tError : Invalid variable keyword [%s]\n", str);
-    Exit(0);
-  }
-}
-
-
-/// サンプリング方法の設定.
-///
-///    @param[in] str サンプリング方法文字列
-///
-void MonitorCompo::setSamplingMethod(const char* str) 
-{
-  if      (!strcasecmp("nearest", str))       method = NEAREST;
-  else if (!strcasecmp("interpolation", str)) method = INTERPOLATION;
-  else if (!strcasecmp("smoothing", str))     method = SMOOTHING;
-  else {
-    Hostonly_ stamped_printf("\tError : Invalid samping_method keyword [%s]\n", str);
-    Exit(0);
-  }
-}
-
-
-/// サンプリングモードの設定.
-///
-///    @param[in] str サンプリングモード文字列
-///
-void MonitorCompo::setSamplingMode(const char* str) 
-{
-  if      (!strcasecmp("all",   str)) mode = Sampling::ALL;
-  else if (!strcasecmp("fluid", str)) mode = Sampling::FLUID_ONLY;
-  else if (!strcasecmp("solid", str)) mode = Sampling::SOLID_ONLY;
-  else {
-    Hostonly_ stamped_printf("\tError : Invalid samping_mode keyword [%s]\n", str);
-    Exit(0);
-  }
-}
-
-
-/// 各モニタ点を担当するランク番号を配列rank[]にセット.
-///
-///   @note 領域境界上のモニタ点は，ランク番号の大きい方の領域が担当
-///
-void MonitorCompo::setRankArray()
-{
-  int* sendBuf =  new int[nPoint];
-  if (!sendBuf) Exit(0);
-  
-  for (int m = 0; m < nPoint; m++) {
-    sendBuf[m] = -1;
-    if (check_region(m, org, box)) sendBuf[m] = pn.ID;
-  }
-  
-  // gather max rank number
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (para_mng->IsParallel()) {
-    if (!para_mng->Allreduce(sendBuf, rank, nPoint, SKL_ARRAY_DTYPE_INT,
-                             SKL_MAX, pn.procGrp)) Exit(0);
-  }
-  else {
-    for (int m = 0; m < nPoint; m++) rank[m] = sendBuf[m];
-  }
-  
-  delete[] sendBuf;
-}
-
-
-/// サンプリング(Line, PointSet).
-void MonitorCompo::sampling()
-{
-  for (int i = 0; i < nPoint; i++) {
-    //  if (!(mon[i] && pointStatus[i] == Sampling::POINT_STATUS_OK)) continue;
-    if (!mon[i]) continue;
-    if (variable[VELOCITY])       vel[i] = mon[i]->samplingVelocity(vSource);
-    if (variable[PRESSURE])       prs[i] = mon[i]->samplingPressure(pSource);
-    if (variable[TEMPERATURE])    tmp[i] = mon[i]->samplingTemperature(tSource);
-    if (variable[TOTAL_PRESSURE]) tp[i]  = mon[i]->samplingTotalPressure(vSource, pSource);
-    if (variable[VORTICITY])      vor[i] = mon[i]->samplingVorticity(vSource);
-  }
-}
 
 
 /// サンプリングした変数をノード0に集約.
@@ -449,7 +207,7 @@ void MonitorCompo::gatherSampled()
   if (variable[PRESSURE])       gatherSampledScalar(prs, sRecvBuf);
   if (variable[TEMPERATURE])    gatherSampledScalar(tmp, sRecvBuf);
   if (variable[TOTAL_PRESSURE]) gatherSampledScalar(tp, sRecvBuf);
-  if (variable[VORTICITY])      gatherSampledVector(vor, vSendBuf, vRecvBuf);
+  //if (variable[VORTICITY])      gatherSampledVector(vor, vSendBuf, vRecvBuf);
   
   if (vSendBuf) delete[] vSendBuf;
   if (vRecvBuf) delete[] vRecvBuf;
@@ -529,6 +287,83 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
 }
 
 
+
+/// モニタ点指定方法文字列の取得.
+string MonitorCompo::getTypeStr()
+{
+  string str;
+  
+  switch (type) {
+    case POINT_SET:
+      str = "Point_set"; break;
+    case LINE:
+      str = "Line"; break;
+    case INNER_BOUNDARY:
+      str = "Inner Boundary"; break;
+    default:
+      Exit(0);
+  }
+  
+  return str;
+}
+
+
+/// サンプリング方法文字列の取得.
+string MonitorCompo::getMethodStr()
+{
+  string str;
+  
+  switch (method) {
+    case SAMPLING_NEAREST:
+      str = "Nearest"; break;
+    case SAMPLING_INTERPOLATION:
+      str = "Interpolation"; break;
+    case SAMPLING_SMOOTHING:
+      str = "Smoothing"; break;
+    default:
+      Exit(0);
+  }
+  
+  return str;
+}
+
+
+/// サンプリングモード文字列の取得.
+string MonitorCompo::getModeStr()
+{
+  string str;
+  
+  switch (mode) {
+    case SAMPLING_ALL:
+      str = "All"; break;
+    case SAMPLING_FLUID_ONLY:
+      str = "Fluid"; break;
+    case SAMPLING_SOLID_ONLY:
+      str = "Solid"; break;
+    default:
+      Exit(0);
+  }
+  
+  return str;
+}
+
+
+/// モニタ変数を結合した文字列の取得.
+string MonitorCompo::getVarStr() 
+{
+  string var;
+  
+  if (variable[VELOCITY])        var += "Velocity ";
+  if (variable[PRESSURE])        var += "Pressure ";
+  if (variable[TEMPERATURE])     var += "Temperature ";
+  if (variable[TOTAL_PRESSURE])  var += "TotalPressure ";
+  //if (variable[VORTICITY])       var += "Vorticity ";
+  
+  return var;
+}
+
+
+
 /// 出力ファイルオープン.
 ///
 ///    @param str ファイル名テンプレート
@@ -553,54 +388,6 @@ void MonitorCompo::openFile(const char* str, bool gathered)
     }
     writeHeader(false);
   }
-}
-
-
-/// 出力ファイルクローズ.
-void MonitorCompo::closeFile()
-{ 
-  assert(fp);
-  fclose(fp);
-}
-
-
-/// モニタ結果出力ファイルにヘッダ部を出力.
-///
-///   @param[in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
-///
-void MonitorCompo::writeHeader(bool gathered)
-{
-  assert(fp);
-  
-  int n;
-  if (gathered) {
-    n = nPoint;
-  }
-  else {
-    n = 0;
-    for (int i = 0; i < nPoint; i++) if (rank[i] == pn.ID) n++;
-  }
-  
-  fprintf(fp, "%d %s\n", n, getVarStr().c_str());
-  
-  for (int i = 0; i < nPoint; i++) {
-    if (gathered || rank[i] == pn.ID) {
-      fprintf(fp, "%14.6e %14.6e %14.6e  #%s", // %12.4 >> %14.6
-              convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
-      
-      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID) {
-        fprintf(fp, "  *skip(unexpected solid)*\n");
-      }
-      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) {
-        fprintf(fp, "  *skip(unexpected fluid)*\n");
-      }
-      else {
-        fprintf(fp, "\n");
-      }
-    }
-  }
-  
-  fflush(fp);
 }
 
 
@@ -656,9 +443,9 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
     if (variable[TOTAL_PRESSURE]) {
       fprintf(fp, sFmt, convTP(tp[i]));
     }
-    if (variable[VORTICITY]) {
-      fprintf(fp, vFmt, convVor(vor[i].x), convVor(vor[i].y), convVor(vor[i].z));
-    }
+    //if (variable[VORTICITY]) {
+    //  fprintf(fp, vFmt, convVor(vor[i].x), convVor(vor[i].y), convVor(vor[i].z));
+    //}
     fprintf(fp, "\n");
   }
 }
@@ -692,6 +479,45 @@ void MonitorCompo::printInfo(FILE* fp, int no)
   }
   fprintf(fp,"\n");
 }
+
+
+/// サンプリング(Line, PointSet).
+void MonitorCompo::sampling()
+{
+  for (int i = 0; i < nPoint; i++) {
+    //  if (!(mon[i] && pointStatus[i] == Sampling::POINT_STATUS_OK)) continue;
+    if (!mon[i]) continue;
+    if (variable[VELOCITY])       vel[i] = mon[i]->samplingVelocity(vSource);
+    if (variable[PRESSURE])       prs[i] = mon[i]->samplingPressure(pSource);
+    if (variable[TEMPERATURE])    tmp[i] = mon[i]->samplingTemperature(tSource);
+    if (variable[TOTAL_PRESSURE]) tp[i]  = mon[i]->samplingTotalPressure(vSource, pSource);
+    //if (variable[VORTICITY])      vor[i] = mon[i]->samplingVorticity(vSource);
+  }
+}
+
+
+
+/// 内部境界条件モニタ点でのサンプリング.
+///
+///   サンプリング結果を集計，コンポーネント領域での平均値を計算.
+///   速度は法線ベクトルとの内積をとる．
+///   結果はコンポーネントcmpに格納.
+///
+void MonitorCompo::samplingInnerBoundary()
+{
+  assert(type == INNER_BOUNDARY);
+  sampling();
+  
+  if (variable[VELOCITY]) {
+    Vec3r velAve = averageVector(vel);
+    cmp->val[var_Velocity]
+    = velAve.x * cmp->nv[0] + velAve.y * cmp->nv[1] + velAve.z * cmp->nv[2];
+  }
+  if (variable[PRESSURE])       cmp->val[var_Pressure]    = averageScalar(prs);
+  if (variable[TEMPERATURE])    cmp->val[var_Temperature] = averageScalar(tmp);
+  if (variable[TOTAL_PRESSURE]) cmp->val[var_TotalP]      = averageScalar(tp);
+}
+
 
 
 /// 内部境界条件として指定されたモニタ領域のセル中心座標をcrd[]に設定.
@@ -772,111 +598,299 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
 }
 
 
-/// 内部境界条件モニタ点でのサンプリング.
+/// 内部境界条件としてモニタ点を登録.
 ///
-///   サンプリング結果を集計，コンポーネント領域での平均値を計算.
-///   速度は法線ベクトルとの内積をとる．
-///   結果はコンポーネントcmpに格納.
+///   @param[in] n コンポーネントエントリ
+///   @param[in] cmp コンポーネント
 ///
-void MonitorCompo::samplingInnerBoundary()
+void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
 {
-  assert(type == INNER_BOUNDARY);
-  sampling();
+  ostringstream oss;
+  oss << "InnerBoundary" << n;
+  type = INNER_BOUNDARY;
+  label = oss.str();
+  method = SAMPLING_NEAREST;
+  mode = SAMPLING_ALL;
   
-  if (variable[VELOCITY]) {
-    Vec3r velAve = averageVector(vel);
-    cmp->val[var_Velocity]
-    = velAve.x * cmp->nv[0] + velAve.y * cmp->nv[1] + velAve.z * cmp->nv[2];
-  }
-  if (variable[PRESSURE])       cmp->val[var_Pressure]    = averageScalar(prs);
-  if (variable[TEMPERATURE])    cmp->val[var_Temperature] = averageScalar(tmp);
-  if (variable[TOTAL_PRESSURE]) cmp->val[var_TotalP]      = averageScalar(tp);
-}
-
-
-/// 内部境界条件として指定されたモニタ領域内でスカラー変数を平均.
-///
-///   @param[in] s スカラー変数配列
-///   @return モニタ領域内平均値
-///
-REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
-{
-  REAL_TYPE sum= 0.0;
-  for (int i = 0; i < nPoint; i++) {
-    if (rank[i] == pn.ID) sum+= s[i];
-  }
-  allReduceSum(&sum, 1);
+  this->cmp = &cmp;
   
-  return sum / nPoint;
-}
-
-
-/// 内部境界条件として指定されたモニタ領域内でベクトル変数を平均.
-///
-///   @param[in] v ベクトル変数配列
-///   @return モニタ領域内平均値
-///
-Vec3r MonitorCompo::averageVector(Vec3r* v)
-{
-  REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
-  for (int i = 0; i < nPoint; i++) {
-    if (rank[i] == pn.ID) {
-      sum[0] += v[i].x;
-      sum[1] += v[i].y;
-      sum[2] += v[i].z;
+  if (cmp.isVarEncoded(var_Velocity))    variable[VELOCITY]       = true;
+  if (cmp.isVarEncoded(var_Pressure))    variable[PRESSURE]       = true;
+  if (cmp.isVarEncoded(var_Temperature)) variable[TEMPERATURE]    = true;
+  if (cmp.isVarEncoded(var_TotalP))      variable[TOTAL_PRESSURE] = true;
+  
+  
+  nPoint = cmp.getElement();
+  allocArray();
+  allocSamplingArray();
+  
+  setIBPoints(n, cmp);
+  
+  setRankArray();
+  
+  for (int m = 0; m < nPoint; m++) {
+    ostringstream oss;
+    oss << "point_" << m;
+    comment[m] = oss.str();
+    if (!check_region(m, g_org, g_box, true)) Exit(0);
+    if (rank[m] == pn.ID) {
+      mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
     }
   }
-  allReduceSum(sum, 3);
   
-  return Vec3r(sum) / nPoint;
+  checkMonitorPoints();
 }
 
 
-/// Allreduceによる総和(実数配列上書き，work配列指定).
-bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
+
+/// Line登録.
+///
+///   @param[in] labelStr ラベル文字列
+///   @param[in] variables モニタ変数vector
+///   @param[in] methodStr method文字列
+///   @param[in] modeStr   mode文字列
+///   @param[in] from Line始点
+///   @param[in] to   Line終点
+///   @param[in] nDivision 分割数(モニタ点数-1)
+///
+void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
+                           const char* methodStr, const char* modeStr,
+                           REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
+  type = LINE;
+  label = labelStr;
+  setSamplingMethod(methodStr);
+  setSamplingMode(modeStr);
   
-  for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+  vector<string>::const_iterator it;
+  for (it = variables.begin(); it != variables.end(); it++) {
+    setMonitorVar((*it).c_str());
+  }
+  
+  nPoint = nDivision + 1;
+  if (nPoint < 2) Exit(0);
+  
+  allocArray();
+  allocSamplingArray();
+  
+  Vec3r st(from), ed(to);
+  Vec3r dd = ed - st;
+  dd /= nPoint - 1;
+  
+  for (int m = 0; m < nPoint; m++) {
+    ostringstream oss;
+    oss << "point_" << m;
+    crd[m] = st + dd * (REAL_TYPE)m;
+    if (!check_region(m, g_org, g_box, true)) Exit(0);
+    comment[m] = oss.str();
+  }
+  
+  setRankArray();
+  
+  for (int m = 0; m < nPoint; m++) {
+    if (rank[m] == pn.ID) {
+      switch (method) {
+        case SAMPLING_NEAREST:
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_INTERPOLATION:
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_SMOOTHING:
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        default:
+          Exit(0);
+      }
+    }
+  }
+  
+  checkMonitorPoints();
 }
 
 
-/// Allreduceによる総和(実数配列上書き).
-bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
+
+/// モニタ対象物理量の設定.
+///
+///    @param[in] str モニタ対象物理量文字列
+///
+void MonitorCompo::setMonitorVar(const char* str) 
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
+  if      (!strcasecmp("velocity", str))        variable[VELOCITY] = true;
+  else if (!strcasecmp("pressure", str))        variable[PRESSURE] = true;
+  else if (!strcasecmp("temperature", str))     variable[TEMPERATURE] = true;
+  else if (!strcasecmp("total_pressure", str))  variable[TOTAL_PRESSURE] = true;
+  //else if (!strcasecmp("vorticity", str))       variable[VORTICITY] = true;
+  else {
+    Hostonly_ stamped_printf("\tError : Invalid variable keyword [%s]\n", str);
+    Exit(0);
+  }
+}
+
+
+/// PointSet登録.
+///
+///   @param[in] labelStr ラベル文字列
+///   @param[in] variables モニタ変数vector
+///   @param[in] methodStr method文字列
+///   @param[in] modeStr   mode文字列
+///   @param[in] pointSet  PointSet
+///
+void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
+                               const char* methodStr, const char* modeStr,
+                               vector<MonitorPoint>& pointSet)
+{
+  type = POINT_SET;
+  label = labelStr;
+  setSamplingMethod(methodStr);
+  setSamplingMode(modeStr);
   
-  REAL_TYPE* sendBuf = new REAL_TYPE[n];
-  bool ret = allReduceSum(array, n, sendBuf);
+  vector<string>::const_iterator it;
+  for (it = variables.begin(); it != variables.end(); it++) {
+    setMonitorVar((*it).c_str());
+  }
+  
+  nPoint = pointSet.size();
+  if (nPoint == 0) Exit(0); // サンプリング点数
+  
+  allocArray();
+  allocSamplingArray();
+  
+  for (int m = 0; m < nPoint; m++) {
+    crd[m] = pointSet[m].crd;
+    if (!check_region(m, g_org, g_box, true)) Exit(0);
+    comment[m] = pointSet[m].label;
+  }
+  
+  setRankArray();
+  
+  for (int m = 0; m < nPoint; m++) {
+    if (rank[m] == pn.ID) {
+      switch (method) {
+        case SAMPLING_NEAREST:
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_INTERPOLATION:
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_SMOOTHING:
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        default:
+          Exit(0);
+      }
+    }
+  }
+  
+  checkMonitorPoints();
+}
+
+
+
+/// 各モニタ点を担当するランク番号を配列rank[]にセット.
+///
+///   @note 領域境界上のモニタ点は，ランク番号の大きい方の領域が担当
+///
+void MonitorCompo::setRankArray()
+{
+  int* sendBuf =  new int[nPoint];
+  if (!sendBuf) Exit(0);
+  
+  for (int m = 0; m < nPoint; m++) {
+    sendBuf[m] = -1;
+    if (check_region(m, org, box)) sendBuf[m] = pn.ID;
+  }
+  
+  // gather max rank number
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if (para_mng->IsParallel()) {
+    if (!para_mng->Allreduce(sendBuf, rank, nPoint, SKL_ARRAY_DTYPE_INT,
+                             SKL_MAX, pn.procGrp)) Exit(0);
+  }
+  else {
+    for (int m = 0; m < nPoint; m++) rank[m] = sendBuf[m];
+  }
+  
   delete[] sendBuf;
-  
-  return ret;
 }
 
 
-/// Allreduceによる総和(整数配列上書き，work配列指定).
-bool MonitorCompo::allReduceSum(int* array, int n, int* sendBuf)
+
+
+/// サンプリング方法の設定.
+///
+///    @param[in] str サンプリング方法文字列
+///
+void MonitorCompo::setSamplingMethod(const char* str) 
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
-  
-  for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+  if      (!strcasecmp("nearest", str))       method = SAMPLING_NEAREST;
+  else if (!strcasecmp("interpolation", str)) method = SAMPLING_INTERPOLATION;
+  else if (!strcasecmp("smoothing", str))     method = SAMPLING_SMOOTHING;
+  else {
+    Hostonly_ stamped_printf("\tError : Invalid samping_method keyword [%s]\n", str);
+    Exit(0);
+  }
 }
 
 
-/// Allreduceによる総和(整数配列上書き).
-bool MonitorCompo::allReduceSum(int* array, int n)
+/// サンプリングモードの設定.
+///
+///    @param[in] str サンプリングモード文字列
+///
+void MonitorCompo::setSamplingMode(const char* str) 
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
-  
-  int* sendBuf = new int[n];
-  bool ret = allReduceSum(array, n, sendBuf);
-  delete[] sendBuf;
-  
-  return ret;
+  if      (!strcasecmp("all",   str)) mode = SAMPLING_ALL;
+  else if (!strcasecmp("fluid", str)) mode = SAMPLING_FLUID_ONLY;
+  else if (!strcasecmp("solid", str)) mode = SAMPLING_SOLID_ONLY;
+  else {
+    Hostonly_ stamped_printf("\tError : Invalid samping_mode keyword [%s]\n", str);
+    Exit(0);
+  }
 }
+
+
+/// モニタ結果出力ファイルにヘッダ部を出力.
+///
+///   @param[in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
+///
+void MonitorCompo::writeHeader(bool gathered)
+{
+  assert(fp);
+  
+  int n;
+  if (gathered) {
+    n = nPoint;
+  }
+  else {
+    n = 0;
+    for (int i = 0; i < nPoint; i++) if (rank[i] == pn.ID) n++;
+  }
+  
+  fprintf(fp, "%d %s\n", n, getVarStr().c_str());
+  
+  for (int i = 0; i < nPoint; i++) {
+    if (gathered || rank[i] == pn.ID) {
+      fprintf(fp, "%14.6e %14.6e %14.6e  #%s", // %12.4 >> %14.6
+              convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
+      
+      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID) {
+        fprintf(fp, "  *skip(unexpected solid)*\n");
+      }
+      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) {
+        fprintf(fp, "  *skip(unexpected fluid)*\n");
+      }
+      else {
+        fprintf(fp, "\n");
+      }
+    }
+  }
+  
+  fflush(fp);
+}
+

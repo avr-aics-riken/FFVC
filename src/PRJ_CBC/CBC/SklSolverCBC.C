@@ -462,7 +462,7 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_VBC_update,         "Velocity BC Update",      PerfMonitor::CALC);
   set_label(tm_LES_eddy,           "Eddy Viscosity",          PerfMonitor::CALC);
   set_label(tm_LES_eddy_comm,      "Sync. Eddy Viscosity",    PerfMonitor::COMM);
-  set_label(tm_pressure_shift,     "pressure Shift",          PerfMonitor::COMM);
+  set_label(tm_pressure_shift,     "Shift Pressure",          PerfMonitor::COMM);
   // end of NS: Loop Post Section
   
   // end of Flow section

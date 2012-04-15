@@ -231,6 +231,16 @@
 #define SHAPE_BOX      2
 #define SHAPE_VOXEL    3
 
+// サンプリング方法
+#define SAMPLING_NEAREST       1  /// モニタ点を含むセルでの値
+#define SAMPLING_INTERPOLATION 2  /// 三重線形補間
+#define SAMPLING_SMOOTHING     3  /// 局所平均
+
+// サンプリングモード
+#define SAMPLING_ALL        1 ///< 全タイプのセルを対象
+#define SAMPLING_FLUID_ONLY 2 ///< 流体セルのみを対象
+#define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
+
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)
 #define IS_FLUID(a) ( ((a >> STATE_BIT) & 0x1) ? true : false )

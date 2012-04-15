@@ -981,6 +981,41 @@ void ParseBC::getXML_IBC_Monitor(const CfgElem *elmL, unsigned n, Control* C)
     Exit(0);
   }
   
+  
+  // サンプリングモード
+  if ( elmL->GetValue(CfgIdt("sampling_mode"), &pnt) ) {
+    if ( !strcasecmp("all", pnt) ) {
+      compo[n].set_SamplingMode(SAMPLING_ALL);
+    }
+    else if ( !strcasecmp("fluid", pnt) ) {
+      compo[n].set_SamplingMode(SAMPLING_FLUID_ONLY);
+    }
+    else if ( !strcasecmp("solid", pnt) ) {
+      compo[n].set_SamplingMode(SAMPLING_SOLID_ONLY);
+    }
+    else {
+      stamped_printf("\tParsing error : Invalid string value for 'Sampling_Mode' : %s\n", pnt);
+      Exit(0);
+    }
+  }
+  
+  // サンプリング方法
+  if ( elmL->GetValue(CfgIdt("sampling_method"), &pnt) ) {
+    if ( !strcasecmp("Nearest", pnt) ) {
+      compo[n].set_SamplingMethod(SAMPLING_NEAREST);
+    }
+    else if ( !strcasecmp("Interpolation", pnt) ) {
+      compo[n].set_SamplingMethod(SAMPLING_INTERPOLATION);
+    }
+    else if ( !strcasecmp("Smoothing", pnt) ) {
+      compo[n].set_SamplingMethod(SAMPLING_SMOOTHING);
+    }
+    else {
+      stamped_printf("\tParsing error : Invalid string value for 'Sampling_Method' : %s\n", pnt);
+      Exit(0);
+    }
+  }
+  
   // モニタする変数と数を取得
   nvc = 0;
   
@@ -1032,20 +1067,18 @@ void ParseBC::getXML_IBC_Monitor(const CfgElem *elmL, unsigned n, Control* C)
   }
   
   // 全圧
-  if ( C->Mode.TP == ON ) {
-    if ( !elmL2->GetValue("total_pressure", &str) ) {
-      stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
-      Exit(0);
-    }
-    if     ( !strcasecmp(str, "on") )  {
-      compo[n].encodeVarType(var_TotalP);
-      nvc++;
-    }
-    else if( !strcasecmp(str, "off") ) {;} // nothing
-    else {
-      stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
-      Exit(0);
-    }
+  if ( !elmL2->GetValue("total_pressure", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
+    Exit(0);
+  }
+  if     ( !strcasecmp(str, "on") )  {
+    compo[n].encodeVarType(var_TotalP);
+    nvc++;
+  }
+  else if( !strcasecmp(str, "off") ) {;} // nothing
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
+    Exit(0);
   }
   
   // モニタ面に対して指定された変数の個数（モニタの個数）を取得

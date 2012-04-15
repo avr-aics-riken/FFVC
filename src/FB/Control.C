@@ -1572,6 +1572,46 @@ void Control::getXML_ReferenceFrame(ReferenceFrame* RF)
 
 
 /**
+ @fn void Control::getXML_Sampling(void)
+ @brief モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータは後ほど
+ */
+void Control::getXML_Sampling(void)
+{
+  const CfgElem *elemTop=NULL, *elmL1=NULL;
+  const char* str=NULL;
+  
+  elemTop = CF->GetTop(STEER);
+  elmL1 = elemTop->GetElemFirst("Monitor_List");
+  
+  // ログ出力
+  if ( !elmL1->GetValue(CfgIdt("log"), &str) ) {
+		stamped_printf("\tParsing error : Invalid string for 'Log' in 'Monitor_List'\n");
+		Exit(0);
+	}
+  if     ( !strcasecmp(str, "on") )   Sampling.log = ON;
+  else if( !strcasecmp(str, "off") )  Sampling.log = OFF;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Monitor_List'\n");
+    Exit(0);
+  }
+  
+  // セルモニターの指定
+  /// @see SklInitialize.C seEnsComponent()
+  if ( !elmL1->GetValue(CfgIdt("cell_monitor"), &str) ) {
+		stamped_printf("\tParsing error : Invalid string for 'cell_monitor' in 'Monitor_List'\n");
+		Exit(0);
+	}
+  if     ( !strcasecmp(str, "on") )   EnsCompo.monitor = ON;
+  else if( !strcasecmp(str, "off") )  EnsCompo.monitor = OFF;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Cell_Monitor'\n");
+    Exit(0);
+  }
+}
+
+
+
+/**
  @fn void Control::getXML_Scaling(void)
  @brief スケーリングファクタを取得する（隠しパラメータ）
  @note 'Scaling_factor'の文字列チェックはしないので注意して使うこと
@@ -1587,7 +1627,7 @@ void Control::getXML_Scaling(void)
   
   Hide.Scaling_Factor = ( ct <= 0.0 ) ? 0.0 : ct;
   if ( Hide.Scaling_Factor <= 0.0 ) {
-    printf("Error : Scaling factor should be positive [%f]\n", ct);
+    stamped_printf("Error : Scaling factor should be positive [%f]\n", ct);
     Exit(0);
   }
 }
@@ -1730,6 +1770,8 @@ void Control::getXML_Steer_1(DTcntl* DT)
   // スケーリングファクタの取得　***隠しパラメータ
   getXML_Scaling();
   
+  // モニターのON/OFF 詳細パラメータはgetXML_Monitor()で行う
+  getXML_Sampling();
 }
 
 /**
