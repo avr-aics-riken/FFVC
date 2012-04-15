@@ -297,10 +297,10 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
         break;
         
       case CELL_MONITOR:
-        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, " %11.4e", cmp[i].val[var_Velocity]);         
-        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, " %11.4e", cmp[i].val[var_Pressure]);
-        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, " %11.4e", cmp[i].val[var_Temperature]);
-        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, " %11.4e", cmp[i].val[var_TotalP]);
+        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );         
+        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, " %11.4e", printPrs(cmp[i].val[var_Pressure]) );
+        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, " %11.4e", printTmp(cmp[i].val[var_Temperature]) );
+        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, " %11.4e", printTP(cmp[i].val[var_TotalP]) );
         break;
     }
   }

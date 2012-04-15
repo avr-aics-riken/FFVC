@@ -31,10 +31,12 @@ protected:
   REAL_TYPE dhd;             /// 有次元の格子幅
   REAL_TYPE dh;              /// 無次元の格子幅
   REAL_TYPE rhocp;           /// 熱流束計算の無次元化量
-  unsigned step;            /// ステップ数
-  unsigned Unit_Temp;       /// 温度単位
-  unsigned Unit_Prs;        /// 圧力基準モード
-  unsigned Unit_Log;        /// ログ出力の単位
+  REAL_TYPE dynamic_p;       /// 動圧
+  REAL_TYPE base_mf;         /// 流量の基準値
+  unsigned step;             /// ステップ数
+  unsigned Unit_Temp;        /// 温度単位
+  unsigned Unit_Prs;         /// 圧力基準モード
+  unsigned Unit_Log;         /// ログ出力の単位
   
 public:
   History() {}
@@ -53,6 +55,8 @@ public:
     Tscale          = RefLength / RefVelocity;
     dhd             = dh*RefLength;
     rhocp           = RefVelocity * DiffTemp * RefDensity * RefSpecificHeat;
+    dynamic_p       = RefVelocity * RefVelocity * RefDensity;
+    base_mf         = RefVelocity * RefLength * RefLength;
     
     time  = 0.0;
     v_max = 0.0;
@@ -85,12 +89,33 @@ protected:
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
   
+  //@fn REAL_TYPE printPrs(const REAL_TYPE var)
+  //@brief 圧力の次元変換
+  REAL_TYPE printPrs(const REAL_TYPE var) {
+    if (Unit_Log != DIMENSIONAL) return var;
+    const REAL_TYPE a = var * dynamic_p;
+    return ( (Unit_Prs==Unit_Absolute) ? BasePrs+a : a );
+  }
+  
+  //@fn REAL_TYPE printTP(const REAL_TYPE var)
+  //@brief 全圧の次元変換
+  REAL_TYPE printTP(const REAL_TYPE var) {
+    return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p : var );
+  }
+  
   //@fn REAL_TYPE printMF(const REAL_TYPE var)
   //@brief モードに対応する流量を返す
   REAL_TYPE printMF(const REAL_TYPE var) {
-    const REAL_TYPE cf = RefVelocity * RefLength * RefLength;
-    return ( (Unit_Log == DIMENSIONAL) ? var*cf : var );
+    return ( (Unit_Log == DIMENSIONAL) ? var*base_mf : var );
   }
+  
+  
+  REAL_TYPE printTmp(const REAL_TYPE var) {
+    if (Unit_Log != DIMENSIONAL) return var;
+    const REAL_TYPE a = BaseTemp + DiffTemp*var; // Kelvin
+    return ( (Unit_Temp==Unit_KELVIN) ? a : a-KELVIN  );
+  }
+  
   
   //@fn REAL_TYPE printQF(const REAL_TYPE var)
   //@brief モードに対応する熱量を返す(面表素)
