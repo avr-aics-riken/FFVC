@@ -49,9 +49,11 @@
 #include "IP_Polygon.h"
 #include "IP_Sphere.h"
 
-// K-profiler
-#ifdef __K_FPCOLL
+// K/FX10 profiler
+#if defined __K_FPCOLL
 #include "fjcoll.h"
+#elif defined __FX_FAPP
+#include "fapp.h"
 #endif
 
 // Polylib
@@ -317,8 +319,15 @@ public:
   //@fn タイミング測定開始
   //@param 格納番号
   inline void TIMING_start(unsigned key) {
+    // Intrinsic profiler
     TIMING__ PM.start(key);
+    
+    // Venus FX profiler
+#if defined __K_FPCOLL
     start_collection( get_tm_label(key) );
+#elif defined __FX_FAPP
+    fapp_start( get_tm_label(key), 0, 0);
+#endif
   }
   
   //@fn タイミング測定終了
@@ -326,15 +335,16 @@ public:
   //@param[in] flopPerTask 「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
   //@param[in] iterationCount  実行「タスク」数 (ディフォルト1)
   inline void TIMING_stop(unsigned key, REAL_TYPE flopPerTask=0.0, unsigned iterationCount=1) {
+    // Venus FX profiler
+#if defined __K_FPCOLL
     stop_collection( get_tm_label(key) );
+#elif defined __FX_FAPP
+    fapp_stop( get_tm_label(key), 0, 0);
+#endif
+    
+    // Intrinsic profiler
     TIMING__ PM.stop(key, flopPerTask, iterationCount);
   }
-
-#ifndef __K_FPCOLL
-  //@fn K用プロファイラのスタブ -D__K_FPCOLLがオプション指定されないと、こちらが有効
-  void start_collection(const char*) {}
-  void stop_collection (const char*) {}
-#endif
   
   //@fn void normalizeCord(REAL_TYPE x[3])
   //@brief 座標値を無次元化する

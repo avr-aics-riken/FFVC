@@ -46,6 +46,7 @@ OBJS = Cutlib.o CutlibCore.o CutUtil.o CutTriangle.o CutBoundary.o
  
 #CXX = g++
 CXX = icpc
+#CXX = mpiFCCpx
 
 #AR = ar cr
 AR = ar cru
@@ -70,6 +71,7 @@ DEFINES =
 
 #CFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 CFLAGS = -O3 -Wall -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+#CFLAGS = -Kfast, simd=2, ocl, preex, array_private -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 $(CUTLIB): $(OBJS)
 	$(AR) $@ $(OBJS)
