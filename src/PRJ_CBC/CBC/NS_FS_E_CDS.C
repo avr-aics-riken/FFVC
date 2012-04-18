@@ -54,6 +54,12 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   int cnv_scheme = (int)C.CnvScheme;  /// 対流項スキーム
   REAL_TYPE clear_value = 0.0;
   
+  // 境界処理用
+  REAL_TYPE* m_buf = NULL;
+  REAL_TYPE* m_tmp = NULL;
+  m_buf = new REAL_TYPE [C.NoBC*2];
+  m_tmp = new REAL_TYPE [C.NoBC*2];
+  
   comm_size = count_comm_size(size, 1);
   
   int v_mode=0;
@@ -392,30 +398,27 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     TIMING_stop(tm_prj_vec, flop_count);
     
     // セルフェイス速度の境界条件による修正
-    REAL_TYPE m_av[C.NoBC][2];
     TIMING_start(tm_prj_vec_bc);
     flop_count=0.0;
-    BC.mod_div(src1, bcv, coef, tm, v00, m_av[C.NoBC], flop_count);
+    BC.mod_div(src1, bcv, coef, tm, v00, m_buf, flop_count);
     TIMING_stop(tm_prj_vec_bc, flop_count);
     
     // セルフェイス速度の境界条件の通信部分
     if ( C.isOutflow() == ON ) {
       if ( !C.isCDS() ) { // Binary
         if ( para_mng->IsParallel() ) {
-          REAL_TYPE tmp[C.NoBC][2];
           
           TIMING_start(tm_prj_vec_bc_comm);
-          for (int n=1; n<=C.NoBC; n++) {
-            tmp[n][0] = m_av[n][0];
-            tmp[n][1] = m_av[n][1];
+          for (int n=0; n<=2*C.NoBC; n++) {
+            m_tmp[n] = m_buf[n];
           }
-          para_mng->Allreduce(tmp, m_av, 2*C.NoBC, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+          para_mng->Allreduce(m_tmp, m_buf, 2*C.NoBC, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
           TIMING_stop(tm_prj_vec_bc_comm, 2.0*(REAL_TYPE)C.NoBC*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
         }
         
         for (int n=1; n<=C.NoBC; n++) {
           if ( cmp[n].getType() == OUTFLOW ) {
-            cmp[n].val[var_Velocity] = m_av[n][0]/m_av[n][1]; // 無次元平均流速
+            cmp[n].val[var_Velocity] = m_buf[2*n]/m_buf[2*n+1]; // 無次元平均流速
           }
         }
       }
@@ -426,29 +429,26 @@ void SklSolverCBC::NS_FS_E_CDS(void)
     
     // Forcingコンポーネントによる速度と発散値の修正
     if ( C.isForcing() == ON ) {
-      REAL_TYPE vm[C.NoBC][2]; // モニター用
-      REAL_TYPE tmp[C.NoBC][2];
       
       TIMING_start(tm_prj_frc_mod);
       flop_count=0.0;
-      BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, dt, C.dh, v00, vm[C.NoBC], component_array, flop_count);
+      BC.mod_Vdiv_Forcing(v, bcd, cvf, src1, dt, C.dh, v00, m_buf, component_array, flop_count);
       TIMING_stop(tm_prj_frc_mod, flop_count);
       
       // 通信部分
       TIMING_start(tm_prj_frc_mod_comm);
       if ( para_mng->IsParallel() ) {
-        for (int n=1; n<=C.NoBC; n++) {
-          tmp[n][0] = vm[n][0];
-          tmp[n][1] = vm[n][1];
+        for (int n=0; n<=2*C.NoBC; n++) {
+          m_tmp[n] = m_buf[n];
         }
-        para_mng->Allreduce(tmp, vm, 2*C.NoBC, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+        para_mng->Allreduce(m_tmp, m_buf, 2*C.NoBC, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
       }
       for (int n=1; n<=C.NoBC; n++) {
         if ( cmp[n].isFORCING() ) {
-          vm[n][0] /= (REAL_TYPE)cmp[n].getElement();
-          vm[n][1] /= (REAL_TYPE)cmp[n].getElement();
-          cmp[n].val[var_Velocity] = vm[n][0]; // 平均速度
-          cmp[n].val[var_Pressure] = vm[n][1]; // 平均圧力損失量
+          m_buf[2*n]   /= (REAL_TYPE)cmp[n].getElement();
+          m_buf[2*n+1] /= (REAL_TYPE)cmp[n].getElement();
+          cmp[n].val[var_Velocity] = m_buf[2*n];   // 平均速度
+          cmp[n].val[var_Pressure] = m_buf[2*n+1]; // 平均圧力損失量
         }
       }
       TIMING_stop(tm_prj_frc_mod_comm, 2.0*(REAL_TYPE)C.NoBC*(REAL_TYPE)sizeof(REAL_TYPE)*2.0);
@@ -541,4 +541,8 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section
+  
+  // 後始末
+  if ( m_buf ) delete [] m_buf;
+  if ( m_tmp ) delete [] m_tmp;
 }

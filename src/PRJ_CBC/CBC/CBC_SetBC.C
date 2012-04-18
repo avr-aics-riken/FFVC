@@ -421,7 +421,7 @@ void SetBC3D::InnerPBC_Periodic(SklScalar3D<REAL_TYPE>* d_p, SklScalar3D<unsigne
  @param coef 係数 h/dt
  @param tm 無次元時刻
  @param v00
- @param avr 平均値計算のテンポラリ値
+ @param avr[2*NoBC] 平均値計算のテンポラリ値
  @param flop
  @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
  */
@@ -440,7 +440,7 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
       
       switch (typ) {
         case OUTFLOW:
-          //cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, avr, &flop);
+          //cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, &avr[2*n], &flop);
           break;
           
         case SPEC_VEL:
@@ -462,7 +462,7 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
       
       switch (typ) {
         case OUTFLOW:
-          cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, avr, &flop);
+          cbc_div_ibc_oflow_vec_(div, dim_sz, gc, st, ed, v00, &coef, (int*)bv, &n, &avr[2*n], &flop);
           break;
           
         case SPEC_VEL:
@@ -661,7 +661,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* v, unsigned* bd, float
  @param dt 時間積分幅
  @param dh 格子幅
  @param v00 参照速度
- @param am モニター用配列
+ @param am[2*NoBC] モニター用配列
  @param c_array コンポーネントワーク配列の管理ポインタ
  @param[out] flop
  */
@@ -685,7 +685,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, unsigned* bd, float* cvf, REAL_TYPE
       
       switch ( cmp[n].getType() ) {
         case HEX:
-          cbc_hex_force_vec_(v, div, dim_sz, gc, st, ed, (int*)bd, cvf, w_ptr, csz, (int*)&n, v00, &dt, &dh, vec, &cmp[n].ca[0], am, &flop);
+          cbc_hex_force_vec_(v, div, dim_sz, gc, st, ed, (int*)bd, cvf, w_ptr, csz, (int*)&n, v00, &dt, &dh, vec, &cmp[n].ca[0], &am[2*n], &flop);
           break;
           
         case FAN:
