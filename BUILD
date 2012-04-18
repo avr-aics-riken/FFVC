@@ -3,7 +3,7 @@ Compilation order of CBC solverclass
 
 Kenji Ono 	keno@riken.jp
 VCAD Research Program, RIKEN
-July 2011
+April 2012
 -----
 
 V-SphereのインストールとCBCのコンパイル

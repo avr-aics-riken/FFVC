@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SphereConfig SolverType="CBC">
     <DomainInfo>
-        <VoxelOrigin ox="-3.1e-2" oy="-3.1e-2" oz="-6.2e-2"/>
-        <VoxelSize ix="64" jx="64" kx="128"/>
-        <VoxelPitch dx="9.6875e-4" dy="9.6875e-4" dz="9.6875e-4"/>
+        <VoxelOrigin ox="0.0" oy="0.0" oz="0.0"/>
+        <VoxelSize ix="256" jx="256" kx="256"/>
+        <VoxelPitch dx="1.0e-02" dy="1.0e-02" dz="1.0e-02"/>
     </DomainInfo>
     <Steer>
         <Elem name="Algorithm">
@@ -26,7 +26,7 @@
             <Param dtype="STRING" name="Vorticity" value="Off"/>
             <Param dtype="STRING" name="2nd_Invariant_of_VGT" value="Off"/>
         </Elem>
-        <Param dtype="STRING" name="Example" value="Rectangular"/>
+        <Param dtype="STRING" name="Example" value="Performance_Test"/>
         <Elem name="File_IO">
             <Param dtype="STRING" name="Unit_of_File" value="Non_Dimensional"/>
             <Param dtype="STRING" name="Guide_Out" value="Without"/>
@@ -34,10 +34,10 @@
             <Param dtype="STRING" name="Parallel_Input" value="Master"/>
             <Param dtype="STRING" name="Parallel_Output" value="Master"/>
             <Param dtype="STRING" name="Debug_Divergence" value="Off"/>
-            <Param dtype="STRING" name="Instant_Interval_Type" value="Time"/>
-            <Param dtype="REAL" name="Instant_Interval" value="1.0"/>
+            <Param dtype="STRING" name="Instant_Interval_Type" value="Step"/>
+            <Param dtype="REAL" name="Instant_Interval" value="1000"/>
             <Param dtype="STRING" name="Averaged_Interval_Type" value="Time"/>
-            <Param dtype="REAL" name="Averaged_Interval" value="6.888888888"/>
+            <Param dtype="REAL" name="Averaged_Interval" value="1000"/>
         </Elem>
         <InputData basedir=".">
             <InFile attr="SphereSVX" fname="example.svx" format="SVX"/>
@@ -45,14 +45,22 @@
         <Elem name="Iteration">
             <Elem name="Flow">
                 <Elem name="Poisson">
-                    <Param dtype="INT" name="Iteration" value="50"/>
+                    <Param dtype="INT" name="Iteration" value="20"/>
                     <Param dtype="REAL" name="Epsilon" value="1.0e-3"/>
                     <Param dtype="REAL" name="Omega" value="1.2"/>
                     <Param dtype="STRING" name="Norm" value="v_div_max"/>
                     <Param dtype="STRING" name="Linear_Solver" value="SOR2SMA"/>
                 </Elem>
             </Elem>
-            <Elem name="Heat"/>
+            <Elem name="Heat">
+                <Elem name="Euler_Implicit">
+                    <Param dtype="INT" name="Iteration" value="30"/>
+                    <Param dtype="REAL" name="Epsilon" value="1.0e-2"/>
+                    <Param dtype="REAL" name="Omega" value="1.2"/>
+                    <Param dtype="STRING" name="Norm" value="T_Res_L2_Absolute"/>
+                    <Param dtype="STRING" name="Linear_Solver" value="SOR"/>
+                </Elem>
+            </Elem>
         </Elem>
         <Elem name="LES_Option">
             <Param dtype="STRING" name="LES_Calculation" value="Off"/>
@@ -61,7 +69,7 @@
             <Param dtype="STRING" name="Unit_of_Log" value="Non_Dimensional"/>
             <Param dtype="STRING" name="Log_Base" value="On"/>
             <Param dtype="STRING" name="Log_Iteration" value="Off"/>
-            <Param dtype="STRING" name="Log_Profiling" value="On"/>
+            <Param dtype="STRING" name="Log_Profiling" value="detail"/>
             <Param dtype="STRING" name="Log_Wall_Info" value="Off"/>
             <Param dtype="STRING" name="Console_Interval_Type" value="Step"/>
             <Param dtype="REAL" name="Console_Interval" value="1"/>
@@ -69,47 +77,46 @@
             <Param dtype="REAL" name="History_Interval" value="1"/>
         </Elem>
         <Elem name="Model_Setting">
-            <Param comment="water" dtype="INT" id="1" name="Fluid" value="1"/>
+            <Param comment="air" dtype="INT" id="1" name="Fluid" value="800"/>
             <Param comment="wall" dtype="INT" id="600" name="Solid" value="600"/>
         </Elem>
         <Elem name="Monitor_List">
-            <Param dtype="STRING" name="Log" value="On"/>
+            <Param dtype="STRING" name="Log" value="Off"/>
             <Param dtype="STRING" name="Output_File" value="sample.log"/>
             <Param dtype="STRING" name="Output_Mode" value="Gather"/>
             <Param dtype="STRING" name="Unit" value="Non_Dimensional"/>
             <Param dtype="STRING" name="Sampling_Interval_Type" value="Time"/>
             <Param dtype="REAL" name="Sampling_Interval" value="0.1"/>
-            <Param dtype="STRING" name="Cell_Monitor" value="off"/>
-            <Elem comment="z=0_x" name="Line">
+            <Elem comment="y=0_x" name="Line">
                 <Param dtype="STRING" name="Variable" value="Velocity"/>
                 <Param dtype="STRING" name="Sampling_Method" value="Interpolation"/>
                 <Param dtype="STRING" name="Sampling_Mode" value="Fluid"/>
                 <Param dtype="INT" name="Division" value="64"/>
                 <Elem name="From">
-                    <Param dtype="REAL" name="X" value="-0.5e-0"/>
+                    <Param dtype="REAL" name="X" value="-0.5"/>
                     <Param dtype="REAL" name="Y" value="0.0"/>
                     <Param dtype="REAL" name="Z" value="0.0"/>
                 </Elem>
                 <Elem name="To">
-                    <Param dtype="REAL" name="X" value="0.5e-0"/>
+                    <Param dtype="REAL" name="X" value="0.5"/>
                     <Param dtype="REAL" name="Y" value="0.0"/>
                     <Param dtype="REAL" name="Z" value="0.0"/>
                 </Elem>
             </Elem>
-            <Elem comment="z=0_y" name="Line">
+            <Elem comment="y=0_z" name="Line">
                 <Param dtype="STRING" name="Variable" value="Velocity"/>
                 <Param dtype="STRING" name="Sampling_Method" value="Interpolation"/>
                 <Param dtype="STRING" name="Sampling_Mode" value="Fluid"/>
                 <Param dtype="INT" name="Division" value="64"/>
                 <Elem name="From">
                     <Param dtype="REAL" name="X" value="0.0"/>
-                    <Param dtype="REAL" name="Y" value="-0.5e-0"/>
-                    <Param dtype="REAL" name="Z" value="0.0"/>
+                    <Param dtype="REAL" name="Y" value="0.0"/>
+                    <Param dtype="REAL" name="Z" value="-0.5"/>
                 </Elem>
                 <Elem name="To">
                     <Param dtype="REAL" name="X" value="0.0"/>
-                    <Param dtype="REAL" name="Y" value="0.5e-0"/>
-                    <Param dtype="REAL" name="Z" value="0.0"/>
+                    <Param dtype="REAL" name="Y" value="0.0"/>
+                    <Param dtype="REAL" name="Z" value="0.5"/>
                 </Elem>
             </Elem>
         </Elem>
@@ -130,24 +137,24 @@
             <Param dtype="STRING" name="Buoyancy" value="No_Buoyancy"/>
             <Param dtype="STRING" name="Kind_of_Solver" value="Flow_Only"/>
             <Param dtype="STRING" name="PDE_type" value="Navier_Stokes"/>
-            <Param dtype="STRING" name="Shape_Approximation" value="Binary"/>
+            <Param dtype="STRING" name="Shape_Approximation" value="cut_distance"/>
             <Param dtype="STRING" name="Time_Variation" value="Unsteady"/>
             <Param dtype="STRING" name="Pressure_Shift" value="off"/>
         </Elem>
         <Elem name="Time_Control">
             <Param dtype="STRING" name="Acceleration_Type" value="Time"/>
-            <Param dtype="REAL" name="Acceleration" value="0.05"/>
+            <Param dtype="REAL" name="Acceleration" value="1.0"/>
             <Param dtype="STRING" name="Dt_Type" value="CFL_Reference_Velocity"/>
-            <Param dtype="REAL" name="Delta_T" value="0.1"/>
-            <Param dtype="STRING" name="Period_Type" value="Time"/>
-            <Param dtype="REAL" name="Calculation_Period" value="41.33333333"/>
+            <Param dtype="REAL" name="Delta_T" value="0.2"/>
+            <Param dtype="STRING" name="Period_Type" value="Step"/>
+            <Param dtype="REAL" name="Calculation_Period" value="20"/>
         </Elem>
         <Elem name="Treatment_of_Wall">
             <Param dtype="STRING" name="Pressure_Gradient" value="Grad_Zero"/>
             <Param dtype="STRING" name="Velocity_Profile" value="No_Slip"/>
         </Elem>
         <Elem name="Unit">
-            <Param dtype="STRING" name="Unit_of_Input_Parameter" value="Dimensional"/>
+            <Param dtype="STRING" name="Unit_of_Input_Parameter" value="Non_Dimensional"/>
             <Param dtype="STRING" name="Pressure" value="Gauge"/>
             <Param dtype="STRING" name="Temperature" value="Celsius"/>
         </Elem>
@@ -158,10 +165,12 @@
     </Steer>
     <Parameter>
         <Elem name="Reference">
-            <Param dtype="REAL" name="Length" value="6.2e-2"/>
-            <Param dtype="REAL" name="Velocity" value="1.8e-2"/>
+            <Param dtype="REAL" name="Length" value="1.0"/>
+            <Param dtype="REAL" name="Velocity" value="1.0"/>
             <Param dtype="REAL" name="Gravity" value="9.8"/>
             <Param dtype="REAL" name="Base_Pressure" value="0.0"/>
+            <Param dtype="REAL" name="Reynolds" value="1000.0"/>
+            <Param dtype="REAL" name="Prandtl" value="0.71"/>
             <Param dtype="INT" name="Ref_ID" value="1"/>
         </Elem>
         <Elem name="Temperature">
@@ -169,7 +178,7 @@
             <Param dtype="REAL" name="Difference" value="35.0"/>
         </Elem>
         <Elem name="Initial_State">
-            <Param dtype="REAL" name="Density" value="998.2"/>
+            <Param dtype="REAL" name="Density" value="1.0"/>
             <Param dtype="REAL" name="Pressure" value="0.0"/>
             <Param dtype="REAL" name="Temperature" value="20.0"/>
             <Elem name="Velocity">
@@ -177,10 +186,6 @@
                 <Param dtype="REAL" name="V" value="0.0"/>
                 <Param dtype="REAL" name="W" value="0.0"/>
             </Elem>
-        </Elem>
-        <Elem name="Intrinsic_Example">
-            <Param dtype="STRING" name="Check_Even" value="Yes"/>
-            <Param dtype="STRING" name="Dimension_Mode" value="3D"/>
         </Elem>
     </Parameter>
     <Medium_Table>
@@ -225,32 +230,43 @@
                     <Param dtype="STRING" name="Profile" value="Constant"/>
                     <Param dtype="REAL" name="Specified_Value" value="0.0"/>
                 </Elem>
-                <Elem id="2" name="Wall">
-                    <Param dtype="REAL" name="Normal_X" value="-1.0"/>
+                <Elem id="10" name="Wall">
+                    <Param dtype="REAL" name="Normal_X" value="1.0"/>
                     <Param dtype="REAL" name="Normal_Y" value="0.0"/>
                     <Param dtype="REAL" name="Normal_Z" value="0.0"/>
                     <Param dtype="STRING" name="Specified_Type" value="Velocity"/>
                     <Param dtype="STRING" name="Profile" value="Constant"/>
-                    <Param dtype="REAL" name="Specified_Value" value="1.8e-2"/>
+                    <Param dtype="REAL" name="Specified_Value" value="1.0"/>
+                </Elem>
+                <Elem id="2" name="Specified_Velocity">
+                    <Param dtype="REAL" name="Normal_X" value="1.0"/>
+                    <Param dtype="REAL" name="Normal_Y" value="0.0"/>
+                    <Param dtype="REAL" name="Normal_Z" value="0.0"/>
+                    <Param dtype="STRING" name="Specified_Type" value="Velocity"/>
+                    <Param dtype="STRING" name="Profile" value="Constant"/>
+                    <Param dtype="REAL" name="Specified_Value" value="5.0"/>
+                </Elem>
+                <Elem id="3" name="Outflow">
+                    <Param dtype="STRING" name="Velocity_Type" value="Average"/>
                 </Elem>
             </Elem>
             <Elem name="Face_BC">
-                <Elem comment="fixedwall" id="1" name="X_minus">
+                <Elem comment="wall" id="1" name="X_minus">
                     <Param id="600" name="Guide_Cell_ID"/>
                 </Elem>
-                <Elem comment="fixedwall" id="1" name="X_plus">
+                <Elem comment="wall" id="1" name="X_plus">
                     <Param id="600" name="Guide_Cell_ID"/>
                 </Elem>
-                <Elem comment="slidewall" id="2" name="Y_minus">
+                <Elem comment="wall" id="1" name="Y_minus">
                     <Param id="600" name="Guide_Cell_ID"/>
                 </Elem>
-                <Elem comment="fixedwall" id="1" name="Y_plus">
+                <Elem comment="wall" id="1" name="Y_plus">
                     <Param id="600" name="Guide_Cell_ID"/>
                 </Elem>
-                <Elem comment="fixedwall" id="1" name="Z_minus">
+                <Elem comment="wall" id="1" name="Z_minus">
                     <Param id="600" name="Guide_Cell_ID"/>
                 </Elem>
-                <Elem comment="fixedwall" id="1" name="Z_plus">
+                <Elem comment="slidewall" id="10" name="Z_plus">
                     <Param id="600" name="Guide_Cell_ID"/>
                 </Elem>
             </Elem>

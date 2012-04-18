@@ -1597,16 +1597,19 @@ void Control::getXML_Sampling(void)
   
   // セルモニターの指定
   /// @see SklInitialize.C seEnsComponent()
-  if ( !elmL1->GetValue(CfgIdt("cell_monitor"), &str) ) {
-		stamped_printf("\tParsing error : Invalid string for 'cell_monitor' in 'Monitor_List'\n");
-		Exit(0);
-	}
-  if     ( !strcasecmp(str, "on") )   EnsCompo.monitor = ON;
-  else if( !strcasecmp(str, "off") )  EnsCompo.monitor = OFF;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Cell_Monitor'\n");
-    Exit(0);
+  if ( Sampling.log == ON ) {
+    if ( !elmL1->GetValue(CfgIdt("cell_monitor"), &str) ) {
+      stamped_printf("\tParsing error : Invalid string for 'cell_monitor' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    if     ( !strcasecmp(str, "on") )   EnsCompo.monitor = ON;
+    else if( !strcasecmp(str, "off") )  EnsCompo.monitor = OFF;
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Cell_Monitor'\n");
+      Exit(0);
+    }
   }
+
 }
 
 
