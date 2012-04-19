@@ -36,13 +36,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, Base_tmp, klv)
    
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
   do i=1,sz
     dst(i) = src(i) * dp - klv + Base_tmp
   end do
@@ -78,13 +73,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, Base_tmp, klv)
    
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
   do i=1,sz
     dst(i) = ( src(i) + klv - Base_tmp ) * dp
   end do
@@ -120,13 +110,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, Base_prs)
    
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
   do i=1,sz
     dst(i) = ( src(i) - Base_prs ) * dp
   end do
@@ -163,13 +148,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, Base_prs)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
   do i=1,sz
     dst(i) = ( src(i) * dp + Base_prs ) 
   end do
@@ -200,13 +180,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do i=1,sz
     dst(i) = src(i) * scale
@@ -255,13 +229,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -314,13 +282,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, unit_v)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -373,13 +335,8 @@
 !$OMP PRIVATE(actv, u, v, w, x, y, z) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
   do k=1,kx
@@ -443,13 +400,8 @@
 !$OMP PRIVATE(actv, s, a) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
   do k=1,kx
@@ -499,13 +451,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -546,13 +493,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -585,13 +527,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do i=1,sz
     avr(i) = avr(i) + src(i)
@@ -619,13 +555,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do i=1,sz
       dst(i) = src(i)
@@ -659,13 +589,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -701,13 +626,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -738,13 +658,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, init)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do i=1,sz
       var(i) = init
@@ -779,13 +693,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, init)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -816,13 +725,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, init)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do i=1,sz
       var(i) = init
@@ -857,13 +760,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, init)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -905,13 +803,8 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -958,13 +851,8 @@
 !$OMP PRIVATE(u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -1019,13 +907,8 @@
 !$OMP PRIVATE(u1, u2, u3, uu) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
 !$OMP REDUCTION(min:v_min) &
 !$OMP REDUCTION(max:v_max)
     do k=1,kx
@@ -1075,13 +958,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 !$OMP REDUCTION(min:f_min) &
 !$OMP REDUCTION(max:f_max)
     do k=1,kx
@@ -1125,13 +1002,8 @@
 !$OMP FIRSTPRIVATE(u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1-g, kx+g
     do j=1-g, jx+g
     do i=1-g, ix+g
@@ -1169,13 +1041,8 @@
 !$OMP PRIVATE(tmp) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
