@@ -63,7 +63,6 @@ public:
   
   virtual const char* getExampleName(void) { return NULL; };
   
-  virtual void genVFfromBcx(REAL_TYPE* VF, unsigned* bx);
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
   virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};
   virtual void printExample(FILE* fp, const char* str);
@@ -72,10 +71,11 @@ public:
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org) {};
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut) {};
-  virtual void writeSVX(REAL_TYPE *vf, int *id, Control* R);
-  virtual void writeSVX(int *id, Control* R);
   
   void setControlVars(Control* R);
+  void writeSVX(REAL_TYPE *vf, int *id, Control* R);
+  void writeSVX(int *id, Control* R);
+  
 };
 
 

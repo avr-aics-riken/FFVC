@@ -225,52 +225,61 @@ SklSolverCBC::SklSolverInitialize() {
   
   TIMING_start(tm_voxel_prep_sct);
   
-  // BinaryとCut-Distanceの分岐
-  if ( C.isCDS() ) { // Cut-Distance Scheme
-    
-    if ( C.Mode.Example == id_Polygon ) {
+
+  switch (C.Mode.Example) {
       
+    case id_Polygon:
       // パラメータの取得
       C.getXML_Polygon();
       
       // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
       
-      // 媒質ファイルを使わない場合，指定された媒質番号で初期化
-      d_length = (int)dc_mid->GetArrayLength();
-      int init_id = C.Mode.Base_Medium;
-      fb_set_int_(mid, &d_length, &init_id);
-
-    }
-    else { // Intrinsic problem
-      // cutをアロケートし，初期値1.0をセット
-      setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      // 指定された媒質番号で初期化
+      Ex->setup(mid, &C, G_org);
       
-      if ( C.Mode.Example == id_Sphere ) {
-        Ex->setup_cut(mid, &C, G_org, cut);
+      if ( !C.isCDS() ) {
+        //
       }
-      else {
+      break;
+      
+    case id_Users:
+      // バイナリ
+      if ( !C.isCDS() ) {
+        TIMING_start(tm_voxel_load);
+        if ( C.vxFormat == Control::Sphere_SVX ) {
+          F.readSVX(this, fp, "SphereSVX", G_size, guide, dc_mid);
+        }
+        else {
+          F.readSBX(this, fp, "SphereSBX", G_size, guide, dc_mid);
+        }
+        TIMING_stop(tm_voxel_load);
+      }
+      else { // カットなし
+        Hostonly_ printf("\t>> Binary only for 'Users' mode\n\n");
+        Exit(0);
+      }
+      break;
+      
+    case id_Sphere:
+      if ( !C.isCDS() ) {
         Ex->setup(mid, &C, G_org);
       }
-    }
-  }
-  else { // Binary
-    
-    TIMING_start(tm_voxel_load);
-    if ( C.Mode.Example == id_Users ) {
-      if ( C.vxFormat == Control::Sphere_SVX ) {
-        F.readSVX(this, fp, "SphereSVX", G_size, guide, dc_mid);
-      }
       else {
-        F.readSBX(this, fp, "SphereSBX", G_size, guide, dc_mid);
+        // cutをアロケートし，初期値1.0をセット
+        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+        Ex->setup_cut(mid, &C, G_org, cut);
       }
-    }
-    else { // Intrinsic problem　ユーザ問題も組み込み例題クラスの一つとして実装されている
+      break;
+      
+    default: // ほかのIntrinsic problems
+      if ( C.isCDS() ) {
+        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      }
       Ex->setup(mid, &C, G_org);
-    }
-    TIMING_stop(tm_voxel_load);
-    
+      break;
   }
+
   
   // midのガイドセル同期
   if( !dc_mid->CommBndCell(guide) ) return -1;
@@ -375,24 +384,24 @@ SklSolverCBC::SklSolverInitialize() {
   
   // ParseBCクラスのセットアップ，CompoListの設定，外部境界条件の読み込み保持
   setBCinfo(&B);
-  
+
   
   // ガイドセル上にXMLで指定するセルIDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) {
     Vinfo.adjCellID_on_GC(face, dc_mid, BC.get_OBC_Ptr(face)->get_BCtype(), 
                          BC.get_OBC_Ptr(face)->get_GuideID(), BC.get_OBC_Ptr(face)->get_PrdcMode());
   }
-  
+
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) setShapeMonitor(mid);
-  
+
   
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
   if ( C.isCDS() ) {
     Vinfo.setOBC_Cut(&BC, cut);
   }
-  
+
   // ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
   Hostonly_  {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");

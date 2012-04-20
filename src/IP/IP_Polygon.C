@@ -49,11 +49,9 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TY
  */
 void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
-  int i,m;
-  int mid_fluid=1;        /// 流体
-  
-  // Initialize  全領域をfluidにしておく
-  m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);
-  for (i=0; i<m; i++) mid[i]=mid_fluid;
+  int m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);
+  int ref = R->Mode.Base_Medium;
 
+#pragma omp parallel for firstprivate(m, ref) schedule(static)
+  for (int i=0; i<m; i++) mid[i] = ref;
 }

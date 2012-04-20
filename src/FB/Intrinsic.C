@@ -70,26 +70,6 @@ void Intrinsic::printPara(FILE* fp, Control* R)
   // describe method
 }
 
-/**
- @fn void Intrinsic::genVFfromBcx(REAL_TYPE* VF, unsigned* bx)
- @brief BCindexから体積率を計算する．Fluid=1.0, Solid=0.0
- @param VF 体積占有率（マスク）
- @param bx BCindex
- */
-void Intrinsic::genVFfromBcx(REAL_TYPE* VF, unsigned* bx)
-{
-  int i,j,k;
-  unsigned m;
-
-  for (k=0; k<=(int)(kmax+1); k++) {
-    for (j=0; j<=(int)(jmax+1); j++) {
-      for (i=0; i<=(int)(imax+1); i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        VF[m] = GET_SHIFT_F( bx[m], STATE_BIT );
-      }
-    }
-  }
-}
 
 /**
  @fn void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
