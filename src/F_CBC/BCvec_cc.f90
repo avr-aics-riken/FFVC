@@ -1753,39 +1753,39 @@
       if ( 0 /= iand(idx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
 
         if ( ibits(idx, bc_face_W, bitw_5) == odr ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i-1, j, k) = u_bc_ref
+          v(2, i-1, j, k) = v_bc_ref
+          v(3, i-1, j, k) = w_bc_ref
         end if
 
         if ( ibits(idx, bc_face_E, bitw_5) == odr ) then
-          v(1, i+1,j,k) = u_bc_ref
-          v(2, i+1,j,k) = v_bc_ref
-          v(3, i+1,j,k) = w_bc_ref
+          v(1, i+1, j, k) = u_bc_ref
+          v(2, i+1, j, k) = v_bc_ref
+          v(3, i+1, j, k) = w_bc_ref
         end if
 
         if ( ibits(idx, bc_face_S, bitw_5) == odr ) then
-          v(1, i,j-1,k) = u_bc_ref
-          v(2, i,j-1,k) = v_bc_ref
-          v(3, i,j-1,k) = w_bc_ref
+          v(1, i, j-1, k) = u_bc_ref
+          v(2, i, j-1, k) = v_bc_ref
+          v(3, i, j-1, k) = w_bc_ref
         end if
         
         if ( ibits(idx, bc_face_N, bitw_5) == odr ) then
-          v(1, i,j+1,k) = u_bc_ref
-          v(2, i,j+1,k) = v_bc_ref
-          v(3, i,j+1,k) = w_bc_ref
+          v(1, i, j+1, k) = u_bc_ref
+          v(2, i, j+1, k) = v_bc_ref
+          v(3, i, j+1, k) = w_bc_ref
         end if
         
         if ( ibits(idx, bc_face_B, bitw_5) == odr ) then
-          v(1, i,j,k-1) = u_bc_ref
-          v(2, i,j,k-1) = v_bc_ref
-          v(3, i,j,k-1) = w_bc_ref
+          v(1, i, j, k-1) = u_bc_ref
+          v(2, i, j, k-1) = v_bc_ref
+          v(3, i, j, k-1) = w_bc_ref
         end if
 			
         if ( ibits(idx, bc_face_T, bitw_5) == odr ) then
-          v(1, i,j,k+1) = u_bc_ref
-          v(2, i,j,k+1) = v_bc_ref
-          v(3, i,j,k+1) = w_bc_ref
+          v(1, i, j, k+1) = u_bc_ref
+          v(2, i, j, k+1) = v_bc_ref
+          v(3, i, j, k+1) = w_bc_ref
         end if
 
       endif
@@ -1850,44 +1850,44 @@
         
         ! X-
         if ( ibits(idx, bc_face_W, bitw_5) == odr ) then
-          v(1, i-1,j,k) = Up
-          v(2, i-1,j,k) = Vp
-          v(3, i-1,j,k) = Wp
+          v(1, i-1, j, k) = Up
+          v(2, i-1, j, k) = Vp
+          v(3, i-1, j, k) = Wp
         end if
         
         ! X+
         if ( ibits(idx, bc_face_E, bitw_5) == odr ) then
-          v(1, i+1,j,k) = Up
-          v(2, i+1,j,k) = Vp
-          v(3, i+1,j,k) = Wp
+          v(1, i+1, j, k) = Up
+          v(2, i+1, j, k) = Vp
+          v(3, i+1, j, k) = Wp
         end if
         
         ! Y-
         if ( ibits(idx, bc_face_S, bitw_5) == odr ) then
-          v(1, i,j-1,k) = Up
-          v(2, i,j-1,k) = Vp
-          v(3, i,j-1,k) = Wp
+          v(1, i, j-1, k) = Up
+          v(2, i, j-1, k) = Vp
+          v(3, i, j-1, k) = Wp
         end if
         
         ! Y+
         if ( ibits(idx, bc_face_N, bitw_5) == odr ) then
-          v(1, i,j+1,k) = Up
-          v(2, i,j+1,k) = Vp
-          v(3, i,j+1,k) = Wp
+          v(1, i, j+1, k) = Up
+          v(2, i, j+1, k) = Vp
+          v(3, i, j+1, k) = Wp
         end if
         
         ! Z-
         if ( ibits(idx, bc_face_B, bitw_5) == odr ) then
-          v(1, i,j,k-1) = Up
-          v(2, i,j,k-1) = Vp
-          v(3, i,j,k-1) = Wp
+          v(1, i, j, k-1) = Up
+          v(2, i, j, k-1) = Vp
+          v(3, i, j, k-1) = Wp
         end if
 			  
         ! Z+
         if ( ibits(idx, bc_face_T, bitw_5) == odr ) then
-          v(1, i,j,k+1) = Up
-          v(2, i,j,k+1) = Vp
-          v(3, i,j,k+1) = Wp
+          v(1, i, j, k+1) = Up
+          v(2, i, j, k+1) = Vp
+          v(3, i, j, k+1) = Wp
         end if
         
       endif
@@ -1938,6 +1938,7 @@
 !$OMP PRIVATE(i, j, k, bvx)
 
     FACES : select case (face)
+    
     case (X_minus)
       i = 1
 #ifdef _DYNAMIC
@@ -1951,9 +1952,9 @@
       do j=1,jx
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i-1, j, k) = u_bc_ref
+          v(2, i-1, j, k) = v_bc_ref
+          v(3, i-1, j, k) = w_bc_ref
         endif
       end do
       end do
@@ -1973,9 +1974,9 @@
       do j=1,jx
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i+1, j, k) = u_bc_ref
+          v(2, i+1, j, k) = v_bc_ref
+          v(3, i+1, j, k) = w_bc_ref
         endif
       end do
       end do
@@ -1995,9 +1996,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i, j-1, k) = u_bc_ref
+          v(2, i, j-1, k) = v_bc_ref
+          v(3, i, j-1, k) = w_bc_ref
         endif
       end do
       end do
@@ -2017,9 +2018,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i, j+1, k) = u_bc_ref
+          v(2, i, j+1, k) = v_bc_ref
+          v(3, i, j+1, k) = w_bc_ref
         endif
       end do
       end do
@@ -2039,9 +2040,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i, j, k-1) = u_bc_ref
+          v(2, i, j, k-1) = v_bc_ref
+          v(3, i, j, k-1) = w_bc_ref
         endif
       end do
       end do
@@ -2061,9 +2062,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          v(1, i-1,j,k) = u_bc_ref
-          v(2, i-1,j,k) = v_bc_ref
-          v(3, i-1,j,k) = w_bc_ref
+          v(1, i, j, k+1) = u_bc_ref
+          v(2, i, j, k+1) = v_bc_ref
+          v(3, i, j, k+1) = w_bc_ref
         endif
       end do
       end do
@@ -2090,7 +2091,6 @@
     include '../FB/cbc_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  uu, vv, ww
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
 
     ix = sz(1)
@@ -2099,7 +2099,7 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
-!$OMP PRIVATE(i, j, k, uu, vv, ww)
+!$OMP PRIVATE(i, j, k)
 
     FACES : select case (face)
     case (X_minus)
@@ -2114,19 +2114,12 @@
 
       do k=1,kx
       do j=1,jx
-
-        uu = v(1, 1, j, k)
-        vv = v(2, 1, j, k)
-        ww = v(3, 1, j, k)
-
-        do i=1-g, 0
-          v(1, i, j, k) = uu
-          v(2, i, j, k) = vv
-          v(3, i, j, k) = ww
-        end do
-
+        v(1, 0, j, k) = v(1, 1, j, k)
+        v(2, 0, j, k) = v(2, 1, j, k)
+        v(3, 0, j, k) = v(3, 1, j, k)
       end do
       end do
+      
 !$OMP END DO
       
 
@@ -2142,19 +2135,12 @@
 
       do k=1,kx
       do j=1,jx
-
-        uu = v(1, ix, j, k)
-        vv = v(2, ix, j, k)
-        ww = v(3, ix, j, k)
-        
-        do i=ix+1, ix+g
-          v(1, i, j, k) = uu
-          v(2, i, j, k) = vv
-          v(3, i, j, k) = ww
-        end do
-
+        v(1, ix+1, j, k) = v(1, ix, j, k)
+        v(2, ix+1, j, k) = v(2, ix, j, k)
+        v(3, ix+1, j, k) = v(3, ix, j, k)
       end do
       end do
+      
 !$OMP END DO
       
 
@@ -2170,19 +2156,12 @@
 
       do k=1,kx
       do i=1,ix
-        
-        uu = v(1, i, 1, k)
-        vv = v(2, i, 1, k)
-        ww = v(3, i, 1, k)
-                
-        do j=1-g, 0
-          v(1, i, j, k) = uu
-          v(2, i, j, k) = vv
-          v(3, i, j, k) = ww
-        end do
-
+        v(1, i, 0, k) = v(1, i, 1, k)
+        v(2, i, 0, k) = v(2, i, 1, k)
+        v(3, i, 0, k) = v(3, i, 1, k)
       end do
       end do
+      
 !$OMP END DO
       
 
@@ -2197,20 +2176,13 @@
 #endif
 
       do k=1,kx
-      do i=1,ix
-
-        uu = v(1, i, jx, k)
-        vv = v(2, i, jx, k)
-        ww = v(3, i, jx, k)
-                
-        do j=jx+1, jx+g
-          v(1, i, j, k) = uu
-          v(2, i, j, k) = vv
-          v(3, i, j, k) = ww
-        end do
-
+      do i=1,ix      
+        v(1, i, jx+1, k) = v(1, i, jx, k)
+        v(2, i, jx+1, k) = v(2, i, jx, k)
+        v(3, i, jx+1, k) = v(3, i, jx, k)
       end do
       end do
+      
 !$OMP END DO
       
 
@@ -2226,19 +2198,12 @@
 
       do j=1,jx
       do i=1,ix
-
-        uu = v(1, i, j, 1)
-        vv = v(2, i, j, 1)
-        ww = v(3, i, j, 1)
-                
-        do k=1-g, 0
-          v(1, i, j, k) = uu
-          v(2, i, j, k) = vv
-          v(3, i, j, k) = ww
-        end do
-
+        v(1, i, j, 0) = v(1, i, j, 1)
+        v(2, i, j, 0) = v(2, i, j, 1)
+        v(3, i, j, 0) = v(3, i, j, 1)
       end do
       end do
+      
 !$OMP END DO
       
 
@@ -2254,19 +2219,12 @@
 
       do j=1,jx
       do i=1,ix
-
-        uu = v(1, i, j, kx)
-        vv = v(2, i, j, kx)
-        ww = v(3, i, j, kx)
-                
-        do k=kx+1, kx+g
-          v(1, i, j, k) = uu
-          v(2, i, j, k) = vv
-          v(3, i, j, k) = ww
-        end do
-
+        v(1, i, j, kx+1) = v(1, i, j, kx)
+        v(2, i, j, kx+1) = v(2, i, j, kx)
+        v(3, i, j, kx+1) = v(3, i, j, kx)
       end do
       end do
+      
 !$OMP END DO
       
 
@@ -2340,9 +2298,9 @@
           Ve = v0(2, i  ,j  ,k  )
           We = v0(3, i  ,j  ,k  )
 
-          v(1, i-1,j  ,k  ) = Uw - c*(Ue-Uw)
-          v(2, i-1,j  ,k  ) = Vw - c*(Ve-Vw)
-          v(3, i-1,j  ,k  ) = Ww - c*(We-Ww)
+          v(1, i-1, j  ,k  ) = Uw - c*(Ue-Uw)
+          v(2, i-1, j  ,k  ) = Vw - c*(Ve-Vw)
+          v(3, i-1, j  ,k  ) = Ww - c*(We-Ww)
         endif
       end do
       end do
@@ -2374,9 +2332,9 @@
           Ve = v0(2, i+1,j  ,k  )
           We = v0(3, i+1,j  ,k  )
           
-          v(i+1,j  ,k  ,1) = Ue - c*(Ue-Uw)
-          v(i+1,j  ,k  ,2) = Ve - c*(Ve-Vw)
-          v(i+1,j  ,k  ,3) = We - c*(We-Ww)
+          v(1, i+1, j  ,k  ) = Ue - c*(Ue-Uw)
+          v(2, i+1, j  ,k  ) = Ve - c*(Ve-Vw)
+          v(3, i+1, j  ,k  ) = We - c*(We-Ww)
         endif
       end do
       end do
@@ -2408,9 +2366,9 @@
           Vn = v0(2, i  ,j  ,k  )
           Wn = v0(3, i  ,j  ,k  )
 
-          v(i  ,j-1,k  ,1) = Us - c*(Un-Us)
-          v(i  ,j-1,k  ,2) = Vs - c*(Vn-Vs)
-          v(i  ,j-1,k  ,3) = Ws - c*(Wn-Ws)
+          v(1, i  ,j-1, k  ) = Us - c*(Un-Us)
+          v(2, i  ,j-1, k  ) = Vs - c*(Vn-Vs)
+          v(3, i  ,j-1, k  ) = Ws - c*(Wn-Ws)
         endif
       end do
       end do
@@ -2442,9 +2400,9 @@
           Vn = v0(2, i  ,j+1,k  )
           Wn = v0(3, i  ,j+1,k  )
 
-          v(i  ,j+1,k  ,1) = Un - c*(Un-Us)
-          v(i  ,j+1,k  ,2) = Vn - c*(Vn-Vs)
-          v(i  ,j+1,k  ,3) = Wn - c*(Wn-Ws)
+          v(1, i  ,j+1, k  ) = Un - c*(Un-Us)
+          v(2, i  ,j+1, k  ) = Vn - c*(Vn-Vs)
+          v(3, i  ,j+1, k  ) = Wn - c*(Wn-Ws)
         endif
       end do
       end do
@@ -2476,9 +2434,9 @@
           Vt = v0(2, i  ,j  ,k  )
           Wt = v0(3, i  ,j  ,k  )
 
-          v(i  ,j  ,k-1,1) = Ub - c*(Ut-Ub)
-          v(i  ,j  ,k-1,2) = Vb - c*(Vt-Vb)
-          v(i  ,j  ,k-1,3) = Wb - c*(Wt-Wb)
+          v(1, i  ,j  , k-1) = Ub - c*(Ut-Ub)
+          v(2, i  ,j  , k-1) = Vb - c*(Vt-Vb)
+          v(3, i  ,j  , k-1) = Wb - c*(Wt-Wb)
         endif
       end do
       end do
@@ -2510,9 +2468,9 @@
           Vt = v0(2, i  ,j  ,k+1)
           Wt = v0(3, i  ,j  ,k+1)
 
-          v(i  ,j  ,k+1,1) = Ut - c*(Ut-Ub)
-          v(i  ,j  ,k+1,2) = Vt - c*(Vt-Vb)
-          v(i  ,j  ,k+1,3) = Wt - c*(Wt-Wb)
+          v(1, i  ,j  , k+1) = Ut - c*(Ut-Ub)
+          v(2, i  ,j  , k+1) = Vt - c*(Vt-Vb)
+          v(3, i  ,j  , k+1) = Wt - c*(Wt-Wb)
         endif
       end do
       end do
