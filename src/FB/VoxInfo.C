@@ -323,65 +323,6 @@ void VoxInfo::alloc_voxel_nv(unsigned len)
   if ( !vox_nv ) Exit(0);
 }
 
-/**
- @fn void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
- @brief コンポーネントの断面積を求める
- @param n エントリ番号
- @param bd BCindex ID
- @param bv BCindex V
- @param bh1 BCindex H1
- @param PL MPIPolylibクラス
- @note ポリゴン情報は有次元とする
- */
-void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
-{
-  using namespace PolylibNS;
-  
-  unsigned id;
-  REAL_TYPE a;
-  int def;
-
-  id  = cmp[n].getID();
-  def = cmp[n].getDef();
-  
-  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-  vector<PolygonGroup*>::iterator it;
-  
-  switch ( cmp[n].getType() ) {
-    case SPEC_VEL:
-    case SPEC_VEL_WH:
-    case OUTFLOW:
-      
-      printf("\t  ID : Polygon Group : Area (m*m)\n");
-      
-      for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
-        std::string m_pg = (*it)->get_name();
-        int m_id = (*it)->get_id();
-        cmp[n].area = (*it)->get_group_area();
-        //printf("\t %3d : %s : %e : %d\n", m_id, m_pg.c_str(), cmp[n].area, (*it)->get_group_num_tria());
-      }
-      
-      return;
-      break;
-      
-      
-    case HEATFLUX:
-    case TRANSFER:
-    case ISOTHERMAL:
-      break;
-      
-    case HEX:
-    case FAN:
-      return;
-      break;
-      
-    case CELL_MONITOR:
-    case DARCY:
-      break;
-  }
-  
-  delete pg_roots;
-}
 
 /**
  @fn void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi)
@@ -4425,6 +4366,67 @@ unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid,
 
 
 /**
+ @fn void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
+ @brief コンポーネントの断面積を求める
+ @param n エントリ番号
+ @param bd BCindex ID
+ @param bv BCindex V
+ @param bh1 BCindex H1
+ @param PL MPIPolylibクラス
+ @note ポリゴン情報は有次元とする
+ */
+void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
+{
+  using namespace PolylibNS;
+  
+  unsigned id;
+  REAL_TYPE a;
+  int def;
+  
+  id  = cmp[n].getID();
+  def = cmp[n].getDef();
+  
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  switch ( cmp[n].getType() ) {
+    case SPEC_VEL:
+    case SPEC_VEL_WH:
+    case OUTFLOW:
+      
+      printf("\t  ID : Polygon Group : Area (m*m)\n");
+      
+      for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+        std::string m_pg = (*it)->get_name();
+        int m_id = (*it)->get_id();
+        cmp[n].area = (*it)->get_group_area();
+        //printf("\t %3d : %s : %e : %d\n", m_id, m_pg.c_str(), cmp[n].area, (*it)->get_group_num_tria());
+      }
+      
+      return;
+      break;
+      
+      
+    case HEATFLUX:
+    case TRANSFER:
+    case ISOTHERMAL:
+      break;
+      
+    case HEX:
+    case FAN:
+      return;
+      break;
+      
+    case CELL_MONITOR:
+    case DARCY:
+      break;
+  }
+  
+  delete pg_roots;
+}
+
+
+/**
  @fn void VoxInfo::getIDrange(const CfgElem *elmL2, const char* keyword, unsigned* var)
  @brief BC Indexからマスク値を計算する
  @param elmL2 XMLツリーのポインタ
@@ -4647,51 +4649,7 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
   
 }
 
-/**
- @fn unsigned VoxInfo::dbg_markSolid_from_Cut(int* mid, float* cut)
- @brief ボクセルモデルにカット情報から得られた固体情報を転写する
- @param[in/out] mid セルID
- @param[in] cut 距離情報
- @retval 固体セル数
- */
-unsigned VoxInfo::dbg_markSolid_from_Cut(int* mid, float* cut)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  unsigned c=0;
-  float *pos;
-  float q;
-  size_t m_p, m;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
-        m = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-        pos = &cut[m];
-        
-        // セルのどこかに交点があれば，壁
-        q = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
-        
-        if ( q < 6.0 ) {
-          mid[m_p] = 2;
-          c++;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = c;
-    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  return c;
-}
+
 
 /**
  @fn void VoxInfo::printScanedCell(FILE* fp)
@@ -5865,4 +5823,58 @@ void VoxInfo::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
   
   if ( !m_MAT ) Exit(0);
   mat = m_MAT;
+}
+
+/**
+ @fn unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
+ @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+ @param[in/out] mid セルID
+ @param[in] cut 距離情報
+ @param[in] id 固体ID 
+ @retval 固体セル数
+ */
+unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  unsigned c=0;
+  int q;
+  size_t m_p, m;
+  
+  unsigned m_sz[3], gd;
+  m_sz[0] = size[0];
+  m_sz[1] = size[1];
+  m_sz[2] = size[2];
+  gd = guide;
+  
+#pragma omp parallel for firstprivate(m_sz, gd, id) private(q) schedule(static) reduction(+:c)
+  for (int k=1; k<=(int)m_sz[2]; k++) {
+    for (int j=1; j<=(int)m_sz[1]; j++) {
+      for (int i=1; i<=(int)m_sz[0]; i++) {
+        
+        m_p = FBUtility::getFindexS3D(m_sz, gd, i, j, k);
+        m = FBUtility::getFindexS3Dcut(m_sz, gd, 0, i, j, k);
+        q = 0;
+        
+        // セル内に交点があれば，壁
+        if ( cut[m+0] <= 0.5f ) q++;
+        if ( cut[m+1] <= 0.5f ) q++;
+        if ( cut[m+2] <= 0.5f ) q++;
+        if ( cut[m+3] <= 0.5f ) q++;
+        if ( cut[m+4] <= 0.5f ) q++;
+        if ( cut[m+5] <= 0.5f ) q++;
+        
+        if ( q > 0 ) {
+          mid[m_p] = id;
+          c++;
+        }
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ) {
+    unsigned tmp = c;
+    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  
+  return c;
 }

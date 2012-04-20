@@ -23,10 +23,6 @@
  */
 void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
-  if ( !R->isCDS() ) {
-    Hostonly_ stamped_printf("\tError : User specified Polygon problem, though shape approximation is not 'cut_distance'\n");
-    Exit(0);
-  }
   
   // 等分割のチェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {

@@ -149,6 +149,7 @@ public:
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
+  unsigned Solid_from_Cut    (int* mid, float* cut, const int id);
   
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
@@ -182,7 +183,6 @@ public:
   REAL_TYPE* get_vox_nv_ptr(void) { return vox_nv; }
   
   // ----> debug function
-  unsigned dbg_markSolid_from_Cut(int* mid, float* cut);
   void dbg_chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
   void dbg_chkBCIndexV           (unsigned* bcv, const char* fname);
 };

@@ -65,13 +65,16 @@ void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
  */
 void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org)
 {
-  int i,j,k;
-  unsigned m;
-
-  // Inner
-  for (k=1; k<=(int)kmax; k++) {
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  unsigned m, m_sz[3], gd;
+  m_sz[0] = size[0];
+  m_sz[1] = size[1];
+  m_sz[2] = size[2];
+  gd = guide;
+  
+#pragma omp parallel for firstprivate(m_sz, gd) schedule(static)
+  for (int k=1; k<=(int)m_sz[2]; k++) {
+    for (int j=1; j<=(int)m_sz[1]; j++) {
+      for (int i=1; i<=(int)m_sz[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }

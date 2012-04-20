@@ -95,7 +95,6 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org)
   m_sz[2] = size[2];
   gd = guide;
 
-  // Inner
 #pragma omp parallel for firstprivate(m_sz, gd) schedule(static)
   for (int k=1; k<=(int)m_sz[2]; k++) {
     for (int j=1; j<=(int)m_sz[1]; j++) {

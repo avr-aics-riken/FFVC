@@ -239,7 +239,8 @@ SklSolverCBC::SklSolverInitialize() {
       Ex->setup(mid, &C, G_org);
       
       if ( !C.isCDS() ) {
-        //
+        unsigned zc = Vinfo.Solid_from_Cut(mid, cut, C.Mode.Base_Medium);
+        Hostonly_ printf("\tGenerated Solid cell from cut = %d\n", zc);
       }
       break;
       
@@ -415,7 +416,7 @@ SklSolverCBC::SklSolverInitialize() {
 #if 0
   // カット情報からボクセルモデルの固体をIDセット　デバッグ用
   if ( C.isCDS() ) {
-    unsigned zc = Vinfo.dbg_markSolid_from_Cut(mid, cut);
+    unsigned zc = Vinfo.Solid_from_Cut(mid, cut);
     Hostonly_ printf("\tCut cell = %d\n", zc);
   }
 #endif
@@ -464,7 +465,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // 体積力を使う場合のコンポーネント配列の確保
   allocComponentArray(PrepMemory, TotalMemory, fp);
-
+  
   // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
   Vinfo.setCmpFraction(cmp, bcd, cvf);
   
@@ -507,14 +508,14 @@ SklSolverCBC::SklSolverInitialize() {
     dc_bh1->CommBndCell(guide);
     dc_bh2->CommBndCell(guide);
   }
-  
+  mark();
   // 法線計算のためのワーク配列 >> 不要にする
   if ( C.NoBC != 0 ) {
     Vinfo.alloc_voxel_nv((C.NoBC+1)*3);
     
     // コンポーネントで指定されるID面の法線を計算，向きはblowing/suctionにより決まる．　bcdをセットしたあとに処理
     for (unsigned n=1; n<=C.NoBC; n++) {
-      if ( C.isCDS() ) {
+      if ( C.Mode.Example == id_Polygon ) {
         Vinfo.get_Compo_Area_Cut(n, PL);
       }
       else {
@@ -522,7 +523,7 @@ SklSolverCBC::SklSolverInitialize() {
       }
     }
   }
-
+  mark();
   // 無次元数などの計算パラメータを設定する．MaterialListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
   // 代表物性値をRefIDの示す媒質から取得
   // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
