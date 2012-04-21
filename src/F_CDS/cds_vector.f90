@@ -67,7 +67,7 @@
     real                                                        ::  du_e, du_w, du_s, du_n, du_b, du_t
     real                                                        ::  dv_e, dv_w, dv_s, dv_n, dv_b, dv_t
     real                                                        ::  dw_e, dw_w, dw_s, dw_n, dw_b, dw_t
-		real                                                        ::  EX, EY, EZ, delta_x, delta_y, delta_z
+		real                                                        ::  EX, EY, EZ
     real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
@@ -115,7 +115,7 @@
     cm1 = 1.0 - ck
     cm2 = 1.0 + ck
     
-    flop = flop + real(ix)*real(jx)*real(kx)*1257.0 + 34.0
+    flop = flop + real(ix)*real(jx)*real(kx)*1215.0 + 34.0
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
@@ -153,7 +153,7 @@
 !$OMP PRIVATE(du_e, du_w, du_s, du_n, du_b, du_t) &
 !$OMP PRIVATE(dv_e, dv_w, dv_s, dv_n, dv_b, dv_t) &
 !$OMP PRIVATE(dw_e, dw_w, dw_s, dw_n, dw_b, dw_t) &
-!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -603,7 +603,7 @@
             - 0.5 * (wfb * (Wbr + Wbl) - afb * (Wbr - Wbl)) * cb + cnv_w
 
       
-      ! 粘性項の計算  >  18 + 27 + 15*3 + 9 = 99 flop -----------------------------------------------
+      ! 粘性項の計算  >  18 + 10*3 + 9 = 57 flop -----------------------------------------------
       du_e = ( Ue1 - Up0 )
       du_w = ( Up0 - Uw1 )
       du_n = ( Un1 - Up0 )
@@ -625,23 +625,19 @@
       dw_t = ( Wt1 - Wp0 )
       dw_b = ( Wp0 - Wb1 )
       
-      delta_x = 2.0 / (de + dw)
-      delta_y = 2.0 / (dn + ds)
-      delta_z = 2.0 / (dt + db)
-      
-      Ex = ( (du_e * ce - du_w * cw) * delta_x &
-           + (du_n * cn - du_s * cs) * delta_y &
-           + (du_t * ct - du_b * cb) * delta_z &
+      Ex = ( (du_e * ce - du_w * cw)  &
+           + (du_n * cn - du_s * cs)  &
+           + (du_t * ct - du_b * cb)  &
            ) * dh2
            
-      Ey = ( (dv_e * ce - dv_w * cw) * delta_x &
-           + (dv_n * cn - dv_s * cs) * delta_y &
-           + (dv_t * ct - dv_b * cb) * delta_z &
+      Ey = ( (dv_e * ce - dv_w * cw)  &
+           + (dv_n * cn - dv_s * cs)  &
+           + (dv_t * ct - dv_b * cb)  &
            ) * dh2
            
-      Ez = ( (dw_e * ce - dw_w * cw) * delta_x &
-           + (dw_n * cn - dw_s * cs) * delta_y &
-           + (dw_t * ct - dw_b * cb) * delta_z &
+      Ez = ( (dw_e * ce - dw_w * cw)  &
+           + (dw_n * cn - dw_s * cs)  &
+           + (dw_t * ct - dw_b * cb)  &
            ) * dh2
 			
       ! 対流項と粘性項の和
@@ -904,7 +900,7 @@
       v(1,i,j,k) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
       v(2,i,j,k) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
       v(3,i,j,k) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
-if ((i.ge.150).and.(i.le.202).and.(j.eq.26).and.(k.eq.37)) write(*,'(3i5, 3E9.2)') i,j,k,  p(i  ,j  ,k+1), pc, N_t !gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r
+
     end do
     end do
     end do

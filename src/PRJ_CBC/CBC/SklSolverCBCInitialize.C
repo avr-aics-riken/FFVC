@@ -721,7 +721,7 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
 
-#if 1
+#if 0
   write_distance(cut);
 #endif
   
@@ -2280,35 +2280,38 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
 
 
 /**
- @fn float SklSolverCBC::min_distance(float* cut, FILE* fp)
- @brief 距離の最小値を求め，閾値以上にする
- @retval 最小距離
+ @fn void SklSolverCBC::min_distance(float* cut, FILE* fp)
+ @brief 距離の最小値を求める
  @param cut カット情報の配列
  @param fp file pointer
  @note cutlibのインスタンスを参照, windows does not support std::min() method?
  */
-float SklSolverCBC::min_distance(float* cut, FILE* fp)
+void SklSolverCBC::min_distance(float* cut, FILE* fp)
 {
-  float min_g = 1.0e6, min_l, c, eps;
-  unsigned mm, g, i;
-  mm = (size[2]+2*guide)*(size[1]+2*guide)*(size[0]+2*guide)*6;
-  g = 0;
-  eps = 4.0e-2; // 1.0/255.0 * 10
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  min_g = 1.0;
-  for (i=0; i<mm; i++) {
+  unsigned mm = (size[2]+2*guide)*(size[1]+2*guide)*(size[0]+2*guide)*6;
+  
+  float min_g = 1.0;
+  float c;
+  
+#pragma omp parallel for firstprivate(mm) private(c) schedule(static) reduction(min:min_g)
+  for (unsigned i=0; i<mm; i++) {
     c = cut[i]; 
     if( min_g > c ) min_g = c;
-    if ( c < eps ) {
-      cut[i] = eps;
-      g++;
-    }
+    //if ( c < eps ) {
+      //cut[i] = 0.0f;
+    //}
   }
-  if ( g>0 ) {
-    Hostonly_ fprintf(fp, "\n\t%d cuts less than %5.3e were modified to 0.0 (in non-dimnensional distance)\n\n", g, eps);
-    Hostonly_ printf     ("\n\t%d cuts less than %5.3e were modified to 0.0 (in non-dimnensional distance)\n\n", g, eps);
+
+  if( para_mng->IsParallel() ) {
+    float tmp = min_g;
+    para_mng->Allreduce(&tmp, &min_g, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
   }
-  return min_g;
+  
+  Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e\n\n", min_g);
+  Hostonly_ printf     ("\n\tMinimum non-dimnensional distance is %e\n\n", min_g);
 }
 
 
@@ -3559,7 +3562,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   Hostonly_ printf("\n\tMinimum dist. = %5.3e  : # of cut = %d : %f [percent]\n", d_min, z, (float)z/(float)size_n_cell*100.0);
   
-  // カットの最小値を閾値以上にする
+  // カットの最小値
   min_distance(cut, fp);
   
 }

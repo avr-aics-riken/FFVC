@@ -225,7 +225,6 @@ public:
   bool chkMediumConsistency(void);
   bool hasLinearSolver (unsigned L);
   
-  float min_distance     (float* cut, FILE* fp);
   REAL_TYPE Norm_Poisson     (ItrCtl* IC);
   
   void allocArray_AB2       (unsigned long &total);
@@ -260,6 +259,7 @@ public:
   void load_Restart_file    (FILE* fp, REAL_TYPE& flop);
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
+  void min_distance         (float* cut, FILE* fp);
   void prepOutput           (void);
   void Pressure_Shift       (REAL_TYPE* p);
   void resizeBVcell         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
