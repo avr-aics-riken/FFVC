@@ -508,7 +508,7 @@ SklSolverCBC::SklSolverInitialize() {
     dc_bh1->CommBndCell(guide);
     dc_bh2->CommBndCell(guide);
   }
-  mark();
+  
   // 法線計算のためのワーク配列 >> 不要にする
   if ( C.NoBC != 0 ) {
     Vinfo.alloc_voxel_nv((C.NoBC+1)*3);
@@ -519,11 +519,11 @@ SklSolverCBC::SklSolverInitialize() {
         Vinfo.get_Compo_Area_Cut(n, PL);
       }
       else {
-        Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &compo_global_bbox[n*6]);
+        //Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &compo_global_bbox[n*6]);
       }
     }
   }
-  mark();
+  
   // 無次元数などの計算パラメータを設定する．MaterialListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
   // 代表物性値をRefIDの示す媒質から取得
   // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
@@ -721,7 +721,7 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
 
-#if 0
+#if 1
   write_distance(cut);
 #endif
   
@@ -2300,7 +2300,7 @@ float SklSolverCBC::min_distance(float* cut, FILE* fp)
     c = cut[i]; 
     if( min_g > c ) min_g = c;
     if ( c < eps ) {
-      cut[i] = 0.0f;
+      cut[i] = eps;
       g++;
     }
   }

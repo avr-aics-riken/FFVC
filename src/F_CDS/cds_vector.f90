@@ -658,8 +658,8 @@
 		return
     end subroutine cds_pvec_muscl
 
-!  *********************************************************************************
-!> @subroutine cds_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, cut, v00, flop)
+!  **************************************************************************************
+!> @subroutine cds_update_vec (v, div, sz, g, delta_t, dh, vc, p, bp, bv, cut, v00, flop)
 !! @brief 次のステップのセルセンターの速度を更新し，発散値を計算する
 !! @param[out] v n+1時刻のセルセンターの速度ベクトル
 !! @param div 発散値
@@ -904,7 +904,7 @@
       v(1,i,j,k) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
       v(2,i,j,k) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
       v(3,i,j,k) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
-    
+if ((i.ge.150).and.(i.le.202).and.(j.eq.26).and.(k.eq.37)) write(*,'(3i5, 3E9.2)') i,j,k,  p(i  ,j  ,k+1), pc, N_t !gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r
     end do
     end do
     end do

@@ -1,0 +1,41 @@
+-----
+Cutlib
+
+Kenji Ono 	keno@riken.jp
+Advanced Visualization Research Team, AICS, RIKEN
+April 2012
+-----
+
+2012-04-21
+  * Version 2.0.3
+  * コンパイルオプションに「-DIGNORE_NORMAL_DIRECTION」を指定すると，
+    ポリゴンの表裏が統一されていることを仮定せずに計算
+  * コンパイルオプションに「-DIGNORE_STL_NORMAL」を指定すると，
+    STLファイル中のポリゴン法線データを信用せず，毎回法線計算
+
+2011-05-12
+  * Version 2.0.2 released.
+  * ユーザ利用マニュアル改訂
+  * Polylib2.0.2コンパイル対応
+  * doxygenのリファレンスはhtmlのみに変更
+
+2011-05-09
+  * Version 2.0.1 released.
+  * ユーザ利用マニュアル改訂
+
+2010-11-10
+  * Version 2.0.0 released.
+  * ユーザ利用マニュアル改訂
+  * インタフェース変更(引数Boundaries* bListの廃止)
+  * 計算対象となるポリゴングループとその境界IDをPolylib初期化ファイルから自動読み取り(Polylib2.0.1の機能)
+
+2010-10-18
+  * Makefileで，Octree版関数作成の有無を選択可能に
+  * 交点探査方向順を変更(-x, +x, -y, +y, -z, +z に)
+
+2010-10-16
+  * Polylib 2.0.0 対応修正
+
+2010-04-28
+  * Version 1.0.0 released.
+

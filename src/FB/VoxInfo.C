@@ -5837,7 +5837,7 @@ unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned c=0;
-  int q;
+  int q, m_id;
   size_t m_p, m;
   
   unsigned m_sz[3], gd;
@@ -5845,8 +5845,9 @@ unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
   m_sz[1] = size[1];
   m_sz[2] = size[2];
   gd = guide;
+  m_id= id;
   
-#pragma omp parallel for firstprivate(m_sz, gd, id) private(q) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(m_sz, gd, m_id) private(q) schedule(static) reduction(+:c)
   for (int k=1; k<=(int)m_sz[2]; k++) {
     for (int j=1; j<=(int)m_sz[1]; j++) {
       for (int i=1; i<=(int)m_sz[0]; i++) {
@@ -5864,7 +5865,7 @@ unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
         if ( cut[m+5] <= 0.5f ) q++;
         
         if ( q > 0 ) {
-          mid[m_p] = id;
+          mid[m_p] = m_id;
           c++;
         }
       }

@@ -336,7 +336,6 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static) &
-
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
   do k=1,kx
@@ -353,6 +352,7 @@
     y = v - vo(2,i,j,k)
     z = w - vo(3,i,j,k)
     rm = rm + (x*x + y*y + z*z)*actv
+  !if ((i.ge.150).and.(i.le.202).and.(j.eq.26).and.(k.eq.37)) write(*,*) i,j,k, u, v, w
   end do
   end do
   end do
