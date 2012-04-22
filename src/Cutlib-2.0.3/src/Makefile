@@ -52,8 +52,8 @@ AR = ar cr
 #AR = ar cru
 RANLIB = ranlib
 
-POLYLIB_DIR = ../../Polylib_2_0_2
-#POLYLIB_DIR = ../../Polylib_2_0_3
+#POLYLIB_DIR = ../../Polylib_2_0_2
+POLYLIB_DIR = ../../Polylib_2_0_3
 POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/include/libxml2
 
 # with Octree lib ############################################################

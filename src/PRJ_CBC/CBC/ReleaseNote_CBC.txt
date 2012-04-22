@@ -4,6 +4,12 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.6.1  14 Apr. 2012
+  - K/FX10のfappに対応するため、Performance Monitorのラベルを英数字とアンダースコアのみに変更
+  - Polylib-2.0.3/Cutlib-2.0.3に対応
+  - cbc_obc_drchlt, cbc_obc_outflow境界条件のバグ修正
+  - 組み込み例題のパッケージングを変更
+  
 Ver 1.6.0  14 Apr. 2012
   - Cell_Monitor指定の方法を変更
   
