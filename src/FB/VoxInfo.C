@@ -3109,7 +3109,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
       para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
     }
     
-    Hostonly_ printf("\tThe number of cells which are excludedd to convergence judgement by cut = %d\n\n", g);
+    Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %d\n\n", g);
     
   }
   
@@ -4139,6 +4139,99 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw,
 
 
 /**
+ @fn bool VoxInfo::find_fill_candidate(int* idx, int& dir, float* cut, int* cid, int* mid, const int tgt_id)
+ @brief ペイントの候補を探す
+ @param[out] idx 候補セルのインデックス
+ @param[out] dir 進む方向
+ @param cut カット情報
+ @param cid カット点のID
+ @param mid ID配列
+ @param[in] tgt_id サーチするID
+ @note tgt_idと接する未ペイントセルをみつけ，tgt_idのインデクスと未ペイントセルに向かう方向を返す
+ */
+bool VoxInfo::find_fill_candidate(int* idx, int* dir, float* cut, int* cid, int* mid, const int tgt_id)
+{
+  int p_id;
+  int m_dir[3];
+  int m_idx[3];
+  int target = tgt_id;
+  unsigned m_sz[3];
+  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  bool find_flag;
+  
+  m_sz[0] = size[0];
+  m_sz[1] = size[1];
+  m_sz[2] = size[2];
+  unsigned gd = guide;
+  
+  for (int k=1; k<=(int)m_sz[2]; k++) {
+    for (int j=1; j<=(int)m_sz[1]; j++) {
+      for (int i=1; i<=(int)m_sz[0]; i++) {
+        m_p = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k  );
+        m_e = FBUtility::getFindexS3D(m_sz, gd, i+1, j  , k  );
+        m_w = FBUtility::getFindexS3D(m_sz, gd, i-1, j  , k  );
+        m_n = FBUtility::getFindexS3D(m_sz, gd, i  , j+1, k  );
+        m_s = FBUtility::getFindexS3D(m_sz, gd, i  , j-1, k  );
+        m_t = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k+1);
+        m_b = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k-1);
+        
+        p_id = mid[m_p];
+        find_flag = false;
+        m_dir[0] = 0;
+        m_dir[1] = 0;
+        m_dir[2] = 0;
+        
+        // 未ペイント（ID=0）がある場合のみ
+        if ( p_id == 0 ) {
+          if ( mid[m_w] == target ) {
+            m_dir[0] = 1;
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_s] == target ) {
+            m_dir[1] = 1;
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_b] == target ) {
+            m_dir[2] = 1;
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_e] == target ) {
+            m_dir[0] = -1;
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_n] == target ) {
+            m_dir[1] = -1;
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_t] == target ) {
+            m_dir[2] = -1;
+            find_flag = true;
+            break;
+          }
+        }
+        
+        // 候補が見つかった場合，targetIDのセルインデクスを返す
+        if ( find_flag ) {
+          m_idx[0] = i - m_dir[0];
+          m_idx[1] = j - m_dir[1];
+          m_idx[2] = k - m_dir[2];
+          return true;
+        }
+      }
+    }
+  }
+  
+  // 候補がない場合
+  return false;
+}
+
+
+/**
  @fn void VoxInfo::find_isolate_Fcell(unsigned order, int* mid, unsigned* bx)
  @brief 孤立した流体セルを探し，周囲の個体媒質で置換，BCindexを修正する
  @param order cmp[]に登録されたMaterialListへのエントリ番号
@@ -4649,6 +4742,92 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
   
 }
 
+/**
+ @fn bool VoxInfo::find_fill_candidate(int* idx, float* cut, int* cid, int* mid, const int tgt_id)
+ @brief ペイントの候補を探す
+ @param idx 候補セルのインデックス
+ @param cut カット情報
+ @param cid カット点のID
+ @param mid ID配列
+ @param tgt_id ペイントするID
+ */
+bool VoxInfo::paint_cell(int* idx, float* cut, int* cid, int* mid, const int tgt_id)
+{
+  int p_id;
+  int m_idx[3];
+  int target = tgt_id;
+  unsigned m_sz[3];
+  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  bool find_flag;
+  
+  m_sz[0] = size[0];
+  m_sz[1] = size[1];
+  m_sz[2] = size[2];
+  unsigned gd = guide;
+  
+  int i, j, k;
+  i = idx[0];
+  j = idx[1];
+  k = idx[2];
+  
+  
+  
+  for (int k=1; k<=(int)m_sz[2]; k++) {
+    for (int j=1; j<=(int)m_sz[1]; j++) {
+      for (int i=1; i<=(int)m_sz[0]; i++) {
+        m_p = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k  );
+        m_e = FBUtility::getFindexS3D(m_sz, gd, i+1, j  , k  );
+        m_w = FBUtility::getFindexS3D(m_sz, gd, i-1, j  , k  );
+        m_n = FBUtility::getFindexS3D(m_sz, gd, i  , j+1, k  );
+        m_s = FBUtility::getFindexS3D(m_sz, gd, i  , j-1, k  );
+        m_t = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k+1);
+        m_b = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k-1);
+        
+        p_id = mid[m_p];
+        find_flag = false;
+        
+        // 未ペイント（ID=0）がある場合のみ
+        if ( p_id == 0 ) {
+          if ( mid[m_w] == target ) {
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_s] == target ) {
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_b] == target ) {
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_e] == target ) {
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_n] == target ) {
+            find_flag = true;
+            break;
+          }
+          else if ( mid[m_t] == target ) {
+            find_flag = true;
+            break;
+          }
+        }
+        
+        // 候補が見つかった場合
+        if ( find_flag ) {
+          m_idx[0] = i;
+          m_idx[1] = j;
+          m_idx[2] = k;
+          return true;
+        }
+      }
+    }
+  }
+  
+  // 候補がない場合
+  return false;
+}
 
 
 /**
