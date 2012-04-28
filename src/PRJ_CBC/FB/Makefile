@@ -29,10 +29,8 @@ CXXSRCS = \
        ../../FB/Monitor.C \
        ../../FB/MonCompo.C \
        ../../FB/Interval_Mngr.C \
-       ../../FB/PerfMonitor.C \
-       ../../FB/PerfWatch.C \
        ../../FB/Sampling.C \
-       ../../FB/DataHolder.C \
+       ../../FB/DataHolder.C
 
 
 FCSRCS = \
@@ -984,144 +982,6 @@ depend:
 ../../FB/MonCompo.o: ../../FB/Component.h ../../FB/Sampling.h
 ../../FB/Interval_Mngr.o: ../../FB/Interval_Mngr.h ../../FB/FBDefine.h
 ../../FB/Interval_Mngr.o: ../../FB/mydebug.h
-../../FB/PerfMonitor.o: ../../FB/PerfMonitor.h ../../FB/FBDefine.h
-../../FB/PerfMonitor.o: ../../FB/mydebug.h ../../FB/Parallel_node.h
-../../FB/PerfMonitor.o: ../../FB/PerfWatch.h /usr/local/sphere/include/Skl.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/endianUtil.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/SklSolverBase.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/SklBase.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/SklDefine.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/SklReservWord.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklSolverConfig.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgSteer.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgInFile.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgHistory.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgParameter.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklIBCConfig.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklOBCConfig.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklMBoxConfig.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklMDMConfig.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/base/SklFileIOCntl.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/base/SklOutputDataSet.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklDataManager.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklScalar.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklAray.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaComponent.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklVector2D.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklVector3D.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/coord/SklCrdMngr.h
-../../FB/PerfMonitor.o: /usr/local/sphere/include/coord/SklCoord.h
-../../FB/PerfWatch.o: ../../FB/PerfWatch.h /usr/local/sphere/include/Skl.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/endianUtil.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/SklSolverBase.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/SklBase.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/SklDefine.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/SklReservWord.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklSolverConfig.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgSteer.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgInFile.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgHistory.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgParameter.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklIBCConfig.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklOBCConfig.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklMBoxConfig.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklMDMConfig.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/base/SklFileIOCntl.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/base/SklOutputDataSet.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklDataManager.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklScalar.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklAray.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaComponent.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklVector2D.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklVector3D.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/coord/SklCrdMngr.h
-../../FB/PerfWatch.o: /usr/local/sphere/include/coord/SklCoord.h
-../../FB/PerfWatch.o: ../../FB/FBDefine.h ../../FB/mydebug.h
-../../FB/PerfWatch.o: ../../FB/Parallel_node.h
 ../../FB/Sampling.o: ../../FB/Sampling.h ../../FB/FBDefine.h
 ../../FB/Sampling.o: ../../FB/mydebug.h ../../FB/FBUtility.h ../../FB/vec3.h
 ../../FB/Sampling.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h

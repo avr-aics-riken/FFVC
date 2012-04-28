@@ -80,7 +80,6 @@ SklSolverCBC::SklSolverInitialize() {
       Exit(0);
       break;
   }
-  PM.setParallelMode(para_mode, C.num_thread, C.num_process);
   
   // condition fileのオープン
   Hostonly_ {
@@ -162,7 +161,6 @@ SklSolverCBC::SklSolverInitialize() {
   BC.setParallelInfo  (pn);
   F.setParallelInfo   (pn);
   MO.setParallelInfo  (pn);
-  TIMING__ PM.setParallelInfo  (pn);
   Ex->setParallelInfo (pn);  // 続く処理より先に初期化しておく
 
   // XMLパラメータの取得
@@ -193,6 +191,8 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.Mode.Profiling != OFF ) {
     ModeTiming = ON;
     TIMING__ PM.initialize(tm_END);
+    TIMING__ PM.setRankInfo(pn.ID);
+    TIMING__ PM.setParallelMode(para_mode, C.num_thread, C.num_process);
     set_timing_label();
   }
   
@@ -3212,15 +3212,15 @@ void SklSolverCBC::set_Parallel_Info(void)
  */
 void SklSolverCBC::setParallelism(void)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
+  int m_np; ///< 並列ノード数
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
   C.num_thread  = omp_get_max_threads();
   
   // Serial or Parallel environment
-  if( para_mng->IsParallel() ){
-    C.num_process = para_mng->GetNodeNum(pn.procGrp);
-    
+  if( m_np > 1 ){
+    C.num_process = m_np;
+
     if ( C.num_thread > 1 ) {
       C.Parallelism = Control::Hybrid;
     }
@@ -3241,15 +3241,7 @@ void SklSolverCBC::setParallelism(void)
 
   
   // 空間分割
-  if (para_mng->IsMb()) {
-    C.Partition = Control::Mbx;
-  }
-  else if (para_mng->IsEv()) {
-    C.Partition = Control::Equal;
-  }
-  else {
-    Exit(0);
-  }
+  C.Partition = Control::Equal;
   
 }
 

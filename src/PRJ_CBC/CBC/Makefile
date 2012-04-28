@@ -1,7 +1,7 @@
 #
 # SPHERE - Skeleton for PHysicalSvCube and Engineering REsearch
 #
-# Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+# Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 #
 
 TARGET = libsphsolvCBC.a

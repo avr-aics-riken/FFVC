@@ -144,6 +144,8 @@ protected:
   
 public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
+  bool find_fill_candidate   (int* idx, int* dir, float* cut, int* cid, int* mid, const int tgt_id);
+  bool paint_cell            (int* idx, float* cut, int* cid, int* mid, const int tgt_id);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);

@@ -37,7 +37,7 @@
 #include "Alloc.h"
 #include "FileIO.h"
 #include "Monitor.h"
-#include "PerfMonitor.h"
+
 
 #include "IP_Duct.h"
 #include "IP_PPLT2D.h"
@@ -49,12 +49,15 @@
 #include "IP_Polygon.h"
 #include "IP_Sphere.h"
 
-// K/FX10 profiler
+// FX10 profiler
 #if defined __K_FPCOLL
 #include "fjcoll.h"
 #elif defined __FX_FAPP
 #include "/fj_tool/fapp.h"
 #endif
+
+// Performance Monitor
+#include "PerfMonitor.h"
 
 // Polylib
 #include "Polylib.h"
@@ -69,6 +72,7 @@
 
 using namespace PolylibNS;
 using namespace cutlib;
+using namespace pm_lib;
 
 class SklSolverCBC : public SklSolverBase {
 
@@ -91,7 +95,6 @@ public:
   Alloc           A;
   FileIO          F;
   MonitorList     MO;
-  PerfMonitor     PM;
   DTcntl          DT;
   ReferenceFrame  RF;
   
@@ -100,6 +103,9 @@ public:
   CompoList*      cmp;
   MaterialList*   mat;
 
+  // PMlib
+  PerfMonitor     PM;
+  
   // Polylib
   MPIPolylib*     PL;
   POLYLIB_STAT	  poly_stat;

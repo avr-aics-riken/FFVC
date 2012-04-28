@@ -9,7 +9,7 @@
 # includeファイルの依存関係更新  : make depend
 #
 ############################################################################
-# K/FX10の場合，MPI_DIRはコメントアウト
+# FX10の場合，MPI_DIRはコメントアウト
 MPI_DIR		= /opt/openmpi
 
 #CXX			= g++
@@ -37,11 +37,11 @@ CFLAGS		= -O2 -Wall -I../include -I$(MPI_DIR)/include \
 			  -I/usr/include -I/usr/include/libxml2 -fno-strict-aliasing \
 #			  -DSAVE_ID_ASCII
 
-# K
+# FX10
 #CFLAGS		= -Kfast, simd=2, ocl, preex, array_private \
 #		-I../include\
-#		-I/opt/FJSVtclang/GM-1.2.0-02/include \
-#		-I/opt/FJSVtclang/GM-1.2.0-02/include/mpi/fujitsu \
+#		-I/opt/FJSVfxlang/GM-1.2.0-02/include \
+#		-I/opt/FJSVfxlang/GM-1.2.0-02/include/mpi/fujitsu \
 #		-I/usr/include \
 #		-I/home/user_hogehoge/libxml2-2.7.8_lib/include/libxml2 \
 #		-fno-strict-aliasing

@@ -346,7 +346,7 @@ void SklSolverCBC::set_label(unsigned key, char* label, PerfMonitor::Type type, 
   
   // Performance Monitorへの登録
   string tmp(label_tmp);
-  PM.setProperties(key, tmp, type, exclusive); 
+  PM.setProperties(key, tmp, type, exclusive);
 
   // K用プロファイラの文字列登録
   strcpy(tm_label_ptr[key], label_tmp);
