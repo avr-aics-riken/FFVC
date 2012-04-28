@@ -1528,6 +1528,7 @@ void Control::getXML_Polygon(void)
     Exit(0);
   }
   Mode.Base_Medium = ct;
+
 }
 
 /**

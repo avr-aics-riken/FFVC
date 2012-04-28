@@ -143,9 +143,9 @@ protected:
   }
   
 public:
+  bool check_fill            (const int* mid);
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
-  bool find_fill_candidate   (int* idx, int* dir, float* cut, int* cid, int* mid, const int tgt_id);
-  bool paint_cell            (int* idx, float* cut, int* cid, int* mid, const int tgt_id);
+  bool find_fill_candidate   (int* idx, const int* bid, const int* mid, const int tgt_id);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
@@ -163,6 +163,8 @@ public:
   void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
   void findVIBCbbox          (const int id, const unsigned* bv, int* st, int* ed);
   void get_Compo_Area_Cut    (unsigned n, PolylibNS::MPIPolylib* PL);
+  void paint_cell            (const int i, const int j, const int k, const int* bid, int* mid, const int target, unsigned long* count);
+  bool paint_first_seed      (int* mid, const int* idx, const int target);
   void printScanedCell       (FILE* fp);
   void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);
   void setAdiabatic4SF       (unsigned* bh);
@@ -183,6 +185,12 @@ public:
   //@fn REAL_TYPE* get_vox_nv_ptr(void)
   //@brief vox_nvのポインタを返す
   REAL_TYPE* get_vox_nv_ptr(void) { return vox_nv; }
+  
+  //@brief CutBid5のBoundrary IDを計算
+  //@note dir = (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+  inline int get_BID5(const int dir, const int bid) {
+    return ( (bid >> dir*5) & MASK_5 );
+  }
   
   // ----> debug function
   void dbg_chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);

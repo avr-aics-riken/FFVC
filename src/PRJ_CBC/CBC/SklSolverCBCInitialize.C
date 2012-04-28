@@ -224,7 +224,6 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   TIMING_start(tm_voxel_prep_sct);
-  
 
   switch (C.Mode.Example) {
       
@@ -234,9 +233,6 @@ SklSolverCBC::SklSolverInitialize() {
       
       // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
-      
-      // 指定された媒質番号で初期化
-      Ex->setup(mid, &C, G_org);
       
       if ( !C.isCDS() ) {
         unsigned zc = Vinfo.Solid_from_Cut(mid, cut, C.Mode.Base_Medium);
@@ -351,6 +347,39 @@ SklSolverCBC::SklSolverInitialize() {
   }
   Vinfo.setParallelInfo(pn);
   Vinfo.setControlVars(size, guide);
+  
+  
+  // Fill
+  if ( (C.Mode.Example == id_Polygon) && C.isCDS() ) {
+    
+    int target_id = C.Mode.Base_Medium;
+    unsigned long fill_count = size[0] * size[1] * size[2];
+    int seed[3];
+
+    seed[0] = 1;
+    seed[1] = 1;
+    seed[2] = 1;
+    
+    Vinfo.paint_first_seed(mid, seed, target_id);
+    
+    int c=0;
+    while (fill_count > 0) {
+      c++;
+      if ( !Vinfo.find_fill_candidate(seed, cut_id, mid, target_id) ) {
+        Hostonly_ printf("\tNo candidates of ID=%d\n", target_id);
+      }
+      Hostonly_ printf("\tTry %4d : Candidates of ID = %d at (%d, %d, %d)\n", c, target_id, seed[0], seed[1], seed[2]);
+      
+      Vinfo.paint_cell(seed[0], seed[1], seed[2], cut_id, mid, target_id, &fill_count);
+    }
+    
+    // 確認
+    if ( !Vinfo.check_fill(mid) ) {
+      Hostonly_ printf("\tFill operation is done, but still remains unpainted cells.\n");
+      Exit(0);
+    }
+  }
+  
   
   // バイナリボクセルのスキャン
   VoxScan(&Vinfo, &B, mid, fp);
