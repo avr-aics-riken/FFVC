@@ -1,0 +1,9 @@
+#! /bin/bash
+platex PMlib
+bibtex PMlib
+platex PMlib
+platex PMlib
+mendex -s myindex PMlib.idx
+platex PMlib
+dvipdfmx PMlib
+open PMlib.pdf

@@ -1,0 +1,144 @@
+\documentclass[a4paper,10pt,oneside,fleqn]{jsbook}
+%
+\usepackage{amsmath,amssymb,bm}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage{makeidx}
+\usepackage{txfonts}
+\usepackage{indentfirst}
+\usepackage{indent}
+\usepackage{booktabs}
+\usepackage{comment}
+\usepackage{cite}
+\usepackage{subfigure}
+\usepackage{alltt}
+\usepackage{eclbkbox,fancybox}
+\usepackage{float}
+%
+\newcounter{program}
+\newenvironment{program}%
+{\vspace{0.5\baselineskip}\VerbatimEnvironment%
+%\begin{breakbox}\setlength{\baselineskip}{0pt}\begin{Verbatim}}%
+\begin{breakbox}\setlength{\baselineskip}{.25\normalbaselineskip}\begin{Verbatim}}%
+{\end{Verbatim}\end{breakbox}\vspace{0.8\baselineskip}}
+
+\makeindex
+%
+\newcommand{\diff}{\mathrm{d}}  %微分記号
+\newcommand{\divergence}{\mathrm{div}\,}  %ダイバージェンス
+\newcommand{\grad}{\mathrm{grad}\,}  %グラディエント
+\newcommand{\rot}{\mathrm{rot}\,}  %ローテーション
+%
+\setlength{\textwidth}{\fullwidth}
+\setlength{\textheight}{44\baselineskip}
+\addtolength{\textheight}{\topskip}
+\setlength{\voffset}{-0.6in}
+\setlength{\mathindent}{1.5cm} %数式のインデント設定
+\setcounter{secnumdepth}{2} %subsubsectionまで番号付け
+\setcounter{tocdepth}{4} %目次の深さ設定
+\renewcommand\citemid{; } %citeのオプション
+
+%subfigure
+\renewcommand{\subfigtopskip}{5pt}	% 図の上の隙間。上図の副題と下図の間
+\renewcommand{\subfigbottomskip}{5pt} % 図の下の隙間。副題と本題の間
+\renewcommand{\subfigcapskip}{10pt}	% 図と副題の間
+\renewcommand{\subcapsize}{\small} % 副題の文字の大きさ
+
+%
+\usepackage{atbegshi}
+\AtBeginShipoutFirst{\special{pdf:tounicode EUC-UCS2}}
+\usepackage[dvipdfm,bookmarks=true,bookmarksnumbered=true]{hyperref}
+%
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+{\huge \textbf{Performance Monitor Library}}\\
+\vspace{1cm}
+
+{\large \textbf{Ver. 1.0}}\\
+\vspace{1.0cm}
+
+{\large \textbf{Advanced Visualization Research Team}\\
+\large \textbf{Advanced Institute of Computational Science}\\
+\large \textbf{RIKEN}\\
+\vspace{1cm}
+}
+
+{7-1-26, Minatojima-minami-machi, Chuo-ku, Kobe, Hyogo, 650-0047, Japan}\\
+\vspace{0.5cm}
+
+\url{http://aics.riken.jp/}\\
+
+\vspace{1.0cm}
+
+
+
+
+April 2012\\
+\vspace{3cm}
+
+\includegraphics[width=4cm,bb=-80 0 220 500]{RIKEN_logo_300x500.eps}
+
+\end{center}
+\end{titlepage}
+\newpage
+
+%
+\frontmatter
+
+\begin{tabular}{llllr}
+First Edition  &  Version 1.0  & 28 Apr. & 2012
+
+
+
+\end{tabular}
+
+\vspace{10cm}
+
+\begin{center}
+\includegraphics[width=4cm]{kei.eps}
+\end{center}
+
+\vspace{2cm}
+
+\begin{description}
+\item[ ] \textbf{COPYRIGHT}\\
+(c) Copyright RIKEN 2012. All rights reserved.\\
+
+%\item[ ] \textbf{DISCLAIMER}\\
+%You shall comply with the conditions of the license when you use this program.\\
+%The license is available at http://vcad-hpsv.riken.jp/permission.html
+\end{description}
+%
+
+\tableofcontents
+%
+%
+\mainmatter
+
+%
+\chapter{計算性能モニタクラス}
+{\begin{abstract}
+本章では，実行時の計算性能を測定するモジュール機能について説明する．
+\end{abstract}
+\include{PM_Monitor}
+
+%
+\chapter{アップデート情報}
+\begin{abstract}
+本ユーザガイドのアップデート情報について記す．
+\end{abstract}
+\include{PM_update}
+
+%
+%\bibliographystyle{junsrt}
+%\bibliography{PMlib}
+
+\newpage
+\printindex
+%
+%
+\end{document}

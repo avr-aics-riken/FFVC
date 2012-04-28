@@ -23,7 +23,7 @@ ChangeLog       改訂履歴
 COPYING         コピーライト
 
 doc/            ドキュメント
-  pmlib_ug.pdf  ユーザ利用マニュアル
+  PMlib.pdf     ユーザ利用マニュアル
   Doxyfile      doxygen生成コンフィギュレーション
 
 include/        ヘッダファイル
