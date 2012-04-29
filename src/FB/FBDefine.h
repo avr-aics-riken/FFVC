@@ -14,7 +14,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 256
+#define FB_VERS 257
 
 // 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
 #ifndef REAL_TYPE_DOUBLE
@@ -39,11 +39,6 @@
 #define ON          1
 #define OFF         0
 #define DETAIL      2
-
-// Grid System
-#define STAGGERED    0
-#define CELL_CENTER  1
-#define NODE         2
 
 // IO mode
 #define IO_GATHER     1

@@ -145,9 +145,9 @@ protected:
 public:
   bool check_fill            (const int* mid);
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
-  bool find_fill_candidate   (int* idx, const int* bid, const int* mid, const int tgt_id);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
+  unsigned fill_cells        (const int* bid, int* mid, const int tgt_id);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
@@ -156,14 +156,12 @@ public:
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
   void alloc_voxel_nv        (unsigned len);
-  void chkBCIndexD           (unsigned* bcd, const char* fname);
   void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);
   void copyBCIbase           (unsigned* dst, unsigned* src);
   void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
   void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
   void findVIBCbbox          (const int id, const unsigned* bv, int* st, int* ed);
   void get_Compo_Area_Cut    (unsigned n, PolylibNS::MPIPolylib* PL);
-  void paint_cell            (const int i, const int j, const int k, const int* bid, int* mid, const int target, unsigned long* count);
   bool paint_first_seed      (int* mid, const int* idx, const int target);
   void printScanedCell       (FILE* fp);
   void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);
@@ -193,6 +191,7 @@ public:
   }
   
   // ----> debug function
+  void dbg_chkBCIndexD           (unsigned* bcd, const char* fname);
   void dbg_chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
   void dbg_chkBCIndexV           (unsigned* bcv, const char* fname);
 };

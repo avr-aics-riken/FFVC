@@ -4,6 +4,9 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.6.2  28 Apr. 2012
+  - PMlib
+
 Ver 1.6.1  14 Apr. 2012
   - K/FX10のfappに対応するため、Performance Monitorのラベルを英数字とアンダースコアのみに変更
   - Polylib-2.0.3/Cutlib-2.0.3に対応

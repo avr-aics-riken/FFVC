@@ -421,48 +421,6 @@ void VoxInfo::checkColorTable(FILE* fp, unsigned size, int* table)
   fflush(fp);
 }
 
-/**
- @fn void VoxInfo::chkBCIndexD(unsigned* bcd, const char* fname)
- @brief BCindexを表示する（デバッグ用）
- @param bcv BCindex D
- @param fname 出力用ファイル名
- */
-void VoxInfo::chkBCIndexD(unsigned* bcd, const char* fname)
-{
-  int i,j,k;
-  unsigned m, s, d;
-  FILE *fp=NULL;
-  
-  if ( !(fp=fopen(fname,"w")) ) {
-    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
-    Exit(0);
-  }
-  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int gd = (int)guide;
-  
-  // ガイドセルを含む全領域
-  for (k=1-gd; k<=kx+gd; k++) {
-    for (j=1-gd; j<=jx+gd; j++) {
-      for (i=1-gd; i<=ix+gd; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        s = bcd[m];
-        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n", 
-                          i, j, k, IS_FLUID(s), 
-                          DECODE_CMP(s),
-                          DECODE_ID(s), 
-                          DECODE_MAT(s), 
-                          DECODE_VF(s), 
-                          (s>>FORCING_BIT)&0x1);
-      }
-    }
-  }
-  fflush(fp);
-  fclose(fp);
-}
 
 /**
  @fn bool VoxInfo::check_fill(const int* mid)
@@ -1284,6 +1242,49 @@ unsigned VoxInfo::countState(unsigned id, int* mid)
   }
   
   return g;
+}
+
+/**
+ @fn void VoxInfo::dbg_chkBCIndexD(unsigned* bcd, const char* fname)
+ @brief BCindexを表示する（デバッグ用）
+ @param bcv BCindex D
+ @param fname 出力用ファイル名
+ */
+void VoxInfo::dbg_chkBCIndexD(unsigned* bcd, const char* fname)
+{
+  int i,j,k;
+  unsigned m, s, d;
+  FILE *fp=NULL;
+  
+  if ( !(fp=fopen(fname,"w")) ) {
+    Hostonly_ printf("\tSorry, can't open '%s', write failed.\n", fname);
+    Exit(0);
+  }
+  Hostonly_ printf("\n\tCheck BC Index '%s' for check\n\n", fname);
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int gd = (int)guide;
+  
+  // ガイドセルを含む全領域
+  for (k=1-gd; k<=kx+gd; k++) {
+    for (j=1-gd; j<=jx+gd; j++) {
+      for (i=1-gd; i<=ix+gd; i++) {
+        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        s = bcd[m];
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n", 
+                          i, j, k, IS_FLUID(s), 
+                          DECODE_CMP(s),
+                          DECODE_ID(s), 
+                          DECODE_MAT(s), 
+                          DECODE_VF(s), 
+                          (s>>FORCING_BIT)&0x1);
+      }
+    }
+  }
+  fflush(fp);
+  fclose(fp);
 }
 
 
@@ -4166,86 +4167,82 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw,
 
 
 /**
- @fn bool VoxInfo::find_fill_candidate(int* idx, const int* bid, const int* mid, const int tgt_id)
- @brief ペイントの候補を探す
- @param[out] idx 候補セルのインデックス
+ @fn unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
+ @brief フィルを実行
  @param[in] bid カット点のID
  @param[in] mid ID配列
  @param[in] tgt_id サーチするID
  @note tgt_idと接する未ペイントセルをみつけ，シードとなるセルのインデクスを返す．シード点はtgt_id
  */
-bool VoxInfo::find_fill_candidate(int* idx, const int* bid, const int* mid, const int tgt_id)
+unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
 {
   int target = tgt_id;
   unsigned m_sz[3];
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  Vec3i pidx;
-  bool find_flag;
   
-  m_sz[0] = size[0];
-  m_sz[1] = size[1];
-  m_sz[2] = size[2];
-  unsigned gd = guide;
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int c = 0;
   
-  for (int k=1; k<=(int)m_sz[2]; k++) {
-    for (int j=1; j<=(int)m_sz[1]; j++) {
-      for (int i=1; i<=(int)m_sz[0]; i++) {
-        m_p = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k  );
-        m_e = FBUtility::getFindexS3D(m_sz, gd, i+1, j  , k  );
-        m_w = FBUtility::getFindexS3D(m_sz, gd, i-1, j  , k  );
-        m_n = FBUtility::getFindexS3D(m_sz, gd, i  , j+1, k  );
-        m_s = FBUtility::getFindexS3D(m_sz, gd, i  , j-1, k  );
-        m_t = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k+1);
-        m_b = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k-1);
-        
-        pidx.assign(i,j,k);
-        find_flag = false;
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+        m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+        m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
+        m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
 
-        // テストセルがtargetの場合で，隣のIDがID=0 && カットがない場合に候補となる
-        // 候補が見つかったら，targetのセルインデクスを保存してループを抜ける
+        // テストセルがtargetの場合
         if ( mid[m_p] == target ) {
 
-          if ( (mid[m_e] == 0) && (get_BID5(X_PLUS, bid[m_e]) == 0) ) { // CutBid5は5bit幅で4byteに6つ詰め込み
-            find_flag = true;
-            break;
+          // 隣のIDがID=0 && カットがない場合にペイント
+          if ( (mid[m_e] == 0) && (get_BID5(X_PLUS, bid[m_e]) == 0) ) {
+            if (i != ix) {
+              mid[m_e] = target;
+              c++;
+            }
           }
           else if ( (mid[m_n] == 0) && (get_BID5(Y_PLUS, bid[m_n]) == 0) ) {
-            find_flag = true;
-            break;
+            if (j != jx) {
+              mid[m_n] = target;
+              c++;
+            }
           }
           else if ( (mid[m_t] == 0) && (get_BID5(Z_PLUS, bid[m_t]) == 0) ) {
-            find_flag = true;
-            break;
+            if (k != kx) {
+              mid[m_t] = target;
+              c++;
+            }
           }
           else if ( (mid[m_b] == 0) && (get_BID5(Z_MINUS, bid[m_b]) == 0) ) {
-            find_flag = true;
-            break;
+            if (k != 1) {
+              mid[m_b] = target;
+              c++;
+            }
           }
           else if ( (mid[m_s] == 0) && (get_BID5(Y_MINUS, bid[m_s]) == 0) ) {
-            find_flag = true;
-            break;
+            if (j != 1) {
+              mid[m_s] = target;
+              c++;
+            }
           }
           else if ( (mid[m_w] == 0) && (get_BID5(X_MINUS, bid[m_w]) == 0) ) {
-            find_flag = true;
-            break;
+            if (i != 1) {
+              mid[m_w] = target;
+              c++;
+            }
           }
           
-        }
-        
+        } // target        
       }
     }
   }
   
-  // 候補が見つかった場合，targetIDのセルインデクスを返す
-  if ( find_flag ) {
-    idx[0] = pidx.x;
-    idx[1] = pidx.y;
-    idx[2] = pidx.z;
-    return true;
-  }
-  else {
-    return false;
-  }
+  return c;
 }
 
 
@@ -4760,68 +4757,6 @@ void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
   
 }
 
-/**
- @fn void VoxInfo::paint_cell(const int i, const int j, const int k, const int* bid, int* mid, const int target, unsigned long* count))
- @brief ペイントの候補を探す
- @param i,j,k 候補セルのインデックス
- @param cut カット情報
- @param bid カット点のID
- @param mid ID配列
- @param target ペイントするID
- @param ペイントする残数
- */
-void VoxInfo::paint_cell(const int i, const int j, const int k, const int* bid, int* mid, const int target, unsigned long* count)
-{
-  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  
-  m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-  m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
-  m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
-  m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
-  m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
-  m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
-  m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
-  
-  // テストセルのIDはtargetのはず
-  if ( mid[m_p] != target ) assert(-1);
-  
-  // 6方向をテスト 隣接セルが未ペイントで，かつコネクティビティがある場合はペイント
-  if ( (mid[m_e] == 0) && (get_BID5(X_PLUS, bid[m_e]) == 0) ) {
-    mid[m_e] = target;
-    count--;
-    if (i != ix) paint_cell(i+1, j, k, bid, mid, target, count);
-  }
-  else if ( (mid[m_n] == 0) && (get_BID5(Y_PLUS, bid[m_n]) == 0) ) {
-    mid[m_n] = target;
-    count--;
-    if (j != jx) paint_cell(i, j+1, k, bid, mid, target, count);
-  }
-  else if ( (mid[m_t] == 0) && (get_BID5(Z_PLUS, bid[m_t]) == 0) ) {
-    mid[m_t] = target;
-    count--;
-    if (k != kx) paint_cell(i, j, k+1, bid, mid, target, count);
-  }
-  else if ( (mid[m_b] == 0) && (get_BID5(Z_MINUS, bid[m_b]) == 0) ) {
-    mid[m_b] = target;
-    count--;
-    if (k != 1) paint_cell(i, j, k-1, bid, mid, target, count);
-  }
-  else if ( (mid[m_s] == 0) && (get_BID5(Y_MINUS, bid[m_s]) == 0) ) {
-    mid[m_s] = target;
-    count--;
-    if (j != 1) paint_cell(i, j-1, k, bid, mid, target, count);
-  }
-  else if ( (mid[m_w] == 0) && (get_BID5(X_MINUS, bid[m_w]) == 0) ) {
-    mid[m_w] = target;
-    count--;
-    if (i != 1) paint_cell(i-1, j, k, bid, mid, target, count);
-  }
-  
-}
 
 
 /**

@@ -354,23 +354,24 @@ SklSolverCBC::SklSolverInitialize() {
     
     int target_id = C.Mode.Base_Medium;
     unsigned long fill_count = size[0] * size[1] * size[2];
+    Hostonly_ printf("Initial fill count = %ld\n", fill_count);
+    
     int seed[3];
-
     seed[0] = 1;
     seed[1] = 1;
     seed[2] = 1;
     
-    Vinfo.paint_first_seed(mid, seed, target_id);
+    if ( !Vinfo.paint_first_seed(mid, seed, target_id) ) {
+      Hostonly_ printf("Failed first painting\n");
+    }
     
     int c=0;
     while (fill_count > 0) {
-      c++;
-      if ( !Vinfo.find_fill_candidate(seed, cut_id, mid, target_id) ) {
-        Hostonly_ printf("\tNo candidates of ID=%d\n", target_id);
-      }
-      Hostonly_ printf("\tTry %4d : Candidates of ID = %d at (%d, %d, %d)\n", c, target_id, seed[0], seed[1], seed[2]);
       
-      Vinfo.paint_cell(seed[0], seed[1], seed[2], cut_id, mid, target_id, &fill_count);
+      int fc = Vinfo.fill_cells(cut_id, mid, target_id);
+      fill_count -= fc;
+      Hostonly_ printf("\tTry %4d : ID = %d : %d\n", c++, target_id, fill_count);
+
     }
     
     // 確認
