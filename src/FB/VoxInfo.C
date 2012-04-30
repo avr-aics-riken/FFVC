@@ -4172,13 +4172,12 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw,
  @param[in] bid カット点のID
  @param[in] mid ID配列
  @param[in] tgt_id サーチするID
- @note tgt_idと接する未ペイントセルをみつけ，シードとなるセルのインデクスを返す．シード点はtgt_id
  */
 unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
 {
   int target = tgt_id;
-  unsigned m_sz[3];
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int pp;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
@@ -4196,43 +4195,45 @@ unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
         m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
         m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
 
-        // テストセルがtargetの場合
-        if ( mid[m_p] == target ) {
+        // テストセルが未ペイントの場合
+        if ( mid[m_p] == 0 ) {
+          
+          pp = bid[m_p];
 
-          // 隣のIDがID=0 && カットがない場合にペイント
-          if ( (mid[m_e] == 0) && (get_BID5(X_PLUS, bid[m_e]) == 0) ) {
+          // 隣のIDがID=target && カットがない場合にペイント
+          if ( (mid[m_w] == target) && (get_BID5(X_MINUS, pp) == 0) ) {
             if (i != ix) {
-              mid[m_e] = target;
+              mid[m_p] = target;
               c++;
             }
           }
-          else if ( (mid[m_n] == 0) && (get_BID5(Y_PLUS, bid[m_n]) == 0) ) {
+          else if ( (mid[m_s] == target) && (get_BID5(Y_MINUS, pp) == 0) ) {
             if (j != jx) {
-              mid[m_n] = target;
+              mid[m_p] = target;
               c++;
             }
           }
-          else if ( (mid[m_t] == 0) && (get_BID5(Z_PLUS, bid[m_t]) == 0) ) {
+          else if ( (mid[m_b] == target) && (get_BID5(Z_MINUS, pp) == 0) ) {
             if (k != kx) {
-              mid[m_t] = target;
+              mid[m_p] = target;
               c++;
             }
           }
-          else if ( (mid[m_b] == 0) && (get_BID5(Z_MINUS, bid[m_b]) == 0) ) {
+          else if ( (mid[m_t] == target) && (get_BID5(Z_PLUS, pp) == 0) ) {
             if (k != 1) {
-              mid[m_b] = target;
+              mid[m_p] = target;
               c++;
             }
           }
-          else if ( (mid[m_s] == 0) && (get_BID5(Y_MINUS, bid[m_s]) == 0) ) {
+          else if ( (mid[m_n] == target) && (get_BID5(Y_PLUS, pp) == 0) ) {
             if (j != 1) {
-              mid[m_s] = target;
+              mid[m_p] = target;
               c++;
             }
           }
-          else if ( (mid[m_w] == 0) && (get_BID5(X_MINUS, bid[m_w]) == 0) ) {
+          else if ( (mid[m_e] == target) && (get_BID5(X_PLUS, pp) == 0) ) {
             if (i != 1) {
-              mid[m_w] = target;
+              mid[m_p] = target;
               c++;
             }
           }

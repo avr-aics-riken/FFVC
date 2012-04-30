@@ -370,9 +370,13 @@ SklSolverCBC::SklSolverInitialize() {
       
       int fc = Vinfo.fill_cells(cut_id, mid, target_id);
       fill_count -= fc;
-      Hostonly_ printf("\tTry %4d : ID = %d : %d\n", c++, target_id, fill_count);
-
+      Hostonly_ printf("\tTry %4d : ID = %d : %ld\n", c++, target_id, fill_count);
+      break;
+      if ( fc == 0 ) break;
     }
+    
+    // チェック
+    Ex->writeSVX(mid, &C);
     
     // 確認
     if ( !Vinfo.check_fill(mid) ) {
