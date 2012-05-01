@@ -353,9 +353,11 @@ SklSolverCBC::SklSolverInitialize() {
   if ( (C.Mode.Example == id_Polygon) && C.isCDS() ) {
     
     int target_id = C.Mode.Base_Medium;
+    int solid_id = 2;
     unsigned long fill_count = size[0] * size[1] * size[2];
     Hostonly_ printf("Initial fill count = %ld\n", fill_count);
     
+    int isolated_cell = 0;
     int seed[3];
     seed[0] = 1;
     seed[1] = 1;
@@ -364,17 +366,21 @@ SklSolverCBC::SklSolverInitialize() {
     if ( !Vinfo.paint_first_seed(mid, seed, target_id) ) {
       Hostonly_ printf("Failed first painting\n");
     }
+    // first fill
+    fill_count--;
     
     int c=0;
     while (fill_count > 0) {
       
-      int fc = Vinfo.fill_cells(cut_id, mid, target_id);
+      int fc = Vinfo.fill_cells(cut_id, mid, target_id, isolated_cell);
       fill_count -= fc;
-      Hostonly_ printf("\tTry %4d : ID = %d : %ld\n", c++, target_id, fill_count);
-      break;
+      Hostonly_ printf("\tTry %4d : ID = %d : %ld\n", ++c, target_id, fill_count);
       if ( fc == 0 ) break;
     }
     
+    // 孤立した連結部を固体に変更
+    if ( isolated_cell > 0 ) Vinfo.fill_isolated_cells(cut_id, mid, isolated_cell, solid_id);
+
     // チェック
     Ex->writeSVX(mid, &C);
     

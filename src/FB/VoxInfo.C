@@ -4167,74 +4167,236 @@ void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw,
 
 
 /**
- @fn unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
+ @fn unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id, int& isolated)
  @brief フィルを実行
  @param[in] bid カット点のID
- @param[in] mid ID配列
+ @param mid ID配列
  @param[in] tgt_id サーチするID
+ @param[in/out] isolated 連結部が孤立したセルの数
  */
-unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
+unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id, int& isolated)
 {
   int target = tgt_id;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int pp;
+  int c_111, c_112, c_113, c_121, c_122, c_123, c_131, c_132, c_133;
+  int c_211, c_212, c_213, c_221, c_222, c_223, c_231, c_232, c_233;
+  int c_311, c_312, c_313, c_321, c_322, c_323, c_331, c_332, c_333;
+  int pp, pw, pe, ps, pn, pb, pt;
+  unsigned m_111, m_112, m_113, m_121, m_122, m_123, m_131, m_132, m_133;
+  unsigned m_211, m_212, m_213, m_221, m_222, m_223, m_231, m_232, m_233;
+  unsigned m_311, m_312, m_313, m_321, m_322, m_323, m_331, m_332, m_333;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int c = 0;
+  int c = 0; /// painted count
+  int g = 0; /// hole filling count 
+  int q0, q1, q2, q3, q4;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        m_e = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
-        m_w = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
-        m_n = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
-        m_s = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
-        m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
-        m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        m_111 = FBUtility::getFindexS3D(size, guide, i-1, j-1, k-1);
+        m_112 = FBUtility::getFindexS3D(size, guide, i-1, j-1, k  );
+        m_113 = FBUtility::getFindexS3D(size, guide, i-1, j-1, k+1);
+        m_121 = FBUtility::getFindexS3D(size, guide, i-1, j  , k-1);
+        m_122 = FBUtility::getFindexS3D(size, guide, i-1, j  , k  );
+        m_123 = FBUtility::getFindexS3D(size, guide, i-1, j  , k+1);
+        m_131 = FBUtility::getFindexS3D(size, guide, i-1, j+1, k-1);
+        m_132 = FBUtility::getFindexS3D(size, guide, i-1, j+1, k  );
+        m_133 = FBUtility::getFindexS3D(size, guide, i-1, j+1, k+1);
+        
+        m_211 = FBUtility::getFindexS3D(size, guide, i  , j-1, k-1);
+        m_212 = FBUtility::getFindexS3D(size, guide, i  , j-1, k  );
+        m_213 = FBUtility::getFindexS3D(size, guide, i  , j-1, k+1);
+        m_221 = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
+        m_222 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        m_223 = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
+        m_231 = FBUtility::getFindexS3D(size, guide, i  , j+1, k-1);
+        m_232 = FBUtility::getFindexS3D(size, guide, i  , j+1, k  );
+        m_233 = FBUtility::getFindexS3D(size, guide, i  , j+1, k+1);
+        
+        m_311 = FBUtility::getFindexS3D(size, guide, i+1, j-1, k-1);
+        m_312 = FBUtility::getFindexS3D(size, guide, i+1, j-1, k  );
+        m_313 = FBUtility::getFindexS3D(size, guide, i+1, j-1, k+1);
+        m_321 = FBUtility::getFindexS3D(size, guide, i+1, j  , k-1);
+        m_322 = FBUtility::getFindexS3D(size, guide, i+1, j  , k  );
+        m_323 = FBUtility::getFindexS3D(size, guide, i+1, j  , k+1);
+        m_331 = FBUtility::getFindexS3D(size, guide, i+1, j+1, k-1);
+        m_332 = FBUtility::getFindexS3D(size, guide, i+1, j+1, k  );
+        m_333 = FBUtility::getFindexS3D(size, guide, i+1, j+1, k+1);
 
+        m_p = m_222;
+        
         // テストセルが未ペイントの場合
-        if ( mid[m_p] == 0 ) {
+        if ( mid[m_222] == 0 ) {
           
-          pp = bid[m_p];
+          pp = bid[m_222];
+          pw = bid[m_122];
+          pe = bid[m_322];
+          ps = bid[m_212];
+          pn = bid[m_232];
+          pb = bid[m_221];
+          pt = bid[m_223];
 
           // 隣のIDがID=target && カットがない場合にペイント
+          /*
           if ( (mid[m_w] == target) && (get_BID5(X_MINUS, pp) == 0) ) {
-            if (i != ix) {
+            if (i != 1) {
               mid[m_p] = target;
               c++;
             }
           }
           else if ( (mid[m_s] == target) && (get_BID5(Y_MINUS, pp) == 0) ) {
-            if (j != jx) {
-              mid[m_p] = target;
-              c++;
-            }
-          }
-          else if ( (mid[m_b] == target) && (get_BID5(Z_MINUS, pp) == 0) ) {
-            if (k != kx) {
-              mid[m_p] = target;
-              c++;
-            }
-          }
-          else if ( (mid[m_t] == target) && (get_BID5(Z_PLUS, pp) == 0) ) {
-            if (k != 1) {
-              mid[m_p] = target;
-              c++;
-            }
-          }
-          else if ( (mid[m_n] == target) && (get_BID5(Y_PLUS, pp) == 0) ) {
             if (j != 1) {
               mid[m_p] = target;
               c++;
             }
           }
-          else if ( (mid[m_e] == target) && (get_BID5(X_PLUS, pp) == 0) ) {
-            if (i != 1) {
+          else if ( (mid[m_b] == target) && (get_BID5(Z_MINUS, pp) == 0) ) {
+            if (k != 1) {
               mid[m_p] = target;
               c++;
+            }
+          }
+          else if ( (mid[m_t] == target) && (get_BID5(Z_PLUS, pp) == 0) ) {
+            if (k != kx) {
+              mid[m_p] = target;
+              c++;
+            }
+          }
+          else if ( (mid[m_n] == target) && (get_BID5(Y_PLUS, pp) == 0) ) {
+            if (j != jx) {
+              mid[m_p] = target;
+              c++;
+            }
+          }
+          else if ( (mid[m_e] == target) && (get_BID5(X_PLUS, pp) == 0) ) {
+            if (i != ix) {
+              mid[m_p] = target;
+              c++;
+            }
+          }
+           */
+          
+          if ( (i != 1) && (mid[m_122] == target) && (get_BID5(X_MINUS, pp) == 0) ) {
+            q1 = q2 = q3 = q4 = 1;
+            if ( get_BID5(Y_MINUS, pp) == 0 ) q1 = ( get_BID5(X_MINUS, ps) == 0 ) ? 0 : 1;
+            if ( get_BID5(Y_PLUS,  pp) == 0 ) q2 = ( get_BID5(X_MINUS, pn) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( get_BID5(X_MINUS, pb) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( get_BID5(X_MINUS, pt) == 0 ) ? 0 : 1;
+            //if ( get_BID5(Y_MINUS, pp) == 0 ) q1 = ( (mid[m_112] == target) && (get_BID5(X_MINUS, ps) == 0)) ? 0 : 1;
+            //if ( get_BID5(Y_PLUS,  pp) == 0 ) q2 = ( (mid[m_132] == target) && (get_BID5(X_MINUS, pn) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( (mid[m_121] == target) && (get_BID5(X_MINUS, pb) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( (mid[m_123] == target) && (get_BID5(X_MINUS, pt) == 0)) ? 0 : 1;
+            q0 = q1 * q2 * q3 * q4;
+            if ( q0 == 0 ) { // q==0 はどれかが連結している
+              mid[m_p] = target;
+              c++;
+            }
+            else { // 孤立した連結セルには-1をマークしておく
+              mid[m_p] = -1;
+              g++;
+            }
+          }
+          else if ( (j != 1) && (mid[m_212] == target) && (get_BID5(Y_MINUS, pp) == 0) ) {
+            q1 = q2 = q3 = q4 = 1;
+            if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( get_BID5(Y_MINUS, pw) == 0 ) ? 0 : 1;
+            if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( get_BID5(Y_MINUS, pe) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( get_BID5(Y_MINUS, pb) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( get_BID5(Y_MINUS, pt) == 0 ) ? 0 : 1;
+            //if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( (mid[m_112] == target) && (get_BID5(Y_MINUS, pw) == 0)) ? 0 : 1;
+            //if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( (mid[m_312] == target) && (get_BID5(Y_MINUS, pe) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( (mid[m_211] == target) && (get_BID5(Y_MINUS, pb) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( (mid[m_213] == target) && (get_BID5(Y_MINUS, pt) == 0)) ? 0 : 1;
+            q0 = q1 * q2 * q3 * q4;
+            if ( q0 == 0 ) {
+              mid[m_p] = target;
+              c++;
+            }
+            else {
+              mid[m_p] = -1;
+              g++;
+            }
+          }
+          else if ( (k != 1) && (mid[m_221] == target) && (get_BID5(Z_MINUS, pp) == 0) ) {
+            q1 = q2 = q3 = q4 = 1;
+            if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( get_BID5(Z_MINUS, pw) == 0 ) ? 0 : 1;
+            if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( get_BID5(Z_MINUS, pe) == 0 ) ? 0 : 1;
+            if ( get_BID5(Y_MINUS, pp) == 0 ) q3 = ( get_BID5(Z_MINUS, ps) == 0 ) ? 0 : 1;
+            if ( get_BID5(Y_PLUS,  pp) == 0 ) q4 = ( get_BID5(Z_MINUS, pn) == 0 ) ? 0 : 1;
+            //if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( (mid[m_121] == target) && (get_BID5(Y_MINUS, pw) == 0)) ? 0 : 1;
+            //if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( (mid[m_321] == target) && (get_BID5(Y_MINUS, pe) == 0)) ? 0 : 1;
+            //if ( get_BID5(Y_MINUS, pp) == 0 ) q3 = ( (mid[m_211] == target) && (get_BID5(Y_MINUS, ps) == 0)) ? 0 : 1;
+            //if ( get_BID5(Y_PLUS,  pp) == 0 ) q4 = ( (mid[m_231] == target) && (get_BID5(Y_MINUS, pn) == 0)) ? 0 : 1;
+            q0 = q1 * q2 * q3 * q4;
+            if ( q0 == 0 ) {
+              mid[m_p] = target;
+              c++;
+            }
+            else {
+              mid[m_p] = -1;
+              g++;
+            }
+          }
+          else if ( (k != kx) && (mid[m_223] == target) && (get_BID5(Z_PLUS, pp) == 0) ) {
+            q1 = q2 = q3 = q4 = 1;
+            if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( get_BID5(Z_PLUS, pw) == 0 ) ? 0 : 1;
+            if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( get_BID5(Z_PLUS, pe) == 0 ) ? 0 : 1;
+            if ( get_BID5(Y_MINUS, pp) == 0 ) q3 = ( get_BID5(Z_PLUS, ps) == 0 ) ? 0 : 1;
+            if ( get_BID5(Y_PLUS,  pp) == 0 ) q4 = ( get_BID5(Z_PLUS, pn) == 0 ) ? 0 : 1;
+            //if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( (mid[m_123] == target) && (get_BID5(Y_PLUS, pw) == 0)) ? 0 : 1;
+            //if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( (mid[m_323] == target) && (get_BID5(Y_PLUS, pe) == 0)) ? 0 : 1;
+            //if ( get_BID5(Y_MINUS, pp) == 0 ) q3 = ( (mid[m_213] == target) && (get_BID5(Y_PLUS, ps) == 0)) ? 0 : 1;
+            //if ( get_BID5(Y_PLUS,  pp) == 0 ) q4 = ( (mid[m_233] == target) && (get_BID5(Y_PLUS, pn) == 0)) ? 0 : 1;
+            q0 = q1 * q2 * q3 * q4;
+            if ( q0 == 0 ) {
+              mid[m_p] = target;
+              c++;
+            }
+            else {
+              mid[m_p] = -1;
+              g++;
+            }
+          }
+          else if ( (j != jx) && (mid[m_232] == target) && (get_BID5(Y_PLUS, pp) == 0) ) {
+            q1 = q2 = q3 = q4 = 1;
+            if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( get_BID5(Y_PLUS, pw) == 0 ) ? 0 : 1;
+            if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( get_BID5(Y_PLUS, pe) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( get_BID5(Y_PLUS, pb) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( get_BID5(Y_PLUS, pt) == 0 ) ? 0 : 1;
+            //if ( get_BID5(X_MINUS, pp) == 0 ) q1 = ( (mid[m_132] == target) && (get_BID5(Y_PLUS, pw) == 0)) ? 0 : 1;
+            //if ( get_BID5(X_PLUS,  pp) == 0 ) q2 = ( (mid[m_332] == target) && (get_BID5(Y_PLUS, pe) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( (mid[m_231] == target) && (get_BID5(Y_PLUS, pb) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( (mid[m_233] == target) && (get_BID5(Y_PLUS, pt) == 0)) ? 0 : 1;
+            q0 = q1 * q2 * q3 * q4;
+            if ( q0 == 0 ) {
+              mid[m_p] = target;
+              c++;
+            }
+            else {
+              mid[m_p] = -1;
+              g++;
+            }
+          }
+          else if ( (i != ix) && (mid[m_322] == target) && (get_BID5(X_PLUS, pp) == 0) ) {
+            q1 = q2 = q3 = q4 = 1;
+            if ( get_BID5(Y_MINUS, pp) == 0 ) q1 = ( get_BID5(X_PLUS, ps) == 0 ) ? 0 : 1;
+            if ( get_BID5(Y_PLUS,  pp) == 0 ) q2 = ( get_BID5(X_PLUS, pn) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( get_BID5(X_PLUS, pb) == 0 ) ? 0 : 1;
+            if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( get_BID5(X_PLUS, pt) == 0 ) ? 0 : 1;
+            //if ( get_BID5(Y_MINUS, pp) == 0 ) q1 = ( (mid[m_312] == target) && (get_BID5(X_PLUS, ps) == 0)) ? 0 : 1;
+            //if ( get_BID5(Y_PLUS,  pp) == 0 ) q2 = ( (mid[m_332] == target) && (get_BID5(X_PLUS, pn) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_MINUS, pp) == 0 ) q3 = ( (mid[m_321] == target) && (get_BID5(X_PLUS, pb) == 0)) ? 0 : 1;
+            //if ( get_BID5(Z_PLUS,  pp) == 0 ) q4 = ( (mid[m_323] == target) && (get_BID5(X_PLUS, pt) == 0)) ? 0 : 1;
+            q0 = q1 * q2 * q3 * q4;
+            if ( q0 == 0 ) {
+              mid[m_p] = target;
+              c++;
+            }
+            else {
+              mid[m_p] = -1;
+              g++;
             }
           }
           
@@ -4243,8 +4405,50 @@ unsigned VoxInfo::fill_cells(const int* bid, int* mid, const int tgt_id)
     }
   }
   
+  isolated += g;
+  
   return c;
 }
+
+
+/**
+ @fn unsigned VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, const int solid_id)
+ @brief フィルを実行
+ @param[in] bid カット点のID
+ @param mid ID配列
+ @param[in] isolated 連結部が孤立したセルの数
+ @param[in] solid_id 固体セルのID
+ */
+void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, const int solid_id)
+{
+  unsigned m_p;
+  
+  int ix = (int)size[0];
+  int jx = (int)size[1];
+  int kx = (int)size[2];
+  int c = 0; /// count 
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
+        
+        // テストセルがマークされている場合
+        if ( mid[m_p] == -1 ) {
+          mid[m_p] = solid_id;
+          c++;
+        }       
+      }
+    }
+  }
+  
+  if ( c != isolated ) {
+    Hostonly_ printf("Error : The number of cells filled as solid = %d , while isolated cell = %d\n", c, isolated);
+    Exit(0);
+  }
+  
+}
+
 
 
 /**
@@ -4266,7 +4470,6 @@ void VoxInfo::find_isolated_Fcell(unsigned order, int* mid, unsigned* bx)
   int ix = (int)size[0];
   int jx = (int)size[1];
   int kx = (int)size[2];
-  int gd = (int)guide;
   
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {

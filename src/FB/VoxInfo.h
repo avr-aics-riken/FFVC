@@ -147,7 +147,7 @@ public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
-  unsigned fill_cells        (const int* bid, int* mid, const int tgt_id);
+  unsigned fill_cells        (const int* bid, int* mid, const int tgt_id, int& isolated);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
@@ -160,6 +160,7 @@ public:
   void copyBCIbase           (unsigned* dst, unsigned* src);
   void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
   void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
+  void fill_isolated_cells   (const int* bid, int* mid, const int isolated, const int solid_id);
   void findVIBCbbox          (const int id, const unsigned* bv, int* st, int* ed);
   void get_Compo_Area_Cut    (unsigned n, PolylibNS::MPIPolylib* PL);
   bool paint_first_seed      (int* mid, const int* idx, const int target);
