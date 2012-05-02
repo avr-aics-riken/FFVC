@@ -147,11 +147,12 @@ public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
-  unsigned fill_cells        (const int* bid, int* mid, const int tgt_id, int& isolated);
+  unsigned fill_cells        (const int* bid, int* mid, const int tgt_id);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
   unsigned Solid_from_Cut    (int* mid, float* cut, const int id);
+  unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
   
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
