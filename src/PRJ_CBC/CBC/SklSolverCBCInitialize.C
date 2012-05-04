@@ -352,14 +352,21 @@ SklSolverCBC::SklSolverInitialize() {
   // Fill
   if ( (C.Mode.Example == id_Polygon) && C.isCDS() ) {
     
+    Hostonly_ {
+      fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(mp,"\t>> Fill\n\n");
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(fp,"\t>> Fill\n\n");
+    }
+    
     int target_id = C.Mode.Base_Medium;
     int solid_id = 2;
     unsigned long fill_count = size[0] * size[1] * size[2];
     
-    unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, solid_id);
-    Hostonly_ printf("Filled cut = %d\n", isolated_cell);
+    //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, solid_id);
+    //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
     
-    Hostonly_ printf("Initial fill count = %ld\n", fill_count);
+    Hostonly_ printf("\tInitial fill count     : %15ld\n\n", fill_count);
     
     int seed[3];
     seed[0] = 1;
@@ -375,14 +382,27 @@ SklSolverCBC::SklSolverInitialize() {
     int c=0;
     while (fill_count > 0) {
       
-      int fc = Vinfo.fill_cells(cut_id, mid, target_id);
-      fill_count -= fc;
-      Hostonly_ printf("\tTry %4d : ID = %d : %ld\n", ++c, target_id, fill_count);
+      unsigned fc = Vinfo.fill_cell_edge(cut_id, mid, cut, target_id, solid_id);
       if ( fc == 0 ) break;
+      
+      fill_count -= (unsigned long)fc;
+      //Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
+      
     }
+    Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", solid_id, fill_count);
     
-    // 孤立した連結部を固体に変更
-    //if ( isolated_cell > 0 ) Vinfo.fill_isolated_cells(cut_id, mid, isolated_cell, solid_id);
+    // 固体に変更
+    c = 0;
+    while ( fill_count > 0 ) {
+      
+      unsigned fc = Vinfo.fill_inside(mid, solid_id);
+      if ( fc == 0 ) break;
+      
+      fill_count -= (unsigned long)fc;
+      //Hostonly_ printf("\t%4d : Try solid fill with ID = %d : %ld\n", ++c, solid_id, fill_count);
+      
+    }
+    Hostonly_ printf("\tSolid fill with ID = %d : %15ld\n\n", solid_id, fill_count);
 
     // チェック
     Ex->writeSVX(mid, &C);

@@ -147,7 +147,8 @@ public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
-  unsigned fill_cells        (const int* bid, int* mid, const int tgt_id);
+  unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
+  unsigned fill_inside       (int* mid, const int solid_id);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
@@ -190,6 +191,12 @@ public:
   //@note dir = (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
   inline int get_BID5(const int dir, const int bid) {
     return ( (bid >> dir*5) & MASK_5 );
+  }
+  
+  //@brief CutBid5のBoundrary ID設定
+  //@note dir = (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+  inline void set_BID5(int& bid, const int dir, const int s_id) {
+    bid |= (s_id << (dir*5));
   }
   
   // ----> debug function
