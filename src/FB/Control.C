@@ -1531,6 +1531,55 @@ void Control::getXML_Polygon(void)
 
 }
 
+
+/**
+ @fn void Control::getXML_restart_rough(void)
+ @brief 派生して計算する変数のオプションを取得する
+ */
+void Control::getXML_restart_rough(void)
+{
+  const CfgElem *elmL1=NULL;
+  const char* str=NULL;
+  
+  if ( !(elmL1 = getXML_Pointer("Restart_mode", "steer")) ) Exit(0);
+  
+  // 全圧
+  if ( !elmL1->GetValue("Restart_with_rough_initial_data", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Restart_with_rough_initial_data' in 'Restart_mode'\n");
+    Exit(0);
+  }
+  if     ( !strcasecmp(str, "on") )  Mode.Rough_Inital = ON;
+  else if( !strcasecmp(str, "off") ) Mode.Rough_Inital = OFF;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Restart_with_rough_initial_data'\n");
+    Exit(0);
+  }
+  
+  if (Mode.Rough_Inital == ON) {
+    if ( !elmL1->GetValue("Pressure file name", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Pressure file name' in 'Restart_mode'\n");
+      Exit(0);
+    }
+    strcpy(RoughInit_prs_file, str);
+    
+    if ( !elmL1->GetValue("Velocity file name", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Velocity file name' in 'Restart_mode'\n");
+      Exit(0);
+    }
+    strcpy(RoughInit_vel_file, str);
+    
+    if ( isHeatProblem() ) {
+      if ( !elmL1->GetValue("Temperature file name", &str) ) {
+        stamped_printf("\tParsing error : fail to get 'Temperature file name' in 'Restart_mode'\n");
+        Exit(0);
+      }
+      strcpy(RoughInit_temp_file, str);
+    }
+  }
+  
+}
+
+
 /**
  @fn void Control::getXML_ReferenceFrame(ReferenceFrame* RF)
  @brief 参照座標系を取得する
@@ -1843,6 +1892,9 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   
   // 性能測定モードの処理　***隠しパラメータ
   getXML_PMtest();
+  
+  // ラフな初期値を使い、リスタートするモード指定
+  getXML_restart_rough();
 }
 
 /**
@@ -2392,6 +2444,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Solver Control Parameters\n\n");
   
+  // ソルバープロパティ ------------------
   fprintf(fp,"\tSolver Properties\n");
   // Basic Equation and PDE
 	switch (KindOfSolver) {
@@ -2605,26 +2658,15 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     fprintf(fp,"\t     Pressure Shift           :   %s\n", getDirection(Mode.Pshift).c_str());
   }
   
-  // 単位系
+  // 単位系 ------------------
   fprintf(fp,"\n\tUnit\n");
   fprintf(fp,"\t     Unit of Input Parameter  :   %s\n", (Unit.Param == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   fprintf(fp,"\t             Pressure         :   %s\n", (Unit.Prs == Unit_Absolute) ? "Absolute Pressure" : "Gauge Pressure");
   fprintf(fp,"\t             Temperature      :   %s\n", (Unit.Temp == Unit_KELVIN) ? "Kelvin" : "Celsius");
   
-  // 時間制御
+  
+  // 時間制御 ------------------
   fprintf(fp,"\n\tTime Control\n");
-  // Start
-  switch (Start) {
-    case initial_start:
-      fprintf(fp,"\t     Start Condition          :   Impulsive start\n");
-      break;
-    case re_start:
-      fprintf(fp,"\t     Start Condition          :   Restart from file\n");
-      break;
-    default:
-      stamped_printf("Error: start condition section\n");
-      err=false;
-  }
   
   // 加速時間
   if ( !Interval[Interval_Manager::tg_accelra].isStep() ) {
@@ -2724,7 +2766,36 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   fprintf(fp,"\n\tParallel Mode & File IO\n");
   
   
-  // parallel mode
+  // スタートモード ------------------
+  fprintf(fp,"\n\tStart Mode\n");
+  
+  // Start
+  switch (Start) {
+    case initial_start:
+      fprintf(fp,"\t     Start Condition          :   Impulsive start\n");
+      break;
+    case re_start:
+      fprintf(fp,"\t     Start Condition          :   Restart from file\n");
+      break;
+    default:
+      stamped_printf("Error: start condition section\n");
+      err=false;
+  }
+  
+  // 粗い格子の計算結果を使ったリスタート
+  if ( Start == re_start ) {
+    if ( Mode.Rough_Inital == ON ) {
+      fprintf(fp,"\t     with Rough Initial files\n");
+      fprintf(fp,"\t          Pressure            :   %s\n", RoughInit_prs_file);
+      fprintf(fp,"\t          Velocity            :   %s\n", RoughInit_vel_file);
+      if ( isHeatProblem() ) {
+        fprintf(fp,"\t          Temperature         :   %s\n", RoughInit_temp_file);
+      }
+    }
+  }
+  
+  
+  // parallel mode ------------------
   switch (Parallelism) {
     case Serial:
       fprintf(fp,"\t     Parallel Mode            :   Serial\n");
@@ -2782,7 +2853,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   fprintf(fp,"\t     Guide cell for output    :   %d\n", GuideOut);
   
   
-  // ログ出力
+  // ログ出力 ------------------
   fprintf(fp,"\n\tLogs\n");
   fprintf(fp,"\t     Unit for Output          :   %s\n", (Unit.Log == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   fprintf(fp,"\t     Base Logs                :   %4s  %s, %s, %s\n", 
@@ -2803,7 +2874,8 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   fprintf(fp,"\n\tIntervals\n");
   
   
-  // 基本履歴のコンソール出力
+  // インターバル ------------------
+  // 基本履歴のコンソール出力 
   if ( !Interval[Interval_Manager::tg_console].isStep() ) {
     itm = Interval[Interval_Manager::tg_console].getIntervalTime();
     fprintf(fp,"\t     Base Info.(stdout)       :   %12.6e [%s]\n", (Unit.Log==DIMENSIONAL)?itm*Tscale:itm, (Unit.Log==DIMENSIONAL)?"sec":"-");
@@ -2851,7 +2923,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   
-  // Criteria
+  // Criteria ------------------
   fprintf(fp,"\n\tParameter of Linear Equation\n");
   ItrCtl* ICp1= &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   ItrCtl* ICp2= &IC[ItrCtl::ic_prs_cr];  /// 圧力のPoisson反復　2回目
@@ -2906,7 +2978,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   
-  // 壁面の扱い
+  // 壁面の扱い ------------------
   fprintf(fp,"\n\tCondition of Wall\n");
   fprintf(fp,"\t     No of surface            :   %d\n", NoWallSurface);
   switch (Mode.PrsNeuamnnType) {
@@ -2944,7 +3016,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   
-  // 派生変数
+  // 派生変数 ------------------
   fprintf(fp, "\n\tDerived variables\n");
   
   //　全圧の出力モード
@@ -2980,7 +3052,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   
-  // Hidden parameter
+  // Hidden parameter ------------------
   fprintf(fp,"\n\tHidden Parameters\n");
   if ( Hide.Scaling_Factor != 1.0 ) {
     fprintf(fp,"\t     Scaling Factor           :   %f\n", Hide.Scaling_Factor);

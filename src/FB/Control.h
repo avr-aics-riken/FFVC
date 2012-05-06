@@ -282,6 +282,7 @@ public:
     unsigned Wall_profile;
     int Base_Medium;
     int Pshift;
+    int Rough_Inital;
   } Mode_set;
   
   // 隠しパラメータ
@@ -525,6 +526,9 @@ public:
   long TotalMemory;
   char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
   char HistoryWallName[LABEL], PolylibConfigName[LABEL];
+  char RoughInit_prs_file[LABEL];
+  char RoughInit_vel_file[LABEL];
+  char RoughInit_temp_file[LABEL];
   
   Control(){
     Acell = 0;
@@ -592,6 +596,9 @@ public:
     memset(HistoryMonitorName,  0, sizeof(char)*LABEL);
     memset(HistoryWallName,  0, sizeof(char)*LABEL);
     memset(PolylibConfigName,  0, sizeof(char)*LABEL);
+    memset(RoughInit_prs_file,  0, sizeof(char)*LABEL);
+    memset(RoughInit_vel_file,  0, sizeof(char)*LABEL);
+    memset(RoughInit_temp_file,  0, sizeof(char)*LABEL);
 
     CF = NULL;
     TotalMemory = 0;
@@ -620,6 +627,7 @@ public:
     Mode.TP = 0;
     Mode.VRT = 0;
     Mode.Wall_profile = 0;
+    Mode.Rough_Inital = 0;
     
     LES.Calc=0;
     LES.Model=0;
@@ -681,6 +689,7 @@ protected:
   void getXML_Para_Wind      (void);
   void getXML_PMtest         (void);
   void getXML_ReferenceFrame (ReferenceFrame* RF);
+  void getXML_restart_rough  (void);
   void getXML_Scaling        (void);
   void getXML_Solver_Properties (void);
   void getXML_Time_Control   (DTcntl* DT);

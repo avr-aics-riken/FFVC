@@ -11,6 +11,118 @@
 !! @author keno, FSI Team, VCAD, RIKEN
 !<
 
+!  **********************************************
+!> @subroutine fb_interp_rough_s(dst, sz, g, src)
+!! @brief 粗い格子から密な格子への補間
+!! @param dst 密な格子系
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param src 粗い格子系
+!<
+  subroutine fb_interp_rough_s(dst, sz, g, src)
+  implicit none
+  integer                                                      ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                        ::  sz
+  real                                                         ::  g_x, g_y, g_z
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
+  real, dimension(1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
+
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
+
+!$OMP DO SCHEDULE(static)
+
+  do k=1, kx/2
+    kk = k*2
+  do j=1, jx/2
+    jj = j*2
+  do i=1, ix/2
+    ii = i*2
+
+    sp = src(i  , j  , k  )
+    sw = src(i-1, j  , k  )
+    se = src(i+1, j  , k  )
+    ss = src(i  , j-1, k  )
+    sn = src(i  , j+1, k  )
+    sb = src(i  , j  , k-1)
+    st = src(i  , j  , k+1)
+
+    g_x = ( se - sw ) * 0.5
+    g_y = ( sn - ss ) * 0.5
+    g_z = ( st - sb ) * 0.5
+
+    g_xx = se - 2.0 * sp + sw
+    g_yy = sn - 2.0 * sp + ss
+    g_zz = st - 2.0 * sp + sb
+
+    g_xy = ( src(i+1, j+1, k  ) - src(i+1, j-1, k  )   &
+           - src(i-1, j+1, k  ) + src(i-1, j-1, k  ) ) * 0.25
+    g_yz = ( src(i  , j+1, k+1) - src(i  , j+1, k-1)   &
+           - src(i  , j-1, k+1) + src(i  , j-1, k-1) ) * 0.25
+    g_zx = ( src(i+1, j  , k+1) - src(i-1, j  , k+1)   &
+           - src(i+1, j  , k-1) + src(i-1, j  , k-1) ) * 0.25
+
+    dst(ii-1, jj-1, kk-1) = sp 
+    dst(ii  , jj  , kk  ) = sp 
+
+  end do
+  end do
+  end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_interp_rough_s
+
+!  **********************************************
+!> @subroutine fb_interp_rough_v(dst, sz, g, src)
+!! @brief 粗い格子から密な格子への補間
+!! @param dst 密な格子系
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param src 粗い格子系
+!<
+  subroutine fb_interp_rough_s(dst, sz, g, src)
+  implicit none
+  integer                                                         ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                           ::  sz
+  real                                                            ::  gu, gv, gw
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
+  real, dimension(3, 1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
+
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
+
+!$OMP DO SCHEDULE(static)
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    gu = 0.5 * ( src(1,i+1,j,k) - src(1,i-1,j,k) )
+    dst(1,i,j,k) = ( src(1,i,j,k) * rr + u_ref ) * scale
+    dst(2,i,j,k) = ( src(2,i,j,k) * rr + v_ref ) * scale
+    dst(3,i,j,k) = ( src(3,i,j,k) * rr + w_ref ) * scale
+  end do
+  end do
+  end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_interp_rough_v
+
 !  ****************************************************************************
 !> @subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
 !! @brief 温度値を無次元から有次元へ変換し，scale倍して出力

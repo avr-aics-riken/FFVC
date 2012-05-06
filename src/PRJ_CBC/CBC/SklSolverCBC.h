@@ -233,18 +233,19 @@ public:
   
   REAL_TYPE Norm_Poisson     (ItrCtl* IC);
   
-  void allocArray_AB2       (unsigned long &total);
-  void allocArray_average   (unsigned long &total, FILE* fp);
-  void allocArray_Collocate (unsigned long &total);
-  void allocArray_compoVF   (unsigned long &prep, unsigned long &total);
-  void allocArray_forcing   (unsigned long &total);
-  void allocArray_heat      (unsigned long &total);
-  void allocArray_interface (unsigned long &total);
-  void allocArray_LES       (unsigned long &total);
-  void allocArray_main      (unsigned long &total);
-  void allocArray_prep      (unsigned long &prep, unsigned long &total);
-  void allocArray_RK        (unsigned long &total);
-  void allocComponentArray  (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
+  void allocArray_AB2         (unsigned long &total);
+  void allocArray_average     (unsigned long &total, FILE* fp);
+  void allocArray_Collocate   (unsigned long &total);
+  void allocArray_compoVF     (unsigned long &prep, unsigned long &total);
+  void allocArray_forcing     (unsigned long &total);
+  void allocArray_heat        (unsigned long &total);
+  void allocArray_interface   (unsigned long &total);
+  void allocArray_LES         (unsigned long &total);
+  void allocArray_main        (unsigned long &total);
+  void allocArray_prep        (unsigned long &prep, unsigned long &total);
+  void allocArray_RK          (unsigned long &total);
+  void allocArray_RoughInitial(unsigned long &prep);
+  void allocComponentArray    (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   
   void AverageOutput        (unsigned mode, REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
@@ -261,8 +262,10 @@ public:
   void getXML_Mon_Line      (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
   void getXML_Mon_Pointset  (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
   void IF_TRP_VOF           (void);
+  void Interpolation_from_rough_initial(void);
   void load_Restart_avr_file(FILE* fp, REAL_TYPE& flop);
   void load_Restart_file    (FILE* fp, REAL_TYPE& flop);
+  void load_Restart_rough   (FILE* fp, REAL_TYPE& flop);
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void min_distance         (float* cut, FILE* fp);

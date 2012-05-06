@@ -66,7 +66,6 @@ SklSolverCBC::SklSolverCBC() {
   dc_abf = NULL;
   dc_vf0 = NULL;
   
-  // (3, ix, jx, kx)
   dc_av  = NULL;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
@@ -92,7 +91,6 @@ SklSolverCBC::SklSolverCBC() {
   
   dc_cvf  = NULL;
   
-  // (ix, jx, kx)
   dc_ap  = NULL;
   dc_at  = NULL;
   
@@ -171,7 +169,6 @@ SklSolverCBC::SklSolverCBC(int sType) {
   dc_abf = NULL;
   dc_vf0 = NULL;
   
-  // (3, ix, jx, kx)
   dc_av  = NULL;
   
   // (3, ix+guide*2, jx+guide*2, kx+guide*2)
@@ -197,7 +194,6 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   dc_cvf  = NULL;
   
-  // (ix, jx, kx)
   dc_ap  = NULL;
   dc_at  = NULL;
   

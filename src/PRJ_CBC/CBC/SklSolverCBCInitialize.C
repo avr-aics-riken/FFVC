@@ -793,7 +793,7 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING_start(tm_init_alloc);
   allocArray_main (TotalMemory);
   
-  allocArray_Collocate (TotalMemory);
+  //allocArray_Collocate (TotalMemory);
   
   if ( C.LES.Calc == ON ) {
     allocArray_LES (TotalMemory);
@@ -818,6 +818,7 @@ SklSolverCBC::SklSolverInitialize() {
   // 時間平均用の配列をアロケート
   allocArray_average (TotalMemory, fp);
 
+
   
   TIMING_stop(tm_init_alloc);
 
@@ -829,8 +830,40 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ fprintf(mp, "\t>> Restart from Previous Calculation Results\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculation Results\n\n");
     
+    // 瞬時値のロード
     TIMING_start(tm_restart);
-    load_Restart_file(fp, flop_task); // 瞬時値のロード
+    
+    if ( C.Mode.Rough_Initial == OFF ) {
+      load_Restart_file(fp, flop_task); 
+    }
+    else {
+      SklVector3DEx<REAL_TYPE> *dc_r_v;
+      SklScalar3D<REAL_TYPE>   *dc_r_p;
+      SklScalar3D<REAL_TYPE>   *dc_r_t;
+      
+      dc_r_p = NULL;
+      dc_r_v = NULL;
+      dc_r_t = NULL;
+      
+      // テンポラリのファイルロード
+      allocArray_RoughInitial(PrepMemory);
+      
+      G_PrepMemory = PrepMemory;
+      if( para_cmp->IsParallel() ) {
+        tmp_memory = G_PrepMemory;
+        para_cmp->Allreduce(&tmp_memory, &G_PrepMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+      }
+      Hostonly_  {
+        FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
+      }
+      
+      // 粗い格子のファイルをロード
+      load_Restart_rough(fp, flop_task);
+      
+      // 内挿処理
+      Interpolation_from_rough_initial();
+    }
+    
     TIMING_stop(tm_restart);
     
     Hostonly_ fprintf(mp,"\n");
@@ -1343,6 +1376,35 @@ void SklSolverCBC::allocArray_RK (unsigned long &total)
   if ( !A.alloc_Real_S3D(this, dc_dp, "dp", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
 }
+
+
+/**
+ @fn void SklSolverCBC::allocArray_RoughInitial(unsigned long &prep)
+ @brief 前処理に用いる配列のアロケーション
+ @param prep 前処理に使用するメモリ量
+ */
+void SklSolverCBC::allocArray_RoughInitial(unsigned long &prep)
+{
+  unsigned long mc=0;
+  unsigned r_size[3];
+  
+  r_size[0] = size[0] / 2;
+  r_size[1] = size[1] / 2;
+  r_size[2] = size[2] / 2;
+  
+  if ( !A.alloc_Real_S3D(this, dc_r_p, "r_prs", r_size, guide, 0.0, mc) ) Exit(0);
+  prep += mc;
+  
+  if ( !A.alloc_Real_V3DEx(this, dc_r_v, "r_vel", r_size, guide, 0.0, mc) ) Exit(0);
+  prep += mc;
+  
+  
+  if ( C.isHeatProblem() ) {
+    if ( !A.alloc_Real_S3D(this, dc_r_t, "r_tmp", r_size, guide, 0.0, mc) ) Exit(0);
+    prep += mc;
+  }
+}
+
 
 /**
  @fn void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
@@ -2274,6 +2336,59 @@ void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
   //F.loadSphScalar3D(this, fp, "VOF", G_size, guide, dc_vof, C.Unit.File);
 }
 
+
+/**
+ @fn void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
+ @brief 粗い格子を用いたリスタート
+ @param fp ファイルポインタ
+ @param flop
+ */
+void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
+{
+  int step;
+  REAL_TYPE time;
+  
+  unsigned r_G_size[3];
+  r_G_size[0] = G_size[0] / 2;
+  r_G_size[1] = G_size[1] / 2;
+  r_G_size[2] = G_size[2] / 2;
+  
+  
+  // 圧力の瞬時値　ここでタイムスタンプを得る
+  REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+  F.loadPressure(this, fp, "Pressure", r_G_size, guide, dc_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+  SklSetBaseStep(step);
+  SklSetBaseTime(time);
+  
+  // v00[]に値をセット
+  copyV00fromRF((double)time);
+  
+  
+  // Instantaneous Velocity fields
+  F.loadVelocity(this, fp, "Velocity", r_G_size, guide, dc_r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+  if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
+    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+    Exit(0);
+  }
+  
+  // Instantaneous Temperature fields
+  if ( C.isHeatProblem() ) {
+    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
+    F.loadTemperature(this, fp, "Temperature", r_G_size, guide, dc_r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+    if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
+      Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+      Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+      Exit(0);
+    }
+  }
+
+}
+
+
 /**
  @fn void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
  @brief リスタート時の平均値ファイル読み込み
@@ -2772,6 +2887,37 @@ void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const u
     
   }
 }
+
+
+/**
+ @fn void SklSolverCBC::Interpolation_from_rough_initial(void)
+ @brief 粗い格子を用いたリスタート値の内挿
+ */
+void SklSolverCBC::Interpolation_from_rough_initial(void)
+{
+  REAL_TYPE *v = NULL;
+  REAL_TYPE *p = NULL;
+  REAL_TYPE *t = NULL;
+  REAL_TYPE *r_v = NULL;
+  REAL_TYPE *r_p = NULL;
+  REAL_TYPE *r_t = NULL;
+  
+  if( !(v   = dc_v->GetData()) )     Exit(0);
+  if( !(p   = dc_p->GetData()) )     Exit(0);
+  if( !(r_v = dc_r_v->GetData()) )   Exit(0);
+  if( !(r_p = dc_r_p->GetData()) )   Exit(0);
+  
+  fb_interp_rough_s_(p, sz, gc, r_p);
+  fb_interp_rough_v_(v, sz, gc, r_v);
+  
+  if ( C.isHeatProblem() ) {
+    if( !(t   = dc_t->GetData()) )   Exit(0);
+    if( !(r_t = dc_r_t->GetData()) ) Exit(0);
+    fb_interp_rough_s_(t, sz, gc, r_t);
+  }
+
+}
+
 
 /**
  @fn void SklSolverCBC::setBCinfo(ParseBC* B)
