@@ -1,9 +1,0 @@
-#! /bin/bash
-platex InsideCBC
-bibtex InsideCBC
-platex InsideCBC
-platex InsideCBC
-mendex -s myindex InsideCBC.idx
-platex InsideCBC
-dvipdfmx InsideCBC
-open InsideCBC.pdf
