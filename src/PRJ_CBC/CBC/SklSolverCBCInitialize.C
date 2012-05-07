@@ -1207,6 +1207,8 @@ SklSolverCBC::SklSolverInitialize() {
   // 初期状態のファイル出力 性能測定モードのときには出力しない
 	if ( (C.Hide.PM_Test == OFF) &&  (0 == SklGetTotalStep()) ) FileOutput(Control::IO_forced, flop_task);
   
+  if ( C.Mode.Rough_Initial == ON ) FileOutput(Control::IO_forced, flop_task);
+  
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
 		Hostonly_ fprintf(mp, "\n\tCheck mode --- Only pre-process\n\n");
@@ -2341,14 +2343,23 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   int step;
   REAL_TYPE time;
   
-  unsigned r_G_size[3];
-  r_G_size[0] = G_size[0] / 2;
-  r_G_size[1] = G_size[1] / 2;
-  r_G_size[2] = G_size[2] / 2;
+  REAL_TYPE *r_v = NULL;
+  REAL_TYPE *r_p = NULL;
+  REAL_TYPE *r_t = NULL;
+  if( !(r_v = dc_r_v->GetData()) )   Exit(0);
+  if( !(r_p = dc_r_p->GetData()) )   Exit(0);
+  
+  unsigned r_size[3];
+  r_size[0] = size[0] / 2;
+  r_size[1] = size[1] / 2;
+  r_size[2] = size[2] / 2;
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-  F.loadPressure(this, fp, "Pressure", r_G_size, guide, dc_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  
+  //F.loadPressure(this, fp, "Pressure", r_G_size, guide, dc_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  F.loadScalar(fp, C.RoughInit_prs_file, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
@@ -2358,7 +2369,9 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  F.loadVelocity(this, fp, "Velocity", r_G_size, guide, dc_r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  //F.loadVelocity(this, fp, "Velocity", r_G_size, guide, dc_r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  F.loadVector(fp, C.RoughInit_vel_file, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
@@ -2368,8 +2381,11 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() ) {
+    if( !(r_t = dc_r_t->GetData()) ) Exit(0);
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    F.loadTemperature(this, fp, "Temperature", r_G_size, guide, dc_r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    //F.loadTemperature(this, fp, "Temperature", r_G_size, guide, dc_r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    F.loadTemp(fp, C.RoughInit_temp_file, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");

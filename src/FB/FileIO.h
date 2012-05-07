@@ -80,6 +80,22 @@ public:
   void writeRawSPH       (const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, 
                           const unsigned m_ModePrecision);
   
+  void loadVector(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+                  REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
+                  const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode=true);
+  void loadScalar(FILE* fp, char* fname, const unsigned* size, const unsigned gc,
+                  REAL_TYPE* s, int& step, REAL_TYPE& time, 
+                  const unsigned Dmode, 
+                  const REAL_TYPE BasePrs, 
+                  const REAL_TYPE RefDensity, 
+                  const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode=true);
+  void loadTemp(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+                REAL_TYPE* t, int& step, REAL_TYPE& time, 
+                const unsigned Dmode, 
+                const REAL_TYPE Base_tmp, 
+                const REAL_TYPE Diff_tmp, 
+                const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode=true);
+  
   /**
    @fn inline void CalcIndex(cosnt unsigned dst_ilen, const unsigned dst_jlen, const unsigned dst_klen, cosnt unsigned dst_gc, const unsigned src_gc, 
    unsigned& dst_ix, unsigned& dst_jx, unsigned& dst_kx, int& diff, unsigned& sta)

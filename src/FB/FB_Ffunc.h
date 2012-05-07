@@ -77,6 +77,9 @@ extern "C" {
   void fb_tmp_d2nd_       (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* Base_tmp, REAL_TYPE* Diff_tm, REAL_TYPE* klv, REAL_TYPE* scale, REAL_TYPE* flop);
   void fb_tmp_nd2d_       (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* Base_tmp, REAL_TYPE* Diff_tm, REAL_TYPE* klv, REAL_TYPE* scale, REAL_TYPE* flop);
   void fb_xcopy_          (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* scale, REAL_TYPE* flop);
+  
+  void fb_read_sph_s_     (REAL_TYPE* s, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, int* gs);
+  void fb_read_sph_v_     (REAL_TYPE* v, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, int* gs);
 }
 
 #endif // _SKL_FORTRAN_FUNC_FB_H_

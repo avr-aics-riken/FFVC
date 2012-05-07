@@ -409,6 +409,112 @@
   return
   end subroutine fb_interp_rough_v
 
+
+!  **********************************************************
+!> @subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs)
+!! @brief 速度ベクトルのロード
+!! @param v 速度ベクトル
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param fname ファイル名
+!! @param step ステップ数
+!! @param time 時刻
+!! @param gs ガイドセルスイッチ
+!<
+  subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs
+  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
+  character*64                                              ::  fname
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  
+  open(16, file=fname, form='unformatted')
+
+  read(16) sv_type, d_type
+  if ( sv_type /= 1 ) then
+    write(*,*) 'read error : scalar'
+    stop
+  end if
+  
+  read(16) imax, jmax, kmax
+  if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
+    write(*,*) 'read error : size'
+    stop
+  end if
+  
+  read(16) x_org, y_org, z_org
+  read(16) dx, dy, dz
+  read(16) step, time
+  
+  if ( gs == 1 ) then
+    read(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+  else
+    read(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
+  end if
+  close (unit=16)
+
+  return
+  end subroutine fb_read_sph_s
+  
+  
+!  **********************************************************
+!> @subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs)
+!! @brief 速度ベクトルのロード
+!! @param v 速度ベクトル
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param fname ファイル名
+!! @param step ステップ数
+!! @param time 時刻
+!! @param gs ガイドセルスイッチ
+!<
+  subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, l
+  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  character*64                                              ::  fname
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  
+  open(16, file=fname, form='unformatted')
+
+  read(16) sv_type, d_type
+  if ( sv_type /= 2 ) then
+    write(*,*) 'read error : vector'
+    stop
+  end if
+  
+  read(16) imax, jmax, kmax
+  if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
+    write(*,*) 'read error : size'
+    stop
+  end if
+  
+  read(16) x_org, y_org, z_org
+  read(16) dx, dy, dz
+  read(16) step, time
+  
+  if ( gs == 1 ) then
+    read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+  else
+    read(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
+  end if
+  close (unit=16)
+
+  return
+  end subroutine fb_read_sph_v
+  
 !  ****************************************************************************
 !> @subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
 !! @brief 温度値を無次元から有次元へ変換し，scale倍して出力

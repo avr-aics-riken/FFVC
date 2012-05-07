@@ -982,3 +982,133 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   if (f) { delete [] f; f=NULL; }
 }
+
+
+/**
+ @fn void FileIO::loadScalar(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+        REAL_TYPE* p, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE BasePrs, 
+        const REAL_TYPE RefDensity, const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+ @brief スカラファイルをロードする
+ @param fp ファイルポインタ（ファイル出力）
+ @param fname ファイル名
+ @param p  結果を保持するデータ
+ @param step[out] ステップ
+ @param time[out] 時刻
+ @param Dmode 次元（無次元-0 / 有次元-1）
+ @param BasePrs 基準圧力
+ @param RefDensity　代表密度
+ @param RefVelocity 代表速度
+ @param flop
+ @param mode （瞬時値のときtrue，平均値のときfalse）
+ */
+void FileIO::loadScalar(FILE* fp, char* fname, const unsigned* size, const unsigned gc,
+                          REAL_TYPE* p, int& step, REAL_TYPE& time, 
+                          const unsigned Dmode, 
+                          const REAL_TYPE BasePrs, 
+                          const REAL_TYPE RefDensity, 
+                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+{
+  if ( !fname ) Exit(0);
+  
+  int gs = 1; // with guide cell
+  fb_read_sph_s_ (p, (int*)size, (int*)&gc, fname, &step, &time, &gs);
+
+  
+  // 有次元ファイルの場合，無次元に変換する
+  int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
+  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
+  REAL_TYPE basep = BasePrs;
+  REAL_TYPE ref_d = RefDensity;
+  REAL_TYPE ref_v = RefVelocity;
+  
+  fb_prs_d2nd_(p, p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
+  
+  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+}
+
+/**
+ @fn void FileIO::loadVelocity(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+          REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
+          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+ @brief 速度をロードする
+ @param fp ファイルポインタ（ファイル出力）
+ @param fname InFile名
+ @param size サイズ
+ @param guide ガイドセルサイズ
+ @param v  結果を保持するデータ
+ @param step ステップ
+ @param time 時刻
+ @param v00[4]
+ @param Dmode 次元（無次元-0 / 有次元-1）
+ @param RefVelocity 代表速度
+ @param flop
+ @param mode （瞬時値のときtrue，平均値のときfalse）
+ */
+void FileIO::loadVector(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+                          REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
+                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+{
+  if ( !fname ) Exit(0);
+  
+  int gs = 1; // with guide cell
+  fb_read_sph_v_ (v, (int*)size, (int*)&gc, fname, &step, &time, &gs);
+  
+  REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
+  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
+  REAL_TYPE u0[3];
+  u0[0] = v00[0];
+  u0[1] = v00[1];
+  u0[2] = v00[2];
+  
+  fb_shift_refv_in_(v, (int*)size, (int*)&gc, v, u0, &scale, &refv, &flop);
+  
+  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+
+}
+
+/**
+ @fn void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, char* fname, const unsigned* size, const unsigned guide, 
+ SklScalar3D<REAL_TYPE>* dc_t, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE Base_tmp, 
+ const REAL_TYPE Diff_tmp, const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
+ @brief 圧力をロードする
+ @param fp ファイルポインタ（ファイル出力）
+ @param fname InFileのattrラベル名
+ @param size グローバルなサイズ
+ @param guide ガイドセルサイズ
+ @param dc_t  結果を保持するデータクラス
+ @param step[out] ステップ
+ @param time[out] 時刻
+ @param Dmode 次元（無次元-0 / 有次元-1）
+ @param Base_tmp 基準温度
+ @param Diff_tmp　代表温度差
+ @param Kelvin 定数
+ @param flop
+ @param mode （瞬時値のときtrue，平均値のときfalse）
+ */
+void FileIO::loadTemp(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+                             REAL_TYPE* t, int& step, REAL_TYPE& time, 
+                             const unsigned Dmode, 
+                             const REAL_TYPE Base_tmp, 
+                             const REAL_TYPE Diff_tmp, 
+                             const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
+{
+  if ( !fname ) Exit(0);
+  
+  int gs = 1; // with guide cell
+  fb_read_sph_s_ (t, (int*)size, (int*)&gc, fname, &step, &time, &gs);
+  
+  // 有次元ファイルの場合，無次元に変換する
+  int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
+  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
+  REAL_TYPE base_t = Base_tmp;
+  REAL_TYPE diff_t = Diff_tmp;
+  REAL_TYPE klv    = Kelvin;
+  
+  fb_tmp_d2nd_(t, t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
+  
+  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+
+}
