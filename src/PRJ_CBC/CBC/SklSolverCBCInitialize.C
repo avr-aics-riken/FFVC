@@ -852,7 +852,7 @@ SklSolverCBC::SklSolverInitialize() {
       
       // 粗い格子のファイルをロード
       load_Restart_rough(fp, flop_task);
-      mark();
+      
       // 内挿処理
       Interpolation_from_rough_initial();
     }
@@ -2357,7 +2357,6 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  //F.loadPressure(this, fp, "Pressure", r_G_size, guide, dc_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   F.loadScalar(fp, C.RoughInit_prs_file, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2369,7 +2368,6 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  //F.loadVelocity(this, fp, "Velocity", r_G_size, guide, dc_r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
   F.loadVector(fp, C.RoughInit_vel_file, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2383,7 +2381,7 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   if ( C.isHeatProblem() ) {
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    //F.loadTemperature(this, fp, "Temperature", r_G_size, guide, dc_r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+
     F.loadTemp(fp, C.RoughInit_temp_file, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;

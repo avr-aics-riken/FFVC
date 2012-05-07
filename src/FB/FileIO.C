@@ -345,10 +345,11 @@ void FileIO::loadVelocity(SklSolverBase* obj, FILE* fp, const char* fname, const
   gc = (int)dc_tmp->GetVCellSize();
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
-  REAL_TYPE u0[3];
+  REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
   u0[2] = v00[2];
+  u0[3] = v00[3];
   
   fb_shift_refv_in_(v, sz, &gc, vi, u0, &scale, &refv, &flop);
       
@@ -1056,10 +1057,11 @@ void FileIO::loadVector(FILE* fp, char* fname, const unsigned* size, const unsig
   
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
-  REAL_TYPE u0[3];
+  REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
   u0[2] = v00[2];
+  u0[3] = v00[3];
   
   fb_shift_refv_in_(v, (int*)size, (int*)&gc, v, u0, &scale, &refv, &flop);
   
