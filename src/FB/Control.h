@@ -282,7 +282,7 @@ public:
     unsigned Wall_profile;
     int Base_Medium;
     int Pshift;
-    int Rough_Inital;
+    int Rough_Initial;
   } Mode_set;
   
   // 隠しパラメータ
@@ -627,7 +627,7 @@ public:
     Mode.TP = 0;
     Mode.VRT = 0;
     Mode.Wall_profile = 0;
-    Mode.Rough_Inital = 0;
+    Mode.Rough_Initial = 0;
     
     LES.Calc=0;
     LES.Model=0;

@@ -94,6 +94,10 @@ SklSolverCBC::SklSolverCBC() {
   dc_ap  = NULL;
   dc_at  = NULL;
   
+  dc_r_p = NULL;
+  dc_r_v = NULL;
+  dc_r_t = NULL;
+  
   // Cut
   cut = NULL;
   cut_id = NULL;
@@ -196,6 +200,10 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   dc_ap  = NULL;
   dc_at  = NULL;
+  
+  dc_r_p = NULL;
+  dc_r_v = NULL;
+  dc_r_t = NULL;
   
   // Cut
   cut = NULL;

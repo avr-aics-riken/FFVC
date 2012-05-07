@@ -179,6 +179,11 @@ public:
   SklScalar3D<REAL_TYPE>  *dc_at;
   SklScalar3D<float>      *dc_cvf;
   
+  // Rough initial
+  SklVector3DEx<REAL_TYPE> *dc_r_v;
+  SklScalar3D<REAL_TYPE>   *dc_r_p;
+  SklScalar3D<REAL_TYPE>   *dc_r_t;
+  
   // コンポーネントワーク配列のアドレス管理
   REAL_TYPE** component_array;
   

@@ -2907,13 +2907,13 @@ void SklSolverCBC::Interpolation_from_rough_initial(void)
   if( !(r_v = dc_r_v->GetData()) )   Exit(0);
   if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
-  fb_interp_rough_s_(p, sz, gc, r_p);
-  fb_interp_rough_v_(v, sz, gc, r_v);
+  //fb_interp_rough_s_(p, sz, gc, r_p);
+  //fb_interp_rough_v_(v, sz, gc, r_v);
   
   if ( C.isHeatProblem() ) {
     if( !(t   = dc_t->GetData()) )   Exit(0);
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
-    fb_interp_rough_s_(t, sz, gc, r_t);
+    //fb_interp_rough_s_(t, sz, gc, r_t);
   }
 
 }

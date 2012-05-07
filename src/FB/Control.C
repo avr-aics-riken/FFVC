@@ -1548,14 +1548,14 @@ void Control::getXML_restart_rough(void)
     stamped_printf("\tParsing error : fail to get 'Restart_with_rough_initial_data' in 'Restart_mode'\n");
     Exit(0);
   }
-  if     ( !strcasecmp(str, "on") )  Mode.Rough_Inital = ON;
-  else if( !strcasecmp(str, "off") ) Mode.Rough_Inital = OFF;
+  if     ( !strcasecmp(str, "on") )  Mode.Rough_Initial = ON;
+  else if( !strcasecmp(str, "off") ) Mode.Rough_Initial = OFF;
   else {
     stamped_printf("\tInvalid keyword is described for 'Restart_with_rough_initial_data'\n");
     Exit(0);
   }
   
-  if (Mode.Rough_Inital == ON) {
+  if (Mode.Rough_Initial == ON) {
     if ( !elmL1->GetValue("Pressure file name", &str) ) {
       stamped_printf("\tParsing error : fail to get 'Pressure file name' in 'Restart_mode'\n");
       Exit(0);
@@ -1894,7 +1894,7 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   getXML_PMtest();
   
   // ラフな初期値を使い、リスタートするモード指定
-  getXML_restart_rough();
+  //getXML_restart_rough();
 }
 
 /**
@@ -2784,7 +2784,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   
   // 粗い格子の計算結果を使ったリスタート
   if ( Start == re_start ) {
-    if ( Mode.Rough_Inital == ON ) {
+    if ( Mode.Rough_Initial == ON ) {
       fprintf(fp,"\t     with Rough Initial files\n");
       fprintf(fp,"\t          Pressure            :   %s\n", RoughInit_prs_file);
       fprintf(fp,"\t          Velocity            :   %s\n", RoughInit_vel_file);

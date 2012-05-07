@@ -21,9 +21,14 @@
 !<
   subroutine fb_interp_rough_s(dst, sz, g, src)
   implicit none
-  integer                                                      ::  i, j, k, ix, jx, kx, g
+  integer                                                      ::  i, j, k, ix, jx, kx, g, ii, jj, kk
   integer, dimension(3)                                        ::  sz
-  real                                                         ::  g_x, g_y, g_z
+  real                                                         ::  g_x,  g_y,  g_z
+  real                                                         ::  g_xx, g_yy, g_zz
+  real                                                         ::  g_xy, g_yz, g_zx
+  real                                                         ::         s_112,        s_121, s_122, s_123,        s_132
+  real                                                         ::  s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233
+  real                                                         ::         s_312,        s_321, s_322, s_323,        s_332
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
   real, dimension(1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
 
@@ -33,7 +38,7 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static)
 
@@ -44,31 +49,76 @@
   do i=1, ix/2
     ii = i*2
 
-    sp = src(i  , j  , k  )
-    sw = src(i-1, j  , k  )
-    se = src(i+1, j  , k  )
-    ss = src(i  , j-1, k  )
-    sn = src(i  , j+1, k  )
-    sb = src(i  , j  , k-1)
-    st = src(i  , j  , k+1)
+!    s_111 = src(i-1, j-1, k-1)
+    s_112 = src(i-1, j-1, k  )
+!    s_113 = src(i-1, j-1, k+1)
+    s_121 = src(i-1, j  , k-1)
+    s_122 = src(i-1, j  , k  )
+    s_123 = src(i-1, j  , k+1)
+!    s_131 = src(i-1, j+1, k-1)
+    s_132 = src(i-1, j+1, k  )
+!    s_133 = src(i-1, j+1, k+1)
+        
+    s_211 = src(i  , j-1, k-1)
+    s_212 = src(i  , j-1, k  )
+    s_213 = src(i  , j-1, k+1)
+    s_221 = src(i  , j  , k-1)
+    s_222 = src(i  , j  , k  )
+    s_223 = src(i  , j  , k+1)
+    s_231 = src(i  , j+1, k-1)
+    s_232 = src(i  , j+1, k  )
+    s_233 = src(i  , j+1, k+1)
+            
+!    s_311 = src(i+1, j-1, k-1)
+    s_312 = src(i+1, j-1, k  )
+!    s_313 = src(i+1, j-1, k+1)
+    s_321 = src(i+1, j  , k-1)
+    s_322 = src(i+1, j  , k  )
+    s_323 = src(i+1, j  , k+1)
+!    s_331 = src(i+1, j+1, k-1)
+    s_332 = src(i+1, j+1, k  )
+!    s_333 = src(i+1, j+1, k+1)
 
-    g_x = ( se - sw ) * 0.5
-    g_y = ( sn - ss ) * 0.5
-    g_z = ( st - sb ) * 0.5
+    g_x = ( s_322 - s_122 ) * 0.5
+    g_y = ( s_232 - s_212 ) * 0.5
+    g_z = ( s_223 - s_221 ) * 0.5
 
-    g_xx = se - 2.0 * sp + sw
-    g_yy = sn - 2.0 * sp + ss
-    g_zz = st - 2.0 * sp + sb
+    g_xx = s_322 - 2.0 * s_222 + s_122
+    g_yy = s_232 - 2.0 * s_222 + s_212
+    g_zz = s_223 - 2.0 * s_222 + s_221
 
-    g_xy = ( src(i+1, j+1, k  ) - src(i+1, j-1, k  )   &
-           - src(i-1, j+1, k  ) + src(i-1, j-1, k  ) ) * 0.25
-    g_yz = ( src(i  , j+1, k+1) - src(i  , j+1, k-1)   &
-           - src(i  , j-1, k+1) + src(i  , j-1, k-1) ) * 0.25
-    g_zx = ( src(i+1, j  , k+1) - src(i-1, j  , k+1)   &
-           - src(i+1, j  , k-1) + src(i-1, j  , k-1) ) * 0.25
+    g_xy = ( s_332 - s_312 - s_132 + s_112 ) * 0.25
+    g_yz = ( s_233 - s_231 - s_213 + s_211 ) * 0.25
+    g_zx = ( s_323 - s_123 - s_321 + s_121 ) * 0.25
+    
+    if (i == 1) then
+      if (j == 1)  g_xy = s_332 - s_322 - s_232 + s_222
+      if (j == jx) g_xy = s_322 - s_222 - s_312 + s_212
+      
+      if (k == 1)  g_zx = s_323 - s_322 - s_223 + s_222
+      if (k == kx) g_zx = s_322 - s_321 - s_222 + s_221
+    end if
+    
+    if (i == ix) then
+      if (j == 1)  g_xy = s_232 - s_222 - s_132 + s_122
+      if (j == jx) g_xy = s_222 - s_122 - s_212 + s_112
+      
+      if (k == 1)  g_zx = s_223 - s_222 - s_123 + s_122
+      if (k == kx) g_zx = s_222 - s_221 - s_122 + s_121
+    end if
+    
+    if (j == 1) then
+      if (k == 1)  g_yz = s_233 - s_232 - s_223 + s_222
+      if (k == kx) g_yz = s_232 - s_231 - s_222 + s_221
+    end if
 
-    dst(ii-1, jj-1, kk-1) = sp 
-    dst(ii  , jj  , kk  ) = sp 
+    if (j == jx) then
+      if (k == 1)  g_yz = s_223 - s_222 - s_213 + s_212
+      if (k == kx) g_yz = s_222 - s_221 - s_212 + s_211
+    end if
+
+    dst(ii-1, jj-1, kk-1) = s_222
+    dst(ii  , jj  , kk  ) = s_222
 
   end do
   end do
@@ -88,7 +138,7 @@
 !! @param g ガイドセル長
 !! @param src 粗い格子系
 !<
-  subroutine fb_interp_rough_s(dst, sz, g, src)
+  subroutine fb_interp_rough_v(dst, sz, g, src)
   implicit none
   integer                                                         ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                           ::  sz
@@ -102,17 +152,14 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    gu = 0.5 * ( src(1,i+1,j,k) - src(1,i-1,j,k) )
-    dst(1,i,j,k) = ( src(1,i,j,k) * rr + u_ref ) * scale
-    dst(2,i,j,k) = ( src(2,i,j,k) * rr + v_ref ) * scale
-    dst(3,i,j,k) = ( src(3,i,j,k) * rr + w_ref ) * scale
+
   end do
   end do
   end do
