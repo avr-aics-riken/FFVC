@@ -4185,7 +4185,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
   m_sz[2] = size[2];
   unsigned gd = guide;
   int c = 0; /// painted count
-  const float cpos = 0.9; // なんとなく
+  float cpos = 0.9; // なんとなく
 
 #pragma omp parallel for firstprivate(ix, jx, kx, m_sz, gd, target, sd, cpos) \
  private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
@@ -6180,7 +6180,7 @@ unsigned VoxInfo::test_opposite_cut(int* bid, int* mid, const int solid_id)
   flag |= ( solid_id << 20);
   flag |= ( solid_id << 25);
   
-#pragma omp parallel for firstprivate(ix, jx, kx, m_sz, gd, solid_id, flag) \
+#pragma omp parallel for firstprivate(ix, jx, kx, m_sz, gd, sd, flag) \
  private(m_111, m_112, m_113, m_121, m_122, m_123, m_131, m_132, m_133) \
  private(m_211, m_212, m_213, m_221, m_222, m_223, m_231, m_232, m_233) \
  private(m_311, m_312, m_313, m_321, m_322, m_323, m_331, m_332, m_333) \
@@ -6256,67 +6256,67 @@ unsigned VoxInfo::test_opposite_cut(int* bid, int* mid, const int solid_id)
         
         if ( (b_122 != 0) && (b_322 != 0) ) {      // i
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_212 != 0) && (b_232 != 0) ) { // j
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_221 != 0) && (b_223 != 0) ) { // k
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_112 != 0) && (b_332 != 0) ) { // ij
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_132 != 0) && (b_312 != 0) ) { // ij
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_211 != 0) && (b_233 != 0) ) { // jk
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_213 != 0) && (b_231 != 0) ) { // jk
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_121 != 0) && (b_323 != 0) ) { // ki
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_123 != 0) && (b_321 != 0) ) { // ki
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_111 != 0) && (b_333 != 0) ) { // ijk
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_311 != 0) && (b_133 != 0) ) { // ijk
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_131 != 0) && (b_313 != 0) ) { // ijk
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
         else if ( (b_331 != 0) && (b_113 != 0) ) { // ijk
           bid[m_222] = flag;
-          mid[m_222] = solid_id;
+          mid[m_222] = sd;
           c++;
         }
           

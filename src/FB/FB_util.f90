@@ -23,7 +23,7 @@
   implicit none
   integer                                                      ::  i, j, k, ix, jx, kx, g, ii, jj, kk
   integer, dimension(3)                                        ::  sz
-  real                                                         ::  g_x,  g_y,  g_z
+  real                                                         ::  g_x,  g_y,  g_z, q
   real                                                         ::  g_xx, g_yy, g_zz
   real                                                         ::  g_xy, g_yz, g_zx
   real                                                         ::         s_112,        s_121, s_122, s_123,        s_132
@@ -38,7 +38,12 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(s_112, s_121, s_122, s_123, s_132) &
+!$OMP PRIVATE(s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233) &
+!$OMP PRIVATE(s_312, s_321, s_322, s_323, s_332) &
+!$OMP PRIVATE(g_x, g_y, g_z, g_xx, g_yy, g_zz, g_xy, g_yz, g_zx, q) &
+!$OMP PRIVATE(ii, jj, kk)
 
 !$OMP DO SCHEDULE(static)
 
@@ -49,15 +54,11 @@
   do i=1, ix/2
     ii = i*2
 
-!    s_111 = src(i-1, j-1, k-1)
     s_112 = src(i-1, j-1, k  )
-!    s_113 = src(i-1, j-1, k+1)
     s_121 = src(i-1, j  , k-1)
     s_122 = src(i-1, j  , k  )
     s_123 = src(i-1, j  , k+1)
-!    s_131 = src(i-1, j+1, k-1)
     s_132 = src(i-1, j+1, k  )
-!    s_133 = src(i-1, j+1, k+1)
         
     s_211 = src(i  , j-1, k-1)
     s_212 = src(i  , j-1, k  )
@@ -69,19 +70,15 @@
     s_232 = src(i  , j+1, k  )
     s_233 = src(i  , j+1, k+1)
             
-!    s_311 = src(i+1, j-1, k-1)
     s_312 = src(i+1, j-1, k  )
-!    s_313 = src(i+1, j-1, k+1)
     s_321 = src(i+1, j  , k-1)
     s_322 = src(i+1, j  , k  )
     s_323 = src(i+1, j  , k+1)
-!    s_331 = src(i+1, j+1, k-1)
     s_332 = src(i+1, j+1, k  )
-!    s_333 = src(i+1, j+1, k+1)
 
-    g_x = ( s_322 - s_122 ) * 0.5
-    g_y = ( s_232 - s_212 ) * 0.5
-    g_z = ( s_223 - s_221 ) * 0.5
+    g_x = ( s_322 - s_122 ) * 0.25
+    g_y = ( s_232 - s_212 ) * 0.25
+    g_z = ( s_223 - s_221 ) * 0.25
 
     g_xx = s_322 - 2.0 * s_222 + s_122
     g_yy = s_232 - 2.0 * s_222 + s_212
@@ -117,8 +114,16 @@
       if (k == kx) g_yz = s_222 - s_221 - s_212 + s_211
     end if
 
-    dst(ii-1, jj-1, kk-1) = s_222
-    dst(ii  , jj  , kk  ) = s_222
+    q = s_222 + 0.125 * ( g_xx + g_yy + g_zz )
+    
+    dst(ii-1, jj-1, kk-1) = q - g_x - g_y - g_z + 0.25 * (+ g_xy + g_yz + g_zx )
+    dst(ii  , jj-1, kk-1) = q + g_x - g_y - g_z + 0.25 * (- g_xy + g_yz + g_zx )
+    dst(ii-1, jj  , kk-1) = q - g_x + g_y - g_z + 0.25 * (- g_xy - g_yz + g_zx )
+    dst(ii  , jj  , kk-1) = q + g_x + g_y - g_z + 0.25 * (+ g_xy - g_yz - g_zx )
+    dst(ii-1, jj-1, kk  ) = q - g_x - g_y + g_z + 0.25 * (+ g_xy - g_yz - g_zx )
+    dst(ii  , jj-1, kk  ) = q + g_x - g_y + g_z + 0.25 * (- g_xy - g_yz + g_zx )
+    dst(ii-1, jj  , kk  ) = q - g_x + g_y + g_z + 0.25 * (- g_xy + g_yz - g_zx )
+    dst(ii  , jj  , kk  ) = q + g_x + g_y + g_z + 0.25 * (+ g_xy + g_yz + g_zx )
 
   end do
   end do
@@ -140,9 +145,15 @@
 !<
   subroutine fb_interp_rough_v(dst, sz, g, src)
   implicit none
-  integer                                                         ::  i, j, k, ix, jx, kx, g
+  integer                                                         ::  i, j, k, ix, jx, kx, g, ii, jj ,kk
   integer, dimension(3)                                           ::  sz
-  real                                                            ::  gu, gv, gw
+  real                                                            ::  u_x, u_y, u_z, u_xx, u_yy, u_zz, u_xy, u_yz, u_zx
+  real                                                            ::  v_x, v_y, v_z, v_xx, v_yy, v_zz, v_xy, v_yz, v_zx
+  real                                                            ::  w_x, w_y, w_z, w_xx, w_yy, w_zz, w_xy, w_yz, w_zx
+  real                                                            ::         s_112,        s_121, s_122, s_123,        s_132
+  real                                                            ::  s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233
+  real                                                            ::         s_312,        s_321, s_322, s_323,        s_332
+  real                                                            ::  q
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
   real, dimension(3, 1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
 
@@ -152,13 +163,241 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(s_112, s_121, s_122, s_123, s_132) &
+!$OMP PRIVATE(s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233) &
+!$OMP PRIVATE(s_312, s_321, s_322, s_323, s_332) &
+!$OMP PRIVATE(u_x, u_y, u_z, u_xx, u_yy, u_zz, u_xy, u_yz, u_zx) &
+!$OMP PRIVATE(v_x, v_y, v_z, v_xx, v_yy, v_zz, v_xy, v_yz, v_zx) &
+!$OMP PRIVATE(w_x, w_y, w_z, w_xx, w_yy, w_zz, w_xy, w_yz, w_zx) &
+!$OMP PRIVATE(ii, jj, kk, q)
 
 !$OMP DO SCHEDULE(static)
 
-  do k=1,kx
-  do j=1,jx
-  do i=1,ix
+  do k=1, kx/2
+    kk = k*2
+  do j=1, jx/2
+    jj = j*2
+  do i=1, ix/2
+    ii = i*2
+
+!   u
+    s_112 = src(1, i-1, j-1, k  )
+    s_121 = src(1, i-1, j  , k-1)
+    s_122 = src(1, i-1, j  , k  )
+    s_123 = src(1, i-1, j  , k+1)
+    s_132 = src(1, i-1, j+1, k  )
+        
+    s_211 = src(1, i  , j-1, k-1)
+    s_212 = src(1, i  , j-1, k  )
+    s_213 = src(1, i  , j-1, k+1)
+    s_221 = src(1, i  , j  , k-1)
+    s_222 = src(1, i  , j  , k  )
+    s_223 = src(1, i  , j  , k+1)
+    s_231 = src(1, i  , j+1, k-1)
+    s_232 = src(1, i  , j+1, k  )
+    s_233 = src(1, i  , j+1, k+1)
+            
+    s_312 = src(1, i+1, j-1, k  )
+    s_321 = src(1, i+1, j  , k-1)
+    s_322 = src(1, i+1, j  , k  )
+    s_323 = src(1, i+1, j  , k+1)
+    s_332 = src(1, i+1, j+1, k  )
+
+    u_x = ( s_322 - s_122 ) * 0.25
+    u_y = ( s_232 - s_212 ) * 0.25
+    u_z = ( s_223 - s_221 ) * 0.25
+
+    u_xx = s_322 - 2.0 * s_222 + s_122
+    u_yy = s_232 - 2.0 * s_222 + s_212
+    u_zz = s_223 - 2.0 * s_222 + s_221
+
+    u_xy = ( s_332 - s_312 - s_132 + s_112 ) * 0.25
+    u_yz = ( s_233 - s_231 - s_213 + s_211 ) * 0.25
+    u_zx = ( s_323 - s_123 - s_321 + s_121 ) * 0.25
+    
+    if (i == 1) then
+      if (j == 1)  u_xy = s_332 - s_322 - s_232 + s_222
+      if (j == jx) u_xy = s_322 - s_222 - s_312 + s_212
+      
+      if (k == 1)  u_zx = s_323 - s_322 - s_223 + s_222
+      if (k == kx) u_zx = s_322 - s_321 - s_222 + s_221
+    end if
+    
+    if (i == ix) then
+      if (j == 1)  u_xy = s_232 - s_222 - s_132 + s_122
+      if (j == jx) u_xy = s_222 - s_122 - s_212 + s_112
+      
+      if (k == 1)  u_zx = s_223 - s_222 - s_123 + s_122
+      if (k == kx) u_zx = s_222 - s_221 - s_122 + s_121
+    end if
+    
+    if (j == 1) then
+      if (k == 1)  u_yz = s_233 - s_232 - s_223 + s_222
+      if (k == kx) u_yz = s_232 - s_231 - s_222 + s_221
+    end if
+
+    if (j == jx) then
+      if (k == 1)  u_yz = s_223 - s_222 - s_213 + s_212
+      if (k == kx) u_yz = s_222 - s_221 - s_212 + s_211
+    end if
+
+    q = s_222 + 0.125 * ( u_xx + u_yy + u_zz )
+    
+    dst(1, ii-1, jj-1, kk-1) = q - u_x - u_y - u_z + 0.25 * (+ u_xy + u_yz + u_zx )
+    dst(1, ii  , jj-1, kk-1) = q + u_x - u_y - u_z + 0.25 * (- u_xy + u_yz + u_zx )
+    dst(1, ii-1, jj  , kk-1) = q - u_x + u_y - u_z + 0.25 * (- u_xy - u_yz + u_zx )
+    dst(1, ii  , jj  , kk-1) = q + u_x + u_y - u_z + 0.25 * (+ u_xy - u_yz - u_zx )
+    dst(1, ii-1, jj-1, kk  ) = q - u_x - u_y + u_z + 0.25 * (+ u_xy - u_yz - u_zx )
+    dst(1, ii  , jj-1, kk  ) = q + u_x - u_y + u_z + 0.25 * (- u_xy - u_yz + u_zx )
+    dst(1, ii-1, jj  , kk  ) = q - u_x + u_y + u_z + 0.25 * (- u_xy + u_yz - u_zx )
+    dst(1, ii  , jj  , kk  ) = q + u_x + u_y + u_z + 0.25 * (+ u_xy + u_yz + u_zx )
+
+
+!   v
+    s_112 = src(2, i-1, j-1, k  )
+    s_121 = src(2, i-1, j  , k-1)
+    s_122 = src(2, i-1, j  , k  )
+    s_123 = src(2, i-1, j  , k+1)
+    s_132 = src(2, i-1, j+1, k  )
+        
+    s_211 = src(2, i  , j-1, k-1)
+    s_212 = src(2, i  , j-1, k  )
+    s_213 = src(2, i  , j-1, k+1)
+    s_221 = src(2, i  , j  , k-1)
+    s_222 = src(2, i  , j  , k  )
+    s_223 = src(2, i  , j  , k+1)
+    s_231 = src(2, i  , j+1, k-1)
+    s_232 = src(2, i  , j+1, k  )
+    s_233 = src(2, i  , j+1, k+1)
+            
+    s_312 = src(2, i+1, j-1, k  )
+    s_321 = src(2, i+1, j  , k-1)
+    s_322 = src(2, i+1, j  , k  )
+    s_323 = src(2, i+1, j  , k+1)
+    s_332 = src(2, i+1, j+1, k  )
+
+    v_x = ( s_322 - s_122 ) * 0.25
+    v_y = ( s_232 - s_212 ) * 0.25
+    v_z = ( s_223 - s_221 ) * 0.25
+
+    v_xx = s_322 - 2.0 * s_222 + s_122
+    v_yy = s_232 - 2.0 * s_222 + s_212
+    v_zz = s_223 - 2.0 * s_222 + s_221
+
+    v_xy = ( s_332 - s_312 - s_132 + s_112 ) * 0.25
+    v_yz = ( s_233 - s_231 - s_213 + s_211 ) * 0.25
+    v_zx = ( s_323 - s_123 - s_321 + s_121 ) * 0.25
+    
+    if (i == 1) then
+      if (j == 1)  v_xy = s_332 - s_322 - s_232 + s_222
+      if (j == jx) v_xy = s_322 - s_222 - s_312 + s_212
+      
+      if (k == 1)  v_zx = s_323 - s_322 - s_223 + s_222
+      if (k == kx) v_zx = s_322 - s_321 - s_222 + s_221
+    end if
+    
+    if (i == ix) then
+      if (j == 1)  v_xy = s_232 - s_222 - s_132 + s_122
+      if (j == jx) v_xy = s_222 - s_122 - s_212 + s_112
+      
+      if (k == 1)  v_zx = s_223 - s_222 - s_123 + s_122
+      if (k == kx) v_zx = s_222 - s_221 - s_122 + s_121
+    end if
+    
+    if (j == 1) then
+      if (k == 1)  v_yz = s_233 - s_232 - s_223 + s_222
+      if (k == kx) v_yz = s_232 - s_231 - s_222 + s_221
+    end if
+
+    if (j == jx) then
+      if (k == 1)  v_yz = s_223 - s_222 - s_213 + s_212
+      if (k == kx) v_yz = s_222 - s_221 - s_212 + s_211
+    end if
+
+    q = s_222 + 0.125 * ( v_xx + v_yy + v_zz )
+    
+    dst(2, ii-1, jj-1, kk-1) = q - v_x - v_y - v_z + 0.25 * (+ v_xy + v_yz + v_zx )
+    dst(2, ii  , jj-1, kk-1) = q + v_x - v_y - v_z + 0.25 * (- v_xy + v_yz + v_zx )
+    dst(2, ii-1, jj  , kk-1) = q - v_x + v_y - v_z + 0.25 * (- v_xy - v_yz + v_zx )
+    dst(2, ii  , jj  , kk-1) = q + v_x + v_y - v_z + 0.25 * (+ v_xy - v_yz - v_zx )
+    dst(2, ii-1, jj-1, kk  ) = q - v_x - v_y + v_z + 0.25 * (+ v_xy - v_yz - v_zx )
+    dst(2, ii  , jj-1, kk  ) = q + v_x - v_y + v_z + 0.25 * (- v_xy - v_yz + v_zx )
+    dst(2, ii-1, jj  , kk  ) = q - v_x + v_y + v_z + 0.25 * (- v_xy + v_yz - v_zx )
+    dst(2, ii  , jj  , kk  ) = q + v_x + v_y + v_z + 0.25 * (+ v_xy + v_yz + v_zx )
+
+
+!   w
+    s_112 = src(3, i-1, j-1, k  )
+    s_121 = src(3, i-1, j  , k-1)
+    s_122 = src(3, i-1, j  , k  )
+    s_123 = src(3, i-1, j  , k+1)
+    s_132 = src(3, i-1, j+1, k  )
+        
+    s_211 = src(3, i  , j-1, k-1)
+    s_212 = src(3, i  , j-1, k  )
+    s_213 = src(3, i  , j-1, k+1)
+    s_221 = src(3, i  , j  , k-1)
+    s_222 = src(3, i  , j  , k  )
+    s_223 = src(3, i  , j  , k+1)
+    s_231 = src(3, i  , j+1, k-1)
+    s_232 = src(3, i  , j+1, k  )
+    s_233 = src(3, i  , j+1, k+1)
+            
+    s_312 = src(3, i+1, j-1, k  )
+    s_321 = src(3, i+1, j  , k-1)
+    s_322 = src(3, i+1, j  , k  )
+    s_323 = src(3, i+1, j  , k+1)
+    s_332 = src(3, i+1, j+1, k  )
+
+    w_x = ( s_322 - s_122 ) * 0.25
+    w_y = ( s_232 - s_212 ) * 0.25
+    w_z = ( s_223 - s_221 ) * 0.25
+
+    w_xx = s_322 - 2.0 * s_222 + s_122
+    w_yy = s_232 - 2.0 * s_222 + s_212
+    w_zz = s_223 - 2.0 * s_222 + s_221
+
+    w_xy = ( s_332 - s_312 - s_132 + s_112 ) * 0.25
+    w_yz = ( s_233 - s_231 - s_213 + s_211 ) * 0.25
+    w_zx = ( s_323 - s_123 - s_321 + s_121 ) * 0.25
+    
+    if (i == 1) then
+      if (j == 1)  w_xy = s_332 - s_322 - s_232 + s_222
+      if (j == jx) w_xy = s_322 - s_222 - s_312 + s_212
+      
+      if (k == 1)  w_zx = s_323 - s_322 - s_223 + s_222
+      if (k == kx) w_zx = s_322 - s_321 - s_222 + s_221
+    end if
+    
+    if (i == ix) then
+      if (j == 1)  w_xy = s_232 - s_222 - s_132 + s_122
+      if (j == jx) w_xy = s_222 - s_122 - s_212 + s_112
+      
+      if (k == 1)  w_zx = s_223 - s_222 - s_123 + s_122
+      if (k == kx) w_zx = s_222 - s_221 - s_122 + s_121
+    end if
+    
+    if (j == 1) then
+      if (k == 1)  w_yz = s_233 - s_232 - s_223 + s_222
+      if (k == kx) w_yz = s_232 - s_231 - s_222 + s_221
+    end if
+
+    if (j == jx) then
+      if (k == 1)  w_yz = s_223 - s_222 - s_213 + s_212
+      if (k == kx) w_yz = s_222 - s_221 - s_212 + s_211
+    end if
+
+    q = s_222 + 0.125 * ( w_xx + w_yy + w_zz )
+    
+    dst(3, ii-1, jj-1, kk-1) = q - w_x - w_y - w_z + 0.25 * (+ w_xy + w_yz + w_zx )
+    dst(3, ii  , jj-1, kk-1) = q + w_x - w_y - w_z + 0.25 * (- w_xy + w_yz + w_zx )
+    dst(3, ii-1, jj  , kk-1) = q - w_x + w_y - w_z + 0.25 * (- w_xy - w_yz + w_zx )
+    dst(3, ii  , jj  , kk-1) = q + w_x + w_y - w_z + 0.25 * (+ w_xy - w_yz - w_zx )
+    dst(3, ii-1, jj-1, kk  ) = q - w_x - w_y + w_z + 0.25 * (+ w_xy - w_yz - w_zx )
+    dst(3, ii  , jj-1, kk  ) = q + w_x - w_y + w_z + 0.25 * (- w_xy - w_yz + w_zx )
+    dst(3, ii-1, jj  , kk  ) = q - w_x + w_y + w_z + 0.25 * (- w_xy + w_yz - w_zx )
+    dst(3, ii  , jj  , kk  ) = q + w_x + w_y + w_z + 0.25 * (+ w_xy + w_yz + w_zx )
 
   end do
   end do

@@ -837,17 +837,10 @@ SklSolverCBC::SklSolverInitialize() {
       load_Restart_file(fp, flop_task); 
     }
     else {
-      SklVector3DEx<REAL_TYPE> *dc_r_v;
-      SklScalar3D<REAL_TYPE>   *dc_r_p;
-      SklScalar3D<REAL_TYPE>   *dc_r_t;
-      
-      dc_r_p = NULL;
-      dc_r_v = NULL;
-      dc_r_t = NULL;
-      
+
       // テンポラリのファイルロード
       allocArray_RoughInitial(PrepMemory);
-      
+
       G_PrepMemory = PrepMemory;
       if( para_cmp->IsParallel() ) {
         tmp_memory = G_PrepMemory;
@@ -859,7 +852,7 @@ SklSolverCBC::SklSolverInitialize() {
       
       // 粗い格子のファイルをロード
       load_Restart_rough(fp, flop_task);
-      
+      mark();
       // 内挿処理
       Interpolation_from_rough_initial();
     }
@@ -2353,14 +2346,13 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   r_G_size[1] = G_size[1] / 2;
   r_G_size[2] = G_size[2] / 2;
   
-  
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   F.loadPressure(this, fp, "Pressure", r_G_size, guide, dc_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
-  
+  mark();
   // v00[]に値をセット
   copyV00fromRF((double)time);
   
@@ -2907,13 +2899,13 @@ void SklSolverCBC::Interpolation_from_rough_initial(void)
   if( !(r_v = dc_r_v->GetData()) )   Exit(0);
   if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
-  //fb_interp_rough_s_(p, sz, gc, r_p);
-  //fb_interp_rough_v_(v, sz, gc, r_v);
+  fb_interp_rough_s_(p, sz, gc, r_p);
+  fb_interp_rough_v_(v, sz, gc, r_v);
   
   if ( C.isHeatProblem() ) {
     if( !(t   = dc_t->GetData()) )   Exit(0);
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
-    //fb_interp_rough_s_(t, sz, gc, r_t);
+    fb_interp_rough_s_(t, sz, gc, r_t);
   }
 
 }

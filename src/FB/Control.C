@@ -1556,13 +1556,13 @@ void Control::getXML_restart_rough(void)
   }
   
   if (Mode.Rough_Initial == ON) {
-    if ( !elmL1->GetValue("Pressure file name", &str) ) {
+    if ( !elmL1->GetValue("Pressure_file_name", &str) ) {
       stamped_printf("\tParsing error : fail to get 'Pressure file name' in 'Restart_mode'\n");
       Exit(0);
     }
     strcpy(RoughInit_prs_file, str);
     
-    if ( !elmL1->GetValue("Velocity file name", &str) ) {
+    if ( !elmL1->GetValue("Velocity_file_name", &str) ) {
       stamped_printf("\tParsing error : fail to get 'Velocity file name' in 'Restart_mode'\n");
       Exit(0);
     }
@@ -1577,6 +1577,10 @@ void Control::getXML_restart_rough(void)
     }
   }
   
+  if ( GuideOut != guide ) {
+    stamped_printf("\tParameter error : 'Restart_mode' requires to be goude out = 'with'\n");
+    Exit(0);
+  }
 }
 
 
@@ -1894,7 +1898,7 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   getXML_PMtest();
   
   // ラフな初期値を使い、リスタートするモード指定
-  //getXML_restart_rough();
+  getXML_restart_rough();
 }
 
 /**
