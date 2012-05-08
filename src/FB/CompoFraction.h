@@ -16,6 +16,7 @@
 #include "FBDefine.h"
 #include "FBUtility.h"
 #include "vec3.h"
+#include <stdio.h>
 
 class CompoFraction {
   

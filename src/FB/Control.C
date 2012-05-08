@@ -1898,7 +1898,7 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   getXML_PMtest();
   
   // ラフな初期値を使い、リスタートするモード指定
-  getXML_restart_rough();
+  if ( Start == Control::re_start ) getXML_restart_rough();
 }
 
 /**

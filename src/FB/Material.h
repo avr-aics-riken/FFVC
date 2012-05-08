@@ -13,7 +13,7 @@
 //@author keno, FSI Team, VCAD, RIKEN
 
 #include <string>
-
+#include <string.h>
 #include "FBDefine.h"
 
 using namespace std;

@@ -14,6 +14,8 @@
 
 #include <math.h>
 #include <string>
+#include <string.h>
+#include <stdio.h>
 #include "FBDefine.h"
 
 class FBUtility {

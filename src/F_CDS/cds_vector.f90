@@ -115,7 +115,7 @@
     cm1 = 1.0 - ck
     cm2 = 1.0 + ck
     
-    flop = flop + real(ix)*real(jx)*real(kx)*1215.0 + 34.0
+    flop = flop + real(ix)*real(jx)*real(kx)*1221.0 + 34.0
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
@@ -293,7 +293,7 @@
       wb = db - 0.5
       wt = dt - 0.5
 
-      ! X方向  > 12 + 18 + 76 + 238 = 344 flop ---------------------------------------
+      ! X方向  > 12 + 20 + 76 + 238 = 346 flop ---------------------------------------
 
       ! カットがない場合のセルフェイス速度　MUSCL内挿で参照する >  12 flop
       Uw_t = 0.5 * (Up0 + Uw1)
@@ -303,13 +303,13 @@
       Ve_t = 0.5 * (Vp0 + Ve1)
       We_t = 0.5 * (Wp0 + We1)
       
-      ! セルフェイスの移流速度 >  18 flop
+      ! セルフェイスの移流速度 >  20 flop
       Uw_r = Uw_t * qw + r_qw * u_ref
       Ue_r = Ue_t * qe + r_qe * u_ref
       Uw_c = hw * ( ww * Ue_r + u_ref )
       Ue_c = he * ( we * Uw_r + u_ref )
-      UPw  = Uw_t * qw + r_qw * Uw_c
-      UPe  = Ue_t * qe + r_qe * Ue_c
+      UPw  = ( Uw_t * qw + r_qw * Uw_c ) * qw
+      UPe  = ( Ue_t * qe + r_qe * Ue_c ) * qe
 
       ! カットがある場合の参照セルの値の計算  >  19*4=76 flop
       ! u_{i-1}
@@ -411,8 +411,8 @@
       Vn_r = Vn_t * qn + r_qn * v_ref
       Vs_c = hs * ( ws * Vn_r + v_ref )
       Vn_c = hn * ( wn * Vs_r + v_ref )
-      VPs  = Vs_t * qs + r_qs * Vs_c
-      VPn  = Vn_t * qn + r_qn * Vn_c
+      VPs  = ( Vs_t * qs + r_qs * Vs_c ) * qs
+      VPn  = ( Vn_t * qn + r_qn * Vn_c ) * qn
       
       ! カットがある場合の参照セルの値の計算
       ! u_{j-1}
@@ -514,8 +514,8 @@
       Wt_r = Wt_t * qt + r_qt * w_ref
       Wb_c = hb * ( wb * Wt_r + w_ref )
       Wt_c = ht * ( wt * Wb_r + w_ref )
-      WPb  = Wb_t * qb + r_qb * Wb_c
-      WPt  = Wt_t * qt + r_qt * Wt_c
+      WPb  = ( Wb_t * qb + r_qb * Wb_c ) * qb
+      WPt  = ( Wt_t * qt + r_qt * Wt_c ) * qt
       
       ! カットがある場合の参照セルの値の計算
       ! u_{k-1}
