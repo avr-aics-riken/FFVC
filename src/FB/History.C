@@ -314,7 +314,6 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
  @brief 計算領域の流束履歴のヘッダー出力
  @param fp 出力ファイルポインタ
  @param C コントロールクラス
- @todo 有次元と無次元の表示
  */
 void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 {
@@ -342,7 +341,6 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
  @brief 計算領域の流束履歴の出力
  @param fp 出力ファイルポインタ
  @param C Controlクラスへのポインタ
- @todo 有次元と無次元の表示
  */
 void History::printHistoryDomfx(FILE* fp, const Control* C)
 {
@@ -365,6 +363,41 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
     for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i]) ); // Watt
   }
 
+  fprintf(fp, "\n");
+  fflush(fp);
+}
+
+/**
+ @fn void History::printHistoryForceTitle(FILE* fp, const Control* C)
+ @brief 物体に働く力の履歴のヘッダー出力
+ @param fp 出力ファイルポインタ
+ @param C コントロールクラス
+ */
+void History::printHistoryForceTitle(FILE* fp, const Control* C)
+{
+  if ( Unit_Log == DIMENSIONAL ) {
+    fprintf(fp, "    step      time[sec]");
+  }
+  else {
+    fprintf(fp, "    step        time[-]");
+  }
+  
+  for (int i=0; i<NOFACE; i++) fprintf(fp, "         Fx         Fy         Fz");
+
+  fprintf(fp, "\n");
+}
+
+/**
+ @fn void History::printHistoryForce(FILE* fp, const Control* C, REAL_TYPE* force)
+ @brief 物体に働く力の履歴の出力
+ @param fp 出力ファイルポインタ
+ @param C Controlクラスへのポインタ
+ */
+void History::printHistoryForce(FILE* fp, const Control* C, REAL_TYPE* force)
+{
+  fprintf(fp, "%8d %14.6e", step, printTime());
+  fprintf(fp, " %12.4e  %12.4e  %12.4e", printTP(force[0]), printTP(force[1]), printTP(force[2]) );
+  
   fprintf(fp, "\n");
   fflush(fp);
 }

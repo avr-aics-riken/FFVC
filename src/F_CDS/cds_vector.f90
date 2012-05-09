@@ -1237,3 +1237,101 @@
 
     return
     end subroutine cds_eddy_viscosity
+
+!  **************************************************************
+!> @subroutine cds_force (force, sz, g, p, bp, bid, id, dh, flop)
+!! @brief 物体表面の力を計算する
+!! @param[out] force 力の成分
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param p 圧力
+!! @param bp BCindex P
+!! @param bid カット点のID情報（BID5）
+!! @param id 積分計算対象ID
+!! @param dh 無次元格子幅
+!! @param[out] flop flop count
+!<
+    subroutine cds_force (force, sz, g, p, bp, bid, id, dh, flop)
+    implicit none
+    include '../FB/cbc_f_params.h'
+    integer                                                     ::  i, j, k, ix, jx, kx, g, id, bd
+    integer, dimension(3)                                       ::  sz
+    real                                                        ::  fx, fy, fz
+    real                                                        ::  qw, qe, qs, qn, qb, qt
+    real                                                        ::  flop, actv, pp, dh, cf
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bid, bp
+    real, dimension(3)                                          ::  force
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+    flop = flop + real(ix)*real(jx)*real(kx)*11.0 + 5.0
+
+    fx = 0.0
+    fy = 0.0
+    fz = 0.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, id) &
+!$OMP PRIVATE(actv, bd, pp) &
+!$OMP PRIVATE(qw, qe, qs, qn, qb, qt)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:fx) &
+!$OMP REDUCTION(+:fy) &
+!$OMP REDUCTION(+:fz)
+
+    do k=1,kx
+    do j=1,jx
+    do i=1,ix
+
+      ! Fluid -> 1.0
+      actv= real(ibits(bp(i,j,k), State, 1))
+
+      bd = bid(i,j,k)
+
+      ! if not cut -> q=0.0
+      qw = 0.0
+      qe = 0.0
+      qs = 0.0
+      qn = 0.0
+      qb = 0.0
+      qt = 0.0
+
+      ! カットIDが指定IDである場合のみ
+      if ( ibits(bd, X_minus*5, bitw_5) == id ) qw = 1.0
+      if ( ibits(bd, X_plus *5, bitw_5) == id ) qe = 1.0
+      if ( ibits(bd, Y_minus*5, bitw_5) == id ) qs = 1.0
+      if ( ibits(bd, Y_plus *5, bitw_5) == id ) qn = 1.0
+      if ( ibits(bd, Z_minus*5, bitw_5) == id ) qb = 1.0
+      if ( ibits(bd, Z_plus *5, bitw_5) == id ) qt = 1.0
+
+      pp = p(i,j,k) * actv
+
+      ! 各方向に壁がある場合、かつ流体セルのみ力を積算
+      fx = fx + pp * ( qw - qe )
+      fy = fy + pp * ( qs - qn )
+      fz = fz + pp * ( qb - qt )
+
+    end do
+    end do
+    end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+    
+    cf = 2.0 * dh * dh
+    force(1) = fx * cf
+    force(2) = fy * cf
+    force(3) = fz * cf
+
+    return
+    end subroutine cds_force

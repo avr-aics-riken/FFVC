@@ -141,6 +141,8 @@ public:
   void printHistoryCompo     (FILE* fp, const CompoList* cmp, const Control* C);
   void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);
   void printHistoryDomfx     (FILE* fp, const Control* C);
+  void printHistoryForceTitle(FILE* fp, const Control* C);
+  void printHistoryForce     (FILE* fp, const Control* C, REAL_TYPE* force);
   void printHistoryDomfxTitle(FILE* fp, const Control* C);
   void printHistoryItr       (FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx);
   void printHistoryItrTitle  (FILE* fp);

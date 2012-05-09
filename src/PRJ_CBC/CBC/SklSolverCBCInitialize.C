@@ -360,10 +360,9 @@ SklSolverCBC::SklSolverInitialize() {
     }
     
     int target_id = C.Mode.Base_Medium;
-    int solid_id = 2;
     unsigned long fill_count = size[0] * size[1] * size[2];
     
-    //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, solid_id);
+    //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
     //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
     
     Hostonly_ printf("\tInitial fill count     : %15ld\n\n", fill_count);
@@ -382,27 +381,27 @@ SklSolverCBC::SklSolverInitialize() {
     int c=0;
     while (fill_count > 0) {
       
-      unsigned fc = Vinfo.fill_cell_edge(cut_id, mid, cut, target_id, solid_id);
+      unsigned fc = Vinfo.fill_cell_edge(cut_id, mid, cut, target_id, id_of_solid);
       if ( fc == 0 ) break;
       
       fill_count -= (unsigned long)fc;
       //Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
       
     }
-    Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", solid_id, fill_count);
+    Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", id_of_solid, fill_count);
     
     // 固体に変更
     c = 0;
     while ( fill_count > 0 ) {
       
-      unsigned fc = Vinfo.fill_inside(mid, solid_id);
+      unsigned fc = Vinfo.fill_inside(mid, id_of_solid);
       if ( fc == 0 ) break;
       
       fill_count -= (unsigned long)fc;
-      //Hostonly_ printf("\t%4d : Try solid fill with ID = %d : %ld\n", ++c, solid_id, fill_count);
+      //Hostonly_ printf("\t%4d : Try solid fill with ID = %d : %ld\n", ++c, id_of_solid, fill_count);
       
     }
-    Hostonly_ printf("\tSolid fill with ID = %d : %15ld\n\n", solid_id, fill_count);
+    Hostonly_ printf("\tSolid fill with ID = %d : %15ld\n\n", id_of_solid, fill_count);
 
     // チェック
     Ex->writeSVX(mid, &C);
@@ -1171,6 +1170,13 @@ SklSolverCBC::SklSolverInitialize() {
         return -1;
       }
       H->printHistoryDomfxTitle(fp_d, &C);
+      
+      // 力の履歴情報　
+      if ( !(fp_f=fopen((char*)C.HistoryForceName, "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", (char*)C.HistoryForceName);
+        return -1;
+      }
+      H->printHistoryForceTitle(fp_f, &C);
     }
     
     // 反復履歴情報　history_itr.log
@@ -1756,6 +1762,7 @@ void SklSolverCBC::fixed_parameters(void)
   strcpy(C.HistoryName,        "history_base.txt");
   strcpy(C.HistoryCompoName,   "history_compo.txt");
   strcpy(C.HistoryDomfxName,   "history_domainflux.txt");
+  strcpy(C.HistoryForceName,   "history_force.txt");
   strcpy(C.HistoryWallName,    "history_log_wall.txt");
   strcpy(C.HistoryItrName,     "history_iteration.txt");
   strcpy(C.HistoryMonitorName, "sample.log");

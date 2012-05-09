@@ -525,7 +525,7 @@ public:
 
   long TotalMemory;
   char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
-  char HistoryWallName[LABEL], PolylibConfigName[LABEL];
+  char HistoryWallName[LABEL], PolylibConfigName[LABEL], HistoryForceName[LABEL];
   char RoughInit_prs_file[LABEL];
   char RoughInit_vel_file[LABEL];
   char RoughInit_temp_file[LABEL];
@@ -592,6 +592,7 @@ public:
     memset(HistoryName,  0, sizeof(char)*LABEL);
     memset(HistoryCompoName,  0, sizeof(char)*LABEL);
     memset(HistoryDomfxName,  0, sizeof(char)*LABEL);
+    memset(HistoryForceName,  0, sizeof(char)*LABEL);
 		memset(HistoryItrName,  0, sizeof(char)*LABEL);
     memset(HistoryMonitorName,  0, sizeof(char)*LABEL);
     memset(HistoryWallName,  0, sizeof(char)*LABEL);

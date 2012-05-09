@@ -19,6 +19,8 @@ SklSolverCBC::SklSolverCBC() {
   para_key = -1; /// parallel managerの識別ID，-1は計算領域全体のID
   cm_mode = 0;   /// 同期通信をデフォルト
   
+  id_of_solid = 2;
+  
   m_condition = m_log = NULL;
   cmp = NULL;
   mat = NULL;
@@ -52,7 +54,7 @@ SklSolverCBC::SklSolverCBC() {
   
   // 履歴情報のファイルポインタ
   mp = stdout;
-  fp_b = fp_w = fp_c = fp_d = fp_i = NULL;
+  fp_b = fp_w = fp_c = fp_d = fp_i = fp_f = NULL;
   
   checkTime = 0.0;
   convergence_prev = 1.0;
@@ -126,6 +128,8 @@ SklSolverCBC::SklSolverCBC(int sType) {
   para_key = -1; /// parallel managerの識別ID，-1は計算領域全体のID
   cm_mode = 0;   /// 同期通信をデフォルト
   
+  id_of_solid = 2;
+  
   m_condition = m_log = NULL;
   cmp = NULL;
   mat = NULL;
@@ -159,7 +163,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   // 履歴情報のファイルポインタ
   mp = stdout;
-  fp_b = fp_w = fp_c = fp_d = fp_i = NULL;
+  fp_b = fp_w = fp_c = fp_d = fp_i = fp_f = NULL;
   
   checkTime = 0.0;
   convergence_prev = 1.0;
@@ -242,6 +246,7 @@ SklSolverCBC::~SklSolverCBC() {
     if (fp_b) fclose(fp_b);
     if (fp_c) fclose(fp_c);
     if (fp_d) fclose(fp_d);
+    if (fp_f) fclose(fp_f);
   }
   
   if (C.Mode.Log_Itr == ON) {

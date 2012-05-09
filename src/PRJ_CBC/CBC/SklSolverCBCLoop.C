@@ -27,7 +27,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   REAL_TYPE *p=NULL;             /// 圧力
   REAL_TYPE *t=NULL;             /// 温度
   REAL_TYPE *tp=NULL;            /// 全圧
-  unsigned *bcd=NULL;           /// BCindex ID
+  unsigned *bcd=NULL;            /// BCindex ID
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp);
   
   // point Data
@@ -271,6 +271,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   
   if (C.Mode.TP == ON ) {
     TIMING_start(tm_total_prs);
+    flop_count=0.0;
     fb_totalp_ (tp, sz, gc, v, p, v00, &flop_count);
     TIMING_stop(tm_total_prs, flop_count);
   }
@@ -299,6 +300,17 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       TIMING_start(tm_hstry_sampling);
       MO.print(loop_step, (REAL_TYPE)loop_time);
       TIMING_stop(tm_hstry_sampling, 0.0);
+      
+      REAL_TYPE force[3];
+      
+      TIMING_start(tm_cal_force);
+      flop_count=0.0;
+      cds_force_(force, sz, gc, p, (int*)bcd, (int*)cut_id, &id_of_solid, dh, &flop_count);
+      TIMING_stop(tm_cal_force, 0.0);
+      
+      TIMING_start(tm_hstry_force);
+      Hostonly_ H->printHistoryForce(fp_f, &C, force);
+      TIMING_stop(tm_hstry_force, 0.0);
     }
   }
   

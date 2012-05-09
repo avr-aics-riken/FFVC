@@ -2860,9 +2860,12 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   // ログ出力 ------------------
   fprintf(fp,"\n\tLogs\n");
   fprintf(fp,"\t     Unit for Output          :   %s\n", (Unit.Log == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
-  fprintf(fp,"\t     Base Logs                :   %4s  %s, %s, %s\n", 
-          (Mode.Log_Base == ON)?"ON >":"OFF ", (Mode.Log_Base == ON)?HistoryName:""
-          , (Mode.Log_Base == ON)?HistoryCompoName:"", (Mode.Log_Base == ON)?HistoryDomfxName:"");
+  fprintf(fp,"\t     Base Logs                :   %4s  %s, %s, %s, %s\n", 
+          (Mode.Log_Base == ON)?"ON >":"OFF ", 
+          (Mode.Log_Base == ON)?HistoryName:"", 
+          (Mode.Log_Base == ON)?HistoryCompoName:"", 
+          (Mode.Log_Base == ON)?HistoryDomfxName:"", 
+          (Mode.Log_Base == ON)?HistoryForceName:"");
   fprintf(fp,"\t     Iteration Log            :   %4s  %s\n", 
           (Mode.Log_Itr == ON)?"ON >":"OFF ", (Mode.Log_Itr == ON)?HistoryItrName:"");
   fprintf(fp,"\t     Profiling report         :   %4s  %s%s\n", 

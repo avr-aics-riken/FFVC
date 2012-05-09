@@ -89,6 +89,8 @@ public:
   unsigned G_size[3];
   REAL_TYPE G_Lbx[3], G_org[3];
   
+  int id_of_solid; // Geometry Direct Interfaceでテスト的に固定ID=2を与える
+  
   Control         C;
   SetBC3D         BC;
   ItrCtl          IC[ItrCtl::ic_END];
@@ -143,6 +145,7 @@ public:
   FILE *fp_c;  // コンポーネント情報
   FILE *fp_d;  // 流量収支情報
   FILE *fp_i;  // 反復履歴情報
+  FILE *fp_f;  // 力の履歴情報
   
   REAL_TYPE checkTime;
   REAL_TYPE convergence_prev, convergence_rate;
