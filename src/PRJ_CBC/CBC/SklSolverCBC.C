@@ -104,8 +104,8 @@ SklSolverCBC::SklSolverCBC() {
   dc_bid = NULL;
   
   // Cut
-  cut = NULL;
-  cut_id = NULL;
+  //cut = NULL;
+  //cut_id = NULL;
   
   // コンポーネント配列
   component_array=NULL;
@@ -216,8 +216,8 @@ SklSolverCBC::SklSolverCBC(int sType) {
   dc_bid = NULL;
   
   // Cut
-  cut = NULL;
-  cut_id = NULL;
+  //cut = NULL;
+  //cut_id = NULL;
   
   // コンポーネント配列
   component_array=NULL;
@@ -1116,6 +1116,7 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
 	REAL_TYPE omg, r;
 	REAL_TYPE *p, *ws, *p0;
   unsigned *bcv;
+  float* cut;
 	
 	p = ws = cut = p0 = NULL;
   bcv = NULL;
@@ -1129,6 +1130,7 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
 	if( !(ws  = dc_ws->GetData()) )  Exit(0);
   if( !(p0  = dc_p0->GetData()) )  Exit(0);
   if( !(bcv = dc_bcv->GetData()) ) Exit(0);
+  if( !(cut = dc_cut->GetData()) ) Exit(0);
   
   // 反復処理
   switch (IC->get_LS()) {

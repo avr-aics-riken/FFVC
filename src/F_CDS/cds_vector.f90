@@ -1317,9 +1317,9 @@
       pp = p(i,j,k) * actv
 
       ! 各方向に壁がある場合、かつ流体セルのみ力を積算
-      fx = fx + pp * ( qw - qe )
-      fy = fy + pp * ( qs - qn )
-      fz = fz + pp * ( qb - qt )
+      fx = fx + pp * ( qe - qw )
+      fy = fy + pp * ( qn - qs )
+      fz = fz + pp * ( qt - qb )
 
     end do
     end do

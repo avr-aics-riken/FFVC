@@ -3115,7 +3115,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
             q5 = floor(pos[5]);
             
             // 収束判定の有効フラグ 
-            if ( (q0+q1+q2+q3+q4+q5) < 6.0 ) {
+            if ( (q0+q1+q2+q3+q4+q5) == 6.0 ) {
               s = offBit(s, VLD_CNVG);    // Out of scope
               g++;
             }

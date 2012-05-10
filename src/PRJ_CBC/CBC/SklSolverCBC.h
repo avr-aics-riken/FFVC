@@ -209,8 +209,8 @@ public:
   SklVoxDataSet *m_outDiv;
 
   // (6, ix+guide*2, jx+guide*2, kx+guide*2)
-  float* cut; // Cutlibで確保する配列のポインタを受け取る
-  int* cut_id;   // カット点のID
+  //float* cut; // Cutlibで確保する配列のポインタを受け取る
+  //int* cut_id;   // カット点のID
   
   // for tuning
   int cf_sz[3];  //buffer size

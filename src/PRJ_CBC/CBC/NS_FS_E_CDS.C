@@ -37,6 +37,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   REAL_TYPE *abf=NULL;   /// Adams-Bashforth用のワーク
   float* cvf=NULL;       /// コンポーネントの体積率
   int d_length;          /// 一次元配列長
+  float* cut = NULL;
   
   // local variables
   REAL_TYPE tm = SklGetTotalTime();    /// 計算開始からの積算時刻
@@ -86,6 +87,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   if( !(bcp = dc_bcp->GetData()) ) Exit(0);
   if( !(bcv = dc_bcv->GetData()) ) Exit(0);
   if( !(wss = dc_wvex->GetData())) Exit(0);
+  if( !(cut = dc_cut->GetData()))  Exit(0);
   
   // 温度計算
   if ( C.isHeatProblem() ) {

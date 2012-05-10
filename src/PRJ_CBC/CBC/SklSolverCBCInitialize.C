@@ -269,7 +269,7 @@ SklSolverCBC::SklSolverInitialize() {
       else {
         // cutをアロケートし，初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(mid, &C, G_org, cut);
+        Ex->setup_cut(mid, &C, G_org, dc_cut->GetData());
       }
       break;
       
@@ -492,7 +492,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
   if ( C.isCDS() ) {
-    Vinfo.setOBC_Cut(&BC, cut);
+    Vinfo.setOBC_Cut(&BC, dc_cut->GetData());
   }
 
   // ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
@@ -3772,12 +3772,11 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   
   // カットとID情報をポイント
-  cut = (float*)cutPos->getDataPointer();
-  cut_id = (int*)cutBid->getDataPointer();
+  float* cut = (float*)cutPos->getDataPointer();
+  int* cut_id = (int*)cutBid->getDataPointer();
   
   // データクラスへのコピー
   allocArray_Cut(m_total);
-
   
   REAL_TYPE* tmp_cut = NULL;
   int* tmp_bid = NULL;
@@ -3788,7 +3787,6 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   int bid_len = dc_bid->GetArrayLength();
   fb_copy_real_ (tmp_cut, cut, &cut_len);
   fb_copy_int_  (tmp_bid, cut_id, &bid_len);
-  mark();
   
   // テスト
   int z=0;
@@ -3871,7 +3869,8 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
 
   
   TIMING_start(tm_init_alloc);
-  cut = new float [size_n_cell*6]; // 6*(float)
+  //cut = new float [size_n_cell*6]; // 6*(float)
+  allocArray_Cut(m_total);
   TIMING_stop(tm_init_alloc);
   
   // 使用メモリ量　
@@ -3889,6 +3888,8 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
   // 初期値のセット
+  float* cut=NULL;
+  cut = dc_cut->GetData();
   for (size_t i=0; i<size_n_cell*6; i++) {
     cut[i] = 1.0f;
   }
@@ -3963,13 +3964,13 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   }
   
   // BCIndexP に圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, cut, C.isCDS());
+  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, dc_cut->GetData(), C.isCDS());
 #if 0
   Vinfo->dbg_chkBCIndexP(bcd, bcp, "BCindexP.txt");
 #endif
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
-  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, cut, cut_id, C.isCDS());
+  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, dc_cut->GetData(), dc_bid->GetData(), C.isCDS());
 #if 0
   Vinfo->dbg_chkBCIndexV(bcv, "BCindexV.txt");
 #endif
