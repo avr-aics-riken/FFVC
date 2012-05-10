@@ -4,6 +4,10 @@ Release Note
 	
 	2009-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.6.3  10 May  2012
+  - 粗い格子で計算した結果を初期値としてリスタートする機能
+  - 力の計算と履歴出力
+  
 Ver 1.6.2  28 Apr. 2012
   - PMlib
 

@@ -190,6 +190,10 @@ public:
   // コンポーネントワーク配列のアドレス管理
   REAL_TYPE** component_array;
   
+  // カット
+  SklScalar4DEx<REAL_TYPE>  *dc_cut;
+  SklScalar3D<int>          *dc_bid;
+  
   // out file object
   SklVoxDataSet *m_outPrs;
   SklVoxDataSet *m_outUVW;
@@ -245,6 +249,7 @@ public:
   void allocArray_average     (unsigned long &total, FILE* fp);
   void allocArray_Collocate   (unsigned long &total);
   void allocArray_compoVF     (unsigned long &prep, unsigned long &total);
+  void allocArray_Cut         (unsigned long &total);
   void allocArray_forcing     (unsigned long &total);
   void allocArray_heat        (unsigned long &total);
   void allocArray_interface   (unsigned long &total);

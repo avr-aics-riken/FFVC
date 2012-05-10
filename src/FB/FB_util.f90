@@ -1071,6 +1071,33 @@
     return
     end subroutine fb_copy_real
 
+!  **************************************
+!> @subroutine fb_copy_int (dst, src, sz)
+!! @brief 値を一次元インデクスでコピーする
+!! @param dst コピー先
+!! @param src コピー元
+!! @param sz 配列長（一次元）
+!<
+    subroutine fb_copy_int (dst, src, sz)
+    implicit none
+    integer                                                   ::  i, sz
+    integer, dimension(sz)                                    ::  dst, src
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(sz)
+
+!$OMP DO SCHEDULE(static)
+
+    do i=1,sz
+      dst(i) = src(i)
+    end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine fb_copy_int
+
 !  ********************************************
 !> @subroutine fb_copy_real_s (dst, src, sz, g)
 !! @brief スカラー値をコピーする

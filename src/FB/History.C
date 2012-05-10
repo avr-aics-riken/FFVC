@@ -382,7 +382,12 @@ void History::printHistoryForceTitle(FILE* fp, const Control* C)
     fprintf(fp, "    step        time[-]");
   }
   
-  for (int i=0; i<NOFACE; i++) fprintf(fp, "         Fx         Fy         Fz");
+  if ( Unit_Log == DIMENSIONAL ) {
+    fprintf(fp, "        Fx[N]         Fy[N]         Fz[N]");
+  }
+  else {
+    fprintf(fp, "        Fx[-]         Fy[-]         Fz[-]");
+  }
 
   fprintf(fp, "\n");
 }
@@ -396,7 +401,7 @@ void History::printHistoryForceTitle(FILE* fp, const Control* C)
 void History::printHistoryForce(FILE* fp, const Control* C, REAL_TYPE* force)
 {
   fprintf(fp, "%8d %14.6e", step, printTime());
-  fprintf(fp, " %12.4e  %12.4e  %12.4e", printTP(force[0]), printTP(force[1]), printTP(force[2]) );
+  fprintf(fp, " %12.4e  %12.4e  %12.4e", printForce(force[0]), printForce(force[1]), printForce(force[2]) );
   
   fprintf(fp, "\n");
   fflush(fp);

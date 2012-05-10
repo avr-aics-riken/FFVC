@@ -100,6 +100,9 @@ SklSolverCBC::SklSolverCBC() {
   dc_r_v = NULL;
   dc_r_t = NULL;
   
+  dc_cut = NULL;
+  dc_bid = NULL;
+  
   // Cut
   cut = NULL;
   cut_id = NULL;
@@ -208,6 +211,9 @@ SklSolverCBC::SklSolverCBC(int sType) {
   dc_r_p = NULL;
   dc_r_v = NULL;
   dc_r_t = NULL;
+  
+  dc_cut = NULL;
+  dc_bid = NULL;
   
   // Cut
   cut = NULL;
@@ -540,6 +546,8 @@ void SklSolverCBC::set_timing_label(void)
   set_label(tm_hstry_compo,        "History_Component",       PerfMonitor::CALC);
   set_label(tm_sampling,           "Sampling",                PerfMonitor::CALC);
   set_label(tm_hstry_sampling,     "History_Sampling",        PerfMonitor::CALC);
+  set_label(tm_cal_force,          "Force_Calculation",       PerfMonitor::CALC);
+  set_label(tm_hstry_force,        "History_Force",           PerfMonitor::CALC);
   // end of Loop Utility Sct:2
 
   // end of Loop Utility Section

@@ -103,6 +103,12 @@ protected:
     return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p : var );
   }
   
+  //@fn REAL_TYPE printForce(const REAL_TYPE var)
+  //@brief 全圧の次元変換
+  REAL_TYPE printForce(const REAL_TYPE var) {
+    return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p*RefLength*RefLength : var );
+  }
+  
   //@fn REAL_TYPE printMF(const REAL_TYPE var)
   //@brief モードに対応する流量を返す
   REAL_TYPE printMF(const REAL_TYPE var) {

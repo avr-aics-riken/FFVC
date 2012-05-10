@@ -37,6 +37,7 @@
 
 #define fb_average_           FB_AVERAGE
 #define fb_copy_real_         FB_COPY_REAL
+#define fb_copy_int_          FB_COPY_INT
 #define fb_set_int_           FB_SET_INT
 #define fb_set_real_          FB_SET_REAL
 #define fb_prs_d2nd_          FB_PRS_D2ND
@@ -70,6 +71,7 @@ extern "C" {
   
   void fb_average_        (REAL_TYPE* avr, REAL_TYPE* src, int* sz, REAL_TYPE* flop);
   void fb_copy_real_      (REAL_TYPE* dst, REAL_TYPE* src, int* sz);
+  void fb_copy_int_       (int* dst, int* src, int* sz);
   void fb_set_int_        (int* var, int* sz, int* init);
   void fb_set_real_       (REAL_TYPE* var, int* sz, REAL_TYPE* init);
   void fb_prs_d2nd_       (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* Base_prs, REAL_TYPE* Ref_rho, REAL_TYPE* Ref_v, REAL_TYPE* scale, REAL_TYPE* flop);

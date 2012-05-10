@@ -224,6 +224,8 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   TIMING_start(tm_voxel_prep_sct);
+  
+  REAL_TYPE* tmp_cut = NULL;
 
   switch (C.Mode.Example) {
       
@@ -234,8 +236,10 @@ SklSolverCBC::SklSolverInitialize() {
       // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
       
+      if( !(tmp_cut  = dc_cut->GetData()) ) Exit(0);
+      
       if ( !C.isCDS() ) {
-        unsigned zc = Vinfo.Solid_from_Cut(mid, cut, C.Mode.Base_Medium);
+        unsigned zc = Vinfo.Solid_from_Cut(mid, tmp_cut, C.Mode.Base_Medium);
         Hostonly_ printf("\tGenerated Solid cell from cut = %d\n", zc);
       }
       break;
@@ -365,6 +369,10 @@ SklSolverCBC::SklSolverInitialize() {
     //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
     //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
     
+    unsigned long tmp_fc = fill_count;
+    if( para_cmp->IsParallel() ) {
+      para_cmp->Allreduce(&tmp_fc, &fill_count, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+    }
     Hostonly_ printf("\tInitial fill count     : %15ld\n\n", fill_count);
     
     int seed[3];
@@ -372,29 +380,51 @@ SklSolverCBC::SklSolverInitialize() {
     seed[1] = 1;
     seed[2] = 1;
     
-    if ( !Vinfo.paint_first_seed(mid, seed, target_id) ) {
-      Hostonly_ printf("Failed first painting\n");
+    Hostonly_ {
+      if ( !Vinfo.paint_first_seed(mid, seed, target_id) ) {
+        printf("Failed first painting\n");
+      }
     }
+    
     // first fill
     fill_count--;
     
     int c=0;
     while (fill_count > 0) {
       
-      unsigned fc = Vinfo.fill_cell_edge(cut_id, mid, cut, target_id, id_of_solid);
+      //unsigned fc = Vinfo.fill_cell_edge(cut_id, mid, cut, target_id, id_of_solid);
+      unsigned fc = Vinfo.fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
+      
+      unsigned t_fc = fc;
+      if( para_cmp->IsParallel() ) {
+        para_cmp->Allreduce(&t_fc, &fc, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+      }
+      
+      // 同期
+      dc_mid->CommBndCell(guide);
+      dc_bid->CommBndCell(guide);
+      dc_cut->CommBndCell(guide);
+      
       if ( fc == 0 ) break;
       
       fill_count -= (unsigned long)fc;
-      //Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
+      
+      Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
       
     }
-    Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", id_of_solid, fill_count);
+    Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", target_id, fill_count);
     
     // 固体に変更
     c = 0;
     while ( fill_count > 0 ) {
       
       unsigned fc = Vinfo.fill_inside(mid, id_of_solid);
+      
+      unsigned t_fc = fc;
+      if( para_cmp->IsParallel() ) {
+        para_cmp->Allreduce(&t_fc, &fc, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+      }
+      
       if ( fc == 0 ) break;
       
       fill_count -= (unsigned long)fc;
@@ -933,18 +963,6 @@ SklSolverCBC::SklSolverInitialize() {
     if( !(t = dc_t->GetData()) )    return -1;
   }
   
-  // リスタート時，セルフェイスへの値の内挿 <v00をセットした後に処理>
-  if ( C.Start==Control::re_start) {
-    
-    if (C.Mode.ShapeAprx == BINARY) {
-    }
-    else if (C.Mode.ShapeAprx == CUT_INFO) {
-    }
-    else {
-      Hostonly_ stamped_printf("Invalid Shape Approximation\n");
-      return -1;
-    }
-  }
   
 	// リスタートの最大値と最小値の表示
   if ( C.Start == Control::re_start ) {
@@ -1465,6 +1483,22 @@ void SklSolverCBC::allocArray_Collocate(unsigned long &total)
   
   if ( !A.alloc_Real_V3DEx(this, dc_vf0, "vf0", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
+}
+
+/**
+ @fn void SklSolverCBC::allocArray_Cut(unsigned long &total)
+ @brief コロケート格子用のセルフェイスの配列
+ @param total ソルバーに使用するメモリ量
+ */
+void SklSolverCBC::allocArray_Cut(unsigned long &total)
+{
+  unsigned long mc=0;
+
+  if ( !A.alloc_Float_S4DEx(this, dc_cut, "cut", size, guide, 6, 0.0, mc) ) Exit(0);
+  total+= mc;
+
+  if ( !A.alloc_Int_S3D(this, dc_bid, "bid", size, guide, 0, mc) ) Exit(0);
+  total += mc;
 }
 
 /**
@@ -3725,7 +3759,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   // 使用メモリ量　
   unsigned long cut_mem, G_cut_mem;
-  G_cut_mem = cut_mem = (unsigned long)size_n_cell *(6+2)*4;
+  G_cut_mem = cut_mem = (unsigned long)size_n_cell *(6+1)*4;
   m_prep += cut_mem;
   m_total+= cut_mem;
   
@@ -3741,6 +3775,21 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   cut = (float*)cutPos->getDataPointer();
   cut_id = (int*)cutBid->getDataPointer();
   
+  // データクラスへのコピー
+  allocArray_Cut(m_total);
+
+  
+  REAL_TYPE* tmp_cut = NULL;
+  int* tmp_bid = NULL;
+  if( !(tmp_cut  = dc_cut->GetData()) ) Exit(0);
+  if( !(tmp_bid  = dc_bid->GetData()) ) Exit(0);
+
+  int cut_len = dc_cut->GetArrayLength();
+  int bid_len = dc_bid->GetArrayLength();
+  fb_copy_real_ (tmp_cut, cut, &cut_len);
+  fb_copy_int_  (tmp_bid, cut_id, &bid_len);
+  mark();
+  
   // テスト
   int z=0;
   float *pos;
@@ -3753,10 +3802,12 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
       for (int i=0; i<=size[0]+1; i++) {
         
         mp = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-        pos = &cut[mp];
+        //pos = &cut[mp];
+        pos = &tmp_cut[mp];
         
         mb = FBUtility::getFindexS3D(size, guide, i, j, k);
-        bd = cut_id[mb];
+        //bd = cut_id[mb];
+        bd = tmp_bid[mb];
         
         if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
           
@@ -3786,7 +3837,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   Hostonly_ printf("\n\tMinimum dist. = %5.3e  : # of cut = %d : %f [percent]\n", d_min, z, (float)z/(float)size_n_cell*100.0);
   
   // カットの最小値
-  min_distance(cut, fp);
+  //min_distance(cut, fp);
+  min_distance(tmp_cut, fp);
   
 }
 

@@ -267,6 +267,18 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       Hostonly_ H->printHistoryDomfx(fp_d, &C);
       TIMING_stop(tm_hstry_dmfx, 0.0);
     }
+    
+    // 力の履歴
+    REAL_TYPE force[3];
+    
+    TIMING_start(tm_cal_force);
+    flop_count=0.0;
+    cds_force_(force, sz, gc, p, (int*)bcd, cut_id, &id_of_solid, dh, &flop_count);
+    TIMING_stop(tm_cal_force, 0.0);
+    
+    TIMING_start(tm_hstry_force);
+    Hostonly_ H->printHistoryForce(fp_f, &C, force);
+    TIMING_stop(tm_hstry_force, 0.0);
   }
   
   if (C.Mode.TP == ON ) {
@@ -300,17 +312,6 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       TIMING_start(tm_hstry_sampling);
       MO.print(loop_step, (REAL_TYPE)loop_time);
       TIMING_stop(tm_hstry_sampling, 0.0);
-      
-      REAL_TYPE force[3];
-      
-      TIMING_start(tm_cal_force);
-      flop_count=0.0;
-      cds_force_(force, sz, gc, p, (int*)bcd, (int*)cut_id, &id_of_solid, dh, &flop_count);
-      TIMING_stop(tm_cal_force, 0.0);
-      
-      TIMING_start(tm_hstry_force);
-      Hostonly_ H->printHistoryForce(fp_f, &C, force);
-      TIMING_stop(tm_hstry_force, 0.0);
     }
   }
   

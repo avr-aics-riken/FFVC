@@ -4174,7 +4174,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
   int target = tgt_id;
   int sd = solid_id;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int qp, qw, qe, qs, qn, qb, qt;
+  int qw, qe, qs, qn, qb, qt;
   unsigned m_sz[3];
   
   int ix = (int)size[0];
@@ -4189,7 +4189,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 
 #pragma omp parallel for firstprivate(ix, jx, kx, m_sz, gd, target, sd, cpos) \
  private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
- private(qp, qw, qe, qs, qn, qb, qt) \
+ private(qw, qe, qs, qn, qb, qt) \
  schedule(static) reduction(+:c)
   
   for (int k=1; k<=kx; k++) {
@@ -4204,8 +4204,6 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
         m_t = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k+1);
         m_b = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k-1);
         
-        qp = bid[m_p];
-        
         // 未ペイントの場合にテスト
         if ( mid[m_p] == 0 ) {
           
@@ -4218,8 +4216,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
           qt = bid[m_t];
           
           // 各方向のテスト
-          if ( (i != 1) && (mid[m_w] == target) && (get_BID5(X_MINUS, qp) == 0) ) {
-            if ( (qp == 0) && ( (qs * qn * qb * qt) == 0) ) { // テストセルはカットがなく、隣接セルの少なくともどれかはカットがない場合
+          if ( !((i == 1) && (pn.nID[X_MINUS] < 0)) && (mid[m_w] == target) && (get_BID5(X_MINUS, bid[m_p]) == 0) ) {
+            if ( (bid[m_p] == 0) && ( (qs * qn * qb * qt) == 0) ) { // テストセルはカットがなく、隣接セルの少なくともどれかはカットがない場合
               mid[m_p] = target;
               c++;
             }
@@ -4229,8 +4227,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[FBUtility::getFindexS3Dcut(m_sz, gd, X_PLUS, i-1, j  , k  )] = cpos; // カット位置をセット
             }
           }
-          else if ( (j != 1) && (mid[m_s] == target) && (get_BID5(Y_MINUS, qp) == 0) ) {
-            if ( (qp == 0) && ( (qw * qe * qb * qt) == 0) ) {
+          else if ( !((j == 1) && (pn.nID[Y_MINUS] < 0)) && (mid[m_s] == target) && (get_BID5(Y_MINUS, bid[m_p]) == 0) ) {
+            if ( (bid[m_p] == 0) && ( (qw * qe * qb * qt) == 0) ) {
               mid[m_p] = target;
               c++;
             }
@@ -4240,8 +4238,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[FBUtility::getFindexS3Dcut(m_sz, gd, Y_PLUS, i  , j-1, k  )] = cpos;
             }
           }
-          else if ( (k != 1) && (mid[m_b] == target) && (get_BID5(Z_MINUS, qp) == 0) ) {
-            if ( (qp == 0) && ( (qw * qe * qs * qn) == 0) ) {
+          else if ( !((k == 1) && (pn.nID[Z_MINUS] < 0)) && (mid[m_b] == target) && (get_BID5(Z_MINUS, bid[m_p]) == 0) ) {
+            if ( (bid[m_p] == 0) && ( (qw * qe * qs * qn) == 0) ) {
               mid[m_p] = target;
               c++;
             }
@@ -4251,8 +4249,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[FBUtility::getFindexS3Dcut(m_sz, gd,  Z_PLUS, i  , j  , k-1)] = cpos;
             }
           }
-          else if ( (k != kx) && (mid[m_t] == target) && (get_BID5(Z_PLUS, qp) == 0) ) {
-            if ( (qp == 0) && ( (qw * qe * qs * qn) == 0) ) {
+          else if ( !((k == kx) && (pn.nID[Z_PLUS] < 0)) && (mid[m_t] == target) && (get_BID5(Z_PLUS, bid[m_p]) == 0) ) {
+            if ( (bid[m_p] == 0) && ( (qw * qe * qs * qn) == 0) ) {
               mid[m_p] = target;
               c++;
             }
@@ -4262,8 +4260,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[FBUtility::getFindexS3Dcut(m_sz, gd, Z_MINUS, i  , j  , k+1)] = cpos;
             }
           }
-          else if ( (j != jx) && (mid[m_n] == target) && (get_BID5(Y_PLUS, qp) == 0) ) {
-            if ( (qp == 0) && ( (qw * qe * qb * qt) == 0) ) {
+          else if ( !((j == jx) && (pn.nID[Y_PLUS] < 0)) && (mid[m_n] == target) && (get_BID5(Y_PLUS, bid[m_p]) == 0) ) {
+            if ( (bid[m_p] == 0) && ( (qw * qe * qb * qt) == 0) ) {
               mid[m_p] = target;
               c++;
             }
@@ -4273,8 +4271,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[FBUtility::getFindexS3Dcut(m_sz, gd, Y_MINUS, i  , j+1, k  )] = cpos;
             }
           }
-          else if ( (i != ix) && (mid[m_e] == target) && (get_BID5(X_PLUS, qp) == 0) ) {
-            if ( (qp == 0) && ( (qs * qn * qb * qt) == 0) ) {
+          else if ( !((i == ix) && (pn.nID[X_PLUS] < 0)) && (mid[m_e] == target) && (get_BID5(X_PLUS, bid[m_p]) == 0) ) {
+            if ( (bid[m_p] == 0) && ( (qs * qn * qb * qt) == 0) ) {
               mid[m_p] = target;
               c++;
             }
