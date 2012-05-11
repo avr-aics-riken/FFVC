@@ -423,23 +423,24 @@ void VoxInfo::checkColorTable(FILE* fp, unsigned size, int* table)
 
 
 /**
- @fn bool VoxInfo::check_fill(const int* mid)
+ @fn unsigned VoxInfo::check_fill(const int* mid)
  @brief ペイント済みかどうかをチェックする
  @param[in] mid ID配列
+ @note 未ペイントセルがあれば1を返す
  */
-bool VoxInfo::check_fill(const int* mid)
+unsigned VoxInfo::check_fill(const int* mid)
 {
   for (int k=1; k<=(int)size[2]; k++) {
     for (int j=1; j<=(int)size[1]; j++) {
       for (int i=1; i<=(int)size[0]; i++) {
         
-        if ( mid[FBUtility::getFindexS3D(size, guide, i  , j  , k  )] == 0 ) return false;
+        if ( mid[FBUtility::getFindexS3D(size, guide, i  , j  , k  )] == 0 ) return 1;
         
       }
     }
   }
   
-  return true;
+  return 0;
 }
 
 

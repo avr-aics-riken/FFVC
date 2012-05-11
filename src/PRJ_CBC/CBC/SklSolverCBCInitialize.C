@@ -436,8 +436,14 @@ SklSolverCBC::SklSolverInitialize() {
     // チェック
     Ex->writeSVX(mid, &C);
     
-    // 確認
-    if ( !Vinfo.check_fill(mid) ) {
+    // 確認 paintedは未ペイントセルがある場合に1
+    unsigned painted = Vinfo.check_fill(mid);
+    unsigned t_painted = painted;
+    if( para_cmp->IsParallel() ) {
+      para_cmp->Allreduce(&t_painted, &painted, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    }
+    
+    if ( painted  != 0 ) {
       Hostonly_ printf("\tFill operation is done, but still remains unpainted cells.\n");
       Exit(0);
     }

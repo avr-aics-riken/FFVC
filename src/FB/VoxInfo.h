@@ -143,10 +143,10 @@ protected:
   }
   
 public:
-  bool check_fill            (const int* mid);
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
+  unsigned  check_fill       (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   unsigned fill_inside       (int* mid, const int solid_id);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
