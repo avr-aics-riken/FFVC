@@ -2520,18 +2520,21 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
   
   float global_min = 1.0;
   float c;
+  float eps = 1.0/255.0; // 0.000392
+  unsigned g=0;
   
 #pragma omp parallel firstprivate(mm) private(c)
   {
     float local_min = 1.0;
   
-#pragma omp for nowait schedule(static)
+#pragma omp for nowait schedule(static) reduction(+:g)
     for (unsigned i=0; i<mm; i++) {
       c = cut[i]; 
       if ( local_min > c ) local_min = c;
-      //if ( c < eps ) {
-        //cut[i] = 0.0f;
-      //}
+      if ( (c > 0.0f) && (c <= eps) ) {
+        cut[i] = eps;
+        g++;
+      }
     }
 #pragma omp critical
     {
@@ -2541,11 +2544,14 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
 
   if( para_mng->IsParallel() ) {
     float tmp = global_min;
-    para_mng->Allreduce(&tmp, &global_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+    para_mng->Allreduce(&tmp, &global_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp);
+    
+    unsigned tmp_g = g;
+    para_mng->Allreduce(&tmp_g, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
   }
-  
-  Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e\n\n", global_min);
-  Hostonly_ printf     ("\n\tMinimum non-dimnensional distance is %e\n\n", global_min);
+
+  Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %d\n\n", global_min, eps, g);
+  Hostonly_ printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %d\n\n", global_min, eps, g);
 }
 
 
