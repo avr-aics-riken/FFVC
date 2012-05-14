@@ -56,8 +56,8 @@ extern "C" {
   void fb_copy_real_v_    (REAL_TYPE* dst, REAL_TYPE* src, int* sz, int* g);
   void fb_delta_s_        (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* sn, REAL_TYPE* so, int* bx, REAL_TYPE* flop);
   void fb_delta_v_        (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* vn, REAL_TYPE* vo, int* bx, REAL_TYPE* flop);
-  void fb_interp_rough_s_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src);
-  void fb_interp_rough_v_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src);
+  void fb_interp_rough_s_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* st_i, int* st_j, int* st_k);
+  void fb_interp_rough_v_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* st_i, int* st_j, int* st_k);
   void fb_limit_scalar_   (REAL_TYPE* t, int* sz, int* g);
   void fb_minmax_s_       (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* s, REAL_TYPE* flop);
   void fb_minmax_v_       (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* flop);

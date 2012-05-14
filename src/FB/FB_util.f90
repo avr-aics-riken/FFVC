@@ -11,17 +11,23 @@
 !! @author keno, FSI Team, VCAD, RIKEN
 !<
 
-!  **********************************************
-!> @subroutine fb_interp_rough_s(dst, sz, g, src)
+!  ****************************************************************
+!> @subroutine fb_interp_rough_s(dst, sz, g, src, st_i, st_j, st_k)
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param src 粗い格子系
+!! @param st_i 粗い格子の開始インデクス
+!! @param st_j 
+!! @param st_k 
 !<
-  subroutine fb_interp_rough_s(dst, sz, g, src)
+  subroutine fb_interp_rough_s(dst, sz, g, src, st_i, st_j, st_k)
   implicit none
-  integer                                                      ::  i, j, k, ix, jx, kx, g, ii, jj, kk
+  integer                                                      ::  i, j, k          ! 粗い格子のループインデクス
+  integer                                                      ::  ii, jj, kk       ! 密な格子のループインデクス
+  integer                                                      ::  st_i, st_j, st_k ! 粗い格子の開始インデクス
+  integer                                                      ::  ix, jx, kx, g
   integer, dimension(3)                                        ::  sz
   real                                                         ::  g_x,  g_y,  g_z, q
   real                                                         ::  g_xx, g_yy, g_zz
@@ -38,7 +44,7 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, st_i, st_j, st_k) &
 !$OMP PRIVATE(s_112, s_121, s_122, s_123, s_132) &
 !$OMP PRIVATE(s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233) &
 !$OMP PRIVATE(s_312, s_321, s_322, s_323, s_332) &
@@ -47,11 +53,11 @@
 
 !$OMP DO SCHEDULE(static)
 
-  do k=1, kx/2
+  do k=st_k, st_k+kx/2-1
     kk = k*2
-  do j=1, jx/2
+  do j=st_j, st_j+jx/2-1
     jj = j*2
-  do i=1, ix/2
+  do i=st_i, st_i+ix/2-1
     ii = i*2
 
     s_112 = src(i-1, j-1, k  )
@@ -135,17 +141,23 @@
   return
   end subroutine fb_interp_rough_s
 
-!  **********************************************
-!> @subroutine fb_interp_rough_v(dst, sz, g, src)
+!  ****************************************************************
+!> @subroutine fb_interp_rough_v(dst, sz, g, src, st_i, st_j, st_k)
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param src 粗い格子系
+!! @param st_i 粗い格子の開始インデクス
+!! @param st_j 
+!! @param st_k 
 !<
-  subroutine fb_interp_rough_v(dst, sz, g, src)
+  subroutine fb_interp_rough_v(dst, sz, g, src, st_i, st_j, st_k)
   implicit none
-  integer                                                         ::  i, j, k, ix, jx, kx, g, ii, jj ,kk
+  integer                                                         ::  i, j, k          ! 粗い格子のループインデクス
+  integer                                                         ::  ii, jj, kk       ! 密な格子のループインデクス
+  integer                                                         ::  st_i, st_j, st_k ! 粗い格子の開始インデクス
+  integer                                                         ::  ix, jx, kx, g
   integer, dimension(3)                                           ::  sz
   real                                                            ::  u_x, u_y, u_z, u_xx, u_yy, u_zz, u_xy, u_yz, u_zx
   real                                                            ::  v_x, v_y, v_z, v_xx, v_yy, v_zz, v_xy, v_yz, v_zx
@@ -163,7 +175,7 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, st_i, st_j, st_k) &
 !$OMP PRIVATE(s_112, s_121, s_122, s_123, s_132) &
 !$OMP PRIVATE(s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233) &
 !$OMP PRIVATE(s_312, s_321, s_322, s_323, s_332) &
@@ -174,11 +186,11 @@
 
 !$OMP DO SCHEDULE(static)
 
-  do k=1, kx/2
+  do k=st_k, st_k+kx/2-1
     kk = k*2
-  do j=1, jx/2
+  do j=st_j, st_j+jx/2-1
     jj = j*2
-  do i=1, ix/2
+  do i=st_i, st_i+ix/2-1
     ii = i*2
 
 !   u

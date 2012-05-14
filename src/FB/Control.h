@@ -20,6 +20,7 @@
 #include "Skl.h"
 #include "SklSolverBase.h"
 #include "config/SklSolverConfig.h"
+#include "config/SklCfgOutFile.h"
 #include "SklUtil.h"
 #include "Material.h"
 #include "Component.h"
@@ -526,9 +527,10 @@ public:
   long TotalMemory;
   char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
   char HistoryWallName[LABEL], PolylibConfigName[LABEL], HistoryForceName[LABEL];
-  char RoughInit_prs_file[LABEL];
-  char RoughInit_vel_file[LABEL];
-  char RoughInit_temp_file[LABEL];
+  std::string RoughInit_prs_file;
+  std::string RoughInit_vel_file;
+  std::string RoughInit_temp_file;
+  std::string RoughInit_dfi_file;
   
   Control(){
     Acell = 0;
@@ -597,9 +599,6 @@ public:
     memset(HistoryMonitorName,  0, sizeof(char)*LABEL);
     memset(HistoryWallName,  0, sizeof(char)*LABEL);
     memset(PolylibConfigName,  0, sizeof(char)*LABEL);
-    memset(RoughInit_prs_file,  0, sizeof(char)*LABEL);
-    memset(RoughInit_vel_file,  0, sizeof(char)*LABEL);
-    memset(RoughInit_temp_file,  0, sizeof(char)*LABEL);
 
     CF = NULL;
     TotalMemory = 0;
@@ -679,7 +678,6 @@ protected:
   void getXML_Convection     (void);
   void getXML_Derived        (void);
   void getXML_Dimension      (void);
-  void getXML_FileIO         (void);
   void getXML_Iteration      (ItrCtl* IC);
   void getXML_KindOfSolver   (const CfgElem *elmL1);
   void getXML_LES_option     (void);
@@ -690,7 +688,6 @@ protected:
   void getXML_Para_Wind      (void);
   void getXML_PMtest         (void);
   void getXML_ReferenceFrame (ReferenceFrame* RF);
-  void getXML_restart_rough  (void);
   void getXML_Scaling        (void);
   void getXML_Solver_Properties (void);
   void getXML_Time_Control   (DTcntl* DT);
@@ -715,8 +712,10 @@ public:
   REAL_TYPE OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
+  void getXML_FileIO            (SklSolverConfig* cfg);
   void getXML_Para_Init         (void);
   void getXML_Polygon           (void);
+  void getXML_restart_rough     (void);
   void getXML_Sampling          (void);
   void getXML_Steer_1           (DTcntl* DT);
   void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);

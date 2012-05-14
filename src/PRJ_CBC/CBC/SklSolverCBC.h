@@ -275,10 +275,8 @@ public:
   void getXML_Mon_Line      (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
   void getXML_Mon_Pointset  (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
   void IF_TRP_VOF           (void);
-  void Interpolation_from_rough_initial(void);
   void load_Restart_avr_file(FILE* fp, REAL_TYPE& flop);
   void load_Restart_file    (FILE* fp, REAL_TYPE& flop);
-  void load_Restart_rough   (FILE* fp, REAL_TYPE& flop);
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void min_distance         (float* cut, FILE* fp);
@@ -322,6 +320,25 @@ public:
   void Buoyancy         (REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned* bd, REAL_TYPE& flop);
   void ps_ConvectionEE  (REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop);
   void ps_LS            (ItrCtl* IC);
+  
+  
+  // ラフな初期値のロードと内挿に使用する関数
+  bool getRoughResult (
+                        int i,		// (in) 密格子　開始インデクスi
+                        int j,		// (in) 同j
+                        int k,		// (in) 同k
+                        std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
+                        std::string& rough_prefix,	// (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                        std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
+                        int& rough_i,	// (out) 粗格子　開始インデクスi
+                        int& rough_j,	// (out) 同j
+                        int& rough_k	// (out) 同k
+                        );
+  std::string get_strval( std::string& buffer );
+  int get_intval( std::string& buffer );
+  void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
+  void load_Restart_rough   (FILE* fp, REAL_TYPE& flop);
+  
   
   //@fn 時刻をRFクラスからv00[4]にコピーする
   //@param time 設定する時刻

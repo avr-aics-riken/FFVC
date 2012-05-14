@@ -215,6 +215,7 @@ depend:
 ../../FB/VoxInfo.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/VoxInfo.o: ../../FB/BndOuter.h ../../FB/Control.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklUtil.h ../../FB/Monitor.h
 ../../FB/VoxInfo.o: ../../FB/vec3.h ../../FB/vec3_func.h
 ../../FB/VoxInfo.o: ../../FB/vec3f_func.h ../../FB/MonCompo.h
@@ -296,6 +297,7 @@ depend:
 ../../FB/Control.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../FB/Control.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/Control.o: /usr/local/sphere/include/coord/SklCoord.h
+../../FB/Control.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../FB/Control.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
 ../../FB/Control.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../FB/Control.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -372,6 +374,7 @@ depend:
 ../../FB/Control_Rect.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../FB/Control_Rect.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/Control_Rect.o: /usr/local/sphere/include/coord/SklCoord.h
+../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../FB/Control_Rect.o: /usr/local/sphere/include/SklUtil.h
 ../../FB/Control_Rect.o: ../../FB/Material.h ../../FB/Component.h
 ../../FB/Control_Rect.o: ../../FB/FBUtility.h ../../FB/Monitor.h
@@ -522,6 +525,7 @@ depend:
 ../../FB/History.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../FB/History.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/History.o: /usr/local/sphere/include/coord/SklCoord.h
+../../FB/History.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../FB/History.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
 ../../FB/History.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../FB/History.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -598,6 +602,7 @@ depend:
 ../../FB/Intrinsic.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/Intrinsic.o: ../../FB/FBDefine.h ../../FB/mydebug.h
 ../../FB/Intrinsic.o: ../../FB/BndOuter.h ../../FB/Control.h
+../../FB/Intrinsic.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../FB/Intrinsic.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
 ../../FB/Intrinsic.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../FB/Intrinsic.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -676,13 +681,14 @@ depend:
 ../../FB/ParseBC.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/ParseBC.o: ../../FB/FBDefine.h ../../FB/mydebug.h
 ../../FB/ParseBC.o: ../../FB/FBUtility.h ../../FB/BndOuter.h
-../../FB/ParseBC.o: ../../FB/Control.h /usr/local/sphere/include/SklUtil.h
-../../FB/ParseBC.o: ../../FB/Material.h ../../FB/Component.h
-../../FB/ParseBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-../../FB/ParseBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-../../FB/ParseBC.o: ../../FB/MonCompo.h ../../FB/basic_func.h
-../../FB/ParseBC.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../FB/ParseBC.o: ../../FB/IDtable.h
+../../FB/ParseBC.o: ../../FB/Control.h
+../../FB/ParseBC.o: /usr/local/sphere/include/config/SklCfgOutFile.h
+../../FB/ParseBC.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
+../../FB/ParseBC.o: ../../FB/Component.h ../../FB/Monitor.h ../../FB/vec3.h
+../../FB/ParseBC.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
+../../FB/ParseBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+../../FB/ParseBC.o: ../../FB/basic_func.h ../../FB/Sampling.h
+../../FB/ParseBC.o: ../../FB/Interval_Mngr.h ../../FB/IDtable.h
 ../../FB/ParseMat.o: ../../FB/ParseMat.h /usr/local/sphere/include/Skl.h
 ../../FB/ParseMat.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/ParseMat.o: /usr/local/sphere/include/SklSolverBase.h
@@ -751,14 +757,15 @@ depend:
 ../../FB/ParseMat.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/ParseMat.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/ParseMat.o: ../../FB/FBDefine.h ../../FB/mydebug.h
-../../FB/ParseMat.o: ../../FB/Control.h /usr/local/sphere/include/SklUtil.h
-../../FB/ParseMat.o: ../../FB/Material.h ../../FB/Component.h
-../../FB/ParseMat.o: ../../FB/FBUtility.h ../../FB/Monitor.h ../../FB/vec3.h
-../../FB/ParseMat.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
-../../FB/ParseMat.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
-../../FB/ParseMat.o: ../../FB/basic_func.h ../../FB/Sampling.h
-../../FB/ParseMat.o: ../../FB/BndOuter.h ../../FB/Interval_Mngr.h
-../../FB/ParseMat.o: ../../FB/IDtable.h
+../../FB/ParseMat.o: ../../FB/Control.h
+../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgOutFile.h
+../../FB/ParseMat.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
+../../FB/ParseMat.o: ../../FB/Component.h ../../FB/FBUtility.h
+../../FB/ParseMat.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
+../../FB/ParseMat.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
+../../FB/ParseMat.o: ../../FB/MonCompo.h ../../FB/basic_func.h
+../../FB/ParseMat.o: ../../FB/Sampling.h ../../FB/BndOuter.h
+../../FB/ParseMat.o: ../../FB/Interval_Mngr.h ../../FB/IDtable.h
 ../../FB/SetBC.o: ../../FB/SetBC.h /usr/local/sphere/include/Skl.h
 ../../FB/SetBC.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/SetBC.o: /usr/local/sphere/include/SklSolverBase.h
@@ -828,6 +835,7 @@ depend:
 ../../FB/SetBC.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/SetBC.o: ../../FB/FBDefine.h ../../FB/mydebug.h ../../FB/FBUtility.h
 ../../FB/SetBC.o: ../../FB/BndOuter.h ../../FB/Control.h
+../../FB/SetBC.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../FB/SetBC.o: /usr/local/sphere/include/SklUtil.h ../../FB/Material.h
 ../../FB/SetBC.o: ../../FB/Component.h ../../FB/Monitor.h ../../FB/vec3.h
 ../../FB/SetBC.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h

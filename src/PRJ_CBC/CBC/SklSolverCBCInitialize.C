@@ -9,6 +9,11 @@
 //@brief CBCソルバークラスのプリプロセッサ
 //@author keno, FSI Team, VCAD, RIKEN
 
+#include <stdlib.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+
 #include "SklSolverCBC.h"
 #include "CompoFraction.h"
 
@@ -165,6 +170,12 @@ SklSolverCBC::SklSolverInitialize() {
 
   // XMLパラメータの取得
   C.getXML_Steer_2(IC, &RF);
+  
+  // ファイル入出力に関するパラメータ
+  C.getXML_FileIO(m_solvCfg);
+  
+  // ラフな初期値を使い、リスタートするモード指定
+  if ( C.Start == Control::re_start ) C.getXML_restart_rough();
   
   // 組み込み例題の固有パラメータ
   if ( !Ex->getXML(m_solvCfg, &C) ) Exit(0);
@@ -885,11 +896,9 @@ SklSolverCBC::SklSolverInitialize() {
         FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
       }
       
-      // 粗い格子のファイルをロード
+      // 粗い格子のファイルをロードし、内挿処理を行う
       load_Restart_rough(fp, flop_task);
-      
-      // 内挿処理
-      Interpolation_from_rough_initial();
+
     }
     
     TIMING_stop(tm_restart);
@@ -914,7 +923,7 @@ SklSolverCBC::SklSolverInitialize() {
   for (int i=0; i<Interval_Manager::tg_END; i++) {
     C.Interval[i].setTime_init( (double)SklGetBaseTime() );
   }
-    
+
   // インターバルの初期化
   double m_dt    = (double)SklGetDeltaT();
   double m_tm    = (double)SklGetTotalTime();
@@ -950,17 +959,17 @@ SklSolverCBC::SklSolverInitialize() {
       Exit(0);
     }    
   }
-
+  mark();
   // V-Sphereに出力インターバルを通知
   C.tell_Interval_2_Sphere();
-
+  mark();
   // 平均値のロード
   if ( C.Start==Control::re_start) {
     TIMING_start(tm_restart);
     if ( C.Mode.Average == ON ) load_Restart_avr_file(fp, flop_task);
     TIMING_stop(tm_restart);
   }
-  
+  mark();
   // データクラスのポイント
   if( !(v  = dc_v->GetData()) )     return -1;
   if( !(p  = dc_p->GetData()) )     return -1;
@@ -968,7 +977,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.isHeatProblem() ) {
     if( !(t = dc_t->GetData()) )    return -1;
   }
-  
+  mark();
   
 	// リスタートの最大値と最小値の表示
   if ( C.Start == Control::re_start ) {
@@ -1137,7 +1146,7 @@ SklSolverCBC::SklSolverInitialize() {
       
       //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
     }
-
+    mark();
     
     // ユーザ例題のときに，速度の内部境界条件を設定する
     if ( C.Mode.Example == id_Users ) {
@@ -2401,21 +2410,55 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   r_size[1] = size[1] / 2;
   r_size[2] = size[2] / 2;
   
+  int rgh_i, rgh_j, rgh_k;    // 粗格子の開始インデクス
+  
+  //並列時には各ランクに必要なファイル名と開始インデクスを取得
+  if ( C.FIO.IO_Input == IO_DISTRIBUTE ) {
+    
+    std::string prefix;
+    int i, j, k;  // 密格子のローカル開始インデクス
+    
+    i = pn.st_idx[0];
+    j = pn.st_idx[1];
+    k = pn.st_idx[2];
+    
+    // rgh_i, _j, _k には同じ値が入る 
+    prefix = C.RoughInit_prs_file;
+    getRoughResult(i, j, k, C.RoughInit_dfi_file, prefix, C.RoughInit_prs_file, rgh_i, rgh_j, rgh_k);
+    
+    prefix = C.RoughInit_vel_file;
+    getRoughResult(i, j, k, C.RoughInit_dfi_file, prefix, C.RoughInit_vel_file, rgh_i, rgh_j, rgh_k);
+    
+    if ( C.isHeatProblem() ) {
+      prefix = C.RoughInit_temp_file;
+      getRoughResult(i, j, k, C.RoughInit_dfi_file, prefix, C.RoughInit_temp_file, rgh_i, rgh_j, rgh_k);
+    }
+  }
+  else {
+    rgh_i = 1;
+    rgh_j = 1;
+    rgh_k = 1;
+  }
+  
+  char label_tmp[LABEL];
+  
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  F.loadScalar(fp, C.RoughInit_prs_file, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  strcpy(label_tmp, C.RoughInit_prs_file.c_str());
+  F.loadScalar(fp, label_tmp, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
-  mark();
+
   // v00[]に値をセット
   copyV00fromRF((double)time);
   
   
   // Instantaneous Velocity fields
-  F.loadVector(fp, C.RoughInit_vel_file, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  strcpy(label_tmp, C.RoughInit_vel_file.c_str());
+  F.loadVector(fp, label_tmp, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2429,7 +2472,8 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    F.loadTemp(fp, C.RoughInit_temp_file, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    strcpy(label_tmp, C.RoughInit_temp_file.c_str());
+    F.loadTemp(fp, label_tmp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2438,6 +2482,9 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
       Exit(0);
     }
   }
+
+  // 内挿処理
+  Interpolation_from_rough_initial(rgh_i, rgh_j, rgh_k);
 
 }
 
@@ -2949,10 +2996,13 @@ void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const u
 
 
 /**
- @fn void SklSolverCBC::Interpolation_from_rough_initial(void)
+ @fn void SklSolverCBC::Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k)
+ @param st_i 粗い格子の開始インデクス
+ @param st_j 
+ @param st_k 
  @brief 粗い格子を用いたリスタート値の内挿
  */
-void SklSolverCBC::Interpolation_from_rough_initial(void)
+void SklSolverCBC::Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k)
 {
   REAL_TYPE *v = NULL;
   REAL_TYPE *p = NULL;
@@ -2961,18 +3011,22 @@ void SklSolverCBC::Interpolation_from_rough_initial(void)
   REAL_TYPE *r_p = NULL;
   REAL_TYPE *r_t = NULL;
   
+  int i = st_i;
+  int j = st_j;
+  int k = st_k;
+  
   if( !(v   = dc_v->GetData()) )     Exit(0);
   if( !(p   = dc_p->GetData()) )     Exit(0);
   if( !(r_v = dc_r_v->GetData()) )   Exit(0);
   if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
-  fb_interp_rough_s_(p, sz, gc, r_p);
-  fb_interp_rough_v_(v, sz, gc, r_v);
+  fb_interp_rough_s_(p, sz, gc, r_p, &i, &j, &k);
+  fb_interp_rough_v_(v, sz, gc, r_v, &i, &j, &k);
   
   if ( C.isHeatProblem() ) {
     if( !(t   = dc_t->GetData()) )   Exit(0);
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
-    fb_interp_rough_s_(t, sz, gc, r_t);
+    fb_interp_rough_s_(t, sz, gc, r_t, &i, &j, &k);
   }
 
 }
@@ -4233,3 +4287,106 @@ void SklSolverCBC::write_distance(float* cut)
   }
   F.writeRawSPH(tmp, size, guide, org, pit, SPH_SINGLE);
 }
+
+
+//@fn int SklSolverCBC::get_intval( std::string& buffer )
+//@brief XMLファイルから値をとりだす
+int SklSolverCBC::get_intval( std::string& buffer )
+{
+	int s = buffer.find( "value=\"", 0 ) + 7;
+	int e = buffer.find( "\"", s );
+	return atoi( buffer.substr( s, e-s ).c_str() );
+}
+
+
+//@fn std::string SklSolverCBC::get_strval( std::string& buffer )
+//@brief XMLファイルから値をとりだす
+std::string SklSolverCBC::get_strval( std::string& buffer )
+{
+	int s = buffer.find( "value=\"", 0 ) + 7;
+	int e = buffer.find( "\"", s );
+  std::string result = buffer.substr( s, e-s );
+	return result;
+}
+
+
+//@fn bool SklSolverCBC::getRoughResult()
+//@note 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+//
+bool
+SklSolverCBC::getRoughResult (
+                int i,		// (in) 密格子　開始インデクスi
+                int j,		// (in) 同j
+                int k,		// (in) 同k
+                std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
+                std::string& rough_prefix,	  // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
+                int& rough_i,	// (out) 粗格子　開始インデクスi
+                int& rough_j,	// (out) 同j
+                int& rough_k	// (out) 同k
+                )
+{
+	// 密格子のijkを粗格子のijkに変換
+	i=i/2; j=j/2; k=k/2;
+  
+	// dfiファイルを開いて
+	ifstream ifs( rough_dfi_fname.c_str() );
+	if( !ifs ) return false;
+	
+	// 粗格子ijkが含まれるランクは？
+	string buf;
+	int rank = -1;
+	int hi, hj, hk, ti, tj, tk;
+	while( getline(ifs, buf) ) {
+		if( buf.find("\"GroupID\"",0) != string::npos ) {
+			rank = get_intval( buf );
+      
+			while( getline(ifs, buf) ) {
+				if( buf.find("\"HeadIndex\"",0) != string::npos ) {
+					getline(ifs, buf);
+					hi = get_intval( buf );	
+					getline(ifs, buf);
+					hj = get_intval( buf );	
+					getline(ifs, buf);
+					hk = get_intval( buf );	
+				}
+				if( buf.find("\"TailIndex\"",0) != string::npos ) {
+					getline(ifs, buf);
+					ti = get_intval( buf );	
+					getline(ifs, buf);
+					tj = get_intval( buf );	
+					getline(ifs, buf);
+					tk = get_intval( buf );	
+					break;
+				}
+			}
+			if( i>=hi && i<=ti && j>=hj && j<=tj && k>=hk && k<=tk ) {
+				// found!
+				break;
+			}
+		}
+	}
+	if( rank == -1 ) return false;
+  
+	// id=rankで、rough_prefixをファイル名に含むsphファイルを探す
+	string fname = "";
+	char id[32];
+	sprintf(id, "id=\"%d\"", rank); 
+	while( getline(ifs, buf) ) {
+		if( buf.find("\"FileName\"",0) != string::npos && buf.find(id,0) != string::npos ) {
+			fname = get_strval( buf );
+			if( fname.find(rough_prefix,0) != string::npos ) {
+				// found!
+				break;
+			}
+		}
+	}
+	if( fname.empty() ) return false;
+  
+	rough_sph_fname = fname;
+	rough_i = hi;
+	rough_j = hj;
+	rough_k = hk;
+	return true;
+}
+
