@@ -1563,20 +1563,20 @@ void Control::getXML_restart_rough(void)
         stamped_printf("\tParsing error : fail to get 'Pressure_file_name' in 'Restart_mode'\n");
         Exit(0);
       }
-      RoughInit_prs_file = str;
+      f_Rough_pressure = str;
       
       if ( !elmL1->GetValue("Velocity_file_name", &str) ) {
         stamped_printf("\tParsing error : fail to get 'Velocity_file_name' in 'Restart_mode'\n");
         Exit(0);
       }
-      RoughInit_vel_file = str;
+      f_Rough_velocity = str;
       
       if ( isHeatProblem() ) {
         if ( !elmL1->GetValue("Temperature_file_name", &str) ) {
           stamped_printf("\tParsing error : fail to get 'Temperature_file_name' in 'Restart_mode'\n");
           Exit(0);
         }
-        RoughInit_temp_file = str;
+        f_Rough_temperature = str;
       }
     }
     
@@ -1588,26 +1588,26 @@ void Control::getXML_restart_rough(void)
         stamped_printf("\tParsing error : fail to get 'DFI_file_name' in 'Restart_mode'\n");
         Exit(0);
       }
-      RoughInit_dfi_file = str;
+      f_Rough_dfi = str;
       
       if ( !elmL1->GetValue("Pressure_prefix", &str) ) {
         stamped_printf("\tParsing error : fail to get 'Pressure_prefix' in 'Restart_mode'\n");
         Exit(0);
       }
-      RoughInit_prs_file = str;
+      f_Rough_pressure = str;
       
       if ( !elmL1->GetValue("Velocity_prefix", &str) ) {
         stamped_printf("\tParsing error : fail to get 'Velocity_prefix' in 'Restart_mode'\n");
         Exit(0);
       }
-      RoughInit_vel_file = str;
+      f_Rough_velocity = str;
       
       if ( isHeatProblem() ) {
         if ( !elmL1->GetValue("Temperature_prefix", &str) ) {
           stamped_printf("\tParsing error : fail to get 'Temperature_prefix' in 'Restart_mode'\n");
           Exit(0);
         }
-        RoughInit_temp_file = str;
+        f_Rough_temperature = str;
       }
     }
     
@@ -2831,19 +2831,19 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       
       if ( FIO.IO_Input == IO_GATHER ) {
         fprintf(fp,"\t     with Rough Initial files\n");
-        fprintf(fp,"\t          Pressure            :   %s\n", RoughInit_prs_file.c_str());
-        fprintf(fp,"\t          Velocity            :   %s\n", RoughInit_vel_file.c_str());
+        fprintf(fp,"\t          Pressure            :   %s\n", f_Rough_pressure.c_str());
+        fprintf(fp,"\t          Velocity            :   %s\n", f_Rough_velocity.c_str());
         if ( isHeatProblem() ) {
-          fprintf(fp,"\t          Temperature         :   %s\n", RoughInit_temp_file.c_str());
+          fprintf(fp,"\t          Temperature         :   %s\n", f_Rough_temperature.c_str());
         }
       }
       else {
         fprintf(fp,"\t     with Rough Initial files\n");
-        fprintf(fp,"\t          DFI file            :   %s\n", RoughInit_dfi_file.c_str());
-        fprintf(fp,"\t          Prefix of Pressure  :   %s\n", RoughInit_prs_file.c_str());
-        fprintf(fp,"\t          Prefix of Velocity  :   %s\n", RoughInit_vel_file.c_str());
+        fprintf(fp,"\t          DFI file            :   %s\n", f_Rough_dfi.c_str());
+        fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_Rough_pressure.c_str());
+        fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_Rough_velocity.c_str());
         if ( isHeatProblem() ) {
-          fprintf(fp,"\t          Prefix of Temp.     :   %s\n", RoughInit_temp_file.c_str());
+          fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_Rough_temperature.c_str());
         }
       }
     }

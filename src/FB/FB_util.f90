@@ -422,10 +422,126 @@
   end subroutine fb_interp_rough_v
 
 
+!  *****************************************************************************
+!> @subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs)
+!! @brief スカラー値の書き出し
+!! @param v 速度ベクトル
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param fname ファイル名
+!! @param step ステップ数
+!! @param time 時刻
+!! @param org 起点座標
+!! @param pit 格子幅
+!! @param d_type (1-float, 2-double)
+!! @param gs guide cell (0-without, 1-with)
+!<
+  subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs
+  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  time
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
+  real, dimension(3)                                        ::  org, pit
+  character*64                                              ::  fname
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+  sv_type = 1 ! scalar
+
+  if ( gs == 0 ) then
+    imax = ix
+    jmax = jx
+    kmax = kx
+  else
+    imax = ix + 2*g
+    jmax = jx + 2*g
+    kmax = kx + 2*g
+  end if
+
+  open(16, file=fname, form='unformatted')
+  write(16) sv_type, d_type
+  write(16) imax, jmax, kmax
+  write(16) org(1), org(2), org(3)
+  write(16) pit(1), pit(2), pit(3)
+  write(16) step, time
+
+  if ( gs == 1 ) then
+    write(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+  else
+    write(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
+  end if
+  close (unit=16)
+
+  return
+  end subroutine fb_write_sph_s
+
+
+!  *****************************************************************************
+!> @subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs)
+!! @brief ベクトル値の書き出し
+!! @param v ベクトル
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param fname ファイル名
+!! @param step ステップ数
+!! @param time 時刻
+!! @param org 起点座標
+!! @param pit 格子幅
+!! @param d_type (1-float, 2-double)
+!! @param gs guide cell (0-without, 1-with)
+!<
+  subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs
+  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  time
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(3)                                        ::  org, pit
+  character*64                                              ::  fname
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+  sv_type = 2 ! vector
+
+  if ( gs == 0 ) then
+    imax = ix
+    jmax = jx
+    kmax = kx
+  else
+    imax = ix + 2*g
+    jmax = jx + 2*g
+    kmax = kx + 2*g
+  end if
+
+  open(16, file=fname, form='unformatted')
+  write(16) sv_type, d_type
+  write(16) imax, jmax, kmax
+  write(16) org(1), org(2), org(3)
+  write(16) pit(1), pit(2), pit(3)
+  write(16) step, time
+
+  if ( gs == 1 ) then
+    write(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+  else
+    write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
+  end if
+  close (unit=16)
+
+  return
+  end subroutine fb_write_sph_v
+
+
 !  **********************************************************
 !> @subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs)
-!! @brief 速度ベクトルのロード
-!! @param v 速度ベクトル
+!! @brief スカラ値のロード
+!! @param s スカラ
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param fname ファイル名
@@ -477,8 +593,8 @@
   
 !  **********************************************************
 !> @subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs)
-!! @brief 速度ベクトルのロード
-!! @param v 速度ベクトル
+!! @brief ベクトルのロード
+!! @param v ベクトル
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param fname ファイル名
@@ -527,11 +643,10 @@
   return
   end subroutine fb_read_sph_v
   
-!  ****************************************************************************
-!> @subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!  *********************************************************************
+!> @subroutine fb_tmp_nd2d (s, sz, Base_tmp, Diff_tmp, klv, scale, flop)
 !! @brief 温度値を無次元から有次元へ変換し，scale倍して出力
-!! @param dst 有次元
-!! @param src 無次元
+!! @param s
 !! @param sz 配列長（一次元）
 !! @param Base_tmp 基準温度(K or C)
 !! @param Diff_tmp 代表温度差(K or C)
@@ -539,12 +654,12 @@
 !! @param scale 倍数（瞬時値のとき1.0）
 !! @param flop 浮動小数演算数
 !<
-  subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+  subroutine fb_tmp_nd2d (s, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
   real                                                      ::  flop, dp, scale
   real                                                      ::  Base_tmp, Diff_tmp, klv
-  real, dimension(sz)                                       ::  dst, src
+  real, dimension(sz)                                       ::  s
 
   dp = scale * abs(Diff_tmp)
   flop = flop + real(sz) * 3.0 + 2.0
@@ -555,7 +670,7 @@
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = src(i) * dp - klv + Base_tmp
+    s(i) = s(i) * dp - klv + Base_tmp
   end do
 !$OMP END DO
 
@@ -564,11 +679,10 @@
   return
   end subroutine fb_tmp_nd2d
   
-!  ****************************************************************************
-!> @subroutine fb_tmp_d2nd (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!  *********************************************************************
+!> @subroutine fb_tmp_d2nd (t, sz, Base_tmp, Diff_tmp, klv, scale, flop)
 !! @brief 温度値を有次元から無次元へ変換し，scale倍して出力
-!! @param dst 無次元
-!! @param src 有次元
+!! @param t 温度場
 !! @param sz 配列長（一次元）
 !! @param Base_tmp 基準温度(K or C)
 !! @param Diff_tmp 代表温度差(K or C)
@@ -576,12 +690,12 @@
 !! @param scale 倍数（瞬時値のとき1.0）
 !! @param flop 浮動小数演算数
 !<
-  subroutine fb_tmp_d2nd (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+  subroutine fb_tmp_d2nd (t, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
   real                                                      ::  flop, dp, scale
   real                                                      ::  Base_tmp, Diff_tmp, klv
-  real, dimension(sz)                                       ::  dst, src
+  real, dimension(sz)                                       ::  t
 
   dp = scale / abs(Diff_tmp)
   flop = flop + real(sz) * 3.0 + 10.0
@@ -592,7 +706,7 @@
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = ( src(i) + klv - Base_tmp ) * dp
+    t(i) = ( t(i) + klv - Base_tmp ) * dp
   end do
 !$OMP END DO
 
@@ -601,11 +715,10 @@
   return
   end subroutine fb_tmp_d2nd
   
-!  *****************************************************************************
-!> @subroutine fb_prs_d2nd (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!  **********************************************************************
+!> @subroutine fb_prs_d2nd (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
 !! @brief 圧力値を有次元から無次元へ変換し，scale倍して出力
-!! @param dst 無次元
-!! @param src 有次元
+!! @param s 圧力
 !! @param sz 配列長（一次元）
 !! @param Base_prs 基準圧力(Pa) 基準圧がゼロのとき，ゲージ圧
 !! @param Ref_rho 代表密度(kg/m^3)
@@ -613,12 +726,12 @@
 !! @param scale 倍数（瞬時値のとき1.0）
 !! @param flop 浮動小数演算数
 !<
-  subroutine fb_prs_d2nd (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+  subroutine fb_prs_d2nd (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
   real                                                      ::  flop, dp, scale
   real                                                      ::  Base_prs, Ref_rho, Ref_v
-  real, dimension(sz)                                       ::  dst, src
+  real, dimension(sz)                                       ::  s
 
   dp = scale / (Ref_rho * Ref_v * Ref_v)
   flop = flop + real(sz) * 3.0 + 10.0
@@ -629,7 +742,7 @@
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = ( src(i) - Base_prs ) * dp
+    s(i) = ( s(i) - Base_prs ) * dp
   end do
 !$OMP END DO
 
@@ -638,8 +751,8 @@
   return
   end subroutine fb_prs_d2nd
   
-!  *****************************************************************************
-!> @subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!  **********************************************************************
+!> @subroutine fb_prs_nd2d (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
 !! @brief 圧力値を無次元から有次元へ変換し，scale倍して出力
 !! @param dst 有次元
 !! @param src 無次元
@@ -651,12 +764,12 @@
 !! @param scale 倍数（瞬時値のとき1.0）
 !! @param flop 浮動小数演算数
 !<
-  subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+  subroutine fb_prs_nd2d (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
   real                                                      ::  flop, dp, scale
   real                                                      ::  Base_prs, Ref_rho, Ref_v
-  real, dimension(sz)                                       ::  dst, src
+  real, dimension(sz)                                       ::  s
 
   dp = Ref_rho * Ref_v * Ref_v * scale
   flop = flop + real(sz) * 3.0 + 2.0
@@ -667,7 +780,7 @@
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = ( src(i) * dp + Base_prs ) 
+    s(i) = ( s(i) * dp + Base_prs ) 
   end do
 !$OMP END DO
 
@@ -708,25 +821,24 @@
   return
   end subroutine fb_xcopy
   
-!  **********************************************************************
-!> @subroutine fb_shift_refv_in (dst, sz, g, src, v00, scale, refv, flop)
+!  ***************************************************************
+!> @subroutine fb_shift_refv_in (v, sz, g, v00, scale, refv, flop)
 !! @brief 速度ベクトルの格子速度変換
-!! @param dst 移動系へ変換されたベクトル（平均場の場合は積算値）
+!! @param v 変換されたベクトル（平均場の場合は積算値）
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param src 静止系のベクトル
 !! @param v00 参照速度
 !! @param sacle 倍数　（瞬時値の場合には1）
 !! @param refv 代表速度
 !! @param flop 浮動小数演算数
 !! @note dst[] = ( src[]/refv + v00 ) * scale, 有次元のときrefvは次元速度，無次元のとき1.0
 !<
-  subroutine fb_shift_refv_in (dst, sz, g, src, v00, scale, refv, flop)
+  subroutine fb_shift_refv_in (v, sz, g, v00, scale, refv, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop, scale, u_ref, v_ref, w_ref, refv, rr
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  dst, src
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -750,9 +862,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    dst(1,i,j,k) = ( src(1,i,j,k) * rr + u_ref ) * scale
-    dst(2,i,j,k) = ( src(2,i,j,k) * rr + v_ref ) * scale
-    dst(3,i,j,k) = ( src(3,i,j,k) * rr + w_ref ) * scale
+    v(1,i,j,k) = ( v(1,i,j,k) * rr + u_ref ) * scale
+    v(2,i,j,k) = ( v(2,i,j,k) * rr + v_ref ) * scale
+    v(3,i,j,k) = ( v(3,i,j,k) * rr + w_ref ) * scale
   end do
   end do
   end do
@@ -763,25 +875,24 @@
   return
   end subroutine fb_shift_refv_in
   
-!  *************************************************************************
-!> @subroutine fb_shift_refv_out (dst, sz, g, src, v00, scale, unit_v, flop)
+!  ******************************************************************
+!> @subroutine fb_shift_refv_out (v, sz, g, v00, scale, unit_v, flop)
 !! @brief 速度ベクトルの格子速度変換をして，scale倍する
-!! @param dst 静止系へ変換されたベクトル
+!! @param v 変換されたベクトル
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param src 移動格子系のベクトル（平均場の場合は積算値）
 !! @param v00 参照速度
 !! @param scale 倍数（瞬時値の場合には1）
 !! @param unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
 !! @param flop 浮動小数演算数
 !! @note dst[] = ( src[] * stepAvr ) - v00
 !<
-  subroutine fb_shift_refv_out (dst, sz, g, src, v00, scale, unit_v, flop)
+  subroutine fb_shift_refv_out (v, sz, g, v00, scale, unit_v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop, u_ref, v_ref, w_ref, unit_v, scale
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  dst, src
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -803,9 +914,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    dst(1,i,j,k) = ( src(1,i,j,k) * scale - u_ref ) * unit_v
-    dst(2,i,j,k) = ( src(2,i,j,k) * scale - v_ref ) * unit_v
-    dst(3,i,j,k) = ( src(3,i,j,k) * scale - w_ref ) * unit_v
+    v(1,i,j,k) = ( v(1,i,j,k) * scale - u_ref ) * unit_v
+    v(2,i,j,k) = ( v(2,i,j,k) * scale - v_ref ) * unit_v
+    v(3,i,j,k) = ( v(3,i,j,k) * scale - w_ref ) * unit_v
   end do
   end do
   end do

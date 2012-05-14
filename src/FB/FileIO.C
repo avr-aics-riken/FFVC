@@ -986,13 +986,13 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
 
 
 /**
- @fn void FileIO::loadScalar(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+ @fn void FileIO::loadPressure(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
         REAL_TYPE* p, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE BasePrs, 
         const REAL_TYPE RefDensity, const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
- @brief スカラファイルをロードする
+ @brief 圧力ファイルをロードする
  @param fp ファイルポインタ（ファイル出力）
  @param fname ファイル名
- @param p  結果を保持するデータ
+ @param p 圧力データ
  @param step[out] ステップ
  @param time[out] 時刻
  @param Dmode 次元（無次元-0 / 有次元-1）
@@ -1002,7 +1002,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
-void FileIO::loadScalar(FILE* fp, char* fname, const unsigned* size, const unsigned gc,
+void FileIO::loadPressure(FILE* fp, char* fname, const unsigned* size, const unsigned gc,
                           REAL_TYPE* p, int& step, REAL_TYPE& time, 
                           const unsigned Dmode, 
                           const REAL_TYPE BasePrs, 
@@ -1022,7 +1022,7 @@ void FileIO::loadScalar(FILE* fp, char* fname, const unsigned* size, const unsig
   REAL_TYPE ref_d = RefDensity;
   REAL_TYPE ref_v = RefVelocity;
   
-  fb_prs_d2nd_(p, p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
+  fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
   
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -1046,7 +1046,7 @@ void FileIO::loadScalar(FILE* fp, char* fname, const unsigned* size, const unsig
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
-void FileIO::loadVector(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+void FileIO::loadVelocity(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
                           REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
                           const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
 {
@@ -1071,15 +1071,18 @@ void FileIO::loadVector(FILE* fp, char* fname, const unsigned* size, const unsig
 }
 
 /**
- @fn void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, char* fname, const unsigned* size, const unsigned guide, 
- SklScalar3D<REAL_TYPE>* dc_t, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE Base_tmp, 
- const REAL_TYPE Diff_tmp, const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
- @brief 圧力をロードする
+ @fn void FileIO::loadTemperature(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+ REAL_TYPE* t, int& step, REAL_TYPE& time, 
+ const unsigned Dmode, 
+ const REAL_TYPE Base_tmp, 
+ const REAL_TYPE Diff_tmp, 
+ const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
+ @brief 温度をロードする
  @param fp ファイルポインタ（ファイル出力）
  @param fname InFileのattrラベル名
  @param size グローバルなサイズ
- @param guide ガイドセルサイズ
- @param dc_t  結果を保持するデータクラス
+ @param gc ガイドセルサイズ
+ @param t  結果を保持するデータクラス
  @param step[out] ステップ
  @param time[out] 時刻
  @param Dmode 次元（無次元-0 / 有次元-1）
@@ -1089,7 +1092,7 @@ void FileIO::loadVector(FILE* fp, char* fname, const unsigned* size, const unsig
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
-void FileIO::loadTemp(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
+void FileIO::loadTemperature(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
                              REAL_TYPE* t, int& step, REAL_TYPE& time, 
                              const unsigned Dmode, 
                              const REAL_TYPE Base_tmp, 
@@ -1108,7 +1111,7 @@ void FileIO::loadTemp(FILE* fp, char* fname, const unsigned* size, const unsigne
   REAL_TYPE diff_t = Diff_tmp;
   REAL_TYPE klv    = Kelvin;
   
-  fb_tmp_d2nd_(t, t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
+  fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
   
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");

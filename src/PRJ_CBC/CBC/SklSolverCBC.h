@@ -339,7 +339,7 @@ public:
   void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
   void load_Restart_rough   (FILE* fp, REAL_TYPE& flop);
   
-  char* GenerateFileName(const char* base_name, int m_step, bool multi_io_flag);
+  char* GenerateFileName(const char* base_name, const int m_step, const bool multi_io_flag, const bool isPara);
   
   
   //@fn 時刻をRFクラスからv00[4]にコピーする

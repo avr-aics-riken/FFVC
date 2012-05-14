@@ -1610,34 +1610,32 @@ REAL_TYPE SklSolverCBC::PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE
 }
 
 /**
- * 出力ファイル名を作成する。
+ * ファイル名を作成する。
  * @param base_name     ファイル接頭文字
  * @param m_step
  * @param m_time
  * @param multi_io_flag   分割入出力フラグ
- * @return      作成出力ファイル名
+ * @param isPara true -> 並列
+ * @return ファイル名
  */
-char* SklSolverCBC::GenerateFileName(const char* base_name, int m_step, bool multi_io_flag)
+char* SklSolverCBC::GenerateFileName(const char* prefix, const int m_step, const bool multi_io_flag, const bool isPara)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
   int m_id = pn.ID; // Rank番号
   
   if( !base_name ) return NULL;
   char* fname = NULL;
-  int len = strlen(base_name) + 29; // step(10) + id(8) + postfix(10) + 1
+  int len = strlen(prefix) + 24; // step(10) + id(9) + postfix(4) + 1
   fname = new char[len];
   memset(fname, 0, sizeof(char)*len);
   
-  char postfix[10]; memset(postfix, 0, sizeof(char)*10);
+  char postfix[4]; memset(postfix, 0, sizeof(char)*4);
 
   strcpy(postfix, "sph");
-  if( !para_mng || !para_mng->IsParallel() || !multi_io_flag ){
-    sprintf(fname, "%s%010d.%s", base_name, m_step, postfix);
+  if( !isPara || !multi_io_flag ){
+    sprintf(fname, "%s%010d.%s", prefix, m_step, postfix);
   }
   else {
-    sprintf(fname, "%s%010d_id%06d.%s", base_name, m_step, m_id, postfix);
+    sprintf(fname, "%s%010d_id%06d.%s", prefix, m_step, m_id, postfix);
   }
 
   return fname;

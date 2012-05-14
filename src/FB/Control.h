@@ -527,10 +527,22 @@ public:
   long TotalMemory;
   char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
   char HistoryWallName[LABEL], PolylibConfigName[LABEL], HistoryForceName[LABEL];
-  std::string RoughInit_prs_file;
-  std::string RoughInit_vel_file;
-  std::string RoughInit_temp_file;
-  std::string RoughInit_dfi_file;
+  std::string f_Rough_pressure;
+  std::string f_Rough_velocity;
+  std::string f_Rough_temperature;
+  std::string f_Rough_dfi;
+  
+  std::string f_Velocity;
+  std::string f_Pressue;
+  std::string f_Temperature;
+  std::string f_AvrPressure;
+  std::string f_AvrVelocity;
+  std::string f_AvrTemperature;
+  std::string f_DivDebug;
+  std::string f_Helicity;
+  std::string f_TotalP;
+  std::string f_I2VGT;
+  
   
   Control(){
     Acell = 0;
