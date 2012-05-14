@@ -54,7 +54,7 @@ RANLIB = ranlib
 
 #POLYLIB_DIR = ../../Polylib_2_0_2
 POLYLIB_DIR = ../../Polylib_2_0_3
-POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/include/libxml2
+POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/local/libxml2-2.7.8_lib/include/libxml2
 
 # with Octree lib ############################################################
 #OCTREE_DIR = ../../sgi-octree

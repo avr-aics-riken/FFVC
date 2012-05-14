@@ -815,7 +815,7 @@ void Control::getXML_Dimension(void)
 void Control::getXML_FileIO(SklSolverConfig* cfg)
 {
   SklCfgInFile* infile   = (SklCfgInFile*)CF->GetInFileFirst();
-  SklCfgOutFile* outfile = (SklCfgOutFile*)cfg->GetOutFileFirst();
+  //SklCfgOutFile* outfile = (SklCfgOutFile*)cfg->GetOutFileFirst(); Lionではうまくいかない
 
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
@@ -917,7 +917,7 @@ void Control::getXML_FileIO(SklSolverConfig* cfg)
     infile = (SklCfgInFile*)CF->GetInFileNext(infile);
   }
 
-  // 出力ファイル情報の記述形式をチェックし，並列出力モードをフレームワークに通知する
+  /* 出力ファイル情報の記述形式をチェックし，並列出力モードをフレームワークに通知する
   while( outfile ){          // check a valid OutFile description
     const char *attr, *format, *fname;
     unsigned interval;
@@ -946,7 +946,7 @@ void Control::getXML_FileIO(SklSolverConfig* cfg)
     }
     
     outfile = (SklCfgOutFile*)CF->GetOutFileNext(outfile);
-  }
+  }*/
 
   // インターバル 瞬時値
   if ( !elmL1->GetValue("Instant_Interval_Type", &str) ) {
@@ -3538,10 +3538,9 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
  @fn void Control::tell_Interval_2_Sphere(void)
  @brief SPHEREフレームワークにファイル出力インターバルを教える
  @note パラメータは，setParameters()で無次元して保持
- */
+ *
 void Control::tell_Interval_2_Sphere(void)
 {
-  mark();
   SklCfgOutFile* outfile = (SklCfgOutFile*)CF->GetOutFileFirst();
   mark();
   while( outfile ){
@@ -3578,13 +3577,13 @@ void Control::tell_Interval_2_Sphere(void)
     mark();
     outfile = (SklCfgOutFile*)CF->GetOutFileNext(outfile);
   }
-}
+}*/
 
 /**
  @fn void Control::tell_Avr_Interval_2_Sphere(void)
  @brief SPHEREフレームワークに平均値ファイル出力インターバルを教える
  @note パラメータは，setParameters()で無次元して保持
- */
+ *
 void Control::tell_Avr_Interval_2_Sphere(void)
 {
   SklCfgOutFile* outfile = (SklCfgOutFile*)CF->GetOutFileFirst();
@@ -3618,4 +3617,4 @@ void Control::tell_Avr_Interval_2_Sphere(void)
     
     outfile = (SklCfgOutFile*)CF->GetOutFileNext(outfile);
   }
-}
+}*/

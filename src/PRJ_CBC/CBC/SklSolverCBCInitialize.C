@@ -16,6 +16,7 @@
 
 #include "SklSolverCBC.h"
 #include "CompoFraction.h"
+#include "fileio/SklVoxDataSet.h"
 
 //@fn int SklSolverCBC::SklSolverInitialize()
 //@brief 前処理
@@ -959,17 +960,17 @@ SklSolverCBC::SklSolverInitialize() {
       Exit(0);
     }    
   }
-  mark();
+  
   // V-Sphereに出力インターバルを通知
-  C.tell_Interval_2_Sphere();
-  mark();
+  //C.tell_Interval_2_Sphere();
+  
   // 平均値のロード
   if ( C.Start==Control::re_start) {
     TIMING_start(tm_restart);
     if ( C.Mode.Average == ON ) load_Restart_avr_file(fp, flop_task);
     TIMING_stop(tm_restart);
   }
-  mark();
+  
   // データクラスのポイント
   if( !(v  = dc_v->GetData()) )     return -1;
   if( !(p  = dc_p->GetData()) )     return -1;
@@ -977,7 +978,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.isHeatProblem() ) {
     if( !(t = dc_t->GetData()) )    return -1;
   }
-  mark();
+ 
   
 	// リスタートの最大値と最小値の表示
   if ( C.Start == Control::re_start ) {
@@ -1043,7 +1044,7 @@ SklSolverCBC::SklSolverInitialize() {
       fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
       B.printOBCinfo(mp, fp, G_Lbx);
     }
-    
+
     // モニタ情報の表示
     if ( C.Sampling.log == ON ) {
       
@@ -1061,12 +1062,12 @@ SklSolverCBC::SklSolverInitialize() {
       Hostonly_ if ( fp_mon ) fclose(fp_mon);
     }
   }
-  
+
   
   // ドライバ条件のチェック
   BC.checkDriver(fp);
-  
-  
+
+
   // 初期条件の条件設定
 	if ( C.Start == Control::initial_start ) {
 		REAL_TYPE dt_init=1.0, tm_init=0.0;
@@ -1128,25 +1129,6 @@ SklSolverCBC::SklSolverInitialize() {
       
 			BC.OuterTBC(dc_t);
 		}
-    else { // リスタート時
-      // 内部境界条件
-      BC.InnerVBC(v, bcv, tm, v00, flop_task);
-      BC.InnerVBC_Periodic(dc_v, dc_bcd);
-      BC.InnerPBC_Periodic(dc_p, dc_bcd);
-      
-      // 外部境界条件
-      BC.OuterVBC(v, v, bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
-      BC.OuterVBC_Periodic(dc_v);
-      
-      //流出境界の流出速度の算出
-      REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
-      REAL_TYPE m_av[2];
-      BC.mod_div(ws, bcv, coef, tm, v00, m_av, flop_task);
-      DomainMonitor(BC.get_OBC_Ptr(), &C, flop_task);
-      
-      //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
-    }
-    mark();
     
     // ユーザ例題のときに，速度の内部境界条件を設定する
     if ( C.Mode.Example == id_Users ) {
@@ -1156,14 +1138,36 @@ SklSolverCBC::SklSolverInitialize() {
       Ex->initCond(v, p);
     }
     
-    // VOF
-    if ( C.BasicEqs == INCMP_2PHASE ) {
-      REAL_TYPE* vof=NULL;
-      if( !(vof = dc_vof->GetData()) )  return -1;
-      setVOF(vof, bcd);
-      if ( !dc_vof->CommBndCell(guide) ) return -1;
-    }
   }
+  else { // リスタート時
+    
+    // 内部境界条件
+    BC.InnerVBC(v, bcv, tm, v00, flop_task);
+    BC.InnerVBC_Periodic(dc_v, dc_bcd);
+    BC.InnerPBC_Periodic(dc_p, dc_bcd);
+    
+    // 外部境界条件
+    BC.OuterVBC(v, v, bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
+    BC.OuterVBC_Periodic(dc_v);
+    
+    //流出境界の流出速度の算出
+    REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
+    REAL_TYPE m_av[2];
+    BC.mod_div(ws, bcv, coef, tm, v00, m_av, flop_task);
+    DomainMonitor(BC.get_OBC_Ptr(), &C, flop_task);
+    
+    //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
+    
+  }
+    
+  // VOF
+  if ( C.BasicEqs == INCMP_2PHASE ) {
+    REAL_TYPE* vof=NULL;
+    if( !(vof = dc_vof->GetData()) )  return -1;
+    setVOF(vof, bcd);
+    if ( !dc_vof->CommBndCell(guide) ) return -1;
+  }
+
   
   // 初期解およびリスタート解の同期
   if( !dc_v->CommBndCell(guide) ) return -1;
@@ -1172,8 +1176,10 @@ SklSolverCBC::SklSolverInitialize() {
     if( !dc_t->CommBndCell(guide) ) return -1;
   }
   
+  
   // 設定した初期値のファイル出力準備
   prepOutput();
+  mark();
 
   // マスターノードでの履歴出力準備
   H = new History(&C);
@@ -2616,6 +2622,13 @@ void SklSolverCBC::prepOutput (void)
 {
   REAL_TYPE org[3], pit[3];
   
+//zkawa.120514.s
+  bool mio_out = true;
+  if( C.FIO.IO_Output == IO_GATHER ) mio_out = false;
+//zkawa.120514.s
+  
+  int interval = C.Interval[Interval_Manager::tg_instant].getIntervalStep();
+  
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
   for (int i=0; i<3; i++) {
     org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
@@ -2636,7 +2649,10 @@ void SklSolverCBC::prepOutput (void)
     // Divergence
     if ( C.FIO.Div_Debug == ON ) {
       if ( SklCfgCheckOutFile("Divergence") ) {
-        if( !(m_outDiv = InitFile("Divergence", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+        //        if( !(m_outDiv = InitFile("Divergence", size, org, pit, dc_ws)) ) {
+        if( !(m_outDiv = CBCInitFile(mio_out, interval, "Divergence", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
           Hostonly_ stamped_printf("\tInit failed.\n");
           Exit(0);
         }
@@ -2646,10 +2662,13 @@ void SklSolverCBC::prepOutput (void)
         Exit(0);
       }
     }
-    
+    mark();
     // Pressure
 		if ( SklCfgCheckOutFile("Pressure") ) {
-			if( !(m_outPrs = InitFile("Pressure", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+      //			if( !(m_outPrs = InitFile("Pressure", size, org, pit, dc_ws)) ) {
+			if( !(m_outPrs = CBCInitFile(mio_out, interval, "Pressure", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
 			}
@@ -2658,10 +2677,13 @@ void SklSolverCBC::prepOutput (void)
 			Hostonly_ stamped_printf("\tMissing 'Pressure' in OutFile\n");
 			Exit(0);
 		}
-    
+    mark();
     // Velocity
 		if ( SklCfgCheckOutFile("Velocity") ) {
-			if( !(m_outUVW = InitFile("Velocity", size, org, pit, dc_wvex)) ) {
+//zkawa.120514.s
+      //			if( !(m_outUVW = InitFile("Velocity", size, org, pit, dc_wvex)) ) {
+			if( !(m_outUVW = CBCInitFile(mio_out, interval, "Velocity", size, org, pit, dc_wvex)) ) {
+//zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
 			}
@@ -2674,7 +2696,10 @@ void SklSolverCBC::prepOutput (void)
 		// Total pressure
 		if (C.Mode.TP == ON) {
 			if ( SklCfgCheckOutFile("TotalPressure") ) {
-				if( !(m_outTP = InitFile("TotalPressure", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+        //				if( !(m_outTP = InitFile("TotalPressure", size, org, pit, dc_ws)) ) {
+				if( !(m_outTP = CBCInitFile(mio_out, interval, "TotalPressure", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
 				}
@@ -2688,7 +2713,10 @@ void SklSolverCBC::prepOutput (void)
 		// Vorticity
 		if (C.Mode.VRT == ON) {
 			if ( SklCfgCheckOutFile("Vorticity") ) {
-				if( !(m_outVrt = InitFile("Vorticity", size, org, pit, dc_wvex)) ) {
+//zkawa.120514.s
+        //				if( !(m_outVrt = InitFile("Vorticity", size, org, pit, dc_wvex)) ) {
+				if( !(m_outVrt = CBCInitFile(mio_out, interval, "Vorticity", size, org, pit, dc_wvex)) ) {
+//zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
 				}
@@ -2702,7 +2730,10 @@ void SklSolverCBC::prepOutput (void)
     // 2nd Invariant of Velocity Gradient Tensor
 		if (C.Mode.I2VGT == ON) {
 			if ( SklCfgCheckOutFile("2ndInvrntVGT") ) {
-				if( !(m_outI2VGT = InitFile("2ndInvrntVGT", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+        //				if( !(m_outI2VGT = InitFile("2ndInvrntVGT", size, org, pit, dc_ws)) ) {
+				if( !(m_outI2VGT = CBCInitFile(mio_out, interval, "2ndInvrntVGT", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
 				}
@@ -2716,7 +2747,10 @@ void SklSolverCBC::prepOutput (void)
     // Helicity
 		if (C.Mode.Helicity == ON) {
 			if ( SklCfgCheckOutFile("Helicity") ) {
-				if( !(m_outHlcty = InitFile("Helicity", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+        //				if( !(m_outHlcty = InitFile("Helicity", size, org, pit, dc_ws)) ) {
+				if( !(m_outHlcty = CBCInitFile(mio_out, interval, "Helicity", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
 				}
@@ -2730,7 +2764,10 @@ void SklSolverCBC::prepOutput (void)
     // Interface function
 		if ( C.BasicEqs == INCMP_2PHASE ) {
 			if ( SklCfgCheckOutFile("VOF") ) {
-				if( !(m_outVrt = InitFile("VOF", size, org, pit, dc_vof)) ) {
+//zkawa.120514.s
+        //				if( !(m_outVrt = InitFile("VOF", size, org, pit, dc_vof)) ) {
+				if( !(m_outVrt = CBCInitFile(mio_out, interval, "VOF", size, org, pit, dc_vof)) ) {
+//zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
 				}
@@ -2744,7 +2781,10 @@ void SklSolverCBC::prepOutput (void)
   
   if( C.isHeatProblem() ){
     if ( SklCfgCheckOutFile("Temperature") ) {
-      if( !(m_outTmp = InitFile("Temperature", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+      //      if( !(m_outTmp = InitFile("Temperature", size, org, pit, dc_ws)) ) {
+      if( !(m_outTmp = CBCInitFile(mio_out, interval, "Temperature", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
         Hostonly_ stamped_printf("\tInit failed.\n");
         Exit(0);
       }
@@ -2758,9 +2798,14 @@ void SklSolverCBC::prepOutput (void)
   // for averaged fields
   if ( C.Mode.Average == OFF) return;
   
+  interval = C.Interval[Interval_Manager::tg_average].getIntervalStep();
+  
 	if ( C.KindOfSolver != SOLID_CONDUCTION ) {
 		if ( SklCfgCheckOutFile("AvrPressure") ) {
-			if( !(m_outAvrPrs = InitFile("AvrPressure", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+      //			if( !(m_outAvrPrs = InitFile("AvrPressure", size, org, pit, dc_ws)) ) {
+			if( !(m_outAvrPrs = CBCInitFile(mio_out, interval, "AvrPressure", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
 			}
@@ -2771,7 +2816,10 @@ void SklSolverCBC::prepOutput (void)
 		}
     
 		if ( SklCfgCheckOutFile("AvrVelocity") ) {
-			if( !(m_outAvrUVW = InitFile("AvrVelocity", size, org, pit, dc_wvex)) ) {
+//zkawa.120514.s
+      //			if( !(m_outAvrUVW = InitFile("AvrVelocity", size, org, pit, dc_wvex)) ) {
+			if( !(m_outAvrUVW = CBCInitFile(mio_out, interval, "AvrVelocity", size, org, pit, dc_wvex)) ) {
+//zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
 			}
@@ -2784,7 +2832,10 @@ void SklSolverCBC::prepOutput (void)
   
   if( C.isHeatProblem() ){
     if ( SklCfgCheckOutFile("AvrTemperature") ) {
-      if( !(m_outAvrTmp = InitFile("AvrTemperature", size, org, pit, dc_ws)) ) {
+//zkawa.120514.s
+      //      if( !(m_outAvrTmp = InitFile("AvrTemperature", size, org, pit, dc_ws)) ) {
+      if( !(m_outAvrTmp = CBCInitFile(mio_out, interval, "AvrTemperature", size, org, pit, dc_ws)) ) {
+//zkawa.120514.e
         Hostonly_ stamped_printf("\tInit failed.\n");
         Exit(0);
       }
@@ -4389,4 +4440,119 @@ SklSolverCBC::getRoughResult (
 	rough_k = hk;
 	return true;
 }
+
+
+//zkawa.120514.s
+SklVoxDataSet* 
+SklSolverCBC::CBCInitFile( bool mioSPH
+                          , const int m_intvl
+                          , const char* attr
+                          , const unsigned int size[3]
+                          , const float origin[3]
+                          , const float pitch[3]
+                          , SklArayBase* array1
+                          , SklArayBase* array2
+                          , SklArayBase* array3
+                          , SklArayBase* array4
+                          , SklArayBase* array5
+                          , SklArayBase* array6
+                          , SklArayBase* array7
+                          , SklArayBase* array8
+                          , SklArayBase* array9 )
+{
+  if( !attr ) return NULL;
+  mark();
+  const SklCfgOutFile* cfg = SklCfgGetOutFileFirst();
+  while(cfg){
+    const char *tmp_attr;
+    if( !(tmp_attr = cfg->GetAttr()) ) {
+      SklErrMessage("\tParsing error : Can't get OutFile attributes.(attr)\n");
+      return NULL;
+    }
+    if( !strcasecmp(tmp_attr, attr) ){
+      const char* format = cfg->GetFormat();
+      if( !format ){
+        SklErrMessage("\tParsing error : Can't get OutFile attributes.(format)\n");
+        return NULL;
+      }
+      if(    strcasecmp(format, "sph")
+         && strcasecmp(format, "p3dxyz")
+         && strcasecmp(format, "p3dfunc")
+         && strcasecmp(format, "p3dq") ){
+        SklErrMessage("\tParsing error : Bad file format.(%s)\n", format);
+        return NULL;
+      }
+      mark();
+      return CBCInitFile(mioSPH, m_intvl, cfg, size, origin, pitch,
+                         array1, array2, array3, array4,
+                         array5, array6, array7, array8, array9);
+    }
+    cfg = SklCfgGetOutFileNext(cfg);
+  }
+  mark();
+  SklErrMessage("\tParsing error : Can't find OutFile elemnt.(attr=\"%s\")\n",
+                attr);
+  return NULL;
+}
+
+SklVoxDataSet* 
+SklSolverCBC::CBCInitFile( bool mioSPH
+                          , const int m_intvl
+                          , const SklCfgOutFile* cfg
+                          , const unsigned int size[3]
+                          , const float origin[3]
+                          , const float pitch[3]
+                          , SklArayBase* array1
+                          , SklArayBase* array2
+                          , SklArayBase* array3
+                          , SklArayBase* array4
+                          , SklArayBase* array5
+                          , SklArayBase* array6
+                          , SklArayBase* array7
+                          , SklArayBase* array8
+                          , SklArayBase* array9 )
+{
+  if( !cfg || !size || !origin || !pitch ) return NULL;
+  
+  int format = SklVoxDataSet::UNKNOWN_FMT;
+  const char* fmt = cfg->GetFormat();
+  if( !fmt ) return NULL;
+  if( !strcasecmp(fmt, "svx") )      format = SklVoxDataSet::SVX_FMT;
+  else if( !strcasecmp(fmt, "fdv") ) format = SklVoxDataSet::FDV_FMT;
+  else if( !strcasecmp(fmt, "sph") ) format = SklVoxDataSet::SPH_FMT;
+  else if( !strcasecmp(fmt, "nbf") ) format = SklVoxDataSet::NBF_FMT;
+  else if( !strcasecmp(fmt, "p3dxyz") ) format = SklVoxDataSet::P3DXYZ_FMT;
+  else if( !strcasecmp(fmt, "p3dfunc") ) format = SklVoxDataSet::P3DFUNC_FMT;
+  else if( !strcasecmp(fmt, "p3dq") ) format = SklVoxDataSet::P3DQ_FMT;
+  
+  SklVoxDataSet* obj = NULL;
+  if( !(obj = CreateFileData(format, size, origin, pitch,
+                             array1, array2, array3, array4, array5,
+                             array6, array7, array8, array9)) ) return NULL;
+  
+  if( !CBCInitFile(mioSPH, m_intvl, cfg, NULL, NULL, obj) ){
+    delete obj; return NULL;
+  }
+  
+  return obj;
+}
+
+bool
+SklSolverCBC::CBCInitFile( bool mioSPH
+                          , const int m_intvl
+                          , const SklCfgOutFile* cfg
+                          , const int* step
+                          , const SKL_REAL* time
+                          , const SklVoxDataSet* dSet )
+{
+  if( !cfg || !dSet ) return false;
+  
+  const char* bn = cfg->GetBaseName();
+  int itrvl = m_intvl; //cfg->GetInterval();
+  bool mio = cfg->IsMultiOutput();
+  const char* fmt = cfg->GetFormat();
+  if( !strcasecmp(fmt, "sph") ) mio = mioSPH;
+  return m_fileCntl.Init(bn, itrvl, mio, step, time, dSet);
+}
+//zkawa.120514.e
 

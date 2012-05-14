@@ -339,6 +339,8 @@ public:
   void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
   void load_Restart_rough   (FILE* fp, REAL_TYPE& flop);
   
+  char* GenerateFileName(const char* base_name, int m_step, bool multi_io_flag);
+  
   
   //@fn 時刻をRFクラスからv00[4]にコピーする
   //@param time 設定する時刻
@@ -392,6 +394,46 @@ public:
     x[1] /= C.RefLength;
     x[2] /= C.RefLength;
   }
+  
+  
+  //zkawa.120514.s
+  SklVoxDataSet* CBCInitFile( bool mioSPH
+                             , const int m_intvl
+                             , const char* attr
+                             , const unsigned int size[3]
+                             , const float origin[3]
+                             , const float pitch[3]
+                             , SklArayBase* array1 = NULL
+                             , SklArayBase* array2 = NULL
+                             , SklArayBase* array3 = NULL
+                             , SklArayBase* array4 = NULL
+                             , SklArayBase* array5 = NULL
+                             , SklArayBase* array6 = NULL
+                             , SklArayBase* array7 = NULL
+                             , SklArayBase* array8 = NULL
+                             , SklArayBase* array9 = NULL );
+  SklVoxDataSet* CBCInitFile( bool mioSPH
+                             , const int m_intvl
+                             , const SklCfgOutFile* cfg
+                             , const unsigned int size[3]
+                             , const float origin[3]
+                             , const float pitch[3]
+                             , SklArayBase* array1 = NULL
+                             , SklArayBase* array2 = NULL
+                             , SklArayBase* array3 = NULL
+                             , SklArayBase* array4 = NULL
+                             , SklArayBase* array5 = NULL
+                             , SklArayBase* array6 = NULL
+                             , SklArayBase* array7 = NULL
+                             , SklArayBase* array8 = NULL
+                             , SklArayBase* array9 = NULL );
+  bool CBCInitFile( bool mioSPH
+                   , const int m_intvl
+                   , const SklCfgOutFile* cfg
+                   , const int* step
+                   , const SKL_REAL* time
+                   , const SklVoxDataSet* dSet );
+  //zkawa.120514.e
   
 };
 

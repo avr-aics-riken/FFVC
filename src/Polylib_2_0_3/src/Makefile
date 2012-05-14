@@ -23,6 +23,8 @@ RANLIB		= ranlib
 
 TARGET_DIR	= ../lib
 
+LIBXML2         = /usr/local/libxml2-2.7.8_lib
+
 ###########################################################################
 # 以下のワーニングを抑制するために-fno-strict-aliasingを追加 2010.10.14
 # warning: type-punning to incomplete type might break strict-aliasing rules
@@ -34,7 +36,7 @@ TARGET_DIR	= ../lib
 # -DSAVE_ID_ASCII
 ###########################################################################
 CFLAGS		= -O2 -Wall -I../include -I$(MPI_DIR)/include \
-			  -I/usr/include -I/usr/include/libxml2 -fno-strict-aliasing \
+			  -I/usr/include -I$(LIBXML2)/include/libxml2 -fno-strict-aliasing \
 #			  -DSAVE_ID_ASCII
 
 # FX10
