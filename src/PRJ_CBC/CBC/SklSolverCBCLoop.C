@@ -179,24 +179,15 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     TIMING_start(tm_file_out);
     
     flop_count=0.0;
-    switch (C.FIO.FileOut) {
-      case Control::IO_normal:
-        FileOutput(Control::IO_normal, flop_count);
-        break;
-        
-      case Control::IO_forced:
-        if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) { // 最終ステップ
-          FileOutput(Control::IO_forced, flop_count);
-        }
-        else {
-          FileOutput(Control::IO_normal, flop_count);
-        }
-        break;
-        
-      case Control::IO_everytime:
-        FileOutput(Control::IO_forced, flop_count);
-        break;
+    
+    // 通常
+    FileOutput(flop_count);
+    
+    // 最終ステップ
+    if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) { 
+      FileOutput(flop_count);
     }
+
     TIMING_stop(tm_file_out, flop_count);  
   }
   
@@ -219,24 +210,15 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
         TIMING_start(tm_file_out);
         
         flop_count=0.0;
-        switch (C.FIO.FileOut) {
-          case Control::IO_normal:
-            AverageOutput(Control::IO_normal, flop_count);
-            break;
-            
-          case Control::IO_forced:
-            if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) { // 最終ステップ
-              AverageOutput(Control::IO_forced, flop_count);
-            }
-            else {
-              AverageOutput(Control::IO_normal, flop_count);
-            }
-            break;
-            
-          case Control::IO_everytime:
-            AverageOutput(Control::IO_forced, flop_count);
-            break;
+        
+        // 通常
+        AverageOutput(flop_count);
+        
+        // 最終ステップ
+        if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) { 
+          AverageOutput(flop_count);
         }
+        
         TIMING_stop(tm_file_out, flop_count);
       }
     }

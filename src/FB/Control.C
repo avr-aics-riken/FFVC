@@ -812,9 +812,9 @@ void Control::getXML_Dimension(void)
  @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
  @note インターバルパラメータは，setParameters()で無次元して保持
  */
-void Control::getXML_FileIO(SklSolverConfig* cfg)
+void Control::getXML_FileIO(void)
 {
-  SklCfgInFile* infile   = (SklCfgInFile*)CF->GetInFileFirst();
+  //SklCfgInFile* infile   = (SklCfgInFile*)CF->GetInFileFirst();
   //SklCfgOutFile* outfile = (SklCfgOutFile*)cfg->GetOutFileFirst(); Lionではうまくいかない
 
   const CfgElem *elmL1=NULL;
@@ -847,7 +847,7 @@ void Control::getXML_FileIO(SklSolverConfig* cfg)
     Exit(0);
   }
   
-  // ファイル出力モード
+  /* ファイル出力モード
   if ( !elmL1->GetValue("Output_Mode", &str) ) {
     stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'File_IO'\n");
     Exit(0);
@@ -858,7 +858,7 @@ void Control::getXML_FileIO(SklSolverConfig* cfg)
   else {
     stamped_printf("\tInvalid keyword is described for 'Output_Mode'\n");
     Exit(0);
-  }
+  }*/
 
   // デバッグ用のdiv(u)の出力指定
   if ( !elmL1->GetValue("Debug_divergence", &str) ) {
@@ -896,7 +896,7 @@ void Control::getXML_FileIO(SklSolverConfig* cfg)
     Exit(0);
   }
 
-  // 入力ファイル情報の記述形式をチェックする
+  /* 入力ファイル情報の記述形式をチェックする
   while( infile ){          // check a valid InFile description
     const char *attr, *format, *fname;
     if ( !infile->GetData(&attr, &format, &fname) ) {
@@ -915,7 +915,7 @@ void Control::getXML_FileIO(SklSolverConfig* cfg)
     }
     
     infile = (SklCfgInFile*)CF->GetInFileNext(infile);
-  }
+  }*/
 
   /* 出力ファイル情報の記述形式をチェックし，並列出力モードをフレームワークに通知する
   while( outfile ){          // check a valid OutFile description
@@ -1533,90 +1533,83 @@ void Control::getXML_Polygon(void)
 
 
 /**
- @fn void Control::getXML_restart_rough(void)
- @brief 派生して計算する変数のオプションを取得する
+ @fn void Control::getXML_start_condition(void)
+ @brief 初期値とリスタート条件
  */
-void Control::getXML_restart_rough(void)
+void Control::getXML_start_condition(void)
 {
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
+  int ct;
   
-  if ( !(elmL1 = getXML_Pointer("Restart_mode", "steer")) ) Exit(0);
+  if ( !(elmL1 = getXML_Pointer("Start_condition", "steer")) ) Exit(0);
   
-
-  if ( !elmL1->GetValue("Restart_with_rough_initial_data", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'Restart_with_rough_initial_data' in 'Restart_mode'\n");
+  if ( !elmL1->GetValue("start_type", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Start_Type' in 'Start_Condition'\n");
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str, "initial") ) Start = initial_start;
+  else if( !strcasecmp(str, "restart") ) Start = re_start;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Start_Type'\n");
+    Exit(0);
+  }
+  
+  // 粗い格子のデータを初期値として利用するモード
+  if ( !elmL1->GetValue("Restart_with_rough_data", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Restart_with_rough_data' in 'Start_Condition'\n");
     Exit(0);
   }
   if     ( !strcasecmp(str, "on") )  Mode.Rough_Initial = ON;
   else if( !strcasecmp(str, "off") ) Mode.Rough_Initial = OFF;
   else {
-    stamped_printf("\tInvalid keyword is described for 'Restart_with_rough_initial_data'\n");
+    stamped_printf("\tInvalid keyword is described for 'Restart_with_rough_data'\n");
     Exit(0);
   }
   
-  // 逐次とプロセス並列時の処理分岐
-  if ( FIO.IO_Input == IO_GATHER ) {
+  // リスタート時のタイムスタンプ
+  if ( Start == re_start ) {
+    if ( !elmL1->GetValue("restat_step", &ct) ) {
+      stamped_printf("\tParsing error : fail to get 'Restat_Step' in 'Start_Condition'\n");
+      Exit(0);
+    }
+    Restart_step = ct;
+  }
+  
+  // 粗い格子を使う場合の初期値データのプリフィクス
+  if (Mode.Rough_Initial == ON) {
+    if ( !elmL1->GetValue("Prefix_of_rough_Pressure", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Prefix_of_rough_Pressure' in 'Start_Condition'\n");
+      Exit(0);
+    }
+    f_Rough_pressure = str;
     
-    if (Mode.Rough_Initial == ON) {
-      if ( !elmL1->GetValue("Pressure_file_name", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'Pressure_file_name' in 'Restart_mode'\n");
+    if ( !elmL1->GetValue("Prefix_of_rough_Velocity", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Prefix_of_rough_Velocity' in 'Start_Condition'\n");
+      Exit(0);
+    }
+    f_Rough_velocity = str;
+    
+    if ( isHeatProblem() ) {
+      if ( !elmL1->GetValue("Prefix_of_rough_Temperature", &str) ) {
+        stamped_printf("\tParsing error : fail to get 'Prefix_of_rough_Temperature' in 'Start_Condition'\n");
         Exit(0);
       }
-      f_Rough_pressure = str;
-      
-      if ( !elmL1->GetValue("Velocity_file_name", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'Velocity_file_name' in 'Restart_mode'\n");
-        Exit(0);
-      }
-      f_Rough_velocity = str;
-      
-      if ( isHeatProblem() ) {
-        if ( !elmL1->GetValue("Temperature_file_name", &str) ) {
-          stamped_printf("\tParsing error : fail to get 'Temperature_file_name' in 'Restart_mode'\n");
-          Exit(0);
-        }
-        f_Rough_temperature = str;
-      }
+      f_Rough_temperature = str;
     }
     
-  }
-  else { // 並列時
-    
-    if (Mode.Rough_Initial == ON) {
+    // プロセス並列時
+    if ( FIO.IO_Input == IO_DISTRIBUTE ) {
       if ( !elmL1->GetValue("dfi_file_name", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'DFI_file_name' in 'Restart_mode'\n");
+        stamped_printf("\tParsing error : fail to get 'DFI_file_name' in 'Start_Condition'\n");
         Exit(0);
       }
       f_Rough_dfi = str;
-      
-      if ( !elmL1->GetValue("Pressure_prefix", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'Pressure_prefix' in 'Restart_mode'\n");
-        Exit(0);
-      }
-      f_Rough_pressure = str;
-      
-      if ( !elmL1->GetValue("Velocity_prefix", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'Velocity_prefix' in 'Restart_mode'\n");
-        Exit(0);
-      }
-      f_Rough_velocity = str;
-      
-      if ( isHeatProblem() ) {
-        if ( !elmL1->GetValue("Temperature_prefix", &str) ) {
-          stamped_printf("\tParsing error : fail to get 'Temperature_prefix' in 'Restart_mode'\n");
-          Exit(0);
-        }
-        f_Rough_temperature = str;
-      }
     }
     
   }
   
-  if ( GuideOut != guide ) {
-    stamped_printf("\tParameter error : 'Restart_mode' requires to be goude out = 'with'\n");
-    Exit(0);
-  }
 }
 
 
@@ -1887,22 +1880,6 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   //getXML_Para_Wind();
   getXML_Para_Init();
 
-  // If a start section dose not describe, the initial start is assumed.
-  StartType type = CF->GetStartType();
-  switch (type) {
-    case Initial:
-      Start = initial_start;
-      break;
-      
-    case Restart:
-      Start = re_start;
-      break;
-      
-    default:
-      stamped_printf("\tParsing error : Start section\n");
-      Exit(0);
-  }
-
   // Reference frame information : Solver defined element >> SPHERE defined
   getXML_ReferenceFrame(RF);
 
@@ -1934,10 +1911,10 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   getXML_PMtest();
   
   // ファイル入出力に関するパラメータ steer1()から移動
-  //getXML_FileIO();
+  getXML_FileIO();
   
   // ラフな初期値を使い、リスタートするモード指定
-  //if ( Start == Control::re_start ) getXML_restart_rough();
+  getXML_start_condition();
 }
 
 /**

@@ -260,7 +260,7 @@ public:
   void allocArray_RoughInitial(unsigned long &prep);
   void allocComponentArray    (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   
-  void AverageOutput        (unsigned mode, REAL_TYPE& flop);
+  void AverageOutput        (REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
   void Variation_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf);
@@ -268,7 +268,7 @@ public:
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
   void EnlargeIndex         (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
-  void FileOutput           (unsigned mode, REAL_TYPE& flop);
+  void FileOutput           (REAL_TYPE& flop);
   void fixed_parameters     (void);
   void gather_DomainInfo    (void);
   void getXML_Monitor       (SklSolverConfig* CF, MonitorList* M);
@@ -280,7 +280,7 @@ public:
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void min_distance         (float* cut, FILE* fp);
-  void prepOutput           (void);
+  //void prepOutput           (void);
   void Pressure_Shift       (REAL_TYPE* p);
   void resizeBVcell         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
   void resizeBVface         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
@@ -396,7 +396,7 @@ public:
   }
   
   
-  //zkawa.120514.s
+  /*zkawa.120514.s
   SklVoxDataSet* CBCInitFile( bool mioSPH
                              , const int m_intvl
                              , const char* attr
@@ -434,7 +434,7 @@ public:
                    , const SKL_REAL* time
                    , const SklVoxDataSet* dSet );
   //zkawa.120514.e
-  
+  */
 };
 
 #endif // _SKL_SOLVER_CBC_CLASS_H_

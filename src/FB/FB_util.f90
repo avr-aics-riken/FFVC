@@ -434,7 +434,7 @@
 !! @param org 起点座標
 !! @param pit 格子幅
 !! @param d_type (1-float, 2-double)
-!! @param gs guide cell (0-without, 1-with)
+!! @param gs guide cell (0-without, others-with)
 !<
   subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs)
   implicit none
@@ -492,7 +492,7 @@
 !! @param org 起点座標
 !! @param pit 格子幅
 !! @param d_type (1-float, 2-double)
-!! @param gs guide cell (0-without, 1-with)
+!! @param gs guide cell (0-without, others-with)
 !<
   subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs)
   implicit none
@@ -643,10 +643,11 @@
   return
   end subroutine fb_read_sph_v
   
-!  *********************************************************************
-!> @subroutine fb_tmp_nd2d (s, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!  ****************************************************************************
+!> @subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
 !! @brief 温度値を無次元から有次元へ変換し，scale倍して出力
-!! @param s
+!! @param dst 
+!! @param src
 !! @param sz 配列長（一次元）
 !! @param Base_tmp 基準温度(K or C)
 !! @param Diff_tmp 代表温度差(K or C)
@@ -654,12 +655,12 @@
 !! @param scale 倍数（瞬時値のとき1.0）
 !! @param flop 浮動小数演算数
 !<
-  subroutine fb_tmp_nd2d (s, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+  subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
   real                                                      ::  flop, dp, scale
   real                                                      ::  Base_tmp, Diff_tmp, klv
-  real, dimension(sz)                                       ::  s
+  real, dimension(sz)                                       ::  dst, src
 
   dp = scale * abs(Diff_tmp)
   flop = flop + real(sz) * 3.0 + 2.0
@@ -670,7 +671,7 @@
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    s(i) = s(i) * dp - klv + Base_tmp
+    dst(i) = src(i) * dp - klv + Base_tmp
   end do
 !$OMP END DO
 
@@ -751,8 +752,8 @@
   return
   end subroutine fb_prs_d2nd
   
-!  **********************************************************************
-!> @subroutine fb_prs_nd2d (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!  *****************************************************************************
+!> @subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
 !! @brief 圧力値を無次元から有次元へ変換し，scale倍して出力
 !! @param dst 有次元
 !! @param src 無次元
@@ -764,12 +765,12 @@
 !! @param scale 倍数（瞬時値のとき1.0）
 !! @param flop 浮動小数演算数
 !<
-  subroutine fb_prs_nd2d (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+  subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
   real                                                      ::  flop, dp, scale
   real                                                      ::  Base_prs, Ref_rho, Ref_v
-  real, dimension(sz)                                       ::  s
+  real, dimension(sz)                                       ::  dst, src
 
   dp = Ref_rho * Ref_v * Ref_v * scale
   flop = flop + real(sz) * 3.0 + 2.0
@@ -780,7 +781,7 @@
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    s(i) = ( s(i) * dp + Base_prs ) 
+    dst(i) = ( src(i) * dp + Base_prs ) 
   end do
 !$OMP END DO
 
@@ -875,10 +876,11 @@
   return
   end subroutine fb_shift_refv_in
   
-!  ******************************************************************
-!> @subroutine fb_shift_refv_out (v, sz, g, v00, scale, unit_v, flop)
+!  **************************************************************************
+!> @subroutine fb_shift_refv_out (vout, vin, sz, g, v00, scale, unit_v, flop)
 !! @brief 速度ベクトルの格子速度変換をして，scale倍する
-!! @param v 変換されたベクトル
+!! @param vout 変換されたベクトル
+!! @param vin 変換前
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param v00 参照速度
@@ -887,12 +889,12 @@
 !! @param flop 浮動小数演算数
 !! @note dst[] = ( src[] * stepAvr ) - v00
 !<
-  subroutine fb_shift_refv_out (v, sz, g, v00, scale, unit_v, flop)
+  subroutine fb_shift_refv_out (vout, vin, sz, g, v00, scale, unit_v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop, u_ref, v_ref, w_ref, unit_v, scale
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout, vin
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -914,9 +916,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    v(1,i,j,k) = ( v(1,i,j,k) * scale - u_ref ) * unit_v
-    v(2,i,j,k) = ( v(2,i,j,k) * scale - v_ref ) * unit_v
-    v(3,i,j,k) = ( v(3,i,j,k) * scale - w_ref ) * unit_v
+    vout(1,i,j,k) = ( vin(1,i,j,k) * scale - u_ref ) * unit_v
+    vout(2,i,j,k) = ( vin(2,i,j,k) * scale - v_ref ) * unit_v
+    vout(3,i,j,k) = ( vin(3,i,j,k) * scale - w_ref ) * unit_v
   end do
   end do
   end do

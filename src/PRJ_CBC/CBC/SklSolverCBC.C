@@ -648,17 +648,14 @@ void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE& flop)
   
 }
 
-//@fn void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
+//@fn void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
 //@brief 時間平均値のファイル出力
-//@param mode 強制出力
 //@param flop 浮動小数演算数
-void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
+void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
 {
-  bool forceFlag=false;
-  bool correct_flag=false; // no correction
-  unsigned guide_zero=0;  // for averaged fields
-  int stepAvr = (int)SklGetAverageTotalStep();
-  REAL_TYPE timeAvr, unit_velocity, scale;
+  SklParaComponent* para_cmp = ParaCmpo;
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
   int d_length;
   
   REAL_TYPE *vo = NULL;
@@ -671,6 +668,8 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
   if( !(ap = dc_ap->GetData()) )   Exit(0);
   
   
+  // 出力ファイルの指定が有次元の場合
+  REAL_TYPE timeAvr;
   if (C.Unit.File == DIMENSIONAL) {
     timeAvr = SklGetAverageTotalTime() * C.Tscale;
   }
@@ -678,41 +677,63 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
     timeAvr = SklGetAverageTotalTime();
   }
   
-  if ( mode == Control::IO_forced ) forceFlag = true;
+  // 出力用のヘッダ
+  REAL_TYPE m_org[3], m_pit[3];
   
-  scale = 1.0 / (REAL_TYPE)stepAvr;
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    m_org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    m_pit[i] = C.dx[i];
+  }
+
+  // 平均操作の母数
+  int stepAvr = (int)SklGetAverageTotalStep();
+  REAL_TYPE scale = 1.0 / (REAL_TYPE)stepAvr;
+  
+  // 出力分割
+  bool mio = (C.FIO.IO_Output == IO_GATHER) ? false : true;
+  
+  // 並列実行
+  bool isPara = ( para_mng->IsParallel() ) ? true : false;
+  
+  // ガイドセル出力
+  int gc_out = (int)C.GuideOut;
+  
+  // 出力ファイル名
+  char m_label[LABEL];
+  char* tmp=NULL;
+  
   
   // Pressure
-  if( m_outAvrPrs ){
-    d_length = (int)dc_ws->GetArrayLength();
+  d_length = (int)dc_ws->GetArrayLength();
     
-    if (C.Unit.File == DIMENSIONAL) {
-      REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-      fb_prs_nd2d_(ws, ap, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
-    }
-    else {
-      fb_xcopy_(ws, ap, &d_length, &scale, &flop);
-    }
-    
-    if( !WriteFile(m_outAvrPrs, stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
+  if (C.Unit.File == DIMENSIONAL) {
+    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+    fb_prs_nd2d_(ws, ap, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
   }
+  else {
+    fb_xcopy_(ws, ap, &d_length, &scale, &flop);
+  }
+  
+  tmp = GenerateFileName("prsa", stepAvr, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.writeScalar(m_label, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+
   
   // Velocity
-  if( m_outAvrUVW ){
-    unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-    fb_shift_refv_out_(vo, sz, gc, av, v00, &scale, &unit_velocity, &flop);
-    
-    if( !WriteFile(m_outAvrUVW, stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
-  }
+  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  fb_shift_refv_out_(vo, av, sz, gc, v00, &scale, &unit_velocity, &flop);
+  
+  tmp = GenerateFileName("vela", stepAvr, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.writeVector(m_label, size, guide, vo, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  
   
   // Temperature
-  if( C.isHeatProblem() && m_outAvrTmp ){
+  if( C.isHeatProblem() ){
+    
     REAL_TYPE *at = NULL;
     if( !(at = dc_ap->GetData()) )   Exit(0);
     d_length = (int)dc_ws->GetArrayLength();
@@ -725,29 +746,25 @@ void SklSolverCBC::AverageOutput (unsigned mode, REAL_TYPE& flop)
       fb_xcopy_(ws, at, &d_length, &scale, &flop);
     }
     
-    if( !WriteFile(m_outAvrTmp, stepAvr, timeAvr, pn.procGrp, forceFlag, guide_zero, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
+    tmp = GenerateFileName("tmpa", stepAvr, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.writeScalar(m_label, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+    
   }
 }
 
 /**
- @fn void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
+ @fn void SklSolverCBC::FileOutput (REAL_TYPE& flop)
  @brief ファイル出力
- @param mode 強制出力
  @param flop 浮動小数点演算数
  @note dc_p0をワークとして使用
  */
-void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
+void SklSolverCBC::FileOutput (REAL_TYPE& flop)
 {
   SklParaComponent* para_cmp = ParaCmpo;
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  bool forceFlag=false;
-  bool correct_flag=false; // no correction
-  unsigned step = SklGetTotalStep();
-  REAL_TYPE time, unit_velocity;
   REAL_TYPE scale = 1.0;
   int d_length;
   
@@ -762,57 +779,90 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
   if( !(p  = dc_p->GetData()) )    Exit(0);
   
 
+  // 出力用のヘッダ
+  REAL_TYPE m_org[3], m_pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    m_org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    m_pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      m_org[i] *= C.RefLength;
+      m_pit[i] *= C.RefLength;
+    }
+  }
+  
+  // ステップ数
+  int m_step = (int)SklGetTotalStep();
+  
+  // 時間の次元変換
+  REAL_TYPE m_time;
   if (C.Unit.File == DIMENSIONAL) {
-    time = SklGetTotalTime() * C.Tscale;
+    m_time = SklGetTotalTime() * C.Tscale;
   }
   else {
-    time = SklGetTotalTime();
+    m_time = SklGetTotalTime();
   }
-
-  if ( mode == Control::IO_forced ) forceFlag = true;
+  
+  // 出力分割
+  bool mio = (C.FIO.IO_Output == IO_GATHER) ? false : true;
+  
+  // 並列実行
+  bool isPara = ( para_mng->IsParallel() ) ? true : false;
+  
+  // ガイドセル出力
+  int gc_out = (int)C.GuideOut;
+  
+  // 出力ファイル名
+  char m_label[LABEL];
+  char* tmp=NULL;
+  
+  
   
   // Divergence デバッグ用なので無次元のみ
-  if( m_outDiv ){
-    REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
-    F.cnv_Div(dc_ws, dc_wk2, coef, flop);
-    
-    if( !WriteFile(m_outDiv, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
-  }
+  REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
+  F.cnv_Div(dc_ws, dc_wk2, coef, flop);
+  
+  tmp = GenerateFileName("div", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+  
   
   // Pressure
-  if( m_outPrs ){
-    d_length = (int)dc_ws->GetArrayLength();
-    
-    if (C.Unit.File == DIMENSIONAL) {
-      REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-      fb_prs_nd2d_(ws, p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
-    }
-    else {
-      fb_xcopy_(ws, p, &d_length, &scale, &flop);
-    }
-    
-    if( !WriteFile(m_outPrs, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
+  d_length = (int)dc_ws->GetArrayLength();
+  
+  if (C.Unit.File == DIMENSIONAL) {
+    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+    fb_prs_nd2d_(ws, p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
   }
+  else {
+    fb_xcopy_(ws, p, &d_length, &scale, &flop);
+  }
+  
+  tmp = GenerateFileName("prs", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+    
+  F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+  
 
   // Velocity
-  if( m_outUVW ){
-    unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-    fb_shift_refv_out_(vo, sz, gc, v, v00, &scale, &unit_velocity, &flop);
+  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  fb_shift_refv_out_(vo, v, sz, gc, v00, &scale, &unit_velocity, &flop);
     
-    if( !WriteFile(m_outUVW, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
-  }
+  tmp = GenerateFileName("vel", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.writeVector(m_label, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
+
 
   // Tempearture
-  if( C.isHeatProblem() && m_outTmp ){
+  if( C.isHeatProblem() ){
+    
     REAL_TYPE *t  = NULL;
     if( !(t  = dc_t->GetData()) )    Exit(0);
     d_length = (int)dc_ws->GetArrayLength();
@@ -824,114 +874,104 @@ void SklSolverCBC::FileOutput (unsigned mode, REAL_TYPE& flop)
     else {
       fb_xcopy_(ws, t, &d_length, &scale, &flop);
     }
-    if( !WriteFile(m_outTmp, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-      stamped_printf("\tFile output was failed.\n");
-      Exit(0);
-    }
+    
+    tmp = GenerateFileName("tmp", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+    
   }
+  
   
   // Total Pressure
   if (C.Mode.TP == ON ) {
-    if( m_outTP ){
-      REAL_TYPE  *p, *tp;
-      if( !(p  = dc_p->GetData()) )   Exit(0);
-      if( !(tp = dc_p0->GetData()) )  Exit(0);
+
+    REAL_TYPE *tp;
+    if( !(tp = dc_p0->GetData()) )  Exit(0);
       
-      fb_totalp_ (tp, sz, gc, v, p, v00, &flop);
+    fb_totalp_ (tp, sz, gc, v, p, v00, &flop);
       
-      // convert non-dimensional to dimensional, iff file is dimensional
-      if (C.Unit.File == DIMENSIONAL) {
-        F.cnv_TP_ND2D(dc_ws, dc_p0, C.RefDensity, C.RefVelocity, flop);
-      }
-      else {
-        if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
-      }
-      if( !WriteFile(m_outTP, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-        stamped_printf("\tFile output was failed.\n");
-        Exit(0);
-      }
+    // convert non-dimensional to dimensional, iff file is dimensional
+    if (C.Unit.File == DIMENSIONAL) {
+      F.cnv_TP_ND2D(dc_ws, dc_p0, C.RefDensity, C.RefVelocity, flop);
     }
+    else {
+      if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
+    }
+
+    tmp = GenerateFileName("tp", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
+  
   
   // Vorticity
   if (C.Mode.VRT == ON ) {
-    if( m_outVrt ) {
-      REAL_TYPE *vrt= NULL;
-      unsigned *bcv=NULL;
+
+    REAL_TYPE *vrt= NULL;
+    unsigned *bcv=NULL;
       
-      if( !(bcv = dc_bcv->GetData()) ) Exit(0);
-      if( !(vrt = dc_wv->GetData()) )  Exit(0);
+    if( !(bcv = dc_bcv->GetData()) ) Exit(0);
+    if( !(vrt = dc_wv->GetData()) )  Exit(0);
       
-      cbc_rot_v_(vrt, sz, gc, dh, v, (int*)bcv, v00, &flop);
+    cbc_rot_v_(vrt, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
-      REAL_TYPE  vz[3];
-      vz[0] = vz[1] = vz[2] = 0.0;
-      unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
-      fb_shift_refv_out_(vo, sz, gc, vrt, vz, &scale, &unit_velocity, &flop);
+    REAL_TYPE  vz[3];
+    vz[0] = vz[1] = vz[2] = 0.0;
+    unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
+    fb_shift_refv_out_(vo, vrt, sz, gc, vz, &scale, &unit_velocity, &flop);
       
-      if( !WriteFile(m_outVrt, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-        stamped_printf("\tFile output was failed.\n");
-        Exit(0);
-      }
-    }
+    tmp = GenerateFileName("vor", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.writeVector(m_label, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
   }
+  
   
   // 2nd Invariant of Velocity Gradient Tensor
   if (C.Mode.I2VGT == ON ) {
-    if( m_outI2VGT ){
-      REAL_TYPE  *v=NULL, *q=NULL;
-      unsigned *bcv=NULL;
-      
-      if( !(v  = dc_v->GetData()) )   Exit(0);
-      if( !(q  = dc_p0->GetData()) )  Exit(0);
-      if( !(bcv= dc_bcv->GetData()) ) Exit(0);
-      
-      cbc_i2vgt_ (q, sz, gc, dh, v, (int*)bcv, v00, &flop);
-      
-      // 無次元で出力
-      d_length = (int)dc_ws->GetArrayLength();
-      fb_xcopy_(ws, q, &d_length, &scale, &flop);
 
-      if( !WriteFile(m_outI2VGT, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-        stamped_printf("\tFile output was failed.\n");
-        Exit(0);
-      }
-    }
+    REAL_TYPE *q=NULL;
+    unsigned *bcv=NULL;
+    
+    if( !(q  = dc_p0->GetData()) )  Exit(0);
+    if( !(bcv= dc_bcv->GetData()) ) Exit(0);
+      
+    cbc_i2vgt_ (q, sz, gc, dh, v, (int*)bcv, v00, &flop);
+      
+    // 無次元で出力
+    d_length = (int)dc_ws->GetArrayLength();
+    fb_xcopy_(ws, q, &d_length, &scale, &flop);
+
+    tmp = GenerateFileName("i2vgt", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
   
   // Helicity
   if (C.Mode.Helicity == ON ) {
-    if( m_outHlcty ){
-      REAL_TYPE  *v=NULL, *q=NULL;
-      unsigned *bcv=NULL;
+    
+    REAL_TYPE *q=NULL;
+    unsigned *bcv=NULL;
       
-      if( !(v  = dc_v->GetData()) )   Exit(0);
-      if( !(q  = dc_p0->GetData()) )  Exit(0);
-      if( !(bcv= dc_bcv->GetData()) ) Exit(0);
+    if( !(q  = dc_p0->GetData()) )  Exit(0);
+    if( !(bcv= dc_bcv->GetData()) ) Exit(0);
       
-      cbc_helicity_(q, sz, gc, dh, v, (int*)bcv, v00, &flop);
+    cbc_helicity_(q, sz, gc, dh, v, (int*)bcv, v00, &flop);
       
-      // 無次元で出力
-      d_length = (int)dc_ws->GetArrayLength();
-      fb_xcopy_(ws, q, &d_length, &scale, &flop);
+    // 無次元で出力
+    d_length = (int)dc_ws->GetArrayLength();
+    fb_xcopy_(ws, q, &d_length, &scale, &flop);
       
-      if( !WriteFile(m_outHlcty, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-        stamped_printf("\tFile output was failed.\n");
-        Exit(0);
-      }
-    }
+    tmp = GenerateFileName("hlt", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
   
-  // Interface Function
-  if ( C.BasicEqs == INCMP_2PHASE ) {
-    if( m_outVOF ){
-      if( !SklUtil::cpyS3D(dc_ws, dc_vof) ) Exit(0);
-      if( !WriteFile(m_outVOF, (int)step, time, pn.procGrp, forceFlag, C.GuideOut, correct_flag) ) {
-        stamped_printf("\tFile output was failed.\n");
-        Exit(0);
-      }
-    }
-  }
+
 }
 
 /**
@@ -1614,7 +1654,7 @@ REAL_TYPE SklSolverCBC::PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE
  * @param base_name     ファイル接頭文字
  * @param m_step
  * @param m_time
- * @param multi_io_flag   分割入出力フラグ
+ * @param multi_io_flag   分割入出力フラグ true -> parallel
  * @param isPara true -> 並列
  * @return ファイル名
  */
@@ -1622,7 +1662,7 @@ char* SklSolverCBC::GenerateFileName(const char* prefix, const int m_step, const
 {
   int m_id = pn.ID; // Rank番号
   
-  if( !base_name ) return NULL;
+  if( !prefix ) return NULL;
   char* fname = NULL;
   int len = strlen(prefix) + 24; // step(10) + id(9) + postfix(4) + 1
   fname = new char[len];
@@ -1631,11 +1671,13 @@ char* SklSolverCBC::GenerateFileName(const char* prefix, const int m_step, const
   char postfix[4]; memset(postfix, 0, sizeof(char)*4);
 
   strcpy(postfix, "sph");
-  if( !isPara || !multi_io_flag ){
-    sprintf(fname, "%s%010d.%s", prefix, m_step, postfix);
+  
+  // 並列実行時で、local出力が指定された場合のみ、分割出力
+  if( isPara || multi_io_flag ){
+    sprintf(fname, "%s%010d_id%06d.%s", prefix, m_step, m_id, postfix);
   }
   else {
-    sprintf(fname, "%s%010d_id%06d.%s", prefix, m_step, m_id, postfix);
+    sprintf(fname, "%s%010d.%s", prefix, m_step, postfix);
   }
 
   return fname;

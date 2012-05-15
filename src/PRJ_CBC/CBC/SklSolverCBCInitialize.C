@@ -172,12 +172,6 @@ SklSolverCBC::SklSolverInitialize() {
   // XMLパラメータの取得
   C.getXML_Steer_2(IC, &RF);
   
-  // ファイル入出力に関するパラメータ
-  C.getXML_FileIO(m_solvCfg);
-  
-  // ラフな初期値を使い、リスタートするモード指定
-  if ( C.Start == Control::re_start ) C.getXML_restart_rough();
-  
   // 組み込み例題の固有パラメータ
   if ( !Ex->getXML(m_solvCfg, &C) ) Exit(0);
 
@@ -1178,8 +1172,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // 設定した初期値のファイル出力準備
-  prepOutput();
-  mark();
+  //prepOutput();
 
   // マスターノードでの履歴出力準備
   H = new History(&C);
@@ -1250,9 +1243,9 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 初期状態のファイル出力 性能測定モードのときには出力しない
-	if ( (C.Hide.PM_Test == OFF) &&  (0 == SklGetTotalStep()) ) FileOutput(Control::IO_forced, flop_task);
+	if ( (C.Hide.PM_Test == OFF) &&  (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
-  if ( C.Mode.Rough_Initial == ON ) FileOutput(Control::IO_forced, flop_task);
+  if ( C.Mode.Rough_Initial == ON ) FileOutput(flop_task);
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
@@ -2365,21 +2358,38 @@ bool SklSolverCBC::hasLinearSolver(unsigned L)
  */
 void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
 {
-  int step;
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
   REAL_TYPE time;
-  char label_tmp[LABEL];
+  char m_label[LABEL];
+  char* tmp = NULL;
   
   REAL_TYPE *v = NULL;
   REAL_TYPE *p = NULL;
-  REAL_TYPE *t = NULL;
+  
   if( !(v = dc_v->GetData()) )   Exit(0);
   if( !(p = dc_p->GetData()) )   Exit(0);
   
-  // 圧力の瞬時値　ここでタイムスタンプを得る
+  // ステップ数 > ファイル名用
+  int m_step = (int)C.Restart_step;
+  int step;
+  
+  // 出力分割
+  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
+  
+  // 並列実行
+  bool isPara = ( para_mng->IsParallel() ) ? true : false;
+  
+  // 圧力の瞬時値　
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-  //F.loadPressure(this, fp, "Pressure", G_size, guide, dc_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
-  strcpy(label_tmp, GenerateFileName(const char* prefix, const int m_step, const bool multi_io_flag, const bool isPara) );
-  F.loadPressure(fp, label_tmp, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  
+  tmp = GenerateFileName("prs", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.readPressure(fp, m_label, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  
+  // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
@@ -2389,9 +2399,13 @@ void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
 
   
   // Instantaneous Velocity fields
-  //F.loadVelocity(this, fp, "Velocity", G_size, guide, dc_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
-  F.loadVelocity();
+  tmp = GenerateFileName("vel", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.readVelocity(fp, m_label, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+  
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -2401,12 +2415,18 @@ void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() ) {
     
+    REAL_TYPE *t = NULL;
     if( !(t = dc_t->GetData()) ) Exit(0);
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    //F.loadTemperature(this, fp, "Temperature", G_size, guide, dc_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
-    F.loadTemperature();
+    
+    tmp = GenerateFileName("tmp", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.readTemperature(fp, m_label, size, guide, t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+    
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -2425,12 +2445,15 @@ void SklSolverCBC::load_Restart_file (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
 {
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
   int step;
   REAL_TYPE time;
   
   REAL_TYPE *r_v = NULL;
   REAL_TYPE *r_p = NULL;
-  REAL_TYPE *r_t = NULL;
+  
   if( !(r_v = dc_r_v->GetData()) )   Exit(0);
   if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
@@ -2469,13 +2492,13 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
     rgh_k = 1;
   }
   
-  char label_tmp[LABEL];
+  char m_label[LABEL];
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  strcpy(label_tmp, C.f_Rough_pressure.c_str());
-  F.loadScalar(fp, label_tmp, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
+  strcpy(m_label, C.f_Rough_pressure.c_str());
+  F.readPressure(fp, m_label, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
@@ -2486,8 +2509,8 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  strcpy(label_tmp, C.f_Rough_velocity.c_str());
-  F.loadVector(fp, label_tmp, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
+  strcpy(m_label, C.f_Rough_velocity.c_str());
+  F.readVelocity(fp, m_label, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2498,11 +2521,14 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() ) {
+    
+    REAL_TYPE *r_t = NULL;
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
+    
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    strcpy(label_tmp, C.f_Rough_temperature.c_str());
-    F.loadTemp(fp, label_tmp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
+    strcpy(m_label, C.f_Rough_temperature.c_str());
+    F.readTemperature(fp, m_label, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2526,11 +2552,29 @@ void SklSolverCBC::load_Restart_rough (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
 {
-  int step;
-  REAL_TYPE time;
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  step = SklGetBaseStep();
-  time = SklGetBaseTime();
+  char m_label[LABEL];
+  char* tmp = NULL;
+  
+  int step = SklGetBaseStep();
+  REAL_TYPE time = SklGetBaseTime();
+  
+  // ステップ数 > ファイル名用
+  int m_step = (int)C.Restart_step;
+  
+  // 出力分割
+  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
+  
+  // 並列実行
+  bool isPara = ( para_mng->IsParallel() ) ? true : false;
+  
+  REAL_TYPE *av = NULL;
+  REAL_TYPE *ap = NULL;
+  
+  if( !(av = dc_av->GetData()) )   Exit(0);
+  if( !(ap = dc_ap->GetData()) )   Exit(0);
   
   if ( C.Interval[Interval_Manager::tg_avstart].isStep() ) {
     if ( step > C.Interval[Interval_Manager::tg_avstart].getIntervalStep() ) {
@@ -2557,15 +2601,26 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
   
   // Pressure > step, timeは戻り値を使用
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-  F.loadPressure(this, fp, "AvrPressure", G_size, guide, dc_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, false);
+  
+  tmp = GenerateFileName("prsa", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.readPressure(fp, m_label, size, guide, ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, false);
+  
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+  
   SklSetAverageBaseStep(step);
   SklSetAverageBaseTime(time);
   
   
   // Velocity
-  F.loadVelocity(this, fp, "AvrVelocity", G_size, guide, dc_av, step, time, v00, C.Unit.File, C.RefVelocity, flop, false);
+  tmp = GenerateFileName("vela", m_step, mio, isPara);
+  strcpy(m_label, tmp);
+  
+  F.readVelocity(fp, m_label, size, guide, av, step, time, v00, C.Unit.File, C.RefVelocity, flop, false);
+  
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+  
   if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) { // 圧力とちがう場合
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -2574,9 +2629,19 @@ void SklSolverCBC::load_Restart_avr_file (FILE* fp, REAL_TYPE& flop)
   
   
   if ( C.isHeatProblem() ) {
+    
+    REAL_TYPE *at = NULL;
+    if( !(at = dc_at->GetData()) ) Exit(0);
+    
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    F.loadTemperature(this, fp, "AvrTemperature", G_size, guide, dc_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, false);
+
+    tmp = GenerateFileName("tmpa", m_step, mio, isPara);
+    strcpy(m_label, tmp);
+    
+    F.readTemperature(fp, m_label, size, guide, at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, false);
+    
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
+    
     if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -2640,14 +2705,14 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
 /**
  @fn void SklSolverCBC::prepOutput(void)
  @brief ファイル出力の準備
- */
+ 
 void SklSolverCBC::prepOutput (void)
 {
   REAL_TYPE org[3], pit[3];
   
 //zkawa.120514.s
-  bool mio_out = true;
-  if( C.FIO.IO_Output == IO_GATHER ) mio_out = false;
+  //bool mio_out = true;
+  //if( C.FIO.IO_Output == IO_GATHER ) mio_out = false;
 //zkawa.120514.s
   
   int interval = C.Interval[Interval_Manager::tg_instant].getIntervalStep();
@@ -2672,9 +2737,10 @@ void SklSolverCBC::prepOutput (void)
     // Divergence
     if ( C.FIO.Div_Debug == ON ) {
       if ( SklCfgCheckOutFile("Divergence") ) {
+
+        if( !(m_outDiv = InitFile("Divergence", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-        //        if( !(m_outDiv = InitFile("Divergence", size, org, pit, dc_ws)) ) {
-        if( !(m_outDiv = CBCInitFile(mio_out, interval, "Divergence", size, org, pit, dc_ws)) ) {
+        //if( !(m_outDiv = CBCInitFile(mio_out, interval, "Divergence", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
           Hostonly_ stamped_printf("\tInit failed.\n");
           Exit(0);
@@ -2688,9 +2754,10 @@ void SklSolverCBC::prepOutput (void)
     mark();
     // Pressure
 		if ( SklCfgCheckOutFile("Pressure") ) {
+
+      if( !(m_outPrs = InitFile("Pressure", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-      //			if( !(m_outPrs = InitFile("Pressure", size, org, pit, dc_ws)) ) {
-			if( !(m_outPrs = CBCInitFile(mio_out, interval, "Pressure", size, org, pit, dc_ws)) ) {
+			//if( !(m_outPrs = CBCInitFile(mio_out, interval, "Pressure", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
@@ -2703,9 +2770,10 @@ void SklSolverCBC::prepOutput (void)
     mark();
     // Velocity
 		if ( SklCfgCheckOutFile("Velocity") ) {
+
+      if( !(m_outUVW = InitFile("Velocity", size, org, pit, dc_wvex)) ) {
 //zkawa.120514.s
-      //			if( !(m_outUVW = InitFile("Velocity", size, org, pit, dc_wvex)) ) {
-			if( !(m_outUVW = CBCInitFile(mio_out, interval, "Velocity", size, org, pit, dc_wvex)) ) {
+			//if( !(m_outUVW = CBCInitFile(mio_out, interval, "Velocity", size, org, pit, dc_wvex)) ) {
 //zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
@@ -2719,9 +2787,10 @@ void SklSolverCBC::prepOutput (void)
 		// Total pressure
 		if (C.Mode.TP == ON) {
 			if ( SklCfgCheckOutFile("TotalPressure") ) {
+
+        if( !(m_outTP = InitFile("TotalPressure", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-        //				if( !(m_outTP = InitFile("TotalPressure", size, org, pit, dc_ws)) ) {
-				if( !(m_outTP = CBCInitFile(mio_out, interval, "TotalPressure", size, org, pit, dc_ws)) ) {
+				//if( !(m_outTP = CBCInitFile(mio_out, interval, "TotalPressure", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
@@ -2736,9 +2805,10 @@ void SklSolverCBC::prepOutput (void)
 		// Vorticity
 		if (C.Mode.VRT == ON) {
 			if ( SklCfgCheckOutFile("Vorticity") ) {
+
+        if( !(m_outVrt = InitFile("Vorticity", size, org, pit, dc_wvex)) ) {
 //zkawa.120514.s
-        //				if( !(m_outVrt = InitFile("Vorticity", size, org, pit, dc_wvex)) ) {
-				if( !(m_outVrt = CBCInitFile(mio_out, interval, "Vorticity", size, org, pit, dc_wvex)) ) {
+				//if( !(m_outVrt = CBCInitFile(mio_out, interval, "Vorticity", size, org, pit, dc_wvex)) ) {
 //zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
@@ -2753,9 +2823,10 @@ void SklSolverCBC::prepOutput (void)
     // 2nd Invariant of Velocity Gradient Tensor
 		if (C.Mode.I2VGT == ON) {
 			if ( SklCfgCheckOutFile("2ndInvrntVGT") ) {
+
+        if( !(m_outI2VGT = InitFile("2ndInvrntVGT", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-        //				if( !(m_outI2VGT = InitFile("2ndInvrntVGT", size, org, pit, dc_ws)) ) {
-				if( !(m_outI2VGT = CBCInitFile(mio_out, interval, "2ndInvrntVGT", size, org, pit, dc_ws)) ) {
+				//if( !(m_outI2VGT = CBCInitFile(mio_out, interval, "2ndInvrntVGT", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
@@ -2770,9 +2841,10 @@ void SklSolverCBC::prepOutput (void)
     // Helicity
 		if (C.Mode.Helicity == ON) {
 			if ( SklCfgCheckOutFile("Helicity") ) {
+
+        if( !(m_outHlcty = InitFile("Helicity", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-        //				if( !(m_outHlcty = InitFile("Helicity", size, org, pit, dc_ws)) ) {
-				if( !(m_outHlcty = CBCInitFile(mio_out, interval, "Helicity", size, org, pit, dc_ws)) ) {
+				//if( !(m_outHlcty = CBCInitFile(mio_out, interval, "Helicity", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
 					Hostonly_ stamped_printf("\tInit failed.\n");
 					Exit(0);
@@ -2804,9 +2876,10 @@ void SklSolverCBC::prepOutput (void)
   
   if( C.isHeatProblem() ){
     if ( SklCfgCheckOutFile("Temperature") ) {
+
+      if( !(m_outTmp = InitFile("Temperature", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-      //      if( !(m_outTmp = InitFile("Temperature", size, org, pit, dc_ws)) ) {
-      if( !(m_outTmp = CBCInitFile(mio_out, interval, "Temperature", size, org, pit, dc_ws)) ) {
+      //if( !(m_outTmp = CBCInitFile(mio_out, interval, "Temperature", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
         Hostonly_ stamped_printf("\tInit failed.\n");
         Exit(0);
@@ -2825,9 +2898,10 @@ void SklSolverCBC::prepOutput (void)
   
 	if ( C.KindOfSolver != SOLID_CONDUCTION ) {
 		if ( SklCfgCheckOutFile("AvrPressure") ) {
+
+      if( !(m_outAvrPrs = InitFile("AvrPressure", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-      //			if( !(m_outAvrPrs = InitFile("AvrPressure", size, org, pit, dc_ws)) ) {
-			if( !(m_outAvrPrs = CBCInitFile(mio_out, interval, "AvrPressure", size, org, pit, dc_ws)) ) {
+			//if( !(m_outAvrPrs = CBCInitFile(mio_out, interval, "AvrPressure", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
@@ -2839,9 +2913,9 @@ void SklSolverCBC::prepOutput (void)
 		}
     
 		if ( SklCfgCheckOutFile("AvrVelocity") ) {
+      if( !(m_outAvrUVW = InitFile("AvrVelocity", size, org, pit, dc_wvex)) ) {
 //zkawa.120514.s
-      //			if( !(m_outAvrUVW = InitFile("AvrVelocity", size, org, pit, dc_wvex)) ) {
-			if( !(m_outAvrUVW = CBCInitFile(mio_out, interval, "AvrVelocity", size, org, pit, dc_wvex)) ) {
+			//if( !(m_outAvrUVW = CBCInitFile(mio_out, interval, "AvrVelocity", size, org, pit, dc_wvex)) ) {
 //zkawa.120514.e
 				Hostonly_ stamped_printf("\tInit failed.\n");
 				Exit(0);
@@ -2855,9 +2929,10 @@ void SklSolverCBC::prepOutput (void)
   
   if( C.isHeatProblem() ){
     if ( SklCfgCheckOutFile("AvrTemperature") ) {
+
+      if( !(m_outAvrTmp = InitFile("AvrTemperature", size, org, pit, dc_ws)) ) {
 //zkawa.120514.s
-      //      if( !(m_outAvrTmp = InitFile("AvrTemperature", size, org, pit, dc_ws)) ) {
-      if( !(m_outAvrTmp = CBCInitFile(mio_out, interval, "AvrTemperature", size, org, pit, dc_ws)) ) {
+      //if( !(m_outAvrTmp = CBCInitFile(mio_out, interval, "AvrTemperature", size, org, pit, dc_ws)) ) {
 //zkawa.120514.e
         Hostonly_ stamped_printf("\tInit failed.\n");
         Exit(0);
@@ -2868,7 +2943,7 @@ void SklSolverCBC::prepOutput (void)
       Exit(0);
     }
   }
-}
+}*/
 
 /**
  @fn void SklSolverCBC::resizeBVface(const int* st, const int* ed, const unsigned n, const unsigned* bx)
@@ -4465,7 +4540,7 @@ SklSolverCBC::getRoughResult (
 }
 
 
-//zkawa.120514.s
+/* zkawa.120514.s
 SklVoxDataSet* 
 SklSolverCBC::CBCInitFile( bool mioSPH
                           , const int m_intvl
@@ -4578,4 +4653,4 @@ SklSolverCBC::CBCInitFile( bool mioSPH
   return m_fileCntl.Init(bn, itrvl, mio, step, time, dSet);
 }
 //zkawa.120514.e
-
+*/

@@ -23,7 +23,7 @@ RANLIB		= ranlib
 
 TARGET_DIR	= ../lib
 
-LIBXML2         = /usr/local/libxml2-2.7.8_lib
+LIBXML2         = /usr
 
 ###########################################################################
 # 以下のワーニングを抑制するために-fno-strict-aliasingを追加 2010.10.14

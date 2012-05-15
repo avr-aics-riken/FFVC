@@ -468,6 +468,7 @@ public:
             Parallelism,
             Partition,
             RefID,
+            Restart_step,
             Start,
             version,
             vxFormat,
@@ -573,6 +574,7 @@ public:
     Parallelism = 0;
     Partition = 0;
     RefID = 0;
+    Restart_step = 0;
     Start = 0;
     version = 0;
     vxFormat = 0;
@@ -690,6 +692,7 @@ protected:
   void getXML_Convection     (void);
   void getXML_Derived        (void);
   void getXML_Dimension      (void);
+  void getXML_FileIO         (void);
   void getXML_Iteration      (ItrCtl* IC);
   void getXML_KindOfSolver   (const CfgElem *elmL1);
   void getXML_LES_option     (void);
@@ -702,6 +705,7 @@ protected:
   void getXML_ReferenceFrame (ReferenceFrame* RF);
   void getXML_Scaling        (void);
   void getXML_Solver_Properties (void);
+  void getXML_start_condition   (void);
   void getXML_Time_Control   (DTcntl* DT);
   void getXML_TimeMarching   (void);
   void getXML_Unit           (void);
@@ -724,10 +728,8 @@ public:
   REAL_TYPE OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
-  void getXML_FileIO            (SklSolverConfig* cfg);
   void getXML_Para_Init         (void);
   void getXML_Polygon           (void);
-  void getXML_restart_rough     (void);
   void getXML_Sampling          (void);
   void getXML_Steer_1           (DTcntl* DT);
   void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);

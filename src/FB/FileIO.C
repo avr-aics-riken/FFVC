@@ -164,7 +164,7 @@ void FileIO::cnv_TP_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYP
  @param RefVelocity 代表速度
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
- */
+ 
 void FileIO::loadPressure(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklScalar3D<REAL_TYPE>* dc_p, int& step, REAL_TYPE& time, 
                           const unsigned Dmode, 
@@ -215,7 +215,7 @@ void FileIO::loadPressure(SklSolverBase* obj, FILE* fp, const char* fname, const
   
   if (sphS) { delete sphS; sphS=NULL; }
 }
-
+*/
 
 /**
  @fn void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
@@ -236,7 +236,7 @@ void FileIO::loadPressure(SklSolverBase* obj, FILE* fp, const char* fname, const
  @param Kelvin 定数
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
- */
+ 
 void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklScalar3D<REAL_TYPE>* dc_t, int& step, REAL_TYPE& time, 
                           const unsigned Dmode, 
@@ -287,7 +287,7 @@ void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, const char* fname, co
   
   if (sphS) { delete sphS; sphS=NULL; }
 }
-
+*/
 
 /**
  @fn void FileIO::loadVelocity(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
@@ -307,7 +307,7 @@ void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, const char* fname, co
  @param RefVelocity 代表速度
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
- */
+ 
 void FileIO::loadVelocity(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
                           SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
                           const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
@@ -358,7 +358,7 @@ void FileIO::loadVelocity(SklSolverBase* obj, FILE* fp, const char* fname, const
       
   if (sphV) { delete sphV; sphV=NULL; }
 }
-
+*/
 
 /**
  @fn void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide,
@@ -986,9 +986,19 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
 
 
 /**
- @fn void FileIO::loadPressure(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
-        REAL_TYPE* p, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE BasePrs, 
-        const REAL_TYPE RefDensity, const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+ @fn void FileIO::readPressure(FILE* fp, 
+ char* fname, 
+ const unsigned* size, 
+ const unsigned gc,
+ REAL_TYPE* p, 
+ int& step, 
+ REAL_TYPE& time, 
+ const unsigned Dmode, 
+ const REAL_TYPE BasePrs, 
+ const REAL_TYPE RefDensity, 
+ const REAL_TYPE RefVelocity, 
+ REAL_TYPE& flop, 
+ const bool mode)
  @brief 圧力ファイルをロードする
  @param fp ファイルポインタ（ファイル出力）
  @param fname ファイル名
@@ -1002,12 +1012,19 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
-void FileIO::loadPressure(FILE* fp, char* fname, const unsigned* size, const unsigned gc,
-                          REAL_TYPE* p, int& step, REAL_TYPE& time, 
+void FileIO::readPressure(FILE* fp, 
+                          char* fname, 
+                          const unsigned* size, 
+                          const unsigned gc,
+                          REAL_TYPE* p, 
+                          int& step, 
+                          REAL_TYPE& time, 
                           const unsigned Dmode, 
                           const REAL_TYPE BasePrs, 
                           const REAL_TYPE RefDensity, 
-                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+                          const REAL_TYPE RefVelocity, 
+                          REAL_TYPE& flop, 
+                          const bool mode)
 {
   if ( !fname ) Exit(0);
   
@@ -1029,9 +1046,18 @@ void FileIO::loadPressure(FILE* fp, char* fname, const unsigned* size, const uns
 }
 
 /**
- @fn void FileIO::loadVelocity(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
-          REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
-          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+ @fn void FileIO::readVelocity(FILE* fp, 
+ char* fname, 
+ const unsigned* size, 
+ const unsigned gc, 
+ REAL_TYPE* v, 
+ int& step, 
+ REAL_TYPE& time, 
+ const REAL_TYPE *v00, 
+ const unsigned Dmode, 
+ const REAL_TYPE RefVelocity, 
+ REAL_TYPE& flop, 
+ const bool mode)
  @brief 速度をロードする
  @param fp ファイルポインタ（ファイル出力）
  @param fname InFile名
@@ -1046,9 +1072,18 @@ void FileIO::loadPressure(FILE* fp, char* fname, const unsigned* size, const uns
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
-void FileIO::loadVelocity(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
-                          REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
-                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
+void FileIO::readVelocity(FILE* fp, 
+                          char* fname, 
+                          const unsigned* size, 
+                          const unsigned gc, 
+                          REAL_TYPE* v, 
+                          int& step, 
+                          REAL_TYPE& time, 
+                          const REAL_TYPE *v00, 
+                          const unsigned Dmode, 
+                          const REAL_TYPE RefVelocity, 
+                          REAL_TYPE& flop, 
+                          const bool mode)
 {
   if ( !fname ) Exit(0);
   
@@ -1071,12 +1106,19 @@ void FileIO::loadVelocity(FILE* fp, char* fname, const unsigned* size, const uns
 }
 
 /**
- @fn void FileIO::loadTemperature(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
- REAL_TYPE* t, int& step, REAL_TYPE& time, 
+ @fn void FileIO::readTemperature(FILE* fp, 
+ char* fname, 
+ const unsigned* size, 
+ const unsigned gc, 
+ REAL_TYPE* t, 
+ int& step, 
+ REAL_TYPE& time, 
  const unsigned Dmode, 
  const REAL_TYPE Base_tmp, 
  const REAL_TYPE Diff_tmp, 
- const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
+ const REAL_TYPE Kelvin, 
+ REAL_TYPE& flop, 
+ const bool mode)
  @brief 温度をロードする
  @param fp ファイルポインタ（ファイル出力）
  @param fname InFileのattrラベル名
@@ -1092,12 +1134,19 @@ void FileIO::loadVelocity(FILE* fp, char* fname, const unsigned* size, const uns
  @param flop
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
-void FileIO::loadTemperature(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
-                             REAL_TYPE* t, int& step, REAL_TYPE& time, 
+void FileIO::readTemperature(FILE* fp, 
+                             char* fname, 
+                             const unsigned* size, 
+                             const unsigned gc, 
+                             REAL_TYPE* t, 
+                             int& step, 
+                             REAL_TYPE& time, 
                              const unsigned Dmode, 
                              const REAL_TYPE Base_tmp, 
                              const REAL_TYPE Diff_tmp, 
-                             const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
+                             const REAL_TYPE Kelvin, 
+                             REAL_TYPE& flop, 
+                             const bool mode)
 {
   if ( !fname ) Exit(0);
   
@@ -1117,3 +1166,80 @@ void FileIO::loadTemperature(FILE* fp, char* fname, const unsigned* size, const 
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
 
 }
+
+/**
+ @fn void FileIO::writeScalar(char* fname, 
+ const unsigned* size, 
+ const unsigned gc,
+ REAL_TYPE* s, 
+ const int step, 
+ const REAL_TYPE time, 
+ const REAL_TYPE* org, 
+ const REAL_TYPE* pit, 
+ const int guide_out)
+ @brief スカラー場を出力する
+ @param fname ファイル名
+ @param size
+ @param gc
+ @param s スカラー場
+ @param step ステップ
+ @param time 時刻
+ @param org
+ @param pit
+ @param guide_out ガイドセル数
+ */
+void FileIO::writeScalar(char* fname, 
+                           const unsigned* size, 
+                           const unsigned gc,
+                           REAL_TYPE* s, 
+                           const int step, 
+                           const REAL_TYPE time, 
+                           const REAL_TYPE* org, 
+                           const REAL_TYPE* pit, 
+                           const int guide_out)
+{
+  if ( !fname ) Exit(0);
+  
+  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  
+  fb_write_sph_s_ (s, (int*)size, (int*)&gc, fname, &step, &time, org, pit, &d_type, &guide_out);
+}
+
+/**
+ @fn void FileIO::writeVector(char* fname, 
+ const unsigned* size, 
+ const unsigned gc, 
+ REAL_TYPE* v, 
+ const int step, 
+ const REAL_TYPE time, 
+ const REAL_TYPE* org, 
+ const REAL_TYPE* pit, 
+ const int guide_out)
+ @brief ベクトル場を出力する
+ @param fname ファイル名
+ @param size
+ @param gc
+ @param v ベクトル場
+ @param step ステップ
+ @param time 時刻
+ @param org
+ @param pit
+ @param guide_out ガイドセル数
+ */
+void FileIO::writeVector(char* fname, 
+                           const unsigned* size, 
+                           const unsigned gc, 
+                           REAL_TYPE* v, 
+                           const int step, 
+                           const REAL_TYPE time, 
+                           const REAL_TYPE* org, 
+                           const REAL_TYPE* pit, 
+                           const int guide_out)
+{
+  if ( !fname ) Exit(0);
+  
+  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  
+  fb_write_sph_v_ (v, (int*)size, (int*)&gc, fname, &step, &time, org, pit, &d_type, &guide_out);
+}
+

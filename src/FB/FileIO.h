@@ -62,15 +62,15 @@ protected:
 public:
   void cnv_Div           (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE coef, REAL_TYPE& flop);
   void cnv_TP_ND2D       (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop);
-  void loadPressure      (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, SklScalar3D<REAL_TYPE>* dc_p, 
-                          int& step, REAL_TYPE& time, const unsigned Dmode, const REAL_TYPE BasePrs, const REAL_TYPE RefDensity, 
-                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode=true);
-  void loadTemperature   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, SklScalar3D<REAL_TYPE>* dc_t, 
-                          int& step, REAL_TYPE& time, const unsigned Dmode, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, 
-                          const REAL_TYPE klv, REAL_TYPE& flop, const bool mode=true);
-  void loadVelocity      (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, SklVector3DEx<REAL_TYPE>* dc_v, 
-                          int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, const REAL_TYPE RefVelocity, 
-                          REAL_TYPE& flop, const bool mode=true);
+  //void loadPressure      (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, SklScalar3D<REAL_TYPE>* dc_p, 
+  //                        int& step, REAL_TYPE& time, const unsigned Dmode, const REAL_TYPE BasePrs, const REAL_TYPE RefDensity, 
+  //                        const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode=true);
+  //void loadTemperature   (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, SklScalar3D<REAL_TYPE>* dc_t, 
+  //                        int& step, REAL_TYPE& time, const unsigned Dmode, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, 
+  //                        const REAL_TYPE klv, REAL_TYPE& flop, const bool mode=true);
+  //void loadVelocity      (SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, SklVector3DEx<REAL_TYPE>* dc_v, 
+  //                        int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, const REAL_TYPE RefVelocity, 
+  //                        REAL_TYPE& flop, const bool mode=true);
   void readSBX           (SklSolverBase* obj, FILE* fp, const char* file_attr, unsigned* size, unsigned guide, 
                           SklScalar3D<unsigned char>* dc_mid);
   void readSBX           (SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned* size, unsigned guide, 
@@ -80,21 +80,69 @@ public:
   void writeRawSPH       (const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, 
                           const unsigned m_ModePrecision);
   
-  void loadVelocity(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
-                  REAL_TYPE* v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
-                  const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode=true);
-  void loadPressure(FILE* fp, char* fname, const unsigned* size, const unsigned gc,
-                  REAL_TYPE* s, int& step, REAL_TYPE& time, 
-                  const unsigned Dmode, 
-                  const REAL_TYPE BasePrs, 
-                  const REAL_TYPE RefDensity, 
-                  const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode=true);
-  void loadTemperature(FILE* fp, char* fname, const unsigned* size, const unsigned gc, 
-                REAL_TYPE* t, int& step, REAL_TYPE& time, 
-                const unsigned Dmode, 
-                const REAL_TYPE Base_tmp, 
-                const REAL_TYPE Diff_tmp, 
-                const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode=true);
+
+  
+  void readPressure(FILE* fp, 
+                    char* fname, 
+                    const unsigned* size, 
+                    const unsigned gc,
+                    REAL_TYPE* s, 
+                    int& step, 
+                    REAL_TYPE& time, 
+                    const unsigned Dmode, 
+                    const REAL_TYPE BasePrs, 
+                    const REAL_TYPE RefDensity, 
+                    const REAL_TYPE RefVelocity, 
+                    REAL_TYPE& flop, 
+                    const bool mode=true);
+  
+  void readVelocity(FILE* fp, 
+                    char* fname, 
+                    const unsigned* size, 
+                    const unsigned gc, 
+                    REAL_TYPE* v, 
+                    int& step, 
+                    REAL_TYPE& time, 
+                    const REAL_TYPE *v00, 
+                    const unsigned Dmode, 
+                    const REAL_TYPE RefVelocity, 
+                    REAL_TYPE& flop, 
+                    const bool mode=true);
+  
+  void readTemperature(FILE* fp, 
+                       char* fname, 
+                       const unsigned* size, 
+                       const unsigned gc, 
+                       REAL_TYPE* t, 
+                       int& step, 
+                       REAL_TYPE& time, 
+                       const unsigned Dmode, 
+                       const REAL_TYPE Base_tmp, 
+                       const REAL_TYPE Diff_tmp, 
+                       const REAL_TYPE Kelvin, 
+                       REAL_TYPE& flop, 
+                       const bool mode=true);
+  
+  void writeScalar(char* fname, 
+                   const unsigned* size, 
+                   const unsigned gc,
+                   REAL_TYPE* s, 
+                   const int step, 
+                   const REAL_TYPE time, 
+                   const REAL_TYPE* org, 
+                   const REAL_TYPE* pit, 
+                   const int guide_out);
+  
+  void writeVector(char* fname, 
+                   const unsigned* size, 
+                   const unsigned gc, 
+                   REAL_TYPE* v, 
+                   const int step, 
+                   const REAL_TYPE time, 
+                   const REAL_TYPE* org, 
+                   const REAL_TYPE* pit, 
+                   const int guide_out);
+  
   
   /**
    @fn inline void CalcIndex(cosnt unsigned dst_ilen, const unsigned dst_jlen, const unsigned dst_klen, cosnt unsigned dst_gc, const unsigned src_gc, 
