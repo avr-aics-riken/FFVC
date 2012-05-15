@@ -146,221 +146,6 @@ void FileIO::cnv_TP_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYP
 
 
 /**
- @fn void FileIO::loadPressure(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                  SklScalar3D<REAL_TYPE>* dc_p, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE BasePrs, 
-                  const REAL_TYPE RefDensity, const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
- @brief 圧力をロードする
- @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
- @param fp ファイルポインタ（ファイル出力）
- @param fname InFileのattrラベル名
- @param size グローバルなサイズ
- @param guide ガイドセルサイズ
- @param dc_p  結果を保持するデータクラス
- @param step[out] ステップ
- @param time[out] 時刻
- @param Dmode 次元（無次元-0 / 有次元-1）
- @param BasePrs 基準圧力
- @param RefDensity　代表密度
- @param RefVelocity 代表速度
- @param flop
- @param mode （瞬時値のときtrue，平均値のときfalse）
- 
-void FileIO::loadPressure(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklScalar3D<REAL_TYPE>* dc_p, int& step, REAL_TYPE& time, 
-                          const unsigned Dmode, 
-                          const REAL_TYPE BasePrs, 
-                          const REAL_TYPE RefDensity, 
-                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
-{
-  if ( !obj )   Exit(0);
-  if ( !dc_p )  Exit(0);
-  if ( !fname ) Exit(0);
-  
-  SklParaComponent* para_cmp = ParaCmpo;
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  SklVoxDataSet* sphS = NULL;
-  
-  if( !(sphS=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
-    Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphS->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphS->GetFileName());
-    Exit(0);
-  }
-  
-  if ( !SklUtil::getTimeStamp(sphS, step, time) ) {
-    Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    Exit(0);
-  }
-  
-  // 有次元ファイルの場合，無次元に変換する
-  SklScalar3D<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklScalar3D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
-  
-  REAL_TYPE *pi = NULL;
-  REAL_TYPE *p  = NULL;
-  if( !(pi = dc_tmp->GetData()) ) Exit(0);
-  if( !(p  = dc_p->GetData()) )   Exit(0);
-  int* sz;
-  sz = (int*)dc_tmp->_GetSize(); // with guide cell
-  int d_length = sz[0]*sz[1]*sz[2];
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
-  REAL_TYPE basep = BasePrs;
-  REAL_TYPE ref_d = RefDensity;
-  REAL_TYPE ref_v = RefVelocity;
-  
-  fb_prs_d2nd_(p, pi, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
-  
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  
-  if (sphS) { delete sphS; sphS=NULL; }
-}
-*/
-
-/**
- @fn void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                  SklScalar3D<REAL_TYPE>* dc_t, int& step, REAL_TYPE& time, unsigned Dmode, const REAL_TYPE Base_tmp, 
-                  const REAL_TYPE Diff_tmp, const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
- @brief 圧力をロードする
- @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
- @param fp ファイルポインタ（ファイル出力）
- @param fname InFileのattrラベル名
- @param size グローバルなサイズ
- @param guide ガイドセルサイズ
- @param dc_t  結果を保持するデータクラス
- @param step[out] ステップ
- @param time[out] 時刻
- @param Dmode 次元（無次元-0 / 有次元-1）
- @param Base_tmp 基準温度
- @param Diff_tmp　代表温度差
- @param Kelvin 定数
- @param flop
- @param mode （瞬時値のときtrue，平均値のときfalse）
- 
-void FileIO::loadTemperature(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklScalar3D<REAL_TYPE>* dc_t, int& step, REAL_TYPE& time, 
-                          const unsigned Dmode, 
-                          const REAL_TYPE Base_tmp, 
-                          const REAL_TYPE Diff_tmp, 
-                          const REAL_TYPE Kelvin, REAL_TYPE& flop, const bool mode)
-{
-  if ( !obj )   Exit(0);
-  if ( !dc_t )  Exit(0);
-  if ( !fname ) Exit(0);
-  
-  SklParaComponent* para_cmp = ParaCmpo;
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  SklVoxDataSet* sphS = NULL;
-  
-  if( !(sphS=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
-    Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphS->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphS->GetFileName());
-    Exit(0);
-  }
-  
-  if ( !SklUtil::getTimeStamp(sphS, step, time) ) {
-    Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphS->GetFileName());
-    Exit(0);
-  }
-  
-  // 有次元ファイルの場合，無次元に変換する
-  SklScalar3D<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklScalar3D<REAL_TYPE>*>(sphS->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
-  
-  REAL_TYPE *ti = NULL;
-  REAL_TYPE *t  = NULL;
-  if( !(ti = dc_tmp->GetData()) ) Exit(0);
-  if( !(t  = dc_t->GetData()) )   Exit(0);
-  int* sz;
-  sz = (int*)dc_tmp->_GetSize(); // with guide cell
-  int d_length = sz[0]*sz[1]*sz[2];
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
-  REAL_TYPE base_t = Base_tmp;
-  REAL_TYPE diff_t = Diff_tmp;
-  REAL_TYPE klv    = Kelvin;
-  
-  fb_tmp_d2nd_(t, ti, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
-  
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphS->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  
-  if (sphS) { delete sphS; sphS=NULL; }
-}
-*/
-
-/**
- @fn void FileIO::loadVelocity(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                  SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
-                  const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
- @brief 速度をロードする
- @param solver_obj SklSolverBaseクラスのオブジェクトのポインタ (this)
- @param fp ファイルポインタ（ファイル出力）
- @param fname InFileのattrラベル名
- @param size グローバルなサイズ
- @param guide ガイドセルサイズ
- @param dc_v  結果を保持するデータクラス
- @param step ステップ
- @param time 時刻
- @param v00[4]
- @param Dmode 次元（無次元-0 / 有次元-1）
- @param RefVelocity 代表速度
- @param flop
- @param mode （瞬時値のときtrue，平均値のときfalse）
- 
-void FileIO::loadVelocity(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide, 
-                          SklVector3DEx<REAL_TYPE>* dc_v, int& step, REAL_TYPE& time, const REAL_TYPE *v00, const unsigned Dmode, 
-                          const REAL_TYPE RefVelocity, REAL_TYPE& flop, const bool mode)
-{
-  if ( !obj )   Exit(0);
-  if ( !dc_v )  Exit(0);
-  if ( !fname ) Exit(0);
-        
-  SklParaComponent* para_cmp = ParaCmpo;
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  SklVoxDataSet* sphV = NULL;
-        
-  if( !(sphV=obj->LoadFile(para_mng, fname, guide, pn.procGrp, size)) ) {
-    Hostonly_ stamped_printf     ("\tError: during '%s' reading\n", sphV->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during '%s' reading\n", sphV->GetFileName());
-    Exit(0);
-  }
-  
-  if ( !SklUtil::getTimeStamp(sphV, step, time) ) {
-    Hostonly_ stamped_printf     ("\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    Hostonly_ stamped_fprintf(fp, "\tError: during getTimeStep for %s\n", sphV->GetFileName());
-    Exit(0);
-  }
-  
-  SklVector3DEx<REAL_TYPE>* dc_tmp;
-  if( !(dc_tmp = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(sphV->GetData(SklVoxDataSet::SPH_DATA))) ) Exit(0);
-  
-  REAL_TYPE *vi = NULL;
-  REAL_TYPE *v  = NULL;
-  if( !(vi = dc_tmp->GetData()) ) Exit(0);
-  if( !(v  = dc_v->GetData()) )   Exit(0);
-  int* sz;
-  int gc;
-  sz = (int*)dc_tmp->GetSize(); // without guide cell
-  gc = (int)dc_tmp->GetVCellSize();
-  REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
-  REAL_TYPE u0[4];
-  u0[0] = v00[0];
-  u0[1] = v00[1];
-  u0[2] = v00[2];
-  u0[3] = v00[3];
-  
-  fb_shift_refv_in_(v, sz, &gc, vi, u0, &scale, &refv, &flop);
-      
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", sphV->GetFileName(), step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-      
-  if (sphV) { delete sphV; sphV=NULL; }
-}
-*/
-
-/**
  @fn void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, const unsigned* size, const unsigned guide,
                           SklScalar3D<int>* dc_mid, const bool vf_mode, SklScalar3D<REAL_TYPE>* dc_ws)
  @brief svxファイルをロードする
@@ -1010,6 +795,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
  @param RefDensity　代表密度
  @param RefVelocity 代表速度
  @param flop
+ @param guide_out 出力ガイドセル数
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
 void FileIO::readPressure(FILE* fp, 
@@ -1024,13 +810,15 @@ void FileIO::readPressure(FILE* fp,
                           const REAL_TYPE RefDensity, 
                           const REAL_TYPE RefVelocity, 
                           REAL_TYPE& flop, 
+                          const int guide_out,
                           const bool mode)
 {
   if ( !fname ) Exit(0);
   
-  int gs = 1; // with guide cell
-  fb_read_sph_s_ (p, (int*)size, (int*)&gc, fname, &step, &time, &gs);
-
+  int g = guide_out;
+  
+  fb_read_sph_s_ (p, (int*)size, (int*)&gc, fname, &step, &time, &g);
+  mark();
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
@@ -1038,9 +826,9 @@ void FileIO::readPressure(FILE* fp,
   REAL_TYPE basep = BasePrs;
   REAL_TYPE ref_d = RefDensity;
   REAL_TYPE ref_v = RefVelocity;
-  
+  mark();
   fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
-  
+  mark();
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
 }
@@ -1060,7 +848,7 @@ void FileIO::readPressure(FILE* fp,
  const bool mode)
  @brief 速度をロードする
  @param fp ファイルポインタ（ファイル出力）
- @param fname InFile名
+ @param fname ファイル名
  @param size サイズ
  @param guide ガイドセルサイズ
  @param v  結果を保持するデータ
@@ -1070,6 +858,7 @@ void FileIO::readPressure(FILE* fp,
  @param Dmode 次元（無次元-0 / 有次元-1）
  @param RefVelocity 代表速度
  @param flop
+ @param guide_out 出力ガイドセル数
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
 void FileIO::readVelocity(FILE* fp, 
@@ -1083,12 +872,14 @@ void FileIO::readVelocity(FILE* fp,
                           const unsigned Dmode, 
                           const REAL_TYPE RefVelocity, 
                           REAL_TYPE& flop, 
+                          const int guide_out,
                           const bool mode)
 {
   if ( !fname ) Exit(0);
   
-  int gs = 1; // with guide cell
-  fb_read_sph_v_ (v, (int*)size, (int*)&gc, fname, &step, &time, &gs);
+  int g = guide_out;
+  
+  fb_read_sph_v_ (v, (int*)size, (int*)&gc, fname, &step, &time, &g);
   
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
@@ -1098,7 +889,7 @@ void FileIO::readVelocity(FILE* fp,
   u0[2] = v00[2];
   u0[3] = v00[3];
   
-  fb_shift_refv_in_(v, (int*)size, (int*)&gc, v, u0, &scale, &refv, &flop);
+  fb_shift_refv_in_(v, (int*)size, (int*)&gc, u0, &scale, &refv, &flop);
   
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -1121,7 +912,7 @@ void FileIO::readVelocity(FILE* fp,
  const bool mode)
  @brief 温度をロードする
  @param fp ファイルポインタ（ファイル出力）
- @param fname InFileのattrラベル名
+ @param fname ファイル名
  @param size グローバルなサイズ
  @param gc ガイドセルサイズ
  @param t  結果を保持するデータクラス
@@ -1132,6 +923,7 @@ void FileIO::readVelocity(FILE* fp,
  @param Diff_tmp　代表温度差
  @param Kelvin 定数
  @param flop
+ @param guide_out 出力ガイドセル数
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
 void FileIO::readTemperature(FILE* fp, 
@@ -1146,12 +938,14 @@ void FileIO::readTemperature(FILE* fp,
                              const REAL_TYPE Diff_tmp, 
                              const REAL_TYPE Kelvin, 
                              REAL_TYPE& flop, 
+                             const int guide_out,
                              const bool mode)
 {
   if ( !fname ) Exit(0);
   
-  int gs = 1; // with guide cell
-  fb_read_sph_s_ (t, (int*)size, (int*)&gc, fname, &step, &time, &gs);
+  int g = guide_out;
+  
+  fb_read_sph_s_ (t, (int*)size, (int*)&gc, fname, &step, &time, &g);
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
@@ -1200,9 +994,20 @@ void FileIO::writeScalar(char* fname,
 {
   if ( !fname ) Exit(0);
   
+  int stp = step;
+  REAL_TYPE tm = time;
+  int g = guide_out;
+  REAL_TYPE o[3], p[3];
+  o[0] = org[0];
+  o[1] = org[1];
+  o[2] = org[2];
+  p[0] = pit[0];
+  p[1] = pit[1];
+  p[2] = pit[2];
+  
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_s_ (s, (int*)size, (int*)&gc, fname, &step, &time, org, pit, &d_type, &guide_out);
+  fb_write_sph_s_ (s, (int*)size, (int*)&gc, fname, &stp, &tm, o, p, &d_type, &g);
 }
 
 /**
@@ -1238,8 +1043,19 @@ void FileIO::writeVector(char* fname,
 {
   if ( !fname ) Exit(0);
   
+  int stp = step;
+  REAL_TYPE tm = time;
+  int g = guide_out;
+  REAL_TYPE o[3], p[3];
+  o[0] = org[0];
+  o[1] = org[1];
+  o[2] = org[2];
+  p[0] = pit[0];
+  p[1] = pit[1];
+  p[2] = pit[2];
+  
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_v_ (v, (int*)size, (int*)&gc, fname, &step, &time, org, pit, &d_type, &guide_out);
+  fb_write_sph_v_ (v, (int*)size, (int*)&gc, fname, &stp, &tm, o, p, &d_type, &g);
 }
 

@@ -496,7 +496,7 @@
 !<
   subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs)
   implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs
+  integer                                                   ::  i, j, k, l, ix, jx, kx, g, step, gs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  time
@@ -547,7 +547,7 @@
 !! @param fname ファイル名
 !! @param step ステップ数
 !! @param time 時刻
-!! @param gs ガイドセルスイッチ
+!! @param gs ガイドセルスイッチ (0-without, others-with)
 !<
   subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs)
   implicit none
@@ -580,10 +580,10 @@
   read(16) dx, dy, dz
   read(16) step, time
   
-  if ( gs == 1 ) then
-    read(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
-  else
+  if ( gs == 0 ) then
     read(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
+  else
+    read(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
   end if
   close (unit=16)
 
@@ -600,7 +600,7 @@
 !! @param fname ファイル名
 !! @param step ステップ数
 !! @param time 時刻
-!! @param gs ガイドセルスイッチ
+!! @param gs ガイドセルスイッチ (0-without, others-with)
 !<
   subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs)
   implicit none
@@ -633,10 +633,10 @@
   read(16) dx, dy, dz
   read(16) step, time
   
-  if ( gs == 1 ) then
-    read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
-  else
+  if ( gs == 0 ) then
     read(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
+  else
+    read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
   end if
   close (unit=16)
 

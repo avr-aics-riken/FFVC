@@ -490,57 +490,40 @@ string Control::getNormString(unsigned d)
 
 /**
  @fn char* Control::getVoxelFileName(void)
- @brief InFileに記述されたボクセルファイル名を取得
+ @brief ボクセルファイル名を取得
  */
 const char* Control::getVoxelFileName(void)
 {
-  SklCfgInFile* infile = (SklCfgInFile*)CF->GetInFileFirst();
-	const char *format, *fname=NULL;
+  const CfgElem *elmL1=NULL;
+	const char *str=NULL;
   
-  // ファイル名の取得
-  if ( !strcasecmp(infile->GetAttr(), "SphereSVX") ) {
+  if ( !(elmL1 = getXML_Pointer("Voxel_File", "steer")) ) Exit(0);
+  
+  
+  // フォーマットの取得
+  if ( !elmL1->GetValue("format", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'Format' in 'Voxel_File'\n");
+    Exit(0);
+  }
+  
+  if ( !strcasecmp(str, "SVX") ) {
     vxFormat = Sphere_SVX;
   }
-  else if ( !strcasecmp(infile->GetAttr(), "SphereSBX") ) {
+  else if ( !strcasecmp(str, "SBX") ) {
     vxFormat = Sphere_SBX;
   }
   else {
-    stamped_printf("\tParsing error : InFile attr [%s] is invalid.\n", infile->GetAttr());
+    stamped_printf("\tParsing error : Format [%s] is invalid.\n", str);
     Exit(0);
   }
-  
-  // フォーマットのチェック
-	if ( !(format = infile->GetFormat()) ) {
-		stamped_printf("\tParsing error : Invalid format at InFile description\n");
-		Exit(0);
-	}
-  if ( !strcasecmp(format, "svx") ) {
-    if ( vxFormat != Sphere_SVX ) {
-      stamped_printf("\tParsing error : Specification of Voxel file format is not consistent.\n");
-      Exit(0);
-    }
-  }
-	else if ( !strcasecmp(format, "sbx") ) {
-    if ( vxFormat != Sphere_SBX ) {
-      stamped_printf("\tParsing error : Specification of Voxel file format is not consistent.\n");
-      Exit(0);
-    }
-  }
-  else {
-		stamped_printf("\tParsing error : Invalid format for input voxel: %s\n", format);
-		Exit(0);
-	}
   
   //ファイル名取得
-  if( !(fname = infile->GetFileName()) ) {
-    stamped_printf("\tParsing error : InFile description\n");
+  if ( !elmL1->GetValue("file", &str) ) {
+    stamped_printf("\tParsing error : fail to get 'File' in 'Voxel_File'\n");
     Exit(0);
   }
   
-  // sbx/svxファイルはシリアル入力のみ対応なので，マルチモードはoff
-  infile->UnsetMultiInput();
-  
-  return fname;
+  return str;
 }
 
 
@@ -814,8 +797,6 @@ void Control::getXML_Dimension(void)
  */
 void Control::getXML_FileIO(void)
 {
-  //SklCfgInFile* infile   = (SklCfgInFile*)CF->GetInFileFirst();
-  //SklCfgOutFile* outfile = (SklCfgOutFile*)cfg->GetOutFileFirst(); Lionではうまくいかない
 
   const CfgElem *elmL1=NULL;
   const char* str=NULL;
@@ -846,19 +827,7 @@ void Control::getXML_FileIO(void)
     stamped_printf("\tInvalid keyword is described for 'Guide_Out'\n");
     Exit(0);
   }
-  
-  /* ファイル出力モード
-  if ( !elmL1->GetValue("Output_Mode", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'File_IO'\n");
-    Exit(0);
-  }
-  if     ( !strcasecmp(str, "Normal") )     FIO.FileOut = IO_normal;
-  else if( !strcasecmp(str, "Forced") )     FIO.FileOut = IO_forced;
-  else if( !strcasecmp(str, "Every_Time") ) FIO.FileOut = IO_everytime;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Output_Mode'\n");
-    Exit(0);
-  }*/
+
 
   // デバッグ用のdiv(u)の出力指定
   if ( !elmL1->GetValue("Debug_divergence", &str) ) {
@@ -896,57 +865,6 @@ void Control::getXML_FileIO(void)
     Exit(0);
   }
 
-  /* 入力ファイル情報の記述形式をチェックする
-  while( infile ){          // check a valid InFile description
-    const char *attr, *format, *fname;
-    if ( !infile->GetData(&attr, &format, &fname) ) {
-      stamped_printf("\tParsing error : InFile description\n");
-      Exit(0);
-    }
-    
-    // V-Sphereフレームワークにパラメータを設定
-    if ( !strcasecmp(format, "sph") ) {
-      if ( FIO.IO_Input == IO_GATHER ) {
-        infile->UnsetMultiInput();
-      }
-      else {
-        infile->SetMultiInput();
-      }
-    }
-    
-    infile = (SklCfgInFile*)CF->GetInFileNext(infile);
-  }*/
-
-  /* 出力ファイル情報の記述形式をチェックし，並列出力モードをフレームワークに通知する
-  while( outfile ){          // check a valid OutFile description
-    const char *attr, *format, *fname;
-    unsigned interval;
-    if ( !(attr = outfile->GetAttr()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    if ( !(format = outfile->GetFormat()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    if( !(fname = outfile->GetBaseName()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    
-    // V-Sphereフレームワークにパラメータを設定
-    if ( !strcasecmp(format, "sph") ) {
-      // 並列出力
-      if ( FIO.IO_Output == IO_GATHER ) {
-        outfile->UnsetMultiOutput();
-      }
-      else {
-        outfile->SetMultiOutput();
-      }
-    }
-    
-    outfile = (SklCfgOutFile*)CF->GetOutFileNext(outfile);
-  }*/
 
   // インターバル 瞬時値
   if ( !elmL1->GetValue("Instant_Interval_Type", &str) ) {
@@ -1309,62 +1227,6 @@ void Control::getXML_Log(void)
 
 
 /**
- @fn void Control::getXML_Para_Init(void)
- @brief 初期値の値を取得する
- @note
- - このメソッド内では，初期値は無次元/有次元の判定はしない
- - 無次元指定時の値の変換は　setParameters(MaterialList* mat, CompoList* cmp)
- @see 
- - bool Control::setParameters(MaterialList* mat, CompoList* cmp)
- */
-void Control::getXML_Para_Init(void)
-{	
-	const CfgElem *elmL1=NULL, *elmL2=NULL;
-  
-  if ( !(elmL1=getXML_Pointer("Initial_State", "parameter")) ) Exit(0);
-	
-  // Density
-	if( !elmL1->GetValue("Density", &iv.Density) ) {
-    stamped_printf("\tParsing error : Invalid float value for 'Density'\n");
-    Exit(0);
-  }
-	
-  // Pressure
-	if( !elmL1->GetValue("Pressure", &iv.Pressure) ) {
-    stamped_printf("\tParsing error : Invalid float value for 'Pressure'\n");
-    Exit(0);
-  }
-	
-  // Velocity
-	if ( !(elmL2  = elmL1->GetElemFirst("Velocity")) ) {
-		stamped_printf("\tParsing error : No 'Velocity' section in 'Initial_State'\n");
-		Exit(0);
-	}
-	if (elmL2->GetParamSize() != 3) {    // check number of Param
-		stamped_printf("\tParsing error : 3 Params should be found in Initial_State Velocity\n");
-		Exit(0);
-  }
-	REAL_TYPE v[3];
-	for (unsigned n=0; n<3; n++) v[n]=0.0;
-	if ( !(elmL2->GetVctValue("u", "v", "w", &v[0], &v[1], &v[2])) ) {
-    stamped_printf("\tParsing error : fail to get velocity params in 'Initial_State'\n");
-    Exit(0);
-  }
-  iv.VecU = v[0];
-  iv.VecV = v[1];
-  iv.VecW = v[2];
-  
-  // Temperature
-  if ( isHeatProblem() ) {
-    if( !elmL1->GetValue("Temperature", &iv.Temperature) ) {
-			stamped_printf("\tParsing error : Invalid float value for 'Temperature'\n");
-			Exit(0);
-		}
-  }
-}
-
-
-/**
  @fn void Control::getXML_Para_Ref(void)
  @brief 参照パラメータを取得
  @note Ref_IDで指定される媒質を代表物性値とする
@@ -1539,6 +1401,8 @@ void Control::getXML_Polygon(void)
 void Control::getXML_start_condition(void)
 {
   const CfgElem *elmL1=NULL;
+  const CfgElem *elmL2=NULL;
+  const CfgElem *elmL3=NULL;
   const char* str=NULL;
   int ct;
   
@@ -1570,7 +1434,7 @@ void Control::getXML_start_condition(void)
   
   // リスタート時のタイムスタンプ
   if ( Start == re_start ) {
-    if ( !elmL1->GetValue("restat_step", &ct) ) {
+    if ( !elmL1->GetValue("restart_step", &ct) ) {
       stamped_printf("\tParsing error : fail to get 'Restat_Step' in 'Start_Condition'\n");
       Exit(0);
     }
@@ -1610,6 +1474,55 @@ void Control::getXML_start_condition(void)
     
   }
   
+  
+  // 初期条件
+  if ( Start == initial_start ) {
+    
+    if ( !(elmL2  = elmL1->GetElemFirst("Initial_State")) ) {
+      stamped_printf("\tParsing error : No 'Initial_State' section in 'Start_Condition'\n");
+      Exit(0);
+    }
+    
+    // Density
+    if( !elmL2->GetValue("Density", &iv.Density) ) {
+      stamped_printf("\tParsing error : Invalid float value for 'Density'\n");
+      Exit(0);
+    }
+    
+    // Pressure
+    if( !elmL2->GetValue("Pressure", &iv.Pressure) ) {
+      stamped_printf("\tParsing error : Invalid float value for 'Pressure'\n");
+      Exit(0);
+    }
+    
+    // Velocity
+    if ( !(elmL3  = elmL2->GetElemFirst("Velocity")) ) {
+      stamped_printf("\tParsing error : No 'Velocity' section in 'Initial_State'\n");
+      Exit(0);
+    }
+    if (elmL3->GetParamSize() != 3) {    // check number of Param
+      stamped_printf("\tParsing error : 3 Params should be found in Initial_State Velocity\n");
+      Exit(0);
+    }
+    REAL_TYPE v[3];
+    for (unsigned n=0; n<3; n++) v[n]=0.0;
+    if ( !(elmL3->GetVctValue("u", "v", "w", &v[0], &v[1], &v[2])) ) {
+      stamped_printf("\tParsing error : fail to get velocity params in 'Initial_State'\n");
+      Exit(0);
+    }
+    iv.VecU = v[0];
+    iv.VecV = v[1];
+    iv.VecW = v[2];
+    
+    // Temperature
+    if ( isHeatProblem() ) {
+      if( !elmL2->GetValue("Temperature", &iv.Temperature) ) {
+        stamped_printf("\tParsing error : Invalid float value for 'Temperature'\n");
+        Exit(0);
+      }
+    }
+  }
+
 }
 
 
@@ -1878,7 +1791,6 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
     getXML_Para_Temp();
   }
   //getXML_Para_Wind();
-  getXML_Para_Init();
 
   // Reference frame information : Solver defined element >> SPHERE defined
   getXML_ReferenceFrame(RF);
@@ -2865,21 +2777,6 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   // InputMode
   fprintf(fp,"\t     Input Mode               :   %s\n", (FIO.IO_Input==IO_GATHER) ? "Master IO" : "Local IO");
   
-  // OutputMode
-  switch (FIO.FileOut) {
-    case IO_normal:
-      fprintf(fp,"\t     Output Mode              :   %s   Normal\n", (FIO.IO_Output==IO_GATHER) ? "Master IO" : "Local IO");
-      break;
-      
-    case IO_forced:
-      fprintf(fp,"\t     Output Mode              :   %s   Forced\n", (FIO.IO_Output==IO_GATHER) ? "Master IO" : "Local IO");
-      break;
-      
-    case IO_everytime:
-      fprintf(fp,"\t     Output Mode              :   %s   Every time\n", (FIO.IO_Output==IO_GATHER) ? "Master IO" : "Local IO");
-      break;
-  }
-  
   
   // Output guide
   fprintf(fp,"\t     Guide cell for output    :   %d\n", GuideOut);
@@ -3509,89 +3406,3 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
     }
 	}
 }
-
-
-/**
- @fn void Control::tell_Interval_2_Sphere(void)
- @brief SPHEREフレームワークにファイル出力インターバルを教える
- @note パラメータは，setParameters()で無次元して保持
- *
-void Control::tell_Interval_2_Sphere(void)
-{
-  SklCfgOutFile* outfile = (SklCfgOutFile*)CF->GetOutFileFirst();
-  mark();
-  while( outfile ){
-    const char *attr, *format;
-    
-    // 出力インターバル
-    if ( !(attr = outfile->GetAttr()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    if      ( !strcasecmp(attr, "velocity") )       outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "pressure") )       outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "temperature") )    outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "totalpressure") )  outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "vorticity") )      outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "2ndinvrntvgt") )   outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "helicity") )       outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "vof") )            outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    else if ( !strcasecmp(attr, "divergence") )     outfile->SetInterval( Interval[Interval_Manager::tg_instant].getIntervalStep() );
-    mark();
-    // 並列出力
-    if ( !(format = outfile->GetFormat()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    if ( !strcasecmp(format, "sph") ) {
-      if ( FIO.IO_Output == IO_GATHER ) {
-        outfile->UnsetMultiOutput();
-      }
-      else {
-        outfile->SetMultiOutput();
-      }
-    }
-    mark();
-    outfile = (SklCfgOutFile*)CF->GetOutFileNext(outfile);
-  }
-}*/
-
-/**
- @fn void Control::tell_Avr_Interval_2_Sphere(void)
- @brief SPHEREフレームワークに平均値ファイル出力インターバルを教える
- @note パラメータは，setParameters()で無次元して保持
- *
-void Control::tell_Avr_Interval_2_Sphere(void)
-{
-  SklCfgOutFile* outfile = (SklCfgOutFile*)CF->GetOutFileFirst();
-  
-  while( outfile ){
-    const char *attr, *format;
-    
-    // 出力インターバル
-    if ( !(attr = outfile->GetAttr()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    
-    if      ( !strcasecmp(attr, "avrvelocity") )    outfile->SetInterval( Interval[Interval_Manager::tg_average].getIntervalStep() );
-    else if ( !strcasecmp(attr, "avrpressure") )    outfile->SetInterval( Interval[Interval_Manager::tg_average].getIntervalStep() );
-    else if ( !strcasecmp(attr, "avrtemperature") ) outfile->SetInterval( Interval[Interval_Manager::tg_average].getIntervalStep() );
-    
-    // 並列出力
-    if ( !(format = outfile->GetFormat()) ) {
-      stamped_printf("\tParsing error : OutFile description\n");
-      Exit(0);
-    }
-    if ( !strcasecmp(format, "sph") ) {
-      if ( FIO.IO_Output == IO_GATHER ) {
-        outfile->UnsetMultiOutput();
-      }
-      else {
-        outfile->SetMultiOutput();
-      }
-    }
-    
-    outfile = (SklCfgOutFile*)CF->GetOutFileNext(outfile);
-  }
-}*/

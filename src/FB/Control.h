@@ -296,7 +296,6 @@ public:
   
   /// File IO control
   typedef struct {
-    unsigned FileOut;
     unsigned IO_Input;
     unsigned IO_Output;
     unsigned Div_Debug;
@@ -534,7 +533,7 @@ public:
   std::string f_Rough_dfi;
   
   std::string f_Velocity;
-  std::string f_Pressue;
+  std::string f_Pressure;
   std::string f_Temperature;
   std::string f_AvrPressure;
   std::string f_AvrVelocity;
@@ -543,6 +542,7 @@ public:
   std::string f_Helicity;
   std::string f_TotalP;
   std::string f_I2VGT;
+  std::string f_Vorticity;
   
   
   Control(){
@@ -648,7 +648,6 @@ public:
     LES.Cs = 0.0;
     LES.damping_factor=0.0;
     
-    FIO.FileOut = 0;
     FIO.IO_Input = 0;
     FIO.IO_Output = 0;
     FIO.Div_Debug = 0;
@@ -728,7 +727,6 @@ public:
   REAL_TYPE OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
-  void getXML_Para_Init         (void);
   void getXML_Polygon           (void);
   void getXML_Sampling          (void);
   void getXML_Steer_1           (DTcntl* DT);
@@ -739,8 +737,6 @@ public:
   void printNoCompo             (FILE* fp);
   void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
   void setParameters            (MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF);
-  //void tell_Avr_Interval_2_Sphere(void);
-  //void tell_Interval_2_Sphere   (void);
   
   virtual void getXML_Version   (void);
   

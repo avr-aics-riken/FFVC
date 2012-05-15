@@ -275,12 +275,11 @@ public:
   void getXML_Mon_Line      (MonitorList* M, const CfgElem *elmL2, REAL_TYPE from[3], REAL_TYPE to[3], int& nDivision);
   void getXML_Mon_Pointset  (MonitorList* M, const CfgElem *elmL2, vector<MonitorCompo::MonitorPoint>& pointSet);
   void IF_TRP_VOF           (void);
-  void load_Restart_avr_file(FILE* fp, REAL_TYPE& flop);
-  void load_Restart_file    (FILE* fp, REAL_TYPE& flop);
+  void Restart_avrerage     (FILE* fp, REAL_TYPE& flop);
+  void Restart              (FILE* fp, REAL_TYPE& flop);
   void LS_Binary            (ItrCtl* IC, REAL_TYPE b2);
   void LS_Planar            (ItrCtl* IC, REAL_TYPE b2);
   void min_distance         (float* cut, FILE* fp);
-  //void prepOutput           (void);
   void Pressure_Shift       (REAL_TYPE* p);
   void resizeBVcell         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
   void resizeBVface         (const int* st, const int* ed, const unsigned n, const unsigned* bx);
@@ -337,9 +336,9 @@ public:
   std::string get_strval( std::string& buffer );
   int get_intval( std::string& buffer );
   void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
-  void load_Restart_rough   (FILE* fp, REAL_TYPE& flop);
+  void Restart_rough   (FILE* fp, REAL_TYPE& flop);
   
-  char* GenerateFileName(const char* base_name, const int m_step, const bool multi_io_flag, const bool isPara);
+  char* GenerateFileName(const std::string prefix, const int m_step, const bool multi_io_flag, const bool isPara);
   
   
   //@fn 時刻をRFクラスからv00[4]にコピーする
@@ -395,46 +394,6 @@ public:
     x[2] /= C.RefLength;
   }
   
-  
-  /*zkawa.120514.s
-  SklVoxDataSet* CBCInitFile( bool mioSPH
-                             , const int m_intvl
-                             , const char* attr
-                             , const unsigned int size[3]
-                             , const float origin[3]
-                             , const float pitch[3]
-                             , SklArayBase* array1 = NULL
-                             , SklArayBase* array2 = NULL
-                             , SklArayBase* array3 = NULL
-                             , SklArayBase* array4 = NULL
-                             , SklArayBase* array5 = NULL
-                             , SklArayBase* array6 = NULL
-                             , SklArayBase* array7 = NULL
-                             , SklArayBase* array8 = NULL
-                             , SklArayBase* array9 = NULL );
-  SklVoxDataSet* CBCInitFile( bool mioSPH
-                             , const int m_intvl
-                             , const SklCfgOutFile* cfg
-                             , const unsigned int size[3]
-                             , const float origin[3]
-                             , const float pitch[3]
-                             , SklArayBase* array1 = NULL
-                             , SklArayBase* array2 = NULL
-                             , SklArayBase* array3 = NULL
-                             , SklArayBase* array4 = NULL
-                             , SklArayBase* array5 = NULL
-                             , SklArayBase* array6 = NULL
-                             , SklArayBase* array7 = NULL
-                             , SklArayBase* array8 = NULL
-                             , SklArayBase* array9 = NULL );
-  bool CBCInitFile( bool mioSPH
-                   , const int m_intvl
-                   , const SklCfgOutFile* cfg
-                   , const int* step
-                   , const SKL_REAL* time
-                   , const SklVoxDataSet* dSet );
-  //zkawa.120514.e
-  */
 };
 
 #endif // _SKL_SOLVER_CBC_CLASS_H_
