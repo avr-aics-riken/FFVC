@@ -818,7 +818,6 @@ void FileIO::readPressure(FILE* fp,
   int g = guide_out;
   
   fb_read_sph_s_ (p, (int*)size, (int*)&gc, fname, &step, &time, &g);
-  mark();
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
@@ -826,9 +825,9 @@ void FileIO::readPressure(FILE* fp,
   REAL_TYPE basep = BasePrs;
   REAL_TYPE ref_d = RefDensity;
   REAL_TYPE ref_v = RefVelocity;
-  mark();
+  
   fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
-  mark();
+  
   Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
 }

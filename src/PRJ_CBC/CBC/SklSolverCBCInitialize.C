@@ -11,8 +11,6 @@
 
 #include <stdlib.h>
 #include <string>
-#include <iostream>
-#include <fstream>
 
 #include "SklSolverCBC.h"
 #include "CompoFraction.h"
@@ -900,7 +898,7 @@ SklSolverCBC::SklSolverInitialize() {
 
       // 粗い格子のファイルをロードし、内挿処理を行う
       Restart_rough(fp, flop_task);
-      mark();
+      
     }
     
     TIMING_stop(tm_restart);
@@ -1832,7 +1830,7 @@ void SklSolverCBC::fixed_parameters(void)
   C.f_Helicity       = "hlt_";
   C.f_TotalP         = "tp_";
   C.f_I2VGT          = "i2vgt_";
-  C.f_Vorticity      =  "vrt_";
+  C.f_Vorticity      = "vrt_";
   
 }
 
@@ -2366,9 +2364,6 @@ bool SklSolverCBC::hasLinearSolver(unsigned L)
  */
 void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
   REAL_TYPE time;
   char m_label[LABEL];
   char* tmp = NULL;
@@ -2383,21 +2378,18 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   int m_step = (int)C.Restart_step;
   int step;
   
-  // 出力分割
-  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
-  
-  // 並列実行
-  bool isPara = ( para_mng->IsParallel() ) ? true : false;
-  
   // 圧力の瞬時値　
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
   // ガイド出力
   int gs = (int)C.GuideOut;
   
-  tmp = GenerateFileName(C.f_Pressure, m_step, mio, isPara);
+  tmp = GenerateFileName(C.f_Pressure, m_step);
   strcpy(m_label, tmp);
-  
+  if ( !checkFile(m_label) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    Exit(0);
+  }
   F.readPressure(fp, m_label, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
   
   // ここでタイムスタンプを得る
@@ -2410,9 +2402,12 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 
   
   // Instantaneous Velocity fields
-  tmp = GenerateFileName(C.f_Velocity, m_step, mio, isPara);
+  tmp = GenerateFileName(C.f_Velocity, m_step);
   strcpy(m_label, tmp);
-  
+  if ( !checkFile(m_label) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    Exit(0);
+  }
   F.readVelocity(fp, m_label, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2431,9 +2426,12 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = GenerateFileName(C.f_Temperature, m_step, mio, isPara);
+    tmp = GenerateFileName(C.f_Temperature, m_step);
     strcpy(m_label, tmp);
-    
+    if ( !checkFile(m_label) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+      Exit(0);
+    }
     F.readTemperature(fp, m_label, size, guide, t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2456,9 +2454,6 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
   int step;
   REAL_TYPE time;
   
@@ -2503,18 +2498,27 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     rgh_k = 1;
   }
 
+  // 出力ファイル名
   char m_label[LABEL];
+  char* tmp=NULL;
   
   // ガイド出力
   int gs = (int)C.GuideOut;
   
+  // ステップ数 > ファイル名用
+  int m_step = (int)C.Restart_step;
+  
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
-  strcpy(m_label, C.f_Rough_pressure.c_str());
-  mark();
+  tmp = GenerateFileName(C.f_Rough_pressure, m_step);
+  strcpy(m_label, tmp);
+  if ( !checkFile(m_label) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    Exit(0);
+  }
   F.readPressure(fp, m_label, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
-  mark();
+  
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
@@ -2522,9 +2526,14 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   // v00[]に値をセット
   copyV00fromRF((double)time);
   
-  mark();
+  
   // Instantaneous Velocity fields
-  strcpy(m_label, C.f_Rough_velocity.c_str());
+  tmp = GenerateFileName(C.f_Rough_velocity, m_step);
+  strcpy(m_label, tmp);
+  if ( !checkFile(m_label) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    Exit(0);
+  }
   F.readVelocity(fp, m_label, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2542,7 +2551,12 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    strcpy(m_label, C.f_Rough_temperature.c_str());
+    tmp = GenerateFileName(C.f_Rough_temperature, m_step);
+    strcpy(m_label, tmp);
+    if ( !checkFile(m_label) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+      Exit(0);
+    }
     F.readTemperature(fp, m_label, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2552,7 +2566,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
       Exit(0);
     }
   }
-  mark();
+  
   // 内挿処理
   Interpolation_from_rough_initial(rgh_i, rgh_j, rgh_k);
 
@@ -2567,9 +2581,6 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
   char m_label[LABEL];
   char* tmp = NULL;
   
@@ -2578,12 +2589,6 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   
   // ステップ数 > ファイル名用
   int m_step = (int)C.Restart_step;
-  
-  // 出力分割
-  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
-  
-  // 並列実行
-  bool isPara = ( para_mng->IsParallel() ) ? true : false;
   
   // ガイド出力
   int gs = (int)C.GuideOut;
@@ -2620,9 +2625,12 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   // Pressure > step, timeは戻り値を使用
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = GenerateFileName(C.f_AvrPressure, m_step, mio, isPara);
+  tmp = GenerateFileName(C.f_AvrPressure, m_step);
   strcpy(m_label, tmp);
-  
+  if ( !checkFile(m_label) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    Exit(0);
+  }
   F.readPressure(fp, m_label, size, guide, ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2632,9 +2640,12 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   
   
   // Velocity
-  tmp = GenerateFileName(C.f_AvrVelocity, m_step, mio, isPara);
+  tmp = GenerateFileName(C.f_AvrVelocity, m_step);
   strcpy(m_label, tmp);
-  
+  if ( !checkFile(m_label) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    Exit(0);
+  }
   F.readVelocity(fp, m_label, size, guide, av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2653,9 +2664,12 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = GenerateFileName(C.f_AvrTemperature, m_step, mio, isPara);
+    tmp = GenerateFileName(C.f_AvrTemperature, m_step);
     strcpy(m_label, tmp);
-    
+    if ( !checkFile(m_label) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+      Exit(0);
+    }
     F.readTemperature(fp, m_label, size, guide, at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;

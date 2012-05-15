@@ -18,6 +18,9 @@
 #ifndef _SKL_SOLVER_CBC_CLASS_H_
 #define _SKL_SOLVER_CBC_CLASS_H_
 
+#include <iostream>
+#include <fstream>
+
 #include "FBDefine.h"
 #include "Skl.h"
 #include "SklSolverBase.h"
@@ -242,6 +245,7 @@ public:
   
   bool chkMediumConsistency(void);
   bool hasLinearSolver (unsigned L);
+  bool checkFile(const char* fname);
   
   REAL_TYPE Norm_Poisson     (ItrCtl* IC);
   
@@ -338,7 +342,7 @@ public:
   void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
   void Restart_rough   (FILE* fp, REAL_TYPE& flop);
   
-  char* GenerateFileName(const std::string prefix, const int m_step, const bool multi_io_flag, const bool isPara);
+  char* GenerateFileName(const std::string prefix, const int m_step);
   
   
   //@fn 時刻をRFクラスからv00[4]にコピーする
