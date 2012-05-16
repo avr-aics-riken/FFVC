@@ -571,9 +571,16 @@
   end if
   
   read(16) imax, jmax, kmax
-  if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
-    write(*,*) 'read error : size'
-    stop
+  if ( gs == 0 ) then
+    if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
+      write(*,*) 'read error : size'
+      stop
+    end if
+  else
+    if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
+      write(*,*) 'read error : size'
+      stop
+    end if
   end if
   
   read(16) x_org, y_org, z_org
@@ -624,9 +631,16 @@
   end if
   
   read(16) imax, jmax, kmax
-  if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
-    write(*,*) 'read error : size'
-    stop
+  if ( gs == 0 ) then
+    if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
+      write(*,*) 'read error : size'
+      stop
+    end if
+  else
+    if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
+      write(*,*) 'read error : size'
+      stop
+    end if
   end if
   
   read(16) x_org, y_org, z_org
