@@ -1464,7 +1464,7 @@ void Control::getXML_start_condition(void)
     }
     
     // プロセス並列時
-    if ( FIO.IO_Input == IO_DISTRIBUTE ) {
+    if ( (FIO.IO_Input == IO_DISTRIBUTE) && (Start == re_start) ) {
       if ( !elmL1->GetValue("dfi_file_name", &str) ) {
         stamped_printf("\tParsing error : fail to get 'DFI_file_name' in 'Start_Condition'\n");
         Exit(0);
