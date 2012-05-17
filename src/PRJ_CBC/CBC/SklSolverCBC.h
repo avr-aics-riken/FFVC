@@ -92,6 +92,9 @@ public:
   unsigned G_size[3];
   REAL_TYPE G_Lbx[3], G_org[3];
   
+  // 全領域の分割数
+  int num_div_domain[3];
+  
   int id_of_solid; // Geometry Direct Interfaceでテスト的に固定ID=2を与える
   
   Control         C;
@@ -121,6 +124,9 @@ public:
   
   // for parallel
   Parallel_Info pn;
+  
+  // for output DFI file
+  unsigned m_dfiWriteCount;
   
   char *m_condition;  // for file name of text output
   char *m_log;
@@ -323,6 +329,11 @@ public:
   void Buoyancy         (REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned* bd, REAL_TYPE& flop);
   void ps_ConvectionEE  (REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop);
   void ps_LS            (ItrCtl* IC);
+  
+  //@fn サブドメインが空
+  bool isEmptyDoamin(void) {
+    
+  }
   
   
   // ラフな初期値のロードと内挿に使用する関数

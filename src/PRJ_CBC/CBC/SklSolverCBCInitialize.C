@@ -4111,6 +4111,11 @@ void SklSolverCBC::VoxelInitialize(void)
     idiv = jdiv = kdiv = 1;
   }
   
+  // 分割数を保持
+  num_div_domain[0] = idiv;
+  num_div_domain[1] = jdiv;
+  num_div_domain[2] = kdiv;
+  
   // 分割数を計算し，sz_paraで取得
   if( SKL_PARACMPO_SUCCESS != para_cmp->SklVoxelInit(m_sz[0], m_sz[1], m_sz[2], idiv, jdiv, kdiv, pn.procGrp)) {
     stamped_printf("\tID %d : Voxel Initialize error.\n", pn.ID);
@@ -4252,16 +4257,16 @@ std::string SklSolverCBC::get_strval( std::string& buffer )
 //@fn bool SklSolverCBC::getRoughResult()
 //@note 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
 bool
-SklSolverCBC::getRoughResult (
-                int i,		// (in) 密格子　開始インデクスi
-                int j,		// (in) 同j
-                int k,		// (in) 同k
+getRoughResult (
+                int i,		                    // (in) 密格子　開始インデクスi
+                int j,		                    // (in) 同j
+                int k,		                    // (in) 同k
                 std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
                 std::string& rough_prefix,	  // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
                 std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
-                int& rough_i,	// (out) 粗格子　開始インデクスi
-                int& rough_j,	// (out) 同j
-                int& rough_k	// (out) 同k
+                int& rough_i,	                // (out) 粗格子　開始インデクスi
+                int& rough_j,	                // (out) 同j
+                int& rough_k	                // (out) 同k
                 )
 {
 	// 密格子のijkを粗格子のijkに変換
@@ -4272,7 +4277,7 @@ SklSolverCBC::getRoughResult (
 	if( !ifs ) return false;
 	
 	// 粗格子ijkが含まれるランクは？
-	string buf;
+  std::string buf;
 	int rank = -1;
 	int hi, hj, hk, ti, tj, tk;
 	while( getline(ifs, buf) ) {
@@ -4307,21 +4312,24 @@ SklSolverCBC::getRoughResult (
 	if( rank == -1 ) return false;
   
 	// id=rankで、rough_prefixをファイル名に含むsphファイルを探す
-	string fname = "";
+  std::string fname = "";
+  std::string last_fname = "";
 	char id[32];
 	sprintf(id, "id=\"%d\"", rank); 
 	while( getline(ifs, buf) ) {
-		if( buf.find("\"FileName\"",0) != string::npos && buf.find(id,0) != string::npos ) {
+		if( buf.find("\"FileName\"",0) != std::string::npos && buf.find(id,0) != string::npos ) {
 			fname = get_strval( buf );
-			if( fname.find(rough_prefix,0) != string::npos ) {
+			if( fname.find(rough_prefix,0) != std::string::npos ) {
 				// found!
-				break;
+				// ファイルの最後までスキャン。最後にマッチしたファイル
+				// が、最終タイムステップのファイルのはず
+				last_fname = fname;
 			}
 		}
 	}
-	if( fname.empty() ) return false;
+	if( last_fname.empty() ) return false;
   
-	rough_sph_fname = fname;
+	rough_sph_fname = last_fname;
 	rough_i = hi;
 	rough_j = hj;
 	rough_k = hk;
