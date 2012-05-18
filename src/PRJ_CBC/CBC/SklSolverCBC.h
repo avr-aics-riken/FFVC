@@ -330,11 +330,6 @@ public:
   void ps_ConvectionEE  (REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop);
   void ps_LS            (ItrCtl* IC);
   
-  //@fn サブドメインが空
-  bool isEmptyDoamin(void) {
-    
-  }
-  
   
   // ラフな初期値のロードと内挿に使用する関数
   bool getRoughResult (
@@ -353,7 +348,30 @@ public:
   void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
   void Restart_rough   (FILE* fp, REAL_TYPE& flop);
   
-  char* GenerateFileName(const std::string prefix, const int m_step);
+  char* GenerateFileName(const std::string prefix, const int m_step, const int m_id);
+  
+  
+  
+  
+  // DFI file
+  bool Generate_DFI_File     (const std::string prefix, const int step);
+  bool Write_DFI_BaseName    (FILE* fp, const unsigned tab, const std::string prefix);
+  bool Write_DFI_File        (const std::string dfi_name, const std::string prefix, const int step);
+  bool Write_DFI_Header      (FILE* fp, const unsigned tab, const std::string prefix);
+  bool Write_DFI_MyID        (FILE* fp, const unsigned tab);
+  bool Write_DFI_Node        (FILE* fp, const unsigned tab, const int id, const std::string prefix);
+  bool Write_DFI_NodeInfo    (FILE* fp, const unsigned tab, const std::string prefix);
+  bool Write_DFI_NodeNum     (FILE* fp, const unsigned tab);
+  bool Write_DFI_OutFileInfo (FILE* fp, const unsigned tab, const std::string prefix, const int step);
+  bool Write_DFI_OutFileName (FILE* fp, const unsigned tab, const int id, const std::string prefix);
+  
+  void Write_DFI_FileFormat  (FILE* fp, const unsigned tab);
+  void Write_DFI_GuideCell   (FILE* fp, const unsigned tab);
+  void Write_DFI_Tab         (FILE* fp, const unsigned tab);
+  void Write_DFI_NumDivDomain(FILE* fp, const unsigned tab);
+  void Write_DFI_WholeSize   (FILE* fp, const unsigned tab);
+  
+  char* Generate_DFI_FileName(const std::string prefix);
   
   
   //@fn 時刻をRFクラスからv00[4]にコピーする

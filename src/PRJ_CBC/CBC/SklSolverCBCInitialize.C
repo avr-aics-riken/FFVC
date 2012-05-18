@@ -4256,18 +4256,17 @@ std::string SklSolverCBC::get_strval( std::string& buffer )
 
 //@fn bool SklSolverCBC::getRoughResult()
 //@note 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-bool
-getRoughResult (
-                int i,		                    // (in) 密格子　開始インデクスi
-                int j,		                    // (in) 同j
-                int k,		                    // (in) 同k
-                std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
-                std::string& rough_prefix,	  // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
-                std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
-                int& rough_i,	                // (out) 粗格子　開始インデクスi
-                int& rough_j,	                // (out) 同j
-                int& rough_k	                // (out) 同k
-                )
+bool SklSolverCBC::getRoughResult (
+                                   int i,		                    // (in) 密格子　開始インデクスi
+                                   int j,		                    // (in) 同j
+                                   int k,		                    // (in) 同k
+                                   std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
+                                   std::string& rough_prefix,	  // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                                   std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
+                                   int& rough_i,	                // (out) 粗格子　開始インデクスi
+                                   int& rough_j,	                // (out) 同j
+                                   int& rough_k	                // (out) 同k
+                                   )
 {
 	// 密格子のijkを粗格子のijkに変換
 	i=i/2; j=j/2; k=k/2;

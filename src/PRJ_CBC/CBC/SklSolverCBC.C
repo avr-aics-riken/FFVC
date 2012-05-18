@@ -1636,14 +1636,14 @@ REAL_TYPE SklSolverCBC::PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE
  * ファイル名を作成する。
  * @param prefix ファイル接頭文字
  * @param m_step
- * @return ファイル名
+ * @param m_id 
  */
-char* SklSolverCBC::GenerateFileName(const std::string prefix, const int m_step)
+char* SklSolverCBC::GenerateFileName(const std::string prefix, const int m_step, const int m_id)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  int m_id = pn.ID; // Rank番号
+  if ( prefix.empty() ) return NULL;
   
   // 出力分割
   bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
@@ -1687,55 +1687,29 @@ bool SklSolverCBC::checkFile(const char* fname)
 
 /**
  * データをファイルに書き込む。
- * @param dSet      出力ボクセルデータセット
+ * @param prefix    ファイル接頭文字
  * @param step      ステップ
- * @param time      時間
- * @param gc        出力ガイドセル
- * @param para_mng    パラレルマネージャ
- * @param procGrp     プロセスグループ番号
- * @param org_correct_flg     原点座標補正フラグ
- * @return      true=success, false=fault
  */
-bool SklVoxDataCntl::Write(SklVoxDataSet* dSet,
-                           int step,
-                           SKL_REAL time,
-                           unsigned gc,
-                           SklParaManager* para_mng,
-                           int procGrp,
-                           bool org_correct_flg)
+bool SklSolverCBC::Generate_DFI_File(const std::string prefix, const int step)
 {
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
   
+  // 出力分割
+  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
   
-  char* sphfname = GenerateFileName(wid, bn, dSet, para_mng, mio);
-  if( !sphfname ) return false;
+  char* dfi_name = NULL;
   
-  bool ret = dSet->Write(sphfname, gc, para_mng, mio, procGrp, org_correct_flg);
-  if( !((SklVoxDataSet*)dSet)->SetFileName(sphfname) ){
-    SklErrMessage("Error(SklVoxDataSet) : Can't set filename(%s)", sphfname);
-    return false;
-  }
-  delete [] sphfname;
-  if( !ret ) return false;
-  
-  
-  if( !dSet ) return false;
-  if (!para_mng) return false;
-  
-  const char* bn = info->GetBaseName();
-  
-  int wid = para_mng->GetMyID(0);
-  bool mio = info->IsMultiIO();
-  char* dfifname = NULL;
-  
-  if( mio && para_mng && (para_mng->GetNodeNum() > 1) ){
-    if( !(dfifname = GenerateDFIFileName(wid, bn, dSet, para_mng)) ){
+  if( mio && (para_mng->GetNodeNum() > 1) ) {
+    if( !(dfi_name = Generate_DFI_FileName(prefix)) ){
       return false;
     }
-    if( !WriteDFIFile(dfifname, bn, dSet, gc, para_mng, procGrp) ){
-      delete [] dfifname; return false;
+    if( !Write_DFI_File(dfi_name, prefix, step) ) {
+      delete [] dfi_name; return false;
     }
-    delete [] dfifname;
+    delete [] dfi_name;
   }
+  
   return true;
 }
 
@@ -1743,29 +1717,25 @@ bool SklVoxDataCntl::Write(SklVoxDataSet* dSet,
  * 出力DFIファイル名を作成する。
  *
  * DFIファイル=ボクセル分割情報ファイル
- * @param id            ノード番号
- * @param base_name     ファイル接頭文字
- * @param dSet          ボクセルデータセット
- * @param para_mng      パラレルマネージャ
- * @return      作成出力DFIファイル名
+ * @param prefix    ファイル接頭文字
  */
-char* SklVoxDataCntl::GenerateDFIFileName(int id,
-                                          const char* base_name,
-                                          SklVoxDataSet* dSet,
-                                          SklParaManager* para_mng) const
+char* SklSolverCBC::Generate_DFI_FileName(const std::string prefix)
 {
-  if( !base_name || !dSet ) return NULL;
-  char* fname = NULL;
-  //int len = strlen(base_name) + 23; // step(10) + id(8) + postfix(4) + 1
-  int len = strlen(base_name) + 13; // id(8) + postfix(4) + 1
-  fname = new char[len];
-  memset(fname, 0, sizeof(char)*len);
-
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  char postfix[5]; memset(postfix, 0, sizeof(char)*5);
+  int m_id = pn.ID; // Rank番号
+  
+  if ( prefix.empty() ) return NULL;
+  
+  int len = prefix.size() + 14; // id(9) + postfix(4) + 1
+  char* fname = new char[len];
+  memset(fname, 0, sizeof(char)*len);
+  
+  char postfix[4]; memset(postfix, 0, sizeof(char)*4);
   strcpy(postfix, "dfi");
-  //sprintf(fname, "%s%010d_id%05d.%s", base_name, step, id, postfix);
-  sprintf(fname, "%s_id%05d.%s", base_name, id, postfix);
+
+  sprintf(fname, "%s_id%06d.%s", prefix.c_str(), m_id, postfix);
   return fname;
 }
 
@@ -1773,59 +1743,50 @@ char* SklVoxDataCntl::GenerateDFIFileName(int id,
  * DFIファイルを出力する。
  *
  * DFIファイル=ボクセル分割情報ファイル
- * @param dfifname      DFIファイル名
- * @param base_name     ファイル接頭文字
- * @param gc            ガイドセル
- * @return      true=success, false=fault
+ * @param dfi_name  DFIファイル名
+ * @param prefix    ファイル接頭文字
+ * @param step      ステップ数
  */
-bool SklVoxDataCntl::WriteDFIFile(const char* dfifname,
-                                  const char* base_name,
-                                  unsigned gc)
+bool SklSolverCBC::Write_DFI_File(const std::string dfi_name, const std::string prefix, const int step)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if( !dfifname || !base_name || !para_mng ) return false;
+  if ( dfi_name.empty() ) return false;
+  if ( prefix.empty() ) return false;
   
   int myID = pn.ID;
   if( myID < 0 ) return true;
   
   FILE* fp = NULL;
-  if( (m_dfiWriteCount == 0) || !(fp = fopen(dfifname, "r")) ) { // file dose not exist
-    
-    // チェック
-    if (para_mng->IsVoxelSize(myID, pn.procGrp)) {
-      if( !(fp = fopen(dfifname, "w")) ) {
-        fprintf(stderr, "Can't open file.(%s)\n", dfifname);
-        return false;
-      }
-    }
-    else {
-      fp = NULL;
-    }
+  if( (m_dfiWriteCount == 0) || !(fp = fopen(dfi_name.c_str(), "r")) ) { // file dose not exist
 
-    // 
     if (fp) fprintf(fp, "<SphereDispersedFileInfo>\n");
     if (fp) fprintf(fp, "\n");
     
-    if( !WriteDFIHeader(fp, base_name, 0, dSet, para_mng, procGrp) ){
+    if( !Write_DFI_Header(fp, 0, prefix) ){
       if (fp) fclose(fp);
       return false;
     }
     
     if (fp) fprintf(fp, "\n");
-    if (fp) writeTab(fp, 1);
+    
+    if (fp) Write_DFI_Tab(fp, 1);
     if (fp) fprintf(fp, "<Elem name=\"FileInfo\">\n");
-    if( !WriteDFIOutFileInfo(fp, base_name, 1, dSet, gc, para_mng, procGrp) ){
+    
+    if( !Write_DFI_OutFileInfo(fp, 1, prefix, step) ){
       if (fp) fclose(fp);
       return false;
     }
-    if (fp) writeTab(fp, 1);
+    
+    if (fp) Write_DFI_Tab(fp, 1);
     if (fp) fprintf(fp, "</Elem>\n");
     if (fp) fprintf(fp, "</SphereDispersedFileInfo>\n");
     if (fp) fclose(fp);
+    
   }
   else { // file exist
+    
     std::string str;
     while( !feof(fp) ){
       int c = fgetc(fp);
@@ -1841,36 +1802,24 @@ bool SklVoxDataCntl::WriteDFIFile(const char* dfifname,
       if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
     }
     
-    // modify start for vsphere_cmp at 2008/08/15 by @hira
-    // check my voxel size
-    if (para_mng->IsVoxelSize(myID, procGrp)) {
-      if( !(fp = fopen(dfifname, "w")) ) {
-        fprintf(stderr, "Can't open file.(%s)\n", dfifname);
-        return false;
-      }
-    }
-    else {
-      fp = NULL;
-    }
-    // modify end for vsphere_cmp at 2008/08/15 by @hira
-    
-    
     if( fp && fwrite(str.c_str(), sizeof(char), strlen(str.c_str()), fp) != strlen(str.c_str()) ){
       if (fp) fclose(fp);
       return false;
     }
     
-    if( !WriteDFIOutFileInfo(fp, base_name, 1, dSet, gc, para_mng, procGrp) ){
+    if( !Write_DFI_OutFileInfo(fp, 1, prefix, step) ){
       if (fp) fclose(fp); return false;
     }
     
-    if (fp) writeTab(fp, 1);
+    if (fp) Write_DFI_Tab(fp, 1);
     if (fp) fprintf(fp, "</Elem>\n");
     if (fp) fprintf(fp, "</SphereDispersedFileInfo>\n");
     if (fp) fclose(fp);
+    
   }
   
   m_dfiWriteCount++;
+  
   return true;
 }
 
@@ -1879,7 +1828,7 @@ bool SklVoxDataCntl::WriteDFIFile(const char* dfifname,
  * @param fp      ファイルポインタ
  * @param tab     インデント数
  */
-void SklSolverCBC::writeTab(FILE* fp, const unsigned tab)
+void SklSolverCBC::Write_DFI_Tab(FILE* fp, const unsigned tab)
 {
 
   if( !fp ) return;
@@ -1891,32 +1840,24 @@ void SklSolverCBC::writeTab(FILE* fp, const unsigned tab)
  * DFIファイル:ヘッダー要素を出力する。
  *
  * @param fp      ファイルポインタ
- * @param base_name     ファイル接頭文字
  * @param tab     インデント
- * @param dSet          ボクセルデータセット
- * @param para_mng    パラレルマネージャ
- * @param procGrp     プロセスグループ番号
- * @return      true=success, false=fault
+ * @param prefix  ファイル接頭文字
  */
-bool SklVoxDataCntl::WriteDFIHeader(FILE* fp, const char* base_name, const unsigned tab)
+bool SklSolverCBC::Write_DFI_Header(FILE* fp, const unsigned tab, const std::string prefix)
 {
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
+  if ( !fp ) return true;
+  if ( prefix.empty() ) return false;
   
-  int m_np = para_mng->GetNodeNum(pn.procGrp);
-
-  if( !fp ) return true;
-  
-  if( !Write_DFI_BaseName(fp, tab+1, base_name) ) return false;
+  if( !Write_DFI_BaseName(fp, tab+1, prefix) ) return false;
   if (fp) fprintf(fp, "\n");
     
   if( !Write_DFI_MyID(fp, tab+1) ) return false;
   if (fp) fprintf(fp, "\n");
     
-  if( !WriteDFI_NodeNum(fp, tab+1, m_np) ) return false;
+  if( !Write_DFI_NodeNum(fp, tab+1) ) return false;
   if (fp) fprintf(fp, "\n");
     
-  Write_DFI_WholeVoxelSize(fp, tab+1;
+  Write_DFI_WholeSize(fp, tab+1);
   if (fp) fprintf(fp, "\n");
     
   Write_DFI_NumDivDomain(fp, tab+1);
@@ -1925,7 +1866,7 @@ bool SklVoxDataCntl::WriteDFIHeader(FILE* fp, const char* base_name, const unsig
   Write_DFI_FileFormat(fp, tab+1);
   if (fp) fprintf(fp, "\n");
     
-  if( !Write_DFI_NodeInfo(fp, tab+1, base_name) ) return false;
+  if( !Write_DFI_NodeInfo(fp, tab+1, prefix) ) return false;
   
   return true;
 }
@@ -1935,21 +1876,15 @@ bool SklVoxDataCntl::WriteDFIHeader(FILE* fp, const char* base_name, const unsig
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @param base_name     ファイル接頭文字
- * @return      true=success, false=fault
+ * @param prefix  ファイル接頭文字
  */
-bool SklSolverCBC::Write_DFI_BaseName(FILE* fp, const unsigned tab, const char* base_name)
+bool SklSolverCBC::Write_DFI_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
 {
-  if( !fp ) return true;
-  if( !base_name ) return false;
-
-  char* base = strdup(base_name);
-  if( !base ) return false;
+  if ( !fp ) return true;
+  if ( prefix.empty() ) return false;
   
-  writeTab(fp, tab);
-  
-  fprintf(fp, "<Param name=\"BaseName\" dtype=\"STRING\" value=\"%s\" />\n", basename(base));
-  free(base);
+  Write_DFI_Tab(fp, tab);
+  fprintf(fp, "<Param name=\"BaseName\" dtype=\"STRING\" value=\"%s\" />\n", prefix.c_str());
   
   return true;
 }
@@ -1959,35 +1894,22 @@ bool SklSolverCBC::Write_DFI_BaseName(FILE* fp, const unsigned tab, const char* 
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @param my_ID   ランク番号
- * @return      true=success, false=fault
  */
-bool SklSolverCBC::Write_DFI_MyID(FILE* fp, const unsigned tab, const int my_ID)
+bool SklSolverCBC::Write_DFI_MyID(FILE* fp, const unsigned tab)
 {
-  if( !fp ) return true;
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  // my ID in world
-  int id = my_ID;
-  if( id < 0 ) return false;
+  if ( !fp ) return true;
   
-  writeTab(fp, tab);
+  int id = para_mng->GetMyID(pn.procGrp);
+  if ( id < 0 ) return false;
+  
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Param name=\"WorldID\" dtype=\"INT\" value=\"%d\" />\n", id);
   
-  // myID in comm group
-  //id = para_mng->GetMyID(procGrp);
-  //if( id < 0 ) return false;
-  
-  // check voxel size and get new node index
-  //int new_id = GetActiveNodeID(id, para_mng, procGrp);
-  //if (new_id < 0) {
-  //  return true;
-  //}
-  
-  
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", id);
-
-  //fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", new_id);
 
   return true;
 }
@@ -1997,38 +1919,23 @@ bool SklSolverCBC::Write_DFI_MyID(FILE* fp, const unsigned tab, const int my_ID)
  *
  * @param fp  ファイルポインタ
  * @param tab インデント
- * @param np  全プロセス数
- * @return    true=success, false=fault
  */
-bool SklSolverCBC::Write_DFI_NodeNum(FILE* fp, const unsigned tab, const int np)
+bool SklSolverCBC::Write_DFI_NodeNum(FILE* fp, const unsigned tab)
 {
-  if( !fp ) return true;
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
+  if ( !fp ) return true;
   
   // number of comm world
-  int nnum = np;
+  int nnum = para_mng->GetNodeNum(pn.procGrp);
   if( nnum < 2 ) return false;
   
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Param name=\"WorldNodeNum\" dtype=\"INT\" value=\"%d\" />\n", nnum);
   
-  // number of comm group
-  //nnum = para_mng->GetNodeNum(procGrp);
-  //if( nnum < 2 ) return false;
-  
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Param name=\"GroupNodeNum\" dtype=\"INT\" value=\"%d\" />\n", nnum);
-  
-  // modify start for vsphere_cmp at 2008/08/15 by @hira
-  //  
-  //register int n;
-  //int new_nnum = 0;
-  //for(n=0; n<nnum; n++) {
-  //  // check voxel size and get new node index
-  //  if (GetNodeId2NewId(n, para_mng, procGrp) >= 0) {
-  //    new_nnum++;
-  //  }
-  //}
-  //fprintf(fp, "<Param name=\"GroupNodeNum\" dtype=\"INT\" value=\"%d\" />\n", new_nnum);
   
   return true;
 }
@@ -2038,25 +1945,24 @@ bool SklSolverCBC::Write_DFI_NodeNum(FILE* fp, const unsigned tab, const int np)
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @return      true=success, false=fault
  */
-void SklSolverCBC::Write_DFI_WholeVoxelSize(FILE* fp, const unsigned tab)
+void SklSolverCBC::Write_DFI_WholeSize(FILE* fp, const unsigned tab)
 {
-  if( !fp ) return;
+  if ( !fp ) return;
   
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Elem name=\"WholeVoxelSize\">\n");
   
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", size[0]);
   
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", size[1]);
   
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", size[2]);
   
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "</Elem>\n");
 }
 
@@ -2065,25 +1971,24 @@ void SklSolverCBC::Write_DFI_WholeVoxelSize(FILE* fp, const unsigned tab)
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @return      true=success, false=fault
  */
 void SklSolverCBC::Write_DFI_NumDivDomain(FILE* fp, const unsigned tab)
 {
-  if( !fp ) return;
+  if ( !fp ) return;
   
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Elem name=\"VoxelDivMethod\">\n");
   
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", num_div_domain[0]);
   
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", num_div_domain[1]);
   
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", num_div_domain[2]);
   
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "</Elem>\n");
 }
 
@@ -2092,13 +1997,12 @@ void SklSolverCBC::Write_DFI_NumDivDomain(FILE* fp, const unsigned tab)
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @return      true=success, false=fault
  */
 void SklSolverCBC::Write_DFI_FileFormat(FILE* fp, const unsigned tab)
 {
-  if( !fp ) return;
+  if ( !fp ) return;
   
-  writeTab(fp, tab);
+  Write_DFI_Tab(fp, tab);
   fprintf(fp, "<Param name=\"Format\" dtype=\"STRING\" value=\"");
   fprintf(fp, "sph");
   fprintf(fp, "\" />\n");
@@ -2108,30 +2012,30 @@ void SklSolverCBC::Write_DFI_FileFormat(FILE* fp, const unsigned tab)
  * DFIファイル:ノード情報要素を出力する。
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @param m_np    プロセス数
- * @param base_name     ファイル接頭文字
- * @return      true=success, false=fault
+ * @param prefix  ファイル接頭文字
  */
-bool SklSolverCBC::Write_DFI_NodeInfo(FILE* fp, 
-                                      const unsigned tab,
-                                      const int m_np, 
-                                      const char* base_name)
+bool SklSolverCBC::Write_DFI_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 {
-  if( !fp ) return true;
+  SklParaComponent* para_cmp = SklGetParaComponent();
+  SklParaManager* para_mng = para_cmp->GetParaManager();
+  
+  if ( !fp ) return true;
+  if ( prefix.empty() ) return false;
   
   if (fp) {
-    writeTab(fp, tab); 
+    Write_DFI_Tab(fp, tab); 
     fprintf(fp, "<Elem name=\"NodeInfo\">\n");
   }
 
+  int m_np = para_mng->GetNodeNum(pn.procGrp);
   if ( m_np < 2 ) return false;
   
   for (int n=0; n<m_np; n++){
-    if ( !Write_DFI_Node(fp, tab+1, n, base_name) ) return false;
+    if ( !Write_DFI_Node(fp, tab+1, n, prefix) ) return false;
   }
   
   if (fp) {
-    writeTab(fp, tab); 
+    Write_DFI_Tab(fp, tab); 
     fprintf(fp, "</Elem>\n");
   }
   
@@ -2143,41 +2047,29 @@ bool SklSolverCBC::Write_DFI_NodeInfo(FILE* fp,
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @param base_name     ファイル接頭文字
- * @param host_name     ホスト名
- * @param para_mng    パラレルマネージャ
- * @param procGrp     プロセスグループ番号
- * @return      true=success, false=fault
+ * @param id      対象ノードID
+ * @param prefix  ファイル接頭文字
  */
-bool SklVoxDataCntl::Write_DFI_Node(FILE* fp, const unsigned tab, const char* base_name)
+bool SklSolverCBC::Write_DFI_Node(FILE* fp, const unsigned tab, const int id, const std::string prefix)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if( !base_name || !host_name ) return false;
-  if( !fp ) return true;
-  
-  //int new_id = GetNodeId2NewId(id, para_mng, procGrp);
-  //if (new_id < 0) {
-  //  return true;
-  //}
-  
-  int id = para_mng->GetMyID(pn.procGrp);
+  if ( prefix.empty() ) return false;
+  if ( !fp ) return true;
   
   const char* hostname = para_mng->GetHostName(pn.ID, pn.procGrp);
   if( !hostname ) return false;
   
-  writeTab(fp, tab); 
+  Write_DFI_Tab(fp, tab); 
   fprintf(fp, "<Elem name=\"Node\">\n");
   
   // ID
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", id);
-  //fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", new_id);
-
   
   // Hostname
-  writeTab(fp, tab+1);
+  Write_DFI_Tab(fp, tab+1);
   fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname);
   
   int hidx[3], tidx[3]; // head_index and tail_index
@@ -2190,54 +2082,54 @@ bool SklVoxDataCntl::Write_DFI_Node(FILE* fp, const unsigned tab, const char* ba
   if( (tidx[2] = para_mng->GetVoxelTailIndex(id, 2, pn.procGrp)) < 0 ) return false;
   
   // VoxelSize
-  writeTab(fp, tab+1); 
+  Write_DFI_Tab(fp, tab+1); 
   fprintf(fp, "<Elem name=\"VoxelSize\">\n");
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tidx[0] - hidx[0] + 1);
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tidx[1] - hidx[1] + 1);
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tidx[2] - hidx[2] + 1);
   
-  writeTab(fp, tab+1); 
+  Write_DFI_Tab(fp, tab+1); 
   fprintf(fp, "</Elem>\n");
   
   // Head Index
-  writeTab(fp, tab+1); 
+  Write_DFI_Tab(fp, tab+1); 
   fprintf(fp, "<Elem name=\"HeadIndex\">\n");
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", hidx[0]);
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", hidx[1]);
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", hidx[2]);
   
-  writeTab(fp, tab+1); 
+  Write_DFI_Tab(fp, tab+1); 
   fprintf(fp, "</Elem>\n");
   
   // Tail Index
-  writeTab(fp, tab+1); 
+  Write_DFI_Tab(fp, tab+1); 
   fprintf(fp, "<Elem name=\"TailIndex\">\n");
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tidx[0]);
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tidx[1]);
   
-  writeTab(fp, tab+2);
+  Write_DFI_Tab(fp, tab+2);
   fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tidx[2]);
   
-  writeTab(fp, tab+1); 
+  Write_DFI_Tab(fp, tab+1); 
   fprintf(fp, "</Elem>\n");
   
-  writeTab(fp, tab); fprintf(fp, "</Elem>\n");
+  Write_DFI_Tab(fp, tab); fprintf(fp, "</Elem>\n");
   
   return true;
 }
@@ -2246,45 +2138,35 @@ bool SklVoxDataCntl::Write_DFI_Node(FILE* fp, const unsigned tab, const char* ba
  * DFIファイル:出力ファイル情報要素を出力する。
  *
  * @param fp      ファイルポインタ
- * @param base_name     ファイル接頭文字
+ * @param prefix  ファイル接頭文字
  * @param tab     インデント
- * @param dSet          ボクセルデータセット
- * @param gc        ガイドセル
- * @param para_mng    パラレルマネージャ
- * @param procGrp     プロセスグループ番号
- * @return      true=success, false=fault
+ * @param step    ステップ数
  */
-bool SklVoxDataCntl::Write_DFI_OutFileInfo(FILE* fp,
-                                         const char* base_name,
-                                         const unsigned tab,
-                                         const int step,
-                                         unsigned gc,
-                                         SklParaManager* para_mng,
-                                         int procGrp) const
+bool SklSolverCBC::Write_DFI_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const int step)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if( !base_name ) return false;
+  if ( !fp ) return true;
+  if ( prefix.empty() ) return false;
 
   
   if (fp) {
-    writeTab(fp, tab+1); 
+    Write_DFI_Tab(fp, tab+1); 
     fprintf(fp, "<Elem name=\"File\" id=\"%d\" >\n", step);
   }
   
-  Write_DFI_GuideCell(fp, tab+1, gc);
+  Write_DFI_GuideCell(fp, tab+1);
   
-  int nnum = para_mng->GetNodeNum(procGrp);
+  int nnum = para_mng->GetNodeNum(pn.procGrp);
   if( nnum < 2 ) return false;
-  
 
   for(int n=0; n<nnum; n++){
-    if( !Write_DFI_OutFileName(fp, tab+1, n, base_name, dSet, para_mng, procGrp) ) return false;
+    if( !Write_DFI_OutFileName(fp, tab+1, n, prefix) ) return false;
   }
   
   if (fp) {
-    writeTab(fp, tab+1); 
+    Write_DFI_Tab(fp, tab+1); 
     fprintf(fp, "</Elem>\n");
   }
   
@@ -2298,14 +2180,13 @@ bool SklVoxDataCntl::Write_DFI_OutFileInfo(FILE* fp,
  * @param fp      ファイルポインタ
  * @param tab     インデント
  * @param gc     ガイドセル
- * @return      true=success, false=fault
  */
-void SklSolverCBC::Write_DFI_GuideCell(FILE* fp, const unsigned tab, const unsigned gc)
+void SklSolverCBC::Write_DFI_GuideCell(FILE* fp, const unsigned tab)
 {
   if( !fp ) return;
 
-  writeTab(fp, tab+1);
-  fprintf(fp, "<Param name=\"GuideCell\" dtype=\"INT\" value=\"%d\" />\n", gc);
+  Write_DFI_Tab(fp, tab+1);
+  fprintf(fp, "<Param name=\"GuideCell\" dtype=\"INT\" value=\"%d\" />\n", guide);
 }
                            
                            
@@ -2314,66 +2195,33 @@ void SklSolverCBC::Write_DFI_GuideCell(FILE* fp, const unsigned tab, const unsig
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @param base_name     ファイル接頭文字
- * @return      true=success, false=fault
+ * @param step    ステップ数
+ * @param id      対象ノードID
+ * @param prefix  ファイル接頭文字
  */
-bool SklSolverCBC::Write_DFI_OutFileName(FILE* fp, const unsigned tab, const char* base_name)
+bool SklSolverCBC::Write_DFI_OutFileName(FILE* fp, const unsigned tab, const int step, const int id, const std::string prefix)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  if( !base_name ) return false;
+  if ( !fp ) return true;
+  if ( prefix.empty() ) return false;
   
-  // check voxel size and get new node index
-  //int new_id = GetNodeId2NewId(id, para_mng, procGrp);
-  //if (new_id < 0) {
-  //  return true;
-  //}
-  
-  // FileName
   char fname[512];
   if( id == para_mng->GetMyID(pn.procGrp) ){
-    char* tmp_fname = GenerateFileName(base_name);
-    if( !path_util::SklGetFullPathName(tmp_fname, fname, 512) ) para_mng->Abort(-1);
-    delete [] tmp_fname;
+    char* tmp_fname = GenerateFileName(prefix, step, id);
+    if( !path_util::SklGetFullPathName(tmp_fname, fname, 512) ) {
+      delete [] tmp_fname;
+      para_mng->Abort(-1);
+    }
   }
   
   if( !para_mng->Broadcast(fname, 512, SKL_ARRAY_DTYPE_CHAR, id, procGrp) ) para_mng->Abort(-1);
     
     
-  if (fp) writeTab(fp, tab+1);
+  if (fp) Write_DFI_Tab(fp, tab+1);
   if (fp) fprintf(fp, "<Param name=\"FileName\" dtype=\"STRING\" value=\"%s\" id=\"%d\" />\n", fname, id);
-    //if (fp) fprintf(fp, "<Param name=\"FileName\" dtype=\"STRING\" value=\"%s\" id=\"%d\" />\n", fname, new_id);
         
   return true;
 }
 
-
-/**
- * get new node index witch has voxel element?
- * @param  id            original node id
- * @param  para_mng      SklParaManager
- * @param  procGrp       process group
- * @return new node index
- *                          -1 : none voxel size in node
- */
-int SklSolverCBC::GetActiveNodeID(int id,
-                                  SklParaManager* para_mng,
-                                  int procGrp)
-{
-  int nnum = para_mng->GetNodeNum(procGrp);
-  if( nnum < 2 ) return 0;
-
-  int new_idx = 0;
-  
-  for(int n=0; n<nnum; n++){
-    if( para_mng->IsVoxelSize(n, procGrp) ) {
-      if (id == n) {
-        return new_idx;
-      }
-      new_idx++;
-    }
-  }
-  
-  return -1;
-}
