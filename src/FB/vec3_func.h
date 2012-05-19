@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_vec3_func_h
-#define _SKL_FB_vec3_func_h
+#ifndef _FB_vec3_func_h
+#define _FB_vec3_func_h
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -133,4 +133,4 @@ void vec3_div(T1 c[3], const T2 a[3], const T3 b)
 	c[2] = a[2] * inv;
 }
 
-#endif  // _SKL_FB_vec3_func_h
+#endif  // _FB_vec3_func_h

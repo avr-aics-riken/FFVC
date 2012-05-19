@@ -5642,26 +5642,27 @@ void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid,
 
 
 /**
- @fn unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS)
+ @fn unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS, float* cut)
  @brief 圧力境界条件のビット情報をエンコードする
  @param bcd BCindex ID
  @param bcp BCindex P
  @param mid ID配列
  @param BC SetBCクラスのポインタ
- @param cut 距離情報
  @param isCDS CDS->true
+ @param cut 距離情報
  @retval 表面セル数
  */
-unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS)
+unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS, float* cut)
 {
+
   unsigned surface = 0;
-  
+
   // 初期化 @note ビットを1に初期化する．初期化範囲はガイドセルを含む全領域．セルフェイスの射影処理で必要．
   unsigned mx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   for (unsigned m=0; m<mx; m++) {
     bcp[m] |= ( 0x3ffff << BC_NDAG_W ); // BC_NDAG_W〜BC_D_Tまで18bitまとめて1に初期化
   }
-  
+
   // 計算領域内の壁面のNeumannBCのマスク処理と固体に隣接するFセルに方向フラグをエンコードし，表面セル数を返す
   if ( !isCDS ) {
     surface = encPbit_N_Binary(bcp);    // Binary
@@ -5669,7 +5670,7 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
   else {
     surface = encPbit_N_Cut(bcp, cut, true);  // Cut-Distance
   }
-  
+
   // 外部境界のビットフラグをエンコード
   BoundaryOuter* m_obc=NULL;
   unsigned F;
@@ -5713,7 +5714,7 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
         Exit(0);
     }
   }
-  
+
   // 内部境界のコンポーネントのエンコード
   unsigned n, id;
   int deface;
@@ -5730,10 +5731,10 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
         break;
     }
   }
-  
+
   // 全周Neumannフラグのセルと排他性をチェックし，反復行列の非対角要素/対角要素をエンコードする
   encPbit(bcp);
-  
+
   // debug
 #if 0
   int i,j,k,m;
@@ -5748,22 +5749,22 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
     }
   }
 #endif
-  
+
   return surface;
 }
 
 /**
- @fn void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float* cut, int* cut_id, bool isCDS)
+ @fn void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS, float* cut, int* cut_id)
  @brief bv[]に境界条件のビット情報をエンコードする
  @param bv BCindex V
  @param mid ID配列
  @param BC SetBCクラスのポインタ
  @param bp BCindex P
+ @param isCDS CDS->true
  @param cut 距離情報
  @param cut_id カット点ID
- @param isCDS CDS->true
  */
-void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float* cut, int* cut_id, bool isCDS)
+void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS, float* cut, int* cut_id)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;

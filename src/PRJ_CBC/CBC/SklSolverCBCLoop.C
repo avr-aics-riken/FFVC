@@ -224,7 +224,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     }
   }
   
-
+  
   
   // 履歴のファイル出力
   if ( C.Interval[Interval_Manager::tg_history].isTriggered(loop_step, loop_time) ) {
@@ -249,14 +249,20 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       Hostonly_ H->printHistoryDomfx(fp_d, &C);
       TIMING_stop(tm_hstry_dmfx, 0.0);
     }
-    
+
     // 力の履歴
     REAL_TYPE force[3];
     
     TIMING_start(tm_cal_force);
     flop_count=0.0;
-    cds_force_(force, sz, gc, p, (int*)bcd, dc_bid->GetData(), &id_of_solid, dh, &flop_count);
+    if ( C.isCDS() ) {
+      cds_force_(force, sz, gc, p, (int*)bcd, dc_bid->GetData(), &id_of_solid, dh, &flop_count);
+    }
+    else {
+      ;
+    }
     TIMING_stop(tm_cal_force, 0.0);
+
     
     REAL_TYPE tmp_f[3];
     tmp_f[0] = force[0];
@@ -265,19 +271,20 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     if( para_cmp->IsParallel() ) {
       para_cmp->Allreduce(tmp_f, force, 3, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
     }
-    
+
     TIMING_start(tm_hstry_force);
     Hostonly_ H->printHistoryForce(fp_f, &C, force);
     TIMING_stop(tm_hstry_force, 0.0);
+
   }
-  
+
   if (C.Mode.TP == ON ) {
     TIMING_start(tm_total_prs);
     flop_count=0.0;
     fb_totalp_ (tp, sz, gc, v, p, v00, &flop_count);
     TIMING_stop(tm_total_prs, flop_count);
   }
-  
+
   // コンポーネント履歴
   if ( C.Sampling.log == ON ) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
@@ -291,7 +298,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       TIMING_stop(tm_hstry_compo, 0.0);
     }
   }
-  
+
   // サンプリング履歴
   if ( C.Sampling.log == ON ) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
@@ -308,7 +315,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   TIMING_stop(tm_loop_uty_sct_2, 0.0);
   //  <<< ステップループのユーティリティ 2
 
-  
+
   
   // 発散時の打ち切り
   if ( m_currentStep > 1 ) {

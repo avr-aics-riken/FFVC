@@ -87,7 +87,9 @@ public:
                     const REAL_TYPE RefVelocity, 
                     REAL_TYPE& flop, 
                     const int guide_out,
-                    const bool mode=true);
+                    const bool mode,
+                    int& step_avr,
+                    REAL_TYPE& time_avr);
   
   void readVelocity(FILE* fp, 
                     const std::string fname, 
@@ -101,7 +103,9 @@ public:
                     const REAL_TYPE RefVelocity, 
                     REAL_TYPE& flop, 
                     const int guide_out,
-                    const bool mode=true);
+                    const bool mode,
+                    int& step_avr,
+                    REAL_TYPE& time_avr);
   
   void readTemperature(FILE* fp, 
                        const std::string fname, 
@@ -116,7 +120,9 @@ public:
                        const REAL_TYPE Kelvin, 
                        REAL_TYPE& flop, 
                        const int guide_out,
-                       const bool mode=true);
+                       const bool mode,
+                       int& step_avr,
+                       REAL_TYPE& time_avr);
   
   void writeScalar(const std::string fname, 
                    const unsigned* size, 
@@ -126,7 +132,10 @@ public:
                    const REAL_TYPE time, 
                    const REAL_TYPE* org, 
                    const REAL_TYPE* pit, 
-                   const int guide_out);
+                   const int guide_out,
+                   const bool mode=true,
+                   const int step_avr=0,
+                   const REAL_TYPE time_avr=0.0);
   
   void writeVector(const std::string fname, 
                    const unsigned* size, 
@@ -136,7 +145,10 @@ public:
                    const REAL_TYPE time, 
                    const REAL_TYPE* org, 
                    const REAL_TYPE* pit, 
-                   const int guide_out);
+                   const int guide_out,
+                   const bool mode=true,
+                   const int step_avr=0,
+                   const REAL_TYPE time_avr=0.0);
   
   
   /**

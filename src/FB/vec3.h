@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_vec3_h
-#define _SKL_FB_vec3_h
+#ifndef _FB_vec3_h
+#define _FB_vec3_h
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -318,4 +318,4 @@ inline bool lessVec3f(const Vec3f& a, const Vec3f& b) {
   
 } // namespace FB
 
-#endif  // _SKL_FB_vec3_h
+#endif  // _FB_vec3_h

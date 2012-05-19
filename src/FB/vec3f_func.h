@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_vec3f_func_h
-#define _SKL_FB_vec3f_func_h
+#ifndef _FB_vec3f_func_h
+#define _FB_vec3f_func_h
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -178,4 +178,4 @@ float vec3f_dist(const float a[3], const float b[3])
 	return sqrtf(vec3f_sqdist(a, b));
 }
 
-#endif  // _SKL_FB_vec3f_func_h
+#endif  // _FB_vec3f_func_h

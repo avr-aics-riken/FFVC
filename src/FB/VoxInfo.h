@@ -151,7 +151,7 @@ public:
   unsigned fill_inside       (int* mid, const int solid_id);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
-  unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, float* cut, bool isCDS);
+  unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   unsigned Solid_from_Cut    (int* mid, float* cut, const int id);
   unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
   
@@ -172,7 +172,7 @@ public:
   void setBCIndexH           (unsigned* bd, unsigned* bh1, unsigned* bh2, int* mid, SetBC* BC, unsigned kos);
   void setBCIndex_base1      (unsigned* bd, int* mid, float* cvf);
   void setBCIndex_base2      (unsigned* bd, int* mid, SetBC* BC, unsigned& Lcell, unsigned& Gcell, unsigned KOS);
-  void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, float* cut, int* cut_id, bool isCDS);
+  void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   void setCmpFraction        (CompoList* compo, unsigned* bx, float* vf);
   void setControlVars        (unsigned* r_size, unsigned r_guide);
   void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);

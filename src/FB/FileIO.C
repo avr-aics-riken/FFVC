@@ -796,7 +796,9 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
  @param RefVelocity 代表速度
  @param flop
  @param guide_out 出力ガイドセル数
- @param mode （瞬時値のときtrue，平均値のときfalse）
+ @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ @param step_avr 平均操作したステップ数
+ @param time_avr 平均操作した時間
  */
 void FileIO::readPressure(FILE* fp, 
                           const std::string fname, 
@@ -811,7 +813,9 @@ void FileIO::readPressure(FILE* fp,
                           const REAL_TYPE RefVelocity, 
                           REAL_TYPE& flop, 
                           const int guide_out,
-                          const bool mode)
+                          const bool mode,
+                          int& step_avr,
+                          REAL_TYPE& time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -821,21 +825,36 @@ void FileIO::readPressure(FILE* fp,
   strcpy(tmp, fname.c_str());
   
   int g = guide_out;
+  int avs = (mode == true) ? 1 : 0;
   
-  fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g);
+  fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  if ( !mode ) {
+    if ( (step_avr == 0) || (time_avr <= 0.0) ) {
+      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
+      Exit(0);
+    }
+  }
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
+  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   REAL_TYPE basep = BasePrs;
   REAL_TYPE ref_d = RefDensity;
   REAL_TYPE ref_v = RefVelocity;
   
   fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
   
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  
+  if ( mode ) {
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  }
+  else {
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
+                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
+                      tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+  }
+
   delete [] tmp;
 }
 
@@ -865,7 +884,9 @@ void FileIO::readPressure(FILE* fp,
  @param RefVelocity 代表速度
  @param flop
  @param guide_out 出力ガイドセル数
- @param mode （瞬時値のときtrue，平均値のときfalse）
+ @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ @param step_avr 平均操作したステップ数
+ @param time_avr 平均操作した時間
  */
 void FileIO::readVelocity(FILE* fp, 
                           const std::string fname,
@@ -879,7 +900,9 @@ void FileIO::readVelocity(FILE* fp,
                           const REAL_TYPE RefVelocity, 
                           REAL_TYPE& flop, 
                           const int guide_out,
-                          const bool mode)
+                          const bool mode,
+                          int& step_avr,
+                          REAL_TYPE& time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -889,11 +912,18 @@ void FileIO::readVelocity(FILE* fp,
   strcpy(tmp, fname.c_str());
   
   int g = guide_out;
+  int avs = (mode == true) ? 1 : 0;
   
-  fb_read_sph_v_ (v, (int*)size, (int*)&gc, tmp, &step, &time, &g);
+  fb_read_sph_v_ (v, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  if ( !mode ) {
+    if ( (step_avr == 0) || (time_avr <= 0.0) ) {
+      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
+      Exit(0);
+    }
+  }
   
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
+  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
@@ -902,9 +932,16 @@ void FileIO::readVelocity(FILE* fp,
   
   fb_shift_refv_in_(v, (int*)size, (int*)&gc, u0, &scale, &refv, &flop);
   
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-
+  if ( mode ) {
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  }
+  else {
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
+                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
+                      tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+  }
   delete [] tmp;
 }
 
@@ -936,7 +973,9 @@ void FileIO::readVelocity(FILE* fp,
  @param Kelvin 定数
  @param flop
  @param guide_out 出力ガイドセル数
- @param mode （瞬時値のときtrue，平均値のときfalse）
+ @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ @param step_avr 平均操作したステップ数
+ @param time_avr 平均操作した時間
  */
 void FileIO::readTemperature(FILE* fp, 
                              const std::string fname,
@@ -951,7 +990,9 @@ void FileIO::readTemperature(FILE* fp,
                              const REAL_TYPE Kelvin, 
                              REAL_TYPE& flop, 
                              const int guide_out,
-                             const bool mode)
+                             const bool mode,
+                             int& step_avr,
+                             REAL_TYPE& time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -961,21 +1002,36 @@ void FileIO::readTemperature(FILE* fp,
   strcpy(tmp, fname.c_str());
   
   int g = guide_out;
+  int avs = (mode == true) ? 1 : 0;
   
-  fb_read_sph_s_ (t, (int*)size, (int*)&gc, tmp, &step, &time, &g);
+  fb_read_sph_s_ (t, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  if ( !mode ) {
+    if ( (step_avr == 0) || (time_avr <= 0.0) ) {
+      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
+      Exit(0);
+    }
+  }
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
+  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   REAL_TYPE base_t = Base_tmp;
   REAL_TYPE diff_t = Diff_tmp;
   REAL_TYPE klv    = Kelvin;
   
   fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
   
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-
+  if ( mode ) {
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  }
+  else {
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
+                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
+                      tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+  }
+  
   delete [] tmp;
 }
 
@@ -999,6 +1055,9 @@ void FileIO::readTemperature(FILE* fp,
  @param org
  @param pit
  @param guide_out ガイドセル数
+ @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ @param step_avr 平均操作したステップ数
+ @param time_avr 平均操作した時間
  */
 void FileIO::writeScalar(const std::string fname, 
                          const unsigned* size, 
@@ -1008,7 +1067,10 @@ void FileIO::writeScalar(const std::string fname,
                          const REAL_TYPE time, 
                          const REAL_TYPE* org, 
                          const REAL_TYPE* pit, 
-                         const int guide_out)
+                         const int guide_out,
+                         const bool mode,
+                         const int step_avr,
+                         const REAL_TYPE time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -1028,9 +1090,12 @@ void FileIO::writeScalar(const std::string fname,
   p[1] = pit[1];
   p[2] = pit[2];
   
+  int avs = (mode == true) ? 1 : 0;
+  int stp_a = step_avr;
+  REAL_TYPE tm_a = time_avr;
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_s_ (s, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g);
+  fb_write_sph_s_ (s, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
   
   delete [] tmp;
 }
@@ -1055,6 +1120,9 @@ void FileIO::writeScalar(const std::string fname,
  @param org
  @param pit
  @param guide_out ガイドセル数
+ @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ @param step_avr 平均操作したステップ数
+ @param time_avr 平均操作した時間
  */
 void FileIO::writeVector(const std::string fname, 
                          const unsigned* size, 
@@ -1064,7 +1132,10 @@ void FileIO::writeVector(const std::string fname,
                          const REAL_TYPE time, 
                          const REAL_TYPE* org, 
                          const REAL_TYPE* pit, 
-                         const int guide_out)
+                         const int guide_out,
+                         const bool mode,
+                         const int step_avr,
+                         const REAL_TYPE time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -1084,9 +1155,12 @@ void FileIO::writeVector(const std::string fname,
   p[1] = pit[1];
   p[2] = pit[2];
   
+  int avs = (mode == true) ? 1 : 0;
+  int stp_a = step_avr;
+  REAL_TYPE tm_a = time_avr;
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_v_ (v, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g);
+  fb_write_sph_v_ (v, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
   
   delete [] tmp;
 }

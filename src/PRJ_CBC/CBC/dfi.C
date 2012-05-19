@@ -13,25 +13,18 @@
 #include "util_Path.h"
 
 //@fn void DFI::init()
-bool DFI::init(const int gather_mode, SklParaManager* m_para_mng, const int* g_size, const int* m_div, const int gc)
+bool DFI::init(const int gather_mode, const int* g_size, const int* m_div, const int gc, const int* hidx, const int* tidx)
 {
   // 出力分割
   bool mio = (gather_mode == IO_GATHER) ? false : true;
   
-  // 並列実行
-  bool isMPI = ( para_mng->IsParallel() ) ? true : false;
-  
-  if ( !(para_mng = m_para_mng) ) {
-    return false;
-  }
-  
-  Num_Node = para_mng->GetNodeNum();
+  MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
   if ( Num_Node < 2 ) {
     return false;
   }
   
-  my_id = para_mng->GetMyID(procGrp);
-  if ( my_id < 0 ) return false;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
+  if ( my_id != 0 ) return false; // master process only
   
   // global size
   Gsize[0] = g_size[0];
@@ -45,14 +38,29 @@ bool DFI::init(const int gather_mode, SklParaManager* m_para_mng, const int* g_s
   
   guide = gc;
   
+  head = new int[3*Num_Node];
+  tail = new int[3*Num_Node];
+  
+  hostname = new char*[Num_Node];
+  for (int i=0; i<Num_Node; i++) {
+    hostname[i] = new char[LABEL];
+  }
+  
+  for (int i=0; i<Num_Node*3; i++) {
+    head[i] = hidx[i];
+    tail[i] = tidx[i];
+  }
+  
   return true;
 }
-
+           
 
 /**
  * データをファイルに書き込む。
- * @param prefix    ファイル接頭文字
- * @param step      ステップ
+ * @param prefix ファイル接頭文字
+ * @param step   ステップ
+ * @param hidx   
+ * @param tidx   
  */
 bool DFI::Write_DFI_File(const std::string prefix, const int step)
 {
@@ -60,7 +68,7 @@ bool DFI::Write_DFI_File(const std::string prefix, const int step)
   
   std::string dfi_name;
   
-  if( isMPI && mio  && (Num_Node > 1) ) {
+  if( mio ) {
     
     dfi_name = Generate_DFI_Name(prefix, my_id);
     
@@ -91,7 +99,7 @@ std::string DFI::Generate_FileName(const std::string prefix, const int m_step, c
   memset(tmp, 0, sizeof(char)*len);
   
   // 並列実行時で、local出力が指定された場合のみ、分割出力
-  if( isMPI && mio && (Num_Node > 1) ){
+  if( mio ){
     sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
   }
   else {
@@ -383,46 +391,34 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
- * @param id      対象ノードID
+ * @param n       対象ノードID
  * @param prefix  ファイル接頭文字
  */
-bool DFI::Write_Node(FILE* fp, const unsigned tab, const int id, const std::string prefix)
+bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::string prefix)
 {
-  const char* hostname = para_mng->GetHostName(id, procGrp);
-  if( !hostname ) return false;
-  
   Write_Tab(fp, tab); 
   fprintf(fp, "<Elem name=\"Node\">\n");
   
   // ID
   Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", id);
+  fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", n);
   
   // Hostname
   Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname);
-  
-  int hidx[3], tidx[3]; // head_index and tail_index
-  
-  if( (hidx[0] = para_mng->GetVoxelHeadIndex(id, 0, procGrp)) < 0 ) return false;
-  if( (hidx[1] = para_mng->GetVoxelHeadIndex(id, 1, procGrp)) < 0 ) return false;
-  if( (hidx[2] = para_mng->GetVoxelHeadIndex(id, 2, procGrp)) < 0 ) return false;
-  if( (tidx[0] = para_mng->GetVoxelTailIndex(id, 0, procGrp)) < 0 ) return false;
-  if( (tidx[1] = para_mng->GetVoxelTailIndex(id, 1, procGrp)) < 0 ) return false;
-  if( (tidx[2] = para_mng->GetVoxelTailIndex(id, 2, procGrp)) < 0 ) return false;
+  fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname[n]);
   
   // VoxelSize
   Write_Tab(fp, tab+1); 
   fprintf(fp, "<Elem name=\"VoxelSize\">\n");
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tidx[0] - hidx[0] + 1);
+  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+0] - head[3*n+0] + 1);
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tidx[1] - hidx[1] + 1);
+  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+1] - head[3*n+1] + 1);
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tidx[2] - hidx[2] + 1);
+  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+2] - head[3*n+2] + 1);
   
   Write_Tab(fp, tab+1); 
   fprintf(fp, "</Elem>\n");
@@ -432,13 +428,13 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int id, const std::stri
   fprintf(fp, "<Elem name=\"HeadIndex\">\n");
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", hidx[0]);
+  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", head[3*n+0]);
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", hidx[1]);
+  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", head[3*n+1]);
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", hidx[2]);
+  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", head[3*n+2]);
   
   Write_Tab(fp, tab+1); 
   fprintf(fp, "</Elem>\n");
@@ -448,13 +444,13 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int id, const std::stri
   fprintf(fp, "<Elem name=\"TailIndex\">\n");
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tidx[0]);
+  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+0]);
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tidx[1]);
+  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+1]);
   
   Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tidx[2]);
+  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+2]);
   
   Write_Tab(fp, tab+1); 
   fprintf(fp, "</Elem>\n");

@@ -79,10 +79,52 @@ extern "C" {
   void fb_prs_nd2d_       (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* Base_prs, REAL_TYPE* Ref_rho, REAL_TYPE* Ref_v, REAL_TYPE* scale, REAL_TYPE* flop);
   void fb_shift_refv_in_  (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* scale, REAL_TYPE* refv, REAL_TYPE* flop);
   void fb_shift_refv_out_ (REAL_TYPE* vout, REAL_TYPE* vin, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* scale, REAL_TYPE* unit_v, REAL_TYPE* flop);
-  void fb_read_sph_s_     (REAL_TYPE* s, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, int* gs);
-  void fb_read_sph_v_     (REAL_TYPE* v, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, int* gs);
-  void fb_write_sph_s_    (REAL_TYPE* s, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, REAL_TYPE* org, REAL_TYPE* pit, int* d_type, int* gs);
-  void fb_write_sph_v_    (REAL_TYPE* v, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, REAL_TYPE* org, REAL_TYPE* pit, int* d_type, int* gs);
+  void fb_read_sph_s_     (REAL_TYPE* s, 
+                           int* sz, 
+                           int* g, 
+                           char* fname, 
+                           int* step, 
+                           REAL_TYPE* time, 
+                           int* gs, 
+                           int* avs,
+                           int* step_avr, 
+                           REAL_TYPE* time_avr);
+  void fb_read_sph_v_     (REAL_TYPE* v, 
+                           int* sz, 
+                           int* g, 
+                           char* fname, 
+                           int* step, 
+                           REAL_TYPE* time, 
+                           int* gs,
+                           int* avs,
+                           int* step_avr, 
+                           REAL_TYPE* time_avr);
+  void fb_write_sph_s_    (REAL_TYPE* s, 
+                           int* sz, 
+                           int* g, 
+                           char* fname, 
+                           int* step, 
+                           REAL_TYPE* time, 
+                           REAL_TYPE* org, 
+                           REAL_TYPE* pit, 
+                           int* d_type, 
+                           int* gs, 
+                           int* avs,
+                           int* step_avr, 
+                           REAL_TYPE* time_avr);
+  void fb_write_sph_v_    (REAL_TYPE* v, 
+                           int* sz, 
+                           int* g, 
+                           char* fname, 
+                           int* step, 
+                           REAL_TYPE* time, 
+                           REAL_TYPE* org, 
+                           REAL_TYPE* pit, 
+                           int* d_type, 
+                           int* gs, 
+                           int* avs,
+                           int* step_avr, 
+                           REAL_TYPE* time_avr);
 }
 
 #endif // _FB_F_FUNC_H_

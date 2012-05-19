@@ -15,6 +15,7 @@
 #include "SklSolverCBC.h"
 #include "CompoFraction.h"
 #include "fileio/SklVoxDataSet.h"
+#include <unistd.h> // for gethostname() and sleep()
 
 
 //@fn int SklSolverCBC::SklSolverInitialize()
@@ -551,7 +552,7 @@ SklSolverCBC::SklSolverInitialize() {
     return -1;
   }
 
-  
+
   // BCIndexへのエンコード処理
   Hostonly_  {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
@@ -560,7 +561,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode(&Vinfo, &M, mid, cvf);
-  
+
   // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
   if ( C.isCDS() ) {
     setBbox_of_VIBC_Cut(&Vinfo, bcv);
@@ -593,7 +594,7 @@ SklSolverCBC::SklSolverInitialize() {
     return -1;
   }
 
-  
+
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
   BC.setBCIperiodic(dc_bcd);
   BC.setBCIperiodic(dc_bcp);
@@ -863,6 +864,40 @@ SklSolverCBC::SklSolverInitialize() {
   TIMING_stop(tm_init_alloc);
 
   
+  // サブドメインのbbox情報を集約する
+  int m_np = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  // 並列時のみ
+  if ( m_np > 1 ) {
+    int* g_bbox_st = new int[3*m_np];
+    int* g_bbox_ed = new int[3*m_np];
+      
+    for (int n=0; n<m_np; n++){
+      if ( (g_bbox_st[3*n+0] = para_mng->GetVoxelHeadIndex(n, 0, pn.procGrp)) < 0 ) Exit(0);
+      if ( (g_bbox_st[3*n+1] = para_mng->GetVoxelHeadIndex(n, 1, pn.procGrp)) < 0 ) Exit(0);
+      if ( (g_bbox_st[3*n+2] = para_mng->GetVoxelHeadIndex(n, 2, pn.procGrp)) < 0 ) Exit(0);
+      if ( (g_bbox_ed[3*n+0] = para_mng->GetVoxelTailIndex(n, 0, pn.procGrp)) < 0 ) Exit(0);
+      if ( (g_bbox_ed[3*n+1] = para_mng->GetVoxelTailIndex(n, 1, pn.procGrp)) < 0 ) Exit(0);
+      if ( (g_bbox_ed[3*n+2] = para_mng->GetVoxelTailIndex(n, 2, pn.procGrp)) < 0 ) Exit(0);
+      
+      const char* host = para_mng->GetHostName(n, pn.procGrp);
+      if ( !host ) Exit(0);
+      DFI.copy_hostname(host, n);
+    }
+    
+    // DFIクラスの初期化
+    if ( !DFI.init(C.FIO.IO_Output, (int*)G_size, num_div_domain, (int)guide, g_bbox_st, g_bbox_ed) ) Exit(0);
+    
+    delete [] g_bbox_st; g_bbox_st = NULL;
+    delete [] g_bbox_ed; g_bbox_ed = NULL;
+  }
+ 
+
+  
+  
+  
+  
   // リスタート 瞬時値と平均値に分けて処理　------------------
   if ( C.Start==Control::re_start) {
     Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
@@ -961,8 +996,6 @@ SklSolverCBC::SklSolverInitialize() {
     }    
   }
   
-  // V-Sphereに出力インターバルを通知
-  //C.tell_Interval_2_Sphere();
   
   // 平均値のロード
   if ( C.Start==Control::re_start) {
@@ -1176,9 +1209,7 @@ SklSolverCBC::SklSolverInitialize() {
     if( !dc_t->CommBndCell(guide) ) return -1;
   }
   
-  
-  // 設定した初期値のファイル出力準備
-  //prepOutput();
+
 
   // マスターノードでの履歴出力準備
   H = new History(&C);
@@ -2384,12 +2415,16 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   // ガイド出力
   int gs = (int)C.GuideOut;
   
+  // dummy
+  int i_dummy=0;
+  REAL_TYPE f_dummy=0.0;
+  
   tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID);
   if ( !checkFile(tmp.c_str()) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, tmp, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
+  F.readPressure(fp, tmp, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2406,7 +2441,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, tmp, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
+  F.readVelocity(fp, tmp, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
@@ -2429,7 +2464,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, size, guide, t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
+    F.readTemperature(fp, tmp, size, guide, t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     
@@ -2504,6 +2539,10 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   // ステップ数 > ファイル名用
   int m_step = (int)C.Restart_step;
   
+  // dummy
+  int i_dummy=0;
+  REAL_TYPE f_dummy=0.0;
+  
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
@@ -2512,7 +2551,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, tmp, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
+  F.readPressure(fp, tmp, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
@@ -2528,7 +2567,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, tmp, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
+  F.readVelocity(fp, tmp, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2550,7 +2589,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
+    F.readTemperature(fp, tmp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2614,33 +2653,42 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
     }
   }
 
-  // Pressure > step, timeは戻り値を使用
+  int step_avr = 0;
+  REAL_TYPE time_avr = 0.0;
+  
+  // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
   tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, pn.ID);
-  if ( !checkFile(tmp.c_str()) ) {
+  if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, tmp, size, guide, ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false);
+  F.readPressure(fp, tmp, size, guide, ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false, step_avr, time_avr);
+  
+  if ( (step != SklGetBaseStep()) || ((REAL_TYPE)time != SklGetBaseTime()) ) {
+    Hostonly_ printf     ("\n\tTime stamp is different between instantaneous and averaged files\n");
+    Hostonly_ fprintf(fp, "\n\tTime stamp is different between instantaneous and averaged files\n");
+    Exit(0);
+  }
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
-  SklSetAverageBaseStep(step);
-  SklSetAverageBaseTime(time);
+  SklSetAverageBaseStep(step_avr);
+  SklSetAverageBaseTime(time_avr);
   
   
   // Velocity
   tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, pn.ID);
-  if ( !checkFile(tmp.c_str()) ) {
+  if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, tmp, size, guide, av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false);
+  F.readVelocity(fp, tmp, size, guide, av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
-  if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) { // 圧力とちがう場合
+  if ( (step_avr != SklGetAverageBaseStep()) || ((REAL_TYPE)time_avr != SklGetAverageBaseTime()) ) { // 圧力とちがう場合
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
@@ -2659,11 +2707,11 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, size, guide, at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false);
+    F.readTemperature(fp, tmp, size, guide, at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false, step_avr, time_avr);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     
-    if ( (step != SklGetAverageBaseStep()) || ((REAL_TYPE)time != SklGetAverageBaseTime()) ) {
+    if ( (step_avr != SklGetAverageBaseStep()) || ((REAL_TYPE)time_avr != SklGetAverageBaseTime()) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       Exit(0);
@@ -3944,7 +3992,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   
   // bcdの同期
   if( !dc_bcd->CommBndCell(guide) ) Exit(0);
-  
+
   // C.Acell > ノードローカルの有効セル数　
   // G_Acell > グローバルなアクティブセル数
   Vinfo->setBCIndex_base2(bcd, mid, &BC, C.Acell, G_Acell, C.KindOfSolver);
@@ -3958,13 +4006,25 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   }
   
   // BCIndexP に圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, dc_cut->GetData(), C.isCDS());
+  if ( C.isCDS() ) {
+    C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC, C.isCDS(), dc_cut->GetData());
+  }
+  else { // binary
+    C.NoWallSurface = Vinfo->setBCIndexP(bcd, bcp, mid, &BC);
+  }
+  
 #if 0
   Vinfo->dbg_chkBCIndexP(bcd, bcp, "BCindexP.txt");
 #endif
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
-  Vinfo->setBCIndexV(bcv, mid, &BC, bcp, dc_cut->GetData(), dc_bid->GetData(), C.isCDS());
+  if ( C.isCDS() ) {
+    Vinfo->setBCIndexV(bcv, mid, &BC, bcp, C.isCDS(), dc_cut->GetData(), dc_bid->GetData());
+  }
+  else { // binary
+    Vinfo->setBCIndexV(bcv, mid, &BC, bcp);
+  }
+  
 #if 0
   Vinfo->dbg_chkBCIndexV(bcv, "BCindexV.txt");
 #endif
@@ -3976,7 +4036,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
     Vinfo->dbg_chkBCIndexH(bcv, "BCindexH.txt");
 #endif
   }
-  
+
   // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
   Vinfo->countCellState(C.Wcell, G_Wcell, bcd, SOLID);
   Vinfo->countCellState(C.Fcell, G_Fcell, bcd, FLUID);
@@ -3986,6 +4046,7 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   
   // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
   resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem());
+
 }
 
 

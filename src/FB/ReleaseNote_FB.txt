@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.5.9  19 May  2012
+  - util_path.hを導入
+  
 Ver 2.5.8  15 May  2012
   - FileIO機能をCBCで実装
   

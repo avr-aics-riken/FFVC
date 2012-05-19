@@ -1,5 +1,5 @@
-#ifndef _SKL_SOLVER_DEBUG_H_
-#define _SKL_SOLVER_DEBUG_H_
+#ifndef _FB_DEBUG_H_
+#define _FB_DEBUG_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -34,4 +34,4 @@
 
 #define TIMING__ if ( ModeTiming == ON )
 
-#endif // _SKL_SOLVER_DEBUG_H_
+#endif // _FB_DEBUG_H_

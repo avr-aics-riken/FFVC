@@ -11,37 +11,38 @@
 //@file DFI.h
 //@brief DFI class Header
 //@author keno, Advanced Vis Team, AICS, RIKEN
+//@note このクラスは、並列時のみにコールすること。MPI_Initialize(), Finalize()はクラス外で実行。
 
 #include <string>
 #include <stdio.h>
-#include "Skl.h"
-#include "SklSolverBase.h"
+#include <mpi.h>
 #include "FB_Define.h"
 
 class DFI {
 protected:
-  bool mio;                 /// 出力時の分割指定　 true = local / false = gather
-  bool isMPI;               /// MPI並列計算モード true = parallel / false = serial
-  int Num_Node;             /// MPI並列数
-  int WriteCount;           /// FileInfoのファイル名を記述した回数（==時系列でコールされた回数）
-  int my_id;                /// 自ノードのランク番号（dfiファイルの出力はランク0のみなので自明だが）
-  int Gsize[3];             /// 計算領域全体の分割数
-  int div_domain[3];        /// 全計算領域のノード分割数
-  int procGrp;              /// プロセスグループ（デフォルト0）
-  int guide;                /// ガイドセル数
-  SklParaManager* para_mng; /// パラレルマネージャ
+  bool mio;           /// 出力時の分割指定　 true = local / false = gather
+  int Num_Node;       /// MPI並列数
+  int WriteCount;     /// FileInfoのファイル名を記述した回数（==時系列でコールされた回数）
+  int my_id;          /// 自ノードのランク番号（dfiファイルの出力はランク0のみなので自明だが）
+  int Gsize[3];       /// 計算領域全体の分割数
+  int div_domain[3];  /// 全計算領域のノード分割数
+  int procGrp;        /// プロセスグループ（デフォルト0）
+  int guide;          /// ガイドセル数
+  int* head;          /// bboxの開始インデクス(C index) [3*Num_Node]
+  int* tail;          /// bboxの終端インデクス(C index) [3*Num_Node]
+  char** hostname;    /// hostname char[m_np][LABEL]
   
 public:
   DFI() {
     mio        = false;
-    isMPI      = false;
     Num_Node   = 0;
     WriteCount = 0;
     my_id      = 0;
     procGrp    = 0;
     guide      = 0;
-    para_mng   = NULL;
-    
+    head       = NULL;
+    tail       = NULL;
+    hostname   = NULL;
     
     for (int i=0; i<3; i++) {
       Gsize[i]      = 0;
@@ -49,7 +50,14 @@ public:
     }
 
   }
-  ~DFI() {}
+  ~DFI() {
+    delete [] head;
+    delete [] tail;
+    for (int i=0; i<Num_Node; i++) {
+      delete [] hostname[i];
+    }
+    delete [] hostname;
+  }
   
 protected:
   std::string Generate_DFI_Name(const std::string prefix, const int m_id);
@@ -71,10 +79,21 @@ protected:
   void Write_WholeSize   (FILE* fp, const unsigned tab);
   
 public:
-  bool init              (const int gather_mode, SklParaManager* m_para_mng, const int* g_size, const int* m_div, const int gc);
+  bool init              (const int gather_mode, 
+                          const int* g_size, 
+                          const int* m_div, 
+                          const int gc, 
+                          const int* hidx, 
+                          const int* tidx);
   bool Write_DFI_File    (const std::string prefix, const int step);
   
   std::string Generate_FileName(const std::string prefix, const int m_step, const int m_id);
+  
+  // @brief ホスト名のコピー
+  // @param host
+  void copy_hostname(const char* m_host, const int i) {
+    strcpy(hostname[i], m_host);
+  }
 
 };
 

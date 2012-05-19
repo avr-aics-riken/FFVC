@@ -12,7 +12,7 @@
 //@brief CBC Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#define VERS_CBC   164
+#define VERS_CBC   165
 #define TM_LABEL_MAX 24
   
 // 計算性能測定キー番号

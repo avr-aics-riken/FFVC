@@ -422,8 +422,8 @@
   end subroutine fb_interp_rough_v
 
 
-!  *****************************************************************************
-!> @subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs)
+!  ******************************************************************************************************
+!> @subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
 !! @brief スカラー値の書き出し
 !! @param v 速度ベクトル
 !! @param sz 配列長
@@ -435,13 +435,16 @@
 !! @param pit 格子幅
 !! @param d_type (1-float, 2-double)
 !! @param gs guide cell (0-without, others-with)
+!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
+!! @param step_avr
+!! @param time_avr
 !<
-  subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs)
+  subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
   implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  time
+  real                                                      ::  time, time_avr
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
   real, dimension(3)                                        ::  org, pit
   character*64                                              ::  fname
@@ -474,14 +477,19 @@
   else
     write(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
   end if
+  
+  if ( avs == 0 ) then
+    write(16) step_avr, time_avr
+  end if
+  
   close (unit=16)
 
   return
   end subroutine fb_write_sph_s
 
 
-!  *****************************************************************************
-!> @subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs)
+!  ******************************************************************************************************
+!> @subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
 !! @brief ベクトル値の書き出し
 !! @param v ベクトル
 !! @param sz 配列長
@@ -493,13 +501,16 @@
 !! @param pit 格子幅
 !! @param d_type (1-float, 2-double)
 !! @param gs guide cell (0-without, others-with)
+!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
+!! @param step_avr
+!! @param time_avr
 !<
-  subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs)
+  subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
   implicit none
-  integer                                                   ::  i, j, k, l, ix, jx, kx, g, step, gs
+  integer                                                   ::  i, j, k, l, ix, jx, kx, g, step, gs, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  time
+  real                                                      ::  time, time_avr
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(3)                                        ::  org, pit
   character*64                                              ::  fname
@@ -532,14 +543,19 @@
   else
     write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
   end if
+  
+  if ( avs == 0 ) then
+    write(16) step_avr, time_avr
+  end if
+  
   close (unit=16)
 
   return
   end subroutine fb_write_sph_v
 
 
-!  **********************************************************
-!> @subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs)
+!  ***********************************************************************************
+!> @subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
 !! @brief スカラ値のロード
 !! @param s スカラ
 !! @param sz 配列長
@@ -548,13 +564,16 @@
 !! @param step ステップ数
 !! @param time 時刻
 !! @param gs ガイドセルスイッチ (0-without, others-with)
+!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
+!! @param step_avr
+!! @param time_avr
 !<
-  subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs)
+  subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
   implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time
+  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
   character*64                                              ::  fname
 
@@ -592,14 +611,18 @@
   else
     read(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
   end if
+  
+  if ( avs == 0 ) then
+    read(16) step_avr, time_avr
+  end if
+  
   close (unit=16)
 
   return
   end subroutine fb_read_sph_s
   
-  
-!  **********************************************************
-!> @subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs)
+!  ***********************************************************************************
+!> @subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
 !! @brief ベクトルのロード
 !! @param v ベクトル
 !! @param sz 配列長
@@ -608,13 +631,16 @@
 !! @param step ステップ数
 !! @param time 時刻
 !! @param gs ガイドセルスイッチ (0-without, others-with)
+!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
+!! @param step_avr
+!! @param time_avr
 !<
-  subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs)
+  subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, step_avr, time_avr)
   implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, l
+  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, l, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time
+  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   character*64                                              ::  fname
 
@@ -652,6 +678,11 @@
   else
     read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
   end if
+  
+  if ( avs == 0 ) then
+    read(16) step_avr, time_avr
+  end if
+  
   close (unit=16)
 
   return

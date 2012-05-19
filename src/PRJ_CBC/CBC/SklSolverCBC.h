@@ -251,7 +251,7 @@ public:
   
   bool chkMediumConsistency(void);
   bool hasLinearSolver (unsigned L);
-  bool checkFile(const char* fname);
+  bool checkFile(std::string fname);
   
   REAL_TYPE Norm_Poisson     (ItrCtl* IC);
   
