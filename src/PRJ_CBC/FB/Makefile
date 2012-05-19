@@ -29,7 +29,8 @@ CXXSRCS = \
        ../../FB/MonCompo.C \
        ../../FB/Interval_Mngr.C \
        ../../FB/Sampling.C \
-       ../../FB/DataHolder.C
+       ../../FB/DataHolder.C \
+       ../../FB/dfi.C
 
 
 FCSRCS = \
@@ -985,3 +986,5 @@ depend:
 ../../FB/DataHolder.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../FB/DataHolder.o: /usr/local/sphere/include/coord/SklCoord.h
 ../../FB/DataHolder.o: ../../FB/Parallel_node.h
+../../FB/dfi.o: ../../FB/dfi.h ../../FB/FB_Define.h ../../FB/mydebug.h
+../../FB/dfi.o: ../../FB/util_Path.h

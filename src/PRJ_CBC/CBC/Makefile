@@ -21,7 +21,6 @@ CXXSRCS = \
        NS_FS_E_CDS.C \
        PS_E_CBC.C \
        IF_TRP_VOF.C \
-       dfi.C \
 
 
 FCSRCS = \
@@ -143,7 +142,6 @@ SklSolverCBCInitialize.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCInitialize.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCInitialize.o: FortranFuncCBC.h
 SklSolverCBCInitialize.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
-SklSolverCBCInitialize.o: dfi.h
 SklSolverCBCLoop.o: SklSolverCBC.h CBC_Define.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/Skl.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/endianUtil.h
@@ -213,7 +211,7 @@ SklSolverCBCLoop.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCLoop.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklSolverCBCLoop.o: CBC_SetBC.h dfi.h
+SklSolverCBCLoop.o: CBC_SetBC.h
 SklSolverCBCPost.o: SklSolverCBC.h CBC_Define.h
 SklSolverCBCPost.o: /usr/local/sphere/include/Skl.h
 SklSolverCBCPost.o: /usr/local/sphere/include/endianUtil.h
@@ -283,7 +281,7 @@ SklSolverCBCPost.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBCPost.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCPost.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCPost.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklSolverCBCPost.o: CBC_SetBC.h dfi.h
+SklSolverCBCPost.o: CBC_SetBC.h
 SklSolverCBCUsage.o: SklSolverCBC.h CBC_Define.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/Skl.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/endianUtil.h
@@ -353,7 +351,7 @@ SklSolverCBCUsage.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCUsage.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklSolverCBCUsage.o: CBC_SetBC.h dfi.h
+SklSolverCBCUsage.o: CBC_SetBC.h
 SklSolverCBC.o: /usr/local/sphere/include/SklGloval.h
 SklSolverCBC.o: /usr/local/sphere/include/SklDefine.h
 SklSolverCBC.o: /usr/local/sphere/include/SklReservWord.h
@@ -423,7 +421,7 @@ SklSolverCBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBC.o: /usr/local/sphere/include/coord/SklCoord.h SklSolverCBC.h
 SklSolverCBC.o: CBC_Define.h FortranFuncCBC.h
-SklSolverCBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
+SklSolverCBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 CBC_Heat.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 CBC_Heat.o: /usr/local/sphere/include/endianUtil.h
 CBC_Heat.o: /usr/local/sphere/include/SklSolverBase.h
@@ -491,7 +489,7 @@ CBC_Heat.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 CBC_Heat.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 CBC_Heat.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 CBC_Heat.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-CBC_Heat.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
+CBC_Heat.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 CBC_SetBC.o: CBC_SetBC.h FortranFuncCBC.h CBC_Define.h
 NS_FS_E_CBC.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/endianUtil.h
@@ -560,7 +558,7 @@ NS_FS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-NS_FS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
+NS_FS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 NS_FS_E_CDS.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/endianUtil.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/SklSolverBase.h
@@ -628,7 +626,7 @@ NS_FS_E_CDS.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-NS_FS_E_CDS.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
+NS_FS_E_CDS.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 PS_E_CBC.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 PS_E_CBC.o: /usr/local/sphere/include/endianUtil.h
 PS_E_CBC.o: /usr/local/sphere/include/SklSolverBase.h
@@ -696,7 +694,7 @@ PS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 PS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 PS_E_CBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 PS_E_CBC.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-PS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
+PS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 IF_TRP_VOF.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 IF_TRP_VOF.o: /usr/local/sphere/include/endianUtil.h
 IF_TRP_VOF.o: /usr/local/sphere/include/SklSolverBase.h
@@ -764,5 +762,4 @@ IF_TRP_VOF.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 IF_TRP_VOF.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 IF_TRP_VOF.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 IF_TRP_VOF.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-IF_TRP_VOF.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
-dfi.o: dfi.h
+IF_TRP_VOF.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
