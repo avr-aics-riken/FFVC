@@ -41,8 +41,8 @@
 #define DETAIL      2
 
 // IO mode
-#define IO_GATHER     1
-#define IO_DISTRIBUTE 2
+#define IO_GATHER     0 // bool => false
+#define IO_DISTRIBUTE 1
 
 // UNIT
 #define NONDIMENSIONAL  0

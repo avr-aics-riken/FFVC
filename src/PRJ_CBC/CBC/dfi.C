@@ -13,19 +13,16 @@
 #include "util_Path.h"
 
 //@fn void DFI::init()
-bool DFI::init(const int gather_mode, const int* g_size, const int* m_div, const int gc, const int* hidx, const int* tidx)
+bool DFI::init(const int* g_size, const int* m_div, const int gc, const int* hidx, const int* tidx)
 {
-  // 出力分割
-  bool mio = (gather_mode == IO_GATHER) ? false : true;
-  
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
   if ( Num_Node < 2 ) {
     return false;
   }
-  
+
   MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
-  if ( my_id != 0 ) return false; // master process only
-  
+  if ( my_id < 0 ) return false;
+
   // global size
   Gsize[0] = g_size[0];
   Gsize[1] = g_size[1];
@@ -59,27 +56,35 @@ bool DFI::init(const int gather_mode, const int* g_size, const int* m_div, const
  * データをファイルに書き込む。
  * @param prefix ファイル接頭文字
  * @param step   ステップ
- * @param hidx   
- * @param tidx   
+ * @param mio    出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_DFI_File(const std::string prefix, const int step)
+bool DFI::Write_DFI_File(const std::string prefix, const int step, const bool mio)
 {
+
   if ( prefix.empty() ) return NULL;
-  
+
+  // master node only
+  int mm;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mm);
+
+  if ( mm != 0 ) return false;
+
   std::string dfi_name;
-  
+
   if( mio ) {
-    
+
     dfi_name = Generate_DFI_Name(prefix, my_id);
-    
+
     if( dfi_name.empty() ) {
       return false;
     }
+
     if( !Write_File(dfi_name, prefix, step) ) {
       return false;
     }
+
   }
-  
+
   return true;
 }
 
@@ -89,8 +94,9 @@ bool DFI::Write_DFI_File(const std::string prefix, const int step)
  * @param prefix ファイル接頭文字
  * @param m_step
  * @param m_id 
+ * @param mio    出力時の分割指定　 true = local / false = gather(default)
  */
-std::string DFI::Generate_FileName(const std::string prefix, const int m_step, const int m_id)
+std::string DFI::Generate_FileName(const std::string prefix, const int m_step, const int m_id, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
   
@@ -127,7 +133,7 @@ std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
-  sprintf(tmp, "%s_id%06d.%s", prefix.c_str(), m_id, "dfi");
+  sprintf(tmp, "%sid%06d.%s", prefix.c_str(), m_id, "dfi");
   
   std::string fname(tmp);
   delete [] tmp;
@@ -148,10 +154,15 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
   if ( dfi_name.empty() ) return false;
   if ( prefix.empty() ) return false;
 
-  
+  int len = dfi_name.size() + 1;
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  strcpy(tmp, dfi_name.c_str());
+  printf("str = %s\n", tmp);
+
   FILE* fp = NULL;
-  if( (WriteCount == 0) || !(fp = fopen(dfi_name.c_str(), "r")) ) { // file dose not exist
-    
+  if( (WriteCount == 0) || !(fp = fopen(tmp, "r+")) ) { // file dose not exist
+
     if (fp) fprintf(fp, "<SphereDispersedFileInfo>\n");
     if (fp) fprintf(fp, "\n");
     
@@ -164,7 +175,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     
     if (fp) Write_Tab(fp, 1);
     if (fp) fprintf(fp, "<Elem name=\"FileInfo\">\n");
-    
+    mark();
     if( !Write_OutFileInfo(fp, 1, prefix, step) ){
       if (fp) fclose(fp);
       return false;
@@ -211,6 +222,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
   }
   
   WriteCount++;
+  
+  delete [] tmp;
   
   return true;
 }

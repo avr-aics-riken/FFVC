@@ -12,6 +12,7 @@
 //@brief DFI class Header
 //@author keno, Advanced Vis Team, AICS, RIKEN
 //@note このクラスは、並列時のみにコールすること。MPI_Initialize(), Finalize()はクラス外で実行。
+//      dfiファイルの書き出しは、マスターランクでのみ行う。
 
 #include <string>
 #include <stdio.h>
@@ -20,7 +21,6 @@
 
 class DFI {
 protected:
-  bool mio;           /// 出力時の分割指定　 true = local / false = gather
   int Num_Node;       /// MPI並列数
   int WriteCount;     /// FileInfoのファイル名を記述した回数（==時系列でコールされた回数）
   int my_id;          /// 自ノードのランク番号（dfiファイルの出力はランク0のみなので自明だが）
@@ -34,7 +34,6 @@ protected:
   
 public:
   DFI() {
-    mio        = false;
     Num_Node   = 0;
     WriteCount = 0;
     my_id      = 0;
@@ -79,15 +78,14 @@ protected:
   void Write_WholeSize   (FILE* fp, const unsigned tab);
   
 public:
-  bool init              (const int gather_mode, 
-                          const int* g_size, 
+  bool init              (const int* g_size, 
                           const int* m_div, 
                           const int gc, 
                           const int* hidx, 
                           const int* tidx);
-  bool Write_DFI_File    (const std::string prefix, const int step);
+  bool Write_DFI_File    (const std::string prefix, const int step, const bool mio);
   
-  std::string Generate_FileName(const std::string prefix, const int m_step, const int m_id);
+  std::string Generate_FileName(const std::string prefix, const int m_step, const int m_id, const bool mio=false);
   
   // @brief ホスト名のコピー
   // @param host

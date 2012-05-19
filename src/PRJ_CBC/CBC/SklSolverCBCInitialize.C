@@ -867,12 +867,13 @@ SklSolverCBC::SklSolverInitialize() {
   // サブドメインのbbox情報を集約する
   int m_np = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
+
   // 並列時のみ
   if ( m_np > 1 ) {
     int* g_bbox_st = new int[3*m_np];
     int* g_bbox_ed = new int[3*m_np];
-      
+
+    // head and tail index
     for (int n=0; n<m_np; n++){
       if ( (g_bbox_st[3*n+0] = para_mng->GetVoxelHeadIndex(n, 0, pn.procGrp)) < 0 ) Exit(0);
       if ( (g_bbox_st[3*n+1] = para_mng->GetVoxelHeadIndex(n, 1, pn.procGrp)) < 0 ) Exit(0);
@@ -880,15 +881,19 @@ SklSolverCBC::SklSolverInitialize() {
       if ( (g_bbox_ed[3*n+0] = para_mng->GetVoxelTailIndex(n, 0, pn.procGrp)) < 0 ) Exit(0);
       if ( (g_bbox_ed[3*n+1] = para_mng->GetVoxelTailIndex(n, 1, pn.procGrp)) < 0 ) Exit(0);
       if ( (g_bbox_ed[3*n+2] = para_mng->GetVoxelTailIndex(n, 2, pn.procGrp)) < 0 ) Exit(0);
-      
+    }
+
+    // DFIクラスの初期化
+    if ( !DFI.init((int*)G_size, num_div_domain, (int)guide, g_bbox_st, g_bbox_ed) ) Exit(0);
+    
+    // host name
+    for (int n=0; n<m_np; n++){
       const char* host = para_mng->GetHostName(n, pn.procGrp);
       if ( !host ) Exit(0);
+      
       DFI.copy_hostname(host, n);
     }
-    
-    // DFIクラスの初期化
-    if ( !DFI.init(C.FIO.IO_Output, (int*)G_size, num_div_domain, (int)guide, g_bbox_st, g_bbox_ed) ) Exit(0);
-    
+      
     delete [] g_bbox_st; g_bbox_st = NULL;
     delete [] g_bbox_ed; g_bbox_ed = NULL;
   }
