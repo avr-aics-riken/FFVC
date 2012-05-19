@@ -278,7 +278,7 @@ public:
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
   void EnlargeIndex         (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
-  void FileOutput           (REAL_TYPE& flop);
+  void FileOutput           (REAL_TYPE& flop, const bool dfi=true);
   void fixed_parameters     (void);
   void gather_DomainInfo    (void);
   void getXML_Monitor       (SklSolverConfig* CF, MonitorList* M);

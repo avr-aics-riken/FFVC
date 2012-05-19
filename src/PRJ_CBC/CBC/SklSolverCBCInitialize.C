@@ -1285,9 +1285,9 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 初期状態のファイル出力 性能測定モードのときには出力しない
-	if ( (C.Hide.PM_Test == OFF) &&  (0 == SklGetTotalStep()) ) FileOutput(flop_task);
+	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
-  if ( C.Mode.Rough_Initial == ON ) FileOutput(flop_task);
+  if ( C.Mode.Rough_Initial == ON ) FileOutput(flop_task, false);
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
@@ -2060,7 +2060,7 @@ void SklSolverCBC::gather_DomainInfo(void)
       fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
       fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
       fprintf(fp,"%8.3f %8.3f ", 100.0*tmp_fcl/tmp_vol, 100.0*tmp_wcl/tmp_vol);
-      fprintf(fp,"%12.4e      %8.3f ", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
+      fprintf(fp,"%12.4e      %8.3f \n", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
     }
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
   }
@@ -4159,28 +4159,37 @@ void SklSolverCBC::VoxelInitialize(void)
   }
   
   // 分割数をXMLから取得，指定なければ自動分割する
-  if( para_cmp->IsParallel() ){
+  if( para_mng->IsParallel() ){
     if( !GetCfgVoxelDivisionMethod(idiv, jdiv, kdiv) ) idiv = jdiv = kdiv = 0;
   }
   else {
     idiv = jdiv = kdiv = 1;
   }
-  
-  // 分割数を保持
-  num_div_domain[0] = idiv;
-  num_div_domain[1] = jdiv;
-  num_div_domain[2] = kdiv;
+
   
   // 分割数を計算し，sz_paraで取得
   if( SKL_PARACMPO_SUCCESS != para_cmp->SklVoxelInit(m_sz[0], m_sz[1], m_sz[2], idiv, jdiv, kdiv, pn.procGrp)) {
     stamped_printf("\tID %d : Voxel Initialize error.\n", pn.ID);
     Exit(0);
   }
+  
   const unsigned int* sz_para = para_mng->GetVoxelSize();
   if( !sz_para ){
     stamped_printf("\tID %d : Can't get voxel size.\n", pn.ID);
     Exit(0);
   }
+  
+  // 分割数を保持
+  if( para_mng->IsParallel() ){
+    const unsigned int* para_div = para_mng->GetVoxelDivInfo(pn.procGrp);
+    if ( !para_div ) {
+      stamped_printf("\tError : division size\n");
+    }
+    num_div_domain[0] = para_div[0];
+    num_div_domain[1] = para_div[1];
+    num_div_domain[2] = para_div[2];
+  }
+  
   
   // 並列処理時のランク情報と各ノードのスタートインデクスを計算
   set_Parallel_Info();

@@ -185,7 +185,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     
     // 最終ステップ
     if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) { 
-      FileOutput(flop_count);
+      FileOutput(flop_count, false);
     }
 
     TIMING_stop(tm_file_out, flop_count);  

@@ -45,14 +45,14 @@ namespace path_util {
    * @return                        true=success, false=fault
    */
   inline bool GetFullPathName(const char* path,
-                                 char* resolved_path,
-                                 size_t str_len) {
+                              char* resolved_path,
+                              size_t str_len) {
     if( !path || !resolved_path || (str_len <= 0) ) return false;
     
 #if defined(_WIN32)
     if( !_fullpath(resolved_path, path, str_len) ) return false;
 #else
-    char rpath[MAXPATHLEN];
+    char rpath[1024];
     if( !realpath(path, rpath) ) return false;
     if( strlen(rpath) > str_len ) return false;
     strncpy(resolved_path, rpath, str_len);

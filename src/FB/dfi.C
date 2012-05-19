@@ -60,7 +60,6 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int* hid
  */
 bool DFI::Write_DFI_File(const std::string prefix, const int step, const bool mio)
 {
-
   if ( prefix.empty() ) return NULL;
 
   // master node only
@@ -79,7 +78,7 @@ bool DFI::Write_DFI_File(const std::string prefix, const int step, const bool mi
       return false;
     }
 
-    if( !Write_File(dfi_name, prefix, step) ) {
+    if( !Write_File(dfi_name, prefix, step, mio) ) {
       return false;
     }
 
@@ -104,7 +103,7 @@ std::string DFI::Generate_FileName(const std::string prefix, const int m_step, c
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
-  // 並列実行時で、local出力が指定された場合のみ、分割出力
+  // local出力が指定された場合、分割出力
   if( mio ){
     sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
   }
@@ -113,7 +112,7 @@ std::string DFI::Generate_FileName(const std::string prefix, const int m_step, c
   }
   
   std::string fname(tmp);
-  delete [] tmp;
+  if ( tmp ) delete [] tmp;
   
   return fname;
 }
@@ -136,7 +135,7 @@ std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
   sprintf(tmp, "%sid%06d.%s", prefix.c_str(), m_id, "dfi");
   
   std::string fname(tmp);
-  delete [] tmp;
+  if ( tmp ) delete [] tmp;
   
   return fname;
 }
@@ -148,25 +147,33 @@ std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
  * @param dfi_name  DFIファイル名
  * @param prefix    ファイル接頭文字
  * @param step      ステップ数
+ * @param mio    出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const int step)
+bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const int step, const bool mio)
 {
   if ( dfi_name.empty() ) return false;
   if ( prefix.empty() ) return false;
 
-  int len = dfi_name.size() + 1;
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
-  strcpy(tmp, dfi_name.c_str());
-  printf("str = %s\n", tmp);
-
   FILE* fp = NULL;
-  if( (WriteCount == 0) || !(fp = fopen(tmp, "r+")) ) { // file dose not exist
+  
+  // File exist ?
+  bool flag = false;
+  if ( fp = fopen(dfi_name.c_str(), "r") ) {
+    flag = true;
+    fclose(fp);
+  }
+      
+  if ( WriteCount == 0 ) { // カウントゼロのとき（リスタート時も） << bug
 
+    if( !(fp = fopen(dfi_name.c_str(), "w")) ) {
+      fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
+      return false;
+    }
+    
     if (fp) fprintf(fp, "<SphereDispersedFileInfo>\n");
     if (fp) fprintf(fp, "\n");
     
-    if( !Write_Header(fp, 0, prefix) ){
+    if( !Write_Header(fp, 0, prefix) ) {
       if (fp) fclose(fp);
       return false;
     }
@@ -175,8 +182,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     
     if (fp) Write_Tab(fp, 1);
     if (fp) fprintf(fp, "<Elem name=\"FileInfo\">\n");
-    mark();
-    if( !Write_OutFileInfo(fp, 1, prefix, step) ){
+
+    if( !Write_OutFileInfo(fp, 1, prefix, step, mio) ){
       if (fp) fclose(fp);
       return false;
     }
@@ -189,12 +196,14 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
   }
   else { // file exist
     
+    fp = fopen(dfi_name.c_str(), "r");
+    
     std::string str;
     while( !feof(fp) ){
       int c = fgetc(fp);
       if( !feof(fp) ) str += c;
     }
-    fclose(fp); // fopen(dfifname, "r")
+    fclose(fp);
     
     register int i = str.size() - 1;
     while( --i > 0 ) {
@@ -204,12 +213,17 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
       if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
     }
     
+    if( !(fp = fopen(dfi_name.c_str(), "w")) ) {
+      fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
+      return false;
+    }
+    
     if( fp && fwrite(str.c_str(), sizeof(char), strlen(str.c_str()), fp) != strlen(str.c_str()) ){
       if (fp) fclose(fp);
       return false;
     }
     
-    if( !Write_OutFileInfo(fp, 1, prefix, step) ){
+    if( !Write_OutFileInfo(fp, 1, prefix, step, mio) ){
       if (fp) fclose(fp); 
       return false;
     }
@@ -221,9 +235,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     
   }
   
-  WriteCount++;
-  
-  delete [] tmp;
+  WriteCount++; // bug
   
   return true;
 }
@@ -480,8 +492,9 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::strin
  * @param prefix  ファイル接頭文字
  * @param tab     インデント
  * @param step    ステップ数
+ * @param mio    出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const int step)
+bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const int step, const bool mio)
 {
   if (fp) {
     Write_Tab(fp, tab+1); 
@@ -490,10 +503,10 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
   
   Write_GuideCell(fp, tab+1);
   
-  for(int n=0; n<Num_Node; n++){
-    if( !Write_OutFileName(fp, tab+1, prefix, step, n) ) return false;
+  for(int n=0; n<Num_Node; n++) {
+    if ( !Write_OutFileName(fp, tab+1, prefix, step, n, mio) ) return false;
   }
-  
+
   if (fp) {
     Write_Tab(fp, tab+1); 
     fprintf(fp, "</Elem>\n");
@@ -520,24 +533,26 @@ void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
 /**
  * DFIファイル:ファイル名要素を出力する。
  *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- * @param step    ステップ数
- * @param id      対象ノードID
+ * @param fp     ファイルポインタ
+ * @param tab    インデント
+ * @param prefix ファイル接頭文字
+ * @param step   ステップ数
+ * @param id     対象ノードID
+ * @param mio    出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id)
+bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id, const bool mio)
 {
   char fname[512];
-  std::string tmp = Generate_FileName(prefix, step, id);
+  memset(fname, 0, sizeof(char)*512);
+  std::string tmp = Generate_FileName(prefix, step, id, mio);
+
   if( !path_util::GetFullPathName(tmp.c_str(), fname, 512) ) {
     return false;
   }
-  
+
   if (fp) Write_Tab(fp, tab+1);
   if (fp) fprintf(fp, "<Param name=\"FileName\" dtype=\"STRING\" value=\"%s\" id=\"%d\" />\n", fname, id);
-  delete [] fname;
-  
+
   return true;
 }
 

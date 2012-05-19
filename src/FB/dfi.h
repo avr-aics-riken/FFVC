@@ -61,12 +61,12 @@ public:
 protected:
   std::string Generate_DFI_Name(const std::string prefix, const int m_id);
   
-  bool Write_File        (const std::string dfi_name, const std::string prefix, const int step);
+  bool Write_File        (const std::string dfi_name, const std::string prefix, const int step, const bool mio);
   bool Write_Header      (FILE* fp, const unsigned tab, const std::string prefix);
   bool Write_Node        (FILE* fp, const unsigned tab, const int id, const std::string prefix);
   bool Write_NodeInfo    (FILE* fp, const unsigned tab, const std::string prefix);
-  bool Write_OutFileInfo (FILE* fp, const unsigned tab, const std::string prefix, const int step);
-  bool Write_OutFileName (FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id);
+  bool Write_OutFileInfo (FILE* fp, const unsigned tab, const std::string prefix, const int step, const bool mio);
+  bool Write_OutFileName (FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id, const bool mio);
   
   void Write_BaseName    (FILE* fp, const unsigned tab, const std::string prefix);
   void Write_FileFormat  (FILE* fp, const unsigned tab);
@@ -78,11 +78,7 @@ protected:
   void Write_WholeSize   (FILE* fp, const unsigned tab);
   
 public:
-  bool init              (const int* g_size, 
-                          const int* m_div, 
-                          const int gc, 
-                          const int* hidx, 
-                          const int* tidx);
+  bool init              (const int* g_size, const int* m_div, const int gc, const int* hidx, const int* tidx);
   bool Write_DFI_File    (const std::string prefix, const int step, const bool mio);
   
   std::string Generate_FileName(const std::string prefix, const int m_step, const int m_id, const bool mio=false);
