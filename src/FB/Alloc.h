@@ -12,7 +12,7 @@
 //@brief FlowBase Files class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 #include "Skl.h"
 #include "SklSolverBase.h"
 #include "parallel/SklParaComponent.h"

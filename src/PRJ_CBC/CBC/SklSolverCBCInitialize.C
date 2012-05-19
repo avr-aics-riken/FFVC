@@ -2366,8 +2366,7 @@ bool SklSolverCBC::hasLinearSolver(unsigned L)
 void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 {
   REAL_TYPE time;
-  char m_label[LABEL];
-  char* tmp = NULL;
+  std::string tmp;
   
   REAL_TYPE *v = NULL;
   REAL_TYPE *p = NULL;
@@ -2385,13 +2384,12 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   // ガイド出力
   int gs = (int)C.GuideOut;
   
-  tmp = GenerateFileName(C.f_Pressure, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  if ( !checkFile(m_label) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID);
+  if ( !checkFile(tmp.c_str()) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, m_label, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
+  F.readPressure(fp, tmp, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -2403,13 +2401,12 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 
   
   // Instantaneous Velocity fields
-  tmp = GenerateFileName(C.f_Velocity, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  if ( !checkFile(m_label) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID);
+  if ( !checkFile(tmp.c_str()) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, m_label, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
+  F.readVelocity(fp, tmp, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
@@ -2427,13 +2424,12 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = GenerateFileName(C.f_Temperature, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    if ( !checkFile(m_label) ) {
-      Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID);
+    if ( !checkFile(tmp.c_str()) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, m_label, size, guide, t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
+    F.readTemperature(fp, tmp, size, guide, t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     
@@ -2500,8 +2496,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   }
 
   // 出力ファイル名
-  char m_label[LABEL];
-  char* tmp=NULL;
+  std::string tmp;
   
   // ガイド出力
   int gs = (int)C.GuideOut;
@@ -2512,13 +2507,12 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
-  tmp = GenerateFileName(C.f_Rough_pressure, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  if ( !checkFile(m_label) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+  tmp = DFI.Generate_FileName(C.f_Rough_pressure, m_step, pn.ID);
+  if ( !checkFile(tmp.c_str()) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, m_label, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
+  F.readPressure(fp, tmp, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
@@ -2529,13 +2523,12 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = GenerateFileName(C.f_Rough_velocity, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  if ( !checkFile(m_label) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+  tmp = DFI.Generate_FileName(C.f_Rough_velocity, m_step, pn.ID);
+  if ( !checkFile(tmp.c_str()) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, m_label, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
+  F.readVelocity(fp, tmp, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2552,13 +2545,12 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = GenerateFileName(C.f_Rough_temperature, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    if ( !checkFile(m_label) ) {
-      Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    tmp = DFI.Generate_FileName(C.f_Rough_temperature, m_step, pn.ID);
+    if ( !checkFile(tmp.c_str()) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, m_label, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
+    F.readTemperature(fp, tmp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2582,8 +2574,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
 {
-  char m_label[LABEL];
-  char* tmp = NULL;
+  std::string tmp;
   
   int step = SklGetBaseStep();
   REAL_TYPE time = SklGetBaseTime();
@@ -2626,13 +2617,12 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   // Pressure > step, timeは戻り値を使用
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = GenerateFileName(C.f_AvrPressure, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  if ( !checkFile(m_label) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, pn.ID);
+  if ( !checkFile(tmp.c_str()) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, m_label, size, guide, ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false);
+  F.readPressure(fp, tmp, size, guide, ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
@@ -2641,13 +2631,12 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   
   
   // Velocity
-  tmp = GenerateFileName(C.f_AvrVelocity, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  if ( !checkFile(m_label) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, pn.ID);
+  if ( !checkFile(tmp.c_str()) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, m_label, size, guide, av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false);
+  F.readVelocity(fp, tmp, size, guide, av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
@@ -2665,13 +2654,12 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = GenerateFileName(C.f_AvrTemperature, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    if ( !checkFile(m_label) ) {
-      Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, pn.ID);
+    if ( !checkFile(tmp.c_str()) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, m_label, size, guide, at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false);
+    F.readTemperature(fp, tmp, size, guide, at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     

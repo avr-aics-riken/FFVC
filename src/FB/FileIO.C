@@ -772,7 +772,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
 
 /**
  @fn void FileIO::readPressure(FILE* fp, 
- char* fname, 
+ const std::string fname, 
  const unsigned* size, 
  const unsigned gc,
  REAL_TYPE* p, 
@@ -799,7 +799,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
 void FileIO::readPressure(FILE* fp, 
-                          char* fname, 
+                          const std::string fname, 
                           const unsigned* size, 
                           const unsigned gc,
                           REAL_TYPE* p, 
@@ -813,11 +813,16 @@ void FileIO::readPressure(FILE* fp,
                           const int guide_out,
                           const bool mode)
 {
-  if ( !fname ) Exit(0);
+  if ( fname.empty() ) Exit(0);
+  
+  int len = fname.size() + 1;
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  strcpy(tmp, fname.c_str());
   
   int g = guide_out;
   
-  fb_read_sph_s_ (p, (int*)size, (int*)&gc, fname, &step, &time, &g);
+  fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g);
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
@@ -828,13 +833,15 @@ void FileIO::readPressure(FILE* fp,
   
   fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
   
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  
+  delete [] tmp;
 }
 
 /**
  @fn void FileIO::readVelocity(FILE* fp, 
- char* fname, 
+ const std::string fname,
  const unsigned* size, 
  const unsigned gc, 
  REAL_TYPE* v, 
@@ -861,7 +868,7 @@ void FileIO::readPressure(FILE* fp,
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
 void FileIO::readVelocity(FILE* fp, 
-                          char* fname, 
+                          const std::string fname,
                           const unsigned* size, 
                           const unsigned gc, 
                           REAL_TYPE* v, 
@@ -874,11 +881,16 @@ void FileIO::readVelocity(FILE* fp,
                           const int guide_out,
                           const bool mode)
 {
-  if ( !fname ) Exit(0);
+  if ( fname.empty() ) Exit(0);
+  
+  int len = fname.size() + 1;
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  strcpy(tmp, fname.c_str());
   
   int g = guide_out;
   
-  fb_read_sph_v_ (v, (int*)size, (int*)&gc, fname, &step, &time, &g);
+  fb_read_sph_v_ (v, (int*)size, (int*)&gc, tmp, &step, &time, &g);
   
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step;
@@ -890,14 +902,15 @@ void FileIO::readVelocity(FILE* fp,
   
   fb_shift_refv_in_(v, (int*)size, (int*)&gc, u0, &scale, &refv, &flop);
   
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
 
+  delete [] tmp;
 }
 
 /**
  @fn void FileIO::readTemperature(FILE* fp, 
- char* fname, 
+ const std::string fname,
  const unsigned* size, 
  const unsigned gc, 
  REAL_TYPE* t, 
@@ -926,7 +939,7 @@ void FileIO::readVelocity(FILE* fp,
  @param mode （瞬時値のときtrue，平均値のときfalse）
  */
 void FileIO::readTemperature(FILE* fp, 
-                             char* fname, 
+                             const std::string fname,
                              const unsigned* size, 
                              const unsigned gc, 
                              REAL_TYPE* t, 
@@ -940,11 +953,16 @@ void FileIO::readTemperature(FILE* fp,
                              const int guide_out,
                              const bool mode)
 {
-  if ( !fname ) Exit(0);
+  if ( fname.empty() ) Exit(0);
+  
+  int len = fname.size() + 1;
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  strcpy(tmp, fname.c_str());
   
   int g = guide_out;
   
-  fb_read_sph_s_ (t, (int*)size, (int*)&gc, fname, &step, &time, &g);
+  fb_read_sph_s_ (t, (int*)size, (int*)&gc, tmp, &step, &time, &g);
   
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
@@ -955,13 +973,14 @@ void FileIO::readTemperature(FILE* fp,
   
   fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
   
-  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", fname, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
 
+  delete [] tmp;
 }
 
 /**
- @fn void FileIO::writeScalar(char* fname, 
+ @fn void FileIO::writeScalar(const std::string fname, 
  const unsigned* size, 
  const unsigned gc,
  REAL_TYPE* s, 
@@ -981,17 +1000,22 @@ void FileIO::readTemperature(FILE* fp,
  @param pit
  @param guide_out ガイドセル数
  */
-void FileIO::writeScalar(char* fname, 
-                           const unsigned* size, 
-                           const unsigned gc,
-                           REAL_TYPE* s, 
-                           const int step, 
-                           const REAL_TYPE time, 
-                           const REAL_TYPE* org, 
-                           const REAL_TYPE* pit, 
-                           const int guide_out)
+void FileIO::writeScalar(const std::string fname, 
+                         const unsigned* size, 
+                         const unsigned gc,
+                         REAL_TYPE* s, 
+                         const int step, 
+                         const REAL_TYPE time, 
+                         const REAL_TYPE* org, 
+                         const REAL_TYPE* pit, 
+                         const int guide_out)
 {
-  if ( !fname ) Exit(0);
+  if ( fname.empty() ) Exit(0);
+  
+  int len = fname.size() + 1;
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  strcpy(tmp, fname.c_str());
   
   int stp = step;
   REAL_TYPE tm = time;
@@ -1006,11 +1030,13 @@ void FileIO::writeScalar(char* fname,
   
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_s_ (s, (int*)size, (int*)&gc, fname, &stp, &tm, o, p, &d_type, &g);
+  fb_write_sph_s_ (s, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g);
+  
+  delete [] tmp;
 }
 
 /**
- @fn void FileIO::writeVector(char* fname, 
+ @fn void FileIO::writeVector(const std::string fname, 
  const unsigned* size, 
  const unsigned gc, 
  REAL_TYPE* v, 
@@ -1030,17 +1056,22 @@ void FileIO::writeScalar(char* fname,
  @param pit
  @param guide_out ガイドセル数
  */
-void FileIO::writeVector(char* fname, 
-                           const unsigned* size, 
-                           const unsigned gc, 
-                           REAL_TYPE* v, 
-                           const int step, 
-                           const REAL_TYPE time, 
-                           const REAL_TYPE* org, 
-                           const REAL_TYPE* pit, 
-                           const int guide_out)
+void FileIO::writeVector(const std::string fname, 
+                         const unsigned* size, 
+                         const unsigned gc, 
+                         REAL_TYPE* v, 
+                         const int step, 
+                         const REAL_TYPE time, 
+                         const REAL_TYPE* org, 
+                         const REAL_TYPE* pit, 
+                         const int guide_out)
 {
-  if ( !fname ) Exit(0);
+  if ( fname.empty() ) Exit(0);
+  
+  int len = fname.size() + 1;
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  strcpy(tmp, fname.c_str());
   
   int stp = step;
   REAL_TYPE tm = time;
@@ -1055,6 +1086,8 @@ void FileIO::writeVector(char* fname,
   
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_v_ (v, (int*)size, (int*)&gc, fname, &stp, &tm, o, p, &d_type, &g);
+  fb_write_sph_v_ (v, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g);
+  
+  delete [] tmp;
 }
 

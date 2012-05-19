@@ -21,7 +21,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 #include "CBC_Define.h"
 
 #include "Skl.h"
@@ -41,6 +41,7 @@
 #include "Alloc.h"
 #include "FileIO.h"
 #include "Monitor.h"
+#include "dfi.h"
 
 
 #include "IP_Duct.h"
@@ -71,8 +72,6 @@
 
 // Cutlib
 #include "Cutlib.h"
-
-#include "util_Path.h"
 
 #include "omp.h"
 
@@ -108,6 +107,7 @@ public:
   MonitorList     MO;
   DTcntl          DT;
   ReferenceFrame  RF;
+  DFI             DFI;
   
   History*				H;
   Intrinsic*      Ex; // pointer to a base class
@@ -127,9 +127,6 @@ public:
   
   // for parallel
   Parallel_Info pn;
-  
-  // for output DFI file
-  unsigned m_dfiWriteCount;
   
   char *m_condition;  // for file name of text output
   char *m_log;
@@ -350,32 +347,7 @@ public:
   int get_intval( std::string& buffer );
   void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
   void Restart_rough   (FILE* fp, REAL_TYPE& flop);
-  
-  char* GenerateFileName(const std::string prefix, const int m_step, const int m_id);
-  
-  
-  
-  
-  // DFI file
-  bool Generate_DFI_File     (const std::string prefix, const int step);
-  bool Write_DFI_BaseName    (FILE* fp, const unsigned tab, const std::string prefix);
-  bool Write_DFI_File        (const std::string dfi_name, const std::string prefix, const int step);
-  bool Write_DFI_Header      (FILE* fp, const unsigned tab, const std::string prefix);
-  bool Write_DFI_MyID        (FILE* fp, const unsigned tab);
-  bool Write_DFI_Node        (FILE* fp, const unsigned tab, const int id, const std::string prefix);
-  bool Write_DFI_NodeInfo    (FILE* fp, const unsigned tab, const std::string prefix);
-  bool Write_DFI_NodeNum     (FILE* fp, const unsigned tab);
-  bool Write_DFI_OutFileInfo (FILE* fp, const unsigned tab, const std::string prefix, const int step);
-  bool Write_DFI_OutFileName (FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id);
-  
-  void Write_DFI_FileFormat  (FILE* fp, const unsigned tab);
-  void Write_DFI_GuideCell   (FILE* fp, const unsigned tab);
-  void Write_DFI_Tab         (FILE* fp, const unsigned tab);
-  void Write_DFI_NumDivDomain(FILE* fp, const unsigned tab);
-  void Write_DFI_WholeSize   (FILE* fp, const unsigned tab);
-  
-  char* Generate_DFI_FileName(const std::string prefix);
-  
+
   
   //@fn 時刻をRFクラスからv00[4]にコピーする
   //@param time 設定する時刻

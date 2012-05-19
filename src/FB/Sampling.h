@@ -12,7 +12,7 @@
 //@brief FlowBase Sampling class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 #include "FBUtility.h"
 #include "vec3.h"
 #include "basic_func.h"

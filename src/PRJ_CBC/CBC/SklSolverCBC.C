@@ -21,7 +21,6 @@ SklSolverCBC::SklSolverCBC() {
   
   id_of_solid = 2;
   
-  m_dfiWriteCount = 0;
   num_div_domain[0] = 0;
   num_div_domain[1] = 0;
   num_div_domain[2] = 0;
@@ -138,7 +137,6 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   id_of_solid = 2;
   
-  m_dfiWriteCount = 0;
   num_div_domain[0] = 0;
   num_div_domain[1] = 0;
   num_div_domain[2] = 0;
@@ -273,6 +271,19 @@ SklSolverCBC::~SklSolverCBC() {
     if (fp_w) fclose(fp_w);
   }
 
+}
+
+
+//@fn bool SklSolverCBC::checkFile(const char* fname)
+//@note ファイルのオープンチェック
+bool SklSolverCBC::checkFile(const char* fname)
+{
+  ifstream ifs(fname, ios::in | ios::binary);
+  if (!ifs) {
+    return false;
+  }
+  ifs.close();
+  return true;
 }
 
 /**
@@ -704,8 +715,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
   int gc_out = (int)C.GuideOut;
   
   // 出力ファイル名
-  char m_label[LABEL];
-  char* tmp=NULL;
+  std::string tmp;
   
   
   // Pressure
@@ -719,18 +729,16 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
     fb_xcopy_(ws, ap, &d_length, &scale, &flop);
   }
   
-  tmp = GenerateFileName(C.f_AvrPressure, stepAvr, pn.ID);
-  strcpy(m_label, tmp);
-  F.writeScalar(m_label, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, stepAvr, pn.ID);
+  F.writeScalar(tmp, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
 
   
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(vo, av, sz, gc, v00, &scale, &unit_velocity, &flop);
   
-  tmp = GenerateFileName(C.f_AvrVelocity, stepAvr, pn.ID);
-  strcpy(m_label, tmp);
-  F.writeVector(m_label, size, guide, vo, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, stepAvr, pn.ID);
+  F.writeVector(tmp, size, guide, vo, stepAvr, timeAvr, m_org, m_pit, gc_out);
   
   
   // Temperature
@@ -748,9 +756,8 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
       fb_xcopy_(ws, at, &d_length, &scale, &flop);
     }
     
-    tmp = GenerateFileName(C.f_AvrTemperature, stepAvr, pn.ID);
-    strcpy(m_label, tmp);
-    F.writeScalar(m_label, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, stepAvr, pn.ID);
+    F.writeScalar(tmp, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
     
   }
 }
@@ -810,17 +817,15 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
   int gc_out = (int)C.GuideOut;
   
   // 出力ファイル名
-  char m_label[LABEL];
-  char* tmp=NULL;
+  std::string tmp;
   
   
   // Divergence デバッグ用なので無次元のみ
   REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
   F.cnv_Div(dc_ws, dc_wk2, coef, flop);
   
-  tmp = GenerateFileName(C.f_DivDebug, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+  tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.ID);
+  F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   
   
   // Pressure
@@ -834,18 +839,16 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     fb_xcopy_(ws, p, &d_length, &scale, &flop);
   }
   
-  tmp = GenerateFileName(C.f_Pressure, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID);
+  F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   
 
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(vo, v, sz, gc, v00, &scale, &unit_velocity, &flop);
     
-  tmp = GenerateFileName(C.f_Velocity, m_step, pn.ID);
-  strcpy(m_label, tmp);
-  F.writeVector(m_label, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
+  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID);
+  F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
 
 
   // Tempearture
@@ -863,9 +866,8 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
       fb_xcopy_(ws, t, &d_length, &scale, &flop);
     }
     
-    tmp = GenerateFileName(C.f_Temperature, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID);
+    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
     
   }
   
@@ -886,9 +888,8 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
       if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
     }
 
-    tmp = GenerateFileName(C.f_TotalP, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, pn.ID);
+    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
   
   
@@ -908,9 +909,8 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(vo, vrt, sz, gc, vz, &scale, &unit_velocity, &flop);
       
-    tmp = GenerateFileName(C.f_Vorticity, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    F.writeVector(m_label, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
+    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, pn.ID);
+    F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
   }
   
   
@@ -929,9 +929,8 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
 
-    tmp = GenerateFileName(C.f_I2VGT, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, pn.ID);
+    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
   
   // Helicity
@@ -949,9 +948,8 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
       
-    tmp = GenerateFileName(C.f_Helicity, m_step, pn.ID);
-    strcpy(m_label, tmp);
-    F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, pn.ID);
+    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
   
 
@@ -1630,596 +1628,5 @@ REAL_TYPE SklSolverCBC::PSOR2sma_core(REAL_TYPE* p, int ip, int color, REAL_TYPE
   }
   
 	return res;
-}
-
-/**
- * ファイル名を作成する。
- * @param prefix ファイル接頭文字
- * @param m_step
- * @param m_id 
- */
-char* SklSolverCBC::GenerateFileName(const std::string prefix, const int m_step, const int m_id)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( prefix.empty() ) return NULL;
-  
-  // 出力分割
-  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
-  
-  // 並列実行
-  bool isPara = ( para_mng->IsParallel() ) ? true : false;
-  
-  if ( prefix.empty() ) Exit(0);
-
-  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1
-  char* fname = new char[len];
-  memset(fname, 0, sizeof(char)*len);
-  
-  char postfix[4]; memset(postfix, 0, sizeof(char)*4);
-
-  strcpy(postfix, "sph");
-  
-  // 並列実行時で、local出力が指定された場合のみ、分割出力
-  if( isPara || mio ){
-    sprintf(fname, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, postfix);
-  }
-  else {
-    sprintf(fname, "%s%010d.%s", prefix.c_str(), m_step, postfix);
-  }
-
-  return fname;
-}
-
-//@fn bool SklSolverCBC::checkFile(const char* fname)
-//@note ファイルのオープンチェック
-bool SklSolverCBC::checkFile(const char* fname)
-{
-  ifstream ifs(fname, ios::in | ios::binary);
-  if (!ifs) {
-    return false;
-  }
-  ifs.close();
-  return true;
-}
-
-
-/**
- * データをファイルに書き込む。
- * @param prefix    ファイル接頭文字
- * @param step      ステップ
- */
-bool SklSolverCBC::Generate_DFI_File(const std::string prefix, const int step)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  // 出力分割
-  bool mio = (C.FIO.IO_Input == IO_GATHER) ? false : true;
-  
-  char* dfi_name = NULL;
-  
-  if( mio && (para_mng->GetNodeNum() > 1) ) {
-    if( !(dfi_name = Generate_DFI_FileName(prefix)) ){
-      return false;
-    }
-    if( !Write_DFI_File(dfi_name, prefix, step) ) {
-      delete [] dfi_name; return false;
-    }
-    delete [] dfi_name;
-  }
-  
-  return true;
-}
-
-/**
- * 出力DFIファイル名を作成する。
- *
- * DFIファイル=ボクセル分割情報ファイル
- * @param prefix    ファイル接頭文字
- */
-char* SklSolverCBC::Generate_DFI_FileName(const std::string prefix)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  int m_id = pn.ID; // Rank番号
-  
-  if ( prefix.empty() ) return NULL;
-  
-  int len = prefix.size() + 14; // id(9) + postfix(4) + 1
-  char* fname = new char[len];
-  memset(fname, 0, sizeof(char)*len);
-  
-  char postfix[4]; memset(postfix, 0, sizeof(char)*4);
-  strcpy(postfix, "dfi");
-
-  sprintf(fname, "%s_id%06d.%s", prefix.c_str(), m_id, postfix);
-  return fname;
-}
-
-/**
- * DFIファイルを出力する。
- *
- * DFIファイル=ボクセル分割情報ファイル
- * @param dfi_name  DFIファイル名
- * @param prefix    ファイル接頭文字
- * @param step      ステップ数
- */
-bool SklSolverCBC::Write_DFI_File(const std::string dfi_name, const std::string prefix, const int step)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( dfi_name.empty() ) return false;
-  if ( prefix.empty() ) return false;
-  
-  int myID = pn.ID;
-  if( myID < 0 ) return true;
-  
-  FILE* fp = NULL;
-  if( (m_dfiWriteCount == 0) || !(fp = fopen(dfi_name.c_str(), "r")) ) { // file dose not exist
-
-    if (fp) fprintf(fp, "<SphereDispersedFileInfo>\n");
-    if (fp) fprintf(fp, "\n");
-    
-    if( !Write_DFI_Header(fp, 0, prefix) ){
-      if (fp) fclose(fp);
-      return false;
-    }
-    
-    if (fp) fprintf(fp, "\n");
-    
-    if (fp) Write_DFI_Tab(fp, 1);
-    if (fp) fprintf(fp, "<Elem name=\"FileInfo\">\n");
-    
-    if( !Write_DFI_OutFileInfo(fp, 1, prefix, step) ){
-      if (fp) fclose(fp);
-      return false;
-    }
-    
-    if (fp) Write_DFI_Tab(fp, 1);
-    if (fp) fprintf(fp, "</Elem>\n");
-    if (fp) fprintf(fp, "</SphereDispersedFileInfo>\n");
-    if (fp) fclose(fp);
-    
-  }
-  else { // file exist
-    
-    std::string str;
-    while( !feof(fp) ){
-      int c = fgetc(fp);
-      if( !feof(fp) ) str += c;
-    }
-    fclose(fp); // fopen(dfifname, "r")
-    
-    register int i = str.size() - 1;
-    while( --i > 0 ) {
-      if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
-    }
-    while( --i > 0 ) {
-      if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
-    }
-    
-    if( fp && fwrite(str.c_str(), sizeof(char), strlen(str.c_str()), fp) != strlen(str.c_str()) ){
-      if (fp) fclose(fp);
-      return false;
-    }
-    
-    if( !Write_DFI_OutFileInfo(fp, 1, prefix, step) ){
-      if (fp) fclose(fp); return false;
-    }
-    
-    if (fp) Write_DFI_Tab(fp, 1);
-    if (fp) fprintf(fp, "</Elem>\n");
-    if (fp) fprintf(fp, "</SphereDispersedFileInfo>\n");
-    if (fp) fclose(fp);
-    
-  }
-  
-  m_dfiWriteCount++;
-  
-  return true;
-}
-
-/**
- * Tab(space２つ)を出力する。
- * @param fp      ファイルポインタ
- * @param tab     インデント数
- */
-void SklSolverCBC::Write_DFI_Tab(FILE* fp, const unsigned tab)
-{
-
-  if( !fp ) return;
-  
-  for(int n=0; n<tab; n++) fprintf(fp, "  ");
-}
-
-/**
- * DFIファイル:ヘッダー要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- */
-bool SklSolverCBC::Write_DFI_Header(FILE* fp, const unsigned tab, const std::string prefix)
-{
-  if ( !fp ) return true;
-  if ( prefix.empty() ) return false;
-  
-  if( !Write_DFI_BaseName(fp, tab+1, prefix) ) return false;
-  if (fp) fprintf(fp, "\n");
-    
-  if( !Write_DFI_MyID(fp, tab+1) ) return false;
-  if (fp) fprintf(fp, "\n");
-    
-  if( !Write_DFI_NodeNum(fp, tab+1) ) return false;
-  if (fp) fprintf(fp, "\n");
-    
-  Write_DFI_WholeSize(fp, tab+1);
-  if (fp) fprintf(fp, "\n");
-    
-  Write_DFI_NumDivDomain(fp, tab+1);
-  if (fp) fprintf(fp, "\n");
-    
-  Write_DFI_FileFormat(fp, tab+1);
-  if (fp) fprintf(fp, "\n");
-    
-  if( !Write_DFI_NodeInfo(fp, tab+1, prefix) ) return false;
-  
-  return true;
-}
-
-/**
- * DFIファイル:BaseName要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- */
-bool SklSolverCBC::Write_DFI_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
-{
-  if ( !fp ) return true;
-  if ( prefix.empty() ) return false;
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"BaseName\" dtype=\"STRING\" value=\"%s\" />\n", prefix.c_str());
-  
-  return true;
-}
-
-/**
- * DFIファイル:ノード番号要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
-bool SklSolverCBC::Write_DFI_MyID(FILE* fp, const unsigned tab)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( !fp ) return true;
-  
-  int id = para_mng->GetMyID(pn.procGrp);
-  if ( id < 0 ) return false;
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"WorldID\" dtype=\"INT\" value=\"%d\" />\n", id);
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", id);
-
-  return true;
-}
-
-/**
- * DFIファイル:ノード数要素を出力する。
- *
- * @param fp  ファイルポインタ
- * @param tab インデント
- */
-bool SklSolverCBC::Write_DFI_NodeNum(FILE* fp, const unsigned tab)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( !fp ) return true;
-  
-  // number of comm world
-  int nnum = para_mng->GetNodeNum(pn.procGrp);
-  if( nnum < 2 ) return false;
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"WorldNodeNum\" dtype=\"INT\" value=\"%d\" />\n", nnum);
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"GroupNodeNum\" dtype=\"INT\" value=\"%d\" />\n", nnum);
-  
-  return true;
-}
-
-/**
- * DFIファイル:全体ボクセルサイズ要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
-void SklSolverCBC::Write_DFI_WholeSize(FILE* fp, const unsigned tab)
-{
-  if ( !fp ) return;
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Elem name=\"WholeVoxelSize\">\n");
-  
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", size[0]);
-  
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", size[1]);
-  
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", size[2]);
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "</Elem>\n");
-}
-
-/**
- * DFIファイル:I,J,K分割数要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
-void SklSolverCBC::Write_DFI_NumDivDomain(FILE* fp, const unsigned tab)
-{
-  if ( !fp ) return;
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Elem name=\"VoxelDivMethod\">\n");
-  
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", num_div_domain[0]);
-  
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", num_div_domain[1]);
-  
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", num_div_domain[2]);
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "</Elem>\n");
-}
-
-/**
- * DFIファイル:ファイルフォーマット要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
-void SklSolverCBC::Write_DFI_FileFormat(FILE* fp, const unsigned tab)
-{
-  if ( !fp ) return;
-  
-  Write_DFI_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"Format\" dtype=\"STRING\" value=\"");
-  fprintf(fp, "sph");
-  fprintf(fp, "\" />\n");
-}
-
-/**
- * DFIファイル:ノード情報要素を出力する。
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- */
-bool SklSolverCBC::Write_DFI_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( !fp ) return true;
-  if ( prefix.empty() ) return false;
-  
-  if (fp) {
-    Write_DFI_Tab(fp, tab); 
-    fprintf(fp, "<Elem name=\"NodeInfo\">\n");
-  }
-
-  int m_np = para_mng->GetNodeNum(pn.procGrp);
-  if ( m_np < 2 ) return false;
-  
-  for (int n=0; n<m_np; n++){
-    if ( !Write_DFI_Node(fp, tab+1, n, prefix) ) return false;
-  }
-  
-  if (fp) {
-    Write_DFI_Tab(fp, tab); 
-    fprintf(fp, "</Elem>\n");
-  }
-  
-  return true;
-}
-
-/**
- * DFIファイル:ボクセル情報要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param id      対象ノードID
- * @param prefix  ファイル接頭文字
- */
-bool SklSolverCBC::Write_DFI_Node(FILE* fp, const unsigned tab, const int id, const std::string prefix)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( prefix.empty() ) return false;
-  if ( !fp ) return true;
-  
-  const char* hostname = para_mng->GetHostName(pn.ID, pn.procGrp);
-  if( !hostname ) return false;
-  
-  Write_DFI_Tab(fp, tab); 
-  fprintf(fp, "<Elem name=\"Node\">\n");
-  
-  // ID
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", id);
-  
-  // Hostname
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname);
-  
-  int hidx[3], tidx[3]; // head_index and tail_index
-  
-  if( (hidx[0] = para_mng->GetVoxelHeadIndex(id, 0, pn.procGrp)) < 0 ) return false;
-  if( (hidx[1] = para_mng->GetVoxelHeadIndex(id, 1, pn.procGrp)) < 0 ) return false;
-  if( (hidx[2] = para_mng->GetVoxelHeadIndex(id, 2, pn.procGrp)) < 0 ) return false;
-  if( (tidx[0] = para_mng->GetVoxelTailIndex(id, 0, pn.procGrp)) < 0 ) return false;
-  if( (tidx[1] = para_mng->GetVoxelTailIndex(id, 1, pn.procGrp)) < 0 ) return false;
-  if( (tidx[2] = para_mng->GetVoxelTailIndex(id, 2, pn.procGrp)) < 0 ) return false;
-  
-  // VoxelSize
-  Write_DFI_Tab(fp, tab+1); 
-  fprintf(fp, "<Elem name=\"VoxelSize\">\n");
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tidx[0] - hidx[0] + 1);
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tidx[1] - hidx[1] + 1);
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tidx[2] - hidx[2] + 1);
-  
-  Write_DFI_Tab(fp, tab+1); 
-  fprintf(fp, "</Elem>\n");
-  
-  // Head Index
-  Write_DFI_Tab(fp, tab+1); 
-  fprintf(fp, "<Elem name=\"HeadIndex\">\n");
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", hidx[0]);
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", hidx[1]);
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", hidx[2]);
-  
-  Write_DFI_Tab(fp, tab+1); 
-  fprintf(fp, "</Elem>\n");
-  
-  // Tail Index
-  Write_DFI_Tab(fp, tab+1); 
-  fprintf(fp, "<Elem name=\"TailIndex\">\n");
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tidx[0]);
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tidx[1]);
-  
-  Write_DFI_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tidx[2]);
-  
-  Write_DFI_Tab(fp, tab+1); 
-  fprintf(fp, "</Elem>\n");
-  
-  Write_DFI_Tab(fp, tab); fprintf(fp, "</Elem>\n");
-  
-  return true;
-}
-
-/**
- * DFIファイル:出力ファイル情報要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param prefix  ファイル接頭文字
- * @param tab     インデント
- * @param step    ステップ数
- */
-bool SklSolverCBC::Write_DFI_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const int step)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( !fp ) return true;
-  if ( prefix.empty() ) return false;
-
-  
-  if (fp) {
-    Write_DFI_Tab(fp, tab+1); 
-    fprintf(fp, "<Elem name=\"File\" id=\"%d\" >\n", step);
-  }
-  
-  Write_DFI_GuideCell(fp, tab+1);
-  
-  int nnum = para_mng->GetNodeNum(pn.procGrp);
-  if( nnum < 2 ) return false;
-
-  for(int n=0; n<nnum; n++){
-    if( !Write_DFI_OutFileName(fp, tab+1, prefix, step, n) ) return false;
-  }
-  
-  if (fp) {
-    Write_DFI_Tab(fp, tab+1); 
-    fprintf(fp, "</Elem>\n");
-  }
-  
-  return true;
-}
-
-                           
-/**
- * DFIファイル:ガイドセル要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param gc     ガイドセル
- */
-void SklSolverCBC::Write_DFI_GuideCell(FILE* fp, const unsigned tab)
-{
-  if( !fp ) return;
-
-  Write_DFI_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"GuideCell\" dtype=\"INT\" value=\"%d\" />\n", guide);
-}
-                           
-                           
-/**
- * DFIファイル:ファイル名要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- * @param step    ステップ数
- * @param id      対象ノードID
- */
-bool SklSolverCBC::Write_DFI_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id)
-{
-  SklParaComponent* para_cmp = SklGetParaComponent();
-  SklParaManager* para_mng = para_cmp->GetParaManager();
-  
-  if ( !fp ) return true;
-  if ( prefix.empty() ) return false;
-  
-  char fname[512];
-  char* tmp_fname = GenerateFileName(prefix, step, id);
-  if( !path_util::GetFullPathName(tmp_fname, fname, 512) ) {
-    delete [] tmp_fname;
-    para_mng->Abort(-1);
-  }
-  
-  if( !para_mng->Broadcast(fname, 512, SKL_ARRAY_DTYPE_CHAR, id, pn.procGrp) ) para_mng->Abort(-1);
-    
-    
-  if (fp) Write_DFI_Tab(fp, tab+1);
-  if (fp) fprintf(fp, "<Param name=\"FileName\" dtype=\"STRING\" value=\"%s\" id=\"%d\" />\n", fname, id);
-        
-  return true;
 }
 

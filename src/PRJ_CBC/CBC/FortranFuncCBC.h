@@ -9,7 +9,7 @@
 //@brief SklSolverCBC class
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 
 #ifndef _CBC_F_FUNC_H_
 #define _CBC_F_FUNC_H_

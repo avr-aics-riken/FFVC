@@ -9,7 +9,7 @@ Ver 1.1.7    21 Mar. 2012
   - IP_Sphere classを追加
   
 Ver 1.1.6    22 Feb. 2012
-  - SKL_REAL >> REAL_TYPE in FBDefine.h
+  - SKL_REAL >> REAL_TYPE in FB_Define.h
   
 Ver 1.1.5    19 Sep. 2011
   - Polygonクラスを追加

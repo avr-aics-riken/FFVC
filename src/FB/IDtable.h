@@ -12,7 +12,7 @@
 //@brief FlowBase IDtable class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 
 class IDtable {
 private:

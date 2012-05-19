@@ -8,7 +8,7 @@
  *
  */
 
-//@file FBDefine.h
+//@file FB_Define.h
 //@brief FlowBase Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 

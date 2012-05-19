@@ -38,7 +38,7 @@ Ver 2.5.0   7 Mar. 2012
 
 Ver 2.4.9  22 Feb. 2012
   - コンポーネントの体積率を求めるCompoFractionクラスを導入
-  - SKL_REAL >> REAL_TYPE に変更し，FBDefine.hで定義
+  - SKL_REAL >> REAL_TYPE に変更し，FB_Define.hで定義
 
 Ver 2.4.8  15 Feb. 2012
   - SklVector3D >> SklVector3DExへ変更 >> Core_Util.C, FB_util.f90, FileIO.C, Smapling.h
@@ -298,7 +298,7 @@ Ver 1.4.8   6 Apr. 2009
 
 Ver 1.4.7  24 Mar. 2009
   - IPクラス群をFB群にのみ依存するように変更
-      defineをCBS3D_ICDefine.hからFBDefine.hへ移動
+      defineをCBS3D_ICDefine.hからFB_Define.hへ移動
 
 Ver 1.4.0  12 Feb. 2009
   - FileIOクラスをFBに追加

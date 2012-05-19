@@ -16,7 +16,7 @@
 #include <vector>
 #include <cassert>
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 #include "SklUtil.h"
 #include "mydebug.h"
 #include "vec3.h"

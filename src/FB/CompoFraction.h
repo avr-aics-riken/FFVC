@@ -13,7 +13,7 @@
 //@author keno, AICS, RIKEN
 
 
-#include "FBDefine.h"
+#include "FB_Define.h"
 #include "FBUtility.h"
 #include "vec3.h"
 #include <stdio.h>

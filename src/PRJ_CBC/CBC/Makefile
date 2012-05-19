@@ -21,6 +21,7 @@ CXXSRCS = \
        NS_FS_E_CDS.C \
        PS_E_CBC.C \
        IF_TRP_VOF.C \
+       dfi.C \
 
 
 FCSRCS = \
@@ -142,6 +143,7 @@ SklSolverCBCInitialize.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCInitialize.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCInitialize.o: FortranFuncCBC.h
 SklSolverCBCInitialize.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+SklSolverCBCInitialize.o: dfi.h
 SklSolverCBCLoop.o: SklSolverCBC.h CBC_Define.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/Skl.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/endianUtil.h
@@ -211,7 +213,7 @@ SklSolverCBCLoop.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCLoop.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklSolverCBCLoop.o: CBC_SetBC.h
+SklSolverCBCLoop.o: CBC_SetBC.h dfi.h
 SklSolverCBCPost.o: SklSolverCBC.h CBC_Define.h
 SklSolverCBCPost.o: /usr/local/sphere/include/Skl.h
 SklSolverCBCPost.o: /usr/local/sphere/include/endianUtil.h
@@ -281,7 +283,7 @@ SklSolverCBCPost.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBCPost.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCPost.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCPost.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklSolverCBCPost.o: CBC_SetBC.h
+SklSolverCBCPost.o: CBC_SetBC.h dfi.h
 SklSolverCBCUsage.o: SklSolverCBC.h CBC_Define.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/Skl.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/endianUtil.h
@@ -351,7 +353,7 @@ SklSolverCBCUsage.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBCUsage.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCUsage.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklSolverCBCUsage.o: CBC_SetBC.h
+SklSolverCBCUsage.o: CBC_SetBC.h dfi.h
 SklSolverCBC.o: /usr/local/sphere/include/SklGloval.h
 SklSolverCBC.o: /usr/local/sphere/include/SklDefine.h
 SklSolverCBC.o: /usr/local/sphere/include/SklReservWord.h
@@ -421,7 +423,7 @@ SklSolverCBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklSolverCBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklSolverCBC.o: /usr/local/sphere/include/coord/SklCoord.h SklSolverCBC.h
 SklSolverCBC.o: CBC_Define.h FortranFuncCBC.h
-SklSolverCBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+SklSolverCBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
 CBC_Heat.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 CBC_Heat.o: /usr/local/sphere/include/endianUtil.h
 CBC_Heat.o: /usr/local/sphere/include/SklSolverBase.h
@@ -489,7 +491,7 @@ CBC_Heat.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 CBC_Heat.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 CBC_Heat.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 CBC_Heat.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-CBC_Heat.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+CBC_Heat.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
 CBC_SetBC.o: CBC_SetBC.h FortranFuncCBC.h CBC_Define.h
 NS_FS_E_CBC.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/endianUtil.h
@@ -558,7 +560,7 @@ NS_FS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-NS_FS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+NS_FS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
 NS_FS_E_CDS.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/endianUtil.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/SklSolverBase.h
@@ -626,7 +628,7 @@ NS_FS_E_CDS.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-NS_FS_E_CDS.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+NS_FS_E_CDS.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
 PS_E_CBC.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 PS_E_CBC.o: /usr/local/sphere/include/endianUtil.h
 PS_E_CBC.o: /usr/local/sphere/include/SklSolverBase.h
@@ -694,7 +696,7 @@ PS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 PS_E_CBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 PS_E_CBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 PS_E_CBC.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-PS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+PS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
 IF_TRP_VOF.o: SklSolverCBC.h CBC_Define.h /usr/local/sphere/include/Skl.h
 IF_TRP_VOF.o: /usr/local/sphere/include/endianUtil.h
 IF_TRP_VOF.o: /usr/local/sphere/include/SklSolverBase.h
@@ -762,4 +764,71 @@ IF_TRP_VOF.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 IF_TRP_VOF.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 IF_TRP_VOF.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 IF_TRP_VOF.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
-IF_TRP_VOF.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
+IF_TRP_VOF.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h dfi.h
+dfi.o: dfi.h /usr/local/sphere/include/Skl.h
+dfi.o: /usr/local/sphere/include/endianUtil.h
+dfi.o: /usr/local/sphere/include/SklSolverBase.h
+dfi.o: /usr/local/sphere/include/SklBase.h
+dfi.o: /usr/local/sphere/include/SklDefine.h
+dfi.o: /usr/local/sphere/include/SklReservWord.h
+dfi.o: /usr/local/sphere/include/config/SklSolverConfig.h
+dfi.o: /usr/local/sphere/include/config/SklCfgDatas.h
+dfi.o: /usr/local/sphere/include/config/SklCfgBase.h
+dfi.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
+dfi.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
+dfi.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
+dfi.o: /usr/local/sphere/include/config/SklCfgBase.h
+dfi.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
+dfi.o: /usr/local/sphere/include/config/SklCfgSteer.h
+dfi.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
+dfi.o: /usr/local/sphere/include/config/SklCfgInFile.h
+dfi.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
+dfi.o: /usr/local/sphere/include/config/SklCfgHistory.h
+dfi.o: /usr/local/sphere/include/config/SklCfgOutFile.h
+dfi.o: /usr/local/sphere/include/config/SklCfgParameter.h
+dfi.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
+dfi.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
+dfi.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
+dfi.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
+dfi.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
+dfi.o: /usr/local/sphere/include/config/SklIBCConfig.h
+dfi.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
+dfi.o: /usr/local/sphere/include/config/SklOBCConfig.h
+dfi.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
+dfi.o: /usr/local/sphere/include/config/SklMBoxConfig.h
+dfi.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
+dfi.o: /usr/local/sphere/include/config/SklMDMConfig.h
+dfi.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
+dfi.o: /usr/local/sphere/include/base/SklFileIOCntl.h
+dfi.o: /usr/local/sphere/include/config/SklCfgDatas.h
+dfi.o: /usr/local/sphere/include/base/SklOutputDataSet.h
+dfi.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
+dfi.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
+dfi.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
+dfi.o: /usr/local/sphere/include/dataclass/SklDataManager.h
+dfi.o: /usr/local/sphere/include/dataclass/SklArayBase.h
+dfi.o: /usr/local/sphere/include/dataclass/SklScalar.h
+dfi.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
+dfi.o: /usr/local/sphere/include/dataclass/SklAray.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaManager.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaIF.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaComponent.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
+dfi.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
+dfi.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
+dfi.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
+dfi.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
+dfi.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
+dfi.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
+dfi.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
+dfi.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
+dfi.o: /usr/local/sphere/include/dataclass/SklVector2D.h
+dfi.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
+dfi.o: /usr/local/sphere/include/dataclass/SklVector3D.h
+dfi.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
+dfi.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
+dfi.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
+dfi.o: /usr/local/sphere/include/coord/SklCrdMngr.h
+dfi.o: /usr/local/sphere/include/coord/SklCoord.h

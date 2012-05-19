@@ -14,7 +14,7 @@
 
 #include "Skl.h"
 #include "SklSolverBase.h"
-#include "FBDefine.h"
+#include "FB_Define.h"
 #include "SklUtil.h"
 #include <fstream>
 #include "Parallel_node.h"
@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include "FBUtility.h"
 #include "FB_Ffunc.h"
+#include <string>
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -74,7 +75,7 @@ public:
   
   
   void readPressure(FILE* fp, 
-                    char* fname, 
+                    const std::string fname, 
                     const unsigned* size, 
                     const unsigned gc,
                     REAL_TYPE* s, 
@@ -89,7 +90,7 @@ public:
                     const bool mode=true);
   
   void readVelocity(FILE* fp, 
-                    char* fname, 
+                    const std::string fname, 
                     const unsigned* size, 
                     const unsigned gc, 
                     REAL_TYPE* v, 
@@ -103,7 +104,7 @@ public:
                     const bool mode=true);
   
   void readTemperature(FILE* fp, 
-                       char* fname, 
+                       const std::string fname, 
                        const unsigned* size, 
                        const unsigned gc, 
                        REAL_TYPE* t, 
@@ -117,7 +118,7 @@ public:
                        const int guide_out,
                        const bool mode=true);
   
-  void writeScalar(char* fname, 
+  void writeScalar(const std::string fname, 
                    const unsigned* size, 
                    const unsigned gc,
                    REAL_TYPE* s, 
@@ -127,7 +128,7 @@ public:
                    const REAL_TYPE* pit, 
                    const int guide_out);
   
-  void writeVector(char* fname, 
+  void writeVector(const std::string fname, 
                    const unsigned* size, 
                    const unsigned gc, 
                    REAL_TYPE* v, 
