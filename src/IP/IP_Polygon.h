@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_POLYGON_H_
-#define _SKL_IP_POLYGON_H_
+#ifndef _IP_POLYGON_H_
+#define _IP_POLYGON_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -31,4 +31,4 @@ public:
     return ("Polygon");
   }
 };
-#endif // _SKL_IP_POLYGON_H_
+#endif // _IP_POLYGON_H_

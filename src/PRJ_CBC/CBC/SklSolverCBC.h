@@ -15,18 +15,19 @@
  (int*)&varでintで渡して，fortran内で型変換して利用する．
  */
 
-#ifndef _SKL_SOLVER_CBC_CLASS_H_
-#define _SKL_SOLVER_CBC_CLASS_H_
+#ifndef _CBC_CLASS_H_
+#define _CBC_CLASS_H_
 
 #include <iostream>
 #include <fstream>
 
 #include "FBDefine.h"
+#include "CBC_Define.h"
+
 #include "Skl.h"
 #include "SklSolverBase.h"
-#include "SklSolverCBCDefine.h"
+
 #include "FortranFuncCBC.h"
-#include "SklTiming.h"
 #include "FB_Ffunc.h"
 #include "Control.h"
 #include "ParseBC.h"
@@ -70,6 +71,8 @@
 
 // Cutlib
 #include "Cutlib.h"
+
+#include "util_Path.h"
 
 #include "omp.h"
 
@@ -363,7 +366,7 @@ public:
   bool Write_DFI_NodeInfo    (FILE* fp, const unsigned tab, const std::string prefix);
   bool Write_DFI_NodeNum     (FILE* fp, const unsigned tab);
   bool Write_DFI_OutFileInfo (FILE* fp, const unsigned tab, const std::string prefix, const int step);
-  bool Write_DFI_OutFileName (FILE* fp, const unsigned tab, const int id, const std::string prefix);
+  bool Write_DFI_OutFileName (FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id);
   
   void Write_DFI_FileFormat  (FILE* fp, const unsigned tab);
   void Write_DFI_GuideCell   (FILE* fp, const unsigned tab);
@@ -429,4 +432,4 @@ public:
   
 };
 
-#endif // _SKL_SOLVER_CBC_CLASS_H_
+#endif // _CBC_CLASS_H_

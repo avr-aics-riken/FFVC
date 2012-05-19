@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_MONITOR_H_
-#define _SKL_FB_MONITOR_H_
+#ifndef _FB_MONITOR_H_
+#define _FB_MONITOR_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -214,4 +214,4 @@ protected:
   
 };
 
-#endif // _SKL_FB_MONITOR_H_
+#endif // _FB_MONITOR_H_

@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_MATERIAL_H_
-#define _SKL_FB_MATERIAL_H_
+#ifndef _FB_MATERIAL_H_
+#define _FB_MATERIAL_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -87,4 +87,4 @@ public:
   void setState(const int key) { state = key; }
 };
 
-#endif // _SKL_FB_MATERIAL_H_
+#endif // _FB_MATERIAL_H_

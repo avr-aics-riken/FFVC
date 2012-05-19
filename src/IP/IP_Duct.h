@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_DUCT_H_
-#define _SKL_IP_DUCT_H_
+#ifndef _IP_DUCT_H_
+#define _IP_DUCT_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -51,4 +51,4 @@ public:
     return ("Duct");
   }
 };
-#endif // _SKL_IP_DUCT_H_
+#endif // _IP_DUCT_H_

@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_PPLT2D_H_
-#define _SKL_IP_PPLT2D_H_
+#ifndef _IP_PPLT2D_H_
+#define _IP_PPLT2D_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -30,4 +30,4 @@ public:
     return ("Parallel Plate 2D");
   }
 };
-#endif // _SKL_IP_PPLT2D_H_
+#endif // _IP_PPLT2D_H_

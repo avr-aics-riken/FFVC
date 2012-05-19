@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_INTVL_MNGR_H_
-#define _SKL_FB_INTVL_MNGR_H_
+#ifndef _FB_INTVL_MNGR_H_
+#define _FB_INTVL_MNGR_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -110,4 +110,4 @@ public:
     return (mode==By_step) ? true : false;
   }
 };
-#endif // _SKL_FB_INTVL_MNGR_H_
+#endif // _FB_INTVL_MNGR_H_

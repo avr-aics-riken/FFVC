@@ -1,5 +1,5 @@
-#ifndef _SKL_FORTRAN_FUNC_FB_H_
-#define _SKL_FORTRAN_FUNC_FB_H_
+#ifndef _FB_F_FUNC_H_
+#define _FB_F_FUNC_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -85,4 +85,4 @@ extern "C" {
   void fb_write_sph_v_    (REAL_TYPE* v, int* sz, int* g, char* fname, int* step, REAL_TYPE* time, REAL_TYPE* org, REAL_TYPE* pit, int* d_type, int* gs);
 }
 
-#endif // _SKL_FORTRAN_FUNC_FB_H_
+#endif // _FB_F_FUNC_H_

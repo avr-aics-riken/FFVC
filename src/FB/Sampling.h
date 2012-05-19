@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_SAMPLING_H_
-#define _SKL_FB_SAMPLING_H_
+#ifndef _FB_SAMPLING_H_
+#define _FB_SAMPLING_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -483,4 +483,4 @@ public:
 
 };
 
-#endif // _SKL_FB_SAMPLING_H_
+#endif // _FB_SAMPLING_H_

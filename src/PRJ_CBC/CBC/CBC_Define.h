@@ -5,11 +5,11 @@
  *
  */
 
-#ifndef _SKL_SOLVER_CBC_DEFINE_H_
-#define _SKL_SOLVER_CBC_DEFINE_H_
+#ifndef _CBC_DEFINE_H_
+#define _CBC_DEFINE_H_
 
-//@file SklSolverCBCDefine.h
-//@brief SklSolverCBC Definition Header
+//@file CBCDefine.h
+//@brief CBC Definition Header
 //@author keno, FSI Team, VCAD, RIKEN
 
 #define VERS_CBC   164
@@ -170,4 +170,4 @@ enum timing_key {
   tm_END
 };  
 
-#endif // _SKL_SOLVER_CBC_DEFINE_H_
+#endif // _CBC_DEFINE_H_

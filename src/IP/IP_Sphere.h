@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_SHERE_H_
-#define _SKL_IP_SHERE_H_
+#ifndef _IP_SHERE_H_
+#define _IP_SHERE_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -55,4 +55,4 @@ public:
   
   float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
 };
-#endif // _SKL_IP_SHERE_H_
+#endif // _IP_SHERE_H_

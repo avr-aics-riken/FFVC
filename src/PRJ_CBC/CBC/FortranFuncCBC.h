@@ -11,8 +11,8 @@
 
 #include "FBDefine.h"
 
-#ifndef _SKL_FORTRAN_FUNC_CBC_H_
-#define _SKL_FORTRAN_FUNC_CBC_H_
+#ifndef _CBC_F_FUNC_H_
+#define _CBC_F_FUNC_H_
 
 #ifdef _WIN32
 // cbc_poisson.f90
@@ -228,4 +228,4 @@ extern "C" {
   void cds_force_         (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, int* bid, int* id, REAL_TYPE* dh, REAL_TYPE* flop);
 }
 
-#endif // _SKL_FORTRAN_FUNC_CBC_H_
+#endif // _CBC_F_FUNC_H_

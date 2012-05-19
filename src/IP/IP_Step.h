@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_STEP_H_
-#define _SKL_IP_STEP_H_
+#ifndef _IP_STEP_H_
+#define _IP_STEP_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -42,4 +42,4 @@ public:
     return ("Back Step");
   }
 };
-#endif // _SKL_IP_STEP_H_
+#endif // _IP_STEP_H_

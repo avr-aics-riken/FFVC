@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_IDTABLE_H_
-#define _SKL_FB_IDTABLE_H_
+#ifndef _FB_IDTABLE_H_
+#define _FB_IDTABLE_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -91,4 +91,4 @@ public:
   }
 };
 
-#endif // _SKL_FB_IDTABLE_H_
+#endif // _FB_IDTABLE_H_

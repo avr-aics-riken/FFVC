@@ -240,7 +240,6 @@ SklFactoryCBC.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
 SklFactoryCBC.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 SklFactoryCBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklFactoryCBC.o: /usr/local/sphere/include/coord/SklCoord.h
-SklFactoryCBC.o: ../CBC/SklSolverCBC.h ../CBC/SklSolverCBCDefine.h
-SklFactoryCBC.o: ../CBC/FortranFuncCBC.h
-SklFactoryCBC.o: /usr/local/sphere/include/SklTiming.h
-SklFactoryCBC.o: /usr/local/sphere/include/SklUtil.h ../CBC/CBC_SetBC.h
+SklFactoryCBC.o: ../CBC/SklSolverCBC.h ../CBC/CBC_Define.h
+SklFactoryCBC.o: ../CBC/FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
+SklFactoryCBC.o: ../CBC/CBC_SetBC.h

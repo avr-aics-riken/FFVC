@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_HISTORY_H_
-#define _SKL_FB_HISTORY_H_
+#ifndef _FB_HISTORY_H_
+#define _FB_HISTORY_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -157,4 +157,4 @@ public:
   void updateTimeStamp       (const unsigned m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
 };
 
-#endif // _SKL_FB_HISTORY_H_
+#endif // _FB_HISTORY_H_

@@ -16,7 +16,6 @@ CXXSRCS = \
        ../../FB/Component.C \
        ../../FB/CompoFraction.C \
        ../../FB/Control.C \
-       ../../FB/Control_Rect.C \
        ../../FB/FBUtility.C \
        ../../FB/FileIO.C \
        ../../FB/History.C \
@@ -305,84 +304,6 @@ depend:
 ../../FB/Control.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/Control.o: ../../FB/Sampling.h ../../FB/BndOuter.h
 ../../FB/Control.o: ../../FB/Interval_Mngr.h
-../../FB/Control_Rect.o: ../../FB/Control_Rect.h ../../FB/Control.h
-../../FB/Control_Rect.o: ../../FB/FBDefine.h ../../FB/mydebug.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/Skl.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/endianUtil.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/SklSolverBase.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/SklBase.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/SklDefine.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/SklReservWord.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklSolverConfig.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgSteer.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgInFile.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgHistory.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgParameter.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklIBCConfig.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklOBCConfig.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklMBoxConfig.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklMDMConfig.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/base/SklFileIOCntl.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/base/SklOutputDataSet.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklDataManager.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklScalar.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklAray.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaComponent.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklVector2D.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklVector3D.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/coord/SklCrdMngr.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/coord/SklCoord.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-../../FB/Control_Rect.o: /usr/local/sphere/include/SklUtil.h
-../../FB/Control_Rect.o: ../../FB/Material.h ../../FB/Component.h
-../../FB/Control_Rect.o: ../../FB/FBUtility.h ../../FB/Monitor.h
-../../FB/Control_Rect.o: ../../FB/vec3.h ../../FB/vec3_func.h
-../../FB/Control_Rect.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-../../FB/Control_Rect.o: ../../FB/MonCompo.h ../../FB/basic_func.h
-../../FB/Control_Rect.o: ../../FB/Sampling.h ../../FB/BndOuter.h
-../../FB/Control_Rect.o: ../../FB/Interval_Mngr.h
 ../../FB/FBUtility.o: ../../FB/FBUtility.h ../../FB/FBDefine.h
 ../../FB/FBUtility.o: ../../FB/mydebug.h
 ../../FB/FileIO.o: ../../FB/FileIO.h /usr/local/sphere/include/Skl.h

@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_ALLOC_H_
-#define _SKL_FB_ALLOC_H_
+#ifndef _FB_ALLOC_H_
+#define _FB_ALLOC_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -45,4 +45,4 @@ public:
                          float init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
 };
 
-#endif // _SKL_FB_ALLOC_H_
+#endif // _FB_ALLOC_H_

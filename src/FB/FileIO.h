@@ -1,5 +1,5 @@
-#ifndef _SKL_FB_FILE_IO_H_
-#define _SKL_FB_FILE_IO_H_
+#ifndef _FB_FILE_IO_H_
+#define _FB_FILE_IO_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -177,4 +177,4 @@ public:
   }
   
 };
-#endif // _SKL_FB_FILE_IO_H_
+#endif // _FB_FILE_IO_H_

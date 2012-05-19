@@ -1,5 +1,5 @@
-#ifndef _SKL_CBC_SETBC_H_
-#define _SKL_CBC_SETBC_H_
+#ifndef _CBC_SETBC_H_
+#define _CBC_SETBC_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -15,7 +15,7 @@
 #include <math.h>
 #include "SetBC.h"
 #include "FortranFuncCBC.h"
-#include "SklSolverCBCDefine.h"
+#include "CBC_Define.h"
 
 class SetBC3D : public SetBC {
 public:
@@ -86,4 +86,4 @@ public:
   REAL_TYPE setDirectForcing (REAL_TYPE* v, unsigned* bx, int n, REAL_TYPE v00);
 };
 
-#endif // _SKL_C3D_SETBC_H_
+#endif // _CBC_SETBC_H_

@@ -1,5 +1,5 @@
-#ifndef _SKL_SOLVER_BINVOX_H_
-#define _SKL_SOLVER_BINVOX_H_
+#ifndef _FB_BINVOX_H_
+#define _FB_BINVOX_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -205,4 +205,4 @@ public:
   void dbg_chkBCIndexV           (unsigned* bcv, const char* fname);
 };
 
-#endif // _SKL_SOLVER_BINVOX_H_
+#endif // _FB_BINVOX_H_

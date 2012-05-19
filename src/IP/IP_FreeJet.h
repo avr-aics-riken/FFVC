@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_FREEJET_H_
-#define _SKL_IP_FREEJET_H_
+#ifndef _IP_FREEJET_H_
+#define _IP_FREEJET_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -40,4 +40,4 @@ public:
   virtual void PostInit(REAL_TYPE &checkTime, Control* R);
 };
 
-#endif // _SKL_IP_FREEJET_H_
+#endif // _IP_FREEJET_H_

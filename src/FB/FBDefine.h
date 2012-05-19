@@ -1,5 +1,5 @@
-#ifndef _SKL_SOLVER_FB_DEFINE_H_
-#define _SKL_SOLVER_FB_DEFINE_H_
+#ifndef _FB_DEFINE_H_
+#define _FB_DEFINE_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -297,4 +297,4 @@ enum Temp_Unit {
   Unit_CELSIUS
 };
 
-#endif // _SKL_SOLVER_FB_DEFINE_H_
+#endif // _FB_DEFINE_H_

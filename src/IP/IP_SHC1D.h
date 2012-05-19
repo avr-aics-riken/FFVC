@@ -1,5 +1,5 @@
-#ifndef _SKL_IP_SHC1D_H_
-#define _SKL_IP_SHC1D_H_
+#ifndef _IP_SHC1D_H_
+#define _IP_SHC1D_H_
 
 /*
  * SPHERE - Skeleton for PHysical and Engineering REsearch
@@ -33,4 +33,4 @@ public:
   }
 };
 
-#endif // _SKL_IP_SHC1D_H_
+#endif // _IP_SHC1D_H_

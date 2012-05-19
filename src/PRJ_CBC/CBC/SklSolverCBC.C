@@ -719,7 +719,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
     fb_xcopy_(ws, ap, &d_length, &scale, &flop);
   }
   
-  tmp = GenerateFileName(C.f_AvrPressure, stepAvr);
+  tmp = GenerateFileName(C.f_AvrPressure, stepAvr, pn.ID);
   strcpy(m_label, tmp);
   F.writeScalar(m_label, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
 
@@ -728,7 +728,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(vo, av, sz, gc, v00, &scale, &unit_velocity, &flop);
   
-  tmp = GenerateFileName(C.f_AvrVelocity, stepAvr);
+  tmp = GenerateFileName(C.f_AvrVelocity, stepAvr, pn.ID);
   strcpy(m_label, tmp);
   F.writeVector(m_label, size, guide, vo, stepAvr, timeAvr, m_org, m_pit, gc_out);
   
@@ -748,7 +748,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
       fb_xcopy_(ws, at, &d_length, &scale, &flop);
     }
     
-    tmp = GenerateFileName(C.f_AvrTemperature, stepAvr);
+    tmp = GenerateFileName(C.f_AvrTemperature, stepAvr, pn.ID);
     strcpy(m_label, tmp);
     F.writeScalar(m_label, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
     
@@ -818,7 +818,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
   REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
   F.cnv_Div(dc_ws, dc_wk2, coef, flop);
   
-  tmp = GenerateFileName(C.f_DivDebug, m_step);
+  tmp = GenerateFileName(C.f_DivDebug, m_step, pn.ID);
   strcpy(m_label, tmp);
   F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   
@@ -834,7 +834,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     fb_xcopy_(ws, p, &d_length, &scale, &flop);
   }
   
-  tmp = GenerateFileName(C.f_Pressure, m_step);
+  tmp = GenerateFileName(C.f_Pressure, m_step, pn.ID);
   strcpy(m_label, tmp);
   F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   
@@ -843,7 +843,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(vo, v, sz, gc, v00, &scale, &unit_velocity, &flop);
     
-  tmp = GenerateFileName(C.f_Velocity, m_step);
+  tmp = GenerateFileName(C.f_Velocity, m_step, pn.ID);
   strcpy(m_label, tmp);
   F.writeVector(m_label, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
 
@@ -863,7 +863,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
       fb_xcopy_(ws, t, &d_length, &scale, &flop);
     }
     
-    tmp = GenerateFileName(C.f_Temperature, m_step);
+    tmp = GenerateFileName(C.f_Temperature, m_step, pn.ID);
     strcpy(m_label, tmp);
     F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
     
@@ -886,7 +886,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
       if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
     }
 
-    tmp = GenerateFileName(C.f_TotalP, m_step);
+    tmp = GenerateFileName(C.f_TotalP, m_step, pn.ID);
     strcpy(m_label, tmp);
     F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
@@ -908,7 +908,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(vo, vrt, sz, gc, vz, &scale, &unit_velocity, &flop);
       
-    tmp = GenerateFileName(C.f_Vorticity, m_step);
+    tmp = GenerateFileName(C.f_Vorticity, m_step, pn.ID);
     strcpy(m_label, tmp);
     F.writeVector(m_label, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
   }
@@ -929,7 +929,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
 
-    tmp = GenerateFileName(C.f_I2VGT, m_step);
+    tmp = GenerateFileName(C.f_I2VGT, m_step, pn.ID);
     strcpy(m_label, tmp);
     F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
@@ -949,7 +949,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
       
-    tmp = GenerateFileName(C.f_Helicity, m_step);
+    tmp = GenerateFileName(C.f_Helicity, m_step, pn.ID);
     strcpy(m_label, tmp);
     F.writeScalar(m_label, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
   }
@@ -2162,7 +2162,7 @@ bool SklSolverCBC::Write_DFI_OutFileInfo(FILE* fp, const unsigned tab, const std
   if( nnum < 2 ) return false;
 
   for(int n=0; n<nnum; n++){
-    if( !Write_DFI_OutFileName(fp, tab+1, n, prefix) ) return false;
+    if( !Write_DFI_OutFileName(fp, tab+1, prefix, step, n) ) return false;
   }
   
   if (fp) {
@@ -2195,11 +2195,11 @@ void SklSolverCBC::Write_DFI_GuideCell(FILE* fp, const unsigned tab)
  *
  * @param fp      ファイルポインタ
  * @param tab     インデント
+ * @param prefix  ファイル接頭文字
  * @param step    ステップ数
  * @param id      対象ノードID
- * @param prefix  ファイル接頭文字
  */
-bool SklSolverCBC::Write_DFI_OutFileName(FILE* fp, const unsigned tab, const int step, const int id, const std::string prefix)
+bool SklSolverCBC::Write_DFI_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -2208,15 +2208,13 @@ bool SklSolverCBC::Write_DFI_OutFileName(FILE* fp, const unsigned tab, const int
   if ( prefix.empty() ) return false;
   
   char fname[512];
-  if( id == para_mng->GetMyID(pn.procGrp) ){
-    char* tmp_fname = GenerateFileName(prefix, step, id);
-    if( !path_util::SklGetFullPathName(tmp_fname, fname, 512) ) {
-      delete [] tmp_fname;
-      para_mng->Abort(-1);
-    }
+  char* tmp_fname = GenerateFileName(prefix, step, id);
+  if( !path_util::GetFullPathName(tmp_fname, fname, 512) ) {
+    delete [] tmp_fname;
+    para_mng->Abort(-1);
   }
   
-  if( !para_mng->Broadcast(fname, 512, SKL_ARRAY_DTYPE_CHAR, id, procGrp) ) para_mng->Abort(-1);
+  if( !para_mng->Broadcast(fname, 512, SKL_ARRAY_DTYPE_CHAR, id, pn.procGrp) ) para_mng->Abort(-1);
     
     
   if (fp) Write_DFI_Tab(fp, tab+1);

@@ -16,6 +16,7 @@
 #include "CompoFraction.h"
 #include "fileio/SklVoxDataSet.h"
 
+
 //@fn int SklSolverCBC::SklSolverInitialize()
 //@brief 前処理
 int
@@ -2384,7 +2385,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   // ガイド出力
   int gs = (int)C.GuideOut;
   
-  tmp = GenerateFileName(C.f_Pressure, m_step);
+  tmp = GenerateFileName(C.f_Pressure, m_step, pn.ID);
   strcpy(m_label, tmp);
   if ( !checkFile(m_label) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2402,7 +2403,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 
   
   // Instantaneous Velocity fields
-  tmp = GenerateFileName(C.f_Velocity, m_step);
+  tmp = GenerateFileName(C.f_Velocity, m_step, pn.ID);
   strcpy(m_label, tmp);
   if ( !checkFile(m_label) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2426,7 +2427,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = GenerateFileName(C.f_Temperature, m_step);
+    tmp = GenerateFileName(C.f_Temperature, m_step, pn.ID);
     strcpy(m_label, tmp);
     if ( !checkFile(m_label) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2511,7 +2512,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
-  tmp = GenerateFileName(C.f_Rough_pressure, m_step);
+  tmp = GenerateFileName(C.f_Rough_pressure, m_step, pn.ID);
   strcpy(m_label, tmp);
   if ( !checkFile(m_label) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2528,7 +2529,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = GenerateFileName(C.f_Rough_velocity, m_step);
+  tmp = GenerateFileName(C.f_Rough_velocity, m_step, pn.ID);
   strcpy(m_label, tmp);
   if ( !checkFile(m_label) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2551,7 +2552,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = GenerateFileName(C.f_Rough_temperature, m_step);
+    tmp = GenerateFileName(C.f_Rough_temperature, m_step, pn.ID);
     strcpy(m_label, tmp);
     if ( !checkFile(m_label) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2625,7 +2626,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   // Pressure > step, timeは戻り値を使用
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = GenerateFileName(C.f_AvrPressure, m_step);
+  tmp = GenerateFileName(C.f_AvrPressure, m_step, pn.ID);
   strcpy(m_label, tmp);
   if ( !checkFile(m_label) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2640,7 +2641,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   
   
   // Velocity
-  tmp = GenerateFileName(C.f_AvrVelocity, m_step);
+  tmp = GenerateFileName(C.f_AvrVelocity, m_step, pn.ID);
   strcpy(m_label, tmp);
   if ( !checkFile(m_label) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
@@ -2664,7 +2665,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = GenerateFileName(C.f_AvrTemperature, m_step);
+    tmp = GenerateFileName(C.f_AvrTemperature, m_step, pn.ID);
     strcpy(m_label, tmp);
     if ( !checkFile(m_label) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", m_label);
