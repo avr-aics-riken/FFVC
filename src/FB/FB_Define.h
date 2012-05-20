@@ -272,7 +272,7 @@
 
 // 変数の種類
 enum Kind_of_vars {
-  var_Velocity,
+  var_Velocity=0,
   var_Pressure,
   var_Temperature,
   var_Density,
@@ -282,7 +282,18 @@ enum Kind_of_vars {
   var_Temperature_Avr,
   var_Density_Avr,
   var_TotalP_Avr,
+  var_Helicity,
+  var_Vorticity,
+  var_I2vgt,
+  var_Divergence,
   var_END
+};
+
+/// スタート指定
+enum start_type {
+  initial_start=0,
+  restart,
+  coarse_restart
 };
 
 /// 圧力単位

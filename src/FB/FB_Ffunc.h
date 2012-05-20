@@ -22,8 +22,8 @@
 #define fb_copy_real_v_       FB_COPY_REAL_V
 #define fb_delta_s_           FB_DELTA_S
 #define fb_delta_v_           FB_DELTA_V
-#define fb_interp_rough_s_    FB_INTERP_ROUGH_S
-#define fb_interp_rough_v_    FB_INTERP_ROUGH_V
+#define fb_interp_coarse_s_   FB_INTERP_COARSE_S
+#define fb_interp_coarse_v_   FB_INTERP_COARSE_V
 #define fb_limit_scalar_      FB_LIMIT_SCALAR
 #define fb_minmax_s_          FB_MINMAX_S
 #define fb_minmax_v_          FB_MINMAX_V
@@ -56,8 +56,8 @@ extern "C" {
   void fb_copy_real_v_    (REAL_TYPE* dst, REAL_TYPE* src, int* sz, int* g);
   void fb_delta_s_        (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* sn, REAL_TYPE* so, int* bx, REAL_TYPE* flop);
   void fb_delta_v_        (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* vn, REAL_TYPE* vo, int* bx, REAL_TYPE* flop);
-  void fb_interp_rough_s_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* st_i, int* st_j, int* st_k);
-  void fb_interp_rough_v_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* st_i, int* st_j, int* st_k);
+  void fb_interp_coarse_s_(REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* st_i, int* st_j, int* st_k);
+  void fb_interp_coarse_v_(REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* st_i, int* st_j, int* st_k);
   void fb_limit_scalar_   (REAL_TYPE* t, int* sz, int* g);
   void fb_minmax_s_       (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* s, REAL_TYPE* flop);
   void fb_minmax_v_       (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* flop);
@@ -73,12 +73,57 @@ extern "C" {
   void fb_set_real_       (REAL_TYPE* var, int* sz, REAL_TYPE* init);
   void fb_xcopy_          (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* scale, REAL_TYPE* flop);
   
-  void fb_tmp_d2nd_       (REAL_TYPE* t, int* sz, REAL_TYPE* Base_tmp, REAL_TYPE* Diff_tm, REAL_TYPE* klv, REAL_TYPE* scale, REAL_TYPE* flop);
-  void fb_tmp_nd2d_       (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* Base_tmp, REAL_TYPE* Diff_tm, REAL_TYPE* klv, REAL_TYPE* scale, REAL_TYPE* flop);
-  void fb_prs_d2nd_       (REAL_TYPE* s, int* sz, REAL_TYPE* Base_prs, REAL_TYPE* Ref_rho, REAL_TYPE* Ref_v, REAL_TYPE* scale, REAL_TYPE* flop);
-  void fb_prs_nd2d_       (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* Base_prs, REAL_TYPE* Ref_rho, REAL_TYPE* Ref_v, REAL_TYPE* scale, REAL_TYPE* flop);
-  void fb_shift_refv_in_  (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* scale, REAL_TYPE* refv, REAL_TYPE* flop);
-  void fb_shift_refv_out_ (REAL_TYPE* vout, REAL_TYPE* vin, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* scale, REAL_TYPE* unit_v, REAL_TYPE* flop);
+  void fb_tmp_d2nd_       (REAL_TYPE* t, 
+                           int* sz, 
+                           REAL_TYPE* Base_tmp, 
+                           REAL_TYPE* Diff_tm, 
+                           REAL_TYPE* klv, 
+                           REAL_TYPE* scale, 
+                           REAL_TYPE* flop);
+  
+  void fb_tmp_nd2d_       (REAL_TYPE* dst, 
+                           REAL_TYPE* src, 
+                           int* sz, 
+                           REAL_TYPE* Base_tmp, 
+                           REAL_TYPE* Diff_tm, 
+                           REAL_TYPE* klv, 
+                           REAL_TYPE* scale, 
+                           REAL_TYPE* flop);
+  
+  void fb_prs_d2nd_       (REAL_TYPE* s, 
+                           int* sz, 
+                           REAL_TYPE* Base_prs, 
+                           REAL_TYPE* Ref_rho, 
+                           REAL_TYPE* Ref_v, 
+                           REAL_TYPE* scale, 
+                           REAL_TYPE* flop);
+  
+  void fb_prs_nd2d_       (REAL_TYPE* dst, 
+                           REAL_TYPE* src, 
+                           int* sz, 
+                           REAL_TYPE* Base_prs, 
+                           REAL_TYPE* Ref_rho, 
+                           REAL_TYPE* Ref_v, 
+                           REAL_TYPE* scale, 
+                           REAL_TYPE* flop);
+  
+  void fb_shift_refv_in_  (REAL_TYPE* v, 
+                           int* sz, 
+                           int* g, 
+                           REAL_TYPE* v00, 
+                           REAL_TYPE* scale, 
+                           REAL_TYPE* refv, 
+                           REAL_TYPE* flop);
+  
+  void fb_shift_refv_out_ (REAL_TYPE* vout, 
+                           REAL_TYPE* vin, 
+                           int* sz, 
+                           int* g, 
+                           REAL_TYPE* v00, 
+                           REAL_TYPE* scale, 
+                           REAL_TYPE* unit_v, 
+                           REAL_TYPE* flop);
+  
   void fb_read_sph_s_     (REAL_TYPE* s, 
                            int* sz, 
                            int* g, 
@@ -89,6 +134,7 @@ extern "C" {
                            int* avs,
                            int* step_avr, 
                            REAL_TYPE* time_avr);
+  
   void fb_read_sph_v_     (REAL_TYPE* v, 
                            int* sz, 
                            int* g, 
@@ -99,6 +145,7 @@ extern "C" {
                            int* avs,
                            int* step_avr, 
                            REAL_TYPE* time_avr);
+  
   void fb_write_sph_s_    (REAL_TYPE* s, 
                            int* sz, 
                            int* g, 
@@ -112,6 +159,7 @@ extern "C" {
                            int* avs,
                            int* step_avr, 
                            REAL_TYPE* time_avr);
+  
   void fb_write_sph_v_    (REAL_TYPE* v, 
                            int* sz, 
                            int* g, 

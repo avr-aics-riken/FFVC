@@ -99,6 +99,25 @@ public:
   
   int id_of_solid; // Geometry Direct Interfaceでテスト的に固定ID=2を与える
   
+  // dfi ファイル管理用 -> Kind_of_vars in FB_Define.h
+  // 同じ解像度のリスタート時には、既にdfiファイルが存在する場合には、その内容を継続する
+  // ラフリスタートの場合には、新規dfiファイルを生成する >> dfi.C
+  //  0 - var_Velocity
+  //  1 - var_Pressure,
+  //  2 - var_Temperature,
+  //  3 - var_Density,
+  //  4 - var_TotalP,
+  //  5 - var_Velocity_Avr,
+  //  6 - var_Pressure_Avr,
+  //  7 - var_Temperature_Avr,
+  //  8 - var_Density_Avr,
+  //  9 - var_TotalP_Avr,
+  // 10 - var_Helicity,
+  // 11 - var_Vorticity,
+  // 12 - var_I2vgt,
+  // 13 - var_Divergence,
+  int dfi_mng[var_END];
+  
   Control         C;
   SetBC3D         BC;
   ItrCtl          IC[ItrCtl::ic_END];
@@ -191,7 +210,7 @@ public:
   SklScalar3D<REAL_TYPE>  *dc_at;
   SklScalar3D<float>      *dc_cvf;
   
-  // Rough initial
+  // Coarse initial
   SklVector3DEx<REAL_TYPE> *dc_r_v;
   SklScalar3D<REAL_TYPE>   *dc_r_p;
   SklScalar3D<REAL_TYPE>   *dc_r_t;
@@ -203,19 +222,6 @@ public:
   SklScalar4DEx<REAL_TYPE>  *dc_cut;
   SklScalar3D<int>          *dc_bid;
   
-  // out file object
-  SklVoxDataSet *m_outPrs;
-  SklVoxDataSet *m_outUVW;
-  SklVoxDataSet *m_outTmp;
-  SklVoxDataSet *m_outAvrPrs;
-  SklVoxDataSet *m_outAvrUVW;
-  SklVoxDataSet *m_outAvrTmp;
-  SklVoxDataSet *m_outVrt;
-  SklVoxDataSet *m_outTP;
-  SklVoxDataSet *m_outVOF;
-  SklVoxDataSet *m_outI2VGT;
-  SklVoxDataSet *m_outHlcty;
-  SklVoxDataSet *m_outDiv;
 
   // (6, ix+guide*2, jx+guide*2, kx+guide*2)
   //float* cut; // Cutlibで確保する配列のポインタを受け取る
@@ -255,20 +261,20 @@ public:
   
   REAL_TYPE Norm_Poisson     (ItrCtl* IC);
   
-  void allocArray_AB2         (unsigned long &total);
-  void allocArray_average     (unsigned long &total, FILE* fp);
-  void allocArray_Collocate   (unsigned long &total);
-  void allocArray_compoVF     (unsigned long &prep, unsigned long &total);
-  void allocArray_Cut         (unsigned long &total);
-  void allocArray_forcing     (unsigned long &total);
-  void allocArray_heat        (unsigned long &total);
-  void allocArray_interface   (unsigned long &total);
-  void allocArray_LES         (unsigned long &total);
-  void allocArray_main        (unsigned long &total);
-  void allocArray_prep        (unsigned long &prep, unsigned long &total);
-  void allocArray_RK          (unsigned long &total);
-  void allocArray_RoughInitial(unsigned long &prep);
-  void allocComponentArray    (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
+  void allocArray_AB2          (unsigned long &total);
+  void allocArray_average      (unsigned long &total, FILE* fp);
+  void allocArray_Collocate    (unsigned long &total);
+  void allocArray_compoVF      (unsigned long &prep, unsigned long &total);
+  void allocArray_Cut          (unsigned long &total);
+  void allocArray_forcing      (unsigned long &total);
+  void allocArray_heat         (unsigned long &total);
+  void allocArray_interface    (unsigned long &total);
+  void allocArray_LES          (unsigned long &total);
+  void allocArray_main         (unsigned long &total);
+  void allocArray_prep         (unsigned long &prep, unsigned long &total);
+  void allocArray_RK           (unsigned long &total);
+  void allocArray_CoarseMesh   (unsigned long &prep);
+  void allocComponentArray     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   
   void AverageOutput        (REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
@@ -332,21 +338,21 @@ public:
   
   
   // ラフな初期値のロードと内挿に使用する関数
-  bool getRoughResult (
-                        int i,		// (in) 密格子　開始インデクスi
-                        int j,		// (in) 同j
-                        int k,		// (in) 同k
-                        std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
-                        std::string& rough_prefix,	// (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
-                        std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
-                        int& rough_i,	// (out) 粗格子　開始インデクスi
-                        int& rough_j,	// (out) 同j
-                        int& rough_k	// (out) 同k
+  bool getCoarseResult (
+                        int i,		                      // (in) 密格子　開始インデクスi
+                        int j,		                      // (in) 同j
+                        int k,		                      // (in) 同k
+                        std::string& coarse_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
+                        std::string& coarse_prefix,	    // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                        std::string& coarse_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
+                        int& coarse_i,	                // (out) 粗格子　開始インデクスi
+                        int& coarse_j,	                // (out) 同j
+                        int& coarse_k	                  // (out) 同k
                         );
   std::string get_strval( std::string& buffer );
   int get_intval( std::string& buffer );
-  void Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k);
-  void Restart_rough   (FILE* fp, REAL_TYPE& flop);
+  void Interpolation_from_coarse_initial(const int st_i, const int st_j, const int st_k);
+  void Restart_coarse   (FILE* fp, REAL_TYPE& flop);
 
   
   //@fn 時刻をRFクラスからv00[4]にコピーする

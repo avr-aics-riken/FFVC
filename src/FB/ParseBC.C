@@ -323,14 +323,7 @@ void ParseBC::get_Dir(const CfgElem *elmL, unsigned n, const char* str, REAL_TYP
  */
 int ParseBC::getNBC(void)
 {  
-  int nobc=0;
-  
-  nobc = CF->GetSize(INNERBND);
-  if ( nobc == 0 ) {
-    printf("\tNo Inner Boundary Conditions\n\n");
-  }
-  
-  return nobc;
+  return CF->GetSize(INNERBND);
 }
 
 

@@ -11,8 +11,8 @@
 !! @author keno, FSI Team, VCAD, RIKEN
 !<
 
-!  ****************************************************************
-!> @subroutine fb_interp_rough_s(dst, sz, g, src, st_i, st_j, st_k)
+!  *****************************************************************
+!> @subroutine fb_interp_coarse_s(dst, sz, g, src, st_i, st_j, st_k)
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
@@ -22,7 +22,7 @@
 !! @param st_j 
 !! @param st_k 
 !<
-  subroutine fb_interp_rough_s(dst, sz, g, src, st_i, st_j, st_k)
+  subroutine fb_interp_coarse_s(dst, sz, g, src, st_i, st_j, st_k)
   implicit none
   integer                                                      ::  i, j, k          ! 粗い格子のループインデクス
   integer                                                      ::  ii, jj, kk       ! 密な格子のループインデクス
@@ -139,10 +139,10 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine fb_interp_rough_s
+  end subroutine fb_interp_coarse_s
 
-!  ****************************************************************
-!> @subroutine fb_interp_rough_v(dst, sz, g, src, st_i, st_j, st_k)
+!  *****************************************************************
+!> @subroutine fb_interp_coarse_v(dst, sz, g, src, st_i, st_j, st_k)
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
@@ -152,7 +152,7 @@
 !! @param st_j 
 !! @param st_k 
 !<
-  subroutine fb_interp_rough_v(dst, sz, g, src, st_i, st_j, st_k)
+  subroutine fb_interp_coarse_v(dst, sz, g, src, st_i, st_j, st_k)
   implicit none
   integer                                                         ::  i, j, k          ! 粗い格子のループインデクス
   integer                                                         ::  ii, jj, kk       ! 密な格子のループインデクス
@@ -419,7 +419,7 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine fb_interp_rough_v
+  end subroutine fb_interp_coarse_v
 
 
 !  ******************************************************************************************************
@@ -635,7 +635,7 @@
 !! @param step_avr
 !! @param time_avr
 !<
-  subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, step_avr, time_avr)
+  subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, l, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
@@ -647,9 +647,9 @@
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
-  
-  open(16, file=fname, form='unformatted')
 
+  open(16, file=fname, form='unformatted')
+  
   read(16) sv_type, d_type
   if ( sv_type /= 2 ) then
     write(*,*) 'read error : vector'
@@ -678,11 +678,11 @@
   else
     read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
   end if
-  
+
   if ( avs == 0 ) then
     read(16) step_avr, time_avr
   end if
-  
+
   close (unit=16)
 
   return

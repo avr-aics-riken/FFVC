@@ -1413,63 +1413,55 @@ void Control::getXML_start_condition(void)
     Exit(0);
   }
   
-  if     ( !strcasecmp(str, "initial") ) Start = initial_start;
-  else if( !strcasecmp(str, "restart") ) Start = re_start;
+  if     ( !strcasecmp(str, "initial") )                  Start = initial_start;
+  else if( !strcasecmp(str, "restart") )                  Start = restart;
+  else if( !strcasecmp(str, "restart_with_coarse_data") ) Start = coarse_restart;
   else {
     stamped_printf("\tInvalid keyword is described for 'Start_Type'\n");
     Exit(0);
   }
   
-  // 粗い格子のデータを初期値として利用するモード
-  if ( !elmL1->GetValue("Restart_with_rough_data", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'Restart_with_rough_data' in 'Start_Condition'\n");
-    Exit(0);
-  }
-  if     ( !strcasecmp(str, "on") )  Mode.Rough_Initial = ON;
-  else if( !strcasecmp(str, "off") ) Mode.Rough_Initial = OFF;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Restart_with_rough_data'\n");
-    Exit(0);
-  }
-  
   // リスタート時のタイムスタンプ
-  if ( Start == re_start ) {
+  if ( (Start == restart) || (Start == coarse_restart) ) {
+    
     if ( !elmL1->GetValue("restart_step", &ct) ) {
       stamped_printf("\tParsing error : fail to get 'Restat_Step' in 'Start_Condition'\n");
       Exit(0);
     }
     Restart_step = ct;
+    
+    if ( !elmL1->GetValue("Prefix_of_Pressure", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Prefix_of_Pressure' in 'Start_Condition'\n");
+      Exit(0);
+    }
+    f_Coarse_pressure = str;
+    
+    if ( !elmL1->GetValue("Prefix_of_Velocity", &str) ) {
+      stamped_printf("\tParsing error : fail to get 'Prefix_of_Velocity' in 'Start_Condition'\n");
+      Exit(0);
+    }
+    f_Coarse_velocity = str;
+    
+    if ( isHeatProblem() ) {
+      if ( !elmL1->GetValue("Prefix_of_Temperature", &str) ) {
+        stamped_printf("\tParsing error : fail to get 'Prefix_of_Temperature' in 'Start_Condition'\n");
+        Exit(0);
+      }
+      f_Coarse_temperature = str;
+    }
+    
   }
   
   // 粗い格子を使う場合の初期値データのプリフィクス
-  if (Mode.Rough_Initial == ON) {
-    if ( !elmL1->GetValue("Prefix_of_rough_Pressure", &str) ) {
-      stamped_printf("\tParsing error : fail to get 'Prefix_of_rough_Pressure' in 'Start_Condition'\n");
-      Exit(0);
-    }
-    f_Rough_pressure = str;
-    
-    if ( !elmL1->GetValue("Prefix_of_rough_Velocity", &str) ) {
-      stamped_printf("\tParsing error : fail to get 'Prefix_of_rough_Velocity' in 'Start_Condition'\n");
-      Exit(0);
-    }
-    f_Rough_velocity = str;
-    
-    if ( isHeatProblem() ) {
-      if ( !elmL1->GetValue("Prefix_of_rough_Temperature", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'Prefix_of_rough_Temperature' in 'Start_Condition'\n");
-        Exit(0);
-      }
-      f_Rough_temperature = str;
-    }
-    
-    // プロセス並列時
-    if ( (FIO.IO_Input == IO_DISTRIBUTE) && (Start == re_start) ) {
+  if ( Start == coarse_restart ) {
+
+    // プロセス並列時にローカルでのファイル入力を指定した場合
+    if ( FIO.IO_Input == IO_DISTRIBUTE ) {
       if ( !elmL1->GetValue("dfi_file_name", &str) ) {
         stamped_printf("\tParsing error : fail to get 'DFI_file_name' in 'Start_Condition'\n");
         Exit(0);
       }
-      f_Rough_dfi = str;
+      f_Coarse_dfi = str;
     }
     
   }
@@ -2706,8 +2698,11 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     case initial_start:
       fprintf(fp,"\t     Start Condition          :   Impulsive start\n");
       break;
-    case re_start:
-      fprintf(fp,"\t     Start Condition          :   Restart from file\n");
+    case restart:
+      fprintf(fp,"\t     Start Condition          :   Restart from previous session\n");
+      break;
+    case coarse_restart:
+      fprintf(fp,"\t     Start Condition          :   Restart from coarse grid data\n");
       break;
     default:
       stamped_printf("Error: start condition section\n");
@@ -2715,27 +2710,26 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   // 粗い格子の計算結果を使ったリスタート
-  if ( Start == re_start ) {
-    if ( Mode.Rough_Initial == ON ) {
+  if ( Start == coarse_restart ) {
       
-      if ( FIO.IO_Input == IO_GATHER ) {
-        fprintf(fp,"\t     with Rough Initial files\n");
-        fprintf(fp,"\t          Pressure            :   %s\n", f_Rough_pressure.c_str());
-        fprintf(fp,"\t          Velocity            :   %s\n", f_Rough_velocity.c_str());
-        if ( isHeatProblem() ) {
-          fprintf(fp,"\t          Temperature         :   %s\n", f_Rough_temperature.c_str());
-        }
-      }
-      else {
-        fprintf(fp,"\t     with Rough Initial files\n");
-        fprintf(fp,"\t          DFI file            :   %s\n", f_Rough_dfi.c_str());
-        fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_Rough_pressure.c_str());
-        fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_Rough_velocity.c_str());
-        if ( isHeatProblem() ) {
-          fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_Rough_temperature.c_str());
-        }
+    if ( FIO.IO_Input == IO_GATHER ) {
+      fprintf(fp,"\t     with Coarse Initial data files\n");
+      fprintf(fp,"\t          Pressure            :   %s\n", f_Coarse_pressure.c_str());
+      fprintf(fp,"\t          Velocity            :   %s\n", f_Coarse_velocity.c_str());
+      if ( isHeatProblem() ) {
+        fprintf(fp,"\t          Temperature         :   %s\n", f_Coarse_temperature.c_str());
       }
     }
+    else {
+      fprintf(fp,"\t     with Coarse Initial data files\n");
+      fprintf(fp,"\t          DFI file            :   %s\n", f_Coarse_dfi.c_str());
+      fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_Coarse_pressure.c_str());
+      fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_Coarse_velocity.c_str());
+      if ( isHeatProblem() ) {
+        fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_Coarse_temperature.c_str());
+      }
+    }
+
   }
   
   

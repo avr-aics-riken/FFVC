@@ -283,7 +283,6 @@ public:
     unsigned Wall_profile;
     int Base_Medium;
     int Pshift;
-    int Rough_Initial;
   } Mode_set;
   
   // 隠しパラメータ
@@ -362,12 +361,6 @@ public:
   enum Range_Cntl {
     Range_Normal=1,
     Range_Cutoff
-  };
-  
-  /// リスタート指定
-  enum start_type {
-    initial_start,
-    re_start
   };
   
   /// 出力タイミングの指定
@@ -527,10 +520,10 @@ public:
   long TotalMemory;
   char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
   char HistoryWallName[LABEL], PolylibConfigName[LABEL], HistoryForceName[LABEL];
-  std::string f_Rough_pressure;
-  std::string f_Rough_velocity;
-  std::string f_Rough_temperature;
-  std::string f_Rough_dfi;
+  std::string f_Coarse_pressure;
+  std::string f_Coarse_velocity;
+  std::string f_Coarse_temperature;
+  std::string f_Coarse_dfi;
   
   std::string f_Velocity;
   std::string f_Pressure;
@@ -641,7 +634,6 @@ public:
     Mode.TP = 0;
     Mode.VRT = 0;
     Mode.Wall_profile = 0;
-    Mode.Rough_Initial = 0;
     
     LES.Calc=0;
     LES.Model=0;

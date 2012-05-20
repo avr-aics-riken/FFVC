@@ -701,6 +701,10 @@ SklSolverCBC::SklSolverInitialize() {
   // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> C.setParameters()の後
   BC.setControlVars(&C, mat, cmp, &RF, Ex);
   
+  if ( C.NoBC == 0 ) {
+    Hostonly_ printf("\tNo Inner Boundary Conditions\n");
+  }
+  
   // パラメータの無次元表示（正規化）に必要な参照物理量の設定
   B.setRefMedium(mat, &C);
   
@@ -884,7 +888,7 @@ SklSolverCBC::SklSolverInitialize() {
     }
 
     // DFIクラスの初期化
-    if ( !DFI.init((int*)G_size, num_div_domain, (int)guide, g_bbox_st, g_bbox_ed) ) Exit(0);
+    if ( !DFI.init((int*)G_size, num_div_domain, (int)C.GuideOut, C.Start, g_bbox_st, g_bbox_ed) ) Exit(0);
     
     // host name
     for (int n=0; n<m_np; n++){
@@ -903,51 +907,14 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   
-  // リスタート 瞬時値と平均値に分けて処理　------------------
-  if ( C.Start==Control::re_start) {
-    Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    Hostonly_ fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  // スタート処理 瞬時値と平均値に分けて処理　------------------
+  Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_ fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  
+  TIMING_start(tm_restart);
+  
+  if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
     
-    
-    // 瞬時値のロード
-    TIMING_start(tm_restart);
-    
-    if ( C.Mode.Rough_Initial == OFF ) {
-      
-      Hostonly_ fprintf(mp, "\t>> Restart from Previous Calculation Results\n\n");
-      Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculation Results\n\n");
-      
-      Restart(fp, flop_task); 
-      
-    }
-    else {
-
-      Hostonly_ fprintf(mp, "\t>> Restart from Previous Rough Calculation Results\n\n");
-      Hostonly_ fprintf(fp, "\t>> Restart from Previous Rough Calculation Results\n\n");
-      
-      // テンポラリのファイルロード
-      allocArray_RoughInitial(PrepMemory);
-
-      G_PrepMemory = PrepMemory;
-      if( para_cmp->IsParallel() ) {
-        tmp_memory = G_PrepMemory;
-        para_cmp->Allreduce(&tmp_memory, &G_PrepMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
-      }
-      Hostonly_  {
-        FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
-      }
-
-      // 粗い格子のファイルをロードし、内挿処理を行う
-      Restart_rough(fp, flop_task);
-      
-    }
-    
-    TIMING_stop(tm_restart);
-    
-    Hostonly_ fprintf(mp,"\n");
-    Hostonly_ fprintf(fp,"\n");
-  }
-  else { // 初期スタートのステップ，時間を設定する
     SklSetBaseStep(0);
     SklSetBaseTime(0.0);
     
@@ -958,7 +925,43 @@ SklSolverCBC::SklSolverInitialize() {
     double g[4];
     RF.copyV00(g);
     for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
+    
   }
+  else if ( C.Start == restart) { // 同一解像度のリスタート
+    
+    Hostonly_ fprintf(mp, "\t>> Restart from Previous Calculated Results\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
+    
+    Restart(fp, flop_task); 
+
+  }
+  else if ( C.Start == coarse_restart) { // 粗い格子からのリスタート
+    
+    Hostonly_ fprintf(mp, "\t>> Restart from Previous Results oin Coarse Mesh\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results oin Coarse Mesh\n\n");
+    
+    // テンポラリのファイルロード
+    allocArray_CoarseMesh(PrepMemory);
+    
+    G_PrepMemory = PrepMemory;
+    if( para_cmp->IsParallel() ) {
+      tmp_memory = G_PrepMemory;
+      para_cmp->Allreduce(&tmp_memory, &G_PrepMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+    }
+    Hostonly_  {
+      FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
+    }
+    
+    // 粗い格子のファイルをロードし、内挿処理を行う
+    Restart_coarse(fp, flop_task);
+    
+    Hostonly_ fprintf(mp,"\n");
+    Hostonly_ fprintf(fp,"\n");
+  }
+  
+  TIMING_stop(tm_restart);
+  
+
 
   // セッションの初期時刻をセット
   for (int i=0; i<Interval_Manager::tg_END; i++) {
@@ -1001,9 +1004,9 @@ SklSolverCBC::SklSolverInitialize() {
     }    
   }
   
-  
+
   // 平均値のロード
-  if ( C.Start==Control::re_start) {
+  if ( C.Start == restart ) {
     TIMING_start(tm_restart);
     if ( C.Mode.Average == ON ) Restart_avrerage(fp, flop_task);
     TIMING_stop(tm_restart);
@@ -1016,10 +1019,10 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.isHeatProblem() ) {
     if( !(t = dc_t->GetData()) )    return -1;
   }
- 
+
   
 	// リスタートの最大値と最小値の表示
-  if ( C.Start == Control::re_start ) {
+  if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
     Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
     REAL_TYPE f_min, f_max;
@@ -1107,7 +1110,7 @@ SklSolverCBC::SklSolverInitialize() {
 
 
   // 初期条件の条件設定
-	if ( C.Start == Control::initial_start ) {
+	if ( C.Start == initial_start ) {
 		REAL_TYPE dt_init=1.0, tm_init=0.0;
 		REAL_TYPE U0[3];
     
@@ -1197,7 +1200,7 @@ SklSolverCBC::SklSolverInitialize() {
     //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
     
   }
-    
+
   // VOF
   if ( C.BasicEqs == INCMP_2PHASE ) {
     REAL_TYPE* vof=NULL;
@@ -1283,11 +1286,11 @@ SklSolverCBC::SklSolverInitialize() {
       MO.setDataPtrs(dc_v->GetData(), dc_p->GetData());
     }
   }
-  
+
   // 初期状態のファイル出力 性能測定モードのときには出力しない
 	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
-  if ( C.Mode.Rough_Initial == ON ) FileOutput(flop_task, false);
+  if ( C.Start == coarse_restart ) FileOutput(flop_task, false);
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
@@ -1295,7 +1298,7 @@ SklSolverCBC::SklSolverInitialize() {
 		Hostonly_ fprintf(fp, "\n\tCheck mode --- Only pre-process\n\n");
     return 0;
 	}
-  
+
   // 組み込み例題の初期化
   Ex->PostInit(checkTime, &C);
   
@@ -1454,11 +1457,11 @@ void SklSolverCBC::allocArray_RK (unsigned long &total)
 
 
 /**
- @fn void SklSolverCBC::allocArray_RoughInitial(unsigned long &prep)
+ @fn void SklSolverCBC::allocArray_CoarseMesh(unsigned long &prep)
  @brief 前処理に用いる配列のアロケーション
  @param prep 前処理に使用するメモリ量
  */
-void SklSolverCBC::allocArray_RoughInitial(unsigned long &prep)
+void SklSolverCBC::allocArray_CoarseMesh(unsigned long &prep)
 {
   unsigned long mc=0;
   unsigned r_size[3];
@@ -2424,13 +2427,15 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   int i_dummy=0;
   REAL_TYPE f_dummy=0.0;
   
-  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID);
-  if ( !checkFile(tmp.c_str()) ) {
+  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
+
+  if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readPressure(fp, tmp, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
+  F.readPressure(fp, tmp, size, guide, p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
@@ -2439,15 +2444,17 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   // v00[]に値をセット
   copyV00fromRF((double)time);
 
-  
+
   // Instantaneous Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID);
-  if ( !checkFile(tmp.c_str()) ) {
+  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  
+  if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
+
   F.readVelocity(fp, tmp, size, guide, v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
-  
+
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2464,8 +2471,9 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID);
-    if ( !checkFile(tmp.c_str()) ) {
+    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
+    
+    if ( !checkFile(tmp) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
@@ -2484,12 +2492,12 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 
 
 /**
- @fn void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
+ @fn void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
  @brief 粗い格子を用いたリスタート
  @param fp ファイルポインタ
  @param flop
  */
-void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
+void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
 {
   int step;
   REAL_TYPE time;
@@ -2505,7 +2513,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   r_size[1] = size[1] / 2;
   r_size[2] = size[2] / 2;
 
-  int rgh_i, rgh_j, rgh_k;    // 粗格子の開始インデクス
+  int crs_i, crs_j, crs_k;    // 粗格子の開始インデクス
   
   //並列時には各ランクに必要なファイル名と開始インデクスを取得
   if ( C.FIO.IO_Input == IO_DISTRIBUTE ) {
@@ -2517,22 +2525,22 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     j = pn.st_idx[1];
     k = pn.st_idx[2];
     
-    // rgh_i, _j, _k には同じ値が入る 
-    prefix = C.f_Rough_pressure;
-    getRoughResult(i, j, k, C.f_Rough_dfi, prefix, C.f_Rough_pressure, rgh_i, rgh_j, rgh_k);
+    // crs_i, _j, _k には同じ値が入る 
+    prefix = C.f_Coarse_pressure;
+    getCoarseResult(i, j, k, C.f_Coarse_dfi, prefix, C.f_Coarse_pressure, crs_i, crs_j, crs_k);
     
-    prefix = C.f_Rough_velocity;
-    getRoughResult(i, j, k, C.f_Rough_dfi, prefix, C.f_Rough_velocity, rgh_i, rgh_j, rgh_k);
+    prefix = C.f_Coarse_velocity;
+    getCoarseResult(i, j, k, C.f_Coarse_dfi, prefix, C.f_Coarse_velocity, crs_i, crs_j, crs_k);
     
     if ( C.isHeatProblem() ) {
-      prefix = C.f_Rough_temperature;
-      getRoughResult(i, j, k, C.f_Rough_dfi, prefix, C.f_Rough_temperature, rgh_i, rgh_j, rgh_k);
+      prefix = C.f_Coarse_temperature;
+      getCoarseResult(i, j, k, C.f_Coarse_dfi, prefix, C.f_Coarse_temperature, crs_i, crs_j, crs_k);
     }
   }
   else {
-    rgh_i = 1;
-    rgh_j = 1;
-    rgh_k = 1;
+    crs_i = 1;
+    crs_j = 1;
+    crs_k = 1;
   }
 
   // 出力ファイル名
@@ -2551,8 +2559,8 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
-  tmp = DFI.Generate_FileName(C.f_Rough_pressure, m_step, pn.ID);
-  if ( !checkFile(tmp.c_str()) ) {
+  tmp = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
@@ -2567,8 +2575,8 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Rough_velocity, m_step, pn.ID);
-  if ( !checkFile(tmp.c_str()) ) {
+  tmp = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
@@ -2589,8 +2597,8 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = DFI.Generate_FileName(C.f_Rough_temperature, m_step, pn.ID);
-    if ( !checkFile(tmp.c_str()) ) {
+    tmp = DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
+    if ( !checkFile(tmp) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
@@ -2605,7 +2613,7 @@ void SklSolverCBC::Restart_rough (FILE* fp, REAL_TYPE& flop)
   }
   
   // 内挿処理
-  Interpolation_from_rough_initial(rgh_i, rgh_j, rgh_k);
+  Interpolation_from_coarse_initial(crs_i, crs_j, crs_k);
 
 }
 
@@ -2664,7 +2672,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, pn.ID);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
   if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
@@ -2684,7 +2692,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   
   
   // Velocity
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, pn.ID);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
   if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
@@ -2707,8 +2715,8 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, pn.ID);
-    if ( !checkFile(tmp.c_str()) ) {
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
+    if ( !checkFile(tmp) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
@@ -2977,13 +2985,13 @@ void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const u
 
 
 /**
- @fn void SklSolverCBC::Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k)
+ @fn void SklSolverCBC::Interpolation_from_coarse_initial(const int st_i, const int st_j, const int st_k)
  @param st_i 粗い格子の開始インデクス
  @param st_j 
  @param st_k 
  @brief 粗い格子を用いたリスタート値の内挿
  */
-void SklSolverCBC::Interpolation_from_rough_initial(const int st_i, const int st_j, const int st_k)
+void SklSolverCBC::Interpolation_from_coarse_initial(const int st_i, const int st_j, const int st_k)
 {
   REAL_TYPE *v = NULL;
   REAL_TYPE *p = NULL;
@@ -3001,13 +3009,13 @@ void SklSolverCBC::Interpolation_from_rough_initial(const int st_i, const int st
   if( !(r_v = dc_r_v->GetData()) )   Exit(0);
   if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
-  fb_interp_rough_s_(p, sz, gc, r_p, &i, &j, &k);
-  fb_interp_rough_v_(v, sz, gc, r_v, &i, &j, &k);
+  fb_interp_coarse_s_(p, sz, gc, r_p, &i, &j, &k);
+  fb_interp_coarse_v_(v, sz, gc, r_v, &i, &j, &k);
   
   if ( C.isHeatProblem() ) {
     if( !(t   = dc_t->GetData()) )   Exit(0);
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
-    fb_interp_rough_s_(t, sz, gc, r_t, &i, &j, &k);
+    fb_interp_coarse_s_(t, sz, gc, r_t, &i, &j, &k);
   }
 
 }
@@ -4318,25 +4326,25 @@ std::string SklSolverCBC::get_strval( std::string& buffer )
 }
 
 
-//@fn bool SklSolverCBC::getRoughResult()
+//@fn bool SklSolverCBC::getCoarseResult()
 //@note 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-bool SklSolverCBC::getRoughResult (
-                                   int i,		                    // (in) 密格子　開始インデクスi
-                                   int j,		                    // (in) 同j
-                                   int k,		                    // (in) 同k
-                                   std::string& rough_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
-                                   std::string& rough_prefix,	  // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
-                                   std::string& rough_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
-                                   int& rough_i,	                // (out) 粗格子　開始インデクスi
-                                   int& rough_j,	                // (out) 同j
-                                   int& rough_k	                // (out) 同k
-                                   )
+bool SklSolverCBC::getCoarseResult (
+                                    int i,		                     // (in) 密格子　開始インデクスi
+                                    int j,		                     // (in) 同j
+                                    int k,		                     // (in) 同k
+                                    std::string& coarse_dfi_fname, // (in) 粗格子のdfiファイル名（どのランクのものでも良い）
+                                    std::string& coarse_prefix,	   // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                                    std::string& coarse_sph_fname, // (out) ijk位置の結果を含む粗格子計算結果ファイル名
+                                    int& coarse_i,	               // (out) 粗格子　開始インデクスi
+                                    int& coarse_j,	               // (out) 同j
+                                    int& coarse_k	                 // (out) 同k
+                                    )
 {
 	// 密格子のijkを粗格子のijkに変換
 	i=i/2; j=j/2; k=k/2;
   
 	// dfiファイルを開いて
-	ifstream ifs( rough_dfi_fname.c_str() );
+	ifstream ifs( coarse_dfi_fname.c_str() );
 	if( !ifs ) return false;
 	
 	// 粗格子ijkが含まれるランクは？
@@ -4374,7 +4382,7 @@ bool SklSolverCBC::getRoughResult (
 	}
 	if( rank == -1 ) return false;
   
-	// id=rankで、rough_prefixをファイル名に含むsphファイルを探す
+	// id=rankで、coarse_prefixをファイル名に含むsphファイルを探す
   std::string fname = "";
   std::string last_fname = "";
 	char id[32];
@@ -4382,7 +4390,7 @@ bool SklSolverCBC::getRoughResult (
 	while( getline(ifs, buf) ) {
 		if( buf.find("\"FileName\"",0) != std::string::npos && buf.find(id,0) != string::npos ) {
 			fname = get_strval( buf );
-			if( fname.find(rough_prefix,0) != std::string::npos ) {
+			if( fname.find(coarse_prefix,0) != std::string::npos ) {
 				// found!
 				// ファイルの最後までスキャン。最後にマッチしたファイル
 				// が、最終タイムステップのファイルのはず
@@ -4392,9 +4400,9 @@ bool SklSolverCBC::getRoughResult (
 	}
 	if( last_fname.empty() ) return false;
   
-	rough_sph_fname = last_fname;
-	rough_i = hi;
-	rough_j = hj;
-	rough_k = hk;
+	coarse_sph_fname = last_fname;
+	coarse_i = hi;
+	coarse_j = hj;
+	coarse_k = hk;
 	return true;
 }

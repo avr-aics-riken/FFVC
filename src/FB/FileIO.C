@@ -819,30 +819,33 @@ void FileIO::readPressure(FILE* fp,
 {
   if ( fname.empty() ) Exit(0);
   
-  int len = fname.size() + 1;
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
+  char tmp[LABEL];
+  memset(tmp, 0, sizeof(char)*LABEL);
   strcpy(tmp, fname.c_str());
   
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
   
   fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  
   if ( !mode ) {
     if ( (step_avr == 0) || (time_avr <= 0.0) ) {
       Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
       Exit(0);
     }
   }
+
   
   // 有次元ファイルの場合，無次元に変換する
-  int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
-  REAL_TYPE basep = BasePrs;
-  REAL_TYPE ref_d = RefDensity;
-  REAL_TYPE ref_v = RefVelocity;
+  if ( Dmode == DIMENSIONAL ) {
+    int d_length = (size[0]+2*gc) * (size[1]+2*gc) * (size[2]+2*gc);
+    REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
+    REAL_TYPE basep = BasePrs;
+    REAL_TYPE ref_d = RefDensity;
+    REAL_TYPE ref_v = RefVelocity;
   
-  fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
+    fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
+  }
   
   if ( mode ) {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -852,10 +855,9 @@ void FileIO::readPressure(FILE* fp,
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
                           tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
-                      tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
 
-  delete [] tmp;
 }
 
 /**
@@ -906,22 +908,22 @@ void FileIO::readVelocity(FILE* fp,
 {
   if ( fname.empty() ) Exit(0);
   
-  int len = fname.size() + 1;
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
+  char tmp[LABEL];
+  memset(tmp, 0, sizeof(char)*LABEL);
   strcpy(tmp, fname.c_str());
-  
+
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
   
   fb_read_sph_v_ (v, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  
   if ( !mode ) {
     if ( (step_avr == 0) || (time_avr <= 0.0) ) {
       Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
       Exit(0);
     }
   }
-  
+
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   REAL_TYPE u0[4];
@@ -929,9 +931,9 @@ void FileIO::readVelocity(FILE* fp,
   u0[1] = v00[1];
   u0[2] = v00[2];
   u0[3] = v00[3];
-  
+
   fb_shift_refv_in_(v, (int*)size, (int*)&gc, u0, &scale, &refv, &flop);
-  
+
   if ( mode ) {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -942,7 +944,7 @@ void FileIO::readVelocity(FILE* fp,
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
                       tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
-  delete [] tmp;
+
 }
 
 /**
@@ -996,9 +998,8 @@ void FileIO::readTemperature(FILE* fp,
 {
   if ( fname.empty() ) Exit(0);
   
-  int len = fname.size() + 1;
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
+  char tmp[LABEL];
+  memset(tmp, 0, sizeof(char)*LABEL);
   strcpy(tmp, fname.c_str());
   
   int g = guide_out;
@@ -1019,7 +1020,9 @@ void FileIO::readTemperature(FILE* fp,
   REAL_TYPE diff_t = Diff_tmp;
   REAL_TYPE klv    = Kelvin;
   
-  fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
+  if ( Dmode == DIMENSIONAL ) {
+    fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
+  }
   
   if ( mode ) {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -1031,8 +1034,7 @@ void FileIO::readTemperature(FILE* fp,
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
                       tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
-  
-  delete [] tmp;
+
 }
 
 /**
@@ -1074,9 +1076,8 @@ void FileIO::writeScalar(const std::string fname,
 {
   if ( fname.empty() ) Exit(0);
   
-  int len = fname.size() + 1;
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
+  char tmp[LABEL];
+  memset(tmp, 0, sizeof(char)*LABEL);
   strcpy(tmp, fname.c_str());
   
   int stp = step;
@@ -1097,7 +1098,6 @@ void FileIO::writeScalar(const std::string fname,
   
   fb_write_sph_s_ (s, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
   
-  delete [] tmp;
 }
 
 /**
@@ -1139,9 +1139,8 @@ void FileIO::writeVector(const std::string fname,
 {
   if ( fname.empty() ) Exit(0);
   
-  int len = fname.size() + 1;
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
+  char tmp[LABEL];
+  memset(tmp, 0, sizeof(char)*LABEL);
   strcpy(tmp, fname.c_str());
   
   int stp = step;
@@ -1161,7 +1160,6 @@ void FileIO::writeVector(const std::string fname,
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
   fb_write_sph_v_ (v, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
-  
-  delete [] tmp;
+
 }
 

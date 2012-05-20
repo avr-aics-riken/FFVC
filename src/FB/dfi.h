@@ -22,12 +22,12 @@
 class DFI {
 protected:
   int Num_Node;       /// MPI並列数
-  int WriteCount;     /// FileInfoのファイル名を記述した回数（==時系列でコールされた回数）
   int my_id;          /// 自ノードのランク番号（dfiファイルの出力はランク0のみなので自明だが）
   int Gsize[3];       /// 計算領域全体の分割数
   int div_domain[3];  /// 全計算領域のノード分割数
   int procGrp;        /// プロセスグループ（デフォルト0）
   int guide;          /// ガイドセル数
+  int start_type;     /// セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2）
   int* head;          /// bboxの開始インデクス(C index) [3*Num_Node]
   int* tail;          /// bboxの終端インデクス(C index) [3*Num_Node]
   char** hostname;    /// hostname char[m_np][LABEL]
@@ -35,10 +35,10 @@ protected:
 public:
   DFI() {
     Num_Node   = 0;
-    WriteCount = 0;
     my_id      = 0;
     procGrp    = 0;
     guide      = 0;
+    start_type = -1;
     head       = NULL;
     tail       = NULL;
     hostname   = NULL;
@@ -61,7 +61,7 @@ public:
 protected:
   std::string Generate_DFI_Name(const std::string prefix, const int m_id);
   
-  bool Write_File        (const std::string dfi_name, const std::string prefix, const int step, const bool mio);
+  bool Write_File        (const std::string dfi_name, const std::string prefix, const int step, int& dfi_mng, const bool mio);
   bool Write_Header      (FILE* fp, const unsigned tab, const std::string prefix);
   bool Write_Node        (FILE* fp, const unsigned tab, const int id, const std::string prefix);
   bool Write_NodeInfo    (FILE* fp, const unsigned tab, const std::string prefix);
@@ -78,8 +78,8 @@ protected:
   void Write_WholeSize   (FILE* fp, const unsigned tab);
   
 public:
-  bool init              (const int* g_size, const int* m_div, const int gc, const int* hidx, const int* tidx);
-  bool Write_DFI_File    (const std::string prefix, const int step, const bool mio);
+  bool init              (const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx);
+  bool Write_DFI_File    (const std::string prefix, const int step, int& dfi_mng, const bool mio);
   
   std::string Generate_FileName(const std::string prefix, const int m_step, const int m_id, const bool mio=false);
   

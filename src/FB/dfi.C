@@ -13,7 +13,7 @@
 #include "util_Path.h"
 
 //@fn void DFI::init()
-bool DFI::init(const int* g_size, const int* m_div, const int gc, const int* hidx, const int* tidx)
+bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx)
 {
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
   if ( Num_Node < 2 ) {
@@ -35,6 +35,8 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int* hid
   
   guide = gc;
   
+  start_type = stype;
+  
   head = new int[3*Num_Node];
   tail = new int[3*Num_Node];
   
@@ -54,11 +56,12 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int* hid
 
 /**
  * データをファイルに書き込む。
- * @param prefix ファイル接頭文字
- * @param step   ステップ
- * @param mio    出力時の分割指定　 true = local / false = gather
+ * @param prefix  ファイル接頭文字
+ * @param step    ステップ
+ * @param dfi_mng 出力管理カウンタ
+ * @param mio     出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_DFI_File(const std::string prefix, const int step, const bool mio)
+bool DFI::Write_DFI_File(const std::string prefix, const int step, int& dfi_mng, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
 
@@ -78,7 +81,7 @@ bool DFI::Write_DFI_File(const std::string prefix, const int step, const bool mi
       return false;
     }
 
-    if( !Write_File(dfi_name, prefix, step, mio) ) {
+    if( !Write_File(dfi_name, prefix, step, dfi_mng, mio) ) {
       return false;
     }
 
@@ -147,9 +150,10 @@ std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
  * @param dfi_name  DFIファイル名
  * @param prefix    ファイル接頭文字
  * @param step      ステップ数
- * @param mio    出力時の分割指定　 true = local / false = gather
+ * @param dfi_mng   出力管理カウンタ
+ * @param mio       出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const int step, const bool mio)
+bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const int step, int& dfi_mng, const bool mio)
 {
   if ( dfi_name.empty() ) return false;
   if ( prefix.empty() ) return false;
@@ -162,8 +166,9 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     flag = true;
     fclose(fp);
   }
-      
-  if ( WriteCount == 0 ) { // カウントゼロのとき（リスタート時も） << bug
+
+  
+  if ( (dfi_mng == 0) || !flag || (start_type == coarse_restart) ) { // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
 
     if( !(fp = fopen(dfi_name.c_str(), "w")) ) {
       fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
@@ -194,8 +199,9 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     if (fp) fclose(fp);
     
   }
-  else { // file exist
+  else { // 既存ファイルが存在する、あるいはセッションが始まり既に書き込み済み >> 追記
     
+    // ファイルの内容をバッファ
     fp = fopen(dfi_name.c_str(), "r");
     
     std::string str;
@@ -213,6 +219,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
       if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
     }
     
+    // 新規ファイルを生成し、バッファを書きだしたあとにファイル情報を追記
     if( !(fp = fopen(dfi_name.c_str(), "w")) ) {
       fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
       return false;
@@ -235,7 +242,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     
   }
   
-  WriteCount++; // bug
+  dfi_mng++;
   
   return true;
 }
