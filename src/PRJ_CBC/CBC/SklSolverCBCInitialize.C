@@ -62,6 +62,9 @@ SklSolverCBC::SklSolverInitialize() {
   // 並列処理時のランク番号をセット．デフォルトで，procGrp = 0;
   pn.ID = para_mng->GetMyID(pn.procGrp);
   
+  int m_np = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
   // 並列処理モード
   setParallelism();
   std::string para_mode;
@@ -157,6 +160,13 @@ SklSolverCBC::SklSolverInitialize() {
 
   // 最初のXMLパラメータの取得
   C.getXML_Steer_1(&DT);
+  
+  // FiliIOのモードを修正
+  if ( m_np == 1 ) {
+    C.FIO.IO_Input  = IO_GATHER;
+    C.FIO.IO_Output = IO_GATHER;
+    Hostonly_ printf("\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
+  }
 
   // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する -----------------------------------------------------
   VoxelInitialize();
@@ -870,22 +880,31 @@ SklSolverCBC::SklSolverInitialize() {
 
   
   // サブドメインのbbox情報を集約する
-  int m_np = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
 
   // 並列時のみ
   if ( m_np > 1 ) {
     int* g_bbox_st = new int[3*m_np];
     int* g_bbox_ed = new int[3*m_np];
+    
+    int st_i, st_j ,st_k, ed_i, ed_j, ed_k;
 
     // head and tail index
     for (int n=0; n<m_np; n++){
-      if ( (g_bbox_st[3*n+0] = para_mng->GetVoxelHeadIndex(n, 0, pn.procGrp)) < 0 ) Exit(0);
-      if ( (g_bbox_st[3*n+1] = para_mng->GetVoxelHeadIndex(n, 1, pn.procGrp)) < 0 ) Exit(0);
-      if ( (g_bbox_st[3*n+2] = para_mng->GetVoxelHeadIndex(n, 2, pn.procGrp)) < 0 ) Exit(0);
-      if ( (g_bbox_ed[3*n+0] = para_mng->GetVoxelTailIndex(n, 0, pn.procGrp)) < 0 ) Exit(0);
-      if ( (g_bbox_ed[3*n+1] = para_mng->GetVoxelTailIndex(n, 1, pn.procGrp)) < 0 ) Exit(0);
-      if ( (g_bbox_ed[3*n+2] = para_mng->GetVoxelTailIndex(n, 2, pn.procGrp)) < 0 ) Exit(0);
+      
+      // Fortran index
+      st_i = para_mng->GetVoxelHeadIndex(n, 0, pn.procGrp) + 1;
+      st_j = para_mng->GetVoxelHeadIndex(n, 1, pn.procGrp) + 1;
+      st_k = para_mng->GetVoxelHeadIndex(n, 2, pn.procGrp) + 1;
+      ed_i = para_mng->GetVoxelTailIndex(n, 0, pn.procGrp) + 1;
+      ed_j = para_mng->GetVoxelTailIndex(n, 1, pn.procGrp) + 1;
+      ed_k = para_mng->GetVoxelTailIndex(n, 2, pn.procGrp) + 1;
+      
+      if ( (g_bbox_st[3*n+0] = st_i) < 1 ) Exit(0);
+      if ( (g_bbox_st[3*n+1] = st_j) < 1 ) Exit(0);
+      if ( (g_bbox_st[3*n+2] = st_k) < 1 ) Exit(0);
+      if ( (g_bbox_ed[3*n+0] = ed_i) < 1 ) Exit(0);
+      if ( (g_bbox_ed[3*n+1] = ed_j) < 1 ) Exit(0);
+      if ( (g_bbox_ed[3*n+2] = ed_k) < 1 ) Exit(0);
     }
 
     // DFIクラスの初期化
@@ -1288,10 +1307,11 @@ SklSolverCBC::SklSolverInitialize() {
     }
   }
 
-  // 初期状態のファイル出力 性能測定モードのときには出力しない
-	//if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
+  // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
+	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
-  //if ( C.Start == coarse_restart ) FileOutput(flop_task, false);
+  // 粗い格子を用いたリスタート時には出力
+  if ( C.Start == coarse_restart ) FileOutput(flop_task, true);
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
@@ -2544,10 +2564,14 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     crs_i = 1;
     crs_j = 1;
     crs_k = 1;
+    f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.ID);
+    f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.ID);
+    if ( C.isHeatProblem() )
+      f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID);
   }
   
-  //printf("%s %d %d %d\n", f_prs.c_str(), crs_i, crs_j, crs_k);
-  //printf("%s %d %d %d\n", f_vel.c_str(), crs_i, crs_j, crs_k);
+  printf("%s %d %d %d\n", f_prs.c_str(), crs_i, crs_j, crs_k);
+  printf("%s %d %d %d\n", f_vel.c_str(), crs_i, crs_j, crs_k);
   
   // ガイド出力
   int gs = (int)C.GuideOut;

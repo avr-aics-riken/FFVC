@@ -1778,6 +1778,9 @@ void Control::getXML_Steer_1(DTcntl* DT)
   
   // モニターのON/OFF 詳細パラメータはgetXML_Monitor()で行う
   getXML_Sampling();
+  
+  // ファイル入出力に関するパラメータ
+  getXML_FileIO();
 }
 
 /**
@@ -1829,10 +1832,7 @@ void Control::getXML_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   // 性能測定モードの処理　***隠しパラメータ
   getXML_PMtest();
   
-  // ファイル入出力に関するパラメータ steer1()から移動
-  getXML_FileIO();
-  
-  // ラフな初期値を使い、リスタートするモード指定
+  // ラフな初期値を使い、リスタートするモード指定 >> FileIO
   getXML_start_condition();
 }
 

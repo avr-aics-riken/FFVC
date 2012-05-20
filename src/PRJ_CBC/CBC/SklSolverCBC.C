@@ -764,13 +764,13 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
 }
 
 /**
- @fn void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
+ @fn void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
  @brief ファイル出力
  @param flop 浮動小数点演算数
- @param dfi  dfiファイル出力の指示（trueの場合出力、default=true）
+ @param restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
  @note dc_p0をワークとして使用
  */
-void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
+void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
 {
   REAL_TYPE scale = 1.0;
   int d_length;
@@ -821,20 +821,26 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
   // 出力ファイル名
   std::string tmp;
   
+  // 並列出力モード
+  bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
+  
   // Divergence デバッグ用なので無次元のみ
   if ( C.FIO.Div_Debug == ON ) {
     
     REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
     F.cnv_Div(dc_ws, dc_wk2, coef, flop);
     
-    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.ID, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.ID, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-    if ( dfi ) {
-      Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], (bool)C.FIO.IO_Output) ) Exit(0);
-    }
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], pout) ) Exit(0);
     
   }
 
+  // リスタート用
+  std::string prs_restart("prs_restart_");
+  std::string vel_restart("vel_restart_");
+  std::string temp_restart("temp_restart_");
   
   // Pressure
   d_length = (int)dc_ws->GetArrayLength();
@@ -847,21 +853,32 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
     fb_xcopy_(ws, p, &d_length, &scale, &flop);
   }
   
-  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID, (bool)C.FIO.IO_Output);
-  F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-  if ( dfi ) {
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Pressure, m_step, dfi_mng[var_Pressure], (bool)C.FIO.IO_Output) ) Exit(0);
+  if ( !restart ) {
+    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID, pout);
   }
+  else {
+    tmp = DFI.Generate_FileName(prs_restart, m_step, pn.ID, pout);
+  }
+  
+  F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+  
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Pressure, m_step, dfi_mng[var_Pressure], pout) ) Exit(0);
+
 
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(vo, v, sz, gc, v00, &scale, &unit_velocity, &flop);
-    
-  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID, (bool)C.FIO.IO_Output);
-  F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
-  if ( dfi ) {
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], (bool)C.FIO.IO_Output) ) Exit(0);
+  
+  if ( !restart ) {
+    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID, pout);
   }
+  else {
+    tmp = DFI.Generate_FileName(vel_restart, m_step, pn.ID, pout);
+  }
+  
+  F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
+  
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], pout) ) Exit(0);
 
 
   // Tempearture
@@ -879,11 +896,16 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
       fb_xcopy_(ws, t, &d_length, &scale, &flop);
     }
     
-    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID, (bool)C.FIO.IO_Output);
-    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-    if ( dfi ) {
-      Hostonly_ if ( !DFI.Write_DFI_File(C.f_Temperature, m_step, dfi_mng[var_Temperature], (bool)C.FIO.IO_Output) ) Exit(0);
+    if ( !restart ) {
+      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID, pout);
     }
+    else {
+      tmp = DFI.Generate_FileName(temp_restart, m_step, pn.ID, pout);
+    }
+    
+    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Temperature, m_step, dfi_mng[var_Temperature], pout) ) Exit(0);
   }
   
   
@@ -903,11 +925,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
       if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
     }
 
-    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, pn.ID, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, pn.ID, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-    if ( dfi ) {
-      Hostonly_ if ( !DFI.Write_DFI_File(C.f_TotalP, m_step, dfi_mng[var_TotalP], (bool)C.FIO.IO_Output) ) Exit(0);
-    }
+
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_TotalP, m_step, dfi_mng[var_TotalP], pout) ) Exit(0);
   }
   
   
@@ -927,11 +948,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(vo, vrt, sz, gc, vz, &scale, &unit_velocity, &flop);
       
-    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, pn.ID, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, pn.ID, pout);
     F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
-    if ( dfi ) {
-      Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], (bool)C.FIO.IO_Output) ) Exit(0);
-    }
+
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
   }
   
   
@@ -950,11 +970,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
 
-    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, pn.ID, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, pn.ID, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-    if ( dfi ) {
-      Hostonly_ if ( !DFI.Write_DFI_File(C.f_I2VGT, m_step, dfi_mng[var_I2vgt], (bool)C.FIO.IO_Output) ) Exit(0);
-    }
+
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_I2VGT, m_step, dfi_mng[var_I2vgt], pout) ) Exit(0);
   }
   
   // Helicity
@@ -972,11 +991,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
       
-    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, pn.ID, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, pn.ID, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-    if ( dfi ) {
-      Hostonly_ if ( !DFI.Write_DFI_File(C.f_Helicity, m_step, dfi_mng[var_Helicity], (bool)C.FIO.IO_Output) ) Exit(0);
-    }
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Helicity, m_step, dfi_mng[var_Helicity], pout) ) Exit(0);
   }
   
 }

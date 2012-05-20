@@ -175,21 +175,26 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   }
   
   // 瞬時値のデータ出力
+  TIMING_start(tm_file_out);
   if ( C.Interval[Interval_Manager::tg_instant].isTriggered(loop_step, loop_time) ) {
-    TIMING_start(tm_file_out);
     
     flop_count=0.0;
     
     // 通常
-    FileOutput(flop_count);
-    
-    // 最終ステップ
-    if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) { 
-      FileOutput(flop_count, false);
-    }
-
-    TIMING_stop(tm_file_out, flop_count);  
+    FileOutput(flop_count);     
   }
+  
+  // 最終ステップ
+  if ( m_currentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) {
+    
+    // 指定間隔の出力がない場合のみ（重複を避ける）
+    if ( !C.Interval[Interval_Manager::tg_instant].isTriggered(loop_step, loop_time) ) {
+      FileOutput(flop_count);
+    }
+  }
+  
+  TIMING_stop(tm_file_out, flop_count); 
+  
   
   // 平均値のデータ出力 >　アルゴいまいち
   if (C.Mode.Average == ON) {
