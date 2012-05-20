@@ -819,12 +819,18 @@ void FileIO::readPressure(FILE* fp,
 {
   if ( fname.empty() ) Exit(0);
   
-  char tmp[LABEL];
-  memset(tmp, 0, sizeof(char)*LABEL);
+  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+    Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
+    Exit(0);
+  }
+
+  char tmp[FB_FILE_PATH_LENGTH];
+  memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   strcpy(tmp, fname.c_str());
-  
+
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
+  //printf("%s %d\n", tmp, strlen(tmp));
   
   fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
   
@@ -908,8 +914,13 @@ void FileIO::readVelocity(FILE* fp,
 {
   if ( fname.empty() ) Exit(0);
   
-  char tmp[LABEL];
-  memset(tmp, 0, sizeof(char)*LABEL);
+  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+    Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
+    Exit(0);
+  }
+  
+  char tmp[FB_FILE_PATH_LENGTH];
+  memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   strcpy(tmp, fname.c_str());
 
   int g = guide_out;
@@ -998,8 +1009,13 @@ void FileIO::readTemperature(FILE* fp,
 {
   if ( fname.empty() ) Exit(0);
   
-  char tmp[LABEL];
-  memset(tmp, 0, sizeof(char)*LABEL);
+  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+    Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
+    Exit(0);
+  }
+  
+  char tmp[FB_FILE_PATH_LENGTH];
+  memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   strcpy(tmp, fname.c_str());
   
   int g = guide_out;
@@ -1076,10 +1092,16 @@ void FileIO::writeScalar(const std::string fname,
 {
   if ( fname.empty() ) Exit(0);
   
-  char tmp[LABEL];
-  memset(tmp, 0, sizeof(char)*LABEL);
-  strcpy(tmp, fname.c_str());
+  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+    Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
+    Exit(0);
+  }
   
+  
+  char tmp[FB_FILE_PATH_LENGTH];
+  memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
+  strcpy(tmp, fname.c_str());
+
   int stp = step;
   REAL_TYPE tm = time;
   int g = guide_out;
@@ -1139,8 +1161,13 @@ void FileIO::writeVector(const std::string fname,
 {
   if ( fname.empty() ) Exit(0);
   
-  char tmp[LABEL];
-  memset(tmp, 0, sizeof(char)*LABEL);
+  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+    Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
+    Exit(0);
+  }
+  
+  char tmp[FB_FILE_PATH_LENGTH];
+  memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   strcpy(tmp, fname.c_str());
   
   int stp = step;

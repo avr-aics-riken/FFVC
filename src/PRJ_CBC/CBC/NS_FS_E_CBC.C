@@ -257,18 +257,18 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   BC.OuterVBC_Periodic(dc_vc);
   BC.InnerVBC_Periodic(dc_vc, dc_bcd);
   TIMING_stop(tm_pvec_BC, flop_count);
-  
+  mark();
   // 疑似ベクトルの同期
   if ( para_mng->IsParallel() ) {
     TIMING_start(tm_pvec_comm);
     if ( !dc_vc->CommBndCell(1) ) Exit(0); // 1 layer communication
     TIMING_stop(tm_pvec_comm, comm_size*1.0*3.0); // ガイドセル数 x ベクトル
   }
-  
+  mark();
   TIMING_stop(tm_frctnl_stp_sct_3, 0.0);
   // <<< Fractional step subsection 3
   
-
+  mark();
   
   // >>> Fractional step sub-section 4
   TIMING_start(tm_frctnl_stp_sct_4);
@@ -293,7 +293,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_frctnl_stp_sct, 0.0);
   // <<< Fractional step section
   
-
+  mark();
   
   // Poissonのソース部分
   // >>> Poisson Source section
@@ -345,7 +345,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
   
-
+  mark();
   
   // VP-Iteration
   // >>> Poisson Iteration section
@@ -484,7 +484,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_poi_itr_sct, 0.0);
   // <<< Poisson Iteration section
   
-  
+  mark();
   
   /// >>> NS Loop post section
   TIMING_start(tm_NS_loop_post_sct);

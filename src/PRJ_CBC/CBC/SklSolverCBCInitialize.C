@@ -16,6 +16,7 @@
 #include "CompoFraction.h"
 #include "fileio/SklVoxDataSet.h"
 #include <unistd.h> // for gethostname() and sleep()
+#include "util_Path.h"
 
 
 //@fn int SklSolverCBC::SklSolverInitialize()
@@ -937,8 +938,8 @@ SklSolverCBC::SklSolverInitialize() {
   }
   else if ( C.Start == coarse_restart) { // 粗い格子からのリスタート
     
-    Hostonly_ fprintf(mp, "\t>> Restart from Previous Results oin Coarse Mesh\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results oin Coarse Mesh\n\n");
+    Hostonly_ fprintf(mp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
     
     // テンポラリのファイルロード
     allocArray_CoarseMesh(PrepMemory);
@@ -1288,9 +1289,9 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // 初期状態のファイル出力 性能測定モードのときには出力しない
-	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
+	//if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
-  if ( C.Start == coarse_restart ) FileOutput(flop_task, false);
+  //if ( C.Start == coarse_restart ) FileOutput(flop_task, false);
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
@@ -2515,26 +2516,28 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
 
   int crs_i, crs_j, crs_k;    // 粗格子の開始インデクス
   
+  // ステップ数 > ファイル名用
+  int m_step = (int)C.Restart_step;
+  
+  std::string f_prs;
+  std::string f_vel;
+  std::string f_temp;
+  
   //並列時には各ランクに必要なファイル名と開始インデクスを取得
   if ( C.FIO.IO_Input == IO_DISTRIBUTE ) {
     
-    std::string prefix;
     int i, j, k;  // 密格子のローカル開始インデクス
-    
     i = pn.st_idx[0];
     j = pn.st_idx[1];
     k = pn.st_idx[2];
     
     // crs_i, _j, _k には同じ値が入る 
-    prefix = C.f_Coarse_pressure;
-    getCoarseResult(i, j, k, C.f_Coarse_dfi, prefix, C.f_Coarse_pressure, crs_i, crs_j, crs_k);
-    
-    prefix = C.f_Coarse_velocity;
-    getCoarseResult(i, j, k, C.f_Coarse_dfi, prefix, C.f_Coarse_velocity, crs_i, crs_j, crs_k);
+    getCoarseResult(i, j, k, C.f_Coarse_dfi_prs, C.f_Coarse_pressure, m_step, f_prs, crs_i, crs_j, crs_k);
+
+    getCoarseResult(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, m_step, f_vel, crs_i, crs_j, crs_k);
     
     if ( C.isHeatProblem() ) {
-      prefix = C.f_Coarse_temperature;
-      getCoarseResult(i, j, k, C.f_Coarse_dfi, prefix, C.f_Coarse_temperature, crs_i, crs_j, crs_k);
+      getCoarseResult(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, m_step, f_temp, crs_i, crs_j, crs_k);
     }
   }
   else {
@@ -2542,15 +2545,13 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     crs_j = 1;
     crs_k = 1;
   }
-
-  // 出力ファイル名
-  std::string tmp;
+  
+  //printf("%s %d %d %d\n", f_prs.c_str(), crs_i, crs_j, crs_k);
+  //printf("%s %d %d %d\n", f_vel.c_str(), crs_i, crs_j, crs_k);
   
   // ガイド出力
   int gs = (int)C.GuideOut;
   
-  // ステップ数 > ファイル名用
-  int m_step = (int)C.Restart_step;
   
   // dummy
   int i_dummy=0;
@@ -2559,13 +2560,14 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
-  tmp = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
-  if ( !checkFile(tmp) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+  //f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  if ( !checkFile(f_prs) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", f_prs.c_str());
     Exit(0);
   }
-  F.readPressure(fp, tmp, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
-  
+
+  F.readPressure(fp, f_prs, r_size, guide, r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   SklSetBaseStep(step);
   SklSetBaseTime(time);
@@ -2575,12 +2577,12 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
-  if ( !checkFile(tmp) ) {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+  //f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  if ( !checkFile(f_vel) ) {
+    Hostonly_ printf("\n\tError : File open '%s'\n", f_vel.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, tmp, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, f_vel, r_size, guide, r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -2597,12 +2599,12 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
-    if ( !checkFile(tmp) ) {
-      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    //f_temp = DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
+    if ( !checkFile(f_temp) ) {
+      Hostonly_ printf("\n\tError : File open '%s'\n", f_temp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    F.readTemperature(fp, f_temp, r_size, guide, r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     if ( (step != SklGetTotalStep()) || (time != (REAL_TYPE)SklGetTotalTime()) ) {
@@ -4332,8 +4334,9 @@ bool SklSolverCBC::getCoarseResult (
                                     int i,		                     // (in) 密格子　開始インデクスi
                                     int j,		                     // (in) 同j
                                     int k,		                     // (in) 同k
-                                    std::string& coarse_dfi_fname, // (in) 粗格子のdfiファイル名（どのランクのものでも良い）
+                                    std::string& coarse_dfi_fname, // (in) 粗格子のdfiファイル名（どの変数のものでも良い）
                                     std::string& coarse_prefix,	   // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                                    const int m_step,              // (in) 探索するステップ数
                                     std::string& coarse_sph_fname, // (out) ijk位置の結果を含む粗格子計算結果ファイル名
                                     int& coarse_i,	               // (out) 粗格子　開始インデクスi
                                     int& coarse_j,	               // (out) 同j
@@ -4343,6 +4346,12 @@ bool SklSolverCBC::getCoarseResult (
 	// 密格子のijkを粗格子のijkに変換
 	i=i/2; j=j/2; k=k/2;
   
+  // ステップ数の文字列を生成
+  char tmp[10]; // 10 digit
+  memset(tmp, 0, sizeof(char)*10);
+  sprintf(tmp, "%010d", m_step);
+  std::string step(tmp);
+  
 	// dfiファイルを開いて
 	ifstream ifs( coarse_dfi_fname.c_str() );
 	if( !ifs ) return false;
@@ -4350,8 +4359,15 @@ bool SklSolverCBC::getCoarseResult (
 	// 粗格子ijkが含まれるランクは？
   std::string buf;
 	int rank = -1;
-	int hi, hj, hk, ti, tj, tk;
+	int hi, hj, hk, ti, tj, tk, np;
+
+  
 	while( getline(ifs, buf) ) {
+
+    //if( buf.find("\"WorldNodeNum\"",0) != string::npos ) {
+    //  np = get_intval( buf );	
+    //}
+    
 		if( buf.find("\"GroupID\"",0) != string::npos ) {
 			rank = get_intval( buf );
       
@@ -4382,25 +4398,33 @@ bool SklSolverCBC::getCoarseResult (
 	}
 	if( rank == -1 ) return false;
   
+  //int mm;
+  //MPI_Comm_size(MPI_COMM_WORLD, &mm); printf("nnum = %d\n", np);
+  //if ( np != mm ) {
+  //  Hostonly_ printf("Error : The number of nodes in between previous[%d] and this[%d] session is different.\n", np, mm);
+  //  Exit(0);
+  //}
+  
 	// id=rankで、coarse_prefixをファイル名に含むsphファイルを探す
   std::string fname = "";
-  std::string last_fname = "";
+  std::string target = "";
 	char id[32];
-	sprintf(id, "id=\"%d\"", rank); 
+	sprintf(id, "id=\"%d\"", rank);
+  
 	while( getline(ifs, buf) ) {
 		if( buf.find("\"FileName\"",0) != std::string::npos && buf.find(id,0) != string::npos ) {
 			fname = get_strval( buf );
-			if( fname.find(coarse_prefix,0) != std::string::npos ) {
-				// found!
-				// ファイルの最後までスキャン。最後にマッチしたファイル
-				// が、最終タイムステップのファイルのはず
-				last_fname = fname;
+			if( (fname.find(coarse_prefix,0) != std::string::npos) && (fname.find(step,0) != std::string::npos) ) {
+        target = fname;
+        break;
 			}
 		}
 	}
-	if( last_fname.empty() ) return false;
+
+  if( target.empty() ) return false;
+  //printf("%s\n", target.c_str());
   
-	coarse_sph_fname = last_fname;
+  coarse_sph_fname = target;
 	coarse_i = hi;
 	coarse_j = hj;
 	coarse_k = hk;

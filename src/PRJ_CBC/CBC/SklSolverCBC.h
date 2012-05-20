@@ -344,6 +344,7 @@ public:
                         int k,		                      // (in) 同k
                         std::string& coarse_dfi_fname,	// (in) 粗格子のdfiファイル名（どのランクのものでも良い）
                         std::string& coarse_prefix,	    // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+                        const int m_step,               // (in) 探索するステップ数
                         std::string& coarse_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
                         int& coarse_i,	                // (out) 粗格子　開始インデクスi
                         int& coarse_j,	                // (out) 同j

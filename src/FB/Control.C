@@ -1457,11 +1457,26 @@ void Control::getXML_start_condition(void)
 
     // プロセス並列時にローカルでのファイル入力を指定した場合
     if ( FIO.IO_Input == IO_DISTRIBUTE ) {
-      if ( !elmL1->GetValue("dfi_file_name", &str) ) {
-        stamped_printf("\tParsing error : fail to get 'DFI_file_name' in 'Start_Condition'\n");
+      
+      if ( !elmL1->GetValue("dfi_file_pressure", &str) ) {
+        stamped_printf("\tParsing error : fail to get 'DFI_file_pressure' in 'Start_Condition'\n");
         Exit(0);
       }
-      f_Coarse_dfi = str;
+      f_Coarse_dfi_prs = str;
+      
+      if ( !elmL1->GetValue("dfi_file_velocity", &str) ) {
+        stamped_printf("\tParsing error : fail to get 'DFI_file_velocity' in 'Start_Condition'\n");
+        Exit(0);
+      }
+      f_Coarse_dfi_vel = str;
+      
+      if ( isHeatProblem() ) {
+        if ( !elmL1->GetValue("dfi_file_temperature", &str) ) {
+          stamped_printf("\tParsing error : fail to get 'DFI_file_temperature' in 'Start_Condition'\n");
+          Exit(0);
+        }
+        f_Coarse_dfi_temp = str;
+      }
     }
     
   }
@@ -2722,7 +2737,11 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
     }
     else {
       fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          DFI file            :   %s\n", f_Coarse_dfi.c_str());
+      fprintf(fp,"\t          DFI file Pressure   :   %s\n", f_Coarse_dfi_prs.c_str());
+      fprintf(fp,"\t          DFI file Velocity   :   %s\n", f_Coarse_dfi_vel.c_str());
+      if ( isHeatProblem() ) {
+        fprintf(fp,"\t          DFI file Temperature:   %s\n", f_Coarse_dfi_temp.c_str());
+      }
       fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_Coarse_pressure.c_str());
       fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_Coarse_velocity.c_str());
       if ( isHeatProblem() ) {

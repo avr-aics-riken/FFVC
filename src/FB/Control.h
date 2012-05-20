@@ -523,7 +523,9 @@ public:
   std::string f_Coarse_pressure;
   std::string f_Coarse_velocity;
   std::string f_Coarse_temperature;
-  std::string f_Coarse_dfi;
+  std::string f_Coarse_dfi_prs;
+  std::string f_Coarse_dfi_vel;
+  std::string f_Coarse_dfi_temp;
   
   std::string f_Velocity;
   std::string f_Pressure;

@@ -12,7 +12,7 @@
 !<
 
 integer     ::  Active, State, id_fluid, id_solid
-integer     ::  bc_diag, bc_mask30
+integer     ::  bc_diag, bc_mask30, file_path_length
 integer     ::  bc_d_T, bc_d_B, bc_d_N, bc_d_S, bc_d_E, bc_d_W
 integer     ::  bc_n_T, bc_n_B, bc_n_N, bc_n_S, bc_n_E, bc_n_W
 integer     ::  bc_ndag_T, bc_ndag_B, bc_ndag_N, bc_ndag_S, bc_ndag_E, bc_ndag_W
@@ -124,4 +124,8 @@ parameter ( obc_periodic = 5 ) ! FB_Define.h OBC_PERIODIC
 ! 体積率
 parameter ( top_vf      = 20) ! FB_Define.h TOP_VF
 parameter ( forcing_bit = 28) ! FB_Define.h FORCING_BIT
+
+! ファイルパスの長さ
+parameter ( file_path_length = 64 ) ! #define FB_FILE_PATH_LENGTH 64
+
 

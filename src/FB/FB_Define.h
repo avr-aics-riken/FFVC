@@ -39,6 +39,7 @@
 #define ON          1
 #define OFF         0
 #define DETAIL      2
+#define FB_FILE_PATH_LENGTH 64
 
 // IO mode
 #define IO_GATHER     0 // bool => false

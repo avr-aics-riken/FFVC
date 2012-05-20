@@ -441,13 +441,14 @@
 !<
   subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
   implicit none
+  include 'cbc_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  time, time_avr
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
   real, dimension(3)                                        ::  org, pit
-  character*64                                              ::  fname
+  character*file_path_length                                ::  fname
 
   ix = sz(1)
   jx = sz(2)
@@ -507,13 +508,14 @@
 !<
   subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
   implicit none
+  include 'cbc_f_params.h'
   integer                                                   ::  i, j, k, l, ix, jx, kx, g, step, gs, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  time, time_avr
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(3)                                        ::  org, pit
-  character*64                                              ::  fname
+  character*file_path_length                                ::  fname
 
   ix = sz(1)
   jx = sz(2)
@@ -570,17 +572,18 @@
 !<
   subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
   implicit none
+  include 'cbc_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
-  character*64                                              ::  fname
+  character*file_path_length                                ::  fname
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
-  
+
   open(16, file=fname, form='unformatted')
 
   read(16) sv_type, d_type
@@ -590,6 +593,7 @@
   end if
   
   read(16) imax, jmax, kmax
+  !write (*,*) imax, jmax, kmax, ix, jx, kx
   if ( gs == 0 ) then
     if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
       write(*,*) 'read error : size'
@@ -637,12 +641,13 @@
 !<
   subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
   implicit none
+  include 'cbc_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, l, step_avr, avs
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
-  character*64                                              ::  fname
+  character*file_path_length                                ::  fname
 
   ix = sz(1)
   jx = sz(2)

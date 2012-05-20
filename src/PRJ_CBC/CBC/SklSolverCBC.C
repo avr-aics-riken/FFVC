@@ -822,14 +822,19 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool dfi)
   std::string tmp;
   
   // Divergence デバッグ用なので無次元のみ
-  REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
-  F.cnv_Div(dc_ws, dc_wk2, coef, flop);
-  
-  tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.ID, (bool)C.FIO.IO_Output);
-  F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
-  if ( dfi ) {
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], (bool)C.FIO.IO_Output) ) Exit(0);
+  if ( C.FIO.Div_Debug == ON ) {
+    
+    REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
+    F.cnv_Div(dc_ws, dc_wk2, coef, flop);
+    
+    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.ID, (bool)C.FIO.IO_Output);
+    F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
+    if ( dfi ) {
+      Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], (bool)C.FIO.IO_Output) ) Exit(0);
+    }
+    
   }
+
   
   // Pressure
   d_length = (int)dc_ws->GetArrayLength();

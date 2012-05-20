@@ -549,13 +549,14 @@ void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
  */
 bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id, const bool mio)
 {
-  char fname[512];
-  memset(fname, 0, sizeof(char)*512);
+  char fname[FB_FILE_PATH_LENGTH];
+  memset(fname, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   std::string tmp = Generate_FileName(prefix, step, id, mio);
 
-  if( !path_util::GetFullPathName(tmp.c_str(), fname, 512) ) {
-    return false;
-  }
+  //if( !path_util::GetFullPathName(tmp.c_str(), fname, FB_FILE_PATH_LENGTH) ) {
+  //  return false;
+  //}
+  strcpy(fname, tmp.c_str());
 
   if (fp) Write_Tab(fp, tab+1);
   if (fp) fprintf(fp, "<Param name=\"FileName\" dtype=\"STRING\" value=\"%s\" id=\"%d\" />\n", fname, id);
