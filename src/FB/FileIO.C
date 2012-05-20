@@ -823,6 +823,7 @@ void FileIO::readPressure(FILE* fp,
     Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
     Exit(0);
   }
+  
 
   char tmp[FB_FILE_PATH_LENGTH];
   memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
@@ -830,7 +831,6 @@ void FileIO::readPressure(FILE* fp,
 
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
-  //printf("%s %d\n", tmp, strlen(tmp));
   
   fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
   
@@ -854,7 +854,7 @@ void FileIO::readPressure(FILE* fp,
   }
   
   if ( mode ) {
-    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
   else {
@@ -946,7 +946,7 @@ void FileIO::readVelocity(FILE* fp,
   fb_shift_refv_in_(v, (int*)size, (int*)&gc, u0, &scale, &refv, &flop);
 
   if ( mode ) {
-    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
   else {

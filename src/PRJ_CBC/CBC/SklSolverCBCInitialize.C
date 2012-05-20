@@ -1043,21 +1043,31 @@ SklSolverCBC::SklSolverInitialize() {
   
 	// リスタートの最大値と最小値の表示
   if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
+    
     Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
     REAL_TYPE f_min, f_max;
-    fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v, &flop_task);
-    Hostonly_ fprintf(mp, "\t\tV: min=%13.6e max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tV: min=%13.6e max=%13.6e\n", f_min, f_max);
+    
+    fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v, &flop_task); // allreduceすること
+    
+    
+    fprintf(mp, "\t\tV : min=%13.6e / max=%13.6e %d\n", f_min, f_max, pn.ID);
+    Hostonly_ fprintf(fp, "\t\tV: min=%13.6e / max=%13.6e\n", f_min, f_max);
+    
+    
     
     fb_minmax_s_ (&f_min, &f_max, sz, gc, p, &flop_task);
-    Hostonly_ fprintf(mp, "\t\tP: min=%13.6e max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tP: min=%13.6e max=%13.6e\n", f_min, f_max);
+    
+    
+    fprintf(mp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
     
     if ( C.isHeatProblem() ) {
       fb_minmax_s_ (&f_min, &f_max, sz, gc, t, &flop_task);
-      Hostonly_ fprintf(mp, "\t\tT: min=%13.6e max=%13.6e\n", f_min, f_max);
-      Hostonly_ fprintf(fp, "\t\tT: min=%13.6e max=%13.6e\n", f_min, f_max);
+      
+      
+      Hostonly_ fprintf(mp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+      Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
     }
 	}
 
@@ -2584,7 +2594,6 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
 
-  //f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
   if ( !checkFile(f_prs) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", f_prs.c_str());
     Exit(0);
@@ -2601,7 +2610,6 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   
   
   // Instantaneous Velocity fields
-  //f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
   if ( !checkFile(f_vel) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", f_vel.c_str());
     Exit(0);
@@ -2623,7 +2631,6 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    //f_temp = DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
     if ( !checkFile(f_temp) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", f_temp.c_str());
       Exit(0);
@@ -4368,7 +4375,7 @@ bool SklSolverCBC::getCoarseResult (
                                     )
 {
 	// 密格子のijkを粗格子のijkに変換
-	i=i/2; j=j/2; k=k/2;
+	i=(i+1)/2; j=(j+1)/2; k=(k+1)/2;
   
   // ステップ数の文字列を生成
   char tmp[10]; // 10 digit
@@ -4452,5 +4459,6 @@ bool SklSolverCBC::getCoarseResult (
 	coarse_i = hi;
 	coarse_j = hj;
 	coarse_k = hk;
+  
 	return true;
 }
