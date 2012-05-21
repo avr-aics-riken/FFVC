@@ -770,52 +770,26 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
 }
 
 
-/**
- @fn void FileIO::readPressure(FILE* fp, 
- const std::string fname, 
- const unsigned* size, 
- const unsigned gc,
- REAL_TYPE* p, 
- int& step, 
- REAL_TYPE& time, 
- const unsigned Dmode, 
- const REAL_TYPE BasePrs, 
- const REAL_TYPE RefDensity, 
- const REAL_TYPE RefVelocity, 
- REAL_TYPE& flop, 
- const bool mode)
- @brief 圧力ファイルをロードする
- @param fp ファイルポインタ（ファイル出力）
- @param fname ファイル名
- @param p 圧力データ
- @param step[out] ステップ
- @param time[out] 時刻
- @param Dmode 次元（無次元-0 / 有次元-1）
- @param BasePrs 基準圧力
- @param RefDensity　代表密度
- @param RefVelocity 代表速度
- @param flop
- @param guide_out 出力ガイドセル数
- @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
- @param step_avr 平均操作したステップ数
- @param time_avr 平均操作した時間
- */
-void FileIO::readPressure(FILE* fp, 
-                          const std::string fname, 
-                          const unsigned* size, 
-                          const unsigned gc,
-                          REAL_TYPE* p, 
-                          int& step, 
-                          REAL_TYPE& time, 
-                          const unsigned Dmode, 
-                          const REAL_TYPE BasePrs, 
-                          const REAL_TYPE RefDensity, 
-                          const REAL_TYPE RefVelocity, 
-                          REAL_TYPE& flop, 
-                          const int guide_out,
-                          const bool mode,
-                          int& step_avr,
-                          REAL_TYPE& time_avr)
+
+//@fn void FileIO::readPressure()
+//@brief 圧力ファイルをロードする
+void FileIO::readPressure(FILE* fp,                    /// @param fp ファイルポインタ（ファイル出力）
+                          const std::string fname,     /// @param fname ファイル名
+                          const unsigned* size,        /// @param size サイズ
+                          const unsigned gc,           /// @param guide ガイドセルサイズ
+                          REAL_TYPE* p,                /// @param p 圧力データ
+                          int& step,                   /// @param step[out] ステップ
+                          REAL_TYPE& time,             /// @param time[out] 時刻
+                          const unsigned Dmode,        /// @param Dmode 次元（無次元-0 / 有次元-1）
+                          const REAL_TYPE BasePrs,     /// @param BasePrs 基準圧力
+                          const REAL_TYPE RefDensity,  /// @param RefDensity　代表密度
+                          const REAL_TYPE RefVelocity, /// @param RefVelocity 代表速度
+                          REAL_TYPE& flop,             /// @param flop
+                          const int guide_out,         /// @param guide_out 出力ガイドセル数
+                          const bool mode,             /// @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+                          int& step_avr,               /// @param step_avr 平均操作したステップ数
+                          REAL_TYPE& time_avr          /// @param time_avr 平均操作した時間
+                          )
 {
   if ( fname.empty() ) Exit(0);
   
@@ -884,6 +858,7 @@ void FileIO::readPressure(FILE* fp,
  @param fname ファイル名
  @param size サイズ
  @param guide ガイドセルサイズ
+ @param block ブロック数（粗い格子のロードのときに指定、通常は1）
  @param v  結果を保持するデータ
  @param step ステップ
  @param time 時刻
@@ -977,6 +952,7 @@ void FileIO::readVelocity(FILE* fp,
  @param fname ファイル名
  @param size グローバルなサイズ
  @param gc ガイドセルサイズ
+ @param block ブロック数（粗い格子のロードのときに指定、通常は1）
  @param t  結果を保持するデータクラス
  @param step[out] ステップ
  @param time[out] 時刻

@@ -346,13 +346,13 @@ public:
                         std::string& coarse_prefix,	    // (in) 粗格子計算結果ファイルプリフィクス e.g. "prs_16"
                         const int m_step,               // (in) 探索するステップ数
                         std::string& coarse_sph_fname,	// (out) ijk位置の結果を含む粗格子計算結果ファイル名
-                        int& coarse_i,	                // (out) 粗格子　開始インデクスi
-                        int& coarse_j,	                // (out) 同j
-                        int& coarse_k	                  // (out) 同k
+                        int* c_size,                    // (out) 粗格子の分割数
+                        int* coarse,	                  // (out) 粗格子　開始インデクス
+                        int* block                      // (out) 含まれるブロック数
                         );
   std::string get_strval( std::string& buffer );
   int get_intval( std::string& buffer );
-  void Interpolation_from_coarse_initial(const int st_i, const int st_j, const int st_k);
+  void Interpolation_from_coarse_initial(const int* st);
   void Restart_coarse   (FILE* fp, REAL_TYPE& flop);
 
   

@@ -592,7 +592,7 @@
   end if
   
   read(16) imax, jmax, kmax
-  !write (*,*) imax, jmax, kmax, ix, jx, kx
+  write (*,*) imax, jmax, kmax, ix, jx, kx
   if ( gs == 0 ) then
     if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
       write(*,*) 'read error : size'
