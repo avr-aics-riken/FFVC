@@ -38,7 +38,6 @@
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
   real, dimension(1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
 
-
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)

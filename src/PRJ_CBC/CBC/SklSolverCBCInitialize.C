@@ -1046,25 +1046,48 @@ SklSolverCBC::SklSolverInitialize() {
     
     Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
-    REAL_TYPE f_min, f_max;
+    REAL_TYPE f_min, f_max, min_tmp, max_tmp;
     
+    // Velocity
     fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v, &flop_task); // allreduceすること
     
+    if( para_mng->IsParallel() ){
+      min_tmp = f_min;
+      if( !para_mng->Allreduce(&min_tmp, &f_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp) ) Exit(0);
+      
+      max_tmp = f_max;
+      if( !para_mng->Allreduce(&max_tmp, &f_max, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) Exit(0);
+    }
     
-    fprintf(mp, "\t\tV : min=%13.6e / max=%13.6e %d\n", f_min, f_max, pn.ID);
+    Hostonly_ fprintf(mp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
     Hostonly_ fprintf(fp, "\t\tV: min=%13.6e / max=%13.6e\n", f_min, f_max);
     
     
-    
+    // Pressure
     fb_minmax_s_ (&f_min, &f_max, sz, gc, p, &flop_task);
     
+    if( para_mng->IsParallel() ){
+      min_tmp = f_min;
+      if( !para_mng->Allreduce(&min_tmp, &f_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp) ) Exit(0);
+      
+      max_tmp = f_max;
+      if( !para_mng->Allreduce(&max_tmp, &f_max, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) Exit(0);
+    }
     
-    fprintf(mp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(mp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
     Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
     
+    // temperature
     if ( C.isHeatProblem() ) {
       fb_minmax_s_ (&f_min, &f_max, sz, gc, t, &flop_task);
       
+      if( para_mng->IsParallel() ){
+        min_tmp = f_min;
+        if( !para_mng->Allreduce(&min_tmp, &f_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp) ) Exit(0);
+        
+        max_tmp = f_max;
+        if( !para_mng->Allreduce(&max_tmp, &f_max, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) Exit(0);
+      }
       
       Hostonly_ fprintf(mp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
       Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
@@ -1316,12 +1339,15 @@ SklSolverCBC::SklSolverInitialize() {
       MO.setDataPtrs(dc_v->GetData(), dc_p->GetData());
     }
   }
+  
 
   // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
 	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
+  
   // 粗い格子を用いたリスタート時には出力
   if ( C.Start == coarse_restart ) FileOutput(flop_task, true);
+  
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON) {
@@ -2544,14 +2570,15 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   r_size[1] = size[1] / 2;
   r_size[2] = size[2] / 2;
 
-  int crs_i, crs_j, crs_k;    // 粗格子の開始インデクス
-  
   // ステップ数 > ファイル名用
   int m_step = (int)C.Restart_step;
   
   std::string f_prs;
   std::string f_vel;
   std::string f_temp;
+  
+  // 粗格子サブドメインにおける開始ブロックインデクス
+  int crs_i, crs_j, crs_k;    
   
   //並列時には各ランクに必要なファイル名と開始インデクスを取得
   if ( C.FIO.IO_Input == IO_DISTRIBUTE ) {
@@ -2580,8 +2607,6 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
       f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID);
   }
   
-  printf("%s %d %d %d\n", f_prs.c_str(), crs_i, crs_j, crs_k);
-  printf("%s %d %d %d\n", f_vel.c_str(), crs_i, crs_j, crs_k);
   
   // ガイド出力
   int gs = (int)C.GuideOut;
@@ -2645,9 +2670,15 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     }
   }
   
+  // 同期
+  if( !dc_r_v->CommBndCell(guide) ) Exit(0);
+  if( !dc_r_p->CommBndCell(guide) ) Exit(0);
+  if ( C.isHeatProblem() ) {
+    if( !dc_r_t->CommBndCell(guide) ) Exit(0);
+  }
+  
   // 内挿処理
   Interpolation_from_coarse_initial(crs_i, crs_j, crs_k);
-
 }
 
 
@@ -4453,12 +4484,27 @@ bool SklSolverCBC::getCoarseResult (
 	}
 
   if( target.empty() ) return false;
-  //printf("%s\n", target.c_str());
   
   coarse_sph_fname = target;
-	coarse_i = hi;
-	coarse_j = hj;
-	coarse_k = hk;
+  
+  // 密格子のサブドメインに相当する粗格子の領域分割数
+  int ic = size[0]/2;
+  int jc = size[1]/2;
+  int kc = size[2]/2;
+  
+  // 各方向に含まれるブロック数
+  int bi = (ti - hi + 1) / ic;
+  int bj = (tj - hj + 1) / jc;
+  int bk = (tk - hk + 1) / kc;
+  
+  // ブロックのHead Index
+  int bh_i = (bi-1) * ic + 1;
+  int bh_j = (bj-1) * jc + 1;
+  int bh_k = (bk-1) * kc + 1;
+  
+	coarse_i = bh_i;
+	coarse_j = bh_j;
+	coarse_k = bh_k;
   
 	return true;
 }
