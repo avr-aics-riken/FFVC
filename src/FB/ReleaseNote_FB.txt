@@ -4,6 +4,9 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 2.6.0  21 May  2012
+  - dfi class
+  
 Ver 2.5.9  19 May  2012
   - util_path.hを導入
   

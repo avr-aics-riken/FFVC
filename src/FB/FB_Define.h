@@ -14,7 +14,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 259
+#define FB_VERS 260
 
 // 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
 #ifndef REAL_TYPE_DOUBLE
