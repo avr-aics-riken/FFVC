@@ -960,18 +960,7 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ fprintf(mp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
     
-    // テンポラリのファイルロード
-    allocArray_CoarseMesh(PrepMemory);
-    
-    G_PrepMemory = PrepMemory;
-    if( para_cmp->IsParallel() ) {
-      tmp_memory = G_PrepMemory;
-      para_cmp->Allreduce(&tmp_memory, &G_PrepMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
-    }
-    Hostonly_  {
-      FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
-    }
-    
+
     // 粗い格子のファイルをロードし、内挿処理を行う
     Restart_coarse(fp, flop_task);
     
@@ -1514,29 +1503,25 @@ void SklSolverCBC::allocArray_RK (unsigned long &total)
 
 
 /**
- @fn void SklSolverCBC::allocArray_CoarseMesh(unsigned long &prep)
+ @fn void SklSolverCBC::allocArray_CoarseMesh(unsigned* r_size)
  @brief 前処理に用いる配列のアロケーション
- @param prep 前処理に使用するメモリ量
+ @param r_size 粗格子の領域サイズ
+
  */
-void SklSolverCBC::allocArray_CoarseMesh(unsigned long &prep)
+void SklSolverCBC::allocArray_CoarseMesh(unsigned* r_size)
 {
   unsigned long mc=0;
-  unsigned r_size[3];
-  
-  r_size[0] = size[0] / 2;
-  r_size[1] = size[1] / 2;
-  r_size[2] = size[2] / 2;
-  
+
   if ( !A.alloc_Real_S3D(this, dc_r_p, "r_prs", r_size, guide, 0.0, mc) ) Exit(0);
-  prep += mc;
+  //prep += mc;
   
   if ( !A.alloc_Real_V3DEx(this, dc_r_v, "r_vel", r_size, guide, 0.0, mc) ) Exit(0);
-  prep += mc;
+  //prep += mc;
   
   
   if ( C.isHeatProblem() ) {
     if ( !A.alloc_Real_S3D(this, dc_r_t, "r_tmp", r_size, guide, 0.0, mc) ) Exit(0);
-    prep += mc;
+    //prep += mc;
   }
 }
 
@@ -2559,12 +2544,6 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   int step;
   REAL_TYPE time;
   
-  REAL_TYPE *r_v = NULL;
-  REAL_TYPE *r_p = NULL;
-  
-  if( !(r_v = dc_r_v->GetData()) )   Exit(0);
-  if( !(r_p = dc_r_p->GetData()) )   Exit(0);
-  
   
   // ステップ数 > ファイル名用
   int m_step = (int)C.Restart_step;
@@ -2576,13 +2555,16 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   // 粗格子の分割サイズ
   int r_size[3];
   
-  // 粗格子サブドメインにおける開始ブロックインデクス
-  int crs[3], num_block[3];
+  // 粗格子サブドメインにおける読み込み開始インデクス
+  int crs[3];
+  
+  // 粗格子サブドメインに含まれる密格子サブドメインの数
+  int num_block[3];
   
   //並列時には各ランクに必要なファイル名と開始インデクスを取得
   if ( C.FIO.IO_Input == IO_DISTRIBUTE ) {
     
-    int i, j, k;  // 密格子のローカル開始インデクス
+    int i, j, k;  // 密格子のグローバル開始インデクス
     i = pn.st_idx[0];
     j = pn.st_idx[1];
     k = pn.st_idx[2];
@@ -2605,6 +2587,16 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     if ( C.isHeatProblem() )
       f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID);
   }
+
+  // テンポラリのファイルロード
+  allocArray_CoarseMesh((unsigned*)r_size);
+
+  
+  REAL_TYPE *r_v = NULL;
+  REAL_TYPE *r_p = NULL;
+  
+  if( !(r_v = dc_r_v->GetData()) )   Exit(0);
+  if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
   // ガイド出力
   int gs = (int)C.GuideOut;
@@ -2676,7 +2668,7 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
   }
   
   // 内挿処理
-  Interpolation_from_coarse_initial(crs);
+  Interpolation_from_coarse_initial(crs, num_block);
 }
 
 
@@ -3047,11 +3039,12 @@ void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const u
 
 
 /**
- @fn void SklSolverCBC::Interpolation_from_coarse_initial(const int* st)
- @param st 粗い格子の開始インデクス
+ @fn void SklSolverCBC::Interpolation_from_coarse_initial(const int* m_st)
+ @param m_st 粗い格子の開始インデクス
+ @param m_bk ブロック数
  @brief 粗い格子を用いたリスタート値の内挿
  */
-void SklSolverCBC::Interpolation_from_coarse_initial(const int* st)
+void SklSolverCBC::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 {
   REAL_TYPE *v = NULL;
   REAL_TYPE *p = NULL;
@@ -3060,22 +3053,26 @@ void SklSolverCBC::Interpolation_from_coarse_initial(const int* st)
   REAL_TYPE *r_p = NULL;
   REAL_TYPE *r_t = NULL;
   
-  int i = st[0];
-  int j = st[1];
-  int k = st[2];
+  int st[3], bk[3];
+  st[0] = m_st[0];
+  st[1] = m_st[1];
+  st[2] = m_st[2];
+  bk[0] = m_bk[0];
+  bk[1] = m_bk[1];
+  bk[2] = m_bk[2];
   
   if( !(v   = dc_v->GetData()) )     Exit(0);
   if( !(p   = dc_p->GetData()) )     Exit(0);
   if( !(r_v = dc_r_v->GetData()) )   Exit(0);
   if( !(r_p = dc_r_p->GetData()) )   Exit(0);
   
-  fb_interp_coarse_s_(p, sz, gc, r_p, &i, &j, &k);
-  fb_interp_coarse_v_(v, sz, gc, r_v, &i, &j, &k);
+  fb_interp_coarse_s_(p, sz, gc, r_p, st, bk);
+  fb_interp_coarse_v_(v, sz, gc, r_v, st, bk);
   
   if ( C.isHeatProblem() ) {
     if( !(t   = dc_t->GetData()) )   Exit(0);
     if( !(r_t = dc_r_t->GetData()) ) Exit(0);
-    fb_interp_coarse_s_(t, sz, gc, r_t, &i, &j, &k);
+    fb_interp_coarse_s_(t, sz, gc, r_t, st, bk);
   }
 
 }
@@ -4436,28 +4433,19 @@ bool SklSolverCBC::getCoarseResult (
       
 			while( getline(ifs, buf) ) {
         if( buf.find("\"VoxelSize\"",0) != string::npos ) {
-					getline(ifs, buf);
-					Ci = get_intval( buf );	
-					getline(ifs, buf);
-					Cj = get_intval( buf );	
-					getline(ifs, buf);
-					Ck = get_intval( buf );	
+					getline(ifs, buf);  Ci = get_intval( buf );	
+					getline(ifs, buf);  Cj = get_intval( buf );	
+					getline(ifs, buf);  Ck = get_intval( buf );	
 				}
 				if( buf.find("\"HeadIndex\"",0) != string::npos ) {
-					getline(ifs, buf);
-					hi = get_intval( buf );	
-					getline(ifs, buf);
-					hj = get_intval( buf );	
-					getline(ifs, buf);
-					hk = get_intval( buf );	
+					getline(ifs, buf);  hi = get_intval( buf );	
+					getline(ifs, buf);  hj = get_intval( buf );	
+					getline(ifs, buf);  hk = get_intval( buf );	
 				}
 				if( buf.find("\"TailIndex\"",0) != string::npos ) {
-					getline(ifs, buf);
-					ti = get_intval( buf );	
-					getline(ifs, buf);
-					tj = get_intval( buf );	
-					getline(ifs, buf);
-					tk = get_intval( buf );	
+					getline(ifs, buf);  ti = get_intval( buf );	
+					getline(ifs, buf);  tj = get_intval( buf );	
+					getline(ifs, buf);  tk = get_intval( buf );	
 					break;
 				}
 			}
@@ -4505,10 +4493,10 @@ bool SklSolverCBC::getCoarseResult (
   int Fj = Cj / bj;
   int Fk = Ck / bk;
   
-  // ブロックのHead Index
-  int bh_i = i0 / Fi * Fi + 1;
-  int bh_j = j0 / Fj * Fj + 1;
-  int bh_k = k0 / Fk * Fk + 1;
+  // 粗格子の読み込み開始のローカルインデクス
+  int bh_i = i0 - hi + 1;
+  int bh_j = j0 - hj + 1;
+  int bh_k = k0 - hk + 1;
   
   
   // return value
@@ -4527,8 +4515,8 @@ bool SklSolverCBC::getCoarseResult (
   block[2] = bk;
   
   //
-  printf("rk=%4d : fine(%4d %4d %4d) : coarse(%4d %4d %4d) : head(%4d %4d %4d) : cblk(%4d %4d %4d): block(%4d %4d %4d) : %s\n", 
-         pn.ID,  i,j,k,  i0,j0,k0,  bh_i,bh_j,bh_k,  Ci,Cj,Ck,  bi,bj,bk,  coarse_sph_fname.c_str());
+  //printf("rk=%4d : fine(%4d %4d %4d) : coarse(%4d %4d %4d) : head(%4d %4d %4d) : cblk(%4d %4d %4d): block(%4d %4d %4d) : %s\n", 
+  //       pn.ID,  i,j,k,  i0,j0,k0,  bh_i,bh_j,bh_k,  Ci,Cj,Ck,  Fi,Fj,Fk,  coarse_sph_fname.c_str());
   //
   
 	return true;

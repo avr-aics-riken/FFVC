@@ -30,7 +30,6 @@
         <Elem name="File_IO">
             <Param dtype="STRING" name="Unit_of_File" value="Non_Dimensional"/>
             <Param dtype="STRING" name="Guide_Out" value="Without"/>
-            <Param dtype="STRING" name="Output_Mode" value="Forced"/>
             <Param dtype="STRING" name="Parallel_Input" value="Master"/>
             <Param dtype="STRING" name="Parallel_Output" value="Master"/>
             <Param dtype="STRING" name="Debug_Divergence" value="Off"/>
@@ -39,8 +38,7 @@
             <Param dtype="STRING" name="Averaged_Interval_Type" value="Time"/>
             <Param dtype="REAL" name="Averaged_Interval" value="1000"/>
         </Elem>
-        <InputData basedir=".">
-            <InFile attr="SphereSVX" fname="example.svx" format="SVX"/>
+        <InputData>
         </InputData>
         <Elem name="Iteration">
             <Elem name="Flow">
@@ -120,18 +118,30 @@
                 </Elem>
             </Elem>
         </Elem>
-        <OutputData basedir=".">
-            <OutFile attr="Velocity" basename="vel" format="SPH" interval="1"/>
-            <OutFile attr="Pressure" basename="prs" format="SPH" interval="1"/>
-            <OutFile attr="Temperature" basename="tmp" format="SPH" interval="1"/>
-            <OutFile attr="AvrVelocity" basename="vela" format="SPH" interval="1"/>
-            <OutFile attr="AvrPressure" basename="prsa" format="SPH" interval="1"/>
-            <OutFile attr="AvrTemperature" basename="tmpa" format="SPH" interval="1"/>
+        <OutputData>
         </OutputData>
         <Elem name="Reference_Frame">
             <Param dtype="STRING" name="Reference_Frame_Type" value="Stationary"/>
         </Elem>
         <StartCondition type="Initial"/>
+        <Elem name="Start_Condition">
+            <Param dtype="STRING" name="start_type" value="initial"/>
+            <Param dtype="INT" name="Restart_step" value="200"/>
+            <Param dtype="STRING" name="Prefix_of_Pressure" value="prs_"/>
+            <Param dtype="STRING" name="Prefix_of_Velocity" value="vel_"/>
+            <Param dtype="STRING" name="dfi_file_pressure" value="prs_64_id000000.dfi"/>
+            <Param dtype="STRING" name="dfi_file_velocity" value="vel_64_id000000.dfi"/>
+            <Elem name="Initial_State">
+                <Param dtype="REAL" name="Density" value="1.0"/>
+                <Param dtype="REAL" name="Pressure" value="0.0"/>
+                <Param dtype="REAL" name="Temperature" value="20.0"/>
+                <Elem name="Velocity">
+                    <Param dtype="REAL" name="U" value="0.0"/>
+                    <Param dtype="REAL" name="V" value="0.0"/>
+                    <Param dtype="REAL" name="W" value="0.0"/>
+                </Elem>
+            </Elem>
+        </Elem>
         <Elem name="Solver_Property">
             <Param dtype="STRING" name="Basic_Equation" value="Incompressible"/>
             <Param dtype="STRING" name="Buoyancy" value="No_Buoyancy"/>
@@ -159,9 +169,14 @@
             <Param dtype="STRING" name="Temperature" value="Celsius"/>
         </Elem>
         <Elem name="Version_Info">
-            <Param dtype="INT" name="CBC" value="160"/>
-            <Param dtype="INT" name="Flow_Base" value="256"/>
+            <Param dtype="INT" name="CBC" value="166"/>
+            <Param dtype="INT" name="Flow_Base" value="260"/>
         </Elem>
+        <!--Elem name="VoxelDivisionMethod">
+            <Param dtype="INT" name="I" value="2"/>
+            <Param dtype="INT" name="J" value="4"/>
+            <Param dtype="INT" name="K" value="4"/>
+        </Elem-->
     </Steer>
     <Parameter>
         <Elem name="Reference">
@@ -176,16 +191,6 @@
         <Elem name="Temperature">
             <Param dtype="REAL" name="Base" value="20.0"/>
             <Param dtype="REAL" name="Difference" value="35.0"/>
-        </Elem>
-        <Elem name="Initial_State">
-            <Param dtype="REAL" name="Density" value="1.0"/>
-            <Param dtype="REAL" name="Pressure" value="0.0"/>
-            <Param dtype="REAL" name="Temperature" value="20.0"/>
-            <Elem name="Velocity">
-                <Param dtype="REAL" name="U" value="0.0"/>
-                <Param dtype="REAL" name="V" value="0.0"/>
-                <Param dtype="REAL" name="W" value="0.0"/>
-            </Elem>
         </Elem>
     </Parameter>
     <Medium_Table>

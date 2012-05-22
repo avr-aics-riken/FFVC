@@ -273,7 +273,7 @@ public:
   void allocArray_main         (unsigned long &total);
   void allocArray_prep         (unsigned long &prep, unsigned long &total);
   void allocArray_RK           (unsigned long &total);
-  void allocArray_CoarseMesh   (unsigned long &prep);
+  void allocArray_CoarseMesh   (unsigned* r_size);
   void allocComponentArray     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   
   void AverageOutput        (REAL_TYPE& flop);
@@ -352,7 +352,7 @@ public:
                         );
   std::string get_strval( std::string& buffer );
   int get_intval( std::string& buffer );
-  void Interpolation_from_coarse_initial(const int* st);
+  void Interpolation_from_coarse_initial(const int* m_st, const int* m_bk);
   void Restart_coarse   (FILE* fp, REAL_TYPE& flop);
 
   

@@ -11,24 +11,22 @@
 !! @author keno, FSI Team, VCAD, RIKEN
 !<
 
-!  *****************************************************************
-!> @subroutine fb_interp_coarse_s(dst, sz, g, src, st_i, st_j, st_k)
+!  *******************************************************
+!> @subroutine fb_interp_coarse_s(dst, sz, g, src, st, bk)
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param src 粗い格子系
-!! @param st_i 粗い格子の開始インデクス
-!! @param st_j 
-!! @param st_k 
+!! @param st 粗い格子の開始インデクス
+!! @param bk ブロック数
 !<
-  subroutine fb_interp_coarse_s(dst, sz, g, src, st_i, st_j, st_k)
+  subroutine fb_interp_coarse_s(dst, sz, g, src, st, bk)
   implicit none
   integer                                                      ::  i, j, k          ! 粗い格子のループインデクス
   integer                                                      ::  ii, jj, kk       ! 密な格子のループインデクス
-  integer                                                      ::  st_i, st_j, st_k ! 粗い格子の開始インデクス
-  integer                                                      ::  ix, jx, kx, g
-  integer, dimension(3)                                        ::  sz
+  integer                                                      ::  ix, jx, kx, g, si, sj, sk
+  integer, dimension(3)                                        ::  sz, st, bk
   real                                                         ::  g_x,  g_y,  g_z, q
   real                                                         ::  g_xx, g_yy, g_zz
   real                                                         ::  g_xy, g_yz, g_zx
@@ -36,14 +34,17 @@
   real                                                         ::  s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233
   real                                                         ::         s_312,        s_321, s_322, s_323,        s_332
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
-  real, dimension(1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
+  real, dimension(1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
+  si = st(1)
+  sj = st(2)
+  sk = st(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, st_i, st_j, st_k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, si, sj, sk) &
 !$OMP PRIVATE(s_112, s_121, s_122, s_123, s_132) &
 !$OMP PRIVATE(s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233) &
 !$OMP PRIVATE(s_312, s_321, s_322, s_323, s_332) &
@@ -52,12 +53,12 @@
 
 !$OMP DO SCHEDULE(static)
 
-  do k=st_k, st_k+kx/2-1
-    kk = k*2
-  do j=st_j, st_j+jx/2-1
-    jj = j*2
-  do i=st_i, st_i+ix/2-1
-    ii = i*2
+  do k=sk, sk+kx/2-1
+    kk = 2*k - (2*k-1)/kx * kx
+  do j=sj, sj+jx/2-1
+    jj = 2*j - (2*j-1)/jx * jx
+  do i=si, si+ix/2-1
+    ii = 2*i - (2*i-1)/ix * ix
 
     s_112 = src(i-1, j-1, k  )
     s_121 = src(i-1, j  , k-1)
@@ -140,24 +141,22 @@
   return
   end subroutine fb_interp_coarse_s
 
-!  *****************************************************************
-!> @subroutine fb_interp_coarse_v(dst, sz, g, src, st_i, st_j, st_k)
+!  *******************************************************
+!> @subroutine fb_interp_coarse_v(dst, sz, g, src, st, bk)
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param src 粗い格子系
-!! @param st_i 粗い格子の開始インデクス
-!! @param st_j 
-!! @param st_k 
+!! @param st 粗い格子の開始インデクス
+!! @param bk ブロック数
 !<
-  subroutine fb_interp_coarse_v(dst, sz, g, src, st_i, st_j, st_k)
+  subroutine fb_interp_coarse_v(dst, sz, g, src, st, bk)
   implicit none
   integer                                                         ::  i, j, k          ! 粗い格子のループインデクス
   integer                                                         ::  ii, jj, kk       ! 密な格子のループインデクス
-  integer                                                         ::  st_i, st_j, st_k ! 粗い格子の開始インデクス
-  integer                                                         ::  ix, jx, kx, g
-  integer, dimension(3)                                           ::  sz
+  integer                                                         ::  ix, jx, kx, g, si, sj, sk
+  integer, dimension(3)                                           ::  sz, st, bk
   real                                                            ::  u_x, u_y, u_z, u_xx, u_yy, u_zz, u_xy, u_yz, u_zx
   real                                                            ::  v_x, v_y, v_z, v_xx, v_yy, v_zz, v_xy, v_yz, v_zx
   real                                                            ::  w_x, w_y, w_z, w_xx, w_yy, w_zz, w_xy, w_yz, w_zx
@@ -166,15 +165,18 @@
   real                                                            ::         s_312,        s_321, s_322, s_323,        s_332
   real                                                            ::  q
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
-  real, dimension(3, 1-g:sz(1)/2+g, 1-g:sz(2)/2+g, 1-g:sz(3)/2+g) ::  src
+  real, dimension(3, 1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
 
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
+  si = st(1)
+  sj = st(2)
+  sk = st(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, st_i, st_j, st_k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, si, sj, sk) &
 !$OMP PRIVATE(s_112, s_121, s_122, s_123, s_132) &
 !$OMP PRIVATE(s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233) &
 !$OMP PRIVATE(s_312, s_321, s_322, s_323, s_332) &
@@ -185,12 +187,12 @@
 
 !$OMP DO SCHEDULE(static)
 
-  do k=st_k, st_k+kx/2-1
-    kk = k*2
-  do j=st_j, st_j+jx/2-1
-    jj = j*2
-  do i=st_i, st_i+ix/2-1
-    ii = i*2
+  do k=sk, sk+kx/2-1
+    kk = 2*k - (2*k-1)/kx * kx
+  do j=sj, sj+jx/2-1
+    jj = 2*j - (2*j-1)/jx * jx
+  do i=si, si+ix/2-1
+    ii = 2*i - (2*i-1)/ix * ix
 
 !   u
     s_112 = src(1, i-1, j-1, k  )
@@ -592,7 +594,7 @@
   end if
   
   read(16) imax, jmax, kmax
-  write (*,*) imax, jmax, kmax, ix, jx, kx
+  !write (*,*) imax, jmax, kmax, ix, jx, kx
   if ( gs == 0 ) then
     if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
       write(*,*) 'read error : size'
