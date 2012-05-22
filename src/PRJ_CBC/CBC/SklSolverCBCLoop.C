@@ -189,7 +189,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     
     // 指定間隔の出力がない場合のみ（重複を避ける）
     if ( !C.Interval[Interval_Manager::tg_instant].isTriggered(loop_step, loop_time) ) {
-      FileOutput(flop_count);
+      if ( C.Hide.PM_Test != ON ) FileOutput(flop_count);
     }
   }
   
@@ -256,31 +256,30 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     }
 
     // 力の履歴
-    REAL_TYPE force[3];
-    
-    TIMING_start(tm_cal_force);
-    flop_count=0.0;
-    //if ( C.isCDS() ) {
+    if ( C.Hide.PM_Test != ON ) {
+      REAL_TYPE force[3];
+      
+      TIMING_start(tm_cal_force);
+      flop_count=0.0;
+      // 性能測定モードのときには出力しない
+      
       cds_force_(force, sz, gc, p, (int*)bcd, dc_bid->GetData(), &id_of_solid, dh, &flop_count);
-    //}
-    //else {
-    //  ;
-    //}
-    TIMING_stop(tm_cal_force, 0.0);
-
-    
-    REAL_TYPE tmp_f[3];
-    tmp_f[0] = force[0];
-    tmp_f[1] = force[1];
-    tmp_f[2] = force[2];
-    if( para_cmp->IsParallel() ) {
-      para_cmp->Allreduce(tmp_f, force, 3, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+      
+      TIMING_stop(tm_cal_force, 0.0);
+      
+      
+      REAL_TYPE tmp_f[3];
+      tmp_f[0] = force[0];
+      tmp_f[1] = force[1];
+      tmp_f[2] = force[2];
+      if( para_cmp->IsParallel() ) {
+        para_cmp->Allreduce(tmp_f, force, 3, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+      }
+      
+      TIMING_start(tm_hstry_force);
+      Hostonly_ H->printHistoryForce(fp_f, &C, force);
+      TIMING_stop(tm_hstry_force, 0.0);
     }
-
-    TIMING_start(tm_hstry_force);
-    Hostonly_ H->printHistoryForce(fp_f, &C, force);
-    TIMING_stop(tm_hstry_force, 0.0);
-
   }
 
   if (C.Mode.TP == ON ) {
