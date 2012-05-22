@@ -77,8 +77,21 @@ extern "C" {
   void fb_set_int_s_      (int* var, int* sz, int* g, int* init);
   void fb_set_real_s_     (REAL_TYPE* var, int* sz, int* g, REAL_TYPE* init);
   void fb_set_real_v_     (REAL_TYPE* var, int* sz, int* g, REAL_TYPE* vec);
-  void fb_set_vector_     (REAL_TYPE* var, int* sz, int* g, REAL_TYPE* val);
-  void fb_totalp_         (REAL_TYPE* tp,  int* sz, int* g, REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* v00, REAL_TYPE* flop);
+  
+  void fb_set_vector_     (REAL_TYPE* var, 
+                           int* sz, 
+                           int* g, 
+                           REAL_TYPE* val, 
+                           int* bv);
+  
+  void fb_totalp_         (REAL_TYPE* tp, 
+                           int* sz, 
+                           int* g, 
+                           REAL_TYPE* v, 
+                           REAL_TYPE* p, 
+                           REAL_TYPE* v00, 
+                           REAL_TYPE* flop);
+  
   void fb_average_        (REAL_TYPE* avr, REAL_TYPE* src, int* sz, REAL_TYPE* flop);
   void fb_copy_real_      (REAL_TYPE* dst, REAL_TYPE* src, int* sz);
   void fb_copy_int_       (int* dst, int* src, int* sz);

@@ -6086,60 +6086,6 @@ void VoxInfo::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
   mat = m_MAT;
 }
 
-/**
- @fn unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
- @brief ボクセルモデルにカット情報から得られた固体情報を転写する
- @param[in/out] mid セルID
- @param[in] cut 距離情報
- @param[in] id 固体ID 
- @retval 固体セル数
- */
-unsigned VoxInfo::Solid_from_Cut(int* mid, float* cut, const int id)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  unsigned c=0;
-  int q, m_id;
-  size_t m_p, m;
-  
-  unsigned m_sz[3], gd;
-  m_sz[0] = size[0];
-  m_sz[1] = size[1];
-  m_sz[2] = size[2];
-  gd = guide;
-  m_id= id;
-  
-#pragma omp parallel for firstprivate(m_sz, gd, m_id) private(q) schedule(static) reduction(+:c)
-  for (int k=1; k<=(int)m_sz[2]; k++) {
-    for (int j=1; j<=(int)m_sz[1]; j++) {
-      for (int i=1; i<=(int)m_sz[0]; i++) {
-        
-        m_p = FBUtility::getFindexS3D(m_sz, gd, i, j, k);
-        m = FBUtility::getFindexS3Dcut(m_sz, gd, 0, i, j, k);
-        q = 0;
-        
-        // セル内に交点があれば，壁
-        if ( cut[m+0] <= 0.5f ) q++;
-        if ( cut[m+1] <= 0.5f ) q++;
-        if ( cut[m+2] <= 0.5f ) q++;
-        if ( cut[m+3] <= 0.5f ) q++;
-        if ( cut[m+4] <= 0.5f ) q++;
-        if ( cut[m+5] <= 0.5f ) q++;
-        
-        if ( q > 0 ) {
-          mid[m_p] = m_id;
-          c++;
-        }
-      }
-    }
-  }
-  
-  if( para_mng->IsParallel() ) {
-    unsigned tmp = c;
-    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-  }
-  
-  return c;
-}
 
 /**
  @fn unsigned VoxInfo::test_opposite_cut(nt* bid, int* mid, const int solid_id)

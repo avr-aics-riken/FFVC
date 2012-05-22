@@ -475,7 +475,7 @@
   write(16) step, time
 
   if ( gs == 1 ) then
-    write(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+    write(16) (((s(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
   else
     write(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
   end if
@@ -542,7 +542,7 @@
   write(16) step, time
 
   if ( gs == 1 ) then
-    write(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+    write(16) ((((v(l,i,j,k),l=1,3),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
   else
     write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
   end if
@@ -1682,21 +1682,24 @@ end subroutine fb_copy_int
     return
     end subroutine fb_minmax_s
 
-!  *******************************************
-!> @subroutine fb_set_vector (var, sz, g, val)
+!  ***********************************************
+!> @subroutine fb_set_vector (var, sz, g, val, bv)
 !! @brief ベクトル値を設定する
 !! @param var ベクトル配列
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param val ベクトル値
+!! @param bv
 !<
-    subroutine fb_set_vector (var, sz, g, val)
+    subroutine fb_set_vector (var, sz, g, val, bv)
     implicit none
-    integer                                                   ::  i, j, k, ix, jx, kx, g
+    include '../FB/cbc_f_params.h'
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  u1, u2, u3
     real, dimension(3)                                        ::  val
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  var
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
@@ -1707,16 +1710,18 @@ end subroutine fb_copy_int
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(u1, u2, u3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g)
+!$OMP FIRSTPRIVATE(ix, jx, kx, g) &
+!$OMP PRIVATE(bvx)
 
 !$OMP DO SCHEDULE(static)
 
     do k=1-g, kx+g
     do j=1-g, jx+g
     do i=1-g, ix+g
-        var(1,i,j,k) = u1
-        var(2,i,j,k) = u2
-        var(3,i,j,k) = u3
+        bvx = ibits(bv(i,j,k), State, 1)
+        var(1,i,j,k) = u1 * bvx
+        var(2,i,j,k) = u2 * bvx
+        var(3,i,j,k) = u3 * bvx
     end do
     end do
     end do

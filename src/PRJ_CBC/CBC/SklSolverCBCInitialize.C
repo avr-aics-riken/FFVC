@@ -256,7 +256,8 @@ SklSolverCBC::SklSolverInitialize() {
       if( !(tmp_cut  = dc_cut->GetData()) ) Exit(0);
       
       if ( !C.isCDS() ) {
-        unsigned zc = Vinfo.Solid_from_Cut(mid, tmp_cut, C.Mode.Base_Medium);
+        //Ex->setup(mid, &C, G_org);
+        unsigned zc = Solid_from_Cut(mid, tmp_cut, id_of_solid);
         Hostonly_ printf("\tGenerated Solid cell from cut = %d\n", zc);
       }
       break;
@@ -371,7 +372,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // Fill
-  if ( (C.Mode.Example == id_Polygon) && C.isCDS() ) {
+  if ( (C.Mode.Example == id_Polygon) ) { //&& C.isCDS() ) {
     
     Hostonly_ {
       fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
@@ -1167,7 +1168,7 @@ SklSolverCBC::SklSolverInitialize() {
       U0[1] = C.iv.VecV;
       U0[2] = C.iv.VecW;
     }
-		fb_set_vector_(v, sz, gc, U0);
+		fb_set_vector_(v, sz, gc, U0, (int*)bcd);
     
 		// 外部境界面の流出流量と移流速度
     DomainMonitor( BC.get_OBC_Ptr(), &C, flop_task);
@@ -3912,11 +3913,9 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
       for (int i=0; i<=size[0]+1; i++) {
         
         mp = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
-        //pos = &cut[mp];
         pos = &tmp_cut[mp];
         
         mb = FBUtility::getFindexS3D(size, guide, i, j, k);
-        //bd = cut_id[mb];
         bd = tmp_bid[mb];
         
         if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) { // 6方向のうちいずれかにカットがある
@@ -3931,7 +3930,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
 #endif
           
           for (int n=0; n<6; n++) {
-            if (pos[n] > 0.0) d_min = min(d_min, pos[n]);
+            d_min = min(d_min, pos[n]);
           }
           z++;
           
@@ -3944,10 +3943,22 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
       }
     }
   }
+  
+  if( para_mng->IsParallel() ) {
+    float tmp =d_min;
+    para_mng->Allreduce(&tmp, &d_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp);
+    
+    int tmp_g = z;
+    para_mng->Allreduce(&tmp_g, &z, 1, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+    
+    tmp_g = size_n_cell;
+    para_mng->Allreduce(&tmp_g, &size_n_cell, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    
+  }
+  
   Hostonly_ printf("\n\tMinimum dist. = %5.3e  : # of cut = %d : %f [percent]\n", d_min, z, (float)z/(float)size_n_cell*100.0);
   
   // カットの最小値
-  //min_distance(cut, fp);
   min_distance(tmp_cut, fp);
   
 }
@@ -4032,6 +4043,62 @@ void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
       }
     }
   }
+}
+
+
+/**
+ @fn unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
+ @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+ @param[in/out] mid セルID
+ @param[in] cut 距離情報
+ @param[in] id 固体ID 
+ @retval 固体セル数
+ */
+unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
+{
+  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  unsigned c=0;
+  int q, m_id;
+  size_t mp, m;
+  
+  unsigned m_sz[3], gd;
+  m_sz[0] = size[0];
+  m_sz[1] = size[1];
+  m_sz[2] = size[2];
+  gd = guide;
+  m_id= id;
+  
+#pragma omp parallel for firstprivate(m_sz, gd, m_id) private(q) schedule(static) reduction(+:c)
+  for (int k=1; k<=(int)m_sz[2]; k++) {
+    for (int j=1; j<=(int)m_sz[1]; j++) {
+      for (int i=1; i<=(int)m_sz[0]; i++) {
+        
+        mp= FBUtility::getFindexS3D(m_sz, gd, i, j, k);
+        m = FBUtility::getFindexS3Dcut(m_sz, gd, 0, i, j, k);
+        q = 0;
+        
+        // セル内に交点があれば，壁
+        if ( cut[m+0] <= 0.5f ) q++;
+        if ( cut[m+1] <= 0.5f ) q++;
+        if ( cut[m+2] <= 0.5f ) q++;
+        if ( cut[m+3] <= 0.5f ) q++;
+        if ( cut[m+4] <= 0.5f ) q++;
+        if ( cut[m+5] <= 0.5f ) q++;
+        
+        if ( q > 0 ) {
+          mid[mp] = m_id;
+          c++;
+        }
+      }
+    }
+  }
+  
+  if( para_mng->IsParallel() ) {
+    unsigned tmp = c;
+    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  }
+  
+  return c;
 }
 
 

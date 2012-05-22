@@ -260,12 +260,12 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     
     TIMING_start(tm_cal_force);
     flop_count=0.0;
-    if ( C.isCDS() ) {
+    //if ( C.isCDS() ) {
       cds_force_(force, sz, gc, p, (int*)bcd, dc_bid->GetData(), &id_of_solid, dh, &flop_count);
-    }
-    else {
-      ;
-    }
+    //}
+    //else {
+    //  ;
+    //}
     TIMING_stop(tm_cal_force, 0.0);
 
     

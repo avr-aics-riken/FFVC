@@ -336,6 +336,7 @@ public:
   void ps_ConvectionEE  (REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop);
   void ps_LS            (ItrCtl* IC);
   
+  unsigned Solid_from_Cut(int* mid, float* cut, const int id);
   
   // ラフな初期値のロードと内挿に使用する関数
   bool getCoarseResult (
