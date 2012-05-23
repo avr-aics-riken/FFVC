@@ -256,7 +256,6 @@ SklSolverCBC::SklSolverInitialize() {
       if( !(tmp_cut  = dc_cut->GetData()) ) Exit(0);
       
       if ( !C.isCDS() ) {
-        //Ex->setup(mid, &C, G_org);
         unsigned zc = Solid_from_Cut(mid, tmp_cut, id_of_solid);
         Hostonly_ printf("\tGenerated Solid cell from cut = %d\n", zc);
       }
@@ -3991,7 +3990,6 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
 
   
   TIMING_start(tm_init_alloc);
-  //cut = new float [size_n_cell*6]; // 6*(float)
   allocArray_Cut(m_total);
   TIMING_stop(tm_init_alloc);
   
@@ -4553,11 +4551,6 @@ bool SklSolverCBC::getCoarseResult (
   int bi = Ci * 2 / size[0];
   int bj = Cj * 2 / size[1];
   int bk = Ck * 2 / size[2];
-  
-  // 密格子のサブドメインが占める粗格子の分割サイズ
-  int Fi = Ci / bi;
-  int Fj = Cj / bj;
-  int Fk = Ck / bk;
   
   // 粗格子の読み込み開始のローカルインデクス
   int bh_i = i0 - hi + 1;

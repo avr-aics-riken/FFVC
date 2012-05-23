@@ -58,7 +58,7 @@
 #if defined __K_FPCOLL
 #include "fjcoll.h"
 #elif defined __FX_FAPP
-#include "/fj_tool/fapp.h"
+#include "/fj_tool/fjcoll.h"
 #endif
 
 // Performance Monitor
