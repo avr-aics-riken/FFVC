@@ -474,7 +474,7 @@
   write(16) pit(1), pit(2), pit(3)
   write(16) step, time
 
-  if ( gs == 1 ) then
+  if ( gs /= 0 ) then
     write(16) (((s(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
   else
     write(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
@@ -541,7 +541,7 @@
   write(16) pit(1), pit(2), pit(3)
   write(16) step, time
 
-  if ( gs == 1 ) then
+  if ( gs /= 0 ) then
     write(16) ((((v(l,i,j,k),l=1,3),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
   else
     write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)

@@ -410,7 +410,6 @@ SklSolverCBC::SklSolverInitialize() {
     int c=0;
     while (fill_count > 0) {
       
-      //unsigned fc = Vinfo.fill_cell_edge(cut_id, mid, cut, target_id, id_of_solid);
       unsigned fc = Vinfo.fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
       
       unsigned t_fc = fc;
@@ -4078,12 +4077,12 @@ unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
         q = 0;
         
         // セル内に交点があれば，壁
-        if ( cut[m+0] <= 0.5f ) q++;
-        if ( cut[m+1] <= 0.5f ) q++;
-        if ( cut[m+2] <= 0.5f ) q++;
-        if ( cut[m+3] <= 0.5f ) q++;
-        if ( cut[m+4] <= 0.5f ) q++;
-        if ( cut[m+5] <= 0.5f ) q++;
+        if ( cut[m+0] < 1.0f ) q++;
+        if ( cut[m+1] < 1.0f ) q++;
+        if ( cut[m+2] < 1.0f ) q++;
+        if ( cut[m+3] < 1.0f ) q++;
+        if ( cut[m+4] < 1.0f ) q++;
+        if ( cut[m+5] < 1.0f ) q++;
         
         if ( q > 0 ) {
           mid[mp] = m_id;
