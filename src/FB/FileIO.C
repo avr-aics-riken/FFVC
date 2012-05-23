@@ -627,9 +627,10 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   int sz, dType, stp, svType;
   int ix, jx, kx, i, j, k;
-  unsigned long m, l, nx;
+  unsigned long l, nx;
   REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
   long long szl[3], stpl;
+  unsigned m;
   
   char sph_fname[512];
   

@@ -2947,7 +2947,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
 {
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
-  size_t m_p, m;
+  unsigned m_p, m;
   unsigned register s;
   float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
   float* ct;
@@ -3733,7 +3733,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
   unsigned register s, q;
   const float *pos;
   int    bid;
-  size_t m_p, m_c;
+  unsigned m_p, m_c;
   int    id_e, id_w, id_n, id_s, id_t, id_b;
   float pp;
   
@@ -4492,7 +4492,7 @@ unsigned VoxInfo::find_mat_odr(unsigned mat_id)
 void VoxInfo::findVIBCbbox(const int odr, const unsigned* bv, int* st, int* ed)
 {
   unsigned s;
-  size_t m;
+  unsigned m;
   bool m_flag;
   int tmp[3];
   
@@ -4957,7 +4957,7 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
 {
   int target;
   int i,j,k;
-  size_t m;
+  unsigned m;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
@@ -5737,7 +5737,8 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
 
   // debug
 #if 0
-  int i,j,k,m;
+  int i,j,k;
+  unsigned m;
   float w, q;
   i=1;
   for (k=1; k<=kx; k++) {
@@ -5986,7 +5987,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   unsigned F;
   
   const float pos=0.5f;
-  size_t m;
+  unsigned m;
   
   const int ix = (int)size[0];
   const int jx = (int)size[1];
