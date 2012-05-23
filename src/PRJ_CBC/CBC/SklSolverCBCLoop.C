@@ -263,7 +263,12 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       flop_count=0.0;
       // 性能測定モードのときには出力しない
       
-      cds_force_(force, sz, gc, p, (int*)bcd, dc_bid->GetData(), &id_of_solid, dh, &flop_count);
+      if ( C.isCDS() ) {
+        cds_force_(force, sz, gc, p, (int*)bcd, dc_bid->GetData(), &id_of_solid, dh, &flop_count);
+      }
+      else {
+        cbc_force_(force, sz, gc, p, (int*)bcd, dh, &flop_count);
+      }
       
       TIMING_stop(tm_cal_force, 0.0);
       

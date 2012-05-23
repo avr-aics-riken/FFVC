@@ -126,6 +126,7 @@ extern "C" {
   void cbc_vmax_              (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* flop);
   void cbc_face_avr_sampling_ (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* avr);
   void cbc_shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
+  void cbc_force_             (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, REAL_TYPE* dh, REAL_TYPE* flop);
   
   
   // BCvec_cc.f90

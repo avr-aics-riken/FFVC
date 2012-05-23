@@ -962,3 +962,107 @@
 
     return
     end subroutine cbc_shift_pressure
+
+!  *****************************************************
+!> @subroutine cbc_force (force, sz, g, p, bp, dh, flop)
+!! @brief 物体表面の力を計算する
+!! @param[out] force 力の成分
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param p 圧力
+!! @param bp BCindex P
+!! @param dh 無次元格子幅
+!! @param[out] flop flop count
+!<
+  subroutine cbc_force (force, sz, g, p, bp, dh, flop)
+  implicit none
+  include '../FB/cbc_f_params.h'
+  integer                                                     ::  i, j, k, ix, jx, kx, g
+  integer                                                     ::  bw, be, bs, bn, bb, bt
+  integer, dimension(3)                                       ::  sz
+  real                                                        ::  fx, fy, fz
+  real                                                        ::  qw, qe, qs, qn, qb, qt
+  real                                                        ::  flop, actv, pp, dh, cf
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
+  real, dimension(3)                                          ::  force
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+  flop = flop + real(ix)*real(jx)*real(kx)*12.0 + 5.0
+
+  fx = 0.0
+  fy = 0.0
+  fz = 0.0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(actv, pp) &
+!$OMP PRIVATE(bw, be, bs, bn, bb, bt) &
+!$OMP PRIVATE(qw, qe, qs, qn, qb, qt)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:fx) &
+!$OMP REDUCTION(+:fy) &
+!$OMP REDUCTION(+:fz)
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+
+    ! Fluid -> 1.0
+    actv= real(ibits(bp(i,j,k), State, 1))
+    bw = ibits(bp(i-1, j  , k  ), State, 1)
+    be = ibits(bp(i+1, j  , k  ), State, 1)
+    bs = ibits(bp(i  , j-1, k  ), State, 1)
+    bn = ibits(bp(i  , j+1, k  ), State, 1)
+    bb = ibits(bp(i  , j  , k-1), State, 1)
+    bt = ibits(bp(i  , j  , k+1), State, 1)
+
+
+    ! if not cut -> q=0.0
+    qw = 0.0
+    qe = 0.0
+    qs = 0.0
+    qn = 0.0
+    qb = 0.0
+    qt = 0.0
+
+    ! 参照先が固体である場合のみ
+    if ( bw == 0 ) qw = 1.0
+    if ( be == 0 ) qe = 1.0
+    if ( bs == 0 ) qs = 1.0
+    if ( bn == 0 ) qn = 1.0
+    if ( bb == 0 ) qb = 1.0
+    if ( bt == 0 ) qt = 1.0
+
+    pp = p(i,j,k) * actv
+
+    ! 各方向に壁がある場合、かつ流体セルのみ力を積算
+    fx = fx + pp * ( qe - qw ) * actv
+    fy = fy + pp * ( qn - qs ) * actv
+    fz = fz + pp * ( qt - qb ) * actv
+
+  end do
+  end do
+  end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+  cf = 2.0 * dh * dh
+  force(1) = fx * cf
+  force(2) = fy * cf
+  force(3) = fz * cf
+
+  return
+  end subroutine cbc_force
+
