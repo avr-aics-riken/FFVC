@@ -278,7 +278,7 @@ public:
   
   void AverageOutput        (REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
-  void Variation_Space      (REAL_TYPE* avr, REAL_TYPE& flop);
+  void Variation_Space      (REAL_TYPE* avr, REAL_TYPE* rms, REAL_TYPE& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);

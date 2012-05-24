@@ -18,7 +18,6 @@
 #include "FBUtility.h"
 #include "Component.h"
 #include "Material.h"
-#include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
 #include "parallel/SklParaComponent.h"
 #include "IDtable.h"
@@ -29,7 +28,6 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
-using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class VoxInfo : public Parallel_Node {
 protected:
@@ -38,7 +36,6 @@ protected:
   unsigned NoVoxID;     /// 含まれるIDの数(Local/Global)
   unsigned NoBC;        /// 境界条件数
   unsigned NoCompo;     /// コンポーネントの総数
-  SklSolverConfig* CF;  /// XMLツリーのポインタ
   
   int* colorList;       /// ボクセルモデルに含まれるIDのリスト(Global)
   REAL_TYPE* vox_nv;    /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
@@ -53,7 +50,6 @@ public:
     NoBC = NoCompo = 0;
     for (unsigned i=0; i<3; i++) size[i]=0;
     colorList = NULL;
-    CF = NULL;
     vox_nv = NULL;
     cmp = NULL;
     mat = NULL;
@@ -102,7 +98,6 @@ protected:
   void encQfaceSVO           (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
   void encVbit_OBC           (int face, unsigned* bv, string key, const bool enc_sw, string chk, unsigned* bp, const bool enc_uwd);
   void find_isolated_Fcell   (unsigned order, int* mid, unsigned* bx);
-  void getIDrange            (const CfgElem *elmL2, const char* keyword, unsigned* var);
   void getNormalSign         (unsigned n, int* gi, unsigned* bx, int* dir);
   void getOffset             (int* st, int* ofst);
   void getQuadrant           (unsigned* q, REAL_TYPE t1, REAL_TYPE t2);
@@ -144,7 +139,7 @@ protected:
   
 public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
-  bool receiveCfgPtr         (SklSolverConfig* cfg);
+  //bool receiveCfgPtr         (SklSolverConfig* cfg);
   
   unsigned  check_fill       (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);

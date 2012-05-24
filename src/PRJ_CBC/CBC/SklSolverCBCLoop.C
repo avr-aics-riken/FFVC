@@ -21,9 +21,10 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   const SklParaManager* para_mng = para_cmp->GetParaManager();
   
   REAL_TYPE flop_count=0.0;      /// 浮動小数演算数
-  REAL_TYPE avrms[6];            /// 平均値 [0]; vel, [1]; prs, [2]; temp, 変動値 [3]; vel, [4]; prs, [5]; temp
+  REAL_TYPE avr_Var[3];          /// 平均値（速度、圧力、温度）
+  REAL_TYPE rms_Var[3];          /// 変動値
   REAL_TYPE vMax=0.0;            /// 最大速度成分
-  REAL_TYPE *v=NULL;             /// 速度（セルセンタ）
+  REAL_TYPE *v=NULL;             /// 速度
   REAL_TYPE *p=NULL;             /// 圧力
   REAL_TYPE *t=NULL;             /// 温度
   REAL_TYPE *tp=NULL;            /// 全圧
@@ -133,24 +134,39 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   // 空間平均値操作と変動量
   TIMING_start(tm_stat_space);
   flop_count=0.0;
-  for (int i=0; i<6; i++) avrms[i] = 0.0;
-  Variation_Space(avrms, flop_count);
+  for (int i=0; i<3; i++) {
+    avr_Var[i] = 0.0;
+    rms_Var[i] = 0.0;
+  }
+  Variation_Space(avr_Var, rms_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
 
   if ( para_mng->IsParallel() ) {
-    REAL_TYPE tmp[6];
+    /// var_Velocity=0,  > FB_Define.h
+    /// var_Pressure,
+    /// var_Temperature,
+    REAL_TYPE src[6], dst[6]; // Vel, Prs, Tempで3*2
     TIMING_start(tm_stat_space_comm);
-    for (int n=0; n<6; n++) tmp[n] = avrms[n];
-    para_mng->Allreduce(tmp, avrms, 6, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 速度，圧力，温度の3変数 x (平均値+変動値)
-    TIMING_stop(tm_stat_space_comm, 2.0*np_f*6.0*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 6変数
+    
+    for (int n=0; n<3; n++) src[n]   = avr_Var[n];
+    for (int n=0; n<3; n++) src[n+3] = rms_Var[n];
+    para_mng->Allreduce(src, dst, 6, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 変数 x (平均値+変動値)
+    for (int n=0; n<3; n++) avr_Var[n] = dst[n];
+    for (int n=0; n<3; n++) rms_Var[n] = dst[n+3];
+    
+    TIMING_stop(tm_stat_space_comm, 2.0*np_f*6.0*2.0*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 変数
   }
 
-  avrms[0] = sqrt(avrms[0]/(REAL_TYPE)G_Acell);  // 速度の変動量のRMS
-  avrms[1] = sqrt(avrms[1]/(REAL_TYPE)G_Acell);  // 圧力の変動量のRMS
-  avrms[2] = sqrt(avrms[2]/(REAL_TYPE)G_Acell);  // 温度の変動量のRMS
-  avrms[3] = sqrt(avrms[3]/(REAL_TYPE)G_Acell);  // 速度の空間RMS
-  avrms[4] = avrms[4]/(REAL_TYPE)G_Acell;        // 圧力の空間平均
-  avrms[5] = avrms[5]/(REAL_TYPE)G_Acell;        // 温度の空間平均
+  avr_Var[var_Velocity] = avr_Var[var_Velocity]/(REAL_TYPE)G_Acell;  // 速度の空間平均
+  avr_Var[var_Pressure] = avr_Var[var_Pressure]/(REAL_TYPE)G_Acell;  // 圧力の空間平均
+  
+  rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]/(REAL_TYPE)G_Acell);  // 速度の変動量 
+  rms_Var[var_Pressure] = sqrt(rms_Var[var_Pressure]/(REAL_TYPE)G_Acell);  // 圧力の変動量 
+  
+  if ( C.isHeatProblem() ) {
+    avr_Var[var_Temperature] = avr_Var[var_Temperature]/(REAL_TYPE)G_Acell;         // 温度の空間平均
+    rms_Var[var_Temperature] = sqrt(rms_Var[var_Temperature]/(REAL_TYPE)G_Acell);   // 温度の変動量
+  }
   
   //  <<< ステップループのユーティリティ 1
   TIMING_stop(tm_loop_uty_sct_1, 0.0);
@@ -169,7 +185,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   if ( C.Mode.Log_Base == ON) {
     if ( C.Interval[Interval_Manager::tg_console].isTriggered(loop_step, loop_time) ) {
       TIMING_start(tm_hstry_stdout);
-      Hostonly_ H->printHistory(mp, avrms, IC, &C);
+      Hostonly_ H->printHistory(mp, avr_Var, rms_Var, IC, &C);
       TIMING_stop(tm_hstry_stdout, 0.0);
     }
   }
@@ -237,7 +253,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     // 基本履歴情報
     if ( C.Mode.Log_Base == ON ) {
       TIMING_start(tm_hstry_base);
-      Hostonly_ H->printHistory(fp_b, avrms, IC, &C);
+      Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C);
       TIMING_stop(tm_hstry_base, 0.0);
     }
     

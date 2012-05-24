@@ -142,7 +142,7 @@ protected:
   }
   
 public:
-  void printHistory          (FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C);
+  void printHistory          (FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms, const ItrCtl* IC, const Control* C);
   void printHistoryTitle     (FILE* fp, const ItrCtl* IC, const Control* C);
   void printHistoryCompo     (FILE* fp, const CompoList* cmp, const Control* C);
   void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);

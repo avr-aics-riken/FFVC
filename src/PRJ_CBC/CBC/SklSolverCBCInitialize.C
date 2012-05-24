@@ -362,10 +362,6 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // VoxInfoクラスで利用する変数をコピー
-  if ( !Vinfo.receiveCfgPtr(m_solvCfg) ) {
-    Hostonly_ stamped_printf("\tError during sending an object pointer of XML tree to VoxInfo class\n");
-    Exit(0);
-  }
   Vinfo.setParallelInfo(pn);
   Vinfo.setControlVars(size, guide);
   
@@ -472,9 +468,9 @@ SklSolverCBC::SklSolverInitialize() {
   // スキャンしたセルIDの情報を表示する
   Hostonly_ {
     fprintf(mp, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\t>> Voxel Model Information\n\n");
+    fprintf(mp,"\t>> Information of Scaned Voxel\n\n");
     fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> Voxel Model Information\n\n");
+    fprintf(fp,"\t>> Information of Scaned Voxel\n\n");
     
 		Vinfo.printScanedCell(fp);
 		fflush(fp);

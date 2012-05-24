@@ -146,12 +146,17 @@ depend:
 ../../FB/VoxInfo.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/VoxInfo.o: ../../FB/FBUtility.h ../../FB/FB_Define.h
 ../../FB/VoxInfo.o: ../../FB/mydebug.h ../../FB/Component.h
-../../FB/VoxInfo.o: ../../FB/Material.h
+../../FB/VoxInfo.o: ../../FB/Material.h ../../FB/Parallel_node.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaComponent.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/SklBase.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaManager.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaIF.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklArayBase.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklDataManager.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklSolverConfig.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgDatas.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/SklBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgBase.h
@@ -176,12 +181,6 @@ depend:
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklMDMConfig.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/VoxInfo.o: ../../FB/Parallel_node.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaComponent.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklDataManager.h
 ../../FB/VoxInfo.o: ../../FB/IDtable.h ../../FB/SetBC.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklSolverBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklDefine.h

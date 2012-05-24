@@ -121,14 +121,15 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C)
 }
 
 /**
- @fn void History::printHistory(FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C)
+ @fn void History::printHistory(FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms,  const ItrCtl* IC, const Control* C)
  @brief 標準履歴の出力
  @param fp 出力ファイルポインタ
- @param delta 1タイムステップの変化量と平均値　（0-pressure, 1-velocity, 2-temperature)
+ @param avr 1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
+ @param rms 1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
  @param IC ItrCtlクラスのポインタ
  @param C Controlクラスへのポインタ
  */
-void History::printHistory(FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, const Control* C)
+void History::printHistory(FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms, const ItrCtl* IC, const Control* C)
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
@@ -157,8 +158,8 @@ void History::printHistory(FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, c
       }
     }
     
-    fprintf(fp, " %10.3e %10.3e %10.3e %10.3e", delta[var_Pressure], delta[var_Pressure+3], delta[var_Velocity], delta[var_Velocity+3]);
-    if ( C->isHeatProblem() ) fprintf(fp, " %10.3e %10.3e", delta[var_Temperature], delta[var_Temperature+3]);
+    fprintf(fp, " %10.3e %10.3e %10.3e %10.3e", rms[var_Pressure], avr[var_Pressure], rms[var_Velocity], avr[var_Velocity]);
+    if ( C->isHeatProblem() ) fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
   }
   else {
     switch (C->AlgorithmH) {				
@@ -166,7 +167,7 @@ void History::printHistory(FILE* fp, const REAL_TYPE* delta, const ItrCtl* IC, c
         fprintf(fp, " %5d %11.4e", ICt->LoopCount+1, ICt->get_normValue());
         break;
     }
-    fprintf(fp, " %10.3e %10.3e", delta[var_Temperature], delta[var_Temperature+3]);
+    fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
   }
   
   fprintf(fp, "\n");

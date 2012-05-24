@@ -705,20 +705,22 @@
   subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale
+  real                                                      ::  flop, dp, scale, kv, b_t
   real                                                      ::  Base_tmp, Diff_tmp, klv
   real, dimension(sz)                                       ::  dst, src
 
   dp = scale * abs(Diff_tmp)
+  kv = klv
+  b_t = Base_tmp
   flop = flop + real(sz) * 3.0 + 2.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(sz, dp, Base_tmp, klv)
+!$OMP FIRSTPRIVATE(sz, dp, b_t, kv)
    
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = src(i) * dp - klv + Base_tmp
+    dst(i) = src(i) * dp - kv + b_t
   end do
 !$OMP END DO
 
@@ -741,20 +743,22 @@
   subroutine fb_tmp_d2nd (t, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale
+  real                                                      ::  flop, dp, scale, b_t, kv
   real                                                      ::  Base_tmp, Diff_tmp, klv
   real, dimension(sz)                                       ::  t
 
   dp = scale / abs(Diff_tmp)
+  kv = klv
+  b_t = Base_tmp
   flop = flop + real(sz) * 3.0 + 10.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(sz, dp, Base_tmp, klv)
+!$OMP FIRSTPRIVATE(sz, dp, b_t, kv)
    
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    t(i) = ( t(i) + klv - Base_tmp ) * dp
+    t(i) = ( t(i) + kv - b_t ) * dp
   end do
 !$OMP END DO
 
@@ -777,20 +781,21 @@
   subroutine fb_prs_d2nd (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale
+  real                                                      ::  flop, dp, scale, b_p
   real                                                      ::  Base_prs, Ref_rho, Ref_v
   real, dimension(sz)                                       ::  s
 
   dp = scale / (Ref_rho * Ref_v * Ref_v)
+  b_p = Base_prs
   flop = flop + real(sz) * 3.0 + 10.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(sz, dp, Base_prs)
+!$OMP FIRSTPRIVATE(sz, dp, b_p)
    
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    s(i) = ( s(i) - Base_prs ) * dp
+    s(i) = ( s(i) - b_p ) * dp
   end do
 !$OMP END DO
 
@@ -815,20 +820,21 @@
   subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale
+  real                                                      ::  flop, dp, scale, b_p
   real                                                      ::  Base_prs, Ref_rho, Ref_v
   real, dimension(sz)                                       ::  dst, src
 
   dp = Ref_rho * Ref_v * Ref_v * scale
+  b_p = Base_prs
   flop = flop + real(sz) * 3.0 + 2.0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(sz, dp, Base_prs)
+!$OMP FIRSTPRIVATE(sz, dp, b_p)
 
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = ( src(i) * dp + Base_prs ) 
+    dst(i) = ( src(i) * dp + b_p ) 
   end do
 !$OMP END DO
 
@@ -849,18 +855,19 @@
   subroutine fb_xcopy (dst, src, sz, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, scale
+  real                                                      ::  flop, scale, s_c
   real, dimension(sz)                                       ::  dst, src
 
   flop = flop + real(sz)
+  s_c = scale
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(sz)
+!$OMP FIRSTPRIVATE(sz, s_c)
 
 !$OMP DO SCHEDULE(static)
 
   do i=1,sz
-    dst(i) = src(i) * scale
+    dst(i) = src(i) * s_c
   end do
 
 !$OMP END DO
@@ -940,7 +947,7 @@
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, u_ref, v_ref, w_ref, unit_v, scale
+  real                                                      ::  flop, u_ref, v_ref, w_ref, unit_v, scale, unit
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout, vin
   real, dimension(0:3)                                      ::  v00
 
@@ -951,21 +958,23 @@
   u_ref = v00(1)
   v_ref = v00(2)
   w_ref = v00(3)
+
+  unit = unit_v
   
   flop = flop + real(ix)*real(jx)*real(kx)*9.0
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, unit_v)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, unit)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vout(1,i,j,k) = ( vin(1,i,j,k) * scale - u_ref ) * unit_v
-    vout(2,i,j,k) = ( vin(2,i,j,k) * scale - v_ref ) * unit_v
-    vout(3,i,j,k) = ( vin(3,i,j,k) * scale - w_ref ) * unit_v
+    vout(1,i,j,k) = ( vin(1,i,j,k) * scale - u_ref ) * unit
+    vout(2,i,j,k) = ( vin(2,i,j,k) * scale - v_ref ) * unit
+    vout(3,i,j,k) = ( vin(3,i,j,k) * scale - w_ref ) * unit
   end do
   end do
   end do
@@ -1016,7 +1025,8 @@
 !$OMP REDUCTION(+:rm)
   do k=1,kx
   do j=1,jx
-  do i=1,ix 
+  do i=1,ix
+
     actv = real(ibits(bx(i,j,k), State, 1))
     
     u = vn(1,i,j,k)
@@ -1028,7 +1038,7 @@
     y = v - vo(2,i,j,k)
     z = w - vo(3,i,j,k)
     rm = rm + (x*x + y*y + z*z)*actv
-  !if ((i.ge.150).and.(i.le.202).and.(j.eq.26).and.(k.eq.37)) write(*,*) i,j,k, u, v, w
+
   end do
   end do
   end do
@@ -1183,37 +1193,6 @@
 
   return
   end subroutine fb_average_s
-
-!  *******************************************
-!> @subroutine fb_average (avr, src, sz, flop)
-!! @brief 値を加算する
-!! @param avr 加算値
-!! @param src 元の値
-!! @param sz 配列長（一次元）
-!! @param flop 浮動小数演算数
-!<
-  subroutine fb_average (avr, src, sz, flop)
-  implicit none
-  integer                                                   ::  i, sz
-  real                                                      ::  flop
-  real, dimension(sz)                                       ::  src, avr
-
-  flop = flop + real(sz)
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(sz)
-
-!$OMP DO SCHEDULE(static)
-
-  do i=1,sz
-    avr(i) = avr(i) + src(i)
-  end do
-
-!$OMP END DO
-!$OMP END PARALLEL
-
-  return
-  end subroutine fb_average
   
 !  ***************************************
 !> @subroutine fb_copy_real (dst, src, sz)

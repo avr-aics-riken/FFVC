@@ -4663,35 +4663,6 @@ void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
 }
 
 
-/**
- @fn void VoxInfo::getIDrange(const CfgElem *elmL2, const char* keyword, unsigned* var)
- @brief BC Indexからマスク値を計算する
- @param elmL2 XMLツリーのポインタ
- @param keyword XMLキーワード
- @param var レンジの値
- */
-void VoxInfo::getIDrange(const CfgElem *elmL2, const char* keyword, unsigned* var)
-{
-  const CfgParam* param=NULL;
-  int value=0;
-  
-  if ( !(param = elmL2->GetParamFirst(keyword)) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing '%s' keyword\n", keyword);
-    Exit(0);
-  }
-  else if ( !(param->GetData(&value)) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid integer value for '%s'\n", keyword);
-    Exit(0);
-  }
-  else if (value<0) {
-    Hostonly_ stamped_printf("\tParsing error : Negative integer value for '%s' %d\n", keyword, value);
-    Exit(0);
-  }
-  else {
-    *var = (unsigned)value;
-  }
-}
-
 
 /**
  @fn void VoxInfo::getOffset(int* st, int* ofst)
@@ -4927,19 +4898,6 @@ void VoxInfo::printScanedCell(FILE* fp)
   }
 }
 
-
-/**
- @fn VoxInfo::receiveCfgPtr(SklSolverConfig* cfg)
- @brief SklSolverConfigのポインタを受け取る
- @param cfg SklSolverConfigクラスのポインタ
- @retval エラーコード
- */
-bool VoxInfo::receiveCfgPtr(SklSolverConfig* cfg)
-{
-  if ( !cfg ) return false;
-  CF = cfg;
-  return true;
-}
 
 /**
  @fn unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID_replace)

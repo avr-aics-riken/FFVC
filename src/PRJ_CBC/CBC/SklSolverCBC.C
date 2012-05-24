@@ -605,30 +605,25 @@ void SklSolverCBC::Averaging_Time(REAL_TYPE& flop)
   if( !(av = dc_av->GetData()) )  Exit(0);
   if( !(p  = dc_p->GetData()) )   Exit(0);
   if( !(ap = dc_ap->GetData()) )  Exit(0);
-  
-  int d_length;
 
-  d_length = (int)dc_ap->GetArrayLength();
-  fb_average_(ap, p, &d_length, &flop);
-  
-  d_length = (int)dc_av->GetArrayLength();
-  fb_average_(av, v, &d_length, &flop);
+  fb_average_s_(ap, sz, gc, p, &flop);
+  fb_average_v_(av, sz, gc, v, &flop);
 
   if ( C.isHeatProblem() ) {
     if( !(t  = dc_t->GetData()) )  Exit(0);
     if( !(at = dc_at->GetData()) ) Exit(0);
     
-    d_length = (int)dc_at->GetArrayLength();
-    fb_average_(at, t, &d_length, &flop);
+    fb_average_s_(at, sz, gc, t, &flop);
   }
 }
 
-//@fn void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE& flop)
+//@fn void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, REAL_TYPE& flop)
 //@brief 空間平均操作と変動量の計算を行う
-//@param avr[out] 平均値と変動値
+//@param avr[out] 平均値
+//@param rms[out] 変動値
 //@param flop[out] 浮動小数演算数
 //@note スカラ値は算術平均，ベクトル値は自乗和
-void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE& flop)
+void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, REAL_TYPE& flop)
 {
   REAL_TYPE *v =NULL;
   REAL_TYPE *v0=NULL;
@@ -653,19 +648,19 @@ void SklSolverCBC::Variation_Space(REAL_TYPE* avr, REAL_TYPE& flop)
   
   // 速度
   fb_delta_v_(m_var, sz, gc, v, v0, (int*)bd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
-  avr[var_Velocity]   = m_var[0]; // 0
-  avr[var_Velocity+3] = m_var[1]; // 3
+  rms[var_Velocity] = m_var[0];
+  avr[var_Velocity] = m_var[1];
 
   // 圧力
   fb_delta_s_(m_var, sz, gc, p, p0, (int*)bd, &flop);
-  avr[var_Pressure]   = m_var[0]; // 1
-  avr[var_Pressure+3] = m_var[1]; // 4
+  rms[var_Pressure] = m_var[0];
+  avr[var_Pressure] = m_var[1];
 
   // 温度
   if ( C.isHeatProblem() ) {
     fb_delta_s_(m_var, sz, gc, t, t0, (int*)bd, &flop);
-    avr[var_Temperature]   = m_var[0]; // 2
-    avr[var_Temperature+3] = m_var[1]; // 5
+    rms[var_Temperature] = m_var[0];
+    avr[var_Temperature] = m_var[1];
   }
   
 }
