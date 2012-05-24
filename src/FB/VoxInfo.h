@@ -28,6 +28,8 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
+#include "mpi.h"
+#include "limits.h"
 
 class VoxInfo : public Parallel_Node {
 protected:
@@ -189,6 +191,27 @@ public:
   //@note dir = (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
   inline void set_BID5(int& bid, const int dir, const int s_id) {
     bid |= (s_id << (dir*5));
+  }
+  
+  static void int_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    rbuf = (int*)&my_recv;
+  }
+  
+  static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    rbuf = (unsigned*)&my_recv;
+  }
+  
+  static void int_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+    rbuf = (int*)&my_recv;
   }
   
   // ----> debug function

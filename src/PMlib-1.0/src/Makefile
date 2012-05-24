@@ -38,6 +38,7 @@ RANLIB = ranlib
 
 
 CFLAGS = -O3 -Wall -I../include -I$(MPI_DIR)/include
+#CFLAGS = -O3 -I../include -I$(MPI_HOME)/include
 
 $(PMLIB): $(OBJS)
 	$(AR) $@ $(OBJS)

@@ -42,6 +42,7 @@
 #include "FileIO.h"
 #include "Monitor.h"
 #include "dfi.h"
+#include "limits.h"
 
 
 #include "IP_Duct.h"

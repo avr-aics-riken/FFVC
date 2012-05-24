@@ -91,7 +91,7 @@ bool MonitorCompo::allReduceSum(int* array, int n, int* sendBuf)
   if (!para_mng->IsParallel()) return true;
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp); // @todo int_sum_Allreduce()に変更
 }
 
 
@@ -810,7 +810,7 @@ void MonitorCompo::setRankArray()
   // gather max rank number
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if (para_mng->IsParallel()) {
-    if (!para_mng->Allreduce(sendBuf, rank, nPoint, SKL_ARRAY_DTYPE_INT,
+    if (!para_mng->Allreduce(sendBuf, rank, nPoint, SKL_ARRAY_DTYPE_INT, // @todo int_sum_Allreduce()に変更
                              SKL_MAX, pn.procGrp)) Exit(0);
   }
   else {
