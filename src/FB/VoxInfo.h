@@ -200,6 +200,20 @@ public:
     rbuf = (int*)&my_recv;
   }
   
+  static void int_array_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (int)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
+  }
+  
   static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
     float my_send = (float)*sbuf;
     float my_recv = (float)*rbuf;
@@ -212,6 +226,20 @@ public:
     float my_recv = (float)*rbuf;
     MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
     rbuf = (int*)&my_recv;
+  }
+  
+  static void int_array_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (int)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
   }
   
   // ----> debug function
