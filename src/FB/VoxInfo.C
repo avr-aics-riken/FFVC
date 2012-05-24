@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <map>
 #include "VoxInfo.h"
-extern SklParaComponent* ParaCmpo;
+//extern SklParaComponent* ParaCmpo;
 
 /**
  @fn void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode)
@@ -27,7 +27,7 @@ extern SklParaComponent* ParaCmpo;
  */
 void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i, j, k;
   register int ref_id;
   unsigned m, m0, m1;
@@ -39,6 +39,10 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
   int gd = (int)guide;
   
   if ( !(mid = d_mid->GetData()) ) Exit(0);
+  
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
   
   // 周期境界以外
   if ( BCtype != OBC_PERIODIC ) {
@@ -145,7 +149,8 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
     // 内部周期境界の場合には，別メソッド
     if ( prdc_mode != BoundaryOuter::prdc_Driver ) {
       // 並列時
-      if( para_mng->IsParallel() ){
+      //if( para_mng->IsParallel() ){
+      if ( m_np > 1 ) {
         switch (face) {
           case X_MINUS:
             if ( !d_mid->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
@@ -277,15 +282,19 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
  */
 void VoxInfo::adjCellID_Prdc_Inner(SklScalar3D<int>* d_mid)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int st[3], ed[3], dir, id;
+  
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
   for (unsigned n=1; n<=NoBC; n++) {
     cmp[n].getBbox(st, ed);
     dir = (int)cmp[n].getPeriodicDir();
     id  = cmp[n].getID();
     if ( cmp[n].getType() == PERIODIC ) {
-      if( para_mng->IsParallel() ){
+      //if( para_mng->IsParallel() ){
+      if ( m_np > 1 ) {
         Hostonly_ printf("Error : Inner Periodic condition is limited to use for serial execution on a temporary\n.");
         Exit(0);
       }
@@ -371,11 +380,6 @@ void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsi
       
     case CELL_MONITOR:
     case DARCY:
-      countVolumeEdge(n, bd, cijk);
-      getNormalSign(n, gi, bd, dir);
-      ai = 0.5*(REAL_TYPE)cijk[0]; // 両面あるので半分にする?
-      aj = 0.5*(REAL_TYPE)cijk[1];
-      ak = 0.5*(REAL_TYPE)cijk[2];
       break;
   }
   
@@ -670,7 +674,7 @@ void VoxInfo::copyID_Prdc_Inner(SklScalar3D<int>* d_mid, int* st, int* ed, int i
 void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, const unsigned state)
 {
   
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned cell=0;    // local
   unsigned g_cell=0;  // global 
   int i,j,k;
@@ -700,10 +704,18 @@ void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, con
   g_cell = cell;
   Lcell = cell;
   
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned c_tmp = g_cell;
-    para_mng->Allreduce(&c_tmp, &g_cell, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&c_tmp, &g_cell, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned c_tmp = g_cell;
+  //  para_mng->Allreduce(&c_tmp, &g_cell, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   Gcell = g_cell;
 
 }
@@ -725,7 +737,7 @@ void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, con
  */
 void VoxInfo::countFace_S(unsigned n, unsigned* bx, int* cc)
 {
-	SklParaManager* para_mng = ParaCmpo->GetParaManager();
+	//SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned register s, m;
   int i,j,k, c[3];
 	int st[3], ed[3];
@@ -750,13 +762,24 @@ void VoxInfo::countFace_S(unsigned n, unsigned* bx, int* cc)
     }
   }
   
-	if( para_mng->IsParallel() ){
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     int tmp[3];
-		tmp[0] = c[0];
+    tmp[0] = c[0];
 		tmp[1] = c[1];
 		tmp[2] = c[2];
-		para_mng->Allreduce(tmp, c, 3, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
-	}
+    MPI_Allreduce(tmp, c, 3, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+	//if( para_mng->IsParallel() ){
+  //  int tmp[3];
+	//	tmp[0] = c[0];
+	//	tmp[1] = c[1];
+	//	tmp[2] = c[2];
+	//	para_mng->Allreduce(tmp, c, 3, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+	//}
 	cc[0] = c[0];
 	cc[1] = c[1];
 	cc[2] = c[2];
@@ -776,7 +799,7 @@ void VoxInfo::countFace_S(unsigned n, unsigned* bx, int* cc)
  */
 void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
 {
-	SklParaManager* para_mng = ParaCmpo->GetParaManager();
+	//SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b, s;
   REAL_TYPE c_p, c_e, c_w, c_n, c_s, c_t, c_b;
   REAL_TYPE dw, de, ds, dn, db, dt;
@@ -853,16 +876,30 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
     }
   }
   
-	if( para_mng->IsParallel() ){
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     int tmp[3];
-		tmp[0] = c[0];
+    tmp[0] = c[0];
 		tmp[1] = c[1];
 		tmp[2] = c[2];
-		para_mng->Allreduce(tmp, c, 3, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(tmp, c, 3, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     
     tmp[0] = ar;
-    para_mng->Allreduce(tmp, &ar, 1, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
-	}
+    MPI_Allreduce(tmp, &ar, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+	//if( para_mng->IsParallel() ){
+  //  int tmp[3];
+	//	tmp[0] = c[0];
+	//	tmp[1] = c[1];
+	//	tmp[2] = c[2];
+	//	para_mng->Allreduce(tmp, c, 3, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+  //  
+  //  tmp[0] = ar;
+  //  para_mng->Allreduce(tmp, &ar, 1, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+	//}
 	cc[0] = c[0];
 	cc[1] = c[1];
 	cc[2] = c[2];
@@ -878,7 +915,7 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
  */
 unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i, j, k;
   unsigned m1, m2, g=0;
   unsigned register s1, s2;
@@ -986,10 +1023,18 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
       break;
   } // end of switch
   
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -1008,12 +1053,12 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
  */
 void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
 {
-	SklParaManager* para_mng = ParaCmpo->GetParaManager();
+	//SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned m0, mi, mj, mk;
   unsigned s0, si, sj, sk;
   int i,j,k;
 	int st[3], ed[3], ofst[3];
-  int c[3], tmp[3];
+  int c[3];
   c[0] = c[1] = c[2] = 0;
 	
   if ( cmp[n].isEns() ) {
@@ -1078,12 +1123,23 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
     
   } // Ens
   
-	if( para_mng->IsParallel() ){
-		tmp[0] = c[0];
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    int tmp[3];
+    tmp[0] = c[0];
 		tmp[1] = c[1];
 		tmp[2] = c[2];
-		para_mng->Allreduce(tmp, c, 3, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
-	}
+    MPI_Allreduce(tmp, c, 3, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+	//if( para_mng->IsParallel() ){
+	//	tmp[0] = c[0];
+	//	tmp[1] = c[1];
+	//	tmp[2] = c[2];
+	//	para_mng->Allreduce(tmp, c, 3, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
+	//}
 	cc[0] = c[0];
 	cc[1] = c[1];
 	cc[2] = c[2];
@@ -1098,10 +1154,10 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
  */
 void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned m0, m1, g;
-  unsigned m_area[NOFACE], tmp[NOFACE];
+  unsigned m_area[NOFACE];
   
   int ix = (int)size[0];
   int jx = (int)size[1];
@@ -1199,10 +1255,19 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
     m_area[Z_PLUS] = g;
   }
   
-  if( para_mng->IsParallel() ){ 
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp[NOFACE];
     for (i=0; i<NOFACE; i++) tmp[i] = m_area[i];
-    para_mng->Allreduce(tmp, m_area, NOFACE, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(tmp, m_area, NOFACE, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ){
+  //  for (i=0; i<NOFACE; i++) tmp[i] = m_area[i];
+  //  para_mng->Allreduce(tmp, m_area, NOFACE, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   
   for (i=0; i<NOFACE; i++) OpenArea[i] = (REAL_TYPE)m_area[i];
 }
@@ -1217,10 +1282,10 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
  */
 unsigned VoxInfo::countState(unsigned id, int* mid)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned m;
-  unsigned g=0, tmp=0;
+  unsigned g=0;
   
   int ix = (int)size[0];
   int jx = (int)size[1];
@@ -1237,10 +1302,18 @@ unsigned VoxInfo::countState(unsigned id, int* mid)
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   
   return g;
 }
@@ -1394,9 +1467,8 @@ void VoxInfo::dbg_chkBCIndexV(unsigned* bcv, const char* fname)
  */
 void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned KOS)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
-  unsigned m, c=0, g=0;
+  unsigned m, c=0;
   unsigned register s;
   
   int ix = (int)size[0];
@@ -1408,9 +1480,9 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
     case FLOW_ONLY:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
-      for (k=1; k<=kx; k++) {
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bx[m];
             if ( IS_FLUID( s ) ) {
@@ -1427,9 +1499,9 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
       break;
       
     case SOLID_CONDUCTION:
-      for (k=1; k<=kx; k++) {
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
             s = bx[m];
             if ( !IS_FLUID( s ) ) {
@@ -1446,9 +1518,9 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
       break;
       
     case CONJUGATE_HEAT_TRANSFER:
-      for (k=1; k<=kx; k++) {
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
             bx[m] = onBit( bx[m], ACTIVE_BIT );
             c++;
@@ -1458,11 +1530,17 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
       break;
   }
   
-  Lcell = g = c;
-  if( para_mng->IsParallel() ) {
+  Lcell = c;
+  unsigned g = c;
+  
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned c_tmp = g;
-    para_mng->Allreduce(&c_tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&c_tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
   Gcell = g;
 }
 
@@ -1670,7 +1748,7 @@ void VoxInfo::encHbit(unsigned* bh1, unsigned* bh2)
  */
 unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* bx)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int idd;
   unsigned register m, g=0;
   
@@ -1692,10 +1770,18 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
     }
   }
   
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
 
   return g;
 }
@@ -1718,7 +1804,7 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
  */
 unsigned VoxInfo::encQfaceHT_S(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k,idd;
   unsigned g=0;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -1835,10 +1921,18 @@ unsigned VoxInfo::encQfaceHT_S(unsigned order, unsigned id, int* mid, unsigned* 
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    unsigned tmp=g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp=g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -1859,7 +1953,7 @@ unsigned VoxInfo::encQfaceHT_S(unsigned order, unsigned id, int* mid, unsigned* 
  */
 unsigned VoxInfo::encQfaceHT_B(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k,idd;
   unsigned g=0;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -1975,10 +2069,18 @@ unsigned VoxInfo::encQfaceHT_B(unsigned order, unsigned id, int* mid, unsigned* 
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    unsigned tmp=g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp=g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -2000,7 +2102,7 @@ unsigned VoxInfo::encQfaceHT_B(unsigned order, unsigned id, int* mid, unsigned* 
  */
 unsigned VoxInfo::encQfaceISO_SF(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k,idd;
   unsigned g=0;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -2116,10 +2218,18 @@ unsigned VoxInfo::encQfaceISO_SF(unsigned order, unsigned id, int* mid, unsigned
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    unsigned tmp=g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp=g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -2141,7 +2251,7 @@ unsigned VoxInfo::encQfaceISO_SF(unsigned order, unsigned id, int* mid, unsigned
  */
 unsigned VoxInfo::encQfaceISO_SS(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k,idd;
   unsigned g=0;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -2257,10 +2367,18 @@ unsigned VoxInfo::encQfaceISO_SS(unsigned order, unsigned id, int* mid, unsigned
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    unsigned tmp=g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp=g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -2282,7 +2400,7 @@ unsigned VoxInfo::encQfaceISO_SS(unsigned order, unsigned id, int* mid, unsigned
  */
 unsigned VoxInfo::encQface(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface, bool flag)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k,idd;
   unsigned g=0;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -2378,11 +2496,19 @@ unsigned VoxInfo::encQface(unsigned order, unsigned id, int* mid, unsigned* bcd,
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    unsigned tmp=g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
-  return (g);
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp=g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
+  return g;
 }
 
 
@@ -2681,7 +2807,7 @@ void VoxInfo::encPbit(unsigned* bx)
  */
 unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k, idd;
   unsigned g=0, tmp=0, m;
   unsigned m_e, m_w, m_n, m_s, m_t, m_b;
@@ -2787,10 +2913,18 @@ unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned*
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -2806,7 +2940,7 @@ unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned*
  */
 unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned register s;
@@ -2924,10 +3058,18 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
     }
   }
   
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned tmp = c;
-    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = c;
+  //  para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   
   return c;
 }
@@ -2945,7 +3087,7 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
  */
 unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned m_p, m;
   unsigned register s;
@@ -3044,10 +3186,18 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
     }
   }
   
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned tmp = c;
-    para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = c;
+  //  para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   
   // 収束判定の有効フラグ
   float q0, q1, q2, q3, q4, q5;
@@ -3087,10 +3237,15 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
   }
   
   
-  if( para_mng->IsParallel() ) {
+  if ( m_np > 1 ) {
     unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   
   Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
   
@@ -3127,10 +3282,18 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
       }
     }
     
-    if( para_mng->IsParallel() ) {
+    int m_np;
+    MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+    
+    if ( m_np > 1 ) {
       unsigned tmp = g;
-      para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+      MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
     }
+    
+    //if( para_mng->IsParallel() ) {
+    //  unsigned tmp = g;
+    //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    //}
     
     Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %d\n\n", g);
     
@@ -3156,7 +3319,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
  */
 unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k, idd;
   unsigned g=0, tmp=0, m;
   unsigned m_e, m_w, m_n, m_s, m_t, m_b;
@@ -3263,10 +3426,18 @@ unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned*
     }
   }
   
-  if( para_mng->IsParallel() ) {
-    tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -3489,7 +3660,7 @@ void VoxInfo::encPbit_OBC(int face, unsigned* bx, string key, bool dir)
  */
 unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k, idd;
   unsigned g=0;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -3695,10 +3866,18 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
   }
   
   // 対象面数の集約
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -3726,7 +3905,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
                                   const float* vec, 
                                   const unsigned bc_dir)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int    idd;
   unsigned g=0;
   
@@ -3865,10 +4044,18 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
 #endif
   
   // 対象面数の集約
-  if( para_mng->IsParallel() ) {
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
     unsigned tmp = g;
-    para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned tmp = g;
+  //  para_mng->Allreduce(&tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   return g;
 }
 
@@ -4562,7 +4749,7 @@ void VoxInfo::findVIBCbbox(const int odr, const unsigned* bv, int* st, int* ed)
  */
 unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k, c_p;
   unsigned s, m, c=0, g=0;
   int idd = (int)id;
@@ -4592,10 +4779,19 @@ unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid,
   }
   
   L = g = c;
-  if( para_mng->IsParallel() ) {
-    unsigned c_tmp = g;
-    para_mng->Allreduce(&c_tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  if ( m_np > 1 ) {
+    unsigned tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   }
+  
+  //if( para_mng->IsParallel() ) {
+  //  unsigned c_tmp = g;
+  //  para_mng->Allreduce(&c_tmp, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+  //}
   G = g;
   
   return g;
@@ -4751,112 +4947,6 @@ void VoxInfo::getQuadrant(unsigned* q, REAL_TYPE t1, REAL_TYPE t2)
   }
 }
 
-/**
- @fn void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
- @brief コンポーネントの法線の符号を計算する
- @param n 境界条件番号
- @param gi コンポーネントのグローバルインデクス
- @param bx BCindex ID
- @param dir 法線ベクトルの符号
- */
-void VoxInfo::getNormalSign(unsigned n, int* gi, unsigned* bx, int* dir)
-{
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  unsigned m, q_ij[5], q_ik[5], tmp[5];
-  int st[3], ed[3];
-  unsigned ni, nj, nk;
-  REAL_TYPE cn[3], tx, ty, tz;
-  int m_sz[3], l_dir[3];
-  int i,j,k;
-  
-  // コンポーネントのローカルインデクス
-  cmp[n].getBbox(st, ed);
-  
-  // 対象コンポーネント領域のBbox領域の大きさ（セル数）
-  ni = (unsigned)(gi[3] - gi[0]);
-  nj = (unsigned)(gi[4] - gi[1]);
-  nk = (unsigned)(gi[5] - gi[2]);
-  
-  // グローバルインデクスでの対象コンポーネント領域の中心座標
-  cn[0] = 0.5*(REAL_TYPE)ni + (REAL_TYPE)gi[0];  
-  cn[1] = 0.5*(REAL_TYPE)nj + (REAL_TYPE)gi[1];
-  cn[2] = 0.5*(REAL_TYPE)nk + (REAL_TYPE)gi[2];
-  
-  m_sz[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0) + 1;
-  m_sz[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1) + 1;
-  m_sz[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2) + 1;
-  
-  for (int l=0; l<5; l++) q_ij[l] = q_ik[l] = 0;
-  
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( (bx[m] & MASK_6) == n ) {
-          tx = (REAL_TYPE)(i+m_sz[0]) - cn[0]; // グローバルインデクスで評価
-          ty = (REAL_TYPE)(j+m_sz[1]) - cn[1];
-          tz = (REAL_TYPE)(k+m_sz[2]) - cn[2];
-          
-          getQuadrant(q_ij, tx, ty); // Quadrant IJ
-          getQuadrant(q_ik, tx, tz); // Quadrant IK
-        }
-      }
-    }
-  }
-	
-	if( para_mng->IsParallel() ){
-		for (i=0; i<5; i++) tmp[i] = q_ij[i];
-		para_mng->Allreduce(tmp, q_ij, 5, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-		
-		for (i=0; i<5; i++) tmp[i] = q_ik[i];
-		para_mng->Allreduce(tmp, q_ik, 5, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-	}
-  
-  // 象限の判断
-  map<unsigned, unsigned, std::greater<unsigned> > QuadrantIJ, QuadrantIK;
-  map<unsigned, unsigned, std::greater<unsigned> >::iterator it;
-  unsigned q[4][2], p;
-  l_dir[0] = 1;
-  l_dir[1] = 0;
-  l_dir[2] = 0;
-  
-  // IJ キーにカウント数を代入，ゼロは未使用なので1から代入
-  for (i=1; i<5; i++) QuadrantIJ.insert( pair<unsigned, unsigned>(q_ij[i], (unsigned)i) );  
-  //for (it=QuadrantIJ.begin(); it!=QuadrantIJ.end(); it++) printf("%d : %d %d\n", pn.ID, it->first, it->second); printf("\n");
-  p=0;
-  for (it=QuadrantIJ.begin(); it!=QuadrantIJ.end(); it++) {
-    q[p][0] = it->first;
-    q[p][1] = it->second;
-  }
-  if ( q[0][0] == q[1][0] ) { // 最初と2番目が同じ値の場合，破棄
-    l_dir[1] = ( (q[2][1] == 2) || (q[2][1] == 4) ) ? -1: 1; // 3番目の候補の象限が２，４の場合はマイナス
-  }
-  else { // 最初の値の判断
-    l_dir[1] = ( (q[0][1] == 2) || (q[0][1] == 4) ) ? -1: 1;
-  }
-  
-  // IK キーにカウント数を代入，ゼロは未使用なので1から代入
-  for (i=1; i<5; i++) QuadrantIK.insert( pair<unsigned, unsigned>(q_ik[i], (unsigned)i) );  
-  //for (it=QuadrantIK.begin(); it!=QuadrantIK.end(); it++) printf("%d : %d %d\n", pn.ID, it->first, it->second); printf("\n");
-  p=0;
-  for (it=QuadrantIK.begin(); it!=QuadrantIK.end(); it++) {
-    q[p][0] = it->first;
-    q[p][1] = it->second;
-  }
-  if ( q[0][0] == q[1][0] ) { // 最初と2番目が同じ値の場合，破棄
-    l_dir[2] = ( (q[2][1] == 2) || (q[2][1] == 4) ) ? -1: 1; // 3番目の候補の象限が２，４の場合はマイナス
-  }
-  else { // 最初の値の判断
-    l_dir[2] = ( (q[0][1] == 2) || (q[0][1] == 4) ) ? -1: 1;
-  }
-  
-  //printf("%d : si=%d sj=%d sk=%d\n", pn.ID, dir[0], dir[1], dir[2]);
-	dir[0] = l_dir[0];
-	dir[1] = l_dir[1];
-	dir[2] = l_dir[2];
-  
-}
-
 
 
 /**
@@ -4973,11 +5063,19 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
   NoVoxID = colorSet.size(); // Localの数
 	
   // 並列処理時の colorList[] の取得
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if( para_mng->IsParallel() ){
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //if( para_mng->IsParallel() ){
+  
+  int nodeNum;
+  MPI_Comm_size(MPI_COMM_WORLD, &nodeNum);
+  
+  if ( nodeNum > 1 ) {
     
-    int myRank  = para_mng->GetMyID();
-    int nodeNum = para_mng->GetNodeNum(pn.procGrp); // 全ノード数を取得
+    int myRank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    
+    //int myRank  = para_mng->GetMyID();
+    //int nodeNum = para_mng->GetNodeNum(pn.procGrp); // 全ノード数を取得
 		
     // 各ノードのID数を集約するテーブルを作成
     int* tmpArray = allocTable(nodeNum);
@@ -4997,12 +5095,15 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
     
     // 各ノードのID数をIDNumTable[]に保持
     tmpArray[myRank] = NoVoxID; // Localの数
-    if( !para_mng->Allreduce(tmpArray, IDNumTable, nodeNum, SKL_ARRAY_DTYPE_INT, SKL_MAX, pn.procGrp) ) {
-      colorSet.clear();
-      if( tmpArray )   { delete [] tmpArray;   tmpArray = NULL; }
-      if( IDNumTable ) { delete [] IDNumTable; IDNumTable = NULL; }
-      Exit(0);
-    }
+
+    MPI_Allreduce(tmpArray, IDNumTable, nodeNum, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    
+    //if( !para_mng->Allreduce(tmpArray, IDNumTable, nodeNum, SKL_ARRAY_DTYPE_INT, SKL_MAX, pn.procGrp) ) {
+    //  colorSet.clear();
+    //  if( tmpArray )   { delete [] tmpArray;   tmpArray = NULL; }
+    //  if( IDNumTable ) { delete [] IDNumTable; IDNumTable = NULL; }
+    //  Exit(0);
+    //}
     delete [] tmpArray; tmpArray = NULL; // 一旦解放
 		
     // 各ノードのcolorList[]を集約するリストを作成 >> tmpArray[]
@@ -5035,13 +5136,15 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
     }
     memset(IdList, 0, sizeof(int)*sizeOfIdList);
     
-    if( !para_mng->Allreduce(tmpArray, IdList, sizeOfIdList, SKL_ARRAY_DTYPE_INT, SKL_MAX, pn.procGrp) ) {
-      colorSet.clear();
-      if( tmpArray )   { delete [] tmpArray; tmpArray=NULL; }
-      if( IDNumTable ) { delete [] IDNumTable; IDNumTable=NULL; }
-      if( IdList )     { delete [] IdList; IdList=NULL; }
-      return 0;
-    }
+    MPI_Allreduce(tmpArray, IdList, sizeOfIdList, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    
+    //if( !para_mng->Allreduce(tmpArray, IdList, sizeOfIdList, SKL_ARRAY_DTYPE_INT, SKL_MAX, pn.procGrp) ) {
+    //  colorSet.clear();
+    //  if( tmpArray )   { delete [] tmpArray; tmpArray=NULL; }
+    //  if( IDNumTable ) { delete [] IDNumTable; IDNumTable=NULL; }
+    //  if( IdList )     { delete [] IdList; IdList=NULL; }
+    //  return 0;
+    //}
     delete [] tmpArray; tmpArray = NULL;
 		
     // create colorSet

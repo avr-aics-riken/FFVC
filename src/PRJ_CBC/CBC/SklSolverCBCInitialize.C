@@ -1290,7 +1290,7 @@ SklSolverCBC::SklSolverInitialize() {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", (char*)C.HistoryForceName);
         return -1;
       }
-      H->printHistoryForceTitle(fp_f, &C);
+      H->printHistoryForceTitle(fp_f);
     }
     
     // 反復履歴情報　history_itr.log

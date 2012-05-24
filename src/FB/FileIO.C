@@ -205,7 +205,8 @@ void FileIO::readSVX(SklSolverBase* obj, FILE* fp, const char* fname, unsigned* 
   SklScalar3D<int>* dc_tmp_mid;
   if ( !(dc_tmp_mid = dynamic_cast<SklScalar3D<int>*>(svxSet->GetData(SklVoxDataSet::SVX_MID))) ) Exit(0);
   if ( !SklUtil::cpyS3DCenter(dc_mid, dc_tmp_mid) ) Exit(0);
-  if (dc_tmp_mid) { delete dc_tmp_mid; dc_tmp_mid; }
+  if (dc_tmp_mid) { 
+    delete dc_tmp_mid; dc_tmp_mid=NULL; }
   
   // Volume Fraction　オプション
   if (vf_mode == true) {

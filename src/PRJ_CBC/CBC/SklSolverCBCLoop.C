@@ -298,7 +298,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       }
       
       TIMING_start(tm_hstry_force);
-      Hostonly_ H->printHistoryForce(fp_f, &C, force);
+      Hostonly_ H->printHistoryForce(fp_f, force);
       TIMING_stop(tm_hstry_force, 0.0);
     }
   }

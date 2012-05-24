@@ -147,12 +147,11 @@ depend:
 ../../FB/VoxInfo.o: ../../FB/FBUtility.h ../../FB/FB_Define.h
 ../../FB/VoxInfo.o: ../../FB/mydebug.h ../../FB/Component.h
 ../../FB/VoxInfo.o: ../../FB/Material.h ../../FB/Parallel_node.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaComponent.h
+../../FB/VoxInfo.o: ../../FB/IDtable.h ../../FB/SetBC.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/SklSolverBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklBase.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklDataManager.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/SklDefine.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/SklReservWord.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklSolverConfig.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgDatas.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgBase.h
@@ -181,19 +180,20 @@ depend:
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklMDMConfig.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/VoxInfo.o: ../../FB/IDtable.h ../../FB/SetBC.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/SklSolverBase.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/SklDefine.h
-../../FB/VoxInfo.o: /usr/local/sphere/include/SklReservWord.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/base/SklFileIOCntl.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/config/SklCfgDatas.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/base/SklOutputDataSet.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklDataManager.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklArayBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklScalar.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/dataclass/SklAray.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaManager.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaIF.h
+../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaComponent.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
