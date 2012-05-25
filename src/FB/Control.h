@@ -718,7 +718,7 @@ public:
   const char* getVoxelFileName(void);
   
   REAL_TYPE getCellSize(unsigned* m_size);
-  REAL_TYPE OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size);
+  REAL_TYPE OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
   void getXML_Polygon           (void);

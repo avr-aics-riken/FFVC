@@ -704,7 +704,7 @@ void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, con
   
   if ( m_np > 1 ) {
     unsigned c_tmp = g_cell;
-    uint_sum_Allreduce(&c_tmp, &g_cell, 1);
+    uint_sum_Allreduce(&c_tmp, &g_cell);
   }
   
   Gcell = g_cell;
@@ -729,16 +729,16 @@ void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, con
 void VoxInfo::countFace_S(unsigned n, unsigned* bx, int* cc)
 {
   unsigned register s, m;
-  int i,j,k, c[3];
+  int c[3];
 	int st[3], ed[3];
   
   c[0] = c[1] = c[2] = 0;
 	
   cmp[n].getBbox(st, ed);
   
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bx[m];
         
@@ -869,7 +869,7 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
     int_array_sum_Allreduce(tmp, c, 3);
     
     tmp[0] = ar;
-    int_sum_Allreduce(tmp, &ar, 1);
+    int_sum_Allreduce(tmp, &ar);
   }
   
 	cc[0] = c[0];
@@ -878,16 +878,14 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
 }
 
 /**
- @fn void VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
+ @fn void VoxInfo::count_ValidCell_OBC(const int face, const unsigned* bv)
  @brief 外部境界面の有効セル数をカウントする
  @param face 外部境界面番号
  @param bv BCindex V
- @note 
- - 外部境界面の両側のセルがFluidのときのみカウント
+ @note 外部境界面の両側のセルがFluidのときのみカウント
  */
-unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
+unsigned VoxInfo::count_ValidCell_OBC(const int face, const unsigned* bv)
 {
-  int i, j, k;
   unsigned m1, m2, g=0;
   unsigned register s1, s2;
   
@@ -899,8 +897,8 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
   switch (face) {
     case X_MINUS:
       if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m1 = FBUtility::getFindexS3D(size, guide, 1  , j, k);
             m2 = FBUtility::getFindexS3D(size, guide, 0  , j, k);
             s1 = bv[m1];
@@ -915,8 +913,8 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
       
     case X_PLUS:
       if( pn.nID[X_PLUS] < 0 ){
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m1 = FBUtility::getFindexS3D(size, guide, ix  , j, k);
             m2 = FBUtility::getFindexS3D(size, guide, ix+1, j, k);
             s1 = bv[m1];
@@ -931,8 +929,8 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
       
     case Y_MINUS:
       if( pn.nID[Y_MINUS] < 0 ){
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, 1  , k);
             m2 = FBUtility::getFindexS3D(size, guide, i, 0  , k);
             s1 = bv[m1];
@@ -947,8 +945,8 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
       
     case Y_PLUS:
       if( pn.nID[Y_PLUS] < 0 ){
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, jx  , k);
             m2 = FBUtility::getFindexS3D(size, guide, i, jx+1, k);
             s1 = bv[m1];
@@ -963,8 +961,8 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
       
     case Z_MINUS:
       if( pn.nID[Z_MINUS] < 0 ){
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, j, 1  );
             m2 = FBUtility::getFindexS3D(size, guide, i, j, 0  );
             s1 = bv[m1];
@@ -979,8 +977,8 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
       
     case Z_PLUS:
       if( pn.nID[Z_PLUS] < 0 ){
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, j, kx  );
             m2 = FBUtility::getFindexS3D(size, guide, i, j, kx+1);
             s1 = bv[m1];
@@ -999,7 +997,7 @@ unsigned VoxInfo::count_ValidCell_OBC(int face, unsigned* bv)
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -1114,7 +1112,6 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
  */
 void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
 {
-  int i,j,k;
   unsigned m0, m1, g;
   unsigned m_area[NOFACE];
   
@@ -1123,7 +1120,7 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   int kx = (int)size[2];
   int gd = (int)guide;
   
-  for (i=0; i<NOFACE; i++) {
+  for (int i=0; i<NOFACE; i++) {
     OpenArea[i]=0.0;
     m_area[i] = 0.0;
   }
@@ -1133,8 +1130,8 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   // X_MINUS
   g=0;
   if( pn.nID[X_MINUS] < 0 ){
-    for (k=1; k<=kx; k++) {
-      for (j=1; j<=jx; j++) {
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
         m0 = FBUtility::getFindexS3D(size, guide, 0, j, k);
         m1 = FBUtility::getFindexS3D(size, guide, 1, j, k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
@@ -1147,8 +1144,8 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   // X_PLUS
   g=0;
   if( pn.nID[X_PLUS] < 0 ){
-    for (k=1; k<=kx; k++) {
-      for (j=1; j<=jx; j++) {
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
         m0 = FBUtility::getFindexS3D(size, guide, ix+1, j, k);
         m1 = FBUtility::getFindexS3D(size, guide, ix,   j, k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
@@ -1161,8 +1158,8 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   // Y_MINUS
   g=0;
   if( pn.nID[Y_MINUS] < 0 ){
-    for (k=1; k<=kx; k++) {
-      for (i=1; i<=ix; i++) {
+    for (int k=1; k<=kx; k++) {
+      for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, 0, k);
         m1 = FBUtility::getFindexS3D(size, guide, i, 1, k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
@@ -1175,8 +1172,8 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   // Y_PLUS
   g=0;
   if( pn.nID[Y_PLUS] < 0 ){
-    for (k=1; k<=kx; k++) {
-      for (i=1; i<=ix; i++) {
+    for (int k=1; k<=kx; k++) {
+      for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, jx+1, k);
         m1 = FBUtility::getFindexS3D(size, guide, i, jx,   k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
@@ -1189,8 +1186,8 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   // Z_MINUS
   g=0;
   if( pn.nID[Z_MINUS] < 0 ){
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, j, 0);
         m1 = FBUtility::getFindexS3D(size, guide, i, j, 1);
         if ( (  FLUID == IS_FLUID(bx[m0]))
@@ -1203,8 +1200,8 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   // Z_PLUS
   g=0;
   if( pn.nID[Z_PLUS] < 0 ){
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, j, kx  );
         m1 = FBUtility::getFindexS3D(size, guide, i, j, kx+1);
         if ( (  FLUID == IS_FLUID(bx[m0]))
@@ -1219,11 +1216,11 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
   
   if ( m_np > 1 ) {
     unsigned tmp[NOFACE];
-    for (i=0; i<NOFACE; i++) tmp[i] = m_area[i];
-    uint_sum_Allreduce(tmp, m_area, NOFACE);
+    for (int i=0; i<NOFACE; i++) tmp[i] = m_area[i];
+    uint_array_sum_Allreduce(tmp, m_area, NOFACE);
   }
   
-  for (i=0; i<NOFACE; i++) OpenArea[i] = (REAL_TYPE)m_area[i];
+  for (int i=0; i<NOFACE; i++) OpenArea[i] = (REAL_TYPE)m_area[i];
 }
 
 
@@ -1260,7 +1257,7 @@ unsigned VoxInfo::countState(unsigned id, int* mid)
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -1484,7 +1481,7 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
   
   if ( m_np > 1 ) {
     unsigned c_tmp = c;
-    uint_sum_Allreduce(&c_tmp, &c, 1);
+    uint_sum_Allreduce(&c_tmp, &c);
   }
   
   Gcell = c;
@@ -1720,7 +1717,7 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
 
   return g;
@@ -1865,7 +1862,7 @@ unsigned VoxInfo::encQfaceHT_S(unsigned order, unsigned id, int* mid, unsigned* 
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2008,7 +2005,7 @@ unsigned VoxInfo::encQfaceHT_B(unsigned order, unsigned id, int* mid, unsigned* 
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2152,7 +2149,7 @@ unsigned VoxInfo::encQfaceISO_SF(unsigned order, unsigned id, int* mid, unsigned
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2296,7 +2293,7 @@ unsigned VoxInfo::encQfaceISO_SS(unsigned order, unsigned id, int* mid, unsigned
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2420,7 +2417,7 @@ unsigned VoxInfo::encQface(unsigned order, unsigned id, int* mid, unsigned* bcd,
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2832,7 +2829,7 @@ unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned*
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2972,7 +2969,7 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
   
   if ( m_np > 1 ) {
     unsigned tmp = c;
-    uint_sum_Allreduce(&tmp, &c, 1);
+    uint_sum_Allreduce(&tmp, &c);
   }
   
   return c;
@@ -3094,7 +3091,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
   
   if ( m_np > 1 ) {
     unsigned tmp = c;
-    uint_sum_Allreduce(&tmp, &c, 1);
+    uint_sum_Allreduce(&tmp, &c);
   }
   
   
@@ -3138,7 +3135,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
@@ -3181,7 +3178,7 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
     
     if ( m_np > 1 ) {
       unsigned tmp = g;
-      uint_sum_Allreduce(&tmp, &g, 1);
+      uint_sum_Allreduce(&tmp, &g);
     }
     
     Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %d\n\n", g);
@@ -3319,7 +3316,7 @@ unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned*
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -3754,7 +3751,7 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -3927,7 +3924,7 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -4658,7 +4655,7 @@ unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid,
   
   if ( m_np > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g, 1);
+    uint_sum_Allreduce(&tmp, &g);
   }
   
   G = g;

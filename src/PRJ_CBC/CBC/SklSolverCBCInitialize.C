@@ -408,10 +408,9 @@ SklSolverCBC::SklSolverInitialize() {
       unsigned fc = Vinfo.fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
       
       unsigned t_fc = fc;
-      //if( para_cmp->IsParallel() ) {
+
       if ( m_np > 1 ) {
-        //para_cmp->Allreduce(&t_fc, &fc, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-        VoxInfo::uint_sum_Allreduce(&t_fc, &fc, 1);
+        VoxInfo::uint_sum_Allreduce(&t_fc, &fc);
       }
       
       // 同期
@@ -435,10 +434,9 @@ SklSolverCBC::SklSolverInitialize() {
       unsigned fc = Vinfo.fill_inside(mid, id_of_solid);
       
       unsigned t_fc = fc;
-      //if( para_cmp->IsParallel() ) {
+
       if ( m_np > 1 ) {
-        VoxInfo::uint_sum_Allreduce(&t_fc, &fc, 1);
-        //para_cmp->Allreduce(&t_fc, &fc, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+        VoxInfo::uint_sum_Allreduce(&t_fc, &fc);
       }
       
       if ( fc == 0 ) break;
@@ -455,10 +453,9 @@ SklSolverCBC::SklSolverInitialize() {
     // 確認 paintedは未ペイントセルがある場合に1
     unsigned painted = Vinfo.check_fill(mid);
     unsigned t_painted = painted;
-    //if( para_cmp->IsParallel() ) {
+
     if ( m_np > 1 ) {
-      VoxInfo::uint_sum_Allreduce(&t_painted, &painted, 1);
-      //para_cmp->Allreduce(&t_painted, &painted, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
+      VoxInfo::uint_sum_Allreduce(&t_painted, &painted);
     }
     
     if ( painted  != 0 ) {
@@ -2834,16 +2831,13 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
   int m_np;
   MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  //if( para_mng->IsParallel() ) {
   if ( m_np > 1 ) {
+    
     float tmp = global_min;
-    //para_mng->Allreduce(&tmp, &global_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp);
     MPI_Allreduce(&tmp, &global_min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
     
     unsigned tmp_g = g;
-    VoxInfo::uint_sum_Allreduce(&tmp_g, &g, 1);
-    //para_mng->Allreduce(&tmp_g, &g, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-    
+    VoxInfo::uint_sum_Allreduce(&tmp_g, &g);
   }
 
   Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %d\n\n", global_min, eps, g);
@@ -3967,16 +3961,13 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   if ( m_np > 1 ) {
     
     float tmp =d_min;
-    //para_mng->Allreduce(&tmp, &d_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp);
     MPI_Allreduce(&tmp, &d_min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
     
     int tmp_g = z;
-    //para_mng->Allreduce(&tmp_g, &z, 1, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp);
-    VoxInfo::int_sum_Allreduce(&tmp_g, &z, 1);
+    VoxInfo::int_sum_Allreduce(&tmp_g, &z);
     
     unsigned tmp_u = size_n_cell;
-    //para_mng->Allreduce(&tmp_g, &size_n_cell, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-    VoxInfo::uint_sum_Allreduce(&tmp_u, &size_n_cell, 1);
+    VoxInfo::uint_sum_Allreduce(&tmp_u, &size_n_cell);
     
   }
   
@@ -4082,7 +4073,7 @@ unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
   //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned c=0;
   int q, m_id;
-  size_t mp, m;
+  unsigned mp, m;
   
   unsigned m_sz[3], gd;
   m_sz[0] = size[0];
@@ -4119,11 +4110,9 @@ unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
   int m_np;
   MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  //if( para_mng->IsParallel() ) {
   if ( m_np > 1 ) {
     unsigned tmp = c;
-    //para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_UINT, SKL_SUM, pn.procGrp);
-    VoxInfo::uint_sum_Allreduce(&tmp, &c, 1);
+    VoxInfo::uint_sum_Allreduce(&tmp, &c);
   }
   
   return c;

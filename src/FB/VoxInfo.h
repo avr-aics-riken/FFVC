@@ -67,7 +67,7 @@ protected:
   int* allocTable  (unsigned size);
   
   unsigned countState          (unsigned id, int* m);
-  unsigned count_ValidCell_OBC (int face, unsigned* bv);
+  unsigned count_ValidCell_OBC (const int face, const unsigned* bv);
   unsigned encodeFace          (unsigned order, unsigned id, int* m, unsigned* bx, const unsigned attrb, unsigned type=0);
   unsigned encodeOrder         (unsigned order, unsigned id, int* m, unsigned* bx);
   unsigned encPbit_D_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
@@ -191,16 +191,33 @@ public:
   }
   
   
-  /// 桁あふれ対策の代替関数
-  static void int_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
+  /// 桁あふれ対策の代替関数 > MPI_INT*1, MPI_SUM
+  static void int_sum_Allreduce(int* sbuf, int* rbuf) {
+#ifdef __ARCH_FX
     float my_send = (float)*sbuf;
     float my_recv = (float)*rbuf;
-    MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
     rbuf = (int*)&my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
   }
   
-  /// 桁あふれ対策の代替関数
+  /// 桁あふれ対策の代替関数 > MPI_INT*1, MPI_MAX
+  static void int_max_Allreduce(int* sbuf, int* rbuf) {
+#ifdef __ARCH_FX
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+    rbuf = (int*)&my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_INT*msg, MPI_SUM
   static void int_array_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
+#ifdef __ARCH_FX
     float* my_send = new float [msg];
     float* my_recv = new float [msg];
     for (int i=0; i<msg; i++) {
@@ -212,41 +229,14 @@ public:
     }
     if ( my_send ) delete [] my_send;
     if ( my_recv ) delete [] my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
   }
   
-  /// 桁あふれ対策の代替関数
-  static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
-    float my_send = (float)*sbuf;
-    float my_recv = (float)*rbuf;
-    MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    rbuf = (unsigned*)&my_recv;
-  }
-  
-  /// 桁あふれ対策の代替関数
-  static void uint_array_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
-    float* my_send = new float [msg];
-    float* my_recv = new float [msg];
-    for (int i=0; i<msg; i++) {
-      my_send[i] = (float)sbuf[i];
-    }
-    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    for (int i=0; i<msg; i++) {
-      rbuf[i] = (int)my_recv[i];
-    }
-    if ( my_send ) delete [] my_send;
-    if ( my_recv ) delete [] my_recv;
-  }
-  
-  /// 桁あふれ対策の代替関数
-  static void int_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
-    float my_send = (float)*sbuf;
-    float my_recv = (float)*rbuf;
-    MPI_Allreduce(&my_send, &my_recv, msg, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
-    rbuf = (int*)&my_recv;
-  }
-  
-  /// 桁あふれ対策の代替関数
+  /// 桁あふれ対策の代替関数 > MPI_INT*msg, MPI_MAX
   static void int_array_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
+#ifdef __ARCH_FX
     float* my_send = new float [msg];
     float* my_recv = new float [msg];
     for (int i=0; i<msg; i++) {
@@ -258,6 +248,40 @@ public:
     }
     if ( my_send ) delete [] my_send;
     if ( my_recv ) delete [] my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_UINT*1, MPI_SUM
+  static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf) {
+#ifdef __ARCH_FX
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    rbuf = (unsigned*)&my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_UINT*msg, MPI_SUM
+  static void uint_array_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
+#ifdef __ARCH_FX
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (unsigned)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, msg, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+#endif
   }
   
   // ----> debug function

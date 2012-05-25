@@ -431,18 +431,7 @@ void Control::findXMLCriteria(const CfgElem *elmL1, const char* key, unsigned or
  */
 REAL_TYPE Control::getCellSize(unsigned* G_size)
 {
-  REAL_TYPE cell_max=0.0;
-  
-  switch (NoDimension) {
-    case 2:
-      cell_max = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1];
-      break;
-      
-    case 3:
-      cell_max = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
-      break;
-  }
-  return cell_max;
+  return (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
 }
 
 
@@ -2095,17 +2084,16 @@ void Control::getXML_Wall_type(void)
 
 
 /**
- @fn REAL_TYPE Control::OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size)
+ @fn REAL_TYPE Control::OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size)
  @brief 外部境界の各方向の開口率（流体部分の比率）
  @retval 開口率
  @param dir 方向
  @param area 計算外部領域の各面の開口率
- @param Dims 次元数
  @param G_Size 計算領域全体の分割数
  */
-REAL_TYPE Control::OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned Dims, unsigned* G_size)
+REAL_TYPE Control::OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size)
 {
-  REAL_TYPE r = 0.0, base=0.0;
+  REAL_TYPE r = 0.0;
   unsigned m_imax, m_jmax, m_kmax;
   
   m_imax = G_size[0];
@@ -2115,23 +2103,21 @@ REAL_TYPE Control::OpenDomainRatio(unsigned dir, REAL_TYPE area, const unsigned 
   switch (dir) {
     case X_MINUS:
     case X_PLUS:
-      (2==Dims) ? base=(REAL_TYPE)m_jmax : base=(REAL_TYPE)(m_jmax*m_kmax);
-      r = area / base*100.0;
+      r = area / (REAL_TYPE)(m_jmax*m_kmax) * 100.0;
       break;
       
     case Y_MINUS:
     case Y_PLUS:
-      (2==Dims) ? base=(REAL_TYPE)m_imax : base=(REAL_TYPE)(m_imax*m_kmax);
-      r = area / base*100.0;
+      r = area / (REAL_TYPE)(m_imax*m_kmax) * 100.0;
       break;
       
     case Z_MINUS:
     case Z_PLUS:
-      (2==Dims) ? base=1.0 : base=(REAL_TYPE)(m_imax*m_jmax);
-      r = area / base*100.0;
+      r = area / (REAL_TYPE)(m_imax*m_jmax) * 100.0;
       break;
   }
-  return (r);
+  
+  return r;
 }
 
 
@@ -2160,7 +2146,7 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
   
   fprintf(fp,"\n\tFace :      Element (Open ratio)\n");
   for (unsigned i=0; i<NOFACE; i++) {
-    fprintf(fp,"\t  %s : %12.0f (%6.2f percent)\n", getDirection(i).c_str(), OpenDomain[i], OpenDomainRatio(i, OpenDomain[i], NoDimension, G_size));
+    fprintf(fp,"\t  %s : %12.0f (%6.2f percent)\n", getDirection(i).c_str(), OpenDomain[i], OpenDomainRatio(i, OpenDomain[i], G_size));
   }
   fprintf(fp,"\n");
   fflush(fp);
