@@ -4382,25 +4382,25 @@ void SklSolverCBC::VoxelInitialize(void)
 void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
 {
   // 外部境界面の媒質IDとその個数を取得
-  unsigned cell_id[NOFACE], count=0;
+  int cell_id[NOFACE];
   for (int i=0; i<NOFACE; i++) cell_id[i] = 0;
   
-  count = B->count_Outer_Cell_ID(cell_id);
+  B->count_Outer_Cell_ID(cell_id);
   
   Hostonly_ {
     fprintf(fp, "\tCell IDs on Guide cell region\n");
-    for ( int i=0; i<count; i++) {
-      fprintf(fp, "\t\tID[%d] = %d\n", i+1, cell_id[i]);
+    for ( int i=0; i<NOFACE; i++) {
+      fprintf(fp, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
     fprintf(mp, "\tCell IDs on Guide cell region\n");
-    for ( int i=0; i<count; i++) {
-      fprintf(mp, "\t\tID[%d] = %d\n", i+1, cell_id[i]);
+    for ( int i=0; i<NOFACE; i++) {
+      fprintf(mp, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
   }
   
   // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
   unsigned sc=0;
-  if ( (sc=Vinfo->scanCell(mid, count, cell_id, C.Hide.Change_ID)) > C.NoID ) {
+  if ( (sc=Vinfo->scanCell(mid, cell_id, C.Hide.Change_ID)) > C.NoID ) {
     Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is grater than one described in 'Model_Setting'(%d)\n", 
                              sc, C.NoID);
     Exit(0);

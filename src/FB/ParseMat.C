@@ -30,48 +30,49 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
   if( !fp ) Exit(0);
   
   if ( basicEq == INCMP_2PHASE ) {
-    fprintf(fp,"\t  No :      ID            Element      Medium   Phase                     Label : BCtype\n");
+    Hostonly_ fprintf(fp,"\t  No :      ID            Element      Medium   Phase                     Label : BCtype\n");
     for (unsigned i=1; i<=NoCompo; i++) {
       
-      fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
+      Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
       ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
       ( compo[i].getPhase() == GAS )   ? fprintf(fp, "        Gas ") : fprintf(fp, "     Liquid ") ;
-      fprintf(fp, " %24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+      Hostonly_ fprintf(fp, " %24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
     }
   }
   else {
     if ( !isHeatProblem() ) {
-      fprintf(fp,"\t  No :      ID            Element      Medium                    Label : BCtype\n");
+      Hostonly_ fprintf(fp,"\t  No :      ID            Element      Medium                    Label : BCtype\n");
       for (unsigned i=1; i<=NoBC; i++) {
-        fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
+        Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
-        fprintf(fp,"\n");
+        Hostonly_ fprintf(fp, "%24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp,"\n");
       }
       for (unsigned i=NoBC+1; i<=NoCompo; i++) {
-        fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
+        Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
-        fprintf(fp,"\n");
+        Hostonly_ fprintf(fp, "%24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp,"\n");
       }
     }
     else {
-      fprintf(fp,"\t  No :      ID            Element      Medium    Init.Temp(%s)                    Label : BCtype\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C" );
+      Hostonly_ fprintf(fp,"\t  No :      ID            Element      Medium    Init.Temp(%s)                    Label : BCtype\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C" );
       for (unsigned i=1; i<=NoBC; i++) {
-        fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
+        Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%14s %24s : %s", "-", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
-        fprintf(fp,"\n");
+        Hostonly_ fprintf(fp, "%14s %24s : %s", "-", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp,"\n");
       }
       for (unsigned i=NoBC+1; i<=NoCompo; i++) {
-        fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
+        Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%14.4e %24s : %s", FBUtility::convK2Temp(compo[i].getInitTemp(), Unit_Temp), (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
-        fprintf(fp,"\n");
+        Hostonly_ fprintf(fp, "%14.4e %24s : %s", FBUtility::convK2Temp(compo[i].getInitTemp(), Unit_Temp), 
+                          (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp,"\n");
       }
     }
   }
-  fprintf(fp,"\n");
+  Hostonly_ fprintf(fp,"\n");
 }
 
 
@@ -115,10 +116,10 @@ bool ParseMat::chkStateList(CompoList* compo)
     id  = compo[i].getID();
     //printf("\tcompo.odr=%d MatOdr=%d id=%d compo[%d].state=%d mat[%d].state=%d\n", i, odr, id, i, compo[i].getState(), odr, mat[odr].getState() );
     if ( compo[i].getState() != mat[odr].getState() ) {
-      printf("\tState between CompoList[%s] and MaterialList[%s] for cell ID[%d] is conflicting.\n",
+      Hostonly_ printf("\tState between CompoList[%s] and MaterialList[%s] for cell ID[%d] is conflicting.\n",
              ( compo[i].getState() == FLUID ) ? "Fluid" : "Solid",
              ( mat[odr].getState() == FLUID ) ? "Fluid" : "Solid", id );
-      printf("\tCheck State between 'Model_Setting' and 'Medium_Table'.\n");
+      Hostonly_ printf("\tCheck State between 'Model_Setting' and 'Medium_Table'.\n");
       return false;
     }
   }
@@ -180,7 +181,7 @@ bool ParseMat::copyMaterials(unsigned& odr, unsigned id)
   
   // Base MaterialListに登録されているMatIDを調べ，登録エントリ番号を取得する
   if ( -1 == (odr_base=getOdrInMatList(id, NoBaseMat, BaseMat)) ) {
-    stamped_printf("\tParsing error : Medium ID [%d] is not listed in MaterialList\n", id);
+    Hostonly_ stamped_printf("\tParsing error : Medium ID [%d] is not listed in MaterialList\n", id);
     return false;
   }
   
@@ -258,7 +259,7 @@ void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
   REAL_TYPE f;
   
   if ( !(p->GetData( &f )) ) {
-    stamped_printf("\tParsing error : Invalid float value for in Medium\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for in Medium\n");
     Exit(0);
   }
   value = f;
@@ -277,13 +278,13 @@ void ParseMat::getXMLmaterial(void)
   
   // Check Model_Setting section
   if ( !(elmL1 = CF->GetTop(MDMTBL)) ) {
-    stamped_printf("\tParsing error : Missing Medium_Table tree\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing Medium_Table tree\n");
     Exit(0);
   }
   
   // check # of Elem
   if ( (NoBaseMat=elmL1->GetElemSize()) == 0 ) {
-    printf("\tNo description was found in 'Medium_Table'\n");
+    Hostonly_ printf("\tNo description was found in 'Medium_Table'\n");
     Exit(0);
   }
   
@@ -298,11 +299,11 @@ void ParseMat::getXMLmaterial(void)
       
       // ID
       if ( !elmL2->isSetID() ) {
-        printf("\tParsing error : No ID section for Medium in 'Medium_Table'\n");
+        Hostonly_ printf("\tParsing error : No ID section for Medium in 'Medium_Table'\n");
         Exit(0);
       }
       if ( -1 == (id=elmL2->GetID()) ) {
-        printf("\tParsing error : No valid ID for Medium in 'Medium_Table'\n");
+        Hostonly_ printf("\tParsing error : No valid ID for Medium in 'Medium_Table'\n");
         Exit(0);
       }
       BaseMat[i].setMatID( (unsigned)id );
@@ -311,14 +312,14 @@ void ParseMat::getXMLmaterial(void)
       if      ( !strcasecmp(p, "Fluid") ) BaseMat[i].setState(FLUID);
       else if ( !strcasecmp(p, "Solid") ) BaseMat[i].setState(SOLID);
       else {
-        printf("\tInvalid medium keyword 'solid/fluid'\n");
+        Hostonly_ printf("\tInvalid medium keyword 'solid/fluid'\n");
         Exit(0);
       }
       
       // Material name
       pnt = NULL;
       if ( !(pnt = elmL2->GetComment()) ) {
-        printf("\tNo comment for Medium\n");
+        Hostonly_ printf("\tNo comment for Medium\n");
       }
       else strcpy(BaseMat[i].getName(), pnt);
       
@@ -326,7 +327,7 @@ void ParseMat::getXMLmaterial(void)
       readMedium(elmL2, i);
     }
     else {
-      printf("\tInvalid keyword in Medium_Table : [%s]\n", p);
+      Hostonly_ printf("\tInvalid keyword in Medium_Table : [%s]\n", p);
       Exit(0);
     }
     
@@ -339,13 +340,13 @@ void ParseMat::getXMLmaterial(void)
     md = BaseMat[n].getMatID();
     for (unsigned l=1; l<n; l++) {
       if ( BaseMat[l].getMatID() == md ) {
-        stamped_printf("\tDuplicate Medium id[%d]=%d in Base MaterialList\n", l, md);
+        Hostonly_ stamped_printf("\tDuplicate Medium id[%d]=%d in Base MaterialList\n", l, md);
         FILE* mp=stdout;
         
-        fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-        fprintf(mp,"\n\t>> Base Material List\n\n");
+        Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+        Hostonly_ fprintf(mp,"\n\t>> Base Material List\n\n");
         
-        printMatList(mp, NoBaseMat, BaseMat);
+        Hostonly_ printMatList(mp, NoBaseMat, BaseMat);
         Exit(0);
       }
     }
@@ -381,7 +382,7 @@ void ParseMat::makeLinkCmpMat(CompoList* compo)
     
     // IDに対応したMatIDをiTableから取得する
     if ( 0 == (id_mat = getMatIDinTable(id)) ) {
-      stamped_printf("\tSomething wrong! Medium ID = %d\n", id_mat);
+      Hostonly_ stamped_printf("\tSomething wrong! Medium ID = %d\n", id_mat);
       Exit(0);
     }
     
@@ -407,7 +408,7 @@ void ParseMat::makeMaterialList(void)
   for (int i=1; i<=NoID; i++) {
     matid = iTable[i].getMatID();
     if ( !isIDinList(matid) ) {
-      stamped_printf("\tMedium ID [%d] described in 'Model_Setting' can not find in 'Medium_Table'\n", matid);
+      Hostonly_ stamped_printf("\tMedium ID [%d] described in 'Model_Setting' can not find in 'Medium_Table'\n", matid);
       Exit(0);
     }
     if ( !copyMaterials( odr, matid ) ) Exit(0);
@@ -426,7 +427,7 @@ void ParseMat::makeMaterialList(void)
  */
 unsigned ParseMat::missingMessage(int m, unsigned key)
 {
-  printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
+  Hostonly_ printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
          MaterialList::getPropertyName(key).c_str(), BaseMat[m].getName(),
          ( BaseMat[m].getState() == SOLID ) ? "solid" : "fluid" );
   return 1; 
@@ -440,12 +441,12 @@ unsigned ParseMat::missingMessage(int m, unsigned key)
 void ParseMat::dbg_printBaseMaterialList(FILE* mp, FILE* fp)
 {
 
-  fprintf(mp, "DEBUG : \n");
-  fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(mp,"\n\t>> Base Material List\n\n");
-  fprintf(fp, "DEBUG : \n");
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Base Material List\n\n");
+  Hostonly_ fprintf(mp, "DEBUG : \n");
+  Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_ fprintf(mp,"\n\t>> Base Material List\n\n");
+  Hostonly_ fprintf(fp, "DEBUG : \n");
+  Hostonly_ fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_ fprintf(fp,"\n\t>> Base Material List\n\n");
 
   printMatList(mp, NoBaseMat, BaseMat);
   printMatList(fp, NoBaseMat, BaseMat);
@@ -551,7 +552,7 @@ void ParseMat::readMedium(const CfgElem *elmL2, int m)
   for (int i=0; i<NoParam; i++) {
     Pname = param->GetName();
     if ( -1 == (key = MaterialList::getKey(Pname)) ) {
-      printf("\tParameter error : Invalid keyword in 'Medium_Table' : [%s]\n", Pname);
+      Hostonly_ printf("\tParameter error : Invalid keyword in 'Medium_Table' : [%s]\n", Pname);
       Exit(0);
     }
     ChkList[key] = true;

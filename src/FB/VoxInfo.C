@@ -4859,21 +4859,17 @@ void VoxInfo::printScanedCell(FILE* fp)
 
 
 /**
- @fn unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID_replace)
+ @fn unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
  @brief cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
  @retval 含まれるセルID数
  @param cell ボクセルIDを保持する配列
- @param count 外部境界のセルID数
  @param cid セルIDリスト 
  @param ID_replace ID[0]を置換するID
- @note
- - 重複がないようにcolorList[]に登録する
- - IDを昇順にソート
+ @note 重複がないようにcolorList[]に登録する
  */ 
-unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID_replace)
+unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
 {
   int target;
-  int i,j,k;
   unsigned m;
   
   int ix = (int)size[0];
@@ -4885,9 +4881,9 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
   if ( ID_replace != 0 ) {
     target = (int)ID_replace;
     Hostonly_ printf("\n\tID[0] is replaced by ID[%d]\n", target);
-    for (k=1; k<=kx; k++) {
-      for (j=1; j<=jx; j++) {
-        for (i=1; i<=ix; i++) {
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
           m = FBUtility::getFindexS3D(size, guide, i, j, k);
           if ( cell[m] == 0 ) cell[m] = target;
         }
@@ -4896,9 +4892,9 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
   }
   
   // 内部領域に対して，マイナスとゼロをチェック
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         target = cell[FBUtility::getFindexS3D(size, guide, i, j, k)];
         if ( target<=0 ) {
           Hostonly_ stamped_printf("\tVoxel data includes non-positive ID [%d] at (%d, %d, %d)\n", target, i, j, k);
@@ -4907,152 +4903,97 @@ unsigned VoxInfo::scanCell(int *cell, unsigned count, unsigned* cid, unsigned ID
       }
     }
   }
-	
-  // 内部領域の媒質IDを数え，colorSetに放り込む
-  set<int> colorSet;
-  colorSet.clear();
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+  
+  // 内部領域の媒質IDがあれば、カウントを加える
+  unsigned colorSet[MODEL_ID_MAX+1];
+  for (int i=0; i<MODEL_ID_MAX+1; i++) colorSet[i]=0;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         target = cell[m];
-        set<int>::iterator itr = colorSet.find(target);
-        if( itr == colorSet.end() ) colorSet.insert(target);
+        
+        if ( target <= MODEL_ID_MAX ) {
+          if ( colorSet[target]++ > INT_MAX ) {
+            Hostonly_ stamped_printf("\tError : count included in Model exceeds INT_MAX\n");
+            Exit(0);
+          }
+        }
+        else {
+          Hostonly_ stamped_printf("\tError : ID included in Model is greater than %d.\n", MODEL_ID_MAX);
+          Exit(0);
+        }
+        
       }
     }
   }
   
+  /*
+  Hostonly_  {
+    for (int i=0; i<MODEL_ID_MAX+1; i++) {
+      if (colorSet[i] != 0) printf("%d %d\n", i, colorSet[i]);
+    }
+  }
+  */
+  
+  
   // 外部領域の媒質IDをcolorSetに追加する
-  for (i=0; i<count; i++) {
+  for (int i=0; i<NOFACE; i++) {
     target = cid[i];
-    set<int>::iterator itr = colorSet.find(target);
-    if( itr == colorSet.end() ) colorSet.insert(target);
+    colorSet[target]++;
   }
   
-  NoVoxID = colorSet.size(); // Localの数
-	
-  // 並列処理時の colorList[] の取得
-  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  //if( para_mng->IsParallel() ){
-  
-  int nodeNum;
-  MPI_Comm_size(MPI_COMM_WORLD, &nodeNum);
-  
-  if ( nodeNum > 1 ) {
-    
-    int myRank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-    
-    //int myRank  = para_mng->GetMyID();
-    //int nodeNum = para_mng->GetNodeNum(pn.procGrp); // 全ノード数を取得
-		
-    // 各ノードのID数を集約するテーブルを作成
-    int* tmpArray = allocTable(nodeNum);
-    if( !tmpArray ) {
-      colorSet.clear();
-      Exit(0);
+  unsigned mc = 0;
+  for (int i=0; i<MODEL_ID_MAX+1; i++) {
+    if ( colorSet[i] != 0 ) {
+      colorSet[i] = 1; // 1に規格化
+      mc++;
     }
-    memset(tmpArray, 0, sizeof(int)*nodeNum);
-    
-    int* IDNumTable = allocTable(nodeNum);
-    if( !IDNumTable ) {
-      colorSet.clear();
-      if( tmpArray ) { delete [] tmpArray; tmpArray=NULL; }
-      Exit(0);
-    }
-    memset(IDNumTable, 0, sizeof(int)*nodeNum);
-    
-    // 各ノードのID数をIDNumTable[]に保持
-    tmpArray[myRank] = NoVoxID; // Localの数
-
-    //MPI_Allreduce(tmpArray, IDNumTable, nodeNum, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    int_array_max_Allreduce(tmpArray, IDNumTable, nodeNum);
-    
-    //if( !para_mng->Allreduce(tmpArray, IDNumTable, nodeNum, SKL_ARRAY_DTYPE_INT, SKL_MAX, pn.procGrp) ) {
-    //  colorSet.clear();
-    //  if( tmpArray )   { delete [] tmpArray;   tmpArray = NULL; }
-    //  if( IDNumTable ) { delete [] IDNumTable; IDNumTable = NULL; }
-    //  Exit(0);
-    //}
-    delete [] tmpArray; tmpArray = NULL; // 一旦解放
-		
-    // 各ノードのcolorList[]を集約するリストを作成 >> tmpArray[]
-    unsigned sizeOfIdList = 0;
-    for(i=0; i<nodeNum; i++) sizeOfIdList += IDNumTable[i];
-    if( !(tmpArray = allocTable(sizeOfIdList)) ) { 
-      colorSet.clear();
-      if( IDNumTable ) { delete [] IDNumTable; IDNumTable=NULL; }
-      return 0;
-    }
-    memset(tmpArray, 0, sizeof(int)*sizeOfIdList);
-    
-    // 各ノードのID番号がストアされる先頭アドレスを計算
-    unsigned mytopp = 0;
-    for(i=0; i<myRank; i++) mytopp += IDNumTable[i];
-    
-    // tmpArray[]の該当アドレスにノードのID番号を書き込む >> tmpArray[]のノード担当外はゼロ
-    set<int>::iterator itr = colorSet.begin();
-    set<int>::iterator itrEnd = colorSet.end();
-    i = mytopp;
-    for( ; itr != itrEnd; itr++) { tmpArray[i++] = *itr; }
-    
-    // 集約用のリスト
-    int* IdList = allocTable(sizeOfIdList);
-    if( !IdList ) {
-      colorSet.clear();
-      if( tmpArray )   { delete [] tmpArray; tmpArray=NULL; }
-      if( IDNumTable ) { delete [] IDNumTable; IDNumTable=NULL; }
-      return 0;
-    }
-    memset(IdList, 0, sizeof(int)*sizeOfIdList);
-    
-    //MPI_Allreduce(tmpArray, IdList, sizeOfIdList, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    int_array_max_Allreduce(tmpArray, IdList, sizeOfIdList);
-    
-
-    //  colorSet.clear();
-    //  if( tmpArray )   { delete [] tmpArray; tmpArray=NULL; }
-    //  if( IDNumTable ) { delete [] IDNumTable; IDNumTable=NULL; }
-    //  if( IdList )     { delete [] IdList; IdList=NULL; }
-    //  return 0;
-
-    delete [] tmpArray; tmpArray = NULL;
-		
-    // create colorSet
-    for(i=0; i<sizeOfIdList; i++) {
-      set<int>::iterator itr = colorSet.find(IdList[i]);
-      if( itr == colorSet.end() ) colorSet.insert(IdList[i]);
-    }
-    NoVoxID = colorSet.size(); // Global
-		
-    if( IDNumTable ) { delete [] IDNumTable; IDNumTable=NULL; }
-    if( IdList )     { delete [] IdList; IdList=NULL; }
   }
-	
-  if( NoVoxID == 0 ) {
-    if( colorList ) delete [] colorList;
-    colorList = NULL;
+  NoVoxID = mc; // Localの数
+  //printf("nun id = %d\n", mc);
+
+	// colorSet[] の集約
+  int m_np;
+  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  int myRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  
+
+  if ( m_np > 1 ) {
+		
+    unsigned clist[MODEL_ID_MAX+1];
+    for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i]=0;
+    
+    for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i] = colorSet[i];
+    
+    uint_array_sum_Allreduce(clist, colorSet, MODEL_ID_MAX+1);
+    
+  }
+  // この時点で、存在するIDの数はm_np個になっている
+    
+  // colorList[]へ詰めてコピー colorList[0]は不使用
+  unsigned b=1;
+  for (int i=0; i<MODEL_ID_MAX+1; i++) {
+    if ( colorSet[i] != 0 ) {
+      colorList[b] = i;
+      b++;
+    }
+  }
+  if ( (b-1) != NoVoxID ) {
+    stamped_printf("something wrong! %d %d\n", NoVoxID, b-1);
     Exit(0);
   }
 	
-  // allocate colorList
-  if( !(colorList = allocTable(NoVoxID+1)) ) {
-    Hostonly_ stamped_printf("\tAllocation error : colorList[]\n");
-    Exit(0);
-  }
-  for (unsigned i=0; i<=NoVoxID; i++) colorList[i] = 0;
-	
-  // colorList[]をcolorSetから作成する
-  set<int>::iterator itr = colorSet.begin();
-  set<int>::iterator itrEnd = colorSet.end();
-  i = 1;
-  for( ; itr != itrEnd; itr++) {
-    colorList[i++] = *itr;
-  }
-	
-  // clear colorSet
-  colorSet.clear();
-	
+  /*
+  Hostonly_  {
+    for (int i=0; i<MODEL_ID_MAX+1; i++) {
+      if (colorList[i] != 0) printf("%d %d\n", i, colorList[i]);
+    }
+  }*/
+  
   return NoVoxID;
 }
 

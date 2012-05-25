@@ -23,6 +23,7 @@
 #define REAL_TYPE double
 #endif // REAL_IS_FLOAT
 
+#define MODEL_ID_MAX 255
 
 // precision
 #define SPH_SINGLE 4

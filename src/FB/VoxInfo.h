@@ -19,7 +19,6 @@
 #include "Component.h"
 #include "Material.h"
 #include "Parallel_node.h"
-//#include "parallel/SklParaComponent.h"
 #include "IDtable.h"
 #include "SetBC.h"
 #include "BndOuter.h"
@@ -33,17 +32,15 @@
 
 class VoxInfo : public Parallel_Node {
 protected:
-  unsigned size[3];     /// 計算内部領域分割数(Local)
-  unsigned guide;       /// ガイドセルサイズ
-  unsigned NoVoxID;     /// 含まれるIDの数(Local/Global)
-  unsigned NoBC;        /// 境界条件数
-  unsigned NoCompo;     /// コンポーネントの総数
-  
-  int* colorList;       /// ボクセルモデルに含まれるIDのリスト(Global)
-  REAL_TYPE* vox_nv;    /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
-  
-  CompoList*      cmp;  /// コンポーネントリスト
-  MaterialList*   mat;  /// マテリアルリスト
+  unsigned size[3];              /// 計算内部領域分割数(Local)
+  unsigned guide;                /// ガイドセルサイズ
+  unsigned NoVoxID;              /// 含まれるIDの数(Local/Global)
+  unsigned NoBC;                 /// 境界条件数
+  unsigned NoCompo;              /// コンポーネントの総数
+  int colorList[MODEL_ID_MAX+1]; /// ボクセルモデルに含まれるIDのリスト(Global)
+  REAL_TYPE* vox_nv;             /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
+  CompoList*      cmp;           /// コンポーネントリスト
+  MaterialList*   mat;           /// マテリアルリスト
 
 public:
   VoxInfo() {
@@ -51,14 +48,14 @@ public:
     guide = 0;
     NoBC = NoCompo = 0;
     for (unsigned i=0; i<3; i++) size[i]=0;
-    colorList = NULL;
     vox_nv = NULL;
     cmp = NULL;
     mat = NULL;
+    
+    for (int i=0; i<MODEL_ID_MAX+1; i++) colorList[i]=0;
   }
   
   ~VoxInfo() {
-    if (colorList) delete [] colorList;
     if (vox_nv)    delete [] vox_nv;
   }
   
@@ -141,11 +138,11 @@ protected:
 public:
   bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
   
-  unsigned  check_fill       (const int* mid);
+  unsigned check_fill        (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   unsigned fill_inside       (int* mid, const int solid_id);
   unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
-  unsigned scanCell          (int *cell, unsigned count, unsigned* medium, unsigned ID_replace);
+  unsigned scanCell          (int *cell, const int* cid, const unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
   
@@ -193,6 +190,8 @@ public:
     bid |= (s_id << (dir*5));
   }
   
+  
+  /// 桁あふれ対策の代替関数
   static void int_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
     float my_send = (float)*sbuf;
     float my_recv = (float)*rbuf;
@@ -200,6 +199,7 @@ public:
     rbuf = (int*)&my_recv;
   }
   
+  /// 桁あふれ対策の代替関数
   static void int_array_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
     float* my_send = new float [msg];
     float* my_recv = new float [msg];
@@ -214,6 +214,7 @@ public:
     if ( my_recv ) delete [] my_recv;
   }
   
+  /// 桁あふれ対策の代替関数
   static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
     float my_send = (float)*sbuf;
     float my_recv = (float)*rbuf;
@@ -221,6 +222,22 @@ public:
     rbuf = (unsigned*)&my_recv;
   }
   
+  /// 桁あふれ対策の代替関数
+  static void uint_array_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (int)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
+  }
+  
+  /// 桁あふれ対策の代替関数
   static void int_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
     float my_send = (float)*sbuf;
     float my_recv = (float)*rbuf;
@@ -228,6 +245,7 @@ public:
     rbuf = (int*)&my_recv;
   }
   
+  /// 桁あふれ対策の代替関数
   static void int_array_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
     float* my_send = new float [msg];
     float* my_recv = new float [msg];

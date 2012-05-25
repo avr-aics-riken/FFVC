@@ -25,10 +25,11 @@
 #include "parallel/SklParaComponent.h"
 #include "Material.h"
 #include "vec3.h"
+#include "Parallel_node.h"
 
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
-class ParseBC {
+class ParseBC : public Parallel_Node {
 private:
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;
@@ -185,10 +186,9 @@ public:
   
   int get_BCval_int       (const CfgElem *elmL, const char* key);
   
-  REAL_TYPE get_BCval_real (const CfgElem *elmL, const char* key);
+  REAL_TYPE get_BCval_real(const CfgElem *elmL, const char* key);
   
-  unsigned count_Outer_Cell_ID (unsigned* medium);
-  
+  void count_Outer_Cell_ID(int* medium);
   void chkBCconsistency   (unsigned kos);
   void getXML_Model       (void);
   void getXML_Phase       (void);

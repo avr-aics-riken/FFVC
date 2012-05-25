@@ -2159,7 +2159,7 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
   fprintf(fp,"\tActive cell                                   = %15d (%8.4f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
   
   fprintf(fp,"\n\tFace :      Element (Open ratio)\n");
-  for (unsigned i=0; i<NoDimension*2; i++) {
+  for (unsigned i=0; i<NOFACE; i++) {
     fprintf(fp,"\t  %s : %12.0f (%6.2f percent)\n", getDirection(i).c_str(), OpenDomain[i], OpenDomainRatio(i, OpenDomain[i], NoDimension, G_size));
   }
   fprintf(fp,"\n");
