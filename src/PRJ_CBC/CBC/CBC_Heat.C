@@ -131,14 +131,14 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
       TIMING_stop(tm_heat_diff_OBC, 0.0);
       
       // 温度の同期
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_heat_update_comm);
         dc_t->CommBndCell(guide);
         TIMING_stop(tm_heat_update_comm, comm_size*(REAL_TYPE)guide);
       }
       
       // 残差の集約
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_heat_diff_res_comm);
         REAL_TYPE tmp_wk[2], m_tmp[2];
         tmp_wk[0] = m_tmp[0] = res;

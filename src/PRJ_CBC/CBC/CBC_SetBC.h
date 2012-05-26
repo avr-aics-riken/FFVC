@@ -16,6 +16,7 @@
 #include "SetBC.h"
 #include "FortranFuncCBC.h"
 #include "CBC_Define.h"
+#include "mpi.h"
 
 class SetBC3D : public SetBC {
 public:

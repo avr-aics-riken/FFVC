@@ -235,7 +235,7 @@ void DataHolderManager::readData()
         Exit(0);
       }
 //    printf("label=%s, file=%s\n", label, file);
-      DataHolder* dh = new DataHolder(label, file, pn.ID);
+      DataHolder* dh = new DataHolder(label, file, pn.myrank);
       m_dataHolders.insert(DATA_HOLDER_MAP::value_type(label, dh));
 
       param = elemDH->GetParamNext(param);
@@ -285,7 +285,7 @@ void DataHolderManager::printInfoDebug(FILE* fp) const
 ///
 void DataHolderManager::printError(const char* fmt, ...)
 {
-  if (pn.ID == 0) {
+  if (pn.myrank == 0) {
     fprintf(stderr, "DataHolderManager error:\n");
     va_list ap;
     va_start(ap, fmt);

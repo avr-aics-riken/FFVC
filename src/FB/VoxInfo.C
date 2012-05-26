@@ -38,9 +38,6 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
   
   if ( !(mid = d_mid->GetData()) ) Exit(0);
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
   
   // 周期境界以外
   if ( BCtype != OBC_PERIODIC ) {
@@ -147,7 +144,7 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
     // 内部周期境界の場合には，別メソッド
     if ( prdc_mode != BoundaryOuter::prdc_Driver ) {
       // 並列時
-      if ( m_np > 1 ) {
+      if ( pn.numProc > 1 ) {
         switch (face) {
           case X_MINUS:
             if ( !d_mid->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
@@ -281,9 +278,6 @@ void VoxInfo::adjCellID_Prdc_Inner(SklScalar3D<int>* d_mid)
 {
   int st[3], ed[3], dir, id;
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
   for (unsigned n=1; n<=NoBC; n++) {
     cmp[n].getBbox(st, ed);
     dir = (int)cmp[n].getPeriodicDir();
@@ -291,7 +285,7 @@ void VoxInfo::adjCellID_Prdc_Inner(SklScalar3D<int>* d_mid)
     
     if ( cmp[n].getType() == PERIODIC ) {
 
-      if ( m_np > 1 ) {
+      if ( pn.numProc > 1 ) {
         Hostonly_ printf("Error : Inner Periodic condition is limited to use for serial execution on a temporary\n.");
         Exit(0);
       }
@@ -699,12 +693,9 @@ void VoxInfo::countCellState(unsigned& Lcell, unsigned& Gcell, unsigned* bx, con
   g_cell = cell;
   Lcell = cell;
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned c_tmp = g_cell;
-    uint_sum_Allreduce(&c_tmp, &g_cell);
+    FBUtility::uint_sum_Allreduce(&c_tmp, &g_cell);
   }
   
   Gcell = g_cell;
@@ -752,15 +743,12 @@ void VoxInfo::countFace_S(unsigned n, unsigned* bx, int* cc)
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     int tmp[3];
     tmp[0] = c[0];
 		tmp[1] = c[1];
 		tmp[2] = c[2];
-    int_array_sum_Allreduce(tmp, c, 3);
+    FBUtility::int_array_sum_Allreduce(tmp, c, 3);
   }
   
 	cc[0] = c[0];
@@ -858,18 +846,16 @@ void VoxInfo::countNrml_from_FaceBC(unsigned n, unsigned* bx, int* cc, int& ar)
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     int tmp[3];
     tmp[0] = c[0];
 		tmp[1] = c[1];
 		tmp[2] = c[2];
-    int_array_sum_Allreduce(tmp, c, 3);
+    FBUtility::int_array_sum_Allreduce(tmp, c, 3);
     
     tmp[0] = ar;
-    int_sum_Allreduce(tmp, &ar);
+    FBUtility::int_sum_Allreduce(tmp, &ar);
   }
   
 	cc[0] = c[0];
@@ -992,12 +978,10 @@ unsigned VoxInfo::count_ValidCell_OBC(const int face, const unsigned* bv)
       break;
   } // end of switch
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -1087,15 +1071,13 @@ void VoxInfo::countVolumeEdge(unsigned n, unsigned* bx, int* cc)
     
   } // Ens
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     int tmp[3];
     tmp[0] = c[0];
 		tmp[1] = c[1];
 		tmp[2] = c[2];
-    int_array_sum_Allreduce(tmp, c, 3);
+    FBUtility::int_array_sum_Allreduce(tmp, c, 3);
   }
   
 	cc[0] = c[0];
@@ -1211,13 +1193,11 @@ void VoxInfo::countOpenAreaOfDomain(unsigned* bx, REAL_TYPE* OpenArea)
     m_area[Z_PLUS] = g;
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp[NOFACE];
     for (int i=0; i<NOFACE; i++) tmp[i] = m_area[i];
-    uint_array_sum_Allreduce(tmp, m_area, NOFACE);
+    FBUtility::uint_array_sum_Allreduce(tmp, m_area, NOFACE);
   }
   
   for (int i=0; i<NOFACE; i++) OpenArea[i] = (REAL_TYPE)m_area[i];
@@ -1252,12 +1232,10 @@ unsigned VoxInfo::countState(unsigned id, int* mid)
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -1476,12 +1454,10 @@ void VoxInfo::encActive(unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned
   
   Lcell = c;
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned c_tmp = c;
-    uint_sum_Allreduce(&c_tmp, &c);
+    FBUtility::uint_sum_Allreduce(&c_tmp, &c);
   }
   
   Gcell = c;
@@ -1712,12 +1688,10 @@ unsigned VoxInfo::encodeOrder(unsigned order, unsigned id, int* mid, unsigned* b
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
 
   return g;
@@ -1856,13 +1830,11 @@ unsigned VoxInfo::encQfaceHT_S(unsigned order, unsigned id, int* mid, unsigned* 
       }
     }
   }
+
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -1999,13 +1971,11 @@ unsigned VoxInfo::encQfaceHT_B(unsigned order, unsigned id, int* mid, unsigned* 
       }
     }
   }
+
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2143,13 +2113,11 @@ unsigned VoxInfo::encQfaceISO_SF(unsigned order, unsigned id, int* mid, unsigned
       }
     }
   }
+
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2288,12 +2256,9 @@ unsigned VoxInfo::encQfaceISO_SS(unsigned order, unsigned id, int* mid, unsigned
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2412,12 +2377,9 @@ unsigned VoxInfo::encQface(unsigned order, unsigned id, int* mid, unsigned* bcd,
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2824,12 +2786,9 @@ unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned*
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -2847,7 +2806,6 @@ unsigned VoxInfo::encPbit_D_IBC(unsigned order, unsigned id, int* mid, unsigned*
  */
 unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
 {
-  int i,j,k;
   unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned register s;
   
@@ -2857,9 +2815,9 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
   int gd = (int)guide;
   
   // ノイマンフラグ
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bx[m_p];
         
@@ -2923,9 +2881,9 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
   // wall locationフラグ
   unsigned c = 0;
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bx[m_p];
         
@@ -2964,12 +2922,9 @@ unsigned VoxInfo::encPbit_N_Binary(unsigned* bx)
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = c;
-    uint_sum_Allreduce(&tmp, &c);
+    FBUtility::uint_sum_Allreduce(&tmp, &c);
   }
   
   return c;
@@ -3086,12 +3041,9 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = c;
-    uint_sum_Allreduce(&tmp, &c);
+    FBUtility::uint_sum_Allreduce(&tmp, &c);
   }
   
   
@@ -3133,9 +3085,9 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
   }
   
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %d\n\n", g);
@@ -3173,12 +3125,9 @@ unsigned VoxInfo::encPbit_N_Cut(unsigned* bx, float* cut, const bool convergence
       }
     }
     
-    int m_np;
-    MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-    
-    if ( m_np > 1 ) {
+    if ( pn.numProc > 1 ) {
       unsigned tmp = g;
-      uint_sum_Allreduce(&tmp, &g);
+      FBUtility::uint_sum_Allreduce(&tmp, &g);
     }
     
     Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %d\n\n", g);
@@ -3311,12 +3260,9 @@ unsigned VoxInfo::encPbit_N_IBC(unsigned order, unsigned id, int* mid, unsigned*
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -3745,13 +3691,9 @@ unsigned VoxInfo::encVbit_IBC(unsigned order, unsigned id, int* mid, unsigned* b
     }
   }
   
-  // 対象面数の集約
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -3918,13 +3860,10 @@ unsigned VoxInfo::encVbit_IBC_Cut(const unsigned order,
   }
 #endif
   
-
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   return g;
@@ -4650,12 +4589,9 @@ unsigned VoxInfo::flip_InActive(unsigned& L, unsigned& G, unsigned id, int* mid,
   
   L = g = c;
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = g;
-    uint_sum_Allreduce(&tmp, &g);
+    FBUtility::uint_sum_Allreduce(&tmp, &g);
   }
   
   G = g;
@@ -4901,7 +4837,7 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
     }
   }
   
-  // 内部領域の媒質IDがあれば、カウントを加える
+  // 内部領域の媒質IDに対して、カウント
   unsigned colorSet[MODEL_ID_MAX+1];
   for (int i=0; i<MODEL_ID_MAX+1; i++) colorSet[i]=0;
   
@@ -4926,13 +4862,12 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
     }
   }
   
-  /*
-  Hostonly_  {
+  
+  //Hostonly_  {
     for (int i=0; i<MODEL_ID_MAX+1; i++) {
-      if (colorSet[i] != 0) printf("%d %d\n", i, colorSet[i]);
+      if (colorSet[i] != 0) printf("a %d : %d %d\n", pn.myrank, i, colorSet[i]);
     }
-  }
-  */
+  //}
   
   
   // 外部領域の媒質IDをcolorSetに追加する
@@ -4941,55 +4876,50 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
     colorSet[target]++;
   }
   
-  unsigned mc = 0;
+  for (int i=0; i<MODEL_ID_MAX+1; i++) {
+    if (colorSet[i] != 0) printf("b %d : %d %d\n", pn.myrank, i, colorSet[i]);
+  }
+  
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
     if ( colorSet[i] != 0 ) {
       colorSet[i] = 1; // 1に規格化
-      mc++;
     }
   }
-  NoVoxID = mc; // Localの数
-  //printf("nun id = %d\n", mc);
 
 	// colorSet[] の集約
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  
-
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
 		
     unsigned clist[MODEL_ID_MAX+1];
     for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i]=0;
     
     for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i] = colorSet[i];
     
-    uint_array_sum_Allreduce(clist, colorSet, MODEL_ID_MAX+1);
+    FBUtility::uint_array_sum_Allreduce(clist, colorSet, MODEL_ID_MAX+1);
     
   }
-  // この時点で、存在するIDの数はm_np個になっている
+  // この時点で、存在するIDの数はpn.numProc個になっている
+  
+  for (int i=0; i<MODEL_ID_MAX+1; i++) {
+    if (colorSet[i] != 0) printf("c %d : %d %d\n", pn.myrank, i, colorSet[i]);
+  }
+  
     
   // colorList[]へ詰めてコピー colorList[0]は不使用
-  unsigned b=1;
+  int b=1;
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
     if ( colorSet[i] != 0 ) {
       colorList[b] = i;
       b++;
     }
   }
-  if ( (b-1) != NoVoxID ) {
-    stamped_printf("something wrong! %d %d\n", NoVoxID, b-1);
-    Exit(0);
-  }
+  
+  NoVoxID = (unsigned)b-1;
 	
-  /*
-  Hostonly_  {
+  //Hostonly_  {
     for (int i=0; i<MODEL_ID_MAX+1; i++) {
       if (colorList[i] != 0) printf("%d %d\n", i, colorList[i]);
     }
-  }*/
+  //}
   
   return NoVoxID;
 }

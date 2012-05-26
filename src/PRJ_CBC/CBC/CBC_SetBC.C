@@ -125,8 +125,6 @@ void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYP
  */
 void SetBC3D::checkDriver(FILE* fp)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
   int o_dir, c_dir;
   int o_pos, c_pos;
   int node_st_i, node_st_j, node_st_k;
@@ -134,10 +132,10 @@ void SetBC3D::checkDriver(FILE* fp)
   
   node_st_i = node_st_j = node_st_k = 0;
   
-  if( para_mng->IsParallel() ){
-    node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
-    node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
-    node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
+  if( pn.numProc > 1 ){
+    node_st_i = pn.st_idx[0];
+    node_st_j = pn.st_idx[1];
+    node_st_k = pn.st_idx[2];
   }
   
   for (int face=0; face<NOFACE; face++) {
@@ -1159,9 +1157,9 @@ void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYP
  */
 void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     unsigned no_comm_face = 1; //通信面数
     
     switch (face) {
@@ -1282,7 +1280,7 @@ void SetBC3D::Pobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_p, int face)
  */
 void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_TYPE pv, unsigned uod)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k;
   unsigned m0, m1;
   unsigned no_comm_face = 1; //通信面数
@@ -1293,7 +1291,7 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
   // 上流面か下流面かで，圧力差の方向を逆転する
   pd = ( uod == BoundaryOuter::prdc_upstream ) ? pv : -pv;
   
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     switch (face) {
       case X_MINUS:
         if ( !d_p->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, no_comm_face) ) Exit(0);
@@ -1458,8 +1456,8 @@ void SetBC3D::Pobc_Prdc_Directional(SklScalar3D<REAL_TYPE>* d_p, int face, REAL_
  */
 void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar3D<unsigned>* d_bcd, int odr, int dir, REAL_TYPE pd)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if( para_mng->IsParallel() ){
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if ( pn.numProc > 1 ) {
     Hostonly_ printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
     Exit(0);
   }
@@ -1807,7 +1805,7 @@ REAL_TYPE SetBC3D::ps_IBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE 
   
   flop += (REAL_TYPE)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1)*7 ); // 近似
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -1924,7 +1922,7 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* ws, unsigned* bh1, int n, REAL_TYPE
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -2093,7 +2091,7 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TYPE
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -2255,7 +2253,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* ws, unsigned* bh1, int face, REAL_TY
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -2391,7 +2389,7 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* qbc, unsigned* bh1, int face, RE
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -2512,7 +2510,7 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int face, REAL
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -2649,7 +2647,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* qbc, unsigned* bh1, int fac
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -2873,7 +2871,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* qbc, unsigned* bh1, int fac
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3109,7 +3107,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* qbc, unsigned* bh1, int fac
       break;
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3189,7 +3187,7 @@ REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* qbc, unsigned* bh1, int n, REAL_TY
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3254,7 +3252,7 @@ REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* b
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		tmp = qsum;
 		para_mng->Allreduce(&tmp, &qsum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3350,7 +3348,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3520,7 +3518,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     REAL_TYPE tmp = va;
     para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
   }
@@ -3678,7 +3676,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* qbc, unsigned* bh1, int n, R
     }
   }
 
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     REAL_TYPE tmp = va;
     para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
   }
@@ -3773,7 +3771,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3847,7 +3845,7 @@ REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, 
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		tmp = qsum;
 		para_mng->Allreduce(&tmp, &qsum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -3942,7 +3940,7 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* qbc, unsigned* bh1, int n, RE
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		REAL_TYPE tmp = va;
 		para_mng->Allreduce(&tmp, &va, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -4016,7 +4014,7 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, uns
     }
   }
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
 		tmp = qsum;
 		para_mng->Allreduce(&tmp, &qsum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
 	}
@@ -4063,7 +4061,7 @@ void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TY
  */
 void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int i,j,k, gd;
   unsigned m0, m1;
   unsigned* bx=NULL;
@@ -4072,7 +4070,7 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
   
   if ( !(bx = d_bx->GetData()) ) Exit(0);
 
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     for (int face=0; face<NOFACE; face++) {
       if ( obc[face].get_BCtype() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
 
@@ -4315,9 +4313,9 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, unsigned* b
  */
 void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     unsigned no_comm_face = guide; //通信面数
     
     switch (face) {
@@ -4437,9 +4435,9 @@ void SetBC3D::Tobc_Prdc_Simple(SklScalar3D<REAL_TYPE>* d_t, int face)
  */
 void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
 
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     unsigned no_comm_face=guide;
     
     switch (face) {
@@ -4524,9 +4522,9 @@ void SetBC3D::Vobc_Prdc_CF(SklVector3DEx<REAL_TYPE>* d_v, int face)
  */
 void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_comm_face)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     unsigned no_comm_face=guide;
     
     switch (face) {
@@ -4674,8 +4672,8 @@ void SetBC3D::Vobc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int face, unsigned no_com
  */
 void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScalar3D<unsigned>* d_bd, int odr, int dir)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if( para_mng->IsParallel() ){
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  if ( pn.numProc > 1 ) {
     Hostonly_ printf("Error : 'Vibc_Prdc' method is limited to use for serial execution\n.");
     Exit(0);
   }

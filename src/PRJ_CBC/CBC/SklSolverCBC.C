@@ -123,7 +123,7 @@ SklSolverCBC::SklSolverCBC() {
   cf_x = cf_y = cf_z = NULL;
   
   pn.procGrp = 0;
-  pn.ID = 0; 
+  pn.myrank = 0; 
   for (int i=0; i<NOFACE; i++) pn.nID[i] = -1;
   ModeTiming = OFF;
 
@@ -239,7 +239,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   cf_x = cf_y = cf_z = NULL;
   
   pn.procGrp = 0;
-  pn.ID = 0; 
+  pn.myrank = 0; 
   for (int i=0; i<6; i++) pn.nID[i] = -1;
   ModeTiming = OFF;
 
@@ -327,7 +327,7 @@ void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, REAL_TYPE& flop
     if (ofv == V_AVERAGE) { // average
       
       // 非境界面はゼロなので，単に足し込むだけ
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         u_sum = tmp_sum = vv[0];
         para_mng->Allreduce(&tmp_sum, &u_sum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
       } 
@@ -336,7 +336,7 @@ void SklSolverCBC::DomainMonitor(BoundaryOuter* ptr, Control* R, REAL_TYPE& flop
     }
     else if (ofv == V_MINMAX) { // minmax
       
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         u_sum = tmp_sum = vv[0];
         u_min = tmp_min = vv[1];
         u_max = tmp_max = vv[2];
@@ -725,7 +725,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
     fb_xcopy_(ws, ap, &d_length, &scale, &flop);
   }
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, stepAvr, pn.ID, (bool)C.FIO.IO_Output);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, stepAvr, pn.myrank, (bool)C.FIO.IO_Output);
   F.writeScalar(tmp, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrPressure, stepAvr, dfi_mng[var_Pressure_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
   
@@ -733,7 +733,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(vo, av, sz, gc, v00, &scale, &unit_velocity, &flop);
   
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, stepAvr, pn.ID, (bool)C.FIO.IO_Output);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, stepAvr, pn.myrank, (bool)C.FIO.IO_Output);
   F.writeVector(tmp, size, guide, vo, stepAvr, timeAvr, m_org, m_pit, gc_out);
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrVelocity, stepAvr, dfi_mng[var_Velocity_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
   
@@ -752,7 +752,7 @@ void SklSolverCBC::AverageOutput (REAL_TYPE& flop)
       fb_xcopy_(ws, at, &d_length, &scale, &flop);
     }
     
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, stepAvr, pn.ID, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, stepAvr, pn.myrank, (bool)C.FIO.IO_Output);
     F.writeScalar(tmp, size, guide, ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
     Hostonly_ if( !DFI.Write_DFI_File(C.f_AvrTemperature, stepAvr, dfi_mng[var_Temperature_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
   }
@@ -825,7 +825,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
     REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
     F.cnv_Div(dc_ws, dc_wk2, coef, flop);
     
-    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, pn.myrank, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], pout) ) Exit(0);
@@ -849,10 +849,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
   }
   
   if ( !restart ) {
-    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.myrank, pout);
   }
   else {
-    tmp = DFI.Generate_FileName(prs_restart, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(prs_restart, m_step, pn.myrank, pout);
   }
   
   F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -865,10 +865,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
   fb_shift_refv_out_(vo, v, sz, gc, v00, &scale, &unit_velocity, &flop);
   
   if ( !restart ) {
-    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.myrank, pout);
   }
   else {
-    tmp = DFI.Generate_FileName(vel_restart, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(vel_restart, m_step, pn.myrank, pout);
   }
   
   F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
@@ -892,10 +892,10 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
     }
     
     if ( !restart ) {
-      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID, pout);
+      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.myrank, pout);
     }
     else {
-      tmp = DFI.Generate_FileName(temp_restart, m_step, pn.ID, pout);
+      tmp = DFI.Generate_FileName(temp_restart, m_step, pn.myrank, pout);
     }
     
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -920,7 +920,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
       if( !SklUtil::cpyS3D(dc_ws, dc_p0) ) Exit(0);
     }
 
-    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, pn.myrank, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
 
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_TotalP, m_step, dfi_mng[var_TotalP], pout) ) Exit(0);
@@ -943,7 +943,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(vo, vrt, sz, gc, vz, &scale, &unit_velocity, &flop);
       
-    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, pn.myrank, pout);
     F.writeVector(tmp, size, guide, vo, m_step, m_time, m_org, m_pit, gc_out);
 
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
@@ -965,7 +965,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
 
-    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, pn.myrank, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
 
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_I2VGT, m_step, dfi_mng[var_I2vgt], pout) ) Exit(0);
@@ -986,7 +986,7 @@ void SklSolverCBC::FileOutput (REAL_TYPE& flop, const bool restart)
     d_length = (int)dc_ws->GetArrayLength();
     fb_xcopy_(ws, q, &d_length, &scale, &flop);
       
-    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, pn.ID, pout);
+    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, pn.myrank, pout);
     F.writeScalar(tmp, size, guide, ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Helicity, m_step, dfi_mng[var_Helicity], pout) ) Exit(0);
@@ -1008,7 +1008,6 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 	REAL_TYPE *p, *src0, *p0, *src1;
 	unsigned *bcp;
   REAL_TYPE flop_count=0.0;
-  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   REAL_TYPE comm_size;              /// 通信面1面あたりの通信量
   unsigned int wait_num=0;
   int req[12];
@@ -1025,6 +1024,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 	if( !(src0= dc_ws->GetData()) )  Exit(0); // 非反復のソース項
   if( !(src1= dc_wk2->GetData()) ) Exit(0); // 反復毎に変化するソース項
 	if( !(bcp = dc_bcp->GetData()) ) Exit(0); // ビットフラグ
+  
   
   // 反復処理
   switch (IC->get_LS()) {
@@ -1055,7 +1055,7 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       TIMING_start(tm_poi_itr_sct_3);
 
       // 同期処理
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_poi_comm);
         if (cm_mode == 0 ) {
           if( !dc_p->CommBndCell(1) ) Exit(0); // 1 layer communication
@@ -1068,11 +1068,11 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       }
       
       // 残差の集約
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_poi_res_comm);
         REAL_TYPE tmp = r;
         para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-        TIMING_stop(tm_poi_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
+        TIMING_stop(tm_poi_res_comm, 2.0*(REAL_TYPE)pn.numProc*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
 
       TIMING_stop(tm_poi_itr_sct_3, 0.0);
@@ -1085,10 +1085,10 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 
       int nID[6], sidx[3], ip;
       
-      if ( para_mng->IsParallel() ){
-        sidx[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0, pn.procGrp) + 1;
-        sidx[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1, pn.procGrp) + 1;
-        sidx[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2, pn.procGrp) + 1;
+      if ( pn.numProc > 1 ) {
+        sidx[0] = pn.st_idx[0];
+        sidx[1] = pn.st_idx[1];
+        sidx[2] = pn.st_idx[2];
         ip = (sidx[0]+sidx[1]+sidx[2]) % 2;
       } 
       else {
@@ -1124,11 +1124,11 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
         TIMING_start(tm_poi_itr_sct_3);
         
         // 残差の集約と同期処理
-        if ( para_mng->IsParallel() ) {
+        if ( pn.numProc > 1 ) {
           TIMING_start(tm_poi_res_comm);
           REAL_TYPE tmp = r;
           para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
-          TIMING_stop(tm_poi_res_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
+          TIMING_stop(tm_poi_res_comm, 2.0*(REAL_TYPE)pn.numProc*(REAL_TYPE)sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
           
           TIMING_start(tm_poi_comm);
           if (cm_mode == 0 ) {
@@ -1192,6 +1192,8 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
   if( !(bcv = dc_bcv->GetData()) ) Exit(0);
   if( !(cut = dc_cut->GetData()) ) Exit(0);
   
+  
+  
   // 反復処理
   switch (IC->get_LS()) {
     case SOR:
@@ -1233,8 +1235,7 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
  */
 REAL_TYPE SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  REAL_TYPE c = 0.0;
+  float c = 0.0;
   
   // 内部面のみをカウントする
   for (unsigned n=0; n<6; n++) {
@@ -1243,28 +1244,29 @@ REAL_TYPE SklSolverCBC::count_comm_size(unsigned sz[3], unsigned guide) const
       switch (n) {
         case X_MINUS:
         case X_PLUS:
-          c += (REAL_TYPE)(sz[1]*sz[2]);
+          c += (float)(sz[1]*sz[2]);
           break;
           
         case Y_MINUS:
         case Y_PLUS:
-          c += (REAL_TYPE)(sz[0]*sz[2]);
+          c += (float)(sz[0]*sz[2]);
           break;
           
         case Z_MINUS:
         case Z_PLUS:
-          c += (REAL_TYPE)(sz[0]*sz[1]);
+          c += (float)(sz[0]*sz[1]);
           break;
       }
     }
   }
   
-  if( para_mng->IsParallel() ){
-    REAL_TYPE tmp = c;
-    if ( !para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp) ) Exit(0);
+  if ( pn.numProc > 1 ) {
+    float tmp = c;
+    //if ( !para_mng->Allreduce(&tmp, &c, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp) ) Exit(0);
+    MPI_Allreduce(&tmp, &c, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
   }
   
-  return c*(REAL_TYPE)sizeof(REAL_TYPE); // Byte
+  return (REAL_TYPE)c * (REAL_TYPE)sizeof(REAL_TYPE); // Byte
 }
 
 /**
@@ -1366,7 +1368,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   TIMING_start(tm_frctnl_stp_sct_8);
   
   // 同期処理
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     switch (IC->get_LS()) {
       case JACOBI:
       case SOR:
@@ -1384,7 +1386,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   }
   
   // Residual reduction
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     TIMING_start(tm_pvec_cn_res_comm);
     REAL_TYPE tmp = r;
     para_mng->Allreduce(&tmp, &r, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // In fact, CN is MAX norm
@@ -1411,13 +1413,13 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
   
   REAL_TYPE nrm, rms, convergence, flop_count;
   REAL_TYPE coef = SklGetDeltaT()/(C.dh*C.dh); /// 発散値を計算するための係数　dt/h^2
-  REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   REAL_TYPE tmp;
   REAL_TYPE *src1=NULL;  /// 発散値
   unsigned *bcp=NULL;
   
   if( !(bcp = dc_bcp->GetData()) )  Exit(0);
   if( !(src1 = dc_wk2->GetData()) ) Exit(0);
+  
   
   switch (IC->get_normType()) {
     case ItrCtl::v_div_max:
@@ -1429,11 +1431,11 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       cbc_norm_v_div_max_(&nrm, sz, gc, src1, &coef, (int*)bcp, &flop_count);
       TIMING_stop(tm_norm_div_max, flop_count);
       
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_norm_comm);
         tmp = nrm;
         para_mng->Allreduce(&tmp, &nrm, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // 最大値
-        TIMING_stop(tm_norm_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*(REAL_TYPE)pn.numProc*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
       convergence = nrm;
       IC->set_normValue( convergence );
@@ -1451,13 +1453,13 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       cbc_norm_v_div_l2_(&rms, sz, gc, src1, &coef, (int*)bcp, &flop_count);
       TIMING_stop(tm_norm_div_l2, flop_count);
       
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_norm_comm);
         tmp = rms;
         para_mng->Allreduce(&tmp, &rms, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 和
-        TIMING_stop(tm_norm_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*(REAL_TYPE)pn.numProc*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
-      convergence = sqrt(rms/np_f); //RMS
+      convergence = sqrt(rms/(REAL_TYPE)pn.numProc); //RMS
       IC->set_normValue( convergence );
       
       TIMING_stop(tm_poi_itr_sct_5, 0.0);
@@ -1484,15 +1486,15 @@ REAL_TYPE SklSolverCBC::Norm_Poisson(ItrCtl* IC)
       
       //@todo ここで，最大値のグローバルなindexの位置を計算する
       
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_norm_comm);
         tmp = nrm;
         para_mng->Allreduce(&tmp, &nrm, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp); // 最大値
         tmp = rms;
         para_mng->Allreduce(&tmp, &rms, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp); // 和
-        TIMING_stop(tm_norm_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*(REAL_TYPE)pn.numProc*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数
       }
-      rms = sqrt(rms/np_f); // RMS
+      rms = sqrt(rms/(REAL_TYPE)pn.numProc); // RMS
       convergence = nrm; // ノルムは最大値を返す
       IC->set_normValue( convergence );
       

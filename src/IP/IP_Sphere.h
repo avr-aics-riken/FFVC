@@ -18,14 +18,12 @@
 
 class IP_Sphere : public Intrinsic {
 protected:
-  REAL_TYPE offset;     ///< オフセット距離
   REAL_TYPE radius;     ///< 球の半径
   REAL_TYPE drv_length; ///< ドライバの長さ
   int drv_mode;         ///< ドライバのON/OFF
   FB::Vec3f pch;        ///< セル幅
   FB::Vec3f org;        ///< 計算領域の基点
   FB::Vec3f wth;        ///< 計算領域の大きさ
-  FB::Vec3f ctr;        ///< 計算領域のセンター
   FB::Vec3f box_min;    ///< Bounding boxの最小値
   FB::Vec3f box_max;    ///< Bounding boxの最大値
   FB::Vec3i box_st;     ///< Bounding boxの始点インデクス
@@ -33,7 +31,6 @@ protected:
   
 public:
   IP_Sphere(){
-    offset = 0.0;
     radius = 0.0;
     drv_length = 0.0;
     drv_mode = OFF;
@@ -51,7 +48,7 @@ public:
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org);
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut);
   
-  FB::Vec3i find_index(const FB::Vec3f p);
+  FB::Vec3i find_index(const FB::Vec3f p, const FB::Vec3f ol);
   
   float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
 };

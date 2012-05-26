@@ -624,7 +624,7 @@ void FileIO::loadSBXfile( SklSolverBase* obj,
  */
 void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
   int sz, dType, stp, svType;
   int ix, jx, kx, i, j, k;
@@ -635,8 +635,8 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   char sph_fname[512];
   
-  if( para_mng->IsParallel() ){
-    sprintf( sph_fname, "field%010d.sph", pn.ID );
+  if ( pn.numProc > 1 ) {
+    sprintf( sph_fname, "field%010d.sph", pn.myrank );
   } else {
     sprintf( sph_fname, "field.sph" );
   }

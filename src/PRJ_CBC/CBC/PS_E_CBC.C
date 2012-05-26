@@ -122,7 +122,7 @@ void SklSolverCBC::PS_E_CBC(void)
   TIMING_stop(tm_heat_diff_IBC_vol, flop_count);
   
   // 部分段階の温度の同期
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     TIMING_start(tm_heat_diff_comm);
     dc_ws->CommBndCell(guide);
     TIMING_stop(tm_heat_diff_comm, comm_size*(REAL_TYPE)guide);
@@ -153,7 +153,7 @@ void SklSolverCBC::PS_E_CBC(void)
   TIMING_stop(tm_heat_diff_OBC_face, flop_count);
   
   // 境界条件の熱流束の同期 >>　不要？
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     TIMING_start(tm_heat_diff_QBC_comm);
     dc_qbc->CommBndCell(1);
     TIMING_stop(tm_heat_diff_QBC_comm, comm_size*3.0); // 3成分
@@ -181,14 +181,14 @@ void SklSolverCBC::PS_E_CBC(void)
     TIMING_stop(tm_heat_diff_OBC, 0.0);
     
     // 温度の同期
-    if ( para_mng->IsParallel() ) {
+    if ( pn.numProc > 1 ) {
       TIMING_start(tm_heat_update_comm);
       dc_t->CommBndCell(guide);
       TIMING_stop(tm_heat_update_comm, comm_size*(REAL_TYPE)guide);
     }
     
     // 残差の集約
-    if ( para_mng->IsParallel() ) {
+    if ( pn.numProc > 1 ) {
       TIMING_start(tm_heat_diff_res_comm);
       REAL_TYPE tmp = res;
       para_mng->Allreduce(&tmp, &res, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);

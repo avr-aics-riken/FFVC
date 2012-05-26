@@ -59,11 +59,26 @@ SklSolverCBC::SklSolverInitialize() {
   ParseBC     B;
   ParseMat    M;
 
-  // 並列処理時のランク番号をセット．デフォルトで，procGrp = 0;
-  pn.ID = para_mng->GetMyID(pn.procGrp);
+
+  // MPI並列情報の設定 ------------------------------------
   
   int m_np = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &m_np);
+  
+  int m_rank = -1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
+  
+  pn.myrank = m_rank;
+  pn.numProc= m_np;
+  pn.procGrp= 0; // default
+
+  // 並列情報のコピー
+  BC.set_Rank   (pn);
+  F.set_Rank    (pn);
+  MO.set_Rank   (pn);
+  B.set_Rank    (pn);
+  M.set_Rank    (pn);
+  Vinfo.set_Rank(pn);
   
   // 並列処理モード
   setParallelism();
@@ -90,6 +105,8 @@ SklSolverCBC::SklSolverInitialize() {
       Exit(0);
       break;
   }
+  
+  // ------------------------------------
   
   // condition fileのオープン
   Hostonly_ {
@@ -162,7 +179,7 @@ SklSolverCBC::SklSolverInitialize() {
   C.getXML_Steer_1(&DT);
   
   // FiliIOのモードを修正
-  if ( m_np == 1 ) {
+  if ( pn.numProc == 1 ) {
     C.FIO.IO_Input  = IO_GATHER;
     C.FIO.IO_Output = IO_GATHER;
     Hostonly_ printf("\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
@@ -170,15 +187,21 @@ SklSolverCBC::SklSolverInitialize() {
 
   // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する -----------------------------------------------------
   VoxelInitialize();
+  
+  // 近接ランク情報
+  BC.set_Neighbor   (pn);
+  F.set_Neighbor    (pn);
+  MO.set_Neighbor   (pn);
+  B.set_Neighbor    (pn);
+  M.set_Neighbor    (pn);
+  Vinfo.set_Neighbor(pn);
+  
+  Ex->set_Rank  (pn);    // 続く処理より先に初期化しておく
+  Ex->set_Neighbor  (pn);
 
   // 組み込み例題クラスへ変数の値をコピー，固有のパラメータ取得，領域設定 -----------------------------------------------------
   Ex->setControlVars (&C);
   
-  // 並列情報のコピー
-  BC.setParallelInfo  (pn);
-  F.setParallelInfo   (pn);
-  MO.setParallelInfo  (pn);
-  Ex->setParallelInfo (pn);  // 続く処理より先に初期化しておく
 
   // XMLパラメータの取得
   C.getXML_Steer_2(IC, &RF);
@@ -208,7 +231,7 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.Mode.Profiling != OFF ) {
     ModeTiming = ON;
     TIMING__ PM.initialize(tm_END);
-    TIMING__ PM.setRankInfo(pn.ID);
+    TIMING__ PM.setRankInfo(pn.myrank);
     TIMING__ PM.setParallelMode(para_mode, C.num_thread, C.num_process);
     set_timing_label();
   }
@@ -318,9 +341,9 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   G_PrepMemory = PrepMemory;
-  if( para_cmp->IsParallel() ) {
+  if( pn.numProc > 1 ) {
     tmp_memory = G_PrepMemory;
-    para_cmp->Allreduce(&tmp_memory, &G_PrepMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp_memory, &G_PrepMemory, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   Hostonly_  {
     FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
@@ -362,7 +385,6 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // VoxInfoクラスで利用する変数をコピー
-  Vinfo.setParallelInfo(pn);
   Vinfo.setControlVars(size, guide);
   
   
@@ -383,8 +405,8 @@ SklSolverCBC::SklSolverInitialize() {
     //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
     
     unsigned long tmp_fc = fill_count;
-    if( para_cmp->IsParallel() ) {
-      para_cmp->Allreduce(&tmp_fc, &fill_count, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+    if ( pn.numProc > 1 ) {
+      MPI_Allreduce(&tmp_fc, &fill_count, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     }
     Hostonly_ printf("\tInitial fill count     : %15ld\n\n", fill_count);
     
@@ -409,8 +431,8 @@ SklSolverCBC::SklSolverInitialize() {
       
       unsigned t_fc = fc;
 
-      if ( m_np > 1 ) {
-        VoxInfo::uint_sum_Allreduce(&t_fc, &fc);
+      if ( pn.numProc > 1 ) {
+        FBUtility::uint_sum_Allreduce(&t_fc, &fc);
       }
       
       // 同期
@@ -435,8 +457,8 @@ SklSolverCBC::SklSolverInitialize() {
       
       unsigned t_fc = fc;
 
-      if ( m_np > 1 ) {
-        VoxInfo::uint_sum_Allreduce(&t_fc, &fc);
+      if ( pn.numProc > 1 ) {
+        FBUtility::uint_sum_Allreduce(&t_fc, &fc);
       }
       
       if ( fc == 0 ) break;
@@ -454,8 +476,8 @@ SklSolverCBC::SklSolverInitialize() {
     unsigned painted = Vinfo.check_fill(mid);
     unsigned t_painted = painted;
 
-    if ( m_np > 1 ) {
-      VoxInfo::uint_sum_Allreduce(&t_painted, &painted);
+    if ( pn.numProc > 1 ) {
+      FBUtility::uint_sum_Allreduce(&t_painted, &painted);
     }
     
     if ( painted  != 0 ) {
@@ -880,14 +902,14 @@ SklSolverCBC::SklSolverInitialize() {
   // サブドメインのbbox情報を集約する
 
   // 並列時のみ
-  if ( m_np > 1 ) {
-    int* g_bbox_st = new int[3*m_np];
-    int* g_bbox_ed = new int[3*m_np];
+  if ( pn.numProc > 1 ) {
+    int* g_bbox_st = new int[3*pn.numProc];
+    int* g_bbox_ed = new int[3*pn.numProc];
     
     int st_i, st_j ,st_k, ed_i, ed_j, ed_k;
 
     // head and tail index
-    for (int n=0; n<m_np; n++){
+    for (int n=0; n<pn.numProc; n++){
       
       // Fortran index
       st_i = para_mng->GetVoxelHeadIndex(n, 0, pn.procGrp) + 1;
@@ -909,7 +931,7 @@ SklSolverCBC::SklSolverInitialize() {
     if ( !DFI.init((int*)G_size, num_div_domain, (int)C.GuideOut, C.Start, g_bbox_st, g_bbox_ed) ) Exit(0);
     
     // host name
-    for (int n=0; n<m_np; n++){
+    for (int n=0; n<pn.numProc; n++){
       const char* host = para_mng->GetHostName(n, pn.procGrp);
       if ( !host ) Exit(0);
       
@@ -1038,7 +1060,7 @@ SklSolverCBC::SklSolverInitialize() {
     // Velocity
     fb_minmax_v_ (&f_min, &f_max, sz, gc, v00, v, &flop_task); // allreduceすること
     
-    if( para_mng->IsParallel() ){
+    if ( pn.numProc > 1 ) {
       min_tmp = f_min;
       if( !para_mng->Allreduce(&min_tmp, &f_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp) ) Exit(0);
       
@@ -1053,7 +1075,7 @@ SklSolverCBC::SklSolverInitialize() {
     // Pressure
     fb_minmax_s_ (&f_min, &f_max, sz, gc, p, &flop_task);
     
-    if( para_mng->IsParallel() ){
+    if ( pn.numProc > 1 ) {
       min_tmp = f_min;
       if( !para_mng->Allreduce(&min_tmp, &f_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp) ) Exit(0);
       
@@ -1068,7 +1090,7 @@ SklSolverCBC::SklSolverInitialize() {
     if ( C.isHeatProblem() ) {
       fb_minmax_s_ (&f_min, &f_max, sz, gc, t, &flop_task);
       
-      if( para_mng->IsParallel() ){
+      if ( pn.numProc > 1 ) {
         min_tmp = f_min;
         if( !para_mng->Allreduce(&min_tmp, &f_min, 1, SKL_ARRAY_DTYPE_REAL, SKL_MIN, pn.procGrp) ) Exit(0);
         
@@ -1100,9 +1122,9 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   G_TotalMemory = TotalMemory;
-  if( para_cmp->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     tmp_memory = G_TotalMemory;
-    para_cmp->Allreduce(&tmp_memory, &G_TotalMemory, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+    MPI_Allreduce(&tmp_memory, &G_TotalMemory, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   Hostonly_ {
     unsigned long mc = (unsigned long)( dc_wvex->GetArrayLength() * sizeof(REAL_TYPE) ); // temporaty array for vector output, see prepOutput();
@@ -1648,8 +1670,8 @@ void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_t
   m_prep += cmp_mem;
   m_total+= cmp_mem;
   
-  if( para_cmp->IsParallel() ) {
-    para_cmp->Allreduce(&cmp_mem, &G_cmp_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+  if ( pn.numProc > 1 ) {
+    MPI_Allreduce(&cmp_mem, &G_cmp_mem, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   
   Hostonly_  {
@@ -1665,15 +1687,17 @@ void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_t
  */
 bool SklSolverCBC::chkMediumConsistency(void)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned long nmSolid = C.NoMediumSolid;
   unsigned long nmFluid = C.NoMediumFluid;
   
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     unsigned long nms = nmSolid;
     unsigned long nmf = nmFluid;
-    if( !para_mng->Allreduce(&nms, &nmSolid, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp) ) return false;
-    if( !para_mng->Allreduce(&nmf, &nmFluid, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp) ) return false;
+    //if( !para_mng->Allreduce(&nms, &nmSolid, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp) ) return false;
+    //if( !para_mng->Allreduce(&nmf, &nmFluid, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp) ) return false;
+    MPI_Allreduce(&nms, &nmSolid, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&nmf, &nmFluid, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   
   if ( (nmFluid == 0) && (nmSolid == 0) ) {
@@ -1923,33 +1947,32 @@ void SklSolverCBC::gather_DomainInfo(void)
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  int nID[6], np=0;
+  int nID[6];
   FILE *fp=NULL;
-  REAL_TYPE vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
-  REAL_TYPE d1, d2, d3, d, r;
+  float vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
+  float d1, d2, d3, d, r;
   int ix, jx, kx;
   
-  np=para_mng->GetNodeNum(pn.procGrp);
-  d = 1.0/(REAL_TYPE)np;
-  if ( para_mng->IsParallel() ) {
-    r = 1.0/(REAL_TYPE)(np-1);
+  d = 1.0/(float)pn.numProc;
+  if ( pn.numProc > 1 ) {
+    r = 1.0/(float)(pn.numProc-1);
   }
   else {
     r = 1.0;
   }
   
-  unsigned* m_size=NULL; if( !(m_size = new unsigned[np*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
-  REAL_TYPE* m_org=NULL;  if( !(m_org  = new REAL_TYPE[np*3]) ) Exit(0);
-  REAL_TYPE* m_Lbx=NULL;  if( !(m_Lbx  = new REAL_TYPE[np*3]) ) Exit(0);
-  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[np*3]) ) Exit(0);
-  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[np*3]) ) Exit(0);
-  REAL_TYPE *bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[np]) )   Exit(0);
-  unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[np]) )   Exit(0);
-  unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[np]) )   Exit(0);
-  unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[np]) )   Exit(0);
+  unsigned* m_size=NULL; if( !(m_size = new unsigned[pn.numProc*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
+  float* m_org=NULL;     if( !(m_org  = new float[pn.numProc*3]) ) Exit(0);
+  float* m_Lbx=NULL;     if( !(m_Lbx  = new float[pn.numProc*3]) ) Exit(0);
+  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[pn.numProc*3]) ) Exit(0);
+  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[pn.numProc*3]) ) Exit(0);
+  float *bf_srf=NULL;    if( !(bf_srf = new float[pn.numProc]) )   Exit(0);
+  unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[pn.numProc]) )   Exit(0);
+  unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[pn.numProc]) )   Exit(0);
+  unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[pn.numProc]) )   Exit(0);
   
   // 領域情報の収集
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     if ( !para_mng->Gather(size,    3, SKL_ARRAY_DTYPE_UINT, 
                            m_size,  3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(C.org,   3, SKL_ARRAY_DTYPE_REAL, 
@@ -1968,27 +1991,27 @@ void SklSolverCBC::gather_DomainInfo(void)
     bf_fcl[0] = C.Fcell;
     bf_wcl[0] = C.Wcell;
     bf_acl[0] = C.Acell;
-    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
-    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
+    memcpy(m_org, C.org, 3*sizeof(float));
+    memcpy(m_Lbx, C.Lbx, 3*sizeof(float));
   }
   
   // Info. of computational domain
-  vol = (REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]);
-  srf = (REAL_TYPE)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
+  vol = (float)(G_size[0]*G_size[1]*G_size[2]);
+  srf = (float)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
   
   // amount of communication in each node
-  ix = size[0];
-  jx = size[1];
-  kx = size[2];
-  m_srf = (REAL_TYPE)(2*(ix*jx + jx*kx + kx*ix));
-  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (REAL_TYPE)(jx*kx);  // remove face which does not join communication
-  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
-  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
-  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(jx*kx);
-  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
-  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
+  ix = (int)size[0];
+  jx = (int)size[1];
+  kx = (int)size[2];
+  m_srf = (float)(2*(ix*jx + jx*kx + kx*ix));
+  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (float)(jx*kx);  // remove face which does not join communication
+  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (float)(ix*kx);
+  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (float)(ix*jx);
+  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (float)(jx*kx);
+  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (float)(ix*kx);
+  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (float)(ix*jx);
   
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     if ( !para_mng->Gather(&m_srf,  1,        SKL_ARRAY_DTYPE_REAL, 
                            bf_srf,  1,        SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
   }
@@ -1998,11 +2021,11 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   // mean of domain
   m_vol = m_srf = m_efv = 0.0;
-  for (int i=0; i<np; i++) {
+  for (int i=0; i<pn.numProc; i++) {
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    m_vol += (REAL_TYPE)(ix*jx*kx);
+    m_vol += (float)(ix*jx*kx);
     m_srf += bf_srf[i];
     m_efv += bf_acl[i];
   }
@@ -2012,13 +2035,13 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   // std. deviation of domain
   vol_dv = srf_dv = efv_dv = 0.0;
-  for (int i=0; i<np; i++) {
+  for (int i=0; i<pn.numProc; i++) {
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    d1 = (REAL_TYPE)(ix*jx*kx) - m_vol;
+    d1 = (float)(ix*jx*kx) - m_vol;
     d2 = bf_srf[i] - m_srf;
-    d3 = (REAL_TYPE)bf_acl[i] - m_efv;
+    d3 = (float)bf_acl[i] - m_efv;
     vol_dv += d1*d1;
     srf_dv += d2*d2;
     efv_dv += d3*d3;
@@ -2036,7 +2059,7 @@ void SklSolverCBC::gather_DomainInfo(void)
   C.printDomain(fp, G_size, G_org, G_Lbx);
   
   // ローカルノードの情報を表示
-  for (int i=0; i<np; i++) {
+  for (int i=0; i<pn.numProc; i++) {
     Hostonly_ {
       fprintf(fp,"Domain %4d\n", i);
       fprintf(fp,"\t ix, jx,  kx        [-] =  %13d %13d %13d\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
@@ -2048,7 +2071,7 @@ void SklSolverCBC::gather_DomainInfo(void)
       if (C.NoBC != 0) fprintf(fp, "\t no            Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     }
     
-    if( para_mng->IsParallel() ) {
+    if ( pn.numProc > 1 ) {
       for (unsigned n=1; n<=C.NoBC; n++) {
         if( !para_mng->Gather(cmp[n].getBbox_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
         if( !para_mng->Gather(cmp[n].getBbox_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
@@ -2068,14 +2091,14 @@ void SklSolverCBC::gather_DomainInfo(void)
     fprintf(fp,"\tDomain size         = %7d %7d %7d\n", G_size[0], G_size[1], G_size[2]);
     fprintf(fp,"\tNumber of voxels    = %12.6e\n", vol);
     fprintf(fp,"\tNumber of surface   = %12.6e\n", srf);
-    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
-    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
-    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
-    if ( np == 1 ) {
-      fprintf(fp,"\tDivision :          = %d : %s\n", np, "Serial");
+    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (float)G_Acell, 100.0*(float)G_Acell/vol);
+    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (float)G_Fcell, 100.0*(float)G_Fcell/vol);
+    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (float)G_Wcell, 100.0*(float)G_Wcell/vol);
+    if ( pn.numProc == 1 ) {
+      fprintf(fp,"\tDivision :          = %d : %s\n", pn.numProc, "Serial");
     }
     else {
-      fprintf(fp,"\tDivision :          = %d : %s\n", np, (para_mng->IsEv()) ? "Equal segregation" : "Multi-Box division");
+      fprintf(fp,"\tDivision :          = %d : %s\n", pn.numProc, "Equal segregation");
     }
     fprintf(fp,"\n\t--------------------------------------------------\n");
     fprintf(fp,"\tDomain Statistics per MPI process\n");
@@ -2090,15 +2113,15 @@ void SklSolverCBC::gather_DomainInfo(void)
     fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     
-    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
-    for (int i=0; i<np; i++) {
+    float tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
+    for (int i=0; i<pn.numProc; i++) {
       ix = m_size[3*i];
       jx = m_size[3*i+1];
       kx = m_size[3*i+2];
-      tmp_vol = (REAL_TYPE)(ix*jx*kx);
-      tmp_acl = (REAL_TYPE)bf_acl[i];
-      tmp_fcl = (REAL_TYPE)bf_fcl[i];
-      tmp_wcl = (REAL_TYPE)bf_wcl[i];
+      tmp_vol = (float)(ix*jx*kx);
+      tmp_acl = (float)bf_acl[i];
+      tmp_fcl = (float)bf_fcl[i];
+      tmp_wcl = (float)bf_wcl[i];
       fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
       fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
       fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
@@ -2467,7 +2490,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
   int i_dummy=0;
   REAL_TYPE f_dummy=0.0;
   
-  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_Pressure, m_step, pn.myrank, (bool)C.FIO.IO_Input);
 
   if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -2486,7 +2509,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
 
 
   // Instantaneous Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_Velocity, m_step, pn.myrank, (bool)C.FIO.IO_Input);
   
   if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -2511,7 +2534,7 @@ void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
+    tmp = DFI.Generate_FileName(C.f_Temperature, m_step, pn.myrank, (bool)C.FIO.IO_Input);
     
     if ( !checkFile(tmp) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -2580,10 +2603,10 @@ void SklSolverCBC::Restart_coarse (FILE* fp, REAL_TYPE& flop)
     crs[0] = 1;
     crs[1] = 1;
     crs[2] = 1;
-    f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.ID);
-    f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.ID);
+    f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, m_step, pn.myrank);
+    f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, m_step, pn.myrank);
     if ( C.isHeatProblem() )
-      f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.ID);
+      f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, m_step, pn.myrank);
   }
 
   // テンポラリのファイルロード
@@ -2724,7 +2747,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, pn.myrank, (bool)C.FIO.IO_Input);
   if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
@@ -2744,7 +2767,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
   
   
   // Velocity
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, pn.ID, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, pn.myrank, (bool)C.FIO.IO_Input);
   if ( !checkFile(tmp) ) {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
@@ -2767,7 +2790,7 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
     
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
 
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, pn.ID, (bool)C.FIO.IO_Input);
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, pn.myrank, (bool)C.FIO.IO_Input);
     if ( !checkFile(tmp) ) {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
@@ -2828,16 +2851,14 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
     }
   } // end omp parallel
 
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     
     float tmp = global_min;
     MPI_Allreduce(&tmp, &global_min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
     
     unsigned tmp_g = g;
-    VoxInfo::uint_sum_Allreduce(&tmp_g, &g);
+    FBUtility::uint_sum_Allreduce(&tmp_g, &g);
   }
 
   Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %d\n\n", global_min, eps, g);
@@ -3388,10 +3409,13 @@ void SklSolverCBC::setGlobalCmpIdx(void)
       ed_j = ed[1];
       ed_k = ed[2];
       
-      if( para_mng->IsParallel() ){
-        node_st_i = para_mng->GetVoxelHeadIndex(pn.ID, 0);
-        node_st_j = para_mng->GetVoxelHeadIndex(pn.ID, 1);
-        node_st_k = para_mng->GetVoxelHeadIndex(pn.ID, 2);
+      if ( pn.numProc > 1 ) {
+        //node_st_i = para_mng->GetVoxelHeadIndex(pn.myrank, 0);
+        //node_st_j = para_mng->GetVoxelHeadIndex(pn.myrank, 1);
+        //node_st_k = para_mng->GetVoxelHeadIndex(pn.myrank, 2);
+        node_st_i = pn.st_idx[0];
+        node_st_j = pn.st_idx[1];
+        node_st_k = pn.st_idx[2];
         
         cgb[6*m+0] = node_st_i + st_i;
         cgb[6*m+1] = node_st_j + st_j;
@@ -3422,12 +3446,12 @@ void SklSolverCBC::setGlobalCmpIdx(void)
   if ( !(m_eArray = new int[np]  ) ) Exit(0);
   
   for (unsigned n=1; n<=C.NoBC; n++) {
-    if (para_mng->IsParallel()) {
+    if ( pn.numProc > 1 ) {
       es = ( cmp[n].isEns() ) ? 1 : 0;
       if (!para_mng->Gather(&es, 1, SKL_ARRAY_DTYPE_INT, m_eArray, 1, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
       if (!para_mng->Gather(&cgb[6*n], 6, SKL_ARRAY_DTYPE_INT, m_gArray, 6, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
       
-      if (pn.ID == 0) { // マスターノードのみ
+      if (pn.myrank == 0) { // マスターノードのみ
         
         // 初期値
         cgb[6*n+0] = 100000000;
@@ -3534,44 +3558,32 @@ void SklSolverCBC::setLocalCmpIdx_Binary(void)
 
 
 /**
- @fn void SklSolverCBC::set_Parallel_Info(void)
+ @fn void SklSolverCBC::set_NeighborRank(void)
  @brief 並列処理時のプロセッサの隣接ランクを計算する
  */
-void SklSolverCBC::set_Parallel_Info(void)
+void SklSolverCBC::set_NeighborRank(void)
 {
   SklParaComponent* para_cmp = SklGetParaComponent();
   SklParaManager* para_mng = para_cmp->GetParaManager();
+  
   int nID[6], sidx[3];
   
-  if( para_mng->IsParallel() ){
-    if (para_mng->IsEv()) {
-      nID[X_MINUS] = para_mng->GetCommID(-1, 0, 0);
-      nID[Y_MINUS] = para_mng->GetCommID( 0,-1, 0);
-      nID[Z_MINUS] = para_mng->GetCommID( 0, 0,-1);
-      nID[X_PLUS]  = para_mng->GetCommID( 1, 0, 0);
-      nID[Y_PLUS]  = para_mng->GetCommID( 0, 1, 0);
-      nID[Z_PLUS]  = para_mng->GetCommID( 0, 0, 1);
-    }
-    else if (para_mng->IsMb()) {
-      nID[X_MINUS] = para_mng->IsCommID(-1, 0, 0);
-      nID[Y_MINUS] = para_mng->IsCommID( 0,-1, 0);
-      nID[Z_MINUS] = para_mng->IsCommID( 0, 0,-1);
-      nID[X_PLUS]  = para_mng->IsCommID( 1, 0, 0);
-      nID[Y_PLUS]  = para_mng->IsCommID( 0, 1, 0);
-      nID[Z_PLUS]  = para_mng->IsCommID( 0, 0, 1);
-    }
-    else {
-      stamped_printf("\tID %d : not parallel process.\n", pn.ID);
-      Exit(0);
-    }
+  if ( pn.numProc > 1 ) {
+    nID[X_MINUS] = para_mng->GetCommID(-1, 0, 0);
+    nID[Y_MINUS] = para_mng->GetCommID( 0,-1, 0);
+    nID[Z_MINUS] = para_mng->GetCommID( 0, 0,-1);
+    nID[X_PLUS]  = para_mng->GetCommID( 1, 0, 0);
+    nID[Y_PLUS]  = para_mng->GetCommID( 0, 1, 0);
+    nID[Z_PLUS]  = para_mng->GetCommID( 0, 0, 1);
     
     for(int i=0; i<6; i++) pn.nID[i] = nID[i];
   }
   
-  if( para_mng->IsParallel() ){
-    sidx[0] = para_mng->GetVoxelHeadIndex(pn.ID, 0, pn.procGrp) + 1;
-    sidx[1] = para_mng->GetVoxelHeadIndex(pn.ID, 1, pn.procGrp) + 1;
-    sidx[2] = para_mng->GetVoxelHeadIndex(pn.ID, 2, pn.procGrp) + 1;
+  // Fortran Index
+  if ( pn.numProc > 1 ) {
+    sidx[0] = para_mng->GetVoxelHeadIndex(pn.myrank, 0, pn.procGrp) + 1;
+    sidx[1] = para_mng->GetVoxelHeadIndex(pn.myrank, 1, pn.procGrp) + 1;
+    sidx[2] = para_mng->GetVoxelHeadIndex(pn.myrank, 2, pn.procGrp) + 1;
   } 
   else {
     sidx[0] = sidx[1] = sidx[2] = 1;
@@ -3587,14 +3599,12 @@ void SklSolverCBC::set_Parallel_Info(void)
  */
 void SklSolverCBC::setParallelism(void)
 {
-  int m_np; ///< 並列ノード数
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
   
   C.num_thread  = omp_get_max_threads();
   
   // Serial or Parallel environment
-  if( m_np > 1 ){
-    C.num_process = m_np;
+  if( pn.numProc > 1 ){
+    C.num_process = pn.numProc;
 
     if ( C.num_thread > 1 ) {
       C.Parallelism = Control::Hybrid;
@@ -3708,9 +3718,6 @@ void SklSolverCBC::setShapeMonitor(int* mid)
  */
 void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp)
 {
-  //SklParaComponent* para_cmp = SklGetParaComponent();
-  //SklParaManager* para_mng = para_cmp->GetParaManager();
-  
   unsigned poly_gc[3];
   float    poly_org[3], poly_dx[3];
   poly_gc[0]  = poly_gc[1] = poly_gc[2] = guide;
@@ -3746,7 +3753,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
                                      poly_dx     //myParaInfos[rank].dx
                                      );
   if( poly_stat != PLSTAT_OK ) {
-    fprintf(mp,"\tRank [%d]: p_polylib->init_parallel_info() failed.", pn.ID);
+    fprintf(mp,"\tRank [%d]: p_polylib->init_parallel_info() failed.", pn.myrank);
     Exit(0);
   }
   
@@ -3754,7 +3761,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   TIMING_start(tm_polygon_load);
   poly_stat = PL->load_rank0( C.PolylibConfigName );
   if( poly_stat != PLSTAT_OK ) {
-    fprintf(mp,"\tRank [%d]: p_polylib->load_rank0() failed.", pn.ID);
+    fprintf(mp,"\tRank [%d]: p_polylib->load_rank0() failed.", pn.myrank);
     Exit(0);
   }
   TIMING_stop(tm_polygon_load);
@@ -3792,13 +3799,9 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   G_poly_mem = poly_mem = (unsigned long)PL->used_memory_size();
   m_prep += poly_mem;
   m_total+= poly_mem;
+
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  //if( para_cmp->IsParallel() ) {
-  if ( m_np > 1 ) {
-    // para_cmp->Allreduce(&poly_mem, &G_poly_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+  if ( pn.numProc > 1 ) {
     MPI_Allreduce(&poly_mem, &G_poly_mem, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   
@@ -3840,14 +3843,14 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   if ( poly_out_para == IO_GATHER ) {
     poly_stat = PL->save_rank0( &fname, "stl_b" );
     if( poly_stat != PLSTAT_OK ) {
-      Hostonly_ fprintf(mp, "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", pn.ID, fname.c_str());
+      Hostonly_ fprintf(mp, "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", pn.myrank, fname.c_str());
       Exit(0);
     }
   }
   else {
     poly_stat = PL->save_parallel( &fname, "stl_b" );
     if( poly_stat != PLSTAT_OK ) {
-      fprintf(mp, "Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", pn.ID, fname.c_str());
+      fprintf(mp, "Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", pn.myrank, fname.c_str());
       Exit(0);
     }
   }
@@ -3887,9 +3890,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   m_prep += cut_mem;
   m_total+= cut_mem;
   
-  //if( para_cmp->IsParallel() ) {
-  if ( m_np > 1 ) {
-    //para_cmp->Allreduce(&cut_mem, &G_cut_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+  if ( pn.numProc > 1 ) {
     MPI_Allreduce(&cut_mem, &G_cut_mem, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   
@@ -3957,17 +3958,16 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     }
   }
   
-  //if( para_mng->IsParallel() ) {
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     
     float tmp =d_min;
     MPI_Allreduce(&tmp, &d_min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
     
     int tmp_g = z;
-    VoxInfo::int_sum_Allreduce(&tmp_g, &z);
+    FBUtility::int_sum_Allreduce(&tmp_g, &z);
     
     unsigned tmp_u = size_n_cell;
-    VoxInfo::uint_sum_Allreduce(&tmp_u, &size_n_cell);
+    FBUtility::uint_sum_Allreduce(&tmp_u, &size_n_cell);
     
   }
   
@@ -4016,8 +4016,8 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   m_prep += cut_mem;
   m_total+= cut_mem;
   
-  if( para_cmp->IsParallel() ) {
-    para_cmp->Allreduce(&cut_mem, &G_cut_mem, 1, SKL_ARRAY_DTYPE_ULONG, SKL_SUM, pn.procGrp);
+  if ( pn.numProc > 1 ) {
+    MPI_Allreduce(&cut_mem, &G_cut_mem, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   
   Hostonly_  {
@@ -4107,12 +4107,9 @@ unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
     }
   }
   
-  int m_np;
-  MPI_Comm_size(MPI_COMM_WORLD, &m_np);
-  
-  if ( m_np > 1 ) {
+  if ( pn.numProc > 1 ) {
     unsigned tmp = c;
-    VoxInfo::uint_sum_Allreduce(&tmp, &c);
+    FBUtility::uint_sum_Allreduce(&tmp, &c);
   }
   
   return c;
@@ -4308,7 +4305,7 @@ void SklSolverCBC::VoxelInitialize(void)
   }
   
   // 分割数をXMLから取得，指定なければ自動分割する
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     if( !GetCfgVoxelDivisionMethod(idiv, jdiv, kdiv) ) idiv = jdiv = kdiv = 0;
   }
   else {
@@ -4318,18 +4315,18 @@ void SklSolverCBC::VoxelInitialize(void)
   
   // 分割数を計算し，sz_paraで取得
   if( SKL_PARACMPO_SUCCESS != para_cmp->SklVoxelInit(m_sz[0], m_sz[1], m_sz[2], idiv, jdiv, kdiv, pn.procGrp)) {
-    stamped_printf("\tID %d : Voxel Initialize error.\n", pn.ID);
+    stamped_printf("\tID %d : Voxel Initialize error.\n", pn.myrank);
     Exit(0);
   }
   
   const unsigned int* sz_para = para_mng->GetVoxelSize();
   if( !sz_para ){
-    stamped_printf("\tID %d : Can't get voxel size.\n", pn.ID);
+    stamped_printf("\tID %d : Can't get voxel size.\n", pn.myrank);
     Exit(0);
   }
   
   // 分割数を保持
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     const unsigned int* para_div = para_mng->GetVoxelDivInfo(pn.procGrp);
     if ( !para_div ) {
       stamped_printf("\tError : division size\n");
@@ -4341,7 +4338,7 @@ void SklSolverCBC::VoxelInitialize(void)
   
   
   // 並列処理時のランク情報と各ノードのスタートインデクスを計算
-  set_Parallel_Info();
+  set_NeighborRank();
   
   // ノードローカルな値の設定　（無次元値）
   for(int i=0; i<3; i++) {
@@ -4595,7 +4592,7 @@ bool SklSolverCBC::getCoarseResult (
   
   //
   //printf("rk=%4d : fine(%4d %4d %4d) : coarse(%4d %4d %4d) : head(%4d %4d %4d) : cblk(%4d %4d %4d): block(%4d %4d %4d) : %s\n", 
-  //       pn.ID,  i,j,k,  i0,j0,k0,  bh_i,bh_j,bh_k,  Ci,Cj,Ck,  Fi,Fj,Fk,  coarse_sph_fname.c_str());
+  //       pn.myrank,  i,j,k,  i0,j0,k0,  bh_i,bh_j,bh_k,  Ci,Cj,Ck,  Fi,Fj,Fk,  coarse_sph_fname.c_str());
   //
   
 	return true;

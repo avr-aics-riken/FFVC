@@ -80,7 +80,7 @@ void Intrinsic::printPara(FILE* fp, Control* R)
  */
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
 
   int      nx, sz, i,j,k;
   unsigned ix, jx, kx, m, l;
@@ -88,8 +88,8 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 
   char svx_fname[512];
 
-  if( para_mng->IsParallel() ){
-    sprintf( svx_fname, "example_%06d.svx", pn.ID );
+  if ( pn.numProc > 1 ) {
+    sprintf( svx_fname, "example_%06d.svx", pn.myrank );
   } else {
     sprintf( svx_fname, "example.svx" );
   }
@@ -184,7 +184,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
  */
 void Intrinsic::writeSVX(int *id, Control* R)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
+  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
   int      nx, sz, i,j,k;
   unsigned ix, jx, kx, m, l;
@@ -192,8 +192,8 @@ void Intrinsic::writeSVX(int *id, Control* R)
   
   char svx_fname[512];
   
-  if( para_mng->IsParallel() ){
-    sprintf( svx_fname, "example_%06d.svx", pn.ID );
+  if ( pn.numProc > 1 ) {
+    sprintf( svx_fname, "example_%06d.svx", pn.myrank );
   } else {
     sprintf( svx_fname, "example.svx" );
   }

@@ -68,7 +68,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   cbc_vmax_(&vMax, sz, gc, v00, v, &flop_count);
   TIMING_stop(tm_vmax, flop_count);
 
-  if( para_mng->IsParallel() ){
+  if ( pn.numProc > 1 ) {
     TIMING_start(tm_vmax_comm);
     REAL_TYPE vMax_tmp = vMax;
     if( !para_mng->Allreduce(&vMax_tmp, &vMax, 1, SKL_ARRAY_DTYPE_REAL, SKL_MAX, pn.procGrp) ) Exit(0);
@@ -141,7 +141,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   Variation_Space(avr_Var, rms_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
 
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     /// var_Velocity=0,  > FB_Define.h
     /// var_Pressure,
     /// var_Temperature,
@@ -293,7 +293,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
       tmp_f[0] = force[0];
       tmp_f[1] = force[1];
       tmp_f[2] = force[2];
-      if( para_cmp->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         para_cmp->Allreduce(tmp_f, force, 3, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
       }
       

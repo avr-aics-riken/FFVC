@@ -80,7 +80,7 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     if (t_st >= t_ed) throw OUT_OF_REGION;
   }
   catch (const char *str) {
-    if (pn.ID == 0) {
+    if (pn.myrank == 0) {
       printf("Line [%14.6e %14.6e %14.6e]-[%14.6e %14.6e %14.6e] is %s\n", // %12.4 >> %14.6
              from[0], from[1], from[2], to[0], to[1], to[2], str);
     }
@@ -105,7 +105,7 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 ///
 void MonitorList::closeFile()
 {
-  if ((outputType == GATHER && pn.ID == 0) ||
+  if ((outputType == GATHER && pn.myrank == 0) ||
       outputType == DISTRIBUTE) {
     for (int i = 0; i < nGroup; i++) {
       if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) monGroup[i]->closeFile();
@@ -148,7 +148,7 @@ string MonitorList::getOutputTypeStr()
 ///
 void MonitorList::openFile(const char* str)
 {
-  if ((outputType == GATHER && pn.ID == 0) ||
+  if ((outputType == GATHER && pn.myrank == 0) ||
       outputType == DISTRIBUTE) {
     for (int i = 0; i < nGroup; i++) {
       if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {

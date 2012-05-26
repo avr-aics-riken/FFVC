@@ -118,7 +118,7 @@ REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 {
   REAL_TYPE sum= 0.0;
   for (int i = 0; i < nPoint; i++) {
-    if (rank[i] == pn.ID) sum+= s[i];
+    if (rank[i] == pn.myrank) sum+= s[i];
   }
   allReduceSum(&sum, 1);
   
@@ -135,7 +135,7 @@ Vec3r MonitorCompo::averageVector(Vec3r* v)
 {
   REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
   for (int i = 0; i < nPoint; i++) {
-    if (rank[i] == pn.ID) {
+    if (rank[i] == pn.myrank) {
       sum[0] += v[i].x;
       sum[1] += v[i].y;
       sum[2] += v[i].z;
@@ -153,7 +153,7 @@ void MonitorCompo::checkMonitorPoints()
 {
   for (int m = 0; m < nPoint; m++) {
     pointStatus[m] = 0;
-    if (rank[m] == pn.ID) {
+    if (rank[m] == pn.myrank) {
       pointStatus[m] = mon[m]->checkMonitorPoint();
     }
   }
@@ -179,7 +179,7 @@ bool MonitorCompo::check_region(unsigned m, Vec3r org, Vec3r box, bool flag)
       (crd[m].y>(org.y+box.y))  ||
       (crd[m].z< org.z)         ||
       (crd[m].z>(org.z+box.z)) ) {
-    if (flag) { stamped_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", pn.ID, crd[m].x, crd[m].y, crd[m].z); } // %12.4 >> %14.6
+    if (flag) { stamped_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", pn.myrank, crd[m].x, crd[m].y, crd[m].z); } // %12.4 >> %14.6
     return false;
   }
   return true;
@@ -225,7 +225,7 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
   SklParaManager* para_mng = ParaCmpo->GetParaManager();
   int np = para_mng->GetNodeNum(pn.procGrp);
   
-  if (pn.ID == 0 && !sRecvBuf) {
+  if (pn.myrank == 0 && !sRecvBuf) {
     if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) Exit(0);
   }
   
@@ -233,7 +233,7 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
                         sRecvBuf, nPoint, SKL_ARRAY_DTYPE_REAL,
                         0, pn.procGrp)) Exit(0);
   
-  if (pn.ID == 0) {
+  if (pn.myrank == 0) {
     for (int i = 0; i < np; i++) {
       for (int m = 0; m < nPoint; m++) {
         if (rank[m] == i) {
@@ -259,7 +259,7 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
     if (!(vSendBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
   }
   
-  if (pn.ID == 0 && !vRecvBuf) {
+  if (pn.myrank == 0 && !vRecvBuf) {
     if (!(vRecvBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
   }
   
@@ -273,7 +273,7 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
                         vRecvBuf, nPoint*3, SKL_ARRAY_DTYPE_REAL,
                         0, pn.procGrp)) Exit(0);
   
-  if (pn.ID == 0) {
+  if (pn.myrank == 0) {
     for (int i = 0; i < np; i++) {
       for (int m = 0; m < nPoint; m++) {
         if (rank[m] == i) {
@@ -380,7 +380,7 @@ void MonitorCompo::openFile(const char* str, bool gathered)
   else {
     string fileName(str);
     ostringstream rankStr;
-    rankStr << "_" << pn.ID;
+    rankStr << "_" << pn.myrank;
     string::size_type pos = fileName.rfind(".");
     fileName.insert(pos, rankStr.str());
     if (!(fp = fopen(fileName.c_str(), "w"))) {
@@ -426,7 +426,7 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
   }
   
   for (int i = 0; i < nPoint; i++) {
-    if (!gathered && rank[i] != pn.ID) continue;
+    if (!gathered && rank[i] != pn.myrank) continue;
     if (pointStatus[i] != Sampling::POINT_STATUS_OK) {
       fprintf(fp, "%s\n", "  *NA*");
       continue;
@@ -544,7 +544,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
         for (int i = st[0]; i <= ed[0]; i++) {
           s = bcd[FBUtility::getFindexS3D(size, guide, i, j, k)];
           if ((s & MASK_6) == n) {
-            nPointList[pn.ID]++;
+            nPointList[pn.myrank]++;
           }
         }
       }
@@ -563,7 +563,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
   
   int m0 = 0;
-  for (int i = 0; i < pn.ID; i++) m0 += nPointList[i];
+  for (int i = 0; i < pn.myrank; i++) m0 += nPointList[i];
   
   int m = 0;
   if (cmp.isEns()) {
@@ -633,7 +633,7 @@ void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
     oss << "point_" << m;
     comment[m] = oss.str();
     if (!check_region(m, g_org, g_box, true)) Exit(0);
-    if (rank[m] == pn.ID) {
+    if (rank[m] == pn.myrank) {
       mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
     }
   }
@@ -688,7 +688,7 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
   setRankArray();
   
   for (int m = 0; m < nPoint; m++) {
-    if (rank[m] == pn.ID) {
+    if (rank[m] == pn.myrank) {
       switch (method) {
         case SAMPLING_NEAREST:
           mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
@@ -768,7 +768,7 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
   setRankArray();
   
   for (int m = 0; m < nPoint; m++) {
-    if (rank[m] == pn.ID) {
+    if (rank[m] == pn.myrank) {
       switch (method) {
         case SAMPLING_NEAREST:
           mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
@@ -804,7 +804,7 @@ void MonitorCompo::setRankArray()
   
   for (int m = 0; m < nPoint; m++) {
     sendBuf[m] = -1;
-    if (check_region(m, org, box)) sendBuf[m] = pn.ID;
+    if (check_region(m, org, box)) sendBuf[m] = pn.myrank;
   }
   
   // gather max rank number
@@ -869,13 +869,13 @@ void MonitorCompo::writeHeader(bool gathered)
   }
   else {
     n = 0;
-    for (int i = 0; i < nPoint; i++) if (rank[i] == pn.ID) n++;
+    for (int i = 0; i < nPoint; i++) if (rank[i] == pn.myrank) n++;
   }
   
   fprintf(fp, "%d %s\n", n, getVarStr().c_str());
   
   for (int i = 0; i < nPoint; i++) {
-    if (gathered || rank[i] == pn.ID) {
+    if (gathered || rank[i] == pn.myrank) {
       fprintf(fp, "%14.6e %14.6e %14.6e  #%s", // %12.4 >> %14.6
               convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
       

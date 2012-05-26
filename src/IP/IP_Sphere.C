@@ -28,15 +28,6 @@ bool IP_Sphere::getXML(SklSolverConfig* CF, Control* R)
     Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Intrinsic_Example'\n");
     return false;
   }
-  
-  // offset
-  if ( elmL1->GetValue(CfgIdt("offset"), &ct) ) {
-    offset = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Offset' in 'Intrinsic_Example'\n");
-    return false;
-  }
 
   // radius
   if ( elmL1->GetValue(CfgIdt("radius"), &ct) ) {
@@ -86,7 +77,6 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Sphere Parameters\n\n");
   
-  fprintf(fp,"\tOffset                 [m] / [-]   : %12.5e / %12.5e\n", offset, offset/RefL);
   fprintf(fp,"\tRadius of Sphere       [m] / [-]   : %12.5e / %12.5e\n", radius, radius/RefL);
   if ( drv_mode == ON ) {
     fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv_length, drv_length/RefL);
@@ -105,6 +95,7 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
 void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL_TYPE m_wth[3], REAL_TYPE m_pch[3])
 {
   pch = m_pch;
+  org = m_org;
   
   // チェック
   if ( (pch.x != pch.y) || (pch.y != pch.z) ) {
@@ -120,23 +111,25 @@ void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL
   m_wth[0] = wth.x;
   m_wth[1] = wth.y;
   m_wth[2] = wth.z;
-  
-  // 領域の基点
-  org = - 0.5*wth;
-  m_org[0] = org.x;
-  m_org[1] = org.y;
-  m_org[2] = org.z;
 
 }
 
-//@fn FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p)
+//@fn FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 //@brief 点pの属するセルインデクスを求める
 //@note Fortran index
-FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p)
+FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 {
-  FB::Vec3f q = (p-org)/pch;
+  FB::Vec3f q = (p-ol)/pch;
+  FB::Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
+  
+  if ( idx.x < 1 ) idx.x = 1;
+  if ( idx.y < 1 ) idx.y = 1;
+  if ( idx.z < 1 ) idx.z = 1;
+  if ( idx.x > (int)imax ) idx.x = (int)imax;
+  if ( idx.y > (int)jmax ) idx.y = (int)jmax;
+  if ( idx.z > (int)kmax ) idx.z = (int)kmax;
 
-  return FB::Vec3i( ceil(q.x), ceil(q.y), ceil(q.z) );
+  return idx;
 }
 
 /**
@@ -158,44 +151,38 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
   
-  FB::Vec3f base, b, t;
+  FB::Vec3f base, b, t, org_l;
   REAL_TYPE ph = pch.x;
   REAL_TYPE r;
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
-  ox = R->org[0];
-  oy = R->org[1];
-  oz = R->org[2];
+  org_l = R->org;
   Lx = R->Lbx[0];
   Ly = R->Lbx[1];
   Lz = R->Lbx[2];
   dh = R->dh;
-  gd = (int)guide;
   ox_g = G_org[0];
   oy_g = G_org[1];
   oz_g = G_org[2];
-  
-  // 領域の基点
-  org.x -= offset;
-  G_org[0] = org.x;
-  
-  
-  // 領域中心座標
-  ctr.x = -offset;
-  ctr.y = 0.0;
-  ctr.z = 0.0;
+
+  //printf("%d : ox = %e, oy = %e, oz = %e\n", pn.myrank, org_l.x, org_l.y, org_l.z);
+  //printf("%d : Lx = %e, Ly = %e, Lz = %e\n", pn.myrank, Lx, Ly, Lz);
+  //printf("%d : oxG= %e, oyG= %e, ozG= %e\n", pn.myrank, ox_g, oy_g, oz_g);
   
   // 球のbbox 球の中心座標はゼロ
   box_min = - rs;
   box_max = + rs;
-  box_st = find_index(box_min);
-  box_ed = find_index(box_max);
+  box_st = find_index(box_min, org_l);
+  box_ed = find_index(box_max, org_l);
+  
+  //printf("%d : st_x = %d, st_y = %d, st_z = %d\n", pn.myrank, box_st.x, box_st.y, box_st.z);
+  //printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", pn.myrank, box_ed.x, box_ed.y, box_ed.z);
   
   // 媒質設定
-  size_t m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
+  unsigned m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
   
-  for (size_t n=0; n<m_nx; n++) { 
+  for (unsigned n=0; n<m_nx; n++) { 
     mid[n] = mid_fluid;
   }
   
@@ -205,7 +192,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
       for (i=box_st.x; i<=box_ed.x; i++) {
         
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org + base*ph;
+        b = org_l + base*ph;
         r = b.length();
         
         if ( r <= rs ) {
@@ -219,6 +206,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org)
   
   // driver設定 iff ドライバ長が正の場合
   if ( drv_mode == OFF ) return;
+  
+  
+  // @todo 以下は確認のこと
   
   // lengthは有次元値
   len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
@@ -282,20 +272,18 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
   int mid_solid=2;        /// 固体
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
-  size_t m;
+  unsigned m;
   REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
   
-  FB::Vec3f base, b, t;
+  FB::Vec3f base, b, t, org_l;
   REAL_TYPE ph = pch.x;
   REAL_TYPE r;
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
-  ox = R->org[0];
-  oy = R->org[1];
-  oz = R->org[2];
+  org_l = R->org;
   Lx = R->Lbx[0];
   Ly = R->Lbx[1];
   Lz = R->Lbx[2];
@@ -304,28 +292,18 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
   ox_g = G_org[0];
   oy_g = G_org[1];
   oz_g = G_org[2];
-
-  // 領域の基点
-  org.x -= offset;
-  G_org[0] = org.x;
-  
-  
-  // 領域中心座標
-  ctr.x = -offset;
-  ctr.y = 0.0;
-  ctr.z = 0.0;
   
   // 球のbbox
   box_min = - rs;
   box_max = + rs;
-  box_st = find_index(box_min);
-  box_ed = find_index(box_max);
+  box_st = find_index(box_min, org_l);
+  box_ed = find_index(box_max, org_l);
 
   
   // 媒質設定
-  size_t m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
+  unsigned m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
   
-  for (size_t n=0; n<m_nx; n++) { 
+  for (unsigned n=0; n<m_nx; n++) { 
     mid[n] = mid_fluid;
   }
   
@@ -335,7 +313,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut)
       for (i=box_st.x; i<=box_ed.x; i++) {
        
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org + base*ph;
+        b = org_l + base*ph;
         r = b.length();
         
         if ( r <= rs ) {

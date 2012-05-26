@@ -157,7 +157,7 @@ public:
     pointStatus = NULL;
     vSource = pSource = tSource = NULL;
     
-    setParallelInfo(pn);
+    set_Rank(pn);
     this->org = org;
     this->pch = pch;
     this->box = box;
@@ -267,7 +267,7 @@ public:
   ///
   void print_gather(unsigned step, REAL_TYPE tm) { 
     gatherSampled();
-    if (pn.ID == 0) print(step, tm, true);
+    if (pn.myrank == 0) print(step, tm, true);
   }
   
   /// モニタ結果出力(distribute).

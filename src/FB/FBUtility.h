@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "FB_Define.h"
+#include "mpi.h"
 
 class FBUtility {
 
@@ -240,6 +241,102 @@ public:
     int t3 = sz[0]+t1;
     return ( 2*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) );
   }
+  
+  
+  /// 桁あふれ対策の代替関数 > MPI_INT*1, MPI_SUM
+  static void int_sum_Allreduce(int* sbuf, int* rbuf) {
+#ifdef __ARCH_FX
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    rbuf = (int*)&my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_INT*1, MPI_MAX
+  static void int_max_Allreduce(int* sbuf, int* rbuf) {
+#ifdef __ARCH_FX
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+    rbuf = (int*)&my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_INT*msg, MPI_SUM
+  static void int_array_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
+#ifdef __ARCH_FX
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (int)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_INT*msg, MPI_MAX
+  static void int_array_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
+#ifdef __ARCH_FX
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (int)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_UINT*1, MPI_SUM
+  static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf) {
+#ifdef __ARCH_FX
+    float my_send = (float)*sbuf;
+    float my_recv = (float)*rbuf;
+    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    rbuf = (unsigned*)&my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数 > MPI_UINT*msg, MPI_SUM
+  static void uint_array_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
+#ifdef __ARCH_FX
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (unsigned)my_recv[i];
+    }
+    if ( my_send ) delete [] my_send;
+    if ( my_recv ) delete [] my_recv;
+#else
+    MPI_Allreduce(sbuf, rbuf, msg, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  }
+  
+  
   
 };
 

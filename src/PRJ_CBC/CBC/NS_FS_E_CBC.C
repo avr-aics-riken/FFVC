@@ -259,7 +259,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_stop(tm_pvec_BC, flop_count);
 
   // 疑似ベクトルの同期
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     TIMING_start(tm_pvec_comm);
     if ( !dc_vc->CommBndCell(1) ) Exit(0); // 1 layer communication
     TIMING_stop(tm_pvec_comm, comm_size*1.0*3.0); // ガイドセル数 x ベクトル
@@ -334,7 +334,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     b2 = sqrt(b2);
     TIMING_stop(tm_poi_src_nrm, flop_count);
     
-    if ( para_mng->IsParallel() ) {
+    if ( pn.numProc > 1 ) {
       TIMING_start(tm_poi_src_comm);
       REAL_TYPE m_tmp = b2;
       para_mng->Allreduce(&m_tmp, &b2, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
@@ -408,7 +408,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     
     if ( C.isOutflow() == ON ) {
       if ( !C.isCDS() ) { // Binary
-        if ( para_mng->IsParallel() ) {
+        if ( pn.numProc > 1 ) {
           
           TIMING_start(tm_prj_vec_bc_comm);
           for (int n=0; n<=2*C.NoBC; n++) {
@@ -438,7 +438,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
       TIMING_stop(tm_prj_frc_mod, flop_count);
 
       // 通信部分
-      if ( para_mng->IsParallel() ) {
+      if ( pn.numProc > 1 ) {
         TIMING_start(tm_prj_frc_mod_comm);
         for (int n=0; n<=2*C.NoBC; n++) {
           m_tmp[n] = m_buf[n];
@@ -490,7 +490,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
   TIMING_start(tm_NS_loop_post_sct);
   
   // 同期
-  if ( para_mng->IsParallel() ) {
+  if ( pn.numProc > 1 ) {
     TIMING_start(tm_vectors_comm);
     dc_v->CommBndCell(guide);
     TIMING_stop(tm_vectors_comm, 2*comm_size*(REAL_TYPE)guide*3.0);
@@ -516,7 +516,7 @@ void SklSolverCBC::NS_FS_E_CBC(void)
     cbc_eddy_viscosity_(vt, sz, gc, dh, &C.Reynolds, &C.LES.Cs, v, (int*)bcv, range_Ut, range_Yp, v00);
     TIMING_stop(tm_LES_eddy, flop_count);
     
-    if ( para_mng->IsParallel() ) {
+    if ( pn.numProc > 1 ) {
       TIMING_start(tm_LES_eddy_comm);
       if( !dc_vt->CommBndCell(guide) ) Exit(0);
       TIMING_stop(tm_LES_eddy_comm, comm_size*(REAL_TYPE)guide);

@@ -21,7 +21,6 @@ CXXSRCS = \
        ../../FB/History.C \
        ../../FB/Intrinsic.C \
        ../../FB/Material.C \
-       ../../FB/Parallel_node.C \
        ../../FB/ParseBC.C \
        ../../FB/ParseMat.C \
        ../../FB/SetBC.C \
@@ -533,7 +532,6 @@ depend:
 ../../FB/Intrinsic.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
 ../../FB/Material.o: ../../FB/Material.h ../../FB/FB_Define.h
 ../../FB/Material.o: ../../FB/mydebug.h
-../../FB/Parallel_node.o: ../../FB/Parallel_node.h
 ../../FB/ParseBC.o: ../../FB/ParseBC.h /usr/local/sphere/include/Skl.h
 ../../FB/ParseBC.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/ParseBC.o: /usr/local/sphere/include/SklSolverBase.h

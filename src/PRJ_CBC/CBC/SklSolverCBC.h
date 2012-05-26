@@ -309,8 +309,8 @@ public:
   void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setLocalCmpIdx_Binary(void);
   void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
+  void set_NeighborRank     (void);
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
-  void set_Parallel_Info    (void);
   void setParallelism       (void);
   void setShapeMonitor      (int* mid);
   void setup_CutInfo4IP     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
