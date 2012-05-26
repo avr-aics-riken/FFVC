@@ -426,12 +426,6 @@ public:
     Hybrid
   };
   
-  /// 空間分割モード
-  enum Partitioning {
-    Equal=1,
-    Mbx
-  };
-  
   unsigned  Acell,
             AlgorithmF,
             AlgorithmH,
@@ -458,7 +452,6 @@ public:
             num_process,
             num_thread,
             Parallelism,
-            Partition,
             RefID,
             Restart_step,
             Start,
@@ -567,7 +560,6 @@ public:
     num_process = 0;
     num_thread = 0;
     Parallelism = 0;
-    Partition = 0;
     RefID = 0;
     Restart_step = 0;
     Start = 0;

@@ -279,8 +279,8 @@ public:
     for (int i=0; i<msg; i++) {
       rbuf[i] = (int)my_recv[i];
     }
-    if ( my_send ) delete [] my_send;
-    if ( my_recv ) delete [] my_recv;
+    if ( my_send ) { delete [] my_send; my_send = NULL; }
+    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
 #else
     MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 #endif
@@ -298,10 +298,29 @@ public:
     for (int i=0; i<msg; i++) {
       rbuf[i] = (int)my_recv[i];
     }
-    if ( my_send ) delete [] my_send;
-    if ( my_recv ) delete [] my_recv;
+    if ( my_send ) { delete [] my_send; my_send = NULL; }
+    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
 #else
     MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+#endif
+  }
+  
+  /// 桁あふれ対策の代替関数
+  static void int_Gather(int* sbuf, int* rbuf, const int msg) {
+#ifdef __ARCH_FX
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Gather(my_send, msg, MPI_FLOAT, my_recv, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (int)my_recv[i];
+    }
+    if ( my_send ) { delete [] my_send; my_send = NULL; }
+    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
+#else
+    MPI_Gather(sbuf, msg, MPI_INT, rbuf, msg, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
   }
   
@@ -329,14 +348,62 @@ public:
     for (int i=0; i<msg; i++) {
       rbuf[i] = (unsigned)my_recv[i];
     }
-    if ( my_send ) delete [] my_send;
-    if ( my_recv ) delete [] my_recv;
+    if ( my_send ) { delete [] my_send; my_send = NULL; }
+    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
 #else
     MPI_Allreduce(sbuf, rbuf, msg, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
 #endif
   }
   
+  /// 桁あふれ対策の代替関数
+  static void uint_Gather(unsigned* sbuf, unsigned* rbuf, const int msg) {
+#ifdef __ARCH_FX
+    float* my_send = new float [msg];
+    float* my_recv = new float [msg];
+    for (int i=0; i<msg; i++) {
+      my_send[i] = (float)sbuf[i];
+    }
+    MPI_Gather(my_send, msg, MPI_FLOAT, my_recv, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    for (int i=0; i<msg; i++) {
+      rbuf[i] = (unsigned)my_recv[i];
+    }
+    if ( my_send ) { delete [] my_send; my_send = NULL; }
+    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
+#else
+    MPI_Gather(sbuf, msg, MPI_UNSIGNED, rbuf, msg, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+#endif
+  }
   
+  /// 浮動小数のラッパー関数
+  static void real_Gather(REAL_TYPE* sbuf, REAL_TYPE* rbuf, const int msg) {
+    
+    if ( sizeof(REAL_TYPE) == sizeof(float) ) {
+      float* my_send = new float [msg];
+      float* my_recv = new float [msg];
+      for (int i=0; i<msg; i++) {
+        my_send[i] = sbuf[i];
+      }
+      MPI_Gather(my_send, msg, MPI_FLOAT, my_recv, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      for (int i=0; i<msg; i++) {
+        rbuf[i] = my_recv[i];
+      }
+      if ( my_send ) { delete [] my_send; my_send = NULL; }
+      if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
+    }
+    else {
+      double* my_send = new double [msg];
+      double* my_recv = new double [msg];
+      for (int i=0; i<msg; i++) {
+        my_send[i] = sbuf[i];
+      }
+      MPI_Gather(my_send, msg, MPI_DOUBLE, my_recv, msg, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      for (int i=0; i<msg; i++) {
+        rbuf[i] = my_recv[i];
+      }
+      if ( my_send ) { delete [] my_send; my_send = NULL; }
+      if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
+    }
+  }
   
 };
 

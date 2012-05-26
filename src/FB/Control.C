@@ -2761,15 +2761,8 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   // 空間分割
-  if ( Partition == Control::Mbx ) {
-    fprintf(fp,"\t     Space Partitioning       :   Multiply-Connected Partitioning\n");
-  }
-  else if ( Partition == Control::Equal ) {
-    fprintf(fp,"\t     Space Partitioning       :   Equal Partitioning\n");
-  }
-  else {
-    Exit(0);
-  }
+  fprintf(fp,"\t     Space Partitioning       :   Equal Partitioning\n");
+
   
   fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   

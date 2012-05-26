@@ -863,30 +863,30 @@ SklSolverCBC::SklSolverInitialize() {
 #if 0
   write_distance(cut);
 #endif
-  
-  
+
+
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
   TIMING_start(tm_init_alloc);
   allocArray_main (TotalMemory);
-  
+
   //allocArray_Collocate (TotalMemory);
-  
+
   if ( C.LES.Calc == ON ) {
     allocArray_LES (TotalMemory);
   }
-  
+
   if ( C.isHeatProblem() ) {
     allocArray_heat (TotalMemory);
   }
-  
+
   if ( C.AlgorithmF == Control::Flow_FS_RK_CN ) {
     allocArray_RK (TotalMemory);
   }
-  
+
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) {
     allocArray_AB2 (TotalMemory);
   }
-  
+
   if ( C.BasicEqs == INCMP_2PHASE ) {
     allocArray_interface(TotalMemory);
   }
@@ -938,12 +938,16 @@ SklSolverCBC::SklSolverInitialize() {
       DFI.copy_hostname(host, n);
     }
       
-    delete [] g_bbox_st; g_bbox_st = NULL;
-    delete [] g_bbox_ed; g_bbox_ed = NULL;
+    if ( g_bbox_st ) {
+      delete [] g_bbox_st; 
+      g_bbox_st = NULL;
+    }
+    if ( g_bbox_ed ) {
+      delete [] g_bbox_ed; 
+      g_bbox_ed = NULL;
+    }
   }
- 
 
-  
   
   
   
@@ -1447,10 +1451,10 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
   
   if ( !A.alloc_Real_V3DEx(this, dc_v0, "v0", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
-  
+
   if ( !A.alloc_Real_V3DEx(this, dc_wv, "wv", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
-  
+
   if ( !A.alloc_Real_V3DEx(this, dc_wvex, "wvex", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
   
@@ -1462,6 +1466,7 @@ void SklSolverCBC::allocArray_main (unsigned long &total)
   
   if ( !A.alloc_Real_S3D(this, dc_wk2, "wk2", size, guide, 0.0, mc) ) Exit(0);
   total+= mc;
+
 }
 
 /**
@@ -1949,27 +1954,29 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   int nID[6];
   FILE *fp=NULL;
-  float vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
-  float d1, d2, d3, d, r;
+  REAL_TYPE vol, srf, m_vol, m_srf, vol_dv, srf_dv, m_efv, efv_dv;
+  REAL_TYPE d1, d2, d3, d, r;
   int ix, jx, kx;
   
-  d = 1.0/(float)pn.numProc;
+  d = 1.0/(REAL_TYPE)pn.numProc;
   if ( pn.numProc > 1 ) {
-    r = 1.0/(float)(pn.numProc-1);
+    r = 1.0/(REAL_TYPE)(pn.numProc-1);
   }
   else {
     r = 1.0;
   }
   
   unsigned* m_size=NULL; if( !(m_size = new unsigned[pn.numProc*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
-  float* m_org=NULL;     if( !(m_org  = new float[pn.numProc*3]) ) Exit(0);
-  float* m_Lbx=NULL;     if( !(m_Lbx  = new float[pn.numProc*3]) ) Exit(0);
-  unsigned* st_buf=NULL; if( !(st_buf = new unsigned[pn.numProc*3]) ) Exit(0);
-  unsigned* ed_buf=NULL; if( !(ed_buf = new unsigned[pn.numProc*3]) ) Exit(0);
-  float *bf_srf=NULL;    if( !(bf_srf = new float[pn.numProc]) )   Exit(0);
   unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[pn.numProc]) )   Exit(0);
   unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[pn.numProc]) )   Exit(0);
   unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[pn.numProc]) )   Exit(0);
+  
+  REAL_TYPE* m_org =NULL; if( !(m_org  = new REAL_TYPE[pn.numProc*3]) ) Exit(0);
+  REAL_TYPE* m_Lbx =NULL; if( !(m_Lbx  = new REAL_TYPE[pn.numProc*3]) ) Exit(0);
+  REAL_TYPE* bf_srf=NULL; if( !(bf_srf = new REAL_TYPE[pn.numProc]) )   Exit(0);
+  
+  int* st_buf=NULL; if( !(st_buf = new int [pn.numProc*3]) ) Exit(0);
+  int* ed_buf=NULL; if( !(ed_buf = new int [pn.numProc*3]) ) Exit(0);
   
   // 領域情報の収集
   if ( pn.numProc > 1 ) {
@@ -1985,35 +1992,44 @@ void SklSolverCBC::gather_DomainInfo(void)
                            bf_wcl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
     if ( !para_mng->Gather(&C.Acell,1, SKL_ARRAY_DTYPE_UINT, 
                            bf_acl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+    
+    //FBUtility::uint_Gather(size,     m_size,  3);
+    //FBUtility::real_Gather(C.org,    m_org,   3);
+    //FBUtility::real_Gather(C.Lbx,    m_Lbx,   3);
+    //FBUtility::uint_Gather(&C.Fcell, bf_fcl,  1);
+    //FBUtility::uint_Gather(&C.Wcell, bf_wcl,  1);
+    //FBUtility::uint_Gather(&C.Acell, bf_acl,  1);
   }
   else { // serial
     memcpy(m_size, size, 3*sizeof(unsigned));
     bf_fcl[0] = C.Fcell;
     bf_wcl[0] = C.Wcell;
     bf_acl[0] = C.Acell;
-    memcpy(m_org, C.org, 3*sizeof(float));
-    memcpy(m_Lbx, C.Lbx, 3*sizeof(float));
+    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
+    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
   }
   
   // Info. of computational domain
-  vol = (float)(G_size[0]*G_size[1]*G_size[2]);
-  srf = (float)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
+  vol = (REAL_TYPE)(G_size[0]*G_size[1]*G_size[2]);
+  srf = (REAL_TYPE)(2*(G_size[0]*G_size[1] + G_size[1]*G_size[2] + G_size[2]*G_size[0]));
   
   // amount of communication in each node
   ix = (int)size[0];
   jx = (int)size[1];
   kx = (int)size[2];
-  m_srf = (float)(2*(ix*jx + jx*kx + kx*ix));
-  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (float)(jx*kx);  // remove face which does not join communication
-  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (float)(ix*kx);
-  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (float)(ix*jx);
-  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (float)(jx*kx);
-  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (float)(ix*kx);
-  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (float)(ix*jx);
+  m_srf = (REAL_TYPE)(2*(ix*jx + jx*kx + kx*ix));
+  if ( pn.nID[X_MINUS] < 0 ) m_srf -= (REAL_TYPE)(jx*kx);  // remove face which does not join communication
+  if ( pn.nID[Y_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
+  if ( pn.nID[Z_MINUS] < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
+  if ( pn.nID[X_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(jx*kx);
+  if ( pn.nID[Y_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*kx);
+  if ( pn.nID[Z_PLUS]  < 0 ) m_srf -= (REAL_TYPE)(ix*jx);
   
   if ( pn.numProc > 1 ) {
     if ( !para_mng->Gather(&m_srf,  1,        SKL_ARRAY_DTYPE_REAL, 
                            bf_srf,  1,        SKL_ARRAY_DTYPE_REAL, 0, pn.procGrp) ) Exit(0);
+    
+    //FBUtility::real_Gather(&m_srf, bf_srf, 1);
   }
   else {
     bf_srf[0] = m_srf;
@@ -2025,7 +2041,7 @@ void SklSolverCBC::gather_DomainInfo(void)
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    m_vol += (float)(ix*jx*kx);
+    m_vol += (REAL_TYPE)(ix*jx*kx);
     m_srf += bf_srf[i];
     m_efv += bf_acl[i];
   }
@@ -2039,9 +2055,9 @@ void SklSolverCBC::gather_DomainInfo(void)
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    d1 = (float)(ix*jx*kx) - m_vol;
+    d1 = (REAL_TYPE)(ix*jx*kx) - m_vol;
     d2 = bf_srf[i] - m_srf;
-    d3 = (float)bf_acl[i] - m_efv;
+    d3 = (REAL_TYPE)bf_acl[i] - m_efv;
     vol_dv += d1*d1;
     srf_dv += d2*d2;
     efv_dv += d3*d3;
@@ -2072,9 +2088,12 @@ void SklSolverCBC::gather_DomainInfo(void)
     }
     
     if ( pn.numProc > 1 ) {
+
       for (unsigned n=1; n<=C.NoBC; n++) {
         if( !para_mng->Gather(cmp[n].getBbox_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
         if( !para_mng->Gather(cmp[n].getBbox_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
+        //FBUtility::int_Gather(cmp[n].getBbox_st(), st_buf, 3);
+        //FBUtility::int_Gather(cmp[n].getBbox_ed(), ed_buf, 3);
         
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
@@ -2091,9 +2110,9 @@ void SklSolverCBC::gather_DomainInfo(void)
     fprintf(fp,"\tDomain size         = %7d %7d %7d\n", G_size[0], G_size[1], G_size[2]);
     fprintf(fp,"\tNumber of voxels    = %12.6e\n", vol);
     fprintf(fp,"\tNumber of surface   = %12.6e\n", srf);
-    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (float)G_Acell, 100.0*(float)G_Acell/vol);
-    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (float)G_Fcell, 100.0*(float)G_Fcell/vol);
-    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (float)G_Wcell, 100.0*(float)G_Wcell/vol);
+    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
+    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
+    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
     if ( pn.numProc == 1 ) {
       fprintf(fp,"\tDivision :          = %d : %s\n", pn.numProc, "Serial");
     }
@@ -2113,15 +2132,15 @@ void SklSolverCBC::gather_DomainInfo(void)
     fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     
-    float tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
+    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
     for (int i=0; i<pn.numProc; i++) {
       ix = m_size[3*i];
       jx = m_size[3*i+1];
       kx = m_size[3*i+2];
-      tmp_vol = (float)(ix*jx*kx);
-      tmp_acl = (float)bf_acl[i];
-      tmp_fcl = (float)bf_fcl[i];
-      tmp_wcl = (float)bf_wcl[i];
+      tmp_vol = (REAL_TYPE)(ix*jx*kx);
+      tmp_acl = (REAL_TYPE)bf_acl[i];
+      tmp_fcl = (REAL_TYPE)bf_fcl[i];
+      tmp_wcl = (REAL_TYPE)bf_wcl[i];
       fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
       fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
       fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
@@ -2133,15 +2152,16 @@ void SklSolverCBC::gather_DomainInfo(void)
   
   if (fp) fclose(fp);
   
+
   if( m_size ) { delete [] m_size; m_size=NULL; }
   if( m_org  ) { delete [] m_org;  m_org =NULL; }
   if( m_Lbx  ) { delete [] m_Lbx;  m_Lbx =NULL; }
-  if( st_buf ) { delete [] st_buf; st_buf=NULL; }
-  if( ed_buf ) { delete [] ed_buf; ed_buf=NULL; }
   if( bf_srf ) { delete [] bf_srf; bf_srf=NULL; }
   if( bf_fcl ) { delete [] bf_fcl; bf_fcl=NULL; }
   if( bf_wcl ) { delete [] bf_wcl; bf_wcl=NULL; }
   if( bf_acl ) { delete [] bf_acl; bf_acl=NULL; }
+  if( st_buf ) { delete [] st_buf; st_buf=NULL; }
+  if( ed_buf ) { delete [] ed_buf; ed_buf=NULL; }
 }
 
 
@@ -3439,17 +3459,18 @@ void SklSolverCBC::setGlobalCmpIdx(void)
   int* m_gArray = NULL;
   int* m_eArray = NULL;
   unsigned array_size = 6*(C.NoCompo+1);
-  int np = para_mng->GetNodeNum(pn.procGrp);
   int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
   
-  if ( !(m_gArray = new int[np*6]) ) Exit(0);
-  if ( !(m_eArray = new int[np]  ) ) Exit(0);
+  if ( !(m_gArray = new int[pn.numProc*6]) ) Exit(0);
+  if ( !(m_eArray = new int[pn.numProc]  ) ) Exit(0);
   
   for (unsigned n=1; n<=C.NoBC; n++) {
     if ( pn.numProc > 1 ) {
       es = ( cmp[n].isEns() ) ? 1 : 0;
       if (!para_mng->Gather(&es, 1, SKL_ARRAY_DTYPE_INT, m_eArray, 1, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
       if (!para_mng->Gather(&cgb[6*n], 6, SKL_ARRAY_DTYPE_INT, m_gArray, 6, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
+      //FBUtility::int_Gather(&es,       m_eArray, 1);
+      //FBUtility::int_Gather(&cgb[6*n], m_gArray, 6);
       
       if (pn.myrank == 0) { // マスターノードのみ
         
@@ -3461,7 +3482,7 @@ void SklSolverCBC::setGlobalCmpIdx(void)
         cgb[6*n+4] = 0;
         cgb[6*n+5] = 0;
         
-        for (int m=0; m<np; m++) {
+        for (int m=0; m<pn.numProc; m++) {
           if ( m_eArray[m]==1 ) { // コンポーネントの存在ランクのみを対象とする
             st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
             st_y = m_gArray[6*m+1];
@@ -3623,10 +3644,6 @@ void SklSolverCBC::setParallelism(void)
       C.Parallelism = Control::Serial;
     }
   }
-
-  
-  // 空間分割
-  C.Partition = Control::Equal;
   
 }
 

@@ -349,6 +349,8 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<REAL_TYPE>* &dc_v
   dims[1] = sz[1]; 
   dims[2] = sz[2];
   size_t nx = 0;
+  REAL_TYPE iv[3];
+  iv[0] = iv[1] = iv[2] = init;
   
   if ( !obj->SklIsCheckMode() ) {
     if( !(dc_var = dynamic_cast<SklVector3DEx<REAL_TYPE>*>(
@@ -368,7 +370,7 @@ bool Alloc::alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<REAL_TYPE>* &dc_v
       stamped_printf("Error : Allocation index overflow %ld\n", nx);
       return false;
     }
-    fb_set_real_v_(dc_var->GetData(), (int*)sz, (int*)&gc, &init);
+    fb_set_real_v_(dc_var->GetData(), (int*)sz, (int*)&gc, iv);
   }
   mc = (long)( nx*sizeof(REAL_TYPE) );
   

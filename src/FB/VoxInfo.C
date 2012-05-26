@@ -4864,9 +4864,9 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
   
   
   //Hostonly_  {
-    for (int i=0; i<MODEL_ID_MAX+1; i++) {
-      if (colorSet[i] != 0) printf("a %d : %d %d\n", pn.myrank, i, colorSet[i]);
-    }
+  //  for (int i=0; i<MODEL_ID_MAX+1; i++) {
+  //    if (colorSet[i] != 0) printf("a %d : %d %d\n", pn.myrank, i, colorSet[i]);
+  //  }
   //}
   
   
@@ -4876,9 +4876,9 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
     colorSet[target]++;
   }
   
-  for (int i=0; i<MODEL_ID_MAX+1; i++) {
-    if (colorSet[i] != 0) printf("b %d : %d %d\n", pn.myrank, i, colorSet[i]);
-  }
+  //for (int i=0; i<MODEL_ID_MAX+1; i++) {
+  //  if (colorSet[i] != 0) printf("b %d : %d %d\n", pn.myrank, i, colorSet[i]);
+  //}
   
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
     if ( colorSet[i] != 0 ) {
@@ -4899,9 +4899,9 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
   }
   // この時点で、存在するIDの数はpn.numProc個になっている
   
-  for (int i=0; i<MODEL_ID_MAX+1; i++) {
-    if (colorSet[i] != 0) printf("c %d : %d %d\n", pn.myrank, i, colorSet[i]);
-  }
+  //for (int i=0; i<MODEL_ID_MAX+1; i++) {
+  //  if (colorSet[i] != 0) printf("c %d : %d %d\n", pn.myrank, i, colorSet[i]);
+  //}
   
     
   // colorList[]へ詰めてコピー colorList[0]は不使用
@@ -4916,9 +4916,9 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
   NoVoxID = (unsigned)b-1;
 	
   //Hostonly_  {
-    for (int i=0; i<MODEL_ID_MAX+1; i++) {
-      if (colorList[i] != 0) printf("%d %d\n", i, colorList[i]);
-    }
+  //  for (int i=0; i<MODEL_ID_MAX+1; i++) {
+  //    if (colorList[i] != 0) printf("%d %d\n", i, colorList[i]);
+  //  }
   //}
   
   return NoVoxID;
