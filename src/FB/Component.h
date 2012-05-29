@@ -93,9 +93,9 @@ public:
 
   
 protected:
+  unsigned long element;    /// 要素数
   unsigned ID;              /// セルID
   unsigned type;            /// 
-  unsigned element;         /// 要素数
   unsigned attrb;           /// 
   unsigned h_type;          /// 
   unsigned variable;        ///
@@ -134,7 +134,8 @@ public:
   char      name[LABEL];    ///< ラベル
   
   CompoList() {
-    ID = type = element = variable = mat_odr = attrb = bc_dir = 0;
+    element = 0;
+    ID = type = variable = mat_odr = attrb = bc_dir = 0;
     h_type = 0;
     state = shape = -1;
     def = 0;
@@ -198,7 +199,7 @@ public:
   void setBClocation       (const unsigned key);
   void setBbox             (const int m_st[], const int m_ed[]);
   void setDef              (const int key);
-  void setElement          (const unsigned key);
+  void setElement          (const unsigned long key);
   void setEns              (const unsigned key);
   void setHtype            (const unsigned key);
   void setID               (const unsigned key);
@@ -252,12 +253,13 @@ public:
   inline unsigned getPrsUnit(void) const          { return var_u1; }
   inline unsigned getOutflowType(void) const      { return var_u1; }
   inline unsigned getStateCellMonitor(void) const { return var_u1; }
-  inline unsigned getElement(void) const          { return element; }
   inline unsigned getID(void) const               { return ID; }
   inline unsigned getMatOdr(void) const           { return mat_odr; }
   inline unsigned getType (void) const            { return type; }
   inline unsigned getHtype (void) const           { return h_type; }
   inline unsigned getAttrb(void) const            { return attrb; }
+  
+  inline unsigned long getElement(void) const     { return element; }
   
   inline bool isPolicy_Massflow(void) const       { return (attrb==BC_type_massflow) ? true : false; }
   inline bool isPolicy_HeatDensity(void) const    { return (usw==hsrc_density) ? true : false; }

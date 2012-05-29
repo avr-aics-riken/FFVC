@@ -12,6 +12,8 @@
 //@brief FlowBase class geometry functions
 //@author T. Tawara and keno, FSI Team, VCAD, RIKEN
 
+namespace FB {
+  
 /**
  @fn inline void vec3f_copy(float to[3], const float from[3])
  @brief copy data
@@ -177,5 +179,8 @@ float vec3f_dist(const float a[3], const float b[3])
 {
 	return sqrtf(vec3f_sqdist(a, b));
 }
+
+
+} // end of namspace FB
 
 #endif  // _FB_vec3f_func_h

@@ -59,7 +59,7 @@
 #if defined __K_FPCOLL
 #include "fjcoll.h"
 #elif defined __FX_FAPP
-#include "/fj_tool/fjcoll.h"
+#include "fj_tool/fjcoll.h"
 #endif
 
 // Performance Monitor
@@ -91,7 +91,7 @@ public:
   
   // Global variables
   int para_key;
-  unsigned G_Fcell, G_Acell, G_Wcell;
+  unsigned long G_Fcell, G_Acell, G_Wcell;
   unsigned G_size[3];
   REAL_TYPE G_Lbx[3], G_org[3];
   
@@ -337,7 +337,7 @@ public:
   void ps_ConvectionEE  (REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop);
   void ps_LS            (ItrCtl* IC);
   
-  unsigned Solid_from_Cut(int* mid, float* cut, const int id);
+  unsigned long Solid_from_Cut(int* mid, const float* cut, const int id);
   
   // ラフな初期値のロードと内挿に使用する関数
   bool getCoarseResult (

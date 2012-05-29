@@ -12,6 +12,8 @@
 //@brief FlowBase class geometry functions
 //@author T. Tawara and keno, FSI Team, VCAD, RIKEN
 
+namespace FB {
+  
 /**
  @fn template<typename T1, typename T2> inline void vec3_copy(T1 to[3], const T2 from[3])
  @brief copy data
@@ -132,5 +134,7 @@ void vec3_div(T1 c[3], const T2 a[3], const T3 b)
 	c[1] = a[1] * inv;
 	c[2] = a[2] * inv;
 }
+
+} // end of namspace FB
 
 #endif  // _FB_vec3_func_h

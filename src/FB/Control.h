@@ -426,14 +426,16 @@ public:
     Hybrid
   };
   
-  unsigned  Acell,
-            AlgorithmF,
+  unsigned long Acell,
+                Fcell,
+                Wcell;
+  
+  unsigned  AlgorithmF,
             AlgorithmH,
             BasicEqs,
             CheckParam,
             CnvScheme,
             FB_version,
-            Fcell,
             guide,
             GuideOut,
             imax, jmax, kmax,
@@ -456,8 +458,7 @@ public:
             Restart_step,
             Start,
             version,
-            vxFormat,
-            Wcell;
+            vxFormat;
 	
   REAL_TYPE BasePrs,
             BaseTemp,

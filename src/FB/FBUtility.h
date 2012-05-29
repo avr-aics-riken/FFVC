@@ -241,167 +241,17 @@ public:
     int t3 = sz[0]+t1;
     return ( 2*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) );
   }
+
   
-  
-  /// 桁あふれ対策の代替関数 > MPI_INT*1, MPI_SUM
-  static void int_sum_Allreduce(int* sbuf, int* rbuf) {
-#ifdef __ARCH_FX
-    float my_send = (float)*sbuf;
-    float my_recv = (float)*rbuf;
-    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    rbuf = (int*)&my_recv;
-#else
-    MPI_Allreduce(sbuf, rbuf, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数 > MPI_INT*1, MPI_MAX
-  static void int_max_Allreduce(int* sbuf, int* rbuf) {
-#ifdef __ARCH_FX
-    float my_send = (float)*sbuf;
-    float my_recv = (float)*rbuf;
-    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
-    rbuf = (int*)&my_recv;
-#else
-    MPI_Allreduce(sbuf, rbuf, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数 > MPI_INT*msg, MPI_SUM
-  static void int_array_sum_Allreduce(int* sbuf, int* rbuf, const int msg) {
-#ifdef __ARCH_FX
-    float* my_send = new float [msg];
-    float* my_recv = new float [msg];
-    for (int i=0; i<msg; i++) {
-      my_send[i] = (float)sbuf[i];
-    }
-    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    for (int i=0; i<msg; i++) {
-      rbuf[i] = (int)my_recv[i];
-    }
-    if ( my_send ) { delete [] my_send; my_send = NULL; }
-    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
-#else
-    MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数 > MPI_INT*msg, MPI_MAX
-  static void int_array_max_Allreduce(int* sbuf, int* rbuf, const int msg) {
-#ifdef __ARCH_FX
-    float* my_send = new float [msg];
-    float* my_recv = new float [msg];
-    for (int i=0; i<msg; i++) {
-      my_send[i] = (float)sbuf[i];
-    }
-    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
-    for (int i=0; i<msg; i++) {
-      rbuf[i] = (int)my_recv[i];
-    }
-    if ( my_send ) { delete [] my_send; my_send = NULL; }
-    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
-#else
-    MPI_Allreduce(sbuf, rbuf, msg, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数
-  static void int_Gather(int* sbuf, int* rbuf, const int msg) {
-#ifdef __ARCH_FX
-    float* my_send = new float [msg];
-    float* my_recv = new float [msg];
-    for (int i=0; i<msg; i++) {
-      my_send[i] = (float)sbuf[i];
-    }
-    MPI_Gather(my_send, msg, MPI_FLOAT, my_recv, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    for (int i=0; i<msg; i++) {
-      rbuf[i] = (int)my_recv[i];
-    }
-    if ( my_send ) { delete [] my_send; my_send = NULL; }
-    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
-#else
-    MPI_Gather(sbuf, msg, MPI_INT, rbuf, msg, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数 > MPI_UINT*1, MPI_SUM
-  static void uint_sum_Allreduce(unsigned* sbuf, unsigned* rbuf) {
-#ifdef __ARCH_FX
-    float my_send = (float)*sbuf;
-    float my_recv = (float)*rbuf;
-    MPI_Allreduce(&my_send, &my_recv, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    rbuf = (unsigned*)&my_recv;
-#else
-    MPI_Allreduce(sbuf, rbuf, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数 > MPI_UINT*msg, MPI_SUM
-  static void uint_array_sum_Allreduce(unsigned* sbuf, unsigned* rbuf, const int msg) {
-#ifdef __ARCH_FX
-    float* my_send = new float [msg];
-    float* my_recv = new float [msg];
-    for (int i=0; i<msg; i++) {
-      my_send[i] = (float)sbuf[i];
-    }
-    MPI_Allreduce(my_send, my_recv, msg, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    for (int i=0; i<msg; i++) {
-      rbuf[i] = (unsigned)my_recv[i];
-    }
-    if ( my_send ) { delete [] my_send; my_send = NULL; }
-    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
-#else
-    MPI_Allreduce(sbuf, rbuf, msg, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
-#endif
-  }
-  
-  /// 桁あふれ対策の代替関数
-  static void uint_Gather(unsigned* sbuf, unsigned* rbuf, const int msg) {
-#ifdef __ARCH_FX
-    float* my_send = new float [msg];
-    float* my_recv = new float [msg];
-    for (int i=0; i<msg; i++) {
-      my_send[i] = (float)sbuf[i];
-    }
-    MPI_Gather(my_send, msg, MPI_FLOAT, my_recv, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    for (int i=0; i<msg; i++) {
-      rbuf[i] = (unsigned)my_recv[i];
-    }
-    if ( my_send ) { delete [] my_send; my_send = NULL; }
-    if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
-#else
-    MPI_Gather(sbuf, msg, MPI_UNSIGNED, rbuf, msg, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-#endif
-  }
   
   /// 浮動小数のラッパー関数
   static void real_Gather(REAL_TYPE* sbuf, REAL_TYPE* rbuf, const int msg) {
     
     if ( sizeof(REAL_TYPE) == sizeof(float) ) {
-      float* my_send = new float [msg];
-      float* my_recv = new float [msg];
-      for (int i=0; i<msg; i++) {
-        my_send[i] = sbuf[i];
-      }
-      MPI_Gather(my_send, msg, MPI_FLOAT, my_recv, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      for (int i=0; i<msg; i++) {
-        rbuf[i] = my_recv[i];
-      }
-      if ( my_send ) { delete [] my_send; my_send = NULL; }
-      if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
+      MPI_Gather(sbuf, msg, MPI_FLOAT, rbuf, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
     }
     else {
-      double* my_send = new double [msg];
-      double* my_recv = new double [msg];
-      for (int i=0; i<msg; i++) {
-        my_send[i] = sbuf[i];
-      }
-      MPI_Gather(my_send, msg, MPI_DOUBLE, my_recv, msg, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-      for (int i=0; i<msg; i++) {
-        rbuf[i] = my_recv[i];
-      }
-      if ( my_send ) { delete [] my_send; my_send = NULL; }
-      if ( my_recv ) { delete [] my_recv; my_recv = NULL; }
+      MPI_Gather(sbuf, msg, MPI_DOUBLE, rbuf, msg, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
   }
   

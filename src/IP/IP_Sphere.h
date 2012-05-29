@@ -14,7 +14,6 @@
 
 #include "Intrinsic.h"
 #include "IP_Define.h"
-#include "vec3.h"
 
 class IP_Sphere : public Intrinsic {
 protected:

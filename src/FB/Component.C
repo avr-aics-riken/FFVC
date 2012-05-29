@@ -198,10 +198,10 @@ void CompoList::setDef(const int key) {
   def = key;
 }
 
-//@fn void CompoList::setElement(const unsigned key)
+//@fn void CompoList::setElement(const unsigned long key)
 //@brief elementをセットする
 //@param key 要素数 element
-void CompoList::setElement(const unsigned key) { 
+void CompoList::setElement(const unsigned long key) { 
   element = key; 
 }
 

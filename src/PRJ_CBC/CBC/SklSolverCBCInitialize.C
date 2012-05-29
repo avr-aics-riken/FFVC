@@ -399,12 +399,14 @@ SklSolverCBC::SklSolverInitialize() {
     }
     
     int target_id = C.Mode.Base_Medium;
-    unsigned long fill_count = size[0] * size[1] * size[2];
     
     //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
     //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
     
+    // Allreduce時の桁あふれ対策のため、unsigned long で集約
+    unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
     unsigned long tmp_fc = fill_count;
+    
     if ( pn.numProc > 1 ) {
       MPI_Allreduce(&tmp_fc, &fill_count, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     }
@@ -427,12 +429,11 @@ SklSolverCBC::SklSolverInitialize() {
     int c=0;
     while (fill_count > 0) {
       
-      unsigned fc = Vinfo.fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
-      
-      unsigned t_fc = fc;
+      unsigned long fc = (unsigned long)Vinfo.fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
+      unsigned long t_fc = fc;
 
       if ( pn.numProc > 1 ) {
-        FBUtility::uint_sum_Allreduce(&t_fc, &fc);
+        MPI_Allreduce(&t_fc, &fc, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
       }
       
       // 同期
@@ -442,28 +443,29 @@ SklSolverCBC::SklSolverInitialize() {
       
       if ( fc == 0 ) break;
       
-      fill_count -= (unsigned long)fc;
+      fill_count -= fc;
       
       Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
       
     }
     Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", target_id, fill_count);
     
+    
     // 固体に変更
+    // Allreduce時の桁あふれ対策のため、unsigned long で集約
     c = 0;
     while ( fill_count > 0 ) {
       
-      unsigned fc = Vinfo.fill_inside(mid, id_of_solid);
-      
-      unsigned t_fc = fc;
+      unsigned long fc = (unsigned long)Vinfo.fill_inside(mid, id_of_solid);
+      unsigned long t_fc = fc;
 
       if ( pn.numProc > 1 ) {
-        FBUtility::uint_sum_Allreduce(&t_fc, &fc);
+        MPI_Allreduce(&t_fc, &fc, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
       }
       
       if ( fc == 0 ) break;
       
-      fill_count -= (unsigned long)fc;
+      fill_count -= fc;
       //Hostonly_ printf("\t%4d : Try solid fill with ID = %d : %ld\n", ++c, id_of_solid, fill_count);
       
     }
@@ -473,11 +475,13 @@ SklSolverCBC::SklSolverInitialize() {
     Ex->writeSVX(mid, &C);
     
     // 確認 paintedは未ペイントセルがある場合に1
-    unsigned painted = Vinfo.check_fill(mid);
-    unsigned t_painted = painted;
+    // Allreduce時の桁あふれ対策のため、unsigned long で集約
+    
+    unsigned long painted = (unsigned long)Vinfo.check_fill(mid);
 
     if ( pn.numProc > 1 ) {
-      FBUtility::uint_sum_Allreduce(&t_painted, &painted);
+      unsigned long t_painted = painted;
+      MPI_Allreduce(&t_painted, &painted, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     }
     
     if ( painted  != 0 ) {
@@ -1966,7 +1970,7 @@ void SklSolverCBC::gather_DomainInfo(void)
     r = 1.0;
   }
   
-  unsigned* m_size=NULL; if( !(m_size = new unsigned[pn.numProc*3]) ) Exit(0); // use new to assign variable array, and release at the end of this method
+  unsigned* m_size=NULL; if( !(m_size = new unsigned[pn.numProc*3]) ) Exit(0);
   unsigned* bf_fcl=NULL; if( !(bf_fcl = new unsigned[pn.numProc]) )   Exit(0);
   unsigned* bf_wcl=NULL; if( !(bf_wcl = new unsigned[pn.numProc]) )   Exit(0);
   unsigned* bf_acl=NULL; if( !(bf_acl = new unsigned[pn.numProc]) )   Exit(0);
@@ -1993,12 +1997,9 @@ void SklSolverCBC::gather_DomainInfo(void)
     if ( !para_mng->Gather(&C.Acell,1, SKL_ARRAY_DTYPE_UINT, 
                            bf_acl,  1, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
     
-    //FBUtility::uint_Gather(size,     m_size,  3);
     //FBUtility::real_Gather(C.org,    m_org,   3);
     //FBUtility::real_Gather(C.Lbx,    m_Lbx,   3);
-    //FBUtility::uint_Gather(&C.Fcell, bf_fcl,  1);
-    //FBUtility::uint_Gather(&C.Wcell, bf_wcl,  1);
-    //FBUtility::uint_Gather(&C.Acell, bf_acl,  1);
+    //MPI_Gather(sbuf, msg, MPI_UNSIGNED, rbuf, msg, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   }
   else { // serial
     memcpy(m_size, size, 3*sizeof(unsigned));
@@ -2092,8 +2093,7 @@ void SklSolverCBC::gather_DomainInfo(void)
       for (unsigned n=1; n<=C.NoBC; n++) {
         if( !para_mng->Gather(cmp[n].getBbox_st(), 3, SKL_ARRAY_DTYPE_UINT, st_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
         if( !para_mng->Gather(cmp[n].getBbox_ed(), 3, SKL_ARRAY_DTYPE_UINT, ed_buf, 3, SKL_ARRAY_DTYPE_UINT, 0, pn.procGrp) ) Exit(0);
-        //FBUtility::int_Gather(cmp[n].getBbox_st(), st_buf, 3);
-        //FBUtility::int_Gather(cmp[n].getBbox_ed(), ed_buf, 3);
+
         
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
@@ -2837,12 +2837,10 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::min_distance(float* cut, FILE* fp)
 {
-  //SklParaComponent* para_cmp = SklGetParaComponent();
-  //SklParaManager* para_mng = para_cmp->GetParaManager();
   
-  unsigned mm = (size[2]+2*guide)*(size[1]+2*guide)*(size[0]+2*guide)*6;
+  unsigned m = (size[2]+2*guide) * (size[1]+2*guide) * (size[0]+2*guide) * 6;
   
-  if (mm >= UINT_MAX) {
+  if (m >= UINT_MAX) {
     Hostonly_ stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
     Exit(0);
   }
@@ -2852,19 +2850,29 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
   float eps = 1.0/255.0; // 0.000392
   unsigned g=0;
   
-#pragma omp parallel firstprivate(mm) private(c)
+#pragma omp parallel firstprivate(m) private(c)
   {
     float local_min = 1.0;
   
 #pragma omp for nowait schedule(static) reduction(+:g)
-    for (unsigned i=0; i<mm; i++) {
-      c = cut[i]; 
-      if ( local_min > c ) local_min = c;
-      if ( (c > 0.0f) && (c <= eps) ) {
-        cut[i] = eps;
-        g++;
+    for (int k=1; k<(int)size[2]; k++) {
+      for (int j=1; j<(int)size[1]; j++) {
+        for (int i=1; i<(int)size[0]; i++) {
+          
+          for (int l=0; l<6; l++) {
+            m = FBUtility::getFindexS3Dcut(size, guide, l, i, j, k);
+            c = cut[m]; 
+            if ( local_min > c ) local_min = c;
+            if ( (c > 0.0f) && (c <= eps) ) {
+              cut[m] = eps;
+              g++;
+            }
+          }
+          
+        }
       }
     }
+
 #pragma omp critical
     {
       if ( local_min < global_min ) global_min = local_min;
@@ -2872,17 +2880,20 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
   } // end omp parallel
 
   
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long gl    = (unsigned long)g;
+  
   if ( pn.numProc > 1 ) {
     
     float tmp = global_min;
     MPI_Allreduce(&tmp, &global_min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
     
-    unsigned tmp_g = g;
-    FBUtility::uint_sum_Allreduce(&tmp_g, &g);
+    unsigned long tmp_g = gl;
+    MPI_Allreduce(&tmp_g, &gl, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
 
-  Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %d\n\n", global_min, eps, g);
-  Hostonly_ printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %d\n\n", global_min, eps, g);
+  Hostonly_ fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+  Hostonly_ printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
 }
 
 
@@ -3469,8 +3480,7 @@ void SklSolverCBC::setGlobalCmpIdx(void)
       es = ( cmp[n].isEns() ) ? 1 : 0;
       if (!para_mng->Gather(&es, 1, SKL_ARRAY_DTYPE_INT, m_eArray, 1, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
       if (!para_mng->Gather(&cgb[6*n], 6, SKL_ARRAY_DTYPE_INT, m_gArray, 6, SKL_ARRAY_DTYPE_INT, 0, pn.procGrp)) Exit(0);
-      //FBUtility::int_Gather(&es,       m_eArray, 1);
-      //FBUtility::int_Gather(&cgb[6*n], m_gArray, 6);
+
       
       if (pn.myrank == 0) { // マスターノードのみ
         
@@ -3883,12 +3893,12 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   size_t n_cell[3];
   
-  for ( unsigned i=0; i<3; i++) {
-    n_cell[i] = size[i] + 2*guide;          // 分割数+ガイドセル両側
-    poly_org[i] -= poly_dx[i]*(float)guide; // ガイドセル分だけシフト
+  for ( int i=0; i<3; i++) {
+    n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル両側
+    poly_org[i] -= poly_dx[i]*(float)guide;  // ガイドセル分だけシフト
   }
   
-  unsigned size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  unsigned long size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
   
   // Cutlibの配列は各方向(引数)のサイズ
@@ -3903,7 +3913,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   // 使用メモリ量　
   unsigned long cut_mem, G_cut_mem;
-  G_cut_mem = cut_mem = (unsigned long)size_n_cell *(6+1)*4;
+  G_cut_mem = cut_mem = size_n_cell *(6+1) * 4; // float
   m_prep += cut_mem;
   m_total+= cut_mem;
   
@@ -3933,7 +3943,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   fb_copy_int_  (tmp_bid, cut_id, &bid_len);
   
   // テスト
-  int z=0;
+  unsigned z=0;
   float *pos;
   float d_min=1.0;
   int bd, b0, b1, b2, b3, b4, b5;
@@ -3975,20 +3985,23 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     }
   }
   
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long zl = (unsigned long)z;
+  
   if ( pn.numProc > 1 ) {
     
     float tmp =d_min;
     MPI_Allreduce(&tmp, &d_min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
     
-    int tmp_g = z;
-    FBUtility::int_sum_Allreduce(&tmp_g, &z);
+    unsigned long tmp_g = zl;
+    MPI_Allreduce(&tmp_g, &zl, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     
-    unsigned tmp_u = size_n_cell;
-    FBUtility::uint_sum_Allreduce(&tmp_u, &size_n_cell);
+    tmp_g = size_n_cell;
+    MPI_Allreduce(&tmp_g, &size_n_cell, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     
   }
   
-  Hostonly_ printf("\n\tMinimum dist. = %5.3e  : # of cut = %d : %f [percent]\n", d_min, z, (float)z/(float)size_n_cell*100.0);
+  Hostonly_ printf("\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", d_min, zl, (float)zl/(float)size_n_cell*100.0);
   
   // カットの最小値
   min_distance(tmp_cut, fp);
@@ -4085,9 +4098,8 @@ void SklSolverCBC::setVOF(REAL_TYPE* vof, unsigned* bx)
  @param[in] id 固体ID 
  @retval 固体セル数
  */
-unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
+unsigned long SklSolverCBC::Solid_from_Cut(int* mid, const float* cut, const int id)
 {
-  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   unsigned c=0;
   int q, m_id;
   unsigned mp, m;
@@ -4099,7 +4111,7 @@ unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
   gd = guide;
   m_id= id;
   
-#pragma omp parallel for firstprivate(m_sz, gd, m_id) private(q) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(m_sz, gd, m_id) private(q, m, mp) schedule(static) reduction(+:c)
   for (int k=1; k<=(int)m_sz[2]; k++) {
     for (int j=1; j<=(int)m_sz[1]; j++) {
       for (int i=1; i<=(int)m_sz[0]; i++) {
@@ -4124,12 +4136,15 @@ unsigned SklSolverCBC::Solid_from_Cut(int* mid, float* cut, const int id)
     }
   }
   
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long cl = (unsigned long)c;
+  
   if ( pn.numProc > 1 ) {
-    unsigned tmp = c;
-    FBUtility::uint_sum_Allreduce(&tmp, &c);
+    unsigned long tmp = cl;
+    MPI_Allreduce(&tmp, &cl, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   
-  return c;
+  return cl;
 }
 
 

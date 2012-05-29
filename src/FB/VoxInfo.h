@@ -64,32 +64,102 @@ protected:
   bool getXMLModel           (void);
   bool isInTable             (unsigned MaxSize, int* cList, int target);
   
-  int* allocTable  (unsigned size);
+  int* allocTable(unsigned size);
   
-  unsigned countState          (unsigned id, int* m);
-  unsigned count_ValidCell_OBC (const int face, const unsigned* bv);
-  unsigned encodeFace          (unsigned order, unsigned id, int* m, unsigned* bx, const unsigned attrb, unsigned type=0);
-  unsigned encodeOrder         (unsigned order, unsigned id, int* m, unsigned* bx);
-  unsigned encPbit_D_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
-  unsigned encPbit_N_IBC       (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bcp, int deface);
-  unsigned encPbit_N_Cut       (unsigned* bx, float* cut, const bool convergence);
-  unsigned encPbit_N_Binary    (unsigned* bx);
-  unsigned encQface            (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface, bool flag);
-  unsigned encQfaceHT_B        (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
-  unsigned encQfaceHT_S        (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
-  unsigned encQfaceISO_SF      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
-  unsigned encQfaceISO_SS      (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
-  unsigned encVbit_IBC         (unsigned order, unsigned id, int* mid, unsigned* bv, int deface, unsigned* bp);
-  unsigned encVbit_IBC_Cut     (const unsigned order, const unsigned id, unsigned* bv, unsigned* bp, const float* cut, const int* cut_id, 
-                                const float* vec, const unsigned bc_dir);
-  unsigned find_mat_odr        (unsigned mat_id);
+  unsigned find_mat_odr(unsigned mat_id);
+  
+  unsigned long countState(unsigned id, 
+                           int* mid);
+  
+  unsigned long count_ValidCell_OBC (const int face, 
+                                     const unsigned* bv);
+  
+  unsigned long encodeOrder(const unsigned order,
+                            const unsigned id, 
+                            const int* mid, 
+                            unsigned* bx);
+  
+  unsigned long encPbit_D_IBC(const unsigned order, 
+                              const unsigned id, 
+                              const int* mid, 
+                              unsigned* bcd, 
+                              unsigned* bcp, 
+                              const int deface);
+  
+  unsigned long encPbit_N_Binary(unsigned* bx);
+  
+  unsigned long encPbit_N_Cut(unsigned* bx, 
+                              float* cut, 
+                              const bool convergence);
+  
+  unsigned long encPbit_N_IBC(const unsigned order, 
+                              const unsigned id, 
+                              const int* mid, 
+                              unsigned* bcd, 
+                              unsigned* bcp, 
+                              const int deface);
+  
+  unsigned long encQface(const unsigned order, 
+                         const unsigned id, 
+                         const int* mid, 
+                         unsigned* bcd, 
+                         unsigned* bh1, 
+                         unsigned* bh2, 
+                         const int deface, 
+                         const bool flag);
+  
+  unsigned long encQfaceHT_B(const unsigned order, 
+                             const unsigned id, 
+                             const int* mid, 
+                             unsigned* bcd, 
+                             unsigned* bh1, 
+                             unsigned* bh2, 
+                             const int deface);
+  
+  unsigned long encQfaceHT_S(const unsigned order, 
+                             const unsigned id, 
+                             const int* mid, 
+                             unsigned* bcd, 
+                             unsigned* bh1, 
+                             unsigned* bh2, 
+                             const int deface);
+  
+  unsigned long encQfaceISO_SF(const unsigned order, 
+                               const unsigned id, 
+                               const int* mid, 
+                               unsigned* bcd, 
+                               unsigned* bh1, 
+                               unsigned* bh2, 
+                               const int deface);
+  
+  unsigned long encQfaceISO_SS(const unsigned order, 
+                               const unsigned id, 
+                               const int* mid, 
+                               unsigned* bcd, 
+                               unsigned* bh1, 
+                               unsigned* bh2, 
+                               const int deface);
+  
+  unsigned long encVbit_IBC(const unsigned order, 
+                            const unsigned id, 
+                            const int* mid, 
+                            unsigned* bv, 
+                            const int deface, 
+                            unsigned* bp);
+  
+  unsigned long encVbit_IBC_Cut(const unsigned order, 
+                                const unsigned id, 
+                                unsigned* bv, 
+                                unsigned* bp, 
+                                const float* cut, 
+                                const int* cut_id, 
+                                const float* vec, 
+                                const unsigned bc_dir);
   
   void checkColorTable       (FILE* fp, unsigned size, int* table);
   void copyID_Prdc_Inner     (SklScalar3D<int>* d_mid, int* st, int* ed, int id, int dir);
   void countNrml_from_FaceBC (unsigned n, unsigned* bx, int* cc, int& ar);
-  void countFace_S           (unsigned n, unsigned* bx, int* cc);
-  void countVolumeEdge       (unsigned n, unsigned* bx, int* cc);
-  void encActive             (unsigned& Lcell, unsigned& Gcell, unsigned* bx, unsigned KOS);
+  void encActive             (unsigned long& Lcell, unsigned long& Gcell, unsigned* bx, const unsigned KOS);
   void encAmask_SymtrcBC     (int face, unsigned* bh2);
   void encHbit               (unsigned* bh1, unsigned* bh2);
   void encPbit               (unsigned* bx);
@@ -141,17 +211,22 @@ public:
   unsigned check_fill        (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   unsigned fill_inside       (int* mid, const int solid_id);
-  unsigned flip_InActive     (unsigned& L, unsigned& G, unsigned id, int* mid, unsigned* bx);
   unsigned scanCell          (int *cell, const int* cid, const unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
+  
+  unsigned long flip_InActive(unsigned long& L, 
+                              unsigned long& G, 
+                              const unsigned id, 
+                              const int* mid, 
+                              unsigned* bx);
   
   void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
   void alloc_voxel_nv        (unsigned len);
   void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);
   void copyBCIbase           (unsigned* dst, unsigned* src);
-  void countCellState        (unsigned& Fcell, unsigned& G_Fcell, unsigned* bx, const unsigned state);
+  void countCellState        (unsigned long& Lcell, unsigned long& Gcell, unsigned* bx, const unsigned state);
   void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
   void fill_isolated_cells   (const int* bid, int* mid, const int isolated, const int solid_id);
   void findVIBCbbox          (const int id, const unsigned* bv, int* st, int* ed);
@@ -162,7 +237,14 @@ public:
   void setAdiabatic4SF       (unsigned* bh);
   void setBCIndexH           (unsigned* bd, unsigned* bh1, unsigned* bh2, int* mid, SetBC* BC, unsigned kos);
   void setBCIndex_base1      (unsigned* bd, int* mid, float* cvf);
-  void setBCIndex_base2      (unsigned* bd, int* mid, SetBC* BC, unsigned& Lcell, unsigned& Gcell, unsigned KOS);
+  
+  void setBCIndex_base2      (unsigned* bx, 
+                              int* mid, 
+                              SetBC* BC, 
+                              unsigned long & Lcell, 
+                              unsigned long & Gcell, 
+                              const unsigned KOS);
+  
   void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   void setCmpFraction        (CompoList* compo, unsigned* bx, float* vf);
   void setControlVars        (unsigned* r_size, unsigned r_guide);
