@@ -2837,20 +2837,18 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::min_distance(float* cut, FILE* fp)
 {
-  
-  unsigned m = (size[2]+2*guide) * (size[1]+2*guide) * (size[0]+2*guide) * 6;
-  
-  if (m >= UINT_MAX) {
-    Hostonly_ stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
-    Exit(0);
-  }
-  
   float global_min = 1.0;
   float c;
   float eps = 1.0/255.0; // 0.000392
-  unsigned g=0;
+  unsigned g=0, m;
+  unsigned gc = guide;
+  unsigned msz[3];
   
-#pragma omp parallel firstprivate(m) private(c)
+  msz[0] = size[0];
+  msz[1] = size[1];
+  msz[2] = size[2];
+  
+#pragma omp parallel firstprivate(msz, eps, gc, global_min) private(c, m)
   {
     float local_min = 1.0;
   
@@ -2860,7 +2858,7 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
         for (int i=1; i<(int)size[0]; i++) {
           
           for (int l=0; l<6; l++) {
-            m = FBUtility::getFindexS3Dcut(size, guide, l, i, j, k);
+            m = FBUtility::getFindexS3Dcut(size, gc, l, i, j, k);
             c = cut[m]; 
             if ( local_min > c ) local_min = c;
             if ( (c > 0.0f) && (c <= eps) ) {
@@ -3901,7 +3899,12 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     poly_org[i] -= poly_dx[i]*(float)guide;  // ガイドセル分だけシフト
   }
   
-  unsigned long size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  unsigned long size_n_cell = (unsigned long)n_cell[0] * (unsigned long)n_cell[1] * (unsigned long)n_cell[2];
+  
+  if (size_n_cell*6  > UINT_MAX) {
+    Hostonly_ stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
+    Exit(0);
+  }
   
   
   // Cutlibの配列は各方向(引数)のサイズ
@@ -3928,33 +3931,34 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
     FBUtility::displayMemory("Cut", G_cut_mem, cut_mem, fp, mp);
   }
   
+  // データクラスのアロケート
+  allocArray_Cut(m_total);
+  
   // カットとID情報をポイント
   float* cut = (float*)cutPos->getDataPointer();
   int* cut_id = (int*)cutBid->getDataPointer();
+
   
-  // データクラスへのコピー
-  allocArray_Cut(m_total);
-  
-  REAL_TYPE* tmp_cut = NULL;
+  float* tmp_cut = NULL;
   int* tmp_bid = NULL;
   if( !(tmp_cut  = dc_cut->GetData()) ) Exit(0);
   if( !(tmp_bid  = dc_bid->GetData()) ) Exit(0);
 
-  int cut_len = dc_cut->GetArrayLength();
-  int bid_len = dc_bid->GetArrayLength();
-  fb_copy_real_ (tmp_cut, cut, &cut_len);
-  fb_copy_int_  (tmp_bid, cut_id, &bid_len);
+  size_t cut_len = dc_cut->GetArrayLength();
+  size_t bid_len = dc_bid->GetArrayLength();
+  fb_copy_real_ (tmp_cut, cut, (int*)&cut_len);
+  fb_copy_int_  (tmp_bid, cut_id, (int*)&bid_len);
   
   // テスト
   unsigned z=0;
-  float *pos;
+  float* pos;
   float d_min=1.0;
   int bd, b0, b1, b2, b3, b4, b5;
-  size_t mp, mb;
+  unsigned mp, mb;
   
-  for (int k=0; k<=size[2]+1; k++) {
-    for (int j=0; j<=size[1]+1; j++) {
-      for (int i=0; i<=size[0]+1; i++) {
+  for (int k=1; k<=(int)size[2]; k++) {
+    for (int j=1; j<=(int)size[1]; j++) {
+      for (int i=1; i<=(int)size[0]; i++) {
         
         mp = FBUtility::getFindexS3Dcut(size, guide, 0, i, j, k);
         pos = &tmp_cut[mp];
