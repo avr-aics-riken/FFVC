@@ -130,12 +130,13 @@ bool ParseMat::chkStateList(CompoList* compo)
  @fn void ParseMat::chkState_Mat_Cmp(CompoList* compo)
  @brief  cmp[]とmat[]のStateの不一致をチェックする
  */
-void ParseMat::chkState_Mat_Cmp(CompoList* compo)
+void ParseMat::chkState_Mat_Cmp(CompoList* compo, FILE* fp)
 {
   unsigned m_id, m_state, m_odr;
   unsigned c=0;
   
   printf("\t  no :   ID  mat_odr mat_ID         mat_Name  : mat_State : specified_state\n");
+  fprintf(fp, "\t  no :   ID  mat_odr mat_ID         mat_Name  : mat_State : specified_state\n");
   
   for (unsigned i=1; i<=NoCompo; i++) {
     m_odr = compo[i].getMatOdr();

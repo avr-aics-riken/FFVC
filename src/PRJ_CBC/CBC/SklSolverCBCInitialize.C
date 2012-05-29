@@ -3280,7 +3280,10 @@ void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
   Hostonly_ M->printMaterialList(mp, fp);
   
   // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
-  M->chkState_Mat_Cmp(cmp);
+  Hostonly_ {
+    M->chkState_Mat_Cmp(cmp, mp);
+    M->chkState_Mat_Cmp(cmp, fp);
+  }
 }
 
 
@@ -4380,6 +4383,11 @@ void SklSolverCBC::VoxelInitialize(void)
   }
   
   //stamped_printf("Local : org(%e %e %e)\n", m_org[0], m_org[1], m_org[2]);
+  unsigned long tz = (unsigned long)m_sz[0] * (unsigned long)m_sz[1] * (unsigned long)m_sz[2];
+  if ( tz >= UINT_MAX) {
+    Hostonly_ stamped_printf("\n\tError : Product of size[] exceeds UINT_MAX\n\n");
+    Exit(0);
+  }
   
   // コントロールクラスのメンバ変数で値を保持
   C.setDomainInfo(m_sz, m_org, m_pch, m_wth);

@@ -91,7 +91,7 @@ public:
   bool receiveCfgPtr         (SklSolverConfig* cfg);
   
   void chkList               (FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq);
-  void chkState_Mat_Cmp      (CompoList* compo);
+  void chkState_Mat_Cmp      (CompoList* compo, FILE* fp);
   void getXMLmaterial        (void);
   void makeLinkCmpMat        (CompoList* compo);
   void makeMaterialList      (void);
