@@ -2837,7 +2837,8 @@ void SklSolverCBC::Restart_avrerage (FILE* fp, REAL_TYPE& flop)
  */
 void SklSolverCBC::min_distance(float* cut, FILE* fp)
 {
-  float global_min = 1.0;
+  float global_min;
+  float local_min;
   float c;
   float eps = 1.0/255.0; // 0.000392
   unsigned g=0, m;
@@ -2848,19 +2849,20 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
   msz[1] = size[1];
   msz[2] = size[2];
   
-#pragma omp parallel firstprivate(msz, eps, gc, global_min) private(c, m)
+#pragma omp parallel firstprivate(msz, eps, gc) private(c, m) 
   {
-    float local_min = 1.0;
-  
-#pragma omp for nowait schedule(static) reduction(+:g)
-    for (int k=1; k<(int)size[2]; k++) {
-      for (int j=1; j<(int)size[1]; j++) {
-        for (int i=1; i<(int)size[0]; i++) {
+    global_min = 1.0;
+    local_min  = 1.0;
+    
+#pragma omp for schedule(static) reduction(+:g)
+    for (int k=1; k<(int)msz[2]; k++) {
+      for (int j=1; j<(int)msz[1]; j++) {
+        for (int i=1; i<(int)msz[0]; i++) {
           
           for (int l=0; l<6; l++) {
-            m = FBUtility::getFindexS3Dcut(size, gc, l, i, j, k);
-            c = cut[m]; 
-            if ( local_min > c ) local_min = c;
+            m = FBUtility::getFindexS3Dcut(msz, gc, l, i, j, k);
+            c = cut[m];
+            local_min = min(local_min, c);
             if ( (c > 0.0f) && (c <= eps) ) {
               cut[m] = eps;
               g++;
@@ -3865,7 +3867,7 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   
   // Polylib: STLデータ書き出しテスト
 #if 0
-   unsigned poly_out_para = IO_GATHER; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
+   unsigned poly_out_para = IO_DISTRIBUTE; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
    string fname;
    
   if ( poly_out_para == IO_GATHER ) {
