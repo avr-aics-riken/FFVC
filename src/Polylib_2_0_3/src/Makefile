@@ -36,14 +36,25 @@ LIBXML2         = /usr
 # -DSAVE_ID_ASCII
 ###########################################################################
 CFLAGS		= -O2 -Wall -I../include -I$(MPI_DIR)/include \
-			  -I/usr/include -I$(LIBXML2)/include/libxml2 -fno-strict-aliasing \
+			  -I/usr/include \
+        -I$(LIBXML2)/include/libxml2 \
+        -fno-strict-aliasing \
 #			  -DSAVE_ID_ASCII
 
 # FX10
 #CFLAGS		= -Kfast, simd=2, ocl, preex, array_private \
 #		-I../include\
-#		-I/opt/FJSVfxlang/GM-1.2.0-02/include \
-#		-I/opt/FJSVfxlang/GM-1.2.0-02/include/mpi/fujitsu \
+#		-I/opt/FJSVfxlang/GM-1.2.0-03/include \
+#		-I/opt/FJSVfxlang/GM-1.2.0-03/include/mpi/fujitsu \
+#		-I/usr/include \
+#		-I/home/user_hogehoge/libxml2-2.7.8_lib/include/libxml2 \
+#		-fno-strict-aliasing
+
+# K
+#CFLAGS		= -Kfast, simd=2, ocl, preex, array_private \
+#		-I../include\
+#		-I/opt/FJSVtclang/GM-1.2.0-05/include \
+#		-I/opt/FJSVtclang/GM-1.2.0-05/include/mpi/fujitsu \
 #		-I/usr/include \
 #		-I/home/user_hogehoge/libxml2-2.7.8_lib/include/libxml2 \
 #		-fno-strict-aliasing

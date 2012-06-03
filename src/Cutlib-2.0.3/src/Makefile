@@ -48,13 +48,18 @@ OBJS = Cutlib.o CutlibCore.o CutUtil.o CutTriangle.o CutBoundary.o
 #CXX = mpiFCCpx
 CXX = icpc
 
-AR = ar cr
-#AR = ar cru
+#AR = ar cr
+AR = ar cru
 RANLIB = ranlib
 
-#POLYLIB_DIR = ../../Polylib_2_0_2
 POLYLIB_DIR = ../../Polylib_2_0_3
+
 POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/include/libxml2
+
+# FX10
+#POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
+#        -I/home/c15046/LIBXML2/libxml2-2.7.8_lib/include/libxml2 \
+#        -fno-strict-aliasing
 
 # with Octree lib ############################################################
 #OCTREE_DIR = ../../sgi-octree
@@ -76,7 +81,11 @@ DEFINES += -DIGNORE_STL_NORMAL
 #DEFINES = 
 
 #CFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
-CFLAGS = -O3 -Wall -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+
+# FX10
+#CFLAGS = -Kfast,ocl,preex,simd=2,array_private,parallel,openmp,optmsg=2 -V -Nsrc \
+#        -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 $(CUTLIB): $(OBJS)
 	$(AR) $@ $(OBJS)
