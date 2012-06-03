@@ -2862,7 +2862,7 @@ void SklSolverCBC::min_distance(float* cut, FILE* fp)
           for (int l=0; l<6; l++) {
             m = FBUtility::getFindexS3Dcut(msz, gc, l, i, j, k);
             c = cut[m];
-            local_min = min(local_min, c);
+            if ( local_min > c ) local_min = c;
             if ( (c > 0.0f) && (c <= eps) ) {
               cut[m] = eps;
               g++;
@@ -3980,7 +3980,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
 #endif
           
           for (int n=0; n<6; n++) {
-            d_min = min(d_min, pos[n]);
+            //d_min = min(d_min, pos[n]);
+            if ( d_min > pos[n] ) d_min = pos[n];
           }
           z++;
           
