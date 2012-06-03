@@ -42,7 +42,7 @@ CFLAGS		= -O2 -Wall -I../include -I$(MPI_DIR)/include \
 #			  -DSAVE_ID_ASCII
 
 # FX10
-#CFLAGS		= -Kfast, simd=2, ocl, preex, array_private \
+#CFLAGS		= -Kfast, simd=2, ocl, preex \
 #		-I../include\
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include \
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include/mpi/fujitsu \
@@ -51,7 +51,7 @@ CFLAGS		= -O2 -Wall -I../include -I$(MPI_DIR)/include \
 #		-fno-strict-aliasing
 
 # K
-#CFLAGS		= -Kfast, simd=2, ocl, preex, array_private \
+#CFLAGS		= -Kfast, simd=2, ocl, preex \
 #		-I../include\
 #		-I/opt/FJSVtclang/GM-1.2.0-05/include \
 #		-I/opt/FJSVtclang/GM-1.2.0-05/include/mpi/fujitsu \

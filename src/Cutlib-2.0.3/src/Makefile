@@ -84,7 +84,7 @@ DEFINES += -DIGNORE_STL_NORMAL
 CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 # FX10
-#CFLAGS = -Kfast,ocl,preex,simd=2,array_private,parallel,openmp,optmsg=2 -V -Nsrc \
+#CFLAGS = -Kfast,ocl,preex,simd=2 \
 #        -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 $(CUTLIB): $(OBJS)

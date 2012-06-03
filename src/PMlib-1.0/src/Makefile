@@ -41,7 +41,7 @@ CFLAGS = -O3 -Wall -I../include -I$(MPI_DIR)/include
 #CFLAGS = -O3 -I../include -I$(MPI_HOME)/include
 
 # FX10
-#CFLAGS = -Kfast,ocl,preex,simd=2 -I../include
+#CFLAGS = -Kfast -I../include
 
 $(PMLIB): $(OBJS)
 	$(AR) $@ $(OBJS)
