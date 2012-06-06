@@ -1,0 +1,61 @@
+これは、TextParser ライブラリ です。
+
+
+ビルド方法 
+
+$ ./configure 
+$　make 
+$ sudo make install or # make install 
+
+configureオプション
+prefix=PREFIX : インストール先です。 デフォルトは/usr/localです。
+ライブラリが PREFIX/lib
+ヘッダファイルが PREFIX/include　
+にそれぞれインストールされます。
+
+
+利用方法
+
+ユーザープログラムは、次の様にビルドします。
+例1
+ソースコード　myprog.cpp から 実行ファイル myprog　を作成
+PREFIX は、/usr/local/TextParser
+
+g++ -o myprog myprog.cpp -I/usr/local/TextParser/include -L/usr/local/TextParser/lib -lTextParser
+
+実行する際は、
+./myprog 
+です。
+
+ただし、共有ライブラリでリンクした場合は、次の環境設定が必要です。
+bash の場合
+$ export LD_LAIBRARY_PATH=$LD_LAIBRARY_PATH:/usr/local/TextParser/lib
+
+例2
+ソースコード　myprog.c から 実行ファイル myprog　を作成
+PREFIX は、/usr/local/TextParser
+
+gcc -o myprog myprog.c -I/usr/local/TextParser/include -L/usr/local/TextParser/lib -lTextParser -lstdc++
+
+実行する際は、
+./myprog 
+です。
+
+ただし、共有ライブラリでリンクした場合は、次の環境設定が必要です。
+bash の場合
+$ export LD_LAIBRARY_PATH=$LD_LAIBRARY_PATH:/usr/local/TextParser/lib
+
+
+例3
+ソースコード　myprog.f90 から 実行ファイル myprog　を作成
+PREFIX は、/usr/local/TextParser
+
+gfortran -o myprog myprog.f90 -I/usr/local/TextParser/include -L/usr/local/TextParser/lib -lTextParser -lTextParser_f90api -lstdc++
+
+実行する際は、
+./myprog 
+です。
+
+ただし、共有ライブラリでリンクした場合は、次の環境設定が必要です。
+bash の場合
+$ export LD_LAIBRARY_PATH=$LD_LAIBRARY_PATH:/usr/local/TextParser/lib

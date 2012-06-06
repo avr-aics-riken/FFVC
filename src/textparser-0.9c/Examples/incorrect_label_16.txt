@@ -1,0 +1,4 @@
+// リーフのラベルの終わりの " が無い
+"DomainInfo" {
+    "VoxelOrigin = 0.0
+}

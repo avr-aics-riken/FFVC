@@ -1,0 +1,6 @@
+// 依存関係付き値（ベクトル値の定義）
+"Average_operation" {
+    "op" = "on"
+    "vector0" = @dep ( "/Average_operation/op" == "on" ) ? ( "A" , "B" , "C" ) : ( "D" , "E" , "F")	// vector
+    "vector1" = @dep ( "/Average_operation/op" != "on" ) ? ( "A" , "B" , "C" ) : ( "D" , "E" , "F")	// vector
+}

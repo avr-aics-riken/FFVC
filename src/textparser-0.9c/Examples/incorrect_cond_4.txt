@@ -1,0 +1,7 @@
+// 未解決のラベルが残るケース
+"Average_operation" {
+    "Result" = @dep ( ("switch3" == "on") && ("switch4" == "on") ) ? "True" : "False"
+    "switch3" = @dep ( ("switch0" == "on") && ("switch1" == "on") ) ? "ON" : "OFF"
+    "switch4" = @dep ( ("switch0" == "on") && ("switch2" == "on") ) ? "ON" : "OFF"
+    "switch0" = "on"
+}

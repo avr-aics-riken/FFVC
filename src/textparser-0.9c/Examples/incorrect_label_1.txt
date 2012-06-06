@@ -1,0 +1,6 @@
+// ラベル名のチェック
+"Doma inInfo" {
+    "VoxelOrigin" = (0.0, 0.2, 1.0)
+    "VoxelPitch" = (0.1, 0.1, 0.1)
+    "VoxelSize" = (30, 20, 50)
+}

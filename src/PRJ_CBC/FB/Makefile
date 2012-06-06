@@ -1,7 +1,7 @@
 #
 # SPHERE - Skeleton for PHysicalSvCube and Engineering REsearch
 #
-# Copyright (c) RIKEN, Japan. All right reserved. 2004-2010
+# Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
 #
 
 TARGET = libsphnsolvFB.a
@@ -29,7 +29,8 @@ CXXSRCS = \
        ../../FB/Interval_Mngr.C \
        ../../FB/Sampling.C \
        ../../FB/DataHolder.C \
-       ../../FB/dfi.C
+       ../../FB/dfi.C \
+       ../../TPControl.C
 
 
 FCSRCS = \

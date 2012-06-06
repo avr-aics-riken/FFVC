@@ -1,0 +1,20 @@
+// 依存関係付き値（改行）エラーになる。
+"Average_operation"
+    {
+       "op" 
+	    = 
+	         "on"
+    ,
+
+    "start_time"
+ = 
+    @Dep (
+              "/Average_operation/op" 
+                     == 
+                          "on"
+                                    ) 
+                                        ? 
+                                              500.0 
+                                                      : 
+                                                              0.0
+     }
