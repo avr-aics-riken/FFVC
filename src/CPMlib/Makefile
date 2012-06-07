@@ -80,13 +80,12 @@ src/cpm_ParaManager_frtIF.o: ./include/inline/cpm_ParaManager_BndComm.h
 src/cpm_ParaManager_frtIF.o: ./include/inline/cpm_ParaManager_BndCommEx.h
 src/cpm_TextParser.o: ./include/cpm_TextParser.h ./include/cpm_Base.h
 src/cpm_TextParser.o: ./include/cpm_Define.h /opt/openmpi/include/mpi.h
-src/cpm_TextParser.o: ./include/cpm_Version.h
-src/cpm_TextParser.o: /my_apps/cbc_git/src/TP/include/TextParser.h
-src/cpm_TextParser.o: /my_apps/cbc_git/src/TP/include/TextParserCommon.h
+src/cpm_TextParser.o: ./include/cpm_Version.h ../TP/include/TextParser.h
+src/cpm_TextParser.o: ../TP/include/TextParserCommon.h
 src/cpm_TextParserDomain.o: ./include/cpm_TextParserDomain.h
 src/cpm_TextParserDomain.o: ./include/cpm_TextParser.h ./include/cpm_Base.h
 src/cpm_TextParserDomain.o: ./include/cpm_Define.h /opt/openmpi/include/mpi.h
 src/cpm_TextParserDomain.o: ./include/cpm_Version.h
-src/cpm_TextParserDomain.o: /my_apps/cbc_git/src/TP/include/TextParser.h
-src/cpm_TextParserDomain.o: /my_apps/cbc_git/src/TP/include/TextParserCommon.h
+src/cpm_TextParserDomain.o: ../TP/include/TextParser.h
+src/cpm_TextParserDomain.o: ../TP/include/TextParserCommon.h
 src/cpm_TextParserDomain.o: ./include/cpm_DomainInfo.h

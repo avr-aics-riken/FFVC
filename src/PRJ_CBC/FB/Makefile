@@ -30,7 +30,7 @@ CXXSRCS = \
        ../../FB/Sampling.C \
        ../../FB/DataHolder.C \
        ../../FB/dfi.C \
-       ../../TPControl.C
+       ../../FB/TPControl.C \
 
 
 FCSRCS = \

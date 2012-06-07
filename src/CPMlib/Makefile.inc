@@ -3,7 +3,7 @@
 #####################################################################################
 
 # library settings
-TEXTPARSER = /my_apps/cbc_git/src/TP
+TEXTPARSER = ../TP
 MPICHDIR   = /opt/openmpi
 MPICHLIB   = -lmpi -lmpi_f77
 FRT_R8     = -r8
