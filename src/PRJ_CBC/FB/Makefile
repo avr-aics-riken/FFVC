@@ -219,7 +219,8 @@ depend:
 ../../FB/VoxInfo.o: ../../FB/vec3.h ../../FB/vec3_func.h
 ../../FB/VoxInfo.o: ../../FB/vec3f_func.h ../../FB/MonCompo.h
 ../../FB/VoxInfo.o: ../../FB/basic_func.h ../../FB/Sampling.h
-../../FB/VoxInfo.o: ../../FB/Interval_Mngr.h ../../FB/Intrinsic.h
+../../FB/VoxInfo.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
+../../FB/VoxInfo.o: ../../FB/Intrinsic.h
 ../../FB/BndOuter.o: ../../FB/BndOuter.h ../../FB/FB_Define.h
 ../../FB/BndOuter.o: ../../FB/mydebug.h
 ../../FB/Component.o: ../../FB/Component.h ../../FB/FB_Define.h
@@ -303,7 +304,7 @@ depend:
 ../../FB/Control.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/Control.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/Control.o: ../../FB/Sampling.h ../../FB/BndOuter.h
-../../FB/Control.o: ../../FB/Interval_Mngr.h
+../../FB/Control.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
 ../../FB/FBUtility.o: ../../FB/FBUtility.h ../../FB/FB_Define.h
 ../../FB/FBUtility.o: ../../FB/mydebug.h
 ../../FB/FileIO.o: ../../FB/FileIO.h /usr/local/sphere/include/Skl.h
@@ -454,7 +455,7 @@ depend:
 ../../FB/History.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/History.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/History.o: ../../FB/Sampling.h ../../FB/BndOuter.h
-../../FB/History.o: ../../FB/Interval_Mngr.h
+../../FB/History.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
 ../../FB/Intrinsic.o: ../../FB/Intrinsic.h /usr/local/sphere/include/Skl.h
 ../../FB/Intrinsic.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/Intrinsic.o: /usr/local/sphere/include/SklSolverBase.h
@@ -531,6 +532,7 @@ depend:
 ../../FB/Intrinsic.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/Intrinsic.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/Intrinsic.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
+../../FB/Intrinsic.o: ../../FB/TPControl.h
 ../../FB/Material.o: ../../FB/Material.h ../../FB/FB_Define.h
 ../../FB/Material.o: ../../FB/mydebug.h
 ../../FB/ParseBC.o: ../../FB/ParseBC.h /usr/local/sphere/include/Skl.h
@@ -609,7 +611,8 @@ depend:
 ../../FB/ParseBC.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
 ../../FB/ParseBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
 ../../FB/ParseBC.o: ../../FB/basic_func.h ../../FB/Sampling.h
-../../FB/ParseBC.o: ../../FB/Interval_Mngr.h ../../FB/IDtable.h
+../../FB/ParseBC.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
+../../FB/ParseBC.o: ../../FB/IDtable.h ../../FB/Intrinsic.h
 ../../FB/ParseMat.o: ../../FB/ParseMat.h /usr/local/sphere/include/Skl.h
 ../../FB/ParseMat.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/ParseMat.o: /usr/local/sphere/include/SklSolverBase.h
@@ -686,7 +689,8 @@ depend:
 ../../FB/ParseMat.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/ParseMat.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/ParseMat.o: ../../FB/Sampling.h ../../FB/BndOuter.h
-../../FB/ParseMat.o: ../../FB/Interval_Mngr.h ../../FB/IDtable.h
+../../FB/ParseMat.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
+../../FB/ParseMat.o: ../../FB/IDtable.h
 ../../FB/SetBC.o: ../../FB/SetBC.h /usr/local/sphere/include/Skl.h
 ../../FB/SetBC.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/SetBC.o: /usr/local/sphere/include/SklSolverBase.h
@@ -762,7 +766,8 @@ depend:
 ../../FB/SetBC.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
 ../../FB/SetBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
 ../../FB/SetBC.o: ../../FB/basic_func.h ../../FB/Sampling.h
-../../FB/SetBC.o: ../../FB/Interval_Mngr.h ../../FB/Intrinsic.h
+../../FB/SetBC.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
+../../FB/SetBC.o: ../../FB/Intrinsic.h
 ../../FB/Monitor.o: ../../FB/Monitor.h ../../FB/FB_Define.h
 ../../FB/Monitor.o: ../../FB/mydebug.h ../../FB/vec3.h ../../FB/vec3_func.h
 ../../FB/Monitor.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
@@ -986,3 +991,5 @@ depend:
 ../../FB/DataHolder.o: ../../FB/Parallel_node.h
 ../../FB/dfi.o: ../../FB/dfi.h ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../FB/dfi.o: ../../FB/util_Path.h
+../../FB/TPControl.o: ../../FB/TPControl.h ../../FB/FB_Define.h
+../../FB/TPControl.o: ../../FB/mydebug.h

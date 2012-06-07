@@ -24,6 +24,10 @@
 #include "Parallel_node.h"
 #include "SklUtil.h"
 #include "vec3.h"
+
+// TextParser 
+#include "TPControl.h"
+
 extern SklParaComponent* ParaCmpo;
 
 enum Intrinsic_class {
@@ -62,6 +66,8 @@ public:
   virtual bool getXML(SklSolverConfig* CF, Control* R) { return true; };
   
   virtual const char* getExampleName(void) { return NULL; };
+  
+  virtual bool getTP(SklSolverConfig* CF, Control* R, TPControl* tpCntl) { return true; };
   
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
   virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};

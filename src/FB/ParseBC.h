@@ -26,6 +26,10 @@
 #include "Material.h"
 #include "vec3.h"
 #include "Parallel_node.h"
+#include "Intrinsic.h"
+
+// TextParser 
+#include "TPControl.h"
 
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
@@ -221,6 +225,83 @@ public:
   unsigned get_NoBaseBC(void) {
     return NoBaseBC;
   }
+  
+  
+  //for text parser
+  
+protected:
+  
+  // TPControl
+  TPControl* tpCntl;
+  
+  
+  int getTP_NBC              (void);
+  unsigned scanTPmodel       (void);
+  unsigned getTP_Vel_profile (const string label_base);
+  void getTP_IBC_Adiabatic (const string label_base, unsigned n);
+  void getTP_IBC_CnstTemp  (const string label_base, unsigned n);
+  void getTP_IBC_Fan       (const string label_base, unsigned n);
+  void getTP_IBC_IBM_DF    (const string label_base, unsigned n);
+  void getTP_IBC_HeatFlux  (const string label_base, unsigned n);
+  void getTP_IBC_HeatSrc   (const string label_base, unsigned n);
+  void getTP_IBC_HT_B      (const string label_base, unsigned n);
+  void getTP_IBC_HT_N      (const string label_base, unsigned n);
+  void getTP_IBC_HT_S      (const string label_base, unsigned n);
+  void getTP_IBC_HT_SF     (const string label_base, unsigned n);
+  void getTP_IBC_HT_SN     (const string label_base, unsigned n);
+  void getTP_IBC_IsoTherm  (const string label_base, unsigned n);
+  void getTP_IBC_Monitor   (const string label_base, unsigned n, Control* C);
+  void getTP_IBC_Outflow   (const string label_base, unsigned n);
+  void getTP_IBC_Periodic  (const string label_base, unsigned n);
+  void getTP_IBC_PrsLoss   (const string label_base, unsigned n);
+  void getTP_IBC_Radiant   (const string label_base, unsigned n);
+  void getTP_IBC_SpecVel   (const string label_base, unsigned n);
+  void getTP_OBC_FarField  (const string label_base, unsigned n);
+  void getTP_OBC_HT        (const string label_base, unsigned n, string kind);
+  //void getTP_OBC_InOut     (const string label_base, unsigned n);
+  void getTP_OBC_Outflow   (const string label_base, unsigned n);
+  void getTP_OBC_Periodic  (const string label_base, unsigned n);
+  void getTP_OBC_SpecVH    (const string label_base, unsigned n);
+  void getTP_OBC_Trcfree   (const string label_base, unsigned n);
+  void getTP_OBC_Wall      (const string label_base, unsigned n);
+  void getTP_Vel_Params    (const string label_base, unsigned type, REAL_TYPE* ca, REAL_TYPE vel);
+  void getTP_Darcy         (const string label_base, unsigned n);
+  void setTP_Deface        (const string label_base, unsigned n);
+  void getTP_NV            (const string label_base, unsigned n, REAL_TYPE* v);
+  void getTP_Dir              (const string label_base, unsigned n, REAL_TYPE* v);
+  void getTP_Center           (const string label_base, unsigned n, REAL_TYPE* v);
+  
+public:
+  
+  
+  int getTP_BCval_int(const string label);
+  REAL_TYPE getTP_BCval_real(const string label);
+  
+  // Medium Table
+  int nMedium_TableTP;
+  int nMedium_TableDB;
+  MediumTableInfo *MTITP;//Medium Table <--- textparser
+  MediumTableInfo *MTIDB;//Medium Table <--- database
+  
+  void TPloadOuterBC        (void);
+  void TPsetCompoList       (Control* C);
+  void TPsetControlVars     (Control* Cref);
+  void TPsetObcPtr        (BoundaryOuter* ptr);
+  
+  void getTP_Model       (Control* C);
+  void getTP_Phase       (void);
+  void getTP_Medium_InitTemp();
+  
+  void setMediumPoint(
+                      int m_nMedium_TableTP,
+                      int m_nMedium_TableDB,
+                      MediumTableInfo *m_MTITP,
+                      MediumTableInfo *m_MTIDB);
+  
+  bool receive_TP_Ptr(TPControl* tp);
+  
+  unsigned TPcount_Outer_Cell_ID (unsigned* medium);
+  
 };
 
 #endif // _FB_PARA_BC_H_

@@ -23,6 +23,9 @@
 #include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
 
+// TextParser 
+#include "TPControl.h"
+
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class  ParseMat : public Parallel_Node {
@@ -101,6 +104,43 @@ public:
   // ----------> debug function
   void dbg_printBaseMaterialList (FILE* mp, FILE* fp);
   void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo);
+  
+  
+  //for text parser
+protected:
+  
+  // TPControl
+  TPControl* tpCntl;
+  
+  bool chkList4Solver_mat(int m);
+  unsigned missingMessage_mat(int m, unsigned key);
+  
+public:
+  
+  // Medium Table
+  int nMedium_TableTP;
+  int nMedium_TableDB;
+  MediumTableInfo *MTITP;//Medium Table <--- textparser
+  MediumTableInfo *MTIDB;//Medium Table <--- database
+  
+  void getTPmaterial();
+  void getTP_MediumTableInfo();
+  
+  //void setMediumPoint(
+  // int m_nMedium_TableTP,
+  // int m_nMedium_TableDB,
+  // MediumTableInfo *m_MTITP,
+  // MediumTableInfo *m_MTIDB);
+  
+  bool receive_TP_Ptr(TPControl* tp);
+  
+  void makeMaterialListTP(void);
+  //bool copyMaterialsTP(unsigned& odr, unsigned id);
+  void set_matMedium(const unsigned n, const int matid);
+  bool chkMatIDin(unsigned n, const int matid);
+  
+  
+
   
 };
 

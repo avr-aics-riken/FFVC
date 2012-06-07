@@ -29,6 +29,9 @@
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
 
+// TextParser 
+#include "TPControl.h"
+
 using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 
@@ -259,6 +262,9 @@ public:
 class Control {
 protected:
   SklSolverConfig* CF;  // for XML parsing
+  
+  // TPControl
+  TPControl* tpCntl;
   
 public:
   
@@ -804,6 +810,74 @@ public:
     x[1] /= RefLength;
     x[2] /= RefLength;
   }
+  
+  
+  //for text parser
+  
+protected:
+  //bool getTP_PrsAverage(void);//未使用ルーチン
+  ////未使用ルーチンgetTP_Polygonからのみコールされている
+  ////const CfgElem* getTP_Pointer(const char* key, string section);
+  void findTPCriteria(
+                      const string label1,
+                      const string label2,
+                      unsigned order,
+                      ItrCtl* IC);
+  void getTP_Algorithm      ();
+  void getTP_Average_option ();
+  void getTP_ChangeID       ();
+  void getTP_CheckParameter ();
+  void getTP_Convection     ();
+  void getTP_Derived        ();
+  //void getTP_Dimension      ();//未使用ルーチン
+  void getTP_FileIO         ();
+  void getTP_Iteration      (ItrCtl* IC);
+  void getTP_KindOfSolver   ();
+  void getTP_LES_option     ();
+  void getTP_Log            ();
+  void getTP_Para_ND        ();
+  void getTP_Para_Ref       ();
+  void getTP_Para_Temp      ();
+  void getTP_Para_Wind      ();
+  void getTP_PMtest         ();
+  void getTP_ReferenceFrame (ReferenceFrame* RF);
+  ////void getTP_restart_rough  ();
+  void getTP_Scaling        ();
+  void getTP_Solver_Properties ();
+  void getTP_start_condition();
+  void getTP_Time_Control   (DTcntl* DT);
+  //void getTP_TimeMarching   ();//未使用ルーチン
+  void getTP_Unit           ();
+  void getTP_VarRange       ();
+  void getTP_Wall_type      ();
+  
+public:
+  
+  void getTP_Para_Init         ();
+  void getTP_Polygon           ();
+  void getTP_Sampling          ();
+  void getTP_Steer_1           (DTcntl* DT);
+  void getTP_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
+  virtual void getTP_Version   ();
+  bool getTP_DomainInfo(
+                        unsigned int Dims,
+                        unsigned* size);
+  bool getTP_SUbDomainInfo(
+                           unsigned int Dims,
+                           unsigned* size);
+  bool set_DomainInfo(
+                      unsigned int Dims,
+                      unsigned* size,
+                      REAL_TYPE* origin,
+                      REAL_TYPE* pitch,
+                      REAL_TYPE* width);
+  
+  bool receive_TP_Ptr(TPControl* tp);
+  
+  // domain info
+  DomainInfo dInfo;
+  SubDomain dom;
+
   
 };
 

@@ -129,8 +129,38 @@ SklSolverCBC::SklSolverInitialize() {
     FBUtility::printVersion(mp, buf, FB_VERS);
   }
   
+  
+  int ierror;
+  std::string inputfile;
+  inputfile="cavity.txt";
+  
+  //TextParserのインスタンス生成
+  ierror = tpCntl.getTPinstance();
+  
+  //TextParserのファイル読み込み
+  ierror = tpCntl.readTPfile(inputfile);
+  
+  
+  //TPControlクラスのポインタを各クラスに渡す
+  if ( !C.receive_TP_Ptr(&tpCntl) ) {
+    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to Control class\n");
+    return -1;
+  }
+  if ( !B.receive_TP_Ptr(&tpCntl) ) {
+    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseBC class\n");
+    return -1;
+  }
+  if ( !M.receive_TP_Ptr(&tpCntl) ) {
+    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseMat class\n");
+    return -1;
+  }
+  
+  
+  
+  
   // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
-  getXMLExample(&C);
+  //getXMLExample(&C);
+  getTPExample(&C);
   
   // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
   connectExample(&C);
@@ -158,7 +188,8 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
-  C.getXML_Version();
+  //C.getXML_Version();
+  C.getTP_Version();
   
   if ( C.version != (unsigned)VERS_CBC ) {
     Hostonly_ {
@@ -176,7 +207,8 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // 最初のXMLパラメータの取得
-  C.getXML_Steer_1(&DT);
+  //C.getXML_Steer_1(&DT);
+  C.getTP_Steer_1(&DT);
   
   // FiliIOのモードを修正
   if ( pn.numProc == 1 ) {
@@ -204,10 +236,12 @@ SklSolverCBC::SklSolverInitialize() {
   
 
   // XMLパラメータの取得
-  C.getXML_Steer_2(IC, &RF);
+  //C.getXML_Steer_2(IC, &RF);
+  C.getTP_Steer_2(IC, &RF);
   
   // 組み込み例題の固有パラメータ
-  if ( !Ex->getXML(m_solvCfg, &C) ) Exit(0);
+  //if ( !Ex->getXML(m_solvCfg, &C) ) Exit(0);
+  if ( !Ex->getTP(m_solvCfg, &C, &tpCntl) ) Exit(0);
 
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
   ix      = (int*)&C.imax;
@@ -271,7 +305,8 @@ SklSolverCBC::SklSolverInitialize() {
       
     case id_Polygon:
       // パラメータの取得
-      C.getXML_Polygon();
+      //C.getXML_Polygon();
+      C.getTP_Polygon();
       
       // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
@@ -354,6 +389,17 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ printf("\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
     return -1;
   }
+  
+  
+  
+  //Medium_Tableを呼んでMediumTableInfoクラスオブジェクトに保持する
+  M.getTP_MediumTableInfo(); //Model_Settingの読み込みに先立ってMedium_Tableを読む
+  
+  //ここでParseMatクラスから他のクラスへポインタをセットする--->後で編集
+  //MediumTableInfoクラスのオブジェクトポインタをParseMatクラスからParseBCクラスにを渡す
+  setMediumPoint(&B,&M);
+  
+  
   
   // XMLから C.NoBC, C.NoID, C.NoCompoを取得
   // KOSオプションとパラメータの整合性をチェック
@@ -751,14 +797,19 @@ SklSolverCBC::SklSolverInitialize() {
   }
 #endif
   
+  
+  
   // 温度計算の場合の初期値指定
   if ( C.isHeatProblem() ) {
-    B.getXML_Medium_InitTemp();
+    std::cout <<  "now heat probrem *** initialize" << std::endl;
+    //B.getXML_Medium_InitTemp();
+    B.getTP_Medium_InitTemp();
   }
   
   // set phase 
   if ( C.BasicEqs == INCMP_2PHASE ) {
-    B.getXML_Phase();
+    //B.getXML_Phase();
+    B.getTP_Phase();
   }
   
   // CompoListの内容を表示する
@@ -796,6 +847,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
   if ( C.Sampling.log == ON ) getXML_Monitor(m_solvCfg, &MO);
+  //if ( C.Sampling.log == ON ) getTP_Monitor(m_solvCfg, &MO);//未完成
   
   
   // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
@@ -4644,3 +4696,440 @@ bool SklSolverCBC::getCoarseResult (
   
 	return true;
 }
+
+
+/**
+ @fn void SklSolverCBC::getTPExample(Control* Cref)
+ @brief 組み込み例題の設定
+ @param Cref Controlクラスのポインタ
+ */
+void SklSolverCBC::getTPExample(Control* Cref)
+{
+  std::string keyword;
+  string label;
+  
+  label="/SphereConfig/Steer/Example";
+  if ( !(tpCntl.GetValue(label, &keyword )) ) {
+    Hostonly_ stamped_printf("\tExample error\n");
+    Exit(0);
+  }
+  //std::cout << "getTPExample --- keyword: "<< keyword << std::endl;
+  
+  if     ( !strcasecmp(keyword.c_str(), "Users") )             Cref->Mode.Example = id_Users;
+  else if( !strcasecmp(keyword.c_str(), "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
+  else if( !strcasecmp(keyword.c_str(), "Duct") )              Cref->Mode.Example = id_Duct;
+  else if( !strcasecmp(keyword.c_str(), "SHC1D") )             Cref->Mode.Example = id_SHC1D;
+  else if( !strcasecmp(keyword.c_str(), "Performance_Test") )  Cref->Mode.Example = id_PMT;
+  else if( !strcasecmp(keyword.c_str(), "Rectangular") )       Cref->Mode.Example = id_Rect;
+  else if( !strcasecmp(keyword.c_str(), "Cylinder") )          Cref->Mode.Example = id_Cylinder;
+  else if( !strcasecmp(keyword.c_str(), "Back_Step") )         Cref->Mode.Example = id_Step;
+  else if( !strcasecmp(keyword.c_str(), "Polygon") )           Cref->Mode.Example = id_Polygon;
+  else if( !strcasecmp(keyword.c_str(), "Sphere") )            Cref->Mode.Example = id_Sphere;
+  else {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
+    Exit(0);
+  }
+}
+
+
+/**
+ @fn void SklSolverCBC::setMediumPoint(
+ ParseBC* B,
+ ParseMat* M);
+ @brief 
+ @param B ParseBC クラスオブジェクトのポインタ
+ @param M ParseMatのポインタ
+ */
+void SklSolverCBC::setMediumPoint(
+                                  ParseBC* B,
+                                  ParseMat* M)
+{
+  //B.nMedium_TableTP=M.nMedium_TableTP;
+  //B.nMedium_TableDB=M.nMedium_TableDB;
+  //B.MTITP=M.MTITP;
+  //B.MTIDB=M.MTIDB;
+  B->setMediumPoint(
+                    M->nMedium_TableTP,
+                    M->nMedium_TableDB,
+                    M->MTITP,
+                    M->MTIDB);
+}
+
+
+
+/**
+ @fn void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
+ @brief TPに記述されたモニタ座標情報を取得し，リストに保持する
+ @param M MonitorList クラスオブジェクトのポインタ
+ */
+void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
+{
+  const CfgElem *elemTop=NULL, *elmL1=NULL, *elmL2=NULL;
+  const char* p=NULL;
+  const char* method=NULL;
+  const char* mode=NULL;
+  const CfgParam * param=NULL;
+  REAL_TYPE f_val=0.0;
+  //int nvar=0;
+  MonitorCompo::Type type;
+  vector<string> variables;
+  
+  
+  std::string str,label;
+  string label_base,label_leaf;
+  REAL_TYPE fval;
+  
+  
+  // Monitor_List section is already confirmed
+  //elemTop = CF->GetTop(STEER);
+  //elmL1 = elemTop->GetElemFirst("");
+  
+  // ログ出力のON/OFFはControl::getTP_Sampling()で取得済み
+  
+  // 集約モード
+  label="/SphereConfig/Steer/Monitor_List/output_mode";
+  //std::cout <<  "label : " << label << std::endl;
+  if ( !(tpCntl.GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  //std::cout <<  "str : " << str << std::endl;
+  if     ( !strcasecmp(str.c_str(), "gather") ) {
+    C.Sampling.out_mode = MonitorList::GATHER;
+    M->setOutputType(MonitorList::GATHER);
+  }
+  else if( !strcasecmp(str.c_str(), "distribute") ) {
+    C.Sampling.out_mode = MonitorList::DISTRIBUTE;
+    M->setOutputType(MonitorList::DISTRIBUTE);
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyord for 'Output_Mode'\n");
+    Exit(0);
+  }
+  
+  
+  // サンプリング間隔
+  label="/SphereConfig/Steer/Monitor_List/Sampling_Interval_Type";
+  //std::cout <<  "label : " << label << std::endl;
+  if ( !(tpCntl.GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval_Type' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  else {
+    if ( !strcasecmp(str.c_str(), "step") ) {
+      C.Interval[Interval_Manager::tg_sampled].setMode_Step();
+    }
+    else if ( !strcasecmp(str.c_str(), "time") ) {
+      C.Interval[Interval_Manager::tg_sampled].setMode_Time();
+    }
+    else {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Sampling_Interval_Type' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    label="/SphereConfig/Steer/Monitor_List/Sampling_Interval";
+    //std::cout <<  "label : " << label << std::endl;
+    if ( !(tpCntl.GetValue(label, &f_val )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    else {
+      C.Interval[Interval_Manager::tg_sampled].setInterval((double)f_val);
+    }
+  }
+  
+  // 単位指定
+  label="/SphereConfig/Steer/Monitor_List/Unit";
+  //std::cout <<  "label : " << label << std::endl;
+  if ( !(tpCntl.GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  //std::cout <<  "str : " << str << std::endl;
+  if     ( !strcasecmp(str.c_str(), "Dimensional") ) {
+    C.Sampling.unit = DIMENSIONAL;
+    M->setSamplingUnit(DIMENSIONAL);
+  }
+  else if( !strcasecmp(str.c_str(), "Non_Dimensional") ) {
+    C.Sampling.unit = NONDIMENSIONAL;
+    M->setSamplingUnit(NONDIMENSIONAL);
+  }
+  else {
+    Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit' section\n");
+    Exit(0);
+  }
+  
+  // サンプリングの指定単位が有次元の場合に，無次元に変換
+  if ( C.Sampling.unit == DIMENSIONAL ) {
+    C.Interval[Interval_Manager::tg_sampled].normalizeInterval(C.Tscale);
+  }
+  
+  
+  // 指定モニタ個数のチェック
+  int nnode=0;
+  int nlist=0;
+  label_base="/SphereConfig/Steer/Monitor_List";
+  nnode=tpCntl.countLabels(label_base);
+  //std::cout <<  "label_base : " << label_base << std::endl;
+  //std::cout <<  "nnode : " << nnode << std::endl;
+  if ( nnode == 0 ) {
+    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
+    Exit(0);
+  }
+  
+  for (unsigned i=0; i<nnode; i++) {
+    if(!tpCntl.GetNodeStr(label_base,i+1,&str)){
+      printf("\tParsing error : No Elem name\n");
+      Exit(0);
+    }
+    if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
+    nlist++;
+  }
+  
+  if(nlist==0 && C.isMonitor() == OFF) {
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in TP. \n");
+    Exit(0);
+  }
+  
+  cout << "nlist = " << nlist << endl;
+  abort();
+  
+  
+  //if ( (elmL1->GetElemSize() < 1) && (C.isMonitor() == OFF) ) {
+  //  Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in TP. \n");
+  //  Exit(0);
+  //}
+  
+  
+  /*
+   
+   // モニターリストの読み込み
+   elmL2 = elmL1->GetElemFirst();
+   
+   while (elmL2) {
+   
+   // sampling type & param check
+   p = elmL2->GetName();
+   if ( !strcasecmp(p, "point_set") ) {
+   type = MonitorCompo::POINT_SET;
+   if ( 0 == elmL2->GetElemSize() ) {
+   Hostonly_ stamped_printf("\tParsing error : At least, 1 elem of 'set' should be found in 'point_set'\n");
+   Exit(0);
+   }
+   }
+   else if ( !strcasecmp(p, "line") ) {
+   type = MonitorCompo::LINE;
+   if ( 2 != elmL2->GetElemSize() ) {
+   Hostonly_ stamped_printf("\tParsing error : 2 elems (from/to) should be found in 'line'\n");
+   Exit(0);
+   }
+   }
+   else {
+   Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in 'Monitor_List'\n");
+   Exit(0);
+   }
+   
+   // Labelの取得．ラベルなしでもエラーではない
+   if ( !(label = elmL2->GetComment()) ) {
+   Hostonly_ stamped_printf("\tParsing warning : No commnet in '%s'\n", p);
+   }
+   
+   // variable
+   variables.clear();
+   param = elmL2->GetParamFirst("variable");
+   while (param) {
+   str=NULL;
+   if ( !param->GetData(&str) ) {
+   Hostonly_ stamped_printf("\tParsing error : fail to get 'variable' in 'Monitor_List'\n");
+   Exit(0);
+   }
+   variables.push_back(str);
+   param = elmL2->GetParamNext(param, "variable");
+   }
+   if (variables.size() == 0) {
+   Hostonly_ stamped_printf("\tParsing error : No 'variable' in 'Monitor_List'\n");
+   Exit(0);
+   }
+   
+   // method
+   if (!elmL2->GetValue("sampling_method", &method)) {
+   Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in 'Monitor_List'\n");
+   Exit(0);
+   }
+   
+   // mode
+   if (!elmL2->GetValue("sampling_mode", &mode)) {
+   Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in 'Monitor_List'\n");
+   Exit(0);
+   }
+   
+   // get coordinate
+   if ( type == MonitorCompo::POINT_SET ) {
+   vector<MonitorCompo::MonitorPoint> pointSet;
+   getTP_Mon_Pointset(M, elmL2, pointSet);
+   M->setPointSet(label, variables, method, mode, pointSet);
+   }
+   else {
+   REAL_TYPE from[3], to[3];
+   int nDivision;
+   getTP_Mon_Line(M, elmL2, from, to, nDivision);
+   M->setLine(label, variables, method, mode, from, to, nDivision);
+   }
+   
+   elmL2 = elmL1->GetElemNext(elmL2); // ahead on the next pointer
+   }
+   
+   
+   */
+  
+}
+
+
+/**
+ @fn void SklSolverCBC::getTP_Mon_Line(MonitorList* M,
+ const string label_base,
+ REAL_TYPE from[3],
+ REAL_TYPE to[3],
+ int& nDivision)
+ @brief TPに記述されたモニタ座標情報(Line)を取得
+ @param M MonitorList クラスオブジェクトのポインタ
+ @param elmL2 コンフィギュレーションツリーのポインタ
+ @param from Line始点座標
+ @param to   Line終点座標
+ @param nDivision Line分割数
+ @note データは無次元化して保持
+ */
+void SklSolverCBC::getTP_Mon_Line(MonitorList* M,
+                                  const string label_base,
+                                  REAL_TYPE from[3],
+                                  REAL_TYPE to[3],
+                                  int& nDivision)
+{
+  std::string str,label;
+  REAL_TYPE v[3];
+  
+  label=label_base+"/division";
+  //std::cout <<  "label : " << label << std::endl;
+  if ( !(tpCntl.GetValue(label, &nDivision )) ) {
+	  Hostonly_ stamped_printf("\tParsing error : no division\n");
+	  Exit(0);
+  }
+  if ( nDivision == 0 ) Exit(0);
+  
+  // load parameter of 'from' and 'to'
+  label=label_base+"/from";
+  //std::cout <<  "label : " << label << std::endl;
+  for (unsigned n=0; n<3; n++) v[n]=0.0;
+  if ( !(tpCntl.GetVector(label, v, 3 )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'from' in 'line'\n");
+    Exit(0);
+  }
+  from[0]=v[0];
+  from[1]=v[1];
+  from[2]=v[2];
+  if (C.Sampling.unit == DIMENSIONAL) {
+    normalizeCord(from);
+  }
+  
+  label=label_base+"/to";
+  //std::cout <<  "label : " << label << std::endl;
+  for (unsigned n=0; n<3; n++) v[n]=0.0;
+  if ( !(tpCntl.GetVector(label, v, 3 )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'to' in 'line'\n");
+    Exit(0);
+  }
+  to[0]=v[0];
+  to[1]=v[1];
+  to[2]=v[2];
+  if (C.Sampling.unit == DIMENSIONAL) {
+    normalizeCord(to);
+  }
+}
+
+/**
+ @fn void SklSolverCBC::getTP_Mon_Pointset(MonitorList* M,
+ const string label_base,
+ vector<MonitorCompo::MonitorPoint>& pointSet)
+ @brief TPに記述されたモニタ座標情報を取得(PointSet)
+ @param M MonitorList クラスオブジェクトのポインタ
+ @param m order
+ @param elmL2 コンフィギュレーションツリーのポインタ
+ @param pointSet PointSet配列
+ @note データは無次元化して保持
+ */
+void SklSolverCBC::getTP_Mon_Pointset(MonitorList* M,
+                                      const string label_base,
+                                      vector<MonitorCompo::MonitorPoint>& pointSet)
+{
+  /*
+   
+   REAL_TYPE v[3];
+   const char* str=NULL;
+   char tmpstr[20];
+   
+   v[0] = v[1] = v[2] = 0.0;
+   
+   // load parameter for a set
+   elmL3 = elmL2->GetElemFirst();
+   
+   for (unsigned j=0; j<elmL2->GetElemSize(); j++) {
+   
+   if ( strcasecmp("set", elmL3->GetName()) ) { // not agree
+   Hostonly_ stamped_printf("\tParsing error : fail to get 'set' in 'point_set' >> %s\n", elmL3->GetName());
+   Exit(0);
+   }
+   if ( !elmL3->GetVctValue("x", "y", "z", &v[0], &v[1], &v[2]) ) {
+   Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'point_set'\n");
+   Exit(0);
+   }
+   if (C.Sampling.unit == DIMENSIONAL) {
+   normalizeCord(v);
+   }
+   
+   // set Labelの取得．ラベルなしでもエラーではない
+   if ( !(str = elmL3->GetComment()) ) {
+   Hostonly_ stamped_printf("\tParsing warning : No commnet for 'set'\n");
+   }
+   if ( !str ) {
+   sprintf(tmpstr, "point_%d",j);
+   str = tmpstr;
+   }
+   
+   pointSet.push_back(MonitorCompo::MonitorPoint(v, str));
+   
+   elmL3 = elmL2->GetElemNext(elmL3); // ahead on the next pointer
+   }  
+   
+   */
+  
+}
+
+//@fn void SklSolverCBC::GetDomainInfo(void)
+//@brief
+//@note 
+bool SklSolverCBC::GetDomainInfo(
+                                 unsigned int Dims,
+                                 unsigned* size,
+                                 REAL_TYPE* origin,
+                                 REAL_TYPE* pitch,
+                                 REAL_TYPE* width)
+{
+  
+	if ( !C.getTP_DomainInfo(Dims, size) ){
+    stamped_printf("\t error getTP_DomainInfo : \n");
+		return false;
+	}
+  
+	if ( !C.getTP_SUbDomainInfo(Dims, size) ){
+    stamped_printf("\t error getTP_SUbDomainInfo : \n");
+		return false;
+	}
+  
+	if ( !C.set_DomainInfo(Dims, size, origin, pitch, width) ){
+    stamped_printf("\t error set_DomainInfo : \n");
+		return false;
+	}
+  
+	return true;
+}
+

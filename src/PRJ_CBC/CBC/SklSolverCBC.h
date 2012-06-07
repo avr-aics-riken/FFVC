@@ -74,6 +74,9 @@
 // Cutlib
 #include "Cutlib.h"
 
+// TextParser 
+#include "TPControl.h"
+
 #include "omp.h"
 
 using namespace PolylibNS;
@@ -147,6 +150,9 @@ public:
   
   // for parallel
   Parallel_Info pn;
+  
+  // TPControl
+  TPControl tpCntl;
   
   char *m_condition;  // for file name of text output
   char *m_log;
@@ -410,6 +416,35 @@ public:
     x[1] /= C.RefLength;
     x[2] /= C.RefLength;
   }
+  
+  //for text parser
+  virtual void getTPExample(Control* Cref);
+  
+  //モニタクラスに戻す
+  void getTP_Monitor       (SklSolverConfig* CF, MonitorList* M);//未完成
+  void getTP_Mon_Line      (
+                            MonitorList* M,
+                            const string label_base,
+                            REAL_TYPE from[3],
+                            REAL_TYPE to[3],
+                            int& nDivision);
+  void getTP_Mon_Pointset  (//未修正
+                            MonitorList* M,//使用していない
+                            const string label_base,
+                            vector<MonitorCompo::MonitorPoint>& pointSet);
+  
+  bool GetDomainInfo(
+                     unsigned int Dims,
+                     unsigned* size,
+                     REAL_TYPE* origin,
+                     REAL_TYPE* pitch,
+                     REAL_TYPE* width);
+  
+  void setMediumPoint(
+                      ParseBC* B,
+                      ParseMat* M);
+
+  
   
 };
 
