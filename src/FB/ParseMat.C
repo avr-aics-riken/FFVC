@@ -270,7 +270,7 @@ void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
 /**
  @fn void ParseMat::getXMLmaterial(void)
  @brief Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
- */
+ 
 void ParseMat::getXMLmaterial(void)
 {
   int id;
@@ -352,7 +352,7 @@ void ParseMat::getXMLmaterial(void)
       }
     }
   }
-}
+}*/
 
 
 /**
@@ -603,7 +603,7 @@ void ParseMat::setControlVars(Control* Cref, IDtable* itbl, MaterialList* m_mat,
   DiffTemp       = Cref->DiffTemp;
   KOS            = Cref->KindOfSolver;
   iTable = itbl;
-  CF     = cfg;
+  //CF     = cfg;
   
   mat = m_mat;
 }
@@ -637,10 +637,10 @@ void ParseMat::getTP_MediumTableInfo()
   nMedium_TableTP=0;
   nMedium_TableDB=0;
   
-  label_base="/SphereConfig/Medium_Table";
+  label_base="/Medium_Table";
   n1=tpCntl->countLabels(label_base);
-  std::cout <<  "label_base : " << label_base << std::endl;
-  std::cout <<  "n1 : " << n1 << std::endl;
+  //std::cout <<  "label_base : " << label_base << std::endl;
+  //std::cout <<  "n1 : " << n1 << std::endl;
   if ( n1 < 0) {
     stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
     Exit(0);
@@ -648,7 +648,7 @@ void ParseMat::getTP_MediumTableInfo()
   nMedium_TableTP=n1;
   
   //MediumTableIndoクラスのインスタンス
-  std::cout <<  "nMedium_TableTP : " << nMedium_TableTP << std::endl;
+  //std::cout <<  "nMedium_TableTP : " << nMedium_TableTP << std::endl;
   MTITP = new MediumTableInfo[nMedium_TableTP];//Medium Table Instance
   
   for (int i1=1; i1<=n1; i1++) {//Medium_Table loop
@@ -704,7 +704,7 @@ void ParseMat::getTP_MediumTableInfo()
   
   //return;
   
-  //debug write
+  /*debug write
   
   // イテレータを生成
   map<string, REAL_TYPE>::iterator itr;
@@ -726,7 +726,7 @@ void ParseMat::getTP_MediumTableInfo()
 	    cout << "i = " << i << "  icounter = " << icounter 
 			<< "  key:" << a1 << "  value:" << a2 << endl;
     }
-  }
+  }*/
   
   //delete [] MTITP;
   
@@ -900,7 +900,7 @@ void ParseMat::set_matMedium(const unsigned n, const int matid)
 	//debug
 	cout << "n = " << n << endl;
 	cout << "matid = " << matid << endl;
-	cout << "要素数：" << (unsigned int)MTITP[matid-1].m_fval.size() << endl;
+	cout << "element=" << (unsigned int)MTITP[matid-1].m_fval.size() << endl;
   
 	int nfval=(unsigned int)MTITP[matid-1].m_fval.size();
 	if(nfval > property_END){

@@ -52,7 +52,7 @@ TextParser::TextParser(){
  */
 
 TextParserError TextParser::read(const std::string& file){
-  std::cout << file << std::endl;
+  //std::cout << file << std::endl;
   
   TextParserError ret = TP_NO_ERROR;
 

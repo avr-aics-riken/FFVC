@@ -258,9 +258,10 @@ public:
   virtual bool SklSolverUsage       (const char* cmd);
   
   virtual void connectExample       (Control* Cref);
-  virtual void getXMLExample        (Control* Cref);
   virtual void set_timing_label     (void);
   virtual void VoxelInitialize      (void);
+  
+  
   
   bool chkMediumConsistency(void);
   bool hasLinearSolver (unsigned L);
@@ -285,6 +286,10 @@ public:
   
   void AverageOutput        (REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
+  
+  void getTPExample         (Control* Cref);
+  
+  
   void Variation_Space      (REAL_TYPE* avr, REAL_TYPE* rms, REAL_TYPE& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf);
   void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
@@ -418,7 +423,7 @@ public:
   }
   
   //for text parser
-  virtual void getTPExample(Control* Cref);
+  
   
   //モニタクラスに戻す
   void getTP_Monitor       (SklSolverConfig* CF, MonitorList* M);//未完成

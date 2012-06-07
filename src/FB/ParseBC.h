@@ -88,49 +88,49 @@ protected:
   bool isCompoTransfer    (unsigned label);
   bool isIDinTable        (int candidate);
   
-  int getNBC              (void);
+  //int getNBC              (void);
   int getStateinTable     (unsigned id);
   
   unsigned getNoMaterial      (void);
-  unsigned getXML_Vel_profile (const CfgElem *elmL, const char* err_str);
+  //unsigned getXML_Vel_profile (const CfgElem *elmL, const char* err_str);
   unsigned oppositDir         (unsigned dir);
-  unsigned scanXMLmodel       (void);
+  //unsigned scanXMLmodel       (void);
   
   void chkKeywordIBC        (const char *keyword, unsigned m);
   void chkKeywordOBC        (const char *keyword, unsigned m);
   void dbg_printBaseOBC     (FILE* fp);
-  void getDarcy             (const CfgElem *elmL, unsigned n);
-  void get_NV               (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
-  void get_Dir              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
-  void get_Center           (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  //void getDarcy             (const CfgElem *elmL, unsigned n);
+  //void get_NV               (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  //void get_Dir              (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
+  //void get_Center           (const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v);
   void getUnitVec           (REAL_TYPE* v);
-  void getXML_IBC_Adiabatic (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_CnstTemp  (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_Fan       (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_IBM_DF    (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HeatFlux  (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HeatSrc   (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HT_B      (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HT_N      (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HT_S      (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HT_SF     (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_HT_SN     (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_IsoTherm  (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_Monitor   (const CfgElem *elmL, unsigned n, Control* C);
-  void getXML_IBC_Outflow   (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_Periodic  (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_PrsLoss   (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_Radiant   (const CfgElem *elmL, unsigned n);
-  void getXML_IBC_SpecVel   (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_FarField  (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_HT        (const CfgElem *elmL, unsigned n, const char* kind);
-  void getXML_OBC_InOut     (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_Outflow   (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_Periodic  (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_SpecVH    (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_Trcfree   (const CfgElem *elmL, unsigned n);
-  void getXML_OBC_Wall      (const CfgElem *elmL, unsigned n);
-  void getXML_Vel_Params    (const CfgElem *elmL, unsigned type, REAL_TYPE* ca, REAL_TYPE vel, const char* err_str);
+  //void getXML_IBC_Adiabatic (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_CnstTemp  (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_Fan       (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_IBM_DF    (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HeatFlux  (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HeatSrc   (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HT_B      (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HT_N      (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HT_S      (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HT_SF     (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_HT_SN     (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_IsoTherm  (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_Monitor   (const CfgElem *elmL, unsigned n, Control* C);
+  //void getXML_IBC_Outflow   (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_Periodic  (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_PrsLoss   (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_Radiant   (const CfgElem *elmL, unsigned n);
+  //void getXML_IBC_SpecVel   (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_FarField  (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_HT        (const CfgElem *elmL, unsigned n, const char* kind);
+  //void getXML_OBC_InOut     (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_Outflow   (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_Periodic  (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_SpecVH    (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_Trcfree   (const CfgElem *elmL, unsigned n);
+  //void getXML_OBC_Wall      (const CfgElem *elmL, unsigned n);
+  //void getXML_Vel_Params    (const CfgElem *elmL, unsigned type, REAL_TYPE* ca, REAL_TYPE vel, const char* err_str);
   void printCompo           (FILE* fp, REAL_TYPE* nv, int* ci, MaterialList* mat);
   void printFaceOBC         (FILE* fp, REAL_TYPE* G_Lbx);
   void printOBC             (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, unsigned face);
@@ -188,24 +188,24 @@ public:
   bool isIDinCompo        (unsigned candidate_id, unsigned now);
   bool isIDinCompo        (unsigned candidate_id, int def, unsigned now);
   
-  int get_BCval_int       (const CfgElem *elmL, const char* key);
+  //int get_BCval_int       (const CfgElem *elmL, const char* key);
   
-  REAL_TYPE get_BCval_real(const CfgElem *elmL, const char* key);
+  //REAL_TYPE get_BCval_real(const CfgElem *elmL, const char* key);
   
-  void count_Outer_Cell_ID(int* medium);
+  //void count_Outer_Cell_ID(int* medium);
   void chkBCconsistency   (unsigned kos);
-  void getXML_Model       (void);
-  void getXML_Phase       (void);
-  void loadOuterBC        (void);
+  //void getXML_Model       (void);
+  //void getXML_Phase       (void);
+  //void loadOuterBC        (void);
   void printCompoInfo     (FILE* mp, FILE* fp, REAL_TYPE* nv, int* ci, MaterialList* mat);
   void printOBCinfo       (FILE* mp, FILE* fp, REAL_TYPE* G_Lbx);
   void printTable         (FILE* fp);
   void receiveCompoPtr    (CompoList* CMP);
   void receiveCfgPtr      (SklSolverConfig* cfg);
   void setMedium          (Control* Cref);
-  void setCompoList       (Control* C);
-  void setControlVars     (Control* Cref);
-  void getXML_Medium_InitTemp(void);
+  //void setCompoList       (Control* C);
+  //void setControlVars     (Control* Cref);
+  //void getXML_Medium_InitTemp(void);
   void setObcPtr          (BoundaryOuter* ptr);
   void setRefMedium       (MaterialList* mat, Control* Cref);
   void setRefValue        (MaterialList* mat, CompoList* cmp, Control* C);
@@ -300,7 +300,7 @@ public:
   
   bool receive_TP_Ptr(TPControl* tp);
   
-  unsigned TPcount_Outer_Cell_ID (unsigned* medium);
+  void TPcount_Outer_Cell_ID (int* medium);
   
 };
 

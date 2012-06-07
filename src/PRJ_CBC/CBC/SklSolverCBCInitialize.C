@@ -131,17 +131,15 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   int ierror;
-  std::string inputfile;
-  inputfile="cavity.txt";
+  std::string inputfile("cavity.tp");
   
-  //TextParserのインスタンス生成
+  // TextParserのインスタンス生成
   ierror = tpCntl.getTPinstance();
   
-  //TextParserのファイル読み込み
+  // TextParserのファイル読み込み
   ierror = tpCntl.readTPfile(inputfile);
   
-  
-  //TPControlクラスのポインタを各クラスに渡す
+  // TPControlクラスのポインタを各クラスに渡す
   if ( !C.receive_TP_Ptr(&tpCntl) ) {
     Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to Control class\n");
     return -1;
@@ -846,8 +844,8 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
-  if ( C.Sampling.log == ON ) getXML_Monitor(m_solvCfg, &MO);
-  //if ( C.Sampling.log == ON ) getTP_Monitor(m_solvCfg, &MO);//未完成
+  //if ( C.Sampling.log == ON ) getXML_Monitor(m_solvCfg, &MO);
+  if ( C.Sampling.log == ON ) getTP_Monitor(m_solvCfg, &MO);//未完成
   
   
   // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
@@ -2218,34 +2216,6 @@ void SklSolverCBC::gather_DomainInfo(void)
 
 
 /**
- @fn void SklSolverCBC::getXMLExample(Control* Cref)
- @brief 組み込み例題の設定
- @param Cref Controlクラスのポインタ
- */
-void SklSolverCBC::getXMLExample(Control* Cref)
-{
-  const char *keyword=NULL;
-  ParseSteer Tree(m_solvCfg);
-  
-  if ( !(keyword=Tree.getParam("Example")) ) Exit(0);
-  
-  if     ( !strcasecmp(keyword, "Users") )                    Cref->Mode.Example = id_Users;
-  else if( !strcasecmp(keyword, "Parallel_Plate_2D") )        Cref->Mode.Example = id_PPLT2D;
-  else if( !strcasecmp(keyword, "Duct") )                     Cref->Mode.Example = id_Duct;
-  else if( !strcasecmp(keyword, "SHC1D"))                     Cref->Mode.Example = id_SHC1D;
-  else if( !strcasecmp(keyword, "Performance_Test") )         Cref->Mode.Example = id_PMT;
-  else if( !strcasecmp(keyword, "Rectangular") )              Cref->Mode.Example = id_Rect;
-  else if( !strcasecmp(keyword, "Cylinder") )                 Cref->Mode.Example = id_Cylinder;
-  else if( !strcasecmp(keyword, "Back_Step") )                Cref->Mode.Example = id_Step;
-  else if( !strcasecmp(keyword, "Polygon") )                  Cref->Mode.Example = id_Polygon;
-  else if( !strcasecmp(keyword, "Sphere") )                   Cref->Mode.Example = id_Sphere;
-  else {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
-    Exit(0);
-  }
-}
-
-/**
  @fn void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
  @brief XMLに記述されたモニタ座標情報を取得し，リストに保持する
  @param M MonitorList クラスオブジェクトのポインタ
@@ -3200,16 +3170,20 @@ void SklSolverCBC::setBCinfo(ParseBC* B)
   B->receiveCompoPtr(cmp);
 
   // XMLの情報を元にCompoListの情報を設定する
-  B->setCompoList(&C);
+  //B->setCompoList(&C);
+  B->TPsetCompoList(&C);
   
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();
+ 
 
-  // BoundaryOuterクラスのポインタを渡す
-  B->setObcPtr(BC.get_OBC_Ptr());
-
+  //外部境界数NoBaseBCを数えてBoundartOuterクラスオブジェクトをnew
+  B->TPsetObcPtr(BC.get_OBC_Ptr());
+  //B->setObcPtr(BC.get_OBC_Ptr());
+  
   // XMLファイルをパースして，外部境界条件を保持する
-  B->loadOuterBC();
+  //B->loadOuterBC();
+  B->TPloadOuterBC();
   
   // KOSと境界条件種類の整合性をチェック
   B->chkBCconsistency(C.KindOfSolver);
@@ -3315,7 +3289,8 @@ void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
   M->setControlVars(&C, B->get_IDtable_Ptr(), mat, m_solvCfg);
   
   // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
-  M->getXMLmaterial();
+  //M->getXMLmaterial();
+  M->getTPmaterial();//何もしない
   
 #if 0
   // Materialの基本リストを表示
@@ -3323,7 +3298,8 @@ void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
 #endif
   
   // MaterialListを作成する
-  M->makeMaterialList();
+  //M->makeMaterialList();
+  M->makeMaterialListTP();// ---> MediumTableInfo *MTITP からmatを作成
   
   // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
   M->makeLinkCmpMat(cmp);
@@ -3439,10 +3415,13 @@ void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
   // NoID = scanXMLmodel();
   // NoCompo = NoBC + NoID;
 	// ParseBCクラス内でiTable[NoID+1]を確保
-  B->setControlVars(&C);
+  //B->setControlVars(&C);
+  B->TPsetControlVars(&C);
+  
   
   // XMLファイルのModel_SettingからボクセルIDの情報を取得
-  B->getXML_Model();
+  //B->getXML_Model();
+  B->getTP_Model(&C);
   
   // XMLから得られたIDテーブルを表示
   Hostonly_ {
@@ -4316,7 +4295,7 @@ void SklSolverCBC::VoxelInitialize(void)
   if ( C.Mode.Example == id_Users ) {
     const char* fname=NULL;
     
-    if ( !(fname = C.getVoxelFileName()) ) {
+    if ( !(fname = C.getTP_VoxelFileName()) ) {
       Hostonly_ stamped_printf("\tRead error : A file name of voxel model is invalid.\n");
       Exit(0);
     }
@@ -4470,7 +4449,8 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
   int cell_id[NOFACE];
   for (int i=0; i<NOFACE; i++) cell_id[i] = 0;
   
-  B->count_Outer_Cell_ID(cell_id);
+  //B->count_Outer_Cell_ID(cell_id);
+  B->TPcount_Outer_Cell_ID(cell_id);
   
   Hostonly_ {
     fprintf(fp, "\tCell IDs on Guide cell region\n");
@@ -4706,14 +4686,13 @@ bool SklSolverCBC::getCoarseResult (
 void SklSolverCBC::getTPExample(Control* Cref)
 {
   std::string keyword;
-  string label;
+  std::string label;
   
-  label="/SphereConfig/Steer/Example";
+  label="/Steer/Example";
   if ( !(tpCntl.GetValue(label, &keyword )) ) {
     Hostonly_ stamped_printf("\tExample error\n");
     Exit(0);
   }
-  //std::cout << "getTPExample --- keyword: "<< keyword << std::endl;
   
   if     ( !strcasecmp(keyword.c_str(), "Users") )             Cref->Mode.Example = id_Users;
   else if( !strcasecmp(keyword.c_str(), "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
@@ -4787,7 +4766,7 @@ void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
   // ログ出力のON/OFFはControl::getTP_Sampling()で取得済み
   
   // 集約モード
-  label="/SphereConfig/Steer/Monitor_List/output_mode";
+  label="/Steer/Monitor_List/output_mode";
   //std::cout <<  "label : " << label << std::endl;
   if ( !(tpCntl.GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'Monitor_List'\n");
@@ -4809,7 +4788,7 @@ void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
   
   
   // サンプリング間隔
-  label="/SphereConfig/Steer/Monitor_List/Sampling_Interval_Type";
+  label="/Steer/Monitor_List/Sampling_Interval_Type";
   //std::cout <<  "label : " << label << std::endl;
   if ( !(tpCntl.GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval_Type' in 'Monitor_List'\n");
@@ -4827,7 +4806,7 @@ void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
       Exit(0);
     }
     
-    label="/SphereConfig/Steer/Monitor_List/Sampling_Interval";
+    label="/Steer/Monitor_List/Sampling_Interval";
     //std::cout <<  "label : " << label << std::endl;
     if ( !(tpCntl.GetValue(label, &f_val )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval' in 'Monitor_List'\n");
@@ -4839,7 +4818,7 @@ void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
   }
   
   // 単位指定
-  label="/SphereConfig/Steer/Monitor_List/Unit";
+  label="/Steer/Monitor_List/Unit";
   //std::cout <<  "label : " << label << std::endl;
   if ( !(tpCntl.GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit' in 'Monitor_List'\n");
@@ -4868,7 +4847,7 @@ void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
   // 指定モニタ個数のチェック
   int nnode=0;
   int nlist=0;
-  label_base="/SphereConfig/Steer/Monitor_List";
+  label_base="/Steer/Monitor_List";
   nnode=tpCntl.countLabels(label_base);
   //std::cout <<  "label_base : " << label_base << std::endl;
   //std::cout <<  "nnode : " << nnode << std::endl;
@@ -5120,8 +5099,8 @@ bool SklSolverCBC::GetDomainInfo(
 		return false;
 	}
   
-	if ( !C.getTP_SUbDomainInfo(Dims, size) ){
-    stamped_printf("\t error getTP_SUbDomainInfo : \n");
+	if ( !C.getTP_SubDomainInfo(Dims, size) ){
+    stamped_printf("\t error getTP_SubDomainInfo : \n");
 		return false;
 	}
   

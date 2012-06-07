@@ -37,7 +37,7 @@ private:
   unsigned imax, jmax, kmax, guide, size[3];
   REAL_TYPE BaseTemp, DiffTemp;
   
-  SklSolverConfig*  CF;  // for XML parsing
+  //SklSolverConfig*  CF;  // for XML parsing
   MaterialList*     mat;
   MaterialList*     BaseMat;      // for internal use of this class
   IDtable*          iTable;
@@ -58,7 +58,7 @@ public:
     KOS          = 0;
     BaseTemp     = 0.0;
     DiffTemp     = 0.0;
-    CF           = NULL;
+    //CF           = NULL;
     mat          = NULL;
     BaseMat      = NULL;
     iTable       = NULL;
@@ -95,7 +95,7 @@ public:
   
   void chkList               (FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq);
   void chkState_Mat_Cmp      (CompoList* compo, FILE* fp);
-  void getXMLmaterial        (void);
+  //void getXMLmaterial        (void);
   void makeLinkCmpMat        (CompoList* compo);
   void makeMaterialList      (void);
   void printMaterialList     (FILE* mp, FILE* fp);

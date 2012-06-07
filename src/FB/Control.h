@@ -672,37 +672,37 @@ public:
 protected:
   bool getXML_PrsAverage(void);
   
-  const CfgElem* getXML_Pointer(const char* key, string section);
+  //const CfgElem* getXML_Pointer(const char* key, string section);
   
   void convertHexCoef        (REAL_TYPE* cf);
   void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
-  void findXMLCriteria       (const CfgElem *elmL1, const char* key, unsigned order, ItrCtl* IC);
-  void getXML_Algorithm      (void);
-  void getXML_Average_option (void);
-  void getXML_ChangeID       (void);
-  void getXML_CheckParameter (void);
-  void getXML_Convection     (void);
-  void getXML_Derived        (void);
-  void getXML_Dimension      (void);
-  void getXML_FileIO         (void);
-  void getXML_Iteration      (ItrCtl* IC);
-  void getXML_KindOfSolver   (const CfgElem *elmL1);
-  void getXML_LES_option     (void);
-  void getXML_Log            (void);
-  void getXML_Para_ND        (void);
-  void getXML_Para_Ref       (void);
-  void getXML_Para_Temp      (void);
-  void getXML_Para_Wind      (void);
-  void getXML_PMtest         (void);
-  void getXML_ReferenceFrame (ReferenceFrame* RF);
-  void getXML_Scaling        (void);
-  void getXML_Solver_Properties (void);
-  void getXML_start_condition   (void);
-  void getXML_Time_Control   (DTcntl* DT);
-  void getXML_TimeMarching   (void);
-  void getXML_Unit           (void);
-  void getXML_VarRange       (void);
-  void getXML_Wall_type      (void);
+  //void findXMLCriteria       (const CfgElem *elmL1, const char* key, unsigned order, ItrCtl* IC);
+  //void getXML_Algorithm      (void);
+  //void getXML_Average_option (void);
+  //void getXML_ChangeID       (void);
+  //void getXML_CheckParameter (void);
+  //void getXML_Convection     (void);
+  //void getXML_Derived        (void);
+  //void getXML_Dimension      (void);
+  //void getXML_FileIO         (void);
+  //void getXML_Iteration      (ItrCtl* IC);
+  //void getXML_KindOfSolver   (const CfgElem *elmL1);
+  //void getXML_LES_option     (void);
+  //void getXML_Log            (void);
+  //void getXML_Para_ND        (void);
+  //void getXML_Para_Ref       (void);
+  //void getXML_Para_Temp      (void);
+  //void getXML_Para_Wind      (void);
+  //void getXML_PMtest         (void);
+  //void getXML_ReferenceFrame (ReferenceFrame* RF);
+  //void getXML_Scaling        (void);
+  //void getXML_Solver_Properties (void);
+  //void getXML_start_condition   (void);
+  //void getXML_Time_Control   (DTcntl* DT);
+  //void getXML_TimeMarching   (void);
+  //void getXML_Unit           (void);
+  //void getXML_VarRange       (void);
+  //void getXML_Wall_type      (void);
   void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
   void printVoxelSize        (unsigned* gs, FILE* fp);
   void printInitValues       (FILE* fp);
@@ -714,16 +714,17 @@ protected:
 public:
   bool receiveCfgPtr(SklSolverConfig* cfg);
   
-  const char* getVoxelFileName(void);
+  //const char* getVoxelFileName(void);
+  const char* getTP_VoxelFileName(void);
   
   REAL_TYPE getCellSize(unsigned* m_size);
   REAL_TYPE OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
-  void getXML_Polygon           (void);
-  void getXML_Sampling          (void);
-  void getXML_Steer_1           (DTcntl* DT);
-  void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
+  //void getXML_Polygon           (void);
+  //void getXML_Sampling          (void);
+  //void getXML_Steer_1           (DTcntl* DT);
+  //void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
   void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
   void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
@@ -731,7 +732,6 @@ public:
   void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
   void setParameters            (MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF);
   
-  virtual void getXML_Version   (void);
   
   static string getDirection(unsigned dir);
 	string getNormString(unsigned d);
@@ -812,6 +812,14 @@ public:
   }
   
   
+public:
+  bool getTP_SubDomainInfo(unsigned int Dims,
+                           unsigned* size);
+  bool receive_TP_Ptr(TPControl* tp);
+  
+  void getTP_Version(void);
+  
+  
   //for text parser
   
 protected:
@@ -829,7 +837,6 @@ protected:
   void getTP_CheckParameter ();
   void getTP_Convection     ();
   void getTP_Derived        ();
-  //void getTP_Dimension      ();//未使用ルーチン
   void getTP_FileIO         ();
   void getTP_Iteration      (ItrCtl* IC);
   void getTP_KindOfSolver   ();
@@ -838,7 +845,6 @@ protected:
   void getTP_Para_ND        ();
   void getTP_Para_Ref       ();
   void getTP_Para_Temp      ();
-  void getTP_Para_Wind      ();
   void getTP_PMtest         ();
   void getTP_ReferenceFrame (ReferenceFrame* RF);
   ////void getTP_restart_rough  ();
@@ -846,7 +852,6 @@ protected:
   void getTP_Solver_Properties ();
   void getTP_start_condition();
   void getTP_Time_Control   (DTcntl* DT);
-  //void getTP_TimeMarching   ();//未使用ルーチン
   void getTP_Unit           ();
   void getTP_VarRange       ();
   void getTP_Wall_type      ();
@@ -858,13 +863,10 @@ public:
   void getTP_Sampling          ();
   void getTP_Steer_1           (DTcntl* DT);
   void getTP_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
-  virtual void getTP_Version   ();
+  
   bool getTP_DomainInfo(
                         unsigned int Dims,
                         unsigned* size);
-  bool getTP_SUbDomainInfo(
-                           unsigned int Dims,
-                           unsigned* size);
   bool set_DomainInfo(
                       unsigned int Dims,
                       unsigned* size,
@@ -872,7 +874,6 @@ public:
                       REAL_TYPE* pitch,
                       REAL_TYPE* width);
   
-  bool receive_TP_Ptr(TPControl* tp);
   
   // domain info
   DomainInfo dInfo;

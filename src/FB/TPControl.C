@@ -41,7 +41,6 @@ int TPControl::readTPfile( const string filename )
   if( !tp ) return TP_ERROR;
 
   // read
-  std::cout << "input file : "  << std::endl;
   if( (ierr = tp->read(filename)) != TP_NO_ERROR )
   {
     cout << "ERROR : in input file: " << filename << endl
@@ -69,7 +68,7 @@ bool TPControl::GetVector(string label, int *vec, const int nvec)
 
   // ラベルがあるかチェック
   if( !chkLabel(label)){
-	  std::cout <<  "WARNING no label " << label << std::endl;
+	  //std::cout <<  "WARNING no label " << label << std::endl;
 	  return false;
   }
 
@@ -115,7 +114,7 @@ bool TPControl::GetVector(string label, REAL_TYPE *vec, const int nvec)
 
   // ラベルがあるかチェック
   if( !chkLabel(label)){
-	  std::cout <<  "WARNING no label " << label << std::endl;
+	  //std::cout <<  "WARNING no label " << label << std::endl;
 	  return false;
   }
 
@@ -164,7 +163,7 @@ bool TPControl::GetVector(string label, string *vec, const int nvec)
 
   // ラベルがあるかチェック
   if( !chkLabel(label)){
-	  std::cout <<  "WARNING no label " << label << std::endl;
+	  //std::cout <<  "WARNING no label " << label << std::endl;
 	  return false;
   }
 
@@ -208,7 +207,7 @@ bool TPControl::GetValue(const string label, int *ct)
 
   // ラベルがあるかチェック
   if( !chkLabel(label)){
-	  std::cout <<  "WARNING no label " << label << std::endl;
+	  //std::cout <<  "WARNING no label " << label << std::endl;
 	  return false;
   }
 
@@ -269,7 +268,7 @@ bool TPControl::GetValue(const string label, REAL_TYPE *ct)
   
   // ラベルがあるかチェック
   if( !chkLabel(label)){
-	  std::cout <<  "WARNING no label " << label << std::endl;
+	  //std::cout <<  "WARNING no label " << label << std::endl;
 	  return false;
   }
 
@@ -328,7 +327,7 @@ bool TPControl::GetValue(const string label, string *ct)
 
   // ラベルがあるかチェック
   if( !chkLabel(label)){
-	  std::cout <<  "WARNING no label " << label << std::endl;
+	  //std::cout <<  "WARNING no label " << label << std::endl;
 	  return false;
   }
 
