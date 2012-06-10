@@ -257,12 +257,14 @@ public:
   virtual bool SklSolverPost        (void);
   virtual bool SklSolverUsage       (const char* cmd);
   
-  virtual void connectExample       (Control* Cref);
-  virtual void set_timing_label     (void);
-  virtual void VoxelInitialize      (void);
+  void connectExample       (Control* Cref);
+  void set_timing_label     (void);
+  void VoxelInitialize      (void);
   
-  
-  
+  bool GetDomainInfo(unsigned* size,
+                     REAL_TYPE* origin,
+                     REAL_TYPE* pitch,
+                     REAL_TYPE* width);
   bool chkMediumConsistency(void);
   bool hasLinearSolver (unsigned L);
   bool checkFile(std::string fname);
@@ -438,18 +440,11 @@ public:
                             const string label_base,
                             vector<MonitorCompo::MonitorPoint>& pointSet);
   
-  bool GetDomainInfo(
-                     unsigned int Dims,
-                     unsigned* size,
-                     REAL_TYPE* origin,
-                     REAL_TYPE* pitch,
-                     REAL_TYPE* width);
+  
   
   void setMediumPoint(
                       ParseBC* B,
                       ParseMat* M);
-
-  
   
 };
 

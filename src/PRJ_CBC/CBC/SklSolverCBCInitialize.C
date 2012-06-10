@@ -186,7 +186,6 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
-  //C.getXML_Version();
   C.getTP_Version();
   
   if ( C.version != (unsigned)VERS_CBC ) {
@@ -205,7 +204,6 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // 最初のXMLパラメータの取得
-  //C.getXML_Steer_1(&DT);
   C.getTP_Steer_1(&DT);
   
   // FiliIOのモードを修正
@@ -234,12 +232,10 @@ SklSolverCBC::SklSolverInitialize() {
   
 
   // XMLパラメータの取得
-  //C.getXML_Steer_2(IC, &RF);
   C.getTP_Steer_2(IC, &RF);
   
   // 組み込み例題の固有パラメータ
-  //if ( !Ex->getXML(m_solvCfg, &C) ) Exit(0);
-  if ( !Ex->getTP(m_solvCfg, &C, &tpCntl) ) Exit(0);
+  if ( !Ex->getTP(&C, &tpCntl) ) Exit(0);
 
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
   ix      = (int*)&C.imax;
@@ -3415,12 +3411,10 @@ void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
   // NoID = scanXMLmodel();
   // NoCompo = NoBC + NoID;
 	// ParseBCクラス内でiTable[NoID+1]を確保
-  //B->setControlVars(&C);
-  B->TPsetControlVars(&C);
+
+  B->setControlVars(&C);
   
-  
-  // XMLファイルのModel_SettingからボクセルIDの情報を取得
-  //B->getXML_Model();
+  // Model_SettingからボクセルIDの情報を取得
   B->getTP_Model(&C);
   
   // XMLから得られたIDテーブルを表示
@@ -5086,25 +5080,23 @@ void SklSolverCBC::getTP_Mon_Pointset(MonitorList* M,
 //@fn void SklSolverCBC::GetDomainInfo(void)
 //@brief
 //@note 
-bool SklSolverCBC::GetDomainInfo(
-                                 unsigned int Dims,
-                                 unsigned* size,
+bool SklSolverCBC::GetDomainInfo(unsigned* size,
                                  REAL_TYPE* origin,
                                  REAL_TYPE* pitch,
                                  REAL_TYPE* width)
 {
   
-	if ( !C.getTP_DomainInfo(Dims, size) ){
+	if ( !C.getTP_DomainInfo(size) ){
     stamped_printf("\t error getTP_DomainInfo : \n");
 		return false;
 	}
   
-	if ( !C.getTP_SubDomainInfo(Dims, size) ){
-    stamped_printf("\t error getTP_SubDomainInfo : \n");
-		return false;
-	}
+	//if ( !C.getTP_SubDomainInfo(size) ){
+  //  stamped_printf("\t error getTP_SubDomainInfo : \n");
+	//	return false;
+	//}
   
-	if ( !C.set_DomainInfo(Dims, size, origin, pitch, width) ){
+	if ( !C.set_DomainInfo(size, origin, pitch, width) ){
     stamped_printf("\t error set_DomainInfo : \n");
 		return false;
 	}

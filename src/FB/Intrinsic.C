@@ -80,7 +80,6 @@ void Intrinsic::printPara(FILE* fp, Control* R)
  */
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
-  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
 
   int      nx, sz, i,j,k;
   unsigned ix, jx, kx, m, l;
@@ -184,7 +183,6 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
  */
 void Intrinsic::writeSVX(int *id, Control* R)
 {
-  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   
   int      nx, sz, i,j,k;
   unsigned ix, jx, kx, m, l;

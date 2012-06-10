@@ -12,6 +12,6 @@
 //@brief Intrinsic class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#define IP_VERS 117
+#define IP_VERS 118
 
 #endif // _IP_DEFINE_H_

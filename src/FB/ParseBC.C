@@ -3453,81 +3453,6 @@ void ParseBC::setObcPtr(BoundaryOuter* ptr)
   BaseBc = new BoundaryOuter[NoBaseBC];
 }
 
-/**
- @fn void ParseBC::setControlVars(Control* Cref) 
- @brief 
-    - ParseBCに必要な変数をコピーする
-    - Controlクラスのメンバ変数に値をコピーする
- @param Cref Controlクラスのポインタ
-
-void ParseBC::setControlVars(Control* Cref)
-{
-  ix          = Cref->imax;
-  jx          = Cref->jmax;
-  kx          = Cref->kmax;
-  guide       = Cref->guide;
-  RefVelocity = Cref->RefVelocity;
-  BaseTemp    = Cref->BaseTemp;
-  DiffTemp    = Cref->DiffTemp;
-  RefDensity  = Cref->RefDensity;
-  HeatProblem = Cref->isHeatProblem();
-  Unit_Param  = Cref->Unit.Param;
-  RefLength   = Cref->RefLength;
-  KindOfSolver= Cref->KindOfSolver;
-  Unit_Temp   = Cref->Unit.Temp;
-  Unit_Prs    = Cref->Unit.Prs;
-	BasePrs     = Cref->BasePrs;
-  Mode_Gradp  = Cref->Mode.PrsNeuamnnType;
-  isCDS       = Cref->isCDS();
-  
-  Cref->NoBC    = NoBC    = getNBC(); // XMLファイルのInnerBoundaryタグ内の各境界条件タグから境界条件の個数を取得
-  Cref->NoID    = NoID    = scanXMLmodel(); // XMLファイルのModel_Settingタグ内にあるID数
-  Cref->NoCompo = NoCompo = NoBC + NoID;
-
-  unsigned m, s;
-  s = MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
-  m = log10(s+1)/log10(2);
-  if ( NoCompo > s ) {
-    Hostonly_ printf("Error : No. of Component (= NoBC + NoID) must be less or equal %d(%dbit-width)\n", s, m);
-    Exit(0);
-  }
-
-  s = MASK_5-1; // 0と31を除く
-  m = log10(s+2)/log10(2);
-  if ( NoBC > s ) {
-    Hostonly_ printf("Error : No. of BC must be less or equal %d(%dbit-width)\n", s, m);
-    Exit(0);
-  }
-
-  // iTableのアロケート
-  iTable = new IDtable[NoID+1];
-}*/
-
-
-/**
- @fn unsigned ParseBC::scanXMLmodel(void)
- @brief XMLに記述されたモデル情報の数を取得
- @retval モデルの数，またはエラーコード0
- 
-unsigned ParseBC::scanXMLmodel(void)
-{
-  const CfgElem *elemTop=NULL, *elmL1=NULL;
-  unsigned n;
-  
-  elemTop = CF->GetTop(STEER);
-  if( !(elmL1 = elemTop->GetElemFirst("Model_Setting")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
-    Exit(0);
-  }
-  n = (unsigned)elmL1->GetParamSize();
-  
-  if ( n > MODEL_ID_MAX ) {
-    Hostonly_ printf("\tError : Number of ID in 'Model_Setting' must be less than %d\n", MODEL_ID_MAX);
-  }
-  
-  return n;
-}*/
-
 
 /**
  @fn const CfgElem* ParseBC::selectFace(int face, const CfgElem* elemTop)
@@ -4008,13 +3933,13 @@ void ParseBC::setMediumPoint(int m_nMedium_TableTP,
 
 
 /**
- @fn void ParseBC::TPsetControlVars(Control* Cref) 
+ @fn void ParseBC::setControlVars(Control* Cref) 
  @brief 
  - ParseBCに必要な変数をコピーする
  - Controlクラスのメンバ変数に値をコピーする
  @param Cref Controlクラスのポインタ
  */
-void ParseBC::TPsetControlVars(Control* Cref)
+void ParseBC::setControlVars(Control* Cref)
 {
   ix          = Cref->imax;
   jx          = Cref->jmax;
@@ -4035,11 +3960,8 @@ void ParseBC::TPsetControlVars(Control* Cref)
   isCDS       = Cref->isCDS();
   
   
-  Cref->NoBC    = NoBC    = getTP_NBC(); //TPファイルのInnerBoundaryタグ内の各境界条件タグから境界条件の個数を取得
-  Cref->NoID    = NoID    = scanTPmodel(); // TPファイルのModel_Settingタグ内にあるID数
-  
-  //std::cout <<  "NoBC = " << NoBC << std::endl;
-  //std::cout <<  "NoID = " << NoID << std::endl;
+  Cref->NoBC    = NoBC    = getNoLocalBC();      //TPファイルのLocalBoundaryタグ内の各境界条件タグから境界条件の個数を取得
+  Cref->NoID    = NoID    = scan_ModelSetting(); // TPファイルのModel_Settingタグ内にあるID数
   
   Cref->NoCompo = NoCompo = NoBC + NoID;
   
@@ -4065,73 +3987,43 @@ void ParseBC::TPsetControlVars(Control* Cref)
 
 
 /**
- @fn int ParseBC::getTP_NBC(void)
+ @fn int ParseBC::getNoLocalBC(void)
  @brief INNERBNDタグ直下のElemの個数（内部境界条件数）を返す
  @retval BCの個数
  @note 境界条件数がゼロでもエラーではない
  */
-int ParseBC::getTP_NBC(void)
+int ParseBC::getNoLocalBC(void)
 {  
   int nobc=0;
   std::string str;
-  string label;
+  std::string label;
   
-  label="/BC_Table/InnerBoundary";
-  //std::cout <<  "label : " << label << std::endl;
+  label="/BC_Table/LocalBoundary";
   
   if ( tpCntl->chkNode(label) ) {//nodeがあれば
 	  nobc = tpCntl->countLabels(label);
   }
-  //std::cout << " nobc   = " << nobc  << std::endl;
   
   return nobc;
-  
-  /*
-   int nobc=0;
-   
-   nobc = CF->GetSize(INNERBND);
-   if ( nobc == 0 ) {
-   printf("\tNo Inner Boundary Conditions\n\n");
-   }
-   
-   return nobc;
-   */
 }
 
 /**
- @fn unsigned ParseBC::scanTPmodel()
- @brief XMLに記述されたモデル情報の数を取得
+ @fn int ParseBC::scan_ModelSetting()
+ @brief 記述されたモデル情報の数を取得
  @retval モデルの数，またはエラーコード0
  */
-unsigned ParseBC::scanTPmodel()
+int ParseBC::scan_ModelSetting()
 {
-  string label;
-  unsigned n;
+  std::string label;
+  int n;
   
   label="/Steer/Model_Setting";
-  //std::cout <<  "label : " << label << std::endl;
   
   if ( tpCntl->chkNode(label) ) {//nodeがあれば
 	  n = tpCntl->countLabels(label);
   }
-  //std::cout << " n   = " << n  << std::endl;
   
   return n;
-  
-  /*
-   const CfgElem *elemTop=NULL, *elmL1=NULL;
-   unsigned n;
-   
-   elemTop = CF->GetTop(STEER);
-   if( !(elmL1 = elemTop->GetElemFirst("")) ) {
-   stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
-   Exit(0);
-   }
-   n = (unsigned)elmL1->GetParamSize();
-   
-   return n;
-   */
-  
 }
 
 
@@ -4139,8 +4031,8 @@ unsigned ParseBC::scanTPmodel()
 
 /**
  @fn void ParseBC::getTP_Model(Control* C)
- @brief XMLに記述されたモデル情報を取得し，ワークテーブルiTableを確保する
- @pre ParseBC::TPsetControlVars()内 scanTPmodel()でNoIDを確定
+ @brief モデル情報を取得し，ワークテーブルiTableを確保する
+ @pre ParseBC::setControlVars()内 scan_ModelSetting()でNoIDを確定
  @note
  - Model_Settingの情報をTPから取得し，iTableに保持
  - 流体の媒質は少なくとも一つは必要
@@ -4198,7 +4090,7 @@ void ParseBC::getTP_Model(Control* C)
     }
     
     label_leaf=label_base+"/"+str;//
-    std::cout << " label_leaf = " << label_leaf << std::endl;
+    //std::cout << " label_leaf = " << label_leaf << std::endl;
     
     label=label_leaf+"/tag";
     if ( !(tpCntl->GetValue(label, &str )) ) {
@@ -4206,7 +4098,7 @@ void ParseBC::getTP_Model(Control* C)
       Exit(0);
     }
     else{ 
-      std::cout <<  "tag str : " << str << std::endl;
+      //std::cout <<  "tag str : " << str << std::endl;
       //ModelのBoxeltagから一致するtagを探す
       /*
        void FreeJet::setup
@@ -4249,8 +4141,7 @@ void ParseBC::getTP_Model(Control* C)
           else {
           }
           break;
-        case id_Rect://cavity
-          std::cout <<  "cavity --- tag str : " << str << std::endl;
+        case id_Rect:
           if     ( !strcasecmp(str.c_str(), "air") )  iTable[i].setID(1);
           if     ( !strcasecmp(str.c_str(), "wall") ) iTable[i].setID(600);
           else {
@@ -4287,7 +4178,7 @@ void ParseBC::getTP_Model(Control* C)
           }
           break;
       }
-      std::cout << i <<  "   iTable[i].getID : " << iTable[i].getID() << std::endl;
+      //std::cout << i <<  "   iTable[i].getID : " << iTable[i].getID() << std::endl;
     }
     
     
@@ -4297,7 +4188,7 @@ void ParseBC::getTP_Model(Control* C)
       Exit(0);
     }
     else{
-      std::cout <<  "medium str : " << str << std::endl;
+      //std::cout <<  "medium str : " << str << std::endl;
       
       //MediumTableInfoから一致するMediumを探す
       for (int j=0; j<nMedium_TableTP; j++) {//Medium_Table loop
@@ -4307,9 +4198,9 @@ void ParseBC::getTP_Model(Control* C)
           iTable[i].setMatID(j+1);
           iTable[i].setLabel(MTITP[j].label.c_str());
           iTable[i].setState(MTITP[j].type);
-          cout << "id  : " << j+1 << endl;
-          cout << "label : " << MTITP[j].label << endl;
-          cout << "type  : " << MTITP[j].type << endl;
+          //cout << "id  : " << j+1 << endl;
+          //cout << "label : " << MTITP[j].label << endl;
+          //cout << "type  : " << MTITP[j].type << endl;
           
         }
       }
@@ -4344,7 +4235,7 @@ void ParseBC::getTP_Model(Control* C)
         }
       }
     }
-  };
+  }
 }
 
 
@@ -4352,25 +4243,25 @@ void ParseBC::getTP_Model(Control* C)
 
 /**
  @fn void ParseBC::TPcount_Outer_Cell_ID(int* cid)
- @brief XMLファイルをパースして，外部境界のセルIDとその数をカウント
- @param[out] cid セルIDのリスト
+ @brief 外部境界のセルIDリストを返す
+ @param[out] cid[6] セルIDのリスト
  */
 void ParseBC::TPcount_Outer_Cell_ID(int* cid)
 {
   int md = 0;
   int tmp[NOFACE];
   
-  string label_base,label_leaf,label;
+  std::string label_base,label_leaf,label;
   std::string str;
   int counter=0;
   int nnode=0;
-  string BC_type[NoBaseBC];
-  string medium[NoBaseBC];
+  std::string BC_type[NoBaseBC];
+  std::string medium[NoBaseBC];
   
   // Basic Outer BCリストの読み込み
   label_base="/BC_Table/OuterBoundary";
   if ( !tpCntl->chkNode(label_base) ) {
-    stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
+    stamped_printf("\tParsing error : Missing OuterBoundary label\n");
     Exit(0);
   }
   
@@ -4406,103 +4297,44 @@ void ParseBC::TPcount_Outer_Cell_ID(int* cid)
     Exit(0);
   }
   
-  // check number of Elem
+  // ラベル数をカウント
   nnode=tpCntl->countLabels(label_base);
   if ( nnode != NOFACE ) {
     stamped_printf("\tParsing error : OuterBoundary Face_BC count != 6\n");
     Exit(0);
   }
   
-  //cout << "nnode  = " << nnode << endl;
-  //cout << "NOFACE = " << NOFACE << endl;
-  
-  //////for (int face=0; face<NOFACE; face++) {
-  //////  // faceに対するエントリを得る
-  //////  if ( !(elmL2 = selectFace(face, elmL1)) ) Exit(0);
-  //////  
-  //////  // セルIDの取得
-  //////  if ( !(param = elmL2->GetParamFirst("Guide_Cell_ID")) ) {
-  //////    stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC' : %s\n", FBUtility::getDirection(face).c_str());
-  //////    Exit(0);
-  //////  }
-  //////  else {
-  //////    if ( !param->isSetID() ) {
-  //////      stamped_printf("\tParsing error : No ID section in 'Guide_Cell_ID' : %s\n", FBUtility::getDirection(face).c_str());
-  //////      Exit(0);
-  //////    }
-  //////    if ( 1 > (md=param->GetID()) ) {
-  //////      stamped_printf("\tParsing error : Invalid Outer Guide Cell ID[%d] that shoud be > 0 : %s\n", md, FBUtility::getDirection(face).c_str());
-  //////      Exit(0);
-  //////    }
-  //////    
-  //////    if ( !isIDinTable(md) ) {
-  //////      stamped_printf("\tParsing error : ID[%d] described in '%s' is not listed on 'Model_Setting'\n", md, FBUtility::getDirection(face).c_str());
-  //////      Exit(0);
-  //////    }
-  //////    
-  //////    tmp[face] = (unsigned)md;
-  //////  }
-  //////}
-  
   // ガイドセルIDを設定
   for (int face=0; face<NOFACE; face++) {//#define NOFACE 6 @ FB_Define.h　
     
     // faceに対するエントリを得る
-    if(!tpCntl->GetNodeStr(label_base,face+1,&str)){
+    if(!tpCntl->GetNodeStr(label_base, face+1, &str)){
       stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
     label_leaf=label_base+"/"+str;
     
     //medium取得
-    label=label_leaf+"/medium";
+    label=label_leaf+"/medium_on_guide_cell";
     if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC'\n");
+      stamped_printf("\tParsing error : No entory 'mediun_on_guide_cell' in 'Face_BC'\n");
       Exit(0);
     }
-    std::cout <<  "label : " << label << std::endl;
-    std::cout <<  "str : " << str << std::endl;
     
     //mediumから媒質番号を求める
     for (int i=1; i<=NoID; i++) {
       int matid=(int)iTable[i].getMatID();
       int guide_cell_id=(int)iTable[i].getID();
-      std::cout <<  "matid : " << matid << std::endl;
-      std::cout <<  "guid_cell_id : " << guide_cell_id << std::endl;
-      std::cout <<  "MTITP[matid-1].label : " << MTITP[matid-1].label << std::endl;
+
       if( !strcasecmp( str.c_str(), MTITP[matid-1].label.c_str() ) ){
-        //tmp[face] = (unsigned)matid;
         tmp[face] = guide_cell_id;
-        cout << "face = " << face << endl;
-        cout << "tmp[face] = " << tmp[face] << endl;
-        
         break;
       }
     }
   }
   
   //debug
-  for (int i=0; i<NOFACE; i++) cout << "tmp[" << i << "] = " << tmp[i] << endl;
-  
-  // 重複チェック
-  int count = 1;
-  int tgt, flag;
-  cid[0] = tmp[0];
-  
-  for (int i=1; i<NOFACE; i++) {
-    
-    tgt = tmp[i]; // テストするID
-    
-    // 登録したmedium[]のIDをチェック，未登録なら登録し，カウントする
-    flag = 0; // flag>0 で登録済み
-    for (int j=0; j<i; j++) {
-      if ( tgt == cid[j] ) flag++; // 登録されていたらflagをインクリメント
-    }
-    if ( flag == 0 ) { // 未登録の場合
-      cid[count] = tgt;
-      count++;
-    }
-  }
+  for (int i=0; i<NOFACE; i++) cid[i] = tmp[i];
 
 }
 

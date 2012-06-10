@@ -4,6 +4,8 @@ Release Note
 	
 	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
 
+Ver 1.1.8    10 June 2012
+  - XMLをTPに変更
 
 Ver 1.1.7    21 Mar. 2012
   - IP_Sphere classを追加

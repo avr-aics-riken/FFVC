@@ -88,13 +88,13 @@ protected:
   bool isCompoTransfer    (unsigned label);
   bool isIDinTable        (int candidate);
   
-  //int getNBC              (void);
   int getStateinTable     (unsigned id);
+  int getNoLocalBC        (void);
+  int scan_ModelSetting   (void);
   
   unsigned getNoMaterial      (void);
   //unsigned getXML_Vel_profile (const CfgElem *elmL, const char* err_str);
   unsigned oppositDir         (unsigned dir);
-  //unsigned scanXMLmodel       (void);
   
   void chkKeywordIBC        (const char *keyword, unsigned m);
   void chkKeywordOBC        (const char *keyword, unsigned m);
@@ -204,8 +204,8 @@ public:
   void receiveCfgPtr      (SklSolverConfig* cfg);
   void setMedium          (Control* Cref);
   //void setCompoList       (Control* C);
-  //void setControlVars     (Control* Cref);
   //void getXML_Medium_InitTemp(void);
+  void setControlVars     (Control* Cref);
   void setObcPtr          (BoundaryOuter* ptr);
   void setRefMedium       (MaterialList* mat, Control* Cref);
   void setRefValue        (MaterialList* mat, CompoList* cmp, Control* C);
@@ -235,8 +235,6 @@ protected:
   TPControl* tpCntl;
   
   
-  int getTP_NBC              (void);
-  unsigned scanTPmodel       (void);
   unsigned getTP_Vel_profile (const string label_base);
   void getTP_IBC_Adiabatic (const string label_base, unsigned n);
   void getTP_IBC_CnstTemp  (const string label_base, unsigned n);
@@ -285,7 +283,7 @@ public:
   
   void TPloadOuterBC        (void);
   void TPsetCompoList       (Control* C);
-  void TPsetControlVars     (Control* Cref);
+  
   void TPsetObcPtr        (BoundaryOuter* ptr);
   
   void getTP_Model       (Control* C);

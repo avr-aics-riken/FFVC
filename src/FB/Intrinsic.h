@@ -67,7 +67,7 @@ public:
   
   virtual const char* getExampleName(void) { return NULL; };
   
-  virtual bool getTP(SklSolverConfig* CF, Control* R, TPControl* tpCntl) { return true; };
+  virtual bool getTP(Control* R, TPControl* tpCntl) { return true; };
   
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
   virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};

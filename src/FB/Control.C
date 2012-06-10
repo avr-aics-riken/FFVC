@@ -536,7 +536,7 @@ const char* Control::getTP_VoxelFileName()
   if     ( !strcasecmp(str.c_str(), "SVX") )    vxFormat = Sphere_SVX;
   else if( !strcasecmp(str.c_str(), "SBX") )    vxFormat = Sphere_SBX;
   else {
-    stamped_printf("\tParsing error : Format [%s] is invalid.\n", str);
+    stamped_printf("\tParsing error : Format [%s] is invalid.\n", str.c_str());
     Exit(0);
   }
   
@@ -5321,8 +5321,7 @@ void Control::getTP_Polygon()
  @fn void Control::getTP_DomainInfo(void)
  @brief DomainInfoの取得
  */
-bool Control::getTP_DomainInfo(unsigned int Dims,
-                               unsigned* size)
+bool Control::getTP_DomainInfo(unsigned* size)
 {
   int ierr = TP_NO_ERROR;
   std::string label, value;
@@ -5403,19 +5402,14 @@ bool Control::getTP_DomainInfo(unsigned int Dims,
 		<< "  ERROR CODE = "<< ierr << endl;
   }
   
-  Dims=3;
-  
   return true;
-  
 }
 
 /**
- @fn void Control::getTP_SubDomainInfo(unsigned int Dims,
- unsigned* size)
+ @fn void Control::getTP_SubDomainInfo(unsigned* size)
  @brief SubDomainInfoの取得
  */
-bool Control::getTP_SubDomainInfo(unsigned int Dims,
-                                  unsigned* size)
+bool Control::getTP_SubDomainInfo(unsigned* size)
 {
   int ierr = TP_NO_ERROR;
   std::string label, value;
@@ -5423,7 +5417,7 @@ bool Control::getTP_SubDomainInfo(unsigned int Dims,
   int *ivec;
   
   std::string str;
-  string label_base,label_domain,label_leaf;
+  std::string label_base,label_domain,label_leaf;
   int n1,n2,n3;
   
   vector<string> nodes;
@@ -5507,16 +5501,15 @@ void Control::getTP_Version(void)
  @fn void Control::set_DomainInfo(void)
  @brief DomainInfo
  */
-bool Control::set_DomainInfo(unsigned int Dims,
-                             unsigned* size,
+bool Control::set_DomainInfo(unsigned* size,
                              REAL_TYPE* origin,
                              REAL_TYPE* pitch,
                              REAL_TYPE* width)
 {
-  for(int n=0; n<Dims; n++) size[n]   = (unsigned)dInfo.m_VoxelSize[n];
-  for(int n=0; n<Dims; n++) origin[n] = dInfo.m_VoxelOrigin[n];
-  for(int n=0; n<Dims; n++) pitch[n]  = dInfo.m_VoxelPitch[n];
-  for(int n=0; n<Dims; n++) width[n]  = size[n]*dInfo.m_VoxelPitch[n];
+  for(int n=0; n<3; n++) size[n]   = (unsigned)dInfo.m_VoxelSize[n];
+  for(int n=0; n<3; n++) origin[n] = dInfo.m_VoxelOrigin[n];
+  for(int n=0; n<3; n++) pitch[n]  = dInfo.m_VoxelPitch[n];
+  for(int n=0; n<3; n++) width[n]  = size[n]*dInfo.m_VoxelPitch[n];
   
   return true;
 }

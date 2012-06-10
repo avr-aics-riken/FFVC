@@ -10,15 +10,15 @@ CSRCS = \
 
 
 CXXSRCS = \
-       ../../IP/IP_PPLT2D.C \
-       ../../IP/IP_Duct.C \
-       ../../IP/IP_SHC1D.C \
+#       ../../IP/IP_PPLT2D.C \
+#       ../../IP/IP_Duct.C \
+#       ../../IP/IP_SHC1D.C \
        ../../IP/IP_PMT.C \
        ../../IP/IP_Rect.C \
-       ../../IP/IP_Cylinder.C \
-       ../../IP/IP_Step.C \
+#       ../../IP/IP_Cylinder.C \
+#       ../../IP/IP_Step.C \
        ../../IP/IP_Polygon.C \
-       ../../IP/IP_Sphere.C \
+#       ../../IP/IP_Sphere.C \
 
 
 FCSRCS = \

@@ -813,8 +813,12 @@ public:
   
   
 public:
-  bool getTP_SubDomainInfo(unsigned int Dims,
-                           unsigned* size);
+  bool set_DomainInfo(unsigned* size,
+                      REAL_TYPE* origin,
+                      REAL_TYPE* pitch,
+                      REAL_TYPE* width);
+  bool getTP_DomainInfo(unsigned* size);
+  bool getTP_SubDomainInfo(unsigned* size);
   bool receive_TP_Ptr(TPControl* tp);
   
   void getTP_Version(void);
@@ -863,17 +867,7 @@ public:
   void getTP_Sampling          ();
   void getTP_Steer_1           (DTcntl* DT);
   void getTP_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
-  
-  bool getTP_DomainInfo(
-                        unsigned int Dims,
-                        unsigned* size);
-  bool set_DomainInfo(
-                      unsigned int Dims,
-                      unsigned* size,
-                      REAL_TYPE* origin,
-                      REAL_TYPE* pitch,
-                      REAL_TYPE* width);
-  
+
   
   // domain info
   DomainInfo dInfo;

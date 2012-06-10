@@ -12,38 +12,47 @@
 #include "IP_Rect.h"
 
 /**
- @fn bool IP_Rect::getXML(SklSolverConfig* CF, Control* R)
+ @fn bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
  @brief パラメータを取得する
- @param CF コンフィギュレーションツリー
- @param R Controlクラスのポインタ
  */
-bool IP_Rect::getXML(SklSolverConfig* CF, Control* R)
+bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 {
-  const CfgElem *elemTop=NULL, *elmL1=NULL;
-  const char *str=NULL;
-  
-  if ( !(elemTop = CF->GetTop(PARAMETER)) ) return false;
-  
-  if( !(elmL1 = elemTop->GetElemFirst("Intrinsic_Example")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Intrinsic_Example'\n");
-    return false;
-  }
+  std::string str;
+  std::string label;
   
   // 分割数の偶数チェックオプション
-  if ( !elmL1->GetValue("Check_Even", &str) ) {
+  label="/Parameter/Intrinsic_Example/Check_Even";
+
+  if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Check_Even' in 'Intrinsic_Example'\n");
     return false;
   }
-  if ( !strcasecmp(str, "yes") ) {
+
+  if     ( !strcasecmp(str.c_str(), "yes") ) {
     even = ON;
   }
-  else if ( !strcasecmp(str, "no") ) {
+  else if( !strcasecmp(str.c_str(), "no") ) {
     even = OFF;
   }
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid 'Check_Even' in 'Intrinsic_Example'\n");
     return false;
   }
+  
+  // 媒質指定
+  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_fluid = str;
+  
+  label="/Parameter/Intrinsic_Example/Solid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_solid = str;
   
   return true;
 }
