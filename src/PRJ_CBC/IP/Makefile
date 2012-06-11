@@ -10,15 +10,15 @@ CSRCS = \
 
 
 CXXSRCS = \
-#       ../../IP/IP_PPLT2D.C \
-#       ../../IP/IP_Duct.C \
-#       ../../IP/IP_SHC1D.C \
-       ../../IP/IP_PMT.C \
-       ../../IP/IP_Rect.C \
-#       ../../IP/IP_Cylinder.C \
-#       ../../IP/IP_Step.C \
-       ../../IP/IP_Polygon.C \
-#       ../../IP/IP_Sphere.C \
+	../../IP/IP_PMT.C \
+	../../IP/IP_Rect.C \
+	../../IP/IP_Polygon.C \
+	../../IP/IP_Cylinder.C \
+	../../IP/IP_Step.C \
+	../../IP/IP_PPLT2D.C \
+	../../IP/IP_Duct.C \
+	../../IP/IP_SHC1D.C \
+	../../IP/IP_Sphere.C \
 
 
 FCSRCS = \
@@ -60,12 +60,12 @@ depend:
 
 # DO NOT DELETE
 
+../../IP/IP_PMT.o: ../../IP/IP_PMT.h ../../IP/IP_Define.h
+../../IP/IP_Rect.o: ../../IP/IP_Rect.h ../../IP/IP_Define.h
+../../IP/IP_Polygon.o: ../../IP/IP_Polygon.h ../../IP/IP_Define.h
+../../IP/IP_Cylinder.o: ../../IP/IP_Cylinder.h ../../IP/IP_Define.h
+../../IP/IP_Step.o: ../../IP/IP_Step.h ../../IP/IP_Define.h
 ../../IP/IP_PPLT2D.o: ../../IP/IP_PPLT2D.h ../../IP/IP_Define.h
 ../../IP/IP_Duct.o: ../../IP/IP_Duct.h ../../IP/IP_Define.h
 ../../IP/IP_SHC1D.o: ../../IP/IP_SHC1D.h ../../IP/IP_Define.h
-../../IP/IP_PMT.o: ../../IP/IP_PMT.h ../../IP/IP_Define.h
-../../IP/IP_Rect.o: ../../IP/IP_Rect.h ../../IP/IP_Define.h
-../../IP/IP_Cylinder.o: ../../IP/IP_Cylinder.h ../../IP/IP_Define.h
-../../IP/IP_Step.o: ../../IP/IP_Step.h ../../IP/IP_Define.h
-../../IP/IP_Polygon.o: ../../IP/IP_Polygon.h ../../IP/IP_Define.h
 ../../IP/IP_Sphere.o: ../../IP/IP_Sphere.h ../../IP/IP_Define.h

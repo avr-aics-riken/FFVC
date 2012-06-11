@@ -11,12 +11,123 @@
 
 #include "IP_Duct.h"
 
+//@brief パラメータを取得する
+bool IP_Duct::getTP(Control* R, TPControl* tpCntl)
+{
+  std::string str;
+  std::string label;
+  REAL_TYPE ct;
+  
+  // Shape
+  label="/Parameter/Intrinsic_Example/Shape";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Shape' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  
+  if ( !strcasecmp(str.c_str(), "circular") ) {
+    driver.shape = id_circular;
+  }
+  else if ( !strcasecmp(str.c_str(), "rectangualr") ) {
+    driver.shape = id_rectangular;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid shape in 'Intrinsic_Example'\n");
+    return false;
+  }
+  
+  // Diameter
+  label="/Parameter/Intrinsic_Example/Diameter";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Diameter' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  else{
+	  driver.diameter = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  
+  // periodic
+  label="/Parameter/Intrinsic_Example/Direction";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Direction' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  if ( !strcasecmp(str.c_str(), "X_minus")) {
+    driver.direction = X_MINUS;
+  }
+  else if ( !strcasecmp(str.c_str(), "X_plus")) {
+    driver.direction = X_PLUS;
+  }
+  else if ( !strcasecmp(str.c_str(), "Y_minus")) {
+    driver.direction = Y_MINUS;
+  }
+  else if ( !strcasecmp(str.c_str(), "Y_plus")) {
+    driver.direction = Y_PLUS;
+  }
+  else if ( !strcasecmp(str.c_str(), "Z_minus")) {
+    driver.direction = Z_MINUS;
+  }
+  else if ( !strcasecmp(str.c_str(), "Z_plus")) {
+    driver.direction = Z_PLUS;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid value of 'Direction' in 'Intrinsic_Example'\n");
+    return false;
+  }     
+  
+  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
+  label="/Parameter/Intrinsic_Example/Driver";
+  if ( tpCntl->GetValue(label, &ct ) ) {
+    driver.length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Driver' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  
+  if ( driver.length < 0.0 ) {
+    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
+    return false;
+  }
+  
+  // 媒質指定
+  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_fluid = str;
+  
+  label="/Parameter/Intrinsic_Example/Solid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_solid = str;
+  
+  label="/Parameter/Intrinsic_Example/driver_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_driver = str;
+  
+  label="/Parameter/Intrinsic_Example/driver_face_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_face_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_driver_face = str;
+  
+  return true;
+}
+
 /**
  @fn bool IP_Duct::getXML(SklSolverConfig* CF, Control* R)
  @brief Ductのパラメータを取得する
  @param CF コンフィギュレーションツリー
  @param R Controlクラスのポインタ
- */
+
 bool IP_Duct::getXML(SklSolverConfig* CF, Control* R)
 {
   const CfgElem *elemTop=NULL, *elmL1=NULL;
@@ -99,7 +210,7 @@ bool IP_Duct::getXML(SklSolverConfig* CF, Control* R)
   }
   
   return true;
-}
+}*/
 
 /**
  @fn void IP_Duct::printPara(FILE* fp, Control* R)

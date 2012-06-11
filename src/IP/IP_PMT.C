@@ -15,7 +15,7 @@
  @fn bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
  @brief パラメータを取得する
  */
-bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
+bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
 {
   std::string str;
   std::string label;

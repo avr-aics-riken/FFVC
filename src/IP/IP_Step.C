@@ -11,12 +11,105 @@
 
 #include "IP_Step.h"
 
+//@brief パラメータを取得する
+bool IP_Step::getTP(Control* R, TPControl* tpCntl)
+{
+  std::string str;
+  std::string label;
+  REAL_TYPE ct;
+  
+  // 2D or 3D mode
+  label="/Parameter/Intrinsic_Example/mode";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'mode' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "2d") ) {
+    mode = dim_2d;
+  }
+  else if( !strcasecmp(str.c_str(), "3d") ) {
+    mode = dim_3d;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid 'mode' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  
+  // x-dir step
+  label="/Parameter/Intrinsic_Example/width";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'width' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  else{
+	  width = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  
+  // z-dir step
+  label="/Parameter/Intrinsic_Example/height";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'height' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  else{
+	  height = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  
+  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
+  label="/Parameter/Intrinsic_Example/Driver";
+  if ( tpCntl->GetValue(label, &ct ) ) {
+    drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Driver' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  
+  if ( drv_length < 0.0 ) {
+    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
+    return false;
+  }
+  
+  // 媒質指定
+  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_fluid = str;
+  
+  label="/Parameter/Intrinsic_Example/Solid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_solid = str;
+  
+  label="/Parameter/Intrinsic_Example/driver_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_driver = str;
+  
+  label="/Parameter/Intrinsic_Example/driver_face_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_face_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_driver_face = str;
+  
+  return true;
+}
+
 /**
  @fn bool IP_Step::getXML(SklSolverConfig* CF, Control* R)
  @brief パラメータを取得する
  @param CF コンフィギュレーションツリー
  @param R Controlクラスのポインタ
- */
+
 bool IP_Step::getXML(SklSolverConfig* CF, Control* R)
 {
   const CfgElem *elemTop=NULL, *elmL1=NULL;
@@ -78,7 +171,7 @@ bool IP_Step::getXML(SklSolverConfig* CF, Control* R)
   }
   
   return true;
-}
+} */
 
 /**
  @fn void IP_Step::printPara(FILE* fp, Control* R)

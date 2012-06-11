@@ -28,6 +28,11 @@ protected:
   FB::Vec3i box_st;     ///< Bounding boxの始点インデクス
   FB::Vec3i box_ed;     ///< Bounding boxの終点インデクス
   
+  std::string m_fluid;
+  std::string m_solid;
+  std::string m_driver;
+  std::string m_driver_face;
+  
 public:
   IP_Sphere(){
     radius = 0.0;
@@ -37,7 +42,8 @@ public:
   ~IP_Sphere() {}
 
 public:
-  virtual bool getXML(SklSolverConfig* CF, Control* R);
+  virtual bool getTP(Control* R, TPControl* tpCntl);
+  
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
   virtual void printPara(FILE* fp, Control* R);
   virtual const char* getExampleName(void) {

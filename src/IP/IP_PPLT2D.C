@@ -11,6 +11,29 @@
 
 #include "IP_PPLT2D.h"
 
+//@brief パラメータを取得する
+bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
+{
+  std::string str;
+  std::string label;
+  
+  // 媒質指定
+  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_fluid = str;
+  
+  label="/Parameter/Intrinsic_Example/Solid_medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+    return false;
+  }
+  m_solid = str;
+  
+  return true;
+}
 /**
  @fn bool IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
  @brief PPLT2Dの領域情報を設定する
