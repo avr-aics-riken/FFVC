@@ -1,6 +1,0 @@
-// 依存関係付き値
-"Average_operation" {	// 平均操作
-    "op" = "on"
-    "start_time1" = @dep("./op" == "off") ? 400.0 : 300.0
-    "start_time2" = @dep("./op" != "off") ? 400.0 : 300.0
-}

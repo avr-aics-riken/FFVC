@@ -1,5 +1,0 @@
-// 依存関係付き値（未定義値）
-"Average_operation" {
-    "op" = "on"
-    "start_time" = @dep("/Average_operation/op" == "on") ? UNDEF : 0.0
-}

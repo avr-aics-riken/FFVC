@@ -1,4 +1,0 @@
-// リーフの = が無い
-"DomainInfo" {
-    "VoxelOrigin" 0.0
-}

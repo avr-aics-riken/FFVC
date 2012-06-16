@@ -1,6 +1,0 @@
-// 配列形式ラベル（リーフを,で区切る）
-"foo" {
-    "bar[@]" {"param[@]"="val1", "param[@]"="val2"} 
-    "bar[@]" {"param[@]"="val3", "param[@]"="val4"} 
-    "bar[@]" {"param[@]"="val5", "param[@]"="val6"} 
-}

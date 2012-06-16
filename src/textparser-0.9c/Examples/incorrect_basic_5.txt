@@ -1,4 +1,0 @@
-// リーフの 数値が異常
-"DomainInfo" {
-    "VoxelOrigin" = *0.0
-}

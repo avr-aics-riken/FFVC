@@ -1,4 +1,0 @@
-// リーフのラベルが異常
-"DomainInfo" {
-    "VoxelO./rigin" = 0.0
-}

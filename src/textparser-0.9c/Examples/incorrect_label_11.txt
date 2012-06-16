@@ -1,4 +1,0 @@
-// ディレクトリのラベルが異常
-"Domain.Info" {
-    "VoxelOrigin" = 0.0
-}
