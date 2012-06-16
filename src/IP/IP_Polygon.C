@@ -37,13 +37,14 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TY
 }
 
 /**
- @fn void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org)
+ @fn void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
+ @param itbl IDtable
  */
-void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org)
+void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
 {
   int m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);
   int ref = R->Mode.Base_Medium;

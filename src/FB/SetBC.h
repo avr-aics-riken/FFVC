@@ -1,12 +1,15 @@
 #ifndef _FB_SETBC_H_
 #define _FB_SETBC_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file SetBC.h
 //@brief FlowBase SetBC class Header
@@ -19,7 +22,7 @@
 #include "BndOuter.h"
 #include "Control.h"
 #include "Component.h"
-#include "Material.h"
+#include "Medium.h"
 #include "SklUtil.h"
 #include "Intrinsic.h"
 #include "Parallel_node.h"
@@ -40,7 +43,7 @@ protected:
   
   BoundaryOuter   obc[NOFACE];
   CompoList*      cmp;
-  MaterialList*   mat;
+  MediumList*   mat;
   Intrinsic*      Ex;
   
   void getOuterLoopIdx (int face, int* st, int* ed);
@@ -80,8 +83,8 @@ public:
 public:
 	REAL_TYPE getVrefOut (REAL_TYPE tm);
   
-  void setControlVars (Control* Cref, MaterialList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
-  void setWorkList    (CompoList* m_CMP, MaterialList* m_MAT);
+  void setControlVars (Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
+  void setWorkList    (CompoList* m_CMP, MediumList* m_MAT);
   
   //@fn bool has_InOut(void)
   //@brief 流入出境界条件が設定されている場合にtrueを返す

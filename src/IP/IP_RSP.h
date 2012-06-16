@@ -12,7 +12,7 @@
 //@brief IP_RSP class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Intrinsic.h"
+#include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 
 class IP_RSP : public Intrinsic {
@@ -24,7 +24,7 @@ protected:
 
 public:
   void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
-  void setup(int* mid, Control* R, REAL_TYPE* G_org);
+  void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl);
   
   const char* getExampleName(void) {
     return ("Rayleigh's Problem");

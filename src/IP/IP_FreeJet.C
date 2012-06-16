@@ -92,7 +92,7 @@ bool FreeJet::printPara(FILE* fp, Control* R)
   return true;
 }
 
-void FreeJet::setup(int* mid, Control* R, REAL_TYPE* G_org)
+void FreeJet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
 {
   unsigned i0, j0, j1, jd;
   unsigned m;

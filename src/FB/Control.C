@@ -1274,7 +1274,7 @@ void Control::getXML_Para_Ref(void)
  @note
  - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
  -           無次元　（Pr, Re > RefV=RefL=1）
- @see bool Control::setParameters(MaterialList* mat, CompoList* cmp)
+ @see bool Control::setParameters(MediumList* mat, CompoList* cmp)
  
 void Control::getXML_Para_ND(void)
 {
@@ -2317,7 +2317,7 @@ void Control::printLS(FILE* fp, ItrCtl* IC)
 void Control::printNoCompo(FILE* fp)
 {
   fprintf(fp,"\tNo. of Inner Boundary  : %d\n", NoBC);
-  fprintf(fp,"\tNo. of Medium          : %d\n", NoMaterial);
+  fprintf(fp,"\tNo. of Medium          : %d\n", NoID);
   fprintf(fp,"\n");
   fprintf(fp,"\tNo. of Fluid ID        : %d\n", NoMediumFluid);
   fprintf(fp,"\tNo. of Solid ID        : %d\n", NoMediumSolid);
@@ -3140,12 +3140,10 @@ void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, 
 
 
 /**
- @fn void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF)
+ @fn void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF)
  @brief 無次元パラメータを各種モードに応じて設定する
  @param mat
  @param cmp
- @param NoBaseBC 外部境界の基本境界条件数
- @param BO 外部境界の基本リスト
  @param rf
  @note
  - 代表長さと代表速度はパラメータで必ず与えること（読み込んだ値は変更しない）
@@ -3158,7 +3156,7 @@ void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, 
  - bool Control::getXML_Para_ND(void)
  - void Control::getXML_Para_Init(void)
  */
-void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF)
+void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF)
 {
   REAL_TYPE rho, nyu, cp, lambda, beta, mu, snd_spd=0.0;
   REAL_TYPE c1, c2, c3;
@@ -3449,12 +3447,12 @@ void Control::setParameters(MaterialList* mat, CompoList* cmp, unsigned NoBaseBC
 
 
 /**
- @fn void Control::getTP_Steer_1(DTcntl* DT)
+ @fn void Control::get_Steer_1(DTcntl* DT)
  @brief 制御，計算パラメータ群の取得
  @param DT
  @note 他のパラメータ取得に先んじて処理しておくもの
  */
-void Control::getTP_Steer_1(DTcntl* DT)
+void Control::get_Steer_1(DTcntl* DT)
 {
   
   // ソルバーの具体的な種類を決めるパラメータ（変数配置，形状近似度，次元）を取得し，ガイドセルの値を設定する
@@ -4169,10 +4167,10 @@ void Control::getTP_KindOfSolver()
 
 
 /**
- @fn void Control::getTP_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
+ @fn void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
  @brief 制御，計算パラメータ群の取得
  */
-void Control::getTP_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
+void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
 {
   // 流体の解法アルゴリズムを取得
   getTP_Algorithm(); 
@@ -4185,7 +4183,7 @@ void Control::getTP_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   if ( isHeatProblem() ) {
     getTP_Para_Temp();
   }
-  //getTP_Para_Wind();
+
   
   ////////
   //////getTP_Para_Init();
@@ -4292,7 +4290,7 @@ void Control::getTP_Algorithm()
  @note
  - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
  -           無次元　（Pr, Re > RefV=RefL=1）
- @see bool Control::setParameters(MaterialList* mat, CompoList* cmp)
+ @see bool Control::setParameters(MediumList* mat, CompoList* cmp)
  */
 void Control::getTP_Para_ND()
 {
@@ -4363,9 +4361,9 @@ void Control::getTP_Para_Temp()
  @brief 初期値の値を取得する
  @note
  - このメソッド内では，初期値は無次元/有次元の判定はしない
- - 無次元指定時の値の変換は　setParameters(MaterialList* mat, CompoList* cmp)
+ - 無次元指定時の値の変換は　setParameters(MediumList* mat, CompoList* cmp)
  @see 
- - bool Control::setParameters(MaterialList* mat, CompoList* cmp)
+ - bool Control::setParameters(MediumList* mat, CompoList* cmp)
  */
 void Control::getTP_Para_Init()
 {	
@@ -5472,9 +5470,9 @@ bool Control::getTP_SubDomainInfo(unsigned* size)
 }
 
 
-//@fn void Control::getTP_Version(void)
+//@fn void Control::get_Version(void)
 //@brief バージョン情報の取得
-void Control::getTP_Version(void)
+void Control::get_Version(void)
 {
   int ct;
   std::string label;

@@ -21,7 +21,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "FB_Define.h"
+#include "../../FB/FB_Define.h"
 #include "CBC_Define.h"
 
 #include "Skl.h"
@@ -45,15 +45,15 @@
 #include "limits.h"
 
 
-#include "IP_Duct.h"
-#include "IP_PPLT2D.h"
-#include "IP_SHC1D.h"
-#include "IP_PMT.h"
-#include "IP_Rect.h"
-#include "IP_Step.h"
-#include "IP_Cylinder.h"
-#include "IP_Polygon.h"
-#include "IP_Sphere.h"
+#include "../../IP/IP_Duct.h"
+#include "../../IP/IP_PPLT2D.h"
+#include "../../IP/IP_SHC1D.h"
+#include "../../IP/IP_PMT.h"
+#include "../../IP/IP_Rect.h"
+#include "../../IP/IP_Step.h"
+#include "../../IP/IP_Cylinder.h"
+#include "../../IP/IP_Polygon.h"
+#include "../../IP/IP_Sphere.h"
 
 // FX10 profiler
 #if defined __K_FPCOLL
@@ -135,7 +135,7 @@ public:
   History*				H;
   Intrinsic*      Ex; // pointer to a base class
   CompoList*      cmp;
-  MaterialList*   mat;
+  MediumList*   mat;
 
   // PMlib
   PerfMonitor     PM;
@@ -289,7 +289,7 @@ public:
   void AverageOutput        (REAL_TYPE& flop);
   void Averaging_Time       (REAL_TYPE& flop);
   
-  void getTPExample         (Control* Cref);
+  void getExample         (Control* Cref);
   
   
   void Variation_Space      (REAL_TYPE* avr, REAL_TYPE* rms, REAL_TYPE& flop);
@@ -319,9 +319,9 @@ public:
   void setComponentVF       (float* cvf);
   void setEnsComponent      (void);
   void setGlobalCmpIdx      (void);
-  void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
+  void setIDtables          (ParseBC* B, ParseMat* M, FILE* fp, FILE* mp);
   void setLocalCmpIdx_Binary(void);
-  void setMaterialList      (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
+  void setMediumList        (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
   void set_NeighborRank     (void);
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void setParallelism       (void);
@@ -330,6 +330,7 @@ public:
   void setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   void setVIBC_from_Cut     (VoxInfo* Vinfo, const unsigned* bv);
   void setVOF               (REAL_TYPE* vof, unsigned* bx);
+
   void write_distance       (float* cut);
   
   void NS_FS_E_CBC          (void);
@@ -442,9 +443,7 @@ public:
   
   
   
-  void setMediumPoint(
-                      ParseBC* B,
-                      ParseMat* M);
+  
   
 };
 

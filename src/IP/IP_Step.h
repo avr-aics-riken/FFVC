@@ -12,7 +12,7 @@
 //@brief IP_Step class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Intrinsic.h"
+#include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 
 class IP_Step : public Intrinsic {
@@ -39,7 +39,7 @@ public:
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl);
   virtual void printPara(FILE* fp, Control* R);
   
   virtual const char* getExampleName(void) {

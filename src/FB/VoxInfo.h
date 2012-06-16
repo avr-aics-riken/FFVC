@@ -17,7 +17,7 @@
 #include "Skl.h"
 #include "FBUtility.h"
 #include "Component.h"
-#include "Material.h"
+#include "Medium.h"
 #include "Parallel_node.h"
 #include "IDtable.h"
 #include "SetBC.h"
@@ -39,8 +39,8 @@ protected:
   unsigned NoCompo;              /// コンポーネントの総数
   int colorList[MODEL_ID_MAX+1]; /// ボクセルモデルに含まれるIDのリスト(Global)
   REAL_TYPE* vox_nv;             /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
-  CompoList*      cmp;           /// コンポーネントリスト
-  MaterialList*   mat;           /// マテリアルリスト
+  CompoList*    cmp;             /// コンポーネントリスト
+  MediumList*   mat;             /// マテリアルリスト
 
 public:
   VoxInfo() {
@@ -250,7 +250,7 @@ public:
   void setControlVars        (unsigned* r_size, unsigned r_guide);
   void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);
   void setOBC_Cut            (SetBC* BC, float* cut);
-  void setWorkList           (CompoList* m_CMP, MaterialList* m_MAT);
+  void setWorkList           (CompoList* m_CMP, MediumList* m_MAT);
   
   //@fn const int* getColorList() const
   //@retval colorListのポインタ

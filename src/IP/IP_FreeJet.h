@@ -14,7 +14,7 @@
  @author keno, FSI Team, RIKEN
  */
 
-#include "Intrinsic.h"
+#include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 
 class FreeJet : public Intrinsic {
@@ -23,10 +23,9 @@ public:
   ~FreeJet() {}
   
 protected:
-  virtual bool getXML(SklSolverConfig* CF, Control* R);
   virtual bool printPara(FILE* fp, Control* R);
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl);
   
 public:
   virtual bool getParaXML(SklSolverConfig* CF, Control* R);

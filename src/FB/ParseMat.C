@@ -77,34 +77,8 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
 
 
 /**
- @fn bool ParseMat::chkList4Solver(int m)
- @brief 媒質情報の内容物をチェックする
- @param m
- */
-bool ParseMat::chkList4Solver(int m)
-{
-  unsigned c=0;
-  if (  BaseMat[m].getState() == FLUID ) {
-    if ( !ChkList[p_density] )                c += missingMessage(m, p_density);
-    if ( !ChkList[p_kinematic_viscosity] )    c += missingMessage(m, p_kinematic_viscosity);
-    if ( !ChkList[p_viscosity] )              c += missingMessage(m, p_viscosity);
-    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(m, p_thermal_conductivity);
-    if ( !ChkList[p_specific_heat] )          c += missingMessage(m, p_specific_heat);
-    if ( !ChkList[p_sound_of_speed] )         c += missingMessage(m, p_sound_of_speed);
-    if ( !ChkList[p_vol_expansion] )          c += missingMessage(m, p_vol_expansion);
-  }
-  else {  // solid
-    if ( !ChkList[p_density] )                c += missingMessage(m, p_density);
-    if ( !ChkList[p_specific_heat] )          c += missingMessage(m, p_specific_heat);
-    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(m, p_thermal_conductivity);
-  }
-  return ( (c != 0) ? false : true ) ;
-}
-
-
-/**
  @fn bool ParseMat::chkStateList(CompoList* compo)
- @brief CompoList[]とMaterialList[]の対応するstateが同じであるかチェックする
+ @brief CompoList[]とMediumList[]の対応するstateが同じであるかチェックする
  @retval エラーコード
  */
 bool ParseMat::chkStateList(CompoList* compo)
@@ -116,7 +90,7 @@ bool ParseMat::chkStateList(CompoList* compo)
     id  = compo[i].getID();
     //printf("\tcompo.odr=%d MatOdr=%d id=%d compo[%d].state=%d mat[%d].state=%d\n", i, odr, id, i, compo[i].getState(), odr, mat[odr].getState() );
     if ( compo[i].getState() != mat[odr].getState() ) {
-      Hostonly_ printf("\tState between CompoList[%s] and MaterialList[%s] for cell ID[%d] is conflicting.\n",
+      Hostonly_ printf("\tState between CompoList[%s] and MediumList[%s] for cell ID[%d] is conflicting.\n",
              ( compo[i].getState() == FLUID ) ? "Fluid" : "Solid",
              ( mat[odr].getState() == FLUID ) ? "Fluid" : "Solid", id );
       Hostonly_ printf("\tCheck State between 'Model_Setting' and 'Medium_Table'.\n");
@@ -143,7 +117,7 @@ void ParseMat::chkState_Mat_Cmp(CompoList* compo, FILE* fp)
     m_id = compo[i].getID();
     m_state = compo[i].getState();
     
-    printf("\t%4d : %4d %8d %6d %16s  :     %s : %s", i, m_id, m_odr, mat[m_odr].getMatID(), mat[m_odr].getName(), 
+    printf("\t%4d : %4d %8d %6d %16s  :     %s : %s", i, m_id, m_odr, m_odr, mat[m_odr].getLabel(), 
            (mat[m_odr].getState() == FLUID ) ? "Fluid" : "Solid",
            (m_state == FLUID ) ? "Fluid" : "Solid");
     if (mat[m_odr].getState() != m_state) {
@@ -163,57 +137,10 @@ void ParseMat::chkState_Mat_Cmp(CompoList* compo, FILE* fp)
 }
 
 
-/**
- @fn bool ParseMat::copyMaterials(unsigned& odr, unsigned id)
- @brief MaterialList BaseMat[]からmat[]へ属性をコピーする
- @retval エラーコード
- @param odr 登録エントリ番号
- @param id 登録対象となるmediumID
- @note
- - マテリアル数はNoMaterialで既知（ParseBC::getNoMaterial）
- - 登録対象のIDがmat[]に登録されているかを調べる
- - odrの値は現在までに登録されている個数で，更新して呼び出し元に戻る．初期値には0が入ってくる．
- - 既に登録されているかどうかの判定は，1から現在登録されている値までについて調べる．
- - もし，idが登録できなければ，関数の最後でリターン
- */
-bool ParseMat::copyMaterials(unsigned& odr, unsigned id)
-{
-  int odr_base=0;
-  
-  // Base MaterialListに登録されているMatIDを調べ，登録エントリ番号を取得する
-  if ( -1 == (odr_base=getOdrInMatList(id, NoBaseMat, BaseMat)) ) {
-    Hostonly_ stamped_printf("\tParsing error : Medium ID [%d] is not listed in MaterialList\n", id);
-    return false;
-  }
-  
-  if ( odr == 0 ) {
-    odr++;
-    mat[odr].setMatID( BaseMat[odr_base].getMatID() );
-    mat[odr].setState( BaseMat[odr_base].getState() );
-    strcpy(mat[odr].getName(), BaseMat[odr_base].getName());
-    for (int m=0; m<property_END; m++)  mat[odr].P[m] = BaseMat[odr_base].P[m];
-    return true;
-  }
-  else {
-    bool flag=true; 
-    for (unsigned n=1; n<=odr; n++) { // 1から現在登録されている値までについて調べる
-      if ( mat[n].getMatID() == id ) flag = false; // 既に登録されていると，falseにする
-    }
-    if (flag) { // 登録されていない場合，新規登録して，odrをインクリメントし，関数を抜ける
-      odr++;
-      mat[odr].setMatID( BaseMat[odr_base].getMatID() );
-      mat[odr].setState( BaseMat[odr_base].getState() );
-      strcpy(mat[odr].getName(), BaseMat[odr_base].getName());
-      for (int m=0; m<property_END; m++)  mat[odr].P[m] = BaseMat[odr_base].P[m];
-      return true;
-    }
-  }
-  return true;
-}
 
 /**
  @fn void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
- @brief CompoList[]とMaterialList[]のチェック
+ @brief CompoList[]とMediumList[]のチェック
  */
 void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
 {
@@ -221,158 +148,12 @@ void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
   printRelation(fp, compo);
 }
 
-/**
- @fn unsigned ParseMat::getMatIDinTable(unsigned id)
- @brief iTable[]にidが含まれるかどうかを調べる
- @retval 含まれれば対応するMatID，そうでなければ0を返す
- */
-unsigned ParseMat::getMatIDinTable(unsigned id)
-{
-  for (unsigned i=1; i<=NoID; i++) {
-    if ( iTable[i].getID() == id ) return iTable[i].getMatID();
-  }
-  return 0;
-}
-
-
-/**
- @fn unsigned ParseMat::getOdrInMatList(unsigned id, unsigned Msize, MaterialList* mlist)
- @brief MaterialListに含まれるidのエントリ番号を返す
- @retval 含まれれば，エントリ番号，そうでなければ0を返す
- */
-unsigned ParseMat::getOdrInMatList(unsigned id, unsigned Msize, MaterialList* mlist)
-{
-  for (unsigned i=1; i<=Msize; i++) {
-    if ( mlist[i].getMatID() == id ) return i;
-  }
-  return 0;
-}
-
-
-/**
- @fn void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
- @brief paramの値を返す
- @param p param要素
- @param value 値
- */
-void ParseMat::getPvalue(const CfgParam* p, REAL_TYPE &value)
-{
-  REAL_TYPE f;
-  
-  if ( !(p->GetData( &f )) ) {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for in Medium\n");
-    Exit(0);
-  }
-  value = f;
-}
-
-
-/**
- @fn void ParseMat::getXMLmaterial(void)
- @brief Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
- 
-void ParseMat::getXMLmaterial(void)
-{
-  int id;
-  const CfgElem *elmL1=NULL, *elmL2=NULL;
-  const char *p=NULL, *pnt=NULL;
-  
-  // Check Model_Setting section
-  if ( !(elmL1 = CF->GetTop(MDMTBL)) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing Medium_Table tree\n");
-    Exit(0);
-  }
-  
-  // check # of Elem
-  if ( (NoBaseMat=elmL1->GetElemSize()) == 0 ) {
-    Hostonly_ printf("\tNo description was found in 'Medium_Table'\n");
-    Exit(0);
-  }
-  
-  // Instance MaterialList valid only inside of this class
-  BaseMat = new MaterialList[NoBaseMat+1];
-  
-  // load Base list
-  elmL2 = elmL1->GetElemFirst();
-  for (int i=1; i<=NoBaseMat; i++) {
-    p = elmL2->GetName();
-    if (  !strcasecmp(p, "Solid") || ( !strcasecmp(p, "Fluid") ) ) {
-      
-      // ID
-      if ( !elmL2->isSetID() ) {
-        Hostonly_ printf("\tParsing error : No ID section for Medium in 'Medium_Table'\n");
-        Exit(0);
-      }
-      if ( -1 == (id=elmL2->GetID()) ) {
-        Hostonly_ printf("\tParsing error : No valid ID for Medium in 'Medium_Table'\n");
-        Exit(0);
-      }
-      BaseMat[i].setMatID( (unsigned)id );
-      
-      // state
-      if      ( !strcasecmp(p, "Fluid") ) BaseMat[i].setState(FLUID);
-      else if ( !strcasecmp(p, "Solid") ) BaseMat[i].setState(SOLID);
-      else {
-        Hostonly_ printf("\tInvalid medium keyword 'solid/fluid'\n");
-        Exit(0);
-      }
-      
-      // Material name
-      pnt = NULL;
-      if ( !(pnt = elmL2->GetComment()) ) {
-        Hostonly_ printf("\tNo comment for Medium\n");
-      }
-      else strcpy(BaseMat[i].getName(), pnt);
-      
-      // each properties
-      readMedium(elmL2, i);
-    }
-    else {
-      Hostonly_ printf("\tInvalid keyword in Medium_Table : [%s]\n", p);
-      Exit(0);
-    }
-    
-    elmL2 = elmL1->GetElemNext(elmL2);
-  }
-  
-  // 重複をチェック
-  unsigned md;
-  for (unsigned n=2; n<=NoBaseMat; n++) {
-    md = BaseMat[n].getMatID();
-    for (unsigned l=1; l<n; l++) {
-      if ( BaseMat[l].getMatID() == md ) {
-        Hostonly_ stamped_printf("\tDuplicate Medium id[%d]=%d in Base MaterialList\n", l, md);
-        FILE* mp=stdout;
-        
-        Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-        Hostonly_ fprintf(mp,"\n\t>> Base Material List\n\n");
-        
-        Hostonly_ printMatList(mp, NoBaseMat, BaseMat);
-        Exit(0);
-      }
-    }
-  }
-}*/
-
-
-/**
- @fn bool ParseMat::isIDinList(unsigned RefID)
- @brief BaseMatにRefIDがあるかを調べる
- @retval RefIDがあれば，trueを返す
- */
-bool ParseMat::isIDinList(unsigned RefID)
-{
-  for (unsigned i=1; i<=NoBaseMat; i++) {
-    if (BaseMat[i].getMatID() == RefID) return true;
-  }
-  return false;
-}
 
 
 /**
  @fn void ParseMat::makeLinkCmpMat(CompoList* compo)
- @brief CompoList, MaterialListの相互参照の準備を行う
- */
+ @brief CompoList, MediumListの相互参照の準備を行う
+ 
 void ParseMat::makeLinkCmpMat(CompoList* compo)
 {
   unsigned id, id_mat, odr_mat;
@@ -386,100 +167,39 @@ void ParseMat::makeLinkCmpMat(CompoList* compo)
       Hostonly_ stamped_printf("\tSomething wrong! Medium ID = %d\n", id_mat);
       Exit(0);
     }
-    
-    // MatIDのMaterialListのエントリ番号
-    odr_mat = getOdrInMatList(id_mat, NoMaterial, mat);
 
     // copy property
-    compo[i].setMatOdr( odr_mat );
+    compo[i].setMatOdr( i );
   }
-}
+}*/
+
 
 
 /**
- @fn void ParseMat::makeMaterialList(void)
- @brief BaseListからMaterialListを作成する
- @note
- - ParseBC::getNoMaterial()で，iTableに登録されたMaterial数を取得ずみ
+ @fn void ParseMat::printMediumList(FILE* mp, FILE* fp)
+ @brief MediumListを表示する
  */
-void ParseMat::makeMaterialList(void)
+void ParseMat::printMediumList(FILE* mp, FILE* fp)
 {
-  unsigned odr=0, matid;
-  
-  for (int i=1; i<=NoID; i++) {
-    matid = iTable[i].getMatID();
-    if ( !isIDinList(matid) ) {
-      Hostonly_ stamped_printf("\tMedium ID [%d] described in 'Model_Setting' can not find in 'Medium_Table'\n", matid);
-      Exit(0);
-    }
-    if ( !copyMaterials( odr, matid ) ) Exit(0);
-    if ( odr == NoMaterial ) return;
-  }
-  stamped_printf("\tError\n");
-  Exit(0);
+  printMatList(mp, (int)NoMedium, mat);
+  printMatList(fp, (int)NoMedium, mat);
 }
 
 
 /**
- @fn unsigned ParseMat::missingMessage(int m, unsigned key)
- @brief 警告メッセージの表示
- @param m
- @param key
- */
-unsigned ParseMat::missingMessage(int m, unsigned key)
-{
-  Hostonly_ printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
-         MaterialList::getPropertyName(key).c_str(), BaseMat[m].getName(),
-         ( BaseMat[m].getState() == SOLID ) ? "solid" : "fluid" );
-  return 1; 
-}
-
-
-/**
- @fn void ParseMat::dbg_printBaseMaterialList(FILE* mp, FILE* fp)
- @brief 基本媒質情報の表示
- */
-void ParseMat::dbg_printBaseMaterialList(FILE* mp, FILE* fp)
-{
-
-  Hostonly_ fprintf(mp, "DEBUG : \n");
-  Hostonly_ fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-  Hostonly_ fprintf(mp,"\n\t>> Base Material List\n\n");
-  Hostonly_ fprintf(fp, "DEBUG : \n");
-  Hostonly_ fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  Hostonly_ fprintf(fp,"\n\t>> Base Material List\n\n");
-
-  printMatList(mp, NoBaseMat, BaseMat);
-  printMatList(fp, NoBaseMat, BaseMat);
-}
-
-/**
- @fn void ParseMat::printMaterialList(FILE* mp, FILE* fp)
- @brief MaterialListを表示する
- */
-void ParseMat::printMaterialList(FILE* mp, FILE* fp)
-{
-  printMatList(mp, NoMaterial, mat);
-  printMatList(fp, NoMaterial, mat);
-}
-
-
-/**
- @fn void ParseMat::printMatList(FILE* fp, unsigned Max, MaterialList* mlist)
+ @fn void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
  @brief 媒質情報の表示
  @param fp
  @param Max
  @param mlist
  */
-void ParseMat::printMatList(FILE* fp, unsigned Max, MaterialList* mlist)
-{  
-  unsigned n, id;
-  
+void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
+{
   fprintf(fp, "\t  no :      ID           Medium\n");
   
-  for(n=1; n<=Max; n++) {
-    id = mlist[n].getMatID();
-    fprintf(fp,"\t%4d : %7d %16s\n", n, id, mlist[n].getName());
+  for (int n=1; n<=Max; n++) {
+    int id = n;
+    fprintf(fp,"\t%4d : %7d %16s\n", n, id, mlist[n].getLabel());
     
     if ( mlist[n].getState() == FLUID ) {
       fprintf(fp, "\t\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
@@ -503,7 +223,7 @@ void ParseMat::printMatList(FILE* fp, unsigned Max, MaterialList* mlist)
 
 /**
  @fn void ParseMat::printRelation(FILE* fp, CompoList* compo)
- @brief CompoList[]とMaterialList[]のチェック
+ @brief CompoList[]とMediumList[]のチェック
  @note debug function
  */
 void ParseMat::printRelation(FILE* fp, CompoList* compo)
@@ -517,7 +237,7 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo)
   for (unsigned i=1; i<=NoCompo; i++) {
     if ( compo[i].getState() != -1 ) {  // is Medium
       odr = compo[i].getMatOdr();
-      fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getID(), odr, mat[odr].getMatID(), mat[odr].getName(),
+      fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getID(), odr, odr, mat[odr].getLabel(),
               (mat[odr].getState() == FLUID ) ? "Fluid" : "Solid" );
     }
     else {
@@ -531,83 +251,17 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo)
 
 
 /**
- @fn void ParseMat::readMedium(const CfgElem *elmL2, int m)
- @brief 媒質情報を取得する
- @param elmL2
- @param m
- */
-void ParseMat::readMedium(const CfgElem *elmL2, int m)
-{
-  const CfgParam *param=NULL;
-  const char* Pname=NULL;
-  int NoParam=0;
-  int key;
-  
-  NoParam = elmL2->GetParamSize();
-  
-  // clear for each medium
-  for (int i=0; i<property_END; i++) ChkList[i] = false;
-  
-  // check for solver
-  param   = elmL2->GetParamFirst();
-  for (int i=0; i<NoParam; i++) {
-    Pname = param->GetName();
-    if ( -1 == (key = MaterialList::getKey(Pname)) ) {
-      Hostonly_ printf("\tParameter error : Invalid keyword in 'Medium_Table' : [%s]\n", Pname);
-      Exit(0);
-    }
-    ChkList[key] = true;
-    
-    param = elmL2->GetParamNext(param);
-  }
-  
-  // Check
-  if ( !chkList4Solver(m) ) Exit(0);
-  
-  // load value
-  param   = elmL2->GetParamFirst();
-  for (int i=0; i<NoParam; i++) {
-    Pname = param->GetName();
-    key = MaterialList::getKey(Pname);  // return value was already checked
-    
-    getPvalue(param, BaseMat[m].P[key]);
-    
-    param = elmL2->GetParamNext(param);
-  }
-}
-
-
-/**
- @fn void ParseMat::setControlVars(Control* Cref, IDtable* itbl, MaterialList* m_mat, SklSolverConfig* cfg)
+ @fn void ParseMat::setControlVars(Control* Cref, MediumList* m_mat)
  @brief 媒質情報のハンドリング
  @param Cref 
- @param itbl 
- @param m_mat
- @param cfg 
+ @param m_mat 
  */
-void ParseMat::setControlVars(Control* Cref, IDtable* itbl, MaterialList* m_mat, SklSolverConfig* cfg)
+void ParseMat::setControlVars(Control* Cref)
 {
-  if ( !itbl ) Exit(0);
-  if ( !cfg )  Exit(0);
-  
   NoCompo        = Cref->NoCompo;
   NoBC           = Cref->NoBC;
-  NoID           = Cref->NoID;
-  NoMaterial     = Cref->NoMaterial;
-  guide          = Cref->guide;
-  imax = size[0] = Cref->imax;
-  jmax = size[1] = Cref->jmax;
-  kmax = size[2] = Cref->kmax;
   Unit_Temp      = Cref->Unit.Temp;
-  BaseTemp       = Cref->BaseTemp;
-  DiffTemp       = Cref->DiffTemp;
-  KOS            = Cref->KindOfSolver;
-  iTable = itbl;
-  //CF     = cfg;
-  
-  mat = m_mat;
 }
-
 
 
 /**
@@ -624,60 +278,55 @@ bool ParseMat::receive_TP_Ptr(TPControl* tp)
 
 
 /**
- @fn void ParseMat::getTP_MediumTableInfo()
+ @fn int ParseMat::get_MediumTable(void)
  @brief Medium_Tableを読んでMediumTableInfoクラスオブジェクトに格納
  */
-void ParseMat::getTP_MediumTableInfo()
+int ParseMat::get_MediumTable(void)
 {
-  std::string str,label;
-  string label_base,label_m,label_leaf;
+  std::string str, label;
+  std::string label_base, label_m, label_leaf;
   REAL_TYPE fval;
-  int n1=0,n2=0,n3=0;
+  int n1=0, n2=0, n3=0;
   
-  nMedium_TableTP=0;
-  nMedium_TableDB=0;
+  NoMedium = 0;
   
-  label_base="/Medium_Table";
-  n1=tpCntl->countLabels(label_base);
-  //std::cout <<  "label_base : " << label_base << std::endl;
-  //std::cout <<  "n1 : " << n1 << std::endl;
+  label_base = "/Medium_Table";
+  
+  // 媒質の個数を取得
+  n1 = tpCntl->countLabels(label_base);
   if ( n1 < 0) {
-    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
+    stamped_printf("\tcountLabels --- %s\n", label_base.c_str());
     Exit(0);
   }
-  nMedium_TableTP=n1;
+  NoMedium = n1;
   
-  //MediumTableIndoクラスのインスタンス
-  //std::cout <<  "nMedium_TableTP : " << nMedium_TableTP << std::endl;
-  MTITP = new MediumTableInfo[nMedium_TableTP];//Medium Table Instance
+  MTITP = new MediumTableInfo[NoMedium+1];
   
-  for (int i1=1; i1<=n1; i1++) {//Medium_Table loop
-    if(!tpCntl->GetNodeStr(label_base,i1,&str)){
+  for (int i1=1; i1<=NoMedium; i1++) {
+    if ( !tpCntl->GetNodeStr(label_base, i1, &str) ) {
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
     
-    label_m=label_base+"/"+str;//
-    n2=tpCntl->countLabels(label_m);
-    //std::cout << "  label_m = " << label_m << std::endl;
-    //   std::cout <<  "n2 : " << n2 << std::endl;
+    label_m = label_base+"/"+str;
+    n2 = tpCntl->countLabels(label_m);
     
-    for (int i2=1; i2<=n2; i2++) {//Medium_Table loop
-      if(!tpCntl->GetNodeStr(label_m,i2,&str)){
-        stamped_printf("\tParsing error : No Leaf Node at Medium_Table\n");
+    for (int i2=1; i2<=n2; i2++) {
+      if ( !tpCntl->GetNodeStr(label_m, i2, &str) ) {
+        stamped_printf("\tParsing error : No Leaf Node in Medium_Table[%d]\n", i1);
         Exit(0);
       }
       
-      label_leaf=label_m+"/"+str;//
-      //std::cout << "    label_leaf = " << label_leaf << std::endl;
+      label_leaf = label_m+"/"+str;
       
-      //MTITP[i1-1].id=0;//idは内部で使われる番号を後で代入--->ここでは0で初期化
-      if     ( !strcasecmp(str.c_str(), "type") ){
+      if ( !strcasecmp(str.c_str(), "type") ) {
         if ( !(tpCntl->GetValue(label_leaf, &label)) ){
-        }else{
-          if     ( !strcasecmp(label.c_str(), "Fluid") ) MTITP[i1-1].type=FLUID;
-          else if( !strcasecmp(label.c_str(), "Solid") ) MTITP[i1-1].type=SOLID;
-          else{
+          ;
+        }
+        else {
+          if     ( !strcasecmp(label.c_str(), "Fluid") ) MTITP[i1].type = FLUID;
+          else if( !strcasecmp(label.c_str(), "Solid") ) MTITP[i1].type = SOLID;
+          else {
             stamped_printf("\tParsing error : unknown type at Medium_Table \n");
             Exit(0);
           }
@@ -685,226 +334,90 @@ void ParseMat::getTP_MediumTableInfo()
       }
       else if( !strcasecmp(str.c_str(), "label") ){
         if ( !(tpCntl->GetValue(label_leaf, &label)) ){
-          
-        }else{
-          MTITP[i1-1].label=label;
+          ;
+        }
+        else {
+          MTITP[i1].label = label;
         }
       }
       else {
         if ( !(tpCntl->GetValue(label_leaf, &fval)) ){
-        }else{
+          ;
+        }
+        else{
           // データをmapに追加
-          //std::cout << "      str  = " << str << std::endl;
-          //std::cout << "      fval = " << fval << std::endl;
-          MTITP[i1-1].m_fval.insert( pair<string,REAL_TYPE>(str,fval));
+          MTITP[i1].m_fval.insert( pair<std::string, REAL_TYPE>(str, fval) );
         }
       }
     }
   }
   
-  //return;
+  return NoMedium; 
+}
+
+
+/**
+ @fn void ParseMat::makeMediumList(MediumList* m_mat)
+ @brief MediumListを作成する
+ */
+void ParseMat::makeMediumList(MediumList* m_mat)
+{
   
-  /*debug write
+  if ( !m_mat ) return;
   
-  // イテレータを生成
-  map<string, REAL_TYPE>::iterator itr;
+  mat = m_mat;
   
-  for (int i=0; i<nMedium_TableTP; i++) {//Medium_Table loop
+  int odr=0;
+  int type;
+  std::string label;
+  
+  for (int i=1; i<=NoMedium; i++) {
     
-    cout << "一覧出力" << i+1 << endl;
-    cout << "type  : " << MTITP[i].type << endl;
-    cout << "label : " << MTITP[i].label << endl;
-    //cout << "id    : " << MTITP[i].id << endl;
+    type  = MTITP[i].type;
+    label = MTITP[i].label;
     
-    int icounter=0;
-    //if (itr != MTITP[i].m_fval.end()) 
-    for (itr = MTITP[i].m_fval.begin(); itr != MTITP[i].m_fval.end(); itr++)
-    {
-      icounter++;
-      string a1 = itr->first;// キー取得
-      REAL_TYPE a2 = itr->second;// 値取得
-	    cout << "i = " << i << "  icounter = " << icounter 
-			<< "  key:" << a1 << "  value:" << a2 << endl;
+    // すでに登録されているかどうか調べる
+    if ( !chkDuplicateLabel(odr, label) ) {
+      Hostonly_ printf("\tError : Medium label '%s' is already used\n", label.c_str());
+      Exit(0);
     }
-  }*/
-  
-  //delete [] MTITP;
-  
-  return;
-  
-}
-
-
-/**
- @fn void ParseMat::getTPmaterial()
- @brief Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
- */
-void ParseMat::getTPmaterial()
-{
-  //すでに保持しているMediumTableInfoのオブジェクトからBaseMatをつくる
-  //一回Medium_Tabelを読んでるのでここで何もしないようにプログラムを改良する！！！
-  //cout << "NoBaseMat " << NoBaseMat << endl;
-  //NoBaseMat=Medium_Tableの定義数
-  return;
-  
-  //////int id;
-  //////const CfgElem *elmL1=NULL, *elmL2=NULL;
-  //////const char *p=NULL, *pnt=NULL;
-  //////
-  //////// Check Model_Setting section
-  //////if ( !(elmL1 = CF->GetTop(MDMTBL)) ) {
-  //////  stamped_printf("\tParsing error : Missing Medium_Table tree\n");
-  //////  Exit(0);
-  //////}
-  //////
-  //////// check # of Elem
-  //////if ( (NoBaseMat=elmL1->GetElemSize()) == 0 ) {
-  //////  printf("\tNo description was found in 'Medium_Table'\n");
-  //////  Exit(0);
-  //////}
-  //////
-  //////// Instance MaterialList valid only inside of this class
-  //////BaseMat = new MaterialList[NoBaseMat+1];
-  //////
-  //////// load Base list
-  //////elmL2 = elmL1->GetElemFirst();
-  //////for (int i=1; i<=NoBaseMat; i++) {
-  //////  p = elmL2->GetName();
-  //////  if (  !strcasecmp(p, "Solid") || ( !strcasecmp(p, "Fluid") ) ) {
-  //////    
-  //////    // ID
-  //////    if ( !elmL2->isSetID() ) {
-  //////      printf("\tParsing error : No ID section for Medium in 'Medium_Table'\n");
-  //////      Exit(0);
-  //////    }
-  //////    if ( -1 == (id=elmL2->GetID()) ) {
-  //////      printf("\tParsing error : No valid ID for Medium in 'Medium_Table'\n");
-  //////      Exit(0);
-  //////    }
-  //////    BaseMat[i].setMatID( (unsigned)id );
-  //////    
-  //////    // state
-  //////    if      ( !strcasecmp(p, "Fluid") ) BaseMat[i].setState(FLUID);
-  //////    else if ( !strcasecmp(p, "Solid") ) BaseMat[i].setState(SOLID);
-  //////    else {
-  //////      printf("\tInvalid medium keyword 'solid/fluid'\n");
-  //////      Exit(0);
-  //////    }
-  //////    
-  //////    // Material name
-  //////    pnt = NULL;
-  //////    if ( !(pnt = elmL2->GetComment()) ) {
-  //////      printf("\tNo comment for Medium\n");
-  //////    }
-  //////    else strcpy(BaseMat[i].getName(), pnt);
-  //////    
-  //////    // each properties ---> 媒質情報を取得する
-  //////    readMedium(elmL2, i);
-  //////  }
-  //////  else {
-  //////    printf("\tInvalid keyword in Medium_Table : [%s]\n", p);
-  //////    Exit(0);
-  //////  }
-  //////  
-  //////  elmL2 = elmL1->GetElemNext(elmL2);
-  //////}
-  //////
-  //////// 重複をチェック
-  //////unsigned md;
-  //////for (unsigned n=2; n<=NoBaseMat; n++) {
-  //////  md = BaseMat[n].getMatID();
-  //////  for (unsigned l=1; l<n; l++) {
-  //////    if ( BaseMat[l].getMatID() == md ) {
-  //////      stamped_printf("\tDuplicate Medium id[%d]=%d in Base MaterialList\n", l, md);
-  //////      FILE* mp=stdout;
-  //////      
-  //////      fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-  //////      fprintf(mp,"\n\t>> Base Material List\n\n");
-  //////      
-  //////      printMatList(mp, NoBaseMat, BaseMat);
-  //////      Exit(0);
-  //////    }
-  //////  }
-  //////}
-  
-}
-
-
-/**
- @fn void ParseMat::makeMaterialListTP(void)
- @brief BaseListからMaterialListを作成する
- @note
- - ParseBC::getNoMaterial()で，iTableに登録されたMaterial数を取得ずみ
- */
-void ParseMat::makeMaterialListTP(void)
-{
-  unsigned odr=0, matid;
-  
-  cout << "NoMaterial " << NoMaterial << endl;
-  
-  for (int i=1; i<=NoID; i++) {
-    matid = iTable[i].getMatID();
-    cout << "i " << i << endl;
-    cout << "matid " << matid << endl;
     
-    ////MaterialList BaseMat[]からmat[]へ属性をコピーする
-    ////---> MediumTableInfo *MTITP からmatを作成（BaseMat[]を作成するところを参考！！！）
-    //   if ( !copyMaterialsTP( odr, matid ) ) Exit(0);
-    
-    //すでに登録されているかどうか調べる
-    if(chkMatIDin(odr,matid)) continue;
-    
-    //登録する
     odr++;
-    cout << "odr = " << odr << endl;
-    
-    // material_id
-    mat[odr].setMatID( matid );
     
     // state
-    mat[odr].setState(MTITP[matid-1].type);
+    mat[odr].setState(type);
+
+    // Medium name
+    strcpy( mat[odr].getLabel(), label.c_str() );
     
-    // Material name
-    strcpy(mat[odr].getName(), MTITP[matid-1].label.c_str());
-    
-    // set mat value
-    set_matMedium(odr,matid);
-    
+    // set medium value
+    storeProperty(odr, i);
   }
-  
-  return;
+
 }
 
 
-/**
- @fn bool ParseMat::chkMatIDin(unsigned n, const int matid)
- @brief MatIDがすでに登録されているかどうか調べる
- */
-bool ParseMat::chkMatIDin(unsigned n, const int matid)
+
+//@brief ラベルの重複を調べる
+bool ParseMat::chkDuplicateLabel(const int n, std::string m_label)
 {
 	for (int i=0; i<n; i++){
-    if(mat[i].getMatID() == matid) return true;
+    if ( mat[i].getLabel() == m_label.c_str() ) return false;
 	}
-	return false;
+	return true;
 }
 
 
-
-
 /**
- @fn void ParseMat::set_matMedium(const unsigned n, const int matid)
+ @fn void ParseMat::storeProperty(const int n, const int matid)
  @brief matの変数値を格納する
  */
-void ParseMat::set_matMedium(const unsigned n, const int matid)
+void ParseMat::storeProperty(const int n, const int matid)
 {
-	//debug
-	cout << "n = " << n << endl;
-	cout << "matid = " << matid << endl;
-	cout << "element=" << (unsigned int)MTITP[matid-1].m_fval.size() << endl;
+	int nfval = MTITP[matid].m_fval.size();
   
-	int nfval=(unsigned int)MTITP[matid-1].m_fval.size();
-	if(nfval > property_END){
-    printf("\tParameter error : too big property size 'Medium_Table'\n");
+	if ( nfval > property_END ){
+    Hostonly_ printf("\tParameter error : too big property size 'Medium_Table'\n");
     Exit(0);
 	};
   
@@ -913,39 +426,20 @@ void ParseMat::set_matMedium(const unsigned n, const int matid)
 	
 	// イテレータを生成
 	map<string, REAL_TYPE>::iterator itr;
-	
-	cout << "type  : " << MTITP[matid-1].type << endl;
-	cout << "label : " << MTITP[matid-1].label << endl;
   
-	//int icounter=0;
-	for (itr = MTITP[matid-1].m_fval.begin(); itr != MTITP[matid-1].m_fval.end(); itr++)
+	for (itr = MTITP[matid].m_fval.begin(); itr != MTITP[matid].m_fval.end(); itr++)
 	{
-		//icounter++;
-    //cout << "  icounter = " << icounter <<endl;
-		string a1 = itr->first;// キー取得
-		REAL_TYPE a2 = itr->second;// 値取得
-		cout << "  key   : " << a1 << endl;
-		cout << "  value : " << a2 << endl;
+    std::string a1 = itr->first;   // キー取得
+		REAL_TYPE   a2 = itr->second;  // 値取得
     
-		int key=0;
-		if (      !strcasecmp("density",              a1.c_str()) ) key = p_density;              // 0
-		else if ( !strcasecmp("kinematic_viscosity",  a1.c_str()) ) key = p_kinematic_viscosity;  // 1
-		else if ( !strcasecmp("viscosity",            a1.c_str()) ) key = p_viscosity;            // 2
-		else if ( !strcasecmp("thermal_conductivity", a1.c_str()) ) key = p_thermal_conductivity; // 3
-		else if ( !strcasecmp("thermal_diffusivity",  a1.c_str()) ) key = p_thermal_diffusivity;  // 4
-		else if ( !strcasecmp("specific_heat",        a1.c_str()) ) key = p_specific_heat;        // 5
-		else if ( !strcasecmp("sound_of_speed",       a1.c_str()) ) key = p_sound_of_speed;       // 6
-		else if ( !strcasecmp("volume_expansion",     a1.c_str()) ) key = p_vol_expansion;        // 7
-		else { 
-			printf("\tParameter error : Invalid keyword in 'Medium_Table' : [%s]\n", a1.c_str());
-			Exit(0);
-		}
+    int key = MediumList::getKey(a1.c_str());
+    
 		mat[n].P[key]=a2;
     ChkList[key] = true;
 	}
 	
 	// Check
-	if ( !chkList4Solver_mat(n) ){
+	if ( !chkList4Solver(n) ){
 		printf("\tParameter error : chkList4Solver \n");
 		Exit(0);
 	}
@@ -960,42 +454,37 @@ void ParseMat::set_matMedium(const unsigned n, const int matid)
  @brief 媒質情報の内容物をチェックする
  @param m
  */
-bool ParseMat::chkList4Solver_mat(int m)
+bool ParseMat::chkList4Solver(const int m)
 {
-  unsigned c=0;
+  int c=0;
   if ( mat[m].getState() == FLUID ) {
-    if ( !ChkList[p_density] )                c += missingMessage_mat(m, p_density);
-    if ( !ChkList[p_kinematic_viscosity] )    c += missingMessage_mat(m, p_kinematic_viscosity);
-    if ( !ChkList[p_viscosity] )              c += missingMessage_mat(m, p_viscosity);
-    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage_mat(m, p_thermal_conductivity);
-    if ( !ChkList[p_specific_heat] )          c += missingMessage_mat(m, p_specific_heat);
-    if ( !ChkList[p_sound_of_speed] )         c += missingMessage_mat(m, p_sound_of_speed);
-    if ( !ChkList[p_vol_expansion] )          c += missingMessage_mat(m, p_vol_expansion);
+    if ( !ChkList[p_density] )                c += missingMessage(m, p_density);
+    if ( !ChkList[p_kinematic_viscosity] )    c += missingMessage(m, p_kinematic_viscosity);
+    if ( !ChkList[p_viscosity] )              c += missingMessage(m, p_viscosity);
+    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(m, p_thermal_conductivity);
+    if ( !ChkList[p_specific_heat] )          c += missingMessage(m, p_specific_heat);
+    if ( !ChkList[p_sound_of_speed] )         c += missingMessage(m, p_sound_of_speed);
+    if ( !ChkList[p_vol_expansion] )          c += missingMessage(m, p_vol_expansion);
   }
   else {  // solid
-    if ( !ChkList[p_density] )                c += missingMessage_mat(m, p_density);
-    if ( !ChkList[p_specific_heat] )          c += missingMessage_mat(m, p_specific_heat);
-    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage_mat(m, p_thermal_conductivity);
+    if ( !ChkList[p_density] )                c += missingMessage(m, p_density);
+    if ( !ChkList[p_specific_heat] )          c += missingMessage(m, p_specific_heat);
+    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(m, p_thermal_conductivity);
   }
   return ( (c != 0) ? false : true ) ;
 }
 
 
-
 /**
- @fn unsigned ParseMat::missingMessage_mat(int m, unsigned key)
+ @fn int ParseMat::missingMessage(const int m, const int key)
  @brief 警告メッセージの表示
  @param m
  @param key
  */
-unsigned ParseMat::missingMessage_mat(int m, unsigned key)
+int ParseMat::missingMessage(const int m, const int key)
 {
   printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
-         MaterialList::getPropertyName(key).c_str(), mat[m].getName(),
+         MediumList::getPropertyName(key).c_str(), mat[m].getLabel(),
          ( mat[m].getState() == SOLID ) ? "solid" : "fluid" );
   return 1; 
 }
-
-
-
-

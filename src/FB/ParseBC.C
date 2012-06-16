@@ -296,70 +296,6 @@ void ParseBC::get_Dir(const CfgElem *elmL, unsigned n, const char* str, REAL_TYP
   getUnitVec(v);
 }*/
 
-/**
- @fn int ParseBC::getNBC(void)
- @brief INNERBNDタグ直下のElemの個数（内部境界条件数）を返す
- @retval BCの個数
- @note 境界条件数がゼロでもエラーではない
- 
-int ParseBC::getNBC(void)
-{  
-  return CF->GetSize(INNERBND);
-}*/
-
-
-/**
- @fn unsigned ParseBC::getNoMaterial(void)
- @brief Model_Settingに記述されたMaterialIDの数を数える
- @retval MaterialIDの数
- @note
- - count[]はstaticなので，変数で宣言してはいけないので，newする．deleteを忘れずに
- - NoIDは'Model_Setting'に記述されたparam文の数
- */
-unsigned ParseBC::getNoMaterial(void)
-{
-  unsigned m=0;
-  bool *count = new bool[NoID+1];
-  
-  if( !count ) {
-    Hostonly_ fprintf(stderr, "\tMemory allocation error.(Medium counter)\n");
-    return m;
-  }
-  
-  for (int i=1; i<=NoID; i++) count[i] = true;
-  
-  for (int i=1; i<=NoID; i++) {
-    unsigned q = iTable[i].getMatID();
-    for (int j=1; j<i; j++) {
-      if ( iTable[j].getMatID() == q ) count[i] = false;
-    }
-  }
-  
-  for (int i=1; i<=NoID; i++) if ( true == count[i] ) m++;
-  
-  if ( count ) { delete [] count; count=NULL; }
-  
-  return m;
-}
-
-/**
- @fn void ParseBC::get_NV(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
- @brief 内部境界条件の法線ベクトル値を取得し，登録する
- @param elmL
- @param n オーダー
- @param v[out] ベクトルパラメータ
- @param str エラー表示用文字列
- 
-void ParseBC::get_NV(const CfgElem *elmL, unsigned n, const char* str, REAL_TYPE* v)
-{
-  for (unsigned i=0; i<3; i++) v[i]=0.0f;
-  
-  if ( !elmL->GetVctValue("Normal_x", "Normal_y", "Normal_z", &v[0], &v[1], &v[2]) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get vec params in '%s\n", str);
-    Exit(0);
-  }
-  getUnitVec(v);
-}*/
 
 /**
  @fn string ParseBC::getOBCstr(unsigned id)
@@ -389,7 +325,7 @@ string ParseBC::getOBCstr(unsigned id)
  */
 int ParseBC::getStateinTable(unsigned id)
 {
-  for (unsigned i=1; i<=NoID; i++) {
+  for (unsigned i=1; i<=NoMedium; i++) {
     if ( iTable[i].getID() == id ) { return iTable[i].getState(); }
   }
   Exit(0);
@@ -1454,104 +1390,6 @@ void ParseBC::getXML_Medium_InitTemp(void)
   }
 }*/
 
-/**
- @fn void ParseBC::getXML_Model(void)
- @brief XMLに記述されたモデル情報を取得し，ワークテーブルiTableを確保する
- @pre ParseBC::setControlVars()内 scanXMLmodel()でNoIDを確定
- @note
-    - Model_Settingの情報をXMLから取得し，iTableに保持
-    - 流体の媒質は少なくとも一つは必要
-    - iTableの数の上限は，NoID
- 
-void ParseBC::getXML_Model(void)
-{
-  const CfgElem *elemTop=NULL, *elmL1=NULL;
-  const CfgParam* param=NULL;
-  int id;
-  const char* p=NULL;
-  const char* pnt;
-  
-  // Check Model_Setting section
-  elemTop = CF->GetTop(STEER);
-  if( !(elmL1 = elemTop->GetElemFirst("Model_Setting")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
-    Exit(0);
-  }
-
-  // load statement list
-  param = elmL1->GetParamFirst();
-  for (int i=1; i<=NoID; i++) {
-
-    // state
-    p = param->GetName();
-    if ( !strcasecmp(p, "Solid") ) {
-      iTable[i].setState(SOLID);
-    }
-    else if ( !strcasecmp(p, "Fluid") ) {
-      iTable[i].setState(FLUID);
-    }
-    else {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Model_Setting'\n");
-      Exit(0);
-    }
-
-    // ID
-    if ( !param->isSetID() ) {
-      Hostonly_ stamped_printf("\tParsing error : No ID for statement in 'Model_Setting'\n");
-      Exit(0);
-    }
-    if ( -1 == (id=param->GetID()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid ID for statement in 'Model_Setting'\n");
-      Exit(0);
-    }
-    iTable[i].setID((unsigned)id);
-
-    // MatID
-    if ( !param->GetData( &id ) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid Medium ID for statement in 'Model_Setting'\n");
-      Exit(0);
-    }
-    iTable[i].setMatID((unsigned)id);
-    
-    // label
-    pnt = NULL;
-    if ( !(pnt = param->GetComment()) ) {
-      Hostonly_ stamped_printf("\tNo comment for statement in 'Model_Setting'\n");
-    }
-    else {
-      iTable[i].setLabel(pnt);
-    }
-
-    param = elmL1->GetParamNext(param);
-  }
-
-  // sort Table
-  {
-    int      s, i, j;
-    unsigned d, m;
-    char label[LABEL];
-    for (i=1; i<=NoID; i++) {
-      for (j=NoID; j>i; j--) {
-        if ( iTable[j].getID() < iTable[j-1].getID() ) {
-          s = iTable[j].getState();
-          d = iTable[j].getID();
-          m = iTable[j].getMatID();
-          strcpy(label, iTable[j].getLabel());
-        
-          iTable[j].setState( iTable[j-1].getState() );
-          iTable[j].setID   ( iTable[j-1].getID()  );
-          iTable[j].setMatID( iTable[j-1].getMatID() );
-          iTable[j].setLabel( iTable[j-1].getLabel() );
-        
-          iTable[j-1].setState( s );
-          iTable[j-1].setID   ( d );
-          iTable[j-1].setMatID( m );
-          iTable[j-1].setLabel( label );
-        }
-      }
-    }
-  };
-}*/
 
 /**
  @fn void ParseBC::getXML_OBC_FarField(const CfgElem *elmL, unsigned n)
@@ -2070,81 +1908,6 @@ void ParseBC::getXML_OBC_Wall(const CfgElem *elmL, unsigned n)
   }
 }*/
 
-/**
- @fn void ParseBC::getXML_Phase(void)
- @brief 2相流問題で気相か液相かを取得する
- 
-void ParseBC::getXML_Phase(void)
-{
-	const CfgElem *elemTop=NULL, *elmL1=NULL;
-  const CfgParam* param=NULL;
-	const char *str=NULL;
-  const char* p=NULL;
-  unsigned m_phase;
-  int id;
-	
-	elemTop = CF->GetTop(STEER);
-	if( !(elmL1 = elemTop->GetElemFirst("Phase_Idetification")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Phase_Idetification'\n");
-    Exit(0);
-  }
-	
-  // load statement list
-  param = elmL1->GetParamFirst();
-  int NoParam = elmL1->GetParamSize();
-  for (int i=1; i<=NoParam; i++) {
-    
-    // state
-    p = param->GetName();
-    if ( !strcasecmp(p, "gas") ) {
-      m_phase = GAS;
-    }
-    else if ( !strcasecmp(p, "liquid") ) {
-      m_phase = LIQUID;
-    }
-    else {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword '%s' in 'Phase_Idetification'\n", p);
-      Exit(0);
-    }
-    
-    // ID
-    if ( !param->isSetID() ) {
-      Hostonly_ stamped_printf("\tParsing error : No ID for statement in 'Phase_Idetification'\n");
-      Exit(0);
-    }
-    if ( -1 == (id=param->GetID()) ) {
-      Hostonly_ stamped_printf("\tParsing error : No valid ID for statement in 'Phase_Idetification'\n");
-      Exit(0);
-    }
-    
-    // IDがiTableの中にリストアップされているかを調べる
-    if ( !isIDinTable(id) ) {
-      Hostonly_ stamped_printf("\tParsing error : ID[%d] described in 'id' is not included in 'Model_Setting'\n", id);
-      Exit(0);
-    }
-    
-    // set phase of FLUID
-    for (int n=1; n<=NoID; n++) {
-      if ( compo[n].getID() == id ) {
-        if ( compo[n].getState() == FLUID ) compo[n].setPhase(m_phase);
-      }
-    }
-  }
-  
-  // check Phase of Fluid
-  unsigned tmp;
-  bool sw=true;
-  for (int n=1; n<=NoID; n++) {
-    if ( compo[n].getState() == FLUID ) {
-      tmp = compo[n].getPhase();
-      if ( (tmp!=GAS) && (tmp!=LIQUID) ) {
-        Hostonly_ stamped_printf("\tcomponent [%d] is fluid, but not identified by gas or liquid.\n", n);
-        sw = false;
-      }
-    }
-  }
-  if ( sw == false ) Exit(0);
-}*/
 
 
 /**
@@ -2300,7 +2063,7 @@ bool ParseBC::isIDinCompo(unsigned candidate_id, int def, unsigned now)
  */
 bool ParseBC::isIDinTable(int candidate)
 {
-  for (int n=1; n<=NoID; n++) {
+  for (int n=1; n<=NoMedium; n++) {
     if ( iTable[n].getID() == (unsigned)candidate ) return true;
   }
   return false;
@@ -2434,7 +2197,7 @@ void ParseBC::loadOuterBC(void)
     }
     
     // セルIDから媒質番号を求める
-    for (int i=1; i<=NoID; i++) {
+    for (int i=1; i<=NoMedium; i++) {
       if ( iTable[i].getID() == (unsigned)bc[face].get_GuideID() ) {
         bc[face].set_GuideMedium( (int)iTable[i].getMatID() );
       }
@@ -2566,13 +2329,13 @@ unsigned ParseBC::oppositDir(unsigned dir)
 
 
 /**
- @fn void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
+ @fn void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
  @brief コンポーネントの情報を表示する
  @param nv ボクセルモデルから計算した法線
  @param gci グローバルなコンポーネントのインデクス
- @param mat MaterialList
+ @param mat MediumList
  */
-void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
+void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
 {
   unsigned n, m;
   bool flag;
@@ -3150,14 +2913,14 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
 
 
 /**
- @fn void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
+ @fn void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
  @brief コンポーネントの情報を表示する
  @param mp 標準出力
  @param nv ボクセルモデルから計算した法線
  @param gci グローバルなコンポーネントのインデクス
- @param mat MaterialList
+ @param mat MediumList
  */
-void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MaterialList* mat)
+void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
 {
   if( !fp || !mp ) Exit(0);
   
@@ -3391,7 +3154,7 @@ void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
 void ParseBC::printTable(FILE* fp)
 {
   fprintf(fp,"\t iTable order : State    ID  MatID Label\n");
-  for (int i=1; i<=NoID; i++) {
+  for (int i=1; i<=NoMedium; i++) {
     fprintf(fp,"\t        %5d : %s %5d  %5d %s\n", i, (iTable[i].getState()==SOLID) ? "Solid" : "Fluid", 
             iTable[i].getID(), iTable[i].getMatID(), iTable[i].getLabel());
   }
@@ -3413,7 +3176,7 @@ void ParseBC::receiveCompoPtr(CompoList* CMP)
 /**
  @fn void ParseBC::receiveCfgPtr(SklSolverConfig* cfg)
  @brief コンフィギュレーションリストのポインタを受け取る
- */
+ 
 void ParseBC::receiveCfgPtr(SklSolverConfig* cfg) 
 { 
   if ( !cfg ) {
@@ -3421,7 +3184,7 @@ void ParseBC::receiveCfgPtr(SklSolverConfig* cfg)
     Exit(0);
   }
   CF = cfg;
-}
+}*/
 
 /**
  @fn void ParseBC::setObcPtr(BoundaryOuter* ptr)
@@ -3430,7 +3193,7 @@ void ParseBC::receiveCfgPtr(SklSolverConfig* cfg)
   - BoundaryOuterクラスのポインタを受け取る
   - XMLファイルの外部境界条件をパースし，個数を取得する
   - 内部作業用のBoundaryOuterクラスをインスタンスする
- */
+ 
 void ParseBC::setObcPtr(BoundaryOuter* ptr) 
 { 
   if ( !ptr ) Exit(0);
@@ -3451,7 +3214,7 @@ void ParseBC::setObcPtr(BoundaryOuter* ptr)
   
   NoBaseBC = (unsigned)elmL1->GetElemSize();
   BaseBc = new BoundaryOuter[NoBaseBC];
-}
+}*/
 
 
 /**
@@ -3757,7 +3520,7 @@ void ParseBC::setCompoList(Control* C)
   }
     
   // 媒質情報の登録
-  for (int i=1; i<=NoID; i++) {
+  for (int i=1; i<=NoMedium; i++) {
     compo[NoBC+i].setID   ( iTable[i].getID() );
     compo[NoBC+i].setState( iTable[i].getState() );
     compo[NoBC+i].setName ( iTable[i].getLabel() );
@@ -3788,48 +3551,43 @@ void ParseBC::set_Deface(const CfgElem *elmL, unsigned n, const char* str)
 
 /**
  @fn void ParseBC::setMedium(Control* Cref)
- @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolid, C.NoMaterialをセット
- @note
- - 流体の媒質は少なくとも一つは必要
- - iTableの数の上限は，NoID
+ @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
+ @note 流体の媒質は少なくとも一つは必要
  */
 void ParseBC::setMedium(Control* Cref)
 {
   // check at least one fluid
   if ( KindOfSolver != SOLID_CONDUCTION ) {
     bool check=false;
-    for (int i=1; i<=NoID; i++) {
+    for (int i=1; i<=NoMedium; i++) {
       if ( iTable[i].getState() == FLUID ) check = true;
     }
     if ( !check ) {
-      Hostonly_ stamped_printf("\tVoxel model should have at least one FLUID.\n");
+      Hostonly_ stamped_printf("\tAnalysis model should have at least one FLUID.\n");
       Exit(0);
     }
   }
   
   // 流体と固体の媒質数をセット
   unsigned m_fluid=0, m_solid=0;
-  for (int i=1; i<=NoID; i++) {
+  for (int i=1; i<=NoMedium; i++) {
     if ( iTable[i].getState() == SOLID ) m_solid++;
     else m_fluid++;
   }
   
   Cref->NoMediumFluid = m_fluid;
   Cref->NoMediumSolid = m_solid;
-  
-  // MaterialIDの数をカウント
-  Cref->NoMaterial = getNoMaterial();
 }
 
 
 /**
- @fn void ParseBC::setRefValue(MaterialList* mat, CompoList* cmp, Control* C)
+ @fn void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
  @brief 媒質により決まる代表量をコピーする
- @param mat MaterialList class
+ @param mat MediumList class
  @param cmp CompoList class
  @param C Control class
  */
-void ParseBC::setRefValue(MaterialList* mat, CompoList* cmp, Control* C)
+void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
 {
   unsigned m;
   
@@ -3855,12 +3613,12 @@ void ParseBC::setRefValue(MaterialList* mat, CompoList* cmp, Control* C)
 }
 
 /**
- @fn void ParseBC::setRefMedium(MaterialList* mat, Control* Cref)
+ @fn void ParseBC::setRefMedium(MediumList* mat, Control* Cref)
  @brief 指定した媒質IDから参照物理量を求める
- @param mat MaterialList
+ @param mat MediumList
  @param Cref Control class
  */
-void ParseBC::setRefMedium(MaterialList* mat, Control* Cref)
+void ParseBC::setRefMedium(MediumList* mat, Control* Cref)
 {
   unsigned m;
   
@@ -3901,32 +3659,16 @@ bool ParseBC::receive_TP_Ptr(TPControl* tp)
 
 
 /**
- @fn void ParseBC::setMediumPoint(int m_nMedium_TableTP,
- int m_nMedium_TableDB,
- MediumTableInfo *m_MTITP,
- MediumTableInfo *m_MTIDB)
+ @fn void ParseBC::setMediumPoint(int m_NoMedium,
+ MediumTableInfo *m_MTITP)
  @brief MediumTableInfoをポイント
- @param m_nMedium_TableTP
- @param m_nMedium_TableDB
+ @param m_NoMedium
  @param m_MTITP
- @param m_MTIDB
  */
-void ParseBC::setMediumPoint(int m_nMedium_TableTP,
-                             int m_nMedium_TableDB,
-                             MediumTableInfo *m_MTITP,
-                             MediumTableInfo *m_MTIDB)
+void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
 {
-  nMedium_TableTP=m_nMedium_TableTP;
-  nMedium_TableDB=m_nMedium_TableDB;
-  
-  //std::cout <<  "m_nMedium_TableTP : " << m_nMedium_TableTP << std::endl;
-  //std::cout <<  "m_nMedium_TableDB : " << m_nMedium_TableDB << std::endl;
-  
   if ( !m_MTITP ) Exit(0);
   MTITP = m_MTITP;
-  
-  if ( !m_MTIDB ) Exit(0);
-  MTIDB = m_MTIDB;
 }
 
 
@@ -3958,18 +3700,15 @@ void ParseBC::setControlVars(Control* Cref)
 	BasePrs     = Cref->BasePrs;
   Mode_Gradp  = Cref->Mode.PrsNeuamnnType;
   isCDS       = Cref->isCDS();
-  
-  
-  Cref->NoBC    = NoBC    = getNoLocalBC();      //TPファイルのLocalBoundaryタグ内の各境界条件タグから境界条件の個数を取得
-  Cref->NoID    = NoID    = scan_ModelSetting(); // TPファイルのModel_Settingタグ内にあるID数
-  
-  Cref->NoCompo = NoCompo = NoBC + NoID;
+  NoMedium    = Cref->NoID;
+  NoCompo     = Cref->NoCompo;
+  NoBC        = Cref->NoBC;
   
   unsigned m, s;
   s = MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
   m = log10(s+1)/log10(2);
   if ( NoCompo > s ) {
-    printf("Error : No. of Component (= NoBC + NoID) must be less or equal %d(%dbit-width)\n", s, m);
+    printf("Error : No. of Component (= NoBC + NoMedium) must be less or equal %d(%dbit-width)\n", s, m);
     Exit(0);
   }
   
@@ -3980,16 +3719,15 @@ void ParseBC::setControlVars(Control* Cref)
     Exit(0);
   }
   
-  // iTableのアロケート
-  iTable = new IDtable[NoID+1];
+  // iTableのアロケート 媒質数+1
+  iTable = new IDtable[NoMedium+1];
 }
 
 
 
 /**
  @fn int ParseBC::getNoLocalBC(void)
- @brief INNERBNDタグ直下のElemの個数（内部境界条件数）を返す
- @retval BCの個数
+ @brief LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
  @note 境界条件数がゼロでもエラーではない
  */
 int ParseBC::getNoLocalBC(void)
@@ -4000,241 +3738,23 @@ int ParseBC::getNoLocalBC(void)
   
   label="/BC_Table/LocalBoundary";
   
-  if ( tpCntl->chkNode(label) ) {//nodeがあれば
+  if ( tpCntl->chkNode(label) ) { //nodeがあれば
 	  nobc = tpCntl->countLabels(label);
   }
   
   return nobc;
 }
 
-/**
- @fn int ParseBC::scan_ModelSetting()
- @brief 記述されたモデル情報の数を取得
- @retval モデルの数，またはエラーコード0
- */
-int ParseBC::scan_ModelSetting()
+
+//@fn void ParseBC::construct_iTable(Control* C)
+void ParseBC::construct_iTable(Control* C)
 {
-  std::string label;
-  int n;
-  
-  label="/Steer/Model_Setting";
-  
-  if ( tpCntl->chkNode(label) ) {//nodeがあれば
-	  n = tpCntl->countLabels(label);
-  }
-  
-  return n;
-}
-
-
-
-
-/**
- @fn void ParseBC::getTP_Model(Control* C)
- @brief モデル情報を取得し，ワークテーブルiTableを確保する
- @pre ParseBC::setControlVars()内 scan_ModelSetting()でNoIDを確定
- @note
- - Model_Settingの情報をTPから取得し，iTableに保持
- - 流体の媒質は少なくとも一つは必要
- - iTableの数の上限は，NoID
- */
-void ParseBC::getTP_Model(Control* C)
-{
-  int id;
-  int ct;
-  std::string label;
-  std::string str,name;
-  std::string kind;
-  std::string label_base,label_kind,label_name,label_leaf;
-  
-  /*debug write Medium_Table Info////////////////////////////////////////////////
-  //std::cout <<  "***********************"  << std::endl;
-  //std::cout <<  "***** getTP_Model *****"  << std::endl;
-  //std::cout <<  "***********************"  << std::endl;
-  //std::cout <<  "debug write Medium_Table Info"  << std::endl;
-  //std::cout <<  "nMedium_TableTP : " << nMedium_TableTP << std::endl;
-  map<string, REAL_TYPE>::iterator itr;// イテレータを生成
-  for (int i=0; i<nMedium_TableTP; i++) {//Medium_Table loop
-    cout << "一覧出力" << i+1 << endl;
-    cout << "type  : " << MTITP[i].type << endl;
-    //cout << "label : " << MTITP[i].label << endl;
-    //cout << "id    : " << M->MTITP[i].id << endl;
-    int icounter=0;
-    for (itr = MTITP[i].m_fval.begin(); itr != MTITP[i].m_fval.end(); itr++)
-    {
-      icounter++;
-      string a1 = itr->first;// キー取得
-      REAL_TYPE a2 = itr->second;// 値取得
-	    cout << "i = " << i << "  icounter = " << icounter 
-			<< "  key:" << a1 << "  value:" << a2 << endl;
-    }
-  }
-  std::cout <<  "NoID : " << NoID << std::endl;
-  std::cout <<  "NoBC : " << NoBC << std::endl;
-  //debug write Medium_Table Info////////////////////////////////////////////////
-   */
-  
-  // Check Model_Setting section
-  label_base="/Steer/Model_Setting";
-  if ( !(tpCntl->chkNode(label_base)) ) {
-    stamped_printf("\tParsing error : Missing the section of 'Model_Setting'\n");
-    Exit(0);
-  }
-  
-  // load statement list
-  for (int i=1; i<=NoID; i++) {
-    
-    if(!tpCntl->GetNodeStr(label_base,i,&str)){
-      stamped_printf("\tParsing error : No Leaf Node \n");
-      Exit(0);
-    }
-    
-    label_leaf=label_base+"/"+str;//
-    //std::cout << " label_leaf = " << label_leaf << std::endl;
-    
-    label=label_leaf+"/tag";
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : No tag in 'Model_Setting'\n");
-      Exit(0);
-    }
-    else{ 
-      //std::cout <<  "tag str : " << str << std::endl;
-      //ModelのBoxeltagから一致するtagを探す
-      /*
-       void FreeJet::setup
-       if     ( !strcasecmp(str.c_str(), "Inner") ) iTable[i].setID(1);
-       else if( !strcasecmp(str.c_str(), "X_MINUS") ) iTable[i].setID(600);
-       else if( !strcasecmp(str.c_str(), "X_MINUS-Nozzle") ) iTable[i].setID(0);
-       else {
-       }
-       void IP_RSP::setup
-       if     ( !strcasecmp(str.c_str(), "air") ) iTable[i].setID(1);
-       else {
-       }
-       */
-      
-      //各例題ごとにmidに設定されているidに対応するidをtagから判別し設定する--->スマートではないので後で編集？
-      switch (C->Mode.Example){
-        case id_Users:
-          break;
-        case id_PPLT2D:
-          break;
-        case id_SHC1D:
-          if     ( !strcasecmp(str.c_str(), "inactive") )   iTable[i].setID(600);
-          else if( !strcasecmp(str.c_str(), "fluid") )      iTable[i].setID(1);
-          else if( !strcasecmp(str.c_str(), "fin") )        iTable[i].setID(610);
-          else if( !strcasecmp(str.c_str(), "isothermal") ) iTable[i].setID(500);
-          else if( !strcasecmp(str.c_str(), "adiabatic") )  iTable[i].setID(520);
-          else {
-          }
-          break;
-        case id_Duct:
-          if     ( !strcasecmp(str.c_str(), "fluid") )       iTable[i].setID(1);// 流体
-          else if( !strcasecmp(str.c_str(), "solid") )       iTable[i].setID(2);// 固体
-          else if( !strcasecmp(str.c_str(), "driver") )      iTable[i].setID(3);// ドライバ部
-          else if( !strcasecmp(str.c_str(), "driver_face") ) iTable[i].setID(4);// ドライバ流出面
-          else {
-          }
-          break;
-        case id_PMT:
-          if     ( !strcasecmp(str.c_str(), "air") ) iTable[i].setID(1);
-          else {
-          }
-          break;
-        case id_Rect:
-          if     ( !strcasecmp(str.c_str(), "air") )  iTable[i].setID(1);
-          if     ( !strcasecmp(str.c_str(), "wall") ) iTable[i].setID(600);
-          else {
-          }
-          break;
-        case id_Cylinder:
-          if     ( !strcasecmp(str.c_str(), "fluid") )       iTable[i].setID(1);// 流体
-          else if( !strcasecmp(str.c_str(), "solid") )       iTable[i].setID(2);// 固体
-          else if( !strcasecmp(str.c_str(), "driver") )      iTable[i].setID(3);// ドライバ部
-          else if( !strcasecmp(str.c_str(), "driver_face") ) iTable[i].setID(4);// ドライバ流出面
-          else {
-          }
-          break;
-        case id_Step:
-          if     ( !strcasecmp(str.c_str(), "fluid") )       iTable[i].setID(1);// 流体
-          else if( !strcasecmp(str.c_str(), "solid") )       iTable[i].setID(2);// 固体
-          else if( !strcasecmp(str.c_str(), "driver") )      iTable[i].setID(3);// ドライバ部
-          else if( !strcasecmp(str.c_str(), "driver_face") ) iTable[i].setID(4);// ドライバ流出面
-          else {
-          }
-          break;
-        case id_Polygon:
-          //int ref = R->Mode.Base_Medium;
-          //if     ( !strcasecmp(str.c_str(), "Base_Medium") ) iTable[i].setID(ref);
-          //else {
-          //}
-          break;
-        case id_Sphere:
-          if     ( !strcasecmp(str.c_str(), "fluid") )       iTable[i].setID(1);// 流体
-          else if( !strcasecmp(str.c_str(), "solid") )       iTable[i].setID(2);// 固体
-          else if( !strcasecmp(str.c_str(), "driver") )      iTable[i].setID(3);// ドライバ部
-          else if( !strcasecmp(str.c_str(), "driver_face") ) iTable[i].setID(4);// ドライバ流出面
-          else {
-          }
-          break;
-      }
-      //std::cout << i <<  "   iTable[i].getID : " << iTable[i].getID() << std::endl;
-    }
-    
-    
-    label=label_leaf+"/medium";
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : No medium in 'Model_Setting'\n");
-      Exit(0);
-    }
-    else{
-      //std::cout <<  "medium str : " << str << std::endl;
-      
-      //MediumTableInfoから一致するMediumを探す
-      for (int j=0; j<nMedium_TableTP; j++) {//Medium_Table loop
-        //cout << j << "  MTITP[j].label : " << MTITP[j].label << endl;
-        if( !strcasecmp(str.c_str(), MTITP[j].label.c_str()) )
-        {
-          iTable[i].setMatID(j+1);
-          iTable[i].setLabel(MTITP[j].label.c_str());
-          iTable[i].setState(MTITP[j].type);
-          //cout << "id  : " << j+1 << endl;
-          //cout << "label : " << MTITP[j].label << endl;
-          //cout << "type  : " << MTITP[j].type << endl;
-          
-        }
-      }
-    }
-  }
-  
-  //abort();
-  
-  
-  // sort Table
-  {
-    int      s, i, j;
-    unsigned d, m;
-    char label[LABEL];
-    for (i=1; i<=NoID; i++) {
-      for (j=NoID; j>i; j--) {
-        if ( iTable[j].getID() < iTable[j-1].getID() ) {
-          s = iTable[j].getState();
-          d = iTable[j].getID();
-          m = iTable[j].getMatID();
-          strcpy(label, iTable[j].getLabel());
-          
-          iTable[j].setState( iTable[j-1].getState() );
-          iTable[j].setID   ( iTable[j-1].getID()  );
-          iTable[j].setMatID( iTable[j-1].getMatID() );
-          iTable[j].setLabel( iTable[j-1].getLabel() );
-          
-          iTable[j-1].setState( s );
-          iTable[j-1].setID   ( d );
-          iTable[j-1].setMatID( m );
-          iTable[j-1].setLabel( label );
-        }
-      }
-    }
+  // MediumTableInfoからiTableにコピー
+  for (int i=1; i<=NoMedium; i++) {
+    iTable[i].setID(i);
+    iTable[i].setMatID(i);
+    iTable[i].setLabel(MTITP[i].label.c_str());
+    iTable[i].setState(MTITP[i].type);
   }
 }
 
@@ -4322,7 +3842,7 @@ void ParseBC::TPcount_Outer_Cell_ID(int* cid)
     }
     
     //mediumから媒質番号を求める
-    for (int i=1; i<=NoID; i++) {
+    for (int i=1; i<=NoMedium; i++) {
       int matid=(int)iTable[i].getMatID();
       int guide_cell_id=(int)iTable[i].getID();
 
@@ -4353,7 +3873,7 @@ void ParseBC::TPcount_Outer_Cell_ID(int* cid)
 void ParseBC::TPsetCompoList(Control* C)
 { 
   std::string str,label,pnt,ename;
-  string label_base,label_ename,label_leaf;
+  std::string label_base,label_ename,label_leaf;
   REAL_TYPE fval;
   int n=0;
   int ide;
@@ -4365,10 +3885,10 @@ void ParseBC::TPsetCompoList(Control* C)
   cout << "**********************" << endl;
   cout << "*****setCompoList*****" << endl;
   cout << "**********************" << endl;
-  cout << "nMedium_TableTP : " << nMedium_TableTP << endl;
+  cout << "NoMedium : " << NoMedium << endl;
   // イテレータを生成
   map<string, REAL_TYPE>::iterator itr;
-  for (int i=0; i<nMedium_TableTP; i++) {//Medium_Table loop
+  for (int i=0; i<NoMedium; i++) {//Medium_Table loop
     cout << "一覧出力" << i+1 << endl;
     cout << "type  : " << MTITP[i].type << endl;
     cout << "label : " << MTITP[i].label << endl;
@@ -4641,7 +4161,7 @@ void ParseBC::TPsetCompoList(Control* C)
   }
   
   // 媒質情報の登録
-  for (int i=1; i<=NoID; i++) {
+  for (int i=1; i<=NoMedium; i++) {
     compo[NoBC+i].setID   ( iTable[i].getID() );
     compo[NoBC+i].setState( iTable[i].getState() );
     compo[NoBC+i].setName ( iTable[i].getLabel() );
@@ -4701,7 +4221,7 @@ void ParseBC::getTP_IBC_SpecVel(const string label_base, unsigned n)
   setTP_Deface(label_base, n);//n=odr
   
   // 法線ベクトル
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
   // 速度パラメータの読み込み
@@ -4795,7 +4315,7 @@ void ParseBC::getTP_IBC_Outflow(const string label_base, unsigned n)
   compo[n].setOutflowType(V_AVERAGE);
   
   // 法線ベクトルの取得
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
   /*
@@ -4842,7 +4362,7 @@ void ParseBC::getTP_IBC_IBM_DF(const string label_base, unsigned n)
   }
   
   // 法線ベクトル
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
   // Velocity
@@ -4905,11 +4425,11 @@ void ParseBC::getTP_IBC_PrsLoss(const string label_base, unsigned n)
   }
   
   // 法線ベクトルの取得
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
   // 方向ベクトルの取得
-  getTP_Dir(label_base, n, v);
+  get_Dir(label_base, n, v);
   copyVec(compo[n].dr, v);
   
   // 中心座標の取得
@@ -5012,7 +4532,7 @@ void ParseBC::getTP_IBC_Fan(const string label_base, unsigned n)
   }
   
   // 法線ベクトルの取得
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
   // 中心座標の取得
@@ -5128,7 +4648,7 @@ void ParseBC::getTP_IBC_Monitor(const string label_base, unsigned n, Control* C)
   }
   
   // 法線ベクトル
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
   unsigned shp = compo[n].get_Shape();
@@ -5142,7 +4662,7 @@ void ParseBC::getTP_IBC_Monitor(const string label_base, unsigned n, Control* C)
   
   if ( shp == SHAPE_BOX ) {
     // 方向ベクトルの取得
-    getTP_Dir(label_base, n, v);
+    get_Dir(label_base, n, v);
     copyVec(compo[n].dr, v);
     
     // 形状パラメータ
@@ -5882,29 +5402,24 @@ void ParseBC::setTP_Deface(const string label_base, unsigned n)
 
 
 /**
- @fn void ParseBC::getTP_NV(const string label_base, unsigned n, REAL_TYPE* v)
+ @fn void ParseBC::get_NV(const std::string label_base, unsigned n, REAL_TYPE* v)
  @brief 内部境界条件の法線ベクトル値を取得し，登録する
  @param label_base
  @param n オーダー
  @param v[out] ベクトルパラメータ
  @param str エラー表示用文字列
  */
-void ParseBC::getTP_NV(const string label_base, unsigned n, REAL_TYPE* v)
+void ParseBC::get_NV(const std::string label_base, unsigned n, REAL_TYPE* v)
 {
-  string label;
+  std::string label;
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
-  label=label_base+"/Normal";//
-  //std::cout <<  "label at getTP_NV: " << label << std::endl;
+  label=label_base+"/Normal";
   if( !(tpCntl->GetVector(label, v, 3)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
     Exit(0);
   }
-  //std::cout <<  "v[0]: " << v[0] << std::endl;
-  //std::cout <<  "v[1]: " << v[1] << std::endl;
-  //std::cout <<  "v[2]: " << v[2] << std::endl;
-  
   
   //単位ベクトル化
   getUnitVec(v);
@@ -5913,16 +5428,16 @@ void ParseBC::getTP_NV(const string label_base, unsigned n, REAL_TYPE* v)
 
 
 /**
- @fn void ParseBC::getTP_Dir(const string label_base, unsigned n, cREAL_TYPE* v)
+ @fn void ParseBC::get_Dir(const std::string label_base, unsigned n, cREAL_TYPE* v)
  @brief 内部境界条件の方向ベクトル値を取得し，登録する
  @param label_base
  @param n オーダー
  @param v[out] ベクトルパラメータ
  @param str エラー表示用文字列
  */
-void ParseBC::getTP_Dir(const string label_base, unsigned n, REAL_TYPE* v)
+void ParseBC::get_Dir(const std::string label_base, unsigned n, REAL_TYPE* v)
 {
-  string label;
+  std::string label;
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
   label=label_base+"/Dir";//
@@ -5951,7 +5466,7 @@ void ParseBC::getTP_Center(const string label_base, unsigned n, REAL_TYPE* v)
   for (unsigned i=0; i<3; i++) v[i]=0.0f;
   
   label=label_base+"/Center";//
-  //std::cout <<  "label at getTP_NV: " << label << std::endl;
+  //std::cout <<  "label at get_NV: " << label << std::endl;
   if( !(tpCntl->GetVector(label, v, 3)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
@@ -6087,16 +5602,12 @@ void ParseBC::TPsetObcPtr(BoundaryOuter* ptr)
       stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
-    //std::cout << i <<  "str : " << str << std::endl;
+
     if( !strcasecmp(str.substr(0,9).c_str(), "Basic_BCs") ) counter++;
   }
-  //std::cout <<  "counter : " << counter << std::endl;
-  
-  //NoBaseBC = (unsigned)tpCntl->countLabels(label);
+
   NoBaseBC = (unsigned)counter;
   BaseBc = new BoundaryOuter[NoBaseBC];
-  
-  //std::cout <<  "NoBaseBC : " << NoBaseBC << std::endl;
 }
 
 
@@ -6283,7 +5794,7 @@ void ParseBC::TPloadOuterBC()
     //std::cout <<  "str : " << str << std::endl;
     
     //mediumから媒質番号を求める
-    for (int i=1; i<=NoID; i++) {
+    for (int i=1; i<=NoMedium; i++) {
       int matid=(int)iTable[i].getMatID();
       int guide_cell_id=(int)iTable[i].getID();
       //std::cout <<  "matid : " << matid << std::endl;
@@ -6319,7 +5830,7 @@ void ParseBC::TPloadOuterBC()
      }
      
      // セルIDから媒質番号を求める
-     for (int i=1; i<=NoID; i++) {
+     for (int i=1; i<=NoMedium; i++) {
      if ( iTable[i].getID() == (unsigned)bc[face].get_GuideID() ) {
      bc[face].set_GuideMedium( (int)iTable[i].getMatID() );
      }
@@ -6456,7 +5967,7 @@ void ParseBC::getTP_OBC_Wall(const string label_base, unsigned n)
   BaseBc[n].set_vType( getTP_Vel_profile(label_base) );
   
   // 法線ベクトル
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   BaseBc[n].addVec(v);
   
   // 速度の指定モードの特定
@@ -6628,7 +6139,7 @@ void ParseBC::getTP_OBC_SpecVH(const string label_base, unsigned n)
   BaseBc[n].set_vType( getTP_Vel_profile(label_base) );
   
   // 法線ベクトル
-  getTP_NV(label_base, n, v);
+  get_NV(label_base, n, v);
   BaseBc[n].addVec(v);
   
   // 速度の指定モードの特定
@@ -7145,7 +6656,7 @@ void ParseBC::getTP_Phase()
      }
      
      // set phase of FLUID
-     for (int n=1; n<=NoID; n++) {
+     for (int n=1; n<=NoMedium; n++) {
      if ( compo[n].getID() == id ) {
      if ( compo[n].getState() == FLUID ) compo[n].setPhase(m_phase);
      }
@@ -7157,7 +6668,7 @@ void ParseBC::getTP_Phase()
   // check Phase of Fluid
   unsigned tmp;
   bool sw=true;
-  for (int n=1; n<=NoID; n++) {
+  for (int n=1; n<=NoMedium; n++) {
     if ( compo[n].getState() == FLUID ) {
       tmp = compo[n].getPhase();
       if ( (tmp!=GAS) && (tmp!=LIQUID) ) {

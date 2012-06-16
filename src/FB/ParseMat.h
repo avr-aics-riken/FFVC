@@ -1,147 +1,82 @@
 #ifndef _FB_PARSE_M_H_
 #define _FB_PARSE_M_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file ParseMat.h
 //@brief FlowBase ParseMat class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@author keno
 
-#include "Skl.h"
-#include "SklSolverBase.h"
 #include "FB_Define.h"
 #include "Control.h"
-#include "Material.h"
-#include "IDtable.h"
+#include "Medium.h"
 #include "Component.h"
-#include "FBUtility.h"
-#include "config/SklSolverConfig.h"
 #include "Parallel_node.h"
-
-// TextParser 
 #include "TPControl.h"
-
-using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 class  ParseMat : public Parallel_Node {
 private:
-  bool ChkList[property_END];  // # of parameters in MaterialList must be less than # of property_END
+  bool ChkList[property_END];  // # of parameters in MediumList must be less than # of property_END
   
-  unsigned NoCompo, NoBaseMat, NoBC, NoID, Unit_Temp;
-  unsigned NoMaterial, NoFluid, NoSolid, KOS;
-  unsigned imax, jmax, kmax, guide, size[3];
-  REAL_TYPE BaseTemp, DiffTemp;
+  unsigned NoCompo, NoBC, Unit_Temp;
   
-  //SklSolverConfig*  CF;  // for XML parsing
-  MaterialList*     mat;
-  MaterialList*     BaseMat;      // for internal use of this class
-  IDtable*          iTable;
+  MediumList* mat;
+
+  int NoMedium;
+  MediumTableInfo *MTITP;
   
 public:
   ParseMat() {
-    NoCompo      = 0;
-    NoBC         = 0;
-    NoID         = 0;
-    NoBaseMat    = 0;
-    NoMaterial   = 0;
-    NoFluid      = 0;
-    NoSolid      = 0;
-    imax         = 0;
-    jmax         = 0;
-    kmax         = 0;
-    Unit_Temp    = 0;
-    KOS          = 0;
-    BaseTemp     = 0.0;
-    DiffTemp     = 0.0;
-    //CF           = NULL;
-    mat          = NULL;
-    BaseMat      = NULL;
-    iTable       = NULL;
-    for (int i=0; i<LABEL; i++) ChkList[i]=false;
-    for (unsigned i=0; i<3; i++) size[i]=0.0;
+    NoCompo    = 0;
+    NoBC       = 0;
+    NoMedium   = 0;
+    Unit_Temp  = 0;
+    mat        = NULL;
+    MTITP      = NULL;
+    for (int i=0; i<property_END; i++) ChkList[i]=false;
   }
-  ~ParseMat() {
-    if (BaseMat) delete [] BaseMat;
-  }
+  ~ParseMat() {}
   
 protected:
-  bool chkList4Solver      (int m);
-  bool copyMaterials       (unsigned& odr, unsigned id);
-  bool isIDinList          (unsigned RefID);
-  
-  unsigned getMatIDinTable (unsigned id);
-  unsigned getOdrInMatList (unsigned id, unsigned Msize, MaterialList* mlist);
-  unsigned missingMessage  (int m, unsigned key);
-  
-  void chkList             (FILE* fp, CompoList* compo, unsigned basicEq);
-  void getPvalue           (const CfgParam* p, REAL_TYPE &value);
-  void printMatList        (FILE* fp, unsigned Max, MaterialList* mlist);
-  void printRelation       (FILE* fp, CompoList* compo);
-  void readMedium          (const CfgElem *elmL2, int m);
-  
-  //@fn bool isHeatProblem(void) const
-  bool isHeatProblem(void) const {
-    return ( ( KOS != FLOW_ONLY ) ? true : false );
-  }
-    
-public:
-  bool chkStateList          (CompoList* compo);
-  bool receiveCfgPtr         (SklSolverConfig* cfg);
-  
-  void chkList               (FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq);
-  void chkState_Mat_Cmp      (CompoList* compo, FILE* fp);
-  //void getXMLmaterial        (void);
-  void makeLinkCmpMat        (CompoList* compo);
-  void makeMaterialList      (void);
-  void printMaterialList     (FILE* mp, FILE* fp);
-  void setControlVars        (Control* Cref, IDtable* itbl, MaterialList* m_mat, SklSolverConfig* cfg);
-  
-  // ----------> debug function
-  void dbg_printBaseMaterialList (FILE* mp, FILE* fp);
-  void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo);
-  
-  
-  //for text parser
-protected:
-  
-  // TPControl
   TPControl* tpCntl;
   
-  bool chkList4Solver_mat(int m);
-  unsigned missingMessage_mat(int m, unsigned key);
+  bool chkDuplicateLabel   (const int n, std::string m_label);
+  bool chkList4Solver      (const int m);
   
+  int missingMessage       (const int m, const int key);
+  
+  void chkList             (FILE* fp, CompoList* compo, unsigned basicEq);
+  void printMatList        (FILE* fp, int Max, MediumList* mlist);
+  void printRelation       (FILE* fp, CompoList* compo);
+  void storeProperty       (const int n, const int matid);
+    
 public:
+  bool chkStateList      (CompoList* compo);
+  bool receive_TP_Ptr    (TPControl* tp);
   
-  // Medium Table
-  int nMedium_TableTP;
-  int nMedium_TableDB;
-  MediumTableInfo *MTITP;//Medium Table <--- textparser
-  MediumTableInfo *MTIDB;//Medium Table <--- database
+  int get_MediumTable    (void);
   
-  void getTPmaterial();
-  void getTP_MediumTableInfo();
+  void chkList           (FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq);
+  void chkState_Mat_Cmp  (CompoList* compo, FILE* fp);
   
-  //void setMediumPoint(
-  // int m_nMedium_TableTP,
-  // int m_nMedium_TableDB,
-  // MediumTableInfo *m_MTITP,
-  // MediumTableInfo *m_MTIDB);
-  
-  bool receive_TP_Ptr(TPControl* tp);
-  
-  void makeMaterialListTP(void);
-  //bool copyMaterialsTP(unsigned& odr, unsigned id);
-  void set_matMedium(const unsigned n, const int matid);
-  bool chkMatIDin(unsigned n, const int matid);
+  //void makeLinkCmpMat       (CompoList* compo);
+  void makeMediumList    (MediumList* m_mat);
+  void printMediumList   (FILE* mp, FILE* fp);
+  void setControlVars    (Control* Cref);
+  void set_matMedium     (const unsigned n, const int matid);
   
   
+  // ----------> debug function
+  void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo); 
 
-  
 };
 
 #endif // _FB_PARSE_M_H_

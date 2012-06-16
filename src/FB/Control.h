@@ -22,7 +22,7 @@
 #include "config/SklSolverConfig.h"
 #include "config/SklCfgOutFile.h"
 #include "SklUtil.h"
-#include "Material.h"
+#include "Medium.h"
 #include "Component.h"
 #include "FBUtility.h"
 #include "Monitor.h"
@@ -453,7 +453,6 @@ public:
             NoCompo,
             NoDimension,
             NoID,
-            NoMaterial,
             NoMediumFluid,
             NoMediumSolid,
             NoWallSurface,
@@ -560,7 +559,6 @@ public:
     NoCompo = 0;
     NoDimension = 0;
     NoID = 0;
-    NoMaterial = 0;
     NoMediumFluid = 0;
     NoMediumSolid = 0;
     NoWallSurface = 0;
@@ -714,27 +712,23 @@ protected:
 public:
   bool receiveCfgPtr(SklSolverConfig* cfg);
   
-  //const char* getVoxelFileName(void);
   const char* getTP_VoxelFileName(void);
   
   REAL_TYPE getCellSize(unsigned* m_size);
   REAL_TYPE OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
-  //void getXML_Polygon           (void);
-  //void getXML_Sampling          (void);
-  //void getXML_Steer_1           (DTcntl* DT);
-  //void getXML_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
+
   void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
   void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
   void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
-  void setParameters            (MaterialList* mat, CompoList* cmp, unsigned NoBaseBC, BoundaryOuter* BO, ReferenceFrame* RF);
+  void setParameters            (MediumList* mat, CompoList* cmp, ReferenceFrame* RF);
   
   
-  static string getDirection(unsigned dir);
-	string getNormString(unsigned d);
+  static std::string getDirection(unsigned dir);
+  std::string getNormString(unsigned d);
   
   unsigned countCompo  (CompoList* cmp, unsigned label);
   
@@ -821,7 +815,7 @@ public:
   bool getTP_SubDomainInfo(unsigned* size);
   bool receive_TP_Ptr(TPControl* tp);
   
-  void getTP_Version(void);
+  void get_Version(void);
   
   
   //for text parser
@@ -865,8 +859,8 @@ public:
   void getTP_Para_Init         ();
   void getTP_Polygon           ();
   void getTP_Sampling          ();
-  void getTP_Steer_1           (DTcntl* DT);
-  void getTP_Steer_2           (ItrCtl* IC, ReferenceFrame* RF);
+  void get_Steer_1         (DTcntl* DT);
+  void get_Steer_2         (ItrCtl* IC, ReferenceFrame* RF);
 
   
   // domain info

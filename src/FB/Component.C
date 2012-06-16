@@ -233,7 +233,7 @@ void CompoList::setInitTemp(const REAL_TYPE key) {
 
 //@fn void CompoList::setMatOdr (const unsigned key)
 //@brief mat_odrをセットする
-//@param key MaterialListのエントリ番号
+//@param key MediumListのエントリ番号
 void CompoList::setMatOdr(const unsigned key) { 
   mat_odr = key; 
 }

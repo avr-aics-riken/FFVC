@@ -157,8 +157,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
-  //getXMLExample(&C);
-  getTPExample(&C);
+  getExample(&C);
   
   // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
   connectExample(&C);
@@ -173,20 +172,9 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ stamped_printf("\tError during sending an object pointer of XML tree to Control class\n");
     return -1;
   }
-  B.receiveCfgPtr(m_solvCfg);
-  
-  // XMLファイルのエントリタグをチェックする -----------------------------------------------------
-  if ( !SklUtil::chkXMLTopTag(STEER) ) {
-    Hostonly_ stamped_printf("\tSklUtil::chkXMLTopTag()\n");
-    return -1;
-  }
-  if ( !SklUtil::chkXMLTopTag(PARAMETER) ) {
-    Hostonly_ stamped_printf("\tSklUtil::chkXMLTopTag()\n");
-    return -1;
-  }
   
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
-  C.getTP_Version();
+  C.get_Version();
   
   if ( C.version != (unsigned)VERS_CBC ) {
     Hostonly_ {
@@ -204,7 +192,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // 最初のXMLパラメータの取得
-  C.getTP_Steer_1(&DT);
+  C.get_Steer_1(&DT);
   
   // FiliIOのモードを修正
   if ( pn.numProc == 1 ) {
@@ -232,10 +220,46 @@ SklSolverCBC::SklSolverInitialize() {
   
 
   // XMLパラメータの取得
-  C.getTP_Steer_2(IC, &RF);
+  C.get_Steer_2(IC, &RF);
   
   // 組み込み例題の固有パラメータ
   if ( !Ex->getTP(&C, &tpCntl) ) Exit(0);
+  
+  
+  
+  // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
+  Hostonly_  {
+    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp,"\n\t>> Medium List\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n\t>> Medium List\n\n");
+  }
+  
+  // 媒質情報をロード
+  C.NoID = (unsigned)M.get_MediumTable(); // Medium_Tableタグ内の媒質数
+  
+  // 媒質情報を設定
+  setMediumList(&B, &M, mp, fp);
+  
+  
+  // パラメータファイルから C.NoBC, C.NoID, C.NoCompoを取得 >> IDtableを生成
+  // KOSオプションとパラメータの整合性をチェック
+  // BCのテーブル取得と表示
+  Hostonly_ {
+    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp, "\t>> Table Information\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp, "\t>> Table Information\n\n");
+  }
+  
+  C.NoBC    = B.getNoLocalBC();   // LocalBoundaryタグ内の境界条件の個数
+  C.NoCompo = C.NoBC + C.NoID;    // コンポーネントの数の定義
+  
+  //setIDtables(&B, &M, fp, mp);
+  
+  
+  
+  
 
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
   ix      = (int*)&C.imax;
@@ -281,6 +305,11 @@ SklSolverCBC::SklSolverInitialize() {
     if( !(bh1 = dc_bh1->GetData()) )  Exit(0);
     if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
   }
+  
+
+  
+
+  
   
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成 --------------------------------------------------------
@@ -333,12 +362,12 @@ SklSolverCBC::SklSolverInitialize() {
       
     case id_Sphere:
       if ( !C.isCDS() ) {
-        Ex->setup(mid, &C, G_org);
+        Ex->setup(mid, &C, G_org, C.NoID, B.get_IDtable_Ptr());
       }
       else {
         // cutをアロケートし，初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(mid, &C, G_org, dc_cut->GetData());
+        Ex->setup_cut(mid, &C, G_org, C.NoID, B.get_IDtable_Ptr(), dc_cut->GetData());
       }
       break;
       
@@ -346,7 +375,7 @@ SklSolverCBC::SklSolverInitialize() {
       if ( C.isCDS() ) {
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       }
-      Ex->setup(mid, &C, G_org);
+      Ex->setup(mid, &C, G_org, C.NoID, B.get_IDtable_Ptr());
       break;
   }
 
@@ -383,28 +412,6 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ printf("\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
     return -1;
   }
-  
-  
-  
-  //Medium_Tableを呼んでMediumTableInfoクラスオブジェクトに保持する
-  M.getTP_MediumTableInfo(); //Model_Settingの読み込みに先立ってMedium_Tableを読む
-  
-  //ここでParseMatクラスから他のクラスへポインタをセットする--->後で編集
-  //MediumTableInfoクラスのオブジェクトポインタをParseMatクラスからParseBCクラスにを渡す
-  setMediumPoint(&B,&M);
-  
-  
-  
-  // XMLから C.NoBC, C.NoID, C.NoCompoを取得
-  // KOSオプションとパラメータの整合性をチェック
-  // BCのテーブル取得と表示, NoMaterialをセットする
-  Hostonly_ {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp, "\t>> Table Information\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp, "\t>> Table Information\n\n");
-  }
-  setIDtables(&B, fp, mp);
   
   
   // VoxInfoクラスへ値をセット
@@ -555,9 +562,9 @@ SklSolverCBC::SklSolverInitialize() {
 		}
 	}
 
-  // CompoList/MaterialListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
+  // CompoList/MediumListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
   cmp = new CompoList[C.NoCompo+1];
-  mat = new MaterialList[C.NoMaterial+1];
+  
   BC.setWorkList(cmp, mat);
   Vinfo.setWorkList(cmp, mat);
 
@@ -582,14 +589,7 @@ SklSolverCBC::SklSolverInitialize() {
     Vinfo.setOBC_Cut(&BC, dc_cut->GetData());
   }
 
-  // ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
-  Hostonly_  {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\n\t>> Medium List\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n\t>> Medium List\n\n");
-  }
-  setMaterialList(&B, &M, mp, fp);
+
   
 
 #if 0
@@ -649,11 +649,11 @@ SklSolverCBC::SklSolverInitialize() {
   Vinfo.setCmpFraction(cmp, bcd, cvf);
   
 #if 0
-  // CompoListとMaterialListの関連を表示
+  // CompoListとMediumListの関連を表示
   Hostonly_ M.dbg_printRelation(mp, fp, cmp);
 #endif
   
-  // CompoListとMaterialListのstate(Fluid / Solid)を比較しチェックする
+  // CompoListとMediumListのstate(Fluid / Solid)を比較しチェックする
   if ( !M.chkStateList(cmp)) {
     Hostonly_ stamped_printf("\tParseMat::chkStateList()\n");
     return -1;
@@ -703,7 +703,7 @@ SklSolverCBC::SklSolverInitialize() {
     }
   }
   
-  // 無次元数などの計算パラメータを設定する．MaterialListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
+  // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
   // 代表物性値をRefIDの示す媒質から取得
   // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
   DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
@@ -768,7 +768,7 @@ SklSolverCBC::SklSolverInitialize() {
   SklSetMaxStep( C.LastStep );
   
   // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
-  C.setParameters(mat, cmp, B.get_NoBaseBC(), B.get_BaseBC_Ptr(), &RF);
+  C.setParameters(mat, cmp, &RF);
   
   // 媒質による代表パラメータのコピー
   B.setRefValue(mat, cmp, &C);
@@ -3272,42 +3272,34 @@ void SklSolverCBC::setComponentVF(float* cvf)
 
 
 /**
- @fn void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+ @fn void SklSolverCBC::setMediumList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
  @brief ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
  @param B
  @param M 
  @param mp
  @param fp 
  */
-void SklSolverCBC::setMaterialList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+void SklSolverCBC::setMediumList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
 {
-  // ParseMatクラスの環境設定 
-  M->setControlVars(&C, B->get_IDtable_Ptr(), mat, m_solvCfg);
+  mat = new MediumList[C.NoID+1];
   
-  // Material情報の内容をXMLファイルをパースして，MaterialListクラスのオブジェクトBaseMatに保持する
-  //M->getXMLmaterial();
-  M->getTPmaterial();//何もしない
-  
-#if 0
-  // Materialの基本リストを表示
-  Hostonly_ M->dbg_printBaseMaterialList(mp, fp);
-#endif
-  
-  // MaterialListを作成する
-  //M->makeMaterialList();
-  M->makeMaterialListTP();// ---> MediumTableInfo *MTITP からmatを作成
-  
-  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
-  M->makeLinkCmpMat(cmp);
+  M->makeMediumList(mat);
   
   // 媒質テーブルの表示
-  Hostonly_ M->printMaterialList(mp, fp);
+  Hostonly_ M->printMediumList(mp, fp);
+  
+  
+  // ParseMatクラスの環境設定 
+  M->setControlVars(&C);
+
+  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
+  //M->makeLinkCmpMat(cmp);
   
   // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
-  Hostonly_ {
-    M->chkState_Mat_Cmp(cmp, mp);
-    M->chkState_Mat_Cmp(cmp, fp);
-  }
+  //Hostonly_ {
+  //  M->chkState_Mat_Cmp(cmp, mp);
+  //  M->chkState_Mat_Cmp(cmp, fp);
+  //}
 }
 
 
@@ -3399,23 +3391,16 @@ void SklSolverCBC::setEnsComponent(void)
 }
 
 /**
- @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
- @brief XMLから境界条件数やID情報を取得し，表示する
- @param B
- @param fp
- @param mp 
+ @fn void SklSolverCBC::setIDtables(ParseBC* B, ParseMat* M, FILE* fp, FILE* mp)
+ @brief パラメータファイルから境界条件数やID情報を取得
  */
-void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
+void SklSolverCBC::setIDtables(ParseBC* B, ParseMat* M, FILE* fp, FILE* mp)
 {
-  // C.NoBC, C.NoID, C.NoCompoを取得
-  // NoID = scanXMLmodel();
-  // NoCompo = NoBC + NoID;
 	// ParseBCクラス内でiTable[NoID+1]を確保
-
   B->setControlVars(&C);
   
-  // Model_SettingからボクセルIDの情報を取得
-  B->getTP_Model(&C);
+  // IDの情報テーブルを構築する
+  B->construct_iTable(&C);
   
   // XMLから得られたIDテーブルを表示
   Hostonly_ {
@@ -3426,7 +3411,7 @@ void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
     fprintf(mp,"\n"); fflush(mp);
   }
   
-  // 流体と固体の媒質数，NoMaterialをセットする
+  // 流体と固体の媒質数をセットする
   B->setMedium(&C);
 }
 
@@ -4673,11 +4658,11 @@ bool SklSolverCBC::getCoarseResult (
 
 
 /**
- @fn void SklSolverCBC::getTPExample(Control* Cref)
+ @fn void SklSolverCBC::getExample(Control* Cref)
  @brief 組み込み例題の設定
  @param Cref Controlクラスのポインタ
  */
-void SklSolverCBC::getTPExample(Control* Cref)
+void SklSolverCBC::getExample(Control* Cref)
 {
   std::string keyword;
   std::string label;
@@ -4702,30 +4687,6 @@ void SklSolverCBC::getTPExample(Control* Cref)
     Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
     Exit(0);
   }
-}
-
-
-/**
- @fn void SklSolverCBC::setMediumPoint(
- ParseBC* B,
- ParseMat* M);
- @brief 
- @param B ParseBC クラスオブジェクトのポインタ
- @param M ParseMatのポインタ
- */
-void SklSolverCBC::setMediumPoint(
-                                  ParseBC* B,
-                                  ParseMat* M)
-{
-  //B.nMedium_TableTP=M.nMedium_TableTP;
-  //B.nMedium_TableDB=M.nMedium_TableDB;
-  //B.MTITP=M.MTITP;
-  //B.MTIDB=M.MTIDB;
-  B->setMediumPoint(
-                    M->nMedium_TableTP,
-                    M->nMedium_TableDB,
-                    M->MTITP,
-                    M->MTIDB);
 }
 
 

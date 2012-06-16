@@ -12,8 +12,6 @@
 //@brief FlowBase Intrinsic class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Skl.h"
-#include "SklSolverBase.h"
 #include "FB_Define.h"
 #include "BndOuter.h"
 #include "Control.h"
@@ -22,13 +20,9 @@
 #include <math.h>
 #include <fstream>
 #include "Parallel_node.h"
-#include "SklUtil.h"
 #include "vec3.h"
-
-// TextParser 
 #include "TPControl.h"
-
-extern SklParaComponent* ParaCmpo;
+#include "IDtable.h"
 
 enum Intrinsic_class {
   id_Users = 0,
@@ -63,8 +57,6 @@ public:
   virtual ~Intrinsic() {}
     
 public:
-  virtual bool getXML(SklSolverConfig* CF, Control* R) { return true; };
-  
   virtual const char* getExampleName(void) { return NULL; };
   
   virtual bool getTP(Control* R, TPControl* tpCntl) { return true; };
@@ -75,12 +67,14 @@ public:
   virtual void printParaInfo(FILE* mp, FILE* fp, Control* R);
   virtual void printPara(FILE* fp, Control* R);
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org) {};
-  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, float* cut) {};
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl) {};
+  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl, float* cut) {};
   
   void setControlVars(Control* R);
   void writeSVX(REAL_TYPE *vf, int *id, Control* R);
   void writeSVX(int *id, Control* R);
+  
+  int find_ID_from_Label(IDtable* itbl, const int Nmax, const std::string key);
   
 };
 
@@ -90,10 +84,8 @@ public:
   IP_Users(){}
   ~IP_Users() {}
   
-protected:
-  
 public:
-  // @fn const char* getExampleName(void)
+  
   // @brief ユーザー例題の名称を返す
   const char* getExampleName(void) {
     return ("User's problem");

@@ -1,17 +1,20 @@
 #ifndef _FB_TPCONTROL_H_
 #define _FB_TPCONTROL_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 /**
  @file TPControl.h
  @brief TextParser Control class Header
- @author keno, FSI Team, VCAD, RIKEN
+ @author keno
  */
 
 #include <math.h>
@@ -26,7 +29,6 @@
 #include "TextParser.h"
 
 using namespace std;
-
 
 class SubDomain {
 public:
@@ -69,26 +71,24 @@ public:
 
 
 class MediumTableInfo {
-private:
-  //IDtable*          iTable;
   
 public:
   int type;
-  string label;
-  map<string, REAL_TYPE> m_fval;
+  std::string label;
+  map<std::string, REAL_TYPE> m_fval;
 
 public:
   MediumTableInfo() 
   {
+    type = -1;
   }
   ~MediumTableInfo() 
   {
   }
+  
 };
 
 class TPControl {
-
-protected:
 
 private:
 
@@ -96,29 +96,27 @@ private:
 
 public:
 
-	/// コンストラクタ。
 	TPControl(){};
 
-	/// デストラクタ。
 	~TPControl(){};
-
-	//
-	int getTPinstance();                      //TextParserをインスタンスする
-	int readTPfile( const string filename );  //入力ファイルをTextParserへ読み込ませる
+	
 
 	//変数取得関数
-	bool GetVector(string label, int *vec, const int nvec);
-	bool GetVector(string label, REAL_TYPE *vec, const int nvec);
-	bool GetVector(string label, string *vec, const int nvec);
-	bool GetValue(const string label, int *ct);
-	bool GetValue(const string label, REAL_TYPE *ct);
-	bool GetValue(const string label, string *ct);
+	bool GetVector(std::string label, int *vec, const int nvec);
+	bool GetVector(std::string label, REAL_TYPE *vec, const int nvec);
+	bool GetVector(std::string label, std::string *vec, const int nvec);
+	bool GetValue(const std::string label, int *ct);
+	bool GetValue(const std::string label, REAL_TYPE *ct);
+	bool GetValue(const std::string label, std::string *ct);
 
 	//Label、Nodeのチェック関数
-	bool chkLabel(const string label);
-	bool chkNode(const string label);
-	int countLabels(const string label);
-	bool GetNodeStr(const string label, const int nnode, string *ct);
+	bool chkLabel(const std::string label);
+	bool chkNode(const std::string label);
+	bool GetNodeStr(const std::string label, const int nnode, std::string *ct);
+  
+  int countLabels(const std::string label);
+  int getTPinstance(void);                     //TextParserをインスタンスする
+	int readTPfile(const std::string filename);  //入力ファイルをTextParserへ読み込ませる
 
 };
 

@@ -4268,7 +4268,7 @@ void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, 
 /**
  @fn void VoxInfo::find_isolate_Fcell(unsigned order, int* mid, unsigned* bx)
  @brief 孤立した流体セルを探し，周囲の個体媒質で置換，BCindexを修正する
- @param order cmp[]に登録されたMaterialListへのエントリ番号
+ @param order cmp[]に登録されたMediumListへのエントリ番号
  @param mid ボクセルID配列
  @param bx BCindex ID
  @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
@@ -4336,7 +4336,7 @@ void VoxInfo::find_isolated_Fcell(unsigned order, int* mid, unsigned* bx)
             
             // 媒質オーダーの変更
             mid[m_p] = max_mid;
-            s |= (order << TOP_MATERIAL); // sにMaterialListのエントリorderをエンコードする
+            s |= (order << TOP_MATERIAL); // sにMediumListのエントリorderをエンコードする
             
             // 固体セルへ状態を変更　
             bx[m_p] = offBit( s, STATE_BIT );
@@ -4360,7 +4360,7 @@ unsigned VoxInfo::find_mat_odr(unsigned mat_id)
   id = 0;
   for (unsigned n=NoBC+1; n<=NoCompo; n++) {
     odr = cmp[n].getMatOdr();
-    id  = mat[odr].getMatID();
+    //id  = mat[odr].getMatID();
     if (id == mat_id) return n;
   }
   if (id == 0) {
@@ -5054,7 +5054,7 @@ void VoxInfo::setAmask_Thermal(unsigned* bh)
  @param bx BCindex ID
  @param mid ID配列
  @param cvf コンポーネントの体積率
- @note 事前に，cmp[]へMaterialListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
+ @note 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
  */
 void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
 {
@@ -5117,7 +5117,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
     }
   }
 
-  // MaterialListのエントリをエンコードする
+  // MediumListのエントリをエンコードする
   for (unsigned n=1; n<=NoCompo; n++) {
     odr = cmp[n].getMatOdr();
     id  = cmp[n].getID();
@@ -5170,7 +5170,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
  @param Lcell ノードローカルの有効セル数
  @param Gcell グローバルの有効セル数
  @param KOS 解くべき方程式の種類 KIND_OF_SOLVER
- @note 事前に，cmp[]へMaterialListへのエントリをエンコードしておく -> cmp[].setMatOdr()
+ @note 事前に，cmp[]へMediumListへのエントリをエンコードしておく -> cmp[].setMatOdr()
  */
 void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned long & Lcell, unsigned long & Gcell, const unsigned KOS)
 {
@@ -5774,12 +5774,12 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
 }
 
 /**
- @fn void VoxInfo::setWorklist(CompoList* m_CMP, MaterialList* m_MAT)
+ @fn void VoxInfo::setWorklist(CompoList* m_CMP, MediumList* m_MAT)
  @brief 作業用のポインタコピー
  @param m_CMP
  @param m_MAT 
  */
-void VoxInfo::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
+void VoxInfo::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);
   cmp = m_CMP;

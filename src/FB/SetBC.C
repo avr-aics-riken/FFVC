@@ -13,12 +13,12 @@
 #include "SetBC.h"
 
 /**
- @fn void SetBC::setWorklist(CompoList* m_CMP, MaterialList* m_MAT)
+ @fn void SetBC::setWorklist(CompoList* m_CMP, MediumList* m_MAT)
  @brief CompoListをポイント
  @param m_CMP
  @param m_MAT 
  */
-void SetBC::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
+void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);
   cmp = m_CMP;
@@ -28,10 +28,10 @@ void SetBC::setWorkList(CompoList* m_CMP, MaterialList* m_MAT)
 }
 
 /**
- @fn void SetBC::setControlVars(Control* Cref, MaterialList* mat, CompoList* cmp, Intrinsic* ExRef)
+ @fn void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Intrinsic* ExRef)
  @brief 必要な値のコピー
  */
-void SetBC::setControlVars(Control* Cref, MaterialList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
+void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
 {
   guide          = Cref->guide;
   imax = size[0] = Cref->imax;
