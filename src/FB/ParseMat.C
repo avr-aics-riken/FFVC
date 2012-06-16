@@ -40,7 +40,7 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
     }
   }
   else {
-    if ( !isHeatProblem() ) {
+    if ( KOS != FLOW_ONLY ) {
       Hostonly_ fprintf(fp,"\t  No :      ID            Element      Medium                    Label : BCtype\n");
       for (unsigned i=1; i<=NoBC; i++) {
         Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
@@ -181,8 +181,8 @@ void ParseMat::makeLinkCmpMat(CompoList* compo)
  */
 void ParseMat::printMediumList(FILE* mp, FILE* fp)
 {
-  printMatList(mp, (int)NoMedium, mat);
-  printMatList(fp, (int)NoMedium, mat);
+  printMatList(mp, NoMedium, mat);
+  printMatList(fp, NoMedium, mat);
 }
 
 
@@ -195,25 +195,24 @@ void ParseMat::printMediumList(FILE* mp, FILE* fp)
  */
 void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
 {
-  fprintf(fp, "\t  no :      ID           Medium\n");
+  fprintf(fp, "\t  no :           Medium  Properties\n");
   
   for (int n=1; n<=Max; n++) {
-    int id = n;
-    fprintf(fp,"\t%4d : %7d %16s\n", n, id, mlist[n].getLabel());
+    fprintf(fp,"\t%4d : %16s\n", n, mlist[n].getLabel());
     
     if ( mlist[n].getState() == FLUID ) {
-      fprintf(fp, "\t\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
-      fprintf(fp, "\t\t\t\t\t kinematic viscosity  %12.6e [m^2/s]\n",    mlist[n].P[p_kinematic_viscosity]);
-      fprintf(fp, "\t\t\t\t\t viscosity            %12.6e [Pa s]\n",     mlist[n].P[p_viscosity]);
-      fprintf(fp, "\t\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mlist[n].P[p_specific_heat]);
-      fprintf(fp, "\t\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mlist[n].P[p_thermal_conductivity]);
-      fprintf(fp, "\t\t\t\t\t sound of speed       %12.6e [m/s]\n",      mlist[n].P[p_sound_of_speed]);
-      fprintf(fp, "\t\t\t\t\t volume expansion     %12.6e [1/K]\n",      mlist[n].P[p_vol_expansion]);
+      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
+      fprintf(fp, "\t\t\t\t kinematic viscosity  %12.6e [m^2/s]\n",    mlist[n].P[p_kinematic_viscosity]);
+      fprintf(fp, "\t\t\t\t viscosity            %12.6e [Pa s]\n",     mlist[n].P[p_viscosity]);
+      fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mlist[n].P[p_specific_heat]);
+      fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mlist[n].P[p_thermal_conductivity]);
+      fprintf(fp, "\t\t\t\t sound of speed       %12.6e [m/s]\n",      mlist[n].P[p_sound_of_speed]);
+      fprintf(fp, "\t\t\t\t volume expansion     %12.6e [1/K]\n",      mlist[n].P[p_vol_expansion]);
     }
     else {  // solid
-      fprintf(fp, "\t\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
-      fprintf(fp, "\t\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mlist[n].P[p_specific_heat]);
-      fprintf(fp, "\t\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mlist[n].P[p_thermal_conductivity]);
+      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
+      fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mlist[n].P[p_specific_heat]);
+      fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mlist[n].P[p_thermal_conductivity]);
     }
     
   }
@@ -228,13 +227,13 @@ void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
  */
 void ParseMat::printRelation(FILE* fp, CompoList* compo)
 {  
-  unsigned odr;
+  int odr;
   
   fprintf(fp,"\n");
   fprintf(fp, "DEBUG @ ParseMat::printRelation\n\n");
   fprintf(fp, "\t  Order in CompoList :  Cell ID  Medium order     ID              Name\n");
   
-  for (unsigned i=1; i<=NoCompo; i++) {
+  for (int i=1; i<=(int)NoCompo; i++) {
     if ( compo[i].getState() != -1 ) {  // is Medium
       odr = compo[i].getMatOdr();
       fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getID(), odr, odr, mat[odr].getLabel(),
@@ -261,6 +260,7 @@ void ParseMat::setControlVars(Control* Cref)
   NoCompo        = Cref->NoCompo;
   NoBC           = Cref->NoBC;
   Unit_Temp      = Cref->Unit.Temp;
+  KOS            = Cref->KindOfSolver;
 }
 
 
@@ -308,7 +308,7 @@ int ParseMat::get_MediumTable(void)
       Exit(0);
     }
     
-    label_m = label_base+"/"+str;
+    label_m = label_base + "/" + str;
     n2 = tpCntl->countLabels(label_m);
     
     for (int i2=1; i2<=n2; i2++) {
@@ -317,7 +317,7 @@ int ParseMat::get_MediumTable(void)
         Exit(0);
       }
       
-      label_leaf = label_m+"/"+str;
+      label_leaf = label_m + "/" + str;
       
       if ( !strcasecmp(str.c_str(), "type") ) {
         if ( !(tpCntl->GetValue(label_leaf, &label)) ){
@@ -346,7 +346,7 @@ int ParseMat::get_MediumTable(void)
         }
         else{
           // データをmapに追加
-          MTITP[i1].m_fval.insert( pair<std::string, REAL_TYPE>(str, fval) );
+          MTITP[i1].m_fval.insert( std::pair<std::string, REAL_TYPE>(str, fval) );
         }
       }
     }
@@ -367,7 +367,6 @@ void ParseMat::makeMediumList(MediumList* m_mat)
   
   mat = m_mat;
   
-  int odr=0;
   int type;
   std::string label;
   
@@ -377,21 +376,19 @@ void ParseMat::makeMediumList(MediumList* m_mat)
     label = MTITP[i].label;
     
     // すでに登録されているかどうか調べる
-    if ( !chkDuplicateLabel(odr, label) ) {
+    if ( !chkDuplicateLabel(i, label) ) {
       Hostonly_ printf("\tError : Medium label '%s' is already used\n", label.c_str());
       Exit(0);
     }
     
-    odr++;
-    
     // state
-    mat[odr].setState(type);
+    mat[i].setState(type);
 
     // Medium name
-    strcpy( mat[odr].getLabel(), label.c_str() );
+    strcpy( mat[i].getLabel(), label.c_str() );
     
     // set medium value
-    storeProperty(odr, i);
+    copyProperty(i);
   }
 
 }
@@ -409,12 +406,12 @@ bool ParseMat::chkDuplicateLabel(const int n, std::string m_label)
 
 
 /**
- @fn void ParseMat::storeProperty(const int n, const int matid)
+ @fn void ParseMat::copyProperty(const int n)
  @brief matの変数値を格納する
  */
-void ParseMat::storeProperty(const int n, const int matid)
+void ParseMat::copyProperty(const int n)
 {
-	int nfval = MTITP[matid].m_fval.size();
+	int nfval = MTITP[n].m_fval.size();
   
 	if ( nfval > property_END ){
     Hostonly_ printf("\tParameter error : too big property size 'Medium_Table'\n");
@@ -425,9 +422,9 @@ void ParseMat::storeProperty(const int n, const int matid)
   for (int i=0; i<property_END; i++) ChkList[i] = false;
 	
 	// イテレータを生成
-	map<string, REAL_TYPE>::iterator itr;
+  std::map<string, REAL_TYPE>::iterator itr;
   
-	for (itr = MTITP[matid].m_fval.begin(); itr != MTITP[matid].m_fval.end(); itr++)
+	for (itr = MTITP[n].m_fval.begin(); itr != MTITP[n].m_fval.end(); itr++)
 	{
     std::string a1 = itr->first;   // キー取得
 		REAL_TYPE   a2 = itr->second;  // 値取得

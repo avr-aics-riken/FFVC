@@ -84,14 +84,14 @@ void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
 }
 
 /**
- @fn void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+ @fn void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param itbl IDtable
+ @param mtl
  */
-void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
 {
   unsigned m, m_sz[3], gd;
   m_sz[0] = size[0];

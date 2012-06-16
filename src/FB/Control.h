@@ -19,8 +19,6 @@
 #include "FB_Define.h"
 #include "Skl.h"
 #include "SklSolverBase.h"
-#include "config/SklSolverConfig.h"
-#include "config/SklCfgOutFile.h"
 #include "SklUtil.h"
 #include "Medium.h"
 #include "Component.h"
@@ -28,11 +26,7 @@
 #include "Monitor.h"
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
-
-// TextParser 
 #include "TPControl.h"
-
-using namespace SklCfg;  // to use SklSolverConfig* cfg
 
 
 class DTcntl {
@@ -261,7 +255,6 @@ public:
 
 class Control {
 protected:
-  SklSolverConfig* CF;  // for XML parsing
   
   // TPControl
   TPControl* tpCntl;
@@ -452,7 +445,7 @@ public:
             NoBC,
             NoCompo,
             NoDimension,
-            NoID,
+            NoMedium,
             NoMediumFluid,
             NoMediumSolid,
             NoWallSurface,
@@ -558,7 +551,7 @@ public:
     NoBC = 0;
     NoCompo = 0;
     NoDimension = 0;
-    NoID = 0;
+    NoMedium = 0;
     NoMediumFluid = 0;
     NoMediumSolid = 0;
     NoWallSurface = 0;
@@ -606,7 +599,6 @@ public:
     memset(HistoryWallName,  0, sizeof(char)*LABEL);
     memset(PolylibConfigName,  0, sizeof(char)*LABEL);
 
-    CF = NULL;
     TotalMemory = 0;
     
     iv.Density     = 0.0;
@@ -670,37 +662,8 @@ public:
 protected:
   bool getXML_PrsAverage(void);
   
-  //const CfgElem* getXML_Pointer(const char* key, string section);
-  
   void convertHexCoef        (REAL_TYPE* cf);
   void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
-  //void findXMLCriteria       (const CfgElem *elmL1, const char* key, unsigned order, ItrCtl* IC);
-  //void getXML_Algorithm      (void);
-  //void getXML_Average_option (void);
-  //void getXML_ChangeID       (void);
-  //void getXML_CheckParameter (void);
-  //void getXML_Convection     (void);
-  //void getXML_Derived        (void);
-  //void getXML_Dimension      (void);
-  //void getXML_FileIO         (void);
-  //void getXML_Iteration      (ItrCtl* IC);
-  //void getXML_KindOfSolver   (const CfgElem *elmL1);
-  //void getXML_LES_option     (void);
-  //void getXML_Log            (void);
-  //void getXML_Para_ND        (void);
-  //void getXML_Para_Ref       (void);
-  //void getXML_Para_Temp      (void);
-  //void getXML_Para_Wind      (void);
-  //void getXML_PMtest         (void);
-  //void getXML_ReferenceFrame (ReferenceFrame* RF);
-  //void getXML_Scaling        (void);
-  //void getXML_Solver_Properties (void);
-  //void getXML_start_condition   (void);
-  //void getXML_Time_Control   (DTcntl* DT);
-  //void getXML_TimeMarching   (void);
-  //void getXML_Unit           (void);
-  //void getXML_VarRange       (void);
-  //void getXML_Wall_type      (void);
   void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
   void printVoxelSize        (unsigned* gs, FILE* fp);
   void printInitValues       (FILE* fp);
@@ -710,9 +673,7 @@ protected:
   void setDimParameters      (void);
 
 public:
-  bool receiveCfgPtr(SklSolverConfig* cfg);
-  
-  const char* getTP_VoxelFileName(void);
+  const char* get_VoxelFileName(void);
   
   REAL_TYPE getCellSize(unsigned* m_size);
   REAL_TYPE OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size);
@@ -724,7 +685,7 @@ public:
   void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
   void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
-  void setParameters            (MediumList* mat, CompoList* cmp, ReferenceFrame* RF);
+  void setParameters            (MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
   
   
   static std::string getDirection(unsigned dir);
@@ -773,10 +734,6 @@ public:
   bool isHeatProblem(void) const {
     return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
   }
-	
-  //@fn const SklSolverConfig* getSolverConfig(void)
-  //@brief CFオブジェクトを返す
-	const SklSolverConfig* getSolverConfig(void) const { return CF; };
   
   //@fn bool isCDS(void) const
   //@brief ソルバーがCDSタイプかどうかを返す
@@ -824,6 +781,7 @@ protected:
   //bool getTP_PrsAverage(void);//未使用ルーチン
   ////未使用ルーチンgetTP_Polygonからのみコールされている
   ////const CfgElem* getTP_Pointer(const char* key, string section);
+  
   void findTPCriteria(
                       const string label1,
                       const string label2,

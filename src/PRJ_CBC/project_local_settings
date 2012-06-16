@@ -19,8 +19,8 @@ LIBS=-lifport -lifcore
 SPH_USR_DEF_LIBS=
 UDEF_OPT=-DTD_USE_NAMESPACE
 UDEF_INC_PATH=-I../../Cutlib-2.0.3/include -I../../Polylib_2_0_3/include -I../../PMlib-1.0/include -I/opt/openmpi/include \
--I../../TP/include -I../../CPMlib/include
-UDEF_LIB_PATH=-L../../Polylib_2_0_3/lib -L../../Cutlib-2.0.3/lib -L../../PMlib-1.0/lib -L../../TP/lib -L../../CPMlib/lib
+-I/usr/local/textparser/include -I../../CPMlib/include
+UDEF_LIB_PATH=-L../../Polylib_2_0_3/lib -L../../Cutlib-2.0.3/lib -L../../PMlib-1.0/lib -L/usr/local/textparser/lib -L../../CPMlib/lib
 UDEF_LIB_UPPER=
 UDEF_LIB_LOWER=
 SPHEREDIR=/usr/local/sphere

@@ -294,7 +294,7 @@ public:
   
   void Variation_Space      (REAL_TYPE* avr, REAL_TYPE* rms, REAL_TYPE& flop);
   void VoxEncode            (VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf);
-  void VoxScan              (VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp);
+  void VoxScan              (VoxInfo* Vinfo, int* mid, FILE* fp);
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
   void EnlargeIndex         (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
@@ -319,9 +319,9 @@ public:
   void setComponentVF       (float* cvf);
   void setEnsComponent      (void);
   void setGlobalCmpIdx      (void);
-  void setIDtables          (ParseBC* B, ParseMat* M, FILE* fp, FILE* mp);
+  void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setLocalCmpIdx_Binary(void);
-  void setMediumList        (ParseBC* B, ParseMat* M, FILE* mp, FILE* fp);
+  void setMediumList        (ParseMat* M, FILE* mp, FILE* fp);
   void set_NeighborRank     (void);
   void set_label            (unsigned key, char* label, PerfMonitor::Type type, bool exclusive=true);
   void setParallelism       (void);

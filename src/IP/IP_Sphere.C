@@ -198,14 +198,14 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 }
 
 /**
- @fn void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+ @fn void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param itbl IDtable
+ @param mtl
  */
-void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
 {
   int i,j,k, gd;
   int mid_fluid=1;        /// 流体
@@ -324,15 +324,15 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, ID
 }
 
 /**
- @fn void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl, float* cut)
+ @fn void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl, float* cut)
  @brief 計算領域のセルIDとカット情報を設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param itbl IDtable
+ @param mtl
  @param cut 
  */
-void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl, float* cut)
+void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl, float* cut)
 {
   int i,j,k, gd;
   int mid_fluid=1;        /// 流体

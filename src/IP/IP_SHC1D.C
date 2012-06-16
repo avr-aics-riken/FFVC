@@ -94,14 +94,14 @@ void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE
 }
 
 /**
- @fn void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+ @fn void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
  @brief モデルIDのセットアップ
  @param mid ボクセル配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param itbl IDtable
+ @param mtl
  */
-void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
 {
   unsigned i, j, k, m;
   int gd;

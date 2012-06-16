@@ -130,7 +130,6 @@ depend:
 ../../IP/IP_PMT.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_PMT.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_PMT.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_PMT.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_PMT.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_PMT.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_PMT.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -209,7 +208,6 @@ depend:
 ../../IP/IP_Rect.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_Rect.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_Rect.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_Rect.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_Rect.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_Rect.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_Rect.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -288,7 +286,6 @@ depend:
 ../../IP/IP_Polygon.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_Polygon.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_Polygon.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_Polygon.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_Polygon.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_Polygon.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_Polygon.o: ../../FB/Monitor.h ../../FB/vec3.h
@@ -367,7 +364,6 @@ depend:
 ../../IP/IP_Cylinder.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_Cylinder.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_Cylinder.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_Cylinder.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_Cylinder.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_Cylinder.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_Cylinder.o: ../../FB/Monitor.h ../../FB/vec3.h
@@ -446,7 +442,6 @@ depend:
 ../../IP/IP_Step.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_Step.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_Step.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_Step.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_Step.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_Step.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_Step.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -525,7 +520,6 @@ depend:
 ../../IP/IP_PPLT2D.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_PPLT2D.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_PPLT2D.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_PPLT2D.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_PPLT2D.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_PPLT2D.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_PPLT2D.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -604,7 +598,6 @@ depend:
 ../../IP/IP_Duct.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_Duct.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_Duct.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_Duct.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_Duct.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_Duct.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_Duct.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -683,7 +676,6 @@ depend:
 ../../IP/IP_SHC1D.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_SHC1D.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_SHC1D.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_SHC1D.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_SHC1D.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_SHC1D.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_SHC1D.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
@@ -762,7 +754,6 @@ depend:
 ../../IP/IP_Sphere.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
 ../../IP/IP_Sphere.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 ../../IP/IP_Sphere.o: /usr/local/sphere/include/coord/SklCoord.h
-../../IP/IP_Sphere.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 ../../IP/IP_Sphere.o: /usr/local/sphere/include/SklUtil.h ../../FB/Medium.h
 ../../IP/IP_Sphere.o: ../../FB/Component.h ../../FB/FBUtility.h
 ../../IP/IP_Sphere.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h

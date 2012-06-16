@@ -245,7 +245,6 @@ SklFactoryCBC.o: ../../FB/mydebug.h ../CBC/CBC_Define.h
 SklFactoryCBC.o: ../CBC/FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
 SklFactoryCBC.o: ../CBC/CBC_SetBC.h ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 SklFactoryCBC.o: ../../FB/FB_Define.h ../../FB/BndOuter.h ../../FB/Control.h
-SklFactoryCBC.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 SklFactoryCBC.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
 SklFactoryCBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
 SklFactoryCBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h

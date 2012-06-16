@@ -19,7 +19,6 @@
 #include "Component.h"
 #include "Medium.h"
 #include "Parallel_node.h"
-#include "IDtable.h"
 #include "SetBC.h"
 #include "BndOuter.h"
 #include "vec3.h"
@@ -206,7 +205,7 @@ protected:
   }
   
 public:
-  bool chkIDconsistency      (IDtable* iTable, unsigned m_NoID);
+  bool chkIDconsistency      (IDtable* iTable, unsigned m_NoMedium);
   
   unsigned check_fill        (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);

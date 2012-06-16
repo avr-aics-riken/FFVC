@@ -25,7 +25,7 @@ public:
 protected:
   virtual bool printPara(FILE* fp, Control* R);
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl);
   
 public:
   virtual bool getParaXML(SklSolverConfig* CF, Control* R);

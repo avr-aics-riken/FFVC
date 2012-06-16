@@ -105,7 +105,7 @@ protected:
   unsigned var_u1;          /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
   unsigned usw;             ///
   unsigned bc_dir;          /// VBCの指定方向
-  int      state;           ///
+  int      state;           /// Fluid(1) or Solid(0)
   int      st[3];           /// コンポーネントインデクスBV範囲の始点
   int      ed[3];           /// コンポーネントインデクスBV範囲の終点
   int      c_size[3];       /// コンポーネントワーク配列の大きさ

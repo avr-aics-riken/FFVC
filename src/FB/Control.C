@@ -477,56 +477,19 @@ string Control::getNormString(unsigned d)
   return nrm;
 }
 
-/**
- @fn char* Control::getVoxelFileName(void)
- @brief ボクセルファイル名を取得
- 
-const char* Control::getVoxelFileName(void)
-{
-  const CfgElem *elmL1=NULL;
-	const char *str=NULL;
-  
-  if ( !(elmL1 = getXML_Pointer("Voxel_File", "steer")) ) Exit(0);
-  
-  
-  // フォーマットの取得
-  if ( !elmL1->GetValue("format", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'Format' in 'Voxel_File'\n");
-    Exit(0);
-  }
-  
-  if ( !strcasecmp(str, "SVX") ) {
-    vxFormat = Sphere_SVX;
-  }
-  else if ( !strcasecmp(str, "SBX") ) {
-    vxFormat = Sphere_SBX;
-  }
-  else {
-    stamped_printf("\tParsing error : Format [%s] is invalid.\n", str);
-    Exit(0);
-  }
-  
-  //ファイル名取得
-  if ( !elmL1->GetValue("file", &str) ) {
-    stamped_printf("\tParsing error : fail to get 'File' in 'Voxel_File'\n");
-    Exit(0);
-  }
-  
-  return str;
-}*/
 
 /**
- @fn const char* Control::getTP_VoxelFileName()
+ @fn const char* Control::get_VoxelFileName()
  @brief ボクセルファイル名を取得
  */
-const char* Control::getTP_VoxelFileName()
+const char* Control::get_VoxelFileName()
 {
   
   int ct;
   std::string str;
-  string label;
+  std::string label;
   
-  label="/Steer/Voxel_File/format";
+  label = "/Steer/Voxel_File/format";
 
   if ( !(tpCntl->GetValue(label, &str )) ) {
 	  stamped_printf("\tParsing error : Invalid char* value for 'format' in 'Voxel_File'\n");
@@ -2317,7 +2280,7 @@ void Control::printLS(FILE* fp, ItrCtl* IC)
 void Control::printNoCompo(FILE* fp)
 {
   fprintf(fp,"\tNo. of Inner Boundary  : %d\n", NoBC);
-  fprintf(fp,"\tNo. of Medium          : %d\n", NoID);
+  fprintf(fp,"\tNo. of Medium          : %d\n", NoMedium);
   fprintf(fp,"\n");
   fprintf(fp,"\tNo. of Fluid ID        : %d\n", NoMediumFluid);
   fprintf(fp,"\tNo. of Solid ID        : %d\n", NoMediumSolid);
@@ -3081,17 +3044,6 @@ void Control::printVoxelSize(unsigned* gs, FILE* fp)
   }
 }
 
-/**
- @fn bool Control::receiveCfgPtr(SklSolverConfig* cfg)
- @brief コンフィギュレーションのポインタを返す
- */
-bool Control::receiveCfgPtr(SklSolverConfig* cfg)
-{
-  if ( !cfg ) return false;
-  CF = cfg;
-  return true;
-}
-
 
 /**
  @fn bool Control::receive_TP_Ptr(TPControl* tp)
@@ -3103,7 +3055,6 @@ bool Control::receive_TP_Ptr(TPControl* tp)
   tpCntl = tp;
   return true;
 }
-
 
 
 /**
@@ -3140,7 +3091,7 @@ void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, 
 
 
 /**
- @fn void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF)
+ @fn void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO)
  @brief 無次元パラメータを各種モードに応じて設定する
  @param mat
  @param cmp
@@ -3156,7 +3107,7 @@ void Control::setDomainInfo(unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, 
  - bool Control::getXML_Para_ND(void)
  - void Control::getXML_Para_Init(void)
  */
-void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF)
+void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO)
 {
   REAL_TYPE rho, nyu, cp, lambda, beta, mu, snd_spd=0.0;
   REAL_TYPE c1, c2, c3;
@@ -3388,7 +3339,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF)
   
   // 外部境界面の速度の指定パラメータを有次元化
   if ( Unit.Param == NONDIMENSIONAL ) {
-    for (unsigned n=0; n<NoBaseBC; n++) {
+    for (int n=0; n<NOFACE; n++) {
       switch ( BO[n].get_BCtype() ) {
         case OBC_WALL:
         case OBC_SPEC_VEL:
@@ -3406,7 +3357,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF)
   
   // 外部境界面の圧力の有次元化
   if ( Unit.Param == NONDIMENSIONAL ) {
-    for (unsigned n=0; n<NoBaseBC; n++) {
+    for (unsigned n=0; n<NOFACE; n++) {
       switch ( BO[n].get_BCtype() ) {
         case OBC_OUTFLOW:
         case OBC_TRC_FREE:

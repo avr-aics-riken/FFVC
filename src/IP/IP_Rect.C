@@ -90,14 +90,14 @@ void IP_Rect::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 }
 
 /**
- @fn void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+ @fn void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param itbl IDtable
+ @param mtl
  */
-void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl)
+void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
 {
   unsigned m, m_sz[3], gd;
   m_sz[0] = size[0];
@@ -108,7 +108,7 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDta
   int id_fluid;
   
   if ( (id_fluid = find_ID_from_Label(itbl, Nmax, m_fluid)) == 0 ) {
-    Hostonly_ printf("\tLabel '%s' is not listed in IDtable\n", m_fluid.c_str());
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   cout << "id=" << id_fluid << endl;

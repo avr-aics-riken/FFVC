@@ -145,20 +145,18 @@ SklSolverCBCInitialize.o: FortranFuncCBC.h
 SklSolverCBCInitialize.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 SklSolverCBCInitialize.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 SklSolverCBCInitialize.o: ../../FB/FB_Define.h ../../FB/BndOuter.h
-SklSolverCBCInitialize.o: ../../FB/Control.h
-SklSolverCBCInitialize.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-SklSolverCBCInitialize.o: ../../FB/Medium.h ../../FB/Component.h
-SklSolverCBCInitialize.o: ../../FB/FBUtility.h ../../FB/Monitor.h
-SklSolverCBCInitialize.o: ../../FB/vec3.h ../../FB/vec3_func.h
-SklSolverCBCInitialize.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-SklSolverCBCInitialize.o: ../../FB/MonCompo.h ../../FB/basic_func.h
-SklSolverCBCInitialize.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-SklSolverCBCInitialize.o: ../../FB/TPControl.h ../../FB/IDtable.h
-SklSolverCBCInitialize.o: ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h
-SklSolverCBCInitialize.o: ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h
-SklSolverCBCInitialize.o: ../../IP/IP_Rect.h ../../IP/IP_Step.h
-SklSolverCBCInitialize.o: ../../IP/IP_Cylinder.h ../../IP/IP_Polygon.h
-SklSolverCBCInitialize.o: ../../IP/IP_Sphere.h
+SklSolverCBCInitialize.o: ../../FB/Control.h ../../FB/Medium.h
+SklSolverCBCInitialize.o: ../../FB/Component.h ../../FB/FBUtility.h
+SklSolverCBCInitialize.o: ../../FB/Monitor.h ../../FB/vec3.h
+SklSolverCBCInitialize.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
+SklSolverCBCInitialize.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+SklSolverCBCInitialize.o: ../../FB/basic_func.h ../../FB/Sampling.h
+SklSolverCBCInitialize.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
+SklSolverCBCInitialize.o: ../../FB/IDtable.h ../../IP/IP_Define.h
+SklSolverCBCInitialize.o: ../../IP/IP_PPLT2D.h ../../IP/IP_SHC1D.h
+SklSolverCBCInitialize.o: ../../IP/IP_PMT.h ../../IP/IP_Rect.h
+SklSolverCBCInitialize.o: ../../IP/IP_Step.h ../../IP/IP_Cylinder.h
+SklSolverCBCInitialize.o: ../../IP/IP_Polygon.h ../../IP/IP_Sphere.h
 SklSolverCBCLoop.o: SklSolverCBC.h ../../FB/FB_Define.h ../../FB/mydebug.h
 SklSolverCBCLoop.o: CBC_Define.h /usr/local/sphere/include/Skl.h
 SklSolverCBCLoop.o: /usr/local/sphere/include/endianUtil.h
@@ -230,9 +228,7 @@ SklSolverCBCLoop.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCLoop.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
 SklSolverCBCLoop.o: CBC_SetBC.h ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 SklSolverCBCLoop.o: ../../FB/FB_Define.h ../../FB/BndOuter.h
-SklSolverCBCLoop.o: ../../FB/Control.h
-SklSolverCBCLoop.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-SklSolverCBCLoop.o: ../../FB/Medium.h ../../FB/Component.h
+SklSolverCBCLoop.o: ../../FB/Control.h ../../FB/Medium.h ../../FB/Component.h
 SklSolverCBCLoop.o: ../../FB/FBUtility.h ../../FB/Monitor.h ../../FB/vec3.h
 SklSolverCBCLoop.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
 SklSolverCBCLoop.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
@@ -314,9 +310,7 @@ SklSolverCBCPost.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCPost.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
 SklSolverCBCPost.o: CBC_SetBC.h ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 SklSolverCBCPost.o: ../../FB/FB_Define.h ../../FB/BndOuter.h
-SklSolverCBCPost.o: ../../FB/Control.h
-SklSolverCBCPost.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-SklSolverCBCPost.o: ../../FB/Medium.h ../../FB/Component.h
+SklSolverCBCPost.o: ../../FB/Control.h ../../FB/Medium.h ../../FB/Component.h
 SklSolverCBCPost.o: ../../FB/FBUtility.h ../../FB/Monitor.h ../../FB/vec3.h
 SklSolverCBCPost.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
 SklSolverCBCPost.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
@@ -398,19 +392,17 @@ SklSolverCBCUsage.o: /usr/local/sphere/include/coord/SklCoord.h
 SklSolverCBCUsage.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
 SklSolverCBCUsage.o: CBC_SetBC.h ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 SklSolverCBCUsage.o: ../../FB/FB_Define.h ../../FB/BndOuter.h
-SklSolverCBCUsage.o: ../../FB/Control.h
-SklSolverCBCUsage.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-SklSolverCBCUsage.o: ../../FB/Medium.h ../../FB/Component.h
-SklSolverCBCUsage.o: ../../FB/FBUtility.h ../../FB/Monitor.h ../../FB/vec3.h
-SklSolverCBCUsage.o: ../../FB/vec3_func.h ../../FB/vec3f_func.h
-SklSolverCBCUsage.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
-SklSolverCBCUsage.o: ../../FB/basic_func.h ../../FB/Sampling.h
-SklSolverCBCUsage.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
-SklSolverCBCUsage.o: ../../FB/IDtable.h ../../IP/IP_Define.h
-SklSolverCBCUsage.o: ../../IP/IP_PPLT2D.h ../../IP/IP_SHC1D.h
-SklSolverCBCUsage.o: ../../IP/IP_PMT.h ../../IP/IP_Rect.h ../../IP/IP_Step.h
-SklSolverCBCUsage.o: ../../IP/IP_Cylinder.h ../../IP/IP_Polygon.h
-SklSolverCBCUsage.o: ../../IP/IP_Sphere.h
+SklSolverCBCUsage.o: ../../FB/Control.h ../../FB/Medium.h
+SklSolverCBCUsage.o: ../../FB/Component.h ../../FB/FBUtility.h
+SklSolverCBCUsage.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
+SklSolverCBCUsage.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
+SklSolverCBCUsage.o: ../../FB/MonCompo.h ../../FB/basic_func.h
+SklSolverCBCUsage.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
+SklSolverCBCUsage.o: ../../FB/TPControl.h ../../FB/IDtable.h
+SklSolverCBCUsage.o: ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h
+SklSolverCBCUsage.o: ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h ../../IP/IP_Rect.h
+SklSolverCBCUsage.o: ../../IP/IP_Step.h ../../IP/IP_Cylinder.h
+SklSolverCBCUsage.o: ../../IP/IP_Polygon.h ../../IP/IP_Sphere.h
 SklSolverCBC.o: /usr/local/sphere/include/SklGloval.h
 SklSolverCBC.o: /usr/local/sphere/include/SklDefine.h
 SklSolverCBC.o: /usr/local/sphere/include/SklReservWord.h
@@ -483,7 +475,6 @@ SklSolverCBC.o: ../../FB/FB_Define.h ../../FB/mydebug.h CBC_Define.h
 SklSolverCBC.o: FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
 SklSolverCBC.o: CBC_SetBC.h ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 SklSolverCBC.o: ../../FB/FB_Define.h ../../FB/BndOuter.h ../../FB/Control.h
-SklSolverCBC.o: /usr/local/sphere/include/config/SklCfgOutFile.h
 SklSolverCBC.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
 SklSolverCBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
 SklSolverCBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
@@ -563,12 +554,11 @@ CBC_Heat.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 CBC_Heat.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
 CBC_Heat.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 CBC_Heat.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h ../../FB/FB_Define.h
-CBC_Heat.o: ../../FB/BndOuter.h ../../FB/Control.h
-CBC_Heat.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-CBC_Heat.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
-CBC_Heat.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-CBC_Heat.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-CBC_Heat.o: ../../FB/MonCompo.h ../../FB/basic_func.h ../../FB/Sampling.h
+CBC_Heat.o: ../../FB/BndOuter.h ../../FB/Control.h ../../FB/Medium.h
+CBC_Heat.o: ../../FB/Component.h ../../FB/FBUtility.h ../../FB/Monitor.h
+CBC_Heat.o: ../../FB/vec3.h ../../FB/vec3_func.h ../../FB/vec3f_func.h
+CBC_Heat.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+CBC_Heat.o: ../../FB/basic_func.h ../../FB/Sampling.h
 CBC_Heat.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h ../../FB/IDtable.h
 CBC_Heat.o: ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h ../../IP/IP_SHC1D.h
 CBC_Heat.o: ../../IP/IP_PMT.h ../../IP/IP_Rect.h ../../IP/IP_Step.h
@@ -644,12 +634,11 @@ NS_FS_E_CBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
 NS_FS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 NS_FS_E_CBC.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h ../../FB/FB_Define.h
-NS_FS_E_CBC.o: ../../FB/BndOuter.h ../../FB/Control.h
-NS_FS_E_CBC.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-NS_FS_E_CBC.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
-NS_FS_E_CBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-NS_FS_E_CBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-NS_FS_E_CBC.o: ../../FB/MonCompo.h ../../FB/basic_func.h ../../FB/Sampling.h
+NS_FS_E_CBC.o: ../../FB/BndOuter.h ../../FB/Control.h ../../FB/Medium.h
+NS_FS_E_CBC.o: ../../FB/Component.h ../../FB/FBUtility.h ../../FB/Monitor.h
+NS_FS_E_CBC.o: ../../FB/vec3.h ../../FB/vec3_func.h ../../FB/vec3f_func.h
+NS_FS_E_CBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+NS_FS_E_CBC.o: ../../FB/basic_func.h ../../FB/Sampling.h
 NS_FS_E_CBC.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
 NS_FS_E_CBC.o: ../../FB/IDtable.h ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h
 NS_FS_E_CBC.o: ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h ../../IP/IP_Rect.h
@@ -725,12 +714,11 @@ NS_FS_E_CDS.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
 NS_FS_E_CDS.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 NS_FS_E_CDS.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h ../../FB/FB_Define.h
-NS_FS_E_CDS.o: ../../FB/BndOuter.h ../../FB/Control.h
-NS_FS_E_CDS.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-NS_FS_E_CDS.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
-NS_FS_E_CDS.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-NS_FS_E_CDS.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-NS_FS_E_CDS.o: ../../FB/MonCompo.h ../../FB/basic_func.h ../../FB/Sampling.h
+NS_FS_E_CDS.o: ../../FB/BndOuter.h ../../FB/Control.h ../../FB/Medium.h
+NS_FS_E_CDS.o: ../../FB/Component.h ../../FB/FBUtility.h ../../FB/Monitor.h
+NS_FS_E_CDS.o: ../../FB/vec3.h ../../FB/vec3_func.h ../../FB/vec3f_func.h
+NS_FS_E_CDS.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+NS_FS_E_CDS.o: ../../FB/basic_func.h ../../FB/Sampling.h
 NS_FS_E_CDS.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
 NS_FS_E_CDS.o: ../../FB/IDtable.h ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h
 NS_FS_E_CDS.o: ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h ../../IP/IP_Rect.h
@@ -806,12 +794,11 @@ PS_E_CBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 PS_E_CBC.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
 PS_E_CBC.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 PS_E_CBC.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h ../../FB/FB_Define.h
-PS_E_CBC.o: ../../FB/BndOuter.h ../../FB/Control.h
-PS_E_CBC.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-PS_E_CBC.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
-PS_E_CBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-PS_E_CBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-PS_E_CBC.o: ../../FB/MonCompo.h ../../FB/basic_func.h ../../FB/Sampling.h
+PS_E_CBC.o: ../../FB/BndOuter.h ../../FB/Control.h ../../FB/Medium.h
+PS_E_CBC.o: ../../FB/Component.h ../../FB/FBUtility.h ../../FB/Monitor.h
+PS_E_CBC.o: ../../FB/vec3.h ../../FB/vec3_func.h ../../FB/vec3f_func.h
+PS_E_CBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+PS_E_CBC.o: ../../FB/basic_func.h ../../FB/Sampling.h
 PS_E_CBC.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h ../../FB/IDtable.h
 PS_E_CBC.o: ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h ../../IP/IP_SHC1D.h
 PS_E_CBC.o: ../../IP/IP_PMT.h ../../IP/IP_Rect.h ../../IP/IP_Step.h
@@ -886,12 +873,11 @@ IF_TRP_VOF.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 IF_TRP_VOF.o: /usr/local/sphere/include/coord/SklCoord.h FortranFuncCBC.h
 IF_TRP_VOF.o: /usr/local/sphere/include/SklUtil.h CBC_SetBC.h
 IF_TRP_VOF.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h ../../FB/FB_Define.h
-IF_TRP_VOF.o: ../../FB/BndOuter.h ../../FB/Control.h
-IF_TRP_VOF.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-IF_TRP_VOF.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
-IF_TRP_VOF.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-IF_TRP_VOF.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-IF_TRP_VOF.o: ../../FB/MonCompo.h ../../FB/basic_func.h ../../FB/Sampling.h
+IF_TRP_VOF.o: ../../FB/BndOuter.h ../../FB/Control.h ../../FB/Medium.h
+IF_TRP_VOF.o: ../../FB/Component.h ../../FB/FBUtility.h ../../FB/Monitor.h
+IF_TRP_VOF.o: ../../FB/vec3.h ../../FB/vec3_func.h ../../FB/vec3f_func.h
+IF_TRP_VOF.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+IF_TRP_VOF.o: ../../FB/basic_func.h ../../FB/Sampling.h
 IF_TRP_VOF.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
 IF_TRP_VOF.o: ../../FB/IDtable.h ../../IP/IP_Define.h ../../IP/IP_PPLT2D.h
 IF_TRP_VOF.o: ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h ../../IP/IP_Rect.h

@@ -50,9 +50,14 @@ void BoundaryOuter::set_DomainV(REAL_TYPE* vv, int face, bool mode)
   }
 }
 
-//@fn void set_ValidCell(unsigned val)
+void BoundaryOuter::set_Label(std::string key)
+{
+  label = key;
+}
+
+//@fn void set_ValidCell(int val)
 //@brief 境界面の有効セル数を保持
-void BoundaryOuter::set_ValidCell(unsigned val)
+void BoundaryOuter::set_ValidCell(int val)
 {
   valid_cell = val;
 }
@@ -85,16 +90,16 @@ void BoundaryOuter::set_Heatflux(REAL_TYPE val)
   var1 = val;
 }
 
-//@fn void set_FaceMode(unsigned key)
+//@fn void set_FaceMode(int key)
 //@brief 周期境界のときの面の状況をセット
-void BoundaryOuter::set_FaceMode(unsigned key)
+void BoundaryOuter::set_FaceMode(int key)
 {
   Face_mode = key;
 }
 
-//@fn void set_PrdcMode(unsigned key)
+//@fn void set_PrdcMode(int key)
 //@brief 周期境界のモードをセット
-void BoundaryOuter::set_PrdcMode(unsigned key)
+void BoundaryOuter::set_PrdcMode(int key)
 {
   Prdc_mode = key;
 }
@@ -113,25 +118,12 @@ void BoundaryOuter::set_DriverIndex(int key)
   drv_lid = key;
 }
 
-//@fn void set_BC_ID(int key) 
-//@brief 基本境界条件リストのIDをセットする
-void BoundaryOuter::set_BC_ID(int key)     
-{ 
-  BC_ID = key;
-}
 
 //@fn void set_GuideMedium(int key) 
 //@brief ガイドセルの媒質IDをセットする
 void BoundaryOuter::set_GuideMedium(int key)     
 { 
   gc_medium = key;
-}
-
-//@fn void set_GuideID(int key) 
-//@brief ガイドセルのIDをセットする
-void BoundaryOuter::set_GuideID(int key)     
-{ 
-  gc_id = key;
 }
 
 //@fn void set_BCtype(int key) 
@@ -141,44 +133,44 @@ void BoundaryOuter::set_BCtype(int key)
   BCtype = key;
 }
 
-//@fn void set_HTmode(unsigned key)
+//@fn void set_HTmode(int key)
 //@brief 熱伝達境界の種別をセット
-void BoundaryOuter::set_HTmode(unsigned key)
+void BoundaryOuter::set_HTmode(int key)
 {
   HTmode = key;
 }
 
-//@fn void set_hType(unsigned key)
+//@fn void set_hType(int key)
 //@brief 熱境界条件の種別をセット
-void BoundaryOuter::set_hType(unsigned key)
+void BoundaryOuter::set_hType(int key)
 { 
   hType  = key;
 }
 
-//@fn void set_MonRef(unsigned key)
+//@fn void set_MonRef(int key)
 //@brief IN_OUT境界条件のときのBC格納番号を保持
-void BoundaryOuter::set_MonRef(unsigned key)
+void BoundaryOuter::set_MonRef(int key)
 {
   mon_ref = key;
 }
 
-//@fn void set_ofv(unsigned key)
+//@fn void set_ofv(int key)
 //@brief 流出，流入出境界条件のときの流出対流速度の評価モードを指定
-void BoundaryOuter::set_ofv(unsigned key)
+void BoundaryOuter::set_ofv(int key)
 { 
   oflowType = key;
 }
 
-//@fn void set_pType(unsigned key)
+//@fn void set_pType(int key)
 //@brief 外部境界の圧力指定
-void BoundaryOuter::set_pType(unsigned key)
+void BoundaryOuter::set_pType(int key)
 {
   pType  = key;
 }
 
-//@fn void set_vType(unsigned key)
+//@fn void set_vType(int key)
 //@brief 速度プロファイルの指定
-void BoundaryOuter::set_vType(unsigned key)
+void BoundaryOuter::set_vType(int key)
 {
   vType  = key;
 }
@@ -196,11 +188,9 @@ void BoundaryOuter::addVec(REAL_TYPE* vec)
 //@brief メンバー変数のコピー
 void BoundaryOuter::dataCopy(BoundaryOuter* src)
 {
-  BC_ID     = src->BC_ID;
   BCtype    = src->BCtype;
   HTref     = src->HTref;
   gc_medium = src->gc_medium;
-  gc_id     = src->gc_id;
   mon_ref   = src->mon_ref;
   pType     = src->pType;
   vType     = src->vType;
@@ -215,6 +205,8 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
   var1      = src->var1;
   var2      = src->var2;
   valid_cell= src->valid_cell;
+  
+  label     = src->label;
   
   for (int i=0; i<3; i++) {
     nv[i] = src->nv[i];

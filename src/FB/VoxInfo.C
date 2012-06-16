@@ -20,7 +20,7 @@
  @param face 外部境界面番号
  @param d_mid ID配列のデータクラス
  @param BCtype 外部境界面の境界条件の種類
- @param c_id セルID
+ @param c_id 媒質インデクス
  @param prdc_mode 周期境界条件のモード
  @note ガイドセル全てを対象
  */
@@ -440,23 +440,23 @@ unsigned VoxInfo::check_fill(const int* mid)
 
 
 /**
- @fn bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoID)
+ @fn bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoMedium)
  @brief XMLとスキャンしたボクセルIDの同一性をチェック
  @retval エラーコード
  @param iTable IDtableのリスト
- @param m_NoID XMLリストに記述されたIDの個数
- @note m_NoID >= NoVoxIDのはず
+ @param m_NoMedium Medium_Tableに記述されたIDの個数
+ @note m_NoMedium >= NoVoxIDのはず
  */
-bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoID)
+bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoMedium)
 {
   bool* chkflag = NULL;
 	if( !(chkflag = new bool[NoVoxID+1]) ) return false;
 	
 	for (int i=0; i<=NoVoxID; i++) chkflag[i] = false;
 	
-	for (int i=1; i<=NoVoxID; i++) { // スキャンしたIDのループ
-		for (int j=1; j<=m_NoID; j++) { // XMLのループ
-			if ( colorList[i] == (int)iTable[j].getID() ) chkflag[i] = true;
+  for (int j=1; j<=m_NoMedium; j++) {
+    for (int i=1; i<=NoVoxID; i++) { // スキャンしたIDのループ
+			if ( colorList[i] == j ) chkflag[i] = true;
 		}
 	}
 	
@@ -4763,22 +4763,11 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
   }
   
   
-  //Hostonly_  {
-  //  for (int i=0; i<MODEL_ID_MAX+1; i++) {
-  //    if (colorSet[i] != 0) printf("a %d : %d %d\n", pn.myrank, i, colorSet[i]);
-  //  }
-  //}
-  
-  
   // 外部領域の媒質IDをcolorSetに追加する
   for (int i=0; i<NOFACE; i++) {
     target = cid[i];
     colorSet[target]++;
   }
-  
-  //for (int i=0; i<MODEL_ID_MAX+1; i++) {
-  //  if (colorSet[i] != 0) printf("b %d : %d %d\n", pn.myrank, i, colorSet[i]);
-  //}
   
   // 集約時の桁あふれを回避するため、1に規格化
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
@@ -4799,12 +4788,7 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
     
   }
   // この時点で、存在するIDの数はpn.numProc個になっている >> unsgined の範囲内
-  
-  //for (int i=0; i<MODEL_ID_MAX+1; i++) {
-  //  if (colorSet[i] != 0) printf("c %d : %d %d\n", pn.myrank, i, colorSet[i]);
-  //}
-  
-    
+
   // colorList[]へ詰めてコピー colorList[0]は不使用
   int b=1;
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
@@ -4815,12 +4799,6 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
   }
   
   NoVoxID = (unsigned)b-1;
-	
-  //Hostonly_  {
-  //  for (int i=0; i<MODEL_ID_MAX+1; i++) {
-  //    if (colorList[i] != 0) printf("%d %d\n", i, colorList[i]);
-  //  }
-  //}
   
   return NoVoxID;
 }

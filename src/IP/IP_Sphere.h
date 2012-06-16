@@ -50,8 +50,8 @@ public:
     return ("Sphere");
   }
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl);
-  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, IDtable* itbl, float* cut);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl);
+  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl, float* cut);
   
   FB::Vec3i find_index(const FB::Vec3f p, const FB::Vec3f ol);
   

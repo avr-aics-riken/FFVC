@@ -167,12 +167,6 @@ SklSolverCBC::SklSolverInitialize() {
     Ex->printExample(fp, Ex->getExampleName());
   }
   
-  // コンフィギュレーション 各クラスで必要なオブジェクトのポインタを渡す -----------------------------------------------------
-  if ( !C.receiveCfgPtr(m_solvCfg) ) {
-    Hostonly_ stamped_printf("\tError during sending an object pointer of XML tree to Control class\n");
-    return -1;
-  }
-  
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
   C.get_Version();
   
@@ -236,13 +230,16 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 媒質情報をロード
-  C.NoID = (unsigned)M.get_MediumTable(); // Medium_Tableタグ内の媒質数
+  C.NoMedium = (unsigned)M.get_MediumTable(); // Medium_Tableタグ内の媒質数
+  
+  // 媒質リストをインスタンス
+  mat = new MediumList[C.NoMedium+1];
   
   // 媒質情報を設定
-  setMediumList(&B, &M, mp, fp);
+  setMediumList(&M, mp, fp);
   
   
-  // パラメータファイルから C.NoBC, C.NoID, C.NoCompoを取得 >> IDtableを生成
+  // パラメータファイルから C.NoBC, C.NoMedium, C.NoCompoを取得 >> IDtableを生成
   // KOSオプションとパラメータの整合性をチェック
   // BCのテーブル取得と表示
   Hostonly_ {
@@ -252,10 +249,13 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(fp, "\t>> Table Information\n\n");
   }
   
-  C.NoBC    = B.getNoLocalBC();   // LocalBoundaryタグ内の境界条件の個数
-  C.NoCompo = C.NoBC + C.NoID;    // コンポーネントの数の定義
+  C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
+  C.NoCompo = C.NoBC + C.NoMedium; // コンポーネントの数の定義
   
-  //setIDtables(&B, &M, fp, mp);
+  // ParseBCクラス内でiTable[NoMedium+1]を確保
+  B.setControlVars(&C, BC.get_OBC_Ptr(), M.export_MediumList());
+  
+  setIDtables(&B, &M, fp, mp);
   
   
   
@@ -362,12 +362,12 @@ SklSolverCBC::SklSolverInitialize() {
       
     case id_Sphere:
       if ( !C.isCDS() ) {
-        Ex->setup(mid, &C, G_org, C.NoID, B.get_IDtable_Ptr());
+        Ex->setup(mid, &C, G_org, C.NoMedium, B.get_IDtable_Ptr());
       }
       else {
         // cutをアロケートし，初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(mid, &C, G_org, C.NoID, B.get_IDtable_Ptr(), dc_cut->GetData());
+        Ex->setup_cut(mid, &C, G_org, C.NoMedium, B.get_IDtable_Ptr(), dc_cut->GetData());
       }
       break;
       
@@ -375,7 +375,7 @@ SklSolverCBC::SklSolverInitialize() {
       if ( C.isCDS() ) {
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       }
-      Ex->setup(mid, &C, G_org, C.NoID, B.get_IDtable_Ptr());
+      Ex->setup(mid, &C, G_org, C.NoMedium, B.get_IDtable_Ptr());
       break;
   }
 
@@ -539,7 +539,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // バイナリボクセルのスキャン
-  VoxScan(&Vinfo, &B, mid, fp);
+  VoxScan(&Vinfo, mid, fp);
   
   // スキャンしたセルIDの情報を表示する
   Hostonly_ {
@@ -556,7 +556,7 @@ SklSolverCBC::SklSolverInitialize() {
 
   // ボクセルモデルのIDがXMLに記述されたIDに含まれていること
 	Hostonly_ {
-		if ( !Vinfo.chkIDconsistency(B.get_IDtable_Ptr(), C.NoID) ) {
+		if ( !Vinfo.chkIDconsistency(B.get_IDtable_Ptr(), C.NoMedium) ) {
 			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
 			return -1;
 		}
@@ -576,7 +576,7 @@ SklSolverCBC::SklSolverInitialize() {
   // ガイドセル上にXMLで指定するセルIDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) {
     Vinfo.adjCellID_on_GC(face, dc_mid, BC.get_OBC_Ptr(face)->get_BCtype(), 
-                         BC.get_OBC_Ptr(face)->get_GuideID(), BC.get_OBC_Ptr(face)->get_PrdcMode());
+                         BC.get_OBC_Ptr(face)->get_GuideMedium(), BC.get_OBC_Ptr(face)->get_PrdcMode());
   }
 
   
@@ -768,7 +768,7 @@ SklSolverCBC::SklSolverInitialize() {
   SklSetMaxStep( C.LastStep );
   
   // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
-  C.setParameters(mat, cmp, &RF);
+  C.setParameters(mat, cmp, &RF, BC.get_OBC_Ptr());
   
   // 媒質による代表パラメータのコピー
   B.setRefValue(mat, cmp, &C);
@@ -3165,21 +3165,14 @@ void SklSolverCBC::setBCinfo(ParseBC* B)
   // CompoListクラスのオブジェクトポインタを渡す
   B->receiveCompoPtr(cmp);
 
-  // XMLの情報を元にCompoListの情報を設定する
-  //B->setCompoList(&C);
+  // パラメータファイルの情報を元にCompoListの情報を設定する
   B->TPsetCompoList(&C);
   
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();
- 
-
-  //外部境界数NoBaseBCを数えてBoundartOuterクラスオブジェクトをnew
-  B->TPsetObcPtr(BC.get_OBC_Ptr());
-  //B->setObcPtr(BC.get_OBC_Ptr());
   
-  // XMLファイルをパースして，外部境界条件を保持する
-  //B->loadOuterBC();
-  B->TPloadOuterBC();
+  // パラメータファイルをパースして，外部境界条件を保持する
+  B->loadOuterBC();
   
   // KOSと境界条件種類の整合性をチェック
   B->chkBCconsistency(C.KindOfSolver);
@@ -3272,25 +3265,26 @@ void SklSolverCBC::setComponentVF(float* cvf)
 
 
 /**
- @fn void SklSolverCBC::setMediumList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+ @fn void SklSolverCBC::setMediumList(ParseMat* M, FILE* mp, FILE* fp)
  @brief ParseMatクラスをセットアップし，媒質情報をXMLから読み込み，媒質リストを作成する
  @param B
  @param M 
  @param mp
  @param fp 
  */
-void SklSolverCBC::setMediumList(ParseBC* B, ParseMat* M, FILE* mp, FILE* fp)
+void SklSolverCBC::setMediumList(ParseMat* M, FILE* mp, FILE* fp)
 {
-  mat = new MediumList[C.NoID+1];
-  
+  // ParseMatクラスの環境設定 
+  M->setControlVars(&C);
+
+  // MediumListを作成
   M->makeMediumList(mat);
   
   // 媒質テーブルの表示
   Hostonly_ M->printMediumList(mp, fp);
   
   
-  // ParseMatクラスの環境設定 
-  M->setControlVars(&C);
+  
 
   // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
   //M->makeLinkCmpMat(cmp);
@@ -3391,14 +3385,11 @@ void SklSolverCBC::setEnsComponent(void)
 }
 
 /**
- @fn void SklSolverCBC::setIDtables(ParseBC* B, ParseMat* M, FILE* fp, FILE* mp)
+ @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
  @brief パラメータファイルから境界条件数やID情報を取得
  */
-void SklSolverCBC::setIDtables(ParseBC* B, ParseMat* M, FILE* fp, FILE* mp)
+void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
 {
-	// ParseBCクラス内でiTable[NoID+1]を確保
-  B->setControlVars(&C);
-  
   // IDの情報テーブルを構築する
   B->construct_iTable(&C);
   
@@ -4274,7 +4265,7 @@ void SklSolverCBC::VoxelInitialize(void)
   if ( C.Mode.Example == id_Users ) {
     const char* fname=NULL;
     
-    if ( !(fname = C.getTP_VoxelFileName()) ) {
+    if ( !(fname = C.get_VoxelFileName()) ) {
       Hostonly_ stamped_printf("\tRead error : A file name of voxel model is invalid.\n");
       Exit(0);
     }
@@ -4412,24 +4403,20 @@ void SklSolverCBC::VoxelInitialize(void)
 
 
 /**
- @fn void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
+ @fn void SklSolverCBC::VoxScan(VoxInfo* Vinfo, int* mid, FILE* fp)
  @brief ボクセルをスキャンし情報を表示する
  @param Vinfo
- @param B
  @param mid 
  @param fp 
- @note
- - ボクセルデータに含まれるID数をカウント
- - XMLに記述されたパラメータと比較
  */
-void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
+void SklSolverCBC::VoxScan(VoxInfo* Vinfo, int* mid, FILE* fp)
 {
   // 外部境界面の媒質IDとその個数を取得
   int cell_id[NOFACE];
-  for (int i=0; i<NOFACE; i++) cell_id[i] = 0;
   
-  //B->count_Outer_Cell_ID(cell_id);
-  B->TPcount_Outer_Cell_ID(cell_id);
+  for (int i=0; i<NOFACE; i++) {
+    cell_id[i] = BC.get_OBC_Ptr(i)->get_GuideMedium();
+  }
   
   Hostonly_ {
     fprintf(fp, "\tCell IDs on Guide cell region\n");
@@ -4444,9 +4431,9 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, ParseBC* B, int* mid, FILE* fp)
   
   // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
   unsigned sc=0;
-  if ( (sc=Vinfo->scanCell(mid, cell_id, C.Hide.Change_ID)) > C.NoID ) {
+  if ( (sc=Vinfo->scanCell(mid, cell_id, C.Hide.Change_ID)) > C.NoMedium ) {
     Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is grater than one described in 'Model_Setting'(%d)\n", 
-                             sc, C.NoID);
+                             sc, C.NoMedium);
     Exit(0);
   }
 }

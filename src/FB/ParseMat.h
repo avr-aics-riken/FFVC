@@ -27,6 +27,7 @@ private:
   bool ChkList[property_END];  // # of parameters in MediumList must be less than # of property_END
   
   unsigned NoCompo, NoBC, Unit_Temp;
+  unsigned KOS;
   
   MediumList* mat;
 
@@ -39,11 +40,14 @@ public:
     NoBC       = 0;
     NoMedium   = 0;
     Unit_Temp  = 0;
+    KOS        = 0;
     mat        = NULL;
     MTITP      = NULL;
     for (int i=0; i<property_END; i++) ChkList[i]=false;
   }
-  ~ParseMat() {}
+  ~ParseMat() {
+    if ( MTITP ) delete [] MTITP;
+  }
   
 protected:
   TPControl* tpCntl;
@@ -56,7 +60,7 @@ protected:
   void chkList             (FILE* fp, CompoList* compo, unsigned basicEq);
   void printMatList        (FILE* fp, int Max, MediumList* mlist);
   void printRelation       (FILE* fp, CompoList* compo);
-  void storeProperty       (const int n, const int matid);
+  void copyProperty        (const int n);
     
 public:
   bool chkStateList      (CompoList* compo);
@@ -71,7 +75,10 @@ public:
   void makeMediumList    (MediumList* m_mat);
   void printMediumList   (FILE* mp, FILE* fp);
   void setControlVars    (Control* Cref);
-  void set_matMedium     (const unsigned n, const int matid);
+  
+  MediumList* export_MediumList(void) {
+    return mat;
+  }
   
   
   // ----------> debug function

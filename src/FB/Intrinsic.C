@@ -11,13 +11,13 @@
 
 #include "Intrinsic.h"
 
-//@brief IDtable中に登録されているkeyに対するIDを返す。発見できない場合はzero 
-int Intrinsic::find_ID_from_Label(IDtable* itbl, const int Nmax, const std::string key)
+//@brief MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
+int Intrinsic::find_ID_from_Label(MediumList* mtl, const int Nmax, const std::string key)
 {
   std::string str = key;
-  cout << "nmax=" << Nmax << endl;
+
   for (int i=1; i<=Nmax; i++) {
-    cout << "i=" << i << " label=" << itbl[i].getLabel() << endl;
+    cout << "i=" << i << " label=" << mtl[i].getLabel() << endl;
     if ( !strcasecmp(str.c_str(), itbl[i].getLabel()) ) {
       return i;
     }
