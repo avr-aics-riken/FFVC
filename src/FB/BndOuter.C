@@ -1,13 +1,16 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file BndOuter.C
 //@brief FlowBase BoundaryOuter class
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include "BndOuter.h"
 

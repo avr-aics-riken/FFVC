@@ -1,17 +1,19 @@
 #ifndef _FB_BND_OUTER_H_
 #define _FB_BND_OUTER_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file BndOuter.h
 //@brief FlowBase BoundaryOuter class Header
-//@author keno, FSI Team, VCAD, RIKEN
-//@todo 平均速度のみ，1/2(min+max)は未処理
+//@author kero
 //@note メンバ変数に追加したら，dataCopy()処理にも加えること
 
 #include "FB_Define.h"

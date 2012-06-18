@@ -1,13 +1,16 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file Intrinsic.C
 //@brief FlowBase Intrinsic class
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include "Intrinsic.h"
 
@@ -17,7 +20,7 @@ int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::st
   std::string str = key;
 
   for (int i=1; i<=Nmax; i++) {
-    if ( !strcasecmp(str.c_str(), mat[i].getLabel()) ) {
+    if ( str != mat[i].getLabel() ) {
       return i;
     }
   }

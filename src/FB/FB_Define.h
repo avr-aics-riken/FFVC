@@ -13,7 +13,7 @@
 
 //@file FB_Define.h
 //@brief FlowBase Definition Header
-//@author keno
+//@author kero
 
 #include "mydebug.h"
 

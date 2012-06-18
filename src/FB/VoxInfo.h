@@ -1,12 +1,15 @@
 #ifndef _FB_BINVOX_H_
 #define _FB_BINVOX_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file VoxInfo.h
 //@brief FlowBase VoxInfo class Header
@@ -14,7 +17,7 @@
 
 #include <math.h>
 
-#include "Skl.h"
+//#include "Skl.h"
 #include "FBUtility.h"
 #include "Component.h"
 #include "Medium.h"

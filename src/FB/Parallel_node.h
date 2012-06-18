@@ -13,7 +13,7 @@
 
 //@file Parallel_node.h
 //@brief FlowBase Parallel_Node class Header
-//@author keno
+//@author kero
 
 typedef struct {
   int procGrp;    // プロセスグループ番号

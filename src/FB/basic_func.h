@@ -1,16 +1,19 @@
 #ifndef _BASIC_FUNCTIONS_H_
 #define _BASIC_FUNCTIONS_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file basic_func.h
-//@brief basic functions which are independent from SPHERE
-//@author keno, FSI Team, VCAD, RIKEN
+//@brief basic functions
+//@author kero
 
 #include <math.h>
 

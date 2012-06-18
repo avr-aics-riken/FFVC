@@ -499,7 +499,7 @@ void SklSolverCBC::NS_FS_E_CDS(void)
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
   flop_count=0.0;
-  DomainMonitor( BC.get_OBC_Ptr(), &C, flop_count);
+  DomainMonitor( BC.export_OBC(), &C, flop_count);
   TIMING_stop(tm_domain_monitor, flop_count);
   
   // 流出境界のガイドセル値の更新

@@ -13,7 +13,7 @@
 
 //@file mydebug.h
 //@brief FlowBase mydebug Header
-//@author keno
+//@author kero
 
 #include <stdlib.h>
 

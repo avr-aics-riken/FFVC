@@ -13,7 +13,7 @@
 
 //@file ParseMat.h
 //@brief FlowBase ParseMat class Header
-//@author keno
+//@author kero
 
 #include "FB_Define.h"
 #include "Control.h"
@@ -75,6 +75,10 @@ public:
   void makeMediumList    (MediumList* mat);
   void printMediumList   (FILE* mp, FILE* fp, MediumList* mat);
   void setControlVars    (Control* Cref);
+  
+  MediumTableInfo* export_MTI(void) {
+    return MTITP;
+  }
   
   
   // ----------> debug function

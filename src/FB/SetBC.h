@@ -13,10 +13,8 @@
 
 //@file SetBC.h
 //@brief FlowBase SetBC class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
-#include "Skl.h"
-#include "SklSolverBase.h"
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
@@ -86,20 +84,17 @@ public:
   void setControlVars (Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
   void setWorkList    (CompoList* m_CMP, MediumList* m_MAT);
   
-  //@fn bool has_InOut(void)
   //@brief 流入出境界条件が設定されている場合にtrueを返す
   bool has_InOut(void) { return inout_flag; }
   
-  //@fn BoundaryOuter* get_OBC_Ptr(void)
   //@brief 外部境界リストのポインタを返す
-  BoundaryOuter* get_OBC_Ptr(void) { 
+  BoundaryOuter* export_OBC(void) { 
     return obc;
   }
   
-  //@fn BoundaryOuter* get_OBC_Ptr(int face)
   //@brief 引数の外部境界面の外部境界リストのポインタを返す
   //@param face 面番号
-  BoundaryOuter* get_OBC_Ptr(int face) { 
+  BoundaryOuter* export_OBC(int face) { 
     return &obc[face];
   }
   

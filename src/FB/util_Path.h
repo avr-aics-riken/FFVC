@@ -1,19 +1,19 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+#ifndef _FB_UTIL_PATH_H_
+#define _FB_UTIL_PATH_H_
+
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 /**
  * @file utilPath.h
-
- * @author     riken
- * @date       2010/10/01
  */
-
-#ifndef _FB_UTIL_PATH_H_
-#define _FB_UTIL_PATH_H_
 
 #include <string>
 #include <sstream>

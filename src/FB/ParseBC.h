@@ -13,17 +13,14 @@
 
 //@file ParseBC.h
 //@brief FlowBase ParseBC class Header
-//@author keno
+//@author kero
 
-#include "Skl.h"
-#include "SklSolverBase.h"
+#include "string.h"
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
-#include "string.h"
 #include "Control.h"
 #include "Component.h"
-#include "parallel/SklParaComponent.h"
 #include "Medium.h"
 #include "vec3.h"
 #include "Parallel_node.h"
@@ -98,7 +95,6 @@ protected:
   bool chkID              (void);
   bool isComponent        (unsigned label);
   bool isCompoTransfer    (unsigned label);
-  bool isIDinTable        (int candidate);
   
   int get_BCval_int       (const std::string label);
   int getStateinTable     (int id);

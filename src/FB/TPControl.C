@@ -10,10 +10,11 @@
 
 //@file TPControl.C
 //@brief FlowBase Text Parser Control class
-//@author keno
+//@author kero
 
 #include "TPControl.h"
 
+using namespace std;
 
 /**
  @fn int TPControl::getTPinstance()
@@ -26,7 +27,7 @@ int TPControl::getTPinstance()
   tp=TextParser::get_instance();
   if( !tp )
   {
-    cerr << "ERROR : instance of TextParser" << endl;
+    std::cerr << "ERROR : instance of TextParser" << endl;
     return TP_ERROR;
   }
   return ierr;
@@ -46,7 +47,7 @@ int TPControl::readTPfile(const std::string filename)
   // read
   if( (ierr = tp->read(filename)) != TP_NO_ERROR )
   {
-    cout << "ERROR : in input file: " << filename << endl
+    std::cout << "ERROR : in input file: " << filename << endl
          << "  ERROR CODE = "<< ierr << endl;
     return ierr;
   }
@@ -82,7 +83,7 @@ bool TPControl::GetVector(std::string label, int *vec, const int nvec)
   if( type != TP_VECTOR_NUMERIC ) return false;
 
   // split
-  vector<string> vec_value;
+  std::vector<string> vec_value;
   if( (ierr = tp->splitVector(value, vec_value)) != TP_NO_ERROR ) return false;
 
   // check number of vector element
@@ -119,7 +120,7 @@ bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
 
   // get value
   if( (ierr = tp->getValue(label, value)) != TP_NO_ERROR ){
-	  cout << " GetVector debug 333" << endl;
+    std::cout << " GetVector debug 333" << endl;
 	  return false;
   }
 
@@ -129,7 +130,7 @@ bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
   if( type != TP_VECTOR_NUMERIC ) return false;
 
   // split
-  vector<string> vec_value;
+  std::vector<string> vec_value;
   if( (ierr = tp->splitVector(value, vec_value)) != TP_NO_ERROR ) return false;
 
   // check number of vector element
@@ -173,7 +174,7 @@ bool TPControl::GetVector(std::string label, std::string *vec, const int nvec)
   if( type != TP_VECTOR_NUMERIC ) return false;
 
   // split
-  vector<string> vec_value;
+  std::vector<string> vec_value;
   if( (ierr = tp->splitVector(value, vec_value)) != TP_NO_ERROR ) return false;
 
   // check number of vector element

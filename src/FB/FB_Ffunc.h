@@ -13,7 +13,7 @@
 
 //@file FB_Ffunc.h
 //@brief FlowBase Fortran function Header
-//@author keno
+//@author kero
 
 #include "FB_Define.h"
 

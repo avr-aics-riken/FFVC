@@ -1,16 +1,19 @@
 #ifndef _FB_COMPO_H_
 #define _FB_COMPO_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file Component.h
 //@brief FlowBase CompoList class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include <string>
 #include <string.h>
@@ -118,6 +121,7 @@ protected:
   REAL_TYPE var3;           /// パラメータ保持 (Heat Density, Temperature)
   REAL_TYPE var_m;          /// モニタの値を保持
   REAL_TYPE temp_init;      /// 温度の初期値
+  std::string name;         ///< ラベル
   
   
 public:
@@ -131,7 +135,6 @@ public:
   REAL_TYPE val[var_END];   ///< データ保持用ワーク
   REAL_TYPE ca[6];          ///< 係数セット a
   REAL_TYPE cb[6];          ///< 係数セット b
-  char      name[LABEL];    ///< ラベル
   
   CompoList() {
     element = 0;
@@ -154,7 +157,6 @@ public:
     }
     for (int i=0; i<var_END; i++) val[i]=0.0;
     for (int i=0; i<6; i++) ca[i] = cb[i] = 0.0;
-    for (int n=0; n<LABEL; n++) name[n]='\0';
     var1 = var2 = var3 = var_m = temp_init = 0.0;
     depth = shp_p1 = shp_p2 = 0.0;
   }
@@ -194,6 +196,9 @@ public:
   
   std::string getVarStr (void);
   std::string getBCstr  (void);
+  std::string getLabel  (void) {
+    return name;
+  }
   
   void setAttrb            (const unsigned key);
   void setBClocation       (const unsigned key);
@@ -205,7 +210,7 @@ public:
   void setID               (const unsigned key);
   void setInitTemp         (const REAL_TYPE var);
   void setMatOdr           (const unsigned key);
-  void setName             (const char* pnt);
+  void setLabel            (const std::string pnt);
   void setOutflowType      (const unsigned key);
   void setPeriodicDir      (const unsigned key);
   void setPrsUnit          (const unsigned key);

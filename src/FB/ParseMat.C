@@ -36,7 +36,7 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
       Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
       ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
       ( compo[i].getPhase() == GAS )   ? fprintf(fp, "        Gas ") : fprintf(fp, "     Liquid ") ;
-      Hostonly_ fprintf(fp, " %24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+      Hostonly_ fprintf(fp, " %24s : %s", (compo[i].getLabel().empty()) ? "" : compo[i].getLabel().c_str(), compo[i].getBCstr().c_str() );
     }
   }
   else {
@@ -45,13 +45,13 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
       for (unsigned i=1; i<=NoBC; i++) {
         Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        Hostonly_ fprintf(fp, "%24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp, "%24s : %s", (compo[i].getLabel().empty()) ? "" : compo[i].getLabel().c_str(), compo[i].getBCstr().c_str() );
         Hostonly_ fprintf(fp,"\n");
       }
       for (unsigned i=NoBC+1; i<=NoCompo; i++) {
         Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        Hostonly_ fprintf(fp, "%24s : %s", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp, "%24s : %s", (compo[i].getLabel().empty()) ? "" : compo[i].getLabel().c_str(), compo[i].getBCstr().c_str() );
         Hostonly_ fprintf(fp,"\n");
       }
     }
@@ -60,14 +60,14 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
       for (unsigned i=1; i<=NoBC; i++) {
         Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        Hostonly_ fprintf(fp, "%14s %24s : %s", "-", (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+        Hostonly_ fprintf(fp, "%14s %24s : %s", "-", (compo[i].getLabel().empty()) ? "" : compo[i].getLabel().c_str(), compo[i].getBCstr().c_str() );
         Hostonly_ fprintf(fp,"\n");
       }
       for (unsigned i=NoBC+1; i<=NoCompo; i++) {
         Hostonly_ fprintf(fp,"\t%4d : %7d %18d ", i, compo[i].getID(), compo[i].getElement());
         ( compo[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
         Hostonly_ fprintf(fp, "%14.4e %24s : %s", FBUtility::convK2Temp(compo[i].getInitTemp(), Unit_Temp), 
-                          (compo[i].name == NULL)?"":compo[i].name, compo[i].getBCstr().c_str() );
+                          (compo[i].getLabel().empty()) ? "" : compo[i].getLabel().c_str(), compo[i].getBCstr().c_str() );
         Hostonly_ fprintf(fp,"\n");
       }
     }
@@ -117,7 +117,7 @@ void ParseMat::chkState_Mat_Cmp(CompoList* compo, MediumList* mat, FILE* fp)
     m_id = compo[i].getID();
     m_state = compo[i].getState();
     
-    printf("\t%4d : %4d %8d %6d %16s  :     %s : %s", i, m_id, m_odr, m_odr, mat[m_odr].getLabel(), 
+    printf("\t%4d : %4d %8d %6d %16s  :     %s : %s", i, m_id, m_odr, m_odr, mat[m_odr].getLabel().c_str(), 
            (mat[m_odr].getState() == FLUID ) ? "Fluid" : "Solid",
            (m_state == FLUID ) ? "Fluid" : "Solid");
     if (mat[m_odr].getState() != m_state) {
@@ -195,7 +195,7 @@ void ParseMat::printMatList(FILE* fp, MediumList* mat)
   fprintf(fp, "\t  no :           Medium  Properties\n");
   
   for (int n=1; n<=NoMedium; n++) {
-    fprintf(fp,"\t%4d : %16s\n", n, mat[n].getLabel());
+    fprintf(fp,"\t%4d : %16s\n", n, mat[n].getLabel().c_str());
     
     if ( mat[n].getState() == FLUID ) {
       fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
@@ -233,7 +233,7 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
   for (int i=1; i<=(int)NoCompo; i++) {
     if ( compo[i].getState() != -1 ) {  // is Medium
       odr = compo[i].getMatOdr();
-      fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getID(), odr, odr, mat[odr].getLabel(),
+      fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getID(), odr, odr, mat[odr].getLabel().c_str(),
               (mat[odr].getState() == FLUID ) ? "Fluid" : "Solid" );
     }
     else {
@@ -379,7 +379,7 @@ void ParseMat::makeMediumList(MediumList* mat)
     mat[i].setState(type);
 
     // Medium name
-    strcpy( mat[i].getLabel(), label.c_str() );
+    mat[i].setLabel(label);
     
     // set medium value
     copyProperty(mat, i);
@@ -393,7 +393,7 @@ void ParseMat::makeMediumList(MediumList* mat)
 bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label)
 {
 	for (int i=0; i<n; i++){
-    if ( mat[i].getLabel() == m_label.c_str() ) return false;
+    if ( mat[i].getLabel() == m_label ) return false;
 	}
 	return true;
 }
@@ -472,7 +472,7 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 {
   printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
-         MediumList::getPropertyName(key).c_str(), mat[m].getLabel(),
+         MediumList::getPropertyName(key).c_str(), mat[m].getLabel().c_str(),
          ( mat[m].getState() == SOLID ) ? "solid" : "fluid" );
   return 1; 
 }

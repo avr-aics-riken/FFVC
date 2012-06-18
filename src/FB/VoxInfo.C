@@ -1,9 +1,12 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file VoxInfo.C
 //@brief FlowBase VoxInfo class
@@ -5229,7 +5232,7 @@ void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid,
   
   // 対称境界面に断熱マスクをセット
   for (int face=0; face<NOFACE; face++) {
-    if ( BC->get_OBC_Ptr(face)->get_BCtype() == OBC_SYMMETRIC ) {
+    if ( BC->export_OBC(face)->get_BCtype() == OBC_SYMMETRIC ) {
       encAmask_SymtrcBC(face, bh2);
     }
   }
@@ -5353,7 +5356,7 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
   unsigned F;
   
   for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->get_OBC_Ptr(face);
+    m_obc = BC->export_OBC(face);
     F = m_obc->get_BCtype();
     
     switch ( F ) {
@@ -5450,7 +5453,7 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool 
   
   // 外部境界
   for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->get_OBC_Ptr(face);
+    m_obc = BC->export_OBC(face);
     F = m_obc->get_BCtype();
     
     switch ( F ) {
@@ -5671,7 +5674,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   const int kx = (int)size[2];
   
   for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->get_OBC_Ptr(face);
+    m_obc = BC->export_OBC(face);
     F = m_obc->get_BCtype();
     
     if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) ) {

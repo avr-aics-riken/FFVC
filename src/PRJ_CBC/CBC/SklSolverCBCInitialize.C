@@ -248,7 +248,9 @@ SklSolverCBC::SklSolverInitialize() {
   
   Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
   
-  B.setControlVars(&C, BC.get_OBC_Ptr(), mat);
+  B.setControlVars(&C, BC.export_OBC(), mat);
+  
+  B.setMediumPoint( M.export_MTI() );
   
   B.countMedium(&C);
 
@@ -441,7 +443,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
   B.loadOuterBC();
-  mark();
+
   // ボクセルのスキャン
   VoxScan(&Vinfo, mid, fp);
   
@@ -474,8 +476,8 @@ SklSolverCBC::SklSolverInitialize() {
   
   // ガイドセル上にXMLで指定するセルIDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) {
-    Vinfo.adjCellID_on_GC(face, dc_mid, BC.get_OBC_Ptr(face)->get_BCtype(), 
-                         BC.get_OBC_Ptr(face)->get_GuideMedium(), BC.get_OBC_Ptr(face)->get_PrdcMode());
+    Vinfo.adjCellID_on_GC(face, dc_mid, BC.export_OBC(face)->get_BCtype(), 
+                         BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
 
   
@@ -667,7 +669,7 @@ SklSolverCBC::SklSolverInitialize() {
   SklSetMaxStep( C.LastStep );
   
   // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
-  C.setParameters(mat, cmp, &RF, BC.get_OBC_Ptr());
+  C.setParameters(mat, cmp, &RF, BC.export_OBC());
   
   // 媒質による代表パラメータのコピー
   B.setRefValue(mat, cmp, &C);
@@ -1141,7 +1143,7 @@ SklSolverCBC::SklSolverInitialize() {
 		fb_set_vector_(v, sz, gc, U0, (int*)bcd);
     
 		// 外部境界面の流出流量と移流速度
-    DomainMonitor( BC.get_OBC_Ptr(), &C, flop_task);
+    DomainMonitor( BC.export_OBC(), &C, flop_task);
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
     BC.OuterVBC_Periodic(dc_v);
@@ -1208,7 +1210,7 @@ SklSolverCBC::SklSolverInitialize() {
     REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
     REAL_TYPE m_av[2];
     BC.mod_div(ws, bcv, coef, tm, v00, m_av, flop_task);
-    DomainMonitor(BC.get_OBC_Ptr(), &C, flop_task);
+    DomainMonitor(BC.export_OBC(), &C, flop_task);
     
     //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
     
@@ -2139,7 +2141,7 @@ void SklSolverCBC::gather_DomainInfo(void)
         
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].name, cmp[n].getID(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+                  n, cmp[n].getLabel().c_str(), cmp[n].getID(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
         }
       }
     }
@@ -4378,9 +4380,10 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, int* mid, FILE* fp)
   int cell_id[NOFACE];
   
   for (int i=0; i<NOFACE; i++) {
-    cell_id[i] = BC.get_OBC_Ptr(i)->get_GuideMedium();
+    cell_id[i] = BC.export_OBC(i)->get_GuideMedium();
   }
   
+#if 0
   Hostonly_ {
     fprintf(fp, "\tCell IDs on Guide cell region\n");
     for ( int i=0; i<NOFACE; i++) {
@@ -4391,6 +4394,7 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, int* mid, FILE* fp)
       fprintf(mp, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
   }
+#endif
   
   // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
   int sc=0;

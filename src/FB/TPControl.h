@@ -14,7 +14,7 @@
 /**
  @file TPControl.h
  @brief TextParser Control class Header
- @author keno
+ @author kero
  */
 
 #include <math.h>
@@ -28,7 +28,6 @@
 #include "string.h"
 #include "TextParser.h"
 
-using namespace std;
 
 class SubDomain {
 public:
@@ -44,6 +43,8 @@ public:
   int m_pos[3];
   int m_bcid[6];
 };
+
+
 
 class DomainInfo {
 public:
@@ -66,16 +67,16 @@ public:
   REAL_TYPE m_globalRegion[3];
   REAL_TYPE m_globalPitch[3];
   int       m_domainDiv[3];
-  vector<SubDomain> m_subDomain;
+  std::vector<SubDomain> m_subDomain;
 };
 
 
+
 class MediumTableInfo {
-  
 public:
   int type;
   std::string label;
-  map<std::string, REAL_TYPE> m_fval;
+  std::map<std::string, REAL_TYPE> m_fval;
 
 public:
   MediumTableInfo() 
@@ -91,11 +92,9 @@ public:
 class TPControl {
 
 private:
-
 	TextParser* tp;
 
 public:
-
 	TPControl(){};
 
 	~TPControl(){};

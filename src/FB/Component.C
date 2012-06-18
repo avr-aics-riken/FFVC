@@ -1,9 +1,12 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file Component.C
 //@brief FlowBase CompoList class
@@ -198,110 +201,106 @@ void CompoList::setDef(const int key) {
   def = key;
 }
 
-//@fn void CompoList::setElement(const unsigned long key)
+
 //@brief elementをセットする
 //@param key 要素数 element
 void CompoList::setElement(const unsigned long key) { 
   element = key; 
 }
 
-//@fn void CompoList::void setEns(const bool key)
+
 //@brief コンポーネントが自ノードに存在しているかどうかをセットする
 void CompoList::setEns(const unsigned key) {
   ens = key;
 }
 
-//@fn void CompoList::setHtype(const int key)
+
 //@brief h_typeをセットする
 //@param key 境界条件の種類
 void CompoList::setHtype(const unsigned key) { 
   h_type = key; 
 }
 
-//@fn void CompoList::setID(const unsigned key)
+
 //@brief IDをセットする
 //@param key 媒質ID ID
 void CompoList::setID(const unsigned key) { 
   ID = key; 
 }
 
-//@fn void CompoList::setInitTemp(const REAL_TYPE key)
+
 //@brief 初期温度の指定
 void CompoList::setInitTemp(const REAL_TYPE key) {
   temp_init = key;
 }
 
-//@fn void CompoList::setMatOdr (const unsigned key)
+
 //@brief mat_odrをセットする
 //@param key MediumListのエントリ番号
 void CompoList::setMatOdr(const unsigned key) { 
   mat_odr = key; 
 }
 
-/**
- @fn void CompoList::setName(const char* pnt)
- @brief ラベル名をセットする
- @param pnt ラベル名のアドレス
- @attention NULL check
- */
-void CompoList::setName(const char* pnt) { 
-  strcpy(name, pnt); 
+
+//@brief ラベル名をセットする
+void CompoList::setLabel(const std::string pnt) { 
+  name = pnt; 
 }
 
-//@fn void CompoList::setOutflowType(const unsigned key)
+
 //@brief 流出速度のタイプを指定する
 //@note V_AVERAGE | V_MINMAX
 void CompoList::setOutflowType(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setPeriodicDir(const unsigned key)
+
 //@brief 周期境界の上流方向を保持する
 void CompoList::setPeriodicDir(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setPhase(const unsigned m_phase)
+
 //@brief set pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
 void CompoList::setPhase(const unsigned m_phase) {
   phase = m_phase;
 }
 
-//@fn void CompoList::setsetPrsUnit(const unsigned key)
+
 //@brief 圧力の単位を指定する
 void CompoList::setPrsUnit(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::set_SamplingMethod(const int key)
+
 void CompoList::set_SamplingMethod(const int key) { 
   sampling_method = key; 
 }
 
-//@fn void CompoList::set_SamplingMode(const int key)
+
 void CompoList::set_SamplingMode(const int key) { 
   sampling_mode = key; 
 }
 
-//@fn void CompoList::set_Shape(const int key)
+
 void CompoList::set_Shape(const int key) { 
   shape = key; 
 }
 
-//@fn void CompoList::setState  (const int key)
+
 //@brief stateをセットする
 //@param key セルの状態 SOLID/FLUID
 void CompoList::setState(const int key) { 
   state = key; 
 }
 
-//@fn void CompoList::setStateCellMonitor(const unsigned key)
+
 //@brief セルモニタスイッチ ON/OFF
 void CompoList::setStateCellMonitor(const unsigned key) {
   var_u1 = key;
 }
 
-//@fn void CompoList::setType(const int key)
+
 //@brief typeをセットする
 //@param key 境界条件の種類
 void CompoList::setType(const unsigned key) { 
@@ -309,7 +308,7 @@ void CompoList::setType(const unsigned key) {
 }
 
 
-//@fn void CompoList::set_cmp_sz(void)
+
 //@brief コンポーネントのサイズを計算
 //@note ガイドセルは片側2層を仮定(c_sizeには含めない)
 void CompoList::set_cmp_sz(void) {

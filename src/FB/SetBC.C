@@ -75,10 +75,10 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   Ex = ExRef;
   
   // get reference values >> 媒質はIDがユニークに定まる
-  unsigned m;
+  int m;
   for (unsigned n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
     if ( cmp[n].getID() == Cref->RefID ) {
-      m = cmp[n].getMatOdr();
+      m = (int)cmp[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {
         rho    = mat[m].P[p_density];
         nyu    = mat[m].P[p_kinematic_viscosity];

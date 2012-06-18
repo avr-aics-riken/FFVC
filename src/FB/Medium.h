@@ -13,7 +13,7 @@
 
 //@file Medium.h
 //@brief FlowBase Medium class Header
-//@author keno
+//@author kero
 
 #include <string>
 #include "FB_Define.h"
@@ -33,7 +33,7 @@ enum property_list {
 class MediumList {
 private:
   int  state;         // solid or fluid
-  char name[LABEL];
+  std::string name;   // ラベル
 
 public:
   REAL_TYPE P[property_END];
@@ -41,7 +41,6 @@ public:
   MediumList() {
     state  = -1;
     for (int i=0; i<property_END; i++) P[i] = 0.0;
-    for (int n=0; n<LABEL; n++) name[n]='\0';
   }
   ~MediumList() {}
   
@@ -49,14 +48,14 @@ public:
 
   int getState(void) { return state; }
   
-  char* getLabel(void) { return name; }
+  std::string getLabel(void) { return name; }
   
   void setState(const int key) { 
     state = key; 
   }
   
   void setLabel(const std::string key) {
-    strcpy(name, key.c_str());
+    name = key;
   }
   
   

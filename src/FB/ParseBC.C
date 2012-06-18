@@ -1,17 +1,19 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file ParseBC.C
 //@brief FlowBase ParseBC class
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include <math.h>
 #include "ParseBC.h"
-extern SklParaComponent* ParaCmpo;
 
 /**
  @fn bool ParseBC::chkBCconsistency(unsigned kos)
@@ -800,12 +802,11 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
   int dir=0;
   REAL_TYPE ct=0.0;
   std::string str;
-  string label;
+  std::string label;
   
   // 上流側の方向
-  
-  label=label_base+"/upstream_direction";//
-  //std::cout <<  "label : " << label << std::endl;
+  label = label_base + "/upstream_direction";
+
   if ( !(tpCntl->GetValue(label, &str )) ) {
 	  printf("\tParsing error : fail to get 'upstream_direction' in 'InnerBoundary > Periodic'\n");
 	  Exit(0);
@@ -836,7 +837,8 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
   
   
   // 圧力差
-  label=label_base+"/pressure_difference";//
+  label = label_base + "/pressure_difference";
+  
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     printf("\tParsing error : Invalid value of 'Pressure difference' in 'InnerBoundary > Periodic'\n");
     Exit(0);
@@ -846,7 +848,7 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);//n=odr
+  set_Deface(label_base, n);
 }
 
 
@@ -860,19 +862,20 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
 void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
 {
   std::string str,str_u;
-  string label;
+  std::string label;
   REAL_TYPE v[4], ct;
   int nnode=0;
   
   // check number of Elem
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
+  
   if ( nnode != 1) {
     stamped_printf("\tParsing error : 1 param should be found in 'InnerBoundary > Adiabatic'\n");
     Exit(0);
   }
   
   // 面指定
-  set_Deface(label_base, n);//n=odr
+  set_Deface(label_base, n);
   
   // zero heat flux
   if ( Unit_Param == DIMENSIONAL ) {
@@ -896,20 +899,22 @@ void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
  */
 void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n)
 {
-  string label;
+  std::string label;
   int nnode=0;
   
   // check number of Elem
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
+  
   if ( nnode != 2) {
     stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > Direct_Heat_Flux'\n");
     Exit(0);
   }
   
   // 面指定
-  set_Deface(label_base, n);//n=odr
+  set_Deface(label_base, n);
   
-  label=label_base+"/Heat_Flux";
+  label = label_base + "/Heat_Flux";
+  
   compo[n].set_Heatflux( get_BCval_real(label) );
   
   if ( Unit_Param != DIMENSIONAL ) {
@@ -927,21 +932,23 @@ void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n)
  */
 void ParseBC::get_IBC_HT_N(const std::string label_base, const int n)
 {
-  string label;
+  std::string label;
   int nnode=0;
   
   // check number of Elem
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
+  
   if ( nnode != 2) {
     stamped_printf("\tParsing error : 2 params should be found in 'InnerBoundary > HeatTransfer_N'\n");
     Exit(0);
   }
   
   // 面指定
-  set_Deface(label_base, n);//n=odr
+  set_Deface(label_base, n);
   
   // 熱伝達係数
-  label=label_base+"/Coef_of_Heat_Transfer";
+  label = label_base + "/Coef_of_Heat_Transfer";
+  
   compo[n].set_CoefHT( get_BCval_real(label) );
   
   if ( Unit_Param != DIMENSIONAL ) {
@@ -959,25 +966,28 @@ void ParseBC::get_IBC_HT_N(const std::string label_base, const int n)
  */
 void ParseBC::get_IBC_HT_S(const std::string label_base, const int n)
 {
-  string label;
+  std::string label;
   int nnode=0;
   
   // check number of Elem
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
+  
   if ( nnode != 3) {
     stamped_printf("\tParsing error : 3 params should be found in 'HeatTransfer_S'\n");
     Exit(0);
   }
   
   // 面指定
-  set_Deface(label_base, n);//n=odr
+  set_Deface(label_base, n);
   
   // 熱伝達係数
-  label=label_base+"/Coef_of_Heat_Transfer";
+  label = label_base + "/Coef_of_Heat_Transfer";
+  
   compo[n].set_CoefHT( get_BCval_real(label) );
   
   // 表面温度
-  label=label_base+"/Surface_Temperature";
+  label = label_base + "/Surface_Temperature";
+  
   REAL_TYPE st = get_BCval_real(label);
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
@@ -998,11 +1008,12 @@ void ParseBC::get_IBC_HT_S(const std::string label_base, const int n)
 void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
 {
   std::string str;
-  string label;
+  std::string label;
   int nnode=0;
   
   // check number of Elem
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
+  
   if ( nnode != 13) {
     stamped_printf("\tParsing error : 13 params should be found in 'InnerBoundary > HeatTransfer_SN'\n");
     Exit(0);
@@ -1010,7 +1021,8 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
   
   
   // 表面温度
-  label=label_base+"/Surface_Temperature";
+  label = label_base + "/Surface_Temperature";
+  
   REAL_TYPE st = get_BCval_real(label);
   compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
@@ -1018,7 +1030,8 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
   set_Deface(label_base, n);
   
   // type
-  label=label_base+"/Ref_Temp_Mode";//
+  label = label_base + "/Ref_Temp_Mode";
+  
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : Invalid int value for 'Ref_Temp_Mode' in 'InnerBoundary > HeatTransfer_SN'\n");
     Exit(0);
@@ -1035,27 +1048,35 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
   }
   
   // Vertical and upper face values
-  label=label_base+"/vertical_laminar_alpha";
+  label = label_base + "/vertical_laminar_alpha";
   compo[n].ca[CompoList::vert_laminar_alpha]    = get_BCval_real(label);
-  label=label_base+"/vertical_laminar_beta";
+  
+  label = label_base + "/vertical_laminar_beta";
   compo[n].ca[CompoList::vert_laminar_beta]     = get_BCval_real(label);
-  label=label_base+"/vertical_turbulent_alpha";
+  
+  label = label_base + "/vertical_turbulent_alpha";
   compo[n].ca[CompoList::vert_turbulent_alpha]  = get_BCval_real(label);
-  label=label_base+"/vertical_turbulent_beta";
+  
+  label = label_base + "/vertical_turbulent_beta";
   compo[n].ca[CompoList::vert_turbulent_beta]   = get_BCval_real(label);
-  label=label_base+"/vertical_Ra_critial";
+  
+  label = label_base + "/vertical_Ra_critial";
   compo[n].ca[CompoList::vert_Ra_critial]       = get_BCval_real(label);
   
   // Lower face values
-  label=label_base+"/lower_laminar_alpha";
+  label = label_base + "/lower_laminar_alpha";
   compo[n].cb[CompoList::lower_laminar_alpha]   = get_BCval_real(label);
-  label=label_base+"/lower_laminar_beta";
+  
+  label = label_base + "/lower_laminar_beta";
   compo[n].cb[CompoList::lower_laminar_beta]    = get_BCval_real(label);
-  label=label_base+"/lower_turbulent_alpha";
+  
+  label = label_base + "/lower_turbulent_alpha";
   compo[n].cb[CompoList::lower_turbulent_alpha] = get_BCval_real(label);
-  label=label_base+"/lower_turbulent_beta";
+  
+  label = label_base + "/lower_turbulent_beta";
   compo[n].cb[CompoList::lower_turbulent_beta]  = get_BCval_real(label);
-  label=label_base+"/lower_Ra_critial";
+  
+  label = label_base + "/lower_Ra_critial";
   compo[n].cb[CompoList::lower_Ra_critial]      = get_BCval_real(label);
   
   if ( Unit_Param != DIMENSIONAL ) {
@@ -2212,7 +2233,7 @@ void ParseBC::get_Phase(void)
      }
      
      // IDがiTableの中にリストアップされているかを調べる
-     if ( !isIDinTable(id) ) {
+     if ( (0 >= def) || (def > NoMedium) ) {
      stamped_printf("\tParsing error : ID[%d] described in 'id' is not included in 'Model_Setting'\n", id);
      Exit(0);
      }
@@ -2303,17 +2324,6 @@ bool ParseBC::isIDinCompo(unsigned candidate_id, int def, unsigned now)
   }
   return true;
 }
-
-/**
- @fn bool ParseBC::isIDinTable(int candidate)
- @brief candidateがiTableのインデクス範囲内であればtrue
- */
-bool ParseBC::isIDinTable(int candidate)
-{
-  if ( (0 < candidate) && (candidate <= NoMedium) ) return true;
-  return false;
-}
-
 
 
 /**
@@ -2444,14 +2454,10 @@ void ParseBC::loadOuterBC(void)
     // ガイドセルの媒質ラベルを取得
     label = label_leaf + "/medium_on_guide_cell";
     
-    cout << "label : " << label << endl;
-    
     if ( !(tpCntl->GetValue(label, &str )) ) {
       stamped_printf("\tParsing error : No entory 'mediun_on_guide_cell' in 'Face_BC'\n");
       Exit(0);
     }
-    
-    cout << "str   : " << str << endl;
     
     for (int i=1; i<=NoMedium; i++) {
       if( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) ){
@@ -2461,7 +2467,7 @@ void ParseBC::loadOuterBC(void)
     }
     
   }
-  mark();
+
   
   // 周期境界条件の整合性のチェック
   
@@ -2600,7 +2606,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++){
       if ( (compo[n].getType() == SPEC_VEL) || (compo[n].getType() == SPEC_VEL_WH) )  {
         fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e\n",
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -2624,7 +2630,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++){
       if ( (compo[n].getType() == SPEC_VEL) || (compo[n].getType() == SPEC_VEL_WH) )  {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e %14s ",
-                n, compo[n].name, compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
                 (compo[n].getBClocation()==CompoList::same_direction) ? "same dir." : "opposite dir.");
         
         if ( compo[n].get_sw_V_profile() == CompoList::vel_zero ) {
@@ -2654,7 +2660,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
       for(n=1; n<=NoBC; n++) {
         if ( compo[n].getType() == SPEC_VEL_WH )  {
           fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                  n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                  n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                   getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                   getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                   getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci),  
@@ -2673,7 +2679,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++){
       if ( compo[n].getType() == OUTFLOW )  {
         fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d ",
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -2698,7 +2704,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++){
       if ( compo[n].getType() == IBM_DF )  {
         fprintf(fp,"\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n",
-                n, compo[n].name, compo[n].getID(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -2711,7 +2717,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++){
       if ( compo[n].getType() == IBM_DF )  {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e %12.4e %12.4e \n",
-                n, compo[n].name, compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
                 compo[n].get_Velocity(), FBUtility::convD2ND_V(compo[n].get_Velocity(), RefVelocity));
       }
     }
@@ -2726,7 +2732,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
 								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
                 compo[n].oc[0], compo[n].oc[1], compo[n].oc[2],
                 compo[n].dr[0], compo[n].dr[1], compo[n].dr[2]);
@@ -2738,7 +2744,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
 								compo[n].depth, compo[n].shp_p1, compo[n].shp_p2, compo[n].area);
       }
     }
@@ -2748,7 +2754,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -2760,7 +2766,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
                 compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4]*RefVelocity, compo[n].ca[5]*RefLength*1000.0,
                 (compo[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
       }
@@ -2775,7 +2781,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
 								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
                 compo[n].oc[0], compo[n].oc[1], compo[n].oc[2]);
       }
@@ -2786,7 +2792,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
 								compo[n].depth, compo[n].shp_p1, compo[n].shp_p2, compo[n].area);
       }
     }
@@ -2796,7 +2802,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -2808,7 +2814,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
      for(n=1; n<=NoBC; n++) {
      if ( compo[n].getType() == FAN ) {
      fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
-     n, compo[n].name, compo[n].getID(),
+     n, compo[n].getLabel().c_str(), compo[n].getID(),
      compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4]*RefVelocity, compo[n].ca[5]*RefLength*1000.0,
      (compo[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
      }
@@ -2823,7 +2829,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == DARCY ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %11.4e %11.4e %11.4e       %11.4e %11.4e %11.4e\n", 
-                n, compo[n].name, compo[n].getID(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), 
                 nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area, 
 								compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4], compo[n].ca[5]);
       }
@@ -2833,7 +2839,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == DARCY ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
-                n, compo[n].name, compo[n].getID(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -2849,7 +2855,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == ADIABATIC ) {
-        fprintf(fp, "\t%3d %24s %5d %5d\n", n, compo[n].name, compo[n].getID(), compo[n].getDef());
+        fprintf(fp, "\t%3d %24s %5d %5d\n", n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef());
       }
     }
   }
@@ -2862,7 +2868,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == HEATFLUX ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(),
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -2879,7 +2885,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_N ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -2896,7 +2902,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_S ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -2914,7 +2920,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -2928,7 +2934,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
       if ( compo[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n", 
                 n, 
-                compo[n].name, 
+                compo[n].getLabel().c_str(), 
                 compo[n].getID(), 
                 compo[n].ca[CompoList::vert_laminar_alpha], 
                 compo[n].ca[CompoList::vert_laminar_beta], 
@@ -2954,7 +2960,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
       if ( compo[n].getHtype() == HT_SF ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, 
-                compo[n].name, 
+                compo[n].getLabel().c_str(), 
                 compo[n].getID(), 
                 compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
@@ -2970,7 +2976,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
       if ( compo[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %11.4e %11.4e %11.4e\n", 
                 n, 
-                compo[n].name, 
+                compo[n].getLabel().c_str(), 
                 compo[n].getID(), 
                 compo[n].ca[CompoList::alpha], 
                 compo[n].ca[CompoList::beta], 
@@ -2988,7 +2994,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getHtype() == HT_B ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -3007,7 +3013,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == ISOTHERMAL ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -3025,7 +3031,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == RADIANT ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), compo[n].getDef(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -3044,7 +3050,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
       unsigned h_odr = compo[n].getMatOdr();
       if ( compo[n].getType() == HEAT_SRC ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -3063,7 +3069,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == CNST_TEMP ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                n, compo[n].name, compo[n].getID(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -3081,7 +3087,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++) {
       if ( compo[n].getType() == CELL_MONITOR ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e  %s\n", 
-                n, compo[n].name, compo[n].getID(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
@@ -3094,7 +3100,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     for(n=1; n<=NoBC; n++){
       if ( compo[n].getType() == CELL_MONITOR )  {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e       %3s\n",
-                n, compo[n].name, compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
+                n, compo[n].getLabel().c_str(), compo[n].getID(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
                 (compo[n].getStateCellMonitor()==ON) ? "yes" : "no");
       }
     }
@@ -3112,7 +3118,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
         dir_in = compo[n].getPeriodicDir();
         
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d     ", 
-                n, compo[n].name, compo[n].getID(), 
+                n, compo[n].getLabel().c_str(), compo[n].getID(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -3422,24 +3428,11 @@ bool ParseBC::receive_TP_Ptr(TPControl* tp)
 
 
 /**
- @fn void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
- @brief MediumTableInfoをポイント
- @param m_MTITP
- */
-void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
-{
-  if ( !m_MTITP ) Exit(0);
-  MTITP = m_MTITP;
-}
-
-
-
-/**
  @fn void ParseBC::setCompoList(Control* C)
  @brief CompoListに内部境界条件の情報を設定する
  @note
  - 最初にBCの情報を登録，その後IDの情報を登録
- - XMLファイルから各内部BCのidをパースし，compoに保持する
+ - パラメータファイルから各内部BCのidをパースし，compoに保持する
  - 格納番号は1からスタート
  */
 void ParseBC::setCompoList(Control* C)
@@ -3451,7 +3444,7 @@ void ParseBC::setCompoList(Control* C)
   int ide;
   unsigned tp;
   
-  // Medium_Table debug print ///////////////////////////////////////////////////
+  /* Medium_Table debug print ///////////////////////////////////////////////////
   std::cout << std::endl;
   std::cout << std::endl;
   cout << "**********************" << endl;
@@ -3478,14 +3471,13 @@ void ParseBC::setCompoList(Control* C)
   std::cout << " NoBC   = " << NoBC  << std::endl;
   std::cout << std::endl;
   std::cout << std::endl;
-  ///////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////// */
   
   // 内部境界条件の有無を調べる
   
   label_base = "/BC_Table/LocalBoundary";
   n = tpCntl->countLabels(label_base);
-  //std::cout <<  "label_base : " << label_base << std::endl;
-  //std::cout <<  "n : " << n << std::endl;
+
   if ( n != NoBC) {
     stamped_printf("\tInnerBoundary error %s\n", label_base.c_str());
     Exit(0);
@@ -3496,47 +3488,36 @@ void ParseBC::setCompoList(Control* C)
   //
   
   // 境界条件がなければ，スキップ
-  for (unsigned odr=1; odr<=NoBC; odr++) {
+  for (int odr=1; odr<=(int)NoBC; odr++) {
     
     if( !tpCntl->GetNodeStr(label_base, odr, &str)){
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
     label_ename = label_base + "/" + str;
-    ename=str;
-    //std::cout << "odr : " << odr << std::endl;
-    //std::cout << "  label_ename = " << label_ename << std::endl;
+    ename = str;
     
     // cmp[].type, h_typeのセット ---> setType
     setKeywordIBC(ename.c_str(), odr);
+
     
-    // IDの取得
-    //if ( !elmL2->isSetID() ) {
-    //  stamped_printf("\tParsing error : No ID section in '%s'\n", ename);
-    //  Exit(0);
-    //}
-    //if ( -1 == (ide=elmL2->GetID()) ) {
-    //  stamped_printf("\tParsing error : No valid ID in '%s'\n", ename);
-    //  Exit(0);
-    //}
-    
-    // IDがiTableの中にリストアップされているかを調べる
-    //if ( !isIDinTable(ide) ) {
+    // IDが媒質中に含まれているかを調べる
+    //if ( (0 >= def) || (def > NoMedium) ) {
     //  stamped_printf("\tParsing error : ID[%d] described in '%s' is not included in 'Model_Setting'\n", ide, ename);
     //  Exit(0);
     //}
     
-    //nodeの移動
+    // nodeの移動
     if(!tpCntl->GetNodeStr(label_ename, 1, &str)){
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
     label_leaf = label_ename + "/" + str;
-    //std::cout << "  label_leaf = " << label_leaf << std::endl;
+    cout << label_leaf << endl;
     
-    // Labelの取得．ラベルなしでもエラーではない
-    pnt=str;
-    compo[odr].setName(pnt.c_str());
+    // Labelの取得
+    pnt = str;
+    compo[odr].setLabel(str);
     
     // とりあえず登録，BCのIDの重複は続く処理で確認
     compo[odr].setID((unsigned)odr);
@@ -3714,7 +3695,7 @@ void ParseBC::setCompoList(Control* C)
   // 媒質情報の登録
   for (int i=1; i<=NoMedium; i++) {
     compo[NoBC+i].setState( mat[i].getState() );
-    compo[NoBC+i].setName ( mat[i].getLabel() );
+    compo[NoBC+i].setLabel( mat[i].getLabel() );
   }
 }
 
@@ -3818,8 +3799,8 @@ void ParseBC::set_Deface(const std::string label_base, const int n)
 	  Exit(0);
   }
   
-  // IDがiTableの中にリストアップされているかを調べる
-  if ( !isIDinTable(def) ) {
+  // IDが媒質に含まれているかを調べる
+  if ( (0 >= def) || (def > NoMedium) ) {
 	  stamped_printf("\tParsing error : ID[%d] described in 'def_face' is not included in 'Model_Setting'\n", def);
 	  Exit(0);
   }
@@ -3884,6 +3865,20 @@ void ParseBC::setKeywordOBC(const char *keyword, const int m)
     Exit(0);
   }
 }
+
+
+
+/**
+ @fn void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
+ @brief MediumTableInfoをポイント
+ @param m_MTITP
+ */
+void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
+{
+  if ( !m_MTITP ) Exit(0);
+  MTITP = m_MTITP;
+}
+
 
 
 /**

@@ -1,16 +1,19 @@
 #ifndef _FB_vec3_h
 #define _FB_vec3_h
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file vec3.h
 //@brief FlowBase Vec3<T> class Header
-//@author T. Tawara and keno, FSI Team, VCAD, RIKEN
+//@author T. Tawara and kero
 //@note add Vec3r Vec3<REAL_TYPE>
 
 #include <iostream>
