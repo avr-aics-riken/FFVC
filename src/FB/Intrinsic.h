@@ -67,14 +67,14 @@ public:
   virtual void printParaInfo(FILE* mp, FILE* fp, Control* R);
   virtual void printPara(FILE* fp, Control* R);
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl) {};
-  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl, float* cut) {};
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
+  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
   
   void setControlVars(Control* R);
   void writeSVX(REAL_TYPE *vf, int *id, Control* R);
   void writeSVX(int *id, Control* R);
   
-  int find_ID_from_Label(MediumList* mtl, const int Nmax, const std::string key);
+  int find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key);
   
 };
 

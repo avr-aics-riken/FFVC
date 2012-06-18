@@ -250,7 +250,7 @@ SklFactoryCBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
 SklFactoryCBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 SklFactoryCBC.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 SklFactoryCBC.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-SklFactoryCBC.o: ../../FB/TPControl.h ../../FB/IDtable.h ../../IP/IP_Define.h
+SklFactoryCBC.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 SklFactoryCBC.o: ../../IP/IP_PPLT2D.h ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h
 SklFactoryCBC.o: ../../IP/IP_Rect.h ../../IP/IP_Step.h ../../IP/IP_Cylinder.h
 SklFactoryCBC.o: ../../IP/IP_Polygon.h ../../IP/IP_Sphere.h

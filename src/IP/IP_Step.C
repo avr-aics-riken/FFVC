@@ -233,14 +233,14 @@ void IP_Step::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 }
 
 /**
- @fn void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+ @fn void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
  @param mtl
  */
-void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k, gd;
   int mid_fluid=1;        /// 流体

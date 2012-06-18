@@ -90,14 +90,14 @@ void IP_Rect::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 }
 
 /**
- @fn void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+ @fn void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param mtl
+ @param mat
  */
-void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   unsigned m, m_sz[3], gd;
   m_sz[0] = size[0];
@@ -107,18 +107,17 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   int id_fluid;
   
-  if ( (id_fluid = find_ID_from_Label(itbl, Nmax, m_fluid)) == 0 ) {
+  if ( (id_fluid = find_ID_from_Label(mat, Nmax, m_fluid)) == 0 ) {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
-  cout << "id=" << id_fluid << endl;
 
 #pragma omp parallel for firstprivate(m_sz, gd) schedule(static)
   for (int k=1; k<=(int)m_sz[2]; k++) {
     for (int j=1; j<=(int)m_sz[1]; j++) {
       for (int i=1; i<=(int)m_sz[0]; i++) {
         m = FBUtility::getFindexS3D(m_sz, gd, i, j, k);
-        mid[m] = 1;
+        mid[m] = id_fluid;
       }
     }
   }

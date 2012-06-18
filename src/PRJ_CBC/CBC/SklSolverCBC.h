@@ -135,7 +135,7 @@ public:
   History*				H;
   Intrinsic*      Ex; // pointer to a base class
   CompoList*      cmp;
-  MediumList*   mat;
+  MediumList*     mat;
 
   // PMlib
   PerfMonitor     PM;
@@ -298,6 +298,7 @@ public:
   //void CN_Itr               (ItrCtl* IC);
   void DomainMonitor        (BoundaryOuter* ptr, Control* R, REAL_TYPE& flop);
   void EnlargeIndex         (int& m_st, int& m_ed, const unsigned st_i, const unsigned len, const unsigned m_x, const unsigned dir, const int m_id=0);
+  void Fill                 (VoxInfo* Vinfo);
   void FileOutput           (REAL_TYPE& flop, const bool restart=false);
   void fixed_parameters     (void);
   void gather_DomainInfo    (void);
@@ -319,7 +320,6 @@ public:
   void setComponentVF       (float* cvf);
   void setEnsComponent      (void);
   void setGlobalCmpIdx      (void);
-  void setIDtables          (ParseBC* B, FILE* fp, FILE* mp);
   void setLocalCmpIdx_Binary(void);
   void setMediumList        (ParseMat* M, FILE* mp, FILE* fp);
   void set_NeighborRank     (void);

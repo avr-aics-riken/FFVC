@@ -76,55 +76,6 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   return true;
 }
 
-/**
- @fn bool IP_Sphere::getXML(SklSolverConfig* CF, Control* R)
- @brief パラメータを取得する
- @param CF コンフィギュレーションツリー
- @param R Controlクラスのポインタ
- 
-bool IP_Sphere::getXML(SklSolverConfig* CF, Control* R)
-{
-  const CfgElem *elemTop=NULL, *elmL1=NULL;
-  REAL_TYPE ct=0.0;
-  
-  if ( !(elemTop = CF->GetTop(PARAMETER)) ) return false;
-  
-  if( !(elmL1 = elemTop->GetElemFirst("Intrinsic_Example")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Intrinsic_Example'\n");
-    return false;
-  }
-
-  // radius
-  if ( elmL1->GetValue(CfgIdt("radius"), &ct) ) {
-    radius = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Radius' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  if ( elmL1->GetValue(CfgIdt("Driver"), &ct) ) {
-    drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Driver' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  if ( drv_length < 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
-    return false;
-  }
-  
-  if ( drv_length > 0.0 ) {
-    drv_mode = ON;
-  }
-  else {
-    drv_mode = OFF;
-  }
-  
-  return true;
-}*/
 
 /**
  @fn void IP_Sphere::printPara(FILE* fp, Control* R)
@@ -198,14 +149,14 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 }
 
 /**
- @fn void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+ @fn void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
  @brief 計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param mtl
+ @param mat
  */
-void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k, gd;
   int mid_fluid=1;        /// 流体
@@ -324,15 +275,15 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
 }
 
 /**
- @fn void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl, float* cut)
+ @fn void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut)
  @brief 計算領域のセルIDとカット情報を設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param mtl
+ @param mat
  @param cut 
  */
-void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl, float* cut)
+void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut)
 {
   int i,j,k, gd;
   int mid_fluid=1;        /// 流体

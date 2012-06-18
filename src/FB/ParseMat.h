@@ -26,12 +26,13 @@ class  ParseMat : public Parallel_Node {
 private:
   bool ChkList[property_END];  // # of parameters in MediumList must be less than # of property_END
   
-  unsigned NoCompo, NoBC, Unit_Temp;
+  int NoMedium;    // 媒質数
+  
+  unsigned NoCompo;
+  unsigned NoBC;
+  unsigned Unit_Temp;
   unsigned KOS;
   
-  MediumList* mat;
-
-  int NoMedium;
   MediumTableInfo *MTITP;
   
 public:
@@ -41,7 +42,6 @@ public:
     NoMedium   = 0;
     Unit_Temp  = 0;
     KOS        = 0;
-    mat        = NULL;
     MTITP      = NULL;
     for (int i=0; i<property_END; i++) ChkList[i]=false;
   }
@@ -52,37 +52,33 @@ public:
 protected:
   TPControl* tpCntl;
   
-  bool chkDuplicateLabel   (const int n, std::string m_label);
-  bool chkList4Solver      (const int m);
+  bool chkDuplicateLabel (MediumList* mat, const int n, const std::string m_label);
+  bool chkList4Solver    (MediumList* mat, const int m);
   
-  int missingMessage       (const int m, const int key);
+  int missingMessage     (MediumList* mat, const int m, const int key);
   
-  void chkList             (FILE* fp, CompoList* compo, unsigned basicEq);
-  void printMatList        (FILE* fp, int Max, MediumList* mlist);
-  void printRelation       (FILE* fp, CompoList* compo);
-  void copyProperty        (const int n);
+  void chkList           (FILE* fp, CompoList* compo, unsigned basicEq);
+  void printMatList      (FILE* fp, MediumList* mat);
+  void printRelation     (FILE* fp, CompoList* compo, MediumList* mat);
+  void copyProperty      (MediumList* mat, const int n);
     
 public:
-  bool chkStateList      (CompoList* compo);
+  bool chkStateList      (CompoList* compo, MediumList* mat);
   bool receive_TP_Ptr    (TPControl* tp);
   
   int get_MediumTable    (void);
   
   void chkList           (FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq);
-  void chkState_Mat_Cmp  (CompoList* compo, FILE* fp);
+  void chkState_Mat_Cmp  (CompoList* compo, MediumList* mat, FILE* fp);
   
   //void makeLinkCmpMat       (CompoList* compo);
-  void makeMediumList    (MediumList* m_mat);
-  void printMediumList   (FILE* mp, FILE* fp);
+  void makeMediumList    (MediumList* mat);
+  void printMediumList   (FILE* mp, FILE* fp, MediumList* mat);
   void setControlVars    (Control* Cref);
-  
-  MediumList* export_MediumList(void) {
-    return mat;
-  }
   
   
   // ----------> debug function
-  void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo); 
+  void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo, MediumList* mat); 
 
 };
 

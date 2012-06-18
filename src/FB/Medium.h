@@ -47,14 +47,18 @@ public:
   
 public:
 
-  //@brief Solid or Fluidの状態を返す
   int getState(void) { return state; }
   
-  //@brief 媒質名を返す
   char* getLabel(void) { return name; }
   
-  //@brief 状態を設定する
-  void setState(const int key) { state = key; }
+  void setState(const int key) { 
+    state = key; 
+  }
+  
+  void setLabel(const std::string key) {
+    strcpy(name, key.c_str());
+  }
+  
   
   //@brief プロパティ文字列に対応するキー番号を返す
   //@param p 文字列

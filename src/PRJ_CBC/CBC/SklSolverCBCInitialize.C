@@ -230,35 +230,35 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 媒質情報をロード
-  C.NoMedium = (unsigned)M.get_MediumTable(); // Medium_Tableタグ内の媒質数
+  C.NoMedium = M.get_MediumTable(); // Medium_Tableタグ内の媒質数
   
   // 媒質リストをインスタンス
   mat = new MediumList[C.NoMedium+1];
+  
+  // ParseMatクラスの環境設定 
+  M.setControlVars(&C);
   
   // 媒質情報を設定
   setMediumList(&M, mp, fp);
   
   
-  // パラメータファイルから C.NoBC, C.NoMedium, C.NoCompoを取得 >> IDtableを生成
-  // KOSオプションとパラメータの整合性をチェック
-  // BCのテーブル取得と表示
-  Hostonly_ {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp, "\t>> Table Information\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp, "\t>> Table Information\n\n");
-  }
-  
+  // パラメータファイルから C.NoBC, C.NoCompoを取得
   C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
-  C.NoCompo = C.NoBC + C.NoMedium; // コンポーネントの数の定義
+  C.NoCompo = C.NoBC + (unsigned)C.NoMedium; // コンポーネントの数の定義
   
-  // ParseBCクラス内でiTable[NoMedium+1]を確保
-  B.setControlVars(&C, BC.get_OBC_Ptr(), M.export_MediumList());
+  Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
   
-  setIDtables(&B, &M, fp, mp);
+  B.setControlVars(&C, BC.get_OBC_Ptr(), mat);
   
+  B.countMedium(&C);
+
+  // CompoListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
+  cmp = new CompoList[C.NoCompo+1];
   
-  
+  // CompoList, MediumListのポインタをセット
+  BC.setWorkList(cmp, mat);
+  Vinfo.setWorkList(cmp, mat);
+  B.receiveCompoPtr(cmp);
   
 
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
@@ -306,11 +306,6 @@ SklSolverCBC::SklSolverInitialize() {
     if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
   }
   
-
-  
-
-  
-  
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成 --------------------------------------------------------
   Hostonly_ {
@@ -327,8 +322,7 @@ SklSolverCBC::SklSolverInitialize() {
   switch (C.Mode.Example) {
       
     case id_Polygon:
-      // パラメータの取得
-      //C.getXML_Polygon();
+      
       C.getTP_Polygon();
       
       // PolylibとCutlibのセットアップ
@@ -343,6 +337,7 @@ SklSolverCBC::SklSolverInitialize() {
       break;
       
     case id_Users:
+      
       // バイナリ
       if ( !C.isCDS() ) {
         TIMING_start(tm_voxel_load);
@@ -362,12 +357,12 @@ SklSolverCBC::SklSolverInitialize() {
       
     case id_Sphere:
       if ( !C.isCDS() ) {
-        Ex->setup(mid, &C, G_org, C.NoMedium, B.get_IDtable_Ptr());
+        Ex->setup(mid, &C, G_org, C.NoMedium, mat);
       }
       else {
         // cutをアロケートし，初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(mid, &C, G_org, C.NoMedium, B.get_IDtable_Ptr(), dc_cut->GetData());
+        Ex->setup_cut(mid, &C, G_org, C.NoMedium, mat, dc_cut->GetData());
       }
       break;
       
@@ -375,7 +370,7 @@ SklSolverCBC::SklSolverInitialize() {
       if ( C.isCDS() ) {
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       }
-      Ex->setup(mid, &C, G_org, C.NoMedium, B.get_IDtable_Ptr());
+      Ex->setup(mid, &C, G_org, C.NoMedium, mat);
       break;
   }
 
@@ -386,9 +381,9 @@ SklSolverCBC::SklSolverInitialize() {
 
   // 領域情報の表示
   Hostonly_ {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp,"\n---------------------------------------------------------------------------\n");
     fprintf(mp,"\n\t>> Global Domain Information\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
     C.printDomainInfo(mp, fp, G_size, G_org, G_Lbx);
   }
@@ -414,11 +409,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   
-  // VoxInfoクラスへ値をセット
-  Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
-  
-  
-  // XMLから得られた内部BCコンポーネント数を表示
+  // パラメータファイルから得られた内部BCコンポーネント数を表示
   Hostonly_ {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(mp,"\t>> Components\n\n");
@@ -445,101 +436,15 @@ SklSolverCBC::SklSolverInitialize() {
       fprintf(fp,"\t>> Fill\n\n");
     }
     
-    int target_id = C.Mode.Base_Medium;
-    
-    //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
-    //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
-    
-    // Allreduce時の桁あふれ対策のため、unsigned long で集約
-    unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
-    unsigned long tmp_fc = fill_count;
-    
-    if ( pn.numProc > 1 ) {
-      MPI_Allreduce(&tmp_fc, &fill_count, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-    }
-    Hostonly_ printf("\tInitial fill count     : %15ld\n\n", fill_count);
-    
-    int seed[3];
-    seed[0] = 1;
-    seed[1] = 1;
-    seed[2] = 1;
-    
-    Hostonly_ {
-      if ( !Vinfo.paint_first_seed(mid, seed, target_id) ) {
-        printf("Failed first painting\n");
-      }
-    }
-    
-    // first fill
-    fill_count--;
-    
-    int c=0;
-    while (fill_count > 0) {
-      
-      unsigned long fc = (unsigned long)Vinfo.fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
-      unsigned long t_fc = fc;
-
-      if ( pn.numProc > 1 ) {
-        MPI_Allreduce(&t_fc, &fc, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-      }
-      
-      // 同期
-      dc_mid->CommBndCell(guide);
-      dc_bid->CommBndCell(guide);
-      dc_cut->CommBndCell(guide);
-      
-      if ( fc == 0 ) break;
-      
-      fill_count -= fc;
-      
-      Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
-      
-    }
-    Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", target_id, fill_count);
-    
-    
-    // 固体に変更
-    // Allreduce時の桁あふれ対策のため、unsigned long で集約
-    c = 0;
-    while ( fill_count > 0 ) {
-      
-      unsigned long fc = (unsigned long)Vinfo.fill_inside(mid, id_of_solid);
-      unsigned long t_fc = fc;
-
-      if ( pn.numProc > 1 ) {
-        MPI_Allreduce(&t_fc, &fc, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-      }
-      
-      if ( fc == 0 ) break;
-      
-      fill_count -= fc;
-      //Hostonly_ printf("\t%4d : Try solid fill with ID = %d : %ld\n", ++c, id_of_solid, fill_count);
-      
-    }
-    Hostonly_ printf("\tSolid fill with ID = %d : %15ld\n\n", id_of_solid, fill_count);
-
-    // チェック
-    Ex->writeSVX(mid, &C);
-    
-    // 確認 paintedは未ペイントセルがある場合に1
-    // Allreduce時の桁あふれ対策のため、unsigned long で集約
-    
-    unsigned long painted = (unsigned long)Vinfo.check_fill(mid);
-
-    if ( pn.numProc > 1 ) {
-      unsigned long t_painted = painted;
-      MPI_Allreduce(&t_painted, &painted, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-    }
-    
-    if ( painted  != 0 ) {
-      Hostonly_ printf("\tFill operation is done, but still remains unpainted cells.\n");
-      Exit(0);
-    }
+    Fill(&Vinfo);
   }
   
-  
-  // バイナリボクセルのスキャン
+  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
+  B.loadOuterBC();
+  mark();
+  // ボクセルのスキャン
   VoxScan(&Vinfo, mid, fp);
+  
   
   // スキャンしたセルIDの情報を表示する
   Hostonly_ {
@@ -556,17 +461,11 @@ SklSolverCBC::SklSolverInitialize() {
 
   // ボクセルモデルのIDがXMLに記述されたIDに含まれていること
 	Hostonly_ {
-		if ( !Vinfo.chkIDconsistency(B.get_IDtable_Ptr(), C.NoMedium) ) {
+		if ( !Vinfo.chkIDconsistency(C.NoMedium) ) {
 			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
 			return -1;
 		}
 	}
-
-  // CompoList/MediumListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
-  cmp = new CompoList[C.NoCompo+1];
-  
-  BC.setWorkList(cmp, mat);
-  Vinfo.setWorkList(cmp, mat);
 
   
   // ParseBCクラスのセットアップ，CompoListの設定，外部境界条件の読み込み保持
@@ -654,7 +553,7 @@ SklSolverCBC::SklSolverInitialize() {
 #endif
   
   // CompoListとMediumListのstate(Fluid / Solid)を比較しチェックする
-  if ( !M.chkStateList(cmp)) {
+  if ( !M.chkStateList(cmp, mat)) {
     Hostonly_ stamped_printf("\tParseMat::chkStateList()\n");
     return -1;
   }
@@ -796,14 +695,12 @@ SklSolverCBC::SklSolverInitialize() {
   // 温度計算の場合の初期値指定
   if ( C.isHeatProblem() ) {
     std::cout <<  "now heat probrem *** initialize" << std::endl;
-    //B.getXML_Medium_InitTemp();
-    B.getTP_Medium_InitTemp();
+    B.get_Medium_InitTemp();
   }
   
   // set phase 
   if ( C.BasicEqs == INCMP_2PHASE ) {
-    //B.getXML_Phase();
-    B.getTP_Phase();
+    B.get_Phase();
   }
   
   // CompoListの内容を表示する
@@ -1743,8 +1640,8 @@ void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_t
 bool SklSolverCBC::chkMediumConsistency(void)
 {
   //SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  unsigned long nmSolid = C.NoMediumSolid;
-  unsigned long nmFluid = C.NoMediumFluid;
+  unsigned long nmSolid = (unsigned long)C.NoMediumSolid;
+  unsigned long nmFluid = (unsigned long)C.NoMediumFluid;
   
   if ( pn.numProc > 1 ) {
     unsigned long nms = nmSolid;
@@ -1991,6 +1888,105 @@ void SklSolverCBC::fixed_parameters(void)
   C.f_I2VGT          = "i2vgt_";
   C.f_Vorticity      = "vrt_";
   
+}
+
+//@brief ポリゴンの場合のフィル操作
+void SklSolverCBC::Fill(VoxInfo* Vinfo)
+{
+  int* mid;
+  if( !(mid = dc_mid->GetData()) )  Exit(0);
+  
+  int target_id = C.Mode.Base_Medium;
+  
+  //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
+  //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
+  
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
+  unsigned long tmp_fc = fill_count;
+  
+  if ( pn.numProc > 1 ) {
+    MPI_Allreduce(&tmp_fc, &fill_count, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  Hostonly_ printf("\tInitial fill count     : %15ld\n\n", fill_count);
+  
+  int seed[3];
+  seed[0] = 1;
+  seed[1] = 1;
+  seed[2] = 1;
+  
+  Hostonly_ {
+    if ( !Vinfo->paint_first_seed(mid, seed, target_id) ) {
+      printf("Failed first painting\n");
+    }
+  }
+  
+  // first fill
+  fill_count--;
+  
+  int c=0;
+  while (fill_count > 0) {
+    
+    unsigned long fc = (unsigned long)Vinfo->fill_cell_edge(dc_bid->GetData(), mid, dc_cut->GetData(), target_id, id_of_solid);
+    unsigned long t_fc = fc;
+    
+    if ( pn.numProc > 1 ) {
+      MPI_Allreduce(&t_fc, &fc, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    }
+    
+    // 同期
+    dc_mid->CommBndCell(guide);
+    dc_bid->CommBndCell(guide);
+    dc_cut->CommBndCell(guide);
+    
+    if ( fc == 0 ) break;
+    
+    fill_count -= fc;
+    
+    Hostonly_ printf("\t%4d : Try edge fill with ID = %d : %ld\n", ++c, target_id, fill_count);
+    
+  }
+  Hostonly_ printf("\tEdge  fill with ID = %d : %15ld\n\n", target_id, fill_count);
+  
+  
+  // 固体に変更
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  c = 0;
+  while ( fill_count > 0 ) {
+    
+    unsigned long fc = (unsigned long)Vinfo->fill_inside(mid, id_of_solid);
+    unsigned long t_fc = fc;
+    
+    if ( pn.numProc > 1 ) {
+      MPI_Allreduce(&t_fc, &fc, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    }
+    
+    if ( fc == 0 ) break;
+    
+    fill_count -= fc;
+    //Hostonly_ printf("\t%4d : Try solid fill with ID = %d : %ld\n", ++c, id_of_solid, fill_count);
+    
+  }
+  Hostonly_ printf("\tSolid fill with ID = %d : %15ld\n\n", id_of_solid, fill_count);
+  
+  // チェック
+  Ex->writeSVX(mid, &C);
+  
+  // 確認 paintedは未ペイントセルがある場合に1
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  
+  unsigned long painted = (unsigned long)Vinfo->check_fill(mid);
+  
+  if ( pn.numProc > 1 ) {
+    unsigned long t_painted = painted;
+    MPI_Allreduce(&t_painted, &painted, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+  if ( painted  != 0 ) {
+    Hostonly_ printf("\tFill operation is done, but still remains unpainted cells.\n");
+    Exit(0);
+  }
+
 }
 
 /**
@@ -3162,17 +3158,11 @@ void SklSolverCBC::Interpolation_from_coarse_initial(const int* m_st, const int*
  */
 void SklSolverCBC::setBCinfo(ParseBC* B)
 {
-  // CompoListクラスのオブジェクトポインタを渡す
-  B->receiveCompoPtr(cmp);
-
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B->TPsetCompoList(&C);
+  B->setCompoList(&C);
   
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();
-  
-  // パラメータファイルをパースして，外部境界条件を保持する
-  B->loadOuterBC();
   
   // KOSと境界条件種類の整合性をチェック
   B->chkBCconsistency(C.KindOfSolver);
@@ -3274,16 +3264,11 @@ void SklSolverCBC::setComponentVF(float* cvf)
  */
 void SklSolverCBC::setMediumList(ParseMat* M, FILE* mp, FILE* fp)
 {
-  // ParseMatクラスの環境設定 
-  M->setControlVars(&C);
-
   // MediumListを作成
   M->makeMediumList(mat);
   
   // 媒質テーブルの表示
-  Hostonly_ M->printMediumList(mp, fp);
-  
-  
+  Hostonly_ M->printMediumList(mp, fp, mat);
   
 
   // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
@@ -3382,28 +3367,6 @@ void SklSolverCBC::setEnsComponent(void)
     Exit(0);
   }
 
-}
-
-/**
- @fn void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
- @brief パラメータファイルから境界条件数やID情報を取得
- */
-void SklSolverCBC::setIDtables(ParseBC* B, FILE* fp, FILE* mp)
-{
-  // IDの情報テーブルを構築する
-  B->construct_iTable(&C);
-  
-  // XMLから得られたIDテーブルを表示
-  Hostonly_ {
-    B->printTable(fp);
-    fprintf(fp,"\n"); fflush(fp);
-    
-    B->printTable(mp);
-    fprintf(mp,"\n"); fflush(mp);
-  }
-  
-  // 流体と固体の媒質数をセットする
-  B->setMedium(&C);
 }
 
 
@@ -4430,9 +4393,9 @@ void SklSolverCBC::VoxScan(VoxInfo* Vinfo, int* mid, FILE* fp)
   }
   
   // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
-  unsigned sc=0;
-  if ( (sc=Vinfo->scanCell(mid, cell_id, C.Hide.Change_ID)) > C.NoMedium ) {
-    Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is grater than one described in 'Model_Setting'(%d)\n", 
+  int sc=0;
+  if ( (sc=Vinfo->scanCell(mid, cell_id, C.Hide.Change_ID)) != C.NoMedium ) {
+    Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", 
                              sc, C.NoMedium);
     Exit(0);
   }

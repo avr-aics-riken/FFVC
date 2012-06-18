@@ -87,14 +87,14 @@ void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYP
 }
 
 /**
- @fn void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+ @fn void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
  @brief PPLT2Dの計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
- @param mtl
+ @param mat
  */
-void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mtl)
+void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k;
   unsigned m;

@@ -33,13 +33,13 @@ class VoxInfo : public Parallel_Node {
 protected:
   unsigned size[3];              /// 計算内部領域分割数(Local)
   unsigned guide;                /// ガイドセルサイズ
-  unsigned NoVoxID;              /// 含まれるIDの数(Local/Global)
   unsigned NoBC;                 /// 境界条件数
   unsigned NoCompo;              /// コンポーネントの総数
+  int NoVoxID;                   /// 含まれるIDの数(Local/Global)
   int colorList[MODEL_ID_MAX+1]; /// ボクセルモデルに含まれるIDのリスト(Global)
   REAL_TYPE* vox_nv;             /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
   CompoList*    cmp;             /// コンポーネントリスト
-  MediumList*   mat;             /// マテリアルリスト
+  MediumList*   mat;             /// 媒質リスト
 
 public:
   VoxInfo() {
@@ -205,12 +205,13 @@ protected:
   }
   
 public:
-  bool chkIDconsistency      (IDtable* iTable, unsigned m_NoMedium);
+  bool chkIDconsistency      (const int m_NoMedium);
+  
+  int scanCell               (int *cell, const int* cid, const unsigned ID_replace);
   
   unsigned check_fill        (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   unsigned fill_inside       (int* mid, const int solid_id);
-  unsigned scanCell          (int *cell, const int* cid, const unsigned ID_replace);
   unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
   
@@ -274,9 +275,9 @@ public:
 
   
   // ----> debug function
-  void dbg_chkBCIndexD           (unsigned* bcd, const char* fname);
-  void dbg_chkBCIndexP           (unsigned* bcd, unsigned* bcp, const char* fname);
-  void dbg_chkBCIndexV           (unsigned* bcv, const char* fname);
+  void dbg_chkBCIndexD  (unsigned* bcd, const char* fname);
+  void dbg_chkBCIndexP  (unsigned* bcd, unsigned* bcp, const char* fname);
+  void dbg_chkBCIndexV  (unsigned* bcv, const char* fname);
 };
 
 #endif // _FB_BINVOX_H_

@@ -102,6 +102,7 @@
 #define OBC_PERIODIC  5
 #define OBC_TRC_FREE  6
 #define OBC_FAR_FIELD 7
+#define OBC_SLIDEWALL 8
 
 // 面の番号
 #define X_MINUS 0

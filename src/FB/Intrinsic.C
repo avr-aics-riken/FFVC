@@ -12,13 +12,12 @@
 #include "Intrinsic.h"
 
 //@brief MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
-int Intrinsic::find_ID_from_Label(MediumList* mtl, const int Nmax, const std::string key)
+int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
 {
   std::string str = key;
 
   for (int i=1; i<=Nmax; i++) {
-    cout << "i=" << i << " label=" << mtl[i].getLabel() << endl;
-    if ( !strcasecmp(str.c_str(), itbl[i].getLabel()) ) {
+    if ( !strcasecmp(str.c_str(), mat[i].getLabel()) ) {
       return i;
     }
   }

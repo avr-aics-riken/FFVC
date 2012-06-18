@@ -136,8 +136,7 @@ depend:
 ../../IP/IP_PMT.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_PMT.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_PMT.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_PMT.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_PMT.o: ../../IP/IP_Define.h
+../../IP/IP_PMT.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 ../../IP/IP_Rect.o: ../../IP/IP_Rect.h ../../FB/Intrinsic.h
 ../../IP/IP_Rect.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_Rect.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -214,8 +213,7 @@ depend:
 ../../IP/IP_Rect.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_Rect.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_Rect.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_Rect.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_Rect.o: ../../IP/IP_Define.h
+../../IP/IP_Rect.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 ../../IP/IP_Polygon.o: ../../IP/IP_Polygon.h ../../FB/Intrinsic.h
 ../../IP/IP_Polygon.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_Polygon.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -293,7 +291,7 @@ depend:
 ../../IP/IP_Polygon.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
 ../../IP/IP_Polygon.o: ../../FB/basic_func.h ../../FB/Sampling.h
 ../../IP/IP_Polygon.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
-../../IP/IP_Polygon.o: ../../FB/IDtable.h ../../IP/IP_Define.h
+../../IP/IP_Polygon.o: ../../IP/IP_Define.h
 ../../IP/IP_Cylinder.o: ../../IP/IP_Cylinder.h ../../FB/Intrinsic.h
 ../../IP/IP_Cylinder.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_Cylinder.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -371,7 +369,7 @@ depend:
 ../../IP/IP_Cylinder.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
 ../../IP/IP_Cylinder.o: ../../FB/basic_func.h ../../FB/Sampling.h
 ../../IP/IP_Cylinder.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
-../../IP/IP_Cylinder.o: ../../FB/IDtable.h ../../IP/IP_Define.h
+../../IP/IP_Cylinder.o: ../../IP/IP_Define.h
 ../../IP/IP_Step.o: ../../IP/IP_Step.h ../../FB/Intrinsic.h
 ../../IP/IP_Step.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_Step.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -448,8 +446,7 @@ depend:
 ../../IP/IP_Step.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_Step.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_Step.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_Step.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_Step.o: ../../IP/IP_Define.h
+../../IP/IP_Step.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 ../../IP/IP_PPLT2D.o: ../../IP/IP_PPLT2D.h ../../FB/Intrinsic.h
 ../../IP/IP_PPLT2D.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_PPLT2D.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -526,8 +523,7 @@ depend:
 ../../IP/IP_PPLT2D.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_PPLT2D.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_PPLT2D.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_PPLT2D.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_PPLT2D.o: ../../IP/IP_Define.h
+../../IP/IP_PPLT2D.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 ../../IP/IP_Duct.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h
 ../../IP/IP_Duct.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_Duct.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -604,8 +600,7 @@ depend:
 ../../IP/IP_Duct.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_Duct.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_Duct.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_Duct.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_Duct.o: ../../IP/IP_Define.h
+../../IP/IP_Duct.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 ../../IP/IP_SHC1D.o: ../../IP/IP_SHC1D.h ../../FB/Intrinsic.h
 ../../IP/IP_SHC1D.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_SHC1D.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -682,8 +677,7 @@ depend:
 ../../IP/IP_SHC1D.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_SHC1D.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_SHC1D.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_SHC1D.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_SHC1D.o: ../../IP/IP_Define.h
+../../IP/IP_SHC1D.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 ../../IP/IP_Sphere.o: ../../IP/IP_Sphere.h ../../FB/Intrinsic.h
 ../../IP/IP_Sphere.o: ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../IP/IP_Sphere.o: ../../FB/BndOuter.h ../../FB/Control.h
@@ -760,5 +754,4 @@ depend:
 ../../IP/IP_Sphere.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../IP/IP_Sphere.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../IP/IP_Sphere.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../IP/IP_Sphere.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../IP/IP_Sphere.o: ../../IP/IP_Define.h
+../../IP/IP_Sphere.o: ../../FB/TPControl.h ../../IP/IP_Define.h

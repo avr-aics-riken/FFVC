@@ -77,11 +77,11 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, unsigned basicEq)
 
 
 /**
- @fn bool ParseMat::chkStateList(CompoList* compo)
+ @fn bool ParseMat::chkStateList(CompoList* compo, const MediumList* mat)
  @brief CompoList[]とMediumList[]の対応するstateが同じであるかチェックする
  @retval エラーコード
  */
-bool ParseMat::chkStateList(CompoList* compo)
+bool ParseMat::chkStateList(CompoList* compo, MediumList* mat)
 {
   unsigned i, odr, id;
   
@@ -104,7 +104,7 @@ bool ParseMat::chkStateList(CompoList* compo)
  @fn void ParseMat::chkState_Mat_Cmp(CompoList* compo)
  @brief  cmp[]とmat[]のStateの不一致をチェックする
  */
-void ParseMat::chkState_Mat_Cmp(CompoList* compo, FILE* fp)
+void ParseMat::chkState_Mat_Cmp(CompoList* compo, MediumList* mat, FILE* fp)
 {
   unsigned m_id, m_state, m_odr;
   unsigned c=0;
@@ -139,13 +139,13 @@ void ParseMat::chkState_Mat_Cmp(CompoList* compo, FILE* fp)
 
 
 /**
- @fn void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
+ @fn void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo, MediumList* mat)
  @brief CompoList[]とMediumList[]のチェック
  */
-void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo)
+void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo, MediumList* mat)
 {
-  printRelation(mp, compo);
-  printRelation(fp, compo);
+  printRelation(mp, compo, mat);
+  printRelation(fp, compo, mat);
 }
 
 
@@ -176,43 +176,40 @@ void ParseMat::makeLinkCmpMat(CompoList* compo)
 
 
 /**
- @fn void ParseMat::printMediumList(FILE* mp, FILE* fp)
+ @fn void ParseMat::printMediumList(FILE* mp, FILE* fp, MediumList* mat)
  @brief MediumListを表示する
  */
-void ParseMat::printMediumList(FILE* mp, FILE* fp)
+void ParseMat::printMediumList(FILE* mp, FILE* fp, MediumList* mat)
 {
-  printMatList(mp, NoMedium, mat);
-  printMatList(fp, NoMedium, mat);
+  printMatList(mp, mat);
+  printMatList(fp, mat);
 }
 
 
 /**
- @fn void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
+ @fn void ParseMat::printMatList(FILE* fp, MediumList* mat)
  @brief 媒質情報の表示
- @param fp
- @param Max
- @param mlist
  */
-void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
+void ParseMat::printMatList(FILE* fp, MediumList* mat)
 {
   fprintf(fp, "\t  no :           Medium  Properties\n");
   
-  for (int n=1; n<=Max; n++) {
-    fprintf(fp,"\t%4d : %16s\n", n, mlist[n].getLabel());
+  for (int n=1; n<=NoMedium; n++) {
+    fprintf(fp,"\t%4d : %16s\n", n, mat[n].getLabel());
     
-    if ( mlist[n].getState() == FLUID ) {
-      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
-      fprintf(fp, "\t\t\t\t kinematic viscosity  %12.6e [m^2/s]\n",    mlist[n].P[p_kinematic_viscosity]);
-      fprintf(fp, "\t\t\t\t viscosity            %12.6e [Pa s]\n",     mlist[n].P[p_viscosity]);
-      fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mlist[n].P[p_specific_heat]);
-      fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mlist[n].P[p_thermal_conductivity]);
-      fprintf(fp, "\t\t\t\t sound of speed       %12.6e [m/s]\n",      mlist[n].P[p_sound_of_speed]);
-      fprintf(fp, "\t\t\t\t volume expansion     %12.6e [1/K]\n",      mlist[n].P[p_vol_expansion]);
+    if ( mat[n].getState() == FLUID ) {
+      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
+      fprintf(fp, "\t\t\t\t kinematic viscosity  %12.6e [m^2/s]\n",    mat[n].P[p_kinematic_viscosity]);
+      fprintf(fp, "\t\t\t\t viscosity            %12.6e [Pa s]\n",     mat[n].P[p_viscosity]);
+      fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mat[n].P[p_specific_heat]);
+      fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mat[n].P[p_thermal_conductivity]);
+      fprintf(fp, "\t\t\t\t sound of speed       %12.6e [m/s]\n",      mat[n].P[p_sound_of_speed]);
+      fprintf(fp, "\t\t\t\t volume expansion     %12.6e [1/K]\n",      mat[n].P[p_vol_expansion]);
     }
     else {  // solid
-      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mlist[n].P[p_density]);
-      fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mlist[n].P[p_specific_heat]);
-      fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mlist[n].P[p_thermal_conductivity]);
+      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
+      fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mat[n].P[p_specific_heat]);
+      fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mat[n].P[p_thermal_conductivity]);
     }
     
   }
@@ -221,11 +218,11 @@ void ParseMat::printMatList(FILE* fp, int Max, MediumList* mlist)
 }
 
 /**
- @fn void ParseMat::printRelation(FILE* fp, CompoList* compo)
+ @fn void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
  @brief CompoList[]とMediumList[]のチェック
  @note debug function
  */
-void ParseMat::printRelation(FILE* fp, CompoList* compo)
+void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
 {  
   int odr;
   
@@ -250,10 +247,9 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo)
 
 
 /**
- @fn void ParseMat::setControlVars(Control* Cref, MediumList* m_mat)
- @brief 媒質情報のハンドリング
- @param Cref 
- @param m_mat 
+ @fn void ParseMat::setControlVars(Control* Cref)
+ @brief 媒質情報の初期化
+ @param Cref
  */
 void ParseMat::setControlVars(Control* Cref)
 {
@@ -357,15 +353,13 @@ int ParseMat::get_MediumTable(void)
 
 
 /**
- @fn void ParseMat::makeMediumList(MediumList* m_mat)
+ @fn void ParseMat::makeMediumList(MediumList* mat)
  @brief MediumListを作成する
  */
-void ParseMat::makeMediumList(MediumList* m_mat)
+void ParseMat::makeMediumList(MediumList* mat)
 {
   
-  if ( !m_mat ) return;
-  
-  mat = m_mat;
+  if ( !mat ) return;
   
   int type;
   std::string label;
@@ -376,7 +370,7 @@ void ParseMat::makeMediumList(MediumList* m_mat)
     label = MTITP[i].label;
     
     // すでに登録されているかどうか調べる
-    if ( !chkDuplicateLabel(i, label) ) {
+    if ( !chkDuplicateLabel(mat, i, label) ) {
       Hostonly_ printf("\tError : Medium label '%s' is already used\n", label.c_str());
       Exit(0);
     }
@@ -388,7 +382,7 @@ void ParseMat::makeMediumList(MediumList* m_mat)
     strcpy( mat[i].getLabel(), label.c_str() );
     
     // set medium value
-    copyProperty(i);
+    copyProperty(mat, i);
   }
 
 }
@@ -396,7 +390,7 @@ void ParseMat::makeMediumList(MediumList* m_mat)
 
 
 //@brief ラベルの重複を調べる
-bool ParseMat::chkDuplicateLabel(const int n, std::string m_label)
+bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label)
 {
 	for (int i=0; i<n; i++){
     if ( mat[i].getLabel() == m_label.c_str() ) return false;
@@ -406,10 +400,10 @@ bool ParseMat::chkDuplicateLabel(const int n, std::string m_label)
 
 
 /**
- @fn void ParseMat::copyProperty(const int n)
+ @fn void ParseMat::copyProperty(MediumList* mat, const int n)
  @brief matの変数値を格納する
  */
-void ParseMat::copyProperty(const int n)
+void ParseMat::copyProperty(MediumList* mat, const int n)
 {
 	int nfval = MTITP[n].m_fval.size();
   
@@ -436,7 +430,7 @@ void ParseMat::copyProperty(const int n)
 	}
 	
 	// Check
-	if ( !chkList4Solver(n) ){
+	if ( !chkList4Solver(mat, n) ){
 		printf("\tParameter error : chkList4Solver \n");
 		Exit(0);
 	}
@@ -447,38 +441,35 @@ void ParseMat::copyProperty(const int n)
 
 
 /**
- @fn bool ParseMat::chkList4Solver(int m)
+ @fn bool ParseMat::chkList4Solver(MediumList* mat, const int m)
  @brief 媒質情報の内容物をチェックする
- @param m
  */
-bool ParseMat::chkList4Solver(const int m)
+bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 {
   int c=0;
   if ( mat[m].getState() == FLUID ) {
-    if ( !ChkList[p_density] )                c += missingMessage(m, p_density);
-    if ( !ChkList[p_kinematic_viscosity] )    c += missingMessage(m, p_kinematic_viscosity);
-    if ( !ChkList[p_viscosity] )              c += missingMessage(m, p_viscosity);
-    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(m, p_thermal_conductivity);
-    if ( !ChkList[p_specific_heat] )          c += missingMessage(m, p_specific_heat);
-    if ( !ChkList[p_sound_of_speed] )         c += missingMessage(m, p_sound_of_speed);
-    if ( !ChkList[p_vol_expansion] )          c += missingMessage(m, p_vol_expansion);
+    if ( !ChkList[p_density] )                c += missingMessage(mat, m, p_density);
+    if ( !ChkList[p_kinematic_viscosity] )    c += missingMessage(mat, m, p_kinematic_viscosity);
+    if ( !ChkList[p_viscosity] )              c += missingMessage(mat, m, p_viscosity);
+    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(mat, m, p_thermal_conductivity);
+    if ( !ChkList[p_specific_heat] )          c += missingMessage(mat, m, p_specific_heat);
+    if ( !ChkList[p_sound_of_speed] )         c += missingMessage(mat, m, p_sound_of_speed);
+    if ( !ChkList[p_vol_expansion] )          c += missingMessage(mat, m, p_vol_expansion);
   }
   else {  // solid
-    if ( !ChkList[p_density] )                c += missingMessage(m, p_density);
-    if ( !ChkList[p_specific_heat] )          c += missingMessage(m, p_specific_heat);
-    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(m, p_thermal_conductivity);
+    if ( !ChkList[p_density] )                c += missingMessage(mat, m, p_density);
+    if ( !ChkList[p_specific_heat] )          c += missingMessage(mat, m, p_specific_heat);
+    if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(mat, m, p_thermal_conductivity);
   }
   return ( (c != 0) ? false : true ) ;
 }
 
 
 /**
- @fn int ParseMat::missingMessage(const int m, const int key)
+ @fn int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
  @brief 警告メッセージの表示
- @param m
- @param key
  */
-int ParseMat::missingMessage(const int m, const int key)
+int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 {
   printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
          MediumList::getPropertyName(key).c_str(), mat[m].getLabel(),

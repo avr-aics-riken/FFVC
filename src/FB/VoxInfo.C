@@ -440,14 +440,12 @@ unsigned VoxInfo::check_fill(const int* mid)
 
 
 /**
- @fn bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoMedium)
- @brief XMLとスキャンしたボクセルIDの同一性をチェック
- @retval エラーコード
- @param iTable IDtableのリスト
+ @fn bool VoxInfo::chkIDconsistency(const int m_NoMedium)
+ @brief パラメータファイルとスキャンしたIDの同一性をチェック
  @param m_NoMedium Medium_Tableに記述されたIDの個数
  @note m_NoMedium >= NoVoxIDのはず
  */
-bool VoxInfo::chkIDconsistency(IDtable* iTable, unsigned m_NoMedium)
+bool VoxInfo::chkIDconsistency(const int m_NoMedium)
 {
   bool* chkflag = NULL;
 	if( !(chkflag = new bool[NoVoxID+1]) ) return false;
@@ -4679,7 +4677,7 @@ bool VoxInfo::paint_first_seed(int* mid, const int* idx, const int target)
  */
 void VoxInfo::printScanedCell(FILE* fp)
 {
-  for (unsigned i=1; i<=NoVoxID; i++) {
+  for (int i=1; i<=NoVoxID; i++) {
     fprintf(fp,"\t\t%3d : ID = [%d]\n", i, colorList[i]);
     if ( colorList[i] == 0 ) {
       Hostonly_ stamped_fprintf(fp, "\t*** Voxel includes ID=0, which is invalid.  ***\n\n");
@@ -4690,7 +4688,7 @@ void VoxInfo::printScanedCell(FILE* fp)
 
 
 /**
- @fn unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
+ @fn int VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
  @brief cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
  @retval 含まれるセルID数
  @param cell ボクセルIDを保持する配列
@@ -4698,7 +4696,7 @@ void VoxInfo::printScanedCell(FILE* fp)
  @param ID_replace ID[0]を置換するID
  @note 重複がないようにcolorList[]に登録する
  */ 
-unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
+int VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
 {
   int target;
   unsigned m;
@@ -4798,7 +4796,7 @@ unsigned VoxInfo::scanCell(int *cell, const int* cid, const unsigned ID_replace)
     }
   }
   
-  NoVoxID = (unsigned)b-1;
+  NoVoxID = b-1;
   
   return NoVoxID;
 }
@@ -5751,12 +5749,8 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   
 }
 
-/**
- @fn void VoxInfo::setWorklist(CompoList* m_CMP, MediumList* m_MAT)
- @brief 作業用のポインタコピー
- @param m_CMP
- @param m_MAT 
- */
+
+//@brief 作業用のポインタコピー
 void VoxInfo::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);

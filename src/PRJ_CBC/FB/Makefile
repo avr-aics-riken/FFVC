@@ -145,8 +145,7 @@ depend:
 ../../FB/VoxInfo.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/VoxInfo.o: ../../FB/FBUtility.h ../../FB/FB_Define.h
 ../../FB/VoxInfo.o: ../../FB/mydebug.h ../../FB/Component.h ../../FB/Medium.h
-../../FB/VoxInfo.o: ../../FB/Parallel_node.h ../../FB/IDtable.h
-../../FB/VoxInfo.o: ../../FB/SetBC.h
+../../FB/VoxInfo.o: ../../FB/Parallel_node.h ../../FB/SetBC.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklSolverBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklBase.h
 ../../FB/VoxInfo.o: /usr/local/sphere/include/SklDefine.h
@@ -527,7 +526,7 @@ depend:
 ../../FB/Intrinsic.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/Intrinsic.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/Intrinsic.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../FB/Intrinsic.o: ../../FB/TPControl.h ../../FB/IDtable.h
+../../FB/Intrinsic.o: ../../FB/TPControl.h
 ../../FB/ParseBC.o: ../../FB/ParseBC.h /usr/local/sphere/include/Skl.h
 ../../FB/ParseBC.o: /usr/local/sphere/include/endianUtil.h
 ../../FB/ParseBC.o: /usr/local/sphere/include/SklSolverBase.h
@@ -603,8 +602,7 @@ depend:
 ../../FB/ParseBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
 ../../FB/ParseBC.o: ../../FB/MonCompo.h ../../FB/basic_func.h
 ../../FB/ParseBC.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
-../../FB/ParseBC.o: ../../FB/TPControl.h ../../FB/IDtable.h
-../../FB/ParseBC.o: ../../FB/Intrinsic.h
+../../FB/ParseBC.o: ../../FB/TPControl.h ../../FB/Intrinsic.h
 ../../FB/ParseMat.o: ../../FB/ParseMat.h ../../FB/FB_Define.h
 ../../FB/ParseMat.o: ../../FB/mydebug.h ../../FB/Control.h
 ../../FB/ParseMat.o: /usr/local/sphere/include/Skl.h
@@ -756,7 +754,7 @@ depend:
 ../../FB/SetBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
 ../../FB/SetBC.o: ../../FB/basic_func.h ../../FB/Sampling.h
 ../../FB/SetBC.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
-../../FB/SetBC.o: ../../FB/Intrinsic.h ../../FB/IDtable.h
+../../FB/SetBC.o: ../../FB/Intrinsic.h
 ../../FB/Monitor.o: ../../FB/Monitor.h ../../FB/FB_Define.h
 ../../FB/Monitor.o: ../../FB/mydebug.h ../../FB/vec3.h ../../FB/vec3_func.h
 ../../FB/Monitor.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h

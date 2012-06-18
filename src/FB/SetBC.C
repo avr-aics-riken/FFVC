@@ -12,12 +12,8 @@
 #include <math.h>
 #include "SetBC.h"
 
-/**
- @fn void SetBC::setWorklist(CompoList* m_CMP, MediumList* m_MAT)
- @brief CompoListをポイント
- @param m_CMP
- @param m_MAT 
- */
+
+//@brief 作業用ポインタのコピー
 void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);

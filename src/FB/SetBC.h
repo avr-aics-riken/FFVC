@@ -43,7 +43,7 @@ protected:
   
   BoundaryOuter   obc[NOFACE];
   CompoList*      cmp;
-  MediumList*   mat;
+  MediumList*     mat;
   Intrinsic*      Ex;
   
   void getOuterLoopIdx (int face, int* st, int* ed);

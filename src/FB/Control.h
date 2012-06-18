@@ -429,6 +429,8 @@ public:
                 Fcell,
                 Wcell;
   
+  int NoMedium;
+  
   unsigned  AlgorithmF,
             AlgorithmH,
             BasicEqs,
@@ -445,7 +447,6 @@ public:
             NoBC,
             NoCompo,
             NoDimension,
-            NoMedium,
             NoMediumFluid,
             NoMediumSolid,
             NoWallSurface,
