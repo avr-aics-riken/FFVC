@@ -14,6 +14,7 @@
 
 #include "BndOuter.h"
 
+
 //@fn void set_DomainV(REAL_TYPE* vv, int face, bool mode)
 //@brief モニタ値を保持する
 //@param vv 指定速度ベクトル
@@ -59,27 +60,32 @@ void BoundaryOuter::set_Label(std::string key)
 }
 
 
+void BoundaryOuter::set_Alias(std::string key)
+{
+  alias = key;
+}
+
 //@brief 境界面の有効セル数を保持
 void BoundaryOuter::set_ValidCell(const int val)
 {
   valid_cell = val;
 }
 
-//@fn void set_HTmodeRef(int key)
+
 //@brief 熱伝達境界の参照モードの保持
 void BoundaryOuter::set_HTmodeRef(int key)
 {
   HTref = key;
 }
 
-//@fn void set_CoefHT(REAL_TYPE val)
+
 //@brief 熱伝達係数の保持
 void BoundaryOuter::set_CoefHT(REAL_TYPE val)
 {
   var1 = val;
 }
 
-//@fn void set_Temp(REAL_TYPE val)
+
 //@brief 温度の保持
 void BoundaryOuter::set_Temp(REAL_TYPE val)
 {
@@ -218,6 +224,7 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
   valid_cell= src->valid_cell;
   
   label     = src->label;
+  alias     = src->alias;
   
   for (int i=0; i<3; i++) {
     nv[i] = src->nv[i];

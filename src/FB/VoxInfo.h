@@ -191,20 +191,6 @@ protected:
     return ( idx | (0x1<<shift) );
   }
   
-  /**
-   @fn inline int VoxInfo::find_Mat_State(int m)
-   @brief cmp[]にエンコードされた中から対象となる媒質の状態を返す
-   @param m 対象とする媒質インデクス
-   @retval 1-fluid / 0-solid
-   @note 媒質のセルIDが格納されているオーダーの範囲は[NoBC+1,NoCompo]
-   */
-  inline int find_Mat_State(int m) {
-    for (int n=(int)NoBC+1; n<=(int)NoCompo; n++) {
-      if (cmp[n].getMatOdr() == m) return cmp[n].getState();
-    }
-    Exit(0);
-    return 0;
-  }
   
 public:
   bool chkIDconsistency      (const int m_NoMedium);
@@ -223,8 +209,8 @@ public:
                               const int* mid, 
                               unsigned* bx);
   
-  void adjCellID_on_GC       (const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode);
-  void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
+  void adjMedium_on_GC       (const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode);
+  void adjMediumPrdc_Inner  (SklScalar3D<int>* d_mid);
   void alloc_voxel_nv        (unsigned len);
   void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);
   void copyBCIbase           (unsigned* dst, unsigned* src);

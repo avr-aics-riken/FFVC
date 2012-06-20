@@ -18,8 +18,8 @@
 #include "VoxInfo.h"
 
 /**
- @fn void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode)
- @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする
+ @fn void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode)
+ @brief 外部境界に接するガイドセルのmid[]に媒質インデクスをエンコードする
  @param face 外部境界面番号
  @param d_mid ID配列のデータクラス
  @param BCtype 外部境界面の境界条件の種類
@@ -27,9 +27,8 @@
  @param prdc_mode 周期境界条件のモード
  @note ガイドセル全てを対象
  */
-void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode)
+void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode)
 {
-  int ref_id;
   unsigned m, m0, m1;
   int* mid=NULL;
   
@@ -48,12 +47,8 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         if( pn.nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m0 = FBUtility::getFindexS3D(size, guide, 1, j, k); // 最外層のID
-              ref_id = mid[m0];
-              
-              int i=0;
-              m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
+              m = FBUtility::getFindexS3D(size, guide, 0, j, k);
+              mid[m] = c_id;
             }
           }
         }
@@ -63,12 +58,8 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         if( pn.nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m0 = FBUtility::getFindexS3D(size, guide, ix, j, k); // 最外層のID
-              ref_id = mid[m0];
-              
-              int i=ix+1;
-              m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
+              m = FBUtility::getFindexS3D(size, guide, ix+1, j, k);
+              mid[m] = c_id;
             }
           }
         }
@@ -78,12 +69,8 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         if( pn.nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, 1, k); // 最外層のID
-              ref_id = mid[m0];
-              
-              int j=0;
-              m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
+              m = FBUtility::getFindexS3D(size, guide, i, 0, k);
+              mid[m] = c_id;
             }
           }
         }
@@ -93,12 +80,8 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         if( pn.nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, jx, k); // 最外層のID
-              ref_id = mid[m0];
-              
-              int j=jx+1;
-              m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
+              m = FBUtility::getFindexS3D(size, guide, i, jx+1, k);
+              mid[m] = c_id;
             }
           }
         }
@@ -108,12 +91,8 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         if( pn.nID[face] < 0 ){
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, j, 1); // 最外層のID
-              ref_id = mid[m0];
-              
-              int k=0;
-              m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
+              m = FBUtility::getFindexS3D(size, guide, i, j, 0);
+              mid[m] = c_id;
             }
           }
         }
@@ -123,12 +102,8 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         if( pn.nID[face] < 0 ){
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m0 = FBUtility::getFindexS3D(size, guide, i, j, kx); // 最外層のID
-              ref_id = mid[m0];
-              
-              int k=kx+1;
-              m = FBUtility::getFindexS3D(size, guide, i, j, k);
-              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
+              m = FBUtility::getFindexS3D(size, guide, i, j, kx+1);
+              mid[m] = c_id;
             }
           }
         }
@@ -261,7 +236,7 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
 }
 
 /**
- @fn void VoxInfo::adjCellID_Prdc_Inner(int face, SklScalar3D<int>* d_mid, int BCtype, unsigned c_id, unsigned prdc_mode)
+ @fn void VoxInfo::adjMediumPrdc_Inner(int face, SklScalar3D<int>* d_mid, int BCtype, unsigned c_id, unsigned prdc_mode)
  @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
  @param face 外部境界面番号
  @param d_mid ID配列のデータクラス
@@ -270,7 +245,7 @@ void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int
  @param prdc_mode 周期境界条件のモード
  @note ガイドセル全てを対象
  */
-void VoxInfo::adjCellID_Prdc_Inner(SklScalar3D<int>* d_mid)
+void VoxInfo::adjMediumPrdc_Inner(SklScalar3D<int>* d_mid)
 {
   int st[3], ed[3], dir, id;
   
@@ -438,12 +413,11 @@ unsigned VoxInfo::check_fill(const int* mid)
  @fn bool VoxInfo::chkIDconsistency(const int m_NoMedium)
  @brief パラメータファイルとスキャンしたIDの同一性をチェック
  @param m_NoMedium Medium_Tableに記述されたIDの個数
- @note m_NoMedium >= NoVoxIDのはず
  */
 bool VoxInfo::chkIDconsistency(const int m_NoMedium)
 {
   bool* chkflag = NULL;
-	if( !(chkflag = new bool[NoVoxID+1]) ) return false;
+	if ( !(chkflag = new bool[NoVoxID+1]) ) return false;
 	
 	for (int i=0; i<=NoVoxID; i++) chkflag[i] = false;
 	
@@ -3768,7 +3742,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const unsigned order,
  @param enc_uwd trueのとき，1次精度のスイッチオン
  @note 
  - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
- - adjCellID_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
+ - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
  */
 void VoxInfo::encVbit_OBC(int face, unsigned* bv, string key, const bool enc_sw, string chk, unsigned* bp, const bool enc_uwd)
 {

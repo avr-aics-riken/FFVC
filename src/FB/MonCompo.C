@@ -620,7 +620,7 @@ void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
   if (cmp.isVarEncoded(var_TotalP))      variable[TOTAL_PRESSURE] = true;
   
   
-  nPoint = cmp.getElement();
+  nPoint = (int)cmp.getElement();
   allocArray();
   allocSamplingArray();
   

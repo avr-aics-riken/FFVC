@@ -607,81 +607,9 @@ depend:
 ../../FB/ParseBC.o: ../../FB/Interval_Mngr.h ../../FB/TPControl.h
 ../../FB/ParseBC.o: ../../FB/Intrinsic.h
 ../../FB/ParseMat.o: ../../FB/ParseMat.h ../../FB/FB_Define.h
-../../FB/ParseMat.o: ../../FB/mydebug.h ../../FB/Control.h ../../FB/Medium.h
-../../FB/ParseMat.o: ../../FB/Component.h ../../FB/FBUtility.h
-../../FB/ParseMat.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-../../FB/ParseMat.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-../../FB/ParseMat.o: ../../FB/MonCompo.h /usr/local/sphere/include/SklUtil.h
-../../FB/ParseMat.o: /usr/local/sphere/include/SklSolverBase.h
-../../FB/ParseMat.o: /usr/local/sphere/include/Skl.h
-../../FB/ParseMat.o: /usr/local/sphere/include/endianUtil.h
-../../FB/ParseMat.o: /usr/local/sphere/include/SklBase.h
-../../FB/ParseMat.o: /usr/local/sphere/include/SklDefine.h
-../../FB/ParseMat.o: /usr/local/sphere/include/SklReservWord.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklSolverConfig.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgErrMsg.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgDomainInfo.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgNodeBase.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgBase.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgUsrDefNode.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgSteer.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgSteerInputData.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgInFile.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgSteerOutputData.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgHistory.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgOutFile.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgParameter.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgUsrDefTopNode.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklIBCConfig.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgInnerBnd.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklOBCConfig.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgOuterBnd.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklMBoxConfig.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgMBoxTable.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklMDMConfig.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgMdmTable.h
-../../FB/ParseMat.o: /usr/local/sphere/include/base/SklFileIOCntl.h
-../../FB/ParseMat.o: /usr/local/sphere/include/config/SklCfgDatas.h
-../../FB/ParseMat.o: /usr/local/sphere/include/base/SklOutputDataSet.h
-../../FB/ParseMat.o: /usr/local/sphere/include/base/SklFileIO_SPH.h
-../../FB/ParseMat.o: /usr/local/sphere/include/base/SklFileIO_FDV.h
-../../FB/ParseMat.o: /usr/local/sphere/include/base/SklFileIO_SVX.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklDataManager.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklArayBase.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklScalar.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklArayIdx1.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklAray.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaManager.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaIF.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaComponent.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaManagerEv.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaNodeInfoEv.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaManagerMb.h
-../../FB/ParseMat.o: /usr/local/sphere/include/parallel/SklParaNodeInfoMb.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklScalar2D.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklArayIdx2.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklScalar3D.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklArayIdx3.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklScalar4D.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklArayIdx4.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklScalar4DEx.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklVector2D.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklVector2DEx.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklVector3D.h
-../../FB/ParseMat.o: /usr/local/sphere/include/dataclass/SklVector3DEx.h
-../../FB/ParseMat.o: /usr/local/sphere/include/fileio/SklVoxDataCntl.h
-../../FB/ParseMat.o: /usr/local/sphere/include/fileio/SklVoxDataSet.h
-../../FB/ParseMat.o: /usr/local/sphere/include/coord/SklCrdMngr.h
-../../FB/ParseMat.o: /usr/local/sphere/include/coord/SklCoord.h
-../../FB/ParseMat.o: ../../FB/basic_func.h ../../FB/Sampling.h
-../../FB/ParseMat.o: ../../FB/BndOuter.h ../../FB/Interval_Mngr.h
-../../FB/ParseMat.o: ../../FB/TPControl.h
+../../FB/ParseMat.o: ../../FB/mydebug.h ../../FB/Medium.h
+../../FB/ParseMat.o: ../../FB/Component.h ../../FB/TPControl.h
+../../FB/ParseMat.o: ../../FB/FBUtility.h
 ../../FB/SetBC.o: ../../FB/SetBC.h ../../FB/FB_Define.h ../../FB/mydebug.h
 ../../FB/SetBC.o: ../../FB/FBUtility.h ../../FB/BndOuter.h ../../FB/Control.h
 ../../FB/SetBC.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/Monitor.h

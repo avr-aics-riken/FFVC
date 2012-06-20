@@ -40,6 +40,7 @@ protected:
   REAL_TYPE var2;    /// 多目的用の変数(温度)
   REAL_TYPE dm[3];   /// ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
   std::string label; /// ラベル
+  std::string alias; /// 別名
   
 public: 
   int mon_ref;       /// IN_OUT境界条件のときのBC格納番号
@@ -99,7 +100,7 @@ public:
   REAL_TYPE get_Temp(void)     const { return var1; };
   
   std::string get_Label(void) const { return label; };
-  
+  std::string get_Alias(void) const { return alias; };
   
   //@fn void getDomainV(REAL_TYPE* vv)
   //@brief ローカルのモニタ積算値
@@ -113,6 +114,7 @@ public:
   
   void addVec         (REAL_TYPE* vec);
   void dataCopy       (BoundaryOuter* src);
+  void set_Alias      (std::string key);
   void set_Class      (const int key);
   void set_CoefHT     (REAL_TYPE val);
   void set_DomainV    (REAL_TYPE* vv, int face, bool mode=false);

@@ -71,7 +71,6 @@ SklSolverCBC::SklSolverInitialize() {
   F.set_Rank    (pn);
   MO.set_Rank   (pn);
   B.set_Rank    (pn);
-  M.set_Rank    (pn);
   Vinfo.set_Rank(pn);
   
   // 並列処理モード
@@ -197,7 +196,6 @@ SklSolverCBC::SklSolverInitialize() {
   F.set_Neighbor    (pn);
   MO.set_Neighbor   (pn);
   B.set_Neighbor    (pn);
-  M.set_Neighbor    (pn);
   Vinfo.set_Neighbor(pn);
   
   Ex->set_Rank  (pn);    // 続く処理より先に初期化しておく
@@ -223,14 +221,12 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(fp,"\n\t>> Medium List\n\n");
   }
   
-  // 媒質情報をロード
-  C.NoMedium = M.get_MediumTable(); // Medium_Tableタグ内の媒質数
+  // 媒質情報をロードし、 Medium_Tableタグ内の媒質数を保持
+  C.NoMedium = M.get_MediumTable();
   
   // 媒質リストをインスタンス
   mat = new MediumList[C.NoMedium+1];
   
-  // ParseMatクラスの環境設定 
-  M.setControlVars(&C);
   
   // 媒質情報を設定
   setMediumList(&M, mp, fp);
@@ -239,6 +235,9 @@ SklSolverCBC::SklSolverInitialize() {
   // パラメータファイルから C.NoBC, C.NoCompoを取得
   C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
   C.NoCompo = C.NoBC + (unsigned)C.NoMedium; // コンポーネントの数の定義
+  
+  // ParseMatクラスの環境設定 
+  M.setControlVars((int)C.NoCompo, (int)C.NoBC, (int)C.Unit.Temp, (int)C.KindOfSolver);
   
   Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
   
@@ -409,13 +408,15 @@ SklSolverCBC::SklSolverInitialize() {
   Hostonly_ {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(mp,"\t>> Components\n\n");
+    
+    C.printNoCompo(mp);
+    fprintf(mp,"\n"); fflush(mp);
+    
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Components\n\n");
     
     C.printNoCompo(fp);
     fprintf(fp,"\n"); fflush(fp);
-    C.printNoCompo(mp);
-    fprintf(mp,"\n"); fflush(mp);
   }
 
   // VoxInfoクラスで利用する変数をコピー
@@ -446,16 +447,18 @@ SklSolverCBC::SklSolverInitialize() {
   Hostonly_ {
     fprintf(mp, "\n---------------------------------------------------------------------------\n\n");
     fprintf(mp,"\t>> Information of Scaned Voxel\n\n");
+    
+    Vinfo.printScanedCell(mp);
+		fflush(mp);
+    
     fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Information of Scaned Voxel\n\n");
     
 		Vinfo.printScanedCell(fp);
 		fflush(fp);
-    Vinfo.printScanedCell(mp);
-		fflush(mp);
   }
 
-  // ボクセルモデルのIDがXMLに記述されたIDに含まれていること
+  // ボクセルモデルの媒質インデクスがパラメータファイルに記述された媒質インデクスに含まれていること
 	Hostonly_ {
 		if ( !Vinfo.chkIDconsistency(C.NoMedium) ) {
 			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
@@ -468,9 +471,9 @@ SklSolverCBC::SklSolverInitialize() {
   setBCinfo(&B);
 
   
-  // ガイドセル上にXMLで指定するセルIDを代入する．周期境界の場合の処理も含む．
+  // ガイドセル上にパラメータファイルで指定する媒質インデクスを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) {
-    Vinfo.adjCellID_on_GC(face, dc_mid, BC.export_OBC(face)->get_Class(), 
+    Vinfo.adjMedium_on_GC(face, dc_mid, BC.export_OBC(face)->get_Class(), 
                          BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
 
@@ -514,7 +517,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   
   // 内部周期境界の場合のガイドセルのコピー処理
-  Vinfo.adjCellID_Prdc_Inner(dc_mid);
+  Vinfo.adjMediumPrdc_Inner(dc_mid);
 
   // 媒質数とKindOfSolverの整合性をチェックする
   if ( !chkMediumConsistency() ) {
@@ -688,24 +691,26 @@ SklSolverCBC::SklSolverInitialize() {
   if ( C.BasicEqs == INCMP_2PHASE ) {
     B.get_Phase();
   }
-  
+
   // CompoListの内容を表示する
   Hostonly_  {
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(mp,"\t>> Component List\n\n");
+    
+    M.chkList(mp, cmp, (int)C.BasicEqs);
+    
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Component List\n\n");
 
-    M.chkList(mp, cmp, C.BasicEqs);
-    M.chkList(fp, cmp, C.BasicEqs);
+    M.chkList(fp, cmp, (int)C.BasicEqs);
   }
   
   // セル数の情報を表示する
   Hostonly_ {
     REAL_TYPE cr = (REAL_TYPE)G_Wcell/ ( (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2]) *100.0;
-    fprintf(mp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %8.4f percent]\n\n", 
+    fprintf(mp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %8.4f percent]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
-    fprintf(fp, "\tThis voxel includes %4d solid %s  [Solid cell ratio inside computational domain : %8.4f percent]\n\n", 
+    fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %8.4f percent]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
   }
   
@@ -756,13 +761,17 @@ SklSolverCBC::SklSolverInitialize() {
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Component Information\n");
+    
+    B.printCompo(mp, Vinfo.get_vox_nv_ptr(), compo_global_bbox, mat);
+    
     fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(mp,"\t>> Component Information\n");
-    B.printCompoInfo(mp, fp, Vinfo.get_vox_nv_ptr(), compo_global_bbox, mat);
+    
+    B.printCompo(fp, Vinfo.get_vox_nv_ptr(), compo_global_bbox, mat);
   }
 
   // コンポーネント数がゼロの場合のチェック
-  for (unsigned n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=(int)C.NoBC; n++) {
     if ( cmp[n].getElement() == 0 ) {
       Hostonly_ printf("\tError : No element was found in Component[%d]\n", n);
       fflush(stdout);
@@ -771,7 +780,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // Check consistency of boundary condition
-  for (unsigned n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=(int)C.NoBC; n++) {
     if ( cmp[n].getType() == HT_SN ) {
       if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
@@ -1082,9 +1091,13 @@ SklSolverCBC::SklSolverInitialize() {
     Hostonly_ {
       fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
       fprintf(mp,"\t>> Outer Boundary Conditions\n\n");
+      
+      B.printFaceOBC(mp, G_Lbx);
+      
       fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
       fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
-      B.printOBCinfo(mp, fp, G_Lbx);
+      
+      B.printFaceOBC(fp, G_Lbx);
     }
 
     // モニタ情報の表示
@@ -3141,7 +3154,6 @@ void SklSolverCBC::Interpolation_from_coarse_initial(const int* m_st, const int*
 /**
  @fn void SklSolverCBC::setBCinfo(ParseBC* B)
  @brief ParseBCクラスをセットアップし，外部境界条件を読み込み，Controlクラスに保持する
- @param B
  */
 void SklSolverCBC::setBCinfo(ParseBC* B)
 {
@@ -3252,10 +3264,17 @@ void SklSolverCBC::setComponentVF(float* cvf)
 void SklSolverCBC::setMediumList(ParseMat* M, FILE* mp, FILE* fp)
 {
   // MediumListを作成
-  M->makeMediumList(mat);
+  if ( !mat ) Exit(0);
+  
+  if ( !M->makeMediumList(mat, C.NoMedium) ) {
+    Hostonly_ stamped_printf("Error : Duplicate label in Material Table\n");
+  }
   
   // 媒質テーブルの表示
-  Hostonly_ M->printMediumList(mp, fp, mat);
+  Hostonly_ {
+    M->printMatList(mp, mat, C.NoMedium);
+    M->printMatList(fp, mat, C.NoMedium);
+  }
   
 
   // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する

@@ -2436,24 +2436,21 @@ void Control::printLS(FILE* fp, ItrCtl* IC)
   }
 }
 
-/**
- @fn void Control::printNoCompo(FILE* fp)
- @brief 内部BCコンポーネントの数を表示する
- */
+
+//@fn void Control::printNoCompo(FILE* fp)
+//@brief 内部BCコンポーネントの数を表示する
 void Control::printNoCompo(FILE* fp)
 {
   fprintf(fp,"\tNo. of Local Boundary  : %d\n", NoBC);
   fprintf(fp,"\tNo. of Medium          : %d\n", NoMedium);
   fprintf(fp,"\n");
-  fprintf(fp,"\tNo. of Fluid ID        : %d\n", NoMediumFluid);
-  fprintf(fp,"\tNo. of Solid ID        : %d\n", NoMediumSolid);
+  fprintf(fp,"\tNo. of Fluid Medium    : %d\n", NoMediumFluid);
+  fprintf(fp,"\tNo. of Solid Medium    : %d\n", NoMediumSolid);
 }
 
-/**
- @fn void Control::printParaConditions(FILE* fp)
- @brief 計算パラメータの表示
- @param fp
- */
+
+//@fn void Control::printParaConditions(FILE* fp)
+//@brief 計算パラメータの表示
 void Control::printParaConditions(FILE* fp)
 {
   if ( !fp ) {
@@ -2512,10 +2509,9 @@ void Control::printParaConditions(FILE* fp)
   fflush(fp);
 }
 
-/**
- @fn void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
- @brief 制御パラメータSTEERの表示
- */
+
+//@fn void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
+//@brief 制御パラメータSTEERの表示
 void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
 {
   if( !fp ) {
@@ -2667,21 +2663,24 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   // Heat Algorithm
-  switch (AlgorithmH) {
-    case Heat_EE_EE:
-      fprintf(fp,"\t     Heat Algorithm           :   Fractional Step\n");
-      fprintf(fp,"\t        Time marching scheme  :   Euler Explicit O(dt1)\n");
-      break;
-      
-    case Heat_EE_EI:
-      fprintf(fp,"\t     Heat Algorithm           :   Fractional Step\n");
-      fprintf(fp,"\t        Time marching scheme  :   Euler Implicit O(dt1)\n");
-      break;
-      
-    default:
-      fprintf(fp,"\t     Heat Algorithm           :   \n");
-      fprintf(fp,"\t        Time marching scheme  :   \n");
+  if ( isHeatProblem() ) {
+    switch (AlgorithmH) {
+      case Heat_EE_EE:
+        fprintf(fp,"\t     Heat Algorithm           :   Fractional Step\n");
+        fprintf(fp,"\t        Time marching scheme  :   Euler Explicit O(dt1)\n");
+        break;
+        
+      case Heat_EE_EI:
+        fprintf(fp,"\t     Heat Algorithm           :   Fractional Step\n");
+        fprintf(fp,"\t        Time marching scheme  :   Euler Implicit O(dt1)\n");
+        break;
+        
+      default:
+        fprintf(fp,"\t     Heat Algorithm           :   \n");
+        fprintf(fp,"\t        Time marching scheme  :   \n");
+    }
   }
+
   
   // Convection scheme
 	if ( KindOfSolver != SOLID_CONDUCTION ) {

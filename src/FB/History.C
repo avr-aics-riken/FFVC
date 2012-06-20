@@ -267,14 +267,14 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
         
       case SPEC_VEL_WH:
         pp = printQF(cmp[i].get_Mon_Calorie());
-        fprintf(fp, " %11.4e %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), pp, pp/cmp[i].getElement() );
+        fprintf(fp, " %11.4e %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), pp, pp/(REAL_TYPE)cmp[i].getElement() );
         break;
       
       case OUTFLOW:
         fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]) );
         if ( C->isHeatProblem() ) {
           pp = printQF(cmp[i].get_Mon_Calorie());
-          fprintf(fp, " %11.4e %11.4e", pp, pp/cmp[i].getElement() ); // [W], [W/m^2]
+          fprintf(fp, " %11.4e %11.4e", pp, pp/(REAL_TYPE)cmp[i].getElement() ); // [W], [W/m^2]
         }
         break;
         

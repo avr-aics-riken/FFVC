@@ -57,12 +57,9 @@ private:
   BoundaryOuter* bc;
   BoundaryOuter* BaseBc;
 	
-  char OBCname[NOFACE][LABEL];
-	
-public:
-	MediumList* mat;
+  MediumList* mat;
 
-  //Medium Table <--- textparser
+  // Medium Table <--- textparser
   MediumTableInfo *MTITP; 
 
 public:
@@ -82,9 +79,6 @@ public:
     BaseBc = NULL;
     compo = NULL;
     mat = NULL;
-    for (int i=0; i<NOFACE; i++) {
-      strcpy(&OBCname[i][0], "\0");
-    }
   }
   ~ParseBC() {
     if (bc) delete [] bc;
@@ -92,6 +86,7 @@ public:
   }
   
 protected:
+  bool chkDuplicate       (const int n, const std::string m_label);
   bool chkID              (void);
   bool isComponent        (unsigned label);
   bool isCompoTransfer    (unsigned label);
@@ -137,8 +132,6 @@ protected:
   void get_OBC_Wall       (const std::string label_base, const int n);
   void getUnitVec         (REAL_TYPE* v);
   void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
-  void printCompo         (FILE* fp, REAL_TYPE* nv, int* ci, MediumList* mat);
-  void printFaceOBC       (FILE* fp, REAL_TYPE* G_Lbx);
   void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int face);
   void set_Deface         (const std::string label_base, const int n);
   
@@ -202,8 +195,8 @@ public:
   void loadBC_Local        (Control* C);
   void loadBC_Outer        (void);
   void setMediumPoint     (MediumTableInfo *m_MTITP);
-  void printCompoInfo     (FILE* mp, FILE* fp, REAL_TYPE* nv, int* ci, MediumList* m_mat);
-  void printOBCinfo       (FILE* mp, FILE* fp, REAL_TYPE* G_Lbx);
+  void printCompo         (FILE* fp, REAL_TYPE* nv, int* ci, MediumList* mat);
+  void printFaceOBC       (FILE* fp, REAL_TYPE* G_Lbx);
   void receiveCompoPtr    (CompoList* CMP);
   void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
   void setRefMedium       (MediumList* mat, Control* Cref);

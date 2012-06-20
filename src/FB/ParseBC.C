@@ -40,6 +40,14 @@ void ParseBC::chkBCconsistency(unsigned kos)
   }
 }
 
+//@brief ラベルの重複を調べる
+bool ParseBC::chkDuplicate(const int n, const std::string m_label)
+{
+	for (int i=0; i<n; i++){
+    if ( BaseBc[i].get_Alias() == m_label ) return false;
+	}
+	return true;
+}
 
 
 /**
@@ -1349,7 +1357,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
 	  compo[n].set_VBC_policy(false);
   }
   else {
-	  printf("\tParsing error : Invalid string value '%s' for 'Specified_Type'\n", str.c_str());
+	  printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
 	  Exit(0);
   }
   
@@ -1371,7 +1379,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
     label = label_base + "/temperature";
     
     if ( !(tpCntl->GetValue(label, &ct )) ) {
-      stamped_printf("\tParsing error : fail to get 'Temperature' in 'LocalBoundary > SPEC_VEL'\n");
+      stamped_printf("\tParsing error : fail to get 'Temperature' in 'LocalBoundary > Specified_Velocity'\n");
       Exit(0);
     }
     else {
@@ -2401,15 +2409,7 @@ void ParseBC::loadBC_Local(Control* C)
       get_IBC_SpecVel(label_leaf, odr);      
     }
     else if ( tp == OUTFLOW ) {
-      if ( compo[odr].getState() != SOLID ) {
-        printf("\tID Error : OUTFLOW ID must be Solid\n");
-        Exit(0);
-      }
-      get_IBC_Outflow(label_leaf, odr);
-      if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-        stamped_printf("Parse Error : Reduplication of a pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-        Exit(0);
-      }      
+      get_IBC_Outflow(label_leaf, odr);     
     }
     else if ( tp == IBM_DF ) {
       get_IBC_IBM_DF(label_leaf, odr);
@@ -2576,7 +2576,7 @@ void ParseBC::loadBC_Outer(void)
   label_base = "/BC_Table/OuterBoundary";
   
   if ( !tpCntl->chkNode(label_base) ) {
-    stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
     Exit(0);
   }
   
@@ -2584,24 +2584,37 @@ void ParseBC::loadBC_Outer(void)
   for (int i=0; i<NoBaseBC; i++) {
     
     if(!tpCntl->GetNodeStr(label_base, i+1, &str)){
-      printf("\tParsing error : No Elem name in 'Basic_BCs'\n");
+      Hostonly_ printf("\tParsing error : Missing 'Basic_BCs'\n");
       Exit(0);
     }
     if( strcasecmp(str.substr(0,9).c_str(), "Basic_BCs") ) continue;
     
+    // alias ユニークな名称であること
+    label_leaf = label_base + "/" + str;
+    label = label_leaf + "/alias";
+    
+    if ( !(tpCntl->GetValue(label, &str )) ) {
+      Hostonly_ printf("\tParsing error : No 'Alias' in 'Basic_BCs'\n");
+      Exit(0);
+    }
+    if ( !chkDuplicate(i, str) ) {
+      Hostonly_ printf("\tParsing error : 'Alias' must be unique\n");
+      Exit(0);
+    }
+    BaseBc[i].set_Alias(str);
+    
     
     // Classに境界条件の種別をセットする
-    label_leaf = label_base + "/" + str;
     label = label_leaf + "/class";
     
     if ( !(tpCntl->GetValue(label, &str )) ) {
-      printf("\tParsing error : No Class in 'Basic_BCs'\n");
+      Hostonly_ printf("\tParsing error : No 'Class' in 'Basic_BCs'\n");
       Exit(0);
     }
     setKeywordOBC(str, i);
-    
     BaseBc[i].set_Label(str);
     
+
     
     // 各条件に応じたパラメータをロード
     switch ( BaseBc[i].get_Class() ) {
@@ -2639,14 +2652,14 @@ void ParseBC::loadBC_Outer(void)
   label_base = "/BC_Table/OuterBoundary/Face_BC";
   
   if ( !tpCntl->chkNode(label_base) ) {
-    stamped_printf("\tParsing error : Missing OuterBoundary Face_BC\n");
+    Hostonly_ printf("\tParsing error : Missing OuterBoundary Face_BC\n");
     Exit(0);
   }
   
   // check
   int nnode = tpCntl->countLabels(label_base);
   if ( nnode != NOFACE ) {
-    stamped_printf("\tParsing error : OuterBoundary Face_BC count != 6\n");
+    Hostonly_ printf("\tParsing error : OuterBoundary Face_BC count != 6\n");
     Exit(0);
   }
   
@@ -2654,8 +2667,8 @@ void ParseBC::loadBC_Outer(void)
   for (int face=0; face<NOFACE; face++) {
     
     // faceに対するラベルを取得
-    if(!tpCntl->GetNodeStr(label_base, face+1, &str)){
-      stamped_printf("\tGetNodeStr error\n");
+    if ( !tpCntl->GetNodeStr(label_base, face+1, &str) ){
+      Hostonly_ printf("\tGetNodeStr error\n");
       Exit(0);
     }
     label_leaf = label_base + "/" + str;
@@ -2663,15 +2676,22 @@ void ParseBC::loadBC_Outer(void)
     // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
     label = label_leaf + "/kind";
     
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      printf("\tParsing error : kind cannot found : Face_BC\n");
+    if ( !(tpCntl->GetValue(label, &str)) ) {
+      Hostonly_ printf("\tParsing error : kind cannot found : Face_BC\n");
       Exit(0);
     }
     
+    // Aliasでサーチ
     for (int i=0; i<NoBaseBC; i++) {
-      if ( !strcasecmp( str.c_str(), BaseBc[i].get_Label().c_str() ) ) {
+      if ( !strcasecmp( str.c_str(), BaseBc[i].get_Alias().c_str() ) ) {
         bc[face].dataCopy( &BaseBc[i] );
         break;
+      }
+      else {
+        if ( i == NoBaseBC-1 ) { // 最後までみつからない
+          Hostonly_ printf("\tParsing error : [%d]'%s' is not listed in 'Basic_BCs'\n", i+1, str.c_str());
+          Exit(0);
+        }
       }
     }
   }
@@ -2683,7 +2703,7 @@ void ParseBC::loadBC_Outer(void)
   for (int face=0; face<NOFACE; face++) {
     
     if(!tpCntl->GetNodeStr(label_base, face+1, &str)){
-      stamped_printf("\tGetNodeStr error\n");
+      Hostonly_ printf("\tGetNodeStr error\n");
       Exit(0);
     }
     label_leaf = label_base + "/" + str;
@@ -2692,7 +2712,7 @@ void ParseBC::loadBC_Outer(void)
     label = label_leaf + "/medium_on_guide_cell";
     
     if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : No entory 'mediun_on_guide_cell' in 'Face_BC'\n");
+      Hostonly_ printf("\tParsing error : No entory 'mediun_on_guide_cell' in 'Face_BC'\n");
       Exit(0);
     }
     
@@ -2723,7 +2743,7 @@ void ParseBC::loadBC_Outer(void)
       if ( bc[n].get_Class() == OBC_PERIODIC ) {
         n_pair = oppositDir(n);
         if ( bc[n_pair].get_Class() != OBC_PERIODIC ) {
-          printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+          Hostonly_ printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
           Exit(0);
         }
       }
@@ -2737,26 +2757,26 @@ void ParseBC::loadBC_Outer(void)
         switch (bc[n].get_PrdcMode()) {
           case BoundaryOuter::prdc_Simple:
             if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Simple ) { 
-              printf("\tFace BC : No consistent SIMPLE Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+              Hostonly_ printf("\tFace BC : No consistent SIMPLE Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             break;
             
           case BoundaryOuter::prdc_Directional:
             if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Directional ) {
-              printf("\tFace BC : No consistent DIRECTIONAL Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+              Hostonly_ printf("\tFace BC : No consistent DIRECTIONAL Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             if ( bc[n].p != bc[n_pair].p ) { // 同じ値が入っていること
-              printf("\tFace BC : Pressure difference value is not same in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+              Hostonly_ printf("\tFace BC : Pressure difference value is not same in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_upstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_downstream) ) {
-              printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
+              Hostonly_ printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
               Exit(0);
             }
             if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_downstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_upstream) ) {
-              printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
+              Hostonly_ printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
               Exit(0);
             }
             
@@ -2774,7 +2794,7 @@ void ParseBC::loadBC_Outer(void)
           
           // 他方は周期境界以外であること
           if ( bc[n_pair].get_Class() == OBC_PERIODIC ) {
-            printf("\tFace BC : %s direction should be non periodic BC\n", FBUtility::getDirection(n_pair).c_str());
+            Hostonly_ printf("\tFace BC : %s direction should be non periodic BC\n", FBUtility::getDirection(n_pair).c_str());
             Exit(0);
           }
           
@@ -2782,7 +2802,7 @@ void ParseBC::loadBC_Outer(void)
           for (unsigned c=1; c<=NoBC; c++) {
             if ( compo[c].getType() == PERIODIC ) {
               if ( (int)compo[c].getPeriodicDir() != bc[n].get_DriverDir() ) {
-                printf("\tPeriodic Driver BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+                Hostonly_ printf("\tPeriodic Driver BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
                 Exit(0);
               }
               else {
@@ -2791,7 +2811,7 @@ void ParseBC::loadBC_Outer(void)
             }
           }
           if (cflag != 1) {
-            printf("\tPeriodic Driver BC can not detemine uniquely\n");
+            Hostonly_ printf("\tPeriodic Driver BC can not detemine uniquely\n");
             Exit(0);
           }
         }        
@@ -3407,22 +3427,6 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
 }
 
 
-/**
- @fn void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
- @brief コンポーネントの情報を表示する
- @param mp 標準出力
- @param nv ボクセルモデルから計算した法線
- @param gci グローバルなコンポーネントのインデクス
- @param mat MediumList
- */
-void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
-{
-  if( !fp || !mp ) Exit(0);
-  
-  printCompo(mp, nv, gci, mat);
-  printCompo(fp, nv, gci, mat);
-}
-
 
 /**
  @fn void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
@@ -3432,8 +3436,8 @@ void ParseBC::printCompoInfo(FILE* mp, FILE* fp, REAL_TYPE* nv, int* gci, Medium
  */
 void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
 {
-  for (unsigned i=0; i<NOFACE; i++) {
-    fprintf(fp,"\t      Set %s up as %s : (%s)\n", Control::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), OBCname[i]);
+  for (int i=0; i<NOFACE; i++) {
+    fprintf(fp,"\t      Set %s up as %s : < %s >\n", Control::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), bc[i].get_Alias().c_str());
     printOBC(fp, &bc[i], G_Lbx, i);
     fprintf(fp,"\n");
   }
@@ -3452,7 +3456,7 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int
 {
   REAL_TYPE a, b, c;
   
-  fprintf(fp,"\t\t\tGuide Cell Medium = %d\n", ref->get_GuideMedium());
+  fprintf(fp,"\t\t\tGuide Cell Medium = %s\n", mat[ref->get_GuideMedium()].getLabel().c_str());
   
   switch ( ref->get_Class() ) {
     case OBC_WALL:
@@ -3621,18 +3625,6 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int
   }
   
   fflush(fp);
-}
-
-
-/**
- @fn void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
- @brief 外部境界を表示
- @param G_Lbx グローバルの領域の大きさ
- */
-void ParseBC::printOBCinfo(FILE* mp, FILE* fp, REAL_TYPE* G_Lbx)
-{
-  printFaceOBC(mp, G_Lbx);
-  printFaceOBC(fp, G_Lbx);
 }
 
 
