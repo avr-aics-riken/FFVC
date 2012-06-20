@@ -1,13 +1,16 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file DFI.C
 //@brief DFIファイル生成
-//@author keno, Advanced Vis Team, AICS, RIKEN
+//@author kero
 
 #include "dfi.h"
 #include "util_Path.h"

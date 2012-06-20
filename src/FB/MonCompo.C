@@ -299,7 +299,7 @@ string MonitorCompo::getTypeStr()
     case LINE:
       str = "Line"; break;
     case INNER_BOUNDARY:
-      str = "Inner Boundary"; break;
+      str = "Local Boundary"; break;
     default:
       Exit(0);
   }
@@ -606,7 +606,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
 void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
 {
   ostringstream oss;
-  oss << "InnerBoundary" << n;
+  oss << "LocalBoundary" << n;
   type = INNER_BOUNDARY;
   label = oss.str();
   method = SAMPLING_NEAREST;

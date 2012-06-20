@@ -242,13 +242,13 @@ SklFactoryCBC.o: /usr/local/sphere/include/coord/SklCrdMngr.h
 SklFactoryCBC.o: /usr/local/sphere/include/coord/SklCoord.h
 SklFactoryCBC.o: ../CBC/SklSolverCBC.h ../../FB/FB_Define.h
 SklFactoryCBC.o: ../../FB/mydebug.h ../CBC/CBC_Define.h
-SklFactoryCBC.o: ../CBC/FortranFuncCBC.h /usr/local/sphere/include/SklUtil.h
-SklFactoryCBC.o: ../CBC/CBC_SetBC.h ../../IP/IP_Duct.h ../../FB/Intrinsic.h
-SklFactoryCBC.o: ../../FB/FB_Define.h ../../FB/BndOuter.h ../../FB/Control.h
-SklFactoryCBC.o: ../../FB/Medium.h ../../FB/Component.h ../../FB/FBUtility.h
-SklFactoryCBC.o: ../../FB/Monitor.h ../../FB/vec3.h ../../FB/vec3_func.h
-SklFactoryCBC.o: ../../FB/vec3f_func.h ../../FB/Parallel_node.h
-SklFactoryCBC.o: ../../FB/MonCompo.h ../../FB/basic_func.h
+SklFactoryCBC.o: ../CBC/FortranFuncCBC.h ../CBC/CBC_SetBC.h
+SklFactoryCBC.o: ../../IP/IP_Duct.h ../../FB/Intrinsic.h ../../FB/FB_Define.h
+SklFactoryCBC.o: ../../FB/BndOuter.h ../../FB/Control.h ../../FB/Medium.h
+SklFactoryCBC.o: ../../FB/Component.h ../../FB/FBUtility.h ../../FB/Monitor.h
+SklFactoryCBC.o: ../../FB/vec3.h ../../FB/vec3_func.h ../../FB/vec3f_func.h
+SklFactoryCBC.o: ../../FB/Parallel_node.h ../../FB/MonCompo.h
+SklFactoryCBC.o: /usr/local/sphere/include/SklUtil.h ../../FB/basic_func.h
 SklFactoryCBC.o: ../../FB/Sampling.h ../../FB/Interval_Mngr.h
 SklFactoryCBC.o: ../../FB/TPControl.h ../../IP/IP_Define.h
 SklFactoryCBC.o: ../../IP/IP_PPLT2D.h ../../IP/IP_SHC1D.h ../../IP/IP_PMT.h

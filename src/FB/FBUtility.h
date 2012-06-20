@@ -19,22 +19,24 @@
 #include <string>
 #include <string.h>
 #include <stdio.h>
-#include "FB_Define.h"
+#include <algorithm>
+
 #include "mpi.h"
+#include "FB_Define.h"
+
 
 class FBUtility {
 
 public:
   FBUtility() {}
   ~FBUtility() {}
-  
-protected:
-  static void MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp);
-  
-public:  
+
+public:
+  static bool compare(const std::string str1, const std::string str2);
   static std::string getDirection(const unsigned dir);
   
   static void displayMemory (const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp, FILE* mp);
+  static void MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp);
   static void printVersion  (FILE* fp, const char* str, const unsigned ver);
 
 	/**

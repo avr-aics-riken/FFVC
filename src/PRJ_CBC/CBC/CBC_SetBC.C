@@ -42,7 +42,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* t, unsigned* bh1, REAL_TYPE tm, Control* C)
    // 外部境界条件
    int n = OBC_MASK;
    for (int face=0; face<NOFACE; face++) {
-   typ = obc[face].get_BCtype();
+   typ = obc[face].get_Class();
    getOuterLoopIdx(face, st, ed);
    
    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
@@ -99,7 +99,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* v, unsigned* bv, REAL_TYPE tm, REAL_TYP
   
   // 外部境界条件
   for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
+    typ = obc[face].get_Class();
     getOuterLoopIdx(face, st, ed);
     
     // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
@@ -139,7 +139,7 @@ void SetBC3D::checkDriver(FILE* fp)
   }
   
   for (int face=0; face<NOFACE; face++) {
-    if ( (obc[face].get_BCtype() == OBC_PERIODIC) && (obc[face].get_PrdcMode() == BoundaryOuter::prdc_Driver) ) {
+    if ( (obc[face].get_Class() == OBC_PERIODIC) && (obc[face].get_PrdcMode() == BoundaryOuter::prdc_Driver) ) {
 
       for (unsigned n=1; n<=NoBC; n++) {
         if ( cmp[n].getType() == PERIODIC ) {
@@ -478,7 +478,7 @@ void SetBC3D::mod_div(REAL_TYPE* div, unsigned* bv, REAL_TYPE coef, REAL_TYPE tm
   
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
+    typ = obc[face].get_Class();
     
     // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     if( pn.nID[face] >= 0 ) {
@@ -758,7 +758,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, unsigned* bv, REAL_TYPE
   
   // 流束形式の外部境界条件
   for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
+    typ = obc[face].get_Class();
     
     // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     if( pn.nID[face] >= 0 ) continue;
@@ -854,7 +854,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* div, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_BCtype();
+    typ = obc[face].get_Class();
     
     // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     if( pn.nID[face] >= 0 ) continue;
@@ -932,7 +932,7 @@ void SetBC3D::OuterPBC(SklScalar3D<REAL_TYPE>* d_p)
   if ( !(p = d_p->GetData()) ) Exit(0);
   
   for (int face=0; face<NOFACE; face++) {
-    F = obc[face].get_BCtype();
+    F = obc[face].get_Class();
     
     // 周期境界条件
     if ( F == OBC_PERIODIC ) {
@@ -982,7 +982,7 @@ void SetBC3D::OuterVBC_Periodic(SklVector3DEx<REAL_TYPE>* d_v)
   
   for (int face=0; face<NOFACE; face++) {
     
-    if ( obc[face].get_BCtype() == OBC_PERIODIC ) {
+    if ( obc[face].get_Class() == OBC_PERIODIC ) {
       mark();
       unsigned pm = obc[face].get_PrdcMode();
       if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional)) { // BoundaryOuter::prdc_Driverに対しては処理不要
@@ -1014,7 +1014,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* v, REAL_TYPE* vc, unsigned* bv, REAL_TYPE tm, 
     if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     // @note ここでスキップする場合には，tfreeの処理でMPI通信をしないこと（参加しないノードがあるためエラーとなる）
     
-    switch ( obc[face].get_BCtype() ) {
+    switch ( obc[face].get_Class() ) {
       case OBC_OUTFLOW:
         cbc_vobc_update_(v, dim_sz, gc, vc, &face);
         break;
@@ -1060,7 +1060,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* vc, REAL_TYPE* v0, unsigned* bv, REAL_T
     if( pn.nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
     
-    switch ( obc[face].get_BCtype() ) {
+    switch ( obc[face].get_Class() ) {
       case OBC_OUTFLOW:
         v_cnv = C->V_Dface[face] * dt / dh;
         cbc_vobc_outflow_(vc, dim_sz, gc, &v_cnv, (int*)bv, &face, v0, &flop);
@@ -1086,7 +1086,7 @@ void SetBC3D::OuterTBC(SklScalar3D<REAL_TYPE>* d_t)
   if ( !(t = d_t->GetData()) ) Exit(0);
   
   for (int face=0; face<NOFACE; face++) {
-    F = obc[face].get_BCtype();
+    F = obc[face].get_Class();
 
     // 周期境界条件
     if ( F == OBC_PERIODIC ) {
@@ -1128,7 +1128,7 @@ void SetBC3D::OuterTBCface(REAL_TYPE* qbc, unsigned* bh1, REAL_TYPE* t, REAL_TYP
     
     H = obc[face].get_HTmode();
     
-    if ( obc[face].get_BCtype() == OBC_WALL ) {
+    if ( obc[face].get_Class() == OBC_WALL ) {
       switch ( obc[face].get_hType() ) { // 熱境界条件の種類
         case HEATFLUX:
           C->H_Dface[face] = ps_OBC_Heatflux(qbc, bh1, face, flop);
@@ -1697,7 +1697,7 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* ws, unsigned* bh1, REAL_TYPE* v, REAL_
     
     // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
     
-    switch ( obc[face].get_BCtype() ) {
+    switch ( obc[face].get_Class() ) {
       case OBC_OUTFLOW:
         C->H_Dface[face] = ps_OBC_Free(ws, bh1, face, v, t, v00, flop);
         break;
@@ -4032,21 +4032,20 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, unsigned* bx, uns
  */
 void SetBC3D::setInitialTemp_Compo(unsigned n, unsigned* bx, SklScalar3D<REAL_TYPE>* d_t)
 {
-  int i,j,k;
-  unsigned register m, id;
+  unsigned register m;
   REAL_TYPE ref;
   REAL_TYPE *t=NULL;
   
   if ( !(t = d_t->GetData()) ) Exit(0);
   
   ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
-  id = cmp[n].getID();
+  int id = cmp[n].getMatOdr();
 	
-  for (k=1; k<=kxc; k++) {
-    for (j=1; j<=jxc; j++) {
-      for (i=1; i<=ixc; i++) {
+  for (int k=1; k<=kxc; k++) {
+    for (int j=1; j<=jxc; j++) {
+      for (int i=1; i<=ixc; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( DECODE_ID(bx[m]) == id ) {
+        if ( (int)DECODE_ID(bx[m]) == id ) {
           t[m] = ref; 
         }
       }
@@ -4072,7 +4071,7 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
 
   if ( pn.numProc > 1 ) {
     for (int face=0; face<NOFACE; face++) {
-      if ( obc[face].get_BCtype() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
+      if ( obc[face].get_Class() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
 
       switch (face) {
         case X_MINUS:
@@ -4103,7 +4102,7 @@ void SetBC3D::setBCIperiodic(SklScalar3D<unsigned>* d_bx)
   } 
   else { // 逐次処理
     for (int face=0; face<NOFACE; face++) {
-      if ( obc[face].get_BCtype() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
+      if ( obc[face].get_Class() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
       
       switch (face) {
         case X_MINUS:

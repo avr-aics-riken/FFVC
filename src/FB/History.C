@@ -1,13 +1,16 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file History.C
 //@brief History class
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include "History.h"
 
@@ -184,7 +187,7 @@ void History::printHistory(FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms,
  */
 void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C)
 {
-  unsigned cid;
+  int cid;
   int def;
 
   if ( Unit_Log == DIMENSIONAL ) {
@@ -195,7 +198,7 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
   }
 
   for (int i=1; i<=C->NoBC; i++) {
-    cid = cmp[i].getID();
+    cid = cmp[i].getMatOdr();
     def = cmp[i].getDef();
     
     switch ( cmp[i].getType() ) {

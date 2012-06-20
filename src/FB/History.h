@@ -1,16 +1,19 @@
 #ifndef _FB_HISTORY_H_
 #define _FB_HISTORY_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file History.h
 //@brief FlowBase History class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include "Control.h"
 #include "Component.h"

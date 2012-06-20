@@ -18,14 +18,13 @@
  */
 
 #include <math.h>
-
-#include "FB_Define.h"
-
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include "string.h"
+
+#include "FB_Define.h"
 #include "TextParser.h"
 
 

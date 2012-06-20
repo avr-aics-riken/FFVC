@@ -13,11 +13,10 @@
 
 //@file VoxInfo.h
 //@brief FlowBase VoxInfo class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include <math.h>
 
-//#include "Skl.h"
 #include "FBUtility.h"
 #include "Component.h"
 #include "Medium.h"
@@ -193,15 +192,15 @@ protected:
   }
   
   /**
-   @fn inline int VoxInfo::find_ID_state(int mid)
-   @brief cmp[]にエンコードされたIDの中から対象となるセルIDの状態を返す
-   @param mid 対象とするセルID
+   @fn inline int VoxInfo::find_Mat_State(int m)
+   @brief cmp[]にエンコードされた中から対象となる媒質の状態を返す
+   @param m 対象とする媒質インデクス
    @retval 1-fluid / 0-solid
    @note 媒質のセルIDが格納されているオーダーの範囲は[NoBC+1,NoCompo]
    */
-  inline int find_ID_state(int mid) {
-    for (unsigned n=NoBC+1; n<=NoCompo; n++) {
-      if (cmp[n].getID() == mid) return cmp[n].getState();
+  inline int find_Mat_State(int m) {
+    for (int n=(int)NoBC+1; n<=(int)NoCompo; n++) {
+      if (cmp[n].getMatOdr() == m) return cmp[n].getState();
     }
     Exit(0);
     return 0;
@@ -224,7 +223,7 @@ public:
                               const int* mid, 
                               unsigned* bx);
   
-  void adjCellID_on_GC       (int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode);
+  void adjCellID_on_GC       (const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode);
   void adjCellID_Prdc_Inner  (SklScalar3D<int>* d_mid);
   void alloc_voxel_nv        (unsigned len);
   void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);

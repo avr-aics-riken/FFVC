@@ -15,13 +15,14 @@
 //@brief FlowBase Intrinsic class Header
 //@author kero
 
+#include <math.h>
+#include <fstream>
+
 #include "FB_Define.h"
 #include "BndOuter.h"
 #include "Control.h"
 #include "Component.h"
 #include "FBUtility.h"
-#include <math.h>
-#include <fstream>
 #include "Parallel_node.h"
 #include "vec3.h"
 #include "TPControl.h"

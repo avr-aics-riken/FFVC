@@ -104,8 +104,8 @@ protected:
   
   REAL_TYPE get_BCval_real(const std::string label);
   
-  void setKeywordIBC      (const char *keyword, const int m);
-  void setKeywordOBC      (const char *keyword, const int m);
+  void setKeywordLBC      (const std::string keyword, const int m);
+  void setKeywordOBC      (const std::string keyword, const int m);
   void get_Center         (const std::string label_base, const int n, REAL_TYPE* v);
   void get_Dir            (const std::string label_base, const int n, REAL_TYPE* v);
   void get_NV             (const std::string label_base, const int n, REAL_TYPE* v);
@@ -136,7 +136,7 @@ protected:
   void get_OBC_Trcfree    (const std::string label_base, const int n);
   void get_OBC_Wall       (const std::string label_base, const int n);
   void getUnitVec         (REAL_TYPE* v);
-  void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, REAL_TYPE vel);
+  void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
   void printCompo         (FILE* fp, REAL_TYPE* nv, int* ci, MediumList* mat);
   void printFaceOBC       (FILE* fp, REAL_TYPE* G_Lbx);
   void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int face);
@@ -189,26 +189,25 @@ protected:
   }
   
 public:
-  bool isIDinCompo        (unsigned candidate_id, unsigned now);
-  bool isIDinCompo        (unsigned candidate_id, int def, unsigned now);
+  bool isIDinCompo        (int candidate, unsigned now);
+  bool isIDinCompo        (int candidate, int def, unsigned now);
   bool receive_TP_Ptr     (TPControl* tp);
   
   int getNoLocalBC        (void);
   
   void chkBCconsistency   (unsigned kos);
   void countMedium        (Control* Cref);
-  void loadOuterBC        (void);
+  void get_Phase          (void);
+  void get_Medium_InitTemp(void);
+  void loadBC_Local        (Control* C);
+  void loadBC_Outer        (void);
   void setMediumPoint     (MediumTableInfo *m_MTITP);
   void printCompoInfo     (FILE* mp, FILE* fp, REAL_TYPE* nv, int* ci, MediumList* m_mat);
   void printOBCinfo       (FILE* mp, FILE* fp, REAL_TYPE* G_Lbx);
   void receiveCompoPtr    (CompoList* CMP);
-  void setCompoList       (Control* C);
   void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
   void setRefMedium       (MediumList* mat, Control* Cref);
   void setRefValue        (MediumList* mat, CompoList* cmp, Control* C);
-  
-  void get_Phase          (void);
-  void get_Medium_InitTemp(void);
   
 };
 

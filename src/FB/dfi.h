@@ -1,16 +1,19 @@
 #ifndef _CBC_DFI_H_
 #define _CBC_DFI_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file DFI.h
 //@brief DFI class Header
-//@author keno, Advanced Vis Team, AICS, RIKEN
+//@author kero
 //@note このクラスは、並列時のみにコールすること。MPI_Initialize(), Finalize()はクラス外で実行。
 //      dfiファイルの書き出しは、マスターランクでのみ行う。
 

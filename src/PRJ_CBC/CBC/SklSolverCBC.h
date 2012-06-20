@@ -34,7 +34,6 @@
 #include "ParseMat.h"
 #include "FBUtility.h"
 #include "VoxInfo.h"
-#include "SklUtil.h"
 #include "History.h"
 #include "CBC_SetBC.h"
 #include "Parallel_node.h"

@@ -18,7 +18,7 @@
 #include "VoxInfo.h"
 
 /**
- @fn void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode)
+ @fn void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode)
  @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする
  @param face 外部境界面番号
  @param d_mid ID配列のデータクラス
@@ -27,10 +27,9 @@
  @param prdc_mode 周期境界条件のモード
  @note ガイドセル全てを対象
  */
-void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, unsigned prdc_mode)
+void VoxInfo::adjCellID_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode)
 {
-  int i, j, k;
-  register int ref_id;
+  int ref_id;
   unsigned m, m0, m1;
   int* mid=NULL;
   
@@ -47,15 +46,14 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
     switch (face) {
       case X_MINUS:
         if( pn.nID[face] < 0 ){
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m0 = FBUtility::getFindexS3D(size, guide, 1, j, k); // 最外層のID
               ref_id = mid[m0];
               
-              for (i=1-gd; i<=0; i++) {
-                m = FBUtility::getFindexS3D(size, guide, i, j, k);
-                mid[m] = ( find_ID_state(ref_id) == SOLID ) ? ref_id : c_id;
-              }
+              int i=0;
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
             }
           }
         }
@@ -63,15 +61,14 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
         
       case X_PLUS:
         if( pn.nID[face] < 0 ){
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m0 = FBUtility::getFindexS3D(size, guide, ix, j, k); // 最外層のID
               ref_id = mid[m0];
               
-              for (i=ix+1; i<=ix+gd; i++) {
-                m = FBUtility::getFindexS3D(size, guide, i, j, k);
-                mid[m] = ( find_ID_state(ref_id) == SOLID ) ? ref_id : c_id;
-              }
+              int i=ix+1;
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
             }
           }
         }
@@ -79,15 +76,14 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
         
       case Y_MINUS:
         if( pn.nID[face] < 0 ){
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m0 = FBUtility::getFindexS3D(size, guide, i, 1, k); // 最外層のID
               ref_id = mid[m0];
               
-              for (j=1-gd; j<=0; j++) {
-                m = FBUtility::getFindexS3D(size, guide, i, j, k);
-                mid[m] = ( find_ID_state(ref_id) == SOLID ) ? ref_id : c_id;
-              }
+              int j=0;
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
             }
           }
         }
@@ -95,15 +91,14 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
         
       case Y_PLUS:
         if( pn.nID[face] < 0 ){
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m0 = FBUtility::getFindexS3D(size, guide, i, jx, k); // 最外層のID
               ref_id = mid[m0];
               
-              for (j=jx+1; j<=jx+gd; j++) {
-                m = FBUtility::getFindexS3D(size, guide, i, j, k);
-                mid[m] = ( find_ID_state(ref_id) == SOLID ) ? ref_id : c_id;
-              }
+              int j=jx+1;
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
             }
           }
         }
@@ -111,15 +106,14 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
         
       case Z_MINUS:
         if( pn.nID[face] < 0 ){
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m0 = FBUtility::getFindexS3D(size, guide, i, j, 1); // 最外層のID
               ref_id = mid[m0];
               
-              for (k=1-gd; k<=0; k++) {
-                m = FBUtility::getFindexS3D(size, guide, i, j, k);
-                mid[m] = ( find_ID_state(ref_id) == SOLID ) ? ref_id : c_id;
-              }
+              int k=0;
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
             }
           }
         }
@@ -127,15 +121,14 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
         
       case Z_PLUS:
         if( pn.nID[face] < 0 ){
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m0 = FBUtility::getFindexS3D(size, guide, i, j, kx); // 最外層のID
               ref_id = mid[m0];
               
-              for (k=kx+1; k<=kx+gd; k++) {
-                m = FBUtility::getFindexS3D(size, guide, i, j, k);
-                mid[m] = ( find_ID_state(ref_id) == SOLID ) ? ref_id : c_id;
-              }
+              int k=kx+1;
+              m = FBUtility::getFindexS3D(size, guide, i, j, k);
+              mid[m] = ( find_Mat_State(ref_id) == SOLID ) ? ref_id : c_id;
             }
           }
         }
@@ -179,9 +172,9 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
         switch (face) {
           case X_MINUS:
             if( pn.nID[face] < 0 ){
-              for (k=1; k<=kx; k++) {
-                for (j=1; j<=jx; j++) {
-                  for (i=1-gd; i<=0; i++) {
+              for (int k=1; k<=kx; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=1-gd; i<=0; i++) {
                     m0 = FBUtility::getFindexS3D(size, guide, i   , j, k);
                     m1 = FBUtility::getFindexS3D(size, guide, i+ix, j, k);
                     mid[m0] = mid[m1];
@@ -193,9 +186,9 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
             
           case X_PLUS:
             if( pn.nID[face] < 0 ){
-              for (k=1; k<=kx; k++) {
-                for (j=1; j<=jx; j++) {
-                  for (i=ix+1; i<=ix+gd; i++) {
+              for (int k=1; k<=kx; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=ix+1; i<=ix+gd; i++) {
                     m0 = FBUtility::getFindexS3D(size, guide, i   , j, k);
                     m1 = FBUtility::getFindexS3D(size, guide, i-ix, j, k);
                     mid[m0] = mid[m1];
@@ -207,9 +200,9 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
             
           case Y_MINUS:
             if( pn.nID[face] < 0 ){
-              for (k=1; k<=kx; k++) {
-                for (j=1-gd; j<=0; j++) {
-                  for (i=1; i<=ix; i++) {
+              for (int k=1; k<=kx; k++) {
+                for (int j=1-gd; j<=0; j++) {
+                  for (int i=1; i<=ix; i++) {
                     m0 = FBUtility::getFindexS3D(size, guide, i, j   , k);
                     m1 = FBUtility::getFindexS3D(size, guide, i, j+jx, k);
                     mid[m0] = mid[m1];
@@ -221,9 +214,9 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
             
           case Y_PLUS:
             if( pn.nID[face] < 0 ){
-              for (k=1; k<=kx; k++) {
-                for (j=jx+1; j<=jx+gd; j++) {
-                  for (i=1; i<=ix; i++) {
+              for (int k=1; k<=kx; k++) {
+                for (int j=jx+1; j<=jx+gd; j++) {
+                  for (int i=1; i<=ix; i++) {
                     m0 = FBUtility::getFindexS3D(size, guide, i, j   , k);
                     m1 = FBUtility::getFindexS3D(size, guide, i, j-jx, k);
                     mid[m0] = mid[m1];
@@ -235,9 +228,9 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
             
           case Z_MINUS:
             if( pn.nID[face] < 0 ){
-              for (k=1-gd; k<=0; k++) {
-                for (j=1; j<=jx; j++) {
-                  for (i=1; i<=ix; i++) {
+              for (int k=1-gd; k<=0; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=1; i<=ix; i++) {
                     m0 = FBUtility::getFindexS3D(size, guide, i, j, k    );
                     m1 = FBUtility::getFindexS3D(size, guide, i, j, k+kx);
                     mid[m0] = mid[m1];
@@ -249,9 +242,9 @@ void VoxInfo::adjCellID_on_GC(int face, SklScalar3D<int>* d_mid, int BCtype, int
             
           case Z_PLUS:
             if( pn.nID[face] < 0 ){
-              for (k=kx+1; k<=kx+gd; k++) {
-                for (j=1; j<=jx; j++) {
-                  for (i=1; i<=ix; i++) {
+              for (int k=kx+1; k<=kx+gd; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=1; i<=ix; i++) {
                     m0 = FBUtility::getFindexS3D(size, guide, i, j, k    );
                     m1 = FBUtility::getFindexS3D(size, guide, i, j, k-kx);
                     mid[m0] = mid[m1];
@@ -284,7 +277,7 @@ void VoxInfo::adjCellID_Prdc_Inner(SklScalar3D<int>* d_mid)
   for (unsigned n=1; n<=NoBC; n++) {
     cmp[n].getBbox(st, ed);
     dir = (int)cmp[n].getPeriodicDir();
-    id  = cmp[n].getID();
+    id  = cmp[n].getMatOdr();
     
     if ( cmp[n].getType() == PERIODIC ) {
 
@@ -339,16 +332,15 @@ void VoxInfo::alloc_voxel_nv(unsigned len)
  */
 void VoxInfo::cal_Compo_Area_Normal(unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi)
 {
-  unsigned id;
   REAL_TYPE a, nvx, nvy, nvz;
-  int cijk[3], dir[3], def, area=0;
+  int cijk[3], dir[3], area=0;
   REAL_TYPE ai, aj, ak;
   
   cijk[0] = cijk[1] = cijk[2] = 0;
   dir[0] = dir[1] = dir[2] = 0;
   
-  id  = cmp[n].getID();
-  def = cmp[n].getDef();
+  int id  = cmp[n].getMatOdr();
+  int def = cmp[n].getDef();
   
   switch ( cmp[n].getType() ) {
     case SPEC_VEL:
@@ -1146,7 +1138,8 @@ void VoxInfo::dbg_chkBCIndexD(unsigned* bcd, const char* fname)
  */
 void VoxInfo::dbg_chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
 {
-  unsigned m, id, q, s, d;
+  unsigned m, q, s, d;
+  int id;
   int i,j,k;
   FILE *fp=NULL;
   
@@ -1170,7 +1163,7 @@ void VoxInfo::dbg_chkBCIndexP(unsigned* bcd, unsigned* bcp, const char* fname)
         d = bcd[m];
         s = bcp[m];
         q = d & MASK_6;
-        id = cmp[q].getID();
+        id = cmp[q].getMatOdr();
         Hostonly_ fprintf(fp, "[%4d %4d %4d], cmp[%3d]=%3d, mat[%3d], state=%1d: D(ewnstb) [%d %d %d %d %d %d] N [%d %d %d %d %d %d] NDAG [%d %d %d %d %d %d] DIAG=%1d :idx=%d\n", 
                           i, j, k, q, id, DECODE_MAT(d), IS_FLUID(d), 
                           (s>>BC_D_E)&0x1, (s>>BC_D_W)&0x1, (s>>BC_D_N)&0x1, (s>>BC_D_S)&0x1, (s>>BC_D_T)&0x1, (s>>BC_D_B)&0x1, 
@@ -4513,12 +4506,10 @@ void VoxInfo::get_Compo_Area_Cut(unsigned n, PolylibNS::MPIPolylib* PL)
 {
   using namespace PolylibNS;
   
-  unsigned id;
   REAL_TYPE a;
-  int def;
   
-  id  = cmp[n].getID();
-  def = cmp[n].getDef();
+  int id  = cmp[n].getMatOdr();
+  int def = cmp[n].getDef();
   
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
@@ -5037,7 +5028,8 @@ void VoxInfo::setAmask_Thermal(unsigned* bh)
  */
 void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
 {
-  unsigned odr, id;
+  unsigned odr;
+  int id;
   unsigned register s;
   int md;
   
@@ -5057,7 +5049,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
   // 体積率コンポーネントのみ
   int st[3], ed[3];
   for (unsigned n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     
     // 体積率コンポーネントのオーバーラップは考慮していないので、エラーが生じる可能性あり
     unsigned m;
@@ -5072,7 +5064,7 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               if ( (cvf[m] > 0.0) && IS_FLUID(bx[m]) ) { // 流体でコンポーネントの体積率があるとき
                 bx[m] |= (id << TOP_CELL_ID) ;
-                mid[m] = (int)id;
+                mid[m] = id;
               }
             }
           }
@@ -5098,17 +5090,16 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
 
   // MediumListのエントリをエンコードする
   for (unsigned n=1; n<=NoCompo; n++) {
-    odr = cmp[n].getMatOdr();
-    id  = cmp[n].getID();
+    id  = cmp[n].getMatOdr();
 
     for (size_t m=0; m<nx; m++) {
-      if ( mid[m] == (int)id ) bx[m] |= (odr << TOP_MATERIAL);
+      if ( mid[m] == id ) bx[m] |= (id << TOP_MATERIAL);
     }
   }
 
   // CompoListのエントリ　セル要素のみ
   for (unsigned n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     
     switch ( cmp[n].getType() ) {
       case PERIODIC:
@@ -5153,7 +5144,8 @@ void VoxInfo::setBCIndex_base1(unsigned* bx, int* mid, float* cvf)
  */
 void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned long & Lcell, unsigned long & Gcell, const unsigned KOS)
 {
-  unsigned id, mat_id;
+  unsigned mat_id;
+  int id;
   
   // 孤立した流体セルの属性変更
   for (unsigned n=1; n<=NoCompo; n++) {
@@ -5166,7 +5158,7 @@ void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned long 
   // Inactive指定のセルを不活性にする
   unsigned long m_L, m_G;
   for (unsigned n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     
     if ( cmp[n].getType() == INACTIVE ) {
       
@@ -5179,7 +5171,7 @@ void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned long 
   
   // コンポーネントに登録された媒質のセル数を数え，elementにセットする
   for (unsigned n=NoBC+1; n<=NoCompo; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     cmp[n].setElement( countState(id, mid) );
   }
   
@@ -5198,7 +5190,8 @@ void VoxInfo::setBCIndex_base2(unsigned* bx, int* mid, SetBC* BC, unsigned long 
  */
 void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid, SetBC* BC, unsigned kos)
 {
-  unsigned n, id;
+  unsigned n;
+  int id;
   int deface;
   int i, j, k;
   unsigned m;
@@ -5232,7 +5225,7 @@ void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid,
   
   // 対称境界面に断熱マスクをセット
   for (int face=0; face<NOFACE; face++) {
-    if ( BC->export_OBC(face)->get_BCtype() == OBC_SYMMETRIC ) {
+    if ( BC->export_OBC(face)->get_Class() == OBC_SYMMETRIC ) {
       encAmask_SymtrcBC(face, bh2);
     }
   }
@@ -5240,13 +5233,13 @@ void VoxInfo::setBCIndexH(unsigned* bcd, unsigned* bh1, unsigned* bh2, int* mid,
   // 不活性セルの場合の断熱マスク処理
   for (unsigned n=1; n<=NoBC; n++) {
     if ( cmp[n].getType() == INACTIVE ) {
-      setAmask_InActive(cmp[n].getID(), mid, bh2);
+      setAmask_InActive(cmp[n].getMatOdr(), mid, bh2);
     }
   }
   
   // bh2の下位5ビットにはBCのエントリのみ(1~31)エンコード
   for (n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     deface = cmp[n].getDef();
     
     switch ( cmp[n].getType() ) {
@@ -5357,7 +5350,7 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
   
   for (int face=0; face<NOFACE; face++) {
     m_obc = BC->export_OBC(face);
-    F = m_obc->get_BCtype();
+    F = m_obc->get_Class();
     
     switch ( F ) {
       case OBC_WALL:
@@ -5396,11 +5389,12 @@ unsigned VoxInfo::setBCIndexP(unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC,
   }
 
   // 内部境界のコンポーネントのエンコード
-  unsigned n, id;
+  unsigned n;
+  int id;
   int deface;
   
   for (n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     deface = cmp[n].getDef();
     
     switch ( cmp[n].getType() ) {
@@ -5454,7 +5448,7 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool 
   // 外部境界
   for (int face=0; face<NOFACE; face++) {
     m_obc = BC->export_OBC(face);
-    F = m_obc->get_BCtype();
+    F = m_obc->get_Class();
     
     switch ( F ) {
       case OBC_SYMMETRIC:
@@ -5488,12 +5482,12 @@ void VoxInfo::setBCIndexV(unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool 
   }
   
   // 内部境界のコンポーネントのエンコード
-  unsigned n, id, m_dir;
-  int deface;
+  unsigned n, m_dir;
+  int deface, id;
   float vec[3];
   
   for (n=1; n<=NoBC; n++) {
-    id = cmp[n].getID();
+    id = cmp[n].getMatOdr();
     deface = cmp[n].getDef();
     
     vec[0] = (float)cmp[n].nv[0];
@@ -5675,7 +5669,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   
   for (int face=0; face<NOFACE; face++) {
     m_obc = BC->export_OBC(face);
-    F = m_obc->get_BCtype();
+    F = m_obc->get_Class();
     
     if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) ) {
       

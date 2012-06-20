@@ -57,20 +57,17 @@ protected:
   
   int missingMessage     (MediumList* mat, const int m, const int key);
   
-  void chkList           (FILE* fp, CompoList* compo, unsigned basicEq);
   void printMatList      (FILE* fp, MediumList* mat);
   void printRelation     (FILE* fp, CompoList* compo, MediumList* mat);
   void copyProperty      (MediumList* mat, const int n);
     
 public:
-  bool chkStateList      (CompoList* compo, MediumList* mat);
   bool receive_TP_Ptr    (TPControl* tp);
   
   int get_MediumTable    (void);
   
-  void chkList           (FILE* mp, FILE* fp, CompoList* compo, unsigned basicEq);
+  void chkList           (FILE* fp, CompoList* compo, unsigned basicEq);
   void chkState_Mat_Cmp  (CompoList* compo, MediumList* mat, FILE* fp);
-  
   //void makeLinkCmpMat       (CompoList* compo);
   void makeMediumList    (MediumList* mat);
   void printMediumList   (FILE* mp, FILE* fp, MediumList* mat);
@@ -79,7 +76,6 @@ public:
   MediumTableInfo* export_MTI(void) {
     return MTITP;
   }
-  
   
   // ----------> debug function
   void dbg_printRelation         (FILE* mp, FILE* fp, CompoList* compo, MediumList* mat); 

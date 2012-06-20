@@ -1,25 +1,25 @@
 #ifndef _FB_CONTROL_H_
 #define _FB_CONTROL_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 /**
  @file Control.h
  @brief FlowBase Control class Header
- @author keno, FSI Team, VCAD, RIKEN
+ @author kero
  */
 
 #include <math.h>
 
 #include "FB_Define.h"
-#include "Skl.h"
-#include "SklSolverBase.h"
-#include "SklUtil.h"
 #include "Medium.h"
 #include "Component.h"
 #include "FBUtility.h"
@@ -194,59 +194,45 @@ public:
   ~ItrCtl() {}
   
 public:
-  // @fn unsigned get_LS(void) const
   // @brief 線形ソルバの種類を返す
   unsigned get_LS(void) const { return LinearSolver; }
   
-  // @fn unsigned get_ItrMax(void) const
   // @brief 最大反復回数を返す
   unsigned get_ItrMax(void) const { return ItrMax; }
   
-  // @fn unsigned get_LoopType(void) const
   // @brief ループ実装の種類を返す
   unsigned get_LoopType(void) const { return SubType; }
   
-  // @fn REAL_TYPE get_omg(void) const
   // @brief 緩和/加速係数を返す
   REAL_TYPE get_omg(void) const { return omg; }
   
-  // @fn REAL_TYPE get_eps(void) const
   // @brief 収束閾値を返す
   REAL_TYPE get_eps(void) const { return eps; }
   
-  // @fn unsigned get_normType(void) const
   // @brief ノルムのタイプを返す
   unsigned get_normType(void) const { return NormType; }
   
-  // @fn REAL_TYPE get_normValue(void) const
   // @brief keyに対応するノルムの値を返す
   REAL_TYPE get_normValue(void) const { return NormValue; }
   
-  // @fn void set_LS(unsigned key)
   // @brief 線形ソルバの種類を設定する
   void set_LS(unsigned key) { LinearSolver=key; }
   
-  // @fn void set_ItrMax(unsigned key)
   // @brief 最大反復回数を設定する
   void set_ItrMax(unsigned key) { ItrMax=key; }
   
-  // @fn void set_LoopType(unsigned key)
   // @brief ループ実装の種類を設定する
   void set_LoopType(unsigned key) { SubType=key; }
-  
-  // @fn void set_omg(REAL_TYPE r)
+
   // @brief 緩和/加速係数を保持
   void set_omg(REAL_TYPE r) { omg = r; }
   
-  // @fn void set_eps(REAL_TYPE r)
   // @brief 収束閾値を保持
   void set_eps(REAL_TYPE r) { eps = r; }
   
-  // @fn void set_normType(unsigned n) 
   // @brief ノルムのタイプを保持
   void set_normType(unsigned n) { NormType = n; }
   
-  // @fn void set_normValue(REAL_TYPE r)
   // @brief ノルム値を保持
   void set_normValue(REAL_TYPE r) { NormValue = r; }
 };
@@ -255,11 +241,13 @@ public:
 
 class Control {
 protected:
-  
-  // TPControl
   TPControl* tpCntl;
   
 public:
+  
+  // domain info
+  DomainInfo dInfo;
+  SubDomain dom;
   
   // 各種モード　パラメータ
   typedef struct {
@@ -429,7 +417,8 @@ public:
                 Fcell,
                 Wcell;
   
-  int NoMedium;
+  int NoMedium,   /// 媒質数
+      RefMat;     /// 参照媒質インデクス
   
   unsigned  AlgorithmF,
             AlgorithmH,
@@ -453,7 +442,6 @@ public:
             num_process,
             num_thread,
             Parallelism,
-            RefID,
             Restart_step,
             Start,
             version,
@@ -559,7 +547,7 @@ public:
     num_process = 0;
     num_thread = 0;
     Parallelism = 0;
-    RefID = 0;
+    RefMat = 0;
     Restart_step = 0;
     Start = 0;
     version = 0;
@@ -665,6 +653,35 @@ protected:
   
   void convertHexCoef        (REAL_TYPE* cf);
   void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
+  void findTPCriteria(
+                      const string label1,
+                      const string label2,
+                      unsigned order,
+                      ItrCtl* IC);
+  void get_Algorithm      ();
+  void get_Average_option ();
+  void get_ChangeID       ();
+  void get_CheckParameter ();
+  void get_Convection     ();
+  void get_Derived        ();
+  void get_FileIO         ();
+  void get_Iteration      (ItrCtl* IC);
+  void get_KindOfSolver   ();
+  void get_LES_option     ();
+  void get_Log            ();
+  void get_Para_ND        ();
+  void get_Para_Ref       ();
+  void get_Para_Temp      ();
+  void get_PMtest         ();
+  void get_ReferenceFrame (ReferenceFrame* RF);
+  ////void get_restart_rough  ();
+  void get_Scaling        ();
+  void get_Solver_Properties ();
+  void get_start_condition();
+  void get_Time_Control   (DTcntl* DT);
+  void get_Unit           ();
+  void get_VarRange       ();
+  void get_Wall_type      ();
   void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
   void printVoxelSize        (unsigned* gs, FILE* fp);
   void printInitValues       (FILE* fp);
@@ -765,68 +782,28 @@ public:
   
   
 public:
-  bool set_DomainInfo(unsigned* size,
-                      REAL_TYPE* origin,
-                      REAL_TYPE* pitch,
-                      REAL_TYPE* width);
-  bool getTP_DomainInfo(unsigned* size);
-  bool getTP_SubDomainInfo(unsigned* size);
-  bool receive_TP_Ptr(TPControl* tp);
+  bool set_DomainInfo   (unsigned* size,
+                         REAL_TYPE* origin,
+                         REAL_TYPE* pitch,
+                         REAL_TYPE* width);
+  bool get_DomainInfo   (unsigned* size);
+  bool get_SubDomainInfo(unsigned* size);
+  bool receive_TP_Ptr   (TPControl* tp);
   
-  void get_Version(void);
-  
+  void get_Para_Init    (void);
+  void get_Polygon      (void);
+  void get_Sampling     (void);
+  void get_Steer_1      (DTcntl* DT);
+  void get_Steer_2      (ItrCtl* IC, ReferenceFrame* RF);
+  void get_Version      (void);
   
   //for text parser
-  
 protected:
-  //bool getTP_PrsAverage(void);//未使用ルーチン
-  ////未使用ルーチンgetTP_Polygonからのみコールされている
-  ////const CfgElem* getTP_Pointer(const char* key, string section);
-  
-  void findTPCriteria(
-                      const string label1,
-                      const string label2,
-                      unsigned order,
-                      ItrCtl* IC);
-  void getTP_Algorithm      ();
-  void getTP_Average_option ();
-  void getTP_ChangeID       ();
-  void getTP_CheckParameter ();
-  void getTP_Convection     ();
-  void getTP_Derived        ();
-  void getTP_FileIO         ();
-  void getTP_Iteration      (ItrCtl* IC);
-  void getTP_KindOfSolver   ();
-  void getTP_LES_option     ();
-  void getTP_Log            ();
-  void getTP_Para_ND        ();
-  void getTP_Para_Ref       ();
-  void getTP_Para_Temp      ();
-  void getTP_PMtest         ();
-  void getTP_ReferenceFrame (ReferenceFrame* RF);
-  ////void getTP_restart_rough  ();
-  void getTP_Scaling        ();
-  void getTP_Solver_Properties ();
-  void getTP_start_condition();
-  void getTP_Time_Control   (DTcntl* DT);
-  void getTP_Unit           ();
-  void getTP_VarRange       ();
-  void getTP_Wall_type      ();
-  
-public:
-  
-  void getTP_Para_Init         ();
-  void getTP_Polygon           ();
-  void getTP_Sampling          ();
-  void get_Steer_1         (DTcntl* DT);
-  void get_Steer_2         (ItrCtl* IC, ReferenceFrame* RF);
+  //bool get_PrsAverage(void);//未使用ルーチン
+  ////未使用ルーチンget_Polygonからのみコールされている
+  ////const CfgElem* get_Pointer(const char* key, string section);
+ 
 
-  
-  // domain info
-  DomainInfo dInfo;
-  SubDomain dom;
-
-  
 };
 
 #endif // _FB_CONTROL_H_

@@ -58,9 +58,9 @@ void BoundaryOuter::set_Label(std::string key)
   label = key;
 }
 
-//@fn void set_ValidCell(int val)
+
 //@brief 境界面の有効セル数を保持
-void BoundaryOuter::set_ValidCell(int val)
+void BoundaryOuter::set_ValidCell(const int val)
 {
   valid_cell = val;
 }
@@ -129,12 +129,20 @@ void BoundaryOuter::set_GuideMedium(int key)
   gc_medium = key;
 }
 
-//@fn void set_BCtype(int key) 
+
 //@brief 境界条件の種類をセットする
-void BoundaryOuter::set_BCtype(int key)     
+void BoundaryOuter::set_Class(const int key)     
 { 
-  BCtype = key;
+  BCclass = key;
 }
+
+
+//@brief 境界条件のサブタイプをセットする
+void BoundaryOuter::set_Type(const int key)     
+{ 
+  subType = key;
+}
+
 
 //@fn void set_HTmode(int key)
 //@brief 熱伝達境界の種別をセット
@@ -161,7 +169,7 @@ void BoundaryOuter::set_MonRef(int key)
 //@brief 流出，流入出境界条件のときの流出対流速度の評価モードを指定
 void BoundaryOuter::set_ofv(int key)
 { 
-  oflowType = key;
+  subType = key;
 }
 
 //@fn void set_pType(int key)
@@ -171,11 +179,11 @@ void BoundaryOuter::set_pType(int key)
   pType  = key;
 }
 
-//@fn void set_vType(int key)
+
 //@brief 速度プロファイルの指定
-void BoundaryOuter::set_vType(int key)
+void BoundaryOuter::set_V_Profile(const int key)
 {
-  vType  = key;
+  v_profile  = key;
 }
 
 //@fn void addVec(REAL_TYPE* vec)
@@ -191,20 +199,20 @@ void BoundaryOuter::addVec(REAL_TYPE* vec)
 //@brief メンバー変数のコピー
 void BoundaryOuter::dataCopy(BoundaryOuter* src)
 {
-  BCtype    = src->BCtype;
+  BCclass   = src->BCclass;
   HTref     = src->HTref;
   gc_medium = src->gc_medium;
   mon_ref   = src->mon_ref;
   pType     = src->pType;
-  vType     = src->vType;
+  v_profile = src->v_profile;
   hType     = src->hType;
-  oflowType = src->oflowType;
   HTmode    = src->HTmode;
   Prdc_mode = src->Prdc_mode;
   Face_mode = src->Face_mode;
   drv_dir   = src->drv_dir;
   drv_lid   = src->drv_lid;
   p         = src->p;
+  subType   = src->subType;
   var1      = src->var1;
   var2      = src->var2;
   valid_cell= src->valid_cell;

@@ -10,7 +10,7 @@
 
 //@file Component.C
 //@brief FlowBase CompoList class
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 
 #include "Component.h"
 
@@ -222,13 +222,6 @@ void CompoList::setHtype(const unsigned key) {
 }
 
 
-//@brief IDをセットする
-//@param key 媒質ID ID
-void CompoList::setID(const unsigned key) { 
-  ID = key; 
-}
-
-
 //@brief 初期温度の指定
 void CompoList::setInitTemp(const REAL_TYPE key) {
   temp_init = key;
@@ -237,7 +230,7 @@ void CompoList::setInitTemp(const REAL_TYPE key) {
 
 //@brief mat_odrをセットする
 //@param key MediumListのエントリ番号
-void CompoList::setMatOdr(const unsigned key) { 
+void CompoList::setMatOdr(const int key) { 
   mat_odr = key; 
 }
 
@@ -403,33 +396,31 @@ void CompoList::set_Pressure(const REAL_TYPE var) {
   var1 = var;
 }
 
-//@fn void CompoList::set_sw_V_profile(const unsigned key)
 //@brief 速度プロファイル指定モードの保持
-void CompoList::set_sw_V_profile(const unsigned key) {
+void CompoList::set_V_profile(const int key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_P_BCtype(const unsigned key)
 //@brief 圧力境界条件タイプ指定モードの保持
-void CompoList::set_sw_P_BCtype(const unsigned key) {
+void CompoList::set_P_BCtype(const int key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_HTmodeRef(const unsigned key)
+
 //@brief 熱伝達の参照指定モードの保持
-void CompoList::set_sw_HTmodeRef(const unsigned key) {
+void CompoList::set_sw_HTmodeRef(const int key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_HexDir (const unsigned key)
+
 //@brief 熱交換機の方向指定モードの保持
-void CompoList::set_sw_HexDir (const unsigned key) {
+void CompoList::set_sw_HexDir (const int key) {
   usw = key;
 }
 
-//@fn void CompoList::set_sw_Heatgen(const unsigned key)
+
 //@brief 発熱量指定モードの保持
-void CompoList::set_sw_Heatgen(const unsigned key) {
+void CompoList::set_sw_Heatgen(const int key) {
   usw = key;
 }
 

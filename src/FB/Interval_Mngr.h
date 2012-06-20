@@ -1,16 +1,19 @@
 #ifndef _FB_INTVL_MNGR_H_
 #define _FB_INTVL_MNGR_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file Interval_Mngr.h
 //@brief FlowBase Interval_Manager class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@author kero
 //@note 出力ファイルおよび計算時間のタイミングを管理する
 
 #include "math.h"

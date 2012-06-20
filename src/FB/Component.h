@@ -97,30 +97,32 @@ public:
   
 protected:
   unsigned long element;    /// 要素数
-  unsigned ID;              /// セルID
   unsigned type;            /// 
   unsigned attrb;           /// 
   unsigned h_type;          /// 
   unsigned variable;        ///
-  unsigned mat_odr;         /// 
   unsigned ens;             /// 
   unsigned phase;           /// 
   unsigned var_u1;          /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
-  unsigned usw;             ///
   unsigned bc_dir;          /// VBCの指定方向
-  int      state;           /// Fluid(1) or Solid(0)
-  int      st[3];           /// コンポーネントインデクスBV範囲の始点
-  int      ed[3];           /// コンポーネントインデクスBV範囲の終点
-  int      c_size[3];       /// コンポーネントワーク配列の大きさ
-  int      def;             /// BC指定時の面を挟む相手先のセルID
-  int      shape;           /// 形状パラメータ
-  int      sampling_method; /// サンプリングの方法（NEAREST, INTERPOLATION, SMOOTHING）
-  int      sampling_mode;   /// サンプリングモード（ALL, FLOW, SOLID）
+  
+  int state;           /// Fluid(1) or Solid(0)
+  int st[3];           /// コンポーネントインデクスBV範囲の始点
+  int ed[3];           /// コンポーネントインデクスBV範囲の終点
+  int c_size[3];       /// コンポーネントワーク配列の大きさ
+  int def;             /// BC指定時の面を挟む相手先のセルID
+  int mat_odr;         /// 媒質リストのインデクス
+  int shape;           /// 形状パラメータ
+  int sampling_method; /// サンプリングの方法（NEAREST, INTERPOLATION, SMOOTHING）
+  int sampling_mode;   /// サンプリングモード（ALL, FLOW, SOLID）
+  int usw;             /// 汎用変数
+  
   REAL_TYPE var1;           /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
   REAL_TYPE var2;           /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
   REAL_TYPE var3;           /// パラメータ保持 (Heat Density, Temperature)
   REAL_TYPE var_m;          /// モニタの値を保持
   REAL_TYPE temp_init;      /// 温度の初期値
+  
   std::string name;         ///< ラベル
   
   
@@ -138,13 +140,14 @@ public:
   
   CompoList() {
     element = 0;
-    ID = type = variable = mat_odr = attrb = bc_dir = 0;
+    type = variable = attrb = bc_dir = 0;
+    mat_odr = 0;
     h_type = 0;
     state = shape = -1;
     def = 0;
     ens = OFF;
     area = 0.0;
-    usw = OFF;
+    usw = 0;
     var_u1 = 0;
     phase = 0;
     for (int i=0; i<3; i++) {
@@ -188,17 +191,9 @@ public:
   REAL_TYPE get_Temp(void)        const { return var3; };
   REAL_TYPE get_Velocity(void)    const { return var1; };
   
-  unsigned get_sw_Heatgen(void)  const { return usw; };
-  unsigned get_sw_HexDir(void)   const { return usw; };
-  unsigned get_sw_HTmodeRef(void)const { return usw; };
-  unsigned get_sw_V_profile(void)const { return usw; };
-  unsigned get_sw_P_BCtype(void) const { return usw; };
-  
   std::string getVarStr (void);
   std::string getBCstr  (void);
-  std::string getLabel  (void) {
-    return name;
-  }
+  std::string getLabel  (void) { return name; }
   
   void setAttrb            (const unsigned key);
   void setBClocation       (const unsigned key);
@@ -207,9 +202,8 @@ public:
   void setElement          (const unsigned long key);
   void setEns              (const unsigned key);
   void setHtype            (const unsigned key);
-  void setID               (const unsigned key);
   void setInitTemp         (const REAL_TYPE var);
-  void setMatOdr           (const unsigned key);
+  void setMatOdr           (const int key);
   void setLabel            (const std::string pnt);
   void setOutflowType      (const unsigned key);
   void setPeriodicDir      (const unsigned key);
@@ -236,30 +230,34 @@ public:
   void set_SamplingMethod  (const int key);
   void set_SamplingMode    (const int key);
   void set_Shape           (const int key);
-  void set_sw_Heatgen      (const unsigned key);
-  void set_sw_HexDir       (const unsigned key);
-  void set_sw_HTmodeRef    (const unsigned key);
-  void set_sw_P_BCtype     (const unsigned key);
-  void set_sw_V_profile    (const unsigned key);
+  void set_sw_Heatgen      (const int key);
+  void set_sw_HexDir       (const int key);
+  void set_sw_HTmodeRef    (const int key);
+  void set_P_BCtype        (const int key);
   void set_Temp            (const REAL_TYPE var);
+  void set_V_profile       (const int key);
   void set_VBC_policy      (const bool kind);
   void set_Velocity        (const REAL_TYPE var);
   
   inline REAL_TYPE getInitTemp(void) const        { return temp_init; }
   
+  int get_sw_Heatgen(void)  const { return usw; };
+  int get_sw_HexDir(void)   const { return usw; };
+  int get_sw_HTmodeRef(void)const { return usw; };
+  int get_P_BCtype(void)    const { return usw; };
+  int get_V_Profile(void)   const { return usw; };
   inline int getDef(void) const                   { return def; };
   inline int getState(void) const                 { return state; }
   inline int get_Shape(void) const                { return shape; }
   inline int get_SamplingMethod(void) const       { return sampling_method; }
   inline int get_SamplingMode(void) const         { return sampling_mode; }
+  inline int getMatOdr(void) const                { return mat_odr; }
   
   inline unsigned getBClocation(void) const       { return bc_dir; }
   inline unsigned getPeriodicDir(void) const      { return var_u1; }
   inline unsigned getPrsUnit(void) const          { return var_u1; }
   inline unsigned getOutflowType(void) const      { return var_u1; }
   inline unsigned getStateCellMonitor(void) const { return var_u1; }
-  inline unsigned getID(void) const               { return ID; }
-  inline unsigned getMatOdr(void) const           { return mat_odr; }
   inline unsigned getType (void) const            { return type; }
   inline unsigned getHtype (void) const           { return h_type; }
   inline unsigned getAttrb(void) const            { return attrb; }

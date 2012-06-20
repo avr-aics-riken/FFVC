@@ -23,12 +23,6 @@
 //@brief 前処理
 int
 SklSolverCBC::SklSolverInitialize() {
-/* USER WRITE
-   Please write solver initialize code.
-     Return value  ->   -1 : error
-                         0 : forced termination
-                         1 : normal return
-*/
 
   SklParaComponent* para_cmp = SklGetParaComponent();
   const SklParaManager* para_mng = para_cmp->GetParaManager();
@@ -325,7 +319,7 @@ SklSolverCBC::SklSolverInitialize() {
       
     case id_Polygon:
       
-      C.getTP_Polygon();
+      C.get_Polygon();
       
       // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
@@ -442,7 +436,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
-  B.loadOuterBC();
+  B.loadBC_Outer();
 
   // ボクセルのスキャン
   VoxScan(&Vinfo, mid, fp);
@@ -476,7 +470,7 @@ SklSolverCBC::SklSolverInitialize() {
   
   // ガイドセル上にXMLで指定するセルIDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) {
-    Vinfo.adjCellID_on_GC(face, dc_mid, BC.export_OBC(face)->get_BCtype(), 
+    Vinfo.adjCellID_on_GC(face, dc_mid, BC.export_OBC(face)->get_Class(), 
                          BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
 
@@ -553,18 +547,12 @@ SklSolverCBC::SklSolverInitialize() {
   // CompoListとMediumListの関連を表示
   Hostonly_ M.dbg_printRelation(mp, fp, cmp);
 #endif
-  
-  // CompoListとMediumListのstate(Fluid / Solid)を比較しチェックする
-  if ( !M.chkStateList(cmp, mat)) {
-    Hostonly_ stamped_printf("\tParseMat::chkStateList()\n");
-    return -1;
-  }
 
-  // RefIDがCompoList中にあるかどうかをチェックする
-  if ( B.isIDinCompo(C.RefID, C.NoCompo+1) ) { // falseのとき，重複がある，つまりIDがある
+  // RefMatがCompoList中にあるかどうかをチェックする
+  if ( B.isIDinCompo(C.RefMat, C.NoCompo+1) ) { // falseのとき，重複がある，つまりIDがある
     Hostonly_ {
-      fprintf(mp, "RefID[%d] is not listed in Medium XML file.\n", C.RefID);
-      fprintf(fp, "RefID[%d] is not listed in Medium XML file.\n", C.RefID);
+      fprintf(mp, "RefMat[%d] is not listed in Medium XML file.\n", C.RefMat);
+      fprintf(fp, "RefMat[%d] is not listed in Medium XML file.\n", C.RefMat);
       stamped_printf("\tParseBC::isIDinCompo()\n");
     }
     return -1;
@@ -605,7 +593,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
-  // 代表物性値をRefIDの示す媒質から取得
+  // 代表物性値をRefMatの示す媒質から取得
   // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
   DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
 
@@ -677,10 +665,6 @@ SklSolverCBC::SklSolverInitialize() {
   // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> C.setParameters()の後
   BC.setControlVars(&C, mat, cmp, &RF, Ex);
   
-  if ( C.NoBC == 0 ) {
-    Hostonly_ printf("\tNo Inner Boundary Conditions\n");
-  }
-  
   // パラメータの無次元表示（正規化）に必要な参照物理量の設定
   B.setRefMedium(mat, &C);
   
@@ -711,7 +695,9 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(mp,"\t>> Component List\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Component List\n\n");
-    M.chkList(mp, fp, cmp, C.BasicEqs);
+
+    M.chkList(mp, cmp, C.BasicEqs);
+    M.chkList(fp, cmp, C.BasicEqs);
   }
   
   // セル数の情報を表示する
@@ -2129,7 +2115,7 @@ void SklSolverCBC::gather_DomainInfo(void)
       fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
               m_Lbx[i*3]*C.RefLength,  m_Lbx[i*3+1]*C.RefLength,  m_Lbx[i*3+2]*C.RefLength, m_Lbx[i*3],  m_Lbx[i*3+1],  m_Lbx[i*3+2]);
       
-      if (C.NoBC != 0) fprintf(fp, "\t no            Label    ID    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+      if (C.NoBC != 0) fprintf(fp, "\t no            Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     }
     
     if ( pn.numProc > 1 ) {
@@ -2141,7 +2127,7 @@ void SklSolverCBC::gather_DomainInfo(void)
         
         Hostonly_ {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].getLabel().c_str(), cmp[n].getID(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+                  n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
         }
       }
     }
@@ -2303,7 +2289,7 @@ void SklSolverCBC::getXML_Monitor(SklSolverConfig* CF, MonitorList* M)
   
   // 指定モニタ個数のチェック
   if ( (elmL1->GetElemSize() < 1) && (C.isMonitor() == OFF) ) {
-    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in XML. \n");
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'LocalBoundary' in XML. \n");
     Exit(0);
   }
   
@@ -3062,10 +3048,9 @@ void SklSolverCBC::resizeBVcell(const int* st, const int* ed, const unsigned n, 
 void SklSolverCBC::resizeCompoBV(const unsigned* bd, const unsigned* bv, const unsigned* bh1, const unsigned* bh2, const unsigned kos, const bool isHeat)
 {
   int st[3], ed[3];
-  unsigned typ, id;
+  unsigned typ;
   
   for (unsigned n=1; n<=C.NoBC; n++) {
-    id = cmp[n].getID();
     cmp[n].getBbox(st, ed);
     typ = cmp[n].getType();
     
@@ -3161,7 +3146,7 @@ void SklSolverCBC::Interpolation_from_coarse_initial(const int* m_st, const int*
 void SklSolverCBC::setBCinfo(ParseBC* B)
 {
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B->setCompoList(&C);
+  B->loadBC_Local(&C);
   
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();
@@ -3365,7 +3350,7 @@ void SklSolverCBC::setEnsComponent(void)
     Exit(0);
   }
   if ( (C.isMonitor() == OFF) && (c > 0) ) {
-    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is NOT specified, however MONITOR section is found in InnerBoundary.\n");
+    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is NOT specified, however MONITOR section is found in LocalBoundary.\n");
     Exit(0);
   }
 
@@ -3510,7 +3495,7 @@ void SklSolverCBC::setLocalCmpIdx_Binary(void)
   int m_st[3], m_ed[3];
   
   for (unsigned m=1; m<=C.NoBC; m++) {
-    id = (int)cmp[m].getID();
+    id = cmp[m].getMatOdr();
     
     switch ( cmp[m].getType() ) {
       case HEX:
@@ -3695,7 +3680,7 @@ void SklSolverCBC::setShapeMonitor(int* mid)
       cmp[n].setBbox(f_st, f_ed);
       cmp[n].setEns(ON);
       
-      int id = (int)cmp[n].getID();
+      int id = cmp[n].getMatOdr();
       SM.setID(f_st, f_ed, mid, id);
       
     }
@@ -4456,7 +4441,7 @@ void SklSolverCBC::write_distance(float* cut)
 
 
 //@fn int SklSolverCBC::get_intval( std::string& buffer )
-//@brief XMLファイルから値をとりだす
+//@brief ファイルから値をとりだす
 int SklSolverCBC::get_intval( std::string& buffer )
 {
 	int s = buffer.find( "value=\"", 0 ) + 7;
@@ -4466,7 +4451,7 @@ int SklSolverCBC::get_intval( std::string& buffer )
 
 
 //@fn std::string SklSolverCBC::get_strval( std::string& buffer )
-//@brief XMLファイルから値をとりだす
+//@brief ファイルから値をとりだす
 std::string SklSolverCBC::get_strval( std::string& buffer )
 {
 	int s = buffer.find( "value=\"", 0 ) + 7;
@@ -4611,32 +4596,29 @@ bool SklSolverCBC::getCoarseResult (
 }
 
 
-/**
- @fn void SklSolverCBC::getExample(Control* Cref)
- @brief 組み込み例題の設定
- @param Cref Controlクラスのポインタ
- */
+//@brief 組み込み例題の設定
 void SklSolverCBC::getExample(Control* Cref)
 {
   std::string keyword;
   std::string label;
   
-  label="/Steer/Example";
+  label = "/Steer/Example";
+  
   if ( !(tpCntl.GetValue(label, &keyword )) ) {
     Hostonly_ stamped_printf("\tExample error\n");
     Exit(0);
   }
   
-  if     ( !strcasecmp(keyword.c_str(), "Users") )             Cref->Mode.Example = id_Users;
-  else if( !strcasecmp(keyword.c_str(), "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
-  else if( !strcasecmp(keyword.c_str(), "Duct") )              Cref->Mode.Example = id_Duct;
-  else if( !strcasecmp(keyword.c_str(), "SHC1D") )             Cref->Mode.Example = id_SHC1D;
-  else if( !strcasecmp(keyword.c_str(), "Performance_Test") )  Cref->Mode.Example = id_PMT;
-  else if( !strcasecmp(keyword.c_str(), "Rectangular") )       Cref->Mode.Example = id_Rect;
-  else if( !strcasecmp(keyword.c_str(), "Cylinder") )          Cref->Mode.Example = id_Cylinder;
-  else if( !strcasecmp(keyword.c_str(), "Back_Step") )         Cref->Mode.Example = id_Step;
-  else if( !strcasecmp(keyword.c_str(), "Polygon") )           Cref->Mode.Example = id_Polygon;
-  else if( !strcasecmp(keyword.c_str(), "Sphere") )            Cref->Mode.Example = id_Sphere;
+  if     ( FBUtility::compare(keyword, "Users") )             Cref->Mode.Example = id_Users;
+  else if( FBUtility::compare(keyword, "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
+  else if( FBUtility::compare(keyword, "Duct") )              Cref->Mode.Example = id_Duct;
+  else if( FBUtility::compare(keyword, "SHC1D") )             Cref->Mode.Example = id_SHC1D;
+  else if( FBUtility::compare(keyword, "Performance_Test") )  Cref->Mode.Example = id_PMT;
+  else if( FBUtility::compare(keyword, "Rectangular") )       Cref->Mode.Example = id_Rect;
+  else if( FBUtility::compare(keyword, "Cylinder") )          Cref->Mode.Example = id_Cylinder;
+  else if( FBUtility::compare(keyword, "Back_Step") )         Cref->Mode.Example = id_Step;
+  else if( FBUtility::compare(keyword, "Polygon") )           Cref->Mode.Example = id_Polygon;
+  else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
     Exit(0);
@@ -4754,39 +4736,28 @@ void SklSolverCBC::getTP_Monitor(SklSolverConfig* CF, MonitorList* M)
   
   
   // 指定モニタ個数のチェック
-  int nnode=0;
   int nlist=0;
-  label_base="/Steer/Monitor_List";
-  nnode=tpCntl.countLabels(label_base);
-  //std::cout <<  "label_base : " << label_base << std::endl;
-  //std::cout <<  "nnode : " << nnode << std::endl;
+  label_base = "/Steer/Monitor_List";
+  int nnode = tpCntl.countLabels(label_base);
+
   if ( nnode == 0 ) {
-    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
+    stamped_printf("\tcountLabels --- %s\n", label_base.c_str());
     Exit(0);
   }
   
-  for (unsigned i=0; i<nnode; i++) {
-    if(!tpCntl.GetNodeStr(label_base,i+1,&str)){
-      printf("\tParsing error : No Elem name\n");
+  for (int i=0; i<nnode; i++) {
+    if ( !tpCntl.GetNodeStr(label_base,i+1,&str) ) {
+      printf("\tParsing error : No Monitor List\n");
       Exit(0);
     }
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
     nlist++;
   }
   
-  if(nlist==0 && C.isMonitor() == OFF) {
-    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in TP. \n");
+  if ( nlist==0 && C.isMonitor() == OFF ) {
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'LocalBoundary' in Input File. \n");
     Exit(0);
   }
-  
-  cout << "nlist = " << nlist << endl;
-  abort();
-  
-  
-  //if ( (elmL1->GetElemSize() < 1) && (C.isMonitor() == OFF) ) {
-  //  Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in TP. \n");
-  //  Exit(0);
-  //}
   
   
   /*
@@ -4992,21 +4963,20 @@ void SklSolverCBC::getTP_Mon_Pointset(MonitorList* M,
   
 }
 
-//@fn void SklSolverCBC::GetDomainInfo(void)
+
 //@brief
-//@note 
 bool SklSolverCBC::GetDomainInfo(unsigned* size,
                                  REAL_TYPE* origin,
                                  REAL_TYPE* pitch,
                                  REAL_TYPE* width)
 {
   
-	if ( !C.getTP_DomainInfo(size) ){
-    stamped_printf("\t error getTP_DomainInfo : \n");
+	if ( !C.get_DomainInfo(size) ){
+    stamped_printf("\t error get_DomainInfo : \n");
 		return false;
 	}
   
-	//if ( !C.getTP_SubDomainInfo(size) ){
+	//if ( !C.get_SubDomainInfo(size) ){
   //  stamped_printf("\t error getTP_SubDomainInfo : \n");
 	//	return false;
 	//}

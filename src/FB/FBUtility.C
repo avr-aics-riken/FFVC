@@ -14,12 +14,19 @@
 
 #include "FBUtility.h"
 
+//@brief 文字列を小文字にして比較
+bool FBUtility::compare(const std::string str1, const std::string str2)
+{
+  std::string s1 = str1;
+  std::string s2 = str2;
+  
+  transform (s1.begin (), s1.end (), s1.begin (), tolower);
+  transform (s2.begin (), s2.end (), s2.begin (), tolower);
+  
+	return (s1 == s2) ? true : false;
+}
 
-/**
- @fn std::string FBUtility::getDirection(const unsigned dir)
- @brief dirの方向ラベルを返す
- @param dir 方向
- */
+//@brief dirの方向ラベルを返す
 std::string FBUtility::getDirection(const unsigned dir)
 {
   std::string face;
@@ -133,10 +140,8 @@ void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, 
   fflush(fp);
 }
 
-/**
- @fn void FBUtility::printVersion(FILE* fp, const char* str, const unsigned ver)
- @brief バージョン情報の表示
- */
+
+//@brief バージョン情報の表示
 void FBUtility::printVersion(FILE* fp, const char* str, const unsigned ver)
 {
   unsigned a, b, c;

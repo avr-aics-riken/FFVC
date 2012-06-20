@@ -21,7 +21,6 @@
 #include "Control.h"
 #include "Component.h"
 #include "Medium.h"
-#include "SklUtil.h"
 #include "Intrinsic.h"
 #include "Parallel_node.h"
 
