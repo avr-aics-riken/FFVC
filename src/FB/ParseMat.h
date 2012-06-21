@@ -45,7 +45,7 @@ public:
     if ( MTITP ) delete [] MTITP;
   }
   
-protected:
+private:
   TPControl* tpCntl;
   
   bool chkDuplicateLabel (MediumList* mat, const int n, const std::string m_label);
@@ -63,8 +63,6 @@ public:
   int get_MediumTable    (void);
   
   void chkList           (FILE* fp, CompoList* compo, const int basicEq);
-  void chkState_Mat_Cmp  (CompoList* compo, MediumList* mat, FILE* fp);
-  //void makeLinkCmpMat       (CompoList* compo);
   void printMatList      (FILE* fp, MediumList* mat, const int NoMedium);
   void setControlVars    (const int m_NoCompo,
                           const int m_NoBC,

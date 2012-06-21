@@ -16,10 +16,10 @@
 //@param step タイムステップ
 int
 SklSolverCBC::SklSolverLoop(const unsigned int step) {
-
+  mark();
   SklParaComponent* para_cmp = SklGetParaComponent();
   const SklParaManager* para_mng = para_cmp->GetParaManager();
-  
+  mark();
   REAL_TYPE flop_count=0.0;      /// 浮動小数演算数
   REAL_TYPE avr_Var[3];          /// 平均値（速度、圧力、温度）
   REAL_TYPE rms_Var[3];          /// 変動値
@@ -30,7 +30,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   REAL_TYPE *tp=NULL;            /// 全圧
   unsigned *bcd=NULL;            /// BCindex ID
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp);
-  
+  mark();
   // point Data
   if( !(v = dc_v->GetData()) )     Exit(0);
   if( !(p = dc_p->GetData()) )     Exit(0);
@@ -42,7 +42,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   if (C.Mode.TP == ON ) {
     if( !(tp = dc_p0->GetData()) ) Exit(0);
   }
-  
+  mark();
   // トリガーのリセット
   for (int i=0; i<Interval_Manager::tg_END; i++) {
     C.Interval[i].resetTrigger();
@@ -75,7 +75,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     TIMING_stop( tm_vmax_comm, 2.0*np_f*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
   }
 
-
+  
   // Flow
   if ( C.KindOfSolver != SOLID_CONDUCTION ) {
     TIMING_start(tm_flow_sct);
@@ -100,7 +100,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     }
     TIMING_stop(tm_flow_sct, 0.0);
   }
-
+  
   // Heat
   if ( C.isHeatProblem() ) {
     TIMING_start(tm_heat_sct);

@@ -103,17 +103,6 @@ std::string ParseBC::getOBCstr(const int id)
 
 
 /**
- @fn int ParseBC::getStateinTable(unsigned id)
- @brief iTable[]にidが含まれるかどうかを調べる
- @param id サーチ対象のボクセルID
- @retval 含まれれば対応するstate，そうでなければおちる
- */
-int ParseBC::getStateinTable(int id)
-{
-  return mat[id].getState();
-}
-
-/**
  @fn void ParseBC::getUnitVec(REAL_TYPE* v)
  @brief 単位ベクトルを計算して戻す
  @param [in/out] v
@@ -158,21 +147,6 @@ int ParseBC::getNoLocalBC(void)
   return nobc;
 }
 
-
-/**
- @fn int ParseBC::get_BCval_int(const string label)
- @brief 境界条件の値(int型)を取得し，返す
- @param label
- */
-int ParseBC::get_BCval_int(const std::string label)
-{
-  int df=0;
-  if ( !(tpCntl->GetValue(label, &df )) ) {
-    stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  return df;
-}
 
 
 /**

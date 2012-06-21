@@ -20,7 +20,7 @@
 #include <string>
 
 class BoundaryOuter {
-protected:
+private:
   int BCclass;       /// 境界条件の種類
   int subType;       /// サブタイプ（汎用）
                      /// outflow >> 流出対流速度の評価モード（average, minmax）

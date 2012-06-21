@@ -85,14 +85,11 @@ public:
     if (BaseBc) delete [] BaseBc;
   }
   
-protected:
+private:
   bool chkDuplicate       (const int n, const std::string m_label);
-  bool chkID              (void);
   bool isComponent        (unsigned label);
   bool isCompoTransfer    (unsigned label);
-  
-  int get_BCval_int       (const std::string label);
-  int getStateinTable     (int id);
+
   int get_Vel_profile     (const std::string label_base);
   
   unsigned oppositDir     (unsigned dir);

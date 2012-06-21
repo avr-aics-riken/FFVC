@@ -95,7 +95,7 @@ public:
   };
 
   
-protected:
+private:
   unsigned long element;    /// 要素数
   unsigned type;            /// 
   unsigned attrb;           /// 

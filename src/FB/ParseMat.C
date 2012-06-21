@@ -109,43 +109,6 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 }
 
 
-/**
- @fn void ParseMat::chkState_Mat_Cmp(CompoList* compo)
- @brief  cmp[]とmat[]のStateの不一致をチェックする
- */
-void ParseMat::chkState_Mat_Cmp(CompoList* compo, MediumList* mat, FILE* fp)
-{
-  int m_state;
-  int m_odr;
-  int c=0;
-  
-  printf("\t  no :   mat_odr mat_ID         mat_Name  : mat_State : specified_state\n");
-  fprintf(fp, "\t  no :   mat_odr mat_ID         mat_Name  : mat_State : specified_state\n");
-  
-  for (unsigned i=1; i<=NoCompo; i++) {
-    m_odr = compo[i].getMatOdr();
-    m_state = compo[i].getState();
-    
-    printf("\t%4d : %8d %6d %16s  :     %s : %s", i, m_odr, m_odr, mat[m_odr].getLabel().c_str(), 
-           (mat[m_odr].getState() == FLUID ) ? "Fluid" : "Solid",
-           (m_state == FLUID ) ? "Fluid" : "Solid");
-    if (mat[m_odr].getState() != m_state) {
-      printf(" <\n");
-      c++;
-    }
-    else {
-      printf("\n");
-    }
-  }
-  printf("\n");
-  
-  if ( c>0 ) {
-    printf("\tMedium ID described in 'Model_Setting is not consistent with the state of Solid/Fluid. See above lines marked '<'.'\n\n");
-    Exit(0);
-  }
-}
-
-
 
 /**
  @fn void ParseMat::copyProperty(MediumList* mat, const int n)
@@ -190,31 +153,6 @@ void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo, MediumLis
   printRelation(mp, compo, mat);
   printRelation(fp, compo, mat);
 }
-
-
-
-/**
- @fn void ParseMat::makeLinkCmpMat(CompoList* compo)
- @brief CompoList, MediumListの相互参照の準備を行う
- 
-void ParseMat::makeLinkCmpMat(CompoList* compo)
-{
-  unsigned id, id_mat, odr_mat;
-  
-  // コンポーネントリストへ，マテリアルリストへのエントリ番号をエンコードする
-  for (int i=1; i<=NoCompo; i++) {
-    id = compo[i].getMatOdr();
-    
-    // IDに対応したMatIDをiTableから取得する
-    if ( 0 == (id_mat = getMatIDinTable(id)) ) {
-      Hostonly_ stamped_printf("\tSomething wrong! Medium ID = %d\n", id_mat);
-      Exit(0);
-    }
-
-    // copy property
-    compo[i].setMatOdr( i );
-  }
-}*/
 
 
 

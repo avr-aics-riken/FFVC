@@ -32,7 +32,7 @@
 #include "limits.h"
 
 class VoxInfo : public Parallel_Node {
-protected:
+private:
   unsigned size[3];              /// 計算内部領域分割数(Local)
   unsigned guide;                /// ガイドセルサイズ
   unsigned NoBC;                 /// 境界条件数
@@ -60,7 +60,7 @@ public:
     if (vox_nv)    delete [] vox_nv;
   }
   
-protected:
+private:
   bool chkIDinside           (unsigned id, int* mid, unsigned* bx);
   bool getXMLModel           (void);
   bool isInTable             (unsigned MaxSize, int* cList, int target);

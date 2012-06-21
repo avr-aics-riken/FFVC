@@ -1231,7 +1231,7 @@ SklSolverCBC::SklSolverInitialize() {
     if( !dc_t->CommBndCell(guide) ) return -1;
   }
   
-
+  
 
   // マスターノードでの履歴出力準備
   H = new History(&C);
@@ -1287,8 +1287,8 @@ SklSolverCBC::SklSolverInitialize() {
       H->printHistoryWallTitle(fp_w);
     }
   }
-
-  // XMLによるサンプリング指定がある場合，モニタ結果出力ファイル群のオープン
+  
+  // サンプリング指定がある場合，モニタ結果出力ファイル群のオープン
   if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
     
   // サンプリング元となるデータ配列の登録
@@ -1301,7 +1301,7 @@ SklSolverCBC::SklSolverInitialize() {
     }
   }
   
-
+  
   // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
 	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
   
@@ -1316,14 +1316,14 @@ SklSolverCBC::SklSolverInitialize() {
 		Hostonly_ fprintf(fp, "\n\tCheck mode --- Only pre-process\n\n");
     return 0;
 	}
-
+  
   // 組み込み例題の初期化
   Ex->PostInit(checkTime, &C);
   
   Hostonly_ if ( fp ) fclose(fp);
    
   TIMING_stop(tm_init_sct);
-
+  
   return 1;
 }
 
@@ -3275,16 +3275,6 @@ void SklSolverCBC::setMediumList(ParseMat* M, FILE* mp, FILE* fp)
     M->printMatList(mp, mat, C.NoMedium);
     M->printMatList(fp, mat, C.NoMedium);
   }
-  
-
-  // コンポーネントとMaterialリストの関連づけ（相互参照リスト）を作成する
-  //M->makeLinkCmpMat(cmp);
-  
-  // Model_Settingで指定した媒質とiTableのStateの不一致をチェック
-  //Hostonly_ {
-  //  M->chkState_Mat_Cmp(cmp, mp);
-  //  M->chkState_Mat_Cmp(cmp, fp);
-  //}
 }
 
 
