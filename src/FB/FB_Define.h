@@ -20,11 +20,11 @@
 #define FB_VERS 260
 
 // 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
-#ifndef REAL_TYPE_DOUBLE
-#define REAL_TYPE float
-#else
-#define REAL_TYPE double
-#endif // REAL_IS_FLOAT
+//#ifndef REAL_TYPE_DOUBLE
+//#define REAL_TYPE float
+//#else
+//#define REAL_TYPE double
+//#endif // REAL_IS_FLOAT
 
 #define MODEL_ID_MAX 255
 

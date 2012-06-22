@@ -1,6 +1,6 @@
 // #################################################################
 //
-// CAERU Library
+// FFV : Frontflow / violet
 //
 // Copyright (c) All right reserved. 2012
 //
@@ -8,36 +8,140 @@
 //
 // #################################################################
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "cpm_ParaManager.h"
-#include "cpm_TextParserDomain.h"
+#include "ffv.h"
 
 #ifdef _DEBUG
   #include "include/_debug.h"
 #endif
 
-using namespace std;
 
-//テストプログラムのメイン
+
+
+
+
 int main( int argc, char **argv )
 {
+
+#ifdef TIME_MEASURE
+  double init_str, init_end;
+  double main_str, main_end;
+  double post_str, post_end;
+#endif 
+  
+  
   int ret = 0;
 
+
+  // ##################################################################
+  // 初期化
+#ifdef TIME_MEASURE
+  init_str = cpm_Base::GetWTime();
+#endif
+  
+  
   // 並列管理クラスのインスタンスと初期化
+  // ここでMPI_Initも行う
   cpm_ParaManager *paraMngr = cpm_ParaManager::get_instance(argc, argv);
   if( !paraMngr ) return CPM_ERROR_PM_INSTANCE;
-
-  // 時間計測開始
-  double ts = cpm_Base::GetWTime();
-
+  
+  
   if( paraMngr->GetMyRankID() == 0 )
   {
     cpm_Base::VersionInfo();
   }
+  
+  // FFV classのインスタンス
+  FFV ffv;
+  
+  int init_ret = ffv.Initialize();
+  
+  switch( init_ret ){
+    case -1:
+      fprintf(mp, "\n\tSolver initialize error.\n\n");
+      return 0;
 
+    case 0:
+      fprintf(mp, "\n\tForced termination during initialization.\n\n");
+      return 1;
+      
+    case 1:
+      // keep going on processing
+      break;
+      
+    default:
+      fprintf(mp, "\n\tSolver initialize error.\n\n");
+      return 0;
+  }
+  
+#ifdef TIME_MEASURE
+  init_end = cpm_Base::GetWTime();
+#endif
+  
+  
+  // ##################################################################
+  // タイムステップループ
+#ifdef TIME_MEASURE
+  main_str = cpm_Base::GetWTime();
+#endif
+  
+  int loop_ret = ffv.MainLoop();
+  
+  switch (loop_ret) {
+    case -1:
+      fprintf(mp, "\n\tSolver error.\n\n");
+      return 0;
+
+    case 0:
+      fprintf(mp, "\n\tSolver forced termination time-step loop.\n\n");
+      break;
+      
+    case 1:
+      if ( ffv.IsMaster(paraMngr) ) {
+        fprintf(mp, "\n\tSolver finished.\n\n");
+      }
+      break;
+  }
+  
+  
+  
+#ifdef TIME_MEASURE
+  main_end = cpm_Base::GetWTime();
+#endif
+  
+  
+  // ##################################################################
+  // ポスト処理
+#ifdef TIME_MEASURE
+  post_str = cpm_Base::GetWTime();
+#endif
+  
+  if( !ffv.Post() ){
+    SklErrMessage("solver post error.\n");
+    return false;
+  }
+  
+#ifdef TIME_MEASURE
+  post_end = cpm_Base::GetWTime();
+#endif
+  
+  
+  
+#ifdef TIME_MEASURE
+  if( !ParaCmpo->IsParallel() || (ParaCmpo->GetMyID() == 0) ){
+    SklMessage("TIME : Solver Init  %10.3f sec.\n", (init_end - init_str));
+    SklMessage("TIME : Solver Main  %10.3f sec.\n", (main_end - main_str));
+    SklMessage("TIME : Solver Post  %10.3f sec.\n", (post_end - post_str));
+    SklMessage("TIME : Solver Total %10.3f sec.\n",
+               (init_end-init_str)+(main_end-main_str)+(post_end-post_str));
+  }
+#endif // SKL_TIME_MEASURED
+  
+  
+  
+  
+  
+  
+  
   // 入力ファイルリスト
   vector<const char*> ifname;
   for( int i=1;i<argc;i++ )
