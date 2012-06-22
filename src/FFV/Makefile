@@ -10,6 +10,8 @@
 
 TARGET = ffv
 
+RM = \rm -f
+
 ###################################################################
 #
 # CPM_LIBS;  openmpi, textparser, cpmlibのライブラリパスとライブラリの指定
@@ -72,21 +74,20 @@ OBJS  = $(COBJS) $(CXXOBJS) $(FCOBJS) $(F90OBJS)
 
 $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(CPM_FLAGS) $(UDEF_INC_PATH) $(REALOPT) -o $(TARGET) $(OBJS) \
-	$(LDFLAGS) $(MPI_LDFLAGS) $(SPHERE_LDFLAGS) \
-	$(UDEF_LIB_PATH) $(SPHERE_LIBS) $(CPM_LIBS) $(LIBS) $(UDEF_LIBS)
-	mv $(TARGET) ../bin/.
+	$(LDFLAGS) $(UDEF_LIB_PATH) $(CPM_LIBS) $(LIBS) $(UDEF_LIBS)
+#	mv $(TARGET) ../bin/.
 
 .c.o:
-	$(CC) $(CFLAGS) $(CPM_FLAGS) $(SPHERE_CFLAGS) $(REALOPT) -o $@ -c $<
+	$(CC) $(CFLAGS) $(CPM_FLAGS) $(UDEF_INC_PATH) $(REALOPT) -o $@ -c $<
 
 .C.o:
-	$(CXX) $(CXXFLAGS) $(CPM_FLAGS) $(SPHERE_CFLAGS) $(REALOPT) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(CPM_FLAGS) $(UDEF_INC_PATH) $(REALOPT) -o $@ -c $<
 
 .f.o:
-	$(FC) $(FCFLAGS) -I$(SPHEREDIR)/include -o $@ -c $<
+	$(FC) $(FCFLAGS) $(CPM_FLAGS) -o $@ -c $<
 
 .f90.o:
-	$(F90) $(F90FLAGS) -I$(SPHEREDIR)/include -o $@ -c $<
+	$(F90) $(F90FLAGS) $(CPM_FLAGS) -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS) $(TARGET)

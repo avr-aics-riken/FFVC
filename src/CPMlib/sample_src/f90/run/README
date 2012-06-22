@@ -1,8 +1,0 @@
-Usage:
-
-  $ mconvp_CPM < in
-
-    or
-
-  $ mpirun -np X mconvp_CPM < in
-
