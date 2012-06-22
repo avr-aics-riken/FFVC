@@ -13,14 +13,6 @@ TARGET = ffv
 RM = \rm -f
 
 ###################################################################
-#
-# CPM_LIBS;  openmpi, textparser, cpmlibのライブラリパスとライブラリの指定
-# CPM_FLAGS; openmpi, textparser, cpmlibのインクルードパスの指定
-#
-#
-#
-#
-#
 
 OMP_FLAGS=-openmp -openmp-report=2
 
@@ -35,15 +27,24 @@ F90FLAGS=-O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
 LDFLAGS=-L/opt/intel/composerxe/lib
 LIBS=-lifport -lifcore
 
-UDEF_INC_PATH=-I../../Cutlib-2.0.3/include -I../../Polylib_2_0_3/include -I../../PMlib-1.0/include
-UDEF_LIB_PATH=-L../../Polylib_2_0_3/lib -L../../Cutlib-2.0.3/lib -L../../PMlib-1.0/lib
-UDEF_LIBS=-lMPIPolylib -lcutlib -lpmlib
+UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
+              -I../Polylib_2_0_3/include \
+              -I../PMlib-1.0/include \
+              -I/usr/local/cpm_float/include \
+              -I/opt/openmpi/include \
+              -I/usr/local/textparser/include \
+              -I../FB \
+              -I../F_CBC \
+              -I../IP
 
-CPM_LIBS = '/usr/local/cpm/bin/cpm-config --cflags'
-CPM_FLAGS = '/usr/local/cpm/bin/cpm-config --libs'
+UDEF_LIB_PATH=-L../Polylib_2_0_3/lib \
+              -L../Cutlib-2.0.3/lib \
+              -L../PMlib-1.0/lib \
+              -L/usr/local/cpm_float/lib \
+              -L/opt/openmpi/lib \
+              -L/usr/local/textparser/lib 
 
-REALOPT=float
-SPH_EXTERNAL_HEADER_PATH=-I../../FB -I../../F_CBC -I../../IP 
+UDEF_LIBS = -lMPIPolylib -lcutlib -lpmlib -lcpmlib -lmpi -lTextParser
 
 ###################################################################
 
@@ -73,21 +74,21 @@ OBJS  = $(COBJS) $(CXXOBJS) $(FCOBJS) $(F90OBJS)
 ###################################################################
 
 $(TARGET):$(OBJS)
-	$(CXX) $(CXXFLAGS) $(CPM_FLAGS) $(UDEF_INC_PATH) $(REALOPT) -o $(TARGET) $(OBJS) \
-	$(LDFLAGS) $(UDEF_LIB_PATH) $(CPM_LIBS) $(LIBS) $(UDEF_LIBS)
+	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \
+	$(LDFLAGS) $(UDEF_LIB_PATH) $(LIBS) $(UDEF_LIBS)
 #	mv $(TARGET) ../bin/.
 
 .c.o:
-	$(CC) $(CFLAGS) $(CPM_FLAGS) $(UDEF_INC_PATH) $(REALOPT) -o $@ -c $<
+	$(CC) $(CFLAGS) $(UDEF_INC_PATH) -c $<
 
 .C.o:
-	$(CXX) $(CXXFLAGS) $(CPM_FLAGS) $(UDEF_INC_PATH) $(REALOPT) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -c $<
 
 .f.o:
-	$(FC) $(FCFLAGS) $(CPM_FLAGS) -o $@ -c $<
+	$(FC) $(FCFLAGS) $(UDEF_INC_PATH) -c $<
 
 .f90.o:
-	$(F90) $(F90FLAGS) $(CPM_FLAGS) -o $@ -c $<
+	$(F90) $(F90FLAGS) $(UDEF_INC_PATH) -c $<
 
 clean:
 	$(RM) $(OBJS) $(TARGET)
@@ -96,3 +97,5 @@ depend:
 	makedepend -I. -Y $(CXXSRCS) $(CSRCS)
 
 # DO NOT DELETE
+
+main.o: include/_mpi_test.h

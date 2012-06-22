@@ -27,7 +27,7 @@ int main( int argc, char **argv )
   int ret = 0;
 
   // 並列管理クラスのインスタンスと初期化
-  cpm_ParaManager *paraMngr = cpm_ParaManager::get_instance(argc,argv);
+  cpm_ParaManager *paraMngr = cpm_ParaManager::get_instance(argc, argv);
   if( !paraMngr ) return CPM_ERROR_PM_INSTANCE;
 
   // 時間計測開始
