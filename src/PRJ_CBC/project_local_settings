@@ -34,7 +34,7 @@ XML2LIBS=-lxml2 -lz -lpthread -licucore -lm
 SPHERE_CFLAGS=-DSKL_TIME_MEASURED -D_CATCH_BAD_ALLOC -I$(SPHEREDIR)/include
 SPHERE_LDFLAGS=-L$(SPHEREDIR)/lib
 SPHERE_LIBS=-lsphapp -lsphbase -lsphls -lsphfio -lsphdc -lsphcrd -lsphcfg -lsphftt -lsphvcar \
--lMPIPolylib -lcutlib -lpmlib -lTextParser -lcpmlib
+-lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib
 REALOPT=
 SPH_EXTERNAL_HEADER_PATH=-I../../FB -I../../F_CBC -I../../IP 
 SPH_PARA_MODULE=MPI
