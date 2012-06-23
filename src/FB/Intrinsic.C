@@ -108,8 +108,8 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 
   char svx_fname[512];
 
-  if ( pn.numProc > 1 ) {
-    sprintf( svx_fname, "example_%06d.svx", pn.myrank );
+  if ( paraMngr->IsParallel() ) {
+    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID() );
   } else {
     sprintf( svx_fname, "example.svx" );
   }
@@ -211,8 +211,8 @@ void Intrinsic::writeSVX(int *id, Control* R)
   
   char svx_fname[512];
   
-  if ( pn.numProc > 1 ) {
-    sprintf( svx_fname, "example_%06d.svx", pn.myrank );
+  if ( paraMngr->IsParallel() ) {
+    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID() );
   } else {
     sprintf( svx_fname, "example.svx" );
   }

@@ -69,7 +69,7 @@ public:
   
   /** コンストラクタ */
   Intrinsic() { 
-    for (unsigned i=0; i<3; i++) size[i]=0.0;
+    for (int i=0; i<3; i++) size[i]=0.0;
     imax = jmax = kmax = guide = 0;
     RefL = 0.0;
   }

@@ -8,17 +8,17 @@
 //
 // #################################################################
 
-//@file Control.C
-//@brief FlowBase Control class
-//@author kero
+/**
+ @file Control.C
+ @brief FlowBase Control class
+ @author kero
+ */
 
 #include "Control.h"
 
-/**
- @fn bool DTcntl::chkDtSelect(void)
- @brief 時間積分幅とKindOfSolver種別の整合性をチェック
- */
-bool DTcntl::chkDtSelect(void)
+
+// 時間積分幅とKindOfSolver種別の整合性をチェック
+bool DTcntl::chkDtSelect()
 {
   switch (KOS) {
     case FLOW_ONLY:
@@ -36,6 +36,197 @@ bool DTcntl::chkDtSelect(void)
   return true;
 }
 
+
+
+//各種モードに対応する時間積分幅を設定する
+int DTcntl::set_DT(const double vRef)
+{
+  double dtC, dtD, a, b;
+  
+  switch ( scheme ) 
+  {
+    case dt_direct:
+      deltaT = CFL;
+      break;
+      
+    case dt_cfl_ref_v:
+      if ( KOS == SOLID_CONDUCTION ) return 1;
+      deltaT = dtCFL( vRef );
+      break;
+      
+    case dt_cfl_max_v:
+      if ( KOS == SOLID_CONDUCTION ) return 2;
+      deltaT = dtCFL(vRef);
+      break;
+      
+    case dt_dfn:
+      if ( KOS != SOLID_CONDUCTION ) return 3;
+      deltaT = dtDFN( Peclet );
+      break;
+      
+    case dt_cfl_dfn_ref_v:
+      switch (KOS) {
+        case FLOW_ONLY:
+          dtC = dtCFL( vRef );
+          dtD = dtDFN( Reynolds );
+          deltaT = (dtC > dtD) ? dtD : dtC;
+          break;
+          
+        case THERMAL_FLOW:
+        case THERMAL_FLOW_NATURAL:
+        case CONJUGATE_HEAT_TRANSFER:
+          dtC = dtCFL( vRef );
+          a = dtDFN( Reynolds );
+          b = dtDFN( Peclet );
+          dtD = (a > b) ? b : a;
+          deltaT = (dtC > dtD) ? dtD : dtC;
+          break;
+          
+        case SOLID_CONDUCTION:
+          return 4;
+          break;
+      }
+      break;
+      
+    case dt_cfl_dfn_max_v:
+      return 6;
+      break;
+      
+    case dt_cfl_max_v_cp:
+      return 7;
+      break;
+  }
+  
+  return 0;
+}
+
+
+/**
+ @fn bool DTcntl::set_Scheme(const char* str, const double val)
+ @brief Δtのスキームを設定する
+ @retval 設定の成否
+ @param str キーワード
+ @param val 値
+ @note 現時点では，Δtは一定値のみ
+ */
+bool DTcntl::set_Scheme(const char* str, const double val)
+{
+  if ( !str ) return false;
+  
+  if ( !strcasecmp(str, "Direct") ) {
+    scheme = dt_direct;
+  }
+  else if ( !strcasecmp(str, "CFL_Reference_Velocity") ) {
+    scheme = dt_cfl_ref_v;
+  }
+  //else if ( !strcasecmp(str, "CFL_MaxV") ) {
+  //  scheme = dt_cfl_max_v;
+  //}
+  else if ( !strcasecmp(str, "Diffusion") ) {
+    scheme = dt_dfn;
+  }
+  else if ( !strcasecmp(str, "CFL_Diffusion_Reference_Velocity") ) {
+    scheme = dt_cfl_dfn_ref_v;
+  }
+  //else if ( !strcasecmp(str, "CFL_DFN_MaxV") ) {
+  //  scheme = dt_cfl_dfn_max_v;
+  //}
+  //else if ( !strcasecmp(str, "CFL_MaxV_CP") ) {
+  //  scheme = dt_cfl_max_v_cp;
+  //}
+  else {
+    return false;
+  }
+  
+  CFL = val;
+  
+  return true;
+}
+
+
+/**
+ @fn void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
+ @brief 基本変数をコピー
+ @param m_kos ソルバーの種類
+ @param m_mode 次元モード
+ @param m_dh 無次元格子幅
+ @param re レイノルズ数
+ @param pe ペクレ数
+ */
+void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
+{
+  KOS      = m_kos;
+  mode     = m_mode;
+  dh       = m_dh;
+  Reynolds = re;
+  Peclet   = pe; 
+}
+
+
+
+// 加速時間をセットする
+void ReferenceFrame::setAccel(const double m_timeAccel)
+{
+  TimeAccel = m_timeAccel;
+}
+
+
+// 参照フレームの種類をセットする
+void ReferenceFrame::setFrame(const int m_frame)
+{
+  Frame = m_frame;
+}
+
+
+
+// 格子速度成分の単位方向ベクトルをセットする
+void ReferenceFrame::setGridVel(const double* m_Gvel)
+{
+  GridVel[0] = m_Gvel[0];
+  GridVel[1] = m_Gvel[1];
+  GridVel[2] = m_Gvel[2];
+}
+
+
+
+// 参照速度を計算する
+void ReferenceFrame::setV00(const double time, const bool init) 
+{
+  if (init == true) {
+    printf("\tReference velocity is set to 1.0 for checking.\n\n");
+    v00[0]=1.0;
+  }
+  else {
+    if ( TimeAccel == 0.0 ) {
+      v00[0] = 1.0;
+    }
+    else {
+      const double c_pai = (double)(2.0*asin(1.0));
+      v00[0] = 0.5*(1.0-cos(c_pai*time/(TimeAccel)));
+      if ( time > (TimeAccel) ) v00[0] = 1.0;
+    }
+  }
+  
+  double u0 = v00[0];
+  
+  switch (Frame) {
+    case frm_static:
+      v00[1] = 0.0;
+      v00[2] = 0.0;
+      v00[3] = 0.0;
+      break;
+      
+    case frm_translation:
+      v00[1] = u0*GridVel[0];  // v0x
+      v00[2] = u0*GridVel[1];  // v0y
+      v00[3] = u0*GridVel[2];  // v0z
+      break;
+      
+    case frm_rotation:
+      break;
+  }
+  
+}
 
 
 /**
@@ -112,13 +303,13 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
 
 
 // 反復の収束判定パラメータを取得
-void Control::findCriteria(const std::string label1, const std::string label2, const int order, ItrCtl* IC)
+void Control::findCriteria(const string label1, const string label2, const int order, ItrCtl* IC)
 {
   int itr=0;
   REAL_TYPE tmp=0.0;
   int LinearSolver=0;
-  std::string str;
-  std::string label, label0, key;
+  string str;
+  string label, label0, key;
   
   label0 = label1 + "/" + label2;
   
@@ -267,9 +458,9 @@ REAL_TYPE Control::getCellSize(unsigned* G_size)
 
 
 // ノルムのラベルを返す
-std::string Control::getNormString(const int d)
+string Control::getNormString(const int d)
 {
-  std::string nrm;
+  string nrm;
 	
   if      (d == ItrCtl::v_div_max)       nrm = "V - Max. Norm of Divergence";
 	else if (d == ItrCtl::v_div_max_dbg)   nrm = "V - Max. Norm of Divergence with Monitoring  ### Forced to be selected since Iteration Log is specified ###";
@@ -293,8 +484,8 @@ const char* Control::get_VoxelFileName()
 {
   
   int ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label = "/Steer/Voxel_File/format";
 
@@ -363,8 +554,8 @@ void Control::get_Steer_1(DTcntl* DT)
 // ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
 void Control::get_Solver_Properties()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 形状近似度の取得
   label = "/Steer/Solver_Property/Shape_Approximation";
@@ -479,8 +670,8 @@ void Control::get_Solver_Properties()
 // 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する
 void Control::get_Unit()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label = "/Steer/Unit/Unit_of_input_parameter";
 
@@ -539,7 +730,7 @@ void Control::get_Para_Ref(void)
 {
   int ct1;
   REAL_TYPE ct2;
-  std::string label;
+  string label;
   
   label = "/Parameter/Reference/Length";
   if ( !(tpCntl->GetValue(label, &ct2 )) ) {
@@ -587,8 +778,8 @@ void Control::get_Time_Control(DTcntl* DT)
   REAL_TYPE ct;
   int ss=0;
   
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 加速時間
   label = "/Steer/Time_Control/Acceleration_Type";
@@ -683,8 +874,8 @@ void Control::get_Time_Control(DTcntl* DT)
 // パラメータ入力チェックモードの取得
 void Control::get_CheckParameter()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label = "/Steer/Check_Parameter";
 
@@ -707,8 +898,8 @@ void Control::get_CheckParameter()
 // 'Scaling_factor'の文字列チェックはしないので注意して使うこと
 void Control::get_Scaling()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   REAL_TYPE ct=0.0;
   Hide.Scaling_Factor = 1.0;
   
@@ -730,8 +921,8 @@ void Control::get_Scaling()
 // モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータは後ほど
 void Control::get_Sampling()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // ログ出力
   label = "/Steer/Monitor_List/log";
@@ -778,8 +969,8 @@ void Control::get_FileIO()
   
   REAL_TYPE f_val=0.0;
   REAL_TYPE ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 出力単位
   label = "/Steer/File_IO/Unit_of_file";
@@ -927,8 +1118,8 @@ void Control::get_Convection()
 {
   
   int ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // scheme
   label="/Steer/Convection_Term/scheme";
@@ -974,8 +1165,8 @@ void Control::get_Convection()
  */
 void Control::get_KindOfSolver()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Steer/Solver_Property/Kind_of_solver";
 
@@ -1095,8 +1286,8 @@ void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
 // 解法アルゴリズムを選択する
 void Control::get_Algorithm()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Steer/Algorithm/Flow";
 
@@ -1143,8 +1334,8 @@ void Control::get_Algorithm()
 void Control::get_Para_ND()
 {
   REAL_TYPE ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Parameter/Reference/Reynolds";
 
@@ -1176,8 +1367,8 @@ void Control::get_Para_Temp()
 {
   REAL_TYPE Base, Diff;
   
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/parameter/Temperature/Base";
   if ( !(tpCntl->GetValue(label, &Base )) ) {
@@ -1266,8 +1457,8 @@ void Control::get_Para_Init()
  */
 void Control::get_ReferenceFrame(ReferenceFrame* RF)
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Steer/Reference_Frame/Reference_Frame_Type";
 
@@ -1307,8 +1498,8 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
 void Control::get_Average_option()
 {
   REAL_TYPE ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Steer/Average_option/Operation";
 
@@ -1363,8 +1554,8 @@ void Control::get_Average_option()
  */
 void Control::get_Wall_type()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 圧力のタイプ
   label="/Steer/Treatment_of_wall/Pressure_Gradient";
@@ -1406,8 +1597,8 @@ void Control::get_Wall_type()
 void Control::get_Log()
 {
   REAL_TYPE f_val=0.0;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 出力単位
   label="/Steer/Log/Unit_of_Log";
@@ -1556,8 +1747,8 @@ void Control::get_Log()
  */
 void Control::get_Iteration(ItrCtl* IC)
 {
-  std::string str;
-  std::string label1, label2;
+  string str;
+  string label1, label2;
   
   label1="/Steer/Iteration";
   label2="/Steer/Iteration/Flow";
@@ -1630,8 +1821,8 @@ void Control::get_Iteration(ItrCtl* IC)
 void Control::get_LES_option()
 {
   REAL_TYPE ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 計算オプション
   label="/Steer/LES_Option/LES_Calculation";
@@ -1693,8 +1884,8 @@ void Control::get_LES_option()
  */
 void Control::get_Derived()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 全圧
   label="/Steer/Derived_Variable/Total_Pressure";
@@ -1767,8 +1958,8 @@ void Control::get_Derived()
  */
 void Control::get_VarRange()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
 
   label="/Steer/Variable_Range";
   if ( !(tpCntl->GetValue(label, &str )) ) {
@@ -1794,7 +1985,7 @@ void Control::get_VarRange()
 void Control::get_ChangeID()
 {
   int ct=0;
-  std::string label;
+  string label;
   
   label="/Steer/Change_ID";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
@@ -1817,8 +2008,8 @@ void Control::get_ChangeID()
  */
 void Control::get_PMtest()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Steer/Performance_Test";
 
@@ -1845,8 +2036,8 @@ void Control::get_PMtest()
 void Control::get_start_condition()
 {
   int ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/Steer/Start_condition/start_type";
   
@@ -2003,8 +2194,8 @@ void Control::get_start_condition()
  */
 void Control::get_Polygon()
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   int ct;
   
   // ポリゴンファイル名を取得
@@ -2039,7 +2230,7 @@ void Control::get_Polygon()
 bool Control::get_DomainInfo(unsigned* size)
 {
   int ierr = TP_NO_ERROR;
-  std::string label, value;
+  string label, value;
   REAL_TYPE *rvec;
   int *ivec;
   
@@ -2127,12 +2318,12 @@ bool Control::get_DomainInfo(unsigned* size)
 bool Control::get_SubDomainInfo(unsigned* size)
 {
   int ierr = TP_NO_ERROR;
-  std::string label, value;
+  string label, value;
   REAL_TYPE *rvec;
   int *ivec;
   
-  std::string str;
-  std::string label_base,label_domain,label_leaf;
+  string str;
+  string label_base,label_domain,label_leaf;
   int n1,n2,n3;
   
   vector<string> nodes;
@@ -2192,7 +2383,7 @@ bool Control::get_SubDomainInfo(unsigned* size)
 void Control::get_Version(void)
 {
   int ct;
-  std::string label;
+  string label;
   
   // FlowBase
   label="/Steer/Version_Info/Flow_Base";
@@ -2386,8 +2577,8 @@ void Control::printInitValues(FILE* fp)
  */
 void Control::printLS(FILE* fp, ItrCtl* IC)
 {
-  switch (IC->get_LS()) {
-      
+  switch (IC->get_LS()) 
+  {
     case SOR:
       fprintf(fp,"\t       Linear Solver          :   Point SOR method\n");
       break;
@@ -2574,7 +2765,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   // Precision
-  if ( Mode.Precision == SPH_SINGLE )
+  if ( Mode.Precision == FP_SINGLE )
     fprintf(fp,"\t     Precision                :   Single Precision \n");
   else
     fprintf(fp,"\t     Precision                :   Double Precision \n");
@@ -2683,7 +2874,8 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 	}
   
   // Reference Frame
-  switch (RF->getFrame()) {
+  switch (RF->getFrame()) 
+  {
     case ReferenceFrame::frm_static:
       fprintf(fp,"\t     Reference Frame          :   Stationary\n");
       break;
@@ -2750,7 +2942,8 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   REAL_TYPE d_R = dh*dh*Reynolds/6.0; // 拡散数
   REAL_TYPE d_P = dh*dh*Peclet/6.0;   // 拡散数
   REAL_TYPE cfl = (REAL_TYPE)DT->get_CFL();
-  switch ( DT->get_Scheme() ) {
+  switch ( DT->get_Scheme() ) 
+  {
     case DTcntl::dt_direct:
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : Direct ", dt*Tscale, dt);
       if ( isHeatProblem() ) {
@@ -2993,7 +3186,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->get_ItrMax());
 		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->get_eps());
 		fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->get_omg());
-		fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp1->get_normType()));
+		fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp1->get_normType()).c_str() );
 		printLS(fp, ICp1);
     
     if ( AlgorithmF == Flow_FS_RK_CN ) {
@@ -3001,7 +3194,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->get_ItrMax());
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->get_eps());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->get_omg());
-      fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp2->get_normType()));
+      fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp2->get_normType()).c_str() );
       printLS(fp, ICp2);
     }
     
@@ -3012,7 +3205,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 			fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->get_ItrMax());
 			fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->get_eps());
 			fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->get_omg());
-			fprintf(fp,"\t       Norm type               :   %s\n", getNormString(ICv->get_normType()));
+			fprintf(fp,"\t       Norm type               :   %s\n", getNormString(ICv->get_normType()).c_str() );
 			printLS(fp, ICv);
 		}
 	}
@@ -3026,7 +3219,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->get_ItrMax());
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->get_eps());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->get_omg());
-			fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICt->get_normType()));
+			fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICt->get_normType()).c_str() );
       printLS(fp, ICt);
     }
   }
@@ -3208,106 +3401,6 @@ bool Control::set_DomainInfo(unsigned* size,
   return true;
 }
 
-
-/**
- @fn unsigned DTcntl::set_DT(const double vRef)
- @brief 各種モードに対応する時間積分幅を設定する
- @retval return code
- @param vRef 速度の参照値（無次元）
- @note deltaTは無次元
- */
-unsigned DTcntl::set_DT(const double vRef)
-{
-  double dtC, dtD, a, b;
-  
-  switch ( scheme ) {
-    case dt_direct:
-      deltaT = CFL;
-      break;
-      
-    case dt_cfl_ref_v:
-      if ( KOS == SOLID_CONDUCTION ) return 1;
-      deltaT = dtCFL( vRef );
-      break;
-      
-    case dt_cfl_max_v:
-      if ( KOS == SOLID_CONDUCTION ) return 2;
-      deltaT = dtCFL(vRef);
-      break;
-      
-    case dt_dfn:
-      if ( KOS != SOLID_CONDUCTION ) return 3;
-      deltaT = dtDFN( Peclet );
-      break;
-      
-    case dt_cfl_dfn_ref_v:
-      switch (KOS) {
-        case FLOW_ONLY:
-          dtC = dtCFL( vRef );
-          dtD = dtDFN( Reynolds );
-          deltaT = (dtC > dtD) ? dtD : dtC;
-          break;
-          
-        case THERMAL_FLOW:
-        case THERMAL_FLOW_NATURAL:
-        case CONJUGATE_HEAT_TRANSFER:
-          dtC = dtCFL( vRef );
-          a = dtDFN( Reynolds );
-          b = dtDFN( Peclet );
-          dtD = (a > b) ? b : a;
-          deltaT = (dtC > dtD) ? dtD : dtC;
-          break;
-          
-        case SOLID_CONDUCTION:
-          return 4;
-          break;
-      }
-      break;
-      
-    case dt_cfl_dfn_max_v:
-      return 6;
-      break;
-      
-    case dt_cfl_max_v_cp:
-      return 7;
-      break;
-  }
-  
-  return 0;
-}
-
-
-/**
- @fn void ReferenceFrame::setFrame(const unsigned m_frame)
- @brief 変数をセットする
- @param m_frame 参照フレームの種類
- */
-void ReferenceFrame::setFrame(const unsigned m_frame)
-{
-  Frame = m_frame;
-}
-
-/**
- @fn void ReferenceFrame::setAccel(const double m_timeAccel)
- @brief 変数をセットする
- @param m_timeAccel 加速時間（無次元）
- */
-void ReferenceFrame::setAccel(const double m_timeAccel)
-{
-  TimeAccel = m_timeAccel;
-}
-
-/**
- @fn void ReferenceFrame::setGridVel(const double* m_Gvel)
- @brief 変数をセットする
- @param m_Gvel 格子速度成分の単位方向ベクトル
- */
-void ReferenceFrame::setGridVel(const double* m_Gvel)
-{
-  GridVel[0] = m_Gvel[0];
-  GridVel[1] = m_Gvel[1];
-  GridVel[2] = m_Gvel[2];
-}
 
 
 /**
@@ -3647,111 +3740,4 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
 			iv.Temperature = FBUtility::convTemp2K(iv.Temperature, Unit.Temp);
     }
 	}
-}
-
-
-/**
- @fn void setV00(const double time, const bool init)
- @brief 参照速度を計算する
- @param time 時刻（無次元）
- @param init フラグ
- @todo 回転
- */
-void ReferenceFrame::setV00(const double time, const bool init) 
-{
-  if (init == true) {
-    printf("\tReference velocity is set to 1.0 for checking.\n\n");
-    v00[0]=1.0;
-  }
-  else {
-    if ( TimeAccel == 0.0 ) {
-      v00[0] = 1.0;
-    }
-    else {
-      const double c_pai = (double)(2.0*asin(1.0));
-      v00[0] = 0.5*(1.0-cos(c_pai*time/(TimeAccel)));
-      if ( time > (TimeAccel) ) v00[0] = 1.0;
-    }
-  }
-  
-  double u0 = v00[0];
-  
-  switch (Frame) {
-    case frm_static:
-      v00[1] = 0.0;
-      v00[2] = 0.0;
-      v00[3] = 0.0;
-      break;
-      
-    case frm_translation:
-      v00[1] = u0*GridVel[0];  // v0x
-      v00[2] = u0*GridVel[1];  // v0y
-      v00[3] = u0*GridVel[2];  // v0z
-      break;
-      
-    case frm_rotation:
-      break;
-  }
-  
-}
-
-
-/**
- @fn bool DTcntl::set_Scheme(const char* str, const double val)
- @brief Δtのスキームを設定する
- @retval 設定の成否
- @param str キーワード
- @param val 値
- @note 現時点では，Δtは一定値のみ
- */
-bool DTcntl::set_Scheme(const char* str, const double val)
-{
-  if ( !str ) return false;
-  
-  if ( !strcasecmp(str, "Direct") ) {
-    scheme = dt_direct;
-  }
-  else if ( !strcasecmp(str, "CFL_Reference_Velocity") ) {
-    scheme = dt_cfl_ref_v;
-  }
-  //else if ( !strcasecmp(str, "CFL_MaxV") ) {
-  //  scheme = dt_cfl_max_v;
-  //}
-  else if ( !strcasecmp(str, "Diffusion") ) {
-    scheme = dt_dfn;
-  }
-  else if ( !strcasecmp(str, "CFL_Diffusion_Reference_Velocity") ) {
-    scheme = dt_cfl_dfn_ref_v;
-  }
-  //else if ( !strcasecmp(str, "CFL_DFN_MaxV") ) {
-  //  scheme = dt_cfl_dfn_max_v;
-  //}
-  //else if ( !strcasecmp(str, "CFL_MaxV_CP") ) {
-  //  scheme = dt_cfl_max_v_cp;
-  //}
-  else {
-    return false;
-  }
-  
-  CFL = val;
-  
-  return true;
-}
-
-/**
- @fn void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
- @brief 基本変数をコピー
- @param m_kos ソルバーの種類
- @param m_mode 次元モード
- @param m_dh 無次元格子幅
- @param re レイノルズ数
- @param pe ペクレ数
- */
-void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
-{
-  KOS      = m_kos;
-  mode     = m_mode;
-  dh       = m_dh;
-  Reynolds = re;
-  Peclet   = pe; 
 }

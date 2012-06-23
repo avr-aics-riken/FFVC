@@ -14,12 +14,9 @@
 
 #include "TPControl.h"
 
-using namespace std;
 
-/**
- @fn int TPControl::getTPinstance()
- @brief TextParserLibraryのインスタンス生成
- */
+
+// TextParserLibraryのインスタンス生成
 int TPControl::getTPinstance()
 {
   int ierr = TP_NO_ERROR;
@@ -27,19 +24,17 @@ int TPControl::getTPinstance()
   tp=TextParser::get_instance();
   if( !tp )
   {
-    std::cerr << "ERROR : instance of TextParser" << endl;
+    cerr << "ERROR : instance of TextParser" << endl;
     return TP_ERROR;
   }
   return ierr;
 }
 
-/**
- @fn int TPControl::readTPfile( const std::string filename )
- @brief TextParserオブジェクトに入力ファイルをセットする
- @param filename 入力ファイル名
- @retval エラーコード
- */
-int TPControl::readTPfile(const std::string filename)
+
+
+
+// TextParserオブジェクトに入力ファイルをセットする
+int TPControl::readTPfile(const string filename)
 {
   int ierr = TP_NO_ERROR;
   if( !tp ) return TP_ERROR;
@@ -47,7 +42,7 @@ int TPControl::readTPfile(const std::string filename)
   // read
   if( (ierr = tp->read(filename)) != TP_NO_ERROR )
   {
-    std::cout << "ERROR : in input file: " << filename << endl
+    cout << "ERROR : in input file: " << filename << endl
          << "  ERROR CODE = "<< ierr << endl;
     return ierr;
   }
@@ -55,17 +50,12 @@ int TPControl::readTPfile(const std::string filename)
 }
 
 
-/**
- @fn bool TPControl::GetVector(std::string label, int *vec, const int nvec)
- @brief TextParser入力ファイルからベクトル値を取得する（整数型）
- @param label 取得するベクトルのラベル（絶対パス）
- @param *vec ベクトル格納配列ポインタ
- @param nvec ベクトルサイズ
- */
-bool TPControl::GetVector(std::string label, int *vec, const int nvec)
+
+// TextParser入力ファイルからベクトル値を取得する（整数型）
+bool TPControl::GetVector(const string label, int *vec, const int nvec)
 {
   int ierr = TP_NO_ERROR;
-  std::string value;
+  string value;
 
   if( !tp ) return false;
 
@@ -83,7 +73,7 @@ bool TPControl::GetVector(std::string label, int *vec, const int nvec)
   if( type != TP_VECTOR_NUMERIC ) return false;
 
   // split
-  std::vector<string> vec_value;
+  vector<string> vec_value;
   if( (ierr = tp->splitVector(value, vec_value)) != TP_NO_ERROR ) return false;
 
   // check number of vector element
@@ -99,17 +89,13 @@ bool TPControl::GetVector(std::string label, int *vec, const int nvec)
   return true;
 }
 
-/**
- @fn bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
- @brief TextParser入力ファイルからベクトル値を取得する（実数型）
- @param label 取得するベクトルのラベル（絶対パス）
- @param *vec ベクトル格納配列ポインタ
- @param nvec ベクトルサイズ
- */
-bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
+
+
+// TextParser入力ファイルからベクトル値を取得する（実数型）
+bool TPControl::GetVector(const string label, REAL_TYPE *vec, const int nvec)
 {
   int ierr = TP_NO_ERROR;
-  std::string value;
+  string value;
 
   if( !tp ) return false;
 
@@ -120,7 +106,7 @@ bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
 
   // get value
   if( (ierr = tp->getValue(label, value)) != TP_NO_ERROR ){
-    std::cout << " GetVector debug 333" << endl;
+    cout << " GetVector debug 333" << endl;
 	  return false;
   }
 
@@ -130,7 +116,7 @@ bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
   if( type != TP_VECTOR_NUMERIC ) return false;
 
   // split
-  std::vector<string> vec_value;
+  vector<string> vec_value;
   if( (ierr = tp->splitVector(value, vec_value)) != TP_NO_ERROR ) return false;
 
   // check number of vector element
@@ -146,17 +132,13 @@ bool TPControl::GetVector(std::string label, REAL_TYPE *vec, const int nvec)
   return true;
 }
 
-/**
- @fn bool TPControl::GetVector(std::string label, std::string *vec, const int nvec)
- @brief TextParser入力ファイルからベクトル値を取得する（文字列型）
- @param label 取得するベクトルのラベル（絶対パス）
- @param *vec ベクトル格納配列ポインタ
- @param nvec ベクトルサイズ
- */
-bool TPControl::GetVector(std::string label, std::string *vec, const int nvec)
+
+
+// TextParser入力ファイルからベクトル値を取得する（文字列型）
+bool TPControl::GetVector(string label, string *vec, const int nvec)
 {
   int ierr = TP_NO_ERROR;
-  std::string value;
+  string value;
 
   if( !tp ) return false;
 
@@ -174,7 +156,7 @@ bool TPControl::GetVector(std::string label, std::string *vec, const int nvec)
   if( type != TP_VECTOR_NUMERIC ) return false;
 
   // split
-  std::vector<string> vec_value;
+  vector<string> vec_value;
   if( (ierr = tp->splitVector(value, vec_value)) != TP_NO_ERROR ) return false;
 
   // check number of vector element
@@ -190,16 +172,12 @@ bool TPControl::GetVector(std::string label, std::string *vec, const int nvec)
 }
 
 
-/**
- @fn bool TPControl::GetValue(const std::string label, int *ct)
- @brief TextParser入力ファイルから変数を取得する（整数型）
- @param label 取得する変数のラベル（絶対パス）
- @param *ct 変数格納ポインタ
- */
-bool TPControl::GetValue(const std::string label, int *ct)
+
+// TextParser入力ファイルから変数を取得する（整数型）
+bool TPControl::GetValue(const string label, int *ct)
 {
   int ierror;
-  std::string value;
+  string value;
   
   if( !tp ) return false;
 
@@ -211,29 +189,29 @@ bool TPControl::GetValue(const std::string label, int *ct)
   //値の取得
   ierror=tp->getValue(label,value);//labelは絶対パスを想定
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR no label " << label << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR no label " << label << ierror << endl;
 	  return false;
   }
 
   //型の取得
   TextParserValueType type = tp->getType(label, &ierror);
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR in TextParser::getType file: " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
 	  return false;
   }
   if( type != TP_NUMERIC_VALUE ){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR in TextParser::Type error: " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
 	  return false;
   }
 
   // string to real
   int val = tp->convertInt(value, &ierror);
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR convertInt " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR convertInt " << ierror << endl;
 	  return false;
   }
 
@@ -242,17 +220,14 @@ bool TPControl::GetValue(const std::string label, int *ct)
   return true;
 }
 
-/**
- @fn bool TPControl::GetValue(const std::string label, REAL_TYPE *ct)
- @brief TextParser入力ファイルから変数を取得する（実数型）
- @param label 取得する変数のラベル（絶対パス）
- @param *ct 変数格納ポインタ
- */
-bool TPControl::GetValue(const std::string label, REAL_TYPE *ct)
+
+
+// TextParser入力ファイルから変数を取得する（実数型）
+bool TPControl::GetValue(const string label, REAL_TYPE *ct)
 {
   int ierror;
-  std::string value;
-  std::string node;
+  string value;
+  string node;
 
   if( !tp ) return false;
   
@@ -264,29 +239,29 @@ bool TPControl::GetValue(const std::string label, REAL_TYPE *ct)
   //値の取得
   ierror=tp->getValue(label,value);//labelは絶対パスを想定
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR no label " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR no label " << ierror << endl;
 	  return false;
   }
 
   //型の取得
   TextParserValueType type = tp->getType(label, &ierror);
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR in TextParser::getType file: " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
 	  return false;
   }
   if( type != TP_NUMERIC_VALUE ){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR in TextParser::Type error: " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
 	  return false;
   }
 
   // string to real
   REAL_TYPE val = tp->convertFloat(value, &ierror);
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR convertInt " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR convertInt " << ierror << endl;
 	  return false;
   }
 
@@ -296,16 +271,12 @@ bool TPControl::GetValue(const std::string label, REAL_TYPE *ct)
 }
 
 
-/**
- @fn bool TPControl::GetValue(const std::string label, std::string *ct)
- @brief TextParser入力ファイルから変数を取得する（文字列型）
- @param label 取得する変数のラベル（絶対パス）
- @param *ct 変数格納ポインタ
- */
-bool TPControl::GetValue(const std::string label, std::string *ct)
+
+// TextParser入力ファイルから変数を取得する（文字列型）
+bool TPControl::GetValue(const string label, string *ct)
 {
   int ierror;
-  std::string value;
+  string value;
   
   if( !tp ) return false;
 
@@ -317,21 +288,21 @@ bool TPControl::GetValue(const std::string label, std::string *ct)
   //値の取得
   ierror=tp->getValue(label,value);//labelは絶対パスを想定
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR no label " << label << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR no label " << label << endl;
 	  return false;
   }
 
   //型の取得
   TextParserValueType type = tp->getType(label, &ierror);
   if (ierror != TP_NO_ERROR){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR in TextParser::getType file: " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
 	  return false;
   }
   if( type != TP_STRING_VALUE ){
-	  std::cout << " label: " << label << std::endl;
-	  std::cout <<  "ERROR in TextParser::Type error: " << ierror << std::endl;
+	  cout << " label: " << label << endl;
+	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
 	  return false;
   }
 
@@ -341,24 +312,21 @@ bool TPControl::GetValue(const std::string label, std::string *ct)
 }
 
 
-/**
- @fn bool TPControl::chkLabel(const std::string label)
- @brief ラベルの有無をチェック
- @param label チェックするラベル（絶対パス）
- */
-bool TPControl::chkLabel(const std::string label)
+
+// ラベルの有無をチェック
+bool TPControl::chkLabel(const string label)
 {
   int ierror;
-  std::string value;
+  string value;
   
   if( !tp ) return false;
 
   // ラベルがあるかチェック
-  std::vector<std::string> labels;
+  vector<string> labels;
   ierror=tp->getAllLabels(labels);
   if (ierror != 0){
-    std::cout <<  "ERROR in TextParser::getAllLabels file: "  
-        << " ERROR CODE "<< ierror << std::endl;
+    cout <<  "ERROR in TextParser::getAllLabels file: "  
+        << " ERROR CODE "<< ierror << endl;
     return false;
   }
   int flag=0;
@@ -375,16 +343,13 @@ bool TPControl::chkLabel(const std::string label)
 }
 
 
-/**
- @fn bool TPControl::chkNode(const std::string label)
- @brief ノードの有無をチェック
- @param label チェックするノード（絶対パス）
- */
-bool TPControl::chkNode(const std::string label)
+
+// ノードの有無をチェック
+bool TPControl::chkNode(const string label)
 {
   int ierror;
-  std::string node;
-  std::vector<std::string> labels;
+  string node;
+  vector<string> labels;
   int len=label.length();
 
   if( !tp ) return false;
@@ -392,8 +357,8 @@ bool TPControl::chkNode(const std::string label)
   // Nodeがあるかチェック
   ierror=tp->getAllLabels(labels);
   if (ierror != 0){
-    std::cout <<  "ERROR in TextParser::getAllLabels file: "  
-        << " ERROR CODE "<< ierror << std::endl;
+    cout <<  "ERROR in TextParser::getAllLabels file: "  
+        << " ERROR CODE "<< ierror << endl;
     return false;
   }
   int flag=0;
@@ -411,17 +376,14 @@ bool TPControl::chkNode(const std::string label)
   return true;
 }
 
-/**
- @fn bool TPControl::countLabels(const std::string label)
- @brief ノード以下のラベルの数を数える
- @param label ラベルを数えるノードの絶対パス
- @retval ラベルの数（エラー、もしくはない場合は-1を返す）
- */
-int TPControl::countLabels(const std::string label)
+
+
+// ノード以下のラベルの数を数える
+int TPControl::countLabels(const string label)
 {
   int ierror;
-  std::string node,str,chkstr="";
-  std::vector<std::string> labels;
+  string node,str,chkstr="";
+  vector<string> labels;
   int len=label.length();
   int flag=0;
   int inode=0;
@@ -432,8 +394,8 @@ int TPControl::countLabels(const std::string label)
   // Nodeがあるかチェック
   ierror=tp->getAllLabels(labels);
   if (ierror != 0){
-    std::cout <<  "ERROR in TextParser::getAllLabels file: "  
-        << " ERROR CODE "<< ierror << std::endl;
+    cout <<  "ERROR in TextParser::getAllLabels file: "  
+        << " ERROR CODE "<< ierror << endl;
     return -1;
   }
   for (int i = 0; i < labels.size(); i++) {
@@ -458,18 +420,12 @@ int TPControl::countLabels(const std::string label)
 }
 
 
-/**
- @fn bool TPControl::GetNodeStr(const std::string label, const int nnode, std::string *ct)
- @brief ノード以下のnnode番目の文字列を取得する
- @param label ノードの絶対パス
- @param nnode 取得する文字列が現れる順番
- @param *ct 取得した文字列
- */
-bool TPControl::GetNodeStr(const std::string label, const int nnode, std::string *ct)
+// ノード以下のnnode番目の文字列を取得する
+bool TPControl::GetNodeStr(const string label, const int nnode, string *ct)
 {
   int ierror;
-  std::string node,str,chkstr="";
-  std::vector<std::string> labels;
+  string node,str,chkstr="";
+  vector<string> labels;
   int len=label.length();
   int flag=0;
   int inode=0;
@@ -480,8 +436,8 @@ bool TPControl::GetNodeStr(const std::string label, const int nnode, std::string
   // Nodeがあるかチェック
   ierror=tp->getAllLabels(labels);
   if (ierror != 0){
-    std::cout <<  "ERROR in TextParser::getAllLabels file: "  
-        << " ERROR CODE "<< ierror << std::endl;
+    cout <<  "ERROR in TextParser::getAllLabels file: "  
+        << " ERROR CODE "<< ierror << endl;
     return false;
   }
   for (int i = 0; i < labels.size(); i++) {

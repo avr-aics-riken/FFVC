@@ -21,25 +21,25 @@
 
 class History {
 protected:
-  REAL_TYPE Tscale;          /// 時間スケール
-  REAL_TYPE RefVelocity;     /// 代表速度
-  REAL_TYPE BaseTemp;        /// 基準温度
-  REAL_TYPE DiffTemp;        /// 代表温度差
-  REAL_TYPE RefDensity;      /// 代表密度
-  REAL_TYPE RefLength;       /// 代表長さ
-  REAL_TYPE BasePrs;         /// 基準圧力
-  REAL_TYPE RefSpecificHeat; /// 代表比熱
-  REAL_TYPE time;            /// 時刻
-  REAL_TYPE v_max;           /// 速度成分の最大値
-  REAL_TYPE dhd;             /// 有次元の格子幅
-  REAL_TYPE dh;              /// 無次元の格子幅
-  REAL_TYPE rhocp;           /// 熱流束計算の無次元化量
-  REAL_TYPE dynamic_p;       /// 動圧
-  REAL_TYPE base_mf;         /// 流量の基準値
-  unsigned step;             /// ステップ数
-  unsigned Unit_Temp;        /// 温度単位
-  unsigned Unit_Prs;         /// 圧力基準モード
-  unsigned Unit_Log;         /// ログ出力の単位
+  REAL_TYPE Tscale;          ///< 時間スケール
+  REAL_TYPE RefVelocity;     ///< 代表速度
+  REAL_TYPE BaseTemp;        ///< 基準温度
+  REAL_TYPE DiffTemp;        ///< 代表温度差
+  REAL_TYPE RefDensity;      ///< 代表密度
+  REAL_TYPE RefLength;       ///< 代表長さ
+  REAL_TYPE BasePrs;         ///< 基準圧力
+  REAL_TYPE RefSpecificHeat; ///< 代表比熱
+  REAL_TYPE time;            ///< 時刻
+  REAL_TYPE v_max;           ///< 速度成分の最大値
+  REAL_TYPE dhd;             ///< 有次元の格子幅
+  REAL_TYPE dh;              ///< 無次元の格子幅
+  REAL_TYPE rhocp;           ///< 熱流束計算の無次元化量
+  REAL_TYPE dynamic_p;       ///< 動圧
+  REAL_TYPE base_mf;         ///< 流量の基準値
+  unsigned step;             ///< ステップ数
+  unsigned Unit_Temp;        ///< 温度単位
+  unsigned Unit_Prs;         ///< 圧力基準モード
+  unsigned Unit_Log;         ///< ログ出力の単位
   
 public:
   History() {}
@@ -153,7 +153,7 @@ public:
   void printHistoryForceTitle(FILE* fp);
   void printHistoryForce     (FILE* fp, REAL_TYPE* force);
   void printHistoryDomfxTitle(FILE* fp, const Control* C);
-  void printHistoryItr       (FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx);
+  void printHistoryItr       (FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx);
   void printHistoryItrTitle  (FILE* fp);
   void printHistoryWall      (FILE* fp, REAL_TYPE* range_Yp, REAL_TYPE* range_Ut);
   void printHistoryWallTitle (FILE* fp);

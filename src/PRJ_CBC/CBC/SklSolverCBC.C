@@ -1027,7 +1027,8 @@ void SklSolverCBC::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   
   
   // 反復処理
-  switch (IC->get_LS()) {
+  switch (IC->get_LS()) 
+  {
       
     case SOR:
       // >>> Poisson Iteration section 2
@@ -1195,7 +1196,8 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
   
   
   // 反復処理
-  switch (IC->get_LS()) {
+  switch (IC->get_LS()) 
+  {
     case SOR:
       //cpc3d_psor_(p, sz, gc, &omg, &r, ws, bnd, cut, &para_key);
       break;
@@ -1211,7 +1213,8 @@ void SklSolverCBC::LS_Planar(ItrCtl* IC, REAL_TYPE b2)
   if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(dc_p, dc_bcd);
   
   // 同期処理
-  switch (IC->get_LS()) {
+  switch (IC->get_LS()) 
+  {
     case SOR:
       if (cm_mode == 0 ) {
         if( !dc_p->CommBndCell(guide) ) Exit(0);
@@ -1311,7 +1314,8 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
   TIMING_start(tm_frctnl_stp_sct_7);
   
   // 反復処理
-  switch (IC->get_LS()) {
+  switch (IC->get_LS()) 
+  {
       
     case JACOBI:
       TIMING_start(tm_pvec_cn_Jacobi);

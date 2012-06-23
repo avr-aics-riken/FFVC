@@ -602,7 +602,8 @@ SklSolverCBC::SklSolverInitialize() {
   DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
 
   // 無次元速度1.0を与えてdeltaTをセットし，エラーチェック
-  switch ( DT.set_DT(1.0) ) {
+  switch ( DT.set_DT(1.0) ) 
+  {
     case 0: // 成功
       break;
       
@@ -2485,18 +2486,16 @@ void SklSolverCBC::getXML_Mon_Pointset(MonitorList* M, const CfgElem *elmL2, vec
   }  
 }
 
-/**
- @fn bool SklSolverCBC::hasLinearSolver(unsigned L)
- @brief 種類Lの線形ソルバを利用する場合，trueを返す
- @param L 線形ソルバの種類
- */
-bool SklSolverCBC::hasLinearSolver(unsigned L)
+
+// 種類Lの線形ソルバを利用する場合，trueを返す
+bool SklSolverCBC::hasLinearSolver(const int L)
 {
   for (int i=0; i<ItrCtl::ic_END; i++)
     if ( IC[i].get_LS() == L ) return true;
   
   return false;
 }
+
 
 /**
  @fn void SklSolverCBC::Restart (FILE* fp, REAL_TYPE& flop)

@@ -111,7 +111,8 @@ void SklSolverCBC::ps_LS(ItrCtl* IC)
   if( !(bh2 = dc_bh2->GetData()) )  Exit(0);
   if( !(ws  = dc_ws->GetData()) )   Exit(0);
 	
-  switch (IC->get_LS()) {
+  switch (IC->get_LS()) 
+  {
     case SOR:
       
       // >>> Passive scalar Diffusion subsection 3

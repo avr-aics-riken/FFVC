@@ -265,7 +265,14 @@ public:
                      REAL_TYPE* pitch,
                      REAL_TYPE* width);
   bool chkMediumConsistency(void);
-  bool hasLinearSolver (unsigned L);
+  
+  /**
+   @brief 種類Lの線形ソルバを利用する場合，trueを返す
+   @param[in] L 線形ソルバの種類
+   */
+  bool hasLinearSolver (const int L);
+  
+  
   bool checkFile(std::string fname);
   
   REAL_TYPE Norm_Poisson     (ItrCtl* IC);

@@ -30,9 +30,11 @@
 #include "Interval_Mngr.h"
 #include "TPControl.h"
 
+using namespace std;
 
 class DTcntl {
 public:
+  /** 時間積分幅の指定種別 */
   enum dt_Type {
     dt_direct=1,      ///< 入力値がΔt
     dt_cfl_ref_v,     ///< dt < c dx/U0
@@ -44,9 +46,9 @@ public:
   };
   
 private:
-  unsigned scheme;   ///< Δtのスキーム種別
-  unsigned KOS;      ///< Kind of Solver
-  unsigned mode;     ///< 入力パラメータの次元モード（無次元/有次元）
+  int scheme;        ///< Δtのスキーム種別
+  int KOS;           ///< Kind of Solver
+  int mode;          ///< 入力パラメータの次元モード（無次元/有次元）
   double   CFL;      ///< Δtの決定に使うCFLなど
   double   deltaT;   ///< Δt（無次元）
   double   dh;       ///< 格子幅（無次元）
@@ -68,33 +70,75 @@ public:
   ~DTcntl() {}
   
 public:
-  //@fn unsigned get_Scheme(void) const
-  unsigned get_Scheme() const { return scheme; };
+  /** スキームの種類を返す */
+  int get_Scheme() const 
+  { 
+    return scheme; 
+  }
   
-  //@fn double get_dt(void) const
-  double get_DT() const { return deltaT; };
+  /** 時間積分幅を返す */
+  double get_DT() const 
+  { 
+    return deltaT; 
+  }
   
-  //@fn Sdouble get_CFL(void) const
-  double get_CFL() const { return CFL; };
+  /** CFL数を返す */
+  double get_CFL() const 
+  { 
+    return CFL; 
+  }
   
-  //@fn double DTcntl::dtCFL(const double Uref) const
-  //@brief CFL数で指定されるdtを計算
-  //@param Uref 速度の参照値（無次元）
-  double dtCFL(const double Uref) const {
+  /**
+   * @brief CFL数で指定されるdtを計算
+   * @param[in] Uref 速度の参照値（無次元）
+   */
+  double dtCFL(const double Uref) const 
+  {
     double v = (Uref < 1.0) ? 1.0 : Uref; // 1.0 is non-dimensional reference velocity
     return (dh*CFL / v);
   }
 
-  //@fn double DTcntl::dtDFN(const double coef)
-  //@brief 拡散数のdt制限
-  //@param coef 係数 (Reynolds number or Peclet number)
-  double dtDFN(const double coef) const { return coef * dh*dh/6.0; }
+
+  /** 拡散数のdt制限
+   * @param coef 係数 (Reynolds number or Peclet number)
+   */
+  double dtDFN(const double coef) const 
+  { 
+    return coef * dh*dh/6.0; 
+  }
   
+  
+  /** 時間積分幅とKindOfSolver種別の整合性をチェック */
   bool chkDtSelect();
+  
+  
+  /**
+   * @brief Δtのスキームを設定する
+   * @retval 設定の成否
+   * @param str[in] str  キーワード
+   * @param val[in] val  値
+   */
   bool set_Scheme (const char* str, const double val);
   
-  unsigned set_DT (const double vRef);
-  void set_Vars   (const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe);
+  
+  /**
+   * @brief 各種モードに対応する時間積分幅を設定する
+   * @retval return code
+   * @param[in] vRef 速度の参照値（無次元）
+   * @note deltaTは無次元
+   */
+  int set_DT(const double vRef);
+  
+  
+  /**
+   * @brief 基本変数をコピー
+   * @param[in] m_kos  ソルバーの種類
+   * @param[in] m_mode 次元モード
+   * @param[in] m_dh   無次元格子幅
+   * @param[in] re     レイノルズ数
+   * @param[in] pe     ペクレ数
+   */
+  void set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe);
 };
 
 
@@ -108,7 +152,7 @@ protected:
   double GridVel[3]; ///< 座標系の移動速度（無次元）
   
 public:
-  /// 参照系の定義
+  /** 参照系の定義 */
   enum frame_type {
     frm_static,
     frm_translation,
@@ -126,14 +170,38 @@ public:
   /**　デストラクタ */
   ~ReferenceFrame() {}
   
+  
+  /** 
+   * @brief 加速時間をセット
+   * @param[in] m_timeAccel 無次元の加速時間
+   */
   void setAccel  (const double m_timeAccel);
+  
+  
+  /**
+   @brief 参照フレームの種類をセットする
+   @param[in] m_frame 参照フレームの種類
+   */
   void setFrame  (const int m_frame);
+  
+  
+  /**
+   @brief 格子速度成分の単位方向ベクトルをセットする
+   @param[in] m_Gvel 格子速度成分の単位方向ベクトル
+   */
   void setGridVel(const double* m_Gvel);
-  void setV00    (const double time, const bool init=false);
+  
+  
+  /**
+   @brief 参照速度を設定する
+   @param[in] time 時刻（無次元）
+   @param[in] init フラグ
+   */
+  void setV00(const double time, const bool init=false);
 
   
   //@brief Frameを返す
-  unsigned getFrame() const 
+  int getFrame() const 
   {
     return Frame;
   }
@@ -147,14 +215,14 @@ public:
   
 
   //@brief v00をコピーする
-  void copyV00(double* m_v0) const 
+  void copyV00(double* m_v0)
   {
     for (int i=0; i<4; i++) m_v0[i] = v00[i];
   }
   
 
   //@brief GridVelocityをコピーする
-  void copyGridVel(double* m_gv) const 
+  void copyGridVel(double* m_gv)
   {
     for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
   }
@@ -165,9 +233,9 @@ public:
 class ItrCtl {
 private:
   int NormType;          /// ノルムの種類
-  unsigned SubType;      /// SKIP LOOP or MASK LOOP
-  unsigned ItrMax;       /// 最大反復数
-  unsigned LinearSolver; /// 線形ソルバーの種類
+  int SubType;           /// SKIP LOOP or MASK LOOP
+  int ItrMax;            /// 最大反復数
+  int LinearSolver;      /// 線形ソルバーの種類
   REAL_TYPE eps;         /// 収束閾値
   REAL_TYPE omg;         /// 加速/緩和係数
   REAL_TYPE NormValue;   /// ノルムの値
@@ -197,7 +265,7 @@ public:
     t_res_l2_r
   };
   
-  unsigned LoopCount;  ///< 反復回数
+  int LoopCount;  ///< 反復回数
   
   /** コンストラクタ */
   ItrCtl() {
@@ -210,54 +278,96 @@ public:
   ~ItrCtl() {}
   
 public:
-  // @brief 線形ソルバの種類を返す
-  unsigned get_LS(void) const { return LinearSolver; }
+  /** @brief 線形ソルバの種類を返す */
+  int get_LS() const 
+  { 
+    return LinearSolver; 
+  }
   
-  // @brief 最大反復回数を返す
-  unsigned get_ItrMax(void) const { return ItrMax; }
+  /** @brief 最大反復回数を返す */
+  int get_ItrMax() const 
+  { 
+    return ItrMax; 
+  }
   
-  // @brief ループ実装の種類を返す
-  unsigned get_LoopType(void) const { return SubType; }
+  /** @brief ループ実装の種類を返す */
+  int get_LoopType() const 
+  { 
+    return SubType; 
+  }
   
-  // @brief 緩和/加速係数を返す
-  REAL_TYPE get_omg(void) const { return omg; }
+  /** @brief 緩和/加速係数を返す */
+  REAL_TYPE get_omg() const 
+  { 
+    return omg; 
+  }
   
-  // @brief 収束閾値を返す
-  REAL_TYPE get_eps(void) const { return eps; }
+  /** @brief 収束閾値を返す */
+  REAL_TYPE get_eps() const 
+  { 
+    return eps; 
+  }
   
-  // @brief ノルムのタイプを返す
-  int get_normType(void) const { return NormType; }
+  /** @brief ノルムのタイプを返す */
+  int get_normType() const 
+  { 
+    return NormType; 
+  }
   
-  // @brief keyに対応するノルムの値を返す
-  REAL_TYPE get_normValue(void) const { return NormValue; }
+  /** @brief keyに対応するノルムの値を返す */
+  REAL_TYPE get_normValue() const 
+  { 
+    return NormValue; 
+  }
   
-  // @brief 線形ソルバの種類を設定する
-  void set_LS(unsigned key) { LinearSolver=key; }
+  /** @brief 線形ソルバの種類を設定する */
+  void set_LS(const int key) 
+  { 
+    LinearSolver=key; 
+  }
   
-  // @brief 最大反復回数を設定する
-  void set_ItrMax(unsigned key) { ItrMax=key; }
+  /** @brief 最大反復回数を設定する */
+  void set_ItrMax(const int key) 
+  { 
+    ItrMax=key; 
+  }
   
-  // @brief ループ実装の種類を設定する
-  void set_LoopType(unsigned key) { SubType=key; }
+  /** @brief ループ実装の種類を設定する */
+  void set_LoopType(const int key) 
+  { 
+    SubType=key; 
+  }
 
-  // @brief 緩和/加速係数を保持
-  void set_omg(REAL_TYPE r) { omg = r; }
+  /** @brief 緩和/加速係数を保持 */
+  void set_omg(const REAL_TYPE r) 
+  { 
+    omg = r; 
+  }
   
-  // @brief 収束閾値を保持
-  void set_eps(REAL_TYPE r) { eps = r; }
+  /** @brief 収束閾値を保持 */
+  void set_eps(const REAL_TYPE r) 
+  { 
+    eps = r; 
+  }
   
-  // @brief ノルムのタイプを保持
-  void set_normType(const int n) { NormType = n; }
+  /** @brief ノルムのタイプを保持 */
+  void set_normType(const int n) 
+  { 
+    NormType = n; 
+  }
   
-  // @brief ノルム値を保持
-  void set_normValue(REAL_TYPE r) { NormValue = r; }
+  /** @brief ノルム値を保持 */
+  void set_normValue(const REAL_TYPE r) 
+  { 
+    NormValue = r; 
+  }
 };
 
 
 
 class Control {
 protected:
-  TPControl* tpCntl;
+  TPControl* tpCntl;   ///< テキストパーサへのポインタ
   
 public:
   
@@ -517,24 +627,24 @@ public:
   long TotalMemory;
   char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
   char HistoryWallName[LABEL], PolylibConfigName[LABEL], HistoryForceName[LABEL];
-  std::string f_Coarse_pressure;
-  std::string f_Coarse_velocity;
-  std::string f_Coarse_temperature;
-  std::string f_Coarse_dfi_prs;
-  std::string f_Coarse_dfi_vel;
-  std::string f_Coarse_dfi_temp;
+  string f_Coarse_pressure;
+  string f_Coarse_velocity;
+  string f_Coarse_temperature;
+  string f_Coarse_dfi_prs;
+  string f_Coarse_dfi_vel;
+  string f_Coarse_dfi_temp;
   
-  std::string f_Velocity;
-  std::string f_Pressure;
-  std::string f_Temperature;
-  std::string f_AvrPressure;
-  std::string f_AvrVelocity;
-  std::string f_AvrTemperature;
-  std::string f_DivDebug;
-  std::string f_Helicity;
-  std::string f_TotalP;
-  std::string f_I2VGT;
-  std::string f_Vorticity;
+  string f_Velocity;
+  string f_Pressure;
+  string f_Temperature;
+  string f_AvrPressure;
+  string f_AvrVelocity;
+  string f_AvrTemperature;
+  string f_DivDebug;
+  string f_Helicity;
+  string f_TotalP;
+  string f_I2VGT;
+  string f_Vorticity;
   
   
   /** コンストラクタ */
@@ -681,7 +791,7 @@ protected:
    @param[in]     order   ItrCtl配列の格納番号
    @param[in/out] IC      反復制御用クラスの配列
    */
-  void findCriteria(const std::string label1, const std::string label2, const int order, ItrCtl* IC);
+  void findCriteria(const string label1, const string label2, const int order, ItrCtl* IC);
   
   
   /** 解法アルゴリズムを選択する */
@@ -772,7 +882,7 @@ public:
    * @param[in] d ノルムの種類
    * @retval ノルムのラベル
    */
-  std::string getNormString(const int d);
+  string getNormString(const int d);
   
   
   unsigned countCompo  (CompoList* cmp, unsigned label);

@@ -39,7 +39,7 @@ void History::printHistoryItrTitle(FILE* fp)
 }
 
 /**
- @fn void History::printHistoryItr(FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx)
+ @fn void History::printHistoryItr(FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx)
  @brief コンポーネントモニタの履歴出力
  @param fp 出力ファイルポインタ
  @param itr 反復回数
@@ -47,7 +47,7 @@ void History::printHistoryItrTitle(FILE* fp)
  @param div 発散の最大値
  @param idx divの最大値の発生セルインデクス
  */
-void History::printHistoryItr(FILE* fp, const unsigned itr, const REAL_TYPE nrm, const int* idx)
+void History::printHistoryItr(FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx)
 {
 	fprintf(fp, "                                           %8d %13.6e (%12d, %12d, %12d)\n", itr+1, nrm, idx[0], idx[1], idx[2]);
 }

@@ -146,7 +146,7 @@ int FFV::Initialize(int argc, char **argv)
   */
   
   
-  
+  return 1;
 }
 
 

@@ -24,17 +24,24 @@
 #include <map>
 #include "string.h"
 
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
+
 #include "FB_Define.h"
 #include "TextParser.h"
 
+using namespace std;
 
 class SubDomain {
 public:
+  /** コンストラクタ */
   SubDomain()
   {
     m_pos[0] = m_pos[1] = m_pos[2] = 0;
     m_bcid[0] = m_bcid[1] = m_bcid[2] = m_bcid[3] = m_bcid[4] = m_bcid[5] = 0;
   }
+  
+  /**　デストラクタ */
   ~SubDomain()
   {
   }
@@ -47,6 +54,7 @@ public:
 
 class DomainInfo {
 public:
+  /** コンストラクタ */
   DomainInfo()
   {
     m_globalOrigin[0] = m_globalOrigin[1] = m_globalOrigin[2] = REAL_TYPE(0.0);
@@ -54,6 +62,8 @@ public:
     m_globalPitch[0]  = m_globalPitch[1]  = m_globalPitch[2]  = REAL_TYPE(0.0);
     m_domainDiv[0]    = m_domainDiv[1]    = m_domainDiv[2]    = 0;
   }
+  
+  /**　デストラクタ */
   ~DomainInfo()
   {
   }
@@ -66,7 +76,7 @@ public:
   REAL_TYPE m_globalRegion[3];
   REAL_TYPE m_globalPitch[3];
   int       m_domainDiv[3];
-  std::vector<SubDomain> m_subDomain;
+  vector<SubDomain> m_subDomain;
 };
 
 
@@ -74,14 +84,17 @@ public:
 class MediumTableInfo {
 public:
   int type;
-  std::string label;
-  std::map<std::string, REAL_TYPE> m_fval;
+  string label;
+  map<string, REAL_TYPE> m_fval;
 
 public:
+  /** コンストラクタ */
   MediumTableInfo() 
   {
     type = -1;
   }
+  
+  /**　デストラクタ */
   ~MediumTableInfo() 
   {
   }
@@ -91,30 +104,110 @@ public:
 class TPControl {
 
 private:
-	TextParser* tp;
+	TextParser* tp;  ///< テキストパーサ
 
 public:
+  /** コンストラクタ */
 	TPControl(){};
 
+  /**　デストラクタ */
 	~TPControl(){};
 	
 
-	//変数取得関数
-	bool GetVector(std::string label, int *vec, const int nvec);
-	bool GetVector(std::string label, REAL_TYPE *vec, const int nvec);
-	bool GetVector(std::string label, std::string *vec, const int nvec);
-	bool GetValue(const std::string label, int *ct);
-	bool GetValue(const std::string label, REAL_TYPE *ct);
-	bool GetValue(const std::string label, std::string *ct);
-
-	//Label、Nodeのチェック関数
-	bool chkLabel(const std::string label);
-	bool chkNode(const std::string label);
-	bool GetNodeStr(const std::string label, const int nnode, std::string *ct);
+  /**
+   @brief TextParser入力ファイルからベクトル値を取得する（整数型）
+   @param[int] label 取得するベクトルのラベル（絶対パス）
+   @param[out] vec   ベクトル格納配列ポインタ
+   @param[in]  nvec  ベクトルサイズ
+   */
+	bool GetVector(const string label, int *vec, const int nvec);
   
-  int countLabels(const std::string label);
-  int getTPinstance(void);                     //TextParserをインスタンスする
-	int readTPfile(const std::string filename);  //入力ファイルをTextParserへ読み込ませる
+  
+  /**
+   @brief TextParser入力ファイルからベクトル値を取得する（実数型）
+   @param[in]  label  取得するベクトルのラベル（絶対パス）
+   @param[out] vec    ベクトル格納配列ポインタ
+   @param[in]  nvec   ベクトルサイズ
+   */
+	bool GetVector(const string label, REAL_TYPE *vec, const int nvec);
+
+  
+  /**
+   @brief TextParser入力ファイルからベクトル値を取得する（文字列型）
+   @param[in]  label  取得するベクトルのラベル（絶対パス）
+   @param[out] vec    ベクトル格納配列ポインタ
+   @param[in]  nvec   ベクトルサイズ
+   */
+	bool GetVector(const string label, string *vec, const int nvec);
+  
+  
+  /**
+   @brief TextParser入力ファイルから変数を取得する（整数型）
+   @param[in]  label 取得する変数のラベル（絶対パス）
+   @param[out] ct    変数格納ポインタ
+   */
+	bool GetValue(const string label, int *ct);
+  
+  
+  /**
+   @brief TextParser入力ファイルから変数を取得する（実数型）
+   @param[in]  label 取得する変数のラベル（絶対パス）
+   @param[out] ct    変数格納ポインタ
+   */
+	bool GetValue(const string label, REAL_TYPE *ct);
+  
+  
+  /**
+   @brief TextParser入力ファイルから変数を取得する（文字列型）
+   @param[in]  label 取得する変数のラベル（絶対パス）
+   @param[out] ct    変数格納ポインタ
+   */
+	bool GetValue(const string label, string *ct);
+
+	
+  /**
+   @brief ラベルの有無をチェック
+   @param[in] label チェックするラベル（絶対パス）
+   */
+	bool chkLabel(const string label);
+  
+  
+  /**
+   @brief ノードの有無をチェック
+   @param[in] label チェックするノード（絶対パス）
+   */
+	bool chkNode(const string label);
+  
+  
+  /**
+   @brief ノード以下のnnode番目の文字列を取得する
+   @param[in]  label ノードの絶対パス
+   @param[in]  nnode 取得する文字列が現れる順番
+   @param[out] ct    取得した文字列
+   */
+	bool GetNodeStr(const string label, const int nnode, string *ct);
+  
+  
+  /**
+   @brief ノード以下のラベルの数を数える
+   @param[in] label ラベルを数えるノードの絶対パス
+   @retval ラベルの数（エラー、もしくはない場合は-1を返す）
+   */
+  int countLabels(const string label);
+  
+  /**
+   @brief TextParserLibraryのインスタンス生成
+   @retrun エラーコード
+   */
+  int getTPinstance();
+  
+  
+  /**
+   @brief TextParserオブジェクトに入力ファイルをセットする
+   @param[in] filename 入力ファイル名
+   @retval エラーコード
+   */
+	int readTPfile(const string filename);
 
 };
 
