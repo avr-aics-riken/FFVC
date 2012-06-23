@@ -1,20 +1,23 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file IP_PMT.C
-//@brief IP_PMT class
-//@author keno, FSI Team, VCAD, RIKEN
+/** 
+ * @file IP_PMT.C
+ * @brief IP_PMT class
+ * @author kero
+ */
 
 #include "IP_PMT.h"
 
-/**
- @fn bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
- @brief パラメータを取得する
- */
+
+// パラメータを取得する
 bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
 {
   std::string str;
@@ -38,15 +41,8 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
   return true;
 }
 
-/**
- @fn bool IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
- @brief 領域情報を設定する
- @param R Controlクラスのポインタ
- @param sz グローバル計算領域のセルサイズ
- @param org グローバル計算領域の基点
- @param wth グローバル計算領域のbounding boxサイズ
- @param pch セルピッチ
- */
+
+// 領域情報を設定する
 void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
   // forced
@@ -83,14 +79,8 @@ void IP_PMT::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   }
 }
 
-/**
- @fn void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
- @brief 計算領域のセルIDを設定する
- @param mid IDの配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- */
+
+// 計算領域のセルIDを設定する
 void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   unsigned m, m_sz[3], gd;

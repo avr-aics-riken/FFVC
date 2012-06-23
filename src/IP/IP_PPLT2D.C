@@ -1,13 +1,18 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file IP_PPLT2D.C
-//@brief IP_PPLT2D class
-//@author keno, FSI Team, VCAD, RIKEN
+/** 
+ * @file IP_PPLT2D.C
+ * @brief IP_PPLT2D class
+ * @author kero
+ */
 
 #include "IP_PPLT2D.h"
 
@@ -34,15 +39,10 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
   
   return true;
 }
-/**
- @fn bool IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
- @brief PPLT2Dの領域情報を設定する
- @param R Controlクラスのポインタ
- @param sz グローバル計算領域のセルサイズ
- @param org グローバル計算領域の基点
- @param wth グローバル計算領域のbounding boxサイズ
- @param pch セルピッチ
- */
+
+
+
+// PPLT2Dの領域情報を設定する
 void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
   // forced
@@ -52,7 +52,7 @@ void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYP
   }
 
   // 分割数を取得する
-  if ( !SklUtil::getCellInfo(R->NoDimension, sz, org, pch, wth) ) Exit(0);
+  //if ( !SklUtil::getCellInfo(R->NoDimension, sz, org, pch, wth) ) Exit(0);
   
   // Z方向のチェック
   if ( sz[2] != 3 ) {
@@ -86,14 +86,8 @@ void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYP
   org[2] = -pch[2]*1.5;
 }
 
-/**
- @fn void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
- @brief PPLT2Dの計算領域のセルIDを設定する
- @param mid IDの配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- */
+
+// PPLT2Dの計算領域のセルIDを設定する
 void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k;

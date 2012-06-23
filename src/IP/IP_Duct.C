@@ -1,15 +1,21 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
+
+/** 
+ * @file IP_Duct.C
+ * @brief IP_Duct class
+ * @author kero
  */
 
-//@file IP_Duct.C
-//@brief IP_Duct class
-//@author keno, FSI Team, VCAD, RIKEN
-
 #include "IP_Duct.h"
+
 
 //@brief パラメータを取得する
 bool IP_Duct::getTP(Control* R, TPControl* tpCntl)
@@ -122,102 +128,8 @@ bool IP_Duct::getTP(Control* R, TPControl* tpCntl)
   return true;
 }
 
-/**
- @fn bool IP_Duct::getXML(SklSolverConfig* CF, Control* R)
- @brief Ductのパラメータを取得する
- @param CF コンフィギュレーションツリー
- @param R Controlクラスのポインタ
 
-bool IP_Duct::getXML(SklSolverConfig* CF, Control* R)
-{
-  const CfgElem *elemTop=NULL, *elmL1=NULL;
-  const char *str=NULL;
-  REAL_TYPE ct=0.0;
-  
-  if ( !(elemTop = CF->GetTop(PARAMETER)) ) return false;
-  
-  if( !(elmL1 = elemTop->GetElemFirst("Intrinsic_Example")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // 断面形状
-  if ( !elmL1->GetValue("Shape", &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Shape' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  if ( !strcasecmp(str, "circular") ) {
-    driver.shape = id_circular;
-  }
-  else if ( !strcasecmp(str, "rectangualr") ) {
-    driver.shape = id_rectangular;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : Invalid shape in 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // 直径
-  if ( elmL1->GetValue(CfgIdt("Diameter"), &ct) ) {
-    driver.diameter = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Diameter' in 'intrinsic_Example'\n");
-    return false;
-  }
-  
-  // 周期境界の方向
-  if ( elmL1->GetValue("Direction", &str) ) {
-    if ( !strcasecmp(str, "X_minus")) {
-      driver.direction = X_MINUS;
-    }
-    else if ( !strcasecmp(str, "X_plus")) {
-      driver.direction = X_PLUS;
-    }
-    else if ( !strcasecmp(str, "Y_minus")) {
-      driver.direction = Y_MINUS;
-    }
-    else if ( !strcasecmp(str, "Y_plus")) {
-      driver.direction = Y_PLUS;
-    }
-    else if ( !strcasecmp(str, "Z_minus")) {
-      driver.direction = Z_MINUS;
-    }
-    else if ( !strcasecmp(str, "Z_plus")) {
-      driver.direction = Z_PLUS;
-    }
-    else {
-      Hostonly_ stamped_printf("\tParsing error : Invalid value of 'Direction' in 'Intrinsic_Example'\n");
-      return false;
-    }      
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Direction' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  if ( elmL1->GetValue(CfgIdt("Driver"), &ct) ) {
-    driver.length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Driver' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  if ( driver.length < 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
-    return false;
-  }
-  
-  return true;
-}*/
-
-/**
- @fn void IP_Duct::printPara(FILE* fp, Control* R)
- @brief パラメータの表示
- @param fp ファイルポインタ
- @param R コントロールクラスのポインタ
- */
+// パラメータの表示
 void IP_Duct::printPara(FILE* fp, Control* R)
 {
   if ( !fp ) {
@@ -225,7 +137,7 @@ void IP_Duct::printPara(FILE* fp, Control* R)
     Exit(0);
   }
   
-  string dir;
+  std::string dir;
   switch (driver.direction) {
     case X_MINUS:
     case X_PLUS:
@@ -256,15 +168,8 @@ void IP_Duct::printPara(FILE* fp, Control* R)
   
 }
 
-/**
- @fn bool IP_Duct::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
- @brief Ductの領域情報を設定する
- @param R Controlクラスのポインタ
- @param sz グローバル計算領域のセルサイズ
- @param org グローバル計算領域の基点
- @param wth グローバル計算領域のbounding boxサイズ
- @param pch セルピッチ
- */
+
+// Ductの領域情報を設定する
 void IP_Duct::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
   wth[0] = pch[0]*(REAL_TYPE)sz[0];
@@ -285,14 +190,8 @@ void IP_Duct::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 
 }
 
-/**
- @fn void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
- @brief Ductの計算領域のセルIDを設定する
- @param mid IDの配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- */
+
+// Ductの計算領域のセルIDを設定する
 void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k, gd;
@@ -303,6 +202,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   unsigned m;
   REAL_TYPE x, y, z, dh, r, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
+  
+  // 隣接ランクのIDを取得 nID[6]
+  const int* nID = paraMngr->GetNeighborRankID();
   
   ox = R->org[0];
   oy = R->org[1];
@@ -387,7 +289,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     
     switch (driver.direction) {
       case X_MINUS:
-        if ( pn.nID[driver.direction] < 0 ) {
+        if ( nID[driver.direction] < 0 ) {
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
@@ -410,7 +312,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case X_PLUS:
-        if ( pn.nID[driver.direction] < 0 ) {
+        if ( nID[driver.direction] < 0 ) {
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
@@ -433,7 +335,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Y_MINUS:
-        if ( pn.nID[driver.direction] < 0 ) {
+        if ( nID[driver.direction] < 0 ) {
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
@@ -456,7 +358,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Y_PLUS:
-        if ( pn.nID[driver.direction] < 0 ) {
+        if ( nID[driver.direction] < 0 ) {
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
@@ -479,7 +381,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Z_MINUS:
-        if ( pn.nID[driver.direction] < 0 ) {
+        if ( nID[driver.direction] < 0 ) {
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {
@@ -502,7 +404,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Z_PLUS:
-        if ( pn.nID[driver.direction] < 0 ) {
+        if ( nID[driver.direction] < 0 ) {
           for (k=1; k<=(int)kmax; k++) {
             for (j=1; j<=(int)jmax; j++) {
               for (i=1; i<=(int)imax; i++) {

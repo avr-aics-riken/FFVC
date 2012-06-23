@@ -1,15 +1,21 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
+
+/** 
+ * @file IP_Sphere.C
+ * @brief IP_Sphere class
+ * @author kero
  */
 
-//@file IP_Shere.C
-//@brief IP_Shere class
-//@author keno, FSI Team, VCAD, RIKEN
-
 #include "IP_Sphere.h"
+
 
 //@brief パラメータを取得する
 bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
@@ -77,12 +83,8 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
 }
 
 
-/**
- @fn void IP_Sphere::printPara(FILE* fp, Control* R)
- @brief パラメータの表示
- @param fp ファイルポインタ
- @param R コントロールクラスのポインタ
- */
+
+// パラメータの表示
 void IP_Sphere::printPara(FILE* fp, Control* R)
 {
   if ( !fp ) {
@@ -99,15 +101,8 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
   }
 }
 
-/**
- @fn bool IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL_TYPE m_wth[3], REAL_TYPE m_pch[3])
- @brief 領域情報を設定する
- @param R Controlクラスのポインタ
- @param[in]  m_sz グローバル計算領域のセルサイズ
- @param[out] m_org グローバル計算領域の基点
- @param[out] m_wth グローバル計算領域のbounding boxサイズ
- @param[in]  m_pch セルピッチ
- */
+
+// 領域情報を設定する
 void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL_TYPE m_wth[3], REAL_TYPE m_pch[3])
 {
   pch = m_pch;
@@ -130,9 +125,9 @@ void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL
 
 }
 
-//@fn FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
-//@brief 点pの属するセルインデクスを求める
-//@note Fortran index
+
+// 点pの属するセルインデクスを求める
+// Fortran index
 FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 {
   FB::Vec3f q = (p-ol)/pch;
@@ -148,14 +143,8 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
   return idx;
 }
 
-/**
- @fn void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
- @brief 計算領域のセルIDを設定する
- @param mid IDの配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- */
+
+// 計算領域のセルIDを設定する
 void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k, gd;
@@ -274,15 +263,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   }
 }
 
-/**
- @fn void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut)
- @brief 計算領域のセルIDとカット情報を設定する
- @param mid IDの配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- @param cut 
- */
+
+
+// 計算領域のセルIDとカット情報を設定する
 void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut)
 {
   int i,j,k, gd;
@@ -437,14 +420,8 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   }
 }
 
-/**
- @fn float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
- @brief 計算領域のセルIDを設定する
- @param p 基点座標
- @param dir テスト方向
- @param r radius
- @param dh 格子幅
- */
+
+// 交点計算
 float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
 {
   float x, y, z, s;
@@ -456,7 +433,7 @@ float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const
   
   s = 0.0;
   
-  // 基点座標の符号で好転座標を判断
+  // 基点座標の符号で交点座標を判断
   switch (dir) {
     case 1: // X-
       xc = sqrtf(r*r - y*y - z*z);

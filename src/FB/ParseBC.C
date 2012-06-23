@@ -2703,19 +2703,19 @@ void ParseBC::loadBC_Outer(void)
   // 周期境界条件の整合性のチェック
   
   // 部分周期境界の数
-  unsigned p_flag=0;
-  for (unsigned n=0; n<NOFACE; n++) {
+  int p_flag=0;
+  for (int n=0; n<NOFACE; n++) {
     if (bc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver) p_flag++;
   }
   
   // 部分周期条件を使わない場合，対になる外部境界のチェック
   if ( p_flag == 0 ) {
-    unsigned n_pair=0;
+    int n_pair=0;
     
     // 周期境界条件の指定をチェック
-    for (unsigned n=0; n<NOFACE; n++) {
+    for (int n=0; n<NOFACE; n++) {
       if ( bc[n].get_Class() == OBC_PERIODIC ) {
-        n_pair = oppositDir(n);
+        n_pair = oppositeDir(n);
         if ( bc[n_pair].get_Class() != OBC_PERIODIC ) {
           Hostonly_ printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
           Exit(0);
@@ -2724,9 +2724,9 @@ void ParseBC::loadBC_Outer(void)
     }
     
     // 対になるモードのチェック
-    for (unsigned n=0; n<NOFACE; n++) {
+    for (int n=0; n<NOFACE; n++) {
       if ( bc[n].get_Class() == OBC_PERIODIC ) {
-        n_pair = oppositDir(n);
+        n_pair = oppositeDir(n);
         
         switch (bc[n].get_PrdcMode()) {
           case BoundaryOuter::prdc_Simple:
@@ -2760,9 +2760,9 @@ void ParseBC::loadBC_Outer(void)
     }
   }
   else { // Driverが指定された場合の内部境界との整合性をチェック
-    unsigned n_pair=0;
-    for (unsigned n=0; n<NOFACE; n++) {
-      n_pair = oppositDir(n);
+    int n_pair=0;
+    for (int n=0; n<NOFACE; n++) {
+      n_pair = oppositeDir(n);
       if ( bc[n].get_Class() == OBC_PERIODIC ) {
         if (bc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver) {
           
@@ -2773,7 +2773,7 @@ void ParseBC::loadBC_Outer(void)
           }
           
           unsigned cflag=0;
-          for (unsigned c=1; c<=NoBC; c++) {
+          for (int c=1; c<=NoBC; c++) {
             if ( compo[c].getType() == PERIODIC ) {
               if ( (int)compo[c].getPeriodicDir() != bc[n].get_DriverDir() ) {
                 Hostonly_ printf("\tPeriodic Driver BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
@@ -2796,14 +2796,11 @@ void ParseBC::loadBC_Outer(void)
 }
 
 
-/**
- @fn unsigned ParseBC::oppositDir(unsigned dir)
- @brief 外部境界面の反対方向を返す
- @param dir 評価する方向
- */
-unsigned ParseBC::oppositDir(unsigned dir)
+
+// 外部境界面の反対方向を返す
+int ParseBC::oppositeDir(const int dir)
 {
-  unsigned n_pair=0;
+  int n_pair=0;
   
   if      ( dir == X_MINUS ) n_pair=X_PLUS;
   else if ( dir == X_PLUS )  n_pair=X_MINUS;
@@ -3411,7 +3408,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
 void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
 {
   for (int i=0; i<NOFACE; i++) {
-    fprintf(fp,"\t      Set %s up as %s : < %s >\n", Control::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), bc[i].get_Alias().c_str());
+    fprintf(fp,"\t      Set %s up as %s : < %s >\n", FBUtility::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), bc[i].get_Alias().c_str());
     printOBC(fp, &bc[i], G_Lbx, i);
     fprintf(fp,"\n");
   }

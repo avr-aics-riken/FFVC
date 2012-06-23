@@ -1,9 +1,21 @@
+************
 Release Note
+************
 
-	Intrinsic class ( Intrinsic Problem )
+	Intrinsic class ( Intrinsic Problems )
 	
-	2007-2012　 Copyright (c) RIKEN, Japan. All rights reserved.
+	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
+  The University of Tokyo, Japan.
+  
+  @author kero
 
+****************************************************************************
+  
+  
+  
+Ver 1.1.9    23 June 2012
+  - FFVのビルド用にMakeの方式を変更
+  
 Ver 1.1.8    10 June 2012
   - XMLをTPに変更
 

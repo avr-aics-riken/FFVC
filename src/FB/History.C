@@ -328,14 +328,14 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
     fprintf(fp, "    step        time[-]");
   }
   
-  for (int i=0; i<NOFACE; i++) fprintf(fp, "         Q:%s", Control::getDirection(i).c_str());
+  for (int i=0; i<NOFACE; i++) fprintf(fp, "         Q:%s", FBUtility::getDirection(i).c_str());
   
   fprintf(fp, " >>      Balance");
   
-  for (int i=0; i<NOFACE; i++) fprintf(fp, "         V:%s", Control::getDirection(i).c_str());
+  for (int i=0; i<NOFACE; i++) fprintf(fp, "         V:%s", FBUtility::getDirection(i).c_str());
   
   if (C->isHeatProblem()) {
-    for (int i=0; i<NOFACE; i++) fprintf(fp, "         H:%s", Control::getDirection(i).c_str());
+    for (int i=0; i<NOFACE; i++) fprintf(fp, "         H:%s", FBUtility::getDirection(i).c_str());
   }
   fprintf(fp, "\n");
 }

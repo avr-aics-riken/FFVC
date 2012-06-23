@@ -1,31 +1,57 @@
 #ifndef _IP_RSP_H_
 #define _IP_RSP_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 //@file IP_RSP.h
 //@brief IP_RSP class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "../FB/Intrinsic.h"
+#include "Intrinsic.h"
 #include "IP_Define.h"
 
 class IP_RSP : public Intrinsic {
 public:
+  /** コンストラクタ */
   IP_RSP(){}
+  
+  /**　デストラクタ */
   ~IP_RSP() {}
   
 protected:
 
 public:
+  /** 領域を設定する
+   * @param[in] R   Controlクラスのポインタ
+   * @param[in] sz  分割数
+   * @param[in] org 計算領域の基点
+   * @param[in] wth 計算領域のbounding boxサイズ
+   * @param[in] pch セル幅
+   */
   void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
+  
+  
+  /** 矩形の計算領域のセルIDを設定する
+   * @param[in/out] mid   媒質情報の配列
+   * @param[in]     R     Controlクラスのポインタ
+   * @param[in]     G_org グローバルな原点（無次元）
+   * @param[in]     Nmax  Controlクラスのポインタ
+   * @param[in]     mat   MediumListクラスのポインタ
+   */
   void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
+  
+  /** 
+   @brief 例題の名称を返す
+   */
   const char* getExampleName(void) {
     return ("Rayleigh's Problem");
   }

@@ -1,17 +1,22 @@
 #ifndef _IP_DEFINE_H_
 #define _IP_DEFINE_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
+
+/** 
+ * @file IP_Define.h
+ * @brief Intrinsic class Header
+ * @author kero
  */
 
-//@file IP_Define.h
-//@brief Intrinsic class Header
-//@author keno, FSI Team, VCAD, RIKEN
-
-#define IP_VERS 118
+#define IP_VERS 119
 
 #endif // _IP_DEFINE_H_

@@ -1,17 +1,21 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
 /**
  @file IP_SHC1D.C
  @brief IP_SHC1D class
- @author keno, FSI Team, RIKEN
+ @author kero
  */
 
 #include "IP_SHC1D.h"
+
 
 //@brief パラメータを取得する
 bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
@@ -58,15 +62,8 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
   return true;
 }
 
-/**
- @fn void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
- @brief Cavity3Dの領域情報を設定する
- @param R Controlクラスのポインタ
- @param sz グローバル計算領域のセルサイズ
- @param org グローバル計算領域の基点
- @param wth グローバル計算領域のbounding boxサイズ
- @param pch セルピッチ
- */
+
+// 領域情報を設定する
 void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
   // forced
@@ -93,14 +90,8 @@ void IP_SHC1D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE
   }
 }
 
-/**
- @fn void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
- @brief モデルIDのセットアップ
- @param mid ボクセル配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- */
+
+// モデルIDのセットアップ
 void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   unsigned i, j, k, m;

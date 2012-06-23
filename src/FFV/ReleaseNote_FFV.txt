@@ -3,10 +3,9 @@ Release Note
 	Frontflow / violet
 	
 	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
-  
   The University of Tokyo, Japan. 
 
-@author kero
+  @author kero
 
 
 

@@ -84,7 +84,7 @@ public:
   /**
    * @param[in] R       Controlクラスのポインタ
    * @param[in] tpCntl  TPControlクラスのポインタ
-   * @return true-成功、false-失敗
+   * @return true-成功、false-エラー
    */
   virtual bool getTP(Control* R, TPControl* tpCntl) { return true; };
   
@@ -102,8 +102,29 @@ public:
   
   virtual void printParaInfo(FILE* mp, FILE* fp, Control* R);
   virtual void printPara(FILE* fp, Control* R);
+  
+  
+  /** 領域を設定する
+   * @param[in] R   Controlクラスのポインタ
+   * @param[in] sz  分割数
+   * @param[in] org 計算領域の基点
+   * @param[in] wth 計算領域の大きさ
+   * @param[in] pch セル幅
+   */
   virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
+  
+  
+  /** 計算領域の媒質情報を設定する
+   * @param[in/out] mid   媒質情報の配列
+   * @param[in]     R     Controlクラスのポインタ
+   * @param[in]     G_org Controlクラスのポインタ
+   * @param[in]     Nmax  Controlクラスのポインタ
+   * @param[in]     mat   MediumListクラスのポインタ
+   */
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
+  
+  
+  
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
   
   

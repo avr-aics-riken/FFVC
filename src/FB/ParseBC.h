@@ -98,7 +98,14 @@ private:
 
   int get_Vel_profile     (const std::string label_base);
   
-  unsigned oppositDir     (unsigned dir);
+  
+  /**
+   @brief 外部境界面の反対方向を返す
+   @param[in] dir 評価する方向
+   @return dirと反対方向
+   */
+  int oppositeDir(const int dir);
+  
   
   REAL_TYPE get_BCval_real(const std::string label);
   

@@ -164,7 +164,7 @@ public:
 
 class ItrCtl {
 private:
-  unsigned NormType;     /// ノルムの種類
+  int NormType;          /// ノルムの種類
   unsigned SubType;      /// SKIP LOOP or MASK LOOP
   unsigned ItrMax;       /// 最大反復数
   unsigned LinearSolver; /// 線形ソルバーの種類
@@ -226,7 +226,7 @@ public:
   REAL_TYPE get_eps(void) const { return eps; }
   
   // @brief ノルムのタイプを返す
-  unsigned get_normType(void) const { return NormType; }
+  int get_normType(void) const { return NormType; }
   
   // @brief keyに対応するノルムの値を返す
   REAL_TYPE get_normValue(void) const { return NormValue; }
@@ -247,7 +247,7 @@ public:
   void set_eps(REAL_TYPE r) { eps = r; }
   
   // @brief ノルムのタイプを保持
-  void set_normType(unsigned n) { NormType = n; }
+  void set_normType(const int n) { NormType = n; }
   
   // @brief ノルム値を保持
   void set_normValue(REAL_TYPE r) { NormValue = r; }
@@ -672,18 +672,39 @@ protected:
   
   void convertHexCoef        (REAL_TYPE* cf);
   void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
-  void findTPCriteria(
-                      const std::string label1,
-                      const std::string label2,
-                      unsigned order,
-                      ItrCtl* IC);
-  void get_Algorithm      ();
+  
+  
+  /**
+   @brief 反復の収束判定パラメータを取得
+   @param[in]     label1  Nodeのラベル1
+   @param[in]     label2  Nodeのラベル2
+   @param[in]     order   ItrCtl配列の格納番号
+   @param[in/out] IC      反復制御用クラスの配列
+   */
+  void findCriteria(const std::string label1, const std::string label2, const int order, ItrCtl* IC);
+  
+  
+  /** 解法アルゴリズムを選択する */
+  void get_Algorithm();
+  
+  
   void get_Average_option ();
   void get_ChangeID       ();
+  
+  
+  /** パラメータ入力チェックモードの取得 */
   void get_CheckParameter ();
+  
+  
   void get_Convection     ();
   void get_Derived        ();
-  void get_FileIO         ();
+  
+  /**
+   @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
+   @note インターバルパラメータは，setParameters()で無次元して保持
+   */
+  void get_FileIO();
+  
   void get_Iteration      (ItrCtl* IC);
   void get_KindOfSolver   ();
   void get_LES_option     ();
@@ -694,11 +715,32 @@ protected:
   void get_PMtest         ();
   void get_ReferenceFrame (ReferenceFrame* RF);
   ////void get_restart_rough  ();
-  void get_Scaling        ();
+  
+  
+  /**
+   @brief スケーリングファクタを取得する（隠しパラメータ）
+   @note 'Scaling_factor'の文字列チェックはしないので注意して使うこと
+   */
+  void get_Scaling();
+  
+  
+  /** ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する */
   void get_Solver_Properties ();
+  
   void get_start_condition();
-  void get_Time_Control   (DTcntl* DT);
+  
+  /**
+   @brief 時間制御に関するパラメータを取得する
+   @param[out] DT DTcntlクラス
+   @note パラメータは，setParameters()で無次元して保持
+   */
+  void get_Time_Control(DTcntl* DT);
+  
+  
+  /** 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する */
   void get_Unit           ();
+  
+  
   void get_VarRange       ();
   void get_Wall_type      ();
   void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
@@ -725,8 +767,13 @@ public:
   void setParameters            (MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
   
   
-  static std::string getDirection(unsigned dir);
-  std::string getNormString(unsigned d);
+  /**
+   * @brief ノルムのタイプを返す
+   * @param[in] d ノルムの種類
+   * @retval ノルムのラベル
+   */
+  std::string getNormString(const int d);
+  
   
   unsigned countCompo  (CompoList* cmp, unsigned label);
   
@@ -811,7 +858,11 @@ public:
   
   void get_Para_Init    (void);
   void get_Polygon      (void);
-  void get_Sampling     (void);
+  
+  
+  /**  モニタリングのON/OFFとセルモニタの有無のみを取得  */
+  void get_Sampling();
+  
   void get_Steer_1      (DTcntl* DT);
   void get_Steer_2      (ItrCtl* IC, ReferenceFrame* RF);
   void get_Version      (void);

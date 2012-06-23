@@ -1,18 +1,23 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file IP_Cylinder.C
-//@brief IP_Cylinder class
-//@author keno, FSI Team, VCAD, RIKEN
+/** 
+ * @file IP_Cylinder.C
+ * @brief IP_Cylinder class
+ * @author kero
+ */
 
 #include "IP_Cylinder.h"
 
 
-//@brief パラメータを取得する
+// パラメータを取得する
 bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
 {
   std::string str;
@@ -20,7 +25,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // 2D or 3D mode
-  label="/Parameter/Intrinsic_Example/mode";
+  label = "/Parameter/Intrinsic_Example/mode";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'mode' in 'Intrinsic_Example'\n");
@@ -39,7 +44,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // x-dir step
-  label="/Parameter/Intrinsic_Example/width";
+  label = "/Parameter/Intrinsic_Example/width";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'width' in 'Intrinsic_Example'\n");
     return false;
@@ -59,7 +64,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/Parameter/Intrinsic_Example/Driver";
+  label = "/Parameter/Intrinsic_Example/Driver";
   if ( tpCntl->GetValue(label, &ct ) ) {
     drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
@@ -75,28 +80,28 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   
   // 媒質指定
-  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  label = "/Parameter/Intrinsic_Example/Fluid_medium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
     return false;
   }
   m_fluid = str;
   
-  label="/Parameter/Intrinsic_Example/Solid_medium";
+  label = "/Parameter/Intrinsic_Example/Solid_medium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
     return false;
   }
   m_solid = str;
   
-  label="/Parameter/Intrinsic_Example/driver_medium";
+  label = "/Parameter/Intrinsic_Example/driver_medium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_medium' in 'Intrinsic_Example'\n");
     return false;
   }
   m_driver = str;
   
-  label="/Parameter/Intrinsic_Example/driver_face_medium";
+  label = "/Parameter/Intrinsic_Example/driver_face_medium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_face_medium' in 'Intrinsic_Example'\n");
     return false;
@@ -106,81 +111,8 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   return true;
 }
 
-/**
- @fn bool IP_Cylinder::getXML(SklSolverConfig* CF, Control* R)
- @brief Cylinderのパラメータを取得する
- @param CF コンフィギュレーションツリー
- @param R Controlクラスのポインタ
 
-bool IP_Cylinder::getXML(SklSolverConfig* CF, Control* R)
-{
-  const CfgElem *elemTop=NULL, *elmL1=NULL;
-  const char *str=NULL;
-  REAL_TYPE ct=0.0;
-  
-  if ( !(elemTop = CF->GetTop(PARAMETER)) ) return false;
-  
-  if( !(elmL1 = elemTop->GetElemFirst("Intrinsic_Example")) ) {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // 次元
-  if ( !elmL1->GetValue("mode", &str) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Mode' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  if ( !strcasecmp(str, "2d") ) {
-    mode = dim_2d;
-  }
-  else if ( !strcasecmp(str, "3d") ) {
-    mode = dim_3d;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : Invalid mode in 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // x-dir step
-  if ( elmL1->GetValue(CfgIdt("width"), &ct) ) {
-    width = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Depth' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // z-dir step
-  if ( elmL1->GetValue(CfgIdt("height"), &ct) ) {
-    height = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Height' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  
-  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  if ( elmL1->GetValue(CfgIdt("Driver"), &ct) ) {
-    drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Driver' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  if ( drv_length < 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
-    return false;
-  }
-  
-  return true;
-} */
-
-/**
- @fn void IP_Cylinder::printPara(FILE* fp, Control* R)
- @brief パラメータの表示
- @param fp ファイルポインタ
- @param R コントロールクラスのポインタ
- */
+// パラメータの表示
 void IP_Cylinder::printPara(FILE* fp, Control* R)
 {
   if ( !fp ) {
@@ -199,15 +131,8 @@ void IP_Cylinder::printPara(FILE* fp, Control* R)
   }
 }
 
-/**
- @fn bool IP_Cylinder::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
- @brief Cylinderの領域情報を設定する
- @param R Controlクラスのポインタ
- @param sz グローバル計算領域のセルサイズ
- @param org グローバル計算領域の基点
- @param wth グローバル計算領域のbounding boxサイズ
- @param pch セルピッチ
- */
+
+// Cylinderの領域情報を設定する
 void IP_Cylinder::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
 {
   wth[0] = pch[0]*(REAL_TYPE)sz[0];
@@ -234,24 +159,22 @@ void IP_Cylinder::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_T
   }
 }
 
-/**
- @fn void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
- @brief Cylinderの計算領域のセルIDを設定する
- @param mid IDの配列
- @param R Controlクラスのポインタ
- @param G_org グローバルな原点（無次元）
- @param mat
- */
+
+// Cylinderの計算領域のセルIDを設定する
 void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int i,j,k, gd;
-  int mid_fluid=1;        /// 流体
-  int mid_solid=2;        /// 固体
-  int mid_driver=3;       /// ドライバ部
-  int mid_driver_face=4;  /// ドライバ流出面
+  int mid_fluid=1;        ///< 流体
+  int mid_solid=2;        ///< 固体
+  int mid_driver=3;       ///< ドライバ部
+  int mid_driver_face=4;  ///< ドライバ流出面
   unsigned m;
   REAL_TYPE x, y, z, dh, len, ht;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
+  
+  // 隣接ランクのIDを取得
+  // nID[6]
+  const int* nID = paraMngr->GetNeighborRankID();
   
   ox = R->org[0];
   oy = R->org[1];
@@ -277,7 +200,7 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, 
   
   // ドライバ部分
   if ( drv_length > 0.0 ) {
-    if ( pn.nID[X_MINUS] < 0 ) {
+    if ( nID[X_MINUS] < 0 ) {
       for (k=1; k<=(int)kmax; k++) {
         for (j=1; j<=(int)jmax; j++) {
           for (i=1; i<=(int)imax; i++) {

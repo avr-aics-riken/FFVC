@@ -57,43 +57,12 @@ depend:
 
 # DO NOT DELETE
 
-IP_PMT.o: IP_PMT.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_PMT.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-IP_PMT.o: ../FB/FBUtility.h ../FB/Interval_Mngr.h ../FB/TPControl.h
-IP_PMT.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
-IP_Rect.o: IP_Rect.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_Rect.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-IP_Rect.o: ../FB/FBUtility.h ../FB/Interval_Mngr.h ../FB/TPControl.h
-IP_Rect.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
-IP_Polygon.o: IP_Polygon.h ../FB/Intrinsic.h ../FB/FB_Define.h
-IP_Polygon.o: ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h
-IP_Polygon.o: ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h
-IP_Polygon.o: ../FB/TPControl.h ../FB/vec3.h ../FB/vec3_func.h
-IP_Polygon.o: ../FB/vec3f_func.h IP_Define.h
-IP_Cylinder.o: IP_Cylinder.h ../FB/Intrinsic.h ../FB/FB_Define.h
-IP_Cylinder.o: ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h
-IP_Cylinder.o: ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h
-IP_Cylinder.o: ../FB/Interval_Mngr.h ../FB/TPControl.h ../FB/vec3.h
-IP_Cylinder.o: ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
-IP_Step.o: IP_Step.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_Step.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-IP_Step.o: ../FB/FBUtility.h ../FB/Interval_Mngr.h ../FB/TPControl.h
-IP_Step.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
-IP_PPLT2D.o: IP_PPLT2D.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_PPLT2D.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h
-IP_PPLT2D.o: ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h
-IP_PPLT2D.o: ../FB/TPControl.h ../FB/vec3.h ../FB/vec3_func.h
-IP_PPLT2D.o: ../FB/vec3f_func.h IP_Define.h
-IP_Duct.o: IP_Duct.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_Duct.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-IP_Duct.o: ../FB/FBUtility.h ../FB/Interval_Mngr.h ../FB/TPControl.h
-IP_Duct.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
-IP_SHC1D.o: IP_SHC1D.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_SHC1D.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-IP_SHC1D.o: ../FB/FBUtility.h ../FB/Interval_Mngr.h ../FB/TPControl.h
-IP_SHC1D.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
-IP_Sphere.o: IP_Sphere.h ../FB/Intrinsic.h ../FB/FB_Define.h ../FB/mydebug.h
-IP_Sphere.o: ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h
-IP_Sphere.o: ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h
-IP_Sphere.o: ../FB/TPControl.h ../FB/vec3.h ../FB/vec3_func.h
-IP_Sphere.o: ../FB/vec3f_func.h IP_Define.h
+IP_PMT.o: IP_PMT.h IP_Define.h
+IP_Rect.o: IP_Rect.h IP_Define.h
+IP_Polygon.o: IP_Polygon.h IP_Define.h
+IP_Cylinder.o: IP_Cylinder.h IP_Define.h
+IP_Step.o: IP_Step.h IP_Define.h
+IP_PPLT2D.o: IP_PPLT2D.h IP_Define.h
+IP_Duct.o: IP_Duct.h IP_Define.h
+IP_SHC1D.o: IP_SHC1D.h IP_Define.h
+IP_Sphere.o: IP_Sphere.h IP_Define.h
