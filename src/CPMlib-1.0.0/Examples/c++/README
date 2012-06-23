@@ -1,0 +1,23 @@
+/*
+ * CPM - Cartesian Partition Manager
+ *
+ * Copyright (C) 2012 University of Tokyo.
+ *
+ */
+
+C++プログラムでのCPMライブラリ使用サンプル
+
+1.提供コード
+  main.C : CPMライブラリを使用しないオリジナルコード
+
+2.使用方法
+  makeすると、exampleCXXプログラムが生成されます。
+  dataディレクトリの入力ファイルinput1.txtとinput2.txtをプログラムの
+  引数で指定します。
+  input1.txtとinput2.txtは並列数が20用の領域分割情報ファイルとして
+  記述されているため、mpirunの実行時オプションで"-np 20"を指定して
+  ください。
+
+  $ cd data
+  $ mpirun -np 20 ../exampleCXX input1.txt input2.txt
+

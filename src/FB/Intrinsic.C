@@ -8,13 +8,15 @@
 //
 // #################################################################
 
-//@file Intrinsic.C
-//@brief FlowBase Intrinsic class
-//@author kero
+/** 
+ * @file Intrinsic.C
+ * @brief FlowBase Intrinsic class
+ * @author kero
+ */
 
 #include "Intrinsic.h"
 
-//@brief MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
+// MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
 int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
 {
   std::string str = key;
@@ -28,12 +30,9 @@ int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::st
   return 0;
 }
 
-/**
- @fn void Intrinsic::printExample(FILE* fp, const char* str)
- @brief 例題名称の表示
- @param fp 出力ファイルのファイルポインタ
- @param str 表示文字列
- */
+
+
+// 例題名称の表示
 void Intrinsic::printExample(FILE* fp, const char* str)
 {
   if( !fp ) {
@@ -45,11 +44,8 @@ void Intrinsic::printExample(FILE* fp, const char* str)
   printf("\n\tExample : %s\n\n", str);
 }
 
-/**
- @fn void Intrinsic::setControlVars(Control* R)
- @brief 基本情報のコピー
- @param R コントロールクラスのポインタ
- */
+
+// 基本情報のコピー
 void Intrinsic::setControlVars(Control* R)
 {
   guide          = R->guide;
@@ -85,6 +81,14 @@ void Intrinsic::printPara(FILE* fp, Control* R)
     Exit(0);
   }
   // describe method
+}
+
+
+// 作業用ポインタのコピー
+void Intrinsic::setPartitionManager(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
 }
 
 

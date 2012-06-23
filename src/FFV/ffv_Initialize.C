@@ -20,6 +20,12 @@ int FFV::Initialize(int argc, char **argv)
 {
   int ret = 0;
   
+  // CPMバージョン表示
+  if ( paraMngr->GetMyRankID() == 0 )
+  {
+    cpm_Base::VersionInfo();
+  }
+  
   // 入力ファイルリスト
   vector<const char*> ifname;
   for (int i=1; i<argc; i++) 

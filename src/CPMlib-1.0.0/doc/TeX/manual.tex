@@ -1,0 +1,82 @@
+\documentclass[11pt]{jsarticle}
+\usepackage[dvipdfm
+           ,bookmarks=true
+           ,bookmarksnumbered=true
+           ,bookmarkstype=toc
+           ,bookmarksopen=true
+           ]{hyperref}
+\ifnum 42146=\euc"A4A2
+  \AtBeginDvi{\special{pdf:tounicode EUC-UCS2}}
+\else
+  \AtBeginDvi{\special{pdf:tounicode 90ms-RKSJ-UCS2}}
+\fi
+
+\usepackage{eclclass}
+\usepackage{enumerate}
+%\usepackage{listings,jlisting}
+\usepackage{fancyhdr}
+\usepackage{ascmac}
+\usepackage{setspace}
+
+\pagestyle{fancy}
+\lhead{Cartesian Partition Manager}
+\rhead{User's Manual}
+
+\begin{document}
+\begin{titlepage}
+\center
+\vspace*{3cm}
+\huge
+Cartesian Partition Manager Library\\
+%\vspace*{1cm}
+{\large \textbf{Ver. 1.0.0}}\\
+\vspace*{1cm}
+
+User's Manual\\
+
+\vspace*{5cm}
+\normalsize
+Center of Research on Innovative Simulation Software\\
+Institute of Industrial Science\\
+the University of Tokyo\\
+\vspace*{1.0cm}
+\small
+4-6-1 Komaba, Meguro-ku, Tokyo, 153-8505 JAPAN\\
+\vspace*{0.5cm}
+http://www.iis.u-tokyo.ac.jp/\\
+\vspace*{1.5cm}
+June 2012
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+%\section{test}
+\include{section/_test}
+
+%\section{この文書について}
+\include{section/summary}
+
+%\section{パッケージのビルド}
+\include{section/build}
+
+%\section{CPMライブラリの利用法(ビルド)}
+\include{section/use_cpmlib}
+
+%\section{C++ユーザープログラムでの利用方法}
+\include{section/use_cxx}
+
+%\section{Fortran90ユーザープログラムでの利用方法}
+\include{section/use_f90}
+
+%\section{APIメソッド一覧}
+\include{section/method}
+
+%\section{領域分割情報ファイルの仕様}
+\include{section/domInfoFile}
+
+%\section{アップデート情報}
+\include{section/update}
+
+
+\end{document}

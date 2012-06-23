@@ -22,11 +22,12 @@
 #include "Component.h"
 #include "Medium.h"
 #include "Intrinsic.h"
-#include "Parallel_node.h"
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
 
-class SetBC : public Parallel_Node {
+class SetBC {
 protected:
-  int *ix, *jx, *kx, *gc;
+  int *ix, *jx, *kx, *gc; ///< Fortranの引数用のポインタ
   int dim_sz[3], ixc, jxc, kxc;
   
   REAL_TYPE dh, accel, Dp1, Dp2, mach, BasePrs;
@@ -39,13 +40,12 @@ protected:
   bool     inout_flag, isCDS;
   
   BoundaryOuter   obc[NOFACE];
-  CompoList*      cmp;
-  MediumList*     mat;
-  Intrinsic*      Ex;
+  CompoList       *cmp;
+  MediumList      *mat;
+  Intrinsic       *Ex;
+  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
   
-  void getOuterLoopIdx (int face, int* st, int* ed);
-  
-  /// 外部境界の種類
+  /** 外部境界の種類 */
   enum obc_kind {
     id_specvel = 0,
     id_outflow,
@@ -53,8 +53,10 @@ protected:
     id_symmetric,
     id_periodic
   };
+
   
 public:
+  /** コンストラクタ */
   SetBC() {
     imax = jmax = kmax = guide = 0;
     ix = jx = kx = gc = NULL;
@@ -74,26 +76,71 @@ public:
     cmp = NULL;
     mat = NULL;
     Ex  = NULL;
+    paraMngr = NULL;
   }
+  
+  /**　デストラクタ */
   virtual ~SetBC() {}
+  
+protected:
+  /**
+   * @brief 外部境界処理用のループインデクスを取得する
+   * @param face[in] 外部境界面番号
+   * @param st[out]  開始インデクス
+   * @param ed[out]  終了インデクス
+   */
+  void getOuterLoopIdx(const int face, int* st, int* ed);
+  
 
 public:
-	REAL_TYPE getVrefOut (REAL_TYPE tm);
+  /**
+   @brief 静止座標系のときの流出速度制御の値を計算する
+   @param[in] tm 時刻
+   @retval 流出境界速度
+   @todo experimental
+   */
+	REAL_TYPE getVrefOut (const REAL_TYPE tm);
   
-  void setControlVars (Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
-  void setWorkList    (CompoList* m_CMP, MediumList* m_MAT);
+  
+  /** 
+   * @brief クラスに必要な変数のコピー
+   * @param[in] Cref       Controlクラス
+   * @param[in] mat        MediumListクラス
+   * @param[in] cmp        Componentクラス
+   * @param[in] RF         ReferenceFrameクラス
+   * @param[in] m_paraMngr cpm_ParaManagerクラス
+   * @param[in] ExRef      Intrinsicクラス
+   */
+  void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, cpm_ParaManager* m_paraMngr, Intrinsic* ExRef=NULL);
+  
+  
+  /** 
+   * @brief クラスのポインタコピー
+   * @param[in] m_CMP        CompoListクラス
+   * @param[in] m_MAT        MediumListクラス
+   */
+  void setWorkList(CompoList* m_CMP, MediumList* m_MAT);
+  
   
   //@brief 流入出境界条件が設定されている場合にtrueを返す
-  bool has_InOut(void) { return inout_flag; }
+  bool has_InOut(void) 
+  { 
+    return inout_flag; 
+  }
   
-  //@brief 外部境界リストのポインタを返す
-  BoundaryOuter* export_OBC(void) { 
+  
+  /** 外部境界リストのポインタを返す */
+  BoundaryOuter* export_OBC() 
+  { 
     return obc;
   }
   
-  //@brief 引数の外部境界面の外部境界リストのポインタを返す
-  //@param face 面番号
-  BoundaryOuter* export_OBC(int face) { 
+  
+  /** 引数の外部境界面の外部境界リストのポインタを返す
+   * @param[in] face 面番号
+   */
+  BoundaryOuter* export_OBC(const int face) 
+  { 
     return &obc[face];
   }
   

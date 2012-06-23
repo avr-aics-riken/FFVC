@@ -1,0 +1,392 @@
+\section{パッケージのビルド}
+\label{build}
+
+\subsection{パッケージの構造}
+CPMライブラリのパッケージは次のようなファイル名で保存されています．\par
+({\it X.X.X}にはバージョンが入ります)\\
+
+{\tt CPMlib-{\it X.X.X}.tar.gz}\\
+
+このファイルの内部には，次のようなディレクトリ構造が格納されています．\\
+
+{\tt
+\begin{classify}{CPMlib-{\it X.X.X}/}
+ \class{Examples/}
+ \class{doc/}
+ \class{include/}
+ \class{src/}
+\end{classify}
+}
+\vspace*{1cm}
+\\
+\indent
+これらのディレクトリ構造は，次の様になっています．
+\begin{itemize}
+\item[・] {\tt Examples}\\
+CPMライブラリの利用例（C++/Fortran90）のサンプルソースコードが収められています．\\
+\item[・] {\tt doc}\\
+この文書を含むTextParserライブラリの文書が収められています．\\
+\item[・] {\tt include}\\
+ヘッダファイルが収められています．
+ここに収められたファイルは{\tt make install}で{\tt \$prefix/include}にインストールされます．\\
+\item[・] {\tt src}\\
+ソースが格納されたディレクトリです．ここにライブラリ{\tt libcpmlib.a}が作成され，
+{\tt make install}で{\tt \$prefix/lib} にインストールされます．\\
+\end{itemize}
+\clearpage
+
+\subsection{パッケージのビルド}
+いずれの環境でもshellで作業するものとします．
+以下の例ではbashを用いていますが，shellによって環境変数の設定方法が異なるだけで，
+インストールの他のコマンドは同一です．
+適宜，環境変数の設定箇所をお使いの環境でのものに読み替えてください．
+
+以下の例では，作業ディレクトリを作成し，その作業ディレクトリに展開したパッケージを用いて
+ビルド，インストールする例を示しています．
+
+\begin{enumerate}
+\item 作業ディレクトリの構築とパッケージのコピー\\
+まず，作業用のディレクトリを用意し，パッケージをコピーします．
+ここでは，カレントディレクトリにworkというディレクトリを作り，
+そのディレクトリにパッケージをコピーします．
+{\tt
+\begin{verbatim}
+  $ mkdir work
+  $ cp [パッケージのパス] work
+\end{verbatim}
+}
+
+
+\item 作業ディレクトリへの移動とパッケージの解凍\\
+先ほど作成した作業ディレクトリに移動し，パッケージを解凍します．
+{\tt
+\begin{verbatim}
+  $ cd work
+  $ tar CPMlib-X.X.X.tar.gz
+\end{verbatim}
+}
+
+\item CPMlib-X.X.Xディレクトリに移動
+先ほどの解凍で作成されたCPMlib-X.X.Xディレクトリに移動します．
+{\tt
+\begin{verbatim}
+  $ cd CPMlib-X.X.X
+\end{verbatim}
+}
+
+
+\item configureスクリプトを実行\\
+次のコマンドでconfigureスクリプトを実行します．
+{\tt
+\begin{verbatim}
+  $ ./configure [option]
+\end{verbatim}
+}
+\noindent
+configureスクリプトの実行時には，お使いの環境に合わせたオプションを指定する必要があります．
+configureオプションに関しては，\ref{config_opt}章を参照してください．
+configureスクリプトを実行することで，環境に合わせたMakefileが作成されます．\\
+
+\item makeの実行\\
+makeコマンドを実行し，ライブラリをビルドします．
+{\tt
+\begin{verbatim}
+  $ make
+\end{verbatim}
+}
+
+makeコマンドを実行すると，次のファイルが作成されます．
+\begin{verbatim}
+  src/libcpmlib.a
+\end{verbatim}
+
+ビルドをやり直す場合は，{\tt make clean}を実行して，前回のmake実行時に作成されたファイルを削除します．
+{\tt
+\begin{verbatim}
+  $ make clean
+  $ make
+\end{verbatim}
+}
+
+また，configureスクリプトによる設定，Makefileの生成をやり直すには，{\tt make distclean}を実行して，
+全ての情報を削除してから，configureスクリプトの実行からやり直します．
+{\tt
+\begin{verbatim}
+  $ make distclean
+  $ ./configure [option]
+  $ make
+\end{verbatim}
+}
+
+
+\item インストール\\
+次のコマンドでconfigureスクリプトの{\tt --prefix}オプションで指定された
+ディレクトリに，ライブラリ，ヘッダファイルをインストールします．
+{\tt
+\begin{verbatim}
+  $ make install
+\end{verbatim}
+}
+
+インストールされる場所とファイルは以下の通りです．\\
+{\tt
+\begin{classify}{\$\{prefix\}}
+ \class{\begin{classify}{bin/}
+  \class{cpm-config}
+ \end{classify}}
+ \class{\begin{classify}{doc/}
+  \class{manual.pdf}
+  \class{reference.pdf}
+ \end{classify}}
+ \class{\begin{classify}{include/}
+  \class{cpm\_Base.h}
+  \class{cpm\_Define.h}
+  \class{cpm\_DomainInfo.h}
+  \class{cpm\_ObjList.h}
+  \class{cpm\_ParaManager.h}
+  \class{cpm\_TextParser.h}
+  \class{cpm\_TextParserDomain.h}
+  \class{cpm\_Version.h}
+  \class{cpm\_VoxelInfo.h}
+  \class{cpm\_fparam.fi}
+  \class{\begin{classify}{inline/}
+   \class{cpm\_ParaManager\_BndComm.h}
+   \class{cpm\_ParaManager\_BndCommEx.h}
+   \class{cpm\_ParaManager\_inline.h}
+  \end{classify}}
+ \end{classify}}
+ \class{\begin{classify}{lib/}
+  \class{libcpmlib.a}
+ \end{classify}}
+\end{classify}}\\
+
+ただし，インストール先のディレクトリへの書き込みに管理者権限が必要な場合は，
+{\tt sudo}コマンドを用いるか，管理者でログインして{\tt make install}を実行します．
+
+{\tt
+\begin{verbatim}
+  $ sudo make install
+\end{verbatim}
+}
+または，
+{\tt
+\begin{verbatim}
+  $ su 
+  passward:
+  # make install
+  # exit
+\end{verbatim}
+}
+\clearpage
+
+
+\item アンインストール\\
+アンインストールするには，書き込み権限によって，
+{\tt
+\begin{verbatim}
+  $ make uninstall
+\end{verbatim}
+}
+または，
+{\tt
+\begin{verbatim}
+  $ sudo make uninstall
+\end{verbatim}
+}
+または，
+{\tt
+\begin{verbatim}
+  $ su 
+  passward:
+  # make uninstall
+  # exit
+\end{verbatim}
+}
+を実行します．
+
+\end{enumerate}
+\clearpage
+
+
+\subsection{configureスクリプトのオプション}
+\label{config_opt}
+\begin{itemize}
+
+\item[・] {\tt--prefix=}{\it dir}\\
+prefixは，パッケージをどこにインストールするかを指定します．
+prefixで設定した場所が{\tt --prefix=/usr/local/CPMlib}の時，
+\begin{verbatim}
+  ライブラリ：/usr/local/CPMlib
+  ヘッダファイル：/usr/local/CPMinclude
+\end{verbatim}
+にインストールされます．\\
+prefixオプションが省略された場合は，デフォルト値として/usr/local/CPMlibが採用され，
+インストールされます．\\
+
+\item[・] コンパイラ等のオプション\\
+コンパイラ，リンカやそれらのオプションは，configureスクリプトで半自動的に探索します．
+ただし，標準ではないコマンドやオプション，ライブラリ，ヘッダファイルの場所は探索
+出来ないことがあります．
+また，標準でインストールされたものでないコマンドやライブラリを指定して利用したい場合が
+あります．
+そのような場合，これらの指定をconfigureスクリプトのオプションとして指定することができます．\\
+
+
+\begin{description}
+\item{\tt CXX} \\
+  C++コンパイラのコマンドパスです．\\
+\item{\tt CXXFLAGS} \\
+  C++コンパイラへ渡すコンパイルオプションです．\\
+\item{\tt LDFLAGS} \\
+  リンク時にリンカに渡すリンク時オプションです．例えば，使用するライブラリが
+  標準でないの場所{\tt $<$libdir$>$}にある場合，{\tt-L$<$libdir$>$}として
+  その場所を指定します．\\
+\item{\tt LIBS} \\
+  利用したいライブラリをリンカに渡すリンク時オプションです．
+  例えば，ライブラリ{\tt$<$library$>$}を利用する場合，
+  {\tt-l$<$library$>$}として指定します．\\
+\item{\tt CC} \\
+  Cコンパイラのコマンドパスです．\\
+\item{\tt CFLAGS} \\
+  Cコンパイラへ渡すコンパイルオプションです．\\
+\item{\tt CPP}\\
+  プリプロセッサのコマンドパスです．\\
+\item{\tt CPPFLAGS}\\
+  プリプロセッサへ渡すフラグです．
+  例えば，標準ではない場所{\tt$<$include dir$>$}にあるヘッダファイルを
+  利用する場合，{\tt-I$<$include dir$>$}と指定します．\\ 
+\item{\tt FC} \\
+  Fortranコンパイラのコマンドパスです．\\
+\item{\tt FCFLAGS} \\
+  Fortranコンパイラに渡すコンパイルオプションです．\\
+\item{\tt F90} \\
+  Fortran90コンパイラのコマンドパスです．\\
+\item{\tt F90FLAGS} \\
+  Fortran90コンパイラに渡すコンパイルオプションです．\\
+\end{description}
+
+なお，CPMライブラリはC++で記述されているため，C++以外のコンパイラの指定は
+必須ではありません．\\
+
+\item[・] ライブラリ指定のオプション\\
+CPMライブラリを利用する場合，コンパイル，リンク時に，MPIライブラリとTextParserライブラリが
+必ず必要になります．
+これらのライブラリのインストールパスは，次に示すconfigureオプションで指定する必要があります．\\
+
+
+\begin{description}
+\item{\tt --with-mpich}={\it dir} \\
+  MPIライブラリとしてmpichを使用する場合に，mpichのインストール先を指定します．\\
+\item{\tt --with-ompi}={\it dir} \\
+  MPIライブラリとしてOpenMPIを使用する場合に，OpenMPIのインストール先を指定します．\\
+  {\tt --with-mpich}オプションと同時に指定された場合，{\tt --with-mpich}が有効になります．
+\item{\tt --with-parser}=dir \\
+  TextParserライブラリのインストール先を指定します．\\
+\end{description}
+
+\item[・] その他のオプション\\
+必要に応じて，次に示すオプションを指定できます．\\
+
+
+\begin{description}
+\item{\tt --with-real}=(float\verb+|+double) \\
+  CPMライブラリ内で定義されている実数型REAL\_TYPEの型を指定します．\\
+  {\tt --with-real=double}を指定した場合，REAL\_TYPEはdouble型として扱われます．
+  {\tt --with-real=float}を指定したか，{\tt --with-real}オプションの指定が無い場合，
+  REAL\_TYPEはfloat型として扱われます．\\
+\item{\tt --with-comp}=(INTEL\verb+|+FJ) \\
+  使用するコンパイラのベンダーを指定します．\\
+  Intelコンパイラの場合INTELを，富士通コンパイラのときFJを指定します．
+  該当しない場合は指定する必要はありません．\\
+  本オプションを指定した場合，{\tt --with-real}オプションの指定内容に従い，
+  cpm-configコマンド(\ref{cpmconfig}章を参照)の{\tt --f90flags}で取得できる
+  Fortranコンパイルオプションに，デフォルトの実数型オプションが自動的に
+  付加されます．\\
+\item{\tt --host}={\it hosttype} \\
+  クロスコンパイル環境の場合に指定します．\\
+\end{description}
+\end{itemize}
+
+なお，configureオプションの詳細は，{\tt ./configure --help}コマンドで表示されますが，
+CPMライブラリでは，上記で説明したオプション以外は無効となります．
+\clearpage
+
+\subsection{configure実行時オプションの例}
+
+\begin{itemize}
+\item[・] {Linux / MacOS Xの場合}
+\begin{verbatim}
+  CPMライブラリのprefix：/opt/CPMlib
+  MPIライブラリ：OpenMPI，/usr/local/openmpi
+  TextParserライブラリ：/usr/local/textparser
+  REAL\_TYPE：double
+  C++コンパイラ：icpc
+  F90コンパイラ：ifort
+\end{verbatim}
+の環境の場合，次のようにconfigureコマンドを実行します．
+{\tt
+\begin{verbatim}
+  $ ./configure --prefix=/opt/CPMlib \
+                --with-ompi=/usr/local/openmpi \
+                --with-parser=/usr/local/textparser \
+                --with-real=double \
+                --with-comp=INTEL \
+                CXX=icpc \
+                F90=ifort
+\end{verbatim}
+}
+
+\item[・] {京コンピュータの場合}
+\begin{verbatim}
+  CPMライブラリのprefix：/home/userXXXX/CPMlib
+  TextParserライブラリ：/home/userXXXX/textparser
+  REAL\_TYPE：double
+  C++コンパイラ：mpiFCCpx
+  F90コンパイラ：mpifrtpx
+\end{verbatim}
+の環境の場合，次のようにconfigureコマンドを実行します．
+{\tt
+\begin{verbatim}
+  $ ./configure --host=sparc64-unknown-linux-gnu \
+                --prefix=/home/userXXXX/CPMlib \
+                --with-parser=/home/userXXXX/textparser \
+                --with-real=double \
+                --with-comp=FJ \
+                CXX=mpiFCCpx \
+                F90=mpifrtpx
+\end{verbatim}
+}
+\end{itemize}
+
+
+\clearpage
+
+
+\subsection{cpm-configコマンド}
+\label{cpmconfig}
+CPMライブラリをインストールすると，{\tt \$prefix}/bin/cpm-config
+コマンド（シェルスクリプト）が生成されます．
+
+このコマンドを利用することで，ユーザーが作成したプログラムをコンパイル，リンクする際に，
+CPMライブラリを参照するために必要なコンパイルオプション，リンク時オプションを
+取得することができます．\\
+
+{\tt cpm-config}コマンドは，次に示すオプションを指定して実行します．
+
+\begin{description}
+\item{\tt --cflags} \\
+  C++コンパイラオプションを取得します．\\
+\item{\tt --f90flags} \\
+  Fortran90コンパイラオプションを取得します．\\
+\item{\tt --libs} \\
+  CPMライブラリのリンクに必要なリンク時オプションを取得します．\\
+\end{description}
+
+ただし，{\tt cpm-config}コマンドで取得できるオプションは，CPMライブラリを
+利用する上で最低限必要なオプションのみとなります．
+
+最適化オプション等は必要に応じて指定してください．\\
+
+また，具体的な{\tt cpm-config}コマンドの使用方法は，\ref{use_cpmlib}章を
+参照してください．
+\clearpage

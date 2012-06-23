@@ -11,16 +11,20 @@
 //
 // #################################################################
 
-//@file VoxInfo.h
-//@brief FlowBase VoxInfo class Header
-//@author kero
+/** 
+ * @file VoxInfo.h
+ * @brief FlowBase VoxInfo class Header
+ * @author kero
+ */
 
 #include <math.h>
+
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
 
 #include "FBUtility.h"
 #include "Component.h"
 #include "Medium.h"
-#include "Parallel_node.h"
 #include "SetBC.h"
 #include "BndOuter.h"
 #include "vec3.h"
@@ -31,19 +35,22 @@
 #include "mpi.h"
 #include "limits.h"
 
-class VoxInfo : public Parallel_Node {
+class VoxInfo {
+  
 private:
-  unsigned size[3];              /// 計算内部領域分割数(Local)
-  unsigned guide;                /// ガイドセルサイズ
-  unsigned NoBC;                 /// 境界条件数
-  unsigned NoCompo;              /// コンポーネントの総数
-  int NoVoxID;                   /// 含まれるIDの数(Local/Global)
-  int colorList[MODEL_ID_MAX+1]; /// ボクセルモデルに含まれるIDのリスト(Global)
-  REAL_TYPE* vox_nv;             /// ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
-  CompoList*    cmp;             /// コンポーネントリスト
-  MediumList*   mat;             /// 媒質リスト
+  unsigned size[3];              ///< 計算内部領域分割数(Local)
+  unsigned guide;                ///< ガイドセルサイズ
+  unsigned NoBC;                 ///< 境界条件数
+  unsigned NoCompo;              ///< コンポーネントの総数
+  int NoVoxID;                   ///< 含まれるIDの数(Local/Global)
+  int colorList[MODEL_ID_MAX+1]; ///< ボクセルモデルに含まれるIDのリスト(Global)
+  REAL_TYPE* vox_nv;             ///< ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
+  CompoList*    cmp;             ///< コンポーネントリスト
+  MediumList*   mat;             ///< 媒質リスト
+  cpm_ParaManager *paraMngr;     ///< Cartesian Partition Maneger
 
 public:
+  /** コンストラクタ */
   VoxInfo() {
     NoVoxID = 0;
     guide = 0;
@@ -52,10 +59,12 @@ public:
     vox_nv = NULL;
     cmp = NULL;
     mat = NULL;
+    paraMngr=NULL;
     
     for (int i=0; i<MODEL_ID_MAX+1; i++) colorList[i]=0;
   }
   
+  /**　デストラクタ */
   ~VoxInfo() {
     if (vox_nv)    delete [] vox_nv;
   }
@@ -261,6 +270,11 @@ public:
   }
   
 
+  /** CPMlibのポインタをセット 
+   * @param[in] m_paraMngr  
+   */
+  void setPartitionManager(cpm_ParaManager* m_paraMngr)
+  
   
   // ----> debug function
   void dbg_chkBCIndexD  (unsigned* bcd, const char* fname);

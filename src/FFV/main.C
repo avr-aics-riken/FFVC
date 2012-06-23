@@ -45,22 +45,16 @@ int main( int argc, char **argv )
   if ( !ffv.paraMngr ) return CPM_ERROR_PM_INSTANCE;
   
   
-  if ( ffv.paraMngr->GetMyRankID() == 0 )
-  {
-    cpm_Base::VersionInfo();
-  }
-  
-  
   int init_ret = ffv.Initialize(argc, argv);
   
   switch( init_ret )
   {
     case -1:
-      printf("\n\tSolver initialize error.\n\n");
+      if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
       return 0;
 
     case 0:
-      printf("\n\tForced termination during initialization.\n\n");
+      if ( ffv.IsMaster() ) printf("\n\tForced termination during initialization.\n\n");
       return 1;
       
     case 1:
@@ -68,7 +62,7 @@ int main( int argc, char **argv )
       break;
       
     default:
-      printf("\n\tSolver initialize error.\n\n");
+      if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
       return 0;
   }
   
@@ -84,18 +78,15 @@ int main( int argc, char **argv )
   switch (loop_ret) 
   {
     case -1:
-      printf("\n\tSolver error.\n\n");
+      if ( ffv.IsMaster() ) printf("\n\tSolver error.\n\n");
       return 0;
 
     case 0:
-      printf("\n\tSolver forced termination time-step loop.\n\n");
+      if ( ffv.IsMaster() ) printf("\n\tSolver forced termination time-step loop.\n\n");
       break;
       
     case 1:
-      if ( ffv.IsMaster() ) 
-      {
-        printf("\n\tSolver finished.\n\n");
-      }
+      if ( ffv.IsMaster() ) printf("\n\tSolver finished.\n\n");
       break;
   }
   

@@ -3802,6 +3802,13 @@ void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
 }
 
 
+// 作業用ポインタのコピー
+void ParseBC::setPartitionManager(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
+}
+
 
 /**
  @fn void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)

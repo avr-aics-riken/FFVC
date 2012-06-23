@@ -38,6 +38,11 @@
 #include "mydebug.h"
 #include "FBUtility.h"
 
+#include "TPControl.h"
+
+#include "omp.h"
+
+
 using namespace std;
 
 class FFV {
@@ -102,7 +107,7 @@ public:
    */
   bool IsMaster() 
   {
-    return ( !paraMngr->IsParallel() || (paraMngr->GetMyRankID() == 0) ) ? true : false;
+    return ( paraMngr->GetMyRankID() == 0 ) ? true : false;
   }
   
 };

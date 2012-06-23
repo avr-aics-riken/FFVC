@@ -39,7 +39,7 @@
 #include "Parallel_node.h"
 #include "Alloc.h"
 #include "FileIO.h"
-#include "Monitor.h"
+//#include "Monitor.h"
 #include "dfi.h"
 #include "limits.h"
 
@@ -126,7 +126,7 @@ public:
   ItrCtl          IC[ItrCtl::ic_END];
   Alloc           A;
   FileIO          F;
-  MonitorList     MO;
+  //MonitorList     MO;
   DTcntl          DT;
   ReferenceFrame  RF;
   DFI             DFI;

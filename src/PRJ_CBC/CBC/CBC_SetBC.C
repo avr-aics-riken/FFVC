@@ -1458,7 +1458,7 @@ void SetBC3D::Pibc_Prdc(SklScalar3D<REAL_TYPE>* d_p, int* st, int* ed, SklScalar
 {
   //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if ( pn.numProc > 1 ) {
-    Hostonly_ printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
+    printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
     Exit(0);
   }
   
@@ -4673,7 +4673,7 @@ void SetBC3D::Vibc_Prdc(SklVector3DEx<REAL_TYPE>* d_v, int* st, int* ed, SklScal
 {
   //SklParaManager* para_mng = ParaCmpo->GetParaManager();
   if ( pn.numProc > 1 ) {
-    Hostonly_ printf("Error : 'Vibc_Prdc' method is limited to use for serial execution\n.");
+    printf("Error : 'Vibc_Prdc' method is limited to use for serial execution\n.");
     Exit(0);
   }
     

@@ -1,31 +1,35 @@
 #ifndef _FB_FILE_IO_H_
 #define _FB_FILE_IO_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
+// #################################################################
+//
+// FFV : Frontflow / violet
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
+
+/** 
+ * @file FileIO.h
+ * @brief FlowBase FileIO class Header
+ * @author kero
  */
 
-//@file FileIO.h
-//@brief FlowBase FileIO class Header
-//@author keno, FSI Team, VCAD, RIKEN
-
-#include "Skl.h"
-#include "SklSolverBase.h"
-#include "FB_Define.h"
-#include "SklUtil.h"
 #include <fstream>
-#include "Parallel_node.h"
-#include "fileio/SklSbxDataSet.h"
-#include "parallel/SklParaComponent.h"
 #include <math.h>
 #include <time.h>
 #include <fcntl.h>
+#include <string>
+
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
+
+#include "FB_Define.h"
 #include "FBUtility.h"
 #include "FB_Ffunc.h"
-#include <string>
+
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -43,33 +47,32 @@
 #include <sys/uio.h>
 #endif
 
-class FileIO : public Parallel_Node {
+class FileIO {
   
 public:
-  FileIO() {}
+  /** コンストラクタ */
+  FileIO() 
+  {
+    paraMngr = NULL;
+  }
+  
+  /**　デストラクタ */
   ~FileIO() {}
   
 protected:
-  /// sphファイルのスカラ/ベクトルの種別
+  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
+  
+  /** sphファイルのスカラ/ベクトルの種別 */
   enum sv_type {
     kind_scalar=1,
     kind_vector
   };
   
-  void loadSBXfile (SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, SklScalar3D<unsigned char>* data);
-  void loadSBXfile (SklSolverBase* obj, FILE* fp, const char* name, unsigned* size, unsigned guide, SklScalar3D<int>* mid_data, 
-                    SklScalar3D<REAL_TYPE>* vol_data = NULL);
   
 public:
   void cnv_Div           (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE coef, REAL_TYPE& flop);
   void cnv_TP_ND2D       (SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop);
 
-  void readSBX           (SklSolverBase* obj, FILE* fp, const char* file_attr, unsigned* size, unsigned guide, 
-                          SklScalar3D<unsigned char>* dc_mid);
-  void readSBX           (SklSolverBase* obj, FILE* fp, const char* mid_str, unsigned* size, unsigned guide, 
-                          SklScalar3D<int>* dc_mid, SklScalar3D<REAL_TYPE>* dc_vol = NULL);
-  void readSVX           (SklSolverBase* obj, FILE* fp, const char* fname, unsigned* size, unsigned guide, 
-                          SklScalar3D<int>* dc_mid, bool vf_mode=false, SklScalar3D<REAL_TYPE>* dc_ws=NULL);
   void writeRawSPH       (const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, 
                           const unsigned m_ModePrecision);
   
@@ -188,6 +191,11 @@ public:
       dst_kx = dst_klen+diff;
     }
   }
+  
+  /** CPMlibのポインタをセット 
+   * @param[in] m_paraMngr  
+   */
+  void setPartitionManager(cpm_ParaManager* m_paraMngr)
   
 };
 #endif // _FB_FILE_IO_H_

@@ -5721,7 +5721,14 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
 }
 
 
-//@brief 作業用のポインタコピー
+// 作業用ポインタのコピー
+void VoxInfo::setPartitionManager(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
+}
+
+// 作業用のポインタコピー
 void VoxInfo::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);

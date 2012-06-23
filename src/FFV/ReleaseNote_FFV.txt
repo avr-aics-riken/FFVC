@@ -1,0 +1,14 @@
+Release Note
+
+	Frontflow / violet
+	
+	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
+  
+  The University of Tokyo, Japan. 
+
+@author kero
+
+
+
+Ver. 0.1.0   23 June 2012
+  - CPMライブラリを用いて並列管理テスト

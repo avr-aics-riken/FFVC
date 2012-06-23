@@ -69,7 +69,7 @@ SklSolverCBC::SklSolverInitialize() {
   // 並列情報のコピー
   BC.set_Rank   (pn);
   F.set_Rank    (pn);
-  MO.set_Rank   (pn);
+  //MO.set_Rank   (pn);
   B.set_Rank    (pn);
   Vinfo.set_Rank(pn);
   
@@ -194,7 +194,7 @@ SklSolverCBC::SklSolverInitialize() {
   // 近接ランク情報
   BC.set_Neighbor   (pn);
   F.set_Neighbor    (pn);
-  MO.set_Neighbor   (pn);
+  //MO.set_Neighbor   (pn);
   B.set_Neighbor    (pn);
   Vinfo.set_Neighbor(pn);
   
@@ -725,9 +725,9 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // Monitor Listの処理 --------------------------------------------
-  MO.setControlVars(bcd, G_org, G_Lbx, C.org, C.dx, C.Lbx, size, guide,
-                    C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
-                    C.Unit.Temp, C.Mode.Precision, C.Unit.Prs);
+  //MO.setControlVars(bcd, G_org, G_Lbx, C.org, C.dx, C.Lbx, size, guide,
+  //                  C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
+  //                  C.Unit.Temp, C.Mode.Precision, C.Unit.Prs);
   
   
   // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
@@ -737,11 +737,11 @@ SklSolverCBC::SklSolverInitialize() {
   
   // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
   if (C.Sampling.log == ON ) {
-    MO.write_ID(mid);
+    //MO.write_ID(mid);
   }
 
   // 内部境界条件として指定されたモニタ設定を登録
-   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
+  //if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
 
   // 組み込み例題 or MonitorListの場合に，svxファイルを出力する．
   if ( (C.Mode.Example != id_Users) || ( (C.Mode.Example == id_Users) && (C.Sampling.log == ON) ) ) {
@@ -1102,7 +1102,7 @@ SklSolverCBC::SklSolverInitialize() {
       B.printFaceOBC(fp, G_Lbx);
     }
 
-    // モニタ情報の表示
+    /* モニタ情報の表示
     if ( C.Sampling.log == ON ) {
       
       MO.printMonitorInfo(mp, C.HistoryMonitorName, false); // ヘッダのみ
@@ -1117,7 +1117,7 @@ SklSolverCBC::SklSolverInitialize() {
       
       MO.printMonitorInfo(fp_mon, C.HistoryMonitorName, true);  // 詳細モード
       Hostonly_ if ( fp_mon ) fclose(fp_mon);
-    }
+    }*/
   }
 
   
@@ -1291,15 +1291,15 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // サンプリング指定がある場合，モニタ結果出力ファイル群のオープン
-  if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
+  //if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
     
   // サンプリング元となるデータ配列の登録
   if ( C.Sampling.log == ON ) {
     if ( C.isHeatProblem() ) {
-      MO.setDataPtrs(dc_v->GetData(), dc_p->GetData(), dc_t->GetData());
+      //MO.setDataPtrs(dc_v->GetData(), dc_p->GetData(), dc_t->GetData());
     }
     else {
-      MO.setDataPtrs(dc_v->GetData(), dc_p->GetData());
+      //MO.setDataPtrs(dc_v->GetData(), dc_p->GetData());
     }
   }
   

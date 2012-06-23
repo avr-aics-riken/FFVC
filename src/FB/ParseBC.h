@@ -16,6 +16,10 @@
 //@author kero
 
 #include "string.h"
+
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
+
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
@@ -23,11 +27,11 @@
 #include "Component.h"
 #include "Medium.h"
 #include "vec3.h"
-#include "Parallel_node.h"
 #include "Intrinsic.h"
 #include "TPControl.h"
 
-class ParseBC : public Parallel_Node {
+
+class ParseBC {
 private:
 
   TPControl* tpCntl;
@@ -53,16 +57,15 @@ private:
   bool HeatProblem;
   bool isCDS;
   
-  CompoList*     compo;
-  BoundaryOuter* bc;
-  BoundaryOuter* BaseBc;
-	
+  CompoList*     compo;      ///< コンポーネントテーブル
+  BoundaryOuter* bc;         ///< 外部境界条件テーブル
+  BoundaryOuter* BaseBc;     ///< テンポラリのテーブル
   MediumList* mat;
-
-  // Medium Table <--- textparser
-  MediumTableInfo *MTITP; 
+  MediumTableInfo *MTITP;    ///< Medium Table <--- textparser
+  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
 
 public:
+  /** コンストラクタ */
   ParseBC(){
     ix = jx = kx = guide = 0;
     KindOfSolver = 0;
@@ -79,7 +82,10 @@ public:
     BaseBc = NULL;
     compo = NULL;
     mat = NULL;
+    paraMngr = NULL;
   }
+  
+  /**　デストラクタ */
   ~ParseBC() {
     if (bc) delete [] bc;
     if (BaseBc) delete [] BaseBc;
@@ -170,13 +176,25 @@ private:
     return ( gci[6*odr+5] );
   }
   
-  //@fn void copyVec(REAL_TYPE* dst, REAL_TYPE* src)
-  //@brief ベクトルのコピー
-  void copyVec(REAL_TYPE* dst, REAL_TYPE* src) {
+  
+  /**
+   * @brief ベクトルのコピー
+   * @param[out] dst コピー先
+   * @param[in]  src コピー元
+   */
+  void copyVec(REAL_TYPE* dst, REAL_TYPE* src) 
+  {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
   }
+  
+  
+  /** CPMlibのポインタをセット 
+   * @param[in] m_paraMngr  
+   */
+  void setPartitionManager(cpm_ParaManager* m_paraMngr)
+  
   
 public:
   bool isIDinCompo        (int candidate, unsigned now);

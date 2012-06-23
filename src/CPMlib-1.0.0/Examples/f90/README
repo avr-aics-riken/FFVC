@@ -1,0 +1,35 @@
+/*
+ * CPM - Cartesian Partition Manager
+ *
+ * Copyright (C) 2012 University of Tokyo.
+ *
+ */
+
+Fortran90プログラムでのCPMライブラリ使用サンプル
+
+1.提供コード
+  mconvp.f90     : CPMライブラリを使用しないオリジナルコード
+  mconvp_CPM.f90 : CPMライブラリでMPI並列化したコード
+
+2.使用方法
+(1) オリジナルコード
+    makeすると、mconvpプログラムが生成されます。
+    dataディレクトリの入力ファイルin.ftcsもしくはin.jacobiを
+    プログラムにリダイレクトすることで、プログラムが実行
+    されます。
+
+    $ cd data
+    $ ../mconvp < in.ftcs
+    $ ../mconvp < in.jacobi
+
+(2) CPM版コード
+    makeすると、mconvp_CPMプログラムが生成されます。
+    dataディレクトリの入力ファイルin.ftcsもしくはin.jacobiを
+    プログラムにリダイレクトすることで、プログラムが実行
+    されます。
+    MPI並列で実行する場合は、mpirunを用います。
+
+    $ cd data
+    $ mpirun -np 4 ../mconvp_CPM < in.ftcs
+    $ mpirun -np 4 ../mconvp_CPM < in.jacobi
+

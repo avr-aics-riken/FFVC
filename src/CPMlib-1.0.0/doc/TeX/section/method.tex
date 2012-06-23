@@ -1,0 +1,116 @@
+\section{APIメソッド一覧}
+\label{method_table}
+以下に，CPMライブラリが提供するAPIメソッドの一覧を示します．
+（表\ref{tbl:method1}，\ref{tbl:method2}）\\
+
+\begin{table}[htb]
+\begin{center}
+\caption{メソッド一覧その1（クラス名の無いC++メソッドはcpm\_ParaManagerクラスメンバ）}
+\label{tbl:method1}
+\footnotesize
+\begin{tabular}{|c|c|c|}
+\hline 
+機能 & C++ API & Fortan API \\
+\hline\hline
+\multicolumn{3}{|l|}{初期化関連} \\
+\hline
+インスタンス生成                 & get\_instance               & --- \\
+CPMライブラリ初期化              & Initialize                  & cpm\_Initialize \\
+領域分割情報ファイル読み込み     & cpm\_TextParserDomain::Read & --- \\
+プロセスグループ作成             & CreateProcessGroup          & --- \\
+領域分割                         & VoxelInit                   & cpm\_VoxelInit \\
+                                 &                             & cpm\_VoxelInit\_nodiv \\
+\hline\hline
+\multicolumn{3}{|l|}{情報取得関連} \\
+\hline
+並列実行チェック                 & IsParallel                  & cpm\_IsParallel \\
+ランク数取得                     & GetNumRank                  & cpm\_GetNumRank \\
+ランク番号取得                   & GetMyRankID                 & cpm\_GetMyRankID \\
+NULLのランク番号取得             & cpm\_Base::getRankNull      & --- \\
+NULLのランク番号チェック         & cpm\_Base::IsRankNull       & --- \\
+MPIコミュニケータ取得            & GetMPI\_Comm                & --- \\
+NULLのMPI\_Comm取得              & cpm\_Base::getCommNull      & --- \\
+NULLのMPI\_Commチェック          & cpm\_Base::IsCommNull       & --- \\
+領域分割数取得                   & GetDivNum                   & cpm\_GetDivNum \\
+自ランク分割位置取得             & GetDivPos                   & cpm\_GetDivPos \\
+VOXELピッチ取得                  & GetPitch                    & cpm\_GetPitch \\
+全体VOXEL数取得                  & GetGlobalVoxelSize          & cpm\_GetGlobalVoxelSize \\
+全体原点座標取得                 & GetGlobalOrigin             & cpm\_GetGlobalOrigin \\
+全体空間サイズ取得               & GetGlobalRegion             & cpm\_GetGlobalRegion \\
+ローカルVOXEL数取得              & GetLocalVoxelSize           & cpm\_GetLocalVoxelSize \\
+ローカル原点座標取得             & GetLocalOrigin              & cpm\_GetLocalOrigin \\
+ローカル空間サイズ取得           & GetLocalRegion              & cpm\_GetLocalRegion \\
+ローカルBCID取得                 & GetBCID                     & cpm\_GetBCID \\
+始点VOXELインデクス取得          & GetVoxelHeadIndex           & cpm\_GetVoxelHeadIndex \\
+終点VOXELインデクス取得          & GetVoxelTailIndex           & cpm\_GetVoxelTailIndex \\
+隣接ランク番号取得               & GetNeighborRankID           & cpm\_GetNeighborRankID \\
+周期境界隣接ランク番号取得       & GetPeriodicRankID           & cpm\_GetPeriodicRankID \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\clearpage
+
+\begin{table}[htb]
+\begin{center}
+\caption{メソッド一覧その2（クラス名の無いC++メソッドはcpm\_ParaManagerクラスメンバ）}
+\label{tbl:method2}
+\footnotesize
+\begin{tabular}{|c|c|c|}
+\hline 
+機能 & C++ API & Fortan API \\
+\hline\hline
+\multicolumn{3}{|l|}{MPI通信のインターフェイス関連} \\
+\hline
+MPI\_AbortのI/F                  & Abort                       & cpm\_Abort \\
+MPI\_BarrierのI/F                & Barrier                     & cpm\_Barrier \\
+MPI\_WaitのI/F                   & Wait                        & cpm\_Wait \\
+MPI\_WaitallのI/F                & Waitall                     & cpm\_Waitall \\
+MPI\_BcastのI/F                  & Bcast                       & cpm\_Bcast \\
+MPI\_SendのI/F                   & Send                        & cpm\_Send \\
+MPI\_RecvのI/F                   & Recv                        & cpm\_Recv \\
+MPI\_IsendのI/F                  & Isend                       & cpm\_Isend \\
+MPI\_IrecvのI/F                  & Irecv                       & cpm\_Irecv \\
+MPI\_AllreduceのI/F              & Allreduce                   & cpm\_Allreduce \\
+MPI\_GatherのI/F                 & Gather                      & cpm\_Gather \\
+MPI\_AllgatherのI/F              & Allgather                   & cpm\_Allgather \\
+MPI\_GathervのI/F                & Gatherv                     & cpm\_Gatherv \\
+MPI\_AllgathervのI/F             & Allgatherv                  & cpm\_Allgatherv \\
+\hline\hline
+\multicolumn{3}{|l|}{袖通信関連} \\
+\hline
+袖通信バッファのセット           & SetBndCommBuffer            & cpm\_SetBndCommBuffer \\
+袖通信バッファサイズ取得         & GetBndCommBufferSize        & --- \\
+袖通信(Scalar3D版)               & BndCommS3D                  & cpm\_BndCommS3D \\
+袖通信(Vector3D版)               & BndCommV3D                  & cpm\_BndCommV3D \\
+袖通信(Scalar4D版)               & BndCommS4D                  & cpm\_BndCommS4D \\
+袖通信(Vector3DEx版)             & BndCommV3DEx                & cpm\_BndCommV3DEx \\
+袖通信(Scalar4DEx版)             & BndCommS4DEx                & cpm\_BndCommS4DEx \\
+\hline\hline
+\multicolumn{3}{|l|}{袖通信（非同期版）関連} \\
+\hline
+非同期袖通信(Scalar3D版)         & BndCommS3D\_nowait          & cpm\_BndCommS3D\_nowait \\
+非同期袖通信(Vector3D版)         & BndCommV3D\_nowait          & cpm\_BndCommV3D\_nowait \\
+非同期袖通信(Scalar4D版)         & BndCommS4D\_nowait          & cpm\_BndCommS4D\_nowait \\
+非同期袖通信(Vector3DEx版)       & BndCommV3DEx\_nowait        & cpm\_BndCommV3DEx\_nowait \\
+非同期袖通信(Scalar4DEx版)       & BndCommS4DEx\_nowait        & cpm\_BndCommS4DEx\_nowait \\
+非同期袖通信の待機(Scalar3D版)   & wait\_BndCommS3D            & cpm\_wait\_BndCommS3D \\
+非同期袖通信の待機(Vector3D版)   & wait\_BndCommV3D            & cpm\_wait\_BndCommV3D \\
+非同期袖通信の待機(Scalar4D版)   & wait\_BndCommS4D            & cpm\_wait\_BndCommS4D \\
+非同期袖通信の待機(Vector3DEx版) & wait\_BndCommV3DEx          & cpm\_wait\_BndCommV3DEx \\
+非同期袖通信の待機(Scalar4DEx版) & wait\_BndCommS4DEx          & cpm\_wait\_BndCommS4DEx \\
+\hline\hline
+\multicolumn{3}{|l|}{周期境界袖通信関連} \\
+\hline
+袖通信(Scalar3D版)               & PeriodicCommS3D             & cpm\_PeriodicCommS3D \\
+袖通信(Vector3D版)               & PeriodicCommV3D             & cpm\_PeriodicCommV3D \\
+袖通信(Scalar4D版)               & PeriodicCommS4D             & cpm\_PeriodicCommS4D \\
+袖通信(Vector3DEx版)             & PeriodicCommV3DEx           & cpm\_PeriodicCommV3DEx \\
+袖通信(Scalar4DEx版)             & PeriodicCommS4DEx           & cpm\_PeriodicCommS4DEx \\
+\hline   
+\end{tabular}
+\end{center}
+\end{table}
+
+\clearpage

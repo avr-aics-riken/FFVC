@@ -60,7 +60,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   copyV00fromRF(loop_time);
 
   // モニタークラスに参照速度を渡す
-  if (C.Sampling.log == ON) MO.set_V00(v00);
+  //if (C.Sampling.log == ON) MO.set_V00(v00);
 
   // 速度成分の最大値
   TIMING_start(tm_vmax);
@@ -315,7 +315,7 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
       TIMING_start(tm_compo_monitor);
       flop_count=0.0;
-      MO.samplingInnerBoundary();
+      //MO.samplingInnerBoundary();
       TIMING_stop(tm_compo_monitor, flop_count);
 
       TIMING_start(tm_hstry_compo);
@@ -328,11 +328,11 @@ SklSolverCBC::SklSolverLoop(const unsigned int step) {
   if ( C.Sampling.log == ON ) {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(loop_step, loop_time) ) {
       TIMING_start(tm_sampling);
-      MO.sampling();
+      //MO.sampling();
       TIMING_stop(tm_sampling, 0.0);
       
       TIMING_start(tm_hstry_sampling);
-      MO.print(loop_step, (REAL_TYPE)loop_time);
+      //MO.print(loop_step, (REAL_TYPE)loop_time);
       TIMING_stop(tm_hstry_sampling, 0.0);
     }
   }

@@ -13,7 +13,7 @@
 #include "SetBC.h"
 
 
-//@brief 作業用ポインタのコピー
+// 作業用ポインタのコピー
 void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);
@@ -23,11 +23,9 @@ void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
   mat = m_MAT;
 }
 
-/**
- @fn void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Intrinsic* ExRef)
- @brief 必要な値のコピー
- */
-void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
+
+// 必要な値のコピー
+void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, cpm_ParaManager* m_paraMngr, Intrinsic* ExRef)
 {
   guide          = Cref->guide;
   imax = size[0] = Cref->imax;
@@ -73,6 +71,7 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   dim_sz[2] = (int)kmax;
   
   Ex = ExRef;
+  paraMngr = m_paraMngr;
   
   // get reference values >> 媒質はIDがユニークに定まる
   int m;
@@ -96,14 +95,9 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
 
 }
 
-/**
- @fn REAL_TYPE SetBC::getVrefOut(REAL_TYPE tm)
- @brief 静止座標系のときの流出速度制御の値を計算する
- @param tm 時刻
- @retval 流出境界速度
- @todo experimental
- */
-REAL_TYPE SetBC::getVrefOut(REAL_TYPE tm)
+
+// 静止座標系のときの流出速度制御の値を計算する
+REAL_TYPE SetBC::getVrefOut(const REAL_TYPE tm)
 {
 	REAL_TYPE u0;
 	
@@ -119,16 +113,12 @@ REAL_TYPE SetBC::getVrefOut(REAL_TYPE tm)
   return u0;
 }
 
-/**
- @fn void SetBC::getOuterLoopIdx(int face, int* st, int* ed)
- @brief 外部境界処理用のループインデクスを取得する
- @param face 外部境界面番号
- @param st 開始インデクス
- @param ed 終了インデクス
- */
-void SetBC::getOuterLoopIdx(int face, int* st, int* ed)
+
+// 外部境界処理用のループインデクスを取得する
+void SetBC::getOuterLoopIdx(const int face, int* st, int* ed)
 {
-  switch (face) {
+  switch (face) 
+  {
     case X_MINUS:
       st[0] = 1;         ed[0] = 1;
       st[1] = 1;         ed[1] = dim_sz[1];
