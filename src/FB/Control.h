@@ -19,11 +19,13 @@
 
 #include <math.h>
 
+#include "cpm_Define.h"
+
 #include "FB_Define.h"
 #include "Medium.h"
 #include "Component.h"
 #include "FBUtility.h"
-#include "Monitor.h"
+//#include "Monitor.h"
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
 #include "TPControl.h"
@@ -32,26 +34,27 @@
 class DTcntl {
 public:
   enum dt_Type {
-    dt_direct=1,      // 入力値がΔt
-    dt_cfl_ref_v,     // dt < c dx/U0
-    dt_cfl_max_v,     // dt < c dx/Umax
-    dt_dfn,           // 拡散数制限
-    dt_cfl_dfn_ref_v, // dt = min( c dx/U0, diffusion number )
-    dt_cfl_dfn_max_v, // dt = min( c dx/Umax, diffusion number )
-    dt_cfl_max_v_cp   // 圧縮性　dt < (cfl+soundSpeed) dx/Umax
+    dt_direct=1,      ///< 入力値がΔt
+    dt_cfl_ref_v,     ///< dt < c dx/U0
+    dt_cfl_max_v,     ///< dt < c dx/Umax
+    dt_dfn,           ///< 拡散数制限
+    dt_cfl_dfn_ref_v, ///< dt = min( c dx/U0, diffusion number )
+    dt_cfl_dfn_max_v, ///< dt = min( c dx/Umax, diffusion number )
+    dt_cfl_max_v_cp   ///< 圧縮性　dt < (cfl+soundSpeed) dx/Umax
   };
   
 private:
-  unsigned scheme;  // Δtのスキーム種別
-  unsigned KOS;     // Kind of Solver
-  unsigned mode;    // 入力パラメータの次元モード（無次元/有次元）
-  double   CFL;     // Δtの決定に使うCFLなど
-  double   deltaT;  // Δt（無次元）
-  double   dh;      // 格子幅（無次元）
-  double   Reynolds;// レイノルズ数
-  double   Peclet;  // ペクレ数
+  unsigned scheme;   ///< Δtのスキーム種別
+  unsigned KOS;      ///< Kind of Solver
+  unsigned mode;     ///< 入力パラメータの次元モード（無次元/有次元）
+  double   CFL;      ///< Δtの決定に使うCFLなど
+  double   deltaT;   ///< Δt（無次元）
+  double   dh;       ///< 格子幅（無次元）
+  double   Reynolds; ///< レイノルズ数
+  double   Peclet;   ///< ペクレ数
   
 public:
+  /** コンストラクタ */
   DTcntl() {
     scheme = 0;
     CFL = 0.0;
@@ -60,17 +63,19 @@ public:
     deltaT = 0.0;
     dh = Reynolds = Peclet = 0.0;
   }
+  
+  /**　デストラクタ */
   ~DTcntl() {}
   
 public:
   //@fn unsigned get_Scheme(void) const
-  unsigned get_Scheme(void) const { return scheme; };
+  unsigned get_Scheme() const { return scheme; };
   
   //@fn double get_dt(void) const
-  double get_DT(void) const { return deltaT; };
+  double get_DT() const { return deltaT; };
   
   //@fn Sdouble get_CFL(void) const
-  double get_CFL(void) const { return CFL; };
+  double get_CFL() const { return CFL; };
   
   //@fn double DTcntl::dtCFL(const double Uref) const
   //@brief CFL数で指定されるdtを計算
@@ -85,7 +90,7 @@ public:
   //@param coef 係数 (Reynolds number or Peclet number)
   double dtDFN(const double coef) const { return coef * dh*dh/6.0; }
   
-  bool chkDtSelect(void);
+  bool chkDtSelect();
   bool set_Scheme (const char* str, const double val);
   
   unsigned set_DT (const double vRef);
@@ -97,10 +102,10 @@ public:
 class ReferenceFrame {
   
 protected:
-  unsigned Frame;    /// 参照座標系
-  double TimeAccel;  /// 加速時間（無次元）
-  double v00[4];     /// 参照速度（無次元
-  double GridVel[3]; /// 座標系の移動速度（無次元）
+  int Frame;         ///< 参照座標系
+  double TimeAccel;  ///< 加速時間（無次元）
+  double v00[4];     ///< 参照速度（無次元
+  double GridVel[3]; ///< 座標系の移動速度（無次元）
   
 public:
   /// 参照系の定義
@@ -110,40 +115,47 @@ public:
     frm_rotation
   };
   
+  /** コンストラクタ */
   ReferenceFrame(){
     Frame     = 0;
     TimeAccel = 0.0;
     v00[0] = v00[1] = v00[2] = v00[3] = 0.0;
     GridVel[0] = GridVel[1] = GridVel[2] = 0.0;
   }
+  
+  /**　デストラクタ */
   ~ReferenceFrame() {}
   
   void setAccel  (const double m_timeAccel);
-  void setFrame  (const unsigned m_frame);
+  void setFrame  (const int m_frame);
   void setGridVel(const double* m_Gvel);
   void setV00    (const double time, const bool init=false);
+
   
-  //@fn unsigned getFrame(void) const
   //@brief Frameを返す
-  unsigned getFrame(void) const {
+  unsigned getFrame() const 
+  {
     return Frame;
   }
   
-  //@fn double getAccel(void) const
-  //@brief Frameを返す
-  double getAccel(void) const {
+
+  //@brief 加速時間を返す
+  double getAccel() const 
+  {
     return TimeAccel;
   }
   
-  //@fn void copyV00(double* m_v0) const
+
   //@brief v00をコピーする
-  void copyV00(double* m_v0) const {
+  void copyV00(double* m_v0) const 
+  {
     for (int i=0; i<4; i++) m_v0[i] = v00[i];
   }
   
-  //@fn void copyGridVel(double* m_gv) const
-  //@brief GridVelをコピーする
-  void copyGridVel(double* m_gv) const {
+
+  //@brief GridVelocityをコピーする
+  void copyGridVel(double* m_gv) const 
+  {
     for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
   }
 };
@@ -161,7 +173,7 @@ private:
   REAL_TYPE NormValue;   /// ノルムの値
   
 public:
-  /// 反復制御リスト
+  /** 反復制御リスト */
   enum itr_cntl_key {
     ic_prs_pr,
     ic_prs_cr,
@@ -171,7 +183,8 @@ public:
     ic_END
   };
   
-  /// 反復法の収束基準種別
+  
+  /** 反復法の収束基準種別 */
   enum norm_type { 
     v_div_max,
     v_div_max_dbg,
@@ -184,13 +197,16 @@ public:
     t_res_l2_r
   };
   
-  unsigned LoopCount;     /// 反復回数
+  unsigned LoopCount;  ///< 反復回数
   
+  /** コンストラクタ */
   ItrCtl() {
     NormType = 0;
     ItrMax = LoopCount = LinearSolver = SubType = 0;
     eps = omg = 0.0;
   }
+  
+  /**　デストラクタ */
   ~ItrCtl() {}
   
 public:
@@ -417,8 +433,8 @@ public:
                 Fcell,
                 Wcell;
   
-  int NoMedium,   /// 媒質数
-      RefMat;     /// 参照媒質インデクス
+  int NoMedium;   /// 媒質数
+  int RefMat;     /// 参照媒質インデクス
   
   unsigned  AlgorithmF,
             AlgorithmH,
@@ -521,6 +537,7 @@ public:
   std::string f_Vorticity;
   
   
+  /** コンストラクタ */
   Control(){
     Acell = 0;
     AlgorithmF = 0;
@@ -646,6 +663,8 @@ public:
     EnsCompo.fraction= 0;
     EnsCompo.monitor = 0;
   }
+  
+  /**　デストラクタ */
   virtual ~Control() {}
   
 protected:
@@ -654,8 +673,8 @@ protected:
   void convertHexCoef        (REAL_TYPE* cf);
   void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
   void findTPCriteria(
-                      const string label1,
-                      const string label2,
+                      const std::string label1,
+                      const std::string label2,
                       unsigned order,
                       ItrCtl* IC);
   void get_Algorithm      ();

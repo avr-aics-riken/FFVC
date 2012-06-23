@@ -1,0 +1,57 @@
+###################################################################
+#
+# CAERU Library
+#
+# Copyright (c) All right reserved. 2012
+#
+# Institute of Industrial Science, The University of Tokyo, Japan. 
+#
+###################################################################
+
+
+OMP_FLAGS=-openmp -openmp-report=2
+CC=icc
+CFLAGS=-O3
+CXX=icpc
+CXXFLAGS=-O3 $(OMP_FLAGS)
+FC=ifort
+FCFLAGS=-O3
+F90=ifort
+F90FLAGS=-O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
+LDFLAGS=-L/opt/intel/composerxe/lib
+LIBS=-lifport -lifcore
+
+UDEF_OPT=-DTD_USE_NAMESPACE
+UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
+              -I../Polylib_2_0_3/include \
+              -I../PMlib-1.0/include \
+              -I/usr/local/cpm_float/include \
+              -I/opt/openmpi/include \
+              -I/usr/local/textparser/include \
+              -I../FB \
+              -I../F_CBC \
+              -I../IP
+UDEF_LIB_PATH=-L../Polylib_2_0_3/lib \
+              -L../Cutlib-2.0.3/lib \
+              -L../PMlib-1.0/lib \
+              -L/usr/local/cpm_float/lib \
+              -L/opt/openmpi/lib \
+              -L/usr/local/textparser/lib 
+UDEF_LIBS = -lMPIPolylib -lcutlib -lpmlib -lcpmlib -lmpi -lTextParser
+
+
+## K
+#CC=mpifccpx
+#CFLAGS=-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
+#CXX=mpiFCCpx
+#CXXFLAGS=-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+#FC=mpifrtpx
+#FCFLAGS=-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
+#F90=mpifrtpx
+#F90FLAGS=-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
+#LDFLAGS=--linkfortran
+#LIBS=
+#UDEF_OPT=-DTD_USE_NAMESPACE -D__K_FPCOLL -D__ARCH_FX
+#UDEF_INC_PATH=-I../../Cutlib-2.0.3/include -I../../Polylib_2_0_3/include -I../../PMlib-1.0/include -I../../TP/include -I../../CPMlib/include
+#UDEF_LIB_PATH=-L../../Polylib_2_0_3/lib -L../../Cutlib-2.0.3/lib -L../../PMlib-1.0/lib -L../../TP/lib -L../../CPMlib/lib
+#SPH_DEVICE=Sparc64_linux

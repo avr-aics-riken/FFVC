@@ -37,6 +37,7 @@
 #include "ffv_Define.h"
 #include "mydebug.h"
 #include "FBUtility.h"
+#include "Control.h"
 
 #include "TPControl.h"
 
@@ -56,6 +57,7 @@ protected:
   
 public:
   cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
+  Control         C;         ///< 制御パラメータクラス
   
   
 public:
@@ -109,6 +111,12 @@ public:
   {
     return ( paraMngr->GetMyRankID() == 0 ) ? true : false;
   }
+  
+  
+  /**
+   @brief 固定パラメータの設定
+   */
+  void fixed_parameters();
   
 };
 

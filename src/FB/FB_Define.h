@@ -29,8 +29,8 @@
 #define MODEL_ID_MAX 255
 
 // precision
-#define SPH_SINGLE 4
-#define SPH_DOUBLE 8
+#define FP_SINGLE 4
+#define FP_DOUBLE 8
 #define SINGLE_EPSILON 2.4e-7
 #define DOUBLE_EPSILON 4.4e-16
 

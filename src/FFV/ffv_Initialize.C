@@ -18,6 +18,12 @@
 
 int FFV::Initialize(int argc, char **argv)
 {
+  unsigned long TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
+  unsigned long PrepMemory;     ///< 初期化に必要なメモリ量（ローカル）
+  unsigned long G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
+  unsigned long G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
+  unsigned long tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
+  
   int ret = 0;
   
   // CPMバージョン表示
@@ -25,6 +31,16 @@ int FFV::Initialize(int argc, char **argv)
   {
     cpm_Base::VersionInfo();
   }
+  
+  
+  // 固定パラメータ
+  fixed_parameters();
+  
+  
+  
+  
+  
+  /*
   
   // 入力ファイルリスト
   vector<const char*> ifname;
@@ -127,8 +143,50 @@ int FFV::Initialize(int argc, char **argv)
   paraMngr->Barrier();
   
   return CPM_SUCCESS;
-  
+  */
   
   
   
 }
+
+
+/**
+ @fn void SklSolverCBC::fixed_parameters(void)
+ @brief 固定パラメータの設定
+ */
+void FFV::fixed_parameters()
+{
+  // 次元
+  C.NoDimension = 3;
+  
+  // 精度
+  if ( sizeof(REAL_TYPE) == sizeof(double) ) {
+    C.Mode.Precision = FP_DOUBLE;
+  }
+  else {
+    C.Mode.Precision = FP_SINGLE;
+  }
+  
+  // ログファイル名
+  strcpy(C.HistoryName,        "history_base.txt");
+  strcpy(C.HistoryCompoName,   "history_compo.txt");
+  strcpy(C.HistoryDomfxName,   "history_domainflux.txt");
+  strcpy(C.HistoryForceName,   "history_force.txt");
+  strcpy(C.HistoryWallName,    "history_log_wall.txt");
+  strcpy(C.HistoryItrName,     "history_iteration.txt");
+  strcpy(C.HistoryMonitorName, "sample.log");
+  
+  C.f_Pressure       = "prs_";
+  C.f_Velocity       = "vel_";
+  C.f_Temperature    = "tmp_";
+  C.f_AvrPressure    = "prsa_";
+  C.f_AvrVelocity    = "vela_";
+  C.f_AvrTemperature = "tmpa_";
+  C.f_DivDebug       = "div_";
+  C.f_Helicity       = "hlt_";
+  C.f_TotalP         = "tp_";
+  C.f_I2VGT          = "i2vgt_";
+  C.f_Vorticity      = "vrt_";
+  
+}
+
