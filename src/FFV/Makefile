@@ -18,9 +18,9 @@ all:
 	cd ../IP; \
 	make \
 		CXX='$(CXX)' \
-		CXXFLAGS='$(CXXFLAGS) \
+		CXXFLAGS='$(CXXFLAGS)' \
 		CC='$(CC)' \
-		CFLAGS='$(CFLAGS) \
+		CFLAGS='$(CFLAGS)' \
 		FC='$(FC)' \
 		FCFLAGS='$(FCFLAGS)' \
 		F90='$(F90)' \
@@ -34,9 +34,9 @@ all:
 	cd ../FB; \
 	make \
 		CXX='$(CXX)' \
-		CXXFLAGS='$(CXXFLAGS) \
+		CXXFLAGS='$(CXXFLAGS)' \
 		CC='$(CC)' \
-		CFLAGS='$(CFLAGS) \
+		CFLAGS='$(CFLAGS)' \
 		FC='$(FC)' \
 		FCFLAGS='$(FCFLAGS)' \
 		F90='$(F90)' \
@@ -47,7 +47,7 @@ all:
 		RM='$(RM)' \
 	)
 	( \
-	make \
+	make -f MakeFFV \
 		TARGET='$(TARGET)' \
 		CXX='$(CXX)' \
 		CXXFLAGS='$(CXXFLAGS)' \
@@ -64,13 +64,26 @@ all:
 clean:
 	(cd ../IP; make clean)
 	(cd ../FB; make clean)
-	(make clean)
+	(make -f MakeFFV clean)
 
 allclean: clean
-	(cd ../..bin; $(RM) $(TARGET) )
+	(cd ../../bin; $(RM) $(TARGET) )
 
 depend:
 	(cd ../IP; make depend)
 	(cd ../FB; make depend)
-	(make depend)
+	(make -f MakeFFV depend)
 
+# DO NOT DELETE
+
+ffv.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h
+ffv.o: ../FB/FB_Define.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
+ffv.o: ../FB/BndOuter.h ../FB/Interval_Mngr.h ../FB/TPControl.h
+ffv_Initialize.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
+ffv_Initialize.o: ../FB/FBUtility.h ../FB/FB_Define.h ../FB/Control.h
+ffv_Initialize.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
+ffv_Initialize.o: ../FB/Interval_Mngr.h ../FB/TPControl.h
+main.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
+main.o: ../FB/FBUtility.h ../FB/FB_Define.h ../FB/Control.h ../FB/Medium.h
+main.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
+main.o: ../FB/TPControl.h
