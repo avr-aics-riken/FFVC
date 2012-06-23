@@ -103,14 +103,6 @@
 #define OBC_TRC_FREE  6
 #define OBC_FAR_FIELD 7
 
-// 面の番号
-#define X_MINUS 0
-#define X_PLUS  1
-#define Y_MINUS 2
-#define Y_PLUS  3
-#define Z_MINUS 4
-#define Z_PLUS  5
-
 // エンコードビット　共通
 #define ACTIVE_BIT 31
 #define STATE_BIT  30

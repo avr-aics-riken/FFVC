@@ -11,14 +11,16 @@
 //
 // #################################################################
 
-//@file ffv_Define.h
-//@brief FFV class Definition Header
-//@author kero
+/** 
+ * @file ffv_Define.h
+ * @brief FFV Class Definition Header
+ * @author kero
+ */
 
 #define VERS_FFV   166
 #define TM_LABEL_MAX 24
   
-// 計算性能測定キー番号
+/** 計算性能測定キー番号 */
 enum timing_key {
   tm_init_sct,
     tm_init_alloc,

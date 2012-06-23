@@ -14,51 +14,8 @@
 
 #include "FBUtility.h"
 
-//@brief 文字列を小文字にして比較
-bool FBUtility::compare(const std::string str1, const std::string str2)
-{
-  std::string s1 = str1;
-  std::string s2 = str2;
-  
-  transform (s1.begin (), s1.end (), s1.begin (), tolower);
-  transform (s2.begin (), s2.end (), s2.begin (), tolower);
-  
-	return (s1 == s2) ? true : false;
-}
 
-//@brief dirの方向ラベルを返す
-std::string FBUtility::getDirection(const unsigned dir)
-{
-  std::string face;
-  if      (dir == X_MINUS) face = "X-";
-  else if (dir == X_PLUS)  face = "X+";
-  else if (dir == Y_MINUS) face = "Y-";
-  else if (dir == Y_PLUS)  face = "Y+";
-  else if (dir == Z_MINUS) face = "Z-";
-  else if (dir == Z_PLUS)  face = "Z+";
-  return face;
-}
-
-/**
- @fn void FBUtility::displayMemory(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp, FILE* mp)
- @brief メモリ使用量を表示する
- @param mode 処理モード
- @param Memory 必要メモリ量
- @param l_memory local
- */
-void FBUtility::displayMemory(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp, FILE* mp)
-{
-  MemoryRequirement(mode, Memory, l_memory, mp);
-  MemoryRequirement(mode, Memory, l_memory, fp);
-}
-
-/**
- @fn void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp)
- @brief メモリ使用量を表示する
- @param mode 処理モード
- @param Memory 必要メモリ量
- @param l_memory local
- */
+// メモリ使用量を表示する
 void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp)
 {
   const REAL_TYPE mem = (REAL_TYPE)Memory;
@@ -138,19 +95,4 @@ void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, 
   }
 
   fflush(fp);
-}
-
-
-//@brief バージョン情報の表示
-void FBUtility::printVersion(FILE* fp, const char* str, const unsigned ver)
-{
-  unsigned a, b, c;
-  a = b = c = 0;
-
-  a = ver / 100;
-  b = (ver - a*100) / 10;
-  c = ver - a*100 - b*10;
-
-  fprintf(fp,"\n");
-  fprintf(fp,"\t%s \tVersion %d.%d.%d\n", str, a, b, c);
 }

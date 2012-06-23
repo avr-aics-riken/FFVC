@@ -8,25 +8,28 @@
 //
 // #################################################################
 
-
-//@file ffv.C
-//@brief ffv class
-//@author kero
+/** 
+ * @file ffv.C
+ * @brief FFV Class
+ * @author kero
+ */
 
 #include "ffv.h"
 
-//@brief コンストラクタ
+// コンストラクタ
 FFV::FFV()
 {
+  session_maxStep = 0;
+  session_currentStep = 0;
   
   mp = stdout;
   
   
-  
+  paraMngr = NULL;
   
 }
 
-//@brief デストラクタ
+// デストラクタ
 FFV::~FFV()
 {
   
@@ -35,27 +38,26 @@ FFV::~FFV()
 }
 
 
-//@brief タイムステップループ
+// タイムステップループ
 int FFV::Loop(int m_step)
 {
-  
-  
-  
+  return 1;
 }
 
 
-//@brief タイムステップループ
-int FFV::MainLoop(void)
+// タイムステップループ
+int FFV::MainLoop()
 {
   int ret = 1;
   
-  for (int i=1; i<=session_maxStep; i++){
-    
+  for (int i=1; i<=session_maxStep; i++)
+  {
     session_currentStep = i;
     
     int loop_ret = Loop(i);
     
-    switch (loop_ret) {
+    switch (loop_ret) 
+    {
       case -1: // error
         return -1;
         
@@ -80,11 +82,12 @@ int FFV::MainLoop(void)
 }
 
 
-//@brief 終了時の処理
-bool FFV::Post(cpm_ParaManager *paraMngr) 
+// 終了時の処理
+bool FFV::Post() 
 {
-
-  TIMING__ { 
+/*
+  TIMING__ 
+  { 
     FILE* fp = NULL;
     
     if ( IsMaster(paraMngr) ) {
@@ -99,13 +102,15 @@ bool FFV::Post(cpm_ParaManager *paraMngr)
     PM.gather();
     TIMING_stop(tm_statistic, 0.0);
     
-    Hostonly_ {
+    if ( IsMaster(paraMngr) ) 
+    {
       // 結果出力(排他測定のみ)
       PM.print(stdout);
       PM.print(fp);
       
       // 結果出力(非排他測定も)
-      if ( C.Mode.Profiling == DETAIL) {
+      if ( C.Mode.Profiling == DETAIL) 
+      {
         PM.printDetail(stdout);
         PM.printDetail(fp);
       }
@@ -114,39 +119,38 @@ bool FFV::Post(cpm_ParaManager *paraMngr)
     }
   }
   
-  if ( IsMaster(paraMngr) ) {
-    if( cm_mode == 0 ){
+  if ( IsMaster(paraMngr) ) 
+  {
+    if( cm_mode == 0 )
+    {
       printf( "Communication Mode = CommBndCell\n" );
-    } else if( cm_mode == 1 ){
+    } 
+    else if( cm_mode == 1 )
+    {
       printf( "Communication Mode = CommBndCell2 or cbs3d_commface(no hide)\n" );
-    } else {
+    } 
+    else 
+    {
       printf( "Communication Mode = CommBndCell2 or cbs3d_commface(hide)\n" );
     }
-    fflush(stdout);
+    paraMngr->flush(stdout);
   }
-  
+  */
   return true;
 }
 
 
-//@brief タイムステップループの後の処理
-bool FFV::stepPost(void) 
+// タイムステップループの後の処理
+bool FFV::stepPost() 
 {
   return true;
 }
 
-//@brief 利用例の表示
+
+// 利用例の表示
 void FFV::Usage(void)
 {
-  char version[8];
-  sprintf(version, "%s", VERS_FFV);
-  
-  cout << endl;
-  cout << "\tFrontflow / violet" << endl;
-  cout << "\t=======================================================" << endl;
-  cout << "\tversion " << version << endl;
-  cout << "\t==============" << endl;
-  cout << endl;
+  FBUtility::printVersion(mp, "Frontflow/violet", VERS_FFV);
   
   cout << " Usage : ";
   cout << "ffv"

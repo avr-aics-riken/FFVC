@@ -11,9 +11,11 @@
 //
 // #################################################################
 
-//@file FBUtility.h
-//@brief FlowBase FBUtility class Header
-//@author kero
+/** 
+ * @file FBUtility.h
+ * @brief FlowBase FBUtility class Header
+ * @author kero
+ */
 
 #include <math.h>
 #include <string>
@@ -21,92 +23,157 @@
 #include <stdio.h>
 #include <algorithm>
 
-#include "mpi.h"
 #include "FB_Define.h"
+#include "cpm_Define.h"
 
 
 class FBUtility {
 
 public:
+  /** コンストラクタ */
   FBUtility() {}
-  ~FBUtility() {}
-
-public:
-  static bool compare(const std::string str1, const std::string str2);
-  static std::string getDirection(const unsigned dir);
   
-  static void displayMemory (const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp, FILE* mp);
+  /** デストラクタ */
+  ~FBUtility() {}
+ 
+  
+public:
+  /** 文字列を小文字にして比較
+   * @param[in] str1  比較string
+   * @param[in] str2  比較string
+   * @ret true-同じ / false-異なる
+   */
+  static bool compare(const std::string str1, const std::string str2)
+  {
+    std::string s1 = str1;
+    std::string s2 = str2;
+    
+    transform (s1.begin (), s1.end (), s1.begin (), tolower);
+    transform (s2.begin (), s2.end (), s2.begin (), tolower);
+    
+    return (s1 == s2) ? true : false;
+  }
+  
+  
+  /**
+   * @brief dirの方向ラベルを返す
+   * @param dir[in]     方向コード
+   * @ret 方向ラベル
+   */
+  static std::string getDirection(const int dir)
+  {
+    std::string face;
+    if      (dir == X_MINUS) face = "X-";
+    else if (dir == X_PLUS)  face = "X+";
+    else if (dir == Y_MINUS) face = "Y-";
+    else if (dir == Y_PLUS)  face = "Y+";
+    else if (dir == Z_MINUS) face = "Z-";
+    else if (dir == Z_PLUS)  face = "Z+";
+    return face;
+  }
+  
+  
+  /**
+   * @brief メモリ使用量を表示する
+   * @param mode[in]     処理モード
+   * @param Memory[in]   必要メモリ量
+   * @param l_memory[in] local
+   * @param fp[in]       ファイルポインタ
+   */
   static void MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp);
-  static void printVersion  (FILE* fp, const char* str, const unsigned ver);
+  
+  
+  /** バージョン情報の表示
+   * @param fp[in]   ファイルポインタ
+   * @param str[in]  名称
+   * @param ver[in]  バージョン番号
+   */
+  static void printVersion(FILE* fp, const char* str, const int ver)
+  {
+    int a, b, c;
+    a = b = c = 0;
+    
+    a = ver / 100;
+    b = (ver - a*100) / 10;
+    c = ver - a*100 - b*10;
+    
+    fprintf(fp, "\n\t%s \tVersion %d.%d.%d\n", str, a, b, c);
+  }
 
+  
 	/**
-   @fn static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff)
    @brief 無次元温度varを有次元(Kelvin)にして返す
    @param var 無次元温度
    @param base Control::BaseTemp
    @param diff Control::DiffTemp
    */
-  static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) {
+  static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) 
+  {
     return ( base + diff*var );
   }
   
+  
   /**
-   @fn static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit)
    @brief 有次元温度varを無次元にして返す
    @param var 有次元温度(Kelvin or Celsius)
    @param base Control::BaseTemp
    @param diff Control::DiffTemp
    @param Unit 温度の単位
    */
-  static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit) {
+  static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit) 
+  {
     REAL_TYPE tmp = convTemp2K(var, Unit);
     return ( (tmp - base) / (REAL_TYPE)fabs(diff) );
   }
   
+  
   /**
-   @fn static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff)
    @brief 有次元温度var(Kelvin)を無次元にして返す
    @param var 有次元温度(Kelvin)
    @param base Control::BaseTemp
    @param diff Control::DiffTemp
    */
-  static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) {
+  static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) 
+  {
     return ( (var - base) / (REAL_TYPE)fabs(diff) );
   }
 
+  
   /**
-   @fn static inline REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit)
    @brief 有次元の温度varを指定された温度単位にして返す
    @param var 有次元温度(Kelvin)
    @param Unit 温度の単位
    */
-  static REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit) {
+  static REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit) 
+  {
     return ( (Unit==Unit_KELVIN) ? var : var-KELVIN );
   }
   
+  
   /**
-   @fn static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit)
    @brief 有次元の温度varを(Kelvin)にして返す
    @param var 有次元温度(Kelvin or Celsius)
    @param Unit 温度の単位
    */
-  static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit) {
+  static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit) 
+  {
     return ( (Unit==Unit_KELVIN) ? var : var+KELVIN );
   }
   
+  
   /**
-   @fn static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE refv)
    @brief 有次元速度を無次元にして返す
    @retval 無次元速度
    @param var 有次元速度
    @param refv 代表速度
    */
-  static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE RefV) {
+  static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE RefV) 
+  {
     return ( var / RefV );
   }
   
+  
   /**
-   @fn static REAL_TYPE convD2ND_Hsrc(REAL_TYPE var, REAL_TYPE RefV, REAL_TYPE RefL, REAL_TYPE diff, REAL_TYPE rho, REAL_TYPE C)
    @brief 発熱量(W/m^3)を無次元にして返す
    @param var 有次元発熱量(W/m^3)
    @param RefV 代表速度
@@ -116,16 +183,17 @@ public:
    @param C 媒質比熱
    */
   static REAL_TYPE convD2ND_Hsrc(const REAL_TYPE var, 
-                                       const REAL_TYPE RefV, 
-                                       const REAL_TYPE RefL, 
-                                       const REAL_TYPE diff, 
-                                       const REAL_TYPE rho, 
-                                       const REAL_TYPE C) {
+                                 const REAL_TYPE RefV, 
+                                 const REAL_TYPE RefL, 
+                                 const REAL_TYPE diff, 
+                                 const REAL_TYPE rho, 
+                                 const REAL_TYPE C) 
+  {
     return ( var*RefL / (RefV*diff*rho*C) );
   }
   
+  
   /**
-   @fn static REAL_TYPE convND2D_Hsrc(const REAL_TYPE var, const REAL_TYPE RefV, const REAL_TYPE RefL, const REAL_TYPE diff, const REAL_TYPE rho, const REAL_TYPE C)
    @brief 発熱量を有次元(W/m^3)にして返す
    @param var 無次元発熱量
    @param RefV 代表速度
@@ -135,16 +203,16 @@ public:
    @param C 媒質比熱
    */
   static REAL_TYPE convND2D_Hsrc(const REAL_TYPE var, 
-                                       const REAL_TYPE RefV, 
-                                       const REAL_TYPE RefL, 
-                                       const REAL_TYPE diff, 
-                                       const REAL_TYPE rho, 
-                                       const REAL_TYPE C) {
+                                 const REAL_TYPE RefV, 
+                                 const REAL_TYPE RefL, 
+                                 const REAL_TYPE diff, 
+                                 const REAL_TYPE rho, 
+                                 const REAL_TYPE C) 
+  {
     return ( var* RefV*diff*rho*C / RefL );
   }
   
   /**
-   @fn static REAL_TYPE convD2ND_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV, const unsigned mode)
    @brief 圧力を無次元にして返す
    @param var 有次元圧力(absolute or gauge)
    @param bp 基準圧力
@@ -153,16 +221,17 @@ public:
    @param mode (absolute or gauge)
    */
   static REAL_TYPE convD2ND_P(const REAL_TYPE var, 
-                                    const REAL_TYPE bp, 
-                                    const REAL_TYPE rho, 
-                                    const REAL_TYPE RefV, 
-                                    const unsigned mode) {
+                              const REAL_TYPE bp, 
+                              const REAL_TYPE rho, 
+                              const REAL_TYPE RefV, 
+                              const unsigned mode) 
+  {
     const REAL_TYPE a = (mode==Unit_Absolute) ? (var-bp) : var;
     return (  a / (RefV*RefV*rho) );
   }
   
+  
   /**
-   @fn static REAL_TYPE convND2D_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV)
    @brief 圧力を有次元(absolute or gauge)にして返す
    @param var 無次元圧力
    @param bp 基準圧力
@@ -170,13 +239,18 @@ public:
    @param RefV 代表速度
    @param mode (absolute or gauge)
    */
-  static REAL_TYPE convND2D_P(const REAL_TYPE var, const REAL_TYPE bp, const REAL_TYPE rho, const REAL_TYPE RefV, const unsigned mode) {
+  static REAL_TYPE convND2D_P(const REAL_TYPE var, 
+                              const REAL_TYPE bp, 
+                              const REAL_TYPE rho, 
+                              const REAL_TYPE RefV, 
+                              const unsigned mode) 
+  {
     const REAL_TYPE a = var * (RefV*RefV*rho);
     return ( (mode==Unit_Absolute) ? bp+a : a );
   }
   
+  
   /**
-   @fn static inline unsigned getFindexS3D(const unsigned* sz, unsigned gc, int i, int j, int k)
    @brief Fortranの3次元インデックスから1次元インデックスを取得する
    @param sz    I,J,K方向サイズ（ガイドセルを含まない）
    @param gc    ガイドセル
@@ -185,7 +259,8 @@ public:
    @param k     K方向インデックス（ガイドセルを含まない）
    @return      1次元インデックス
    */
-  static inline unsigned getFindexS3D(const unsigned* sz, unsigned gc, int i, int j, int k) {
+  static inline unsigned getFindexS3D(const unsigned* sz, unsigned gc, int i, int j, int k) 
+  {
     //return ( (sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + (sz[0]+gc*2)*(j+gc-1) + i+gc-1 );
     int t1 = gc*2;
     int t2 = gc-1;
@@ -194,7 +269,6 @@ public:
   }
   
   /**
-   @fn static inline unsigned getFindexV3DEx(const unsigned* sz, unsigned gc, int l, int i, int j, int k)
    @brief Fortranの3次元Exベクトルインデックスから1次元インデックスを取得する
    @param sz    I,J,K方向サイズ（ガイドセルを含まない）
    @param gc    ガイドセル
@@ -204,7 +278,8 @@ public:
    @param k     K方向インデックス（ガイドセルを含まない）
    @return      1次元インデックス
    */
-  static inline unsigned getFindexV3DEx(const unsigned* sz, unsigned gc, int l, int i, int j, int k) {
+  static inline unsigned getFindexV3DEx(const unsigned* sz, unsigned gc, int l, int i, int j, int k) 
+  {
     int t1 = gc*2;
     int t2 = gc-1;
     int t3 = sz[0]+t1;
@@ -213,7 +288,6 @@ public:
   }
   
   /**
-   @fn static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k)
    @brief Fortranの3次元cut用インデックスから1次元インデックスを取得する
    @param sz    I,J,K方向サイズ（ガイドセルを含まない）
    @param gc    ガイドセル
@@ -223,7 +297,8 @@ public:
    @param k     K方向インデックス（ガイドセルを含まない）
    @return      1次元インデックス
    */
-  static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k) {
+  static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k) 
+  {
     int t1 = gc*2;
     int t2 = gc-1;
     int t3 = sz[0]+t1;
@@ -231,7 +306,6 @@ public:
   }
   
   /**
-   @fn static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int l, int i, int j, int k)
    @brief Fortranの3次元cut用Bid8インデックスから1次元インデックスを取得する
    @param sz    I,J,K方向サイズ（ガイドセルを含まない）
    @param gc    ガイドセル
@@ -240,24 +314,12 @@ public:
    @param k     K方向インデックス（ガイドセルを含まない）
    @return      1次元インデックス
    */
-  static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int i, int j, int k) {
+  static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int i, int j, int k) 
+  {
     int t1 = gc*2;
     int t2 = gc-1;
     int t3 = sz[0]+t1;
     return ( 2*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) );
-  }
-
-  
-  
-  /// 浮動小数のラッパー関数
-  static void real_Gather(REAL_TYPE* sbuf, REAL_TYPE* rbuf, const int msg) {
-    
-    if ( sizeof(REAL_TYPE) == sizeof(float) ) {
-      MPI_Gather(sbuf, msg, MPI_FLOAT, rbuf, msg, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    }
-    else {
-      MPI_Gather(sbuf, msg, MPI_DOUBLE, rbuf, msg, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    }
   }
   
 };

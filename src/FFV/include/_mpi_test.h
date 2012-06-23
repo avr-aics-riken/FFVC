@@ -414,7 +414,7 @@
     }}}
 
     char fname[512];
-    sprintf ( fname, "commS3D_%04d.log", rank );
+    sprintf ( fname, "commS3D_%06d.log", rank );
     std::ofstream ofs( fname );
 #ifdef _NOWAIT_TEST_
     ofs << "#### commS3D nowait test ####" << endl << endl;
@@ -487,7 +487,7 @@
     }}}}
 
     char fname[512];
-    sprintf ( fname, "commV3D_%04d.log", rank );
+    sprintf ( fname, "commV3D_%06d.log", rank );
     std::ofstream ofs( fname );
 #ifdef _NOWAIT_TEST_
     ofs << "#### commV3D nowait test ####" << endl << endl;
@@ -560,7 +560,7 @@
     }}}}
 
     char fname[512];
-    sprintf ( fname, "commS4D_%04d.log", rank );
+    sprintf ( fname, "commS4D_%06d.log", rank );
     std::ofstream ofs( fname );
 #ifdef _NOWAIT_TEST_
     ofs << "#### commS4D nowait test ####" << endl << endl;
@@ -633,7 +633,7 @@
     }}}}
 
     char fname[512];
-    sprintf ( fname, "commV3DEx_%04d.log", rank );
+    sprintf ( fname, "commV3DEx_%06d.log", rank );
     std::ofstream ofs( fname );
 #ifdef _NOWAIT_TEST_
     ofs << "#### commV3DEx nowait test ####" << endl << endl;
@@ -706,7 +706,7 @@
     }}}}
 
     char fname[512];
-    sprintf ( fname, "commS4DEx_%04d.log", rank );
+    sprintf ( fname, "commS4DEx_%06d.log", rank );
     std::ofstream ofs( fname );
 #ifdef _NOWAIT_TEST_
     ofs << "#### commS4DEx nowait test ####" << endl << endl;

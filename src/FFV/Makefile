@@ -53,6 +53,8 @@ CSRCS = \
 
 CXXSRCS = \
        main.C \
+       ffv.C \
+       ffv_Initialize.C \
 
 
 FCSRCS = \
@@ -76,7 +78,7 @@ OBJS  = $(COBJS) $(CXXOBJS) $(FCOBJS) $(F90OBJS)
 $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \
 	$(LDFLAGS) $(UDEF_LIB_PATH) $(LIBS) $(UDEF_LIBS)
-#	mv $(TARGET) ../bin/.
+	mv $(TARGET) ../../bin/.
 
 .c.o:
 	$(CC) $(CFLAGS) $(UDEF_INC_PATH) -c $<
@@ -91,11 +93,22 @@ $(TARGET):$(OBJS)
 	$(F90) $(F90FLAGS) $(UDEF_INC_PATH) -c $<
 
 clean:
-	$(RM) $(OBJS) $(TARGET)
+	$(RM) $(OBJS)
+  
+#	(cd CBC; make clean)
+#	(cd IP; make clean)
+#	(cd FB; make clean)
+#	(cd app; make clean)
 
+allclean: clean
+	(cd ../../bin; $(RM) $(TARGET) )
+  
 depend:
 	makedepend -I. -Y $(CXXSRCS) $(CSRCS)
 
 # DO NOT DELETE
 
-main.o: include/_mpi_test.h
+main.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
+ffv.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
+ffv_Initialize.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
+ffv_Initialize.o: include/_mpi_test.h

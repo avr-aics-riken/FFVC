@@ -394,7 +394,8 @@ SklSolverCBC::SklSolverInitialize() {
     MPI_Allreduce(&tmp_memory, &G_PrepMemory, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
   Hostonly_  {
-    FBUtility::displayMemory("prep", G_PrepMemory, PrepMemory, fp, mp);
+    FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, mp);
+    FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, fp);
   }
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
@@ -1076,7 +1077,8 @@ SklSolverCBC::SklSolverInitialize() {
   }
   Hostonly_ {
     unsigned long mc = (unsigned long)( dc_wvex->GetArrayLength() * sizeof(REAL_TYPE) ); // temporaty array for vector output, see prepOutput();
-    FBUtility::displayMemory("solver", G_TotalMemory, TotalMemory, fp, mp);
+    FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, mp);
+    FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, fp);
   }
   
   // 制御パラメータ，物理パラメータの表示
@@ -1628,7 +1630,9 @@ void SklSolverCBC::allocComponentArray(unsigned long& m_prep, unsigned long& m_t
   }
   
   Hostonly_  {
-    FBUtility::displayMemory("component", G_cmp_mem, cmp_mem, fp, mp);
+    FBUtility::MemoryRequirement("component", G_cmp_mem, cmp_mem, mp);
+    FBUtility::MemoryRequirement("component", G_cmp_mem, cmp_mem, fp);
+    
   }
 }
 
@@ -3796,7 +3800,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   
   Hostonly_  {
-    FBUtility::displayMemory("Polygon", G_poly_mem, poly_mem, fp, mp);
+    FBUtility::MemoryRequirement("Polygon", G_poly_mem, poly_mem, mp);
+    FBUtility::MemoryRequirement("Polygon", G_poly_mem, poly_mem, fp);
   }
   
   // Triangle display
@@ -3890,7 +3895,8 @@ void SklSolverCBC::setup_Polygon2CutInfo(unsigned long& m_prep, unsigned long& m
   }
   
   Hostonly_  {
-    FBUtility::displayMemory("Cut", G_cut_mem, cut_mem, fp, mp);
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, mp);
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
   }
   
   // データクラスのアロケート
@@ -4021,7 +4027,8 @@ void SklSolverCBC::setup_CutInfo4IP(unsigned long& m_prep, unsigned long& m_tota
   }
   
   Hostonly_  {
-    FBUtility::displayMemory("Cut", G_cut_mem, cut_mem, fp, mp);
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, mp);
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
   }
   
   // 初期値のセット
