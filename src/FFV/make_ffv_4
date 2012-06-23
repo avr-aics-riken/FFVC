@@ -1,0 +1,76 @@
+###################################################################
+#
+# CAERU Library
+#
+# Copyright (c) All right reserved. 2012
+#
+# Institute of Industrial Science, The University of Tokyo, Japan. 
+#
+###################################################################
+
+BASEDIR  = $(PWD)
+TARGET   = ffv
+
+include make_setting
+
+all:
+	( \
+	cd ../IP; \
+	make \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS) \
+		CC='$(CC)' \
+		CFLAGS='$(CFLAGS) \
+		FC='$(FC)' \
+		FCFLAGS='$(FCFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+	)
+	( \
+	cd ../FB; \
+	make \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS) \
+		CC='$(CC)' \
+		CFLAGS='$(CFLAGS) \
+		FC='$(FC)' \
+		FCFLAGS='$(FCFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+	)
+	( \
+	make \
+		TARGET='$(TARGET)' \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
+		LDFLAGS='$(LDFLAGS)' \
+		LIBS='$(LIBS)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+		UDEF_LIB_PATH='$(UDEF_LIB_PATH)' \
+		UDEF_LIBS='$(UDEF_LIBS)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+	)
+
+clean:
+	(cd ../IP; make clean)
+	(cd ../FB; make clean)
+	(make clean)
+
+allclean: clean
+	(cd ../..bin; $(RM) $(TARGET) )
+
+depend:
+	(cd ../IP; make depend)
+	(cd ../FB; make depend)
+	(make depend)
+
