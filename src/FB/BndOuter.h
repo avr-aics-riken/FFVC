@@ -16,50 +16,54 @@
 //@author kero
 //@note メンバ変数に追加したら，dataCopy()処理にも加えること
 
-#include "FB_Define.h"
 #include <string>
+#include "FB_Define.h"
+#include "cpm_Define.h"
 
 class BoundaryOuter {
 private:
-  int BCclass;       /// 境界条件の種類
-  int subType;       /// サブタイプ（汎用）
+  int BCclass;       ///< 境界条件の種類
+  int subType;       ///< サブタイプ（汎用）
                      /// outflow >> 流出対流速度の評価モード（average, minmax）
                      /// wall >> (fixed, slide)
-  int drv_dir;       /// ドライバーの方向
-  int drv_lid;       /// ドライバフェイスIDの位置
-  int gc_medium;     /// ガイドセルの媒質インデクス
-  int v_profile;     /// 速度プロファイル（constant, harmonic, zero）
-  int Face_mode;     /// 周期境界のときの面の状況指定（upstream, downstream）
-  int hType;         /// 熱境界条件の種別
-  int HTref;         /// 熱伝達境界の参照モード(Bulk, Local)
-  int HTmode;        /// 熱伝達境界の種別(HT_N, HT_B, HT_S, HT_SN, HT_SF)
-  int Prdc_mode;     /// 周期境界のモード（simple, directional, driver）
-  int pType;         /// 外部境界の圧力指定(ディリクレ，勾配ゼロ)
-  int valid_cell;    /// 境界面で流量計算に有効なセル数（Fluid cell）
-  REAL_TYPE var1;    /// 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
-  REAL_TYPE var2;    /// 多目的用の変数(温度)
-  REAL_TYPE dm[3];   /// ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
-  std::string label; /// ラベル
-  std::string alias; /// 別名
+  int drv_dir;       ///< ドライバーの方向
+  int drv_lid;       ///< ドライバフェイスIDの位置
+  int gc_medium;     ///< ガイドセルの媒質インデクス
+  int v_profile;     ///< 速度プロファイル（constant, harmonic, zero）
+  int Face_mode;     ///< 周期境界のときの面の状況指定（upstream, downstream）
+  int hType;         ///< 熱境界条件の種別
+  int HTref;         ///< 熱伝達境界の参照モード(Bulk, Local)
+  int HTmode;        ///< 熱伝達境界の種別(HT_N, HT_B, HT_S, HT_SN, HT_SF)
+  int Prdc_mode;     ///< 周期境界のモード（simple, directional, driver）
+  int pType;         ///< 外部境界の圧力指定(ディリクレ，勾配ゼロ)
+  int valid_cell;    ///< 境界面で流量計算に有効なセル数（Fluid cell）
+  REAL_TYPE var1;    ///< 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
+  REAL_TYPE var2;    ///< 多目的用の変数(温度)
+  REAL_TYPE dm[3];   ///< ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
+  std::string label; ///< ラベル
+  std::string alias; ///< 別名
   
 public: 
-  int mon_ref;       /// IN_OUT境界条件のときのBC格納番号
-  REAL_TYPE nv[3];   /// 
-  REAL_TYPE ca[5];   /// 
-  REAL_TYPE cb[5];   /// 
-  REAL_TYPE p;       ///  
+  int mon_ref;       ///< IN_OUT境界条件のときのBC格納番号
+  REAL_TYPE nv[3];   ///< 法線
+  REAL_TYPE ca[5];   ///< 係数
+  REAL_TYPE cb[5];   ///< 係数
+  REAL_TYPE p;       ///< ワーク
   
+  /** 周期境界の方向 */
   enum periodic_dir {
     prdc_upstream,
     prdc_downstream
   };
   
+  /** 周期境界の種類 */
   enum periodic_kind {
     prdc_Simple,
     prdc_Directional,
     prdc_Driver
   };
   
+  /** 壁面の種類 */
   enum wall_kind {
     fixed,
     slide

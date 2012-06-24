@@ -33,11 +33,17 @@
 #include "cpm_ParaManager.h"
 #include "cpm_TextParserDomain.h"
 
-#include "../FB/FB_Define.h"
+#include "FB_Define.h"
 #include "ffv_Define.h"
 #include "mydebug.h"
 #include "FBUtility.h"
 #include "Control.h"
+#include "Alloc.h"
+#include "FileIO.h"
+#include "ParseBC.h"
+#include "ParseMat.h"
+//#include "ffv_SetBC.h"
+//#include "VoxInfo.h"
 
 #include "TPControl.h"
 
@@ -53,12 +59,22 @@ protected:
   int session_maxStep;     ///< セッションのステップ数
   int session_currentStep; ///< セッションの現在のステップ
   
-  FILE *mp;  ///< 標準出力
+  FILE *mp;    ///< 標準出力
+  FILE *fp_b;  ///< 基本情報
+  FILE *fp_w;  ///< 壁面情報
+  FILE *fp_c;  ///< コンポーネント情報
+  FILE *fp_d;  ///< 流量収支情報
+  FILE *fp_i;  ///< 反復履歴情報
+  FILE *fp_f;  ///< 力の履歴情報
+  
+  TPControl tpCntl;   ///< テキストパーサのラッパークラス
+  Control C;          ///< 制御パラメータクラス
+  FileIO  F;          ///< ファイル入出力クラス
+  
+//  SetBC3D BC;                ///< BCクラス
   
 public:
   cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
-  Control         C;         ///< 制御パラメータクラス
-  
   
 public:
   /** コンストラクタ */
@@ -114,10 +130,15 @@ public:
   
   
   /**
-   @brief 固定パラメータの設定
+   * @brief 固定パラメータの設定
    */
   void fixed_parameters();
   
+  
+  /**
+   * @brief 並列化と分割の方法を保持
+   */
+  void setParallelism();
 };
 
 #endif // _FFV_H_

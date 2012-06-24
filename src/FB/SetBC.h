@@ -11,9 +11,14 @@
 //
 // #################################################################
 
-//@file SetBC.h
-//@brief FlowBase SetBC class Header
-//@author kero
+/** 
+ * @file SetBC.h
+ * @brief FlowBase SetBC class Header
+ * @author kero
+ */
+
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
 
 #include "FB_Define.h"
 #include "FBUtility.h"
@@ -22,8 +27,7 @@
 #include "Component.h"
 #include "Medium.h"
 #include "Intrinsic.h"
-#include "cpm_Define.h"
-#include "cpm_ParaManager.h"
+
 
 class SetBC {
 protected:
@@ -85,9 +89,9 @@ public:
 protected:
   /**
    * @brief 外部境界処理用のループインデクスを取得する
-   * @param face[in] 外部境界面番号
-   * @param st[out]  開始インデクス
-   * @param ed[out]  終了インデクス
+   * @param [in] face 外部境界面番号
+   * @param [out] st  開始インデクス
+   * @param [out] ed  終了インデクス
    */
   void getOuterLoopIdx(const int face, int* st, int* ed);
   
@@ -95,29 +99,35 @@ protected:
 public:
   /**
    @brief 静止座標系のときの流出速度制御の値を計算する
-   @param[in] tm 時刻
+   @param [in] tm 時刻
    @retval 流出境界速度
    @todo experimental
    */
 	REAL_TYPE getVrefOut (const REAL_TYPE tm);
   
   
+  /**
+   * @brief CPMのポインタコピー
+   * @param [in] m_paraMngr  cpm_ParaManagerクラス
+   */
+  void importCPM(cpm_ParaManager* m_paraMngr)
+  
+  
   /** 
    * @brief クラスに必要な変数のコピー
-   * @param[in] Cref       Controlクラス
-   * @param[in] mat        MediumListクラス
-   * @param[in] cmp        Componentクラス
-   * @param[in] RF         ReferenceFrameクラス
-   * @param[in] m_paraMngr cpm_ParaManagerクラス
-   * @param[in] ExRef      Intrinsicクラス
+   * @param [in] Cref       Controlクラス
+   * @param [in] mat        MediumListクラス
+   * @param [in] cmp        Componentクラス
+   * @param [in] RF         ReferenceFrameクラス
+   * @param [in] ExRef      Intrinsicクラス
    */
-  void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, cpm_ParaManager* m_paraMngr, Intrinsic* ExRef=NULL);
+  void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
   
   
   /** 
    * @brief クラスのポインタコピー
-   * @param[in] m_CMP        CompoListクラス
-   * @param[in] m_MAT        MediumListクラス
+   * @param [in] m_CMP        CompoListクラス
+   * @param [in] m_MAT        MediumListクラス
    */
   void setWorkList(CompoList* m_CMP, MediumList* m_MAT);
   
@@ -137,7 +147,7 @@ public:
   
   
   /** 引数の外部境界面の外部境界リストのポインタを返す
-   * @param[in] face 面番号
+   * @param [in] face 面番号
    */
   BoundaryOuter* export_OBC(const int face) 
   { 

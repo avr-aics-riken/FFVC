@@ -208,6 +208,13 @@ extern "C" {
                            int* avs,
                            int* step_avr, 
                            REAL_TYPE* time_avr);
+  
+  void fb_mulcpy_         (REAL_TYPE* dst, 
+                           REAL_TYPE* src, 
+                           int* sz, 
+                           int* g, 
+                           REAL_TYPE* cf, 
+                           REAL_TYPE* flop);
 }
 
 #endif // _FB_F_FUNC_H_

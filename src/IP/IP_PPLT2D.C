@@ -50,9 +50,6 @@ void IP_PPLT2D::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYP
     Hostonly_ printf("\tError : PPLT2D class is designed for only non-dimensional parameter\n");
     Exit(0);
   }
-
-  // 分割数を取得する
-  //if ( !SklUtil::getCellInfo(R->NoDimension, sz, org, pch, wth) ) Exit(0);
   
   // Z方向のチェック
   if ( sz[2] != 3 ) {

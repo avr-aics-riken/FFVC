@@ -273,7 +273,7 @@ public:
   /** CPMlibのポインタをセット 
    * @param[in] m_paraMngr  
    */
-  void setPartitionManager(cpm_ParaManager* m_paraMngr)
+  void importCPM(cpm_ParaManager* m_paraMngr)
   
   
   // ----> debug function

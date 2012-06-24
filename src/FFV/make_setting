@@ -43,8 +43,10 @@ UDEF_LIB_PATH=-L../Polylib_2_0_3/lib \
               -L../PMlib-1.0/lib \
               -L/usr/local/cpm_float/lib \
               -L/opt/openmpi/lib \
-              -L/usr/local/textparser/lib 
-UDEF_LIBS = -lMPIPolylib -lcutlib -lpmlib -lcpmlib -lmpi -lTextParser
+              -L/usr/local/textparser/lib \
+              -L../FB \
+              -L../IP
+UDEF_LIBS = -lmpi -lcpmlib -lFB -lIP -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi
 
 
 ## K

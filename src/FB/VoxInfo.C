@@ -4614,6 +4614,14 @@ void VoxInfo::getQuadrant(unsigned* q, REAL_TYPE t1, REAL_TYPE t2)
 }
 
 
+// CPMクラスポインタのコピー
+void VoxInfo::importCPM(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
+}
+
+
 
 /**
  @fn bool VoxInfo::paint_first_seed(int* mid, const int* idx, const int target)
@@ -5721,12 +5729,6 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
 }
 
 
-// 作業用ポインタのコピー
-void VoxInfo::setPartitionManager(cpm_ParaManager* m_paraMngr)
-{
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
-}
 
 // 作業用のポインタコピー
 void VoxInfo::setWorkList(CompoList* m_CMP, MediumList* m_MAT)

@@ -17,7 +17,9 @@
 
 #include <string>
 #include "FB_Define.h"
+#include "cpm_Define.h"
 
+/** 属性リストのキー */
 enum property_list {
   p_density,              // 0
   p_kinematic_viscosity,  // 1
@@ -32,11 +34,11 @@ enum property_list {
 
 class MediumList {
 private:
-  int  state;         // solid or fluid
-  std::string name;   // ラベル
+  int  state;         ///< solid or fluid
+  std::string name;   ///< ラベル
 
 public:
-  REAL_TYPE P[property_END];
+  REAL_TYPE P[property_END]; ///< プロパティリスト
   
   MediumList() {
     state  = -1;
@@ -46,21 +48,51 @@ public:
   
 public:
 
-  int getState(void) { return state; }
+  /**
+   * @brief 媒質の属性を取得
+   * @return Fluid or Solid
+   */
+  int getState() const
+  { 
+    return state; 
+  }
   
-  std::string getLabel(void) { return name; }
   
-  void setState(const int key) { 
+  /**
+   * @brief ラベルを取得
+   * @return 文字列
+   */
+  std::string getLabel() const
+  { 
+    return name; 
+  }
+  
+  
+  /**
+   * @brief 状態をセット
+   * @param[in] key fluid(1) or solid(0)
+   */
+  void setState(const int key) 
+  { 
     state = key; 
   }
   
-  void setLabel(const std::string key) {
+  
+  /**
+   * @brief ラベルをセット
+   * @param[in] key 文字列
+   */
+  void setLabel(const std::string key) 
+  {
     name = key;
   }
   
   
-  //@brief プロパティ文字列に対応するキー番号を返す
-  //@param p 文字列
+  /**
+   * @brief 文字列に対応するキー番号を返す
+   * @param p[in] 文字列
+   * @return キー
+   */
   static int getKey(const char* p) {
     int key=-1;
     
@@ -76,9 +108,12 @@ public:
     return key;
   }
   
-
-  //@brief プロパティの文字列を返す
-  //@param key キー番号
+  
+  /**
+   * @brief プロパティの文字列を返す
+   * @param[in] key キー番号
+   * @return ラベル
+   */
   static std::string getPropertyName(const int key) {
     std::string name;
     

@@ -3371,11 +3371,9 @@ void Control::printVoxelSize(unsigned* gs, FILE* fp)
 }
 
 
-/**
- @fn bool Control::receive_TP_Ptr(TPControl* tp)
- @brief TPのポインタを受け取る
- */
-bool Control::receive_TP_Ptr(TPControl* tp) 
+
+// TPのポインタを受け取る
+bool Control::importTP(TPControl* tp) 
 { 
   if ( !tp ) return false;
   tpCntl = tp;

@@ -1,48 +1,94 @@
 #ifndef _FB_ALLOC_H_
 #define _FB_ALLOC_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
+// #################################################################
+//
+// FFV : Frontflow / violet
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
+
+/** 
+ * @file Alloc.h
+ * @brief FlowBase Files class Header
+ * @author kero
  */
 
-//@file Alloc.h
-//@brief FlowBase Files class Header
-//@author keno, FSI Team, VCAD, RIKEN
-
-#include "FB_Define.h"
-#include "Skl.h"
-#include "SklSolverBase.h"
-#include "parallel/SklParaComponent.h"
-#include "FB_Ffunc.h"
+#include "cpm_Define.h"
 #include "limits.h"
 
 
 class Alloc {
   
 public:
+  /** コンストラクタ */
   Alloc() {}
+  
+  /**　デストラクタ */
   ~Alloc() {}
   
 public:
-  bool alloc_Int_S1D   (SklSolverBase* obj, SklScalar<int>*           &dc_var, const char* label, unsigned  sz, unsigned gc, 
-                        int init,      unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Int_S3D   (SklSolverBase* obj, SklScalar3D<int>*         &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        int init,      unsigned long &mc, int para_key=-1, int m_procGrp=0);
-	bool alloc_Real_S3D  (SklSolverBase* obj, SklScalar3D<REAL_TYPE>*   &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        REAL_TYPE init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Real_V3DEx(SklSolverBase* obj, SklVector3DEx<REAL_TYPE>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        REAL_TYPE init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Uint_S1D  (SklSolverBase* obj, SklScalar<unsigned>*      &dc_var, const char* label, unsigned  sz, unsigned gc, 
-                        unsigned init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Uint_S3D  (SklSolverBase* obj, SklScalar3D<unsigned>*    &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        unsigned init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Float_S3D (SklSolverBase* obj, SklScalar3D<float>* &dc_var, const char* label, unsigned* sz, unsigned gc, 
-                        float init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
-  bool alloc_Float_S4DEx(SklSolverBase* obj, SklScalar4DEx<float>* &dc_var, const char* label, unsigned* sz, unsigned gc, unsigned dNum,
-                         float init, unsigned long &mc, int para_key=-1, int m_procGrp=0);
+
+  /**
+   @brief データ領域をアロケートする（Scalar:int）
+   @retval エラーコード
+   @param[in]      sz       計算内部領域のサイズ
+   @param[in]      gc       ガイドセルサイズ
+   @param[in/out]  mc       メモリ使用量のカウンタ
+   */
+  int* alloc_Int_S3D(const int* sz, const int gc, unsigned long &mc);
+  
+  
+  /**
+   @brief データ領域をアロケートする（Scalar:REAL_TYPE）
+   @retval エラーコード
+   @param[in]      sz       計算内部領域のサイズ
+   @param[in]      gc       ガイドセルサイズ
+   @param[in/out]  mc       メモリ使用量のカウンタ
+   */
+	REAL_TYPE* alloc_Real_S3D(const int* sz, const int gc, unsigned long &mc);
+  
+  /**
+   @brief データ領域をアロケートする（Vector:REAL_TYPE）
+   @retval エラーコード
+   @param[in]      sz       計算内部領域のサイズ
+   @param[in]      gc       ガイドセルサイズ
+   @param[in/out]  mc       メモリ使用量のカウンタ
+   */
+  REAL_TYPE* alloc_Real_V3D(const int* sz, const int gc, unsigned long &mc);
+
+  
+  /**
+   @brief データ領域をアロケートする（Scalar:unsigned）
+   @retval エラーコード
+   @param[in]      sz       計算内部領域のサイズ
+   @param[in]      gc       ガイドセルサイズ
+   @param[in/out]  mc       メモリ使用量のカウンタ
+   */
+  unsigned* alloc_Uint_S3D(const int* sz, const int gc, unsigned long &mc);
+  
+  /**
+   @brief データ領域をアロケートする（Scalar:float）
+   @retval エラーコード
+   @param[in]      sz       計算内部領域のサイズ
+   @param[in]      gc       ガイドセルサイズ
+   @param[in/out]  mc       メモリ使用量のカウンタ
+   */
+  float* alloc_Float_S3D(const int* sz, const int gc, unsigned long &mc);
+  
+  
+  /**
+   @brief データ領域をアロケートする（Scalar4:REAL_TYPE）
+   @retval エラーコード
+   @param[in]      sz       計算内部領域のサイズ
+   @param[in]      gc       ガイドセルサイズ
+   @param[in]      dnum     4つめのサイズ
+   @param[in/out]  mc       メモリ使用量のカウンタ
+   */
+  float* alloc_Float_S4D(const int* sz, const int gc, const int dnum, unsigned long &mc);
 };
 
 #endif // _FB_ALLOC_H_

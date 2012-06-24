@@ -33,12 +33,6 @@ bool FreeJet::setDomain(Control* R, unsigned* G_size, REAL_TYPE* G_org, REAL_TYP
   REAL_TYPE px, py, pz;
   px = py = pz = 0.0;
   
-  // check Dimension
-  if (R->NoDimension != 3 ) {
-    printf("\tThe size of dimension must be 3 for Free Jet example\n");
-    return false;
-  }
-  
   // Setting depends on Example,  INTRINSIC
   px         = 1.0 / (REAL_TYPE)imax;
   py         = 1.0 / (REAL_TYPE)jmax;

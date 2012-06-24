@@ -26,6 +26,7 @@
 #include "FB_Define.h"
 #include "cpm_Define.h"
 
+using namespace std;
 
 class FBUtility {
 
@@ -39,30 +40,28 @@ public:
   
 public:
   /** 文字列を小文字にして比較
-   * @param[in] str1  比較string
-   * @param[in] str2  比較string
-   * @ret true-同じ / false-異なる
+   * @param [in] str1  比較string
+   * @param [in] str2  比較string
+   * @return true-同じ / false-異なる
    */
-  static bool compare(const std::string str1, const std::string str2)
+  static bool compare(const string str1, const string str2)
   {
-    std::string s1 = str1;
-    std::string s2 = str2;
-    
-    transform (s1.begin (), s1.end (), s1.begin (), tolower);
-    transform (s2.begin (), s2.end (), s2.begin (), tolower);
-    
-    return (s1 == s2) ? true : false;
+    if ( !strcasecmp(str1.c_str(), str2.c_str()) ) 
+    {
+      return true;
+    }
+    return false;
   }
   
   
   /**
    * @brief dirの方向ラベルを返す
-   * @param dir[in]     方向コード
-   * @ret 方向ラベル
+   * @param [in] dir     方向コード
+   * @return 方向ラベル
    */
-  static std::string getDirection(const int dir)
+  static string getDirection(const int dir)
   {
-    std::string face;
+    string face;
     if      (dir == X_MINUS) face = "X-";
     else if (dir == X_PLUS)  face = "X+";
     else if (dir == Y_MINUS) face = "Y-";
@@ -75,18 +74,18 @@ public:
   
   /**
    * @brief メモリ使用量を表示する
-   * @param mode[in]     処理モード
-   * @param Memory[in]   必要メモリ量
-   * @param l_memory[in] local
-   * @param fp[in]       ファイルポインタ
+   * @param [in] mode     処理モード
+   * @param [in] Memory   必要メモリ量
+   * @param [in] l_memory local
+   * @param [in] fp       ファイルポインタ
    */
   static void MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp);
   
   
   /** バージョン情報の表示
-   * @param fp[in]   ファイルポインタ
-   * @param str[in]  名称
-   * @param ver[in]  バージョン番号
+   * @param [in] fp   ファイルポインタ
+   * @param [in] str  名称
+   * @param [in] ver  バージョン番号
    */
   static void printVersion(FILE* fp, const char* str, const int ver)
   {
@@ -103,9 +102,9 @@ public:
   
 	/**
    @brief 無次元温度varを有次元(Kelvin)にして返す
-   @param var 無次元温度
-   @param base Control::BaseTemp
-   @param diff Control::DiffTemp
+   @param [in] var   無次元温度
+   @param [in] base  Control::BaseTemp
+   @param [in] diff  Control::DiffTemp
    */
   static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) 
   {
@@ -115,10 +114,10 @@ public:
   
   /**
    @brief 有次元温度varを無次元にして返す
-   @param var 有次元温度(Kelvin or Celsius)
-   @param base Control::BaseTemp
-   @param diff Control::DiffTemp
-   @param Unit 温度の単位
+   @param [in] var  有次元温度(Kelvin or Celsius)
+   @param [in] base Control::BaseTemp
+   @param [in] diff Control::DiffTemp
+   @param [in] Unit 温度の単位
    */
   static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit) 
   {
@@ -129,9 +128,9 @@ public:
   
   /**
    @brief 有次元温度var(Kelvin)を無次元にして返す
-   @param var 有次元温度(Kelvin)
-   @param base Control::BaseTemp
-   @param diff Control::DiffTemp
+   @param [in] var  有次元温度(Kelvin)
+   @param [in] base Control::BaseTemp
+   @param [in] diff Control::DiffTemp
    */
   static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) 
   {
@@ -141,8 +140,8 @@ public:
   
   /**
    @brief 有次元の温度varを指定された温度単位にして返す
-   @param var 有次元温度(Kelvin)
-   @param Unit 温度の単位
+   @param [in] var  有次元温度(Kelvin)
+   @param [in] Unit 温度の単位
    */
   static REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit) 
   {
@@ -152,8 +151,8 @@ public:
   
   /**
    @brief 有次元の温度varを(Kelvin)にして返す
-   @param var 有次元温度(Kelvin or Celsius)
-   @param Unit 温度の単位
+   @param [in] var  有次元温度(Kelvin or Celsius)
+   @param [in] Unit 温度の単位
    */
   static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit) 
   {
@@ -164,8 +163,8 @@ public:
   /**
    @brief 有次元速度を無次元にして返す
    @retval 無次元速度
-   @param var 有次元速度
-   @param refv 代表速度
+   @param [in] var  有次元速度
+   @param [in] refv 代表速度
    */
   static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE RefV) 
   {
@@ -175,12 +174,12 @@ public:
   
   /**
    @brief 発熱量(W/m^3)を無次元にして返す
-   @param var 有次元発熱量(W/m^3)
-   @param RefV 代表速度
-   @param RefL 代表長さ
-   @param diff 代表温度差
-   @param rho 媒質密度
-   @param C 媒質比熱
+   @param [in] var   有次元発熱量(W/m^3)
+   @param [in] RefV  代表速度
+   @param [in] RefL  代表長さ
+   @param [in] diff  代表温度差
+   @param [in] rho   媒質密度
+   @param [in] C     媒質比熱
    */
   static REAL_TYPE convD2ND_Hsrc(const REAL_TYPE var, 
                                  const REAL_TYPE RefV, 
@@ -195,12 +194,12 @@ public:
   
   /**
    @brief 発熱量を有次元(W/m^3)にして返す
-   @param var 無次元発熱量
-   @param RefV 代表速度
-   @param RefL 代表長さ
-   @param diff 代表温度差
-   @param rho 媒質密度
-   @param C 媒質比熱
+   @param [in] var  無次元発熱量
+   @param [in] RefV 代表速度
+   @param [in] RefL 代表長さ
+   @param [in] diff 代表温度差
+   @param [in] rho  媒質密度
+   @param [in] C    媒質比熱
    */
   static REAL_TYPE convND2D_Hsrc(const REAL_TYPE var, 
                                  const REAL_TYPE RefV, 
@@ -214,11 +213,11 @@ public:
   
   /**
    @brief 圧力を無次元にして返す
-   @param var 有次元圧力(absolute or gauge)
-   @param bp 基準圧力
-   @param rho 媒質密度
-   @param RefV 代表速度
-   @param mode (absolute or gauge)
+   @param [in] var   有次元圧力(absolute or gauge)
+   @param [in] bp    基準圧力
+   @param [in] rho   媒質密度
+   @param [in] RefV  代表速度
+   @param [in] mode  (absolute or gauge)
    */
   static REAL_TYPE convD2ND_P(const REAL_TYPE var, 
                               const REAL_TYPE bp, 
@@ -233,11 +232,11 @@ public:
   
   /**
    @brief 圧力を有次元(absolute or gauge)にして返す
-   @param var 無次元圧力
-   @param bp 基準圧力
-   @param rho 媒質密度
-   @param RefV 代表速度
-   @param mode (absolute or gauge)
+   @param [in] var   無次元圧力
+   @param [in] bp    基準圧力
+   @param [in] rho   媒質密度
+   @param [in] RefV  代表速度
+   @param [in] mode  (absolute or gauge)
    */
   static REAL_TYPE convND2D_P(const REAL_TYPE var, 
                               const REAL_TYPE bp, 
@@ -252,12 +251,12 @@ public:
   
   /**
    @brief Fortranの3次元インデックスから1次元インデックスを取得する
-   @param sz    I,J,K方向サイズ（ガイドセルを含まない）
-   @param gc    ガイドセル
-   @param i     I方向インデックス（ガイドセルを含まない）
-   @param j     J方向インデックス（ガイドセルを含まない）
-   @param k     K方向インデックス（ガイドセルを含まない）
-   @return      1次元インデックス
+   @param [in] sz    I,J,K方向サイズ（ガイドセルを含まない）
+   @param [in] gc    ガイドセル
+   @param [in] i     I方向インデックス（ガイドセルを含まない）
+   @param [in] j     J方向インデックス（ガイドセルを含まない）
+   @param [in] k     K方向インデックス（ガイドセルを含まない）
+   @return  1次元インデックス
    */
   static inline unsigned getFindexS3D(const unsigned* sz, unsigned gc, int i, int j, int k) 
   {
@@ -270,13 +269,13 @@ public:
   
   /**
    @brief Fortranの3次元Exベクトルインデックスから1次元インデックスを取得する
-   @param sz    I,J,K方向サイズ（ガイドセルを含まない）
-   @param gc    ガイドセル
-   @param l     ベクトルインデックス
-   @param i     I方向インデックス（ガイドセルを含まない）
-   @param j     J方向インデックス（ガイドセルを含まない）
-   @param k     K方向インデックス（ガイドセルを含まない）
-   @return      1次元インデックス
+   @param [in] sz    I,J,K方向サイズ（ガイドセルを含まない）
+   @param [in] gc    ガイドセル
+   @param [in] l     ベクトルインデックス
+   @param [in] i     I方向インデックス（ガイドセルを含まない）
+   @param [in] j     J方向インデックス（ガイドセルを含まない）
+   @param [in] k     K方向インデックス（ガイドセルを含まない）
+   @return  1次元インデックス
    */
   static inline unsigned getFindexV3DEx(const unsigned* sz, unsigned gc, int l, int i, int j, int k) 
   {
@@ -289,13 +288,13 @@ public:
   
   /**
    @brief Fortranの3次元cut用インデックスから1次元インデックスを取得する
-   @param sz    I,J,K方向サイズ（ガイドセルを含まない）
-   @param gc    ガイドセル
-   @param l     方向インデックス[0,5]
-   @param i     I方向インデックス（ガイドセルを含まない）
-   @param j     J方向インデックス（ガイドセルを含まない）
-   @param k     K方向インデックス（ガイドセルを含まない）
-   @return      1次元インデックス
+   @param [in] sz    I,J,K方向サイズ（ガイドセルを含まない）
+   @param [in] gc    ガイドセル
+   @param [in] l     方向インデックス[0,5]
+   @param [in] i     I方向インデックス（ガイドセルを含まない）
+   @param [in] j     J方向インデックス（ガイドセルを含まない）
+   @param [in] k     K方向インデックス（ガイドセルを含まない）
+   @return  1次元インデックス
    */
   static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k) 
   {
@@ -307,12 +306,12 @@ public:
   
   /**
    @brief Fortranの3次元cut用Bid8インデックスから1次元インデックスを取得する
-   @param sz    I,J,K方向サイズ（ガイドセルを含まない）
-   @param gc    ガイドセル
-   @param i     I方向インデックス（ガイドセルを含まない）
-   @param j     J方向インデックス（ガイドセルを含まない）
-   @param k     K方向インデックス（ガイドセルを含まない）
-   @return      1次元インデックス
+   @param [in] sz    I,J,K方向サイズ（ガイドセルを含まない）
+   @param [in] gc    ガイドセル
+   @param [in] i     I方向インデックス（ガイドセルを含まない）
+   @param [in] j     J方向インデックス（ガイドセルを含まない）
+   @param [in] k     K方向インデックス（ガイドセルを含まない）
+   @return  1次元インデックス
    */
   static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int i, int j, int k) 
   {

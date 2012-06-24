@@ -36,6 +36,83 @@ int FFV::Initialize(int argc, char **argv)
   // 固定パラメータ
   fixed_parameters();
   
+  // 前処理段階のみに使用するオブジェクトをインスタンス
+  //VoxInfo Vinfo;
+  ParseBC     B;
+  ParseMat    M;
+  
+  
+  // CPMのセット
+  //BC.importCPM(paraMngr);
+  //Vinfo.importCPM(paraMngr);
+  B.importCPM(paraMngr);
+  F.importCPM(paraMngr);
+  
+  
+  // 並列処理モード
+  setParallelism();
+
+  
+  // ------------------------------------
+  FILE* fp = NULL;
+  
+  // condition fileのオープン
+  Hostonly_ {
+    if ( !(fp=fopen("condition.txt", "w")) ) {
+      stamped_printf("\tSorry, can't open 'condition.txt' file. Write failed.\n");
+      return -1;
+    }
+  }
+  
+  // メッセージ表示
+  Hostonly_ {
+    char buf[LABEL];
+    memset(buf, 0, sizeof(char)*LABEL);
+    strcpy(buf, "Welcome to FFV  ");
+    FBUtility::printVersion(fp, buf, VERS_FFV);
+    FBUtility::printVersion(mp, buf, VERS_FFV);
+    
+		memset(buf, 0, sizeof(char)*LABEL);
+    strcpy(buf, "FlowBase        ");
+    FBUtility::printVersion(fp, buf, FB_VERS);
+    FBUtility::printVersion(mp, buf, FB_VERS);
+  }
+  
+
+  int ierror;
+  std::string inputfile("cavity.tp");
+  
+  // TextParserのインスタンス生成
+  ierror = tpCntl.getTPinstance();
+  
+  // TextParserのファイル読み込み
+  ierror = tpCntl.readTPfile(inputfile);
+  
+  // TPControlクラスのポインタを各クラスに渡す
+  if ( !C.importTP(&tpCntl) ) {
+    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to Control class\n");
+    return -1;
+  }
+  if ( !B.importTP(&tpCntl) ) {
+    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseBC class\n");
+    return -1;
+  }
+  if ( !M.importTP(&tpCntl) ) {
+    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseMat class\n");
+    return -1;
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -150,15 +227,9 @@ int FFV::Initialize(int argc, char **argv)
 }
 
 
-/**
- @fn void SklSolverCBC::fixed_parameters(void)
- @brief 固定パラメータの設定
- */
+/** 固定パラメータの設定 */
 void FFV::fixed_parameters()
 {
-  // 次元
-  C.NoDimension = 3;
-  
   // 精度
   if ( sizeof(REAL_TYPE) == sizeof(double) ) {
     C.Mode.Precision = FP_DOUBLE;
@@ -190,3 +261,45 @@ void FFV::fixed_parameters()
   
 }
 
+
+
+// 並列化と分割の方法を保持
+void FFV::setParallelism()
+{
+  std::string para_mode;
+  
+  C.num_thread  = omp_get_max_threads();
+  
+  // Serial or Parallel environment
+  if( paraMngr->IsParallel() )
+  {
+    C.num_process = paraMngr->GetNumRank();
+    
+    if ( C.num_thread > 1 ) 
+    {
+      C.Parallelism = Control::Hybrid;
+      para_mode = "Hybrid";
+    }
+    else 
+    {
+      C.Parallelism = Control::FlatMPI;
+      para_mode = "FlatMPI";
+    }
+  }
+  else 
+  {
+    C.num_process = 1;
+    
+    if ( C.num_thread > 1 ) 
+    {
+      C.Parallelism = Control::OpenMP;
+      para_mode = "OpenMP";
+    }
+    else 
+    {
+      C.Parallelism = Control::Serial;
+      para_mode = "Serial";
+    }
+  }
+  
+}

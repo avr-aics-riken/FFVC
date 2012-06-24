@@ -14,15 +14,15 @@ CSRCS = \
 
 
 CXXSRCS = \
-    IP_PMT.C \
-    IP_Rect.C \
-    IP_Polygon.C \
-    IP_Cylinder.C \
-    IP_Step.C \
-    IP_PPLT2D.C \
-    IP_Duct.C \
-    IP_SHC1D.C \
-    IP_Sphere.C \
+	IP_PMT.C \
+	IP_Rect.C \
+	IP_Polygon.C \
+	IP_Cylinder.C \
+	IP_Step.C \
+	IP_PPLT2D.C \
+	IP_Duct.C \
+	IP_SHC1D.C \
+	IP_Sphere.C \
 
 
 F90SRCS = \

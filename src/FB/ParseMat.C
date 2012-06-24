@@ -336,10 +336,10 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
 
 
 /**
- @fn void ParseMat::receive_TP_Ptr(TPControl* tp)
+ @fn void ParseMat::importTP(TPControl* tp)
  @brief TPのポインタを受け取る
  */
-bool ParseMat::receive_TP_Ptr(TPControl* tp) 
+bool ParseMat::importTP(TPControl* tp) 
 { 
   if ( !tp ) return false;
   tpCntl = tp;

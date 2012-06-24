@@ -58,7 +58,11 @@ private:
     
 public:
   bool makeMediumList    (MediumList* mat, const int NoMedium);
-  bool receive_TP_Ptr    (TPControl* tp);
+  
+  /**
+   * @brief TPのポインタを受け取る
+   */
+  bool importTP(TPControl* tp);
   
   int get_MediumTable    (void);
   

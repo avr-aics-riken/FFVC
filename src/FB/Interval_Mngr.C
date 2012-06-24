@@ -8,20 +8,16 @@
 //
 // #################################################################
 
-//@file Interval_Mngr.C
-//@author kero
+/** 
+ * @file Interval_Mngr.C
+ * @brief FlowBase Interval_Manager class
+ * @author kero
+ */
 
 #include "Interval_Mngr.h"
 
-/**
- @fn bool Interval_Manager::isTriggered(const unsigned stp, const double tm, bool d_flag)
- @brief 指定の時刻になったかどうかを判断する
- @retval 出力タイミングの場合，trueを返す
- @param stp 現在ステップ
- @param tm 現時刻
- @param d_flag 表示用フラグ（デバッグ）
- @note 指定時刻を過ぎて，かつ1時刻前が指定時刻に満たない場合が出力タイミング
-*/
+
+// 指定の時刻になったかどうかを判断する
 bool Interval_Manager::isTriggered(const unsigned stp, const double tm, bool d_flag) 
 {
   if (d_flag) printf("tm=%f ntm=%f nst=%d itv=%d\n",tm, next_tm, next_step, intvl_step);
@@ -51,15 +47,8 @@ bool Interval_Manager::isTriggered(const unsigned stp, const double tm, bool d_f
   return false;
 }
   
-/**
- @fn bool Interval_Manager::initTrigger(const unsigned stp, const double tm, const double m_dt, const unsigned m_id, const double tscale)
- @brief トリガーを初期化する
- @param stp 現在ステップ
- @param tm 現時刻（無次元）
- @param m_dt 時間積分幅（無次元）
- @param m_id 管理対象を示すID
- @param tscale タイムスケール(デフォルト 0.0)
- */
+
+// トリガーを初期化する
 bool Interval_Manager::initTrigger(const unsigned stp, const double tm, const double m_dt, const unsigned m_id, const double tscale)
 {
   delta_t = m_dt;
@@ -106,8 +95,8 @@ bool Interval_Manager::initTrigger(const unsigned stp, const double tm, const do
   return true;
 }
  
-//@fn void Interval_Manager::setInterval(const double m_interval)
-//@brief インターバル値をセットする
+
+// インターバル値をセットする
 void Interval_Manager::setInterval(const double m_interval) 
 {
   if (mode == By_step) {
@@ -118,17 +107,15 @@ void Interval_Manager::setInterval(const double m_interval)
   }
 }
 
-//@fn void Interval_Manager::normalizeInterval(const double scale)
-//@brief インターバル値を無次元化する
-//@param scale 時間スケール
-//@note BY_timeの場合には単にゼロになるだけ
-void Interval_Manager::normalizeInterval(const double scale) {
+
+// インターバル値を無次元化する
+void Interval_Manager::normalizeInterval(const double scale) 
+{
   intvl_tm /= scale;
 }
 
-//@fn void Interval_Manager::setTime_init(const double m_tm) 
-//@brief セッションの開始時刻をセットする
-//@param m_tm 無次元時刻
+
+// セッションの開始時刻をセットする
 void Interval_Manager::setTime_init(const double m_tm) 
 {
   init_tm = m_tm;

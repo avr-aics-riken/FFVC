@@ -17,162 +17,52 @@
 #include "FileIO.h"
 
 
-// 作業用ポインタのコピー
-void FileIO::setPartitionManager(cpm_ParaManager* m_paraMngr)
+// CPMクラスポインタのコピー
+void FileIO::importCPM(cpm_ParaManager* m_paraMngr)
 {
   if ( !m_paraMngr ) Exit(0);
   paraMngr = m_paraMngr;
 }
 
 
-/**
- @fn void FileIO::cnv_Div(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE coef, REAL_TYPE& flop)
- @brief ファイル出力時，発散値を計算する
- @param dst 単位変換のデータクラス
- @param src 単位変換前のデータクラス
- @param coef 係数
- @param flop 浮動小数演算数
- @see SklUtil::cpyS3D()
- */
-void FileIO::cnv_Div(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE coef, REAL_TYPE& flop)
+// ファイル出力時，発散値を計算する
+void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, const unsigned* size, const unsigned guide, const REAL_TYPE coef, REAL_TYPE& flop)
 {
-  if( !dst || !src ) Exit(0);
+  if( !dst || !src || !size ) Exit(0);
   
-  const unsigned* dst_sz = dst->GetSize();
-  const unsigned* src_sz = src->GetSize();
-  if(   (src_sz[0] != dst_sz[0])
-     || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) Exit(0);
+  int sz[3];
+  sz[0] = (int)size[0];
+  sz[1] = (int)size[1];
+  sz[2] = (int)size[2];
+  int gc = (int)guide;
+  REAL_TYPE cf = coef;
   
-  REAL_TYPE* dst_data = dst->GetData();
-  const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) Exit(0);
-  
-  dst_sz = dst->_GetSize();
-  src_sz = src->_GetSize();
-  unsigned dst_gc = dst->GetVCellSize();
-  unsigned src_gc = src->GetVCellSize();
-  unsigned sta, ix, jx, kx;
-  int diff;
-  register unsigned i, j, k;
-  
-  unsigned long dst_lsz[3];
-  dst_lsz[0] = dst_sz[0];
-  dst_lsz[1] = dst_sz[1];
-  dst_lsz[2] = dst_sz[2];
-  
-  // compare whole size
-  if(   (src_sz[0] == dst_sz[0])
-     && (src_sz[1] == dst_sz[1])
-     && (src_sz[2] == dst_sz[2]) ) {
-    unsigned long idx;
-    
-    for(k=0; k<dst_sz[2]; k++){
-      for(j=0; j<dst_sz[1]; j++){
-        for(i=0; i<dst_sz[0]; i++){
-          idx = dst_lsz[0]*dst_lsz[1]*k  + dst_lsz[0]*j  + i;
-          dst_data[idx] = src_data[idx]*coef;
-        }
-      }
-    }
-    flop += (REAL_TYPE)(dst_sz[0]*dst_sz[1]*dst_sz[2]);
-  }
-  else {
-    Exit(0);
-  }
-}
-
-/**
- @fn void FileIO::cnv_TP_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop)
- @brief 全圧データについて，無次元から有次元単位に変換する
- @param dst 単位変換のデータクラス
- @param src 単位変換前のデータクラス
- @param Ref_rho 代表密度(kg/m^3)
- @param Ref_v 代表速度(m/s)
- @param flop 浮動小数演算数
- @see SklUtil::cpyS3D()
- */
-void FileIO::cnv_TP_ND2D(SklScalar3D<REAL_TYPE>* dst, const SklScalar3D<REAL_TYPE>* src, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop)
-{
-  if( !dst || !src ) Exit(0);
-  
-  const unsigned* dst_sz = dst->GetSize();
-  const unsigned* src_sz = src->GetSize();
-  if(   (src_sz[0] != dst_sz[0])
-     || (src_sz[1] != dst_sz[1])
-     || (src_sz[2] != dst_sz[2]) ) Exit(0);
-  
-  REAL_TYPE* dst_data = dst->GetData();
-  const REAL_TYPE* src_data = src->GetData();
-  if( !dst_data || !src_data ) Exit(0);
-  
-  dst_sz = dst->_GetSize();
-  src_sz = src->_GetSize();
-  unsigned dst_gc = dst->GetVCellSize();
-  unsigned src_gc = src->GetVCellSize();
-  unsigned sta, ix, jx, kx;
-  int diff;
-  register unsigned i, j, k;
-  
-  REAL_TYPE c = Ref_rho*Ref_v*Ref_v;
-  flop += (REAL_TYPE)(dst_sz[0]*dst_sz[1]*dst_sz[2]*1);
-  
-  unsigned long src_idx, dst_idx, idx, src_lsz[3], dst_lsz[3];
-  src_lsz[0] = src_sz[0];
-  src_lsz[1] = src_sz[1];
-  src_lsz[2] = src_sz[2];
-  dst_lsz[0] = dst_sz[0];
-  dst_lsz[1] = dst_sz[1];
-  dst_lsz[2] = dst_sz[2];
-  
-  // compare whole size
-  if(   (src_sz[0] == dst_sz[0])
-     && (src_sz[1] == dst_sz[1])
-     && (src_sz[2] == dst_sz[2]) ) {
-    unsigned idx;
-    
-    for(k=0; k<dst_sz[2]; k++){
-      for(j=0; j<dst_sz[1]; j++){
-        for(i=0; i<dst_sz[0]; i++){
-          idx = dst_lsz[0]*dst_lsz[1]*k  + dst_lsz[0]*j  + i;
-          dst_data[idx] = src_data[idx]*c;
-        }
-      }
-    }
-  }
-  else {
-    CalcIndex(dst_sz[0], dst_sz[1], dst_sz[2], dst_gc, src_gc, ix, jx, kx, diff, sta);
-    
-    for(k=sta; k<kx; k++){
-      unsigned kk = k+diff;
-      for(j=sta; j<jx; j++){
-        unsigned jj = j+diff;
-        for(i=sta; i<ix; i++){
-          src_idx = src_lsz[0]*src_lsz[1]*kk + src_lsz[0]*jj + i+diff;
-          dst_idx = dst_lsz[0]*dst_lsz[1]*k  + dst_lsz[0]*j  + i;
-          dst_data[dst_idx] = src_data[src_idx]*c;
-        }
-      }
-    }
-  }
+  fb_mulcpy_ (dst, src, sz, &gc, &cf, &flop);
 }
 
 
-/**
- @fn void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
- @brief sphファイルの書き出し（内部領域のみ）
- @param vf スカラデータ
- @param size 配列サイズ
- @param gc ガイドセル
- @param org 基点
- @param ddx ピッチ
- @param m_ModePrecision 浮動小数点の精度
- @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
- */
+
+// 全圧データについて，無次元から有次元単位に変換する
+void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, const unsigned* size, const unsigned guide, 
+                         const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop)
+{
+  if( !dst || !src || !size ) Exit(0);
+  
+  int sz[3];
+  sz[0] = (int)size[0];
+  sz[1] = (int)size[1];
+  sz[2] = (int)size[2];
+  int gc = (int)guide;
+  
+  REAL_TYPE cf = Ref_rho*Ref_v*Ref_v;
+  
+  fb_mulcpy_ (dst, src, sz, &gc, &cf, &flop);
+}
+
+
+// sphファイルの書き出し（内部領域のみ）
 void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
 {
-  //SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  
   int sz, dType, stp, svType;
   int ix, jx, kx, i, j, k;
   unsigned long l, nx;
@@ -182,8 +72,8 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   char sph_fname[512];
   
-  if ( pn.numProc > 1 ) {
-    sprintf( sph_fname, "field%010d.sph", pn.myrank );
+  if ( paraMngr->IsParallel() ) {
+    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID() );
   } else {
     sprintf( sph_fname, "field.sph" );
   }
@@ -225,7 +115,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   }
   
   // data property
-  ( m_ModePrecision == SPH_SINGLE ) ? dType=1 : dType=2;
+  ( m_ModePrecision == FP_SINGLE ) ? dType=1 : dType=2;
   sz = sizeof(unsigned)*2;
   ofs.write( (char*)&sz, sizeof(int) );
   ofs.write( (char*)&svType, sizeof(int) );
@@ -307,7 +197,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   }
   
   if (svType == kind_scalar) {
-    sz = (m_ModePrecision == SPH_SINGLE) ? nx * sizeof(float) : nx * sizeof(double);
+    sz = (m_ModePrecision == FP_SINGLE) ? nx * sizeof(float) : nx * sizeof(double);
     ofs.write( (char*)&sz, sizeof(int) );
     ofs.write( (char*)f,   sz );
     ofs.write( (char*)&sz, sizeof(int) );
@@ -320,24 +210,24 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
 
 
 
-//@fn void FileIO::readPressure()
-//@brief 圧力ファイルをロードする
-void FileIO::readPressure(FILE* fp,                    /// @param fp ファイルポインタ（ファイル出力）
-                          const std::string fname,     /// @param fname ファイル名
-                          const unsigned* size,        /// @param size サイズ
-                          const unsigned gc,           /// @param guide ガイドセルサイズ
-                          REAL_TYPE* p,                /// @param p 圧力データ
-                          int& step,                   /// @param step[out] ステップ
-                          REAL_TYPE& time,             /// @param time[out] 時刻
-                          const unsigned Dmode,        /// @param Dmode 次元（無次元-0 / 有次元-1）
-                          const REAL_TYPE BasePrs,     /// @param BasePrs 基準圧力
-                          const REAL_TYPE RefDensity,  /// @param RefDensity　代表密度
-                          const REAL_TYPE RefVelocity, /// @param RefVelocity 代表速度
-                          REAL_TYPE& flop,             /// @param flop
-                          const int guide_out,         /// @param guide_out 出力ガイドセル数
-                          const bool mode,             /// @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
-                          int& step_avr,               /// @param step_avr 平均操作したステップ数
-                          REAL_TYPE& time_avr          /// @param time_avr 平均操作した時間
+
+// 圧力のファイルをロードする
+void FileIO::readPressure(FILE* fp,
+                          const std::string fname,
+                          const unsigned* size,
+                          const unsigned gc,
+                          REAL_TYPE* p,
+                          int& step,
+                          REAL_TYPE& time,
+                          const unsigned Dmode,
+                          const REAL_TYPE BasePrs,
+                          const REAL_TYPE RefDensity,
+                          const REAL_TYPE RefVelocity,
+                          REAL_TYPE& flop,
+                          const int guide_out,
+                          const bool mode,
+                          int& step_avr,
+                          REAL_TYPE& time_avr
                           )
 {
   if ( fname.empty() ) Exit(0);
@@ -389,37 +279,9 @@ void FileIO::readPressure(FILE* fp,                    /// @param fp ファイ�
 
 }
 
-/**
- @fn void FileIO::readVelocity(FILE* fp, 
- const std::string fname,
- const unsigned* size, 
- const unsigned gc, 
- REAL_TYPE* v, 
- int& step, 
- REAL_TYPE& time, 
- const REAL_TYPE *v00, 
- const unsigned Dmode, 
- const REAL_TYPE RefVelocity, 
- REAL_TYPE& flop, 
- const bool mode)
- @brief 速度をロードする
- @param fp ファイルポインタ（ファイル出力）
- @param fname ファイル名
- @param size サイズ
- @param guide ガイドセルサイズ
- @param block ブロック数（粗い格子のロードのときに指定、通常は1）
- @param v  結果を保持するデータ
- @param step ステップ
- @param time 時刻
- @param v00[4]
- @param Dmode 次元（無次元-0 / 有次元-1）
- @param RefVelocity 代表速度
- @param flop
- @param guide_out 出力ガイドセル数
- @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
- @param step_avr 平均操作したステップ数
- @param time_avr 平均操作した時間
- */
+
+
+// 速度のファイルをロードする
 void FileIO::readVelocity(FILE* fp, 
                           const std::string fname,
                           const unsigned* size, 
@@ -482,39 +344,8 @@ void FileIO::readVelocity(FILE* fp,
 
 }
 
-/**
- @fn void FileIO::readTemperature(FILE* fp, 
- const std::string fname,
- const unsigned* size, 
- const unsigned gc, 
- REAL_TYPE* t, 
- int& step, 
- REAL_TYPE& time, 
- const unsigned Dmode, 
- const REAL_TYPE Base_tmp, 
- const REAL_TYPE Diff_tmp, 
- const REAL_TYPE Kelvin, 
- REAL_TYPE& flop, 
- const bool mode)
- @brief 温度をロードする
- @param fp ファイルポインタ（ファイル出力）
- @param fname ファイル名
- @param size グローバルなサイズ
- @param gc ガイドセルサイズ
- @param block ブロック数（粗い格子のロードのときに指定、通常は1）
- @param t  結果を保持するデータクラス
- @param step[out] ステップ
- @param time[out] 時刻
- @param Dmode 次元（無次元-0 / 有次元-1）
- @param Base_tmp 基準温度
- @param Diff_tmp　代表温度差
- @param Kelvin 定数
- @param flop
- @param guide_out 出力ガイドセル数
- @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
- @param step_avr 平均操作したステップ数
- @param time_avr 平均操作した時間
- */
+
+// 温度のファイルをロードする
 void FileIO::readTemperature(FILE* fp, 
                              const std::string fname,
                              const unsigned* size, 
@@ -578,30 +409,8 @@ void FileIO::readTemperature(FILE* fp,
 
 }
 
-/**
- @fn void FileIO::writeScalar(const std::string fname, 
- const unsigned* size, 
- const unsigned gc,
- REAL_TYPE* s, 
- const int step, 
- const REAL_TYPE time, 
- const REAL_TYPE* org, 
- const REAL_TYPE* pit, 
- const int guide_out)
- @brief スカラー場を出力する
- @param fname ファイル名
- @param size
- @param gc
- @param s スカラー場
- @param step ステップ
- @param time 時刻
- @param org
- @param pit
- @param guide_out ガイドセル数
- @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
- @param step_avr 平均操作したステップ数
- @param time_avr 平均操作した時間
- */
+
+// スカラーファイルを出力する
 void FileIO::writeScalar(const std::string fname, 
                          const unsigned* size, 
                          const unsigned gc,
@@ -647,30 +456,8 @@ void FileIO::writeScalar(const std::string fname,
   
 }
 
-/**
- @fn void FileIO::writeVector(const std::string fname, 
- const unsigned* size, 
- const unsigned gc, 
- REAL_TYPE* v, 
- const int step, 
- const REAL_TYPE time, 
- const REAL_TYPE* org, 
- const REAL_TYPE* pit, 
- const int guide_out)
- @brief ベクトル場を出力する
- @param fname ファイル名
- @param size
- @param gc
- @param v ベクトル場
- @param step ステップ
- @param time 時刻
- @param org
- @param pit
- @param guide_out ガイドセル数
- @param mode 平均値出力指示（瞬時値のときtrue，平均値のときfalse）
- @param step_avr 平均操作したステップ数
- @param time_avr 平均操作した時間
- */
+
+// ベクトルファイルを出力する
 void FileIO::writeVector(const std::string fname, 
                          const unsigned* size, 
                          const unsigned gc, 

@@ -23,6 +23,12 @@ FFV::FFV()
   session_currentStep = 0;
   
   mp = stdout;
+  fp_b = NULL;
+  fp_w = NULL;
+  fp_c = NULL;
+  fp_d = NULL;
+  fp_i = NULL;
+  fp_f = NULL;
   
   
   paraMngr = NULL;

@@ -2229,6 +2229,14 @@ void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_
 }
 
 
+// 作業用ポインタのコピー
+void ParseBC::importCPM(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
+}
+
+
 /**
  @fn bool ParseBC::isComponent(unsigned label)
  @brief コンポーネントが存在するかどうかを調べる
@@ -3615,10 +3623,10 @@ void ParseBC::receiveCompoPtr(CompoList* CMP)
 
 
 /**
- @fn void ParseBC::receive_TP_Ptr(TPControl* tp)
+ @fn void ParseBC::importTP(TPControl* tp)
  @brief TPのポインタを受け取る
  */
-bool ParseBC::receive_TP_Ptr(TPControl* tp) 
+bool ParseBC::importTP(TPControl* tp) 
 { 
   if ( !tp ) return false;
   tpCntl = tp;
@@ -3796,14 +3804,6 @@ void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
 {
   if ( !m_MTITP ) Exit(0);
   MTITP = m_MTITP;
-}
-
-
-// 作業用ポインタのコピー
-void ParseBC::setPartitionManager(cpm_ParaManager* m_paraMngr)
-{
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
 }
 
 

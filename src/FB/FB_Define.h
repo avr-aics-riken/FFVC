@@ -11,9 +11,11 @@
 //
 // #################################################################
 
-//@file FB_Define.h
-//@brief FlowBase Definition Header
-//@author kero
+/**
+ @file FB_Define.h
+ @brief FlowBase Definition Header
+ @author kero
+ */
 
 #include "mydebug.h"
 

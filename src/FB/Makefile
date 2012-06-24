@@ -14,29 +14,29 @@ CSRCS = \
 
 
 CXXSRCS = \
-       Control.C \
-       FBUtility.C \
-       Intrinsic.C \
-       TPControl.C 
-#       ParseBC.C \
-#       ParseMat.C \
+  Control.C \
+  FBUtility.C \
+  Intrinsic.C \
+  TPControl.C \
+  ParseBC.C \
+  ParseMat.C \
+  FileIO.C \
+  Component.C \
+  BndOuter.C \
+  Interval_Mngr.C \
 #       SetBC.C \
 #       Monitor.C \
 #       MonCompo.C \
-#       Interval_Mngr.C \
 #       Sampling.C \
 #       DataHolder.C \
 #       dfi.C \
-#       FileIO.C \
 #       History.C \
 #       Alloc.C \
 #       VoxInfo.C \
-#       BndOuter.C \
-#       Component.C \
 #       CompoFraction.C \
 
 F90SRCS = \
-       FB_util.f90 \
+    FB_util.f90 \
 
 
 SRCS  = $(CSRCS) $(CXXSRCS) $(F90SRCS)
@@ -75,3 +75,12 @@ Intrinsic.o: Intrinsic.h FB_Define.h mydebug.h BndOuter.h Control.h Medium.h
 Intrinsic.o: Component.h FBUtility.h Interval_Mngr.h TPControl.h vec3.h
 Intrinsic.o: vec3_func.h vec3f_func.h
 TPControl.o: TPControl.h FB_Define.h mydebug.h
+ParseBC.o: ParseBC.h FB_Define.h mydebug.h FBUtility.h BndOuter.h Control.h
+ParseBC.o: Medium.h Component.h Interval_Mngr.h TPControl.h vec3.h
+ParseBC.o: vec3_func.h vec3f_func.h Intrinsic.h
+ParseMat.o: ParseMat.h FB_Define.h mydebug.h Medium.h Component.h TPControl.h
+ParseMat.o: FBUtility.h
+FileIO.o: FileIO.h FB_Define.h mydebug.h FBUtility.h FB_Ffunc.h
+Component.o: Component.h FB_Define.h mydebug.h
+BndOuter.o: BndOuter.h FB_Define.h mydebug.h
+Interval_Mngr.o: Interval_Mngr.h FB_Define.h mydebug.h

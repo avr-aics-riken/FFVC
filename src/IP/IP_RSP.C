@@ -29,7 +29,7 @@ void IP_RSP::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE w
   }
 
   // 分割数を取得する
-  if ( !FBUtility::getCellInfo(R->NoDimension, sz, org, pch, wth) ) Exit(0);
+  if ( !FBUtility::getCellInfo(3, sz, org, pch, wth) ) Exit(0);
   
   // Z方向のチェック
   if ( sz[2] != 3 ) {

@@ -77,13 +77,26 @@ depend:
 # DO NOT DELETE
 
 ffv.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h
-ffv.o: ../FB/FB_Define.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-ffv.o: ../FB/BndOuter.h ../FB/Interval_Mngr.h ../FB/TPControl.h
+ffv.o: ../FB/Control.h ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
+ffv.o: ../FB/Interval_Mngr.h ../FB/TPControl.h ../FB/Alloc.h ../FB/FileIO.h
+ffv.o: ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/vec3.h ../FB/vec3_func.h
+ffv.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_Initialize.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
-ffv_Initialize.o: ../FB/FBUtility.h ../FB/FB_Define.h ../FB/Control.h
-ffv_Initialize.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
-ffv_Initialize.o: ../FB/Interval_Mngr.h ../FB/TPControl.h
+ffv_Initialize.o: ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
+ffv_Initialize.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
+ffv_Initialize.o: ../FB/TPControl.h ../FB/Alloc.h ../FB/FileIO.h
+ffv_Initialize.o: ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/vec3.h
+ffv_Initialize.o: ../FB/vec3_func.h ../FB/vec3f_func.h ../FB/Intrinsic.h
+ffv_Initialize.o: ../FB/ParseMat.h
+ffv_SetBC.o: ffv_SetBC.h ../FB/SetBC.h ../FB/FB_Define.h ../FB/mydebug.h
+ffv_SetBC.o: ../FB/FBUtility.h ../FB/BndOuter.h ../FB/Control.h
+ffv_SetBC.o: ../FB/Medium.h ../FB/Component.h ../FB/Interval_Mngr.h
+ffv_SetBC.o: ../FB/TPControl.h ../FB/Intrinsic.h ../FB/vec3.h
+ffv_SetBC.o: ../FB/vec3_func.h ../FB/vec3f_func.h ffv_FortranFunc.h
+ffv_SetBC.o: ffv_Define.h
 main.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
-main.o: ../FB/FBUtility.h ../FB/FB_Define.h ../FB/Control.h ../FB/Medium.h
-main.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
-main.o: ../FB/TPControl.h
+main.o: ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
+main.o: ../FB/BndOuter.h ../FB/Interval_Mngr.h ../FB/TPControl.h
+main.o: ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h
+main.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h ../FB/Intrinsic.h
+main.o: ../FB/ParseMat.h

@@ -1,13 +1,18 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file SetBC.C
-//@brief FlowBase SetBC class Header
-//@author keno, FSI Team, VCAD, RIKEN
+/** 
+ * @file SetBC.C
+ * @brief FlowBase SetBC class
+ * @author kero
+ */
 
 #include <math.h>
 #include "SetBC.h"
@@ -24,8 +29,16 @@ void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 }
 
 
+// CPMのインポート
+void SetBC::importCPM(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
+}
+
+
 // 必要な値のコピー
-void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, cpm_ParaManager* m_paraMngr, Intrinsic* ExRef)
+void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
 {
   guide          = Cref->guide;
   imax = size[0] = Cref->imax;
@@ -71,7 +84,6 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   dim_sz[2] = (int)kmax;
   
   Ex = ExRef;
-  paraMngr = m_paraMngr;
   
   // get reference values >> 媒質はIDがユニークに定まる
   int m;

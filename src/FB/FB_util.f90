@@ -1744,3 +1744,46 @@ end subroutine fb_copy_int
 
     return
     end subroutine fb_limit_scalar
+
+!  *************************************************
+!> @subroutine fb_mulcpy (dst, src, sz, g, cf, flop)
+!! @brief 配列と係数の積を新しい配列にストアする
+!! @param [out] dst  出力データ
+!! @param [in]  src  元データ
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  cf   変換係数
+!! @param [out] flop 浮動小数演算数
+!<
+  subroutine fb_mulcpy (dst, src, sz, g, cf, flop)
+  implicit none
+  include 'cbc_f_params.h'
+  integer                                                   ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  flop
+  real                                                      ::  cf
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  dst, src
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+  flop = flop + real(ix)*real(jx)*real(kx)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, cf)
+
+!$OMP DO SCHEDULE(static)
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    dst(i,j,k) = src(i,j,k) * cf
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_mulcpy

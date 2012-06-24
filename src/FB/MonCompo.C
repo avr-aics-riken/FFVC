@@ -408,7 +408,7 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
   char* sFmt;
   char* vFmt;
   
-  if (refVar.modePrecision == SPH_SINGLE) {
+  if (refVar.modePrecision == FP_SINGLE) {
     sFmt = sFmtSingle;
     vFmt = vFmtSingle;
   }
@@ -418,7 +418,7 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
   }
   
   fprintf(fp, "\n");
-  if (refVar.modePrecision == SPH_SINGLE) {
+  if (refVar.modePrecision == FP_SINGLE) {
     fprintf(fp, "%d %14.6e\n", step, convTime(tm)); // %12.4 >> %14.6
   }
   else {

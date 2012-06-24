@@ -133,15 +133,15 @@ SklSolverCBC::SklSolverInitialize() {
   ierror = tpCntl.readTPfile(inputfile);
   
   // TPControlクラスのポインタを各クラスに渡す
-  if ( !C.receive_TP_Ptr(&tpCntl) ) {
+  if ( !C.importTP(&tpCntl) ) {
     Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to Control class\n");
     return -1;
   }
-  if ( !B.receive_TP_Ptr(&tpCntl) ) {
+  if ( !B.importTP(&tpCntl) ) {
     Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseBC class\n");
     return -1;
   }
-  if ( !M.receive_TP_Ptr(&tpCntl) ) {
+  if ( !M.importTP(&tpCntl) ) {
     Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseMat class\n");
     return -1;
   }
@@ -1862,15 +1862,13 @@ void SklSolverCBC::EnlargeIndex(int& m_st, int& m_ed, const unsigned st_i, const
  */
 void SklSolverCBC::fixed_parameters(void)
 {
-  // 次元
-  C.NoDimension = 3;
   
   // 精度
   if ( sizeof(REAL_TYPE) == sizeof(double) ) {
-    C.Mode.Precision = SPH_DOUBLE;
+    C.Mode.Precision = FP_DOUBLE;
   }
   else {
-    C.Mode.Precision = SPH_SINGLE;
+    C.Mode.Precision = FP_SINGLE;
   }
   
   // ログファイル名
@@ -3250,7 +3248,7 @@ void SklSolverCBC::setComponentVF(float* cvf)
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(cvf, size, guide, org, pit, SPH_SINGLE);
+  F.writeRawSPH(cvf, size, guide, org, pit, FP_SINGLE);
 #endif
   
 }
@@ -4279,7 +4277,7 @@ void SklSolverCBC::VoxelInitialize(void)
   else { // その他の組み込み例題の場合
     
     // 分割数，基点，ピッチを取得する
-    if ( !SklUtil::getCellInfo(C.NoDimension, m_sz, m_org, m_pch, m_wth) ) Exit(0);
+    if ( !SklUtil::getCellInfo(3, m_sz, m_org, m_pch, m_wth) ) Exit(0);
     
     // 有次元の場合に無次元化
     if (C.Unit.Param == DIMENSIONAL ) {
@@ -4451,7 +4449,7 @@ void SklSolverCBC::write_distance(float* cut)
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(tmp, size, guide, org, pit, SPH_SINGLE);
+  F.writeRawSPH(tmp, size, guide, org, pit, FP_SINGLE);
 }
 
 

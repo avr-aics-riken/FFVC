@@ -1295,7 +1295,7 @@ void SklSolverCBC::CN_Itr(ItrCtl* IC)
 	REAL_TYPE r = 0.0;                  /// 残差
   REAL_TYPE flop_count=0.0;           /// 浮動小数演算数
   REAL_TYPE half=0.5;                 /// 定数
-  REAL_TYPE machine_epsilon = (C.Mode.Precision == SPH_SINGLE) ? SINGLE_EPSILON : DOUBLE_EPSILON;
+  REAL_TYPE machine_epsilon = (C.Mode.Precision == FP_SINGLE) ? SINGLE_EPSILON : DOUBLE_EPSILON;
   REAL_TYPE np_f = (REAL_TYPE)para_mng->GetNodeNum(pn.procGrp); /// 全ノード数
   
 	if( !(vc  = dc_vc->GetData()) )  Exit(0);

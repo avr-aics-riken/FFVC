@@ -561,7 +561,6 @@ public:
             MarchingScheme,
             NoBC,
             NoCompo,
-            NoDimension,
             NoMediumFluid,
             NoMediumSolid,
             NoWallSurface,
@@ -666,7 +665,6 @@ public:
     MarchingScheme = 0;
     NoBC = 0;
     NoCompo = 0;
-    NoDimension = 0;
     NoMedium = 0;
     NoMediumFluid = 0;
     NoMediumSolid = 0;
@@ -964,7 +962,12 @@ public:
                          REAL_TYPE* width);
   bool get_DomainInfo   (unsigned* size);
   bool get_SubDomainInfo(unsigned* size);
-  bool receive_TP_Ptr   (TPControl* tp);
+  
+  
+  /**
+   * @brief TPのポインタを受け取る
+   */
+  bool importTP(TPControl* tp);
   
   void get_Para_Init    (void);
   void get_Polygon      (void);

@@ -197,16 +197,24 @@ private:
   }
   
   
-  /** CPMlibのポインタをセット 
-   * @param[in] m_paraMngr  
-   */
-  void setPartitionManager(cpm_ParaManager* m_paraMngr)
-  
-  
 public:
   bool isIDinCompo        (int candidate, unsigned now);
   bool isIDinCompo        (int candidate, int def, unsigned now);
-  bool receive_TP_Ptr     (TPControl* tp);
+  
+  
+  /**
+   * @brief TPのポインタを受け取る
+   * @param [in] tp  TPControlクラスのポインタ
+   * @return エラーコード
+   */
+  bool importTP(TPControl* tp);
+  
+  
+  /** CPMlibのポインタをセット 
+   * @param[in] m_paraMngr  CPMlibのポインタ
+   */
+  void importCPM(cpm_ParaManager* m_paraMngr);
+  
   
   int getNoLocalBC        (void);
   
