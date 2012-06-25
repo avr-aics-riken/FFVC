@@ -14,28 +14,17 @@
 
 #include "CompoFraction.h"
 
-//@fn void CompoFraction::bbox_index(int* st, int* ed)
-//@brief コンポーネントの属するセルインデクスを求める
+
+// コンポーネントの属するセルインデクスを求める
 void CompoFraction::bbox_index(int* st, int* ed)
 {
   find_index(st, box_min);
   find_index(ed, box_max);
 }
 
-//@fn void CompoFraction::find_index(int* w, const FB::Vec3f p)
-//@brief 点pの属するセルインデクスを求める
-//@note Fortran index
-void CompoFraction::find_index(int* w, const FB::Vec3f p)
-{
-  FB::Vec3f q = (p-org)/pch;
-  
-  w[0] = (int)ceil(q.x);
-  w[1] = (int)ceil(q.y);
-  w[2] = (int)ceil(q.z);
-}
 
-//@fn void CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
-//@brief 直方体領域のbboxを計算し、投影面積を計算
+
+// 直方体領域のbboxを計算し、投影面積を計算
 float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 {
   FB::Vec3f p[8], o, u, v, w;
@@ -68,9 +57,9 @@ float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
   return a*b;
 }
 
-//@fn void CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
-//@brief 円筒領域のbboxを計算
-//@note 標準位置で円周上の点をサンプリングし，逆変換後，min/max
+
+// 円筒領域のbboxを計算
+// 標準位置で円周上の点をサンプリングし，逆変換後，min/max
 float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 {
   FB::Vec3f r, q;
@@ -102,9 +91,104 @@ float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
   return a;
 }
 
-//@fn void CompoFraction::get_BboxArea(void)
-//@brief 形状のbboxと投影面積を求める
-float CompoFraction::get_BboxArea(void)
+
+// 点pの属するセルインデクスを求める
+// Fortran index
+void CompoFraction::find_index(int* w, const FB::Vec3f p)
+{
+  FB::Vec3f q = (p-org)/pch;
+  
+  w[0] = (int)ceil(q.x);
+  w[1] = (int)ceil(q.y);
+  w[2] = (int)ceil(q.z);
+}
+
+
+// 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
+// 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
+void CompoFraction::get_angle()
+{
+  float alpha, beta, c, d, c_alp, c_bta;
+  float eps = 1.0e-5, f_yz, f_xz;
+  FB::Vec3f p, q;
+  FB::Vec3f z(0.0, 0.0, 1.0);
+  
+  // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
+  // yz面への射影
+  p.x = 0.0;
+  p.y = nv.y;
+  p.z = nv.z;
+  c = p.length();
+  
+  if ( c != 0.0 ) {
+    c_alp = dot(z, p)/c;
+    d = acos( c_alp );
+    f_yz = c_alp+1.0;
+    alpha = (nv.y >= 0.0) ? d : -d;
+  }
+  else {
+    alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
+  }
+  
+  // 参照ベクトルをalphaだけ回転して評価ベクトルを生成 > xz面への射影
+  q.assign(alpha, 0.0, 0.0);
+  p = rotate(q, nv);
+  c = p.length();
+  
+  if ( c != 0.0 ) {
+    c_bta = dot(z, p)/c;
+    d = acos( c_bta );
+    f_xz = c_bta+1.0;
+    beta = (nv.x >= 0.0) ? -d : d;
+  }
+  else {
+    beta = 0.0;
+  }
+  
+  // x軸とy軸の両方から見てz軸と反対の場合にだけ，y軸回りのみ回転する
+  if ( (f_yz<eps) && (f_xz<eps) ) {
+    alpha = 0.0;
+    beta  = acos(-1.0);
+  }
+  
+  angle.assign(alpha, beta, 0.0);
+  
+  
+  // 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
+  if ( smode == SHAPE_BOX ) {
+    float c_gma, f_xy;
+    FB::Vec3f x(1.0, 0.0, 0.0);
+    
+    q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
+    c = q.length();
+    
+    if ( c != 0.0 ) {
+      c_gma = dot(x, q)/c;
+      d = acos( c_gma );
+      f_xy = c_gma+1.0;
+      if ( f_xy<eps ) {
+        angle.z = 2.0*asin(1.0); // 反対方向なのでπ
+      }
+      else {
+        angle.z = (q.y >= 0.0) ? -d : d;
+      }
+    }
+    else {
+      stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
+      Exit(0);
+    }
+  }
+#if 0
+  stamped_printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
+#endif
+  
+}
+
+
+
+
+// 形状のbboxと投影面積を求める
+float CompoFraction::get_BboxArea()
 {
   box_min.assign(1.0e6, 1.0e6, 1.0e6);
   box_max.assign(-1.0e6, -1.0e6, -1.0e6);
@@ -126,8 +210,8 @@ float CompoFraction::get_BboxArea(void)
 }
 
 
-//@fn void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
-//@brief 矩形の形状パラメータをセットする
+
+// 矩形の形状パラメータをセットする
 void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
 {
   smode  = SHAPE_BOX;
@@ -151,8 +235,8 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   }
 }
 
-//@fn void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
-//@brief 円筒の形状パラメータをセットする
+
+// 円筒の形状パラメータをセットする
 void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
 {
   smode  = SHAPE_CYLINDER;
@@ -169,11 +253,8 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   }
 }
 
-//@fn void CompoFraction::subdivision(const int st[], const int ed[], float* vf, double& flop)
-//@brief 体積率が(0,1)の間のセルに対してサブディビジョンを実施
-//@param st 開始インデクス
-//@param ed 終了インデクス
-//@param vf フラクション
+
+// 体積率が(0,1)の間のセルに対してサブディビジョンを実施
 void CompoFraction::subdivision(const int st[], const int ed[], float* vf, double& flop)
 {
   FB::Vec3f base, b;
@@ -271,13 +352,12 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
   
 } 
 
-//@fn void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& flop)
-//@brief セルの8頂点の内外判定を行い，0, 1, otherに分類
-//@param st 開始インデクス
-//@param en 終了インデクス
-//@param vf フラクション
-//@note テスト候補のループ範囲（st[], ed[]）内で，テストセルの8頂点座標を生成し，形状の範囲内かどうかを判定する
-//@note vfは加算するので、初期化しておく
+
+
+
+// セルの8頂点の内外判定を行い，0, 1, otherに分類
+// テスト候補のループ範囲（st[], ed[]）内で，テストセルの8頂点座標を生成し，形状の範囲内かどうかを判定する
+// vfは加算するので、初期化しておく
 void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& flop)
 {
   FB::Vec3f base, o, b;
@@ -322,7 +402,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
       }
     }
     flop += (double)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1) )*
-            (3.0 + 2.0*3.0 + 6.0 + 8.0*183.0 + 2.0);
+    (3.0 + 2.0*3.0 + 6.0 + 8.0*183.0 + 2.0);
   }
   else {
     // Circular cylinder
@@ -331,7 +411,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
         for (int i=st[0]; i<=ed[0]; i++) {
           base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
           b    = o + base * ph;
-
+          
           p[0] =          b;      // (0,0,0) 
           p[1] = shift_f1(b, ph); // (1,0,0)
           p[2] = shift_f2(b, ph); // (0,1,0)
@@ -352,98 +432,14 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
       }
     }
     flop += (double)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1) )*
-            (3.0 + 2.0*3.0 + 6.0 + 8.0*186.0 + 2.0);
+    (3.0 + 2.0*3.0 + 6.0 + 8.0*186.0 + 2.0);
   }
 }
 
-//@fn void CompoFraction::get_angle(void)
-//@brief 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
-//@note 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
-void CompoFraction::get_angle(void)
-{
-  float alpha, beta, c, d, c_alp, c_bta;
-  float eps = 1.0e-5, f_yz, f_xz;
-  FB::Vec3f p, q;
-  FB::Vec3f z(0.0, 0.0, 1.0);
-  
-  // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
-  // yz面への射影
-  p.x = 0.0;
-  p.y = nv.y;
-  p.z = nv.z;
-  c = p.length();
-  
-  if ( c != 0.0 ) {
-    c_alp = dot(z, p)/c;
-    d = acos( c_alp );
-    f_yz = c_alp+1.0;
-    alpha = (nv.y >= 0.0) ? d : -d;
-  }
-  else {
-    alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
-  }
-  
-  // 参照ベクトルをalphaだけ回転して評価ベクトルを生成 > xz面への射影
-  q.assign(alpha, 0.0, 0.0);
-  p = rotate(q, nv);
-  c = p.length();
-  
-  if ( c != 0.0 ) {
-    c_bta = dot(z, p)/c;
-    d = acos( c_bta );
-    f_xz = c_bta+1.0;
-    beta = (nv.x >= 0.0) ? -d : d;
-  }
-  else {
-    beta = 0.0;
-  }
-  
-  // x軸とy軸の両方から見てz軸と反対の場合にだけ，y軸回りのみ回転する
-  if ( (f_yz<eps) && (f_xz<eps) ) {
-    alpha = 0.0;
-    beta  = acos(-1.0);
-  }
-  
-  angle.assign(alpha, beta, 0.0);
-  
-  
-  // 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
-  if ( smode == SHAPE_BOX ) {
-    float c_gma, f_xy;
-    FB::Vec3f x(1.0, 0.0, 0.0);
-    
-    q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
-    c = q.length();
-    
-    if ( c != 0.0 ) {
-      c_gma = dot(x, q)/c;
-      d = acos( c_gma );
-      f_xy = c_gma+1.0;
-      if ( f_xy<eps ) {
-        angle.z = 2.0*asin(1.0); // 反対方向なのでπ
-      }
-      else {
-        angle.z = (q.y >= 0.0) ? -d : d;
-      }
-    }
-    else {
-      stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
-      Exit(0);
-    }
-  }
-#if 0
-  stamped_printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
-#endif
-  
-}
 
-//@fn void ShapeMonitor::setID(const int st[], const int ed[], int* mid, int id)
-//@brief セルの8頂点の内外判定より50%以上のセルにIDを設定する
-//@param st 開始インデクス
-//@param en 終了インデクス
-//@param mid
-//@pram id
-void ShapeMonitor::setID(const int st[], const int ed[], int* mid, int id)
+
+// セルの8頂点の内外判定より50%以上のセルにIDを設定する
+void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
 {
   FB::Vec3f base, o, b;
   FB::Vec3f p[8];

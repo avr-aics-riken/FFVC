@@ -38,7 +38,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 前処理段階のみに使用するオブジェクトをインスタンス
   //VoxInfo Vinfo;
-  ParseBC     B;
+  ParseBC B;
   
   
   // CPMのセット
@@ -47,9 +47,6 @@ int FFV::Initialize(int argc, char **argv)
   B.importCPM(paraMngr);
   F.importCPM(paraMngr);
   
-  
-  // 並列処理モード
-  setParallelism();
 
   
   // ------------------------------------
@@ -212,6 +209,53 @@ int FFV::Initialize(int argc, char **argv)
   C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
   C.NoCompo = C.NoBC + (unsigned)C.NoMedium; // コンポーネントの数の定義
 
+  // ParseMatクラスの環境設定 
+  M.setControlVars((int)C.NoCompo, (int)C.NoBC, (int)C.Unit.Temp, (int)C.KindOfSolver);
+  
+  //Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
+  
+  //B.setControlVars(&C, BC.export_OBC(), mat);
+  
+  B.setMediumPoint( M.export_MTI() );
+  
+  B.countMedium(&C);
+  
+  // CompoListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
+  cmp = new CompoList[C.NoCompo+1];
+  
+  // CompoList, MediumListのポインタをセット
+  //BC.setWorkList(cmp, mat);
+  //Vinfo.setWorkList(cmp, mat);
+  B.receiveCompoPtr(cmp);
+  
+  
+  // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
+  dh0     = &C.dh;
+  dh      = &C.dh;
+  gc      = (int)C.guide;
+  sz[0]   = (int)C.imax;
+  sz[1]   = (int)C.jmax;
+  sz[2]   = (int)C.kmax;
+  
+  // 並列処理モード
+  string para_label = setParallelism();
+  
+  // タイミング測定の初期化
+  if ( C.Mode.Profiling != OFF ) {
+    ModeTiming = ON;
+    //TIMING__ PM.initialize( tm_END );
+    //TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
+    //TIMING__ PM.setParallelMode(para_label, C.num_thread, C.num_process);
+    //set_timing_label();
+  }
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -445,7 +489,7 @@ void FFV::setMediumList(FILE* fp)
 
 
 // 並列化と分割の方法を保持
-void FFV::setParallelism()
+string FFV::setParallelism()
 {
   string para_mode;
   
@@ -482,5 +526,5 @@ void FFV::setParallelism()
       para_mode = "Serial";
     }
   }
-  
+  return para_mode;
 }

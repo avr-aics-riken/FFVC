@@ -24,6 +24,7 @@ CXXSRCS = \
   Component.C \
   BndOuter.C \
   Interval_Mngr.C \
+#  VoxInfo.C \
 #       SetBC.C \
 #       Monitor.C \
 #       MonCompo.C \
@@ -32,7 +33,6 @@ CXXSRCS = \
 #       dfi.C \
 #       History.C \
 #       Alloc.C \
-#       VoxInfo.C \
 #       CompoFraction.C \
 
 F90SRCS = \

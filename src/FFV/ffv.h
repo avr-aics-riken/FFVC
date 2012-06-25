@@ -67,10 +67,66 @@ private:
   
   int session_maxStep;     ///< セッションのステップ数
   int session_currentStep; ///< セッションの現在のステップ
+  int ModeTiming;          ///< タイミング測定管理フラグ
   
   int G_size[3];           ///< 全ドメインの分割数
   REAL_TYPE G_org[3];      ///< 全ドメインの基点
   REAL_TYPE G_reg[3];      ///< 全ドメインのサイズ
+  
+  // Fortranへの引数
+  int sz[3];        ///< 領域分割数
+  int gc;           ///< ガイドセル数
+  REAL_TYPE *dh;    ///< 格子幅（無次元）
+  REAL_TYPE *dh0;   ///< 格子幅（有次元）
+  REAL_TYPE v00[4]; ///< 参照速度
+  
+  
+  // データ領域ポインタ
+  
+  // Vector3D
+  REAL_TYPE *dc_v;
+  REAL_TYPE *dc_vc;
+  REAL_TYPE *dc_v0;
+  REAL_TYPE *dc_wv;
+  REAL_TYPE *dc_abf;
+  REAL_TYPE *dc_vf0;
+  REAL_TYPE *dc_av;
+  REAL_TYPE *dc_wvex;
+  REAL_TYPE *dc_qbc;
+  
+  // Scalar3D
+  int        *dc_mid;
+  unsigned   *dc_bcd;
+  unsigned   *dc_bcp;
+  unsigned   *dc_bcv;
+  unsigned   *dc_bh1;
+  unsigned   *dc_bh2;
+  REAL_TYPE  *dc_ws;
+  REAL_TYPE  *dc_p;
+  REAL_TYPE  *dc_wk2;
+  REAL_TYPE  *dc_dp;
+  REAL_TYPE  *dc_p0;
+  REAL_TYPE  *dc_t;
+  REAL_TYPE  *dc_t0;
+  REAL_TYPE  *dc_vt;
+  REAL_TYPE  *dc_vof;
+  REAL_TYPE  *dc_ap;
+  REAL_TYPE  *dc_at;
+  float      *dc_cvf;
+  
+  // Coarse initial
+  REAL_TYPE *dc_r_v;  ///< 粗格子の速度
+  REAL_TYPE *dc_r_p;  ///< 粗格子の圧力
+  REAL_TYPE *dc_r_t;  ///< 粗格子の温度
+  
+  // コンポーネントワーク配列のアドレス管理
+  REAL_TYPE** component_array;
+  
+  
+  // カット
+  REAL_TYPE  *dc_cut; ///< 距離情報
+  int        *dc_bid; ///< BC
+  
   
   FILE *mp;    ///< 標準出力
   FILE *fp_b;  ///< 基本情報
@@ -88,8 +144,11 @@ private:
   ItrCtl IC[ItrCtl::ic_END]; ///< 反復情報管理クラス
   ReferenceFrame RF;         ///< 参照座標系クラス
   MediumList* mat;           ///< 媒質リスト
+  CompoList* cmp;            ///< コンポーネントリスト
   
 //  SetBC3D BC;                ///< BCクラス
+  
+  char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
   
 public:
   cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
@@ -180,8 +239,25 @@ public:
   
   /**
    * @brief 並列化と分割の方法を保持
+   * @return 並列モード
    */
-  void setParallelism();
+  string setParallelism();
+  
+  
+  /**
+   * @brief タイミング測定区間にラベルを与えるラッパー
+   * @param [in] key       キー番号
+   * @param [in] label     ラベル
+   * @param [in] type      測定対象タイプ(COMM or CALC)
+   * @param [in] exclusive 排他測定フラグ(ディフォルトtrue)
+   */
+  //void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive);
+  
+  
+  /**
+   * @brief タイミング測定区間にラベルを与える
+   */
+  void set_timing_label();
   
   
   /** 毎ステップ後に行う処理 */
