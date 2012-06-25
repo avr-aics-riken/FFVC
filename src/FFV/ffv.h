@@ -83,9 +83,11 @@ private:
   Control C;                 ///< 制御パラメータクラス
   FileIO F;                  ///< ファイル入出力クラス
   DTcntl DT;                 ///< 時間制御クラス
+  ParseMat M;                ///< 媒質パラメータ管理クラス
   Intrinsic* Ex;             ///< pointer to a base class
   ItrCtl IC[ItrCtl::ic_END]; ///< 反復情報管理クラス
   ReferenceFrame RF;         ///< 参照座標系クラス
+  MediumList* mat;           ///< 媒質リスト
   
 //  SetBC3D BC;                ///< BCクラス
   
@@ -168,6 +170,12 @@ public:
    * @param [in] dInfo  領域情報クラス
    */
   void printDomainInfo( cpm_GlobalDomainInfo* dInfo );
+  
+  
+  /** ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
+   * @param [in] fp  ファイルポインタ
+   */
+  void setMediumList(FILE* fp);
   
   
   /**

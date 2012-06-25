@@ -22,6 +22,13 @@ FFV::FFV()
   session_maxStep = 0;
   session_currentStep = 0;
   
+  for (int i=0; i<3; i++) 
+  {
+    G_size[i]= 0;
+    G_org[i] = 0.0;
+    G_reg[i] = 0.0;
+  }
+  
   mp = stdout;
   fp_b = NULL;
   fp_w = NULL;
@@ -30,7 +37,8 @@ FFV::FFV()
   fp_i = NULL;
   fp_f = NULL;
   
-  
+  Ex = NULL;
+  mat = NULL;
   paraMngr = NULL;
   
 }

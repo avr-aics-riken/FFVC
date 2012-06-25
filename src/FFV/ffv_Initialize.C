@@ -39,7 +39,6 @@ int FFV::Initialize(int argc, char **argv)
   // 前処理段階のみに使用するオブジェクトをインスタンス
   //VoxInfo Vinfo;
   ParseBC     B;
-  ParseMat    M;
   
   
   // CPMのセット
@@ -190,23 +189,38 @@ int FFV::Initialize(int argc, char **argv)
   if ( !Ex->getTP(&C, &tpCntl) ) Exit(0);
   
   
+  // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
+  Hostonly_  {
+    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp,"\n\t>> Medium List\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n\t>> Medium List\n\n");
+  }
+  
+  // 媒質情報をロードし、 Medium_Tableタグ内の媒質数を保持
+  C.NoMedium = M.get_MediumTable();
+  
+  // 媒質リストをインスタンス
+  mat = new MediumList[C.NoMedium+1];
+  
+  
+  // 媒質情報を設定
+  setMediumList(fp);
+  
+  
+  // パラメータファイルから C.NoBC, C.NoCompoを取得
+  C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
+  C.NoCompo = C.NoBC + (unsigned)C.NoMedium; // コンポーネントの数の定義
+
+  
+  
+  
+  // 初期化終了時に、入力パラメータのDBを破棄
   if (tpCntl.remove() != TP_NO_ERROR ) 
   {
     Hostonly_ printf("Error : delete textparser\n");
     Exit(0);
   }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
   
   return 1;
 }
@@ -408,6 +422,24 @@ void FFV::printDomainInfo( cpm_GlobalDomainInfo* dInfo )
     << "  pos="   << pos[0]  << "," << pos[1]  << "," << pos[2]
     << "  bcid="  << bcid[0] << "," << bcid[1] << "," << bcid[2]
     <<       ","  << bcid[3] << "," << bcid[4] << "," << bcid[5] << endl;
+  }
+}
+
+
+
+// ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
+void FFV::setMediumList(FILE* fp)
+{
+  if ( !mat ) Exit(0);
+  
+  if ( !M.makeMediumList(mat, C.NoMedium) ) {
+    Hostonly_ stamped_printf("Error : Duplicate label in Material Table\n");
+  }
+  
+  // 媒質テーブルの表示
+  Hostonly_ {
+    M.printMatList(mp, mat, C.NoMedium);
+    M.printMatList(fp, mat, C.NoMedium);
   }
 }
 
