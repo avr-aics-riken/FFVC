@@ -371,8 +371,7 @@ protected:
   
 public:
   
-  // domain info
-  DomainInfo dInfo;
+  DomainInfo dInfo; ///< 領域情報クラス
   SubDomain dom;
   
   // 各種モード　パラメータ
@@ -539,19 +538,21 @@ public:
     Hybrid
   };
   
-  unsigned long Acell,
-                Fcell,
-                Wcell;
+  unsigned long Acell; ///<
+  unsigned long Fcell; ///<
+  unsigned long Wcell; ///<
   
-  int NoMedium;   /// 媒質数
-  int RefMat;     /// 参照媒質インデクス
+  int FB_version; ///< FlowBaseクラスのバージョン番号
+  int NoMedium;   ///< 媒質数
+  int RefMat;     ///< 参照媒質インデクス
+  int version;    ///< FFVバージョン番号
+  
   
   unsigned  AlgorithmF,
             AlgorithmH,
             BasicEqs,
             CheckParam,
             CnvScheme,
-            FB_version,
             guide,
             GuideOut,
             imax, jmax, kmax,
@@ -569,7 +570,6 @@ public:
             Parallelism,
             Restart_step,
             Start,
-            version,
             vxFormat;
 	
   REAL_TYPE BasePrs,
@@ -860,7 +860,6 @@ protected:
   void setDimParameters      (void);
 
 public:
-  const char* get_VoxelFileName(void);
   
   REAL_TYPE getCellSize(unsigned* m_size);
   REAL_TYPE OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size);
@@ -871,7 +870,19 @@ public:
   void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
-  void setDomainInfo            (unsigned* m_sz, REAL_TYPE* m_org, REAL_TYPE* m_pch, REAL_TYPE* m_wth);
+  
+  /**
+   * @brief 無次元の領域情報をセットする
+   * @param [in] m_sz   領域分割数（計算領域内部のみ）
+   * @param [in] m_org  基点
+   * @param [in] m_pch  格子幅
+   * @param [in] m_wth  領域の大きさ
+   * @pre Control::setGiudeCell()
+   * @note setGiudeCell()の前にコール
+   */
+  void setDomainInfo(const int* m_sz, const REAL_TYPE* m_org, const REAL_TYPE* m_pch, const REAL_TYPE* m_wth);
+  
+  
   void setParameters            (MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
   
   
@@ -956,11 +967,14 @@ public:
   
   
 public:
-  bool set_DomainInfo   (unsigned* size,
-                         REAL_TYPE* origin,
-                         REAL_TYPE* pitch,
-                         REAL_TYPE* width);
-  bool get_DomainInfo   (unsigned* size);
+  /** Domainファイル名の取得 */
+  string get_DomainFile();
+  
+  
+  /** グローバルな領域情報を取得 */
+  void get_DomainInfo();
+  
+
   bool get_SubDomainInfo(unsigned* size);
   
   
@@ -976,9 +990,26 @@ public:
   /**  モニタリングのON/OFFとセルモニタの有無のみを取得  */
   void get_Sampling();
   
-  void get_Steer_1      (DTcntl* DT);
-  void get_Steer_2      (ItrCtl* IC, ReferenceFrame* RF);
-  void get_Version      (void);
+  
+  /**
+   * @brief 制御，計算パラメータ群の取得
+   * @param [in] DT
+   * @note 他のパラメータ取得に先んじて処理しておくもの
+   */
+  void get_Steer_1(DTcntl* DT);
+  
+
+  /**
+   * @brief 制御，計算パラメータ群の取得
+   * @param [in] IC  反復制御クラス
+   * @param [in] RF  ReferenceFrameクラス
+   */
+  void get_Steer_2(ItrCtl* IC, ReferenceFrame* RF);
+  
+  
+  /** バージョン番号の取得 */
+  void get_Version();
+  
   
   //for text parser
 protected:

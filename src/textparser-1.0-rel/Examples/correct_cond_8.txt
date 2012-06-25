@@ -1,0 +1,5 @@
+// 依存関係付き値（無駄な括弧）
+"Average_operation" {
+    "op" = "on"
+    "start_time" = @dep((("/Average_operation/op" == "on"))) ? 1.0 : 0.0
+}

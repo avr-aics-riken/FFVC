@@ -24,7 +24,7 @@
 
 int main( int argc, char **argv )
 {
-
+  // タイミング用変数
   double init_str, init_end;
   double main_str, main_end;
   double post_str, post_end;
@@ -43,6 +43,18 @@ int main( int argc, char **argv )
   // ここでMPI_Initも行う
   ffv.paraMngr = cpm_ParaManager::get_instance(argc, argv);
   if ( !ffv.paraMngr ) return CPM_ERROR_PM_INSTANCE;
+  
+  
+  // 引数チェック
+  if ( argc != 3 )
+  {
+    if ( ffv.IsMaster() )
+    {
+      printf("\n\tusage\n");
+      printf("\n\t$ ffv <input_file> <domain_file> \n");
+    }
+    Exit(0);
+  }
   
   
   int init_ret = ffv.Initialize(argc, argv);

@@ -1,0 +1,9 @@
+// 依存関係付き値（条件式で未解決のラベルを参照）
+"Average_operation" {
+    "switch0" = "on"
+    "switch3" = @dep ( ("switch0" == "on") && ("switch1" == "on") ) ? "ON" : "OFF"
+    "switch4" = @dep ( ("switch0" == "on") && ("switch2" == "on") ) ? "ON" : "OFF"
+    "Result" = @dep ( ("switch3" == "on") && ("switch4" == "on") ) ? "True" : "False"
+    "switch1" = "on"
+    "switch2" = "off"
+}

@@ -31,6 +31,13 @@ int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::st
 }
 
 
+// 作業用ポインタのコピー
+void Intrinsic::importCPM(cpm_ParaManager* m_paraMngr)
+{
+  if ( !m_paraMngr ) Exit(0);
+  paraMngr = m_paraMngr;
+}
+
 
 // 例題名称の表示
 void Intrinsic::printExample(FILE* fp, const char* str)
@@ -44,16 +51,6 @@ void Intrinsic::printExample(FILE* fp, const char* str)
   printf("\n\tExample : %s\n\n", str);
 }
 
-
-// 基本情報のコピー
-void Intrinsic::setControlVars(Control* R)
-{
-  guide          = R->guide;
-  imax = size[0] = R->imax;
-  jmax = size[1] = R->jmax;
-  kmax = size[2] = R->kmax;
-  RefL = R->RefLength;
-}
 
 /**
  @fn void Intrinsic::printParaInfo(FILE* mp, FILE* fp, Control* R)
@@ -84,11 +81,15 @@ void Intrinsic::printPara(FILE* fp, Control* R)
 }
 
 
-// 作業用ポインタのコピー
-void Intrinsic::setPartitionManager(cpm_ParaManager* m_paraMngr)
+
+// 基本情報のコピー
+void Intrinsic::setControlVars(Control* R)
 {
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
+  guide          = R->guide;
+  imax = size[0] = R->imax;
+  jmax = size[1] = R->jmax;
+  kmax = size[2] = R->kmax;
+  RefL = R->RefLength;
 }
 
 

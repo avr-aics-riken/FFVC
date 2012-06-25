@@ -208,6 +208,13 @@ public:
    @retval エラーコード
    */
 	int readTPfile(const string filename);
+  
+  
+  /** テキストパーサーの内容を破棄 */
+  int remove()
+  {
+    return tp->remove();
+  }
 
 };
 

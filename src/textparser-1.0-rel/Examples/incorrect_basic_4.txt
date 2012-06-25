@@ -1,0 +1,4 @@
+// リーフの = が無い
+"DomainInfo" {
+    "VoxelOrigin" (1, 3, 5)
+}

@@ -1,0 +1,8 @@
+// 依存関係付き値（ベクトルの数、タイプの違い）
+"Average_operation" {
+    "op" = "on"
+    "vector0" = @dep ( "/Average_operation/op" == "on" ) ? ( "A" , "B" , "C" ) : ( 1 , 2 , 3)	// vector
+    "vector1" = @dep ( "/Average_operation/op" != "on" ) ? ( "A" , "B" , "C" ) : ( "D" , "E")	// vector
+    "vector2" = @dep ( "/Average_operation/op" == "on" ) ? ( "A" , "B" , "C" ) : 1		// vector
+    "vector3" = @dep ( "/Average_operation/op" != "on" ) ? ( "A" , "B" , "C" ) : 1		// vector
+}

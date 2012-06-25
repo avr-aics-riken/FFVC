@@ -1,0 +1,4 @@
+// リーフの文字列値が異常
+"DomainInfo" {
+    "VoxelOrigin" = "123*456"
+}
