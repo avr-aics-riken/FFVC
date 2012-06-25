@@ -18,13 +18,14 @@
 
 int FFV::Initialize(int argc, char **argv)
 {
-  unsigned long TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
-  unsigned long PrepMemory;     ///< 初期化に必要なメモリ量（ローカル）
-  unsigned long G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
-  unsigned long G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
-  unsigned long tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
+  float TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
+  float PrepMemory;     ///< 初期化に必要なメモリ量（ローカル）
+  float G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
+  float G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
+  float tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
   
-  TPControl tpCntl;             ///< テキストパーサのラッパークラス
+  TPControl tpCntl;     ///< テキストパーサのラッパークラス
+  
   
   // CPMバージョン表示
   if ( paraMngr->GetMyRankID() == 0 )
@@ -36,12 +37,13 @@ int FFV::Initialize(int argc, char **argv)
   // 固定パラメータ
   fixed_parameters();
   
+  
   // 前処理段階のみに使用するオブジェクトをインスタンス
   //VoxInfo Vinfo;
   ParseBC B;
   
   
-  // CPMのセット
+  // CPMのポインタをセット
   //BC.importCPM(paraMngr);
   //Vinfo.importCPM(paraMngr);
   B.importCPM(paraMngr);
@@ -144,7 +146,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する -----------------------------------------------------
-  // 領域情報を記述したファイル名の取得
+  // 領域情報を記述したファイル名の取得 >> テキストパーサのDB切り替え
   string dom_file = argv[2];
   DomainInitialize(dom_file);
 
@@ -249,6 +251,22 @@ int FFV::Initialize(int argc, char **argv)
     //set_timing_label();
   }
   
+  // タイミング測定開始
+  //TIMING_start(tm_init_sct); 
+  
+  // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
+  //TIMING_start(tm_init_alloc); 
+  allocArray_prep(PrepMemory, TotalMemory);
+  //TIMING_stop(tm_init_alloc);
+  
+  
+  // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成
+  Hostonly_ {
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Voxel file information\n\n");
+    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(mp,"\t>> Voxel file information\n\n");
+  }
   
   
   
@@ -268,6 +286,7 @@ int FFV::Initialize(int argc, char **argv)
   
   return 1;
 }
+
 
 
 // 組み込み例題のインスタンス

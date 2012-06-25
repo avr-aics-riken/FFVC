@@ -12,6 +12,7 @@ APP_SRCS = \
     main.C \
     ffv.C \
     ffv_Initialize.C \
+    ffv_Alloc.C \
         
 
 SRCS = $(APP_SRCS)

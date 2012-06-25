@@ -161,6 +161,15 @@ public:
   ~FFV();
   
   
+private:
+  /**
+   * @brief 前処理に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in/out] prep  前処理に使用するメモリ量
+   */
+  void allocArray_prep (float &prep, float &total);
+  
+  
 public:
   
   /**

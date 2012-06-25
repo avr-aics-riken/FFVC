@@ -24,6 +24,7 @@ CXXSRCS = \
   Component.C \
   BndOuter.C \
   Interval_Mngr.C \
+  Alloc.C \
 #  VoxInfo.C \
 #       SetBC.C \
 #       Monitor.C \
@@ -32,7 +33,6 @@ CXXSRCS = \
 #       DataHolder.C \
 #       dfi.C \
 #       History.C \
-#       Alloc.C \
 #       CompoFraction.C \
 
 F90SRCS = \
@@ -84,3 +84,4 @@ FileIO.o: FileIO.h FB_Define.h mydebug.h FBUtility.h FB_Ffunc.h
 Component.o: Component.h FB_Define.h mydebug.h
 BndOuter.o: BndOuter.h FB_Define.h mydebug.h
 Interval_Mngr.o: Interval_Mngr.h FB_Define.h mydebug.h
+Alloc.o: Alloc.h
