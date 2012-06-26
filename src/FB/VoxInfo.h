@@ -38,13 +38,12 @@
 class VoxInfo {
   
 private:
-  unsigned size[3];              ///< 計算内部領域分割数(Local)
-  unsigned guide;                ///< ガイドセルサイズ
-  unsigned NoBC;                 ///< 境界条件数
-  unsigned NoCompo;              ///< コンポーネントの総数
+  int size[3];                   ///< 計算内部領域分割数(Local)
+  int guide;                     ///< ガイドセルサイズ
+  int NoBC;                      ///< 境界条件数
+  int NoCompo;                   ///< コンポーネントの総数
   int NoVoxID;                   ///< 含まれるIDの数(Local/Global)
   int colorList[MODEL_ID_MAX+1]; ///< ボクセルモデルに含まれるIDのリスト(Global)
-  REAL_TYPE* vox_nv;             ///< ボクセルモデルに含まれるコンポーネントの法線を計算したもの(Global)
   CompoList*    cmp;             ///< コンポーネントリスト
   MediumList*   mat;             ///< 媒質リスト
   cpm_ParaManager *paraMngr;     ///< Cartesian Partition Maneger
@@ -55,8 +54,7 @@ public:
     NoVoxID = 0;
     guide = 0;
     NoBC = NoCompo = 0;
-    for (unsigned i=0; i<3; i++) size[i]=0;
-    vox_nv = NULL;
+    for (int i=0; i<3; i++) size[i]=0;
     cmp = NULL;
     mat = NULL;
     paraMngr=NULL;
@@ -65,138 +63,129 @@ public:
   }
   
   /**　デストラクタ */
-  ~VoxInfo() {
-    if (vox_nv)    delete [] vox_nv;
-  }
+  ~VoxInfo() {}
   
 private:
-  bool chkIDinside           (unsigned id, int* mid, unsigned* bx);
-  bool getXMLModel           (void);
-  bool isInTable             (unsigned MaxSize, int* cList, int target);
+  bool chkIDinside           (int id, int* mid, int* bx);
+  bool isInTable             (int MaxSize, int* cList, int target);
   
-  int* allocTable(unsigned size);
+  int* allocTable(int size);
   
-  unsigned find_mat_odr(unsigned mat_id);
+  int find_mat_odr(int mat_id);
   
-  unsigned long countState(unsigned id, 
-                           int* mid);
+  unsigned long countState(int id, int* mid);
   
-  unsigned long count_ValidCell_OBC (const int face, 
-                                     const unsigned* bv);
+  unsigned long count_ValidCell_OBC (const int face, const int* bv);
   
-  unsigned long encodeOrder(const unsigned order,
-                            const unsigned id, 
+  unsigned long encodeOrder(const int order,
+                            const int id, 
                             const int* mid, 
-                            unsigned* bx);
+                            int* bx);
   
-  unsigned long encPbit_D_IBC(const unsigned order, 
-                              const unsigned id, 
+  unsigned long encPbit_D_IBC(const int order, 
+                              const int id, 
                               const int* mid, 
-                              unsigned* bcd, 
-                              unsigned* bcp, 
+                              int* bcd, 
+                              int* bcp, 
                               const int deface);
   
-  unsigned long encPbit_N_Binary(unsigned* bx);
+  unsigned long encPbit_N_Binary(int* bx);
   
-  unsigned long encPbit_N_Cut(unsigned* bx, 
-                              float* cut, 
-                              const bool convergence);
+  unsigned long encPbit_N_Cut(int* bx, float* cut, const bool convergence);
   
-  unsigned long encPbit_N_IBC(const unsigned order, 
-                              const unsigned id, 
+  unsigned long encPbit_N_IBC(const int order, 
+                              const int id, 
                               const int* mid, 
-                              unsigned* bcd, 
-                              unsigned* bcp, 
+                              int* bcd, 
+                              int* bcp, 
                               const int deface);
   
-  unsigned long encQface(const unsigned order, 
-                         const unsigned id, 
+  unsigned long encQface(const int order, 
+                         const int id, 
                          const int* mid, 
-                         unsigned* bcd, 
-                         unsigned* bh1, 
-                         unsigned* bh2, 
+                         int* bcd, 
+                         int* bh1, 
+                         int* bh2, 
                          const int deface, 
                          const bool flag);
   
-  unsigned long encQfaceHT_B(const unsigned order, 
-                             const unsigned id, 
+  unsigned long encQfaceHT_B(const int order, 
+                             const int id, 
                              const int* mid, 
-                             unsigned* bcd, 
-                             unsigned* bh1, 
-                             unsigned* bh2, 
+                             int* bcd, 
+                             int* bh1, 
+                             int* bh2, 
                              const int deface);
   
-  unsigned long encQfaceHT_S(const unsigned order, 
-                             const unsigned id, 
+  unsigned long encQfaceHT_S(const int order, 
+                             const int id, 
                              const int* mid, 
-                             unsigned* bcd, 
-                             unsigned* bh1, 
-                             unsigned* bh2, 
+                             int* bcd, 
+                             int* bh1, 
+                             int* bh2, 
                              const int deface);
   
-  unsigned long encQfaceISO_SF(const unsigned order, 
-                               const unsigned id, 
+  unsigned long encQfaceISO_SF(const int order, 
+                               const int id, 
                                const int* mid, 
-                               unsigned* bcd, 
-                               unsigned* bh1, 
-                               unsigned* bh2, 
+                               int* bcd, 
+                               int* bh1, 
+                               int* bh2, 
                                const int deface);
   
-  unsigned long encQfaceISO_SS(const unsigned order, 
-                               const unsigned id, 
+  unsigned long encQfaceISO_SS(const int order, 
+                               const int id, 
                                const int* mid, 
-                               unsigned* bcd, 
-                               unsigned* bh1, 
-                               unsigned* bh2, 
+                               int* bcd, 
+                               int* bh1, 
+                               int* bh2, 
                                const int deface);
   
-  unsigned long encVbit_IBC(const unsigned order, 
-                            const unsigned id, 
+  unsigned long encVbit_IBC(const int order, 
+                            const int id, 
                             const int* mid, 
-                            unsigned* bv, 
+                            int* bv, 
                             const int deface, 
-                            unsigned* bp);
+                            int* bp);
   
-  unsigned long encVbit_IBC_Cut(const unsigned order, 
-                                const unsigned id, 
-                                unsigned* bv, 
-                                unsigned* bp, 
+  unsigned long encVbit_IBC_Cut(const int order, 
+                                const int id, 
+                                int* bv, 
+                                int* bp, 
                                 const float* cut, 
                                 const int* cut_id, 
                                 const float* vec, 
-                                const unsigned bc_dir);
+                                const int bc_dir);
   
-  void checkColorTable       (FILE* fp, unsigned size, int* table);
+  void checkColorTable       (FILE* fp, int size, int* table);
   void copyID_Prdc_Inner     (SklScalar3D<int>* d_mid, int* st, int* ed, int id, int dir);
-  void countNrml_from_FaceBC (unsigned n, unsigned* bx, int* cc, int& ar);
-  void encActive             (unsigned long& Lcell, unsigned long& Gcell, unsigned* bx, const unsigned KOS);
-  void encAmask_SymtrcBC     (int face, unsigned* bh2);
-  void encHbit               (unsigned* bh1, unsigned* bh2);
-  void encPbit               (unsigned* bx);
-  void encPbit_OBC           (int face, unsigned* bx, string key, bool dir);
-  void encQfaceSVO           (unsigned order, unsigned id, int* mid, unsigned* bcd, unsigned* bh1, unsigned* bh2, int deface);
-  void encVbit_OBC           (int face, unsigned* bv, string key, const bool enc_sw, string chk, unsigned* bp, const bool enc_uwd);
-  void find_isolated_Fcell   (unsigned order, int* mid, unsigned* bx);
+  void encActive             (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
+  void encAmask_SymtrcBC     (int face, int* bh2);
+  void encHbit               (int* bh1, int* bh2);
+  void encPbit               (int* bx);
+  void encPbit_OBC           (int face, int* bx, string key, bool dir);
+  void encQfaceSVO           (int order, int id, int* mid, int* bcd, int* bh1, int* bh2, int deface);
+  void encVbit_OBC           (int face, int* bv, string key, const bool enc_sw, string chk, int* bp, const bool enc_uwd);
+  void find_isolated_Fcell   (int order, int* mid, int* bx);
   void getOffset             (int* st, int* ofst);
-  void getQuadrant           (unsigned* q, REAL_TYPE t1, REAL_TYPE t2);
-  void resizeBVcell          (const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv);
-  void resizeBVface          (const int* st, const int* ed, unsigned n, unsigned* bx, int* gcbv);
-  void setInactive_Compo     (unsigned id, int def, int* mid, unsigned* bh1, unsigned* bh2);
-  void setAmask_InActive     (unsigned id, int* mid, unsigned* bh);
-  void setAmask_Solid        (unsigned* bh);
-  void setAmask_Thermal      (unsigned* bh);
-  void updateGlobalIndex     (const int* st, const int* ed, unsigned n, int* gcbv);
+  void resizeBVcell          (const int* st, const int* ed, int n, int* bx, int* gcbv);
+  void resizeBVface          (const int* st, const int* ed, int n, int* bx, int* gcbv);
+  void setInactive_Compo     (int id, int def, int* mid, int* bh1, int* bh2);
+  void setAmask_InActive     (int id, int* mid, int* bh);
+  void setAmask_Solid        (int* bh);
+  void setAmask_Thermal      (int* bh);
+  void updateGlobalIndex     (const int* st, const int* ed, int n, int* gcbv);
   
 
-  //@fn inline unsigned offBit(unsigned idx, const unsigned shift)
+  //@fn inline int offBit(int idx, const int shift)
   //@brief idxの第shiftビットをOFFにする
-  inline unsigned offBit(unsigned idx, const unsigned shift) {
+  inline int offBit(int idx, const int shift) {
     return ( idx & (~(0x1<<shift)) );
   }
   
-  //@fn inline unsigned onBit(unsigned idx, const unsigned shift)
+  //@fn inline int onBit(int idx, const int shift)
   //@brief idxの第shiftビットをONにする
-  inline unsigned onBit(unsigned idx, const unsigned shift) {
+  inline int onBit(int idx, const int shift) {
     return ( idx | (0x1<<shift) );
   }
   
@@ -204,48 +193,46 @@ private:
 public:
   bool chkIDconsistency      (const int m_NoMedium);
   
-  int scanCell               (int *cell, const int* cid, const unsigned ID_replace);
+  int scanCell               (int *cell, const int* cid, const int ID_replace);
   
-  unsigned check_fill        (const int* mid);
+  int check_fill        (const int* mid);
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   unsigned fill_inside       (int* mid, const int solid_id);
-  unsigned setBCIndexP       (unsigned* bcd, unsigned* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
+  unsigned setBCIndexP       (int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
   
   unsigned long flip_InActive(unsigned long& L, 
                               unsigned long& G, 
-                              const unsigned id, 
+                              const int id, 
                               const int* mid, 
-                              unsigned* bx);
+                              int* bx);
   
-  void adjMedium_on_GC       (const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const unsigned prdc_mode);
+  void adjMedium_on_GC       (const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const int prdc_mode);
   void adjMediumPrdc_Inner  (SklScalar3D<int>* d_mid);
-  void alloc_voxel_nv        (unsigned len);
-  void cal_Compo_Area_Normal (unsigned n, unsigned* bd, unsigned* bv, unsigned* bh1, REAL_TYPE dhd, int* gi);
-  void copyBCIbase           (unsigned* dst, unsigned* src);
-  void countCellState        (unsigned long& Lcell, unsigned long& Gcell, unsigned* bx, const unsigned state);
-  void countOpenAreaOfDomain (unsigned* bx, REAL_TYPE* OpenArea);
+  void copyBCIbase           (int* dst, int* src);
+  void countCellState        (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state);
+  void countOpenAreaOfDomain (int* bx, REAL_TYPE* OpenArea);
   void fill_isolated_cells   (const int* bid, int* mid, const int isolated, const int solid_id);
-  void findVIBCbbox          (const int id, const unsigned* bv, int* st, int* ed);
-  void get_Compo_Area_Cut    (unsigned n, PolylibNS::MPIPolylib* PL);
+  void findVIBCbbox          (const int id, const int* bv, int* st, int* ed);
+  void get_Compo_Area_Cut    (int n, PolylibNS::MPIPolylib* PL);
   bool paint_first_seed      (int* mid, const int* idx, const int target);
   void printScanedCell       (FILE* fp);
-  void resizeCompoBV         (unsigned* bd, unsigned* bv, unsigned* bh1, unsigned* bh2, unsigned kos, bool isHeat, int* gcbv);
-  void setAdiabatic4SF       (unsigned* bh);
-  void setBCIndexH           (unsigned* bd, unsigned* bh1, unsigned* bh2, int* mid, SetBC* BC, unsigned kos);
-  void setBCIndex_base1      (unsigned* bd, int* mid, float* cvf);
+  void resizeCompoBV         (int* bd, int* bv, int* bh1, int* bh2, int kos, bool isHeat, int* gcbv);
+  void setAdiabatic4SF       (int* bh);
+  void setBCIndexH           (int* bd, int* bh1, int* bh2, int* mid, SetBC* BC, int kos);
+  void setBCIndex_base1      (int* bd, int* mid, float* cvf);
   
-  void setBCIndex_base2      (unsigned* bx, 
+  void setBCIndex_base2      (int* bx, 
                               int* mid, 
                               SetBC* BC, 
                               unsigned long & Lcell, 
                               unsigned long & Gcell, 
-                              const unsigned KOS);
+                              const int KOS);
   
-  void setBCIndexV           (unsigned* bv, int* mid, SetBC* BC, unsigned* bp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
-  void setCmpFraction        (CompoList* compo, unsigned* bx, float* vf);
-  void setControlVars        (unsigned* r_size, unsigned r_guide);
-  void setNoCompo_BC         (unsigned m_NoBC, unsigned m_NoCompo);
+  void setBCIndexV           (int* bv, int* mid, SetBC* BC, int* bp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
+  void setCmpFraction        (CompoList* compo, int* bx, float* vf);
+  void setControlVars        (int* r_size, int r_guide);
+  void setNoCompo_BC         (int m_NoBC, int m_NoCompo);
   void setOBC_Cut            (SetBC* BC, float* cut);
   void setWorkList           (CompoList* m_CMP, MediumList* m_MAT);
   
@@ -253,9 +240,6 @@ public:
   //@retval colorListのポインタ
 	const int* getColorList() const { return colorList; }
 	
-  //@fn REAL_TYPE* get_vox_nv_ptr(void)
-  //@brief vox_nvのポインタを返す
-  REAL_TYPE* get_vox_nv_ptr(void) { return vox_nv; }
   
   //@brief CutBid5のBoundrary IDを計算
   //@note dir = (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
@@ -277,9 +261,9 @@ public:
   
   
   // ----> debug function
-  void dbg_chkBCIndexD  (unsigned* bcd, const char* fname);
-  void dbg_chkBCIndexP  (unsigned* bcd, unsigned* bcp, const char* fname);
-  void dbg_chkBCIndexV  (unsigned* bcv, const char* fname);
+  void dbg_chkBCIndexD  (int* bcd, const char* fname);
+  void dbg_chkBCIndexP  (int* bcd, int* bcp, const char* fname);
+  void dbg_chkBCIndexV  (int* bcv, const char* fname);
 };
 
 #endif // _FB_BINVOX_H_
