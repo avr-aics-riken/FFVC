@@ -18,7 +18,6 @@
  */
 
 #include "cpm_Define.h"
-#include "limits.h"
 
 
 class Alloc {
@@ -37,9 +36,8 @@ public:
    @retval エラーコード
    @param[in]      sz       計算内部領域のサイズ
    @param[in]      gc       ガイドセルサイズ
-   @param[in/out]  mc       メモリ使用量のカウンタ
    */
-  static float* Float_S3D(const int* sz, const int gc, float &mc);
+  static float* Float_S3D(const int* sz, const int gc);
   
   
   /**
@@ -48,9 +46,8 @@ public:
    @param[in]      sz       計算内部領域のサイズ
    @param[in]      gc       ガイドセルサイズ
    @param[in]      dnum     4つめのサイズ
-   @param[in/out]  mc       メモリ使用量のカウンタ
    */
-  static float* Float_S4D(const int* sz, const int gc, const int dnum, float &mc);
+  static float* Float_S4D(const int* sz, const int gc, const int dnum);
   
   
   /**
@@ -58,9 +55,8 @@ public:
    @retval エラーコード
    @param[in]      sz       計算内部領域のサイズ
    @param[in]      gc       ガイドセルサイズ
-   @param[in/out]  mc       メモリ使用量のカウンタ
    */
-  static int* Int_S3D(const int* sz, const int gc, float &mc);
+  static int* Int_S3D(const int* sz, const int gc);
   
   
   /**
@@ -68,9 +64,8 @@ public:
    @retval エラーコード
    @param[in]      sz       計算内部領域のサイズ
    @param[in]      gc       ガイドセルサイズ
-   @param[in/out]  mc       メモリ使用量のカウンタ
    */
-	static REAL_TYPE* Real_S3D(const int* sz, const int gc, float &mc);
+	static REAL_TYPE* Real_S3D(const int* sz, const int gc);
   
   
   /**
@@ -78,9 +73,8 @@ public:
    @retval エラーコード
    @param[in]      sz       計算内部領域のサイズ
    @param[in]      gc       ガイドセルサイズ
-   @param[in/out]  mc       メモリ使用量のカウンタ
    */
-  static REAL_TYPE* Real_V3D(const int* sz, const int gc, float &mc);
+  static REAL_TYPE* Real_V3D(const int* sz, const int gc);
 
   
   /**
@@ -88,9 +82,8 @@ public:
    @retval エラーコード
    @param[in]      sz       計算内部領域のサイズ
    @param[in]      gc       ガイドセルサイズ
-   @param[in/out]  mc       メモリ使用量のカウンタ
    */
-  static unsigned* Uint_S3D(const int* sz, const int gc, float &mc);
+  static unsigned* Uint_S3D(const int* sz, const int gc);
 
 };
 

@@ -35,6 +35,6 @@
 
 #define Hostonly_ if(paraMngr->GetMyRankID() == 0)
 
-//#define TIMING__ if ( ModeTiming == ON )
+#define TIMING__ if ( ModeTiming == ON )
 
 #endif // _FB_DEBUG_H_

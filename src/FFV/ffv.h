@@ -60,7 +60,22 @@
 #include "IP_Polygon.h"
 #include "IP_Sphere.h"
 
+// FX10 profiler
+#if defined __K_FPCOLL
+#include "fjcoll.h"
+#elif defined __FX_FAPP
+#include "fj_tool/fjcoll.h"
+#endif
+
+// Performance Monitor
+#include "PerfMonitor.h"
+
+
+
+
 using namespace std;
+using namespace pm_lib;
+
 
 class FFV {
 private:
@@ -145,6 +160,7 @@ private:
   ReferenceFrame RF;         ///< 参照座標系クラス
   MediumList* mat;           ///< 媒質リスト
   CompoList* cmp;            ///< コンポーネントリスト
+  PerfMonitor PM;            ///< 性能モニタクラス
   
 //  SetBC3D BC;                ///< BCクラス
   
@@ -162,19 +178,91 @@ public:
   
   
 private:
+
+  /**
+   * @brief Adams-Bashforth法に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_AB2 (double &total);
+  
+  
+  /**
+   * @brief 平均値処理に用いる配列のアロケーション
+   * @param [in/out] total  ソルバーに使用するメモリ量
+   */
+  void allocArray_Average (double &total);
+  
+  
+  /**
+   * @brief 粗格子読み込みに用いる配列のアロケーション
+   * @param [in] r_size  粗格子の領域サイズ
+   */
+  void allocArray_CoarseMesh(const int* r_size);
+  
+  
+  /**
+   * @brief コンポーネント体積率の配列のアロケーション
+   * @param [in/out] prep  前処理に使用するメモリ量
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_CompoVF(double &prep, double &total);
+  
+  
+  /**
+   * @brief カット情報の配列
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_Cut(double &total);
+  
+  
+  /**
+   * @brief 熱の主計算部分に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_Heat(double &total);
+  
+  
+  /**
+   * @brief 体積率の配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_Interface(double &total);
+  
+  
+  /**
+   * @brief LES計算に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_LES(double &total);
+  
+  
+  /**
+   * @brief 主計算部分に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_Main(double &total);
+  
+  
   /**
    * @brief 前処理に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
    * @param [in/out] prep  前処理に使用するメモリ量
+   * @param [in/out] total ソルバーに使用するメモリ量
    */
-  void allocArray_prep (float &prep, float &total);
+  void allocArray_Prep(double &prep, double &total);
+  
+  
+  /**
+   * @brief Runge-Kutta法に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_RK(double &total);
   
   
 public:
   
   /**
-   @brief 組み込み例題のインスタンス
-   @param [in] Cref Controlクラスのポインタ
+   * @brief 組み込み例題のインスタンス
+   * @param [in] Cref Controlクラスのポインタ
    */
   void connectExample(Control* Cref);
   
@@ -190,12 +278,25 @@ public:
    */
   void fixed_parameters();
   
+  
   /**
    * @brief 組み込み例題の設定
    * @param [in] Cref    コントロールクラス
    * @param [in] tpCntl  テキストパーサーのラッパー
    */
   void getExample(Control* Cref, TPControl* tpCntl);
+  
+  
+  /**
+   * @brief プロファイラのラベル取り出し
+   * @param [in] key 格納番号
+   * @return ラベル
+   */
+  inline const char* get_tm_label(const int key) 
+  {
+    return (const char*)tm_label_ptr[key];
+  }
+  
   
   /** 初期化 
    * 格子生成、ビットフラグ処理ほか
@@ -260,7 +361,7 @@ public:
    * @param [in] type      測定対象タイプ(COMM or CALC)
    * @param [in] exclusive 排他測定フラグ(ディフォルトtrue)
    */
-  //void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive);
+  void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
   
   
   /**
@@ -272,6 +373,41 @@ public:
   /** 毎ステップ後に行う処理 */
   bool stepPost();
   
+  
+  /**
+   * @brief タイミング測定開始
+   * @param [in] key 格納番号
+   */
+  inline void TIMING_start(const int key) 
+  {
+    // Intrinsic profiler
+    TIMING__ PM.start(key);
+    
+    // Venus FX profiler
+#if defined __K_FPCOLL
+    start_collection( get_tm_label(key) );
+#elif defined __FX_FAPP
+    fapp_start( get_tm_label(key), 0, 0);
+#endif
+  }
+  
+  
+  /**
+   * @brief タイミング測定終了
+   * @param [in] key             格納番号
+   * @param [in] flopPerTask    「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
+   * @param [in] iterationCount  実行「タスク」数 (ディフォルト1)
+   */
+  inline void TIMING_stop(const int key, double flopPerTask=0.0, int iterationCount=1) 
+  {
+    // Venus FX profiler
+#if defined __K_FPCOLL
+    stop_collection( get_tm_label(key) );
+#elif defined __FX_FAPP
+    fapp_stop( get_tm_label(key), 0, 0);
+#endif
+  }
+    
   
   /** コマンドラインヘルプ */
   virtual void Usage();

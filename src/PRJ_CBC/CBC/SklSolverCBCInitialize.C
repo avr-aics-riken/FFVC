@@ -838,7 +838,17 @@ SklSolverCBC::SklSolverInitialize() {
   }
 
   // 時間平均用の配列をアロケート
-  allocArray_average (TotalMemory, fp);
+  if ( C.Mode.Average == ON ) {
+    if ( !SklCfgCheckOutFile("AvrPressure") || // 時間平均を指定しているが，出力ファイル記述がない場合
+        !SklCfgCheckOutFile("AvrVelocity") || 
+        (!SklCfgCheckOutFile("AvrTemperature") && C.isHeatProblem()) ) {
+      Hostonly_ stamped_printf     ("\tAveraging, but there is no OutFile description for an average file. \n");
+      Hostonly_ stamped_fprintf(fp, "\tAveraging, but there is no OutFile description for an average file. \n");
+      Exit(0);
+    }
+    
+    allocArray_average (TotalMemory);
+  }
 
 
   
@@ -1513,26 +1523,16 @@ void SklSolverCBC::allocArray_CoarseMesh(unsigned* r_size)
 void SklSolverCBC::allocArray_average (unsigned long &total, FILE* fp)
 {
   unsigned long mc=0;
+
+  if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) Exit(0);
+  total += mc;
   
-  if ( C.Mode.Average == ON ) {
-    if ( !SklCfgCheckOutFile("AvrPressure") || // 時間平均を指定しているが，出力ファイル記述がない場合
-         !SklCfgCheckOutFile("AvrVelocity") || 
-        (!SklCfgCheckOutFile("AvrTemperature") && C.isHeatProblem()) ) {
-      Hostonly_ stamped_printf     ("\tAveraging, but there is no OutFile description for an average file. \n");
-      Hostonly_ stamped_fprintf(fp, "\tAveraging, but there is no OutFile description for an average file. \n");
-      Exit(0);
-    }
-    
-    if ( !A.alloc_Real_S3D(this, dc_ap, "avtp", size, guide, 0.0, mc) ) Exit(0);
+  if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) Exit(0);
+  total += mc;
+  
+  if ( C.isHeatProblem() ) {
+    if ( !A.alloc_Real_S3D(this, dc_at, "avrt", size, guide, 0.0, mc) ) Exit(0);
     total += mc;
-    
-    if ( !A.alloc_Real_V3DEx(this, dc_av, "avrv", size, guide, 0.0, mc) ) Exit(0);
-    total += mc;
-    
-    if ( C.isHeatProblem() ) {
-      if ( !A.alloc_Real_S3D(this, dc_at, "avrt", size, guide, 0.0, mc) ) Exit(0);
-      total += mc;
-    }
   }
 }
 

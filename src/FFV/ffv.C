@@ -156,7 +156,7 @@ bool FFV::Post()
 
 
 
-/* タイミング測定区間にラベルを与えるラッパー
+// タイミング測定区間にラベルを与えるラッパー
 void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive)
 {
   // 文字数がTM_LABEL_MAX-1を超えるものはカット
@@ -178,9 +178,9 @@ void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exc
   // FX用プロファイラの文字列登録
   strcpy(tm_label_ptr[key], label_tmp);
 }
-*/
 
-/* タイミング測定区間にラベルを与える
+
+// タイミング測定区間にラベルを与える
 void FFV::set_timing_label()
 {
   // ラベルの設定
@@ -376,7 +376,6 @@ void FFV::set_timing_label()
   set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC, false);
   
 }
-*/
 
 
 // タイムステップループの後の処理
@@ -387,7 +386,7 @@ bool FFV::stepPost()
 
 
 // 利用例の表示
-void FFV::Usage(void)
+void FFV::Usage()
 {
   FBUtility::printVersion(mp, "Frontflow/violet", VERS_FFV);
   

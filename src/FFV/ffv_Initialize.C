@@ -18,13 +18,13 @@
 
 int FFV::Initialize(int argc, char **argv)
 {
-  float TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
-  float PrepMemory;     ///< 初期化に必要なメモリ量（ローカル）
-  float G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
-  float G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
-  float tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
+  double TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
+  double PrepMemory;     ///< 初期化に必要なメモリ量（ローカル）
+  double G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
+  double G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
+  double tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
   
-  TPControl tpCntl;     ///< テキストパーサのラッパークラス
+  TPControl tpCntl;      ///< テキストパーサのラッパークラス
   
   
   // CPMバージョン表示
@@ -245,19 +245,19 @@ int FFV::Initialize(int argc, char **argv)
   // タイミング測定の初期化
   if ( C.Mode.Profiling != OFF ) {
     ModeTiming = ON;
-    //TIMING__ PM.initialize( tm_END );
-    //TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
-    //TIMING__ PM.setParallelMode(para_label, C.num_thread, C.num_process);
-    //set_timing_label();
+    TIMING__ PM.initialize( tm_END );
+    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
+    TIMING__ PM.setParallelMode(para_label, C.num_thread, C.num_process);
+    set_timing_label();
   }
   
   // タイミング測定開始
-  //TIMING_start(tm_init_sct); 
+  TIMING_start(tm_init_sct); 
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
-  //TIMING_start(tm_init_alloc); 
-  allocArray_prep(PrepMemory, TotalMemory);
-  //TIMING_stop(tm_init_alloc);
+  TIMING_start(tm_init_alloc); 
+  allocArray_Prep(PrepMemory, TotalMemory);
+  TIMING_stop(tm_init_alloc);
   
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成
@@ -268,7 +268,7 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(mp,"\t>> Voxel file information\n\n");
   }
   
-  
+  TIMING_start(tm_voxel_prep_sct);
   
   
   
