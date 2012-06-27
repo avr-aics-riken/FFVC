@@ -259,7 +259,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
 {
   FB::Vec3f base, b;
   FB::Vec3f p, o;
-  unsigned m;
+  size_t m;
   float c, r, h, ff, ph;
   int ix, jx, kx, gc, dv;
   
@@ -362,7 +362,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
 {
   FB::Vec3f base, o, b;
   FB::Vec3f p[8];
-  unsigned m;
+  size_t m;
   float c, ph;
   int ix, jx, kx, gc;
   
@@ -443,7 +443,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
 {
   FB::Vec3f base, o, b;
   FB::Vec3f p[8];
-  unsigned m;
+  size_t m;
   float c, ph;
   int ix, jx, kx, gc;
   

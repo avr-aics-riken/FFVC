@@ -35,7 +35,8 @@ using namespace std;
 class DTcntl {
 public:
   /** 時間積分幅の指定種別 */
-  enum dt_Type {
+  enum dt_Type 
+  {
     dt_direct=1,      ///< 入力値がΔt
     dt_cfl_ref_v,     ///< dt < c dx/U0
     dt_cfl_max_v,     ///< dt < c dx/Umax
@@ -46,14 +47,14 @@ public:
   };
   
 private:
-  int scheme;        ///< Δtのスキーム種別
-  int KOS;           ///< Kind of Solver
-  int mode;          ///< 入力パラメータの次元モード（無次元/有次元）
-  double   CFL;      ///< Δtの決定に使うCFLなど
-  double   deltaT;   ///< Δt（無次元）
-  double   dh;       ///< 格子幅（無次元）
-  double   Reynolds; ///< レイノルズ数
-  double   Peclet;   ///< ペクレ数
+  int scheme;      ///< Δtのスキーム種別
+  int KOS;         ///< Kind of Solver
+  int mode;        ///< 入力パラメータの次元モード（無次元/有次元）
+  double CFL;      ///< Δtの決定に使うCFLなど
+  double deltaT;   ///< Δt（無次元）
+  double dh;       ///< 格子幅（無次元）
+  double Reynolds; ///< レイノルズ数
+  double Peclet;   ///< ペクレ数
   
 public:
   /** コンストラクタ */
@@ -90,7 +91,7 @@ public:
   
   /**
    * @brief CFL数で指定されるdtを計算
-   * @param[in] Uref 速度の参照値（無次元）
+   * @param [in] Uref 速度の参照値（無次元）
    */
   double dtCFL(const double Uref) const 
   {
@@ -100,7 +101,7 @@ public:
 
 
   /** 拡散数のdt制限
-   * @param coef 係数 (Reynolds number or Peclet number)
+   * @param [in] coef 係数 (Reynolds number or Peclet number)
    */
   double dtDFN(const double coef) const 
   { 
@@ -115,8 +116,8 @@ public:
   /**
    * @brief Δtのスキームを設定する
    * @retval 設定の成否
-   * @param str[in] str  キーワード
-   * @param val[in] val  値
+   * @param [in] str str  キーワード
+   * @param [in] val val  値
    */
   bool set_Scheme (const char* str, const double val);
   
@@ -124,7 +125,7 @@ public:
   /**
    * @brief 各種モードに対応する時間積分幅を設定する
    * @retval return code
-   * @param[in] vRef 速度の参照値（無次元）
+   * @param [in] vRef 速度の参照値（無次元）
    * @note deltaTは無次元
    */
   int set_DT(const double vRef);
@@ -132,13 +133,13 @@ public:
   
   /**
    * @brief 基本変数をコピー
-   * @param[in] m_kos  ソルバーの種類
-   * @param[in] m_mode 次元モード
-   * @param[in] m_dh   無次元格子幅
-   * @param[in] re     レイノルズ数
-   * @param[in] pe     ペクレ数
+   * @param [in] m_kos  ソルバーの種類
+   * @param [in] m_mode 次元モード
+   * @param [in] m_dh   無次元格子幅
+   * @param [in] re     レイノルズ数
+   * @param [in] pe     ペクレ数
    */
-  void set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe);
+  void set_Vars(const int m_kos, const int m_mode, const double m_dh, const double re, const double pe);
 };
 
 
@@ -153,14 +154,16 @@ protected:
   
 public:
   /** 参照系の定義 */
-  enum frame_type {
+  enum frame_type 
+  {
     frm_static,
     frm_translation,
     frm_rotation
   };
   
   /** コンストラクタ */
-  ReferenceFrame(){
+  ReferenceFrame() 
+  {
     Frame     = 0;
     TimeAccel = 0.0;
     v00[0] = v00[1] = v00[2] = v00[3] = 0.0;
@@ -173,56 +176,66 @@ public:
   
   /** 
    * @brief 加速時間をセット
-   * @param[in] m_timeAccel 無次元の加速時間
+   * @param [in] m_timeAccel 無次元の加速時間
    */
-  void setAccel  (const double m_timeAccel);
+  void setAccel(const double m_timeAccel);
   
   
   /**
    @brief 参照フレームの種類をセットする
-   @param[in] m_frame 参照フレームの種類
+   @param [in] m_frame 参照フレームの種類
    */
-  void setFrame  (const int m_frame);
+  void setFrame(const int m_frame);
   
   
   /**
    @brief 格子速度成分の単位方向ベクトルをセットする
-   @param[in] m_Gvel 格子速度成分の単位方向ベクトル
+   @param [in] m_Gvel 格子速度成分の単位方向ベクトル
    */
   void setGridVel(const double* m_Gvel);
   
   
   /**
    @brief 参照速度を設定する
-   @param[in] time 時刻（無次元）
-   @param[in] init フラグ
+   @param [in] time 時刻（無次元）
+   @param [in] init フラグ
    */
   void setV00(const double time, const bool init=false);
 
   
-  //@brief Frameを返す
+  /**
+   * @brief Frameを返す
+   */
   int getFrame() const 
   {
     return Frame;
   }
   
 
-  //@brief 加速時間を返す
+  /**
+   * @brief 加速時間を返す
+   */
   double getAccel() const 
   {
     return TimeAccel;
   }
   
 
-  //@brief v00をコピーする
-  void copyV00(double* m_v0)
+  /** 
+   * @brief v00をコピーする
+   * @param [in] m_v0 コピー元
+   */
+  void copyV00(const double* m_v0)
   {
     for (int i=0; i<4; i++) m_v0[i] = v00[i];
   }
   
 
-  //@brief GridVelocityをコピーする
-  void copyGridVel(double* m_gv)
+  /**
+   * @brief GridVelocityをコピーする
+   * @param [in] m_gv 格子速度
+   */
+  void copyGridVel(const double* m_gv)
   {
     for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
   }
@@ -232,17 +245,18 @@ public:
 
 class ItrCtl {
 private:
-  int NormType;          /// ノルムの種類
-  int SubType;           /// SKIP LOOP or MASK LOOP
-  int ItrMax;            /// 最大反復数
-  int LinearSolver;      /// 線形ソルバーの種類
-  REAL_TYPE eps;         /// 収束閾値
-  REAL_TYPE omg;         /// 加速/緩和係数
-  REAL_TYPE NormValue;   /// ノルムの値
+  int NormType;          ///< ノルムの種類
+  int SubType;           ///< SKIP LOOP or MASK LOOP
+  int ItrMax;            ///< 最大反復数
+  int LinearSolver;      ///< 線形ソルバーの種類
+  REAL_TYPE eps;         ///< 収束閾値
+  REAL_TYPE omg;         ///< 加速/緩和係数
+  REAL_TYPE NormValue;   ///< ノルムの値
   
 public:
   /** 反復制御リスト */
-  enum itr_cntl_key {
+  enum itr_cntl_key 
+  {
     ic_prs_pr,
     ic_prs_cr,
     ic_vis_cn,
@@ -253,7 +267,8 @@ public:
   
   
   /** 反復法の収束基準種別 */
-  enum norm_type { 
+  enum norm_type 
+  { 
     v_div_max,
     v_div_max_dbg,
     v_div_l2,
@@ -276,6 +291,7 @@ public:
   
   /**　デストラクタ */
   ~ItrCtl() {}
+  
   
 public:
   /** @brief 線形ソルバの種類を返す */
@@ -372,56 +388,60 @@ protected:
 public:
   
   DomainInfo dInfo; ///< 領域情報クラス
-  SubDomain dom;
   
-  // 各種モード　パラメータ
-  typedef struct {
-    unsigned Average;
-    unsigned Buoyancy;
-    unsigned Example;
-    unsigned Helicity;
-    unsigned I2VGT;
-    unsigned Log_Base;
-    unsigned Log_Itr;
-    unsigned Log_Wall;
-    unsigned PDE;
-    unsigned Precision;
-    unsigned Profiling;
-    unsigned PrsNeuamnnType;
-    unsigned ShapeAprx;
-    unsigned Steady;
-    unsigned TP;
-    unsigned VRT;
-    unsigned Wall_profile;
+  /** 各種モード　パラメータ */
+  typedef struct 
+  {
+    int Average;
+    int Buoyancy;
+    int Example;
+    int Helicity;
+    int I2VGT;
+    int Log_Base;
+    int Log_Itr;
+    int Log_Wall;
+    int PDE;
+    int Precision;
+    int Profiling;
+    int PrsNeuamnnType;
+    int ShapeAprx;
+    int Steady;
+    int TP;
+    int VRT;
+    int Wall_profile;
     int Base_Medium;
     int Pshift;
   } Mode_set;
   
-  // 隠しパラメータ
-  typedef struct {
-    unsigned Change_ID;
-    unsigned Range_Limit;
-    unsigned PM_Test;
+  /** 隠しパラメータ */
+  typedef struct 
+  {
+    int Change_ID;
+    int Range_Limit;
+    int PM_Test;
     REAL_TYPE Scaling_Factor;
   } Hidden_Parameter;
   
-  /// File IO control
-  typedef struct {
-    unsigned IO_Input;
-    unsigned IO_Output;
-    unsigned Div_Debug;
+  /** File IO control */
+  typedef struct 
+  {
+    int IO_Input;
+    int IO_Output;
+    int Div_Debug;
   } File_IO_Cntl;
   
-  // LESパラメータ
-  typedef struct {
-    unsigned Calc;
-    unsigned Model;
+  /** LESパラメータ */
+  typedef struct 
+  {
+    int Calc;
+    int Model;
     REAL_TYPE Cs;
     REAL_TYPE damping_factor;
   } LES_Parameter;
   
-  // 初期値
-  typedef struct {
+  /** 初期値 */
+  typedef struct 
+  {
     REAL_TYPE Density;
     REAL_TYPE Energy;
     REAL_TYPE Pressure;
@@ -431,107 +451,121 @@ public:
     REAL_TYPE VecW;
   } Initial_Value;
   
-  // 単位
-  typedef struct {
-    unsigned Param; /// 入力パラメータ単位 (Dimensional/NonDimensional)
-    unsigned File;  /// ファイルの記述単位 (Dimensional/NonDimensional)
-    unsigned Log;   /// 出力ログの単位 (Dimensional/NonDimensional)
-    unsigned Prs;   /// 圧力単位 (Absolute/Gauge)
-    unsigned Temp;  /// 温度単位 (Celsius/Kelvin)
+  /** 単位 */
+  typedef struct 
+  {
+    int Param; /// 入力パラメータ単位 (Dimensional/NonDimensional)
+    int File;  /// ファイルの記述単位 (Dimensional/NonDimensional)
+    int Log;   /// 出力ログの単位 (Dimensional/NonDimensional)
+    int Prs;   /// 圧力単位 (Absolute/Gauge)
+    int Temp;  /// 温度単位 (Celsius/Kelvin)
   } Unit_Def;
   
-  // サンプリング機能
-  typedef struct {
-    unsigned log;       /// ログ出力 (ON / OFF)
-    unsigned out_mode;  /// 出力モード (Gather / Distribute)
-    unsigned unit;      /// 出力単位 (DImensional / NonDimensional)
+  /** サンプリング機能 */
+  typedef struct 
+  {
+    int log;       /// ログ出力 (ON / OFF)
+    int out_mode;  /// 出力モード (Gather / Distribute)
+    int unit;      /// 出力単位 (DImensional / NonDimensional)
   } Sampling_Def;
   
-  // コンポーネントの存在
-  typedef struct {
-    unsigned forcing;
-    unsigned hsrc;
-    unsigned outflow;
-    unsigned periodic;
-    unsigned fraction;
-    unsigned monitor;
+  /** コンポーネントの存在 */
+  typedef struct 
+  {
+    int forcing;
+    int hsrc;
+    int outflow;
+    int periodic;
+    int fraction;
+    int monitor;
   } Ens_of_Compo;
   
-  /// 偏微分方程式の型
-  enum PDE_type {
+  /** 偏微分方程式の型 */
+  enum PDE_type 
+   {
     PDE_NS=1,
     PDE_EULER
   };
   
-  /// 定常性
+  /** 定常性 */
   enum Time_Variation {
     TV_Steady=1,
     TV_Unsteady
   };
   
-  /// 値域の制御　
-  enum Range_Cntl {
+  /** 値域の制御　*/
+  enum Range_Cntl 
+  {
     Range_Normal=1,
     Range_Cutoff
   };
   
-  /// 出力タイミングの指定
-  enum output_mode {
+  /** 出力タイミングの指定 */
+  enum output_mode 
+  {
     IO_normal,
     IO_forced,
     IO_everytime
   };
   
-  /// 流れの計算アルゴリズム
-  enum Algorithm_Flow {
+  /** 流れの計算アルゴリズム */
+  enum Algorithm_Flow 
+  {
     Flow_FS_EE_EE=0,
     Flow_FS_RK_CN,
     Flow_FS_AB2,
     Flow_FS_AB_CN
   };
   
-  /// 温度計算アルゴリズム
-  enum Algorithm_Heat {
+  /** 温度計算アルゴリズム */
+  enum Algorithm_Heat 
+  {
     Heat_EE_EE=1, // Euler Explicit
     Heat_EE_EI    // Euler Explicit + Implicit
   };
   
-  /// 対流項スキーム
-  enum convection_scheme {
+  /** 対流項スキーム */
+  enum convection_scheme 
+  {
     O1_upwind=1,
     O2_central,
     O3_muscl,
     O4_central
   };
   
-  /// TVD limiter
-  enum Limiter_function {
+  /** TVD limiter */
+  enum Limiter_function 
+  {
     No_Limiter,
     MinMod
   };
   
-  /// LES Model
-  enum LES_model {
+  /** LES Model */
+  enum LES_model 
+  {
     Smagorinsky=1,
     Low_Reynolds,
     Dynamic
   };
   
-  /// 壁面の扱い
-  enum Wall_Condition {
+  /** 壁面の扱い */
+  enum Wall_Condition 
+  {
     No_Slip, // 0
     Slip,    // 1
     Log_Law  // 2
   };
   
-  /// ボクセルファイルフォーマット
-  enum Voxel_Type {
+  /** ボクセルファイルフォーマット */
+  enum Voxel_Type 
+  {
     Sphere_SVX=1,
     Sphere_SBX
   };
   
-  /// 並列化モード
-  enum Parallel_mode {
+  /** 並列化モード */
+  enum Parallel_mode 
+  {
     Serial=1,
     OpenMP,
     FlatMPI,
@@ -548,10 +582,10 @@ public:
   int version;    ///< FFVバージョン番号
   
   
-  unsigned  AlgorithmF,
-            AlgorithmH,
-            BasicEqs,
-            CheckParam,
+  int AlgorithmF;
+  int AlgorithmH;
+  int BasicEqs;
+  int CheckParam;
             CnvScheme,
             guide,
             GuideOut,
@@ -851,8 +885,8 @@ protected:
   
   void get_VarRange       ();
   void get_Wall_type      ();
-  void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
-  void printVoxelSize        (unsigned* gs, FILE* fp);
+  void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, int* G_size);
+  void printVoxelSize        (int* gs, FILE* fp);
   void printInitValues       (FILE* fp);
   void printLS               (FILE* fp, ItrCtl* IC);
   void printParaConditions   (FILE* fp);
@@ -862,13 +896,13 @@ protected:
 public:
   
   REAL_TYPE getCellSize(unsigned* m_size);
-  REAL_TYPE OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size);
+  REAL_TYPE OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size);
 	
   void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
 
-  void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size);
-  void printDomain              (FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
-  void printDomainInfo          (FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
+  void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, int* G_size);
+  void printDomain              (FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
+  void printDomainInfo          (FILE* mp, FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
   void printNoCompo             (FILE* fp);
   
   /**
@@ -896,39 +930,39 @@ public:
   
   unsigned countCompo  (CompoList* cmp, unsigned label);
   
-  //@fn unsigned isForcing(void) const
+
   //@brief Forcingコンポーネントがあれば1を返す
-  unsigned isForcing(void) const {
+  int isForcing(void) const {
     return EnsCompo.forcing;
   }
   
-  //@fn unsigned isHsrc(void) const
+
   //@brief Hsrcコンポーネントがあれば1を返す
-  unsigned isHsrc(void) const {
+  int isHsrc(void) const {
     return EnsCompo.hsrc;
   }
   
-  //@fn unsigned isPeriodic(void) const
+
   //@brief 部分周期境界コンポーネントがあれば1を返す
-  unsigned isPeriodic(void) const {
+  int isPeriodic(void) const {
     return EnsCompo.periodic;
   }
 
-  //@fn unsigned isMonitor(void) const
+
   //@brief モニタコンポーネントがあれば1を返す
-  unsigned isMonitor(void) const {
+  int isMonitor(void) const {
     return EnsCompo.monitor;
   }
   
-  //@fn unsigned isOutflow(void) const
+
   //@brief 流出コンポーネントがあれば1を返す
-  unsigned isOutflow(void) const {
+  int isOutflow(void) const {
     return EnsCompo.outflow;
   }
   
-  //@fn unsigned isVfraction(void) const
+
   //@brief 体積率コンポーネントがあれば1を返す
-  unsigned isVfraction(void) const {
+  int isVfraction(void) const {
     return EnsCompo.fraction;
   }
   
@@ -975,7 +1009,7 @@ public:
   void get_DomainInfo();
   
 
-  bool get_SubDomainInfo(unsigned* size);
+  bool get_SubDomainInfo(int* size);
   
   
   /**

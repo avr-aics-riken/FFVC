@@ -11,10 +11,12 @@
 //
 // #################################################################
 
-//@file BndOuter.h
-//@brief FlowBase BoundaryOuter Class Header
-//@author kero
-//@note メンバ変数に追加したら，dataCopy()処理にも加えること
+/** 
+ * @file BndOuter.h
+ * @brief FlowBase BoundaryOuter Class Header
+ * @author kero
+ * @note メンバ変数に追加したら，dataCopy()処理にも加えること
+ */
 
 #include <string>
 #include "FB_Define.h"
@@ -51,25 +53,30 @@ public:
   REAL_TYPE p;       ///< ワーク
   
   /** 周期境界の方向 */
-  enum periodic_dir {
+  enum periodic_dir 
+  {
     prdc_upstream,
     prdc_downstream
   };
   
   /** 周期境界の種類 */
-  enum periodic_kind {
+  enum periodic_kind 
+  {
     prdc_Simple,
     prdc_Directional,
     prdc_Driver
   };
   
   /** 壁面の種類 */
-  enum wall_kind {
+  enum wall_kind 
+  {
     fixed,
     slide
   };
   
-  BoundaryOuter() {
+  /** コンストラクタ */
+  BoundaryOuter() 
+  {
     BCclass = drv_dir = HTref = subType = 0;
     drv_lid = 0;
     mon_ref = pType = v_profile = hType = 0;
@@ -80,37 +87,116 @@ public:
     for (int i=0; i<3; i++) nv[i] = 0.0;
     for (int i=0; i<3; i++) dm[i]=0.0;
   }
+  
+  /**　デストラクタ */
   ~BoundaryOuter() {}
   
 public:
-  int get_Class(void)       const { return BCclass; };
-  int get_DriverDir(void)   const { return drv_dir; };
-  int get_DriverIndex(void) const { return drv_lid; };
-  int get_GuideMedium(void) const { return gc_medium; };
-  int get_HTmodeRef(void)   const { return HTref; };
-  int get_FaceMode(void)    const { return Face_mode; };
-  int get_HTmode(void)      const { return HTmode; };
-  int get_hType(void)       const { return hType; };
-  int get_MonRef(void)      const { return mon_ref; };
-  int get_ofv(void)         const { return subType; };
-  int get_PrdcMode(void)    const { return Prdc_mode; };
-  int get_pType(void)       const { return pType; };
-  int get_Type(void)        const { return subType; };
-  int get_V_Profile(void)   const { return v_profile; };
-  int get_ValidCell(void)   const { return valid_cell; };
+  int get_Class() const
+  { 
+    return BCclass; 
+  }
   
-  REAL_TYPE get_CoefHT(void)   const { return var1; };
-  REAL_TYPE get_Heatflux(void) const { return var1; };
-  REAL_TYPE get_Temp(void)     const { return var1; };
+  int get_DriverDir() const
+  { 
+    return drv_dir;
+  }
   
-  std::string get_Label(void) const { return label; };
-  std::string get_Alias(void) const { return alias; };
+  int get_DriverIndex() const
+  { 
+    return drv_lid; 
+  }
+  
+  int get_GuideMedium() const
+  { 
+    return gc_medium; 
+  }
+  
+  int get_HTmodeRef() const
+  { 
+    return HTref; 
+  }
+  
+  int get_FaceMode() const
+  { 
+    return Face_mode; 
+  }
+  
+  int get_HTmode() const
+  { 
+    return HTmode; 
+  }
+  
+  int get_hType() const
+  { 
+    return hType;
+  }
+  
+  int get_MonRef() const
+  {
+    return mon_ref;
+  }
+  
+  int get_ofv() const
+  { 
+    return subType; 
+  }
+  
+  int get_PrdcMode() const
+  { 
+    return Prdc_mode;
+  }
+  
+  int get_pType() const 
+  { 
+    return pType; 
+  }
+  
+  int get_Type() const 
+  { 
+    return subType; 
+  }
+  
+  int get_V_Profile() const 
+  { 
+    return v_profile; 
+  }
+  int get_ValidCell() const
+  { 
+    return valid_cell;
+  }
+  
+  REAL_TYPE get_CoefHT() const 
+  { 
+    return var1; 
+  }
+  
+  REAL_TYPE get_Heatflux() const
+  {
+    return var1;
+  }
+  
+  REAL_TYPE get_Temp() const 
+  { 
+    return var1; 
+  }
+  
+  std::string get_Label() const 
+  { 
+    return label; 
+  }
+  
+  std::string get_Alias() const 
+  { 
+    return alias;
+  }
   
   //@fn void getDomainV(REAL_TYPE* vv)
   //@brief ローカルのモニタ積算値
   //@ret vv[3] (0-sum, 1-min, 2-max)
   //@param face 外部境界面番号
-  void getDomainV(REAL_TYPE* vv) {
+  void getDomainV(REAL_TYPE* vv) 
+  {
     vv[0] = dm[0];
     vv[1] = dm[1];
     vv[2] = dm[2];

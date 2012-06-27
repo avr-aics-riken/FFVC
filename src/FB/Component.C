@@ -14,12 +14,9 @@
 
 #include "Component.h"
 
-/**
- @fn std::string CompoList::getVarStr(void)
- @brief 変数名を返す
- @retval 変数の文字列
- */
-std::string CompoList::getVarStr(void)
+
+// 変数名を返す
+std::string CompoList::getVarStr()
 {
   std::string var;
   
@@ -41,7 +38,7 @@ std::string CompoList::getVarStr(void)
  @fn std::string CompoList::getBCstr(void)
  @brief BCのラベル名を返す
  */
-std::string CompoList::getBCstr(void)
+std::string CompoList::getBCstr()
 {
   std::string bc;
   if      ( type == ADIABATIC )     bc = "Adiabatic";

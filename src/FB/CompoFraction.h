@@ -59,7 +59,8 @@ public:
    * @param [in] pch    ローカル領域セル幅
    * @param [in] div    サブディビジョンの分割数
    */
-  CompoFraction(const int size[], const int guide, const float pch[], const float org[], const int div) {
+  CompoFraction(const int size[], const int guide, const float pch[], const float org[], const int div)
+  {
     this->size[0]  = size[0];
     this->size[1]  = size[1];
     this->size[2]  = size[2];
@@ -100,43 +101,64 @@ protected:
   void find_index(int* w, const FB::Vec3f p);
   
   
-  /** インデックスを(1,0,0)シフト */
+  /** インデックスを(1,0,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) 
   { 
     return FB::Vec3f(index.x+h, index.y  , index.z  ); 
   }
   
-  /** インデックスを(0,1,0)シフト */
+  /** インデックスを(0,1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) 
   { 
     return FB::Vec3f(index.x  , index.y+h, index.z  ); 
   }
   
-  /** インデックスを(1,1,0)シフト */
+  /** インデックスを(1,1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) 
   { 
     return FB::Vec3f(index.x+h, index.y+h, index.z  ); 
   }
   
-  /** インデックスを(0,0,1)シフト */
+  /** インデックスを(0,0,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) 
   {
     return FB::Vec3f(index.x  , index.y  , index.z+h); 
   }
   
-  /** インデックスを(1,0,1)シフト */
+  /** インデックスを(1,0,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) 
   { 
     return FB::Vec3f(index.x+h, index.y  , index.z+h); 
   }
   
-  /** インデックスを(0,1,1)シフト */
+  /** インデックスを(0,1,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f6 (const FB::Vec3f index, const float h)
   { 
     return FB::Vec3f(index.x  , index.y+h, index.z+h); 
   }
   
-  /** インデックスを(1,1,1)シフト */
+  /** インデックスを(1,1,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
   inline FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) 
   {
     return FB::Vec3f(index.x+h, index.y+h, index.z+h); 
@@ -148,7 +170,8 @@ protected:
    * @param [in/out] mn 比較して小さい成分
    * @param [in]     p  参照ベクトル
    */
-  inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) {
+  inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) 
+  {
     mn.x = (mn.x < p.x) ? mn.x : p.x;
     mn.y = (mn.y < p.y) ? mn.y : p.y;
     mn.z = (mn.z < p.z) ? mn.z : p.z;
@@ -160,7 +183,8 @@ protected:
    * @param [in/out] mx 比較して大きい成分
    * @param [in]     p  参照ベクトル
    */
-  inline void get_max(FB::Vec3f& mx, const FB::Vec3f p) {
+  inline void get_max(FB::Vec3f& mx, const FB::Vec3f p) 
+  {
     mx.x = (mx.x > p.x) ? mx.x : p.x;
     mx.y = (mx.y > p.y) ? mx.y : p.y;
     mx.z = (mx.z > p.z) ? mx.z : p.z;
@@ -275,7 +299,7 @@ public:
   /**
    * @brief 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
    */
-  void get_angle     (void);
+  void get_angle();
   
   
   /**
@@ -287,7 +311,7 @@ public:
    * @param [in] m_width  幅
    * @param [in] m_height 高さ
    */
-  void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height);
+  void setShapeParam(const float m_nv[], const float m_ctr[], const float m_dir[], const float m_depth, const float m_width, const float m_height);
   
   /**
    * @brief 円筒の形状パラメータをセットする
@@ -297,7 +321,7 @@ public:
    * @param [in] m_r_fan  外径
    * @param [in] m_r_boss 内径
    */
-  void setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss=0.0f);
+  void setShapeParam(const float m_nv[], const float m_ctr[], const float m_depth, const float m_r_fan, const float m_r_boss=0.0f);
   
   
   /**
@@ -307,7 +331,7 @@ public:
    * @param [in/out] vf フラクション
    * @param [in/out] flop  浮動小数点演算数
    */
-  void subdivision   (const int st[], const int ed[], float* vf, double& flop);
+  void subdivision(const int st[], const int ed[], float* vf, double& flop);
   
   
   /**
