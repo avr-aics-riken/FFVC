@@ -101,14 +101,8 @@ int DTcntl::set_DT(const double vRef)
 }
 
 
-/**
- @fn bool DTcntl::set_Scheme(const char* str, const double val)
- @brief Δtのスキームを設定する
- @retval 設定の成否
- @param str キーワード
- @param val 値
- @note 現時点では，Δtは一定値のみ
- */
+
+// Δtのスキームを設定する
 bool DTcntl::set_Scheme(const char* str, const double val)
 {
   if ( !str ) return false;
@@ -144,16 +138,9 @@ bool DTcntl::set_Scheme(const char* str, const double val)
 }
 
 
-/**
- @fn void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
- @brief 基本変数をコピー
- @param m_kos ソルバーの種類
- @param m_mode 次元モード
- @param m_dh 無次元格子幅
- @param re レイノルズ数
- @param pe ペクレ数
- */
-void DTcntl::set_Vars(const unsigned m_kos, const unsigned m_mode, const double m_dh, const double re, const double pe)
+
+// 基本変数をコピー
+void DTcntl::set_Vars(const int m_kos, const int m_mode, const double m_dh, const double re, const double pe)
 {
   KOS      = m_kos;
   mode     = m_mode;
@@ -229,13 +216,10 @@ void ReferenceFrame::setV00(const double time, const bool init)
 }
 
 
-/**
- @fn void Control::convertHexCoef(REAL_TYPE* cf, REAL_TYPE Density)
- @brief 熱交換器パラメータの変換（水と水銀）
- @param cf パラメータ値
- @param Density ヘッドの単位
- */
-void Control::convertHexCoef(REAL_TYPE* cf, REAL_TYPE Density)
+
+// 熱交換器パラメータの変換（水と水銀）
+
+void Control::convertHexCoef(REAL_TYPE* cf, const REAL_TYPE Density)
 {
   REAL_TYPE cc[6], s;
   
@@ -250,11 +234,8 @@ void Control::convertHexCoef(REAL_TYPE* cf, REAL_TYPE Density)
   for (int i=0; i<6; i++) cf[i] = cc[i];
 }
 
-/**
- @fn void Control::convertHexCoef(REAL_TYPE* cf)
- @brief 熱交換器パラメータの変換（Pa）
- @param cf パラメータ値
- */
+
+// 熱交換器パラメータの変換（Pa）
 void Control::convertHexCoef(REAL_TYPE* cf)
 {
   REAL_TYPE cc[6], s;
@@ -270,27 +251,21 @@ void Control::convertHexCoef(REAL_TYPE* cf)
   for (int i=0; i<6; i++) cf[i] = cc[i];
 }
 
-/**
- @fn unsigned Control::countCompo(CompoList* cmp, unsigned label)
- @brief labelのコンポーネント数を返す
- @param cmp
- @param label コンポーネントID
- */
-unsigned Control::countCompo(CompoList* cmp, unsigned label)
+
+// labelのコンポーネント数を返す
+int Control::countCompo(CompoList* cmp, const int label)
 {
-  unsigned cnt=0;
-  for (unsigned i=1; i<=NoBC; i++) {
+  int cnt=0;
+  
+  for (int i=1; i<=NoBC; i++) {
     if ( cmp[i].getType() == label ) cnt++;
   }
   return cnt;
 }
 
-/**
- @fn void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
- @brief 制御，計算パラメータ群の表示
- @param mp ファイルポインタ（標準出力）
- @param fp ファイルポインタ（ファイル出力）
- */
+
+
+// 制御，計算パラメータ群の表示
 void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
 {
   printSteerConditions(mp, IC, DT, RF);
@@ -444,12 +419,8 @@ void Control::findCriteria(const string label1, const string label2, const int o
 
 
 
-/**
- @fn REAL_TYPE Control::getCellSize(unsigned* G_size)
- @brief 計算内部領域の全セル数を返す
- @param G_size 計算領域全体の分割数
- */
-REAL_TYPE Control::getCellSize(unsigned* G_size)
+// 計算内部領域の全セル数を返す
+REAL_TYPE Control::getCellSize(const int* G_size)
 {
   return (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
 }
@@ -576,14 +547,16 @@ void Control::get_Solver_Properties()
   // 非定常計算，または定常計算の種別を取得する
   label = "/Steer/Solver_Property/Time_Variation";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
     stamped_printf("\tParsing error : fail to get 'Time_Variation' in 'Solver_Property'\n");
     Exit(0);
   }
   
   if     ( !strcasecmp(str.c_str(), "Steady" ) )    Mode.Steady = TV_Steady;
   else if( !strcasecmp(str.c_str(), "Unsteady" ) )  Mode.Steady = TV_Unsteady;
-  else {
+  else 
+  {
     stamped_printf("\tInvalid keyword is described for 'Time_Variation'\n");
     Exit(0);
   }
@@ -598,8 +571,10 @@ void Control::get_Solver_Properties()
   if (KindOfSolver==SOLID_CONDUCTION) {
     guide = 1;
   }
-  else {
-    switch (CnvScheme) {
+  else 
+  {
+    switch (CnvScheme) 
+    {
       case O1_upwind:
       case O2_central:
         guide = 1;
@@ -617,7 +592,8 @@ void Control::get_Solver_Properties()
   // 平均値の引き戻しオプション
   label = "/Steer/Solver_Property/Pressure_Shift";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
     stamped_printf("\tParsing error : fail to get 'Pressure_Shift' in 'Solver_Property'\n");
 	  Exit(0);
   }
@@ -629,7 +605,8 @@ void Control::get_Solver_Properties()
   else if( !strcasecmp(str.c_str(), "y_plus" ) )  Mode.Pshift = Y_PLUS;
   else if( !strcasecmp(str.c_str(), "z_minus" ) ) Mode.Pshift = Z_MINUS;
   else if( !strcasecmp(str.c_str(), "z_plus" ) )  Mode.Pshift = Z_PLUS;
-  else {
+  else 
+  {
     stamped_printf("\tInvalid keyword is described for 'Pressure_Shift'\n");
     Exit(0);
   }
@@ -1077,7 +1054,7 @@ void Control::get_FileIO()
   }
 
   if     ( !strcasecmp(str.c_str(), "without") )  GuideOut = 0;
-  else if( !strcasecmp(str.c_str(), "with") )     GuideOut = (unsigned)guide;
+  else if( !strcasecmp(str.c_str(), "with") )     GuideOut = guide;
   else {
     stamped_printf("\tInvalid keyword is described for 'Guide_Out'\n");
     Exit(0);
@@ -1390,7 +1367,7 @@ void Control::get_Para_Init()
   
   // Velocity
   REAL_TYPE v[3];
-  for (unsigned n=0; n<3; n++) v[n]=0.0;
+  for (int n=0; n<3; n++) v[n]=0.0;
   
   label="/parameter/Initial_State/Velocity";
 
@@ -1439,7 +1416,7 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
   else if( !strcasecmp(str.c_str(), "translational") ) {
     RF->setFrame(ReferenceFrame::frm_translation);
     REAL_TYPE xyz[3];
-    for (unsigned n=0; n<3; n++) xyz[n]=0.0;
+    for (int n=0; n<3; n++) xyz[n]=0.0;
 
     if( tpCntl->GetVector(label, xyz, 3) )
     {
@@ -1963,7 +1940,7 @@ void Control::get_ChangeID()
     Exit(0);
   }
   else {
-    Hide.Change_ID = (unsigned)ct;
+    Hide.Change_ID = ct;
   }
 }
 
@@ -2124,7 +2101,7 @@ void Control::get_start_condition()
     
     // Velocity
     REAL_TYPE v[3];
-    for (unsigned n=0; n<3; n++) v[n]=0.0;
+    for (int n=0; n<3; n++) v[n]=0.0;
     label="/Steer/Start_condition/Initial_State/Velocity";
     if( !(tpCntl->GetVector(label, v, 3)) )
     {
@@ -2171,7 +2148,7 @@ void Control::get_Polygon()
     stamped_printf("\tParsing error : Invalid char* value in 'Polygon_Info'\n");
     Exit(0);
   }
-  strcpy(PolylibConfigName, str.c_str());
+  PolylibConfigName = str;
   
   // デフォルト媒質番号の指定
   label="/Steer/Polygon_Info/Base_Medium";
@@ -2251,73 +2228,6 @@ void Control::get_DomainInfo()
 }
 
 
-/**
- @fn void Control::get_SubDomainInfo(unsigned* size)
- @brief SubDomainInfoの取得
- */
-bool Control::get_SubDomainInfo(unsigned* size)
-{
-  int ierr = TP_NO_ERROR;
-  string label, value;
-  REAL_TYPE *rvec;
-  int *ivec;
-  
-  string str;
-  string label_base,label_domain,label_leaf;
-  int n1,n2,n3;
-  
-  vector<string> nodes;
-  
-  label_base = "/ActiveSubDomains";
-  if( !tpCntl->chkNode(label_base) )
-  {
-    stamped_printf("\tActiveSubDomains not found \n");
-    return false;
-  }
-  
-  n1=tpCntl->countLabels(label_base);
-  if ( n1 < 0) {
-    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
-    return false;
-  }
-  
-  
-  for (int i1=1; i1<=n1; i1++) {
-    
-    if(!tpCntl->GetNodeStr(label_base,i1,&str)){ //str=domain[@]
-      stamped_printf("\tParsing error : No Leaf Node \n");
-      Exit(0);
-    }
-    
-    label_domain=label_base+"/"+str;//
-    n2=tpCntl->countLabels(label_domain);
-    
-    if ( n2 <= 0) continue;
-    for (int i2=1; i2<=n2; i2++) {
-      
-      if(!tpCntl->GetNodeStr(label_domain,i2,&str)){
-        stamped_printf("\tParsing error : No Leaf Node \n");
-        Exit(0);
-      }
-      
-      label_leaf=label_domain+"/"+str;//
-
-      
-      if(str=="pos"){
-        tpCntl->GetVector(label_leaf,dom.m_pos,3);
-      }
-      
-      if(str=="bcid"){
-        tpCntl->GetVector(label_leaf,dom.m_bcid,6);
-      }
-    }
-  }
-  
-  return true;
-  
-}
-
-
 
 // バージョン情報の取得
 void Control::get_Version()
@@ -2344,24 +2254,17 @@ void Control::get_Version()
 
 
 
-/**
- @fn REAL_TYPE Control::OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size)
- @brief 外部境界の各方向の開口率（流体部分の比率）
- @retval 開口率
- @param dir 方向
- @param area 計算外部領域の各面の開口率
- @param G_Size 計算領域全体の分割数
- */
-REAL_TYPE Control::OpenDomainRatio(const unsigned dir, const REAL_TYPE area, const unsigned* G_size)
+// 外部境界の各方向の開口率（流体部分の比率）
+REAL_TYPE Control::OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size)
 {
   REAL_TYPE r = 0.0;
-  unsigned m_imax, m_jmax, m_kmax;
   
-  m_imax = G_size[0];
-  m_jmax = G_size[1];
-  m_kmax = G_size[2];
+  int m_imax = G_size[0];
+  int m_jmax = G_size[1];
+  int m_kmax = G_size[2];
   
-  switch (dir) {
+  switch (dir) 
+  {
     case X_MINUS:
     case X_PLUS:
       r = area / (REAL_TYPE)(m_jmax*m_kmax) * 100.0;
@@ -2384,15 +2287,8 @@ REAL_TYPE Control::OpenDomainRatio(const unsigned dir, const REAL_TYPE area, con
 
 
 
-/**
- @fn void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size)
- @brief 有効セル数を表示する
- @param fp 出力ファイルポインタ
- @param G_Fcell グローバルなFluid cell
- @param G_Acell グローバルなActive cell
- @param G_size global size
- */
-void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size)
+// 全計算領域の有効セル数と外部境界面の開口率を表示する
+void Control::printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Acell, int* G_size)
 {
   if( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -2404,8 +2300,8 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Effective cells and Open Area of Computational Domain\n\n");
   
-  fprintf(fp,"\tFluid cell  inside whole Computational domain = %15d (%8.4f percent)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
-  fprintf(fp,"\tActive cell                                   = %15d (%8.4f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
+  fprintf(fp,"\tFluid  cell inside whole Computational domain = %15ld (%8.4f percent)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
+  fprintf(fp,"\tActive cell                                   = %15ld (%8.4f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
   
   fprintf(fp,"\n\tFace :      Element (Open ratio)\n");
   for (int i=0; i<NOFACE; i++) {
@@ -2416,64 +2312,76 @@ void Control::printArea(FILE* fp, unsigned G_Fcell, unsigned G_Acell, unsigned* 
 }
 
 
-/**
- @fn void Control::printAreaInfo(FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size)
- @brief 有効セル数を表示する
- @param fp 出力ファイルポインタ
- @param mp 標準出力ファイルポインタ
- @param G_Fcell グローバルなFluid cell
- @param G_Acell グローバルなActive cell
- @param G_size global size
- */
-void Control::printAreaInfo(FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, unsigned* G_size)
-{
-  printArea(mp, G_Fcell, G_Acell, G_size);
-  printArea(fp, G_Fcell, G_Acell, G_size);
-}
 
-/**
- @fn void Control::printDomainInfo(FILE* fp, FILE* mp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
- @brief 領域情報をfp, mpに出力する
- @param fp file pointer
- @param G_size global size
- @param G_org global original point
- @param G_Lbx global bbox of computational domain
- */
-void Control::printDomainInfo(FILE* mp, FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
+// グローバルな領域情報を表示する
+void Control::printGlobalDomain(FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_reg)
 {
-  if ( !fp || !mp ) {
-    stamped_printf("\tFail to write into file\n");
-    Exit(0);
+  REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
+  KB = 1000.0;
+  MB = 1000.0*KB;
+  GB = 1000.0*MB;
+  TB = 1000.0*GB;
+  PB = 1000.0*TB;
+  
+  fprintf(fp,"\timax, jmax, kmax    = %13d %13d %13d     >> ", 
+          G_size[0], 
+          G_size[1], 
+          G_size[2]);
+
+  total = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
+  
+  if ( total > PB ) {
+    fprintf (fp,"%6.2f (P cells)\n", total / PB);
   }
-  printDomain(mp, G_size, G_org, G_Lbx);
-  printDomain(fp, G_size, G_org, G_Lbx);
-}
-
-/**
- @fn void Control::printDomain(FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
- @brief グローバルな領域情報を表示する
- @param fp file pointer
- @param G_size global size
- @param G_org global original point
- @param G_Lbx global bbox of computational domain
- */
-void Control::printDomain(FILE* fp, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx)
-{
-  fprintf(fp,"\timax, jmax, kmax    = %13d %13d %13d     >> ", G_size[0], G_size[1], G_size[2]);
-  printVoxelSize(G_size, fp);
+  else if ( total > TB ) {
+    fprintf (fp,"%6.2f (T cells)\n", total / TB);
+  }
+  else if ( total > GB ) {
+    fprintf (fp,"%6.2f (G cells)\n", total / GB);
+  }
+  else if ( total > MB ) {
+    fprintf (fp,"%6.2f (M cells)\n", total / MB);
+  }
+  else if ( total > KB ) {
+    fprintf (fp,"%6.2f (K cells)\n", total / KB);
+  }
+  else if ( total <= KB ){
+    fprintf (fp,"%6.2f (cells)\n", total);
+  }
   fprintf(fp,"\n");
-  fprintf(fp,"\t(dx, dy, dz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",    dx[0]*RefLength,    dx[1]*RefLength,    dx[2]*RefLength,    dx[0],    dx[1],    dx[2]);
-  fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", G_org[0]*RefLength, G_org[1]*RefLength, G_org[2]*RefLength, G_org[0], G_org[1], G_org[2]);
-  fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", G_Lbx[0]*RefLength, G_Lbx[1]*RefLength, G_Lbx[2]*RefLength, G_Lbx[0], G_Lbx[1], G_Lbx[2]);
+  
+  fprintf(fp,"\t(dx, dy, dz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",    
+          dx[0]*RefLength,    
+          dx[1]*RefLength,    
+          dx[2]*RefLength,    
+          dx[0], 
+          dx[1], 
+          dx[2]);
+  
+  fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
+          G_org[0]*RefLength, 
+          G_org[1]*RefLength, 
+          G_org[2]*RefLength, 
+          G_org[0], 
+          G_org[1], 
+          G_org[2]);
+  
+  fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
+          G_reg[0]*RefLength, 
+          G_reg[1]*RefLength, 
+          G_reg[2]*RefLength, 
+          G_reg[0], 
+          G_reg[1], 
+          G_reg[2]);
   fprintf(fp,"\n");
+  
   fflush(fp);
 }
 
 /**
  @fn void Control::printInitValues(FILE* fp)
  @brief 初期値の表示
- @note
- - Init*には無次元値が保持されている
+ @note Init*には無次元値が保持されている
  @see void Control::setInitialConditions(void)
  */
 void Control::printInitValues(FILE* fp)
@@ -3042,20 +2950,20 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   fprintf(fp,"\n\tLogs\n");
   fprintf(fp,"\t     Unit for Output          :   %s\n", (Unit.Log == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   fprintf(fp,"\t     Base Logs                :   %4s  %s, %s, %s, %s\n", 
-          (Mode.Log_Base == ON)?"ON >":"OFF ", 
-          (Mode.Log_Base == ON)?HistoryName:"", 
-          (Mode.Log_Base == ON)?HistoryCompoName:"", 
-          (Mode.Log_Base == ON)?HistoryDomfxName:"", 
-          (Mode.Log_Base == ON)?HistoryForceName:"");
+          (Mode.Log_Base == ON) ? "ON >" : "OFF ", 
+          (Mode.Log_Base == ON) ? HistoryName.c_str() : "", 
+          (Mode.Log_Base == ON) ? HistoryCompoName.c_str() : "", 
+          (Mode.Log_Base == ON) ? HistoryDomfxName.c_str() : "", 
+          (Mode.Log_Base == ON) ? HistoryForceName.c_str() : "");
   fprintf(fp,"\t     Iteration Log            :   %4s  %s\n", 
-          (Mode.Log_Itr == ON)?"ON >":"OFF ", (Mode.Log_Itr == ON)?HistoryItrName:"");
+          (Mode.Log_Itr == ON)?"ON >":"OFF ", (Mode.Log_Itr == ON) ? HistoryItrName.c_str() : "");
   fprintf(fp,"\t     Profiling report         :   %4s  %s%s\n", 
           (Mode.Profiling != OFF)?"ON >":"OFF ", 
           (Mode.Profiling == DETAIL)? "Detail mode, ":"",
           (Mode.Profiling != OFF)?"profiling.txt":"");
   
   fprintf(fp,"\t     Wall info. Log           :   %4s  %s\n", 
-          (Mode.Log_Wall == ON)?"ON >":"OFF ", (Mode.Log_Wall == ON)?HistoryWallName:"");
+          (Mode.Log_Wall == ON)?"ON >":"OFF ", (Mode.Log_Wall == ON) ? HistoryWallName.c_str() : "");
   
   
   // Intervals
@@ -3271,54 +3179,11 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 
 
 
-/**
- @fn void Control::MemoryRequirement(char* mode, long Memory, long l_memory, FILE* fp)
- @brief メモリ使用量を表示する
- @param mode 処理モード（前処理 or ソルバー）
- @param Memory 必要メモリ量
- @param l_memory local
- */
-void Control::printVoxelSize(unsigned* gs, FILE* fp)
-{
-  if( !fp ) Exit(0);
-  
-  REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
-  KB = 1000.0;
-  MB = 1000.0*KB;
-  GB = 1000.0*MB;
-  TB = 1000.0*GB;
-  PB = 1000.0*TB;
-  
-  total = (REAL_TYPE)gs[0] * (REAL_TYPE)gs[1] * (REAL_TYPE)gs[2];
-  
-  if ( total > PB ) {
-    fprintf (fp,"%6.2f (P cells)\n", total / PB);
-  }
-  else if ( total > TB ) {
-    fprintf (fp,"%6.2f (T cells)\n", total / TB);
-  }
-  else if ( total > GB ) {
-    fprintf (fp,"%6.2f (G cells)\n", total / GB);
-  }
-  else if ( total > MB ) {
-    fprintf (fp,"%6.2f (M cells)\n", total / MB);
-  }
-  else if ( total > KB ) {
-    fprintf (fp,"%6.2f (K cells)\n", total / KB);
-  }
-  else if ( total <= KB ){
-    fprintf (fp,"%6.2f (cells)\n", total);
-  }
-}
-
-
-
 // TPのポインタを受け取る
-bool Control::importTP(TPControl* tp) 
+void Control::importTP(TPControl* tp) 
 { 
-  if ( !tp ) return false;
+  if ( !tp ) Exit(0);
   tpCntl = tp;
-  return true;
 }
 
 
@@ -3326,9 +3191,9 @@ bool Control::importTP(TPControl* tp)
 // 無次元の領域情報をセットする
 void Control::setDomainInfo(const int* m_sz, const REAL_TYPE* m_org, const REAL_TYPE* m_pch, const REAL_TYPE* m_wth)
 {
-  imax = (unsigned)m_sz[0];
-  jmax = (unsigned)m_sz[1];
-  kmax = (unsigned)m_sz[2];
+  imax = m_sz[0];
+  jmax = m_sz[1];
+  kmax = m_sz[2];
   
   dh    = m_pch[0];
   dx[0] = m_pch[0];
@@ -3366,10 +3231,10 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
 {
   REAL_TYPE rho, nyu, cp, lambda, beta, mu, snd_spd=0.0;
   REAL_TYPE c1, c2, c3;
-  unsigned m;
+  int m;
   
   // get reference values
-  for (unsigned n=NoBC+1; n<=NoCompo; n++) {
+  for (int n=NoBC+1; n<=NoCompo; n++) {
     if ( cmp[n].getMatOdr() == RefMat ) {
       m = cmp[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {
@@ -3562,7 +3427,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   for (int n=1; n<=NoBC; n++) {
     if ( cmp[n].getType()==HEX ) {
       m = cmp[n].getMatOdr();
-      for (unsigned i=0; i<6; i++) cf[i] = cmp[n].ca[i];
+      for (int i=0; i<6; i++) cf[i] = cmp[n].ca[i];
       
       // 流量と圧力損失量計算の有次元化の係数
       cmp[n].set_CoefMassflow( RefLength * RefLength * RefVelocity );
@@ -3587,7 +3452,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
         cf[5] *= (1e-3/RefLength);
       }
       
-      for (unsigned i=0; i<6; i++) cmp[n].ca[i] = cf[i];
+      for (int i=0; i<6; i++) cmp[n].ca[i] = cf[i];
     }
     
   }
@@ -3612,7 +3477,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   
   // 外部境界面の圧力の有次元化
   if ( Unit.Param == NONDIMENSIONAL ) {
-    for (unsigned n=0; n<NOFACE; n++) {
+    for (int n=0; n<NOFACE; n++) {
       switch ( BO[n].get_Class() ) {
         case OBC_OUTFLOW:
         case OBC_TRC_FREE:

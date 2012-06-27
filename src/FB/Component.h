@@ -151,6 +151,7 @@ public:
   REAL_TYPE ca[6];          ///< 係数セット a
   REAL_TYPE cb[6];          ///< 係数セット b
   
+  /** コンストラクタ */
   CompoList() {
     element = 0;
     type = variable = attrb = bc_dir = 0;
@@ -176,6 +177,8 @@ public:
     var1 = var2 = var3 = var_m = temp_init = 0.0;
     depth = shp_p1 = shp_p2 = 0.0;
   }
+  
+  /**　デストラクタ */
   ~CompoList() {}
   
 public:
@@ -492,7 +495,7 @@ public:
   
 
   //@brief コンポーネントのBV情報edのアドレスを返す
-  int* getBbox_ed(void) 
+  int* getBbox_ed() 
   { 
     return ed; 
   }

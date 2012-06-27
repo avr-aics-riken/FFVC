@@ -115,11 +115,11 @@ public:
   
   /**
    * @brief Δtのスキームを設定する
-   * @retval 設定の成否
-   * @param [in] str str  キーワード
-   * @param [in] val val  値
+   * @retval エラーコード
+   * @param [in] str  キーワード
+   * @param [in] val  値
    */
-  bool set_Scheme (const char* str, const double val);
+  bool set_Scheme(const char* str, const double val);
   
   
   /**
@@ -182,23 +182,23 @@ public:
   
   
   /**
-   @brief 参照フレームの種類をセットする
-   @param [in] m_frame 参照フレームの種類
+   * @brief 参照フレームの種類をセットする
+   * @param [in] m_frame 参照フレームの種類
    */
   void setFrame(const int m_frame);
   
   
   /**
-   @brief 格子速度成分の単位方向ベクトルをセットする
-   @param [in] m_Gvel 格子速度成分の単位方向ベクトル
+   * @brief 格子速度成分の単位方向ベクトルをセットする
+   * @param [in] m_Gvel 格子速度成分の単位方向ベクトル
    */
   void setGridVel(const double* m_Gvel);
   
   
   /**
-   @brief 参照速度を設定する
-   @param [in] time 時刻（無次元）
-   @param [in] init フラグ
+   * @brief 参照速度を設定する
+   * @param [in] time 時刻（無次元）
+   * @param [in] init フラグ
    */
   void setV00(const double time, const bool init=false);
 
@@ -223,9 +223,9 @@ public:
 
   /** 
    * @brief v00をコピーする
-   * @param [in] m_v0 コピー元
+   * @param [out] m_v0 コピー元
    */
-  void copyV00(const double* m_v0)
+  void copyV00(double* m_v0)
   {
     for (int i=0; i<4; i++) m_v0[i] = v00[i];
   }
@@ -233,9 +233,9 @@ public:
 
   /**
    * @brief GridVelocityをコピーする
-   * @param [in] m_gv 格子速度
+   * @param [out] m_gv 格子速度
    */
-  void copyGridVel(const double* m_gv)
+  void copyGridVel(double* m_gv)
   {
     for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
   }
@@ -572,77 +572,72 @@ public:
     Hybrid
   };
   
-  unsigned long Acell; ///<
-  unsigned long Fcell; ///<
-  unsigned long Wcell; ///<
-  
-  int FB_version; ///< FlowBaseクラスのバージョン番号
-  int NoMedium;   ///< 媒質数
-  int RefMat;     ///< 参照媒質インデクス
-  int version;    ///< FFVバージョン番号
-  
-  
   int AlgorithmF;
   int AlgorithmH;
   int BasicEqs;
   int CheckParam;
-            CnvScheme,
-            guide,
-            GuideOut,
-            imax, jmax, kmax,
-            KindOfSolver,
-            LastStep,
-            Limiter,
-            MarchingScheme,
-            NoBC,
-            NoCompo,
-            NoMediumFluid,
-            NoMediumSolid,
-            NoWallSurface,
-            num_process,
-            num_thread,
-            Parallelism,
-            Restart_step,
-            Start,
-            vxFormat;
+  int CnvScheme;
+  int FB_version; ///< FlowBaseクラスのバージョン番号
+  int guide;
+  int GuideOut;
+  int imax;
+  int jmax; 
+  int kmax;
+  int KindOfSolver;
+  int LastStep;
+  int Limiter;
+  int MarchingScheme;
+  int NoBC;
+  int NoCompo;
+  int NoMedium;   ///< 媒質数
+  int NoMediumFluid;
+  int NoMediumSolid;
+  int NoWallSurface;
+  int num_process;
+  int num_thread;
+  int Parallelism;
+  int RefMat;     ///< 参照媒質インデクス
+  int Restart_step;
+  int Start;
+  int version;    ///< FFVバージョン番号
+  int vxFormat;
 	
-  REAL_TYPE BasePrs,
-            BaseTemp,
-            DiffTemp,
-            dh,
-            Domain_p1,
-            Domain_p2,
-            Eff_Cell_Ratio,
-            dx[3],
-            Gravity,
-            Grashof,
-	          GridVel[3],
-            H_Dface[NOFACE],
-            Lbx[3],
-            Mach,
-            OpenDomain[NOFACE],
-            org[3],
-            Peclet,
-            pitch,
-            PlotIntvl, 
-            Prandtl,
-            Q_Dface[NOFACE],
-            Rayleigh,
-            RefDensity,
-            RefKviscosity,
-            RefLambda,
-            RefLength,
-            RefSoundSpeed,
-            RefSpecificHeat,
-            RefVelocity,
-            RefViscosity,
-            Reynolds,
-            roll,
-            SpecificHeatRatio, 
-            timeflag,
-            Tscale,
-            V_Dface[NOFACE],
-            yaw;
+  REAL_TYPE BasePrs;
+  REAL_TYPE BaseTemp;
+  REAL_TYPE DiffTemp;
+  REAL_TYPE dh;
+  REAL_TYPE Domain_p1;
+  REAL_TYPE Domain_p2;
+  REAL_TYPE dx[3];
+  REAL_TYPE Gravity;
+  REAL_TYPE Grashof;
+	REAL_TYPE GridVel[3];
+  REAL_TYPE H_Dface[NOFACE];
+  REAL_TYPE Lbx[3];
+  REAL_TYPE Mach;
+  REAL_TYPE OpenDomain[NOFACE];
+  REAL_TYPE org[3];
+  REAL_TYPE Peclet;
+  REAL_TYPE pitch;
+  REAL_TYPE PlotIntvl;
+  REAL_TYPE Prandtl;
+  REAL_TYPE Q_Dface[NOFACE];
+  REAL_TYPE Rayleigh;
+  REAL_TYPE RefDensity;
+  REAL_TYPE RefKviscosity;
+  REAL_TYPE RefLambda;
+  REAL_TYPE RefLength;
+  REAL_TYPE RefSoundSpeed;
+  REAL_TYPE RefSpecificHeat;
+  REAL_TYPE RefVelocity;
+  REAL_TYPE RefViscosity;
+  REAL_TYPE Reynolds;
+  REAL_TYPE roll;
+  REAL_TYPE SpecificHeatRatio;
+  REAL_TYPE timeflag;
+  REAL_TYPE Tscale;
+  REAL_TYPE V_Dface[NOFACE];
+  REAL_TYPE yaw;
   
   // struct
   Mode_set          Mode;
@@ -656,10 +651,16 @@ public:
   
   // class
   Interval_Manager  Interval[Interval_Manager::tg_END];
-
-  long TotalMemory;
-  char HistoryName[LABEL], HistoryCompoName[LABEL], HistoryDomfxName[LABEL], HistoryItrName[LABEL], HistoryMonitorName[LABEL];
-  char HistoryWallName[LABEL], PolylibConfigName[LABEL], HistoryForceName[LABEL];
+  
+  string HistoryName;
+  string HistoryCompoName;
+  string HistoryDomfxName;
+  string HistoryItrName;
+  string HistoryMonitorName;
+  string HistoryWallName;
+  string PolylibConfigName;
+  string HistoryForceName;
+  
   string f_Coarse_pressure;
   string f_Coarse_velocity;
   string f_Coarse_temperature;
@@ -682,13 +683,11 @@ public:
   
   /** コンストラクタ */
   Control(){
-    Acell = 0;
     AlgorithmF = 0;
     AlgorithmH = 0;
     BasicEqs = 0;
     CheckParam = 0;
     FB_version = 0;
-    Fcell = 0;
     CnvScheme = 0;
     guide = 0;
     GuideOut = 0;
@@ -711,14 +710,12 @@ public:
     Start = 0;
     version = 0;
     vxFormat = 0;
-    Wcell = 0;
     
     dh = 0.0;
     PlotIntvl = 0.0;
     yaw = pitch = roll = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
     RefVelocity = RefLength = RefDensity = RefSoundSpeed = RefSpecificHeat = RefKviscosity = RefLambda = RefViscosity = 0.0;
-    Eff_Cell_Ratio = 0.0;
     DiffTemp = BaseTemp = BasePrs = 0.0;
     Gravity = Mach = SpecificHeatRatio =  0.0;
     timeflag = Tscale = 0.0;
@@ -737,17 +734,6 @@ public:
     }
     Reynolds = Peclet = 1.0;
     Prandtl = Rayleigh = Grashof = 0.0;
-    
-    memset(HistoryName,  0, sizeof(char)*LABEL);
-    memset(HistoryCompoName,  0, sizeof(char)*LABEL);
-    memset(HistoryDomfxName,  0, sizeof(char)*LABEL);
-    memset(HistoryForceName,  0, sizeof(char)*LABEL);
-		memset(HistoryItrName,  0, sizeof(char)*LABEL);
-    memset(HistoryMonitorName,  0, sizeof(char)*LABEL);
-    memset(HistoryWallName,  0, sizeof(char)*LABEL);
-    memset(PolylibConfigName,  0, sizeof(char)*LABEL);
-
-    TotalMemory = 0;
     
     iv.Density     = 0.0;
     iv.Energy      = 0.0;
@@ -810,18 +796,28 @@ public:
   virtual ~Control() {}
   
 protected:
-  bool getXML_PrsAverage(void);
   
-  void convertHexCoef        (REAL_TYPE* cf);
-  void convertHexCoef        (REAL_TYPE* cf, REAL_TYPE DensityMode);
+  /**
+   * @brief 熱交換器パラメータの変換（Pa）
+   * @param [out] cf パラメータ値
+   */
+  void convertHexCoef(REAL_TYPE* cf);
   
   
   /**
-   @brief 反復の収束判定パラメータを取得
-   @param[in]     label1  Nodeのラベル1
-   @param[in]     label2  Nodeのラベル2
-   @param[in]     order   ItrCtl配列の格納番号
-   @param[in/out] IC      反復制御用クラスの配列
+   * @brief 熱交換器パラメータの変換（水と水銀）
+   * @param [out] cf     パラメータ値
+   * @param [in] Density ヘッドの単位
+   */
+  void convertHexCoef(REAL_TYPE* cf, const REAL_TYPE DensityMode);
+  
+  
+  /**
+   * @brief 反復の収束判定パラメータを取得
+   * @param [in]     label1  Nodeのラベル1
+   * @param [in]     label2  Nodeのラベル2
+   * @param [in]     order   ItrCtl配列の格納番号
+   * @param [in/out] IC      反復制御用クラスの配列
    */
   void findCriteria(const string label1, const string label2, const int order, ItrCtl* IC);
   
@@ -860,8 +856,8 @@ protected:
   
   
   /**
-   @brief スケーリングファクタを取得する（隠しパラメータ）
-   @note 'Scaling_factor'の文字列チェックはしないので注意して使うこと
+   * @brief スケーリングファクタを取得する（隠しパラメータ）
+   * @note 'Scaling_factor'の文字列チェックはしないので注意して使うこと
    */
   void get_Scaling();
   
@@ -872,38 +868,79 @@ protected:
   void get_start_condition();
   
   /**
-   @brief 時間制御に関するパラメータを取得する
-   @param[out] DT DTcntlクラス
-   @note パラメータは，setParameters()で無次元して保持
+   * @brief 時間制御に関するパラメータを取得する
+   * @param [out] DT DTcntlクラス
+   * @note パラメータは，setParameters()で無次元して保持
    */
   void get_Time_Control(DTcntl* DT);
   
   
   /** 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する */
-  void get_Unit           ();
+  void get_Unit();
   
   
-  void get_VarRange       ();
-  void get_Wall_type      ();
-  void printArea             (FILE* fp, unsigned G_Fcell, unsigned G_Acell, int* G_size);
-  void printVoxelSize        (int* gs, FILE* fp);
+  void get_VarRange();
+  void get_Wall_type();
+  
+
+  
+
   void printInitValues       (FILE* fp);
   void printLS               (FILE* fp, ItrCtl* IC);
   void printParaConditions   (FILE* fp);
   void printSteerConditions  (FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
   void setDimParameters      (void);
 
+  
 public:
   
-  REAL_TYPE getCellSize(unsigned* m_size);
+  /**
+   * @brief 計算内部領域の全セル数を返す
+   * @param [in] G_size 計算領域全体の分割数
+   */
+  REAL_TYPE getCellSize(const int* m_size);
+  
+  
+  /**
+   * @brief 外部境界の各方向の開口率（流体部分の比率）
+   * @retval 開口率
+   * @param [in] dir    方向
+   * @param [in] area   計算外部領域の各面の開口率
+   * @param [in] G_size 計算領域全体の分割数
+   */
   REAL_TYPE OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size);
 	
-  void displayParams            (FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
+  
+  /**
+   @brief 制御，計算パラメータ群の表示
+   @param [in] mp ファイルポインタ（標準出力）
+   @param [in] fp ファイルポインタ（ファイル出力）
+   */
+  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
 
-  void printAreaInfo            (FILE* fp, FILE* mp, unsigned G_Fcell, unsigned G_Acell, int* G_size);
-  void printDomain              (FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
-  void printDomainInfo          (FILE* mp, FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
-  void printNoCompo             (FILE* fp);
+  
+  /**
+   * @brief 全計算領域の有効セル数と外部境界面の開口率を表示する
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] G_Fcell グローバルなFluid cell
+   * @param [in] G_Acell グローバルなActive cell
+   * @param [in] G_size  グローバルな分割数
+   */
+  void printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Acell, int* G_size);
+  
+  
+  /**
+   * @brief グローバルな領域情報を表示する
+   * @param [in] fp      ファイルポインタ
+   * @param [in] G_size  グローバルな分割数
+   * @param [in] G_org   グローバルな領域基点
+   * @param [in] G_reg   グローバルな領域サイズ
+   */
+  void printGlobalDomain(FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_reg);
+  
+  
+  void printNoCompo(FILE* fp);
+  
   
   /**
    * @brief 無次元の領域情報をセットする
@@ -917,90 +954,105 @@ public:
   void setDomainInfo(const int* m_sz, const REAL_TYPE* m_org, const REAL_TYPE* m_pch, const REAL_TYPE* m_wth);
   
   
-  void setParameters            (MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
+  void setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
   
   
   /**
    * @brief ノルムのタイプを返す
-   * @param[in] d ノルムの種類
+   * @param [in] d ノルムの種類
    * @retval ノルムのラベル
    */
   string getNormString(const int d);
   
   
-  unsigned countCompo  (CompoList* cmp, unsigned label);
+  /**
+   * @brief labelのコンポーネント数を返す
+   * @param [in] cmp   CompoListクラス
+   * @param [in] label コンポーネントID
+   */
+  int countCompo(CompoList* cmp, const int label);
   
 
   //@brief Forcingコンポーネントがあれば1を返す
-  int isForcing(void) const {
+  int isForcing() const 
+  {
     return EnsCompo.forcing;
   }
   
 
   //@brief Hsrcコンポーネントがあれば1を返す
-  int isHsrc(void) const {
+  int isHsrc() const 
+  {
     return EnsCompo.hsrc;
   }
   
 
   //@brief 部分周期境界コンポーネントがあれば1を返す
-  int isPeriodic(void) const {
+  int isPeriodic() const 
+  {
     return EnsCompo.periodic;
   }
 
 
   //@brief モニタコンポーネントがあれば1を返す
-  int isMonitor(void) const {
+  int isMonitor() const 
+  {
     return EnsCompo.monitor;
   }
   
 
   //@brief 流出コンポーネントがあれば1を返す
-  int isOutflow(void) const {
+  int isOutflow() const 
+  {
     return EnsCompo.outflow;
   }
   
 
   //@brief 体積率コンポーネントがあれば1を返す
-  int isVfraction(void) const {
+  int isVfraction() const 
+  {
     return EnsCompo.fraction;
   }
   
-  //@fn bool isHeatProblem(void) const
+
   //@brief 熱問題かどうかを返す
-  bool isHeatProblem(void) const {
+  bool isHeatProblem() const 
+  {
     return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
   }
   
-  //@fn bool isCDS(void) const
+
   //@brief ソルバーがCDSタイプかどうかを返す
   //@retval CDSであればtrue
-  bool isCDS(void) const {
+  bool isCDS() const 
+  {
     return ( CUT_INFO == Mode.ShapeAprx ) ? true : false;
   }
   
-  //@fn REAL_TYPE getRcpPeclet(void) const
+
   //@brief ペクレ数の逆数を計算
-  REAL_TYPE getRcpPeclet(void) const {
+  REAL_TYPE getRcpPeclet() const 
+  {
     return ( 1.0 / Peclet );
   }
   
-  //@fn REAL_TYPE getRcpReynolds(void) const
+
   //@brief レイノルズ数の逆数を計算
-  REAL_TYPE getRcpReynolds(void) const {
+  REAL_TYPE getRcpReynolds() const 
+  {
     return ( (Mode.PDE == PDE_NS) ? (1.0 / Reynolds) : 0.0 );
   }
 
-  //@fn void normalizeCord(REAL_TYPE x[3])
+
   //@brief 座標値を無次元化する
-  void normalizeCord(REAL_TYPE x[3]) {
+  void normalizeCord(REAL_TYPE x[3]) 
+  {
     x[0] /= RefLength;
     x[1] /= RefLength;
     x[2] /= RefLength;
   }
   
-  
-public:
+
   /** Domainファイル名の取得 */
   string get_DomainFile();
   
@@ -1008,17 +1060,14 @@ public:
   /** グローバルな領域情報を取得 */
   void get_DomainInfo();
   
-
-  bool get_SubDomainInfo(int* size);
-  
   
   /**
    * @brief TPのポインタを受け取る
    */
-  bool importTP(TPControl* tp);
+  void importTP(TPControl* tp);
   
-  void get_Para_Init    (void);
-  void get_Polygon      (void);
+  void get_Para_Init();
+  void get_Polygon();
   
   
   /**  モニタリングのON/OFFとセルモニタの有無のみを取得  */
@@ -1043,13 +1092,6 @@ public:
   
   /** バージョン番号の取得 */
   void get_Version();
-  
-  
-  //for text parser
-protected:
-  //bool get_PrsAverage(void);//未使用ルーチン
-  ////未使用ルーチンget_Polygonからのみコールされている
-  ////const CfgElem* get_Pointer(const char* key, string section);
  
 
 };

@@ -26,15 +26,15 @@ void FileIO::importCPM(cpm_ParaManager* m_paraMngr)
 
 
 // ファイル出力時，発散値を計算する
-void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, const unsigned* size, const unsigned guide, const REAL_TYPE coef, REAL_TYPE& flop)
+void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, const int* size, const int guide, const REAL_TYPE coef, REAL_TYPE& flop)
 {
   if( !dst || !src || !size ) Exit(0);
   
   int sz[3];
-  sz[0] = (int)size[0];
-  sz[1] = (int)size[1];
-  sz[2] = (int)size[2];
-  int gc = (int)guide;
+  sz[0] = size[0];
+  sz[1] = size[1];
+  sz[2] = size[2];
+  int gc = guide;
   REAL_TYPE cf = coef;
   
   fb_mulcpy_ (dst, src, sz, &gc, &cf, &flop);
@@ -43,16 +43,16 @@ void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, const unsigned* size, const
 
 
 // 全圧データについて，無次元から有次元単位に変換する
-void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, const unsigned* size, const unsigned guide, 
+void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, const int* size, const int guide, 
                          const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop)
 {
   if( !dst || !src || !size ) Exit(0);
   
   int sz[3];
-  sz[0] = (int)size[0];
-  sz[1] = (int)size[1];
-  sz[2] = (int)size[2];
-  int gc = (int)guide;
+  sz[0] = size[0];
+  sz[1] = size[1];
+  sz[2] = size[2];
+  int gc = guide;
   
   REAL_TYPE cf = Ref_rho*Ref_v*Ref_v;
   
@@ -61,14 +61,13 @@ void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, const unsigned* size, c
 
 
 // sphファイルの書き出し（内部領域のみ）
-void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsigned gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const unsigned m_ModePrecision)
+void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* size, const int gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)
 {
   int sz, dType, stp, svType;
   int ix, jx, kx, i, j, k;
-  unsigned long l, nx;
   REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
   long long szl[3], stpl;
-  unsigned m;
+  
   
   char sph_fname[512];
   
@@ -87,7 +86,9 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   ix = size[0]; //+2*gc;
   jx = size[1]; //+2*gc;
   kx = size[2]; //+2*gc;
-  nx = ix * jx * kx;
+  
+  size_t nx = ix * jx * kx;
+  
   ox = org[0]; //-ddx[0]*(REAL_TYPE)gc;
   oy = org[1]; //-ddx[1]*(REAL_TYPE)gc;
   oz = org[2]; //-ddx[2]*(REAL_TYPE)gc;
@@ -104,6 +105,8 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   REAL_TYPE *f = new REAL_TYPE[nx];
   
+  size_t m, l;
+  
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
@@ -116,7 +119,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   // data property
   ( m_ModePrecision == FP_SINGLE ) ? dType=1 : dType=2;
-  sz = sizeof(unsigned)*2;
+  sz = sizeof(int)*2;
   ofs.write( (char*)&sz, sizeof(int) );
   ofs.write( (char*)&svType, sizeof(int) );
   ofs.write( (char*)&dType, sizeof(int) );
@@ -124,11 +127,11 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
   
   // voxel size
   if (dType == 1) {
-    sz = sizeof(unsigned)*3;
+    sz = sizeof(int)*3;
     ofs.write( (char*)&sz, sizeof(int) );
-    ofs.write( (char*)&ix, sizeof(unsigned) );
-    ofs.write( (char*)&jx, sizeof(unsigned) );
-    ofs.write( (char*)&kx, sizeof(unsigned) );
+    ofs.write( (char*)&ix, sizeof(int) );
+    ofs.write( (char*)&jx, sizeof(int) );
+    ofs.write( (char*)&kx, sizeof(int) );
     ofs.write( (char*)&sz, sizeof(int) );
   }
   else {
@@ -214,12 +217,12 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const unsigned* size, const unsign
 // 圧力のファイルをロードする
 void FileIO::readPressure(FILE* fp,
                           const std::string fname,
-                          const unsigned* size,
-                          const unsigned gc,
+                          int* size,
+                          int gc,
                           REAL_TYPE* p,
                           int& step,
                           REAL_TYPE& time,
-                          const unsigned Dmode,
+                          const int Dmode,
                           const REAL_TYPE BasePrs,
                           const REAL_TYPE RefDensity,
                           const REAL_TYPE RefVelocity,
@@ -245,7 +248,7 @@ void FileIO::readPressure(FILE* fp,
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
   
-  fb_read_sph_s_ (p, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  fb_read_sph_s_ (p, size, &gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
   
   if ( !mode ) {
     if ( (step_avr == 0) || (time_avr <= 0.0) ) {
@@ -284,13 +287,13 @@ void FileIO::readPressure(FILE* fp,
 // 速度のファイルをロードする
 void FileIO::readVelocity(FILE* fp, 
                           const std::string fname,
-                          const unsigned* size, 
-                          const unsigned gc, 
+                          int* size, 
+                          int gc, 
                           REAL_TYPE* v, 
                           int& step, 
                           REAL_TYPE& time, 
                           const REAL_TYPE *v00, 
-                          const unsigned Dmode, 
+                          const int Dmode, 
                           const REAL_TYPE RefVelocity, 
                           REAL_TYPE& flop, 
                           const int guide_out,
@@ -312,7 +315,7 @@ void FileIO::readVelocity(FILE* fp,
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
   
-  fb_read_sph_v_ (v, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  fb_read_sph_v_ (v, size, &gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
   
   if ( !mode ) {
     if ( (step_avr == 0) || (time_avr <= 0.0) ) {
@@ -329,7 +332,7 @@ void FileIO::readVelocity(FILE* fp,
   u0[2] = v00[2];
   u0[3] = v00[3];
 
-  fb_shift_refv_in_(v, (int*)size, (int*)&gc, u0, &scale, &refv, &flop);
+  fb_shift_refv_in_(v, size, &gc, u0, &scale, &refv, &flop);
 
   if ( mode ) {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -348,12 +351,12 @@ void FileIO::readVelocity(FILE* fp,
 // 温度のファイルをロードする
 void FileIO::readTemperature(FILE* fp, 
                              const std::string fname,
-                             const unsigned* size, 
-                             const unsigned gc, 
+                             int* size, 
+                             int gc, 
                              REAL_TYPE* t, 
                              int& step, 
                              REAL_TYPE& time, 
-                             const unsigned Dmode, 
+                             const int Dmode, 
                              const REAL_TYPE Base_tmp, 
                              const REAL_TYPE Diff_tmp, 
                              const REAL_TYPE Kelvin, 
@@ -377,7 +380,7 @@ void FileIO::readTemperature(FILE* fp,
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
   
-  fb_read_sph_s_ (t, (int*)size, (int*)&gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  fb_read_sph_s_ (t, size, &gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
   if ( !mode ) {
     if ( (step_avr == 0) || (time_avr <= 0.0) ) {
       Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
@@ -412,8 +415,8 @@ void FileIO::readTemperature(FILE* fp,
 
 // スカラーファイルを出力する
 void FileIO::writeScalar(const std::string fname, 
-                         const unsigned* size, 
-                         const unsigned gc,
+                         int* size, 
+                         int gc,
                          REAL_TYPE* s, 
                          const int step, 
                          const REAL_TYPE time, 
@@ -452,15 +455,15 @@ void FileIO::writeScalar(const std::string fname,
   REAL_TYPE tm_a = time_avr;
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_s_ (s, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
+  fb_write_sph_s_ (s, size, &gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
   
 }
 
 
 // ベクトルファイルを出力する
 void FileIO::writeVector(const std::string fname, 
-                         const unsigned* size, 
-                         const unsigned gc, 
+                         int* size, 
+                         int gc, 
                          REAL_TYPE* v, 
                          const int step, 
                          const REAL_TYPE time, 
@@ -498,7 +501,7 @@ void FileIO::writeVector(const std::string fname,
   REAL_TYPE tm_a = time_avr;
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
-  fb_write_sph_v_ (v, (int*)size, (int*)&gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
+  fb_write_sph_v_ (v, size, &gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
 
 }
 

@@ -91,6 +91,7 @@ public:
   /**　デストラクタ */
   ~BoundaryOuter() {}
   
+  
 public:
   int get_Class() const
   { 
@@ -161,6 +162,7 @@ public:
   { 
     return v_profile; 
   }
+  
   int get_ValidCell() const
   { 
     return valid_cell;
@@ -191,15 +193,13 @@ public:
     return alias;
   }
   
-  //@fn void getDomainV(REAL_TYPE* vv)
-  //@brief ローカルのモニタ積算値
-  //@ret vv[3] (0-sum, 1-min, 2-max)
-  //@param face 外部境界面番号
-  void getDomainV(REAL_TYPE* vv) 
+  /**
+   * @brief ローカルのモニタ積算値
+   * @return dm[] (0-sum, 1-min, 2-max)
+   */
+  REAL_TYPE* getDomainV() 
   {
-    vv[0] = dm[0];
-    vv[1] = dm[1];
-    vv[2] = dm[2];
+    return dm;
   }
   
   void addVec         (REAL_TYPE* vec);

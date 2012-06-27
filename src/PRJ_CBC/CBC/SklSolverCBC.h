@@ -95,7 +95,7 @@ public:
   int para_key;
   unsigned long G_Fcell, G_Acell, G_Wcell;
   unsigned G_size[3];
-  REAL_TYPE G_Lbx[3], G_org[3];
+  REAL_TYPE G_reg[3], G_org[3];
   
   // 全領域の分割数
   int num_div_domain[3];

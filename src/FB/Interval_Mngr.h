@@ -23,11 +23,11 @@
 
 class Interval_Manager {
 protected:
-  unsigned id;         ///< 管理対象を表すID
-  unsigned mode;       ///< 出力指定モード
-  unsigned intvl_step; ///< ステップ数指定のインターバル
-  unsigned next_step;  ///< ステップ数指定の場合の次の出力ステップ
-  unsigned m_count;    ///< セッション内のインターバル数のカウント
+  int id;         ///< 管理対象を表すID
+  int mode;       ///< 出力指定モード
+  int intvl_step; ///< ステップ数指定のインターバル
+  int next_step;  ///< ステップ数指定の場合の次の出力ステップ
+  int m_count;    ///< セッション内のインターバル数のカウント
   double   intvl_tm;   ///< 時刻指定のインターバル（無次元） tg_avstartの場合には，スタート開始時刻として扱う
   double   next_tm;    ///< 時刻指定の場合の次の出力時刻（無次元）
   double   delta_t;    ///< 時間積分幅（無次元）
@@ -79,7 +79,7 @@ public:
    * @param [in] m_id   管理対象を示すID
    * @param [in] tscale タイムスケール(デフォルト 0.0)
    */
-  bool initTrigger(const unsigned stp, const double tm, const double m_dt, const unsigned m_id, const double tscale=0.0);
+  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale=0.0);
   
   
   /**
@@ -88,9 +88,8 @@ public:
    * @param [in] stp    現在ステップ
    * @param [in] tm     現時刻
    * @param [in] d_flag 表示用フラグ（デバッグ）
-   * @note 指定時刻を過ぎて，かつ1時刻前が指定時刻に満たない場合が出力タイミング
    */
-  bool isTriggered(const unsigned stp, const double tm, bool d_flag=false);
+  bool isTriggered(const int stp, const double tm, bool d_flag=false);
  
   
   /**
@@ -137,7 +136,7 @@ public:
   
 
   /** インターバル（ステップ）を返す */
-  unsigned getIntervalStep() const 
+  int getIntervalStep() const 
   {
     return intvl_step;
   }

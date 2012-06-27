@@ -18,6 +18,7 @@
  */
 
 #include <math.h>
+#include <cstdio>
 
 #include "cpm_Define.h"
 #include "cpm_ParaManager.h"

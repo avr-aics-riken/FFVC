@@ -103,7 +103,7 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
 
 
 // 領域情報を設定する
-void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL_TYPE m_wth[3], REAL_TYPE m_pch[3])
+void IP_Sphere::setDomain(Control* R, const int* sz, const REAL_TYPE* m_org, REAL_TYPE* m_reg, const REAL_TYPE* m_pch)
 {
   pch = m_pch;
   org = m_org;
@@ -115,13 +115,13 @@ void IP_Sphere::setDomain(Control* R, unsigned m_sz[3], REAL_TYPE m_org[3], REAL
   }
   
   // 領域サイズ
-  wth.x = pch.x * (float)m_sz[0];
-  wth.y = pch.y * (float)m_sz[1];
-  wth.z = pch.z * (float)m_sz[2];
+  wth.x = pch.x * (float)size[0];
+  wth.y = pch.y * (float)size[1];
+  wth.z = pch.z * (float)size[2];
   
-  m_wth[0] = wth.x;
-  m_wth[1] = wth.y;
-  m_wth[2] = wth.z;
+  m_reg[0] = wth.x;
+  m_reg[1] = wth.y;
+  m_reg[2] = wth.z;
 
 }
 
@@ -133,12 +133,16 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
   FB::Vec3f q = (p-ol)/pch;
   FB::Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
   
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  
   if ( idx.x < 1 ) idx.x = 1;
   if ( idx.y < 1 ) idx.y = 1;
   if ( idx.z < 1 ) idx.z = 1;
-  if ( idx.x > (int)imax ) idx.x = (int)imax;
-  if ( idx.y > (int)jmax ) idx.y = (int)jmax;
-  if ( idx.z > (int)kmax ) idx.z = (int)kmax;
+  if ( idx.x > imax ) idx.x = imax;
+  if ( idx.y > jmax ) idx.y = jmax;
+  if ( idx.z > kmax ) idx.z = kmax;
 
   return idx;
 }
@@ -147,12 +151,11 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 // 計算領域のセルIDを設定する
 void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int i,j,k, gd;
   int mid_fluid=1;        /// 流体
   int mid_solid=2;        /// 固体
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
-  unsigned m;
+
   REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
@@ -171,6 +174,14 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   ox_g = G_org[0];
   oy_g = G_org[1];
   oz_g = G_org[2];
+  
+  size_t m;
+  
+  // ローカルにコピー
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  int gd = guide;
 
   //printf("%d : ox = %e, oy = %e, oz = %e\n", pn.myrank, org_l.x, org_l.y, org_l.z);
   //printf("%d : Lx = %e, Ly = %e, Lz = %e\n", pn.myrank, Lx, Ly, Lz);
@@ -186,23 +197,23 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   //printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", pn.myrank, box_ed.x, box_ed.y, box_ed.z);
   
   // 媒質設定
-  unsigned m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
+  size_t m_nx = (imax+2*gd) * (jmax+2*gd) * (kmax+2*gd);
   
-  for (unsigned n=0; n<m_nx; n++) { 
+  for (size_t n=0; n<m_nx; n++) { 
     mid[n] = mid_fluid;
   }
   
   // 球内部
-  for (k=box_st.z; k<=box_ed.z; k++) { 
-    for (j=box_st.y; j<=box_ed.y; j++) {
-      for (i=box_st.x; i<=box_ed.x; i++) {
+  for (int k=box_st.z; k<=box_ed.z; k++) { 
+    for (int j=box_st.y; j<=box_ed.y; j++) {
+      for (int i=box_st.x; i<=box_ed.x; i++) {
         
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
         b = org_l + base*ph;
         r = b.length();
         
         if ( r <= rs ) {
-          m = FBUtility::getFindexS3D(size, guide, i, j, k);
+          m = FBUtility::getFindexS3D(size, gd, i, j, k);
           mid[m] = mid_solid;
         }
       }
@@ -221,9 +232,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i, j, k);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
@@ -234,10 +245,12 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   
   // ドライバの下流面にIDを設定
   if ( drv_length > 0.0 ) {
-    unsigned m1;
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    
+    size_t m1;
+    
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i,   j, k);
           m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
@@ -249,9 +262,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   }
   
   // ステップ部分を上書き
-  for (k=1; k<=(int)kmax; k++) {
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  for (int k=1; k<=kmax; k++) {
+    for (int j=1; j<=jmax; j++) {
+      for (int i=1; i<=imax; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
@@ -268,12 +281,11 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
 // 計算領域のセルIDとカット情報を設定する
 void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut)
 {
-  int i,j,k, gd;
   int mid_fluid=1;        /// 流体
   int mid_solid=2;        /// 固体
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
-  unsigned m;
+
   REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
@@ -289,7 +301,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   Ly = R->Lbx[1];
   Lz = R->Lbx[2];
   dh = R->dh;
-  gd = (int)guide;
+
   ox_g = G_org[0];
   oy_g = G_org[1];
   oz_g = G_org[2];
@@ -300,25 +312,32 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   box_st = find_index(box_min, org_l);
   box_ed = find_index(box_max, org_l);
 
+  size_t m;
+  
+  // ローカルにコピー
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  int gd = guide;
   
   // 媒質設定
-  unsigned m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
+  size_t m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
   
-  for (unsigned n=0; n<m_nx; n++) { 
+  for (size_t n=0; n<m_nx; n++) { 
     mid[n] = mid_fluid;
   }
   
   // 球内部
-  for (k=box_st.z; k<=box_ed.z; k++) { 
-    for (j=box_st.y; j<=box_ed.y; j++) {
-      for (i=box_st.x; i<=box_ed.x; i++) {
+  for (int k=box_st.z; k<=box_ed.z; k++) { 
+    for (int j=box_st.y; j<=box_ed.y; j++) {
+      for (int i=box_st.x; i<=box_ed.x; i++) {
        
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
         b = org_l + base*ph;
         r = b.length();
         
         if ( r <= rs ) {
-          m = FBUtility::getFindexS3D(size, guide, i, j, k);
+          m = FBUtility::getFindexS3D(size, gd, i, j, k);
           mid[m] = mid_solid;
         }
       }
@@ -329,9 +348,9 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   FB::Vec3f p[7];
   float lb[7], s, r_min=10.0, r_max=0.0;
   
-  for (k=box_st.z; k<=box_ed.z; k++) { 
-    for (j=box_st.y; j<=box_ed.y; j++) {
-      for (i=box_st.x; i<=box_ed.x; i++) {
+  for (int k=box_st.z; k<=box_ed.z; k++) { 
+    for (int j=box_st.y; j<=box_ed.y; j++) {
+      for (int i=box_st.x; i<=box_ed.x; i++) {
         
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
         b = org + base*ph;
@@ -378,9 +397,9 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i, j, k);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
@@ -391,10 +410,12 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   
   // ドライバの下流面にIDを設定
   if ( drv_length > 0.0 ) {
-    unsigned m1;
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    
+    size_t m1;
+    
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i,   j, k);
           m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
@@ -406,9 +427,9 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   }
 
   // ステップ部分を上書き
-  for (k=1; k<=(int)kmax; k++) {
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  for (int k=1; k<=kmax; k++) {
+    for (int j=1; j<=jmax; j++) {
+      for (int i=1; i<=imax; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);

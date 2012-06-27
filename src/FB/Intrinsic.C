@@ -86,9 +86,9 @@ void Intrinsic::printPara(FILE* fp, Control* R)
 void Intrinsic::setControlVars(Control* R)
 {
   guide          = R->guide;
-  imax = size[0] = R->imax;
-  jmax = size[1] = R->jmax;
-  kmax = size[2] = R->kmax;
+  size[0] = R->imax;
+  size[1] = R->jmax;
+  size[2] = R->kmax;
   RefL = R->RefLength;
 }
 
@@ -103,9 +103,9 @@ void Intrinsic::setControlVars(Control* R)
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
 
-  int      nx, sz, i,j,k;
-  unsigned ix, jx, kx, m, l;
-  float    ox, oy, oz, dx, dy, dz;
+  int    sz, ix, jx, kx;
+  size_t m, l;
+  float  ox, oy, oz, dx, dy, dz;
 
   char svx_fname[512];
 
@@ -120,10 +120,16 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
     Exit(0);
   }
 
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  
   ix = imax+2;  // +2 means guide cell for IP model
   jx = jmax+2;
   kx = kmax+2;
-  nx = (int)ix*jx*kx;
+  
+  size_t nx = ix*jx*kx;
+  
   dx = (float)R->dx[0]*RefL;
   dy = (float)R->dx[1]*RefL;
   dz = (float)R->dx[2]*RefL;
@@ -136,10 +142,10 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
   float *f = new float[nx];
   int   *q = new int[nx];
 
-  for (k=0; k<=(int)(kmax+1); k++) {
-    for (j=0; j<=(int)(jmax+1); j++) {
-      for (i=0; i<=(int)(imax+1); i++) {
-        l = (unsigned)(ix*jx*k + ix*j + i);
+  for (int k=0; k<=(kmax+1); k++) {
+    for (int j=0; j<=(jmax+1); j++) {
+      for (int i=0; i<=(imax+1); i++) {
+        l = (size_t)(ix*jx*k + ix*j + i);
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         q[l] = id[m];
         f[l] = (float)vf[m];
@@ -148,11 +154,11 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
   }
 
   // voxel size
-  sz = sizeof(unsigned)*3;
+  sz = sizeof(int)*3;
   ofs.write( (char*)&sz, sizeof(int) );
-  ofs.write( (char*)&ix, sizeof(unsigned) );
-  ofs.write( (char*)&jx, sizeof(unsigned) );
-  ofs.write( (char*)&kx, sizeof(unsigned) );
+  ofs.write( (char*)&ix, sizeof(int) );
+  ofs.write( (char*)&jx, sizeof(int) );
+  ofs.write( (char*)&kx, sizeof(int) );
   ofs.write( (char*)&sz, sizeof(int) );
 
   // original point of domain
@@ -206,9 +212,9 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 void Intrinsic::writeSVX(int *id, Control* R)
 {
   
-  int      nx, sz, i,j,k;
-  unsigned ix, jx, kx, m, l;
-  float    ox, oy, oz, dx, dy, dz;
+  int   sz, ix, jx, kx;
+  size_t m, l;
+  float ox, oy, oz, dx, dy, dz;
   
   char svx_fname[512];
   
@@ -223,10 +229,16 @@ void Intrinsic::writeSVX(int *id, Control* R)
     Exit(0);
   }
   
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  
   ix = imax+2;  // +2 means guide cell for IP model
   jx = jmax+2;
   kx = kmax+2;
-  nx = (int)ix*jx*kx;
+  
+  size_t nx = (size_t)(ix*jx*kx);
+  
   dx = (float)R->dx[0]*RefL;
   dy = (float)R->dx[1]*RefL;
   dz = (float)R->dx[2]*RefL;
@@ -238,10 +250,10 @@ void Intrinsic::writeSVX(int *id, Control* R)
   
   int   *q = new int[nx];
   
-  for (k=0; k<=(int)(kmax+1); k++) {
-    for (j=0; j<=(int)(jmax+1); j++) {
-      for (i=0; i<=(int)(imax+1); i++) {
-        l = (unsigned)(ix*jx*k + ix*j + i);
+  for (int k=0; k<=(kmax+1); k++) {
+    for (int j=0; j<=(jmax+1); j++) {
+      for (int i=0; i<=(imax+1); i++) {
+        l = (size_t)(ix*jx*k + ix*j + i);
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         q[l] = id[m];
       }
@@ -249,11 +261,11 @@ void Intrinsic::writeSVX(int *id, Control* R)
   }
   
   // voxel size
-  sz = sizeof(unsigned)*3;
+  sz = sizeof(int)*3;
   ofs.write( (char*)&sz, sizeof(int) );
-  ofs.write( (char*)&ix, sizeof(unsigned) );
-  ofs.write( (char*)&jx, sizeof(unsigned) );
-  ofs.write( (char*)&kx, sizeof(unsigned) );
+  ofs.write( (char*)&ix, sizeof(int) );
+  ofs.write( (char*)&jx, sizeof(int) );
+  ofs.write( (char*)&kx, sizeof(int) );
   ofs.write( (char*)&sz, sizeof(int) );
   
   // original point of domain

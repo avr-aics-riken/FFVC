@@ -39,8 +39,8 @@ protected:
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
   REAL_TYPE rho, nyu, cp, lambda, beta;
   
-  unsigned imax, jmax, kmax, guide, size[3];
-  unsigned Example, NoBC, Unit_Temp, Unit_Prs;
+  int imax, jmax, kmax, guide, size[3];
+  int Example, NoBC, Unit_Temp, Unit_Prs;
   bool     inout_flag, isCDS;
   
   BoundaryOuter   obc[NOFACE];

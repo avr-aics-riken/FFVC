@@ -44,15 +44,15 @@ private:
   REAL_TYPE RefLength, BasePrs;
   REAL_TYPE rho, nyu, cp, lambda, beta; // 無次元化の参照値
 
-  unsigned ix, jx, kx, guide;
-  unsigned KindOfSolver;
-  unsigned NoCompo;
-  unsigned NoBC;        // LocalBCの数
-  unsigned Unit_Param;
-  unsigned monitor;
-  unsigned Unit_Temp;
-  unsigned Unit_Prs;
-  unsigned Mode_Gradp;
+  int ix, jx, kx, guide;
+  int KindOfSolver;
+  int NoCompo;
+  int NoBC;        ///< LocalBCの数
+  int Unit_Param;
+  int monitor;
+  int Unit_Temp;
+  int Unit_Prs;
+  int Mode_Gradp;
   
   bool HeatProblem;
   bool isCDS;
@@ -60,7 +60,7 @@ private:
   CompoList*     compo;      ///< コンポーネントテーブル
   BoundaryOuter* bc;         ///< 外部境界条件テーブル
   BoundaryOuter* BaseBc;     ///< テンポラリのテーブル
-  MediumList* mat;
+  MediumList* mat;           ///< 媒質情報テーブル
   MediumTableInfo *MTITP;    ///< Medium Table <--- textparser
   cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
 
@@ -93,8 +93,8 @@ public:
   
 private:
   bool chkDuplicate       (const int n, const std::string m_label);
-  bool isComponent        (unsigned label);
-  bool isCompoTransfer    (unsigned label);
+  bool isComponent        (int label);
+  bool isCompoTransfer    (int label);
 
   int get_Vel_profile     (const std::string label_base);
   
@@ -142,44 +142,50 @@ private:
   void get_OBC_Wall       (const std::string label_base, const int n);
   void getUnitVec         (REAL_TYPE* v);
   void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
-  void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int face);
+  void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int face);
   void set_Deface         (const std::string label_base, const int n);
   
   std::string getOBCstr   (const int id);
   
-  //@fn int getCmpGbbox_st_x(unsigned odr, int* gci)
+
   //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_st_x(unsigned odr, int* gci) {
+  int getCmpGbbox_st_x(int odr, int* gci) 
+  {
     return ( gci[6*odr+0] );
   }
   
-  //@fn int getCmpGbbox_st_y(unsigned odr, int* gci)
+
   //@brief コンポーネントのBbox情報st_yを返す
-  int getCmpGbbox_st_y(unsigned odr, int* gci) {
+  int getCmpGbbox_st_y(int odr, int* gci) 
+  {
     return ( gci[6*odr+1] );
   }
   
-  //@fn int getCmpGbbox_st_z(unsigned odr, int* gci)
+
   //@brief コンポーネントのBbox情報st_zを返す
-  int getCmpGbbox_st_z(unsigned odr, int* gci) {
+  int getCmpGbbox_st_z(int odr, int* gci) 
+  {
     return ( gci[6*odr+2] );
   }
   
-  //@fn int getCmpGbbox_ed_x(unsigned odr, int* gci)
+
   //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_ed_x(unsigned odr, int* gci) {
+  int getCmpGbbox_ed_x(int odr, int* gci) 
+  {
     return ( gci[6*odr+3] );
   }
   
-  //@fn int getCmpGbbox_ed_y(unsigned odr, int* gci)
+
   //@brief コンポーネントのBbox情報ed_yを返す
-  int getCmpGbbox_ed_y(unsigned odr, int* gci) {
+  int getCmpGbbox_ed_y(int odr, int* gci) 
+  {
     return ( gci[6*odr+4] );
   }
   
-  //@fn int getCmpGbbox_ed_z(unsigned odr, int* gci)
+
   //@brief コンポーネントのBbox情報ed_zを返す
-  int getCmpGbbox_ed_z(unsigned odr, int* gci) {
+  int getCmpGbbox_ed_z(int odr, int* gci) 
+  {
     return ( gci[6*odr+5] );
   }
   
@@ -198,16 +204,15 @@ private:
   
   
 public:
-  bool isIDinCompo        (int candidate, unsigned now);
-  bool isIDinCompo        (int candidate, int def, unsigned now);
+  bool isIDinCompo        (int candidate, int now);
+  bool isIDinCompo        (int candidate, int def, int now);
   
   
   /**
    * @brief TPのポインタを受け取る
    * @param [in] tp  TPControlクラスのポインタ
-   * @return エラーコード
    */
-  bool importTP(TPControl* tp);
+  void importTP(TPControl* tp);
   
   
   /** CPMlibのポインタをセット 
@@ -216,17 +221,17 @@ public:
   void importCPM(cpm_ParaManager* m_paraMngr);
   
   
-  int getNoLocalBC        (void);
+  int getNoLocalBC        ();
   
-  void chkBCconsistency   (unsigned kos);
+  void chkBCconsistency   (int kos);
   void countMedium        (Control* Cref);
-  void get_Phase          (void);
-  void get_Medium_InitTemp(void);
-  void loadBC_Local        (Control* C);
-  void loadBC_Outer        (void);
+  void get_Phase          ();
+  void get_Medium_InitTemp();
+  void loadBC_Local       (Control* C);
+  void loadBC_Outer       ();
   void setMediumPoint     (MediumTableInfo *m_MTITP);
   void printCompo         (FILE* fp, REAL_TYPE* nv, int* ci, MediumList* mat);
-  void printFaceOBC       (FILE* fp, REAL_TYPE* G_Lbx);
+  void printFaceOBC       (FILE* fp, REAL_TYPE* G_reg);
   void receiveCompoPtr    (CompoList* CMP);
   void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
   void setRefMedium       (MediumList* mat, Control* Cref);

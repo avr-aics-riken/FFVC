@@ -54,23 +54,22 @@ protected:
   cpm_ParaManager *paraMngr;     ///< Cartesian Partition Maneger
   
 public:
-  unsigned size[3]; ///< 分割数
-  unsigned imax;    ///< 分割数 i方向
-  unsigned jmax;    ///< 分割数 j方向
-  unsigned kmax;    ///< 分割数 k方向
-  unsigned guide;   ///< ガイドセル数
-  REAL_TYPE RefL;   ///< 代表長さ
+  int size[3];    ///< 分割数
+  int guide;      ///< ガイドセル数
+  REAL_TYPE RefL; ///< 代表長さ
   
   /** 次元のモード */
-  enum dim_mode {
+  enum dim_mode 
+  {
     dim_2d = 1,
     dim_3d
   };
   
   /** コンストラクタ */
-  Intrinsic() { 
+  Intrinsic() 
+  { 
     for (int i=0; i<3; i++) size[i]=0.0;
-    imax = jmax = kmax = guide = 0;
+    guide = 0;
     RefL = 0.0;
   }
   
@@ -79,14 +78,20 @@ public:
     
   
 public:
-  virtual const char* getExampleName() { return NULL; };
+  virtual const char* getExampleName() 
+  { 
+    return NULL; 
+  }
   
   /**
    * @param[in] R       Controlクラスのポインタ
    * @param[in] tpCntl  TPControlクラスのポインタ
    * @return true-成功、false-エラー
    */
-  virtual bool getTP(Control* R, TPControl* tpCntl) { return true; };
+  virtual bool getTP(Control* R, TPControl* tpCntl) 
+  { 
+    return true; 
+  }
   
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
   virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};
@@ -94,8 +99,8 @@ public:
   
   /**
    @brief 例題名称の表示
-   @param fp[in]  出力ファイルのファイルポインタ
-   @param str[in] 表示文字列
+   @param [in] fp   出力ファイルのファイルポインタ
+   @param [in] str  表示文字列
    */
   virtual void printExample(FILE* fp, const char* str);
   
@@ -105,21 +110,21 @@ public:
   
   
   /** 領域を設定する
-   * @param[in] R   Controlクラスのポインタ
-   * @param[in] sz  分割数
-   * @param[in] org 計算領域の基点
-   * @param[in] wth 計算領域の大きさ
-   * @param[in] pch セル幅
+   * @param [in] R   Controlクラスのポインタ
+   * @param [in] sz  分割数
+   * @param [in] org 計算領域の基点
+   * @param [in] reg 計算領域の大きさ
+   * @param [in] pch セル幅
    */
-  virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]) {};
+  virtual void setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch) {};
   
   
   /** 計算領域の媒質情報を設定する
-   * @param[in/out] mid   媒質情報の配列
-   * @param[in]     R     Controlクラスのポインタ
-   * @param[in]     G_org Controlクラスのポインタ
-   * @param[in]     Nmax  Controlクラスのポインタ
-   * @param[in]     mat   MediumListクラスのポインタ
+   * @param [in/out] mid   媒質情報の配列
+   * @param [in]     R     Controlクラスのポインタ
+   * @param [in]     G_org Controlクラスのポインタ
+   * @param [in]     Nmax  Controlクラスのポインタ
+   * @param [in]     mat   MediumListクラスのポインタ
    */
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
   
@@ -129,13 +134,13 @@ public:
   
   
   /** 変数のコピー
-   * @param[in] R  Controlクラスのポインタ
+   * @param [in] R  Controlクラスのポインタ
    */
   void setControlVars(Control* R);
   
   
   /** CPMlibのポインタをセット 
-   * @param[in] m_paraMngr  
+   * @param [in] m_paraMngr  
    */
   void importCPM(cpm_ParaManager* m_paraMngr);
   
@@ -145,9 +150,9 @@ public:
   
   
   /** MediumList中に登録されているkeyに対するIDを返す
-   * @param[in] mat  MediumListクラス
-   * @param[in] Namx リストの最大数
-   * @param[in] key  探査するラベル
+   * @param [in] mat  MediumListクラス
+   * @param [in] Namx リストの最大数
+   * @param [in] key  探査するラベル
    * @return keyに対するIDを返す。発見できない場合はzero
    */
   int find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key);

@@ -591,7 +591,7 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
 unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
 {
   size_t m1, m2;
-  unsigned register s1, s2;
+  int s1, s2;
   
   int ix = size[0];
   int jx = size[1];
@@ -718,7 +718,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
 void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
 {
   size_t m0, m1;
-  unsigned long g;
+  unsigned g;
   unsigned m_area[NOFACE];
   
   int ix = size[0];
@@ -3822,17 +3822,17 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 {
   int target = tgt_id;
   int sd = solid_id;
-  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int qw, qe, qs, qn, qb, qt;
   unsigned m_sz[3];
   
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   m_sz[0] = size[0];
   m_sz[1] = size[1];
   m_sz[2] = size[2];
-  unsigned gd = guide;
+  int gd = guide;
   int c = 0; /// painted count
   float cpos = 0.9; // なんとなく
 
@@ -3949,17 +3949,17 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
 {
   int sd = solid_id;
-  unsigned m_p;
-  unsigned m_sz[3];
+  size_t m_p;
+  int m_sz[3];
   
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   m_sz[0] = size[0];
   m_sz[1] = size[1];
   m_sz[2] = size[2];
-  unsigned gd = guide;
-  int c = 0; /// painted count
+  int gd = guide;
+  unsigned c = 0; /// painted count
   
 #pragma omp parallel for firstprivate(ix, jx, kx, m_sz, gd, sd) \
  private(m_p) schedule(static) reduction(+:c)
@@ -3992,12 +3992,12 @@ unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
  */
 void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, const int solid_id)
 {
-  unsigned m_p;
+  size_t m_p;
   
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int c = 0; /// count 
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  unsigned c = 0; /// count 
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -4031,19 +4031,18 @@ void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, 
  */
 void VoxInfo::find_isolated_Fcell(int order, int* mid, int* bx)
 {
-  int i, j, k;
-  unsigned register s;
-  unsigned m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int s;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   unsigned key[6];
   int val[6];
   
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m_p = FBUtility::getFindexS3D(size, guide, i, j, k);
         s = bx[m_p];
         if ( IS_FLUID(s) ) {
@@ -4060,7 +4059,7 @@ void VoxInfo::find_isolated_Fcell(int order, int* mid, int* bx)
                !IS_FLUID(bx[m_t]) && !IS_FLUID(bx[m_b]) ) {
             
             // 最頻値を求める
-            for (unsigned l=0; l<6; l++) key[l]=1; // 頻度
+            for (int l=0; l<6; l++) key[l]=1; // 頻度
             
             val[0] = mid[m_e]; // ID
             val[1] = mid[m_w];
@@ -4069,9 +4068,9 @@ void VoxInfo::find_isolated_Fcell(int order, int* mid, int* bx)
             val[4] = mid[m_t];
             val[5] = mid[m_b];
             
-            for (unsigned l=0; l<6; l++) {
+            for (int l=0; l<6; l++) {
               if ( key[l] != 0 ) {
-                for (unsigned m=l+1; m<6; m++) {
+                for (int m=l+1; m<6; m++) {
                   if ( val[l] == val[m] ) {
                     key[l]++;
                     key[m] = 0;
@@ -4079,8 +4078,8 @@ void VoxInfo::find_isolated_Fcell(int order, int* mid, int* bx)
                 }
               }
             }
-            unsigned max_loc=0, cnt=key[0]; // 最頻値とインデクス
-            for (unsigned l=1; l<6; l++) {
+            int max_loc=0, cnt=key[0]; // 最頻値とインデクス
+            for (int l=1; l<6; l++) {
               if ( key[l] > cnt ) {
                 cnt = key[l];
                 max_loc = l;
@@ -5024,7 +5023,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
  @param cut 距離情報
  @retval 表面セル数
  */
-unsigned VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS, float* cut)
+unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS, float* cut)
 {
 
   unsigned long surface = 0;
@@ -5458,22 +5457,22 @@ void VoxInfo::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
  */
 unsigned VoxInfo::test_opposite_cut(int* bid, int* mid, const int solid_id)
 {
-  unsigned m_111, m_112, m_113, m_121, m_122, m_123, m_131, m_132, m_133;
-  unsigned m_211, m_212, m_213, m_221, m_222, m_223, m_231, m_232, m_233;
-  unsigned m_311, m_312, m_313, m_321, m_322, m_323, m_331, m_332, m_333;
+  size_t m_111, m_112, m_113, m_121, m_122, m_123, m_131, m_132, m_133;
+  size_t m_211, m_212, m_213, m_221, m_222, m_223, m_231, m_232, m_233;
+  size_t m_311, m_312, m_313, m_321, m_322, m_323, m_331, m_332, m_333;
   int b_111, b_112, b_113, b_121, b_122, b_123, b_131, b_132, b_133;
   int b_211, b_212, b_213, b_221, b_222, b_223, b_231, b_232, b_233;
   int b_311, b_312, b_313, b_321, b_322, b_323, b_331, b_332, b_333;
-  unsigned m_sz[3];
+  int m_sz[3];
   m_sz[0] = size[0];
   m_sz[1] = size[1];
   m_sz[2] = size[2];
-  unsigned gd = guide;
+  int gd = guide;
   
-  int ix = (int)size[0];
-  int jx = (int)size[1];
-  int kx = (int)size[2];
-  int c = 0; /// count
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  unsigned c = 0; /// count
   int sd = solid_id;
   
   if ( sd >32 ) {

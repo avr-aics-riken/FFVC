@@ -53,7 +53,7 @@ SklSolverCBC::SklSolverCBC() {
   
   G_Fcell = G_Acell = G_Wcell = 0;
   G_size[0] = G_size[1] = G_size[2] = 0;
-  G_Lbx[0] = G_Lbx[1] = G_Lbx[2] = 0.0;
+  G_reg[0] = G_reg[1] = G_reg[2] = 0.0;
   G_org[0] = G_org[1] = G_org[2] = 0.0;
   
   range_Ut[0] = range_Ut[1] = 0.0;
@@ -169,7 +169,7 @@ SklSolverCBC::SklSolverCBC(int sType) {
   
   G_Fcell = G_Acell = G_Wcell = 0;
   G_size[0] = G_size[1] = G_size[2] = 0;
-  G_Lbx[0] = G_Lbx[1] = G_Lbx[2] = 0.0;
+  G_reg[0] = G_reg[1] = G_reg[2] = 0.0;
   G_org[0] = G_org[1] = G_org[2] = 0.0;
   
   range_Ut[0] = range_Ut[1] = 0.0;

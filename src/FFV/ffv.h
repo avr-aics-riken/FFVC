@@ -87,9 +87,12 @@ private:
   int G_size[3];           ///< 全ドメインの分割数
   REAL_TYPE G_org[3];      ///< 全ドメインの基点
   REAL_TYPE G_reg[3];      ///< 全ドメインのサイズ
+  unsigned long Acell;     ///< グローバルなActive cell
+  unsigned long Fcell;     ///< グローバルなFluid cell
+  unsigned long Wcell;     ///< グローバルなSolid cell
   
   // Fortranへの引数
-  int sz[3];        ///< 領域分割数
+  int sz[3];        ///< ローカルの領域分割数
   int gc;           ///< ガイドセル数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
   REAL_TYPE *dh0;   ///< 格子幅（有次元）
@@ -110,12 +113,12 @@ private:
   REAL_TYPE *dc_qbc;
   
   // Scalar3D
-  int        *dc_mid;
-  unsigned   *dc_bcd;
-  unsigned   *dc_bcp;
-  unsigned   *dc_bcv;
-  unsigned   *dc_bh1;
-  unsigned   *dc_bh2;
+  int *dc_mid;
+  int *dc_bcd;
+  int *dc_bcp;
+  int *dc_bcv;
+  int *dc_bh1;
+  int *dc_bh2;
   REAL_TYPE  *dc_ws;
   REAL_TYPE  *dc_p;
   REAL_TYPE  *dc_wk2;

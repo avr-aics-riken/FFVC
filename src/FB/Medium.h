@@ -11,16 +11,19 @@
 //
 // #################################################################
 
-//@file Medium.h
-//@brief FlowBase Medium class Header
-//@author kero
+/** 
+ * @file Medium.h
+ * @brief FlowBase Medium class Header
+ * @author kero
+ */
 
 #include <string>
 #include "FB_Define.h"
 #include "cpm_Define.h"
 
 /** 属性リストのキー */
-enum property_list {
+enum property_list 
+{
   p_density,              // 0
   p_kinematic_viscosity,  // 1
   p_viscosity,            // 2
@@ -93,7 +96,8 @@ public:
    * @param p[in] 文字列
    * @return キー
    */
-  static int getKey(const char* p) {
+  static int getKey(const char* p) 
+  {
     int key=-1;
     
     if      ( !(strcasecmp(p, "density")) )              key = p_density;
@@ -114,7 +118,8 @@ public:
    * @param[in] key キー番号
    * @return ラベル
    */
-  static std::string getPropertyName(const int key) {
+  static std::string getPropertyName(const int key) 
+  {
     std::string name;
     
     switch (key) {

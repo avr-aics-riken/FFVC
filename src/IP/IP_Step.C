@@ -132,27 +132,27 @@ void IP_Step::printPara(FILE* fp, Control* R)
 
 
 // 領域情報を設定する
-void IP_Step::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
+void IP_Step::setDomain(Control* R, const int* sz, const REAL_TYPE* org, REAL_TYPE* reg, const REAL_TYPE* pch)
 {
-  wth[0] = pch[0]*(REAL_TYPE)sz[0];
-  wth[1] = pch[1]*(REAL_TYPE)sz[1];
-  wth[2] = pch[2]*(REAL_TYPE)sz[2];
+  reg[0] = pch[0]*(REAL_TYPE)sz[0];
+  reg[1] = pch[1]*(REAL_TYPE)sz[1];
+  reg[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // チェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
-  if ( ((unsigned)(wth[0]/pch[0]) != sz[0]) ||
-       ((unsigned)(wth[1]/pch[1]) != sz[1]) ||
-       ((unsigned)(wth[2]/pch[2]) != sz[2]) ) {
+  if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
+       ((int)(reg[1]/pch[1]) != sz[1]) ||
+       ((int)(reg[2]/pch[2]) != sz[2]) ) {
     Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
     Exit(0);
   }
 
   // 次元とサイズ
   if (mode == dim_2d) {
-    if (kmax != 3) {
+    if (size[2] != 3) {
       Hostonly_ printf("Error : VoxelSize kmax must be 3 if 2-dimensional.\n");
     }
   }
@@ -162,12 +162,11 @@ void IP_Step::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 // 計算領域のセルIDを設定する
 void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int i,j,k, gd;
   int mid_fluid=1;        /// 流体
   int mid_solid=2;        /// 固体
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
-  unsigned m;
+
   REAL_TYPE x, y, z, dh, len, ht;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
@@ -180,19 +179,27 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   Ly = R->Lbx[1];
   Lz = R->Lbx[2];
   dh = R->dh;
-  gd = (int)guide;
+
   ox_g = G_org[0];
   oy_g = G_org[1];
   oz_g = G_org[2];
+  
+  size_t m;
+  
+  // ローカルにコピー
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  int gd = guide;
 
   // length, widthなどは有次元値
   len = ox_g + (drv_length+width)/R->RefLength; // グローバルな無次元位置
   ht  = oy_g + height/R->RefLength;
   
   // Initialize  内部領域をfluidにしておく
-  for (k=1; k<=(int)kmax; k++) { 
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  for (int k=1; k<=kmax; k++) {
+    for (int j=1; j<=jmax; j++) {
+      for (int i=1; i<=imax; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_fluid;
       }
@@ -201,9 +208,9 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i, j, k);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
@@ -214,10 +221,12 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   // ドライバの下流面にIDを設定
   if ( drv_length > 0.0 ) {
-    unsigned m1;
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    
+    size_t m1;
+    
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i,   j, k);
           m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
@@ -229,9 +238,9 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   }
 
   // ステップ部分を上書き
-  for (k=1; k<=(int)kmax; k++) {
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  for (int k=1; k<=kmax; k++) {
+    for (int j=1; j<=jmax; j++) {
+      for (int i=1; i<=imax; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);

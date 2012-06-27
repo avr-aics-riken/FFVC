@@ -15,6 +15,7 @@
 //@brief FlowBase Fortran function Header
 //@author kero
 
+#include "cpm_Define.h"
 #include "FB_Define.h"
 
 #ifdef _WIN32
@@ -52,21 +53,87 @@
 
 extern "C" {
 	// FB_util.f90
-  void fb_copy_real_s_    (REAL_TYPE* dst, REAL_TYPE* src, int* sz, int* g);
-  void fb_copy_real_v_    (REAL_TYPE* dst, REAL_TYPE* src, int* sz, int* g);
-  void fb_delta_s_        (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* sn, REAL_TYPE* so, int* bx, REAL_TYPE* flop);
-  void fb_delta_v_        (REAL_TYPE* d, int* sz, int* g, REAL_TYPE* vn, REAL_TYPE* vo, int* bx, REAL_TYPE* flop);
-  void fb_limit_scalar_   (REAL_TYPE* t, int* sz, int* g);
-  void fb_minmax_s_       (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* s, REAL_TYPE* flop);
-  void fb_minmax_v_       (REAL_TYPE* f_min, REAL_TYPE* f_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* flop);
-  void fb_set_int_s_      (int* var, int* sz, int* g, int* init);
-  void fb_set_real_s_     (REAL_TYPE* var, int* sz, int* g, REAL_TYPE* init);
-  void fb_set_real_v_     (REAL_TYPE* var, int* sz, int* g, REAL_TYPE* vec);
-  void fb_copy_real_      (REAL_TYPE* dst, REAL_TYPE* src, int* sz);
-  void fb_copy_int_       (int* dst, int* src, int* sz);
-  void fb_set_int_        (int* var, int* sz, int* init);
-  void fb_set_real_       (REAL_TYPE* var, int* sz, REAL_TYPE* init);
-  void fb_xcopy_          (REAL_TYPE* dst, REAL_TYPE* src, int* sz, REAL_TYPE* scale, REAL_TYPE* flop);
+  void fb_copy_real_s_    (REAL_TYPE* dst,
+                           REAL_TYPE* src,
+                           int* sz,
+                           int* g);
+  
+  void fb_copy_real_v_    (REAL_TYPE* dst,
+                           REAL_TYPE* src,
+                           int* sz,
+                           int* g);
+  
+  void fb_delta_s_        (REAL_TYPE* d,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* sn,
+                           REAL_TYPE* so,
+                           int* bx,
+                           REAL_TYPE* flop);
+  
+  void fb_delta_v_        (REAL_TYPE* d,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* vn,
+                           REAL_TYPE* vo,
+                           int* bx,
+                           REAL_TYPE* flop);
+  
+  void fb_limit_scalar_   (REAL_TYPE* t,
+                           int* sz,
+                           int* g);
+  
+  void fb_minmax_s_       (REAL_TYPE* f_min,
+                           REAL_TYPE* f_max,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* s,
+                           REAL_TYPE* flop);
+  
+  void fb_minmax_v_       (REAL_TYPE* f_min,
+                           REAL_TYPE* f_max,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* v,
+                           REAL_TYPE* flop);
+  
+  void fb_set_int_s_      (int* var,
+                           int* sz,
+                           int* g,
+                           int* init);
+  
+  void fb_set_real_s_     (REAL_TYPE* var,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* init);
+  
+  void fb_set_real_v_     (REAL_TYPE* var,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* vec);
+  
+  void fb_copy_real_      (REAL_TYPE* dst,
+                           REAL_TYPE* src,
+                           int* sz);
+  
+  void fb_copy_int_       (int* dst,
+                           int* src,
+                           int* sz);
+  
+  void fb_set_int_        (int* var,
+                           int* sz,
+                           int* init);
+  
+  void fb_set_real_       (REAL_TYPE* var,
+                           int* sz,
+                           REAL_TYPE* init);
+  
+  void fb_xcopy_          (REAL_TYPE* dst,
+                           REAL_TYPE* src,
+                           int* sz,
+                           REAL_TYPE* scale,
+                           REAL_TYPE* flop);
  
   void fb_average_s_      (REAL_TYPE* avr, 
                            int* sz, 

@@ -18,7 +18,7 @@
 
 
 // 領域情報を設定する
-void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
+void IP_Polygon::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
 {
   
   // 等分割のチェック
@@ -28,9 +28,9 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TY
   }
   
   // 分割数を計算
-  //sz[0] = (unsigned)ceil(wth[0]/pch[0]);
-  //sz[1] = (unsigned)ceil(wth[1]/pch[1]);
-  //sz[2] = (unsigned)ceil(wth[2]/pch[2]);
+  //sz[0] = (unsigned)ceil(reg[0]/pch[0]);
+  //sz[1] = (unsigned)ceil(reg[1]/pch[1]);
+  //sz[2] = (unsigned)ceil(reg[2]/pch[2]);
 }
 
 
@@ -38,9 +38,13 @@ void IP_Polygon::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TY
 // 計算領域のセルIDを設定する
 void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);
+  // ローカルにコピー
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  size_t m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);
   int ref = R->Mode.Base_Medium;
 
 #pragma omp parallel for firstprivate(m, ref) schedule(static)
-  for (int i=0; i<m; i++) mid[i] = ref;
+  for (size_t i=0; i<m; i++) mid[i] = ref;
 }

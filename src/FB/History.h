@@ -11,9 +11,12 @@
 //
 // #################################################################
 
-//@file History.h
-//@brief FlowBase History class Header
-//@author kero
+/** 
+ * @file History.h
+ * @brief FlowBase History class Header
+ * @author kero
+ */
+
 
 #include "Control.h"
 #include "Component.h"
@@ -36,14 +39,19 @@ protected:
   REAL_TYPE rhocp;           ///< 熱流束計算の無次元化量
   REAL_TYPE dynamic_p;       ///< 動圧
   REAL_TYPE base_mf;         ///< 流量の基準値
-  unsigned step;             ///< ステップ数
-  unsigned Unit_Temp;        ///< 温度単位
-  unsigned Unit_Prs;         ///< 圧力基準モード
-  unsigned Unit_Log;         ///< ログ出力の単位
+  int step;                  ///< ステップ数
+  int Unit_Temp;             ///< 温度単位
+  int Unit_Prs;              ///< 圧力基準モード
+  int Unit_Log;              ///< ログ出力の単位
   
 public:
+  
+  /** デフォルトコンストラクタ */
   History() {}
-  History(const Control* Cref) {
+  
+  /** コンストラクタ */
+  History(const Control* Cref) 
+  {
     RefVelocity     = Cref->RefVelocity;
     BaseTemp        = Cref->BaseTemp;
     DiffTemp        = Cref->DiffTemp;
@@ -65,99 +73,247 @@ public:
     v_max = 0.0;
     step  = 0;
   }
+  
+  /**　デストラクタ */
   ~History() {}
   
+  
 protected:
-  //@fn REAL_TYPE printTime(void)
-  //@brief モードに対応する時刻を返す
-  REAL_TYPE printTime(void) {
+
+  /** @brief モードに対応する時刻を返す */
+  REAL_TYPE printTime() const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? time*Tscale : time );
   }
   
-  //@fn REAL_TYPE printVmax(void)
-  //@brief モードに対応する速度最大値を返す
-  REAL_TYPE printVmax(void) {
+
+  /** @brief モードに対応する速度最大値を返す */
+  REAL_TYPE printVmax() const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? v_max*RefVelocity : v_max );
   }
   
-  //@fn REAL_TYPE printLen(const REAL_TYPE var)t
-  //@brief モードに対応する長さを返す
-  REAL_TYPE printLen(const REAL_TYPE var) {
+
+  /**
+   * @brief モードに対応する長さを返す
+   * @param [in] var  長さ
+   */
+  REAL_TYPE printLen(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefLength : var );
   }
   
-  //@fn REAL_TYPE printVel(const REAL_TYPE var)
-  //@brief モードに対応する速度値を返す
-  REAL_TYPE printVel(const REAL_TYPE var) {
+
+  /** 
+   * @brief モードに対応する速度値を返す
+   * @param [in] var  速度
+   */
+  REAL_TYPE printVel(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
   
-  //@fn REAL_TYPE printPrs(const REAL_TYPE var)
-  //@brief 圧力の次元変換
-  REAL_TYPE printPrs(const REAL_TYPE var) {
+
+  /**
+   * @brief 圧力の次元変換
+   * @param [in] var  圧力
+   */
+  REAL_TYPE printPrs(const REAL_TYPE var) const
+  {
     if (Unit_Log != DIMENSIONAL) return var;
     const REAL_TYPE a = var * dynamic_p;
     return ( (Unit_Prs==Unit_Absolute) ? BasePrs+a : a );
   }
   
-  //@fn REAL_TYPE printTP(const REAL_TYPE var)
-  //@brief 全圧の次元変換
-  REAL_TYPE printTP(const REAL_TYPE var) {
+
+  /** 
+   * @brief 全圧の次元変換
+   * @param [in] var  圧力
+   */
+  REAL_TYPE printTP(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p : var );
   }
   
-  //@fn REAL_TYPE printForce(const REAL_TYPE var)
-  //@brief 全圧の次元変換
-  REAL_TYPE printForce(const REAL_TYPE var) {
+
+  /**
+   * @brief 全圧の次元変換
+   * @param [in] var  全圧
+   */
+  REAL_TYPE printForce(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p*RefLength*RefLength : var );
   }
   
-  //@fn REAL_TYPE printMF(const REAL_TYPE var)
-  //@brief モードに対応する流量を返す
-  REAL_TYPE printMF(const REAL_TYPE var) {
+
+  /** 
+   * @brief モードに対応する流量を返す
+   * @param [in] var  流量
+   */
+  REAL_TYPE printMF(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*base_mf : var );
   }
   
   
-  REAL_TYPE printTmp(const REAL_TYPE var) {
+  /** 
+   * @brief モードに対応する温度を返す
+   * @param [in] var  温度
+   */
+  REAL_TYPE printTmp(const REAL_TYPE var) const
+  {
     if (Unit_Log != DIMENSIONAL) return var;
     const REAL_TYPE a = BaseTemp + DiffTemp*var; // Kelvin
     return ( (Unit_Temp==Unit_KELVIN) ? a : a-KELVIN  );
   }
   
   
-  //@fn REAL_TYPE printQF(const REAL_TYPE var)
-  //@brief モードに対応する熱量を返す(面表素)
-  REAL_TYPE printQF(const REAL_TYPE var) {
+
+  /**
+   * @brief モードに対応する熱量を返す(面要素)
+   * @param [in] var  熱量
+   */
+  REAL_TYPE printQF(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*dhd*dhd*rhocp : var*dh*dh );
   }
   
-  //@fn REAL_TYPE printQV(const REAL_TYPE var)
-  //@brief モードに対応する熱量を返す(体積要素)
-  REAL_TYPE printQV(const REAL_TYPE var) {
+
+  /**
+   * @brief モードに対応する熱量を返す(体積要素)
+   * @param [in] var  熱量
+   */
+  REAL_TYPE printQV(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*dhd*dhd*dhd*rhocp : var*dh*dh*dh );
   }
   
-  //@fn REAL_TYPE printHflux(const REAL_TYPE var)
-  //@brief モードに対応する熱流束を返す
-  REAL_TYPE printHflux(const REAL_TYPE var) {
+
+  /** 
+   * @brief モードに対応する熱流束を返す
+   * @param [in] var  熱流束
+   */
+  REAL_TYPE printHflux(const REAL_TYPE var) const
+  {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
   
 public:
-  void printHistory          (FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms, const ItrCtl* IC, const Control* C);
-  void printHistoryTitle     (FILE* fp, const ItrCtl* IC, const Control* C);
-  void printHistoryCompo     (FILE* fp, const CompoList* cmp, const Control* C);
+  
+  /**
+   * @brief 標準履歴の出力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] avr 1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] rms 1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] IC  ItrCtlクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   */
+  void printHistory(FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms, const ItrCtl* IC, const Control* C);
+  
+  
+  /**
+   * @brief 反復過程の状況モニタのヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] IC 反復管理クラス
+   * @param [in] C  制御クラス
+   */
+  void printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C);
+  
+  
+  /**
+   * @brief コンポーネントモニタの履歴出力(dimensional value)
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   */
+  void printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C);
+  
+  
+  /**
+   * @brief コンポーネントモニタのヘッダー出力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   */
   void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);
-  void printHistoryDomfx     (FILE* fp, const Control* C);
+  
+  
+  /**
+   * @brief 計算領域の流束履歴の出力
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] C Controlクラスへのポインタ
+   */
+  void printHistoryDomfx(FILE* fp, const Control* C);
+  
+  
+  /**
+   * @brief 反復過程の状況モニタのヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   */
   void printHistoryForceTitle(FILE* fp);
-  void printHistoryForce     (FILE* fp, REAL_TYPE* force);
+  
+  
+  /**
+   * @brief 物体に働く力の履歴の出力
+   * @param [in] fp 出力ファイルポインタ
+   */
+  void printHistoryForce(FILE* fp, const REAL_TYPE* force);
+  
+  
+  /**
+   * @brief 物体に働く力の履歴のヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   */
+  void printHistoryForceTitle(FILE* fp);
+  
+  
+  /**
+   * @brief 計算領域の流束履歴のヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] C  コントロールクラス
+   */
   void printHistoryDomfxTitle(FILE* fp, const Control* C);
-  void printHistoryItr       (FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx);
-  void printHistoryItrTitle  (FILE* fp);
-  void printHistoryWall      (FILE* fp, REAL_TYPE* range_Yp, REAL_TYPE* range_Ut);
-  void printHistoryWallTitle (FILE* fp);
-  void updateTimeStamp       (const unsigned m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
+  
+  /**
+   * @brief コンポーネントモニタの履歴出力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] itr 反復回数
+   * @param [in] nrm ノルム
+   * @param [in] idx divの最大値の発生セルインデクス
+   */
+  void printHistoryItr(FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx);
+  
+  
+  /**
+   * @brief 反復過程の状況モニタのヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   */
+  void printHistoryItrTitle(FILE* fp);
+  
+  
+  /**
+   * @brief 壁面履歴の出力
+   * @param [in] fp        出力ファイルポインタ
+   * @param [in] range_Yp  壁座標の最小最大値
+   * @param [in] range_Ut  摩擦速度の最小最大値
+   */
+  void printHistoryWall(FILE* fp, const REAL_TYPE* range_Yp, const REAL_TYPE* range_Ut);
+  
+  
+  /**
+   * @brief 反復過程の状況モニタのヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   */
+  void printHistoryWallTitle(FILE* fp);
+  
+  
+  /**
+   * @brief タイムスタンプの更新
+   * @param [in] m_stp ステップ数
+   * @param [in] m_tm  時刻
+   * @param [in] vMax  速度最大値成分
+   */
+  void updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
 };
 
 #endif // _FB_HISTORY_H_

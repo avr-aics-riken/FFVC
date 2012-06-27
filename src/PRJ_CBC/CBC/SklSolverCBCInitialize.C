@@ -380,7 +380,8 @@ SklSolverCBC::SklSolverInitialize() {
     fprintf(mp,"\n\t>> Global Domain Information\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
-    C.printDomainInfo(mp, fp, G_size, G_org, G_Lbx);
+    C.printGlobalDomain(mp, G_size, G_org, G_reg);
+    C.printGlobalDomain(fp, G_size, G_org, G_reg);
   }
   
   // メモリ消費量の情報を表示
@@ -726,7 +727,7 @@ SklSolverCBC::SklSolverInitialize() {
   }
   
   // Monitor Listの処理 --------------------------------------------
-  //MO.setControlVars(bcd, G_org, G_Lbx, C.org, C.dx, C.Lbx, size, guide,
+  //MO.setControlVars(bcd, G_org, G_reg, C.org, C.dx, C.Lbx, size, guide,
   //                  C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
   //                  C.Unit.Temp, C.Mode.Precision, C.Unit.Prs);
   
@@ -1098,19 +1099,20 @@ SklSolverCBC::SklSolverInitialize() {
     Ex->printParaInfo(mp, fp, &C);
     
     // 外部境界面の開口率を表示
-    C.printAreaInfo(mp, fp, G_Fcell, G_Acell, G_size);
+    C.printOuterArea(mp, G_Fcell, G_Acell, G_size);
+    C.printOuterArea(fp, G_Fcell, G_Acell, G_size);
     
     // 境界条件のリストと外部境界面のBC設定を表示
     Hostonly_ {
       fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
       fprintf(mp,"\t>> Outer Boundary Conditions\n\n");
       
-      B.printFaceOBC(mp, G_Lbx);
+      B.printFaceOBC(mp, G_reg);
       
       fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
       fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
       
-      B.printFaceOBC(fp, G_Lbx);
+      B.printFaceOBC(fp, G_reg);
     }
 
     /* モニタ情報の表示
@@ -1255,29 +1257,29 @@ SklSolverCBC::SklSolverInitialize() {
     // コンポーネント情報
     if ( C.Mode.Log_Base == ON ) {
       // 基本情報　history.log, history_compo.log, history_domfx.log
-      if ( !(fp_b=fopen((char*)C.HistoryName, "w")) ) {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", (char*)C.HistoryName);
+      if ( !(fp_b=fopen(C.HistoryName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryName.c_str());
         return -1;
       }
       H->printHistoryTitle(fp_b, IC, &C);
       
       // コンポーネント履歴情報
-      if ( !(fp_c=fopen((char*)C.HistoryCompoName, "w")) ) {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", (char*)C.HistoryCompoName);
+      if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryCompoName.c_str());
         return -1;
       }
       H->printHistoryCompoTitle(fp_c, cmp, &C);
 
       // 流量収支情報　
-      if ( !(fp_d=fopen((char*)C.HistoryDomfxName, "w")) ) {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", (char*)C.HistoryDomfxName);
+      if ( !(fp_d=fopen(C.HistoryDomfxName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryDomfxName.c_str());
         return -1;
       }
       H->printHistoryDomfxTitle(fp_d, &C);
       
       // 力の履歴情報　
-      if ( !(fp_f=fopen((char*)C.HistoryForceName, "w")) ) {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", (char*)C.HistoryForceName);
+      if ( !(fp_f=fopen(C.HistoryForceName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryForceName.c_str());
         return -1;
       }
       H->printHistoryForceTitle(fp_f);
@@ -1285,16 +1287,16 @@ SklSolverCBC::SklSolverInitialize() {
     
     // 反復履歴情報　history_itr.log
     if ( C.Mode.Log_Itr == ON ) {
-      if ( !(fp_i=fopen((char*)C.HistoryItrName, "w")) ) {
-				stamped_printf("\tSorry, can't open '%s' file.\n", (char*)C.HistoryItrName);
+      if ( !(fp_i=fopen(C.HistoryItrName.c_str(), "w")) ) {
+				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryItrName.c_str());
         return -1;
       }
     }
     
     // 壁面情報　history_wall.log
     if ( C.Mode.Log_Wall == ON ) {
-      if ( !(fp_w=fopen((char*)C.HistoryWallName, "w")) ) {
-				stamped_printf("\tSorry, can't open '%s' file.\n", (char*)C.HistoryWallName);
+      if ( !(fp_w=fopen(C.HistoryWallName.c_str(), "w")) ) {
+				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryWallName.c_str());
         return -1;
       }
       H->printHistoryWallTitle(fp_w);
@@ -2119,7 +2121,7 @@ void SklSolverCBC::gather_DomainInfo(void)
   }
   
   // 全体情報の表示
-  C.printDomain(fp, G_size, G_org, G_Lbx);
+  C.printDomain(fp, G_size, G_org, G_reg);
   
   // ローカルノードの情報を表示
   for (int i=0; i<pn.numProc; i++) {
@@ -4198,8 +4200,6 @@ void SklSolverCBC::VoxEncode(VoxInfo* Vinfo, ParseMat* M, int* mid, float* vf)
   Vinfo->countCellState(C.Wcell, G_Wcell, bcd, SOLID);
   Vinfo->countCellState(C.Fcell, G_Fcell, bcd, FLUID);
   
-  // set local active cell ratio
-  C.Eff_Cell_Ratio = (REAL_TYPE)C.Acell / C.getCellSize(size);
   
   // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
   resizeCompoBV(bcd, bcv, bh1, bh2, C.KindOfSolver, C.isHeatProblem());
@@ -4307,7 +4307,7 @@ void SklSolverCBC::VoxelInitialize(void)
   for (int i=0; i<3; i++) {
     G_size[i] = m_sz[i];
     G_org[i]  = m_org[i];
-    G_Lbx[i]  = m_wth[i];
+    G_reg[i]  = m_wth[i];
   }
   
   // 分割数をXMLから取得，指定なければ自動分割する

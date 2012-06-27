@@ -62,11 +62,11 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 
 
 // Rectの領域情報を設定する
-void IP_Rect::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
+void IP_Rect::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
 {
-  wth[0] = pch[0]*(REAL_TYPE)sz[0];
-  wth[1] = pch[1]*(REAL_TYPE)sz[1];
-  wth[2] = pch[2]*(REAL_TYPE)sz[2];
+  reg[0] = pch[0]*(REAL_TYPE)sz[0];
+  reg[1] = pch[1]*(REAL_TYPE)sz[1];
+  reg[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // 偶数のチェック
   if ( even == ON ) {
@@ -89,11 +89,14 @@ void IP_Rect::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 // 計算領域のセルIDを設定する
 void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  unsigned m, m_sz[3], gd;
-  m_sz[0] = size[0];
-  m_sz[1] = size[1];
-  m_sz[2] = size[2];
-  gd = guide;
+  size_t m;
+  int sz[3];
+  
+  // ローカルにコピー
+  int imax = sz[0] = size[0];
+  int jmax = sz[1] = size[1];
+  int kmax = sz[2] = size[2];
+  int gd = guide;
   
   int id_fluid;
   
@@ -102,11 +105,11 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     Exit(0);
   }
 
-#pragma omp parallel for firstprivate(m_sz, gd) schedule(static)
-  for (int k=1; k<=(int)m_sz[2]; k++) {
-    for (int j=1; j<=(int)m_sz[1]; j++) {
-      for (int i=1; i<=(int)m_sz[0]; i++) {
-        m = FBUtility::getFindexS3D(m_sz, gd, i, j, k);
+#pragma omp parallel for firstprivate(imax, jmax, kmax, gd, sz) schedule(static)
+  for (int k=1; k<=kmax; k++) {
+    for (int j=1; j<=jmax; j++) {
+      for (int i=1; i<=imax; i++) {
+        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
         mid[m] = id_fluid;
       }
     }

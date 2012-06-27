@@ -83,8 +83,8 @@ public:
    */
   void cnv_Div(REAL_TYPE* dst, 
                REAL_TYPE* src, 
-               const unsigned* size, 
-               const unsigned guide, 
+               const int* size, 
+               const int guide, 
                const REAL_TYPE coef, 
                REAL_TYPE& flop);
   
@@ -101,8 +101,8 @@ public:
    */
   void cnv_TP_ND2D(REAL_TYPE* dst, 
                    REAL_TYPE* src, 
-                   const unsigned* size, 
-                   const unsigned guide, 
+                   const int* size, 
+                   const int guide, 
                    const REAL_TYPE Ref_rho, 
                    const REAL_TYPE Ref_v, 
                    REAL_TYPE& flop);
@@ -119,11 +119,11 @@ public:
    * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
    */
   void writeRawSPH(const REAL_TYPE *vf, 
-                   const unsigned* size, 
-                   const unsigned gc, 
+                   const int* size, 
+                   const int gc, 
                    const REAL_TYPE* org, 
                    const REAL_TYPE* ddx, 
-                   const unsigned m_ModePrecision);
+                   const int m_ModePrecision);
   
   /**
    * @brief 圧力のファイルをロードする
@@ -146,12 +146,12 @@ public:
    */
   void readPressure(FILE* fp, 
                     const std::string fname, 
-                    const unsigned* size, 
-                    const unsigned gc,
+                    int* size, 
+                    int gc,
                     REAL_TYPE* s, 
                     int& step, 
                     REAL_TYPE& time, 
-                    const unsigned Dmode, 
+                    const int Dmode, 
                     const REAL_TYPE BasePrs, 
                     const REAL_TYPE RefDensity, 
                     const REAL_TYPE RefVelocity, 
@@ -182,13 +182,13 @@ public:
    */
   void readVelocity(FILE* fp, 
                     const std::string fname, 
-                    const unsigned* size, 
-                    const unsigned gc, 
+                    int* size, 
+                    int gc, 
                     REAL_TYPE* v, 
                     int& step, 
                     REAL_TYPE& time, 
                     const REAL_TYPE *v00, 
-                    const unsigned Dmode, 
+                    const int Dmode, 
                     const REAL_TYPE RefVelocity, 
                     REAL_TYPE& flop, 
                     const int guide_out,
@@ -218,12 +218,12 @@ public:
    */
   void readTemperature(FILE* fp, 
                        const std::string fname, 
-                       const unsigned* size, 
-                       const unsigned gc, 
+                       int* size, 
+                       int gc, 
                        REAL_TYPE* t, 
                        int& step, 
                        REAL_TYPE& time, 
-                       const unsigned Dmode, 
+                       const int Dmode, 
                        const REAL_TYPE Base_tmp, 
                        const REAL_TYPE Diff_tmp, 
                        const REAL_TYPE Kelvin, 
@@ -250,8 +250,8 @@ public:
    * @param [in] time_avr  平均操作した時間
    */
   void writeScalar(const std::string fname, 
-                   const unsigned* size, 
-                   const unsigned gc,
+                   int* size, 
+                   int gc,
                    REAL_TYPE* s, 
                    const int step, 
                    const REAL_TYPE time, 
@@ -279,8 +279,8 @@ public:
    * @param [in] time_avr  平均操作した時間
    */
   void writeVector(const std::string fname, 
-                   const unsigned* size, 
-                   const unsigned gc, 
+                   int* size, 
+                   int gc, 
                    REAL_TYPE* v, 
                    const int step, 
                    const REAL_TYPE time, 

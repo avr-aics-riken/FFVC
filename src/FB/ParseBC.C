@@ -16,11 +16,11 @@
 #include "ParseBC.h"
 
 /**
- @fn bool ParseBC::chkBCconsistency(unsigned kos)
+ @fn bool ParseBC::chkBCconsistency(int kos)
  @brief KOSと境界条件数の整合性をチェックする
  @param kos KindOfSolver
  */
-void ParseBC::chkBCconsistency(unsigned kos)
+void ParseBC::chkBCconsistency(int kos)
 {
   if (kos == FLOW_ONLY) {
     for (int n=1; n<NoBC; n++) {
@@ -70,7 +70,7 @@ void ParseBC::countMedium(Control* Cref)
   }
   
   // 流体と固体の媒質数をセット
-  unsigned m_fluid=0, m_solid=0;
+  int m_fluid=0, m_solid=0;
   for (int i=1; i<=NoMedium; i++) {
     if ( mat[i].getState() == SOLID ) m_solid++;
     else m_fluid++;
@@ -202,7 +202,7 @@ void ParseBC::get_Darcy(const std::string label_base, const int n)
   string label;
   int nnode=0;
   
-  for (unsigned n=0; n<3; n++) v[n]=0.0;
+  for (int n=0; n<3; n++) v[n]=0.0;
   
   // check number of Elem
   nnode = tpCntl->countLabels(label_base);
@@ -527,7 +527,7 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   get_NV(label_base, n, v);
   copyVec(compo[n].nv, v);
   
-  unsigned shp = compo[n].get_Shape();
+  int shp = compo[n].get_Shape();
   
   if ( (shp == SHAPE_BOX) || (shp == SHAPE_CYLINDER) ) {
     // 中心座標の取得
@@ -723,7 +723,7 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
     stamped_printf("\tParsing error : Invalid direction in 'LocalBoundary > Periodic'\n");
     Exit(0);
   }
-	compo[n].setPeriodicDir((unsigned)dir);
+	compo[n].setPeriodicDir((int)dir);
   
   
   // 圧力差
@@ -1399,7 +1399,7 @@ void ParseBC::get_Medium_InitTemp(void)
 {
   int id;
   const char* p=NULL;
-  unsigned Cell_state;
+  int Cell_state;
   REAL_TYPE ct;
   
   std::string label, label_base;
@@ -1413,7 +1413,7 @@ void ParseBC::get_Medium_InitTemp(void)
     Exit(0);
   }
   
-  unsigned m_no_medium = NoCompo - NoBC;
+  int m_no_medium = NoCompo - NoBC;
   
   // check number of Elem
   nnode=tpCntl->countLabels(label_base);
@@ -1426,7 +1426,7 @@ void ParseBC::get_Medium_InitTemp(void)
   
   
   // load statement list
-  for (unsigned i=1; i<=m_no_medium; i++) {
+  for (int i=1; i<=m_no_medium; i++) {
     
     if(!tpCntl->GetNodeStr(label_base,i,&str)){
       stamped_printf("\tGetNodeStr error\n");
@@ -1458,9 +1458,9 @@ void ParseBC::get_Medium_InitTemp(void)
     
     //// マッチング
     //bool m_flag = false;
-    //for (unsigned m=NoBC+1; m<=NoCompo; m++) {
+    //for (int m=NoBC+1; m<=NoCompo; m++) {
     //  
-    //  if ( compo[m].getID() == (unsigned)id ) {
+    //  if ( compo[m].getID() == (int)id ) {
     //    m_flag = true;
     //    if ( compo[m].getState() != Cell_state ) {
     //      stamped_printf("\tError : Inconsistent the cell state between 'Model_Setting' and 'Init_Temp_of_Medium' : Medium ID=%d\n", id);
@@ -1498,7 +1498,7 @@ void ParseBC::get_Medium_InitTemp(void)
 void ParseBC::get_NV(const std::string label_base, const int n, REAL_TYPE* v)
 {
   std::string label;
-  for (unsigned i=0; i<3; i++) v[i]=0.0f;
+  for (int i=0; i<3; i++) v[i]=0.0f;
   
   label = label_base + "/Normal";
   if( !(tpCntl->GetVector(label, v, 3)) )
@@ -2034,7 +2034,7 @@ void ParseBC::get_OBC_HT(const std::string label_base, const int n, const std::s
  */
 void ParseBC::get_Phase(void)
 {
-  unsigned m_phase;
+  int m_phase;
   int id;
   std::string str,p;
   string label,label_base;
@@ -2108,7 +2108,7 @@ void ParseBC::get_Phase(void)
   }
   
   // check Phase of Fluid
-  unsigned tmp;
+  int tmp;
   bool sw=true;
   for (int n=1; n<=NoMedium; n++) {
     if ( compo[n].getState() == FLUID ) {
@@ -2237,12 +2237,20 @@ void ParseBC::importCPM(cpm_ParaManager* m_paraMngr)
 }
 
 
+// TPのポインタを受け取る
+void ParseBC::importTP(TPControl* tp) 
+{ 
+  if ( !tp ) Exit(0);
+  tpCntl = tp;
+}
+
+
 /**
- @fn bool ParseBC::isComponent(unsigned label)
+ @fn bool ParseBC::isComponent(int label)
  @brief コンポーネントが存在するかどうかを調べる
  @retval bool値
  */
-bool ParseBC::isComponent(unsigned label)
+bool ParseBC::isComponent(int label)
 {
   for (int n=1; n<=NoBC; n++) {
     if ( compo[n].getType() == label ) return true;
@@ -2251,11 +2259,11 @@ bool ParseBC::isComponent(unsigned label)
 }
 
 /**
- @fn bool ParseBC::isCompoTransfer(unsigned label)
+ @fn bool ParseBC::isCompoTransfer(int label)
  @brief HTコンポーネントが存在するかどうかを調べる
  @retval bool値
  */
-bool ParseBC::isCompoTransfer(unsigned label)
+bool ParseBC::isCompoTransfer(int label)
 {
   for (int n=1; n<=NoBC; n++) {
     if ( compo[n].getHtype() == label ) return true;
@@ -2264,13 +2272,13 @@ bool ParseBC::isCompoTransfer(unsigned label)
 }
 
 /**
- @fn bool ParseBC::isIDinCompo(int candidate, unsigned now)
+ @fn bool ParseBC::isIDinCompo(int candidate, int now)
  @brief candidate_idが既にコンポーネントに登録されているかを調べる
  @retval 重複していればfalseを返す
  @param candidate チェックの候補
  @param now コンポーネントリストの現在までのエントリ番号
  */
-bool ParseBC::isIDinCompo(int candidate, unsigned now)
+bool ParseBC::isIDinCompo(int candidate, int now)
 {
   for (int i=1; i<(int)now; i++) {
     if ( candidate == compo[i].getMatOdr() ) {
@@ -2281,14 +2289,14 @@ bool ParseBC::isIDinCompo(int candidate, unsigned now)
 }
 
 /**
- @fn bool ParseBC::isIDinCompo(int candidate, int def, unsigned now)
+ @fn bool ParseBC::isIDinCompo(int candidate, int def, int now)
  @brief candidate_idとdefの組が既にコンポーネントに登録されているかを調べる
  @retval 重複していればfalseを返す
  @param candidate_id チェックの候補ID
  @param def deface
  @param now コンポーネントリストの現在までのエントリ番号
  */
-bool ParseBC::isIDinCompo(int candidate, int def, unsigned now)
+bool ParseBC::isIDinCompo(int candidate, int def, int now)
 {
   for (int i=1; i<(int)now; i++) {
     if ( (candidate == compo[i].getMatOdr()) && (def == compo[i].getDef()) ) {
@@ -2316,7 +2324,7 @@ void ParseBC::loadBC_Local(Control* C)
   REAL_TYPE fval;
   int n=0;
   int ide;
-  unsigned tp;
+  int tp;
   
   /* Medium_Table debug print ///////////////////////////////////////////////////
    std::cout << std::endl;
@@ -2780,7 +2788,7 @@ void ParseBC::loadBC_Outer(void)
             Exit(0);
           }
           
-          unsigned cflag=0;
+          int cflag=0;
           for (int c=1; c<=NoBC; c++) {
             if ( compo[c].getType() == PERIODIC ) {
               if ( (int)compo[c].getPeriodicDir() != bc[n].get_DriverDir() ) {
@@ -2831,7 +2839,7 @@ int ParseBC::oppositeDir(const int dir)
  */
 void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
 {
-  unsigned n, m;
+  int n, m;
   bool flag;
   
   // VBC ---------------------------------------------------
@@ -3283,7 +3291,7 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed     Q[W/m^3]    nrmlzd[-]\n");
     
     for(n=1; n<=NoBC; n++) {
-      unsigned h_odr = compo[n].getMatOdr();
+      int h_odr = compo[n].getMatOdr();
       if ( compo[n].getType() == HEAT_SRC ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                 n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
@@ -3408,30 +3416,28 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
 
 
 /**
- @fn void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
  @brief 外部境界条件の各面の情報を表示する
  @param fp
- @param G_Lbx グローバルの領域の大きさ
+ @param G_reg グローバルの領域の大きさ
  */
-void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_Lbx)
+void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_reg)
 {
   for (int i=0; i<NOFACE; i++) {
     fprintf(fp,"\t      Set %s up as %s : < %s >\n", FBUtility::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), bc[i].get_Alias().c_str());
-    printOBC(fp, &bc[i], G_Lbx, i);
+    printOBC(fp, &bc[i], G_reg, i);
     fprintf(fp,"\n");
   }
   fflush(fp);
 }
 
 /**
- @fn void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref REAL_TYPE* G_Lbx, const int face)
  @brief 速度の外部境界条件処理の表示
  @param fp
  @param ref
- @param G_Lbx グローバルの領域の大きさ
+ @param G_reg グローバルの領域の大きさ
  @param face 面番号
  */
-void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int face)
+void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int face)
 {
   REAL_TYPE a, b, c;
   
@@ -3454,12 +3460,12 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int
       }
       fprintf(fp,"\t\t\tPressure Gradient is %s\n", ( Mode_Gradp == P_GRAD_ZERO) ? "zero" : "calculated from Navier-Stokes eqs.");
       if ( HeatProblem ) {
-        unsigned htp = ref->get_hType();
+        int htp = ref->get_hType();
         if ( htp == ADIABATIC ) {
           fprintf(fp,"\t\t\tAdiabatic\n");
         }
         else if ( htp == TRANSFER) {
-          unsigned ht_mode = ref->get_HTmode();
+          int ht_mode = ref->get_HTmode();
           if ( ht_mode == HT_N ) {
             fprintf(fp, "\tHeat Transfer Type N  : H. T. Coef. = %e \n", ref->get_CoefHT());
           }
@@ -3568,19 +3574,19 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_Lbx, const int
             case X_MINUS:
             case X_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
-                      ref->p/(G_Lbx[0]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_Lbx[0]);
+                      ref->p/(G_reg[0]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[0]);
               break;
               
             case Y_MINUS:
             case Y_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
-                      ref->p/(G_Lbx[1]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_Lbx[1]);
+                      ref->p/(G_reg[1]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[1]);
               break;
               
             case Z_MINUS:
             case Z_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
-                      ref->p/(G_Lbx[2]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_Lbx[2]);
+                      ref->p/(G_reg[2]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[2]);
               break;
           }          
           break;
@@ -3622,17 +3628,6 @@ void ParseBC::receiveCompoPtr(CompoList* CMP)
 }
 
 
-/**
- @fn void ParseBC::importTP(TPControl* tp)
- @brief TPのポインタを受け取る
- */
-bool ParseBC::importTP(TPControl* tp) 
-{ 
-  if ( !tp ) return false;
-  tpCntl = tp;
-  return true;
-}
-
 
 //@brief 変数の初期化
 void ParseBC::setControlVars(Control* Cref, BoundaryOuter* ptr, MediumList* m_mat)
@@ -3668,7 +3663,7 @@ void ParseBC::setControlVars(Control* Cref, BoundaryOuter* ptr, MediumList* m_ma
   double s, two=2.0d;
   
   s = (double)MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
-  m = (unsigned)(log10(s+1.0d)/log10(two) );
+  m = (int)(log10(s+1.0d)/log10(two) );
   
   if ( NoCompo > s ) {
     printf("Error : No. of Component (= NoBC + NoMedium) must be less or equal %d(%dbit-width)\n", (int)s, m);
@@ -3816,9 +3811,9 @@ void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
  */
 void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
 {
-  unsigned m;
+  int m;
   
-	for (unsigned n=NoBC+1; n<=NoCompo; n++) {
+	for (int n=NoBC+1; n<=NoCompo; n++) {
     if ( cmp[n].getMatOdr() == C->RefMat ) {
       m = cmp[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {
@@ -3847,9 +3842,9 @@ void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
  */
 void ParseBC::setRefMedium(MediumList* mat, Control* Cref)
 {
-  unsigned m;
+  int m;
   
-  for (unsigned n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
+  for (int n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
     if ( compo[n].getMatOdr() == Cref->RefMat ) {
       m = compo[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {

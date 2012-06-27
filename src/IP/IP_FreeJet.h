@@ -49,10 +49,10 @@ public:
    * @param[in] R   Controlクラスのポインタ
    * @param[in] sz  分割数
    * @param[in] org 計算領域の基点
-   * @param[in] wth 計算領域のbounding boxサイズ
+   * @param[in] reg 計算領域のbounding boxサイズ
    * @param[in] pch セル幅
    */
-  virtual bool setDomain(Control* R, unsigned* G_size, REAL_TYPE* G_org, REAL_TYPE* G_Lbx);
+  virtual bool setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch);
   
   
   /** 

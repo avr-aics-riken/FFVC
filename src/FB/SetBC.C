@@ -44,13 +44,13 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   imax = size[0] = Cref->imax;
   jmax = size[1] = Cref->jmax;
   kmax = size[2] = Cref->kmax;
-  gc = (int*)&guide;
-  ix = (int*)&(Cref->imax);
-  jx = (int*)&(Cref->jmax);
-  kx = (int*)&(Cref->kmax);
-  ixc = (int)imax;
-  jxc = (int)jmax;
-  kxc = (int)kmax;
+  gc = &guide;
+  ix = &(Cref->imax);
+  jx = &(Cref->jmax);
+  kx = &(Cref->kmax);
+  ixc = imax;
+  jxc = jmax;
+  kxc = kmax;
   dh        = Cref->dh;
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
@@ -79,17 +79,17 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   Dp1       = Cref->Domain_p1;
   Dp2       = Cref->Domain_p2;
   
-  dim_sz[0] = (int)imax;
-  dim_sz[1] = (int)jmax;
-  dim_sz[2] = (int)kmax;
+  dim_sz[0] = imax;
+  dim_sz[1] = jmax;
+  dim_sz[2] = kmax;
   
   Ex = ExRef;
   
   // get reference values >> 媒質はIDがユニークに定まる
   int m;
-  for (unsigned n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
+  for (int n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
     if ( cmp[n].getMatOdr() == Cref->RefMat ) {
-      m = (int)cmp[n].getMatOdr();
+      m = cmp[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {
         rho    = mat[m].P[p_density];
         nyu    = mat[m].P[p_kinematic_viscosity];

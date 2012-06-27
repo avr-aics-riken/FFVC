@@ -18,7 +18,8 @@
 
 
 // 指定の時刻になったかどうかを判断する
-bool Interval_Manager::isTriggered(const unsigned stp, const double tm, bool d_flag) 
+// 指定時刻を過ぎて，かつ1時刻前が指定時刻に満たない場合が出力タイミング
+bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag) 
 {
   if (d_flag) printf("tm=%f ntm=%f nst=%d itv=%d\n",tm, next_tm, next_step, intvl_step);
   
@@ -49,7 +50,7 @@ bool Interval_Manager::isTriggered(const unsigned stp, const double tm, bool d_f
   
 
 // トリガーを初期化する
-bool Interval_Manager::initTrigger(const unsigned stp, const double tm, const double m_dt, const unsigned m_id, const double tscale)
+bool Interval_Manager::initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale)
 {
   delta_t = m_dt;
   id = m_id;
@@ -100,7 +101,7 @@ bool Interval_Manager::initTrigger(const unsigned stp, const double tm, const do
 void Interval_Manager::setInterval(const double m_interval) 
 {
   if (mode == By_step) {
-    intvl_step = (unsigned)m_interval;
+    intvl_step = (int)m_interval;
   }
   else {
     intvl_tm = (double)m_interval;

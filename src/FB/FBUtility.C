@@ -8,24 +8,27 @@
 //
 // #################################################################
 
-//@file FBUtility.C
-//@brief FlowBase FBUtility class Header
-//@author kero
+/** 
+ * @file FBUtility.C
+ * @brief FlowBase FBUtility class
+ * @author kero
+ */
+
 
 #include "FBUtility.h"
 
 
 // メモリ使用量を表示する
-void FBUtility::MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp)
+void FBUtility::MemoryRequirement(const char* mode, const double Memory, const double l_memory, FILE* fp)
 {
-  const REAL_TYPE mem = (REAL_TYPE)Memory;
-  const REAL_TYPE lmem= (REAL_TYPE)l_memory;
-  const REAL_TYPE KB = 1024.0;
-  const REAL_TYPE MB = 1024.0*KB;
-  const REAL_TYPE GB = 1024.0*MB;
-  const REAL_TYPE TB = 1024.0*GB;
-  const REAL_TYPE PB = 1024.0*TB;
-  const REAL_TYPE factor = 1.05; // estimate 5% for addtional
+  const double mem = Memory;
+  const double lmem= l_memory;
+  const double KB = 1024.0;
+  const double MB = 1024.0*KB;
+  const double GB = 1024.0*MB;
+  const double TB = 1024.0*GB;
+  const double PB = 1024.0*TB;
+  const double factor = 1.05; // estimate 5% for addtional
 
   if ( !strcasecmp(mode,"prep") ) {
     fprintf (fp,"\t>> Memory required for Preprocessor : ");

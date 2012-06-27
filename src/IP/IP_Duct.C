@@ -170,20 +170,20 @@ void IP_Duct::printPara(FILE* fp, Control* R)
 
 
 // Ductの領域情報を設定する
-void IP_Duct::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3])
+void IP_Duct::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
 {
-  wth[0] = pch[0]*(REAL_TYPE)sz[0];
-  wth[1] = pch[1]*(REAL_TYPE)sz[1];
-  wth[2] = pch[2]*(REAL_TYPE)sz[2];
+  reg[0] = pch[0]*(REAL_TYPE)sz[0];
+  reg[1] = pch[1]*(REAL_TYPE)sz[1];
+  reg[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // チェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
-  if ( ((unsigned)(wth[0]/pch[0]) != sz[0]) ||
-       ((unsigned)(wth[1]/pch[1]) != sz[1]) ||
-       ((unsigned)(wth[2]/pch[2]) != sz[2]) ) {
+  if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
+       ((int)(reg[1]/pch[1]) != sz[1]) ||
+       ((int)(reg[2]/pch[2]) != sz[2]) ) {
     Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
     Exit(0);
   }
@@ -194,14 +194,20 @@ void IP_Duct::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE 
 // Ductの計算領域のセルIDを設定する
 void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int i,j,k, gd;
   int mid_fluid=1;        /// 流体
   int mid_solid=2;        /// 固体
   int mid_driver=3;       /// ドライバ部
   int mid_driver_face=4;  /// ドライバ流出面
-  unsigned m;
   REAL_TYPE x, y, z, dh, r, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
+  
+  size_t m;
+  
+  // ローカルにコピー
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  int gd = guide;
   
   // 隣接ランクのIDを取得 nID[6]
   const int* nID = paraMngr->GetNeighborRankID();
@@ -213,14 +219,13 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   Ly = R->Lbx[1];
   Lz = R->Lbx[2];
   dh = R->dh;
-  gd = (int)guide;
   r  = driver.diameter/R->RefLength * 0.5;
   len= driver.length/R->RefLength;
   
   // Initialize  内部領域をsolidにしておく
-  for (k=1; k<=(int)kmax; k++) { 
-    for (j=1; j<=(int)jmax; j++) {
-      for (i=1; i<=(int)imax; i++) {
+  for (int k=1; k<=kmax; k++) {
+    for (int j=1; j<=jmax; j++) {
+      for (int i=1; i<=imax; i++) {
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_solid;
       }
@@ -229,9 +234,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   // Inner
   if (driver.shape == id_rectangular ) { // 矩形管の場合は内部は全て流体
-    for (k=1; k<=(int)kmax; k++) {
-      for (j=1; j<=(int)jmax; j++) {
-        for (i=1; i<=(int)imax; i++) {
+    for (int k=1; k<=kmax; k++) {
+      for (int j=1; j<=jmax; j++) {
+        for (int i=1; i<=imax; i++) {
           m = FBUtility::getFindexS3D(size, guide, i, j, k);
           mid[m] = mid_fluid;
         }
@@ -242,9 +247,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     switch (driver.direction) {
       case X_MINUS:
       case X_PLUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               y = oy + 0.5*dh + dh*(j-1);
               z = oz + 0.5*dh + dh*(k-1);
@@ -256,9 +261,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case Y_MINUS:
       case Y_PLUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               x = ox + 0.5*dh + dh*(i-1);
               z = oz + 0.5*dh + dh*(k-1);
@@ -270,9 +275,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case Z_MINUS:
       case Z_PLUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               x = ox + 0.5*dh + dh*(i-1);
               y = oy + 0.5*dh + dh*(j-1);
@@ -290,9 +295,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     switch (driver.direction) {
       case X_MINUS:
         if ( nID[driver.direction] < 0 ) {
-          for (k=1; k<=(int)kmax; k++) {
-            for (j=1; j<=(int)jmax; j++) {
-              for (i=1; i<=(int)imax; i++) {
+          for (int k=1; k<=kmax; k++) {
+            for (int j=1; j<=jmax; j++) {
+              for (int i=1; i<=imax; i++) {
                 m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
@@ -313,9 +318,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case X_PLUS:
         if ( nID[driver.direction] < 0 ) {
-          for (k=1; k<=(int)kmax; k++) {
-            for (j=1; j<=(int)jmax; j++) {
-              for (i=1; i<=(int)imax; i++) {
+          for (int k=1; k<=kmax; k++) {
+            for (int j=1; j<=jmax; j++) {
+              for (int i=1; i<=imax; i++) {
                 m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
@@ -336,9 +341,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case Y_MINUS:
         if ( nID[driver.direction] < 0 ) {
-          for (k=1; k<=(int)kmax; k++) {
-            for (j=1; j<=(int)jmax; j++) {
-              for (i=1; i<=(int)imax; i++) {
+          for (int k=1; k<=kmax; k++) {
+            for (int j=1; j<=jmax; j++) {
+              for (int i=1; i<=imax; i++) {
                 m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
@@ -359,9 +364,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case Y_PLUS:
         if ( nID[driver.direction] < 0 ) {
-          for (k=1; k<=(int)kmax; k++) {
-            for (j=1; j<=(int)jmax; j++) {
-              for (i=1; i<=(int)imax; i++) {
+          for (int k=1; k<=kmax; k++) {
+            for (int j=1; j<=jmax; j++) {
+              for (int i=1; i<=imax; i++) {
                 m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
@@ -382,9 +387,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case Z_MINUS:
         if ( nID[driver.direction] < 0 ) {
-          for (k=1; k<=(int)kmax; k++) {
-            for (j=1; j<=(int)jmax; j++) {
-              for (i=1; i<=(int)imax; i++) {
+          for (int k=1; k<=kmax; k++) {
+            for (int j=1; j<=jmax; j++) {
+              for (int i=1; i<=imax; i++) {
                 m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
@@ -405,9 +410,9 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         
       case Z_PLUS:
         if ( nID[driver.direction] < 0 ) {
-          for (k=1; k<=(int)kmax; k++) {
-            for (j=1; j<=(int)jmax; j++) {
-              for (i=1; i<=(int)imax; i++) {
+          for (int k=1; k<=kmax; k++) {
+            for (int j=1; j<=jmax; j++) {
+              for (int i=1; i<=imax; i++) {
                 m = FBUtility::getFindexS3D(size, guide, i, j, k);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
@@ -431,15 +436,18 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   // ドライバの下流面にIDを設定
   if ( driver.length > 0.0 ) {
     
-    unsigned m1;
-    switch (driver.direction) {
+    size_t m1;
+    
+    switch (driver.direction) 
+    {
       case X_MINUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i,   j, k);
               m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              {
                 mid[m] = mid_driver_face;
               }
             }
@@ -448,12 +456,13 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case X_PLUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i,   j, k);
               m1= FBUtility::getFindexS3D(size, guide, i-1, j, k);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              {
                 mid[m] = mid_driver_face;
               }
             }
@@ -462,12 +471,13 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Y_MINUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j,   k);
               m1= FBUtility::getFindexS3D(size, guide, i, j+1, k);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              {
                 mid[m] = mid_driver_face;
               }
             }
@@ -476,12 +486,13 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Y_PLUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j,   k);
               m1= FBUtility::getFindexS3D(size, guide, i, j-1, k);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              {
                 mid[m] = mid_driver_face;
               }
             }
@@ -490,12 +501,13 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Z_MINUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               m1= FBUtility::getFindexS3D(size, guide, i, j, k+1);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              {
                 mid[m] = mid_driver_face;
               }
             }
@@ -504,12 +516,13 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         break;
         
       case Z_PLUS:
-        for (k=1; k<=(int)kmax; k++) {
-          for (j=1; j<=(int)jmax; j++) {
-            for (i=1; i<=(int)imax; i++) {
+        for (int k=1; k<=kmax; k++) {
+          for (int j=1; j<=jmax; j++) {
+            for (int i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               m1= FBUtility::getFindexS3D(size, guide, i, j, k-1);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              {
                 mid[m] = mid_driver_face;
               }
             }

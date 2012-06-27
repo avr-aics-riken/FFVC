@@ -37,29 +37,29 @@ protected:
 public:
   
   /** パラメータをロード
-   * @apram[in] R      Controlクラス
-   * @param[in] tpCntl テキストパーサクラス
+   * @param [in] R      Controlクラス
+   * @param [in] tpCntl テキストパーサクラス
    * @return true-成功, false-エラー
    */
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
   
   /** 領域を設定する
-   * @param[in] R   Controlクラスのポインタ
-   * @param[in] sz  分割数
-   * @param[in] org 計算領域の基点
-   * @param[in] wth 計算領域のbounding boxサイズ
-   * @param[in] pch セル幅
+   * @param [in] R   Controlクラスのポインタ
+   * @param [in] sz  分割数
+   * @param [in] org 計算領域の基点
+   * @param [in] reg 計算領域のbounding boxサイズ
+   * @param [in] pch セル幅
    */
-  virtual void setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE wth[3], REAL_TYPE pch[3]);
+  virtual void setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch);
   
   
   /** 並行平板の計算領域のセルIDを設定する
-   * @param[in/out] mid   媒質情報の配列
-   * @param[in]     R     Controlクラスのポインタ
-   * @param[in]     G_org グローバルな原点（無次元）
-   * @param[in]     Nmax  Controlクラスのポインタ
-   * @param[in]     mat   MediumListクラスのポインタ
+   * @param [in/out] mid   媒質情報の配列
+   * @param [in]     R     Controlクラスのポインタ
+   * @param [in]     G_org グローバルな原点（無次元）
+   * @param [in]     Nmax  Controlクラスのポインタ
+   * @param [in]     mat   MediumListクラスのポインタ
    */
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
@@ -67,7 +67,7 @@ public:
   /** 
    @brief 例題の名称を返す
    */
-  virtual const char* getExampleName(void) 
+  virtual const char* getExampleName() 
   {
     return ("Parallel Plate 2D");
   }

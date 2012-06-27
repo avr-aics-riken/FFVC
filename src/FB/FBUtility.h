@@ -56,7 +56,7 @@ public:
   
   /**
    * @brief dirの方向ラベルを返す
-   * @param [in] dir     方向コード
+   * @param [in] dir 方向コード
    * @return 方向ラベル
    */
   static string getDirection(const int dir)
@@ -79,7 +79,7 @@ public:
    * @param [in] l_memory local
    * @param [in] fp       ファイルポインタ
    */
-  static void MemoryRequirement(const char* mode, const unsigned long Memory, const unsigned long l_memory, FILE* fp);
+  static void MemoryRequirement(const char* mode, const double Memory, const double l_memory, FILE* fp);
   
   
   /** バージョン情報の表示
@@ -119,7 +119,7 @@ public:
    @param [in] diff Control::DiffTemp
    @param [in] Unit 温度の単位
    */
-  static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const unsigned Unit) 
+  static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const int Unit) 
   {
     REAL_TYPE tmp = convTemp2K(var, Unit);
     return ( (tmp - base) / (REAL_TYPE)fabs(diff) );
@@ -143,7 +143,7 @@ public:
    @param [in] var  有次元温度(Kelvin)
    @param [in] Unit 温度の単位
    */
-  static REAL_TYPE convK2Temp(const REAL_TYPE var, const unsigned Unit) 
+  static REAL_TYPE convK2Temp(const REAL_TYPE var, const int Unit) 
   {
     return ( (Unit==Unit_KELVIN) ? var : var-KELVIN );
   }
@@ -154,7 +154,7 @@ public:
    @param [in] var  有次元温度(Kelvin or Celsius)
    @param [in] Unit 温度の単位
    */
-  static REAL_TYPE convTemp2K(const REAL_TYPE var, const unsigned Unit) 
+  static REAL_TYPE convTemp2K(const REAL_TYPE var, const int Unit) 
   {
     return ( (Unit==Unit_KELVIN) ? var : var+KELVIN );
   }
@@ -223,7 +223,7 @@ public:
                               const REAL_TYPE bp, 
                               const REAL_TYPE rho, 
                               const REAL_TYPE RefV, 
-                              const unsigned mode) 
+                              const int mode) 
   {
     const REAL_TYPE a = (mode==Unit_Absolute) ? (var-bp) : var;
     return (  a / (RefV*RefV*rho) );
@@ -242,11 +242,63 @@ public:
                               const REAL_TYPE bp, 
                               const REAL_TYPE rho, 
                               const REAL_TYPE RefV, 
-                              const unsigned mode) 
+                              const int mode) 
   {
     const REAL_TYPE a = var * (RefV*RefV*rho);
     return ( (mode==Unit_Absolute) ? bp+a : a );
   }
+  
+  
+  /** 3次元インデクス(i,j,k) -> 1次元インデクス変換マクロ
+   *  @param[in] _I  i方向インデクス
+   *  @param[in] _J  j方向インデクス
+   *  @param[in] _K  k方向インデクス
+   *  @param[in] _NI i方向インデクスサイズ
+   *  @param[in] _NJ j方向インデクスサイズ
+   *  @param[in] _NK k方向インデクスサイズ
+   *  @param[in] _VC 仮想セル数
+   *  @return 1次元インデクス
+   */
+#define _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
+( size_t(_K+_VC-1) * size_t(_NI+2*_VC) * size_t(_NJ+2*_VC) \
++ size_t(_J+_VC-1) * size_t(_NI+2*_VC) \
++ size_t(_I+_VC-1) \
+)
+  
+  
+  /** 4次元インデクス(n,i,j,k) -> 1次元インデクス変換マクロ
+   *  @param[in] _N  成分インデクス
+   *  @param[in] _I  i方向インデクス
+   *  @param[in] _J  j方向インデクス
+   *  @param[in] _K  k方向インデクス
+   *  @param[in] _NN 成分数
+   *  @param[in] _NI i方向インデクスサイズ
+   *  @param[in] _NJ j方向インデクスサイズ
+   *  @param[in] _NK k方向インデクスサイズ
+   *  @param[in] _VC 仮想セル数
+   *  @return 1次元インデクス
+   */
+#define _F_IDX_S4DEX(_N,_I,_J,_K,_NN,_NI,_NJ,_NK,_VC) \
+( size_t(_NN-1) * _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
++ size_t(_N) )
+  
+  
+  /** 3次元インデクス(3,i,j,k) -> 1次元インデクス変換マクロ
+   *  @param[in] _N  成分インデクス
+   *  @param[in] _I  i方向インデクス
+   *  @param[in] _J  j方向インデクス
+   *  @param[in] _K  k方向インデクス
+   *  @param[in] _NI i方向インデクスサイズ
+   *  @param[in] _NJ j方向インデクスサイズ
+   *  @param[in] _NK k方向インデクスサイズ
+   *  @param[in] _VC 仮想セル数
+   */
+#define _F_IDX_V3DEX(_N,_I,_J,_K,_NI,_NJ,_NK,_VC) \
+( 3 * size_t(_K+_VC-1) * size_t(_NI+2*_VC) * size_t(_NJ+2*_VC) \
++ 3 * size_t(_J+_VC-1) * size_t(_NI+2*_VC) \
++ 3 * size_t(_I+_VC-1) + size_t(_N) \
+)
+  
   
   
   /**
@@ -258,7 +310,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexS3D(const unsigned* sz, unsigned gc, int i, int j, int k) 
+  static inline unsigned getFindexS3D(const int* sz, int gc, int i, int j, int k) 
   {
     //return ( (sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + (sz[0]+gc*2)*(j+gc-1) + i+gc-1 );
     int t1 = gc*2;
@@ -277,7 +329,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexV3DEx(const unsigned* sz, unsigned gc, int l, int i, int j, int k) 
+  static inline unsigned getFindexV3DEx(const int* sz, int gc, int l, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;
@@ -296,7 +348,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexS3Dcut(const unsigned* sz, unsigned gc, int l, int i, int j, int k) 
+  static inline unsigned getFindexS3Dcut(const int* sz, int gc, int l, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;
@@ -313,7 +365,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexBID8(const unsigned* sz, unsigned gc, int i, int j, int k) 
+  static inline unsigned getFindexBID8(const int* sz, int gc, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;

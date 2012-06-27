@@ -89,10 +89,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // TPControlクラスのポインタをControlクラスに渡す
-  if ( !C.importTP(&tpCntl) ) {
-    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to Control class\n");
-    return -1;
-  }
+  C.importTP(&tpCntl);
   
   
   // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
@@ -167,18 +164,9 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // TPControlクラスのポインタを各クラスに渡す
-  if ( !C.importTP(&tpCntl) ) {
-    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to Control class\n");
-    return -1;
-  }
-  if ( !B.importTP(&tpCntl) ) {
-    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseBC class\n");
-    return -1;
-  }
-  if ( !M.importTP(&tpCntl) ) {
-    Hostonly_ stamped_printf("\tError during sending an object pointer of TPControl to ParseMat class\n");
-    return -1;
-  }
+  C.importTP(&tpCntl);
+  B.importTP(&tpCntl);
+  M.importTP(&tpCntl);
   
   // パラメータを取得
   C.get_Steer_2(IC, &RF);
@@ -209,10 +197,10 @@ int FFV::Initialize(int argc, char **argv)
   
   // パラメータファイルから C.NoBC, C.NoCompoを取得
   C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
-  C.NoCompo = C.NoBC + (unsigned)C.NoMedium; // コンポーネントの数の定義
+  C.NoCompo = C.NoBC + C.NoMedium; // コンポーネントの数の定義
 
   // ParseMatクラスの環境設定 
-  M.setControlVars((int)C.NoCompo, (int)C.NoBC, (int)C.Unit.Temp, (int)C.KindOfSolver);
+  M.setControlVars(C.NoCompo, C.NoBC, C.Unit.Temp, C.KindOfSolver);
   
   //Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
   
@@ -234,10 +222,10 @@ int FFV::Initialize(int argc, char **argv)
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
   dh0     = &C.dh;
   dh      = &C.dh;
-  gc      = (int)C.guide;
-  sz[0]   = (int)C.imax;
-  sz[1]   = (int)C.jmax;
-  sz[2]   = (int)C.kmax;
+  gc      = C.guide;
+  sz[0]   = C.imax;
+  sz[1]   = C.jmax;
+  sz[2]   = C.kmax;
   
   // 並列処理モード
   string para_label = setParallelism();
@@ -370,7 +358,7 @@ void FFV::DomainInitialize(const string dom_file)
   }
   
   // 各例題のパラメータ設定
-  Ex->setDomain(&C, (unsigned*)m_sz, org, reg, pch);
+  Ex->setDomain(&C, m_sz, org, reg, pch);
   
 
   // グローバルな値の保持 （無次元値）
@@ -407,13 +395,13 @@ void FFV::fixed_parameters()
   }
   
   // ログファイル名
-  strcpy(C.HistoryName,        "history_base.txt");
-  strcpy(C.HistoryCompoName,   "history_compo.txt");
-  strcpy(C.HistoryDomfxName,   "history_domainflux.txt");
-  strcpy(C.HistoryForceName,   "history_force.txt");
-  strcpy(C.HistoryWallName,    "history_log_wall.txt");
-  strcpy(C.HistoryItrName,     "history_iteration.txt");
-  strcpy(C.HistoryMonitorName, "sample.log");
+  C.HistoryName        = "history_base.txt";
+  C.HistoryCompoName   = "history_compo.txt";
+  C.HistoryDomfxName   = "history_domainflux.txt";
+  C.HistoryForceName   = "history_force.txt";
+  C.HistoryWallName    = "history_log_wall.txt";
+  C.HistoryItrName     = "history_iteration.txt";
+  C.HistoryMonitorName = "sample.log";
   
   C.f_Pressure       = "prs_";
   C.f_Velocity       = "vel_";
