@@ -1096,7 +1096,8 @@ SklSolverCBC::SklSolverInitialize() {
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ {
     C.displayParams(mp, fp, IC, &DT, &RF);
-    Ex->printParaInfo(mp, fp, &C);
+    Ex->printPara(mp, &C);
+    Ex->printPara(fp, &C);
     
     // 外部境界面の開口率を表示
     C.printOuterArea(mp, G_Fcell, G_Acell, G_size);

@@ -8,9 +8,11 @@
 //
 // #################################################################
 
-//@file VoxInfo.C
-//@brief FlowBase VoxInfo class
-//@author keno, FSI Team, VCAD, RIKEN
+/**
+ * @file   VoxInfo.C
+ * @brief  FlowBase VoxInfo class
+ * @author kero
+ */
 
 #include <set>
 #include <algorithm>
@@ -401,25 +403,21 @@ void VoxInfo::copyBCIbase(int* dst, int* src)
 }
 
 /**
- @fn void VoxInfo::copyID_Prdc_Inner(SklScalar3D<int>* d_mid, int* st, int* ed, int id, int dir)
  @brief 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
- @param d_mid ID配列のデータクラス
- @param st コンポーネントのbbox始点
- @param ed コンポーネントのbbox終点
- @param id 対象のID
- @param dir ドライバの方向
+ @param [in] mid ID配列のデータクラス
+ @param [in] st コンポーネントのbbox始点
+ @param [in] ed コンポーネントのbbox終点
+ @param [in] id 対象のID
+ @param [in] dir ドライバの方向
  */
-void VoxInfo::copyID_Prdc_Inner(SklScalar3D<int>* d_mid, int* st, int* ed, int id, int dir)
+void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
 {
   size_t m0, m1, m2;
-  int* mid=NULL;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  if ( !(mid = d_mid->GetData()) ) Exit(0);
   
   switch (dir) {
     case X_MINUS:

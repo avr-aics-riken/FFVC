@@ -43,7 +43,7 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
 
 
 // 領域情報を設定する
-void IP_PMT::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
+void IP_PMT::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   // forced
   if (R->Unit.Param != NONDIMENSIONAL) {

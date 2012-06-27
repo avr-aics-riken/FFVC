@@ -11,15 +11,16 @@
 //
 // #################################################################
 
-//@file vec3f_func.h
-//@brief FlowBase class geometry functions
-//@author T. Tawara and kero
+/**
+ * @file   vec3f_func.h
+ * @brief  FlowBase class geometry functions
+ * @author T. Tawara and kero
+ */
 
 namespace FB {
   
 /**
- @fn inline void vec3f_copy(float to[3], const float from[3])
- @brief copy data
+ * @brief copy data
  */
 inline
 void vec3f_copy(float to[3], const float from[3])
@@ -30,8 +31,7 @@ void vec3f_copy(float to[3], const float from[3])
 }
 
 /**
- @fn inline void vec3f_set(float v[3], float x, float y, float z)
- @brief set data
+ * @brief set data
  */
 inline
 void vec3f_set(float v[3], float x, float y, float z)
@@ -42,8 +42,7 @@ void vec3f_set(float v[3], float x, float y, float z)
 }
 
 /**
- @fn inline void vec3f_min(float c[3], const float a[3], const float b[3])
- @brief get minimum
+ * @brief get minimum
  */
 inline
 void vec3f_min(float c[3], const float a[3], const float b[3])
@@ -54,8 +53,7 @@ void vec3f_min(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_max(float c[3], const float a[3], const float b[3])
- @brief get maximum
+ * @brief get maximum
  */
 inline
 void vec3f_max(float c[3], const float a[3], const float b[3])
@@ -66,8 +64,7 @@ void vec3f_max(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_plus(float c[3], const float a[3], const float b[3])
- @brief c[] = a[] + b[]
+ * @brief c[] = a[] + b[]
  */
 inline
 void vec3f_plus(float c[3], const float a[3], const float b[3])
@@ -78,8 +75,7 @@ void vec3f_plus(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_minus(float c[3], const float a[3], const float b[3])
- @brief c[] = a[] - b[]
+ * @brief c[] = a[] - b[]
  */
 inline
 void vec3f_minus(float c[3], const float a[3], const float b[3])
@@ -90,8 +86,7 @@ void vec3f_minus(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_multi(float c[3], const float a[3], const float b[3])
- @brief c[] = a[] * b[]
+ * @brief c[] = a[] * b[]
  */
 inline
 void vec3f_multi(float c[3], const float a[3], const float b[3])
@@ -102,8 +97,7 @@ void vec3f_multi(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_multi(float c[3], const float a[3], const float b)
- @brief c[] = a[] * b
+ * @brief c[] = a[] * b
  */
 inline
 void vec3f_multi(float c[3], const float a[3], const float b)
@@ -114,8 +108,7 @@ void vec3f_multi(float c[3], const float a[3], const float b)
 }
 
 /**
- @fn inline void vec3f_div(float c[3], const float a[3], const float b[3])
- @brief c[] = a[] / b[]
+ * @brief c[] = a[] / b[]
  */
 inline
 void vec3f_div(float c[3], const float a[3], const float b[3])
@@ -126,8 +119,7 @@ void vec3f_div(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_div(float c[3], const float a[3], const float b)
- @brief c[] = a[] / b
+ * @brief c[] = a[] / b
  */
 inline
 void vec3f_div(float c[3], const float a[3], const float b)
@@ -139,8 +131,7 @@ void vec3f_div(float c[3], const float a[3], const float b)
 }
 
 /**
- @fn inline float vec3f_dot(const float a[3], const float b[3])
- @brief return inner product (a[],b[])
+ * @brief return inner product (a[],b[])
  */
 inline
 float vec3f_dot(const float a[3], const float b[3])
@@ -149,8 +140,7 @@ float vec3f_dot(const float a[3], const float b[3])
 }
 
 /**
- @fn inline void vec3f_cross(float c[3], const float a[3], const float b[3])
- @brief cross product c[] = a[] x b[]
+ * @brief cross product c[] = a[] x b[]
  */
 inline
 void vec3f_cross(float c[3], const float a[3], const float b[3])
@@ -161,8 +151,7 @@ void vec3f_cross(float c[3], const float a[3], const float b[3])
 }
 
 /**
- @fn inline float vec3f_sqdist(const float a[3], const float b[3])
- @brief return squared distance between a[] and b[]
+ * @brief return squared distance between a[] and b[]
  */
 inline
 float vec3f_sqdist(const float a[3], const float b[3])
@@ -174,8 +163,7 @@ float vec3f_sqdist(const float a[3], const float b[3])
 }
 
 /**
- @fn inline float vec3f_dist(const float a[3], const float b[3])
- @brief return distance between a[] and b[]
+ * @brief return distance between a[] and b[]
  */
 inline
 float vec3f_dist(const float a[3], const float b[3])

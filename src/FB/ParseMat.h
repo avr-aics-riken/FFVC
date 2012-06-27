@@ -11,9 +11,11 @@
 //
 // #################################################################
 
-//@file ParseMat.h
-//@brief FlowBase ParseMat class Header
-//@author kero
+/**
+ * @file   ParseMat.h
+ * @brief  FlowBase ParseMat class Header
+ * @author kero
+ */
 
 #include "FB_Define.h"
 #include "Medium.h"

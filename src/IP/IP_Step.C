@@ -112,7 +112,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
 
 
 // パラメータの表示
-void IP_Step::printPara(FILE* fp, Control* R)
+void IP_Step::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -132,7 +132,7 @@ void IP_Step::printPara(FILE* fp, Control* R)
 
 
 // 領域情報を設定する
-void IP_Step::setDomain(Control* R, const int* sz, const REAL_TYPE* org, REAL_TYPE* reg, const REAL_TYPE* pch)
+void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   reg[0] = pch[0]*(REAL_TYPE)sz[0];
   reg[1] = pch[1]*(REAL_TYPE)sz[1];

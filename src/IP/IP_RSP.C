@@ -20,7 +20,7 @@
  @param wth グローバル計算領域のbounding boxサイズ
  @param pch セルピッチ
  */
-void IP_RSP::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
+void IP_RSP::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   // forced
   if (R->Unit.Param != DIMENSIONAL) {
@@ -29,7 +29,7 @@ void IP_RSP::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const RE
   }
 
   // 分割数を取得する
-  if ( !FBUtility::getCellInfo(3, sz, org, pch, wth) ) Exit(0);
+  if ( !FBUtility::getCellInfo(3, sz, org, pch, reg) ) Exit(0);
   
   // Z方向のチェック
   if ( sz[2] != 3 ) {

@@ -28,7 +28,7 @@ bool FreeJet::getXML(SklSolverConfig* CF, Control* R)
   return true;
 }
 
-bool FreeJet::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
+bool FreeJet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   REAL_TYPE px, py, pz;
   px = py = pz = 0.0;
@@ -71,7 +71,7 @@ void FreeJet::PostInit(REAL_TYPE &checkTime, Control* R)
   checkTime = R->PlotIntvl;  // first check time
 }
 
-bool FreeJet::printPara(FILE* fp, Control* R)
+bool FreeJet::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");

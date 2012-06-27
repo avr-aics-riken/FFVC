@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file SetBC.C
- * @brief FlowBase SetBC class
+ * @file   SetBC.C
+ * @brief  FlowBase SetBC class
  * @author kero
  */
 

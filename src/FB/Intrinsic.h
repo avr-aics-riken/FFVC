@@ -34,7 +34,8 @@
 
 
 /** 組み込み例題のID */
-enum Intrinsic_class {
+enum Intrinsic_class 
+{
   id_Users = 0,
   id_Duct,
   id_PPLT2D,
@@ -78,14 +79,18 @@ public:
     
   
 public:
+  
+  /** 
+   @brief ユーザー例題の名称を返す
+   */
   virtual const char* getExampleName() 
   { 
     return NULL; 
   }
   
   /**
-   * @param[in] R       Controlクラスのポインタ
-   * @param[in] tpCntl  TPControlクラスのポインタ
+   * @param [in] R       Controlクラスのポインタ
+   * @param [in] tpCntl  TPControlクラスのポインタ
    * @return true-成功、false-エラー
    */
   virtual bool getTP(Control* R, TPControl* tpCntl) 
@@ -105,18 +110,22 @@ public:
   virtual void printExample(FILE* fp, const char* str);
   
   
-  virtual void printParaInfo(FILE* mp, FILE* fp, Control* R);
-  virtual void printPara(FILE* fp, Control* R);
+  /**
+   @brief パラメータの表示
+   @param [in] fp ファイルポインタ
+   @param [in] R  コントロールクラスのポインタ
+   */
+  virtual void printPara(FILE* fp, const Control* R);
   
   
   /** 領域を設定する
-   * @param [in] R   Controlクラスのポインタ
-   * @param [in] sz  分割数
-   * @param [in] org 計算領域の基点
-   * @param [in] reg 計算領域の大きさ
-   * @param [in] pch セル幅
+   * @param [in]     R   Controlクラスのポインタ
+   * @param [in]     sz  分割数
+   * @param [in/out] org 計算領域の基点
+   * @param [in/out] reg 計算領域の大きさ
+   * @param [in/out] pch セル幅
    */
-  virtual void setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch) {};
+  virtual void setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch) {};
   
   
   /** 計算領域の媒質情報を設定する
@@ -145,7 +154,20 @@ public:
   void importCPM(cpm_ParaManager* m_paraMngr);
   
   
+  /**
+   * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
+   * @param [in] vf 体積占有率
+   * @param [in] id ID情報
+   * @param [in] R  コントロールクラスのポインタ
+   */
   void writeSVX(REAL_TYPE *vf, int *id, Control* R);
+  
+  
+  /**
+   * @brief 例題のモデルをsvxフォーマットで出力する(ID)
+   * @param [in] id ID情報
+   * @param [in] R  コントロールクラスのポインタ
+   */
   void writeSVX(int *id, Control* R);
   
   

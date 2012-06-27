@@ -25,7 +25,7 @@ CXXSRCS = \
   BndOuter.C \
   Interval_Mngr.C \
   Alloc.C \
-#  VoxInfo.C \
+  VoxInfo.C \
 #       SetBC.C \
 #       Monitor.C \
 #       MonCompo.C \

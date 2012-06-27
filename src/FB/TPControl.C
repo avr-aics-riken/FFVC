@@ -9,9 +9,9 @@
 // #################################################################
 
 /**
- @file TPControl.C
- @brief TextParser Control class
- @author kero
+ * @file   TPControl.C
+ * @brief  TextParser Control class
+ * @author kero
  */
 
 #include "TPControl.h"

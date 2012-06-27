@@ -8,14 +8,16 @@
 //
 // #################################################################
 
-//@file ParseMat.C
-//@brief FlowBase ParseMat class
-//@author kero
+/**
+ * @file   ParseMat.C
+ * @brief  FlowBase ParseMat class
+ * @author kero
+ */
 
 #include "ParseMat.h"
 
 
-//@brief ラベルの重複を調べる
+// ラベルの重複を調べる
 bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label)
 {
 	for (int i=0; i<n; i++){
@@ -231,8 +233,7 @@ int ParseMat::get_MediumTable(void)
 
 
 
-//@fn void ParseMat::makeMediumList(MediumList* mat)
-//@brief MediumListを作成する
+// MediumListを作成する
 bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
 {
   int type;
@@ -263,10 +264,7 @@ bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
 
 
 
-/**
- @fn int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
- @brief 警告メッセージの表示
- */
+// 警告メッセージの表示
 int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 {
   printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
@@ -277,8 +275,8 @@ int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 
 
 
-//@brief 媒質情報の表示
-//@note Hostonly
+// 媒質情報の表示
+// Hostonly
 void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
 {
   fprintf(fp, "\t  no :           Medium  Properties\n");
@@ -307,7 +305,6 @@ void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
 }
 
 /**
- @fn void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
  @brief CompoList[]とMediumList[]のチェック
  @note debug function
  */
@@ -335,10 +332,8 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
 }
 
 
-/**
- @fn void ParseMat::importTP(TPControl* tp)
- @brief TPのポインタを受け取る
- */
+
+//TPのポインタを受け取る
 bool ParseMat::importTP(TPControl* tp) 
 { 
   if ( !tp ) return false;
@@ -349,7 +344,7 @@ bool ParseMat::importTP(TPControl* tp)
 
 
 
-//@brief 媒質情報の初期化
+// 媒質情報の初期化
 void ParseMat::setControlVars(const int m_NoCompo,
                               const int m_NoBC,
                               const int m_Unit_Temp,

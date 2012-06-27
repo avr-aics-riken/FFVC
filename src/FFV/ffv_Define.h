@@ -12,12 +12,12 @@
 // #################################################################
 
 /** 
- * @file ffv_Define.h
- * @brief FFV Class Definition Header
+ * @file   ffv_Define.h
+ * @brief  FFV Class Definition Header
  * @author kero
  */
 
-#define VERS_FFV   166
+#define FFV_VERS   166
 #define TM_LABEL_MAX 24
   
 /** 計算性能測定キー番号 */

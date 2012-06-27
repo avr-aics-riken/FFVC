@@ -62,7 +62,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 
 
 // Rectの領域情報を設定する
-void IP_Rect::setDomain(Control* R, const int* sz, const REAL_TYPE* org, const REAL_TYPE* reg, const REAL_TYPE* pch)
+void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   reg[0] = pch[0]*(REAL_TYPE)sz[0];
   reg[1] = pch[1]*(REAL_TYPE)sz[1];

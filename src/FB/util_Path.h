@@ -39,10 +39,10 @@ namespace path_util {
 
   /**
    * パス名の絶対パスを取得する。
-   * @param path[in]                パス名
-   * @param resolved_path[out]      絶対パス名
-   * @param str_len                 文字列長
-   * @return                        true=success, false=fault
+   * @param [in]  path               パス名
+   * @param [out] resolved_path      絶対パス名
+   * @param [in]  str_len            文字列長
+   * @return  true=success, false=fault
    */
   inline bool GetFullPathName(const char* path,
                               char* resolved_path,
@@ -64,9 +64,9 @@ namespace path_util {
   
   /**
    * パス名からファイル名を切り出す
-   * @param path        パス名
-   * @param dc          パス区切り文字
-   * @return            ファイル名
+   * @param [in] path        パス名
+   * @param [in] dc          パス区切り文字
+   * @return ファイル名
    */
   inline std::string DirName(const std::string& path,
                              const char dc = '/') {
@@ -111,10 +111,10 @@ namespace path_util {
   
   /**
    * パス名からディレクトリとサフィックスを取り除く。
-   * @param path                パス名
-   * @param suffix              削除末尾文字
-   * @param dc                  パス区切り文字
-   * @return                    ファイル名（ディレクトリとサフィックスなし）
+   * @param [in] path                パス名
+   * @param [in] suffix              削除末尾文字
+   * @param [in] dc                  パス区切り文字
+   * @return ファイル名（ディレクトリとサフィックスなし）
    */
   inline std::string BaseName(const std::string& path,
                               const std::string& suffix = std::string(""),
@@ -158,9 +158,9 @@ namespace path_util {
   
   /**
    * パス名から相対パス文字(./, ../)を削除する。
-   * @param path        パス名
-   * @param dc          パス区切り文字
-   * @return            相対パス文字(./, ../)削除パス名
+   * @param [in] path        パス名
+   * @param [in] dc          パス区切り文字
+   * @return  相対パス文字(./, ../)削除パス名
    */
   inline std::string OmitDots(const std::string& path,
                               const char dc = '/') {

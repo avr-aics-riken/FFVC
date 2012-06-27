@@ -24,16 +24,16 @@
 
 class DFI {
 protected:
-  int Num_Node;       /// MPI並列数
-  int my_id;          /// 自ノードのランク番号（dfiファイルの出力はランク0のみなので自明だが）
-  int Gsize[3];       /// 計算領域全体の分割数
-  int div_domain[3];  /// 全計算領域のノード分割数
-  int procGrp;        /// プロセスグループ（デフォルト0）
-  int guide;          /// ガイドセル数
-  int start_type;     /// セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2）
-  int* head;          /// bboxの開始インデクス(C index) [3*Num_Node]
-  int* tail;          /// bboxの終端インデクス(C index) [3*Num_Node]
-  char** hostname;    /// hostname char[pn.numProc][LABEL]
+  int Num_Node;          ///< MPI並列数
+  int my_id;             ///< 自ノードのランク番号（dfiファイルの出力はランク0のみなので自明だが）
+  int Gsize[3];          ///< 計算領域全体の分割数
+  int div_domain[3];     ///< 全計算領域のノード分割数
+  int procGrp;           ///< プロセスグループ（デフォルト0）
+  int guide;             ///< ガイドセル数
+  int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2）
+  int* head;             ///< bboxの開始インデクス(C index) [3*Num_Node]
+  int* tail;             ///< bboxの終端インデクス(C index) [3*Num_Node]
+  std::string* hostname; ///< ラベル
   
 public:
   DFI() {
@@ -44,7 +44,6 @@ public:
     start_type = -1;
     head       = NULL;
     tail       = NULL;
-    hostname   = NULL;
     
     for (int i=0; i<3; i++) {
       Gsize[i]      = 0;
@@ -53,12 +52,9 @@ public:
 
   }
   ~DFI() {
-    delete [] head;
-    delete [] tail;
-    for (int i=0; i<Num_Node; i++) {
-      delete [] hostname[i];
-    }
-    delete [] hostname;
+    if ( head ) delete [] head;
+    if ( tail ) delete [] tail;
+    if ( hostname ) delete [] hostname;
   }
   
 protected:
@@ -85,12 +81,6 @@ public:
   bool Write_DFI_File    (const std::string prefix, const int step, int& dfi_mng, const bool mio);
   
   std::string Generate_FileName(const std::string prefix, const int m_step, const int m_id, const bool mio=false);
-  
-  // @brief ホスト名のコピー
-  // @param host
-  void copy_hostname(const char* m_host, const int i) {
-    strcpy(hostname[i], m_host);
-  }
 
 };
 

@@ -39,13 +39,13 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 前処理段階のみに使用するオブジェクトをインスタンス
-  //VoxInfo Vinfo;
+  VoxInfo Vinfo;
   ParseBC B;
   
   
   // CPMのポインタをセット
   //BC.importCPM(paraMngr);
-  //Vinfo.importCPM(paraMngr);
+  Vinfo.importCPM(paraMngr);
   B.importCPM(paraMngr);
   F.importCPM(paraMngr);
   
@@ -64,16 +64,11 @@ int FFV::Initialize(int argc, char **argv)
   
   // メッセージ表示
   Hostonly_ {
-    char buf[LABEL];
-    memset(buf, 0, sizeof(char)*LABEL);
-    strcpy(buf, "Welcome to FFV  ");
-    FBUtility::printVersion(fp, buf, VERS_FFV);
-    FBUtility::printVersion(mp, buf, VERS_FFV);
+    FBUtility::printVersion(fp, "Welcome to FFV  ", FFV_VERS);
+    FBUtility::printVersion(mp, "Welcome to FFV  ", FFV_VERS);
     
-		memset(buf, 0, sizeof(char)*LABEL);
-    strcpy(buf, "FlowBase        ");
-    FBUtility::printVersion(fp, buf, FB_VERS);
-    FBUtility::printVersion(mp, buf, FB_VERS);
+    FBUtility::printVersion(fp, "FlowBase        ", FB_VERS);
+    FBUtility::printVersion(mp, "FlowBase        ", FB_VERS);
   }
   
   // 入力ファイルの指定
@@ -107,10 +102,10 @@ int FFV::Initialize(int argc, char **argv)
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
   C.get_Version();
   
-  if ( C.version != VERS_FFV ) {
+  if ( C.version != FFV_VERS ) {
     Hostonly_ {
-      fprintf(mp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, VERS_FFV);
-      fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, VERS_FFV);
+      fprintf(mp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
+      fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
     }
     return -1;
   }
@@ -463,17 +458,6 @@ void FFV::printDomainInfo( cpm_GlobalDomainInfo* dInfo )
   cout << " G_pitch    = " << pch[0] << "," << pch[1] << "," << pch[2] << endl;
   cout << " G_region   = " << rgn[0] << "," << rgn[1] << "," << rgn[2] << endl;
   cout << " G_div      = " << div[0] << "," << div[1] << "," << div[2] << endl;
-  cout << " #subdomain = " << dInfo->GetSubDomainNum() << endl;
-  for( size_t i=0;i<dInfo->GetSubDomainNum();i++ )
-  {
-    const cpm_ActiveSubDomainInfo *dom = dInfo->GetSubDomainInfo(i);
-    const int *pos  = dom->GetPos();
-    const int *bcid = dom->GetBCID();
-    cout << "  domain" << i
-    << "  pos="   << pos[0]  << "," << pos[1]  << "," << pos[2]
-    << "  bcid="  << bcid[0] << "," << bcid[1] << "," << bcid[2]
-    <<       ","  << bcid[3] << "," << bcid[4] << "," << bcid[5] << endl;
-  }
 }
 
 

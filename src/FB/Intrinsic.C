@@ -16,6 +16,7 @@
 
 #include "Intrinsic.h"
 
+
 // MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
 int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
 {
@@ -52,26 +53,9 @@ void Intrinsic::printExample(FILE* fp, const char* str)
 }
 
 
-/**
- @fn void Intrinsic::printParaInfo(FILE* mp, FILE* fp, Control* R)
- @brief パラメータの表示
- @param mp 標準出力のファイルポインタ
- @param fp ファイルポインタ
- @param R コントロールクラスのポインタ
- */
-void Intrinsic::printParaInfo(FILE* mp, FILE* fp, Control* R)
-{
-  printPara(mp, R);
-  printPara(fp, R);
-}
 
-/**
- @fn void Intrinsic::printPara(FILE* fp, Control* R)
- @brief パラメータの表示
- @param fp ファイルポインタ
- @param R コントロールクラスのポインタ
- */
-void Intrinsic::printPara(FILE* fp, Control* R)
+// パラメータの表示
+void Intrinsic::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -93,13 +77,8 @@ void Intrinsic::setControlVars(Control* R)
 }
 
 
-/**
- @fn void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
- @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
- @param vf 体積占有率
- @param id ID情報
- @param R コントロールクラスのポインタ
- */
+
+// 例題のモデルをsvxフォーマットで出力する(体積率とID)
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
 
@@ -203,12 +182,8 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
   if (q) { delete [] q; q=NULL; }
 }
 
-/**
- @fn void Intrinsic::writeSVX(int *id, Control* R)
- @brief 例題のモデルをsvxフォーマットで出力する(ID)
- @param id ID情報
- @param R コントロールクラスのポインタ
- */
+
+// 例題のモデルをsvxフォーマットで出力する(ID)
 void Intrinsic::writeSVX(int *id, Control* R)
 {
   

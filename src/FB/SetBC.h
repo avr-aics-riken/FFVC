@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file SetBC.h
- * @brief FlowBase SetBC class Header
+ * @file   SetBC.h
+ * @brief  FlowBase SetBC class Header
  * @author kero
  */
 
@@ -110,7 +110,7 @@ public:
    * @brief CPMのポインタコピー
    * @param [in] m_paraMngr  cpm_ParaManagerクラス
    */
-  void importCPM(cpm_ParaManager* m_paraMngr)
+  void importCPM(cpm_ParaManager* m_paraMngr);
   
   
   /** 

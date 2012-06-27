@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file VoxInfo.h
- * @brief FlowBase VoxInfo class Header
+ * @file   VoxInfo.h
+ * @brief  FlowBase VoxInfo class Header
  * @author kero
  */
 

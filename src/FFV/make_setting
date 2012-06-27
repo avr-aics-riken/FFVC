@@ -30,7 +30,7 @@ LDFLAGS=-L/opt/intel/composerxe/lib
 LIBS=-lifport -lifcore
 
 UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
-              -I../Polylib_2_0_3/include \
+              -I../Polylib_2_1_0_Dev/include \
               -I../PMlib-1.0/include \
               -I/usr/local/cpm_float/include \
               -I/opt/openmpi/include \
@@ -38,7 +38,7 @@ UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
               -I../FB \
               -I../F_CBC \
               -I../IP
-UDEF_LIB_PATH=-L../Polylib_2_0_3/lib \
+UDEF_LIB_PATH=-L../Polylib_2_1_0_Dev/lib \
               -L../Cutlib-2.0.3/lib \
               -L../PMlib-1.0/lib \
               -L/usr/local/cpm_float/lib \

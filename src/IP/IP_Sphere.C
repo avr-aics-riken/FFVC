@@ -85,7 +85,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
 
 
 // パラメータの表示
-void IP_Sphere::printPara(FILE* fp, Control* R)
+void IP_Sphere::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -103,7 +103,7 @@ void IP_Sphere::printPara(FILE* fp, Control* R)
 
 
 // 領域情報を設定する
-void IP_Sphere::setDomain(Control* R, const int* sz, const REAL_TYPE* m_org, REAL_TYPE* m_reg, const REAL_TYPE* m_pch)
+void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
 {
   pch = m_pch;
   org = m_org;

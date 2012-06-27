@@ -12,21 +12,14 @@
 // #################################################################
 
 /**
- @file FB_Define.h
- @brief FlowBase Definition Header
+ @file   FB_Define.h
+ @brief  FlowBase Definition Header
  @author kero
  */
 
 #include "mydebug.h"
 
 #define FB_VERS 260
-
-// 浮動小数点の型の指定　コンパイルオプション -DREAL_TYPE_DOUBLE のとき倍精度
-//#ifndef REAL_TYPE_DOUBLE
-//#define REAL_TYPE float
-//#else
-//#define REAL_TYPE double
-//#endif // REAL_IS_FLOAT
 
 #define MODEL_ID_MAX 255
 
@@ -41,7 +34,7 @@
 
 // general
 #define NOFACE      6
-#define LABEL       64
+//#define LABEL       64
 #define ON          1
 #define OFF         0
 #define DETAIL      2

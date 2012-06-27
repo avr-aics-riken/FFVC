@@ -1,0 +1,70 @@
+!-----------------------------------------------------------------------
+! CPM - Cartesian Partition Manager
+!
+! Copyright (C) 2012 University of Tokyo.
+!
+!-----------------------------------------------------------------------
+      ! return code
+      INTEGER CPM_SUCCESS
+      PARAMETER ( CPM_SUCCESS = 0 )
+
+      ! default process groupe No.
+      INTEGER CPM_DEFAULT_GROUP
+      PARAMETER ( CPM_DEFAULT_GROUP = 0 )
+
+      ! face (0 start)
+      INTEGER X_MINUS, Y_MINUS, Z_MINUS, X_PLUS, Y_PLUS, Z_PLUS
+      PARAMETER ( X_MINUS = 0 )
+      PARAMETER ( X_PLUS  = 1 )
+      PARAMETER ( Y_MINUS = 2 )
+      PARAMETER ( Y_PLUS  = 3 )
+      PARAMETER ( Z_MINUS = 4 )
+      PARAMETER ( Z_PLUS  = 5 )
+
+      ! face (1 start)
+      INTEGER X_MINUS1, Y_MINUS1, Z_MINUS1, X_PLUS1, Y_PLUS1, Z_PLUS1
+      PARAMETER ( X_MINUS1 = 1 )
+      PARAMETER ( X_PLUS1  = 2 )
+      PARAMETER ( Y_MINUS1 = 3 )
+      PARAMETER ( Y_PLUS1  = 4 )
+      PARAMETER ( Z_MINUS1 = 5 )
+      PARAMETER ( Z_PLUS1  = 6 )
+
+      ! direction
+      INTEGER X_DIR, Y_DIR, Z_DIR
+      PARAMETER ( X_DIR = 0 )
+      PARAMETER ( Y_DIR = 1 )
+      PARAMETER ( Z_DIR = 2 )
+
+      ! houkou
+      INTEGER PLUS2MINUS, MINUS2PLUS, BOTH
+      PARAMETER ( PLUS2MINUS = 0 )
+      PARAMETER ( MINUS2PLUS = 1 )
+      PARAMETER ( BOTH       = 2 )
+
+      ! CPM_Datatype
+      INTEGER CPM_INT, CPM_INTEGER
+      INTEGER CPM_REAL
+      INTEGER CPM_FLOAT, CPM_REAL4
+      INTEGER CPM_DOUBLE, CPM_REAL8
+      PARAMETER ( CPM_INT     = 6  )
+      PARAMETER ( CPM_INTEGER = 6  )
+      PARAMETER ( CPM_REAL    = 52 )
+      PARAMETER ( CPM_FLOAT   = 10 )
+      PARAMETER ( CPM_REAL4   = 10 )
+      PARAMETER ( CPM_DOUBLE  = 11 )
+      PARAMETER ( CPM_REAL8   = 11 )
+
+      ! CPM_Op
+      INTEGER CPM_MAX, CPM_MIN, CPM_SUM, CPM_PROD, CPM_LAND
+      INTEGER CPM_BAND, CPM_LOR, CPM_BOR, CPM_LXOR, CPM_BXOR
+      PARAMETER ( CPM_MAX  = 100 )
+      PARAMETER ( CPM_MIN  = 101 )
+      PARAMETER ( CPM_SUM  = 102 )
+      PARAMETER ( CPM_PROD = 103 )
+      PARAMETER ( CPM_LAND = 104 )
+      PARAMETER ( CPM_BAND = 105 )
+      PARAMETER ( CPM_LOR  = 106 )
+      PARAMETER ( CPM_BOR  = 107 )
+      PARAMETER ( CPM_LXOR = 108 )
+      PARAMETER ( CPM_BXOR = 109 )

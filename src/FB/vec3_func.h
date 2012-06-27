@@ -11,15 +11,17 @@
 //
 // #################################################################
 
-//@file vec3_func.h
-//@brief FlowBase class geometry functions
-//@author T. Tawara and kero
+/**
+ * @file   vec3_func.h
+ * @brief  FlowBase class geometry functions
+ * @author T. Tawara and kero
+ */
+#include "cpm_Define.h"
 
 namespace FB {
   
 /**
- @fn template<typename T1, typename T2> inline void vec3_copy(T1 to[3], const T2 from[3])
- @brief copy data
+ * @brief copy data
  */
 template<typename T1, typename T2> inline
 void vec3_copy(T1 to[3], const T2 from[3])
@@ -30,8 +32,7 @@ void vec3_copy(T1 to[3], const T2 from[3])
 }
 
 /**
- @fn template<typename T1, typename T2> inline void vec3_set(T1 v[3], T2 x, T2 y, T2 z)
- @brief set data
+ * @brief set data
  */
 template<typename T1, typename T2> inline
 void vec3_set(T1 v[3], T2 x, T2 y, T2 z)
@@ -42,8 +43,7 @@ void vec3_set(T1 v[3], T2 x, T2 y, T2 z)
 }
 
 /**
- @fn template<typename T> inline void vec3_min(T c[3], const T a[3], const T b[3])
- @brief get minimum
+ * @brief get minimum
  */
 template<typename T> inline
 void vec3_min(T c[3], const T a[3], const T b[3])
@@ -54,8 +54,7 @@ void vec3_min(T c[3], const T a[3], const T b[3])
 }
 
 /**
- @fn template<typename T> inline void vec3_max(T c[3], const T a[3], const T b[3])
- @brief get maximum
+ * @brief get maximum
  */
 template<typename T> inline
 void vec3_max(T c[3], const T a[3], const T b[3])
@@ -66,8 +65,7 @@ void vec3_max(T c[3], const T a[3], const T b[3])
 }
 
 /**
- @fn template<typename T1, typename T2, typename T3> inline void vec3_plus(T1 c[3], const T2 a[3], const T3 b[3])
- @brief c[] = a[] + b[]
+ * @brief c[] = a[] + b[]
  */
 template<typename T1, typename T2, typename T3> inline
 void vec3_plus(T1 c[3], const T2 a[3], const T3 b[3])
@@ -78,8 +76,7 @@ void vec3_plus(T1 c[3], const T2 a[3], const T3 b[3])
 }
 
 /**
- @fn template<typename T1, typename T2, typename T3> inline void vec3_minus(T1 c[3], const T2 a[3], const T3 b[3])
- @brief c[] = a[] - b[]
+ * @brief c[] = a[] - b[]
  */
 template<typename T1, typename T2, typename T3> inline
 void vec3_minus(T1 c[3], const T2 a[3], const T3 b[3])
@@ -90,8 +87,7 @@ void vec3_minus(T1 c[3], const T2 a[3], const T3 b[3])
 }
 
 /**
- @fn template<typename T1, typename T2, typename T3> inline void vec3_multi(T1 c[3], const T2 a[3], const T3 b[3])
- @brief c[] = a[] * b[]
+ * @brief c[] = a[] * b[]
  */
 template<typename T1, typename T2, typename T3> inline
 void vec3_multi(T1 c[3], const T2 a[3], const T3 b[3])
@@ -102,8 +98,7 @@ void vec3_multi(T1 c[3], const T2 a[3], const T3 b[3])
 }
 
 /**
- @fn template<typename T1, typename T2, typename T3> inline void vec3_multi(T1 c[3], const T2 a[3], const T3 b)
- @brief c[] = a[] * b
+ * @brief c[] = a[] * b
  */
 template<typename T1, typename T2, typename T3> inline
 void vec3_multi(T1 c[3], const T2 a[3], const T3 b)
@@ -114,8 +109,7 @@ void vec3_multi(T1 c[3], const T2 a[3], const T3 b)
 }
 
 /**
- @fn template<typename T1, typename T2, typename T3> inline void vec3_div(T1 c[3], const T2 a[3], const T3 b[3])
- @brief c[] = a[] / b[]
+ * @brief c[] = a[] / b[]
  */
 template<typename T1, typename T2, typename T3> inline
 void vec3_div(T1 c[3], const T2 a[3], const T3 b[3])
@@ -126,8 +120,7 @@ void vec3_div(T1 c[3], const T2 a[3], const T3 b[3])
 }
 
 /**
- @fn template<typename T1, typename T2, typename T3> inline void vec3_div(T1 c[3], const T2 a[3], const T3 b)
- @brief c[] = a[] / b
+ * @brief c[] = a[] / b
  */
 template<typename T1, typename T2, typename T3> inline
 void vec3_div(T1 c[3], const T2 a[3], const T3 b)

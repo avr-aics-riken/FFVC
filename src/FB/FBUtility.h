@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file FBUtility.h
- * @brief FlowBase FBUtility class Header
+ * @file   FBUtility.h
+ * @brief  FlowBase FBUtility class Header
  * @author kero
  */
 
@@ -87,7 +87,7 @@ public:
    * @param [in] str  名称
    * @param [in] ver  バージョン番号
    */
-  static void printVersion(FILE* fp, const char* str, const int ver)
+  static void printVersion(FILE* fp, const string str, const int ver)
   {
     int a, b, c;
     a = b = c = 0;
@@ -96,7 +96,7 @@ public:
     b = (ver - a*100) / 10;
     c = ver - a*100 - b*10;
     
-    fprintf(fp, "\n\t%s \tVersion %d.%d.%d\n", str, a, b, c);
+    fprintf(fp, "\n\t%s \tVersion %d.%d.%d\n", str.c_str(), a, b, c);
   }
 
   
@@ -250,13 +250,13 @@ public:
   
   
   /** 3次元インデクス(i,j,k) -> 1次元インデクス変換マクロ
-   *  @param[in] _I  i方向インデクス
-   *  @param[in] _J  j方向インデクス
-   *  @param[in] _K  k方向インデクス
-   *  @param[in] _NI i方向インデクスサイズ
-   *  @param[in] _NJ j方向インデクスサイズ
-   *  @param[in] _NK k方向インデクスサイズ
-   *  @param[in] _VC 仮想セル数
+   *  @param [in] _I  i方向インデクス
+   *  @param [in] _J  j方向インデクス
+   *  @param [in] _K  k方向インデクス
+   *  @param [in] _NI i方向インデクスサイズ
+   *  @param [in] _NJ j方向インデクスサイズ
+   *  @param [in] _NK k方向インデクスサイズ
+   *  @param [in] _VC 仮想セル数
    *  @return 1次元インデクス
    */
 #define _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
@@ -310,7 +310,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexS3D(const int* sz, int gc, int i, int j, int k) 
+  static inline size_t getFindexS3D(const int* sz, int gc, int i, int j, int k) 
   {
     //return ( (sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + (sz[0]+gc*2)*(j+gc-1) + i+gc-1 );
     int t1 = gc*2;
@@ -329,7 +329,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexV3DEx(const int* sz, int gc, int l, int i, int j, int k) 
+  static inline size_t getFindexV3DEx(const int* sz, int gc, int l, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;
@@ -348,7 +348,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexS3Dcut(const int* sz, int gc, int l, int i, int j, int k) 
+  static inline size_t getFindexS3Dcut(const int* sz, int gc, int l, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;
@@ -365,7 +365,7 @@ public:
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
    */
-  static inline unsigned getFindexBID8(const int* sz, int gc, int i, int j, int k) 
+  static inline size_t getFindexBID8(const int* sz, int gc, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;

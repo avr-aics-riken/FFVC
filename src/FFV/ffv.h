@@ -70,11 +70,14 @@
 // Performance Monitor
 #include "PerfMonitor.h"
 
-
+// Polylib
+#include "Polylib.h"
+#include "MPIPolylib.h"
 
 
 using namespace std;
 using namespace pm_lib;
+using namespace PolylibNS;
 
 
 class FFV {
