@@ -45,10 +45,8 @@
 #include "ParseBC.h"
 #include "ParseMat.h"
 #include "VoxInfo.h"
-//#include "ffv_SetBC.h"
-
-
 #include "TPControl.h"
+//#include "ffv_SetBC.h"
 
 #include "omp.h"
 
@@ -85,7 +83,7 @@ using namespace PolylibNS;
 
 class FFV : public DomainInfo {
 private:
-  int procGrp;             ///< プロセスグループ番号 => 0
+  int ffv_procGrp;         ///< プロセスグループ番号 => 0
   int session_maxStep;     ///< セッションのステップ数
   int session_currentStep; ///< セッションの現在のステップ
   int ModeTiming;          ///< タイミング測定管理フラグ
@@ -167,6 +165,7 @@ private:
   PerfMonitor PM;            ///< 性能モニタクラス
   VoxInfo V;                 ///< ボクセル前処理クラス
   ParseBC B;                 ///< 境界条件のパースクラス
+  TPControl tpCntl;          ///< テキストパーサのラッパークラス
   
 //  SetBC3D BC;                ///< BCクラス
   
@@ -261,6 +260,8 @@ private:
   void allocArray_RK(double &total);
   
   
+  /** グローバルな領域情報を取得 */
+  void get_DomainInfo();
   
 public:
   
@@ -307,7 +308,7 @@ public:
    * @param [in] m_paraMngr  cpm_ParaManagerクラス
    * @return  エラーコード
    */
-  bool importCPM(cpm_ParaManager* m_paraMngr) const
+  bool importCPM(cpm_ParaManager* m_paraMngr)
   {
     if ( !m_paraMngr ) return false;
     paraMngr = m_paraMngr;
@@ -356,9 +357,8 @@ public:
   
   /**
    * @brief 読み込んだ領域情報のデバッグライト
-   * @param [in] dInfo  領域情報クラス
    */
-  void printDomainInfo( cpm_GlobalDomainInfo* dInfo );
+  void printDomainInfo();
   
   
   /** ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する

@@ -19,7 +19,7 @@
 // コンストラクタ
 FFV::FFV()
 {
-  procGrp = 0;
+  ffv_procGrp = 0;
   
   session_maxStep = 0;
   session_currentStep = 0;
@@ -52,6 +52,128 @@ FFV::~FFV()
   
   if ( mp ) fclose(mp);
   
+}
+
+
+// グローバルな領域情報を取得
+void FFV::get_DomainInfo()
+{
+  // 領域分割モードのパターン
+  //      分割指定(G_div指定)    |     domain.txt 
+  // 1)  G_divなし >> 自動分割   |  G_orign + G_regionのみ
+  // 2)  G_div指定あり          |  G_orign + G_regionのみ
+  // 3)  G_divなし >> 自動分割   |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  // 4)  G_div指定あり          |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  
+  string label, str;
+  REAL_TYPE *rvec;
+  int *ivec;
+  
+  // G_origin　必須
+  rvec  = G_org;
+  label = "/DomainInfo/Global_origin";
+  
+  if ( !tpCntl.GetVector(label, rvec, 3) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  // G_region 必須
+  rvec  = G_reg;
+  label = "/DomainInfo/Global_region";
+  
+  if ( !tpCntl.GetVector(label, rvec, 3) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  if ( (G_reg[0]>0.0) && (G_reg[1]>0.0) && (G_reg[2]>0.0) )
+  {
+    ; // skip
+  }
+  else
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  
+  // G_pitch オプション
+  bool flag = true; // 排他チェック（voxel, ptich）
+  rvec  = pch;
+  label = "/DomainInfo/Global_pitch";
+  
+  if ( !tpCntl.GetVector(label, rvec, 3) )
+  {
+    cout << "No option : in parsing [" << label << "]" << endl;
+    flag = false;
+  }
+  
+  if ( (pch[0]>0.0) && (pch[1]>0.0) && (pch[2]>0.0) )
+  {
+    ; // skip
+  }
+  else
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  
+  // G_voxel オプション
+  if ( flag ) // pitchが指定されている場合が優先
+  {
+    G_size[0] = (int)(G_reg[0]/pch[0]);
+    G_size[1] = (int)(G_reg[1]/pch[1]);
+    G_size[2] = (int)(G_reg[2]/pch[2]);
+  }
+  else
+  {
+    ivec  = G_size;
+    label = "/DomainInfo/Global_voxel";
+    
+    if ( !tpCntl.GetVector(label, ivec, 3) )
+    {
+      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0); // pitchもvoxelも有効でない
+    }
+    
+    if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
+    {
+      pch[0] = G_reg[0] / (REAL_TYPE)G_size[0];
+      pch[1] = G_reg[1] / (REAL_TYPE)G_size[1];
+      pch[2] = G_reg[2] / (REAL_TYPE)G_size[2];
+      printf("\tCalculated pitch is (%e %e %e) >> ", pch[0], pch[1], pch[2]);
+      pch[1] = pch[0];
+      pch[2] = pch[0];
+      printf(" modified to (%e %e %e)\n", pch[0], pch[1], pch[2]);
+    }
+    else
+    {
+      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+  }
+  
+  
+  // G_div オプション
+  ivec  = G_div;
+  label = "/DomainInfo/Global_division";
+  
+  if ( !tpCntl.GetVector(label, ivec, 3) )
+  {
+    cout << "No option : in parsing [" << label << "]" << endl;
+  }
+  
+  // ActiveSubdomainファイル名の取得
+  label = "/DomainInfo/ActiveSubDomain_File";
+  
+  if ( !tpCntl.GetValue(label, &str ) ) {
+    cout << "No option : in parsing [" << label << "]" << endl;
+  }
+  // string hoge = str;
 }
 
 

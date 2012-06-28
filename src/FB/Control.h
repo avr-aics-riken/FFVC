@@ -388,8 +388,6 @@ protected:
   
 public:
   
-  DomainInfo dInfo; ///< 領域情報クラス
-  
   /** 各種モード　パラメータ */
   typedef struct 
   {

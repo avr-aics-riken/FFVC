@@ -1738,7 +1738,7 @@ void Control::get_DomainInfo()
     cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
   }
-
+  printf("G_org= %e %e %e\n", G_org[0], G_org[1], G_org[2]);
   
   // G_region 必須
   rvec  = G_reg;
@@ -1766,7 +1766,7 @@ void Control::get_DomainInfo()
   rvec  = pch;
   label = "/DomainInfo/Global_pitch";
   
-  if ( tpCntl->GetVector(label, rvec, 3) )
+  if ( !tpCntl->GetVector(label, rvec, 3) )
   {
     cout << "No option : in parsing [" << label << "]" << endl;
     flag = false;

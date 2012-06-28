@@ -16,6 +16,7 @@
 
 #include "ffv.h"
 
+
 int FFV::Initialize(int argc, char **argv)
 {
   double TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
@@ -23,9 +24,6 @@ int FFV::Initialize(int argc, char **argv)
   double G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
   double G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
   double tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
-  
-  TPControl tpCntl;      ///< テキストパーサのラッパークラス
-  
   
   // CPMバージョン表示
   if ( paraMngr->GetMyRankID() == 0 )
@@ -129,9 +127,12 @@ int FFV::Initialize(int argc, char **argv)
     Hostonly_ printf("\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
   }
   
+  
+  
   // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する -----------------------------------------------------
   // 領域情報を記述したファイル名の取得 >> テキストパーサのDB切り替え
   string dom_file = argv[2];
+  
   DomainInitialize(dom_file);
   
   
@@ -209,10 +210,6 @@ int FFV::Initialize(int argc, char **argv)
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
   dh0     = &C.dh;
   dh      = &C.dh;
-  gc      = C.guide;
-  sz[0]   = C.imax;
-  sz[1]   = C.jmax;
-  sz[2]   = C.kmax;
   
   // 並列処理モード
   string para_label = setParallelism();
@@ -221,7 +218,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Mode.Profiling != OFF ) {
     ModeTiming = ON;
     TIMING__ PM.initialize( tm_END );
-    TIMING__ PM.setDomainInfo( paraMngr->GetMyRankID() );
+    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
     TIMING__ PM.setParallelMode(para_label, C.num_thread, C.num_process);
     set_timing_label();
   }
@@ -288,23 +285,18 @@ void FFV::connectExample(Control* Cref)
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
 {
-  const REAL_TYPE *g_pch; ///< 格子幅
-  const int *g_sz;        ///< 全ドメインの分割数
-  const REAL_TYPE *g_org; ///< 全ドメインの基点
-  const REAL_TYPE *g_reg; ///< 全ドメインのサイズ
-  const int* g_div;       ///< プロセス分割情報
-  
   // グローバルな領域情報のロード
   int ierror = tpCntl.readTPfile(dom_file);
   
   C.importTP(&tpCntl);
+
+  // メンバ変数にパラメータをロード
+  get_DomainInfo();
+
   
-  C.get_DomainInfo();
-  
-  
-# if 0
-  printDomainInfo(dInfo);
-  paraMngr->flush(cout);
+# if 1
+  printDomainInfo();
+  fflush(stdout);
 #endif
   
   // テキストパーサーのDBを破棄
@@ -313,8 +305,8 @@ void FFV::DomainInitialize(const string dom_file)
     Hostonly_ printf("Error : delete textparser\n");
     Exit(0);
   }
-  
-  
+
+
   // 領域分割モードのパターン
   //      分割指定(G_div指定)    |     domain.txt 
   // 1)  G_divなし >> 自動分割   |  G_orign + G_regionのみ
@@ -324,20 +316,31 @@ void FFV::DomainInitialize(const string dom_file)
   
   int type=0;
   
-  g_sz  = paraMngr->GetGlobalVoxelSize();
-  g_div = paraMngr->GetDivNum();
-  g_pch = paraMngr->GetPitch();
-  g_org = paraMngr->GetGlobalOrigin();
-  g_reg = paraMngr->GetGlobalRegion();
+  // 全ドメインの分割数
+  //const int* g_sz  = paraMngr->GetGlobalVoxelSize();
   
-  if ( (g_sz[0]>0) && (g_sz[1]>0) && (g_sz[2]>0) ) // 分割数が保持されている場合 >> type 3 or 4 
+  // プロセス分割情報
+  //const int* g_div = paraMngr->GetDivNum();
+  
+  // 全ドメインの基点
+  //const REAL_TYPE* g_org = paraMngr->GetGlobalOrigin();
+  
+  // 全ドメインのサイズ
+  //const REAL_TYPE* g_reg = paraMngr->GetGlobalRegion();
+
+  //printf("g_sz = %d %d %d\n", g_sz[0], g_sz[1], g_sz[2]);
+  //printf("g_div= %d %d %d\n", g_div[0], g_div[1], g_div[2]);
+  //printf("g_org= %e %e %e\n", g_org[0], g_org[1], g_org[2]);
+  //printf("g_reg= %e %e %e\n", g_reg[0], g_reg[1], g_reg[2]);
+  
+  if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) ) // 分割数が保持されている場合 >> type 3 or 4 
   {
     cout << "unsuppoted now" << endl;
     Exit(0);
   }
   else
   {
-    if ( (g_div[0]>0) && (g_div[1]>0) && (g_div[2]>0) ) // プロセス分割数が指定されている場合
+    if ( (G_div[0]>0) && (G_div[1]>0) && (G_div[2]>0) ) // プロセス分割数が指定されている場合
     {
       type = 2;
     }
@@ -346,22 +349,35 @@ void FFV::DomainInitialize(const string dom_file)
       type = 1;
     }
   }
-  
+  mark();
   // 袖通信の成分数と袖の最大数
   // V(3), P(1), T(1), Cut(6)
   size_t Ncmp = ( C.isCDS() ) ? 6 : 3;
-  size_t Nvc  = (size_t)guide;
-
+  size_t Nvc  = (size_t)C.guide;
   
+  int m_sz[3] = {G_size[0], G_size[1], G_size[2]};
+  REAL_TYPE m_org[3] = {G_org[0], G_org[1], G_org[2]};
+  REAL_TYPE m_reg[3] = {G_reg[0], G_reg[1], G_reg[2]};
+  int m_div[3] = {G_div[0], G_div[1], G_div[2]};
+  
+  mark();
   // 領域分割
   switch (type) 
   {
     case 1:
-      ret = paraMngr->VoxelInit(g_size, g_org, g_reg, Nvc, Ncmp);
+      if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+      {
+        cout << "Domain decomposition error : " << endl;
+        Exit(0);
+      }
       break;
       
     case 2:
-      ret = paraMngr->VoxelInit(g_div, g_size, g_org, g_reg, Nvc, Ncmp);
+      if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+      {
+        cout << "Domain decomposition error : " << endl;
+        Exit(0);
+      }
       break;
       
     case 3:
@@ -374,13 +390,7 @@ void FFV::DomainInitialize(const string dom_file)
       Exit(0);
       break;
   }
-  
-  
-  if( ret != CPM_SUCCESS )
-  {
-    cout << "Domain decomposition error : " << ret << endl;
-    Exit(0);
-  }
+  mark();
 
   // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
   setNeighborInfo();
@@ -398,7 +408,7 @@ void FFV::DomainInitialize(const string dom_file)
   }
   
   // 各例題のパラメータ設定
-  Ex->setDomain(&C, m_sz, org, reg, pch);
+  Ex->setDomain(&C, size, org, reg, pch);
   
   
   // チェック
@@ -477,20 +487,14 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
 
 
 // 読み込んだ領域情報のデバッグライト
-void FFV::printDomainInfo( cpm_GlobalDomainInfo* dInfo )
+void FFV::printDomainInfo()
 {
-  const REAL_TYPE *org = dInfo->GetOrigin();
-  const REAL_TYPE *pch = dInfo->GetPitch();
-  const REAL_TYPE *rgn = dInfo->GetRegion();
-  const int       *vox = dInfo->GetVoxNum();
-  const int       *div = dInfo->GetDivNum();
-  
   cout << "\n####### read parameters ########" << endl;
-  cout << " G_org      = " << org[0] << "," << org[1] << "," << org[2] << endl;
-  cout << " G_voxel    = " << vox[0] << "," << vox[1] << "," << vox[2] << endl;
-  cout << " G_pitch    = " << pch[0] << "," << pch[1] << "," << pch[2] << endl;
-  cout << " G_region   = " << rgn[0] << "," << rgn[1] << "," << rgn[2] << endl;
-  cout << " G_div      = " << div[0] << "," << div[1] << "," << div[2] << endl;
+  cout << " G_org      = " << G_org[0]  << "," << G_org[1]  << "," << G_org[2]  << endl;
+  cout << " G_voxel    = " << G_size[0] << "," << G_size[1] << "," << G_size[2] << endl;
+  cout << " G_pitch    = " << pch[0]    << "," << pch[1]    << "," << pch[2]    << endl;
+  cout << " G_region   = " << G_reg[0]  << "," << G_reg[1]  << "," << G_reg[2]  << endl;
+  cout << " G_div      = " << G_div[0]  << "," << G_div[1]  << "," << G_div[2]  << endl;
 }
 
 

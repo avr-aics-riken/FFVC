@@ -81,7 +81,7 @@ public:
    * @param [in] m_paraMngr  cpm_ParaManagerクラス
    * @return  エラーコード
    */
-  bool importCPM(cpm_ParaManager* m_paraMngr) const
+  bool importCPM(cpm_ParaManager* m_paraMngr)
   {
     if ( !m_paraMngr ) return false;
     paraMngr = m_paraMngr;
