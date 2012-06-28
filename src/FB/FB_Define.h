@@ -81,12 +81,6 @@
 #define BOUSSINESQ  2
 #define LOW_MACH    3
 
-// 周期境界の方向と通信方向
-#define PRDC_X_DIR 0
-#define PRDC_Y_DIR 1
-#define PRDC_Z_DIR 2
-#define PRDC_PLUS2MINUS 1
-#define PRDC_MINUS2PLUS 2
 
 // 外部境界条件
 #define OBC_MASK      31 // 外部境界と内部境界の識別子

@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file Intrinsic.C
- * @brief FlowBase Intrinsic class
+ * @file   Intrinsic.C
+ * @brief  FlowBase Intrinsic class
  * @author kero
  */
 
@@ -31,13 +31,6 @@ int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::st
   return 0;
 }
 
-
-// 作業用ポインタのコピー
-void Intrinsic::importCPM(cpm_ParaManager* m_paraMngr)
-{
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
-}
 
 
 // 例題名称の表示
@@ -69,10 +62,6 @@ void Intrinsic::printPara(FILE* fp, const Control* R)
 // 基本情報のコピー
 void Intrinsic::setControlVars(Control* R)
 {
-  guide          = R->guide;
-  size[0] = R->imax;
-  size[1] = R->jmax;
-  size[2] = R->kmax;
   RefL = R->RefLength;
 }
 

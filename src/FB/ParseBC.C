@@ -2229,13 +2229,6 @@ void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_
 }
 
 
-// 作業用ポインタのコピー
-void ParseBC::importCPM(cpm_ParaManager* m_paraMngr)
-{
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
-}
-
 
 // TPのポインタを受け取る
 void ParseBC::importTP(TPControl* tp) 

@@ -491,396 +491,6 @@ string Control::getNormString(const int d)
 
 
 
-// ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
-void Control::get_Solver_Properties()
-{
-  string str;
-  string label;
-  
-  // 形状近似度の取得
-  label = "/Steer/Solver_Property/Shape_Approximation";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Shape_Approximation' in 'Solver_Property'\n");
-    Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Binary") )       Mode.ShapeAprx = BINARY;
-  else if( !strcasecmp(str.c_str(), "cut_distance") ) Mode.ShapeAprx = CUT_INFO;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Shape_Approximation'\n");
-    Exit(0);
-  }
-  
-  // 支配方程式の型（PDE_NS / Euler）を取得
-  label = "/Steer/Solver_Property/PDE_type";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'PDE_type' in 'Solver_Property'\n");
-    Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Navier_Stokes" ) ) Mode.PDE = PDE_NS;
-  else if( !strcasecmp(str.c_str(), "Euler" ) )         Mode.PDE = PDE_EULER;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'PDE_type'\n");
-    Exit(0);
-  }
-  
-  // 基礎方程式の種類を取得する
-  label = "/Steer/Solver_Property/Basic_Equation";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Basic_Equation' in 'Solver_Property'\n");
-    Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Incompressible" ) )            BasicEqs = INCMP;
-  else if( !strcasecmp(str.c_str(), "Limited_Compressible" ) )      BasicEqs = LTDCMP;
-  else if( !strcasecmp(str.c_str(), "Compressible" ) )              BasicEqs = CMPRSS;
-  else if( !strcasecmp(str.c_str(), "Incompressible_Two_Phase" ) )  BasicEqs = INCMP_2PHASE;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Basic_Equation'\n");
-    Exit(0);
-  }
-  
-  // 非定常計算，または定常計算の種別を取得する
-  label = "/Steer/Solver_Property/Time_Variation";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) 
-  {
-    stamped_printf("\tParsing error : fail to get 'Time_Variation' in 'Solver_Property'\n");
-    Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Steady" ) )    Mode.Steady = TV_Steady;
-  else if( !strcasecmp(str.c_str(), "Unsteady" ) )  Mode.Steady = TV_Unsteady;
-  else 
-  {
-    stamped_printf("\tInvalid keyword is described for 'Time_Variation'\n");
-    Exit(0);
-  }
-  
-  // 対流項スキームの種類の取得
-  get_Convection();
-  
-  // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HEAT_TRANSFER / SOLID_CONDUCTION）と浮力モード
-  get_KindOfSolver();
-  
-  // ガイドセルの値を決める get_Convection(), get_KindOfSolver()のあと
-  if (KindOfSolver==SOLID_CONDUCTION) {
-    guide = 1;
-  }
-  else 
-  {
-    switch (CnvScheme) 
-    {
-      case O1_upwind:
-      case O2_central:
-        guide = 1;
-        break;
-        
-      case O3_muscl:
-        guide = 2;
-        break;
-        
-      default:
-        Exit(0);
-    }
-  }
-  
-  // 平均値の引き戻しオプション
-  label = "/Steer/Solver_Property/Pressure_Shift";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) 
-  {
-    stamped_printf("\tParsing error : fail to get 'Pressure_Shift' in 'Solver_Property'\n");
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "off" ) )     Mode.Pshift = -1;
-  else if( !strcasecmp(str.c_str(), "x_minus" ) ) Mode.Pshift = X_MINUS;
-  else if( !strcasecmp(str.c_str(), "x_plus" ) )  Mode.Pshift = X_PLUS;
-  else if( !strcasecmp(str.c_str(), "y_minus" ) ) Mode.Pshift = Y_MINUS;
-  else if( !strcasecmp(str.c_str(), "y_plus" ) )  Mode.Pshift = Y_PLUS;
-  else if( !strcasecmp(str.c_str(), "z_minus" ) ) Mode.Pshift = Z_MINUS;
-  else if( !strcasecmp(str.c_str(), "z_plus" ) )  Mode.Pshift = Z_PLUS;
-  else 
-  {
-    stamped_printf("\tInvalid keyword is described for 'Pressure_Shift'\n");
-    Exit(0);
-  }
-}
-
-
-
-// 制御，計算パラメータ群の取得
-void Control::get_Steer_1(DTcntl* DT)
-{
-  
-  // ソルバーの具体的な種類を決めるパラメータ（変数配置，形状近似度，次元）を取得し，ガイドセルの値を設定する
-  get_Solver_Properties();
-  
-  // 指定単位が有次元か無次元かを取得
-  get_Unit();
-  
-  // Reference parameter needs to be called before setDomain();
-  // パラメータの取得，代表値に関するもの．
-  get_Para_Ref();
-  
-  // 時間制御パラメータ
-  get_Time_Control(DT);
-  
-  // ファイル入出力に関するパラメータ
-  //get_FileIO(tpCntl);
-  
-  // パラメータチェック
-  get_CheckParameter();
-  
-  // スケーリングファクタの取得　***隠しパラメータ
-  get_Scaling(); 
-  
-  // モニターのON/OFF 詳細パラメータはget_Monitor()で行う
-  get_Sampling();
-  
-  // ファイル入出力に関するパラメータ
-  get_FileIO();
-  
-}
-
-
-
-// 制御，計算パラメータ群の取得
-void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
-{
-  // 流体の解法アルゴリズムを取得
-  get_Algorithm(); 
-  
-  // パラメータを取得する
-  if ( Unit.Param == NONDIMENSIONAL ) {
-    if ( KindOfSolver == FLOW_ONLY ) get_Para_ND();
-  }
-  
-  if ( isHeatProblem() ) {
-    get_Para_Temp();
-  }
-  
-  
-  ////////
-  //////get_Para_Init();
-  
-  //////// If a start section dose not describe, the initial start is assumed.
-  //////StartType type = CF->GetStartType();
-  //////switch (type) {
-  //////  case Initial:
-  //////    Start = initial_start;
-  //////    break;
-  //////    
-  //////  case Restart:
-  //////    //Start = re_start;
-  //////    break;
-  //////    
-  //////  default:
-  //////    stamped_printf("\tParsing error : Start section\n");
-  //////    Exit(0);
-  //////}
-  
-  // Reference frame information : Solver defined element >> SPHERE defined
-  get_ReferenceFrame(RF);
-  
-  // 時間平均操作
-  get_Average_option();
-  
-  // 圧力ノイマン条件のタイプ >> get_Log()よりも先に
-  get_Wall_type();
-  
-  // Log >> get_Iteration()よりも前に
-  get_Log();
-  
-  // Criteria of computation
-  get_Iteration(IC);
-  
-  // LES
-  get_LES_option();
-  
-  
-  // 派生変数のオプション
-  get_Derived();
-  
-  // 変数範囲の処理　***隠しパラメータ
-  get_VarRange();
-  
-  // Cell IDのゼロを指定IDに変更　***隠しパラメータ
-  get_ChangeID();
-  
-  // 性能測定モードの処理　***隠しパラメータ
-  get_PMtest();
-  
-  // ラフな初期値を使い、リスタートするモード指定 >> FileIO
-  get_start_condition();
-  
-}
-
-
-
-
-// 時間制御に関するパラメータを取得する
-// パラメータは，setParameters()で無次元して保持
-void Control::get_Time_Control(DTcntl* DT)
-{
-  REAL_TYPE ct;
-  int ss=0;
-  
-  string str;
-  string label;
-  
-  // 加速時間
-  label = "/Steer/Time_Control/Acceleration_Type";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-	  stamped_printf("\tParsing error : fail to get 'Acceleration_Type' in 'Time_Control'\n");
-	  Exit(0);
-  }
-  else{
-	  if     ( !strcasecmp(str.c_str(), "step") ){
-		  Interval[Interval_Manager::tg_accelra].setMode_Step();
-	  }
-	  else if( !strcasecmp(str.c_str(), "time") ) {
-		  Interval[Interval_Manager::tg_accelra].setMode_Time();
-	  }
-	  else {
-		  stamped_printf("\tParsing error : Invalid keyword for 'Acceleration_Type' in 'Time_Control'\n");
-		  Exit(0);
-	  }
-	  
-	  label = "/Steer/Time_Control/Acceleration";
-	  if ( !(tpCntl->GetValue(label, &ct )) ) {
-		  stamped_printf("\tParsing error : fail to get 'Acceleration' in 'Time_Control'\n");
-		  Exit(0);
-	  }
-	  else{
-		  Interval[Interval_Manager::tg_accelra].setInterval((double)ct);
-	  }
-  }
-  
-  // 時間積分幅を取得する
-  label = "/Steer/Time_Control/Dt_Type";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Dt_Type' in 'Time_Control'\n");
-    Exit(0);
-  }
-  
-  label = "/Steer/Time_Control/Delta_t";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    stamped_printf("\tParsing error : fail to get 'Delta_t' in 'Time_Control'\n");
-    Exit(0);
-  }
-  
-  // Directで有次元の場合は，無次元化
-  double ts = (double)RefLength / (double)RefVelocity;
-  double cc;
-  if ( !strcasecmp(str.c_str(), "Direct") ) {
-    if (Unit.Param == DIMENSIONAL) {
-      cc = (double)ct / ts;
-    }
-  }
-  else {
-    cc = (double)ct;
-  }
-  
-  if ( !DT->set_Scheme(str.c_str(), cc) ) {
-    stamped_printf("\tParsing error : fail to set DELTA_T\n");
-    Exit(0);
-  }
-  
-  // 計算する時間を取得する
-  label = "/Steer/Time_Control/Period_Type";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Period_Type' in 'Time_Control'\n");
-    Exit(0);
-  }
-  else {
-    if ( !strcasecmp(str.c_str(), "step") ) {
-      Interval[Interval_Manager::tg_compute].setMode_Step();
-    }
-    else if ( !strcasecmp(str.c_str(), "time") ) {
-      Interval[Interval_Manager::tg_compute].setMode_Time();
-    }
-    else {
-      stamped_printf("\tParsing error : Invalid keyword for 'Period_Type' in 'Time_Control'\n");
-      Exit(0);
-    }
-    
-    label = "/Steer/Time_Control/Calculation_Period";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
-      stamped_printf("\tParsing error : fail to get 'Calculation_Period' in 'Time_Control'\n");
-      Exit(0);
-    }
-    else {
-      Interval[Interval_Manager::tg_compute].setInterval((double)ct);
-    }
-    
-  }
-}
-
-
-
-
-// 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する
-void Control::get_Unit()
-{
-  string str;
-  string label;
-  
-  label = "/Steer/Unit/Unit_of_input_parameter";
-
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-		stamped_printf("\tParsing error : Invalid string for 'Unit_of_Input_Parameter' in 'Unit'\n");
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Dimensional") )      Unit.Param = DIMENSIONAL;
-  else if( !strcasecmp(str.c_str(), "Non_Dimensional") )  Unit.Param = NONDIMENSIONAL;
-  else {
-    stamped_printf("\tInvalid keyword is described at 'Unit_of_Input_Parameter' section\n");
-    Exit(0);
-  }
-  
-  label = "/Steer/Unit/pressure";
-
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : Invalid string for 'Pressure' in 'Unit'\n");
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Gauge") )    Unit.Prs = Unit_Gauge;
-  else if( !strcasecmp(str.c_str(), "Absolute") ) Unit.Prs = Unit_Absolute;
-  else {
-    stamped_printf("\tInvalid keyword is described at 'Pressure' in 'Unit'\n");
-    Exit(0);
-  }
-  
-  if ( isHeatProblem() ) {
-    
-    label = "/Steer/Unit/temperature";
-
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : Invalid string for 'Temperature' in 'Unit'\n");
-      Exit(0);
-    }
-    
-    if     ( !strcasecmp(str.c_str(), "Celsius") )  Unit.Temp = Unit_CELSIUS;
-    else if( !strcasecmp(str.c_str(), "Kelvin") )   Unit.Temp = Unit_KELVIN;
-    else {
-      stamped_printf("\tInvalid keyword is described at 'Temperature' in 'Unit'\n");
-      Exit(0);
-    }
-  }
-  
-}
-
-
-
 /**
  @brief 参照パラメータを取得
  @note Ref_IDで指定される媒質を代表物性値とする
@@ -1944,31 +1554,6 @@ void Control::get_ChangeID()
   }
 }
 
-/**
- @fn void Control::get_PMtest()
- @brief 性能試験モードを取得する（隠しパラメータ）
- @note 'Performance_Test'の文字列チェックはしないので注意して使うこと
- */
-void Control::get_PMtest()
-{
-  string str;
-  string label;
-  
-  label="/Steer/Performance_Test";
-
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-	  return;
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
-  else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Performance_Test'\n");
-    Exit(0);
-  }
-}
-
-
 
 
 
@@ -2130,11 +1715,154 @@ void Control::get_start_condition()
 
 
 
+// グローバルな領域情報を取得
+void Control::get_DomainInfo()
+{
+  // 領域分割モードのパターン
+  //      分割指定(G_div指定)    |     domain.txt 
+  // 1)  G_divなし >> 自動分割   |  G_orign + G_regionのみ
+  // 2)  G_div指定あり          |  G_orign + G_regionのみ
+  // 3)  G_divなし >> 自動分割   |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  // 4)  G_div指定あり          |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  
+  string label, str;
+  REAL_TYPE *rvec;
+  int *ivec;
 
-/**
- @fn void Control::get_Polygon()
- @brief ポリゴン情報
- */
+  // G_origin　必須
+  rvec  = G_org;
+  label = "/DomainInfo/Global_origin";
+
+  if ( !tpCntl->GetVector(label, rvec, 3) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+
+  
+  // G_region 必須
+  rvec  = G_reg;
+  label = "/DomainInfo/Global_region";
+
+  if ( !tpCntl->GetVector(label, rvec, 3) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  if ( (G_reg[0]>0.0) && (G_reg[1]>0.0) && (G_reg[2]>0.0) )
+  {
+    ; // skip
+  }
+  else
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  
+  // G_pitch オプション
+  bool flag = true; // 排他チェック（voxel, ptich）
+  rvec  = pch;
+  label = "/DomainInfo/Global_pitch";
+  
+  if ( tpCntl->GetVector(label, rvec, 3) )
+  {
+    cout << "No option : in parsing [" << label << "]" << endl;
+    flag = false;
+  }
+  
+  if ( (pch[0]>0.0) && (pch[1]>0.0) && (pch[2]>0.0) )
+  {
+    ; // skip
+  }
+  else
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  
+  // G_voxel オプション
+  if ( flag ) // pitchが指定されている場合が優先
+  {
+    G_size[0] = (int)(G_reg[0]/pch[0]);
+    G_size[1] = (int)(G_reg[1]/pch[1]);
+    G_size[2] = (int)(G_reg[2]/pch[2]);
+  }
+  else
+  {
+    ivec  = G_size;
+    label = "/DomainInfo/Global_voxel";
+    
+    if ( !tpCntl->GetVector(label, ivec, 3) )
+    {
+      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0); // pitchもvoxelも有効でない
+    }
+    
+    if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
+    {
+      pch[0] = G_reg[0] / (REAL_TYPE)G_size[0];
+      pch[1] = G_reg[1] / (REAL_TYPE)G_size[1];
+      pch[2] = G_reg[2] / (REAL_TYPE)G_size[2];
+      printf("\tCalculated pitch is (%e %e %e) >> ", pch[0], pch[1], pch[2]);
+      pch[1] = pch[0];
+      pch[2] = pch[0];
+      printf(" modified to (%e %e %e)\n", pch[0], pch[1], pch[2]);
+    }
+    else
+    {
+      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+  }
+
+
+  // G_div オプション
+  ivec  = G_div;
+  label = "/DomainInfo/Global_division";
+
+  if ( !tpCntl->GetVector(label, ivec, 3) )
+  {
+    cout << "No option : in parsing [" << label << "]" << endl;
+  }
+  
+  // ActiveSubdomainファイル名の取得
+  label = "/DomainInfo/ActiveSubDomain_File";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    cout << "No option : in parsing [" << label << "]" << endl;
+  }
+  // string hoge = str;
+}
+
+
+
+// 性能試験モードを取得する（隠しパラメータ）
+// 'Performance_Test'の文字列チェックはしないので注意して使うこと
+void Control::get_PMtest()
+{
+  string str;
+  string label;
+  
+  label="/Steer/Performance_Test";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+	  return;
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
+  else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Performance_Test'\n");
+    Exit(0);
+  }
+}
+
+
+
+// ポリゴン情報
 void Control::get_Polygon()
 {
   string str;
@@ -2143,7 +1871,7 @@ void Control::get_Polygon()
   
   // ポリゴンファイル名を取得
   label="/Steer/Polygon_Info/Polylib_File";
-
+  
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : Invalid char* value in 'Polygon_Info'\n");
     Exit(0);
@@ -2166,65 +1894,392 @@ void Control::get_Polygon()
 
 
 
-
-// Domainファイル名の取得
-string Control::get_DomainFile()
+// 制御，計算パラメータ群の取得
+void Control::get_Steer_1(DTcntl* DT)
 {
-  string label, str;
   
-  label = "/DomainInfo/Domain_File";
+  // ソルバーの具体的な種類を決めるパラメータ（変数配置，形状近似度，次元）を取得し，ガイドセルの値を設定する
+  get_Solver_Properties();
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : Invalid char* value in 'Domain_File'\n");
-    Exit(0);
-  }
+  // 指定単位が有次元か無次元かを取得
+  get_Unit();
   
-  return str;
+  // Reference parameter needs to be called before setDomain();
+  // パラメータの取得，代表値に関するもの．
+  get_Para_Ref();
+  
+  // 時間制御パラメータ
+  get_Time_Control(DT);
+  
+  // ファイル入出力に関するパラメータ
+  //get_FileIO(tpCntl);
+  
+  // パラメータチェック
+  get_CheckParameter();
+  
+  // スケーリングファクタの取得　***隠しパラメータ
+  get_Scaling(); 
+  
+  // モニターのON/OFF 詳細パラメータはget_Monitor()で行う
+  get_Sampling();
+  
+  // ファイル入出力に関するパラメータ
+  get_FileIO();
+  
 }
 
 
-// グローバルな領域情報を取得
-void Control::get_DomainInfo()
+
+// 制御，計算パラメータ群の取得
+void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
 {
-  string label, value;
-  REAL_TYPE *rvec;
-  int *ivec;
-
-  // G_org
-  rvec  = dInfo.m_globalOrigin;
-  label = "/DomainInfo/G_org";
-
-  if ( tpCntl->GetVector(label, rvec, 3) )
-  {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
+  // 流体の解法アルゴリズムを取得
+  get_Algorithm(); 
+  
+  // パラメータを取得する
+  if ( Unit.Param == NONDIMENSIONAL ) {
+    if ( KindOfSolver == FLOW_ONLY ) get_Para_ND();
   }
-
-  // G_region
-  rvec  = dInfo.m_globalRegion;
-  label = "/DomainInfo/G_region";
-
-  if ( tpCntl->GetVector(label, rvec, 3) )
-  {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
+  
+  if ( isHeatProblem() ) {
+    get_Para_Temp();
   }
+  
+  
+  ////////
+  //////get_Para_Init();
+  
+  //////// If a start section dose not describe, the initial start is assumed.
+  //////StartType type = CF->GetStartType();
+  //////switch (type) {
+  //////  case Initial:
+  //////    Start = initial_start;
+  //////    break;
+  //////    
+  //////  case Restart:
+  //////    //Start = re_start;
+  //////    break;
+  //////    
+  //////  default:
+  //////    stamped_printf("\tParsing error : Start section\n");
+  //////    Exit(0);
+  //////}
+  
+  // Reference frame information : Solver defined element >> SPHERE defined
+  get_ReferenceFrame(RF);
+  
+  // 時間平均操作
+  get_Average_option();
+  
+  // 圧力ノイマン条件のタイプ >> get_Log()よりも先に
+  get_Wall_type();
+  
+  // Log >> get_Iteration()よりも前に
+  get_Log();
+  
+  // Criteria of computation
+  get_Iteration(IC);
+  
+  // LES
+  get_LES_option();
+  
+  
+  // 派生変数のオプション
+  get_Derived();
+  
+  // 変数範囲の処理　***隠しパラメータ
+  get_VarRange();
+  
+  // Cell IDのゼロを指定IDに変更　***隠しパラメータ
+  get_ChangeID();
+  
+  // 性能測定モードの処理　***隠しパラメータ
+  get_PMtest();
+  
+  // ラフな初期値を使い、リスタートするモード指定 >> FileIO
+  get_start_condition();
+  
+}
+
+
+
+
+// ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
+void Control::get_Solver_Properties()
+{
+  string str;
+  string label;
+  
+  // 形状近似度の取得
+  label = "/Steer/Solver_Property/Shape_Approximation";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Shape_Approximation' in 'Solver_Property'\n");
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Binary") )       Mode.ShapeAprx = BINARY;
+  else if( !strcasecmp(str.c_str(), "cut_distance") ) Mode.ShapeAprx = CUT_INFO;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Shape_Approximation'\n");
+    Exit(0);
+  }
+  
+  // 支配方程式の型（PDE_NS / Euler）を取得
+  label = "/Steer/Solver_Property/PDE_type";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'PDE_type' in 'Solver_Property'\n");
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Navier_Stokes" ) ) Mode.PDE = PDE_NS;
+  else if( !strcasecmp(str.c_str(), "Euler" ) )         Mode.PDE = PDE_EULER;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'PDE_type'\n");
+    Exit(0);
+  }
+  
+  // 基礎方程式の種類を取得する
+  label = "/Steer/Solver_Property/Basic_Equation";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Basic_Equation' in 'Solver_Property'\n");
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Incompressible" ) )            BasicEqs = INCMP;
+  else if( !strcasecmp(str.c_str(), "Limited_Compressible" ) )      BasicEqs = LTDCMP;
+  else if( !strcasecmp(str.c_str(), "Compressible" ) )              BasicEqs = CMPRSS;
+  else if( !strcasecmp(str.c_str(), "Incompressible_Two_Phase" ) )  BasicEqs = INCMP_2PHASE;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Basic_Equation'\n");
+    Exit(0);
+  }
+  
+  // 非定常計算，または定常計算の種別を取得する
+  label = "/Steer/Solver_Property/Time_Variation";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
+    stamped_printf("\tParsing error : fail to get 'Time_Variation' in 'Solver_Property'\n");
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Steady" ) )    Mode.Steady = TV_Steady;
+  else if( !strcasecmp(str.c_str(), "Unsteady" ) )  Mode.Steady = TV_Unsteady;
+  else 
+  {
+    stamped_printf("\tInvalid keyword is described for 'Time_Variation'\n");
+    Exit(0);
+  }
+  
+  // 対流項スキームの種類の取得
+  get_Convection();
+  
+  // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HEAT_TRANSFER / SOLID_CONDUCTION）と浮力モード
+  get_KindOfSolver();
+  
+  // ガイドセルの値を決める get_Convection(), get_KindOfSolver()のあと
+  if (KindOfSolver==SOLID_CONDUCTION) {
+    guide = 1;
+  }
+  else 
+  {
+    switch (CnvScheme) 
+    {
+      case O1_upwind:
+      case O2_central:
+        guide = 1;
+        break;
+        
+      case O3_muscl:
+        guide = 2;
+        break;
+        
+      default:
+        Exit(0);
+    }
+  }
+  
+  // 平均値の引き戻しオプション
+  label = "/Steer/Solver_Property/Pressure_Shift";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
+    stamped_printf("\tParsing error : fail to get 'Pressure_Shift' in 'Solver_Property'\n");
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "off" ) )     Mode.Pshift = -1;
+  else if( !strcasecmp(str.c_str(), "x_minus" ) ) Mode.Pshift = X_MINUS;
+  else if( !strcasecmp(str.c_str(), "x_plus" ) )  Mode.Pshift = X_PLUS;
+  else if( !strcasecmp(str.c_str(), "y_minus" ) ) Mode.Pshift = Y_MINUS;
+  else if( !strcasecmp(str.c_str(), "y_plus" ) )  Mode.Pshift = Y_PLUS;
+  else if( !strcasecmp(str.c_str(), "z_minus" ) ) Mode.Pshift = Z_MINUS;
+  else if( !strcasecmp(str.c_str(), "z_plus" ) )  Mode.Pshift = Z_PLUS;
+  else 
+  {
+    stamped_printf("\tInvalid keyword is described for 'Pressure_Shift'\n");
+    Exit(0);
+  }
+}
+
+
+
+// 時間制御に関するパラメータを取得する
+// パラメータは，setParameters()で無次元して保持
+void Control::get_Time_Control(DTcntl* DT)
+{
+  REAL_TYPE ct;
+  int ss=0;
+  
+  string str;
+  string label;
+  
+  // 加速時間
+  label = "/Steer/Time_Control/Acceleration_Type";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+	  stamped_printf("\tParsing error : fail to get 'Acceleration_Type' in 'Time_Control'\n");
+	  Exit(0);
+  }
+  else{
+	  if     ( !strcasecmp(str.c_str(), "step") ){
+		  Interval[Interval_Manager::tg_accelra].setMode_Step();
+	  }
+	  else if( !strcasecmp(str.c_str(), "time") ) {
+		  Interval[Interval_Manager::tg_accelra].setMode_Time();
+	  }
+	  else {
+		  stamped_printf("\tParsing error : Invalid keyword for 'Acceleration_Type' in 'Time_Control'\n");
+		  Exit(0);
+	  }
+	  
+	  label = "/Steer/Time_Control/Acceleration";
+	  if ( !(tpCntl->GetValue(label, &ct )) ) {
+		  stamped_printf("\tParsing error : fail to get 'Acceleration' in 'Time_Control'\n");
+		  Exit(0);
+	  }
+	  else{
+		  Interval[Interval_Manager::tg_accelra].setInterval((double)ct);
+	  }
+  }
+  
+  // 時間積分幅を取得する
+  label = "/Steer/Time_Control/Dt_Type";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Dt_Type' in 'Time_Control'\n");
+    Exit(0);
+  }
+  
+  label = "/Steer/Time_Control/Delta_t";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    stamped_printf("\tParsing error : fail to get 'Delta_t' in 'Time_Control'\n");
+    Exit(0);
+  }
+  
+  // Directで有次元の場合は，無次元化
+  double ts = (double)RefLength / (double)RefVelocity;
+  double cc;
+  if ( !strcasecmp(str.c_str(), "Direct") ) {
+    if (Unit.Param == DIMENSIONAL) {
+      cc = (double)ct / ts;
+    }
+  }
+  else {
+    cc = (double)ct;
+  }
+  
+  if ( !DT->set_Scheme(str.c_str(), cc) ) {
+    stamped_printf("\tParsing error : fail to set DELTA_T\n");
+    Exit(0);
+  }
+  
+  // 計算する時間を取得する
+  label = "/Steer/Time_Control/Period_Type";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Period_Type' in 'Time_Control'\n");
+    Exit(0);
+  }
+  else {
+    if ( !strcasecmp(str.c_str(), "step") ) {
+      Interval[Interval_Manager::tg_compute].setMode_Step();
+    }
+    else if ( !strcasecmp(str.c_str(), "time") ) {
+      Interval[Interval_Manager::tg_compute].setMode_Time();
+    }
+    else {
+      stamped_printf("\tParsing error : Invalid keyword for 'Period_Type' in 'Time_Control'\n");
+      Exit(0);
+    }
     
-  // G_pitch
-  rvec  = dInfo.m_globalPitch;
-  label = "/DomainInfo/G_pitch";
-
-  if ( tpCntl->GetVector(label, rvec, 3) )
-  {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
+    label = "/Steer/Time_Control/Calculation_Period";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      stamped_printf("\tParsing error : fail to get 'Calculation_Period' in 'Time_Control'\n");
+      Exit(0);
+    }
+    else {
+      Interval[Interval_Manager::tg_compute].setInterval((double)ct);
+    }
+    
   }
+}
 
-  // G_div
-  ivec  = dInfo.m_domainDiv;
-  label = "/DomainInfo/G_div";
 
-  if ( tpCntl->GetVector(label, rvec, 3) )
-  {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
+
+
+// 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する
+void Control::get_Unit()
+{
+  string str;
+  string label;
+  
+  label = "/Steer/Unit/Unit_of_input_parameter";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+		stamped_printf("\tParsing error : Invalid string for 'Unit_of_Input_Parameter' in 'Unit'\n");
+	  Exit(0);
   }
+  
+  if     ( !strcasecmp(str.c_str(), "Dimensional") )      Unit.Param = DIMENSIONAL;
+  else if( !strcasecmp(str.c_str(), "Non_Dimensional") )  Unit.Param = NONDIMENSIONAL;
+  else {
+    stamped_printf("\tInvalid keyword is described at 'Unit_of_Input_Parameter' section\n");
+    Exit(0);
+  }
+  
+  label = "/Steer/Unit/pressure";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : Invalid string for 'Pressure' in 'Unit'\n");
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Gauge") )    Unit.Prs = Unit_Gauge;
+  else if( !strcasecmp(str.c_str(), "Absolute") ) Unit.Prs = Unit_Absolute;
+  else {
+    stamped_printf("\tInvalid keyword is described at 'Pressure' in 'Unit'\n");
+    Exit(0);
+  }
+  
+  if ( isHeatProblem() ) {
+    
+    label = "/Steer/Unit/temperature";
+    
+    if ( !(tpCntl->GetValue(label, &str )) ) {
+      stamped_printf("\tParsing error : Invalid string for 'Temperature' in 'Unit'\n");
+      Exit(0);
+    }
+    
+    if     ( !strcasecmp(str.c_str(), "Celsius") )  Unit.Temp = Unit_CELSIUS;
+    else if( !strcasecmp(str.c_str(), "Kelvin") )   Unit.Temp = Unit_KELVIN;
+    else {
+      stamped_printf("\tInvalid keyword is described at 'Temperature' in 'Unit'\n");
+      Exit(0);
+    }
+  }
+  
 }
 
 
@@ -2250,6 +2305,15 @@ void Control::get_Version()
     Exit(0);
   }
   version = ct;
+}
+
+
+
+// TPのポインタを受け取る
+void Control::importTP(TPControl* tp) 
+{ 
+  if ( !tp ) Exit(0);
+  tpCntl = tp;
 }
 
 
@@ -3178,36 +3242,6 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 }
 
 
-
-// TPのポインタを受け取る
-void Control::importTP(TPControl* tp) 
-{ 
-  if ( !tp ) Exit(0);
-  tpCntl = tp;
-}
-
-
-
-// 無次元の領域情報をセットする
-void Control::setDomainInfo(const int* m_sz, const REAL_TYPE* m_org, const REAL_TYPE* m_pch, const REAL_TYPE* m_wth)
-{
-  imax = m_sz[0];
-  jmax = m_sz[1];
-  kmax = m_sz[2];
-  
-  dh    = m_pch[0];
-  dx[0] = m_pch[0];
-  dx[1] = m_pch[1];
-  dx[2] = m_pch[2];
-  
-  org[0] = m_org[0];
-  org[1] = m_org[1];
-  org[2] = m_org[2];
-  
-  Lbx[0] = m_wth[0];
-  Lbx[1] = m_wth[1];
-  Lbx[2] = m_wth[2];
-}
 
 
 /**

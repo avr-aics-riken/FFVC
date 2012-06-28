@@ -41,8 +41,10 @@ int main( int argc, char **argv )
   
   // 並列管理クラスのインスタンスと初期化
   // ここでMPI_Initも行う
-  ffv.paraMngr = cpm_ParaManager::get_instance(argc, argv);
-  if ( !ffv.paraMngr ) return CPM_ERROR_PM_INSTANCE;
+  if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) )
+  {
+    return CPM_ERROR_PM_INSTANCE;
+  }
   
   
   // 引数チェック

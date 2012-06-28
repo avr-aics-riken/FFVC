@@ -18,11 +18,12 @@
  */
 
 #include <math.h>
-#include <cstdio>
+#include <cstdlib>
 
 #include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
+#include "DomainInfo.h"
 #include "FBUtility.h"
 #include "Component.h"
 #include "Medium.h"
@@ -36,29 +37,24 @@
 #include "mpi.h"
 #include "limits.h"
 
-class VoxInfo {
+class VoxInfo : public DomainInfo {
   
 private:
-  int size[3];                   ///< 計算内部領域分割数(Local)
-  int guide;                     ///< ガイドセルサイズ
   int NoBC;                      ///< 境界条件数
   int NoCompo;                   ///< コンポーネントの総数
   int NoVoxID;                   ///< 含まれるIDの数(Local/Global)
   int colorList[MODEL_ID_MAX+1]; ///< ボクセルモデルに含まれるIDのリスト(Global)
   CompoList*    cmp;             ///< コンポーネントリスト
   MediumList*   mat;             ///< 媒質リスト
-  cpm_ParaManager *paraMngr;     ///< Cartesian Partition Maneger
 
 public:
   /** コンストラクタ */
   VoxInfo() {
     NoVoxID = 0;
-    guide = 0;
-    NoBC = NoCompo = 0;
-    for (int i=0; i<3; i++) size[i]=0;
+    NoBC = 0;
+    NoCompo = 0;
     cmp = NULL;
     mat = NULL;
-    paraMngr=NULL;
     
     for (int i=0; i<MODEL_ID_MAX+1; i++) colorList[i]=0;
   }
@@ -159,7 +155,19 @@ private:
                                 const int bc_dir);
   
   void checkColorTable       (FILE* fp, int size, int* table);
-  void copyID_Prdc_Inner     (SklScalar3D<int>* d_mid, int* st, int* ed, int id, int dir);
+  
+  
+  /**
+   * @brief 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
+   * @param [in/out] mid   ID配列のデータクラス
+   * @param [in]     m_st  コンポーネントのbbox始点
+   * @param [in]     m_ed  コンポーネントのbbox終点
+   * @param [in]     m_id  対象のID
+   * @param [in]     m_dir ドライバの方向
+   */
+  void copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
+  
+  
   void encActive             (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
   void encAmask_SymtrcBC     (int face, int* bh2);
   void encHbit               (int* bh1, int* bh2);
@@ -196,10 +204,16 @@ public:
   
   int scanCell               (int *cell, const int* cid, const int ID_replace);
   
-  int check_fill        (const int* mid);
+  /**
+   * @brief ペイント済みかどうかをチェックする
+   * @param [in] mid ID配列
+   * @note 未ペイントセルがあれば1を返す
+   */
+  int check_fill(const int* mid);
+  
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   unsigned fill_inside       (int* mid, const int solid_id);
-  unsigned setBCIndexP       (int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
+  unsigned long setBCIndexP  (int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
   
   unsigned long flip_InActive(unsigned long& L, 
@@ -208,8 +222,25 @@ public:
                               const int* mid, 
                               int* bx);
   
-  void adjMedium_on_GC       (const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const int prdc_mode);
-  void adjMediumPrdc_Inner  (SklScalar3D<int>* d_mid);
+  
+  /**
+   * @brief 外部境界に接するガイドセルのmid[]に媒質インデクスをエンコードする
+   * @param [in]     face      外部境界面番号
+   * @param [in/out] mid       ID配列のデータクラス
+   * @param [in]     BCtype    外部境界面の境界条件の種類
+   * @param [in]     c_id      媒質インデクス
+   * @param [in]     prdc_mode 周期境界条件のモード
+   */
+  void adjMedium_on_GC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode);
+  
+  
+  /**
+   * @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
+   * @param [in/out] mid       ID配列のデータ
+   */
+  void adjMediumPrdc_Inner(int* mid);
+  
+  
   void copyBCIbase           (int* dst, int* src);
   void countCellState        (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state);
   void countOpenAreaOfDomain (int* bx, REAL_TYPE* OpenArea);
@@ -254,11 +285,6 @@ public:
     bid |= (s_id << (dir*5));
   }
   
-
-  /** CPMlibのポインタをセット 
-   * @param[in] m_paraMngr  
-   */
-  void importCPM(cpm_ParaManager* m_paraMngr)
   
   
   // ----> debug function

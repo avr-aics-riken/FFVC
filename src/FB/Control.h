@@ -21,6 +21,7 @@
 
 #include "cpm_Define.h"
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "Medium.h"
 #include "Component.h"
@@ -381,7 +382,7 @@ public:
 
 
 
-class Control {
+class Control : public DomainInfo {
 protected:
   TPControl* tpCntl;   ///< テキストパーサへのポインタ
   
@@ -850,7 +851,12 @@ protected:
   void get_Para_ND        ();
   void get_Para_Ref       ();
   void get_Para_Temp      ();
-  void get_PMtest         ();
+  
+  /**
+   * @brief 性能試験モードを取得する（隠しパラメータ）
+   */
+  void get_PMtest();
+  
   void get_ReferenceFrame (ReferenceFrame* RF);
   ////void get_restart_rough  ();
   
@@ -940,18 +946,6 @@ public:
   
   
   void printNoCompo(FILE* fp);
-  
-  
-  /**
-   * @brief 無次元の領域情報をセットする
-   * @param [in] m_sz   領域分割数（計算領域内部のみ）
-   * @param [in] m_org  基点
-   * @param [in] m_pch  格子幅
-   * @param [in] m_wth  領域の大きさ
-   * @pre Control::setGiudeCell()
-   * @note setGiudeCell()の前にコール
-   */
-  void setDomainInfo(const int* m_sz, const REAL_TYPE* m_org, const REAL_TYPE* m_pch, const REAL_TYPE* m_wth);
   
   
   void setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
@@ -1052,10 +1046,6 @@ public:
     x[2] /= RefLength;
   }
   
-
-  /** Domainファイル名の取得 */
-  string get_DomainFile();
-  
   
   /** グローバルな領域情報を取得 */
   void get_DomainInfo();
@@ -1067,6 +1057,10 @@ public:
   void importTP(TPControl* tp);
   
   void get_Para_Init();
+  
+  /**
+   * @brief ポリゴン情報
+   */
   void get_Polygon();
   
   

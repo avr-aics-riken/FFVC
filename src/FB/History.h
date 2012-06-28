@@ -247,13 +247,6 @@ public:
   
   
   /**
-   * @brief 反復過程の状況モニタのヘッダー出力
-   * @param [in] fp 出力ファイルポインタ
-   */
-  void printHistoryForceTitle(FILE* fp);
-  
-  
-  /**
    * @brief 物体に働く力の履歴の出力
    * @param [in] fp 出力ファイルポインタ
    */

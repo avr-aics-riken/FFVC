@@ -20,6 +20,7 @@
 #include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
@@ -31,7 +32,7 @@
 #include "TPControl.h"
 
 
-class ParseBC {
+class ParseBC : public DomainInfo {
 private:
 
   TPControl* tpCntl;
@@ -39,12 +40,11 @@ private:
   int NoBaseBC;    // 外部境界条件の指定種類数
   int NoMedium;    // 媒質数
   
-  
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;
   REAL_TYPE rho, nyu, cp, lambda, beta; // 無次元化の参照値
 
-  int ix, jx, kx, guide;
+  int ix, jx, kx;
   int KindOfSolver;
   int NoCompo;
   int NoBC;        ///< LocalBCの数
@@ -62,12 +62,12 @@ private:
   BoundaryOuter* BaseBc;     ///< テンポラリのテーブル
   MediumList* mat;           ///< 媒質情報テーブル
   MediumTableInfo *MTITP;    ///< Medium Table <--- textparser
-  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
+
 
 public:
   /** コンストラクタ */
   ParseBC(){
-    ix = jx = kx = guide = 0;
+    ix = jx = kx = 0;
     KindOfSolver = 0;
     BaseTemp = DiffTemp = BasePrs = 0.0;
     RefVelocity = RefDensity = RefSpecificHeat = RefLength = 0.0;
@@ -82,7 +82,6 @@ public:
     BaseBc = NULL;
     compo = NULL;
     mat = NULL;
-    paraMngr = NULL;
   }
   
   /**　デストラクタ */
@@ -214,11 +213,6 @@ public:
    */
   void importTP(TPControl* tp);
   
-  
-  /** CPMlibのポインタをセット 
-   * @param[in] m_paraMngr  CPMlibのポインタ
-   */
-  void importCPM(cpm_ParaManager* m_paraMngr);
   
   
   int getNoLocalBC        ();

@@ -33,6 +33,8 @@
 #include "cpm_ParaManager.h"
 #include "cpm_TextParserDomain.h"
 
+#include "DomainInfo.h"
+
 #include "FB_Define.h"
 #include "ffv_Define.h"
 #include "mydebug.h"
@@ -42,8 +44,9 @@
 #include "FileIO.h"
 #include "ParseBC.h"
 #include "ParseMat.h"
+#include "VoxInfo.h"
 //#include "ffv_SetBC.h"
-//#include "VoxInfo.h"
+
 
 #include "TPControl.h"
 
@@ -80,23 +83,18 @@ using namespace pm_lib;
 using namespace PolylibNS;
 
 
-class FFV {
+class FFV : public DomainInfo {
 private:
-  
+  int procGrp;             ///< プロセスグループ番号 => 0
   int session_maxStep;     ///< セッションのステップ数
   int session_currentStep; ///< セッションの現在のステップ
   int ModeTiming;          ///< タイミング測定管理フラグ
   
-  int G_size[3];           ///< 全ドメインの分割数
-  REAL_TYPE G_org[3];      ///< 全ドメインの基点
-  REAL_TYPE G_reg[3];      ///< 全ドメインのサイズ
   unsigned long Acell;     ///< グローバルなActive cell
   unsigned long Fcell;     ///< グローバルなFluid cell
   unsigned long Wcell;     ///< グローバルなSolid cell
   
   // Fortranへの引数
-  int sz[3];        ///< ローカルの領域分割数
-  int gc;           ///< ガイドセル数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
   REAL_TYPE *dh0;   ///< 格子幅（有次元）
   REAL_TYPE v00[4]; ///< 参照速度
@@ -167,13 +165,12 @@ private:
   MediumList* mat;           ///< 媒質リスト
   CompoList* cmp;            ///< コンポーネントリスト
   PerfMonitor PM;            ///< 性能モニタクラス
+  VoxInfo V;                 ///< ボクセル前処理クラス
+  ParseBC B;                 ///< 境界条件のパースクラス
   
 //  SetBC3D BC;                ///< BCクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
-  
-public:
-  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
   
 public:
   /** コンストラクタ */
@@ -264,6 +261,7 @@ private:
   void allocArray_RK(double &total);
   
   
+  
 public:
   
   /**
@@ -304,26 +302,42 @@ public:
   }
   
   
+  /**
+   * @brief CPMのポインタをコピーし、ランク情報を設定
+   * @param [in] m_paraMngr  cpm_ParaManagerクラス
+   * @return  エラーコード
+   */
+  bool importCPM(cpm_ParaManager* m_paraMngr) const
+  {
+    if ( !m_paraMngr ) return false;
+    paraMngr = m_paraMngr;
+    
+    setDomainInfo(paraMngr, procGrp);
+    
+    return true;
+  }
+  
+  
   /** 初期化 
    * 格子生成、ビットフラグ処理ほか
-   * @param[in] argc  main関数の引数の個数
-   * @param[in] argv  main関数の引数リスト
+   * @param [in] argc  main関数の引数の個数
+   * @param [in] argv  main関数の引数リスト
    */
   int Initialize(int argc, char **argv);
   
   
   /** 
    * @brief マスターノードのみ trueを返す
-   * @ret true(Rank==0) / false(Rank!=0)
+   * @return true(Rank==0) / false(Rank!=0)
    */
-  bool IsMaster() 
+  bool IsMaster() const
   {
     return ( paraMngr->GetMyRankID() == 0 ) ? true : false;
   }
   
   
   /** 1ステップのコアの処理
-   * @param[in] m_step   現在のステップ数
+   * @param [in] m_step   現在のステップ数
    */
   int Loop(int m_step);
   

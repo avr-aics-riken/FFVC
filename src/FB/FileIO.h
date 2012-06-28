@@ -25,6 +25,7 @@
 
 #include "cpm_ParaManager.h"
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "FB_Ffunc.h"
@@ -47,21 +48,17 @@
 #include <sys/uio.h>
 #endif
 
-class FileIO {
+class FileIO : public DomainInfo {
   
 public:
   /** コンストラクタ */
-  FileIO() 
-  {
-    paraMngr = NULL;
-  }
+  FileIO() {}
   
   /**　デストラクタ */
   ~FileIO() {}
   
   
 protected:
-  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
   
   /** sphファイルのスカラ/ベクトルの種別 */
   enum sv_type {
@@ -83,9 +80,9 @@ public:
    */
   void cnv_Div(REAL_TYPE* dst, 
                REAL_TYPE* src, 
-               const int* size, 
-               const int guide, 
-               const REAL_TYPE coef, 
+               int* sz, 
+               int gc, 
+               REAL_TYPE coef, 
                REAL_TYPE& flop);
   
   
@@ -101,8 +98,8 @@ public:
    */
   void cnv_TP_ND2D(REAL_TYPE* dst, 
                    REAL_TYPE* src, 
-                   const int* size, 
-                   const int guide, 
+                   int* sz, 
+                   int gc, 
                    const REAL_TYPE Ref_rho, 
                    const REAL_TYPE Ref_v, 
                    REAL_TYPE& flop);
@@ -111,7 +108,7 @@ public:
   /**
    * @brief sphファイルの書き出し（内部領域のみ）
    * @param [in] vf               スカラデータ
-   * @param [in] size             配列サイズ
+   * @param [in] sz               配列サイズ
    * @param [in] gc               ガイドセル
    * @param [in] org              基点
    * @param [in] ddx              ピッチ
@@ -119,7 +116,7 @@ public:
    * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
    */
   void writeRawSPH(const REAL_TYPE *vf, 
-                   const int* size, 
+                   const int* sz, 
                    const int gc, 
                    const REAL_TYPE* org, 
                    const REAL_TYPE* ddx, 
@@ -129,8 +126,8 @@ public:
    * @brief 圧力のファイルをロードする
    * @param [in]     fp          ファイルポインタ（ファイル出力）
    * @param [in]     fname       ファイル名
-   * @param [in]     size        サイズ
-   * @param [in]     guide       ガイドセルサイズ
+   * @param [in]     sz          サイズ
+   * @param [in]     gc          ガイドセルサイズ
    * @param [out]    p           圧力データポインタ
    * @param [out]    step        ステップ
    * @param [out]    time        時刻
@@ -146,7 +143,7 @@ public:
    */
   void readPressure(FILE* fp, 
                     const std::string fname, 
-                    int* size, 
+                    int* sz, 
                     int gc,
                     REAL_TYPE* s, 
                     int& step, 
@@ -166,8 +163,8 @@ public:
    * @brief 速度のファイルをロードする
    * @param [in]     fp          ファイルポインタ（ファイル出力）
    * @param [in]     fname       ファイル名
-   * @param [in]     size        サイズ
-   * @param [in]     guide       ガイドセルサイズ
+   * @param [in]     sz          サイズ
+   * @param [in]     gc          ガイドセルサイズ
    * @param [out]    v           速度データポインタ
    * @param [out]    step        ステップ
    * @param [out]    time        時刻
@@ -182,7 +179,7 @@ public:
    */
   void readVelocity(FILE* fp, 
                     const std::string fname, 
-                    int* size, 
+                    int* sz, 
                     int gc, 
                     REAL_TYPE* v, 
                     int& step, 
@@ -201,8 +198,8 @@ public:
    * @brief 温度のファイルをロードする
    * @param [in]     fp          ファイルポインタ（ファイル出力）
    * @param [in]     fname       ファイル名
-   * @param [in]     size        サイズ
-   * @param [in]     guide       ガイドセルサイズ
+   * @param [in]     sz          サイズ
+   * @param [in]     gc          ガイドセルサイズ
    * @param [out]    t           温度データポインタ
    * @param [out]    step        ステップ
    * @param [out]    time        時刻
@@ -218,7 +215,7 @@ public:
    */
   void readTemperature(FILE* fp, 
                        const std::string fname, 
-                       int* size, 
+                       int* sz, 
                        int gc, 
                        REAL_TYPE* t, 
                        int& step, 
@@ -237,7 +234,7 @@ public:
   /** 
    * @brief スカラーファイルを出力する
    * @param [in] fname     ファイル名
-   * @param [in] size      分割数
+   * @param [in] sz        分割数
    * @param [in] gc        ガイドセル数
    * @param [in] s         スカラー場
    * @param [in] step      ステップ
@@ -250,7 +247,7 @@ public:
    * @param [in] time_avr  平均操作した時間
    */
   void writeScalar(const std::string fname, 
-                   int* size, 
+                   int* sz, 
                    int gc,
                    REAL_TYPE* s, 
                    const int step, 
@@ -266,7 +263,7 @@ public:
   /** 
    * @brief ベクトルファイルを出力する
    * @param [in] fname     ファイル名
-   * @param [in] size      分割数
+   * @param [in] sz        分割数
    * @param [in] gc        ガイドセル数
    * @param [in] v         ベクトル場
    * @param [in] step      ステップ
@@ -279,7 +276,7 @@ public:
    * @param [in] time_avr  平均操作した時間
    */
   void writeVector(const std::string fname, 
-                   int* size, 
+                   int* sz, 
                    int gc, 
                    REAL_TYPE* v, 
                    const int step, 
@@ -290,12 +287,6 @@ public:
                    const bool mode=true,
                    const int step_avr=0,
                    const REAL_TYPE time_avr=0.0);
-  
-  
-  /** CPMlibのポインタをセット 
-   * @param [in] m_paraMngr  CPMクラスのポインタ
-   */
-  void importCPM(cpm_ParaManager* m_paraMngr);
   
 };
 #endif // _FB_FILE_IO_H_

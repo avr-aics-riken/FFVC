@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file Intrinsic.h
- * @brief FlowBase Intrinsic class Header
+ * @file   Intrinsic.h
+ * @brief  FlowBase Intrinsic class Header
  * @author kero
  */
 
@@ -23,6 +23,7 @@
 #include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "BndOuter.h"
 #include "Control.h"
@@ -49,14 +50,9 @@ enum Intrinsic_class
 };
 
 
-class Intrinsic {
-
-protected:
-  cpm_ParaManager *paraMngr;     ///< Cartesian Partition Maneger
+class Intrinsic : public DomainInfo {
   
 public:
-  int size[3];    ///< 分割数
-  int guide;      ///< ガイドセル数
   REAL_TYPE RefL; ///< 代表長さ
   
   /** 次元のモード */
@@ -69,8 +65,6 @@ public:
   /** コンストラクタ */
   Intrinsic() 
   { 
-    for (int i=0; i<3; i++) size[i]=0.0;
-    guide = 0;
     RefL = 0.0;
   }
   
@@ -147,11 +141,6 @@ public:
    */
   void setControlVars(Control* R);
   
-  
-  /** CPMlibのポインタをセット 
-   * @param [in] m_paraMngr  
-   */
-  void importCPM(cpm_ParaManager* m_paraMngr);
   
   
   /**

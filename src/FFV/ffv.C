@@ -19,6 +19,8 @@
 // コンストラクタ
 FFV::FFV()
 {
+  procGrp = 0;
+  
   session_maxStep = 0;
   session_currentStep = 0;
   

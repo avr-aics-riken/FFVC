@@ -18,7 +18,7 @@
 
 
 // タイムスタンプの更新
-void History::updateTimeStamp(const unsigned m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax)
+void History::updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax)
 {
   step  = m_stp;
   time  = m_tm;

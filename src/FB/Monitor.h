@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "vec3.h"
-#include "Parallel_node.h"
 #include "MonCompo.h"
 #include "basic_func.h"
 #include "Component.h"
@@ -28,7 +28,7 @@ using namespace std;
 /**
  *  モニタグループ管理クラス.
  */
-class MonitorList : public Parallel_Node {
+class MonitorList : public DomainInfo {
   
 public:
   /// 出力タイプ型

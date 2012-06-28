@@ -16,11 +16,11 @@
 #include <vector>
 #include <cassert>
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "SklUtil.h"
 #include "mydebug.h"
 #include "vec3.h"
-#include "Parallel_node.h"
 #include "basic_func.h"
 #include "FBUtility.h"
 #include "Component.h"
@@ -32,7 +32,7 @@ using namespace std;
 /**
  *  モニタグループクラス.
  */
-class MonitorCompo : public Parallel_Node {
+class MonitorCompo : public DomainInfo {
 public:
   
   /// PointSet要素用構造体

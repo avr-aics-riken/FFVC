@@ -32,54 +32,6 @@
 
 using namespace std;
 
-class SubDomain {
-public:
-  /** コンストラクタ */
-  SubDomain()
-  {
-    m_pos[0] = m_pos[1] = m_pos[2] = 0;
-    m_bcid[0] = m_bcid[1] = m_bcid[2] = m_bcid[3] = m_bcid[4] = m_bcid[5] = 0;
-  }
-  
-  /**　デストラクタ */
-  ~SubDomain()
-  {
-  }
-
-  int m_pos[3];
-  int m_bcid[6];
-};
-
-
-
-class DomainInfo {
-public:
-  /** コンストラクタ */
-  DomainInfo()
-  {
-    m_globalOrigin[0] = m_globalOrigin[1] = m_globalOrigin[2] = REAL_TYPE(0.0);
-    m_globalRegion[0] = m_globalRegion[1] = m_globalRegion[2] = REAL_TYPE(0.0);
-    m_globalPitch[0]  = m_globalPitch[1]  = m_globalPitch[2]  = REAL_TYPE(0.0);
-    m_domainDiv[0]    = m_domainDiv[1]    = m_domainDiv[2]    = 0;
-  }
-  
-  /**　デストラクタ */
-  ~DomainInfo()
-  {
-  }
-
-  REAL_TYPE m_VoxelOrigin[3];
-  REAL_TYPE m_VoxelSize[3];
-  REAL_TYPE m_VoxelPitch[3];
-
-  REAL_TYPE m_globalOrigin[3];
-  REAL_TYPE m_globalRegion[3];
-  REAL_TYPE m_globalPitch[3];
-  int       m_domainDiv[3];
-  vector<SubDomain> m_subDomain;
-};
-
-
 
 class MediumTableInfo {
 public:

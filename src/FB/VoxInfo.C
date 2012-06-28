@@ -19,37 +19,29 @@
 #include <map>
 #include "VoxInfo.h"
 
-/**
- @fn void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const int prdc_mode)
- @brief 外部境界に接するガイドセルのmid[]に媒質インデクスをエンコードする
- @param face 外部境界面番号
- @param d_mid ID配列のデータクラス
- @param BCtype 外部境界面の境界条件の種類
- @param c_id 媒質インデクス
- @param prdc_mode 周期境界条件のモード
- @note ガイドセル全てを対象
- */
-void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int BCtype, const int c_id, const int prdc_mode)
+
+// 外部境界に接するガイドセルのmid[]に媒質インデクスをエンコードする
+void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode)
 {
   size_t m, m0, m1;
-  int* mid=NULL;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
+  int sz[3] = {ix, jx, kx};
   int gd = guide;
-  
-  if ( !(mid = d_mid->GetData()) ) Exit(0);
-  
+
   
   // 周期境界以外
   if ( BCtype != OBC_PERIODIC ) {
-    switch (face) {
+    
+    switch (face) 
+    {
       case X_MINUS:
-        if( pn.nID[face] < 0 ){
+        if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(size, guide, 0, j, k);
+              m = FBUtility::getFindexS3D(sz, gd, 0, j, k);
               mid[m] = c_id;
             }
           }
@@ -57,10 +49,10 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         break;
         
       case X_PLUS:
-        if( pn.nID[face] < 0 ){
+        if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(size, guide, ix+1, j, k);
+              m = FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
               mid[m] = c_id;
             }
           }
@@ -68,10 +60,10 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         break;
         
       case Y_MINUS:
-        if( pn.nID[face] < 0 ){
+        if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(size, guide, i, 0, k);
+              m = FBUtility::getFindexS3D(sz, gd, i, 0, k);
               mid[m] = c_id;
             }
           }
@@ -79,10 +71,10 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         break;
         
       case Y_PLUS:
-        if( pn.nID[face] < 0 ){
+        if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(size, guide, i, jx+1, k);
+              m = FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
               mid[m] = c_id;
             }
           }
@@ -90,10 +82,10 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         break;
         
       case Z_MINUS:
-        if( pn.nID[face] < 0 ){
+        if( nID[face] < 0 ){
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(size, guide, i, j, 0);
+              m = FBUtility::getFindexS3D(sz, gd, i, j, 0);
               mid[m] = c_id;
             }
           }
@@ -101,10 +93,10 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
         break;
         
       case Z_PLUS:
-        if( pn.nID[face] < 0 ){
+        if( nID[face] < 0 ){
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(size, guide, i, j, kx+1);
+              m = FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
               mid[m] = c_id;
             }
           }
@@ -117,30 +109,30 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
     // 内部周期境界の場合には，別メソッド
     if ( prdc_mode != BoundaryOuter::prdc_Driver ) {
       // 並列時
-      if ( pn.numProc > 1 ) {
+      if ( numProc > 1 ) {
         switch (face) {
           case X_MINUS:
-            if ( !d_mid->CommPeriodicBndCell(PRDC_X_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
+            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, PLUS2MINUS);
             break;
             
           case X_PLUS:
-            if ( !d_mid->CommPeriodicBndCell(PRDC_X_DIR, PRDC_MINUS2PLUS, guide) ) Exit(0);
+            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, MINUS2PLUS);
             break;
             
           case Y_MINUS:
-            if ( !d_mid->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
+            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, PLUS2MINUS);
             break;
             
           case Y_PLUS:
-            if ( !d_mid->CommPeriodicBndCell(PRDC_Y_DIR, PRDC_MINUS2PLUS, guide) ) Exit(0);
+            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, MINUS2PLUS);
             break;
             
           case Z_MINUS:
-            if ( !d_mid->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_PLUS2MINUS, guide) ) Exit(0);
+            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, PLUS2MINUS);
             break;
             
           case Z_PLUS:
-            if ( !d_mid->CommPeriodicBndCell(PRDC_Z_DIR, PRDC_MINUS2PLUS, guide) ) Exit(0);
+            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, MINUS2PLUS);
             break;
         }      
       }
@@ -148,12 +140,12 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
       else {
         switch (face) {
           case X_MINUS:
-            if( pn.nID[face] < 0 ){
+            if( nID[face] < 0 ){
               for (int k=1; k<=kx; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1-gd; i<=0; i++) {
-                    m0 = FBUtility::getFindexS3D(size, guide, i   , j, k);
-                    m1 = FBUtility::getFindexS3D(size, guide, i+ix, j, k);
+                    m0 = FBUtility::getFindexS3D(sz, gd, i   , j, k);
+                    m1 = FBUtility::getFindexS3D(sz, gd, i+ix, j, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -162,12 +154,12 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
             break;
             
           case X_PLUS:
-            if( pn.nID[face] < 0 ){
+            if( nID[face] < 0 ){
               for (int k=1; k<=kx; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=ix+1; i<=ix+gd; i++) {
-                    m0 = FBUtility::getFindexS3D(size, guide, i   , j, k);
-                    m1 = FBUtility::getFindexS3D(size, guide, i-ix, j, k);
+                    m0 = FBUtility::getFindexS3D(sz, gd, i   , j, k);
+                    m1 = FBUtility::getFindexS3D(sz, gd, i-ix, j, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -176,12 +168,12 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
             break;
             
           case Y_MINUS:
-            if( pn.nID[face] < 0 ){
+            if( nID[face] < 0 ){
               for (int k=1; k<=kx; k++) {
                 for (int j=1-gd; j<=0; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(size, guide, i, j   , k);
-                    m1 = FBUtility::getFindexS3D(size, guide, i, j+jx, k);
+                    m0 = FBUtility::getFindexS3D(sz, gd, i, j   , k);
+                    m1 = FBUtility::getFindexS3D(sz, gd, i, j+jx, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -190,12 +182,12 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
             break;
             
           case Y_PLUS:
-            if( pn.nID[face] < 0 ){
+            if( nID[face] < 0 ){
               for (int k=1; k<=kx; k++) {
                 for (int j=jx+1; j<=jx+gd; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(size, guide, i, j   , k);
-                    m1 = FBUtility::getFindexS3D(size, guide, i, j-jx, k);
+                    m0 = FBUtility::getFindexS3D(sz, gd, i, j   , k);
+                    m1 = FBUtility::getFindexS3D(sz, gd, i, j-jx, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -204,12 +196,12 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
             break;
             
           case Z_MINUS:
-            if( pn.nID[face] < 0 ){
+            if( nID[face] < 0 ){
               for (int k=1-gd; k<=0; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(size, guide, i, j, k    );
-                    m1 = FBUtility::getFindexS3D(size, guide, i, j, k+kx);
+                    m0 = FBUtility::getFindexS3D(sz, gd, i, j, k    );
+                    m1 = FBUtility::getFindexS3D(sz, gd, i, j, k+kx);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -218,12 +210,12 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
             break;
             
           case Z_PLUS:
-            if( pn.nID[face] < 0 ){
+            if( nID[face] < 0 ){
               for (int k=kx+1; k<=kx+gd; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(size, guide, i, j, k    );
-                    m1 = FBUtility::getFindexS3D(size, guide, i, j, k-kx);
+                    m0 = FBUtility::getFindexS3D(sz, gd, i, j, k    );
+                    m1 = FBUtility::getFindexS3D(sz, gd, i, j, k-kx);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -237,32 +229,24 @@ void VoxInfo::adjMedium_on_GC(const int face, SklScalar3D<int>* d_mid, const int
   
 }
 
-/**
- @fn void VoxInfo::adjMediumPrdc_Inner(int face, SklScalar3D<int>* d_mid, int BCtype, int c_id, int prdc_mode)
- @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
- @param face 外部境界面番号
- @param d_mid ID配列のデータクラス
- @param BCtype 外部境界面の境界条件の種類
- @param c_id セルID
- @param prdc_mode 周期境界条件のモード
- @note ガイドセル全てを対象
- */
-void VoxInfo::adjMediumPrdc_Inner(SklScalar3D<int>* d_mid)
+
+// 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
+void VoxInfo::adjMediumPrdc_Inner(int* mid)
 {
-  int st[3], ed[3], dir, id;
+  int st[3], ed[3];
   
   for (int n=1; n<=NoBC; n++) {
     cmp[n].getBbox(st, ed);
-    dir = cmp[n].getPeriodicDir();
-    id  = cmp[n].getMatOdr();
+    int dir = cmp[n].getPeriodicDir();
+    int id  = cmp[n].getMatOdr();
     
     if ( cmp[n].getType() == PERIODIC ) {
 
-      if ( pn.numProc > 1 ) {
+      if ( numProc > 1 ) {
         Hostonly_ printf("Error : Inner Periodic condition is limited to use for serial execution on a temporary\n.");
         Exit(0);
       }
-      copyID_Prdc_Inner(d_mid, st, ed, id, dir);
+      copyID_Prdc_Inner(mid, st, ed, id, dir);
     }
   }
   
@@ -304,19 +288,22 @@ void VoxInfo::checkColorTable(FILE* fp, int size, int* table)
 }
 
 
-/**
- @fn int VoxInfo::check_fill(const int* mid)
- @brief ペイント済みかどうかをチェックする
- @param[in] mid ID配列
- @note 未ペイントセルがあれば1を返す
- */
+
+// ペイント済みかどうかをチェックする
+// 未ペイントセルがあれば1を返す
 int VoxInfo::check_fill(const int* mid)
 {
-  for (int k=1; k<=size[2]; k++) {
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int sz[3] = {ix, jx, kx};
+  int gd = guide;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         
-        if ( mid[FBUtility::getFindexS3D(size, guide, i  , j  , k  )] == 0 ) return 1;
+        if ( mid[FBUtility::getFindexS3D(sz, gd, i  , j  , k  )] == 0 ) return 1;
         
       }
     }
@@ -402,26 +389,24 @@ void VoxInfo::copyBCIbase(int* dst, int* src)
   }  
 }
 
-/**
- @brief 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
- @param [in] mid ID配列のデータクラス
- @param [in] st コンポーネントのbbox始点
- @param [in] ed コンポーネントのbbox終点
- @param [in] id 対象のID
- @param [in] dir ドライバの方向
- */
-void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
+
+// 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
+void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir)
 {
   size_t m0, m1, m2;
   
+  int st[3] = {m_st[0], m_st[1], m_st[2]};
+  int ed[3] = {m_ed[0], m_ed[1], m_ed[2]};
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int gd = guide;
+  int dir = m_dir;
+  int id  = m_id;
+  int gd  = guide;
   
   switch (dir) {
     case X_MINUS:
-      if ( pn.nID[dir] < 0 ) {
+      if ( nID[dir] < 0 ) {
         int i = st[0];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
@@ -439,7 +424,7 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
       break;
       
     case X_PLUS:
-      if ( pn.nID[dir] < 0 ) {
+      if ( nID[dir] < 0 ) {
         int i = st[0];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
@@ -457,7 +442,7 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
       break;
       
     case Y_MINUS:
-      if ( pn.nID[dir] < 0 ) {
+      if ( nID[dir] < 0 ) {
         int j = st[1];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int i=st[0]; i<=ed[0]; i++) {
@@ -475,7 +460,7 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
       break;
       
     case Y_PLUS:
-      if ( pn.nID[dir] < 0 ) {
+      if ( nID[dir] < 0 ) {
         int j = st[1];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int i=st[0]; i<=ed[0]; i++) {
@@ -493,7 +478,7 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
       break;
       
     case Z_MINUS:
-      if ( pn.nID[dir] < 0 ) {
+      if ( nID[dir] < 0 ) {
         int k = st[2];
         for (int j=st[1]; j<=ed[1]; j++) {
           for (int i=st[0]; i<=ed[0]; i++) {
@@ -511,7 +496,7 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, int* st, int* ed, int id, int dir)
       break;
       
     case Z_PLUS:
-      if ( pn.nID[dir] < 0 ) {
+      if ( nID[dir] < 0 ) {
         int k = st[2];
         for (int j=st[1]; j<=ed[1]; j++) {
           for (int i=st[0]; i<=ed[0]; i++) {
@@ -569,7 +554,7 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
   g_cell = cell;
   Lcell  = cell;
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long c_tmp = g_cell;
     MPI_Allreduce(&c_tmp, &g_cell, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -600,7 +585,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
   
   switch (face) {
     case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+      if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m1 = FBUtility::getFindexS3D(size, guide, 1  , j, k);
@@ -616,7 +601,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       break;
       
     case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
+      if( nID[X_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m1 = FBUtility::getFindexS3D(size, guide, ix  , j, k);
@@ -632,7 +617,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       break;
       
     case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
+      if( nID[Y_MINUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, 1  , k);
@@ -648,7 +633,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       break;
       
     case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
+      if( nID[Y_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, jx  , k);
@@ -664,7 +649,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       break;
       
     case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
+      if( nID[Z_MINUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, j, 1  );
@@ -680,7 +665,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       break;
       
     case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
+      if( nID[Z_PLUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m1 = FBUtility::getFindexS3D(size, guide, i, j, kx  );
@@ -697,7 +682,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
   } // end of switch
   
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -733,7 +718,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   
   // X_MINUS
   g=0;
-  if( pn.nID[X_MINUS] < 0 ){
+  if( nID[X_MINUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         m0 = FBUtility::getFindexS3D(size, guide, 0, j, k);
@@ -747,7 +732,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   
   // X_PLUS
   g=0;
-  if( pn.nID[X_PLUS] < 0 ){
+  if( nID[X_PLUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         m0 = FBUtility::getFindexS3D(size, guide, ix+1, j, k);
@@ -761,7 +746,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   
   // Y_MINUS
   g=0;
-  if( pn.nID[Y_MINUS] < 0 ){
+  if( nID[Y_MINUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, 0, k);
@@ -775,7 +760,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   
   // Y_PLUS
   g=0;
-  if( pn.nID[Y_PLUS] < 0 ){
+  if( nID[Y_PLUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, jx+1, k);
@@ -789,7 +774,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   
   // Z_MINUS
   g=0;
-  if( pn.nID[Z_MINUS] < 0 ){
+  if( nID[Z_MINUS] < 0 ){
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, j, 0);
@@ -803,7 +788,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   
   // Z_PLUS
   g=0;
-  if( pn.nID[Z_PLUS] < 0 ){
+  if( nID[Z_PLUS] < 0 ){
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         m0 = FBUtility::getFindexS3D(size, guide, i, j, kx  );
@@ -816,7 +801,7 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   }
   
   // 面素がunsignedの値域を超えることはないと仮定
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned tmp[NOFACE];
     for (int i=0; i<NOFACE; i++) tmp[i] = m_area[i];
     MPI_Allreduce(tmp, m_area, NOFACE, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
@@ -853,7 +838,7 @@ unsigned long VoxInfo::countState(int id, int* mid)
   }
   
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1075,7 +1060,7 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
   Lcell = c;
   
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long c_tmp = c;
     MPI_Allreduce(&c_tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1099,7 +1084,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
   
   switch (face) {
     case X_MINUS:
-      if( pn.nID[face] < 0 ){
+      if( nID[face] < 0 ){
         int i=1;
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1111,7 +1096,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
       break;
       
     case X_PLUS:
-      if( pn.nID[face] < 0 ){
+      if( nID[face] < 0 ){
         int i=ix;
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1123,7 +1108,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
       break;
       
     case Y_MINUS:
-      if( pn.nID[face] < 0 ){
+      if( nID[face] < 0 ){
         int j=1;
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1135,7 +1120,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
       break;
       
     case Y_PLUS:
-      if( pn.nID[face] < 0 ){
+      if( nID[face] < 0 ){
         int j=jx;
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1147,7 +1132,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
       break;
       
     case Z_MINUS:
-      if( pn.nID[face] < 0 ){
+      if( nID[face] < 0 ){
         int k=1;
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1159,7 +1144,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
       break;
       
     case Z_PLUS:
-      if( pn.nID[face] < 0 ){
+      if( nID[face] < 0 ){
         int k=kx;
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1310,7 +1295,7 @@ unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid
   }
   
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1457,7 +1442,7 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
   }
 
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1602,7 +1587,7 @@ unsigned long VoxInfo::encQfaceHT_B(const int order,
   }
 
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1748,7 +1733,7 @@ unsigned long VoxInfo::encQfaceISO_SF(const int order,
   }
 
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1893,7 +1878,7 @@ unsigned long VoxInfo::encQfaceISO_SS(const int order,
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2019,7 +2004,7 @@ unsigned long VoxInfo::encQface(const int order,
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2371,7 +2356,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
           
           // X_MINUS
           if ( c_w == idd ) { // Wセルが指定IDかどうかを先にチェック
-            if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) { // 続いて領域チェック 外部境界面は除外
+            if ( !((nID[X_MINUS] < 0) && (i == 1)) ) { // 続いて領域チェック 外部境界面は除外
               d |= order; // dにorderをエンコード
               s = offBit( s, BC_D_W );
               g++;
@@ -2380,7 +2365,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
           
           // X_PLUS
           if ( c_e == idd ) {
-            if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
               d |= order;
               s = offBit( s, BC_D_E );
               g++;
@@ -2389,7 +2374,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
           
           // Y_MINUS
           if ( c_s == idd ) {
-            if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
               d |= order;
               s = offBit( s, BC_D_S );
               g++;
@@ -2398,7 +2383,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
           
           // Y_PLUS
           if ( c_n == idd ) {
-            if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
               d |= order;
               s = offBit( s, BC_D_N );
               g++;
@@ -2407,7 +2392,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
           
           // Z_MINUS
           if ( c_b == idd ) {
-            if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
               d |= order;
               s = offBit( s, BC_D_B );
               g++;
@@ -2416,7 +2401,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
           
           // Z_PLUS
           if ( c_t == idd ) {
-            if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
               d |= order;
               s = offBit( s, BC_D_T );
               g++;
@@ -2430,7 +2415,7 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2472,44 +2457,44 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
           m_t = FBUtility::getFindexS3D(size, guide, i  , j  , k+1);
           m_b = FBUtility::getFindexS3D(size, guide, i  , j  , k-1);
           
-          // 外部境界面は除外 pn.nID[X_MINUS] < 0 のときが外部境界面，0-myrank, 0>other rank
+          // 外部境界面は除外 nID[X_MINUS] < 0 のときが外部境界面，0-myrank, 0>other rank
           // X_MINUS
-          if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+          if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
             if ( !IS_FLUID(bx[m_w]) ) {
               s = offBit( s, BC_N_W );
             }
           }
           
           // X_PLUS
-          if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+          if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
             if ( !IS_FLUID(bx[m_e]) ) {
               s = offBit( s, BC_N_E );
             }
           }
           
           // Y_MINUS
-          if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+          if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
             if ( !IS_FLUID(bx[m_s]) ) {
               s = offBit( s, BC_N_S );
             }
           }
           
           // Y_PLUS
-          if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+          if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
             if ( !IS_FLUID(bx[m_n]) ) {
               s = offBit( s, BC_N_N );
             }
           }
           
           // Z_MINUS
-          if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+          if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
             if ( !IS_FLUID(bx[m_b]) ) {
               s = offBit( s, BC_N_B );
             }
           }
           
           // Z_PLUS
-          if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+          if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
             if ( !IS_FLUID(bx[m_t]) ) {
               s = offBit( s, BC_N_T );
             }
@@ -2565,7 +2550,7 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = c;
     MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2607,42 +2592,42 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, float* cut, const bool convergence
           ct = &cut[m];
 
           // X_MINUS
-          //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+          //if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
             if (ct[0] < 1.0) {          // 交点があるなら壁面なのでノイマン条件をセット
               s = offBit( s, BC_N_W );
             }
           //}
           
           // X_PLUS
-          //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+          //if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
             if (ct[1] < 1.0) {
               s = offBit( s, BC_N_E );
             }
           //}
           
           // Y_MINUS
-          //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+          //if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
             if (ct[2] < 1.0) {
               s = offBit( s, BC_N_S );
             }
           //}
           
           // Y_PLUS
-          //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+          //if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
             if (ct[3] < 1.0) {
               s = offBit( s, BC_N_N );
             }
           //}
           
           // Z_MINUS
-          //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+          //if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
             if (ct[4] < 1.0) {
               s = offBit( s, BC_N_B );
             }
           //}
           
           // Z_PLUS
-          //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+          //if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
             if (ct[5] < 1.0) {
               s = offBit( s, BC_N_T );
             }
@@ -2682,7 +2667,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, float* cut, const bool convergence
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = c;
     MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2727,7 +2712,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, float* cut, const bool convergence
   }
   
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2768,7 +2753,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, float* cut, const bool convergence
       }
     }
     
-    if ( pn.numProc > 1 ) {
+    if ( numProc > 1 ) {
       unsigned long tmp = g;
       MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     }
@@ -2846,7 +2831,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           
           // 外部境界面は除外
           // X_MINUS
-          //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+          //if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
             if ( !IS_FLUID( s_w ) && (c_w == idd) ) { // Wセルが指定ID，かつ固体である
               d |= order; // dにエントリをエンコード
               s = offBit( s, BC_N_W );
@@ -2855,7 +2840,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           //}
           
           // X_PLUS
-          //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+          //if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
             if ( !IS_FLUID( s_e ) && (c_e == idd) ) {
               d |= order;
               s = offBit( s, BC_N_E );
@@ -2864,7 +2849,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           //}
           
           // Y_MINUS
-          //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+          //if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
             if ( !IS_FLUID( s_s ) && (c_s == idd) ) {
               d |= order;
               s = offBit( s, BC_N_S );
@@ -2873,7 +2858,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           //}
           
           // Y_PLUS
-          //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+          //if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
             if ( !IS_FLUID( s_n ) && (c_n == idd) ) {
               d |= order;
               s = offBit( s, BC_N_N );
@@ -2882,7 +2867,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           //}
           
           // Z_MINUS
-          //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+          //if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
             if ( !IS_FLUID( s_b ) && (c_b == idd) ) {
               d |= order;
               s = offBit( s, BC_N_B );
@@ -2891,7 +2876,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           //}
           
           // Z_PLUS
-          //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+          //if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
             if ( !IS_FLUID( s_t ) && (c_t == idd) ) {
               d |= order;
               s = offBit( s, BC_N_T );
@@ -2906,7 +2891,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2937,7 +2922,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
   
   switch (face) {
     case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){
+      if( nID[X_MINUS] < 0 ){
         int i = 1;
         
         if ("Neumann"==key) {
@@ -2968,7 +2953,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
+      if( nID[X_PLUS] < 0 ){
         int i = ix;
         
         if ("Neumann"==key) {
@@ -2999,7 +2984,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
+      if( nID[Y_MINUS] < 0 ){
         int j = 1;
         
         if ("Neumann"==key) {
@@ -3030,7 +3015,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
+      if( nID[Y_PLUS] < 0 ){
         int j = jx;
         
         if ("Neumann"==key) {
@@ -3061,7 +3046,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
+      if( nID[Z_MINUS] < 0 ){
         int k = 1;
         
         if ("Neumann"==key) {
@@ -3092,7 +3077,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
+      if( nID[Z_PLUS] < 0 ){
         int k = kx;
         
         if ("Neumann"==key) {
@@ -3180,7 +3165,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // X-
           if ( c_w == idd ) {
-            //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+            //if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
               if ( !IS_FLUID( bv[m_w] ) ) { // 流入出セルが固体であるかをチェックする
                 s |= (order << BC_FACE_W);
                 q = offBit(q, FACING_W);
@@ -3195,7 +3180,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // X+
           if ( c_e == idd ) {
-            //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            //if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
               if ( !IS_FLUID( bv[m_e] ) ) { 
                 s |= (order << BC_FACE_E);
                 q = offBit(q, FACING_E);
@@ -3210,7 +3195,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // Y-
           if ( c_s == idd ) {
-            //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            //if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
               if ( !IS_FLUID( bv[m_s] ) ) { 
                 s |= (order << BC_FACE_S);
                 q = offBit(q, FACING_S);
@@ -3225,7 +3210,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // Y+
           if ( c_n == idd ) {
-            //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            //if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
               if ( !IS_FLUID( bv[m_n] ) ) { 
                 s |= (order << BC_FACE_N);
                 q = offBit(q, FACING_N);
@@ -3240,7 +3225,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // Z-
           if ( c_b == idd ) {
-            //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            //if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
               if ( !IS_FLUID( bv[m_b] ) ) { 
                 s |= (order << BC_FACE_B);
                 q = offBit(q, FACING_B);
@@ -3255,7 +3240,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // Z+
           if ( c_t == idd ) {
-            //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            //if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
               if ( !IS_FLUID( bv[m_t] ) ) { 
                 s |= (order << BC_FACE_T);
                 q = offBit(q, FACING_T);
@@ -3301,42 +3286,42 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
           
           // X-
           if ( c_w == idd ) {
-            //if ( !((pn.nID[X_MINUS] < 0) && (i == 1)) ) {
+            //if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
               bv[m_w] = onBit( bv[m_w], STATE_BIT );
             //}
           }
           
           // X+
           if ( c_e == idd ) {
-            //if ( !((pn.nID[X_PLUS] < 0) && (i == ix)) ) {
+            //if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
               bv[m_e] = onBit( bv[m_e], STATE_BIT );
             //}
           }
           
           // Y-
           if ( c_s == idd ) {
-            //if ( !((pn.nID[Y_MINUS] < 0) && (j == 1)) ) {
+            //if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
               bv[m_s] = onBit( bv[m_s], STATE_BIT );
             //}
           }
           
           // Y+
           if ( c_n == idd ) {
-            //if ( !((pn.nID[Y_PLUS] < 0) && (j == jx)) ) {
+            //if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
               bv[m_n] = onBit( bv[m_n], STATE_BIT );
             //}
           }
           
           // Z-
           if ( c_b == idd ) {
-            //if ( !((pn.nID[Z_MINUS] < 0) && (k == 1)) ) {
+            //if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
               bv[m_b] = onBit( bv[m_b], STATE_BIT );
             //}
           }
           
           // Z+
           if ( c_t == idd ) {
-            //if ( !((pn.nID[Z_PLUS] < 0) && (k == kx)) ) {
+            //if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
               bv[m_t] = onBit( bv[m_t], STATE_BIT );
             //}
           }
@@ -3345,7 +3330,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
     }
   }
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -3512,7 +3497,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
 #endif
   
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -3549,7 +3534,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
   
   switch (face) {
     case X_MINUS:
-      if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+      if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m = FBUtility::getFindexS3D(size, guide, 1  , j, k);
@@ -3591,7 +3576,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case X_PLUS:
-      if( pn.nID[X_PLUS] < 0 ){
+      if( nID[X_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m = FBUtility::getFindexS3D(size, guide, ix  , j, k);
@@ -3634,7 +3619,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Y_MINUS:
-      if( pn.nID[Y_MINUS] < 0 ){
+      if( nID[Y_MINUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, 1  , k);
@@ -3677,7 +3662,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Y_PLUS:
-      if( pn.nID[Y_PLUS] < 0 ){
+      if( nID[Y_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, jx  , k);
@@ -3720,7 +3705,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Z_MINUS:
-      if( pn.nID[Z_MINUS] < 0 ){
+      if( nID[Z_MINUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, 1  );
@@ -3763,7 +3748,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Z_PLUS:
-      if( pn.nID[Z_PLUS] < 0 ){
+      if( nID[Z_PLUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, kx  );
@@ -3827,14 +3812,12 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  m_sz[0] = size[0];
-  m_sz[1] = size[1];
-  m_sz[2] = size[2];
+  int sz[3] = {ix, jx, kx};
   int gd = guide;
   int c = 0; /// painted count
   float cpos = 0.9; // なんとなく
 
-#pragma omp parallel for firstprivate(ix, jx, kx, m_sz, gd, target, sd, cpos) \
+#pragma omp parallel for firstprivate(ix, jx, kx, sz, gd, target, sd, cpos) \
  private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
  private(qw, qe, qs, qn, qb, qt) \
  schedule(static) reduction(+:c)
@@ -3843,13 +3826,13 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = FBUtility::getFindexS3D(m_sz, gd, i,   j,   k  );
-        m_e = FBUtility::getFindexS3D(m_sz, gd, i+1, j  , k  );
-        m_w = FBUtility::getFindexS3D(m_sz, gd, i-1, j  , k  );
-        m_n = FBUtility::getFindexS3D(m_sz, gd, i  , j+1, k  );
-        m_s = FBUtility::getFindexS3D(m_sz, gd, i  , j-1, k  );
-        m_t = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k+1);
-        m_b = FBUtility::getFindexS3D(m_sz, gd, i  , j  , k-1);
+        m_p = FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
+        m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+        m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+        m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+        m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+        m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+        m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
         
         // 未ペイントの場合にテスト
         if ( mid[m_p] == 0 ) {
@@ -3863,7 +3846,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
           qt = bid[m_t];
           
           // 各方向のテスト
-          if ( !((i == 1) && (pn.nID[X_MINUS] < 0)) && (mid[m_w] == target) && (get_BID5(X_MINUS, bid[m_p]) == 0) ) {
+          if ( !((i == 1) && (nID[X_MINUS] < 0)) && (mid[m_w] == target) && (get_BID5(X_MINUS, bid[m_p]) == 0) ) {
             if ( (bid[m_p] == 0) && ( (qs * qn * qb * qt) == 0) ) { // テストセルはカットがなく、隣接セルの少なくともどれかはカットがない場合
               mid[m_p] = target;
               c++;
@@ -3871,10 +3854,10 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
               mid[m_p] = sd; // セルIDを固体に変更
-              cut[FBUtility::getFindexS3Dcut(m_sz, gd, X_PLUS, i-1, j  , k  )] = cpos; // カット位置をセット
+              cut[FBUtility::getFindexS3Dcut(sz, gd, X_PLUS, i-1, j  , k  )] = cpos; // カット位置をセット
             }
           }
-          else if ( !((j == 1) && (pn.nID[Y_MINUS] < 0)) && (mid[m_s] == target) && (get_BID5(Y_MINUS, bid[m_p]) == 0) ) {
+          else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == target) && (get_BID5(Y_MINUS, bid[m_p]) == 0) ) {
             if ( (bid[m_p] == 0) && ( (qw * qe * qb * qt) == 0) ) {
               mid[m_p] = target;
               c++;
@@ -3882,10 +3865,10 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_s], Y_PLUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(m_sz, gd, Y_PLUS, i  , j-1, k  )] = cpos;
+              cut[FBUtility::getFindexS3Dcut(sz, gd, Y_PLUS, i  , j-1, k  )] = cpos;
             }
           }
-          else if ( !((k == 1) && (pn.nID[Z_MINUS] < 0)) && (mid[m_b] == target) && (get_BID5(Z_MINUS, bid[m_p]) == 0) ) {
+          else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == target) && (get_BID5(Z_MINUS, bid[m_p]) == 0) ) {
             if ( (bid[m_p] == 0) && ( (qw * qe * qs * qn) == 0) ) {
               mid[m_p] = target;
               c++;
@@ -3893,10 +3876,10 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_b], Z_PLUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(m_sz, gd,  Z_PLUS, i  , j  , k-1)] = cpos;
+              cut[FBUtility::getFindexS3Dcut(sz, gd,  Z_PLUS, i  , j  , k-1)] = cpos;
             }
           }
-          else if ( !((k == kx) && (pn.nID[Z_PLUS] < 0)) && (mid[m_t] == target) && (get_BID5(Z_PLUS, bid[m_p]) == 0) ) {
+          else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == target) && (get_BID5(Z_PLUS, bid[m_p]) == 0) ) {
             if ( (bid[m_p] == 0) && ( (qw * qe * qs * qn) == 0) ) {
               mid[m_p] = target;
               c++;
@@ -3904,10 +3887,10 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_t], Z_MINUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(m_sz, gd, Z_MINUS, i  , j  , k+1)] = cpos;
+              cut[FBUtility::getFindexS3Dcut(sz, gd, Z_MINUS, i  , j  , k+1)] = cpos;
             }
           }
-          else if ( !((j == jx) && (pn.nID[Y_PLUS] < 0)) && (mid[m_n] == target) && (get_BID5(Y_PLUS, bid[m_p]) == 0) ) {
+          else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == target) && (get_BID5(Y_PLUS, bid[m_p]) == 0) ) {
             if ( (bid[m_p] == 0) && ( (qw * qe * qb * qt) == 0) ) {
               mid[m_p] = target;
               c++;
@@ -3915,10 +3898,10 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_n], Y_MINUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(m_sz, gd, Y_MINUS, i  , j+1, k  )] = cpos;
+              cut[FBUtility::getFindexS3Dcut(sz, gd, Y_MINUS, i  , j+1, k  )] = cpos;
             }
           }
-          else if ( !((i == ix) && (pn.nID[X_PLUS] < 0)) && (mid[m_e] == target) && (get_BID5(X_PLUS, bid[m_p]) == 0) ) {
+          else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == target) && (get_BID5(X_PLUS, bid[m_p]) == 0) ) {
             if ( (bid[m_p] == 0) && ( (qs * qn * qb * qt) == 0) ) {
               mid[m_p] = target;
               c++;
@@ -3926,7 +3909,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_e], X_MINUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(m_sz, gd, X_MINUS, i+1, j  , k  )] = cpos;
+              cut[FBUtility::getFindexS3Dcut(sz, gd, X_MINUS, i+1, j  , k  )] = cpos;
             }
           }
           
@@ -4180,8 +4163,8 @@ void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
           tmp[0] = i;
           tmp[1] = j;
           tmp[2] = k;
-          vec3_min(st, st, tmp);
-          vec3_max(ed, ed, tmp);
+          FB::vec3_min(st, st, tmp);
+          FB::vec3_max(ed, ed, tmp);
         }
         
       }
@@ -4237,7 +4220,7 @@ unsigned long VoxInfo::flip_InActive(unsigned long& L,
   
   L = c;
   
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
     unsigned long tmp = c;
     MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -4319,35 +4302,26 @@ void VoxInfo::get_Compo_Area_Cut(int n, PolylibNS::MPIPolylib* PL)
  */
 void VoxInfo::getOffset(int* st, int* ofst)
 {
-  if( pn.nID[X_MINUS] < 0 ){
+  if( nID[X_MINUS] < 0 ){
     ofst[0] = 1;
   }
   else {
     ofst[0] = ( st[0] == 1 ) ? 0 : 1;
   }
   
-  if( pn.nID[Y_MINUS] < 0 ){
+  if( nID[Y_MINUS] < 0 ){
     ofst[1] = 1;
   }
   else {
     ofst[1] = ( st[1] == 1 ) ? 0 : 1;
   }
   
-  if( pn.nID[Z_MINUS] < 0 ){
+  if( nID[Z_MINUS] < 0 ){
     ofst[2] = 1;
   }
   else {
     ofst[2] = ( st[2] == 1 ) ? 0 : 1;
   }
-}
-
-
-
-// CPMクラスポインタのコピー
-void VoxInfo::importCPM(cpm_ParaManager* m_paraMngr)
-{
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
 }
 
 
@@ -4478,7 +4452,7 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   }
 
 	// colorSet[] の集約
-  if ( pn.numProc > 1 ) {
+  if ( numProc > 1 ) {
 		
     int clist[MODEL_ID_MAX+1];
     for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i]=0;
@@ -4488,7 +4462,7 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
     MPI_Allreduce(clist, colorSet, MODEL_ID_MAX+1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
     
   }
-  // この時点で、存在するIDの数はpn.numProc個になっている >> unsgined の範囲内
+  // この時点で、存在するIDの数はnumProc個になっている >> unsgined の範囲内
 
   // colorList[]へ詰めてコピー colorList[0]は不使用
   int b=1;
@@ -4584,7 +4558,7 @@ void VoxInfo::setAmask_Solid(int* bh)
   int s, s_e, s_w, s_n, s_s, s_t, s_b;
   
   int ix = size[0];
-  int jx = ize[1];
+  int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
@@ -4935,7 +4909,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
   }
   
   // bh2の下位5ビットにはBCのエントリのみ(1~31)エンコード
-  for (n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoBC; n++) {
     id = cmp[n].getMatOdr();
     deface = cmp[n].getDef();
     
@@ -5229,7 +5203,7 @@ void VoxInfo::setCmpFraction(CompoList* cmp, int* bx, float* vf)
             s = bx[m];
             if ( ( s & MASK_6) == n ) {
               f = (int)floorf(vf[m]*255.0 + 0.5); // 0.0<vf<1.0 の四捨五入 > 8ビットで量子化
-              if ( f > 255 ) assert(0);
+              if ( f > 255 ) Exit(0);
               s |= (f << TOP_VF); // 8ビットで量子化
               if ( cmp[n].isFORCING() ) s = onBit(s, FORCING_BIT);
               bx[m] = s;
@@ -5362,7 +5336,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
       
       switch (face) {
         case X_MINUS:
-          if( pn.nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+          if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
                 m = FBUtility::getFindexS3Dcut(size, guide, X_MINUS, 1, j, k);
@@ -5373,7 +5347,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case X_PLUS:
-          if( pn.nID[X_PLUS] < 0 ){
+          if( nID[X_PLUS] < 0 ){
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
                 m = FBUtility::getFindexS3Dcut(size, guide, X_PLUS, ix, j, k);
@@ -5384,7 +5358,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Y_MINUS:
-          if( pn.nID[Y_MINUS] < 0 ){
+          if( nID[Y_MINUS] < 0 ){
             for (int k=1; k<=kx; k++) {
               for (int i=1; i<=ix; i++) {
                 m = FBUtility::getFindexS3Dcut(size, guide, Y_MINUS, i, 1, k);
@@ -5395,7 +5369,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Y_PLUS:
-          if( pn.nID[Y_PLUS] < 0 ){
+          if( nID[Y_PLUS] < 0 ){
             for (int k=1; k<=kx; k++) {
               for (int i=1; i<=ix; i++) {
                 m = FBUtility::getFindexS3Dcut(size, guide, Y_PLUS, i, jx, k);
@@ -5406,7 +5380,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Z_MINUS:
-          if( pn.nID[Z_MINUS] < 0 ){
+          if( nID[Z_MINUS] < 0 ){
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 m = FBUtility::getFindexS3Dcut(size, guide, Z_MINUS, i, j, 1);
@@ -5417,7 +5391,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Z_PLUS:
-          if( pn.nID[Z_PLUS] < 0 ){
+          if( nID[Z_PLUS] < 0 ){
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 m = FBUtility::getFindexS3Dcut(size, guide, Z_PLUS, i, j, kx);

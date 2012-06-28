@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file Interval_Mngr.h
- * @brief FlowBase Interval_Manager class Header 出力ファイルおよび計算時間のタイミングを管理する
+ * @file   Interval_Mngr.h
+ * @brief  FlowBase Interval_Manager class Header 出力ファイルおよび計算時間のタイミングを管理する
  * @author kero
  */
 
@@ -23,11 +23,11 @@
 
 class Interval_Manager {
 protected:
-  int id;         ///< 管理対象を表すID
-  int mode;       ///< 出力指定モード
-  int intvl_step; ///< ステップ数指定のインターバル
-  int next_step;  ///< ステップ数指定の場合の次の出力ステップ
-  int m_count;    ///< セッション内のインターバル数のカウント
+  int id;              ///< 管理対象を表すID
+  int mode;            ///< 出力指定モード
+  int intvl_step;      ///< ステップ数指定のインターバル
+  int next_step;       ///< ステップ数指定の場合の次の出力ステップ
+  int m_count;         ///< セッション内のインターバル数のカウント
   double   intvl_tm;   ///< 時刻指定のインターバル（無次元） tg_avstartの場合には，スタート開始時刻として扱う
   double   next_tm;    ///< 時刻指定の場合の次の出力時刻（無次元）
   double   delta_t;    ///< 時間積分幅（無次元）

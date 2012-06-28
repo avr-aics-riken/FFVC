@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file ffv_Initialize.C
- * @brief FFV Class
+ * @file   ffv_Initialize.C
+ * @brief  FFV Class
  * @author kero
  */
 
@@ -38,16 +38,8 @@ int FFV::Initialize(int argc, char **argv)
   fixed_parameters();
   
   
-  // 前処理段階のみに使用するオブジェクトをインスタンス
-  VoxInfo Vinfo;
-  ParseBC B;
-  
-  
   // CPMのポインタをセット
   //BC.importCPM(paraMngr);
-  Vinfo.importCPM(paraMngr);
-  B.importCPM(paraMngr);
-  F.importCPM(paraMngr);
   
 
   
@@ -131,7 +123,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // FiliIOのモードを修正
-  if ( paraMngr->GetNumRank() == 1 ) {
+  if ( myRank == 1 ) {
     C.FIO.IO_Input  = IO_GATHER;
     C.FIO.IO_Output = IO_GATHER;
     Hostonly_ printf("\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
@@ -141,24 +133,24 @@ int FFV::Initialize(int argc, char **argv)
   // 領域情報を記述したファイル名の取得 >> テキストパーサのDB切り替え
   string dom_file = argv[2];
   DomainInitialize(dom_file);
-
-  // DomainInitialize()で使用したテキストパーサーのDBを破棄
-  if (tpCntl.remove() != TP_NO_ERROR ) 
-  {
-    Hostonly_ printf("Error : delete textparser\n");
-    Exit(0);
-  }
   
-  // 組み込み例題クラスへ変数の値をコピー，固有のパラメータ取得，領域設定 -----------------------------------------------------
+  
+  // 各クラスで領域情報を保持
+  C.setDomainInfo(paraMngr, procGrp);
+  B.setDomainInfo(paraMngr, procGrp);
+  V.setDomainInfo(paraMngr, procGrp);
+  F.setDomainInfo(paraMngr, procGrp);
+
+
+  
+  // 組み込み例題クラスへ変数の値をコピー -----------------------------------------------------
   Ex->setControlVars (&C);
-  Ex->importCPM(paraMngr);
   
   
   // 　再度、入力ファイルをオープン
   ierror = tpCntl.readTPfile(input_file);
 
-  
-  // TPControlクラスのポインタを各クラスに渡す
+  // TPControlクラスのポインタを各クラスに渡す(2回目)
   C.importTP(&tpCntl);
   B.importTP(&tpCntl);
   M.importTP(&tpCntl);
@@ -197,7 +189,7 @@ int FFV::Initialize(int argc, char **argv)
   // ParseMatクラスの環境設定 
   M.setControlVars(C.NoCompo, C.NoBC, C.Unit.Temp, C.KindOfSolver);
   
-  //Vinfo.setNoCompo_BC(C.NoBC, C.NoCompo);
+  //Vox.setNoCompo_BC(C.NoBC, C.NoCompo);
   
   //B.setControlVars(&C, BC.export_OBC(), mat);
   
@@ -210,7 +202,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // CompoList, MediumListのポインタをセット
   //BC.setWorkList(cmp, mat);
-  //Vinfo.setWorkList(cmp, mat);
+  //Vox.setWorkList(cmp, mat);
   B.receiveCompoPtr(cmp);
   
   
@@ -229,7 +221,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Mode.Profiling != OFF ) {
     ModeTiming = ON;
     TIMING__ PM.initialize( tm_END );
-    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
+    TIMING__ PM.setDomainInfo( paraMngr->GetMyRankID() );
     TIMING__ PM.setParallelMode(para_label, C.num_thread, C.num_process);
     set_timing_label();
   }
@@ -296,17 +288,18 @@ void FFV::connectExample(Control* Cref)
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
 {
-  const REAL_TYPE *m_pch; ///< 格子幅
-  const int *m_sz;        ///< サブドメインの分割数
-  const REAL_TYPE *m_org; ///< サブドメインの基点
-  const REAL_TYPE *m_reg; ///< サブドメインのサイズ
+  const REAL_TYPE *g_pch; ///< 格子幅
   const int *g_sz;        ///< 全ドメインの分割数
   const REAL_TYPE *g_org; ///< 全ドメインの基点
   const REAL_TYPE *g_reg; ///< 全ドメインのサイズ
+  const int* g_div;       ///< プロセス分割情報
   
   // グローバルな領域情報のロード
-  int ret = 0;
-  cpm_GlobalDomainInfo *dInfo = cpm_TextParserDomain::Read(dom_file, ret);
+  int ierror = tpCntl.readTPfile(dom_file);
+  
+  C.importTP(&tpCntl);
+  
+  C.get_DomainInfo();
   
   
 # if 0
@@ -314,66 +307,106 @@ void FFV::DomainInitialize(const string dom_file)
   paraMngr->flush(cout);
 #endif
   
+  // テキストパーサーのDBを破棄
+  if (tpCntl.remove() != TP_NO_ERROR ) 
+  {
+    Hostonly_ printf("Error : delete textparser\n");
+    Exit(0);
+  }
+  
+  
+  // 領域分割モードのパターン
+  //      分割指定(G_div指定)    |     domain.txt 
+  // 1)  G_divなし >> 自動分割   |  G_orign + G_regionのみ
+  // 2)  G_div指定あり          |  G_orign + G_regionのみ
+  // 3)  G_divなし >> 自動分割   |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  // 4)  G_div指定あり          |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  
+  int type=0;
+  
+  g_sz  = paraMngr->GetGlobalVoxelSize();
+  g_div = paraMngr->GetDivNum();
+  g_pch = paraMngr->GetPitch();
+  g_org = paraMngr->GetGlobalOrigin();
+  g_reg = paraMngr->GetGlobalRegion();
+  
+  if ( (g_sz[0]>0) && (g_sz[1]>0) && (g_sz[2]>0) ) // 分割数が保持されている場合 >> type 3 or 4 
+  {
+    cout << "unsuppoted now" << endl;
+    Exit(0);
+  }
+  else
+  {
+    if ( (g_div[0]>0) && (g_div[1]>0) && (g_div[2]>0) ) // プロセス分割数が指定されている場合
+    {
+      type = 2;
+    }
+    else
+    {
+      type = 1;
+    }
+  }
+  
+  // 袖通信の成分数と袖の最大数
+  // V(3), P(1), T(1), Cut(6)
+  size_t Ncmp = ( C.isCDS() ) ? 6 : 3;
+  size_t Nvc  = (size_t)guide;
 
+  
   // 領域分割
-  if( (ret = paraMngr->VoxelInit( dInfo, C.guide, 6 )) != CPM_SUCCESS )
+  switch (type) 
+  {
+    case 1:
+      ret = paraMngr->VoxelInit(g_size, g_org, g_reg, Nvc, Ncmp);
+      break;
+      
+    case 2:
+      ret = paraMngr->VoxelInit(g_div, g_size, g_org, g_reg, Nvc, Ncmp);
+      break;
+      
+    case 3:
+      break;
+      
+    case 4:
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+  
+  if( ret != CPM_SUCCESS )
   {
     cout << "Domain decomposition error : " << ret << endl;
     Exit(0);
   }
 
-  // 分割後のパラメータ取得
-  m_pch = paraMngr->GetPitch();
-  m_sz  = paraMngr->GetLocalVoxelSize();
-  m_org = paraMngr->GetLocalOrigin();
-  m_reg = paraMngr->GetLocalRegion();
-  
-  g_sz  = paraMngr->GetGlobalVoxelSize();
-  g_org = paraMngr->GetGlobalOrigin();
-  g_reg = paraMngr->GetGlobalRegion();
+  // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
+  setNeighborInfo();
   
   
-  // 有次元の場合に無次元化
-  REAL_TYPE org[3];
-  REAL_TYPE pch[3];
-  REAL_TYPE reg[3];
-  for (int i=0; i<3; i++) 
-  {
-    org[i] = m_org[i];
-    pch[i] = m_pch[i];
-    reg[i] = m_reg[i];
-  }
-  
+  // 有次元の場合に無次元化 (Local)
   if (C.Unit.Param == DIMENSIONAL ) {
     for (int i=0; i<3; i++) {
-      org[i] /= C.RefLength;
-      pch[i] /= C.RefLength;
-      reg[i] /= C.RefLength;
+      org[i]   /= C.RefLength;
+      pch[i]   /= C.RefLength;
+      reg[i]   /= C.RefLength;
+      G_org[i] /= C.RefLength;
+      G_reg[i] /= C.RefLength;
     }
   }
   
   // 各例題のパラメータ設定
   Ex->setDomain(&C, m_sz, org, reg, pch);
   
-
-  // グローバルな値の保持 （無次元値）
-  for (int i=0; i<3; i++) {
-    G_size[i] = g_sz[i];
-    G_org[i]  = g_org[i];
-    G_reg[i]  = g_reg[i];
-  }
   
   // チェック
-  unsigned long tz = (unsigned long)m_sz[0] * (unsigned long)m_sz[1] * (unsigned long)m_sz[2];
+  unsigned long tz = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
   if ( tz >= UINT_MAX) {
     Hostonly_ stamped_printf("\n\tError : Product of size[] exceeds UINT_MAX\n\n");
     Exit(0);
   }
-  
-  // コントロールクラスのメンバ変数で値を保持
-  C.setDomainInfo(m_sz, m_org, m_pch, m_reg);
-  
-  if ( dInfo ) delete dInfo;
 
 }
 

@@ -47,7 +47,7 @@ protected:
   CompoList       *cmp;
   MediumList      *mat;
   Intrinsic       *Ex;
-  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
+  cpm_ParaManager *paraMngr; ///< Cartesian Partition Manager
   
   /** 外部境界の種類 */
   enum obc_kind {

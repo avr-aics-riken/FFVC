@@ -35,6 +35,8 @@ private:
   MediumTableInfo *MTITP;
   
 public:
+  
+  /** コンストラクタ */
   ParseMat() {
     NoCompo    = 0;
     NoBC       = 0;
@@ -43,7 +45,10 @@ public:
     MTITP      = NULL;
     for (int i=0; i<property_END; i++) ChkList[i]=false;
   }
-  ~ParseMat() {
+  
+  /**　デストラクタ */
+  ~ParseMat() 
+  {
     if ( MTITP ) delete [] MTITP;
   }
   
