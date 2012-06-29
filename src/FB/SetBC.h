@@ -31,7 +31,7 @@
 
 
 class SetBC : public DomainInfo {
-private:
+protected:
   int *ix, *jx, *kx, *gc; ///< Fortranの引数用のポインタ
   
   REAL_TYPE dh, accel, Dp1, Dp2, mach, BasePrs;
@@ -64,7 +64,6 @@ public:
   SetBC() {
     imax = jmax = kmax = 0;
     ix = jx = kx = gc = NULL;
-    ixc = jxc = kxc = 0;
     dh = rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
     rho = nyu = cp = lambda = beta = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
@@ -83,7 +82,7 @@ public:
   /**　デストラクタ */
   virtual ~SetBC() {}
   
-private:
+protected:
   /**
    * @brief 外部境界処理用のループインデクスを取得する
    * @param [in] face 外部境界面番号

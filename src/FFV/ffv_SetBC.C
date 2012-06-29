@@ -76,7 +76,8 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
  */
 void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
 {
-  REAL_TYPE flop, vec[3];
+  double flop;
+  REAL_TYPE vec[3];
   int st[3], ed[3];
   int typ;
   
@@ -135,9 +136,9 @@ void SetBC3D::checkDriver(FILE* fp)
   node_st_i = node_st_j = node_st_k = 0;
   
   if( numProc > 1 ){
-    node_st_i = st_idx[0];
-    node_st_j = pn.st_idx[1];
-    node_st_k = pn.st_idx[2];
+    node_st_i = head[0];
+    node_st_j = head[1];
+    node_st_k = head[2];
   }
   
   for (int face=0; face<NOFACE; face++) {
@@ -515,7 +516,7 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
  @param v00 参照速度
  @param[out] flop
  */
-void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -559,7 +560,7 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
  @param dt 時間積分幅
  @param[in/out] flop
  */
-void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, REAL_TYPE &flop)
+void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -601,7 +602,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
  @param c_array コンポーネントワーク配列の管理ポインタ
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE** c_array, REAL_TYPE &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -650,7 +651,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, floa
  @param c_array コンポーネントワーク配列の管理ポインタ
  @param[out] flop
  */
-void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* d_div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE** c_array, REAL_TYPE &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* d_div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -786,7 +787,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYP
  @param v00
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE coef, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, REAL_TYPE &flop)
+void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE coef, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], dummy, vel;
@@ -827,7 +828,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
           
         case OUTFLOW:
           vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-          cbc_div_ibc_oflow_pvec_(d_div, size, gc, st, ed, v00, &vel, &coef, d_bv, &n, v0, &flop);
+          cbc_div_ibc_oflow_pvec_(d_div, size, gc, st, ed, v00, &vel, &coef, d_bv, &n, d_v0, &flop);
           break;
           
         default:
@@ -963,7 +964,7 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
       mark();
       int pm = obc[face].get_PrdcMode();
       if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional)) { // BoundaryOuter::prdc_Driverに対しては処理不要
-        Vobc_Prdc(d_v, face, guide); // セルフェイスの値の周期処理は不要
+        Vobc_Prdc(d_v, face); // セルフェイスの値の周期処理は不要
       }
     }
   }  
@@ -1088,7 +1089,7 @@ void SetBC3D::OuterTBC(REAL_TYPE* d_t)
  @param flop 浮動小数演算数
  @note 断熱BCは断熱マスクで処理
  */
-void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TYPE* t0, Control* C, double& flop)
+void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop)
 {
   int H;
   
@@ -1607,14 +1608,14 @@ REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* d_t, int* d_bh2, int n, REAL_TYP
     for (j=st[1]; j<=ed[1]; j++) {
       for (i=st[0]; i<=ed[0]; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        if ( (bh2[m] & MASK_6) == n ) {
+        if ( (d_bh2[m] & MASK_6) == n ) {
           d_t[m] += dt*hs;
           c++; 
         }
       }
     }
   }
-  flop += (REAL_TYPE)c*2.0;
+  flop += (double)c*2.0;
   
   return (c*hs); // 無次元の総発熱量(単位体積あたり)
 }
@@ -1678,7 +1679,7 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL
         break;
 
       case OBC_SPEC_VEL:
-        C->H_Dface[face] = ps_OBC_SpecVH(d_ws, d_bh1, face, d_, tm, v00, flop);
+        C->H_Dface[face] = ps_OBC_SpecVH(d_ws, d_bh1, face, d_v, tm, v00, flop);
         break;
     }
   }
@@ -1822,8 +1823,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* d_ws, int* d_bh1, int n, REAL_TYPE*
         
         f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
         m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        s = bh1[m];
-        t_p = t[m];
+        s = d_bh1[m];
+        t_p = d_t[m];
         
         if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
           m_0 = FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
@@ -2026,7 +2027,7 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
         for (j=1; j<=jmax; j++) {
           for (i=1; i<=imax; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
-            s = bh1[m];
+            s = d_bh1[m];
             m_0 = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
             m_b = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k-1);
             c = 0.5*(d_v[m_b]+d_v[m_0]) - w_ref;
@@ -2047,7 +2048,7 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
         for (j=1; j<=jmax; j++) {
           for (i=1; i<=imax; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
-            s = bh1[m];
+            s = d_bh1[m];
             m_0 = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
             m_t = FBUtility::getFindexV3DEx(size, guide, 2, i, j, k+1);
             c = 0.5*(d_v[m_t]+d_v[m_0]) - w_ref;
@@ -2176,10 +2177,10 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         for (k=1; k<=kmax; k++) {
           for (i=1; i<=imax; i++) {
             m = FBUtility::getFindexS3D(size, guide, i, j, k);
-            s = bh1[m];
+            s = d_bh1[m];
             va += f_n;
             ff = f_e - f_w + f_n - f_s + f_t - f_b;
-            ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+            d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
           }
         }
       }
@@ -2686,7 +2687,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
             for (j=1; j<=jmax; j++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
-              q = ht * (sf - t0[m]); // 基準温度との温度差
+              q = ht * (sf - d_t0[m]); // 基準温度との温度差
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
               va += q;
               d_t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf;
@@ -3048,7 +3049,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
             for (i=1; i<=imax; i++) {
               m = FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
-              q = ht3 * (sf - t0[m]);
+              q = ht3 * (sf - d_t0[m]);
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
               d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
@@ -3243,7 +3244,7 @@ REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, in
   
   if ( numProc > 1 ) {
 		tmp = qsum;
-		para_mng->Allreduce(&tmp, &qsum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, procGrp);
+		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
 	}
   c = qsum * (RefV*DiffTemp*rho*cp);
   
@@ -3456,7 +3457,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
           s = d_bh1[m];
           
           if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
-            q = ht1 * (sf - t0[m]); // 基準温度との温度差
+            q = ht1 * (sf - d_t0[m]); // 基準温度との温度差
             d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
             va += q; // マイナス面の正の値は流入
             d_t[FBUtility::getFindexS3D(size, guide, i-1, j  , k  )] = sf; // 固体セルに表面温度を代入
@@ -3464,7 +3465,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
           }
           
           if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
-            q = ht1 * (t0[m] - sf);
+            q = ht1 * (d_t0[m] - sf);
             d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] += q;
             va -= q; // プラス面の正の値は流出
             d_t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
@@ -3472,7 +3473,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
           }
           
           if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
-            q = ht1 * (sf - t0[m]);
+            q = ht1 * (sf - d_t0[m]);
             d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
             va += q;
             d_t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
@@ -3480,7 +3481,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
           }
           
           if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
-            q = ht1 * (t0[m] - sf);
+            q = ht1 * (d_t0[m] - sf);
             d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] += q;
             va -= q;
             d_t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
@@ -3488,7 +3489,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
           }
           
           if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
-            q = ht3 * (sf - t0[m]);
+            q = ht3 * (sf - d_t0[m]);
             d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
             va += q;
             d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
@@ -3496,7 +3497,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
           }
           
           if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
-            q = ht1 * (t0[m] - sf);
+            q = ht1 * (d_t0[m] - sf);
             d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] += q;
             va -= q;
             d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
@@ -3842,7 +3843,7 @@ REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n
   
   if ( numProc > 1 ) {
 		tmp = qsum;
-		para_mng->Allreduce(&tmp, &qsum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, procGrp);
+		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
 	}
   c = qsum * (RefV*DiffTemp*rho*cp);
   
@@ -4012,7 +4013,7 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n, R
   
   if ( numProc > 1 ) {
 		tmp = qsum;
-		para_mng->Allreduce(&tmp, &qsum, 1, SKL_ARRAY_DTYPE_REAL, SKL_SUM, procGrp);
+		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
 	}
   c = qsum * (RefV*DiffTemp*rho*cp);
   
@@ -4683,7 +4684,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
   {
     case X_MINUS:
       if ( nID[dir] < 0 ) {
-        i = st[0];
+        int i = st[0];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
             for (int l=0; l<3; l++) {
@@ -4703,7 +4704,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       
     case X_PLUS:
       if ( nID[dir] < 0 ) {
-        i = st[0];
+        int i = st[0];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
             for (int l=0; l<3; l++) {

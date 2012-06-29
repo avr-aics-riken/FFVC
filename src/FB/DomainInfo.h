@@ -21,7 +21,7 @@
 
 class DomainInfo {
   
-protected:
+public:
   cpm_ParaManager* paraMngr; ///< Cartesian Partition Manager
   
 public:
