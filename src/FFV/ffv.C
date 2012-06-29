@@ -101,25 +101,29 @@ void FFV::get_DomainInfo()
   
   
   // G_pitch オプション
-  bool flag = true; // 排他チェック（voxel, ptich）
+  bool flag = true; // 排他チェック（voxel, pitch）
   rvec  = pch;
   label = "/DomainInfo/Global_pitch";
   
   if ( !tpCntl.GetVector(label, rvec, 3) )
   {
-    cout << "No option : in parsing [" << label << "]" << endl;
+    cout << "\tNo option : in parsing [" << label << "]" << endl;
     flag = false;
   }
   
-  if ( (pch[0]>0.0) && (pch[1]>0.0) && (pch[2]>0.0) )
-  {
-    ; // skip
+  // pitchが入力されている場合のみチェック
+  if ( flag ) {
+    if ( (pch[0]>0.0) && (pch[1]>0.0) && (pch[2]>0.0) )
+    {
+      ; // skip
+    }
+    else
+    {
+      printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pch[0], pch[1], pch[2] );
+      Exit(0);
+    }
   }
-  else
-  {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
-    Exit(0);
-  }
+
   
   
   // G_voxel オプション
@@ -136,7 +140,7 @@ void FFV::get_DomainInfo()
     
     if ( !tpCntl.GetVector(label, ivec, 3) )
     {
-      cout << "ERROR : in parsing [" << label << "]" << endl;
+      cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
       Exit(0); // pitchもvoxelも有効でない
     }
     

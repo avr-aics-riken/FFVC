@@ -106,7 +106,7 @@ public:
    @param [in] base  Control::BaseTemp
    @param [in] diff  Control::DiffTemp
    */
-  static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) 
+  static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff)
   {
     return ( base + diff*var );
   }
@@ -154,7 +154,7 @@ public:
    @param [in] var  有次元温度(Kelvin or Celsius)
    @param [in] Unit 温度の単位
    */
-  static REAL_TYPE convTemp2K(const REAL_TYPE var, const int Unit) 
+  static REAL_TYPE convTemp2K(const REAL_TYPE var, const int Unit)
   {
     return ( (Unit==Unit_KELVIN) ? var : var+KELVIN );
   }

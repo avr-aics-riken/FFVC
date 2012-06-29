@@ -197,9 +197,10 @@ private:
   
   /**
    * @brief 粗格子読み込みに用いる配列のアロケーション
-   * @param [in] r_size  粗格子の領域サイズ
+   * @param [in]     r_size  粗格子の領域サイズ
+   * @param [in/out] prep    前処理に使用するメモリ量
    */
-  void allocArray_CoarseMesh(const int* r_size);
+  void allocArray_CoarseMesh(const int* r_size, double &prep);
   
   
   /**
