@@ -345,6 +345,10 @@ PL_DBGOSH << "PolylibConfig::tp_parse():Elem:name=" << *it << endl;
 		}
 		parent->set_elem(elem);
 		++it;
+
+		if( tp->changeNode(node) != TP_NO_ERROR ) {
+			return PLSTAT_NG;
+		}
 	}
 
 	// 当該ノード内のリーフ一覧
@@ -367,13 +371,18 @@ PL_DBGOSH << "PolylibConfig::tp_parse(): leaves.size()=" << leaves.size() << end
 		if( tp->getValue(*it, val) != TP_NO_ERROR ) {
 			return PLSTAT_NG;
 		}
+		// Polylibでは配列的要素の[*]は無視する
+		string name = *it;
+		unsigned int pos;
+		if( (pos=name.find("[")) != string::npos ) {
+			name = name.substr(0,pos);
+		}
+		parent->set_param( new PolylibCfgParam(name, type, val) );
 #ifdef DEBUG
-PL_DBGOSH << "PolylibConfig::tp_parse():Param:label,type,value=" << *it << "," << type << "," << val << endl;
+PL_DBGOSH << "PolylibConfig::tp_parse():Param:name,type,val=" << name << "," << type << "," << val << endl;
 #endif
-		parent->set_param( new PolylibCfgParam((std::string)*it, type, val) );
 		++it;
 	}
-PL_DBGOSH << "loop end." << endl;
 	return PLSTAT_OK;
 }
 
@@ -466,7 +475,8 @@ const PolylibCfgParam* PolylibCfgElem::first_param (
 		return *itr;
 	}
 	for (itr = m_param->begin(); itr != m_param->end(); itr++) {
-		if ((*itr)->get_name() == name) {
+		string param_name = (*itr)->get_name();
+		if (param_name == name) {
 			return *itr;
 		}
 	}
@@ -490,10 +500,11 @@ const PolylibCfgParam* PolylibCfgElem::next_param (
 		if (flg == false) {
 			continue;
 		}
-		if (name.empty() == true && (*itr)->get_name() == param->get_name()) {
+		string param_name = (*itr)->get_name();
+		if (name.empty() == true && param_name == param->get_name()) {
 			return *itr;
 		}
-		else if (name.empty() == false && (*itr)->get_name() == name) {
+		else if (name.empty() == false && param_name == name) {
 			return *itr;
 		}
 	}

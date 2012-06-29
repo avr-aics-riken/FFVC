@@ -33,7 +33,7 @@ const char *PolygonGroup::ATT_NAME_CLASS = "class_name";
 ///
 /// 本クラス内でのみ使用するXMLタグ
 ///
-#define ATT_NAME_NAME		"name"
+//#define ATT_NAME_NAME		"name"
 #define ATT_NAME_PATH		"filepath"
 #define ATT_NAME_MOVABLE	"movable"
 // ユーザ定義ID追加 2010.10.20
@@ -483,15 +483,19 @@ POLYLIB_STAT PolygonGroup::setup_attribute (
 	PolygonGroup			*parent, 
 	const PolylibCfgElem	*elem
 ) {
-	const PolylibCfgParam *att_name = elem->first_param(ATT_NAME_NAME);
+	// for tp
+	//const PolylibCfgParam *att_name = elem->first_param(ATT_NAME_NAME);
 	const PolylibCfgParam *att_file = elem->first_param(ATT_NAME_PATH);
 	// ユーザ定義ID追加 2010.10.20
 	const PolylibCfgParam *att_id	= elem->first_param(ATT_NAME_ID);
+	// for tp
+#if 0
 	if (att_name == NULL) {
 		PL_ERROSH << "[ERROR]PolygonGroup::setup_attribute():Paramete not found." 
 				  << endl;
 		return PLSTAT_CONFIG_ERROR;
 	}
+#endif
 
 	// moveメソッドにより移動するグループか?
 	if (this->whoami() == this->get_class_name()) {
@@ -508,7 +512,10 @@ POLYLIB_STAT PolygonGroup::setup_attribute (
 	}
 
 	// グループ名が重複していないか確認
-	string	pg_name = att_name->get_string_data();
+	// for tp
+	//string	pg_name = att_name->get_string_data();
+	string pg_name = elem->get_name();
+
 	string	parent_path = "";
 	if (parent != NULL)		parent_path = parent->acq_fullpath();
 	POLYLIB_STAT ret = polylib->check_group_name(pg_name, parent_path);
@@ -544,7 +551,10 @@ POLYLIB_STAT PolygonGroup::setup_attribute (
 	}
 
 	// その他の属性を設定
-	m_name = att_name->get_string_data();
+	// for tp
+	//m_name = att_name->get_string_data();
+	m_name = pg_name;
+
 	m_internal_id = create_global_id();
 	// ユーザ定義ID追加 2010.10.20
 	if (att_id == NULL) m_id = 0;

@@ -195,8 +195,20 @@ MPIPolylib::load_rank0(
 	POLYLIB_STAT ret;
 	string       config_contents;
 
+	// for tp
+	try {
+		PolylibConfig base(config_filename);
+		ret = make_group_tree(&base);
+		if( ret != PLSTAT_OK ) return ret;
+	}
+	catch( POLYLIB_STAT e ){
+		return e;
+	}
+
 	if( m_myrank == 0 ) {
 
+// for tp
+#if 0
 		// 設定ファイル読み込み。
 		if( (ret = Polylib::load_config_file( &config_contents, config_filename ))
 																		!= PLSTAT_OK ) {
@@ -218,6 +230,7 @@ MPIPolylib::load_rank0(
 					  << PolylibStat2::String(ret) << endl;
 			return ret;
 		}
+#endif
 
 		// ポリゴン情報を構築 (三角形IDファイルは不要なので、第二引数はダミー)
 		if( (ret = load_polygons(false, ID_BIN)) != PLSTAT_OK ) {
@@ -239,11 +252,14 @@ MPIPolylib::load_rank0(
 	}
 	else {
 
+// for tp
+#if 0
 		// 設定ファイルの内容をrank0から受信する
 		if( (ret = broadcast_config_from_rank0()) != PLSTAT_OK ) {
 			PL_ERROSH << "[ERROR]MPIPolylib::load_rank0():broadcast_config_from_rank0() faild. returns:" << PolylibStat2::String(ret) << endl;
 			return ret;
 		}
+#endif
 
 		// ポリゴン情報をrank0から受信する。
 		if( (ret = receive_polygons_from_rank0()) != PLSTAT_OK ) {
@@ -303,11 +319,14 @@ MPIPolylib::save_rank0(
 		}
 
 		// グループ階層構造、ポリゴン情報をファイルへ保存
+// for tp
+#if 0
 		if( (ret = Polylib::save( p_config_filename, stl_format, extend )) != PLSTAT_OK ) {
 			PL_ERROSH << "[ERROR]MPIPolylib::save_rank0():Polylib::save() faild. returns:"
 					  << PolylibStat2::String(ret) << endl;
 			return ret;
 		}
+#endif
 	}
 	else {
 

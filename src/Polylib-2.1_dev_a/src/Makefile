@@ -9,18 +9,10 @@
 # includeファイルの依存関係更新 : make depend
 #
 ############################################################################
-# FX10の場合，MPI_DIRはコメントアウト
-MPI_DIR		= /opt/openmpi
-
-#CXX			= g++
-CXX			= icpc
-#CXX			= mpiFCCpx
-
-#AR			= ar cr
-AR			= ar cru
-
+MPI_INC_DIR	= /usr/include/openmpi-x86_64
+CXX			= g++
+AR			= ar cr
 RANLIB		= ranlib
-
 TARGET_DIR	= ../lib
 ###########################################################################
 # 以下のワーニングを抑制するために-fno-strict-aliasingを追加 2010.10.14
@@ -32,31 +24,10 @@ TARGET_DIR	= ../lib
 # 三角形IDファイルをテキストモードで出力するにはCFLAGSに以下を追加のこと
 # -DSAVE_ID_ASCII
 ###########################################################################
-CFLAGS		= -O2 -Wall \
-            -I../include \
-            -I$(MPI_DIR)/include \
-            -I/usr/include \
-            -fno-strict-aliasing \
-            -I/usr/local/textparser/include \
-#            -DSAVE_ID_ASCII -DDEBUG
-
-# FX10
-#CFLAGS		= -Kfast, simd=2, ocl, preex \
-#		-I../include\
-#		-I/opt/FJSVfxlang/GM-1.2.0-03/include \
-#		-I/opt/FJSVfxlang/GM-1.2.0-03/include/mpi/fujitsu \
-#		-I/usr/include \
-#		-I/home/textparser/include \
-#		-fno-strict-aliasing
-
-# K
-#CFLAGS		= -Kfast, simd=2, ocl, preex \
-#		-I../include\
-#		-I/opt/FJSVtclang/GM-1.2.0-05/include \
-#		-I/opt/FJSVtclang/GM-1.2.0-05/include/mpi/fujitsu \
-#		-I/usr/include \
-#		-I/home/textparser/include \
-#		-fno-strict-aliasing
+CFLAGS		= -O2 -Wall -I../include -I$(MPI_INC_DIR) \
+			  -I/usr/include -fno-strict-aliasing \
+              -I/home/tkawanab/textparser/textparser-1.0-rel/include \
+			  -DSAVE_ID_ASCII
 
 #####################################
 # single版マクロ
