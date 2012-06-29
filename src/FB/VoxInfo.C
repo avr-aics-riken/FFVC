@@ -112,27 +112,27 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
       if ( numProc > 1 ) {
         switch (face) {
           case X_MINUS:
-            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, PLUS2MINUS);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case X_PLUS:
-            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, MINUS2PLUS);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Y_MINUS:
-            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, PLUS2MINUS);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Y_PLUS:
-            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, MINUS2PLUS);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Z_MINUS:
-            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, PLUS2MINUS);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Z_PLUS:
-            paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, MINUS2PLUS);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
             break;
         }      
       }

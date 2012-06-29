@@ -20,6 +20,7 @@
 #include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
+#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
@@ -29,17 +30,16 @@
 #include "Intrinsic.h"
 
 
-class SetBC {
-protected:
+class SetBC : public DomainInfo {
+private:
   int *ix, *jx, *kx, *gc; ///< Fortranの引数用のポインタ
-  int dim_sz[3], ixc, jxc, kxc;
   
   REAL_TYPE dh, accel, Dp1, Dp2, mach, BasePrs;
   REAL_TYPE RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
   REAL_TYPE rho, nyu, cp, lambda, beta;
   
-  int imax, jmax, kmax, guide, size[3];
+  int imax, jmax, kmax;
   int Example, NoBC, Unit_Temp, Unit_Prs;
   bool     inout_flag, isCDS;
   
@@ -47,10 +47,10 @@ protected:
   CompoList       *cmp;
   MediumList      *mat;
   Intrinsic       *Ex;
-  cpm_ParaManager *paraMngr; ///< Cartesian Partition Manager
   
   /** 外部境界の種類 */
-  enum obc_kind {
+  enum obc_kind 
+  {
     id_specvel = 0,
     id_outflow,
     id_wall,
@@ -62,7 +62,7 @@ protected:
 public:
   /** コンストラクタ */
   SetBC() {
-    imax = jmax = kmax = guide = 0;
+    imax = jmax = kmax = 0;
     ix = jx = kx = gc = NULL;
     ixc = jxc = kxc = 0;
     dh = rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
@@ -72,21 +72,18 @@ public:
     inout_flag = isCDS = false;
     
     for (int i=0; i<3; i++) {
-      dim_sz[i] = 0;
-      size[i]   = 0.0;
       Lbx[i]    = 0.0;
     }
     
     cmp = NULL;
     mat = NULL;
     Ex  = NULL;
-    paraMngr = NULL;
   }
   
   /**　デストラクタ */
   virtual ~SetBC() {}
   
-protected:
+private:
   /**
    * @brief 外部境界処理用のループインデクスを取得する
    * @param [in] face 外部境界面番号
@@ -106,13 +103,6 @@ public:
 	REAL_TYPE getVrefOut (const REAL_TYPE tm);
   
   
-  /**
-   * @brief CPMのポインタコピー
-   * @param [in] m_paraMngr  cpm_ParaManagerクラス
-   */
-  void importCPM(cpm_ParaManager* m_paraMngr);
-  
-  
   /** 
    * @brief クラスに必要な変数のコピー
    * @param [in] Cref       Controlクラス
@@ -129,7 +119,7 @@ public:
    * @param [in] m_CMP        CompoListクラス
    * @param [in] m_MAT        MediumListクラス
    */
-  void setWorkList(CompoList* m_CMP, MediumList* m_MAT);
+  void importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT);
   
   
   //@brief 流入出境界条件が設定されている場合にtrueを返す

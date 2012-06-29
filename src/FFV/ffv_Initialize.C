@@ -141,7 +141,7 @@ int FFV::Initialize(int argc, char **argv)
   B.setDomainInfo(paraMngr, procGrp);
   V.setDomainInfo(paraMngr, procGrp);
   F.setDomainInfo(paraMngr, procGrp);
-
+  Ex->setDomainInfo(paraMngr, procGrp);
 
   
   // 各例題のパラメータ設定 -----------------------------------------------------
@@ -190,9 +190,9 @@ int FFV::Initialize(int argc, char **argv)
   // ParseMatクラスの環境設定 
   M.setControlVars(C.NoCompo, C.NoBC, C.Unit.Temp, C.KindOfSolver);
   
-  //Vox.setNoCompo_BC(C.NoBC, C.NoCompo);
+  V.setNoCompo_BC(C.NoBC, C.NoCompo);
   
-  //B.setControlVars(&C, BC.export_OBC(), mat);
+  B.setControlVars(&C, BC.export_OBC(), mat);
   
   B.setMediumPoint( M.export_MTI() );
   

@@ -64,7 +64,7 @@ void ParseBC::countMedium(Control* Cref)
       if ( mat[i].getState() == FLUID ) check = true;
     }
     if ( !check ) {
-      Hostonly_ stamped_printf("\tAnalysis model should have at least one FLUID.\n");
+      Hostonly_ stamped_printf("\tAnalysis model should have at least one FLUID medium in Medium_Table.\n");
       Exit(0);
     }
   }

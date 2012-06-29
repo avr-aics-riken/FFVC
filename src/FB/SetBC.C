@@ -19,7 +19,7 @@
 
 
 // 作業用ポインタのコピー
-void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
+void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);
   cmp = m_CMP;
@@ -29,29 +29,19 @@ void SetBC::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
 }
 
 
-// CPMのインポート
-void SetBC::importCPM(cpm_ParaManager* m_paraMngr)
-{
-  if ( !m_paraMngr ) Exit(0);
-  paraMngr = m_paraMngr;
-}
-
-
 // 必要な値のコピー
 void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
 {
-  guide          = Cref->guide;
-  imax = size[0] = Cref->imax;
-  jmax = size[1] = Cref->jmax;
-  kmax = size[2] = Cref->kmax;
-  gc = &guide;
+
+  imax = Cref->imax;
+  jmax = Cref->jmax;
+  kmax = Cref->kmax;
+
   ix = &(Cref->imax);
   jx = &(Cref->jmax);
   kx = &(Cref->kmax);
-  ixc = imax;
-  jxc = jmax;
-  kxc = kmax;
-  dh        = Cref->dh;
+  
+  dh        = Cref->dh
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
   Peclet    = Cref->Peclet;
@@ -79,17 +69,15 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   Dp1       = Cref->Domain_p1;
   Dp2       = Cref->Domain_p2;
   
-  dim_sz[0] = imax;
-  dim_sz[1] = jmax;
-  dim_sz[2] = kmax;
-  
   Ex = ExRef;
   
   // get reference values >> 媒質はIDがユニークに定まる
-  int m;
+
   for (int n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
     if ( cmp[n].getMatOdr() == Cref->RefMat ) {
-      m = cmp[n].getMatOdr();
+      
+      int m = cmp[n].getMatOdr();
+      
       if ( mat[m].getState() == FLUID ) {
         rho    = mat[m].P[p_density];
         nyu    = mat[m].P[p_kinematic_viscosity];
@@ -133,38 +121,38 @@ void SetBC::getOuterLoopIdx(const int face, int* st, int* ed)
   {
     case X_MINUS:
       st[0] = 1;         ed[0] = 1;
-      st[1] = 1;         ed[1] = dim_sz[1];
-      st[2] = 1;         ed[2] = dim_sz[2];
+      st[1] = 1;         ed[1] = size[1];
+      st[2] = 1;         ed[2] = size[2];
       break;
       
     case X_PLUS:
-      st[0] = dim_sz[0]; ed[0] = dim_sz[0];
-      st[1] = 1;         ed[1] = dim_sz[1];
-      st[2] = 1;         ed[2] = dim_sz[2];
+      st[0] = size[0]; ed[0] = size[0];
+      st[1] = 1;         ed[1] = size[1];
+      st[2] = 1;         ed[2] = size[2];
       break;
       
     case Y_MINUS:
-      st[0] = 1;         ed[0] = dim_sz[0];
+      st[0] = 1;         ed[0] = size[0];
       st[1] = 1;         ed[1] = 1;
-      st[2] = 1;         ed[2] = dim_sz[2];
+      st[2] = 1;         ed[2] = size[2];
       break;
       
     case Y_PLUS:
-      st[0] = 1;         ed[0] = dim_sz[0];
-      st[1] = dim_sz[1]; ed[1] = dim_sz[1];
-      st[2] = 1;         ed[2] = dim_sz[2];
+      st[0] = 1;         ed[0] = size[0];
+      st[1] = size[1];   ed[1] = size[1];
+      st[2] = 1;         ed[2] = size[2];
       break;
       
     case Z_MINUS:
-      st[0] = 1;         ed[0] = dim_sz[0];
-      st[1] = 1;         ed[1] = dim_sz[1];
+      st[0] = 1;         ed[0] = size[0];
+      st[1] = 1;         ed[1] = size[1];
       st[2] = 1;         ed[2] = 1;
       break;
       
     case Z_PLUS:
-      st[0] = 1;         ed[0] = dim_sz[0];
-      st[1] = 1;         ed[1] = dim_sz[1];
-      st[2] = dim_sz[2]; ed[2] = dim_sz[2];
+      st[0] = 1;         ed[0] = size[0];
+      st[1] = 1;         ed[1] = size[1];
+      st[2] = size[2];   ed[2] = size[2];
       break;
   }
 }

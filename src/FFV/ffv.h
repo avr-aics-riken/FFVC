@@ -46,7 +46,7 @@
 #include "ParseMat.h"
 #include "VoxInfo.h"
 #include "TPControl.h"
-//#include "ffv_SetBC.h"
+#include "ffv_SetBC.h"
 
 #include "omp.h"
 
@@ -166,8 +166,7 @@ private:
   VoxInfo V;                 ///< ボクセル前処理クラス
   ParseBC B;                 ///< 境界条件のパースクラス
   TPControl tpCntl;          ///< テキストパーサのラッパークラス
-  
-//  SetBC3D BC;                ///< BCクラス
+  SetBC3D BC;                ///< BCクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
   
