@@ -136,12 +136,6 @@ public:
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
   
   
-  /** 変数のコピー
-   * @param [in] R  Controlクラスのポインタ
-   */
-  void setControlVars(Control* R);
-  
-  
   
   /**
    * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)

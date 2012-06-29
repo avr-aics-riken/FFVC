@@ -22,6 +22,8 @@
  */
 void IP_RSP::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
+  
   // forced
   if (R->Unit.Param != DIMENSIONAL) {
     Hostonly_ printf("\tError : RSP class is designed for only dimensional parameter\n");

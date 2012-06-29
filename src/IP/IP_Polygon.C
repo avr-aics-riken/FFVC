@@ -20,6 +20,7 @@
 // 領域情報を設定する
 void IP_Polygon::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
   
   // 等分割のチェック
   if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {

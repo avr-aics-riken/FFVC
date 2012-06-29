@@ -30,7 +30,7 @@ LDFLAGS=-L/opt/intel/composerxe/lib
 LIBS=-lifport -lifcore
 
 UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
-              -I../Polylib_2_1_0_Dev/include \
+              -I../Polylib-2.1_dev_a/include \
               -I../PMlib-1.0/include \
               -I/usr/local/cpm_float/include \
               -I/opt/openmpi/include \
@@ -38,7 +38,7 @@ UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
               -I../FB \
               -I../F_CBC \
               -I../IP
-UDEF_LIB_PATH=-L../Polylib_2_1_0_Dev/lib \
+UDEF_LIB_PATH=-L../Polylib-2.1_dev_a/lib \
               -L../Cutlib-2.0.3/lib \
               -L../PMlib-1.0/lib \
               -L/usr/local/cpm_float/lib \
@@ -61,6 +61,6 @@ UDEF_LIBS = -lmpi -lcpmlib -lFB -lIP -lMPIPolylib -lcutlib -lpmlib -lTextParser_
 #LDFLAGS=--linkfortran
 #LIBS=
 #UDEF_OPT=-DTD_USE_NAMESPACE -D__K_FPCOLL -D__ARCH_FX
-#UDEF_INC_PATH=-I../../Cutlib-2.0.3/include -I../../Polylib_2_0_3/include -I../../PMlib-1.0/include -I../../TP/include -I../../CPMlib/include
-#UDEF_LIB_PATH=-L../../Polylib_2_0_3/lib -L../../Cutlib-2.0.3/lib -L../../PMlib-1.0/lib -L../../TP/lib -L../../CPMlib/lib
+#UDEF_INC_PATH=-I../../Cutlib-2.0.3/include -I../../Polylib-2.1_dev_a/include -I../../PMlib-1.0/include -I../../TP/include -I../../CPMlib/include
+#UDEF_LIB_PATH=-L../../Polylib-2.1_dev_a/lib -L../../Cutlib-2.0.3/lib -L../../PMlib-1.0/lib -L../../TP/lib -L../../CPMlib/lib
 #SPH_DEVICE=Sparc64_linux

@@ -105,6 +105,8 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
 // 領域情報を設定する
 void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
 {
+  RefL = R->RefLength;
+  
   pch = m_pch;
   org = m_org;
   

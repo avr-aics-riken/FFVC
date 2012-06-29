@@ -45,6 +45,8 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
 // PPLT2Dの領域情報を設定する
 void IP_PPLT2D::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
+  
   // forced
   if (R->Unit.Param != NONDIMENSIONAL) {
     Hostonly_ printf("\tError : PPLT2D class is designed for only non-dimensional parameter\n");

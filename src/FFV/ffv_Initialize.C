@@ -144,8 +144,8 @@ int FFV::Initialize(int argc, char **argv)
 
 
   
-  // 組み込み例題クラスへ変数の値をコピー -----------------------------------------------------
-  Ex->setControlVars (&C);
+  // 各例題のパラメータ設定 -----------------------------------------------------
+  Ex->setDomain(&C, size, org, reg, pch);
   
   
   // 　再度、入力ファイルをオープン
@@ -290,11 +290,11 @@ void FFV::DomainInitialize(const string dom_file)
   
   C.importTP(&tpCntl);
 
-  // メンバ変数にパラメータをロード
-  get_DomainInfo();
+  // メンバ変数にパラメータをロード : 分割指示 (1-with / 2-without)
+  int div_type = get_DomainInfo();
 
   
-# if 1
+# if 0
   printDomainInfo();
   fflush(stdout);
 #endif
@@ -305,66 +305,30 @@ void FFV::DomainInitialize(const string dom_file)
     Hostonly_ printf("Error : delete textparser\n");
     Exit(0);
   }
+  
 
-
-  // 領域分割モードのパターン
-  //      分割指定(G_div指定)    |     domain.txt 
-  // 1)  G_divなし >> 自動分割   |  G_orign + G_regionのみ
-  // 2)  G_div指定あり          |  G_orign + G_regionのみ
-  // 3)  G_divなし >> 自動分割   |  + (G_pitch || G_voxel) + ActiveDomainInfo
-  // 4)  G_div指定あり          |  + (G_pitch || G_voxel) + ActiveDomainInfo
-  
-  int type=0;
-  
-  // 全ドメインの分割数
-  //const int* g_sz  = paraMngr->GetGlobalVoxelSize();
-  
-  // プロセス分割情報
-  //const int* g_div = paraMngr->GetDivNum();
-  
-  // 全ドメインの基点
-  //const REAL_TYPE* g_org = paraMngr->GetGlobalOrigin();
-  
-  // 全ドメインのサイズ
-  //const REAL_TYPE* g_reg = paraMngr->GetGlobalRegion();
-
-  //printf("g_sz = %d %d %d\n", g_sz[0], g_sz[1], g_sz[2]);
-  //printf("g_div= %d %d %d\n", g_div[0], g_div[1], g_div[2]);
-  //printf("g_org= %e %e %e\n", g_org[0], g_org[1], g_org[2]);
-  //printf("g_reg= %e %e %e\n", g_reg[0], g_reg[1], g_reg[2]);
-  
-  if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) ) // 分割数が保持されている場合 >> type 3 or 4 
-  {
-    cout << "unsuppoted now" << endl;
-    Exit(0);
-  }
-  else
-  {
-    if ( (G_div[0]>0) && (G_div[1]>0) && (G_div[2]>0) ) // プロセス分割数が指定されている場合
-    {
-      type = 2;
-    }
-    else
-    {
-      type = 1;
-    }
-  }
-  mark();
   // 袖通信の成分数と袖の最大数
   // V(3), P(1), T(1), Cut(6)
   size_t Ncmp = ( C.isCDS() ) ? 6 : 3;
   size_t Nvc  = (size_t)C.guide;
   
-  int m_sz[3] = {G_size[0], G_size[1], G_size[2]};
+  int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
+  int m_div[3] = {G_div [0], G_div [1], G_div [2]};
+  
   REAL_TYPE m_org[3] = {G_org[0], G_org[1], G_org[2]};
   REAL_TYPE m_reg[3] = {G_reg[0], G_reg[1], G_reg[2]};
-  int m_div[3] = {G_div[0], G_div[1], G_div[2]};
   
-  mark();
-  // 領域分割
-  switch (type) 
+  
+  // 領域分割モードのパターン
+  //      分割指定(G_div指定)    |     domain.txt 
+  // 1)  G_divなし >> 自動分割   |  G_orign + G_region + (G_pitch || G_voxel)
+  // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
+  // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
+  // 4)  G_div指定あり          |   + ActiveDomainInfo
+  
+  switch (div_type) 
   {
-    case 1:
+    case 1: // 分割数が指示されている場合
       if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
       {
         cout << "Domain decomposition error : " << endl;
@@ -372,7 +336,7 @@ void FFV::DomainInitialize(const string dom_file)
       }
       break;
       
-    case 2:
+    case 2: // 分割数が指示されていない場合
       if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
       {
         cout << "Domain decomposition error : " << endl;
@@ -380,17 +344,11 @@ void FFV::DomainInitialize(const string dom_file)
       }
       break;
       
-    case 3:
-      break;
-      
-    case 4:
-      break;
-      
     default:
       Exit(0);
       break;
   }
-  mark();
+
 
   // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
   setNeighborInfo();
@@ -406,9 +364,6 @@ void FFV::DomainInitialize(const string dom_file)
       G_reg[i] /= C.RefLength;
     }
   }
-  
-  // 各例題のパラメータ設定
-  Ex->setDomain(&C, size, org, reg, pch);
   
   
   // チェック

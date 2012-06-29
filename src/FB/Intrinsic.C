@@ -59,14 +59,6 @@ void Intrinsic::printPara(FILE* fp, const Control* R)
 
 
 
-// 基本情報のコピー
-void Intrinsic::setControlVars(Control* R)
-{
-  RefL = R->RefLength;
-}
-
-
-
 // 例題のモデルをsvxフォーマットで出力する(体積率とID)
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {

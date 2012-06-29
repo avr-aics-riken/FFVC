@@ -30,6 +30,8 @@ bool FreeJet::getXML(SklSolverConfig* CF, Control* R)
 
 bool FreeJet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
+  
   REAL_TYPE px, py, pz;
   px = py = pz = 0.0;
   

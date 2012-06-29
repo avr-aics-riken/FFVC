@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file ffv.C
- * @brief FFV Class
+ * @file   ffv.C
+ * @brief  FFV Class
  * @author kero
  */
 
@@ -56,18 +56,19 @@ FFV::~FFV()
 
 
 // グローバルな領域情報を取得
-void FFV::get_DomainInfo()
+int FFV::get_DomainInfo()
 {
   // 領域分割モードのパターン
   //      分割指定(G_div指定)    |     domain.txt 
-  // 1)  G_divなし >> 自動分割   |  G_orign + G_regionのみ
-  // 2)  G_div指定あり          |  G_orign + G_regionのみ
-  // 3)  G_divなし >> 自動分割   |  + (G_pitch || G_voxel) + ActiveDomainInfo
-  // 4)  G_div指定あり          |  + (G_pitch || G_voxel) + ActiveDomainInfo
+  // 1)  G_divなし >> 自動分割   |  G_orign + G_region + (G_pitch || G_voxel)
+  // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
+  // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
+  // 4)  G_div指定あり          |   + ActiveDomainInfo
   
   string label, str;
   REAL_TYPE *rvec;
   int *ivec;
+  int div_type = 1;
   
   // G_origin　必須
   rvec  = G_org;
@@ -168,16 +169,34 @@ void FFV::get_DomainInfo()
   
   if ( !tpCntl.GetVector(label, ivec, 3) )
   {
-    cout << "No option : in parsing [" << label << "]" << endl;
+    cout << "\tNo option : in parsing [" << label << "]" << endl;
+    div_type = 2;
   }
+  
+  // プロセス分割数が指定されている場合のチェック
+  if ( div_type == 1 )
+  {
+    if ( (G_div[0]>0) && (G_div[1]>0) && (G_div[2]>0) ) 
+    {
+      ; // skip
+    }
+    else
+    {
+      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+  }
+
   
   // ActiveSubdomainファイル名の取得
   label = "/DomainInfo/ActiveSubDomain_File";
   
   if ( !tpCntl.GetValue(label, &str ) ) {
-    cout << "No option : in parsing [" << label << "]" << endl;
+    cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
   // string hoge = str;
+  
+  return div_type;
 }
 
 

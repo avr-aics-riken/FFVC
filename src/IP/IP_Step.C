@@ -134,6 +134,8 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 // 領域情報を設定する
 void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
+  
   reg[0] = pch[0]*(REAL_TYPE)sz[0];
   reg[1] = pch[1]*(REAL_TYPE)sz[1];
   reg[2] = pch[2]*(REAL_TYPE)sz[2];

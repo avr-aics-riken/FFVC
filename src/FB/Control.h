@@ -1045,9 +1045,6 @@ public:
   }
   
   
-  /** グローバルな領域情報を取得 */
-  void get_DomainInfo();
-  
   
   /**
    * @brief TPのポインタを受け取る

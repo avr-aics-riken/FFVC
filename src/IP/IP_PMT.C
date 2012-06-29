@@ -45,6 +45,8 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
 // 領域情報を設定する
 void IP_PMT::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
+  
   // forced
   if (R->Unit.Param != NONDIMENSIONAL) {
     Hostonly_ printf("\tError : PMT class is designed for only non-dimensional parameter\n");

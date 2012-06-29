@@ -66,6 +66,8 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
 // 領域情報を設定する
 void IP_SHC1D::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
+  RefL = R->RefLength;
+  
   // forced
   if (R->Unit.Param != DIMENSIONAL) {
     Hostonly_ printf("\tError : SHC1D class is designed for only dimensional parameter\n");

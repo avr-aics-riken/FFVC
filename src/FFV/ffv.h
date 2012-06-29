@@ -261,8 +261,10 @@ private:
   void allocArray_RK(double &total);
   
   
-  /** グローバルな領域情報を取得 */
-  void get_DomainInfo();
+  /** グローバルな領域情報を取得 
+   * @return 分割指示 (1-with / 2-without)
+   */
+  int get_DomainInfo();
   
 public:
   
