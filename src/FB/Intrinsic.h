@@ -37,7 +37,6 @@
 /** 組み込み例題のID */
 enum Intrinsic_class 
 {
-  id_Users = 0,
   id_Duct,
   id_PPLT2D,
   id_SHC1D,
@@ -162,26 +161,6 @@ public:
    */
   int find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key);
   
-};
-
-
-class IP_Users : public Intrinsic {
-public:
-  /** コンストラクタ */
-  IP_Users() {}
-  
-  /**　デストラクタ */
-  ~IP_Users() {}
-  
-public:
-  
-  /** 
-   @brief ユーザー例題の名称を返す
-   */
-  const char* getExampleName()
-  {
-    return ("User's problem");
-  }
 };
 
 #endif // _FB_INTRNSC_H_

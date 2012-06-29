@@ -264,8 +264,7 @@ int FFV::Initialize(int argc, char **argv)
 // 組み込み例題のインスタンス
 void FFV::connectExample(Control* Cref)
 {
-  if      ( Cref->Mode.Example == id_Users )   Ex = dynamic_cast<Intrinsic*>(new IP_Users);
-  else if ( Cref->Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
+  if      ( Cref->Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
   else if ( Cref->Mode.Example == id_SHC1D)    Ex = dynamic_cast<Intrinsic*>(new IP_SHC1D);
   else if ( Cref->Mode.Example == id_Duct )    Ex = dynamic_cast<Intrinsic*>(new IP_Duct);
   else if ( Cref->Mode.Example == id_PMT )     Ex = dynamic_cast<Intrinsic*>(new IP_PMT);
@@ -424,8 +423,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
     Exit(0);
   }
   
-  if     ( FBUtility::compare(keyword, "Users") )             Cref->Mode.Example = id_Users;
-  else if( FBUtility::compare(keyword, "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
+  if     ( FBUtility::compare(keyword, "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
   else if( FBUtility::compare(keyword, "Duct") )              Cref->Mode.Example = id_Duct;
   else if( FBUtility::compare(keyword, "SHC1D") )             Cref->Mode.Example = id_SHC1D;
   else if( FBUtility::compare(keyword, "Performance_Test") )  Cref->Mode.Example = id_PMT;
