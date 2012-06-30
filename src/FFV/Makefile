@@ -47,10 +47,28 @@ all:
 		RM='$(RM)' \
 	)
 	( \
+	cd ../F_CORE; \
+	make \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
+		CC='$(CC)' \
+		CFLAGS='$(CFLAGS)' \
+		FC='$(FC)' \
+		FCFLAGS='$(FCFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+	)
+	( \
 	make -f MakeFFV \
 		TARGET='$(TARGET)' \
 		CXX='$(CXX)' \
 		CXXFLAGS='$(CXXFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
 		LDFLAGS='$(LDFLAGS)' \
 		LIBS='$(LIBS)' \
 		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
@@ -64,6 +82,7 @@ all:
 clean:
 	(cd ../IP; make clean)
 	(cd ../FB; make clean)
+	(cd ../F_CORE; make clean)
 	(make -f MakeFFV clean)
 
 allclean: clean
@@ -72,6 +91,7 @@ allclean: clean
 depend:
 	(cd ../IP; make depend)
 	(cd ../FB; make depend)
+	(cd ../F_CORE; make depend)
 	(make -f MakeFFV depend)
 
 # DO NOT DELETE
@@ -111,8 +131,8 @@ ffv_SetBC.o: ffv_SetBC.h ../FB/SetBC.h ../FB/DomainInfo.h ../FB/FB_Define.h
 ffv_SetBC.o: ../FB/mydebug.h ../FB/FBUtility.h ../FB/BndOuter.h
 ffv_SetBC.o: ../FB/Control.h ../FB/Medium.h ../FB/Component.h
 ffv_SetBC.o: ../FB/Interval_Mngr.h ../FB/TPControl.h ../FB/Intrinsic.h
-ffv_SetBC.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h ffv_Ffunc.h
-ffv_SetBC.o: ffv_Define.h
+ffv_SetBC.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h ffv_Define.h
+ffv_SetBC.o: ffv_Ffunc.h
 main.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 main.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 main.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h

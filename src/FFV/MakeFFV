@@ -8,17 +8,19 @@
 #
 ###################################################################
 
-APP_SRCS = \
+CXXSRCS = \
     main.C \
     ffv.C \
     ffv_Initialize.C \
     ffv_Alloc.C \
     ffv_SetBC.C \
 
-SRCS = $(APP_SRCS)
+
+SRCS = $(CXXSRCS)
 
 .SUFFIXES: .o .C
-OBJS = $(SRCS:.C=.o)
+CXXOBJS = $(CXXSRCS:.C=.o)
+OBJS  = $(CXXOBJS) 
 
 $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \
@@ -32,7 +34,7 @@ clean:
 	$(RM) $(OBJS)
 
 depend:
-	makedepend -I. -I../IP -I../FB -Y *.C
+	makedepend -I. -I../IP -I../FB -I../F_CORE -Y *.C
 
 # DO NOT DELETE
 

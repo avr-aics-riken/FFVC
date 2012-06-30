@@ -27,7 +27,7 @@
 !<
     subroutine norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
     integer, dimension(3)                                     ::  sz, idx
     real                                                      ::  ds, flop, r, coef, rm, d
@@ -99,7 +99,7 @@
 !<
     subroutine norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ds, flop, r, coef
@@ -151,7 +151,7 @@
 !<
     subroutine norm_v_div_max (ds, sz, g, div, coef, bp, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ds, flop, r, coef
@@ -262,7 +262,7 @@
 !<
     subroutine i2vgt (q, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -445,7 +445,7 @@
 !<
     subroutine rot_v (rot, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -611,7 +611,7 @@
 !<
     subroutine helicity (ht, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -777,7 +777,7 @@
 !<
     subroutine face_avr_sampling (p, sz, g, face, avr)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
@@ -958,7 +958,7 @@
 
 !> ********************************************************************
 !! @brief 物体表面の力を計算する
-!! @param[out] force 力の成分
+!! @param[out] frc 力の成分
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param p 圧力
@@ -966,9 +966,9 @@
 !! @param dh 無次元格子幅
 !! @param[out] flop flop count
 !<
-  subroutine force (force, sz, g, p, bp, dh, flop)
+  subroutine force (frc, sz, g, p, bp, dh, flop)
   implicit none
-  include '../FB/ffv_f_params.h'
+  include 'ffv_f_params.h'
   integer                                                     ::  i, j, k, ix, jx, kx, g
   integer                                                     ::  bw, be, bs, bn, bb, bt
   integer, dimension(3)                                       ::  sz
@@ -977,7 +977,7 @@
   real                                                        ::  flop, actv, pp, dh, cf
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
-  real, dimension(3)                                          ::  force
+  real, dimension(3)                                          ::  frc
 
   ix = sz(1)
   jx = sz(2)
@@ -1051,9 +1051,9 @@
 !$OMP END PARALLEL
 
   cf = 2.0 * dh * dh
-  force(1) = fx * cf
-  force(2) = fy * cf
-  force(3) = fz * cf
+  frc(1) = fx * cf
+  frc(2) = fy * cf
+  frc(3) = fz * cf
 
   return
   end subroutine force

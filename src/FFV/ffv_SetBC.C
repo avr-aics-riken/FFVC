@@ -38,7 +38,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
     switch (typ) {
       case SPEC_VEL_WH:
         tc  = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
-        cbc_hbc_drchlt_(d_t, size, gc, st, ed, d_bh1, &n, &tc);
+        hbc_drchlt_(d_t, size, gc, st, ed, d_bh1, &n, &tc);
         break;
     }
   }
@@ -61,7 +61,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
    vec[1] = v00[2];
    vec[2] = v00[3];
    }
-   cbc_vbc_drchlt_cc_(v, size, gc, st, ed, v00, bv, &n, vec);
+   vbc_drchlt_cc_(v, size, gc, st, ed, v00, bv, &n, vec);
    }
    }*/
 }
@@ -96,7 +96,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
         else {
           vec[0] = vec[1] = vec[2] = 0.0;
         }
-        cbc_vibc_drchlt_(d_v, size, gc, st, ed, v00, d_bv, &n, vec);
+        vibc_drchlt_(d_v, size, gc, st, ed, v00, d_bv, &n, vec);
         break;
     }
   }
@@ -116,7 +116,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
       else {
         vec[0] = vec[1] = vec[2] = 0.0;
       }
-      cbc_vobc_drchlt_(d_v, size, gc, v00, d_bv, &face, vec);
+      vobc_drchlt_(d_v, size, gc, v00, d_bv, &face, vec);
     }
   }
 }
@@ -325,11 +325,11 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, 
         case SPEC_VEL:
         case SPEC_VEL_WH:
           extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_vibc_drchlt_(d_v, size, gc, st, ed, v00, d_bv, &n, vec);
+          vibc_drchlt_(d_v, size, gc, st, ed, v00, d_bv, &n, vec);
           break;
           
         case OUTFLOW:
-          cbc_vibc_outflow_(d_v, size, gc, st, ed, d_bv, &n);
+          vibc_outflow_(d_v, size, gc, st, ed, d_bv, &n);
           break;
           
         default:
@@ -430,13 +430,13 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
       
       switch (typ) {
         case OUTFLOW:
-          //cbc_div_ibc_oflow_vec_(div, size, gc, st, ed, v00, &coef, bv, &n, &avr[2*n], &flop);
+          //div_ibc_oflow_vec_(div, size, gc, st, ed, v00, &coef, bv, &n, &avr[2*n], &flop);
           break;
           
         case SPEC_VEL:
         case SPEC_VEL_WH:
           cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
-          cbc_div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
           break;
           
         default:
@@ -452,13 +452,13 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
       
       switch (typ) {
         case OUTFLOW:
-          cbc_div_ibc_oflow_vec_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, &avr[2*n], &flop);
+          div_ibc_oflow_vec_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, &avr[2*n], &flop);
           break;
           
         case SPEC_VEL:
         case SPEC_VEL_WH:
           cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
-          cbc_div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
           break;
           
         default:
@@ -483,14 +483,14 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
     
     switch (typ) {
       case OBC_OUTFLOW:
-        cbc_div_obc_oflow_vec_(d_div, size, gc, &face, v00, &coef, d_bv, vec, &flop); // vecは流用
+        div_obc_oflow_vec_(d_div, size, gc, &face, v00, &coef, d_bv, vec, &flop); // vecは流用
         obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
         break;
         
       case OBC_SPEC_VEL:
       case OBC_WALL:
         dummy = extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_div_obc_drchlt_(d_div, size, gc, &face, v00, &coef, d_bv, vec, &flop);
+        div_obc_drchlt_(d_div, size, gc, &face, v00, &coef, d_bv, vec, &flop);
         obc[face].set_DomainV(vec, face); // 速度の形式
         break;
         
@@ -532,7 +532,7 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
       
       switch ( cmp[n].getType() ) {
         case HEX:
-          if ( cmp[n].get_sw_HexDir() ) cbc_hex_dir_ (d_v, size, gc, st, ed, d_bd, d_cvf, &n, v00, vec, &flop);
+          if ( cmp[n].get_sw_HexDir() ) hex_dir_ (d_v, size, gc, st, ed, d_bd, d_cvf, &n, v00, vec, &flop);
           break;
           
         case FAN:
@@ -574,7 +574,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
     
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_hex_force_pvec_(d_vc, size, gc, st, ed, d_bd, d_cvf, d_v, &n, v00, &dt, vec, &cmp[n].ca[0], &flop);
+        hex_force_pvec_(d_vc, size, gc, st, ed, d_bd, d_cvf, d_v, &n, v00, &dt, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:
@@ -617,11 +617,11 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, floa
     cmp[n].get_cmp_sz(csz);
     w_ptr = c_array[n];
     
-    if ( cmp[n].isFORCING() ) cbc_force_keep_vec_(w_ptr, csz, st, ed, d_v, size, gc);
+    if ( cmp[n].isFORCING() ) force_keep_vec_(w_ptr, csz, st, ed, d_v, size, gc);
 
     switch ( cmp[n].getType() ) {
       case HEX:
-        cbc_hex_psrc_(d_src, size, gc, st, ed, d_bd, d_cvf, w_ptr, csz, &n, v00, &dh, vec, &cmp[n].ca[0], &flop);
+        hex_psrc_(d_src, size, gc, st, ed, d_bd, d_cvf, w_ptr, csz, &n, v00, &dh, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:
@@ -671,7 +671,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYP
       
       switch ( cmp[n].getType() ) {
         case HEX:
-          cbc_hex_force_vec_(d_v, d_div, size, gc, st, ed, d_bd, d_cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], &am[2*n], &flop);
+          hex_force_vec_(d_v, d_div, size, gc, st, ed, d_bd, d_cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], &am[2*n], &flop);
           break;
           
         case FAN:
@@ -716,7 +716,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYP
 
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_pvec_vibc_specv_(d_wv, size, gc, st, ed, &dh, v00, &rei, d_v, d_bv, &n, vec, &flop);
+          pvec_vibc_specv_(d_wv, size, gc, st, ed, &dh, v00, &rei, d_v, d_bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW ) {
         }      
@@ -732,11 +732,11 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYP
         
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) ) {
           extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_pvec_vibc_specv_(d_wv, size, gc, st, ed, &dh, v00, &rei, d_v, d_bv, &n, vec, &flop);
+          pvec_vibc_specv_(d_wv, size, gc, st, ed, &dh, v00, &rei, d_v, d_bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW ) {
           vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
-          cbc_pvec_vibc_oflow_(d_wv, size, gc, st, ed, &dh, &rei, d_v, d_bv, &n, vec, &flop);
+          pvec_vibc_oflow_(d_wv, size, gc, st, ed, &dh, &rei, d_v, d_bv, &n, vec, &flop);
         }      
       }
     }
@@ -753,21 +753,21 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYP
     switch ( typ ) {
       case OBC_SPEC_VEL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_pvec_vobc_specv_(d_wv, size, gc, &dh, v00, &rei, d_v, d_bv, vec, &face, &flop);
+        pvec_vobc_specv_(d_wv, size, gc, &dh, v00, &rei, d_v, d_bv, vec, &face, &flop);
         break;
         
       case OBC_WALL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_pvec_vobc_wall_(d_wv, size, gc, &dh, v00, &rei, d_v, d_bv, vec, &face, &flop);
+        pvec_vobc_wall_(d_wv, size, gc, &dh, v00, &rei, d_v, d_bv, vec, &face, &flop);
         break;
         
       case OBC_SYMMETRIC:
-        cbc_pvec_vobc_symtrc_(d_wv, size, gc, &dh, &rei, d_v, d_bv, &face, &flop);
+        pvec_vobc_symtrc_(d_wv, size, gc, &dh, &rei, d_v, d_bv, &face, &flop);
         break;
         
       case OBC_OUTFLOW:
         vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-        cbc_pvec_vobc_oflow_(d_wv, size, gc, &dh, v00, &rei, d_v, d_bv, vec, &face, &flop);
+        pvec_vobc_oflow_(d_wv, size, gc, &dh, v00, &rei, d_v, d_bv, vec, &face, &flop);
         break;
     }
   }
@@ -803,7 +803,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
         case SPEC_VEL:
         case SPEC_VEL_WH:
           dummy = extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
           break;
           
         case OUTFLOW:
@@ -823,12 +823,12 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
         case SPEC_VEL:
         case SPEC_VEL_WH:
           dummy = extractVel_IBC(n, vec, tm, v00, flop);
-          cbc_div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          div_ibc_drchlt_(d_div, size, gc, st, ed, v00, &coef, d_bv, &n, vec, &flop);
           break;
           
         case OUTFLOW:
           vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-          cbc_div_ibc_oflow_pvec_(d_div, size, gc, st, ed, v00, &vel, &coef, d_bv, &n, d_v0, &flop);
+          div_ibc_oflow_pvec_(d_div, size, gc, st, ed, v00, &vel, &coef, d_bv, &n, d_v0, &flop);
           break;
           
         default:
@@ -849,18 +849,18 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
       case OBC_SPEC_VEL:
       case OBC_WALL:
         dummy = extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_div_obc_drchlt_(d_div, size, gc, &face, v00, &coef, d_bv, vec, &flop);
+        div_obc_drchlt_(d_div, size, gc, &face, v00, &coef, d_bv, vec, &flop);
         break;
         
       case OBC_SYMMETRIC:
         // 境界面の法線速度はゼロなので，修正不要 移動格子の場合は必要
         //vec[0] = vec[1] = vec[2] = 0.0;
-        //cbc_div_obc_drchlt_(div, size, gc, &face, v00, &coef, d_bv, vec, &flop);
+        //div_obc_drchlt_(div, size, gc, &face, v00, &coef, d_bv, vec, &flop);
         break;
         
       case OBC_OUTFLOW:
         vel = C->V_Dface[face] * dt / dh;
-        cbc_div_obc_oflow_pvec_(d_div, size, gc, &face, v00, &vel, &coef, d_bv, d_v0, &flop);
+        div_obc_oflow_pvec_(d_div, size, gc, &face, v00, &vel, &coef, d_bv, d_v0, &flop);
         break;
         
       case OBC_TRC_FREE:
@@ -899,7 +899,7 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_
     }
     
     cmp[n].getBbox(st, ed);
-    cbc_vis_ee_vbc_(d_vc, size, gc, st, ed, &dh, &dt, v00, &rei, d_v0, d_bx, &n, &cf, vec, &flop);
+    vis_ee_vbc_(d_vc, size, gc, st, ed, &dh, &dt, v00, &rei, d_v0, d_bx, &n, &cf, vec, &flop);
   }
 }
 
@@ -940,11 +940,11 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
       switch ( F ) {
           
         case OBC_TRC_FREE:
-          cbc_pobc_drchlt_ (d_p, size, gc, &face, &pv);
+          pobc_drchlt_ (d_p, size, gc, &face, &pv);
           break;
           
         case OBC_FAR_FIELD:
-          cbc_pobc_neumann_(d_p, size, gc, &face);
+          pobc_neumann_(d_p, size, gc, &face);
           break;
       }
     }
@@ -993,20 +993,20 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
     
     switch ( obc[face].get_Class() ) {
       case OBC_OUTFLOW:
-        cbc_vobc_update_(d_v, size, gc, d_vc, &face);
+        vobc_update_(d_v, size, gc, d_vc, &face);
         break;
         
       case OBC_SPEC_VEL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        cbc_vobc_drchlt_(d_v, size, gc, v00, d_bv, &face, vec);
+        vobc_drchlt_(d_v, size, gc, v00, d_bv, &face, vec);
         break;
         
       case OBC_TRC_FREE:
-        cbc_vobc_tfree_(d_v, size, gc, &face, &flop);
+        vobc_tfree_(d_v, size, gc, &face, &flop);
         break;
         
       case OBC_FAR_FIELD:
-        cbc_vobc_neumann_(d_v, size, gc, &face);
+        vobc_neumann_(d_v, size, gc, &face);
         break;
         
       default:
@@ -1039,7 +1039,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_
     switch ( obc[face].get_Class() ) {
       case OBC_OUTFLOW:
         v_cnv = C->V_Dface[face] * dt / dh;
-        cbc_vobc_outflow_(d_vc, size, gc, &v_cnv, d_bv, &face, d_v0, &flop);
+        vobc_outflow_(d_vc, size, gc, &v_cnv, d_bv, &face, d_v0, &flop);
         break;
     }
     
@@ -4275,11 +4275,11 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, int* bx, RE
       
       switch (LS) {
         case JACOBI:
-          cbc_vis_cn_mod_jcb_(vc, size, gc, st, ed, &dh, &dt, v00, &rei, &omg, wv, bx, wk, &cf, res, vec, flop);
+          vis_cn_mod_jcb_(vc, size, gc, st, ed, &dh, &dt, v00, &rei, &omg, wv, bx, wk, &cf, res, vec, flop);
           break;
           
         case SOR:
-          cbc_vis_cn_mod_sor_(vc, size, gc, st, ed, &dh, &dt, v00, &rei, &omg, wv, bx, &cf, res, vec, flop);
+          vis_cn_mod_sor_(vc, size, gc, st, ed, &dh, &dt, v00, &rei, &omg, wv, bx, &cf, res, vec, flop);
           break;
           
         case SOR2SMA:
@@ -4422,7 +4422,7 @@ void SetBC3D::Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face)
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル（セルフェイス）
  @param face 面番号
- @note cbc_update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
+ @note update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
  */
 void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
 {

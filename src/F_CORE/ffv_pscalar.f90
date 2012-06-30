@@ -31,7 +31,7 @@
 !<
     subroutine ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bh1, bh2, swt, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, idx, swt, hdx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
@@ -285,7 +285,7 @@
 !<
     subroutine ps_buoyancy (v, sz, g, dt, gr, rei, t, bd, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  dt, gr, rei, dgr, flop
@@ -327,7 +327,7 @@
 !<
     subroutine ps_diff_ee (t, sz, g, res, dh, dt, pei, qbc, bh, ws, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  dh, dt, pei, dth1, dth2, res, flop, delta
@@ -415,7 +415,7 @@
 !<
     subroutine hbc_drchlt (t, sz, g, st, ed, bh, odr, tc)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  tc

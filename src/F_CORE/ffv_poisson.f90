@@ -24,7 +24,7 @@
 !<
     subroutine div_cnst (div, sz, g, b2, bp, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  b2, dv, flop
@@ -78,7 +78,7 @@
 !<
     subroutine psor (p, sz, g, omg, res, src0, src1, bp, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -155,7 +155,7 @@
 !<
     subroutine psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b

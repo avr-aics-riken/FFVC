@@ -71,9 +71,9 @@
 #define div_obc_oflow_pvec_ DIV_OBC_OFLOW_PVEC
 #define div_obc_oflow_vec_  DIV_OBC_OFLOW_VEC
 
-// ffv_velocity_bin.f90
+// ffv_velocity_binary.f90
 #define ab2_                AB2
-#define div_                DIV
+#define divergence_         DIVERGENCE
 #define eddy_viscosity_     EDDY_VISCOSITY
 #define euler_explicit_     EULER_EXPLICIT
 #define friction_velocity_  FRICTION_VELOCITY
@@ -199,9 +199,9 @@ extern "C" {
 
   
   //***********************************************************************************************
-  // ffv_velocity_bin.f90
+  // ffv_velocity_binary.f90
   void ab2_               (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, REAL_TYPE* ab, int* bd, REAL_TYPE* v00, double* flop);
-  void div_               (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* vc, int* bv, REAL_TYPE* v00, double* flop);
+  void divergence_        (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* vc, int* bv, REAL_TYPE* v00, double* flop);
   void eddy_viscosity_    (REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, int* bx, 
                            REAL_TYPE* vt_range, REAL_TYPE* yp_range, REAL_TYPE* v00);
   void euler_explicit_    (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, int* bd, double* flop);
@@ -236,7 +236,7 @@ extern "C" {
   void helicity_          (REAL_TYPE* ht,    int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
   void i2vgt_             (REAL_TYPE* q,     int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
   void rot_v_             (REAL_TYPE* rot,   int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
-  void vmax_              (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, double* flop);
+  void find_vmax_         (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, double* flop);
   void face_avr_sampling_ (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* avr);
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
   void force_             (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, REAL_TYPE* dh, double* flop);

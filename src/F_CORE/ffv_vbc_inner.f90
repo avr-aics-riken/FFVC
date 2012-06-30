@@ -34,7 +34,7 @@
 !<
     subroutine pvec_vibc_oflow (wv, sz, g, st, ed, dh, rei, v, bv, odr, vec, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
@@ -275,7 +275,7 @@
 !<
     subroutine pvec_vibc_specv (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
@@ -532,7 +532,7 @@
 !<
     subroutine vibc_drchlt (v, sz, g, st, ed, v00, bv, odr, vec)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
@@ -630,7 +630,7 @@
 !<
     subroutine vibc_outflow (v, sz, g, st, ed, bv, odr)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up, Vp, Wp
@@ -736,7 +736,7 @@
 !<
     subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef
@@ -824,7 +824,7 @@
 !<
     subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, coef, bv, odr, v0, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef, m
@@ -956,7 +956,7 @@
 !<
     subroutine div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, av, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  flop, coef, rc
@@ -1043,126 +1043,3 @@
 
     return
     end subroutine div_ibc_oflow_vec
-
-
-!> ********************************************************************
-!! @brief 圧力の外部ディリクレ境界
-!! @param p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param face 外部境界面の番号
-!! @param pv 値
-!<
-    subroutine pobc_drchlt (p, sz, g, face, pv)
-    implicit none
-    include '../FB/ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g
-    integer, dimension(3)                                     ::  sz
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
-    real                                                      ::  pv
-
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, pv)
-
-    FACES : select case (face)
-    case (X_minus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      do k=1,kx
-      do j=1,jx
-        p(0,j,k) = pv
-      end do
-      end do
-!$OMP END DO
-      
-    case (X_plus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      do k=1,kx
-      do j=1,jx
-        p(ix+1,j,k) = pv
-      end do
-      end do
-!$OMP END DO
-      
-    case (Y_minus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      do k=1,kx
-      do i=1,ix
-        p(i,0,k) = pv
-      end do
-      end do
-!$OMP END DO
-      
-    case (Y_plus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      do k=1,kx
-      do i=1,ix
-        p(i,jx+1,k) = pv
-      end do
-      end do
-!$OMP END DO
-      
-    case (Z_minus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      do j=1,jx
-      do i=1,ix
-        p(i,j,0) = pv
-      end do
-      end do
-!$OMP END DO
-    
-    case (Z_plus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      do j=1,jx
-      do i=1,ix
-        p(i,j,kx+1) = pv
-      end do
-      end do
-!$OMP END DO
-      
-    case default
-    end select FACES
-
-!$OMP END PARALLEL
-
-    return
-    end subroutine pobc_drchlt

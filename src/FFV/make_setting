@@ -36,7 +36,7 @@ UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
               -I/opt/openmpi/include \
               -I/usr/local/textparser/include \
               -I../FB \
-              -I../F_FFV \
+              -I../F_CORE \
               -I../IP
 UDEF_LIB_PATH=-L../Polylib-2.1_dev_a/lib \
               -L../Cutlib-2.0.3/lib \
@@ -45,8 +45,9 @@ UDEF_LIB_PATH=-L../Polylib-2.1_dev_a/lib \
               -L/opt/openmpi/lib \
               -L/usr/local/textparser/lib \
               -L../FB \
-              -L../IP
-UDEF_LIBS = -lmpi -lcpmlib -lFB -lIP -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi
+              -L../IP \
+              -L../F_CORE
+UDEF_LIBS = -lmpi -lcpmlib -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi
 
 
 ## K

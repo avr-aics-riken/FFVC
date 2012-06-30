@@ -29,7 +29,7 @@
 !<
     subroutine hex_dir (v, sz, g, st, ed, bd, vf, odr, v00, nv, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
@@ -178,7 +178,7 @@
 !<
     subroutine hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
@@ -299,7 +299,7 @@
 !<
     subroutine hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
@@ -418,7 +418,7 @@
 !<
     subroutine hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
     implicit none
-    include '../FB/ffv_f_params.h'
+    include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
