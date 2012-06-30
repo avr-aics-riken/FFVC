@@ -1,17 +1,19 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *********************************************************
+!   Copyright (c) All right reserved. 2012
+!
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
 
-!> @file cbc_3d.f90
-!> @brief subroutines for CBC
-!> @author keno, FSI Team, VCAD, RIKEN
+!> @file   ffv_velocity_bin.f90
+!! @brief  速度計算のルーチン群（バイナリモデル）
+!! @author kero
+!<
 
-!  ***************************************************************************************************************
-!> @subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
+!> ********************************************************************
 !! @brief 対流項と粘性項の計算
 !! @param[out] wv 疑似ベクトルの空間項の評価値
 !! @param sz 配列長
@@ -30,9 +32,9 @@
 !! @param cvf コンポーネント体積率
 !! @param[out] flop
 !<
-    subroutine cbc_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
+    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
@@ -632,10 +634,9 @@
     flop = flop + vflop
 
     return
-    end subroutine cbc_pvec_muscl
+    end subroutine pvec_muscl
 
-!  ****************************************************************************
-!> @subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
+!> ********************************************************************
 !! @brief 次ステップのセルセンターの速度を更新
 !! @param[out] v n+1時刻の速度ベクトル
 !! @param[out] div 速度の発散値
@@ -653,9 +654,9 @@
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !!    - VBC(OUTFLOW, SPEC_VEL)の参照セルでは不定値となるが，InnerVBC()で上書き
 !<
-    subroutine cbc_update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
+    subroutine update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  dh, dt, dd, flop, coef, actv, r_actv
@@ -792,10 +793,9 @@
 !$OMP END PARALLEL
     
     return
-    end subroutine cbc_update_vec
+    end subroutine update_vec
 
-!  *********************************************************
-!> @subroutine cbc_div (div, sz, g, coef, v0, bv, v00, flop)
+!> ********************************************************************
 !! @brief 速度の発散を計算する
 !! @param div 速度の発散値
 !! @param sz 配列長
@@ -807,9 +807,9 @@
 !! @param[out] flop flop count
 !! @note divの値は計算対象のFluidセルでのみ有効であればよいので，bvを使ってよい
 !<
-    subroutine cbc_div (div, sz, g, coef, v0, bv, v00, flop)
+    subroutine div (div, sz, g, coef, v0, bv, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  coef, flop
@@ -879,10 +879,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_div
+    end subroutine div
     
-!  ***********************************************
-!> @subroutine cbc_ee (vc, sz, g, dt, v, bd, flop)
+!> ********************************************************************
 !! @brief 疑似ベクトルの時間積分（Euler陽解法）
 !! @param[in/out] vc 疑似ベクトル
 !! @param sz 配列長
@@ -893,9 +892,9 @@
 !! @param[out] flop
 !! @note ここのマスクはIDのこと，VSPEC, OUTFLOWの増分をキャンセルするため
 !<
-    subroutine cbc_ee (vc, sz, g, dt, v, bd, flop)
+    subroutine ee (vc, sz, g, dt, v, bd, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, actv, dt
@@ -934,10 +933,9 @@
 !$OMP END PARALLEL
     
     return
-    end subroutine cbc_ee
+    end subroutine ee
 
-!  *************************************************************************
-!> @subroutine cbc_vis_ee (vc, sz, g, dh, dt, v00, rei, wv, v, bx, cf, flop)
+!> ********************************************************************
 !! @brief 粘性項の計算（Euler陽解法，壁面境界の影響のみ考慮する）
 !! @param[out] vc 疑似ベクトル
 !! @param sz 配列長
@@ -952,9 +950,9 @@
 !! @param cf 粘性項の係数 (0.0=only convection, 1.0=convection+viscous)
 !! @param[out] flop
 !<
-    subroutine cbc_vis_ee (vc, sz, g, dh, dt, v00, rei, wv, v, bx, cf, flop)
+    subroutine vis_ee (vc, sz, g, dh, dt, v00, rei, wv, v, bx, cf, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz
@@ -1097,10 +1095,9 @@
     end do
 
     return
-    end subroutine cbc_vis_ee
+    end subroutine vis_ee
 
-!  *******************************************************************************************
-!> @subroutine cbc_vis_ee_vbc (vc, sz, g, st, ed, dh, dt, v00, rei, v, bx, odr, cf, vec, flop)
+!> ********************************************************************
 !! @brief 速度境界条件による粘性項の修正（Euler陽解法）
 !! @param[out] vc 疑似ベクトル
 !! @param sz 配列長
@@ -1119,9 +1116,9 @@
 !! @param[out] flop
 !! @note NOCHECK
 !<
-    subroutine cbc_vis_ee_vbc (vc, sz, g, st, ed, dh, dt, v00, rei, v, bx, odr, cf, vec, flop)
+    subroutine vis_ee_vbc (vc, sz, g, st, ed, dh, dt, v00, rei, v, bx, odr, cf, vec, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, m, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
@@ -1257,10 +1254,9 @@
     flop = flop + real(8 + 42*m) ! 20100628
 
     return
-    end subroutine cbc_vis_ee_vbc
+    end subroutine vis_ee_vbc
     
-!  ******************************************************************************
-!> @subroutine cbc_vis_cn_sor (v, sz, g, dh, v00, rei, omg, vc, bx, cf, dv, flop)
+!> ********************************************************************
 !! @brief SOR法による粘性項の計算
 !! @param[out] v 疑似ベクトル
 !! @param sz 配列長
@@ -1277,9 +1273,9 @@
 !! @param[out] flop
 !! @note NOCHECK
 !<
-    subroutine cbc_vis_cn_sor (v, sz, g, dh, dt, v00, rei, omg, vc, bx, cf, dv, flop)
+    subroutine vis_cn_sor (v, sz, g, dh, dt, v00, rei, omg, vc, bx, cf, dv, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz
@@ -1399,10 +1395,9 @@
     end do
 
     return
-    end subroutine cbc_vis_cn_sor
+    end subroutine vis_cn_sor
 
-!  ***************************************************************************************************
-!> @subroutine cbc_vis_cn_mod_sor (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, cf, dv, vec, flop)
+!> ********************************************************************
 !! @brief SOR法による粘性項計算の境界条件による修正
 !! @param[in/out] v 疑似ベクトル
 !! @param sz 配列長
@@ -1422,9 +1417,9 @@
 !! @param[out] flop
 !! @note NOCHECK
 !<
-    subroutine cbc_vis_cn_mod_sor (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, cf, dv, vec, flop)
+    subroutine vis_cn_mod_sor (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, cf, dv, vec, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, m
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz, st, ed
@@ -1585,10 +1580,9 @@
     flop = flop + real(m)*48.0 + 8.0
 
     return
-    end subroutine cbc_vis_cn_mod_sor
+    end subroutine vis_cn_mod_sor
 
-!  **************************************************************************************
-!> @subroutine cbc_eddy_viscosity (vt, sz, g, dh, re, cs, v, bx, vt_range, yp_range, v00)
+!> ********************************************************************
 !! @brief Smagorinsky Modelによる乱流渦粘性係数の計算，減衰関数を併用
 !! @param vt 乱流渦粘性係数
 !! @param sz 配列長
@@ -1608,9 +1602,9 @@
 !!    - 境界条件は必要か？
 !! @note NOCHECK
 !<
-    subroutine cbc_eddy_viscosity (vt, sz, g, dh, re, cs, v, bx, vt_range, yp_range, v00)
+    subroutine eddy_viscosity (vt, sz, g, dh, re, cs, v, bx, vt_range, yp_range, v00)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, m
     integer, dimension(3)                                       ::  sz
     real, dimension(2)                                          ::  vt_range, yp_range
@@ -1722,10 +1716,9 @@
     end do
 
     return
-    end subroutine cbc_eddy_viscosity
+    end subroutine eddy_viscosity
 
-!  *********************************************************
-!> @subroutine cbc_ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
+!> ********************************************************************
 !! @brief Adams-Bashforth法による疑似ベクトルの時間積分
 !! @param[out] vc 疑似ベクトル
 !! @param sz 配列長
@@ -1738,9 +1731,9 @@
 !! @param[out] flop
 !! @note NOCHECK
 !<
-    subroutine cbc_ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
+    subroutine ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  flop, actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
@@ -1777,10 +1770,9 @@
     end do
 
     return
-    end subroutine cbc_ab2
+    end subroutine ab2
     
-!  **********************************************************************************
-!> @subroutine cbc_vis_cn_jcb (v, sz, g, dh, v00, rei, omg, vc, bx, wk, cf, dv, flop)
+!> ********************************************************************
 !! @brief 緩和Jacobi法による粘性項の計算
 !! @param[out] v 疑似ベクトル
 !! @param sz 配列長
@@ -1798,9 +1790,9 @@
 !! @param[out] flop
 !! @note NOCHECK
 !<
-    subroutine cbc_vis_cn_jcb (v, sz, g, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, flop)
+    subroutine vis_cn_jcb (v, sz, g, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz
@@ -1922,10 +1914,9 @@
 ! update should be done after modification
 
     return
-    end subroutine cbc_vis_cn_jcb
+    end subroutine vis_cn_jcb
 
-!  *******************************************************************************************************
-!> @subroutine cbc_vis_cn_mod_jcb (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, vec, flop)
+!> ********************************************************************
 !! @brief 緩和Jacobi法による粘性項の計算
 !! @param[in/out] v 疑似ベクトル
 !! @param sz 配列長
@@ -1946,9 +1937,9 @@
 !! @param[out] flop
 !! @note NOCHECK
 !<
-    subroutine cbc_vis_cn_mod_jcb (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, vec, flop)
+    subroutine vis_cn_mod_jcb (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, vec, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, m
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer, dimension(3)                                       ::  sz, st, ed
@@ -2109,10 +2100,9 @@
     flop = flop + real(8 + 48*m)
 
     return
-    end subroutine cbc_vis_cn_mod_jcb
+    end subroutine vis_cn_mod_jcb
 
-!  *******************************************************************************************
-!> @subroutine cbc_friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, v00, flop)
+!> ********************************************************************
 !! @brief 壁関数での摩擦速度の計算
 !! @param ut 摩擦速度
 !! @param sz 配列長
@@ -2127,9 +2117,9 @@
 !! @param flop
 !! @note NOCHECK
 !<
-    subroutine cbc_friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, v00, flop)
+    subroutine friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     include 'sklparaf.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, itr, itrMax, iret, ierr
     integer, dimension(3)                                       ::  sz
@@ -2223,4 +2213,4 @@
 		end if
 
     return
-    end subroutine cbc_friction_velocity
+    end subroutine friction_velocity

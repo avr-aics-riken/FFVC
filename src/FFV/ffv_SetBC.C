@@ -1776,7 +1776,7 @@ REAL_TYPE SetBC3D::ps_IBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, int n, REAL_TYPE v
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -1895,7 +1895,7 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* d_ws, int* d_bh1, int n, REAL_TYPE*
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-		if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2066,7 +2066,7 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-		if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2230,7 +2230,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2368,7 +2368,7 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2491,7 +2491,7 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2630,7 +2630,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2856,7 +2856,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3094,7 +3094,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3176,7 +3176,7 @@ REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, int n, double& 
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3338,7 +3338,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3510,7 +3510,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
   
   if ( numProc > 1 ) {
     REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3670,7 +3670,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
 
   if ( numProc > 1 ) {
     REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3767,7 +3767,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -3936,7 +3936,7 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
   
   if ( numProc > 1 ) {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, CPM_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);

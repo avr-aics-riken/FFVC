@@ -1,17 +1,19 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *********************************************************
+!   Copyright (c) All right reserved. 2012
+!
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
 
-!> @file cbc_forcing.f90
-!> @brief subroutines for CBC
-!> @author keno, FSI Team, VCAD, RIKEN
+!> @file   ffv_forcing.f90
+!! @brief  外力タイプの境界条件
+!! @author kero
+!<
 
-!  **********************************************************************
-!> @subroutine cbc_hex_dir (v, sz, g, st, ed, bd, vf, odr, v00, nv, flop)
+!> ********************************************************************
 !! @brief 擬似速度ベクトルの方向の修正、および外力項の付加
 !! @param v 速度ベクトル タイムレベルn
 !! @param sz 配列長
@@ -25,9 +27,9 @@
 !! @param nv 法線ベクトル
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_dir (v, sz, g, st, ed, bd, vf, odr, v00, nv, flop)
+    subroutine hex_dir (v, sz, g, st, ed, bd, vf, odr, v00, nv, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
@@ -96,10 +98,9 @@
     flop = flop + (ie-is+1)*(je-js+1)*(ke-ks+1)*24.0
 
     return
-    end subroutine cbc_hex_dir
+    end subroutine hex_dir
     
-!  *********************************************************
-!> @subroutine cbc_force_keep_vec (wk, cz, st, ed, v, sz, g)
+!> ********************************************************************
 !! @brief コンポーネントのワーク配列に速度ベクトルを保持
 !! @param wk テンポラリのワークベクトル
 !! @param cz コンポーネントの配列長
@@ -109,7 +110,7 @@
 !! @param sz 配列長
 !! @param g ガイドセル長
 !<
-    subroutine cbc_force_keep_vec (wk, cz, st, ed, v, sz, g)
+    subroutine force_keep_vec (wk, cz, st, ed, v, sz, g)
     implicit none
     integer                                                     ::  i, j, k, g, ii, jj, kk
     integer                                                     ::  is, ie, js, je, ks, ke
@@ -155,10 +156,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_force_keep_vec
+    end subroutine force_keep_vec
 
-!  ****************************************************************************************
-!> @subroutine cbc_hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
+!> ********************************************************************
 !! @brief 圧力損失部におけるPoissonのソース項を計算する
 !! @param[out] src ソース項
 !! @param sz 配列長
@@ -176,9 +176,9 @@
 !! @param c 圧力損失部の係数
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
+    subroutine hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
@@ -278,10 +278,9 @@
     flop = flop + (cz(1)+2)*(cz(2)+2)*(cz(3)+2)*200.0
 
     return
-    end subroutine cbc_hex_psrc
+    end subroutine hex_psrc
 
-!  ****************************************************************************************
-!> @subroutine cbc_hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
+!> ********************************************************************
 !! @brief 擬似速度ベクトルの方向の修正、および外力項の付加
 !! @param[in/out] vc 擬似速度ベクトル
 !! @param sz 配列長
@@ -298,9 +297,9 @@
 !! @param c 圧力損失部の係数
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
+    subroutine hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
@@ -394,10 +393,9 @@
     flop = flop + (ie-is+1)*(je-js+1)*(ke-ks+1)*55.0
 
     return
-    end subroutine cbc_hex_force_pvec
+    end subroutine hex_force_pvec
 
-!  ********************************************************************************************************
-!> @subroutine cbc_hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
+!> ********************************************************************
 !! @brief 圧力損失部における速度の修正と発散値の修正
 !! @param[in/out] v 速度ベクトル(n+1,k+1)
 !! @param[in/out] div 速度の発散
@@ -418,9 +416,9 @@
 !! @param am 平均速度と圧損量
 !! @param[out] flop flop count
 !<
-    subroutine cbc_hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
+    subroutine hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
@@ -538,4 +536,4 @@
     am(2) = am2
 
     return
-    end subroutine cbc_hex_force_vec
+    end subroutine hex_force_vec

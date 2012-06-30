@@ -1,17 +1,19 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
+!   FFV : Frontflow / violet
 !
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   Copyright (c) All right reserved. 2012
 !
-!   *********************************************************
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
 !
-!> @file cbc_poisson.f90
-!> @brief Poisson calculation
-!> @author keno, FSI Team, VCAD, RIKEN
+!********************************************************************
+
+!> @file   ffv_poisson.f90
+!! @brief  Poisson routine
+!! @author kero
 !<
-!  ***************************************************
-!> @subroutine cbc_div_cnst (div, sz, g, b2, bp, flop)
+
+!> ********************************************************************
 !! @brief 連立一次方程式の定数項の計算
 !! @param div 速度の発散値
 !! @param sz 配列長
@@ -20,9 +22,9 @@
 !! @param bp BCindex P
 !! @param[out] flop flop count
 !<
-    subroutine cbc_div_cnst (div, sz, g, b2, bp, flop)
+    subroutine div_cnst (div, sz, g, b2, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
     real                                                        ::  b2, dv, flop
@@ -60,10 +62,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_div_cnst
+    end subroutine div_cnst
     
-!  ***************************************************************
-!> @subroutine cbc_psor (p, sz, g, omg, res, src0, src1, bp, flop)
+!> ********************************************************************
 !! @brief point SOR法
 !! @param[in/out] p 圧力
 !! @param sz 配列長
@@ -75,9 +76,9 @@
 !! @param bp BCindex P
 !! @param[out] flop
 !<
-    subroutine cbc_psor (p, sz, g, omg, res, src0, src1, bp, flop)
+    subroutine psor (p, sz, g, omg, res, src0, src1, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -136,10 +137,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_psor
+    end subroutine psor
 
-!  ***********************************************************************************
-!> @subroutine cbc_psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
+!> ********************************************************************
 !! @brief 2-colored SOR法 stride memory access
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -153,9 +153,9 @@
 !! @param bp BCindex P
 !! @param[out] flop 浮動小数演算数
 !<
-    subroutine cbc_psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
+    subroutine psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -214,10 +214,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_psor2sma_core
+    end subroutine psor2sma_core
 
-!  ***********************************************************************************
-!> @subroutine cbc_sma_comm(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key, para_key)
+!> ********************************************************************
 !! @brief SOR2SMAの非同期通信処理
 !! @param p 圧力
 !! @param sz 配列長
@@ -231,7 +230,7 @@
 !! @param key 送信ID
 !! @param para_key parallel managerの識別ID
 !<
-    subroutine cbc_sma_comm(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key, para_key)
+    subroutine sma_comm(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key, para_key)
     implicit none
     include 'sklparaf.h'
     integer                                                ::  ix, jx, kx, g
@@ -414,10 +413,9 @@
       endif
     endif
 
-    end subroutine cbc_sma_comm
+    end subroutine sma_comm
 
-!  ******************************************************************************
-!> @subroutine cbc_sma_comm_wait(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key)
+!> ********************************************************************
 !! @brief SOR2の非同期通信処理
 !! @param p 圧力
 !! @param sz 配列長
@@ -430,7 +428,7 @@
 !! @param cf_z z方向のバッファ
 !! @param key 送信ID
 !<
-    subroutine cbc_sma_comm_wait(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key)
+    subroutine sma_comm_wait(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key)
     implicit none
     include 'sklparaf.h'
     integer                                                ::  ix, jx, kx, g
@@ -551,4 +549,4 @@
       call SklWait(key(6,1), ierr)
     endif
 
-    end subroutine cbc_sma_comm_wait
+    end subroutine sma_comm_wait

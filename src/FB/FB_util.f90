@@ -1,18 +1,19 @@
-!   *****************************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *****************************************************************
+!   Copyright (c) All right reserved. 2012
 !
-!> @file FB_util.f90
-!! @brief FlowBase utilities
-!! @author keno, FSI Team, VCAD, RIKEN
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
+
+!> @file   FB_util.f90
+!! @brief  FlowBase utilities
+!! @author kero
 !<
 
-!  *******************************************************
-!> @subroutine fb_interp_coarse_s(dst, sz, g, src, st, bk)
+!> ********************************************************************
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
@@ -141,8 +142,7 @@
   return
   end subroutine fb_interp_coarse_s
 
-!  *******************************************************
-!> @subroutine fb_interp_coarse_v(dst, sz, g, src, st, bk)
+!> ********************************************************************
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
@@ -423,8 +423,7 @@
   end subroutine fb_interp_coarse_v
 
 
-!  ******************************************************************************************************
-!> @subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
+!> ********************************************************************
 !! @brief スカラー値の書き出し
 !! @param v 速度ベクトル
 !! @param sz 配列長
@@ -489,8 +488,7 @@
   end subroutine fb_write_sph_s
 
 
-!  ******************************************************************************************************
-!> @subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
+!> ********************************************************************
 !! @brief ベクトル値の書き出し
 !! @param v ベクトル
 !! @param sz 配列長
@@ -555,8 +553,7 @@
   end subroutine fb_write_sph_v
 
 
-!  ***********************************************************************************
-!> @subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
+!> ********************************************************************
 !! @brief スカラ値のロード
 !! @param s スカラ
 !! @param sz 配列長
@@ -623,8 +620,7 @@
   return
   end subroutine fb_read_sph_s
   
-!  ***********************************************************************************
-!> @subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
+!> ********************************************************************
 !! @brief ベクトルのロード
 !! @param v ベクトル
 !! @param sz 配列長
@@ -690,8 +686,7 @@
   return
   end subroutine fb_read_sph_v
   
-!  ****************************************************************************
-!> @subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!> ********************************************************************
 !! @brief 温度値を無次元から有次元へ変換し，scale倍して出力
 !! @param dst 
 !! @param src
@@ -729,8 +724,7 @@
   return
   end subroutine fb_tmp_nd2d
   
-!  *********************************************************************
-!> @subroutine fb_tmp_d2nd (t, sz, Base_tmp, Diff_tmp, klv, scale, flop)
+!> ********************************************************************
 !! @brief 温度値を有次元から無次元へ変換し，scale倍して出力
 !! @param t 温度場
 !! @param sz 配列長（一次元）
@@ -767,8 +761,7 @@
   return
   end subroutine fb_tmp_d2nd
   
-!  **********************************************************************
-!> @subroutine fb_prs_d2nd (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!> ********************************************************************
 !! @brief 圧力値を有次元から無次元へ変換し，scale倍して出力
 !! @param s 圧力
 !! @param sz 配列長（一次元）
@@ -804,8 +797,7 @@
   return
   end subroutine fb_prs_d2nd
   
-!  *****************************************************************************
-!> @subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
+!> ********************************************************************
 !! @brief 圧力値を無次元から有次元へ変換し，scale倍して出力
 !! @param dst 有次元
 !! @param src 無次元
@@ -843,8 +835,7 @@
   return
   end subroutine fb_prs_nd2d
   
-!  ************************************************
-!> @subroutine fb_xcopy (dst, src, sz, scale, flop)
+!> ********************************************************************
 !! @brief 値をscale倍してコピーする
 !! @param dst 出力
 !! @param src 入力
@@ -876,8 +867,7 @@
   return
   end subroutine fb_xcopy
   
-!  ***************************************************************
-!> @subroutine fb_shift_refv_in (v, sz, g, v00, scale, refv, flop)
+!> ********************************************************************
 !! @brief 速度ベクトルの格子速度変換
 !! @param v 変換されたベクトル（平均場の場合は積算値）
 !! @param sz 配列長
@@ -930,8 +920,7 @@
   return
   end subroutine fb_shift_refv_in
   
-!  **************************************************************************
-!> @subroutine fb_shift_refv_out (vout, vin, sz, g, v00, scale, unit_v, flop)
+!> ********************************************************************
 !! @brief 速度ベクトルの格子速度変換をして，scale倍する
 !! @param vout 変換されたベクトル
 !! @param vin 変換前
@@ -985,8 +974,7 @@
   return
   end subroutine fb_shift_refv_out
   
-!  ***************************************************
-!> @subroutine fb_delta_v (d, sz, g, vn, vo, bx, flop)
+!> ********************************************************************
 !! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
 !! @param d 戻り値（変化量の2乗和と平均値）
 !! @param sz 配列長
@@ -998,7 +986,7 @@
 !<
   subroutine fb_delta_v (d, sz, g, vn, vo, bx, flop)
   implicit none
-  include 'cbc_f_params.h'
+  include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop, actv
@@ -1051,8 +1039,7 @@
   return
   end subroutine fb_delta_v
 
-!  ***************************************************
-!> @subroutine fb_delta_s (d, sz, g, sn, so, bx, flop)
+!> ********************************************************************
 !! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
 !! @param d 戻り値（変化量の2乗和と平均値）
 !! @param sz 配列長
@@ -1064,7 +1051,7 @@
 !<
   subroutine fb_delta_s (d, sz, g, sn, so, bx, flop)
   implicit none
-  include 'cbc_f_params.h'
+  include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop, actv
@@ -1112,8 +1099,7 @@
   return
   end subroutine fb_delta_s
 
-!  **********************************************
-!> @subroutine fb_average_v (avr, sz, g, v, flop)
+!> ********************************************************************
 !! @brief スカラ値を加算する
 !! @param avr 平均値
 !! @param sz 配列長
@@ -1154,8 +1140,7 @@
   return
   end subroutine fb_average_v
 
-!  **********************************************
-!> @subroutine fb_average_s (avr, sz, g, s, flop)
+!> ********************************************************************
 !! @brief スカラ値を加算する
 !! @param avr 平均値
 !! @param sz 配列長
@@ -1194,8 +1179,7 @@
   return
   end subroutine fb_average_s
   
-!  ***************************************
-!> @subroutine fb_copy_real (dst, src, sz)
+!> ********************************************************************
 !! @brief 値を一次元インデクスでコピーする
 !! @param dst コピー先
 !! @param src コピー元
@@ -1222,8 +1206,7 @@
     return
     end subroutine fb_copy_real
 
-!  **************************************
-!> @subroutine fb_copy_int (dst, src, sz)
+!> ********************************************************************
 !! @brief 値を一次元インデクスでコピーする
 !! @param dst コピー先
 !! @param src コピー元
@@ -1249,8 +1232,7 @@
 return
 end subroutine fb_copy_int
 
-!  ********************************************
-!> @subroutine fb_copy_real_s (dst, src, sz, g)
+!> ********************************************************************
 !! @brief スカラー値をコピーする
 !! @param dst コピー先
 !! @param src コピー元
@@ -1286,8 +1268,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_copy_real_s
 
-!  ********************************************
-!> @subroutine fb_copy_real_v (dst, src, sz, g)
+!> ********************************************************************
 !! @brief ベクトル値をコピーする
 !! @param dst コピー先
 !! @param src コピー元
@@ -1325,8 +1306,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_copy_real_v
 
-!  **************************************
-!> @subroutine fb_set_int (var, sz, init)
+!> ********************************************************************
 !! @brief ベクトル値を設定する
 !! @param var 配列の先頭ポインタ
 !! @param sz 配列長（一次元）
@@ -1352,8 +1332,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_set_int
     
-!  *******************************************
-!> @subroutine fb_set_int_s (var, sz, g, init)
+!> ********************************************************************
 !! @brief ベクトル値を設定する
 !! @param var 配列の先頭ポインタ
 !! @param sz 配列長
@@ -1390,8 +1369,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_set_int_s
 
-!  ***************************************
-!> @subroutine fb_set_real (var, sz, init)
+!> ********************************************************************
 !! @brief 値を設定する
 !! @param var 配列の先頭ポインタ
 !! @param sz 配列長（一次元）
@@ -1419,8 +1397,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_set_real
     
-!  ********************************************
-!> @subroutine fb_set_real_s(var, sz, g, init)
+!> ********************************************************************
 !! @brief スカラー値を設定する
 !! @param var 配列の先頭ポインタ
 !! @param sz 配列長
@@ -1457,8 +1434,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_set_real_s
 
-!  ******************************************
-!> @subroutine fb_set_real_v(var, sz, g, vec)
+!> ********************************************************************
 !! @brief ベクトル値を設定する
 !! @param var 配列の先頭ポインタ
 !! @param sz 配列長
@@ -1502,8 +1478,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_set_real_v
     
-!  **************************************************
-!> @subroutine fb_totalp (tp, sz, g, v, p, v00, flop)
+!> ********************************************************************
 !! @brief 全圧を計算する
 !! @param tp 全圧
 !! @param sz 配列長
@@ -1553,8 +1528,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_totalp
 
-!  ***********************************************************
-!> @subroutine fb_minmax_v (v_min, v_max, sz, g, v00, v, flop)
+!> ********************************************************************
 !! @brief 速度の最小値と最大値を計算する
 !! @param v_min 最小値
 !! @param v_max 最大値
@@ -1611,8 +1585,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_minmax_v
 
-!  ******************************************************
-!> @subroutine fb_minmax_s (f_min, f_max, sz, g, s, flop)
+!> ********************************************************************
 !! @brief スカラ値の最小値と最大値を計算する
 !! @param f_min 最小値
 !! @param f_max 最大値
@@ -1657,8 +1630,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_minmax_s
 
-!  ***********************************************
-!> @subroutine fb_set_vector (var, sz, g, val, bv)
+!> ********************************************************************
 !! @brief ベクトル値を設定する
 !! @param var ベクトル配列
 !! @param sz 配列長
@@ -1668,7 +1640,7 @@ end subroutine fb_copy_int
 !<
     subroutine fb_set_vector (var, sz, g, val, bv)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  u1, u2, u3
@@ -1706,8 +1678,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_set_vector
 
-!  **************************************
-!> @subroutine fb_limit_scalar (t, sz, g)
+!> ********************************************************************
 !! @brief スカラ値の値を[0, 1]に制限する
 !! @param t スカラ値
 !! @param sz 配列長
@@ -1745,8 +1716,7 @@ end subroutine fb_copy_int
     return
     end subroutine fb_limit_scalar
 
-!  *************************************************
-!> @subroutine fb_mulcpy (dst, src, sz, g, cf, flop)
+!> ********************************************************************
 !! @brief 配列と係数の積を新しい配列にストアする
 !! @param [out] dst  出力データ
 !! @param [in]  src  元データ
@@ -1757,7 +1727,7 @@ end subroutine fb_copy_int
 !<
   subroutine fb_mulcpy (dst, src, sz, g, cf, flop)
   implicit none
-  include 'cbc_f_params.h'
+  include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  flop

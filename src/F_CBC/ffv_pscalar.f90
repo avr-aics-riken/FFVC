@@ -1,19 +1,21 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *********************************************************
-
-!> @file cbc_pscalar.f90
-!> @brief subroutines for CBC
-!> @author keno, FSI Team, VCAD, RIKEN
+!   Copyright (c) All right reserved. 2012
+!
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
     
-!  **************************************************************************************
-!> @subroutine cbc_ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bh1, bh2, swt, flop)
+!> @file   ffv_pscalar.f90
+!! @brief  パッシブスカラー計算のルーチン群
+!! @author kero
+!<
+
+!> ********************************************************************
 !! @brief パッシブスカラの移流部分の積分
-!! @param[out] ws スカラ値の対流項による増分
+!! @param [out] ws スカラ値の対流項による増分
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param dh 格子幅
@@ -27,9 +29,9 @@
 !! @param swt 固定壁の扱い（0-断熱，1-共役熱移動）
 !! @param[out] flop
 !<
-    subroutine cbc_ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bh1, bh2, swt, flop)
+    subroutine ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bh1, bh2, swt, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, idx, swt, hdx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
@@ -268,10 +270,9 @@
     end do
 
     return
-    end subroutine cbc_ps_muscl
+    end subroutine ps_muscl
 
-!  ****************************************************************
-!> @subroutine cbc_ps_buoyancy (v, sz, g, dt, gr, rei, t, bd, flop)
+!> ********************************************************************
 !! @brief 浮力項の計算
 !! @param[in/out] v 速度ベクトル
 !! @param sz 配列長
@@ -282,9 +283,9 @@
 !! @param bd BCindex ID
 !! @param[out] flop
 !<
-    subroutine cbc_ps_buoyancy (v, sz, g, dt, gr, rei, t, bd, flop)
+    subroutine ps_buoyancy (v, sz, g, dt, gr, rei, t, bd, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  dt, gr, rei, dgr, flop
@@ -308,10 +309,9 @@
     end do
 
     return
-    end subroutine cbc_ps_buoyancy
+    end subroutine ps_buoyancy
 
-!  **************************************************************************
-!> @subroutine cbc_ps_diff_ee (t, sz, g, res, dh, dt, pei, qbc, bh, ws, flop)
+!> ********************************************************************
 !! @brief 温度の拡散項の半陰的時間積分（対流項を積分した結果を用いて粘性項を計算）
 !! @param t 温度
 !! @param sz 配列長
@@ -325,9 +325,9 @@
 !! @param ws 部分段階の温度
 !! @param flop 浮動小数演算数
 !<
-    subroutine cbc_ps_diff_ee (t, sz, g, res, dh, dt, pei, qbc, bh, ws, flop)
+    subroutine ps_diff_ee (t, sz, g, res, dh, dt, pei, qbc, bh, ws, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  dh, dt, pei, dth1, dth2, res, flop, delta
@@ -400,10 +400,9 @@
     end do
 
     return
-    end subroutine cbc_ps_diff_ee
+    end subroutine ps_diff_ee
 
-!  **********************************************************
-!> @subroutine cbc_hbc_drchlt (t, sz, g, st, ed, bh, odr, tc)
+!> ********************************************************************
 !! @brief 温度指定境界条件を設定するために必要な参照値をセットする
 !! @param[in/out] t 温度
 !! @param sz 配列長
@@ -414,9 +413,9 @@
 !! @param odr 内部境界処理時の境界条件のエントリ
 !! @param tc 指定する値
 !<
-    subroutine cbc_hbc_drchlt (t, sz, g, st, ed, bh, odr, tc)
+    subroutine hbc_drchlt (t, sz, g, st, ed, bh, odr, tc)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  tc
@@ -460,4 +459,4 @@
     end do
     
     return
-    end subroutine cbc_hbc_drchlt
+    end subroutine hbc_drchlt

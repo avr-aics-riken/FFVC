@@ -1,28 +1,30 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *********************************************************
+!   Copyright (c) All right reserved. 2012
 !
-!> @file BCprs_cc.f90
-!> @brief Boundary conditons for pressure
-!> @author keno, FSI Team, VCAD, RIKEN
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
+
+!> @file   ffv_pbc.f90
+!! @brief  圧力境界条件
+!! @author kero
 !<
     
-!  ************************************************
-!> @subroutine cbc_pobc_drchlt (p, sz, g, face, pv)
-!! @brief 圧力の外部ノイマン境界
+
+!> ********************************************************************
+!! @brief 圧力の外部ディリクレ境界
 !! @param p 圧力
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param face 外部境界面の番号
 !! @param pv 値
 !<
-    subroutine cbc_pobc_drchlt (p, sz, g, face, pv)
+    subroutine pobc_drchlt (p, sz, g, face, pv)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
@@ -132,19 +134,19 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_pobc_drchlt
+    end subroutine pobc_drchlt
     
-!  *********************************************
-!> @subroutine cbc_pobc_neumann (p, sz, g, face)
+    
+!> ********************************************************************
 !! @brief 圧力の外部ノイマン境界
 !! @param p 圧力
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param face 外部境界面の番号
 !<
-    subroutine cbc_pobc_neumann (p, sz, g, face)
+    subroutine pobc_neumann (p, sz, g, face)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
@@ -253,4 +255,4 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_pobc_neumann
+    end subroutine pobc_neumann

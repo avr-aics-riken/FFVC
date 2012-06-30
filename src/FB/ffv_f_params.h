@@ -8,7 +8,7 @@
 !
 ! #################################################################
 !
-!> @file cbc_f_params.h
+!> @file ffv_f_params.h
 !! @brief BC Indexのマスク操作のビット定義, FB_Define.hと整合
 !! @author kero
 !<

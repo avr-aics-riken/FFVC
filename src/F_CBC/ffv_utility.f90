@@ -1,18 +1,19 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
+!   FFV : Frontflow / violet
 !
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   Copyright (c) All right reserved. 2012
 !
-!   *********************************************************
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
 !
-!> @file cbc_utility.f90
-!> @brief Utilities
-!> @author keno, FSI Team, VCAD, RIKEN
+!********************************************************************
+
+!> @file   ffv_utility.f90
+!! @brief  Utilitiy functions
+!! @author kero
 !<
 
-!  ************************************************************************
-!> @subroutine cbc_norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
+!> ********************************************************************
 !! @brief 有効セルに対する発散の最大値と自乗和を計算，絶対値の最大値の位置を返す
 !! @param ds 残差の絶対値
 !! @param rm 残差の自乗和
@@ -24,9 +25,9 @@
 !! @param bp BCindex P
 !! @param flop
 !<
-    subroutine cbc_norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
     integer, dimension(3)                                     ::  sz, idx
     real                                                      ::  ds, flop, r, coef, rm, d
@@ -84,10 +85,9 @@
     idx(3) = k0
 
     return
-    end subroutine cbc_norm_v_div_dbg
+    end subroutine norm_v_div_dbg
    
-!  ***************************************************************
-!> @subroutine cbc_norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
+!> ********************************************************************
 !! @brief 速度成分の最大値を計算する
 !! @param ds 最大値
 !! @param sz 配列長
@@ -97,9 +97,9 @@
 !! @param bp BCindex P
 !! @param flop
 !<
-    subroutine cbc_norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ds, flop, r, coef
@@ -137,10 +137,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_norm_v_div_l2
+    end subroutine norm_v_div_l2
 
-!  ***************************************************************
-!> @subroutine cbc_norm_v_div_max (ds, sz, g, div, coef, bp, flop)
+!> ********************************************************************
 !! @brief 速度成分の最大値を計算する
 !! @param ds 最大値
 !! @param sz 配列長
@@ -150,9 +149,9 @@
 !! @param bp BCindex P
 !! @param flop
 !<
-    subroutine cbc_norm_v_div_max (ds, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_max (ds, sz, g, div, coef, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ds, flop, r, coef
@@ -190,10 +189,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_norm_v_div_max
+    end subroutine norm_v_div_max
     
-!  *************************************************
-!> @subroutine cbc_vmax (v_max, sz, g, v00, v, flop)
+!> ********************************************************************
 !! @brief 速度成分の最大値を計算する
 !! @param v_max 最大値
 !! @param sz 配列長
@@ -202,7 +200,7 @@
 !! @param v 速度ベクトル
 !! @param flop
 !<
-    subroutine cbc_vmax (v_max, sz, g, v00, v, flop)
+    subroutine find_vmax (v_max, sz, g, v00, v, flop)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
@@ -249,10 +247,9 @@
     v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 2 flop
 
     return
-    end subroutine cbc_vmax
+    end subroutine find_vmax
     
-!  ******************************************************
-!> @subroutine cbc_i2vgt (q, sz, g, dh, v, bv, v00, flop)
+!> ********************************************************************
 !! @brief 速度勾配テンソルの第２不変量の計算
 !! @param[out] q 速度勾配テンソルの第２不変量
 !! @param sz 配列長
@@ -263,9 +260,9 @@
 !! @param v00 参照速度
 !! @param[out] flop
 !<
-    subroutine cbc_i2vgt (q, sz, g, dh, v, bv, v00, flop)
+    subroutine i2vgt (q, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -433,10 +430,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_i2vgt
+    end subroutine i2vgt
 
-!  ********************************************************
-!> @subroutine cbc_rot_v (rot, sz, g, dh, v, bv, v00, flop)
+!> ********************************************************************
 !! @brief 速度勾配テンソルの第２不変量の計算
 !! @param[out] rot 渦度ベクトル
 !! @param sz 配列長
@@ -447,9 +443,9 @@
 !! @param v00 参照速度
 !! @param[out] flop
 !<
-    subroutine cbc_rot_v (rot, sz, g, dh, v, bv, v00, flop)
+    subroutine rot_v (rot, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -600,10 +596,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_rot_v
+    end subroutine rot_v
 
-!  **********************************************************
-!> @subroutine cbc_helicity (ht, sz, g, dh, v, bv, v00, flop)
+!> ********************************************************************
 !! @brief ヘリシティの計算
 !! @param[out] ht ヘリシティ
 !! @param sz 配列長
@@ -614,9 +609,9 @@
 !! @param v00 参照速度
 !! @param[out] flop
 !<
-    subroutine cbc_helicity (ht, sz, g, dh, v, bv, v00, flop)
+    subroutine helicity (ht, sz, g, dh, v, bv, v00, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -770,10 +765,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_helicity
+    end subroutine helicity
 
-!  *******************************************************
-!> @subroutine cbc_face_avr_sampling (p, sz, g, face, avr)
+!> ********************************************************************
 !! @brief 指定面の平均圧力を求める
 !! @param p 圧力
 !! @param sz 配列長
@@ -781,9 +775,9 @@
 !! @param face 外部境界面の番号
 !! @param avr 平均値
 !<
-    subroutine cbc_face_avr_sampling (p, sz, g, face, avr)
+    subroutine face_avr_sampling (p, sz, g, face, avr)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
@@ -917,17 +911,16 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_face_avr_sampling
+    end subroutine face_avr_sampling
 
-!  **********************************************
-!> @subroutine cbc_shift_pressure (p, sz, g, avr)
+!> ********************************************************************
 !! @brief 圧力を指定値だけシフトする
 !! @param p 圧力
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param avr 平均値
 !<
-    subroutine cbc_shift_pressure (p, sz, g, avr)
+    subroutine shift_pressure (p, sz, g, avr)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
@@ -961,10 +954,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cbc_shift_pressure
+    end subroutine shift_pressure
 
-!  *****************************************************
-!> @subroutine cbc_force (force, sz, g, p, bp, dh, flop)
+!> ********************************************************************
 !! @brief 物体表面の力を計算する
 !! @param[out] force 力の成分
 !! @param sz 配列長
@@ -974,9 +966,9 @@
 !! @param dh 無次元格子幅
 !! @param[out] flop flop count
 !<
-  subroutine cbc_force (force, sz, g, p, bp, dh, flop)
+  subroutine force (force, sz, g, p, bp, dh, flop)
   implicit none
-  include '../FB/cbc_f_params.h'
+  include '../FB/ffv_f_params.h'
   integer                                                     ::  i, j, k, ix, jx, kx, g
   integer                                                     ::  bw, be, bs, bn, bb, bt
   integer, dimension(3)                                       ::  sz
@@ -1064,5 +1056,5 @@
   force(3) = fz * cf
 
   return
-  end subroutine cbc_force
+  end subroutine force
 

@@ -1,14 +1,17 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *********************************************************
+!   Copyright (c) All right reserved. 2012
+!
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
 
-!> @file d_o_o_p.h
-!> @brief subroutines for CBC
-!> @author keno, FSI Team, VCAD, RIKEN
+!> @file   d_o_o_p.h
+!! @brief  データロードの共通部分
+!! @author kero
+!<
 
 !    real                                                        ::  u_ref, v_ref, w_ref, flop
 !    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t

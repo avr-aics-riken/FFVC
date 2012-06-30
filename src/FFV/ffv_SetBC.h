@@ -20,8 +20,9 @@
 #include <math.h>
 
 #include "SetBC.h"
-#include "ffv_Ffunc.h"
 #include "ffv_Define.h"
+#include "ffv_Ffunc.h"
+
 
 class SetBC3D : public SetBC {
 public:
@@ -59,11 +60,11 @@ protected:
   
   
   /**
-   * @brief 温度の外部周期境界条件（単純なコピー）
+   * @brief 温度の外部周期境界条件（単純コピー）
    * @param [in] t    温度のデータクラス
    * @param [in] face 面番号
    */
-  void Tobc_Prdc_Simple         (REAL_TYPE* d_t, const int face);
+  void Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face);
   
   void Vibc_Prdc                (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
   void Vobc_Prdc                (REAL_TYPE* d_v, const int face);

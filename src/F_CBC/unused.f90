@@ -1,17 +1,19 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
+!   FFV : Frontflow / violet
 !
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   Copyright (c) All right reserved. 2012
 !
-!   *********************************************************
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
 !
-!> @file unused.f90
-!> @brief 利用しない関数群
-!> @author keno, FSI Team, VCAD, RIKEN
+!********************************************************************
 
-!  **************************************************************************************
-!> @subroutine cbc_psor2sma_core_if (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
+!> @file   unused.f90
+!! @brief  予備の関数群
+!! @author kero
+!<
+
+!> ********************************************************************
 !! @brief 2-colored SOR法，stride memory access 非計算セルのスキップ
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -25,9 +27,9 @@
 !! @param bp BCindex P
 !! @param[out] flop
 !<
-    subroutine cbc_psor2sma_core_if (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
+    subroutine ffv_psor2sma_core_if (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx, w
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -78,10 +80,9 @@
     ! flop = flop + real(w)*41.0 ! DP
 
     return
-    end subroutine cbc_psor2sma_core_if
+    end subroutine ffv_psor2sma_core_if
     
-!  **********************************************************************
-!> @subroutine cbc_jacobi (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
+!> ********************************************************************
 !! @brief 緩和Jacobi法
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -94,9 +95,9 @@
 !! @param bp BCindex P
 !! @param[out] flop flop count
 !<
-    subroutine cbc_jacobi (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
+    subroutine ffv_jacobi (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -150,10 +151,9 @@
     end do
 
     return
-    end subroutine cbc_jacobi
+    end subroutine ffv_jacobi
 
-!  ************************************************************************************
-!> @subroutine cbc_psor_index (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
+!> ********************************************************************
 !! @brief SOR　インデクスによる非計算セルのスキップ．インデクスはi,j,kをビットエンコード処理
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -167,9 +167,9 @@
 !! @param idx_sz C.Fcell
 !! @param[out] flop
 !<
-    subroutine cbc_psor_index (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
+    subroutine ffv_psor_index (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
     implicit none
-    include '../FB/cbc_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, m, g, idx, idx_sz, ldx
     integer, dimension(3)                                     ::  sz
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -214,10 +214,9 @@
     end do
 
     return
-    end subroutine cbc_psor_index
+    end subroutine ffv_psor_index
 
-!  *************************************************************************************
-!> @subroutine cbc_psor_index3 (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
+!> ********************************************************************
 !! @brief SOR　インデクスによる非計算セルのスキップ．インデクスはinteger*3
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -231,9 +230,9 @@
 !! @param idx_sz C.Fcell
 !! @param[out] flop
 !<
-subroutine cbc_psor_index3 (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
+subroutine ffv_psor_index3 (p, sz, g, omg, res, src0, src1, bp, index, idx_sz, flop)
 implicit none
-include '../FB/cbc_f_params.h'
+include '../FB/ffv_f_params.h'
 integer                                                   ::  i, j, k, m, g, idx
 integer, dimension(3)                                     ::  sz
 real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -278,10 +277,9 @@ res = res + dp*dp*real(ibits(idx, Active, 1))
 end do
 
 return
-end subroutine cbc_psor_index3
+end subroutine ffv_psor_index3
 
-!  ******************************************************************
-!> @subroutine cbc_psor_if (p, sz, g, omg, res, src0, src1, bp, flop)
+!> ********************************************************************
 !! @brief point SOR 非計算セルをif-statementでスキップする
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -293,9 +291,9 @@ end subroutine cbc_psor_index3
 !! @param bp BCindex P
 !! @param[out] flop
 !<
-subroutine cbc_psor_if (p, sz, g, omg, res, src0, src1, bp, flop)
+subroutine ffv_psor_if (p, sz, g, omg, res, src0, src1, bp, flop)
 implicit none
-include '../FB/cbc_f_params.h'
+include '../FB/ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx, c
 integer, dimension(3)                                     ::  sz
 real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -346,10 +344,9 @@ flop = flop + real(c)*36.0
 ! flop = flop + real(c)*41.0 ! DP
 
 return
-end subroutine cbc_psor_if
+end subroutine ffv_psor_if
 
-!  *************************************************************************
-!> @subroutine cbc_jacobi_if (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
+!> ********************************************************************
 !! @brief 緩和Jacobi法，非計算セルのスキップ
 !! @param[out] p 圧力
 !! @param sz 配列長
@@ -361,9 +358,9 @@ end subroutine cbc_psor_if
 !! @param bp BCindex P
 !! @param[out] flop flop count
 !<
-subroutine cbc_jacobi_if (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
+subroutine ffv_jacobi_if (p, sz, g, omg, res, src0, src1, bp, wk2, flop)
 implicit none
-include '../FB/cbc_f_params.h'
+include '../FB/ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, c, idx
 integer, dimension(3)                                     ::  sz
 real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
@@ -422,4 +419,4 @@ flop = flop + real(c)*36.0
 ! flop = flop + real(c)*41.0 ! DP
 
 return
-end subroutine cbc_jacobi_if
+end subroutine ffv_jacobi_if

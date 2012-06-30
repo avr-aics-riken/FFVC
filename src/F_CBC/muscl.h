@@ -1,14 +1,17 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet
 !
-!   *********************************************************
+!   Copyright (c) All right reserved. 2012
+!
+!   Institute of Industrial Science, The University of Tokyo, Japan. 
+!
+!********************************************************************
 
-!> @file muscl_x.h
-!> @brief subroutines for CBC
-!> @author keno, FSI Team, VCAD, RIKEN 
+!> @file   muscl.h
+!! @brief  MUSCL reconstruction core
+!! @author kero
+!<
 
 ! b  = (3.0-ck)/(1.0-ck), ck=1/3
 ! w_?; セル界面フラグ　(0-wall face / 1-fluid)

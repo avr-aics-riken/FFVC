@@ -36,7 +36,7 @@ UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
               -I/opt/openmpi/include \
               -I/usr/local/textparser/include \
               -I../FB \
-              -I../F_CBC \
+              -I../F_FFV \
               -I../IP
 UDEF_LIB_PATH=-L../Polylib-2.1_dev_a/lib \
               -L../Cutlib-2.0.3/lib \

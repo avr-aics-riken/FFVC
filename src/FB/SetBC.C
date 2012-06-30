@@ -41,7 +41,7 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   jx = &(Cref->jmax);
   kx = &(Cref->kmax);
   
-  dh        = Cref->dh
+  dh        = Cref->dh;
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
   Peclet    = Cref->Peclet;

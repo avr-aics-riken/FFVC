@@ -11,9 +11,12 @@
 //
 // #################################################################
 
-//@file FB_Ffunc.h
-//@brief FlowBase Fortran function Header
-//@author kero
+/**
+ @file   FB_Ffunc.h
+ @brief  FlowBase Fortran function Header
+ @author kero
+ */
+
 
 #include "cpm_Define.h"
 #include "FB_Define.h"
