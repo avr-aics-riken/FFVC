@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file CompoFraction.h
- * @brief Component Fraction class Header
+ * @file   CompoFraction.h
+ * @brief  Component Fraction class Header
  * @author kero
  */
 
@@ -326,9 +326,9 @@ public:
   
   /**
    * @brief 体積率が(0,1)の間のセルに対してサブディビジョンを実施
-   * @param [in] st 開始インデクス
-   * @param [in] ed 終了インデクス
-   * @param [in/out] vf フラクション
+   * @param [in]     st    開始インデクス
+   * @param [in]     ed    終了インデクス
+   * @param [in/out] vf    フラクション
    * @param [in/out] flop  浮動小数点演算数
    */
   void subdivision(const int st[], const int ed[], float* vf, double& flop);

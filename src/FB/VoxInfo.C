@@ -231,7 +231,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
 
 
 // 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
-void VoxInfo::adjMediumPrdc_Inner(int* mid)
+void VoxInfo::adjMediumPrdc_Inner(int* mid, CompoList* cmp)
 {
   int st[3], ed[3];
   
@@ -849,12 +849,9 @@ unsigned long VoxInfo::countState(int id, int* mid)
   return g;
 }
 
-/**
- @brief BCindexを表示する（デバッグ用）
- @param bcv BCindex D
- @param fname 出力用ファイル名
- */
-void VoxInfo::dbg_chkBCIndexD(int* bcd, const char* fname)
+
+// BCindexを表示する（デバッグ用）
+void VoxInfo::dbg_chkBCIndexD(const int* bcd, const char* fname)
 {
   int s;
   size_t m;
@@ -893,13 +890,8 @@ void VoxInfo::dbg_chkBCIndexD(int* bcd, const char* fname)
 }
 
 
-/**
- @brief BCindexを表示する（デバッグ用）
- @param bcd BCindex ID
- @param bcp BCindex P
- @param fname 出力用ファイル名
- */
-void VoxInfo::dbg_chkBCIndexP(int* bcd, int* bcp, const char* fname)
+// BCindexを表示する（デバッグ用）
+void VoxInfo::dbg_chkBCIndexP(const int* bcd, const int* bcp, const char* fname, CompoList* cmp)
 {
   size_t m;
   int q, s, d;
@@ -2588,12 +2580,12 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
  - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
  - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
  */
-unsigned long VoxInfo::encPbit_N_Cut(int* bx, float* cut, const bool convergence)
+unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool convergence)
 {
   size_t m_p, m;
   int s;
   float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
-  float* ct;
+  const float* ct;
   
   int ix = size[0];
   int jx = size[1];
@@ -2663,7 +2655,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, float* cut, const bool convergence
   
   // wall locationフラグ
   unsigned long c = 0;
-  float* pos; 
+  const float* pos; 
   float q;
   
   for (int k=1; k<=kx; k++) {
@@ -4115,19 +4107,15 @@ void VoxInfo::find_isolated_Fcell(int order, int* mid, int* bx)
   }
 }
 
-/**
- @brief cmp[]にエンコードされた媒質IDの中から対象となるIDのエントリを探す
- @param mat_id 対象とする媒質ID
- @note 媒質が格納されているオーダーの範囲は[NoBC+1,NoCompo]
- */
-int VoxInfo::find_mat_odr(int mat_id)
+
+// cmp[]にエンコードされた媒質IDの中から対象となるIDのエントリを探す
+int VoxInfo::find_mat_odr(const int mat_id, CompoList* cmp)
 {
   int odr, id;
   
   id = 0;
   for (int n=NoBC+1; n<=NoCompo; n++) {
     odr = cmp[n].getMatOdr();
-    //id  = mat[odr].getMatID();
     if (id == mat_id) return n;
   }
   if (id == 0) {
@@ -4136,6 +4124,7 @@ int VoxInfo::find_mat_odr(int mat_id)
   }
   return 0;
 }
+
 
 /**
  @brief VBCのbboxを取得する
@@ -4266,16 +4255,9 @@ unsigned long VoxInfo::flip_InActive(unsigned long& L,
 }
 
 
-/**
- @brief コンポーネントの断面積を求める
- @param n エントリ番号
- @param bd BCindex ID
- @param bv BCindex V
- @param bh1 BCindex H1
- @param PL MPIPolylibクラス
- @note ポリゴン情報は有次元とする
- */
-void VoxInfo::get_Compo_Area_Cut(int n, PolylibNS::MPIPolylib* PL)
+// コンポーネントの断面積を求める
+// ポリゴン情報は有次元とする
+void VoxInfo::get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::MPIPolylib* PL)
 {
   using namespace PolylibNS;
   
@@ -4360,17 +4342,6 @@ void VoxInfo::getOffset(int* st, int* ofst)
 }
 
 
-// 作業用ポインタのコピー
-void VoxInfo::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
-{
-  if ( !m_CMP ) Exit(0);
-  cmp = m_CMP;
-  
-  if ( !m_MAT ) Exit(0);
-  mat = m_MAT;
-}
-
-
 /**
  @brief シード点をペイントする
  @param mid ID配列
@@ -4436,7 +4407,8 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+          //m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           if ( cell[m] == 0 ) cell[m] = target;
         }
       }
@@ -4448,7 +4420,9 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        target = cell[FBUtility::getFindexS3D(sz, gd, i, j, k)];
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        //m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        target = cell[m];
         if ( target<=0 ) {
           Hostonly_ stamped_printf("\tVoxel data includes non-positive ID [%d] at (%d, %d, %d)\n", target, i, j, k);
           Exit(0);
@@ -4763,14 +4737,9 @@ void VoxInfo::setAmask_Thermal(int* bh)
 
 
 
-/**
- @brief bx[]に各境界条件の共通のビット情報をエンコードする（その1）
- @param bx BCindex ID
- @param mid ID配列
- @param cvf コンポーネントの体積率
- @note 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
- */
-void VoxInfo::setBCIndex_base1(int* bx, int* mid, float* cvf)
+// bx[]に各境界条件の共通のビット情報をエンコードする（その1）
+// 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
+void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const MediumList* mat, CompoList* cmp)
 {
   int odr;
   int id;
@@ -4803,7 +4772,8 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, float* cvf)
     
     // 体積率コンポーネントのオーバーラップは考慮していないので、エラーが生じる可能性あり
     size_t m;
-    switch ( cmp[n].getType() ) {
+    switch ( cmp[n].getType() ) 
+    {
       case HEX:
       case FAN:
         cmp[n].getBbox(st, ed);
@@ -4881,21 +4851,11 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, float* cvf)
   
 }
 
-/**
- @brief bx[]に各境界条件の共通のビット情報をエンコードする（その2）
- @param bx BCindex ID
- @param mid ID配列
- @param BC SetBCクラスのポインタ
- @param Lcell ノードローカルの有効セル数
- @param Gcell グローバルの有効セル数
- @param KOS 解くべき方程式の種類 KIND_OF_SOLVER
- @note 事前に，cmp[]へMediumListへのエントリをエンコードしておく -> cmp[].setMatOdr()
- */
-void VoxInfo::setBCIndex_base2(int* bx, int* mid, SetBC* BC, unsigned long & Lcell, unsigned long & Gcell, const int KOS)
+
+// bx[]に各境界条件の共通のビット情報をエンコードする（その2）
+// 事前に，cmp[]へMediumListへのエントリをエンコードしておく -> cmp[].setMatOdr()
+void VoxInfo::setBCIndex_base2(int* bx, int* mid, unsigned long& Lcell, unsigned long& Gcell, const int KOS, CompoList* cmp)
 {
-  int mat_id;
-  int id;
-  
   // 孤立した流体セルの属性変更
   for (int n=1; n<=NoCompo; n++) {
     find_isolated_Fcell( cmp[n].getMatOdr(), mid, bx);
@@ -4906,8 +4866,9 @@ void VoxInfo::setBCIndex_base2(int* bx, int* mid, SetBC* BC, unsigned long & Lce
   
   // Inactive指定のセルを不活性にする
   unsigned long m_L, m_G;
+  
   for (int n=1; n<=NoBC; n++) {
-    id = cmp[n].getMatOdr();
+    int id = cmp[n].getMatOdr();
     
     if ( cmp[n].getType() == INACTIVE ) {
       
@@ -4920,23 +4881,16 @@ void VoxInfo::setBCIndex_base2(int* bx, int* mid, SetBC* BC, unsigned long & Lce
   
   // コンポーネントに登録された媒質のセル数を数え，elementにセットする
   for (int n=NoBC+1; n<=NoCompo; n++) {
-    id = cmp[n].getMatOdr();
+    int id = cmp[n].getMatOdr();
     cmp[n].setElement( countState(id, mid) );
   }
   
   
 }
 
-/**
- @brief 境界条件のビット情報をエンコードする
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh1 BCindex H2
- @param mid ID配列
- @param BC SetBCクラスのポインタ
- @param kos KindOfSolver
- */
-void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos)
+
+// 境界条件のビット情報をエンコードする
+void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp)
 {
   int id;
   int deface;
@@ -5061,17 +5015,8 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
 }
 
 
-/**
- @brief 圧力境界条件のビット情報をエンコードする
- @param bcd BCindex ID
- @param bcp BCindex P
- @param mid ID配列
- @param BC SetBCクラスのポインタ
- @param isCDS CDS->true
- @param cut 距離情報
- @retval 表面セル数
- */
-unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS, float* cut)
+// 圧力境界条件のビット情報をエンコードする
+unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, const bool isCDS, const float* cut, CompoList* cmp)
 {
 
   unsigned long surface = 0;
@@ -5178,11 +5123,12 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, bool
  @param mid ID配列
  @param BC SetBCクラスのポインタ
  @param bp BCindex P
+ @param [in/out] cmp CompoList
  @param isCDS CDS->true
  @param cut 距離情報
  @param cut_id カット点ID
  */
-void VoxInfo::setBCIndexV(int* bv, int* mid, SetBC* BC, int* bp, bool isCDS, float* cut, int* cut_id)
+void VoxInfo::setBCIndexV(int* bv, int* mid, SetBC* BC, int* bp, CompoList* cmp, bool isCDS, float* cut, int* cut_id)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;
@@ -5479,6 +5425,78 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   }
   
 }
+
+// Cell_Monitorで指定するIDでモニタ部分を指定するための準備
+void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL)
+{
+  int f_st[3], f_ed[3];
+  
+  float ctr[3];
+  float nv[3];
+  float dr[3];
+  float m_depth;
+  float m_radius;
+  float m_width;
+  float m_height;
+  
+  
+  for (int n=1; n<=NoBC; n++) {
+    
+    if (cmp[n].isMONITOR()) {
+      
+      // 形状パラメータのセット
+      nv[0]   = cmp[n].nv[0];
+      nv[1]   = cmp[n].nv[1];
+      nv[2]   = cmp[n].nv[2];
+      
+      dr[0]   = cmp[n].dr[0];
+      dr[1]   = cmp[n].dr[1];
+      dr[2]   = cmp[n].dr[2];
+      
+      ctr[0]  = cmp[n].oc[0]/(float)RefL;
+      ctr[1]  = cmp[n].oc[1]/(float)RefL;
+      ctr[2]  = cmp[n].oc[2]/(float)RefL;
+      
+      m_depth = cmp[n].depth/(float)RefL;
+      m_radius= cmp[n].shp_p1/(float)RefL;
+      m_width = cmp[n].shp_p1/(float)RefL;
+      m_height= cmp[n].shp_p2/(float)RefL;
+      
+      switch ( cmp[n].get_Shape() ) {
+        case SHAPE_BOX:
+          SM->setShapeParam(nv, ctr, dr, m_depth, m_width, m_height);
+          break;
+          
+        case SHAPE_CYLINDER:
+          SM->setShapeParam(nv, ctr, m_depth, m_radius);
+          break;
+          
+        default:
+          Exit(0);
+          break;
+      }
+      
+      // 回転角度の計算
+      SM->get_angle(); 
+      
+      // bboxと投影面積の計算
+      cmp[n].area = SM->get_BboxArea();
+      
+      // インデクスの計算 > あとでresize
+      SM->bbox_index(f_st, f_ed);
+      
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+      
+      int id = cmp[n].getMatOdr();
+      SM->setID(f_st, f_ed, mid, id);
+      
+    }
+  }
+  
+}
+
 
 
 // ボクセルモデルにカット情報から得られた固体情報を転写する

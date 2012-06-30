@@ -129,7 +129,7 @@ public:
   
   
   /** 外部境界リストのポインタを返す */
-  BoundaryOuter* export_OBC() 
+  BoundaryOuter* export_OBC()
   { 
     return obc;
   }
@@ -138,7 +138,7 @@ public:
   /** 引数の外部境界面の外部境界リストのポインタを返す
    * @param [in] face 面番号
    */
-  BoundaryOuter* export_OBC(const int face) 
+  BoundaryOuter* export_OBC(const int face)
   { 
     return &obc[face];
   }

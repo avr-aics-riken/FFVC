@@ -8,8 +8,8 @@
 //
 // #################################################################
 
-//@file CompoFraction.C
-//@brief CompoFraction class
+//@file   CompoFraction.C
+//@brief  CompoFraction class
 //@author kero
 
 #include "CompoFraction.h"

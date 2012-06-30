@@ -25,6 +25,8 @@ int FFV::Initialize(int argc, char **argv)
   double G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
   double tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
   
+  double flop_count;     ///< flops計算用
+  
   // CPMバージョン表示
   if ( paraMngr->GetMyRankID() == 0 )
   {
@@ -199,11 +201,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // CompoListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
   cmp = new CompoList[C.NoCompo+1];
-  
-  // CompoList, MediumListのポインタをセット
-  BC.importCMP_MAT(cmp, mat);
-  V.importCMP_MAT(cmp, mat);
-  B.importCompoPtr(cmp);
+
   
   
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
@@ -341,10 +339,46 @@ int FFV::Initialize(int argc, char **argv)
 	}
 
   
+  // CompoList, MediumListのポインタをセット
+  BC.importCMP_MAT(cmp, mat);
+  B.importCompoPtr(cmp);
+  
+  // CompoListの設定，外部境界条件の読み込み保持、ガイドセル上にパラメータファイルで指定する媒質インデクスを代入
+  setBCinfo();
+  
+
   
   
+  // Cell_Monitorの指定がある場合，モニタ位置をセット
+  if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) 
+  {
+    // ShapeMonitorのインスタンス
+    ShapeMonitor SM(size, guide, C.dx, C.org);
+    
+    V.setShapeMonitor(d_mid, &SM, cmp, C.RefLength);
+  }
   
   
+  // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定
+  if ( C.isCDS() ) 
+  {
+    V.setOBC_Cut(&BC, d_cut);
+  }
+  
+  
+  // セルIDのノード間同期
+  if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  
+  
+  // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
+  if ( C.isVfraction() ) {
+    TIMING_start(tm_init_alloc);
+    allocArray_CompoVF(PrepMemory, TotalMemory);
+    TIMING_stop(tm_init_alloc); 
+    
+    flop_count = 0.0;
+    setComponentVF();
+  }
   
   
   
@@ -573,6 +607,166 @@ void FFV::printDomainInfo()
   cout << " G_div      = " << G_div[0]  << "," << G_div[1]  << "," << G_div[2]  << endl;
 }
 
+
+// 外部境界条件を読み込み，Controlクラスに保持する
+void FFV::setBCinfo()
+{
+  // パラメータファイルの情報を元にCompoListの情報を設定する
+  B.loadBC_Local(&C);
+  
+  // 各コンポーネントが存在するかどうかを保持しておく
+  setEnsComponent();
+  
+  // KOSと境界条件種類の整合性をチェック
+  B.chkBCconsistency(C.KindOfSolver);
+  
+  // ガイドセル上にパラメータファイルで指定する媒質インデクスを代入する．周期境界の場合の処理も含む．
+  for (int face=0; face<NOFACE; face++) {
+    V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(), 
+                      BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
+  }
+}
+
+
+
+// HEX,FANコンポーネントなどの体積率とbboxなどをセット
+// インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+void FFV::setComponentVF()
+{
+  const int subsampling = 20; // 体積率のサブサンプリングの基数
+  int f_st[3], f_ed[3];
+  double flop;
+  
+  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    if ( cmp[n].isFORCING() ) {
+      // 形状パラメータのセット
+      switch ( cmp[n].getType() ) {
+        case HEX:
+          CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+          break;
+          
+        case FAN:
+          CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+          
+        default:
+          Exit(0);
+          break;
+      }
+      
+      // 回転角度の計算
+      CF.get_angle(); 
+      
+      // bboxと投影面積の計算
+      cmp[n].area = CF.get_BboxArea();
+      
+      // インデクスの計算 > あとで，VoxEncode()でresize
+      CF.bbox_index(f_st, f_ed);
+      
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+      
+      // 体積率
+      TIMING_start(tm_cmp_vertex8);
+      flop = 0.0;
+      CF.vertex8(f_st, f_ed, d_cvf, flop);
+      TIMING_stop(tm_cmp_vertex8, flop);
+      
+      TIMING_start(tm_cmp_subdivision);
+      flop = 0.0;
+      CF.subdivision(f_st, f_ed, d_cvf, flop);
+      TIMING_stop(tm_cmp_subdivision, flop);
+    }
+  }
+  
+// ########## 確認のための出力
+#if 0
+  REAL_TYPE org[3], pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      org[i] *= C.RefLength;
+      pit[i] *= C.RefLength;
+    }
+  }
+  F.writeRawSPH(cvf, size, guide, org, pit, FP_SINGLE);
+#endif
+// ##########
+  
+}
+
+
+// コンポーネントが存在するかを保持しておく
+void FFV::setEnsComponent()
+{
+  int c;
+  
+  // Forcing > HEX, FAN, DARCY
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isFORCING() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.forcing = ON;
+  
+  // Heat source > HEAT_SRC, CNST_TEMP
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isHsrc() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.hsrc = ON;
+  
+  // 周期境界 > PERIODIC
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getType() == PERIODIC ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.periodic = ON;
+  
+  // 流出境界 > OUTFLOW
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getType() == OUTFLOW ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.outflow = ON;
+  
+  // 体積率コンポーネント
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isVFraction() ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.fraction = ON;
+  
+  // モニタ
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].isMONITOR() ) c++;
+  }
+  // MONITOR_LISTでCELL_MONITORが指定されている場合，C.EnsCompo.monitor==ON
+  if ( (C.isMonitor() == ON) && (c < 1) ) {
+    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is specified, however any MONITOR can not be found.\n");
+    Exit(0);
+  }
+  if ( (C.isMonitor() == OFF) && (c > 0) ) {
+    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is NOT specified, however MONITOR section is found in LocalBoundary.\n");
+    Exit(0);
+  }
+  
+}
 
 
 // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する

@@ -30,6 +30,7 @@
 #include "SetBC.h"
 #include "BndOuter.h"
 #include "vec3.h"
+#include "CompoFraction.h"
 
 #include "Polylib.h"
 #include "MPIPolylib.h"
@@ -44,8 +45,6 @@ private:
   int NoCompo;                   ///< コンポーネントの総数
   int NoVoxID;                   ///< 含まれるIDの数(Local/Global)
   int colorList[MODEL_ID_MAX+1]; ///< ボクセルモデルに含まれるIDのリスト(Global)
-  CompoList*    cmp;             ///< コンポーネントリスト
-  MediumList*   mat;             ///< 媒質リスト
 
 public:
   /** コンストラクタ */
@@ -53,8 +52,6 @@ public:
     NoVoxID = 0;
     NoBC = 0;
     NoCompo = 0;
-    cmp = NULL;
-    mat = NULL;
     
     for (int i=0; i<MODEL_ID_MAX+1; i++) colorList[i]=0;
   }
@@ -99,7 +96,7 @@ private:
   
   unsigned long encPbit_N_Binary(int* bx);
   
-  unsigned long encPbit_N_Cut(int* bx, float* cut, const bool convergence);
+  unsigned long encPbit_N_Cut(int* bx, const float* cut, const bool convergence);
   
   unsigned long encPbit_N_IBC(const int order, 
                               const int id, 
@@ -174,7 +171,14 @@ private:
   
   
   void find_isolated_Fcell   (int order, int* mid, int* bx);
-  int find_mat_odr(int mat_id);
+  
+  
+  /**
+   * @brief cmp[]にエンコードされた媒質IDの中から対象となるIDのエントリを探す
+   * @param [in] mat_id 対象とする媒質ID
+   */
+  int find_mat_odr(const int mat_id, CompoList* cmp);
+  
   
   void getOffset             (int* st, int* ofst);
   
@@ -226,8 +230,9 @@ public:
   /**
    * @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
    * @param [in/out] mid       ID配列のデータ
+   * @param [in]     cmp        CompoList
    */
-  void adjMediumPrdc_Inner(int* mid);
+  void adjMediumPrdc_Inner(int* mid, CompoList* cmp);
   
   
   /**
@@ -247,17 +252,6 @@ public:
   void copyBCIbase           (int* dst, int* src);
   void countCellState        (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state);
   void countOpenAreaOfDomain (int* bx, REAL_TYPE* OpenArea);
-  
-  /** 
-   * @brief クラスのポインタコピー
-   * @param [in] m_CMP        CompoListクラス
-   * @param [in] m_MAT        MediumListクラス
-   */
-  void importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT);
-  
-  
-  
-  
   
   
   unsigned fill_cell_edge    (int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
@@ -290,7 +284,15 @@ public:
     return ( (bid >> dir*5) & MASK_5 );
   }
   
-  void get_Compo_Area_Cut    (int n, PolylibNS::MPIPolylib* PL);
+  /**
+   * @brief コンポーネントの断面積を求める
+   * @param [in]     n   エントリ番号
+   * @param [in/out] cmp CompoList
+   * @param [int]    PL  MPIPolylibクラス
+   */
+  void get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::MPIPolylib* PL);
+  
+  
   bool paint_first_seed      (int* mid, const int* idx, const int target);
   void printScanedCell       (FILE* fp);
   void resizeCompoBV         (int* bd, int* bv, int* bh1, int* bh2, int kos, bool isHeat, int* gcbv);
@@ -313,20 +315,58 @@ public:
     bid |= (s_id << (dir*5));
   }
   
-  void setBCIndex_base1      (int* bd, int* mid, float* cvf);
+  /**
+   * @brief bx[]に各境界条件の共通のビット情報をエンコードする（その1）
+   * @param [in/out] bx   BCindex ID
+   * @param [in/out] mid  ID配列
+   * @param [in]     cvf  コンポーネントの体積率
+   * @param [in]     mat  MediumList
+   * @param [in/out] cmp  CompoList
+   * @note 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
+   */
+  void setBCIndex_base1(int* bd, int* mid, const float* cvf, const MediumList* mat, CompoList* cmp);
   
-  void setBCIndex_base2      (int* bx, 
-                              int* mid, 
-                              SetBC* BC, 
-                              unsigned long & Lcell, 
-                              unsigned long & Gcell, 
-                              const int KOS);
   
-  void setBCIndexH           (int* bd, int* bh1, int* bh2, int* mid, SetBC* BC, int kos);
+  /**
+   * @brief bx[]に各境界条件の共通のビット情報をエンコードする（その2）
+   * @param [out]    bx    BCindex ID
+   * @param [in/out] mid   ID配列
+   * @param [in/out] Lcell ノードローカルの有効セル数
+   * @param [in/out] Gcell グローバルの有効セル数
+   * @param [in]     KOS   解くべき方程式の種類 KIND_OF_SOLVER
+   * @param [in/out] cmp   CompoList
+   */
+  void setBCIndex_base2(int* bx, int* mid, unsigned long& Lcell, unsigned long& Gcell, const int KOS, CompoList* cmp);
   
-  unsigned long setBCIndexP  (int* bcd, int* bcp, int* mid, SetBC* BC, bool isCDS=false, float* cut=NULL);
   
-  void setBCIndexV           (int* bv, int* mid, SetBC* BC, int* bp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
+  /**
+   @brief 境界条件のビット情報をエンコードする
+   @param [in/out] bcd BCindex ID
+   @param [in/out] bh1 BCindex H1
+   @param [in/out] bh1 BCindex H2
+   @param [in/out] mid ID配列
+   @param [in]     BC  SetBCクラスのポインタ
+   @param [in]     kos KindOfSolver
+   @param [in/out] cmp CompoList
+   */
+  void setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp);
+  
+  
+  /**
+   @brief 圧力境界条件のビット情報をエンコードする
+   @param [in/out] bcd   BCindex ID
+   @param [in/out] bcp   BCindex P
+   @param [in/out] mid   ID配列
+   @param [in]     BC    SetBCクラスのポインタ
+   @param [in]     isCDS CDS->true
+   @param [in]     cut   距離情報
+   @param [in/out] cmp   CompoList
+   @retval 表面セル数
+   */
+  unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, const bool isCDS, const float* cut, CompoList* cmp);
+  
+  
+  void setBCIndexV(int* bv, int* mid, SetBC* BC, int* bp, CompoList* cmp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   
   void setCmpFraction        (CompoList* compo, int* bx, float* vf);
   
@@ -335,6 +375,16 @@ public:
   
   void setNoCompo_BC         (int m_NoBC, int m_NoCompo);
   void setOBC_Cut            (SetBC* BC, float* cut);
+  
+  
+  /**
+   * @brief Cell_Monitorで指定するIDでモニタ部分を指定するためのしかけ
+   * @param [in] mid  ID配列
+   * @param [in] SM   ShapeMonitorクラス
+   * @param [in] cmp  CompoListクラス
+   * @param [in] RefL 代表長さ
+   */
+  void setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
   
   
   /**
@@ -348,8 +398,23 @@ public:
   
   
   // ----> debug function
-  void dbg_chkBCIndexD  (int* bcd, const char* fname);
-  void dbg_chkBCIndexP  (int* bcd, int* bcp, const char* fname);
+  
+  /**
+   * @brief BCindexを表示する（デバッグ用）
+   * @param [in] bcd   BCindex D
+   * @param [in] fname 出力用ファイル名
+   */
+  void dbg_chkBCIndexD  (const int* bcd, const char* fname);
+  
+  /**
+   * @brief BCindexを表示する（デバッグ用）
+   * @param [in] bcd   BCindex ID
+   * @param [in] bcp   BCindex P
+   * @param [in] fname 出力用ファイル名
+   * @param [in] cmp CompoListクラス
+   */
+  void dbg_chkBCIndexP  (const int* bcd, const int* bcp, const char* fname, CompoList* cmp);
+  
   void dbg_chkBCIndexV  (int* bcv, const char* fname);
 };
 

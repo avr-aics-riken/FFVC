@@ -47,6 +47,7 @@
 #include "VoxInfo.h"
 #include "TPControl.h"
 #include "ffv_SetBC.h"
+#include "CompoFraction.h"
 
 #include "omp.h"
 
@@ -360,6 +361,23 @@ public:
    * @brief 読み込んだ領域情報のデバッグライト
    */
   void printDomainInfo();
+  
+  /**
+   * @brief 外部境界条件を読み込み，Controlクラスに保持する
+   */
+  void setBCinfo();
+  
+  
+  /**
+   * @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
+   */
+  void setComponentVF();
+  
+  
+  /**
+   * @brief コンポーネントが存在するかを保持しておく
+   */
+  void setEnsComponent();
   
   
   /** ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する

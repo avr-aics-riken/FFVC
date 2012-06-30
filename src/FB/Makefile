@@ -28,12 +28,13 @@ CXXSRCS = \
   VoxInfo.C \
   History.C \
   SetBC.C \
+  CompoFraction.C \
 #       Monitor.C \
 #       MonCompo.C \
 #       Sampling.C \
 #       DataHolder.C \
 #       dfi.C \
-#       CompoFraction.C \
+
 
 F90SRCS = \
     FB_util.f90 \
@@ -88,8 +89,11 @@ Alloc.o: Alloc.h
 VoxInfo.o: VoxInfo.h DomainInfo.h FBUtility.h FB_Define.h mydebug.h
 VoxInfo.o: Component.h Medium.h SetBC.h BndOuter.h Control.h Interval_Mngr.h
 VoxInfo.o: TPControl.h Intrinsic.h vec3.h vec3_func.h vec3f_func.h
+VoxInfo.o: CompoFraction.h
 History.o: History.h Control.h DomainInfo.h FB_Define.h mydebug.h Medium.h
 History.o: Component.h FBUtility.h BndOuter.h Interval_Mngr.h TPControl.h
 SetBC.o: SetBC.h DomainInfo.h FB_Define.h mydebug.h FBUtility.h BndOuter.h
 SetBC.o: Control.h Medium.h Component.h Interval_Mngr.h TPControl.h
 SetBC.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h
+CompoFraction.o: CompoFraction.h FB_Define.h mydebug.h FBUtility.h vec3.h
+CompoFraction.o: vec3_func.h vec3f_func.h
