@@ -101,51 +101,50 @@ private:
   // データ領域ポインタ
   
   // Vector3D
-  REAL_TYPE *dc_v;
-  REAL_TYPE *dc_vc;
-  REAL_TYPE *dc_v0;
-  REAL_TYPE *dc_wv;
-  REAL_TYPE *dc_abf;
-  REAL_TYPE *dc_vf0;
-  REAL_TYPE *dc_av;
-  REAL_TYPE *dc_wvex;
-  REAL_TYPE *dc_qbc;
+  REAL_TYPE *d_v;
+  REAL_TYPE *d_vc;
+  REAL_TYPE *d_v0;
+  REAL_TYPE *d_wv;
+  REAL_TYPE *d_abf;
+  REAL_TYPE *d_vf0;
+  REAL_TYPE *d_av;
+  REAL_TYPE *d_wvex;
+  REAL_TYPE *d_qbc;
   
   // Scalar3D
-  int *dc_mid;
-  int *dc_bcd;
-  int *dc_bcp;
-  int *dc_bcv;
-  int *dc_bh1;
-  int *dc_bh2;
-  REAL_TYPE  *dc_ws;
-  REAL_TYPE  *dc_p;
-  REAL_TYPE  *dc_wk2;
-  REAL_TYPE  *dc_dp;
-  REAL_TYPE  *dc_p0;
-  REAL_TYPE  *dc_t;
-  REAL_TYPE  *dc_t0;
-  REAL_TYPE  *dc_vt;
-  REAL_TYPE  *dc_vof;
-  REAL_TYPE  *dc_ap;
-  REAL_TYPE  *dc_at;
-  float      *dc_cvf;
+  int *d_mid;
+  int *d_bcd;
+  int *d_bcp;
+  int *d_bcv;
+  int *d_bh1;
+  int *d_bh2;
+  REAL_TYPE  *d_ws;
+  REAL_TYPE  *d_p;
+  REAL_TYPE  *d_wk2;
+  REAL_TYPE  *d_dp;
+  REAL_TYPE  *d_p0;
+  REAL_TYPE  *d_t;
+  REAL_TYPE  *d_t0;
+  REAL_TYPE  *d_vt;
+  REAL_TYPE  *d_vof;
+  REAL_TYPE  *d_ap;
+  REAL_TYPE  *d_at;
+  float      *d_cvf;
   
   // Coarse initial
-  REAL_TYPE *dc_r_v;  ///< 粗格子の速度
-  REAL_TYPE *dc_r_p;  ///< 粗格子の圧力
-  REAL_TYPE *dc_r_t;  ///< 粗格子の温度
+  REAL_TYPE *d_r_v;  ///< 粗格子の速度
+  REAL_TYPE *d_r_p;  ///< 粗格子の圧力
+  REAL_TYPE *d_r_t;  ///< 粗格子の温度
   
   // コンポーネントワーク配列のアドレス管理
   REAL_TYPE** component_array;
   
   
   // カット
-  REAL_TYPE  *dc_cut; ///< 距離情報
-  int        *dc_bid; ///< BC
+  REAL_TYPE  *d_cut; ///< 距離情報
+  int        *d_bid; ///< BC
   
   
-  FILE *mp;    ///< 標準出力
   FILE *fp_b;  ///< 基本情報
   FILE *fp_w;  ///< 壁面情報
   FILE *fp_c;  ///< コンポーネント情報
@@ -386,14 +385,32 @@ public:
   void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
   
   
+  /** モデルをセットアップ
+   * @param [in] PrepMemory  前処理に必要なメモリ
+   * @param [in] TotalMemory ソルバー実行に必要なメモリ
+   * @param [in] fp          ファイルポインタ
+   */
+  void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
+  
+  
   /**
    * @brief タイミング測定区間にラベルを与える
    */
   void set_timing_label();
   
   
+  /**
+   @brief IP用にカット領域をアロケートする
+   @param [in] m_prep  前処理用のメモリサイズ
+   @param [in] m_total 本計算用のメモリリサイズ
+   @param [in] fp      ファイルポインタ
+   */
+  void setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp);
+  
+  
   /** 毎ステップ後に行う処理 */
   bool stepPost();
+  
   
   
   /**
@@ -432,9 +449,15 @@ public:
     
   
   /** コマンドラインヘルプ */
-  virtual void Usage();
+  void Usage();
   
   
+  /**
+   @brief ボクセルをスキャンし情報を表示する
+   @param [in] V  前処理クラス
+   @param [in] fp ファイルポインタ 
+   */
+  void VoxScan(VoxInfo* V, FILE* fp);
 
 };
 

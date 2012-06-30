@@ -92,6 +92,7 @@ public:
   }
   
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
+  
   virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};
   
   

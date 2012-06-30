@@ -50,11 +50,7 @@ bool ParseBC::chkDuplicate(const int n, const std::string m_label)
 }
 
 
-/**
- @fn void ParseBC::countMedium(Control* Cref)
- @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
- @note 流体の媒質は少なくとも一つは必要
- */
+// KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
 void ParseBC::countMedium(Control* Cref)
 {
   // check at least one fluid
@@ -2229,6 +2225,16 @@ void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_
 }
 
 
+// コンポーネントリストのポインタを受け取る
+void ParseBC::importCompoPtr(CompoList* CMP)
+{
+  if ( !CMP ) {
+    Hostonly_ stamped_printf("\tAn object of CompoList class is NULL\n");
+    Exit(0);
+  }
+  compo = CMP;
+}
+
 
 // TPのポインタを受け取る
 void ParseBC::importTP(TPControl* tp) 
@@ -3607,21 +3613,6 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int
 
 
 
-/**
- @fn void ParseBC::receiveCompoPtr(CompoList* CMP)
- @brief コンポーネントリストのポインタを受け取る
- */
-void ParseBC::receiveCompoPtr(CompoList* CMP)
-{
-  if ( !CMP ) {
-    Hostonly_ stamped_printf("\tAn object of CompoList class is NULL\n");
-    Exit(0);
-  }
-  compo = CMP;
-}
-
-
-
 //@brief 変数の初期化
 void ParseBC::setControlVars(Control* Cref, BoundaryOuter* ptr, MediumList* m_mat)
 {
@@ -3631,10 +3622,6 @@ void ParseBC::setControlVars(Control* Cref, BoundaryOuter* ptr, MediumList* m_ma
   if ( !m_mat ) Exit(0);
   mat = m_mat;
   
-  ix          = Cref->imax;
-  jx          = Cref->jmax;
-  kx          = Cref->kmax;
-  guide       = Cref->guide;
   RefVelocity = Cref->RefVelocity;
   BaseTemp    = Cref->BaseTemp;
   DiffTemp    = Cref->DiffTemp;
@@ -3717,7 +3704,7 @@ void ParseBC::set_Deface(const std::string label_base, const int n)
   int def=0;
   std::string label;
   
-  label=label_base+"/def_face";//
+  label=label_base+"/def_face";
   
   if ( !(tpCntl->GetValue(label, &def )) ) {
 	  stamped_printf("\tParsing error : fail to get 'def_face' in '%s'\n", label.c_str());
@@ -3783,12 +3770,9 @@ void ParseBC::setKeywordOBC(const std::string keyword, const int m)
 
 
 
-/**
- @fn void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
- @brief MediumTableInfoをポイント
- @param m_MTITP
- */
-void ParseBC::setMediumPoint(MediumTableInfo *m_MTITP)
+
+// MediumTableInfoをポイント
+void ParseBC::setMediumTI(MediumTableInfo *m_MTITP)
 {
   if ( !m_MTITP ) Exit(0);
   MTITP = m_MTITP;
@@ -3827,18 +3811,14 @@ void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
   }
 }
 
-/**
- @fn void ParseBC::setRefMedium(MediumList* mat, Control* Cref)
- @brief 指定した媒質IDから参照物理量を求める
- @param mat MediumList
- @param Cref Control class
- */
-void ParseBC::setRefMedium(MediumList* mat, Control* Cref)
+
+// 指定した媒質IDから参照物理量を設定する
+void ParseBC::setRefMedium(MediumList* mat, const int RefMedium)
 {
   int m;
   
-  for (int n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
-    if ( compo[n].getMatOdr() == Cref->RefMat ) {
+  for (int n=NoBC+1; n<=NoCompo; n++) {
+    if ( compo[n].getMatOdr() == RefMedium ) {
       m = compo[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {
         rho    = mat[m].P[p_density];

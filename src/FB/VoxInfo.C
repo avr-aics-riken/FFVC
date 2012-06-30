@@ -313,11 +313,7 @@ int VoxInfo::check_fill(const int* mid)
 }
 
 
-/**
- @fn bool VoxInfo::chkIDconsistency(const int m_NoMedium)
- @brief パラメータファイルとスキャンしたIDの同一性をチェック
- @param m_NoMedium Medium_Tableに記述されたIDの個数
- */
+// パラメータファイルとスキャンしたIDの同一性をチェック
 bool VoxInfo::chkIDconsistency(const int m_NoMedium)
 {
   bool* chkflag = NULL;
@@ -339,6 +335,7 @@ bool VoxInfo::chkIDconsistency(const int m_NoMedium)
 	
 	return true;
 }
+
 
 /**
  @fn bool VoxInfo::chkIDinside(int id, int* mid, int* bx)
@@ -3501,7 +3498,8 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
     }
   }
   
-  // check for debug
+
+// ########## check for debug
 # if 0
   int m_flag;
   for (int k=1; k<=kx; k++) {
@@ -3525,7 +3523,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
     }
   }
 #endif
-  
+// ##########  
   
   if ( numProc > 1 ) {
     unsigned long tmp = g;
@@ -4362,6 +4360,16 @@ void VoxInfo::getOffset(int* st, int* ofst)
 }
 
 
+// 作業用ポインタのコピー
+void VoxInfo::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
+{
+  if ( !m_CMP ) Exit(0);
+  cmp = m_CMP;
+  
+  if ( !m_MAT ) Exit(0);
+  mat = m_MAT;
+}
+
 
 /**
  @brief シード点をペイントする
@@ -4407,14 +4415,7 @@ void VoxInfo::printScanedCell(FILE* fp)
 }
 
 
-/**
- @brief cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
- @retval 含まれるセルID数
- @param cell ボクセルIDを保持する配列
- @param cid セルIDリスト 
- @param ID_replace ID[0]を置換するID
- @note 重複がないようにcolorList[]に登録する
- */ 
+// cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
 int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
 {
   int target;
@@ -4425,6 +4426,7 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   int kx = size[2];
   int sz[3] = {ix, jx, kx};
   int gd = guide;
+  
   
   // ID[0]を置換するオプションが指定されている場合（ID_replaceに値がセット）
   if ( ID_replace != 0 ) {
@@ -4441,6 +4443,7 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
     }
   }
   
+  
   // 内部領域に対して，マイナスとゼロをチェック
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -4454,21 +4457,23 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
     }
   }
   
+
   // 内部領域の媒質IDに対して、カウント
+
+  unsigned long colorSet[MODEL_ID_MAX+1];
+  for (int i=0; i<=MODEL_ID_MAX; i++) colorSet[i]=0;
   
-  // colorSet[] ローカルなIDのカウント >> unsignedは超えないはず
-  int colorSet[MODEL_ID_MAX+1];
-  for (int i=0; i<MODEL_ID_MAX+1; i++) colorSet[i]=0;
-  
+  // colorSet[] ローカルなIDのカウント
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        //m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         target = cell[m];
         
         if ( target <= MODEL_ID_MAX ) {
-          if ( colorSet[target]++ > UINT_MAX ) {
-            Hostonly_ stamped_printf("\tError : count included in Model exceeds UINT_MAX\n");
+          if ( colorSet[target]++ > ULONG_MAX ) {
+            Hostonly_ stamped_printf("\tError : count included in Model exceeds ULONG_MAX\n");
             Exit(0);
           }
         }
@@ -4485,7 +4490,10 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   // 外部領域の媒質IDをcolorSetに追加する
   for (int i=0; i<NOFACE; i++) {
     target = cid[i];
-    colorSet[target]++;
+    if ( colorSet[target]++ > ULONG_MAX ) {
+      Hostonly_ stamped_printf("\tError : count included in Model exceeds ULONG_MAX\n");
+      Exit(0);
+    }
   }
   
   // 集約時の桁あふれを回避するため、1に規格化
@@ -4494,24 +4502,38 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
       colorSet[i] = 1;
     }
   }
+  
+  // int型にコピー
+  int iSet[MODEL_ID_MAX+1];
+  for (int i=0; i<=MODEL_ID_MAX; i++) iSet[i] = (int)colorSet[i];
+  
+
+// ##########
+#if 0
+  cout << "color list" << endl;
+  for (int i=0; i<MODEL_ID_MAX+1; i++)
+  {
+    printf("\t%3d : %d\n", i, iSet[i]);
+  }
+  
+#endif
+// ##########
 
 	// colorSet[] の集約
   if ( numProc > 1 ) {
 		
     int clist[MODEL_ID_MAX+1];
-    for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i]=0;
+    for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i] = iSet[i];
     
-    for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i] = colorSet[i];
-    
-    MPI_Allreduce(clist, colorSet, MODEL_ID_MAX+1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+    if ( paraMngr->Allreduce(clist, iSet, MODEL_ID_MAX+1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     
   }
-  // この時点で、存在するIDの数はnumProc個になっている >> unsgined の範囲内
+  // この時点で、存在するIDの数はnumProc個になっている >> int の範囲内
 
   // colorList[]へ詰めてコピー colorList[0]は不使用
   int b=1;
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
-    if ( colorSet[i] != 0 ) {
+    if ( iSet[i] != 0 ) {
       colorList[b] = i;
       b++;
     }
@@ -5276,18 +5298,6 @@ void VoxInfo::setCmpFraction(CompoList* cmp, int* bx, float* vf)
   }
 }
 
-/**
- @brief 必要な変数をコピーする
- @param r_size 分割数
- @param r_guide ガイドセル
- */
-void VoxInfo::setControlVars(int* r_size, int r_guide)
-{
-  guide   = r_guide;
-  size[0] = r_size[0];
-  size[1] = r_size[1];
-  size[2] = r_size[2];
-}
 
 /**
  @brief コンポーネントに接するdef_faceのIDをもつセルを不活性セルにする
@@ -5471,15 +5481,56 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
 }
 
 
-
-// 作業用のポインタコピー
-void VoxInfo::setWorkList(CompoList* m_CMP, MediumList* m_MAT)
+// ボクセルモデルにカット情報から得られた固体情報を転写する
+unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
 {
-  if ( !m_CMP ) Exit(0);
-  cmp = m_CMP;
+  unsigned long c=0;
+  int q;
+  size_t mp, m;
   
-  if ( !m_MAT ) Exit(0);
-  mat = m_MAT;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int sz[3] = {ix, jx, kx};
+  int gd = guide;
+  int m_id= id;
+  
+  float eps = 0.5f;  // 閾値
+  
+#pragma omp parallel for firstprivate(sz, gd, m_id, eps) private(q, m, mp) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        mp= FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+        q = 0;
+        
+        // セル内に交点があれば，壁
+        if ( cut[m+0] < eps ) q++;
+        if ( cut[m+1] < eps ) q++;
+        if ( cut[m+2] < eps ) q++;
+        if ( cut[m+3] < eps ) q++;
+        if ( cut[m+4] < eps ) q++;
+        if ( cut[m+5] < eps ) q++;
+        
+        if ( q > 0 ) {
+          mid[mp] = m_id;
+          c++;
+        }
+      }
+    }
+  }
+  
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long cl = c;
+  
+  if ( numProc > 1 ) {
+    unsigned long tmp = cl;
+    if ( paraMngr->Allreduce(&tmp, &cl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return cl;
 }
 
 

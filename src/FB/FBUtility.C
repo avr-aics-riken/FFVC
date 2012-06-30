@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file FBUtility.C
- * @brief FlowBase FBUtility class
+ * @file   FBUtility.C
+ * @brief  FlowBase FBUtility class
  * @author kero
  */
 

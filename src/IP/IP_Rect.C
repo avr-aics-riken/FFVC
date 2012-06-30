@@ -107,7 +107,7 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     Exit(0);
   }
 
-#pragma omp parallel for firstprivate(imax, jmax, kmax, gd, sz) schedule(static)
+#pragma omp parallel for firstprivate(imax, jmax, kmax, gd, sz, id_fluid) schedule(static)
   for (int k=1; k<=kmax; k++) {
     for (int j=1; j<=jmax; j++) {
       for (int i=1; i<=imax; i++) {

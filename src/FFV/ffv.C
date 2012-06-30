@@ -31,7 +31,6 @@ FFV::FFV()
     G_reg[i] = 0.0;
   }
   
-  mp = stdout;
   fp_b = NULL;
   fp_w = NULL;
   fp_c = NULL;
@@ -49,8 +48,6 @@ FFV::FFV()
 // デストラクタ
 FFV::~FFV()
 {
-  
-  if ( mp ) fclose(mp);
   
 }
 
@@ -535,7 +532,7 @@ bool FFV::stepPost()
 // 利用例の表示
 void FFV::Usage()
 {
-  FBUtility::printVersion(mp, "Frontflow/violet", FFV_VERS);
+  FBUtility::printVersion(stdout, "Frontflow/violet", FFV_VERS);
   
   cout << " Usage : ";
   cout << "ffv"

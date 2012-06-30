@@ -178,9 +178,12 @@ void CompoFraction::get_angle()
       Exit(0);
     }
   }
+  
+// ##########
 #if 0
   stamped_printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 #endif
+// ##########
   
 }
 
@@ -200,11 +203,13 @@ float CompoFraction::get_BboxArea()
   else {
     a = bbox_circ_cylinder(box_min, box_max);
   }
-  
+
+// ##########
 #if 0
   stamped_printf("bbox min : %f %f %f\n", box_min.x, box_min.y, box_min.z);
   stamped_printf("bbox max : %f %f %f\n", box_max.x, box_max.y, box_max.z);
 #endif
+// ##########
   
   return a;
 }

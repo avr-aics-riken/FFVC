@@ -35,10 +35,6 @@ int FFV::Initialize(int argc, char **argv)
   // 固定パラメータ
   fixed_parameters();
   
-  
-  // CPMのポインタをセット
-  //BC.importCPM(paraMngr);
-  
 
   
   // ------------------------------------
@@ -55,10 +51,10 @@ int FFV::Initialize(int argc, char **argv)
   // メッセージ表示
   Hostonly_ {
     FBUtility::printVersion(fp, "Welcome to FFV  ", FFV_VERS);
-    FBUtility::printVersion(mp, "Welcome to FFV  ", FFV_VERS);
+    FBUtility::printVersion(stdout, "Welcome to FFV  ", FFV_VERS);
     
     FBUtility::printVersion(fp, "FlowBase        ", FB_VERS);
-    FBUtility::printVersion(mp, "FlowBase        ", FB_VERS);
+    FBUtility::printVersion(stdout, "FlowBase        ", FB_VERS);
   }
   
   // 入力ファイルの指定
@@ -94,14 +90,14 @@ int FFV::Initialize(int argc, char **argv)
   
   if ( C.version != FFV_VERS ) {
     Hostonly_ {
-      fprintf(mp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
+      fprintf(stdout, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
       fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
     }
     return -1;
   }
   if ( C.FB_version != FB_VERS ) {
     Hostonly_ {
-      fprintf(mp, "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
+      fprintf(stdout, "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
       fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
     }
     return -1;
@@ -128,20 +124,23 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
+  // ###########################
+  // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   
-  // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定する -----------------------------------------------------
-  // 領域情報を記述したファイル名の取得 >> テキストパーサのDB切り替え
-  string dom_file = argv[2];
+  string dom_file = argv[2]; // 領域情報を記述したファイル名の取得 >> テキストパーサのDB切り替え
   
+  // 領域設定
   DomainInitialize(dom_file);
   
-  
   // 各クラスで領域情報を保持
-  C.setDomainInfo(paraMngr, procGrp);
-  B.setDomainInfo(paraMngr, procGrp);
-  V.setDomainInfo(paraMngr, procGrp);
-  F.setDomainInfo(paraMngr, procGrp);
-  Ex->setDomainInfo(paraMngr, procGrp);
+  C.setDomainInfo(paraMngr, procGrp);   C.setNeighborInfo();
+  B.setDomainInfo(paraMngr, procGrp);   B.setNeighborInfo();
+  V.setDomainInfo(paraMngr, procGrp);   V.setNeighborInfo();
+  F.setDomainInfo(paraMngr, procGrp);   F.setNeighborInfo();
+  BC.setDomainInfo(paraMngr, procGrp);  BC.setNeighborInfo();
+  Ex->setDomainInfo(paraMngr, procGrp); Ex->setNeighborInfo();
+  
+  // ###########################
 
   
   // 各例題のパラメータ設定 -----------------------------------------------------
@@ -166,8 +165,8 @@ int FFV::Initialize(int argc, char **argv)
   
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
   Hostonly_  {
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\n\t>> Medium List\n\n");
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\n\t>> Medium List\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n\t>> Medium List\n\n");
   }
@@ -194,7 +193,7 @@ int FFV::Initialize(int argc, char **argv)
   
   B.setControlVars(&C, BC.export_OBC(), mat);
   
-  B.setMediumPoint( M.export_MTI() );
+  B.setMediumTI( M.export_MTI() );
   
   B.countMedium(&C);
   
@@ -202,9 +201,9 @@ int FFV::Initialize(int argc, char **argv)
   cmp = new CompoList[C.NoCompo+1];
   
   // CompoList, MediumListのポインタをセット
-  //BC.setWorkList(cmp, mat);
-  //Vox.setWorkList(cmp, mat);
-  B.receiveCompoPtr(cmp);
+  BC.importCMP_MAT(cmp, mat);
+  V.importCMP_MAT(cmp, mat);
+  B.importCompoPtr(cmp);
   
   
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
@@ -236,11 +235,131 @@ int FFV::Initialize(int argc, char **argv)
   Hostonly_ {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Voxel file information\n\n");
-    fprintf(mp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(mp,"\t>> Voxel file information\n\n");
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Voxel file information\n\n");
   }
   
   TIMING_start(tm_voxel_prep_sct);
+  
+  
+  // 各問題に応じてモデルを設定
+  setModel(PrepMemory, TotalMemory, fp);
+  
+  
+  
+  // 領域情報の表示
+  Hostonly_ {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n");
+    fprintf(stdout,"\n\t>> Global Domain Information\n\n");
+    C.printGlobalDomain(stdout, G_size, G_org, G_reg);
+    
+    fprintf(fp,"\n---------------------------------------------------------------------------\n");
+    fprintf(fp,"\n\t>> Global Domain Information\n\n");
+    C.printGlobalDomain(fp, G_size, G_org, G_reg);
+  }
+  
+  // メモリ消費量の情報を表示
+  Hostonly_ {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  }
+  G_PrepMemory = PrepMemory;
+  
+  if( numProc > 1 ) {
+    tmp_memory = G_PrepMemory;
+    if ( paraMngr->Allreduce(&tmp_memory, &G_PrepMemory, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  Hostonly_  {
+    FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, stdout);
+    FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, fp);
+  }
+  
+  
+  // Fill
+  if ( (C.Mode.Example == id_Polygon) ) { //&& C.isCDS() ) {
+    
+    Hostonly_ {
+      fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(stdout,"\t>> Fill\n\n");
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(fp,"\t>> Fill\n\n");
+    }
+    
+    // Fill(&Vinfo);
+  }
+  
+  
+  
+  
+  // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
+  if ( !DT.chkDtSelect() ) {
+    Hostonly_ printf("\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
+    return -1;
+  }
+  
+  
+  // パラメータファイルから得られた内部BCコンポーネント数を表示
+  Hostonly_ {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Components\n\n");
+    C.printNoCompo(stdout);
+    fprintf(stdout,"\n"); fflush(stdout);
+    
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Components\n\n");
+    C.printNoCompo(fp);
+    fprintf(fp,"\n"); fflush(fp);
+  }
+  
+  
+  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
+  B.loadBC_Outer();
+  
+  // ボクセルのスキャン
+  VoxScan(&V, fp);
+  
+  
+  // スキャンしたセルIDの情報を表示する
+  Hostonly_ {
+    fprintf(stdout, "\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Information of Scaned Voxel\n\n");
+    V.printScanedCell(stdout);
+		fflush(stdout);
+    
+    fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Information of Scaned Voxel\n\n");
+		V.printScanedCell(fp);
+		fflush(fp);
+  }
+  
+  // ボクセルモデルの媒質インデクスがパラメータファイルに記述された媒質インデクスに含まれていること
+	Hostonly_ {
+		if ( !V.chkIDconsistency(C.NoMedium) ) {
+			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
+			return -1;
+		}
+	}
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -256,6 +375,7 @@ int FFV::Initialize(int argc, char **argv)
     Exit(0);
   }
   
+  Exit(0);
   return 1;
 }
 
@@ -293,10 +413,13 @@ void FFV::DomainInitialize(const string dom_file)
   int div_type = get_DomainInfo();
 
   
+// ##########  
 # if 0
   printDomainInfo();
   fflush(stdout);
 #endif
+// ##########
+  
   
   // テキストパーサーのDBを破棄
   if (tpCntl.remove() != TP_NO_ERROR ) 
@@ -463,7 +586,7 @@ void FFV::setMediumList(FILE* fp)
   
   // 媒質テーブルの表示
   Hostonly_ {
-    M.printMatList(mp, mat, C.NoMedium);
+    M.printMatList(stdout, mat, C.NoMedium);
     M.printMatList(fp, mat, C.NoMedium);
   }
 }
@@ -508,4 +631,137 @@ string FFV::setParallelism()
     }
   }
   return para_mode;
+}
+
+
+// 各種例題のモデルをセット
+void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int id_of_solid = 2;
+  
+  switch (C.Mode.Example) {
+      
+    case id_Polygon:
+      
+      C.get_Polygon();
+      
+      // PolylibとCutlibのセットアップ
+      //setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
+      
+      
+      if ( !C.isCDS() ) {
+        unsigned long zc = V.Solid_from_Cut(d_mid, d_cut, id_of_solid);
+        Hostonly_ printf("\tGenerated Solid cell from cut = %ld\n", zc);
+      }
+      break;
+      
+    case id_Sphere:
+      if ( !C.isCDS() ) {
+        Ex->setup(d_mid, &C, G_org, C.NoMedium, mat);
+      }
+      else {
+        // cutをアロケートし，初期値1.0をセット
+        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+        Ex->setup_cut(d_mid, &C, G_org, C.NoMedium, mat, d_cut);
+      }
+      break;
+      
+    default: // ほかのIntrinsic problems
+      if ( C.isCDS() ) {
+        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      }
+      Ex->setup(d_mid, &C, G_org, C.NoMedium, mat);
+      break;
+  }
+  
+  
+  // midのガイドセル同期
+  if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, guide, 1) != CPM_SUCCESS ) Exit(0);
+}
+
+
+// IP用にカット領域をアロケートする
+void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
+{
+  Hostonly_ {
+    fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp, "\t>> Cut Info\n\n");
+    fprintf(stdout, "\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout, "\t>> Cut Info\n\n");
+  }
+  
+  size_t n_cell[3];
+  
+  for (int i=0; i<3; i++) {
+    n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル
+  }
+  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  
+  
+  TIMING_start(tm_init_alloc);
+  allocArray_Cut(m_total);
+  TIMING_stop(tm_init_alloc);
+  
+  // 使用メモリ量　
+  double cut_mem, G_cut_mem;
+  G_cut_mem = cut_mem = (double)size_n_cell * (double)(6*sizeof(float) + sizeof(int));
+  m_prep += cut_mem;
+  m_total+= cut_mem;
+  
+  if ( numProc > 1 ) {
+    if ( paraMngr->Allreduce(&cut_mem, &G_cut_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_  {
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, stdout);
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
+  }
+  
+  // 初期値のセット
+  for (size_t i=0; i<size_n_cell*6; i++) {
+    d_cut[i] = 1.0f;
+  }
+  
+}
+
+/**
+ @brief ボクセルをスキャンし情報を表示する
+ @param [in] V  前処理クラス
+ @param [in] fp ファイルポインタ 
+ */
+void FFV::VoxScan(VoxInfo* V, FILE* fp)
+{
+  // 外部境界面の媒質IDとその個数を取得
+  int cell_id[NOFACE];
+  
+  for (int i=0; i<NOFACE; i++) {
+    cell_id[i] = BC.export_OBC(i)->get_GuideMedium();
+  }
+
+// ##########
+#if 0
+  Hostonly_ {
+    fprintf(fp, "\tCell IDs on Guide cell region\n");
+    for ( int i=0; i<NOFACE; i++) {
+      fprintf(fp, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
+    }
+    fprintf(stdout, "\tCell IDs on Guide cell region\n");
+    for ( int i=0; i<NOFACE; i++) {
+      fprintf(stdout, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
+    }
+  }
+#endif
+// ##########
+  
+  // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
+  int sc=0;
+  if ( (sc = V->scanCell(d_mid, cell_id, C.Hide.Change_ID)) != C.NoMedium ) 
+  {
+    Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", 
+                             sc, C.NoMedium);
+    Exit(0);
+  }
 }

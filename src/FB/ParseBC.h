@@ -11,8 +11,8 @@
 //
 // #################################################################
 
-//@file ParseBC.h
-//@brief FlowBase ParseBC class Header
+//@file   ParseBC.h
+//@brief  FlowBase ParseBC class Header
 //@author kero
 
 #include "string.h"
@@ -37,23 +37,22 @@ private:
 
   TPControl* tpCntl;
   
-  int NoBaseBC;    // 外部境界条件の指定種類数
-  int NoMedium;    // 媒質数
+  // NoCompo = NoBC + NoMedium
+  int NoBC;        ///< LocalBCの数
+  int NoBaseBC;    ///< 入力ファイルに記載された外部境界条件の指定種類数
+  int NoMedium;    ///< 媒質数
+  int NoCompo;     ///< コンポーネントリストの全登録数
   
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;
   REAL_TYPE rho, nyu, cp, lambda, beta; // 無次元化の参照値
 
-  int ix, jx, kx;
   int KindOfSolver;
-  int NoCompo;
-  int NoBC;        ///< LocalBCの数
   int Unit_Param;
   int monitor;
   int Unit_Temp;
   int Unit_Prs;
   int Mode_Gradp;
-  
   bool HeatProblem;
   bool isCDS;
   
@@ -67,17 +66,20 @@ private:
 public:
   /** コンストラクタ */
   ParseBC(){
-    ix = jx = kx = 0;
     KindOfSolver = 0;
     BaseTemp = DiffTemp = BasePrs = 0.0;
     RefVelocity = RefDensity = RefSpecificHeat = RefLength = 0.0;
-    NoCompo = NoBC = monitor = 0;
+    monitor = 0;
     Unit_Param = 0;
     Unit_Temp = 0;
     Unit_Prs = 0;
     Mode_Gradp = 0;
     HeatProblem = isCDS = false;
+    NoBaseBC = 0;
+    NoBC     = 0;
+    NoCompo  = 0; 
     NoMedium = 0;
+    
     bc = NULL;
     BaseBc = NULL;
     compo = NULL;
@@ -92,24 +94,65 @@ public:
   
 private:
   bool chkDuplicate       (const int n, const std::string m_label);
-  bool isComponent        (int label);
-  bool isCompoTransfer    (int label);
-
-  int get_Vel_profile     (const std::string label_base);
-  
   
   /**
-   @brief 外部境界面の反対方向を返す
-   @param[in] dir 評価する方向
-   @return dirと反対方向
+   * @brief ベクトルのコピー
+   * @param[out] dst コピー先
+   * @param[in]  src コピー元
    */
-  int oppositeDir(const int dir);
-  
+  void copyVec(REAL_TYPE* dst, REAL_TYPE* src) 
+  {
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+  }
   
   REAL_TYPE get_BCval_real(const std::string label);
   
-  void setKeywordLBC      (const std::string keyword, const int m);
-  void setKeywordOBC      (const std::string keyword, const int m);
+  std::string getOBCstr   (const int id);
+
+  int get_Vel_profile     (const std::string label_base);
+  
+  //@brief コンポーネントのBbox情報st_xを返す
+  int getCmpGbbox_st_x(int odr, int* gci) 
+  {
+    return ( gci[6*odr+0] );
+  }
+  
+  
+  //@brief コンポーネントのBbox情報st_yを返す
+  int getCmpGbbox_st_y(int odr, int* gci) 
+  {
+    return ( gci[6*odr+1] );
+  }
+  
+  
+  //@brief コンポーネントのBbox情報st_zを返す
+  int getCmpGbbox_st_z(int odr, int* gci) 
+  {
+    return ( gci[6*odr+2] );
+  }
+  
+  //@brief コンポーネントのBbox情報st_xを返す
+  int getCmpGbbox_ed_x(int odr, int* gci) 
+  {
+    return ( gci[6*odr+3] );
+  }
+  
+  
+  //@brief コンポーネントのBbox情報ed_yを返す
+  int getCmpGbbox_ed_y(int odr, int* gci) 
+  {
+    return ( gci[6*odr+4] );
+  }
+  
+  
+  //@brief コンポーネントのBbox情報ed_zを返す
+  int getCmpGbbox_ed_z(int odr, int* gci) 
+  {
+    return ( gci[6*odr+5] );
+  }
+  
   void get_Center         (const std::string label_base, const int n, REAL_TYPE* v);
   void get_Dir            (const std::string label_base, const int n, REAL_TYPE* v);
   void get_NV             (const std::string label_base, const int n, REAL_TYPE* v);
@@ -141,70 +184,47 @@ private:
   void get_OBC_Wall       (const std::string label_base, const int n);
   void getUnitVec         (REAL_TYPE* v);
   void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
-  void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int face);
-  void set_Deface         (const std::string label_base, const int n);
   
-  std::string getOBCstr   (const int id);
-  
-
-  //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_st_x(int odr, int* gci) 
-  {
-    return ( gci[6*odr+0] );
-  }
-  
-
-  //@brief コンポーネントのBbox情報st_yを返す
-  int getCmpGbbox_st_y(int odr, int* gci) 
-  {
-    return ( gci[6*odr+1] );
-  }
-  
-
-  //@brief コンポーネントのBbox情報st_zを返す
-  int getCmpGbbox_st_z(int odr, int* gci) 
-  {
-    return ( gci[6*odr+2] );
-  }
-  
-
-  //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_ed_x(int odr, int* gci) 
-  {
-    return ( gci[6*odr+3] );
-  }
-  
-
-  //@brief コンポーネントのBbox情報ed_yを返す
-  int getCmpGbbox_ed_y(int odr, int* gci) 
-  {
-    return ( gci[6*odr+4] );
-  }
-  
-
-  //@brief コンポーネントのBbox情報ed_zを返す
-  int getCmpGbbox_ed_z(int odr, int* gci) 
-  {
-    return ( gci[6*odr+5] );
-  }
-  
+  bool isComponent        (int label);
+  bool isCompoTransfer    (int label);
   
   /**
-   * @brief ベクトルのコピー
-   * @param[out] dst コピー先
-   * @param[in]  src コピー元
+   @brief 外部境界面の反対方向を返す
+   @param[in] dir 評価する方向
+   @return dirと反対方向
    */
-  void copyVec(REAL_TYPE* dst, REAL_TYPE* src) 
-  {
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-  }
+  int oppositeDir(const int dir);
+  
+  void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int face);
+  
+  
+  void setKeywordLBC      (const std::string keyword, const int m);
+  void setKeywordOBC      (const std::string keyword, const int m);
+
+  void set_Deface         (const std::string label_base, const int n);
   
   
 public:
-  bool isIDinCompo        (int candidate, int now);
-  bool isIDinCompo        (int candidate, int def, int now);
+
+  
+  void chkBCconsistency   (int kos);
+  
+  /**
+   * @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
+   * @param [in] Cref Controlクラス
+   */
+  void countMedium(Control* Cref);
+  
+  
+  int getNoLocalBC();
+  void get_Phase          ();
+  void get_Medium_InitTemp();
+  
+  /**
+   * @brief TPのポインタを受け取る
+   * @param [in] CMP  CompoListクラスのポインタ
+   */
+  void importCompoPtr(CompoList* CMP);
   
   
   /**
@@ -214,21 +234,33 @@ public:
   void importTP(TPControl* tp);
   
   
+  bool isIDinCompo        (int candidate, int now);
+  bool isIDinCompo        (int candidate, int def, int now);
   
-  int getNoLocalBC        ();
-  
-  void chkBCconsistency   (int kos);
-  void countMedium        (Control* Cref);
-  void get_Phase          ();
-  void get_Medium_InitTemp();
   void loadBC_Local       (Control* C);
   void loadBC_Outer       ();
-  void setMediumPoint     (MediumTableInfo *m_MTITP);
+  
   void printCompo         (FILE* fp, REAL_TYPE* nv, int* ci, MediumList* mat);
   void printFaceOBC       (FILE* fp, REAL_TYPE* G_reg);
-  void receiveCompoPtr    (CompoList* CMP);
+  
   void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
-  void setRefMedium       (MediumList* mat, Control* Cref);
+  
+  
+  /**
+   * @brief MediumTableInfoをポイント
+   * @param [in] m_MTITP
+   */
+  void setMediumTI(MediumTableInfo *m_MTITP);
+  
+  
+  /**
+   * @brief 指定した媒質IDから参照物理量を設定する
+   * @param [in] mat       MediumList
+   * @param [in] RefMedium 参照媒質番号
+   */
+  void setRefMedium(MediumList* mat, const int RefMedium);
+  
+  
   void setRefValue        (MediumList* mat, CompoList* cmp, Control* C);
   
 };
