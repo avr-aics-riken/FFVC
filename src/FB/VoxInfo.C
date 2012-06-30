@@ -28,12 +28,12 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
 
   
   // 周期境界以外
-  if ( BCtype != OBC_PERIODIC ) {
+  if ( BCtype != OBC_PERIODIC ) 
+  {
     
     switch (face) 
     {
@@ -41,7 +41,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(sz, gd, 0, j, k);
+              m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 0, j, k);
               mid[m] = c_id;
             }
           }
@@ -52,7 +52,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
+              m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
               mid[m] = c_id;
             }
           }
@@ -63,7 +63,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, 0, k);
+              m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 0, k);
               mid[m] = c_id;
             }
           }
@@ -74,7 +74,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         if( nID[face] < 0 ){
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
+              m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
               mid[m] = c_id;
             }
           }
@@ -85,7 +85,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         if( nID[face] < 0 ){
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, 0);
+              m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 0);
               mid[m] = c_id;
             }
           }
@@ -96,7 +96,7 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         if( nID[face] < 0 ){
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
+              m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
               mid[m] = c_id;
             }
           }
@@ -105,12 +105,16 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
     } // end of switch
   }
   // 周期境界のとき
-  else {
+  else 
+  {
     // 内部周期境界の場合には，別メソッド
-    if ( prdc_mode != BoundaryOuter::prdc_Driver ) {
+    if ( prdc_mode != BoundaryOuter::prdc_Driver ) 
+    {
       // 並列時
-      if ( numProc > 1 ) {
-        switch (face) {
+      if ( numProc > 1 ) 
+      {
+        switch (face) 
+        {
           case X_MINUS:
             if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
@@ -144,8 +148,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
               for (int k=1; k<=kx; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1-gd; i<=0; i++) {
-                    m0 = FBUtility::getFindexS3D(sz, gd, i   , j, k);
-                    m1 = FBUtility::getFindexS3D(sz, gd, i+ix, j, k);
+                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i   , j, k);
+                    m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+ix, j, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -158,8 +162,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
               for (int k=1; k<=kx; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=ix+1; i<=ix+gd; i++) {
-                    m0 = FBUtility::getFindexS3D(sz, gd, i   , j, k);
-                    m1 = FBUtility::getFindexS3D(sz, gd, i-ix, j, k);
+                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i   , j, k);
+                    m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-ix, j, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -172,8 +176,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
               for (int k=1; k<=kx; k++) {
                 for (int j=1-gd; j<=0; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(sz, gd, i, j   , k);
-                    m1 = FBUtility::getFindexS3D(sz, gd, i, j+jx, k);
+                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j   , k);
+                    m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j+jx, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -186,8 +190,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
               for (int k=1; k<=kx; k++) {
                 for (int j=jx+1; j<=jx+gd; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(sz, gd, i, j   , k);
-                    m1 = FBUtility::getFindexS3D(sz, gd, i, j-jx, k);
+                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j   , k);
+                    m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j-jx, k);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -200,8 +204,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
               for (int k=1-gd; k<=0; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(sz, gd, i, j, k    );
-                    m1 = FBUtility::getFindexS3D(sz, gd, i, j, k+kx);
+                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k    );
+                    m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k+kx);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -214,8 +218,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
               for (int k=kx+1; k<=kx+gd; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = FBUtility::getFindexS3D(sz, gd, i, j, k    );
-                    m1 = FBUtility::getFindexS3D(sz, gd, i, j, k-kx);
+                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k    );
+                    m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k-kx);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -296,14 +300,15 @@ int VoxInfo::check_fill(const int* mid)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
+  size_t m;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
-        if ( mid[FBUtility::getFindexS3D(sz, gd, i  , j  , k  )] == 0 ) return 1;
+        //m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        if ( mid[mm] == 0 ) return 1;
         
       }
     }
@@ -342,24 +347,21 @@ bool VoxInfo::chkIDconsistency(const int m_NoMedium)
  @brief 指定されたIDが計算領域内部にあるかどうかを判定する
  @param id サーチ対象ID
  @param mid ID配列
- @param bx BC Index
  @retval IDがあればtrue
  */
-bool VoxInfo::chkIDinside(int id, int* mid, int* bx)
+bool VoxInfo::chkIDinside(const int id, const int* mid)
 {
-  int i, j, k;
   size_t m;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         if ( mid[m] == id ) {
           Hostonly_ stamped_printf("\tID[%d] exist inside the computational region\n", id);
           return true;
@@ -398,7 +400,6 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int dir = m_dir;
   int id  = m_id;
   int gd  = guide;
@@ -409,11 +410,11 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
         int i = st[0];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             if ( mid[m1] == id ) {
               for (int ii=1-gd; ii<=0; ii++) {
-                m0 = FBUtility::getFindexS3D(sz, gd, ii,   j, k);
-                m2 = FBUtility::getFindexS3D(sz, gd, i+ii, j, k);
+                m0 = _F_IDX_S3D(ii,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ii,   j, k);
+                m2 = _F_IDX_S3D(ii+i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+ii, j, k);
                 mid[m0] = mid[m2];
               }
             }
@@ -427,11 +428,11 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
         int i = st[0];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             if ( mid[m1] == id ) {
               for (int ii=ix+1; ii<=ix+gd; ii++) {
-                m0 = FBUtility::getFindexS3D(sz, gd, ii,        j, k);
-                m2 = FBUtility::getFindexS3D(sz, gd, i+ii-ix-1, j, k);
+                m0 = _F_IDX_S3D(ii,        j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ii,        j, k);
+                m2 = _F_IDX_S3D(ii+i-ix-1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+ii-ix-1, j, k);
                 mid[m0] = mid[m2];
               }
             }
@@ -445,11 +446,11 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
         int j = st[1];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             if ( mid[m1] == id ) {
               for (int jj=1-gd; jj<=0; jj++) {
-                m0 = FBUtility::getFindexS3D(sz, gd, i, jj,   k);
-                m2 = FBUtility::getFindexS3D(sz, gd, i, j+jj, k);
+                m0 = _F_IDX_S3D(i, jj,   k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jj,   k);
+                m2 = _F_IDX_S3D(i, jj+j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j+jj, k);
                 mid[m0] = mid[m2];
               }
             }
@@ -463,11 +464,11 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
         int j = st[1];
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             if ( mid[m1] == id ) {
               for (int jj=jx+1; jj<=jx+gd; jj++) {
-                m0 = FBUtility::getFindexS3D(sz, gd, i, jj,        k);
-                m2 = FBUtility::getFindexS3D(sz, gd, i, j+jj-jx-1, k);
+                m0 = _F_IDX_S3D(i, jj,        k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jj,        k);
+                m2 = _F_IDX_S3D(i, jj+j-jx-1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j+jj-jx-1, k);
                 mid[m0] = mid[m2];
               }
             }
@@ -481,11 +482,11 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
         int k = st[2];
         for (int j=st[1]; j<=ed[1]; j++) {
           for (int i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             if ( mid[m1] == id ) {
               for (int kk=1-gd; kk<=0; kk++) {
-                m0 = FBUtility::getFindexS3D(sz, gd, i, j, kk  );
-                m2 = FBUtility::getFindexS3D(sz, gd, i, j, k+kk);
+                m0 = _F_IDX_S3D(i, j, kk,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kk  );
+                m2 = _F_IDX_S3D(i, j, kk+k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k+kk);
                 mid[m0] = mid[m2];
               }
             }
@@ -499,11 +500,11 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
         int k = st[2];
         for (int j=st[1]; j<=ed[1]; j++) {
           for (int i=st[0]; i<=ed[0]; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             if ( mid[m1] == id ) {
               for (int kk=kx+1; kk<=kx+gd; kk++) {
-                m0 = FBUtility::getFindexS3D(sz, gd, i, j, kk       );
-                m2 = FBUtility::getFindexS3D(sz, gd, i, j, k+kk-kx-1);
+                m0 = _F_IDX_S3D(i, j, kk,        ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kk       );
+                m2 = _F_IDX_S3D(i, j, kk+k-kx-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k+kk-kx-1);
                 mid[m0] = mid[m2];
               }
             }
@@ -532,14 +533,13 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // described in Fortran index
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
 
         if ( state == SOLID) {
           if (!IS_FLUID(bx[m]) ) cell++;  //  IS_Fluid() > 0=SOLID, 1=FLUID
@@ -589,8 +589,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, 1  , j, k);
-            m2 = FBUtility::getFindexS3D(sz, gd, 0  , j, k);
+            m1 = _F_IDX_S3D(1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 1  , j, k);
+            m2 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 0  , j, k);
             s1 = bv[m1];
             s2 = bv[m2];
             if ( GET_FACE_BC(s1, BC_FACE_W) == OBC_MASK ) {
@@ -605,8 +605,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       if( nID[X_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, ix  , j, k);
-            m2 = FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
+            m1 = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix  , j, k);
+            m2 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
             s1 = bv[m1];
             s2 = bv[m2];
             if ( GET_FACE_BC(s1, BC_FACE_E) == OBC_MASK ) {
@@ -621,8 +621,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       if( nID[Y_MINUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, 1  , k);
-            m2 = FBUtility::getFindexS3D(sz, gd, i, 0  , k);
+            m1 = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 1  , k);
+            m2 = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 0  , k);
             s1 = bv[m1];
             s2 = bv[m2];
             if ( GET_FACE_BC(s1, BC_FACE_S) == OBC_MASK ) {
@@ -637,8 +637,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       if( nID[Y_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, jx  , k);
-            m2 = FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
+            m1 = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx  , k);
+            m2 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
             s1 = bv[m1];
             s2 = bv[m2];
             if ( GET_FACE_BC(s1, BC_FACE_N) == OBC_MASK ) {
@@ -653,8 +653,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       if( nID[Z_MINUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, 1  );
-            m2 = FBUtility::getFindexS3D(sz, gd, i, j, 0  );
+            m1 = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 1  );
+            m2 = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 0  );
             s1 = bv[m1];
             s2 = bv[m2];
             if ( GET_FACE_BC(s1, BC_FACE_B) == OBC_MASK ) {
@@ -669,8 +669,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
       if( nID[Z_PLUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m1 = FBUtility::getFindexS3D(sz, gd, i, j, kx  );
-            m2 = FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
+            m1 = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx  );
+            m2 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
             s1 = bv[m1];
             s2 = bv[m2];
             if ( GET_FACE_BC(s1, BC_FACE_T) == OBC_MASK ) {
@@ -708,7 +708,6 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int i=0; i<NOFACE; i++) {
@@ -723,8 +722,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   if( nID[X_MINUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        m0 = FBUtility::getFindexS3D(sz, gd, 0, j, k);
-        m1 = FBUtility::getFindexS3D(sz, gd, 1, j, k);
+        m0 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 0, j, k);
+        m1 = _F_IDX_S3D(1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 1, j, k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
@@ -737,8 +736,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   if( nID[X_PLUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        m0 = FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
-        m1 = FBUtility::getFindexS3D(sz, gd, ix,   j, k);
+        m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
+        m1 = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix,   j, k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
@@ -751,8 +750,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   if( nID[Y_MINUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
-        m0 = FBUtility::getFindexS3D(sz, gd, i, 0, k);
-        m1 = FBUtility::getFindexS3D(sz, gd, i, 1, k);
+        m0 = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 0, k);
+        m1 = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 1, k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
@@ -765,8 +764,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   if( nID[Y_PLUS] < 0 ){
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
-        m0 = FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
-        m1 = FBUtility::getFindexS3D(sz, gd, i, jx,   k);
+        m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
+        m1 = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx,   k);
         if ( (  FLUID == IS_FLUID(bx[m0]))
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
@@ -779,8 +778,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   if( nID[Z_MINUS] < 0 ){
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m0 = FBUtility::getFindexS3D(sz, gd, i, j, 0);
-        m1 = FBUtility::getFindexS3D(sz, gd, i, j, 1);
+        m0 = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 0);
+        m1 = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 1);
         if ( (  FLUID == IS_FLUID(bx[m0]))
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
@@ -793,8 +792,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   if( nID[Z_PLUS] < 0 ){
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m0 = FBUtility::getFindexS3D(sz, gd, i, j, kx  );
-        m1 = FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
+        m0 = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx  );
+        m1 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
         if ( (  FLUID == IS_FLUID(bx[m0]))
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
@@ -827,14 +826,13 @@ unsigned long VoxInfo::countState(int id, int* mid)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // サーチ範囲はノードローカルの計算セル内
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         if ( mid[m] == id )  g++;
       }
     }
@@ -866,14 +864,13 @@ void VoxInfo::dbg_chkBCIndexD(const int* bcd, const char* fname)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // ガイドセルを含む全領域
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         s = bcd[m];
         Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n", 
                           i, j, k, IS_FLUID(s), 
@@ -908,14 +905,13 @@ void VoxInfo::dbg_chkBCIndexP(const int* bcd, const int* bcp, const char* fname,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // ガイドセルを含む全領域
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         d = bcd[m];
         s = bcp[m];
         q = d & MASK_6;
@@ -954,14 +950,13 @@ void VoxInfo::dbg_chkBCIndexV(int* bcv, const char* fname)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // ガイドセルを含む全領域
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         s = bcv[m];
         Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: VBC(ewnstb) [%2d %2d %2d %2d %2d %2d] : idx=%d\n", 
                           i, j, k, IS_FLUID(s), 
@@ -999,7 +994,6 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   switch ( KOS ) {
@@ -1009,7 +1003,7 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             s = bx[m];
             if ( IS_FLUID( s ) ) {
               s = onBit( s, ACTIVE_BIT );
@@ -1028,7 +1022,7 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             s = bx[m];
             if ( !IS_FLUID( s ) ) {
               s = onBit( s, ACTIVE_BIT );
@@ -1047,7 +1041,7 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             bx[m] = onBit( bx[m], ACTIVE_BIT );
             c++;
           }
@@ -1079,7 +1073,6 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   switch (face) {
@@ -1088,7 +1081,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
         int i=1;
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k); // 最外層のID
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k); // 最外層のID
             bh2[m] = offBit(bh2[m], ADIABATIC_W); // 断熱ビットを0にする
           }
         }
@@ -1100,7 +1093,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
         int i=ix;
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             bh2[m] = offBit(bh2[m], ADIABATIC_E);
           }
         }
@@ -1112,7 +1105,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
         int j=1;
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             bh2[m] = offBit(bh2[m], ADIABATIC_S);
           }
         }
@@ -1124,7 +1117,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
         int j=jx;
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             bh2[m] = offBit(bh2[m], ADIABATIC_N);
           }
         }
@@ -1136,7 +1129,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
         int k=1;
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             bh2[m] = offBit(bh2[m], ADIABATIC_B);
           }
         }
@@ -1148,7 +1141,7 @@ void VoxInfo::encAmask_SymtrcBC(const int face, int* bh2)
         int k=kx;
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             bh2[m] = offBit(bh2[m], ADIABATIC_T);
           }
         }
@@ -1173,14 +1166,13 @@ void VoxInfo::encHbit(int* bh1, int* bh2)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // 初期化
   for (int k=0; k<=kx+1; k++) {
     for (int j=0; j<=jx+1; j++) {
       for (int i=0; i<=ix+1; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         bh2[m] |= ( 0x3f << GMA_W ); // 6bitまとめて(1)で初期化
       }
     }
@@ -1190,7 +1182,7 @@ void VoxInfo::encHbit(int* bh1, int* bh2)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         s1 = bh1[m];
         s2 = bh2[m];
         
@@ -1210,7 +1202,7 @@ void VoxInfo::encHbit(int* bh1, int* bh2)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s2= bh2[m];
         
         s_w = BIT_SHIFT(s2, GMA_W); // 対角要素の係数：0 or 1
@@ -1279,7 +1271,6 @@ unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   idd = id;
@@ -1287,7 +1278,7 @@ unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         if ( mid[m] == idd )  
         {
           bx[m] |= order; // bx[m]の下位6bitにエントリをエンコード  >> ParseBC:sertControlVars()でビット幅をチェック
@@ -1338,7 +1329,6 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -1346,7 +1336,7 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         d  = bcd[m_p];
@@ -1355,12 +1345,15 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
         
         if ( (c_p == deface) && IS_FLUID(s2) ) // 流体セルに対してのみ適用
         {
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -1485,7 +1478,6 @@ unsigned long VoxInfo::encQfaceHT_B(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -1493,7 +1485,7 @@ unsigned long VoxInfo::encQfaceHT_B(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         d  = bcd[m_p];
@@ -1501,12 +1493,15 @@ unsigned long VoxInfo::encQfaceHT_B(const int order,
         s2 = bh2[m_p];
         
         if ( (c_p == idd) && !IS_FLUID(s2) ) { // 固体セルに対してのみ適用
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -1632,7 +1627,6 @@ unsigned long VoxInfo::encQfaceISO_SF(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -1640,7 +1634,7 @@ unsigned long VoxInfo::encQfaceISO_SF(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         d  = bcd[m_p];
@@ -1648,12 +1642,15 @@ unsigned long VoxInfo::encQfaceISO_SF(const int order,
         s2 = bh2[m_p];
         
         if ( (c_p == deface) && IS_FLUID(s2) ) { // テストセルは流体でdefaceID
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           s_e = bh2[m_e];
           s_w = bh2[m_w];
@@ -1779,7 +1776,6 @@ unsigned long VoxInfo::encQfaceISO_SS(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -1787,7 +1783,7 @@ unsigned long VoxInfo::encQfaceISO_SS(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         d  = bcd[m_p];
@@ -1795,12 +1791,15 @@ unsigned long VoxInfo::encQfaceISO_SS(const int order,
         s2 = bh2[m_p];
         
         if ( (c_p == idd) && !IS_FLUID(s2) ) { // テストセルは固体でキーID
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           s_e = bh2[m_e];
           s_w = bh2[m_w];
@@ -1925,7 +1924,6 @@ unsigned long VoxInfo::encQface(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -1933,16 +1931,19 @@ unsigned long VoxInfo::encQface(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         if ( c_p == deface) {
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -2046,7 +2047,6 @@ void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   idd = id;
@@ -2054,7 +2054,7 @@ void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* 
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         d  = bcd[m_p];
@@ -2062,12 +2062,15 @@ void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* 
         s2 = bh2[m_p];
         
         if ( (c_p == deface) && IS_FLUID(s1) ) { // defaceセルかつ流体の時に，以下を評価
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -2130,18 +2133,21 @@ void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* 
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         s1  = bh1[m_p];
         
         if ( (c_p == deface) && IS_FLUID(s1) ) { // 指定セルかつ流体の時に，以下を評価
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -2204,7 +2210,6 @@ void VoxInfo::encPbit(int* bx)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // ディリクレ条件とノイマン条件の排他性のチェック
@@ -2213,7 +2218,7 @@ void VoxInfo::encPbit(int* bx)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m];
         flag = 0;
         
@@ -2263,7 +2268,7 @@ void VoxInfo::encPbit(int* bx)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m];
         
         s_e = BIT_SHIFT(s, BC_N_E); // 0-Neumann / 1-normal
@@ -2278,12 +2283,12 @@ void VoxInfo::encPbit(int* bx)
         
         if ( (ss == 0) && (BIT_IS_SHIFT(s,ACTIVE_BIT)) ) { 
           Hostonly_ printf("\tError : Coefficient of diagonal element is zero at (%d,%d,%d) : (wesnbt)[%1d %1d %1d %1d %1d %1d]\n", i,j,k,
-                           IS_FLUID(bx[FBUtility::getFindexS3D(sz, gd, i-1, j, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(sz, gd, i+1, j, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(sz, gd, i, j-1, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(sz, gd, i, j+1, k)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(sz, gd, i, j, k-1)]),
-                           IS_FLUID(bx[FBUtility::getFindexS3D(sz, gd, i, j, k+1)]) );
+                           IS_FLUID(bx[_F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd)]),
+                           IS_FLUID(bx[_F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd)]),
+                           IS_FLUID(bx[_F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd)]),
+                           IS_FLUID(bx[_F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd)]),
+                           IS_FLUID(bx[_F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd)]),
+                           IS_FLUID(bx[_F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd)]) );
         }
         
       }
@@ -2330,7 +2335,6 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -2338,18 +2342,21 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         d = bcd[m];
         s = bcp[m];
         c_p = mid[m];
         
         if ( IS_FLUID( s ) && (c_p == deface) ) { // 対象セルが流体セル，かつdefaceである
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -2451,23 +2458,25 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // ノイマンフラグ
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           // 外部境界面は除外 nID[X_MINUS] < 0 のときが外部境界面，0-myrank, 0>other rank
           // X_MINUS
@@ -2524,16 +2533,19 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           // X_MINUS
           if ( !IS_FLUID(bx[m_w]) ) { s = onBit( s, FACING_W ); c++; }
@@ -2590,14 +2602,13 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // ノイマンフラグ
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
@@ -2661,7 +2672,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
@@ -2694,7 +2705,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
@@ -2741,7 +2752,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+          m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
           s = bx[m_p];
           
           if ( IS_FLUID( s ) ) {
@@ -2809,7 +2820,6 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -2817,18 +2827,21 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         d = bcd[m];
         s = bcp[m];
         c_p = mid[m];
         
         if ( IS_FLUID( s ) && (c_p == deface) ) { // 対象セルが流体セル，かつdefaceである
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -2933,7 +2946,6 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   switch (face) {
@@ -2944,7 +2956,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         if ("Neumann"==key) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_W );
@@ -2956,7 +2968,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         else {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_W );
@@ -2975,7 +2987,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         if ("Neumann"==key) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_E );
@@ -2987,7 +2999,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         else {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_E );
@@ -3006,7 +3018,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         if ("Neumann"==key) {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_S );
@@ -3018,7 +3030,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         else {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_S );
@@ -3037,7 +3049,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         if ("Neumann"==key) {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_N );
@@ -3049,7 +3061,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         else {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_N );
@@ -3068,7 +3080,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         if ("Neumann"==key) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_B );
@@ -3080,7 +3092,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         else {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_B );
@@ -3099,7 +3111,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         if ("Neumann"==key) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_T );
@@ -3111,7 +3123,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
         else {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               s = bx[m];
               if ( IS_FLUID(s) ) {
                 if (dir) s = onBit( s, FACING_T );
@@ -3151,7 +3163,6 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -3159,19 +3170,22 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         s = bv[m_p];
         q = bp[m_p];
         
         if ( (c_p == deface) && IS_FLUID(s) ) { // テストセルが流体，かつdeface
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -3281,18 +3295,21 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         s = bv[m_p];
         
         if ( (c_p == deface) && IS_FLUID(s) ) {
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -3403,7 +3420,6 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   int idd = id;
@@ -3418,7 +3434,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
         
         if ( pp < 6.0 ) { // 6方向のうちいずれかにカットがある
 
-          m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+          m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
           bid = cut_id[m_p];
           s   = bv[m_p];
           q   = bp[m_p];
@@ -3498,7 +3514,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bv[m_p];
         
         m_flag = 0;
@@ -3548,7 +3564,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   ( "fluid" == key ) ? sw=1 : sw=0;
@@ -3559,8 +3574,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            m = FBUtility::getFindexS3D(sz, gd, 1  , j, k);
-            mt= FBUtility::getFindexS3D(sz, gd, 0  , j, k);
+            m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 1  , j, k);
+            mt= _F_IDX_S3D(0, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, 0  , j, k);
             
             s = bv[m];
             q = bp[mt];
@@ -3601,8 +3616,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       if( nID[X_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            m = FBUtility::getFindexS3D(sz, gd, ix  , j, k);
-            mt= FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
+            m = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix  , j, k);
+            mt= _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, ix+1, j, k);
             
             s = bv[m];
             q = bp[mt];
@@ -3644,8 +3659,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       if( nID[Y_MINUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, 1  , k);
-            mt= FBUtility::getFindexS3D(sz, gd, i, 0  , k);
+            m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 1  , k);
+            mt= _F_IDX_S3D(i, 0, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, 0  , k);
             
             s = bv[m];
             q = bp[mt];
@@ -3687,8 +3702,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       if( nID[Y_PLUS] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, jx  , k);
-            mt= FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
+            m = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx  , k);
+            mt= _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, jx+1, k);
             
             s = bv[m];
             q = bp[mt];
@@ -3730,8 +3745,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       if( nID[Z_MINUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, 1  );
-            mt= FBUtility::getFindexS3D(sz, gd, i, j, 0  );
+            m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 1  );
+            mt= _F_IDX_S3D(i, j, 0, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, 0  );
             
             s = bv[m];
             q = bp[mt];
@@ -3773,8 +3788,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       if( nID[Z_PLUS] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, kx  );
-            mt= FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
+            m = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx  );
+            mt= _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, kx+1);
             
             s = bv[m];
             q = bp[mt];
@@ -3834,12 +3849,11 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   int c = 0; /// painted count
   float cpos = 0.9; // なんとなく
 
-#pragma omp parallel for firstprivate(ix, jx, kx, sz, gd, target, sd, cpos) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, target, sd, cpos) \
  private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
  private(qw, qe, qs, qn, qb, qt) \
  schedule(static) reduction(+:c)
@@ -3848,13 +3862,16 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
-        m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-        m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-        m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-        m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-        m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-        m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+        m_p = _F_IDX_S3D(i,   j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
+        /*
+        m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+        m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+        m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+        m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+        m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+        m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+         */
+#include "FindexS3D.h"
         
         // 未ペイントの場合にテスト
         if ( mid[m_p] == 0 ) {
@@ -3958,7 +3975,6 @@ unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   unsigned c = 0; /// painted count
   
@@ -3969,7 +3985,7 @@ unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
         
         // 未ペイントの場合
         if ( mid[m_p] == 0 ) {
@@ -3998,14 +4014,13 @@ void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   unsigned c = 0; /// count 
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         
         // テストセルがマークされている場合
         if ( mid[m_p] == -1 ) {
@@ -4042,21 +4057,23 @@ void VoxInfo::find_isolated_Fcell(int order, int* mid, int* bx)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bx[m_p];
         if ( IS_FLUID(s) ) {
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           // 隣接セルがすべて固体の場合
           if ( !IS_FLUID(bx[m_e]) && !IS_FLUID(bx[m_w]) &&
@@ -4143,7 +4160,6 @@ void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
 
   st[0] = ix;
@@ -4158,7 +4174,7 @@ void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         s = bv[m];
         
         m_flag = false;
@@ -4220,13 +4236,12 @@ unsigned long VoxInfo::flip_InActive(unsigned long& L,
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         c_p = mid[m];
         s = bx[m];
         
@@ -4353,10 +4368,10 @@ bool VoxInfo::paint_first_seed(int* mid, const int* idx, const int target)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
-  size_t m = FBUtility::getFindexS3D(sz, gd, idx[0], idx[1], idx[2]);
+  //size_t m = FBUtility::getFindexS3D(sz, gd, idx[0], idx[1], idx[2]);
+  size_t m = _F_IDX_S3D(idx[0], idx[1], idx[2], ix, jx, kx, gd);
   
   if ( mid[m] != 0 ) {
     return false;
@@ -4546,19 +4561,21 @@ void VoxInfo::setAmask_InActive(int id, int* mid, int* bh)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
-        m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-        m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-        m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-        m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-        m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-        m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+        m_p = _F_IDX_S3D(i,   j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        /*
+        m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+        m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+        m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+        m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+        m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+        m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+         */
+#include "FindexS3D.h"
         
         c_p = mid[m_p];
         c_e = mid[m_e];
@@ -4601,22 +4618,24 @@ void VoxInfo::setAmask_Solid(int* bh)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         s   = bh[m_p];
         
         if ( !IS_FLUID(s) ) { // pセルが固体セルの場合が対象
-          m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-          m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-          m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-          m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-          m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-          m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+          /*
+          m_e = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
+          m_w = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
+          m_n = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
+          m_s = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
+          m_t = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
+          m_b = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           s_e = bh[m_e];
           s_w = bh[m_w];
@@ -4681,16 +4700,19 @@ void VoxInfo::setAmask_Thermal(int* bh)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         s   = bh[m_p];
         
         if ( IS_FLUID(s) ) { // pセルが流体セルの場合が対象
+          /*
           m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
           m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
           m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
           m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
           m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
           m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           s_e = bh[m_e];
           s_w = bh[m_w];
@@ -4749,7 +4771,6 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   size_t nx = (ix+2*guide) * (jx+2*guide) * (kx+2*guide); // ガイドセルを含む全領域を対象にする
@@ -4781,7 +4802,7 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
             for (int i=st[0]; i<=ed[0]; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               if ( (cvf[m] > 0.0) && IS_FLUID(bx[m]) ) { // 流体でコンポーネントの体積率があるとき
                 bx[m] |= (id << TOP_CELL_ID) ;
                 mid[m] = id;
@@ -4797,7 +4818,7 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
         for (int k=st[2]; k<=ed[2]; k++) {
           for (int j=st[1]; j<=ed[1]; j++) {
             for (int i=st[0]; i<=ed[0]; i++) {
-              m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
               if ( mid[m] == id ) {
                 bx[m] |= (id << TOP_CELL_ID) ;
               }
@@ -4899,14 +4920,13 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   // 断熱マスクを非断熱(1)に初期化する
   for (int k=0; k<=kx+1; k++) {
     for (int j=0; j<=jx+1; j++) {
       for (int i=0; i<=ix+1; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         bh2[m] |= ( 0x3f << ADIABATIC_W ); // 6bitまとめて初期化
       }
     }
@@ -5101,12 +5121,16 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, cons
 
   // debug
 #if 0
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   size_t m;
   float w, q;
   int i=1;
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
-      m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+      m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
       w = GET_SHIFT_F(bcp[m], BC_N_W);
       q = GET_SHIFT_F(bcp[m], BC_NDAG_W);
       printf("(1, %3d, %3d) N=%f Coef_W=%f\n", j,k,w,q);
@@ -5217,7 +5241,6 @@ void VoxInfo::setCmpFraction(CompoList* cmp, int* bx, float* vf)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int n=1; n<=NoBC; n++) {
@@ -5227,7 +5250,7 @@ void VoxInfo::setCmpFraction(CompoList* cmp, int* bx, float* vf)
       for (int k=st[2]; k<=ed[2]; k++) {
         for (int j=st[1]; j<=ed[1]; j++) {
           for (int i=st[0]; i<=ed[0]; i++) {
-            m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
             s = bx[m];
             if ( ( s & MASK_6) == n ) {
               f = floorf(vf[m]*255.0 + 0.5); // 0.0<vf<1.0 の四捨五入 > 8ビットで量子化
@@ -5262,22 +5285,24 @@ void VoxInfo::setInactive_Compo(int id, int def, int* mid, int* bh1, int* bh2)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         c_p = mid[m_p];
         
         if ( c_p == idd ) { // BCの対象セル
+          /*
           m_e = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
           m_w = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
           m_n = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
           m_s = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
           m_t = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
           m_b = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
+           */
+#include "FindexS3D.h"
           
           c_e = mid[m_e];
           c_w = mid[m_w];
@@ -5520,7 +5545,7 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        mp= FBUtility::getFindexS3D(sz, gd, i, j, k);
+        mp= _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
         q = 0;
         
@@ -5571,7 +5596,6 @@ unsigned VoxInfo::test_opposite_cut(int* bid, int* mid, const int solid_id)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   unsigned c = 0; /// count
@@ -5602,35 +5626,35 @@ unsigned VoxInfo::test_opposite_cut(int* bid, int* mid, const int solid_id)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_111 = FBUtility::getFindexS3D(sz, gd, i-1, j-1, k-1);
-        m_112 = FBUtility::getFindexS3D(sz, gd, i-1, j-1, k  );
-        m_113 = FBUtility::getFindexS3D(sz, gd, i-1, j-1, k+1);
-        m_121 = FBUtility::getFindexS3D(sz, gd, i-1, j  , k-1);
-        m_122 = FBUtility::getFindexS3D(sz, gd, i-1, j  , k  );
-        m_123 = FBUtility::getFindexS3D(sz, gd, i-1, j  , k+1);
-        m_131 = FBUtility::getFindexS3D(sz, gd, i-1, j+1, k-1);
-        m_132 = FBUtility::getFindexS3D(sz, gd, i-1, j+1, k  );
-        m_133 = FBUtility::getFindexS3D(sz, gd, i-1, j+1, k+1);
+        m_111 = _F_IDX_S3D(i-1, j-1, k-1, ix, jx, kx, gd);
+        m_112 = _F_IDX_S3D(i-1, j-1, k  , ix, jx, kx, gd);
+        m_113 = _F_IDX_S3D(i-1, j-1, k+1, ix, jx, kx, gd);
+        m_121 = _F_IDX_S3D(i-1, j  , k-1, ix, jx, kx, gd);
+        m_122 = _F_IDX_S3D(i-1, j  , k  , ix, jx, kx, gd);
+        m_123 = _F_IDX_S3D(i-1, j  , k+1, ix, jx, kx, gd);
+        m_131 = _F_IDX_S3D(i-1, j+1, k-1, ix, jx, kx, gd);
+        m_132 = _F_IDX_S3D(i-1, j+1, k  , ix, jx, kx, gd);
+        m_133 = _F_IDX_S3D(i-1, j+1, k+1, ix, jx, kx, gd);
         
-        m_211 = FBUtility::getFindexS3D(sz, gd, i  , j-1, k-1);
-        m_212 = FBUtility::getFindexS3D(sz, gd, i  , j-1, k  );
-        m_213 = FBUtility::getFindexS3D(sz, gd, i  , j-1, k+1);
-        m_221 = FBUtility::getFindexS3D(sz, gd, i  , j  , k-1);
-        m_222 = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
-        m_223 = FBUtility::getFindexS3D(sz, gd, i  , j  , k+1);
-        m_231 = FBUtility::getFindexS3D(sz, gd, i  , j+1, k-1);
-        m_232 = FBUtility::getFindexS3D(sz, gd, i  , j+1, k  );
-        m_233 = FBUtility::getFindexS3D(sz, gd, i  , j+1, k+1);
+        m_211 = _F_IDX_S3D(i  , j-1, k-1, ix, jx, kx, gd);
+        m_212 = _F_IDX_S3D(i  , j-1, k  , ix, jx, kx, gd);
+        m_213 = _F_IDX_S3D(i  , j-1, k+1, ix, jx, kx, gd);
+        m_221 = _F_IDX_S3D(i  , j  , k-1, ix, jx, kx, gd);
+        m_222 = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        m_223 = _F_IDX_S3D(i  , j  , k+1, ix, jx, kx, gd);
+        m_231 = _F_IDX_S3D(i  , j+1, k-1, ix, jx, kx, gd);
+        m_232 = _F_IDX_S3D(i  , j+1, k  , ix, jx, kx, gd);
+        m_233 = _F_IDX_S3D(i  , j+1, k+1, ix, jx, kx, gd);
             
-        m_311 = FBUtility::getFindexS3D(sz, gd, i+1, j-1, k-1);
-        m_312 = FBUtility::getFindexS3D(sz, gd, i+1, j-1, k  );
-        m_313 = FBUtility::getFindexS3D(sz, gd, i+1, j-1, k+1);
-        m_321 = FBUtility::getFindexS3D(sz, gd, i+1, j  , k-1);
-        m_322 = FBUtility::getFindexS3D(sz, gd, i+1, j  , k  );
-        m_323 = FBUtility::getFindexS3D(sz, gd, i+1, j  , k+1);
-        m_331 = FBUtility::getFindexS3D(sz, gd, i+1, j+1, k-1);
-        m_332 = FBUtility::getFindexS3D(sz, gd, i+1, j+1, k  );
-        m_333 = FBUtility::getFindexS3D(sz, gd, i+1, j+1, k+1);
+        m_311 = _F_IDX_S3D(i+1, j-1, k-1, ix, jx, kx, gd);
+        m_312 = _F_IDX_S3D(i+1, j-1, k  , ix, jx, kx, gd);
+        m_313 = _F_IDX_S3D(i+1, j-1, k+1, ix, jx, kx, gd);
+        m_321 = _F_IDX_S3D(i+1, j  , k-1, ix, jx, kx, gd);
+        m_322 = _F_IDX_S3D(i+1, j  , k  , ix, jx, kx, gd);
+        m_323 = _F_IDX_S3D(i+1, j  , k+1, ix, jx, kx, gd);
+        m_331 = _F_IDX_S3D(i+1, j+1, k-1, ix, jx, kx, gd);
+        m_332 = _F_IDX_S3D(i+1, j+1, k  , ix, jx, kx, gd);
+        m_333 = _F_IDX_S3D(i+1, j+1, k+1, ix, jx, kx, gd);
         
         b_111 = bid[m_111];
         b_112 = bid[m_112];

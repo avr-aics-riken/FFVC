@@ -189,9 +189,9 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   size_t m;
   
   // ローカルにコピー
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   int gd = guide;
 
   // length, widthなどは有次元値
@@ -199,10 +199,10 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   ht  = oy_g + height/R->RefLength;
   
   // Initialize  内部領域をfluidにしておく
-  for (int k=1; k<=kmax; k++) {
-    for (int j=1; j<=jmax; j++) {
-      for (int i=1; i<=imax; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = mid_fluid;
       }
     }
@@ -210,10 +210,10 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
-    for (int k=1; k<=kmax; k++) {
-      for (int j=1; j<=jmax; j++) {
-        for (int i=1; i<=imax; i++) {
-          m = FBUtility::getFindexS3D(size, guide, i, j, k);
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
         }
@@ -226,11 +226,11 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     
     size_t m1;
     
-    for (int k=1; k<=kmax; k++) {
-      for (int j=1; j<=jmax; j++) {
-        for (int i=1; i<=imax; i++) {
-          m = FBUtility::getFindexS3D(size, guide, i,   j, k);
-          m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
+          m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
             mid[m] = mid_driver_face;
           }
@@ -240,10 +240,10 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   }
 
   // ステップ部分を上書き
-  for (int k=1; k<=kmax; k++) {
-    for (int j=1; j<=jmax; j++) {
-      for (int i=1; i<=imax; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
         if ( (x < len) && (y < ht) ) {

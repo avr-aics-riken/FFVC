@@ -266,13 +266,13 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
   FB::Vec3f p, o;
   size_t m;
   float c, r, h, ff, ph;
-  int ix, jx, kx, gc, dv;
+  int ix, jx, kx, gd, dv;
   
   // for optimization > variables defined outside
   ix = size[0];
   jx = size[1];
   kx = size[2];
-  gc = guide;
+  gd = guide;
   dv = division;
   h  = pch.x/(float)dv;
   ff = 1.0/(float)(dv*dv*dv);
@@ -284,7 +284,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           r = vf[m];
           
           if ( (r>0.0) && (r<1.0) ) {
@@ -321,7 +321,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           r = vf[m];
           
           if ( (r>0.0) && (r<1.0) ) {
@@ -369,13 +369,12 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
   FB::Vec3f p[8];
   size_t m;
   float c, ph;
-  int ix, jx, kx, gc;
   
   // for optimization > variables defined outside
-  ix = size[0];
-  jx = size[1];
-  kx = size[2];
-  gc = guide;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   o  = org;
   ph = pch.x;
   
@@ -401,7 +400,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
           for (int l=0; l<8; l++) {
             c += judge_rect(p[l]);
           }
-          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           vf[m] += c*0.125; // 1/8
         }
       }
@@ -431,7 +430,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
           for (int l=0; l<8; l++) {
             c += judge_cylinder(p[l]);
           }
-          m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           vf[m] += c*0.125; // 1/8
         }
       }
@@ -450,13 +449,12 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
   FB::Vec3f p[8];
   size_t m;
   float c, ph;
-  int ix, jx, kx, gc;
   
   // for optimization > variables defined outside
-  ix = size[0];
-  jx = size[1];
-  kx = size[2];
-  gc = guide;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   o  = org;
   ph = pch.x;
   
@@ -483,7 +481,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
             c += judge_rect(p[l]);
           }
           if ( c>=4.0) {
-            m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
             mid[m] = id;
           }
         }
@@ -514,7 +512,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
             c += judge_cylinder(p[l]);
           }
           if ( c>=4.0) {
-            m = F_INDEX_S3D(ix, jx, kx, gc, i, j, k);
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
             mid[m] = id;
           }
         }

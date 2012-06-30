@@ -86,19 +86,18 @@ void IP_PMT::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg
 void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   size_t m;
-  int sz[3];
   
   // ローカルにコピー
-  int imax = sz[0] = size[0];
-  int jmax = sz[1] = size[1];
-  int kmax = sz[2] = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   int gd = guide;
   
-#pragma omp parallel for firstprivate(imax, jmax, kmax, gd) schedule(static)
-  for (int k=1; k<=kmax; k++) {
-    for (int j=1; j<=jmax; j++) {
-      for (int i=1; i<=imax; i++) {
-        m = FBUtility::getFindexS3D(sz, gd, i, j, k);
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
         mid[m] = 1;
       }
     }

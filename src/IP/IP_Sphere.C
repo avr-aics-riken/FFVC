@@ -135,16 +135,16 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
   FB::Vec3f q = (p-ol)/pch;
   FB::Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
   
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   
   if ( idx.x < 1 ) idx.x = 1;
   if ( idx.y < 1 ) idx.y = 1;
   if ( idx.z < 1 ) idx.z = 1;
-  if ( idx.x > imax ) idx.x = imax;
-  if ( idx.y > jmax ) idx.y = jmax;
-  if ( idx.z > kmax ) idx.z = kmax;
+  if ( idx.x > ix ) idx.x = ix;
+  if ( idx.y > jx ) idx.y = jx;
+  if ( idx.z > kx ) idx.z = kx;
 
   return idx;
 }
@@ -180,9 +180,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   size_t m;
   
   // ローカルにコピー
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   int gd = guide;
 
   //printf("%d : ox = %e, oy = %e, oz = %e\n", pn.myrank, org_l.x, org_l.y, org_l.z);
@@ -199,7 +199,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   //printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", pn.myrank, box_ed.x, box_ed.y, box_ed.z);
   
   // 媒質設定
-  size_t m_nx = (imax+2*gd) * (jmax+2*gd) * (kmax+2*gd);
+  size_t m_nx = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
   
   for (size_t n=0; n<m_nx; n++) { 
     mid[n] = mid_fluid;
@@ -215,7 +215,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
         r = b.length();
         
         if ( r <= rs ) {
-          m = FBUtility::getFindexS3D(size, gd, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
           mid[m] = mid_solid;
         }
       }
@@ -234,10 +234,10 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
-    for (int k=1; k<=kmax; k++) {
-      for (int j=1; j<=jmax; j++) {
-        for (int i=1; i<=imax; i++) {
-          m = FBUtility::getFindexS3D(size, guide, i, j, k);
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
         }
@@ -250,11 +250,11 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
     
     size_t m1;
     
-    for (int k=1; k<=kmax; k++) {
-      for (int j=1; j<=jmax; j++) {
-        for (int i=1; i<=imax; i++) {
-          m = FBUtility::getFindexS3D(size, guide, i,   j, k);
-          m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
+          m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
             mid[m] = mid_driver_face;
           }
@@ -264,10 +264,10 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   }
   
   // ステップ部分を上書き
-  for (int k=1; k<=kmax; k++) {
-    for (int j=1; j<=jmax; j++) {
-      for (int i=1; i<=imax; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
         if ( x < len ) {
@@ -317,13 +317,13 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   size_t m;
   
   // ローカルにコピー
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   int gd = guide;
   
   // 媒質設定
-  size_t m_nx = (imax+2*guide) * (jmax+2*guide) * (kmax+2*guide);
+  size_t m_nx = (ix+2*guide) * (jx+2*guide) * (kx+2*guide);
   
   for (size_t n=0; n<m_nx; n++) { 
     mid[n] = mid_fluid;
@@ -339,7 +339,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
         r = b.length();
         
         if ( r <= rs ) {
-          m = FBUtility::getFindexS3D(size, gd, i, j, k);
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
           mid[m] = mid_solid;
         }
       }
@@ -399,10 +399,10 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
-    for (int k=1; k<=kmax; k++) {
-      for (int j=1; j<=jmax; j++) {
-        for (int i=1; i<=imax; i++) {
-          m = FBUtility::getFindexS3D(size, guide, i, j, k);
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
         }
@@ -415,11 +415,11 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
     
     size_t m1;
     
-    for (int k=1; k<=kmax; k++) {
-      for (int j=1; j<=jmax; j++) {
-        for (int i=1; i<=imax; i++) {
-          m = FBUtility::getFindexS3D(size, guide, i,   j, k);
-          m1= FBUtility::getFindexS3D(size, guide, i+1, j, k);
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
+          m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
             mid[m] = mid_driver_face;
           }
@@ -429,10 +429,10 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   }
 
   // ステップ部分を上書き
-  for (int k=1; k<=kmax; k++) {
-    for (int j=1; j<=jmax; j++) {
-      for (int i=1; i<=imax; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
         if ( x < len ) {

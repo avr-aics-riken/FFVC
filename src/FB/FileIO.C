@@ -43,7 +43,7 @@ void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc,
 void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)
 {
   int pad, dType, stp, svType;
-  int ix, jx, kx, i, j, k;
+  int i, j, k;
   REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
   long long szl[3], stpl;
   
@@ -62,9 +62,10 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
     Exit(0);
   }
   
-  ix = sz[0]; //+2*gc;
-  jx = sz[1]; //+2*gc;
-  kx = sz[2]; //+2*gc;
+  int ix = sz[0]; //+2*gc;
+  int jx = sz[1]; //+2*gc;
+  int kx = sz[2]; //+2*gc;
+  int gd = gc;
   
   size_t nx = ix * jx * kx;
   
@@ -90,7 +91,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
         l = ix*jx*(k-1) + ix*(j-1) + i-1;
-        m = FBUtility::getFindexS3D(sz, gc, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gc, i, j, k);
         f[l] = (REAL_TYPE)vf[m];
       }
     }

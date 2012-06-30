@@ -92,16 +92,16 @@ void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   size_t m;
   
   // ローカルにコピー
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   int gd = guide;
 
   // Inner
-  for (int k=1; k<=kmax; k++) {
-    for (int j=1; j<=jmax; j++) {
-      for (int i=1; i<=imax; i++) {
-        m = FBUtility::getFindexS3D(size, guide, i, j, k);
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
         mid[m] = 1;
       }
     }

@@ -253,8 +253,26 @@
 // BCindexのセルの6面のいずれかにBCが設定されている場合，true
 #define IS_INCLUDE_BC(s) ( (s & 0x3fffffff) != 0 )
 
-// alternative
-#define F_INDEX_S3D(ix, jx, kx, gc, i, j, k) ( ((ix)+(gc)*2)*((jx)+(gc)*2)*((k)+(gc)-1) + ((ix)+(gc)*2)*((j)+(gc)-1) + (i)+(gc)-1 )
+
+/** 3次元インデクス(i,j,k) -> 1次元インデクス変換マクロ
+ *  @param [in] _I  i方向インデクス
+ *  @param [in] _J  j方向インデクス
+ *  @param [in] _K  k方向インデクス
+ *  @param [in] _NI i方向インデクスサイズ
+ *  @param [in] _NJ j方向インデクスサイズ
+ *  @param [in] _NK k方向インデクスサイズ
+ *  @param [in] _VC 仮想セル数
+ *  @return 1次元インデクス
+ */
+#define _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
+( size_t(_K+_VC-1) * size_t(_NI+2*_VC) * size_t(_NJ+2*_VC) \
++ size_t(_J+_VC-1) * size_t(_NI+2*_VC) \
++ size_t(_I+_VC-1) \
+)
+
+
+
+
 
 // 変数の種類
 enum Kind_of_vars {

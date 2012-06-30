@@ -105,26 +105,26 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Med
   size_t m;
   
   // ローカルにコピー
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
   int gd = guide;
 
   // Initialize and for outer solid
-  for (int k=1-gd; k<=kmax+gd; k++) {
-    for (int j=1-gd; j<=jmax+gd; j++) {
-      for (int i=1-gd; i<=imax+gd; i++) {
-        m = FBUtility::getFindexS3D(size, gd, i, j, k);
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
         mid[m] = mid_inactive;
       }
     }
   }
 
   // inner fluid
-  for (int k=2; k<=kmax-1; k++) {
-    for (int j=2; j<=jmax-1; j++) {
-      for (int i=2; i<=imax-1; i++) {
-        m = FBUtility::getFindexS3D(size, gd, i, j, k);
+  for (int k=2; k<=kx-1; k++) {
+    for (int j=2; j<=jx-1; j++) {
+      for (int i=2; i<=ix-1; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
         mid[m] = mid_fluid;
       }
     }
@@ -134,21 +134,21 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Med
   int i, j, k;
   
   j = k = 3;
-  for (i=3; i<=imax-2; i++) {
-    m = FBUtility::getFindexS3D(size, gd, i, j, k);
+  for (i=3; i<=ix-2; i++) {
+    m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
     mid[m] = mid_fin;
   }
 
   // iso-thermal fin
   i = 2;
   j = k = 3;
-  m = FBUtility::getFindexS3D(size, gd, i, j, k);
+  m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
   mid[m] = mid_isothermal;
   
   // adiabatic fin
-  i = imax-1;
+  i = ix-1;
   j = k = 3;
-  m = FBUtility::getFindexS3D(size, gd, i, j, k);
+  m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
   mid[m] = mid_adiabatic;  
   
 }
