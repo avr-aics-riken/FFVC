@@ -22,7 +22,6 @@
 
 #include "DomainInfo.h"
 #include "FB_Define.h"
-#include "FBUtility.h"
 #include "BndOuter.h"
 #include "Control.h"
 #include "Component.h"
@@ -39,7 +38,6 @@ protected:
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
   REAL_TYPE rho, nyu, cp, lambda, beta;
   
-  int imax, jmax, kmax;
   int Example, NoBC, Unit_Temp, Unit_Prs;
   bool     inout_flag, isCDS;
   
@@ -62,7 +60,6 @@ protected:
 public:
   /** コンストラクタ */
   SetBC() {
-    imax = jmax = kmax = 0;
     ix = jx = kx = gc = NULL;
     dh = rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
     rho = nyu = cp = lambda = beta = BasePrs = 0.0;

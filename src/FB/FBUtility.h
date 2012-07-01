@@ -248,43 +248,6 @@ public:
     return ( (mode==Unit_Absolute) ? bp+a : a );
   }
   
-
-  
-  
-  /** 4次元インデクス(n,i,j,k) -> 1次元インデクス変換マクロ
-   *  @param[in] _N  成分インデクス
-   *  @param[in] _I  i方向インデクス
-   *  @param[in] _J  j方向インデクス
-   *  @param[in] _K  k方向インデクス
-   *  @param[in] _NN 成分数
-   *  @param[in] _NI i方向インデクスサイズ
-   *  @param[in] _NJ j方向インデクスサイズ
-   *  @param[in] _NK k方向インデクスサイズ
-   *  @param[in] _VC 仮想セル数
-   *  @return 1次元インデクス
-   */
-#define _F_IDX_S4DEX(_N,_I,_J,_K,_NN,_NI,_NJ,_NK,_VC) \
-( size_t(_NN-1) * _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
-+ size_t(_N) )
-  
-  
-  /** 3次元インデクス(3,i,j,k) -> 1次元インデクス変換マクロ
-   *  @param[in] _N  成分インデクス
-   *  @param[in] _I  i方向インデクス
-   *  @param[in] _J  j方向インデクス
-   *  @param[in] _K  k方向インデクス
-   *  @param[in] _NI i方向インデクスサイズ
-   *  @param[in] _NJ j方向インデクスサイズ
-   *  @param[in] _NK k方向インデクスサイズ
-   *  @param[in] _VC 仮想セル数
-   */
-#define _F_IDX_V3DEX(_N,_I,_J,_K,_NI,_NJ,_NK,_VC) \
-( 3 * size_t(_K+_VC-1) * size_t(_NI+2*_VC) * size_t(_NJ+2*_VC) \
-+ 3 * size_t(_J+_VC-1) * size_t(_NI+2*_VC) \
-+ 3 * size_t(_I+_VC-1) + size_t(_N) \
-)
-  
-  
   
   /**
    @brief Fortranの3次元インデックスから1次元インデックスを取得する
@@ -294,7 +257,7 @@ public:
    @param [in] j     J方向インデックス（ガイドセルを含まない）
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
-   */
+   
   static inline size_t getFindexS3D(const int* sz, int gc, int i, int j, int k) 
   {
     //return ( (sz[0]+gc*2)*(sz[1]+gc*2)*(k+gc-1) + (sz[0]+gc*2)*(j+gc-1) + i+gc-1 );
@@ -302,7 +265,7 @@ public:
     int t2 = gc-1;
     int t3 = sz[0]+t1;
     return ( t3*( (sz[1]+t1)*(k+t2) + j+t2 ) + i+t2 );
-  }
+  }*/
   
   /**
    @brief Fortranの3次元Exベクトルインデックスから1次元インデックスを取得する
@@ -332,14 +295,14 @@ public:
    @param [in] j     J方向インデックス（ガイドセルを含まない）
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
-   */
+   
   static inline size_t getFindexS3Dcut(const int* sz, int gc, int l, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;
     int t3 = sz[0]+t1;
     return ( 6*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) + l );
-  }
+  }*/
   
   /**
    @brief Fortranの3次元cut用Bid8インデックスから1次元インデックスを取得する
@@ -349,14 +312,14 @@ public:
    @param [in] j     J方向インデックス（ガイドセルを含まない）
    @param [in] k     K方向インデックス（ガイドセルを含まない）
    @return  1次元インデックス
-   */
+   
   static inline size_t getFindexBID8(const int* sz, int gc, int i, int j, int k) 
   {
     int t1 = gc*2;
     int t2 = gc-1;
     int t3 = sz[0]+t1;
     return ( 2*(t3*(sz[1]+t1)*(k+t2) + t3*(j+t2) + i+t2) );
-  }
+  }*/
   
 };
 

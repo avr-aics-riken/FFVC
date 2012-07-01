@@ -28,7 +28,6 @@
 #include "BndOuter.h"
 #include "Control.h"
 #include "Component.h"
-#include "FBUtility.h"
 #include "vec3.h"
 #include "TPControl.h"
 #include "Medium.h"

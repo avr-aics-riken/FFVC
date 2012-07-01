@@ -255,6 +255,7 @@
 
 
 /** 3次元インデクス(i,j,k) -> 1次元インデクス変換マクロ
+ *  @note i,j,kインデクスはF表記
  *  @param [in] _I  i方向インデクス
  *  @param [in] _J  j方向インデクス
  *  @param [in] _K  k方向インデクス
@@ -271,7 +272,37 @@
 )
 
 
+/** 4次元インデクス(n,i,j,k) -> 1次元インデクス変換マクロ
+ *  @note i,j,kインデクスはF表記、nはC表記
+ *  @param [in] _N  成分インデクス
+ *  @param [in] _I  i方向インデクス
+ *  @param [in] _J  j方向インデクス
+ *  @param [in] _K  k方向インデクス
+ *  @param [in] _NN 成分数
+ *  @param [in] _NI i方向インデクスサイズ
+ *  @param [in] _NJ j方向インデクスサイズ
+ *  @param [in] _NK k方向インデクスサイズ
+ *  @param [in] _VC 仮想セル数
+ *  @return 1次元インデクス
+ */
+#define _F_IDX_S4DEX(_N,_I,_J,_K,_NN,_NI,_NJ,_NK,_VC) \
+( size_t(_NN) * \
+_F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
++ size_t(_N) )
 
+
+/** 3次元インデクス(3,i,j,k) -> 1次元インデクス変換マクロ
+ *  @note i,j,kインデクスはF表記、nはC表記
+ *  @param [in] _N  成分インデクス
+ *  @param [in] _I  i方向インデクス
+ *  @param [in] _J  j方向インデクス
+ *  @param [in] _K  k方向インデクス
+ *  @param [in] _NI i方向インデクスサイズ
+ *  @param [in] _NJ j方向インデクスサイズ
+ *  @param [in] _NK k方向インデクスサイズ
+ *  @param [in] _VC 仮想セル数
+ */
+#define _F_IDX_V3DEX(_N,_I,_J,_K,_NI,_NJ,_NK,_VC) (_F_IDX_S4DEX(_N,_I,_J,_K,3,_NI,_NJ,_NK,_VC))
 
 
 // 変数の種類

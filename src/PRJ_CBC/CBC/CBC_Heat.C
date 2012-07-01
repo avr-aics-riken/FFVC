@@ -63,14 +63,13 @@ void SklSolverCBC::ps_ConvectionEE(REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, RE
  */
 void SklSolverCBC::Buoyancy(REAL_TYPE* v, REAL_TYPE dgr, REAL_TYPE* t, unsigned* bd, REAL_TYPE& flop)
 {
-  int i,j,k;
-  unsigned register m, l;
+  size_t m, l;
   
   flop += (REAL_TYPE)(ixc*jxc*kxc*2);
   
-  for (k=1; k<=kxc; k++) {
-    for (j=1; j<=jxc; j++) {
-      for (i=1; i<=ixc; i++) {
+  for (int k=1; k<=kxc; k++) {
+    for (int j=1; j<=jxc; j++) {
+      for (int i=1; i<=ixc; i++) {
         m = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         l = FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  ); // k方向が重力方向
         v[l] += dgr*t[m]* GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の計算なので，状態を参照

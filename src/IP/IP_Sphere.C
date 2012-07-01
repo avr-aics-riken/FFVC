@@ -313,8 +313,6 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   box_max = + rs;
   box_st = find_index(box_min, org_l);
   box_ed = find_index(box_max, org_l);
-
-  size_t m;
   
   // ローカルにコピー
   int ix = size[0];
@@ -330,6 +328,8 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   }
   
   // 球内部
+  size_t m;
+  
   for (int k=box_st.z; k<=box_ed.z; k++) { 
     for (int j=box_st.y; j<=box_ed.y; j++) {
       for (int i=box_st.x; i<=box_ed.x; i++) {
@@ -373,8 +373,8 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
         for (int l=1; l<=6; l++) {
           if ( lb[0]*lb[l] < 0.0 ) {
             s = cut_line(p[0], l, rs, ph);
-      
-            m = FBUtility::getFindexS3Dcut(size, guide, l-1, i, j, k); // 注意！　インデクスが1-6
+            //m = FBUtility::getFindexS3Dcut(size, guide, l-1, i, j, k); // 注意！　インデクスが1-6
+            m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd);
             cut[m] = s;
 
             if ( r_min > s ) r_min = s;

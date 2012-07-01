@@ -19,7 +19,6 @@
 
 #include <stdio.h>
 #include "FB_Define.h"
-#include "FBUtility.h"
 #include "vec3.h"
 
 

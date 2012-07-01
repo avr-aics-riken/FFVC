@@ -2613,7 +2613,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
         
         if ( IS_FLUID( s ) ) {
           
-          m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+          //m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+          m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
           ct = &cut[m];
 
           // X_MINUS
@@ -2676,7 +2677,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
-          m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+          //m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+          m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
           pos = &cut[m];
           
           if ( pos[X_MINUS] != 1.0 ) { s = onBit( s, FACING_W ); c++; }
@@ -2709,7 +2711,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
         s = bx[m_p];
         
         if ( IS_FLUID( s ) ) {
-          m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+          //m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+          m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
           pos = &cut[m];
           
           q0 = floor(pos[0]);
@@ -2756,7 +2759,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
           s = bx[m_p];
           
           if ( IS_FLUID( s ) ) {
-            m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+            //m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+            m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
             pos = &cut[m];
             
             q0 = floor(pos[0]);
@@ -3428,7 +3432,8 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_c = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+        //m_c = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+        m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
         pos = &cut[m_c];
         pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
         
@@ -3844,7 +3849,6 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
   int sd = solid_id;
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int qw, qe, qs, qn, qb, qt;
-  unsigned m_sz[3];
   
   int ix = size[0];
   int jx = size[1];
@@ -3893,7 +3897,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
               mid[m_p] = sd; // セルIDを固体に変更
-              cut[FBUtility::getFindexS3Dcut(sz, gd, X_PLUS, i-1, j  , k  )] = cpos; // カット位置をセット
+              //cut[FBUtility::getFindexS3Dcut(sz, gd, X_PLUS, i-1, j  , k  )] = cpos; // カット位置をセット
+              cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd);] = cpos; // カット位置をセット
             }
           }
           else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == target) && (get_BID5(Y_MINUS, bid[m_p]) == 0) ) {
@@ -3904,7 +3909,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_s], Y_PLUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(sz, gd, Y_PLUS, i  , j-1, k  )] = cpos;
+              //cut[FBUtility::getFindexS3Dcut(sz, gd, Y_PLUS, i  , j-1, k  )] = cpos;
+              cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd);] = cpos;
             }
           }
           else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == target) && (get_BID5(Z_MINUS, bid[m_p]) == 0) ) {
@@ -3915,7 +3921,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_b], Z_PLUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(sz, gd,  Z_PLUS, i  , j  , k-1)] = cpos;
+              //cut[FBUtility::getFindexS3Dcut(sz, gd,  Z_PLUS, i  , j  , k-1)] = cpos;
+              cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd);] = cpos;
             }
           }
           else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == target) && (get_BID5(Z_PLUS, bid[m_p]) == 0) ) {
@@ -3926,7 +3933,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_t], Z_MINUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(sz, gd, Z_MINUS, i  , j  , k+1)] = cpos;
+              //cut[FBUtility::getFindexS3Dcut(sz, gd, Z_MINUS, i  , j  , k+1)] = cpos;
+              cut[_F_IDX_S4DEX( Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd);] = cpos;
             }
           }
           else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == target) && (get_BID5(Y_PLUS, bid[m_p]) == 0) ) {
@@ -3937,7 +3945,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_n], Y_MINUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(sz, gd, Y_MINUS, i  , j+1, k  )] = cpos;
+              //cut[FBUtility::getFindexS3Dcut(sz, gd, Y_MINUS, i  , j+1, k  )] = cpos;
+              cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd);] = cpos;
             }
           }
           else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == target) && (get_BID5(X_PLUS, bid[m_p]) == 0) ) {
@@ -3948,7 +3957,8 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
             else {
               set_BID5(bid[m_e], X_MINUS, sd);
               mid[m_p] = sd;
-              cut[FBUtility::getFindexS3Dcut(sz, gd, X_MINUS, i+1, j  , k  )] = cpos;
+              //cut[FBUtility::getFindexS3Dcut(sz, gd, X_MINUS, i+1, j  , k  )] = cpos;
+              cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd);] = cpos;
             }
           }
           
@@ -5369,7 +5379,6 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   for (int face=0; face<NOFACE; face++) {
@@ -5383,7 +5392,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
-                m = FBUtility::getFindexS3Dcut(sz, gd, X_MINUS, 1, j, k);
+                m = _F_IDX_S4DEX(X_MINUS, 1, j, k, 6, ix, jx, kx, gd); //FBUtility::getFindexS3Dcut(sz, gd, X_MINUS, 1, j, k);
                 cut[m] = pos; 
               }
             }        
@@ -5394,7 +5403,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           if( nID[X_PLUS] < 0 ){
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
-                m = FBUtility::getFindexS3Dcut(sz, gd, X_PLUS, ix, j, k);
+                m = _F_IDX_S4DEX(X_PLUS, ix, j, k, 6, ix, jx, kx, gd); //FBUtility::getFindexS3Dcut(sz, gd, X_PLUS, ix, j, k);
                 cut[m] = pos;
               }
             }
@@ -5405,7 +5414,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           if( nID[Y_MINUS] < 0 ){
             for (int k=1; k<=kx; k++) {
               for (int i=1; i<=ix; i++) {
-                m = FBUtility::getFindexS3Dcut(sz, gd, Y_MINUS, i, 1, k);
+                m = _F_IDX_S4DEX(Y_MINUS, i, 1, k, 6, ix, jx, kx, gd); //FBUtility::getFindexS3Dcut(sz, gd, Y_MINUS, i, 1, k);
                 cut[m] = pos; 
               }
             }
@@ -5416,7 +5425,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           if( nID[Y_PLUS] < 0 ){
             for (int k=1; k<=kx; k++) {
               for (int i=1; i<=ix; i++) {
-                m = FBUtility::getFindexS3Dcut(sz, gd, Y_PLUS, i, jx, k);
+                m = _F_IDX_S4DEX(Y_PLUS, i, jx, k, 6, ix, jx, kx, gd); //FBUtility::getFindexS3Dcut(sz, gd, Y_PLUS, i, jx, k);
                 cut[m] = pos;
               }
             }
@@ -5427,7 +5436,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           if( nID[Z_MINUS] < 0 ){
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = FBUtility::getFindexS3Dcut(sz, gd, Z_MINUS, i, j, 1);
+                m = _F_IDX_S4DEX(Z_MINUS, i, j, 1, 6, ix, jx, kx, gd); //FBUtility::getFindexS3Dcut(sz, gd, Z_MINUS, i, j, 1);
                 cut[m] = pos;
               }
             }
@@ -5438,7 +5447,7 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           if( nID[Z_PLUS] < 0 ){
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = FBUtility::getFindexS3Dcut(sz, gd, Z_PLUS, i, j, kx);
+                m = _F_IDX_S4DEX(Z_PLUS, i, j, kx, 6, ix, jx, kx, gd); //FBUtility::getFindexS3Dcut(sz, gd, Z_PLUS, i, j, kx);
                 cut[m] = pos;
               }
             }
@@ -5534,7 +5543,6 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   int m_id= id;
   
@@ -5546,7 +5554,8 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
       for (int i=1; i<=ix; i++) {
         
         mp= _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
-        m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+        //m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
+        m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
         q = 0;
         
         // セル内に交点があれば，壁
