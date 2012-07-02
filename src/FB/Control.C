@@ -179,15 +179,18 @@ void ReferenceFrame::setGridVel(const double* m_Gvel)
 // 参照速度を計算する
 void ReferenceFrame::setV00(const double time, const bool init) 
 {
-  if (init == true) {
+  if (init == true) 
+  {
     printf("\tReference velocity is set to 1.0 for checking.\n\n");
     v00[0]=1.0;
   }
-  else {
+  else 
+  {
     if ( TimeAccel == 0.0 ) {
       v00[0] = 1.0;
     }
-    else {
+    else 
+    {
       const double c_pai = (double)(2.0*asin(1.0));
       v00[0] = 0.5*(1.0-cos(c_pai*time/(TimeAccel)));
       if ( time > (TimeAccel) ) v00[0] = 1.0;

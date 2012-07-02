@@ -98,6 +98,15 @@ private:
   unsigned long L_Fcell;   ///< ローカルなFluid cell
   unsigned long L_Wcell;   ///< ローカルなSolid cell
   
+  double Base_time;      ///< セッションの開始時間
+  double Current_time;   ///< 現在の時間（ケース）
+  double Session_time;   ///< セッションの現在時間 Session_time = Current_time - Base_time
+  double Total_time;     ///< 1ケースの全時間
+  unsigned Base_step;    ///< セッションの開始ステップ
+  unsigned Current_step; ///< 現在のステップ（ケース）
+  unsigned Session_step; ///< セッションの現在ステップ Session_step = Current_step - Base_step
+  unsigned Total_step;   ///< 1ケースの全ステップ
+  
   // Fortranへの引数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
   REAL_TYPE *dh0;   ///< 格子幅（有次元）
@@ -280,6 +289,12 @@ private:
   
   
   /**
+   * @brief ファイルのオープンチェック
+   */
+  bool checkFile(string fname);
+  
+  
+  /**
    @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
    @retval エラーコード
    */
@@ -291,6 +306,13 @@ private:
    * @param [in] Cref Controlクラスのポインタ
    */
   void connectExample(Control* Cref);
+  
+  
+  /**
+  * @brief 時刻をRFクラスからv00[4]にコピーする
+  * @param [in] time 設定する時刻
+  */
+  void copyV00fromRF(double m_time);
   
   
   /** 計算領域情報を設定する
@@ -324,6 +346,30 @@ private:
   void gather_DomainInfo();
   
   
+  /**
+   * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+   * @param [in]  i                 密格子　開始インデクスi
+   * @param [in]  j                        同j
+   * @param [in]  k                        同k
+   * @param [in]  coarse_dfi_fname  粗格子のdfiファイル名（どの変数のものでも良い）
+   * @param [in]  coarse_prefix     粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+   * @param [in]  m_step            探索するステップ数
+   * @param [out] coarse_sph_fname  ijk位置の結果を含む粗格子計算結果ファイル名
+   * @param [out] c_size            粗格子の分割数
+   * @param [out] coarse            粗格子　開始インデクス
+   * @param [out] block             含まれるブロック数
+   * return エラーコード
+   */
+  bool getCoarseResult (int i, int j, int k,
+                        std::string& coarse_dfi_fname,
+                        std::string& coarse_prefix,
+                        const int m_step,
+                        std::string& coarse_sph_fname,
+                        int* c_size,
+                        int* coarse,
+                        int* block
+                        );
+  
   /** グローバルな領域情報を取得 
    * @return 分割指示 (1-with / 2-without)
    */
@@ -339,6 +385,18 @@ private:
   
   
   /**
+   * @brief ファイルから値をとりだす（整数）
+   */
+  int get_intval( string& buffer );
+  
+  
+  /**
+   * @brief ファイルから値をとりだす（文字列）
+   */
+  string get_strval( string& buffer );
+  
+  
+  /**
    * @brief プロファイラのラベル取り出し
    * @param [in] key 格納番号
    * @return ラベル
@@ -347,6 +405,15 @@ private:
   {
     return (const char*)tm_label_ptr[key];
   }
+  
+  
+  /**
+   * @brief 粗格子から密格子へ内挿
+   * @param [in] m_st 粗い格子の開始インデクス
+   * @param [in] m_bk ブロック数
+   * @brief 粗い格子を用いたリスタート値の内挿
+   */
+  void Interpolation_from_coarse_initial(const int* m_st, const int* m_bk);
   
   
   /** 1ステップのコアの処理
@@ -387,6 +454,22 @@ private:
    * @param isHeat 熱問題のときtrue
    */
   void resizeCompoBV(const int kos, const bool isHeat);
+  
+  
+  /**
+   * @brief リスタート時の瞬時値ファイル読み込み
+   * @param [in]     fp   ファイルポインタ
+   * @param [in/out] flop 浮動小数点演算数
+   */
+  void Restart(FILE* fp, double& flop);
+  
+  
+  /**
+   * @brief 粗い格子を用いたリスタート
+   * @param [in]     fp   ファイルポインタ
+   * @param [in/out] flop 浮動小数点演算数
+   */
+  void Restart_coarse(FILE* fp, double& flop);
   
   
   /**

@@ -84,7 +84,7 @@ public:
                int* sz, 
                int gc, 
                REAL_TYPE coef, 
-               REAL_TYPE& flop);
+               double& flop);
   
   
   /**
@@ -103,7 +103,7 @@ public:
                    int gc, 
                    const REAL_TYPE Ref_rho, 
                    const REAL_TYPE Ref_v, 
-                   REAL_TYPE& flop);
+                   double& flop);
 
   
   /**
@@ -153,7 +153,7 @@ public:
                     const REAL_TYPE BasePrs, 
                     const REAL_TYPE RefDensity, 
                     const REAL_TYPE RefVelocity, 
-                    REAL_TYPE& flop, 
+                    double& flop, 
                     const int guide_out,
                     const bool mode,
                     int& step_avr,
@@ -188,7 +188,7 @@ public:
                     const REAL_TYPE *v00, 
                     const int Dmode, 
                     const REAL_TYPE RefVelocity, 
-                    REAL_TYPE& flop, 
+                    double& flop, 
                     const int guide_out,
                     const bool mode,
                     int& step_avr,
@@ -225,7 +225,7 @@ public:
                        const REAL_TYPE Base_tmp, 
                        const REAL_TYPE Diff_tmp, 
                        const REAL_TYPE Kelvin, 
-                       REAL_TYPE& flop, 
+                       double& flop, 
                        const int guide_out,
                        const bool mode,
                        int& step_avr,

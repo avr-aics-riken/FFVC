@@ -18,24 +18,28 @@
 
 
 // ファイル出力時，発散値を計算する
-void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, REAL_TYPE& flop)
+void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, double& flop)
 {
   if( !dst || !src || !sz ) Exit(0);
   
-  fb_mulcpy_ (dst, src, sz, &gc, &coef, &flop);
+  REAL_TYPE fpct = (REAL_TYPE)flop;
+  fb_mulcpy_ (dst, src, sz, &gc, &coef, &fpct);
+  flop = (double)fpct;
 }
 
 
 
 // 全圧データについて，無次元から有次元単位に変換する
 void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, 
-                         const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, REAL_TYPE& flop)
+                         const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
 {
   if( !dst || !src || !sz ) Exit(0);
   
   REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
+  REAL_TYPE fpct = (REAL_TYPE)flop;
   
-  fb_mulcpy_ (dst, src, sz, &gc, &cf, &flop);
+  fb_mulcpy_ (dst, src, sz, &gc, &cf, &fpct);
+  flop = (double)fpct;
 }
 
 
@@ -209,13 +213,15 @@ void FileIO::readPressure(FILE* fp,
                           const REAL_TYPE BasePrs,
                           const REAL_TYPE RefDensity,
                           const REAL_TYPE RefVelocity,
-                          REAL_TYPE& flop,
+                          double& flop,
                           const int guide_out,
                           const bool mode,
                           int& step_avr,
                           REAL_TYPE& time_avr
                           )
 {
+  REAL_TYPE fpct = (REAL_TYPE)flop;
+  
   if ( fname.empty() ) Exit(0);
   
   if ( fname.size() > FB_FILE_PATH_LENGTH ) {
@@ -249,7 +255,7 @@ void FileIO::readPressure(FILE* fp,
     REAL_TYPE ref_d = RefDensity;
     REAL_TYPE ref_v = RefVelocity;
   
-    fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
+    fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &fpct);
   }
   
   if ( mode ) {
@@ -262,6 +268,8 @@ void FileIO::readPressure(FILE* fp,
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
                           tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
+  
+  flop = (double)fpct;
 
 }
 
@@ -278,12 +286,14 @@ void FileIO::readVelocity(FILE* fp,
                           const REAL_TYPE *v00, 
                           const int Dmode, 
                           const REAL_TYPE RefVelocity, 
-                          REAL_TYPE& flop, 
+                          double& flop, 
                           const int guide_out,
                           const bool mode,
                           int& step_avr,
                           REAL_TYPE& time_avr)
 {
+  REAL_TYPE fpct = (REAL_TYPE)flop;
+  
   if ( fname.empty() ) Exit(0);
   
   if ( fname.size() > FB_FILE_PATH_LENGTH ) {
@@ -315,7 +325,7 @@ void FileIO::readVelocity(FILE* fp,
   u0[2] = v00[2];
   u0[3] = v00[3];
 
-  fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &flop);
+  fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &fpct);
 
   if ( mode ) {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -328,6 +338,7 @@ void FileIO::readVelocity(FILE* fp,
                       tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
 
+  flop = (double)fpct;
 }
 
 
@@ -343,12 +354,14 @@ void FileIO::readTemperature(FILE* fp,
                              const REAL_TYPE Base_tmp, 
                              const REAL_TYPE Diff_tmp, 
                              const REAL_TYPE Kelvin, 
-                             REAL_TYPE& flop, 
+                             double& flop, 
                              const int guide_out,
                              const bool mode,
                              int& step_avr,
                              REAL_TYPE& time_avr)
 {
+  REAL_TYPE fpct = (REAL_TYPE)flop;
+  
   if ( fname.empty() ) Exit(0);
   
   if ( fname.size() > FB_FILE_PATH_LENGTH ) {
@@ -379,7 +392,7 @@ void FileIO::readTemperature(FILE* fp,
   REAL_TYPE klv    = Kelvin;
   
   if ( Dmode == DIMENSIONAL ) {
-    fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
+    fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &fpct);
   }
   
   if ( mode ) {
@@ -393,6 +406,7 @@ void FileIO::readTemperature(FILE* fp,
                       tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
 
+  flop = (double)fpct;
 }
 
 
