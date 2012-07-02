@@ -207,8 +207,8 @@ void FileIO::readPressure(FILE* fp,
                           int* sz,
                           int gc,
                           REAL_TYPE* p,
-                          int& step,
-                          REAL_TYPE& time,
+                          unsigned& step,
+                          double& time,
                           const int Dmode,
                           const REAL_TYPE BasePrs,
                           const REAL_TYPE RefDensity,
@@ -216,8 +216,8 @@ void FileIO::readPressure(FILE* fp,
                           double& flop,
                           const int guide_out,
                           const bool mode,
-                          int& step_avr,
-                          REAL_TYPE& time_avr
+                          unsigned& step_avr,
+                          double& time_avr
                           )
 {
   REAL_TYPE fpct = (REAL_TYPE)flop;
@@ -236,12 +236,14 @@ void FileIO::readPressure(FILE* fp,
 
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
+  int f_step, a_step;
+  REAL_TYPE f_time, a_time;
   
-  fb_read_sph_s_ (p, sz, &gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  fb_read_sph_s_ (p, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
   
   if ( !mode ) {
     if ( (step_avr == 0) || (time_avr <= 0.0) ) {
-      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
+      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", a_step, a_time);
       Exit(0);
     }
   }
@@ -259,16 +261,20 @@ void FileIO::readPressure(FILE* fp,
   }
   
   if ( mode ) {
-    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
   else {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
-                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                          tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
-                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                          tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
   
+  step = (unsigned)f_step;
+  time = (double)f_time;
+  step_avr = (unsigned)a_step;
+  time_avr = (double)a_time;
   flop = (double)fpct;
 
 }
@@ -281,16 +287,16 @@ void FileIO::readVelocity(FILE* fp,
                           int* sz, 
                           int gc, 
                           REAL_TYPE* v, 
-                          int& step, 
-                          REAL_TYPE& time, 
+                          unsigned& step, 
+                          double& time, 
                           const REAL_TYPE *v00, 
                           const int Dmode, 
                           const REAL_TYPE RefVelocity, 
                           double& flop, 
                           const int guide_out,
                           const bool mode,
-                          int& step_avr,
-                          REAL_TYPE& time_avr)
+                          unsigned& step_avr,
+                          double& time_avr)
 {
   REAL_TYPE fpct = (REAL_TYPE)flop;
   
@@ -307,12 +313,14 @@ void FileIO::readVelocity(FILE* fp,
 
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
+  int f_step, a_step;
+  REAL_TYPE f_time, a_time;
   
-  fb_read_sph_v_ (v, sz, &gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  fb_read_sph_v_ (v, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
   
   if ( !mode ) {
-    if ( (step_avr == 0) || (time_avr <= 0.0) ) {
-      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
+    if ( (a_step == 0) || (a_time <= 0.0) ) {
+      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", a_step, a_time);
       Exit(0);
     }
   }
@@ -328,16 +336,20 @@ void FileIO::readVelocity(FILE* fp,
   fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &fpct);
 
   if ( mode ) {
-    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
   else {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
-                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                          tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
-                      tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                      tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
 
+  step = (unsigned)f_step;
+  time = (double)f_time;
+  step_avr = (unsigned)a_step;
+  time_avr = (double)a_time;
   flop = (double)fpct;
 }
 
@@ -348,8 +360,8 @@ void FileIO::readTemperature(FILE* fp,
                              int* sz, 
                              int gc, 
                              REAL_TYPE* t, 
-                             int& step, 
-                             REAL_TYPE& time, 
+                             unsigned& step, 
+                             double& time, 
                              const int Dmode, 
                              const REAL_TYPE Base_tmp, 
                              const REAL_TYPE Diff_tmp, 
@@ -357,8 +369,8 @@ void FileIO::readTemperature(FILE* fp,
                              double& flop, 
                              const int guide_out,
                              const bool mode,
-                             int& step_avr,
-                             REAL_TYPE& time_avr)
+                             unsigned& step_avr,
+                             double& time_avr)
 {
   REAL_TYPE fpct = (REAL_TYPE)flop;
   
@@ -375,11 +387,13 @@ void FileIO::readTemperature(FILE* fp,
   
   int g = guide_out;
   int avs = (mode == true) ? 1 : 0;
+  int f_step, a_step;
+  REAL_TYPE f_time, a_time;
   
-  fb_read_sph_s_ (t, sz, &gc, tmp, &step, &time, &g, &avs, &step_avr, &time_avr);
+  fb_read_sph_s_ (t, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
   if ( !mode ) {
-    if ( (step_avr == 0) || (time_avr <= 0.0) ) {
-      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", step_avr, time_avr);
+    if ( (a_step == 0) || (a_time <= 0.0) ) {
+      Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", a_step, a_time);
       Exit(0);
     }
   }
@@ -396,16 +410,20 @@ void FileIO::readTemperature(FILE* fp,
   }
   
   if ( mode ) {
-    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
-    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, step, time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
+    Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
   else {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
-                          tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                          tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
-                      tmp, step, time, step_avr, time_avr, (Dmode==DIMENSIONAL)?"sec.":"-");
+                      tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
 
+  step = (unsigned)f_step;
+  time = (double)f_time;
+  step_avr = (unsigned)a_step;
+  time_avr = (double)a_time;
   flop = (double)fpct;
 }
 
@@ -415,14 +433,14 @@ void FileIO::writeScalar(const string fname,
                          int* sz, 
                          int gc,
                          REAL_TYPE* s, 
-                         const int step, 
-                         const REAL_TYPE time, 
+                         const unsigned step, 
+                         const double time, 
                          const REAL_TYPE* org, 
                          const REAL_TYPE* pit, 
                          const int guide_out,
                          const bool mode,
-                         const int step_avr,
-                         const REAL_TYPE time_avr)
+                         const unsigned step_avr,
+                         const double time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -436,8 +454,8 @@ void FileIO::writeScalar(const string fname,
   memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   strcpy(tmp, fname.c_str());
 
-  int stp = step;
-  REAL_TYPE tm = time;
+  int stp = (int)step;
+  REAL_TYPE tm = (REAL_TYPE)time;
   int g = guide_out;
   REAL_TYPE o[3], p[3];
   o[0] = org[0];
@@ -448,8 +466,8 @@ void FileIO::writeScalar(const string fname,
   p[2] = pit[2];
   
   int avs = (mode == true) ? 1 : 0;
-  int stp_a = step_avr;
-  REAL_TYPE tm_a = time_avr;
+  int stp_a = (int)step_avr;
+  REAL_TYPE tm_a = (REAL_TYPE)time_avr;
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
   fb_write_sph_s_ (s, sz, &gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
@@ -462,14 +480,14 @@ void FileIO::writeVector(const string fname,
                          int* sz, 
                          int gc, 
                          REAL_TYPE* v, 
-                         const int step, 
-                         const REAL_TYPE time, 
+                         const unsigned step, 
+                         const double time, 
                          const REAL_TYPE* org, 
                          const REAL_TYPE* pit, 
                          const int guide_out,
                          const bool mode,
-                         const int step_avr,
-                         const REAL_TYPE time_avr)
+                         const unsigned step_avr,
+                         const double time_avr)
 {
   if ( fname.empty() ) Exit(0);
   
@@ -482,8 +500,8 @@ void FileIO::writeVector(const string fname,
   memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
   strcpy(tmp, fname.c_str());
   
-  int stp = step;
-  REAL_TYPE tm = time;
+  int stp = (int)step;
+  REAL_TYPE tm = (REAL_TYPE)time;
   int g = guide_out;
   REAL_TYPE o[3], p[3];
   o[0] = org[0];
@@ -494,8 +512,8 @@ void FileIO::writeVector(const string fname,
   p[2] = pit[2];
   
   int avs = (mode == true) ? 1 : 0;
-  int stp_a = step_avr;
-  REAL_TYPE tm_a = time_avr;
+  int stp_a = (int)step_avr;
+  REAL_TYPE tm_a = (REAL_TYPE)time_avr;
   int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
   
   fb_write_sph_v_ (v, sz, &gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);

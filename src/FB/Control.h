@@ -595,12 +595,12 @@ public:
   int num_thread;
   int Parallelism;
   int RefMat;     ///< 参照媒質インデクス
-  int Restart_step;
   int Start;
   int version;    ///< FFVバージョン番号
   int vxFormat;
   
-  unsigned long NoWallSurface;
+  unsigned Restart_step;       ///< リスタートステップ
+  unsigned long NoWallSurface; ///< 固体表面セル数
 	
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;

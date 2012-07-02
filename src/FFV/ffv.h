@@ -98,14 +98,17 @@ private:
   unsigned long L_Fcell;   ///< ローカルなFluid cell
   unsigned long L_Wcell;   ///< ローカルなSolid cell
   
-  double Base_time;      ///< セッションの開始時間
-  double Current_time;   ///< 現在の時間（ケース）
-  double Session_time;   ///< セッションの現在時間 Session_time = Current_time - Base_time
-  double Total_time;     ///< 1ケースの全時間
-  unsigned Base_step;    ///< セッションの開始ステップ
-  unsigned Current_step; ///< 現在のステップ（ケース）
-  unsigned Session_step; ///< セッションの現在ステップ Session_step = Current_step - Base_step
-  unsigned Total_step;   ///< 1ケースの全ステップ
+  double Base_time;        ///< セッションの開始時間
+  double Current_time;     ///< 現在の時間（ケース）
+  double Session_time;     ///< セッションの現在時間 Session_time = Current_time - Base_time
+  double Total_time;       ///< 1ケースの全時間
+  double Total_time_avr;   ///< 平均時間
+  
+  unsigned Base_step;      ///< セッションの開始ステップ
+  unsigned Current_step;   ///< 現在のステップ（ケース）
+  unsigned Session_step;   ///< セッションの現在ステップ Session_step = Current_step - Base_step
+  unsigned Total_step;     ///< 1ケースの全ステップ
+  unsigned Total_step_avr; ///< 平均ステップ数
   
   // Fortranへの引数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
@@ -133,18 +136,18 @@ private:
   int *d_bcv;
   int *d_bh1;
   int *d_bh2;
-  REAL_TYPE  *d_ws;
-  REAL_TYPE  *d_p;
-  REAL_TYPE  *d_wk2;
-  REAL_TYPE  *d_dp;
-  REAL_TYPE  *d_p0;
-  REAL_TYPE  *d_t;
-  REAL_TYPE  *d_t0;
-  REAL_TYPE  *d_vt;
-  REAL_TYPE  *d_vof;
-  REAL_TYPE  *d_ap;
-  REAL_TYPE  *d_at;
-  float      *d_cvf;
+  REAL_TYPE *d_ws;
+  REAL_TYPE *d_p;
+  REAL_TYPE *d_wk2;
+  REAL_TYPE *d_dp;
+  REAL_TYPE *d_p0;
+  REAL_TYPE *d_t;
+  REAL_TYPE *d_t0;
+  REAL_TYPE *d_vt;
+  REAL_TYPE *d_vof;
+  REAL_TYPE *d_ap;
+  REAL_TYPE *d_at;
+  float *d_cvf;
   
   // Coarse initial
   REAL_TYPE *d_r_v;  ///< 粗格子の速度
@@ -458,16 +461,24 @@ private:
   
   /**
    * @brief リスタート時の瞬時値ファイル読み込み
-   * @param [in]     fp   ファイルポインタ
-   * @param [in/out] flop 浮動小数点演算数
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
    */
   void Restart(FILE* fp, double& flop);
   
   
   /**
+   * @brief リスタート時の平均値ファイル読み込み
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   */
+  void Restart_avrerage (FILE* fp, double& flop);
+  
+  
+  /**
    * @brief 粗い格子を用いたリスタート
-   * @param [in]     fp   ファイルポインタ
-   * @param [in/out] flop 浮動小数点演算数
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
    */
   void Restart_coarse(FILE* fp, double& flop);
   

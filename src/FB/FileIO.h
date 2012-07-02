@@ -147,8 +147,8 @@ public:
                     int* sz, 
                     int gc,
                     REAL_TYPE* s, 
-                    int& step, 
-                    REAL_TYPE& time, 
+                    unsigned& step, 
+                    double& time, 
                     const int Dmode, 
                     const REAL_TYPE BasePrs, 
                     const REAL_TYPE RefDensity, 
@@ -156,8 +156,8 @@ public:
                     double& flop, 
                     const int guide_out,
                     const bool mode,
-                    int& step_avr,
-                    REAL_TYPE& time_avr);
+                    unsigned& step_avr,
+                    double& time_avr);
   
   
   /**
@@ -183,16 +183,16 @@ public:
                     int* sz, 
                     int gc, 
                     REAL_TYPE* v, 
-                    int& step, 
-                    REAL_TYPE& time, 
+                    unsigned& step, 
+                    double& time, 
                     const REAL_TYPE *v00, 
                     const int Dmode, 
                     const REAL_TYPE RefVelocity, 
                     double& flop, 
                     const int guide_out,
                     const bool mode,
-                    int& step_avr,
-                    REAL_TYPE& time_avr);
+                    unsigned& step_avr,
+                    double& time_avr);
   
   
   /**
@@ -219,8 +219,8 @@ public:
                        int* sz, 
                        int gc, 
                        REAL_TYPE* t, 
-                       int& step, 
-                       REAL_TYPE& time, 
+                       unsigned& step, 
+                       double& time, 
                        const int Dmode, 
                        const REAL_TYPE Base_tmp, 
                        const REAL_TYPE Diff_tmp, 
@@ -228,8 +228,8 @@ public:
                        double& flop, 
                        const int guide_out,
                        const bool mode,
-                       int& step_avr,
-                       REAL_TYPE& time_avr);
+                       unsigned& step_avr,
+                       double& time_avr);
   
   
   /** 
@@ -251,14 +251,14 @@ public:
                    int* sz, 
                    int gc,
                    REAL_TYPE* s, 
-                   const int step, 
-                   const REAL_TYPE time, 
+                   const unsigned step, 
+                   const double time, 
                    const REAL_TYPE* org, 
                    const REAL_TYPE* pit, 
                    const int guide_out,
                    const bool mode=true,
-                   const int step_avr=0,
-                   const REAL_TYPE time_avr=0.0);
+                   const unsigned step_avr=0,
+                   const double time_avr=0.0);
   
   
   /** 
@@ -280,14 +280,14 @@ public:
                    int* sz, 
                    int gc, 
                    REAL_TYPE* v, 
-                   const int step, 
-                   const REAL_TYPE time, 
+                   const unsigned step, 
+                   const double time, 
                    const REAL_TYPE* org, 
                    const REAL_TYPE* pit, 
                    const int guide_out,
                    const bool mode=true,
-                   const int step_avr=0,
-                   const REAL_TYPE time_avr=0.0);
+                   const unsigned step_avr=0,
+                   const double time_avr=0.0);
   
 };
 #endif // _FB_FILE_IO_H_

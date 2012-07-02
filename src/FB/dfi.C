@@ -61,7 +61,7 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int styp
  * @param dfi_mng 出力管理カウンタ
  * @param mio     出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_DFI_File(const std::string prefix, const int step, int& dfi_mng, const bool mio)
+bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
 
@@ -98,7 +98,7 @@ bool DFI::Write_DFI_File(const std::string prefix, const int step, int& dfi_mng,
  * @param m_id 
  * @param mio    出力時の分割指定　 true = local / false = gather(default)
  */
-std::string DFI::Generate_FileName(const std::string prefix, const int m_step, const int m_id, const bool mio)
+std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
   
@@ -153,7 +153,7 @@ std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
  * @param dfi_mng   出力管理カウンタ
  * @param mio       出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const int step, int& dfi_mng, const bool mio)
+bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
 {
   if ( dfi_name.empty() ) return false;
   if ( prefix.empty() ) return false;
@@ -501,7 +501,7 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::strin
  * @param step    ステップ数
  * @param mio    出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const int step, const bool mio)
+bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const bool mio)
 {
   if (fp) {
     Write_Tab(fp, tab+1); 
@@ -547,7 +547,7 @@ void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
  * @param id     対象ノードID
  * @param mio    出力時の分割指定　 true = local / false = gather
  */
-bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const int step, const int id, const bool mio)
+bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const int id, const bool mio)
 {
   char fname[FB_FILE_PATH_LENGTH];
   memset(fname, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
