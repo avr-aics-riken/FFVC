@@ -19,13 +19,13 @@
 
 int FFV::Initialize(int argc, char **argv)
 {
-  double TotalMemory;    ///< 計算に必要なメモリ量（ローカル）
-  double PrepMemory;     ///< 初期化に必要なメモリ量（ローカル）
-  double G_TotalMemory;  ///< 計算に必要なメモリ量（グローバル）
-  double G_PrepMemory;   ///< 初期化に必要なメモリ量（グローバル）
-  double tmp_memory;     ///< 計算に必要なメモリ量（グローバル）？
+  double TotalMemory   = 0.0;  ///< 計算に必要なメモリ量（ローカル）
+  double PrepMemory    = 0.0;  ///< 初期化に必要なメモリ量（ローカル）
+  double G_TotalMemory = 0.0;  ///< 計算に必要なメモリ量（グローバル）
+  double G_PrepMemory  = 0.0;  ///< 初期化に必要なメモリ量（グローバル）
+  double tmp_memory    = 0.0;  ///< 計算に必要なメモリ量（グローバル）？
   
-  double flop_count;     ///< flops計算用
+  double flop_count    = 0.0;  ///< flops計算用
   
   // CPMバージョン表示
   if ( paraMngr->GetMyRankID() == 0 )
@@ -369,7 +369,7 @@ int FFV::Initialize(int argc, char **argv)
   // セルIDのノード間同期
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
-  
+
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   if ( C.isVfraction() ) {
     TIMING_start(tm_init_alloc);
@@ -382,7 +382,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // コンポーネントのローカルインデクスを保存
   setLocalCmpIdx_Binary();
-  
+
   
   // 内部周期境界の場合のガイドセルのコピー処理
   V.adjMediumPrdc_Inner(d_mid, cmp);
@@ -400,31 +400,351 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   
+  // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
+  if ( C.isCDS() ) {
+    VIBC_Bbox_from_Cut();
+  }
+  
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode();
   
 
   
+  // 体積力を使う場合のコンポーネント配列の確保
+  TIMING_start(tm_init_alloc);
+
+  allocArray_Forcing(PrepMemory, TotalMemory, fp);
+  TIMING_stop(tm_init_alloc); 
+  
+
+  // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
+  V.setCmpFraction(cmp, d_bcd, d_cvf);
+
+// ########## 
+#if 0
+  // CompoListとMediumListの関連を表示
+  Hostonly_ M.dbg_printRelation(stdout, fp, cmp);
+#endif
+// ########## 
+  
+  
+  // Ref_MediumがCompoList中にあるかどうかをチェックし、RefMatを設定
+  if ( (C.RefMat = C.find_ID_from_Label(mat, C.NoCompo, C.Ref_Medium)) == 0 )
+  {
+    Hostonly_ {
+      fprintf(stdout, "RefMat[%d] is not listed in Medium_Table.\n");
+      fprintf(fp, "RefMat[%d] is not listed in Medium_Table.\n");
+      stamped_printf("\tParseBC::isIDinCompo()\n");
+    }
+    return -1;
+  }
+  
+
+  // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
+  BC.setBCIperiodic(d_bcd);
+  BC.setBCIperiodic(d_bcp);
+  BC.setBCIperiodic(d_bcv);
+  if ( C.isHeatProblem() ) {
+    BC.setBCIperiodic(d_bh1);
+    BC.setBCIperiodic(d_bh2);
+  }
+  
+  // bcd/bcp/bcv/bchの同期
+  if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommS3D(d_bcv, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+
+  if ( C.isHeatProblem() ) {
+    if ( paraMngr->BndCommS3D(d_bh1, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bh2, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // 法線計算のためのワーク配列 >> 不要にする
+  if ( C.NoBC != 0 ) {
+    
+    // コンポーネントで指定されるID面の法線を計算，向きはblowing/suctionにより決まる．　bcdをセットしたあとに処理
+    for (int n=1; n<=C.NoBC; n++) {
+      if ( C.Mode.Example == id_Polygon ) {
+        V.get_Compo_Area_Cut(n, cmp, PL);
+      }
+      else {
+        //Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &compo_global_bbox[n*6]);
+      }
+    }
+  }
   
   
   
+  // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
+  // 代表物性値をRefMatの示す媒質から取得
+  // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
+  DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
+  
+  // 無次元速度1.0を与えてdeltaTをセットし，エラーチェック
+  switch ( DT.set_DT(1.0) ) 
+  {
+    case 0: // 成功
+      break;
+      
+    case 1:
+      Hostonly_ stamped_printf("\tdt selection error(1) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 2:
+      Hostonly_ stamped_printf("\tdt selection error(2) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 3:
+      Hostonly_ stamped_printf("\tdt selection error(3) : 'Kind of Solver' includes flow effect. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 4:
+      Hostonly_ stamped_printf("\tdt selection error(4) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 5:
+      Hostonly_ stamped_printf("\tdt selection error(5) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 6:
+      Hostonly_ stamped_printf("\tdt selection error(6) : CFL max V and Diffusion ; Not implemented yet\n");
+      Exit(0);
+      break;
+      
+    case 7:
+      Hostonly_ stamped_printf("\tdt selection error(7) : CFL max V for cp ;  Not implemented yet\n");
+      Exit(0);
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+  // Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
+  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(0, 0.0, DT.get_DT(), Interval_Manager::tg_compute, 
+                                                             (double)(C.RefLength/C.RefVelocity)) ) 
+  {
+    Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
+    Exit(0);
+  }
+  C.LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
+
+  
+  // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
+  C.setParameters(mat, cmp, &RF, BC.export_OBC());
+  
+  
+  // 媒質による代表パラメータのコピー
+  B.setRefValue(mat, cmp, &C);
+  
+  // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> C.setParameters()の後
+  BC.setControlVars(&C, mat, cmp, &RF, Ex);
+  
+  // パラメータの無次元表示（正規化）に必要な参照物理量の設定
+  B.setRefMedium(mat, C.RefMat);
+  
+// ##########
+#if 0
+  // チェックのため，全計算セルのBCIndexの内容を表示する
+  if ( !V.dbg_chkBCIndexP(bcd, bcp, "BCindex.txt") ) {
+    Hostonly_ stamped_printf("\tVoxInfo::dbg_chkBCIndexP()\n");
+    return -1;
+  }
+#endif
+// ##########
   
   
   
+  // 温度計算の場合の初期値指定
+  if ( C.isHeatProblem() ) {
+    cout <<  "now heat probrem *** initialize" << endl;
+    B.get_Medium_InitTemp();
+  }
+  
+  // set phase 
+  if ( C.BasicEqs == INCMP_2PHASE ) {
+    B.get_Phase();
+  }
+  
+  
+  // CompoListの内容を表示する
+  Hostonly_  {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Component List\n\n");
+    M.chkList(stdout, cmp, C.BasicEqs);
+    
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Component List\n\n");
+    
+    M.chkList(fp, cmp, C.BasicEqs);
+  }
+  
+  
+  // セル数の情報を表示する
+  Hostonly_ {
+    double cr = (double)G_Wcell/ ( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]) *100.0;
+    fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
+            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
+    fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
+            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
+  }
+  
+  
+  // 外部境界面の開口率を計算する
+  V.countOpenAreaOfDomain(d_bcd, C.OpenDomain);
+  
+  
+  Hostonly_ {
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n\n");
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n\n");
+  }
   
   
   
+  // Monitor Listの処理 --------------------------------------------
+  //MO.setControlVars(bcd, G_org, G_reg, C.org, C.dx, C.Lbx, size, guide,
+  //                  C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
+  //                  C.Unit.Temp, C.Mode.Precision, C.Unit.Prs);
+  
+  
+  // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
+  //if ( C.Sampling.log == ON ) getXML_Monitor(m_solvCfg, &MO);
+  //if ( C.Sampling.log == ON ) getTP_Monitor(m_solvCfg, &MO);//未完成
+  
+  
+  // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
+  //if (C.Sampling.log == ON ) {
+    //MO.write_ID(mid);
+  //}
+  
+  // 内部境界条件として指定されたモニタ設定を登録
+  //if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
+  
+  
+  // MonitorListの場合に，svxファイルを出力する．
+  if ( C.Sampling.log == ON ) {
+    Hostonly_ printf("\n\twrite ID which includes Monitor List ID\n\n");
+    
+    // 性能測定モードがオフのときのみ出力
+    if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(d_mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
+  }
   
   
   
+  // mid[]を解放する  ---------------------------
+  if ( d_mid ) delete [] d_mid;
   
   
   
+  // コンポーネントのグローバルインデクス情報を取得
+  setGlobalCmpIdx();
+
   
   
+  // コンポーネントの内容リストを表示する
+  if ( C.NoBC >0 ) {
+    Hostonly_ {
+      fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(stdout,"\t>> Component Information\n");
+      B.printCompo(stdout, compo_global_bbox, mat, cmp);
+      
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(fp,"\t>> Component Information\n");
+      B.printCompo(fp, compo_global_bbox, mat, cmp);
+    }
+  }
+
+  // コンポーネント数がゼロの場合のチェック
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getElement() == 0 ) {
+      Hostonly_ printf("\tError : No element was found in Component[%d]\n", n);
+      fflush(stdout);
+      Exit(0);
+    }
+  }
+  
+  // Check consistency of boundary condition
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getType() == HT_SN ) {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
+        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
+        fflush(stdout);
+        Exit(0);
+      }
+    }
+    if ( cmp[n].getType() == HT_SF ) {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
+        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
+        fflush(stdout);
+        Exit(0);
+      }
+    }
+  }
+
+  
+  // 各ノードの領域情報をファイル出力
+  gather_DomainInfo();
+  
+
+  
+  TIMING_stop(tm_voxel_prep_sct);
+  // ここまでがボクセル準備の時間セクション
   
   
+// ##########  
+#if 0
+  write_distance(cut);
+#endif
+// ##########  
   
+
+  
+  // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
+  TIMING_start(tm_init_alloc);
+  allocArray_Main(TotalMemory);
+  
+  //allocArray_Collocate (TotalMemory);
+  
+  if ( C.LES.Calc == ON ) 
+  {
+    allocArray_LES (TotalMemory);
+  }
+
+  if ( C.isHeatProblem() ) 
+  {
+    allocArray_Heat(TotalMemory);
+  }
+  
+  if ( C.AlgorithmF == Control::Flow_FS_RK_CN ) 
+  {
+    allocArray_RK(TotalMemory);
+  }
+  
+  if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) 
+  {
+    allocArray_AB2(TotalMemory);
+  }
+  
+  if ( C.BasicEqs == INCMP_2PHASE ) 
+  {
+    allocArray_Interface(TotalMemory);
+  }
+  
+  // 時間平均用の配列をアロケート
+  if ( C.Mode.Average == ON ) 
+  {
+    allocArray_Average(TotalMemory);
+  }
+
+  
+  TIMING_stop(tm_init_alloc);
   
   
   
@@ -453,6 +773,10 @@ int FFV::Initialize(int argc, char **argv)
     Hostonly_ printf("Error : delete textparser\n");
     Exit(0);
   }
+  
+  Hostonly_ if ( fp ) fclose(fp);
+  
+  TIMING_stop(tm_init_sct);
   
   Exit(0);
   return 1;
@@ -801,6 +1125,232 @@ void FFV::fixed_parameters()
 }
 
 
+/**
+ * @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
+ */
+void FFV::gather_DomainInfo()
+{
+  // 統計処理の母数
+  double d = 1.0/(double)numProc;
+  double r;
+  
+  if ( numProc > 1 ) {
+    r = 1.0/(REAL_TYPE)(numProc-1);
+  }
+  else {
+    r = 1.0;
+  }
+  
+  int* m_size=NULL;           ///< 領域分割数
+  unsigned long* bf_fcl=NULL; ///< Fluid cell
+  unsigned long* bf_wcl=NULL; ///< Solid cell
+  unsigned long* bf_acl=NULL; ///< Active cell
+  
+  REAL_TYPE* m_org =NULL;     ///< 基点
+  REAL_TYPE* m_Lbx =NULL;     ///< 領域サイズ
+  unsigned long* bf_srf=NULL; ///< 表面数
+  
+  int* st_buf=NULL; ///< 
+  int* ed_buf=NULL; ///< 
+  
+  
+  if( !(m_size = new int[numProc*3]) ) Exit(0);
+  if( !(bf_fcl = new unsigned long[numProc]) )   Exit(0);
+  if( !(bf_wcl = new unsigned long[numProc]) )   Exit(0);
+  if( !(bf_acl = new unsigned long[numProc]) )   Exit(0);
+  
+  if( !(m_org  = new REAL_TYPE[numProc*3]) ) Exit(0);
+  if( !(m_Lbx  = new REAL_TYPE[numProc*3]) ) Exit(0);
+  if( !(bf_srf = new unsigned long[numProc]) )   Exit(0);
+  
+  if( !(st_buf = new int [numProc*3]) ) Exit(0);
+  if( !(ed_buf = new int [numProc*3]) ) Exit(0);
+  
+  // 領域情報の収集
+  if ( numProc > 1 ) {
+    if ( paraMngr->Gather(size, 3, m_size, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(C.org, 3, m_org, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(C.Lbx, 3, m_Lbx, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&L_Fcell, 1, bf_fcl, 1, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&L_Wcell, 1, bf_wcl, 1, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&L_Acell, 1, bf_acl, 1, 0) != CPM_SUCCESS ) Exit(0);
+  }
+  else { // serial
+    memcpy(m_size, size, 3*sizeof(int));
+    bf_fcl[0] = G_Fcell;
+    bf_wcl[0] = G_Wcell;
+    bf_acl[0] = G_Acell;
+    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
+    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
+  }
+  
+  // Info. of computational domain
+  double vol = (double)( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]);
+  double srf = 2.0 * ( (double)G_size[0] * (double)G_size[1] 
+                     + (double)G_size[1] * (double)G_size[2] 
+                     + (double)G_size[2] * (double)G_size[0]);
+  
+  // ローカルノード
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  unsigned long m_srf = (unsigned long)(2*(ix*jx + jx*kx + kx*ix));
+  
+  if ( nID[X_MINUS] < 0 ) m_srf -= (unsigned long)(jx*kx);  // remove face which does not join communication
+  if ( nID[Y_MINUS] < 0 ) m_srf -= (unsigned long)(ix*kx);
+  if ( nID[Z_MINUS] < 0 ) m_srf -= (unsigned long)(ix*jx);
+  if ( nID[X_PLUS]  < 0 ) m_srf -= (unsigned long)(jx*kx);
+  if ( nID[Y_PLUS]  < 0 ) m_srf -= (unsigned long)(ix*kx);
+  if ( nID[Z_PLUS]  < 0 ) m_srf -= (unsigned long)(ix*jx);
+  
+  if ( numProc > 1 ) {
+    if ( paraMngr->Gather(&m_srf, 1, bf_srf, 1, 0) != CPM_SUCCESS ) Exit(0);
+  }
+  else 
+  {
+    bf_srf[0] = m_srf;
+  }
+  
+  // mean of domain
+  unsigned long m_vol = 0;
+  unsigned long m_efv = 0;
+  m_srf = 0;
+  
+  for (int i=0; i<numProc; i++) {
+    ix = m_size[3*i];
+    jx = m_size[3*i+1];
+    kx = m_size[3*i+2];
+    m_vol += (unsigned long)(ix*jx*kx);
+    m_srf += bf_srf[i];
+    m_efv += bf_acl[i];
+  }
+  
+  double d_vol = (double)m_vol * d;
+  double d_srf = (double)m_srf * d;
+  double d_efv = (double)m_efv * d;
+  
+  // std. deviation of domain
+  double vol_dv = 0.0;
+  double srf_dv = 0.0;
+  double efv_dv = 0.0;
+  
+  unsigned long d1, d2, d3;
+  
+  for (int i=0; i<numProc; i++) {
+    ix = m_size[3*i];
+    jx = m_size[3*i+1];
+    kx = m_size[3*i+2];
+    d1 = (unsigned long)(ix*jx*kx) - m_vol;
+    d2 = bf_srf[i] - m_srf;
+    d3 = bf_acl[i] - m_efv;
+    vol_dv += (double)d1*(double)d1;
+    srf_dv += (double)d2*(double)d2;
+    efv_dv += (double)d3*(double)d3;
+  }
+  vol_dv = sqrt(vol_dv*r);
+  srf_dv = sqrt(srf_dv*r);
+  efv_dv = sqrt(efv_dv*r);
+  
+  
+  FILE *fp=NULL;
+  if ( !(fp=fopen("DomainInfo.txt", "w")) ) {
+    stamped_printf("\tSorry, can't open 'DomainInfo.txt' file. Write failed.\n");
+    Exit(0);
+  }
+  
+  // 全体情報の表示
+  C.printGlobalDomain(fp, G_size, G_org, G_reg);
+  
+  // ローカルノードの情報を表示
+  for (int i=0; i<numProc; i++) {
+    Hostonly_ {
+      fprintf(fp,"Domain %4d\n", i);
+      fprintf(fp,"\t ix, jx,  kx        [-] =  %13ld %13ld %13ld\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
+      fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
+              m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
+      fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
+              m_Lbx[i*3]*C.RefLength,  m_Lbx[i*3+1]*C.RefLength,  m_Lbx[i*3+2]*C.RefLength, m_Lbx[i*3],  m_Lbx[i*3+1],  m_Lbx[i*3+2]);
+      
+      if (C.NoBC != 0) fprintf(fp, "\t no            Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+    }
+    
+    if ( numProc > 1 ) {
+      
+      for (int n=1; n<=C.NoBC; n++) {
+        if( paraMngr->Gather(cmp[n].getBbox_st(), 3, st_buf, 3, 0) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Gather(cmp[n].getBbox_ed(), 3, ed_buf, 3, 0) != CPM_SUCCESS ) Exit(0);
+        
+        
+        Hostonly_ {
+          fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
+                  n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+        }
+      }
+    }
+  }
+  
+  Hostonly_ {
+    fprintf(fp, "\n");
+    fprintf(fp,"\n\t--------------------------------------------------\n");
+    fprintf(fp,"\tReport of Whole Domain Statistics\n");
+    fprintf(fp,"\tDomain size         = %7d %7d %7d\n", G_size[0], G_size[1], G_size[2]);
+    fprintf(fp,"\tNumber of voxels    = %12.6e\n", vol);
+    fprintf(fp,"\tNumber of surface   = %12.6e\n", srf);
+    fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
+    fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
+    fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
+    if ( numProc == 1 ) {
+      fprintf(fp,"\tDivision :          = %d : %s\n", numProc, "Serial");
+    }
+    else {
+      fprintf(fp,"\tDivision :          = %d : %s\n", numProc, "Equal segregation");
+    }
+    fprintf(fp,"\n\t--------------------------------------------------\n");
+    fprintf(fp,"\tDomain Statistics per MPI process\n");
+    fprintf(fp,"\tMean volume in each domain           = %12.6e\n", m_vol);
+    fprintf(fp,"\tStd. deviation of domain             = %12.6e\n", vol_dv);
+    fprintf(fp,"\tMean comm. in each domain            = %12.6e\n", m_srf);
+    fprintf(fp,"\tStd. deviation of surface            = %12.6e\n", srf_dv);
+    fprintf(fp,"\tMean effective volume in each domain = %12.6e\n", m_efv);
+    fprintf(fp,"\tStd. deviation of effective volume   = %12.6e\n", efv_dv);
+    fprintf(fp,"\n");
+    
+    fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
+    fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+    
+    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
+    for (int i=0; i<numProc; i++) {
+      ix = m_size[3*i];
+      jx = m_size[3*i+1];
+      kx = m_size[3*i+2];
+      tmp_vol = (REAL_TYPE)(ix*jx*kx);
+      tmp_acl = (REAL_TYPE)bf_acl[i];
+      tmp_fcl = (REAL_TYPE)bf_fcl[i];
+      tmp_wcl = (REAL_TYPE)bf_wcl[i];
+      fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
+      fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
+      fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
+      fprintf(fp,"%8.3f %8.3f ", 100.0*tmp_fcl/tmp_vol, 100.0*tmp_wcl/tmp_vol);
+      fprintf(fp,"%12.4e      %8.3f \n", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
+    }
+    fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+  }
+  
+  if (fp) fclose(fp);
+  
+  
+  if( m_size ) { delete [] m_size; m_size=NULL; }
+  if( m_org  ) { delete [] m_org;  m_org =NULL; }
+  if( m_Lbx  ) { delete [] m_Lbx;  m_Lbx =NULL; }
+  if( bf_srf ) { delete [] bf_srf; bf_srf=NULL; }
+  if( bf_fcl ) { delete [] bf_fcl; bf_fcl=NULL; }
+  if( bf_wcl ) { delete [] bf_wcl; bf_wcl=NULL; }
+  if( bf_acl ) { delete [] bf_acl; bf_acl=NULL; }
+  if( st_buf ) { delete [] st_buf; st_buf=NULL; }
+  if( ed_buf ) { delete [] ed_buf; ed_buf=NULL; }
+}
+
+
 // 組み込み例題の設定
 void FFV::getExample(Control* Cref, TPControl* tpCntl)
 {
@@ -1130,6 +1680,59 @@ void FFV::setComponentVF()
 }
 
 
+// 並列分散時のファイル名の管理を行う
+void FFV::setDFI()
+{
+  // 並列時のみ
+  if ( numProc > 1 ) {
+    int* g_bbox_st = new int[3*numProc];
+    int* g_bbox_ed = new int[3*numProc];
+    
+    int st_i, st_j ,st_k, ed_i, ed_j, ed_k;
+    
+    // head and tail index
+    for (int n=0; n<numProc; n++){
+      
+      // Fortran index
+      st_i = head[0];
+      st_j = head[1];
+      st_k = head[2];
+      
+      const int* tail = paraMngr->GetVoxelTailIndex();
+      ed_i = tail[0] + 1;
+      ed_j = tail[1] + 1;
+      ed_k = tail[2] + 1;
+      
+      if ( (g_bbox_st[3*n+0] = st_i) < 1 ) Exit(0);
+      if ( (g_bbox_st[3*n+1] = st_j) < 1 ) Exit(0);
+      if ( (g_bbox_st[3*n+2] = st_k) < 1 ) Exit(0);
+      if ( (g_bbox_ed[3*n+0] = ed_i) < 1 ) Exit(0);
+      if ( (g_bbox_ed[3*n+1] = ed_j) < 1 ) Exit(0);
+      if ( (g_bbox_ed[3*n+2] = ed_k) < 1 ) Exit(0);
+    }
+    
+    // DFIクラスの初期化
+    if ( !DFI.init(G_size, paraMngr->GetDivNum(), C.GuideOut, C.Start, g_bbox_st, g_bbox_ed) ) Exit(0);
+    
+    // host name
+    //for (int n=0; n<numProc; n++){
+    //  const char* host = para_mng->GetHostName(n, procGrp);
+    //  if ( !host ) Exit(0);
+      
+    //  DFI.copy_hostname(host, n);
+    //}
+    
+    if ( g_bbox_st ) {
+      delete [] g_bbox_st; 
+      g_bbox_st = NULL;
+    }
+    if ( g_bbox_ed ) {
+      delete [] g_bbox_ed; 
+      g_bbox_ed = NULL;
+    }
+  }
+  
+}
 // コンポーネントが存在するかを保持しておく
 void FFV::setEnsComponent()
 {
@@ -1185,6 +1788,125 @@ void FFV::setEnsComponent()
     Exit(0);
   }
   
+}
+
+
+/**
+ * @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
+ */
+void FFV::setGlobalCmpIdx()
+{
+  int st_i, st_j, st_k, ed_i, ed_j, ed_k;
+  int node_st_i, node_st_j, node_st_k;
+  int st[3], ed[3];
+  
+  // グローバルインデクスの配列インスタンス
+  compo_global_bbox = new int[6*(C.NoCompo+1)];
+  int* cgb = compo_global_bbox;
+  
+  // ローカルインデクスからグローバルインデクスに変換
+  for (int m=1; m<=C.NoCompo; m++) {
+    
+    if ( !cmp[m].isEns() ) { // コンポーネントが存在しないノードはゼロを代入
+      cgb[6*m+0] = 0;
+      cgb[6*m+1] = 0;
+      cgb[6*m+2] = 0;
+      cgb[6*m+3] = 0;
+      cgb[6*m+4] = 0;
+      cgb[6*m+5] = 0;
+    }
+    else { // コンポーネントが存在する場合
+      cmp[m].getBbox(st, ed);
+      st_i = st[0];
+      st_j = st[1];
+      st_k = st[2];
+      ed_i = ed[0];
+      ed_j = ed[1];
+      ed_k = ed[2];
+      
+      if ( numProc > 1 ) {
+        node_st_i = head[0];
+        node_st_j = head[1];
+        node_st_k = head[2];
+        
+        cgb[6*m+0] = node_st_i + st_i;
+        cgb[6*m+1] = node_st_j + st_j;
+        cgb[6*m+2] = node_st_k + st_k;
+        cgb[6*m+3] = node_st_i + ed_i;
+        cgb[6*m+4] = node_st_j + ed_j;
+        cgb[6*m+5] = node_st_k + ed_k;
+      } 
+      else {
+        cgb[6*m+0] = st_i;
+        cgb[6*m+1] = st_j;
+        cgb[6*m+2] = st_k;
+        cgb[6*m+3] = ed_i;
+        cgb[6*m+4] = ed_j;
+        cgb[6*m+5] = ed_k;
+      }
+    }
+  }
+  
+  // 領域全体のbboxを求める
+  int* m_gArray = NULL;
+  int* m_eArray = NULL;
+  int array_size = 6*(C.NoCompo+1);
+  int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
+  
+  if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
+  if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( numProc > 1 ) {
+      es = ( cmp[n].isEns() ) ? 1 : 0;
+      if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
+      
+      
+      if (myRank == 0) { // マスターノードのみ
+        
+        // 初期値
+        cgb[6*n+0] = 100000000;
+        cgb[6*n+1] = 100000000;
+        cgb[6*n+2] = 100000000;
+        cgb[6*n+3] = 0;
+        cgb[6*n+4] = 0;
+        cgb[6*n+5] = 0;
+        
+        for (int m=0; m<numProc; m++) {
+          if ( m_eArray[m]==1 ) { // コンポーネントの存在ランクのみを対象とする
+            st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
+            st_y = m_gArray[6*m+1];
+            st_z = m_gArray[6*m+2];
+            ed_x = m_gArray[6*m+3];
+            ed_y = m_gArray[6*m+4];
+            ed_z = m_gArray[6*m+5];
+            
+            if( st_x < cgb[6*n+0] ) { cgb[6*n+0] = st_x; } // 最大値と最小値を求める
+            if( st_y < cgb[6*n+1] ) { cgb[6*n+1] = st_y; }
+            if( st_z < cgb[6*n+2] ) { cgb[6*n+2] = st_z; }
+            if( ed_x > cgb[6*n+3] ) { cgb[6*n+3] = ed_x; }
+            if( ed_y > cgb[6*n+4] ) { cgb[6*n+4] = ed_y; }
+            if( ed_z > cgb[6*n+5] ) { cgb[6*n+5] = ed_z; }
+          }
+        }
+      }
+    }
+    
+  }
+  
+  // destroy
+  if (m_gArray) 
+  {
+    delete[] m_gArray;
+    m_gArray = NULL;
+  }
+  
+  if (m_eArray) 
+  {
+    delete[] m_eArray;
+    m_eArray = NULL;
+  }
 }
 
 
@@ -1356,10 +2078,10 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       break;
   }
   
-  
   // midのガイドセル同期
   if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, guide, 1) != CPM_SUCCESS ) Exit(0);
 }
+
 
 
 // IP用にカット領域をアロケートする
@@ -1402,6 +2124,28 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   // 初期値のセット
   for (size_t i=0; i<size_n_cell*6; i++) {
     d_cut[i] = 1.0f;
+  }
+  
+}
+
+
+
+// ポリゴンのカット情報からVBCのboxをセット
+void FFV::VIBC_Bbox_from_Cut()
+{
+  int f_st[3], f_ed[3];
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    if ( cmp[n].isVBC_IO() ) { // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
+      
+      // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+      V.findVIBCbbox(n, d_bcv, f_st, f_ed);
+      
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+    }
   }
   
 }

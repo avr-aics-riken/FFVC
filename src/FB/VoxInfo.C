@@ -4141,19 +4141,10 @@ int VoxInfo::find_mat_odr(const int mat_id, CompoList* cmp)
 }
 
 
-/**
- @brief VBCのbboxを取得する
- @param odr[in] コンポーネント配列のインデクス
- @param bv[in] BCindex V
- @param st[out] コンポーネントbboxの開始セル
- @param ed[out] コンポーネントbboxの終端セル
- */
+// VBCのbboxを取得する
 void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
 {
   int s;
-  size_t m;
-  bool m_flag;
-  int tmp[3];
   
   int ix = size[0];
   int jx = size[1];
@@ -4172,10 +4163,9 @@ void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
-        s = bv[m];
+        s = bv[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)]; //FBUtility::getFindexS3D(sz, gd, i, j, k);
         
-        m_flag = false;
+        bool m_flag = false;
         
         // X-
         if ( GET_FACE_BC(s, BC_FACE_W) == odr ) m_flag = true;
@@ -4197,9 +4187,7 @@ void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
         
         // min, max
         if ( m_flag ) {
-          tmp[0] = i;
-          tmp[1] = j;
-          tmp[2] = k;
+          int tmp[3] = {i, j, k};
           FB::vec3_min(st, st, tmp);
           FB::vec3_max(ed, ed, tmp);
         }
@@ -4277,7 +4265,6 @@ void VoxInfo::get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::M
   REAL_TYPE a;
   
   int id  = cmp[n].getMatOdr();
-  int def = cmp[n].getDef();
   
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;

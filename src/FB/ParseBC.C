@@ -301,15 +301,15 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
   int nnode=0;
   
   // check number of Elem
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
   if ( nnode != 11) {
-    stamped_printf("\tParsing error : 11 params should be found in 'Pressure_Loss'\n");
+    stamped_printf("\tParsing error : 11 parameters should be found in 'Pressure_Loss'\n");
     Exit(0);
   }
   
   // 入力単位の指定
-  label=label_base+"/unit";//
-  //std::cout <<  "label : " << label << std::endl;
+  label = label_base + "/unit";
+
   if ( !(tpCntl->GetValue(label, &str_u )) ) {
 		stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
 		Exit(0);
@@ -354,15 +354,7 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
   compo[n].shp_p2 = get_BCval_real(label);
   
   // 圧力損失パラメータ
-  //label=label_base+"/c1";
-  //compo[n].ca[0] = get_BCval_real(label);
-  //label=label_base+"/c2";
-  //compo[n].ca[1] = get_BCval_real(label);
-  //label=label_base+"/c3";
-  //compo[n].ca[2] = get_BCval_real(label);
-  //label=label_base+"/c4";
-  //compo[n].ca[3] = get_BCval_real(label);
-  label=label_base+"/c";
+  label = label_base + "/c";
   if( !(tpCntl->GetVector(label, v, 4)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
@@ -373,14 +365,15 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
   compo[n].ca[2]=v[2];
   compo[n].ca[3]=v[3];
   
-  label=label_base+"/u_threshold";
+  label = label_base + "/u_threshold";
   compo[n].ca[4] = get_BCval_real(label);
-  label=label_base+"/thickness";
+  
+  label = label_base + "/thickness";
   compo[n].ca[5] = get_BCval_real(label);
   
   // 熱交換器の方向強制オプション
   
-  label=label_base+"/vector";//
+  label = label_base + "/vector";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : Invalid string for 'vector' in 'Pressure_Loss'\n");
     Exit(0);
@@ -747,7 +740,7 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
  */
 void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
 {
-  std::string str,str_u;
+  std::string str, str_u;
   std::string label;
   REAL_TYPE v[4], ct;
   int nnode=0;
@@ -756,7 +749,7 @@ void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
   nnode = tpCntl->countLabels(label_base);
   
   if ( nnode != 1) {
-    stamped_printf("\tParsing error : 1 param should be found in 'LocalBoundary > Adiabatic'\n");
+    stamped_printf("\tParsing error : 1 parameter should be found in 'LocalBoundary > Adiabatic'\n");
     Exit(0);
   }
   
@@ -2271,40 +2264,18 @@ bool ParseBC::isCompoTransfer(int label)
 }
 
 /**
- @fn bool ParseBC::isIDinCompo(int candidate, int now)
- @brief candidate_idが既にコンポーネントに登録されているかを調べる
- @retval 重複していればfalseを返す
- @param candidate チェックの候補
- @param now コンポーネントリストの現在までのエントリ番号
+ * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
+ * @retval 重複していればfalseを返す
+ * @param [in] candidate テストするラベル
+ * @param [in] now       コンポーネントリストの現在までのエントリ番号
  */
-bool ParseBC::isIDinCompo(int candidate, int now)
+bool ParseBC::isLabelinCompo(const std::string candidate, int now)
 {
-  for (int i=1; i<(int)now; i++) {
-    if ( candidate == compo[i].getMatOdr() ) {
-      return false;
-    }
+  for (int i=1; i<now; i++) {
+    if ( FBUtility::compare(candidate, compo[i].getLabel()) ) return false;
   }
   return true;
 }
-
-/**
- @fn bool ParseBC::isIDinCompo(int candidate, int def, int now)
- @brief candidate_idとdefの組が既にコンポーネントに登録されているかを調べる
- @retval 重複していればfalseを返す
- @param candidate_id チェックの候補ID
- @param def deface
- @param now コンポーネントリストの現在までのエントリ番号
- */
-bool ParseBC::isIDinCompo(int candidate, int def, int now)
-{
-  for (int i=1; i<(int)now; i++) {
-    if ( (candidate == compo[i].getMatOdr()) && (def == compo[i].getDef()) ) {
-      return false;
-    }
-  }
-  return true;
-}
-
 
 
 
@@ -2369,7 +2340,7 @@ void ParseBC::loadBC_Local(Control* C)
   //
   
   // 境界条件がなければ，スキップ
-  for (int odr=1; odr<=(int)NoBC; odr++) {
+  for (int odr=1; odr<=NoBC; odr++) {
     
     if( !tpCntl->GetNodeStr(label_base, odr, &str)){
       stamped_printf("\tParsing error : No Leaf Node \n");
@@ -2402,51 +2373,24 @@ void ParseBC::loadBC_Local(Control* C)
     }
     else if ( tp == IBM_DF ) {
       get_IBC_IBM_DF(label_leaf, odr);
-      if ( !isIDinCompo(ide, odr) ) {
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
     }
     else if ( tp == HEX ) {
       get_IBC_PrsLoss(label_leaf, odr);//debug済み
-      if ( !isIDinCompo(ide, odr) ) {
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
     }
     else if ( tp == FAN ) {
       get_IBC_Fan(label_leaf, odr);//debug済み
-      if ( !isIDinCompo(ide, odr) ) {
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
     }
     else if ( tp == DARCY ) {
       get_Darcy(label_leaf, odr);
-      if ( !isIDinCompo(ide, odr) ) {
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
     }
     else if ( tp == CELL_MONITOR ) {
       get_IBC_Monitor(label_leaf, odr, C);//debug済み
-      if ( !isIDinCompo(ide, odr) ) {
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
     }
     else if ( tp == INACTIVE ) {
-      if ( !isIDinCompo(ide, odr) ) { // IDのみの重複チェック
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
+      ; // skip
     }
     else if ( tp == PERIODIC ) {
       get_IBC_Periodic(label_leaf, odr);
-      if ( !isIDinCompo(ide, odr) ) {
-        stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-        Exit(0);
-      }
     }
     else if ( HeatProblem ) { // Incase of Heat problem
       if ( C->KindOfSolver == FLOW_ONLY ) {
@@ -2456,81 +2400,49 @@ void ParseBC::loadBC_Local(Control* C)
       
       if ( tp == ADIABATIC ) {
         get_IBC_Adiabatic(label_leaf, odr);
-        if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-          stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-          Exit(0);
-        }        
+        
       }
       else if ( tp == HEATFLUX ) {
         get_IBC_HeatFlux(label_leaf, odr);
-        if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-          stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-          Exit(0);
-        }        
+       
       }
       else if ( tp == TRANSFER ) {
         switch ( compo[odr].getHtype() ) {
           case HT_N:
             get_IBC_HT_N(label_leaf, odr);
-            if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-              Exit(0);
-            }
+
             break;
             
           case HT_S:
             get_IBC_HT_S(label_leaf, odr);
-            if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-              Exit(0);
-            }
+
             break;
             
           case HT_SN:
             get_IBC_HT_SN(label_leaf, odr);
-            if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-              Exit(0);
-            }
+
             break;
             
           case HT_SF:
             get_IBC_HT_SF(label_leaf, odr);
-            if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-              Exit(0);
-            }
+
             break;
             
           case HT_B:
             get_IBC_HT_B(label_leaf, odr);
-            if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-              stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-              Exit(0);
-            }
+
             break;
         }        
       }
       else if ( tp == ISOTHERMAL ) {
         get_IBC_IsoTherm(label_leaf, odr);
-        if ( !isIDinCompo(ide, compo[odr].getDef(), odr) ) {
-          stamped_printf("Parse Error : Reduplication of pair of ID[%d] and Def[%d] for BC\n", ide, compo[odr].getDef());
-          Exit(0);
-        }
+
       }
       else if ( tp == RADIANT ) {
         get_IBC_Radiant(label_leaf, odr);
-        if ( !isIDinCompo(ide, odr) ) {
-          stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-          Exit(0);
-        }
       }
       else if ( tp == HEAT_SRC ) {
         get_IBC_HeatSrc(label_leaf, odr);
-        if ( !isIDinCompo(ide, odr) ) {
-          stamped_printf("Parse Error : Reduplication of ID[%d] for BC\n", ide);
-          Exit(0);
-        }
       }
       else if ( tp == CNST_TEMP ) {
         get_IBC_CnstTemp(label_leaf, odr);
@@ -2556,7 +2468,7 @@ void ParseBC::loadBC_Local(Control* C)
  @fn void ParseBC::loadBC_Outer(void)
  @brief パラメータファイルをパースして，外部境界条件を取得，保持する
  */
-void ParseBC::loadBC_Outer(void)
+void ParseBC::loadBC_Outer()
 {
   std::string label_base, label_leaf, label;
   std::string str;
@@ -2829,14 +2741,8 @@ int ParseBC::oppositeDir(const int dir)
 
 
 
-/**
- @fn void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
- @brief コンポーネントの情報を表示する
- @param nv ボクセルモデルから計算した法線
- @param gci グローバルなコンポーネントのインデクス
- @param mat MediumList
- */
-void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
+// コンポーネントの情報を表示する
+void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp)
 {
   int n, m;
   bool flag;
@@ -2847,23 +2753,23 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]\n");
     
     for(n=1; n<=NoBC; n++){
-      if ( (compo[n].getType() == SPEC_VEL) || (compo[n].getType() == SPEC_VEL_WH) )  {
+      if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )  {
         fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e\n",
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(),
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area);
+                cmp[n].area);
       }
     }
     fprintf(fp, "\n");
     
     fprintf(fp, "\t no                    Label   Mat   normal_x   normal_y   normal_z      Direction");
     
-    if ( compo[n].get_V_Profile() == CompoList::vel_zero ) {
+    if ( cmp[n].get_V_Profile() == CompoList::vel_zero ) {
       fprintf(fp, "\n");
     }
-    else if ( compo[n].get_V_Profile() == CompoList::vel_constant ) {
+    else if ( cmp[n].get_V_Profile() == CompoList::vel_constant ) {
       fprintf(fp, "    Q[m^3/s]   Vel.[m/s]\n");
     }
     else {
@@ -2871,25 +2777,25 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     }
     
     for(n=1; n<=NoBC; n++){
-      if ( (compo[n].getType() == SPEC_VEL) || (compo[n].getType() == SPEC_VEL_WH) )  {
+      if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )  {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e %14s ",
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                (compo[n].getBClocation()==CompoList::same_direction) ? "same dir." : "opposite dir.");
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                (cmp[n].getBClocation()==CompoList::same_direction) ? "same dir." : "opposite dir.");
         
-        if ( compo[n].get_V_Profile() == CompoList::vel_zero ) {
+        if ( cmp[n].get_V_Profile() == CompoList::vel_zero ) {
           fprintf(fp,"\n");
         }
-        else if ( compo[n].get_V_Profile() == CompoList::vel_constant ) {
-          fprintf(fp,"%11.3e %11.3e\n", compo[n].ca[CompoList::bias]*compo[n].area, compo[n].ca[CompoList::bias] );
+        else if ( cmp[n].get_V_Profile() == CompoList::vel_constant ) {
+          fprintf(fp,"%11.3e %11.3e\n", cmp[n].ca[CompoList::bias]*cmp[n].area, cmp[n].ca[CompoList::bias] );
         }
         else {
           fprintf(fp,"%11.3e %11.3e %11.3e %11.3e %11.3e %11.4e\n",
-                  compo[n].ca[CompoList::amplitude]*compo[n].area,
-                  compo[n].ca[CompoList::amplitude],
-                  compo[n].ca[CompoList::frequency],
-                  compo[n].ca[CompoList::initphase],
-                  compo[n].ca[CompoList::bias],
-                  compo[n].ca[CompoList::frequency]*RefLength/RefVelocity);
+                  cmp[n].ca[CompoList::amplitude]*cmp[n].area,
+                  cmp[n].ca[CompoList::amplitude],
+                  cmp[n].ca[CompoList::frequency],
+                  cmp[n].ca[CompoList::initphase],
+                  cmp[n].ca[CompoList::bias],
+                  cmp[n].ca[CompoList::frequency]*RefLength/RefVelocity);
         }
         
       }
@@ -2901,14 +2807,14 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
       fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
       
       for(n=1; n<=NoBC; n++) {
-        if ( compo[n].getType() == SPEC_VEL_WH )  {
+        if ( cmp[n].getType() == SPEC_VEL_WH )  {
           fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                  n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                  n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                   getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                   getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                   getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci),  
-									FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp), 
-									FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
+									FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp), 
+									FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
         }
       }
       fprintf(fp, "\n");
@@ -2920,15 +2826,15 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed  outflow_vel  pressure\n");
     
     for(n=1; n<=NoBC; n++){
-      if ( compo[n].getType() == OUTFLOW )  {
+      if ( cmp[n].getType() == OUTFLOW )  {
         fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d ",
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(),
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                (compo[n].getOutflowType() == V_AVERAGE) ? "Average " : "Minmax ");
-        if (compo[n].get_P_BCtype() == P_DIRICHLET) {
-          fprintf(fp, "%12.4e;", FBUtility::convND2D_P(compo[n].get_Pressure(), BasePrs, RefDensity, RefVelocity, Unit_Prs) );
+                (cmp[n].getOutflowType() == V_AVERAGE) ? "Average " : "Minmax ");
+        if (cmp[n].get_P_BCtype() == P_DIRICHLET) {
+          fprintf(fp, "%12.4e;", FBUtility::convND2D_P(cmp[n].get_Pressure(), BasePrs, RefDensity, RefVelocity, Unit_Prs) );
         }
         else {
           fprintf(fp," Grad_p = 0   ---");
@@ -2945,9 +2851,9 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     
     for(n=1; n<=NoBC; n++){
-      if ( compo[n].getType() == IBM_DF )  {
+      if ( cmp[n].getType() == IBM_DF )  {
         fprintf(fp,"\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n",
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -2958,10 +2864,10 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   normal_x   normal_y   normal_z    Vel.[m/s]      Vel.[-]\n");
     
     for(n=1; n<=NoBC; n++){
-      if ( compo[n].getType() == IBM_DF )  {
+      if ( cmp[n].getType() == IBM_DF )  {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e %12.4e %12.4e \n",
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                compo[n].get_Velocity(), FBUtility::convD2ND_V(compo[n].get_Velocity(), RefVelocity));
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                cmp[n].get_Velocity(), FBUtility::convD2ND_V(cmp[n].get_Velocity(), RefVelocity));
       }
     }
   }
@@ -2973,31 +2879,31 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     
     fprintf(fp, "\t no                    Label   Mat    normal_x   normal_y   normal_z     O_x[m]     O_y[m]     O_z[m]      dir_x      dir_y      dir_z\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == HEX ) {
+      if ( cmp[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
-								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                compo[n].oc[0], compo[n].oc[1], compo[n].oc[2],
-                compo[n].dr[0], compo[n].dr[1], compo[n].dr[2]);
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
+								cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                cmp[n].oc[0], cmp[n].oc[1], cmp[n].oc[2],
+                cmp[n].dr[0], cmp[n].dr[1], cmp[n].dr[2]);
       }
     }
     fprintf(fp, "\n");
     
     fprintf(fp, "\t                                     Depth[m]   Width[m]  Height[m]  Area[m*m]\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == HEX ) {
+      if ( cmp[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
-								compo[n].depth, compo[n].shp_p1, compo[n].shp_p2, compo[n].area);
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
+								cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2, cmp[n].area);
       }
     }
     fprintf(fp, "\n");
     
     fprintf(fp, "\t                                      i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == HEX ) {
+      if ( cmp[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -3007,11 +2913,11 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     
     fprintf(fp, "\t no                    Label   Mat         c1         c2         c3         c4  u_th[m/s]  thick[mm]     vec_forcing\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == HEX ) {
+      if ( cmp[n].getType() == HEX ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
-                compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4]*RefVelocity, compo[n].ca[5]*RefLength*1000.0,
-                (compo[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
+                cmp[n].ca[0], cmp[n].ca[1], cmp[n].ca[2], cmp[n].ca[3], cmp[n].ca[4]*RefVelocity, cmp[n].ca[5]*RefLength*1000.0,
+                (cmp[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
       }
     }
   }
@@ -3022,30 +2928,30 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     
     fprintf(fp, "\t no                    Label   Mat    normal_x   normal_y   normal_z      O_x[m]     O_y[m]     O_z[m]\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == FAN ) {
+      if ( cmp[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d  %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
-								compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                compo[n].oc[0], compo[n].oc[1], compo[n].oc[2]);
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
+								cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                cmp[n].oc[0], cmp[n].oc[1], cmp[n].oc[2]);
       }
     }
     fprintf(fp, "\n");
     
     fprintf(fp, "\t                                     Depth[m]     Fan[m]    Boss[m]  Area[m*m]\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == FAN ) {
+      if ( cmp[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
-								compo[n].depth, compo[n].shp_p1, compo[n].shp_p2, compo[n].area);
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
+								cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2, cmp[n].area);
       }
     }
     fprintf(fp, "\n");
     
     fprintf(fp, "\t                                      i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == FAN ) {
+      if ( cmp[n].getType() == FAN ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -3055,11 +2961,11 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     /*
      fprintf(fp, "\t no                    Label    ID         c1         c2         c3         c4  u_th[m/s]  thick[mm]     vec_forcing\n");
      for(n=1; n<=NoBC; n++) {
-     if ( compo[n].getType() == FAN ) {
+     if ( cmp[n].getType() == FAN ) {
      fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e     %s\n", 
-     n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
-     compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4]*RefVelocity, compo[n].ca[5]*RefLength*1000.0,
-     (compo[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
+     n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
+     cmp[n].ca[0], cmp[n].ca[1], cmp[n].ca[2], cmp[n].ca[3], cmp[n].ca[4]*RefVelocity, cmp[n].ca[5]*RefLength*1000.0,
+     (cmp[n].get_sw_HexDir()==ON) ? "Directional":"Non-directional");
      }
      }*/
   }
@@ -3068,21 +2974,21 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
   if ( isComponent(DARCY) ) {
     fprintf(fp, "\n\t[Darcy medium]\n");
     
-    fprintf(fp, "\t no                    Label   Mat        (Computed Normal form ID)  Area[m*m]   Prmblty_x   Prmblty_y   Prmblty_z[m^2]    Prmblty_x   Prmblty_y   Prmblty_z[-]\n");
+    fprintf(fp, "\t no                    Label   Mat        Area[m*m]   Prmblty_x   Prmblty_y   Prmblty_z[m^2]    Prmblty_x   Prmblty_y   Prmblty_z[-]\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == DARCY ) {
-        fprintf(fp, "\t%3d %24s %5d %10.3e %10.3e %10.3e %10.3e %11.4e %11.4e %11.4e       %11.4e %11.4e %11.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
-                nv[3*n+0], nv[3*n+1], nv[3*n+2], compo[n].area, 
-								compo[n].ca[0], compo[n].ca[1], compo[n].ca[2], compo[n].ca[3], compo[n].ca[4], compo[n].ca[5]);
+      if ( cmp[n].getType() == DARCY ) {
+        fprintf(fp, "\t%3d %24s %5d %10.3e %11.4e %11.4e %11.4e       %11.4e %11.4e %11.4e\n", 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
+                cmp[n].area, 
+								cmp[n].ca[0], cmp[n].ca[1], cmp[n].ca[2], cmp[n].ca[3], cmp[n].ca[4], cmp[n].ca[5]);
       }
     }
     
     fprintf(fp, "\t                                      i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == DARCY ) {
+      if ( cmp[n].getType() == DARCY ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(),
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
@@ -3097,8 +3003,8 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def\n");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == ADIABATIC ) {
-        fprintf(fp, "\t%3d %24s %5d %5d\n", n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef());
+      if ( cmp[n].getType() == ADIABATIC ) {
+        fprintf(fp, "\t%3d %24s %5d %5d\n", n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef());
       }
     }
   }
@@ -3109,13 +3015,13 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   flux(W/m^2)        q[-]\n");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == HEATFLUX ) {
+      if ( cmp[n].getType() == HEATFLUX ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(),
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, compo[n].get_Heatflux(), compo[n].get_Heatflux()/(RefVelocity*DiffTemp*rho*cp));
+                cmp[n].area, cmp[n].get_Heatflux(), cmp[n].get_Heatflux()/(RefVelocity*DiffTemp*rho*cp));
       }
     }
   }
@@ -3126,13 +3032,13 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)\n");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_N ) {
+      if ( cmp[n].getHtype() == HT_N ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, compo[n].get_CoefHT());
+                cmp[n].area, cmp[n].get_CoefHT());
       }
     }
   }
@@ -3143,14 +3049,14 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_S ) {
+      if ( cmp[n].getHtype() == HT_S ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, compo[n].get_CoefHT(), FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp) );
+                cmp[n].area, cmp[n].get_CoefHT(), FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3161,34 +3067,34 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_SN ) {
+      if ( cmp[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp),
-                (compo[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
+                cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp),
+                (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
       }
     }
     fprintf(fp, "\t no                    Label   Mat  vert_lam_a  vert_lam_b vert_turb_a vert_turb_b  vert_Ra_cr   lwr_lam_a   lwr_lam_b  lwr_turb_a  lwr_turb_b   lwr_Ra_cr\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_SN ) {
+      if ( cmp[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n", 
                 n, 
-                compo[n].getLabel().c_str(), 
-                compo[n].getMatOdr(), 
-                compo[n].ca[CompoList::vert_laminar_alpha], 
-                compo[n].ca[CompoList::vert_laminar_beta], 
-                compo[n].ca[CompoList::vert_turbulent_alpha], 
-                compo[n].ca[CompoList::vert_turbulent_beta], 
-                compo[n].ca[CompoList::vert_Ra_critial], 
-                compo[n].cb[CompoList::lower_laminar_alpha], 
-                compo[n].cb[CompoList::lower_laminar_beta], 
-                compo[n].cb[CompoList::lower_turbulent_alpha], 
-                compo[n].cb[CompoList::lower_turbulent_beta], 
-                compo[n].cb[CompoList::lower_Ra_critial] );
+                cmp[n].getLabel().c_str(), 
+                cmp[n].getMatOdr(), 
+                cmp[n].ca[CompoList::vert_laminar_alpha], 
+                cmp[n].ca[CompoList::vert_laminar_beta], 
+                cmp[n].ca[CompoList::vert_turbulent_alpha], 
+                cmp[n].ca[CompoList::vert_turbulent_beta], 
+                cmp[n].ca[CompoList::vert_Ra_critial], 
+                cmp[n].cb[CompoList::lower_laminar_alpha], 
+                cmp[n].cb[CompoList::lower_laminar_beta], 
+                cmp[n].cb[CompoList::lower_turbulent_alpha], 
+                cmp[n].cb[CompoList::lower_turbulent_beta], 
+                cmp[n].cb[CompoList::lower_Ra_critial] );
       }
     }
   }
@@ -3200,30 +3106,30 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_SF ) {
+      if ( cmp[n].getHtype() == HT_SF ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, 
-                compo[n].getLabel().c_str(), 
-                compo[n].getMatOdr(), 
-                compo[n].getDef(), 
+                cmp[n].getLabel().c_str(), 
+                cmp[n].getMatOdr(), 
+                cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp),
-                (compo[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
+                cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp),
+                (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
       }
     }
     fprintf(fp, "\t no                    Label   Mat       alpha        beta       gamma\n");
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_SN ) {
+      if ( cmp[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %11.4e %11.4e %11.4e\n", 
                 n, 
-                compo[n].getLabel().c_str(), 
-                compo[n].getMatOdr(), 
-                compo[n].ca[CompoList::alpha], 
-                compo[n].ca[CompoList::beta], 
-                compo[n].ca[CompoList::gamma]);
+                cmp[n].getLabel().c_str(), 
+                cmp[n].getMatOdr(), 
+                cmp[n].ca[CompoList::alpha], 
+                cmp[n].ca[CompoList::beta], 
+                cmp[n].ca[CompoList::gamma]);
       }
     }
   }
@@ -3235,14 +3141,14 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getHtype() == HT_B ) {
+      if ( cmp[n].getHtype() == HT_B ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, compo[n].get_CoefHT(), FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp) );
+                cmp[n].area, cmp[n].get_CoefHT(), FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3254,14 +3160,14 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == ISOTHERMAL ) {
+      if ( cmp[n].getType() == ISOTHERMAL ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-								compo[n].area, FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp) );
+								cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3272,13 +3178,13 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat    def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   ep[-]   pj[-]\n");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == RADIANT ) {
+      if ( cmp[n].getType() == RADIANT ) {
         fprintf(fp, "\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].getDef(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].area, compo[n].get_CoefRadEps(), compo[n].get_CoefRadPrj());
+                cmp[n].area, cmp[n].get_CoefRadEps(), cmp[n].get_CoefRadPrj());
       }
     }
   }
@@ -3290,15 +3196,15 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed     Q[W/m^3]    nrmlzd[-]\n");
     
     for(n=1; n<=NoBC; n++) {
-      int h_odr = compo[n].getMatOdr();
-      if ( compo[n].getType() == HEAT_SRC ) {
+      int h_odr = cmp[n].getMatOdr();
+      if ( cmp[n].getType() == HEAT_SRC ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                compo[n].get_HeatValue(), 
-                FBUtility::convD2ND_Hsrc(compo[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[h_odr].P[p_density], mat[h_odr].P[p_specific_heat]));
+                cmp[n].get_HeatValue(), 
+                FBUtility::convD2ND_Hsrc(cmp[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[h_odr].P[p_density], mat[h_odr].P[p_specific_heat]));
       }
     }
   }
@@ -3310,14 +3216,14 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == CNST_TEMP ) {
+      if ( cmp[n].getType() == CNST_TEMP ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                FBUtility::convK2Temp(compo[n].get_Temp(), Unit_Temp), 
-                FBUtility::convK2ND(compo[n].get_Temp(), BaseTemp, DiffTemp));
+                FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp), 
+                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp));
       }
     }
   }
@@ -3328,23 +3234,23 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  Variables\n");
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == CELL_MONITOR ) {
+      if ( cmp[n].getType() == CELL_MONITOR ) {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e  %s\n", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-								compo[n].area, compo[n].getVarStr().c_str());
+								cmp[n].area, cmp[n].getVarStr() );
       }
     }
     fprintf(fp, "\n");
     
     fprintf(fp, "\t no                    Label   Mat   normal_x   normal_y   normal_z Reference\n");
     for(n=1; n<=NoBC; n++){
-      if ( compo[n].getType() == CELL_MONITOR )  {
+      if ( cmp[n].getType() == CELL_MONITOR )  {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e       %3s\n",
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), compo[n].nv[0], compo[n].nv[1], compo[n].nv[2],
-                (compo[n].getStateCellMonitor()==ON) ? "yes" : "no");
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                (cmp[n].getStateCellMonitor()==ON) ? "yes" : "no");
       }
     }
   }
@@ -3357,15 +3263,15 @@ void ParseBC::printCompo(FILE* fp, REAL_TYPE* nv, int* gci, MediumList* mat)
     int dir_in=0, dir_out=0, pp_in=0, pp_out=0;
     
     for(n=1; n<=NoBC; n++) {
-      if ( compo[n].getType() == PERIODIC ) {
-        dir_in = compo[n].getPeriodicDir();
+      if ( cmp[n].getType() == PERIODIC ) {
+        dir_in = cmp[n].getPeriodicDir();
         
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d     ", 
-                n, compo[n].getLabel().c_str(), compo[n].getMatOdr(), 
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
-        fprintf(fp,"%12.6e / %12.6e ", compo[n].ca[0], FBUtility::convD2ND_P(compo[n].ca[0], BasePrs, RefDensity, RefVelocity, Unit_Prs));
+        fprintf(fp,"%12.6e / %12.6e ", cmp[n].ca[0], FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, RefDensity, RefVelocity, Unit_Prs));
         fprintf(fp, "%7s\n", FBUtility::getDirection(dir_in).c_str());
         
         // ドライバの方向が周期境界であるかをチェック
@@ -3704,10 +3610,10 @@ void ParseBC::set_Deface(const std::string label_base, const int n)
   int def=0;
   std::string label;
   
-  label=label_base+"/def_face";
+  label = label_base + "/face_label";
   
   if ( !(tpCntl->GetValue(label, &def )) ) {
-	  stamped_printf("\tParsing error : fail to get 'def_face' in '%s'\n", label.c_str());
+	  stamped_printf("\tParsing error : fail to get 'face_label' in '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -3813,12 +3719,12 @@ void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
 
 
 // 指定した媒質IDから参照物理量を設定する
-void ParseBC::setRefMedium(MediumList* mat, const int RefMedium)
+void ParseBC::setRefMedium(MediumList* mat, const int Ref)
 {
   int m;
   
   for (int n=NoBC+1; n<=NoCompo; n++) {
-    if ( compo[n].getMatOdr() == RefMedium ) {
+    if ( compo[n].getMatOdr() == Ref ) {
       m = compo[n].getMatOdr();
       if ( mat[m].getState() == FLUID ) {
         rho    = mat[m].P[p_density];

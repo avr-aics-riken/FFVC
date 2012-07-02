@@ -29,11 +29,12 @@ CXXSRCS = \
   History.C \
   SetBC.C \
   CompoFraction.C \
+  dfi.C \
 #       Monitor.C \
 #       MonCompo.C \
 #       Sampling.C \
 #       DataHolder.C \
-#       dfi.C \
+
 
 
 F90SRCS = \
@@ -97,3 +98,4 @@ SetBC.o: Medium.h Component.h FBUtility.h Interval_Mngr.h TPControl.h
 SetBC.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h
 CompoFraction.o: CompoFraction.h FB_Define.h mydebug.h vec3.h vec3_func.h
 CompoFraction.o: vec3f_func.h
+dfi.o: dfi.h FB_Define.h mydebug.h util_Path.h

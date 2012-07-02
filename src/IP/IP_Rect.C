@@ -101,7 +101,7 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   int id_fluid;
   
-  if ( (id_fluid = find_ID_from_Label(mat, Nmax, m_fluid)) == 0 ) {
+  if ( (id_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 ) {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }

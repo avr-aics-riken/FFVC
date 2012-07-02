@@ -27,11 +27,7 @@ bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string
 }
 
 
-/**
- @fn void ParseMat::chkList(FILE* fp, CompoList* compo, const int basicEq)
- @brief 取得したCompoList[]の内容を表示する
- @note Hostonly
- */
+// 取得したCompoList[]の内容を表示する
 void ParseMat::chkList(FILE* fp, CompoList* compo, const int basicEq)
 {
   if( !fp ) Exit(0);

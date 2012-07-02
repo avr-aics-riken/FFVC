@@ -43,7 +43,7 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int styp
   head = new int[3*Num_Node];
   tail = new int[3*Num_Node];
   
-  hostname = new std::string[Num_Node];
+  hostname = "hoge";
   
   for (int i=0; i<Num_Node*3; i++) {
     head[i] = hidx[i];
@@ -437,7 +437,7 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::strin
   
   // Hostname
   Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname[n].c_str());
+  fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname.c_str());
   
   // VoxelSize
   Write_Tab(fp, tab+1); 

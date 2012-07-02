@@ -8,15 +8,17 @@
 //
 // #################################################################
 
-//@file Component.C
-//@brief FlowBase CompoList class
-//@author kero
+/** 
+ * @file Component.C
+ * @brief FlowBase CompoList class
+ * @author kero
+ */
 
 #include "Component.h"
 
 
 // 変数名を返す
-std::string CompoList::getVarStr()
+const char* CompoList::getVarStr()
 {
   std::string var;
   
@@ -31,7 +33,7 @@ std::string CompoList::getVarStr()
   if ( isVarEncoded(var_Density_Avr) )      var += "Averaged Density ";      // 8
   if ( isVarEncoded(var_TotalP_Avr) )       var += "Averaged TotalPressure ";// 9
   
-  return var;
+  return var.c_str();
 }
 
 /**

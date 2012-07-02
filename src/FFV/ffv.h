@@ -48,6 +48,7 @@
 #include "TPControl.h"
 #include "ffv_SetBC.h"
 #include "CompoFraction.h"
+#include "dfi.h"
 
 #include "omp.h"
 
@@ -141,8 +142,9 @@ private:
   REAL_TYPE *d_r_p;  ///< 粗格子の圧力
   REAL_TYPE *d_r_t;  ///< 粗格子の温度
   
-  // コンポーネントワーク配列のアドレス管理
-  REAL_TYPE** component_array;
+  REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
+  
+  int* compo_global_bbox; ///< グローバルなコンポーネントBbox 表示に利用
   
   
   // カット
@@ -171,6 +173,10 @@ private:
   ParseBC B;                 ///< 境界条件のパースクラス
   TPControl tpCntl;          ///< テキストパーサのラッパークラス
   SetBC3D BC;                ///< BCクラス
+  DFI DFI;                   ///< 分散ファイルインデクス管理クラス
+  // Polylib
+  MPIPolylib* PL;            ///< Polylibクラス
+  POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
   
@@ -219,6 +225,15 @@ private:
    * @param [in/out] total ソルバーに使用するメモリ量
    */
   void allocArray_Cut(double &total);
+  
+  
+  /**
+   @brief コンポーネントのワーク用配列のアロケート
+   @param [in/out] m_prep  前処理用のメモリサイズ
+   @param [in/out] m_total 本計算用のメモリリサイズ
+   @param [in]     fp      ファイルポインタ
+   */
+  void allocArray_Forcing(double& m_prep, double& m_total, FILE* fp);
   
   
   /**
@@ -303,6 +318,12 @@ private:
   void fixed_parameters();
   
   
+  /**
+   * @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
+   */
+  void gather_DomainInfo();
+  
+  
   /** グローバルな領域情報を取得 
    * @return 分割指示 (1-with / 2-without)
    */
@@ -380,10 +401,24 @@ private:
   void setComponentVF();
   
   
+  
+  /**
+   * @brief 並列分散時のファイル名の管理を行う
+   */
+  void setDFI();
+  
+  
   /**
    * @brief コンポーネントが存在するかを保持しておく
    */
   void setEnsComponent();
+  
+  
+  /**
+   * @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
+   */
+  void setGlobalCmpIdx();
+  
   
   /**
    * @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
@@ -449,7 +484,7 @@ private:
   inline void TIMING_start(const int key) 
   {
     // Intrinsic profiler
-    TIMING__ PM.start(key);
+    TIMING__ PM.start((unsigned)key);
     
     // Venus FX profiler
 #if defined __K_FPCOLL
@@ -474,11 +509,19 @@ private:
 #elif defined __FX_FAPP
     fapp_stop( get_tm_label(key), 0, 0);
 #endif
+    
+    // Intrinsic profiler
+    TIMING__ PM.stop((unsigned)key, flopPerTask, (unsigned)iterationCount);
   }
     
   
   /** コマンドラインヘルプ */
   void Usage();
+  
+  /**
+   * @brief ポリゴンのカット情報からVBCのboxをセット
+   */
+  void VIBC_Bbox_from_Cut();
   
   
   /**
@@ -488,8 +531,8 @@ private:
   
   
   /**
-   @brief ボクセルをスキャンし情報を表示する
-   @param [in] fp ファイルポインタ 
+   * @brief ボクセルをスキャンし情報を表示する
+   * @param [in] fp ファイルポインタ 
    */
   void VoxScan(FILE* fp);
 

@@ -114,41 +114,41 @@ private:
   int get_Vel_profile     (const std::string label_base);
   
   //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_st_x(int odr, int* gci) 
+  int getCmpGbbox_st_x(int odr, const int* gci) 
   {
     return ( gci[6*odr+0] );
   }
   
   
   //@brief コンポーネントのBbox情報st_yを返す
-  int getCmpGbbox_st_y(int odr, int* gci) 
+  int getCmpGbbox_st_y(int odr, const int* gci) 
   {
     return ( gci[6*odr+1] );
   }
   
   
   //@brief コンポーネントのBbox情報st_zを返す
-  int getCmpGbbox_st_z(int odr, int* gci) 
+  int getCmpGbbox_st_z(int odr, const int* gci) 
   {
     return ( gci[6*odr+2] );
   }
   
   //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_ed_x(int odr, int* gci) 
+  int getCmpGbbox_ed_x(int odr, const int* gci) 
   {
     return ( gci[6*odr+3] );
   }
   
   
   //@brief コンポーネントのBbox情報ed_yを返す
-  int getCmpGbbox_ed_y(int odr, int* gci) 
+  int getCmpGbbox_ed_y(int odr, const int* gci) 
   {
     return ( gci[6*odr+4] );
   }
   
   
   //@brief コンポーネントのBbox情報ed_zを返す
-  int getCmpGbbox_ed_z(int odr, int* gci) 
+  int getCmpGbbox_ed_z(int odr, const int* gci) 
   {
     return ( gci[6*odr+5] );
   }
@@ -234,13 +234,29 @@ public:
   void importTP(TPControl* tp);
   
   
-  bool isIDinCompo        (int candidate, int now);
-  bool isIDinCompo        (int candidate, int def, int now);
+  /**
+   * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
+   * @retval 重複していればfalseを返す
+   * @param [in] candidate テストするラベル
+   * @param [in] now       コンポーネントリストの現在までのエントリ番号
+   */
+  bool isLabelinCompo(const std::string candidate, int now);
+  
   
   void loadBC_Local       (Control* C);
   void loadBC_Outer       ();
   
-  void printCompo         (FILE* fp, REAL_TYPE* nv, int* ci, MediumList* mat);
+  
+  /**
+   * @brief コンポーネントの情報を表示する
+   * @param [in] fp  ファイルポインタ
+   * @param [in] gci グローバルなコンポーネントのインデクス
+   * @param [in] mat MediumList
+   * @param [in] cmp CompoList
+   */
+  void printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp);
+  
+  
   void printFaceOBC       (FILE* fp, REAL_TYPE* G_reg);
   
   void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
@@ -255,10 +271,10 @@ public:
   
   /**
    * @brief 指定した媒質IDから参照物理量を設定する
-   * @param [in] mat       MediumList
-   * @param [in] RefMedium 参照媒質番号
+   * @param [in] mat MediumList
+   * @param [in] Ref 参照媒質番号
    */
-  void setRefMedium(MediumList* mat, const int RefMedium);
+  void setRefMedium(MediumList* mat, const int Ref);
   
   
   void setRefValue        (MediumList* mat, CompoList* cmp, Control* C);

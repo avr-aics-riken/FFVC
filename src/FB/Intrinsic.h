@@ -152,15 +152,6 @@ public:
    */
   void writeSVX(int *id, Control* R);
   
-  
-  /** MediumList中に登録されているkeyに対するIDを返す
-   * @param [in] mat  MediumListクラス
-   * @param [in] Namx リストの最大数
-   * @param [in] key  探査するラベル
-   * @return keyに対するIDを返す。発見できない場合はzero
-   */
-  int find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key);
-  
 };
 
 #endif // _FB_INTRNSC_H_

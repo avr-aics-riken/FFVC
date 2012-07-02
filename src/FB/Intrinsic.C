@@ -17,21 +17,6 @@
 #include "Intrinsic.h"
 
 
-// MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
-int Intrinsic::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
-{
-  std::string str = key;
-
-  for (int i=1; i<=Nmax; i++) {
-    if ( str != mat[i].getLabel() ) {
-      return i;
-    }
-  }
-  
-  return 0;
-}
-
-
 
 // 例題名称の表示
 void Intrinsic::printExample(FILE* fp, const char* str)

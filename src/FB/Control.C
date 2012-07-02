@@ -277,6 +277,21 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
 }
 
 
+// MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
+int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
+{
+  std::string str = key;
+  
+  for (int i=1; i<=Nmax; i++) {
+    if ( str != mat[i].getLabel() ) {
+      return i;
+    }
+  }
+  
+  return 0;
+}
+
+
 // 反復の収束判定パラメータを取得
 void Control::findCriteria(const string label1, const string label2, const int order, ItrCtl* IC)
 {
@@ -499,42 +514,42 @@ void Control::get_Para_Ref(void)
 {
   int ct1;
   REAL_TYPE ct2;
-  string label;
+  string label, str;
   
   label = "/Parameter/Reference/Length";
   if ( !(tpCntl->GetValue(label, &ct2 )) ) {
-    stamped_printf("\tParsing error /Parameter/Reference/Length: '\n");
+    printf("\tParsing error /Parameter/Reference/Length: '\n");
     Exit(0);
   }
   RefLength = ct2;
   
   label = "/Parameter/Reference/Velocity";
   if ( !(tpCntl->GetValue(label, &ct2 )) ) {
-    stamped_printf("\tParsing error /Parameter/Reference/Velocity: '\n");
+    printf("\tParsing error /Parameter/Reference/Velocity: '\n");
     Exit(0);
   }
   RefVelocity = ct2;
   
   label = "/Parameter/Reference/Gravity";
   if ( !(tpCntl->GetValue(label, &ct2 )) ) {
-    stamped_printf("\tParsing error /Parameter/Reference/Gravity: '\n");
+    printf("\tParsing error /Parameter/Reference/Gravity: '\n");
     Exit(0);
   }
   Gravity = ct2;
   
   label = "/Parameter/Reference/Base_Pressure";
   if ( !(tpCntl->GetValue(label, &ct2 )) ) {
-    stamped_printf("\tParsing error /Parameter/Reference/Base_Pressure: '\n");
+    printf("\tParsing error /Parameter/Reference/Base_Pressure: '\n");
     Exit(0);
   }
   BasePrs = ct2;
   
-  label = "/Parameter/Reference/Ref_ID";
-  if ( !(tpCntl->GetValue(label, &ct1 )) ) {
-    stamped_printf("\tParsing error /Parameter/Reference/Ref_ID: '\n");
-    Exit(0);
+  label = "/Parameter/Reference/Base_Medium";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    printf("\tParsing error /Parameter/Reference/Base_Medium: '\n");
+	  Exit(0);
   }
-  RefMat = ct1;
+  Ref_Medium = str;
 }
 
 
@@ -554,7 +569,7 @@ void Control::get_CheckParameter()
   if     ( !strcasecmp(str.c_str(), "On") )   CheckParam = ON;
   else if( !strcasecmp(str.c_str(), "Off") )  CheckParam = OFF;
   else {
-    stamped_printf("\tInvalid keyword is described for 'Check_Parameter'\n");
+    printf("\tInvalid keyword is described for 'Check_Parameter'\n");
     Exit(0);
   }
   

@@ -73,7 +73,14 @@ public:
   
   int get_MediumTable    (void);
   
-  void chkList           (FILE* fp, CompoList* compo, const int basicEq);
+  
+  /**
+   @brief 取得したCompoList[]の内容を表示する
+   @note Hostonly
+   */
+  void chkList(FILE* fp, CompoList* compo, const int basicEq);
+  
+  
   void printMatList      (FILE* fp, MediumList* mat, const int NoMedium);
   void setControlVars    (const int m_NoCompo,
                           const int m_NoBC,

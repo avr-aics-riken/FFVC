@@ -270,7 +270,7 @@ public:
   /**
    * @brief 変数名を返す
    */
-  std::string getVarStr();
+  const char* getVarStr();
   
   
   /**

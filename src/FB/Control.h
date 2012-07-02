@@ -680,6 +680,8 @@ public:
   string f_I2VGT;
   string f_Vorticity;
   
+  string Ref_Medium;
+  
   
   /** コンストラクタ */
   Control(){
@@ -898,6 +900,15 @@ protected:
 
   
 public:
+  
+  /** MediumList中に登録されているkeyに対するIDを返す
+   * @param [in] mat  MediumListクラス
+   * @param [in] Namx リストの最大数
+   * @param [in] key  探査するラベル
+   * @return keyに対するIDを返す。発見できない場合はzero
+   */
+  int find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key);
+  
   
   /**
    * @brief 計算内部領域の全セル数を返す

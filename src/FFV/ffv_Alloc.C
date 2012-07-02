@@ -104,6 +104,58 @@ void FFV::allocArray_Cut(double &total)
 }
 
 
+// コンポーネントのワーク用配列のアロケート
+void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
+{
+  
+  // 管理用のポインタ配列の確保
+  component_array = new REAL_TYPE* [C.NoBC];
+  
+  for (int i=0; i<C.NoBC; i++) {
+    component_array[i] = NULL;
+  }
+  
+  
+  // リサイズ後のインデクスサイズの登録と配列領域の確保
+  int c_sz[3];
+  int gd=2; // 両側それぞれ2セル
+  unsigned long m_cmp_size=0;
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    if ( cmp[n].isFORCING() ) {
+      
+      // インデクスサイズをリサイズしたst[], ed[]から計算
+      cmp[n].set_cmp_sz();
+      cmp[n].get_cmp_sz(c_sz);
+      
+      // ワーク用の配列を確保
+      size_t array_size = (c_sz[0]+2*gd) * (c_sz[1]+2*gd) * (c_sz[2]+2*gd) * 3;
+      component_array[n] = new REAL_TYPE[array_size];
+      m_cmp_size += array_size;
+    }
+  }
+  
+  // 使用メモリ量　
+  double cmp_mem, G_cmp_mem;
+  G_cmp_mem = cmp_mem = (double)m_cmp_size * sizeof(double);
+  m_prep += cmp_mem;
+  m_total+= cmp_mem;
+  
+  if ( numProc > 1 ) {
+    paraMngr->Allreduce(&cmp_mem, &G_cmp_mem, 1, MPI_SUM);
+  }
+  
+  if ( C.isForcing() )
+  {
+    Hostonly_  
+    {
+      FBUtility::MemoryRequirement("Component", G_cmp_mem, cmp_mem, stdout);
+      FBUtility::MemoryRequirement("Component", G_cmp_mem, cmp_mem, fp);
+    }   
+  }
+}
+
 
 // 熱の主計算部分に用いる配列のアロケーション
 void FFV::allocArray_Heat(double &total)

@@ -290,7 +290,17 @@ public:
   
   
   void fill_isolated_cells   (const int* bid, int* mid, const int isolated, const int solid_id);
-  void findVIBCbbox          (const int id, const int* bv, int* st, int* ed);
+  
+  
+  /**
+   @brief VBCのbboxを取得する
+   @param [in]  odr コンポーネント配列のインデクス
+   @param [in]  bv  BCindex V
+   @param [out] st  コンポーネントbboxの開始セル
+   @param [out] ed  コンポーネントbboxの終端セル
+   */
+  void findVIBCbbox(const int id, const int* bv, int* st, int* ed);
+  
   
   //@fn const int* getColorList() const
   //@retval colorListのポインタ
