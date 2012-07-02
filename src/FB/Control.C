@@ -3015,7 +3015,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   
   // 壁面の扱い ------------------
   fprintf(fp,"\n\tCondition of Wall\n");
-  fprintf(fp,"\t     No of surface            :   %d\n", NoWallSurface);
+  fprintf(fp,"\t     No of surface            :   %ld\n", NoWallSurface);
   switch (Mode.PrsNeuamnnType) {
     case P_GRAD_ZERO:
       fprintf(fp,"\t     Pressure Gradient        :   Neumann Zero\n");

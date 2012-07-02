@@ -510,13 +510,8 @@ void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, cons
   
 }
 
-/**
- @brief セルの状態をカウントして，その個数をLcell, Gcellに保持する
- @param Lcell ノードローカルの値（戻り値）
- @param Gcell グローバルの値（戻り値）
- @param bx BCindex ID
- @param state カウントするセルの状態
- */
+
+// セルの状態をカウントして，その個数をLcell, Gcellに保持する
 void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state)
 {
   unsigned long cell=0;    // local
@@ -550,7 +545,7 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
   
   if ( numProc > 1 ) {
     unsigned long c_tmp = g_cell;
-    MPI_Allreduce(&c_tmp, &g_cell, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    paraMngr->Allreduce(&c_tmp, &g_cell, 1, MPI_SUM);
   }
   
   Gcell = g_cell;
@@ -1049,7 +1044,7 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
   
   if ( numProc > 1 ) {
     unsigned long c_tmp = c;
-    MPI_Allreduce(&c_tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM);
   }
   
   Gcell = c;
@@ -2453,7 +2448,7 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
   // ノイマンフラグ
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -2520,7 +2515,7 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
       }
     }
   }
-  
+
   // wall locationフラグ
   unsigned long c = 0;
   
@@ -2567,10 +2562,10 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
       }
     }
   }
-  
+
   if ( numProc > 1 ) {
     unsigned long tmp = c;
-    MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM);
   }
   
   return c;
@@ -4776,7 +4771,7 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
   int kx = size[2];
   int gd = guide;
   
-  size_t nx = (ix+2*guide) * (jx+2*guide) * (kx+2*guide); // ガイドセルを含む全領域を対象にする
+  size_t nx = (ix+2*gd) * (jx+2*gd) * (kx+2*gd); // ガイドセルを含む全領域を対象にする
   
   // セルの状態を流体で初期化
   for (size_t m=0; m<nx; m++) {
@@ -4838,6 +4833,7 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
 
     for (size_t m=0; m<nx; m++) {
       if ( mid[m] == id ) bx[m] |= (id << TOP_MATERIAL);
+      
     }
   }
 
@@ -5039,9 +5035,8 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
 
 
 // 圧力境界条件のビット情報をエンコードする
-unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, const bool isCDS, const float* cut, CompoList* cmp)
+unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const bool isCDS, const float* cut)
 {
-
   unsigned long surface = 0;
 
   // 初期化 @note ビットを1に初期化する．初期化範囲はガイドセルを含む全領域．セルフェイスの射影処理で必要．
@@ -5144,18 +5139,9 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, cons
   return surface;
 }
 
-/**
- @brief bv[]に境界条件のビット情報をエンコードする
- @param bv BCindex V
- @param mid ID配列
- @param BC SetBCクラスのポインタ
- @param bp BCindex P
- @param [in/out] cmp CompoList
- @param isCDS CDS->true
- @param cut 距離情報
- @param cut_id カット点ID
- */
-void VoxInfo::setBCIndexV(int* bv, int* mid, SetBC* BC, int* bp, CompoList* cmp, bool isCDS, float* cut, int* cut_id)
+
+// bv[]に境界条件のビット情報をエンコードする
+void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, bool isCDS, float* cut, int* cut_id)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;

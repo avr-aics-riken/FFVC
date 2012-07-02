@@ -89,9 +89,13 @@ private:
   int session_currentStep; ///< セッションの現在のステップ
   int ModeTiming;          ///< タイミング測定管理フラグ
   
-  unsigned long Acell;     ///< グローバルなActive cell
-  unsigned long Fcell;     ///< グローバルなFluid cell
-  unsigned long Wcell;     ///< グローバルなSolid cell
+  unsigned long G_Acell;   ///< グローバルなActive cell
+  unsigned long G_Fcell;   ///< グローバルなFluid cell
+  unsigned long G_Wcell;   ///< グローバルなSolid cell
+  
+  unsigned long L_Acell;   ///< ローカルなActive cell
+  unsigned long L_Fcell;   ///< ローカルなFluid cell
+  unsigned long L_Wcell;   ///< ローカルなSolid cell
   
   // Fortranへの引数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
@@ -260,12 +264,12 @@ private:
   void allocArray_RK(double &total);
   
   
-  /** グローバルな領域情報を取得 
-   * @return 分割指示 (1-with / 2-without)
+  /**
+   @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
+   @retval エラーコード
    */
-  int get_DomainInfo();
+  bool chkMediumConsistency();
   
-public:
   
   /**
    * @brief 組み込み例題のインスタンス
@@ -281,9 +285,28 @@ public:
   
   
   /**
+   @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
+   @param [in/out] m_st 拡大された開始点（Fortranインデクス）
+   @param [in/out] m_ed 拡大された終了点（Fortranインデクス）
+   @param [in]     st_i 開始点（Cインデクス）
+   @param [in]     len  コンポーネントの存在長さ
+   @param [in]     m_x  軸方向のサイズ
+   @param [in]     dir  方向
+   @param m_id キーID
+   */
+  void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
+  
+  
+  /**
    * @brief 固定パラメータの設定
    */
   void fixed_parameters();
+  
+  
+  /** グローバルな領域情報を取得 
+   * @return 分割指示 (1-with / 2-without)
+   */
+  int get_DomainInfo();
   
   
   /**
@@ -305,62 +328,45 @@ public:
   }
   
   
-  /**
-   * @brief CPMのポインタをコピーし、ランク情報を設定
-   * @param [in] m_paraMngr  cpm_ParaManagerクラス
-   * @return  エラーコード
-   */
-  bool importCPM(cpm_ParaManager* m_paraMngr)
-  {
-    if ( !m_paraMngr ) return false;
-    paraMngr = m_paraMngr;
-    
-    setDomainInfo(paraMngr, procGrp);
-    
-    return true;
-  }
-  
-  
-  /** 初期化 
-   * 格子生成、ビットフラグ処理ほか
-   * @param [in] argc  main関数の引数の個数
-   * @param [in] argv  main関数の引数リスト
-   */
-  int Initialize(int argc, char **argv);
-  
-  
-  /** 
-   * @brief マスターノードのみ trueを返す
-   * @return true(Rank==0) / false(Rank!=0)
-   */
-  bool IsMaster() const
-  {
-    return ( paraMngr->GetMyRankID() == 0 ) ? true : false;
-  }
-  
-  
   /** 1ステップのコアの処理
    * @param [in] m_step   現在のステップ数
    */
   int Loop(int m_step);
   
   
-  /** シミュレーションの1ステップの処理
-   *  Loop() + stepPost()
-   */
-  int MainLoop();
-  
-  
-  /** シミュレーションの終了時の処理
-   * プロファイルの統計処理ほか
-   */
-  bool Post();
-  
-  
   /**
    * @brief 読み込んだ領域情報のデバッグライト
    */
   void printDomainInfo();
+
+  
+  /**
+   * @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+   * @param [in] st 開始インデクス
+   * @param [in] ed 終了インデクス
+   * @param [in] n  CompoListのエントリ
+   * @param [in] bx BCindex
+   */
+  void resizeBVface(const int* st, const int* ed, const int n, const int* bx);
+  
+  
+  /**
+   * @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+   * @param [in] st 開始インデクス
+   * @param [in] ed 終了インデクス
+   * @param [in] n  CompoListのエントリ
+   * @param [in] bx BCindex
+   */
+  void resizeBVcell(const int* st, const int* ed, const int n, const int* bx);
+  
+  
+  /**
+   * @brief コンポーネントリストに登録されたBV情報をリサイズする
+   * @param kos KOS
+   * @param isHeat 熱問題のときtrue
+   */
+  void resizeCompoBV(const int kos, const bool isHeat);
+  
   
   /**
    * @brief 外部境界条件を読み込み，Controlクラスに保持する
@@ -378,6 +384,11 @@ public:
    * @brief コンポーネントが存在するかを保持しておく
    */
   void setEnsComponent();
+  
+  /**
+   * @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
+   */
+  void setLocalCmpIdx_Binary();
   
   
   /** ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
@@ -471,12 +482,67 @@ public:
   
   
   /**
+   * @brief BCIndexにビット情報をエンコードする
+   */
+  void VoxEncode();
+  
+  
+  /**
    @brief ボクセルをスキャンし情報を表示する
-   @param [in] V  前処理クラス
    @param [in] fp ファイルポインタ 
    */
-  void VoxScan(VoxInfo* V, FILE* fp);
+  void VoxScan(FILE* fp);
 
+  
+  
+  
+public:
+  
+  /**
+   * @brief CPMのポインタをコピーし、ランク情報を設定
+   * @param [in] m_paraMngr  cpm_ParaManagerクラス
+   * @return  エラーコード
+   */
+  bool importCPM(cpm_ParaManager* m_paraMngr)
+  {
+    if ( !m_paraMngr ) return false;
+    paraMngr = m_paraMngr;
+    
+    setDomainInfo(paraMngr, procGrp);
+    
+    return true;
+  }
+  
+  
+  /** 初期化 
+   * 格子生成、ビットフラグ処理ほか
+   * @param [in] argc  main関数の引数の個数
+   * @param [in] argv  main関数の引数リスト
+   */
+  int Initialize(int argc, char **argv);
+  
+  
+  /** 
+   * @brief マスターノードのみ trueを返す
+   * @return true(Rank==0) / false(Rank!=0)
+   */
+  bool IsMaster() const
+  {
+    return ( paraMngr->GetMyRankID() == 0 ) ? true : false;
+  }
+  
+  
+  /** シミュレーションの1ステップの処理
+   *  Loop() + stepPost()
+   */
+  int MainLoop();
+  
+  
+  /** シミュレーションの終了時の処理
+   * プロファイルの統計処理ほか
+   */
+  bool Post();
+  
 };
 
 #endif // _FFV_H_

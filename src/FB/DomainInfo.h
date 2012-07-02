@@ -107,10 +107,14 @@ public:
   
   /**
    * @brief 隣接情報と領域情報を設定する
+   * @param [in] m_guide ガイドセル数
    * @note cpm_ParaManager::VoxelInit()のあとにコール
    */
-  void setNeighborInfo()
+  void setNeighborInfo(const int m_guide)
   {
+    // guide cell
+    guide = m_guide;
+    
     // 領域分割数 (Local)
     const int* l_sz = paraMngr->GetLocalVoxelSize();
     size[0] = l_sz[0];

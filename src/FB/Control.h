@@ -591,7 +591,6 @@ public:
   int NoMedium;   ///< 媒質数
   int NoMediumFluid;
   int NoMediumSolid;
-  int NoWallSurface;
   int num_process;
   int num_thread;
   int Parallelism;
@@ -600,6 +599,8 @@ public:
   int Start;
   int version;    ///< FFVバージョン番号
   int vxFormat;
+  
+  unsigned long NoWallSurface;
 	
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;

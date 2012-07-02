@@ -258,7 +258,18 @@ public:
   
   
   void copyBCIbase           (int* dst, int* src);
-  void countCellState        (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state);
+  
+  
+  /**
+   * @brief セルの状態をカウントして，その個数をLcell, Gcellに保持する
+   * @param Lcell ノードローカルの値（戻り値）
+   * @param Gcell グローバルの値（戻り値）
+   * @param bx BCindex ID
+   * @param state カウントするセルの状態
+   */
+  void countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state);
+  
+  
   void countOpenAreaOfDomain (int* bx, REAL_TYPE* OpenArea);
   
   
@@ -361,20 +372,33 @@ public:
   
   
   /**
-   @brief 圧力境界条件のビット情報をエンコードする
-   @param [in/out] bcd   BCindex ID
-   @param [in/out] bcp   BCindex P
-   @param [in/out] mid   ID配列
-   @param [in]     BC    SetBCクラスのポインタ
-   @param [in]     isCDS CDS->true
-   @param [in]     cut   距離情報
-   @param [in/out] cmp   CompoList
-   @retval 表面セル数
+   * @brief 圧力境界条件のビット情報をエンコードする
+   * @param [in/out] bcd   BCindex ID
+   * @param [in/out] bcp   BCindex P
+   * @param [in/out] mid   ID配列
+   * @param [in]     BC    SetBCクラスのポインタ
+   * @param [in/out] cmp   CompoList
+   * @param [in]     isCDS CDS->true
+   * @param [in]     cut   距離情報
+   * @retval 表面セル数
    */
-  unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, const bool isCDS, const float* cut, CompoList* cmp);
+  unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const bool isCDS=false, const float* cut=NULL);
   
   
-  void setBCIndexV(int* bv, int* mid, SetBC* BC, int* bp, CompoList* cmp, bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
+  /**
+   * @brief bv[]に境界条件のビット情報をエンコードする
+   * @param [in/out] bv BCindex V
+   * @param [in] mid ID配列
+   * @param [in/out] bp BCindex P
+   * @param [in]     BC SetBCクラスのポインタ
+   * @param [in/out] cmp CompoList
+   * @param [in]     isCDS CDS->true
+   * @param [in]     cut 距離情報
+   * @param [in]     cut_id カット点ID
+   */
+  void setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, 
+                   bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
+  
   
   void setCmpFraction        (CompoList* compo, int* bx, float* vf);
   
