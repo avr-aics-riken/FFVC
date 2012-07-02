@@ -308,7 +308,7 @@ int VoxInfo::check_fill(const int* mid)
       for (int i=1; i<=ix; i++) {
         //m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( mid[mm] == 0 ) return 1;
+        if ( mid[m] == 0 ) return 1;
         
       }
     }
@@ -342,13 +342,7 @@ bool VoxInfo::chkIDconsistency(const int m_NoMedium)
 }
 
 
-/**
- @fn bool VoxInfo::chkIDinside(int id, int* mid, int* bx)
- @brief 指定されたIDが計算領域内部にあるかどうかを判定する
- @param id サーチ対象ID
- @param mid ID配列
- @retval IDがあればtrue
- */
+// 指定されたIDが計算領域内部にあるかどうかを判定する
 bool VoxInfo::chkIDinside(const int id, const int* mid)
 {
   size_t m;
@@ -3433,7 +3427,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
       for (int i=1; i<=ix; i++) {
         
         //m_c = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
-        m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+        m_c = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
         pos = &cut[m_c];
         pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
         
@@ -3898,7 +3892,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
               mid[m_p] = sd; // セルIDを固体に変更
               //cut[FBUtility::getFindexS3Dcut(sz, gd, X_PLUS, i-1, j  , k  )] = cpos; // カット位置をセット
-              cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd);] = cpos; // カット位置をセット
+              cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
             }
           }
           else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == target) && (get_BID5(Y_MINUS, bid[m_p]) == 0) ) {
@@ -3910,7 +3904,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               set_BID5(bid[m_s], Y_PLUS, sd);
               mid[m_p] = sd;
               //cut[FBUtility::getFindexS3Dcut(sz, gd, Y_PLUS, i  , j-1, k  )] = cpos;
-              cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd);] = cpos;
+              cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
             }
           }
           else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == target) && (get_BID5(Z_MINUS, bid[m_p]) == 0) ) {
@@ -3922,7 +3916,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               set_BID5(bid[m_b], Z_PLUS, sd);
               mid[m_p] = sd;
               //cut[FBUtility::getFindexS3Dcut(sz, gd,  Z_PLUS, i  , j  , k-1)] = cpos;
-              cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd);] = cpos;
+              cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
             }
           }
           else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == target) && (get_BID5(Z_PLUS, bid[m_p]) == 0) ) {
@@ -3934,7 +3928,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               set_BID5(bid[m_t], Z_MINUS, sd);
               mid[m_p] = sd;
               //cut[FBUtility::getFindexS3Dcut(sz, gd, Z_MINUS, i  , j  , k+1)] = cpos;
-              cut[_F_IDX_S4DEX( Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd);] = cpos;
+              cut[_F_IDX_S4DEX( Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
             }
           }
           else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == target) && (get_BID5(Y_PLUS, bid[m_p]) == 0) ) {
@@ -3946,7 +3940,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               set_BID5(bid[m_n], Y_MINUS, sd);
               mid[m_p] = sd;
               //cut[FBUtility::getFindexS3Dcut(sz, gd, Y_MINUS, i  , j+1, k  )] = cpos;
-              cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd);] = cpos;
+              cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
             }
           }
           else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == target) && (get_BID5(X_PLUS, bid[m_p]) == 0) ) {
@@ -3958,7 +3952,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               set_BID5(bid[m_e], X_MINUS, sd);
               mid[m_p] = sd;
               //cut[FBUtility::getFindexS3Dcut(sz, gd, X_MINUS, i+1, j  , k  )] = cpos;
-              cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd);] = cpos;
+              cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd)] = cpos;
             }
           }
           
@@ -3979,8 +3973,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
 {
   int sd = solid_id;
-  size_t m_p;
-  int m_sz[3];
+  size_t m;
   
   int ix = size[0];
   int jx = size[1];
@@ -3988,18 +3981,18 @@ unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
   int gd = guide;
   unsigned c = 0; /// painted count
   
-#pragma omp parallel for firstprivate(ix, jx, kx, sz, gd, sd) \
- private(m_p) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sd) \
+ private(m) schedule(static) reduction(+:c)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i,   j,   k  );
         
         // 未ペイントの場合
-        if ( mid[m_p] == 0 ) {
-          mid[m_p] = sd;
+        if ( mid[m] == 0 ) {
+          mid[m] = sd;
           c++;
         }      
       }
@@ -5548,7 +5541,7 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
   
   float eps = 0.5f;  // 閾値
   
-#pragma omp parallel for firstprivate(sz, gd, m_id, eps) private(q, m, mp) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, m_id, eps) private(q, m, mp) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -5622,7 +5615,7 @@ unsigned VoxInfo::test_opposite_cut(int* bid, int* mid, const int solid_id)
   flag |= ( solid_id << 20);
   flag |= ( solid_id << 25);
   
-#pragma omp parallel for firstprivate(ix, jx, kx, sz, gd, sd, flag) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sd, flag) \
  private(m_111, m_112, m_113, m_121, m_122, m_123, m_131, m_132, m_133) \
  private(m_211, m_212, m_213, m_221, m_222, m_223, m_231, m_232, m_233) \
  private(m_311, m_312, m_313, m_321, m_322, m_323, m_331, m_332, m_333) \

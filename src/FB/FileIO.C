@@ -50,9 +50,12 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   
   char sph_fname[512];
   
-  if ( paraMngr->IsParallel() ) {
+  if ( paraMngr->IsParallel() ) 
+  {
     sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID() );
-  } else {
+  } 
+  else 
+  {
     sprintf( sph_fname, "field.sph" );
   }
   
@@ -196,7 +199,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
 
 // 圧力のファイルをロードする
 void FileIO::readPressure(FILE* fp,
-                          const std::string fname,
+                          const string fname,
                           int* sz,
                           int gc,
                           REAL_TYPE* p,
@@ -266,7 +269,7 @@ void FileIO::readPressure(FILE* fp,
 
 // 速度のファイルをロードする
 void FileIO::readVelocity(FILE* fp, 
-                          const std::string fname,
+                          const string fname,
                           int* sz, 
                           int gc, 
                           REAL_TYPE* v, 
@@ -330,7 +333,7 @@ void FileIO::readVelocity(FILE* fp,
 
 // 温度のファイルをロードする
 void FileIO::readTemperature(FILE* fp, 
-                             const std::string fname,
+                             const string fname,
                              int* sz, 
                              int gc, 
                              REAL_TYPE* t, 
@@ -394,7 +397,7 @@ void FileIO::readTemperature(FILE* fp,
 
 
 // スカラーファイルを出力する
-void FileIO::writeScalar(const std::string fname, 
+void FileIO::writeScalar(const string fname, 
                          int* sz, 
                          int gc,
                          REAL_TYPE* s, 
@@ -441,7 +444,7 @@ void FileIO::writeScalar(const std::string fname,
 
 
 // ベクトルファイルを出力する
-void FileIO::writeVector(const std::string fname, 
+void FileIO::writeVector(const string fname, 
                          int* sz, 
                          int gc, 
                          REAL_TYPE* v, 

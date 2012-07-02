@@ -1605,9 +1605,9 @@ REAL_TYPE SetBC3D::ps_IBC_HeatGen_SM(REAL_TYPE* d_t, int* d_bh2, int n, REAL_TYP
 
   cmp[n].getBbox(st, ed);
 	
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         if ( (d_bh2[m] & MASK_6) == n ) {
           d_t[m] += dt*hs;
@@ -1833,9 +1833,9 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* d_ws, int* d_bh1, int n, REAL_TYPE*
   
   cmp[n].getBbox(st, ed);
 	
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
@@ -1959,9 +1959,9 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
   switch (face) {
     case X_MINUS:
       if( nID[face] < 0 ){
-        i=1; // 最外層のID
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=1; // 最外層のID
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m   = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             m_0 = _F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd); //FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
@@ -1980,9 +1980,9 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
       
     case X_PLUS:
       if( nID[face] < 0 ){
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=ix;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             m_0 = _F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd); //FBUtility::getFindexV3DEx(size, guide, 0, i  , j, k);
@@ -2001,9 +2001,9 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
       
     case Y_MINUS:
       if( nID[face] < 0 ){
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=1;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             m_0 = _F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd); //FBUtility::getFindexV3DEx(size, guide, 1, i, j  , k);
@@ -2022,9 +2022,9 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
       
     case Y_PLUS:
       if( nID[face] < 0 ){
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=jx;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             m_0 = _F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd); //FBUtility::getFindexV3DEx(size, guide, 1, i, j  , k);
@@ -2043,9 +2043,9 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
       
     case Z_MINUS:
       if( nID[face] < 0 ){
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=1;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             m_0 = _F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd); //FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
@@ -2064,9 +2064,9 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
       
     case Z_PLUS:
       if( nID[face] < 0 ){
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=kx;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             m_0 = _F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd); //FBUtility::getFindexV3DEx(size, guide, 2, i, j, k  );
@@ -2137,9 +2137,9 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         c = vec[0] - u_ref;
         f_w = c * t_nd;
         
-        i=1; // 最外層のID
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=1; // 最外層のID
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             va += f_w;
@@ -2157,9 +2157,9 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         c = vec[0] - u_ref;
         f_e = -c * t_nd; // ref_tが正のとき，X+方向のセルでは流出なので符号反転
         
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=ix;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             va += f_e;
@@ -2177,9 +2177,9 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         c = vec[1] - v_ref;
         f_s = c * t_nd;
         
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=1;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             va += f_s;
@@ -2197,9 +2197,9 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         c = vec[1] - v_ref;
         f_n = -c * t_nd; // 符号反転
         
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=jx;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             va += f_n;
@@ -2217,9 +2217,9 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         c = vec[2] - w_ref;
         f_b = c * t_nd;
         
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=1;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             va += f_b;
@@ -2237,9 +2237,9 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
         c = vec[2] - w_ref;
         f_t = -c * t_nd; // 符号反転
         
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=kx;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             va += f_t;
@@ -2293,9 +2293,9 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
   switch (face) {
     case X_MINUS:
       if( nID[face] < 0 ){
-        i=1; // 最外層のID
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=1; // 最外層のID
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = pp * (sf - d_t0[m]);
@@ -2312,9 +2312,9 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
       
     case X_PLUS:
       if( nID[face] < 0 ){
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=ix;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = pp * (d_t0[m] - sf);
@@ -2331,9 +2331,9 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
       
     case Y_MINUS:
       if( nID[face] < 0 ){
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=1;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = pp * (sf - d_t0[m]);
@@ -2350,9 +2350,9 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
       
     case Y_PLUS:
       if( nID[face] < 0 ){
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=jx;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = pp * (d_t0[m] - sf);
@@ -2369,9 +2369,9 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
       
     case Z_MINUS:
       if( nID[face] < 0 ){
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=1;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = pp * (sf - d_t0[m]);
@@ -2388,9 +2388,9 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
       
     case Z_PLUS:
       if( nID[face] < 0 ){
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=kx;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = pp * (d_t0[m] - sf);
@@ -2444,9 +2444,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
   switch (face) {
     case X_MINUS:
       if( nID[face] < 0 ){
-        i=1; // 最外層のID
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=1; // 最外層のID
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             //d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i-1, j  , k  )] += q;
@@ -2460,9 +2460,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
       
     case X_PLUS:
       if( nID[face] < 0 ){
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=ix;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             //d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
@@ -2476,9 +2476,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
       
     case Y_MINUS:
       if( nID[face] < 0 ){
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=1;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             //d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
@@ -2492,9 +2492,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
       
     case Y_PLUS:
       if( nID[face] < 0 ){
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=jx;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             //d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
@@ -2508,9 +2508,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
       
     case Z_MINUS:
       if( nID[face] < 0 ){
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=1;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             //d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
@@ -2524,9 +2524,9 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
       
     case Z_PLUS:
       if( nID[face] < 0 ){
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=kx;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             //d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
@@ -2581,9 +2581,9 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
   switch (face) {
     case X_MINUS:
       if( nID[face] < 0 ){
-        i=1; // 最外層のID
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=1; // 最外層のID
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = ht * (bt - d_t0[m]);
@@ -2600,9 +2600,9 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case X_PLUS:
       if( nID[face] < 0 ){
-        i=ix;
-        for (k=1; k<=kx; k++) {
-          for (j=1; j<=jx; j++) {
+        int i=ix;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = ht * (d_t0[m] - bt);
@@ -2619,9 +2619,9 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Y_MINUS:
       if( nID[face] < 0 ){
-        j=1;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=1;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = ht * (bt - d_t0[m]);
@@ -2638,9 +2638,9 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Y_PLUS:
       if( nID[face] < 0 ){
-        j=jx;
-        for (k=1; k<=kx; k++) {
-          for (i=1; i<=ix; i++) {
+        int j=jx;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = ht * (d_t0[m] - bt);
@@ -2657,9 +2657,9 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Z_MINUS:
       if( nID[face] < 0 ){
-        k=1;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=1;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = ht * (bt - d_t0[m]);
@@ -2676,9 +2676,9 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Z_PLUS:
       if( nID[face] < 0 ){
-        k=kx;
-        for (j=1; j<=jx; j++) {
-          for (i=1; i<=ix; i++) {
+        int k=kx;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
             s = d_bh1[m];
             q = ht * (d_t0[m] - bt);
@@ -2739,10 +2739,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
   switch (face) {
     case X_MINUS:
       if( nID[face] < 0 ){
-        i=1; // 最外層のID
+        int i=1; // 最外層のID
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (sf - 0.0); // 基準温度との温度差
@@ -2755,8 +2755,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
           }
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (sf - d_t0[m]); // 基準温度との温度差
@@ -2774,10 +2774,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
       
     case X_PLUS:
       if( nID[face] < 0 ){
-        i=ix;
+        int i=ix;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (0.0 - sf);
@@ -2785,13 +2785,13 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q; // プラス面の正の値は流出
               va -= q; // プラス面の正の値は流出
               //d_t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+              d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
             }
           }          
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (d_t0[m] - sf);
@@ -2799,7 +2799,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 0, i  , j  , k  )] -= q;
               va -= q; // プラス面の正の値は流出
               //d_t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i+1, j  , k  )] = sf;
+              d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
             }
           }          
         }
@@ -2809,10 +2809,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
       
     case Y_MINUS:
       if( nID[face] < 0 ){
-        j=1;
+        int j=1;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (sf - 0.0);
@@ -2820,13 +2820,13 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
               va += q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+              d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
             }
           }          
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (sf - d_t0[m]);
@@ -2834,7 +2834,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j-1, k  )] += q;
               va += q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j-1, k  )] = sf;
+              d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
             }
           }          
         }
@@ -2844,10 +2844,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
       
     case Y_PLUS:
       if( nID[face] < 0 ){
-        j=jx;
+        int j=jx;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (0.0 - sf);
@@ -2855,13 +2855,13 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
               va -= q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+              d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
             }
           }          
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (d_t0[m] - sf);
@@ -2869,7 +2869,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 1, i  , j  , k  )] -= q;
               va -= q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j+1, k  )] = sf;
+              d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
             }
           }          
         }
@@ -2879,10 +2879,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
       
     case Z_MINUS:
       if( nID[face] < 0 ){
-        k=1;
+        int k=1;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (sf - 0.0);
@@ -2890,13 +2890,13 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+              d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
             }
           }
         }
         else { // Local
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (sf - d_t0[m]);
@@ -2904,7 +2904,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k-1)] += q;
               va += q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k-1)] = sf;
+              d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
             }
           }
         }
@@ -2914,10 +2914,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
       
     case Z_PLUS:
       if( nID[face] < 0 ){
-        k=kx;
+        int k=kx;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (0.0 - sf);
@@ -2925,13 +2925,13 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
               va -= q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+              d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
             }
           }
         }
         else { // Local
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht * (d_t0[m] - sf);
@@ -2939,7 +2939,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
               d_qbc[FBUtility::getFindexV3DEx(size, guide, 2, i  , j  , k  )] -= q;
               va -= q;
               //d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
-              d_t[FBUtility::getFindexS3D(size, guide, i  , j  , k+1)] = sf;
+              d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
             }
           }
         }
@@ -3005,10 +3005,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
   switch (face) {
     case X_MINUS:
       if( nID[face] < 0 ){
-        i=1; // 最外層のID
+        int i=1; // 最外層のID
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (sf - 0.0); // 基準温度との温度差
@@ -3021,8 +3021,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
           }
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (sf - d_t0[m]); // 基準温度との温度差
@@ -3040,10 +3040,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case X_PLUS:
       if( nID[face] < 0 ){
-        i=ix;
+        int i=ix;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (0.0 - sf);
@@ -3056,8 +3056,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
           }          
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (j=1; j<=jx; j++) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (d_t0[m] - sf);
@@ -3075,10 +3075,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Y_MINUS:
       if( nID[face] < 0 ){
-        j=1;
+        int j=1;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (sf - 0.0);
@@ -3091,8 +3091,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
           }          
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (sf - d_t0[m]);
@@ -3110,10 +3110,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Y_PLUS:
       if( nID[face] < 0 ){
-        j=jx;
+        int j=jx;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (0.0 - sf);
@@ -3126,8 +3126,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
           }          
         }
         else { // Local
-          for (k=1; k<=kx; k++) {
-            for (i=1; i<=ix; i++) {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (d_t0[m] - sf);
@@ -3145,10 +3145,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Z_MINUS:
       if( nID[face] < 0 ){
-        k=1;
+        int k=1;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht3 * (sf - 0.0);
@@ -3161,8 +3161,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
           }
         }
         else { // Local
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht3 * (sf - d_t0[m]);
@@ -3180,10 +3180,10 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
       
     case Z_PLUS:
       if( nID[face] < 0 ){
-        k=kx;
+        int k=kx;
         if ( obc[face].get_HTmodeRef() == CompoList::HT_mode_bulk ) {
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (0.0 - sf);
@@ -3196,8 +3196,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
           }
         }
         else { // Local
-          for (j=1; j<=jx; j++) {
-            for (i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
               s = d_bh1[m];
               q = ht1 * (d_t0[m] - sf);
@@ -3254,9 +3254,9 @@ REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, int n, double& 
 
   cmp[n].getBbox(st, ed);
 	
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
 
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
         s = d_bh1[m];
@@ -3414,9 +3414,9 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
 
   cmp[n].getBbox(st, ed);
   
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = d_bh1[m];
@@ -3542,9 +3542,9 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
   cmp[n].getBbox(st, ed);
   
   if ( cmp[n].get_sw_HTmodeRef() == CompoList::HT_mode_bulk ) {
-    for (k=st[2]; k<=ed[2]; k++) {
-      for (j=st[1]; j<=ed[1]; j++) {
-        for (i=st[0]; i<=ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           
           m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = d_bh1[m];
@@ -3613,9 +3613,9 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
     }
   }
   else { // Local
-    for (k=st[2]; k<=ed[2]; k++) {
-      for (j=st[1]; j<=ed[1]; j++) {
-        for (i=st[0]; i<=ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           
           m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = d_bh1[m];
@@ -3730,9 +3730,9 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
   cmp[n].getBbox(st, ed);
   
   if ( cmp[n].get_sw_HTmodeRef() == CompoList::HT_mode_bulk ) {
-    for (k=st[2]; k<=ed[2]; k++) {
-      for (j=st[1]; j<=ed[1]; j++) {
-        for (i=st[0]; i<=ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           
           m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = d_bh1[m];
@@ -3801,9 +3801,9 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
     }
   }
   else { // Local
-    for (k=st[2]; k<=ed[2]; k++) {
-      for (j=st[1]; j<=ed[1]; j++) {
-        for (i=st[0]; i<=ed[0]; i++) {
+    for (int k=st[2]; k<=ed[2]; k++) {
+      for (int j=st[1]; j<=ed[1]; j++) {
+        for (int i=st[0]; i<=ed[0]; i++) {
           
           m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
           s = d_bh1[m];
@@ -3915,9 +3915,9 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
 
   cmp[n].getBbox(st, ed);
   
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = d_bh1[m];
@@ -4100,9 +4100,9 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
 
   cmp[n].getBbox(st, ed);
   
-  for (k=st[2]; k<=ed[2]; k++) {
-    for (j=st[1]; j<=ed[1]; j++) {
-      for (i=st[0]; i<=ed[0]; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i  , j  , k  );
         s = d_bh1[m];

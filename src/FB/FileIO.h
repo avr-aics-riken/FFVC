@@ -47,6 +47,8 @@
 #include <sys/uio.h>
 #endif
 
+using namespace std;
+
 class FileIO : public DomainInfo {
   
 public:
@@ -141,7 +143,7 @@ public:
    * @param [out]    time_avr    平均操作した時間
    */
   void readPressure(FILE* fp, 
-                    const std::string fname, 
+                    const string fname, 
                     int* sz, 
                     int gc,
                     REAL_TYPE* s, 
@@ -177,7 +179,7 @@ public:
    * @param [out]    time_avr    平均操作した時間
    */
   void readVelocity(FILE* fp, 
-                    const std::string fname, 
+                    const string fname, 
                     int* sz, 
                     int gc, 
                     REAL_TYPE* v, 
@@ -213,7 +215,7 @@ public:
    * @param [out]    time_avr    平均操作した時間
    */
   void readTemperature(FILE* fp, 
-                       const std::string fname, 
+                       const string fname, 
                        int* sz, 
                        int gc, 
                        REAL_TYPE* t, 
@@ -245,7 +247,7 @@ public:
    * @param [in] step_avr  平均操作したステップ数
    * @param [in] time_avr  平均操作した時間
    */
-  void writeScalar(const std::string fname, 
+  void writeScalar(const string fname, 
                    int* sz, 
                    int gc,
                    REAL_TYPE* s, 
@@ -274,7 +276,7 @@ public:
    * @param [in] step_avr  平均操作したステップ数
    * @param [in] time_avr  平均操作した時間
    */
-  void writeVector(const std::string fname, 
+  void writeVector(const string fname, 
                    int* sz, 
                    int gc, 
                    REAL_TYPE* v, 

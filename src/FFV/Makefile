@@ -129,11 +129,10 @@ ffv_Initialize.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
 ffv_Initialize.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
 ffv_Initialize.o: ../IP/IP_Sphere.h
 ffv_SetBC.o: ffv_SetBC.h ../FB/SetBC.h ../FB/DomainInfo.h ../FB/FB_Define.h
-ffv_SetBC.o: ../FB/mydebug.h ../FB/FBUtility.h ../FB/BndOuter.h
-ffv_SetBC.o: ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-ffv_SetBC.o: ../FB/Interval_Mngr.h ../FB/TPControl.h ../FB/Intrinsic.h
-ffv_SetBC.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h ffv_Define.h
-ffv_SetBC.o: ffv_Ffunc.h
+ffv_SetBC.o: ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h ../FB/Medium.h
+ffv_SetBC.o: ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h
+ffv_SetBC.o: ../FB/TPControl.h ../FB/Intrinsic.h ../FB/vec3.h
+ffv_SetBC.o: ../FB/vec3_func.h ../FB/vec3f_func.h ffv_Define.h ffv_Ffunc.h
 main.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 main.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 main.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h

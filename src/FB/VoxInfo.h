@@ -65,7 +65,15 @@ private:
   int* allocTable(int size);
   
   void checkColorTable       (FILE* fp, int size, int* table);
-  bool chkIDinside           (int id, int* mid, int* bx);
+  
+  
+  /**
+   * @brief 指定されたIDが計算領域内部にあるかどうかを判定する
+   * @param [in] id サーチ対象ID
+   * @param [in] mid ID配列
+   * @retval IDがあればtrue
+   */
+  bool chkIDinside(const int id, const int* mid);
   
   /**
    * @brief 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
