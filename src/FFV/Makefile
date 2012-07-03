@@ -9,7 +9,7 @@
 ###################################################################
 
 BASEDIR  = $(PWD)
-TARGET   = ffv
+TARGET   = ffvc
 
 include make_setting
 

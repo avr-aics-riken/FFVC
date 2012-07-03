@@ -92,8 +92,6 @@ public:
   
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
   
-  virtual void PostInit(REAL_TYPE &checkTime, Control* R) {};
-  
   
   /**
    @brief 例題名称の表示

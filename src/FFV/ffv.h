@@ -49,6 +49,7 @@
 #include "ffv_SetBC.h"
 #include "CompoFraction.h"
 #include "dfi.h"
+#include "History.h"
 
 #include "omp.h"
 
@@ -191,6 +192,7 @@ private:
   TPControl tpCntl;          ///< テキストパーサのラッパークラス
   SetBC3D BC;                ///< BCクラス
   DFI DFI;                   ///< 分散ファイルインデクス管理クラス
+  History* H;                ///< 履歴クラス
   // Polylib
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
@@ -301,7 +303,7 @@ private:
    * @brief 主計算部分に用いる配列のアロケーション
    * @param [in/out] total ソルバーに使用するメモリ量
    */
-  void FFV::allocate_Main(double &total);
+  void allocate_Main(double &total);
   
   
   /**
@@ -340,20 +342,23 @@ private:
   
   /**
    * @brief コンポーネントの内容リストを表示する
+   * @param [in]  fp   ファイルポインタ
    */
-  void display_Compo_Info();
+  void display_Compo_Info(FILE* fp);
   
   
   /**
    * @brief CompoListの内容とセル数の情報を表示する
+   * @param [in]  fp   ファイルポインタ
    */
-  void display_CompoList()
+  void display_CompoList(FILE* fp);
   
    
   /**
    * @brief 制御パラメータ，物理パラメータの表示
+   * @param [in]  fp   ファイルポインタ
    */
-  void display_Parameters();
+  void display_Parameters(FILE* fp);
   
   
   /** 計算領域情報を設定する
@@ -474,6 +479,12 @@ private:
    * @param [in] m_step   現在のステップ数
    */
   int Loop(int m_step);
+  
+  
+  /**
+   * @brief 履歴の出力準備
+   */
+  void prep_HistoryOutput();
   
   
   /**

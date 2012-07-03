@@ -63,7 +63,6 @@ public:
     return ("FreeJet");
   }
   
-  virtual void PostInit(REAL_TYPE &checkTime, Control* R);
 };
 
 #endif // _IP_FREEJET_H_

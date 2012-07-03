@@ -204,8 +204,117 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 
 
 
+// リスタートプロセス
+void FFV::Restart()
+{
+  double flop_task;
+  
+  TIMING_start(tm_restart);
+  
+  if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
+    
+    Base_step = Current_step = Session_step = Total_step = 0;
+    Base_time = Current_time = Session_time = Total_time = 0.0;
+    
+    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
+    if ( C.CheckParam == ON ) RF.setV00(Total_time, true);
+    else                      RF.setV00(Total_time);
+    
+    double g[4];
+    RF.copyV00(g);
+    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
+    
+  }
+  else if ( C.Start == restart) // 同一解像度のリスタート
+  {
+    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
+    
+    flop_task = 0.0;
+    Restart_std(fp, flop_task); 
+  }
+  else if ( C.Start == coarse_restart) // 粗い格子からのリスタート
+  {
+    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
+    
+    
+    // 粗い格子のファイルをロードし、内挿処理を行う
+    flop_task = 0.0;
+    Restart_coarse(fp, flop_task);
+    
+    Hostonly_ fprintf(stdout,"\n");
+    Hostonly_ fprintf(fp,"\n");
+  }
+  
+  TIMING_stop(tm_restart);
+}
+
+
+
+// リスタートの最大値と最小値の表示
+void FFV::Restart_display_minmax(FILE* fp, double& flop)
+{
+  if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
+    
+    Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
+    Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
+    REAL_TYPE f_min, f_max, min_tmp, max_tmp, fpct;
+    
+    fpct = (REAL_TYPE)flop;
+    
+    // Velocity
+    fb_minmax_v_ (&f_min, &f_max, size, guide, v00, d_v, &fpct); // allreduceすること
+    
+    if ( numProc > 1 ) {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, SKL_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    
+    
+    // Pressure
+    fb_minmax_s_ (&f_min, &f_max, size, guide, d_p, &fpct);
+    
+    if ( numProc > 1 ) {
+      min_tmp = f_min;
+      if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    
+    // temperature
+    if ( C.isHeatProblem() ) {
+      fb_minmax_s_ (&f_min, &f_max, size, guide, d_t, &fpct);
+      
+      if ( numProc > 1 ) {
+        min_tmp = f_min;
+        if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        max_tmp = f_max;
+        if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+      Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    }
+    
+    flop = (double)fpct;
+	}
+}
+
+
 // リスタート時の瞬時値ファイル読み込み
-void FFV::Restart(FILE* fp, double& flop)
+void FFV::Restart_std(FILE* fp, double& flop)
 {
   double time;
   unsigned step;

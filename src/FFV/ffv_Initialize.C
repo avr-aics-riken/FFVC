@@ -507,7 +507,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // CompoListの内容とセル数の情報を表示する
-  display_CompoList();
+  display_CompoList(fp);
   
   
   // 外部境界面の開口率を計算する
@@ -562,7 +562,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // コンポーネントの内容リストを表示し、コンポーネント数がゼロの場合と境界条件との整合性をチェック
-  display_Compo_Info();
+  display_Compo_Info(fp);
 
   
   // 各ノードの領域情報をファイル出力
@@ -618,7 +618,7 @@ int FFV::Initialize(int argc, char **argv)
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ 
   {
-    display_Parameters();
+    display_Parameters(fp);
   }
   
   
@@ -648,7 +648,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
-	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
+	if ( (C.Hide.PM_Test == OFF) && (0 == Total_step) ) FileOutput(flop_task);
   
   
   // 粗い格子を用いたリスタート時には出力
@@ -698,8 +698,6 @@ int FFV::Initialize(int argc, char **argv)
     return 0;
 	}
   
-  // 組み込み例題の初期化
-  Ex->PostInit(checkTime, &C);
   
   TIMING_stop(tm_init_sct);
   
@@ -792,7 +790,7 @@ void FFV::copyV00fromRF(double m_time)
 
 
 // コンポーネントの内容リストを表示する
-void FFV::display_Compo_Info()
+void FFV::display_Compo_Info(FILE* fp)
 {
   if ( C.NoBC >0 ) {
     Hostonly_ {
@@ -836,7 +834,7 @@ void FFV::display_Compo_Info()
 
 
 // CompoListの内容とセル数の情報を表示する
-void FFV::display_CompoList()
+void FFV::display_CompoList(FILE* fp)
 {
   Hostonly_  {
     fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
@@ -862,7 +860,7 @@ void FFV::display_CompoList()
 
 
 // 制御パラメータ，物理パラメータの表示
-void FFV::display_Parameters()
+void FFV::display_Parameters(FILE* fp)
 {
   C.displayParams(stdout, fp, IC, &DT, &RF);
   Ex->printPara(stdout, &C);
@@ -1485,35 +1483,35 @@ void FFV::prep_HistoryOutput()
   H = new History(&C);
   
   Hostonly_ {
-    H->printHistoryTitle(mp, IC, &C);
+    H->printHistoryTitle(stdout, IC, &C);
     
     // コンポーネント情報
     if ( C.Mode.Log_Base == ON ) {
       // 基本情報　history.log, history_compo.log, history_domfx.log
       if ( !(fp_b=fopen(C.HistoryName.c_str(), "w")) ) {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryName.c_str());
-        return -1;
+        Exit(0);
       }
       H->printHistoryTitle(fp_b, IC, &C);
       
       // コンポーネント履歴情報
       if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryCompoName.c_str());
-        return -1;
+        Exit(0);
       }
       H->printHistoryCompoTitle(fp_c, cmp, &C);
       
       // 流量収支情報　
       if ( !(fp_d=fopen(C.HistoryDomfxName.c_str(), "w")) ) {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryDomfxName.c_str());
-        return -1;
+        Exit(0);
       }
       H->printHistoryDomfxTitle(fp_d, &C);
       
       // 力の履歴情報　
       if ( !(fp_f=fopen(C.HistoryForceName.c_str(), "w")) ) {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryForceName.c_str());
-        return -1;
+        Exit(0);
       }
       H->printHistoryForceTitle(fp_f);
     }
@@ -1522,7 +1520,7 @@ void FFV::prep_HistoryOutput()
     if ( C.Mode.Log_Itr == ON ) {
       if ( !(fp_i=fopen(C.HistoryItrName.c_str(), "w")) ) {
 				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryItrName.c_str());
-        return -1;
+        Exit(0);
       }
     }
     
@@ -1530,7 +1528,7 @@ void FFV::prep_HistoryOutput()
     if ( C.Mode.Log_Wall == ON ) {
       if ( !(fp_w=fopen(C.HistoryWallName.c_str(), "w")) ) {
 				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryWallName.c_str());
-        return -1;
+        Exit(0);
       }
       H->printHistoryWallTitle(fp_w);
     }
@@ -2042,7 +2040,7 @@ void FFV::setInitialCondition()
       U0[1] = C.iv.VecV;
       U0[2] = C.iv.VecW;
     }
-		fb_set_vector_(d_v, size, guide, U0, d_bcd);
+		fb_set_vector_(d_v, size, &guide, U0, d_bcd);
     
 		// 外部境界面の流出流量と移流速度
     DomainMonitor( BC.export_OBC(), &C, flop_task);
@@ -2055,7 +2053,6 @@ void FFV::setInitialCondition()
     
 		// 圧力
     REAL_TYPE ip;
-    int d_length;
     if (C.Unit.Param == DIMENSIONAL) {
       ip = FBUtility::convD2ND_P(C.iv.Pressure, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
     }
@@ -2063,9 +2060,8 @@ void FFV::setInitialCondition()
       ip = C.iv.Pressure;
     }
     
-    d_length = (int)dc_p->GetArrayLength();
-    fb_set_real_(dc_p->GetData(), &d_length, &ip);
-		BC.OuterPBC(dc_p);
+    fb_set_real_s_(d_p, size, &guide, &ip);
+		BC.OuterPBC(d_p);
     
 		// 温度
 		if ( C.isHeatProblem() ) {
@@ -2077,24 +2073,18 @@ void FFV::setInitialCondition()
         it = C.iv.Temperature;
       }
       
-      d_length = (int)dc_t->GetArrayLength();
-      fb_set_real_(dc_t->GetData(), &d_length, &it);
+      fb_set_real_s_(d_t, size, &guide, &it);
       
       // コンポーネントの初期値
-      for (unsigned m=C.NoBC+1; m<=C.NoCompo; m++) {
-        BC.setInitialTemp_Compo(m, bcd, dc_t);
+      for (int m=C.NoBC+1; m<=C.NoCompo; m++) {
+        BC.setInitialTemp_Compo(m, d_bcd, d_t);
       }
       
-			BC.OuterTBC(dc_t);
+			BC.OuterTBC(d_t);
 		}
     
     // ユーザ例題のときに，速度の内部境界条件を設定する
-    if ( C.Mode.Example == id_Users ) {
-      ; // nothing
-    }
-    else {
-      Ex->initCond(v, p);
-    }
+    Ex->initCond(d_v, d_p);
     
   }
   else { // リスタート時
@@ -2130,7 +2120,7 @@ void FFV::setInitialCondition()
   
   // VOF
   if ( C.BasicEqs == INCMP_2PHASE ) {
-    setVOF(d_vof, d_bcd);
+    setVOF();
     if ( paraMngr->BndCommS3D  (d_vof, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   }
   
@@ -2450,7 +2440,7 @@ void FFV::setVOF()
     for (int j=1; j<=size[1]; j++) {
       for (int i=1; i<=size[0]; i++) {
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = bx[m];
+        s = d_bcd[m];
         odr = DECODE_CMP(s);
         if ( cmp[odr].getState() == FLUID ) {
           d_vof[m] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
@@ -2595,110 +2585,3 @@ void FFV::VoxScan(FILE* fp)
   }
 }
 
-
-// リスタートプロセス
-void FFV::Restart()
-{
-  double flop_task;
-  
-  TIMING_start(tm_restart);
-  
-  if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
-    
-    Base_step = Current_step = Session_step = Total_step = 0;
-    Base_time = Current_time = Session_time = Total_time = 0.0;
-    
-    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C.CheckParam == ON ) RF.setV00(Total_time, true);
-    else                      RF.setV00(Total_time);
-    
-    double g[4];
-    RF.copyV00(g);
-    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
-    
-  }
-  else if ( C.Start == restart) // 同一解像度のリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
-    
-    flop_task = 0.0;
-    Restart_std(fp, flop_task); 
-  }
-  else if ( C.Start == coarse_restart) // 粗い格子からのリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
-    
-    
-    // 粗い格子のファイルをロードし、内挿処理を行う
-    flop_task = 0.0;
-    Restart_coarse(fp, flop_task);
-    
-    Hostonly_ fprintf(stdout,"\n");
-    Hostonly_ fprintf(fp,"\n");
-  }
-  
-  TIMING_stop(tm_restart);
-}
-
-
-// リスタートの最大値と最小値の表示
-void FFV::Restart_display_minmax(FILE* fp, double& flop)
-{
-  if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
-    
-    Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
-    Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
-    REAL_TYPE f_min, f_max, min_tmp, max_tmp, fpct;
-    
-    fpct = (REAL_TYPE)flop;
-    
-    // Velocity
-    fb_minmax_v_ (&f_min, &f_max, size, guide, v00, d_v, &fpct); // allreduceすること
-    
-    if ( numProc > 1 ) {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, SKL_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    
-    
-    // Pressure
-    fb_minmax_s_ (&f_min, &f_max, size, guide, d_p, &fpct);
-    
-    if ( numProc > 1 ) {
-      min_tmp = f_min;
-      if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      max_tmp = f_max;
-      if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    
-    // temperature
-    if ( C.isHeatProblem() ) {
-      fb_minmax_s_ (&f_min, &f_max, size, guide, d_t, &fpct);
-      
-      if ( numProc > 1 ) {
-        min_tmp = f_min;
-        if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-        
-        max_tmp = f_max;
-        if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-      }
-      
-      Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
-      Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    }
-    
-    flop = (double)fpct;
-	}
-}

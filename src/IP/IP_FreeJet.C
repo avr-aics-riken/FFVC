@@ -68,10 +68,6 @@ bool FreeJet::getParaXML(SklSolverConfig* CF, Control* R)
   return true;
 }
 
-void FreeJet::PostInit(REAL_TYPE &checkTime, Control* R)
-{
-  checkTime = R->PlotIntvl;  // first check time
-}
 
 bool FreeJet::printPara(FILE* fp, const Control* R)
 {

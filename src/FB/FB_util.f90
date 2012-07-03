@@ -1666,9 +1666,9 @@ end subroutine fb_copy_int
     do j=1-g, jx+g
     do i=1-g, ix+g
         bvx = ibits(bv(i,j,k), State, 1)
-        var(1,i,j,k) = u1 * bvx
-        var(2,i,j,k) = u2 * bvx
-        var(3,i,j,k) = u3 * bvx
+        var(1,i,j,k) = u1 * real(bvx)
+        var(2,i,j,k) = u2 * real(bvx)
+        var(3,i,j,k) = u3 * real(bvx)
     end do
     end do
     end do
