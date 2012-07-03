@@ -296,3 +296,77 @@ void FFV::allocArray_RK(double &total)
   if ( !(d_dp = paraMngr->AllocRealS3D(guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
 }
+
+
+// SOR2SMAのバッファ確保
+void FFV::allocate_SOR2SMA_buffer(double &total)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  
+  if ( hasLinearSolver(SOR2SMA) ) 
+  {
+    cf_sz[0] = (jx+1) * (kx+1) / 2; // バッファサイズチェック
+    cf_sz[1] = (kx+1) * (ix+1) / 2;
+    cf_sz[2] = (ix+1) * (jx+1) / 2;
+    
+    unsigned n1 = cf_sz[0]*4;
+    unsigned n2 = cf_sz[1]*4;
+    unsigned n3 = cf_sz[2]*4;
+    
+    if( (cf_x = new REAL_TYPE[n1]) == NULL ) Exit(0);
+    if( (cf_y = new REAL_TYPE[n2]) == NULL ) Exit(0);
+    if( (cf_z = new REAL_TYPE[n3]) == NULL ) Exit(0);
+    
+    memset(cf_x, 0, sizeof(REAL_TYPE)*n1);
+    memset(cf_y, 0, sizeof(REAL_TYPE)*n2);
+    memset(cf_z, 0, sizeof(REAL_TYPE)*n3);
+    
+    total += (double)( (n1+n2+n3)*sizeof(REAL_TYPE) );
+  }
+}
+
+
+// 主計算に用いる配列の確保
+void FFV::allocate_Main(double &total)
+{
+  TIMING_start(tm_init_alloc);
+  allocArray_Main(total);
+  
+  //allocArray_Collocate (total);
+  
+  if ( C.LES.Calc == ON ) 
+  {
+    allocArray_LES (total);
+  }
+  
+  if ( C.isHeatProblem() ) 
+  {
+    allocArray_Heat(total);
+  }
+  
+  if ( C.AlgorithmF == Control::Flow_FS_RK_CN ) 
+  {
+    allocArray_RK(total);
+  }
+  
+  if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) 
+  {
+    allocArray_AB2(total);
+  }
+  
+  if ( C.BasicEqs == INCMP_2PHASE ) 
+  {
+    allocArray_Interface(total);
+  }
+  
+  // 時間平均用の配列をアロケート
+  if ( C.Mode.Average == ON ) 
+  {
+    allocArray_Average(total);
+  }
+  
+  TIMING_stop(tm_init_alloc);
+}
+

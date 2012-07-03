@@ -110,6 +110,11 @@ private:
   unsigned Total_step;     ///< 1ケースの全ステップ
   unsigned Total_step_avr; ///< 平均ステップ数
   
+  int cf_sz[3];     ///< SOR2SMAの反復の場合のバッファサイズ
+  REAL_TYPE *cf_x;  ///< i方向のバッファ
+  REAL_TYPE *cf_y;  ///< j方向のバッファ
+  REAL_TYPE *cf_z;  ///< k方向のバッファ
+  
   // Fortranへの引数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
   REAL_TYPE *dh0;   ///< 格子幅（有次元）
@@ -291,6 +296,21 @@ private:
   void allocArray_RK(double &total);
   
   
+  
+  /**
+   * @brief 主計算部分に用いる配列のアロケーション
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void FFV::allocate_Main(double &total);
+  
+  
+  /**
+   * @brief SOR2SMAのバッファ確保
+   * @param [in/out] total ソルバーに使用するメモリ量
+   */
+  void allocate_SOR2SMA_buffer(double &total);
+  
+  
   /**
    * @brief ファイルのオープンチェック
    */
@@ -316,6 +336,24 @@ private:
   * @param [in] time 設定する時刻
   */
   void copyV00fromRF(double m_time);
+  
+  
+  /**
+   * @brief コンポーネントの内容リストを表示する
+   */
+  void display_Compo_Info();
+  
+  
+  /**
+   * @brief CompoListの内容とセル数の情報を表示する
+   */
+  void display_CompoList()
+  
+   
+  /**
+   * @brief 制御パラメータ，物理パラメータの表示
+   */
+  void display_Parameters();
   
   
   /** 計算領域情報を設定する
@@ -400,6 +438,13 @@ private:
   
   
   /**
+   * @brief 種類Lの線形ソルバを利用する場合，trueを返す
+   * @param [in] L 線形ソルバの種類
+   */
+  bool hasLinearSolver(const int L);
+  
+  
+  /**
    * @brief プロファイラのラベル取り出し
    * @param [in] key 格納番号
    * @return ラベル
@@ -408,6 +453,12 @@ private:
   {
     return (const char*)tm_label_ptr[key];
   }
+  
+  
+  /**
+   * @brief インターバルの初期化
+   */
+  void init_Interval();
   
   
   /**
@@ -460,11 +511,17 @@ private:
   
   
   /**
+   * @brief リスタートプロセス
+   */
+  void Restart();
+  
+  
+  /**
    * @brief リスタート時の瞬時値ファイル読み込み
    * @param [in]  fp   ファイルポインタ
    * @param [out] flop 浮動小数点演算数
    */
-  void Restart(FILE* fp, double& flop);
+  void Restart_std(FILE* fp, double& flop);
   
   
   /**
@@ -481,6 +538,14 @@ private:
    * @param [out] flop 浮動小数点演算数
    */
   void Restart_coarse(FILE* fp, double& flop);
+  
+  
+  /**
+   * @brief リスタートの最大値と最小値の表示
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   */
+  void Restart_display_minmax(FILE* fp, double& flop);
   
   
   /**
@@ -515,6 +580,12 @@ private:
   
   
   /**
+   * @brief 初期条件の設定
+   */
+  void setInitialCondition();
+  
+  
+  /**
    * @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
    */
   void setLocalCmpIdx_Binary();
@@ -531,6 +602,12 @@ private:
    * @return 並列モード
    */
   string setParallelism();
+  
+  
+  /**
+   * @brief 時間積分幅や物理パラメータの設定
+   */
+  void setParameters();
   
   
   /**
@@ -564,6 +641,12 @@ private:
    @param [in] fp      ファイルポインタ
    */
   void setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp);
+  
+  
+  /**
+   * @brief VOF値を気体(0.0)と液体(1.0)で初期化
+   */
+  void setVOF();
   
   
   /** 毎ステップ後に行う処理 */

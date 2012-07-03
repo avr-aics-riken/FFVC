@@ -411,7 +411,6 @@ int FFV::Initialize(int argc, char **argv)
   
   // 体積力を使う場合のコンポーネント配列の確保
   TIMING_start(tm_init_alloc);
-
   allocArray_Forcing(PrepMemory, TotalMemory, fp);
   TIMING_stop(tm_init_alloc); 
   
@@ -459,7 +458,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  // 法線計算のためのワーク配列 >> 不要にする
+  // 法線計算
   if ( C.NoBC != 0 ) {
     
     // コンポーネントで指定されるID面の法線を計算，向きはblowing/suctionにより決まる．　bcdをセットしたあとに処理
@@ -474,80 +473,14 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  
-  // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
-  // 代表物性値をRefMatの示す媒質から取得
-  // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
-  DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
-  
-  // 無次元速度1.0を与えてdeltaTをセットし，エラーチェック
-  switch ( DT.set_DT(1.0) ) 
-  {
-    case 0: // 成功
-      break;
-      
-    case 1:
-      Hostonly_ stamped_printf("\tdt selection error(1) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      Exit(0);
-      break;
-      
-    case 2:
-      Hostonly_ stamped_printf("\tdt selection error(2) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      Exit(0);
-      break;
-      
-    case 3:
-      Hostonly_ stamped_printf("\tdt selection error(3) : 'Kind of Solver' includes flow effect. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      Exit(0);
-      break;
-      
-    case 4:
-      Hostonly_ stamped_printf("\tdt selection error(4) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      Exit(0);
-      break;
-      
-    case 5:
-      Hostonly_ stamped_printf("\tdt selection error(5) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
-      Exit(0);
-      break;
-      
-    case 6:
-      Hostonly_ stamped_printf("\tdt selection error(6) : CFL max V and Diffusion ; Not implemented yet\n");
-      Exit(0);
-      break;
-      
-    case 7:
-      Hostonly_ stamped_printf("\tdt selection error(7) : CFL max V for cp ;  Not implemented yet\n");
-      Exit(0);
-      break;
-      
-    default:
-      Exit(0);
-      break;
-  }
-  
-  // Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
-  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(0, 0.0, DT.get_DT(), Interval_Manager::tg_compute, 
-                                                             (double)(C.RefLength/C.RefVelocity)) ) 
-  {
-    Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
-    Exit(0);
-  }
-  C.LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
+  // 時間積分幅や物理パラメータの設定
+  setParameters();
 
   
-  // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
-  C.setParameters(mat, cmp, &RF, BC.export_OBC());
   
-  
-  // 媒質による代表パラメータのコピー
-  B.setRefValue(mat, cmp, &C);
-  
-  // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> C.setParameters()の後
+  // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> setParameters()の後
   BC.setControlVars(&C, mat, cmp, &RF, Ex);
   
-  // パラメータの無次元表示（正規化）に必要な参照物理量の設定
-  B.setRefMedium(mat, C.RefMat);
   
 // ##########
 #if 0
@@ -573,27 +506,8 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  // CompoListの内容を表示する
-  Hostonly_  {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Component List\n\n");
-    M.chkList(stdout, cmp, C.BasicEqs);
-    
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> Component List\n\n");
-    
-    M.chkList(fp, cmp, C.BasicEqs);
-  }
-  
-  
-  // セル数の情報を表示する
-  Hostonly_ {
-    double cr = (double)G_Wcell/ ( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]) *100.0;
-    fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
-            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
-    fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
-            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
-  }
+  // CompoListの内容とセル数の情報を表示する
+  display_CompoList();
   
   
   // 外部境界面の開口率を計算する
@@ -647,45 +561,8 @@ int FFV::Initialize(int argc, char **argv)
 
   
   
-  // コンポーネントの内容リストを表示する
-  if ( C.NoBC >0 ) {
-    Hostonly_ {
-      fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-      fprintf(stdout,"\t>> Component Information\n");
-      B.printCompo(stdout, compo_global_bbox, mat, cmp);
-      
-      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-      fprintf(fp,"\t>> Component Information\n");
-      B.printCompo(fp, compo_global_bbox, mat, cmp);
-    }
-  }
-
-  // コンポーネント数がゼロの場合のチェック
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].getElement() == 0 ) {
-      Hostonly_ printf("\tError : No element was found in Component[%d]\n", n);
-      fflush(stdout);
-      Exit(0);
-    }
-  }
-  
-  // Check consistency of boundary condition
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].getType() == HT_SN ) {
-      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
-        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
-        fflush(stdout);
-        Exit(0);
-      }
-    }
-    if ( cmp[n].getType() == HT_SF ) {
-      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
-        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
-        fflush(stdout);
-        Exit(0);
-      }
-    }
-  }
+  // コンポーネントの内容リストを表示し、コンポーネント数がゼロの場合と境界条件との整合性をチェック
+  display_Compo_Info();
 
   
   // 各ノードの領域情報をファイル出力
@@ -706,44 +583,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
-  TIMING_start(tm_init_alloc);
-  allocArray_Main(TotalMemory);
-  
-  //allocArray_Collocate (TotalMemory);
-  
-  if ( C.LES.Calc == ON ) 
-  {
-    allocArray_LES (TotalMemory);
-  }
-
-  if ( C.isHeatProblem() ) 
-  {
-    allocArray_Heat(TotalMemory);
-  }
-  
-  if ( C.AlgorithmF == Control::Flow_FS_RK_CN ) 
-  {
-    allocArray_RK(TotalMemory);
-  }
-  
-  if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) 
-  {
-    allocArray_AB2(TotalMemory);
-  }
-  
-  if ( C.BasicEqs == INCMP_2PHASE ) 
-  {
-    allocArray_Interface(TotalMemory);
-  }
-  
-  // 時間平均用の配列をアロケート
-  if ( C.Mode.Average == ON ) 
-  {
-    allocArray_Average(TotalMemory);
-  }
-
-  
-  TIMING_stop(tm_init_alloc);
+  allocate_Main(TotalMemory);
   
 
   
@@ -751,98 +591,14 @@ int FFV::Initialize(int argc, char **argv)
   setDFI();
   
   
-
-  
   
   // スタート処理 瞬時値と平均値に分けて処理　------------------
   Hostonly_ fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
   Hostonly_ fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   
-  TIMING_start(tm_restart);
   
-  if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
-    
-    Base_step = Current_step = Session_step = Total_step = 0;
-    Base_time = Current_time = Session_time = Total_time = 0.0;
-    
-    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C.CheckParam == ON ) RF.setV00(Total_time, true);
-    else                      RF.setV00(Total_time);
-
-    double g[4];
-    RF.copyV00(g);
-    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
-
-  }
-  else if ( C.Start == restart) // 同一解像度のリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
-    
-    flop_task = 0.0;
-    Restart(fp, flop_task); 
-  }
-  else if ( C.Start == coarse_restart) // 粗い格子からのリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
-    
-    
-    // 粗い格子のファイルをロードし、内挿処理を行う
-    flop_task = 0.0;
-    Restart_coarse(fp, flop_task);
-    
-    Hostonly_ fprintf(stdout,"\n");
-    Hostonly_ fprintf(fp,"\n");
-  }
-  
-  TIMING_stop(tm_restart);
-  
-  
-  
-  // セッションの初期時刻をセット
-  for (int i=0; i<Interval_Manager::tg_END; i++) {
-    C.Interval[i].setTime_init(Base_time );
-  }
-  
-  
-  
-  // インターバルの初期化
-  double m_dt    = DT.get_DT();
-  double m_tm    = Total_time;  // 設定した？
-  unsigned m_stp = (unsigned)Total_step;
-  REAL_TYPE tm = (REAL_TYPE)m_tm;
-  
-  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) ) {  // 基本履歴のコンソールへの出力
-    Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
-    Exit(0);
-  }
-  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) ) {  // 履歴のファイルへの出力
-    Hostonly_ printf("\t Error : Interval for History output is asigned to zero.\n");
-    Exit(0);
-  }
-  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) ) {  // 瞬時値ファイル
-    Hostonly_ printf("\t Error : Interval for Instantaneous output is asigned to zero.\n");
-    Exit(0);
-  }
-  if ( C.Mode.Average == ON ) {
-    //if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) {  // 平均値ファイル
-    //  Hostonly_ printf("\t Error : Interval for Average output is asigned to zero.\n");
-    //  Exit(0);
-    //}
-    // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
-    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) ) {  // 平均値開始
-      Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
-      Exit(0);
-    }
-  }
-  if ( C.Sampling.log == ON ) {
-    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) ) {  // サンプリング履歴
-      Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
-      Exit(0);
-    }    
-  }
-  
+  // 制御インターバルの初期化
+  init_Interval();
   
   
   
@@ -854,54 +610,74 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
+  // リスタートの最大値と最小値の表示
+  Restart_display_minmax(fp, flop_task);
+  
+  
+  
+  // 制御パラメータ，物理パラメータの表示
+  Hostonly_ 
+  {
+    display_Parameters();
+  }
+  
+  
+  
+  // ドライバ条件のチェック
+  BC.checkDriver(fp);
+  
+  
+  // 初期条件の条件設定
+  setInitialCondition();
+  
+  
+  // 履歴出力準備
+  prep_HistoryOutput();
+  
+  
+  
+  // サンプリング元となるデータ配列の登録
+  if ( C.Sampling.log == ON ) {
+    if ( C.isHeatProblem() ) {
+      //MO.setDataPtrs(dc_v->GetData(), dc_p->GetData(), dc_t->GetData());
+    }
+    else {
+      //MO.setDataPtrs(dc_v->GetData(), dc_p->GetData());
+    }
+  }
+  
+  
+  // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
+	if ( (C.Hide.PM_Test == OFF) && (0 == SklGetTotalStep()) ) FileOutput(flop_task);
+  
+  
+  // 粗い格子を用いたリスタート時には出力
+  if ( C.Start == coarse_restart ) FileOutput(flop_task, true);
   
   
   
   
   
+  // SOR2SMA用のバッファ確保
+  allocate_SOR2SMA_buffer(TotalMemory);
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  // メモリ使用量の表示
+  Hostonly_ {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  }
+  G_TotalMemory = TotalMemory;
+  if ( numProc > 1 ) {
+    tmp_memory = G_TotalMemory;
+    if ( paraMngr->Allreduce(&tmp_memory, &G_TotalMemory, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  Hostonly_ {
+    double n = (double)( (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide) * 3 );
+    double mc = n * (double)sizeof(REAL_TYPE); // temporaty array for vector output, see prepOutput();
+    FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, stdout);
+    FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, fp);
+  }
   
   
   
@@ -922,6 +698,8 @@ int FFV::Initialize(int argc, char **argv)
     return 0;
 	}
   
+  // 組み込み例題の初期化
+  Ex->PostInit(checkTime, &C);
   
   TIMING_stop(tm_init_sct);
   
@@ -1012,6 +790,116 @@ void FFV::copyV00fromRF(double m_time)
 }
 
 
+
+// コンポーネントの内容リストを表示する
+void FFV::display_Compo_Info()
+{
+  if ( C.NoBC >0 ) {
+    Hostonly_ {
+      fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(stdout,"\t>> Component Information\n");
+      B.printCompo(stdout, compo_global_bbox, mat, cmp);
+      
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      fprintf(fp,"\t>> Component Information\n");
+      B.printCompo(fp, compo_global_bbox, mat, cmp);
+    }
+  }
+  
+  // コンポーネント数がゼロの場合のチェック
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getElement() == 0 ) {
+      Hostonly_ printf("\tError : No element was found in Component[%d]\n", n);
+      fflush(stdout);
+      Exit(0);
+    }
+  }
+  
+  // Check consistency of boundary condition
+  for (int n=1; n<=C.NoBC; n++) {
+    if ( cmp[n].getType() == HT_SN ) {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
+        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
+        fflush(stdout);
+        Exit(0);
+      }
+    }
+    if ( cmp[n].getType() == HT_SF ) {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
+        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
+        fflush(stdout);
+        Exit(0);
+      }
+    }
+  }
+}
+
+
+// CompoListの内容とセル数の情報を表示する
+void FFV::display_CompoList()
+{
+  Hostonly_  {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Component List\n\n");
+    M.chkList(stdout, cmp, C.BasicEqs);
+    
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Component List\n\n");
+    
+    M.chkList(fp, cmp, C.BasicEqs);
+  }
+  
+  // セル数の情報を表示する
+  Hostonly_ {
+    double cr = (double)G_Wcell/ ( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]) *100.0;
+    fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
+            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
+    fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
+            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
+  }
+  
+}
+
+
+// 制御パラメータ，物理パラメータの表示
+void FFV::display_Parameters()
+{
+  C.displayParams(stdout, fp, IC, &DT, &RF);
+  Ex->printPara(stdout, &C);
+  Ex->printPara(fp, &C);
+  
+  // 外部境界面の開口率を表示
+  C.printOuterArea(stdout, G_Fcell, G_Acell, G_size);
+  C.printOuterArea(fp, G_Fcell, G_Acell, G_size);
+  
+  // 境界条件のリストと外部境界面のBC設定を表示
+
+  fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(stdout,"\t>> Outer Boundary Conditions\n\n");
+  B.printFaceOBC(stdout, G_reg);
+  
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
+  B.printFaceOBC(fp, G_reg);
+
+  
+  /* モニタ情報の表示
+   if ( C.Sampling.log == ON ) {
+   
+   MO.printMonitorInfo(mp, C.HistoryMonitorName, false); // ヘッダのみ
+   
+   FILE *fp_mon=NULL;
+   Hostonly_ {
+   if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
+   stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
+   return -1;
+   }
+   }
+   
+   MO.printMonitorInfo(fp_mon, C.HistoryMonitorName, true);  // 詳細モード
+   Hostonly_ if ( fp_mon ) fclose(fp_mon);
+   }*/
+}
 
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
@@ -1542,6 +1430,117 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
 
 
 
+// インターバルの初期化
+void FFV::init_Interval()
+{
+  
+  // セッションの初期時刻をセット
+  for (int i=0; i<Interval_Manager::tg_END; i++) {
+    C.Interval[i].setTime_init(Base_time );
+  }
+  
+  // インターバルの初期化
+  double m_dt    = DT.get_DT();
+  double m_tm    = Total_time;  // 設定した？
+  unsigned m_stp = (unsigned)Total_step;
+  REAL_TYPE tm = (REAL_TYPE)m_tm;
+  
+  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) ) {  // 基本履歴のコンソールへの出力
+    Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
+    Exit(0);
+  }
+  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) ) {  // 履歴のファイルへの出力
+    Hostonly_ printf("\t Error : Interval for History output is asigned to zero.\n");
+    Exit(0);
+  }
+  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) ) {  // 瞬時値ファイル
+    Hostonly_ printf("\t Error : Interval for Instantaneous output is asigned to zero.\n");
+    Exit(0);
+  }
+  if ( C.Mode.Average == ON ) {
+    //if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) {  // 平均値ファイル
+    //  Hostonly_ printf("\t Error : Interval for Average output is asigned to zero.\n");
+    //  Exit(0);
+    //}
+    // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
+    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) ) {  // 平均値開始
+      Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
+      Exit(0);
+    }
+  }
+  if ( C.Sampling.log == ON ) {
+    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) ) {  // サンプリング履歴
+      Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
+      Exit(0);
+    }    
+  }
+  
+}
+
+
+// 履歴の出力準備
+void FFV::prep_HistoryOutput()
+{
+  // マスターノードでの履歴出力準備
+  H = new History(&C);
+  
+  Hostonly_ {
+    H->printHistoryTitle(mp, IC, &C);
+    
+    // コンポーネント情報
+    if ( C.Mode.Log_Base == ON ) {
+      // 基本情報　history.log, history_compo.log, history_domfx.log
+      if ( !(fp_b=fopen(C.HistoryName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryName.c_str());
+        return -1;
+      }
+      H->printHistoryTitle(fp_b, IC, &C);
+      
+      // コンポーネント履歴情報
+      if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryCompoName.c_str());
+        return -1;
+      }
+      H->printHistoryCompoTitle(fp_c, cmp, &C);
+      
+      // 流量収支情報　
+      if ( !(fp_d=fopen(C.HistoryDomfxName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryDomfxName.c_str());
+        return -1;
+      }
+      H->printHistoryDomfxTitle(fp_d, &C);
+      
+      // 力の履歴情報　
+      if ( !(fp_f=fopen(C.HistoryForceName.c_str(), "w")) ) {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryForceName.c_str());
+        return -1;
+      }
+      H->printHistoryForceTitle(fp_f);
+    }
+    
+    // 反復履歴情報　history_itr.log
+    if ( C.Mode.Log_Itr == ON ) {
+      if ( !(fp_i=fopen(C.HistoryItrName.c_str(), "w")) ) {
+				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryItrName.c_str());
+        return -1;
+      }
+    }
+    
+    // 壁面情報　history_wall.log
+    if ( C.Mode.Log_Wall == ON ) {
+      if ( !(fp_w=fopen(C.HistoryWallName.c_str(), "w")) ) {
+				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryWallName.c_str());
+        return -1;
+      }
+      H->printHistoryWallTitle(fp_w);
+    }
+  }
+  
+  // サンプリング指定がある場合，モニタ結果出力ファイル群のオープン
+  //if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
+}
+
+
 
 // 読み込んだ領域情報のデバッグライト
 void FFV::printDomainInfo()
@@ -2023,6 +2022,122 @@ void FFV::setGlobalCmpIdx()
 
 
 
+// 初期条件の設定
+void FFV::setInitialCondition()
+{
+  double flop_task;
+  
+  if ( C.Start == initial_start ) {
+		REAL_TYPE dt_init=1.0, tm_init=0.0;
+		REAL_TYPE U0[3];
+    
+		// 速度の初期条件の設定
+    if (C.Unit.Param == DIMENSIONAL) {
+      U0[0] = C.iv.VecU/C.RefVelocity;
+      U0[1] = C.iv.VecV/C.RefVelocity;
+      U0[2] = C.iv.VecW/C.RefVelocity;
+    }
+    else {
+      U0[0] = C.iv.VecU;
+      U0[1] = C.iv.VecV;
+      U0[2] = C.iv.VecW;
+    }
+		fb_set_vector_(d_v, size, guide, U0, d_bcd);
+    
+		// 外部境界面の流出流量と移流速度
+    DomainMonitor( BC.export_OBC(), &C, flop_task);
+    
+		// 外部境界面の移流速度を計算し，外部境界条件を設定
+    BC.OuterVBC_Periodic(d_v);
+		BC.OuterVBC(d_v, d_v, d_bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
+    BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
+    BC.InnerVBC_Periodic(d_v, d_bcd);
+    
+		// 圧力
+    REAL_TYPE ip;
+    int d_length;
+    if (C.Unit.Param == DIMENSIONAL) {
+      ip = FBUtility::convD2ND_P(C.iv.Pressure, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
+    }
+    else {
+      ip = C.iv.Pressure;
+    }
+    
+    d_length = (int)dc_p->GetArrayLength();
+    fb_set_real_(dc_p->GetData(), &d_length, &ip);
+		BC.OuterPBC(dc_p);
+    
+		// 温度
+		if ( C.isHeatProblem() ) {
+      REAL_TYPE it;
+      if (C.Unit.Param == DIMENSIONAL) {
+        it = FBUtility::convK2ND(C.iv.Temperature, C.BaseTemp, C.DiffTemp);
+      }
+      else {
+        it = C.iv.Temperature;
+      }
+      
+      d_length = (int)dc_t->GetArrayLength();
+      fb_set_real_(dc_t->GetData(), &d_length, &it);
+      
+      // コンポーネントの初期値
+      for (unsigned m=C.NoBC+1; m<=C.NoCompo; m++) {
+        BC.setInitialTemp_Compo(m, bcd, dc_t);
+      }
+      
+			BC.OuterTBC(dc_t);
+		}
+    
+    // ユーザ例題のときに，速度の内部境界条件を設定する
+    if ( C.Mode.Example == id_Users ) {
+      ; // nothing
+    }
+    else {
+      Ex->initCond(v, p);
+    }
+    
+  }
+  else { // リスタート時
+    
+    // 内部境界条件
+    BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
+    BC.InnerVBC_Periodic(d_v, d_bcd);
+    BC.InnerPBC_Periodic(d_p, d_bcd);
+    
+    // 外部境界条件
+    BC.OuterVBC(d_v, d_v, d_bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
+    BC.OuterVBC_Periodic(d_v);
+    
+    //流出境界の流出速度の算出
+    REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
+    REAL_TYPE m_av[2];
+    BC.mod_div(d_ws, d_bcv, coef, tm, v00, m_av, flop_task);
+    DomainMonitor(BC.export_OBC(), &C, flop_task);
+    
+    //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
+    
+  }
+
+  
+  // 初期解およびリスタート解の同期
+  if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
+  
+  if ( C.isHeatProblem() ) {
+    if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // VOF
+  if ( C.BasicEqs == INCMP_2PHASE ) {
+    setVOF(d_vof, d_bcd);
+    if ( paraMngr->BndCommS3D  (d_vof, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+  
+}
+
+
+
 // midの情報から各BCコンポーネントのローカルなインデクスを取得する
 // 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
 // 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
@@ -2147,6 +2262,84 @@ string FFV::setParallelism()
 }
 
 
+// 時間積分幅や物理パラメータの設定
+void FFV::setParameters()
+{
+  // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
+  // 代表物性値をRefMatの示す媒質から取得
+  // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
+  DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
+  
+  
+  // 無次元速度1.0を与えてdeltaTをセットし，エラーチェック
+  switch ( DT.set_DT(1.0) ) 
+  {
+    case 0: // 成功
+      break;
+      
+    case 1:
+      Hostonly_ stamped_printf("\tdt selection error(1) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 2:
+      Hostonly_ stamped_printf("\tdt selection error(2) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 3:
+      Hostonly_ stamped_printf("\tdt selection error(3) : 'Kind of Solver' includes flow effect. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 4:
+      Hostonly_ stamped_printf("\tdt selection error(4) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 5:
+      Hostonly_ stamped_printf("\tdt selection error(5) : 'Kind of Solver' is solid conduction. Consider to specify other dt scheme or confirm 'Kind of Solver'.\n");
+      Exit(0);
+      break;
+      
+    case 6:
+      Hostonly_ stamped_printf("\tdt selection error(6) : CFL max V and Diffusion ; Not implemented yet\n");
+      Exit(0);
+      break;
+      
+    case 7:
+      Hostonly_ stamped_printf("\tdt selection error(7) : CFL max V for cp ;  Not implemented yet\n");
+      Exit(0);
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+  
+  // Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
+  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(0, 0.0, DT.get_DT(), Interval_Manager::tg_compute, 
+                                                             (double)(C.RefLength/C.RefVelocity)) ) 
+  {
+    Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
+    Exit(0);
+  }
+  C.LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
+  
+  
+  // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
+  C.setParameters(mat, cmp, &RF, BC.export_OBC());
+  
+  
+  // 媒質による代表パラメータのコピー
+  B.setRefValue(mat, cmp, &C);
+  
+  // パラメータの無次元化（正規化）に必要な参照物理量の設定
+  B.setRefMedium(mat, C.RefMat);
+}
+
+
 // 各種例題のモデルをセット
 void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
@@ -2240,6 +2433,32 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   
 }
 
+
+
+// VOF値を気体(0.0)と液体(1.0)で初期化
+void FFV::setVOF()
+{
+  size_t m;
+  int s, odr;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  for (int k=1; k<=size[2]; k++) {
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        s = bx[m];
+        odr = DECODE_CMP(s);
+        if ( cmp[odr].getState() == FLUID ) {
+          d_vof[m] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
+        }
+      }
+    }
+  }
+}
 
 
 // ポリゴンのカット情報からVBCのboxをセット
@@ -2374,4 +2593,112 @@ void FFV::VoxScan(FILE* fp)
                              sc, C.NoMedium);
     Exit(0);
   }
+}
+
+
+// リスタートプロセス
+void FFV::Restart()
+{
+  double flop_task;
+  
+  TIMING_start(tm_restart);
+  
+  if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
+    
+    Base_step = Current_step = Session_step = Total_step = 0;
+    Base_time = Current_time = Session_time = Total_time = 0.0;
+    
+    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
+    if ( C.CheckParam == ON ) RF.setV00(Total_time, true);
+    else                      RF.setV00(Total_time);
+    
+    double g[4];
+    RF.copyV00(g);
+    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
+    
+  }
+  else if ( C.Start == restart) // 同一解像度のリスタート
+  {
+    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
+    
+    flop_task = 0.0;
+    Restart_std(fp, flop_task); 
+  }
+  else if ( C.Start == coarse_restart) // 粗い格子からのリスタート
+  {
+    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
+    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
+    
+    
+    // 粗い格子のファイルをロードし、内挿処理を行う
+    flop_task = 0.0;
+    Restart_coarse(fp, flop_task);
+    
+    Hostonly_ fprintf(stdout,"\n");
+    Hostonly_ fprintf(fp,"\n");
+  }
+  
+  TIMING_stop(tm_restart);
+}
+
+
+// リスタートの最大値と最小値の表示
+void FFV::Restart_display_minmax(FILE* fp, double& flop)
+{
+  if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
+    
+    Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
+    Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
+    REAL_TYPE f_min, f_max, min_tmp, max_tmp, fpct;
+    
+    fpct = (REAL_TYPE)flop;
+    
+    // Velocity
+    fb_minmax_v_ (&f_min, &f_max, size, guide, v00, d_v, &fpct); // allreduceすること
+    
+    if ( numProc > 1 ) {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, SKL_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    
+    
+    // Pressure
+    fb_minmax_s_ (&f_min, &f_max, size, guide, d_p, &fpct);
+    
+    if ( numProc > 1 ) {
+      min_tmp = f_min;
+      if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    
+    // temperature
+    if ( C.isHeatProblem() ) {
+      fb_minmax_s_ (&f_min, &f_max, size, guide, d_t, &fpct);
+      
+      if ( numProc > 1 ) {
+        min_tmp = f_min;
+        if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        max_tmp = f_max;
+        if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+      Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    }
+    
+    flop = (double)fpct;
+	}
 }
