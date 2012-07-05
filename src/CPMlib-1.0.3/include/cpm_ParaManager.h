@@ -241,26 +241,72 @@ public:
 
   /** 自ランクの始点VOXELの全体空間でのインデクスを取得
    *  - 全体空間の先頭インデクスを0としたC型のインデクス
+   *  @param[in] procGrpNo プロセスグループ番号(省略時=0)
    *  @return 自ランクの始点インデクス整数配列のポインタ
    */
   const int* GetVoxelHeadIndex( int procGrpNo=0 );
 
   /** 自ランクの終点VOXELの全体空間でのインデクスを取得
    *  - 全体空間の先頭インデクスを0としたC型のインデクス
+   *  @param[in] procGrpNo プロセスグループ番号(省略時=0)
    *  @return 自ランクの終点インデクス整数配列のポインタ
    */
   const int* GetVoxelTailIndex( int procGrpNo=0 );
 
   /** 自ランクの隣接ランク番号を取得
+   *  @param[in] procGrpNo プロセスグループ番号(省略時=0)
    *  @return 自ランクの隣接ランク番号整数配列のポインタ
    */
   const int* GetNeighborRankID( int procGrpNo=0 );
 
   /** 自ランクの周期境界の隣接ランク番号を取得
+   *  @param[in] procGrpNo プロセスグループ番号(省略時=0)
    *  @return 自ランクの周期境界の隣接ランク番号整数配列のポインタ
    */
   const int* GetPeriodicRankID( int procGrpNo=0 );
 
+  /** 指定idを含む全体ボクセル空間のインデクス範囲を取得
+   *  - 全体空間実セルのスタートインデクスを0としたときの，i,j,k各方向の
+   *    スタートインデクスと長さを取得する．
+   *  @param[in]  id        判定するid
+   *  @param[in]  array     判定対象の配列ポインタ
+   *  @param[in]  vc        仮想セル数
+   *  @param[out] ista      I方向範囲のスタートインデクス
+   *  @param[out] jsta      J方向範囲のスタートインデクス
+   *  @param[out] ksta      K方向範囲のスタートインデクス
+   *  @param[out] ilen      I方向範囲の長さ
+   *  @param[out] jlen      J方向範囲の長さ
+   *  @param[out] klen      K方向範囲の長さ
+   *  @param[in]  procGrpNo プロセスグループ番号(省略時=0)
+   *  @retval true  指定idを含むセルが存在した
+   *  @retval false 指定idを含むセルが存在しない
+   */
+  bool GetBndIndexExtGc( int id, int *array, int vc
+                       , int &ista, int &jsta, int &ksta, int &ilen, int &jlen, int &klen
+                       , int procGrpNo=0 );
+
+  /** 指定idを含む全体ボクセル空間のインデクス範囲を取得
+   *  - 全体空間実セルのスタートインデクスを0としたときの，i,j,k各方向の
+   *    スタートインデクスと長さを取得する．
+   *  @param[in]  id        判定するid
+   *  @param[in]  array     判定対象の配列ポインタ
+   *  @param[in]  imax      配列サイズ(I方向)
+   *  @param[in]  jmax      配列サイズ(J方向)
+   *  @param[in]  kmax      配列サイズ(K方向)
+   *  @param[in]  vc        仮想セル数
+   *  @param[out] ista      I方向範囲のスタートインデクス
+   *  @param[out] jsta      J方向範囲のスタートインデクス
+   *  @param[out] ksta      K方向範囲のスタートインデクス
+   *  @param[out] ilen      I方向範囲の長さ
+   *  @param[out] jlen      J方向範囲の長さ
+   *  @param[out] klen      K方向範囲の長さ
+   *  @param[in]  procGrpNo プロセスグループ番号(省略時=0)
+   *  @retval true  指定idを含むセルが存在した
+   *  @retval false 指定idを含むセルが存在しない
+   */
+  bool GetBndIndexExtGc( int id, int *array, int imax, int jmax, int kmax, int vc
+                       , int &ista, int &jsta, int &ksta, int &ilen, int &jlen, int &klen
+                       , int procGrpNo=0 );
 
 
 
@@ -304,6 +350,12 @@ public:
    *  @return ランク数
    */
   int GetNumRank( int procGrpNo=0 );
+
+  /** ホスト名の取得
+   *  - 自ランクのホスト名を取得
+   *  @return ホスト名
+   */
+  std::string GetHostName();
 
   /** MPIコミュニケータの取得
    *  - MPI_COMM_NULLが返ってきた場合は、

@@ -605,20 +605,15 @@ public:
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;
   REAL_TYPE DiffTemp;
-  REAL_TYPE dh;
   REAL_TYPE Domain_p1;
   REAL_TYPE Domain_p2;
-  REAL_TYPE dx[3];
   REAL_TYPE Gravity;
   REAL_TYPE Grashof;
 	REAL_TYPE GridVel[3];
   REAL_TYPE H_Dface[NOFACE];
-  REAL_TYPE Lbx[3];
   REAL_TYPE Mach;
   REAL_TYPE OpenDomain[NOFACE];
-  REAL_TYPE org[3];
   REAL_TYPE Peclet;
-  REAL_TYPE pitch;
   REAL_TYPE PlotIntvl;
   REAL_TYPE Prandtl;
   REAL_TYPE Q_Dface[NOFACE];
@@ -632,12 +627,10 @@ public:
   REAL_TYPE RefVelocity;
   REAL_TYPE RefViscosity;
   REAL_TYPE Reynolds;
-  REAL_TYPE roll;
   REAL_TYPE SpecificHeatRatio;
   REAL_TYPE timeflag;
   REAL_TYPE Tscale;
   REAL_TYPE V_Dface[NOFACE];
-  REAL_TYPE yaw;
   
   // struct
   Mode_set          Mode;
@@ -713,9 +706,7 @@ public:
     version = 0;
     vxFormat = 0;
     
-    dh = 0.0;
     PlotIntvl = 0.0;
-    yaw = pitch = roll = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
     RefVelocity = RefLength = RefDensity = RefSoundSpeed = RefSpecificHeat = RefKviscosity = RefLambda = RefViscosity = 0.0;
     DiffTemp = BaseTemp = BasePrs = 0.0;
@@ -729,9 +720,6 @@ public:
       H_Dface[i]=0.0;
     }
     for (int i=0; i<3; i++) {
-      org[i] = 0.0;
-      dx[i]   = 0.0;
-      Lbx[i] = 0.0;
 			GridVel[i]=0.0;
     }
     Reynolds = Peclet = 1.0;
@@ -951,8 +939,9 @@ public:
    * @param [in] G_size  グローバルな分割数
    * @param [in] G_org   グローバルな領域基点
    * @param [in] G_reg   グローバルな領域サイズ
+   * @param [in] pch     格子幅
    */
-  void printGlobalDomain(FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_reg);
+  void printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_org, const REAL_TYPE* G_reg, const REAL_TYPE* pch);
   
   
   void printNoCompo(FILE* fp);

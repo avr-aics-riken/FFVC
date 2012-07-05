@@ -116,6 +116,30 @@ private:
   REAL_TYPE *cf_y;  ///< j方向のバッファ
   REAL_TYPE *cf_z;  ///< k方向のバッファ
   
+  
+  REAL_TYPE delta_T; ///< 時間積分幅（無次元）
+  REAL_TYPE delta_H; ///< 格子幅（無次元）
+  
+  // dfi ファイル管理用 -> Kind_of_vars in FB_Define.h
+  // 同じ解像度のリスタート時には、既にdfiファイルが存在する場合には、その内容を継続する
+  // ラフリスタートの場合には、新規dfiファイルを生成する >> dfi.C
+  //  0 - var_Velocity
+  //  1 - var_Pressure,
+  //  2 - var_Temperature,
+  //  3 - var_Density,
+  //  4 - var_TotalP,
+  //  5 - var_Velocity_Avr,
+  //  6 - var_Pressure_Avr,
+  //  7 - var_Temperature_Avr,
+  //  8 - var_Density_Avr,
+  //  9 - var_TotalP_Avr,
+  // 10 - var_Helicity,
+  // 11 - var_Vorticity,
+  // 12 - var_I2vgt,
+  // 13 - var_Divergence,
+  int dfi_mng[var_END];
+  
+  
   // Fortranへの引数
   REAL_TYPE *dh;    ///< 格子幅（無次元）
   REAL_TYPE *dh0;   ///< 格子幅（有次元）
@@ -378,6 +402,14 @@ private:
    @param m_id キーID
    */
   void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
+  
+  
+  /**
+   * @brief ファイル出力
+   * @param [in] flop 浮動小数点演算数
+   * @param [in] restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+   */
+  void FileOutput(double& flop, const bool restart);
   
   
   /**

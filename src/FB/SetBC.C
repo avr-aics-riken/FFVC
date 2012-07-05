@@ -36,7 +36,6 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   jx = &size[1];
   kx = &size[2];
   
-  dh        = Cref->dh;
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
   Peclet    = Cref->Peclet;
@@ -56,8 +55,6 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   Prandtl   = Cref->Prandtl;
   
   isCDS = Cref->isCDS();
-  
-  for (int i=0; i<3; i++) Lbx[i] = Cref->Lbx[i];
   
   if ( Cref->isHeatProblem() ) pei = Cref->getRcpPeclet();
 

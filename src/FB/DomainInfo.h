@@ -34,15 +34,16 @@ public:
   
   int guide;           ///< ガイドセル数
   int G_div[3];        ///< プロセス分割数
-  REAL_TYPE pch[3];    ///< 格子幅 (Non-dimensional)
+  REAL_TYPE pitch[3];  ///< 格子幅 (Non-dimensional)
+  REAL_TYPE deltaX;    ///< 等間隔格子の無次元格子幅
   
-  int size[3];         ///< 領域分割数 (Local, Non-dimensional)
-  REAL_TYPE org[3];    ///< 領域基点   (Local, Non-dimensional)
-  REAL_TYPE reg[3];    ///< 領域サイズ (Local, Non-dimensional)
+  int size[3];           ///< 領域分割数 (Local, Non-dimensional)
+  REAL_TYPE origin[3];   ///< 領域基点   (Local, Non-dimensional)
+  REAL_TYPE region[3];   ///< 領域サイズ (Local, Non-dimensional)
   
-  int G_size[3];       ///< 領域分割数 (Global, Non-dimensional)
-  REAL_TYPE G_org[3];  ///< 領域基点   (Global, Non-dimensional)
-  REAL_TYPE G_reg[3];  ///< 領域サイズ (Global, Non-dimensional)
+  int G_size[3];         ///< 領域分割数 (Global, Non-dimensional)
+  REAL_TYPE G_origin[3]; ///< 領域基点   (Global, Non-dimensional)
+  REAL_TYPE G_region[3]; ///< 領域サイズ (Global, Non-dimensional)
 
   
 public:
@@ -60,13 +61,14 @@ public:
       size[i]   = 0;
       G_size[i] = 0;
       G_div[i]  = 0;
-      pch[i]    = 0.0;
-      org[i]    = 0.0;
-      reg[i]    = 0.0;
-      G_org[i]  = 0.0;
-      G_reg[i]  = 0.0;
+      pitch[i]    = 0.0;
+      origin[i]   = 0.0;
+      region[i]   = 0.0;
+      G_origin[i] = 0.0;
+      G_region[i] = 0.0;
     }
-
+    
+    deltaX = 0.0;
     guide = 0;
     paraMngr = NULL;
   }
@@ -123,15 +125,15 @@ public:
     
     // 領域基点 (Local)
     const REAL_TYPE* l_org = paraMngr->GetLocalOrigin();
-    org[0] = l_org[0];
-    org[1] = l_org[1];
-    org[2] = l_org[2];
+    origin[0] = l_org[0];
+    origin[1] = l_org[1];
+    origin[2] = l_org[2];
     
     // 領域サイズ (Local)
     const REAL_TYPE* l_reg = paraMngr->GetLocalRegion();
-    reg[0] = l_reg[0];
-    reg[1] = l_reg[1];
-    reg[2] = l_reg[2];
+    region[0] = l_reg[0];
+    region[1] = l_reg[1];
+    region[2] = l_reg[2];
     
     // 領域分割数 (Global)
     const int* g_sz  = paraMngr->GetGlobalVoxelSize();
@@ -141,21 +143,22 @@ public:
     
     // 領域基点   (Global)
     const REAL_TYPE* g_org = paraMngr->GetGlobalOrigin();
-    G_org[0] = g_org[0];
-    G_org[1] = g_org[1];
-    G_org[2] = g_org[2];
+    G_origin[0] = g_org[0];
+    G_origin[1] = g_org[1];
+    G_origin[2] = g_org[2];
     
     // 領域サイズ (Global)
     const REAL_TYPE* g_reg = paraMngr->GetGlobalRegion();
-    G_reg[0] = g_reg[0];
-    G_reg[1] = g_reg[1];
-    G_reg[2] = g_reg[2];
+    G_region[0] = g_reg[0];
+    G_region[1] = g_reg[1];
+    G_region[2] = g_reg[2];
     
     // 格子幅
     const REAL_TYPE* m_pch = paraMngr->GetPitch();
-    pch[0] = m_pch[0];
-    pch[1] = m_pch[1];
-    pch[2] = m_pch[2];
+    pitch[0] = m_pch[0];
+    pitch[1] = m_pch[1];
+    pitch[2] = m_pch[2];
+    deltaX = pitch[0];
     
     // プロセス分割数
     const int* g_div = paraMngr->GetDivNum();

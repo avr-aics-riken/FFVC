@@ -2271,7 +2271,7 @@ void Control::printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Ac
 
 
 // グローバルな領域情報を表示する
-void Control::printGlobalDomain(FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TYPE* G_reg)
+void Control::printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_org, const REAL_TYPE* G_reg, const REAL_TYPE* pch)
 {
   REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
   KB = 1000.0;
@@ -2308,12 +2308,12 @@ void Control::printGlobalDomain(FILE* fp, int* G_size, REAL_TYPE* G_org, REAL_TY
   fprintf(fp,"\n");
   
   fprintf(fp,"\t(dx, dy, dz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",    
-          dx[0]*RefLength,    
-          dx[1]*RefLength,    
-          dx[2]*RefLength,    
-          dx[0], 
-          dx[1], 
-          dx[2]);
+          pch[0]*RefLength,
+          pch[1]*RefLength,
+          pch[2]*RefLength,
+          pch[0], 
+          pch[1], 
+          pch[2]);
   
   fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
           G_org[0]*RefLength, 
@@ -2443,7 +2443,7 @@ void Control::printParaConditions(FILE* fp)
   fprintf(fp,"\tRef. Sound Speed          [m/s]       : %12.5e\n", RefSoundSpeed);
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
-  fprintf(fp,"\tSpacing                   [m] / [-]   : %12.5e / %12.5e\n", dh*RefLength, dh);
+  fprintf(fp,"\tSpacing                   [m] / [-]   : %12.5e / %12.5e\n", deltaX*RefLength, deltaX);
   fprintf(fp,"\tTime Scale                [sec]       : %12.5e\n", Tscale);
   fprintf(fp,"\n");
   if ( isHeatProblem() ) {
@@ -2745,15 +2745,15 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   }
   
   // Time Increment
-  REAL_TYPE d_R = dh*dh*Reynolds/6.0; // 拡散数
-  REAL_TYPE d_P = dh*dh*Peclet/6.0;   // 拡散数
+  REAL_TYPE d_R = deltaX*deltaX*Reynolds/6.0; // 拡散数
+  REAL_TYPE d_P = deltaX*deltaX*Peclet/6.0;   // 拡散数
   REAL_TYPE cfl = (REAL_TYPE)DT->get_CFL();
   switch ( DT->get_Scheme() ) 
   {
     case DTcntl::dt_direct:
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : Direct ", dt*Tscale, dt);
       if ( isHeatProblem() ) {
-        fprintf(fp,": Diff. Num. = %7.2e\n", dt/(dh*dh*Peclet));
+        fprintf(fp,": Diff. Num. = %7.2e\n", dt/(deltaX*deltaX*Peclet));
       }
       else {
         fprintf(fp,"\n");
@@ -3321,7 +3321,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度
   REAL_TYPE a, vol;
-  a = dh*RefLength;
+  a = deltaX*RefLength;
   vol = a*a*a;
   
   for (int n=1; n<=NoBC; n++) {

@@ -62,7 +62,7 @@ public:
     Unit_Temp       = Cref->Unit.Temp;
     Unit_Prs        = Cref->Unit.Prs;
     Unit_Log        = Cref->Unit.Log;
-    dh              = Cref->dh;
+    dh              = Cref->deltaX;
     Tscale          = RefLength / RefVelocity;
     dhd             = dh*RefLength;
     rhocp           = RefVelocity * DiffTemp * RefDensity * RefSpecificHeat;

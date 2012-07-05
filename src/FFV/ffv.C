@@ -27,8 +27,8 @@ FFV::FFV()
   for (int i=0; i<3; i++) 
   {
     G_size[i]= 0;
-    G_org[i] = 0.0;
-    G_reg[i] = 0.0;
+    G_origin[i] = 0.0;
+    G_region[i] = 0.0;
   }
   
   fp_b = NULL;
@@ -52,6 +52,225 @@ FFV::~FFV()
 }
 
 
+
+// ファイル出力
+void FFV::FileOutput (double& flop, const bool restart)
+{
+  REAL_TYPE fpct;
+  REAL_TYPE scale = 1.0;
+  int d_length;
+  
+  // d_p0をワークとして使用
+  
+  // 出力用のヘッダ
+  REAL_TYPE m_org[3], m_pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
+    m_pit[i] = pitch[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL ) {
+    for (int i=0; i<3; i++) {
+      m_org[i] *= C.RefLength;
+      m_pit[i] *= C.RefLength;
+    }
+  }
+  
+  // ステップ数
+  int m_step = (int)Total_step;
+  
+  // 時間の次元変換
+  REAL_TYPE m_time;
+  if (C.Unit.File == DIMENSIONAL) {
+    m_time = (REAL_TYPE)Total_time * C.Tscale;
+  }
+  else {
+    m_time = (REAL_TYPE)Total_time;
+  }
+  
+  // ガイドセル出力
+  int gc_out = C.GuideOut;
+  
+  // 出力ファイル名
+  std::string tmp;
+  
+  // 並列出力モード
+  bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
+  
+  // Divergence デバッグ用なので無次元のみ
+  if ( C.FIO.Div_Debug == ON ) {
+    
+    REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
+    F.cnv_Div(d_ws, d_wk2, size, guide, coef, flop);
+    
+    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, pout);
+    F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], pout) ) Exit(0);
+    
+  }
+  
+  fpct = (REAL_TYPE)flop;
+  
+  // リスタート用
+  std::string prs_restart("prs_restart_");
+  std::string vel_restart("vel_restart_");
+  std::string temp_restart("temp_restart_");
+  
+  // Pressure
+  d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  
+  if (C.Unit.File == DIMENSIONAL) {
+    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+    fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &fpct);
+  }
+  else {
+    fb_xcopy_(d_ws, d_p, &d_length, &scale, &fpct);
+  }
+  
+  if ( !restart ) {
+    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, myRank, pout);
+  }
+  else {
+    tmp = DFI.Generate_FileName(prs_restart, m_step, myRank, pout);
+  }
+  
+  F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
+  
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Pressure, m_step, dfi_mng[var_Pressure], pout) ) Exit(0);
+  
+  
+  // Velocity
+  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  fb_shift_refv_out_(d_wvex, d_v, size, &guide, v00, &scale, &unit_velocity, &fpct);
+  
+  if ( !restart ) {
+    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, pout);
+  }
+  else {
+    tmp = DFI.Generate_FileName(vel_restart, m_step, myRank, pout);
+  }
+  
+  F.writeVector(tmp, size, guide, d_wvex, m_step, m_time, m_org, m_pit, gc_out);
+  
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], pout) ) Exit(0);
+  
+  
+  // Tempearture
+  if( C.isHeatProblem() ){
+    
+    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+    
+    if (C.Unit.File == DIMENSIONAL) {
+      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
+      fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &fpct);
+    }
+    else {
+      fb_xcopy_(d_ws, d_t, &d_length, &scale, &fpct);
+    }
+    
+    if ( !restart ) {
+      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, myRank, pout);
+    }
+    else {
+      tmp = DFI.Generate_FileName(temp_restart, m_step, myRank, pout);
+    }
+    
+    F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Temperature, m_step, dfi_mng[var_Temperature], pout) ) Exit(0);
+  }
+  
+  flop = (double)fpct;
+  
+  
+  // Total Pressure
+  if (C.Mode.TP == ON ) {
+    
+    fpct = (REAL_TYPE)flop;
+    
+    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &fpct);
+    
+    // convert non-dimensional to dimensional, iff file is dimensional
+    if (C.Unit.File == DIMENSIONAL) {
+      F.cnv_TP_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, fpct);
+    }
+    else {
+      REAL_TYPE* tp;
+      tp = d_ws; d_ws = d_p0; d_p0 = tp;
+    }
+    
+    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, myRank, pout);
+    F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_TotalP, m_step, dfi_mng[var_TotalP], pout) ) Exit(0);
+    
+    flop = (double)fpct;
+  }
+  
+  
+  // Vorticity
+  if (C.Mode.VRT == ON ) {
+    fpct = (REAL_TYPE)flop;
+    
+    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &fpct);
+    
+    REAL_TYPE  vz[3];
+    vz[0] = vz[1] = vz[2] = 0.0;
+    unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
+    fb_shift_refv_out_(d_wvex, d_wv, size, &guide, vz, &scale, &unit_velocity, &fpct);
+    
+    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, pout);
+    F.writeVector(tmp, size, guide, d_wvex, m_step, m_time, m_org, m_pit, gc_out);
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
+    
+    flop = (double)fpct;
+  }
+  
+  
+  // 2nd Invariant of Velocity Gradient Tensor
+  if (C.Mode.I2VGT == ON ) {
+    fpct = (REAL_TYPE)flop;
+    
+    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &fpct);
+    
+    // 無次元で出力
+    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &fpct);
+    
+    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, pout);
+    F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_I2VGT, m_step, dfi_mng[var_I2vgt], pout) ) Exit(0);
+    
+    flop = (double)fpct;
+  }
+  
+  // Helicity
+  if (C.Mode.Helicity == ON ) {
+    fpct = (REAL_TYPE)flop;
+    
+    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &fpct);
+    
+    // 無次元で出力
+    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &fpct);
+    
+    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, pout);
+    F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
+    
+    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Helicity, m_step, dfi_mng[var_Helicity], pout) ) Exit(0);
+    
+    flop = (double)fpct;
+  }
+
+}
+
+
 // グローバルな領域情報を取得
 int FFV::get_DomainInfo()
 {
@@ -68,7 +287,7 @@ int FFV::get_DomainInfo()
   int div_type = 1;
   
   // G_origin　必須
-  rvec  = G_org;
+  rvec  = G_origin;
   label = "/DomainInfo/Global_origin";
   
   if ( !tpCntl.GetVector(label, rvec, 3) )
@@ -78,7 +297,7 @@ int FFV::get_DomainInfo()
   }
   
   // G_region 必須
-  rvec  = G_reg;
+  rvec  = G_region;
   label = "/DomainInfo/Global_region";
   
   if ( !tpCntl.GetVector(label, rvec, 3) )
@@ -87,7 +306,7 @@ int FFV::get_DomainInfo()
     Exit(0);
   }
   
-  if ( (G_reg[0]>0.0) && (G_reg[1]>0.0) && (G_reg[2]>0.0) )
+  if ( (G_region[0]>0.0) && (G_region[1]>0.0) && (G_region[2]>0.0) )
   {
     ; // skip
   }
@@ -100,7 +319,7 @@ int FFV::get_DomainInfo()
   
   // G_pitch オプション
   bool flag = true; // 排他チェック（voxel, pitch）
-  rvec  = pch;
+  rvec  = pitch;
   label = "/DomainInfo/Global_pitch";
   
   if ( !tpCntl.GetVector(label, rvec, 3) )
@@ -111,13 +330,13 @@ int FFV::get_DomainInfo()
   
   // pitchが入力されている場合のみチェック
   if ( flag ) {
-    if ( (pch[0]>0.0) && (pch[1]>0.0) && (pch[2]>0.0) )
+    if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
     {
       ; // skip
     }
     else
     {
-      printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pch[0], pch[1], pch[2] );
+      printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
       Exit(0);
     }
   }
@@ -127,9 +346,9 @@ int FFV::get_DomainInfo()
   // G_voxel オプション
   if ( flag ) // pitchが指定されている場合が優先
   {
-    G_size[0] = (int)(G_reg[0]/pch[0]);
-    G_size[1] = (int)(G_reg[1]/pch[1]);
-    G_size[2] = (int)(G_reg[2]/pch[2]);
+    G_size[0] = (int)(G_region[0]/pitch[0]);
+    G_size[1] = (int)(G_region[1]/pitch[1]);
+    G_size[2] = (int)(G_region[2]/pitch[2]);
   }
   else
   {
@@ -144,13 +363,13 @@ int FFV::get_DomainInfo()
     
     if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
     {
-      pch[0] = G_reg[0] / (REAL_TYPE)G_size[0];
-      pch[1] = G_reg[1] / (REAL_TYPE)G_size[1];
-      pch[2] = G_reg[2] / (REAL_TYPE)G_size[2];
-      printf("\tCalculated pitch is (%e %e %e) >> ", pch[0], pch[1], pch[2]);
-      pch[1] = pch[0];
-      pch[2] = pch[0];
-      printf(" modified to (%e %e %e)\n", pch[0], pch[1], pch[2]);
+      pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
+      pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
+      pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
+      printf("\tCalculated pitch is (%e %e %e) >> ", pitch[0], pitch[1], pitch[2]);
+      pitch[1] = pitch[0];
+      pitch[2] = pitch[0];
+      printf(" modified to (%e %e %e)\n", pitch[0], pitch[1], pitch[2]);
     }
     else
     {

@@ -126,6 +126,17 @@ cpm_ParaManager::GetNumRank( int procGrpNo )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// ホスト名の取得
+std::string
+cpm_ParaManager::GetHostName()
+{
+  char name[512];
+  memset(name, 0x00, sizeof(char)*512);
+  if( gethostname(name, 512) != 0 ) return std::string("");
+  return std::string(name);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // コミュニケータの取得
 MPI_Comm
 cpm_ParaManager::GetMPI_Comm( int procGrpNo )

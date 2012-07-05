@@ -245,7 +245,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
         
       case HEX:
         dr = cmp[i].ca[4]; // 熱交換器の無次元厚さ
-        dp = cmp[i].val[var_Pressure] * p0 * dr/C->dh * RefLength;
+        dp = cmp[i].val[var_Pressure] * p0 * dr/dh * RefLength;
         fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), dp);
         break;
         

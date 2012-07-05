@@ -168,14 +168,14 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
-  org_l = R->org;
-  Lx = R->Lbx[0];
-  Ly = R->Lbx[1];
-  Lz = R->Lbx[2];
-  dh = R->dh;
-  ox_g = G_org[0];
-  oy_g = G_org[1];
-  oz_g = G_org[2];
+  org_l = origin;
+  Lx = region[0];
+  Ly = region[1];
+  Lz = region[2];
+  dh = deltaX;
+  ox_g = G_origin[0];
+  oy_g = G_origin[1];
+  oz_g = G_origin[2];
   
   size_t m;
   
@@ -298,15 +298,15 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
-  org_l = R->org;
-  Lx = R->Lbx[0];
-  Ly = R->Lbx[1];
-  Lz = R->Lbx[2];
-  dh = R->dh;
+  org_l = origin;
+  Lx = region[0];
+  Ly = region[1];
+  Lz = region[2];
+  dh = deltaX;
 
-  ox_g = G_org[0];
-  oy_g = G_org[1];
-  oz_g = G_org[2];
+  ox_g = G_origin[0];
+  oy_g = G_origin[1];
+  oz_g = G_origin[2];
   
   // 球のbbox
   box_min = - rs;

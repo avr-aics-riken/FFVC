@@ -185,13 +185,13 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, 
   // nID[6]
   const int* nID = paraMngr->GetNeighborRankID();
   
-  ox = R->org[0];
-  oy = R->org[1];
-  oz = R->org[2];
-  Lx = R->Lbx[0];
-  Ly = R->Lbx[1];
-  Lz = R->Lbx[2];
-  dh = R->dh;
+  ox = origin[0];
+  oy = origin[1];
+  oz = origin[2];
+  Lx = region[0];
+  Ly = region[1];
+  Lz = region[2];
+  dh = deltaX;
 
   len= drv_length/R->RefLength;
   ht = height/R->RefLength;

@@ -249,11 +249,11 @@ int FFV::Initialize(int argc, char **argv)
   Hostonly_ {
     fprintf(stdout,"\n---------------------------------------------------------------------------\n");
     fprintf(stdout,"\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(stdout, G_size, G_org, G_reg);
+    C.printGlobalDomain(stdout, G_size, G_org, G_reg, pitch);
     
     fprintf(fp,"\n---------------------------------------------------------------------------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(fp, G_size, G_org, G_reg);
+    C.printGlobalDomain(fp, G_size, G_org, G_reg, pitch);
   }
   
   // メモリ消費量の情報を表示
@@ -935,8 +935,8 @@ void FFV::DomainInitialize(const string dom_file)
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
   int m_div[3] = {G_div [0], G_div [1], G_div [2]};
   
-  REAL_TYPE m_org[3] = {G_org[0], G_org[1], G_org[2]};
-  REAL_TYPE m_reg[3] = {G_reg[0], G_reg[1], G_reg[2]};
+  REAL_TYPE m_org[3] = {G_origin[0], G_origin[1], G_origin[2]};
+  REAL_TYPE m_reg[3] = {G_region[0], G_region[1], G_region[2]};
   
   
   // 領域分割モードのパターン
@@ -977,11 +977,11 @@ void FFV::DomainInitialize(const string dom_file)
   // 有次元の場合に無次元化 (Local)
   if (C.Unit.Param == DIMENSIONAL ) {
     for (int i=0; i<3; i++) {
-      org[i]   /= C.RefLength;
-      pch[i]   /= C.RefLength;
-      reg[i]   /= C.RefLength;
-      G_org[i] /= C.RefLength;
-      G_reg[i] /= C.RefLength;
+      origin[i]   /= C.RefLength;
+      pitch[i]    /= C.RefLength;
+      region[i]   /= C.RefLength;
+      G_origin[i] /= C.RefLength;
+      G_region[i] /= C.RefLength;
     }
   }
   
@@ -1305,7 +1305,7 @@ void FFV::gather_DomainInfo()
   }
   
   // 全体情報の表示
-  C.printGlobalDomain(fp, G_size, G_org, G_reg);
+  C.printGlobalDomain(fp, G_size, G_org, G_reg, pitch);
   
   // ローカルノードの情報を表示
   for (int i=0; i<numProc; i++) {
@@ -1544,10 +1544,10 @@ void FFV::prep_HistoryOutput()
 void FFV::printDomainInfo()
 {
   cout << "\n####### read parameters ########" << endl;
-  cout << " G_org      = " << G_org[0]  << "," << G_org[1]  << "," << G_org[2]  << endl;
-  cout << " G_voxel    = " << G_size[0] << "," << G_size[1] << "," << G_size[2] << endl;
-  cout << " G_pitch    = " << pch[0]    << "," << pch[1]    << "," << pch[2]    << endl;
-  cout << " G_region   = " << G_reg[0]  << "," << G_reg[1]  << "," << G_reg[2]  << endl;
+  cout << " G_org      = " << G_origin[0] << "," << G_origin[1] << "," << G_origin[2] << endl;
+  cout << " G_voxel    = " << G_size[0]   << "," << G_size[1]   << "," << G_size[2]   << endl;
+  cout << " G_pitch    = " << pitch[0]    << "," << pitch[1]    << "," << pitch[2]    << endl;
+  cout << " G_region   = " << G_region[0] << "," << G_region[1] << "," << G_region[2] << endl;
   cout << " G_div      = " << G_div[0]  << "," << G_div[1]  << "," << G_div[2]  << endl;
 }
 

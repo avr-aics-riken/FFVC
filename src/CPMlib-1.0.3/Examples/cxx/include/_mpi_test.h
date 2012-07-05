@@ -4,6 +4,9 @@
     char fname[512];
     sprintf ( fname, "mpiTest_%04d.log", rank );
     std::ofstream ofs( fname );
+
+    std::string hname = paraMngr->GetHostName();
+    ofs << "hostname=" << hname << endl;
   
     // Broardcast
 #if 1
@@ -256,8 +259,8 @@
         }
         int *recvbuf = new int[recvcnt+1];
         for( int i=0;i<recvcnt+1;i++ ) recvbuf[i] = 0;
-        if( rank==0 ) cout << endl << "***** Allgatherv test pg[" << 0 << "]" << endl;
-        ofs << endl << "***** Allgatherv test pg[" << 0 << "]" << endl;
+        if( rank==0 ) cout << endl << "***** Allgatherv test pg[" << pg << "]" << endl;
+        ofs << endl << "***** Allgatherv test pg[" << pg << "]" << endl;
         string strsend ="";
         for( int i=0;i<sendcnt;i++ )
         {
@@ -282,8 +285,53 @@
         delete [] recvcnts;
         delete [] recvbuf;
 
-        if( rank==0 ) cout << endl;
       }
+    }
+#endif
+
+    // GetBndIndexExtGc
+#if 1
+    {
+      // process group 0
+      int rank = paraMngr->GetMyRankID();
+      int np   = paraMngr->GetNumRank();
+      const int *sz = paraMngr->GetLocalVoxelSize();
+      int imax = sz[0];
+      int jmax = sz[1];
+      int kmax = sz[2];
+      int vc = 3;
+      int *mid = paraMngr->AllocIntS3D(vc);
+      for( int k=-vc;k<kmax+vc;k++ ){
+      for( int j=-vc;j<jmax+vc;j++ ){
+      for( int i=-vc;i<imax+vc;i++ ){
+        mid[_IDX_S3D(i,j,k,imax,jmax,kmax,vc)] = 0;
+      }}}
+
+      int id = 1;
+      int ii = imax/2;
+      int jj = jmax/2;
+      int kk = kmax/2;
+      mid[_IDX_S3D(ii,jj,kk,imax,jmax,kmax,vc)] = id;
+
+      if( rank==0 ) cout << endl << "***** GetBndIndexExtGc test pg[" << 0 << "]" << endl;
+      ofs << endl << "***** GetBndIndexExtGc test pg[" << 0 << "]" << endl;
+
+      const int *hidx = paraMngr->GetVoxelHeadIndex();
+
+      int ista, jsta, ksta, ilen, jlen, klen;
+      if( paraMngr->GetBndIndexExtGc( id, mid, imax, jmax, kmax, vc
+                                    , ista, jsta, ksta, ilen, jlen, klen ) )
+      {
+        ofs << "  set id(" << id << ") local  index = " << ii << ", " << jj << ", " << kk << endl;
+        ofs << "  set id(" << id << ") global index = " << ii+hidx[0] << ", " << jj+hidx[1] << ", " << kk+hidx[2] << endl;
+        ofs << "  GetBndIndexExtGc start index = "<< ista << ", " << jsta << ", " << ksta << endl;
+        ofs << "  GetBndIndexExtGc end   index = "<< ista+ilen-1 << ", " << jsta+jlen-1 << ", " << ksta+klen-1 << endl;
+        ofs << "  GetBndIndexExtGc len         = "<< ilen << ", " << jlen << ", " << klen << endl;
+      }
+
+      delete [] mid;
+
+      if( rank==0 ) cout << endl;
     }
 #endif
   }

@@ -76,12 +76,12 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
   
   size_t nx = ix*jx*kx;
   
-  dx = (float)R->dx[0]*RefL;
-  dy = (float)R->dx[1]*RefL;
-  dz = (float)R->dx[2]*RefL;
-  ox = (float)R->org[0]*RefL - dx; // 片側1層分をシフト
-  oy = (float)R->org[1]*RefL - dy;
-  oz = (float)R->org[2]*RefL - dz;
+  dx = (float)pitch[0]*RefL;
+  dy = (float)pitch[1]*RefL;
+  dz = (float)pitch[2]*RefL;
+  ox = (float)origin[0]*RefL - dx; // 片側1層分をシフト
+  oy = (float)origin[1]*RefL - dy;
+  oz = (float)origin[2]*RefL - dz;
   
   //stamped_printf("example out org(%e %e %e) dimensional\n", ox, oy, oz);
 
@@ -182,12 +182,12 @@ void Intrinsic::writeSVX(int *id, Control* R)
   
   size_t nx = (size_t)(ix*jx*kx);
   
-  dx = (float)R->dx[0]*RefL;
-  dy = (float)R->dx[1]*RefL;
-  dz = (float)R->dx[2]*RefL;
-  ox = (float)R->org[0]*RefL - dx; // 片側1層分をシフト
-  oy = (float)R->org[1]*RefL - dy;
-  oz = (float)R->org[2]*RefL - dz;
+  dx = (float)pitch[0]*RefL;
+  dy = (float)pitch[1]*RefL;
+  dz = (float)pitch[2]*RefL;
+  ox = (float)origin[0]*RefL - dx; // 片側1層分をシフト
+  oy = (float)origin[1]*RefL - dy;
+  oz = (float)origin[2]*RefL - dz;
   
   //stamped_printf("example out org(%e %e %e) dimensional\n", ox, oy, oz);
   

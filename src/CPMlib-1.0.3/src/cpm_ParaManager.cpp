@@ -673,6 +673,98 @@ cpm_ParaManager::GetPeriodicRankID( int procGrpNo )
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// 指定idを含む全体ボクセル空間のインデクス範囲を取得
+bool
+cpm_ParaManager::GetBndIndexExtGc( int id, int *array, int vc
+                                 , int &ista, int &jsta, int &ksta
+                                 , int &ilen, int &jlen, int &klen
+                                 , int procGrpNo )
+{
+  //ローカルボクセル数
+  const int *sz = GetLocalVoxelSize(procGrpNo);
+  if( !sz ) return false;
+  int imax = sz[0];
+  int jmax = sz[1];
+  int kmax = sz[2];
+
+  // 共有関数
+  return GetBndIndexExtGc( id, array, vc
+                         , ista, jsta, ksta, ilen, jlen, klen, procGrpNo );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// 指定idを含む全体ボクセル空間のインデクス範囲を取得
+bool
+cpm_ParaManager::GetBndIndexExtGc( int id, int *array
+                               , int imax, int jmax, int kmax, int vc
+                               , int &ista, int &jsta, int &ksta
+                               , int &ilen, int &jlen, int &klen
+                               , int procGrpNo )
+{
+  // 全体ボクセルサイズ
+  const int *wsz = GetGlobalVoxelSize(procGrpNo);
+  if( !wsz ) return false;
+
+  // 自ランク内のid範囲を取得
+  int my_sta[3] = {wsz[0]+vc-1, wsz[1]+vc-1, wsz[2]+vc-1};
+  int my_end[3] = {-vc, -vc, -vc};
+  for( int k=-vc;k<kmax+vc;k++ ){
+  for( int j=-vc;j<jmax+vc;j++ ){
+  for( int i=-vc;i<imax+vc;i++ ){
+    long long idx = _IDX_S3D(i,j,k,imax,jmax,kmax,vc);
+    if( array[idx] == id )
+    {
+      if( i < my_sta[0] ) my_sta[0] = i;
+      if( j < my_sta[1] ) my_sta[1] = j;
+      if( k < my_sta[2] ) my_sta[2] = k;
+      if( i > my_end[0] ) my_end[0] = i;
+      if( j > my_end[1] ) my_end[1] = j;
+      if( k > my_end[2] ) my_end[2] = k;
+    }
+  }}}
+
+  // 取得した自ランク範囲を全体インデクスに変換
+  const int *hidx = GetVoxelHeadIndex(procGrpNo);
+  if( !hidx ) return false;
+  for( int i=0;i<3;i++ )
+  {
+    if( my_sta[i] > my_end[i] ) continue;
+    my_sta[i] += hidx[i];
+    my_end[i] += hidx[i];
+  }
+
+  // 全ランクのmin/maxを取得
+  int idxsta[3], idxend[3];
+  for( int i=0;i<3;i++ )
+  {
+    idxsta[i] = my_sta[i];
+    idxend[i] = my_end[i];
+  }
+  if( Allreduce( my_sta, idxsta, 3, MPI_MIN, procGrpNo ) != CPM_SUCCESS ) return false;
+  if( Allreduce( my_end, idxend, 3, MPI_MAX, procGrpNo ) != CPM_SUCCESS ) return false;
+
+  // 存在チェック
+  bool bCheck = true;
+  for( int i=0;i<3;i++ )
+  {
+    if( idxsta[i] > idxend[i] ) bCheck = false;
+  }
+
+  // 存在したとき、スタートインデクスと長さをセット
+  if( bCheck )
+  {
+    ista = idxsta[0];
+    jsta = idxsta[1];
+    ksta = idxsta[2];
+    ilen = idxend[0] - idxsta[0] + 1;
+    jlen = idxend[1] - idxsta[1] + 1;
+    klen = idxend[2] - idxsta[2] + 1;
+  }
+
+  return bCheck;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // 袖通信バッファのセット
 cpm_ErrorCode
 cpm_ParaManager::SetBndCommBuffer( size_t maxVC, size_t maxN, int procGrpNo )

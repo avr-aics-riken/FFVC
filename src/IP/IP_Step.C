@@ -174,17 +174,17 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   REAL_TYPE ox_g, oy_g, oz_g;
   
   // ノードローカルの無次元値
-  ox = R->org[0];
-  oy = R->org[1];
-  oz = R->org[2];
-  Lx = R->Lbx[0];
-  Ly = R->Lbx[1];
-  Lz = R->Lbx[2];
-  dh = R->dh;
+  ox = origin[0];
+  oy = origin[1];
+  oz = origin[2];
+  Lx = region[0];
+  Ly = region[1];
+  Lz = region[2];
+  dh = deltaX;
 
-  ox_g = G_org[0];
-  oy_g = G_org[1];
-  oz_g = G_org[2];
+  ox_g = G_origin[0];
+  oy_g = G_origin[1];
+  oz_g = G_origin[2];
   
   size_t m;
   

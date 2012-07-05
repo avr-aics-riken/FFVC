@@ -33,7 +33,7 @@ class SetBC : public DomainInfo {
 protected:
   int *ix, *jx, *kx, *gc; ///< Fortranの引数用のポインタ
   
-  REAL_TYPE dh, accel, Dp1, Dp2, mach, BasePrs;
+  REAL_TYPE accel, Dp1, Dp2, mach, BasePrs;
   REAL_TYPE RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
   REAL_TYPE rho, nyu, cp, lambda, beta;
@@ -61,15 +61,11 @@ public:
   /** コンストラクタ */
   SetBC() {
     ix = jx = kx = gc = NULL;
-    dh = rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
+    rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
     rho = nyu = cp = lambda = beta = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
     Example = NoBC = Unit_Temp = Unit_Prs = 0;
     inout_flag = isCDS = false;
-    
-    for (int i=0; i<3; i++) {
-      Lbx[i]    = 0.0;
-    }
     
     cmp = NULL;
     mat = NULL;
