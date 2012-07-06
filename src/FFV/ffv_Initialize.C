@@ -146,7 +146,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 各例題のパラメータ設定 -----------------------------------------------------
-  Ex->setDomain(&C, size, org, reg, pch);
+  Ex->setDomain(&C, size, origin, region, pitch);
   
   
   // 　再度、入力ファイルをオープン
@@ -205,8 +205,8 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
-  dh0     = &C.dh;
-  dh      = &C.dh;
+  dh0     = &deltaX;
+  dh      = &deltaX;
   
   // 並列処理モード
   string para_label = setParallelism();
@@ -249,11 +249,11 @@ int FFV::Initialize(int argc, char **argv)
   Hostonly_ {
     fprintf(stdout,"\n---------------------------------------------------------------------------\n");
     fprintf(stdout,"\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(stdout, G_size, G_org, G_reg, pitch);
+    C.printGlobalDomain(stdout, G_size, G_origin, G_region, pitch);
     
     fprintf(fp,"\n---------------------------------------------------------------------------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(fp, G_size, G_org, G_reg, pitch);
+    C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
   }
   
   // メモリ消費量の情報を表示
@@ -353,7 +353,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) 
   {
     // ShapeMonitorのインスタンス
-    ShapeMonitor SM(size, guide, C.dx, C.org);
+    ShapeMonitor SM(size, guide, deltaX, origin);
     
     V.setShapeMonitor(d_mid, &SM, cmp, C.RefLength);
   }
@@ -874,11 +874,11 @@ void FFV::display_Parameters(FILE* fp)
 
   fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
   fprintf(stdout,"\t>> Outer Boundary Conditions\n\n");
-  B.printFaceOBC(stdout, G_reg);
+  B.printFaceOBC(stdout, G_region);
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
-  B.printFaceOBC(fp, G_reg);
+  B.printFaceOBC(fp, G_region);
 
   
   /* モニタ情報の表示
@@ -933,7 +933,7 @@ void FFV::DomainInitialize(const string dom_file)
   size_t Nvc  = (size_t)C.guide;
   
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
-  int m_div[3] = {G_div [0], G_div [1], G_div [2]};
+  int m_div[3] = {G_division[0], G_division[1], G_division[2]};
   
   REAL_TYPE m_org[3] = {G_origin[0], G_origin[1], G_origin[2]};
   REAL_TYPE m_reg[3] = {G_region[0], G_region[1], G_region[2]};
@@ -1177,11 +1177,11 @@ void FFV::fixed_parameters()
 void FFV::gather_DomainInfo()
 {
   // 統計処理の母数
-  double d = 1.0/(double)numProc;
+  double d = 1.0 /(double)numProc;
   double r;
   
   if ( numProc > 1 ) {
-    r = 1.0/(REAL_TYPE)(numProc-1);
+    r = 1.0 /(REAL_TYPE)(numProc-1);
   }
   else {
     r = 1.0;
@@ -1215,8 +1215,8 @@ void FFV::gather_DomainInfo()
   // 領域情報の収集
   if ( numProc > 1 ) {
     if ( paraMngr->Gather(size, 3, m_size, 3, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(C.org, 3, m_org, 3, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(C.Lbx, 3, m_Lbx, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(origin, 3, m_org, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(region, 3, m_Lbx, 3, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Fcell, 1, bf_fcl, 1, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Wcell, 1, bf_wcl, 1, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Acell, 1, bf_acl, 1, 0) != CPM_SUCCESS ) Exit(0);
@@ -1226,15 +1226,15 @@ void FFV::gather_DomainInfo()
     bf_fcl[0] = G_Fcell;
     bf_wcl[0] = G_Wcell;
     bf_acl[0] = G_Acell;
-    memcpy(m_org, C.org, 3*sizeof(REAL_TYPE));
-    memcpy(m_Lbx, C.Lbx, 3*sizeof(REAL_TYPE));
+    memcpy(m_org, origin, 3*sizeof(REAL_TYPE));
+    memcpy(m_Lbx, region, 3*sizeof(REAL_TYPE));
   }
   
   // Info. of computational domain
   double vol = (double)( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]);
-  double srf = 2.0 * ( (double)G_size[0] * (double)G_size[1] 
-                     + (double)G_size[1] * (double)G_size[2] 
-                     + (double)G_size[2] * (double)G_size[0]);
+  double srf = 2.0   * ( (double)G_size[0] * (double)G_size[1] 
+                       + (double)G_size[1] * (double)G_size[2] 
+                       + (double)G_size[2] * (double)G_size[0]);
   
   // ローカルノード
   int ix = size[0];
@@ -1305,7 +1305,7 @@ void FFV::gather_DomainInfo()
   }
   
   // 全体情報の表示
-  C.printGlobalDomain(fp, G_size, G_org, G_reg, pitch);
+  C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
   
   // ローカルノードの情報を表示
   for (int i=0; i<numProc; i++) {
@@ -1548,7 +1548,7 @@ void FFV::printDomainInfo()
   cout << " G_voxel    = " << G_size[0]   << "," << G_size[1]   << "," << G_size[2]   << endl;
   cout << " G_pitch    = " << pitch[0]    << "," << pitch[1]    << "," << pitch[2]    << endl;
   cout << " G_region   = " << G_region[0] << "," << G_region[1] << "," << G_region[2] << endl;
-  cout << " G_div      = " << G_div[0]  << "," << G_div[1]  << "," << G_div[2]  << endl;
+  cout << " G_div      = " << G_division[0]  << "," << G_division[1]  << "," << G_division[2]  << endl;
 }
 
 
@@ -1767,7 +1767,7 @@ void FFV::setComponentVF()
   int f_st[3], f_ed[3];
   double flop;
   
-  CompoFraction CF(size, guide, C.dx, C.org, subsampling);
+  CompoFraction CF(size, guide, deltaX, origin, subsampling);
   
   for (int n=1; n<=C.NoBC; n++) {
     
@@ -2027,7 +2027,9 @@ void FFV::setInitialCondition()
   
   if ( C.Start == initial_start ) {
 		REAL_TYPE dt_init=1.0, tm_init=0.0;
-		REAL_TYPE U0[3];
+		REAL_TYPE U0[3], tm;
+    
+    tm = Total_time * C.Tscale;
     
 		// 速度の初期条件の設定
     if (C.Unit.Param == DIMENSIONAL) {
@@ -2047,7 +2049,7 @@ void FFV::setInitialCondition()
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
     BC.OuterVBC_Periodic(d_v);
-		BC.OuterVBC(d_v, d_v, d_bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
+		BC.OuterVBC(d_v, d_v, d_bcv, tm, deltaT, &C, v00, flop_task);
     BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
     BC.InnerVBC_Periodic(d_v, d_bcd);
     
@@ -2095,11 +2097,11 @@ void FFV::setInitialCondition()
     BC.InnerPBC_Periodic(d_p, d_bcd);
     
     // 外部境界条件
-    BC.OuterVBC(d_v, d_v, d_bcv, tm, (REAL_TYPE)m_dt, &C, v00, flop_task);
+    BC.OuterVBC(d_v, d_v, d_bcv, tm, deltaT, &C, v00, flop_task);
     BC.OuterVBC_Periodic(d_v);
     
     //流出境界の流出速度の算出
-    REAL_TYPE coef = C.dh/(REAL_TYPE)m_dt;
+    REAL_TYPE coef = deltaX/(REAL_TYPE)m_dt;
     REAL_TYPE m_av[2];
     BC.mod_div(d_ws, d_bcv, coef, tm, v00, m_av, flop_task);
     DomainMonitor(BC.export_OBC(), &C, flop_task);
@@ -2258,7 +2260,7 @@ void FFV::setParameters()
   // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
   // 代表物性値をRefMatの示す媒質から取得
   // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
-  DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)C.dh, (double)C.Reynolds, (double)C.Peclet);
+  DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)deltaX, (double)C.Reynolds, (double)C.Peclet);
   
   
   // 無次元速度1.0を与えてdeltaTをセットし，エラーチェック
@@ -2356,12 +2358,12 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       
     case id_Sphere:
       if ( !C.isCDS() ) {
-        Ex->setup(d_mid, &C, G_org, C.NoMedium, mat);
+        Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
       }
       else {
         // cutをアロケートし，初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(d_mid, &C, G_org, C.NoMedium, mat, d_cut);
+        Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
       }
       break;
       
@@ -2369,7 +2371,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       if ( C.isCDS() ) {
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       }
-      Ex->setup(d_mid, &C, G_org, C.NoMedium, mat);
+      Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
       break;
   }
   

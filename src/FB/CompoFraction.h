@@ -58,14 +58,18 @@ public:
    * @param [in] pch    ローカル領域セル幅
    * @param [in] div    サブディビジョンの分割数
    */
-  CompoFraction(const int size[], const int guide, const float pch[], const float org[], const int div)
+  CompoFraction(const int* size, const int guide, const float* pch, const float* org, const int div)
   {
     this->size[0]  = size[0];
     this->size[1]  = size[1];
     this->size[2]  = size[2];
     this->guide    = guide;
-    this->pch      = pch;
-    this->org      = org;
+    this->pch.x    = pch[0];
+    this->pch.y    = pch[1];
+    this->pch.z    = pch[2];
+    this->org.x    = org[0];
+    this->org.y    = org[1];
+    this->org.z    = org[2];
     this->division = div;
   }
   
@@ -359,14 +363,18 @@ public:
    * @param [in] org    ローカル領域基点座標
    * @param [in] pch    ローカル領域セル幅
    */
-  ShapeMonitor(const int size[], const int guide, const float pch[], const float org[]) 
+  ShapeMonitor(const int* size, const int guide, const float* pch, const float* org) 
   {
     this->size[0]  = size[0];
     this->size[1]  = size[1];
     this->size[2]  = size[2];
     this->guide    = guide;
-    this->pch      = pch;
-    this->org      = org;
+    this->pch.x    = pch[0];
+    this->pch.y    = pch[1];
+    this->pch.z    = pch[2];
+    this->org.x    = org[0];
+    this->org.y    = org[1];
+    this->org.z    = org[2];
   }
   
   

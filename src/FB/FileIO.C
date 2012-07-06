@@ -21,10 +21,8 @@
 void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, double& flop)
 {
   if( !dst || !src || !sz ) Exit(0);
-  
-  REAL_TYPE fpct = (REAL_TYPE)flop;
-  fb_mulcpy_ (dst, src, sz, &gc, &coef, &fpct);
-  flop = (double)fpct;
+
+  fb_mulcpy_ (dst, src, sz, &gc, &coef, &flop);
 }
 
 
@@ -36,10 +34,8 @@ void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc,
   if( !dst || !src || !sz ) Exit(0);
   
   REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
-  REAL_TYPE fpct = (REAL_TYPE)flop;
   
-  fb_mulcpy_ (dst, src, sz, &gc, &cf, &fpct);
-  flop = (double)fpct;
+  fb_mulcpy_ (dst, src, sz, &gc, &cf, &flop);
 }
 
 
@@ -220,7 +216,6 @@ void FileIO::readPressure(FILE* fp,
                           double& time_avr
                           )
 {
-  REAL_TYPE fpct = (REAL_TYPE)flop;
   
   if ( fname.empty() ) Exit(0);
   
@@ -257,7 +252,7 @@ void FileIO::readPressure(FILE* fp,
     REAL_TYPE ref_d = RefDensity;
     REAL_TYPE ref_v = RefVelocity;
   
-    fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &fpct);
+    fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
   }
   
   if ( mode ) {
@@ -275,7 +270,6 @@ void FileIO::readPressure(FILE* fp,
   time = (double)f_time;
   step_avr = (unsigned)a_step;
   time_avr = (double)a_time;
-  flop = (double)fpct;
 
 }
 
@@ -298,7 +292,6 @@ void FileIO::readVelocity(FILE* fp,
                           unsigned& step_avr,
                           double& time_avr)
 {
-  REAL_TYPE fpct = (REAL_TYPE)flop;
   
   if ( fname.empty() ) Exit(0);
   
@@ -333,7 +326,7 @@ void FileIO::readVelocity(FILE* fp,
   u0[2] = v00[2];
   u0[3] = v00[3];
 
-  fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &fpct);
+  fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &flop);
 
   if ( mode ) {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
@@ -350,7 +343,6 @@ void FileIO::readVelocity(FILE* fp,
   time = (double)f_time;
   step_avr = (unsigned)a_step;
   time_avr = (double)a_time;
-  flop = (double)fpct;
 }
 
 
@@ -372,7 +364,6 @@ void FileIO::readTemperature(FILE* fp,
                              unsigned& step_avr,
                              double& time_avr)
 {
-  REAL_TYPE fpct = (REAL_TYPE)flop;
   
   if ( fname.empty() ) Exit(0);
   
@@ -406,7 +397,7 @@ void FileIO::readTemperature(FILE* fp,
   REAL_TYPE klv    = Kelvin;
   
   if ( Dmode == DIMENSIONAL ) {
-    fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &fpct);
+    fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
   }
   
   if ( mode ) {
@@ -424,7 +415,6 @@ void FileIO::readTemperature(FILE* fp,
   time = (double)f_time;
   step_avr = (unsigned)a_step;
   time_avr = (double)a_time;
-  flop = (double)fpct;
 }
 
 

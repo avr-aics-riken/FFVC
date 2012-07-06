@@ -53,10 +53,77 @@ FFV::~FFV()
 
 
 
+// 外部計算領域の各面における総流量と対流流出速度を計算する
+// 流出境界のみ和をとる，その他は既知
+void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
+{
+  if ( !ptr ) Exit(0);
+  BoundaryOuter* obc=NULL;
+  
+  obc = ptr;
+  
+  REAL_TYPE ddh;
+  REAL_TYPE *vv, ec;
+  REAL_TYPE u_sum, u_min, u_max, u_avr;
+  REAL_TYPE tmp_sum, tmp_min, tmp_max;
+  int ofv;
+  
+	ddh = deltaX * deltaX;
+  
+  for (int face=0; face<NOFACE; face++) {
+    
+    // ofv (1-MINMAX, 2-AVERAGE) ゼロでなければ，流出境界
+    ofv = obc[face].get_ofv();
+    
+    // OUTFLOW, SPEC_VELのときの有効セル数
+    ec = (REAL_TYPE)obc[face].get_ValidCell();
+    
+    // 各プロセスの外部領域面の速度をvv[]にコピー
+    vv = obc[face].getDomainV();
+    
+    // 流出境界のモード
+    if (ofv == V_AVERAGE) { // average
+      
+      // 非境界面はゼロなので，単に足し込むだけ
+      if ( numProc > 1 ) {
+        u_sum = tmp_sum = vv[0];
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      } 
+      u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
+      flop = flop + 1.0;
+    }
+    else if (ofv == V_MINMAX) { // minmax
+      
+      if ( numProc > 1 ) {
+        u_sum = tmp_sum = vv[0];
+        u_min = tmp_min = vv[1];
+        u_max = tmp_max = vv[2];
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&tmp_min, &u_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&tmp_max, &u_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      u_avr = 0.5*(u_min+u_max);
+      flop = flop + 2.0;
+    }
+    else { // 非OUTFLOW BCは速度がストアされている
+      u_sum = vv[0] * ec;
+      u_avr = vv[0];
+      flop = flop + 1.0;
+    }
+    
+    // コントロールクラスにコピー
+    R->V_Dface[face] = u_avr;
+    R->Q_Dface[face] = u_sum * ddh;
+    flop = flop + 1.0;
+  }
+  
+}
+
+
+
 // ファイル出力
 void FFV::FileOutput (double& flop, const bool restart)
 {
-  REAL_TYPE fpct;
   REAL_TYPE scale = 1.0;
   int d_length;
   
@@ -113,7 +180,6 @@ void FFV::FileOutput (double& flop, const bool restart)
     
   }
   
-  fpct = (REAL_TYPE)flop;
   
   // リスタート用
   std::string prs_restart("prs_restart_");
@@ -125,10 +191,10 @@ void FFV::FileOutput (double& flop, const bool restart)
   
   if (C.Unit.File == DIMENSIONAL) {
     REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-    fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &fpct);
+    fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
   }
   else {
-    fb_xcopy_(d_ws, d_p, &d_length, &scale, &fpct);
+    fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
   }
   
   if ( !restart ) {
@@ -145,7 +211,7 @@ void FFV::FileOutput (double& flop, const bool restart)
   
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  fb_shift_refv_out_(d_wvex, d_v, size, &guide, v00, &scale, &unit_velocity, &fpct);
+  fb_shift_refv_out_(d_wvex, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
   if ( !restart ) {
     tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, pout);
@@ -166,10 +232,10 @@ void FFV::FileOutput (double& flop, const bool restart)
     
     if (C.Unit.File == DIMENSIONAL) {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &fpct);
+      fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
     else {
-      fb_xcopy_(d_ws, d_t, &d_length, &scale, &fpct);
+      fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
     }
     
     if ( !restart ) {
@@ -183,20 +249,17 @@ void FFV::FileOutput (double& flop, const bool restart)
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Temperature, m_step, dfi_mng[var_Temperature], pout) ) Exit(0);
   }
-  
-  flop = (double)fpct;
+
   
   
   // Total Pressure
   if (C.Mode.TP == ON ) {
     
-    fpct = (REAL_TYPE)flop;
-    
-    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &fpct);
+    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C.Unit.File == DIMENSIONAL) {
-      F.cnv_TP_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, fpct);
+      F.cnv_TP_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, flop);
     }
     else {
       REAL_TYPE* tp;
@@ -207,65 +270,58 @@ void FFV::FileOutput (double& flop, const bool restart)
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_TotalP, m_step, dfi_mng[var_TotalP], pout) ) Exit(0);
-    
-    flop = (double)fpct;
+
   }
   
   
   // Vorticity
   if (C.Mode.VRT == ON ) {
-    fpct = (REAL_TYPE)flop;
     
-    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &fpct);
+    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
-    fb_shift_refv_out_(d_wvex, d_wv, size, &guide, vz, &scale, &unit_velocity, &fpct);
+    fb_shift_refv_out_(d_wvex, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
     tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, pout);
     F.writeVector(tmp, size, guide, d_wvex, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
-    
-    flop = (double)fpct;
+
   }
   
   
   // 2nd Invariant of Velocity Gradient Tensor
   if (C.Mode.I2VGT == ON ) {
-    fpct = (REAL_TYPE)flop;
     
-    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &fpct);
+    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &fpct);
+    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     
     tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_I2VGT, m_step, dfi_mng[var_I2vgt], pout) ) Exit(0);
-    
-    flop = (double)fpct;
+
   }
   
   // Helicity
   if (C.Mode.Helicity == ON ) {
-    fpct = (REAL_TYPE)flop;
     
-    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &fpct);
+    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &fpct);
+    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     
     tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Helicity, m_step, dfi_mng[var_Helicity], pout) ) Exit(0);
-    
-    flop = (double)fpct;
+
   }
 
 }
@@ -380,7 +436,7 @@ int FFV::get_DomainInfo()
   
   
   // G_div オプション
-  ivec  = G_div;
+  ivec  = G_division;
   label = "/DomainInfo/Global_division";
   
   if ( !tpCntl.GetVector(label, ivec, 3) )
@@ -392,7 +448,7 @@ int FFV::get_DomainInfo()
   // プロセス分割数が指定されている場合のチェック
   if ( div_type == 1 )
   {
-    if ( (G_div[0]>0) && (G_div[1]>0) && (G_div[2]>0) ) 
+    if ( (G_division[0]>0) && (G_division[1]>0) && (G_division[2]>0) ) 
     {
       ; // skip
     }

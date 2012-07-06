@@ -700,14 +700,15 @@
   subroutine fb_tmp_nd2d (dst, src, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale, kv, b_t
+  real                                                      ::  dp, scale, kv, b_t
   real                                                      ::  Base_tmp, Diff_tmp, klv
+  double precision                                          ::  flop
   real, dimension(sz)                                       ::  dst, src
 
   dp = scale * abs(Diff_tmp)
   kv = klv
   b_t = Base_tmp
-  flop = flop + real(sz) * 3.0 + 2.0
+  flop = flop + dble(sz) * 3.0d0 + 2.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, b_t, kv)
@@ -737,14 +738,15 @@
   subroutine fb_tmp_d2nd (t, sz, Base_tmp, Diff_tmp, klv, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale, b_t, kv
+  real                                                      ::  dp, scale, b_t, kv
   real                                                      ::  Base_tmp, Diff_tmp, klv
+  double precision                                          ::  flop
   real, dimension(sz)                                       ::  t
 
   dp = scale / abs(Diff_tmp)
   kv = klv
   b_t = Base_tmp
-  flop = flop + real(sz) * 3.0 + 10.0
+  flop = flop + dble(sz) * 3.0d0 + 10.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, b_t, kv)
@@ -774,13 +776,14 @@
   subroutine fb_prs_d2nd (s, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale, b_p
+  real                                                      ::  dp, scale, b_p
   real                                                      ::  Base_prs, Ref_rho, Ref_v
+  double precision                                          ::  flop
   real, dimension(sz)                                       ::  s
 
   dp = scale / (Ref_rho * Ref_v * Ref_v)
   b_p = Base_prs
-  flop = flop + real(sz) * 3.0 + 10.0
+  flop = flop + dble(sz) * 3.0d0 + 10.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, b_p)
@@ -812,13 +815,14 @@
   subroutine fb_prs_nd2d (dst, src, sz, Base_prs, Ref_rho, Ref_v, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, dp, scale, b_p
+  real                                                      ::  dp, scale, b_p
   real                                                      ::  Base_prs, Ref_rho, Ref_v
+  double precision                                          ::  flop
   real, dimension(sz)                                       ::  dst, src
 
   dp = Ref_rho * Ref_v * Ref_v * scale
   b_p = Base_prs
-  flop = flop + real(sz) * 3.0 + 2.0
+  flop = flop + dble(sz) * 3.0d0 + 2.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(sz, dp, b_p)
@@ -846,10 +850,11 @@
   subroutine fb_xcopy (dst, src, sz, scale, flop)
   implicit none
   integer                                                   ::  i, sz
-  real                                                      ::  flop, scale, s_c
+  real                                                      ::  scale, s_c
+  double precision                                          ::  flop
   real, dimension(sz)                                       ::  dst, src
 
-  flop = flop + real(sz)
+  flop = flop + dble(sz)
   s_c = scale
 
 !$OMP PARALLEL &
@@ -882,7 +887,8 @@
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, scale, u_ref, v_ref, w_ref, refv, rr
+  real                                                      ::  scale, u_ref, v_ref, w_ref, refv, rr
+  double precision                                          ::  flop
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(0:3)                                      ::  v00
 
@@ -896,7 +902,7 @@
   
   rr = 1.0/refv
   
-  flop = flop + real(ix)*real(jx)*real(kx)*9.0 + 8.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 8.0d0
 
 
 !$OMP PARALLEL &
@@ -936,7 +942,8 @@
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, u_ref, v_ref, w_ref, unit_v, scale, unit
+  real                                                      ::  u_ref, v_ref, w_ref, unit_v, scale, unit
+  double precision                                          ::  flop
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout, vin
   real, dimension(0:3)                                      ::  v00
 
@@ -950,7 +957,7 @@
 
   unit = unit_v
   
-  flop = flop + real(ix)*real(jx)*real(kx)*9.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
 
 
 !$OMP PARALLEL &
@@ -989,8 +996,9 @@
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, actv
+  real                                                      ::  actv
   real                                                      ::  u, v, w, av, rm, x, y, z
+  double precision                                          ::  flop
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vn, vo
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
   real, dimension(2)                                        ::  d
@@ -999,7 +1007,7 @@
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + real(ix)*real(jx)*real(kx)*18.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*18.0d0
 
   av = 0.0
   rm = 0.0
@@ -1054,8 +1062,9 @@
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop, actv
+  real                                                      ::  actv
   real                                                      ::  a, s, av, rm
+  double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  sn, so
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
   real, dimension(2)                                        ::  d
@@ -1064,7 +1073,7 @@
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + real(ix)*real(jx)*real(kx)*7.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*7.0d0
 
   av = 0.0
   rm = 0.0
@@ -1111,14 +1120,14 @@
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop
+  double precision                                          ::  flop
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, avr
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + real(ix)*real(jx)*real(kx)*3.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
@@ -1152,14 +1161,14 @@
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop
+  double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s, avr
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + real(ix)*real(jx)*real(kx)*1.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*1.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
@@ -1492,7 +1501,8 @@ end subroutine fb_copy_int
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  u1, u2, u3, flop, vx, vy, vz
+    real                                                      ::  u1, u2, u3, vx, vy, vz
+    double precision                                          ::  flop
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, tp
     real, dimension(0:3)                                      ::  v00
@@ -1523,7 +1533,7 @@ end subroutine fb_copy_int
 !$OMP END DO
 !$OMP END PARALLEL
         
-    flop = flop + real(ix)*real(jx)*real(kx)*10.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*10.0d0
     
     return
     end subroutine fb_totalp
@@ -1556,7 +1566,7 @@ end subroutine fb_copy_int
     v_max = -1.0e6
     
     ! 10 + sqrt*1 = 20 ! DP 30
-    flop = flop + real(ix)*real(jx)*real(kx)*20.0
+    flop = flop + real(ix)*real(jx)*real(kx)*20.0d0
     ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
 !$OMP PARALLEL &
@@ -1598,7 +1608,8 @@ end subroutine fb_copy_int
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  f_min, f_max, flop
+    real                                                      ::  f_min, f_max
+    double precision                                          ::  flop
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
 
     ix = sz(1)
@@ -1607,8 +1618,7 @@ end subroutine fb_copy_int
     f_min =  1.0e6
     f_max = -1.0e6
     
-    flop = flop + real(ix)*real(jx)*real(kx)*20.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*2.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
@@ -1730,7 +1740,7 @@ end subroutine fb_copy_int
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  flop
+  double precision                                          ::  flop
   real                                                      ::  cf
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  dst, src
 
@@ -1738,7 +1748,7 @@ end subroutine fb_copy_int
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + real(ix)*real(jx)*real(kx)
+  flop = flop + dble(ix)*dble(jx)*dble(kx)
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, cf)

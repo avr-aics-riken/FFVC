@@ -72,7 +72,7 @@ extern "C" {
                            REAL_TYPE* sn,
                            REAL_TYPE* so,
                            int* bx,
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_delta_v_        (REAL_TYPE* d,
                            int* sz,
@@ -80,7 +80,7 @@ extern "C" {
                            REAL_TYPE* vn,
                            REAL_TYPE* vo,
                            int* bx,
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_limit_scalar_   (REAL_TYPE* t,
                            int* sz,
@@ -91,7 +91,7 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* s,
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_minmax_v_       (REAL_TYPE* f_min,
                            REAL_TYPE* f_max,
@@ -99,7 +99,7 @@ extern "C" {
                            int* g,
                            REAL_TYPE* v00,
                            REAL_TYPE* v,
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_set_int_s_      (int* var,
                            int* sz,
@@ -136,19 +136,19 @@ extern "C" {
                            REAL_TYPE* src,
                            int* sz,
                            REAL_TYPE* scale,
-                           REAL_TYPE* flop);
+                           double* flop);
  
   void fb_average_s_      (REAL_TYPE* avr, 
                            int* sz, 
                            int* g, 
                            REAL_TYPE* s, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_average_v_      (REAL_TYPE* avr, 
                            int* sz, 
                            int* g, 
                            REAL_TYPE* v, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_interp_coarse_s_(REAL_TYPE* dst, 
                            int* sz, 
@@ -170,7 +170,7 @@ extern "C" {
                            REAL_TYPE* Ref_rho, 
                            REAL_TYPE* Ref_v, 
                            REAL_TYPE* scale, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_prs_nd2d_       (REAL_TYPE* dst, 
                            REAL_TYPE* src, 
@@ -179,7 +179,7 @@ extern "C" {
                            REAL_TYPE* Ref_rho, 
                            REAL_TYPE* Ref_v, 
                            REAL_TYPE* scale, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_read_sph_s_     (REAL_TYPE* s, 
                            int* sz, 
@@ -215,7 +215,7 @@ extern "C" {
                            REAL_TYPE* v00, 
                            REAL_TYPE* scale, 
                            REAL_TYPE* refv, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_shift_refv_out_ (REAL_TYPE* vout, 
                            REAL_TYPE* vin, 
@@ -224,7 +224,7 @@ extern "C" {
                            REAL_TYPE* v00, 
                            REAL_TYPE* scale, 
                            REAL_TYPE* unit_v, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_tmp_d2nd_       (REAL_TYPE* t, 
                            int* sz, 
@@ -232,7 +232,7 @@ extern "C" {
                            REAL_TYPE* Diff_tm, 
                            REAL_TYPE* klv, 
                            REAL_TYPE* scale, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_tmp_nd2d_       (REAL_TYPE* dst, 
                            REAL_TYPE* src, 
@@ -241,7 +241,7 @@ extern "C" {
                            REAL_TYPE* Diff_tm, 
                            REAL_TYPE* klv, 
                            REAL_TYPE* scale, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_totalp_         (REAL_TYPE* tp, 
                            int* sz, 
@@ -249,7 +249,7 @@ extern "C" {
                            REAL_TYPE* v, 
                            REAL_TYPE* p, 
                            REAL_TYPE* v00, 
-                           REAL_TYPE* flop);
+                           double* flop);
   
   void fb_write_sph_s_    (REAL_TYPE* s, 
                            int* sz, 
@@ -284,7 +284,7 @@ extern "C" {
                            int* sz, 
                            int* g, 
                            REAL_TYPE* cf, 
-                           REAL_TYPE* flop);
+                           double* flop);
 }
 
 #endif // _FB_F_FUNC_H_

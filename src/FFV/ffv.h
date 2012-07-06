@@ -117,8 +117,8 @@ private:
   REAL_TYPE *cf_z;  ///< k方向のバッファ
   
   
-  REAL_TYPE delta_T; ///< 時間積分幅（無次元）
-  REAL_TYPE delta_H; ///< 格子幅（無次元）
+  REAL_TYPE deltaT; ///< 時間積分幅（無次元）
+
   
   // dfi ファイル管理用 -> Kind_of_vars in FB_Define.h
   // 同じ解像度のリスタート時には、既にdfiファイルが存在する場合には、その内容を継続する
@@ -392,6 +392,15 @@ private:
   
   
   /**
+   * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
+   * @param [in] ptr  BoundaryOuterクラスのポインタ
+   * @param [in] R    Controlクラスのポインタ
+   * @param [in] flop 浮動小数点演算数
+   */
+  void DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop);
+  
+  
+  /**
    @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
    @param [in/out] m_st 拡大された開始点（Fortranインデクス）
    @param [in/out] m_ed 拡大された終了点（Fortranインデクス）
@@ -406,8 +415,8 @@ private:
   
   /**
    * @brief ファイル出力
-   * @param [in] flop 浮動小数点演算数
-   * @param [in] restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+   * @param [in/out] flop    浮動小数点演算数
+   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
   void FileOutput(double& flop, const bool restart);
   

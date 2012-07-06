@@ -33,7 +33,7 @@ public:
   int head[3];         ///< 開始インデクス（グローバルインデクス, Fortran）
   
   int guide;           ///< ガイドセル数
-  int G_div[3];        ///< プロセス分割数
+  int G_division[3];   ///< プロセス分割数
   REAL_TYPE pitch[3];  ///< 格子幅 (Non-dimensional)
   REAL_TYPE deltaX;    ///< 等間隔格子の無次元格子幅
   
@@ -57,15 +57,15 @@ public:
     
     for (int i=0; i<3; i++)
     {
-      head[i]   = 0;
-      size[i]   = 0;
-      G_size[i] = 0;
-      G_div[i]  = 0;
-      pitch[i]    = 0.0;
-      origin[i]   = 0.0;
-      region[i]   = 0.0;
-      G_origin[i] = 0.0;
-      G_region[i] = 0.0;
+      head[i]       = 0;
+      size[i]       = 0;
+      G_size[i]     = 0;
+      G_division[i] = 0;
+      pitch[i]      = 0.0;
+      origin[i]     = 0.0;
+      region[i]     = 0.0;
+      G_origin[i]   = 0.0;
+      G_region[i]   = 0.0;
     }
     
     deltaX = 0.0;
