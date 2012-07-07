@@ -77,10 +77,12 @@ void FFV::AverageOutput(double& flop)
 {
   // 出力ファイルの指定が有次元の場合
   REAL_TYPE timeAvr;
-  if (C.Unit.File == DIMENSIONAL) {
+  if (C.Unit.File == DIMENSIONAL) 
+  {
     timeAvr = CurrentTime_Avr * C.Tscale;
   }
-  else {
+  else 
+  {
     timeAvr = CurrentTime_Avr;
   }
   
@@ -88,7 +90,8 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE m_org[3], m_pit[3];
   
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<3; i++) 
+  {
     m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
     m_pit[i] = pitch[i];
   }
@@ -131,11 +134,13 @@ void FFV::AverageOutput(double& flop)
   // Temperature
   if( C.isHeatProblem() )
   {
-    if (C.Unit.File == DIMENSIONAL) {
+    if (C.Unit.File == DIMENSIONAL) 
+    {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
       fb_tmp_nd2d_(d_ws, d_at, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
-    else {
+    else 
+    {
       fb_xcopy_(d_ws, d_at, &d_length, &scale, &flop);
     }
     
@@ -181,7 +186,8 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
   
 	ddh = deltaX * deltaX;
   
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++) 
+  {
     
     // ofv (1-MINMAX, 2-AVERAGE) ゼロでなければ，流出境界
     ofv = obc[face].get_ofv();
@@ -193,19 +199,22 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
     vv = obc[face].getDomainV();
     
     // 流出境界のモード
-    if (ofv == V_AVERAGE) { // average
+    if (ofv == V_AVERAGE) // average
+    {
       
       // 非境界面はゼロなので，単に足し込むだけ
-      if ( numProc > 1 ) {
+      if ( numProc > 1 ) 
+      {
         u_sum = tmp_sum = vv[0];
         if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       } 
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
       flop = flop + 1.0;
     }
-    else if (ofv == V_MINMAX) { // minmax
-      
-      if ( numProc > 1 ) {
+    else if (ofv == V_MINMAX) // minmax
+    {
+      if ( numProc > 1 ) 
+      {
         u_sum = tmp_sum = vv[0];
         u_min = tmp_min = vv[1];
         u_max = tmp_max = vv[2];
@@ -216,7 +225,8 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
       u_avr = 0.5*(u_min+u_max);
       flop = flop + 2.0;
     }
-    else { // 非OUTFLOW BCは速度がストアされている
+    else // 非OUTFLOW BCは速度がストアされている
+    {
       u_sum = vv[0] * ec;
       u_avr = vv[0];
       flop = flop + 1.0;
@@ -244,14 +254,17 @@ void FFV::FileOutput(double& flop, const bool restart)
   REAL_TYPE m_org[3], m_pit[3];
   
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<3; i++) 
+  {
     m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
     m_pit[i] = pitch[i];
   }
   
   // 出力ファイルの指定が有次元の場合
-  if ( C.Unit.File == DIMENSIONAL ) {
-    for (int i=0; i<3; i++) {
+  if ( C.Unit.File == DIMENSIONAL ) 
+  {
+    for (int i=0; i<3; i++) 
+    {
       m_org[i] *= C.RefLength;
       m_pit[i] *= C.RefLength;
     }
@@ -262,10 +275,12 @@ void FFV::FileOutput(double& flop, const bool restart)
   
   // 時間の次元変換
   REAL_TYPE m_time;
-  if (C.Unit.File == DIMENSIONAL) {
+  if (C.Unit.File == DIMENSIONAL) 
+  {
     m_time = (REAL_TYPE)CurrentTime * C.Tscale;
   }
-  else {
+  else 
+  {
     m_time = (REAL_TYPE)CurrentTime;
   }
   
@@ -279,10 +294,11 @@ void FFV::FileOutput(double& flop, const bool restart)
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
   
   // Divergence デバッグ用なので無次元のみ
-  if ( C.FIO.Div_Debug == ON ) {
+  if ( C.FIO.Div_Debug == ON ) 
+  {
     
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-    F.cnv_Div(d_ws, d_wk2, size, guide, coef, flop);
+    F.cnv_Div(d_ws, d_sq, size, guide, coef, flop);
     
     tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -380,10 +396,12 @@ void FFV::FileOutput(double& flop, const bool restart)
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) {
+    if (C.Unit.File == DIMENSIONAL) 
+    {
       F.cnv_TP_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, flop);
     }
-    else {
+    else 
+    {
       REAL_TYPE* tp;
       tp = d_ws; d_ws = d_p0; d_p0 = tp;
     }
@@ -397,7 +415,8 @@ void FFV::FileOutput(double& flop, const bool restart)
   
   
   // Vorticity
-  if (C.Mode.VRT == ON ) {
+  if (C.Mode.VRT == ON ) 
+  {
     
     rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
@@ -431,7 +450,8 @@ void FFV::FileOutput(double& flop, const bool restart)
   }
   
   // Helicity
-  if (C.Mode.Helicity == ON ) {
+  if (C.Mode.Helicity == ON ) 
+  {
     
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
@@ -645,13 +665,15 @@ int FFV::MainLoop()
 // 終了時の処理
 bool FFV::Post() 
 {
-/*
+
   TIMING__ 
   { 
     FILE* fp = NULL;
     
-    if ( IsMaster(paraMngr) ) {
-      if ( !(fp=fopen("profiling.txt", "w")) ) {
+    if ( IsMaster(paraMngr) ) 
+    {
+      if ( !(fp=fopen("profiling.txt", "w")) ) 
+      {
         stamped_printf("\tSorry, can't open 'profiling.txt' file. Write failed.\n");
         Exit(0);
       }
@@ -695,7 +717,7 @@ bool FFV::Post()
     }
     paraMngr->flush(stdout);
   }
-  */
+  
   return true;
 }
 
@@ -708,11 +730,13 @@ void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exc
   int len = strlen(label);
   char label_tmp[TM_LABEL_MAX];
   
-  if ( len>TM_LABEL_MAX-1 ) {
+  if ( len>TM_LABEL_MAX-1 ) 
+  {
     strncpy(label_tmp, label, TM_LABEL_MAX-1);
     printf("\tWarning: Length of timing label must be less than %d\n", TM_LABEL_MAX-1);
   }
-  else {
+  else 
+  {
     strcpy(label_tmp, label);
   }
   
@@ -965,7 +989,8 @@ void FFV::Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, double& flop)
   avr[var_Pressure] = m_var[1];
   
   // 温度
-  if ( C.isHeatProblem() ) {
+  if ( C.isHeatProblem() ) 
+  {
     fb_delta_s_(m_var, size, &guide, d_t, d_t0, d_bcd, &flop);
     rms[var_Temperature] = m_var[0];
     avr[var_Temperature] = m_var[1];

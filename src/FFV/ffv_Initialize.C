@@ -2402,7 +2402,8 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 // IP用にカット領域をアロケートする
 void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
 {
-  Hostonly_ {
+  Hostonly_ 
+  {
     fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp, "\t>> Cut Info\n\n");
     fprintf(stdout, "\n---------------------------------------------------------------------------\n\n");
@@ -2411,7 +2412,8 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   
   size_t n_cell[3];
   
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<3; i++) 
+  {
     n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル
   }
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
@@ -2427,17 +2429,20 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   m_prep += cut_mem;
   m_total+= cut_mem;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 ) 
+  {
     if ( paraMngr->Allreduce(&cut_mem, &G_cut_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
-  Hostonly_  {
+  Hostonly_  
+  {
     FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, stdout);
     FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
   }
   
   // 初期値のセット
-  for (size_t i=0; i<size_n_cell*6; i++) {
+  for (size_t i=0; i<size_n_cell*6; i++) 
+  {
     d_cut[i] = 1.0f;
   }
   
@@ -2456,13 +2461,15 @@ void FFV::setVOF()
   int kx = size[2];
   int gd = guide;
   
-  for (int k=1; k<=size[2]; k++) {
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         s = d_bcd[m];
         odr = DECODE_CMP(s);
-        if ( cmp[odr].getState() == FLUID ) {
+        
+        if ( cmp[odr].getState() == FLUID ) 
+        {
           d_vof[m] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
         }
       }
@@ -2476,10 +2483,11 @@ void FFV::VIBC_Bbox_from_Cut()
 {
   int f_st[3], f_ed[3];
   
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     
-    if ( cmp[n].isVBC_IO() ) { // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
-      
+    if ( cmp[n].isVBC_IO() ) // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
+    {
       // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
       V.findVIBCbbox(n, d_bcv, f_st, f_ed);
       
@@ -2514,16 +2522,20 @@ void FFV::VoxEncode()
   // STATEとACTIVEビットのコピー
   V.copyBCIbase(d_bcp, d_bcd);
   V.copyBCIbase(d_bcv, d_bcd);
-  if ( C.isHeatProblem() ) {
+  
+  if ( C.isHeatProblem() ) 
+  {
     V.copyBCIbase(d_bh1, d_bcd);
     V.copyBCIbase(d_bh2, d_bcd);
   }
 
   // BCIndexP に圧力計算のビット情報をエンコードする -----
-  if ( C.isCDS() ) {
+  if ( C.isCDS() ) 
+  {
     C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, true, d_cut);
   }
-  else { // binary
+  else // binary
+  {
     C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp);
   }
 
@@ -2532,10 +2544,12 @@ void FFV::VoxEncode()
 #endif
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
-  if ( C.isCDS() ) {
+  if ( C.isCDS() ) 
+  {
     V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, true, d_cut, d_bid);
   }
-  else { // binary
+  else // binary
+  {
     V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp);
   }
 
@@ -2576,19 +2590,25 @@ void FFV::VoxScan(FILE* fp)
   // 外部境界面の媒質IDとその個数を取得
   int cell_id[NOFACE];
   
-  for (int i=0; i<NOFACE; i++) {
+  for (int i=0; i<NOFACE; i++) 
+  {
     cell_id[i] = BC.export_OBC(i)->get_GuideMedium();
   }
 
 // ##########
 #if 0
-  Hostonly_ {
+  Hostonly_ 
+  {
     fprintf(fp, "\tCell IDs on Guide cell region\n");
-    for ( int i=0; i<NOFACE; i++) {
+    
+    for ( int i=0; i<NOFACE; i++) 
+    {
       fprintf(fp, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
     fprintf(stdout, "\tCell IDs on Guide cell region\n");
-    for ( int i=0; i<NOFACE; i++) {
+    
+    for ( int i=0; i<NOFACE; i++) 
+    {
       fprintf(stdout, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
   }

@@ -42,7 +42,8 @@ void FFV::allocArray_Average (double &total)
   if ( !(d_av = paraMngr->AllocRealV3DEx(guide)) ) Exit(0);
   total += mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  if ( C.isHeatProblem() ) {
+  if ( C.isHeatProblem() ) 
+  {
     // d_at
     if ( !(d_at = paraMngr->AllocFloatS3D(guide)) ) Exit(0);
     total += mc * (double)sizeof(float);
@@ -65,8 +66,8 @@ void FFV::allocArray_CoarseMesh(const int* r_size, double &prep)
   prep += mc * (double)sizeof(REAL_TYPE) * 3.0;
   
   
-  if ( C.isHeatProblem() ) {
-    
+  if ( C.isHeatProblem() ) 
+  {
     // d_r_t
     if ( !(d_r_t = Alloc::Real_S3D(r_size, guide)) ) Exit(0);
     prep += mc * (double)sizeof(REAL_TYPE);
@@ -111,7 +112,8 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
   // 管理用のポインタ配列の確保
   component_array = new REAL_TYPE* [C.NoBC];
   
-  for (int i=0; i<C.NoBC; i++) {
+  for (int i=0; i<C.NoBC; i++) 
+  {
     component_array[i] = NULL;
   }
   
@@ -121,10 +123,11 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
   int gd=2; // 両側それぞれ2セル
   unsigned long m_cmp_size=0;
   
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     
-    if ( cmp[n].isFORCING() ) {
-      
+    if ( cmp[n].isFORCING() ) 
+    {
       // インデクスサイズをリサイズしたst[], ed[]から計算
       cmp[n].set_cmp_sz();
       cmp[n].get_cmp_sz(c_sz);
@@ -142,7 +145,8 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
   m_prep += cmp_mem;
   m_total+= cmp_mem;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 ) 
+  {
     paraMngr->Allreduce(&cmp_mem, &G_cmp_mem, 1, MPI_SUM);
   }
   
@@ -235,8 +239,8 @@ void FFV::allocArray_Main(double &total)
   if ( !(d_p0 = paraMngr->AllocRealS3D(guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_wk2
-  if ( !(d_wk2 = paraMngr->AllocRealS3D(guide)) ) Exit(0);
+  // d_sq
+  if ( !(d_sq = paraMngr->AllocRealS3D(guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
 }
 
@@ -271,8 +275,8 @@ void FFV::allocArray_Prep(double &prep, double &total)
   prep += mc * (double)sizeof(int);
   total+= mc * (double)sizeof(int);
   
-  if ( C.isHeatProblem() ) {
-    
+  if ( C.isHeatProblem() ) 
+  {
     // d_bh1
     if ( !(d_bh1 = paraMngr->AllocIntS3D(guide)) ) Exit(0);
     prep += mc * (double)sizeof(int);

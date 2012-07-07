@@ -31,7 +31,7 @@
 #include <fstream>
 
 #include "cpm_ParaManager.h"
-#include "cpm_TextParserDomain.h"
+//#include "cpm_TextParserDomain.h"
 
 #include "DomainInfo.h"
 
@@ -129,9 +129,10 @@ private:
   int dfi_mng[var_END];
   
   
-  // Fortranへの引数
   //REAL_TYPE *dh0;   ///< 格子幅（有次元）
-  REAL_TYPE v00[4]; ///< 参照速度
+  REAL_TYPE v00[4];      ///< 参照速度
+  REAL_TYPE range_Ut[2]; ///< 
+  REAL_TYPE range_Yp[2]; ///< 
   
   
   // データ領域ポインタ
@@ -156,7 +157,7 @@ private:
   int *d_bh2;
   REAL_TYPE *d_ws;
   REAL_TYPE *d_p;
-  REAL_TYPE *d_wk2;
+  REAL_TYPE *d_sq;
   REAL_TYPE *d_dp;
   REAL_TYPE *d_p0;
   REAL_TYPE *d_t;
@@ -528,7 +529,7 @@ private:
   /**
    * @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
    */
-  void NS_FS_E_CBC();
+  void NS_FS_E_Binary();
   
   
   /**
