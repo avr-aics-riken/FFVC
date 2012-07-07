@@ -35,30 +35,31 @@
     subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb, u1, u2, u3, ug, e1, e2, e3, u_tau
-    real                                                        ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
-    real                                                        ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
-    real                                                        ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-    real                                                        ::  ck, dh, dh1, dh2, flop, vcs, vflop
-    real                                                        ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4, tmp1, tmp2
-    real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
-    real                                                        ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
-    real                                                        ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
-    real                                                        ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
-    real                                                        ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
-    real                                                        ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
-    real                                                        ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
-    real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
-    real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ut
-    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cvf
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp, bd
+    integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, vflop
+    real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb, u1, u2, u3, ug, e1, e2, e3, u_tau
+    real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
+    real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
+    real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
+    real                                                      ::  ck, dh, dh1, dh2, vcs
+    real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4, tmp1, tmp2
+    real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
+    real                                                      ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
+    real                                                      ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
+    real                                                      ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
+    real                                                      ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
+    real                                                      ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
+    real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
+    real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
+    real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
+    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cvf
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp, bd
     
     ix = sz(1)
     jx = sz(2)
@@ -122,10 +123,10 @@
 ! 粘性項置換部　67 ! DP 92
 ! Total : 45 + 44 + 798 + 84 = 971 ! DP 65 + 44 + 798 + 84 = 991
 
-    flop = flop + real(ix)*real(jx)*real(kx)*798.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*991.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*798.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*991.0d0 ! DP
     
-    vflop = 0.0;
+    vflop = 0.0d0;
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
@@ -588,7 +589,7 @@
             vv_b = u_tau * e2*e2
           endif
           
-          vflop = vflop + 67.0
+          vflop = vflop + 67.0d0
           ! > 9 + sqrt*1 + /3 + 4*6 = 9+10+8*3+24 = 67 ! DP 9+20+13*3+24 = 92
         endif
       endif 
@@ -657,20 +658,21 @@
     subroutine update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  dh, dt, dd, flop, coef, actv, r_actv
-    real                                                        ::  pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt
-    real                                                        ::  u_ref, v_ref, w_ref
-    real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
-    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                        ::  c1, c2, c3, c4, c5, c6
-    real                                                        ::  N_e, N_w, N_n, N_s, N_t, N_b
-    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, vc
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div, p
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp, bv
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  dh, dt, dd, coef, actv, r_actv
+    real                                                      ::  pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt
+    real                                                      ::  u_ref, v_ref, w_ref
+    real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
+    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
+    real                                                      ::  c1, c2, c3, c4, c5, c6
+    real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
     
     ix = sz(1)
     jx = sz(2)
@@ -682,8 +684,8 @@
     coef = dh/dt
     
     ! loop : 2 + 6 + 6 + 36 + 18 + 25 + 15 = 108
-    flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 16.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*108.0 + 26.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 16.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 26.0d0 ! DP
 
 
 !$OMP PARALLEL &
@@ -810,18 +812,19 @@
     subroutine divergence (div, sz, g, coef, v0, bv, v00, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  coef, flop
-    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb, actv
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                        ::  u_ref, v_ref, w_ref
-    real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
-    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  coef
+    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, actv
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real                                                      ::  u_ref, v_ref, w_ref
+    real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
@@ -831,7 +834,7 @@
     w_ref = v00(3)
     
     ! loop : 1 + 42 + 13
-    flop  = flop + real(ix)*real(jx)*real(kx)*56.0
+    flop  = flop + dble(ix)*dble(jx)*dble(kx)*56.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bvx, actv) &
@@ -895,17 +898,18 @@
     subroutine ee (vc, sz, g, dt, v, bd, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  flop, actv, dt
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vc, v
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  actv, dt
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vc, v
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*8.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*8.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(actv) &
@@ -953,18 +957,19 @@
     subroutine vis_ee (vc, sz, g, dh, dt, v00, rei, wv, v, bx, cf, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  u_ref, v_ref, w_ref, dh, dh1, dh2, flop
-    real                                                        ::  EX, EY, EZ, rei, cf, dt, uq, vq, wq, actv
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv, vc
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
+    real                                                      ::  EX, EY, EZ, rei, cf, dt, uq, vq, wq, actv
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, wv, vc
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
     ix = sz(1)
     jx = sz(2)
@@ -974,7 +979,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(ix*jx*kx)*48.0 + 5.0
+    flop = flop + dble(ix*jx*kx)*48.0d0 + 5.0d0
     
     do k=1,kx
     do j=1,jx
@@ -1119,19 +1124,20 @@
     subroutine vis_ee_vbc (vc, sz, g, st, ed, dh, dt, v00, rei, v, bx, odr, cf, vec, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, m, odr
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  u_ref, v_ref, w_ref, dh, dh1, dh2, flop
-    real                                                        ::  EX, EY, EZ, rei, cf, dt
-    real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vc, v
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
+    integer                                                   ::  i, j, k, g, bvx, m, odr
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
+    real                                                      ::  EX, EY, EZ, rei, cf, dt
+    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  vec
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
     dh1= 1.0/dh
     dh2= dt*rei*dh1*dh1 * cf
@@ -1251,7 +1257,7 @@
     end do
     end do
     
-    flop = flop + real(8 + 42*m) ! 20100628
+    flop = flop + dble(m)*42d0 + 8.0d0
 
     return
     end subroutine vis_ee_vbc
@@ -1276,18 +1282,19 @@
     subroutine vis_cn_sor (v, sz, g, dh, dt, v00, rei, omg, vc, bx, cf, dv, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  u_ref, v_ref, w_ref, dh, dh1, dh2, flop
-    real                                                        ::  rei, dd, dv, dv1, dv2, dv3, uq, vq, wq, ddv
-    real                                                        ::  omg, s1, s2, s3, cf, dt, actv, b_vbc
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
+    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, uq, vq, wq, ddv
+    real                                                      ::  omg, s1, s2, s3, cf, dt, actv, b_vbc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
     ix = sz(1)
     jx = sz(2)
@@ -1298,7 +1305,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(ix*jx*kx)*52.0 + 8.0
+    flop = flop + dble(ix*jx*kx)*52.0d0 + 8.0d0
     
     do k=1,kx
     do j=1,jx
@@ -1420,20 +1427,21 @@
     subroutine vis_cn_mod_sor (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, cf, dv, vec, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, m
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  u_ref, v_ref, w_ref, dh, dh1, dh2, flop
-    real                                                        ::  rei, dd, dv, dv1, dv2, dv3, ddv
-    real                                                        ::  u_bc, v_bc, w_bc, uq, vq, wq
-    real                                                        ::  omg, s1, s2, s3, cf, dt, actv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
+    integer                                                   ::  i, j, k, g, bvx, m
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
+    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, ddv
+    real                                                      ::  u_bc, v_bc, w_bc, uq, vq, wq
+    real                                                      ::  omg, s1, s2, s3, cf, dt, actv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  vec
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
     dh1= 1.0/dh
     dh2= dt*rei*dh1*dh1*cf
@@ -1577,7 +1585,7 @@
     end do
     end do
     
-    flop = flop + real(m)*48.0 + 8.0
+    flop = flop + dble(m)*48.0d0 + 8.0d0
 
     return
     end subroutine vis_cn_mod_sor
@@ -1734,12 +1742,13 @@
     subroutine ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  flop, actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vc, v, ab
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vc, v, ab
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
     
     ix = sz(1)
     jx = sz(2)
@@ -1747,7 +1756,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(27*ix*jx*kx) ! 20100706
+    flop = flop + dble(ix*jx*kx) * 27.0d0
     
     do k=1,kx
     do j=1,jx
@@ -1793,18 +1802,19 @@
     subroutine vis_cn_jcb (v, sz, g, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  u_ref, v_ref, w_ref, dh, dh1, dh2, flop
-    real                                                        ::  rei, dd, dv, dv1, dv2, dv3, uq, vq, wq, ddv
-    real                                                        ::  omg, s1, s2, s3, cf, dt, actv, b_vbc
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc, wk
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
+    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, uq, vq, wq, ddv
+    real                                                      ::  omg, s1, s2, s3, cf, dt, actv, b_vbc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, wk
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
     ix = sz(1)
     jx = sz(2)
@@ -1815,7 +1825,7 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    flop = flop + real(8 + 52*ix*jx*kx)
+    flop = flop + dble(ix*jx*kx)*52.0d0 + 8.0d0
     
     do k=1,kx
     do j=1,jx
@@ -1940,20 +1950,21 @@
     subroutine vis_cn_mod_jcb (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, vec, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, m
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  u_ref, v_ref, w_ref, dh, dh1, dh2, flop
-    real                                                        ::  rei, dd, dv, dv1, dv2, dv3, ddv
-    real                                                        ::  u_bc, v_bc, w_bc, uq, vq, wq
-    real                                                        ::  omg, s1, s2, s3, cf, dt, actv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc, wk
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
+    integer                                                   ::  i, j, k, g, bvx, m
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
+    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, ddv
+    real                                                      ::  u_bc, v_bc, w_bc, uq, vq, wq
+    real                                                      ::  omg, s1, s2, s3, cf, dt, actv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, wk
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  vec
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
     dh1= 1.0/dh
     dh2= dt*rei*dh1*dh1*cf
@@ -2097,7 +2108,7 @@
     end do
     end do
     
-    flop = flop + real(8 + 48*m)
+    flop = flop + dble(m)*48.0d0 + 8.0d0
 
     return
     end subroutine vis_cn_mod_jcb
@@ -2121,16 +2132,17 @@
     implicit none
     include 'ffv_f_params.h'
 
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, itr, itrMax, iret, ierr
-    integer, dimension(3)                                       ::  sz
-    real, dimension(2)                                          ::  range_Yp, range_Ut, tmp_Max, tmp_Min, tmp
-    real                                                        ::  dh, dd, dis, eps1, eps2, re, flop
-    real                                                        ::  T_w, U_t, U_t0, Yp, dut
-    real                                                        ::  u_ref, v_ref, w_ref, u1, u2, u3, ug
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ut
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, itr, itrMax, iret, ierr
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real, dimension(2)                                        ::  range_Yp, range_Ut, tmp_Max, tmp_Min, tmp
+    real                                                      ::  dh, dd, dis, eps1, eps2, re
+    real                                                      ::  T_w, U_t, U_t0, Yp, dut
+    real                                                      ::  u_ref, v_ref, w_ref, u1, u2, u3, ug
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
     ix = sz(1)
     jx = sz(2)
@@ -2152,7 +2164,7 @@
     eps1 = 1.0e-3 ! 速度がeps1よりも小さい値のときには摩擦速度をゼロにする
     eps2 = 1.0e-3 ! 反復の収束判定閾値
     itrMax = 10   ! Newton反復の最大反復数
-    flop = flop + 4.0
+    flop = flop + 4.0d0
 
     do k=1,kx
     do j=1,jx
@@ -2165,13 +2177,13 @@
       ug = sqrt(u1*u1 + u2*u2 + u3*u3)
       U_t0 = 0.0
       
-      flop = flop + 23.0
+      flop = flop + 23.0d0
       
       if ( (0 /= ibits(bpx, facing_W, 6)) .and. (ug >= eps1) ) then ! 6面のうちのどれか隣接壁への方向フラグが立っている場合，かつ速度がeps1以上
         T_w = ug*dd
         U_t0= sqrt(T_w)
         Yp  = dis*U_t0*re
-        flop = flop + 18.0
+        flop = flop + 18.0d0
         
         do itr=1,itrMax
           dut = ( ug - (5.75*log10(Yp)+5.5)*U_t0 ) / ( ug/U_t0 + 1.0/0.4 )
@@ -2188,7 +2200,7 @@
         range_Ut(1) = min(range_Ut(1), U_t0)
         range_Ut(2) = max(range_Ut(2), U_t0)
         
-        flop = flop + real(itr)*40.0
+        flop = flop + dble(itr)*40.0d0
       endif
       
       ut(i,j,k) = U_t0

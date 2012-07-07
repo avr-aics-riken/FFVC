@@ -15,6 +15,7 @@ CXXSRCS = \
     ffv_Alloc.C \
     ffv_SetBC.C \
     ffv_Restart.C \
+    ffv_Loop.C \
 
 
 SRCS = $(CXXSRCS)

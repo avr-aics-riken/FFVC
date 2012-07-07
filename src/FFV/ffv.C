@@ -40,6 +40,7 @@ FFV::FFV()
   CurrentStep_Avr = 0;
   
   REAL_TYPE deltaT; ///< 時間積分幅（無次元）
+  id_of_solid = 2;
   
   for (int i=0; i<3; i++) 
   {
@@ -62,10 +63,103 @@ FFV::FFV()
   
 }
 
+
 // デストラクタ
 FFV::~FFV()
 {
   
+}
+
+
+
+// 時間平均値のファイル出力
+void FFV::AverageOutput(double& flop)
+{
+  // 出力ファイルの指定が有次元の場合
+  REAL_TYPE timeAvr;
+  if (C.Unit.File == DIMENSIONAL) {
+    timeAvr = CurrentTime_Avr * C.Tscale;
+  }
+  else {
+    timeAvr = CurrentTime_Avr;
+  }
+  
+  // 出力用のヘッダ
+  REAL_TYPE m_org[3], m_pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++) {
+    m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
+    m_pit[i] = pitch[i];
+  }
+  
+  // 平均操作の母数
+  int stepAvr = (int)CurrentStep_Avr;
+  REAL_TYPE scale = 1.0 / (REAL_TYPE)stepAvr;
+  
+  // ガイドセル出力
+  int gc_out = C.GuideOut;
+  
+  // 出力ファイル名
+  std::string tmp;
+  
+  int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  
+  // Pressure
+  if (C.Unit.File == DIMENSIONAL) 
+  {
+    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+    fb_prs_nd2d_(d_ws, d_ap, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
+  }
+  else 
+  {
+    fb_xcopy_(d_ws, d_ap, &d_length, &scale, &flop);
+  }
+  
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, stepAvr, myRank, (bool)C.FIO.IO_Output);
+  F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrPressure, stepAvr, dfi_mng[var_Pressure_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
+  
+  // Velocity
+  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  fb_shift_refv_out_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop);
+  
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, stepAvr, myRank, (bool)C.FIO.IO_Output);
+  F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrVelocity, stepAvr, dfi_mng[var_Velocity_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
+  
+  // Temperature
+  if( C.isHeatProblem() )
+  {
+    if (C.Unit.File == DIMENSIONAL) {
+      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
+      fb_tmp_nd2d_(d_ws, d_at, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
+    }
+    else {
+      fb_xcopy_(d_ws, d_at, &d_length, &scale, &flop);
+    }
+    
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, stepAvr, myRank, (bool)C.FIO.IO_Output);
+    F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+    Hostonly_ if( !DFI.Write_DFI_File(C.f_AvrTemperature, stepAvr, dfi_mng[var_Temperature_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
+  }
+}
+
+
+
+// 時間平均操作を行う
+void FFV::Averaging_Time(double& flop)
+{
+  CurrentStep_Avr++;
+  CurrentTime_Avr += DT.get_DT();
+  
+  fb_average_s_(d_ap, size, &guide, d_p, &flop);
+  fb_average_v_(d_av, size, &guide, d_v, &flop);
+  
+  if ( C.isHeatProblem() ) 
+  {
+    fb_average_s_(d_at, size, &guide, d_t, &flop);
+  }
 }
 
 
@@ -232,7 +326,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  fb_shift_refv_out_(d_wvex, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
   if ( !restart ) 
   {
@@ -243,7 +337,7 @@ void FFV::FileOutput(double& flop, const bool restart)
     tmp = DFI.Generate_FileName(vel_restart, m_step, myRank, pout);
   }
   
-  F.writeVector(tmp, size, guide, d_wvex, m_step, m_time, m_org, m_pit, gc_out);
+  F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out);
   
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], pout) ) Exit(0);
   
@@ -310,10 +404,10 @@ void FFV::FileOutput(double& flop, const bool restart)
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
-    fb_shift_refv_out_(d_wvex, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
     tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, pout);
-    F.writeVector(tmp, size, guide, d_wvex, m_step, m_time, m_org, m_pit, gc_out);
+    F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
 
@@ -509,12 +603,6 @@ bool FFV::hasLinearSolver(const int L)
   return false;
 }
 
-
-// タイムステップループ
-int FFV::Loop(int m_step)
-{
-  return 1;
-}
 
 
 // タイムステップループ
@@ -842,6 +930,7 @@ bool FFV::stepPost()
 }
 
 
+
 // 利用例の表示
 void FFV::Usage()
 {
@@ -855,4 +944,31 @@ void FFV::Usage()
   cout << " \tparameter_file includes all parameters for simulation." << endl;
   cout << endl;
 
+}
+
+
+
+// 空間平均操作と変動量の計算を行う
+// スカラ値は算術平均，ベクトル値は自乗和
+void FFV::Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, double& flop)
+{
+  REAL_TYPE m_var[2];
+  
+  // 速度
+  fb_delta_v_(m_var, size, &guide, d_v, d_v0, d_bcd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
+  rms[var_Velocity] = m_var[0];
+  avr[var_Velocity] = m_var[1];
+  
+  // 圧力
+  fb_delta_s_(m_var, size, &guide, d_p, d_p0, d_bcd, &flop);
+  rms[var_Pressure] = m_var[0];
+  avr[var_Pressure] = m_var[1];
+  
+  // 温度
+  if ( C.isHeatProblem() ) {
+    fb_delta_s_(m_var, size, &guide, d_t, d_t0, d_bcd, &flop);
+    rms[var_Temperature] = m_var[0];
+    avr[var_Temperature] = m_var[1];
+  }
+  
 }

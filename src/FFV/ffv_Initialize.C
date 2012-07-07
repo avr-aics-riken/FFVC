@@ -203,10 +203,7 @@ int FFV::Initialize(int argc, char **argv)
   cmp = new CompoList[C.NoCompo+1];
 
   
-  
-  // ソルバークラスのノードローカルな変数の設定 -----------------------------------------------------
-  dh0     = &deltaX;
-  dh      = &deltaX;
+
   
   // 並列処理モード
   string para_label = setParallelism();
@@ -2360,7 +2357,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int id_of_solid = 2;
   
   switch (C.Mode.Example) {
       

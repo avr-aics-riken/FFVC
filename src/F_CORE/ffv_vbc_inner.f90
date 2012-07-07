@@ -35,19 +35,20 @@
     subroutine pvec_vibc_oflow (wv, sz, g, st, ed, dh, rei, v, bv, odr, vec, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                        ::  dh, dh1, dh2, flop, EX, EY, EZ, rei
-    real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, m
-    real                                                        ::  u_bc, v_bc, w_bc
-    real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
+    real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
+    real                                                      ::  cnv_u, cnv_v, cnv_w, cr, cl, m
+    real                                                      ::  u_bc, v_bc, w_bc
+    real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, wv
+    real, dimension(3)                                        ::  vec
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
     dh1= 1.0/dh
     dh2= rei*dh1*dh1
@@ -64,7 +65,7 @@
     ks = st(3)
     ke = ed(3)
     
-    flop = flop + 10.0 ! DP 15 flops
+    flop = flop + 10.0d0 ! DP 15 flops
     
     m = 0.0
 
@@ -278,11 +279,12 @@
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
+    double precision                                          ::  flop
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                        ::  dh, dh1, dh2, flop, EX, EY, EZ, rei
+    real                                                        ::  dh, dh1, dh2, EX, EY, EZ, rei
     real                                                        ::  u_ref, v_ref, w_ref, m1, m2
     real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
@@ -320,7 +322,7 @@
     m1 = 0.0
     m2 = 0.0
     
-    flop = flop + 13.0 ! DP 18 flop
+    flop = flop + 13.0d0 ! DP 18 flop
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m1) &
@@ -737,15 +739,16 @@
     subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  flop, coef
-    real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref, m
-    real, dimension(3)                                          ::  vec
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  coef
+    real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
+    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref, m
+    real, dimension(3)                                        ::  vec
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
     ! u_bc_refは参照座標系での境界速度
     u_bc_ref = vec(1) + v00(1)
@@ -760,7 +763,7 @@
     ke = ed(3)
     
     m = real( (ie-is+1)*(je-js+1)*(ke-ks+1) )
-    flop = flop + m*7.0 + 3.0
+    flop = flop + dble(m)*7.0d0 + 3.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr, coef) &
@@ -825,18 +828,19 @@
     subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, coef, bv, odr, v0, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  flop, coef, m
-    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                        ::  cf, u_ref, v_ref, w_ref
-    real                                                        ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  coef, m
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
+    real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
+    real                                                      ::  cf, u_ref, v_ref, w_ref
+    real                                                      ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ! 参照速度
     u_ref = v00(1)
@@ -933,7 +937,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + m*91.0
+    flop = flop + dble(m)*91.0d0
 
     return
     end subroutine div_ibc_oflow_pvec
@@ -957,14 +961,15 @@
     subroutine div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, av, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  flop, coef, rc
-    real                                                        ::  u_ref, v_ref, w_ref, dv, a1, m
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    real, dimension(2)                                          ::  av
+    integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+    integer, dimension(3)                                     ::  sz, st, ed
+    double precision                                          ::  flop
+    real                                                      ::  coef, rc
+    real                                                      ::  u_ref, v_ref, w_ref, dv, a1, m
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+    real, dimension(2)                                        ::  av
     
     ! 参照速度
     u_ref = v00(1)
@@ -981,7 +986,7 @@
     ks = st(3)
     ke = ed(3)
 
-    flop = flop + 8.0 ! DP 13 flop
+    flop = flop + 8.0d0 ! DP 13 flop
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a1) &
@@ -1039,7 +1044,7 @@
 
     av(1) = a1
     av(2) = m
-    flop = flop + m*13.0
+    flop = flop + dble(m)*13.0d0
 
     return
     end subroutine div_ibc_oflow_vec

@@ -577,11 +577,7 @@ public:
   int CheckParam;
   int CnvScheme;
   int FB_version; ///< FlowBaseクラスのバージョン番号
-  int guide;
   int GuideOut;
-  int imax;
-  int jmax; 
-  int kmax;
   int KindOfSolver;
   int LastStep;
   int Limiter;
@@ -684,9 +680,7 @@ public:
     CheckParam = 0;
     FB_version = 0;
     CnvScheme = 0;
-    guide = 0;
     GuideOut = 0;
-    imax = jmax = kmax = 0;
     KindOfSolver = 0;
     LastStep = 0;
     Limiter = 0;

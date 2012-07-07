@@ -29,10 +29,11 @@
     include '../FB/ffv_f_params.h'
     integer                                                   :: i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     :: sz
+    double precision                                          :: flop
     real                                                      :: ur, ul, vr, vl, wr, wl, dt, dh, dth
     real                                                      :: fc, fe, fw, fn, fs, ft, fb
     real                                                      :: bc, be, bw, bn, bs, bt, bb
-    real                                                      :: re, rw, rn, rs, rt, rb, flop
+    real                                                      :: re, rw, rn, rs, rt, rb
     real                                                      :: u_ref, v_ref, w_ref
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    :: f, q
@@ -46,7 +47,7 @@
     v_ref = v00(2)
     w_ref = v00(3)
     dth= dt/dh
-    flop = real(ix*jx*kx*75 + 1)
+    flop = dble(ix*jx*kx)*75.0d0 + 1.0d0
 
     do k=1,kx
     do j=1,jx
@@ -121,7 +122,8 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  dh, ck, b, dt, flop
+    double precision                                          ::  flop
+    real                                                      ::  dh, ck, b, dt
     real                                                      ::  di1, di2, di3, si1, si2, si3, si4, gi1, gi2, gi3, gi4, tr1, tl1, c1
     real                                                      ::  dj1, dj2, dj3, sj1, sj2, sj3, sj4, gj1, gj2, gj3, gj4, tr2, tl2, c2
     real                                                      ::  dk1, dk2, dk3, sk1, sk2, sk3, sk4, gk1, gk2, gk3, gk4, tr3, tl3, c3

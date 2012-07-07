@@ -27,7 +27,8 @@
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                       ::  sz
-    real                                                        ::  b2, dv, flop
+    double precision                                            ::  flop
+    real                                                        ::  b2, dv
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
 
@@ -36,7 +37,7 @@
     kx = sz(3)
     b2 = 0.0
     
-    flop = flop + real(ix)*real(jx)*real(kx)*4.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(dv) &
@@ -81,8 +82,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp, res, flop
+    real                                                      ::  omg, dd, ss, dp, res
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -91,8 +93,8 @@
     kx = sz(3)
 		res = 0.0 ! absolute
     
-    flop = flop + real(ix)*real(jx)*real(kx)*36.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*41.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*36.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*41.0d0 ! DP
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
@@ -158,8 +160,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp, res, flop, pp
+    real                                                      ::  omg, dd, ss, dp, res, pp
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
     integer                                                   ::  ip, color
@@ -167,8 +170,8 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    flop = flop + real(ix)*real(jx)*real(kx)*36.0*0.5
-    ! flop = flop + real(ix)*real(jx)*real(kx)*41.0*0.5 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx) * 36.0d0 * 0.5d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, pp, ss, dp, idx) &

@@ -98,19 +98,23 @@ private:
   unsigned long L_Wcell;   ///< ローカルなSolid cell
   
   
-  double CurrentTime;           ///< 現在の時間（ケース）
-  double CurrentTime_Avr;       ///< 平均時間（ケース）
+  double CurrentTime;           ///< 計算開始からの積算時刻（ケース）
+  double CurrentTime_Avr;       ///< 平均値操作の積算時間（ケース）
   double Session_StartTime;     ///< セッションの開始時間
   double Session_CurrentTime;   ///< セッションの現在時間
   
-  unsigned CurrentStep;         ///< 現在のステップ（ケース）
-  unsigned CurrentStep_Avr;     ///< 平均ステップ数（ケース）
+  unsigned CurrentStep;         ///< 計算開始からの積算ステップ（ケース）
+  unsigned CurrentStep_Avr;     ///< 平均操作の積算ステップ数（ケース）
   unsigned Session_StartStep;   ///< セッションの開始ステップ
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
   unsigned Session_LastStep;    ///< セッションで計算するステップ数
   
+  REAL_TYPE convergence_prev;  ///< 前回の反復の収束値
+  REAL_TYPE convergence_rate;  ///< 収束値の増減比
   
   REAL_TYPE deltaT; ///< 時間積分幅（無次元）
+  
+  int id_of_solid; // Geometry Direct Interfaceでテスト的に固定ID=2を与える
   
   
   int cf_sz[3];     ///< SOR2SMAの反復の場合のバッファサイズ
@@ -126,8 +130,7 @@ private:
   
   
   // Fortranへの引数
-  REAL_TYPE *dh;    ///< 格子幅（無次元）
-  REAL_TYPE *dh0;   ///< 格子幅（有次元）
+  //REAL_TYPE *dh0;   ///< 格子幅（有次元）
   REAL_TYPE v00[4]; ///< 参照速度
   
   
@@ -141,7 +144,7 @@ private:
   REAL_TYPE *d_abf;
   REAL_TYPE *d_vf0;
   REAL_TYPE *d_av;
-  REAL_TYPE *d_wvex;
+  REAL_TYPE *d_wo;
   REAL_TYPE *d_qbc;
   
   // Scalar3D
@@ -319,6 +322,22 @@ private:
    * @param [in/out] total ソルバーに使用するメモリ量
    */
   void allocate_SOR2SMA_buffer(double &total);
+  
+  
+  
+  /**
+   * @brief 時間平均値のファイル出力
+   * @param [in/out] flop 浮動小数点演算数
+   */
+  void AverageOutput(double& flop);
+  
+  
+  
+  /**
+   * @brief 時間平均操作を行う
+   * @param [in/out] flop 浮動小数点演算数
+   */
+  void Averaging_Time(double& flop);
   
   
   /**
@@ -503,7 +522,13 @@ private:
   /** 1ステップのコアの処理
    * @param [in] m_step   現在のステップ数
    */
-  int Loop(int m_step);
+  int Loop(const unsigned m_step);
+  
+  
+  /**
+   * @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
+   */
+  void NS_FS_E_CBC();
   
   
   /**
@@ -731,6 +756,16 @@ private:
   
   /** コマンドラインヘルプ */
   void Usage();
+  
+  
+  /**
+   * @brief 空間平均操作と変動量の計算を行う
+   * @param [out]    avr  平均値
+   * @param [out]    rms  変動値
+   * @param [in/out] flop 浮動小数演算数
+   */
+  void Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, double& flop);
+  
   
   /**
    * @brief ポリゴンのカット情報からVBCのboxをセット

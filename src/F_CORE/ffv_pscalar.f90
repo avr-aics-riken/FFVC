@@ -35,12 +35,13 @@
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, idx, swt, hdx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
+    double precision                                            ::  flop
     real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb
     real                                                        ::  Up0, Ue1, Uw1
     real                                                        ::  Vp0, Vs1, Vn1
     real                                                        ::  Wp0, Wb1, Wt1
     real                                                        ::  Fp0, Fe1, Fe2, Fw1, Fw2, Fs1, Fs2, Fn1, Fn2, Fb1, Fb2, Ft1, Ft2
-    real                                                        ::  ck, u_ref, v_ref, w_ref, dh, dh1, flop, actv
+    real                                                        ::  ck, u_ref, v_ref, w_ref, dh, dh1, actv
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                        ::  a_e, a_w, a_n, a_s, a_t, a_b
     real                                                        ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4
@@ -77,8 +78,8 @@
 
     ! /3 + 2 = 26 ! DP 41
     ! loop : 6+1+6+36 + ( 4+36+32+4+17 )*3dir + 2 + 3 = 333
-    flop = flop + real(ix)*real(jx)*real(kx)*333.0 + 26.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*333.0 + 41.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*333.0d0 + 26.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*333.0d0 + 41.0d0 ! DP
     
     do k=1,kx
     do j=1,jx
@@ -288,7 +289,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  dt, gr, rei, dgr, flop
+    double precision                                          ::  flop
+    real                                                      ::  dt, gr, rei, dgr
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
@@ -298,7 +300,7 @@
     kx = sz(3)
     dgr = dt*gr*rei*rei
     
-    flop = flop + real(ix)*real(jx)*real(kx)*4.0 + 3.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0 + 3.0d0
 
     do k=1,kx
     do j=1,jx
@@ -330,7 +332,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  dh, dt, pei, dth1, dth2, res, flop, delta
+    double precision                                          ::  flop
+    real                                                      ::  dh, dt, pei, dth1, dth2, res, delta
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
     real                                                      ::  g_p, g_w, g_e, g_s, g_n, g_b, g_t
     real                                                      ::       a_w, a_e, a_s, a_n, a_b, a_t
@@ -347,8 +350,8 @@
     
     ! /2 + 1 = 17 flop ! DP 27 flop
     ! loop : 6 + 6 + 1 + 51 = 64 flop
-    flop = flop + real(ix)*real(jx)*real(kx)*64.0 + 17.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*64.0 + 27.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 17.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 27.0d0
 
     do k=1,kx
     do j=1,jx

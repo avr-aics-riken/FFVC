@@ -33,7 +33,7 @@
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  flop
+    double precision                                            ::  flop
     real                                                        ::  u_ref, v_ref, w_ref, es, bes
     real                                                        ::  nx, ny, nz, b0, r_bt, uu, u1, u2, u3
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
@@ -95,7 +95,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + (ie-is+1)*(je-js+1)*(ke-ks+1)*24.0
+    flop = flop + dble(ie-is+1)*(je-js+1)*(ke-ks+1)*24.0d0
 
     return
     end subroutine hex_dir
@@ -182,7 +182,8 @@
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
-    real                                                        ::  flop, dh, cf
+    double precision                                            ::  flop
+    real                                                        ::  dh, cf
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
@@ -275,7 +276,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
     
-    flop = flop + (cz(1)+2)*(cz(2)+2)*(cz(3)+2)*200.0
+    flop = flop + dble(cz(1)+2)*(cz(2)+2)*(cz(3)+2)*200.0d0
 
     return
     end subroutine hex_psrc
@@ -303,7 +304,8 @@
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  flop, dt, cf
+    double precision                                            ::  flop
+    real                                                        ::  dt, cf
     real                                                        ::  u_ref, v_ref, w_ref, es
     real                                                        ::  u_p, v_p, w_p, g_p, d_p, Fx_p, Fy_p, Fz_p
     real                                                        ::  nx, ny, nz, b0, d_b, r_bt, uu, u1, u2, u3
@@ -390,7 +392,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + (ie-is+1)*(je-js+1)*(ke-ks+1)*55.0
+    flop = flop + dble(ie-is+1)*(je-js+1)*(ke-ks+1)*55.0d0
 
     return
     end subroutine hex_force_pvec
@@ -422,7 +424,8 @@
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
-    real                                                        ::  flop, dt, dh, cf1, cf2, beta
+    double precision                                            ::  flop
+    real                                                        ::  dt, dh, cf1, cf2, beta
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
@@ -530,7 +533,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + (ie-is+3)*(je-js+3)*(ke-ks+3)*213.0
+    flop = flop + dble(ie-is+3)*(je-js+3)*(ke-ks+3)*213.0d0
 
     am(1) = am1
     am(2) = am2

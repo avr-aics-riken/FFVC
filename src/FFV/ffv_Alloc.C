@@ -223,8 +223,8 @@ void FFV::allocArray_Main(double &total)
   if ( !(d_wv = paraMngr->AllocRealV3DEx(guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_wvex
-  if ( !(d_wvex = paraMngr->AllocRealV3DEx(guide)) ) Exit(0);
+  // d_wo
+  if ( !(d_wo = paraMngr->AllocRealV3DEx(guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
   // d_p

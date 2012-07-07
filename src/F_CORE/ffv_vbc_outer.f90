@@ -32,23 +32,24 @@
     subroutine pvec_vobc_oflow (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, face
-    integer                                                     ::  ix, jx, kx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  dh, dh1, dh2, flop, rei
-    real                                                        ::  u_ref, v_ref, w_ref, m
-    real                                                        ::  u_bc, v_bc, w_bc
-    real                                                        ::  fu, fv, fw, c, EX, EY, EZ
-    real                                                        ::  Ue0, Uw0, Vs0, Vn0, Wb0, Wt0
-    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
-    real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    real, dimension(3)                                          ::  vec
+    integer                                                   ::  i, j, k, g, bvx, face
+    integer                                                   ::  ix, jx, kx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  dh, dh1, dh2, rei
+    real                                                      ::  u_ref, v_ref, w_ref, m
+    real                                                      ::  u_bc, v_bc, w_bc
+    real                                                      ::  fu, fv, fw, c, EX, EY, EZ
+    real                                                      ::  Ue0, Uw0, Vs0, Vn0, Wb0, Wt0
+    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(0:3)                                      ::  v00
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+    real, dimension(3)                                        ::  vec
     
     ix = sz(1)
     jx = sz(2)
@@ -67,7 +68,7 @@
     v_bc = vec(2)
     w_bc = vec(3)
     
-    flop = flop + 10.0 ! DP 15 flops
+    flop = flop + 10.0d0 ! DP 15 flops
 
     m = 0.0
     
@@ -353,7 +354,7 @@
     
 !$OMP END PARALLEL
 
-    flop = flop + m*68.0
+    flop = flop + dble(m)*68.0d0
       
     return
     end subroutine pvec_vobc_oflow
@@ -376,20 +377,21 @@
     subroutine pvec_vobc_specv (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, face
-    integer                                                     ::  ix, jx, kx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  dh, dh1, dh2, flop, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, m
-    real                                                        ::  fu, fv, fw, c, ac
-    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, bvx, face
+    integer                                                   ::  ix, jx, kx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
+    real                                                      ::  u_ref, v_ref, w_ref, m
+    real                                                      ::  fu, fv, fw, c, ac
+    real                                                      ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  vec
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
     ix = sz(1)
     jx = sz(2)
@@ -413,7 +415,7 @@
     v_bc_ref = v_bc + v_ref
     w_bc_ref = w_bc + w_ref
     
-    flop = flop + 13.0 ! DP 18 flop
+    flop = flop + 13.0d0 ! DP 18 flop
 
     m = 0.0
     
@@ -682,7 +684,7 @@
     
 !$OMP END PARALLEL
 
-    flop = flop + m*34.0
+    flop = flop + dble(m)*34.0d0
     
     return
     end subroutine pvec_vobc_specv
@@ -703,26 +705,27 @@
     subroutine pvec_vobc_symtrc (wv, sz, g, dh, rei, v0, bv, face, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, face
-    integer                                                     ::  ix, jx, kx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  dh, dh1, dh2, flop, rei
-    real                                                        ::  rix, rjx, rkx, Up0, Vp0, Wp0
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, bvx, face
+    integer                                                   ::  ix, jx, kx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, rix, rjx, rkx
+    real                                                      ::  dh, dh1, dh2, rei
+    real                                                      ::  Up0, Vp0, Wp0
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
 
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
     
     dh1= 1.0/dh
     dh2= 2.0*rei*dh1*dh1
     
-    flop = flop + 14.0 ! DP 19 flop
+    flop = flop + 14.0d0 ! DP 19 flop
 
 !$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh2, face) &
@@ -752,7 +755,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rix*2.0
+      flop = flop + rix*2.0d0
       
 
     case (X_plus)
@@ -777,7 +780,7 @@
       end do
 !$OMP END DO
     
-      flop = flop + rix*2.0
+      flop = flop + rix*2.0d0
       
 
     case (Y_minus)
@@ -802,7 +805,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*2.0
+      flop = flop + rjx*2.0d0
       
 
     case (Y_plus)
@@ -827,7 +830,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*2.0
+      flop = flop + rjx*2.0d0
       
 
     case (Z_minus)
@@ -852,7 +855,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rkx*2.0
+      flop = flop + rkx*2.0d0
       
 
     case (Z_plus)
@@ -877,7 +880,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rkx*2.0
+      flop = flop + rkx*2.0d0
       
 
     case default
@@ -907,20 +910,21 @@
     subroutine pvec_vobc_wall  (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, face
-    integer                                                     ::  ix, jx, kx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  dh, dh1, dh2, flop, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, m
-    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
-    real                                                        ::  u_bc_ref2, v_bc_ref2, w_bc_ref2
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0, wv
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, bvx, face
+    integer                                                   ::  ix, jx, kx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+    real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
+    real                                                      ::  u_ref, v_ref, w_ref, m
+    real                                                      ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+    real                                                      ::  u_bc_ref2, v_bc_ref2, w_bc_ref2
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  vec
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
     ix = sz(1)
     jx = sz(2)
@@ -948,7 +952,7 @@
     v_bc_ref2 = 2.0*v_bc_ref
     w_bc_ref2 = 2.0*w_bc_ref
     
-    flop = flop + 16.0 ! DP 21 flops
+    flop = flop + 16.0d0 ! DP 21 flops
 
     m = 0.0
 
@@ -1187,7 +1191,7 @@
     
 !$OMP END PARALLEL
 
-    flop = flop + m*12.0
+    flop = flop + dble(m)*12.0d0
     
     return
     end subroutine pvec_vobc_wall
@@ -1540,21 +1544,22 @@
     subroutine vobc_outflow (v, sz, g, c, bv, face, v0, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, face, ix, jx, kx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  Ue, Uw, Un, Us, Ut, Ub
-    real                                                        ::  Ve, Vw, Vn, Vs, Vt, Vb
-    real                                                        ::  We, Ww, Wn, Ws, Wt, Wb
-    real                                                        ::  flop, c, rix, rjx, rkx
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, v0
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, idx, face, ix, jx, kx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, rix, rjx, rkx
+    real                                                      ::  Ue, Uw, Un, Us, Ut, Ub
+    real                                                      ::  Ve, Vw, Vn, Vs, Vt, Vb
+    real                                                      ::  We, Ww, Wn, Ws, Wt, Wb
+    real                                                      ::  c
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, v0
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
     
 !$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face, c) &
@@ -1595,7 +1600,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*9.0
+      flop = flop + rix*9.0d0
       
       
     case (X_plus)
@@ -1629,7 +1634,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*9.0
+      flop = flop + rix*9.0d0
       
       
     case (Y_minus)
@@ -1663,7 +1668,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*9.0
+      flop = flop + rjx*9.0d0
       
       
     case (Y_plus)
@@ -1697,7 +1702,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*9.0
+      flop = flop + rjx*9.0d0
       
       
     case (Z_minus)
@@ -1731,7 +1736,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rkx*9.0
+      flop = flop + rkx*9.0d0
       
       
     case (Z_plus)
@@ -1765,7 +1770,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rkx*9.0
+      flop = flop + rkx*9.0d0
       
     case default
     end select FACES
@@ -1789,16 +1794,16 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g, ii, jj, kk
     integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  v1, v2, v3, v4
-    real                                                      ::  flop, rix, rjx, rkx
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
 
 !$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rix, rjx, rkx, g, face) &
@@ -1831,7 +1836,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*12.0
+      flop = flop + rix*12.0d0
       
 
     case (X_plus)
@@ -1860,7 +1865,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*12.0
+      flop = flop + rix*12.0d0
       
 
     case (Y_minus)
@@ -1889,7 +1894,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*12.0
+      flop = flop + rjx*12.0d0
       
 
     case (Y_plus)
@@ -1918,7 +1923,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rjx*12.0
+      flop = flop + rjx*12.0d0
       
 
     case (Z_minus)
@@ -1947,7 +1952,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rkx*12.0
+      flop = flop + rkx*12.0d0
       
 
     case (Z_plus)
@@ -1976,7 +1981,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rkx*12.0
+      flop = flop + rkx*12.0d0
       
 
     case default
@@ -2144,29 +2149,30 @@
     subroutine div_obc_drchlt (div, sz, g, face, v00, coef, bv, vec, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  flop, coef, rix, rjx, rkx
-    real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, rix, rjx, rkx
+    real                                                      ::  coef
+    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  vec
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
 
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
     
     ! 参照座標系の速度に係数をかけておく
     u_bc_ref = (vec(1) + v00(1)) * coef
     v_bc_ref = (vec(2) + v00(2)) * coef
     w_bc_ref = (vec(3) + v00(3)) * coef
     
-    flop = flop + 6.0
+    flop = flop + 6.0d0
 
 !$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, face) &
@@ -2193,7 +2199,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rix*3.0 ! 2+ real*1
+      flop = flop + rix*3.0d0 ! 2+ real*1
       
       
     case (X_plus)
@@ -2216,7 +2222,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*3.0 ! 2+ real*1
+      flop = flop + rix*3.0d0 ! 2+ real*1
       
       
     case (Y_minus)
@@ -2239,7 +2245,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*3.0 ! 2+ real*1
+      flop = flop + rjx*3.0d0 ! 2+ real*1
       
       
     case (Y_plus)
@@ -2262,7 +2268,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rjx*3.0 ! 2+ real*1
+      flop = flop + rjx*3.0d0 ! 2+ real*1
     
     
     case (Z_minus)
@@ -2285,7 +2291,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rkx*3.0 ! 2+ real*1
+      flop = flop + rkx*3.0d0 ! 2+ real*1
       
       
     case (Z_plus)
@@ -2308,7 +2314,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rkx*3.0 ! 2+ real*1
+      flop = flop + rkx*3.0d0 ! 2+ real*1
     
     case default
     end select FACES
@@ -2335,18 +2341,19 @@
     subroutine div_obc_oflow_pvec (div, sz, g, face, v00, v_out, coef, bv, v0, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  flop, coef, v_out
-    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real                                                        ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
-    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                        ::  u_ref, v_ref, w_ref, m
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v0
+    integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  coef, v_out
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real                                                      ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
+    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
+    real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
+    real                                                      ::  u_ref, v_ref, w_ref, m
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0
 
     ix = sz(1)
     jx = sz(2)
@@ -2542,7 +2549,7 @@
 
 !$OMP END PARALLEL
     
-    flop = flop + m*51.0
+    flop = flop + dble(m)*51.0d0
 
     return
     end subroutine div_obc_oflow_pvec
@@ -2564,21 +2571,21 @@
     subroutine div_obc_oflow_vec (div, sz, g, face, v00, coef, bv, aa, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, ix, jx, kx, face, bvx
-    integer, dimension(3)                                       ::  sz
-    real                                                        ::  flop, coef, dv, a1, a2, a3, u_ref, v_ref, w_ref, rc
-    real                                                        ::  rix, rjx, rkx
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  aa
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, rix, rjx, rkx
+    real                                                      ::  coef, dv, a1, a2, a3, u_ref, v_ref, w_ref, rc
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  aa
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    rix = real(jx)*real(kx)
-    rjx = real(ix)*real(kx)
-    rkx = real(ix)*real(jx)
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
 
     a1 = 0.0   ! sum
     a2 = 1.0e6 ! min
@@ -2586,7 +2593,7 @@
     
     rc = 1.0/coef
 
-    flop = flop + 8.0 ! DP 13 flop
+    flop = flop + 8.0d0 ! DP 13 flop
     
     ! 参照速度
     u_ref = v00(1)
@@ -2627,7 +2634,7 @@
       end do
 !$OMP END DO
       
-      flop = flop + rix*5.0
+      flop = flop + rix*5.0d0
       
       
     case (X_plus)
@@ -2654,7 +2661,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rix*5.0
+      flop = flop + rix*5.0d0
       
       
     case (Y_minus)
@@ -2681,7 +2688,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rjx*5.0
+      flop = flop + rjx*5.0d0
       
       
     case (Y_plus)
@@ -2708,7 +2715,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rjx*5.0
+      flop = flop + rjx*5.0d0
     
     
     case (Z_minus)
@@ -2734,7 +2741,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rkx*5.0
+      flop = flop + rkx*5.0d0
       
       
     case (Z_plus)
@@ -2760,7 +2767,7 @@
       end do
 !$OMP END DO
 
-      flop = flop + rkx*5.0
+      flop = flop + rkx*5.0d0
     
     case default
     end select FACES

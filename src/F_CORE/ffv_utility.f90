@@ -30,7 +30,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
     integer, dimension(3)                                     ::  sz, idx
-    real                                                      ::  ds, flop, r, coef, rm, d
+    double precision                                          ::  flop
+    real                                                      ::  ds, r, coef, rm, d
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -44,7 +45,7 @@
     ds = 0.0
     rm = 0.0
 
-    flop = flop + real(ix)*real(jx)*real(kx)*5.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r, d) &
@@ -102,7 +103,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  ds, flop, r, coef
+    double precision                                          ::  flop
+    real                                                      ::  ds, r, coef
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -111,7 +113,7 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + real(ix)*real(jx)*real(kx)*5.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r) &
@@ -154,7 +156,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  ds, flop, r, coef
+    double precision                                          ::  flop
+    real                                                      ::  ds, r, coef
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -163,7 +166,7 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + real(ix)*real(jx)*real(kx)*5.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r) &
@@ -204,7 +207,8 @@
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  vm1, vm2, vm3, v_max, flop, vx, vy, vz
+    double precision                                          ::  flop
+    real                                                      ::  vm1, vm2, vm3, v_max, vx, vy, vz
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(0:3)                                      ::  v00
 
@@ -217,7 +221,7 @@
     vx = v00(1)
     vy = v00(2)
     vz = v00(3)
-    flop = flop + real(ix)*real(jx)*real(kx)*9.0 + 2.0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 2.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
@@ -265,8 +269,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, h, flop, actv
+    real                                                      ::  u_ref, v_ref, w_ref, dh, h, actv
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -289,8 +294,8 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*72.0 + 8.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*72.0 + 13.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*72.0d0 + 8.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*72.0d0 + 13.0d0 ! DP
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -448,8 +453,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, h, flop, actv
+    real                                                      ::  u_ref, v_ref, w_ref, dh, h, actv
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -469,8 +475,8 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*34.0 + 8.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*34.0 + 13.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*34.0d0 + 8.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*34.0d0 + 13.0d0 ! DP
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -614,8 +620,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, h, flop, actv
+    real                                                      ::  u_ref, v_ref, w_ref, dh, h, actv
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -636,8 +643,8 @@
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*40.0 + 8.0
-    ! flop = flop + real(ix)*real(jx)*real(kx)*40.0 + 13.0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*40.0d0 + 8.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*40.0d0 + 13.0d0 ! DP
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -969,21 +976,22 @@
   subroutine force (frc, sz, g, p, bp, dh, flop)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g
-  integer                                                     ::  bw, be, bs, bn, bb, bt
-  integer, dimension(3)                                       ::  sz
-  real                                                        ::  fx, fy, fz
-  real                                                        ::  qw, qe, qs, qn, qb, qt
-  real                                                        ::  flop, actv, pp, dh, cf
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
-  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
-  real, dimension(3)                                          ::  frc
+  integer                                                   ::  i, j, k, ix, jx, kx, g
+  integer                                                   ::  bw, be, bs, bn, bb, bt
+  integer, dimension(3)                                     ::  sz
+  double precision                                          ::  flop
+  real                                                      ::  fx, fy, fz
+  real                                                      ::  qw, qe, qs, qn, qb, qt
+  real                                                      ::  actv, pp, dh, cf
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+  real, dimension(3)                                        ::  frc
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + real(ix)*real(jx)*real(kx)*12.0 + 5.0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*12.0d0 + 5.0d0
 
   fx = 0.0
   fy = 0.0
