@@ -189,18 +189,22 @@ void FFV::FileOutput (double& flop, const bool restart)
   // Pressure
   d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
-  if (C.Unit.File == DIMENSIONAL) {
+  if (C.Unit.File == DIMENSIONAL) 
+  {
     REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
     fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
   }
-  else {
+  else 
+  {
     fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
   }
   
-  if ( !restart ) {
+  if ( !restart ) 
+  {
     tmp = DFI.Generate_FileName(C.f_Pressure, m_step, myRank, pout);
   }
-  else {
+  else 
+  {
     tmp = DFI.Generate_FileName(prs_restart, m_step, myRank, pout);
   }
   
@@ -213,10 +217,12 @@ void FFV::FileOutput (double& flop, const bool restart)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wvex, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  if ( !restart ) {
+  if ( !restart ) 
+  {
     tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, pout);
   }
-  else {
+  else 
+  {
     tmp = DFI.Generate_FileName(vel_restart, m_step, myRank, pout);
   }
   
@@ -226,22 +232,27 @@ void FFV::FileOutput (double& flop, const bool restart)
   
   
   // Tempearture
-  if( C.isHeatProblem() ){
+  if( C.isHeatProblem() )
+  {
     
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     
-    if (C.Unit.File == DIMENSIONAL) {
+    if (C.Unit.File == DIMENSIONAL) 
+    {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
       fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
-    else {
+    else 
+    {
       fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
     }
     
-    if ( !restart ) {
+    if ( !restart ) 
+    {
       tmp = DFI.Generate_FileName(C.f_Temperature, m_step, myRank, pout);
     }
-    else {
+    else 
+    {
       tmp = DFI.Generate_FileName(temp_restart, m_step, myRank, pout);
     }
     
@@ -469,6 +480,16 @@ int FFV::get_DomainInfo()
   // string hoge = str;
   
   return div_type;
+}
+
+
+// 種類Lの線形ソルバを利用する場合，trueを返す
+bool FFV::hasLinearSolver(const int L)
+{
+  for (int i=0; i<ItrCtl::ic_END; i++)
+    if ( IC[i].get_LS() == L ) return true;
+  
+  return false;
 }
 
 

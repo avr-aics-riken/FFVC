@@ -32,10 +32,6 @@ void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 // 必要な値のコピー
 void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
 {
-  ix = &size[0];
-  jx = &size[1];
-  kx = &size[2];
-  
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
   Peclet    = Cref->Peclet;

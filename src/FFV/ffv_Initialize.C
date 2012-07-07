@@ -353,7 +353,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) 
   {
     // ShapeMonitorのインスタンス
-    ShapeMonitor SM(size, guide, deltaX, origin);
+    ShapeMonitor SM(size, guide, pitch, origin);
     
     V.setShapeMonitor(d_mid, &SM, cmp, C.RefLength);
   }
@@ -473,7 +473,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  // 時間積分幅や物理パラメータの設定
+  // 時間積分幅 deltaT や物理パラメータの設定
   setParameters();
 
   
@@ -507,6 +507,12 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // CompoListの内容とセル数の情報を表示する
+  Hostonly_  {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Component List\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Component List\n\n");
+  }
   display_CompoList(fp);
   
   
@@ -562,6 +568,12 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // コンポーネントの内容リストを表示し、コンポーネント数がゼロの場合と境界条件との整合性をチェック
+  Hostonly_ {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Component Information\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Component Information\n");
+  }
   display_Compo_Info(fp);
 
   
@@ -618,6 +630,11 @@ int FFV::Initialize(int argc, char **argv)
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ 
   {
+    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(stdout,"\t>> Outer Boundary Conditions\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
+    
     display_Parameters(fp);
   }
   
@@ -794,12 +811,7 @@ void FFV::display_Compo_Info(FILE* fp)
 {
   if ( C.NoBC >0 ) {
     Hostonly_ {
-      fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-      fprintf(stdout,"\t>> Component Information\n");
       B.printCompo(stdout, compo_global_bbox, mat, cmp);
-      
-      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-      fprintf(fp,"\t>> Component Information\n");
       B.printCompo(fp, compo_global_bbox, mat, cmp);
     }
   }
@@ -837,13 +849,7 @@ void FFV::display_Compo_Info(FILE* fp)
 void FFV::display_CompoList(FILE* fp)
 {
   Hostonly_  {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Component List\n\n");
     M.chkList(stdout, cmp, C.BasicEqs);
-    
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> Component List\n\n");
-    
     M.chkList(fp, cmp, C.BasicEqs);
   }
   
@@ -872,12 +878,7 @@ void FFV::display_Parameters(FILE* fp)
   
   // 境界条件のリストと外部境界面のBC設定を表示
 
-  fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(stdout,"\t>> Outer Boundary Conditions\n\n");
   B.printFaceOBC(stdout, G_region);
-  
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
   B.printFaceOBC(fp, G_region);
 
   
@@ -1767,7 +1768,7 @@ void FFV::setComponentVF()
   int f_st[3], f_ed[3];
   double flop;
   
-  CompoFraction CF(size, guide, deltaX, origin, subsampling);
+  CompoFraction CF(size, guide, pitch, origin, subsampling);
   
   for (int n=1; n<=C.NoBC; n++) {
     
@@ -2025,11 +2026,10 @@ void FFV::setInitialCondition()
 {
   double flop_task;
   
+  REAL_TYPE tm = Total_time * C.Tscale;
+  
   if ( C.Start == initial_start ) {
-		REAL_TYPE dt_init=1.0, tm_init=0.0;
-		REAL_TYPE U0[3], tm;
-    
-    tm = Total_time * C.Tscale;
+		REAL_TYPE U0[3];
     
 		// 速度の初期条件の設定
     if (C.Unit.Param == DIMENSIONAL) {
@@ -2089,8 +2089,8 @@ void FFV::setInitialCondition()
     Ex->initCond(d_v, d_p);
     
   }
-  else { // リスタート時
-    
+  else // リスタート時
+  { 
     // 内部境界条件
     BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
     BC.InnerVBC_Periodic(d_v, d_bcd);
@@ -2101,7 +2101,7 @@ void FFV::setInitialCondition()
     BC.OuterVBC_Periodic(d_v);
     
     //流出境界の流出速度の算出
-    REAL_TYPE coef = deltaX/(REAL_TYPE)m_dt;
+    REAL_TYPE coef = deltaX/deltaT;
     REAL_TYPE m_av[2];
     BC.mod_div(d_ws, d_bcv, coef, tm, v00, m_av, flop_task);
     DomainMonitor(BC.export_OBC(), &C, flop_task);
@@ -2309,6 +2309,9 @@ void FFV::setParameters()
       break;
   }
   
+  
+  // 無次元時間積分幅
+  deltaT = DT.get_DT();
   
   // Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
   if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(0, 0.0, DT.get_DT(), Interval_Manager::tg_compute, 

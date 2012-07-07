@@ -418,7 +418,7 @@ private:
    * @param [in/out] flop    浮動小数点演算数
    * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
-  void FileOutput(double& flop, const bool restart);
+  void FileOutput(double& flop, const bool restart=false);
   
   
   /**
@@ -564,8 +564,9 @@ private:
   
   /**
    * @brief リスタートプロセス
+   * @param [in]  fp   ファイルポインタ
    */
-  void Restart();
+  void Restart(FILE* fp);
   
   
   /**

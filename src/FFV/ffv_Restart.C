@@ -205,7 +205,7 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 
 
 // リスタートプロセス
-void FFV::Restart()
+void FFV::Restart(FILE* fp)
 {
   double flop_task;
   
@@ -257,21 +257,20 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
   if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
     
-    Hostonly_ fprintf(mp, "\tNon-dimensional value\n");
+    Hostonly_ fprintf(stdout, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
-    REAL_TYPE f_min, f_max, min_tmp, max_tmp, fpct;
-    
-    fpct = (REAL_TYPE)flop;
+    REAL_TYPE f_min, f_max, min_tmp, max_tmp;
     
     // Velocity
-    fb_minmax_v_ (&f_min, &f_max, size, guide, v00, d_v, &fpct); // allreduceすること
+    fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_v, &flop); // allreduceすること
     
-    if ( numProc > 1 ) {
+    if ( numProc > 1 ) 
+    {
       min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, SKL_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
     Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
@@ -279,9 +278,10 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
     
     
     // Pressure
-    fb_minmax_s_ (&f_min, &f_max, size, guide, d_p, &fpct);
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_p, &flop);
     
-    if ( numProc > 1 ) {
+    if ( numProc > 1 ) 
+    {
       min_tmp = f_min;
       if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
@@ -293,10 +293,12 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
     Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
     
     // temperature
-    if ( C.isHeatProblem() ) {
-      fb_minmax_s_ (&f_min, &f_max, size, guide, d_t, &fpct);
+    if ( C.isHeatProblem() ) 
+    {
+      fb_minmax_s_ (&f_min, &f_max, size, &guide, d_t, &flop);
       
-      if ( numProc > 1 ) {
+      if ( numProc > 1 ) 
+      {
         min_tmp = f_min;
         if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
         
@@ -307,8 +309,6 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
       Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
       Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
     }
-    
-    flop = (double)fpct;
 	}
 }
 

@@ -53,9 +53,8 @@ public:
   /** コンストラクタ
    * @param [in] size   ローカルセル数
    * @param [in] guide  ガイドセル数
-   * @param [in] crd    モニタ点座標
-   * @param [in] org    ローカル領域基点座標
    * @param [in] pch    ローカル領域セル幅
+   * @param [in] org    ローカル領域基点座標
    * @param [in] div    サブディビジョンの分割数
    */
   CompoFraction(const int* size, const int guide, const float* pch, const float* org, const int div)
@@ -359,9 +358,8 @@ public:
   /** コンストラクタ
    * @param [in] size   ローカルセル数
    * @param [in] guide  ガイドセル数
-   * @param [in] crd    モニタ点座標
-   * @param [in] org    ローカル領域基点座標
    * @param [in] pch    ローカル領域セル幅
+   * @param [in] org    ローカル領域基点座標
    */
   ShapeMonitor(const int* size, const int guide, const float* pch, const float* org) 
   {

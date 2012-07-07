@@ -66,9 +66,9 @@ protected:
    */
   void Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face);
   
-  void Vibc_Prdc                (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
-  void Vobc_Prdc                (REAL_TYPE* d_v, const int face);
-  void Vobc_Prdc_CF             (REAL_TYPE* d_v, const int face);
+  void Vibc_Prdc        (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
+  void Vobc_Prdc         (REAL_TYPE* d_v, const int face);
+  void Vobc_Prdc_CF     (REAL_TYPE* d_v, const int face);
   
 public:
   void assign_Temp          (REAL_TYPE* d_t, int* d_bh, REAL_TYPE tm, Control* C);
@@ -84,11 +84,11 @@ public:
   void mod_Dir_Forcing      (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
   void mod_Psrc_VBC         (REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE coef, 
                              int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
-  void mod_Psrc_Forcing     (REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE dh, REAL_TYPE* v00, 
+  void mod_Psrc_Forcing     (REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, 
                              REAL_TYPE** c_array, double& flop);
   void mod_Pvec_Flux        (REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop);
   void mod_Pvec_Forcing     (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);
-  void mod_Vdiv_Forcing     (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* d_div, REAL_TYPE dt, REAL_TYPE dh, REAL_TYPE* v00, 
+  void mod_Vdiv_Forcing     (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* d_div, REAL_TYPE dt, REAL_TYPE* v00, 
                              REAL_TYPE* am, REAL_TYPE** c_array, double& flop);
   void mod_Vis_EE           (REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop);
   void OuterPBC             (REAL_TYPE* d_p);
