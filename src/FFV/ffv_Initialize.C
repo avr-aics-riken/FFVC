@@ -668,7 +668,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
-	if ( (C.Hide.PM_Test == OFF) && (0 == Total_step) ) FileOutput(flop_task);
+	if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) ) FileOutput(flop_task);
   
   
   // 粗い格子を用いたリスタート時には出力
@@ -720,6 +720,18 @@ int FFV::Initialize(int argc, char **argv)
   
   
   TIMING_stop(tm_init_sct);
+  
+  
+  printf("CurrentTime         = %e\n",CurrentTime);
+  printf("CurrentTime_Avr     = %e\n",CurrentTime_Avr);
+  printf("Session_StartTime   = %e\n",Session_StartTime);
+  printf("Session_CurrentTime = %e\n",Session_CurrentTime);
+
+  printf("Session_LastStep    = %u\n",Session_LastStep);
+  printf("Session_CurrentStep = %u\n",Session_CurrentStep);
+  printf("Session_StartStep   = %u\n",Session_StartStep);
+  printf("CurrentStep         = %u\n",CurrentStep);
+  printf("CurrentStep_Avr     = %u\n",CurrentStep_Avr);
   
   Exit(0);
   return 1;
@@ -1438,14 +1450,13 @@ void FFV::init_Interval()
   
   // セッションの初期時刻をセット
   for (int i=0; i<Interval_Manager::tg_END; i++) {
-    C.Interval[i].setTime_init(Base_time );
+    C.Interval[i].setTime_init(Session_StartTime);
   }
   
   // インターバルの初期化
   double m_dt    = DT.get_DT();
-  double m_tm    = Total_time;  // 設定した？
-  unsigned m_stp = (unsigned)Total_step;
-  REAL_TYPE tm = (REAL_TYPE)m_tm;
+  double m_tm    = CurrentTime;  // 設定した？
+  unsigned m_stp = CurrentStep;
   
   if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) ) {  // 基本履歴のコンソールへの出力
     Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
@@ -2029,7 +2040,7 @@ void FFV::setInitialCondition()
 {
   double flop_task;
   
-  REAL_TYPE tm = Total_time * C.Tscale;
+  REAL_TYPE tm = CurrentTime * C.Tscale;
   
   if ( C.Start == initial_start ) {
 		REAL_TYPE U0[3];
@@ -2143,6 +2154,11 @@ void FFV::setLocalCmpIdx_Binary()
   int id;
   int m_st[3], m_ed[3];
   
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
   for (int m=1; m<=C.NoBC; m++) {
     id = cmp[m].getMatOdr();
     
@@ -2161,12 +2177,12 @@ void FFV::setLocalCmpIdx_Binary()
         }
         
         // コンポーネント範囲
-        // GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
-        //if ( !dc_mid->GetBndIndexExtGc(id, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2], 0) ) 
-        //{
-        //  Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
-        //  Exit(0);
-        //}
+        //GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
+        if ( !paraMngr->GetBndIndexExtGc(id, d_mid, ix, jx, kx, gd, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2]) ) 
+        {
+          Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", id);
+          Exit(0);
+        }
         
         // ノード内にコンポーネントがあるかどうかをチェック
         if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし

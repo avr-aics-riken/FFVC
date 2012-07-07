@@ -76,8 +76,8 @@ protected:
   void Write_WholeSize   (FILE* fp, const unsigned tab);
   
 public:
-  bool init              (const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx);
-  bool Write_DFI_File    (const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
+  bool init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host);
+  bool Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
   
   std::string Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const bool mio=false);
 

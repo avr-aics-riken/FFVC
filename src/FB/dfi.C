@@ -16,7 +16,7 @@
 #include "util_Path.h"
 
 //@fn void DFI::init()
-bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx)
+bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host)
 {
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
   if ( Num_Node < 2 ) {
@@ -43,7 +43,7 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int styp
   head = new int[3*Num_Node];
   tail = new int[3*Num_Node];
   
-  hostname = "hoge";
+  hostname = m_host;
   
   for (int i=0; i<Num_Node*3; i++) {
     head[i] = hidx[i];

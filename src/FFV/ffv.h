@@ -18,8 +18,8 @@
 //   PLUS2MINUS, MINUS2PLUS, BOTH
 
 /** 
- * @file ffv.h
- * @brief FFV Class Header
+ * @file   ffv.h
+ * @brief  FFV Class Header
  * @author kero
  */
 
@@ -87,8 +87,6 @@ using namespace PolylibNS;
 class FFV : public DomainInfo {
 private:
   int ffv_procGrp;         ///< プロセスグループ番号 => 0
-  int session_maxStep;     ///< セッションのステップ数
-  int session_currentStep; ///< セッションの現在のステップ
   int ModeTiming;          ///< タイミング測定管理フラグ
   
   unsigned long G_Acell;   ///< グローバルなActive cell
@@ -99,44 +97,31 @@ private:
   unsigned long L_Fcell;   ///< ローカルなFluid cell
   unsigned long L_Wcell;   ///< ローカルなSolid cell
   
-  double Base_time;        ///< セッションの開始時間
-  double Current_time;     ///< 現在の時間（ケース）
-  double Session_time;     ///< セッションの現在時間 Session_time = Current_time - Base_time
-  double Total_time;       ///< 1ケースの全時間
-  double Total_time_avr;   ///< 平均時間
   
-  unsigned Base_step;      ///< セッションの開始ステップ
-  unsigned Current_step;   ///< 現在のステップ（ケース）
-  unsigned Session_step;   ///< セッションの現在ステップ Session_step = Current_step - Base_step
-  unsigned Total_step;     ///< 1ケースの全ステップ
-  unsigned Total_step_avr; ///< 平均ステップ数
+  double CurrentTime;           ///< 現在の時間（ケース）
+  double CurrentTime_Avr;       ///< 平均時間（ケース）
+  double Session_StartTime;     ///< セッションの開始時間
+  double Session_CurrentTime;   ///< セッションの現在時間
+  
+  unsigned CurrentStep;         ///< 現在のステップ（ケース）
+  unsigned CurrentStep_Avr;     ///< 平均ステップ数（ケース）
+  unsigned Session_StartStep;   ///< セッションの開始ステップ
+  unsigned Session_CurrentStep; ///< セッションの現在のステップ
+  unsigned Session_LastStep;    ///< セッションで計算するステップ数
+  
+  
+  REAL_TYPE deltaT; ///< 時間積分幅（無次元）
+  
   
   int cf_sz[3];     ///< SOR2SMAの反復の場合のバッファサイズ
   REAL_TYPE *cf_x;  ///< i方向のバッファ
   REAL_TYPE *cf_y;  ///< j方向のバッファ
   REAL_TYPE *cf_z;  ///< k方向のバッファ
-  
-  
-  REAL_TYPE deltaT; ///< 時間積分幅（無次元）
 
   
   // dfi ファイル管理用 -> Kind_of_vars in FB_Define.h
   // 同じ解像度のリスタート時には、既にdfiファイルが存在する場合には、その内容を継続する
   // ラフリスタートの場合には、新規dfiファイルを生成する >> dfi.C
-  //  0 - var_Velocity
-  //  1 - var_Pressure,
-  //  2 - var_Temperature,
-  //  3 - var_Density,
-  //  4 - var_TotalP,
-  //  5 - var_Velocity_Avr,
-  //  6 - var_Pressure_Avr,
-  //  7 - var_Temperature_Avr,
-  //  8 - var_Density_Avr,
-  //  9 - var_TotalP_Avr,
-  // 10 - var_Helicity,
-  // 11 - var_Vorticity,
-  // 12 - var_I2vgt,
-  // 13 - var_Divergence,
   int dfi_mng[var_END];
   
   
@@ -217,7 +202,6 @@ private:
   SetBC3D BC;                ///< BCクラス
   DFI DFI;                   ///< 分散ファイルインデクス管理クラス
   History* H;                ///< 履歴クラス
-  // Polylib
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   
@@ -787,8 +771,8 @@ public:
   }
   
   
-  /** 初期化 
-   * 格子生成、ビットフラグ処理ほか
+  /**  
+   * @brief 初期化格子生成、ビットフラグ処理ほか
    * @param [in] argc  main関数の引数の個数
    * @param [in] argv  main関数の引数リスト
    */
@@ -805,13 +789,15 @@ public:
   }
   
   
-  /** シミュレーションの1ステップの処理
+  /** 
+   * @brief シミュレーションの1ステップの処理
    *  Loop() + stepPost()
    */
   int MainLoop();
   
   
-  /** シミュレーションの終了時の処理
+  /** 
+   * @brief シミュレーションの終了時の処理
    * プロファイルの統計処理ほか
    */
   bool Post();

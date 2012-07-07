@@ -20,9 +20,26 @@
 FFV::FFV()
 {
   ffv_procGrp = 0;
+  ModeTiming = 0;
+  G_Acell = 0;
+  G_Fcell = 0;
+  G_Wcell = 0;
+  L_Acell = 0;
+  L_Fcell = 0;
+  L_Wcell = 0;
   
-  session_maxStep = 0;
-  session_currentStep = 0;
+  CurrentTime = 0.0;
+  CurrentTime_Avr = 0.0;
+  Session_StartTime = 0.0;
+  Session_CurrentTime = 0.0;
+  
+  Session_LastStep = 0;
+  Session_CurrentStep = 0;
+  Session_StartStep = 0;
+  CurrentStep = 0;
+  CurrentStep_Avr = 0;
+  
+  REAL_TYPE deltaT; ///< 時間積分幅（無次元）
   
   for (int i=0; i<3; i++) 
   {
@@ -122,7 +139,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
 
 
 // ファイル出力
-void FFV::FileOutput (double& flop, const bool restart)
+void FFV::FileOutput(double& flop, const bool restart)
 {
   REAL_TYPE scale = 1.0;
   int d_length;
@@ -147,15 +164,15 @@ void FFV::FileOutput (double& flop, const bool restart)
   }
   
   // ステップ数
-  int m_step = (int)Total_step;
+  int m_step = (int)CurrentStep;
   
   // 時間の次元変換
   REAL_TYPE m_time;
   if (C.Unit.File == DIMENSIONAL) {
-    m_time = (REAL_TYPE)Total_time * C.Tscale;
+    m_time = (REAL_TYPE)CurrentTime * C.Tscale;
   }
   else {
-    m_time = (REAL_TYPE)Total_time;
+    m_time = (REAL_TYPE)CurrentTime;
   }
   
   // ガイドセル出力
@@ -505,9 +522,9 @@ int FFV::MainLoop()
 {
   int ret = 1;
   
-  for (int i=1; i<=session_maxStep; i++)
+  for (int i=1; i<=Session_LastStep; i++)
   {
-    session_currentStep = i;
+    Session_CurrentStep = i;
     
     int loop_ret = Loop(i);
     

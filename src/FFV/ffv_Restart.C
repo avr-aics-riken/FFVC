@@ -213,12 +213,9 @@ void FFV::Restart(FILE* fp)
   
   if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
     
-    Base_step = Current_step = Session_step = Total_step = 0;
-    Base_time = Current_time = Session_time = Total_time = 0.0;
-    
     // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C.CheckParam == ON ) RF.setV00(Total_time, true);
-    else                      RF.setV00(Total_time);
+    if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
+    else                      RF.setV00(CurrentTime);
     
     double g[4];
     RF.copyV00(g);
@@ -341,11 +338,11 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-  Base_step = step;
-  Base_time = time;
+  Session_StartStep = CurrentStep = step;
+  Session_StartTime = CurrentTime = time;
   
   // v00[]に値をセット
-  copyV00fromRF(Base_time);
+  copyV00fromRF(Session_StartTime);
   
   
   // Instantaneous Velocity fields
@@ -360,7 +357,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
-  if ( (step != Base_step) || (time != Base_time) ) 
+  if ( (step != Session_StartStep) || (time != Session_StartTime) ) 
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -382,7 +379,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     
     if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
     
-    if ( (step != Base_step) || (time != Base_time) ) 
+    if ( (step != Session_StartStep) || (time != Session_StartTime) ) 
     {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -399,8 +396,8 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
 {
   std::string tmp;
   
-  unsigned step = Base_step;
-  double time = Base_time;
+  unsigned step = Session_StartStep;
+  double   time = Session_StartTime;
 
   
   // ガイド出力
@@ -410,8 +407,8 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
     if ( step > C.Interval[Interval_Manager::tg_avstart].getIntervalStep() ) {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tStep : base=%d current=%d total=%d\n", step, Current_step, Total_step);
-      Hostonly_ fprintf(fp, "\tStep : base=%d current=%d total=%d\n", step, Current_step, Total_step);
+      Hostonly_ printf     ("\tStep : base=%u current=%u\n", step, CurrentStep);
+      Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", step, CurrentStep);
     }
     else {
       return;
@@ -421,8 +418,8 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
     if ( time > C.Interval[Interval_Manager::tg_avstart].getIntervalTime() ) {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-] total=%e[-]\n", time*C.Tscale, time, Current_time, Total_time);
-      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-] total=%e[-]\n", time*C.Tscale, time, Current_time, Total_time);
+      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
+      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
     }
     else {
       return;
@@ -442,16 +439,14 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   }
   F.readPressure(fp, tmp, size, guide, d_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
-  if ( (step != Base_step) || (time != Base_time) ) {
+  if ( (step != Session_StartStep) || (time != Session_StartTime) ) {
     Hostonly_ printf     ("\n\tTime stamp is different between instantaneous and averaged files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between instantaneous and averaged files\n");
     Exit(0);
   }
   
-  if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
-  
-  Total_step_avr = step_avr;
-  Total_time_avr = time_avr;
+  CurrentStep_Avr = step_avr;
+  CurrentTime_Avr = time_avr;
   
   
   // Velocity
@@ -462,9 +457,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   }
   F.readVelocity(fp, tmp, size, guide, d_av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
-  if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
-  
-  if ( (step_avr != Total_step_avr) || (time_avr != Total_time_avr) ) { // 圧力とちがう場合
+  if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) { // 圧力とちがう場合
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
@@ -482,9 +475,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
     }
     F.readTemperature(fp, tmp, size, guide, d_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false, step_avr, time_avr);
     
-    if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
-    
-    if ( (step_avr != Total_step_avr) || (time_avr != Total_time_avr) ) {
+    if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       Exit(0);
@@ -564,11 +555,11 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   F.readPressure(fp, f_prs, r_size, guide, d_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
-  Base_step = step;
-  Base_time = time;
+  Session_StartStep = step;
+  Session_StartTime = time;
   
   // v00[]に値をセット
-  copyV00fromRF(Base_time);
+  copyV00fromRF(Session_StartTime);
   
   
   // Instantaneous Velocity fields
@@ -580,7 +571,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
-  if ( (step != Base_step) || (time != Base_time) )
+  if ( (step != Session_StartStep) || (time != Session_StartTime) )
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -600,7 +591,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     
     if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
     
-    if ( (step != Base_step) || (time != Base_time) )
+    if ( (step != Session_StartStep) || (time != Session_StartTime) )
     {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -653,22 +644,25 @@ void FFV::setDFI()
       if ( (g_bbox_ed[3*n+2] = ed_k) < 1 ) Exit(0);
     }
     
+    // host nameの取得
+    string host = paraMngr->GetHostName();
+    if ( host.empty() ) Exit(0);
+    
+    
     // DFIクラスの初期化
-    if ( !DFI.init(G_size, paraMngr->GetDivNum(), C.GuideOut, C.Start, g_bbox_st, g_bbox_ed) ) Exit(0);
+    if ( !DFI.init(G_size, paraMngr->GetDivNum(), C.GuideOut, C.Start, g_bbox_st, g_bbox_ed, host) ) Exit(0);
     
-    // host name
-    //for (int n=0; n<numProc; n++){
-    //  const char* host = para_mng->GetHostName(n, procGrp);
-    //  if ( !host ) Exit(0);
+
     
-    //  DFI.copy_hostname(host, n);
-    //}
     
-    if ( g_bbox_st ) {
+    if ( g_bbox_st ) 
+    {
       delete [] g_bbox_st; 
       g_bbox_st = NULL;
     }
-    if ( g_bbox_ed ) {
+    
+    if ( g_bbox_ed ) 
+    {
       delete [] g_bbox_ed; 
       g_bbox_ed = NULL;
     }
