@@ -82,10 +82,7 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, const int basicEq)
 
 
 
-/**
- @fn bool ParseMat::chkList4Solver(MediumList* mat, const int m)
- @brief 媒質情報の内容物をチェックする
- */
+// 媒質情報の内容物をチェックする
 bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 {
   int c=0;
@@ -108,10 +105,7 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 
 
 
-/**
- @fn void ParseMat::copyProperty(MediumList* mat, const int n)
- @brief matの変数値を格納する
- */
+// matの変数値を格納する
 void ParseMat::copyProperty(MediumList* mat, const int n)
 {
 	int nfval = MTITP[n].m_fval.size();
@@ -141,24 +135,8 @@ void ParseMat::copyProperty(MediumList* mat, const int n)
 
 
 
-/**
- @fn void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo, MediumList* mat)
- @brief CompoList[]とMediumList[]のチェック
- @note Hostonly
- */
-void ParseMat::dbg_printRelation(FILE* mp, FILE* fp, CompoList* compo, MediumList* mat)
-{
-  printRelation(mp, compo, mat);
-  printRelation(fp, compo, mat);
-}
-
-
-
-/**
- @fn int ParseMat::get_MediumTable(void)
- @brief Medium_Tableを読んでMediumTableInfoクラスオブジェクトに格納
- */
-int ParseMat::get_MediumTable(void)
+// Medium_Tableを読んでMediumTableInfoクラスオブジェクトに格納
+int ParseMat::get_MediumTable()
 {
   std::string str, label;
   std::string label_base, label_m, label_leaf;
@@ -300,10 +278,8 @@ void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
   fflush(fp);
 }
 
-/**
- @brief CompoList[]とMediumList[]のチェック
- @note debug function
- */
+
+// CompoList[]とMediumList[]のチェック
 void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
 {  
   int odr;

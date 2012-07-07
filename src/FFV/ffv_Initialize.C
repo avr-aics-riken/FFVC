@@ -421,7 +421,11 @@ int FFV::Initialize(int argc, char **argv)
 // ########## 
 #if 0
   // CompoListとMediumListの関連を表示
-  Hostonly_ M.dbg_printRelation(stdout, fp, cmp);
+  Hostonly_ 
+  {
+    M.printRelation(stdout, cmp, mat);
+    M.printRelation(fp, cmp, mat);
+  }
 #endif
 // ########## 
   
@@ -432,7 +436,6 @@ int FFV::Initialize(int argc, char **argv)
     Hostonly_ {
       fprintf(stdout, "RefMat[%d] is not listed in Medium_Table.\n");
       fprintf(fp, "RefMat[%d] is not listed in Medium_Table.\n");
-      stamped_printf("\tParseBC::isIDinCompo()\n");
     }
     return -1;
   }
@@ -868,7 +871,7 @@ void FFV::display_CompoList(FILE* fp)
 // 制御パラメータ，物理パラメータの表示
 void FFV::display_Parameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, IC, &DT, &RF);
+  C.displayParams(stdout, fp, IC, &DT, &RF, mat);
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
   

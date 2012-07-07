@@ -882,7 +882,16 @@ protected:
 
   void printInitValues       (FILE* fp);
   void printLS               (FILE* fp, ItrCtl* IC);
-  void printParaConditions   (FILE* fp);
+  
+  
+  /** 
+   * @brief 計算パラメータの表示
+   * @param [in] fp  ファイルポインタ
+   * @param [in] mat MediumListクラス
+   */
+  void printParaConditions(FILE* fp, MediumList* mat);
+  
+  
   void printSteerConditions  (FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
   void setDimParameters      (void);
 
@@ -916,11 +925,15 @@ public:
 	
   
   /**
-   @brief 制御，計算パラメータ群の表示
-   @param [in] mp ファイルポインタ（標準出力）
-   @param [in] fp ファイルポインタ（ファイル出力）
+   * @brief 制御，計算パラメータ群の表示
+   * @param [in] mp  ファイルポインタ（標準出力）
+   * @param [in] fp  ファイルポインタ（ファイル出力）
+   * @param [in] IC  ItrCtl
+   * @param [in] DT  DTcntl
+   * @param [in] RF  ReferenceFrame
+   * @param [in] mat MediumList
    */
-  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
+  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
 
   
   /**
@@ -1023,21 +1036,30 @@ public:
   }
   
 
-  //@brief ペクレ数の逆数を計算
+  /**
+   * @brief ペクレ数の逆数を計算
+   * @note Eulerの時にはゼロ
+   */
   REAL_TYPE getRcpPeclet() const 
   {
-    return ( 1.0 / Peclet );
+    return ( (Mode.PDE == PDE_NS) ? (1.0 / Peclet) : 0.0 );
   }
   
 
-  //@brief レイノルズ数の逆数を計算
+  /**
+   * @brief レイノルズ数の逆数を計算
+   * @note Eulerの時にはゼロ
+   */
   REAL_TYPE getRcpReynolds() const 
   {
     return ( (Mode.PDE == PDE_NS) ? (1.0 / Reynolds) : 0.0 );
   }
 
 
-  //@brief 座標値を無次元化する
+  /**
+   * @brief 座標値を無次元化する
+   * @param [in/out] x 座標値
+   */
   void normalizeCord(REAL_TYPE x[3]) 
   {
     x[0] /= RefLength;
@@ -1049,10 +1071,12 @@ public:
   
   /**
    * @brief TPのポインタを受け取る
+   * @param [in] tp TPControl
    */
   void importTP(TPControl* tp);
   
   void get_Para_Init();
+  
   
   /**
    * @brief ポリゴン情報

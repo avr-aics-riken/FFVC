@@ -269,12 +269,12 @@ int Control::countCompo(CompoList* cmp, const int label)
 
 
 // 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
+void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat)
 {
   printSteerConditions(mp, IC, DT, RF);
   printSteerConditions(fp, IC, DT, RF);
-  printParaConditions(mp);
-  printParaConditions(fp);
+  printParaConditions(mp, mat);
+  printParaConditions(fp, mat);
   printInitValues(mp);
   printInitValues(fp);
 }
@@ -285,10 +285,9 @@ int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::stri
 {
   std::string str = key;
   
-  for (int i=1; i<=Nmax; i++) {
-    if ( str != mat[i].getLabel() ) {
-      return i;
-    }
+  for (int i=1; i<=Nmax; i++) 
+  {
+    if ( !strcasecmp(str.c_str(), mat[i].getLabel().c_str()) ) return i;
   }
   
   return 0;
@@ -2416,9 +2415,8 @@ void Control::printNoCompo(FILE* fp)
 }
 
 
-//@fn void Control::printParaConditions(FILE* fp)
-//@brief 計算パラメータの表示
-void Control::printParaConditions(FILE* fp)
+// 計算パラメータの表示
+void Control::printParaConditions(FILE* fp, MediumList* mat)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -2428,7 +2426,7 @@ void Control::printParaConditions(FILE* fp)
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Simulation Parameters\n\n");
   
-  fprintf(fp,"\tReference ID              [-]         :  %d\n", RefMat);
+  fprintf(fp,"\tReference ID              [-]         :  %s\n", mat[RefMat].getLabel().c_str());
   fprintf(fp,"\n");
   
   // Reference values
