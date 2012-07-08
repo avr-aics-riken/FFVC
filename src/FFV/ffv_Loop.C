@@ -57,7 +57,7 @@ int FFV::Loop(const unsigned step)
     TIMING_start(tm_vmax_comm);
     REAL_TYPE vMax_tmp = vMax;
     if ( paraMngr->Allreduce(&vMax_tmp, &vMax, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop( tm_vmax_comm, 2.0*numProc*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
+    TIMING_stop( tm_vmax_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
   }
   
   
@@ -72,7 +72,7 @@ int FFV::Loop(const unsigned step)
       case Control::Flow_FS_AB2:
       case Control::Flow_FS_AB_CN:
         if (C.Mode.ShapeAprx == BINARY) {
-          NS_FS_E_CBC();
+          NS_FS_E_Binary();
         }
         else if (C.Mode.ShapeAprx == CUT_INFO) {
           //NS_FS_E_CDS();
@@ -148,7 +148,7 @@ int FFV::Loop(const unsigned step)
     for (int n=0; n<3; n++) avr_Var[n] = dst[n];
     for (int n=0; n<3; n++) rms_Var[n] = dst[n+3];
     
-    TIMING_stop(tm_stat_space_comm, 2.0*numProc*6.0*2.0*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 変数
+    TIMING_stop(tm_stat_space_comm, 2.0*numProc*6.0*2.0*sizeof(REAL_TYPE) ); // 双方向 x ノード数 x 変数
   }
   
   avr_Var[var_Velocity] = avr_Var[var_Velocity]/(REAL_TYPE)G_Acell;  // 速度の空間平均

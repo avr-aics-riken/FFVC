@@ -169,6 +169,46 @@ void FFV::Averaging_Time(double& flop)
 
 
 
+// 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
+double FFV::count_comm_size(const int sz[3], const int guide)
+{
+  double c = 0.0;
+  
+  // 内部面のみをカウントする
+  for (int n=0; n<6; n++) 
+  {
+    if ( nID[n] >= 0 ) {
+      
+      switch (n) 
+      {
+        case X_MINUS:
+        case X_PLUS:
+          c += (double)(sz[1]*sz[2]);
+          break;
+          
+        case Y_MINUS:
+        case Y_PLUS:
+          c += (double)(sz[0]*sz[2]);
+          break;
+          
+        case Z_MINUS:
+        case Z_PLUS:
+          c += (double)(sz[0]*sz[1]);
+          break;
+      }
+    }
+  }
+  
+  if ( numProc > 1 ) {
+    double tmp = c;
+    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c * sizeof(double); // Byte
+}
+
+
+
 // 外部計算領域の各面における総流量と対流流出速度を計算する
 // 流出境界のみ和をとる，その他は既知
 void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
@@ -625,6 +665,155 @@ bool FFV::hasLinearSolver(const int L)
 
 
 
+// 線形ソルバーの選択実行
+void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
+{	
+  double flop_count=0.0;         /// 浮動小数点演算数
+  double comm_size;              /// 通信面1面あたりの通信量
+  REAL_TYPE clear_value=0.0;	   /// 初期化の値
+  REAL_TYPE omg = IC->get_omg(); /// 加速係数
+	REAL_TYPE r = 0.0;             /// 残差
+  
+  comm_size = count_comm_size(size, guide);
+  
+	// c_p   圧力 p^{n+1}
+  // d_p0  圧力 p^n
+	// d_ws  非反復のソース項
+  // d_sq  反復毎に変化するソース項
+	// d_bcp ビットフラグ
+  
+  
+  // 反復処理
+  switch (IC->get_LS()) 
+  {
+      
+    case SOR:
+      TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
+      
+      // 反復処理
+      TIMING_start(tm_poi_PSOR);
+      flop_count = 0.0;
+      psor_(d_p, size, &guide, &omg, &r, d_ws, d_sq, d_bcp, &flop_count);
+      //r = PSOR(p, d_ws, d_sq, bcp, IC, flop_count); //実装速度比較
+      TIMING_stop(tm_poi_PSOR, flop_count);
+      
+      // 境界条件
+      TIMING_start(tm_poi_BC);
+      BC.OuterPBC(d_p);
+      if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
+      TIMING_stop(tm_poi_BC, 0.0);
+      
+      TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+      
+      
+      TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
+      
+      // 同期処理
+      if ( numProc > 1 ) 
+      {
+        TIMING_start(tm_poi_comm);
+        if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+        TIMING_stop(tm_poi_comm, comm_size);
+      }
+      
+      // 残差の集約
+      if ( numProc > 1 ) 
+      {
+        TIMING_start(tm_poi_res_comm);
+        REAL_TYPE tmp = r;
+        if ( paraMngr->Allreduce(&tmp, &r, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+      }
+      
+      TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+      break;
+      
+      
+    case SOR2SMA:
+      // 2色のマルチカラーのセットアップ
+      TIMING_start(tm_poi_setup);
+      
+      int nID[6], sidx[3], ip;
+      
+      if ( numProc > 1 ) {
+        sidx[0] = head[0];
+        sidx[1] = head[1];
+        sidx[2] = head[2];
+        ip = (sidx[0]+sidx[1]+sidx[2]) % 2;
+      } 
+      else {
+        sidx[0] = sidx[1] = sidx[2] = 1;
+        ip = 0;
+      }
+      TIMING_stop(tm_poi_setup, 0.0);
+      
+      
+      // 各カラー毎の間に同期
+      r = 0.0;          // 色間で積算する
+      for (int color=0; color<2; color++) 
+      {
+        TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
+        
+        TIMING_start(tm_poi_SOR2SMA);
+        flop_count = 0.0; // 色間で積算しない
+        psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &r, d_ws, d_sq, d_bcp, &flop_count);
+        //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
+        TIMING_stop(tm_poi_SOR2SMA, flop_count);
+        
+        // 境界条件
+        TIMING_start(tm_poi_BC);
+        BC.OuterPBC(d_p);
+        if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
+        TIMING_stop(tm_poi_BC, 0.0);
+        
+        TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+        
+        
+        TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
+        
+        // 残差の集約と同期処理
+        if ( numProc > 1 ) {
+          TIMING_start(tm_poi_res_comm);
+          REAL_TYPE tmp = r;
+          if ( paraMngr->Allreduce(&tmp, &r, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
+          
+          TIMING_start(tm_poi_comm);
+          if (cm_mode == 0 ) 
+          {
+            if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+          }
+          else {
+            sma_comm_     (d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req, &para_key);
+            sma_comm_wait_(d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req);
+          }
+          TIMING_stop(tm_poi_comm, comm_size*0.5);
+        }
+        
+        TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+      }
+      break;
+      
+    default:
+      printf("\tInvalid Linear Solver for Pressure\n");
+      Exit(0);
+      break;
+  }
+  
+  // 残差の保存 
+  /// @note Control::p_res_l2_r/aのときのみ，それ以外はNorm_Poissonで計算
+  if ( (IC->get_normType() == ItrCtl::p_res_l2_r) || (IC->get_normType() == ItrCtl::p_res_l2_a) ) 
+  {
+    REAL_TYPE res_a = sqrt( r /(REAL_TYPE)G_Acell ); // 残差のRMS
+    REAL_TYPE bb  = sqrt( b2/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
+    REAL_TYPE res_r = ( bb == 0.0 ) ? res_a : res_a/bb;
+    REAL_TYPE nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;
+    IC->set_normValue( nrm );
+  }
+}
+
+
+
 // タイムステップループ
 int FFV::MainLoop()
 {
@@ -662,6 +851,118 @@ int FFV::MainLoop()
 }
 
 
+
+/**
+ * @brief Poissonのノルムを計算する
+ * @retval 収束値
+ * @param [in] IC ItrCtlクラス
+ */
+REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
+{
+  REAL_TYPE nrm;
+  REAL_TYPE rms;
+  REAL_TYPE convergence; /// 収束判定値
+  REAL_TYPE coef = deltaT/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
+  REAL_TYPE tmp; /// テンポラリバッファ
+  double flop_count;
+  
+  //d_sqに発散がストアされている
+  
+  
+  switch (IC->get_normType()) 
+  {
+    case ItrCtl::v_div_max:
+      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
+      
+      TIMING_start(tm_norm_div_max);
+      flop_count=0.0;
+      norm_v_div_max_(&nrm, size, &guide, d_sq, &coef, d_bcp, &flop_count);
+      TIMING_stop(tm_norm_div_max, flop_count);
+      
+      if ( numProc > 1 ) 
+      {
+        TIMING_start(tm_norm_comm);
+        tmp = nrm;
+        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+      }
+      convergence = nrm;
+      IC->set_normValue( convergence );
+      
+      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
+      break;
+      
+    case ItrCtl::v_div_l2:
+      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
+      
+      TIMING_start(tm_norm_div_l2);
+      flop_count=0.0;
+      norm_v_div_l2_(&rms, size, &guide, d_sq, &coef, d_bcp, &flop_count);
+      TIMING_stop(tm_norm_div_l2, flop_count);
+      
+      if ( numProc > 1 ) 
+      {
+        TIMING_start(tm_norm_comm);
+        tmp = rms; 
+        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+      }
+      convergence = sqrt(rms/(REAL_TYPE)numProc); //RMS
+      IC->set_normValue( convergence );
+      
+      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
+      break;
+      
+    case ItrCtl::p_res_l2_a:
+    case ItrCtl::p_res_l2_r:
+      convergence = IC->get_normValue();
+      break;
+      
+    case ItrCtl::v_div_max_dbg:
+      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
+      
+      TIMING_start(tm_norm_div_max_dbg);
+      flop_count=0.0;
+      int index[3];
+      index[0] = 0;
+      index[1] = 0;
+      index[2] = 0;
+      norm_v_div_dbg_(&nrm, &rms, index, size, &guide, d_sq, &coef, d_bcp, &flop_count);
+      TIMING_stop(tm_norm_div_max_dbg, flop_count);
+      
+      //@todo ここで，最大値のグローバルなindexの位置を計算する
+      
+      if ( numProc > 1 ) 
+      {
+        TIMING_start(tm_norm_comm);
+        tmp = nrm;
+        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+        tmp = rms;
+        if ( paraMngr->Allreduce(&tmp, &rms, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数
+      }
+      rms = sqrt(rms/(REAL_TYPE)numProc); // RMS
+      convergence = nrm; // ノルムは最大値を返す
+      IC->set_normValue( convergence );
+      
+      Hostonly_ {
+        H->printHistoryItr(fp_i, IC->LoopCount, nrm, index);
+        fflush(fp_i);
+      }
+      
+      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
+      break;
+      
+    default:
+      stamped_printf("\tInvalid convergence type\n");
+      Exit(0);
+  }
+  
+  return convergence;
+}
+
+
+
 // 終了時の処理
 bool FFV::Post() 
 {
@@ -670,7 +971,7 @@ bool FFV::Post()
   { 
     FILE* fp = NULL;
     
-    if ( IsMaster(paraMngr) ) 
+    if ( IsMaster() ) 
     {
       if ( !(fp=fopen("profiling.txt", "w")) ) 
       {
@@ -684,7 +985,7 @@ bool FFV::Post()
     PM.gather();
     TIMING_stop(tm_statistic, 0.0);
     
-    if ( IsMaster(paraMngr) ) 
+    if ( IsMaster() ) 
     {
       // 結果出力(排他測定のみ)
       PM.print(stdout);
@@ -700,27 +1001,23 @@ bool FFV::Post()
       if ( !fp ) fclose(fp);
     }
   }
-  
-  if ( IsMaster(paraMngr) ) 
-  {
-    if( cm_mode == 0 )
-    {
-      printf( "Communication Mode = CommBndCell\n" );
-    } 
-    else if( cm_mode == 1 )
-    {
-      printf( "Communication Mode = CommBndCell2 or cbs3d_commface(no hide)\n" );
-    } 
-    else 
-    {
-      printf( "Communication Mode = CommBndCell2 or cbs3d_commface(hide)\n" );
-    }
-    paraMngr->flush(stdout);
-  }
+
   
   return true;
 }
 
+
+
+// 圧力の引き戻し操作を行う
+void FFV::Pressure_Shift()
+{
+  REAL_TYPE base=0.0;
+  
+  int n = C.Mode.Pshift;
+  
+  face_avr_sampling_(d_p, size, &guide, &n, &base);
+  shift_pressure_   (d_p, size, &guide, &base);
+}
 
 
 // タイミング測定区間にラベルを与えるラッパー

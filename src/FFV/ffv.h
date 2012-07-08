@@ -116,6 +116,7 @@ private:
   
   int id_of_solid; // Geometry Direct Interfaceでテスト的に固定ID=2を与える
   
+  int communication_mode; ///< synchronous, asynchronous
   
   int cf_sz[3];     ///< SOR2SMAの反復の場合のバッファサイズ
   REAL_TYPE *cf_x;  ///< i方向のバッファ
@@ -368,6 +369,16 @@ private:
   void copyV00fromRF(double m_time);
   
   
+  
+  /**
+   * @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
+   * @retval 通信量(Byte)
+   * @param [in] sz    配列サイズ
+   * @param [in] guide ガイドセル
+   */
+  double count_comm_size(const int sz[3], const int guide);
+  
+  
   /**
    * @brief コンポーネントの内容リストを表示する
    * @param [in]  fp   ファイルポインタ
@@ -526,6 +537,23 @@ private:
   int Loop(const unsigned m_step);
   
   
+  
+  /**
+   * @brief 線形ソルバーの選択実行
+   * @param [in] IC ItrCtlクラス
+   * @param [in] b2 ソースベクトルの自乗和
+   */
+  void LS_Binary(ItrCtl* IC, REAL_TYPE b2);
+  
+  
+  /**
+   * @brief Poissonのノルムを計算する
+   * @retval 収束値
+   * @param [in] IC ItrCtlクラス
+   */
+  REAL_TYPE Norm_Poisson(ItrCtl* IC);
+  
+  
   /**
    * @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
    */
@@ -536,6 +564,12 @@ private:
    * @brief 履歴の出力準備
    */
   void prep_HistoryOutput();
+  
+  
+  /**
+   * @brief 圧力の引き戻し操作を行う
+   */
+  void Pressure_Shift();
   
   
   /**

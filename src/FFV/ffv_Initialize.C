@@ -1587,7 +1587,8 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         s = bx[m];
         
-        if ( GET_FACE_BC(s, BC_FACE_W) == n ) {
+        if ( GET_FACE_BC(s, BC_FACE_W) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1596,7 +1597,8 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
           if( k > ned[2] ) { ned[2] = k; }
         }
         
-        if ( GET_FACE_BC(s, BC_FACE_E) == n ) {
+        if ( GET_FACE_BC(s, BC_FACE_E) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1605,7 +1607,8 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
           if( k > ned[2] ) { ned[2] = k; }
         }
         
-        if ( GET_FACE_BC(s, BC_FACE_S) == n ) {
+        if ( GET_FACE_BC(s, BC_FACE_S) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1614,7 +1617,8 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
           if( k > ned[2] ) { ned[2] = k; }
         }
         
-        if ( GET_FACE_BC(s, BC_FACE_N) == n ) {
+        if ( GET_FACE_BC(s, BC_FACE_N) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1623,7 +1627,8 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
           if( k > ned[2] ) { ned[2] = k; }
         }
         
-        if ( GET_FACE_BC(s, BC_FACE_B) == n ) {
+        if ( GET_FACE_BC(s, BC_FACE_B) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1632,7 +1637,8 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
           if( k > ned[2] ) { ned[2] = k; }
         }
         
-        if ( GET_FACE_BC(s, BC_FACE_T) == n ) {
+        if ( GET_FACE_BC(s, BC_FACE_T) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1673,7 +1679,8 @@ void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         s = bx[m];
         
-        if ( ( s & MASK_6) == n ) {
+        if ( ( s & MASK_6) == n ) 
+        {
           if( i < nst[0] ) { nst[0] = i; }
           if( i > ned[0] ) { ned[0] = i; }
           if( j < nst[1] ) { nst[1] = j; }
@@ -1763,7 +1770,8 @@ void FFV::setBCinfo()
   B.chkBCconsistency(C.KindOfSolver);
   
   // ガイドセル上にパラメータファイルで指定する媒質インデクスを代入する．周期境界の場合の処理も含む．
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++) 
+  {
     V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(), 
                       BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
@@ -1781,11 +1789,14 @@ void FFV::setComponentVF()
   
   CompoFraction CF(size, guide, pitch, origin, subsampling);
   
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     
-    if ( cmp[n].isFORCING() ) {
+    if ( cmp[n].isFORCING() ) 
+    {
       // 形状パラメータのセット
-      switch ( cmp[n].getType() ) {
+      switch ( cmp[n].getType() ) 
+      {
         case HEX:
           CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
           break;
@@ -1834,14 +1845,17 @@ void FFV::setComponentVF()
   REAL_TYPE org[3], pit[3];
   
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<3; i++) 
+  {
     org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
     pit[i] = C.dx[i];
   }
   
   // 出力ファイルの指定が有次元の場合
-  if ( C.Unit.File == DIMENSIONAL ) {
-    for (int i=0; i<3; i++) {
+  if ( C.Unit.File == DIMENSIONAL ) 
+  {
+    for (int i=0; i<3; i++) 
+    {
       org[i] *= C.RefLength;
       pit[i] *= C.RefLength;
     }
@@ -1861,50 +1875,60 @@ void FFV::setEnsComponent()
   
   // Forcing > HEX, FAN, DARCY
   c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     if ( cmp[n].isFORCING() ) c++;
   }
   if ( c>0 ) C.EnsCompo.forcing = ON;
   
   // Heat source > HEAT_SRC, CNST_TEMP
   c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     if ( cmp[n].isHsrc() ) c++;
   }
   if ( c>0 ) C.EnsCompo.hsrc = ON;
   
   // 周期境界 > PERIODIC
   c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     if ( cmp[n].getType() == PERIODIC ) c++;
   }
   if ( c>0 ) C.EnsCompo.periodic = ON;
   
   // 流出境界 > OUTFLOW
   c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     if ( cmp[n].getType() == OUTFLOW ) c++;
   }
   if ( c>0 ) C.EnsCompo.outflow = ON;
   
   // 体積率コンポーネント
   c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     if ( cmp[n].isVFraction() ) c++;
   }
   if ( c>0 ) C.EnsCompo.fraction = ON;
   
   // モニタ
   c = 0;
-  for (int n=1; n<=C.NoBC; n++) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
     if ( cmp[n].isMONITOR() ) c++;
   }
+  
   // MONITOR_LISTでCELL_MONITORが指定されている場合，C.EnsCompo.monitor==ON
-  if ( (C.isMonitor() == ON) && (c < 1) ) {
+  if ( (C.isMonitor() == ON) && (c < 1) ) 
+  {
     Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is specified, however any MONITOR can not be found.\n");
     Exit(0);
   }
-  if ( (C.isMonitor() == OFF) && (c > 0) ) {
+  
+  if ( (C.isMonitor() == OFF) && (c > 0) ) 
+  {
     Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is NOT specified, however MONITOR section is found in LocalBoundary.\n");
     Exit(0);
   }
@@ -1926,9 +1950,11 @@ void FFV::setGlobalCmpIdx()
   int* cgb = compo_global_bbox;
   
   // ローカルインデクスからグローバルインデクスに変換
-  for (int m=1; m<=C.NoCompo; m++) {
+  for (int m=1; m<=C.NoCompo; m++) 
+  {
     
-    if ( !cmp[m].isEns() ) { // コンポーネントが存在しないノードはゼロを代入
+    if ( !cmp[m].isEns() ) // コンポーネントが存在しないノードはゼロを代入
+    {
       cgb[6*m+0] = 0;
       cgb[6*m+1] = 0;
       cgb[6*m+2] = 0;
@@ -1936,7 +1962,8 @@ void FFV::setGlobalCmpIdx()
       cgb[6*m+4] = 0;
       cgb[6*m+5] = 0;
     }
-    else { // コンポーネントが存在する場合
+    else // コンポーネントが存在する場合
+    {
       cmp[m].getBbox(st, ed);
       st_i = st[0];
       st_j = st[1];
@@ -1945,7 +1972,8 @@ void FFV::setGlobalCmpIdx()
       ed_j = ed[1];
       ed_k = ed[2];
       
-      if ( numProc > 1 ) {
+      if ( numProc > 1 ) 
+      {
         node_st_i = head[0];
         node_st_j = head[1];
         node_st_k = head[2];
@@ -1957,7 +1985,8 @@ void FFV::setGlobalCmpIdx()
         cgb[6*m+4] = node_st_j + ed_j;
         cgb[6*m+5] = node_st_k + ed_k;
       } 
-      else {
+      else 
+      {
         cgb[6*m+0] = st_i;
         cgb[6*m+1] = st_j;
         cgb[6*m+2] = st_k;
@@ -1977,8 +2006,10 @@ void FFV::setGlobalCmpIdx()
   if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
   if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
   
-  for (int n=1; n<=C.NoBC; n++) {
-    if ( numProc > 1 ) {
+  for (int n=1; n<=C.NoBC; n++) 
+  {
+    if ( numProc > 1 ) 
+    {
       es = ( cmp[n].isEns() ) ? 1 : 0;
       if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
@@ -1994,8 +2025,10 @@ void FFV::setGlobalCmpIdx()
         cgb[6*n+4] = 0;
         cgb[6*n+5] = 0;
         
-        for (int m=0; m<numProc; m++) {
-          if ( m_eArray[m]==1 ) { // コンポーネントの存在ランクのみを対象とする
+        for (int m=0; m<numProc; m++) 
+        {
+          if ( m_eArray[m]==1 ) // コンポーネントの存在ランクのみを対象とする
+          {
             st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
             st_y = m_gArray[6*m+1];
             st_z = m_gArray[6*m+2];

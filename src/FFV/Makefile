@@ -96,6 +96,18 @@ depend:
 
 # DO NOT DELETE
 
+NS_FS_E_Binary.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
+NS_FS_E_Binary.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h
+NS_FS_E_Binary.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
+NS_FS_E_Binary.o: ../FB/Interval_Mngr.h ../FB/TPControl.h ../FB/Alloc.h
+NS_FS_E_Binary.o: ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h
+NS_FS_E_Binary.o: ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h
+NS_FS_E_Binary.o: ../FB/Intrinsic.h ../FB/ParseMat.h ../FB/VoxInfo.h
+NS_FS_E_Binary.o: ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h ffv_Ffunc.h
+NS_FS_E_Binary.o: ../FB/dfi.h ../FB/History.h ../IP/IP_Duct.h
+NS_FS_E_Binary.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
+NS_FS_E_Binary.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
+NS_FS_E_Binary.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
 ffv.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h

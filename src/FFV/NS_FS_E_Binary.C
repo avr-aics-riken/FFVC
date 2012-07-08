@@ -34,7 +34,7 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
   REAL_TYPE half = 0.5;                /// 定数                          
-  REAL_TYPE comm_size;                 /// 通信面1面あたりの通信量
+  double comm_size;                    /// 通信面1面あたりの通信量
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   REAL_TYPE clear_value = 0.0;
@@ -157,7 +157,7 @@ void FFV::NS_FS_E_Binary()
     case Control::Flow_FS_EE_EE:
       TIMING_start(tm_pvec_ee);
       flop = 0.0;
-      cbc_ee_ (d_vc, size, &guide, &dt, d_v0, d_bcd, &flop);
+      euler_explicit_ (d_vc, size, &guide, &dt, d_v0, d_bcd, &flop);
       TIMING_stop(tm_pvec_ee, flop);
       break;
       
@@ -226,7 +226,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start(tm_buoyancy);
     REAL_TYPE dgr = dt*C.Grashof*rei*rei;
     flop = 3.0;
-    Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
+    //Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
     TIMING_stop(tm_buoyancy, flop);
   }
 
@@ -318,7 +318,7 @@ void FFV::NS_FS_E_Binary()
       TIMING_start(tm_poi_src_comm);
       REAL_TYPE m_tmp = b2;
       if ( paraMngr->Allreduce(&m_tmp, &b2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*(REAL_TYPE)sizeof(REAL_TYPE) ); // 双方向 x ノード数
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
   }
 
@@ -354,7 +354,7 @@ void FFV::NS_FS_E_Binary()
     {
       TIMING_start(tm_force_src);
       flop=0.0;
-      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, &dh, v00, component_array, flop);
+      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
       TIMING_stop(tm_force_src, flop);
     }
 
@@ -391,7 +391,7 @@ void FFV::NS_FS_E_Binary()
     {
       if ( !C.isCDS() ) // Binary
       {
-        if ( pn.numProc > 1 ) 
+        if ( numProc > 1 ) 
         {
           TIMING_start(tm_prj_vec_bc_comm);
           for (int n=0; n<=2*C.NoBC; n++) 
@@ -399,7 +399,7 @@ void FFV::NS_FS_E_Binary()
             m_tmp[n] = m_buf[n];
           }
           if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          TIMING_stop(tm_prj_vec_bc_comm, 2.0*(REAL_TYPE)C.NoBC*numProc*(REAL_TYPE)sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+          TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
         }
         
         for (int n=1; n<=C.NoBC; n++) 
@@ -421,7 +421,7 @@ void FFV::NS_FS_E_Binary()
     {
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;
-      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_sq, dt, &dh, v00, m_buf, component_array, flop);
+      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_sq, dt, v00, m_buf, component_array, flop);
       TIMING_stop(tm_prj_frc_mod, flop);
 
       // 通信部分
@@ -432,7 +432,7 @@ void FFV::NS_FS_E_Binary()
           m_tmp[n] = m_buf[n];
         }
         if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_prj_frc_mod_comm, 2.0*(REAL_TYPE)C.NoBC*numProc*(REAL_TYPE)sizeof(REAL_TYPE)*2.0);
+        TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0);
       }
       for (int n=1; n<=C.NoBC; n++) 
       {
@@ -483,7 +483,7 @@ void FFV::NS_FS_E_Binary()
   if ( numProc > 1 ) {
     TIMING_start(tm_vectors_comm);
     if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_vectors_comm, 2*comm_size*(REAL_TYPE)guide*3.0);
+    TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);
   }
   
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
@@ -511,7 +511,7 @@ void FFV::NS_FS_E_Binary()
     {
       TIMING_start(tm_LES_eddy_comm);
       if ( paraMngr->BndCommS3D(d_vt, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_LES_eddy_comm, comm_size*(REAL_TYPE)guide);
+      TIMING_stop(tm_LES_eddy_comm, comm_size*guide);
     }
   }
   
@@ -530,7 +530,7 @@ void FFV::NS_FS_E_Binary()
   // 圧力値の引き戻しオプション
   if ( C.Mode.Pshift != -1 ) 
   {
-    Pressure_Shift(d_p);
+    Pressure_Shift();
   }
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);

@@ -343,5 +343,10 @@ enum Temp_Unit {
   Unit_CELSIUS
 };
 
+/// 同期モード
+enum Synch_Mode {
+  synchronous=1,
+  asynchronous
+};
 
 #endif // _FB_DEFINE_H_
