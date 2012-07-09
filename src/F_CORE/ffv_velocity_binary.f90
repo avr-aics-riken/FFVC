@@ -895,7 +895,7 @@
 !! @param[out] flop
 !! @note ここのマスクはIDのこと，VSPEC, OUTFLOWの増分をキャンセルするため
 !<
-    subroutine ee (vc, sz, g, dt, v, bd, flop)
+    subroutine euler_explicit (vc, sz, g, dt, v, bd, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
@@ -937,7 +937,7 @@
 !$OMP END PARALLEL
     
     return
-    end subroutine ee
+    end subroutine euler_explicit
 
 !> ********************************************************************
 !! @brief 粘性項の計算（Euler陽解法，壁面境界の影響のみ考慮する）

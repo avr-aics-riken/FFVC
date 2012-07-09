@@ -288,7 +288,7 @@ int FFV::Loop(const unsigned step)
       
       if ( C.isCDS() ) 
       {
-        cds_force_(frc, size, &guide, d_p, d_bcd, d_bid, &id_of_solid, &deltaX, &flop_count);
+        //cds_force_(frc, size, &guide, d_p, d_bcd, d_bid, &id_of_solid, &deltaX, &flop_count);
       }
       else 
       {

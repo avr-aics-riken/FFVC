@@ -140,14 +140,14 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_poisson.f90
-  void div_cnst_        (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* b2, int* bp, double* flop);
-  void psor_            (REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
+  void div_cnst_(REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* b2, int* bp, double* flop);
+  void psor_(REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
                          int* bp, double* flop);
-  void psor2sma_core_   (REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
+  void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
                          REAL_TYPE* s1, int* bp, double* flop);
-  void sma_comm_        (REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
+  void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
                          REAL_TYPE* cf_z, int* key, int* para_key);
-  void sma_comm_wait_   (REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
+  void sma_comm_wait_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
                          REAL_TYPE* cf_z, int* key);
   
   

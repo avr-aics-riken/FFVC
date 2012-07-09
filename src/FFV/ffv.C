@@ -728,7 +728,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
       break;
       
-      
+    /*
     case SOR2SMA:
       // 2色のマルチカラーのセットアップ
       TIMING_start(tm_poi_setup);
@@ -792,7 +792,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
         
         TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
       }
-      break;
+      break; */
       
     default:
       printf("\tInvalid Linear Solver for Pressure\n");
