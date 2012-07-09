@@ -10,7 +10,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(CPMlib,1.0.3,,CPMlib)
+AC_INIT(CPMlib,1.0.4,,CPMlib)
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/cpm_ParaManager.cpp])
 AM_CONFIG_HEADER([config.h])
@@ -141,10 +141,28 @@ elif test "$enable_mpi" = "ompi" ; then
   esac
 fi
 
+
 #
 # f90 example
 #
 AC_ARG_WITH(f90example, [  --with-f90example=(yes|no)  make f90 example.], , with_f90example=yes)
+
+
+#
+# f90 compiler check
+#
+if test "_$FC" = "_"; then
+  if test "_$F90" = "_"; then
+    with_f90example="no"
+  else
+    FC=$F90
+  fi
+fi
+if test "_$FCFLAGS" = "_"; then
+  if test "_$F90FLAGS" != "_"; then
+    FCFLAGS=$F90FLAGS
+  fi
+fi
 
 #
 # CPM special flags

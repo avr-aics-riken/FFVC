@@ -1,6 +1,6 @@
 Release Note
 
-	Frontflow / violet
+	Frontflow / violet Cartesian
 	
 	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
   The University of Tokyo, Japan. 
@@ -9,6 +9,8 @@ Release Note
 
 #######################################
 
+Ver. 0.3.0    9 July 2012
+  - データクラスをポインタへ置換
 
 Ver. 0.2.0   30 June 2012
   - 関数名を再構築

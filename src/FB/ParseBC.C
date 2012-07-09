@@ -51,7 +51,7 @@ bool ParseBC::chkDuplicate(const int n, const std::string m_label)
 
 
 // KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
-void ParseBC::countMedium(Control* Cref)
+void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 {
   // check at least one fluid
   if ( KindOfSolver != SOLID_CONDUCTION ) {
@@ -2296,7 +2296,7 @@ bool ParseBC::isLabelinCompo(const std::string candidate, int now)
  - パラメータファイルから各内部BCのidをパースし，compoに保持する
  - 格納番号は1からスタート
  */
-void ParseBC::loadBC_Local(Control* C)
+void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
 { 
   std::string str, label, ename;
   std::string label_base, label_ename, label_leaf;
@@ -2474,10 +2474,10 @@ void ParseBC::loadBC_Local(Control* C)
 
 
 /**
- @fn void ParseBC::loadBC_Outer(void)
- @brief パラメータファイルをパースして，外部境界条件を取得，保持する
+ * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
+ * @param [in/out] bc BoundaryOuter
  */
-void ParseBC::loadBC_Outer()
+void ParseBC::loadBC_Outer(BoundaryOuter* bc)
 {
   std::string label_base, label_leaf, label;
   std::string str;
@@ -2751,7 +2751,7 @@ int ParseBC::oppositeDir(const int dir)
 
 
 // コンポーネントの情報を表示する
-void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp)
+void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, const CompoList* cmp, const BoundaryOuter* bc)
 {
   int n, m;
   bool flag;
@@ -3329,12 +3329,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 
 
 
-/**
- @brief 外部境界条件の各面の情報を表示する
- @param fp
- @param G_reg グローバルの領域の大きさ
- */
-void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_reg)
+// 外部境界条件の各面の情報を表示する
+void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc)
 {
   for (int i=0; i<NOFACE; i++) {
     fprintf(fp,"\t      Set %s up as %s : < %s >\n", FBUtility::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), bc[i].get_Alias().c_str());
@@ -3344,14 +3340,10 @@ void ParseBC::printFaceOBC(FILE* fp, REAL_TYPE* G_reg)
   fflush(fp);
 }
 
-/**
- @brief 速度の外部境界条件処理の表示
- @param fp
- @param ref
- @param G_reg グローバルの領域の大きさ
- @param face 面番号
- */
-void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int face)
+
+
+// 速度の外部境界条件処理の表示
+void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat, const REAL_TYPE* G_reg, const int face)
 {
   REAL_TYPE a, b, c;
   
@@ -3529,14 +3521,8 @@ void ParseBC::printOBC(FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int
 
 
 //@brief 変数の初期化
-void ParseBC::setControlVars(Control* Cref, BoundaryOuter* ptr, MediumList* m_mat)
+void ParseBC::setControlVars(Control* Cref)
 {
-  if ( !ptr ) Exit(0);
-  bc = ptr;
-  
-  if ( !m_mat ) Exit(0);
-  mat = m_mat;
-  
   RefVelocity = Cref->RefVelocity;
   BaseTemp    = Cref->BaseTemp;
   DiffTemp    = Cref->DiffTemp;
@@ -3742,4 +3728,3 @@ void ParseBC::setRefMedium(MediumList* mat, const int Ref)
     }
   }
 }
-

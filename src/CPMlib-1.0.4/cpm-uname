@@ -16,12 +16,10 @@ fi
 # for MacOSX
 if test `uname` = "Darwin" ; then
   if   test `uname -r | cut -b 1` = "1" ; then
-    if test `uname -r | cut -b 2` = "1" ; then
-      echo Lion
-    fi
-  elif test `uname -r | cut -b 1` = "1" ; then
     if test `uname -r | cut -b 2` = "0" ; then
       echo Snow_Leopard
+    elif test `uname -r | cut -b 2` = "1" ; then
+      echo Lion
     fi
   elif test `uname -r | cut -b 1` = "9" ; then
     echo Leopard

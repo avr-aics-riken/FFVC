@@ -3,7 +3,7 @@
 
 // #################################################################
 //
-// FFV : Frontflow / violet
+// FFV : Frontflow / violet Cartesian
 //
 // Copyright (c) All right reserved. 2012
 //
@@ -17,7 +17,7 @@
  * @author kero
  */
 
-#define FFV_VERS   20
+#define FFV_VERS   30
 #define TM_LABEL_MAX 24
   
 /** 計算性能測定キー番号 */

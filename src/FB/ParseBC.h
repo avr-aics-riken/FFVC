@@ -57,9 +57,7 @@ private:
   bool isCDS;
   
   CompoList*     compo;      ///< コンポーネントテーブル
-  BoundaryOuter* bc;         ///< 外部境界条件テーブル
   BoundaryOuter* BaseBc;     ///< テンポラリのテーブル
-  MediumList* mat;           ///< 媒質情報テーブル
   MediumTableInfo *MTITP;    ///< Medium Table <--- textparser
 
 
@@ -80,15 +78,12 @@ public:
     NoCompo  = 0; 
     NoMedium = 0;
     
-    bc = NULL;
     BaseBc = NULL;
     compo = NULL;
-    mat = NULL;
   }
   
   /**　デストラクタ */
   ~ParseBC() {
-    if (bc) delete [] bc;
     if (BaseBc) delete [] BaseBc;
   }
   
@@ -189,13 +184,21 @@ private:
   bool isCompoTransfer    (int label);
   
   /**
-   @brief 外部境界面の反対方向を返す
-   @param[in] dir 評価する方向
-   @return dirと反対方向
+   * @brief 外部境界面の反対方向を返す
+   * @param [in] dir 評価する方向
+   * @return dirと反対方向
    */
   int oppositeDir(const int dir);
   
-  void printOBC           (FILE* fp, BoundaryOuter* ref, REAL_TYPE* G_reg, const int face);
+  
+  /**
+   * @brief 速度の外部境界条件処理の表示
+   * @param [in] fp    ファイルポインタ
+   * @param [in] ref   BoundaryOuter
+   * @param [in] G_reg グローバルの領域の大きさ
+   * @param [in] face  面番号
+   */
+  void printOBC(FILE* fp, const BoundaryOuter* ref, const REAL_TYPE* G_reg, const int face);
   
   
   void setKeywordLBC      (const std::string keyword, const int m);
@@ -219,6 +222,7 @@ public:
   int getNoLocalBC();
   void get_Phase          ();
   void get_Medium_InitTemp();
+  
   
   /**
    * @brief TPのポインタを受け取る
@@ -250,8 +254,14 @@ public:
   bool isLabelinCompo(const std::string candidate, int now);
   
   
-  void loadBC_Local       (Control* C);
-  void loadBC_Outer       ();
+  void loadBC_Local(Control* C);
+  
+  
+  /**
+   * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
+   * @param [in/out] bc BoundaryOuter
+   */
+  void loadBC_Outer(BoundaryOuter* bc);
   
   
   /**
@@ -260,13 +270,21 @@ public:
    * @param [in] gci グローバルなコンポーネントのインデクス
    * @param [in] mat MediumList
    * @param [in] cmp CompoList
+   * @param [in] bc  BoundaryOuter
    */
-  void printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp);
+  void printCompo(FILE* fp, const int* gci, const MediumList* mat, const CompoList* cmp, const BoundaryOuter* bc);
   
   
-  void printFaceOBC       (FILE* fp, REAL_TYPE* G_reg);
+  /**
+   * @brief 外部境界条件の各面の情報を表示する
+   * @param [in] fp    ファイルポインタ
+   * @param [in] G_reg グローバルの領域の大きさ
+   * @param [in] bc    BoundaryOuter
+   */
+  void printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc);
   
-  void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
+  
+  void setControlVars(Control* Cref);
   
   
   /**
@@ -277,7 +295,7 @@ public:
   void setRefMedium(MediumList* mat, const int Ref);
   
   
-  void setRefValue        (MediumList* mat, CompoList* cmp, Control* C);
+  void setRefValue(MediumList* mat, CompoList* cmp, Control* C);
   
 };
 

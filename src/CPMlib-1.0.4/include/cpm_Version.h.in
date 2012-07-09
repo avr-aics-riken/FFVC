@@ -19,7 +19,7 @@
 #define CPM_VERSION_NO  "@PACKAGE_VERSION@"
 
 /** CPMライブラリのリビジョン */
-#define CPM_REVISION    "20120703_0900"
+#define CPM_REVISION    "20120709_0900"
 
 #endif /* _CPM_VERSION_H_ */
 

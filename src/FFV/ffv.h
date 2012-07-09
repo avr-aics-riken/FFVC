@@ -3,7 +3,7 @@
 
 // #################################################################
 //
-// FFV : Frontflow / violet
+// FFV : Frontflow / violet Cartesian
 //
 // Copyright (c) All right reserved. 2012
 //
