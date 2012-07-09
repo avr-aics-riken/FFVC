@@ -36,9 +36,9 @@ const char* CompoList::getVarStr()
   return var.c_str();
 }
 
-/**
- @brief BCのラベル名を返す
- */
+
+
+//BCのラベル名を返す
 std::string CompoList::getBCstr()
 {
   std::string bc;
@@ -69,6 +69,8 @@ std::string CompoList::getBCstr()
   return bc;
 }
 
+
+
 /**
  @brief 境界条件タイプがFORCINGかどうかを調べる
  @retval FORCINGであればtrue
@@ -80,6 +82,7 @@ bool CompoList::isFORCING()
       (type == DARCY) ) return true;
   return false;
 }
+
 
 /**
  @brief 境界条件タイプが熱境界条件かどうかを調べる
@@ -97,6 +100,7 @@ bool CompoList::isHBC()
       (type == CNST_TEMP) ) return true;
   return false;
 }
+
 
 /**
  @brief 境界条件タイプが熱源かどうかを調べる

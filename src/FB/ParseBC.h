@@ -34,8 +34,6 @@
 
 class ParseBC : public DomainInfo {
 private:
-
-  TPControl* tpCntl;
   
   // NoCompo = NoBC + NoMedium
   int NoBC;        ///< LocalBCの数
@@ -56,9 +54,9 @@ private:
   bool HeatProblem;
   bool isCDS;
   
-  CompoList*     compo;      ///< コンポーネントテーブル
-  BoundaryOuter* BaseBc;     ///< テンポラリのテーブル
-  MediumTableInfo *MTITP;    ///< Medium Table <--- textparser
+  TPControl* tpCntl;      ///< テキストパーサーのラッパークラス
+  CompoList* compo;       ///< コンポーネントテーブル
+  BoundaryOuter* BaseBc;  ///< テンポラリのテーブル
 
 
 public:
@@ -88,67 +86,97 @@ public:
   }
   
 private:
-  bool chkDuplicate       (const int n, const std::string m_label);
+  
+  /**
+   * @brief ラベルの重複を調べる
+   * @param [in] n       テストするBaseBcの格納番号の最大値
+   * @param [in] m_label テストラベル
+   */
+  bool chkDuplicate(const int n, const std::string m_label);
+  
   
   /**
    * @brief ベクトルのコピー
-   * @param[out] dst コピー先
-   * @param[in]  src コピー元
+   * @param [out] dst コピー先
+   * @param [in]  src コピー元
    */
-  void copyVec(REAL_TYPE* dst, REAL_TYPE* src) 
+  void copyVec(REAL_TYPE* dst, const REAL_TYPE* src) 
   {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
   }
   
+  
+  /**
+   * @brief 境界条件の値(REAL_TYPE型)を取得し，返す
+   * @param [in] label テストラベル
+   */
   REAL_TYPE get_BCval_real(const std::string label);
   
-  std::string getOBCstr   (const int id);
+  
+  /**
+   * @brief 外部境界条件のキーワードを照合し， BCの文字列を返す
+   * @param [in] id 
+   */
+  std::string getOBCstr(const int id);
+  
 
   int get_Vel_profile     (const std::string label_base);
   
-  //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_st_x(int odr, const int* gci) 
+  
+  
+  // コンポーネントのBbox情報st_xを返す
+  int getCmpGbbox_st_x(const int odr, const int* gci) 
   {
     return ( gci[6*odr+0] );
   }
   
   
-  //@brief コンポーネントのBbox情報st_yを返す
-  int getCmpGbbox_st_y(int odr, const int* gci) 
+  // コンポーネントのBbox情報st_yを返す
+  int getCmpGbbox_st_y(const int odr, const int* gci) 
   {
     return ( gci[6*odr+1] );
   }
   
   
-  //@brief コンポーネントのBbox情報st_zを返す
-  int getCmpGbbox_st_z(int odr, const int* gci) 
+  // コンポーネントのBbox情報st_zを返す
+  int getCmpGbbox_st_z(const int odr, const int* gci) 
   {
     return ( gci[6*odr+2] );
   }
   
-  //@brief コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_ed_x(int odr, const int* gci) 
+  // コンポーネントのBbox情報st_xを返す
+  int getCmpGbbox_ed_x(const int odr, const int* gci) 
   {
     return ( gci[6*odr+3] );
   }
   
   
-  //@brief コンポーネントのBbox情報ed_yを返す
-  int getCmpGbbox_ed_y(int odr, const int* gci) 
+  // コンポーネントのBbox情報ed_yを返す
+  int getCmpGbbox_ed_y(const int odr, const int* gci) 
   {
     return ( gci[6*odr+4] );
   }
   
   
-  //@brief コンポーネントのBbox情報ed_zを返す
-  int getCmpGbbox_ed_z(int odr, const int* gci) 
+  // コンポーネントのBbox情報ed_zを返す
+  int getCmpGbbox_ed_z(const int odr, const int* gci) 
   {
     return ( gci[6*odr+5] );
   }
   
-  void get_Center         (const std::string label_base, const int n, REAL_TYPE* v);
+  
+  /**
+   * @brief 内部境界条件の座標値を取得し，登録する
+   * @param [in]  label_base パラメータパス
+   * @param [in]  n          オーダー
+   * @param [out] v          ベクトルパラメータ
+   */
+  void get_Center(const std::string label_base, const int n, REAL_TYPE* v);
+  
+  
+  
   void get_Dir            (const std::string label_base, const int n, REAL_TYPE* v);
   void get_NV             (const std::string label_base, const int n, REAL_TYPE* v);
   void get_IBC_Adiabatic  (const std::string label_base, const int n);
@@ -177,11 +205,33 @@ private:
   void get_OBC_SpecVH     (const std::string label_base, const int n);
   void get_OBC_Trcfree    (const std::string label_base, const int n);
   void get_OBC_Wall       (const std::string label_base, const int n);
-  void getUnitVec         (REAL_TYPE* v);
+  
+  
+  /**
+   * @brief 単位ベクトルを計算して戻す
+   * @param [in/out] v
+   */
+  void getUnitVec(REAL_TYPE* v);
+  
+  
   void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
   
-  bool isComponent        (int label);
-  bool isCompoTransfer    (int label);
+  
+  /**
+   * @brief コンポーネントが存在するかどうかを調べる
+   * @param [in] label  テストするラベル
+   * @retval bool値
+   */
+  bool isComponent(const int label);
+  
+  
+  /**
+   * @brief HTコンポーネントが存在するかどうかを調べる
+   * @param [in] label  テストするラベル
+   * @retval bool値
+   */
+  bool isCompoTransfer(const int label);
+  
   
   /**
    * @brief 外部境界面の反対方向を返す
@@ -195,47 +245,65 @@ private:
    * @brief 速度の外部境界条件処理の表示
    * @param [in] fp    ファイルポインタ
    * @param [in] ref   BoundaryOuter
+   * @param [in] mat   MediumList
    * @param [in] G_reg グローバルの領域の大きさ
    * @param [in] face  面番号
    */
-  void printOBC(FILE* fp, const BoundaryOuter* ref, const REAL_TYPE* G_reg, const int face);
+  void printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat, const REAL_TYPE* G_reg, const int face);
   
   
-  void setKeywordLBC      (const std::string keyword, const int m);
-  void setKeywordOBC      (const std::string keyword, const int m);
+  /**
+   * @brief 内部境界条件の照合を行う
+   * @param [in] keyword テストキーワード
+   * @param [in] m       BaseBcの格納番号
+   */
+  void setKeywordLBC(const std::string keyword, const int m);
+  
+  
+  
+  /**
+   * @brief 内部境界条件の照合を行う
+   * @param [in] keyword テストキーワード
+   * @param [in] m       コンポーネントの格納番号
+   */
+  void setKeywordOBC(const std::string keyword, const int m);
+  
 
-  void set_Deface         (const std::string label_base, const int n);
+  void set_Deface(const std::string label_base, const int n);
   
   
 public:
 
+  /**
+   * @brief KOSと境界条件数の整合性をチェックする
+   * @param [in] kos KindOfSolver
+   */  
+  void chkBCconsistency(const int kos);
   
-  void chkBCconsistency   (int kos);
   
   /**
    * @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
    * @param [in] Cref Controlクラス
+   * @param [in] mat  MediumList
    */
-  void countMedium(Control* Cref);
+  void countMedium(Control* Cref, const MediumList* mat);
   
   
+  /**
+   * @brief LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
+   */
   int getNoLocalBC();
+  
+  
   void get_Phase          ();
   void get_Medium_InitTemp();
   
   
   /**
-   * @brief TPのポインタを受け取る
+   * @brief CMPのポインタを受け取る
    * @param [in] CMP  CompoListクラスのポインタ
    */
   void importCompoPtr(CompoList* CMP);
-  
-  
-  /**
-   * @brief MediumTableInfoをポイント
-   * @param [in] m_MTITP
-   */
-  void importMTI(MediumTableInfo *m_MTITP);
   
   
   /**
@@ -251,17 +319,25 @@ public:
    * @param [in] candidate テストするラベル
    * @param [in] now       コンポーネントリストの現在までのエントリ番号
    */
-  bool isLabelinCompo(const std::string candidate, int now);
+  bool isLabelinCompo(const std::string candidate, const int now);
   
   
-  void loadBC_Local(Control* C);
+  
+  /**
+   * @brief CompoListに内部境界条件の情報を設定する
+   * @param [in] C     Control
+   * @param [in] mat   MediumList
+   * @param [in] MTITP MediumTableInfo
+   */
+  void loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP);
   
   
   /**
    * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
    * @param [in/out] bc BoundaryOuter
+   * @param [in] MTITP MediumTableInfo
    */
-  void loadBC_Outer(BoundaryOuter* bc);
+  void loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP);
   
   
   /**
@@ -272,7 +348,7 @@ public:
    * @param [in] cmp CompoList
    * @param [in] bc  BoundaryOuter
    */
-  void printCompo(FILE* fp, const int* gci, const MediumList* mat, const CompoList* cmp, const BoundaryOuter* bc);
+  void printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc);
   
   
   /**
@@ -280,8 +356,9 @@ public:
    * @param [in] fp    ファイルポインタ
    * @param [in] G_reg グローバルの領域の大きさ
    * @param [in] bc    BoundaryOuter
+   * @param [in] mat   MediumList
    */
-  void printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc);
+  void printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat);
   
   
   void setControlVars(Control* Cref);

@@ -193,11 +193,9 @@ int FFV::Initialize(int argc, char **argv)
   
   V.setNoCompo_BC(C.NoBC, C.NoCompo);
   
-  B.setControlVars(&C, BC.export_OBC(), mat);
+  B.setControlVars(&C);
   
-  B.importMTI( M.export_MTI() );
-  
-  B.countMedium(&C);
+  B.countMedium(&C, mat);
   
   // CompoListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
   cmp = new CompoList[C.NoCompo+1];
@@ -308,7 +306,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
-  B.loadBC_Outer();
+  B.loadBC_Outer( BC.export_OBC(), M.export_MTI() );
   
   // ボクセルのスキャン
   VoxScan(fp);
@@ -810,10 +808,8 @@ void FFV::connectExample(Control* Cref)
 }
 
 
-/**
- * @brief 時刻をRFクラスからv00[4]にコピーする
- * @param [in] time 設定する時刻
- */
+
+// 時刻をRFクラスからv00[4]にコピーする
 void FFV::copyV00fromRF(double m_time) 
 {
   RF.setV00(m_time);
@@ -830,8 +826,8 @@ void FFV::display_Compo_Info(FILE* fp)
 {
   if ( C.NoBC >0 ) {
     Hostonly_ {
-      B.printCompo(stdout, compo_global_bbox, mat, cmp);
-      B.printCompo(fp, compo_global_bbox, mat, cmp);
+      B.printCompo( stdout, compo_global_bbox, mat, cmp, BC.export_OBC() );
+      B.printCompo( fp, compo_global_bbox, mat, cmp, BC.export_OBC() );
     }
   }
   
@@ -897,8 +893,8 @@ void FFV::display_Parameters(FILE* fp)
   
   // 境界条件のリストと外部境界面のBC設定を表示
 
-  B.printFaceOBC(stdout, G_region);
-  B.printFaceOBC(fp, G_region);
+  B.printFaceOBC(stdout, G_region, BC.export_OBC(), mat);
+  B.printFaceOBC(fp, G_region, BC.export_OBC(), mat);
 
   
   /* モニタ情報の表示
@@ -918,6 +914,8 @@ void FFV::display_Parameters(FILE* fp)
    Hostonly_ if ( fp_mon ) fclose(fp_mon);
    }*/
 }
+
+
 
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
@@ -1015,16 +1013,9 @@ void FFV::DomainInitialize(const string dom_file)
 
 }
 
-/**
- @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
- @param [in/out] m_st 拡大された開始点（Fortranインデクス）
- @param [in/out] m_ed 拡大された終了点（Fortranインデクス）
- @param [in]     st_i 開始点（Cインデクス）
- @param [in]     len  コンポーネントの存在長さ
- @param [in]     m_x  軸方向のサイズ
- @param [in]     dir  方向
- @param m_id キーID
- */
+
+
+//初期インデクスの情報を元に，一層拡大したインデクス値を返す
 void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id)
 {
   int ed_i = st_i + len - 1;
@@ -1034,7 +1025,8 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
   
   int label_st, label_ed;
   
-  switch (dir) {
+  switch (dir) 
+  {
     case 0:
       label_st = X_MINUS;
       label_ed = X_PLUS;
@@ -1156,7 +1148,8 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 }
 
 
-/** 固定パラメータの設定 */
+
+// 固定パラメータの設定
 void FFV::fixed_parameters()
 {
   // 精度
@@ -1768,7 +1761,7 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 void FFV::setBCinfo()
 {
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBC_Local(&C);
+  B.loadBC_Local(&C, mat, M.export_MTI());
   
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();

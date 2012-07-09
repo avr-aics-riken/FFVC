@@ -15,24 +15,25 @@
 #include <math.h>
 #include "ParseBC.h"
 
-/**
- @fn bool ParseBC::chkBCconsistency(int kos)
- @brief KOSと境界条件数の整合性をチェックする
- @param kos KindOfSolver
- */
-void ParseBC::chkBCconsistency(int kos)
+
+// KOSと境界条件数の整合性をチェックする
+void ParseBC::chkBCconsistency(const int kos)
 {
-  if (kos == FLOW_ONLY) {
-    for (int n=1; n<NoBC; n++) {
-      if ( compo[n].isHBC() ) {
+  if (kos == FLOW_ONLY) 
+  {
+    for (int n=1; n<=NoBC; n++) {
+      if ( compo[n].isHBC() ) 
+      {
         Hostonly_ stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Local_Boundary'\n");
         Exit(0);
       }
     }
   }
-  else if (kos == SOLID_CONDUCTION) {
-    for (int n=1; n<NoBC; n++) {
-      if ( compo[n].isVBC() ) {
+  else if (kos == SOLID_CONDUCTION) 
+  {
+    for (int n=1; n<=NoBC; n++) {
+      if ( compo[n].isVBC() ) 
+      {
         Hostonly_ stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Local_Boundary'\n");
         Exit(0);
       }
@@ -40,7 +41,9 @@ void ParseBC::chkBCconsistency(int kos)
   }
 }
 
-//@brief ラベルの重複を調べる
+
+
+// ラベルの重複を調べる
 bool ParseBC::chkDuplicate(const int n, const std::string m_label)
 {
 	for (int i=0; i<n; i++){
@@ -48,6 +51,7 @@ bool ParseBC::chkDuplicate(const int n, const std::string m_label)
 	}
 	return true;
 }
+
 
 
 // KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
@@ -78,11 +82,7 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 
 
 
-/**
- @fn string ParseBC::getOBCstr(const int id)
- @brief 外部境界条件のキーワードを照合し， BCの文字列を返す
- @param id 
- */
+// 外部境界条件のキーワードを照合し， BCの文字列を返す
 std::string ParseBC::getOBCstr(const int id)
 {
   std::string bc;
@@ -98,11 +98,8 @@ std::string ParseBC::getOBCstr(const int id)
 }
 
 
-/**
- @fn void ParseBC::getUnitVec(REAL_TYPE* v)
- @brief 単位ベクトルを計算して戻す
- @param [in/out] v
- */
+
+// 単位ベクトルを計算して戻す
 void ParseBC::getUnitVec(REAL_TYPE* v)
 {
 	REAL_TYPE a;
@@ -123,12 +120,9 @@ void ParseBC::getUnitVec(REAL_TYPE* v)
 
 
 
-/**
- @fn int ParseBC::getNoLocalBC(void)
- @brief LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
- @note 境界条件数がゼロでもエラーではない
- */
-int ParseBC::getNoLocalBC(void)
+// LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
+// 境界条件数がゼロでもエラーではない
+int ParseBC::getNoLocalBC()
 {  
   int nobc=0;
   std::string str;
@@ -136,7 +130,8 @@ int ParseBC::getNoLocalBC(void)
   
   label="/BC_Table/LocalBoundary";
   
-  if ( tpCntl->chkNode(label) ) { //nodeがあれば
+  if ( tpCntl->chkNode(label) )  //nodeがあれば
+  {
 	  nobc = tpCntl->countLabels(label);
   }
   
@@ -145,15 +140,12 @@ int ParseBC::getNoLocalBC(void)
 
 
 
-/**
- @fn REAL_TYPE ParseBC::get_BCval_real(const string label)
- @brief 境界条件の値(REAL_TYPE型)を取得し，返す
- @param label
- */
+// 境界条件の値(REAL_TYPE型)を取得し，返す
 REAL_TYPE ParseBC::get_BCval_real(const std::string label)
 {
   REAL_TYPE df=0.0f;
-  if ( !(tpCntl->GetValue(label, &df )) ) {
+  if ( !(tpCntl->GetValue(label, &df )) ) 
+  {
     stamped_printf("\tParsing error : Invalid REAL_TYPE value for '%s'\n", label.c_str());
     Exit(0);
   }
@@ -162,14 +154,7 @@ REAL_TYPE ParseBC::get_BCval_real(const std::string label)
 
 
 
-/**
- @fn void ParseBC::get_Center(const std::string label_base, const int n, REAL_TYPE* v)
- @brief 内部境界条件の座標値を取得し，登録する
- @param label_base
- @param n オーダー
- @param v[out] ベクトルパラメータ
- @param str エラー表示用文字列
- */
+// 内部境界条件の座標値を取得し，登録する
 void ParseBC::get_Center(const std::string label_base, const int n, REAL_TYPE* v)
 {
   std::string label;
@@ -2230,12 +2215,6 @@ void ParseBC::importCompoPtr(CompoList* CMP)
 
 
 
-// MediumTableInfoをポイント
-void ParseBC::importMTI(MediumTableInfo *m_MTITP)
-{
-  if ( !m_MTITP ) Exit(0);
-  MTITP = m_MTITP;
-}
 
 
 // TPのポインタを受け取る
@@ -2251,7 +2230,7 @@ void ParseBC::importTP(TPControl* tp)
  @brief コンポーネントが存在するかどうかを調べる
  @retval bool値
  */
-bool ParseBC::isComponent(int label)
+bool ParseBC::isComponent(const int label)
 {
   for (int n=1; n<=NoBC; n++) {
     if ( compo[n].getType() == label ) return true;
@@ -2259,12 +2238,10 @@ bool ParseBC::isComponent(int label)
   return false;
 }
 
-/**
- @fn bool ParseBC::isCompoTransfer(int label)
- @brief HTコンポーネントが存在するかどうかを調べる
- @retval bool値
- */
-bool ParseBC::isCompoTransfer(int label)
+
+
+// HTコンポーネントが存在するかどうかを調べる
+bool ParseBC::isCompoTransfer(const int label)
 {
   for (int n=1; n<=NoBC; n++) {
     if ( compo[n].getHtype() == label ) return true;
@@ -2272,13 +2249,10 @@ bool ParseBC::isCompoTransfer(int label)
   return false;
 }
 
-/**
- * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
- * @retval 重複していればfalseを返す
- * @param [in] candidate テストするラベル
- * @param [in] now       コンポーネントリストの現在までのエントリ番号
- */
-bool ParseBC::isLabelinCompo(const std::string candidate, int now)
+
+
+// 同じラベルが既にコンポーネントに登録されているかを調べる
+bool ParseBC::isLabelinCompo(const std::string candidate, const int now)
 {
   for (int i=1; i<now; i++) {
     if ( FBUtility::compare(candidate, compo[i].getLabel()) ) return false;
@@ -2288,15 +2262,11 @@ bool ParseBC::isLabelinCompo(const std::string candidate, int now)
 
 
 
-/**
- @fn void ParseBC::loadBC_Local(Control* C)
- @brief CompoListに内部境界条件の情報を設定する
- @note
- - 最初にBCの情報を登録，その後IDの情報を登録
- - パラメータファイルから各内部BCのidをパースし，compoに保持する
- - 格納番号は1からスタート
- */
-void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
+
+// 最初にBCの情報を登録，その後IDの情報を登録
+// パラメータファイルから各内部BCのidをパースし，compoに保持する
+// 格納番号は1からスタート
+void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP)
 { 
   std::string str, label, ename;
   std::string label_base, label_ename, label_leaf;
@@ -2339,7 +2309,8 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
   label_base = "/BC_Table/LocalBoundary";
   n = tpCntl->countLabels(label_base);
   
-  if ( n != NoBC) {
+  if ( n != NoBC) 
+  {
     stamped_printf("\tLocalBoundary error %s\n", label_base.c_str());
     Exit(0);
   }
@@ -2351,7 +2322,8 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
   // 境界条件がなければ，スキップ
   for (int odr=1; odr<=NoBC; odr++) {
     
-    if( !tpCntl->GetNodeStr(label_base, odr, &str)){
+    if( !tpCntl->GetNodeStr(label_base, odr, &str))
+    {
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
@@ -2362,7 +2334,8 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
     setKeywordLBC(ename, odr);
     
     // nodeの移動
-    if ( !tpCntl->GetNodeStr(label_ename, 1, &str) ){
+    if ( !tpCntl->GetNodeStr(label_ename, 1, &str) )
+    {
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
@@ -2374,49 +2347,64 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
     // 各BCの処理
     tp = compo[odr].getType();
     
-    if ( tp == SPEC_VEL ) {
+    if ( tp == SPEC_VEL ) 
+    {
       get_IBC_SpecVel(label_leaf, odr);      
     }
-    else if ( tp == OUTFLOW ) {
+    else if ( tp == OUTFLOW ) 
+    {
       get_IBC_Outflow(label_leaf, odr);     
     }
-    else if ( tp == IBM_DF ) {
+    else if ( tp == IBM_DF ) 
+    {
       get_IBC_IBM_DF(label_leaf, odr);
     }
-    else if ( tp == HEX ) {
+    else if ( tp == HEX ) 
+    {
       get_IBC_PrsLoss(label_leaf, odr);//debug済み
     }
-    else if ( tp == FAN ) {
+    else if ( tp == FAN ) 
+    {
       get_IBC_Fan(label_leaf, odr);//debug済み
     }
-    else if ( tp == DARCY ) {
+    else if ( tp == DARCY ) 
+    {
       get_Darcy(label_leaf, odr);
     }
-    else if ( tp == CELL_MONITOR ) {
+    else if ( tp == CELL_MONITOR ) 
+    {
       get_IBC_Monitor(label_leaf, odr, C);//debug済み
     }
-    else if ( tp == INACTIVE ) {
+    else if ( tp == INACTIVE ) 
+    {
       ; // skip
     }
-    else if ( tp == PERIODIC ) {
+    else if ( tp == PERIODIC ) 
+    {
       get_IBC_Periodic(label_leaf, odr);
     }
-    else if ( HeatProblem ) { // Incase of Heat problem
-      if ( C->KindOfSolver == FLOW_ONLY ) {
+    else if ( HeatProblem ) // Incase of Heat problem
+    {
+      if ( C->KindOfSolver == FLOW_ONLY ) 
+      {
         stamped_printf("Parse Error : Heat BC is not allowed on FLOW_ONLY mode.\n");
         Exit(0);
       }
       
-      if ( tp == ADIABATIC ) {
+      if ( tp == ADIABATIC ) 
+      {
         get_IBC_Adiabatic(label_leaf, odr);
         
       }
-      else if ( tp == HEATFLUX ) {
+      else if ( tp == HEATFLUX ) 
+      {
         get_IBC_HeatFlux(label_leaf, odr);
        
       }
-      else if ( tp == TRANSFER ) {
-        switch ( compo[odr].getHtype() ) {
+      else if ( tp == TRANSFER ) 
+      {
+        switch ( compo[odr].getHtype() ) 
+        {
           case HT_N:
             get_IBC_HT_N(label_leaf, odr);
 
@@ -2443,20 +2431,25 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
             break;
         }        
       }
-      else if ( tp == ISOTHERMAL ) {
+      else if ( tp == ISOTHERMAL ) 
+      {
         get_IBC_IsoTherm(label_leaf, odr);
 
       }
-      else if ( tp == RADIANT ) {
+      else if ( tp == RADIANT ) 
+      {
         get_IBC_Radiant(label_leaf, odr);
       }
-      else if ( tp == HEAT_SRC ) {
+      else if ( tp == HEAT_SRC ) 
+      {
         get_IBC_HeatSrc(label_leaf, odr);
       }
-      else if ( tp == CNST_TEMP ) {
+      else if ( tp == CNST_TEMP ) 
+      {
         get_IBC_CnstTemp(label_leaf, odr);
       }
-      else {
+      else 
+      {
         printf("\tError : Invalid Local BC keyword [%d]\n", tp);
         Exit(0);
       }
@@ -2473,11 +2466,8 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat)
 
 
 
-/**
- * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
- * @param [in/out] bc BoundaryOuter
- */
-void ParseBC::loadBC_Outer(BoundaryOuter* bc)
+// パラメータファイルをパースして，外部境界条件を取得，保持する
+void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP)
 {
   std::string label_base, label_leaf, label;
   std::string str;
@@ -2561,14 +2551,16 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc)
   // 各フェイスに境界条件を設定する
   label_base = "/BC_Table/OuterBoundary/Face_BC";
   
-  if ( !tpCntl->chkNode(label_base) ) {
+  if ( !tpCntl->chkNode(label_base) ) 
+  {
     Hostonly_ printf("\tParsing error : Missing OuterBoundary Face_BC\n");
     Exit(0);
   }
   
   // check
   int nnode = tpCntl->countLabels(label_base);
-  if ( nnode != NOFACE ) {
+  if ( nnode != NOFACE ) 
+  {
     Hostonly_ printf("\tParsing error : OuterBoundary Face_BC count != 6\n");
     Exit(0);
   }
@@ -2577,7 +2569,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc)
   for (int face=0; face<NOFACE; face++) {
     
     // faceに対するラベルを取得
-    if ( !tpCntl->GetNodeStr(label_base, face+1, &str) ){
+    if ( !tpCntl->GetNodeStr(label_base, face+1, &str) )
+    {
       Hostonly_ printf("\tGetNodeStr error\n");
       Exit(0);
     }
@@ -2586,19 +2579,23 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc)
     // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
     label = label_leaf + "/kind";
     
-    if ( !(tpCntl->GetValue(label, &str)) ) {
+    if ( !(tpCntl->GetValue(label, &str)) ) 
+    {
       Hostonly_ printf("\tParsing error : kind cannot found : Face_BC\n");
       Exit(0);
     }
     
     // Aliasでサーチ
     for (int i=0; i<NoBaseBC; i++) {
-      if ( !strcasecmp( str.c_str(), BaseBc[i].get_Alias().c_str() ) ) {
+      if ( !strcasecmp( str.c_str(), BaseBc[i].get_Alias().c_str() ) ) 
+      {
         bc[face].dataCopy( &BaseBc[i] );
         break;
       }
-      else {
-        if ( i == NoBaseBC-1 ) { // 最後までみつからない
+      else 
+      {
+        if ( i == NoBaseBC-1 ) // 最後までみつからない
+        {
           Hostonly_ printf("\tParsing error : [%d]'%s' is not listed in 'Basic_BCs'\n", i+1, str.c_str());
           Exit(0);
         }
@@ -2612,7 +2609,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc)
   
   for (int face=0; face<NOFACE; face++) {
     
-    if(!tpCntl->GetNodeStr(label_base, face+1, &str)){
+    if(!tpCntl->GetNodeStr(label_base, face+1, &str))
+    {
       Hostonly_ printf("\tGetNodeStr error\n");
       Exit(0);
     }
@@ -2621,13 +2619,15 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc)
     // ガイドセルの媒質ラベルを取得
     label = label_leaf + "/medium_on_guide_cell";
     
-    if ( !(tpCntl->GetValue(label, &str )) ) {
+    if ( !(tpCntl->GetValue(label, &str )) ) 
+    {
       Hostonly_ printf("\tParsing error : No entory 'mediun_on_guide_cell' in 'Face_BC'\n");
       Exit(0);
     }
     
     for (int i=1; i<=NoMedium; i++) {
-      if( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) ){
+      if( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
+      {
         bc[face].set_GuideMedium(i);
         break;
       }
@@ -2751,7 +2751,7 @@ int ParseBC::oppositeDir(const int dir)
 
 
 // コンポーネントの情報を表示する
-void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, const CompoList* cmp, const BoundaryOuter* bc)
+void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc)
 {
   int n, m;
   bool flag;
@@ -3243,7 +3243,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, const 
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  Variables\n");
     
     for(n=1; n<=NoBC; n++) {
-      if ( cmp[n].getType() == CELL_MONITOR ) {
+      if ( cmp[n].getType() == CELL_MONITOR ) 
+      {
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e  %s\n", 
                 n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), 
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
@@ -3256,7 +3257,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, const 
     
     fprintf(fp, "\t no                    Label   Mat   normal_x   normal_y   normal_z Reference\n");
     for(n=1; n<=NoBC; n++){
-      if ( cmp[n].getType() == CELL_MONITOR )  {
+      if ( cmp[n].getType() == CELL_MONITOR )  
+      {
         fprintf(fp,"\t%3d %24s %5d %10.3e %10.3e %10.3e       %3s\n",
                 n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
                 (cmp[n].getStateCellMonitor()==ON) ? "yes" : "no");
@@ -3330,11 +3332,14 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, const 
 
 
 // 外部境界条件の各面の情報を表示する
-void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc)
+void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat)
 {
   for (int i=0; i<NOFACE; i++) {
-    fprintf(fp,"\t      Set %s up as %s : < %s >\n", FBUtility::getDirection(i).c_str(), getOBCstr(bc[i].get_Class()).c_str(), bc[i].get_Alias().c_str());
-    printOBC(fp, &bc[i], G_reg, i);
+    fprintf(fp,"\t      Set %s up as %s : < %s >\n", 
+            FBUtility::getDirection(i).c_str(), 
+            getOBCstr(bc[i].get_Class()).c_str(), 
+            bc[i].get_Alias().c_str());
+    printOBC(fp, &bc[i], mat, G_reg, i);
     fprintf(fp,"\n");
   }
   fflush(fp);

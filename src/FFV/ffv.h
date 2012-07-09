@@ -363,9 +363,9 @@ private:
   
   
   /**
-  * @brief 時刻をRFクラスからv00[4]にコピーする
-  * @param [in] time 設定する時刻
-  */
+   * @brief 時刻をRFクラスからv00[4]にコピーする
+   * @param [in] time 設定する時刻
+   */
   void copyV00fromRF(double m_time);
   
   
@@ -416,14 +416,14 @@ private:
   
   
   /**
-   @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
-   @param [in/out] m_st 拡大された開始点（Fortranインデクス）
-   @param [in/out] m_ed 拡大された終了点（Fortranインデクス）
-   @param [in]     st_i 開始点（Cインデクス）
-   @param [in]     len  コンポーネントの存在長さ
-   @param [in]     m_x  軸方向のサイズ
-   @param [in]     dir  方向
-   @param m_id キーID
+   * @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
+   * @param [in/out] m_st 拡大された開始点（Fortranインデクス）
+   * @param [in/out] m_ed 拡大された終了点（Fortranインデクス）
+   * @param [in]     st_i 開始点（Cインデクス）
+   * @param [in]     len  コンポーネントの存在長さ
+   * @param [in]     m_x  軸方向のサイズ
+   * @param [in]     dir  方向
+   * @param [in]     m_id キーID
    */
   void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
   
@@ -789,7 +789,9 @@ private:
   }
     
   
-  /** コマンドラインヘルプ */
+  /**
+   * @brief コマンドラインヘルプ 
+   */
   void Usage();
   
   

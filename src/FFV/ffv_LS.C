@@ -16,24 +16,95 @@
 
 #include "ffv.h"
 
+/**
+ * @brief SOR2SMAの非同期通信処理
+ * @param [in]  col オーダリングカラーの番号
+ * @param [in]  ip  オーダリングカラー0の最初のインデクス
+ * @param [out] key 送信ID
+ */
+void FFV::comm_SOR2SMA(const int col, const int ip. int* key)
+{
+  // cf_sz バッファサイズ
+  // cf_x x方向のバッファ (cf_sz[0]*4) 
+  // cf_y y方向のバッファ (cf_sz[1]*4) 
+  // cf_z z方向のバッファ (cf_sz[2]*4) 
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int cx = cf_sz[0];
+  int cy = cf_sz[1];
+  int cz = cf_sz[2];
+  
+  int a = col + ip;
+  int ic = a - int(a/2)*2; // スタートカラー
+  
+  // 送信IDを初期化
+  for (int i=0; i<NOFACE*2; i++)
+  {
+    key[i] = -1;
+  }
+  
 
-!> ********************************************************************
-!! @brief SOR2SMAの非同期通信処理
-!! @param p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param col オーダリングカラーの番号
-!! @param ip オーダリングカラー0の最初のインデクス
-!! @param cf_sz バッファサイズ
-!! @param cf_x x方向のバッファ
-!! @param cf_y y方向のバッファ
-!! @param cf_z z方向のバッファ
-!! @param key 送信ID
-!! @param para_key parallel managerの識別ID
-!<
-subroutine sma_comm(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key, para_key)
-implicit none
-include 'sklparaf.h'
+  // X_MINUS
+  // send
+  if ( nID[X_MINUS]>=0 )
+  {
+    int c = 0;
+    int i = 1;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + 1;
+      int js= b - int(b/2)*2;
+      
+      for (int j=1+js; j<=jx; j+=2) {
+        cf_x[c] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        c++;
+      }
+    }
+    
+    if ( paraMngr->Isend(cf_x, c, nID[X_MINUS], key[]) != CPM_SUCCESS ) Exit(0);
+  }
+    
+  // recieve
+  if ( nID[X_PLUS]>=0 )
+  {
+    
+  }
+    
+  }
+    
+    
+    
+  // X_PLUS
+    
+    
+  // Y_MINUS
+    
+    
+    
+    
+  // Y_PLUS
+    
+    
+  // Z_MINUS
+    
+    
+    
+  // Z_PLUS
+    
+    
+
+  
+  
+}
+
+
+
+
+
 integer                                                ::  ix, jx, kx, g
 integer                                                ::  i, j, k, ic, icnt, ierr, para_key, iret
 integer                                                ::  col ! color No. 0 or 1
@@ -47,28 +118,7 @@ real, dimension(cf_sz(2), 4)                           ::  cf_y
 real, dimension(cf_sz(3), 4)                           ::  cf_z
 integer, dimension(6, 2)                               ::  key
 integer, dimension(6)                                  ::  nID
-!
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-ic = mod(col+ip,2)
-iret = 0
-ierr = 0
 
-do i=1,6
-key(i,1) = -1 !send
-key(i,2) = -1 !recv
-end do
-
-! get neighbor domain ID
-call SklGetCommID(para_key, -1,  0,  0, nID(1), SKL_DEFAULT_GROUP, ierr) !X_MINUS
-call SklGetCommID(para_key,  1,  0,  0, nID(2), SKL_DEFAULT_GROUP, ierr) !X_PLUS
-call SklGetCommID(para_key,  0, -1,  0, nID(3), SKL_DEFAULT_GROUP, ierr) !Y_MINUS
-call SklGetCommID(para_key,  0,  1,  0, nID(4), SKL_DEFAULT_GROUP, ierr) !Y_PLUS
-call SklGetCommID(para_key,  0,  0, -1, nID(5), SKL_DEFAULT_GROUP, ierr) !Z_MINUS
-call SklGetCommID(para_key,  0,  0,  1, nID(6), SKL_DEFAULT_GROUP, ierr) !Z_PLUS
-
-call SklIsParallel(iret)
 
 ! X_MINUS
 ! send
