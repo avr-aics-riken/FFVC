@@ -228,6 +228,13 @@ public:
   
   
   /**
+   * @brief MediumTableInfoをポイント
+   * @param [in] m_MTITP
+   */
+  void importMTI(MediumTableInfo *m_MTITP);
+  
+  
+  /**
    * @brief TPのポインタを受け取る
    * @param [in] tp  TPControlクラスのポインタ
    */
@@ -260,13 +267,6 @@ public:
   void printFaceOBC       (FILE* fp, REAL_TYPE* G_reg);
   
   void setControlVars     (Control* Cref, BoundaryOuter* ptr, MediumList* m_mat);
-  
-  
-  /**
-   * @brief MediumTableInfoをポイント
-   * @param [in] m_MTITP
-   */
-  void setMediumTI(MediumTableInfo *m_MTITP);
   
   
   /**

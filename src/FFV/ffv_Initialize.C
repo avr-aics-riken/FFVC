@@ -195,7 +195,7 @@ int FFV::Initialize(int argc, char **argv)
   
   B.setControlVars(&C, BC.export_OBC(), mat);
   
-  B.setMediumTI( M.export_MTI() );
+  B.importMTI( M.export_MTI() );
   
   B.countMedium(&C);
   
@@ -648,10 +648,6 @@ int FFV::Initialize(int argc, char **argv)
   setInitialCondition();
   
   
-  // 履歴出力準備
-  prep_HistoryOutput();
-  
-  
   
   // サンプリング元となるデータ配列の登録
   if ( C.Sampling.log == ON ) {
@@ -696,6 +692,16 @@ int FFV::Initialize(int argc, char **argv)
     FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, fp);
   }
   
+  Hostonly_ 
+  {
+    printf("\n\n");
+    fprintf(fp, "\n\n");
+  }
+  
+  // 履歴出力準備
+  prep_HistoryOutput();
+  
+  
   
   
   // 初期化終了時に、入力パラメータのDBを破棄
@@ -730,7 +736,8 @@ int FFV::Initialize(int argc, char **argv)
   printf("CurrentStep         = %u\n",CurrentStep);
   printf("CurrentStep_Avr     = %u\n",CurrentStep_Avr);
   
-  Exit(0);
+  
+
   return 1;
 }
 
@@ -2369,7 +2376,7 @@ void FFV::setParameters()
     Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
     Exit(0);
   }
-  C.LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
+  Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
   
   
   // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後

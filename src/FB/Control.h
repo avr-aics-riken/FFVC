@@ -579,7 +579,6 @@ public:
   int FB_version; ///< FlowBaseクラスのバージョン番号
   int GuideOut;
   int KindOfSolver;
-  int LastStep;
   int Limiter;
   int MarchingScheme;
   int NoBC;
@@ -682,7 +681,6 @@ public:
     CnvScheme = 0;
     GuideOut = 0;
     KindOfSolver = 0;
-    LastStep = 0;
     Limiter = 0;
     MarchingScheme = 0;
     NoBC = 0;

@@ -2229,6 +2229,15 @@ void ParseBC::importCompoPtr(CompoList* CMP)
 }
 
 
+
+// MediumTableInfoをポイント
+void ParseBC::importMTI(MediumTableInfo *m_MTITP)
+{
+  if ( !m_MTITP ) Exit(0);
+  MTITP = m_MTITP;
+}
+
+
 // TPのポインタを受け取る
 void ParseBC::importTP(TPControl* tp) 
 { 
@@ -3675,14 +3684,6 @@ void ParseBC::setKeywordOBC(const std::string keyword, const int m)
 }
 
 
-
-
-// MediumTableInfoをポイント
-void ParseBC::setMediumTI(MediumTableInfo *m_MTITP)
-{
-  if ( !m_MTITP ) Exit(0);
-  MTITP = m_MTITP;
-}
 
 
 /**

@@ -38,7 +38,7 @@ int FFV::Loop(const unsigned step)
   // 時間進行
   CurrentTime += DT.get_DT(); // 戻り値はdouble
   CurrentStep++;
-
+  
   
   // 参照座標速度をv00に保持する
   copyV00fromRF(CurrentTime);

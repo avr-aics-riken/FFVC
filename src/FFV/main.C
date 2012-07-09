@@ -126,6 +126,7 @@ int main( int argc, char **argv )
     double main = main_end - main_str;
     double post = post_end - post_str;
     
+    printf("\n\n");
     printf("TIME : Solver Init  %10.3f sec.\n", init);
     printf("TIME : Solver Main  %10.3f sec.\n", main);
     printf("TIME : Solver Post  %10.3f sec.\n", post);

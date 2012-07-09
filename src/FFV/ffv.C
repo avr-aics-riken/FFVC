@@ -540,7 +540,7 @@ int FFV::get_DomainInfo()
   
   if ( !tpCntl.GetVector(label, rvec, 3) )
   {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
   }
   
@@ -550,7 +550,7 @@ int FFV::get_DomainInfo()
   }
   else
   {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
   }
   
@@ -562,7 +562,7 @@ int FFV::get_DomainInfo()
   
   if ( !tpCntl.GetVector(label, rvec, 3) )
   {
-    cout << "\tNo option : in parsing [" << label << "]" << endl;
+    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
     flag = false;
   }
   
@@ -574,7 +574,7 @@ int FFV::get_DomainInfo()
     }
     else
     {
-      printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
+      Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
       Exit(0);
     }
   }
@@ -595,7 +595,7 @@ int FFV::get_DomainInfo()
     
     if ( !tpCntl.GetVector(label, ivec, 3) )
     {
-      cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
+      Hostonly_ cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
       Exit(0); // pitchもvoxelも有効でない
     }
     
@@ -604,14 +604,17 @@ int FFV::get_DomainInfo()
       pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
       pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
       pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
-      printf("\tCalculated pitch is (%e %e %e) >> ", pitch[0], pitch[1], pitch[2]);
+      
+      Hostonly_ printf("\tCalculated pitch is (%e %e %e) >> ", pitch[0], pitch[1], pitch[2]);
+      
       pitch[1] = pitch[0];
       pitch[2] = pitch[0];
-      printf(" modified to (%e %e %e)\n", pitch[0], pitch[1], pitch[2]);
+      
+      Hostonly_ printf(" modified to (%e %e %e)\n", pitch[0], pitch[1], pitch[2]);
     }
     else
     {
-      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
       Exit(0);
     }
   }
@@ -623,7 +626,7 @@ int FFV::get_DomainInfo()
   
   if ( !tpCntl.GetVector(label, ivec, 3) )
   {
-    cout << "\tNo option : in parsing [" << label << "]" << endl;
+    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
     div_type = 2;
   }
   
@@ -636,7 +639,7 @@ int FFV::get_DomainInfo()
     }
     else
     {
-      cout << "ERROR : in parsing [" << label << "]" << endl;
+      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
       Exit(0);
     }
   }
@@ -646,7 +649,7 @@ int FFV::get_DomainInfo()
   label = "/DomainInfo/ActiveSubDomain_File";
   
   if ( !tpCntl.GetValue(label, &str ) ) {
-    cout << "\tNo option : in parsing [" << label << "]" << endl;
+    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
   // string hoge = str;
   
@@ -829,6 +832,7 @@ int FFV::MainLoop()
     {
       case -1: // error
         return -1;
+        break;
         
       case 0: // forced terminated
         ret = 1;
@@ -844,9 +848,9 @@ int FFV::MainLoop()
     
     if( loop_ret == 0 ) break;
   }
-  
+
   if ( !stepPost() ) return -1;
-  
+
   return ret;
 }
 

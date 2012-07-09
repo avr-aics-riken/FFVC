@@ -47,9 +47,7 @@ public:
   }
   
   /**　デストラクタ */
-  ~MediumTableInfo() 
-  {
-  }
+  ~MediumTableInfo() {}
   
 };
 
