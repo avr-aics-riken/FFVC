@@ -306,7 +306,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
-  B.loadBC_Outer( BC.export_OBC(), M.export_MTI() );
+  B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
   
   // ボクセルのスキャン
   VoxScan(fp);
@@ -336,7 +336,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
-  B.importCompoPtr(cmp);
+  
   
   // CompoListの設定，外部境界条件の読み込み保持、ガイドセル上にパラメータファイルで指定する媒質インデクスを代入
   setBCinfo();
@@ -500,7 +500,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // set phase 
   if ( C.BasicEqs == INCMP_2PHASE ) {
-    B.get_Phase();
+    B.get_Phase(cmp);
   }
   
   
@@ -1761,13 +1761,14 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 void FFV::setBCinfo()
 {
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBC_Local(&C, mat, M.export_MTI());
+  B.loadBC_Local(&C, mat, M.export_MTI(), cmp);
+  
   
   // 各コンポーネントが存在するかどうかを保持しておく
   setEnsComponent();
   
   // KOSと境界条件種類の整合性をチェック
-  B.chkBCconsistency(C.KindOfSolver);
+  B.chkBCconsistency(C.KindOfSolver, cmp);
   
   // ガイドセル上にパラメータファイルで指定する媒質インデクスを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) 
@@ -2376,11 +2377,8 @@ void FFV::setParameters()
   C.setParameters(mat, cmp, &RF, BC.export_OBC());
   
   
-  // 媒質による代表パラメータのコピー
-  B.setRefValue(mat, cmp, &C);
-  
   // パラメータの無次元化（正規化）に必要な参照物理量の設定
-  B.setRefMedium(mat, C.RefMat);
+  B.setRefMediumProperty(mat, cmp, C.RefMat);
 }
 
 

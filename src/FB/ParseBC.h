@@ -55,7 +55,6 @@ private:
   bool isCDS;
   
   TPControl* tpCntl;      ///< テキストパーサーのラッパークラス
-  CompoList* compo;       ///< コンポーネントテーブル
   BoundaryOuter* BaseBc;  ///< テンポラリのテーブル
 
 
@@ -77,7 +76,6 @@ public:
     NoMedium = 0;
     
     BaseBc = NULL;
-    compo = NULL;
   }
   
   /**　デストラクタ */
@@ -122,46 +120,46 @@ private:
   std::string getOBCstr(const int id);
   
 
-  int get_Vel_profile     (const std::string label_base);
+  int get_Vel_profile(const std::string label_base);
   
   
   
   // コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_st_x(const int odr, const int* gci) 
+  int getCmpGbbox_st_x(const int odr, const int* gci) const
   {
     return ( gci[6*odr+0] );
   }
   
   
   // コンポーネントのBbox情報st_yを返す
-  int getCmpGbbox_st_y(const int odr, const int* gci) 
+  int getCmpGbbox_st_y(const int odr, const int* gci) const
   {
     return ( gci[6*odr+1] );
   }
   
   
   // コンポーネントのBbox情報st_zを返す
-  int getCmpGbbox_st_z(const int odr, const int* gci) 
+  int getCmpGbbox_st_z(const int odr, const int* gci) const
   {
     return ( gci[6*odr+2] );
   }
   
   // コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_ed_x(const int odr, const int* gci) 
+  int getCmpGbbox_ed_x(const int odr, const int* gci) const
   {
     return ( gci[6*odr+3] );
   }
   
   
   // コンポーネントのBbox情報ed_yを返す
-  int getCmpGbbox_ed_y(const int odr, const int* gci) 
+  int getCmpGbbox_ed_y(const int odr, const int* gci) const
   {
     return ( gci[6*odr+4] );
   }
   
   
   // コンポーネントのBbox情報ed_zを返す
-  int getCmpGbbox_ed_z(const int odr, const int* gci) 
+  int getCmpGbbox_ed_z(const int odr, const int* gci) const
   {
     return ( gci[6*odr+5] );
   }
@@ -169,35 +167,200 @@ private:
   
   /**
    * @brief 内部境界条件の座標値を取得し，登録する
-   * @param [in]  label_base パラメータパス
-   * @param [in]  n          オーダー
+   * @param [in]  label_base ラベルディレクトリ
    * @param [out] v          ベクトルパラメータ
    */
-  void get_Center(const std::string label_base, const int n, REAL_TYPE* v);
+  void get_Center(const std::string label_base, REAL_TYPE* v);
+  
+  
+  /**
+   * @brief 内部境界条件の方向ベクトル値を取得し，登録する
+   * @param [in] label_base ラベルディレクトリ   
+   * @param [out v          ベクトルパラメータ
+   */
+  void get_Dir(const std::string label_base, REAL_TYPE* v);
   
   
   
-  void get_Dir            (const std::string label_base, const int n, REAL_TYPE* v);
-  void get_NV             (const std::string label_base, const int n, REAL_TYPE* v);
-  void get_IBC_Adiabatic  (const std::string label_base, const int n);
-  void get_IBC_CnstTemp   (const std::string label_base, const int n);
-  void get_IBC_Fan        (const std::string label_base, const int n);
-  void get_IBC_IBM_DF     (const std::string label_base, const int n);
-  void get_IBC_HeatFlux   (const std::string label_base, const int n);
-  void get_IBC_HeatSrc    (const std::string label_base, const int n);
-  void get_IBC_HT_B       (const std::string label_base, const int n);
-  void get_IBC_HT_N       (const std::string label_base, const int n);
-  void get_IBC_HT_S       (const std::string label_base, const int n);
-  void get_IBC_HT_SF      (const std::string label_base, const int n);
-  void get_IBC_HT_SN      (const std::string label_base, const int n);
-  void get_IBC_IsoTherm   (const std::string label_base, const int n);
-  void get_IBC_Monitor    (const std::string label_base, const int n, Control* C);
-  void get_IBC_Outflow    (const std::string label_base, const int n);
-  void get_IBC_Periodic   (const std::string label_base, const int n);
-  void get_IBC_PrsLoss    (const std::string label_base, const int n);
-  void get_IBC_Radiant    (const std::string label_base, const int n);
-  void get_IBC_SpecVel    (const std::string label_base, const int n);
-  void get_Darcy          (const std::string label_base, const int n);
+  /**
+   * @brief 内部境界条件の法線ベクトル値を取得し，登録する
+   * @param [in] label_base ラベルディレクトリ   
+   * @param [out v          ベクトルパラメータ
+   */
+  void get_NV(const std::string label_base, REAL_TYPE* v);
+  
+  
+  /**
+   * @brief Adiabaticのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_Adiabatic(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief Const_Temperatureのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_CnstTemp(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief Fanのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_Fan(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief Direct Forcingのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_IBM_DF(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief Direct_Fluxのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HeatFlux(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief Heat_Generationのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HeatSrc(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief HeatTransfer_Bのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HT_B(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief HeatTransfer_Nのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HT_N(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief HeatTransfer_Sのパラメータを取得す
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HT_S(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief HeatTransfer_SFのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HT_SF(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief HeatTransfer_SNのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_HT_SN(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief 境界条件IsoThermalのパラメータを取得し保持する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_IsoTherm(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief Monitorの設定内容をパースし，パラメータを保持する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_Monitor(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief 内部の流出境界のパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_Outflow(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief 内部の周期境界のパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_Periodic(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief HeatExchangerのパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_PrsLoss(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /** 境界条件Radiantのパラメータを取得し保持する
+   * @brief 
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_Radiant(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief 内部の流入境界のパラメータを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_IBC_SpecVel(const std::string label_base, const int n, CompoList* cmp);
+  
+  
+  /**
+   * @brief 
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   */
+  void get_Darcy(const std::string label_base, const int n, CompoList* cmp);
+  
+  
   void get_OBC_FarField   (const std::string label_base, const int n);
   void get_OBC_HT         (const std::string label_base, const int n, const std::string kind);
   void get_OBC_Outflow    (const std::string label_base, const int n);
@@ -214,23 +377,25 @@ private:
   void getUnitVec(REAL_TYPE* v);
   
   
-  void get_Vel_Params     (const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
+  void get_Vel_Params(const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
   
   
   /**
    * @brief コンポーネントが存在するかどうかを調べる
    * @param [in] label  テストするラベル
+   * @param [in] cmp    CompoList
    * @retval bool値
    */
-  bool isComponent(const int label);
+  bool isComponent(const int label, const CompoList* cmp);
   
   
   /**
    * @brief HTコンポーネントが存在するかどうかを調べる
    * @param [in] label  テストするラベル
+   * @param [in] cmp    CompoList
    * @retval bool値
    */
-  bool isCompoTransfer(const int label);
+  bool isCompoTransfer(const int label, const CompoList* cmp);
   
   
   /**
@@ -254,10 +419,11 @@ private:
   
   /**
    * @brief 内部境界条件の照合を行う
-   * @param [in] keyword テストキーワード
-   * @param [in] m       BaseBcの格納番号
+   * @param [in]  keyword テストキーワード
+   * @param [in]  m       BaseBcの格納番号
+   * @param [out] cmp     CompoList
    */
-  void setKeywordLBC(const std::string keyword, const int m);
+  void setKeywordLBC(const std::string keyword, const int m, CompoList* cmp);
   
   
   
@@ -268,8 +434,14 @@ private:
    */
   void setKeywordOBC(const std::string keyword, const int m);
   
-
-  void set_Deface(const std::string label_base, const int n);
+  
+  /**
+   * @brief 内部境界条件のdef_faceを取得し，登録する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストのエントリ番号
+   * @param [out] cmp        CompoList
+   */
+  void set_Deface(const std::string label_base, const int n, CompoList* cmp);
   
   
 public:
@@ -278,7 +450,7 @@ public:
    * @brief KOSと境界条件数の整合性をチェックする
    * @param [in] kos KindOfSolver
    */  
-  void chkBCconsistency(const int kos);
+  void chkBCconsistency(const int kos, CompoList* cmp);
   
   
   /**
@@ -295,15 +467,15 @@ public:
   int getNoLocalBC();
   
   
-  void get_Phase          ();
-  void get_Medium_InitTemp();
-  
-  
   /**
-   * @brief CMPのポインタを受け取る
-   * @param [in] CMP  CompoListクラスのポインタ
+   * @brief 2相流問題で気相か液相かを取得する
+   * @param [out] cmp   CompoList
    */
-  void importCompoPtr(CompoList* CMP);
+  void get_Phase(CompoList* cmp);
+  
+  
+  
+  void get_Medium_InitTemp();
   
   
   /**
@@ -318,26 +490,29 @@ public:
    * @retval 重複していればfalseを返す
    * @param [in] candidate テストするラベル
    * @param [in] now       コンポーネントリストの現在までのエントリ番号
+   * @param [in] cmp       CompoList
    */
-  bool isLabelinCompo(const std::string candidate, const int now);
+  bool isLabelinCompo(const std::string candidate, const int now, const CompoList* cmp);
   
   
   
   /**
    * @brief CompoListに内部境界条件の情報を設定する
-   * @param [in] C     Control
-   * @param [in] mat   MediumList
-   * @param [in] MTITP MediumTableInfo
+   * @param [in]  C     Control
+   * @param [in]  mat   MediumList
+   * @param [in]  MTITP MediumTableInfo
+   * @param [out] cmp   CompoList
    */
-  void loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP);
+  void loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp);
   
   
   /**
    * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
-   * @param [in/out] bc BoundaryOuter
-   * @param [in] MTITP MediumTableInfo
+   * @param [in/out] bc     BoundaryOuter
+   * @param [in]     MTITP  MediumTableInfo
+   * @param [out]    cmp    CompoList
    */
-  void loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP);
+  void loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp);
   
   
   /**
@@ -367,12 +542,10 @@ public:
   /**
    * @brief 指定した媒質IDから参照物理量を設定する
    * @param [in] mat MediumList
+   * @param [in] cmp CompoList
    * @param [in] Ref 参照媒質番号
    */
-  void setRefMedium(MediumList* mat, const int Ref);
-  
-  
-  void setRefValue(MediumList* mat, CompoList* cmp, Control* C);
+  void setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref);
   
 };
 

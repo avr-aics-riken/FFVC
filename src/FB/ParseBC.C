@@ -17,12 +17,12 @@
 
 
 // KOSと境界条件数の整合性をチェックする
-void ParseBC::chkBCconsistency(const int kos)
+void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 {
   if (kos == FLOW_ONLY) 
   {
     for (int n=1; n<=NoBC; n++) {
-      if ( compo[n].isHBC() ) 
+      if ( cmp[n].isHBC() ) 
       {
         Hostonly_ stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Local_Boundary'\n");
         Exit(0);
@@ -32,7 +32,7 @@ void ParseBC::chkBCconsistency(const int kos)
   else if (kos == SOLID_CONDUCTION) 
   {
     for (int n=1; n<=NoBC; n++) {
-      if ( compo[n].isVBC() ) 
+      if ( cmp[n].isVBC() ) 
       {
         Hostonly_ stamped_printf("\tNo consistency between 'Kind_of_Solver' and 'Local_Boundary'\n");
         Exit(0);
@@ -155,7 +155,7 @@ REAL_TYPE ParseBC::get_BCval_real(const std::string label)
 
 
 // 内部境界条件の座標値を取得し，登録する
-void ParseBC::get_Center(const std::string label_base, const int n, REAL_TYPE* v)
+void ParseBC::get_Center(const std::string label_base, REAL_TYPE* v)
 {
   std::string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
@@ -170,14 +170,8 @@ void ParseBC::get_Center(const std::string label_base, const int n, REAL_TYPE* v
 }
 
 
-/**
- @fn void ParseBC::get_Darcy(const std::string label_base, const int n)
- @brief Darcyのパラメータを取得する
- @param label_base Forcing_Volumeのレベル
- @param n コンポーネントリストのエントリ番号
- @note 透過率[m^2]は境界条件設定時に無次元化する
- */
-void ParseBC::get_Darcy(const std::string label_base, const int n)
+// Darcyのパラメータを取得する
+void ParseBC::get_Darcy(const std::string label_base, const int n, CompoList* cmp)
 {
   REAL_TYPE v[3];
   string label;
@@ -199,22 +193,15 @@ void ParseBC::get_Darcy(const std::string label_base, const int n)
     stamped_printf("\tParsing error : fail to get permeability params in 'Darcy'\n");
     Exit(0);
   }
-  compo[n].ca[0] = v[0];
-  compo[n].ca[1] = v[1];
-  compo[n].ca[2] = v[2];
+  cmp[n].ca[0] = v[0]; // 透過率[m^2]は境界条件設定時に無次元化する
+  cmp[n].ca[1] = v[1];
+  cmp[n].ca[2] = v[2];
 }
 
 
 
-/**
- @fn void ParseBC::get_Dir(const std::string label_base, const int n, REAL_TYPE* v)
- @brief 内部境界条件の方向ベクトル値を取得し，登録する
- @param label_base
- @param n オーダー
- @param v[out] ベクトルパラメータ
- @param str エラー表示用文字列
- */
-void ParseBC::get_Dir(const std::string label_base, const int n, REAL_TYPE* v)
+// 内部境界条件の方向ベクトル値を取得し，登録する
+void ParseBC::get_Dir(const std::string label_base, REAL_TYPE* v)
 {
   std::string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
@@ -232,13 +219,8 @@ void ParseBC::get_Dir(const std::string label_base, const int n, REAL_TYPE* v)
 
 
 
-/**
- @fn void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n)
- @brief Direct Forcingのパラメータを取得する
- @param label_base 
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n)
+// Direct Forcingのパラメータを取得する
+void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n, CompoList* cmp)
 {
   int d;
   int nnode=0;
@@ -254,31 +236,27 @@ void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n)
   }
   
   // 法線ベクトル
-  get_NV(label_base, n, v);
-  copyVec(compo[n].nv, v);
+  get_NV(label_base, v);
+  copyVec(cmp[n].nv, v);
   
   // Velocity
   label=label_base+"/Velocity";//
-  //std::cout <<  "label : " << label << std::endl;
+
   REAL_TYPE ct = get_BCval_real(label);
   if ( Unit_Param == DIMENSIONAL ) {
-    compo[n].set_Velocity( ct );
+    cmp[n].set_Velocity( ct );
   }
   else {
-    compo[n].set_Velocity( ct * RefVelocity );
+    cmp[n].set_Velocity( ct * RefVelocity );
   }
 }
 
 
-/**
- @fn void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
- @brief HeatExchangerのパラメータを取得する
- @param label_base コンフィギュレーションツリーのポインタ
- @param n コンポーネントリストのエントリ番号
- @note この時点ではRefDensityの値が未定なので，あとでパラメータ処理
- @see Control::setParameters()
- */
-void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
+
+// HeatExchangerのパラメータを取得する
+///> @note この時点ではRefDensityの値が未定なので，あとでパラメータ処理
+///> @see Control::setParameters()
+void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string str,str_u;
   string label;
@@ -300,16 +278,16 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
 		Exit(0);
   }
   if ( !strcasecmp("mmaq", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_mmAq);
+    cmp[n].setPrsUnit(CompoList::unit_mmAq);
   }
   else if ( !strcasecmp("mmhg", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_mmHg);
+    cmp[n].setPrsUnit(CompoList::unit_mmHg);
   }
   else if ( !strcasecmp("pa", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_Pa);
+    cmp[n].setPrsUnit(CompoList::unit_Pa);
   }
   else if ( !strcasecmp("non_dimension", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_NonDimensional);
+    cmp[n].setPrsUnit(CompoList::unit_NonDimensional);
   }
   else {
     stamped_printf("\tDescribed unit is out of scope.\n");
@@ -317,26 +295,26 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
   }
   
   // 法線ベクトルの取得
-  get_NV(label_base, n, v);
-  copyVec(compo[n].nv, v);
+  get_NV(label_base, v);
+  copyVec(cmp[n].nv, v);
   
   // 方向ベクトルの取得
-  get_Dir(label_base, n, v);
-  copyVec(compo[n].dr, v);
+  get_Dir(label_base, v);
+  copyVec(cmp[n].dr, v);
   
   // 中心座標の取得
-  get_Center(label_base, n, v);
-  copyVec(compo[n].oc, v);
+  get_Center(label_base, v);
+  copyVec(cmp[n].oc, v);
   
   // 形状パラメータ
   label = label_base + "/depth";
-  compo[n].depth  = get_BCval_real(label);
+  cmp[n].depth  = get_BCval_real(label);
   
   label = label_base + "/width";
-  compo[n].shp_p1 = get_BCval_real(label);
+  cmp[n].shp_p1 = get_BCval_real(label);
   
   label = label_base + "/height";
-  compo[n].shp_p2 = get_BCval_real(label);
+  cmp[n].shp_p2 = get_BCval_real(label);
   
   // 圧力損失パラメータ
   label = label_base + "/c";
@@ -345,16 +323,16 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
     Exit(0);
   }
-  compo[n].ca[0]=v[0];
-  compo[n].ca[1]=v[1];
-  compo[n].ca[2]=v[2];
-  compo[n].ca[3]=v[3];
+  cmp[n].ca[0]=v[0];
+  cmp[n].ca[1]=v[1];
+  cmp[n].ca[2]=v[2];
+  cmp[n].ca[3]=v[3];
   
   label = label_base + "/u_threshold";
-  compo[n].ca[4] = get_BCval_real(label);
+  cmp[n].ca[4] = get_BCval_real(label);
   
   label = label_base + "/thickness";
-  compo[n].ca[5] = get_BCval_real(label);
+  cmp[n].ca[5] = get_BCval_real(label);
   
   // 熱交換器の方向強制オプション
   
@@ -364,23 +342,18 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n)
     Exit(0);
   }
   if ( !strcasecmp("directional", str.c_str()) ) {
-    compo[n].set_sw_HexDir( ON );
+    cmp[n].set_sw_HexDir( ON );
   }
   else {
-    compo[n].set_sw_HexDir( OFF );
+    cmp[n].set_sw_HexDir( OFF );
   }
   
 }
 
 
 
-/**
- @fn void ParseBC::get_IBC_Fan(const std::string label_base, const int n)
- @brief Fanのパラメータを取得する
- @param label_base Forcing_Volumeのレベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_Fan(const std::string label_base, const int n)
+// Fanのパラメータを取得する
+void ParseBC::get_IBC_Fan(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string str,str_u;
   string label;
@@ -402,16 +375,16 @@ void ParseBC::get_IBC_Fan(const std::string label_base, const int n)
 		Exit(0);
   }
   if ( !strcasecmp("mmaq", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_mmAq);
+    cmp[n].setPrsUnit(CompoList::unit_mmAq);
   }
   else if ( !strcasecmp("mmhg", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_mmHg);
+    cmp[n].setPrsUnit(CompoList::unit_mmHg);
   }
   else if ( !strcasecmp("pa", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_Pa);
+    cmp[n].setPrsUnit(CompoList::unit_Pa);
   }
   else if ( !strcasecmp("non_dimension", str_u.c_str()) ) {
-    compo[n].setPrsUnit(CompoList::unit_NonDimensional);
+    cmp[n].setPrsUnit(CompoList::unit_NonDimensional);
   }
   else {
     stamped_printf("\tDescribed unit is out of scope.\n");
@@ -419,22 +392,22 @@ void ParseBC::get_IBC_Fan(const std::string label_base, const int n)
   }
   
   // 法線ベクトルの取得
-  get_NV(label_base, n, v);
-  copyVec(compo[n].nv, v);
+  get_NV(label_base, v);
+  copyVec(cmp[n].nv, v);
   
   // 中心座標の取得
-  get_Center(label_base, n, v);
-  copyVec(compo[n].oc, v);
+  get_Center(label_base, v);
+  copyVec(cmp[n].oc, v);
   
   // 形状パラメータ
   label=label_base+"/depth";
-  compo[n].depth  = get_BCval_real(label);
+  cmp[n].depth  = get_BCval_real(label);
   label=label_base+"/fan_radius";
-  compo[n].shp_p1 = get_BCval_real(label);
+  cmp[n].shp_p1 = get_BCval_real(label);
   label=label_base+"/boss_radius";
-  compo[n].shp_p2 = get_BCval_real(label);
+  cmp[n].shp_p2 = get_BCval_real(label);
   
-  if ( compo[n].shp_p1 <= compo[n].shp_p2 ) {
+  if ( cmp[n].shp_p1 <= cmp[n].shp_p2 ) {
     stamped_printf("\tError : Radius of boss is greater than fan.\n");
     Exit(0);
   }
@@ -443,15 +416,8 @@ void ParseBC::get_IBC_Fan(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control* C)
- @brief XMLファイルからMonitorの設定内容をパースし，パラメータを保持する
- @param label_base コンフィギュレーションツリーのポインタ
- @param n コンポーネントリストに登録するエントリ番号のベース
- @param C Control class
- @note Referenceは，隠しコマンドに
- */
-void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control* C)
+// Monitorの設定内容をパースし，パラメータを保持する
+void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, CompoList* cmp)
 {
   int nvc=0;
   REAL_TYPE v[3];
@@ -459,19 +425,19 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   string label,label_leaf;
   
   // モードと形状
-  label=label_base+"/shape";//
-  //std::cout <<  "label : " << label << std::endl;
+  label=label_base+"/shape";
+
   if ( !(tpCntl->GetValue(label, &pnt )) ) {
   }
   else{
     if ( !strcasecmp("cylinder", pnt.c_str()) ) {
-      compo[n].set_Shape(SHAPE_CYLINDER);
+      cmp[n].set_Shape(SHAPE_CYLINDER);
     }
     else if ( !strcasecmp("box", pnt.c_str()) ) {
-      compo[n].set_Shape(SHAPE_BOX);
+      cmp[n].set_Shape(SHAPE_BOX);
     }
     else if ( !strcasecmp("voxel_model", pnt.c_str()) ) {
-      compo[n].set_Shape(SHAPE_VOXEL);
+      cmp[n].set_Shape(SHAPE_VOXEL);
     }
     else {
       stamped_printf("\tParsing error : Invalid string value for 'Shape' : %s\n", pnt.c_str());
@@ -479,17 +445,17 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
     }
   }
   
-  // reference 
-  label=label_base+"/reference";//
-  //std::cout <<  "label : " << label << std::endl;
+  // reference 隠しコマンドに
+  label=label_base+"/reference";
+
   if ( !(tpCntl->GetValue(label, &pnt )) ) {
   }
   else{
     if ( !strcasecmp("yes", pnt.c_str()) ) {
-      compo[n].setStateCellMonitor(ON);
+      cmp[n].setStateCellMonitor(ON);
     }
     else if ( !strcasecmp("no", pnt.c_str()) ) {
-      compo[n].setStateCellMonitor(OFF);
+      cmp[n].setStateCellMonitor(OFF);
     }
     else {
       stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt.c_str());
@@ -498,38 +464,38 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   }
   
   // 法線ベクトル
-  get_NV(label_base, n, v);
-  copyVec(compo[n].nv, v);
+  get_NV(label_base, v);
+  copyVec(cmp[n].nv, v);
   
-  int shp = compo[n].get_Shape();
+  int shp = cmp[n].get_Shape();
   
   if ( (shp == SHAPE_BOX) || (shp == SHAPE_CYLINDER) ) {
     // 中心座標の取得
-    get_Center(label_base, n, v);
-    copyVec(compo[n].oc, v);
+    get_Center(label_base, v);
+    copyVec(cmp[n].oc, v);
     
   }
   
   if ( shp == SHAPE_BOX ) {
     // 方向ベクトルの取得
-    get_Dir(label_base, n, v);
-    copyVec(compo[n].dr, v);
+    get_Dir(label_base, v);
+    copyVec(cmp[n].dr, v);
     
     // 形状パラメータ
     label=label_base+"/depth";
-    compo[n].depth  = get_BCval_real(label);
+    cmp[n].depth  = get_BCval_real(label);
     label=label_base+"/width";
-    compo[n].shp_p1 = get_BCval_real(label);
+    cmp[n].shp_p1 = get_BCval_real(label);
     label=label_base+"/height";
-    compo[n].shp_p2 = get_BCval_real(label);
+    cmp[n].shp_p2 = get_BCval_real(label);
   }
   
   if ( shp == SHAPE_CYLINDER ) {
     // 形状パラメータ
     label=label_base+"/depth";
-    compo[n].depth  = get_BCval_real(label);
+    cmp[n].depth  = get_BCval_real(label);
     label=label_base+"/radius";
-    compo[n].shp_p1 = get_BCval_real(label);
+    cmp[n].shp_p1 = get_BCval_real(label);
   }
   
   
@@ -541,18 +507,18 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   }
   
   // サンプリングモード
-  label=label_leaf+"/sampling_mode";//
+  label=label_leaf+"/sampling_mode";
   if ( !(tpCntl->GetValue(label, &pnt )) ) {
   }
   else{
     if ( !strcasecmp("all", pnt.c_str()) ) {
-      compo[n].set_SamplingMode(SAMPLING_ALL);
+      cmp[n].set_SamplingMode(SAMPLING_ALL);
     }
     else if ( !strcasecmp("fluid", pnt.c_str()) ) {
-      compo[n].set_SamplingMode(SAMPLING_FLUID_ONLY);
+      cmp[n].set_SamplingMode(SAMPLING_FLUID_ONLY);
     }
     else if ( !strcasecmp("solid", pnt.c_str()) ) {
-      compo[n].set_SamplingMode(SAMPLING_SOLID_ONLY);
+      cmp[n].set_SamplingMode(SAMPLING_SOLID_ONLY);
     }
     else {
       stamped_printf("\tParsing error : Invalid string value for 'Sampling_Mode' : %s\n", pnt.c_str());
@@ -561,18 +527,18 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   }
   
   // サンプリング方法
-  label=label_leaf+"/sampling_method";//
+  label=label_leaf+"/sampling_method";
   if ( !(tpCntl->GetValue(label, &pnt )) ) {
   }
   else{
     if ( !strcasecmp("Nearest", pnt.c_str()) ) {
-      compo[n].set_SamplingMethod(SAMPLING_NEAREST);
+      cmp[n].set_SamplingMethod(SAMPLING_NEAREST);
     }
     else if ( !strcasecmp("Interpolation", pnt.c_str()) ) {
-      compo[n].set_SamplingMethod(SAMPLING_INTERPOLATION);
+      cmp[n].set_SamplingMethod(SAMPLING_INTERPOLATION);
     }
     else if ( !strcasecmp("Smoothing", pnt.c_str()) ) {
-      compo[n].set_SamplingMethod(SAMPLING_SMOOTHING);
+      cmp[n].set_SamplingMethod(SAMPLING_SMOOTHING);
     }
     else {
       stamped_printf("\tParsing error : Invalid string value for 'Sampling_Method' : %s\n", pnt.c_str());
@@ -584,13 +550,13 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   nvc = 0;
   
   // 速度
-  label=label_leaf+"/velocity";//
+  label=label_leaf+"/velocity";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : fail to get 'Velocity' in 'Cell_Monitor'\n");
     Exit(0);
   }
   if     ( !strcasecmp(str.c_str(), "on") )  {
-    compo[n].encodeVarType(var_Velocity);
+    cmp[n].encodeVarType(var_Velocity);
     nvc++;
   }
   else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
@@ -600,13 +566,13 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   }
   
   // 圧力
-  label=label_leaf+"/pressure";//
+  label=label_leaf+"/pressure";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : fail to get 'Pressure' in 'Cell_Monitor'\n");
     Exit(0);
   }
   if     ( !strcasecmp(str.c_str(), "on") )  {
-    compo[n].encodeVarType(var_Pressure);
+    cmp[n].encodeVarType(var_Pressure);
     nvc++;
   }
   else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
@@ -617,13 +583,13 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   
   // 温度
   if ( HeatProblem ) {
-    label=label_leaf+"/temperature";//
+    label=label_leaf+"/temperature";
     if ( !(tpCntl->GetValue(label, &str )) ) {
       stamped_printf("\tParsing error : fail to get 'Temperature' in 'Cell_Monitor'\n");
       Exit(0);
     }
     if     ( !strcasecmp(str.c_str(), "on") )  {
-      compo[n].encodeVarType(var_Temperature);
+      cmp[n].encodeVarType(var_Temperature);
       nvc++;
     }
     else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
@@ -634,13 +600,13 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   }
   
   // 全圧
-  label=label_leaf+"/total_pressure";//
+  label=label_leaf+"/total_pressure";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
     Exit(0);
   }
   if     ( !strcasecmp(str.c_str(), "on") )  {
-    compo[n].encodeVarType(var_TotalP);
+    cmp[n].encodeVarType(var_TotalP);
     nvc++;
   }
   else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
@@ -650,18 +616,13 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, Control
   }
   
   // モニタ面に対して指定された変数の個数（モニタの個数）を取得
-  compo[n].setAttrb(nvc);
+  cmp[n].setAttrb(nvc);
 }
 
 
 
-/**
- @fn void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
- @brief 内部の周期境界のパラメータを取得する
- @param label_base レベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
+// 内部の周期境界のパラメータを取得する
+void ParseBC::get_IBC_Periodic(const std::string label_base, const int n, CompoList* cmp)
 {
   int dir=0;
   REAL_TYPE ct=0.0;
@@ -697,7 +658,7 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
     stamped_printf("\tParsing error : Invalid direction in 'LocalBoundary > Periodic'\n");
     Exit(0);
   }
-	compo[n].setPeriodicDir((int)dir);
+	cmp[n].setPeriodicDir((int)dir);
   
   
   // 圧力差
@@ -708,22 +669,17 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n)
     Exit(0);
   }
   else {
-    compo[n].ca[0] = ct;
+    cmp[n].ca[0] = ct;
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
 }
 
 
 
-/**
- @fn void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
- @brief Adiabaticのパラメータを取得する
- @param label_base
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
+// Adiabaticのパラメータを取得する
+void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string str, str_u;
   std::string label;
@@ -739,11 +695,11 @@ void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // zero heat flux
   if ( Unit_Param == DIMENSIONAL ) {
-    compo[n].set_Heatflux( 0.0f );
+    cmp[n].set_Heatflux( 0.0f );
   }
   else {
     stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
@@ -754,14 +710,8 @@ void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n)
- @brief Direct_Fluxのパラメータを取得する
- @param label_base
- @param n コンポーネントリストのエントリ番号
- @note [W/m^2]
- */
-void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n)
+// Direct_Fluxのパラメータを取得する
+void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string label;
   int nnode=0;
@@ -775,11 +725,11 @@ void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   label = label_base + "/Heat_Flux";
   
-  compo[n].set_Heatflux( get_BCval_real(label) );
+  cmp[n].set_Heatflux( get_BCval_real(label) ); /// @note [W/m^2]
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
@@ -788,13 +738,8 @@ void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n)
 }
 
 
-/**
- @fn void ParseBC::get_IBC_HT_N(const std::string label_base, const int n)
- @brief HeatTransfer_Nのパラメータを取得する
- @param label_base レベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_HT_N(const std::string label_base, const int n)
+// HeatTransfer_Nのパラメータを取得する
+void ParseBC::get_IBC_HT_N(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string label;
   int nnode=0;
@@ -808,12 +753,12 @@ void ParseBC::get_IBC_HT_N(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // 熱伝達係数
   label = label_base + "/Coef_of_Heat_Transfer";
   
-  compo[n].set_CoefHT( get_BCval_real(label) );
+  cmp[n].set_CoefHT( get_BCval_real(label) );
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
@@ -822,13 +767,9 @@ void ParseBC::get_IBC_HT_N(const std::string label_base, const int n)
 }
 
 
-/**
- @fn void ParseBC::get_IBC_HT_S(const std::string label_base, const int n)
- @brief HeatTransfer_Sのパラメータを取得する
- @param label_base
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_HT_S(const std::string label_base, const int n)
+
+// HeatTransfer_Sのパラメータを取得す
+void ParseBC::get_IBC_HT_S(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string label;
   int nnode=0;
@@ -842,18 +783,18 @@ void ParseBC::get_IBC_HT_S(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // 熱伝達係数
   label = label_base + "/Coef_of_Heat_Transfer";
   
-  compo[n].set_CoefHT( get_BCval_real(label) );
+  cmp[n].set_CoefHT( get_BCval_real(label) );
   
   // 表面温度
   label = label_base + "/Surface_Temperature";
   
   REAL_TYPE st = get_BCval_real(label);
-  compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
@@ -863,13 +804,8 @@ void ParseBC::get_IBC_HT_S(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
- @brief HeatTransfer_SNのパラメータを取得する
- @param label_base HeatTransfer_SNのレベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
+// HeatTransfer_SNのパラメータを取得する
+void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string str;
   std::string label;
@@ -888,10 +824,10 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
   label = label_base + "/Surface_Temperature";
   
   REAL_TYPE st = get_BCval_real(label);
-  compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // type
   label = label_base + "/Ref_Temp_Mode";
@@ -901,10 +837,10 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
     Exit(0);
   }
   if ( !strcasecmp("bulk_temperature", str.c_str()) ) {
-	  compo[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
+	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
   }
   else if ( !strcasecmp("local_temperature", str.c_str()) ) {
-	  compo[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
+	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
   }
   else {
 	  stamped_printf("\tParsing error : Invalid string value for 'Ref_Temp_Mode' : %s\n", str.c_str());
@@ -913,35 +849,35 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
   
   // Vertical and upper face values
   label = label_base + "/vertical_laminar_alpha";
-  compo[n].ca[CompoList::vert_laminar_alpha]    = get_BCval_real(label);
+  cmp[n].ca[CompoList::vert_laminar_alpha]    = get_BCval_real(label);
   
   label = label_base + "/vertical_laminar_beta";
-  compo[n].ca[CompoList::vert_laminar_beta]     = get_BCval_real(label);
+  cmp[n].ca[CompoList::vert_laminar_beta]     = get_BCval_real(label);
   
   label = label_base + "/vertical_turbulent_alpha";
-  compo[n].ca[CompoList::vert_turbulent_alpha]  = get_BCval_real(label);
+  cmp[n].ca[CompoList::vert_turbulent_alpha]  = get_BCval_real(label);
   
   label = label_base + "/vertical_turbulent_beta";
-  compo[n].ca[CompoList::vert_turbulent_beta]   = get_BCval_real(label);
+  cmp[n].ca[CompoList::vert_turbulent_beta]   = get_BCval_real(label);
   
   label = label_base + "/vertical_Ra_critial";
-  compo[n].ca[CompoList::vert_Ra_critial]       = get_BCval_real(label);
+  cmp[n].ca[CompoList::vert_Ra_critial]       = get_BCval_real(label);
   
   // Lower face values
   label = label_base + "/lower_laminar_alpha";
-  compo[n].cb[CompoList::lower_laminar_alpha]   = get_BCval_real(label);
+  cmp[n].cb[CompoList::lower_laminar_alpha]   = get_BCval_real(label);
   
   label = label_base + "/lower_laminar_beta";
-  compo[n].cb[CompoList::lower_laminar_beta]    = get_BCval_real(label);
+  cmp[n].cb[CompoList::lower_laminar_beta]    = get_BCval_real(label);
   
   label = label_base + "/lower_turbulent_alpha";
-  compo[n].cb[CompoList::lower_turbulent_alpha] = get_BCval_real(label);
+  cmp[n].cb[CompoList::lower_turbulent_alpha] = get_BCval_real(label);
   
   label = label_base + "/lower_turbulent_beta";
-  compo[n].cb[CompoList::lower_turbulent_beta]  = get_BCval_real(label);
+  cmp[n].cb[CompoList::lower_turbulent_beta]  = get_BCval_real(label);
   
   label = label_base + "/lower_Ra_critial";
-  compo[n].cb[CompoList::lower_Ra_critial]      = get_BCval_real(label);
+  cmp[n].cb[CompoList::lower_Ra_critial]      = get_BCval_real(label);
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
@@ -951,13 +887,8 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n)
- @brief HeatTransfer_SFのパラメータを取得する
- @param label_base HeatTransfer_SFのレベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n)
+// HeatTransfer_SFのパラメータを取得する
+void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string str;
   string label;
@@ -973,10 +904,10 @@ void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n)
   // 表面温度
   label=label_base+"/Surface_Temperature";
   REAL_TYPE st = get_BCval_real(label);
-  compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // type
   label=label_base+"/Ref_Temp_Mode";//
@@ -985,10 +916,10 @@ void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n)
     Exit(0);
   }
   if ( !strcasecmp("bulk_temperature", str.c_str()) ) {
-	  compo[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
+	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
   }
   else if ( !strcasecmp("local_temperature", str.c_str()) ) {
-	  compo[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
+	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
   }
   else {
 	  stamped_printf("\tParsing error : Invalid string value for 'type' : %s\n", str.c_str());
@@ -997,11 +928,11 @@ void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n)
   
   // coefficients
   label=label_base+"/alpha";
-  compo[n].ca[CompoList::alpha] = get_BCval_real(label);
+  cmp[n].ca[CompoList::alpha] = get_BCval_real(label);
   label=label_base+"/beta";
-  compo[n].ca[CompoList::beta]  = get_BCval_real(label);
+  cmp[n].ca[CompoList::beta]  = get_BCval_real(label);
   label=label_base+"/gamma";
-  compo[n].ca[CompoList::gamma] = get_BCval_real(label);
+  cmp[n].ca[CompoList::gamma] = get_BCval_real(label);
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
@@ -1009,13 +940,10 @@ void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n)
   }
 }
 
-/**
- @fn void ParseBC::get_IBC_HT_B(const std::string label_base, const int n)
- @brief HeatTransfer_Bのパラメータを取得する
- @param label_base HeatTransfer_Bのレベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_HT_B(const std::string label_base, const int n)
+
+
+// HeatTransfer_Bのパラメータを取得する
+void ParseBC::get_IBC_HT_B(const std::string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1028,16 +956,16 @@ void ParseBC::get_IBC_HT_B(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // 熱伝達係数
   label=label_base+"/Coef_of_Heat_Transfer";
-  compo[n].set_CoefHT( get_BCval_real(label) );
+  cmp[n].set_CoefHT( get_BCval_real(label) );
   
   // バルク温度
   label=label_base+"/Bulk_Temperature";
   REAL_TYPE st = get_BCval_real(label);
-  compo[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
@@ -1048,13 +976,8 @@ void ParseBC::get_IBC_HT_B(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n)
- @brief XMLファイルから境界条件IsoThermalのパラメータを取得し保持する
- @param label_base IsoThermalのレベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n)
+// 境界条件IsoThermalのパラメータを取得し保持する
+void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1069,10 +992,10 @@ void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n)
   // 表面温度
   label=label_base+"/temperature";
   REAL_TYPE tmp = get_BCval_real(label);
-  compo[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
+  cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
 	
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
@@ -1080,13 +1003,10 @@ void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n)
   }
 }
 
-/**
- @fn void ParseBC::get_IBC_Radiant(const std::string label_base, const int n)
- @brief XMLファイルから境界条件Radiantのパラメータを取得し保持する
- @todo
- - 境界条件自体は未実装
- */
-void ParseBC::get_IBC_Radiant(const std::string label_base, const int n)
+
+// 境界条件Radiantのパラメータを取得し保持する
+// 境界条件自体は未実装
+void ParseBC::get_IBC_Radiant(const std::string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1099,15 +1019,15 @@ void ParseBC::get_IBC_Radiant(const std::string label_base, const int n)
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // 係数
   label=label_base+"/epsilon";
-  compo[n].set_CoefRadEps( get_BCval_real(label) );
+  cmp[n].set_CoefRadEps( get_BCval_real(label) );
   
   // 射出率
   label=label_base+"/projection";
-  compo[n].set_CoefRadPrj( get_BCval_real(label) );
+  cmp[n].set_CoefRadPrj( get_BCval_real(label) );
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
@@ -1117,15 +1037,8 @@ void ParseBC::get_IBC_Radiant(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n)
- @brief Heat_Generationのパラメータを取得する
- @param label_base Pointer of Configuration tree
- @param n コンポーネントリストのエントリ番号
- @note
- - D1には発熱量を保持，D2には発熱密度を保持
- */
-void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n)
+// Heat_Generationのパラメータを取得する
+void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n, CompoList* cmp)
 {
   REAL_TYPE hsrc=0.0f;
   std::string str;
@@ -1146,10 +1059,10 @@ void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n)
     Exit(0);
   }
   if ( !strcasecmp("heat_release_value", str.c_str()) ) {
-	  compo[n].set_HSRC_policy(true);
+	  cmp[n].set_HSRC_policy(true);
   }
   else if ( !strcasecmp("heat_generation_density", str.c_str()) ) {
-	  compo[n].set_HSRC_policy(false);
+	  cmp[n].set_HSRC_policy(false);
   }
   else {
 	  stamped_printf("\tParsing error : Invalid string value for 'type' : %s\n", str.c_str());
@@ -1162,11 +1075,11 @@ void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n)
     stamped_printf("\tParsing error : Invalid float value for 'Heat_Generation_Density' or 'Heat_Release_Value' in 'Heat_Generation'\n");
     Exit(0);
   }
-  if ( compo[n].isPolicy_HeatDensity() ) {
-    compo[n].set_HeatDensity( hsrc ); // 発熱密度
+  if ( cmp[n].isPolicy_HeatDensity() ) {
+    cmp[n].set_HeatDensity( hsrc ); // 発熱密度
   }
   else {
-    compo[n].set_HeatValue( hsrc ); // 発熱量
+    cmp[n].set_HeatValue( hsrc ); // 発熱量
   }
   if ( Unit_Param != DIMENSIONAL ) { 
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n"); 
@@ -1176,13 +1089,9 @@ void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n)
 }
 
 
-/**
- @fn void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n)
- @brief Const_Temperatureのパラメータを取得する
- @param label_base Const_Temperatureのレベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n)
+
+// Const_Temperatureのパラメータを取得する
+void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1197,7 +1106,7 @@ void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n)
   // 温度
   label=label_base+"/temperature";
   REAL_TYPE tmp = get_BCval_real(label);
-  compo[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
+  cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
   
   if ( Unit_Param != DIMENSIONAL ) {
     stamped_printf("\tWarning: Heat condition must be given by dimensional value\n");
@@ -1205,13 +1114,10 @@ void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n)
   }
 }
 
-/**
- @fn void ParseBC::get_IBC_Outflow(const std::string label_base, const int n)
- @brief 内部の流出境界のパラメータを取得する
- @param label_base レベル
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::get_IBC_Outflow(const std::string label_base, const int n)
+
+
+// 内部の流出境界のパラメータを取得する
+void ParseBC::get_IBC_Outflow(const std::string label_base, const int n, CompoList* cmp)
 {
   int def;
   REAL_TYPE ct;
@@ -1220,7 +1126,7 @@ void ParseBC::get_IBC_Outflow(const std::string label_base, const int n)
   std::string label;
   
   // 圧力境界のタイプ default
-  compo[n].set_P_BCtype( P_GRAD_ZERO );
+  cmp[n].set_P_BCtype( P_GRAD_ZERO );
   
   // Hidden parameter
   label = label_base + "/pressure_type";
@@ -1230,30 +1136,30 @@ void ParseBC::get_IBC_Outflow(const std::string label_base, const int n)
   }
   else {
     if ( !strcasecmp("dirichlet", str.c_str()) ) {
-      compo[n].set_P_BCtype( P_DIRICHLET );
+      cmp[n].set_P_BCtype( P_DIRICHLET );
     }
     else if ( !strcasecmp("grad_zero", str.c_str()) ) {
-      compo[n].set_P_BCtype( P_GRAD_ZERO );
+      cmp[n].set_P_BCtype( P_GRAD_ZERO );
     }
     else {
       printf("\tParsing error : Invalid string value for 'Pressure_Type' : %s\n", str.c_str());
       Exit(0);
     }
-    if ( compo[n].get_P_BCtype() == P_DIRICHLET ) {
+    if ( cmp[n].get_P_BCtype() == P_DIRICHLET ) {
       label = label_base + "/pressure_value";
-      compo[n].set_Pressure( get_BCval_real(label) );
+      cmp[n].set_Pressure( get_BCval_real(label) );
     }
   }
   
   // 面指定
-  set_Deface(label_base, n);
+  set_Deface(label_base, n, cmp);
   
   // 流出速度のタイプ
-  compo[n].setOutflowType(V_AVERAGE);
+  cmp[n].setOutflowType(V_AVERAGE);
   
   // 法線ベクトルの取得
-  get_NV(label_base, n, v);
-  copyVec(compo[n].nv, v);
+  get_NV(label_base, v);
+  copyVec(cmp[n].nv, v);
   
   /*
    label=label_base+"/velocity_type";//
@@ -1262,10 +1168,10 @@ void ParseBC::get_IBC_Outflow(const std::string label_base, const int n)
    Exit(0);
    }
    if ( !strcasecmp("average", str.c_str()) ) {
-   compo[n].flag = V_AVERAGE;
+   cmp[n].flag = V_AVERAGE;
    }
    else if ( !strcasecmp("minmax", str.c_str()) ) {
-   compo[n].flag = V_MINMAX;
+   cmp[n].flag = V_MINMAX;
    }
    else {
    printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
@@ -1277,14 +1183,9 @@ void ParseBC::get_IBC_Outflow(const std::string label_base, const int n)
 
 
 
-/**
- @fn void ParseBC::get_IBC_SpecVel(const string label_base, const int n)
- @brief 内部の流入境界のパラメータを取得する
- @param label_base レベル
- @param n コンポーネントリストのエントリ番号
- @note Control::setparameters()でcompo[].ca[]に値をセットする
- */
-void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
+// 内部の流入境界のパラメータを取得する
+// Control::setparameters()でcmp[].ca[]に値をセットする
+void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoList* cmp)
 {
   std::string str;
   std::string label;
@@ -1299,10 +1200,10 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
     Exit(0);
   }
   if ( !strcasecmp("velocity", str.c_str()) ) {
-	  compo[n].set_VBC_policy(true);
+	  cmp[n].set_VBC_policy(true);
   }
   else if ( !strcasecmp("massflow", str.c_str()) ) {
-	  compo[n].set_VBC_policy(false);
+	  cmp[n].set_VBC_policy(false);
   }
   else {
 	  printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
@@ -1310,16 +1211,16 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
   }
   
   // 速度指定タイプ
-  compo[n].set_V_profile( get_Vel_profile(label_base) );
+  cmp[n].set_V_profile( get_Vel_profile(label_base) );
   
   
   // 速度パラメータの読み込み
-  get_Vel_Params(label_base, compo[n].get_V_Profile(), compo[n].ca, "LocalBoundary", compo[n].isPolicy_Massflow());
+  get_Vel_Params(label_base, cmp[n].get_V_Profile(), cmp[n].ca, "LocalBoundary", cmp[n].isPolicy_Massflow());
 
   
   // 法線ベクトル
-  get_NV(label_base, n, v);
-  copyVec(compo[n].nv, v);
+  get_NV(label_base, v);
+  copyVec(cmp[n].nv, v);
   
   
   // heat problem
@@ -1331,12 +1232,12 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
       Exit(0);
     }
     else {
-      compo[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      cmp[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
       if ( Unit_Param != DIMENSIONAL ) {
         stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
         Exit(0);
       }
-      compo[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
+      cmp[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
     }
   }
   
@@ -1350,10 +1251,10 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
       Exit(0);
     }
     if ( !strcasecmp("same", str.c_str()) ) {
-      compo[n].setBClocation(CompoList::same_direction);
+      cmp[n].setBClocation(CompoList::same_direction);
     }
     else if ( !strcasecmp("opposite", str.c_str()) ) {
-      compo[n].setBClocation(CompoList::opposite_direction);
+      cmp[n].setBClocation(CompoList::opposite_direction);
     }
     else {
       printf("\tParsing error : Invalid string value '%s' for 'BC_direction'\n", str.c_str());
@@ -1369,7 +1270,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n)
  @fn void ParseBC::get_Medium_InitTemp(void)
  @brief 温度計算の場合の各媒質の初期値を取得する
  */
-void ParseBC::get_Medium_InitTemp(void)
+void ParseBC::get_Medium_InitTemp()
 {
   int id;
   const char* p=NULL;
@@ -1434,9 +1335,9 @@ void ParseBC::get_Medium_InitTemp(void)
     //bool m_flag = false;
     //for (int m=NoBC+1; m<=NoCompo; m++) {
     //  
-    //  if ( compo[m].getID() == (int)id ) {
+    //  if ( cmp[m].getID() == (int)id ) {
     //    m_flag = true;
-    //    if ( compo[m].getState() != Cell_state ) {
+    //    if ( cmp[m].getState() != Cell_state ) {
     //      stamped_printf("\tError : Inconsistent the cell state between 'Model_Setting' and 'Init_Temp_of_Medium' : Medium ID=%d\n", id);
     //      Exit(0);
     //    }
@@ -1445,7 +1346,7 @@ void ParseBC::get_Medium_InitTemp(void)
     //      stamped_printf("\tParsing error : No initial temperature in 'Init_Temp_of_Medium'\n");
     //      Exit(0);
     //    }
-    //    compo[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    //    cmp[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
     //    break;
     //  }
     //}
@@ -1461,15 +1362,8 @@ void ParseBC::get_Medium_InitTemp(void)
 
 
 
-/**
- @fn void ParseBC::get_NV(const std::string label_base, const int n, REAL_TYPE* v)
- @brief 内部境界条件の法線ベクトル値を取得し，登録する
- @param label_base
- @param n オーダー
- @param v[out] ベクトルパラメータ
- @param str エラー表示用文字列
- */
-void ParseBC::get_NV(const std::string label_base, const int n, REAL_TYPE* v)
+// 内部境界条件の法線ベクトル値を取得し，登録する
+void ParseBC::get_NV(const std::string label_base, REAL_TYPE* v)
 {
   std::string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
@@ -1523,7 +1417,7 @@ void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
 
    // 法線ベクトル
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero ) {
-    get_NV(label_base, n, v);
+    get_NV(label_base, v);
     BaseBc[n].addVec(v); 
   }
   
@@ -1670,7 +1564,7 @@ void ParseBC::get_OBC_SpecVH(const std::string label_base, const int n)
   
   // 法線ベクトル
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero ) {
-    get_NV(label_base, n, v);
+    get_NV(label_base, v);
     BaseBc[n].addVec(v);
   }
   
@@ -2002,11 +1896,8 @@ void ParseBC::get_OBC_HT(const std::string label_base, const int n, const std::s
 
 
 
-/**
- @fn void ParseBC::get_Phase(void)
- @brief 2相流問題で気相か液相かを取得する
- */
-void ParseBC::get_Phase(void)
+// 2相流問題で気相か液相かを取得する
+void ParseBC::get_Phase(CompoList* cmp)
 {
   int m_phase;
   int id;
@@ -2073,8 +1964,8 @@ void ParseBC::get_Phase(void)
      
      // set phase of FLUID
      for (int n=1; n<=NoMedium; n++) {
-     if ( compo[n].getID() == id ) {
-     if ( compo[n].getState() == FLUID ) compo[n].setPhase(m_phase);
+     if ( cmp[n].getID() == id ) {
+     if ( cmp[n].getState() == FLUID ) cmp[n].setPhase(m_phase);
      }
      }
      */
@@ -2085,8 +1976,8 @@ void ParseBC::get_Phase(void)
   int tmp;
   bool sw=true;
   for (int n=1; n<=NoMedium; n++) {
-    if ( compo[n].getState() == FLUID ) {
-      tmp = compo[n].getPhase();
+    if ( cmp[n].getState() == FLUID ) {
+      tmp = cmp[n].getPhase();
       if ( (tmp!=GAS) && (tmp!=LIQUID) ) {
         stamped_printf("\tcomponent [%d] is fluid, but not identified by gas or liquid.\n", n);
         sw = false;
@@ -2203,19 +2094,6 @@ void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_
 }
 
 
-// コンポーネントリストのポインタを受け取る
-void ParseBC::importCompoPtr(CompoList* CMP)
-{
-  if ( !CMP ) {
-    Hostonly_ stamped_printf("\tAn object of CompoList class is NULL\n");
-    Exit(0);
-  }
-  compo = CMP;
-}
-
-
-
-
 
 // TPのポインタを受け取る
 void ParseBC::importTP(TPControl* tp) 
@@ -2225,15 +2103,12 @@ void ParseBC::importTP(TPControl* tp)
 }
 
 
-/**
- @fn bool ParseBC::isComponent(int label)
- @brief コンポーネントが存在するかどうかを調べる
- @retval bool値
- */
-bool ParseBC::isComponent(const int label)
+
+// コンポーネントが存在するかどうかを調べる
+bool ParseBC::isComponent(const int label, const CompoList* cmp)
 {
   for (int n=1; n<=NoBC; n++) {
-    if ( compo[n].getType() == label ) return true;
+    if ( cmp[n].getType() == label ) return true;
   }
   return false;
 }
@@ -2241,10 +2116,10 @@ bool ParseBC::isComponent(const int label)
 
 
 // HTコンポーネントが存在するかどうかを調べる
-bool ParseBC::isCompoTransfer(const int label)
+bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 {
   for (int n=1; n<=NoBC; n++) {
-    if ( compo[n].getHtype() == label ) return true;
+    if ( cmp[n].getHtype() == label ) return true;
   }
   return false;
 }
@@ -2252,10 +2127,10 @@ bool ParseBC::isCompoTransfer(const int label)
 
 
 // 同じラベルが既にコンポーネントに登録されているかを調べる
-bool ParseBC::isLabelinCompo(const std::string candidate, const int now)
+bool ParseBC::isLabelinCompo(const std::string candidate, const int now, const CompoList* cmp)
 {
   for (int i=1; i<now; i++) {
-    if ( FBUtility::compare(candidate, compo[i].getLabel()) ) return false;
+    if ( FBUtility::compare(candidate, cmp[i].getLabel()) ) return false;
   }
   return true;
 }
@@ -2264,9 +2139,9 @@ bool ParseBC::isLabelinCompo(const std::string candidate, const int now)
 
 
 // 最初にBCの情報を登録，その後IDの情報を登録
-// パラメータファイルから各内部BCのidをパースし，compoに保持する
+// パラメータファイルから各内部BCのidをパースし，cmpに保持する
 // 格納番号は1からスタート
-void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP)
+void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp)
 { 
   std::string str, label, ename;
   std::string label_base, label_ename, label_leaf;
@@ -2331,7 +2206,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     ename = str;
     
     // cmp[].type, h_typeのセット ---> setType
-    setKeywordLBC(ename, odr);
+    setKeywordLBC(ename, odr, cmp);
     
     // nodeの移動
     if ( !tpCntl->GetNodeStr(label_ename, 1, &str) )
@@ -2342,38 +2217,38 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     label_leaf = label_ename + "/" + str;
     
     // Labelの取得
-    compo[odr].setLabel(str);
+    cmp[odr].setLabel(str);
     
     // 各BCの処理
-    tp = compo[odr].getType();
+    tp = cmp[odr].getType();
     
     if ( tp == SPEC_VEL ) 
     {
-      get_IBC_SpecVel(label_leaf, odr);      
+      get_IBC_SpecVel(label_leaf, odr, cmp);      
     }
     else if ( tp == OUTFLOW ) 
     {
-      get_IBC_Outflow(label_leaf, odr);     
+      get_IBC_Outflow(label_leaf, odr, cmp);     
     }
     else if ( tp == IBM_DF ) 
     {
-      get_IBC_IBM_DF(label_leaf, odr);
+      get_IBC_IBM_DF(label_leaf, odr, cmp);
     }
     else if ( tp == HEX ) 
     {
-      get_IBC_PrsLoss(label_leaf, odr);//debug済み
+      get_IBC_PrsLoss(label_leaf, odr, cmp);
     }
     else if ( tp == FAN ) 
     {
-      get_IBC_Fan(label_leaf, odr);//debug済み
+      get_IBC_Fan(label_leaf, odr, cmp);
     }
     else if ( tp == DARCY ) 
     {
-      get_Darcy(label_leaf, odr);
+      get_Darcy(label_leaf, odr, cmp);
     }
     else if ( tp == CELL_MONITOR ) 
     {
-      get_IBC_Monitor(label_leaf, odr, C);//debug済み
+      get_IBC_Monitor(label_leaf, odr, cmp);
     }
     else if ( tp == INACTIVE ) 
     {
@@ -2381,7 +2256,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     }
     else if ( tp == PERIODIC ) 
     {
-      get_IBC_Periodic(label_leaf, odr);
+      get_IBC_Periodic(label_leaf, odr, cmp);
     }
     else if ( HeatProblem ) // Incase of Heat problem
     {
@@ -2393,60 +2268,60 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       
       if ( tp == ADIABATIC ) 
       {
-        get_IBC_Adiabatic(label_leaf, odr);
+        get_IBC_Adiabatic(label_leaf, odr, cmp);
         
       }
       else if ( tp == HEATFLUX ) 
       {
-        get_IBC_HeatFlux(label_leaf, odr);
+        get_IBC_HeatFlux(label_leaf, odr, cmp);
        
       }
       else if ( tp == TRANSFER ) 
       {
-        switch ( compo[odr].getHtype() ) 
+        switch ( cmp[odr].getHtype() ) 
         {
           case HT_N:
-            get_IBC_HT_N(label_leaf, odr);
+            get_IBC_HT_N(label_leaf, odr, cmp);
 
             break;
             
           case HT_S:
-            get_IBC_HT_S(label_leaf, odr);
+            get_IBC_HT_S(label_leaf, odr, cmp);
 
             break;
             
           case HT_SN:
-            get_IBC_HT_SN(label_leaf, odr);
+            get_IBC_HT_SN(label_leaf, odr, cmp);
 
             break;
             
           case HT_SF:
-            get_IBC_HT_SF(label_leaf, odr);
+            get_IBC_HT_SF(label_leaf, odr, cmp);
 
             break;
             
           case HT_B:
-            get_IBC_HT_B(label_leaf, odr);
+            get_IBC_HT_B(label_leaf, odr, cmp);
 
             break;
         }        
       }
       else if ( tp == ISOTHERMAL ) 
       {
-        get_IBC_IsoTherm(label_leaf, odr);
+        get_IBC_IsoTherm(label_leaf, odr, cmp);
 
       }
       else if ( tp == RADIANT ) 
       {
-        get_IBC_Radiant(label_leaf, odr);
+        get_IBC_Radiant(label_leaf, odr, cmp);
       }
       else if ( tp == HEAT_SRC ) 
       {
-        get_IBC_HeatSrc(label_leaf, odr);
+        get_IBC_HeatSrc(label_leaf, odr, cmp);
       }
       else if ( tp == CNST_TEMP ) 
       {
-        get_IBC_CnstTemp(label_leaf, odr);
+        get_IBC_CnstTemp(label_leaf, odr, cmp);
       }
       else 
       {
@@ -2458,16 +2333,16 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
   
   // 媒質情報の登録
   for (int i=1; i<=NoMedium; i++) {
-    compo[NoBC+i].setState( mat[i].getState() );
-    compo[NoBC+i].setLabel( mat[i].getLabel() );
-    compo[NoBC+i].setMatOdr(i);
+    cmp[NoBC+i].setState( mat[i].getState() );
+    cmp[NoBC+i].setLabel( mat[i].getLabel() );
+    cmp[NoBC+i].setMatOdr(i);
   }
 }
 
 
 
 // パラメータファイルをパースして，外部境界条件を取得，保持する
-void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP)
+void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp)
 {
   std::string label_base, label_leaf, label;
   std::string str;
@@ -2710,8 +2585,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP)
           
           int cflag=0;
           for (int c=1; c<=NoBC; c++) {
-            if ( compo[c].getType() == PERIODIC ) {
-              if ( (int)compo[c].getPeriodicDir() != bc[n].get_DriverDir() ) {
+            if ( cmp[c].getType() == PERIODIC ) {
+              if ( (int)cmp[c].getPeriodicDir() != bc[n].get_DriverDir() ) {
                 Hostonly_ printf("\tPeriodic Driver BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
                 Exit(0);
               }
@@ -2757,7 +2632,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   bool flag;
   
   // VBC ---------------------------------------------------
-  if ( isComponent(SPEC_VEL) || isComponent(SPEC_VEL_WH) ) {
+  if ( isComponent(SPEC_VEL, cmp) || isComponent(SPEC_VEL_WH, cmp) ) {
     fprintf(fp, "\n\t[SPECIFIED_VELOCITY]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]\n");
     
@@ -2811,7 +2686,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     }
     
     // with constant temperature
-    if ( isComponent(SPEC_VEL_WH) ) {
+    if ( isComponent(SPEC_VEL_WH, cmp) ) {
       fprintf(fp, "\n\t[SPECIFIED_VELOCITY with constant temperature]\n");
       fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
       
@@ -2830,7 +2705,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     }
   }
   
-  if ( isComponent(OUTFLOW) ) {
+  if ( isComponent(OUTFLOW, cmp) ) {
     fprintf(fp, "\n\t[OUTFLOW]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed  outflow_vel  pressure\n");
     
@@ -2855,7 +2730,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Forcing
-  if ( isComponent(IBM_DF) ) {
+  if ( isComponent(IBM_DF, cmp) ) {
     fprintf(fp, "\n\t[IBM_DF]\n");
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     
@@ -2883,7 +2758,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   
   // Forcing ---------------------------------------------------
 	// Heat Exchanger
-  if ( isComponent(HEX) ) {
+  if ( isComponent(HEX, cmp) ) {
     fprintf(fp, "\n\t[Heat Exchanger]\n");
     
     fprintf(fp, "\t no                    Label   Mat    normal_x   normal_y   normal_z     O_x[m]     O_y[m]     O_z[m]      dir_x      dir_y      dir_z\n");
@@ -2932,7 +2807,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Fan
-  if ( isComponent(FAN) ) {
+  if ( isComponent(FAN, cmp) ) {
     fprintf(fp, "\n\t[Fan]\n");
     
     fprintf(fp, "\t no                    Label   Mat    normal_x   normal_y   normal_z      O_x[m]     O_y[m]     O_z[m]\n");
@@ -2980,7 +2855,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
 	// Darcy Law
-  if ( isComponent(DARCY) ) {
+  if ( isComponent(DARCY, cmp) ) {
     fprintf(fp, "\n\t[Darcy medium]\n");
     
     fprintf(fp, "\t no                    Label   Mat        Area[m*m]   Prmblty_x   Prmblty_y   Prmblty_z[m^2]    Prmblty_x   Prmblty_y   Prmblty_z[-]\n");
@@ -3007,7 +2882,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   
   // Heat Face ---------------------------------------------------
   // Adiabatic
-  if ( HeatProblem && isComponent(ADIABATIC) ) {
+  if ( HeatProblem && isComponent(ADIABATIC, cmp) ) {
     fprintf(fp, "\n\t[Adiabatic]\n");
     fprintf(fp, "\t no                    Label   Mat   def\n");
     
@@ -3019,7 +2894,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Direct Heat Flux
-  if ( HeatProblem && isComponent(HEATFLUX) ) {
+  if ( HeatProblem && isComponent(HEATFLUX, cmp) ) {
     fprintf(fp, "\n\t[Direct Heat Flux]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   flux(W/m^2)        q[-]\n");
     
@@ -3036,7 +2911,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Heat Transfer N
-  if ( HeatProblem && isCompoTransfer(HT_N) ) {
+  if ( HeatProblem && isCompoTransfer(HT_N, cmp) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type N]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)\n");
     
@@ -3053,7 +2928,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Heat Transfer S
-  if ( HeatProblem && isCompoTransfer(HT_S) ) {
+  if ( HeatProblem && isCompoTransfer(HT_S, cmp) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type S]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
@@ -3071,7 +2946,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Heat Transfer SN
-  if ( HeatProblem && isCompoTransfer(HT_SN) ) {
+  if ( HeatProblem && isCompoTransfer(HT_SN, cmp) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type SN]\n"); 
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
@@ -3109,7 +2984,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Heat Transfer SF
-  if ( HeatProblem && isCompoTransfer(HT_SF) ) {
+  if ( HeatProblem && isCompoTransfer(HT_SF, cmp) ) {
     fprintf(fp, "\n\t[Heat Transfer : Type SF]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
@@ -3144,7 +3019,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Heat Transfer B
-  if ( HeatProblem && isCompoTransfer(HT_B)) {
+  if ( HeatProblem && isCompoTransfer(HT_B, cmp)) {
     fprintf(fp, "\n\t[Heat Transfer : Type B]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  coef(W/m^2K)  BulkTemp(%s)   BulkTemp[-]\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
@@ -3163,7 +3038,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Iso Thermal
-  if ( HeatProblem && isComponent(ISOTHERMAL)) {
+  if ( HeatProblem && isComponent(ISOTHERMAL, cmp)) {
     fprintf(fp, "\n\t[Iso-Thermal]\n");
     fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
@@ -3182,7 +3057,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Radiant
-  if ( HeatProblem && isComponent(RADIANT)) {
+  if ( HeatProblem && isComponent(RADIANT, cmp)) {
     fprintf(fp, "\n\t[Radiant]\n");
     fprintf(fp, "\t no                    Label   Mat    def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   ep[-]   pj[-]\n");
     
@@ -3200,7 +3075,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   
   // Heat source ---------------------------------------------------
   // Heat generation
-  if ( HeatProblem && isComponent(HEAT_SRC)) {
+  if ( HeatProblem && isComponent(HEAT_SRC, cmp)) {
     fprintf(fp, "\n\t[Heat Generation]\n");
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed     Q[W/m^3]    nrmlzd[-]\n");
     
@@ -3219,7 +3094,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Constant Temperature
-  if ( HeatProblem && isComponent(CNST_TEMP)) {
+  if ( HeatProblem && isComponent(CNST_TEMP, cmp)) {
     fprintf(fp, "\n\t[Constant Temperature]\n");
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp[%s]      Temp[-]\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
@@ -3238,7 +3113,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Monitor ---------------------------------------------------
-  if ( isComponent(CELL_MONITOR) ) {
+  if ( isComponent(CELL_MONITOR, cmp) ) {
     fprintf(fp, "\n\t[Monitor]\n");
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  Variables\n");
     
@@ -3267,7 +3142,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   }
   
   // Periodic ---------------------------------------------------
-  if ( isComponent(PERIODIC) ) {
+  if ( isComponent(PERIODIC, cmp) ) {
     fprintf(fp, "\n\t[Periodic]\n");
     fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed    Pressure Difference [Pa]/[-]  Driver\n");
     
@@ -3599,13 +3474,8 @@ void ParseBC::setControlVars(Control* Cref)
 
 
 
-/**
- @fn void ParseBC::set_Deface(const std::string label_base, const int n)
- @brief 内部境界条件のdef_faceを取得し，登録する
- @param label_base
- @param n コンポーネントリストのエントリ番号
- */
-void ParseBC::set_Deface(const std::string label_base, const int n)
+// 内部境界条件のdef_faceを取得し，登録する
+void ParseBC::set_Deface(const std::string label_base, const int n, CompoList* cmp)
 {
   int def=0;
   std::string label;
@@ -3622,35 +3492,35 @@ void ParseBC::set_Deface(const std::string label_base, const int n)
 	  stamped_printf("\tParsing error : ID[%d] described in 'def_face' is not included in 'Model_Setting'\n", def);
 	  Exit(0);
   }
-  compo[n].setDef(def);
+  cmp[n].setDef(def);
 }
 
 
 
 //@brief 内部境界条件の照合を行う
 //@note SPEC_VEL_WHは陽には現れず，get_IBC_SpecVel()内で登録される
-void ParseBC::setKeywordLBC(const std::string keyword, const int m)
+void ParseBC::setKeywordLBC(const std::string keyword, const int m, CompoList* cmp)
 {
-  if     ( FBUtility::compare(keyword, "Adiabatic") )             compo[m].setType(ADIABATIC);
-  else if( FBUtility::compare(keyword, "Direct_Heat_Flux") )      compo[m].setType(HEATFLUX);
-  else if( FBUtility::compare(keyword, "HeatTransfer_B") ) {      compo[m].setType(TRANSFER); compo[m].setHtype(HT_B); }
-  else if( FBUtility::compare(keyword, "HeatTransfer_N") ) {      compo[m].setType(TRANSFER); compo[m].setHtype(HT_N); }
-  else if( FBUtility::compare(keyword, "HeatTransfer_S") ) {      compo[m].setType(TRANSFER); compo[m].setHtype(HT_S); }
-  else if( FBUtility::compare(keyword, "HeatTransfer_SF") ){      compo[m].setType(TRANSFER); compo[m].setHtype(HT_SF); }
-  else if( FBUtility::compare(keyword, "HeatTransfer_SN") ){      compo[m].setType(TRANSFER); compo[m].setHtype(HT_SN); }
-  else if( FBUtility::compare(keyword, "IsoThermal") )            compo[m].setType(ISOTHERMAL);
-  else if( FBUtility::compare(keyword, "Radiation") )             compo[m].setType(RADIANT);
-  else if( FBUtility::compare(keyword, "specified_velocity") )    compo[m].setType(SPEC_VEL);
-  else if( FBUtility::compare(keyword, "outflow") )               compo[m].setType(OUTFLOW);
-  else if( FBUtility::compare(keyword, "Forcing") )               compo[m].setType(IBM_DF);
-  else if( FBUtility::compare(keyword, "Heat_Source") )           compo[m].setType(HEAT_SRC);
-  else if( FBUtility::compare(keyword, "specified_Temperature") ) compo[m].setType(CNST_TEMP);
-  else if( FBUtility::compare(keyword, "Pressure_Loss") )         compo[m].setType(HEX);
-  else if( FBUtility::compare(keyword, "Fan") )                   compo[m].setType(FAN);
-  else if( FBUtility::compare(keyword, "Darcy") )                 compo[m].setType(DARCY);
-  else if( FBUtility::compare(keyword, "cell_monitor") )          compo[m].setType(CELL_MONITOR);
-  else if( FBUtility::compare(keyword, "inactive") )              compo[m].setType(INACTIVE);
-  else if( FBUtility::compare(keyword, "Periodic") )              compo[m].setType(PERIODIC);
+  if     ( FBUtility::compare(keyword, "Adiabatic") )             cmp[m].setType(ADIABATIC);
+  else if( FBUtility::compare(keyword, "Direct_Heat_Flux") )      cmp[m].setType(HEATFLUX);
+  else if( FBUtility::compare(keyword, "HeatTransfer_B") ) {      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_B); }
+  else if( FBUtility::compare(keyword, "HeatTransfer_N") ) {      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_N); }
+  else if( FBUtility::compare(keyword, "HeatTransfer_S") ) {      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_S); }
+  else if( FBUtility::compare(keyword, "HeatTransfer_SF") ){      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_SF); }
+  else if( FBUtility::compare(keyword, "HeatTransfer_SN") ){      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_SN); }
+  else if( FBUtility::compare(keyword, "IsoThermal") )            cmp[m].setType(ISOTHERMAL);
+  else if( FBUtility::compare(keyword, "Radiation") )             cmp[m].setType(RADIANT);
+  else if( FBUtility::compare(keyword, "specified_velocity") )    cmp[m].setType(SPEC_VEL);
+  else if( FBUtility::compare(keyword, "outflow") )               cmp[m].setType(OUTFLOW);
+  else if( FBUtility::compare(keyword, "Forcing") )               cmp[m].setType(IBM_DF);
+  else if( FBUtility::compare(keyword, "Heat_Source") )           cmp[m].setType(HEAT_SRC);
+  else if( FBUtility::compare(keyword, "specified_Temperature") ) cmp[m].setType(CNST_TEMP);
+  else if( FBUtility::compare(keyword, "Pressure_Loss") )         cmp[m].setType(HEX);
+  else if( FBUtility::compare(keyword, "Fan") )                   cmp[m].setType(FAN);
+  else if( FBUtility::compare(keyword, "Darcy") )                 cmp[m].setType(DARCY);
+  else if( FBUtility::compare(keyword, "cell_monitor") )          cmp[m].setType(CELL_MONITOR);
+  else if( FBUtility::compare(keyword, "inactive") )              cmp[m].setType(INACTIVE);
+  else if( FBUtility::compare(keyword, "Periodic") )              cmp[m].setType(PERIODIC);
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described '%s'\n", keyword.c_str());
     Exit(0);
@@ -3676,60 +3546,35 @@ void ParseBC::setKeywordOBC(const std::string keyword, const int m)
 
 
 
-
-/**
- @fn void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
- @brief 媒質により決まる代表量をコピーする
- @param mat MediumList class
- @param cmp CompoList class
- @param C Control class
- */
-void ParseBC::setRefValue(MediumList* mat, CompoList* cmp, Control* C)
-{
-  int m;
-  
-	for (int n=NoBC+1; n<=NoCompo; n++) {
-    if ( cmp[n].getMatOdr() == C->RefMat ) {
-      m = cmp[n].getMatOdr();
-      if ( mat[m].getState() == FLUID ) {
-        RefDensity      = mat[m].P[p_density];
-        //mu    = mat[m].P[p_viscosity];
-        //nyu   = mat[m].P[p_kinematic_viscosity];
-        RefSpecificHeat = mat[m].P[p_specific_heat];
-        //lambda= mat[m].P[p_thermal_conductivity];
-        //beta  = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
-        //snd_spd = mat[m].P[p_sound_of_speed];
-      }
-      else {
-        RefDensity      = mat[m].P[p_density];
-        RefSpecificHeat = mat[m].P[p_specific_heat];
-        //lambda = mat[m].P[p_thermal_conductivity];
-      }
-    }
-  }
-}
-
-
 // 指定した媒質IDから参照物理量を設定する
-void ParseBC::setRefMedium(MediumList* mat, const int Ref)
+void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref)
 {
   int m;
   
   for (int n=NoBC+1; n<=NoCompo; n++) {
-    if ( compo[n].getMatOdr() == Ref ) {
-      m = compo[n].getMatOdr();
-      if ( mat[m].getState() == FLUID ) {
+    m = cmp[n].getMatOdr();
+    
+    if ( m == Ref ) 
+    {
+      if ( mat[m].getState() == FLUID ) 
+      {
         rho    = mat[m].P[p_density];
         nyu    = mat[m].P[p_kinematic_viscosity];
         cp     = mat[m].P[p_specific_heat];
         lambda = mat[m].P[p_thermal_conductivity];
         beta   = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
+        //mu    = mat[m].P[p_viscosity];
+        //snd_spd = mat[m].P[p_sound_of_speed];
       }
-      else {
+      else 
+      {
         rho    = mat[m].P[p_density];
         cp     = mat[m].P[p_specific_heat];
         lambda = mat[m].P[p_thermal_conductivity];
       }
     }
   }
+  
+  RefDensity      = rho;
+  RefSpecificHeat = cp;
 }
