@@ -305,6 +305,25 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 #define _F_IDX_V3DEX(_N,_I,_J,_K,_NI,_NJ,_NK,_VC) (_F_IDX_S4DEX(_N,_I,_J,_K,3,_NI,_NJ,_NK,_VC))
 
 
+/**
+ * @brief 非同期通信のリクエストIDアクセス
+ * @param [in] _DIR 送受信方向
+ * @param [in] _OP  オペレーション(send/recv)
+ */
+#define _ASYNC_RQ(_DIR,_OP) (_DIR*2+_OP)
+
+
+/**
+ * @brief パック配列アクセス
+ * @param [in] _SZ 配列サイズ（1D）
+ * @param [in] _BF バッファ種類
+ * @param [in] _L  アドレス（パックする変数カウント）
+ * @note バッファ種類 >> enum Async_Buffer_Direction
+ */
+#define _PACK(_SZ,_BF,_L) (_BF*_SZ+_L)
+
+
+
 // 変数の種類
 enum Kind_of_vars {
   var_Velocity=0,
@@ -347,6 +366,20 @@ enum Temp_Unit {
 enum Synch_Mode {
   synchronous=1,
   asynchronous
+};
+
+/// send/recv Operation
+enum CommOperation {
+  async_send=0,
+  async_recv
+};
+
+/// 非同期バッファの送受信方向
+enum Async_Buffer_Direction {
+  send_to_minus=0,
+  send_to_plus,
+  recv_from_plus,
+  recv_from_minus
 };
 
 #endif // _FB_DEFINE_H_

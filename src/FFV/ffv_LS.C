@@ -16,18 +16,17 @@
 
 #include "ffv.h"
 
-/**
- * @brief SOR2SMAの非同期通信処理
- * @param [in]  col オーダリングカラーの番号
- * @param [in]  ip  オーダリングカラー0の最初のインデクス
- * @param [out] key 送信ID
- */
-void FFV::comm_SOR2SMA(const int col, const int ip. int* key)
+
+// SOR2SMAの非同期通信処理
+// 並列時のみコールされる
+void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
 {
   // cf_sz バッファサイズ
   // cf_x x方向のバッファ (cf_sz[0]*4) 
   // cf_y y方向のバッファ (cf_sz[1]*4) 
   // cf_z z方向のバッファ (cf_sz[2]*4) 
+  
+  // key [12] >> [dir(0-5), send(0)/recv(1)]
   
   int ix = size[0];
   int jx = size[1];
@@ -39,13 +38,10 @@ void FFV::comm_SOR2SMA(const int col, const int ip. int* key)
   int cz = cf_sz[2];
   
   int a = col + ip;
-  int ic = a - int(a/2)*2; // スタートカラー
+  int ic = a - int(a/2)*2; // スタートインデクス
   
   // 送信IDを初期化
-  for (int i=0; i<NOFACE*2; i++)
-  {
-    key[i] = -1;
-  }
+  for (int i=0; i<NOFACE*2; i++) key[i] = -1;
   
 
   // X_MINUS
@@ -56,348 +52,356 @@ void FFV::comm_SOR2SMA(const int col, const int ip. int* key)
     int i = 1;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + 1;
+      int b = k + ic + i;
       int js= b - int(b/2)*2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        cf_x[c] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_x[_PACK(cx, send_to_minus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(cf_x, c, nID[X_MINUS], key[]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(cf_x[_PACK(cx, send_to_minus, 0)], cx, nID[X_MINUS], key[_ASYNC_RQ(X_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
     
   // recieve
   if ( nID[X_PLUS]>=0 )
   {
-    
+    if ( paraMngr->Irecv(cf_x[_PACK(cx, recv_from_plus, 0)], cx, nID[X_PLUS], key[_ASYNC_RQ(X_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
-    
-  }
-    
     
     
   // X_PLUS
+  // send
+  if ( nID[X_PLUS]>=0 )
+  {
+    int c = 0;
+    int i = ix;
     
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + i;
+      int js= b - int(b/2)*2;
+      
+      for (int j=1+js; j<=jx; j+=2) {
+        cf_x[_PACK(cx, send_to_plus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        c++;
+      }
+    }
     
-  // Y_MINUS
-    
-    
-    
-    
-  // Y_PLUS
-    
-    
-  // Z_MINUS
-    
-    
-    
-  // Z_PLUS
-    
-    
-
+    if ( paraMngr->Isend(cf_x[_PACK(cx, send_to_plus, 0)], cx, nID[X_PLUS], key[_ASYNC_RQ(X_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+  }
   
+  // recieve
+  if ( nID[X_MINUS]>=0 )
+  {
+    if ( paraMngr->Irecv(cf_x[_PACK(cx, recv_from_minus, 0)], cx, nID[X_MINUS], key[_ASYNC_RQ(X_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // Y_MINUS
+  // send
+  if ( nID[Y_MINUS]>=0 )
+  {
+    int c = 0;
+    int j = 1;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + j;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        cf_y[_PACK(cy, send_to_minus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        c++;
+      }
+    }
+    
+    if ( paraMngr->Isend(cf_y[_PACK(cy, send_to_minus, 0)], cy, nID[Y_MINUS], key[_ASYNC_RQ(Y_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // recv
+  if ( nID[Y_PLUS]>=0 )
+  {
+    if ( paraMngr->Irecv(cf_y[_PACK(cy, recv_from_plus, 0)], cy, nID[Y_PLUS], key[_ASYNC_RQ(Y_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // Y_PLUS
+  // send
+  if ( nID[Y_PLUS]>=0 )
+  {
+    int c = 0;
+    int j = jx;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + j;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        cf_y[_PACK(cy, send_to_plus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        c++;
+      }
+    }
+    
+    if ( paraMngr->Isend(cf_y[_PACK(cy, send_to_plus, 0)], cy, nID[Y_PLUS], key[_ASYNC_RQ(Y_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // recv
+  if ( nID[Y_MINUS]>=0 )
+  {
+    if ( paraMngr->Irecv(cf_y[_PACK(cy, recv_from_minus, 0)], cy, nID[Y_MINUS], key[_ASYNC_RQ(Y_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // Z_MINUS
+  // send
+  if ( nID[Z_MINUS]>=0 )
+  {
+    int c = 0;
+    int k = 1;
+    
+    for (int j=1; j<=jx; j++) {
+      int b = j + ic + k;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        cf_z[_PACK(cz, send_to_minus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        c++;
+      }
+    }
+    
+    if ( paraMngr->Isend(cf_z[_PACK(cz, send_to_minus, 0)], cz, nID[Z_MINUS], key[_ASYNC_RQ(Z_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // recv
+  if ( nID[Z_PLUS]>=0 )
+  {
+    if ( paraMngr->Irecv(cf_z[_PACK(cz, recv_from_plus, 0)], cz, nID[Z_PLUS], key[_ASYNC_RQ(Z_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // Z_PLUS
+  // send
+  if ( nID[Z_PLUS]>=0 )
+  {
+    int c = 0;
+    int k = kx;
+    
+    for (int j=1; j<=jx; j++) {
+      int b = j + ic + k;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        cf_z[_PACK(cz, send_to_plus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        c++;
+      }
+    }
+    
+    if ( paraMngr->Isend(cf_z[_PACK(cz, send_to_plus, 0)], cz, nID[Z_PLUS], key[_ASYNC_RQ(Z_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // recv
+  if ( nID[Z_MINUS]>=0 )
+  {
+    if ( paraMngr->Irecv(cf_z[_PACK(cz, recv_from_minus, 0)], cz, nID[Z_MINUS], key[_ASYNC_RQ(Z_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+  }
   
 }
 
 
-
-
-
-integer                                                ::  ix, jx, kx, g
-integer                                                ::  i, j, k, ic, icnt, ierr, para_key, iret
-integer                                                ::  col ! color No. 0 or 1
-integer                                                ::  ip  ! top index type of color0
-!  0 : color 0 start is (1,1,1)
-!  1 : color 0 start is (2,1,1)
-integer, dimension(3)                                  ::  sz, cf_sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p 
-real, dimension(cf_sz(1), 4)                           ::  cf_x
-real, dimension(cf_sz(2), 4)                           ::  cf_y
-real, dimension(cf_sz(3), 4)                           ::  cf_z
-integer, dimension(6, 2)                               ::  key
-integer, dimension(6)                                  ::  nID
-
-
-! X_MINUS
-! send
-if( nID(1).ge.0 ) then
-icnt = 1
-i = 1
-do k=1,kx
-do j=1+mod(k+ic+1,2),jx,2
-cf_x(icnt,1) = p(i,j,k)
-icnt = icnt+1
-end do
-end do
-
-if ( iret == 1 ) then
-call SklImmediateSend(cf_x(1,1), cf_sz(1), SKL_REAL, nID(1), SKL_DEFAULT_GROUP, key(1,1), ierr)
-endif
-endif
-
-! recv
-if( nID(2).ge.0 ) then
-if ( iret == 1 ) then
-call SklImmediateRecv(cf_x(1,3), cf_sz(1), SKL_REAL, nID(2), SKL_DEFAULT_GROUP, key(1,2), ierr)
-end if
-endif
-
-! X_PLUS
-! send
-if( nID(2).ge.0 ) then
-icnt = 1
-i = ix
-do k=1,kx
-do j=1+mod(k+ic+ix,2),jx,2
-cf_x(icnt,2) = p(i,j,k)
-icnt = icnt+1
-end do
-end do
-
-if ( iret == 1 ) then
-call SklImmediateSend(cf_x(1,2), cf_sz(1), SKL_REAL, nID(2), SKL_DEFAULT_GROUP, key(2,1), ierr)
-end if
-endif
-
-! recv
-if( nID(1).ge.0 ) then
-if ( iret == 1 ) then
-call SklImmediateRecv(cf_x(1,4), cf_sz(1), SKL_REAL, nID(1), SKL_DEFAULT_GROUP, key(2,2), ierr)
-endif
-endif
-
-! Y_MINUS
-! send
-if( nID(3).ge.0 ) then
-icnt = 1
-j = 1
-do k=1,kx
-do i=1+mod(k+ic+1,2),ix,2
-cf_y(icnt,1) = p(i,j,k)
-icnt = icnt+1
-end do
-end do
-
-if ( iret == 1 ) then
-call SklImmediateSend(cf_y(1,1), cf_sz(2), SKL_REAL, nID(3), SKL_DEFAULT_GROUP, key(3,1), ierr)
-endif
-endif
-
-! recv
-if( nID(4).ge.0 ) then
-if ( iret == 1 ) then
-call SklImmediateRecv(cf_y(1,3), cf_sz(2), SKL_REAL, nID(4), SKL_DEFAULT_GROUP, key(3,2), ierr)
-endif
-endif
-
-! Y_PLUS
-! send
-if( nID(4).ge.0 ) then
-icnt = 1
-j = jx
-do k=1,kx
-do i=1+mod(k+ic+jx,2),ix,2
-cf_y(icnt,2) = p(i,j,k)
-icnt = icnt+1
-end do
-end do
-
-if ( iret == 1 ) then
-call SklImmediateSend(cf_y(1,2), cf_sz(2), SKL_REAL, nID(4), SKL_DEFAULT_GROUP, key(4,1), ierr)
-endif
-endif
-
-! recv
-if( nID(3).ge.0 ) then
-if ( iret == 1 ) then
-call SklImmediateRecv(cf_y(1,4), cf_sz(2), SKL_REAL, nID(3), SKL_DEFAULT_GROUP, key(4,2), ierr)
-endif
-endif
-
-! Z_MINUS
-! send
-if( nID(5).ge.0 ) then
-icnt = 1
-k = 1
-do j=1,jx
-do i=1+mod(j+ic+1,2),ix,2
-cf_z(icnt,1) = p(i,j,k)
-icnt = icnt+1
-end do
-end do
-
-if ( iret == 1 ) then
-call SklImmediateSend(cf_z(1,1), cf_sz(3), SKL_REAL, nID(5), SKL_DEFAULT_GROUP, key(5,1), ierr)
-endif
-endif
-
-! recv
-if( nID(6).ge.0 ) then
-if ( iret == 1 ) then
-call SklImmediateRecv(cf_z(1,3), cf_sz(3), SKL_REAL, nID(6), SKL_DEFAULT_GROUP, key(5,2), ierr)
-endif
-endif
-
-! Z_PLUS
-! send
-if( nID(6).ge.0 ) then
-icnt = 1
-k = kx
-do j=1,jx
-do i=1+mod(j+ic+kx,2),ix,2
-cf_z(icnt,2) = p(i,j,k)
-icnt = icnt+1
-end do
-end do
-
-if ( iret == 1 ) then
-call SklImmediateSend(cf_z(1,2), cf_sz(3), SKL_REAL, nID(6), SKL_DEFAULT_GROUP, key(6,1), ierr)
-endif
-endif
-
-! recv
-if( nID(5).ge.0 ) then
-if ( iret == 1 ) then
-call SklImmediateRecv(cf_z(1,4), cf_sz(3), SKL_REAL, nID(5), SKL_DEFAULT_GROUP, key(6,2), ierr)
-endif
-endif
-
-end subroutine sma_comm
-
-!> ********************************************************************
-!! @brief SOR2の非同期通信処理
-!! @param p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param col オーダリングカラーの番号
-!! @param ip オーダリングカラー0の最初のインデクス
-!! @param cf_sz バッファサイズ
-!! @param cf_x x方向のバッファ
-!! @param cf_y y方向のバッファ
-!! @param cf_z z方向のバッファ
-!! @param key 送信ID
-!<
-subroutine sma_comm_wait(p, sz, g, col, ip, cf_sz, cf_x, cf_y, cf_z, key)
-implicit none
-include 'sklparaf.h'
-integer                                                ::  ix, jx, kx, g
-integer                                                ::  i, j, k, ic, icnt, ierr
-integer                                                ::  col ! color No. 0 or 1
-integer                                                ::  ip  ! top index type of color0
-!  0 : color 0 start is (1,1,1)
-!  1 : color 0 start is (2,1,1)
-integer, dimension(3)                                  ::  sz, cf_sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p 
-real, dimension(cf_sz(1), 4)                           ::  cf_x
-real, dimension(cf_sz(2), 4)                           ::  cf_y
-real, dimension(cf_sz(3), 4)                           ::  cf_z
-integer, dimension(6, 2)                               ::  key
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-ic = mod(col+ip,2)
-ierr = 0
-
-! wait for recv
-! from X_MINUS
-if( key(1,2).ge.0 ) then
-call SklWait(key(1,2), ierr)
-icnt = 1
-i = ix+1
-do k=1,kx
-do j=1+mod(k+ic+ix+1,2),jx,2
-p(i,j,k) = cf_x(icnt,3)
-icnt = icnt+1
-end do
-end do
-endif
-
-! from X_PLUS
-if( key(2,2).ge.0 ) then
-call SklWait(key(2,2), ierr)
-icnt = 1
-i = 0
-do k=1,kx
-do j=1+mod(k+ic,2),jx,2
-p(i,j,k) = cf_x(icnt,4)
-icnt = icnt+1
-end do
-end do
-endif
-
-! from Y_MINUS
-if( key(3,2).ge.0 ) then
-call SklWait(key(3,2), ierr)
-icnt = 1
-j = jx+1
-do k=1,kx
-do i=1+mod(k+ic+jx+1,2),ix,2
-p(i,j,k) = cf_y(icnt,3)
-icnt = icnt+1
-end do
-end do
-endif
-
-! from Y_PLUS
-if( key(4,2).ge.0 ) then
-call SklWait(key(4,2), ierr)
-icnt = 1
-j = 0
-do k=1,kx
-do i=1+mod(k+ic,2),ix,2
-p(i,j,k) = cf_y(icnt,4)
-icnt = icnt+1
-end do
-end do
-endif
-
-! from Z_MINUS
-if( key(5,2).ge.0 ) then
-call SklWait(key(5,2), ierr)
-icnt = 1
-k = kx+1
-do j=1,jx
-do i=1+mod(j+ic+kx+1,2),ix,2
-p(i,j,k) = cf_z(icnt,3)
-icnt = icnt+1
-end do
-end do
-endif
-
-! from Z_PLUS
-if( key(6,2).ge.0 ) then
-call SklWait(key(6,2), ierr)
-icnt = 1
-k = 0
-do j=1,jx
-do i=1+mod(j+ic,2),ix,2
-p(i,j,k) = cf_z(icnt,4)
-icnt = icnt+1
-end do
-end do
-endif
-
-! wait for send
-if( key(1,1).ge.0) then
-call SklWait(key(1,1), ierr)
-endif
-if( key(2,1).ge.0) then
-call SklWait(key(2,1), ierr)
-endif
-if( key(3,1).ge.0) then
-call SklWait(key(3,1), ierr)
-endif
-if( key(4,1).ge.0) then
-call SklWait(key(4,1), ierr)
-endif
-if( key(5,1).ge.0) then
-call SklWait(key(5,1), ierr)
-endif
-if( key(6,1).ge.0) then
-call SklWait(key(6,1), ierr)
-endif
-
-end subroutine sma_comm_wait
+// SOR2SMAの非同期通信処理
+// 並列時のみコールされる
+void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int cx = cf_sz[0];
+  int cy = cf_sz[1];
+  int cz = cf_sz[2];
+  
+  int a = col + ip;
+  int ic = a - int(a/2)*2; // スタートインデクス
+  
+  int rq;
+  
+  // Wait for recv ------------------------
+  
+  // from X_MINUS
+  rq = _ASYNC_RQ(X_MINUS, async_recv);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    
+    int c = 0;
+    int i = ix+1;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + i;
+      int js= b - int(b/2)*2;
+      
+      for (int j=1+js; j<=jx; j+=2) {
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, recv_from_plus, c)];
+        c++;
+      }
+    }
+  }
+  
+  // from X_PLUS
+  rq = _ASYNC_RQ(X_PLUS, async_recv);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    
+    int c = 0;
+    int i = 0;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + i;
+      int js= b - int(b/2)*2;
+      
+      for (int j=1+js; j<=jx; j+=2) {
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, recv_from_minus, c)];
+        c++;
+      }
+    }
+  }
+          
+  // from Y_MINUS
+  rq = _ASYNC_RQ(Y_MINUS, async_recv);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    
+    int c = 0;
+    int j = jx+1;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + j;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, recv_from_plus, c)];
+        c++;
+      }
+    }
+  }
+  
+  // from Y_PLUS
+  rq = _ASYNC_RQ(Y_PLUS, async_recv);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    
+    int c = 0;
+    int j = 0;
+    
+    for (int k=1; k<=kx; k++) {
+      int b = k + ic + j;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, recv_from_minus, c)];
+        c++;
+      }
+    }
+  }
+  
+  // from Z_MINUS
+  rq = _ASYNC_RQ(Z_MINUS, async_recv);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    
+    int c = 0;
+    int k = kx+1;
+    
+    for (int j=1; j<=jx; j++) {
+      int b = j + ic + k;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, recv_from_plus, c)];
+        c++;
+      }
+    }
+  }
+  
+  // from Z_PLUS
+  rq = _ASYNC_RQ(Z_PLUS, async_recv);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    
+    int c = 0;
+    int k = 0;
+    
+    for (int j=1; j<=jx; j++) {
+      int b = j + ic + k;
+      int is= b - int(b/2)*2;
+      
+      for (int i=1+is; i<=ix; i+=2) {
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, recv_from_minus, c)];
+        c++;
+      }
+    }
+  }
+  
+  
+  // Wait for send ------------------------
+  
+  // X_MINUS
+  rq = _ASYNC_RQ(X_MINUS, async_send);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // X_PLUS
+  rq = _ASYNC_RQ(X_PLUS, async_send);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // Y_MINUS
+  rq = _ASYNC_RQ(Y_MINUS, async_send);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // Y_PLUS
+  rq = _ASYNC_RQ(Y_PLUS, async_send);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // Z_MINUS
+  rq = _ASYNC_RQ(Z_MINUS, async_send);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // Z_PLUS
+  rq = _ASYNC_RQ(Z_PLUS, async_send);
+  
+  if (key[rq]>=0 )
+  {
+    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+  }
+}

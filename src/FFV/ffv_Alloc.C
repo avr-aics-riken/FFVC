@@ -311,8 +311,8 @@ void FFV::allocate_SOR2SMA_buffer(double &total)
   
   if ( hasLinearSolver(SOR2SMA) ) 
   {
-    cf_sz[0] = (jx+1) * (kx+1) / 2; // バッファサイズチェック
-    cf_sz[1] = (kx+1) * (ix+1) / 2;
+    cf_sz[0] = (jx+1) * (kx+1) / 2; // バッファサイズ
+    cf_sz[1] = (kx+1) * (ix+1) / 2; // +1はマージン
     cf_sz[2] = (ix+1) * (jx+1) / 2;
     
     unsigned n1 = cf_sz[0]*4;
