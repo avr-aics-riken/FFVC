@@ -31,7 +31,7 @@ LIBS=-lifport -lifcore
 
 UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
               -I../Polylib-2.1_dev_a/include \
-              -I../PMlib-1.0/include \
+              -I../PMlib-1.2/include \
               -I/usr/local/cpm_float/include \
               -I/opt/openmpi/include \
               -I/usr/local/textparser/include \
@@ -40,7 +40,7 @@ UDEF_INC_PATH=-I../Cutlib-2.0.3/include \
               -I../IP
 UDEF_LIB_PATH=-L../Polylib-2.1_dev_a/lib \
               -L../Cutlib-2.0.3/lib \
-              -L../PMlib-1.0/lib \
+              -L../PMlib-1.2/lib \
               -L/usr/local/cpm_float/lib \
               -L/opt/openmpi/lib \
               -L/usr/local/textparser/lib \
