@@ -696,10 +696,20 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp, "\n\n");
   }
   
+  printf("CurrentTime         = %e\n",CurrentTime);
+  printf("CurrentTime_Avr     = %e\n",CurrentTime_Avr);
+  printf("Session_StartTime   = %e\n",Session_StartTime);
+  printf("Session_CurrentTime = %e\n",Session_CurrentTime);
+  
+  printf("Session_LastStep    = %u\n",Session_LastStep);
+  printf("Session_CurrentStep = %u\n",Session_CurrentStep);
+  printf("Session_StartStep   = %u\n",Session_StartStep);
+  printf("CurrentStep         = %u\n",CurrentStep);
+  printf("CurrentStep_Avr     = %u\n",CurrentStep_Avr);
+  
+  
   // 履歴出力準備
   prep_HistoryOutput();
-  
-  
   
   
   // 初期化終了時に、入力パラメータのDBを破棄
@@ -721,20 +731,6 @@ int FFV::Initialize(int argc, char **argv)
   
   
   TIMING_stop(tm_init_sct);
-  
-  
-  printf("CurrentTime         = %e\n",CurrentTime);
-  printf("CurrentTime_Avr     = %e\n",CurrentTime_Avr);
-  printf("Session_StartTime   = %e\n",Session_StartTime);
-  printf("Session_CurrentTime = %e\n",Session_CurrentTime);
-
-  printf("Session_LastStep    = %u\n",Session_LastStep);
-  printf("Session_CurrentStep = %u\n",Session_CurrentStep);
-  printf("Session_StartStep   = %u\n",Session_StartStep);
-  printf("CurrentStep         = %u\n",CurrentStep);
-  printf("CurrentStep_Avr     = %u\n",CurrentStep_Avr);
-  
-  
 
   return 1;
 }
