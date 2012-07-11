@@ -250,6 +250,7 @@ private:
   int SubType;           ///< SKIP LOOP or MASK LOOP
   int ItrMax;            ///< 最大反復数
   int LinearSolver;      ///< 線形ソルバーの種類
+  int SyncMode;          ///< 同期モード (synchronous, asynchronous)
   REAL_TYPE eps;         ///< 収束閾値
   REAL_TYPE omg;         ///< 加速/緩和係数
   REAL_TYPE NormValue;   ///< ノルムの値
@@ -287,6 +288,7 @@ public:
   ItrCtl() {
     NormType = 0;
     ItrMax = LoopCount = LinearSolver = SubType = 0;
+    SyncMode = 0;
     eps = omg = 0.0;
   }
   
@@ -337,6 +339,13 @@ public:
     return NormValue; 
   }
   
+  /** @brief 同期モードを返す */
+  int get_SyncMode() const 
+  { 
+    return SyncMode; 
+  }
+  
+  
   /** @brief 線形ソルバの種類を設定する */
   void set_LS(const int key) 
   { 
@@ -377,6 +386,12 @@ public:
   void set_normValue(const REAL_TYPE r) 
   { 
     NormValue = r; 
+  }
+  
+  /** @brief 同期モードを保持 */
+  void set_SyncMode(const Synch_Mode r) 
+  { 
+    SyncMode= r; 
   }
 };
 
@@ -669,6 +684,7 @@ public:
   string f_Vorticity;
   
   string Ref_Medium;
+  string OperatorName;
   
   
   /** コンストラクタ */
@@ -788,8 +804,8 @@ protected:
   
   /**
    * @brief 熱交換器パラメータの変換（水と水銀）
-   * @param [out] cf     パラメータ値
-   * @param [in] Density ヘッドの単位
+   * @param [out] cf      パラメータ値
+   * @param [in]  Density ヘッドの単位
    */
   void convertHexCoef(REAL_TYPE* cf, const REAL_TYPE DensityMode);
   
@@ -804,7 +820,9 @@ protected:
   void findCriteria(const string label1, const string label2, const int order, ItrCtl* IC);
   
   
-  /** 解法アルゴリズムを選択する */
+  /** 
+   * @brief 解法アルゴリズムを選択する 
+   */
   void get_Algorithm();
   
   
@@ -829,14 +847,22 @@ protected:
   void get_KindOfSolver   ();
   void get_LES_option     ();
   void get_Log            ();
+  
+  /**
+   * @brief 作業者情報を取得
+   */
+  void get_Operator();
+  
   void get_Para_ND        ();
   void get_Para_Ref       ();
   void get_Para_Temp      ();
+  
   
   /**
    * @brief 性能試験モードを取得する（隠しパラメータ）
    */
   void get_PMtest();
+  
   
   void get_ReferenceFrame (ReferenceFrame* RF);
   ////void get_restart_rough  ();

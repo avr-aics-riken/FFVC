@@ -5,11 +5,12 @@
  *
  */
 
-//@file PerfMonitor.cpp
-//@brief PerfMonitor class
+//@file   PerfMonitor.cpp
+//@brief  PerfMonitor class
 //@author keno, Vis Team, AICS, RIKEN / Soichiro Suzuki, IIS, The University of Tokyo
 
 #include "PerfMonitor.h"
+#include <time.h>
 #include <mpi.h>
 
 namespace pm_lib {
@@ -24,11 +25,13 @@ namespace pm_lib {
   /// 測定結果を出力.
   ///
   ///   排他測定区間のみ
-  ///   @param[in] fp 出力ファイルポインタ
+  ///   @param[in] fp           出力ファイルポインタ
+  ///   @param[in] hostname     ホスト名
+  ///   @param[in] operatorname 作業者名
   ///
   ///   @note ノード0以外は, 呼び出されてもなにもしない
   ///
-  void PerfMonitor::print(FILE* fp)
+  void PerfMonitor::print(FILE* fp, const std::string hostname, const std::string operatorname)
   {
     if (my_rank != 0) return;
     
@@ -36,6 +39,24 @@ namespace pm_lib {
       fprintf(stderr, "\tPerfMonitor::print() error, not gathered infomation\n");
       PM_Exit(0);
     }
+    
+    // タイムスタンプの取得
+    struct tm *date;
+    time_t now;
+    int year, month, day;
+    int hour, minute, second;
+    
+    time(&now);
+    date = localtime(&now);
+    
+    year   = date->tm_year + 1900;
+    month  = date->tm_mon + 1;
+    day    = date->tm_mday;
+    hour   = date->tm_hour;
+    minute = date->tm_min;
+    second = date->tm_sec;
+    
+    
     
     // 合計 > tot
     double tot = 0.0;
@@ -50,8 +71,13 @@ namespace pm_lib {
     maxLabelLen++;
     
     fprintf(fp, "\n\t-----------------------------------------------------------------\n");
-    fprintf(fp, "\tReport of Timing Statistics\n");
+    fprintf(fp, "\tReport of Timing Statistics PMlib version %3.1f\n", (float)PMLIB_VERS/10.0);
     fprintf(fp, "\n");
+    fprintf(fp, "\tOperator  : %s\n", operatorname.c_str());
+    fprintf(fp, "\tHost name : %s\n", hostname.c_str());
+    fprintf(fp, "\tDate      : %04d/%02d/%02d : %02d:%02d:%02d\n", year, month, day, hour, minute, second);
+    fprintf(fp, "\n");
+    
     fprintf(fp,"\tParallel Mode                    :   %s ", parallel_mode.c_str());
     if (parallel_mode == "Serial") {
       fprintf(fp, "\n");
@@ -66,9 +92,11 @@ namespace pm_lib {
       PM_Exit(0);
     }
     fprintf(fp, "\n");
+    
     fprintf(fp, "\tTotal execution time            = %12.6e [sec]\n", m_total.m_time);
     fprintf(fp, "\tTotal time of measured sections = %12.6e [sec]\n", tot);
     fprintf(fp, "\n");
+    
     fprintf(fp, "\tStatistics per MPI process [Node Average]\n");
     
     fprintf(fp, "\t%-*s|     call     |              accumulated time                    |          flop | messages[Bytes]\n", maxLabelLen, "Label");

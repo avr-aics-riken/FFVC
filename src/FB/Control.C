@@ -334,6 +334,22 @@ void Control::findCriteria(const string label1, const string label2, const int o
     }
     IC[order].set_omg(tmp);
     
+    key = "/synchronization";
+    label = label0 + key;
+    if ( !(tpCntl->GetValue(label, &str )) ) 
+    {
+      stamped_printf("\tParsing error : Invalid char* value for 'Norm' of %s in Criteria\n", key.c_str());
+      Exit(0);
+    }
+    if ( !strcasecmp(key.c_str(), "sync") )
+    {
+      IC[order].set_SyncMode(synchronous);
+    }
+    else if ( !strcasecmp(key.c_str(), "async") )
+    {
+      IC[order].set_SyncMode(asynchronous);
+    }
+    
     key = "/norm";
     label = label0 + key;
     if ( !(tpCntl->GetValue(label, &str )) ) 
@@ -341,7 +357,7 @@ void Control::findCriteria(const string label1, const string label2, const int o
       stamped_printf("\tParsing error : Invalid char* value for 'Norm' of %s in Criteria\n", key.c_str());
       Exit(0);
     }
-    
+
     // normのタイプ
     switch (order) 
     {
@@ -577,6 +593,22 @@ void Control::get_CheckParameter()
   
 }
 
+
+// 作業者情報の取得
+void Control::get_Operator()
+{
+  string str;
+  string label;
+  
+  label = "/Steer/Operator";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+	  Exit(0);
+  }
+  
+  OperatorName = str;
+  
+}
 
 
 // スケーリングファクタを取得する（隠しパラメータ）
@@ -1891,6 +1923,9 @@ void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
   // ラフな初期値を使い、リスタートするモード指定 >> FileIO
   get_start_condition();
   
+  // 作業者情報
+  get_Operator();
+  
 }
 
 
@@ -2991,6 +3026,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->get_eps());
 		fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->get_omg());
 		fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp1->get_normType()).c_str() );
+    fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
 		printLS(fp, ICp1);
     
     if ( AlgorithmF == Flow_FS_RK_CN ) {
@@ -2999,6 +3035,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->get_eps());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->get_omg());
       fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp2->get_normType()).c_str() );
+      fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
       printLS(fp, ICp2);
     }
     
@@ -3010,6 +3047,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 			fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->get_eps());
 			fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->get_omg());
 			fprintf(fp,"\t       Norm type               :   %s\n", getNormString(ICv->get_normType()).c_str() );
+      fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
 			printLS(fp, ICv);
 		}
 	}
@@ -3024,6 +3062,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->get_eps());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->get_omg());
 			fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICt->get_normType()).c_str() );
+      fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
       printLS(fp, ICt);
     }
   }

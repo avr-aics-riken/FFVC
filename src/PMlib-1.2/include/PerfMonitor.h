@@ -24,7 +24,9 @@ namespace pm_lib {
   
   /// 排他測定＋非排他測定用マクロ
 #define PM_TIMING_DETAIL__  if (PerfMonitor::TimingLevel > 1)
-  
+
+  /// バージョン情報
+#define PMLIB_VERS 12
   
   /**
    * 計算性能測定管理クラス.
@@ -152,11 +154,13 @@ namespace pm_lib {
     /// 測定結果を出力.
     ///
     ///   排他測定区間のみ
-    ///   @param[in] fp 出力ファイルポインタ
+    ///   @param[in] fp           出力ファイルポインタ
+    ///   @param[in] hostname     ホスト名
+    ///   @param[in] operatorname 作業者名
     ///
     ///   @note ノード0以外は, 呼び出されてもなにもしない
     ///
-    void print(FILE* fp);
+    void print(FILE* fp, const std::string hostname, const std::string operatorname);
     
     /// 詳細な測定結果を出力.
     ///

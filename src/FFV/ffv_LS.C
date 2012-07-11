@@ -19,7 +19,7 @@
 
 // SOR2SMAの非同期通信処理
 // 並列時のみコールされる
-void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
+void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
 {
   // cf_sz バッファサイズ
   // cf_x x方向のバッファ (cf_sz[0]*4) 
@@ -40,9 +40,6 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
   int a = col + ip;
   int ic = a - int(a/2)*2; // スタートインデクス
   
-  // 送信IDを初期化
-  for (int i=0; i<NOFACE*2; i++) key[i] = -1;
-  
 
   // X_MINUS
   // send
@@ -61,13 +58,13 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
       }
     }
     
-    if ( paraMngr->Isend(cf_x[_PACK(cx, send_to_minus, 0)], cx, nID[X_MINUS], key[_ASYNC_RQ(X_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_x[_PACK(cx, send_to_minus, 0)], cx, nID[X_MINUS], &key[_ASYNC_RQ(X_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
     
   // recieve
   if ( nID[X_PLUS]>=0 )
   {
-    if ( paraMngr->Irecv(cf_x[_PACK(cx, recv_from_plus, 0)], cx, nID[X_PLUS], key[_ASYNC_RQ(X_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_x[_PACK(cx, recv_from_plus, 0)], cx, nID[X_PLUS], &key[_ASYNC_RQ(X_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
     
     
@@ -88,13 +85,13 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
       }
     }
     
-    if ( paraMngr->Isend(cf_x[_PACK(cx, send_to_plus, 0)], cx, nID[X_PLUS], key[_ASYNC_RQ(X_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_x[_PACK(cx, send_to_plus, 0)], cx, nID[X_PLUS], &key[_ASYNC_RQ(X_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recieve
   if ( nID[X_MINUS]>=0 )
   {
-    if ( paraMngr->Irecv(cf_x[_PACK(cx, recv_from_minus, 0)], cx, nID[X_MINUS], key[_ASYNC_RQ(X_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_x[_PACK(cx, recv_from_minus, 0)], cx, nID[X_MINUS], &key[_ASYNC_RQ(X_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -115,13 +112,13 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
       }
     }
     
-    if ( paraMngr->Isend(cf_y[_PACK(cy, send_to_minus, 0)], cy, nID[Y_MINUS], key[_ASYNC_RQ(Y_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_y[_PACK(cy, send_to_minus, 0)], cy, nID[Y_MINUS], &key[_ASYNC_RQ(Y_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Y_PLUS]>=0 )
   {
-    if ( paraMngr->Irecv(cf_y[_PACK(cy, recv_from_plus, 0)], cy, nID[Y_PLUS], key[_ASYNC_RQ(Y_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_y[_PACK(cy, recv_from_plus, 0)], cy, nID[Y_PLUS], &key[_ASYNC_RQ(Y_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -142,13 +139,13 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
       }
     }
     
-    if ( paraMngr->Isend(cf_y[_PACK(cy, send_to_plus, 0)], cy, nID[Y_PLUS], key[_ASYNC_RQ(Y_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_y[_PACK(cy, send_to_plus, 0)], cy, nID[Y_PLUS], &key[_ASYNC_RQ(Y_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Y_MINUS]>=0 )
   {
-    if ( paraMngr->Irecv(cf_y[_PACK(cy, recv_from_minus, 0)], cy, nID[Y_MINUS], key[_ASYNC_RQ(Y_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_y[_PACK(cy, recv_from_minus, 0)], cy, nID[Y_MINUS], &key[_ASYNC_RQ(Y_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -169,13 +166,13 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
       }
     }
     
-    if ( paraMngr->Isend(cf_z[_PACK(cz, send_to_minus, 0)], cz, nID[Z_MINUS], key[_ASYNC_RQ(Z_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_z[_PACK(cz, send_to_minus, 0)], cz, nID[Z_MINUS], &key[_ASYNC_RQ(Z_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Z_PLUS]>=0 )
   {
-    if ( paraMngr->Irecv(cf_z[_PACK(cz, recv_from_plus, 0)], cz, nID[Z_PLUS], key[_ASYNC_RQ(Z_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_z[_PACK(cz, recv_from_plus, 0)], cz, nID[Z_PLUS], &key[_ASYNC_RQ(Z_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -196,13 +193,13 @@ void FFV::comm_SOR2SMA(const int col, const int ip, int* key)
       }
     }
     
-    if ( paraMngr->Isend(cf_z[_PACK(cz, send_to_plus, 0)], cz, nID[Z_PLUS], key[_ASYNC_RQ(Z_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_z[_PACK(cz, send_to_plus, 0)], cz, nID[Z_PLUS], &key[_ASYNC_RQ(Z_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Z_MINUS]>=0 )
   {
-    if ( paraMngr->Irecv(cf_z[_PACK(cz, recv_from_minus, 0)], cz, nID[Z_MINUS], key[_ASYNC_RQ(Z_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_z[_PACK(cz, recv_from_minus, 0)], cz, nID[Z_MINUS], &key[_ASYNC_RQ(Z_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
 }
@@ -266,7 +263,18 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_poi_comm);
-        if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+        if (IC->get_SyncMode() == synchronous ) 
+        {
+          if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+        }
+        else 
+        {
+          MPI_Request req[12];
+          for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
+          
+          if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+          if ( paraMngr->wait_BndCommS3D(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+        }
         TIMING_stop(tm_poi_comm, comm_size);
       }
       
@@ -282,71 +290,78 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
       break;
       
-      /*
-       case SOR2SMA:
-       // 2色のマルチカラーのセットアップ
-       TIMING_start(tm_poi_setup);
-       
-       int nID[6], sidx[3], ip;
-       
-       if ( numProc > 1 ) {
-       sidx[0] = head[0];
-       sidx[1] = head[1];
-       sidx[2] = head[2];
-       ip = (sidx[0]+sidx[1]+sidx[2]) % 2;
-       } 
-       else {
-       sidx[0] = sidx[1] = sidx[2] = 1;
-       ip = 0;
-       }
-       TIMING_stop(tm_poi_setup, 0.0);
-       
-       
-       // 各カラー毎の間に同期
-       r = 0.0;          // 色間で積算する
-       for (int color=0; color<2; color++) 
-       {
-       TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
-       
-       TIMING_start(tm_poi_SOR2SMA);
-       flop_count = 0.0; // 色間で積算しない
-       psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &r, d_ws, d_sq, d_bcp, &flop_count);
-       //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
-       TIMING_stop(tm_poi_SOR2SMA, flop_count);
-       
-       // 境界条件
-       TIMING_start(tm_poi_BC);
-       BC.OuterPBC(d_p);
-       if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
-       TIMING_stop(tm_poi_BC, 0.0);
-       
-       TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
-       
-       
-       TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
-       
-       // 残差の集約と同期処理
-       if ( numProc > 1 ) {
-       TIMING_start(tm_poi_res_comm);
-       REAL_TYPE tmp = r;
-       if ( paraMngr->Allreduce(&tmp, &r, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-       TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
-       
-       TIMING_start(tm_poi_comm);
-       if (cm_mode == 0 ) 
-       {
-       if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-       }
-       else {
-       sma_comm_     (d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req, &para_key);
-       sma_comm_wait_(d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, req);
-       }
-       TIMING_stop(tm_poi_comm, comm_size*0.5);
-       }
-       
-       TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
-       }
-       break; */
+  
+    case SOR2SMA:
+      // 2色のマルチカラーのセットアップ
+      TIMING_start(tm_poi_setup);
+      
+      int sidx[3], ip;
+      MPI_Request req[12]; /// 送信ID
+      
+      for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
+      
+      if ( numProc > 1 ) 
+      {
+        sidx[0] = head[0];
+        sidx[1] = head[1];
+        sidx[2] = head[2];
+        ip = (sidx[0]+sidx[1]+sidx[2]) % 2;
+      } 
+      else 
+      {
+        sidx[0] = sidx[1] = sidx[2] = 1;
+        ip = 0;
+      }
+      TIMING_stop(tm_poi_setup, 0.0);
+      
+      
+      // 各カラー毎の間に同期
+      r = 0.0;          // 色間で積算する
+      for (int color=0; color<2; color++) 
+      {
+        TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
+        
+        TIMING_start(tm_poi_SOR2SMA);
+        flop_count = 0.0; // 色間で積算しない
+        psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &r, d_ws, d_sq, d_bcp, &flop_count);
+        //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
+        TIMING_stop(tm_poi_SOR2SMA, flop_count);
+        
+        // 境界条件
+        TIMING_start(tm_poi_BC);
+        BC.OuterPBC(d_p);
+        if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
+        TIMING_stop(tm_poi_BC, 0.0);
+        
+        TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+        
+        
+        TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
+        
+        // 残差の集約と同期処理
+        if ( numProc > 1 ) 
+        {
+          TIMING_start(tm_poi_res_comm);
+          REAL_TYPE tmp = r;
+          if ( paraMngr->Allreduce(&tmp, &r, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
+          
+          TIMING_start(tm_poi_comm);
+          if (IC->get_SyncMode() == synchronous ) 
+          {
+            if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+          }
+          else 
+          {
+            comm_SOR2SMA(color, ip, req);
+            wait_SOR2SMA(color, ip, req);
+          }
+          TIMING_stop(tm_poi_comm, comm_size*0.5);
+        }
+        
+        TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+      }
+      break;
       
     default:
       printf("\tInvalid Linear Solver for Pressure\n");
@@ -370,7 +385,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 
 // SOR2SMAの非同期通信処理
 // 並列時のみコールされる
-void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
+void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
 {
   int ix = size[0];
   int jx = size[1];
@@ -393,7 +408,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
     
     int c = 0;
     int i = ix+1;
@@ -414,7 +429,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
     
     int c = 0;
     int i = 0;
@@ -435,7 +450,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
     
     int c = 0;
     int j = jx+1;
@@ -456,7 +471,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
     
     int c = 0;
     int j = 0;
@@ -477,7 +492,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
     
     int c = 0;
     int k = kx+1;
@@ -498,7 +513,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
     
     int c = 0;
     int k = 0;
@@ -522,7 +537,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
   }
   
   // X_PLUS
@@ -530,7 +545,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
   }
   
   // Y_MINUS
@@ -538,7 +553,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
   }
   
   // Y_PLUS
@@ -546,7 +561,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
   }
   
   // Z_MINUS
@@ -554,7 +569,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
   }
   
   // Z_PLUS
@@ -562,6 +577,6 @@ void FFV::wait_SOR2SMA(const int col, const int ip, int* key)
   
   if (key[rq]>=0 )
   {
-    if ( paraMngr->Wait(key[rq]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Wait(&key[rq]) != CPM_SUCCESS ) Exit(0);
   }
 }

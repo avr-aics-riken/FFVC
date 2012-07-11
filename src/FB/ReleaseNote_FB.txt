@@ -9,6 +9,11 @@ Release Note
 
 #######################################
 
-Ver 0.8.0  30 June  2012
+Ver 0.9.0  11 July 2012
+  - Operator追加
+  - hostnameを取得
+  - Iteration/Synchronizationに "sync/async" を追加
+
+Ver 0.8.0  30 June 2012
   - CPM Library対応
   

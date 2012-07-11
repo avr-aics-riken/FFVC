@@ -17,6 +17,7 @@
  * @author kero
  */
 
+#include <string>
 #include "cpm_ParaManager.h"
 
 class DomainInfo {
@@ -44,6 +45,8 @@ public:
   int G_size[3];         ///< 領域分割数 (Global, Non-dimensional)
   REAL_TYPE G_origin[3]; ///< 領域基点   (Global, Non-dimensional)
   REAL_TYPE G_region[3]; ///< 領域サイズ (Global, Non-dimensional)
+  
+  std::string HostName;  ///< ホスト名
 
   
 public:
@@ -104,6 +107,7 @@ public:
     procGrp = m_procGrp;
     myRank  = paraMngr->GetMyRankID();
     numProc = paraMngr->GetNumRank();
+    HostName= paraMngr->GetHostName();
   }
   
   

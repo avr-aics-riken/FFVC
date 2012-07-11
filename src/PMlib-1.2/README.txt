@@ -1,12 +1,12 @@
 -----
-PMlib 1.0
+PMlib 1.2
 
 Corresponding author Kenji Ono 	keno@riken.jp
 Advanced Visualization Research Team, AICS, RIKEN
 
 written by Soichiro Suzuki, IIS, The University of Tokyo
 
-April 2012
+July 2012
 -----
 
 インストール方法

@@ -361,7 +361,7 @@ private:
    * @param [in]  ip  オーダリングカラー0の最初のインデクス
    * @param [out] key 送信ID
    */
-  void comm_SOR2SMA(const int col, const int ip, int* key);
+  void comm_SOR2SMA(const int col, const int ip, MPI_Request* key);
   
   
   /**
@@ -834,11 +834,11 @@ private:
   
   /**
    * @brief SOR2SMAの非同期通信処理
-   * @param [in]  col オーダリングカラーの番号
-   * @param [in]  ip  オーダリングカラー0の最初のインデクス
-   * @param [in]  key 送信ID
+   * @param [in]     col オーダリングカラーの番号
+   * @param [in]     ip  オーダリングカラー0の最初のインデクス
+   * @param [in/out] key 送信ID
    */
-  void wait_SOR2SMA(const int col, const int ip, const int* key);
+  void wait_SOR2SMA(const int col, const int ip, MPI_Request* key);
   
 public:
   
