@@ -263,7 +263,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_poi_comm);
-        if (IC->get_SyncMode() == synchronous ) 
+        if (IC->get_SyncMode() == comm_sync ) 
         {
           if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
         }
@@ -347,7 +347,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
           TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
           
           TIMING_start(tm_poi_comm);
-          if (IC->get_SyncMode() == synchronous ) 
+          if (IC->get_SyncMode() == comm_sync ) 
           {
             if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
           }

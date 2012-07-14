@@ -334,20 +334,25 @@ void Control::findCriteria(const string label1, const string label2, const int o
     }
     IC[order].set_omg(tmp);
     
-    key = "/synchronization";
+    key = "/comm_mode";
     label = label0 + key;
     if ( !(tpCntl->GetValue(label, &str )) ) 
     {
-      stamped_printf("\tParsing error : Invalid char* value for 'Norm' of %s in Criteria\n", key.c_str());
+      stamped_printf("\tParsing error : Invalid char* value for 'Comm_Mode' of %s in Criteria\n", key.c_str());
       Exit(0);
     }
-    if ( !strcasecmp(key.c_str(), "sync") )
+    if ( !strcasecmp(str.c_str(), "sync") )
     {
-      IC[order].set_SyncMode(synchronous);
+      IC[order].set_SyncMode(comm_sync);
     }
-    else if ( !strcasecmp(key.c_str(), "async") )
+    else if ( !strcasecmp(str.c_str(), "async") )
     {
-      IC[order].set_SyncMode(asynchronous);
+      IC[order].set_SyncMode(comm_async);
+    }
+    else
+    {
+      stamped_printf("\tParsing error : Invalid char* value for 'Comm_Mode' of %s in Criteria\n", key.c_str());
+      Exit(0);
     }
     
     key = "/norm";
@@ -432,9 +437,10 @@ void Control::findCriteria(const string label1, const string label2, const int o
     }
     
     // 線形ソルバーの種類
-    if     ( !strcasecmp(str.c_str(), "SOR") )       IC[order].set_LS(SOR);
-    else if( !strcasecmp(str.c_str(), "SOR2SMA") )   IC[order].set_LS(SOR2SMA);
-    else if( !strcasecmp(str.c_str(), "SOR2CMA") )   IC[order].set_LS(SOR2CMA);
+    if     ( !strcasecmp(str.c_str(), "SOR") )      IC[order].set_LS(SOR);
+    else if( !strcasecmp(str.c_str(), "SOR2SMA") )  IC[order].set_LS(SOR2SMA);
+    else if( !strcasecmp(str.c_str(), "SOR2CMA") )  IC[order].set_LS(SOR2CMA);
+    else if( !strcasecmp(str.c_str(), "JACOBI") )   IC[order].set_LS(JACOBI);
     else 
     {
       stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
@@ -2409,16 +2415,16 @@ void Control::printInitValues(FILE* fp)
 }
 
 
-/**
- @fn void Control::printLS(FILE* fp, ItrCtl* IC)
- @brief 線形ソルバー種別の表示
- @param fp
- @param IC
- */
-void Control::printLS(FILE* fp, ItrCtl* IC)
+
+// 線形ソルバー種別の表示
+void Control::printLS(FILE* fp, const ItrCtl* IC)
 {
   switch (IC->get_LS()) 
   {
+    case JACOBI:
+      fprintf(fp,"\t       Linear Solver          :   Jacobi method\n");
+      break;
+      
     case SOR:
       fprintf(fp,"\t       Linear Solver          :   Point SOR method\n");
       break;
@@ -2438,8 +2444,8 @@ void Control::printLS(FILE* fp, ItrCtl* IC)
 }
 
 
-//@fn void Control::printNoCompo(FILE* fp)
-//@brief 内部BCコンポーネントの数を表示する
+
+// 内部BCコンポーネントの数を表示する
 void Control::printNoCompo(FILE* fp)
 {
   fprintf(fp,"\tNo. of Local Boundary  : %d\n", NoBC);
@@ -2451,7 +2457,7 @@ void Control::printNoCompo(FILE* fp)
 
 
 // 計算パラメータの表示
-void Control::printParaConditions(FILE* fp, MediumList* mat)
+void Control::printParaConditions(FILE* fp, const MediumList* mat)
 {
   if ( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -2510,9 +2516,8 @@ void Control::printParaConditions(FILE* fp, MediumList* mat)
 }
 
 
-//@fn void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
-//@brief 制御パラメータSTEERの表示
-void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF)
+// 制御パラメータSTEERの表示
+void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF)
 {
   if( !fp ) {
     stamped_printf("\tFail to write into file\n");
@@ -3011,9 +3016,9 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   
   // Criteria ------------------
   fprintf(fp,"\n\tParameter of Linear Equation\n");
-  ItrCtl* ICp1= &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
-  ItrCtl* ICp2= &IC[ItrCtl::ic_prs_cr];  /// 圧力のPoisson反復　2回目
-  ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
+  const ItrCtl* ICp1= &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
+  const ItrCtl* ICp2= &IC[ItrCtl::ic_prs_cr];  /// 圧力のPoisson反復　2回目
+  const ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
   
   if ( Hide.PM_Test == ON ) {
     fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
@@ -3026,7 +3031,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->get_eps());
 		fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->get_omg());
 		fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp1->get_normType()).c_str() );
-    fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
+    fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
 		printLS(fp, ICp1);
     
     if ( AlgorithmF == Flow_FS_RK_CN ) {
@@ -3035,7 +3040,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->get_eps());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->get_omg());
       fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp2->get_normType()).c_str() );
-      fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
+      fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
       printLS(fp, ICp2);
     }
     
@@ -3047,7 +3052,7 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
 			fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->get_eps());
 			fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->get_omg());
 			fprintf(fp,"\t       Norm type               :   %s\n", getNormString(ICv->get_normType()).c_str() );
-      fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
+      fprintf(fp,"\t       Communication Mode      :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
 			printLS(fp, ICv);
 		}
 	}
@@ -3055,14 +3060,14 @@ void Control::printSteerConditions(FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFr
   // for Temperature
   if ( isHeatProblem() ) {
     if ( AlgorithmH == Heat_EE_EI ) {
-      ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
+      const ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
       fprintf(fp,"\n");
       fprintf(fp,"\t     Temperature Iteration  \n");
       fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->get_ItrMax());
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->get_eps());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->get_omg());
 			fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICt->get_normType()).c_str() );
-      fprintf(fp,"\t       Synchronization Mode   :   %s\n", (ICp1->get_SyncMode()==synchronous) ? "SYNC" : "ASYNC");
+      fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
       printLS(fp, ICt);
     }
   }

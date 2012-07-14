@@ -364,8 +364,8 @@ enum Temp_Unit {
 
 /// 同期モード
 enum Synch_Mode {
-  synchronous=1,
-  asynchronous
+  comm_sync=1,
+  comm_async
 };
 
 /// send/recv Operation

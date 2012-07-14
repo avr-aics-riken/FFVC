@@ -188,13 +188,14 @@ int FFV::Loop(const unsigned step)
   }
   
   // 瞬時値のデータ出力
-  TIMING_start(tm_file_out);
+  
+  // 通常
   if ( C.Interval[Interval_Manager::tg_instant].isTriggered(CurrentStep, CurrentTime) ) 
   {
+    TIMING_start(tm_file_out);
     flop_count=0.0;
-    
-    // 通常
-    FileOutput(flop_count);     
+    FileOutput(flop_count);
+    TIMING_stop(tm_file_out, flop_count); 
   }
   
   // 最終ステップ
@@ -203,11 +204,15 @@ int FFV::Loop(const unsigned step)
     // 指定間隔の出力がない場合のみ（重複を避ける）
     if ( !C.Interval[Interval_Manager::tg_instant].isTriggered(CurrentStep, CurrentTime) ) 
     {
-      if ( C.Hide.PM_Test != ON ) FileOutput(flop_count);
+      if ( C.Hide.PM_Test != ON ) 
+      {
+        TIMING_start(tm_file_out);
+        flop_count=0.0;
+        FileOutput(flop_count);
+        TIMING_stop(tm_file_out, flop_count); 
+      }
     }
   }
-  
-  TIMING_stop(tm_file_out, flop_count); 
   
   
   // 平均値のデータ出力 >　アルゴいまいち
@@ -232,7 +237,7 @@ int FFV::Loop(const unsigned step)
         TIMING_start(tm_file_out);
         
         flop_count=0.0;
-        
+
         // 通常
         AverageOutput(flop_count);
         

@@ -941,9 +941,7 @@ void FFV::DomainInitialize(const string dom_file)
   }
   
 
-  // 袖通信の成分数と袖の最大数
-  // V(3), P(1), T(1), Cut(6)
-  size_t Ncmp = ( C.isCDS() ) ? 6 : 3;
+  // 袖通信の最大数
   size_t Nvc  = (size_t)C.guide;
   
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
@@ -963,7 +961,7 @@ void FFV::DomainInitialize(const string dom_file)
   switch (div_type) 
   {
     case 1: // 分割数が指示されている場合
-      if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+      if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Nvc) != CPM_SUCCESS )
       {
         cout << "Domain decomposition error : " << endl;
         Exit(0);
@@ -971,7 +969,7 @@ void FFV::DomainInitialize(const string dom_file)
       break;
       
     case 2: // 分割数が指示されていない場合
-      if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+      if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Nvc) != CPM_SUCCESS )
       {
         cout << "Domain decomposition error : " << endl;
         Exit(0);
@@ -1163,7 +1161,7 @@ void FFV::fixed_parameters()
   C.HistoryForceName   = "history_force.txt";
   C.HistoryWallName    = "history_log_wall.txt";
   C.HistoryItrName     = "history_iteration.txt";
-  C.HistoryMonitorName = "sample.log";
+  C.HistoryMonitorName = "sampling.txt";
   
   C.f_Pressure       = "prs_";
   C.f_Velocity       = "vel_";
@@ -1403,6 +1401,152 @@ void FFV::gather_DomainInfo()
   if( bf_acl ) { delete [] bf_acl; bf_acl=NULL; }
   if( st_buf ) { delete [] st_buf; st_buf=NULL; }
   if( ed_buf ) { delete [] ed_buf; ed_buf=NULL; }
+}
+
+
+
+
+// グローバルな領域情報を取得
+int FFV::get_DomainInfo()
+{
+  // 領域分割モードのパターン
+  //      分割指定(G_div指定)    |     domain.txt 
+  // 1)  G_divなし >> 自動分割   |  G_orign + G_region + (G_pitch || G_voxel)
+  // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
+  // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
+  // 4)  G_div指定あり          |   + ActiveDomainInfo
+  
+  string label, str;
+  REAL_TYPE *rvec;
+  int *ivec;
+  int div_type = 1;
+  
+  // G_origin　必須
+  rvec  = G_origin;
+  label = "/DomainInfo/Global_origin";
+  
+  if ( !tpCntl.GetVector(label, rvec, 3) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  // G_region 必須
+  rvec  = G_region;
+  label = "/DomainInfo/Global_region";
+  
+  if ( !tpCntl.GetVector(label, rvec, 3) )
+  {
+    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  if ( (G_region[0]>0.0) && (G_region[1]>0.0) && (G_region[2]>0.0) )
+  {
+    ; // skip
+  }
+  else
+  {
+    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  
+  // G_pitch オプション
+  bool flag = true; // 排他チェック（voxel, pitch）
+  rvec  = pitch;
+  label = "/DomainInfo/Global_pitch";
+  
+  if ( !tpCntl.GetVector(label, rvec, 3) )
+  {
+    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
+    flag = false;
+  }
+  
+  // pitchが入力されている場合のみチェック
+  if ( flag ) {
+    if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
+    {
+      ; // skip
+    }
+    else
+    {
+      Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
+      Exit(0);
+    }
+  }
+  
+  
+  
+  // G_voxel オプション
+  if ( flag ) // pitchが指定されている場合が優先
+  {
+    G_size[0] = (int)(G_region[0]/pitch[0]);
+    G_size[1] = (int)(G_region[1]/pitch[1]);
+    G_size[2] = (int)(G_region[2]/pitch[2]);
+  }
+  else
+  {
+    ivec  = G_size;
+    label = "/DomainInfo/Global_voxel";
+    
+    if ( !tpCntl.GetVector(label, ivec, 3) )
+    {
+      Hostonly_ cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
+      Exit(0); // pitchもvoxelも有効でない
+    }
+    
+    if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
+    {
+      pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
+      pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
+      pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
+      
+      pitch[1] = pitch[0];
+      pitch[2] = pitch[0];
+    }
+    else
+    {
+      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+  }
+  
+  
+  // G_div オプション
+  ivec  = G_division;
+  label = "/DomainInfo/Global_division";
+  
+  if ( !tpCntl.GetVector(label, ivec, 3) )
+  {
+    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
+    div_type = 2;
+  }
+  
+  // プロセス分割数が指定されている場合のチェック
+  if ( div_type == 1 )
+  {
+    if ( (G_division[0]>0) && (G_division[1]>0) && (G_division[2]>0) ) 
+    {
+      ; // skip
+    }
+    else
+    {
+      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+  }
+  
+  
+  // ActiveSubdomainファイル名の取得
+  label = "/DomainInfo/ActiveSubDomain_File";
+  
+  if ( !tpCntl.GetValue(label, &str ) ) {
+    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
+  }
+  // string hoge = str;
+  
+  return div_type;
 }
 
 
@@ -2153,18 +2297,24 @@ void FFV::setInitialCondition()
 
   
   // 初期解およびリスタート解の同期
-  if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
-  
-  if ( C.isHeatProblem() ) {
-    if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( !IsMaster() )
+  {
+    if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
+    
+    if ( C.isHeatProblem() ) 
+    {
+      if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    }
   }
-  
-  
+
   // VOF
   if ( C.BasicEqs == INCMP_2PHASE ) {
     setVOF();
-    if ( paraMngr->BndCommS3D  (d_vof, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( !IsMaster() )
+    {
+      if ( paraMngr->BndCommS3D  (d_vof, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    }
   }
   
 }

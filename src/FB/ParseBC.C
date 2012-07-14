@@ -1488,7 +1488,7 @@ void ParseBC::get_OBC_Outflow(const std::string label_base, const int n)
   
   
   // 流出速度のタイプ
-  label = label_base + "/vel_type";
+  label = label_base + "/velocity_type";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     stamped_printf("\tParsing error : fail to get 'Vel_Type' in 'Basic_BCs > outflow'\n");
@@ -1501,7 +1501,7 @@ void ParseBC::get_OBC_Outflow(const std::string label_base, const int n)
 	  BaseBc[n].set_ofv(V_MINMAX);
   }
   else {
-	  stamped_printf("\tParsing error : Invalid string value for 'Vel_Type' : %s\n", str.c_str());
+	  stamped_printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str.c_str());
 	  Exit(0);
   }
   
@@ -1511,7 +1511,7 @@ void ParseBC::get_OBC_Outflow(const std::string label_base, const int n)
   BaseBc[n].p = 0.0; // ダミー値
   
   // Hidden option
-  label = label_base + "/prs_type";
+  label = label_base + "/pressure_type";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
   }

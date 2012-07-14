@@ -250,7 +250,7 @@ private:
   int SubType;           ///< SKIP LOOP or MASK LOOP
   int ItrMax;            ///< 最大反復数
   int LinearSolver;      ///< 線形ソルバーの種類
-  int SyncMode;          ///< 同期モード (synchronous, asynchronous)
+  int SyncMode;          ///< 同期モード (comm_sync, comm_async)
   REAL_TYPE eps;         ///< 収束閾値
   REAL_TYPE omg;         ///< 加速/緩和係数
   REAL_TYPE NormValue;   ///< ノルムの値
@@ -899,7 +899,14 @@ protected:
   
 
   void printInitValues       (FILE* fp);
-  void printLS               (FILE* fp, ItrCtl* IC);
+  
+  
+  /**
+   * @brief 線形ソルバー種別の表示
+   * @param [in] fp ファイルポインタ
+   * @param [in] IC ItrCtl
+   */
+  void printLS(FILE* fp, const ItrCtl* IC);
   
   
   /** 
@@ -907,11 +914,16 @@ protected:
    * @param [in] fp  ファイルポインタ
    * @param [in] mat MediumListクラス
    */
-  void printParaConditions(FILE* fp, MediumList* mat);
+  void printParaConditions(FILE* fp, const MediumList* mat);
   
   
-  void printSteerConditions  (FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF);
-  void setDimParameters      (void);
+  /** 
+   * @brief 制御パラメータSTEERの表示
+   * @param [in] IC ItrCtl
+   * @param [in] DT DTcntl
+   * @param [in] RF ReferenceFrame
+   */
+  void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
 
   
 public:
@@ -975,6 +987,10 @@ public:
   void printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_org, const REAL_TYPE* G_reg, const REAL_TYPE* pch);
   
   
+  /**
+   * @brief 内部BCコンポーネントの数を表示する
+   * @param [in] fp      ファイルポインタ
+   */
   void printNoCompo(FILE* fp);
   
   

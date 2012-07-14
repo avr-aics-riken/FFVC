@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file IP_Rect.C
- * @brief IP_Rect class
+ * @file   IP_Rect.C
+ * @brief  IP_Rect class
  * @author kero
  */
 
