@@ -25,9 +25,8 @@
 class BoundaryOuter {
 private:
   int BCclass;       ///< 境界条件の種類
-  int subType;       ///< サブタイプ（汎用）
-                     /// outflow >> 流出対流速度の評価モード（average, minmax）
-                     /// wall >> (fixed, slide)
+  int wallType;      ///< wall >> (fixed, slide)
+  int outType;       /// outflow >> 流出対流速度の評価モード（average, minmax）
   int drv_dir;       ///< ドライバーの方向
   int drv_lid;       ///< ドライバフェイスIDの位置
   int gc_medium;     ///< ガイドセルの媒質インデクス
@@ -77,8 +76,9 @@ public:
   /** コンストラクタ */
   BoundaryOuter() 
   {
-    BCclass = drv_dir = HTref = subType = 0;
+    BCclass = drv_dir = HTref = wallType = 0;
     drv_lid = 0;
+    outType = 0;
     mon_ref = pType = v_profile = hType = 0;
     HTmode = gc_medium = Prdc_mode = Face_mode = 0;
     p = var1 = var2 = 0.0;
@@ -140,7 +140,7 @@ public:
   
   int get_ofv() const
   { 
-    return subType; 
+    return outType; 
   }
   
   int get_PrdcMode() const
@@ -153,9 +153,9 @@ public:
     return pType; 
   }
   
-  int get_Type() const 
+  int get_wallType() const 
   { 
-    return subType; 
+    return wallType; 
   }
   
   int get_V_Profile() const 
@@ -207,7 +207,15 @@ public:
   void set_Alias      (std::string key);
   void set_Class      (const int key);
   void set_CoefHT     (REAL_TYPE val);
-  void set_DomainV    (REAL_TYPE* vv, int face, bool mode=false);
+  
+  /**
+   * @brief モニタ値を保持する
+   * @param [in] vv   指定速度ベクトル
+   * @param [in] face 面番号
+   * @param [in] mode true-outflow, false-others(default)
+   */
+  void set_DomainV(const REAL_TYPE* vv, const int face, bool mode=false);
+  
   void set_DriverDir  (int key);
   void set_DriverIndex(int key);
   void set_FaceMode   (int key);
@@ -222,7 +230,7 @@ public:
   void set_PrdcMode   (int key);
   void set_pType      (int key);
   void set_Temp       (REAL_TYPE val);
-  void set_Type       (const int key);
+  void set_wallType   (const int key);
   void set_V_Profile  (const int key);
   void set_ValidCell  (const int val);
   

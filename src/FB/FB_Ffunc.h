@@ -66,7 +66,7 @@ extern "C" {
                            int* sz,
                            int* g);
   
-  void fb_delta_s_        (REAL_TYPE* d,
+  void fb_delta_s_        (double* d,
                            int* sz,
                            int* g,
                            REAL_TYPE* sn,
@@ -74,7 +74,7 @@ extern "C" {
                            int* bx,
                            double* flop);
   
-  void fb_delta_v_        (REAL_TYPE* d,
+  void fb_delta_v_        (double* d,
                            int* sz,
                            int* g,
                            REAL_TYPE* vn,

@@ -922,9 +922,9 @@ void FFV::Usage()
 
 // 空間平均操作と変動量の計算を行う
 // スカラ値は算術平均，ベクトル値は自乗和
-void FFV::Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, double& flop)
+void FFV::Variation_Space(double* avr, double* rms, double& flop)
 {
-  REAL_TYPE m_var[2];
+  double m_var[2];
   
   // 速度
   fb_delta_v_(m_var, size, &guide, d_v, d_v0, d_bcd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること

@@ -208,7 +208,7 @@ public:
    * @param [in] IC  ItrCtlクラスのポインタ
    * @param [in] C   Controlクラスへのポインタ
    */
-  void printHistory(FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms, const ItrCtl* IC, const Control* C);
+  void printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C);
   
   
   /**

@@ -810,7 +810,7 @@ private:
    * @param [out]    rms  変動値
    * @param [in/out] flop 浮動小数演算数
    */
-  void Variation_Space(REAL_TYPE* avr, REAL_TYPE* rms, double& flop);
+  void Variation_Space(double* avr, double* rms, double& flop);
   
   
   /**

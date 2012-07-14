@@ -1403,11 +1403,11 @@ void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
   }
   
   if ( !strcasecmp("fixed", str.c_str()) ) {
-	  BaseBc[n].set_Type(BoundaryOuter::fixed);
+	  BaseBc[n].set_wallType(BoundaryOuter::fixed);
     BaseBc[n].set_V_Profile( CompoList::vel_zero );
   }
   else if ( !strcasecmp("slide", str.c_str()) ) {
-	  BaseBc[n].set_Type(BoundaryOuter::slide);
+	  BaseBc[n].set_wallType(BoundaryOuter::slide);
     BaseBc[n].set_V_Profile( get_Vel_profile(label_base) );
   }
   else {

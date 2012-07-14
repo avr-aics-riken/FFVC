@@ -982,7 +982,7 @@
   end subroutine fb_shift_refv_out
   
 !> ********************************************************************
-!! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
+!! @brief 有効セルに対する，1タイムステップ進行時のベクトルの絶対値の変化量の和と平均値
 !! @param d 戻り値（変化量の2乗和と平均値）
 !! @param sz 配列長
 !! @param g ガイドセル長
@@ -996,18 +996,18 @@
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  actv
-  real                                                      ::  u, v, w, av, rm, x, y, z
-  double precision                                          ::  flop
+  double precision                                          ::  u, v, w, x, y, z, actv
+  double precision                                          ::  flop, av, rm
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vn, vo
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-  real, dimension(2)                                        ::  d
+  double precision, dimension(2)                            ::  d
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*18.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*58.0d0
+  ! sqrt float->10, double->20
 
   av = 0.0
   rm = 0.0
@@ -1025,15 +1025,15 @@
 
     actv = real(ibits(bx(i,j,k), State, 1))
     
-    u = vn(1,i,j,k)
-    v = vn(2,i,j,k)
-    w = vn(3,i,j,k)
-    av = av + (u*u + v*v + w*w)*actv
+    u = dble(vn(1,i,j,k))
+    v = dble(vn(2,i,j,k))
+    w = dble(vn(3,i,j,k))
+    av = av + sqrt(u*u + v*v + w*w)*actv
     
-    x = u - vo(1,i,j,k)
-    y = v - vo(2,i,j,k)
-    z = w - vo(3,i,j,k)
-    rm = rm + (x*x + y*y + z*z)*actv
+    x = u - dble(vo(1,i,j,k))
+    y = v - dble(vo(2,i,j,k))
+    z = w - dble(vo(3,i,j,k))
+    rm = rm + sqrt(x*x + y*y + z*z)*actv
 
   end do
   end do
@@ -1062,12 +1062,10 @@
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  actv
-  real                                                      ::  a, s, av, rm
-  double precision                                          ::  flop
+  double precision                                          ::  a, s, av, rm, actv, flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  sn, so
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-  real, dimension(2)                                        ::  d
+  double precision, dimension(2)                            ::  d
 
   ix = sz(1)
   jx = sz(2)
@@ -1089,12 +1087,12 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    actv = real(ibits(bx(i,j,k), State,  1))
+    actv = dble(ibits(bx(i,j,k), State,  1))
     
-    s = sn(i,j,k)
+    s = dble(sn(i,j,k))
     av = av + s*actv
     
-    a = (s - so(i,j,k))*actv
+    a = ( s - dble(so(i,j,k)) )*actv
     rm = rm + a*a
   end do
   end do

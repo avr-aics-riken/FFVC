@@ -477,7 +477,8 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
     typ = obc[face].get_Class();
     
     // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( nID[face] >= 0 ) {
+    if( nID[face] >= 0 ) 
+    {
       vec[0] = 0.0;   // sum
       vec[1] = 1.0e6; // min
       vec[2] =-1.0e6; // max
@@ -485,7 +486,8 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
       continue;
     }
     
-    switch (typ) {
+    switch (typ) 
+    {
       case OBC_OUTFLOW:
         div_obc_oflow_vec_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &flop); // vecは流用
         obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
@@ -506,6 +508,7 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
         
       case OBC_FAR_FIELD:
       case OBC_TRC_FREE:
+        vec[0] = vec[1] = vec[2] = 0.0;
         // nothing
         break;
     }

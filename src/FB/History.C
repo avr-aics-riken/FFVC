@@ -107,7 +107,7 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C)
 
 
 // 標準履歴の出力
-void History::printHistory(FILE* fp, const REAL_TYPE* avr, const REAL_TYPE* rms, const ItrCtl* IC, const Control* C)
+void History::printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C)
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  ///< 粘性項のCrank-Nicolson反復
@@ -291,7 +291,7 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, "         Q:%s", FBUtility::getDirection(i).c_str());
   
-  fprintf(fp, " >>      Balance");
+  fprintf(fp, " >>      Balance : ");
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, "         V:%s", FBUtility::getDirection(i).c_str());
   
@@ -316,7 +316,7 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
   fprintf(fp, "%8d %14.6e", step, printTime());
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printMF(C->Q_Dface[i]) );
-  fprintf(fp, " >> %12.4e", printMF(balance) );
+  fprintf(fp, " >> %12.4e : ", printMF(balance) );
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printVel(C->V_Dface[i]) );
   
