@@ -288,21 +288,17 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       // 2色のマルチカラーのセットアップ
       TIMING_start(tm_poi_setup);
       
-      int sidx[3], ip;
+      int ip;
       MPI_Request req[12]; /// 送信ID
       
       for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
       
       if ( numProc > 1 ) 
       {
-        sidx[0] = head[0];
-        sidx[1] = head[1];
-        sidx[2] = head[2];
-        ip = (sidx[0]+sidx[1]+sidx[2]) % 2;
+        ip = (head[0]+head[1]+head[2]) % 2;
       } 
       else 
       {
-        sidx[0] = sidx[1] = sidx[2] = 1;
         ip = 0;
       }
       TIMING_stop(tm_poi_setup, 0.0);

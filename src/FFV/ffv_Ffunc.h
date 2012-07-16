@@ -117,13 +117,13 @@
 extern "C" {
   //***********************************************************************************************
   // ffv_forcing.f90
-  void hex_dir_           (REAL_TYPE* v, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, int* odr, REAL_TYPE* v00, REAL_TYPE* nv, double* flop);
-  void force_keep_vec_    (REAL_TYPE* wk, int* c_sz, int* st, int* ed, REAL_TYPE* v, int* sz, int* g);
-  void hex_psrc_          (REAL_TYPE* src, int* sz, int* g, int* st, int* ed, int* bd, float* vf, REAL_TYPE* wk, int* c_sz, int* odr, 
+  void hex_dir_(REAL_TYPE* v, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, int* odr, REAL_TYPE* v00, REAL_TYPE* nv, double* flop);
+  void force_keep_vec_(REAL_TYPE* wk, int* c_sz, int* st, int* ed, REAL_TYPE* v, int* sz, int* g);
+  void hex_psrc_(REAL_TYPE* src, int* sz, int* g, int* st, int* ed, int* bd, float* vf, REAL_TYPE* wk, int* c_sz, int* odr, 
                            REAL_TYPE* v00, REAL_TYPE* dh, REAL_TYPE* nv, REAL_TYPE* c, double* flop);
-  void hex_force_pvec_    (REAL_TYPE* vc,  int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* v, int* odr, 
+  void hex_force_pvec_ (REAL_TYPE* vc,  int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* v, int* odr, 
                            REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* nv, REAL_TYPE* c, double* flop);
-  void hex_force_vec_     (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* wk, int* c_sz, int* odr, 
+  void hex_force_vec_(REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, REAL_TYPE* wk, int* c_sz, int* odr, 
                            REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* nv, REAL_TYPE* c, REAL_TYPE* am, double* flop);
   
   
@@ -145,10 +145,8 @@ extern "C" {
                          int* bp, double* flop);
   void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
                          REAL_TYPE* s1, int* bp, double* flop);
-  void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
-                         REAL_TYPE* cf_z, int* key, int* nID);
-  void sma_comm_wait_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
-                         REAL_TYPE* cf_z, int* key);
+  void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key, int* nID);
+  void sma_comm_wait_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key);
   
   
   //***********************************************************************************************
