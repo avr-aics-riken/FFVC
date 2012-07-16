@@ -308,9 +308,9 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 /**
  * @brief 非同期通信のリクエストIDアクセス
  * @param [in] _DIR 送受信方向
- * @param [in] _OP  オペレーション(send/recv)
+ * @param [in] _KEY オペレーション(send/recv)
  */
-#define _ASYNC_RQ(_DIR,_OP) (_DIR*2+_OP)
+#define _KEY_RQ(_DIR,_KEY) (_DIR*2+_KEY)
 
 
 /**
@@ -368,18 +368,18 @@ enum Synch_Mode {
   comm_async
 };
 
-/// send/recv Operation
-enum CommOperation {
-  async_send=0,
-  async_recv
+/// send/recv Key
+enum CommKeys {
+  key_send=0,
+  key_recv
 };
 
-/// 非同期バッファの送受信方向
+/// 非同期バッファの面と種類
 enum Async_Buffer_Direction {
-  send_to_minus=0,
-  send_to_plus,
-  recv_from_plus,
-  recv_from_minus
+  face_m_send=0,
+  face_p_send,
+  face_p_recv,
+  face_m_recv
 };
 
 #endif // _FB_DEFINE_H_

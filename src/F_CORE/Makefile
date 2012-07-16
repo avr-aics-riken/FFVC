@@ -46,7 +46,7 @@ $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
 
 .f90.o:
-	$(F90) $(F90FLAGS) -I. -I../FB -o $@ -c $<
+	$(F90) $(F90FLAGS) -I. -I../FB -I/usr/local/cpm_float/include -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS) $(TARGET)

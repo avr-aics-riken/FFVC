@@ -315,9 +315,9 @@ void FFV::allocate_SOR2SMA_buffer(double &total)
     cf_sz[1] = (kx+1) * (ix+1) / 2; // +1はマージン
     cf_sz[2] = (ix+1) * (jx+1) / 2;
     
-    unsigned n1 = cf_sz[0]*4;
-    unsigned n2 = cf_sz[1]*4;
-    unsigned n3 = cf_sz[2]*4;
+    size_t n1 = cf_sz[0]*4;
+    size_t n2 = cf_sz[1]*4;
+    size_t n3 = cf_sz[2]*4;
     
     if( (cf_x = new REAL_TYPE[n1]) == NULL ) Exit(0);
     if( (cf_y = new REAL_TYPE[n2]) == NULL ) Exit(0);

@@ -37,8 +37,7 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
   int cy = cf_sz[1];
   int cz = cf_sz[2];
   
-  int a = col + ip;
-  int ic = a - int(a/2)*2; // スタートインデクス
+  int ic = (col + ip) % 2; // スタートインデクス
   
 
   // X_MINUS
@@ -49,22 +48,21 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int i = 1;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + i;
-      int js= b - int(b/2)*2;
+      int js= (k + ic + i) % 2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        cf_x[_PACK(cx, send_to_minus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_x[_PACK(cx, face_m_send, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(&cf_x[_PACK(cx, send_to_minus, 0)], cx, nID[X_MINUS], &key[_ASYNC_RQ(X_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_x[_PACK(cx, face_m_send, 0)], cx, nID[X_MINUS], &key[_KEY_RQ(X_MINUS, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
     
   // recieve
   if ( nID[X_PLUS]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_x[_PACK(cx, recv_from_plus, 0)], cx, nID[X_PLUS], &key[_ASYNC_RQ(X_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_x[_PACK(cx, face_p_recv, 0)], cx, nID[X_PLUS], &key[_KEY_RQ(X_PLUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
     
     
@@ -76,22 +74,21 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int i = ix;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + i;
-      int js= b - int(b/2)*2;
+      int js= (k + ic + i) % 2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        cf_x[_PACK(cx, send_to_plus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_x[_PACK(cx, face_p_send, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(&cf_x[_PACK(cx, send_to_plus, 0)], cx, nID[X_PLUS], &key[_ASYNC_RQ(X_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_x[_PACK(cx, face_p_send, 0)], cx, nID[X_PLUS], &key[_KEY_RQ(X_PLUS, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recieve
   if ( nID[X_MINUS]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_x[_PACK(cx, recv_from_minus, 0)], cx, nID[X_MINUS], &key[_ASYNC_RQ(X_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_x[_PACK(cx, face_m_recv, 0)], cx, nID[X_MINUS], &key[_KEY_RQ(X_MINUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -103,22 +100,21 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int j = 1;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + j;
-      int is= b - int(b/2)*2;
+      int is= (k + ic + j) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        cf_y[_PACK(cy, send_to_minus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_y[_PACK(cy, face_m_send, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(&cf_y[_PACK(cy, send_to_minus, 0)], cy, nID[Y_MINUS], &key[_ASYNC_RQ(Y_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_y[_PACK(cy, face_m_send, 0)], cy, nID[Y_MINUS], &key[_KEY_RQ(Y_MINUS, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Y_PLUS]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_y[_PACK(cy, recv_from_plus, 0)], cy, nID[Y_PLUS], &key[_ASYNC_RQ(Y_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_y[_PACK(cy, face_p_recv, 0)], cy, nID[Y_PLUS], &key[_KEY_RQ(Y_PLUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -130,22 +126,21 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int j = jx;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + j;
-      int is= b - int(b/2)*2;
+      int is= (k + ic + j) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        cf_y[_PACK(cy, send_to_plus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_y[_PACK(cy, face_p_send, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(&cf_y[_PACK(cy, send_to_plus, 0)], cy, nID[Y_PLUS], &key[_ASYNC_RQ(Y_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_y[_PACK(cy, face_p_send, 0)], cy, nID[Y_PLUS], &key[_KEY_RQ(Y_PLUS, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Y_MINUS]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_y[_PACK(cy, recv_from_minus, 0)], cy, nID[Y_MINUS], &key[_ASYNC_RQ(Y_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_y[_PACK(cy, face_m_recv, 0)], cy, nID[Y_MINUS], &key[_KEY_RQ(Y_MINUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -157,22 +152,21 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int k = 1;
     
     for (int j=1; j<=jx; j++) {
-      int b = j + ic + k;
-      int is= b - int(b/2)*2;
+      int is= (j + ic + k) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        cf_z[_PACK(cz, send_to_minus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_z[_PACK(cz, face_m_send, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(&cf_z[_PACK(cz, send_to_minus, 0)], cz, nID[Z_MINUS], &key[_ASYNC_RQ(Z_MINUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_z[_PACK(cz, face_m_send, 0)], cz, nID[Z_MINUS], &key[_KEY_RQ(Z_MINUS, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Z_PLUS]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_z[_PACK(cz, recv_from_plus, 0)], cz, nID[Z_PLUS], &key[_ASYNC_RQ(Z_MINUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_z[_PACK(cz, face_p_recv, 0)], cz, nID[Z_PLUS], &key[_KEY_RQ(Z_PLUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -184,22 +178,21 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int k = kx;
     
     for (int j=1; j<=jx; j++) {
-      int b = j + ic + k;
-      int is= b - int(b/2)*2;
+      int is= (j + ic + k) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        cf_z[_PACK(cz, send_to_plus, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
+        cf_z[_PACK(cz, face_p_send, c)] = d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ];
         c++;
       }
     }
     
-    if ( paraMngr->Isend(&cf_z[_PACK(cz, send_to_plus, 0)], cz, nID[Z_PLUS], &key[_ASYNC_RQ(Z_PLUS, async_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_z[_PACK(cz, face_p_send, 0)], cz, nID[Z_PLUS], &key[_KEY_RQ(Z_PLUS, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
   if ( nID[Z_MINUS]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_z[_PACK(cz, recv_from_minus, 0)], cz, nID[Z_MINUS], &key[_ASYNC_RQ(Z_PLUS, async_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_z[_PACK(cz, face_m_recv, 0)], cz, nID[Z_MINUS], &key[_KEY_RQ(Z_MINUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
 }
@@ -273,7 +266,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
           for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
           
           if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-          if ( paraMngr->wait_BndCommS3D(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+          if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
         }
         TIMING_stop(tm_poi_comm, comm_size);
       }
@@ -353,8 +346,13 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
           }
           else 
           {
-            comm_SOR2SMA(color, ip, req);
-            wait_SOR2SMA(color, ip, req);
+            //if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
+            //if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
+            //comm_SOR2SMA(color, ip, req);
+            //wait_SOR2SMA(color, ip, req);
+            int ireq[12];
+            sma_comm_     (d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
+            sma_comm_wait_(d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
           }
           TIMING_stop(tm_poi_comm, comm_size*0.5);
         }
@@ -396,15 +394,13 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   int cy = cf_sz[1];
   int cz = cf_sz[2];
   
-  int a = col + ip;
-  int ic = a - int(a/2)*2; // スタートインデクス
+  int ic = (col + ip) % 2; // スタートインデクス
   
   int rq;
   
-  // Wait for recv ------------------------
   
-  // from X_MINUS
-  rq = _ASYNC_RQ(X_MINUS, async_recv);
+  // X_PLUS面の受信バッファを展開
+  rq = _KEY_RQ(X_PLUS, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -414,18 +410,17 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int i = ix+1;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + i;
-      int js= b - int(b/2)*2;
+      int js= (k + ic + i) % 2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, recv_from_plus, c)];
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, face_p_recv, c)];
         c++;
       }
     }
   }
   
-  // from X_PLUS
-  rq = _ASYNC_RQ(X_PLUS, async_recv);
+  // X_MINUS面の受信バッファを展開
+  rq = _KEY_RQ(X_MINUS, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -435,18 +430,17 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int i = 0;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + i;
-      int js= b - int(b/2)*2;
+      int js= (k + ic + i) % 2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, recv_from_minus, c)];
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, face_m_recv, c)];
         c++;
       }
     }
   }
           
-  // from Y_MINUS
-  rq = _ASYNC_RQ(Y_MINUS, async_recv);
+  // Y_PLUS面の受信バッファを展開
+  rq = _KEY_RQ(Y_PLUS, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -456,18 +450,17 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int j = jx+1;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + j;
-      int is= b - int(b/2)*2;
+      int is= (k + ic + j) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, recv_from_plus, c)];
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, face_p_recv, c)];
         c++;
       }
     }
   }
   
-  // from Y_PLUS
-  rq = _ASYNC_RQ(Y_PLUS, async_recv);
+  // Y_MINUS面の受信バッファを展開
+  rq = _KEY_RQ(Y_MINUS, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -477,18 +470,17 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int j = 0;
     
     for (int k=1; k<=kx; k++) {
-      int b = k + ic + j;
-      int is= b - int(b/2)*2;
+      int is= (k + ic + j) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, recv_from_minus, c)];
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, face_m_recv, c)];
         c++;
       }
     }
   }
   
-  // from Z_MINUS
-  rq = _ASYNC_RQ(Z_MINUS, async_recv);
+  // Z_PLUS面の受信バッファを展開
+  rq = _KEY_RQ(Z_PLUS, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -498,18 +490,17 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int k = kx+1;
     
     for (int j=1; j<=jx; j++) {
-      int b = j + ic + k;
-      int is= b - int(b/2)*2;
+      int is= (j + ic + k) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, recv_from_plus, c)];
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, face_p_recv, c)];
         c++;
       }
     }
   }
   
-  // from Z_PLUS
-  rq = _ASYNC_RQ(Z_PLUS, async_recv);
+  // Z_MINUS面の受信バッファを展開
+  rq = _KEY_RQ(Z_MINUS, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -519,11 +510,10 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
     int k = 0;
     
     for (int j=1; j<=jx; j++) {
-      int b = j + ic + k;
-      int is= b - int(b/2)*2;
+      int is= (j + ic + k) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, recv_from_minus, c)];
+        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, face_m_recv, c)];
         c++;
       }
     }
@@ -533,7 +523,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   // Wait for send ------------------------
   
   // X_MINUS
-  rq = _ASYNC_RQ(X_MINUS, async_send);
+  rq = _KEY_RQ(X_MINUS, key_send);
   
   if (key[rq]>=0 )
   {
@@ -541,7 +531,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
   
   // X_PLUS
-  rq = _ASYNC_RQ(X_PLUS, async_send);
+  rq = _KEY_RQ(X_PLUS, key_send);
   
   if (key[rq]>=0 )
   {
@@ -549,7 +539,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
   
   // Y_MINUS
-  rq = _ASYNC_RQ(Y_MINUS, async_send);
+  rq = _KEY_RQ(Y_MINUS, key_send);
   
   if (key[rq]>=0 )
   {
@@ -557,7 +547,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
   
   // Y_PLUS
-  rq = _ASYNC_RQ(Y_PLUS, async_send);
+  rq = _KEY_RQ(Y_PLUS, key_send);
   
   if (key[rq]>=0 )
   {
@@ -565,7 +555,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
   
   // Z_MINUS
-  rq = _ASYNC_RQ(Z_MINUS, async_send);
+  rq = _KEY_RQ(Z_MINUS, key_send);
   
   if (key[rq]>=0 )
   {
@@ -573,7 +563,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
   
   // Z_PLUS
-  rq = _ASYNC_RQ(Z_PLUS, async_send);
+  rq = _KEY_RQ(Z_PLUS, key_send);
   
   if (key[rq]>=0 )
   {

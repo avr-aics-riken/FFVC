@@ -146,7 +146,7 @@ extern "C" {
   void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
                          REAL_TYPE* s1, int* bp, double* flop);
   void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
-                         REAL_TYPE* cf_z, int* key, int* para_key);
+                         REAL_TYPE* cf_z, int* key, int* nID);
   void sma_comm_wait_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, 
                          REAL_TYPE* cf_z, int* key);
   
