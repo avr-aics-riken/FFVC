@@ -306,8 +306,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       
       // 各カラー毎の間に同期
       r = 0.0;          // 色間で積算する
-      for (int color=0; color<2; color++) 
-      {
+      for (int color=0; color<2; color++) {
         TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
         
         TIMING_start(tm_poi_SOR2SMA);

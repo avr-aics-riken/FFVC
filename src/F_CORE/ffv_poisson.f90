@@ -257,12 +257,12 @@
   iret = 0
   ierr = 0
 
-do i=X_MINUS,Z_PLUS ! 0:5
+  do i=X_MINUS,Z_PLUS ! 0:5
     key(i,1) = -1 !send
     key(i,2) = -1 !recv
   end do
 
-  call cpm_IsParallel(iret, ierr)
+!  call cpm_IsParallel(iret, ierr)
 
 ! X_MINUS
 ! send
@@ -276,16 +276,16 @@ do i=X_MINUS,Z_PLUS ! 0:5
     end do
     end do
 
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Isend(cf_x(1,1), cf_sz(1), CPM_REAL, nID(X_MINUS), 0, key(X_MINUS,1), ierr)
     endif
-  endif
+!  endif
 
 ! recv
   if( nID(X_PLUS).ge.0 ) then
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Irecv(cf_x(1,3), cf_sz(1), CPM_REAL, nID(X_PLUS), 0, key(X_MINUS,2), ierr)
-    end if
+!    end if
   endif
 
 ! X_PLUS
@@ -300,16 +300,16 @@ do i=X_MINUS,Z_PLUS ! 0:5
     end do
     end do
 
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Isend(cf_x(1,2), cf_sz(1), CPM_REAL, nID(X_PLUS), 0, key(X_PLUS,1), ierr)
-    end if
+!    end if
   endif
 
 ! recv
   if( nID(X_MINUS).ge.0 ) then
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Irecv(cf_x(1,4), cf_sz(1), CPM_REAL, nID(X_MINUS), 0, key(X_PLUS,2), ierr)
-    endif
+!    endif
   endif
 
 ! Y_MINUS
@@ -324,16 +324,16 @@ do i=X_MINUS,Z_PLUS ! 0:5
     end do
     end do
 
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Isend(cf_y(1,1), cf_sz(2), CPM_REAL, nID(Y_MINUS), 0, key(Y_MINUS,1), ierr)
-    endif
+!    endif
   endif
 
 ! recv
   if( nID(Y_PLUS).ge.0 ) then
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Irecv(cf_y(1,3), cf_sz(2), CPM_REAL, nID(Y_PLUS), 0, key(Y_MINUS,2), ierr)
-    endif
+!    endif
   endif
 
 ! Y_PLUS
@@ -348,16 +348,16 @@ do i=X_MINUS,Z_PLUS ! 0:5
     end do
     end do
 
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Isend(cf_y(1,2), cf_sz(2), CPM_REAL, nID(Y_PLUS), 0, key(Y_PLUS,1), ierr)
-    endif
+!    endif
   endif
 
 ! recv
   if( nID(Y_MINUS).ge.0 ) then
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Irecv(cf_y(1,4), cf_sz(2), CPM_REAL, nID(Y_MINUS), 0, key(Y_PLUS,2), ierr)
-    endif
+!    endif
   endif
 
 ! Z_MINUS
@@ -372,16 +372,16 @@ do i=X_MINUS,Z_PLUS ! 0:5
     end do
     end do
 
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Isend(cf_z(1,1), cf_sz(3), CPM_REAL, nID(Z_MINUS), 0, key(Z_MINUS,1), ierr)
-    endif
+!    endif
   endif
 
 ! recv
   if( nID(Z_PLUS).ge.0 ) then
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Irecv(cf_z(1,3), cf_sz(3), CPM_REAL, nID(Z_PLUS), 0, key(Z_MINUS,2), ierr)
-    endif
+!    endif
   endif
 
 ! Z_PLUS
@@ -396,16 +396,16 @@ do i=X_MINUS,Z_PLUS ! 0:5
     end do
     end do
 
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Isend(cf_z(1,2), cf_sz(3), CPM_REAL, nID(Z_PLUS), 0, key(Z_PLUS,1), ierr)
-    endif
+!    endif
   endif
 
 ! recv
   if( nID(Z_MINUS).ge.0 ) then
-    if ( iret == 1 ) then
+!    if ( iret == 1 ) then
       call cpm_Irecv(cf_z(1,4), cf_sz(3), CPM_REAL, nID(Z_MINUS), 0, key(Z_PLUS,2), ierr)
-    endif
+!    endif
   endif
 
 end subroutine sma_comm
