@@ -216,7 +216,9 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   double comm_size;              /// 通信面1面あたりの通信量
   REAL_TYPE clear_value=0.0;	   /// 初期化の値
   REAL_TYPE omg = IC->get_omg(); /// 加速係数
-	REAL_TYPE r = 0.0;             /// 残差
+	REAL_TYPE res = 0.0;           /// 残差
+  int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
+                                 /// ip=0 > R, ip=1 > B
   
   comm_size = count_comm_size(size, guide);
   
@@ -230,14 +232,13 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   // 反復処理
   switch (IC->get_LS()) 
   {
-      
     case SOR:
       TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
       
       // 反復処理
       TIMING_start(tm_poi_PSOR);
       flop_count = 0.0;
-      psor_(d_p, size, &guide, &omg, &r, d_ws, d_sq, d_bcp, &flop_count);
+      psor_(d_p, size, &guide, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
       //r = PSOR(p, d_ws, d_sq, bcp, IC, flop_count); //実装速度比較
       TIMING_stop(tm_poi_PSOR, flop_count);
       
@@ -275,8 +276,8 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_poi_res_comm);
-        REAL_TYPE tmp = r;
-        if ( paraMngr->Allreduce(&tmp, &r, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        REAL_TYPE tmp = res;
+        if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
       
@@ -285,17 +286,18 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       
   
     case SOR2SMA:
-      // 2色のマルチカラーのセットアップ
+      // 2色のマルチカラー(Red&Black)のセットアップ
       TIMING_start(tm_poi_setup);
       
-      int ip;
       MPI_Request req[12]; /// 送信ID
       
       for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
       
+      // ip = 0 基点(1,1,1)がRからスタート
+      //    = 1 基点(1,1,1)がBからスタート
       if ( numProc > 1 ) 
       {
-        ip = (head[0]+head[1]+head[2]) % 2;
+        ip = (head[0]+head[1]+head[2]+1) % 2;
       } 
       else 
       {
@@ -304,14 +306,14 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       TIMING_stop(tm_poi_setup, 0.0);
       
       
-      // 各カラー毎の間に同期
-      r = 0.0;          // 色間で積算する
+      // 各カラー毎の間に同期, 残差は色間で積算する
+      // R - color=0 / B - color=1
       for (int color=0; color<2; color++) {
         TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
         
         TIMING_start(tm_poi_SOR2SMA);
         flop_count = 0.0; // 色間で積算しない
-        psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &r, d_ws, d_sq, d_bcp, &flop_count);
+        psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
         //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
         TIMING_stop(tm_poi_SOR2SMA, flop_count);
         
@@ -326,14 +328,9 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
         
         TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
         
-        // 残差の集約と同期処理
+        // 同期処理
         if ( numProc > 1 ) 
         {
-          TIMING_start(tm_poi_res_comm);
-          REAL_TYPE tmp = r;
-          if ( paraMngr->Allreduce(&tmp, &r, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
-          
           TIMING_start(tm_poi_comm);
           if (IC->get_SyncMode() == comm_sync ) 
           {
@@ -354,6 +351,16 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
         
         TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
       }
+      
+      // 残差の集約
+      if ( numProc > 1 ) 
+      {
+        TIMING_start(tm_poi_res_comm);
+        REAL_TYPE tmp = res;
+        if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
+      }
+      
       break;
       
     default:
@@ -366,7 +373,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   /// @note Control::p_res_l2_r/aのときのみ，それ以外はNorm_Poissonで計算
   if ( (IC->get_normType() == ItrCtl::p_res_l2_r) || (IC->get_normType() == ItrCtl::p_res_l2_a) ) 
   {
-    REAL_TYPE res_a = sqrt( r /(REAL_TYPE)G_Acell ); // 残差のRMS
+    REAL_TYPE res_a = sqrt( res /(REAL_TYPE)G_Acell ); // 残差のRMS
     REAL_TYPE bb  = sqrt( b2/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
     REAL_TYPE res_r = ( bb == 0.0 ) ? res_a : res_a/bb;
     REAL_TYPE nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;

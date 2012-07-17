@@ -115,7 +115,8 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   
   fprintf(fp, "%8d %14.6e %11.4e", step, printTime(), printVmax() );
 
-  if ( C->KindOfSolver != SOLID_CONDUCTION ) {
+  if ( C->KindOfSolver != SOLID_CONDUCTION ) 
+  {
     switch (C->AlgorithmF) {
       case Control::Flow_FS_EE_EE:
       case Control::Flow_FS_AB2:
@@ -124,12 +125,15 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
         break;
     }
     
-    if (C->AlgorithmF == Control::Flow_FS_AB_CN) {
+    if (C->AlgorithmF == Control::Flow_FS_AB_CN) 
+    {
       fprintf(fp, " %5d %11.4e", ICv->LoopCount+1, ICv->get_normValue());
     }
     
-    if ( C->isHeatProblem() ) {
-      switch (C->AlgorithmH) {				
+    if ( C->isHeatProblem() ) 
+    {
+      switch (C->AlgorithmH) 
+      {				
         case Control::Heat_EE_EI:
           fprintf(fp, " %5d %11.4e", ICt->LoopCount+1, ICt->get_normValue());
           break;
@@ -139,8 +143,10 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
     fprintf(fp, " %10.3e %10.3e %10.3e %10.3e", rms[var_Pressure], avr[var_Pressure], rms[var_Velocity], avr[var_Velocity]);
     if ( C->isHeatProblem() ) fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
   }
-  else {
-    switch (C->AlgorithmH) {				
+  else 
+  {
+    switch (C->AlgorithmH) 
+    {				
       case Control::Heat_EE_EI:
         fprintf(fp, " %5d %11.4e", ICt->LoopCount+1, ICt->get_normValue());
         break;

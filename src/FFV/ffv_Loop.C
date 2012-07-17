@@ -131,6 +131,7 @@ int FFV::Loop(const unsigned step)
   }
   Variation_Space(avr_Var, rms_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
+
   
   if ( numProc > 1 ) 
   {

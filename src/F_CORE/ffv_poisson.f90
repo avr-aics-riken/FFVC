@@ -143,17 +143,17 @@
 
 !> ********************************************************************
 !! @brief 2-colored SOR法 stride memory access
-!! @param[out] p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param ip 開始点インデクス
-!! @param color グループ番号
-!! @param omg 加速係数
-!! @param res 絶対残差と相対残差
-!! @param src0 固定ソース項
-!! @param src1 反復毎に変化するソース項
-!! @param bp BCindex P
-!! @param[out] flop 浮動小数演算数
+!! @param [in/out] p     圧力
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     ip    開始点インデクス
+!! @param [in]     color グループ番号
+!! @param [in]     omg   加速係数
+!! @param [in/out] res   絶対残差と相対残差
+!! @param [in]     src0  固定ソース項
+!! @param [in]     src1  反復毎に変化するソース項
+!! @param [in]     bp    BCindex P
+!! @param [out]    flop  浮動小数演算数
 !<
     subroutine psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
     implicit none
@@ -219,8 +219,8 @@
     return
     end subroutine psor2sma_core
 
-!  ***********************************************************************************
-!>
+
+!> ***********************************************************************************
 !! @brief SOR2SMAの非同期通信処理
 !! @param p 圧力
 !! @param sz 配列長
@@ -257,7 +257,7 @@
   iret = 0
   ierr = 0
 
-  do i=X_MINUS,Z_PLUS ! 0:5
+  do i=X_MINUS,Z_PLUS ! (0:5)
     key(i,1) = -1 !send
     key(i,2) = -1 !recv
   end do
@@ -408,10 +408,10 @@
 !    endif
   endif
 
-end subroutine sma_comm
+  end subroutine sma_comm
 
-!  ******************************************************************************
-!> 
+ 
+!> ******************************************************************************
 !! @brief SOR2の非同期通信処理
 !! @param p 圧力
 !! @param sz 配列長

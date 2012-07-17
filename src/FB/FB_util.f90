@@ -1090,7 +1090,7 @@
     actv = dble(ibits(bx(i,j,k), State,  1))
     
     s = dble(sn(i,j,k))
-    av = av + s*actv
+    av = av + s * actv
     
     a = ( s - dble(so(i,j,k)) )*actv
     rm = rm + a*a
