@@ -12,8 +12,8 @@
 // #################################################################
 
 /**
- @file Control.h
- @brief FlowBase Control class Header
+ @file   Control.h
+ @brief  FlowBase Control class Header
  @author kero
  */
 
@@ -30,6 +30,9 @@
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
 #include "TPControl.h"
+
+#include "PLOT3D_read.h"
+#include "PLOT3D_write.h"
 
 using namespace std;
 
@@ -442,7 +445,28 @@ public:
     int IO_Input;
     int IO_Output;
     int Div_Debug;
+    int IO_Format; //=0 : *.sph , =1 : PLOT3D
   } File_IO_Cntl;
+  
+  /** PLOT3D オプション */
+  typedef struct 
+  {
+    //////int GridKind;    ///=0:single grid, =1:multi grid
+    //////int MoveGrid;    ///=0:not move, =1:move
+    //////int Steady;      ///=0:Steady, =1:Unsteady
+    //////int IBlankFlag;  ///=0:not set IBlank, =1 :set IBlank
+    //////int DimIs;       ///=2:2D, =3:3D
+    //////int Format;      ///
+    string basename;
+    int IS_xyz;
+    int IS_q;
+    int IS_funciton;
+    int IS_function_name;
+    int IS_fvbnd;
+    //Initializeでセット
+    int ngrid; //出力ブロック数
+    int nvar;  //出力項目数
+  } Plot3D_Option;
   
   /** LESパラメータ */
   typedef struct 
@@ -501,11 +525,6 @@ public:
     PDE_EULER
   };
   
-  /** 定常性 */
-  enum Time_Variation {
-    TV_Steady=1,
-    TV_Unsteady
-  };
   
   /** 値域の制御　*/
   enum Range_Cntl 
@@ -586,6 +605,7 @@ public:
     Hybrid
   };
   
+  
   int AlgorithmF;
   int AlgorithmH;
   int BasicEqs;
@@ -647,6 +667,7 @@ public:
   Initial_Value     iv;
   LES_Parameter     LES;
   File_IO_Cntl      FIO;
+  Plot3D_Option     P3Op;
   Hidden_Parameter  Hide;
   Unit_Def          Unit;
   Sampling_Def      Sampling;
@@ -766,6 +787,20 @@ public:
     FIO.IO_Input = 0;
     FIO.IO_Output = 0;
     FIO.Div_Debug = 0;
+    FIO.IO_Format = 0; //=0 : *.sph , =1 : PLOT3D
+    
+    //////P3Op.GridKind = 1;
+    //////P3Op.MoveGrid = 0;
+    //////P3Op.Steady = 1;
+    //////P3Op.IBlankFlag = 1;
+    //////P3Op.DimIs = 3;
+    //////P3Op.Format = 1;
+    //P3Op.basename = 
+    P3Op.IS_xyz = ON;
+    P3Op.IS_q = ON;
+    P3Op.IS_funciton = ON;
+    P3Op.IS_function_name = ON;
+    P3Op.IS_fvbnd = ON;
     
     Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
@@ -838,10 +873,19 @@ protected:
   void get_Derived        ();
   
   /**
-   @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
-   @note インターバルパラメータは，setParameters()で無次元して保持
+   * @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
+   * @note インターバルパラメータは，setParameters()で無次元して保持
    */
   void get_FileIO();
+  
+  
+  /**
+   * @brief PLOT3Dファイル入出力に関するパラメータ
+   * @param [in]  FP3DR    PLOT3D READクラス ポインタ
+   * @param [in]  FP3DW    PLOT3D WRITEクラス ポインタ
+   */
+  void get_PLOT3D(FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
+  
   
   void get_Iteration      (ItrCtl* IC);
   void get_KindOfSolver   ();
@@ -1124,10 +1168,12 @@ public:
   
   /**
    * @brief 制御，計算パラメータ群の取得
-   * @param [in] DT
+   * @param [in] DT     DTctlクラス ポインタ
+   * @param [in] FP3DR  PLOT3D READクラス ポインタ
+   * @param [in] FP3DW  PLOT3D WRITEクラス ポインタ
    * @note 他のパラメータ取得に先んじて処理しておくもの
    */
-  void get_Steer_1(DTcntl* DT);
+  void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
   
 
   /**

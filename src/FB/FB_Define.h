@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 90
+#define FB_VERS 91
 
 #define MODEL_ID_MAX 255
 
@@ -34,11 +34,18 @@
 
 // general
 #define NOFACE      6
-//#define LABEL       64
 #define ON          1
 #define OFF         0
 #define DETAIL      2
 #define FB_FILE_PATH_LENGTH 64
+
+// DIMENSITON
+#define DIMENSION_2D 2
+#define DIMENSION_3D 3
+
+// 定常or非定常解析
+#define FB_STEADY   0
+#define FB_UNSTEADY 1
 
 // IO mode
 #define IO_GATHER     0 // bool => false
@@ -221,6 +228,28 @@
 #define SAMPLING_ALL        1 ///< 全タイプのセルを対象
 #define SAMPLING_FLUID_ONLY 2 ///< 流体セルのみを対象
 #define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
+
+// ファイル形式 ---> C.File_IO_Cntl.IO_Format
+#define FILE_FMT_SPH    0  /// .sphファイル
+#define FILE_FMT_PLOT3D 1  ///　PLOT3D形式
+
+// GRIDの種類
+#define SINGLE_GRID 0
+#define MULTI_GRID  1
+
+// *.xyzファイルの出力を時刻暦にするかどうか
+#define GRID_NOT_MOVE 0
+#define GRID_MOVE     1
+
+// IBLANKフラグのセットの有無
+#define NOT_SET_IBLANK 0
+#define SET_IBLANK     1
+
+// PLOT3D File Format
+#define UNFORMATTED         1
+#define FORMATTED           2
+#define UNFORMATTED_SPECIAL 3
+
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)

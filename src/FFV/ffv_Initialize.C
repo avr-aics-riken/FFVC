@@ -107,7 +107,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 最初のパラメータの取得
-  C.get_Steer_1(&DT);
+  C.get_Steer_1(&DT, &FP3DR, &FP3DW);
 
   
   // 一度、テキストパーサーのDBを破棄
@@ -141,7 +141,9 @@ int FFV::Initialize(int argc, char **argv)
   F.setDomainInfo(paraMngr, procGrp);   F.setNeighborInfo(C.guide);
   BC.setDomainInfo(paraMngr, procGrp);  BC.setNeighborInfo(C.guide);
   Ex->setDomainInfo(paraMngr, procGrp); Ex->setNeighborInfo(C.guide);
-  
+  MO.setDomainInfo(paraMngr, procGrp);    MO.setNeighborInfo(C.guide);
+  FP3DR.setDomainInfo(paraMngr, procGrp); FP3DR.setNeighborInfo(C.guide);
+  FP3DW.setDomainInfo(paraMngr, procGrp); FP3DW.setNeighborInfo(C.guide);
   // ###########################
 
   
@@ -156,6 +158,7 @@ int FFV::Initialize(int argc, char **argv)
   C.importTP(&tpCntl);
   B.importTP(&tpCntl);
   M.importTP(&tpCntl);
+  MO.importTP(&tpCntl);//Monitorクラスは2回目のみ
   
   // パラメータを取得
   C.get_Steer_2(IC, &RF);
@@ -529,23 +532,24 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // Monitor Listの処理 --------------------------------------------
-  //MO.setControlVars(bcd, G_org, G_reg, C.org, C.dx, C.Lbx, size, guide,
-  //                  C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
-  //                  C.Unit.Temp, C.Mode.Precision, C.Unit.Prs);
+  MO.setControlVars(d_bcd,
+                    C.RefVelocity, C.BaseTemp, C.DiffTemp, C.RefDensity, C.RefLength, C.BasePrs,
+                    C.Unit.Temp, C.Mode.Precision, C.Unit.Prs, C.num_process);
   
   
-  // モニタ機能がONの場合に，パラメータを取得し，セットの配列を確保する
-  //if ( C.Sampling.log == ON ) getXML_Monitor(m_solvCfg, &MO);
-  //if ( C.Sampling.log == ON ) getTP_Monitor(m_solvCfg, &MO);//未完成
+  // モニタ機能がONの場合
+  if ( C.Sampling.log == ON )
+  {
+    //パラメータを取得し，セットの配列を確保する
+	  MO.get_Monitor(&C);
+    
+	  //プローブ位置をID=255としてボクセルファイルに書き込む
+	  MO.write_ID(d_mid);
+  }
   
-  
-  // モニタリストが指定されている場合に，プローブ位置をID=255としてボクセルファイルに書き込む
-  //if (C.Sampling.log == ON ) {
-    //MO.write_ID(mid);
-  //}
   
   // 内部境界条件として指定されたモニタ設定を登録
-  //if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
+  if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
   
   
   // MonitorListの場合に，svxファイルを出力する．
@@ -650,25 +654,52 @@ int FFV::Initialize(int argc, char **argv)
   
   
   
-  // サンプリング元となるデータ配列の登録
-  if ( C.Sampling.log == ON ) {
-    if ( C.isHeatProblem() ) {
-      //MO.setDataPtrs(dc_v->GetData(), dc_p->GetData(), dc_t->GetData());
+
+  if ( C.Sampling.log == ON ) 
+  {
+    // サンプリング指定がある場合，モニタ結果出力ファイル群のオープン
+    MO.openFile(C.HistoryMonitorName.c_str());
+    
+    // サンプリング元となるデータ配列の登録
+    if ( C.isHeatProblem() ) 
+    {
+      MO.setDataPtrs(d_v, d_p, d_t);
     }
-    else {
-      //MO.setDataPtrs(dc_v->GetData(), dc_p->GetData());
+    else 
+    {
+      MO.setDataPtrs(d_v, d_p);
     }
   }
   
   
   // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
-	if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) ) FileOutput(flop_task);
+  if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
+  {
+    flop_task = 0.0;
+    if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
+    {
+      OutputPlot3D_post(flop_task);
+    }
+    else if(C.FIO.IO_Format == FILE_FMT_SPH)
+    {
+      FileOutput(flop_task);
+    }
+  }
   
   
   // 粗い格子を用いたリスタート時には出力
-  if ( C.Start == coarse_restart ) FileOutput(flop_task, true);
-  
-  
+  if ( C.Start == coarse_restart )
+  {
+    flop_task = 0.0;
+    if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
+    {
+      OutputPlot3D_post(flop_task, true);
+    }
+    else if (C.FIO.IO_Format == FILE_FMT_SPH)
+    {
+      FileOutput(flop_task, true);
+    }
+  }
   
   
   
@@ -732,6 +763,14 @@ int FFV::Initialize(int argc, char **argv)
     return 0;
 	}
   
+  // 形状データの書き出し
+  if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
+  {
+    setValuePlot3D();
+    if(C.P3Op.IS_xyz == ON) OutputPlot3D_xyz();
+    if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name(); 
+    if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
+  }
   
   TIMING_stop(tm_init_sct);
 
@@ -896,22 +935,23 @@ void FFV::display_Parameters(FILE* fp)
   B.printFaceOBC(fp, G_region, BC.export_OBC(), mat);
 
   
-  /* モニタ情報の表示
-   if ( C.Sampling.log == ON ) {
-   
-   MO.printMonitorInfo(mp, C.HistoryMonitorName, false); // ヘッダのみ
-   
-   FILE *fp_mon=NULL;
-   Hostonly_ {
-   if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
-   stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
-   return -1;
-   }
-   }
-   
-   MO.printMonitorInfo(fp_mon, C.HistoryMonitorName, true);  // 詳細モード
-   Hostonly_ if ( fp_mon ) fclose(fp_mon);
-   }*/
+  // モニタ情報の表示
+  if ( C.Sampling.log == ON ) {
+    
+    MO.printMonitorInfo(stdout, C.HistoryMonitorName.c_str(), false); // ヘッダのみ
+    
+    FILE *fp_mon=NULL;
+    Hostonly_ {
+      if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
+        stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
+        //return -1;
+        Exit(0);
+      }
+    }
+    
+    MO.printMonitorInfo(fp_mon, C.HistoryMonitorName.c_str(), true);  // 詳細モード
+    Hostonly_ if ( fp_mon ) fclose(fp_mon);
+  }
 }
 
 
@@ -1642,30 +1682,35 @@ void FFV::prep_HistoryOutput()
     H->printHistoryTitle(stdout, IC, &C);
     
     // コンポーネント情報
-    if ( C.Mode.Log_Base == ON ) {
+    if ( C.Mode.Log_Base == ON ) 
+    {
       // 基本情報　history.log, history_compo.log, history_domfx.log
-      if ( !(fp_b=fopen(C.HistoryName.c_str(), "w")) ) {
+      if ( !(fp_b=fopen(C.HistoryName.c_str(), "w")) ) 
+      {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryName.c_str());
         Exit(0);
       }
       H->printHistoryTitle(fp_b, IC, &C);
       
       // コンポーネント履歴情報
-      if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) {
+      if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) 
+      {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryCompoName.c_str());
         Exit(0);
       }
       H->printHistoryCompoTitle(fp_c, cmp, &C);
       
       // 流量収支情報　
-      if ( !(fp_d=fopen(C.HistoryDomfxName.c_str(), "w")) ) {
+      if ( !(fp_d=fopen(C.HistoryDomfxName.c_str(), "w")) ) 
+      {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryDomfxName.c_str());
         Exit(0);
       }
       H->printHistoryDomfxTitle(fp_d, &C);
       
       // 力の履歴情報　
-      if ( !(fp_f=fopen(C.HistoryForceName.c_str(), "w")) ) {
+      if ( !(fp_f=fopen(C.HistoryForceName.c_str(), "w")) ) 
+      {
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryForceName.c_str());
         Exit(0);
       }
@@ -1673,16 +1718,20 @@ void FFV::prep_HistoryOutput()
     }
     
     // 反復履歴情報　history_itr.log
-    if ( C.Mode.Log_Itr == ON ) {
-      if ( !(fp_i=fopen(C.HistoryItrName.c_str(), "w")) ) {
+    if ( C.Mode.Log_Itr == ON ) 
+    {
+      if ( !(fp_i=fopen(C.HistoryItrName.c_str(), "w")) ) 
+      {
 				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryItrName.c_str());
         Exit(0);
       }
     }
     
     // 壁面情報　history_wall.log
-    if ( C.Mode.Log_Wall == ON ) {
-      if ( !(fp_w=fopen(C.HistoryWallName.c_str(), "w")) ) {
+    if ( C.Mode.Log_Wall == ON ) 
+    {
+      if ( !(fp_w=fopen(C.HistoryWallName.c_str(), "w")) ) 
+      {
 				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryWallName.c_str());
         Exit(0);
       }
@@ -1691,7 +1740,7 @@ void FFV::prep_HistoryOutput()
   }
   
   // サンプリング指定がある場合，モニタ結果出力ファイル群のオープン
-  //if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName);
+  if ( C.Sampling.log == ON ) MO.openFile(C.HistoryMonitorName.c_str());
 }
 
 

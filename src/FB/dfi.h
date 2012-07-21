@@ -11,8 +11,8 @@
 //
 // #################################################################
 
-//@file DFI.h
-//@brief DFI class Header
+//@file   dfi.h
+//@brief  DFI class Header
 //@author kero
 //@note このクラスは、並列時のみにコールすること。MPI_Initialize(), Finalize()はクラス外で実行。
 //      dfiファイルの書き出しは、マスターランクでのみ行う。
@@ -80,6 +80,9 @@ public:
   bool Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
   
   std::string Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const bool mio=false);
+  
+  // 拡張子自由
+  std::string Generate_FileName_Free(const std::string prefix, const std::string xxx, const unsigned m_step, const int m_id, const bool mio=false);
 
 };
 

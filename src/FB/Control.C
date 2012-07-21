@@ -830,13 +830,220 @@ void Control::get_FileIO()
     
   }
   
+  // File format ---> sph or plot3d
+  label = "/Steer/File_IO/Format";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Format' in 'File_IO'\n");
+    Exit(0);
+  }
+  if     ( !strcasecmp(str.c_str(), "sph") )    FIO.IO_Format = FILE_FMT_SPH;
+  else if( !strcasecmp(str.c_str(), "plot3d") ) FIO.IO_Format = FILE_FMT_PLOT3D;
+  else {
+    stamped_printf("\tInvalid keyword is described for 'Format' in 'File_IO'\n");
+    Exit(0);
+  }
+  
 }
 
 
-/**
- @fn void Control::get_Convection()
- @brief 対流項スキームのパラメータを取得する
- */
+// PLOT3Dファイル入出力に関するパラメータ
+void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)						  
+{
+  string str;
+  string label;
+  
+  // File_plot3d_filename --- option
+  label = "/Steer/plot3d_options/Filename";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+  }
+  else{
+    P3Op.basename = str;
+  }
+  
+  // File_plot3d_grid_kind
+  label = "/Steer/plot3d_options/Grid_kind";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Grid_Kind' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "single_grid") ) FP3DR->setSingleGrid();
+    else if( !strcasecmp(str.c_str(), "multi_grid") )  FP3DR->setMultiGrid();
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Grid_Kind' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // 格子の移動
+  label = "/Steer/plot3d_options/Grid_Mobility";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Grid_Mobility' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "movable") )    FP3DR->setMoveGrid(GRID_MOVE);
+    else if( !strcasecmp(str.c_str(), "immobvable") ) FP3DR->setMoveGrid(GRID_NOT_MOVE);
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Grid_Mobility' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // 時間方向の変化
+  label = "/Steer/plot3d_options/state_of_time";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'State_of_Time' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "steady") )   FP3DR->setSteady(FB_STEADY);
+    else if( !strcasecmp(str.c_str(), "unsteady") ) FP3DR->setSteady(FB_UNSTEADY);
+    else {
+      stamped_printf("\tInvalid keyword is described for 'State_of_Time' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // IBLANKファイル
+  label = "/Steer/plot3d_options/iblank";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'IBLANK' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "on") )  FP3DR->setIBlankFlag(SET_IBLANK);
+    else if( !strcasecmp(str.c_str(), "off") ) FP3DR->setIBlankFlag(NOT_SET_IBLANK);
+    else {
+      stamped_printf("\tInvalid keyword is described for 'IBLANK' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // 次元数
+  label = "/Steer/plot3d_options/dimension";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Dimension' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "2d") ) FP3DR->setDimension2D();
+    else if( !strcasecmp(str.c_str(), "3d") ) FP3DR->setDimension3D();
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Dimension' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  //File_plot3d_format
+  label = "/Steer/plot3d_options/Format_Type";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'Format_Type' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "unformatted") )  FP3DR->setFormat(UNFORMATTED);
+    else if( !strcasecmp(str.c_str(), "formatted") )    FP3DR->setFormat(FORMATTED);
+    else if( !strcasecmp(str.c_str(), "special") )      FP3DR->setFormat(UNFORMATTED_SPECIAL);
+    else {
+      stamped_printf("\tInvalid keyword is described for 'Format_Type' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  //copy options read to write
+  //FP3DW->P3Op.GridKind   = FP3DR->P3Op.GridKind;
+  //FP3DW->P3Op.MoveGrid   = FP3DR->P3Op.MoveGrid;
+  //FP3DW->P3Op.Steady     = FP3DR->P3Op.Steady;
+  //FP3DW->P3Op.IBlankFlag = FP3DR->P3Op.IBlankFlag;
+  //FP3DW->P3Op.DimIs      = FP3DR->P3Op.DimIs;
+  //FP3DW->P3Op.Format     = FP3DR->P3Op.Format;
+  FP3DW->setMoveGrid(FP3DR->IsGridKind());
+  FP3DW->setMoveGrid(FP3DR->IsMoveGrid());
+  FP3DW->setSteady(FP3DR->IsSteady());
+  FP3DW->setIBlankFlag(FP3DR->IsIBlankFlag());
+  FP3DW->setFormat(FP3DR->GetDim());
+  FP3DW->setFormat(FP3DR->GetFormat());
+  
+  // File_plot3d_xyz
+  label = "/Steer/plot3d_options/File_plot3d_xyz";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'File_plot3d_xyz' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_xyz = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_xyz = OFF;
+    else {
+      stamped_printf("\tInvalid keyword is described for 'File_plot3d_xyz' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // File_plot3d_q
+  label = "/Steer/plot3d_options/File_plot3d_q";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'File_plot3d_q' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_q = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_q = OFF;
+    else {
+      stamped_printf("\tInvalid keyword is described for 'File_plot3d_q' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // File_plot3d_function
+  label = "/Steer/plot3d_options/File_plot3d_function";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'File_plot3d_function' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_funciton = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_funciton = OFF;
+    else {
+      stamped_printf("\tInvalid keyword is described for 'File_plot3d_function' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  // File_plot3d_function_name
+  label = "/Steer/plot3d_options/File_plot3d_function_name";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'File_plot3d_function_name' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_function_name = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_function_name = OFF;
+    else {
+      stamped_printf("\tInvalid keyword is described for 'File_plot3d_function_name' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+  //File_plot3d_fvbnd
+  label = "/Steer/plot3d_options/File_plot3d_fvbnd";
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    stamped_printf("\tParsing error : fail to get 'File_plot3d_fvbnd' in 'PLOT3D_Options'\n");
+    Exit(0);
+  }
+  else{
+    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_fvbnd = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_fvbnd = OFF;
+    else {
+      stamped_printf("\tInvalid keyword is described for 'File_plot3d_fvbnd' in 'PLOT3D_Options'\n");
+      Exit(0);
+    }
+  }
+  
+}
+
+
+// 対流項スキームのパラメータを取得する
 void Control::get_Convection()
 {
   
@@ -1825,7 +2032,7 @@ void Control::get_Polygon()
 
 
 // 制御，計算パラメータ群の取得
-void Control::get_Steer_1(DTcntl* DT)
+void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
 {
   
   // ソルバーの具体的な種類を決めるパラメータ（変数配置，形状近似度，次元）を取得し，ガイドセルの値を設定する
@@ -1855,6 +2062,9 @@ void Control::get_Steer_1(DTcntl* DT)
   
   // ファイル入出力に関するパラメータ
   get_FileIO();
+  
+  // PLOT3Dファイル入出力に関するパラメータ
+  if (FIO.IO_Format == FILE_FMT_PLOT3D) get_PLOT3D(FP3DR,FP3DW);
   
 }
 

@@ -1,13 +1,18 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file DataHolder.C
-//@brief DataHolder class
-//@author keno, FSI Team, VCAD, RIKEN
+/**
+ * @file   DataHolder.C
+ * @brief  FlowBase DataHolder class
+ * @author kero
+ */
 
 #include "DataHolder.h"
 
@@ -203,44 +208,56 @@ void DataHolder::printError(const char* fmt, ...)
 /* ------------- DataHolderManager ----------------------------------*/
 
 
-/// 設定XMLファイルポインタを受け取る.
-///
-///   @param[in] cfg 設定XMLファイルポインタ
-///
-bool DataHolderManager::receiveCfgPtr(SklSolverConfig* cfg)
-{
-  if (!cfg) return false;
-  m_cfg = cfg;
-  return true;
-}
-
-
 /// データファイル読み込み.
 ///
-///   設定XMLファイルをパースし, 入力データファイルを読み込み,
+///   設定ファイルをパースし, 入力データファイルを読み込み,
 ///   DataHolderを生成し登録する.
 ///
 void DataHolderManager::readData()
 {
-  const CfgElem* elemTop = m_cfg->GetTop(PARAMETER);
-  if (!elemTop) Exit(0);
-  const CfgElem* elemDH = elemTop->GetElemFirst("Data_Holder");
-  while (elemDH) {
-    const CfgParam* param = elemDH->GetParamFirst();
-    while (param) {
-      const char* label = param->GetName();
-      const char* file;
-      if (!param->GetData(&file)) {
-        printError("name=\"%s\": cannnot parse 'value'\n", label);
-        Exit(0);
-      }
-//    printf("label=%s, file=%s\n", label, file);
-      DataHolder* dh = new DataHolder(label, file, pn.myrank);
-      m_dataHolders.insert(DATA_HOLDER_MAP::value_type(label, dh));
-
-      param = elemDH->GetParamNext(param);
+  string label_base,label_leaf,str;
+  string label,file;
+  
+  label_base="/Parameter/Data_Holder";
+  if ( !tpCntl->chkNode(label_base) ) {
+    stamped_printf("\tParsing error : Missing the section of 'Data_Holder' in 'Parameter'\n");
+    Exit(0);
+  }
+  
+  // check number of Elem
+  int ndata=tpCntl->countLabels(label_base);
+  if ( ndata == 0 ) {
+    stamped_printf("\tParsing error : No Data at Data_Holder\n");
+    Exit(0);
+  }
+  
+  // load statement list
+  for (int i=1; i<=ndata; i++) {
+    
+    if(!tpCntl->GetNodeStr(label_base,i,&str)){
+      stamped_printf("\tGetNodeStr error\n");
+      Exit(0);
     }
-    elemDH = elemTop->GetElemNext(elemDH, "Data_Holder");
+    
+    // name
+    label_leaf=label_base+"/"+str+"/name";
+
+    if ( !(tpCntl->GetValue(label_leaf, &label )) ) {
+      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
+      Exit(0);
+    }
+    
+    // file
+    label_leaf=label_base+"/"+str+"/file";
+
+    if ( !(tpCntl->GetValue(label_leaf, &file )) ) {
+      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
+      Exit(0);
+    }
+    
+    DataHolder* dh = new DataHolder(label.c_str(), file.c_str(), myRank);
+    m_dataHolders.insert(DATA_HOLDER_MAP::value_type(label.c_str(), dh));
+    
   }
 }
 
@@ -285,11 +302,20 @@ void DataHolderManager::printInfoDebug(FILE* fp) const
 ///
 void DataHolderManager::printError(const char* fmt, ...)
 {
-  if (pn.myrank == 0) {
+  if (myRank == 0) {
     fprintf(stderr, "DataHolderManager error:\n");
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
   }
+}
+
+
+// TPのポインタを受け取る
+bool DataHolderManager::importTP(TPControl* tp) 
+{ 
+  if ( !tp ) return false;
+  tpCntl = tp;
+  return true;
 }

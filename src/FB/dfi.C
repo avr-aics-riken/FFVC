@@ -8,8 +8,8 @@
 //
 // #################################################################
 
-//@file DFI.C
-//@brief DFIファイル生成
+//@file   dfi.C
+//@brief  DFIファイル生成
 //@author kero
 
 #include "dfi.h"
@@ -112,6 +112,37 @@ std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_st
   }
   else {
     sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, "sph");
+  }
+  
+  std::string fname(tmp);
+  if ( tmp ) delete [] tmp;
+  
+  return fname;
+}
+
+
+/**
+ * ファイル名を作成する。（拡張子自由）
+ * @param prefix ファイル接頭文字
+ * @param m_step
+ * @param m_id 
+ * @param mio    出力時の分割指定　 true = local / false = gather(default)
+ */
+std::string DFI::Generate_FileName_Free(
+                                        const std::string prefix, const std::string xxx, const unsigned m_step, const int m_id, const bool mio)
+{
+  if ( prefix.empty() ) return NULL;
+  
+  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  
+  // local出力が指定された場合、分割出力
+  if( mio ){
+    sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
+  }
+  else {
+    sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, xxx.c_str());
   }
   
   std::string fname(tmp);

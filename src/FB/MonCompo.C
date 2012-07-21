@@ -1,13 +1,18 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// FFV : Frontflow / violet
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file MonCompo.C
-//@brief FlowBase MonitorCompo class
-//@author keno, FSI Team, VCAD, RIKEN
+/** 
+ * @file   MonCompo.h
+ * @brief  FlowBase MonitorCompo class
+ * @author kero
+ */
 
 #include "MonCompo.h"
 #include <sstream>
@@ -62,19 +67,24 @@ void MonitorCompo::allocSamplingArray()
 /// Allreduceによる総和(実数配列上書き，work配列指定).
 bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
+  if ( numProc <= 1 ) return true;
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_REAL, SKL_SUM, pn.procGrp);
+  
+  if( cpm_Base::RealIsDouble() ){
+    if( MPI_Allreduce(sendBuf, array, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  }
+  else{
+    if( MPI_Allreduce(sendBuf, array, n, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  }
+  return true;
 }
 
 
 /// Allreduceによる総和(実数配列上書き).
 bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
+  if ( numProc <= 1 ) return true;
   
   REAL_TYPE* sendBuf = new REAL_TYPE[n];
   bool ret = allReduceSum(array, n, sendBuf);
@@ -87,19 +97,18 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 /// Allreduceによる総和(整数配列上書き，work配列指定).
 bool MonitorCompo::allReduceSum(int* array, int n, int* sendBuf)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
+  if ( numProc <= 1 ) return true;
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  return para_mng->Allreduce(sendBuf, array, n, SKL_ARRAY_DTYPE_INT, SKL_SUM, pn.procGrp); // @todo unsigned long 
+  if( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;  // @todo unsigned long 
+  return true;
 }
 
 
 /// Allreduceによる総和(整数配列上書き).
 bool MonitorCompo::allReduceSum(int* array, int n)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (!para_mng->IsParallel()) return true;
+  if ( numProc <= 1 ) return true;
   
   int* sendBuf = new int[n];
   bool ret = allReduceSum(array, n, sendBuf);
@@ -118,7 +127,7 @@ REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 {
   REAL_TYPE sum= 0.0;
   for (int i = 0; i < nPoint; i++) {
-    if (rank[i] == pn.myrank) sum+= s[i];
+    if (rank[i] == myRank) sum+= s[i];
   }
   allReduceSum(&sum, 1);
   
@@ -135,7 +144,7 @@ Vec3r MonitorCompo::averageVector(Vec3r* v)
 {
   REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
   for (int i = 0; i < nPoint; i++) {
-    if (rank[i] == pn.myrank) {
+    if (rank[i] == myRank) {
       sum[0] += v[i].x;
       sum[1] += v[i].y;
       sum[2] += v[i].z;
@@ -153,7 +162,7 @@ void MonitorCompo::checkMonitorPoints()
 {
   for (int m = 0; m < nPoint; m++) {
     pointStatus[m] = 0;
-    if (rank[m] == pn.myrank) {
+    if (rank[m] == myRank) {
       pointStatus[m] = mon[m]->checkMonitorPoint();
     }
   }
@@ -171,15 +180,15 @@ void MonitorCompo::checkMonitorPoints()
 ///   @param[in] flag メッセージ出力フラグ(trueの時出力)
 ///   @return true=領域内/false=領域外
 ///
-bool MonitorCompo::check_region(unsigned m, Vec3r org, Vec3r box, bool flag) 
+bool MonitorCompo::check_region(int m, Vec3r org, Vec3r box, bool flag) 
 {
   if ( (crd[m].x< org.x)        ||
       (crd[m].x>(org.x+box.x))  ||
       (crd[m].y< org.y)         ||
       (crd[m].y>(org.y+box.y))  ||
       (crd[m].z< org.z)         ||
-      (crd[m].z>(org.z+box.z)) ) {
-    if (flag) { stamped_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", pn.myrank, crd[m].x, crd[m].y, crd[m].z); } // %12.4 >> %14.6
+      (crd[m].z>(org.z+box.z)) ) { 
+        if (flag) { stamped_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", myRank, crd[m].x, crd[m].y, crd[m].z); }
     return false;
   }
   return true;
@@ -217,26 +226,41 @@ void MonitorCompo::gatherSampled()
 
 /// サンプリングしたスカラー変数をノード0に集約.
 ///
-///   @param[in,out] s スカラー変数配列
-///   @param  sRecvBuf  通信用work領域
+///   @param [in,out] s         スカラー変数配列
+///   @param          sRecvBuf  通信用work領域
 ///
 void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int np = para_mng->GetNodeNum(pn.procGrp);
+  int np = num_process;
+  if ( numProc <= 1 ) return;
   
-  if (pn.myrank == 0 && !sRecvBuf) {
+  if (myRank == 0 && !sRecvBuf) {
     if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) Exit(0);
   }
   
-  if (!para_mng->Gather(s, nPoint, SKL_ARRAY_DTYPE_REAL,
-                        sRecvBuf, nPoint, SKL_ARRAY_DTYPE_REAL,
-                        0, pn.procGrp)) Exit(0);
+  if ( numProc > 1 ) 
+  {
+    if( cpm_Base::RealIsDouble() ){
+      if( MPI_Gather(s, nPoint, MPI_DOUBLE, sRecvBuf, nPoint, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    }
+    else
+    {
+      if( MPI_Gather(s, nPoint, MPI_FLOAT, sRecvBuf, nPoint, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    }
+  }
+  else
+  {
+    //for (int m = 0; m < nPoint*np; m++) {
+    //  vRecvBuf[m] = s[m]
+    //}
+  }
   
-  if (pn.myrank == 0) {
+  if (myRank == 0) 
+  {
     for (int i = 0; i < np; i++) {
       for (int m = 0; m < nPoint; m++) {
-        if (rank[m] == i) {
+        if (rank[m] == i) 
+        {
           s[m] = sRecvBuf[nPoint*i+m];
         }
       }
@@ -252,14 +276,16 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 ///
 void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int np = para_mng->GetNodeNum(pn.procGrp);
+  int np = num_process;
+  if ( numProc <= 1 ) return;
   
-  if (!vSendBuf) {
+  if (!vSendBuf) 
+  {
     if (!(vSendBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
   }
   
-  if (pn.myrank == 0 && !vRecvBuf) {
+  if (myRank == 0 && !vRecvBuf) 
+  {
     if (!(vRecvBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
   }
   
@@ -269,11 +295,27 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
     vSendBuf[3*m+2] = v[m].z;
   }
   
-  if (!para_mng->Gather(vSendBuf, nPoint*3, SKL_ARRAY_DTYPE_REAL,
-                        vRecvBuf, nPoint*3, SKL_ARRAY_DTYPE_REAL,
-                        0, pn.procGrp)) Exit(0);
+  if ( numProc > 1 ){
+    if( cpm_Base::RealIsDouble() )
+    {
+      if( MPI_Gather(vSendBuf, nPoint*3, MPI_DOUBLE, vRecvBuf, nPoint*3, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    }
+    else
+    {
+      if( MPI_Gather(vSendBuf, nPoint*3, MPI_FLOAT, vRecvBuf, nPoint*3, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    }
+  }
+  else
+  {
+    //for (int m = 0; m < nPoint; m++) {
+    //  vRecvBuf[3*m  ] = vSendBuf[3*m  ]
+    //  vRecvBuf[3*m+1] = vSendBuf[3*m+1]
+    //  vRecvBuf[3*m+2] = vSendBuf[3*m+2]
+    //}
+  }
   
-  if (pn.myrank == 0) {
+  if (myRank == 0) 
+  {
     for (int i = 0; i < np; i++) {
       for (int m = 0; m < nPoint; m++) {
         if (rank[m] == i) {
@@ -371,19 +413,23 @@ string MonitorCompo::getVarStr()
 ///
 void MonitorCompo::openFile(const char* str, bool gathered)
 {
-  if (gathered) {
-    if (!(fp = fopen(str, "w"))) {
+  if (gathered) 
+  {
+    if (!(fp = fopen(str, "w"))) 
+    {
       perror(str); Exit(0);
     }
     writeHeader(true);
   }
-  else {
+  else 
+  {
     string fileName(str);
     ostringstream rankStr;
-    rankStr << "_" << pn.myrank;
+    rankStr << "_" << myRank;
     string::size_type pos = fileName.rfind(".");
     fileName.insert(pos, rankStr.str());
-    if (!(fp = fopen(fileName.c_str(), "w"))) {
+    if (!(fp = fopen(fileName.c_str(), "w"))) 
+    {
       perror(fileName.c_str()); Exit(0);
     }
     writeHeader(false);
@@ -408,39 +454,48 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
   char* sFmt;
   char* vFmt;
   
-  if (refVar.modePrecision == FP_SINGLE) {
+  if (refVar.modePrecision == FP_SINGLE)
+  {
     sFmt = sFmtSingle;
     vFmt = vFmtSingle;
   }
-  else {
+  else 
+  {
     sFmt = sFmtDouble;
     vFmt = vFmtDouble;
   }
   
   fprintf(fp, "\n");
-  if (refVar.modePrecision == FP_SINGLE) {
+  if (refVar.modePrecision == FP_SINGLE) 
+  {
     fprintf(fp, "%d %14.6e\n", step, convTime(tm)); // %12.4 >> %14.6
   }
-  else {
+  else 
+  {
     fprintf(fp, "%d %24.16e\n", step, convTime(tm));
   }
   
   for (int i = 0; i < nPoint; i++) {
-    if (!gathered && rank[i] != pn.myrank) continue;
-    if (pointStatus[i] != Sampling::POINT_STATUS_OK) {
+    if (!gathered && rank[i] != myRank) continue;
+    if (pointStatus[i] != Sampling::POINT_STATUS_OK) 
+    {
       fprintf(fp, "%s\n", "  *NA*");
       continue;
     }
-    if (variable[VELOCITY]) {
+    if (variable[VELOCITY]) 
+    {
       fprintf(fp, vFmt, convVel(vel[i].x), convVel(vel[i].y), convVel(vel[i].z));
     }
-    if (variable[PRESSURE]) {
+    if (variable[PRESSURE]) 
+    {
       fprintf(fp, sFmt, convPrs(prs[i]));
     }
-    if (variable[TEMPERATURE]) {
+    if (variable[TEMPERATURE]) 
+    {
       fprintf(fp, sFmt, convTmp(tmp[i]));
     }
-    if (variable[TOTAL_PRESSURE]) {
+    if (variable[TOTAL_PRESSURE]) 
+    {
       fprintf(fp, sFmt, convTP(tp[i]));
     }
     //if (variable[VORTICITY]) {
@@ -467,13 +522,16 @@ void MonitorCompo::printInfo(FILE* fp, int no)
   for (int j = 0; j < nPoint; j++) {
     fprintf(fp,"\t\t%9d : %14.6e %14.6e %14.6e  : %6d : %s", // %12.4 >> %14.6
             j+1, convCrd(crd[j].x), convCrd(crd[j].y), convCrd(crd[j].z), rank[j], comment[j].c_str());
-    if (pointStatus[j] == Sampling::UNEXPECTED_SOLID) {
+    if (pointStatus[j] == Sampling::UNEXPECTED_SOLID) 
+    {
       fprintf(fp, "  *skip(unexpected solid)*\n");
     }
-    else if (pointStatus[j] == Sampling::UNEXPECTED_FLUID) {
+    else if (pointStatus[j] == Sampling::UNEXPECTED_FLUID) 
+    {
       fprintf(fp, "  *skip(unexpected fluid)*\n");
     }
-    else {
+    else 
+    {
       fprintf(fp, "\n");
     }
   }
@@ -508,7 +566,8 @@ void MonitorCompo::samplingInnerBoundary()
   assert(type == INNER_BOUNDARY);
   sampling();
   
-  if (variable[VELOCITY]) {
+  if (variable[VELOCITY]) 
+  {
     Vec3r velAve = averageVector(vel);
     cmp->val[var_Velocity]
     = velAve.x * cmp->nv[0] + velAve.y * cmp->nv[1] + velAve.z * cmp->nv[2];
@@ -527,10 +586,9 @@ void MonitorCompo::samplingInnerBoundary()
 ///
 void MonitorCompo::setIBPoints(int n, CompoList& cmp)
 {
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  int np = para_mng->GetNodeNum(pn.procGrp);
+  int np = num_process;
   int st[3], ed[3];
-  unsigned s;
+  int s;
   
   int* nPointList;
   if (!(nPointList = new int[np])) Exit(0);
@@ -538,13 +596,25 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   
   cmp.getBbox(st, ed);
 
-  if (cmp.isEns()) {
+  // for optimization > variables defined outside
+  size_t mm;
+  int ix, jx, kx, gd;
+  ix = size[0];
+  jx = size[1];
+  kx = size[2];
+  gd = guide;
+  
+  if (cmp.isEns()) 
+  {
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          s = bcd[FBUtility::getFindexS3D(size, guide, i, j, k)];
-          if ((s & MASK_6) == n) {
-            nPointList[pn.myrank]++;
+          mm = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          s = bcd[mm];
+          
+          if ((s & MASK_6) == n) 
+          {
+            nPointList[myRank]++;
           }
         }
       }
@@ -563,18 +633,21 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
   
   int m0 = 0;
-  for (int i = 0; i < pn.myrank; i++) m0 += nPointList[i];
+  for (int i = 0; i < myRank; i++) m0 += nPointList[i];
   
   int m = 0;
-  if (cmp.isEns()) {
-    int i0 = pn.st_idx[0] - 1;
-    int j0 = pn.st_idx[1] - 1;
-    int k0 = pn.st_idx[2] - 1;
+  if (cmp.isEns()) 
+  {
+    int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
+    int j0 = head[1] - 1;
+    int k0 = head[2] - 1;
 
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
         for (int i = st[0]; i <= ed[0]; i++) {
-          if ((bcd[FBUtility::getFindexS3D(size, guide, i, j, k)] & MASK_6) == n) {
+          mm=_F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          if ((bcd[mm] & MASK_6) == n) 
+          {
             buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
             buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
             buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
@@ -633,7 +706,8 @@ void MonitorCompo::setInnerBoundary(int n, CompoList& cmp)
     oss << "point_" << m;
     comment[m] = oss.str();
     if (!check_region(m, g_org, g_box, true)) Exit(0);
-    if (rank[m] == pn.myrank) {
+    if (rank[m] == myRank) 
+    {
       mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
     }
   }
@@ -688,7 +762,8 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
   setRankArray();
   
   for (int m = 0; m < nPoint; m++) {
-    if (rank[m] == pn.myrank) {
+    if (rank[m] == myRank) 
+    {
       switch (method) {
         case SAMPLING_NEAREST:
           mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
@@ -768,7 +843,8 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
   setRankArray();
   
   for (int m = 0; m < nPoint; m++) {
-    if (rank[m] == pn.myrank) {
+    if (rank[m] == myRank) 
+    {
       switch (method) {
         case SAMPLING_NEAREST:
           mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
@@ -804,16 +880,16 @@ void MonitorCompo::setRankArray()
   
   for (int m = 0; m < nPoint; m++) {
     sendBuf[m] = -1;
-    if (check_region(m, org, box)) sendBuf[m] = pn.myrank;
+    if (check_region(m, org, box)) sendBuf[m] = myRank;
   }
   
   // gather max rank number
-  SklParaManager* para_mng = ParaCmpo->GetParaManager();
-  if (para_mng->IsParallel()) {
-    if (!para_mng->Allreduce(sendBuf, rank, nPoint, SKL_ARRAY_DTYPE_INT, // @todo unsigned long
-                             SKL_MAX, pn.procGrp)) Exit(0);
+  if ( numProc > 1 ) 
+  {
+    if( MPI_Allreduce(sendBuf, rank, nPoint, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
   }
-  else {
+  else 
+  {
     for (int m = 0; m < nPoint; m++) rank[m] = sendBuf[m];
   }
   
@@ -869,23 +945,27 @@ void MonitorCompo::writeHeader(bool gathered)
   }
   else {
     n = 0;
-    for (int i = 0; i < nPoint; i++) if (rank[i] == pn.myrank) n++;
+    for (int i = 0; i < nPoint; i++) if (rank[i] == myRank) n++;
   }
   
   fprintf(fp, "%d %s\n", n, getVarStr().c_str());
   
   for (int i = 0; i < nPoint; i++) {
-    if (gathered || rank[i] == pn.myrank) {
+    if (gathered || rank[i] == myRank) 
+    {
       fprintf(fp, "%14.6e %14.6e %14.6e  #%s", // %12.4 >> %14.6
               convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
       
-      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID) {
+      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID) 
+      {
         fprintf(fp, "  *skip(unexpected solid)*\n");
       }
-      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) {
+      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) 
+      {
         fprintf(fp, "  *skip(unexpected fluid)*\n");
       }
-      else {
+      else 
+      {
         fprintf(fp, "\n");
       }
     }

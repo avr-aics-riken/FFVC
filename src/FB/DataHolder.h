@@ -1,27 +1,32 @@
 #ifndef _FB_DATA_HOLDER_H_
 #define _FB_DATA_HOLDER_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
+
+/**
+ * @file   DataHolder.h
+ * @brief  FlowBase DataHolder class Header
+ * @author kero
  */
 
-//@file DataHolder.h
-//@brief FlowBase DataHolder class Header
-//@author keno, FSI Team, VCAD, RIKEN
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <iostream>
+#include <fstream>
 
-#include <cstdio>
-#include <cstdarg>
 #include "FB_Define.h"
-#include "Skl.h"
-#include "SklSolverBase.h"
-#include "config/SklSolverConfig.h"
-#include "Parallel_node.h"
-
-using namespace SklCfg;  // to use SklSolverConfig* cfg
-
+#include "TPControl.h"
+#include "DomainInfo.h"
 
 /* ------------- DataHolder -----------------------------------------*/
 
@@ -41,7 +46,7 @@ protected:
 
   DATA_MAP m_data;  ///< データコンテナ
 
-  unsigned m_dataSize; ///< データ数
+  int m_dataSize; ///< データ数
 
   REAL_TYPE m_minKey;   ///< 時刻最小値
   REAL_TYPE m_maxKey;   ///< 時刻最大値
@@ -82,7 +87,7 @@ public:
   ///
   ///  @return データ数
   ///
-  unsigned getDataSize() const {
+  int getDataSize() const {
     return m_dataSize;
   }
 
@@ -154,12 +159,19 @@ typedef std::map<string,DataHolder*> DATA_HOLDER_MAP;
 /**
  * DataHolderManager データ格納管理クラス.
  */
-class DataHolderManager : public Parallel_Node {
+class DataHolderManager : public DomainInfo {
 
 protected:
-  SklSolverConfig* m_cfg;  ///< 設定ファイルポインタ(for XML parsing)
 
   DATA_HOLDER_MAP m_dataHolders;  ///< DataHolderコンテナ(ラベルをキーとしたマップ)
+  
+  TPControl* tpCntl;
+  
+  /// エラーメッセージ出力.
+  ///
+  ///   @param[in] fmt  出力フォーマット文字列
+  ///
+  void printError(const char* fmt, ...);
 
 public:
 
@@ -176,7 +188,7 @@ public:
 
   /// ラベルを指定してDataHolderを取得.
   ///
-  ///   @param[in] label ラベル
+  ///   @param [in] label ラベル
   ///   @return 対応するDataHolderへのポインタ
   ///
   ///   @note 対応するDataHolderがない場合は0を返す.
@@ -196,27 +208,24 @@ public:
   ///
   ///   @return DataHolder数
   ///
-  unsigned getNumDataHolder() {
+  int getNumDataHolder() {
     return m_dataHolders.size();
   }
 
+  
   /// 管理しているDataHolderの情報を出力.
   ///
   ///   @param fp ファイルポインタ
   ///
   void printInfo(FILE* fp) const;
 
+  
   /// 管理しているDataHolderの全データを出力(デバッグ用).
   ///
   ///   @param fp ファイルポインタ
   ///
   void printInfoDebug(FILE* fp) const;
 
-  /// 設定XMLファイルポインタを受け取る.
-  ///
-  ///   @param[in] cfg 設定XMLファイルポインタ
-  ///
-  bool receiveCfgPtr(SklSolverConfig* cfg);
 
   /// データファイル読み込み.
   ///
@@ -224,14 +233,14 @@ public:
   ///   DataHolderを生成し登録する.
   ///
   void readData();
+  
+  /**
+   * @brief TPのポインタを受け取る
+   * @param [in] tp  TPControlクラスのポインタ
+   * @return エラーコード
+   */
+  bool importTP(TPControl* tp);
 
-protected:
-
-  /// エラーメッセージ出力.
-  ///
-  ///   @param[in] fmt  出力フォーマット文字列
-  ///
-  void printError(const char* fmt, ...);
 };
 
 

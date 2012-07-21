@@ -30,16 +30,21 @@ CXXSRCS = \
   SetBC.C \
   CompoFraction.C \
   dfi.C \
-#       Monitor.C \
-#       MonCompo.C \
-#       Sampling.C \
-#       DataHolder.C \
+  DataHolder.C \
+  Monitor.C \
+  MonCompo.C \
+  Sampling.C \
+  PLOT3D.C \
+  PLOT3D_read.C \
+  PLOT3D_write.C \
 
 
 
 F90SRCS = \
-    FB_util.f90 \
-
+  FB_util.f90 \
+  PLOT3D.f90 \
+  PLOT3D_read.f90 \
+  PLOT3D_write.f90 \
 
 SRCS  = $(CSRCS) $(CXXSRCS) $(F90SRCS)
 

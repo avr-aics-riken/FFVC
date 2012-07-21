@@ -1,13 +1,16 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file Monitor.C
-//@brief FlowBase MonitorList class
-//@author keno, FSI Team, VCAD, RIKEN
+//@file   Monitor.C
+//@brief  FlowBase MonitorList class
+//@author kero
 
 #include "Monitor.h"
 
@@ -80,7 +83,7 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     if (t_st >= t_ed) throw OUT_OF_REGION;
   }
   catch (const char *str) {
-    if (pn.myrank == 0) {
+    if (myRank == 0) {
       printf("Line [%14.6e %14.6e %14.6e]-[%14.6e %14.6e %14.6e] is %s\n", // %12.4 >> %14.6
              from[0], from[1], from[2], to[0], to[1], to[2], str);
     }
@@ -105,7 +108,7 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 ///
 void MonitorList::closeFile()
 {
-  if ((outputType == GATHER && pn.myrank == 0) ||
+  if ((outputType == GATHER && myRank == 0) ||
       outputType == DISTRIBUTE) {
     for (int i = 0; i < nGroup; i++) {
       if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) monGroup[i]->closeFile();
@@ -148,7 +151,7 @@ string MonitorList::getOutputTypeStr()
 ///
 void MonitorList::openFile(const char* str)
 {
-  if ((outputType == GATHER && pn.myrank == 0) ||
+  if ((outputType == GATHER && myRank == 0) ||
       outputType == DISTRIBUTE) {
     for (int i = 0; i < nGroup; i++) {
       if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
@@ -222,39 +225,29 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
 
 /// 必要なパラメータのコピー.
 ///
-///   @param[in] bcd BCindex ID
-///   @param[in] g_org,g_lbx  グローバル領域基点座標，領域サイズ
-///   @param[in] org,dx,lbx   ローカル領域基点座標，セル幅，領域サイズ
-///   @param[in] rs, gc       ローカルセルサイズ，ガイドセル数
-///   @param[in] refVelocity    代表速度
-///   @param[in] baseTemp       基準温度
-///   @param[in] diffTemp       代表温度差
-///   @param[in] refDensity     基準密度
-///   @param[in] refLength      代表長さ
-///   @param[in] basePrs        基準圧力
-///   @param[in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
-///   @param[in] modePrecision  出力精度指定フラグ (単精度，倍精度)
-///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
+///   @param [in] bcd BCindex ID
+///   @param [in] refVelocity    代表速度
+///   @param [in] baseTemp       基準温度
+///   @param [in] diffTemp       代表温度差
+///   @param [in] refDensity     基準密度
+///   @param [in] refLength      代表長さ
+///   @param [in] basePrs        基準圧力
+///   @param [in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
+///   @param [in] modePrecision  出力精度指定フラグ (単精度，倍精度)
+///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
 ///
-void MonitorList::setControlVars(unsigned* bcd,
-                                 REAL_TYPE g_org[3], REAL_TYPE g_lbx[3],
-                                 REAL_TYPE org[3], REAL_TYPE dx[3], REAL_TYPE lbx[3],
-                                 unsigned rs[3], unsigned gc,
+void MonitorList::setControlVars(int* bcd,
                                  REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp, 
                                  REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs, 
-                                 unsigned unitTemp, unsigned modePrecision, unsigned unitPrs) 
+                                 int unitTemp, int modePrecision, int unitPrs, int num_process) 
 {
   this->bcd = bcd;
-  this->g_org = g_org;
-  this->g_box = g_lbx;
-  this->org = org;
-  this->pch = dx;
-  this->box = lbx;
-  
-  size[0] = rs[0];
-  size[1] = rs[1];
-  size[2] = rs[2];
-  guide = gc;
+  this->g_org = G_origin;
+  this->g_box = G_region;
+  this->org = origin;
+  this->pch = deltaX;
+  this->box = region;
+  this->num_process = num_process;
   
   refVar.refVelocity = refVelocity;
   refVar.baseTemp    = baseTemp;
@@ -265,6 +258,7 @@ void MonitorList::setControlVars(unsigned* bcd,
   refVar.unitTemp    = unitTemp;
   refVar.unitPrs     = unitPrs;
   refVar.modePrecision = modePrecision;
+  
 }
 
 /// 参照速度のコピー
@@ -291,8 +285,10 @@ void MonitorList::setPointSet(const char* str, vector<string>& variables,
                               const char* method, const char* mode,
                               vector<MonitorCompo::MonitorPoint>& pointSet)
 {
-  MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
-                                     size, guide, refVar, bcd);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+  
+  m->setDomainInfo(paraMngr, procGrp);  m->setNeighborInfo(guide);
+  
   m->setPointSet(str, variables, method, mode, pointSet);
   
   monGroup.push_back(m);
@@ -316,8 +312,11 @@ void MonitorList::setLine(const char* str, vector<string>& variables,
 {
   clipLine(from, to);
   
-  MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box,
-                                     size, guide, refVar, bcd);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+  
+  m->setDomainInfo(paraMngr, procGrp);  
+  m->setNeighborInfo(guide);
+  
   m->setLine(str, variables, method, mode, from, to, nDivision);
   
   monGroup.push_back(m);
@@ -333,8 +332,12 @@ void MonitorList::setLine(const char* str, vector<string>& variables,
 void MonitorList::setInnerBoundary(CompoList *cmp, int nBC)
 {
   for (int i = 1; i <= nBC; i++) {
-    if (cmp[i].isMONITOR()) {
-      MonitorCompo* m = new MonitorCompo(pn, org, pch, box, g_org, g_box, size, guide, refVar, bcd);
+    if (cmp[i].isMONITOR()) 
+    {
+      MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+      m->setDomainInfo(paraMngr, procGrp);  
+      m->setNeighborInfo(guide);
+      
       m->setInnerBoundary(i, cmp[i]);
       
       monGroup.push_back(m);
@@ -345,21 +348,378 @@ void MonitorList::setInnerBoundary(CompoList *cmp, int nBC)
 
 
 
-/// XMLにより指定されるモニタ点位置にID=255を書き込む.
+/// 入力ファイルにより指定されるモニタ点位置にID=255を書き込む.
 ///
-///   @param[in] id セルID配列
+///   @param [in] id セルID配列
 ///
 void MonitorList::write_ID(int* id)
 {
+  // for optimization > variables defined outside
+  size_t q;
+  int ix, jx, kx, gd;
+  ix = size[0];
+  jx = size[1];
+  kx = size[2];
+  gd = guide;
+  
   for (int i = 0; i < nGroup; i++) {
     for (int m = 0; m < monGroup[i]->getSize(); m++) {
-      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
-        //<<<
+      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) 
+      {
         if (!monGroup[i]->check_region(m, org, box)) continue;
-        //>>>
+        
         Vec3i index = monGroup[i]->getSamplingCellIndex(m);
-        id[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)] = 255;
+        q = _F_IDX_S3D(index.x, index.y, index.z, ix, jx, kx, gd);
+        id[q] = 255;
       }
     }
   }
+}
+
+// TPのポインタを受け取る
+void MonitorList::importTP(TPControl* tp) 
+{ 
+  if ( !tp ) Exit(0);
+  tpCntl = tp;
+}
+
+
+
+// TPに記述されたモニタ座標情報を取得し，リストに保持する
+void MonitorList::get_Monitor(Control* C)
+{
+  REAL_TYPE f_val=0.0;
+  MonitorCompo::Type type;
+  vector<string> variables;
+  
+  std::string str,label;
+  string label_base,label_leaf;
+  string name;
+  string method;
+  string mode;
+  
+  REAL_TYPE fval;
+  
+  // ログ出力のON/OFFはControl::getTP_Sampling()で取得済み
+  
+  // 集約モード
+  label="/Steer/Monitor_List/output_mode";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  
+  if ( !strcasecmp(str.c_str(), "gather") ) 
+  {
+    C->Sampling.out_mode = MonitorList::GATHER;
+    setOutputType(MonitorList::GATHER);
+  }
+  else if( !strcasecmp(str.c_str(), "distribute") ) 
+  {
+    C->Sampling.out_mode = MonitorList::DISTRIBUTE;
+    setOutputType(MonitorList::DISTRIBUTE);
+  }
+  else 
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyord for 'Output_Mode' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  
+  
+  // サンプリング間隔
+  label="/Steer/Monitor_List/Sampling_Interval_Type";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval_Type' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  else 
+  {
+    if ( !strcasecmp(str.c_str(), "step") ) 
+    {
+      C->Interval[Interval_Manager::tg_sampled].setMode_Step();
+    }
+    else if ( !strcasecmp(str.c_str(), "time") ) 
+    {
+      C->Interval[Interval_Manager::tg_sampled].setMode_Time();
+    }
+    else 
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Sampling_Interval_Type' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    label="/Steer/Monitor_List/Sampling_Interval";
+    
+    if ( !(tpCntl->GetValue(label, &f_val )) ) 
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    else 
+    {
+      C->Interval[Interval_Manager::tg_sampled].setInterval((double)f_val);
+    }
+  }
+  
+  // 単位指定
+  label="/Steer/Monitor_List/Unit";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) 
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit' in 'Monitor_List'\n");
+    Exit(0);
+  }
+  
+  if ( !strcasecmp(str.c_str(), "Dimensional") ) 
+  {
+    C->Sampling.unit = DIMENSIONAL;
+    setSamplingUnit(DIMENSIONAL);
+  }
+  else if( !strcasecmp(str.c_str(), "Non_Dimensional") ) 
+  {
+    C->Sampling.unit = NONDIMENSIONAL;
+    setSamplingUnit(NONDIMENSIONAL);
+  }
+  else 
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit' section\n");
+    Exit(0);
+  }
+  
+  // サンプリングの指定単位が有次元の場合に，無次元に変換
+  if ( C->Sampling.unit == DIMENSIONAL ) 
+  {
+    C->Interval[Interval_Manager::tg_sampled].normalizeInterval(C->Tscale);
+  }
+  
+  
+  // 指定モニタ個数のチェック
+  int nnode=0;
+  int nlist=0;
+  label_base="/Steer/Monitor_List";
+  
+  nnode=tpCntl->countLabels(label_base);
+  if ( nnode == 0 ) 
+  {
+    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
+    Exit(0);
+  }
+  
+  for (int i=0; i<nnode; i++) {
+    if(!tpCntl->GetNodeStr(label_base,i+1,&str)){
+      printf("\tParsing error : No Elem name\n");
+      Exit(0);
+    }
+    if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
+    nlist++;
+  }
+  
+  if (nlist==0 && C->isMonitor() == OFF) 
+  {
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in TP. \n");
+    Exit(0);
+  }
+  
+  // モニターリストの読み込み
+  label_base="/Steer/Monitor_List";
+  
+  for (int i=0; i<nnode; i++) 
+  {
+    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    {
+      printf("\tParsing error : No Elem name\n");
+      Exit(0);
+    }
+    if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
+    
+    label_leaf=label_base+"/"+str;
+    
+    // sampling type & param check
+    label=label_leaf+"/type";
+    
+    if ( !(tpCntl->GetValue(label, &str )) ) 
+    {
+      stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC'\n");
+      Exit(0);
+    }
+    
+    if ( !strcasecmp(str.c_str(), "point_set") ) 
+    {
+      type = MonitorCompo::POINT_SET;
+    }
+    else if ( !strcasecmp(str.c_str(), "line") ) 
+    {
+      type = MonitorCompo::LINE;
+    }
+    else 
+    {
+      Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // Labelの取得．ラベルなしでもエラーではない
+    label=label_leaf+"/label";
+    
+    if ( !(tpCntl->GetValue(label, &name )) ) 
+    {
+      Hostonly_ stamped_printf("\tParsing warning : No commnet in '%s'\n", name.c_str());
+    }
+    
+    // variable ---> 複数setできるような仕様にする？
+    variables.clear();
+    label=label_leaf+"/variable";
+    
+    if ( !(tpCntl->GetValue(label, &str )) ) 
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'variable' in 'Monitor_List'\n");
+    }
+    variables.push_back(str.c_str());
+
+    
+    if (variables.size() == 0) 
+    {
+      Hostonly_ stamped_printf("\tParsing error : No 'variable' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // method
+    label=label_leaf+"/sampling_method";
+    
+    if ( !(tpCntl->GetValue(label, &method )) ) 
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // mode
+    label=label_leaf+"/sampling_mode";
+    
+    if ( !(tpCntl->GetValue(label, &mode )) ) 
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in 'Monitor_List'\n");
+      Exit(0);
+    }
+    
+    // get coordinate
+    if ( type == MonitorCompo::POINT_SET ) {
+      vector<MonitorCompo::MonitorPoint> pointSet;
+    }
+    else 
+    {
+      cout << "Monitor --- Line = " << name << endl;
+      REAL_TYPE from[3], to[3];
+      int nDivision;
+      get_Mon_Line(C, label_leaf, from, to, nDivision);
+      //この中でLineの領域内外判定をしているが、サブドメインの設定がまだなのでコメントアウト
+      setLine(name.c_str(), variables, method.c_str(), mode.c_str(), from, to, nDivision);
+    }
+  }
+  
+  
+}
+
+
+// TPに記述されたモニタ座標情報(Line)を取得
+void MonitorList::get_Mon_Line(Control* C,
+                               const string label_base,
+                               REAL_TYPE from[3],
+                               REAL_TYPE to[3],
+                               int& nDivision)
+{
+  std::string str,label;
+  REAL_TYPE v[3];
+  
+  label=label_base+"/division";
+
+  if ( !(tpCntl->GetValue(label, &nDivision )) ) 
+  {
+	  Hostonly_ stamped_printf("\tParsing error : no division\n");
+	  Exit(0);
+  }
+  if ( nDivision == 0 ) Exit(0);
+  
+  // load parameter of 'from' and 'to'
+  label=label_base+"/from";
+
+  for (int n=0; n<3; n++) v[n]=0.0;
+  if ( !(tpCntl->GetVector(label, v, 3 )) ) 
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'from' in 'line'\n");
+    Exit(0);
+  }
+  from[0]=v[0];
+  from[1]=v[1];
+  from[2]=v[2];
+  if (C->Sampling.unit == DIMENSIONAL) 
+  {
+    normalizeCord(C->RefLength,from);
+  }
+  
+  label=label_base+"/to";
+
+  for (int n=0; n<3; n++) v[n]=0.0;
+  if ( !(tpCntl->GetVector(label, v, 3 )) ) 
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'to' in 'line'\n");
+    Exit(0);
+  }
+  to[0]=v[0];
+  to[1]=v[1];
+  to[2]=v[2];
+  if (C->Sampling.unit == DIMENSIONAL) 
+  {
+    normalizeCord(C->RefLength,to);
+  }
+}
+
+// TPに記述されたモニタ座標情報を取得(PointSet)
+void MonitorList::get_Mon_Pointset(Control* C,
+                                   const string label_base,
+                                   vector<MonitorCompo::MonitorPoint>& pointSet)
+{
+  /*
+   
+   REAL_TYPE v[3];
+   const char* str=NULL;
+   char tmpstr[20];
+   
+   v[0] = v[1] = v[2] = 0.0;
+   
+   // load parameter for a set
+   elmL3 = elmL2->GetElemFirst();
+   
+   for (unsigned j=0; j<elmL2->GetElemSize(); j++) {
+   
+   if ( strcasecmp("set", elmL3->GetName()) ) { // not agree
+   Hostonly_ stamped_printf("\tParsing error : fail to get 'set' in 'point_set' >> %s\n", elmL3->GetName());
+   Exit(0);
+   }
+   if ( !elmL3->GetVctValue("x", "y", "z", &v[0], &v[1], &v[2]) ) {
+   Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'point_set'\n");
+   Exit(0);
+   }
+   if (C->Sampling.unit == DIMENSIONAL) {
+   normalizeCord(C->RefLength,v);
+   }
+   
+   // set Labelの取得．ラベルなしでもエラーではない
+   if ( !(str = elmL3->GetComment()) ) {
+   Hostonly_ stamped_printf("\tParsing warning : No commnet for 'set'\n");
+   }
+   if ( !str ) {
+   sprintf(tmpstr, "point_%d",j);
+   str = tmpstr;
+   }
+   
+   pointSet.push_back(MonitorCompo::MonitorPoint(v, str));
+   
+   elmL3 = elmL2->GetElemNext(elmL3); // ahead on the next pointer
+   }  
+   
+   */
+  
 }

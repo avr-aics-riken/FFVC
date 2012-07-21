@@ -1,16 +1,21 @@
 #ifndef _FB_MONITOR_COMPO_H_
 #define _FB_MONITOR_COMPO_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// FFV : Frontflow / violet
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file MonCompo.h
-//@brief FlowBase MonitorCompo class Header
-//@author keno, FSI Team, VCAD, RIKEN
+/** 
+ * @file   MonCompo.h
+ * @brief  FlowBase MonitorCompo class Header
+ * @author kero
+ */
 
 #include <string>
 #include <vector>
@@ -18,8 +23,6 @@
 
 #include "DomainInfo.h"
 #include "FB_Define.h"
-#include "SklUtil.h"
-#include "mydebug.h"
 #include "vec3.h"
 #include "basic_func.h"
 #include "FBUtility.h"
@@ -45,10 +48,10 @@ public:
   
   /// 参照用パラメータ構造体
   struct ReferenceVariables {
-    unsigned modeUnit;       /// 出力単位指定フラグ (有次元，無次元)
-    unsigned unitTemp;       /// 温度単位指定フラグ (Kelvin / Celsius)
-    unsigned modePrecision;  /// 出力精度指定フラグ (単精度，倍精度)
-    unsigned unitPrs;        /// 圧力単位指定フラグ (絶対値，ゲージ圧)
+    int modeUnit;       /// 出力単位指定フラグ (有次元，無次元)
+    int unitTemp;       /// 温度単位指定フラグ (Kelvin / Celsius)
+    int modePrecision;  /// 出力精度指定フラグ (単精度，倍精度)
+    int unitPrs;        /// 圧力単位指定フラグ (絶対値，ゲージ圧)
     REAL_TYPE refVelocity;   /// 代表速度
     REAL_TYPE baseTemp;      /// 基準温度
     REAL_TYPE diffTemp;      /// 代表温度差
@@ -86,8 +89,6 @@ protected:
   
   Sampling** mon;    ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
   
-  unsigned size[3];  ///< セル(ローカル)サイズ
-  unsigned guide;    ///< ガイドセル数
   Vec3r org;         ///< ローカル基点座標
   Vec3r pch;         ///< セル幅
   Vec3r box;         ///< ローカル領域サイズ
@@ -97,7 +98,7 @@ protected:
   
   ReferenceVariables refVar;  ///< 参照用パラメータ変数
   
-  unsigned* bcd;     ///< BCindex ID
+  int* bcd;     ///< BCindex ID
   
   FILE* fp;          ///< 出力ファイルポインタ
   
@@ -119,6 +120,8 @@ protected:
   Vec3r* vor;      ///< 渦度サンプリング結果配列
   
   CompoList* cmp;  ///< 内部境界条件指定の場合の対応するコンポーネントへのポインタ
+  
+  int num_process;
   
 public:
   /// ディフォルトコンストラクタ.
@@ -143,10 +146,9 @@ public:
   ///   param[in] refVar  参照パラメータ
   ///   param[in] bcd  BCindex ID
   ///
-  MonitorCompo(Parallel_Info& pn, 
-               Vec3r org, Vec3r pch, Vec3r box, Vec3r g_org, Vec3r g_box,
-               unsigned size[], unsigned guide, ReferenceVariables refVar,
-               unsigned* bcd) {
+  MonitorCompo(Vec3r org, Vec3r pch, Vec3r box, Vec3r g_org, Vec3r g_box, 
+               ReferenceVariables refVar,
+               int* bcd, int num_process) {
     nPoint = 0;
     for (int i = 0; i < NUM_VAR; i++) variable[i] = false;
     vel = vor  = NULL;
@@ -157,18 +159,14 @@ public:
     pointStatus = NULL;
     vSource = pSource = tSource = NULL;
     
-    set_Rank(pn);
     this->org = org;
     this->pch = pch;
     this->box = box;
     this->g_org = g_org;
     this->g_box = g_box;
-    this->size[0] = size[0];
-    this->size[1] = size[1];
-    this->size[2] = size[2];
-    this->guide = guide;
     this->refVar = refVar;
     this->bcd = bcd;
+    this->num_process = num_process;
   }
   
   /// デストラクタ.
@@ -196,7 +194,8 @@ public:
   ///   @param[in] flag メッセージ出力フラグ(trueの時出力)
   ///   @return true=領域内/false=領域外
   ///
-  bool check_region(unsigned m, Vec3r org, Vec3r box, bool flag=false);
+  bool check_region(int m, Vec3r org, Vec3r box, bool flag=false);
+  
   
   /// PointSet登録.
   ///
@@ -267,7 +266,7 @@ public:
   ///
   void print_gather(unsigned step, REAL_TYPE tm) { 
     gatherSampled();
-    if (pn.myrank == 0) print(step, tm, true);
+    if (myRank == 0) print(step, tm, true);
   }
   
   /// モニタ結果出力(distribute).
@@ -282,13 +281,13 @@ public:
   }
   
   /// グループラベルを返す.
-  const char* getLabel(void) { return label.c_str(); }
+  const char* getLabel() { return label.c_str(); }
   
   /// 登録タイプを返す.
-  Type getType(void) { return type; }
+  Type getType() { return type; }
   
   /// m番目のモニタ点を含むセルインデクスを返す.
-  Vec3i getSamplingCellIndex(unsigned m) {
+  Vec3i getSamplingCellIndex(int m) {
     Vec3i index;
     Vec3r c = (crd[m] - org) / pch;
     index.x = int(c.x) + 1;
@@ -298,7 +297,7 @@ public:
   }
   
   /// モニタ点数を返す.
-  unsigned getSize(void) { return nPoint; }
+  int getSize() { return nPoint; }
   
   /// 出力ファイルオープン.
   ///

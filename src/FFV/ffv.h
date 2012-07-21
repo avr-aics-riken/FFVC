@@ -50,6 +50,7 @@
 #include "CompoFraction.h"
 #include "dfi.h"
 #include "History.h"
+#include "Monitor.h"
 
 #include "omp.h"
 
@@ -209,6 +210,10 @@ private:
   History* H;                ///< 履歴クラス
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
+  
+  MonitorList MO;            ///< Monitorクラス 
+  FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
+  FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
   
@@ -888,6 +893,51 @@ public:
    * プロファイルの統計処理ほか
    */
   bool Post();
+  
+  
+  // for plot3d ---> ffv_plot3d.C
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void setValuePlot3D();
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void OutputPlot3D_xyz();
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void OutputPlot3D_post(double& flop, const bool restart=false);
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void OutputPlot3D_q(double& flop, const bool restart=false);
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void OutputPlot3D_function(double& flop, const bool restart=false);
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void OutputPlot3D_function_name();
+  
+  /** 
+   * @brief 
+   * 
+   */
+  void OutputPlot3D_fvbnd();
   
 };
 

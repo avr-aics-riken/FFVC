@@ -1,13 +1,16 @@
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file Sampling.C
-//@brief FlowBase Sampling class
-//@author keno, FSI Team, VCAD, RIKEN
+//@file   Sampling.C
+//@brief  FlowBase Sampling class
+//@author kero
 
 #include "Sampling.h"
 
@@ -59,8 +62,8 @@ Vec3r Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-Nearest::Nearest(int mode, unsigned size[], unsigned guide,
-                 Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
+Nearest::Nearest(int mode, int size[], int guide,
+                 Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd) 
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
 {
 }
@@ -120,8 +123,8 @@ Vec3r Nearest::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-Smoothing::Smoothing(int mode, unsigned size[], unsigned guide,
-                     Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
+Smoothing::Smoothing(int mode, int size[], int guide,
+                     Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd) 
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
 {
   add_xm = permitToAdd(shift_xm(cIndex)) ? true : false;
@@ -243,8 +246,8 @@ Vec3r Smoothing::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-Interpolation::Interpolation(int mode, unsigned size[], unsigned guide,
-                             Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
+Interpolation::Interpolation(int mode, int size[], int guide,
+                             Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd) 
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
 {
   Vec3r c = (crd - org) / pch;
@@ -363,8 +366,8 @@ Vec3r Interpolation::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] v00  座標系移動速度
 ///   @param[in] bcd  BCindex ID
 ///
-InterpolationStgV::InterpolationStgV(int mode, unsigned size[], unsigned guide,
-                             Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) 
+InterpolationStgV::InterpolationStgV(int mode, int size[], int guide,
+                                     Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd) 
   : Interpolation(mode, size, guide, crd, org, pch, v00, bcd)
 {
   Vec3r c = (crd - org) / pch;

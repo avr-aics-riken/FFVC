@@ -1,16 +1,19 @@
 #ifndef _FB_MONITOR_H_
 #define _FB_MONITOR_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file Monitor.h
-//@brief FlowBase MonitorList class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@file   Monitor.h
+//@brief  FlowBase MonitorList class Header
+//@author kero
 
 #include <string>
 #include <vector>
@@ -22,6 +25,8 @@
 #include "basic_func.h"
 #include "Component.h"
 #include "FBUtility.h"
+#include "TPControl.h"
+#include "Control.h"
 
 using namespace std;
 
@@ -41,11 +46,9 @@ public:
 protected:
   OutputType outputType;  ///< 出力タイプ
   
-  unsigned nGroup;    ///< モニタリンググループ数
+  int nGroup;    ///< モニタリンググループ数
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
   
-  unsigned size[3];  ///< セル(ローカル)サイズ
-  unsigned guide;    ///< ガイドセル数
   Vec3r org;         ///< ローカル基点座標
   Vec3r pch;         ///< セル幅
   Vec3r box;         ///< ローカル領域サイズ
@@ -55,7 +58,10 @@ protected:
   
   MonitorCompo:: ReferenceVariables refVar;  ///< 参照用パラメータ変数
   
-  unsigned* bcd;     ///< BCindex ID
+  int* bcd;     ///< BCindex ID
+  int num_process;
+  
+  TPControl* tpCntl;   ///< テキストパーサへのポインタ
   
 public:
   /// コンストラクタ
@@ -66,6 +72,47 @@ public:
   
   /// デストラクタ
   ~MonitorList() { for (int i = 0; i < nGroup; i++) delete monGroup[i]; }
+  
+  
+  /**
+   @brief TPに記述されたモニタ座標情報を取得し，リストに保持する
+   @param [in] C  Control クラスオブジェクトのポインタ
+   */
+  void get_Monitor(Control* C); //未完成
+  
+  /**
+   @brief TPに記述されたモニタ座標情報(Line)を取得
+   @param C  Control クラスオブジェクトのポインタ
+   @param from Line始点座標
+   @param to   Line終点座標
+   @param nDivision Line分割数
+   @note データは無次元化して保持
+   */
+  void get_Mon_Line(
+                    Control* C,
+                    const string label_base,
+                    REAL_TYPE from[3],
+                    REAL_TYPE to[3],
+                    int& nDivision);
+  
+  /**
+   @brief TPに記述されたモニタ座標情報を取得(PointSet)
+   @param C  Control クラスオブジェクトのポインタ
+   @param pointSet PointSet配列
+   @note データは無次元化して保持
+   */
+  void get_Mon_Pointset(//未修正
+                        Control* C,
+                        const string label_base,
+                        vector<MonitorCompo::MonitorPoint>& pointSet);
+  
+  
+  /**
+   * @brief TPのポインタを受け取る
+   * @param [in] tp TPControl
+   */
+  void importTP(TPControl* tp);
+  
   
   /// PointSet登録.
   ///
@@ -107,9 +154,6 @@ public:
   /// 必要なパラメータのコピー.
   ///
   ///   @param[in] bcd BCindex ID
-  ///   @param[in] g_org,g_lbx  グローバル領域基点座標，領域サイズ
-  ///   @param[in] org,dx,lbx   ローカル領域基点座標，セル幅，領域サイズ
-  ///   @param[in] rs, gc       ローカルセルサイズ，ガイドセル数
   ///   @param[in] refVelocity    代表速度
   ///   @param[in] baseTemp       基準温度
   ///   @param[in] diffTemp       代表温度差
@@ -120,12 +164,10 @@ public:
   ///   @param[in] modePrecision  出力精度指定フラグ (単精度，倍精度)
   ///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
   ///
-  void setControlVars(unsigned* bcd, REAL_TYPE g_org[3], REAL_TYPE g_lbx[3],
-                      REAL_TYPE org[3], REAL_TYPE dx[3], REAL_TYPE lbx[3],
-                      unsigned rs[3], unsigned gc,
+  void setControlVars(int* bcd,
                       REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp,
                       REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs,
-                      unsigned unitTemp, unsigned modePrecision, unsigned unitPrs);
+                      int unitTemp, int modePrecision, int unitPrs,int num_process);
   
   /// 参照速度のコピー
   ///   @param[in] v00 座標系移動速度
@@ -146,7 +188,7 @@ public:
   
   /// サンプリングと出力の次元の設定
   /// @param[in] modeUnit       出力単位指定フラグ (有次元，無次元)
-  void setSamplingUnit(unsigned unit) { refVar.modeUnit = unit; }
+  void setSamplingUnit(int unit) { refVar.modeUnit = unit; }
   
   /// 出力ファイルオープン.
   ///
@@ -194,7 +236,7 @@ public:
   ///
   void print(unsigned step, REAL_TYPE tm);
   
-  /// XMLにより指定されるモニタ点位置にID=255を書き込む.
+  /// 指定されるモニタ点位置にID=255を書き込む.
   ///
   ///   @param[in] id セルID配列
   ///
@@ -211,6 +253,14 @@ protected:
   
   /// 出力タイプ文字列の取得.
   string getOutputTypeStr();
+  
+
+  //@brief 座標値を無次元化する
+  void normalizeCord(REAL_TYPE RefLength, REAL_TYPE x[3]) {
+    x[0] /= RefLength;
+    x[1] /= RefLength;
+    x[2] /= RefLength;
+  }
   
 };
 

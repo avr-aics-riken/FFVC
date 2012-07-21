@@ -1,16 +1,19 @@
 #ifndef _FB_SAMPLING_H_
 #define _FB_SAMPLING_H_
 
-/*
- * SPHERE - Skeleton for PHysical and Engineering REsearch
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
- *
- */
+// #################################################################
+//
+// CAERU Library
+//
+// Copyright (c) All right reserved. 2012
+//
+// Institute of Industrial Science, The University of Tokyo, Japan. 
+//
+// #################################################################
 
-//@file MSampling.h
-//@brief FlowBase Sampling class Header
-//@author keno, FSI Team, VCAD, RIKEN
+//@file   Sampling.h
+//@brief  FlowBase Sampling class Header
+//@author kero
 
 #include "FB_Define.h"
 #include "FBUtility.h"
@@ -35,16 +38,14 @@ public:
   };
 
 protected:
-  int mode;          ///< サンプリングモード
+  int mode;     ///< サンプリングモード
+  int size[3];  ///< セル(ローカル)サイズ
+  int guide;    ///< ガイドセル数
 
-  Vec3i cIndex;      ///< モニタ点を含むセルのインデックス
-
-  unsigned size[3];  ///< セル(ローカル)サイズ
-  unsigned guide;    ///< ガイドセル数
-  Vec3r pch;         ///< セル幅
-
-  Vec3r v00;         ///< 座標系移動速度
-  unsigned* bcd;     ///< BCindex ID
+  Vec3i cIndex; ///< モニタ点を含むセルのインデックス
+  Vec3r pch;    ///< セル幅
+  Vec3r v00;    ///< 座標系移動速度
+  int* bcd;     ///< BCindex ID
   
 public:
   /// ディフォルトコンストラクタ.
@@ -59,8 +60,8 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  Sampling(int mode, unsigned size[], unsigned guide,
-           Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) {
+  Sampling(int mode, int size[], int guide,
+           Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd) {
     this->mode = mode;
     this->size[0] = size[0];
     this->size[1] = size[1];
@@ -181,23 +182,25 @@ protected:
   ///    @param[in] index セルインデックス
   ///
   bool isFluid(Vec3i index) {
-    return IS_FLUID(bcd[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)]);
+    size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
+    return IS_FLUID(bcd[m]);
   }
 
   /// セルでのスカラー値を取得.
   ///
-  ///    @param[in] s スカラー配列
-  ///    @param[in] index セルインデックス
+  ///    @param [in] s スカラー配列
+  ///    @param [in] index セルインデックス
   ///    @return セルでのスカラー値
   ///
   REAL_TYPE getScalar(const REAL_TYPE* s, Vec3i index) {
-    return s[FBUtility::getFindexS3D(size, guide, index.x, index.y, index.z)];
+    size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
+    return s[m];
   }
 
   /// セルでのベクトル値を取得.
   ///
-  ///    @param[in] v ベクトル配列
-  ///    @param[in] index セルインデックス
+  ///    @param [in] v ベクトル配列
+  ///    @param [in] index セルインデックス
   ///    @return セルでのベクトル値
   ///
   Vec3r getVector(const REAL_TYPE* v, Vec3i index) {
@@ -235,8 +238,8 @@ public:
   ///   @param[in] v00  座標系移動速度
   ///   @param[in] bcd  BCindex ID
   ///
-  Nearest(int mode, unsigned size[], unsigned guide,
-          Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd);
+  Nearest(int mode, int size[], int guide,
+          Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~Nearest() {}
@@ -317,15 +320,15 @@ public:
   ///
   ///   隣接セルに対して局所平均計算に使用するかどうかのフラグを立てる.
   ///
-  ///   @param[in] mode サンプリングモード
-  ///   @param[in] size,guide ローカルセル数，ガイドセル数
-  ///   @param[in] crd  モニタ点座標
-  ///   @param[in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param[in] v00  座標系移動速度
-  ///   @param[in] bcd  BCindex ID
+  ///   @param [in] mode サンプリングモード
+  ///   @param [in] size,guide ローカルセル数，ガイドセル数
+  ///   @param [in] crd  モニタ点座標
+  ///   @param [in] org,pch  ローカル領域基点座標，セル幅
+  ///   @param [in] v00  座標系移動速度
+  ///   @param [in] bcd  BCindex ID
   ///
-  Smoothing(int mode, unsigned size[], unsigned guide,
-            Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd) ;
+  Smoothing(int mode, int size[], int guide,
+            Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~Smoothing() {}
@@ -400,15 +403,15 @@ public:
   ///   補間計算の基準セルのインデックスおよび補間係数を計算.
   ///   流体-固体境界に接しているかをチェック.
   ///
-  ///   @param[in] mode サンプリングモード
-  ///   @param[in] size,guide ローカルセル数，ガイドセル数
-  ///   @param[in] crd  モニタ点座標
-  ///   @param[in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param[in] v00  座標系移動速度
-  ///   @param[in] bcd  BCindex ID
+  ///   @param [in] mode サンプリングモード
+  ///   @param [in] size,guide ローカルセル数，ガイドセル数
+  ///   @param [in] crd  モニタ点座標
+  ///   @param [in] org,pch  ローカル領域基点座標，セル幅
+  ///   @param [in] v00  座標系移動速度
+  ///   @param [in] bcd  BCindex ID
   ///
-  Interpolation(int mode, unsigned size[], unsigned guide,
-                Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd);
+  Interpolation(int mode, int size[], int guide,
+                Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~Interpolation() {}
@@ -462,15 +465,15 @@ public:
 
   /// コンストラクタ.
   ///
-  ///   @param[in] mode サンプリングモード
-  ///   @param[in] size,guide ローカルセル数，ガイドセル数
-  ///   @param[in] crd  モニタ点座標
-  ///   @param[in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param[in] v00  座標系移動速度
-  ///   @param[in] bcd  BCindex ID
+  ///   @param [in] mode サンプリングモード
+  ///   @param [in] size,guide ローカルセル数，ガイドセル数
+  ///   @param [in] crd  モニタ点座標
+  ///   @param [in] org,pch  ローカル領域基点座標，セル幅
+  ///   @param [in] v00  座標系移動速度
+  ///   @param [in] bcd  BCindex ID
   ///
-  InterpolationStgV(int mode, unsigned size[], unsigned guide,
-                    Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, unsigned* bcd);
+  InterpolationStgV(int mode, int size[], int guide,
+                    Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~InterpolationStgV() {}
