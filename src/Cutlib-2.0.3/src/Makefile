@@ -52,9 +52,9 @@ CXX = icpc
 AR = ar cru
 RANLIB = ranlib
 
-POLYLIB_DIR = ../../Polylib_2_0_3
+POLYLIB_DIR = ../../Polylib-2.1_dev_a
 
-POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/include/libxml2
+POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include
 
 # FX10
 #POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
