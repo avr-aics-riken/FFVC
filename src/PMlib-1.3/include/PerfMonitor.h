@@ -14,6 +14,7 @@
 //@note MPI_Init(), MPI_Finalize()はライブラリ外で行う。
 
 #include <cstdio>
+#include <cstdlib>
 #include "PerfWatch.h"
 
 namespace pm_lib {

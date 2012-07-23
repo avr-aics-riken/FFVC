@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <string>
+#include <cstdlib>
 
 #ifndef _WIN32
 #include <sys/time.h>

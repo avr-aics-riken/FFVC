@@ -1,5 +1,5 @@
 -----
-PMlib 1.2
+PMlib 1.3
 
 Corresponding author Kenji Ono 	keno@riken.jp
 Advanced Visualization Research Team, AICS, RIKEN
