@@ -9,12 +9,12 @@
 // #################################################################
 
 /** 
- * @file FileIO_PLOT3D.C
+ * @file PLOT3D.C
  * @brief FlowBase FileIO_PLOT3D class Header
  * @author kero
  */
 
-#include "FileIO_PLOT3D.h"
+#include "PLOT3D.h"
 
 
 //// CPMクラスポインタのコピー
@@ -50,8 +50,8 @@ bool FileIO_PLOT3D::setMoveGrid(const int is){
  */
 bool FileIO_PLOT3D::setSteady(const int is){
   switch (is) {
-    case STEADY:
-    case UNSTEADY:
+    case FB_STEADY:
+    case FB_UNSTEADY:
       P3Op.Steady=is;
       return true;
       break;

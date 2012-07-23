@@ -9,12 +9,12 @@
 // #################################################################
 
 /** 
- * @file FileIO_PLOT3D_WRITE.C
- * @brief FlowBase FileIO_PLOT3D_WRITE class Header
+ * @file   PLOT3D_write.C
+ * @brief  FlowBase FileIO_PLOT3D_WRITE class Header
  * @author kero
  */
 
-#include "FileIO_PLOT3D_WRITE.h"
+#include "PLOT3D_write.h"
 
 
 /**
@@ -126,10 +126,10 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_xyz_2d_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           write_xyz_3d_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -142,10 +142,10 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dwrite_xyz_2d_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           dwrite_xyz_3d_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -166,10 +166,10 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_xyz_2d_formatted_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           write_xyz_3d_formatted_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -182,10 +182,10 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_xyz_2d_formatted_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           dwrite_xyz_3d_formatted_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -215,10 +215,10 @@ void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_q_2d_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         write_q_3d_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -226,10 +226,10 @@ void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dwrite_q_2d_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dwrite_q_3d_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -245,10 +245,10 @@ void FileIO_PLOT3D_WRITE::WriteQ_FORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_q_2d_formatted_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         write_q_3d_formatted_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -256,10 +256,10 @@ void FileIO_PLOT3D_WRITE::WriteQ_FORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dwrite_q_2d_formatted_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dwrite_q_3d_formatted_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -284,10 +284,10 @@ void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_func_2d_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         write_func_3d_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
@@ -295,10 +295,10 @@ void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dwrite_func_2d_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dwrite_func_3d_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
@@ -314,10 +314,10 @@ void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         write_func_2d_formatted_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         write_func_3d_formatted_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
@@ -325,10 +325,10 @@ void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dwrite_func_2d_formatted_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dwrite_func_3d_formatted_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }

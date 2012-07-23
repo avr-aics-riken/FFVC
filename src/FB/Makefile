@@ -42,9 +42,9 @@ CXXSRCS = \
 
 F90SRCS = \
   FB_util.f90 \
-  PLOT3D.f90 \
-  PLOT3D_read.f90 \
-  PLOT3D_write.f90 \
+  PLT3D.f90 \
+  PLT3D_read.f90 \
+  PLT3D_write.f90 \
 
 SRCS  = $(CSRCS) $(CXXSRCS) $(F90SRCS)
 
@@ -76,15 +76,18 @@ depend:
 # DO NOT DELETE
 
 Control.o: Control.h DomainInfo.h FB_Define.h mydebug.h Medium.h Component.h
-Control.o: FBUtility.h BndOuter.h Interval_Mngr.h TPControl.h
+Control.o: FBUtility.h BndOuter.h Interval_Mngr.h TPControl.h PLOT3D_read.h
+Control.o: PLOT3D.h FB_Ffunc.h PLOT3D_write.h
 FBUtility.o: FBUtility.h FB_Define.h mydebug.h
 Intrinsic.o: Intrinsic.h DomainInfo.h FB_Define.h mydebug.h BndOuter.h
 Intrinsic.o: Control.h Medium.h Component.h FBUtility.h Interval_Mngr.h
-Intrinsic.o: TPControl.h vec3.h vec3_func.h vec3f_func.h
+Intrinsic.o: TPControl.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
+Intrinsic.o: vec3.h vec3_func.h vec3f_func.h
 TPControl.o: TPControl.h FB_Define.h mydebug.h
 ParseBC.o: ParseBC.h DomainInfo.h FB_Define.h mydebug.h FBUtility.h
 ParseBC.o: BndOuter.h Control.h Medium.h Component.h Interval_Mngr.h
-ParseBC.o: TPControl.h vec3.h vec3_func.h vec3f_func.h Intrinsic.h
+ParseBC.o: TPControl.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
+ParseBC.o: vec3.h vec3_func.h vec3f_func.h Intrinsic.h
 ParseMat.o: ParseMat.h FB_Define.h mydebug.h Medium.h Component.h TPControl.h
 ParseMat.o: FBUtility.h
 FileIO.o: FileIO.h DomainInfo.h FB_Define.h mydebug.h FB_Ffunc.h
@@ -94,13 +97,30 @@ Interval_Mngr.o: Interval_Mngr.h FB_Define.h mydebug.h
 Alloc.o: Alloc.h
 VoxInfo.o: VoxInfo.h DomainInfo.h FBUtility.h FB_Define.h mydebug.h
 VoxInfo.o: Component.h Medium.h SetBC.h BndOuter.h Control.h Interval_Mngr.h
-VoxInfo.o: TPControl.h Intrinsic.h vec3.h vec3_func.h vec3f_func.h
-VoxInfo.o: CompoFraction.h FindexS3D.h
+VoxInfo.o: TPControl.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
+VoxInfo.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h CompoFraction.h
+VoxInfo.o: FindexS3D.h
 History.o: History.h Control.h DomainInfo.h FB_Define.h mydebug.h Medium.h
 History.o: Component.h FBUtility.h BndOuter.h Interval_Mngr.h TPControl.h
+History.o: PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
 SetBC.o: SetBC.h DomainInfo.h FB_Define.h mydebug.h BndOuter.h Control.h
 SetBC.o: Medium.h Component.h FBUtility.h Interval_Mngr.h TPControl.h
-SetBC.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h
+SetBC.o: PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h Intrinsic.h vec3.h
+SetBC.o: vec3_func.h vec3f_func.h
 CompoFraction.o: CompoFraction.h FB_Define.h mydebug.h vec3.h vec3_func.h
 CompoFraction.o: vec3f_func.h
 dfi.o: dfi.h FB_Define.h mydebug.h util_Path.h
+DataHolder.o: DataHolder.h FB_Define.h mydebug.h TPControl.h DomainInfo.h
+Monitor.o: Monitor.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
+Monitor.o: vec3f_func.h MonCompo.h basic_func.h FBUtility.h Component.h
+Monitor.o: Sampling.h TPControl.h Control.h Medium.h BndOuter.h
+Monitor.o: Interval_Mngr.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
+MonCompo.o: MonCompo.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
+MonCompo.o: vec3f_func.h basic_func.h FBUtility.h Component.h Sampling.h
+Sampling.o: Sampling.h FB_Define.h mydebug.h FBUtility.h vec3.h vec3_func.h
+Sampling.o: vec3f_func.h basic_func.h
+PLOT3D.o: PLOT3D.h DomainInfo.h FB_Define.h mydebug.h FB_Ffunc.h
+PLOT3D_read.o: PLOT3D_read.h PLOT3D.h DomainInfo.h FB_Define.h mydebug.h
+PLOT3D_read.o: FB_Ffunc.h
+PLOT3D_write.o: PLOT3D_write.h PLOT3D.h DomainInfo.h FB_Define.h mydebug.h
+PLOT3D_write.o: FB_Ffunc.h

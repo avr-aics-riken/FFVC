@@ -9,6 +9,12 @@ Release Note
 
 #######################################
 
+Ver 0.9.2  23 July 2012
+  - PLOT3Dフォーマットテスト導入
+
+Ver 0.9.1  21 July 2012
+  - 全メソッドTextParsar対応
+  
 Ver 0.9.0  11 July 2012
   - Operator追加
   - hostnameを取得

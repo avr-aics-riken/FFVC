@@ -2209,8 +2209,8 @@ void Control::get_Solver_Properties()
     Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Steady" ) )    Mode.Steady = TV_Steady;
-  else if( !strcasecmp(str.c_str(), "Unsteady" ) )  Mode.Steady = TV_Unsteady;
+  if     ( !strcasecmp(str.c_str(), "Steady" ) )    Mode.Steady = FB_STEADY;
+  else if( !strcasecmp(str.c_str(), "Unsteady" ) )  Mode.Steady = FB_UNSTEADY;
   else 
   {
     stamped_printf("\tInvalid keyword is described for 'Time_Variation'\n");
@@ -2790,11 +2790,11 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   // Steady
   switch (Mode.Steady) {
-    case TV_Steady:
+    case FB_STEADY:
       fprintf(fp,"\t     Time Variation           :   Steady\n");
       break;
       
-    case TV_Unsteady:
+    case FB_UNSTEADY:
       fprintf(fp,"\t     Time Variation           :   Unsteady\n");
       break;
       

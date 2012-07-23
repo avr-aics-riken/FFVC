@@ -12,7 +12,7 @@
 // #################################################################
 
 /** 
- * @file   PLOT3D_WRITE.h
+ * @file   PLOT3D_write.h
  * @brief  FlowBase FileIO_PLOT3D_WRITE class Header
  * @author kero
  */

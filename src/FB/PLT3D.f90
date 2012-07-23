@@ -8,7 +8,7 @@
 !
 !********************************************************************
 
-!> @file   PLOT3D.f90
+!> @file   PLT3D.f90
 !! @brief  FlowBase PLOT3D related code
 !! @author kero
 !<
@@ -195,21 +195,3 @@
     read(ifl,'(8i8,1x,1a,1x,i8)') tp,gn,imin,imsx,jmin,jmax,kmin,kmax,flag,dir
     
     end subroutine read_fvbnd_boundary
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

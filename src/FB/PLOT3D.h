@@ -95,7 +95,7 @@ extern "C" {
 
 using namespace std;
 
-//class FileIO_PLOT3D {
+
 class FileIO_PLOT3D : public DomainInfo {
 
 public:
@@ -113,7 +113,7 @@ public:
 
     fp_xyz = NULL;
     fp_q = NULL;
-	ifl = 31;
+	  ifl = 31;
   }
 
   /**　デストラクタ */
@@ -156,43 +156,6 @@ protected:
     int DimIs;       ///=2:2D, =3:3D
     int Format;      ///
   } Plot3D_Option;
-
-  //// GRIDの種類
-  //enum PLOT3D_GridKind {
-  //  SINGLE_GRID,
-  //  MULTI_GRID
-  //};
-
-  //// *.xyzファイルの出力を時刻暦にするかどうか
-  //enum PLOT3D_MoveGrid {
-  //  GRID_NOT_MOVE,
-  //  GRID_MOVE
-  //};
-
-  //// 定常or非定常解析 *.qファイルの出力
-  //enum PLOT3D_Steady {
-  //  STEADY,
-  //  UNSTEADY
-  //};
-
-  //// IBLANKフラグのセットの有無
-  //enum PLOT3D_IBlankFlag {
-  //  NOT_SET_IBLANK,
-  //  SET_IBLANK
-  //};
-
-  //// DIMENSITON
-  //enum PLOT3D_DimIs {
-  //  DIMENSION2D=2,
-  //  DIMENSION3D
-  //};
-
-  //// PLOT3D File Format
-  //enum PLOT3D_Fiel_Format {
-  //  UNFORMATTED=1,
-  //  FORMATTED,
-  //  UNFORMATTED_SPECIAL
-  //};
 
   Plot3D_Option P3Op;
 

@@ -9,12 +9,12 @@
 // #################################################################
 
 /** 
- * @file FileIO_PLOT3D_READ.C
- * @brief FlowBase FileIO_PLOT3D_READ class Header
+ * @file   PLOT3D_read.C
+ * @brief  FlowBase FileIO_PLOT3D_READ class Header
  * @author kero
  */
 
-#include "FileIO_PLOT3D_READ.h"
+#include "PLOT3D_read.h"
 
 
 /**
@@ -135,10 +135,10 @@ void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_xyz_2d_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           read_xyz_3d_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -151,10 +151,10 @@ void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dread_xyz_2d_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           dread_xyz_3d_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -175,10 +175,10 @@ void FileIO_PLOT3D_READ::ReadXYZ_FORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_xyz_2d_formatted_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           read_xyz_3d_formatted_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -191,10 +191,10 @@ void FileIO_PLOT3D_READ::ReadXYZ_FORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_xyz_2d_formatted_(&id, &jd, x, y, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
           dread_xyz_3d_formatted_(&id, &jd, &kd, x, y, z, &ifl);
         }
@@ -224,10 +224,10 @@ void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_q_2d_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         read_q_3d_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -235,10 +235,10 @@ void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dread_q_2d_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dread_q_3d_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -254,10 +254,10 @@ void FileIO_PLOT3D_READ::ReadQ_FORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_q_2d_formatted_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         read_q_3d_formatted_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -265,10 +265,10 @@ void FileIO_PLOT3D_READ::ReadQ_FORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dread_q_2d_formatted_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dread_q_3d_formatted_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
         break;
     }
@@ -293,10 +293,10 @@ void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_func_2d_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         read_func_3d_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
@@ -304,10 +304,10 @@ void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dread_func_2d_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dread_func_3d_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
@@ -323,10 +323,10 @@ void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
   if(d_type==1)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         read_func_2d_formatted_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         read_func_3d_formatted_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
@@ -334,10 +334,10 @@ void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
   else if(d_type==2)
   {
     switch (P3Op.DimIs) {
-      case DIMENSION2D:
+      case DIMENSION_2D:
         dread_func_2d_formatted_(&id, &jd, &nvar, d, &ifl);
         break;
-      case DIMENSION3D:
+      case DIMENSION_3D:
         dread_func_3d_formatted_(&id, &jd, &kd, &nvar, d, &ifl);
         break;
     }
