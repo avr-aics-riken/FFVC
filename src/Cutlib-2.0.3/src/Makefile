@@ -54,7 +54,7 @@ RANLIB = ranlib
 
 POLYLIB_DIR = ../../Polylib-2.1_dev_a
 
-POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include
+POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/local/textparser/include
 
 # FX10
 #POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
