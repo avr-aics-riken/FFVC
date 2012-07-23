@@ -44,7 +44,7 @@ int FFV::Loop(const unsigned step)
   copyV00fromRF(CurrentTime);
   
   // モニタークラスに参照速度を渡す
-  //if (C.Sampling.log == ON) MO.set_V00(v00);
+  if (C.Sampling.log == ON) MO.set_V00(v00);
   
   // 速度成分の最大値
   TIMING_start(tm_vmax);
@@ -195,7 +195,14 @@ int FFV::Loop(const unsigned step)
   {
     TIMING_start(tm_file_out);
     flop_count=0.0;
-    FileOutput(flop_count);
+    if(C.FIO.IO_Format == FILE_FMT_PLOT3D)
+    {
+      OutputPlot3D_post(flop_count);
+    }
+    else if(C.FIO.IO_Format == FILE_FMT_SPH)
+    {
+      FileOutput(flop_count);
+    }
     TIMING_stop(tm_file_out, flop_count); 
   }
   
@@ -209,7 +216,14 @@ int FFV::Loop(const unsigned step)
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        FileOutput(flop_count);
+        if(C.FIO.IO_Format == FILE_FMT_PLOT3D)
+        {
+          OutputPlot3D_post(flop_count);
+        }
+        else if(C.FIO.IO_Format == FILE_FMT_SPH)
+        {
+          FileOutput(flop_count);
+        }
         TIMING_stop(tm_file_out, flop_count); 
       }
     }
@@ -334,7 +348,7 @@ int FFV::Loop(const unsigned step)
     {
       TIMING_start(tm_compo_monitor);
       flop_count=0.0;
-      //MO.samplingInnerBoundary();
+      MO.samplingInnerBoundary();
       TIMING_stop(tm_compo_monitor, flop_count);
       
       TIMING_start(tm_hstry_compo);
@@ -348,11 +362,11 @@ int FFV::Loop(const unsigned step)
   {
     if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) ) {
       TIMING_start(tm_sampling);
-      //MO.sampling();
+      MO.sampling();
       TIMING_stop(tm_sampling, 0.0);
       
       TIMING_start(tm_hstry_sampling);
-      //MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
+      MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
       TIMING_stop(tm_hstry_sampling, 0.0);
     }
   }

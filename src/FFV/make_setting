@@ -47,7 +47,7 @@ UDEF_LIB_PATH=-L../Polylib-2.1_dev_a/lib \
               -L../FB \
               -L../IP \
               -L../F_CORE
-UDEF_LIBS = -lmpi -lcpmlib -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi
+UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib
 
 
 ## K
