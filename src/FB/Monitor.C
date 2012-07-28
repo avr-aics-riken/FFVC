@@ -287,7 +287,8 @@ void MonitorList::setPointSet(const char* str, vector<string>& variables,
 {
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
   
-  m->setDomainInfo(paraMngr, procGrp);  m->setNeighborInfo(guide);
+  m->setDomainInfo(paraMngr, procGrp);
+  m->setNeighborInfo(guide);
   
   m->setPointSet(str, variables, method, mode, pointSet);
   

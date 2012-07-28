@@ -22,15 +22,17 @@
 
 #ifdef _WIN32
 
-//FileIO_PLOT3D_fortran_write.f90
-#define write_ngrid_data_                     WRITE_NGIRD_DATA_
+// PLT3D_write.f90
+#define write_ngrid_data_                     WRITE_NGIRD_DATA
 #define write_ngrid_data_formatted_           WRITE_NGIRD_DATA_FORMATTED
-#define write_block_data_                     WRITE_BLOCK_DATA_
+#define write_block_data_                     WRITE_BLOCK_DATA
 #define write_block_data_formatted_           WRITE_BLOCK_DATA_FORMATTED
 #define write_block_data_2d_                  WRITE_BLOCK_DATA_2D
 #define write_block_data_2d_formatted_        WRITE_BLOCK_DATA_2D_FORMATTED
-#define write_func_block_data_                WRITE_FUNC_BLOCK_DATA_
+#define write_func_block_data_                WRITE_FUNC_BLOCK_DATA
 #define write_func_block_data_formatted_      WRITE_FUNC_BLOCK_DATA_FORMATTED
+#define write_func_block_data_2d_             WRITE_FUNC_BLOCK_DATA_2D
+#define write_func_block_data_2d_formatted_   WRITE_FUNC_BLOCK_DATA_2D_FORMATTED
 #define write_xyz_3d_                         WRITE_XYZ_3D
 #define write_xyz_3d_formatted_               WRITE_XYZ_3D_FORMATTED
 #define write_xyz_3d_iblank_                  WRITE_XYZ_3D_IBLANK
@@ -65,7 +67,7 @@
 
 extern "C" {
 
-//FileIO_PLOT3D_fortran_write.f90
+// PLT3D_write.f90
   void write_ngrid_data_ (int* ngrid, int* ifl);
   void write_ngrid_data_formatted_  (int* ngrid, int* ifl);
   void write_block_data_ (
@@ -77,9 +79,13 @@ extern "C" {
   void write_block_data_2d_formatted_  (
       int* id, int* jd, int* ifl);
   void write_func_block_data_ (
-      int* id, int* jd, int* kd, int* nvar, int* ifl);
+                               int* id, int* jd, int* kd, int* nvar, int* ngrid, int* ifl);
   void write_func_block_data_formatted_  (
-      int* id, int* jd, int* kd, int* nvar, int* ifl);
+                                          int* id, int* jd, int* kd, int* nvar, int* ngrid, int* ifl);
+  void write_func_block_data_2d_ (
+                                  int* id, int* jd, int* nvar, int* ngrid, int* ifl);
+  void write_func_block_data_2d_formatted_  (
+                                             int* id, int* jd, int* nvar, int* ngrid, int* ifl);
   void write_xyz_3d_ (
       int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
   void write_xyz_3d_formatted_ (
@@ -224,7 +230,7 @@ public:
   /**
    * @brief 計算結果Functionファイル、ブロックデータの書き出し
    */
-  void WriteFuncBlockData(int id, int jd, int kd, int nvar);
+  void WriteFuncBlockData(int* id, int* jd, int* kd, int* nvar, int ngrid);
 
   /**
    * @brief グリッド座標ファイルの書き出し

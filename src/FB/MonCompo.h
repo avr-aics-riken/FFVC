@@ -25,7 +25,6 @@
 #include "FB_Define.h"
 #include "vec3.h"
 #include "basic_func.h"
-#include "FBUtility.h"
 #include "Component.h"
 #include "Sampling.h"
 

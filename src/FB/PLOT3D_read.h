@@ -22,15 +22,17 @@
 
 #ifdef _WIN32
 
-//FileIO_PLOT3D_fortran_read.f90
-#define read_ngrid_data_                      READ_NGIRD_DATA_
+// PLT3D_read.f90
+#define read_ngrid_data_                      READ_NGIRD_DATA
 #define read_ngrid_data_formatted_            READ_NGIRD_DATA_FORMATTED
-#define read_block_data_                      READ_BLOCK_DATA_
+#define read_block_data_                      READ_BLOCK_DATA
 #define read_block_data_formatted_            READ_BLOCK_DATA_FORMATTED
 #define read_block_data_2d_                   READ_BLOCK_DATA_2D
 #define read_block_data_2d_formatted_         READ_BLOCK_DATA_2D_FORMATTED
-#define read_func_block_data_                 READ_FUNC_BLOCK_DATA_
+#define read_func_block_data_                 READ_FUNC_BLOCK_DATA
 #define read_func_block_data_formatted_       READ_FUNC_BLOCK_DATA_FORMATTED
+#define read_func_block_data_2d_              READ_FUNC_BLOCK_DATA_2D
+#define read_func_block_data_2d_formatted_    READ_FUNC_BLOCK_DATA_2D_FORMATTED
 #define read_xyz_3d_                          READ_XYZ_3D
 #define read_xyz_3d_formatted_                READ_XYZ_3D_FORMATTED
 #define read_xyz_3d_iblank_                   READ_XYZ_3D_IBLANK
@@ -65,7 +67,7 @@
 
 extern "C" {
 
-//FileIO_PLOT3D_fortran_read.f90
+// PLT3D_read.f90
   void read_ngrid_data_ (int* ngrid, int* ifl);
   void read_ngrid_data_formatted_  (int* ngrid, int* ifl);
   void read_block_data_ (
@@ -77,9 +79,13 @@ extern "C" {
   void read_block_data_2d_formatted_  (
       int* id, int* jd, int* ifl);
   void read_func_block_data_ (
-      int* id, int* jd, int* kd, int* nvar, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, int* ngrid, int* ifl);
   void read_func_block_data_formatted_  (
-      int* id, int* jd, int* kd, int* nvar, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, int* ngrid, int* ifl);
+  void read_func_block_data_2d_ (
+      int* id, int* jd, int* nvar, int* ngrid, int* ifl);
+  void read_func_block_data_2d_formatted_  (
+      int* id, int* jd, int* nvar, int* ngrid, int* ifl);
   void read_xyz_3d_ (
       int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
   void read_xyz_3d_formatted_ (
@@ -136,7 +142,6 @@ extern "C" {
       int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
   void dread_func_2d_formatted_ (
       int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
-
 }
 
 using namespace std;
@@ -224,7 +229,7 @@ public:
   /**
    * @brief 計算結果Functionファイル、ブロックデータの読み込み
    */
-  void ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar);
+  void ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar, int ngrid);
 
   /**
    * @brief グリッド座標ファイルの読み込み

@@ -28,8 +28,6 @@ bool FileIO_PLOT3D_WRITE::OpenFile()
   strcpy(tmp, fname.c_str());
 
   int len = strlen(tmp);
-  //len++;
-  //std::cout << "len = " << len << std::endl;
 
   //open file
   int flag=P3Op.Format;
@@ -101,18 +99,35 @@ void FileIO_PLOT3D_WRITE::WriteBlockData2D(int id, int jd)
 /**
  * @brief 計算結果Functionファイル、ブロックデータの書き出し
  */
-void FileIO_PLOT3D_WRITE::WriteFuncBlockData(int id, int jd, int kd, int nvar)
+void FileIO_PLOT3D_WRITE::WriteFuncBlockData(int* id, int* jd, int* kd, int* nvar, int ngrid)
 {
-  switch (P3Op.Format) {
-    case UNFORMATTED:
-      write_func_block_data_(&id, &jd, &kd, &nvar, &ifl);
-      break;
-    case FORMATTED:
-      write_func_block_data_formatted_(&id, &jd, &kd, &nvar, &ifl);
-      break;
-    case UNFORMATTED_SPECIAL:
-      break;
-    default:
+  switch (P3Op.DimIs) {
+    case DIMENSION_2D:
+      switch (P3Op.Format) {
+        case UNFORMATTED:
+          write_func_block_data_2d_(id, jd, nvar, &ngrid, &ifl);
+          break;
+        case FORMATTED:
+          write_func_block_data_2d_formatted_(id, jd, nvar, &ngrid, &ifl);
+          break;
+        case UNFORMATTED_SPECIAL:
+          break;
+        default:
+          break;
+      }
+    case DIMENSION_3D:
+      switch (P3Op.Format) {
+        case UNFORMATTED:
+          write_func_block_data_(id, jd, kd, nvar, &ngrid, &ifl);
+          break;
+        case FORMATTED:
+          write_func_block_data_formatted_(id, jd, kd, nvar, &ngrid, &ifl);
+          break;
+        case UNFORMATTED_SPECIAL:
+          break;
+        default:
+          break;
+      }
       break;
   }
 }
@@ -417,18 +432,11 @@ void FileIO_PLOT3D_WRITE::WriteFunctionName(const char* fn)
 {
   funcname=fn;
 
-  //int len1 = strlen(fn);
-  //std::cout << "fn len = " << len1 << std::endl;
-  //int len2 = strlen(funcname.c_str());
-  //std::cout << "fincname len = " << len2 << std::endl;
-
   char tmp[FB_BUFF_LENGTH];
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, funcname.c_str());
 
   int len = strlen(tmp);
-  //std::cout << "tmp len = " << len << std::endl;
-  //len++;
   write_line_(tmp,&ifl,&len);
 }
 
@@ -455,7 +463,6 @@ void FileIO_PLOT3D_WRITE::WriteFVBND(
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, buff.c_str());
   len = strlen(tmp);
-  //len++;
   write_line_(tmp,&ifl,&len);
 
 //write boundary name
@@ -463,7 +470,6 @@ void FileIO_PLOT3D_WRITE::WriteFVBND(
     buff=boundary_name[i];
     strcpy(tmp, buff.c_str());
     len = strlen(tmp);
-    //len++;
     write_line_(tmp,&ifl,&len);
   }
 
@@ -478,11 +484,7 @@ void FileIO_PLOT3D_WRITE::WriteFVBND(
     memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
     strcpy(tmp, buff.c_str());
     len = strlen(tmp);
-    //len++;
     write_fvbnd_boundary_(
       &type[i],&gridnum[i],&Imin[i],&Imax[i],&Jmin[i],&Jmax[i],&Kmin[i],&Kmax[i],tmp,&dir[i],&ifl);
   }
 }
-
-
-

@@ -112,11 +112,11 @@ CompoFraction.o: vec3f_func.h
 dfi.o: dfi.h FB_Define.h mydebug.h util_Path.h
 DataHolder.o: DataHolder.h FB_Define.h mydebug.h TPControl.h DomainInfo.h
 Monitor.o: Monitor.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
-Monitor.o: vec3f_func.h MonCompo.h basic_func.h FBUtility.h Component.h
-Monitor.o: Sampling.h TPControl.h Control.h Medium.h BndOuter.h
+Monitor.o: vec3f_func.h MonCompo.h basic_func.h Component.h Sampling.h
+Monitor.o: FBUtility.h TPControl.h Control.h Medium.h BndOuter.h
 Monitor.o: Interval_Mngr.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
 MonCompo.o: MonCompo.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
-MonCompo.o: vec3f_func.h basic_func.h FBUtility.h Component.h Sampling.h
+MonCompo.o: vec3f_func.h basic_func.h Component.h Sampling.h FBUtility.h
 Sampling.o: Sampling.h FB_Define.h mydebug.h FBUtility.h vec3.h vec3_func.h
 Sampling.o: vec3f_func.h basic_func.h
 PLOT3D.o: PLOT3D.h DomainInfo.h FB_Define.h mydebug.h FB_Ffunc.h

@@ -71,12 +71,16 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
   
-  if( cpm_Base::RealIsDouble() ){
+
+  if( sizeof(REAL_TYPE) == 8 )
+  {
     if( MPI_Allreduce(sendBuf, array, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
   }
-  else{
+  else
+  {
     if( MPI_Allreduce(sendBuf, array, n, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
   }
+  
   return true;
 }
 
@@ -100,7 +104,7 @@ bool MonitorCompo::allReduceSum(int* array, int n, int* sendBuf)
   if ( numProc <= 1 ) return true;
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  if( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;  // @todo unsigned long 
+  if ( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
   return true;
 }
 
@@ -234,13 +238,15 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
   int np = num_process;
   if ( numProc <= 1 ) return;
   
-  if (myRank == 0 && !sRecvBuf) {
+  if (myRank == 0 && !sRecvBuf)
+  {
     if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) Exit(0);
   }
   
   if ( numProc > 1 ) 
   {
-    if( cpm_Base::RealIsDouble() ){
+    if ( sizeof(REAL_TYPE) == 8 )
+    {
       if( MPI_Gather(s, nPoint, MPI_DOUBLE, sRecvBuf, nPoint, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
     }
     else
@@ -296,7 +302,7 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
   }
   
   if ( numProc > 1 ){
-    if( cpm_Base::RealIsDouble() )
+    if ( sizeof(REAL_TYPE) == 8 )
     {
       if( MPI_Gather(vSendBuf, nPoint*3, MPI_DOUBLE, vRecvBuf, nPoint*3, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
     }
@@ -886,7 +892,7 @@ void MonitorCompo::setRankArray()
   // gather max rank number
   if ( numProc > 1 ) 
   {
-    if( MPI_Allreduce(sendBuf, rank, nPoint, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    if ( MPI_Allreduce(sendBuf, rank, nPoint, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
   }
   else 
   {

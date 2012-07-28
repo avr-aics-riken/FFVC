@@ -64,7 +64,7 @@
 
 #ifdef _WIN32
 
-//FileIO_PLOT3D_fortran.f90
+// PLT3D.f90
 #define open_plot3d_file_       OPEN_PLOT3D_FILE
 #define open_plot3d_outputfile_ OPEN_PLOT3D_OUTPUTFILE
 #define open_plot3d_inputfile_  OPEN_PLOT3D_INPUTFILE
@@ -79,7 +79,7 @@
 
 extern "C" {
 
-//FileIO_PLOT3D_fortran.f90
+// PLT3D.f90
   void open_plot3d_file_ (int* iflag, char* fname, int* ifl, int* fnsize, int* ierror);
   void open_plot3d_outputfile_ (int* iflag, char* fname, int* ifl, int* fnsize, int* ierror);
   void open_plot3d_inputfile_ (int* iflag, char* fname, int* ifl, int* fnsize, int* ierror);

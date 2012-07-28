@@ -678,6 +678,7 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
     {
+      //初期値設定がまだ？すべて0になってるので出力停止?--->あとで調査
       OutputPlot3D_post(flop_task);
     }
     else if(C.FIO.IO_Format == FILE_FMT_SPH)

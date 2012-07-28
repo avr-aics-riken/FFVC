@@ -17,46 +17,46 @@
 #include "ffv.h"
 
 
-// 
+//
 void FFV::setValuePlot3D()
 {
-//set ngrid
+  //set ngrid
   C.P3Op.ngrid=1;
-
-//set nvar
+  
+  //set nvar
   int nvar=4;//pressure + velocity(3)
   if( C.isHeatProblem() ) nvar++;
   if (C.Mode.TP == ON ) nvar++;
   if (C.Mode.VRT == ON ) nvar++;
   //if (C.Mode.I2VGT == ON ) nvar++;
-  if (C.Mode.Helicity == ON ) nvar++; 
+  if (C.Mode.Helicity == ON ) nvar++;
   C.P3Op.nvar=nvar;
-
+  
 }
 
-// 
-void FFV::OutputPlot3D_xyz()
+//
+void FFV::OutputPlot3D_xyz(const bool restart)
 {
-//value
+  //value
   int igrid;
   int ngrid;
   int *id,*jd,*kd;
   REAL_TYPE *x,*y,*z;
   int *iblank;
-
-//set grid data
+  
+  //allocate
   ngrid=C.P3Op.ngrid;
   id = new int[ngrid];
   jd = new int[ngrid];
   kd = new int[ngrid];
-
+  
   //igrid=0
   igrid=0;
   id[igrid]=size[0];
   jd[igrid]=size[1];
   kd[igrid]=size[2];
-
-//set options
+  
+  //set options
   //if(!FP3DW.setMoveGrid(0)) std::cout << "error setMoveGrid" << std::endl;
   //if(!FP3DW.setSteady(1)) std::cout << "error setSteady" << std::endl;
   //if(!FP3DW.setIBlankFlag(0)) std::cout << "error setIBlankFlag" << std::endl;
@@ -64,32 +64,32 @@ void FFV::OutputPlot3D_xyz()
   //FP3DW.setDimension3D();//default set 3D
   //FP3DW.setSingleGrid();//
   //FP3DW.setFilePortNumver(20);//default = 31
-
-//set filename
-
-  // 
+  
+  //set filename
+  
+  //
   std::string tmp;
   
-  // 
+  //
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
-
+  
   tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "xyz", 0, myRank, pout);
-
-//open file
+  
+  //open file
   FP3DW.setFileName(tmp.c_str());
   if(!FP3DW.OpenFile()){
     Hostonly_ printf("Error : error OpenFile\n");
     Exit(0);
   }
-
-//write block data
+  
+  //write block data
   FP3DW.WriteNgrid(ngrid);//if multi grid
   for(igrid=0;igrid<ngrid;igrid++){
     FP3DW.WriteBlockData(id[igrid],jd[igrid],kd[igrid]);
   }
-
+  
   //write xyz and iblank data
-
+  
   igrid=0;//igrid=0
   x = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid] ];
   y = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid] ];
@@ -104,7 +104,7 @@ void FFV::OutputPlot3D_xyz()
       }
     }
   }
-
+  
   if(FP3DW.IsIBlankFlag()){
     iblank = new int[ id[igrid]*jd[igrid]*kd[igrid] ];
     for(int k=0;k<kd[igrid];k++){
@@ -119,7 +119,7 @@ void FFV::OutputPlot3D_xyz()
     //iblank[ 0*id[igrid]*jd[igrid]+1*id[igrid]+0 ]=0;
     //iblank[ 0*id[igrid]*jd[igrid]+2*id[igrid]+0 ]=0;
   }
-
+  
   FP3DW.setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
   FP3DW.setXYZData(x,y,z,iblank);
   if(!FP3DW.WriteXYZData()) std::cout << "error WriteXYZData" << std::endl;
@@ -129,32 +129,32 @@ void FFV::OutputPlot3D_xyz()
   if(FP3DW.IsIBlankFlag()){
     delete [] iblank;
   }
-
-//close file
+  
+  //close file
   FP3DW.CloseFile();
-
+  
 }
 
-// 
+//
 void FFV::OutputPlot3D_post(double& flop, const bool restart)
 {
 	if(C.P3Op.IS_q == ON) OutputPlot3D_q(flop, restart);
-	if(C.P3Op.IS_funciton == ON) OutputPlot3D_function(flop, restart); 
-	//if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name(); 
+	if(C.P3Op.IS_funciton == ON) OutputPlot3D_function(flop, restart);
+	//if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name();
 	//if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
 }
 
-// 
+//
 void FFV::OutputPlot3D_q(double& flop, const bool restart)
 {
-
+  
 }
 
 
-// 
+//
 void FFV::OutputPlot3D_function(double& flop, const bool restart)
 {
-//value
+  //value
   int igrid;
   int ngrid;
   int *id,*jd,*kd;
@@ -163,111 +163,111 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   REAL_TYPE *d1;
   REAL_TYPE *d2;
   REAL_TYPE *d3;
-
-//
+  
+  //
   REAL_TYPE scale = 1.0;
   int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
-  //// 
+  ////
   //REAL_TYPE m_org[3], m_pit[3];
   //
-  ////  
-  //for (int i=0; i<3; i++) 
+  ////
+  //for (int i=0; i<3; i++)
   //{
   //  m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
   //  m_pit[i] = pitch[i];
   //}
   //
-  //// 
-  //if ( C.Unit.File == DIMENSIONAL ) 
+  ////
+  //if ( C.Unit.File == DIMENSIONAL )
   //{
-  //  for (int i=0; i<3; i++) 
+  //  for (int i=0; i<3; i++)
   //  {
   //    m_org[i] *= C.RefLength;
   //    m_pit[i] *= C.RefLength;
   //  }
   //}
   
-  // 
+  //
   int m_step = (int)CurrentStep;
   
-  // 
+  //
   REAL_TYPE m_time;
-  if (C.Unit.File == DIMENSIONAL) 
+  if (C.Unit.File == DIMENSIONAL)
   {
     m_time = (REAL_TYPE)CurrentTime * C.Tscale;
   }
-  else 
+  else
   {
     m_time = (REAL_TYPE)CurrentTime;
   }
-
-  // 
+  
+  //
   int gc_out = C.GuideOut;
-
-//set grid data
+  
+  //set grid data
   ngrid=C.P3Op.ngrid;
   id = new int[ngrid];
   jd = new int[ngrid];
   kd = new int[ngrid];
-
+  
   //igrid=0
   igrid=0;
   id[igrid]=size[0];//
   jd[igrid]=size[1];
   kd[igrid]=size[2];
-
-//set nvar : 
+  
+  //set nvar :
   nvar=C.P3Op.nvar;
-
-//set filename
-
-  // 
+  
+  //set filename
+  
+  //
   std::string tmp;
   std::string buff;
   buff=C.P3Op.basename+"_func";
-
-  // 
+  
+  //
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
-
+  
   tmp = DFI.Generate_FileName_Free(buff, "func", m_step, myRank, pout);
-  if ( restart ) tmp = "restart_" + tmp; // 
-
-//open file
+  if ( restart ) tmp = "restart_" + tmp; //
+  
+  //open file
   FP3DW.setFileName(tmp.c_str());
   if(!FP3DW.OpenFile()){
     std::cout << "error OpenFile" << std::endl;
     Exit(0);
   }
-
-//write block data
+  
+  //write block data
   FP3DW.WriteNgrid(ngrid);//if multi grid
   for(igrid=0;igrid<ngrid;igrid++){
-    FP3DW.WriteFuncBlockData(id[igrid],jd[igrid],kd[igrid],nvar);
+    //FP3DW.WriteFuncBlockData(id[igrid],jd[igrid],kd[igrid],nvar); bug
   }
   
-
-//write function data
-
+  
+  //write function data
+  
   //nvar
-
+  
   igrid=0;
-
+  
   ////d = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid]*nvar ];
   //d = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid] ];
   d1 = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid] ];
   d2 = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid] ];
   d3 = new REAL_TYPE[ id[igrid]*jd[igrid]*kd[igrid] ];
-
+  
   FP3DW.setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
-
+  
   // Pressure
-  if (C.Unit.File == DIMENSIONAL) 
+  if (C.Unit.File == DIMENSIONAL)
   {
     REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
     fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
   }
-  else 
+  else
   {
     fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
   }
@@ -284,7 +284,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   }
   FP3DW.setFuncData(1,d1);
   if(!FP3DW.WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
-
+  
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
@@ -307,20 +307,20 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   if(!FP3DW.WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   FP3DW.setFuncData(1,d3);
   if(!FP3DW.WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
-
+  
   // Tempearture
   if( C.isHeatProblem() )
   {
-    if (C.Unit.File == DIMENSIONAL) 
+    if (C.Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
       fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
     }
-    else 
+    else
     {
       fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
     }
-
+    
     for(int k=0;k<kd[igrid];k++){
       for(int j=0;j<jd[igrid];j++){
         for(int i=0;i<id[igrid];i++){
@@ -333,22 +333,22 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     FP3DW.setFuncData(1,d1);
     if(!FP3DW.WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   }
-
+  
   // Total Pressure
   if (C.Mode.TP == ON ) {
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) 
+    if (C.Unit.File == DIMENSIONAL)
     {
       F.cnv_TP_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, flop);
     }
-    else 
+    else
     {
       REAL_TYPE* tp;
       tp = d_ws; d_ws = d_p0; d_p0 = tp;
     }
-
+    
     for(int k=0;k<kd[igrid];k++){
       for(int j=0;j<jd[igrid];j++){
         for(int i=0;i<id[igrid];i++){
@@ -363,7 +363,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   }
   
   // Vorticity
-  if (C.Mode.VRT == ON ) 
+  if (C.Mode.VRT == ON )
   {
     rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
@@ -371,7 +371,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
-
+    
     for(int k=0;k<kd[igrid];k++){
       for(int j=0;j<jd[igrid];j++){
         for(int i=0;i<id[igrid];i++){
@@ -396,14 +396,14 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   //}
   
   // Helicity
-  if (C.Mode.Helicity == ON ) 
+  if (C.Mode.Helicity == ON )
   {
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
-
-    // 
+    
+    //
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
-
+    
     for(int k=0;k<kd[igrid];k++){
       for(int j=0;j<jd[igrid];j++){
         for(int i=0;i<id[igrid];i++){
@@ -416,28 +416,28 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     FP3DW.setFuncData(1,d1);
     if(!FP3DW.WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   }
-
+  
   delete [] d1;
   delete [] d2;
   delete [] d3;
-
-//close file
+  
+  //close file
   FP3DW.CloseFile();
-
-//deallocate
+  
+  //deallocate
   delete [] id;
   delete [] jd;
   delete [] kd;
-
+  
 }
 
-// 
+//
 void FFV::OutputPlot3D_function_name()
 {
-//HostRank
+  //HostRank
   //if(myRank != 0 ) return;
-
-//set options
+  
+  //set options
   //if(!FP3DW.setMoveGrid(0)) std::cout << "error setMoveGrid" << std::endl;
   //if(!FP3DW.setSteady(1)) std::cout << "error setSteady" << std::endl;
   //if(!FP3DW.setIBlankFlag(0)) std::cout << "error setIBlankFlag" << std::endl;
@@ -445,34 +445,34 @@ void FFV::OutputPlot3D_function_name()
   //FP3DW.setDimension3D();//default set 3D
   //FP3DW.setSingleGrid();//
   //FP3DW.setFilePortNumver(20);//default = 31
-
+  
   int keep_format=FP3DW.GetFormat();
-
+  
   //function_name
   if(!FP3DW.setFormat(2)) std::cout << "error set" << std::endl;
-
-//set filename
-
-  // 
+  
+  //set filename
+  
+  //
   std::string tmp;
   std::string buff;
   buff=C.P3Op.basename+"_funcname";
-
-  // 
+  
+  //
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
-
+  
   tmp = DFI.Generate_FileName_Free(buff, "nam", 0, myRank, pout);
-
-//open file
+  
+  //open file
   FP3DW.setFileName(tmp.c_str());
   if(!FP3DW.OpenFile()){
     Hostonly_ printf("Error : error OpenFile\n");
     Exit(0);
   }
-
+  
   // Pressure
   FP3DW.WriteFunctionName("Pressure");
-
+  
   // Velocity
   FP3DW.WriteFunctionName("U-Velocity ; Velocity");
   FP3DW.WriteFunctionName("V-Velocity");
@@ -523,7 +523,7 @@ void FFV::OutputPlot3D_fvbnd()
 
   int keep_format=FP3DW.GetFormat();
 
-  //fvbndファイルはかならずformatted形式
+  //fvbnd
   if(!FP3DW.setFormat(2)) std::cout << "error set" << std::endl;
 
 //set filename

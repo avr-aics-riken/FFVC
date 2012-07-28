@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file PLOT3D.C
- * @brief FlowBase FileIO_PLOT3D class Header
+ * @file   PLOT3D.C
+ * @brief  FlowBase FileIO_PLOT3D class Header
  * @author kero
  */
 
@@ -199,7 +199,6 @@ bool FileIO_PLOT3D::OpenFile()
   strcpy(tmp, fname.c_str());
 
   int len = strlen(tmp);
-  //std::cout << "len = " << len << std::endl;
 
   //open file
   int flag=P3Op.Format;

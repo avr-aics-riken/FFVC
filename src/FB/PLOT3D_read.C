@@ -28,7 +28,6 @@ bool FileIO_PLOT3D_READ::OpenFile()
   strcpy(tmp, fname.c_str());
 
   int len = strlen(tmp);
-  //std::cout << "len = " << len << std::endl;
 
   //open file
   int flag=P3Op.Format;
@@ -109,18 +108,35 @@ void FileIO_PLOT3D_READ::ReadBlockData2D(int* id, int* jd)
 /**
  * @brief 計算結果Functionファイル、ブロックデータの読み込み
  */
-void FileIO_PLOT3D_READ::ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar)
+void FileIO_PLOT3D_READ::ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar, int ngrid)
 {
-  switch (P3Op.Format) {
-    case UNFORMATTED:
-      read_func_block_data_(id, jd, kd, nvar, &ifl);
-      break;
-    case FORMATTED:
-      read_func_block_data_formatted_(id, jd, kd, nvar, &ifl);
-      break;
-    case UNFORMATTED_SPECIAL:
-      break;
-    default:
+  switch (P3Op.DimIs) {
+    case DIMENSION_2D:
+      switch (P3Op.Format) {
+        case UNFORMATTED:
+          read_func_block_data_2d_(id, jd, nvar, &ngrid, &ifl);
+          break;
+        case FORMATTED:
+          read_func_block_data_2d_formatted_(id, jd, nvar, &ngrid, &ifl);
+          break;
+        case UNFORMATTED_SPECIAL:
+          break;
+        default:
+          break;
+      }
+    case DIMENSION_3D:
+      switch (P3Op.Format) {
+        case UNFORMATTED:
+          read_func_block_data_(id, jd, kd, nvar, &ngrid, &ifl);
+          break;
+        case FORMATTED:
+          read_func_block_data_formatted_(id, jd, kd, nvar, &ngrid, &ifl);
+          break;
+        case UNFORMATTED_SPECIAL:
+          break;
+        default:
+          break;
+      }
       break;
   }
 }
@@ -500,7 +516,3 @@ void FileIO_PLOT3D_READ::ReadFVBND(
   }
 
 }
-
-
-
-

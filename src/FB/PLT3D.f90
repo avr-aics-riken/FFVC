@@ -24,14 +24,6 @@
     integer :: iflag,ifl,fnsize,ierror
     character(fnsize) :: fname
     
-!    write(*,*) ""
-!    write(*,*) "*** open_plot3d_outputfile ***"
-!    write(*,*) "iflag  = ",iflag
-!    write(*,*) "fname  = ",fname
-!    write(*,*) "ifl    = ",ifl
-!    write(*,*) "fnsize = ",fnsize
-!    write(*,*) ""
-    
     if(iflag.eq.1) then !UNFORMATTED
        open(unit=ifl, err=10, file=fname, status='new', access='sequential', form='unformatted')
     else if(iflag.eq.2) then !FORMATTED
@@ -58,14 +50,6 @@
     integer :: iflag,ifl,fnsize,ierror
     character(fnsize) :: fname
     
-!    write(*,*) ""
-!    write(*,*) "*** open_plot3d_outputfile ***"
-!    write(*,*) "iflag  = ",iflag
-!    write(*,*) "fname  = ",fname
-!    write(*,*) "ifl    = ",ifl
-!    write(*,*) "fnsize = ",fnsize
-!    write(*,*) ""
-    
     if(iflag.eq.1) then !UNFORMATTED
        open(unit=ifl, err=10, file=fname, status='unknown', access='sequential', form='unformatted')
     else if(iflag.eq.2) then !FORMATTED
@@ -91,14 +75,6 @@
     implicit none
     integer :: iflag,ifl,fnsize,ierror
     character(fnsize) :: fname
-    
-!    write(*,*) ""
-!    write(*,*) "*** open_plot3d_inputfile ***"
-!    write(*,*) "iflag  = ",iflag
-!    write(*,*) "fname  = ",fname
-!    write(*,*) "ifl    = ",ifl
-!    write(*,*) "fnsize = ",fnsize
-!    write(*,*) ""
     
     if(iflag.eq.1) then !UNFORMATTED
        open(unit=ifl, err=10, file=fname, status='old', access='sequential', form='unformatted')
