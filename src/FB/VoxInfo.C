@@ -5500,42 +5500,41 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
 
 
 // ボクセルモデルにカット情報から得られた固体情報を転写する
-unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
+unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut)
 {
   unsigned long c=0;
-  int q;
-  size_t mp, m;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  int m_id= id;
   
-  float eps = 0.5f;  // 閾値
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, m_id, eps) private(q, m, mp) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
+
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[m];
+        int bx = 0;
         
-        mp= _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
-        //m = FBUtility::getFindexS3Dcut(sz, gd, 0, i, j, k);
-        m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        q = 0;
-        
-        // セル内に交点があれば，壁
-        if ( cut[m+0] < eps ) q++;
-        if ( cut[m+1] < eps ) q++;
-        if ( cut[m+2] < eps ) q++;
-        if ( cut[m+3] < eps ) q++;
-        if ( cut[m+4] < eps ) q++;
-        if ( cut[m+5] < eps ) q++;
-        
-        if ( q > 0 ) {
-          mid[mp] = m_id;
-          c++;
+        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        {
+          size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+          const float* pos = &cut[mp];
+          
+          // 6方向のカット面のIDのうち最大のものを使う
+          for (int l=0; l<6; l++) {
+            if ( pos[l] < 0.5 ) // セル内部のときのみ
+            {
+              bx = (bd >> l*5)  & MASK_5; // 面のID，カットがなければゼロ
+              mid[m] = max( mid[m], bx );
+              if ( bx == 0 ) Exit(0); // 交点があるのに，IDがない
+              c++;
+            }
+          }
         }
+        
       }
     }
   }
@@ -5543,7 +5542,8 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const float* cut, const int id)
   // Allreduce時の桁あふれ対策のため、unsigned long で集約
   unsigned long cl = c;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = cl;
     if ( paraMngr->Allreduce(&tmp, &cl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }

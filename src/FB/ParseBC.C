@@ -2350,7 +2350,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
   // Basic Outer BCリストの読み込み
   label_base = "/BC_Table/OuterBoundary";
   
-  if ( !tpCntl->chkNode(label_base) ) {
+  if ( !tpCntl->chkNode(label_base) )
+  {
     Hostonly_ stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
     Exit(0);
   }
@@ -2358,7 +2359,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
   //Basic_BCs
   for (int i=0; i<NoBaseBC; i++) {
     
-    if(!tpCntl->GetNodeStr(label_base, i+1, &str)){
+    if(!tpCntl->GetNodeStr(label_base, i+1, &str))
+    {
       Hostonly_ printf("\tParsing error : Missing 'Basic_BCs'\n");
       Exit(0);
     }
@@ -2368,11 +2370,13 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
     label_leaf = label_base + "/" + str;
     label = label_leaf + "/alias";
     
-    if ( !(tpCntl->GetValue(label, &str )) ) {
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
       Hostonly_ printf("\tParsing error : No 'Alias' in 'Basic_BCs'\n");
       Exit(0);
     }
-    if ( !chkDuplicate(i, str) ) {
+    if ( !chkDuplicate(i, str) )
+    {
       Hostonly_ printf("\tParsing error : 'Alias' must be unique\n");
       Exit(0);
     }
@@ -2382,7 +2386,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
     // Classに境界条件の種別をセットする
     label = label_leaf + "/class";
     
-    if ( !(tpCntl->GetValue(label, &str )) ) {
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
       Hostonly_ printf("\tParsing error : No 'Class' in 'Basic_BCs'\n");
       Exit(0);
     }
@@ -2392,7 +2397,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
 
     
     // 各条件に応じたパラメータをロード
-    switch ( BaseBc[i].get_Class() ) {
+    switch ( BaseBc[i].get_Class() )
+    {
       case OBC_WALL:
         get_OBC_Wall(label_leaf, i);
         break;
@@ -2484,7 +2490,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
   
   for (int face=0; face<NOFACE; face++) {
     
-    if(!tpCntl->GetNodeStr(label_base, face+1, &str))
+    if (!tpCntl->GetNodeStr(label_base, face+1, &str))
     {
       Hostonly_ printf("\tGetNodeStr error\n");
       Exit(0);
@@ -2500,6 +2506,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
       Exit(0);
     }
     
+    // ラベル名が一致するエントリ番号をセットする
     for (int i=1; i<=NoMedium; i++) {
       if( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
       {

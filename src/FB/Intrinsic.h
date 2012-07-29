@@ -133,6 +133,13 @@ public:
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
   
   
+  /**
+   * @brief モデルIDをsphフォーマット(float)で出力する
+   * @param [in] mid ID情報
+   * @param [in] R   コントロールクラスのポインタ
+   */
+  void writeSPH(const int *mid, const Control* R);
+  
   
   /**
    * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)

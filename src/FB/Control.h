@@ -26,7 +26,6 @@
 #include "Medium.h"
 #include "Component.h"
 #include "FBUtility.h"
-//#include "Monitor.h"
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
 #include "TPControl.h"
@@ -976,6 +975,13 @@ public:
   
   
   /**
+   * @brief モデルの形状情報
+   * @param [in] MTITP 媒質情報テーブル
+   */
+  void get_Geometry(const MediumTableInfo *MTITP);
+  
+  
+  /**
    * @brief 外部境界の各方向の開口率（流体部分の比率）
    * @retval 開口率
    * @param [in] dir    方向
@@ -1141,12 +1147,6 @@ public:
   void importTP(TPControl* tp);
   
   void get_Para_Init();
-  
-  
-  /**
-   * @brief ポリゴン情報
-   */
-  void get_Polygon();
   
   
   /**  モニタリングのON/OFFとセルモニタの有無のみを取得  */

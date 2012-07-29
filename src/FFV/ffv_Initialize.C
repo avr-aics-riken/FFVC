@@ -170,7 +170,7 @@ int FFV::Initialize(int argc, char **argv)
   C.importTP(&tpCntl);
   B.importTP(&tpCntl);
   M.importTP(&tpCntl);
-  MO.importTP(&tpCntl);//Monitorクラスは2回目のみ
+  MO.importTP(&tpCntl);//Monitorクラスは2回目以降
   
   // パラメータを取得
   C.get_Steer_2(IC, &RF);
@@ -251,9 +251,25 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start(tm_voxel_prep_sct);
   
   
+  
   // 各問題に応じてモデルを設定
   setModel(PrepMemory, TotalMemory, fp);
   
+  // 一度、テキストパーサーのDBを破棄 >> Polylibが利用したもの
+  if (tpCntl.remove() != TP_NO_ERROR )
+  {
+    Hostonly_ printf("Error : delete textparser\n");
+    Exit(0);
+  }
+  
+  // 　再度、入力ファイルをオープン
+  ierror = tpCntl.readTPfile(input_file);
+  
+  // TPControlクラスのポインタを各クラスに渡す(3回目)
+  C.importTP(&tpCntl);
+  B.importTP(&tpCntl);
+  M.importTP(&tpCntl);
+  MO.importTP(&tpCntl);
   
   
   // 領域情報の表示
@@ -355,7 +371,6 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // ボクセルモデルの媒質インデクスがパラメータファイルに記述された媒質インデクスに含まれていること
-	
   if ( !V.chkIDconsistency(C.NoMedium) )
   {
     Hostonly_
@@ -617,7 +632,7 @@ int FFV::Initialize(int argc, char **argv)
     }
     
     // 性能測定モードがオフのときのみ出力
-    if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(d_mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
+    if ( C.Hide.PM_Test == OFF ) Ex->writeSPH(d_mid, &C);
   }
   
   
@@ -1751,7 +1766,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
   else if( FBUtility::compare(keyword, "Rectangular") )       Cref->Mode.Example = id_Rect;
   else if( FBUtility::compare(keyword, "Cylinder") )          Cref->Mode.Example = id_Cylinder;
   else if( FBUtility::compare(keyword, "Back_Step") )         Cref->Mode.Example = id_Step;
-  else if( FBUtility::compare(keyword, "Polygon") )           Cref->Mode.Example = id_Polygon;
+  else if( FBUtility::compare(keyword, "Users") )             Cref->Mode.Example = id_Polygon;
   else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
   else
   {
@@ -1831,39 +1846,32 @@ void FFV::min_distance(float* cut, FILE* fp)
   int kx = size[2];
   int gd = guide;
   
-#pragma omp parallel firstprivate(ix, jx, kx, eps, gd)
-  {
-    global_min = 1.0;
-    local_min  = 1.0;
-    
-#pragma omp for schedule(static) reduction(+:g)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
+  local_min  = 1.0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, eps, gd) schedule(static) reduction(+:g) reduction(min:local_min)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        for (int l=0; l<6; l++) {
+          size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
+          float c = cut[m];
           
-          for (int l=0; l<6; l++) {
-            size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
-            float c = cut[m];
-            
-            if ( local_min > c ) local_min = c;
-            
-            if ( (c > 0.0) && (c <= eps) )
-            {
-              cut[m] = eps;
-              g++;
-            }
+          local_min = min(local_min, c);
+          //if ( local_min > c ) local_min = c;
+          
+          if ( (c > 0.0) && (c <= eps) )
+          {
+            cut[m] = eps;
+            g++;
           }
-          
         }
+        
       }
     }
+  }
     
-#pragma omp critical
-    {
-      if ( local_min < global_min ) global_min = local_min;
-    }
-  } // end omp parallel
-  
+  global_min = local_min;
   
   // Allreduce時の桁あふれ対策のため、unsigned long で集約
   unsigned long gl = (unsigned long)g;
@@ -2798,31 +2806,40 @@ void FFV::setParameters()
 // 各種例題のモデルをセット
 void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
+  // d_midをゼロで初期化
+  size_t mt = (size[0]+2*guide) * (size[1]+2*guide) *(size[2]+2*guide) * sizeof(int);
+  memset(d_mid, 0, mt);
   
-  switch (C.Mode.Example) {
+  
+  switch (C.Mode.Example)
+  {
+    case id_Polygon: // ユーザ例題
       
-    case id_Polygon:
+      C.get_Geometry( M.export_MTI() );
       
-      C.get_Polygon();
       
       // PolylibとCutlibのセットアップ
-      //setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
+      setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
       
       
-      if ( !C.isCDS() ) {
-        unsigned long zc = V.Solid_from_Cut(d_mid, d_cut, id_of_solid);
-        Hostonly_ printf("\tGenerated Solid cell from cut = %ld\n", zc);
+      if ( !C.isCDS() ) // binary
+      {
+        unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut);
+        Hostonly_
+        {
+          printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
+          fprintf(fp,"\tGenerated Solid cell from cut = %ld\n", zc);
+        }
       }
       break;
       
     case id_Sphere:
-      if ( !C.isCDS() ) {
+      if ( !C.isCDS() )
+      {
         Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
       }
-      else {
+      else
+      {
         // cutをアロケートし，初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
         Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
@@ -2830,7 +2847,8 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       break;
       
     default: // ほかのIntrinsic problems
-      if ( C.isCDS() ) {
+      if ( C.isCDS() ) // カットの場合
+      {
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       }
       Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
@@ -2838,7 +2856,12 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   }
   
   // midのガイドセル同期
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  
   if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, guide, 1) != CPM_SUCCESS ) Exit(0);
+  
 }
 
 
@@ -2850,8 +2873,8 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   {
     fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp, "\t>> Cut Info\n\n");
-    fprintf(stdout, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout, "\t>> Cut Info\n\n");
+    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\t>> Cut Info\n\n");
   }
   
   size_t n_cell[3];
@@ -2863,6 +2886,7 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
   
+  // カット情報保持領域のアロケート
   TIMING_start(tm_init_alloc);
   allocArray_Cut(m_total);
   TIMING_stop(tm_init_alloc);
@@ -2885,20 +2909,17 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   }
   
   // 初期値のセット
-  for (size_t i=0; i<size_n_cell*6; i++) 
-  {
+  for (size_t i=0; i<size_n_cell*6; i++) {
     d_cut[i] = 1.0f;
+  }
+  
+  for (size_t i=0; i<size_n_cell; i++) {
+    d_bid[i] = 0;
   }
   
 }
 
-/**
- @brief 幾何形状情報を準備し，交点計算を行う
- @param [in,out] m_prep  前処理用のメモリサイズ
- @param [in,out] m_total 本計算用のメモリリサイズ
- @param [in]     fp      ファイルポインタ
- @note Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
- */
+// 幾何形状情報を準備し，交点計算を行う
 void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
   unsigned poly_gc[3];
@@ -2906,7 +2927,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   float poly_dx[3];
   poly_gc[0]  = poly_gc[1] = poly_gc[2] = (unsigned)guide;
   
-  // 有次元に変換
+  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
   poly_dx[0]  = (float)pitch[0] *C.RefLength;
   poly_dx[1]  = (float)pitch[1] *C.RefLength;
   poly_dx[2]  = (float)pitch[2] *C.RefLength;
@@ -2949,6 +2970,14 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
+  // 一度、テキストパーサーのDBを破棄 >> polylibが利用
+  if (tpCntl.remove() != TP_NO_ERROR )
+  {
+    Hostonly_ printf("Error : delete textparser\n");
+    Exit(0);
+  }
+  
+  
   // Polylib: STLデータ読み込み
   TIMING_start(tm_polygon_load);
   poly_stat = PL->load_rank0( C.PolylibConfigName );
@@ -2976,20 +3005,20 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf("\t  ID : Polygon Group\n");
-    fprintf(fp, "\t  ID : Polygon Group\n");
+    printf(     "\t  ID :     No. : Polygon Group\n");
+    fprintf(fp, "\t  ID :     No. : Polygon Group\n");
   }
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
     std::string m_pg = (*it)->get_name();
-    int m_id = (*it)->get_id();
+    int m_id = (*it)->get_internal_id(); //get_id(); ??
     Hostonly_
     {
-      printf("\t %3d : %s\n", m_id, m_pg.c_str());
-      fprintf(fp,"\t %3d : %s\n", m_id, m_pg.c_str());
+      printf(    "\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
+      fprintf(fp,"\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
     }
 #if 0
-    PL->show_group_info(m_pg); debug
+    PL->show_group_info(m_pg); //debug
 #endif
   }
   
@@ -3124,11 +3153,12 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // 使用メモリ量
   double cut_mem, G_cut_mem;
-  G_cut_mem = cut_mem = (double)size_n_cell * (6+1) * 4; // float
+  G_cut_mem = cut_mem = (double)size_n_cell * (double)(6*sizeof(float) + sizeof(int)); // float
   m_prep += cut_mem;
   m_total+= cut_mem;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     if ( paraMngr->Allreduce(&cut_mem, &G_cut_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
@@ -3138,11 +3168,6 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
   }
   
-  /* カット情報保持領域のアロケート
-  TIMING_start(tm_init_alloc);
-  allocArray_Cut(m_total);
-  TIMING_stop(tm_init_alloc);
-  */
   
   // カットとID情報をポイント
   d_cut = (float*)cutPos->getDataPointer();
@@ -3155,8 +3180,9 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   int gd = guide;
   
   unsigned z=0;
-  float d_min=1.0;
+  float f_min=1.0;
   
+  #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:z) reduction(min:f_min)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -3171,8 +3197,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
         //if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) // 6方向のうちいずれかにカットがある
         {
           for (int n=0; n<6; n++) {
-            if ( d_min > pos[n] ) d_min = pos[n];
-            // alternative: d_min = min(d_min, pos[n]);
+            f_min = min(f_min, pos[n]);
+            // alternative: if ( f_min > pos[n] ) f_min = pos[n];
           }
           z++;
           
@@ -3198,8 +3224,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   if ( numProc > 1 )
   {
-    float tmp = d_min;
-    if ( paraMngr->Allreduce(&tmp, &d_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    float tmp = f_min;
+    if ( paraMngr->Allreduce(&tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
     unsigned long tmp_g = zl;
     if ( paraMngr->Allreduce(&tmp_g, &zl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
@@ -3210,8 +3236,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf("\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", d_min, zl, (float)zl/(float)tt*100.0);
-    fprintf(fp,"\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", d_min, zl, (float)zl/(float)tt*100.0);
+    printf(    "\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", f_min, zl, (float)zl/(float)tt*100.0);
+    fprintf(fp,"\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", f_min, zl, (float)zl/(float)tt*100.0);
   }
   
   // カットの最小値
@@ -3252,8 +3278,7 @@ void FFV::VIBC_Bbox_from_Cut()
 {
   int f_st[3], f_ed[3];
   
-  for (int n=1; n<=C.NoBC; n++) 
-  {
+  for (int n=1; n<=C.NoBC; n++) {
     
     if ( cmp[n].isVBC_IO() ) // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
     {
@@ -3269,9 +3294,7 @@ void FFV::VIBC_Bbox_from_Cut()
 }
 
 
-/**
- * @brief BCIndexにビット情報をエンコードする
- */
+// BCIndexにビット情報をエンコードする
 void FFV::VoxEncode()
 {
   int ix = size[0];
@@ -3359,8 +3382,7 @@ void FFV::VoxScan(FILE* fp)
   // 外部境界面の媒質IDとその個数を取得
   int cell_id[NOFACE];
   
-  for (int i=0; i<NOFACE; i++) 
-  {
+  for (int i=0; i<NOFACE; i++) {
     cell_id[i] = BC.export_OBC(i)->get_GuideMedium();
   }
 
@@ -3370,26 +3392,27 @@ void FFV::VoxScan(FILE* fp)
   {
     fprintf(fp, "\tCell IDs on Guide cell region\n");
     
-    for ( int i=0; i<NOFACE; i++) 
-    {
+    for ( int i=0; i<NOFACE; i++) {
       fprintf(fp, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
     fprintf(stdout, "\tCell IDs on Guide cell region\n");
     
-    for ( int i=0; i<NOFACE; i++) 
-    {
+    for ( int i=0; i<NOFACE; i++) {
       fprintf(stdout, "\t\t%s = %d\n", FBUtility::getDirection(i).c_str(), cell_id[i]);
     }
   }
 #endif
 // ##########
   
-  // midにロードされたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
+  // midに設定されたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
   int sc=0;
   if ( (sc = V.scanCell(d_mid, cell_id, C.Hide.Change_ID)) != C.NoMedium ) 
   {
-    Hostonly_ stamped_printf("A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", 
-                             sc, C.NoMedium);
+    Hostonly_
+    {
+      stamped_printf(    "A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", sc, C.NoMedium);
+      stamped_fprintf(fp,"A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", sc, C.NoMedium);
+    }
     Exit(0);
   }
 }

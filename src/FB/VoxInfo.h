@@ -430,13 +430,13 @@ public:
   
   
   /**
-   @brief ボクセルモデルにカット情報から得られた固体情報を転写する
-   @param [in/out] mid セルID
-   @param [in]     cut 距離情報
-   @param [in]     id  固体ID 
-   @retval 固体セル数
+   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+   * @param [in/out] mid セルID
+   * @param [in]     bid ID情報
+   * @param [in]     cut 距離情報
+   * @retval 固体セル数
    */
-  unsigned long Solid_from_Cut(int* mid, const float* cut, const int id);
+  unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut);
   
   
   // ----> debug function

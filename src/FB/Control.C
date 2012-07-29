@@ -2029,33 +2029,46 @@ void Control::get_PMtest()
 
 
 
-// ポリゴン情報
-void Control::get_Polygon()
+// モデル形状情報
+void Control::get_Geometry(const MediumTableInfo *MTITP)
 {
   string str;
   string label;
-  int ct;
   
-  // ポリゴンファイル名を取得
-  label="/Steer/Polygon_Info/Polylib_File";
+  // ファイル名を取得
+  label="/Steer/Geometry_Model/Polylib_File";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : Invalid char* value in 'Polygon_Info'\n");
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    stamped_printf("\tParsing error : Invalid char* value in 'Geometry_Model'\n");
     Exit(0);
   }
   PolylibConfigName = str;
   
   // デフォルト媒質番号の指定
-  label="/Steer/Polygon_Info/Base_Medium";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    stamped_printf("\tParsing error : Invalid value for 'Base_Medium' in 'Polygon_Info'\n");
+  label="/Steer/Geometry_Model/Base_Medium";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    stamped_printf("\tParsing error : Invalid value for 'Base_Medium' in 'Geometry_Model'\n");
     Exit(0);
   }
-  if (ct<1) {
-    stamped_printf("\tParsing error : Base_Medium must be positive\n");
+  
+  // ラベル名が媒質リストにあるか否かを確認
+  for (int i=1; i<=NoMedium; i++) {
+    
+    if ( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
+    {
+      Mode.Base_Medium = i;
+      break;
+    }
+  }
+  
+  // チェック
+  if ( Mode.Base_Medium == 0 )
+  {
+    stamped_printf("\tError : Medium '%s' in not listed in Medium_Table\n", str.c_str());
     Exit(0);
   }
-  Mode.Base_Medium = ct;
   
 }
 

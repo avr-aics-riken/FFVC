@@ -43,6 +43,117 @@ void Intrinsic::printPara(FILE* fp, const Control* R)
 }
 
 
+// モデルIDをsphフォーマット(float)で出力する
+void Intrinsic::writeSPH(const int *mid, const Control* R)
+{
+  int ix, jx, kx;
+  float ox, oy, oz, dx, dy, dz;
+  char fname[64];
+  
+  if ( paraMngr->IsParallel() )
+  {
+    sprintf( fname, "model_%06d.sph", paraMngr->GetMyRankID() );
+  }
+  else
+  {
+    sprintf( fname, "model.sph" );
+  }
+  
+  ofstream ofs(fname, ios::out | ios::binary);
+  
+  if (!ofs)
+  {
+    cout << "\tCan't open " << fname << " file" << endl;
+    Exit(0);
+  }
+  
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  int gd = guide;
+  
+  ix = imax+2;  // +2 means guide cell
+  jx = jmax+2;
+  kx = kmax+2;
+  
+  size_t nx = (size_t)(ix*jx*kx);
+  
+  dx = (float)pitch[0]*RefL;
+  dy = (float)pitch[1]*RefL;
+  dz = (float)pitch[2]*RefL;
+  
+  ox = (float)origin[0]*RefL - dx; // 片側1層分をシフト
+  oy = (float)origin[1]*RefL - dy;
+  oz = (float)origin[2]*RefL - dz;
+  
+  float *q = new float[nx];
+  
+  size_t m, l;
+  
+  #pragma omp parallel for firstprivate(imax, jmax, kmax, ix, jx, gd) private(m, l) schedule(static)
+  for (int k=0; k<=(kmax+1); k++) {
+    for (int j=0; j<=(jmax+1); j++) {
+      for (int i=0; i<=(imax+1); i++) {
+        l = (size_t)(ix*jx*k + ix*j + i);
+        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+        q[l] = (float)mid[m];
+      }
+    }
+  }
+  
+  // data property
+  int dType  = 1; // float
+  int svType = 1; // scalar
+  int pad = sizeof(int)*2;
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&svType, sizeof(int) );
+  ofs.write( (char*)&dType,  sizeof(int) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // voxel size
+  pad = sizeof(int)*3;
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&ix, sizeof(int) );
+  ofs.write( (char*)&jx, sizeof(int) );
+  ofs.write( (char*)&kx, sizeof(int) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // original point of domain
+  pad = sizeof(float)*3;
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&ox, sizeof(float) );
+  ofs.write( (char*)&oy, sizeof(float) );
+  ofs.write( (char*)&oz, sizeof(float) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // pitch of voxel
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&dx, sizeof(float) );
+  ofs.write( (char*)&dy, sizeof(float) );
+  ofs.write( (char*)&dz, sizeof(float) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // time stamp
+  int stp = 0;
+  float tm = 0.0;
+  pad = sizeof(int)+sizeof(float);
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&stp, sizeof(int) );
+  ofs.write( (char*)&tm, sizeof(float) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // medium ID
+  pad = nx * sizeof(float);
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)q,   pad );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  ofs.close();
+  
+  if (q) { delete [] q; q=NULL; }
+}
+
+
 
 // 例題のモデルをsvxフォーマットで出力する(体積率とID)
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)

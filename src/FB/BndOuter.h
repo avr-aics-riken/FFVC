@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file BndOuter.h
- * @brief FlowBase BoundaryOuter Class Header
+ * @file   BndOuter.h
+ * @brief  FlowBase BoundaryOuter Class Header
  * @author kero
  * @note メンバ変数に追加したら，dataCopy()処理にも加えること
  */
