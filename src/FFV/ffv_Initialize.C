@@ -3193,8 +3193,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
         size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = d_bid[mb];
         
-        if ( TEST_BC(bd) )
-        //if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) // 6方向のうちいずれかにカットがある
+        //if ( TEST_BC(bd) )
+        if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) // 6方向のうちいずれかにカットがある
         {
           for (int n=0; n<6; n++) {
             f_min = min(f_min, pos[n]);
