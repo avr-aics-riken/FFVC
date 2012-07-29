@@ -79,10 +79,13 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
+// Cutlib
+#include "Cutlib.h"
 
 using namespace std;
 using namespace pm_lib;
 using namespace PolylibNS;
+using namespace cutlib;
 
 
 class FFV : public DomainInfo {
@@ -181,8 +184,11 @@ private:
   
   
   // カット
-  REAL_TYPE  *d_cut; ///< 距離情報
-  int        *d_bid; ///< BC
+  CutPos32Array *cutPos;
+  CutBid5Array  *cutBid;
+  
+  float  *d_cut; ///< 距離情報
+  int    *d_bid; ///< BC
   
   
   FILE *fp_b;  ///< 基本情報
@@ -561,6 +567,14 @@ private:
   
   
   /**
+   * @brief 距離の最小値を求める
+   * @param [in,out] cut カット情報の配列
+   * @param [in]     fp  file pointer
+   */
+  void min_distance(float* cut, FILE* fp);
+  
+  
+  /**
    * @brief Poissonのノルムを計算する
    * @retval 収束値
    * @param [in] IC ItrCtlクラス
@@ -746,12 +760,21 @@ private:
   
   
   /**
-   @brief IP用にカット領域をアロケートする
-   @param [in] m_prep  前処理用のメモリサイズ
-   @param [in] m_total 本計算用のメモリリサイズ
-   @param [in] fp      ファイルポインタ
+   * @brief IP用にカット領域をアロケートする
+   * @param [in,out] m_prep  前処理用のメモリサイズ
+   * @param [in,out] m_total 本計算用のメモリリサイズ
+   * @param [in]     fp      ファイルポインタ
    */
   void setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp);
+  
+  
+  /**
+   * @brief 幾何形状情報を準備し，交点計算を行う
+   * @param [in,out] m_prep  前処理用のメモリサイズ
+   * @param [in,out] m_total 本計算用のメモリリサイズ
+   * @param [in]     fp      ファイルポインタ
+   */
+  void setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
   
   
   /**
@@ -845,6 +868,55 @@ private:
    */
   void wait_SOR2SMA(const int col, const int ip, MPI_Request* key);
   
+  
+  // for plot3d ---> ffv_plot3d.C
+  
+  /**
+   * @brief グリッド数、出力項目数をセット（BCMへ移行する場合要編集）
+   *
+   */
+  void setValuePlot3D();
+  
+  /**
+   * @brief 形状データファイル（*.xyz）の出力
+   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+   */
+  void OutputPlot3D_xyz(const bool restart=false);
+  
+  /**
+   * @brief PLOT3Dファイルのポスト出力
+   * @param [in/out] flop    浮動小数点演算数
+   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+   */
+  void OutputPlot3D_post(double& flop, const bool restart=false);
+  
+  /**
+   * @brief 圧縮性流体のための計算結果ファイル（*.q）出力（未整備）
+   * @param [in/out] flop    浮動小数点演算数
+   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+   */
+  void OutputPlot3D_q(double& flop, const bool restart=false);
+  
+  /**
+   * @brief 計算結果ファイル（*.func）出力
+   * @param [in/out] flop    浮動小数点演算数
+   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+   */
+  void OutputPlot3D_function(double& flop, const bool restart=false);
+  
+  /**
+   * @brief 計算結果ファイルの項目（*.nam）出力
+   *
+   */
+  void OutputPlot3D_function_name();
+  
+  /**
+   * @brief 境界面定義ファイル（*.fvbnd）出力（未整備）
+   * @note BCMになるとりメッシュされたときに対応できないため出力することはない？
+   */
+  void OutputPlot3D_fvbnd();
+  
+  
 public:
   
   /**
@@ -894,53 +966,6 @@ public:
    */
   bool Post();
   
-  
-  // for plot3d ---> ffv_plot3d.C
-  
-  /** 
-   * @brief グリッド数、出力項目数をセット（BCMへ移行する場合要編集）
-   * 
-   */
-  void setValuePlot3D();
-  
-  /** 
-   * @brief 形状データファイル（*.xyz）の出力
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
-   */
-  void OutputPlot3D_xyz(const bool restart=false);
-  
-  /** 
-   * @brief PLOT3Dファイルのポスト出力
-   * @param [in/out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
-   */
-  void OutputPlot3D_post(double& flop, const bool restart=false);
-  
-  /** 
-   * @brief 圧縮性流体のための計算結果ファイル（*.q）出力（未整備）
-   * @param [in/out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
-   */
-  void OutputPlot3D_q(double& flop, const bool restart=false);
-  
-  /** 
-   * @brief 計算結果ファイル（*.func）出力
-   * @param [in/out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
-   */
-  void OutputPlot3D_function(double& flop, const bool restart=false);
-  
-  /** 
-   * @brief 計算結果ファイルの項目（*.nam）出力
-   * 
-   */
-  void OutputPlot3D_function_name();
-  
-  /** 
-   * @brief 境界面定義ファイル（*.fvbnd）出力（未整備）
-   * @note BCMになるとりメッシュされたときに対応できないため出力することはない？
-   */
-  void OutputPlot3D_fvbnd();
   
 };
 

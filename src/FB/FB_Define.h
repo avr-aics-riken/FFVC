@@ -279,8 +279,8 @@
 // BCindexにエンコードされたFaceBCのインデクスを返す
 #define GET_FACE_BC(a,b) ( (a>>b) & MASK_5 )
 
-// BCindexのセルの6面のいずれかにBCが設定されている場合，true
-#define IS_INCLUDE_BC(s) ( (s & 0x3fffffff) != 0 )
+// 6面のいずれかにBCが設定されている場合，true
+#define TEST_BC(s) ( (s & 0x3fffffff) != 0 )
 
 
 /** 3次元インデクス(i,j,k) -> 1次元インデクス変換マクロ

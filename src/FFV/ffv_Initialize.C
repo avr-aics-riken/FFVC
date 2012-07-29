@@ -43,7 +43,8 @@ int FFV::Initialize(int argc, char **argv)
   FILE* fp = NULL;
   
   // condition fileのオープン
-  Hostonly_ {
+  Hostonly_
+  {
     if ( !(fp=fopen("condition.txt", "w")) ) {
       stamped_printf("\tSorry, can't open 'condition.txt' file. Write failed.\n");
       return -1;
@@ -51,11 +52,12 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // メッセージ表示
-  Hostonly_ {
-    FBUtility::printVersion(fp, "Welcome to FFV  ", FFV_VERS);
+  Hostonly_
+  {
+    FBUtility::printVersion(fp,     "Welcome to FFV  ", FFV_VERS);
     FBUtility::printVersion(stdout, "Welcome to FFV  ", FFV_VERS);
     
-    FBUtility::printVersion(fp, "FlowBase        ", FB_VERS);
+    FBUtility::printVersion(fp,     "FlowBase        ", FB_VERS);
     FBUtility::printVersion(stdout, "FlowBase        ", FB_VERS);
   }
   
@@ -83,23 +85,28 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 組み込み例題クラス名を表示
-  Hostonly_ {
+  Hostonly_
+  {
     Ex->printExample(fp, Ex->getExampleName());
   }
   
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
   C.get_Version();
   
-  if ( C.version != FFV_VERS ) {
-    Hostonly_ {
-      fprintf(stdout, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
+  if ( C.version != FFV_VERS )
+  {
+    Hostonly_
+    {
+      printf(     "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
       fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
     }
     return -1;
   }
-  if ( C.FB_version != FB_VERS ) {
-    Hostonly_ {
-      fprintf(stdout, "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
+  if ( C.FB_version != FB_VERS )
+  {
+    Hostonly_
+    {
+      printf(     "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
       fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
     }
     return -1;
@@ -119,10 +126,15 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // FiliIOのモードを修正
-  if ( myRank == 1 ) {
+  if ( myRank == 1 )
+  {
     C.FIO.IO_Input  = IO_GATHER;
     C.FIO.IO_Output = IO_GATHER;
-    Hostonly_ printf("\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
+    Hostonly_
+    {
+      printf(     "\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
+      fprintf(fp, "\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
+    }
   }
   
   
@@ -169,10 +181,11 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
-  Hostonly_  {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\n\t>> Medium List\n\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\n\t>> Medium List\n\n");
     fprintf(fp,"\n\t>> Medium List\n\n");
   }
   
@@ -206,17 +219,16 @@ int FFV::Initialize(int argc, char **argv)
   
 
   
-  // 並列処理モード
-  string para_label = setParallelism();
-  
   // タイミング測定の初期化
-  if ( C.Mode.Profiling != OFF ) {
+  if ( C.Mode.Profiling != OFF )
+  {
     ModeTiming = ON;
     TIMING__ PM.initialize( tm_END );
     TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
-    TIMING__ PM.setParallelMode(para_label, C.num_thread, C.num_process);
+    TIMING__ PM.setParallelMode(setParallelism(), C.num_thread, C.num_process);
     set_timing_label();
   }
+  
   
   // タイミング測定開始
   TIMING_start(tm_init_sct); 
@@ -228,11 +240,12 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // ファイルからIDを読み込む，または組み込み例題クラスでID情報を作成
-  Hostonly_ {
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> Voxel file information\n\n");
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Voxel file information\n\n");
+    printf(    "\t>> Analysis Model Information\n\n");
+    fprintf(fp,"\t>> Analysis Model Information\n\n");
   }
   
   TIMING_start(tm_voxel_prep_sct);
@@ -244,9 +257,10 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 領域情報の表示
-  Hostonly_ {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n");
-    fprintf(stdout,"\n\t>> Global Domain Information\n\n");
+  Hostonly_
+  {
+    printf("\n---------------------------------------------------------------------------\n");
+    printf("\n\t>> Global Domain Information\n\n");
     C.printGlobalDomain(stdout, G_size, G_origin, G_region, pitch);
     
     fprintf(fp,"\n---------------------------------------------------------------------------\n");
@@ -255,29 +269,34 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // メモリ消費量の情報を表示
-  Hostonly_ {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   G_PrepMemory = PrepMemory;
   
-  if( numProc > 1 ) {
+  if( numProc > 1 )
+  {
     tmp_memory = G_PrepMemory;
     if ( paraMngr->Allreduce(&tmp_memory, &G_PrepMemory, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
-  Hostonly_  {
+  
+  Hostonly_
+  {
     FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, stdout);
     FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, fp);
   }
   
   
   // Fill
-  if ( (C.Mode.Example == id_Polygon) ) { //&& C.isCDS() ) {
-    
-    Hostonly_ {
-      fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-      fprintf(stdout,"\t>> Fill\n\n");
+  if ( (C.Mode.Example == id_Polygon) ) //&& C.isCDS() ) {
+  {
+    Hostonly_
+    {
+      printf(    "\n---------------------------------------------------------------------------\n\n");
       fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      printf(    "\t>> Fill\n\n");
       fprintf(fp,"\t>> Fill\n\n");
     }
     
@@ -288,18 +307,24 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
-  if ( !DT.chkDtSelect() ) {
-    Hostonly_ printf("\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
+  if ( !DT.chkDtSelect() )
+  {
+    Hostonly_
+    {
+      printf(    "\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
+      fprintf(fp,"\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
+    }
     return -1;
   }
   
   
   // パラメータファイルから得られた内部BCコンポーネント数を表示
-  Hostonly_ {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Components\n\n");
+  Hostonly_
+  {
+    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\t>> Components\n\n");
     C.printNoCompo(stdout);
-    fprintf(stdout,"\n"); fflush(stdout);
+    printf("\n"); fflush(stdout);
     
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\t>> Components\n\n");
@@ -316,9 +341,10 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // スキャンしたセルIDの情報を表示する
-  Hostonly_ {
-    fprintf(stdout, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Information of Scaned Voxel\n\n");
+  Hostonly_
+  {
+    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\t>> Information of Scaned Voxel\n\n");
     V.printScanedCell(stdout);
 		fflush(stdout);
     
@@ -329,11 +355,15 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // ボクセルモデルの媒質インデクスがパラメータファイルに記述された媒質インデクスに含まれていること
-	Hostonly_ {
-		if ( !V.chkIDconsistency(C.NoMedium) ) {
-			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
-			return -1;
+	
+  if ( !V.chkIDconsistency(C.NoMedium) )
+  {
+    Hostonly_
+    {
+			stamped_printf(    "\tIDs in between parameter file and scaned model are not consistent.\n");
+      stamped_fprintf(fp,"\tIDs in between parameter file and scaned model are not consistent.\n");
 		}
+    return -1;
 	}
 
   
@@ -369,7 +399,8 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
-  if ( C.isVfraction() ) {
+  if ( C.isVfraction() )
+  {
     TIMING_start(tm_init_alloc);
     allocArray_CompoVF(PrepMemory, TotalMemory);
     TIMING_stop(tm_init_alloc); 
@@ -385,20 +416,27 @@ int FFV::Initialize(int argc, char **argv)
   V.adjMediumPrdc_Inner(d_mid, cmp);
   
   // 媒質数とKindOfSolverの整合性をチェックする
-  if ( !chkMediumConsistency() ) {
-    Hostonly_ stamped_printf("\tchkMediumConsistency()\n");
+  if ( !chkMediumConsistency() )
+  {
+    Hostonly_
+    {
+      stamped_printf(    "\tchkMediumConsistency()\n");
+      stamped_fprintf(fp,"\tchkMediumConsistency()\n");
+    }
     return -1;
   }
   
 
   // BCIndexへのエンコード処理
-  Hostonly_  {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   
   // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
-  if ( C.isCDS() ) {
+  if ( C.isCDS() )
+  {
     VIBC_Bbox_from_Cut();
   }
   
@@ -431,9 +469,10 @@ int FFV::Initialize(int argc, char **argv)
   // Ref_MediumがCompoList中にあるかどうかをチェックし、RefMatを設定
   if ( (C.RefMat = C.find_ID_from_Label(mat, C.NoCompo, C.Ref_Medium)) == 0 )
   {
-    Hostonly_ {
-      fprintf(stdout, "RefMat[%d] is not listed in Medium_Table.\n");
-      fprintf(fp, "RefMat[%d] is not listed in Medium_Table.\n");
+    Hostonly_
+    {
+      printf(     "RefMat[%d] is not listed in Medium_Table.\n", C.RefMat);
+      fprintf(fp, "RefMat[%d] is not listed in Medium_Table.\n", C.RefMat);
     }
     return -1;
   }
@@ -443,7 +482,9 @@ int FFV::Initialize(int argc, char **argv)
   BC.setBCIperiodic(d_bcd);
   BC.setBCIperiodic(d_bcp);
   BC.setBCIperiodic(d_bcv);
-  if ( C.isHeatProblem() ) {
+  
+  if ( C.isHeatProblem() )
+  {
     BC.setBCIperiodic(d_bh1);
     BC.setBCIperiodic(d_bh2);
   }
@@ -455,7 +496,8 @@ int FFV::Initialize(int argc, char **argv)
     if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(d_bcv, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     
-    if ( C.isHeatProblem() ) {
+    if ( C.isHeatProblem() )
+    {
       if ( paraMngr->BndCommS3D(d_bh1, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bh2, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     }
@@ -463,14 +505,16 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 法線計算
-  if ( C.NoBC != 0 ) {
-    
+  if ( C.NoBC != 0 )
+  {
     // コンポーネントで指定されるID面の法線を計算，向きはblowing/suctionにより決まる．　bcdをセットしたあとに処理
     for (int n=1; n<=C.NoBC; n++) {
-      if ( C.Mode.Example == id_Polygon ) {
+      if ( C.Mode.Example == id_Polygon )
+      {
         V.get_Compo_Area_Cut(n, cmp, PL);
       }
-      else {
+      else
+      {
         //Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &compo_global_bbox[n*6]);
       }
     }
@@ -489,8 +533,12 @@ int FFV::Initialize(int argc, char **argv)
 // ##########
 #if 0
   // チェックのため，全計算セルのBCIndexの内容を表示する
-  if ( !V.dbg_chkBCIndexP(bcd, bcp, "BCindex.txt") ) {
-    Hostonly_ stamped_printf("\tVoxInfo::dbg_chkBCIndexP()\n");
+  if ( !V.dbg_chkBCIndexP(bcd, bcp, "BCindex.txt") )
+  {
+    Hostonly_
+    {
+      stamped_printf("\tVoxInfo::dbg_chkBCIndexP()\n");
+    }
     return -1;
   }
 #endif
@@ -499,22 +547,28 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 温度計算の場合の初期値指定
-  if ( C.isHeatProblem() ) {
-    cout <<  "now heat probrem *** initialize" << endl;
+  if ( C.isHeatProblem() )
+  {
+    Hostonly_
+    {
+      cout <<  "now heat probrem *** initialize" << endl;
+    }
     B.get_Medium_InitTemp();
   }
   
   // set phase 
-  if ( C.BasicEqs == INCMP_2PHASE ) {
+  if ( C.BasicEqs == INCMP_2PHASE )
+  {
     B.get_Phase(cmp);
   }
   
   
   // CompoListの内容とセル数の情報を表示する
-  Hostonly_  {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Component List\n\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\t>> Component List\n\n");
     fprintf(fp,"\t>> Component List\n\n");
   }
   display_CompoList(fp);
@@ -524,9 +578,10 @@ int FFV::Initialize(int argc, char **argv)
   V.countOpenAreaOfDomain(d_bcd, C.OpenDomain);
   
   
-  Hostonly_ {
+  Hostonly_
+  {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n\n");
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n\n");
+    printf(    "\n---------------------------------------------------------------------------\n\n\n");
   }
   
   
@@ -553,8 +608,13 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // MonitorListの場合に，svxファイルを出力する．
-  if ( C.Sampling.log == ON ) {
-    Hostonly_ printf("\n\twrite ID which includes Monitor List ID\n\n");
+  if ( C.Sampling.log == ON )
+  {
+    Hostonly_
+    {
+      printf(    "\n\twrite ID which includes Monitor List ID\n\n");
+      fprintf(fp,"\n\twrite ID which includes Monitor List ID\n\n");
+    }
     
     // 性能測定モードがオフのときのみ出力
     if ( C.Hide.PM_Test == OFF ) Ex->writeSVX(d_mid, &C); // writeSVX(); ユーザ問題の場合には，単にtrueを返す
@@ -573,10 +633,11 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // コンポーネントの内容リストを表示し、コンポーネント数がゼロの場合と境界条件との整合性をチェック
-  Hostonly_ {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Component Information\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\t>> Component Information\n");
     fprintf(fp,"\t>> Component Information\n");
   }
   display_Compo_Info(fp);
@@ -610,8 +671,11 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // スタート処理 瞬時値と平均値に分けて処理　------------------
-  Hostonly_ fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-  Hostonly_ fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  }
   
   
   // 制御インターバルの初期化
@@ -620,7 +684,8 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 平均値のロード
-  if ( C.Start == restart ) {
+  if ( C.Start == restart )
+  {
     TIMING_start(tm_restart);
     if ( C.Mode.Average == ON ) Restart_avrerage(fp, flop_task);
     TIMING_stop(tm_restart);
@@ -635,9 +700,9 @@ int FFV::Initialize(int argc, char **argv)
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ 
   {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
-    fprintf(stdout,"\t>> Outer Boundary Conditions\n\n");
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\t>> Outer Boundary Conditions\n\n");
     fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
     
     display_Parameters(fp);
@@ -709,16 +774,20 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // メモリ使用量の表示
-  Hostonly_ {
-    fprintf(stdout,"\n---------------------------------------------------------------------------\n\n");
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
+  
   G_TotalMemory = TotalMemory;
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     tmp_memory = G_TotalMemory;
     if ( paraMngr->Allreduce(&tmp_memory, &G_TotalMemory, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
-  Hostonly_ {
+  Hostonly_
+  {
     double n = (double)( (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide) * 3 );
     double mc = n * (double)sizeof(REAL_TYPE); // temporaty array for vector output, see prepOutput();
     FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, stdout);
@@ -750,7 +819,11 @@ int FFV::Initialize(int argc, char **argv)
   // 初期化終了時に、入力パラメータのDBを破棄
   if (tpCntl.remove() != TP_NO_ERROR ) 
   {
-    Hostonly_ printf("Error : delete textparser\n");
+    Hostonly_
+    {
+      printf(    "Error : delete textparser\n");
+      fprintf(fp,"Error : delete textparser\n");
+    }
     Exit(0);
   }
   
@@ -758,9 +831,13 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
-  if ( C.CheckParam == ON) {
-		Hostonly_ fprintf(stdout, "\n\tCheck mode --- Only pre-process\n\n");
-		Hostonly_ fprintf(fp, "\n\tCheck mode --- Only pre-process\n\n");
+  if ( C.CheckParam == ON)
+  {
+		Hostonly_
+    {
+      printf(     "\n\tCheck mode --- Only pre-process\n\n");
+      fprintf(fp, "\n\tCheck mode --- Only pre-process\n\n");
+    }
     return 0;
 	}
   
@@ -786,38 +863,44 @@ bool FFV::chkMediumConsistency()
   int nmSolid = C.NoMediumSolid;
   int nmFluid = C.NoMediumFluid;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     int nms = nmSolid;
     int nmf = nmFluid;
     paraMngr->Allreduce(&nms, &nmSolid, 1, MPI_SUM);
     paraMngr->Allreduce(&nmf, &nmFluid, 1, MPI_SUM);
   }
   
-  if ( (nmFluid == 0) && (nmSolid == 0) ) {
+  if ( (nmFluid == 0) && (nmSolid == 0) )
+  {
     Hostonly_ printf("\tError : No medium\n");
     return false;
   }
   
-  switch (C.KindOfSolver) {
+  switch (C.KindOfSolver)
+  {
     case FLOW_ONLY:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
       
-      if ( nmFluid == 0 ) {
+      if ( nmFluid == 0 )
+      {
         Hostonly_ printf("\tError : No FLUID medium\n");
         return false;
       }
       break;
       
     case CONJUGATE_HEAT_TRANSFER:
-      if ( ( nmFluid == 0 ) || ( nmSolid == 0 ) ) {
+      if ( ( nmFluid == 0 ) || ( nmSolid == 0 ) )
+      {
         Hostonly_ printf("\tError : Fluid/Solid should have at least one medium.\n");
         return false;
       }
       break;
       
     case SOLID_CONDUCTION:
-      if ( nmSolid == 0 ) {
+      if ( nmSolid == 0 )
+      {
         Hostonly_ printf("\tError : No Solid medium\n");
         return false;
       }
@@ -840,7 +923,8 @@ void FFV::connectExample(Control* Cref)
   else if ( Cref->Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
   else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
   else if ( Cref->Mode.Example == id_Sphere )  Ex = dynamic_cast<Intrinsic*>(new IP_Sphere);
-  else {
+  else
+  {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
     Exit(0);
   }
@@ -863,8 +947,10 @@ void FFV::copyV00fromRF(double m_time)
 // コンポーネントの内容リストを表示する
 void FFV::display_Compo_Info(FILE* fp)
 {
-  if ( C.NoBC >0 ) {
-    Hostonly_ {
+  if ( C.NoBC >0 )
+  {
+    Hostonly_
+    {
       B.printCompo( stdout, compo_global_bbox, mat, cmp, BC.export_OBC() );
       B.printCompo( fp, compo_global_bbox, mat, cmp, BC.export_OBC() );
     }
@@ -872,7 +958,8 @@ void FFV::display_Compo_Info(FILE* fp)
   
   // コンポーネント数がゼロの場合のチェック
   for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].getElement() == 0 ) {
+    if ( cmp[n].getElement() == 0 )
+    {
       Hostonly_ printf("\tError : No element was found in Component[%d]\n", n);
       fflush(stdout);
       Exit(0);
@@ -881,15 +968,19 @@ void FFV::display_Compo_Info(FILE* fp)
   
   // Check consistency of boundary condition
   for (int n=1; n<=C.NoBC; n++) {
-    if ( cmp[n].getType() == HT_SN ) {
-      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
+    if ( cmp[n].getType() == HT_SN )
+    {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) )
+      {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
         fflush(stdout);
         Exit(0);
       }
     }
-    if ( cmp[n].getType() == HT_SF ) {
-      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) ) {
+    if ( cmp[n].getType() == HT_SF )
+    {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) )
+      {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
         fflush(stdout);
         Exit(0);
@@ -902,7 +993,8 @@ void FFV::display_Compo_Info(FILE* fp)
 // CompoListの内容とセル数の情報を表示する
 void FFV::display_CompoList(FILE* fp)
 {
-  Hostonly_  {
+  Hostonly_
+  {
     M.chkList(stdout, cmp, C.BasicEqs);
     M.chkList(fp, cmp, C.BasicEqs);
   }
@@ -942,8 +1034,10 @@ void FFV::display_Parameters(FILE* fp)
     MO.printMonitorInfo(stdout, C.HistoryMonitorName.c_str(), false); // ヘッダのみ
     
     FILE *fp_mon=NULL;
-    Hostonly_ {
-      if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
+    Hostonly_
+    {
+      if ( !(fp_mon=fopen("sampling_info.txt", "w")) )
+      {
         stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
         //return -1;
         Exit(0);
@@ -1032,7 +1126,8 @@ void FFV::DomainInitialize(const string dom_file)
   
   
   // 有次元の場合に無次元化 (Local)
-  if (C.Unit.Param == DIMENSIONAL ) {
+  if (C.Unit.Param == DIMENSIONAL )
+  {
     for (int i=0; i<3; i++) {
       origin[i]   /= C.RefLength;
       pitch[i]    /= C.RefLength;
@@ -1045,7 +1140,8 @@ void FFV::DomainInitialize(const string dom_file)
   
   // チェック
   unsigned long tz = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
-  if ( tz >= UINT_MAX) {
+  if ( tz >= UINT_MAX)
+  {
     Hostonly_ stamped_printf("\n\tError : Product of size[] exceeds UINT_MAX\n\n");
     Exit(0);
   }
@@ -1087,17 +1183,22 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
   }
   
   // BVが-方向のガイドセル内のみにある場合
-  if ( ed_i < guide ) { 
-    if( nID[label_st] < 0 ){ // 計算領域の外部面に接する場合は，対象外
+  if ( ed_i < guide )
+  {
+    if( nID[label_st] < 0 ) // 計算領域の外部面に接する場合は，対象外
+    {
       m_st = 0;
       m_ed = 0;
     }
-    else { // 計算領域内部にある場合（並列時）
-      if ( n_ed == guide ) { // ガイドセル1層外側の場合
+    else // 計算領域内部にある場合（並列時）
+    {
+      if ( n_ed == guide ) // ガイドセル1層外側の場合
+      {
         m_st = 1; // F index
         m_ed = 1; // F index
       }
-      else {
+      else
+      {
         m_st = 0;
         m_ed = 0;
       }
@@ -1105,17 +1206,22 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
   }
   
   // BVが+方向のガイドセル内のみにある場合
-  else if ( st_i >= max_c1 ) {
-    if( nID[label_ed] < 0 ){ // 計算領域の外部面に接する場合は，対象外
+  else if ( st_i >= max_c1 )
+  {
+    if( nID[label_ed] < 0 ) // 計算領域の外部面に接する場合は，対象外
+    {
       m_st = 0;
       m_ed = 0;
     }
-    else {
-      if ( n_st == (max_c1 - 1) ) { // ガイドセル1層外側の場合
+    else
+    {
+      if ( n_st == (max_c1 - 1) ) // ガイドセル1層外側の場合
+      {
         m_st = m_x; // F index
         m_ed = m_x; // F index
       }
-      else {
+      else
+      {
         m_st = 0;
         m_ed = 0;
       }
@@ -1124,63 +1230,79 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
   }
   
   // BVが内部領域のみにある場合（逐次・並列で同じ処理）
-  else if ( (st_i >= guide) && (ed_i < max_c1) ) {
-    if ( st_i == guide ) { // 最外層セル
+  else if ( (st_i >= guide) && (ed_i < max_c1) )
+  {
+    if ( st_i == guide ) // 最外層セル
+    {
       m_st = 1; // F index
     }
-    else {
+    else
+    {
       m_st = n_st + 1 - guide; // F index
     }
     
-    if ( ed_i == (max_c1 - 1) ) { // 最外層セル
+    if ( ed_i == (max_c1 - 1) ) // 最外層セル
+    {
       m_ed = m_x; // F index
     }
-    else { // 内部
+    else // 内部
+    {
       m_ed = n_ed + 1 - guide; // F index
     }
     //debug; Hostonly_ printf("(3) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
   }
   
   // BVが両方向のガイドセルにまたがる場合（逐次・並列で同じ処理）
-  else if ( (st_i < guide) && (ed_i >= max_c1) ) {
+  else if ( (st_i < guide) && (ed_i >= max_c1) )
+  {
     m_st = 1; // F index
     m_ed = m_x; // F index
     //debug; Hostonly_ printf("(4) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
   }
   
   // BVが-方向のガイドセルから内部領域にある場合
-  else if ( (st_i < guide) && (ed_i < max_c1) ) {
+  else if ( (st_i < guide) && (ed_i < max_c1) )
+  {
     m_st = 1; // F index
     
-    if ( ed_i == (max_c1 - 1) ) { // 最外層セル
+    if ( ed_i == (max_c1 - 1) ) // 最外層セル
+    {
       m_ed = m_x; // F index
     }
-    else { // 内部
+    else // 内部
+    {
       m_ed = n_ed + 1 - guide; // F index
     }
     //debug; Hostonly_ printf("(5) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
   }
   
   // BVが+方向のガイドセルから内部領域にある場合
-  else if ( (st_i < max_c1) && (ed_i >= max_c1) ) {
+  else if ( (st_i < max_c1) && (ed_i >= max_c1) )
+  {
     m_ed = m_x; // F index
     
-    if ( st_i == guide ) { // 端点
+    if ( st_i == guide ) // 端点
+    {
       m_st = 1; // F index
     }
-    else { // 内部
+    else // 内部
+    {
       m_st = n_st + 1 - guide; // F index
     }
     //debug; Hostonly_ printf("(6) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
   }
   
-  else {
+  else
+  {
     string m_dir;
     if      ( dir == 0 ) m_dir = "X";
     else if ( dir == 1 ) m_dir = "Y";
     else                 m_dir = "Z";
     
-    Hostonly_ stamped_printf("\tError : Unexpected case for ID=%d, (%d - %d): %s\n", m_id, st_i, ed_i, m_dir.c_str());
+    Hostonly_
+    {
+      stamped_printf("\tError : Unexpected case for ID=%d, (%d - %d): %s\n", m_id, st_i, ed_i, m_dir.c_str());
+    }
     Exit(0);
   }
   
@@ -1192,10 +1314,12 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 void FFV::fixed_parameters()
 {
   // 精度
-  if ( sizeof(REAL_TYPE) == sizeof(double) ) {
+  if ( sizeof(REAL_TYPE) == sizeof(double) )
+  {
     C.Mode.Precision = FP_DOUBLE;
   }
-  else {
+  else
+  {
     C.Mode.Precision = FP_SINGLE;
   }
   
@@ -1232,10 +1356,12 @@ void FFV::gather_DomainInfo()
   double d = 1.0 /(double)numProc;
   double r;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     r = 1.0 /(REAL_TYPE)(numProc-1);
   }
-  else {
+  else
+  {
     r = 1.0;
   }
   
@@ -1265,7 +1391,8 @@ void FFV::gather_DomainInfo()
   if( !(ed_buf = new int [numProc*3]) ) Exit(0);
   
   // 領域情報の収集
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     if ( paraMngr->Gather(size, 3, m_size, 3, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(origin, 3, m_org, 3, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(region, 3, m_Lbx, 3, 0) != CPM_SUCCESS ) Exit(0);
@@ -1273,7 +1400,8 @@ void FFV::gather_DomainInfo()
     if ( paraMngr->Gather(&L_Wcell, 1, bf_wcl, 1, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Acell, 1, bf_acl, 1, 0) != CPM_SUCCESS ) Exit(0);
   }
-  else { // serial
+  else // serial
+  {
     memcpy(m_size, size, 3*sizeof(int));
     bf_fcl[0] = G_Fcell;
     bf_wcl[0] = G_Wcell;
@@ -1301,7 +1429,8 @@ void FFV::gather_DomainInfo()
   if ( nID[Y_PLUS]  < 0 ) m_srf -= (unsigned long)(ix*kx);
   if ( nID[Z_PLUS]  < 0 ) m_srf -= (unsigned long)(ix*jx);
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     if ( paraMngr->Gather(&m_srf, 1, bf_srf, 1, 0) != CPM_SUCCESS ) Exit(0);
   }
   else 
@@ -1351,7 +1480,8 @@ void FFV::gather_DomainInfo()
   
   
   FILE *fp=NULL;
-  if ( !(fp=fopen("DomainInfo.txt", "w")) ) {
+  if ( !(fp=fopen("DomainInfo.txt", "w")) )
+  {
     stamped_printf("\tSorry, can't open 'DomainInfo.txt' file. Write failed.\n");
     Exit(0);
   }
@@ -1372,14 +1502,14 @@ void FFV::gather_DomainInfo()
       if (C.NoBC != 0) fprintf(fp, "\t no            Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     }
     
-    if ( numProc > 1 ) {
-      
+    if ( numProc > 1 )
+    {
       for (int n=1; n<=C.NoBC; n++) {
         if( paraMngr->Gather(cmp[n].getBbox_st(), 3, st_buf, 3, 0) != CPM_SUCCESS ) Exit(0);
         if( paraMngr->Gather(cmp[n].getBbox_ed(), 3, ed_buf, 3, 0) != CPM_SUCCESS ) Exit(0);
         
-        
-        Hostonly_ {
+        Hostonly_
+        {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
                   n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
         }
@@ -1387,7 +1517,8 @@ void FFV::gather_DomainInfo()
     }
   }
   
-  Hostonly_ {
+  Hostonly_
+  {
     fprintf(fp, "\n");
     fprintf(fp,"\n\t--------------------------------------------------\n");
     fprintf(fp,"\tReport of Whole Domain Statistics\n");
@@ -1397,12 +1528,16 @@ void FFV::gather_DomainInfo()
     fprintf(fp,"\tEffective voxels    = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Acell, 100.0*(REAL_TYPE)G_Acell/vol);
     fprintf(fp,"\tFluid voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Fcell, 100.0*(REAL_TYPE)G_Fcell/vol);
     fprintf(fp,"\tWall  voxels        = %12.6e (%6.2f%%)\n", (REAL_TYPE)G_Wcell, 100.0*(REAL_TYPE)G_Wcell/vol);
-    if ( numProc == 1 ) {
+    
+    if ( numProc == 1 )
+    {
       fprintf(fp,"\tDivision :          = %d : %s\n", numProc, "Serial");
     }
-    else {
+    else
+    {
       fprintf(fp,"\tDivision :          = %d : %s\n", numProc, "Equal segregation");
     }
+    
     fprintf(fp,"\n\t--------------------------------------------------\n");
     fprintf(fp,"\tDomain Statistics per MPI process\n");
     fprintf(fp,"\tMean volume in each domain           = %12.6e\n", m_vol);
@@ -1618,7 +1753,8 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
   else if( FBUtility::compare(keyword, "Back_Step") )         Cref->Mode.Example = id_Step;
   else if( FBUtility::compare(keyword, "Polygon") )           Cref->Mode.Example = id_Polygon;
   else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
-  else {
+  else
+  {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
     Exit(0);
   }
@@ -1640,37 +1776,114 @@ void FFV::init_Interval()
   double m_tm    = CurrentTime;  // 設定した？
   unsigned m_stp = CurrentStep;
   
-  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) ) {  // 基本履歴のコンソールへの出力
+  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) )  // 基本履歴のコンソールへの出力
+  {
     Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) ) {  // 履歴のファイルへの出力
+  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) )  // 履歴のファイルへの出力
+  {
     Hostonly_ printf("\t Error : Interval for History output is asigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) ) {  // 瞬時値ファイル
+  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) )  // 瞬時値ファイル
+  {
     Hostonly_ printf("\t Error : Interval for Instantaneous output is asigned to zero.\n");
     Exit(0);
   }
-  if ( C.Mode.Average == ON ) {
-    //if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) {  // 平均値ファイル
+  if ( C.Mode.Average == ON )
+  {
+    //if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) { // 平均値ファイル
     //  Hostonly_ printf("\t Error : Interval for Average output is asigned to zero.\n");
     //  Exit(0);
     //}
     // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
-    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) ) {  // 平均値開始
+    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) )  // 平均値開始
+    {
       Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
       Exit(0);
     }
   }
-  if ( C.Sampling.log == ON ) {
-    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) ) {  // サンプリング履歴
+    
+  if ( C.Sampling.log == ON )
+  {
+    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) )  // サンプリング履歴
+    {
       Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
       Exit(0);
     }    
   }
   
 }
+
+
+
+// 距離の最小値を求める
+void FFV::min_distance(float* cut, FILE* fp)
+{
+  float global_min;
+  float local_min;
+  float eps = 1.0/255.0; // 0.000392
+  unsigned g=0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel firstprivate(ix, jx, kx, eps, gd)
+  {
+    global_min = 1.0;
+    local_min  = 1.0;
+    
+#pragma omp for schedule(static) reduction(+:g)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          
+          for (int l=0; l<6; l++) {
+            size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
+            float c = cut[m];
+            
+            if ( local_min > c ) local_min = c;
+            
+            if ( (c > 0.0) && (c <= eps) )
+            {
+              cut[m] = eps;
+              g++;
+            }
+          }
+          
+        }
+      }
+    }
+    
+#pragma omp critical
+    {
+      if ( local_min < global_min ) global_min = local_min;
+    }
+  } // end omp parallel
+  
+  
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long gl = (unsigned long)g;
+  
+  if ( numProc > 1 )
+  {
+    float tmp = global_min;
+    if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    unsigned long tmp_g = gl;
+    if ( paraMngr->Allreduce(&tmp_g, &gl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+    printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+  }
+}
+
 
 
 // 履歴の出力準備
@@ -2679,6 +2892,331 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   
 }
 
+/**
+ @brief 幾何形状情報を準備し，交点計算を行う
+ @param [in,out] m_prep  前処理用のメモリサイズ
+ @param [in,out] m_total 本計算用のメモリリサイズ
+ @param [in]     fp      ファイルポインタ
+ @note Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
+ */
+void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
+{
+  unsigned poly_gc[3];
+  float poly_org[3];
+  float poly_dx[3];
+  poly_gc[0]  = poly_gc[1] = poly_gc[2] = (unsigned)guide;
+  
+  // 有次元に変換
+  poly_dx[0]  = (float)pitch[0] *C.RefLength;
+  poly_dx[1]  = (float)pitch[1] *C.RefLength;
+  poly_dx[2]  = (float)pitch[2] *C.RefLength;
+  poly_org[0] = (float)origin[0]*C.RefLength;
+  poly_org[1] = (float)origin[1]*C.RefLength;
+  poly_org[2] = (float)origin[2]*C.RefLength;
+  
+  Hostonly_
+  {
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Polylib configuration\n\n");
+    fprintf(fp,"\tfile name = %s\n\n", C.PolylibConfigName.c_str());
+    
+    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\t>> Polylib configuration\n\n");
+    printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
+  }
+  
+  // Polylib: インスタンス取得
+  PL = MPIPolylib::get_instance();
+  
+  // Polylib: ポリゴングループのFactoryクラスを登録
+  //PL->set_factory( new MyPolygonGroupFactory() );
+  
+  // Polylib: 並列計算領域情報を設定
+  poly_stat = PL->init_parallel_info( MPI_COMM_WORLD,
+                                     poly_org,        // 自ランクの基点座標
+                                     (unsigned*)size, // 自ランクの分割数
+                                     poly_gc,         // ガイドセル数
+                                     poly_dx          // 格子幅
+                                     );
+  if ( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\tRank [%d]: p_polylib->init_parallel_info() failed.", myRank);
+      printf("\tRank [%d]: p_polylib->init_parallel_info() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  
+  // Polylib: STLデータ読み込み
+  TIMING_start(tm_polygon_load);
+  poly_stat = PL->load_rank0( C.PolylibConfigName );
+  
+  if( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      printf("\tRank [%d]: p_polylib->load_rank0() failed.", myRank);
+      fprintf(fp,"\tRank [%d]: p_polylib->load_rank0() failed.", myRank);
+    }
+    Exit(0);
+  }
+  TIMING_stop(tm_polygon_load);
+  
+  // 階層情報表示 debug
+#if 0
+  PL->show_group_hierarchy();
+  PL->show_group_hierarchy(fp);
+#endif
+  
+  // IDの表示
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  Hostonly_
+  {
+    printf("\t  ID : Polygon Group\n");
+    fprintf(fp, "\t  ID : Polygon Group\n");
+  }
+  
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+    std::string m_pg = (*it)->get_name();
+    int m_id = (*it)->get_id();
+    Hostonly_
+    {
+      printf("\t %3d : %s\n", m_id, m_pg.c_str());
+      fprintf(fp,"\t %3d : %s\n", m_id, m_pg.c_str());
+    }
+#if 0
+    PL->show_group_info(m_pg); debug
+#endif
+  }
+  
+  delete pg_roots;
+  
+  Hostonly_
+  {
+    printf("\n");
+    fprintf(fp, "\n");
+  }
+  
+  // 使用メモリ量　基本クラスのみ
+  double poly_mem, G_poly_mem;
+  G_poly_mem = poly_mem = (double)PL->used_memory_size();
+  m_prep += poly_mem;
+  m_total+= poly_mem;
+  
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->Allreduce(&poly_mem, &G_poly_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    FBUtility::MemoryRequirement("Polygon", G_poly_mem, poly_mem, stdout);
+    FBUtility::MemoryRequirement("Polygon", G_poly_mem, poly_mem, fp);
+  }
+  
+  
+  // Triangle display >> Debug
+#if 0
+  PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
+  t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
+  m_min = t1 - t2;      // 1層外側まで
+  m_max = t1 + t3 + t2; //
+  printf("min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
+  printf("max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
+  vector<Triangle*>* trias = PL->search_polygons("Tube", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+  
+  PolylibNS::Vec3f *p, nrl, n;
+  int c=0;
+  vector<Triangle*>::iterator it2;
+  for (it2 = trias->begin(); it2 != trias->end(); it2++) {
+    p = (*it2)->get_vertex();
+    n = (*it2)->get_normal();
+    printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
+           p[0].t[0], p[0].t[1], p[0].t[2],
+           p[1].t[0], p[1].t[1], p[1].t[2],
+           p[2].t[0], p[2].t[1], p[2].t[2],
+           n.t[0], n.t[1], n.t[2]);
+  }
+  
+  delete trias;  //後始末
+#endif
+  
+  
+  // Polylib: STLデータ書き出しテスト >> Debug
+#if 0
+  unsigned poly_out_para = IO_DISTRIBUTE; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
+  string fname;
+  
+  if ( poly_out_para == IO_GATHER )
+  {
+    poly_stat = PL->save_rank0( &fname, "stl_b" );
+    if ( poly_stat != PLSTAT_OK )
+    {
+      Hostonly_
+      {
+        printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+        fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+      }
+      Exit(0);
+    }
+  }
+  else
+  {
+    poly_stat = PL->save_parallel( &fname, "stl_b" );
+    if ( poly_stat != PLSTAT_OK )
+    {
+      Hostonly_
+      {
+        printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+        fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+      }
+      Exit(0);
+    }
+  }
+#endif
+  
+  
+  
+  // Cutlib
+  Hostonly_
+  {
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\t>> Cut Info\n\n");
+    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\t>> Cut Info\n\n");
+  }
+  
+  size_t n_cell[3];
+  
+  for ( int i=0; i<3; i++) {
+    n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル両側
+    poly_org[i] -= poly_dx[i]*(float)guide;  // ガイドセル分だけシフト
+  }
+  
+  size_t size_n_cell = (size_t)n_cell[0] * (size_t)n_cell[1] * (size_t)n_cell[2];
+  
+  if (size_n_cell*6  > UINT_MAX)
+  {
+    Hostonly_
+    {
+      stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
+      stamped_fprintf(fp,"\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
+    }
+    Exit(0);
+  }
+  
+  
+  // Cutlibの配列は各方向(引数)のサイズ
+  TIMING_start(tm_init_alloc);
+  cutPos = new CutPos32Array(n_cell); // 6*(float)
+  cutBid = new CutBid5Array(n_cell);  // (int32_t)
+  TIMING_stop(tm_init_alloc);
+  
+  TIMING_start(tm_cutinfo);
+  CutInfoCell(poly_org, poly_dx, PL, cutPos, cutBid); // ガイドセルを含む全領域で交点を計算
+  TIMING_stop(tm_cutinfo);
+  
+  
+  // 使用メモリ量
+  double cut_mem, G_cut_mem;
+  G_cut_mem = cut_mem = (double)size_n_cell * (6+1) * 4; // float
+  m_prep += cut_mem;
+  m_total+= cut_mem;
+  
+  if ( numProc > 1 ) {
+    if ( paraMngr->Allreduce(&cut_mem, &G_cut_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, stdout);
+    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
+  }
+  
+  /* カット情報保持領域のアロケート
+  TIMING_start(tm_init_alloc);
+  allocArray_Cut(m_total);
+  TIMING_stop(tm_init_alloc);
+  */
+  
+  // カットとID情報をポイント
+  d_cut = (float*)cutPos->getDataPointer();
+  d_bid = (int*)cutBid->getDataPointer();
+  
+
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  unsigned z=0;
+  float d_min=1.0;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+        float* pos = &d_cut[mp];
+        
+        size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = d_bid[mb];
+        
+        if ( TEST_BC(bd) )
+        //if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) // 6方向のうちいずれかにカットがある
+        {
+          for (int n=0; n<6; n++) {
+            if ( d_min > pos[n] ) d_min = pos[n];
+            // alternative: d_min = min(d_min, pos[n]);
+          }
+          z++;
+          
+#if 0 // debug
+          int b0 = (bd >> 0)  & MASK_5;
+          int b1 = (bd >> 5)  & MASK_5;
+          int b2 = (bd >> 10) & MASK_5;
+          int b3 = (bd >> 15) & MASK_5;
+          int b4 = (bd >> 20) & MASK_5;
+          int b5 = (bd >> 25) & MASK_5;
+          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
+#endif
+          
+        }
+      }
+    }
+  }
+  
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long zl = (unsigned long)z;
+  unsigned long tt = (unsigned long)size_n_cell;
+  
+  if ( numProc > 1 )
+  {
+    float tmp = d_min;
+    if ( paraMngr->Allreduce(&tmp, &d_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    unsigned long tmp_g = zl;
+    if ( paraMngr->Allreduce(&tmp_g, &zl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    
+    tmp_g = tt;
+    if ( paraMngr->Allreduce(&tmp_g, &tt, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    printf("\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", d_min, zl, (float)zl/(float)tt*100.0);
+    fprintf(fp,"\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", d_min, zl, (float)zl/(float)tt*100.0);
+  }
+  
+  // カットの最小値
+  min_distance(d_cut, fp);
+}
 
 
 // VOF値を気体(0.0)と液体(1.0)で初期化
