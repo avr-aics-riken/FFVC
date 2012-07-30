@@ -3181,23 +3181,24 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   unsigned z=0;
   float f_min=1.0;
+  size_t mp, mb;
+  int bd;
   
-  #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:z) reduction(min:f_min)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) private(mp, mb, bd) \
+        schedule(static) reduction(+:z) reduction(min:f_min)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        float* pos = &d_cut[mp];
-        
-        size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int bd = d_bid[mb];
+        mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+        mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        bd = d_bid[mb];
         
         //if ( TEST_BC(bd) )
-        if ( (pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5]) < 6.0 ) // 6方向のうちいずれかにカットがある
+        if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 6方向のうちいずれかにカットがある
         {
           for (int n=0; n<6; n++) {
-            f_min = min(f_min, pos[n]);
+            f_min = min(f_min, d_cut[mp+n]);
             // alternative: if ( f_min > pos[n] ) f_min = pos[n];
           }
           z++;
