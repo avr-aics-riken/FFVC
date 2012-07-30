@@ -34,6 +34,7 @@ TARGET_DIR	= ../lib
 # 三角形IDファイルをテキストモードで出力するにはCFLAGSに以下を追加のこと
 # -DSAVE_ID_ASCII
 ###########################################################################
+
 CFLAGS		= -O2 -Wall \
             -I../include \
             -I$(MPI_DIR)/include \

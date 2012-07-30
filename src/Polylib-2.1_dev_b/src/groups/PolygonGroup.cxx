@@ -558,7 +558,8 @@ POLYLIB_STAT PolygonGroup::setup_attribute (
 	m_internal_id = create_global_id();
 	// ユーザ定義ID追加 2010.10.20
 	if (att_id == NULL) m_id = 0;
-	else				m_id = att_id->get_int_data();
+	// TextParser暫定対応。 "id"を文字列で保持しているので、atoi()で変換が必要。
+	else				m_id = atoi( (att_id->get_string_data()).c_str() );
 	
 	return PLSTAT_OK;
 }

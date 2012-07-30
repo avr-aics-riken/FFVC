@@ -1837,7 +1837,7 @@ void FFV::init_Interval()
 void FFV::min_distance(float* cut, FILE* fp)
 {
   float global_min;
-  float local_min;
+  float local_min = 1.0;
   float eps = 1.0/255.0; // 0.000392
   unsigned g=0;
   
@@ -1846,28 +1846,36 @@ void FFV::min_distance(float* cut, FILE* fp)
   int kx = size[2];
   int gd = guide;
   
-  local_min  = 1.0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, eps, gd) schedule(static) reduction(+:g) reduction(min:local_min)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        for (int l=0; l<6; l++) {
-          size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
-          float c = cut[m];
+#pragma omp parallel firstprivate(ix, jx, kx, eps, gd)
+  {
+    float th_min = 1.0;
+    
+#pragma omp for schedule(static) reduction(+:g)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
           
-          local_min = min(local_min, c);
-          //if ( local_min > c ) local_min = c;
-          
-          if ( (c > 0.0) && (c <= eps) )
-          {
-            cut[m] = eps;
-            g++;
+          for (int l=0; l<6; l++) {
+            size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
+            float c = cut[m];
+            
+            th_min = min(th_min, c);
+            //if ( local_min > c ) local_min = c;
+            
+            if ( (c > 0.0) && (c <= eps) )
+            {
+              cut[m] = eps;
+              g++;
+            }
           }
+          
         }
-        
       }
+    }
+    
+#pragma omp critical
+    {
+      local_min = min(local_min, th_min);
     }
   }
     
@@ -3011,7 +3019,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
     std::string m_pg = (*it)->get_name();
-    int m_id = (*it)->get_internal_id(); //get_id(); ??
+    int m_id = (*it)->get_id();
     Hostonly_
     {
       printf(    "\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
@@ -3181,41 +3189,48 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   unsigned z=0;
   float f_min=1.0;
-  size_t mp, mb;
-  int bd;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) private(mp, mb, bd) \
-        schedule(static) reduction(+:z) reduction(min:f_min)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bd = d_bid[mb];
-        
-        //if ( TEST_BC(bd) )
-        if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 6方向のうちいずれかにカットがある
-        {
-          for (int n=0; n<6; n++) {
-            f_min = min(f_min, d_cut[mp+n]);
-            // alternative: if ( f_min > pos[n] ) f_min = pos[n];
-          }
-          z++;
+#pragma omp parallel firstprivate(ix, jx, kx, gd)
+  {
+    float th_min = 1.0;
+    
+#pragma omp parallel for schedule(static) reduction(+:z)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
           
+          size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+          size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bd = d_bid[mb];
+          
+          //if ( TEST_BC(bd) )
+          if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 6方向のうちいずれかにカットがある
+          {
+            for (int n=0; n<6; n++) {
+              th_min = min(th_min, d_cut[mp+n]);
+              // alternative: if ( th_min > pos[n] ) th_min = pos[n];
+            }
+            z++;
+            
 #if 0 // debug
-          int b0 = (bd >> 0)  & MASK_5;
-          int b1 = (bd >> 5)  & MASK_5;
-          int b2 = (bd >> 10) & MASK_5;
-          int b3 = (bd >> 15) & MASK_5;
-          int b4 = (bd >> 20) & MASK_5;
-          int b5 = (bd >> 25) & MASK_5;
-          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
+            int b0 = (bd >> 0)  & MASK_5;
+            int b1 = (bd >> 5)  & MASK_5;
+            int b2 = (bd >> 10) & MASK_5;
+            int b3 = (bd >> 15) & MASK_5;
+            int b4 = (bd >> 20) & MASK_5;
+            int b5 = (bd >> 25) & MASK_5;
+            printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+                   pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
 #endif
-          
+            
+          }
         }
       }
+    }
+    
+#pragma omp critical
+    {
+      f_min = min(f_min, th_min);
     }
   }
   
