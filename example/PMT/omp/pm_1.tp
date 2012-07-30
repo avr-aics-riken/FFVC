@@ -32,14 +32,19 @@ Steer {
   File_IO {
     Unit_of_File           = "Non_Dimensional"
     Guide_Out              = "Without"
+    Format                 = "sph"
     Parallel_Input         = "master"
     Parallel_Output        = "master"
     Debug_Divergence       = "Off"
-    Format                 = "sph"
     Instant_Interval_Type  = "step"
     Instant_Interval       = 1000
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 1000
+  }
+
+  Geometry_Model {
+    Polylib_File = ""
+    Base_Medium  = "air"
   }
 
   Iteration {
@@ -114,6 +119,20 @@ Steer {
     }
   }
 
+  PLOT3D_Options {
+    filename         = ""
+    grid_kind        = "single_grid"
+    grid_mobility    = "immovable"
+    state_of_time    = "unsteady"
+    set_iblank_flag  = "off"
+    Dimension        = "3D"
+    Format_type      = "unformatted"
+    Output_xyz       = "off"
+    Output_q         = "off"
+    Output_function  = "off"
+    Output_func_name = "off"
+    Output_fvbnd     = "off"
+  }
 
   Reference_Frame {
     Reference_Frame_Type = "Stationary"
@@ -165,8 +184,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 50
-    Flow_Base = 92
+    FFV       = 60
+    Flow_Base = 93
   }
 
 } //Steer

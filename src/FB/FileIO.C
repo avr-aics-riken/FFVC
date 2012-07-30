@@ -101,7 +101,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   }
   
   // data property
-  ( m_ModePrecision == FP_SINGLE ) ? dType=1 : dType=2;
+  ( m_ModePrecision == sizeof(float) ) ? dType=1 : dType=2;
   pad = sizeof(int)*2;
   ofs.write( (char*)&pad, sizeof(int) );
   ofs.write( (char*)&svType, sizeof(int) );
@@ -183,7 +183,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   }
   
   if (svType == kind_scalar) {
-    pad = (m_ModePrecision == FP_SINGLE) ? nx * sizeof(float) : nx * sizeof(double);
+    pad = (m_ModePrecision == sizeof(float)) ? nx * sizeof(float) : nx * sizeof(double);
     ofs.write( (char*)&pad, sizeof(int) );
     ofs.write( (char*)f,   pad );
     ofs.write( (char*)&pad, sizeof(int) );

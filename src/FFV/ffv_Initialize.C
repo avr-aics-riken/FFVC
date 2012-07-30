@@ -255,6 +255,7 @@ int FFV::Initialize(int argc, char **argv)
   // 各問題に応じてモデルを設定
   setModel(PrepMemory, TotalMemory, fp);
   
+  
   // 一度、テキストパーサーのDBを破棄 >> Polylibが利用したもの
   if (tpCntl.remove() != TP_NO_ERROR )
   {
@@ -871,7 +872,7 @@ int FFV::Initialize(int argc, char **argv)
 }
 
 
-
+// **********************************************
 // 全Voxelモデルの媒質数とKOSの整合性をチェック
 bool FFV::chkMediumConsistency()
 {
@@ -925,7 +926,7 @@ bool FFV::chkMediumConsistency()
   return true;
 }
 
-
+// **********************************************
 // 組み込み例題のインスタンス
 void FFV::connectExample(Control* Cref)
 {
@@ -946,7 +947,7 @@ void FFV::connectExample(Control* Cref)
 }
 
 
-
+// **********************************************
 // 時刻をRFクラスからv00[4]にコピーする
 void FFV::copyV00fromRF(double m_time) 
 {
@@ -958,7 +959,7 @@ void FFV::copyV00fromRF(double m_time)
 }
 
 
-
+// **********************************************
 // コンポーネントの内容リストを表示する
 void FFV::display_Compo_Info(FILE* fp)
 {
@@ -1005,6 +1006,7 @@ void FFV::display_Compo_Info(FILE* fp)
 }
 
 
+// **********************************************
 // CompoListの内容とセル数の情報を表示する
 void FFV::display_CompoList(FILE* fp)
 {
@@ -1026,6 +1028,7 @@ void FFV::display_CompoList(FILE* fp)
 }
 
 
+// **********************************************
 // 制御パラメータ，物理パラメータの表示
 void FFV::display_Parameters(FILE* fp)
 {
@@ -1065,7 +1068,7 @@ void FFV::display_Parameters(FILE* fp)
 }
 
 
-
+// **********************************************
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
 {
@@ -1164,7 +1167,7 @@ void FFV::DomainInitialize(const string dom_file)
 }
 
 
-
+// **********************************************
 //初期インデクスの情報を元に，一層拡大したインデクス値を返す
 void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id)
 {
@@ -1324,18 +1327,18 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 }
 
 
-
+// **********************************************
 // 固定パラメータの設定
 void FFV::fixed_parameters()
 {
   // 精度
   if ( sizeof(REAL_TYPE) == sizeof(double) )
   {
-    C.Mode.Precision = FP_DOUBLE;
+    C.Mode.Precision = sizeof(double);
   }
   else
   {
-    C.Mode.Precision = FP_SINGLE;
+    C.Mode.Precision = sizeof(float);
   }
   
   // ログファイル名
@@ -1362,9 +1365,9 @@ void FFV::fixed_parameters()
 }
 
 
-/**
- * @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
- */
+
+// **********************************************
+// 並列処理時の各ノードの分割数を集めてファイルに保存する
 void FFV::gather_DomainInfo()
 {
   // 統計処理の母数
@@ -1600,7 +1603,7 @@ void FFV::gather_DomainInfo()
 
 
 
-
+// **********************************************
 // グローバルな領域情報を取得
 int FFV::get_DomainInfo()
 {
@@ -1745,7 +1748,7 @@ int FFV::get_DomainInfo()
 }
 
 
-
+// **********************************************
 // 組み込み例題の設定
 void FFV::getExample(Control* Cref, TPControl* tpCntl)
 {
@@ -1776,7 +1779,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
 }
 
 
-
+// **********************************************
 // インターバルの初期化
 void FFV::init_Interval()
 {
@@ -1832,7 +1835,7 @@ void FFV::init_Interval()
 }
 
 
-
+// **********************************************
 // 距離の最小値を求める
 void FFV::min_distance(float* cut, FILE* fp)
 {
@@ -1859,8 +1862,7 @@ void FFV::min_distance(float* cut, FILE* fp)
             size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
             float c = cut[m];
             
-            th_min = min(th_min, c);
-            //if ( local_min > c ) local_min = c;
+            th_min = min(th_min, c); //if ( local_min > c ) local_min = c;
             
             if ( (c > 0.0) && (c <= eps) )
             {
@@ -1901,7 +1903,7 @@ void FFV::min_distance(float* cut, FILE* fp)
 }
 
 
-
+// **********************************************
 // 履歴の出力準備
 void FFV::prep_HistoryOutput()
 {
@@ -1974,7 +1976,7 @@ void FFV::prep_HistoryOutput()
 }
 
 
-
+// **********************************************
 // 読み込んだ領域情報のデバッグライト
 void FFV::printDomainInfo()
 {
@@ -1987,7 +1989,7 @@ void FFV::printDomainInfo()
 }
 
 
-
+// **********************************************
 // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
 void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
 {
@@ -2078,7 +2080,7 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
 }
 
 
-
+// **********************************************
 // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
 void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
 {
@@ -2120,6 +2122,7 @@ void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
 }
 
 
+// **********************************************
 // コンポーネントリストに登録されたBV情報をリサイズする
 void FFV::resizeCompoBV(const int kos, const bool isHeat)
 {
@@ -2179,7 +2182,7 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 
 
 
-
+// **********************************************
 // 外部境界条件を読み込み，Controlクラスに保持する
 void FFV::setBCinfo()
 {
@@ -2203,6 +2206,7 @@ void FFV::setBCinfo()
 
 
 
+// **********************************************
 // HEX,FANコンポーネントなどの体積率とbboxなどをセット
 // インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
 void FFV::setComponentVF()
@@ -2284,7 +2288,7 @@ void FFV::setComponentVF()
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(cvf, size, guide, org, pit, FP_SINGLE);
+  F.writeRawSPH(cvf, size, guide, org, pit, sizeof(float));
 #endif
 // ##########
   
@@ -2292,6 +2296,7 @@ void FFV::setComponentVF()
 
 
 
+// **********************************************
 // コンポーネントが存在するかを保持しておく
 void FFV::setEnsComponent()
 {
@@ -2360,9 +2365,9 @@ void FFV::setEnsComponent()
 }
 
 
-/**
- * @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
- */
+
+// **********************************************
+// コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
 void FFV::setGlobalCmpIdx()
 {
   int st_i, st_j, st_k, ed_i, ed_j, ed_k;
@@ -2489,6 +2494,7 @@ void FFV::setGlobalCmpIdx()
 
 
 
+// **********************************************
 // 初期条件の設定
 void FFV::setInitialCondition()
 {
@@ -2604,6 +2610,7 @@ void FFV::setInitialCondition()
 
 
 
+// **********************************************
 // midの情報から各BCコンポーネントのローカルなインデクスを取得する
 // 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
 // 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
@@ -2673,7 +2680,7 @@ void FFV::setLocalCmpIdx_Binary()
 }
 
 
-
+// **********************************************
 // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
 void FFV::setMediumList(FILE* fp)
 {
@@ -2691,6 +2698,70 @@ void FFV::setMediumList(FILE* fp)
 }
 
 
+
+
+// **********************************************
+// 各種例題のモデルをセット
+void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
+{
+  // d_midをゼロで初期化
+  size_t mt = (size[0]+2*guide) * (size[1]+2*guide) *(size[2]+2*guide) * sizeof(int);
+  memset(d_mid, 0, mt);
+  
+  
+  switch (C.Mode.Example)
+  {
+    case id_Polygon: // ユーザ例題
+      
+      C.get_Geometry( M.export_MTI() );
+      
+      
+      // PolylibとCutlibのセットアップ
+      setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
+      
+      
+      if ( !C.isCDS() ) // binary
+      {
+        unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut);
+        Hostonly_
+        {
+          printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
+          fprintf(fp,"\tGenerated Solid cell from cut = %ld\n", zc);
+        }
+      }
+      break;
+      
+    case id_Sphere:
+      if ( !C.isCDS() )
+      {
+        Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
+      }
+      else
+      {
+        // cutをアロケートし，初期値1.0をセット
+        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+        Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
+      }
+      break;
+      
+    default: // ほかのIntrinsic problems
+      if ( C.isCDS() ) // カットの場合
+      {
+        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      }
+      Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
+      break;
+  }
+  
+  // midのガイドセル同期
+  if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  
+}
+
+
+
+
+// **********************************************
 // 並列化と分割の方法を保持
 string FFV::setParallelism()
 {
@@ -2733,6 +2804,7 @@ string FFV::setParallelism()
 }
 
 
+// **********************************************
 // 時間積分幅や物理パラメータの設定
 void FFV::setParameters()
 {
@@ -2811,69 +2883,8 @@ void FFV::setParameters()
 }
 
 
-// 各種例題のモデルをセット
-void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
-{
-  // d_midをゼロで初期化
-  size_t mt = (size[0]+2*guide) * (size[1]+2*guide) *(size[2]+2*guide) * sizeof(int);
-  memset(d_mid, 0, mt);
-  
-  
-  switch (C.Mode.Example)
-  {
-    case id_Polygon: // ユーザ例題
-      
-      C.get_Geometry( M.export_MTI() );
-      
-      
-      // PolylibとCutlibのセットアップ
-      setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
-      
-      
-      if ( !C.isCDS() ) // binary
-      {
-        unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut);
-        Hostonly_
-        {
-          printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
-          fprintf(fp,"\tGenerated Solid cell from cut = %ld\n", zc);
-        }
-      }
-      break;
-      
-    case id_Sphere:
-      if ( !C.isCDS() )
-      {
-        Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
-      }
-      else
-      {
-        // cutをアロケートし，初期値1.0をセット
-        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
-      }
-      break;
-      
-    default: // ほかのIntrinsic problems
-      if ( C.isCDS() ) // カットの場合
-      {
-        setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-      }
-      Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
-      break;
-  }
-  
-  // midのガイドセル同期
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  
-  if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, guide, 1) != CPM_SUCCESS ) Exit(0);
-  
-}
 
-
-
+// **********************************************
 // IP用にカット領域をアロケートする
 void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
 {
@@ -2927,6 +2938,8 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   
 }
 
+
+// **********************************************
 // 幾何形状情報を準備し，交点計算を行う
 void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
@@ -3002,10 +3015,12 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   TIMING_stop(tm_polygon_load);
   
   // 階層情報表示 debug
+// ##########
 #if 0
   PL->show_group_hierarchy();
   PL->show_group_hierarchy(fp);
 #endif
+// ##########
   
   // IDの表示
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
@@ -3025,9 +3040,11 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       printf(    "\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
       fprintf(fp,"\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
     }
+// ##########
 #if 0
     PL->show_group_info(m_pg); //debug
 #endif
+// ##########
   }
   
   delete pg_roots;
@@ -3058,6 +3075,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   // Triangle display >> Debug
+// ##########
 #if 0
   PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
   t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
@@ -3082,9 +3100,10 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   delete trias;  //後始末
 #endif
-  
+// ##########
   
   // Polylib: STLデータ書き出しテスト >> Debug
+// ##########
 #if 0
   unsigned poly_out_para = IO_DISTRIBUTE; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
   string fname;
@@ -3116,7 +3135,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
   }
 #endif
-  
+// ##########  
   
   
   // Cutlib
@@ -3203,15 +3222,14 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
           size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int bd = d_bid[mb];
           
-          //if ( TEST_BC(bd) )
-          if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 6方向のうちいずれかにカットがある
+          if ( TEST_BC(bd) ) // IDにによる判定
+          //if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 距離による判定
           {
             for (int n=0; n<6; n++) {
-              th_min = min(th_min, d_cut[mp+n]);
-              // alternative: if ( th_min > pos[n] ) th_min = pos[n];
+              th_min = min(th_min, d_cut[mp+n]); // if ( th_min > pos[n] ) th_min = pos[n];
             }
             z++;
-            
+// ##########            
 #if 0 // debug
             int b0 = (bd >> 0)  & MASK_5;
             int b1 = (bd >> 5)  & MASK_5;
@@ -3222,7 +3240,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
             printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
                    pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
 #endif
-            
+// ##########            
           }
         }
       }
@@ -3261,6 +3279,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 }
 
 
+// **********************************************
 // VOF値を気体(0.0)と液体(1.0)で初期化
 void FFV::setVOF()
 {
@@ -3289,6 +3308,8 @@ void FFV::setVOF()
 }
 
 
+
+// **********************************************
 // ポリゴンのカット情報からVBCのboxをセット
 void FFV::VIBC_Bbox_from_Cut()
 {
@@ -3310,6 +3331,8 @@ void FFV::VIBC_Bbox_from_Cut()
 }
 
 
+
+// **********************************************
 // BCIndexにビット情報をエンコードする
 void FFV::VoxEncode()
 {
@@ -3392,6 +3415,7 @@ void FFV::VoxEncode()
 
 
 
+// **********************************************
 // ボクセルをスキャンし情報を表示する
 void FFV::VoxScan(FILE* fp)
 {
@@ -3432,4 +3456,3 @@ void FFV::VoxScan(FILE* fp)
     Exit(0);
   }
 }
-

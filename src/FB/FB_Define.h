@@ -19,13 +19,11 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 92
+#define FB_VERS 93
 
 #define MODEL_ID_MAX 255
 
 // precision
-#define FP_SINGLE 4
-#define FP_DOUBLE 8
 #define SINGLE_EPSILON 2.4e-7
 #define DOUBLE_EPSILON 4.4e-16
 

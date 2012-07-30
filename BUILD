@@ -1,14 +1,12 @@
 -----
-Compilation order of CBC solverclass
+Compilation order of FFV-C
 
 Kenji Ono 	keno@riken.jp
-VCAD Research Program, RIKEN
-April 2012
+AICS, RIKEN
+July 2012
 -----
 
-V-SphereのインストールとCBCのコンパイル
-
-インストールの詳細は，docディレクトリにあるcbc_ug.pdfの第２章，およびvsphere_ug.pdfの第３章をご覧ください．
+インストールの詳細は，docディレクトリにあるffvc_ug.pdfをご覧ください．
 
 1.　V-Sphere　インストール
 下記のシェルを用いて，/usr/local/sphereにインストールします．

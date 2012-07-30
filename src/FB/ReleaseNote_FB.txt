@@ -1,6 +1,6 @@
 Release Note
 
-	Frontflow / violet
+	FrontFlow / Violet
 	
 	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
   The University of Tokyo, Japan. 
@@ -8,6 +8,9 @@ Release Note
   @author kero
 
 #######################################
+
+Ver 0.9.3  30 July 2012
+  - plylib-2.1_Dev_b対応
 
 Ver 0.9.2  23 July 2012
   - PLOT3Dフォーマットテスト導入
@@ -22,4 +25,3 @@ Ver 0.9.0  11 July 2012
 
 Ver 0.8.0  30 June 2012
   - CPM Library対応
-  

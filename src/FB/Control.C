@@ -2862,7 +2862,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Precision
-  if ( Mode.Precision == FP_SINGLE )
+  if ( Mode.Precision == sizeof(float) )
     fprintf(fp,"\t     Precision                :   Single Precision \n");
   else
     fprintf(fp,"\t     Precision                :   Double Precision \n");

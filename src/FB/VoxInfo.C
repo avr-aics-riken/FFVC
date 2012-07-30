@@ -4280,7 +4280,6 @@ void VoxInfo::get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::M
         std::string m_pg = (*it)->get_name();
         int m_id = (*it)->get_id();
         cmp[n].area = (*it)->get_group_area();
-        //printf("\t %3d : %s : %e : %d\n", m_id, m_pg.c_str(), cmp[n].area, (*it)->get_group_num_tria());
       }
       
       return;
@@ -4400,14 +4399,15 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   
   
   // ID[0]を置換するオプションが指定されている場合（ID_replaceに値がセット）
-  if ( ID_replace != 0 ) {
+  if ( ID_replace != 0 )
+  {
     target = ID_replace;
     Hostonly_ printf("\n\tID[0] is replaced by ID[%d]\n", target);
     
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, target) private(m) schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          //m = FBUtility::getFindexS3D(sz, gd, i, j, k);
           m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           if ( cell[m] == 0 ) cell[m] = target;
         }
@@ -4417,13 +4417,14 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   
   
   // 内部領域に対して，マイナスとゼロをチェック
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) private(m, target) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        //m = FBUtility::getFindexS3D(sz, gd, i, j, k);
         target = cell[m];
-        if ( target<=0 ) {
+        if ( target<=0 )
+        {
           Hostonly_ stamped_printf("\tVoxel data includes non-positive ID [%d] at (%d, %d, %d)\n", target, i, j, k);
           Exit(0);
         }
@@ -4433,25 +4434,28 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   
 
   // 内部領域の媒質IDに対して、カウント
-
+  
   unsigned long colorSet[MODEL_ID_MAX+1];
   for (int i=0; i<=MODEL_ID_MAX; i++) colorSet[i]=0;
   
   // colorSet[] ローカルなIDのカウント
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) private(m, target) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        //m = FBUtility::getFindexS3D(sz, gd, i, j, k);
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         target = cell[m];
         
-        if ( target <= MODEL_ID_MAX ) {
-          if ( colorSet[target]++ > ULONG_MAX ) {
+        if ( target <= MODEL_ID_MAX )
+        {
+          if ( colorSet[target]++ > ULONG_MAX )
+          {
             Hostonly_ stamped_printf("\tError : count included in Model exceeds ULONG_MAX\n");
             Exit(0);
           }
         }
-        else {
+        else
+        {
           Hostonly_ stamped_printf("\tError : ID included in Model is greater than %d.\n", MODEL_ID_MAX);
           Exit(0);
         }
@@ -4464,7 +4468,8 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   // 外部領域の媒質IDをcolorSetに追加する
   for (int i=0; i<NOFACE; i++) {
     target = cid[i];
-    if ( colorSet[target]++ > ULONG_MAX ) {
+    if ( colorSet[target]++ > ULONG_MAX )
+    {
       Hostonly_ stamped_printf("\tError : count included in Model exceeds ULONG_MAX\n");
       Exit(0);
     }
@@ -4472,7 +4477,8 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   
   // 集約時の桁あふれを回避するため、1に規格化
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
-    if ( colorSet[i] != 0 ) {
+    if ( colorSet[i] != 0 )
+    {
       colorSet[i] = 1;
     }
   }
@@ -4494,20 +4500,20 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
 // ##########
 
 	// colorSet[] の集約
-  if ( numProc > 1 ) {
-		
+  if ( numProc > 1 )
+  {
     int clist[MODEL_ID_MAX+1];
     for (int i=0; i<MODEL_ID_MAX+1; i++) clist[i] = iSet[i];
     
     if ( paraMngr->Allreduce(clist, iSet, MODEL_ID_MAX+1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    
   }
   // この時点で、存在するIDの数はnumProc個になっている >> int の範囲内
 
   // colorList[]へ詰めてコピー colorList[0]は不使用
   int b=1;
   for (int i=0; i<MODEL_ID_MAX+1; i++) {
-    if ( iSet[i] != 0 ) {
+    if ( iSet[i] != 0 )
+    {
       colorList[b] = i;
       b++;
     }
