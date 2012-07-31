@@ -307,7 +307,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // Fill
-  if ( (C.Mode.Example == id_Polygon) ) //&& C.isCDS() ) {
+  if ( (C.Mode.Example == id_Polygon) ) //&& C.isCDS() )
   {
     Hostonly_
     {
@@ -317,7 +317,7 @@ int FFV::Initialize(int argc, char **argv)
       fprintf(fp,"\t>> Fill\n\n");
     }
     
-    // Fill(&Vinfo);
+    fill(fp);
   }
   
   
@@ -872,7 +872,7 @@ int FFV::Initialize(int argc, char **argv)
 }
 
 
-// **********************************************
+// #################################################################
 // 全Voxelモデルの媒質数とKOSの整合性をチェック
 bool FFV::chkMediumConsistency()
 {
@@ -926,7 +926,7 @@ bool FFV::chkMediumConsistency()
   return true;
 }
 
-// **********************************************
+// #################################################################
 // 組み込み例題のインスタンス
 void FFV::connectExample(Control* Cref)
 {
@@ -947,7 +947,7 @@ void FFV::connectExample(Control* Cref)
 }
 
 
-// **********************************************
+// #################################################################
 // 時刻をRFクラスからv00[4]にコピーする
 void FFV::copyV00fromRF(double m_time) 
 {
@@ -959,7 +959,7 @@ void FFV::copyV00fromRF(double m_time)
 }
 
 
-// **********************************************
+// #################################################################
 // コンポーネントの内容リストを表示する
 void FFV::display_Compo_Info(FILE* fp)
 {
@@ -1006,7 +1006,7 @@ void FFV::display_Compo_Info(FILE* fp)
 }
 
 
-// **********************************************
+// #################################################################
 // CompoListの内容とセル数の情報を表示する
 void FFV::display_CompoList(FILE* fp)
 {
@@ -1028,7 +1028,7 @@ void FFV::display_CompoList(FILE* fp)
 }
 
 
-// **********************************************
+// #################################################################
 // 制御パラメータ，物理パラメータの表示
 void FFV::display_Parameters(FILE* fp)
 {
@@ -1068,7 +1068,7 @@ void FFV::display_Parameters(FILE* fp)
 }
 
 
-// **********************************************
+// #################################################################
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
 {
@@ -1167,7 +1167,7 @@ void FFV::DomainInitialize(const string dom_file)
 }
 
 
-// **********************************************
+// #################################################################
 //初期インデクスの情報を元に，一層拡大したインデクス値を返す
 void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id)
 {
@@ -1327,7 +1327,156 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 }
 
 
-// **********************************************
+
+// #################################################################
+// ポリゴンの場合のフィル操作
+void FFV::fill(FILE* fp)
+{
+  
+  //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
+  //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
+  
+  // 最初にフィル対象のセル数を求める
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
+  unsigned long tmp_fc = fill_count;
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->Allreduce(&tmp_fc, &fill_count, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    printf    ("\tInitial fill target count     : %15ld\n\n", fill_count);
+    fprintf(fp,"\tInitial fill target count     : %15ld\n\n", fill_count);
+  }
+  
+  
+  // 指定された媒質を使って、指定シード点を与える
+  int target_id = C.Fill_Medium;
+  
+  int seed[3]; ///> @todo シード点をどう与えるか？
+  seed[0] = 1;
+  seed[1] = 1;
+  seed[2] = 1;
+  
+  if ( !V.paint_first_seed(d_mid, seed, target_id) )
+  {
+    Hostonly_
+    {
+      printf(    "Failed first painting\n");
+      fprintf(fp,"Failed first painting\n");
+    }
+    Exit(0);
+  }
+  
+  
+  
+  // first fill  >> 最初の一つ分のカウントデクリメント
+  fill_count--;
+  
+  
+  // 
+  int c=0;
+  while (fill_count > 0) {
+    
+    unsigned long fc = (unsigned long)V.fill_cell_edge(d_bid, d_mid, d_cut, target_id, id_of_solid);
+    unsigned long t_fc = fc;
+    
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->Allreduce(&t_fc, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    if ( fc == 0 ) break; // フィル対象がなくなったら終了
+    
+    fill_count -= fc;
+    
+    Hostonly_
+    {
+      printf(    "\t%4d : Try Fluid fill = %15ld\n", ++c, fill_count);
+      fprintf(fp,"\t%4d : Try Fluid fill = %15ld\n", ++c, fill_count);
+    }
+    
+    // 同期
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    }
+  }
+  
+  Hostonly_
+  {
+    printf(    "\tFluid fill = %15ld\n\n", fill_count);
+    fprintf(fp,"\tFluid fill = %15ld\n\n", fill_count);
+  }
+  
+  
+  // 固体に変更
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  c = 0;
+  while ( fill_count > 0 ) {
+    
+    // 未ペイントのセルに対して、固体IDを与える
+    unsigned long fc = (unsigned long)V.fill_inside(d_mid, id_of_solid);
+    unsigned long t_fc = fc;
+    
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->Allreduce(&t_fc, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    if ( fc == 0 ) break;
+    
+    fill_count -= fc;
+    
+    Hostonly_
+    {
+      printf(    "\t%4d : Try Solid fill = %ld\n", ++c, fill_count);
+      fprintf(fp,"\t%4d : Try Solid fill = %ld\n", ++c, fill_count);
+    }
+    
+  }
+  
+  Hostonly_
+  {
+    printf(    "\tSolid fill = %15ld\n\n", fill_count);
+    fprintf(fp,"\tSolid fill = %15ld\n\n", fill_count);
+  }
+  
+  // チェック出力　デバッグ
+  Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
+  
+  
+  // 確認 paintedは未ペイントセルがある場合に1
+  // Allreduce時の桁あふれ対策のため、unsigned long で集約
+  
+  unsigned long painted = (unsigned long)V.fill_check(d_mid);
+  
+  if ( numProc > 1 )
+  {
+    unsigned long t_painted = painted;
+    if ( paraMngr->Allreduce(&t_painted, &painted, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  if ( painted  != 0 )
+  {
+    Hostonly_
+    {
+      printf(    "\tFill operation is done, but still remains unpainted cells.\n");
+      fprintf(fp,"\tFill operation is done, but still remains unpainted cells.\n");
+    }
+    Exit(0);
+  }
+  
+}
+
+
+
+// #################################################################
 // 固定パラメータの設定
 void FFV::fixed_parameters()
 {
@@ -1366,7 +1515,7 @@ void FFV::fixed_parameters()
 
 
 
-// **********************************************
+// #################################################################
 // 並列処理時の各ノードの分割数を集めてファイルに保存する
 void FFV::gather_DomainInfo()
 {
@@ -1603,7 +1752,7 @@ void FFV::gather_DomainInfo()
 
 
 
-// **********************************************
+// #################################################################
 // グローバルな領域情報を取得
 int FFV::get_DomainInfo()
 {
@@ -1748,7 +1897,7 @@ int FFV::get_DomainInfo()
 }
 
 
-// **********************************************
+// #################################################################
 // 組み込み例題の設定
 void FFV::getExample(Control* Cref, TPControl* tpCntl)
 {
@@ -1779,7 +1928,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
 }
 
 
-// **********************************************
+// #################################################################
 // インターバルの初期化
 void FFV::init_Interval()
 {
@@ -1835,7 +1984,7 @@ void FFV::init_Interval()
 }
 
 
-// **********************************************
+// #################################################################
 // 距離の最小値を求める
 void FFV::min_distance(float* cut, FILE* fp)
 {
@@ -1903,7 +2052,7 @@ void FFV::min_distance(float* cut, FILE* fp)
 }
 
 
-// **********************************************
+// #################################################################
 // 履歴の出力準備
 void FFV::prep_HistoryOutput()
 {
@@ -1976,7 +2125,7 @@ void FFV::prep_HistoryOutput()
 }
 
 
-// **********************************************
+// #################################################################
 // 読み込んだ領域情報のデバッグライト
 void FFV::printDomainInfo()
 {
@@ -1989,7 +2138,7 @@ void FFV::printDomainInfo()
 }
 
 
-// **********************************************
+// #################################################################
 // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
 void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
 {
@@ -2080,7 +2229,7 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
 }
 
 
-// **********************************************
+// #################################################################
 // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
 void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
 {
@@ -2122,7 +2271,7 @@ void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
 }
 
 
-// **********************************************
+// #################################################################
 // コンポーネントリストに登録されたBV情報をリサイズする
 void FFV::resizeCompoBV(const int kos, const bool isHeat)
 {
@@ -2182,7 +2331,7 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 
 
 
-// **********************************************
+// #################################################################
 // 外部境界条件を読み込み，Controlクラスに保持する
 void FFV::setBCinfo()
 {
@@ -2206,7 +2355,7 @@ void FFV::setBCinfo()
 
 
 
-// **********************************************
+// #################################################################
 // HEX,FANコンポーネントなどの体積率とbboxなどをセット
 // インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
 void FFV::setComponentVF()
@@ -2296,7 +2445,7 @@ void FFV::setComponentVF()
 
 
 
-// **********************************************
+// #################################################################
 // コンポーネントが存在するかを保持しておく
 void FFV::setEnsComponent()
 {
@@ -2366,7 +2515,7 @@ void FFV::setEnsComponent()
 
 
 
-// **********************************************
+// #################################################################
 // コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
 void FFV::setGlobalCmpIdx()
 {
@@ -2494,7 +2643,7 @@ void FFV::setGlobalCmpIdx()
 
 
 
-// **********************************************
+// #################################################################
 // 初期条件の設定
 void FFV::setInitialCondition()
 {
@@ -2610,7 +2759,7 @@ void FFV::setInitialCondition()
 
 
 
-// **********************************************
+// #################################################################
 // midの情報から各BCコンポーネントのローカルなインデクスを取得する
 // 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
 // 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
@@ -2680,7 +2829,7 @@ void FFV::setLocalCmpIdx_Binary()
 }
 
 
-// **********************************************
+// #################################################################
 // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
 void FFV::setMediumList(FILE* fp)
 {
@@ -2700,7 +2849,7 @@ void FFV::setMediumList(FILE* fp)
 
 
 
-// **********************************************
+// #################################################################
 // 各種例題のモデルをセット
 void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
@@ -2761,7 +2910,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 
 
 
-// **********************************************
+// #################################################################
 // 並列化と分割の方法を保持
 string FFV::setParallelism()
 {
@@ -2804,7 +2953,7 @@ string FFV::setParallelism()
 }
 
 
-// **********************************************
+// #################################################################
 // 時間積分幅や物理パラメータの設定
 void FFV::setParameters()
 {
@@ -2884,7 +3033,7 @@ void FFV::setParameters()
 
 
 
-// **********************************************
+// #################################################################
 // IP用にカット領域をアロケートする
 void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
 {
@@ -2939,7 +3088,7 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
 }
 
 
-// **********************************************
+// #################################################################
 // 幾何形状情報を準備し，交点計算を行う
 void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
@@ -3279,7 +3428,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 }
 
 
-// **********************************************
+// #################################################################
 // VOF値を気体(0.0)と液体(1.0)で初期化
 void FFV::setVOF()
 {
@@ -3309,7 +3458,7 @@ void FFV::setVOF()
 
 
 
-// **********************************************
+// #################################################################
 // ポリゴンのカット情報からVBCのboxをセット
 void FFV::VIBC_Bbox_from_Cut()
 {
@@ -3332,7 +3481,7 @@ void FFV::VIBC_Bbox_from_Cut()
 
 
 
-// **********************************************
+// #################################################################
 // BCIndexにビット情報をエンコードする
 void FFV::VoxEncode()
 {
@@ -3415,7 +3564,7 @@ void FFV::VoxEncode()
 
 
 
-// **********************************************
+// #################################################################
 // ボクセルをスキャンし情報を表示する
 void FFV::VoxScan(FILE* fp)
 {

@@ -372,7 +372,7 @@ private:
   
   /**
    * @brief 単位ベクトルを計算して戻す
-   * @param [in/out] v
+   * @param [in,out] v
    */
   void getUnitVec(REAL_TYPE* v);
   
@@ -508,7 +508,7 @@ public:
   
   /**
    * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
-   * @param [in/out] bc     BoundaryOuter
+   * @param [in,out] bc     BoundaryOuter
    * @param [in]     MTITP  MediumTableInfo
    * @param [out]    cmp    CompoList
    */

@@ -204,7 +204,7 @@ void SetBC3D::checkDriver(FILE* fp)
  @param[out] vec[3] ベクトル成分
  @param tm 時刻
  @param v00
- @param[in/out] flop
+ @param[in,out] flop
  */
 REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, double& flop)
 {
@@ -228,7 +228,7 @@ REAL_TYPE SetBC3D::extractVel_IBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE
  @param[out] vec[3] ベクトル成分
  @param tm 時刻
  @param v00
- @param[in/out] flop
+ @param[in,out] flop
  */
 REAL_TYPE SetBC3D::extractVel_OBC(int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, double& flop)
 {
@@ -517,7 +517,7 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
 
 /**
  @brief 圧力損失部による速度の方向修正
- @param[in/out] v 速度
+ @param[in,out] v 速度
  @param bd BCindex ID
  @param cvf コンポーネントの体積率
  @param v00 参照速度
@@ -560,13 +560,13 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
 
 /**
  @brief 圧力損失部による疑似速度方向の修正
- @param[in/out] vc 疑似速度ベクトル
+ @param[in,out] vc 疑似速度ベクトル
  @param[in] v 速度ベクトル n-step
  @param bd BCindex ID
  @param cvf コンポーネントの体積率
  @param v00 参照速度
  @param dt 時間積分幅
- @param[in/out] flop
+ @param[in,out] flop
  */
 void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double &flop)
 {
@@ -650,7 +650,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, floa
 
 /**
  @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
- @param[in/out] v セルセンターの速度
+ @param[in,out] v セルセンターの速度
  @param bd BCindex ID
  @param cvf コンポーネントの体積率
  @param div div((u)*(dh/dt)
@@ -702,7 +702,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYP
 
 /**
  @brief 速度境界条件による流束の修正
- @param [in/out] wv 疑似ベクトル
+ @param [in,out] wv 疑似ベクトル
  @param v 速度ベクトル u^n
  @param bv BCindex V
  @param tm 無次元時刻

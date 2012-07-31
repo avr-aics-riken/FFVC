@@ -169,7 +169,7 @@ protected:
   
   /**
    * @brief ベクトルの最小成分
-   * @param [in/out] mn 比較して小さい成分
+   * @param [in,out] mn 比較して小さい成分
    * @param [in]     p  参照ベクトル
    */
   inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) 
@@ -182,7 +182,7 @@ protected:
   
   /**
    * @brief ベクトルの最大値成分
-   * @param [in/out] mx 比較して大きい成分
+   * @param [in,out] mx 比較して大きい成分
    * @param [in]     p  参照ベクトル
    */
   inline void get_max(FB::Vec3f& mx, const FB::Vec3f p) 
@@ -330,8 +330,8 @@ public:
    * @brief 体積率が(0,1)の間のセルに対してサブディビジョンを実施
    * @param [in]     st    開始インデクス
    * @param [in]     ed    終了インデクス
-   * @param [in/out] vf    フラクション
-   * @param [in/out] flop  浮動小数点演算数
+   * @param [in,out] vf    フラクション
+   * @param [in,out] flop  浮動小数点演算数
    */
   void subdivision(const int st[], const int ed[], float* vf, double& flop);
   
@@ -340,8 +340,8 @@ public:
    * @brief セルの8頂点の内外判定を行い，0, 1, otherに分類
    * @param [in]     st    開始インデクス
    * @param [in]     en    終了インデクス
-   * @param [in/out] vf    フラクション
-   * @param [in/out] flop  浮動小数点演算数
+   * @param [in,out] vf    フラクション
+   * @param [in,out] flop  浮動小数点演算数
    */
   void vertex8(const int st[], const int ed[], float* vf, double& flop);
 };
@@ -384,7 +384,7 @@ public:
    * @brief セルの8頂点の内外判定より50%以上のセルにIDを設定する
    * @param [in]     st   開始インデクス
    * @param [in]     en   終了インデクス
-   * @param [in/out] mid  IDの配列
+   * @param [in,out] mid  IDの配列
    * @param [in]     id   指定ID
    */
   void setID(const int st[], const int ed[], int* mid, const int m_id);

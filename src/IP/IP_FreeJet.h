@@ -33,7 +33,7 @@ protected:
   
   
   /** 矩形の計算領域のセルIDを設定する
-   * @param [in/out] mid   媒質情報の配列
+   * @param [in,out] mid   媒質情報の配列
    * @param [in]     R     Controlクラスのポインタ
    * @param [in]     G_org グローバルな原点（無次元）
    * @param [in]     Nmax  Controlクラスのポインタ
@@ -48,9 +48,9 @@ public:
   /** 領域を設定する
    * @param [in]     R   Controlクラスのポインタ
    * @param [in]     sz  分割数
-   * @param [in/out] org 計算領域の基点
-   * @param [in/out] reg 計算領域のbounding boxサイズ
-   * @param [in/out] pch セル幅
+   * @param [in,out] org 計算領域の基点
+   * @param [in,out] reg 計算領域のbounding boxサイズ
+   * @param [in,out] pch セル幅
    */
   virtual bool setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   

@@ -235,14 +235,14 @@ private:
 
   /**
    * @brief Adams-Bashforth法に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_AB2 (double &total);
   
   
   /**
    * @brief 平均値処理に用いる配列のアロケーション
-   * @param [in/out] total  ソルバーに使用するメモリ量
+   * @param [in,out] total  ソルバーに使用するメモリ量
    */
   void allocArray_Average (double &total);
   
@@ -250,30 +250,30 @@ private:
   /**
    * @brief 粗格子読み込みに用いる配列のアロケーション
    * @param [in]     r_size  粗格子の領域サイズ
-   * @param [in/out] prep    前処理に使用するメモリ量
+   * @param [in,out] prep    前処理に使用するメモリ量
    */
   void allocArray_CoarseMesh(const int* r_size, double &prep);
   
   
   /**
    * @brief コンポーネント体積率の配列のアロケーション
-   * @param [in/out] prep  前処理に使用するメモリ量
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] prep  前処理に使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_CompoVF(double &prep, double &total);
   
   
   /**
    * @brief カット情報の配列
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_Cut(double &total);
   
   
   /**
    @brief コンポーネントのワーク用配列のアロケート
-   @param [in/out] m_prep  前処理用のメモリサイズ
-   @param [in/out] m_total 本計算用のメモリリサイズ
+   @param [in,out] m_prep  前処理用のメモリサイズ
+   @param [in,out] m_total 本計算用のメモリリサイズ
    @param [in]     fp      ファイルポインタ
    */
   void allocArray_Forcing(double& m_prep, double& m_total, FILE* fp);
@@ -281,43 +281,43 @@ private:
   
   /**
    * @brief 熱の主計算部分に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_Heat(double &total);
   
   
   /**
    * @brief 体積率の配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_Interface(double &total);
   
   
   /**
    * @brief LES計算に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_LES(double &total);
   
   
   /**
    * @brief 主計算部分に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_Main(double &total);
   
   
   /**
    * @brief 前処理に用いる配列のアロケーション
-   * @param [in/out] prep  前処理に使用するメモリ量
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] prep  前処理に使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_Prep(double &prep, double &total);
   
   
   /**
    * @brief Runge-Kutta法に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_RK(double &total);
   
@@ -325,14 +325,14 @@ private:
   
   /**
    * @brief 主計算部分に用いる配列のアロケーション
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocate_Main(double &total);
   
   
   /**
    * @brief SOR2SMAのバッファ確保
-   * @param [in/out] total ソルバーに使用するメモリ量
+   * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocate_SOR2SMA_buffer(double &total);
   
@@ -340,7 +340,7 @@ private:
   
   /**
    * @brief 時間平均値のファイル出力
-   * @param [in/out] flop 浮動小数点演算数
+   * @param [in,out] flop 浮動小数点演算数
    */
   void AverageOutput(double& flop);
   
@@ -348,7 +348,7 @@ private:
   
   /**
    * @brief 時間平均操作を行う
-   * @param [in/out] flop 浮動小数点演算数
+   * @param [in,out] flop 浮動小数点演算数
    */
   void Averaging_Time(double& flop);
   
@@ -437,8 +437,8 @@ private:
   
   /**
    * @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
-   * @param [in/out] m_st 拡大された開始点（Fortranインデクス）
-   * @param [in/out] m_ed 拡大された終了点（Fortranインデクス）
+   * @param [in,out] m_st 拡大された開始点（Fortranインデクス）
+   * @param [in,out] m_ed 拡大された終了点（Fortranインデクス）
    * @param [in]     st_i 開始点（Cインデクス）
    * @param [in]     len  コンポーネントの存在長さ
    * @param [in]     m_x  軸方向のサイズ
@@ -450,10 +450,17 @@ private:
   
   /**
    * @brief ファイル出力
-   * @param [in/out] flop    浮動小数点演算数
+   * @param [in,out] flop    浮動小数点演算数
    * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
   void FileOutput(double& flop, const bool restart=false);
+  
+  
+  /*
+   * @brief フィル
+   * @param [in] fp    ファイルポインタ
+   */
+  void fill(FILE* fp);
   
   
   /**
@@ -836,7 +843,7 @@ private:
    * @brief 空間平均操作と変動量の計算を行う
    * @param [out]    avr  平均値
    * @param [out]    rms  変動値
-   * @param [in/out] flop 浮動小数演算数
+   * @param [in,out] flop 浮動小数演算数
    */
   void Variation_Space(double* avr, double* rms, double& flop);
   
@@ -864,7 +871,7 @@ private:
    * @brief SOR2SMAの非同期通信処理
    * @param [in]     col オーダリングカラーの番号
    * @param [in]     ip  オーダリングカラー0の最初のインデクス
-   * @param [in/out] key 送信ID
+   * @param [in,out] key 送信ID
    */
   void wait_SOR2SMA(const int col, const int ip, MPI_Request* key);
   
@@ -885,21 +892,21 @@ private:
   
   /**
    * @brief PLOT3Dファイルのポスト出力
-   * @param [in/out] flop    浮動小数点演算数
+   * @param [in,out] flop    浮動小数点演算数
    * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
   void OutputPlot3D_post(double& flop, const bool restart=false);
   
   /**
    * @brief 圧縮性流体のための計算結果ファイル（*.q）出力（未整備）
-   * @param [in/out] flop    浮動小数点演算数
+   * @param [in,out] flop    浮動小数点演算数
    * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
   void OutputPlot3D_q(double& flop, const bool restart=false);
   
   /**
    * @brief 計算結果ファイル（*.func）出力
-   * @param [in/out] flop    浮動小数点演算数
+   * @param [in,out] flop    浮動小数点演算数
    * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
   void OutputPlot3D_function(double& flop, const bool restart=false);

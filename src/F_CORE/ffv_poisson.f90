@@ -67,7 +67,7 @@
     
 !> ********************************************************************
 !! @brief point SOR法
-!! @param[in/out] p 圧力
+!! @param[in,out] p 圧力
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param omg 加速係数
@@ -143,13 +143,13 @@
 
 !> ********************************************************************
 !! @brief 2-colored SOR法 stride memory access
-!! @param [in/out] p     圧力
+!! @param [in,out] p     圧力
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
 !! @param [in]     ip    開始点インデクス
 !! @param [in]     color グループ番号
 !! @param [in]     omg   加速係数
-!! @param [in/out] res   絶対残差と相対残差
+!! @param [in,out] res   絶対残差と相対残差
 !! @param [in]     src0  固定ソース項
 !! @param [in]     src1  反復毎に変化するソース項
 !! @param [in]     bp    BCindex P

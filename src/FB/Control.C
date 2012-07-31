@@ -568,9 +568,9 @@ void Control::get_Para_Ref(void)
   }
   BasePrs = ct2;
   
-  label = "/Parameter/Reference/Base_Medium";
+  label = "/Parameter/Reference/Medium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    printf("\tParsing error /Parameter/Reference/Base_Medium: '\n");
+    printf("\tParsing error /Parameter/Reference/Medium: '\n");
 	  Exit(0);
   }
   Ref_Medium = str;
@@ -2045,11 +2045,11 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   }
   PolylibConfigName = str;
   
-  // デフォルト媒質番号の指定
-  label="/Steer/Geometry_Model/Base_Medium";
+  // フィル媒質番号の指定
+  label="/Steer/Geometry_Model/Fill_Medium";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    stamped_printf("\tParsing error : Invalid value for 'Base_Medium' in 'Geometry_Model'\n");
+    stamped_printf("\tParsing error : Invalid value for 'Fill_Medium' in 'Geometry_Model'\n");
     Exit(0);
   }
   
@@ -2058,13 +2058,13 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
     
     if ( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
     {
-      Mode.Base_Medium = i;
+      Fill_Medium = i;
       break;
     }
   }
   
   // チェック
-  if ( Mode.Base_Medium == 0 )
+  if ( Fill_Medium == 0 )
   {
     stamped_printf("\tError : Medium '%s' in not listed in Medium_Table\n", str.c_str());
     Exit(0);

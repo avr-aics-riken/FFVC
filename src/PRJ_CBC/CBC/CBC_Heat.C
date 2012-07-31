@@ -26,7 +26,7 @@
 /**
  @fn void SklSolverCBC::ps_ConvectionEE(REAL_TYPE* tc, REAL_TYPE dt, unsigned* bd, REAL_TYPE* t0, REAL_TYPE& flop)
  @brief 移流項のEuler陽解法による時間積分
- @param tc[in/out] 対流項の流束の和/部分段階の温度
+ @param tc[in,out] 対流項の流束の和/部分段階の温度
  @param dt 時間積分幅
  @param bd BCindex ID
  @param t0 nステップの温度

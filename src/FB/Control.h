@@ -620,7 +620,7 @@ public:
   int RefMat;     ///< 参照媒質インデクス
   int Start;
   int version;    ///< FFVバージョン番号
-  int vxFormat;
+  int Fill_Medium;
   
   unsigned Restart_step;       ///< リスタートステップ
   unsigned long NoWallSurface; ///< 固体表面セル数
@@ -726,7 +726,7 @@ public:
     Restart_step = 0;
     Start = 0;
     version = 0;
-    vxFormat = 0;
+    Fill_Medium = 0;
     
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
@@ -836,7 +836,7 @@ protected:
    * @param [in]     label1  Nodeのラベル1
    * @param [in]     label2  Nodeのラベル2
    * @param [in]     order   ItrCtl配列の格納番号
-   * @param [in/out] IC      反復制御用クラスの配列
+   * @param [in,out] IC      反復制御用クラスの配列
    */
   void findCriteria(const string label1, const string label2, const int order, ItrCtl* IC);
   
@@ -1129,7 +1129,7 @@ public:
 
   /**
    * @brief 座標値を無次元化する
-   * @param [in/out] x 座標値
+   * @param [in,out] x 座標値
    */
   void normalizeCord(REAL_TYPE x[3]) 
   {

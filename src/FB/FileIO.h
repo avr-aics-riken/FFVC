@@ -77,7 +77,7 @@ public:
    * @param [in]     sz   分割数
    * @param [in]     gc   ガイドセル数
    * @param [in]     coef 係数
-   * @param [in/out] flop 浮動小数演算数
+   * @param [in,out] flop 浮動小数演算数
    */
   void cnv_Div(REAL_TYPE* dst, 
                REAL_TYPE* src, 
@@ -95,7 +95,7 @@ public:
    * @param [in]     gc      ガイドセル数
    * @param [in]     Ref_rho 代表密度(kg/m^3)
    * @param [in]     Ref_v   代表速度(m/s)
-   * @param [in/out] flop    浮動小数演算数
+   * @param [in,out] flop    浮動小数演算数
    */
   void cnv_TP_ND2D(REAL_TYPE* dst, 
                    REAL_TYPE* src, 
@@ -136,7 +136,7 @@ public:
    * @param [in]     BasePrs     基準圧力
    * @param [in]     RefDensity　代表密度
    * @param [in]     RefVelocity 代表速度
-   * @param [in/out] flop        浮動小数点演算数
+   * @param [in,out] flop        浮動小数点演算数
    * @param [in]     guide_out   出力ガイドセル数
    * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
    * @param [out]    step_avr    平均操作したステップ数
@@ -172,7 +172,7 @@ public:
    * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
    * @param [in]     BasePrs     基準圧力
    * @param [in]     RefVelocity 代表速度
-   * @param [in/out] flop        浮動小数点演算数
+   * @param [in,out] flop        浮動小数点演算数
    * @param [in]     guide_out   出力ガイドセル数
    * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
    * @param [out]    step_avr    平均操作したステップ数
@@ -208,7 +208,7 @@ public:
    * @param [in]     Base_tmp    基準温度
    * @param [in]     Diff_tmp  　代表温度差
    * @param [in]     Kelvin      定数
-   * @param [in/out] flop        浮動小数点演算数
+   * @param [in,out] flop        浮動小数点演算数
    * @param [in]     guide_out   出力ガイドセル数
    * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
    * @param [out]    step_avr    平均操作したステップ数
