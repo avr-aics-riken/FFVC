@@ -27,6 +27,7 @@
 #include "basic_func.h"
 #include "Component.h"
 #include "Sampling.h"
+#include "FBUtility.h"
 
 using namespace std;
 
@@ -459,7 +460,7 @@ protected:
   bool allReduceSum(REAL_TYPE* array, int n);
   
   /// Allreduceによる総和(整数配列上書き，work配列指定).
-  bool allReduceSum(int* array, int n, int* sendBuf);
+  bool allReduceSum(int* array, int n, unsigned long* sendBuf);
   
   /// Allreduceによる総和(整数配列上書き).
   bool allReduceSum(int* array, int n);

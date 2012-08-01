@@ -99,12 +99,27 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 
 
 /// Allreduceによる総和(整数配列上書き，work配列指定).
-bool MonitorCompo::allReduceSum(int* array, int n, int* sendBuf)
+bool MonitorCompo::allReduceSum(int* array, int n, unsigned long* sendBuf)
 {
   if ( numProc <= 1 ) return true;
   
-  for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  if ( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  //for (int i = 0; i < n; i++) sendBuf[i] = array[i];
+  //if ( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  
+  // 一度ulongへキャストし、チェック
+  unsigned long* recvBuf = new unsigned long[n];
+  for (int i = 0; i < n; i++) sendBuf[i] = (unsigned long)array[i];
+  if ( MPI_Allreduce(sendBuf, recvBuf, n, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  for (int i = 0; i < n; i++)
+  {
+    if (recvBuf[i] > INT_MAX)
+    {
+      Hostonly_ stamped_printf("\tError : allReduceSum OverFlow\n");
+      Exit(0);
+    }
+    array[i] = (int)recvBuf[i];
+  }
+  
   return true;
 }
 
@@ -114,7 +129,7 @@ bool MonitorCompo::allReduceSum(int* array, int n)
 {
   if ( numProc <= 1 ) return true;
   
-  int* sendBuf = new int[n];
+  unsigned long* sendBuf = new unsigned long[n];
   bool ret = allReduceSum(array, n, sendBuf);
   delete[] sendBuf;
   
@@ -172,6 +187,7 @@ void MonitorCompo::checkMonitorPoints()
   }
   
   if (!allReduceSum(pointStatus, nPoint)) Exit(0);
+  
 }
 
 
@@ -629,6 +645,7 @@ void MonitorCompo::setIBPoints(int n, CompoList& cmp)
   
   if (!allReduceSum(nPointList, np)) Exit(0);
   
+  
   //check
   int sum = 0;
   for (int i = 0; i < np; i++) sum += nPointList[i];
@@ -979,4 +996,3 @@ void MonitorCompo::writeHeader(bool gathered)
   
   fflush(fp);
 }
-

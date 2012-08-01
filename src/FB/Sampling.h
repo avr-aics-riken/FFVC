@@ -16,7 +16,6 @@
 //@author kero
 
 #include "FB_Define.h"
-#include "FBUtility.h"
 #include "vec3.h"
 #include "basic_func.h"
 
@@ -205,9 +204,18 @@ protected:
   ///
   Vec3r getVector(const REAL_TYPE* v, Vec3i index) {
     Vec3r vRet;
-    vRet.x = v[FBUtility::getFindexV3DEx(size, guide, 0, index.x, index.y, index.z)];
-    vRet.y = v[FBUtility::getFindexV3DEx(size, guide, 1, index.x, index.y, index.z)];
-    vRet.z = v[FBUtility::getFindexV3DEx(size, guide, 2, index.x, index.y, index.z)];
+    int ix = size[0];
+    int jx = size[1];
+    int kx = size[2];
+    int gd = guide;
+    
+    size_t m_x = _F_IDX_V3DEX(0, index.x, index.y, index.z, ix, jx, kx, gd);
+    size_t m_y = _F_IDX_V3DEX(1, index.x, index.y, index.z, ix, jx, kx, gd);
+    size_t m_z = _F_IDX_V3DEX(2, index.x, index.y, index.z, ix, jx, kx, gd);
+    vRet.x = v[m_x];
+    vRet.y = v[m_y];
+    vRet.z = v[m_z];
+    
     return vRet;
   }
 
