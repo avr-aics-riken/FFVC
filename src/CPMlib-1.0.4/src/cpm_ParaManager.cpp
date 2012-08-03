@@ -379,6 +379,7 @@ cpm_ParaManager::DecideDivPattern( int divNum
   voxSizell[1] = voxSize[1];
   voxSizell[2] = voxSize[2];
 
+#if 0 //2012.08.03.mod.start
   bool flag = false;
   unsigned long long n;
   for(n=1; n<=divNumll; n++){
@@ -408,6 +409,40 @@ cpm_ParaManager::DecideDivPattern( int divNum
       }
     }
   }
+#else
+  bool flag = false;
+  unsigned long long i, j, k;
+  for(i=1; i<=divNumll; i++)
+  {
+    if( divNumll%i != 0 ) continue;
+    unsigned long long jmax = divNumll/i;
+    for(j=1; j<=jmax; j++)
+    {
+      if( (divNumll/i)%j != 0 ) continue;
+      unsigned long long kmax = divNumll/(i*j);
+      for(k=1; k<=kmax; k++)
+      {
+        if( (divNumll/(i*j))%k != 0 ) continue;
+        if( (voxSizell[2] / k) < 1 ) break;
+        if( i*j*k == divNumll){
+          unsigned long long commSize;
+          if( (commSize=CalcCommSize(i, j, k, voxSizell)) == 0 ) break;
+
+          if( !flag )
+          {
+            minCommSize = commSize;
+            flag = true;
+          }
+          else if( commSize < minCommSize )
+          {
+            divPttnll[0] = i; divPttnll[1] = j; divPttnll[2] = k;
+            minCommSize = commSize;
+          }
+        }
+      }
+    }
+  }
+#endif //2012.08.03.mod.end
 
   divPttn[0] = divPttnll[0];
   divPttn[1] = divPttnll[1];

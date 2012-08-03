@@ -232,7 +232,7 @@ private:
 public:
   
   /**
-   * @brief 外部境界に接するガイドセルのmid[]に媒質インデクスをエンコードする
+   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする
    * @param [in]     face      外部境界面番号
    * @param [in,out] mid       ID配列のデータクラス
    * @param [in]     BCtype    外部境界面の境界条件の種類

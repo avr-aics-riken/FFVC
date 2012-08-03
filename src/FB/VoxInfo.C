@@ -20,7 +20,7 @@
 #include "VoxInfo.h"
 
 
-// 外部境界に接するガイドセルのmid[]に媒質インデクスをエンコードする
+// 計算領域外部のガイドセルに媒質IDをエンコードする
 void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode)
 {
   size_t m, m0, m1;
@@ -29,6 +29,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  
+  printf("face=%d BC=%d id=%d\n", face, BCtype, c_id);
 
   
   // 周期境界以外
@@ -38,7 +40,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
     switch (face) 
     {
       case X_MINUS:
-        if( nID[face] < 0 ){
+        if ( nID[face] < 0 )
+        {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
@@ -49,7 +52,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         break;
         
       case X_PLUS:
-        if( nID[face] < 0 ){
+        if ( nID[face] < 0 )
+        {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
@@ -60,7 +64,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         break;
         
       case Y_MINUS:
-        if( nID[face] < 0 ){
+        if ( nID[face] < 0 )
+        {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
@@ -71,7 +76,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         break;
         
       case Y_PLUS:
-        if( nID[face] < 0 ){
+        if ( nID[face] < 0 )
+        {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
@@ -82,7 +88,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         break;
         
       case Z_MINUS:
-        if( nID[face] < 0 ){
+        if ( nID[face] < 0 )
+        {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
@@ -93,7 +100,8 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         break;
         
       case Z_PLUS:
-        if( nID[face] < 0 ){
+        if ( nID[face] < 0 )
+        {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
@@ -141,15 +149,18 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         }      
       }
       // 非並列時
-      else {
-        switch (face) {
+      else
+      {
+        switch (face)
+        {
           case X_MINUS:
-            if( nID[face] < 0 ){
+            if ( nID[face] < 0 )
+            {
               for (int k=1; k<=kx; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1-gd; i<=0; i++) {
-                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i   , j, k);
-                    m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i+ix, j, k);
+                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -158,12 +169,13 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
             break;
             
           case X_PLUS:
-            if( nID[face] < 0 ){
+            if ( nID[face] < 0 )
+            {
               for (int k=1; k<=kx; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=ix+1; i<=ix+gd; i++) {
-                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i   , j, k);
-                    m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i-ix, j, k);
+                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -172,12 +184,13 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
             break;
             
           case Y_MINUS:
-            if( nID[face] < 0 ){
+            if ( nID[face] < 0 )
+            {
               for (int k=1; k<=kx; k++) {
                 for (int j=1-gd; j<=0; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j   , k);
-                    m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j+jx, k);
+                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -186,12 +199,13 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
             break;
             
           case Y_PLUS:
-            if( nID[face] < 0 ){
+            if ( nID[face] < 0 )
+            {
               for (int k=1; k<=kx; k++) {
                 for (int j=jx+1; j<=jx+gd; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j   , k);
-                    m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j-jx, k);
+                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -200,12 +214,13 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
             break;
             
           case Z_MINUS:
-            if( nID[face] < 0 ){
+            if ( nID[face] < 0 )
+            {
               for (int k=1-gd; k<=0; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k    );
-                    m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k+kx);
+                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd);
                     mid[m0] = mid[m1];
                   }
                 }
@@ -214,12 +229,13 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
             break;
             
           case Z_PLUS:
-            if( nID[face] < 0 ){
+            if ( nID[face] < 0 )
+            {
               for (int k=kx+1; k<=kx+gd; k++) {
                 for (int j=1; j<=jx; j++) {
                   for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k    );
-                    m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k-kx);
+                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd);
                     mid[m0] = mid[m1];
                   }
                 }

@@ -391,6 +391,8 @@ int FFV::Initialize(int argc, char **argv)
   setBCinfo();
   
 
+  // チェック出力　デバッグ
+  Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
@@ -1447,8 +1449,6 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\tSolid fill = %15ld\n\n", fill_count);
   }
   
-  // チェック出力　デバッグ
-  Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
   
   
   // 確認 paintedは未ペイントセルがある場合に1
@@ -2345,7 +2345,7 @@ void FFV::setBCinfo()
   // KOSと境界条件種類の整合性をチェック
   B.chkBCconsistency(C.KindOfSolver, cmp);
   
-  // ガイドセル上にパラメータファイルで指定する媒質インデクスを代入する．周期境界の場合の処理も含む．
+  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++) 
   {
     V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(), 
