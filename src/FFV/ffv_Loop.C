@@ -152,16 +152,19 @@ int FFV::Loop(const unsigned step)
     TIMING_stop(tm_stat_space_comm, 2.0*numProc*6.0*2.0*sizeof(double) ); // 双方向 x ノード数 x 変数
   }
   
-  avr_Var[var_Velocity] = avr_Var[var_Velocity]/(double)G_Acell;  // 速度の空間平均
-  avr_Var[var_Pressure] = avr_Var[var_Pressure]/(double)G_Acell;  // 圧力の空間平均
+  avr_Var[var_Velocity] /= (double)G_Acell;  // 速度の空間平均
+  avr_Var[var_Pressure] /= (double)G_Acell;  // 圧力の空間平均
   
-  rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]/(double)G_Acell);  // 速度の変動量 
-  rms_Var[var_Pressure] = sqrt(rms_Var[var_Pressure]/(double)G_Acell);  // 圧力の変動量 
+  rms_Var[var_Velocity] /= (double)G_Acell;  // 速度の変動量
+  rms_Var[var_Pressure] /= (double)G_Acell;  // 圧力の変動量
+  rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]);
+  rms_Var[var_Pressure] = sqrt(rms_Var[var_Pressure]);
   
   if ( C.isHeatProblem() ) 
   {
-    avr_Var[var_Temperature] = avr_Var[var_Temperature]/(double)G_Acell;         // 温度の空間平均
-    rms_Var[var_Temperature] = sqrt(rms_Var[var_Temperature]/(double)G_Acell);   // 温度の変動量
+    avr_Var[var_Temperature] /= (double)G_Acell;   // 温度の空間平均
+    rms_Var[var_Temperature] /= (double)G_Acell;   // 温度の変動量
+    rms_Var[var_Temperature] = sqrt(rms_Var[var_Temperature]);
   }
   
   //  <<< ステップループのユーティリティ 1

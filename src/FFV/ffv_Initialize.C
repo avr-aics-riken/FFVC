@@ -1636,7 +1636,6 @@ void FFV::gather_DomainInfo()
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
     d1 = (double)(ix*jx*kx) - d_vol;
-    Hostonly_ printf("d1= %e m_vol=%e\n",d1,  d_vol);
     d2 = bf_srf[i] - d_srf;
     d3 = (double)bf_acl[i] - d_efv;
     vol_dv += d1 * d1;

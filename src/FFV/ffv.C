@@ -944,4 +944,6 @@ void FFV::Variation_Space(double* avr, double* rms, double& flop)
     avr[var_Temperature] = m_var[1];
   }
   
+  Hostonly_ printf("p_av=%e p_rms=%e v_av=%e v_rms=%e\n", avr[var_Pressure], rms[var_Pressure], avr[var_Velocity], rms[var_Velocity]);
+  
 }

@@ -29,8 +29,6 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  printf("face=%d BC=%d id=%d\n", face, BCtype, c_id);
 
   
   // 周期境界以外

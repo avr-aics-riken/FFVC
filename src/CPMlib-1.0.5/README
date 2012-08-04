@@ -1,5 +1,5 @@
 /*
- * CPM - Cartesian Partition Manager
+ * CPMlib - Cartesian Partition Manager Library
  *
  * Copyright (C) 2012 University of Tokyo.
  *
@@ -16,7 +16,7 @@
 
   ハードウェア：Intel64互換CPUのPC
 
-  OS          ：Linux kernel 2.6x
+  OS        ：Linux kernel 2.6x
 
   コンパイラ  ：Intel C++ Compile
 
