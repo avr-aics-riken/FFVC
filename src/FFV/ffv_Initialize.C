@@ -361,13 +361,13 @@ int FFV::Initialize(int argc, char **argv)
   Hostonly_
   {
     printf("\n---------------------------------------------------------------------------\n\n");
-    printf("\t>> Information of Scaned Voxel\n\n");
-    V.printScanedCell(stdout);
+    printf("\t>> Information of Scanned Voxel\n\n");
+    V.printScannedCell(stdout);
 		fflush(stdout);
     
     fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\t>> Information of Scaned Voxel\n\n");
-		V.printScanedCell(fp);
+    fprintf(fp,"\t>> Information of Scanned Voxel\n\n");
+		V.printScannedCell(fp);
 		fflush(fp);
   }
   
@@ -376,8 +376,8 @@ int FFV::Initialize(int argc, char **argv)
   {
     Hostonly_
     {
-			stamped_printf(    "\tIDs in between parameter file and scaned model are not consistent.\n");
-      stamped_fprintf(fp,"\tIDs in between parameter file and scaned model are not consistent.\n");
+			stamped_printf(    "\tIDs in between parameter file and scanned model are not consistent.\n");
+      stamped_fprintf(fp,"\tIDs in between parameter file and scanned model are not consistent.\n");
 		}
     return -1;
 	}
@@ -1525,24 +1525,24 @@ void FFV::gather_DomainInfo()
   
   if ( numProc > 1 )
   {
-    r = 1.0 /(REAL_TYPE)(numProc-1);
+    r = 1.0 /(double)(numProc-1);
   }
   else
   {
     r = 1.0;
   }
   
-  int* m_size=NULL;           ///< 領域分割数
-  unsigned long* bf_fcl=NULL; ///< Fluid cell
-  unsigned long* bf_wcl=NULL; ///< Solid cell
-  unsigned long* bf_acl=NULL; ///< Active cell
+  int* m_size = NULL;           ///< 領域分割数
+  unsigned long* bf_fcl = NULL; ///< Fluid cell
+  unsigned long* bf_wcl = NULL; ///< Solid cell
+  unsigned long* bf_acl = NULL; ///< Active cell
   
-  REAL_TYPE* m_org =NULL;     ///< 基点
-  REAL_TYPE* m_Lbx =NULL;     ///< 領域サイズ
-  unsigned long* bf_srf=NULL; ///< 表面数
+  REAL_TYPE* m_org = NULL;      ///< 基点
+  REAL_TYPE* m_reg = NULL;      ///< 領域サイズ
+  double* bf_srf = NULL;        ///< 表面数
   
-  int* st_buf=NULL; ///< 
-  int* ed_buf=NULL; ///< 
+  int* st_buf = NULL; ///<
+  int* ed_buf = NULL; ///<
   
   
   if( !(m_size = new int[numProc*3]) ) Exit(0);
@@ -1551,8 +1551,8 @@ void FFV::gather_DomainInfo()
   if( !(bf_acl = new unsigned long[numProc]) )   Exit(0);
   
   if( !(m_org  = new REAL_TYPE[numProc*3]) ) Exit(0);
-  if( !(m_Lbx  = new REAL_TYPE[numProc*3]) ) Exit(0);
-  if( !(bf_srf = new unsigned long[numProc]) )   Exit(0);
+  if( !(m_reg  = new REAL_TYPE[numProc*3]) ) Exit(0);
+  if( !(bf_srf = new double[numProc]) )   Exit(0);
   
   if( !(st_buf = new int [numProc*3]) ) Exit(0);
   if( !(ed_buf = new int [numProc*3]) ) Exit(0);
@@ -1562,7 +1562,7 @@ void FFV::gather_DomainInfo()
   {
     if ( paraMngr->Gather(size, 3, m_size, 3, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(origin, 3, m_org, 3, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(region, 3, m_Lbx, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(region, 3, m_reg, 3, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Fcell, 1, bf_fcl, 1, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Wcell, 1, bf_wcl, 1, 0) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->Gather(&L_Acell, 1, bf_acl, 1, 0) != CPM_SUCCESS ) Exit(0);
@@ -1570,12 +1570,13 @@ void FFV::gather_DomainInfo()
   else // serial
   {
     memcpy(m_size, size, 3*sizeof(int));
-    bf_fcl[0] = G_Fcell;
-    bf_wcl[0] = G_Wcell;
-    bf_acl[0] = G_Acell;
+    bf_fcl[0] = L_Fcell;
+    bf_wcl[0] = L_Wcell;
+    bf_acl[0] = L_Acell;
     memcpy(m_org, origin, 3*sizeof(REAL_TYPE));
-    memcpy(m_Lbx, region, 3*sizeof(REAL_TYPE));
+    memcpy(m_reg, region, 3*sizeof(REAL_TYPE));
   }
+  
   
   // Info. of computational domain
   double vol = (double)( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]);
@@ -1587,14 +1588,14 @@ void FFV::gather_DomainInfo()
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  unsigned long m_srf = (unsigned long)(2*(ix*jx + jx*kx + kx*ix));
+  double m_srf = (double)((ix*jx + jx*kx + kx*ix)) * 2.0;
   
-  if ( nID[X_MINUS] < 0 ) m_srf -= (unsigned long)(jx*kx);  // remove face which does not join communication
-  if ( nID[Y_MINUS] < 0 ) m_srf -= (unsigned long)(ix*kx);
-  if ( nID[Z_MINUS] < 0 ) m_srf -= (unsigned long)(ix*jx);
-  if ( nID[X_PLUS]  < 0 ) m_srf -= (unsigned long)(jx*kx);
-  if ( nID[Y_PLUS]  < 0 ) m_srf -= (unsigned long)(ix*kx);
-  if ( nID[Z_PLUS]  < 0 ) m_srf -= (unsigned long)(ix*jx);
+  if ( nID[X_MINUS] < 0 ) m_srf -= (double)(jx*kx);  // remove face which does not join communication
+  if ( nID[Y_MINUS] < 0 ) m_srf -= (double)(ix*kx);
+  if ( nID[Z_MINUS] < 0 ) m_srf -= (double)(ix*jx);
+  if ( nID[X_PLUS]  < 0 ) m_srf -= (double)(jx*kx);
+  if ( nID[Y_PLUS]  < 0 ) m_srf -= (double)(ix*kx);
+  if ( nID[Z_PLUS]  < 0 ) m_srf -= (double)(ix*jx);
   
   if ( numProc > 1 )
   {
@@ -1606,40 +1607,41 @@ void FFV::gather_DomainInfo()
   }
   
   // mean of domain
-  unsigned long m_vol = 0;
-  unsigned long m_efv = 0;
+  double m_vol = 0;
+  double m_efv = 0;
   m_srf = 0;
   
   for (int i=0; i<numProc; i++) {
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    m_vol += (unsigned long)(ix*jx*kx);
+    m_vol += (double)(ix*jx*kx);
     m_srf += bf_srf[i];
-    m_efv += bf_acl[i];
+    m_efv += (double)bf_acl[i];
   }
   
-  double d_vol = (double)m_vol * d;
-  double d_srf = (double)m_srf * d;
-  double d_efv = (double)m_efv * d;
+  double d_vol = m_vol * d;
+  double d_srf = m_srf * d;
+  double d_efv = m_efv * d;
   
   // std. deviation of domain
   double vol_dv = 0.0;
   double srf_dv = 0.0;
   double efv_dv = 0.0;
   
-  unsigned long d1, d2, d3;
+  double d1, d2, d3;
   
   for (int i=0; i<numProc; i++) {
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
-    d1 = (unsigned long)(ix*jx*kx) - m_vol;
-    d2 = bf_srf[i] - m_srf;
-    d3 = bf_acl[i] - m_efv;
-    vol_dv += (double)d1*(double)d1;
-    srf_dv += (double)d2*(double)d2;
-    efv_dv += (double)d3*(double)d3;
+    d1 = (double)(ix*jx*kx) - d_vol;
+    Hostonly_ printf("d1= %e m_vol=%e\n",d1,  d_vol);
+    d2 = bf_srf[i] - d_srf;
+    d3 = (double)bf_acl[i] - d_efv;
+    vol_dv += d1 * d1;
+    srf_dv += d2 * d2;
+    efv_dv += d3 * d3;
   }
   vol_dv = sqrt(vol_dv*r);
   srf_dv = sqrt(srf_dv*r);
@@ -1664,7 +1666,7 @@ void FFV::gather_DomainInfo()
       fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
               m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
       fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
-              m_Lbx[i*3]*C.RefLength,  m_Lbx[i*3+1]*C.RefLength,  m_Lbx[i*3+2]*C.RefLength, m_Lbx[i*3],  m_Lbx[i*3+1],  m_Lbx[i*3+2]);
+              m_reg[i*3]*C.RefLength,  m_reg[i*3+1]*C.RefLength,  m_reg[i*3+2]*C.RefLength, m_reg[i*3],  m_reg[i*3+1],  m_reg[i*3+2]);
       
       if (C.NoBC != 0) fprintf(fp, "\t no            Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     }
@@ -1707,31 +1709,31 @@ void FFV::gather_DomainInfo()
     
     fprintf(fp,"\n\t--------------------------------------------------\n");
     fprintf(fp,"\tDomain Statistics per MPI process\n");
-    fprintf(fp,"\tMean volume in each domain           = %12.6e\n", m_vol);
+    fprintf(fp,"\tMean volume in each domain           = %12.6e\n", d_vol);
     fprintf(fp,"\tStd. deviation of domain             = %12.6e\n", vol_dv);
-    fprintf(fp,"\tMean comm. in each domain            = %12.6e\n", m_srf);
+    fprintf(fp,"\tMean comm. in each domain            = %12.6e\n", d_srf);
     fprintf(fp,"\tStd. deviation of surface            = %12.6e\n", srf_dv);
-    fprintf(fp,"\tMean effective volume in each domain = %12.6e\n", m_efv);
+    fprintf(fp,"\tMean effective volume in each domain = %12.6e\n", d_efv);
     fprintf(fp,"\tStd. deviation of effective volume   = %12.6e\n", efv_dv);
     fprintf(fp,"\n");
     
     fprintf(fp,"\tDomain :     ix     jx     kx       Volume Vol_dv[%%]      Surface Srf_dv[%%] Fluid[%%] Solid[%%]      Eff_Vol Eff_Vol_dv[%%]      Eff_Srf Eff_srf_dv[%%]  Itr_scheme\n");
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     
-    REAL_TYPE tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
+    double tmp_vol, tmp_acl, tmp_fcl, tmp_wcl;
     for (int i=0; i<numProc; i++) {
       ix = m_size[3*i];
       jx = m_size[3*i+1];
       kx = m_size[3*i+2];
-      tmp_vol = (REAL_TYPE)(ix*jx*kx);
-      tmp_acl = (REAL_TYPE)bf_acl[i];
-      tmp_fcl = (REAL_TYPE)bf_fcl[i];
-      tmp_wcl = (REAL_TYPE)bf_wcl[i];
+      tmp_vol = (double)(ix*jx*kx);
+      tmp_acl = (double)bf_acl[i];
+      tmp_fcl = (double)bf_fcl[i];
+      tmp_wcl = (double)bf_wcl[i];
       fprintf(fp,"\t%6d : %6d %6d %6d ", i, ix, jx, kx);
-      fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-m_vol)/m_vol);
-      fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (m_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-m_srf)/m_srf);
+      fprintf(fp,"%12.4e  %8.3f ", tmp_vol, 100.0*(tmp_vol-d_vol)/d_vol);
+      fprintf(fp,"%12.4e  %8.3f ", bf_srf[i], (d_srf == 0.0) ? 0.0 : 100.0*(bf_srf[i]-d_srf)/d_srf);
       fprintf(fp,"%8.3f %8.3f ", 100.0*tmp_fcl/tmp_vol, 100.0*tmp_wcl/tmp_vol);
-      fprintf(fp,"%12.4e      %8.3f \n", tmp_acl, 100.0*(tmp_acl-m_efv)/m_efv);
+      fprintf(fp,"%12.4e      %8.3f \n", tmp_acl, 100.0*(tmp_acl-d_efv)/d_efv);
     }
     fprintf(fp,"\t---------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
   }
@@ -1741,7 +1743,7 @@ void FFV::gather_DomainInfo()
   
   if( m_size ) { delete [] m_size; m_size=NULL; }
   if( m_org  ) { delete [] m_org;  m_org =NULL; }
-  if( m_Lbx  ) { delete [] m_Lbx;  m_Lbx =NULL; }
+  if( m_reg  ) { delete [] m_reg;  m_reg =NULL; }
   if( bf_srf ) { delete [] bf_srf; bf_srf=NULL; }
   if( bf_fcl ) { delete [] bf_fcl; bf_fcl=NULL; }
   if( bf_wcl ) { delete [] bf_wcl; bf_wcl=NULL; }

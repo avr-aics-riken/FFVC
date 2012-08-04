@@ -362,7 +362,7 @@ public:
   bool paint_first_seed(int* mid, const int* idx, const int target);
   
   
-  void printScanedCell       (FILE* fp);
+  void printScannedCell       (FILE* fp);
   void resizeCompoBV         (int* bd, int* bv, int* bh1, int* bh2, int kos, bool isHeat, int* gcbv);
   
   

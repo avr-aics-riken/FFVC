@@ -3894,14 +3894,7 @@ int VoxInfo::fill_check(const int* mid)
 
 
 // #################################################################
-/**
- @brief 流体媒質のフィルを実行
- @param [in]     bid      カット点のID配列（5ビット幅x6方向）
- @param [in,out] mid      ID配列
- @param [in]     cut      カット情報
- @param [in]     tgt_id   フィルする流体ID
- @param [in]     solid_id 固体ID
- */
+// 流体媒質のフィルを実行
 unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
 {
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -3948,7 +3941,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
           // 1) 外部領域に接していない
           // 2) フィルを行うターゲットID（Fluid）で既にペイントされている
           // 3) 対象セルのカットIDのW方向がゼロ、つまりカットがない
-          if ( !((i == 1) && (nID[X_MINUS] < 0)) && (mid[m_w] == tg) && (get_BID5(X_MINUS, qq) == 0) )
+          if ( !((i == 1) && (nID[X_MINUS] < 0)) && (mid[m_w] == tg) && (qw == 0) )
           {
             if ( (qs * qn * qb * qt) == 0 ) 
             { // 隣接セルの面直方向のいずれかはカットがなく、空きがある場合 >> 流体でペイントする
@@ -3962,7 +3955,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
             }
           }
-          else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == tg) && (get_BID5(Y_MINUS, qq) == 0) )
+          else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == tg) && (qs == 0) )
           {
             if ( (qw * qe * qb * qt) == 0 )
             {
@@ -3976,7 +3969,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
             }
           }
-          else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == tg) && (get_BID5(Z_MINUS, qq) == 0) )
+          else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == tg) && (qb == 0) )
           {
             if ( (qw * qe * qs * qn) == 0 )
             {
@@ -3990,7 +3983,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
             }
           }
-          else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == tg) && (get_BID5(Z_PLUS, qq) == 0) )
+          else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == tg) && (qt == 0) )
           {
             if ( (qw * qe * qs * qn) == 0 )
             {
@@ -4004,7 +3997,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[_F_IDX_S4DEX( Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
             }
           }
-          else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == tg) && (get_BID5(Y_PLUS, qq) == 0) )
+          else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == tg) && (qn == 0) )
           {
             if ( (qw * qe * qb * qt) == 0 )
             {
@@ -4018,7 +4011,7 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
               cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
             }
           }
-          else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == tg) && (get_BID5(X_PLUS, qq) == 0) )
+          else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == tg) && (qe == 0) )
           {
             if ( (qs * qn * qb * qt) == 0 )
             {
@@ -4449,11 +4442,11 @@ bool VoxInfo::paint_first_seed(int* mid, const int* idx, const int target)
 
 // #################################################################
 /**
- @fn void VoxInfo::printScanedCell(FILE* fp)
+ @fn void VoxInfo::printScannedCell(FILE* fp)
  @brief ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
  @param fp ファイル出力のファイルポインタ
  */
-void VoxInfo::printScanedCell(FILE* fp)
+void VoxInfo::printScannedCell(FILE* fp)
 {
   for (int i=1; i<=NoVoxID; i++) {
     fprintf(fp,"\t\t%3d : ID = [%d]\n", i, colorList[i]);
@@ -5635,7 +5628,7 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
           
           // 6方向のカット面のIDのうち最大のものを使う
           for (int l=0; l<6; l++) {
-            if ( pos[l] < 0.5 ) // セル内部のときのみ
+            if ( pos[l] <= 0.5 ) // セル内部のときのみ
             {
               bx = (bd >> l*5)  & MASK_5; // 面のID，カットがなければゼロ
               mid[m] = max( mid[m], bx );

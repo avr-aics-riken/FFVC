@@ -463,7 +463,7 @@ SklSolverCBC::SklSolverInitialize() {
   // ボクセルモデルの媒質インデクスがパラメータファイルに記述された媒質インデクスに含まれていること
 	Hostonly_ {
 		if ( !Vinfo.chkIDconsistency(C.NoMedium) ) {
-			stamped_printf("\tID in between XML and Voxel scaned is not consistent\n");
+			stamped_printf("\tID in between XML and Voxel scanned is not consistent\n");
 			return -1;
 		}
 	}

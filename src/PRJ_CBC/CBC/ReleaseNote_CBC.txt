@@ -147,7 +147,7 @@ Ver 1.2.6  11 Dec. 2010
   - Debug用のdiv_uのファイル出力機能を追加
   
 Ver 1.2.5  10 Dec. 2010
-  - BvoxScan()でのIDチェックで，(XML!=Scaned) から (XML>=Scaned)に変更．領域内に無いセルIDをガイドセル上に指定可能にする
+  - BvoxScan()でのIDチェックで，(XML!=Scanned) から (XML>=Scanned)に変更．領域内に無いセルIDをガイドセル上に指定可能にする
   - 圧力損失コンポーネントの体積率をbcdの8ビットに量子化して保持
 
 Ver 1.2.4   4 Dec. 2010
