@@ -198,7 +198,7 @@ Parameter {
     Base_Pressure = 0.0
     Reynolds      = 1000.0
     Prandtl       = 0.71
-    Base_Medium   = "air"
+    Medium        = "air"
   }
       
   Temperature {
