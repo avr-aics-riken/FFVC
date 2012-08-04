@@ -20,7 +20,6 @@
 #include <math.h>
 #include <fstream>
 
-#include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
 #include "DomainInfo.h"

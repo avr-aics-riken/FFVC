@@ -56,10 +56,10 @@ POLYLIB_DIR = ../../Polylib-2.1_dev_b
 
 POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/local/textparser/include
 
-# FX10
+# FX10/K
 #POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
-#        -I/home/c15046/LIBXML2/libxml2-2.7.8_lib/include/libxml2 \
-#        -fno-strict-aliasing
+#   -fno-strict-aliasing \
+#   -I/home/g00001/k00011/ffv/textparser-1.0/include
 
 # with Octree lib ############################################################
 #OCTREE_DIR = ../../sgi-octree

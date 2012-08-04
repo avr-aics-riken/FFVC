@@ -35,8 +35,8 @@ void FFV::allocArray_Average (double &total)
   double mc = (double)(size[0] * size[1] * size[2]);
   
   // d_ap
-  if ( !(d_ap = paraMngr->AllocFloatS3D(guide)) ) Exit(0);
-  total += mc * (double)sizeof(float);
+  if ( !(d_ap = paraMngr->AllocRealS3D(guide)) ) Exit(0);
+  total += mc * (double)sizeof(REAL_TYPE);
   
   // d_av
   if ( !(d_av = paraMngr->AllocRealV3DEx(guide)) ) Exit(0);
@@ -45,8 +45,8 @@ void FFV::allocArray_Average (double &total)
   if ( C.isHeatProblem() ) 
   {
     // d_at
-    if ( !(d_at = paraMngr->AllocFloatS3D(guide)) ) Exit(0);
-    total += mc * (double)sizeof(float);
+    if ( !(d_at = paraMngr->AllocRealS3D(guide)) ) Exit(0);
+    total += mc * (double)sizeof(REAL_TYPE);
   }
 }
 

@@ -53,13 +53,13 @@ CFLAGS		= -O2 -Wall \
 #		-fno-strict-aliasing
 
 # K
-#CFLAGS		= -Kfast, simd=2, ocl, preex \
-#		-I../include\
-#		-I/opt/FJSVtclang/GM-1.2.0-05/include \
-#		-I/opt/FJSVtclang/GM-1.2.0-05/include/mpi/fujitsu \
-#		-I/usr/include \
-#		-I/home/textparser/include \
-#		-fno-strict-aliasing
+#CFLAGS	 = -Kfast, simd=2, ocl, preex \
+#   -I../include\
+#   -I/opt/FJSVtclang/GM-1.2.0-07/include \
+#   -I/opt/FJSVtclang/GM-1.2.0-07/include/mpi/fujitsu \
+#   -I/usr/include \
+#   -I/home/g00001/k00011/ffv/textparser-1.0/include \
+#   -fno-strict-aliasing
 
 #####################################
 # single版マクロ

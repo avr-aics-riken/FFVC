@@ -24,7 +24,6 @@
 #include <map>
 #include "string.h"
 
-#include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
 #include "FB_Define.h"

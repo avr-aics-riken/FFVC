@@ -399,7 +399,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) 
   {
     // ShapeMonitorのインスタンス
-    ShapeMonitor SM(size, guide, pitch, origin);
+    ShapeMonitor SM(size, guide, (float*)pitch, (float*)origin);
     
     V.setShapeMonitor(d_mid, &SM, cmp, C.RefLength);
   }
@@ -2365,7 +2365,7 @@ void FFV::setComponentVF()
   int f_st[3], f_ed[3];
   double flop;
   
-  CompoFraction CF(size, guide, pitch, origin, subsampling);
+  CompoFraction CF(size, guide, (float*)pitch, (float*)origin, subsampling);
   
   for (int n=1; n<=C.NoBC; n++) 
   {
@@ -2376,11 +2376,11 @@ void FFV::setComponentVF()
       switch ( cmp[n].getType() ) 
       {
         case HEX:
-          CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].dr, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+          CF.setShapeParam((float*)cmp[n].nv, (float*)cmp[n].oc, (float*)cmp[n].dr, (float)cmp[n].depth, (float)cmp[n].shp_p1, (float)cmp[n].shp_p2);
           break;
           
         case FAN:
-          CF.setShapeParam(cmp[n].nv, cmp[n].oc, cmp[n].depth, cmp[n].shp_p1, cmp[n].shp_p2);
+          CF.setShapeParam((float*)cmp[n].nv, (float*)cmp[n].oc, (float)cmp[n].depth, (float)cmp[n].shp_p1, (float)cmp[n].shp_p2);
           break;
           
         case DARCY:

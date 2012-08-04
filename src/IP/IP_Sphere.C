@@ -107,8 +107,13 @@ void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE
 {
   RefL = R->RefLength;
   
-  pch = m_pch;
-  org = m_org;
+  pch.x = (float)m_pch[0];
+  pch.y = (float)m_pch[1];
+  pch.z = (float)m_pch[2];
+  
+  org.x = (float)m_org[0];
+  org.y = (float)m_org[1];
+  org.z = (float)m_org[2];
   
   // チェック
   if ( (pch.x != pch.y) || (pch.y != pch.z) ) {
@@ -168,7 +173,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
-  org_l = origin;
+  org_l.x = (float)origin[0];
+  org_l.y = (float)origin[1];
+  org_l.z = (float)origin[2];
   Lx = region[0];
   Ly = region[1];
   Lz = region[2];
@@ -298,7 +305,9 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
-  org_l = origin;
+  org_l.x = (float)origin[0];
+  org_l.y = (float)origin[1];
+  org_l.z = (float)origin[2];
   Lx = region[0];
   Ly = region[1];
   Lz = region[2];

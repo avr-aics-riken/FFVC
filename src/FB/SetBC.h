@@ -17,7 +17,6 @@
  * @author kero
  */
 
-#include "cpm_Define.h"
 #include "cpm_ParaManager.h"
 
 #include "DomainInfo.h"

@@ -246,6 +246,14 @@ typedef Vec3<REAL_TYPE> Vec3r;
 /**
  * @brief multiply s
  */
+inline Vec3r operator*(double s, const Vec3r& v)
+{
+  return Vec3r(s*v.x, s*v.y, s*v.z);
+}
+  
+/**
+ * @brief multiply s
+ */
 inline Vec3f operator*(float s, const Vec3f& v) 
 {
 	return Vec3f(s*v.x, s*v.y, s*v.z);
