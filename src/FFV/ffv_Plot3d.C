@@ -504,17 +504,17 @@ void FFV::OutputPlot3D_fvbnd()
   
   int nbname=5;
   int nb=3;
-  string boundary_name[nbname];
-  int type[nb];
-  int gridnum[nb];
-  int Imin[nb];
-  int Imax[nb];
-  int Jmin[nb];
-  int Jmax[nb];
-  int Kmin[nb];
-  int Kmax[nb];
-  string ResultFlag[nb];
-  int dir[nb];
+  string boundary_name[5];
+  int type[3];
+  int gridnum[3];
+  int Imin[3];
+  int Imax[3];
+  int Jmin[3];
+  int Jmax[3];
+  int Kmin[3];
+  int Kmax[3];
+  string ResultFlag[3];
+  int dir[3];
   
   boundary_name[0]="wall";
   boundary_name[1]="slide wall";

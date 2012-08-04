@@ -7,12 +7,13 @@
 
 /**
  * @file   cpm_ParaManager_MPI.cpp
- * パラレルマネージャクラスのMPIインターフェイス関数ソースファイル
+ * @brief  パラレルマネージャクラスのMPIインターフェイス関数ソースファイル
  * @author University of Tokyo
  * @date   2012/05/31
  */
 #include "stdlib.h"
 #include "cpm_ParaManager.h"
+#include <unistd.h> // for gethostname()
 
 ////////////////////////////////////////////////////////////////////////////////
 // MPI_Datatypeを取得

@@ -1081,7 +1081,6 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static) &
-
 !$OMP REDUCTION(+:av) &
 !$OMP REDUCTION(+:rm)
   do k=1,kx
@@ -1107,7 +1106,7 @@
   end subroutine fb_delta_s
 
 !> ********************************************************************
-!! @brief スカラ値を加算する
+!! @brief ベクトル値を加算する
 !! @param avr 平均値
 !! @param sz 配列長
 !! @param g ガイドセル長

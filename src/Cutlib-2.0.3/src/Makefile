@@ -52,7 +52,7 @@ CXX = icpc
 AR = ar cru
 RANLIB = ranlib
 
-POLYLIB_DIR = ../../Polylib-2.1_dev_a
+POLYLIB_DIR = ../../Polylib-2.1_dev_b
 
 POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/local/textparser/include
 

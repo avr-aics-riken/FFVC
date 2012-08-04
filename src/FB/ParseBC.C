@@ -3428,10 +3428,10 @@ void ParseBC::setControlVars(Control* Cref)
   NoBC        = Cref->NoBC;
   
   int m;
-  double s, two=2.0d;
+  double s, two=2.0;
   
   s = (double)MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
-  m = (int)(log10(s+1.0d)/log10(two) );
+  m = (int)(log10(s+1.0)/log10(two) );
   
   if ( NoCompo > s ) {
     printf("Error : No. of Component (= NoBC + NoMedium) must be less or equal %d(%dbit-width)\n", (int)s, m);
@@ -3439,7 +3439,7 @@ void ParseBC::setControlVars(Control* Cref)
   }
   
   s = (double)(MASK_5-1); // 0と31を除く
-  m = (int)( log10(s+2.0d)/log10(two) );
+  m = (int)( log10(s+2.0)/log10(two) );
   
   if ( NoBC > s ) {
     printf("Error : No. of BC must be less or equal %d(%dbit-width)\n", (int)s, m);
