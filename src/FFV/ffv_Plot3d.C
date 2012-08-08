@@ -474,16 +474,60 @@ void FFV::OutputPlot3D_function_name()
 //
 void FFV::OutputPlot3D_fvbnd()
 {
-  return;
+  //return;
   
   //HostRankでデータ集約する？
   //if(myRank != 0 ) return;
   
+  //set debug test data
+  int nbname=5;
+  int nb=3;
+  int type[3];
+  int gridnum[3];
+  int Imin[3];
+  int Imax[3];
+  int Jmin[3];
+  int Jmax[3];
+  int Kmin[3];
+  int Kmax[3];
+  int dir[3];
+  string ResultFlag;
+
+  type[0]=1;
+  gridnum[0]=1;
+  Imin[0]=1;
+  Imax[0]=1;
+  Jmin[0]=1;
+  Jmax[0]=11;
+  Kmin[0]=12;
+  Kmax[0]=441;
+  dir[0]=1;
+  
+  type[1]=4;
+  gridnum[1]=2;
+  Imin[1]=1;
+  Imax[1]=1;
+  Jmin[1]=1;
+  Jmax[1]=3;
+  Kmin[1]=6;
+  Kmax[1]=66;
+  dir[1]=0;
+  
+  type[2]=5;
+  gridnum[2]=3;
+  Imin[2]=1;
+  Imax[2]=1;
+  Jmin[2]=1;
+  Jmax[2]=44;
+  Kmin[2]=53;
+  Kmax[2]=3;
+  dir[2]=0;
+
+// write start
+
   //fvbndファイルはかならずformatted形式
   int keep_format=FP3DW.GetFormat();
   if(!FP3DW.setFormat(2)) std::cout << "error set" << std::endl;
-  
-  //set filename
   
   // 出力ファイル名
   std::string tmp;
@@ -499,71 +543,102 @@ void FFV::OutputPlot3D_fvbnd()
     Hostonly_ printf("Error : error OpenFile\n");
     Exit(0);
   }
+
+  //write fvbnd header 1
+  FP3DW.WriteFVBNDHEAD1();
+
+  //write boundary name
+  FP3DW.WriteSTRING("wall");
+  FP3DW.WriteSTRING("slide wall");
+  FP3DW.WriteSTRING("outflow");
+  FP3DW.WriteSTRING("inflow");
+  FP3DW.WriteSTRING("synmmetry");
   
-  //set data
-  
-  int nbname=5;
-  int nb=3;
-  string boundary_name[5];
-  int type[3];
-  int gridnum[3];
-  int Imin[3];
-  int Imax[3];
-  int Jmin[3];
-  int Jmax[3];
-  int Kmin[3];
-  int Kmax[3];
-  string ResultFlag[3];
-  int dir[3];
-  
-  boundary_name[0]="wall";
-  boundary_name[1]="slide wall";
-  boundary_name[2]="outflow";
-  boundary_name[3]="inflow";
-  boundary_name[4]="synmmetry";
-  
-  type[0]=1;
-  gridnum[0]=1;
-  Imin[0]=1;
-  Imax[0]=1;
-  Jmin[0]=1;
-  Jmax[0]=11;
-  Kmin[0]=12;
-  Kmax[0]=441;
-  ResultFlag[0]="F";
-  dir[0]=1;
-  
-  type[1]=4;
-  gridnum[1]=2;
-  Imin[1]=1;
-  Imax[1]=1;
-  Jmin[1]=1;
-  Jmax[1]=3;
-  Kmin[1]=6;
-  Kmax[1]=66;
-  ResultFlag[1]="T";
-  dir[1]=0;
-  
-  type[2]=5;
-  gridnum[2]=3;
-  Imin[2]=1;
-  Imax[2]=1;
-  Jmin[2]=1;
-  Jmax[2]=44;
-  Kmin[2]=53;
-  Kmax[2]=3;
-  ResultFlag[2]="T";
-  dir[2]=0;
-  
-  //write fvbnd
-  FP3DW.WriteFVBND(
-                   nbname, nb, boundary_name, type, gridnum,
-                   Imin, Imax, Jmin, Jmax, Kmin, Kmax, ResultFlag, dir);
-  
+  //write fvbnd header 2
+  FP3DW.WriteFVBNDHEAD2();
+
+  //write boundary condition
+  for(int i=0;i<nb;i++){
+    ResultFlag="T";//T or F
+    FP3DW.WriteFVBND(
+      type[i],gridnum[i],
+      Imin[i],Imax[i],Jmin[i],Jmax[i],
+      Kmin[i],Kmax[i],ResultFlag,dir[i]);
+  }
+
   //close file
   FP3DW.CloseFile();
   
   //reset option
   if(!FP3DW.setFormat(keep_format)) std::cout << "error set" << std::endl;
   
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// read test start ////////////////////////////////////////////////////////////
+
+  keep_format=FP3DR.GetFormat();
+  if(!FP3DR.setFormat(2)) std::cout << "error set" << std::endl;
+  
+  // 並列出力モード
+  pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
+  
+  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "fvbnd", 0, myRank, pout);
+  
+  //open file
+  FP3DR.setFileName(tmp.c_str());
+  if(!FP3DR.OpenFile()){
+    Hostonly_ printf("Error : error OpenFile\n");
+    Exit(0);
+  }
+
+  string buff;
+
+  //read fvbnd header 1
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+
+  //read boundary name
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+
+  //read fvbnd header 2
+  FP3DR.ReadSTRING(&buff);
+  cout << buff << endl;
+
+  //write boundary condition
+  int l_type, l_gridnum;
+  int l_Imin, l_Imax, l_Jmin, l_Jmax, l_Kmin, l_Kmax;
+  string l_ResultFlag;
+  int l_dir;
+  for(int i=0;i<nb;i++){
+    FP3DR.ReadFVBND(
+      &l_type, &l_gridnum, 
+      &l_Imin, &l_Imax, &l_Jmin, &l_Jmax,
+      &l_Kmin, &l_Kmax, &l_ResultFlag, &l_dir);
+    cout << "type = " << l_type << endl;
+    cout << "gridnum = " << l_gridnum << endl;
+    cout << "Imin = " << l_Imin << endl;
+    cout << "Imax = " << l_Imax << endl;
+    cout << "Jmin = " << l_Jmin << endl;
+    cout << "Jmax = " << l_Jmax << endl;
+    cout << "Kmin = " << l_Kmin << endl;
+    cout << "Kmax = " << l_Kmax << endl;
+    cout << "ResultFlag = " << l_ResultFlag << endl;
+    cout << "dir = " << l_dir << endl;
+  }
+
+  //close file
+  FP3DR.CloseFile();
+  
+  //reset option
+  if(!FP3DR.setFormat(keep_format)) std::cout << "error set" << std::endl;
+
 }

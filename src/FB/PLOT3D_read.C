@@ -452,67 +452,108 @@ bool FileIO_PLOT3D_READ::ReadFuncData()
 /**
  * @brief FunctionNameファイルの読み込み
  */
-void FileIO_PLOT3D_READ::ReadFunctionName(string* fn, int* ndata)
+void FileIO_PLOT3D_READ::ReadFunctionName(string* fn)
 {
   int iend=0;
-  int len;
+  int len=FB_BUFF_LENGTH;
   char tmp[FB_BUFF_LENGTH];
-  int icoun=0;
 
-  while(1){
-    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
-    len=FB_BUFF_LENGTH;
-    read_line_(tmp,&ifl,&len,&iend);
-    if(iend){
-      *ndata=icoun;
-      return;
-    }else{
-      len = strlen(tmp);
-      fn[icoun]=tmp;
-	  icoun++;
-    }
-  }
+  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+  read_line_(tmp,&ifl,&len,&iend);
+  *fn=tmp;
+  return;
 }
 
+
+/**
+ * @brief 文字列の読み込み
+ */
+void FileIO_PLOT3D_READ::ReadSTRING(
+  string* m_buff)
+{
+  int iend=0;
+  int len=FB_BUFF_LENGTH;
+  char tmp[FB_BUFF_LENGTH];
+
+  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+  read_line_(tmp,&ifl,&len,&iend);
+  *m_buff=tmp;
+  return;
+}
 
 /**
  * @brief FVBNDファイルの読み込み
  */
 void FileIO_PLOT3D_READ::ReadFVBND(
-  const int nbname, const int nb,
-  string* boundary_name,
-  int* type, int* gridnum,
-  int* Imin,int* Imax,
-  int* Jmin,int* Jmax,
-  int* Kmin,int* Kmax,
-  string* ResultFlag,
-  int* dir)
+  int* m_type, int* m_gridnum,
+  int* m_Imin,int* m_Imax,
+  int* m_Jmin,int* m_Jmax,
+  int* m_Kmin,int* m_Kmax,
+  string* m_ResultFlag,
+  int* m_dir)
 {
-  int iend=0;
-  int len=FB_BUFF_LENGTH;
+  int type,gridnum;
+  int Imin,Imax,Jmin,Jmax,Kmin,Kmax;
+  int dir;
+
   char tmp[FB_BUFF_LENGTH];
   string buff;
 
-//read header "FVBND 1 4"
-  read_line_(tmp,&ifl,&len,&iend);
-  if(iend) return;
-
-//read boundary name
-  for(int i=0;i<nbname;i++){
-    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
-    read_line_(tmp,&ifl,&len,&iend);
-    boundary_name[i]=tmp;
-    if(iend) return;
-  }
-
 //read boundaries
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
-  read_line_(tmp,&ifl,&len,&iend);//read "BOUNDARIES"
-  for(int i=0;i<nb;i++){
-    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
-    read_fvbnd_boundary_(
-      &type[i],&gridnum[i],&Imin[i],&Imax[i],&Jmin[i],&Jmax[i],&Kmin[i],&Kmax[i],tmp,&dir[i],&ifl);
-    ResultFlag[i]=tmp;
-  }
+  read_fvbnd_boundary_(
+    &type,&gridnum,&Imin,&Imax,&Jmin,&Jmax,&Kmin,&Kmax,tmp,&dir,&ifl);
 
+  *m_type=type;
+  *m_gridnum=gridnum;
+  *m_Imin=Imin;
+  *m_Imax=Imax;
+  *m_Jmin=Jmin;
+  *m_Jmax=Jmax;
+  *m_Kmin=Kmin;
+  *m_Kmax=Kmax;
+  *m_ResultFlag=tmp;
+  *m_dir=dir;
 }
+
+///**
+// * @brief FVBNDファイルの読み込み
+// */
+//void FileIO_PLOT3D_READ::ReadFVBND(
+//  const int nbname, const int nb,
+//  string* boundary_name,
+//  int* type, int* gridnum,
+//  int* Imin,int* Imax,
+//  int* Jmin,int* Jmax,
+//  int* Kmin,int* Kmax,
+//  string* ResultFlag,
+//  int* dir)
+//{
+//  int iend=0;
+//  int len=FB_BUFF_LENGTH;
+//  char tmp[FB_BUFF_LENGTH];
+//  string buff;
+//
+////read header "FVBND 1 4"
+//  read_line_(tmp,&ifl,&len,&iend);
+//  if(iend) return;
+//
+////read boundary name
+//  for(int i=0;i<nbname;i++){
+//    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+//    read_line_(tmp,&ifl,&len,&iend);
+//    boundary_name[i]=tmp;
+//    if(iend) return;
+//  }
+//
+////read boundaries
+//  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+//  read_line_(tmp,&ifl,&len,&iend);//read "BOUNDARIES"
+//  for(int i=0;i<nb;i++){
+//    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+//    read_fvbnd_boundary_(
+//      &type[i],&gridnum[i],&Imin[i],&Imax[i],&Jmin[i],&Jmax[i],&Kmin[i],&Kmax[i],tmp,&dir[i],&ifl);
+//    ResultFlag[i]=tmp;
+//  }
+//
+//}

@@ -253,17 +253,40 @@ public:
   void WriteFunctionName(const char* fn);
 
   /**
+   * @brief FVBNDファイルHEADERの書き出し1
+   */
+  void WriteFVBNDHEAD1();
+
+  /**
+   * @brief 文字列の書き出し
+   */
+  void WriteSTRING(const char* buff);
+
+  /**
+   * @brief FVBNDファイルHEADERの書き出し2
+   */
+  void WriteFVBNDHEAD2();
+
+  /**
    * @brief FVBNDファイルの書き出し
    */
   void WriteFVBND(
-    const int nbname, const int nb,
-    string* boundary_name,
-    int* type, int* gridnum,
-    int* Imin,int* Imax,
-    int* Jmin,int* Jmax,
-    int* Kmin,int* Kmax,
-     string* ResultFlag,
-    int* dir);
+    int type, int gridnum,
+    int Imin, int Imax, int Jmin, int Jmax,
+    int Kmin, int Kmax, string ResultFlag,int dir);
+
+  ///**
+  // * @brief FVBNDファイルの書き出し
+  // */
+  //void WriteFVBND(
+  //  const int nbname, const int nb,
+  //  string* boundary_name,
+  //  int* type, int* gridnum,
+  //  int* Imin, int* Imax,
+  //  int* Jmin, int* Jmax,
+  //  int* Kmin, int* Kmax,
+  //   string* ResultFlag,
+  //  int* dir);
 
 };
 

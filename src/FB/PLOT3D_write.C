@@ -442,49 +442,118 @@ void FileIO_PLOT3D_WRITE::WriteFunctionName(const char* fn)
 
 
 /**
- * @brief FVBNDファイルの書き出し
+ * @brief FVBNDファイルHEADERの書き出し1
  */
-void FileIO_PLOT3D_WRITE::WriteFVBND(
-  const int nbname, const int nb,
-  string* boundary_name,
-  int* type, int* gridnum,
-  int* Imin,int* Imax,
-  int* Jmin,int* Jmax,
-  int* Kmin,int* Kmax,
-  string* ResultFlag,
-  int* dir)
+void FileIO_PLOT3D_WRITE::WriteFVBNDHEAD1()
 {
   int len;
   string buff;
   char tmp[FB_BUFF_LENGTH];
 
-//write header
   buff = "FVBND 1 4";
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, buff.c_str());
   len = strlen(tmp);
   write_line_(tmp,&ifl,&len);
+}
 
-//write boundary name
-  for(int i=0;i<nbname;i++){
-    buff=boundary_name[i];
-    strcpy(tmp, buff.c_str());
-    len = strlen(tmp);
-    write_line_(tmp,&ifl,&len);
-  }
 
-//write boundaries
+/**
+ * @brief 文字列の書き出し
+ */
+void FileIO_PLOT3D_WRITE::WriteSTRING(const char* buff)
+{
+  string dum=buff;
+
+  char tmp[FB_BUFF_LENGTH];
+  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+  strcpy(tmp, dum.c_str());
+
+  int len = strlen(tmp);
+  write_line_(tmp,&ifl,&len);
+}
+
+/**
+ * @brief FVBNDファイルHEADERの書き出し2
+ */
+void FileIO_PLOT3D_WRITE::WriteFVBNDHEAD2()
+{
+  int len;
+  string buff;
+  char tmp[FB_BUFF_LENGTH];
+
   buff = "BOUNDARIES";
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, buff.c_str());
   len = strlen(tmp);
   write_line_(tmp,&ifl,&len);
-  for(int i=0;i<nb;i++){
-    buff=ResultFlag[i];
-    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
-    strcpy(tmp, buff.c_str());
-    len = strlen(tmp);
-    write_fvbnd_boundary_(
-      &type[i],&gridnum[i],&Imin[i],&Imax[i],&Jmin[i],&Jmax[i],&Kmin[i],&Kmax[i],tmp,&dir[i],&ifl);
-  }
 }
+
+/**
+ * @brief FVBNDファイルの書き出し
+ */
+void FileIO_PLOT3D_WRITE::WriteFVBND(
+  int type, int gridnum,
+  int Imin, int Imax,
+  int Jmin, int Jmax,
+  int Kmin, int Kmax,
+  string ResultFlag,
+  int dir)
+{
+  string buff;
+  char tmp[FB_BUFF_LENGTH];
+
+//write boundaries
+  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+  strcpy(tmp, ResultFlag.c_str());
+  write_fvbnd_boundary_(
+    &type,&gridnum,&Imin,&Imax,&Jmin,&Jmax,&Kmin,&Kmax,tmp,&dir,&ifl);
+}
+
+///**
+// * @brief FVBNDファイルの書き出し
+// */
+//void FileIO_PLOT3D_WRITE::WriteFVBND(
+//  const int nbname, const int nb,
+//  string* boundary_name,
+//  int* type, int* gridnum,
+//  int* Imin,int* Imax,
+//  int* Jmin,int* Jmax,
+//  int* Kmin,int* Kmax,
+//  string* ResultFlag,
+//  int* dir)
+//{
+//  int len;
+//  string buff;
+//  char tmp[FB_BUFF_LENGTH];
+//
+////write header
+//  buff = "FVBND 1 4";
+//  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+//  strcpy(tmp, buff.c_str());
+//  len = strlen(tmp);
+//  write_line_(tmp,&ifl,&len);
+//
+////write boundary name
+//  for(int i=0;i<nbname;i++){
+//    buff=boundary_name[i];
+//    strcpy(tmp, buff.c_str());
+//    len = strlen(tmp);
+//    write_line_(tmp,&ifl,&len);
+//  }
+//
+////write boundaries
+//  buff = "BOUNDARIES";
+//  memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+//  strcpy(tmp, buff.c_str());
+//  len = strlen(tmp);
+//  write_line_(tmp,&ifl,&len);
+//  for(int i=0;i<nb;i++){
+//    buff=ResultFlag[i];
+//    memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
+//    strcpy(tmp, buff.c_str());
+//    len = strlen(tmp);
+//    write_fvbnd_boundary_(
+//      &type[i],&gridnum[i],&Imin[i],&Imax[i],&Jmin[i],&Jmax[i],&Kmin[i],&Kmax[i],tmp,&dir[i],&ifl);
+//  }
+//}

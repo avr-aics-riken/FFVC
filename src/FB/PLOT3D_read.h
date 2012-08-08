@@ -254,20 +254,36 @@ public:
   /**
    * @brief FunctionNameファイルの読み込み
    */
-  void ReadFunctionName(string* fn, int* ndata);
+  void ReadFunctionName(string* fn);
+
+  /**
+   * @brief 文字列の読み込み
+   */
+  void ReadSTRING(string* m_buff);
 
   /**
    * @brief FVBNDファイルの読み込み
    */
   void ReadFVBND(
-    const int nbname, const int nb,
-    string* boundary_name,
-    int* type, int* gridnum,
-    int* Imin,int* Imax,
-    int* Jmin,int* Jmax,
-    int* Kmin,int* Kmax,
-    string* ResultFlag,
-    int* dir);
+    int* m_type, int* m_gridnum,
+    int* m_Imin,int* m_Imax,
+    int* m_Jmin,int* m_Jmax,
+    int* m_Kmin,int* m_Kmax,
+    string* m_ResultFlag,
+    int* m_dir);
+
+  ///**
+  // * @brief FVBNDファイルの読み込み
+  // */
+  //void ReadFVBND(
+  //  const int nbname, const int nb,
+  //  string* boundary_name,
+  //  int* type, int* gridnum,
+  //  int* Imin,int* Imax,
+  //  int* Jmin,int* Jmax,
+  //  int* Kmin,int* Kmax,
+  //  string* ResultFlag,
+  //  int* dir);
 
 };
 
