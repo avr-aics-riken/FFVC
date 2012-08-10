@@ -480,7 +480,8 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_NS_loop_post_sct);
   
   // 同期
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     TIMING_start(tm_vectors_comm);
     if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);

@@ -617,7 +617,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
 void FFV::setDFI()
 {
   // 並列時のみ
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     int* g_bbox_st = new int[3*numProc];
     int* g_bbox_ed = new int[3*numProc];
     

@@ -1363,14 +1363,14 @@ void FFV::fill(FILE* fp)
   seed[1] = 1;
   seed[2] = 1;
   
-  if ( !V.paint_first_seed(d_mid, seed, target_id) )
+  Hostonly_
   {
-    Hostonly_
+    if ( !V.paint_first_seed(d_mid, seed, target_id) )
     {
       printf(    "Failed first painting\n");
       fprintf(fp,"Failed first painting\n");
+      Exit(0);
     }
-    Exit(0);
   }
   
   
@@ -1680,6 +1680,20 @@ void FFV::gather_DomainInfo()
         {
           fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
                   n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+        }
+      }
+    }
+    else // serial
+    {
+      int *st, *ed;
+      for (int n=1; n<=C.NoBC; n++) {
+        st = cmp[n].getBbox_st();
+        ed = cmp[n].getBbox_ed();
+        
+        Hostonly_
+        {
+          fprintf(fp,"\t%3d %16s %5d %7d %7d %7d %7d %7d %7d\n",
+                  n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), st[0], ed[0], st[1], ed[1], st[2], ed[2]);
         }
       }
     }
@@ -2044,6 +2058,7 @@ void FFV::min_distance(float* cut, FILE* fp)
     unsigned long tmp_g = gl;
     if ( paraMngr->Allreduce(&tmp_g, &gl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
+
   
   Hostonly_
   {
@@ -3298,13 +3313,14 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   size_t n_cell[3];
+
   
   for ( int i=0; i<3; i++) {
     n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル両側
     poly_org[i] -= poly_dx[i]*(float)guide;  // ガイドセル分だけシフト
   }
   
-  size_t size_n_cell = (size_t)n_cell[0] * (size_t)n_cell[1] * (size_t)n_cell[2];
+  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
   if (size_n_cell*6  > UINT_MAX)
   {

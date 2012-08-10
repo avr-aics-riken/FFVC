@@ -199,7 +199,8 @@ double FFV::count_comm_size(const int sz[3], const int guide)
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     double tmp = c;
     if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
@@ -247,7 +248,11 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
       {
         u_sum = tmp_sum = vv[0];
         if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      } 
+      }
+      else
+      {
+        u_sum = vv[0];
+      }
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
       flop = flop + 1.0;
     }
@@ -261,6 +266,12 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
         if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         if ( paraMngr->Allreduce(&tmp_min, &u_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
         if ( paraMngr->Allreduce(&tmp_max, &u_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      else
+      {
+        u_sum = vv[0];
+        u_min = vv[1];
+        u_max = vv[2];
       }
       u_avr = 0.5*(u_min+u_max);
       flop = flop + 2.0;
@@ -600,7 +611,7 @@ REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
       {
         TIMING_start(tm_norm_comm);
         tmp = rms; 
-        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
+        if ( paraMngr->Allreduce(&tmp, &rms, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
         TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
       }
       convergence = sqrt(rms/(REAL_TYPE)numProc); //RMS
@@ -943,7 +954,5 @@ void FFV::Variation_Space(double* avr, double* rms, double& flop)
     rms[var_Temperature] = m_var[0];
     avr[var_Temperature] = m_var[1];
   }
-  
-  Hostonly_ printf("p_av=%e p_rms=%e v_av=%e v_rms=%e\n", avr[var_Pressure], rms[var_Pressure], avr[var_Velocity], rms[var_Velocity]);
   
 }

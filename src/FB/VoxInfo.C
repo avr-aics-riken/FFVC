@@ -261,7 +261,8 @@ void VoxInfo::adjMediumPrdc_Inner(int* mid, CompoList* cmp)
     
     if ( cmp[n].getType() == PERIODIC ) {
 
-      if ( numProc > 1 ) {
+      if ( numProc > 1 )
+      {
         Hostonly_ printf("Error : Inner Periodic condition is limited to use for serial execution on a temporary\n.");
         Exit(0);
       }
@@ -541,7 +542,8 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
   g_cell = cell;
   Lcell  = cell;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long c_tmp = g_cell;
     paraMngr->Allreduce(&c_tmp, &g_cell, 1, MPI_SUM);
   }
@@ -670,7 +672,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
   } // end of switch
   
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -789,7 +792,8 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   }
   
   // 面素がunsignedの値域を超えることはないと仮定
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned tmp[NOFACE];
     for (int i=0; i<NOFACE; i++) tmp[i] = m_area[i];
     MPI_Allreduce(tmp, m_area, NOFACE, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
@@ -827,7 +831,8 @@ unsigned long VoxInfo::countState(int id, int* mid)
   }
   
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1048,7 +1053,8 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
   Lcell = c;
   
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long c_tmp = c;
     paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM);
   }
@@ -1290,7 +1296,8 @@ unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid
   }
   
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1441,7 +1448,8 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
   }
 
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1591,7 +1599,8 @@ unsigned long VoxInfo::encQfaceHT_B(const int order,
   }
 
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1743,7 +1752,8 @@ unsigned long VoxInfo::encQfaceISO_SF(const int order,
   }
 
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -1893,7 +1903,8 @@ unsigned long VoxInfo::encQfaceISO_SS(const int order,
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2024,7 +2035,8 @@ unsigned long VoxInfo::encQface(const int order,
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2450,7 +2462,8 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2593,7 +2606,8 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
     }
   }
 
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = c;
     paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM);
   }
@@ -2715,7 +2729,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = c;
     MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2761,7 +2776,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
   }
   
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -2803,7 +2819,8 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
       }
     }
     
-    if ( numProc > 1 ) {
+    if ( numProc > 1 )
+    {
       unsigned long tmp = g;
       MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     }
@@ -2946,7 +2963,8 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -3395,7 +3413,8 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -3567,7 +3586,8 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
 #endif
 // ##########  
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = g;
     MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }
@@ -4313,7 +4333,8 @@ unsigned long VoxInfo::flip_InActive(unsigned long& L,
   
   L = c;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     unsigned long tmp = c;
     MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   }

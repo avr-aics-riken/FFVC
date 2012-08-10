@@ -317,7 +317,8 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
     vSendBuf[3*m+2] = v[m].z;
   }
   
-  if ( numProc > 1 ){
+  if ( numProc > 1 )
+  {
     if ( sizeof(REAL_TYPE) == 8 )
     {
       if( MPI_Gather(vSendBuf, nPoint*3, MPI_DOUBLE, vRecvBuf, nPoint*3, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);

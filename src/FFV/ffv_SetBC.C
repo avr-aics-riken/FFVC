@@ -137,7 +137,8 @@ void SetBC3D::checkDriver(FILE* fp)
   
   node_st_i = node_st_j = node_st_k = 0;
   
-  if( numProc > 1 ){
+  if( numProc > 1 )
+  {
     node_st_i = head[0];
     node_st_j = head[1];
     node_st_k = head[2];
@@ -1808,7 +1809,8 @@ REAL_TYPE SetBC3D::ps_IBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, int n, REAL_TYPE v
   
   flop += (double)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1)*7 ); // 近似
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -1932,7 +1934,8 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* d_ws, int* d_bh1, int n, REAL_TYPE*
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
 		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -2108,7 +2111,8 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
 		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -2277,7 +2281,8 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -2432,7 +2437,8 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -2565,7 +2571,8 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -2720,7 +2727,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -2974,7 +2982,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -3240,7 +3249,8 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
       break;
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -3332,7 +3342,8 @@ REAL_TYPE SetBC3D::ps_IBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, int n, double& 
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -3400,7 +3411,8 @@ REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, in
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 ) 
+ {
 		tmp = qsum;
 		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
 	}
@@ -3510,7 +3522,8 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -3710,7 +3723,8 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -3898,7 +3912,8 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
     }
   }
 
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -4011,7 +4026,8 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_B_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -4087,7 +4103,8 @@ REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 ) 
+ {
 		tmp = qsum;
 		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
 	}
@@ -4197,7 +4214,8 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
 		REAL_TYPE tmp = va;
     if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
     {
@@ -4274,7 +4292,8 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n, R
     }
   }
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 ) 
+ {
 		tmp = qsum;
 		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
 	}
@@ -4698,7 +4717,8 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
   int sz[3] = {ix, jx, kx};
   int gd = guide;
   
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     
     switch (face) {
       case X_MINUS:
@@ -4815,8 +4835,8 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
         break;
     }
   }
-  else { // Serial
-
+  else // Serial
+  {
     size_t m0, m1;
     
     switch (face) 
@@ -4931,7 +4951,8 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
  */
 void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, int dir)
 {
-  if ( numProc > 1 ) {
+  if ( numProc > 1 )
+  {
     Hostonly_ printf("Error : 'Vibc_Prdc' method is limited to use for serial execution\n.");
     Exit(0);
   }
