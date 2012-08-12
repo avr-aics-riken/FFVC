@@ -1101,7 +1101,7 @@ void FFV::DomainInitialize(const string dom_file)
 
   // 袖通信の最大数
   size_t Nvc  = (size_t)C.guide;
-  size_t Ncmp = (C.isCDS()) ? 6 : 3; // カットを使う場合には6成分（面），使わない場合にはベクトル成分が最大値
+  size_t Ncmp = 6; // カットを使うので6成分（面）
   
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
   int m_div[3] = {G_division[0], G_division[1], G_division[2]};

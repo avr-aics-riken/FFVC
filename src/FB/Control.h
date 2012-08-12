@@ -1099,8 +1099,10 @@ public:
   }
   
 
-  //@brief ソルバーがCDSタイプかどうかを返す
-  //@retval CDSであればtrue
+  /**
+   * @brief ソルバーがCDSタイプかどうかを返す
+   * @retval CDSであればtrue
+   */
   bool isCDS() const 
   {
     return ( CUT_INFO == Mode.ShapeAprx ) ? true : false;
