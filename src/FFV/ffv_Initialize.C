@@ -329,7 +329,7 @@ int FFV::Initialize(int argc, char **argv)
   //<<
   
   // Fill
-  if ( (C.Mode.Example == id_Polygon) ) //&& C.isCDS() )
+  if ( (C.Mode.Example == id_Polygon) )
   {
     Hostonly_
     {
@@ -1375,8 +1375,11 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf    ("\tInitial target count : %15ld\n", fill_count);
-    fprintf(fp,"\tInitial target count : %15ld\n", fill_count);
+    printf(    "\tFLUID\n");
+    fprintf(fp,"\tFLUID\n");
+
+    printf    ("\t\tInitial target count : %15ld\n", fill_count);
+    fprintf(fp,"\t\tInitial target count : %15ld\n", fill_count);
   }
   
   
@@ -1384,8 +1387,8 @@ void FFV::fill(FILE* fp)
   int target_id = C.Fill_Medium;
   Hostonly_
   {
-    printf    ("\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
-    fprintf(fp,"\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
+    printf    ("\t\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
+    fprintf(fp,"\t\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
   }
   
   if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
@@ -1403,7 +1406,7 @@ void FFV::fill(FILE* fp)
 
   // シード分のカウントデクリメント
   fill_count -= tmp_fc;
-  //Ex->writeSVX(d_mid, &C); Exit(0);
+
   
   int c=0;
   while (fill_count > 0) {
@@ -1421,22 +1424,10 @@ void FFV::fill(FILE* fp)
     fill_count -= fc;
     c++;
     
-    Hostonly_
-    {
-      printf(    "\t%4d : Try Fluid fill = %15ld\n", c, fill_count);
-      fprintf(fp,"\t%4d : Try Fluid fill = %15ld\n", c, fill_count);
-    }
-    
     // 同期
     if ( numProc > 1 )
     {
-      cpm_ErrorCode cer = paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide);
-      
-      if ( cer != CPM_SUCCESS )
-      {
-        Hostonly_ printf("error code = %d\n", cer);
-        Exit(0);
-      }
+      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
@@ -1444,8 +1435,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\tFluid fill = %15ld\n\n", fill_count);
-    fprintf(fp,"\tFluid fill = %15ld\n\n", fill_count);
+    printf(    "\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
+    fprintf(fp,"\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
   }
   
   
@@ -1466,19 +1457,16 @@ void FFV::fill(FILE* fp)
     if ( fc == 0 ) break;
     
     fill_count -= fc;
-    
-    Hostonly_
-    {
-      printf(    "\t%4d : Try Solid fill = %ld\n", ++c, fill_count);
-      fprintf(fp,"\t%4d : Try Solid fill = %ld\n", ++c, fill_count);
-    }
-    
+    c++;
   }
   
   Hostonly_
   {
-    printf(    "\tSolid fill = %15ld\n\n", fill_count);
-    fprintf(fp,"\tSolid fill = %15ld\n\n", fill_count);
+    printf(    "\tSOLID\n");
+    fprintf(fp,"\tSOLID\n");
+    
+    printf(    "\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
+    fprintf(fp,"\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
   }
   
   

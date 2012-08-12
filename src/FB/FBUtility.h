@@ -101,10 +101,10 @@ public:
 
   
 	/**
-   @brief 無次元温度varを有次元(Kelvin)にして返す
-   @param [in] var   無次元温度
-   @param [in] base  Control::BaseTemp
-   @param [in] diff  Control::DiffTemp
+   * @brief 無次元温度varを有次元(Kelvin)にして返す
+   * @param [in] var   無次元温度
+   * @param [in] base  Control::BaseTemp
+   * @param [in] diff  Control::DiffTemp
    */
   static REAL_TYPE convND2Kelvin(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff)
   {
@@ -113,11 +113,11 @@ public:
   
   
   /**
-   @brief 有次元温度varを無次元にして返す
-   @param [in] var  有次元温度(Kelvin or Celsius)
-   @param [in] base Control::BaseTemp
-   @param [in] diff Control::DiffTemp
-   @param [in] Unit 温度の単位
+   * @brief 有次元温度varを無次元にして返す
+   * @param [in] var  有次元温度(Kelvin or Celsius)
+   * @param [in] base Control::BaseTemp
+   * @param [in] diff Control::DiffTemp
+   * @param [in] Unit 温度の単位
    */
   static REAL_TYPE convD2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff, const int Unit) 
   {
@@ -127,10 +127,10 @@ public:
   
   
   /**
-   @brief 有次元温度var(Kelvin)を無次元にして返す
-   @param [in] var  有次元温度(Kelvin)
-   @param [in] base Control::BaseTemp
-   @param [in] diff Control::DiffTemp
+   * @brief 有次元温度var(Kelvin)を無次元にして返す
+   * @param [in] var  有次元温度(Kelvin)
+   * @param [in] base Control::BaseTemp
+   * @param [in] diff Control::DiffTemp
    */
   static REAL_TYPE convK2ND(const REAL_TYPE var, const REAL_TYPE base, const REAL_TYPE diff) 
   {
@@ -139,9 +139,9 @@ public:
 
   
   /**
-   @brief 有次元の温度varを指定された温度単位にして返す
-   @param [in] var  有次元温度(Kelvin)
-   @param [in] Unit 温度の単位
+   * @brief 有次元の温度varを指定された温度単位にして返す
+   * @param [in] var  有次元温度(Kelvin)
+   * @param [in] Unit 温度の単位
    */
   static REAL_TYPE convK2Temp(const REAL_TYPE var, const int Unit) 
   {
@@ -150,9 +150,9 @@ public:
   
   
   /**
-   @brief 有次元の温度varを(Kelvin)にして返す
-   @param [in] var  有次元温度(Kelvin or Celsius)
-   @param [in] Unit 温度の単位
+   * @brief 有次元の温度varを(Kelvin)にして返す
+   * @param [in] var  有次元温度(Kelvin or Celsius)
+   * @param [in] Unit 温度の単位
    */
   static REAL_TYPE convTemp2K(const REAL_TYPE var, const int Unit)
   {
@@ -161,10 +161,10 @@ public:
   
   
   /**
-   @brief 有次元速度を無次元にして返す
-   @retval 無次元速度
-   @param [in] var  有次元速度
-   @param [in] refv 代表速度
+   * @brief 有次元速度を無次元にして返す
+   * @retval 無次元速度
+   * @param [in] var  有次元速度
+   * @param [in] refv 代表速度
    */
   static REAL_TYPE convD2ND_V(const REAL_TYPE var, const REAL_TYPE RefV) 
   {
@@ -173,13 +173,13 @@ public:
   
   
   /**
-   @brief 発熱量(W/m^3)を無次元にして返す
-   @param [in] var   有次元発熱量(W/m^3)
-   @param [in] RefV  代表速度
-   @param [in] RefL  代表長さ
-   @param [in] diff  代表温度差
-   @param [in] rho   媒質密度
-   @param [in] C     媒質比熱
+   * @brief 発熱量(W/m^3)を無次元にして返す
+   * @param [in] var   有次元発熱量(W/m^3)
+   * @param [in] RefV  代表速度
+   * @param [in] RefL  代表長さ
+   * @param [in] diff  代表温度差
+   * @param [in] rho   媒質密度
+   * @param [in] C     媒質比熱
    */
   static REAL_TYPE convD2ND_Hsrc(const REAL_TYPE var, 
                                  const REAL_TYPE RefV, 
@@ -193,13 +193,13 @@ public:
   
   
   /**
-   @brief 発熱量を有次元(W/m^3)にして返す
-   @param [in] var  無次元発熱量
-   @param [in] RefV 代表速度
-   @param [in] RefL 代表長さ
-   @param [in] diff 代表温度差
-   @param [in] rho  媒質密度
-   @param [in] C    媒質比熱
+   * @brief 発熱量を有次元(W/m^3)にして返す
+   * @param [in] var  無次元発熱量
+   * @param [in] RefV 代表速度
+   * @param [in] RefL 代表長さ
+   * @param [in] diff 代表温度差
+   * @param [in] rho  媒質密度
+   * @param [in] C    媒質比熱
    */
   static REAL_TYPE convND2D_Hsrc(const REAL_TYPE var, 
                                  const REAL_TYPE RefV, 
@@ -212,12 +212,12 @@ public:
   }
   
   /**
-   @brief 圧力を無次元にして返す
-   @param [in] var   有次元圧力(absolute or gauge)
-   @param [in] bp    基準圧力
-   @param [in] rho   媒質密度
-   @param [in] RefV  代表速度
-   @param [in] mode  (absolute or gauge)
+   * @brief 圧力を無次元にして返す
+   * @param [in] var   有次元圧力(absolute or gauge)
+   * @param [in] bp    基準圧力
+   * @param [in] rho   媒質密度
+   * @param [in] RefV  代表速度
+   * @param [in] mode  (absolute or gauge)
    */
   static REAL_TYPE convD2ND_P(const REAL_TYPE var, 
                               const REAL_TYPE bp, 
@@ -231,12 +231,12 @@ public:
   
   
   /**
-   @brief 圧力を有次元(absolute or gauge)にして返す
-   @param [in] var   無次元圧力
-   @param [in] bp    基準圧力
-   @param [in] rho   媒質密度
-   @param [in] RefV  代表速度
-   @param [in] mode  (absolute or gauge)
+   * @brief 圧力を有次元(absolute or gauge)にして返す
+   * @param [in] var   無次元圧力
+   * @param [in] bp    基準圧力
+   * @param [in] rho   媒質密度
+   * @param [in] RefV  代表速度
+   * @param [in] mode  (absolute or gauge)
    */
   static REAL_TYPE convND2D_P(const REAL_TYPE var, 
                               const REAL_TYPE bp, 
