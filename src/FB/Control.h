@@ -857,15 +857,30 @@ protected:
    */
   void get_Average_option();
   
-  void get_ChangeID       ();
+  
+  /**
+   * @brief Cell IDのゼロを指定IDに変更するオプションを取得する（隠しパラメータ）
+   * @note 'Change_ID'の文字列チェックはしないので注意して使うこと
+   */
+  void get_ChangeID();
   
   
-  /** パラメータ入力チェックモードの取得 */
-  void get_CheckParameter ();
+  /** 
+   * @brief パラメータ入力チェックモードの取得 
+   */
+  void get_CheckParameter();
   
   
-  void get_Convection     ();
-  void get_Derived        ();
+  /**
+   * @brief 対流項スキームのパラメータを取得する
+   */
+  void get_Convection();
+  
+  
+  /**
+   * @brief 派生して計算する変数のオプションを取得する
+   */
+  void get_Derived();
   
   /**
    * @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
@@ -875,14 +890,25 @@ protected:
   
   
   /**
+   * @brief 反復関連の情報を取得する
+   */
+  void get_Iteration(ItrCtl* IC);
+  
+  
+  /**
+   * @brief LES計算のオプションを取得する
+   */
+  void get_LES_option();
+  
+  
+  
+  /**
    * @brief PLOT3Dファイル入出力に関するパラメータ
    * @param [in]  FP3DR    PLOT3D READクラス ポインタ
    * @param [in]  FP3DW    PLOT3D WRITEクラス ポインタ
    */
   void get_PLOT3D(FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
-  
-  
-  void get_Iteration      (ItrCtl* IC);
+
   
   
   /**
@@ -890,8 +916,7 @@ protected:
    */
   void get_KindOfSolver();
   
-  
-  void get_LES_option     ();
+
   void get_Log            ();
   
   /**
@@ -948,6 +973,10 @@ protected:
   /** ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する */
   void get_Solver_Properties ();
   
+  
+  /**
+   * @brief 初期値とリスタート条件
+   */
   void get_start_condition();
   
   /**
@@ -962,7 +991,16 @@ protected:
   void get_Unit();
   
   
+  /**
+   * @brief 変数の範囲制限モードを取得
+   * @note 隠しパラメータ
+   */
   void get_VarRange();
+  
+  
+  /**
+   * @brief 壁面上の扱いを指定する
+   */
   void get_Wall_type();
   
 
