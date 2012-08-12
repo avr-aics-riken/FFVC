@@ -1404,7 +1404,13 @@ void FFV::fill(FILE* fp)
     // 同期
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      cpm_ErrorCode cer = paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide);
+      
+      if ( cer != CPM_SUCCESS )
+      {
+        Hostonly_ printf("error code = %d\n", cer);
+        Exit(0);
+      }
       if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
