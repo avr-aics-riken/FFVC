@@ -1,4 +1,0 @@
-// リーフの文字列値が閉じてない
-"DomainInfo" {
-    "VoxelOrigin" = "123456
-}

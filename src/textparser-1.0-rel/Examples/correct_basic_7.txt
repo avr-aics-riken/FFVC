@@ -1,6 +1,0 @@
-// 未定義値のケース
-"DomainInfo" {
-    "VoxelOrigin" = UNDEF
-    "VoxelPitch" = (0.1, 0.1, 0.1)
-    "VoxelSize" = (UNDEF, UNDEF, UNDEF)
-}

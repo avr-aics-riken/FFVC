@@ -1,7 +1,0 @@
-// 依存関係付き値（&& ||）
-"Average_operation" {
-    "swtch0" = "on"
-    "swtch1" = "of"
-    "value0" = @dep ( ("swtch0" == "on") && ("swtch1" == "on") ) ? "ON" : "OFF"
-    "value1" = @dep ( ("swtch0" == "on") || ("swtch1" == "on") ) ? "ON" : "OFF"
-}

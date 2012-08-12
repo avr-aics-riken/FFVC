@@ -1,9 +1,0 @@
-// 条件式ラベルの相対パス指定
-"Average_operation" {
-    "swtch0" = "on"
-    "swtch1" = "off"
-    "Directory1" {
-        "value0" = @dep ( ("../swtch0" == "on") && ("../swtch1" == "on") ) ? "ON" : "OFF"
-        "value1" = @dep ( ("../swtch0" == "on") || ("../swtch1" == "on") ) ? "ON" : "OFF"
-    }
-}

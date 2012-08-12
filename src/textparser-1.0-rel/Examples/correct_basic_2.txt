@@ -1,7 +1,0 @@
-// スカラー（数値）とベクトル（数値）
-"DomainInfo" {
-    "Test" = 0.1
-    "VoxelOrigin" = (0.0, 0.2, 1.0)
-    "VoxelPitch" = (0.1, 0.1, 0.1)
-    "VoxelSize" = (30, 20, 50)
-}

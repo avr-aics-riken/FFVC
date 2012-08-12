@@ -1,5 +1,0 @@
-// 依存関係付き値が自分のラベルを参照している場合
-"Average_operation" {
-    "switch0" = "on"
-    "switch1" = @dep ( ("switch0" == "on") && ("switch1" == "on") ) ? "ON" : "OFF"
-}
