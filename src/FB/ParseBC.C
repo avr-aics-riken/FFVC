@@ -2434,7 +2434,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
   
   if ( !tpCntl->chkNode(label_base) ) 
   {
-    Hostonly_ printf("\tParsing error : Missing OuterBoundary Face_BC\n");
+    Hostonly_ printf("\tParsing error : Missing OuterBoundary '/BC_Table/OuterBoundary/Face_BC'\n");
     Exit(0);
   }
   

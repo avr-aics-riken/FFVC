@@ -4061,93 +4061,98 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 
           
           // 各方向のテスト
-          // 例えば、W側をみてテストするとき、次の３つを満たす場合のみがテスト対象となる
-          // 1) 外部領域に接していない
-          // 2) フィルを行うターゲットID（Fluid）で既にペイントされている
-          // 3) 対象セルのカットIDのW方向がゼロ、つまりカットがない
-          if ( !((i == 1) && (nID[X_MINUS] < 0)) && (mid[m_w] == tg) && (qw == 0) )
+          // 例えば、W側をみてテストするとき、次の2つを満たす場合のみがテスト対象となる
+          // 1) フィルを行うターゲットID（Fluid）で既にペイントされている
+          // 2) 対象セルのカットIDのW方向がゼロ、つまりカットがない
+          if ( (mid[m_w] == tg) && (qw == 0) )
+          //if ( !((i == 1) && (nID[X_MINUS] < 0)) && (mid[m_w] == tg) && (qw == 0) )
           {
-            if ( (qs * qn * qb * qt) == 0 ) 
-            { // 隣接セルの面直方向のいずれかはカットがなく、空きがある場合 >> 流体でペイントする
+            //if ( (qs * qn * qb * qt) == 0 )
+            //{ // 隣接セルの面直方向のいずれかはカットがなく、空きがある場合 >> 流体でペイントする
               mid[m_p] = tg;
               c++;
-            }
+            /*}
             else
             { // 面直方向の４方向が全てカット有り >> 1セルの空きがあるので固体で埋める
               set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
               mid[m_p] = sd; // セルIDを固体に変更
               cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
-            }
+            //}*/
           }
-          else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == tg) && (qs == 0) )
+          else if ( (mid[m_s] == tg) && (qs == 0) )
+          //else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == tg) && (qs == 0) )
           {
-            if ( (qw * qe * qb * qt) == 0 )
-            {
+            //if ( (qw * qe * qb * qt) == 0 )
+            //{
               mid[m_p] = tg;
               c++;
-            }
+            /*}
             else
             {
               set_BID5(bid[m_s], Y_PLUS, sd);
               mid[m_p] = sd;
               cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
-            }
+            //}*/
           }
-          else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == tg) && (qb == 0) )
+          else if ( (mid[m_b] == tg) && (qb == 0) )
+          //else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == tg) && (qb == 0) )
           {
-            if ( (qw * qe * qs * qn) == 0 )
-            {
+            //if ( (qw * qe * qs * qn) == 0 )
+            //{
               mid[m_p] = tg;
               c++;
-            }
+            /*}
             else
             {
               set_BID5(bid[m_b], Z_PLUS, sd);
               mid[m_p] = sd;
               cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
-            }
+            //}*/
           }
-          else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == tg) && (qt == 0) )
+          else if ( (mid[m_t] == tg) && (qt == 0) )
+          //else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == tg) && (qt == 0) )
           {
-            if ( (qw * qe * qs * qn) == 0 )
-            {
+            //if ( (qw * qe * qs * qn) == 0 )
+            //{
               mid[m_p] = tg;
               c++;
-            }
+            /*}
             else
             {
               set_BID5(bid[m_t], Z_MINUS, sd);
               mid[m_p] = sd;
               cut[_F_IDX_S4DEX( Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
-            }
+            //}*/
           }
-          else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == tg) && (qn == 0) )
+          else if ( (mid[m_n] == tg) && (qn == 0) )
+          //else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == tg) && (qn == 0) )
           {
-            if ( (qw * qe * qb * qt) == 0 )
-            {
+            //if ( (qw * qe * qb * qt) == 0 )
+            //{
               mid[m_p] = tg;
               c++;
-            }
+            /*}
             else
             {
               set_BID5(bid[m_n], Y_MINUS, sd);
               mid[m_p] = sd;
               cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
-            }
+            //}*/
           }
-          else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == tg) && (qe == 0) )
+          else if ( (mid[m_e] == tg) && (qe == 0) )
+          //else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == tg) && (qe == 0) )
           {
-            if ( (qs * qn * qb * qt) == 0 )
-            {
+            //if ( (qs * qn * qb * qt) == 0 )
+            //{
               mid[m_p] = tg;
               c++;
-            }
+            /*}
             else
             {
               set_BID5(bid[m_e], X_MINUS, sd);
               mid[m_p] = sd;
               cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd)] = cpos;
-            }
+            //}*/
           }
           
         } // target        
@@ -4235,6 +4240,209 @@ void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, 
   }
   
 }
+
+
+
+// #################################################################
+// シード点をペイントする
+// ヒントとして与えられた外部境界面に接するセルでカットが無い（つまり固体でない）セルをフィルする
+// もし，ヒント面に固体があればエラー
+unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, const float* cut)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  unsigned long c = 0;
+  int g=0;
+  
+  
+  switch (face)
+  {
+    case X_MINUS:
+      if ( nID[face] < 0 )
+      {
+        int i = 1;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[mp];
+            int flag = 0;
+            
+            for (int l=0; l<6; l++) {
+              if ( pos[l] <= 0.5 )
+              {
+                flag++;
+                g++;
+              }
+            }
+            
+            if ( (flag == 0) && (mid[m] == 0) )
+            {
+              mid[m] = target;
+              c++;
+            }
+
+          }
+        }
+      }
+      break;
+      
+    case X_PLUS:
+      if ( nID[face] < 0 )
+      {
+        int i = ix;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[mp];
+            int flag = 0;
+            
+            for (int l=0; l<6; l++) {
+              if ( pos[l] <= 0.5 )
+              {
+                flag++;
+                g++;
+              }
+            }
+            
+            if ( (flag == 0) && (mid[m] == 0) )
+            {
+              mid[m] = target;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Y_MINUS:
+      if ( nID[face] < 0 )
+      {
+        int j = 1;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[mp];
+            int flag = 0;
+            
+            for (int l=0; l<6; l++) {
+              if ( pos[l] <= 0.5 )
+              {
+                flag++;
+                g++;
+              }
+            }
+              
+            if ( (flag == 0) && (mid[m] == 0) )
+            {
+              mid[m] = target;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Y_PLUS:
+      if ( nID[face] < 0 )
+      {
+        int j = jx;
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[mp];
+            int flag = 0;
+            
+            for (int l=0; l<6; l++) {
+              if ( pos[l] <= 0.5 )
+              {
+                flag++;
+                g++;
+              }
+            }
+            
+            if ( (flag == 0) && (mid[m] == 0) )
+            {
+              mid[m] = target;
+              c++;
+            }
+
+          }
+        }
+      }
+      break;
+      
+    case Z_MINUS:
+      if ( nID[face] < 0 )
+      {
+        int k = 1;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[mp];
+            int flag = 0;
+            
+            for (int l=0; l<6; l++) {
+              if ( pos[l] <= 0.5 )
+              {
+                flag++;
+                g++;
+              }
+            }
+            
+            if ( (flag == 0) && (mid[m] == 0) )
+            {
+              mid[m] = target;
+              c++;
+            }
+
+          }
+        }
+      }
+      break;
+      
+    case Z_PLUS:
+      if ( nID[face] < 0 )
+      {
+        int k = kx;
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[mp];
+            int flag = 0;
+            
+            for (int l=0; l<6; l++) {
+              if ( pos[l] <= 0.5 )
+              {
+                flag++;
+                g++;
+              }
+            }
+            
+            if ( (flag == 0) && (mid[m] == 0) )
+            {
+              mid[m] = target;
+              c++;
+            }
+
+          }
+        }
+      }
+      break;
+      
+  } // end of switch
+  
+  // 固体面があれば，ゼロを返す（エラー）
+  return (g==0) ? c : 0;
+}
+
 
 
 // #################################################################
@@ -4553,38 +4761,7 @@ void VoxInfo::getOffset(int* st, int* ofst)
 
 
 // #################################################################
-// シード点をペイントする
-// @todo idxで指定されるグローバルインデクスをもつプロセスのみで動かす。現在は、(1,1,1)がマスターで動くことを想定した実装
-bool VoxInfo::paint_first_seed(int* mid, const int* idx, const int target)
-{
-  if (myRank != 0) return false;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t m = _F_IDX_S3D(idx[0], idx[1], idx[2], ix, jx, kx, gd);
-  
-  if ( mid[m] == 0 )
-  {
-    mid[m] = target;
-  }
-  else
-  {
-    return false;
-  }
-  
-  return true;
-}
-
-
-// #################################################################
-/**
- @fn void VoxInfo::printScannedCell(FILE* fp)
- @brief ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
- @param fp ファイル出力のファイルポインタ
- */
+// ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
 void VoxInfo::printScannedCell(FILE* fp)
 {
   for (int i=1; i<=NoVoxID; i++) {
@@ -5784,11 +5961,10 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
           size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
           const float* pos = &cut[mp];
           
-          // 6方向のカット面のIDのうち最大のものを使う
           for (int l=0; l<6; l++) {
-            if ( pos[l] <= 0.5 ) // セル内部のときのみ
+            if ( pos[l] <= 0.5 ) // セル内部にカットが存在する
             {
-              bx = (bd >> l*5)  & MASK_5; // 面のID，カットがなければゼロ
+              bx = (bd >> l*5)  & MASK_5; // カット面のID，カットがなければゼロ, 6方向のカット面のIDのうち最大のものを使う
               mid[m] = max( mid[m], bx );
               if ( bx == 0 ) Exit(0); // 交点があるのに，IDがない
               c++;
@@ -5800,7 +5976,6 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
     }
   }
   
-  // Allreduce時の桁あふれ対策のため、unsigned long で集約
   unsigned long cl = c;
   
   if ( numProc > 1 )

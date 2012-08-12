@@ -604,14 +604,16 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int FB_version; ///< FlowBaseクラスのバージョン番号
+  int FB_version;     ///< FlowBaseクラスのバージョン番号
+  int Fill_Hint;      ///< フィルのヒント {no | x_minux | x_plus |...}
+  int Fill_Medium;    ///< 作動流体のフィル媒質
   int GuideOut;
   int KindOfSolver;
   int Limiter;
   int MarchingScheme;
   int NoBC;
   int NoCompo;
-  int NoMedium;   ///< 媒質数
+  int NoMedium;       ///< 媒質数
   int NoMediumFluid;
   int NoMediumSolid;
   int num_process;
@@ -620,7 +622,7 @@ public:
   int RefMat;     ///< 参照媒質インデクス
   int Start;
   int version;    ///< FFVバージョン番号
-  int Fill_Medium;
+  
   
   unsigned Restart_step;       ///< リスタートステップ
   unsigned long NoWallSurface; ///< 固体表面セル数
@@ -709,6 +711,8 @@ public:
     CheckParam = 0;
     FB_version = 0;
     CnvScheme = 0;
+    Fill_Hint = -1;
+    Fill_Medium = 0;
     GuideOut = 0;
     KindOfSolver = 0;
     Limiter = 0;
@@ -726,7 +730,7 @@ public:
     Restart_step = 0;
     Start = 0;
     version = 0;
-    Fill_Medium = 0;
+    
     
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
@@ -847,7 +851,12 @@ protected:
   void get_Algorithm();
   
   
-  void get_Average_option ();
+  /**
+   * @brief 平均値操作に関するパラメータを取得する
+   * @note パラメータは，setParameters()で無次元して保持
+   */
+  void get_Average_option();
+  
   void get_ChangeID       ();
   
   
@@ -874,7 +883,14 @@ protected:
   
   
   void get_Iteration      (ItrCtl* IC);
-  void get_KindOfSolver   ();
+  
+  
+  /**
+   * @brief ソルバーの計算対象種別と浮力モードを取得
+   */
+  void get_KindOfSolver();
+  
+  
   void get_LES_option     ();
   void get_Log            ();
   
@@ -883,9 +899,27 @@ protected:
    */
   void get_Operator();
   
-  void get_Para_ND        ();
-  void get_Para_Ref       ();
-  void get_Para_Temp      ();
+  
+  /**
+   * @brief 無次元パラメータを各種モードに応じて設定する
+   * @note
+   *   - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
+   *   -           無次元　（Pr, Re > RefV=RefL=1）
+   * @see bool setParameters(MediumList* mat, CompoList* cmp)
+   */
+  void get_Para_ND();
+  
+  
+  /**
+   * @brief 参照パラメータを取得
+   * @note Ref_IDで指定される媒質を代表物性値とする
+   */
+  void get_Para_Ref();
+  
+  /**
+   * @brief 温度の参照パラメータを取得
+   */
+  void get_Para_Temp();
   
   
   /**
@@ -894,7 +928,13 @@ protected:
   void get_PMtest();
   
   
+  /**
+   * @brief 参照座標系を取得する
+   * @todo 回転は未
+   */
   void get_ReferenceFrame (ReferenceFrame* RF);
+  
+  
   ////void get_restart_rough  ();
   
   
@@ -1147,8 +1187,6 @@ public:
    * @param [in] tp TPControl
    */
   void importTP(TPControl* tp);
-  
-  void get_Para_Init();
   
   
   /**  モニタリングのON/OFFとセルモニタの有無のみを取得  */

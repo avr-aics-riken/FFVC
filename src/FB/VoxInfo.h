@@ -299,6 +299,15 @@ public:
    */
   unsigned fill_inside(int* mid, const int solid_id);
   
+  /**
+   * @brief シード点をペイントする
+   * @param [in,out] mid    ID配列
+   * @param [in]     face   ヒント面
+   * @param [in]     target ペイントするID
+   * @param [in]     cut    距離情報
+   */
+  unsigned long fill_seed(int* mid, const int face, const int target, const float* cut);
+  
   
   unsigned long flip_InActive(unsigned long& L,
                               unsigned long& G, 
@@ -348,17 +357,15 @@ public:
   void get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::MPIPolylib* PL);
   
   
+  
+
   /**
-   * @brief シード点をペイントする
-   * @param mid ID配列
-   * @param[in] idx seed点のインデクス
-   * @param[in] target ペイントするID
-   * @note グローバルで一つのプロセスのみで処理される
+   * @brief ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
+   * @param fp ファイル出力のファイルポインタ
    */
-  bool paint_first_seed(int* mid, const int* idx, const int target);
+  void printScannedCell(FILE* fp);
   
   
-  void printScannedCell       (FILE* fp);
   void resizeCompoBV         (int* bd, int* bv, int* bh1, int* bh2, int kos, bool isHeat, int* gcbv);
   
   

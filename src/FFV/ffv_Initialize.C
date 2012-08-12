@@ -233,6 +233,8 @@ int FFV::Initialize(int argc, char **argv)
   // タイミング測定開始
   TIMING_start(tm_init_sct); 
   
+  
+  
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start(tm_init_alloc); 
   allocArray_Prep(PrepMemory, TotalMemory);
@@ -306,6 +308,26 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
+  //>>
+  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
+  B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
+  
+  // CompoList, MediumListのポインタをセット
+  BC.importCMP_MAT(cmp, mat);
+  
+  
+  // CompoListの設定，外部境界条件の読み込み保持
+  setBCinfo();
+  
+  
+  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
+  for (int face=0; face<NOFACE; face++)
+  {
+    V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(),
+                      BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
+  }
+  //<<
+  
   // Fill
   if ( (C.Mode.Example == id_Polygon) ) //&& C.isCDS() )
   {
@@ -351,7 +373,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
-  B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
+  //B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
   
   // ボクセルのスキャン
   VoxScan(fp);
@@ -382,13 +404,21 @@ int FFV::Initialize(int argc, char **argv)
     return -1;
 	}
 
-  
+  /*
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
   
   
-  // CompoListの設定，外部境界条件の読み込み保持、ガイドセル上にパラメータファイルで指定する媒質インデクスを代入
+  // CompoListの設定，外部境界条件の読み込み保持
   setBCinfo();
+  
+  
+  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
+  for (int face=0; face<NOFACE; face++)
+  {
+    V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(),
+                      BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
+  }*/
   
 
   // チェック出力　デバッグ
@@ -1334,12 +1364,7 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 // ポリゴンの場合のフィル操作
 void FFV::fill(FILE* fp)
 {
-  
-  //unsigned isolated_cell = Vinfo.test_opposite_cut(cut_id, mid, id_of_solid);
-  //Hostonly_ printf("Filled cut = %d\n", isolated_cell);
-  
   // 最初にフィル対象のセル数を求める
-  // Allreduce時の桁あふれ対策のため、unsigned long で集約
   unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
   unsigned long tmp_fc = fill_count;
   
@@ -1350,36 +1375,36 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf    ("\tInitial fill target count     : %15ld\n\n", fill_count);
-    fprintf(fp,"\tInitial fill target count     : %15ld\n\n", fill_count);
+    printf    ("\tInitial target count : %15ld\n", fill_count);
+    fprintf(fp,"\tInitial target count : %15ld\n", fill_count);
   }
   
   
   // 指定された媒質を使って、指定シード点を与える
   int target_id = C.Fill_Medium;
-  
-  int seed[3]; ///> @todo シード点をどう与えるか？
-  seed[0] = 1;
-  seed[1] = 1;
-  seed[2] = 1;
-  
   Hostonly_
   {
-    if ( !V.paint_first_seed(d_mid, seed, target_id) )
+    printf    ("\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
+    fprintf(fp,"\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
+  }
+  
+  if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
+  {
+    if ( (tmp_fc = V.fill_seed(d_mid, C.Fill_Hint, target_id, d_cut)) == 0 )
     {
-      printf(    "Failed first painting\n");
-      fprintf(fp,"Failed first painting\n");
+      Hostonly_
+      {
+        printf(    "Failed first painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        fprintf(fp,"Failed first painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+      }
       Exit(0);
     }
   }
+
+  // シード分のカウントデクリメント
+  fill_count -= tmp_fc;
+  //Ex->writeSVX(d_mid, &C); Exit(0);
   
-  
-  
-  // first fill  >> 最初の一つ分のカウントデクリメント
-  fill_count--;
-  
-  
-  // 
   int c=0;
   while (fill_count > 0) {
     
@@ -1394,11 +1419,12 @@ void FFV::fill(FILE* fp)
     if ( fc == 0 ) break; // フィル対象がなくなったら終了
     
     fill_count -= fc;
+    c++;
     
     Hostonly_
     {
-      printf(    "\t%4d : Try Fluid fill = %15ld\n", ++c, fill_count);
-      fprintf(fp,"\t%4d : Try Fluid fill = %15ld\n", ++c, fill_count);
+      printf(    "\t%4d : Try Fluid fill = %15ld\n", c, fill_count);
+      fprintf(fp,"\t%4d : Try Fluid fill = %15ld\n", c, fill_count);
     }
     
     // 同期
@@ -1912,7 +1938,7 @@ int FFV::get_DomainInfo()
   if ( !tpCntl.GetValue(label, &str ) ) {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
-  // string hoge = str;
+  //@todo  string hoge = str;
   
   return div_type;
 }
@@ -2367,12 +2393,6 @@ void FFV::setBCinfo()
   // KOSと境界条件種類の整合性をチェック
   B.chkBCconsistency(C.KindOfSolver, cmp);
   
-  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
-  for (int face=0; face<NOFACE; face++) 
-  {
-    V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(), 
-                      BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
-  }
 }
 
 
