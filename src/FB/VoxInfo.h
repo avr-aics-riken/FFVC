@@ -300,9 +300,6 @@ public:
   unsigned fill_inside(int* mid, const int solid_id);
   
   
-  
-  unsigned test_opposite_cut (int* bid, int* mid, const int solid_id);
-  
   unsigned long flip_InActive(unsigned long& L,
                               unsigned long& G, 
                               const int id, 
