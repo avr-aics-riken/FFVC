@@ -1366,10 +1366,11 @@ void FFV::fill(FILE* fp)
 {
   // 最初にフィル対象のセル数を求める
   unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
-  unsigned long tmp_fc = fill_count;
+  unsigned long fs = 0;
   
   if ( numProc > 1 )
   {
+    unsigned long tmp_fc = fill_count;
     if ( paraMngr->Allreduce(&tmp_fc, &fill_count, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
@@ -1393,7 +1394,15 @@ void FFV::fill(FILE* fp)
   
   if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
   {
-    if ( (tmp_fc = V.fill_seed(d_mid, C.Fill_Hint, target_id, d_cut)) == 0 )
+    fs = V.fill_seed(d_mid, C.Fill_Hint, target_id, d_cut);
+
+    if ( numProc > 1 )
+    {
+      unsigned long tmp_fs = fs;
+      if ( paraMngr->Allreduce(&tmp_fs, &fs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    if ( fs == 0 )
     {
       Hostonly_
       {
@@ -1405,7 +1414,7 @@ void FFV::fill(FILE* fp)
   }
 
   // シード分のカウントデクリメント
-  fill_count -= tmp_fc;
+  fill_count -= fs;
 
   
   int c=0;
@@ -3214,10 +3223,18 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
+    int ntria= (*it)->get_group_num_tria();
+    
+    if ( numProc > 1 )
+    {
+      int tmp = ntria;
+      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
     Hostonly_
     {
-      printf(    "\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
-      fprintf(fp,"\t %3d : %7d : %s\n", m_id, (*it)->get_group_num_tria(), m_pg.c_str());
+      printf(    "\t %3d : %7d : %s\n", m_id, ntria, m_pg.c_str());
+      fprintf(fp,"\t %3d : %7d : %s\n", m_id, ntria, m_pg.c_str());
     }
 // ##########
 #if 0
@@ -3434,7 +3451,9 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // Allreduce時の桁あふれ対策のため、unsigned long で集約
   unsigned long zl = (unsigned long)z;
-  unsigned long tt = (unsigned long)size_n_cell;
+  
+  // 内点のみ
+  unsigned long tt = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
   
   if ( numProc > 1 )
   {

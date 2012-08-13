@@ -520,13 +520,13 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ
     if( nID[face] >= 0 ) 
     {
       vec[0] = 0.0;   // sum
       vec[1] = 1.0e6; // min
       vec[2] =-1.0e6; // max
-      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく
+      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく, trueで初期値を設定
       continue;
     }
     
@@ -534,7 +534,7 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
     {
       case OBC_OUTFLOW:
         div_obc_oflow_vec_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &flop); // vecは流用
-        obc[face].set_DomainV(vec, face, true); // vecは速度の和の形式で保持
+        obc[face].set_DomainV(vec, face, true); // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
         break;
         
       case OBC_SPEC_VEL:

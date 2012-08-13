@@ -2774,9 +2774,9 @@
 
 !$OMP END PARALLEL
     
-    aa(1) = a1
-    aa(2) = a2
-    aa(3) = a3
+    aa(1) = a1 ! sum
+    aa(2) = a2 ! min
+    aa(3) = a3 ! max
 
     return
     end subroutine div_obc_oflow_vec
