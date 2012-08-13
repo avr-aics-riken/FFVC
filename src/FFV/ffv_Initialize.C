@@ -126,14 +126,14 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // FiliIOのモードを修正
-  if ( myRank == 1 )
+  if ( numProc == 1 )
   {
     C.FIO.IO_Input  = IO_GATHER;
     C.FIO.IO_Output = IO_GATHER;
     Hostonly_
     {
-      printf(     "\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
-      fprintf(fp, "\tMode of Parallel_Input/_Output was changed because of serial execution.\n");
+      printf(     "\tMode of Parallel_Input/_Output was changed because of serial execution.\n\n");
+      fprintf(fp, "\tMode of Parallel_Input/_Output was changed because of serial execution.\n\n");
     }
   }
   

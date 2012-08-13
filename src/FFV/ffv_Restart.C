@@ -503,8 +503,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   int num_block[3];
   
   //並列時には各ランクに必要なファイル名と開始インデクスを取得
-  if ( C.FIO.IO_Input == IO_DISTRIBUTE ) {
-    
+  if ( C.FIO.IO_Input == IO_DISTRIBUTE )
+  {
     int i, j, k;  // 密格子のグローバル開始インデクス
     i = head[0];
     j = head[1];
@@ -515,18 +515,22 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     
     getCoarseResult(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, C.Restart_step, f_vel, r_size, crs, num_block);
     
-    if ( C.isHeatProblem() ) {
+    if ( C.isHeatProblem() )
+    {
       getCoarseResult(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, C.Restart_step, f_temp, r_size, crs, num_block);
     }
   }
-  else {
+  else
+  {
     crs[0] = 1;
     crs[1] = 1;
     crs[2] = 1;
     f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, C.Restart_step, myRank);
     f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, C.Restart_step, myRank);
     if ( C.isHeatProblem() )
+    {
       f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, C.Restart_step, myRank);
+    }
   }
   
   // テンポラリのファイルロード
@@ -547,7 +551,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  if ( !checkFile(f_prs) ) {
+  if ( !checkFile(f_prs) )
+  {
     Hostonly_ printf("\n\tError : File open '%s'\n", f_prs.c_str());
     Exit(0);
   }
@@ -563,7 +568,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   
   
   // Instantaneous Velocity fields
-  if ( !checkFile(f_vel) ) {
+  if ( !checkFile(f_vel) )
+  {
     Hostonly_ printf("\n\tError : File open '%s'\n", f_vel.c_str());
     Exit(0);
   }
@@ -579,11 +585,12 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   }
   
   // Instantaneous Temperature fields
-  if ( C.isHeatProblem() ) {
-    
+  if ( C.isHeatProblem() )
+  {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    if ( !checkFile(f_temp) ) {
+    if ( !checkFile(f_temp) )
+    {
       Hostonly_ printf("\n\tError : File open '%s'\n", f_temp.c_str());
       Exit(0);
     }
@@ -603,7 +610,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   if ( paraMngr->BndCommV3DEx(d_r_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   if ( paraMngr->BndCommS3D(d_r_p, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   
-  if ( C.isHeatProblem() ) {
+  if ( C.isHeatProblem() )
+  {
     if ( paraMngr->BndCommS3D(d_r_t, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   }
   
@@ -625,7 +633,7 @@ void FFV::setDFI()
     int st_i, st_j ,st_k, ed_i, ed_j, ed_k;
     
     // head and tail index
-    for (int n=0; n<numProc; n++){
+    for (int n=0; n<numProc; n++) {
       
       // Fortran index
       st_i = head[0];
@@ -655,7 +663,7 @@ void FFV::setDFI()
     
 
     
-    
+    // 後始末
     if ( g_bbox_st ) 
     {
       delete [] g_bbox_st; 

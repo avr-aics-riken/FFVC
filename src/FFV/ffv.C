@@ -49,6 +49,9 @@ FFV::FFV()
     G_region[i] = 0.0;
   }
   
+  // dfi管理
+  for (int i=0; i<var_END; i++) dfi_mng[i]=0;
+  
   fp_b = NULL;
   fp_w = NULL;
   fp_c = NULL;

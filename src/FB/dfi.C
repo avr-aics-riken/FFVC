@@ -15,7 +15,10 @@
 #include "dfi.h"
 #include "util_Path.h"
 
-//@fn void DFI::init()
+
+
+// #################################################################
+// 初期化
 bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host)
 {
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
@@ -54,13 +57,8 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int styp
 }
            
 
-/**
- * データをファイルに書き込む。
- * @param prefix  ファイル接頭文字
- * @param step    ステップ
- * @param dfi_mng 出力管理カウンタ
- * @param mio     出力時の分割指定　 true = local / false = gather
- */
+// #################################################################
+// データをファイルに書き込む。
 bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
@@ -73,31 +71,27 @@ bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, int& dfi
 
   std::string dfi_name;
 
-  if( mio ) {
-
+  if ( mio )
+  {
     dfi_name = Generate_DFI_Name(prefix, my_id);
 
-    if( dfi_name.empty() ) {
+    if( dfi_name.empty() )
+    {
       return false;
     }
 
-    if( !Write_File(dfi_name, prefix, step, dfi_mng, mio) ) {
+    if( !Write_File(dfi_name, prefix, step, dfi_mng, mio) )
+    {
       return false;
     }
-
   }
 
   return true;
 }
 
 
-/**
- * ファイル名を作成する。
- * @param prefix ファイル接頭文字
- * @param m_step
- * @param m_id 
- * @param mio    出力時の分割指定　 true = local / false = gather(default)
- */
+// #################################################################
+// ファイル名を作成する
 std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
@@ -107,10 +101,12 @@ std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_st
   memset(tmp, 0, sizeof(char)*len);
   
   // local出力が指定された場合、分割出力
-  if( mio ){
+  if ( mio )
+  {
     sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
   }
-  else {
+  else
+  {
     sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, "sph");
   }
   
@@ -121,15 +117,9 @@ std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_st
 }
 
 
-/**
- * ファイル名を作成する。（拡張子自由）
- * @param prefix ファイル接頭文字
- * @param m_step
- * @param m_id 
- * @param mio    出力時の分割指定　 true = local / false = gather(default)
- */
-std::string DFI::Generate_FileName_Free(
-                                        const std::string prefix, const std::string xxx, const unsigned m_step, const int m_id, const bool mio)
+// #################################################################
+// ファイル名を作成する（拡張子自由）
+std::string DFI::Generate_FileName_Free(const std::string prefix, const std::string xxx, const unsigned m_step, const int m_id, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
   
@@ -138,10 +128,12 @@ std::string DFI::Generate_FileName_Free(
   memset(tmp, 0, sizeof(char)*len);
   
   // local出力が指定された場合、分割出力
-  if( mio ){
+  if ( mio )
+  {
     sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
   }
-  else {
+  else
+  {
     sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, xxx.c_str());
   }
   
@@ -152,12 +144,8 @@ std::string DFI::Generate_FileName_Free(
 }
 
 
-/**
- * 出力DFIファイル名を作成する。
- *
- * @param prefix ファイル接頭文字
- * @param m_id   ランク番号
- */
+// #################################################################
+// 出力DFIファイル名を作成する
 std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
 {
   if ( prefix.empty() ) return NULL;
@@ -174,16 +162,9 @@ std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
   return fname;
 }
 
-/**
- * DFIファイルを出力する。
- *
- * DFIファイル=ボクセル分割情報ファイル
- * @param dfi_name  DFIファイル名
- * @param prefix    ファイル接頭文字
- * @param step      ステップ数
- * @param dfi_mng   出力管理カウンタ
- * @param mio       出力時の分割指定　 true = local / false = gather
- */
+
+// #################################################################
+// DFIファイルを出力する
 bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
 {
   if ( dfi_name.empty() ) return false;
@@ -193,15 +174,17 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
   
   // File exist ?
   bool flag = false;
-  if ( fp = fopen(dfi_name.c_str(), "r") ) {
+  if ( fp = fopen(dfi_name.c_str(), "r") )
+  {
     flag = true;
     fclose(fp);
   }
 
   
-  if ( (dfi_mng == 0) || !flag || (start_type == coarse_restart) ) { // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
-
-    if( !(fp = fopen(dfi_name.c_str(), "w")) ) {
+  if ( (dfi_mng == 0) || !flag || (start_type == coarse_restart) ) // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
+  {
+    if( !(fp = fopen(dfi_name.c_str(), "w")) )
+    {
       fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
       return false;
     }
@@ -209,7 +192,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     if (fp) fprintf(fp, "<SphereDispersedFileInfo>\n");
     if (fp) fprintf(fp, "\n");
     
-    if( !Write_Header(fp, 0, prefix) ) {
+    if( !Write_Header(fp, 0, prefix) )
+    {
       if (fp) fclose(fp);
       return false;
     }
@@ -219,7 +203,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     if (fp) Write_Tab(fp, 1);
     if (fp) fprintf(fp, "<Elem name=\"FileInfo\">\n");
 
-    if( !Write_OutFileInfo(fp, 1, prefix, step, mio) ){
+    if ( !Write_OutFileInfo(fp, 1, prefix, step, mio) )
+    {
       if (fp) fclose(fp);
       return false;
     }
@@ -230,7 +215,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     if (fp) fclose(fp);
     
   }
-  else { // 既存ファイルが存在する、あるいはセッションが始まり既に書き込み済み >> 追記
+  else // 既存ファイルが存在する、あるいはセッションが始まり既に書き込み済み >> 追記
+  {
     
     // ファイルの内容をバッファ
     fp = fopen(dfi_name.c_str(), "r");
@@ -246,22 +232,26 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     while( --i > 0 ) {
       if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
     }
+    
     while( --i > 0 ) {
       if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
     }
     
     // 新規ファイルを生成し、バッファを書きだしたあとにファイル情報を追記
-    if( !(fp = fopen(dfi_name.c_str(), "w")) ) {
+    if( !(fp = fopen(dfi_name.c_str(), "w")) )
+    {
       fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
       return false;
     }
     
-    if( fp && fwrite(str.c_str(), sizeof(char), strlen(str.c_str()), fp) != strlen(str.c_str()) ){
+    if ( fp && fwrite(str.c_str(), sizeof(char), strlen(str.c_str()), fp) != strlen(str.c_str()) )
+    {
       if (fp) fclose(fp);
       return false;
     }
     
-    if( !Write_OutFileInfo(fp, 1, prefix, step, mio) ){
+    if ( !Write_OutFileInfo(fp, 1, prefix, step, mio) )
+    {
       if (fp) fclose(fp); 
       return false;
     }
@@ -278,23 +268,17 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
   return true;
 }
 
-/**
- * Tab(space２つ)を出力する。
- * @param fp      ファイルポインタ
- * @param tab     インデント数
- */
+
+// #################################################################
+// Tab(space２つ)を出力する
 void DFI::Write_Tab(FILE* fp, const unsigned tab)
 {
   for(int n=0; n<tab; n++) fprintf(fp, "  ");
 }
 
-/**
- * DFIファイル:ヘッダー要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- */
+
+// #################################################################
+// DFIファイル:ヘッダー要素を出力する
 bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
 {
   Write_BaseName(fp, tab+1, prefix);
@@ -320,25 +304,18 @@ bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
   return true;
 }
 
-/**
- * DFIファイル:BaseName要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- */
+
+// #################################################################
+// DFIファイル:BaseName要素を出力する
 void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
 {
   Write_Tab(fp, tab);
   fprintf(fp, "<Param name=\"BaseName\" dtype=\"STRING\" value=\"%s\" />\n", prefix.c_str());
 }
 
-/**
- * DFIファイル:ノード番号要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
+
+// #################################################################
+// DFIファイル:ノード番号要素を出力する
 void DFI::Write_MyID(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
@@ -348,12 +325,9 @@ void DFI::Write_MyID(FILE* fp, const unsigned tab)
   fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", my_id);
 }
 
-/**
- * DFIファイル:ノード数要素を出力する。
- *
- * @param fp  ファイルポインタ
- * @param tab インデント
- */
+
+// #################################################################
+// DFIファイル:ノード数要素を出力する
 void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
@@ -363,12 +337,9 @@ void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
   fprintf(fp, "<Param name=\"GroupNodeNum\" dtype=\"INT\" value=\"%d\" />\n", Num_Node);
 }
 
-/**
- * DFIファイル:全体ボクセルサイズ要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
+
+// #################################################################
+// DFIファイル:全体ボクセルサイズ要素を出力する
 void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
@@ -387,12 +358,9 @@ void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
   fprintf(fp, "</Elem>\n");
 }
 
-/**
- * DFIファイル:I,J,K分割数要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
+
+// #################################################################
+// DFIファイル:I,J,K分割数要素を出力する
 void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
@@ -411,12 +379,9 @@ void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
   fprintf(fp, "</Elem>\n");
 }
 
-/**
- * DFIファイル:ファイルフォーマット要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- */
+
+// #################################################################
+// DFIファイル:ファイルフォーマット要素を出力する
 void DFI::Write_FileFormat(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
@@ -424,12 +389,9 @@ void DFI::Write_FileFormat(FILE* fp, const unsigned tab)
   fprintf(fp, "\" />\n");
 }
 
-/**
- * DFIファイル:ノード情報要素を出力する。
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param prefix  ファイル接頭文字
- */
+
+// #################################################################
+// DFIファイル:ノード情報要素を出力する
 bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 {
   if (fp) {
@@ -449,14 +411,9 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
   return true;
 }
 
-/**
- * DFIファイル:ボクセル情報要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param n       対象ノードID
- * @param prefix  ファイル接頭文字
- */
+
+// #################################################################
+// DFIファイル:ボクセル情報要素を出力する
 bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::string prefix)
 {
   Write_Tab(fp, tab); 
@@ -523,15 +480,9 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::strin
   return true;
 }
 
-/**
- * DFIファイル:出力ファイル情報要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param prefix  ファイル接頭文字
- * @param tab     インデント
- * @param step    ステップ数
- * @param mio    出力時の分割指定　 true = local / false = gather
- */
+
+// #################################################################
+// DFIファイル:出力ファイル情報要素を出力する
 bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const bool mio)
 {
   if (fp) {
@@ -554,13 +505,8 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
 }
 
 
-/**
- * DFIファイル:ガイドセル要素を出力する。
- *
- * @param fp      ファイルポインタ
- * @param tab     インデント
- * @param gc     ガイドセル
- */
+// #################################################################
+// DFIファイル:ガイドセル要素を出力する
 void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab+1);
@@ -568,16 +514,8 @@ void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
 }
 
 
-/**
- * DFIファイル:ファイル名要素を出力する。
- *
- * @param fp     ファイルポインタ
- * @param tab    インデント
- * @param prefix ファイル接頭文字
- * @param step   ステップ数
- * @param id     対象ノードID
- * @param mio    出力時の分割指定　 true = local / false = gather
- */
+// #################################################################
+// DFIファイル:ファイル名要素を出力する
 bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const int id, const bool mio)
 {
   char fname[FB_FILE_PATH_LENGTH];
