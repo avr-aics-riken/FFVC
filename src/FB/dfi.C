@@ -17,77 +17,25 @@
 
 
 
-// #################################################################
-// 初期化
-bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host)
-{
-  MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
-  if ( Num_Node < 2 ) {
-    return false;
-  }
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
-  if ( my_id < 0 ) return false;
-
-  // global size
-  Gsize[0] = g_size[0];
-  Gsize[1] = g_size[1];
-  Gsize[2] = g_size[2];
-  
-  // ノード分割数
-  div_domain[0] = m_div[0];
-  div_domain[1] = m_div[1];
-  div_domain[2] = m_div[2];
-  
-  guide = gc;
-  
-  start_type = stype;
-  
-  head = new int[3*Num_Node];
-  tail = new int[3*Num_Node];
-  
-  hostname = m_host;
-  
-  for (int i=0; i<Num_Node*3; i++) {
-    head[i] = hidx[i];
-    tail[i] = tidx[i];
-  }
-  
-  return true;
-}
            
-
 // #################################################################
-// データをファイルに書き込む。
-bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
+// 出力DFIファイル名を作成する
+std::string DFI::Generate_DFI_Name(const std::string prefix)
 {
   if ( prefix.empty() ) return NULL;
-
-  // master node only
-  int mm;
-  MPI_Comm_rank(MPI_COMM_WORLD, &mm);
-
-  if ( mm != 0 ) return false;
-
-  std::string dfi_name;
-
-  if ( mio )
-  {
-    dfi_name = Generate_DFI_Name(prefix, my_id);
-
-    if( dfi_name.empty() )
-    {
-      return false;
-    }
-
-    if( !Write_File(dfi_name, prefix, step, dfi_mng, mio) )
-    {
-      return false;
-    }
-  }
-
-  return true;
+  
+  int len = prefix.size() + 5; // postfix(4) + 1
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  
+  sprintf(tmp, "%s.%s", prefix.c_str(), "dfi");
+  
+  std::string fname(tmp);
+  if ( tmp ) delete [] tmp;
+  
+  return fname;
 }
+
 
 
 // #################################################################
@@ -145,22 +93,91 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
 
 
 // #################################################################
-// 出力DFIファイル名を作成する
-std::string DFI::Generate_DFI_Name(const std::string prefix, const int m_id)
+// 初期化
+bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host)
+{
+  MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
+  
+  if ( Num_Node < 2 )
+  {
+    return false;
+  }
+  
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
+  
+  if ( my_id < 0 ) return false;
+  
+  // global size
+  Gsize[0] = g_size[0];
+  Gsize[1] = g_size[1];
+  Gsize[2] = g_size[2];
+  
+  // ノード分割数
+  div_domain[0] = m_div[0];
+  div_domain[1] = m_div[1];
+  div_domain[2] = m_div[2];
+  
+  guide = gc;
+  
+  start_type = stype;
+  
+  head = new int[3*Num_Node];
+  tail = new int[3*Num_Node];
+  
+  hostname = m_host;
+  
+  for (int i=0; i<Num_Node*3; i++) {
+    head[i] = hidx[i];
+    tail[i] = tidx[i];
+  }
+  
+  return true;
+}
+
+
+
+// #################################################################
+// DFIファイル:BaseName要素を出力する
+void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
+{
+  Write_Tab(fp, tab);
+  fprintf(fp, "BaseName = \"%s\"\n", prefix.c_str());
+}
+
+
+
+// #################################################################
+// データをファイルに書き込む。
+bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 14; // id(9) + postfix(4) + 1
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
+  // master node only
+  int mm;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mm);
   
-  sprintf(tmp, "%sid%06d.%s", prefix.c_str(), m_id, "dfi");
+  if ( mm != 0 ) return false;
   
-  std::string fname(tmp);
-  if ( tmp ) delete [] tmp;
+  std::string dfi_name;
   
-  return fname;
+  if ( mio )
+  {
+    dfi_name = Generate_DFI_Name(prefix);
+    
+    if( dfi_name.empty() )
+    {
+      return false;
+    }
+    
+    if( !Write_File(dfi_name, prefix, step, dfi_mng, mio) )
+    {
+      return false;
+    }
+  }
+  
+  return true;
 }
+
 
 
 // #################################################################
@@ -189,7 +206,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
       return false;
     }
     
-    if (fp) fprintf(fp, "Distributed_File_Info {\n\n");
+    if (fp) fprintf(fp, "Distributed_File_Info {\n");
+    if (fp) fprintf(fp, "\n");
     
     if( !Write_Header(fp, 0, prefix) )
     {
@@ -268,12 +286,25 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
 }
 
 
+
 // #################################################################
-// Tab(space２つ)を出力する
-void DFI::Write_Tab(FILE* fp, const unsigned tab)
+// DFIファイル:ファイルフォーマット要素を出力する
+void DFI::Write_FileFormat(FILE* fp, const unsigned tab)
 {
-  for(int n=0; n<tab; n++) fprintf(fp, "  ");
+  Write_Tab(fp, tab);
+  fprintf(fp, "FileFormat = \"sph\"\n");
 }
+
+
+
+// #################################################################
+// DFIファイル:ガイドセル要素を出力する
+void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
+{
+  Write_Tab(fp, tab);
+  fprintf(fp, "GuideCell = %d\n", guide);
+}
+
 
 
 // #################################################################
@@ -307,14 +338,6 @@ bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
 }
 
 
-// #################################################################
-// DFIファイル:BaseName要素を出力する
-void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
-{
-  Write_Tab(fp, tab);
-  fprintf(fp, "BaseName = \"%s\"\n", prefix.c_str());
-}
-
 
 // #################################################################
 // DFIファイル:ノード番号要素を出力する
@@ -327,66 +350,6 @@ void DFI::Write_MyID(FILE* fp, const unsigned tab)
   fprintf(fp, "GroupID = %d\n", my_id);
 }
 
-
-// #################################################################
-// DFIファイル:ノード数要素を出力する
-void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
-{
-  Write_Tab(fp, tab);
-  fprintf(fp, "WorldNodeNum = %d\n", Num_Node);
-  
-  Write_Tab(fp, tab);
-  fprintf(fp, "GroupNodeNum = %d\n", Num_Node);
-}
-
-
-// #################################################################
-// DFIファイル:全体ボクセルサイズ要素を出力する
-void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
-{
-  Write_Tab(fp, tab);
-  fprintf(fp, "WholeVoxelSize = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
-}
-
-
-// #################################################################
-// DFIファイル:I,J,K分割数要素を出力する
-void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
-{
-  Write_Tab(fp, tab);
-  fprintf(fp, "VoxelDivision = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
-}
-
-
-// #################################################################
-// DFIファイル:ファイルフォーマット要素を出力する
-void DFI::Write_FileFormat(FILE* fp, const unsigned tab)
-{
-  Write_Tab(fp, tab);
-  fprintf(fp, "FileFormat = \"sph\"\n");
-}
-
-
-// #################################################################
-// DFIファイル:ノード情報要素を出力する
-bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
-{
-  if (fp) {
-    Write_Tab(fp, tab); 
-    fprintf(fp, "NodeInfo {\n");
-  }
-  
-  for (int n=0; n<Num_Node; n++){
-    if ( !Write_Node(fp, tab+1, n, prefix) ) return false;
-  }
-  
-  if (fp) {
-    Write_Tab(fp, tab); 
-    fprintf(fp, "}\n");
-  }
-  
-  return true;
-}
 
 
 // #################################################################
@@ -433,22 +396,22 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::strin
 
 
 // #################################################################
-// DFIファイル:出力ファイル情報要素を出力する
-bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const bool mio)
+// DFIファイル:ノード情報要素を出力する
+bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 {
-  if (fp) {
-    Write_Tab(fp, tab+1); 
-    fprintf(fp, "File[@] {\n");
+  if (fp)
+  {
+    Write_Tab(fp, tab);
+    fprintf(fp, "NodeInfo {\n");
   }
   
-  Write_Step(fp, tab+1, step);
-  
-  for(int n=0; n<Num_Node; n++) {
-    if ( !Write_OutFileName(fp, tab+1, prefix, step, n, mio) ) return false;
+  for (int n=0; n<Num_Node; n++) {
+    if ( !Write_Node(fp, tab+1, n, prefix) ) return false;
   }
-
-  if (fp) {
-    Write_Tab(fp, tab+1); 
+  
+  if (fp)
+  {
+    Write_Tab(fp, tab);
     fprintf(fp, "}\n");
   }
   
@@ -457,11 +420,60 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
 
 
 // #################################################################
-// DFIファイル:ガイドセル要素を出力する
-void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
+// DFIファイル:ノード数要素を出力する
+void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "GuideCell = %d\n", guide);
+  fprintf(fp, "WorldNodeNum = %d\n", Num_Node);
+  
+  Write_Tab(fp, tab);
+  fprintf(fp, "GroupNodeNum = %d\n", Num_Node);
+}
+
+
+
+// #################################################################
+// DFIファイル:I,J,K分割数要素を出力する
+void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
+{
+  Write_Tab(fp, tab);
+  fprintf(fp, "VoxelDivision = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
+}
+
+
+
+// #################################################################
+// DFIファイル:出力ファイル情報要素を出力する
+bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const bool mio)
+{
+  if (fp)
+  {
+    Write_Tab(fp, tab+1);
+    fprintf(fp, "Step[@] = %d\n", step);
+  }
+  
+  /*
+  if (fp)
+  {
+    Write_Tab(fp, tab+1); 
+    fprintf(fp, "File[@] {\n");
+  }
+  
+  Write_Step(fp, tab+1, step);
+  
+  
+  for(int n=0; n<Num_Node; n++) {
+    if ( !Write_OutFileName(fp, tab+1, prefix, step, n, mio) ) return false;
+  }
+
+  if (fp)
+  {
+    Write_Tab(fp, tab+1); 
+    fprintf(fp, "}\n");
+  }
+   */
+  
+  return true;
 }
 
 
@@ -484,6 +496,7 @@ bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string pref
   return true;
 }
 
+
 // #################################################################
 // DFIファイル:ステップ数を出力する
 void DFI::Write_Step(FILE* fp, const unsigned tab, const unsigned step)
@@ -492,3 +505,19 @@ void DFI::Write_Step(FILE* fp, const unsigned tab, const unsigned step)
   fprintf(fp, "Step = %d\n", step);
 }
 
+
+// #################################################################
+// Tab(space２つ)を出力する
+void DFI::Write_Tab(FILE* fp, const unsigned tab)
+{
+  for(int n=0; n<tab; n++) fprintf(fp, "  ");
+}
+
+
+// #################################################################
+// DFIファイル:全体ボクセルサイズ要素を出力する
+void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
+{
+  Write_Tab(fp, tab);
+  fprintf(fp, "WholeVoxelSize = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
+}

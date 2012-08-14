@@ -631,57 +631,55 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
 // 並列分散時のファイル名の管理を行う
 void FFV::setDFI()
 {
+  int* g_bbox_st = new int[3*numProc];
+  int* g_bbox_ed = new int[3*numProc];
+  
   // 並列時のみ
   if ( numProc > 1 )
   {
-    int* g_bbox_st = new int[3*numProc];
-    int* g_bbox_ed = new int[3*numProc];
+    const int* m_tail = paraMngr->GetVoxelTailIndex();
+    int tail[3];
     
-    int st_i, st_j ,st_k, ed_i, ed_j, ed_k;
+    tail[0] = m_tail[0] + 1;
+    tail[1] = m_tail[1] + 1;
+    tail[2] = m_tail[2] + 1;
     
-    // head and tail index
-    for (int n=0; n<numProc; n++) {
-      
-      // Fortran index
-      st_i = head[0];
-      st_j = head[1];
-      st_k = head[2];
-      
-      const int* tail = paraMngr->GetVoxelTailIndex();
-      ed_i = tail[0] + 1;
-      ed_j = tail[1] + 1;
-      ed_k = tail[2] + 1;
-      
-      if ( (g_bbox_st[3*n+0] = st_i) < 1 ) Exit(0);
-      if ( (g_bbox_st[3*n+1] = st_j) < 1 ) Exit(0);
-      if ( (g_bbox_st[3*n+2] = st_k) < 1 ) Exit(0);
-      if ( (g_bbox_ed[3*n+0] = ed_i) < 1 ) Exit(0);
-      if ( (g_bbox_ed[3*n+1] = ed_j) < 1 ) Exit(0);
-      if ( (g_bbox_ed[3*n+2] = ed_k) < 1 ) Exit(0);
-    }
+    // 集約
+    if ( paraMngr->Gather(head, 3, g_bbox_st, 3, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(tail, 3, g_bbox_ed, 3, 0) != CPM_SUCCESS ) Exit(0);
     
-    // host nameの取得
-    string host = paraMngr->GetHostName();
-    if ( host.empty() ) Exit(0);
+  }
+  else // serial
+  {
+    g_bbox_st[0] = 1;
+    g_bbox_st[1] = 1;
+    g_bbox_st[2] = 1;
+    g_bbox_ed[0] = size[0];
+    g_bbox_ed[1] = size[1];
+    g_bbox_ed[2] = size[2];
+  }
+  
     
-    
-    // DFIクラスの初期化
-    if ( !DFI.init(G_size, paraMngr->GetDivNum(), C.GuideOut, C.Start, g_bbox_st, g_bbox_ed, host) ) Exit(0);
-    
-
-    
-    // 後始末
-    if ( g_bbox_st ) 
-    {
-      delete [] g_bbox_st; 
-      g_bbox_st = NULL;
-    }
-    
-    if ( g_bbox_ed ) 
-    {
-      delete [] g_bbox_ed; 
-      g_bbox_ed = NULL;
-    }
+  // host nameの取得
+  string host = paraMngr->GetHostName();
+  if ( host.empty() ) Exit(0);
+  
+  
+  // DFIクラスの初期化
+  if ( !DFI.init(G_size, paraMngr->GetDivNum(), C.GuideOut, C.Start, g_bbox_st, g_bbox_ed, host) ) Exit(0);
+  
+  
+  // 後始末
+  if ( g_bbox_st )
+  {
+    delete [] g_bbox_st;
+    g_bbox_st = NULL;
+  }
+  
+  if ( g_bbox_ed )
+  {
+    delete [] g_bbox_ed;
+    g_bbox_ed = NULL;
   }
   
 }

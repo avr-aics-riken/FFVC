@@ -61,9 +61,8 @@ protected:
   /**
    * @brief 出力DFIファイル名を作成する
    * @param [in] prefix ファイル接頭文字
-   * @param [in] m_id   ランク番号
    */
-  std::string Generate_DFI_Name(const std::string prefix, const int m_id);
+  std::string Generate_DFI_Name(const std::string prefix);
   
   
   /**
