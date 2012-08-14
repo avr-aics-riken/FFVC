@@ -72,28 +72,33 @@ bool FFV::getCoarseResult (int i, int j, int k,
     //  np = get_intval( buf );	
     //}
     
-		if( buf.find("\"GroupID\"",0) != string::npos ) {
+		if( buf.find("GroupID",0) != string::npos )
+    {
 			rank = get_intval( buf );
       
 			while( getline(ifs, buf) ) {
-        if( buf.find("\"VoxelSize\"",0) != string::npos ) {
+        if( buf.find("VoxelSize",0) != string::npos )
+        {
 					getline(ifs, buf);  Ci = get_intval( buf );	
 					getline(ifs, buf);  Cj = get_intval( buf );	
 					getline(ifs, buf);  Ck = get_intval( buf );	
 				}
-				if( buf.find("\"HeadIndex\"",0) != string::npos ) {
+				if( buf.find("HeadIndex",0) != string::npos )
+        {
 					getline(ifs, buf);  hi = get_intval( buf );	
 					getline(ifs, buf);  hj = get_intval( buf );	
 					getline(ifs, buf);  hk = get_intval( buf );	
 				}
-				if( buf.find("\"TailIndex\"",0) != string::npos ) {
+				if( buf.find("TailIndex",0) != string::npos )
+        {
 					getline(ifs, buf);  ti = get_intval( buf );	
 					getline(ifs, buf);  tj = get_intval( buf );	
 					getline(ifs, buf);  tk = get_intval( buf );	
 					break;
 				}
 			}
-			if( i0>=hi && i0<=ti && j0>=hj && j0<=tj && k0>=hk && k0<=tk ) {
+			if ( i0>=hi && i0<=ti && j0>=hj && j0<=tj && k0>=hk && k0<=tk )
+      {
 				// found!
 				break;
 			}
@@ -115,9 +120,11 @@ bool FFV::getCoarseResult (int i, int j, int k,
 	sprintf(id, "id=\"%d\"", rank);
   
 	while( getline(ifs, buf) ) {
-		if( buf.find("\"FileName\"",0) != std::string::npos && buf.find(id,0) != string::npos ) {
+		if ( buf.find("FileName",0) != std::string::npos && buf.find(id,0) != string::npos )
+    {
 			fname = get_strval( buf );
-			if( (fname.find(coarse_prefix,0) != std::string::npos) && (fname.find(step,0) != std::string::npos) ) {
+			if ( (fname.find(coarse_prefix,0) != std::string::npos) && (fname.find(step,0) != std::string::npos) )
+      {
         target = fname;
         break;
 			}

@@ -30,7 +30,7 @@ public:
   
 public:
   /** コンストラクタ */
-  IP_Rect(){
+  IP_Rect() {
     even = OFF;
   }
   
@@ -67,7 +67,7 @@ public:
   
   
   /** 
-   @brief 例題の名称を返す
+   * @brief 例題の名称を返す
    */
   virtual const char* getExampleName(void) 
   {

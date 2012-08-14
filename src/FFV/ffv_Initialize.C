@@ -711,7 +711,7 @@ int FFV::Initialize(int argc, char **argv)
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
   allocate_Main(TotalMemory);
   
-
+  
   
   // 分散時のインデクスファイル生成
   setDFI();
@@ -726,14 +726,17 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
+  // リスタート処理
+  Restart(fp);
+
+  
+  
   // 制御インターバルの初期化
   init_Interval();
   
   
-  
   // 平均値のロード
-  if ( C.Start == restart )
-  {
+  if ( C.Start == restart ) {
     TIMING_start(tm_restart);
     if ( C.Mode.Average == ON ) Restart_avrerage(fp, flop_task);
     TIMING_stop(tm_restart);
@@ -754,9 +757,27 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
     
     display_Parameters(fp);
+    
+    
+    /* モニタ情報の表示
+     if ( C.Sampling.log == ON ) {
+     
+     MO.printMonitorInfo(mp, C.HistoryMonitorName, false); // ヘッダのみ
+     
+     FILE *fp_mon=NULL;
+     Hostonly_ {
+     if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
+     stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
+     return -1;
+     }
+     }
+     
+     MO.printMonitorInfo(fp_mon, C.HistoryMonitorName, true);  // 詳細モード
+     Hostonly_ if ( fp_mon ) fclose(fp_mon);
+     }*/
   }
   
-  
+
   
   // ドライバ条件のチェック
   BC.checkDriver(fp);
@@ -847,7 +868,7 @@ int FFV::Initialize(int argc, char **argv)
     printf("\n\n");
     fprintf(fp, "\n\n");
   }
-  
+  /*
   printf("CurrentTime         = %e\n",CurrentTime);
   printf("CurrentTime_Avr     = %e\n",CurrentTime_Avr);
   printf("Session_StartTime   = %e\n",Session_StartTime);
@@ -858,7 +879,7 @@ int FFV::Initialize(int argc, char **argv)
   printf("Session_StartStep   = %u\n",Session_StartStep);
   printf("CurrentStep         = %u\n",CurrentStep);
   printf("CurrentStep_Avr     = %u\n",CurrentStep_Avr);
-  
+  */
   
   // 履歴出力準備
   prep_HistoryOutput();

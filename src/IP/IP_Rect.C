@@ -26,33 +26,41 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   // 分割数の偶数チェックオプション
   label="/Parameter/Intrinsic_Example/Check_Even";
 
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Check_Even' in 'Intrinsic_Example'\n");
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '/Parameter/Intrinsic_Example/Check_Even'\n");
     return false;
   }
 
-  if     ( !strcasecmp(str.c_str(), "yes") ) {
+  if     ( !strcasecmp(str.c_str(), "yes") )
+  {
     even = ON;
   }
-  else if( !strcasecmp(str.c_str(), "no") ) {
+  else if( !strcasecmp(str.c_str(), "no") )
+  {
     even = OFF;
   }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : Invalid 'Check_Even' in 'Intrinsic_Example'\n");
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid '/Parameter/Intrinsic_Example/Check_Even'\n");
     return false;
   }
   
   // 媒質指定
   label="/Parameter/Intrinsic_Example/Fluid_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '/Parameter/Intrinsic_Example/Fluid_medium'\n");
     return false;
   }
   m_fluid = str;
   
   label="/Parameter/Intrinsic_Example/Solid_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '/Parameter/Intrinsic_Example/Solid_medium'\n");
     return false;
   }
   m_solid = str;
@@ -71,16 +79,20 @@ void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
   reg[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // 偶数のチェック
-  if ( even == ON ) {
-    if ( sz[0]/2*2 != sz[0] ) {
+  if ( even == ON )
+  {
+    if ( sz[0]/2*2 != sz[0] )
+    {
       printf("\tDimension size must be even for x direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
       Exit(0);
     }
-    if ( sz[1]/2*2 != sz[1] ) {
+    if ( sz[1]/2*2 != sz[1] )
+    {
       printf("\tDimension size must be even for y direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
       Exit(0);
     }
-    if ( sz[2]/2*2 != sz[2] ) {
+    if ( sz[2]/2*2 != sz[2] )
+    {
       printf("\tDimension size must be even for z direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
       Exit(0);
     }
@@ -101,7 +113,8 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   int id_fluid;
   
-  if ( (id_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 ) {
+  if ( (id_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
@@ -110,7 +123,7 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         mid[m] = id_fluid;
       }
     }

@@ -189,8 +189,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
       return false;
     }
     
-    if (fp) fprintf(fp, "<SphereDispersedFileInfo>\n");
-    if (fp) fprintf(fp, "\n");
+    if (fp) fprintf(fp, "Distributed_File_Info {\n\n");
     
     if( !Write_Header(fp, 0, prefix) )
     {
@@ -201,7 +200,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     if (fp) fprintf(fp, "\n");
     
     if (fp) Write_Tab(fp, 1);
-    if (fp) fprintf(fp, "<Elem name=\"FileInfo\">\n");
+    if (fp) fprintf(fp, "FileInfo {\n");
 
     if ( !Write_OutFileInfo(fp, 1, prefix, step, mio) )
     {
@@ -210,8 +209,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     }
     
     if (fp) Write_Tab(fp, 1);
-    if (fp) fprintf(fp, "</Elem>\n");
-    if (fp) fprintf(fp, "</SphereDispersedFileInfo>\n");
+    if (fp) fprintf(fp, "}\n");
+    if (fp) fprintf(fp, "}\n");
     if (fp) fclose(fp);
     
   }
@@ -257,8 +256,8 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
     }
     
     if (fp) Write_Tab(fp, 1);
-    if (fp) fprintf(fp, "</Elem>\n");
-    if (fp) fprintf(fp, "</SphereDispersedFileInfo>\n");
+    if (fp) fprintf(fp, "}\n");
+    if (fp) fprintf(fp, "}\n");
     if (fp) fclose(fp);
     
   }
@@ -299,6 +298,9 @@ bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
   Write_FileFormat(fp, tab+1);
   if (fp) fprintf(fp, "\n");
   
+  Write_GuideCell(fp, tab+1);
+  if (fp) fprintf(fp, "\n");
+  
   if( !Write_NodeInfo(fp, tab+1, prefix) ) return false;
   
   return true;
@@ -310,7 +312,7 @@ bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
 void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"BaseName\" dtype=\"STRING\" value=\"%s\" />\n", prefix.c_str());
+  fprintf(fp, "BaseName = \"%s\"\n", prefix.c_str());
 }
 
 
@@ -319,10 +321,10 @@ void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
 void DFI::Write_MyID(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"WorldID\" dtype=\"INT\" value=\"%d\" />\n", my_id);
+  fprintf(fp, "WorldID = %d\n", my_id);
   
   Write_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", my_id);
+  fprintf(fp, "GroupID = %d\n", my_id);
 }
 
 
@@ -331,10 +333,10 @@ void DFI::Write_MyID(FILE* fp, const unsigned tab)
 void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"WorldNodeNum\" dtype=\"INT\" value=\"%d\" />\n", Num_Node);
+  fprintf(fp, "WorldNodeNum = %d\n", Num_Node);
   
   Write_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"GroupNodeNum\" dtype=\"INT\" value=\"%d\" />\n", Num_Node);
+  fprintf(fp, "GroupNodeNum = %d\n", Num_Node);
 }
 
 
@@ -343,19 +345,7 @@ void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "<Elem name=\"WholeVoxelSize\">\n");
-  
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", Gsize[0]);
-  
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", Gsize[1]);
-  
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", Gsize[2]);
-  
-  Write_Tab(fp, tab);
-  fprintf(fp, "</Elem>\n");
+  fprintf(fp, "WholeVoxelSize = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
 }
 
 
@@ -364,19 +354,7 @@ void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
 void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "<Elem name=\"VoxelDivMethod\">\n");
-  
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", div_domain[0]);
-  
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", div_domain[1]);
-  
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", div_domain[2]);
-  
-  Write_Tab(fp, tab);
-  fprintf(fp, "</Elem>\n");
+  fprintf(fp, "VoxelDivision = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
 }
 
 
@@ -385,8 +363,7 @@ void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
 void DFI::Write_FileFormat(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "<Param name=\"Format\" dtype=\"STRING\" value=\"sph");
-  fprintf(fp, "\" />\n");
+  fprintf(fp, "FileFormat = \"sph\"\n");
 }
 
 
@@ -396,7 +373,7 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 {
   if (fp) {
     Write_Tab(fp, tab); 
-    fprintf(fp, "<Elem name=\"NodeInfo\">\n");
+    fprintf(fp, "NodeInfo {\n");
   }
   
   for (int n=0; n<Num_Node; n++){
@@ -405,7 +382,7 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
   
   if (fp) {
     Write_Tab(fp, tab); 
-    fprintf(fp, "</Elem>\n");
+    fprintf(fp, "}\n");
   }
   
   return true;
@@ -417,65 +394,39 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::string prefix)
 {
   Write_Tab(fp, tab); 
-  fprintf(fp, "<Elem name=\"Node\">\n");
+  fprintf(fp, "Node[@] {\n");
   
   // ID
   Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"GroupID\" dtype=\"INT\" value=\"%d\" />\n", n);
+  fprintf(fp, "GroupID = %d\n", n);
   
   // Hostname
   Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"HostName\" dtype=\"STRING\" value=\"%s\" />\n", hostname.c_str());
+  fprintf(fp, "HostName = \"%s\"\n", hostname.c_str());
   
-  // VoxelSize
+  // Voxel Size
   Write_Tab(fp, tab+1); 
-  fprintf(fp, "<Elem name=\"VoxelSize\">\n");
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+0] - head[3*n+0] + 1);
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+1] - head[3*n+1] + 1);
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+2] - head[3*n+2] + 1);
-  
-  Write_Tab(fp, tab+1); 
-  fprintf(fp, "</Elem>\n");
+  fprintf(fp, "VoxelSize = (%d, %d, %d)\n",
+          tail[3*n+0] - head[3*n+0] + 1,
+          tail[3*n+1] - head[3*n+1] + 1,
+          tail[3*n+2] - head[3*n+2] + 1);
   
   // Head Index
   Write_Tab(fp, tab+1); 
-  fprintf(fp, "<Elem name=\"HeadIndex\">\n");
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", head[3*n+0]);
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", head[3*n+1]);
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", head[3*n+2]);
-  
-  Write_Tab(fp, tab+1); 
-  fprintf(fp, "</Elem>\n");
+  fprintf(fp, "HeadIndex = (%d, %d, %d)\n",
+          head[3*n+0],
+          head[3*n+1],
+          head[3*n+2]);
   
   // Tail Index
   Write_Tab(fp, tab+1); 
-  fprintf(fp, "<Elem name=\"TailIndex\">\n");
+  fprintf(fp, "TailIndex = (%d, %d, %d)\n",
+          tail[3*n+0],
+          tail[3*n+1],
+          tail[3*n+2]);
   
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"I\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+0]);
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"J\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+1]);
-  
-  Write_Tab(fp, tab+2);
-  fprintf(fp, "<Param name=\"K\" dtype=\"INT\" value=\"%d\" />\n", tail[3*n+2]);
-  
-  Write_Tab(fp, tab+1); 
-  fprintf(fp, "</Elem>\n");
-  
-  Write_Tab(fp, tab); fprintf(fp, "</Elem>\n");
+  Write_Tab(fp, tab);
+  fprintf(fp, "}\n");
   
   return true;
 }
@@ -487,10 +438,10 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
 {
   if (fp) {
     Write_Tab(fp, tab+1); 
-    fprintf(fp, "<Elem name=\"File\" id=\"%d\" >\n", step);
+    fprintf(fp, "File[@] {\n");
   }
   
-  Write_GuideCell(fp, tab+1);
+  Write_Step(fp, tab+1, step);
   
   for(int n=0; n<Num_Node; n++) {
     if ( !Write_OutFileName(fp, tab+1, prefix, step, n, mio) ) return false;
@@ -498,7 +449,7 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
 
   if (fp) {
     Write_Tab(fp, tab+1); 
-    fprintf(fp, "</Elem>\n");
+    fprintf(fp, "}\n");
   }
   
   return true;
@@ -509,8 +460,8 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
 // DFIファイル:ガイドセル要素を出力する
 void DFI::Write_GuideCell(FILE* fp, const unsigned tab)
 {
-  Write_Tab(fp, tab+1);
-  fprintf(fp, "<Param name=\"GuideCell\" dtype=\"INT\" value=\"%d\" />\n", guide);
+  Write_Tab(fp, tab);
+  fprintf(fp, "GuideCell = %d\n", guide);
 }
 
 
@@ -528,8 +479,16 @@ bool DFI::Write_OutFileName(FILE* fp, const unsigned tab, const std::string pref
   strcpy(fname, tmp.c_str());
 
   if (fp) Write_Tab(fp, tab+1);
-  if (fp) fprintf(fp, "<Param name=\"FileName\" dtype=\"STRING\" value=\"%s\" id=\"%d\" />\n", fname, id);
+  if (fp) fprintf(fp, "FileName[@] = \"%s\"\n", fname);
 
   return true;
+}
+
+// #################################################################
+// DFIファイル:ステップ数を出力する
+void DFI::Write_Step(FILE* fp, const unsigned tab, const unsigned step)
+{
+  Write_Tab(fp, tab+1);
+  fprintf(fp, "Step = %d\n", step);
 }
 

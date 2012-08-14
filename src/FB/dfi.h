@@ -177,6 +177,16 @@ protected:
    */
   void Write_NumDivDomain(FILE* fp, const unsigned tab);
   
+  
+  /**
+   * @brief ステップ数を出力する
+   * @param [in] fp      ファイルポインタ
+   * @param [in] tab     インデント数
+   * @param [in] step    ステップ数
+   */
+  void Write_Step(FILE* fp, const unsigned tab, const unsigned step);
+  
+  
   /**
    * @brief Tab(space２つ)を出力する
    * @param [in] fp      ファイルポインタ
