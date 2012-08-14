@@ -634,6 +634,11 @@ void FFV::setDFI()
   int* g_bbox_st = new int[3*numProc];
   int* g_bbox_ed = new int[3*numProc];
   
+  // host nameの取得
+  string host = paraMngr->GetHostName();
+  if ( host.empty() ) Exit(0);
+  
+  
   // 並列時のみ
   if ( numProc > 1 )
   {
@@ -658,11 +663,6 @@ void FFV::setDFI()
     g_bbox_ed[1] = size[1];
     g_bbox_ed[2] = size[2];
   }
-  
-    
-  // host nameの取得
-  string host = paraMngr->GetHostName();
-  if ( host.empty() ) Exit(0);
   
   
   // DFIクラスの初期化

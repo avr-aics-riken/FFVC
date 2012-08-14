@@ -33,7 +33,7 @@ protected:
   int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2）
   int* head;             ///< bboxの開始インデクス(C index) [3*Num_Node]
   int* tail;             ///< bboxの終端インデクス(C index) [3*Num_Node]
-  std::string  hostname; ///< ラベル
+  std::string hostname;  ///< ラベル
   
 public:
   DFI() {

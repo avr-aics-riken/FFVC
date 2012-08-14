@@ -147,7 +147,7 @@ void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
 
 
 // #################################################################
-// データをファイルに書き込む。
+// データをファイルに書き込む
 bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio)
 {
   if ( prefix.empty() ) return NULL;
