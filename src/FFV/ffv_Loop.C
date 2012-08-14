@@ -141,17 +141,21 @@ int FFV::Loop(const unsigned step)
     double src[6], dst[6]; // Vel, Prs, Tempで3*2
     TIMING_start(tm_stat_space_comm);
     
-    for (int n=0; n<3; n++) src[n]   = avr_Var[n];
-    for (int n=0; n<3; n++) src[n+3] = rms_Var[n];
+    for (int n=0; n<3; n++) {
+      src[n]   = avr_Var[n];
+      src[n+3] = rms_Var[n];
+    }
     
     if ( paraMngr->Allreduce(src, dst, 6, MPI_SUM) != CPM_SUCCESS) Exit(0); // 変数 x (平均値+変動値)
     
-    for (int n=0; n<3; n++) avr_Var[n] = dst[n];
-    for (int n=0; n<3; n++) rms_Var[n] = dst[n+3];
+    for (int n=0; n<3; n++) {
+      avr_Var[n] = dst[n];
+      rms_Var[n] = dst[n+3];
+    }
     
     TIMING_stop(tm_stat_space_comm, 2.0*numProc*6.0*2.0*sizeof(double) ); // 双方向 x ノード数 x 変数
   }
-  
+
   avr_Var[var_Velocity] /= (double)G_Acell;  // 速度の空間平均
   avr_Var[var_Pressure] /= (double)G_Acell;  // 圧力の空間平均
   

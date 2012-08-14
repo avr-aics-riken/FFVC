@@ -46,9 +46,9 @@ void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, bool mode)
         break;
     }
     
-    dm[0] = a; // sum
-    dm[1] = a; // min
-    dm[2] = a; // max
+    dm[0] = a;
+    dm[1] = a;
+    dm[2] = a;
   }
 }
 

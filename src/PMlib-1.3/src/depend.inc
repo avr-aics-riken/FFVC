@@ -1,4 +1,5 @@
 PerfWatch.o: PerfWatch.cpp /opt/openmpi/include/mpi.h \
+ /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/constants.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/functions.h \
@@ -31,8 +32,9 @@ PerfWatch.o: PerfWatch.cpp /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/win_inln.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h ../include/PerfWatch.h
 PerfMonitor.o: PerfMonitor.cpp ../include/PerfMonitor.h ../include/PerfWatch.h \
- /opt/openmpi/include/mpi.h /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h \
- /opt/openmpi/include/mpi.h /opt/openmpi/include/openmpi/ompi/mpi/cxx/constants.h \
+ /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
+ /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
+ /opt/openmpi/include/openmpi/ompi/mpi/cxx/constants.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/functions.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/datatype.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/exception.h \

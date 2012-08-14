@@ -523,9 +523,9 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
     // 計算領域の最外郭領域でないときに，境界処理をスキップ
     if( nID[face] >= 0 ) 
     {
-      vec[0] = 0.0;   // sum
-      vec[1] = 1.0e6; // min
-      vec[2] =-1.0e6; // max
+      vec[0] =  0.0;   // sum
+      vec[1] =  1.0e6; // min
+      vec[2] = -1.0e6; // max
       obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく, trueで初期値を設定
       continue;
     }

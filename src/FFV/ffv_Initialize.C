@@ -3403,14 +3403,14 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   int kx = size[2];
   int gd = guide;
   
-  unsigned z=0;
+  // カットの最小値を求める
   float f_min=1.0;
   
 #pragma omp parallel firstprivate(ix, jx, kx, gd)
   {
     float th_min = 1.0;
     
-#pragma omp parallel for schedule(static) reduction(+:z)
+#pragma omp parallel for schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -3419,13 +3419,15 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
           size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int bd = d_bid[mb];
           
-          if ( TEST_BC(bd) ) // IDにによる判定
+          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
           //if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 距離による判定
           {
-            for (int n=0; n<6; n++) {
-              th_min = min(th_min, d_cut[mp+n]); // if ( th_min > pos[n] ) th_min = pos[n];
+            for (size_t n=0; n<6; n++) {
+              
+              th_min = min(th_min, d_cut[mp+n]);
+              
             }
-            z++;
+            
 // ##########            
 #if 0 // debug
             int b0 = (bd >> 0)  & MASK_5;
@@ -3442,35 +3444,24 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
         }
       }
     }
-    
+
 #pragma omp critical
     {
       f_min = min(f_min, th_min);
     }
   }
-  
-  // Allreduce時の桁あふれ対策のため、unsigned long で集約
-  unsigned long zl = (unsigned long)z;
-  
-  // 内点のみ
-  unsigned long tt = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
+
   
   if ( numProc > 1 )
   {
     float tmp = f_min;
     if ( paraMngr->Allreduce(&tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-    
-    unsigned long tmp_g = zl;
-    if ( paraMngr->Allreduce(&tmp_g, &zl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    
-    tmp_g = tt;
-    if ( paraMngr->Allreduce(&tmp_g, &tt, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_
   {
-    printf(    "\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", f_min, zl, (float)zl/(float)tt*100.0);
-    fprintf(fp,"\n\tMinimum dist. = %5.3e  : # of cut = %ld : %f [percent]\n", f_min, zl, (float)zl/(float)tt*100.0);
+    printf(    "\n\tMinimum dist. = %5.3e  \n", f_min);
+    fprintf(fp,"\n\tMinimum dist. = %5.3e  \n", f_min);
   }
   
   // カットの最小値

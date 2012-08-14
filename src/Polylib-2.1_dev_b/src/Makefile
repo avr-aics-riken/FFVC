@@ -35,12 +35,12 @@ TARGET_DIR	= ../lib
 # -DSAVE_ID_ASCII
 ###########################################################################
 
-CFLAGS		= -O2 -Wall \
+CFLAGS		= -O3 -Wall \
             -I../include \
             -I$(MPI_DIR)/include \
-            -I/usr/include \
             -fno-strict-aliasing \
             -I/usr/local/textparser/include \
+#            -I/usr/include \
 #            -DSAVE_ID_ASCII -DDEBUG
 
 # FX10

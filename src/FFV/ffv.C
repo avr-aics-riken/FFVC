@@ -267,7 +267,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
       u_min = vv[1];
       u_max = vv[2];
 
-      printf("rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, u_avr);
+      printf(" rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, 0.5*(u_min+u_max));
       
       if ( numProc > 1 )
       {
@@ -281,7 +281,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
 
       u_avr = 0.5*(u_min+u_max);
       flop = flop + 2.0;
-      
+      Hostonly_ printf("*rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, u_avr);
     }
     else // 非OUTFLOW BCは速度がストアされている
     {
