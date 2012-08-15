@@ -46,7 +46,7 @@ PL_DBGOSH << "PolylibConfig::PolylibConfig() in." << endl;
 #endif
 
 	//  singletonなための暫定措置
-	TextParser *tp = TextParser::get_instance();
+	TextParser *tp = new TextParser;
 	if( tp == NULL ) {
 		PL_ERROSH << "[ERROR]PolylibConfig::PolylibConfig():Can't instance textparser."
 				  << endl;

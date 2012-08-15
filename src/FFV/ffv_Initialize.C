@@ -67,18 +67,19 @@ int FFV::Initialize(int argc, char **argv)
   int ierror;
   
   // TextParserのインスタンス生成
-  ierror = tpCntl.getTPinstance();
+  ierror = tp_hoge.getTPinstance();
+  
   
   // TextParserのファイル読み込み
-  ierror = tpCntl.readTPfile(input_file);
+  ierror = tp_hoge.readTPfile(input_file);
 
   
   // TPControlクラスのポインタをControlクラスに渡す
-  C.importTP(&tpCntl);
+  C.importTP(&tp_hoge);
   
   
   // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
-  getExample(&C, &tpCntl);
+  getExample(&C, &tp_hoge);
   
   // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
   connectExample(&C);
@@ -117,13 +118,6 @@ int FFV::Initialize(int argc, char **argv)
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
 
   
-  // 一度、テキストパーサーのDBを破棄
-  if (tpCntl.remove() != TP_NO_ERROR ) 
-  {
-    Hostonly_ printf("Error : delete textparser\n");
-    Exit(0);
-  }
-  
   
   // FiliIOのモードを修正
   if ( numProc == 1 )
@@ -141,7 +135,7 @@ int FFV::Initialize(int argc, char **argv)
   // ###########################
   // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   
-  string dom_file = argv[2]; // 領域情報を記述したファイル名の取得 >> テキストパーサのDB切り替え
+  string dom_file = argv[2]; // 領域情報を記述したファイル名の取得
   
   // 領域設定
   DomainInitialize(dom_file);
@@ -1126,13 +1120,8 @@ void FFV::display_Parameters(FILE* fp)
 // 計算領域情報を設定する
 void FFV::DomainInitialize(const string dom_file)
 {
-  // グローバルな領域情報のロード
-  int ierror = tpCntl.readTPfile(dom_file);
-  
-  C.importTP(&tpCntl);
-
   // メンバ変数にパラメータをロード : 分割指示 (1-with / 2-without)
-  int div_type = get_DomainInfo();
+  int div_type = get_DomainInfo(dom_file);
 
   
 // ##########  
@@ -1144,7 +1133,7 @@ void FFV::DomainInitialize(const string dom_file)
   
   
   // テキストパーサーのDBを破棄
-  if (tpCntl.remove() != TP_NO_ERROR ) 
+  if (tp_dom.remove() != TP_NO_ERROR )
   {
     Hostonly_ printf("Error : delete textparser\n");
     Exit(0);
@@ -1820,7 +1809,7 @@ void FFV::gather_DomainInfo()
 
 // #################################################################
 // グローバルな領域情報を取得
-int FFV::get_DomainInfo()
+int FFV::get_DomainInfo(const string dom_file)
 {
   // 領域分割モードのパターン
   //      分割指定(G_div指定)    |     domain.txt 
@@ -1828,6 +1817,16 @@ int FFV::get_DomainInfo()
   // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
   // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
   // 4)  G_div指定あり          |   + ActiveDomainInfo
+  
+  // テキストパーサのラッパークラス domain.tp
+  TPControl tp_dom;
+  
+  // TextParserのインスタンス生成
+  int ierror = tp_dom.getTPinstance();
+  
+  // グローバルな領域情報のロード
+  ierror = tp_dom.readTPfile(dom_file);
+  
   
   string label, str;
   REAL_TYPE *rvec;
@@ -1838,7 +1837,7 @@ int FFV::get_DomainInfo()
   rvec  = G_origin;
   label = "/DomainInfo/Global_origin";
   
-  if ( !tpCntl.GetVector(label, rvec, 3) )
+  if ( !tp_dom.GetVector(label, rvec, 3) )
   {
     cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -1848,7 +1847,7 @@ int FFV::get_DomainInfo()
   rvec  = G_region;
   label = "/DomainInfo/Global_region";
   
-  if ( !tpCntl.GetVector(label, rvec, 3) )
+  if ( !tp_dom.GetVector(label, rvec, 3) )
   {
     Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -1870,14 +1869,15 @@ int FFV::get_DomainInfo()
   rvec  = pitch;
   label = "/DomainInfo/Global_pitch";
   
-  if ( !tpCntl.GetVector(label, rvec, 3) )
+  if ( !tp_dom.GetVector(label, rvec, 3) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
     flag = false;
   }
   
   // pitchが入力されている場合のみチェック
-  if ( flag ) {
+  if ( flag )
+  {
     if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
     {
       ; // skip
@@ -1903,7 +1903,7 @@ int FFV::get_DomainInfo()
     ivec  = G_size;
     label = "/DomainInfo/Global_voxel";
     
-    if ( !tpCntl.GetVector(label, ivec, 3) )
+    if ( !tp_dom.GetVector(label, ivec, 3) )
     {
       Hostonly_ cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
       Exit(0); // pitchもvoxelも有効でない
@@ -1930,7 +1930,7 @@ int FFV::get_DomainInfo()
   ivec  = G_division;
   label = "/DomainInfo/Global_division";
   
-  if ( !tpCntl.GetVector(label, ivec, 3) )
+  if ( !tp_dom.GetVector(label, ivec, 3) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
     div_type = 2;
@@ -1954,10 +1954,12 @@ int FFV::get_DomainInfo()
   // ActiveSubdomainファイル名の取得
   label = "/DomainInfo/ActiveSubDomain_File";
   
-  if ( !tpCntl.GetValue(label, &str ) ) {
+  if ( !tp_dom.GetValue(label, &str ) )
+  {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
   //@todo  string hoge = str;
+  
   
   return div_type;
 }

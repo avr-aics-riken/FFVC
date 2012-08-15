@@ -19,19 +19,10 @@
 
 
 // TextParserLibraryのインスタンス生成
-int TPControl::getTPinstance()
+void TPControl::getTPinstance()
 {
-  int ierr = TP_NO_ERROR;
-
-  tp=TextParser::get_instance();
-  if( !tp )
-  {
-    cerr << "ERROR : instance of TextParser" << endl;
-    return TP_ERROR;
-  }
-  return ierr;
+  tp = new TextParser;
 }
-
 
 
 

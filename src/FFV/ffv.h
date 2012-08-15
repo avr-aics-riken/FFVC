@@ -209,7 +209,6 @@ private:
   PerfMonitor PM;            ///< 性能モニタクラス
   VoxInfo V;                 ///< ボクセル前処理クラス
   ParseBC B;                 ///< 境界条件のパースクラス
-  TPControl tpCntl;          ///< テキストパーサのラッパークラス
   SetBC3D BC;                ///< BCクラス
   DFI DFI;                   ///< 分散ファイルインデクス管理クラス
   History* H;                ///< 履歴クラス
@@ -219,6 +218,10 @@ private:
   MonitorList MO;            ///< Monitorクラス 
   FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
   FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
+  
+  TPControl tp_hoge;         ///< テキストパーサのラッパークラス hoge.tp
+  TPControl tp_poly;         ///< テキストパーサのラッパークラス polygon.tp
+  TPControl tp_dfi;          ///< テキストパーサのラッパークラス foo.dfi
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
   
@@ -499,9 +502,10 @@ private:
                         );
   
   /** グローバルな領域情報を取得 
+   * @param [in] dom_file  ドメインファイル名
    * @return 分割指示 (1-with / 2-without)
    */
-  int get_DomainInfo();
+  int get_DomainInfo(const string dom_info);
   
   
   /**
