@@ -53,11 +53,27 @@ bool FFV::getCoarseResult (int i, int j, int k,
   sprintf(tmp, "%010d", m_step);
   std::string step(tmp);
   
-	// dfiファイルを開いて
-	ifstream ifs( coarse_dfi_fname.c_str() );
-	if( !ifs ) return false;
+  
+	// dfiファイルをtextparserにロード
+  
+  // 一度、テキストパーサーのDBを破棄
+  if (tpCntl.remove() != TP_NO_ERROR )
+  {
+    Hostonly_ printf("Error : delete textparser\n");
+    Exit(0);
+  }
+  
+  // 　再度、入力ファイルをオープン
+  int ierror = tpCntl.readTPfile(coarse_dfi_fname);
+  
+  std::string str;
+  std::string label;
+  std::string label_base;
+  std::string label_leaf;
+  int ibuf;
+  int iv[3];
+
 	
-	// 粗格子ijkが含まれるランクは？
   std::string buf;
 	int rank = -1;
 	int hi, hj, hk, ti, tj, tk;
@@ -65,7 +81,88 @@ bool FFV::getCoarseResult (int i, int j, int k,
   // サブドメインの分割数（粗格子）
   int Ci, Cj, Ck;
   
+
+  // ノード情報を探索
+  label_base = "/Distributed_File_Info/NodeInfo";
   
+  if ( !tpCntl.chkNode(label_base) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Missing '/Distributed_File_Info/NodeInfo'\n");
+    Exit(0);
+  }
+  
+  // 粗格子 (i0,j0,k0) が含まれるランクを探す
+  int n = 0;
+  while ( n < numProc ) {
+    
+    if (!tpCntl.GetNodeStr(label_base, n+1, &str)) // Node[@], @=1,...
+    {
+      Hostonly_ printf("\tParsing error : Missing 'Node'\n");
+      Exit(0);
+    }
+    
+    if ( strcasecmp(str.substr(0,4).c_str(), "Node") )
+    {
+      label_leaf = label_base + "/" + str;
+      
+      // ランク
+      label = label_leaf + "/GroupID";
+      if ( !(tpCntl.GetValue(label, &ibuf)) )
+      {
+        Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
+        Exit(0);
+      }
+      rank = ibuf;
+      
+      // VoxelSize
+      label = label_leaf + "/VoxelSize";
+      if ( !(tpCntl.GetVector(label, iv, 3)) )
+      {
+        Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
+        Exit(0);
+      }
+      Ci = iv[0];
+      Cj = iv[1];
+      Ck = iv[2];
+      
+      // HeadIndex
+      label = label_leaf + "/HeadIndex";
+      if ( !(tpCntl.GetVector(label, iv, 3)) )
+      {
+        Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
+        Exit(0);
+      }
+      hi = iv[0];
+      hj = iv[1];
+      hk = iv[2];
+      
+      // TailIndex
+      label = label_leaf + "/TailIndex";
+      if ( !(tpCntl.GetVector(label, iv, 3)) )
+      {
+        Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
+        Exit(0);
+      }
+      ti = iv[0];
+      tj = iv[1];
+      tk = iv[2];
+      
+      if ( i0>=hi && i0<=ti && j0>=hj && j0<=tj && k0>=hk && k0<=tk ) break; // found!
+    }
+    
+    n++;
+  }
+    
+  // 見つけられなかった
+  if ( rank == -1 ) return false;
+    
+    
+  // ランク番号のファイル名を生成する
+  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, true);
+  if ( target.empty() ) return false;
+  
+  
+  /*
 	while( getline(ifs, buf) ) {
     
     //if( buf.find("\"WorldNodeNum\"",0) != string::npos ) {
@@ -81,7 +178,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
         {
 					getline(ifs, buf);  Ci = get_intval( buf );	
 					getline(ifs, buf);  Cj = get_intval( buf );	
-					getline(ifs, buf);  Ck = get_intval( buf );	
+					getline(ifs, buf);  Ck = get_intval( buf );
 				}
 				if( buf.find("HeadIndex",0) != string::npos )
         {
@@ -105,6 +202,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
 		}
 	}
 	if( rank == -1 ) return false;
+   */
   
   // このセッションの並列数
   //int mm = paraMngr->GetNumRank();
@@ -113,7 +211,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
   //  Exit(0);
   //}
   
-	// id=rankで、coarse_prefixをファイル名に含むsphファイルを探す
+	/* id=rankで、coarse_prefixをファイル名に含むsphファイルを探す
   std::string fname = "";
   std::string target = "";
 	char id[32];
@@ -132,6 +230,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
 	}
   
   if( target.empty() ) return false;
+   */
   
   
   // 各方向に含まれるブロック数（dx_C/dx_F = 2）
@@ -534,6 +633,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     crs[2] = 1;
     f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, C.Restart_step, myRank);
     f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, C.Restart_step, myRank);
+    
     if ( C.isHeatProblem() )
     {
       f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, C.Restart_step, myRank);
@@ -554,6 +654,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   
   unsigned step;
   double time;
+  
+  printf("fname=%s\n", f_prs.c_str());
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;

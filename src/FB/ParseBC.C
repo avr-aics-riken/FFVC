@@ -2352,7 +2352,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
   
   if ( !tpCntl->chkNode(label_base) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing '/BC_Table/OuterBoundary'\n");
     Exit(0);
   }
   
@@ -2372,7 +2372,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ printf("\tParsing error : No 'Alias' in 'Basic_BCs'\n");
+      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
     if ( !chkDuplicate(i, str) )
@@ -3453,7 +3453,7 @@ void ParseBC::setControlVars(Control* Cref)
   label = "/BC_Table/OuterBoundary";
   
   if ( !tpCntl->chkNode(label) ) {
-    stamped_printf("\tParsing error : Missing OuterBoundary tree\n");
+    stamped_printf("\tParsing error : Missing '/BC_Table/OuterBoundary'\n");
     Exit(0);
   }
   
