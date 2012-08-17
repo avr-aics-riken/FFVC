@@ -141,7 +141,7 @@ bool DFI::init(const int* g_size, const int* m_div, const int gc, const int styp
 void DFI::Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "BaseName = \"%s\"\n", prefix.c_str());
+  fprintf(fp, "Prefix = \"%s\"\n", prefix.c_str());
 }
 
 
@@ -344,10 +344,10 @@ bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
 void DFI::Write_MyID(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "WorldID = %d\n", my_id);
+  fprintf(fp, "RankID_in_MPIworld = %d\n", my_id);
   
   Write_Tab(fp, tab);
-  fprintf(fp, "GroupID = %d\n", my_id);
+  fprintf(fp, "GroupID_in_MPIworld = %d\n", my_id);
 }
 
 
@@ -361,7 +361,7 @@ bool DFI::Write_Node(FILE* fp, const unsigned tab, const int n, const std::strin
   
   // ID
   Write_Tab(fp, tab+1);
-  fprintf(fp, "GroupID = %d\n", n);
+  fprintf(fp, "RankID = %d\n", n);
   
   // Hostname
   Write_Tab(fp, tab+1);
@@ -424,10 +424,10 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "WorldNodeNum = %d\n", Num_Node);
+  fprintf(fp, "Number_of_Rank_in_MPIworld = %d\n", Num_Node);
   
   Write_Tab(fp, tab);
-  fprintf(fp, "GroupNodeNum = %d\n", Num_Node);
+  fprintf(fp, "Number_of_Group_in_MPIworld = %d\n", 1);
 }
 
 
@@ -437,7 +437,7 @@ void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "VoxelDivision = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
+  fprintf(fp, "Global_Division = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
 }
 
 
@@ -451,27 +451,6 @@ bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string pref
     Write_Tab(fp, tab+1);
     fprintf(fp, "Step[@] = %d\n", step);
   }
-  
-  /*
-  if (fp)
-  {
-    Write_Tab(fp, tab+1); 
-    fprintf(fp, "File[@] {\n");
-  }
-  
-  Write_Step(fp, tab+1, step);
-  
-  
-  for(int n=0; n<Num_Node; n++) {
-    if ( !Write_OutFileName(fp, tab+1, prefix, step, n, mio) ) return false;
-  }
-
-  if (fp)
-  {
-    Write_Tab(fp, tab+1); 
-    fprintf(fp, "}\n");
-  }
-   */
   
   return true;
 }
@@ -519,5 +498,5 @@ void DFI::Write_Tab(FILE* fp, const unsigned tab)
 void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "WholeVoxelSize = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
+  fprintf(fp, "Global_Voxel = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
 }

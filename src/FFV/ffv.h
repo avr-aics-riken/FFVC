@@ -219,10 +219,6 @@ private:
   FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
   FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
   
-  TPControl tp_hoge;         ///< テキストパーサのラッパークラス hoge.tp
-  TPControl tp_poly;         ///< テキストパーサのラッパークラス polygon.tp
-  TPControl tp_dfi;          ///< テキストパーサのラッパークラス foo.dfi
-  
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
   
 public:
@@ -514,18 +510,6 @@ private:
    * @param [in] tpCntl  テキストパーサーのラッパー
    */
   void getExample(Control* Cref, TPControl* tpCntl);
-  
-  
-  /**
-   * @brief ファイルから値をとりだす（整数）
-   */
-  int get_intval( string& buffer );
-  
-  
-  /**
-   * @brief ファイルから値をとりだす（文字列）
-   */
-  string get_strval( string& buffer );
   
   
   /**

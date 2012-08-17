@@ -2102,7 +2102,7 @@ void Control::get_Solver_Properties()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Solver_Property/Pressure_Shift'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -2115,7 +2115,7 @@ void Control::get_Solver_Properties()
   else if( !strcasecmp(str.c_str(), "z_plus" ) )  Mode.Pshift = Z_PLUS;
   else
   {
-    stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Pressure_Shift'\n");
+    stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
 }
@@ -2135,16 +2135,16 @@ void Control::get_start_condition()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/start_type'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
   if      ( !strcasecmp(str.c_str(), "initial") )                  Start = initial_start;
   else if ( !strcasecmp(str.c_str(), "restart") )                  Start = restart;
-  else if ( !strcasecmp(str.c_str(), "restart_with_coarse_data") ) Start = coarse_restart;
+  else if ( !strcasecmp(str.c_str(), "restart_from_coarse_data") ) Start = coarse_restart;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Start_condition/start_type'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -2156,28 +2156,28 @@ void Control::get_start_condition()
     
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/restart_step'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     Restart_step = ct;
     
     
-    label="/Steer/Start_condition/Prefix_of_Pressure";
+    label="/Steer/Start_condition/Prefix_of_Coarse_Pressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/Prefix_of_Pressure'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     
     f_Coarse_pressure = str.c_str();
     
     
-    label="/Steer/Start_condition/Prefix_of_Velocity";
+    label="/Steer/Start_condition/Prefix_of_Coarse_Velocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/Prefix_of_Velocity'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -2186,11 +2186,11 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/Start_condition/Prefix_of_Temperature";
+      label="/Steer/Start_condition/Prefix_of_Coarse_Temperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/Prefix_of_Temperature'\n");
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
       }
       
@@ -2210,7 +2210,7 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/dfi_file_pressure'\n");
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
       }
       
@@ -2221,7 +2221,7 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/dfi_file_velocity'\n");
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
       }
       
@@ -2234,7 +2234,7 @@ void Control::get_start_condition()
         
         if ( !(tpCntl->GetValue(label, &str )) )
         {
-          Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Start_condition/dfi_file_temperature'\n");
+          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
           Exit(0);
         }
         
@@ -2254,7 +2254,7 @@ void Control::get_start_condition()
     
     if ( !(tpCntl->GetValue(label, &iv.Density )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '/Steer/Start_condition/Initial_State/Density'\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -2263,7 +2263,7 @@ void Control::get_start_condition()
     
     if ( !(tpCntl->GetValue(label, &iv.Pressure )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '/Steer/Start_condition/Initial_State/Pressure'\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -2274,7 +2274,7 @@ void Control::get_start_condition()
     
     if( !(tpCntl->GetVector(label, v, 3)) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get velocity in '/Steer/Start_condition/Initial_State/Velocity'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get velocity in '%s'\n", label.c_str());
       Exit(0);
     }
     iv.VecU = v[0];
@@ -2288,7 +2288,7 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &iv.Temperature )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : Invalid float value for '/Steer/Start_condition/Initial_State/Temperature'\n");
+        Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
         Exit(0);
       }
       

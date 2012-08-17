@@ -21,7 +21,8 @@
 bool FFV::checkFile(std::string fname)
 {
   ifstream ifs(fname.c_str(), ios::in | ios::binary);
-  if (!ifs) {
+  if (!ifs)
+  {
     return false;
   }
   ifs.close();
@@ -54,17 +55,13 @@ bool FFV::getCoarseResult (int i, int j, int k,
   std::string step(tmp);
   
   
-	// dfiファイルをtextparserにロード
+	// dfiファイルローダをインスタンス
+  TPControl tp_dfi;
   
-  // 一度、テキストパーサーのDBを破棄
-  if (tpCntl.remove() != TP_NO_ERROR )
-  {
-    Hostonly_ printf("Error : delete textparser\n");
-    Exit(0);
-  }
+  tp_dfi.getTPinstance();
   
-  // 　再度、入力ファイルをオープン
-  int ierror = tpCntl.readTPfile(coarse_dfi_fname);
+  // 入力ファイルをオープン
+  int ierror = tp_dfi.readTPfile(coarse_dfi_fname);
   
   std::string str;
   std::string label;
@@ -85,9 +82,9 @@ bool FFV::getCoarseResult (int i, int j, int k,
   // ノード情報を探索
   label_base = "/Distributed_File_Info/NodeInfo";
   
-  if ( !tpCntl.chkNode(label_base) )
+  if ( !tp_dfi.chkNode(label_base) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing '/Distributed_File_Info/NodeInfo'\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label_base.c_str());
     Exit(0);
   }
   
@@ -95,19 +92,20 @@ bool FFV::getCoarseResult (int i, int j, int k,
   int n = 0;
   while ( n < numProc ) {
     
-    if (!tpCntl.GetNodeStr(label_base, n+1, &str)) // Node[@], @=1,...
+    if ( !tp_dfi.GetNodeStr(label_base, n+1, &str) ) // Node[@], @=0,...
     {
       Hostonly_ printf("\tParsing error : Missing 'Node'\n");
       Exit(0);
     }
     
-    if ( strcasecmp(str.substr(0,4).c_str(), "Node") )
+    if ( !strcasecmp(str.substr(0,4).c_str(), "Node") )
     {
       label_leaf = label_base + "/" + str;
       
       // ランク
-      label = label_leaf + "/GroupID";
-      if ( !(tpCntl.GetValue(label, &ibuf)) )
+      label = label_leaf + "/RankID";
+      
+      if ( !tp_dfi.GetValue(label, &ibuf) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -116,7 +114,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       
       // VoxelSize
       label = label_leaf + "/VoxelSize";
-      if ( !(tpCntl.GetVector(label, iv, 3)) )
+      if ( !(tp_dfi.GetVector(label, iv, 3)) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -127,7 +125,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       
       // HeadIndex
       label = label_leaf + "/HeadIndex";
-      if ( !(tpCntl.GetVector(label, iv, 3)) )
+      if ( !(tp_dfi.GetVector(label, iv, 3)) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -138,7 +136,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       
       // TailIndex
       label = label_leaf + "/TailIndex";
-      if ( !(tpCntl.GetVector(label, iv, 3)) )
+      if ( !(tp_dfi.GetVector(label, iv, 3)) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -146,6 +144,9 @@ bool FFV::getCoarseResult (int i, int j, int k,
       ti = iv[0];
       tj = iv[1];
       tk = iv[2];
+      
+      //printf("rank=%d size=(%d,%d,%d) head=(%d,%d,%d) tail=(%d,%d,%d) : (%d,%d,%d)\n",
+      //       rank, Ci, Cj, Ck, hi, hj, hk, ti, tj, tk, i0, j0, k0);
       
       if ( i0>=hi && i0<=ti && j0>=hj && j0<=tj && k0>=hk && k0<=tk ) break; // found!
     }
@@ -161,76 +162,6 @@ bool FFV::getCoarseResult (int i, int j, int k,
   std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, true);
   if ( target.empty() ) return false;
   
-  
-  /*
-	while( getline(ifs, buf) ) {
-    
-    //if( buf.find("\"WorldNodeNum\"",0) != string::npos ) {
-    //  np = get_intval( buf );	
-    //}
-    
-		if( buf.find("GroupID",0) != string::npos )
-    {
-			rank = get_intval( buf );
-      
-			while( getline(ifs, buf) ) {
-        if( buf.find("VoxelSize",0) != string::npos )
-        {
-					getline(ifs, buf);  Ci = get_intval( buf );	
-					getline(ifs, buf);  Cj = get_intval( buf );	
-					getline(ifs, buf);  Ck = get_intval( buf );
-				}
-				if( buf.find("HeadIndex",0) != string::npos )
-        {
-					getline(ifs, buf);  hi = get_intval( buf );	
-					getline(ifs, buf);  hj = get_intval( buf );	
-					getline(ifs, buf);  hk = get_intval( buf );	
-				}
-				if( buf.find("TailIndex",0) != string::npos )
-        {
-					getline(ifs, buf);  ti = get_intval( buf );	
-					getline(ifs, buf);  tj = get_intval( buf );	
-					getline(ifs, buf);  tk = get_intval( buf );	
-					break;
-				}
-			}
-			if ( i0>=hi && i0<=ti && j0>=hj && j0<=tj && k0>=hk && k0<=tk )
-      {
-				// found!
-				break;
-			}
-		}
-	}
-	if( rank == -1 ) return false;
-   */
-  
-  // このセッションの並列数
-  //int mm = paraMngr->GetNumRank();
-  //if ( np != mm ) {
-  //  Hostonly_ printf("Error : The number of nodes in between previous[%d] and this[%d] session is different.\n", np, mm);
-  //  Exit(0);
-  //}
-  
-	/* id=rankで、coarse_prefixをファイル名に含むsphファイルを探す
-  std::string fname = "";
-  std::string target = "";
-	char id[32];
-	sprintf(id, "id=\"%d\"", rank);
-  
-	while( getline(ifs, buf) ) {
-		if ( buf.find("FileName",0) != std::string::npos && buf.find(id,0) != string::npos )
-    {
-			fname = get_strval( buf );
-			if ( (fname.find(coarse_prefix,0) != std::string::npos) && (fname.find(step,0) != std::string::npos) )
-      {
-        target = fname;
-        break;
-			}
-		}
-	}
-  
-  if( target.empty() ) return false;
-   */
   
   
   // 各方向に含まれるブロック数（dx_C/dx_F = 2）
@@ -268,26 +199,6 @@ bool FFV::getCoarseResult (int i, int j, int k,
 }
 
 
-
-// ファイルから値をとりだす（整数）
-int FFV::get_intval( string& buffer )
-{
-	int s = buffer.find( "value=\"", 0 ) + 7;
-	int e = buffer.find( "\"", s );
-	return atoi( buffer.substr( s, e-s ).c_str() );
-}
-
-
-// ファイルから値をとりだす（文字列）
-string FFV::get_strval( string& buffer )
-{
-	int s = buffer.find( "value=\"", 0 ) + 7;
-	int e = buffer.find( "\"", s );
-  string result = buffer.substr( s, e-s );
-	return result;
-}
-
-
 // 粗格子から密格子へ内挿
 void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 {
@@ -302,7 +213,8 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
   fb_interp_coarse_s_(d_p, size, &guide, d_r_p, st, bk);
   fb_interp_coarse_v_(d_v, size, &guide, d_r_v, st, bk);
   
-  if ( C.isHeatProblem() ) {
+  if ( C.isHeatProblem() )
+  {
     fb_interp_coarse_s_(d_t, size, &guide, d_r_t, st, bk);
   }
   
@@ -317,8 +229,8 @@ void FFV::Restart(FILE* fp)
   
   TIMING_start(tm_restart);
   
-  if ( C.Start == initial_start) { // 初期スタートのステップ，時間を設定する
-    
+  if ( C.Start == initial_start) // 初期スタートのステップ，時間を設定する
+  {
     // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
     if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
     else                      RF.setV00(CurrentTime);
@@ -358,8 +270,8 @@ void FFV::Restart(FILE* fp)
 // リスタートの最大値と最小値の表示
 void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
-  if ( (C.Start == restart) || (C.Start == coarse_restart) ) {
-    
+  if ( (C.Start == restart) || (C.Start == coarse_restart) )
+  {
     Hostonly_ fprintf(stdout, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
     REAL_TYPE f_min, f_max, min_tmp, max_tmp;
@@ -386,10 +298,10 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
     if ( numProc > 1 ) 
     {
       min_tmp = f_min;
-      if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
     Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
@@ -403,10 +315,10 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
       if ( numProc > 1 ) 
       {
         min_tmp = f_min;
-        if( !paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
         
         max_tmp = f_max;
-        if( !paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
       }
       
       Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
@@ -435,7 +347,8 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   tmp = DFI.Generate_FileName(C.f_Pressure, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
   
-  if ( !checkFile(tmp) ) {
+  if ( !checkFile(tmp) )
+  {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
@@ -454,7 +367,8 @@ void FFV::Restart_std(FILE* fp, double& flop)
   // Instantaneous Velocity fields
   tmp = DFI.Generate_FileName(C.f_Velocity, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
   
-  if ( !checkFile(tmp) ) {
+  if ( !checkFile(tmp) )
+  {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
@@ -471,13 +385,14 @@ void FFV::Restart_std(FILE* fp, double& flop)
   }
   
   // Instantaneous Temperature fields
-  if ( C.isHeatProblem() ) {
-    
+  if ( C.isHeatProblem() )
+  {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
     tmp = DFI.Generate_FileName(C.f_Temperature, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
     
-    if ( !checkFile(tmp) ) {
+    if ( !checkFile(tmp) )
+    {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
@@ -509,25 +424,31 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // ガイド出力
   int gs = C.GuideOut;
   
-  if ( C.Interval[Interval_Manager::tg_avstart].isStep() ) {
-    if ( step > C.Interval[Interval_Manager::tg_avstart].getIntervalStep() ) {
+  if ( C.Interval[Interval_Manager::tg_avstart].isStep() )
+  {
+    if ( step > C.Interval[Interval_Manager::tg_avstart].getIntervalStep() )
+    {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ printf     ("\tStep : base=%u current=%u\n", step, CurrentStep);
       Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", step, CurrentStep);
     }
-    else {
+    else
+    {
       return;
     }
   }
-  else {
-    if ( time > C.Interval[Interval_Manager::tg_avstart].getIntervalTime() ) {
+  else
+  {
+    if ( time > C.Interval[Interval_Manager::tg_avstart].getIntervalTime() )
+    {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
       Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
     }
-    else {
+    else
+    {
       return;
     }
   }
@@ -539,13 +460,15 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
   tmp = DFI.Generate_FileName(C.f_AvrPressure, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
-  if ( !checkFile(tmp) ) {
+  if ( !checkFile(tmp) )
+  {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
   F.readPressure(fp, tmp, size, guide, d_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
-  if ( (step != Session_StartStep) || (time != Session_StartTime) ) {
+  if ( (step != Session_StartStep) || (time != Session_StartTime) )
+  {
     Hostonly_ printf     ("\n\tTime stamp is different between instantaneous and averaged files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between instantaneous and averaged files\n");
     Exit(0);
@@ -557,31 +480,35 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   // Velocity
   tmp = DFI.Generate_FileName(C.f_AvrVelocity, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
-  if ( !checkFile(tmp) ) {
+  if ( !checkFile(tmp) )
+  {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
   F.readVelocity(fp, tmp, size, guide, d_av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
-  if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) { // 圧力とちがう場合
+  if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
+  {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
   }
   
   
-  if ( C.isHeatProblem() ) {
-    
+  if ( C.isHeatProblem() )
+  {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
     tmp = DFI.Generate_FileName(C.f_AvrTemperature, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
-    if ( !checkFile(tmp) ) {
+    if ( !checkFile(tmp) )
+    {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
     F.readTemperature(fp, tmp, size, guide, d_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false, step_avr, time_avr);
     
-    if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) {
+    if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) )
+    {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       Exit(0);
@@ -616,14 +543,26 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     j = head[1];
     k = head[2];
     
-    // crs_i, _j, _kには同じ値が入る 
-    getCoarseResult(i, j, k, C.f_Coarse_dfi_prs, C.f_Coarse_pressure, C.Restart_step, f_prs, r_size, crs, num_block);
+    // crs_i, _j, _kには同じ値が入る
+    if ( !getCoarseResult(i, j, k, C.f_Coarse_dfi_prs, C.f_Coarse_pressure, C.Restart_step, f_prs, r_size, crs, num_block) )
+    {
+      Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
+      Exit(0);
+    }
     
-    getCoarseResult(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, C.Restart_step, f_vel, r_size, crs, num_block);
+    if ( !getCoarseResult(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, C.Restart_step, f_vel, r_size, crs, num_block) )
+    {
+      Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
+      Exit(0);
+    }
     
     if ( C.isHeatProblem() )
     {
-      getCoarseResult(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, C.Restart_step, f_temp, r_size, crs, num_block);
+      if ( !getCoarseResult(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, C.Restart_step, f_temp, r_size, crs, num_block) )
+      {
+        Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
+        Exit(0);
+      }
     }
   }
   else
@@ -655,7 +594,6 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   unsigned step;
   double time;
   
-  printf("fname=%s\n", f_prs.c_str());
   
   // 圧力の瞬時値　ここでタイムスタンプを得る
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
@@ -665,7 +603,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     Hostonly_ printf("\n\tError : File open '%s'\n", f_prs.c_str());
     Exit(0);
   }
-  
+
   F.readPressure(fp, f_prs, r_size, guide, d_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
@@ -674,7 +612,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   
   // v00[]に値をセット
   copyV00fromRF(Session_StartTime);
-  
+
   
   // Instantaneous Velocity fields
   if ( !checkFile(f_vel) )
@@ -714,14 +652,14 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
       Exit(0);
     }
   }
-  
+
   // 同期
-  if ( paraMngr->BndCommV3DEx(d_r_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  if ( paraMngr->BndCommS3D(d_r_p, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommS3D  (d_r_p, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommV3DEx(d_r_v, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   
   if ( C.isHeatProblem() )
   {
-    if ( paraMngr->BndCommS3D(d_r_t, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_r_t, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   }
   
   // 内挿処理

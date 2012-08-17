@@ -63,23 +63,25 @@ int FFV::Initialize(int argc, char **argv)
   
   // 入力ファイルの指定
   string input_file = argv[1];
-  
-  int ierror;
-  
-  // TextParserのインスタンス生成
-  ierror = tp_hoge.getTPinstance();
-  
-  
-  // TextParserのファイル読み込み
-  ierror = tp_hoge.readTPfile(input_file);
 
   
-  // TPControlクラスのポインタをControlクラスに渡す
-  C.importTP(&tp_hoge);
+  // ffvのパラメータローダのインスタンス生成
+  TPControl tp_ffv;
+  
+  tp_ffv.getTPinstance();
+  
+  int ierror = tp_ffv.readTPfile(input_file);
+
+  
+  // TPControlクラスのポインタを各クラスに渡す
+  C.importTP(&tp_ffv);
+  B.importTP(&tp_ffv);
+  M.importTP(&tp_ffv);
+  MO.importTP(&tp_ffv);
   
   
   // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
-  getExample(&C, &tp_hoge);
+  getExample(&C, &tp_ffv);
   
   // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
   connectExample(&C);
@@ -155,23 +157,14 @@ int FFV::Initialize(int argc, char **argv)
   
   // 各例題のパラメータ設定 -----------------------------------------------------
   Ex->setDomain(&C, size, origin, region, pitch);
-  
-  
-  // 　再度、入力ファイルをオープン
-  ierror = tpCntl.readTPfile(input_file);
 
-  // TPControlクラスのポインタを各クラスに渡す(2回目)
-  C.importTP(&tpCntl);
-  B.importTP(&tpCntl);
-  M.importTP(&tpCntl);
-  MO.importTP(&tpCntl);//Monitorクラスは2回目以降
   
   // パラメータを取得
   C.get_Steer_2(IC, &RF);
   
   
   // 組み込み例題の固有パラメータ
-  if ( !Ex->getTP(&C, &tpCntl) ) Exit(0);
+  if ( !Ex->getTP(&C, &tp_ffv) ) Exit(0);
   
   
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
@@ -251,22 +244,6 @@ int FFV::Initialize(int argc, char **argv)
   // 各問題に応じてモデルを設定
   setModel(PrepMemory, TotalMemory, fp);
   
-  
-  // 一度、テキストパーサーのDBを破棄 >> Polylibが利用したもの
-  if (tpCntl.remove() != TP_NO_ERROR )
-  {
-    Hostonly_ printf("Error : delete textparser\n");
-    Exit(0);
-  }
-  
-  // 　再度、入力ファイルをオープン
-  ierror = tpCntl.readTPfile(input_file);
-  
-  // TPControlクラスのポインタを各クラスに渡す(3回目)
-  C.importTP(&tpCntl);
-  B.importTP(&tpCntl);
-  M.importTP(&tpCntl);
-  MO.importTP(&tpCntl);
   
   
   // 領域情報の表示
@@ -880,16 +857,6 @@ int FFV::Initialize(int argc, char **argv)
   prep_HistoryOutput();
   
   
-  // 初期化終了時に、入力パラメータのDBを破棄
-  if (tpCntl.remove() != TP_NO_ERROR ) 
-  {
-    Hostonly_
-    {
-      printf(    "Error : delete textparser\n");
-      fprintf(fp,"Error : delete textparser\n");
-    }
-    Exit(0);
-  }
   
   Hostonly_ if ( fp ) fclose(fp);
   
@@ -1130,14 +1097,6 @@ void FFV::DomainInitialize(const string dom_file)
   fflush(stdout);
 #endif
 // ##########
-  
-  
-  // テキストパーサーのDBを破棄
-  if (tp_dom.remove() != TP_NO_ERROR )
-  {
-    Hostonly_ printf("Error : delete textparser\n");
-    Exit(0);
-  }
   
 
   // 袖通信の最大数
@@ -1818,14 +1777,12 @@ int FFV::get_DomainInfo(const string dom_file)
   // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
   // 4)  G_div指定あり          |   + ActiveDomainInfo
   
-  // テキストパーサのラッパークラス domain.tp
+  // 領域パラメータのローダ
   TPControl tp_dom;
   
-  // TextParserのインスタンス生成
-  int ierror = tp_dom.getTPinstance();
-  
-  // グローバルな領域情報のロード
-  ierror = tp_dom.readTPfile(dom_file);
+  tp_dom.getTPinstance();
+
+  int ierror = tp_dom.readTPfile(dom_file);
   
   
   string label, str;
@@ -3202,13 +3159,6 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     Exit(0);
   }
   
-  
-  // 一度、テキストパーサーのDBを破棄 >> polylibが利用
-  if (tpCntl.remove() != TP_NO_ERROR )
-  {
-    Hostonly_ printf("Error : delete textparser\n");
-    Exit(0);
-  }
   
   
   // Polylib: STLデータ読み込み

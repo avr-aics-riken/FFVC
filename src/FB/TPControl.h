@@ -148,7 +148,7 @@ public:
    * @brief TextParserLibraryのインスタンス生成
    * @retrun エラーコード
    */
-  int getTPinstance();
+  void getTPinstance();
   
   
   /**
