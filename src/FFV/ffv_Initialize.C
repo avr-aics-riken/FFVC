@@ -120,20 +120,6 @@ int FFV::Initialize(int argc, char **argv)
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
 
   
-  
-  // FiliIOのモードを修正
-  if ( numProc == 1 )
-  {
-    C.FIO.IO_Input  = IO_GATHER;
-    C.FIO.IO_Output = IO_GATHER;
-    Hostonly_
-    {
-      printf(     "\tMode of Parallel_Input/_Output was changed because of serial execution.\n\n");
-      fprintf(fp, "\tMode of Parallel_Input/_Output was changed because of serial execution.\n\n");
-    }
-  }
-  
-  
   // ###########################
   // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   
@@ -1510,6 +1496,9 @@ void FFV::fixed_parameters()
   C.f_I2VGT          = "i2vgt_";
   C.f_Vorticity      = "vrt_";
   
+  C.FIO.IO_Input  = IO_DISTRIBUTE;
+  C.FIO.IO_Output = IO_DISTRIBUTE;
+  
 }
 
 
@@ -1923,7 +1912,7 @@ int FFV::get_DomainInfo(const string dom_file)
 
 
 // #################################################################
-// 組み込み例題の設定
+// 組み込み例題の表示
 void FFV::getExample(Control* Cref, TPControl* tpCntl)
 {
   string keyword;
@@ -1931,8 +1920,9 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
   
   label = "/Steer/Example";
   
-  if ( !(tpCntl->GetValue(label, &keyword )) ) {
-    Hostonly_ stamped_printf("\tExample error\n");
+  if ( !(tpCntl->GetValue(label, &keyword )) )
+  {
+    Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -1947,7 +1937,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
   else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for Example definition\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
 }

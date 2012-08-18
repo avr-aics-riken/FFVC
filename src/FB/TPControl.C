@@ -271,36 +271,42 @@ bool TPControl::GetValue(const string label, string *ct)
   int ierror;
   string value;
   
-  if( !tp ) return false;
-
+  if ( !tp ) return false;
+  
   // ラベルがあるかチェック
-  if( !chkLabel(label)){
+  if ( !chkLabel(label) )
+  {
 	  return false;
   }
-
+  
   //値の取得
-  ierror=tp->getValue(label,value);//labelは絶対パスを想定
-  if (ierror != TP_NO_ERROR){
+  ierror = tp->getValue(label, value); //labelは絶対パスを想定
+  
+  if (ierror != TP_NO_ERROR)
+  {
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR no label " << label << endl;
 	  return false;
   }
-
+  
   //型の取得
   TextParserValueType type = tp->getType(label, &ierror);
-  if (ierror != TP_NO_ERROR){
+  if (ierror != TP_NO_ERROR)
+  {
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
 	  return false;
   }
-  if( type != TP_STRING_VALUE ){
+  
+  if( type != TP_STRING_VALUE )
+  {
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
 	  return false;
   }
-
+  
   *ct=value;
-
+  
   return true;
 }
 
@@ -316,22 +322,31 @@ bool TPControl::chkLabel(const string label)
 
   // ラベルがあるかチェック
   vector<string> labels;
+
   ierror=tp->getAllLabels(labels);
-  if (ierror != 0){
+
+  if (ierror != 0)
+  {
     cout <<  "ERROR in TextParser::getAllLabels file: "  
-        << " ERROR CODE "<< ierror << endl;
+         << " ERROR CODE "<< ierror << endl;
     return false;
   }
+
   int flag=0;
-  for (int i = 0; i < labels.size(); i++) {
-	  if( !strcasecmp(label.c_str(), labels[i].c_str()) ){
+  for (int i = 0; i < labels.size(); i++)
+  {
+	  if( !strcasecmp(label.c_str(), labels[i].c_str()) )
+    {
 		  flag=1;
 		  break;
 	  }
   }
-  if(flag==0){
+
+  if (flag==0)
+  {
 	  return false;
   }
+  
   return true;
 }
 

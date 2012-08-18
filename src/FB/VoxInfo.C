@@ -1306,20 +1306,9 @@ void VoxInfo::encHbit(int* bh1, int* bh2)
 
 
 // #################################################################
-/**
- @brief bx[]へCompoListのエントリをエンコードする
- @param order エンコードするエントリ
- @param id サーチ対象ID
- @param mid セルID配列
- @param bx BCindex ID/H2
- @retval エンコードした個数
- @note
- - mid[]のセルIDが指定されたidならば，bx[]に対してCompoListのエントリをエンコードする
- */
+// CompoListのエントリをbx[]へエンコードする
 unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid, int* bx)
 {
-  int idd;
-  size_t m;
   unsigned long g=0;
   
   int ix = size[0];
@@ -1327,15 +1316,19 @@ unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid
   int kx = size[2];
   int gd = guide;
   
-  idd = id;
+  int idd = id;
+  int odr = order;
   
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, idd, odr) schedule(static) reduction(+:g)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
         if ( mid[m] == idd )  
         {
-          bx[m] |= order; // bx[m]の下位6bitにエントリをエンコード  >> ParseBC:sertControlVars()でビット幅をチェック
+          bx[m] |= odr; // bx[m]の下位6bitにエントリをエンコード  >> ParseBC:sertControlVars()でビット幅をチェック
           g++;
         }
       }
@@ -1346,938 +1339,13 @@ unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
 
   return g;
 }
 
 
-// #################################################################
-/**
- @brief TRANSFER_S/SF/SNに必要な情報をエンコードする
- @retval エンコードしたセル数
- @param order CompoListのエントリ
- @param id 対象ID
- @param mid セルID配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface セルフェイスを指定するための参照ID
- @note
- - この境界条件処理は，固体セルに接する流体セルの熱伝達面に対して適用される
- - 対象面の断熱ビットを非断熱(1)に戻しておく
- */
-unsigned long VoxInfo::encQfaceHT_S(const int order, 
-                                    const int id, 
-                                    const int* mid, 
-                                    int* bcd, 
-                                    int* bh1, 
-                                    int* bh2, 
-                                    const int deface)
-{
-  unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s_e, s_w, s_n, s_s, s_t, s_b;
-  int s1, s2, d;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int idd = id;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        d  = bcd[m_p];
-        s1 = bh1[m_p];
-        s2 = bh2[m_p];
-        
-        if ( (c_p == deface) && IS_FLUID(s2) ) // 流体セルに対してのみ適用
-        {
-#include "FindexS3D.h"
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          s_e = bh2[m_e];
-          s_w = bh2[m_w];
-          s_n = bh2[m_n];
-          s_s = bh2[m_s];
-          s_t = bh2[m_t];
-          s_b = bh2[m_b];
-          
-          // X-
-          if ( c_w == idd ) // 指定IDで挟まれる面の候補
-          {
-            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
-            {
-              d |= order; // エントリをエンコード
-              s1 |= (order << BC_FACE_W);  // エントリをエンコード
-              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
-              g++;
-            }
-          }
-          
-          // X+
-          if ( c_e == idd )
-          {
-            if ( !IS_FLUID(s_e) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_E);
-              s2 = onBit(s2, ADIABATIC_E);
-              g++;
-            }
-          }
-          
-          // Y-
-          if ( c_s == idd )
-          {
-            if ( !IS_FLUID(s_s) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_S);
-              s2 = onBit(s2, ADIABATIC_S);
-              g++;
-            }
-          }
-          
-          // Y+
-          if ( c_n == idd )
-          {
-            if ( !IS_FLUID(s_n) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_N);
-              s2 = onBit(s2, ADIABATIC_N);
-              g++;
-            }
-          }
-          
-          // Z-
-          if ( c_b == idd )
-          {
-            if ( !IS_FLUID(s_b) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_B);
-              s2 = onBit(s2, ADIABATIC_B);
-              g++;
-            }
-          }
-          
-          // Z+
-          if ( c_t == idd )
-          {
-            if ( !IS_FLUID(s_t) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_T);
-              s2 = onBit(s2, ADIABATIC_T);
-              g++;
-            }
-          }
-          
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
-        }
-        
-      }
-    }
-  }
-
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  return g;
-}
-
-
-// #################################################################
-/**
- @brief TRANSFER_Bに必要な情報をエンコードする
- @retval エンコードしたセル数
- @param order CompoListのエントリ
- @param id 対象ID
- @param mid セルID配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface セルフェイスを指定するための参照ID
- @note
- - この境界条件処理は，流体セルに接する固体セルの熱伝達面に対して適用される
- - 対象面の断熱ビットを非断熱(1)に戻しておく
- */
-unsigned long VoxInfo::encQfaceHT_B(const int order, 
-                                    const int id, 
-                                    const int* mid, 
-                                    int* bcd, 
-                                    int* bh1, 
-                                    int* bh2, 
-                                    const int deface)
-{
-  unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s_e, s_w, s_n, s_s, s_t, s_b;
-  int s1, s2, d;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int idd = id;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        d  = bcd[m_p];
-        s1 = bh1[m_p];
-        s2 = bh2[m_p];
-        
-        if ( (c_p == idd) && !IS_FLUID(s2) ) // 固体セルに対してのみ適用
-        {
-#include "FindexS3D.h"
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          s_e = bh2[m_e];
-          s_w = bh2[m_w];
-          s_n = bh2[m_n];
-          s_s = bh2[m_s];
-          s_t = bh2[m_t];
-          s_b = bh2[m_b];
-          
-          // X-
-          if ( c_w == deface ) // 指定IDで挟まれる面の候補
-          {
-            if ( IS_FLUID(s_w) )        // 隣接セルが流体であること
-            {
-              d |= order; // エントリをエンコード
-              s1 |= (order << BC_FACE_W);  // エントリをエンコード
-              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
-              g++;
-            }
-          }
-          
-          // X+
-          if ( c_e == deface )
-          {
-            if ( IS_FLUID(s_e) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_E);
-              s2 = onBit(s2, ADIABATIC_E);
-              g++;
-            }
-          }
-          
-          // Y-
-          if ( c_s == deface )
-          {
-            if ( IS_FLUID(s_s) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_S);
-              s2 = onBit(s2, ADIABATIC_S);
-              g++;
-            }
-          }
-          
-          // Y+
-          if ( c_n == deface )
-          {
-            if ( IS_FLUID(s_n) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_N);
-              s2 = onBit(s2, ADIABATIC_N);
-              g++;
-            }
-          }
-          
-          // Z-
-          if ( c_b == deface )
-          {
-            if ( IS_FLUID(s_b) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_B);
-              s2 = onBit(s2, ADIABATIC_B);
-              g++;
-            }
-          }
-          
-          // Z+
-          if ( c_t == deface )
-          {
-            if ( IS_FLUID(s_t) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_T);
-              s2 = onBit(s2, ADIABATIC_T);
-              g++;
-            }
-          }
-          
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
-        }
-        
-      }
-    }
-  }
-
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  return g;
-}
-
-
-
-// #################################################################
-/**
- @brief SF界面のISOTHERMAL処理
- @retval エンコードしたセル数
- @param order CompoListのエントリ
- @param id 対象ID
- @param mid セルID配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface セルフェイスを指定するための参照ID
- @note
- - この境界条件処理は，流体と固体で挟まれる面に対して適用される
- - defaceで指定されるセルは等温壁をもつ計算セルで，等温面はidで指定されるセルで挟まれる
- - 対象面の断熱ビットを非断熱(1)に戻しておく
- */
-unsigned long VoxInfo::encQfaceISO_SF(const int order, 
-                                      const int id, 
-                                      const int* mid, 
-                                      int* bcd, 
-                                      int* bh1, 
-                                      int* bh2, 
-                                      const int deface)
-{
-  unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s_e, s_w, s_n, s_s, s_t, s_b;
-  int s1, s2, d;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int idd = id;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        d  = bcd[m_p];
-        s1 = bh1[m_p];
-        s2 = bh2[m_p];
-        
-        if ( (c_p == deface) && IS_FLUID(s2) ) // テストセルは流体でdefaceID
-        {
-#include "FindexS3D.h"
-          
-          s_e = bh2[m_e];
-          s_w = bh2[m_w];
-          s_n = bh2[m_n];
-          s_s = bh2[m_s];
-          s_t = bh2[m_t];
-          s_b = bh2[m_b];
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          // X-
-          if ( c_w == idd ) // 指定IDで挟まれる面
-          {
-            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
-            {
-              d |= order; // エントリをエンコード
-              s1 |= (order << BC_FACE_W);  // エントリをエンコード
-              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
-              g++;
-            }
-          }
-          
-          // X+
-          if ( c_e == idd )
-          {
-            if ( !IS_FLUID(s_e) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_E);
-              s2 = onBit(s2, ADIABATIC_E);
-              g++;
-            }
-          }
-          
-          // Y-
-          if ( c_s == idd )
-          {
-            if ( !IS_FLUID(s_s) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_S);
-              s2 = onBit(s2, ADIABATIC_S);
-              g++;
-            }
-          }
-          
-          // Y+
-          if ( c_n == idd )
-          {
-            if ( !IS_FLUID(s_n) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_N);
-              s2 = onBit(s2, ADIABATIC_N);
-              g++;
-            }
-          }
-          
-          // Z-
-          if ( c_b == idd )
-          {
-            if ( !IS_FLUID(s_b) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_B);
-              s2 = onBit(s2, ADIABATIC_B);
-              g++;
-            }
-          }
-          
-          // Z+
-          if ( c_t == idd )
-          {
-            if ( !IS_FLUID(s_t) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_T);
-              s2 = onBit(s2, ADIABATIC_T);
-              g++;
-            }
-          }
-          
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
-        }
-        
-      }
-    }
-  }
-
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  return g;
-}
-
-
-// #################################################################
-/**
- @brief SS界面のISOTHERMAL処理
- @retval エンコードしたセル数
- @param order CompoListのエントリ
- @param id 対象ID
- @param mid セルID配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface セルフェイスを指定するための参照ID
- @note
- - この境界条件処理は，固体と固体で挟まれる面に対して適用される
- -　idで指定されるセルは等温壁をもつ計算セルで，等温面はidで指定されるセルで挟まれる
- - 対象面の断熱ビットを非断熱(1)に戻しておく
- */
-unsigned long VoxInfo::encQfaceISO_SS(const int order, 
-                                      const int id, 
-                                      const int* mid, 
-                                      int* bcd, 
-                                      int* bh1, 
-                                      int* bh2, 
-                                      const int deface)
-{
-  unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s_e, s_w, s_n, s_s, s_t, s_b;
-  int s1, s2, d;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int idd = id;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        d  = bcd[m_p];
-        s1 = bh1[m_p];
-        s2 = bh2[m_p];
-        
-        if ( (c_p == idd) && !IS_FLUID(s2) ) // テストセルは固体でキーID
-        {
-#include "FindexS3D.h"
-          
-          s_e = bh2[m_e];
-          s_w = bh2[m_w];
-          s_n = bh2[m_n];
-          s_s = bh2[m_s];
-          s_t = bh2[m_t];
-          s_b = bh2[m_b];
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          // X-
-          if ( c_w == deface ) // 指定IDで挟まれる面
-          {
-            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
-            {
-              d |= order; // エントリをエンコード
-              s1 |= (order << BC_FACE_W);  // エントリをエンコード
-              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
-              g++;
-            }
-          }
-          
-          // X+
-          if ( c_e == deface )
-          {
-            if ( !IS_FLUID(s_e) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_E);
-              s2 = onBit(s2, ADIABATIC_E);
-              g++;
-            }
-          }
-          
-          // Y-
-          if ( c_s == deface )
-          {
-            if ( !IS_FLUID(s_s) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_S);
-              s2 = onBit(s2, ADIABATIC_S);
-              g++;
-            }
-          }
-          
-          // Y+
-          if ( c_n == deface )
-          {
-            if ( !IS_FLUID(s_n) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_N);
-              s2 = onBit(s2, ADIABATIC_N);
-              g++;
-            }
-          }
-          
-          // Z-
-          if ( c_b == deface )
-          {
-            if ( !IS_FLUID(s_b) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_B);
-              s2 = onBit(s2, ADIABATIC_B);
-              g++;
-            }
-          }
-          
-          // Z+
-          if ( c_t == deface )
-          {
-            if ( !IS_FLUID(s_t) )
-            {
-              d |= order;
-              s1 |= (order << BC_FACE_T);
-              s2 = onBit(s2, ADIABATIC_T);
-              g++;
-            }
-          }
-          
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
-        }
-        
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  return g;
-}
-
-
-// #################################################################
-/**
- @brief 熱境界条件のBCエントリをエンコードする
- @retval カウントしたセル数
- @param order CompoListのエントリ
- @param id 対象セルID
- @param mid セルID配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface 界面指定セルID
- @param flag 断熱ビットのon(true)/off(false)
- @note
- - idとdefaceで挟まれる面に対して適用
- - 対象面の断熱ビットはflagで判断
- */
-unsigned long VoxInfo::encQface(const int order, 
-                                const int id, 
-                                const int* mid, 
-                                int* bcd, 
-                                int* bh1, 
-                                int* bh2, 
-                                const int deface, 
-                                const bool flag)
-{
-  unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s1, s2, d;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int idd = id;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        if ( c_p == deface)
-        {
-#include "FindexS3D.h"
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          d  = bcd[m_p];
-          s1 = bh1[m_p];
-          s2 = bh2[m_p];
-          
-          // X-
-          if ( c_w == idd )
-          {
-            d |= order; // エントリをエンコード
-            s1 |= (order << BC_FACE_W);  // エントリをエンコード
-            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W );
-            g++;
-          }
-          
-          // X+
-          if ( c_e == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_E);
-            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
-            g++;
-          }
-          
-          // Y-
-          if ( c_s == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_S);
-            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
-            g++;
-          }
-          
-          // Y+
-          if ( c_n == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_N);
-            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
-            g++;
-          }
-          
-          // Z-
-          if ( c_b == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_B);
-            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
-            g++;
-          }
-          
-          // Z+
-          if ( c_t == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_T);
-            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
-            g++;            
-          }
-          
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
-        }
-        
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  return g;
-}
-
-
-
-// #################################################################
-/**
- @brief 速度指定，流出型の境界条件の計算に必要な情報をエンコードする
- @param order cmp[]のエントリ番号
- @param id  セルID
- @param mid ボクセル配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface 面を指定するid
- @note 
- - encVbit_IBC()でセル数はカウント済み
- - 流体かつ指定IDであり，defaceが設定されたセルと挟まれる面に対して適用
- - 対象面の断熱ビットを非断熱にする
- - encVbit_IBC()では，最外層を除外しているが，熱では除外しない
- */
-void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* bh2, int deface)
-{
-  int idd;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s1, s2, d;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  idd = id;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        d  = bcd[m_p];
-        s1 = bh1[m_p];
-        s2 = bh2[m_p];
-        
-        if ( (c_p == deface) && IS_FLUID(s1) ) // defaceセルかつ流体の時に，以下を評価
-        {
-#include "FindexS3D.h"
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          // X-
-          if ( c_w == idd ) // m_wセルの属性チェックはしていない
-          {
-            d |= order; // エントリをエンコード
-            s1 |= (order << BC_FACE_W);  // エントリをエンコード
-            s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱(1)
-          }
-          
-          // X+
-          if ( c_e == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_E);
-            s2 = onBit(s2, ADIABATIC_E);
-          }
-          
-          // Y-
-          if ( c_s == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_S);
-            s2 = onBit(s2, ADIABATIC_S);
-          }
-          
-          // Y+
-          if ( c_n == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_N);
-            s2 = onBit(s2, ADIABATIC_N);
-          }
-          
-          // Z-
-          if ( c_b == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_B);
-            s2 = onBit(s2, ADIABATIC_B);
-          }
-          
-          // Z+
-          if ( c_t == idd )
-          {
-            d |= order;
-            s1 |= (order << BC_FACE_T);
-            s2 = onBit(s2, ADIABATIC_T);
-          }
-          
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
-        }
-      } // i-loop
-    }
-  }
-  
-  // iddセルのSTATE_BITをFLUIDに変更
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
-        
-        s1  = bh1[m_p];
-        
-        if ( (c_p == deface) && IS_FLUID(s1) ) // 指定セルかつ流体の時に，以下を評価
-        {
-#include "FindexS3D.h"
-          
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          // X-
-          if ( c_w == idd )
-          {
-            bh1[m_w] = onBit( bh1[m_w], STATE_BIT );
-          }
-          
-          // X+
-          if ( c_e == idd )
-          {
-            bh1[m_e] = onBit( bh1[m_e], STATE_BIT );
-          }
-          
-          // Y-
-          if ( c_s == idd )
-          {
-            bh1[m_s] = onBit( bh1[m_s], STATE_BIT );
-          }
-          
-          // Y+
-          if ( c_n == idd )
-          {
-            bh1[m_n] = onBit( bh1[m_n], STATE_BIT );
-          }
-          
-          // Z-
-          if ( c_b == idd )
-          {
-            bh1[m_b] = onBit( bh1[m_b], STATE_BIT );
-          }
-          
-          // Z+
-          if ( c_t == idd )
-          {
-            bh1[m_t] = onBit( bh1[m_t], STATE_BIT );
-          }
-        }
-      } // i-loop
-    }
-  }
-}
 
 
 // #################################################################
@@ -3278,6 +2346,936 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
   } // end of switch
 }
+
+
+
+// #################################################################
+/**
+ @brief 熱境界条件のBCエントリをエンコードする
+ @retval カウントしたセル数
+ @param order CompoListのエントリ
+ @param id 対象セルID
+ @param mid セルID配列
+ @param bcd BCindex ID
+ @param bh1 BCindex H1
+ @param bh2 BCindex H2
+ @param deface 界面指定セルID
+ @param flag 断熱ビットのon(true)/off(false)
+ @note
+ - idとdefaceで挟まれる面に対して適用
+ - 対象面の断熱ビットはflagで判断
+ */
+unsigned long VoxInfo::encQface(const int order,
+                                const int id,
+                                const int* mid,
+                                int* bcd,
+                                int* bh1,
+                                int* bh2,
+                                const int deface,
+                                const bool flag)
+{
+  unsigned long g=0;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int s1, s2, d;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int idd = id;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        if ( c_p == deface)
+        {
+#include "FindexS3D.h"
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          d  = bcd[m_p];
+          s1 = bh1[m_p];
+          s2 = bh2[m_p];
+          
+          // X-
+          if ( c_w == idd )
+          {
+            d |= order; // エントリをエンコード
+            s1 |= (order << BC_FACE_W);  // エントリをエンコード
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W );
+            g++;
+          }
+          
+          // X+
+          if ( c_e == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_E);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
+            g++;
+          }
+          
+          // Y-
+          if ( c_s == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_S);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
+            g++;
+          }
+          
+          // Y+
+          if ( c_n == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_N);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
+            g++;
+          }
+          
+          // Z-
+          if ( c_b == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_B);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
+            g++;
+          }
+          
+          // Z+
+          if ( c_t == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_T);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
+            g++;
+          }
+          
+          bcd[m_p] = d;
+          bh1[m_p] = s1;
+          bh2[m_p] = s2;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+  return g;
+}
+
+
+
+// #################################################################
+/**
+ @brief TRANSFER_S/SF/SNに必要な情報をエンコードする
+ @retval エンコードしたセル数
+ @param order CompoListのエントリ
+ @param id 対象ID
+ @param mid セルID配列
+ @param bcd BCindex ID
+ @param bh1 BCindex H1
+ @param bh2 BCindex H2
+ @param deface セルフェイスを指定するための参照ID
+ @note
+ - この境界条件処理は，固体セルに接する流体セルの熱伝達面に対して適用される
+ - 対象面の断熱ビットを非断熱(1)に戻しておく
+ */
+unsigned long VoxInfo::encQfaceHT_S(const int order,
+                                    const int id,
+                                    const int* mid,
+                                    int* bcd,
+                                    int* bh1,
+                                    int* bh2,
+                                    const int deface)
+{
+  unsigned long g=0;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int s_e, s_w, s_n, s_s, s_t, s_b;
+  int s1, s2, d;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int idd = id;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        d  = bcd[m_p];
+        s1 = bh1[m_p];
+        s2 = bh2[m_p];
+        
+        if ( (c_p == deface) && IS_FLUID(s2) ) // 流体セルに対してのみ適用
+        {
+#include "FindexS3D.h"
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          s_e = bh2[m_e];
+          s_w = bh2[m_w];
+          s_n = bh2[m_n];
+          s_s = bh2[m_s];
+          s_t = bh2[m_t];
+          s_b = bh2[m_b];
+          
+          // X-
+          if ( c_w == idd ) // 指定IDで挟まれる面の候補
+          {
+            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
+            {
+              d |= order; // エントリをエンコード
+              s1 |= (order << BC_FACE_W);  // エントリをエンコード
+              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
+              g++;
+            }
+          }
+          
+          // X+
+          if ( c_e == idd )
+          {
+            if ( !IS_FLUID(s_e) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_E);
+              s2 = onBit(s2, ADIABATIC_E);
+              g++;
+            }
+          }
+          
+          // Y-
+          if ( c_s == idd )
+          {
+            if ( !IS_FLUID(s_s) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_S);
+              s2 = onBit(s2, ADIABATIC_S);
+              g++;
+            }
+          }
+          
+          // Y+
+          if ( c_n == idd )
+          {
+            if ( !IS_FLUID(s_n) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_N);
+              s2 = onBit(s2, ADIABATIC_N);
+              g++;
+            }
+          }
+          
+          // Z-
+          if ( c_b == idd )
+          {
+            if ( !IS_FLUID(s_b) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_B);
+              s2 = onBit(s2, ADIABATIC_B);
+              g++;
+            }
+          }
+          
+          // Z+
+          if ( c_t == idd )
+          {
+            if ( !IS_FLUID(s_t) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_T);
+              s2 = onBit(s2, ADIABATIC_T);
+              g++;
+            }
+          }
+          
+          bcd[m_p] = d;
+          bh1[m_p] = s1;
+          bh2[m_p] = s2;
+        }
+        
+      }
+    }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+  return g;
+}
+
+
+// #################################################################
+/**
+ @brief TRANSFER_Bに必要な情報をエンコードする
+ @retval エンコードしたセル数
+ @param order CompoListのエントリ
+ @param id 対象ID
+ @param mid セルID配列
+ @param bcd BCindex ID
+ @param bh1 BCindex H1
+ @param bh2 BCindex H2
+ @param deface セルフェイスを指定するための参照ID
+ @note
+ - この境界条件処理は，流体セルに接する固体セルの熱伝達面に対して適用される
+ - 対象面の断熱ビットを非断熱(1)に戻しておく
+ */
+unsigned long VoxInfo::encQfaceHT_B(const int order,
+                                    const int id,
+                                    const int* mid,
+                                    int* bcd,
+                                    int* bh1,
+                                    int* bh2,
+                                    const int deface)
+{
+  unsigned long g=0;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int s_e, s_w, s_n, s_s, s_t, s_b;
+  int s1, s2, d;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int idd = id;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        d  = bcd[m_p];
+        s1 = bh1[m_p];
+        s2 = bh2[m_p];
+        
+        if ( (c_p == idd) && !IS_FLUID(s2) ) // 固体セルに対してのみ適用
+        {
+#include "FindexS3D.h"
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          s_e = bh2[m_e];
+          s_w = bh2[m_w];
+          s_n = bh2[m_n];
+          s_s = bh2[m_s];
+          s_t = bh2[m_t];
+          s_b = bh2[m_b];
+          
+          // X-
+          if ( c_w == deface ) // 指定IDで挟まれる面の候補
+          {
+            if ( IS_FLUID(s_w) )        // 隣接セルが流体であること
+            {
+              d |= order; // エントリをエンコード
+              s1 |= (order << BC_FACE_W);  // エントリをエンコード
+              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
+              g++;
+            }
+          }
+          
+          // X+
+          if ( c_e == deface )
+          {
+            if ( IS_FLUID(s_e) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_E);
+              s2 = onBit(s2, ADIABATIC_E);
+              g++;
+            }
+          }
+          
+          // Y-
+          if ( c_s == deface )
+          {
+            if ( IS_FLUID(s_s) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_S);
+              s2 = onBit(s2, ADIABATIC_S);
+              g++;
+            }
+          }
+          
+          // Y+
+          if ( c_n == deface )
+          {
+            if ( IS_FLUID(s_n) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_N);
+              s2 = onBit(s2, ADIABATIC_N);
+              g++;
+            }
+          }
+          
+          // Z-
+          if ( c_b == deface )
+          {
+            if ( IS_FLUID(s_b) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_B);
+              s2 = onBit(s2, ADIABATIC_B);
+              g++;
+            }
+          }
+          
+          // Z+
+          if ( c_t == deface )
+          {
+            if ( IS_FLUID(s_t) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_T);
+              s2 = onBit(s2, ADIABATIC_T);
+              g++;
+            }
+          }
+          
+          bcd[m_p] = d;
+          bh1[m_p] = s1;
+          bh2[m_p] = s2;
+        }
+        
+      }
+    }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+  return g;
+}
+
+
+
+// #################################################################
+/**
+ @brief SF界面のISOTHERMAL処理
+ @retval エンコードしたセル数
+ @param order CompoListのエントリ
+ @param id 対象ID
+ @param mid セルID配列
+ @param bcd BCindex ID
+ @param bh1 BCindex H1
+ @param bh2 BCindex H2
+ @param deface セルフェイスを指定するための参照ID
+ @note
+ - この境界条件処理は，流体と固体で挟まれる面に対して適用される
+ - defaceで指定されるセルは等温壁をもつ計算セルで，等温面はidで指定されるセルで挟まれる
+ - 対象面の断熱ビットを非断熱(1)に戻しておく
+ */
+unsigned long VoxInfo::encQfaceISO_SF(const int order,
+                                      const int id,
+                                      const int* mid,
+                                      int* bcd,
+                                      int* bh1,
+                                      int* bh2,
+                                      const int deface)
+{
+  unsigned long g=0;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int s_e, s_w, s_n, s_s, s_t, s_b;
+  int s1, s2, d;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int idd = id;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        d  = bcd[m_p];
+        s1 = bh1[m_p];
+        s2 = bh2[m_p];
+        
+        if ( (c_p == deface) && IS_FLUID(s2) ) // テストセルは流体でdefaceID
+        {
+#include "FindexS3D.h"
+          
+          s_e = bh2[m_e];
+          s_w = bh2[m_w];
+          s_n = bh2[m_n];
+          s_s = bh2[m_s];
+          s_t = bh2[m_t];
+          s_b = bh2[m_b];
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          // X-
+          if ( c_w == idd ) // 指定IDで挟まれる面
+          {
+            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
+            {
+              d |= order; // エントリをエンコード
+              s1 |= (order << BC_FACE_W);  // エントリをエンコード
+              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
+              g++;
+            }
+          }
+          
+          // X+
+          if ( c_e == idd )
+          {
+            if ( !IS_FLUID(s_e) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_E);
+              s2 = onBit(s2, ADIABATIC_E);
+              g++;
+            }
+          }
+          
+          // Y-
+          if ( c_s == idd )
+          {
+            if ( !IS_FLUID(s_s) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_S);
+              s2 = onBit(s2, ADIABATIC_S);
+              g++;
+            }
+          }
+          
+          // Y+
+          if ( c_n == idd )
+          {
+            if ( !IS_FLUID(s_n) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_N);
+              s2 = onBit(s2, ADIABATIC_N);
+              g++;
+            }
+          }
+          
+          // Z-
+          if ( c_b == idd )
+          {
+            if ( !IS_FLUID(s_b) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_B);
+              s2 = onBit(s2, ADIABATIC_B);
+              g++;
+            }
+          }
+          
+          // Z+
+          if ( c_t == idd )
+          {
+            if ( !IS_FLUID(s_t) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_T);
+              s2 = onBit(s2, ADIABATIC_T);
+              g++;
+            }
+          }
+          
+          bcd[m_p] = d;
+          bh1[m_p] = s1;
+          bh2[m_p] = s2;
+        }
+        
+      }
+    }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+  return g;
+}
+
+
+// #################################################################
+/**
+ @brief SS界面のISOTHERMAL処理
+ @retval エンコードしたセル数
+ @param order CompoListのエントリ
+ @param id 対象ID
+ @param mid セルID配列
+ @param bcd BCindex ID
+ @param bh1 BCindex H1
+ @param bh2 BCindex H2
+ @param deface セルフェイスを指定するための参照ID
+ @note
+ - この境界条件処理は，固体と固体で挟まれる面に対して適用される
+ -　idで指定されるセルは等温壁をもつ計算セルで，等温面はidで指定されるセルで挟まれる
+ - 対象面の断熱ビットを非断熱(1)に戻しておく
+ */
+unsigned long VoxInfo::encQfaceISO_SS(const int order,
+                                      const int id,
+                                      const int* mid,
+                                      int* bcd,
+                                      int* bh1,
+                                      int* bh2,
+                                      const int deface)
+{
+  unsigned long g=0;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int s_e, s_w, s_n, s_s, s_t, s_b;
+  int s1, s2, d;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int idd = id;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        d  = bcd[m_p];
+        s1 = bh1[m_p];
+        s2 = bh2[m_p];
+        
+        if ( (c_p == idd) && !IS_FLUID(s2) ) // テストセルは固体でキーID
+        {
+#include "FindexS3D.h"
+          
+          s_e = bh2[m_e];
+          s_w = bh2[m_w];
+          s_n = bh2[m_n];
+          s_s = bh2[m_s];
+          s_t = bh2[m_t];
+          s_b = bh2[m_b];
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          // X-
+          if ( c_w == deface ) // 指定IDで挟まれる面
+          {
+            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
+            {
+              d |= order; // エントリをエンコード
+              s1 |= (order << BC_FACE_W);  // エントリをエンコード
+              s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
+              g++;
+            }
+          }
+          
+          // X+
+          if ( c_e == deface )
+          {
+            if ( !IS_FLUID(s_e) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_E);
+              s2 = onBit(s2, ADIABATIC_E);
+              g++;
+            }
+          }
+          
+          // Y-
+          if ( c_s == deface )
+          {
+            if ( !IS_FLUID(s_s) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_S);
+              s2 = onBit(s2, ADIABATIC_S);
+              g++;
+            }
+          }
+          
+          // Y+
+          if ( c_n == deface )
+          {
+            if ( !IS_FLUID(s_n) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_N);
+              s2 = onBit(s2, ADIABATIC_N);
+              g++;
+            }
+          }
+          
+          // Z-
+          if ( c_b == deface )
+          {
+            if ( !IS_FLUID(s_b) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_B);
+              s2 = onBit(s2, ADIABATIC_B);
+              g++;
+            }
+          }
+          
+          // Z+
+          if ( c_t == deface )
+          {
+            if ( !IS_FLUID(s_t) )
+            {
+              d |= order;
+              s1 |= (order << BC_FACE_T);
+              s2 = onBit(s2, ADIABATIC_T);
+              g++;
+            }
+          }
+          
+          bcd[m_p] = d;
+          bh1[m_p] = s1;
+          bh2[m_p] = s2;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+  }
+  
+  return g;
+}
+
+
+
+// #################################################################
+/**
+ @brief 速度指定，流出型の境界条件の計算に必要な情報をエンコードする
+ @param order cmp[]のエントリ番号
+ @param id  セルID
+ @param mid ボクセル配列
+ @param bcd BCindex ID
+ @param bh1 BCindex H1
+ @param bh2 BCindex H2
+ @param deface 面を指定するid
+ @note
+ - encVbit_IBC()でセル数はカウント済み
+ - 流体かつ指定IDであり，defaceが設定されたセルと挟まれる面に対して適用
+ - 対象面の断熱ビットを非断熱にする
+ - encVbit_IBC()では，最外層を除外しているが，熱では除外しない
+ */
+void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* bh2, int deface)
+{
+  int idd;
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
+  int s1, s2, d;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  idd = id;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        d  = bcd[m_p];
+        s1 = bh1[m_p];
+        s2 = bh2[m_p];
+        
+        if ( (c_p == deface) && IS_FLUID(s1) ) // defaceセルかつ流体の時に，以下を評価
+        {
+#include "FindexS3D.h"
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          // X-
+          if ( c_w == idd ) // m_wセルの属性チェックはしていない
+          {
+            d |= order; // エントリをエンコード
+            s1 |= (order << BC_FACE_W);  // エントリをエンコード
+            s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱(1)
+          }
+          
+          // X+
+          if ( c_e == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_E);
+            s2 = onBit(s2, ADIABATIC_E);
+          }
+          
+          // Y-
+          if ( c_s == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_S);
+            s2 = onBit(s2, ADIABATIC_S);
+          }
+          
+          // Y+
+          if ( c_n == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_N);
+            s2 = onBit(s2, ADIABATIC_N);
+          }
+          
+          // Z-
+          if ( c_b == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_B);
+            s2 = onBit(s2, ADIABATIC_B);
+          }
+          
+          // Z+
+          if ( c_t == idd )
+          {
+            d |= order;
+            s1 |= (order << BC_FACE_T);
+            s2 = onBit(s2, ADIABATIC_T);
+          }
+          
+          bcd[m_p] = d;
+          bh1[m_p] = s1;
+          bh2[m_p] = s2;
+        }
+      } // i-loop
+    }
+  }
+  
+  // iddセルのSTATE_BITをFLUIDに変更
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        c_p = mid[m_p];
+        
+        s1  = bh1[m_p];
+        
+        if ( (c_p == deface) && IS_FLUID(s1) ) // 指定セルかつ流体の時に，以下を評価
+        {
+#include "FindexS3D.h"
+          
+          c_e = mid[m_e];
+          c_w = mid[m_w];
+          c_n = mid[m_n];
+          c_s = mid[m_s];
+          c_t = mid[m_t];
+          c_b = mid[m_b];
+          
+          // X-
+          if ( c_w == idd )
+          {
+            bh1[m_w] = onBit( bh1[m_w], STATE_BIT );
+          }
+          
+          // X+
+          if ( c_e == idd )
+          {
+            bh1[m_e] = onBit( bh1[m_e], STATE_BIT );
+          }
+          
+          // Y-
+          if ( c_s == idd )
+          {
+            bh1[m_s] = onBit( bh1[m_s], STATE_BIT );
+          }
+          
+          // Y+
+          if ( c_n == idd )
+          {
+            bh1[m_n] = onBit( bh1[m_n], STATE_BIT );
+          }
+          
+          // Z-
+          if ( c_b == idd )
+          {
+            bh1[m_b] = onBit( bh1[m_b], STATE_BIT );
+          }
+          
+          // Z+
+          if ( c_t == idd )
+          {
+            bh1[m_t] = onBit( bh1[m_t], STATE_BIT );
+          }
+        }
+      } // i-loop
+    }
+  }
+}
+
 
 
 // #################################################################

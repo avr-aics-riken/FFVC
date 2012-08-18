@@ -846,7 +846,7 @@ void Control::get_FileIO()
   }
   
   
-  // 入力ファイルの並列処理方式を選択
+  /* 入力ファイルの並列処理方式を選択 >> 固定パラメータへ
   label = "/Steer/File_IO/Parallel_Input";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -879,7 +879,7 @@ void Control::get_FileIO()
     Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Parallel_Output'\n");
     Exit(0);
   }
-  
+  */
   
   // インターバル 瞬時値
   label = "/Steer/File_IO/Instant_Interval_Type";
@@ -1469,31 +1469,26 @@ void Control::get_Operator()
 void Control::get_Para_ND()
 {
   REAL_TYPE ct;
-  string str;
   string label;
   
   label="/Parameter/Reference/Reynolds";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
   }
-  else
-  {
-	  Reynolds=(REAL_TYPE)ct;
-  }
+  Reynolds=(REAL_TYPE)ct;
+  
   
   label="/Parameter/Reference/Prandtl";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
   }
-  else
-  {
-	  Prandtl=(REAL_TYPE)ct;
-  }
-  
+  Prandtl=(REAL_TYPE)ct;
 }
 
 
@@ -1502,14 +1497,13 @@ void Control::get_Para_ND()
 // 参照パラメータを取得
 void Control::get_Para_Ref()
 {
-  int ct1;
   REAL_TYPE ct2;
   string label, str;
   
   label = "/Parameter/Reference/Length";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
-    Hostonly_ printf("\tParsing error in '/Parameter/Reference/Length'\n");
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
   }
   RefLength = ct2;
@@ -1517,7 +1511,7 @@ void Control::get_Para_Ref()
   label = "/Parameter/Reference/Velocity";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
-    Hostonly_ printf("\tParsing error in '/Parameter/Reference/Velocity'\n");
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
   }
   RefVelocity = ct2;
@@ -1525,7 +1519,7 @@ void Control::get_Para_Ref()
   label = "/Parameter/Reference/Gravity";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
-    Hostonly_ printf("\tParsing error in '/Parameter/Reference/Gravity'\n");
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
   }
   Gravity = ct2;
@@ -1533,15 +1527,15 @@ void Control::get_Para_Ref()
   label = "/Parameter/Reference/Base_Pressure";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
-    Hostonly_ printf("\tParsing error in '/Parameter/Reference/Base_Pressure'\n");
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
   }
   BasePrs = ct2;
-  
+
   label = "/Parameter/Reference/Medium";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !tpCntl->GetValue(label, &str) )
   {
-    Hostonly_ printf("\tParsing error in '/Parameter/Reference/Medium'\n");
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
   }
   Ref_Medium = str;
@@ -1554,15 +1548,13 @@ void Control::get_Para_Ref()
 void Control::get_Para_Temp()
 {
   REAL_TYPE Base, Diff;
-  
-  string str;
   string label;
   
   label="/Parameter/Temperature/Base";
   
   if ( !(tpCntl->GetValue(label, &Base )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '/Parameter/Temperature/Base'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -1571,7 +1563,7 @@ void Control::get_Para_Temp()
   
   if ( !(tpCntl->GetValue(label, &Diff )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '/Parameter/Temperature/Difference'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -2301,7 +2293,7 @@ void Control::get_start_condition()
 
 // #################################################################
 // 制御，計算パラメータ群の取得
-void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
+void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
 {
   
   // ソルバーの具体的な種類を決めるパラメータを取得し，ガイドセルの値を設定する

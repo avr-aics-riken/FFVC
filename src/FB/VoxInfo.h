@@ -89,6 +89,16 @@ private:
   
   unsigned long count_ValidCell_OBC (const int face, const int* bv);
   
+  
+  /**
+   * @brief CompoListのエントリをbx[]へエンコードする
+   * @param [in]     order エンコードするエントリ
+   * @param [in]     id    サーチ対象ID
+   * @param [in]     mid   セルID配列
+   * @param [in,out] bx    BCindex ID/H2
+   * @retval エンコードした個数
+   * @note mid[]のセルIDが指定されたidならば，bx[]に対してCompoListのエントリをエンコードする
+   */
   unsigned long encodeOrder(const int order,
                             const int id, 
                             const int* mid, 

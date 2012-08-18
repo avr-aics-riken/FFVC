@@ -15,8 +15,6 @@
 #include "dfi.h"
 #include "util_Path.h"
 
-
-
            
 // #################################################################
 // 出力DFIファイル名を作成する
@@ -97,11 +95,6 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
 bool DFI::init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host)
 {
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
-  
-  if ( Num_Node < 2 )
-  {
-    return false;
-  }
   
   MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
   
