@@ -15,6 +15,7 @@
 #include "BndOuter.h"
 
 
+// #################################################################
 // モニタ値を保持する
 void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, bool mode)
 {
@@ -52,18 +53,23 @@ void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, bool mode)
   }
 }
 
+// #################################################################
 // ラベルを設定
 void BoundaryOuter::set_Label(std::string key)
 {
   label = key;
 }
 
+
+// #################################################################
 // aliasラベルを設定する
 void BoundaryOuter::set_Alias(std::string key)
 {
   alias = key;
 }
 
+
+// #################################################################
 // 境界面の有効セル数を保持
 void BoundaryOuter::set_ValidCell(const int val)
 {
@@ -71,6 +77,7 @@ void BoundaryOuter::set_ValidCell(const int val)
 }
 
 
+// #################################################################
 // 熱伝達境界の参照モードの保持
 void BoundaryOuter::set_HTmodeRef(int key)
 {
@@ -78,6 +85,7 @@ void BoundaryOuter::set_HTmodeRef(int key)
 }
 
 
+// #################################################################
 // 熱伝達係数の保持
 void BoundaryOuter::set_CoefHT(REAL_TYPE val)
 {
@@ -85,6 +93,7 @@ void BoundaryOuter::set_CoefHT(REAL_TYPE val)
 }
 
 
+// #################################################################
 //温度の保持
 void BoundaryOuter::set_Temp(REAL_TYPE val)
 {
@@ -92,6 +101,7 @@ void BoundaryOuter::set_Temp(REAL_TYPE val)
 }
 
 
+// #################################################################
 // 熱流束の保持
 void BoundaryOuter::set_Heatflux(REAL_TYPE val)
 {
@@ -99,6 +109,7 @@ void BoundaryOuter::set_Heatflux(REAL_TYPE val)
 }
 
 
+// #################################################################
 // 周期境界のときの面の状況をセット
 void BoundaryOuter::set_FaceMode(int key)
 {
@@ -106,6 +117,7 @@ void BoundaryOuter::set_FaceMode(int key)
 }
 
 
+// #################################################################
 // 周期境界のモードをセット
 void BoundaryOuter::set_PrdcMode(int key)
 {
@@ -113,6 +125,7 @@ void BoundaryOuter::set_PrdcMode(int key)
 }
 
 
+// #################################################################
 // ドライバー部分の方向をセットする
 void BoundaryOuter::set_DriverDir(int key)     
 { 
@@ -120,6 +133,7 @@ void BoundaryOuter::set_DriverDir(int key)
 }
 
 
+// #################################################################
 // ドライバー部分の方向をセットする
 void BoundaryOuter::set_DriverIndex(int key)     
 { 
@@ -127,6 +141,7 @@ void BoundaryOuter::set_DriverIndex(int key)
 }
 
 
+// #################################################################
 // ガイドセルの媒質IDをセットする
 void BoundaryOuter::set_GuideMedium(int key)     
 { 
@@ -134,6 +149,7 @@ void BoundaryOuter::set_GuideMedium(int key)
 }
 
 
+// #################################################################
 // 境界条件の種類をセットする
 void BoundaryOuter::set_Class(const int key)     
 { 
@@ -141,6 +157,7 @@ void BoundaryOuter::set_Class(const int key)
 }
 
 
+// #################################################################
 // 壁面境界のモードをセットする
 void BoundaryOuter::set_wallType(const int key)     
 { 
@@ -148,7 +165,7 @@ void BoundaryOuter::set_wallType(const int key)
 }
 
 
-
+// #################################################################
 // 熱伝達境界の種別をセット
 void BoundaryOuter::set_HTmode(int key)
 {
@@ -156,6 +173,7 @@ void BoundaryOuter::set_HTmode(int key)
 }
 
 
+// #################################################################
 // 熱境界条件の種別をセット
 void BoundaryOuter::set_hType(int key)
 { 
@@ -163,6 +181,7 @@ void BoundaryOuter::set_hType(int key)
 }
 
 
+// #################################################################
 // IN_OUT境界条件のときのBC格納番号を保持
 void BoundaryOuter::set_MonRef(int key)
 {
@@ -170,6 +189,7 @@ void BoundaryOuter::set_MonRef(int key)
 }
 
 
+// #################################################################
 // 流出境界条件のときの流出対流速度の評価モードを指定
 void BoundaryOuter::set_ofv(int key)
 { 
@@ -177,6 +197,7 @@ void BoundaryOuter::set_ofv(int key)
 }
 
 
+// #################################################################
 // 外部境界の圧力指定
 void BoundaryOuter::set_pType(int key)
 {
@@ -184,6 +205,7 @@ void BoundaryOuter::set_pType(int key)
 }
 
 
+// #################################################################
 // 速度プロファイルの指定
 void BoundaryOuter::set_V_Profile(const int key)
 {
@@ -191,6 +213,7 @@ void BoundaryOuter::set_V_Profile(const int key)
 }
 
 
+// #################################################################
 // ベクトルのコピー
 void BoundaryOuter::addVec(REAL_TYPE* vec) 
 {
@@ -200,6 +223,7 @@ void BoundaryOuter::addVec(REAL_TYPE* vec)
 }
 
 
+// #################################################################
 // メンバー変数のコピー
 void BoundaryOuter::dataCopy(BoundaryOuter* src)
 {

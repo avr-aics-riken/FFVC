@@ -15,6 +15,7 @@
 #include "CompoFraction.h"
 
 
+// #################################################################
 // コンポーネントの属するセルインデクスを求める
 void CompoFraction::bbox_index(int* st, int* ed)
 {
@@ -23,7 +24,7 @@ void CompoFraction::bbox_index(int* st, int* ed)
 }
 
 
-
+// #################################################################
 // 直方体領域のbboxを計算し、投影面積を計算
 float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 {
@@ -58,6 +59,7 @@ float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 }
 
 
+// #################################################################
 // 円筒領域のbboxを計算
 // 標準位置で円周上の点をサンプリングし，逆変換後，min/max
 float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
@@ -92,6 +94,7 @@ float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 }
 
 
+// #################################################################
 // 点pの属するセルインデクスを求める
 // Fortran index
 void CompoFraction::find_index(int* w, const FB::Vec3f p)
@@ -104,6 +107,7 @@ void CompoFraction::find_index(int* w, const FB::Vec3f p)
 }
 
 
+// #################################################################
 // 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
 // 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
 void CompoFraction::get_angle()
@@ -189,7 +193,7 @@ void CompoFraction::get_angle()
 
 
 
-
+// #################################################################
 // 形状のbboxと投影面積を求める
 float CompoFraction::get_BboxArea()
 {
@@ -215,7 +219,7 @@ float CompoFraction::get_BboxArea()
 }
 
 
-
+// #################################################################
 // 矩形の形状パラメータをセットする
 void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
 {
@@ -241,6 +245,7 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
 }
 
 
+// #################################################################
 // 円筒の形状パラメータをセットする
 void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
 {
@@ -259,6 +264,7 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
 }
 
 
+// #################################################################
 // 体積率が(0,1)の間のセルに対してサブディビジョンを実施
 void CompoFraction::subdivision(const int st[], const int ed[], float* vf, double& flop)
 {
@@ -359,7 +365,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
 
 
 
-
+// #################################################################
 // セルの8頂点の内外判定を行い，0, 1, otherに分類
 // テスト候補のループ範囲（st[], ed[]）内で，テストセルの8頂点座標を生成し，形状の範囲内かどうかを判定する
 // vfは加算するので、初期化しておく
@@ -441,7 +447,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
 }
 
 
-
+// #################################################################
 // セルの8頂点の内外判定より50%以上のセルにIDを設定する
 void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
 {

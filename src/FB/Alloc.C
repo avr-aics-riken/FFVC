@@ -17,7 +17,7 @@
 #include "Alloc.h"
 
 
-
+// #################################################################
 // データ領域をアロケートする（Scalar:float）
 float* Alloc::Float_S3D(const int* sz, const int gc)
 {
@@ -39,7 +39,7 @@ float* Alloc::Float_S3D(const int* sz, const int gc)
 }
 
 
-
+// #################################################################
 // データ領域をアロケートする（Scalar4:REAL_TYPE）
 float* Alloc::Float_S4D(const int* sz, const int gc, const int dnum)
 {
@@ -61,7 +61,7 @@ float* Alloc::Float_S4D(const int* sz, const int gc, const int dnum)
 }
 
 
-
+// #################################################################
 // データ領域をアロケートする（Scalar:int）
 int* Alloc::Int_S3D(const int* sz, const int gc)
 {
@@ -83,6 +83,7 @@ int* Alloc::Int_S3D(const int* sz, const int gc)
 }
 
 
+// #################################################################
 // データ領域をアロケートする（Scalar:REAL_TYPE）
 REAL_TYPE* Alloc::Real_S3D(const int* sz, const int gc)
 {
@@ -104,6 +105,7 @@ REAL_TYPE* Alloc::Real_S3D(const int* sz, const int gc)
 }
 
 
+// #################################################################
 // データ領域をアロケートする（Vector:REAL_TYPE）
 REAL_TYPE* Alloc::Real_V3D(const int* sz, const int gc)
 {
@@ -125,6 +127,7 @@ REAL_TYPE* Alloc::Real_V3D(const int* sz, const int gc)
 }
 
 
+// #################################################################
 // データ領域をアロケートする（Scalar:unsigned）
 unsigned* Alloc::Uint_S3D(const int* sz, const int gc)
 {
