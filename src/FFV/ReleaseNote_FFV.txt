@@ -9,20 +9,23 @@ Release Note
 
 #######################################
 
-Ver. 0.6.0   30 July 2012
+Ver 0.7.0   19 Aug. 2012
+  - dfi対応
+
+Ver 0.6.0   30 July 2012
   - Polylib-2.1_Dev_b対応
 
-Ver. 0.5.0   23 July 2012
+Ver 0.5.0   23 July 2012
   - PLOT3Dフォーマット導入
 
-Ver. 0.4.0   11 July 2012
+Ver 0.4.0   11 July 2012
   - SOR2SMAのCPMlib実装
 
-Ver. 0.3.0    9 July 2012
+Ver 0.3.0    9 July 2012
   - データクラスをポインタへ置換
 
-Ver. 0.2.0   30 June 2012
+Ver 0.2.0   30 June 2012
   - 関数名を再構築
 
-Ver. 0.1.0   23 June 2012
+Ver 0.1.0   23 June 2012
   - CPMライブラリを用いて並列管理テスト

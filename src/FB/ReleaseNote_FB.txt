@@ -9,6 +9,10 @@ Release Note
 
 #######################################
 
+Ver 0.9.4   19 Aug. 2012
+  - dfi対応
+  - Parallel_Input/Outputパラメータを固定(IO_Distribute)へ変更
+  
 Ver 0.9.3  30 July 2012
   - plylib-2.1_Dev_b対応
 

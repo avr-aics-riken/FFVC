@@ -28,7 +28,7 @@ int FFV::Initialize(int argc, char **argv)
   double flop_task     = 0.0;  ///< flops計算用
   
   // CPMバージョン表示
-  if ( paraMngr->GetMyRankID() == 0 )
+  Hostonly_
   {
     cpm_Base::VersionInfo();
   }
@@ -1141,6 +1141,7 @@ void FFV::DomainInitialize(const string dom_file)
       G_origin[i] /= C.RefLength;
       G_region[i] /= C.RefLength;
     }
+    deltaX /= C.RefLength;
   }
   
   
@@ -1810,7 +1811,7 @@ int FFV::get_DomainInfo(const string dom_file)
   }
   
   
-  // G_pitch オプション
+  // pitch オプション
   bool flag = true; // 排他チェック（voxel, pitch）
   rvec  = pitch;
   label = "/DomainInfo/Global_pitch";
@@ -1837,7 +1838,7 @@ int FFV::get_DomainInfo(const string dom_file)
   
   
   
-  // G_voxel オプション
+  // G_size オプション
   if ( flag ) // pitchが指定されている場合が優先
   {
     G_size[0] = (int)(G_region[0]/pitch[0]);
@@ -1872,7 +1873,7 @@ int FFV::get_DomainInfo(const string dom_file)
   }
   
   
-  // G_div オプション
+  // G_division オプション
   ivec  = G_division;
   label = "/DomainInfo/Global_division";
   

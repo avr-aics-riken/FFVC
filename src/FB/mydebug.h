@@ -31,9 +31,8 @@
 
 #define stamped_printf printf("%s (%d):  ",__FILE__, __LINE__), printf
 #define stamped_fprintf fprintf(fp, "%s (%d):  ",__FILE__, __LINE__), fprintf
-#define stamped_mprintf fprintf(mp, "%s (%d):  ",__FILE__, __LINE__), fprintf
 
-#define Hostonly_ if ( paraMngr->GetMyRankID() == 0 )
+#define Hostonly_ if(paraMngr->GetMyRankID()==0) 
 
 #define TIMING__ if ( ModeTiming == ON )
 
