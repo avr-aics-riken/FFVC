@@ -28,7 +28,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Parameter/Intrinsic_Example/Check_Even'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
 
@@ -42,7 +42,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   }
   else
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid '/Parameter/Intrinsic_Example/Check_Even'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid '%s'\n", label.c_str());
     return false;
   }
   
@@ -51,7 +51,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Parameter/Intrinsic_Example/Fluid_medium'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
@@ -60,7 +60,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Parameter/Intrinsic_Example/Solid_medium'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_solid = str;
@@ -103,8 +103,6 @@ void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 // 計算領域のセルIDを設定する
 void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  size_t m;
-  
   // ローカルにコピー
   int ix = size[0];
   int jx = size[1];
@@ -123,7 +121,7 @@ void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         mid[m] = id_fluid;
       }
     }

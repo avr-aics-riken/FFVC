@@ -19,7 +19,7 @@ OMP_FLAGS=-openmp -openmp-report=2
 CC=icc
 CFLAGS=-O3
 CXX=icpc
-CXXFLAGS=-O3 $(OMP_FLAGS) -DTD_USE_NAMESPACE
+CXXFLAGS=-O3 $(OMP_FLAGS)
 FC=ifort
 FCFLAGS=-O3
 F90=ifort

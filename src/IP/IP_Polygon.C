@@ -23,15 +23,12 @@ void IP_Polygon::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE*
   RefL = R->RefLength;
   
   // 等分割のチェック
-  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
+  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) )
+  {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
-  
-  // 分割数を計算
-  //sz[0] = (unsigned)ceil(reg[0]/pch[0]);
-  //sz[1] = (unsigned)ceil(reg[1]/pch[1]);
-  //sz[2] = (unsigned)ceil(reg[2]/pch[2]);
+
 }
 
 
@@ -40,12 +37,21 @@ void IP_Polygon::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE*
 void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   // ローカルにコピー
-  int imax = size[0];
-  int jmax = size[1];
-  int kmax = size[2];
-  size_t m = (imax+2*guide)*(jmax+2*guide)*(kmax+2*guide);
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
   int ref = R->Mode.Base_Medium;
 
-#pragma omp parallel for firstprivate(m, ref) schedule(static)
-  for (size_t i=0; i<m; i++) mid[i] = ref;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ref) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        mid[m] = ref;
+      }
+    }
+  }
 }

@@ -14,70 +14,70 @@
 #
 # INTEL
 #
-AR = ar cru
-RANLIB = ranlib
-RM = \rm -f
-MPI_DIR	= /opt/openmpi
-CPM_DIR = /usr/local/cpm
-TP_DIR  = /usr/local/textparser
+AR        = ar cru
+RANLIB    = ranlib
+RM        = \rm -f
+MPI_DIR	  = /opt/openmpi
+CPM_DIR   = /usr/local/cpm
+TP_DIR    = /usr/local/textparser
 OMP_FLAGS = -openmp -par-report=2 -vec-report=2
-UDEF_OPT=
-CC=icc
-CFLAGS=-O3
-CXX=icpc
-CXXFLAGS=-O3 $(OMP_FLAGS) -DTD_USE_NAMESPACE
-FC=ifort
-FCFLAGS=-O3
-F90=ifort
-F90FLAGS=-O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
-LDFLAGS=-L/opt/intel/composerxe/lib
-LIBS=-lifport -lifcore
+UDEF_OPT  =
+CC        = icc
+CFLAGS    = -O3
+CXX       = icpc
+CXXFLAGS  = -O3 $(OMP_FLAGS)
+FC        = ifort
+FCFLAGS   = -O3
+F90       = ifort
+F90FLAGS  = -O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
+LDFLAGS   = -L/opt/intel/composerxe/lib
+LIBS      = -lifport -lifcore
 
 
 #
 # FX10, K
 #
-#AR = ar cru
-#RANLIB = ranlib
-#RM = \rm -f
-#MPI_DIR =
-#CPM_DIR = /hoge
-#TP_DIR  = /funya
+#AR        = ar cru
+#RANLIB    = ranlib
+#RM        = \rm -f
+#MPI_DIR   =
+#CPM_DIR   = /hoge
+#TP_DIR    = /funya
 #OMP_FLAGS = 
-#UDEF_OPT=-DTD_USE_NAMESPACE -D__K_FPCOLL -D__ARCH_FX
-#CC=mpifccpx
-#CFLAGS=-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
-#CXX=mpiFCCpx
-#CXXFLAGS=-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
-#FC=mpifrtpx
-#FCFLAGS=-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
-#F90=mpifrtpx
-#F90FLAGS=-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
-#LDFLAGS=--linkfortran
-#LIBS=
+#UDEF_OPT  = -D__K_FPCOLL -D__ARCH_FX
+#CC        =  mpifccpx
+#CFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
+#CXX       = mpiFCCpx
+#CXXFLAGS  = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+#FC        = mpifrtpx
+#FCFLAGS   = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
+#F90       = mpifrtpx
+#F90FLAGS  = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
+#LDFLAGS   = --linkfortran
+#LIBS      =
 
 
 #
 # BG/P
 #
-#AR = ar rv
-#RANLIB = ranlib
-#RM = \rm -f
-#MPI_DIR =
-#CPM_DIR = /hoge
-#TP_DIR  = /funya
+#AR        = ar rv
+#RANLIB    = ranlib
+#RM        = \rm -f
+#MPI_DIR   =
+#CPM_DIR   = /hoge
+#TP_DIR    = /funya
 #OMP_FLAGS = -qsmp=omp 
-#UDEF_OPT=-DTD_USE_NAMESPACE
-#CC=mpixlc_r
-#CFLAGS=-O3 -qarch=450d -qtune=450
-#CXX=mpixlcxx_r
-#CXXFLAGS=-O3 -qarch=450d -qtune=450 $(OMP_FLAGS) -DTD_USE_NAMESPACE
-#FC=mpixlf90_r
-#FCFLAGS=-O3 -qarch=450d -qtune=450 -qextname
-#F90=mpixlf90_r
-#F90FLAGS=-O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS) -WF,-D_STATIC
-#LDFLAGS=
-#LIBS=
+#UDEF_OPT  =
+#CC        = mpixlc_r
+#CFLAGS    = -O3 -qarch=450d -qtune=450
+#CXX       = mpixlcxx_r
+#CXXFLAGS  = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+#FC        = mpixlf90_r
+#FCFLAGS   = -O3 -qarch=450d -qtune=450 -qextname
+#F90       = mpixlf90_r
+#F90FLAGS  = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS) -WF,-D_STATIC
+#LDFLAGS   =
+#LIBS      =
 
 ###################################################################
 
