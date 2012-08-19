@@ -99,6 +99,6 @@ UDEF_LIB_PATH=-L../Polylib-2.1_dev_b/lib \
               -L../FB \
               -L../IP \
               -L../F_CORE \
-              -I$(MPI_DIR)/lib
+              -L$(MPI_DIR)/lib
               
 UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib

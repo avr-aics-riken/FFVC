@@ -287,7 +287,7 @@ void MonitorList::setPointSet(const char* str, vector<string>& variables,
 {
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
   
-  m->setDomainInfo(paraMngr, procGrp);
+  m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
   
   m->setPointSet(str, variables, method, mode, pointSet);
@@ -315,7 +315,7 @@ void MonitorList::setLine(const char* str, vector<string>& variables,
   
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
   
-  m->setDomainInfo(paraMngr, procGrp);  
+  m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
   
   m->setLine(str, variables, method, mode, from, to, nDivision);
@@ -336,7 +336,7 @@ void MonitorList::setInnerBoundary(CompoList *cmp, int nBC)
     if (cmp[i].isMONITOR()) 
     {
       MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
-      m->setDomainInfo(paraMngr, procGrp);  
+      m->setRankInfo(paraMngr, procGrp);
       m->setNeighborInfo(guide);
       
       m->setInnerBoundary(i, cmp[i]);

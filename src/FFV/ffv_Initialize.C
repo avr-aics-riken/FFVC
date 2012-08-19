@@ -93,6 +93,20 @@ int FFV::Initialize(int argc, char **argv)
     Ex->printExample(fp, Ex->getExampleName());
   }
   
+  
+  // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
+  C.setRankInfo(paraMngr, procGrp);
+  B.setRankInfo(paraMngr, procGrp);
+  V.setRankInfo(paraMngr, procGrp);
+  F.setRankInfo(paraMngr, procGrp);
+  BC.setRankInfo(paraMngr, procGrp);
+  Ex->setRankInfo(paraMngr, procGrp);
+  MO.setRankInfo(paraMngr, procGrp);
+  FP3DR.setRankInfo(paraMngr, procGrp);
+  FP3DW.setRankInfo(paraMngr, procGrp);
+  
+  
+  
   // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
   C.get_Version();
   
@@ -118,28 +132,27 @@ int FFV::Initialize(int argc, char **argv)
   
   // 最初のパラメータの取得
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
-
   
-  // ###########################
-  // 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   
-  string dom_file = argv[2]; // 領域情報を記述したファイル名の取得
   
-  // 領域設定
+  // 領域情報を記述したファイル名の取得
+  string dom_file = argv[2]; 
+  
+  // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   DomainInitialize(dom_file);
   
   // 各クラスで領域情報を保持
-  C.setDomainInfo(paraMngr, procGrp);   C.setNeighborInfo(C.guide);
-  B.setDomainInfo(paraMngr, procGrp);   B.setNeighborInfo(C.guide);
-  V.setDomainInfo(paraMngr, procGrp);   V.setNeighborInfo(C.guide);
-  F.setDomainInfo(paraMngr, procGrp);   F.setNeighborInfo(C.guide);
-  BC.setDomainInfo(paraMngr, procGrp);  BC.setNeighborInfo(C.guide);
-  Ex->setDomainInfo(paraMngr, procGrp); Ex->setNeighborInfo(C.guide);
-  MO.setDomainInfo(paraMngr, procGrp);    MO.setNeighborInfo(C.guide);
-  FP3DR.setDomainInfo(paraMngr, procGrp); FP3DR.setNeighborInfo(C.guide);
-  FP3DW.setDomainInfo(paraMngr, procGrp); FP3DW.setNeighborInfo(C.guide);
-  // ###########################
+  C.setNeighborInfo(C.guide);
+  B.setNeighborInfo(C.guide);
+  V.setNeighborInfo(C.guide);
+  F.setNeighborInfo(C.guide);
+  BC.setNeighborInfo(C.guide);
+  Ex->setNeighborInfo(C.guide);
+  MO.setNeighborInfo(C.guide);
+  FP3DR.setNeighborInfo(C.guide);
+  FP3DW.setNeighborInfo(C.guide);
 
+  
   
   // 各例題のパラメータ設定 -----------------------------------------------------
   Ex->setDomain(&C, size, origin, region, pitch);

@@ -99,7 +99,7 @@ public:
    * @param [in] m_paraMngr  CPMlibポインタ
    * @param [in] m_proGrp    プロセスグループ番号
    */
-  void setDomainInfo(cpm_ParaManager* m_paraMngr, const int m_procGrp)
+  void setRankInfo(cpm_ParaManager* m_paraMngr, const int m_procGrp)
   {
     // ポインタコピー
     paraMngr = m_paraMngr;

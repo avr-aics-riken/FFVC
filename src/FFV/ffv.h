@@ -923,7 +923,7 @@ public:
     if ( !m_paraMngr ) return false;
     paraMngr = m_paraMngr;
     
-    setDomainInfo(paraMngr, procGrp);
+    setRankInfo(paraMngr, procGrp);
     
     return true;
   }
