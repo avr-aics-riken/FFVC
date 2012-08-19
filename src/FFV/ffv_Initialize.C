@@ -3661,12 +3661,12 @@ void FFV::VoxScan(FILE* fp)
   
   // midに設定されたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
   int sc=0;
-  if ( (sc = V.scanCell(d_mid, cell_id, C.Hide.Change_ID)) != C.NoMedium ) 
+  if ( (sc = V.scanCell(d_mid, cell_id, C.Hide.Change_ID)) > C.NoMedium )
   {
     Hostonly_
     {
-      stamped_printf(    "A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", sc, C.NoMedium);
-      stamped_fprintf(fp,"A number of IDs included in voxel model(%d) is not agree with the one in 'Model_Setting'(%d)\n", sc, C.NoMedium);
+      stamped_printf(    "A number of Mediums included in model(%d) is greater than the one in 'Medium_List'(%d)\n", sc, C.NoMedium);
+      stamped_fprintf(fp,"A number of Mediums included in model(%d) is greater than the one in 'Medium_List'(%d)\n", sc, C.NoMedium);
     }
     Exit(0);
   }
