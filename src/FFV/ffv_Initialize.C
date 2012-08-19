@@ -151,7 +151,6 @@ int FFV::Initialize(int argc, char **argv)
   MO.setNeighborInfo(C.guide);
   FP3DR.setNeighborInfo(C.guide);
   FP3DW.setNeighborInfo(C.guide);
-
   
   
   // 各例題のパラメータ設定 -----------------------------------------------------
@@ -1105,6 +1104,18 @@ void FFV::DomainInitialize(const string dom_file)
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
   int m_div[3] = {G_division[0], G_division[1], G_division[2]};
   
+
+  // 有次元の場合に無次元化する　paraMngr->VoxelInit()で計算する基本量
+  if (C.Unit.Param == DIMENSIONAL )
+  {
+    for (int i=0; i<3; i++) {
+      pitch[i]    /= C.RefLength;
+      G_origin[i] /= C.RefLength;
+      G_region[i] /= C.RefLength;
+    }
+  }
+
+  
   REAL_TYPE m_org[3] = {G_origin[0], G_origin[1], G_origin[2]};
   REAL_TYPE m_reg[3] = {G_region[0], G_region[1], G_region[2]};
   
@@ -1116,6 +1127,7 @@ void FFV::DomainInitialize(const string dom_file)
   // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
   // 4)  G_div指定あり          |   + ActiveDomainInfo
   
+  // 分割数を元に分割する。pitchが指定値とならないこともある。
   switch (div_type) 
   {
     case 1: // 分割数が指示されている場合
@@ -1142,20 +1154,7 @@ void FFV::DomainInitialize(const string dom_file)
 
   // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
   setNeighborInfo(C.guide);
-  
-  
-  // 有次元の場合に無次元化 (Local)
-  if (C.Unit.Param == DIMENSIONAL )
-  {
-    for (int i=0; i<3; i++) {
-      origin[i]   /= C.RefLength;
-      pitch[i]    /= C.RefLength;
-      region[i]   /= C.RefLength;
-      G_origin[i] /= C.RefLength;
-      G_region[i] /= C.RefLength;
-    }
-    deltaX /= C.RefLength;
-  }
+
   
   
   // チェック
@@ -1793,6 +1792,27 @@ int FFV::get_DomainInfo(const string dom_file)
   int *ivec;
   int div_type = 1;
   
+  
+  // 長さの単位
+  label = "/DomainInfo/Unit_of_Length";
+  
+  if ( !(tp_dom.GetValue(label, &str )) )
+  {
+		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Non_Dimensional") )  C.Unit.Length = LTH_ND;
+  else if( !strcasecmp(str.c_str(), "M") )                C.Unit.Length = LTH_m;
+  else if( !strcasecmp(str.c_str(), "cm") )               C.Unit.Length = LTH_cm;
+  else if( !strcasecmp(str.c_str(), "mm") )               C.Unit.Length = LTH_mm;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
   // G_origin　必須
   rvec  = G_origin;
   label = "/DomainInfo/Global_origin";
@@ -1847,8 +1867,7 @@ int FFV::get_DomainInfo(const string dom_file)
       Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
       Exit(0);
     }
-  }
-  
+  }  
   
   
   // G_size オプション
@@ -1908,6 +1927,34 @@ int FFV::get_DomainInfo(const string dom_file)
       Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
       Exit(0);
     }
+  }
+
+  
+  // 有次元の場合には、単位をメートルに変換
+  REAL_TYPE factor;
+  switch ( C.Unit.Length )
+  {
+    case LTH_m:
+    case LTH_ND:
+      factor = 1.0; // 変更なし
+      break;
+      
+    case LTH_cm:
+      factor = 0.01;
+      break;
+      
+    case LTH_mm:
+      factor = 0.001;
+      break;
+      
+    default:
+      Exit(0);
+  }
+  
+  for (int i=0; i<3; i++) {
+    pitch[i]    *= factor;
+    G_origin[i] *= factor;
+    G_region[i] *= factor;
   }
   
   

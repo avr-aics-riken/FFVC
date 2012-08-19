@@ -60,12 +60,6 @@ void IP_PMT::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg
   // 性能測定モードをOnにする
   R->Hide.PM_Test = ON;
 
-  // 等ピッチのチェック
-  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) )
-  {
-    Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    Exit(0);
-  }
   if ( pch[0] <= 0.0 )
   {
     Hostonly_ printf("Error : 'VoxelPitch' must be grater than zero.\n");

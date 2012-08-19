@@ -2526,7 +2526,8 @@ void Control::get_Unit()
   
   label = "/Steer/Unit/Unit_of_Input_Parameter";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
@@ -2901,7 +2902,8 @@ void Control::printNoCompo(FILE* fp)
 // 計算パラメータの表示
 void Control::printParaConditions(FILE* fp, const MediumList* mat)
 {
-  if ( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
@@ -2924,10 +2926,13 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\tRef. Sound Speed          [m/s]       : %12.5e\n", RefSoundSpeed);
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
+  
   fprintf(fp,"\tSpacing                   [m] / [-]   : %12.5e / %12.5e\n", deltaX*RefLength, deltaX);
   fprintf(fp,"\tTime Scale                [sec]       : %12.5e\n", Tscale);
   fprintf(fp,"\n");
-  if ( isHeatProblem() ) {
+  
+  if ( isHeatProblem() )
+  {
     fprintf(fp,"\tBase Temperature          [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C", FBUtility::convK2Temp(BaseTemp, Unit.Temp), 0.0);
     fprintf(fp,"\tTemperature Diff.         [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C", DiffTemp, 1.0);
   }
@@ -2941,13 +2946,17 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   
   fprintf(fp,"\n");
   fprintf(fp,"\tPrandtl  number           [-]         : %12.5e\n", Prandtl);
-  if (Mode.PDE == PDE_NS) {
+  if (Mode.PDE == PDE_NS)
+  {
     fprintf(fp,"\tReynolds number           [-]         : %12.5e\n", Reynolds);
   }
-  else {
+  else
+  {
     fprintf(fp,"\tMach number               [-]         : %12.5e\n", Mach);
   }
-  if ( isHeatProblem() )  {
+  
+  if ( isHeatProblem() )
+  {
     fprintf(fp,"\tPeclet   number           [-]         : %12.5e\n", Peclet);
     fprintf(fp,"\tGrashof  number           [-]         : %12.5e\n", Grashof);
     if (KindOfSolver==THERMAL_FLOW_NATURAL)  fprintf(fp,"\tRayleigh number           [-]         : %12.5e\n", Rayleigh);
@@ -2962,7 +2971,8 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 // 制御パラメータSTEERの表示
 void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF)
 {
-  if( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
@@ -2976,8 +2986,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   // ソルバープロパティ ------------------
   fprintf(fp,"\tSolver Properties\n");
+  
   // Basic Equation and PDE
-	switch (KindOfSolver) {
+	switch (KindOfSolver)
+  {
     case FLOW_ONLY:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
@@ -2986,15 +2998,19 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 				case INCMP:
 					fprintf(fp,"\t     Basic Equation           :   Incompressible Flow ");
 					break;
+          
 				case LTDCMP:
 					fprintf(fp,"\t     Basic Equation           :   Limited Compressible Flow ");
 					break;
+          
 				case CMPRSS:
 					fprintf(fp,"\t     Basic Equation           :   Compressible Flow ");
 					break;
+          
         case INCMP_2PHASE:
 					fprintf(fp,"\t     Basic Equation           :   Incompressible Two-Phase Flow ");
 					break;
+          
 				default:
 					stamped_printf("\nError: Basic Equation section\n");
 					err=false;
@@ -3002,14 +3018,17 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 			switch (Mode.PDE) {
 				case PDE_EULER:
 					fprintf(fp,"PDE_EULER Equations\n");
-					if  ( !((KindOfSolver == FLOW_ONLY) || (KindOfSolver == THERMAL_FLOW) || (KindOfSolver == THERMAL_FLOW_NATURAL)) ) {
+					if  ( !((KindOfSolver == FLOW_ONLY) || (KindOfSolver == THERMAL_FLOW) || (KindOfSolver == THERMAL_FLOW_NATURAL)) )
+          {
 						fprintf(fp,"\tInvalid combination with Conjugate Heat Transfer nor Solid Conduction\n");
 						err=false;
 					}
 					break;
+          
 				case PDE_NS:
 					fprintf(fp,"Navier-Stokes Equations\n");
 					break;
+          
 				default:
 					stamped_printf("Error: PDE section\n");
 					err=false;
@@ -3022,7 +3041,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Steady
-  switch (Mode.Steady) {
+  switch (Mode.Steady)
+  {
     case FB_STEADY:
       fprintf(fp,"\t     Time Variation           :   Steady\n");
       break;
@@ -3037,7 +3057,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Shape approximation
-  switch (Mode.ShapeAprx) {
+  switch (Mode.ShapeAprx)
+  {
     case BINARY:
       fprintf(fp,"\t     Shape Approximation      :   Binary\n");
       break;
@@ -3053,39 +3074,52 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   // Precision
   if ( Mode.Precision == sizeof(float) )
+  {
     fprintf(fp,"\t     Precision                :   Single Precision \n");
+  }
   else
+  {
     fprintf(fp,"\t     Precision                :   Double Precision \n");
+  }
   
   // Kind Of Solver
-  if (KindOfSolver==FLOW_ONLY) {
+  if (KindOfSolver==FLOW_ONLY)
+  {
     fprintf(fp,"\t     Kind of Solver           :   Flow Only (Non Heat)\n");
   }
-  else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==NO_BUOYANCY) ) {
+  else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==NO_BUOYANCY) )
+  {
     fprintf(fp,"\t     Kind of Solver           :   Forced convection without buoyancy\n");
   }
-  else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==BOUSSINESQ) ) {
+  else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==BOUSSINESQ) )
+  {
     fprintf(fp,"\t     Kind of Solver           :   Forced convection with buoyancy : Boussinesq Approximation\n");
   }
-  else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==LOW_MACH) ) {
+  else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==LOW_MACH) )
+  {
     fprintf(fp,"\t     Kind of Solver           :   Forced convection with buoyancy : Low Mach Approximation\n");
   }
-  else if ( (KindOfSolver==THERMAL_FLOW_NATURAL) && (Mode.Buoyancy==BOUSSINESQ) ) {
+  else if ( (KindOfSolver==THERMAL_FLOW_NATURAL) && (Mode.Buoyancy==BOUSSINESQ) )
+  {
     fprintf(fp,"\t     Kind of Solver           :   Natural convection : Boussinesq Approximation\n");
   }
-  else if ( (KindOfSolver==THERMAL_FLOW_NATURAL) && (Mode.Buoyancy==LOW_MACH) ) {
+  else if ( (KindOfSolver==THERMAL_FLOW_NATURAL) && (Mode.Buoyancy==LOW_MACH) )
+  {
     fprintf(fp,"\t     Kind of Solver           :   Natural convection : Low Mach Approximation\n");
   }
-  else if (KindOfSolver==SOLID_CONDUCTION) {
+  else if (KindOfSolver==SOLID_CONDUCTION)
+  {
     fprintf(fp,"\t     Kind of Solver           :   Solid Conduction\n");
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Heat Solver type         :   Error\n");
     err=false;
   }
   
   // Flow Algorithm
-  switch (AlgorithmF) {
+  switch (AlgorithmF)
+  {
     case Flow_FS_EE_EE:
       fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
       fprintf(fp,"\t        Time marching scheme  :   Euler Explicit O(dt1)\n");
@@ -3111,8 +3145,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Heat Algorithm
-  if ( isHeatProblem() ) {
-    switch (AlgorithmH) {
+  if ( isHeatProblem() )
+  {
+    switch (AlgorithmH)
+    {
       case Heat_EE_EE:
         fprintf(fp,"\t     Heat Algorithm           :   Fractional Step\n");
         fprintf(fp,"\t        Time marching scheme  :   Euler Explicit O(dt1)\n");
@@ -3131,8 +3167,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 
   
   // Convection scheme
-	if ( KindOfSolver != SOLID_CONDUCTION ) {
-		switch (CnvScheme) {
+	if ( KindOfSolver != SOLID_CONDUCTION )
+  {
+		switch (CnvScheme)
+    {
 			case O1_upwind:
 				fprintf(fp,"\t     Convective flux scheme   :   Upwind O(dx1)\n");
         break;
@@ -3168,10 +3206,12 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       break;
       
     case ReferenceFrame::frm_translation:
-      if (Unit.Param==DIMENSIONAL) {
+      if (Unit.Param==DIMENSIONAL)
+      {
         fprintf(fp,"\t     Reference Frame          :   Translational (%12.4e, %12.4e, %12.4e) [m/s]\n", GridVel[0]*RefVelocity, GridVel[1]*RefVelocity, GridVel[2]*RefVelocity);
       }
-      else {
+      else
+      {
         fprintf(fp,"\t     Reference Frame          :   Translational (%12.4e, %12.4e, %12.4e) [-]\n", GridVel[0], GridVel[1], GridVel[2]);
       }
       break;
@@ -3186,9 +3226,12 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Pressure shift
-  if (Mode.Pshift == -1) {
+  if (Mode.Pshift == -1)
+  {
     fprintf(fp,"\t     Pressure Shift           :   Off\n");
-  } else {
+  }
+  else
+  {
     fprintf(fp,"\t     Pressure Shift           :   %s\n", FBUtility::getDirection(Mode.Pshift).c_str());
   }
   
@@ -3203,25 +3246,31 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   fprintf(fp,"\n\tTime Control\n");
   
   // 加速時間
-  if ( !Interval[Interval_Manager::tg_accelra].isStep() ) {
+  if ( !Interval[Interval_Manager::tg_accelra].isStep() )
+  {
     itm = Interval[Interval_Manager::tg_accelra].getIntervalTime();
     fprintf(fp,"\t     Acceleration Time        :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Acceleration Step        :   %12d\n", Interval[Interval_Manager::tg_accelra].getIntervalStep());
   }
   
   // 時間平均
-  if ( Mode.Average == ON ) {
-    if ( !Interval[Interval_Manager::tg_avstart].isStep() ) {
+  if ( Mode.Average == ON )
+  {
+    if ( !Interval[Interval_Manager::tg_avstart].isStep() )
+    {
       itm = Interval[Interval_Manager::tg_avstart].getIntervalTime();
       fprintf(fp,"\t     Averaging Operation      :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
     }
-    else {
+    else
+    {
       fprintf(fp,"\t     Averaging Operation      :   %12d\n", Interval[Interval_Manager::tg_avstart].getIntervalStep());
     }
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Averaging Operation      :   OFF\n");
   }
   
@@ -3233,10 +3282,12 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   {
     case DTcntl::dt_direct:
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : Direct ", dt*Tscale, dt);
-      if ( isHeatProblem() ) {
+      if ( isHeatProblem() )
+      {
         fprintf(fp,": Diff. Num. = %7.2e\n", dt/(deltaX*deltaX*Peclet));
       }
-      else {
+      else
+      {
         fprintf(fp,"\n");
       }
       
@@ -3259,7 +3310,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : CFL & Diffusion number with Reference velocity\n",  dt*Tscale, dt);
       fprintf(fp,"\t                              :               CFL number                                     : %8.5f [-]\n", cfl);
       fprintf(fp,"\t                              :               dt restricted by Diffusion number (Reynolds)   : %8.5f [-]\n", d_R);
-      if ( isHeatProblem() ) {
+      if ( isHeatProblem() )
+      {
         fprintf(fp,"\t                              :               dt restricted by Diffusion number (Peclet)     : %8.5f [-]\n", d_P);
       }
       break;
@@ -3272,7 +3324,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : CFL & Diffusion number with Maximum velocity (in case of v=1.0 for Ref.)\n", dt*Tscale, dt);
       fprintf(fp,"\t                              :             CFL number                    : %8.5f [-]\n", cfl);
       fprintf(fp,"\t                              :             dt restricted by Diffusion number (Reynolds)   : %8.5f [-]\n", d_R);
-      if ( isHeatProblem() ) {
+      if ( isHeatProblem() )
+      {
         c = (REAL_TYPE)DT->dtDFN((double)Peclet);
         fprintf(fp,"\t                              :             dt restricted by Diffusion number (Peclet)     : %8.5f [-]\n", d_P);
       }
@@ -3289,58 +3342,67 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Calculation time/step
-  if ( !Interval[Interval_Manager::tg_compute].isStep() ) {
+  if ( !Interval[Interval_Manager::tg_compute].isStep() )
+  {
     itm = Interval[Interval_Manager::tg_compute].getIntervalTime();
     fprintf(fp,"\t     Calculation Time         :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Calculation Step         :   %12d\n", Interval[Interval_Manager::tg_compute].getIntervalStep());
   }
   
-  
-  fprintf(fp,"\n\tParallel Mode & File IO\n");
   
   
   // スタートモード ------------------
   fprintf(fp,"\n\tStart Mode\n");
   
   // Start
-  switch (Start) {
+  switch (Start)
+  {
     case initial_start:
       fprintf(fp,"\t     Start Condition          :   Impulsive start\n");
       break;
+      
     case restart:
       fprintf(fp,"\t     Start Condition          :   Restart from previous session\n");
       break;
+      
     case coarse_restart:
       fprintf(fp,"\t     Start Condition          :   Restart from coarse grid data\n");
       break;
+      
     default:
       stamped_printf("Error: start condition section\n");
       err=false;
   }
   
   // 粗い格子の計算結果を使ったリスタート
-  if ( Start == coarse_restart ) {
-    
-    if ( FIO.IO_Input == IO_GATHER ) {
+  if ( Start == coarse_restart )
+  {
+    if ( FIO.IO_Input == IO_GATHER )
+    {
       fprintf(fp,"\t     with Coarse Initial data files\n");
       fprintf(fp,"\t          Pressure            :   %s\n", f_Coarse_pressure.c_str());
       fprintf(fp,"\t          Velocity            :   %s\n", f_Coarse_velocity.c_str());
-      if ( isHeatProblem() ) {
+      if ( isHeatProblem() )
+      {
         fprintf(fp,"\t          Temperature         :   %s\n", f_Coarse_temperature.c_str());
       }
     }
-    else {
+    else
+    {
       fprintf(fp,"\t     with Coarse Initial data files\n");
       fprintf(fp,"\t          DFI file Pressure   :   %s\n", f_Coarse_dfi_prs.c_str());
       fprintf(fp,"\t          DFI file Velocity   :   %s\n", f_Coarse_dfi_vel.c_str());
-      if ( isHeatProblem() ) {
+      if ( isHeatProblem() )
+      {
         fprintf(fp,"\t          DFI file Temperature:   %s\n", f_Coarse_dfi_temp.c_str());
       }
       fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_Coarse_pressure.c_str());
       fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_Coarse_velocity.c_str());
-      if ( isHeatProblem() ) {
+      if ( isHeatProblem() )
+      {
         fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_Coarse_temperature.c_str());
       }
     }
@@ -3349,7 +3411,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   
   // parallel mode ------------------
-  switch (Parallelism) {
+  fprintf(fp,"\n\tParallel Mode & File IO\n");
+  
+  switch (Parallelism)
+  {
     case Serial:
       fprintf(fp,"\t     Parallel Mode            :   Serial\n");
       break;
@@ -3376,8 +3441,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   
-  // InputMode
-  fprintf(fp,"\t     Input Mode               :   %s\n", (FIO.IO_Input==IO_GATHER) ? "Master IO" : "Local IO");
+  // InputMode >> デフォルトでローカル
+  //fprintf(fp,"\t     Input Mode               :   %s\n", (FIO.IO_Input==IO_GATHER) ? "Master IO" : "Local IO");
   
   
   // Output guide
@@ -3410,48 +3475,59 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   // インターバル ------------------
   // 基本履歴のコンソール出力 
-  if ( !Interval[Interval_Manager::tg_console].isStep() ) {
+  if ( !Interval[Interval_Manager::tg_console].isStep() )
+  {
     itm = Interval[Interval_Manager::tg_console].getIntervalTime();
-    fprintf(fp,"\t     Base Info.(stdout)       :   %12.6e [%s]\n", (Unit.Log==DIMENSIONAL)?itm*Tscale:itm, (Unit.Log==DIMENSIONAL)?"sec":"-");
+    fprintf(fp,"\t     Base Info.(stdout)       :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Base Info.(stdout)       :   %12d [step]\n", Interval[Interval_Manager::tg_console].getIntervalStep());
   }
   
   // 履歴情報のファイル出力
-  if ( !Interval[Interval_Manager::tg_history].isStep() ) {
+  if ( !Interval[Interval_Manager::tg_history].isStep() )
+  {
     itm = Interval[Interval_Manager::tg_history].getIntervalTime();
-    fprintf(fp,"\t     Other Histories          :   %12.6e [%s]\n", (Unit.Log==DIMENSIONAL)?itm*Tscale:itm, (Unit.Log==DIMENSIONAL)?"sec":"-");
+    fprintf(fp,"\t     Other Histories          :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Other Histories          :   %12d [step]\n", Interval[Interval_Manager::tg_history].getIntervalStep());
   }
   
   // 瞬間値のファイル出力
-  if ( !Interval[Interval_Manager::tg_instant].isStep() ) {
+  if ( !Interval[Interval_Manager::tg_instant].isStep() )
+  {
     itm = Interval[Interval_Manager::tg_instant].getIntervalTime();
-    fprintf(fp,"\t     Instant data             :   %12.6e [%s]\n", (Unit.File==DIMENSIONAL)?itm*Tscale:itm, (Unit.File==DIMENSIONAL)?"sec":"-");
+    fprintf(fp,"\t     Instant data             :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Instant data             :   %12d [step]\n", Interval[Interval_Manager::tg_instant].getIntervalStep());
   }
   
   // 平均値のファイル出力
-  if ( !Interval[Interval_Manager::tg_average].isStep() ) {
+  if ( !Interval[Interval_Manager::tg_average].isStep() )
+  {
     itm = Interval[Interval_Manager::tg_average].getIntervalTime();
-    fprintf(fp,"\t     Averaged data            :   %12.6e [%s]\n", (Unit.File==DIMENSIONAL)?itm*Tscale:itm, (Unit.File==DIMENSIONAL)?"sec":"-");
+    fprintf(fp,"\t     Averaged data            :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Averaged data            :   %12d [step]\n", Interval[Interval_Manager::tg_average].getIntervalStep());
   }
   
   // サンプリング情報のファイル出力
-  if ( Sampling.log == ON ) {
-    if ( !Interval[Interval_Manager::tg_sampled].isStep() ) {
+  if ( Sampling.log == ON )
+  {
+    if ( !Interval[Interval_Manager::tg_sampled].isStep() )
+    {
       itm = Interval[Interval_Manager::tg_sampled].getIntervalTime();
-      fprintf(fp,"\t     Sampled data             :   %12.6e [%s]\n", (Sampling.unit==DIMENSIONAL)?itm*Tscale:itm, (Sampling.unit==DIMENSIONAL)?"sec":"-");
+      fprintf(fp,"\t     Sampled data             :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
     }
-    else {
+    else
+    {
       fprintf(fp,"\t     Sampled data             :   %12d [step]\n", Interval[Interval_Manager::tg_sampled].getIntervalStep());
     }
   }
@@ -3463,11 +3539,13 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   const ItrCtl* ICp2= &IC[ItrCtl::ic_prs_cr];  /// 圧力のPoisson反復　2回目
   const ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
   
-  if ( Hide.PM_Test == ON ) {
+  if ( Hide.PM_Test == ON )
+  {
     fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
   }
   
-	if ( KindOfSolver != SOLID_CONDUCTION ) {
+	if ( KindOfSolver != SOLID_CONDUCTION )
+  {
 		// 1st iteration
 		fprintf(fp,"\t     1st Pressure Iteration \n");
 		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->get_ItrMax());
@@ -3477,7 +3555,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
 		printLS(fp, ICp1);
     
-    if ( AlgorithmF == Flow_FS_RK_CN ) {
+    if ( AlgorithmF == Flow_FS_RK_CN )
+    {
       fprintf(fp,"\t     2nd Pressure Iteration \n");
       fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->get_ItrMax());
       fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->get_eps());
@@ -3488,7 +3567,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     }
     
     // CN iteration
-		if ( (AlgorithmF == Flow_FS_AB_CN) || (AlgorithmF == Flow_FS_RK_CN) ) {
+		if ( (AlgorithmF == Flow_FS_AB_CN) || (AlgorithmF == Flow_FS_RK_CN) )
+    {
       fprintf(fp,"\n");
 			fprintf(fp,"\t     Velocity CN Iteration \n");
 			fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->get_ItrMax());
@@ -3501,8 +3581,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 	}
 	
   // for Temperature
-  if ( isHeatProblem() ) {
-    if ( AlgorithmH == Heat_EE_EI ) {
+  if ( isHeatProblem() )
+  {
+    if ( AlgorithmH == Heat_EE_EI )
+    {
       const ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
       fprintf(fp,"\n");
       fprintf(fp,"\t     Temperature Iteration  \n");
@@ -3519,7 +3601,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   // 壁面の扱い ------------------
   fprintf(fp,"\n\tCondition of Wall\n");
   fprintf(fp,"\t     No of surface            :   %ld\n", NoWallSurface);
-  switch (Mode.PrsNeuamnnType) {
+  switch (Mode.PrsNeuamnnType)
+  {
     case P_GRAD_ZERO:
       fprintf(fp,"\t     Pressure Gradient        :   Neumann Zero\n");
       break;
@@ -3534,7 +3617,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       break;
   }
   
-  switch (Mode.Wall_profile) {
+  switch (Mode.Wall_profile)
+  {
     case No_Slip:
       fprintf(fp,"\t     Velocity Profile         :   No Slip\n");
       break;
@@ -3558,26 +3642,32 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   fprintf(fp, "\n\tDerived variables\n");
   
   //　全圧の出力モード
-  if ( Mode.TP == ON ) {
+  if ( Mode.TP == ON )
+  {
     fprintf(fp,"\t     Total Pressure           :   ON\n");
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Total Pressure           :   OFF\n");
   }
   
   //　渦度の出力モード
-  if ( Mode.VRT == ON ) {
+  if ( Mode.VRT == ON )
+  {
     fprintf(fp,"\t     Vorticity                :   ON\n");
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Vorticity                :   OFF\n");
   }
   
   //　ヘリシティの出力モード
-  if ( Mode.Helicity == ON ) {
+  if ( Mode.Helicity == ON )
+  {
     fprintf(fp,"\t     Helicity                 :   ON\n");
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     Helicity                 :   OFF\n");
   }
   
@@ -3585,23 +3675,27 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   if ( Mode.I2VGT == ON ) {
     fprintf(fp,"\t     2nd Invariant of VGT     :   ON\n");
   }
-  else {
+  else
+  {
     fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
   }
   
   
   // Hidden parameter ------------------
   fprintf(fp,"\n\tHidden Parameters\n");
-  if ( Hide.Scaling_Factor != 1.0 ) {
+  if ( Hide.Scaling_Factor != 1.0 )
+  {
     fprintf(fp,"\t     Scaling Factor           :   %f\n", Hide.Scaling_Factor);
   }
   
-  if (Hide.Change_ID != 0 ) {
+  if (Hide.Change_ID != 0 )
+  {
     fprintf(fp,"\t     Change ID from [0] to    :   %d\n", Hide.Change_ID);
   }
   fprintf(fp,"\n");
   
-  switch (Hide.Range_Limit) {
+  switch (Hide.Range_Limit)
+  {
     case Range_Cutoff:
       fprintf(fp,"\t     Variable Range           :   Limit value between [0,1] in normalized value\n");
       break;
@@ -3623,7 +3717,6 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 
 // #################################################################
 /**
- @fn void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO)
  @brief 無次元パラメータを各種モードに応じて設定する
  @param mat
  @param cmp

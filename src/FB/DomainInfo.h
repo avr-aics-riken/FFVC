@@ -160,9 +160,9 @@ public:
     // 格子幅
     const REAL_TYPE* m_pch = paraMngr->GetPitch();
     pitch[0] = m_pch[0];
-    pitch[1] = m_pch[1];
-    pitch[2] = m_pch[2];
     deltaX = pitch[0];
+    pitch[1] = deltaX;
+    pitch[2] = deltaX;
     
     // プロセス分割数
     const int* g_div = paraMngr->GetDivNum();

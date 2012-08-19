@@ -9,8 +9,12 @@ Release Note
 
 #######################################
 
+Ver 0.7.1   19 Aug. 2012
+  - domain.tpにlength_of_unitパラメータを導入
+  
 Ver 0.7.0   19 Aug. 2012
   - dfi対応
+  - textparser 1.1対応
 
 Ver 0.6.0   30 July 2012
   - Polylib-2.1_Dev_b対応

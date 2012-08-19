@@ -485,11 +485,12 @@ public:
   /** 単位 */
   typedef struct 
   {
-    int Param; /// 入力パラメータ単位 (Dimensional/NonDimensional)
-    int File;  /// ファイルの記述単位 (Dimensional/NonDimensional)
-    int Log;   /// 出力ログの単位 (Dimensional/NonDimensional)
-    int Prs;   /// 圧力単位 (Absolute/Gauge)
-    int Temp;  /// 温度単位 (Celsius/Kelvin)
+    int Param;  /// 入力パラメータ単位 (Dimensional/NonDimensional)
+    int File;   /// ファイルの記述単位 (Dimensional/NonDimensional)
+    int Log;    /// 出力ログの単位 (Dimensional/NonDimensional)
+    int Prs;    /// 圧力単位 (Absolute/Gauge)
+    int Temp;   /// 温度単位 (Celsius/Kelvin)
+    int Length; /// 入力パラメータの長さの単位 (non_dimensional/m/cm/mm)
   } Unit_Def;
   
   /** サンプリング機能 */

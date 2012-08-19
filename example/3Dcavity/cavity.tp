@@ -27,36 +27,41 @@ Steer {
     2nd_Invariant_of_VGT = "Off"
   }
 
-  Example = "Performance_Test"
+  Example = "Rectangular"
 
   File_IO {
     Unit_of_File           = "Non_Dimensional"
     Guide_Out              = "Without"
-    Parallel_Input         = "master"
-    Parallel_Output        = "master"
+    Format                 = "sph"
     Debug_Divergence       = "Off"
     Instant_Interval_Type  = "step"
-    Instant_Interval       = 1000
+    Instant_Interval       = 100
     Averaged_Interval_Type = "Time"
-    Averaged_Interval      = 1000
+    Averaged_Interval      = 200
+  }
+
+  Geometry_Model {
+    Polylib_File          = "hoge.tp"
+    Fill_Medium           = "air"
+    Hint_of_Filling_Fluid = "y_plus"
   }
 
   Iteration {
     Flow {
       Poisson {
-        Iteration     = 20
-        Epsilon       = 1.0e-3
-        Omega         = 1.2
+        Iteration     = 200
+        Epsilon       = 1.0e-4
+        Omega         = 1.1
         Norm          = "v_div_max"
-        Linear_Solver = "SOR"
-        Comm_mode     = "sync"
+        Linear_Solver = "SOR2SMA"
+        Comm_mode     = "async"
       }
     }
     Heat {
       Euler_Implicit {
         Iteration     = 30
         Epsilon       = 1.0e-2
-        Omega         = 1.2
+        Omega         = 1.1
         Norm          = "T_Res_L2_Absolute"
         Linear_Solver = "SOR"
         Comm_mode     = "sync"
@@ -72,7 +77,7 @@ Steer {
     Unit_of_Log           = "Non_Dimensional"
     Log_Base              = "On"
     Log_Iteration         = "Off"
-    Log_Profiling         = "on"
+    Log_Profiling         = "On"
     Log_Wall_Info         = "Off"
     Console_Interval_Type = "Step"
     Console_Interval      = 1
@@ -113,6 +118,20 @@ Steer {
     }
   }
 
+  PLOT3D_Options {
+    filename       = ""
+    grid_kind      = "single_grid"
+    grid_mobility  = "immovable"
+    state_of_time  = "unsteady"
+    Iblank         = "off"
+    Dimension      = "3D"
+    Format_type    = "unformatted"
+    File_plot3d_xyz= "off"
+    File_plot3d_q  = "off"
+    File_plot3d_function = "off"
+    File_plot3d_function_name = "off"
+    File_plot3d_fvbnd = "off"
+  }
 
   Reference_Frame {
     Reference_Frame_Type = "Stationary"
@@ -121,8 +140,8 @@ Steer {
   Start_Condition {
     start_type         = "initial"
     Restart_step       = 200
-    Prefix_of_Pressure = "prs_"
-    Prefix_of_Velocity = "vel_"
+    Prefix_of_Coarse_Pressure = "prs_64_"
+    Prefix_of_Coarse_Velocity = "vel_64_"
     dfi_file_pressure  = "prs_64_id000000.dfi"
     dfi_file_velocity  = "vel_64_id000000.dfi"
     Initial_State {
@@ -149,7 +168,7 @@ Steer {
     Dt_Type            = "CFL_Reference_Velocity"
     Delta_T            = 0.2
     Period_Type        = "step"
-    Calculation_Period = 20
+    Calculation_Period = 100
   }
 
   Treatment_of_Wall {
@@ -164,8 +183,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 40
-    Flow_Base = 90
+    FFV       = 71
+    Flow_Base = 95
   }
 
 } //Steer
@@ -178,7 +197,7 @@ Parameter {
     Base_Pressure = 0.0
     Reynolds      = 1000.0
     Prandtl       = 0.71
-    Base_Medium   = "air"
+    Medium        = "air"
   }
       
   Temperature {
@@ -284,7 +303,7 @@ BC_Table {
 
   OuterBoundary {
       
-    // candidates
+    // 境界条件候補リスト
     Basic_BCs[@] {
       alias    = "outer_wall"
       class    = "Wall"
@@ -311,7 +330,7 @@ BC_Table {
       velocity_Type = "Average"
     }
       
-    // outer BC
+    //外部境界条件
     Face_BC {
       X_minus {
         kind   = "outer_wall"

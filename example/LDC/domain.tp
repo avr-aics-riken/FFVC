@@ -1,0 +1,11 @@
+DomainInfo {
+  Unit_of_length  = "M"
+  Global_origin   = (-3.1e-2, -3.1e-2, -6.2e-2   )
+  Global_region   = (6.2e-2,  6.2e-2,  1.24e-1   )
+  Global_voxel    = (64   , 64   , 128  )
+  
+  //Global_pitch    = (9.6875e-04, 9.6875e-04, 9.6875e-04)
+  //Global_division = (1    , 1    , 1    )
+
+  ActiveSubDomain_File = "hoge"
+}

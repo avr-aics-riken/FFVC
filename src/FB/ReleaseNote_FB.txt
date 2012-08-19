@@ -9,6 +9,9 @@ Release Note
 
 #######################################
 
+Ver 0.9.5   19 Aug. 2012
+  - domain.tpにlength_of_unitパラメータを導入
+  
 Ver 0.9.4   19 Aug. 2012
   - dfi対応
   - Parallel_Input/Outputパラメータを固定(IO_Distribute)へ変更

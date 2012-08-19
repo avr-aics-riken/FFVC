@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 94
+#define FB_VERS 95
 
 #define MODEL_ID_MAX 255
 
@@ -387,6 +387,14 @@ enum Unit_Pressure {
 enum Temp_Unit {
   Unit_KELVIN=1,
   Unit_CELSIUS
+};
+
+/// 長さ単位
+enum Length_Unit {
+  LTH_ND=0,
+  LTH_m,
+  LTH_cm,
+  LTH_mm
 };
 
 /// 同期モード
