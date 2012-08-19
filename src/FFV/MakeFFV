@@ -33,7 +33,7 @@ $(TARGET):$(OBJS)
 	mv $(TARGET) ../../bin/.
 
 .C.o:
-	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -c $<
+	$(CXX) $(CXXFLAGS) $(UDEF_OPT) $(UDEF_INC_PATH) -c $<
 
 clean:
 	$(RM) $(OBJS)
