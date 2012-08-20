@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file IP_Cylinder.h
- * @brief IP_Cylinder class Header
+ * @file   IP_Cylinder.h
+ * @brief  IP_Cylinder class Header
  * @author kero
  */
 
@@ -26,6 +26,7 @@ protected:
   REAL_TYPE width;           ///< 流路の幅
   REAL_TYPE height;          ///< ドライバ部の高さ
   REAL_TYPE drv_length;      ///< ドライバの長さ
+  int drv_mode;              ///< ドライバのON/OFF
   std::string m_fluid;       ///< 流体のラベル
   std::string m_solid;       ///< 固体のラベル
   std::string m_driver;      ///< ドライバ部分のラベル
@@ -81,7 +82,7 @@ public:
   
   
   /** 
-   @brief 例題の名称を返す
+   * @brief 例題の名称を返す
    */
   virtual const char* getExampleName()
   {

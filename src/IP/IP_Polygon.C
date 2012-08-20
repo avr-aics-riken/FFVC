@@ -9,14 +9,15 @@
 // #################################################################
 
 /**
- @file IP_Polygon.C
- @brief IP_Polygon class
+ @file   IP_Polygon.C
+ @brief  IP_Polygon class
  @author kero
  */
 
 #include "IP_Polygon.h"
 
 
+// #################################################################
 // 領域情報を設定する
 void IP_Polygon::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
@@ -32,7 +33,7 @@ void IP_Polygon::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE*
 }
 
 
-
+// #################################################################
 // 計算領域のセルIDを設定する
 void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {

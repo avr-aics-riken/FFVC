@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file IP_PPLT2D.h
- * @brief IP_PPLT2D class Header
+ * @file   IP_PPLT2D.h
+ * @brief  IP_PPLT2D class Header
  * @author kero
  */
 
@@ -65,7 +65,7 @@ public:
   
   
   /** 
-   @brief 例題の名称を返す
+   * @brief 例題の名称を返す
    */
   virtual const char* getExampleName() 
   {

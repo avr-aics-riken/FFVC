@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file IP_Sphere.h
- * @brief IP_Sphere class Header
+ * @file   IP_Sphere.h
+ * @brief  IP_Sphere class Header
  * @author kero
  */
 
@@ -69,15 +69,15 @@ public:
   
   
   /**
-   @brief パラメータの表示
-   @param[in] fp ファイルポインタ
-   @param[in] R  コントロールクラスのポインタ
+   * @brief パラメータの表示
+   * @param [in] fp ファイルポインタ
+   * @param [in] R  コントロールクラスのポインタ
    */
   virtual void printPara(FILE* fp, const Control* R);
   
   
   /** 
-   @brief 例題の名称を返す
+   * @brief 例題の名称を返す
    */
   virtual const char* getExampleName(void) 
   {
@@ -96,32 +96,32 @@ public:
   
   
   /**
-   @brief 計算領域のセルIDとカット情報を設定する
-   @param[in,out] mid    IDの配列
-   @param[in]     R      Controlクラスのポインタ
-   @param[in]     G_org  グローバルな原点（無次元）
-   @param[in]     Nmax   
-   @param[in]     mat    MediumListクラスのポインタ
-   @param[out]    cut    カット情報
+   * @brief 計算領域のセルIDとカット情報を設定する
+   * @param [in,out] mid    IDの配列
+   * @param [in]     R      Controlクラスのポインタ
+   * @param [in]     G_org  グローバルな原点（無次元）
+   * @param [in]     Nmax
+   * @param [in]     mat    MediumListクラスのポインタ
+   * @param [out]    cut    カット情報
    */
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut);
   
   
   /** 点pの属するセルインデクスを求める
-   * @param[in] p   探索座標
-   * @param[in] ol  基点座標
-   * @return 
+   * @param [in] p   探索座標
+   * @param [in] ol  基点座標
+   * @return cell index
    */
   FB::Vec3i find_index(const FB::Vec3f p, const FB::Vec3f ol);
   
   
   /**
-   @brief 交点の無次元距離を計算する
-   @param[in] p 基点座標
-   @param[in] dir テスト方向
-   @param[in] r radius
-   @param[in] dh 格子幅
-   @return 交点距離
+   * @brief 交点の無次元距離を計算する
+   * @param [in] p 基点座標
+   * @param [in] dir テスト方向
+   * @param [in] r radius
+   * @param [in] dh 格子幅
+   * @return 交点距離
    */
   float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
 };

@@ -12,11 +12,11 @@
 // #################################################################
 
 /** 
- * @file IP_Define.h
- * @brief Intrinsic class Header
+ * @file   IP_Define.h
+ * @brief  Intrinsic class Header
  * @author kero
  */
 
-#define IP_VERS 119
+#define IP_VERS 120
 
 #endif // _IP_DEFINE_H_

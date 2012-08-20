@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file IP_Rect.h
- * @brief IP_Rect class Header
+ * @file   IP_Rect.h
+ * @brief  IP_Rect class Header
  * @author kero
  */
 

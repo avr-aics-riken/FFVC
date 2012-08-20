@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file IP_PMT.h
- * @brief IP_PMT class Header
+ * @file   IP_PMT.h
+ * @brief  IP_PMT class Header
  * @author kero
  */
 
@@ -64,7 +64,7 @@ public:
   
   
   /** 
-   @brief 例題の名称を返す
+   * @brief 例題の名称を返す
    */
   virtual const char* getExampleName(void) 
   {

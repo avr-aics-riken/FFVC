@@ -17,6 +17,7 @@
 #include "IP_Rect.h"
 
 
+// #################################################################
 // パラメータを取得する
 bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 {
@@ -69,6 +70,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 }
 
 
+// #################################################################
 // Rectの領域情報を設定する
 void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
@@ -100,6 +102,7 @@ void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 }
 
 
+// #################################################################
 // 計算領域のセルIDを設定する
 void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {

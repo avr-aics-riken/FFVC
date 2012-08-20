@@ -58,6 +58,14 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
     return false;
   }
   
+  if ( drv_length > 0.0 )
+  {
+    drv_mode = ON;
+  }
+  else{
+    drv_mode = OFF;
+  }
+  
   // 媒質指定
   label = "/Parameter/Intrinsic_Example/Fluid_medium";
   if ( !tpCntl->GetValue(label, &str) )
@@ -77,7 +85,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   m_solid = str;
   
   
-  if (drv_length < 0.0 )
+  if (drv_length > 0.0 )
   {
     label = "/Parameter/Intrinsic_Example/driver_medium";
     if ( !tpCntl->GetValue(label, &str) )
@@ -396,18 +404,6 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
     Exit(0);
   }
   
-  if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
-    Exit(0);
-  }
-  
-  if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
-    Exit(0);
-  }
-  
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
@@ -485,6 +481,19 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   
   // driver設定 iff ドライバ長が正の場合
   if ( drv_mode == OFF ) return;
+  
+  
+  if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
+    Exit(0);
+  }
+  
+  if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
+    Exit(0);
+  }
   
   // lengthは有次元値
   len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置

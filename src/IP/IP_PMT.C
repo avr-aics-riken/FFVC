@@ -17,6 +17,7 @@
 #include "IP_PMT.h"
 
 
+// #################################################################
 // パラメータを取得する
 bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
 {
@@ -45,6 +46,7 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
 }
 
 
+// #################################################################
 // 領域情報を設定する
 void IP_PMT::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
@@ -83,6 +85,7 @@ void IP_PMT::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg
 }
 
 
+// #################################################################
 // 計算領域のセルIDを設定する
 void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {

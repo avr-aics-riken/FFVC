@@ -12,8 +12,8 @@
 // #################################################################
 
 /**
- @file IP_Polygon.h
- @brief IP_Polygon class Header
+ @file   IP_Polygon.h
+ @brief  IP_Polygon class Header
  @author kero
  */
 
@@ -56,7 +56,7 @@ public:
   
   
   /** 
-   @brief 例題の名称を返す
+   * @brief 例題の名称を返す
    */
   virtual const char* getExampleName(void)
   {

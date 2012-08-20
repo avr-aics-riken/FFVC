@@ -9,13 +9,15 @@
 // #################################################################
 
 /** 
- * @file IP_PPLT2D.C
- * @brief IP_PPLT2D class
+ * @file   IP_PPLT2D.C
+ * @brief  IP_PPLT2D class
  * @author kero
  */
 
 #include "IP_PPLT2D.h"
 
+
+// #################################################################
 //@brief パラメータを取得する
 bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
 {
@@ -23,16 +25,20 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 媒質指定
-  label="/Parameter/Intrinsic_Example/Fluid_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+  label = "/Parameter/Intrinsic_Example/Fluid_medium";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
-  label="/Parameter/Intrinsic_Example/Solid_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+  label = "/Parameter/Intrinsic_Example/Solid_medium";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_solid = str;
@@ -41,26 +47,29 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
 }
 
 
-
+// #################################################################
 // PPLT2Dの領域情報を設定する
 void IP_PPLT2D::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
   
   // forced
-  if (R->Unit.Param != NONDIMENSIONAL) {
+  if (R->Unit.Param != NONDIMENSIONAL)
+  {
     Hostonly_ printf("\tError : PPLT2D class is designed for only non-dimensional parameter\n");
     Exit(0);
   }
   
   // Z方向のチェック
-  if ( sz[2] != 3 ) {
+  if ( sz[2] != 3 )
+  {
     Hostonly_ printf("\tError : The size of Z-direction must be 3.\n");
     Exit(0);
   }
   
   // 領域アスペクト比のチェック
-  if ( sz[0] != sz[1]*2 ) {
+  if ( sz[0] != sz[1]*2 )
+  {
     Hostonly_ printf("\tError : The number of division must be 2:1 (=X:Y)\n");
     Exit(0);
   }
@@ -74,7 +83,8 @@ void IP_PPLT2D::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* 
   pch[0] = reg[0] / (REAL_TYPE)sz[0];
   pch[1] = reg[1] / (REAL_TYPE)sz[1];
   
-  if ( pch[0] != pch[1] ) {
+  if ( pch[0] != pch[1] )
+  {
     Hostonly_ printf("\tVoxel width must be same between X and Y direction.\n");
     Exit(0);
   }
@@ -86,23 +96,30 @@ void IP_PPLT2D::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* 
 }
 
 
+// #################################################################
 // PPLT2Dの計算領域のセルIDを設定する
 void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  size_t m;
-  
   // ローカルにコピー
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-
+  int id_fluid;
+  
+  if ( (id_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
+    Exit(0);
+  }
+  
   // Inner
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, id_fluid) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-        mid[m] = 1;
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        mid[m] = id_fluid;
       }
     }
   }
