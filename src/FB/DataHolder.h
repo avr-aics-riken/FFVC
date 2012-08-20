@@ -28,6 +28,10 @@
 #include "TPControl.h"
 #include "DomainInfo.h"
 
+#ifdef __ARCH_BG
+#include <stdarg.h> // for va_start()
+#endif
+
 /* ------------- DataHolder -----------------------------------------*/
 
 

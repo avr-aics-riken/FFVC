@@ -61,6 +61,7 @@ all:
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
+    CPM_DIR='$(CPM_DIR)' \
 	)
 	( \
 	make -f MakeFFV \

@@ -37,7 +37,7 @@ LIBS      = -lifport -lifcore
 #
 # FX10, K
 #
-#AR        = ar cru
+#AR        = ar cr
 #RANLIB    = ranlib
 #RM        = \rm -f
 #MPI_DIR   =
@@ -67,7 +67,7 @@ LIBS      = -lifport -lifcore
 #CPM_DIR   = /hoge
 #TP_DIR    = /funya
 #OMP_FLAGS = -qsmp=omp 
-#UDEF_OPT  =
+#UDEF_OPT  = -WF,-D__ARCH_BG
 #CC        = mpixlc_r
 #CFLAGS    = -O3 -qarch=450d -qtune=450
 #CXX       = mpixlcxx_r

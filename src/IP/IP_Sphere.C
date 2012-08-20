@@ -9,14 +9,15 @@
 // #################################################################
 
 /** 
- * @file IP_Sphere.C
- * @brief IP_Sphere class
+ * @file   IP_Sphere.C
+ * @brief  IP_Sphere class
  * @author kero
  */
 
 #include "IP_Sphere.h"
 
 
+// #################################################################
 //@brief パラメータを取得する
 bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
 {
@@ -25,69 +26,88 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // radius
-  label="/Parameter/Intrinsic_Example/radius";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'radius' in 'Intrinsic_Example'\n");
+  label = "/Parameter/Intrinsic_Example/radius";
+  
+  if ( !tpCntl->GetValue(label, &ct) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  else{
+  else
+  {
 	  radius = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
 
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/Parameter/Intrinsic_Example/Driver";
-  if ( tpCntl->GetValue(label, &ct ) ) {
+  label = "/Parameter/Intrinsic_Example/Driver";
+  
+  if ( tpCntl->GetValue(label, &ct ) )
+  {
     drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Driver' in 'Intrinsic_Example'\n");
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   
-  if ( drv_length < 0.0 ) {
+  if ( drv_length < 0.0 )
+  {
     Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
     return false;
   }
   
   // 媒質指定
-  label="/Parameter/Intrinsic_Example/Fluid_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+  label = "/Parameter/Intrinsic_Example/Fluid_medium";
+  if ( !tpCntl->GetValue(label, &str) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
-  label="/Parameter/Intrinsic_Example/Solid_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Solid_medium' in 'Intrinsic_Example'\n");
+  
+  label = "/Parameter/Intrinsic_Example/Solid_medium";
+  if ( !tpCntl->GetValue(label, &str) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_solid = str;
   
-  label="/Parameter/Intrinsic_Example/driver_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_medium' in 'Intrinsic_Example'\n");
-    return false;
-  }
-  m_driver = str;
   
-  label="/Parameter/Intrinsic_Example/driver_face_medium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_face_medium' in 'Intrinsic_Example'\n");
-    return false;
+  if (drv_length < 0.0 )
+  {
+    label = "/Parameter/Intrinsic_Example/driver_medium";
+    if ( !tpCntl->GetValue(label, &str) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    m_driver = str;
+    
+    
+    label = "/Parameter/Intrinsic_Example/driver_face_medium";
+    if ( !tpCntl->GetValue(label, &str) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    m_driver_face = str;
   }
-  m_driver_face = str;
+
   
   return true;
 }
 
 
-
+// #################################################################
 // パラメータの表示
 void IP_Sphere::printPara(FILE* fp, const Control* R)
 {
-  if ( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
@@ -96,12 +116,15 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
   fprintf(fp,"\n\t>> Intrinsic Sphere Parameters\n\n");
   
   fprintf(fp,"\tRadius of Sphere       [m] / [-]   : %12.5e / %12.5e\n", radius, radius/RefL);
-  if ( drv_mode == ON ) {
+  
+  if ( drv_mode == ON )
+  {
     fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv_length, drv_length/RefL);
   }
 }
 
 
+// #################################################################
 // 領域情報を設定する
 void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
 {
@@ -116,7 +139,8 @@ void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE
   org.z = (float)m_org[2];
   
   // チェック
-  if ( (pch.x != pch.y) || (pch.y != pch.z) ) {
+  if ( (pch.x != pch.y) || (pch.y != pch.z) )
+  {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
@@ -133,6 +157,7 @@ void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE
 }
 
 
+// #################################################################
 // 点pの属するセルインデクスを求める
 // Fortran index
 FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
@@ -155,13 +180,14 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 }
 
 
-// 計算領域のセルIDを設定する
+// #################################################################
+// 計算領域のセルIDを設定する（バイナリー）
 void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int mid_fluid=1;        /// 流体
-  int mid_solid=2;        /// 固体
-  int mid_driver=3;       /// ドライバ部
-  int mid_driver_face=4;  /// ドライバ流出面
+  int mid_fluid;        /// 流体
+  int mid_solid;        /// 固体
+  int mid_driver;       /// ドライバ部
+  int mid_driver_face;  /// ドライバ流出面
 
   REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
@@ -184,8 +210,6 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   oy_g = G_origin[1];
   oz_g = G_origin[2];
   
-  size_t m;
-  
   // ローカルにコピー
   int ix = size[0];
   int jx = size[1];
@@ -206,10 +230,26 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   //printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", pn.myrank, box_ed.x, box_ed.y, box_ed.z);
   
   // 媒質設定
-  size_t m_nx = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
+  if ( (mid_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
+    Exit(0);
+  }
   
-  for (size_t n=0; n<m_nx; n++) { 
-    mid[n] = mid_fluid;
+  if ( (mid_solid = R->find_ID_from_Label(mat, Nmax, m_solid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
+    Exit(0);
+  }
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        mid[m] = mid_fluid;
+      }
+    }
   }
   
   // 球内部
@@ -221,8 +261,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
         b = org_l + base*ph;
         r = b.length();
         
-        if ( r <= rs ) {
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
+        if ( r <= rs )
+        {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           mid[m] = mid_solid;
         }
       }
@@ -234,17 +275,30 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   if ( drv_mode == OFF ) return;
   
   
+  if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
+    Exit(0);
+  }
+  
+  if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
+    Exit(0);
+  }
+  
   // @todo 以下は確認のこと
   
   // lengthは有次元値
   len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( drv_length > 0.0 ) {
+  if ( drv_length > 0.0 )
+  {
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
         }
@@ -253,16 +307,15 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   }
   
   // ドライバの下流面にIDを設定
-  if ( drv_length > 0.0 ) {
-    
-    size_t m1;
-    
+  if ( drv_length > 0.0 )
+  {
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
-          m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
-          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+          size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
+          size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) )
+          {
             mid[m] = mid_driver_face;
           }
         }
@@ -274,10 +327,11 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
-        if ( x < len ) {
+        if ( x < len )
+        {
           mid[m] = mid_solid;
         }
       }
@@ -286,14 +340,14 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
 }
 
 
-
+// #################################################################
 // 計算領域のセルIDとカット情報を設定する
 void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut)
 {
-  int mid_fluid=1;        /// 流体
-  int mid_solid=2;        /// 固体
-  int mid_driver=3;       /// ドライバ部
-  int mid_driver_face=4;  /// ドライバ流出面
+  int mid_fluid;        /// 流体
+  int mid_solid;        /// 固体
+  int mid_driver;       /// ドライバ部
+  int mid_driver_face;  /// ドライバ流出面
 
   REAL_TYPE x, y, z, dh, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
@@ -330,14 +384,41 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   int gd = guide;
   
   // 媒質設定
-  size_t m_nx = (ix+2*guide) * (jx+2*guide) * (kx+2*guide);
+  if ( (mid_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
+    Exit(0);
+  }
   
-  for (size_t n=0; n<m_nx; n++) { 
-    mid[n] = mid_fluid;
+  if ( (mid_solid = R->find_ID_from_Label(mat, Nmax, m_solid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
+    Exit(0);
+  }
+  
+  if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
+    Exit(0);
+  }
+  
+  if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
+    Exit(0);
+  }
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        mid[m] = mid_fluid;
+      }
+    }
   }
   
   // 球内部
-  size_t m;
   
   for (int k=box_st.z; k<=box_ed.z; k++) { 
     for (int j=box_st.y; j<=box_ed.y; j++) {
@@ -347,8 +428,9 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
         b = org_l + base*ph;
         r = b.length();
         
-        if ( r <= rs ) {
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, gd, i, j, k);
+        if ( r <= rs )
+        {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           mid[m] = mid_solid;
         }
       }
@@ -380,24 +462,25 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
         
         // cut test
         for (int l=1; l<=6; l++) {
-          if ( lb[0]*lb[l] < 0.0 ) {
+          if ( lb[0]*lb[l] < 0.0 )
+          {
             s = cut_line(p[0], l, rs, ph);
-            //m = FBUtility::getFindexS3Dcut(size, guide, l-1, i, j, k); // 注意！　インデクスが1-6
-            m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd); // 注意！　インデクスが1-6
             cut[m] = s;
-
-            if ( r_min > s ) r_min = s;
-            if ( r_max < s ) r_max = s;
+            r_min = std::min(r_min, s);
+            r_max = std::max(r_max, s);
           }
         }
       }
     }
   }
   
-  printf("\nCut info. for Sphere\n");
-  printf("\tmin. cut = %f\n", r_min);
-  printf("\tmax. cut = %f\n", r_max);
-
+  Hostonly_
+  {
+    printf("\nCut info. for Sphere\n");
+    printf("\tmin. cut = %f\n", r_min);
+    printf("\tmax. cut = %f\n", r_max);
+  }
 
   
   // driver設定 iff ドライバ長が正の場合
@@ -407,11 +490,12 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( drv_length > 0.0 ) {
+  if ( drv_length > 0.0 )
+  {
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
         }
@@ -420,16 +504,15 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   }
   
   // ドライバの下流面にIDを設定
-  if ( drv_length > 0.0 ) {
-    
-    size_t m1;
-    
+  if ( drv_length > 0.0 )
+  {
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
-          m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
-          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
+          size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
+          size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) )
+          {
             mid[m] = mid_driver_face;
           }
         }
@@ -441,10 +524,11 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         x = ox + 0.5*dh + dh*(i-1);
         y = oy + 0.5*dh + dh*(j-1);
-        if ( x < len ) {
+        if ( x < len )
+        {
           mid[m] = mid_solid;
         }
       }
@@ -453,6 +537,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax
 }
 
 
+// #################################################################
 // 交点計算
 float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
 {
@@ -466,7 +551,8 @@ float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const
   s = 0.0;
   
   // 基点座標の符号で交点座標を判断
-  switch (dir) {
+  switch (dir)
+  {
     case 1: // X-
       xc = sqrtf(r*r - y*y - z*z);
       if ( x < 0.0 ) xc *= -1.0;

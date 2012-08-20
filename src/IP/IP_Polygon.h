@@ -20,6 +20,10 @@
 #include "Intrinsic.h"
 #include "IP_Define.h"
 
+#ifdef __ARCH_BG
+#include <string.h> // for memset()
+#endif
+
 class IP_Polygon : public Intrinsic {
 protected:
   

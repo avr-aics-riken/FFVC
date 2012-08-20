@@ -2952,13 +2952,13 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       break;
       
     case id_Sphere:
-      if ( !C.isCDS() )
+      if ( !C.isCDS() ) // binary
       {
         Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
       }
-      else
+      else // cut
       {
-        // cutをアロケートし，初期値1.0をセット
+        // 初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
         Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
       }

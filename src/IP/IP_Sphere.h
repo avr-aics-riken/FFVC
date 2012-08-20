@@ -40,7 +40,7 @@ protected:
   
 public:
   /** コンストラクタ */
-  IP_Sphere(){
+  IP_Sphere() {
     radius = 0.0;
     drv_length = 0.0;
     drv_mode = OFF;
