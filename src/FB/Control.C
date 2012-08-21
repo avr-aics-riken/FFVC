@@ -984,21 +984,22 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   string label;
   
   // ファイル名を取得
-  label="/Steer/Geometry_Model/Polylib_File";
+  label = "/Steer/Geometry_Model/Polylib_File";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid char* value in '/Steer/Geometry_Model/Polylib_File'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
     Exit(0);
   }
   PolylibConfigName = str;
   
-  // フィル媒質番号の指定
-  label="/Steer/Geometry_Model/Fill_Medium";
+  
+  // フィルの流体媒質番号の指定
+  label = "/Steer/Geometry_Model/Fluid_Medium_for_Fill";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value for '/Steer/Geometry_Model/Fill_Medium'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid value for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -1007,24 +1008,52 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
     
     if ( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
     {
-      Fill_Medium = i;
+      Fill_Fluid = i;
       break;
     }
   }
   
   // チェック
-  if ( Fill_Medium == 0 )
+  if ( Fill_Fluid == 0 )
   {
     Hostonly_ stamped_printf("\tError : Medium '%s' in not listed in 'Medium_Table'\n", str.c_str());
     Exit(0);
   }
   
-  // 流体セルのフィルのヒント
-  label="/Steer/Geometry_Model/Hint_of_Filling_Fluid";
+  
+  // フィルの固体媒質番号の指定
+  label = "/Steer/Geometry_Model/Solid_Medium_for_Fill";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in '/Steer/Geometry_Model/Hint_of_Filling_Fluid'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // ラベル名が媒質リストにあるか否かを確認
+  for (int i=1; i<=NoMedium; i++) {
+    
+    if ( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
+    {
+      Fill_Solid = i;
+      break;
+    }
+  }
+  
+  // チェック
+  if ( Fill_Solid == 0 )
+  {
+    Hostonly_ stamped_printf("\tError : Medium '%s' in not listed in 'Medium_Table'\n", str.c_str());
+    Exit(0);
+  }
+  
+  
+  // 流体セルのフィルのヒント
+  label = "/Steer/Geometry_Model/Hint_of_Filling_Fluid";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -1038,7 +1067,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
     else if( !strcasecmp(str.c_str(), "z_plus" ) )  Fill_Hint = Z_PLUS;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Geometry_Model/Hint_of_Filling_Fluid'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }

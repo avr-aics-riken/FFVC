@@ -117,8 +117,6 @@ private:
   
   REAL_TYPE deltaT; ///< 時間積分幅（無次元）
   
-  int id_of_solid; // Geometry Direct Interfaceでテスト的に固定ID=2を与える
-  
   int communication_mode; ///< synchronous, asynchronous
   
   int cf_sz[3];     ///< SOR2SMAの反復の場合のバッファサイズ

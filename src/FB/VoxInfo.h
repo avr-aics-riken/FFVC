@@ -292,22 +292,34 @@ public:
   
   
   /**
-   * @brief 流体媒質のフィルを実行
+   * @brief 流体媒質のフィルをbid情報を元に実行
    * @param [in,out] bid      カット点のID配列（5ビット幅x6方向）
    * @param [in,out] mid      ID配列
    * @param [in,out] cut      カット情報
    * @param [in]     tgt_id   フィルする流体ID
    * @param [in]     solid_id 固体ID
    */
-  unsigned fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
+  unsigned fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
+  
+  
+  /**
+   * @brief 流体媒質のフィルをmid情報を元に実行
+   * @param [in,out] bid      カット点のID配列（5ビット幅x6方向）
+   * @param [in,out] mid      ID配列
+   * @param [in,out] cut      カット情報
+   * @param [in]     tgt_id   フィルする流体ID
+   * @param [in]     solid_id 固体ID
+   */
+  unsigned fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
   
   
   /**
    * @brief 内部フィルを実行
-   * @param [in,out] mid      ID配列
-   * @param [in]     solid_id 固体ID
+   * @param [in,out] mid     ID配列
+   * @param [in]     target  置換対象ID
+   * @param [in]     fill_id 置換ID
    */
-  unsigned fill_inside(int* mid, const int solid_id);
+  unsigned fill_inside(int* mid, const int target, const int fill_id);
   
   /**
    * @brief シード点をペイントする

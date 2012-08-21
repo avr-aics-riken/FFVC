@@ -4015,12 +4015,14 @@ int VoxInfo::fill_check(const int* mid)
 }
 
 
+
 // #################################################################
 // 流体媒質のフィルを実行
-unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
+unsigned VoxInfo::fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
 {
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int qw, qe, qs, qn, qb, qt, qq;
+  int zw, ze, zs, zn, zb, zt, zp;
   
   int tg = tgt_id;
   int sd = solid_id;
@@ -4029,12 +4031,163 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
   int kx = size[2];
   int gd = guide;
   int c = 0; /// painted count
-  float cpos = 0.9; // なんとなく
+  float cpos = 0.5;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos) \
+private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
+private(qw, qe, qs, qn, qb, qt, qq) \
+private(zw, ze, zs, zn, zb, zt, zp) \
+schedule(static) reduction(+:c)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+#include "FindexS3D.h"
+        
+        zp = mid[m_p];
+        zw = mid[m_w];
+        ze = mid[m_e];
+        zs = mid[m_s];
+        zn = mid[m_n];
+        zb = mid[m_b];
+        zt = mid[m_t];
+        
+        // 未ペイントの場合にテスト
+        if ( zp == 0 )
+        {
+          qq = bid[m_p];
+          
+          // 隣接セルの方向に対するカットの有無>> 0ならばカット無し、チェック半径は1
+          qw = get_BID5(X_MINUS, qq);
+          qe = get_BID5(X_PLUS,  qq);
+          qs = get_BID5(Y_MINUS, qq);
+          qn = get_BID5(Y_PLUS,  qq);
+          qb = get_BID5(Z_MINUS, qq);
+          qt = get_BID5(Z_PLUS,  qq);
+          
+          // 各方向のテスト
+          // 例えば、W側をみてテストするとき、次の2つを満たす場合のみがテスト対象となる
+          // 1) W側のセルがフィルを行うターゲットID（Fluid）で既にペイントされている
+          // 2) 対象セルのカットIDのW方向がゼロ、つまりカットがない
+          
+          if ( (zw == tg) && (qw == 0) )
+          {
+            if ( (qw*qe != 0) || (qb*qt != 0) )
+            { // W方向からみて、面直平面のY, Z各方向の対辺を見て、Y,Zいずれかの対辺の両方にカットがある場合は塞ぐ
+              mid[m_p] = sd; // セルIDを固体に変更
+              set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
+              cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
+            }
+            else // フィルする
+            {
+              mid[m_p] = tg;
+              c++;
+            }
+          }
+          else if ( (zs == tg) && (qs == 0) )
+          {
+            if ( (qw*qe != 0) || (qb*qt != 0) )
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_s], Y_PLUS, sd);
+              cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
+            }
+            else
+            {
+              mid[m_p] = tg;
+              c++;
+            }
+          }
+          else if ( (zb == tg) && (qb == 0) )
+          {
+            if ( (qw*qe != 0) || (qs*qn != 0) )
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_b], Z_PLUS, sd);
+              cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
+            }
+            else
+            {
+              mid[m_p] = tg;
+              c++;
+            }
+          }
+          else if ( (zt == tg) && (qt == 0) )
+          {
+            if ( (qw*qe != 0) || (qs*qn != 0) )
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_t], Z_MINUS, sd);
+              cut[_F_IDX_S4DEX(Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
+            }
+            else
+            {
+              mid[m_p] = tg;
+              c++;
+            }
+          }
+          else if ( (zn == tg) && (qn == 0) )
+          {
+            if ( (qw*qe != 0) || (qb*qt != 0) )
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_n], Y_MINUS, sd);
+              cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
+            }
+            else
+            {
+              mid[m_p] = tg;
+              c++;
+            }
+          }
+          else if ( (ze == tg) && (qe == 0) )
+          {
+            if ( (qs*qn != 0) || (qb*qt != 0) )
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_e], X_MINUS, sd);
+              cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd)] = cpos;
+            }
+            else
+            {
+              mid[m_p] = tg;
+              c++;
+            }
+          }
+          
+        } // target
+      }
+    }
+  }
+  
+  return c;
+}
+
+// #################################################################
+// 流体媒質のフィルを実行
+unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
+{
+  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
+  int qw, qe, qs, qn, qb, qt, qq;
+  int zw, ze, zs, zn, zb, zt, zp;
+  
+  int tg = tgt_id;
+  int sd = solid_id;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int c = 0; /// painted count
+  float cpos = 0.5;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos) \
- private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
- private(qw, qe, qs, qn, qb, qt, qq) \
- schedule(static) reduction(+:c)
+  private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
+  private(qw, qe, qs, qn, qb, qt, qq) \
+  private(zw, ze, zs, zn, zb, zt, zp) \
+  schedule(static) reduction(+:c)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -4044,8 +4197,16 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 
 #include "FindexS3D.h"
         
+        zp = mid[m_p];
+        zw = mid[m_w];
+        ze = mid[m_e];
+        zs = mid[m_s];
+        zn = mid[m_n];
+        zb = mid[m_b];
+        zt = mid[m_t];
+        
         // 未ペイントの場合にテスト
-        if ( mid[m_p] == 0 )
+        if ( zp == tg )
         {
           qq = bid[m_p];
           
@@ -4058,99 +4219,69 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
           qt = get_BID5(Z_PLUS,  qq);
 
           
-          // 各方向のテスト
-          // 例えば、W側をみてテストするとき、次の2つを満たす場合のみがテスト対象となる
-          // 1) フィルを行うターゲットID（Fluid）で既にペイントされている
-          // 2) 対象セルのカットIDのW方向がゼロ、つまりカットがない
-          if ( (mid[m_w] == tg) && (qw == 0) )
-          //if ( !((i == 1) && (nID[X_MINUS] < 0)) && (mid[m_w] == tg) && (qw == 0) )
+          if ( ((zs != 0) && (zs != tg)  &&  // X平面：ゼロでなく、かつ、targetでもない ==> 固体
+                (zn != 0) && (zn != tg)) ||
+               ((zb != 0) && (zb != tg)  &&
+                (zt != 0) && (zt != tg)) )
           {
-            //if ( (qs * qn * qb * qt) == 0 )
-            //{ // 隣接セルの面直方向のいずれかはカットがなく、空きがある場合 >> 流体でペイントする
-              mid[m_p] = tg;
-              c++;
-            /*}
-            else
-            { // 面直方向の４方向が全てカット有り >> 1セルの空きがあるので固体で埋める
-              set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
+            
+            if ( (zw == tg) && (qw == 0) ) // from X-
+            {
               mid[m_p] = sd; // セルIDを固体に変更
+              set_BID5(bid[m_w], X_PLUS, sd); // カットIDを設定
               cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
-            //}*/
-          }
-          else if ( (mid[m_s] == tg) && (qs == 0) )
-          //else if ( !((j == 1) && (nID[Y_MINUS] < 0)) && (mid[m_s] == tg) && (qs == 0) )
-          {
-            //if ( (qw * qe * qb * qt) == 0 )
-            //{
-              mid[m_p] = tg;
               c++;
-            /*}
-            else
+            }
+            else if ( (ze == tg) && (qe == 0) ) // from X+
             {
-              set_BID5(bid[m_s], Y_PLUS, sd);
               mid[m_p] = sd;
-              cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
-            //}*/
-          }
-          else if ( (mid[m_b] == tg) && (qb == 0) )
-          //else if ( !((k == 1) && (nID[Z_MINUS] < 0)) && (mid[m_b] == tg) && (qb == 0) )
-          {
-            //if ( (qw * qe * qs * qn) == 0 )
-            //{
-              mid[m_p] = tg;
-              c++;
-            /*}
-            else
-            {
-              set_BID5(bid[m_b], Z_PLUS, sd);
-              mid[m_p] = sd;
-              cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
-            //}*/
-          }
-          else if ( (mid[m_t] == tg) && (qt == 0) )
-          //else if ( !((k == kx) && (nID[Z_PLUS] < 0)) && (mid[m_t] == tg) && (qt == 0) )
-          {
-            //if ( (qw * qe * qs * qn) == 0 )
-            //{
-              mid[m_p] = tg;
-              c++;
-            /*}
-            else
-            {
-              set_BID5(bid[m_t], Z_MINUS, sd);
-              mid[m_p] = sd;
-              cut[_F_IDX_S4DEX( Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
-            //}*/
-          }
-          else if ( (mid[m_n] == tg) && (qn == 0) )
-          //else if ( !((j == jx) && (nID[Y_PLUS] < 0)) && (mid[m_n] == tg) && (qn == 0) )
-          {
-            //if ( (qw * qe * qb * qt) == 0 )
-            //{
-              mid[m_p] = tg;
-              c++;
-            /*}
-            else
-            {
-              set_BID5(bid[m_n], Y_MINUS, sd);
-              mid[m_p] = sd;
-              cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
-            //}*/
-          }
-          else if ( (mid[m_e] == tg) && (qe == 0) )
-          //else if ( !((i == ix) && (nID[X_PLUS] < 0)) && (mid[m_e] == tg) && (qe == 0) )
-          {
-            //if ( (qs * qn * qb * qt) == 0 )
-            //{
-              mid[m_p] = tg;
-              c++;
-            /*}
-            else
-            {
               set_BID5(bid[m_e], X_MINUS, sd);
-              mid[m_p] = sd;
               cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd)] = cpos;
-            //}*/
+              c++;
+            }
+          }
+          
+          if ( ((zw != 0) && (zw != tg)  && // Y平面
+                (ze != 0) && (ze != tg)) ||
+               ((zb != 0) && (zb != tg)  &&
+                (zt != 0) && (zt != tg)) )
+          {
+            
+            if ( (zs == tg) && (qs == 0) ) // from Y-
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_s], Y_PLUS, sd);
+              cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
+              c++;
+            }
+            else if ( (zn == tg) && (qn == 0) ) // from Y+
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_n], Y_MINUS, sd);
+              cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
+              c++;
+            }
+          }
+          
+          if ( ((zw != 0) && (zw != tg)  && // Z平面
+                (ze != 0) && (ze != tg)) ||
+               ((zs != 0) && (zs != tg)  &&
+                (zn != 0) && (zn != tg)) )
+          {
+            if ( (zb == tg) && (qb == 0) ) // from Z-
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_b], Z_PLUS, sd);
+              cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
+              c++;
+            }
+            else if ( (zt == tg) && (qt == 0) ) // from Z+
+            {
+              mid[m_p] = sd;
+              set_BID5(bid[m_t], Z_MINUS, sd);
+              cut[_F_IDX_S4DEX(Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
+              c++;
+            }
           }
           
         } // target        
@@ -4164,10 +4295,10 @@ unsigned VoxInfo::fill_cell_edge(int* bid, int* mid, float* cut, const int tgt_i
 
 // #################################################################
 // 内部フィルを実行
-unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
+unsigned VoxInfo::fill_inside(int* mid, const int target, const int fill_id)
 {
-  int sd = solid_id;
-  size_t m;
+  int sd = fill_id;
+  int tg = target;
   
   int ix = size[0];
   int jx = size[1];
@@ -4175,21 +4306,21 @@ unsigned VoxInfo::fill_inside(int* mid, const int solid_id)
   int gd = guide;
   unsigned c = 0; /// painted count
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, sd) \
- private(m) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sd, tg) \
+        schedule(static) reduction(+:c)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
         // 未ペイントの場合
-        if ( mid[m] == 0 )
+        if ( mid[m] == tg )
         {
           mid[m] = sd;
           c++;
-        }      
+        }
       }
     }
   }
@@ -4244,7 +4375,7 @@ void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, 
 // #################################################################
 // シード点をペイントする
 // ヒントとして与えられた外部境界面に接するセルでカットが無い（つまり固体でない）セルをフィルする
-// もし，ヒント面に固体があればエラー
+// もし，ヒント面に固体があれば、ぬれ面はフィルしない
 unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, const float* cut)
 {
   int ix = size[0];
@@ -4252,7 +4383,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
   int kx = size[2];
   int gd = guide;
   unsigned long c = 0;
-  int g=0;
   
   
   switch (face)
@@ -4272,7 +4402,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
               if ( pos[l] <= 0.5 )
               {
                 flag++;
-                g++;
               }
             }
             
@@ -4302,7 +4431,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
               if ( pos[l] <= 0.5 )
               {
                 flag++;
-                g++;
               }
             }
             
@@ -4331,7 +4459,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
               if ( pos[l] <= 0.5 )
               {
                 flag++;
-                g++;
               }
             }
               
@@ -4360,7 +4487,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
               if ( pos[l] <= 0.5 )
               {
                 flag++;
-                g++;
               }
             }
             
@@ -4390,7 +4516,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
               if ( pos[l] <= 0.5 )
               {
                 flag++;
-                g++;
               }
             }
             
@@ -4420,7 +4545,6 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
               if ( pos[l] <= 0.5 )
               {
                 flag++;
-                g++;
               }
             }
             
@@ -4438,7 +4562,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
   } // end of switch
   
   // 固体面があれば，ゼロを返す（エラー）
-  return (g==0) ? c : 0;
+  return c;
 }
 
 

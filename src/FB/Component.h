@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file Component.h
- * @brief FlowBase CompoList class Header
+ * @file   Component.h
+ * @brief  FlowBase CompoList class Header
  * @author kero
  */
 

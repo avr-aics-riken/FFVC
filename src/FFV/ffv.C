@@ -40,7 +40,6 @@ FFV::FFV()
   CurrentStep_Avr = 0;
   
   REAL_TYPE deltaT; ///< 時間積分幅（無次元）
-  id_of_solid = 2;
   
   for (int i=0; i<3; i++) 
   {

@@ -277,7 +277,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  //>>
+
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
   B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
   
@@ -295,7 +295,7 @@ int FFV::Initialize(int argc, char **argv)
     V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(),
                       BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
-  //<<
+
   
   // Fill
   if ( (C.Mode.Example == id_Polygon) )
@@ -341,9 +341,6 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()につづく
-  //B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
-  
   // ボクセルのスキャン
   VoxScan(fp);
   
@@ -373,21 +370,6 @@ int FFV::Initialize(int argc, char **argv)
     return -1;
 	}
 
-  /*
-  // CompoList, MediumListのポインタをセット
-  BC.importCMP_MAT(cmp, mat);
-  
-  
-  // CompoListの設定，外部境界条件の読み込み保持
-  setBCinfo();
-  
-  
-  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
-  for (int face=0; face<NOFACE; face++)
-  {
-    V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(),
-                      BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
-  }*/
   
 
   // チェック出力　デバッグ
@@ -1333,6 +1315,39 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 // ポリゴンの場合のフィル操作
 void FFV::fill(FILE* fp)
 {
+  
+  // 指定媒質の属性をチェック
+  bool flag = false;
+  
+  for (int i=C.NoBC+1; i<=C.NoCompo; i++) {
+    if ( (cmp[i].getMatOdr() == C.Fill_Fluid) && (cmp[i].getState() == FLUID) )
+    {
+      flag = true;
+    }
+  }
+  if ( !flag )
+  {
+    Hostonly_ printf("\tSpecified Medium of filling fluid is not FLUID\n");
+    Exit(0);
+  }
+  
+  
+  flag = false;
+  for (int i=C.NoBC+1; i<=C.NoCompo; i++) {
+    if ( (cmp[i].getMatOdr() == C.Fill_Solid) && (cmp[i].getState() == SOLID) )
+    {
+      flag = true;
+    }
+  }
+  if ( !flag )
+  {
+    Hostonly_ printf("\tSpecified Medium of filling solid is not SOLID\n");
+    Exit(0);
+  }
+
+  
+  unsigned long fc;
+  
   // 最初にフィル対象のセル数を求める
   unsigned long fill_count = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
   unsigned long fs = 0;
@@ -1354,16 +1369,19 @@ void FFV::fill(FILE* fp)
   
   
   // 指定された媒質を使って、指定シード点を与える
-  int target_id = C.Fill_Medium;
   Hostonly_
   {
-    printf    ("\t\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
-    fprintf(fp,"\t\tFilled by medium     : %s\n\n", mat[target_id].getLabel().c_str());
+    printf    ("\t\tFilled by medium     : %s\n", mat[C.Fill_Fluid].getLabel().c_str());
+    fprintf(fp,"\t\tFilled by medium     : %s\n", mat[C.Fill_Fluid].getLabel().c_str());
   }
+  
+  
+  
+  // 1st pass
   
   if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
   {
-    fs = V.fill_seed(d_mid, C.Fill_Hint, target_id, d_cut);
+    fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut);
 
     if ( numProc > 1 )
     {
@@ -1380,20 +1398,33 @@ void FFV::fill(FILE* fp)
       }
       Exit(0);
     }
+    
+    Hostonly_
+    {
+      printf(    "\t\tPainted %ld by Hint (%s includes soid cell)\n", fs, FBUtility::getDirection(C.Fill_Hint).c_str());
+      fprintf(fp,"\t\tPainted %ld by Hint (%s includes soid cell)\n", fs, FBUtility::getDirection(C.Fill_Hint).c_str());
+    }
   }
 
   // シード分のカウントデクリメント
   fill_count -= fs;
-
   
+  Hostonly_
+  {
+    printf("\n");
+    fprintf(fp,"\n");
+  }
+
+
+  // BIDによるフィル
   int c=0;
   while (fill_count > 0) {
     
-    unsigned long fc = (unsigned long)V.fill_cell_edge(d_bid, d_mid, d_cut, target_id, id_of_solid);
-    unsigned long t_fc = fc;
+    fc = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid);
     
     if ( numProc > 1 )
     {
+      unsigned long t_fc = fc;
       if ( paraMngr->Allreduce(&t_fc, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
     
@@ -1413,9 +1444,119 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
-    fprintf(fp,"\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
+    printf(    "\t\tTry = %5d : 1st FLUID fill by BID = %15ld\n", c+1, fill_count);
+    fprintf(fp,"\t\tTry = %5d : 1st FLUID fill by BID = %15ld\n", c+1, fill_count);
   }
+  
+  
+  // midによる穴埋め
+  c = 0;
+  unsigned long z1 = 0;
+  unsigned long z2 = 0;
+  
+  while (fill_count > 0) {
+    
+    z1 = (unsigned long)V.fill_by_mid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid);
+    
+    if ( numProc > 1 )
+    {
+      unsigned long t_fc = z1;
+      if ( paraMngr->Allreduce(&t_fc, &z1, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    z2 += z1;
+    
+    if ( z1 == 0 ) break; // フィル対象がなくなったら終了
+
+    c++;
+    
+    // 同期
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    }
+  }
+  
+  Hostonly_
+  {
+    printf(    "\t\tTry = %5d : 1st SOLID fill by mid = %15ld\n", c+1, z2);
+    fprintf(fp,"\t\tTry = %5d : 1st SOLID fill by mid = %15ld\n", c+1, z2);
+  }
+  
+  
+  
+  // 2nd pass
+  
+  // clear
+  unsigned long fz = (unsigned long)V.fill_inside(d_mid, C.Fill_Fluid, 0);
+  
+  if ( numProc > 1 )
+  {
+    unsigned long t_fc = fz;
+    if ( paraMngr->Allreduce(&t_fc, &fz, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  fill_count += fz;
+  
+  
+  
+  if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
+  {
+    fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut);
+    
+    if ( numProc > 1 )
+    {
+      unsigned long tmp_fs = fs;
+      if ( paraMngr->Allreduce(&tmp_fs, &fs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    if ( fs == 0 )
+    {
+      Hostonly_
+      {
+        printf(    "Failed second painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        fprintf(fp,"Failed second painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+      }
+      Exit(0);
+    }
+  }
+  
+  
+  // BIDによるフィル
+  c = 0;
+  while (fill_count > 0) {
+    
+    fc = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid);
+    
+    if ( numProc > 1 )
+    {
+      unsigned long t_fc = fc;
+      if ( paraMngr->Allreduce(&t_fc, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    if ( fc == 0 ) break; // フィル対象がなくなったら終了
+    
+    fill_count -= fc;
+    c++;
+    
+    // 同期
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    }
+  }
+  
+  Hostonly_
+  {
+    printf(    "\t\tTry = %5d : 2nd FLUID fill by BID = %15ld\n\n", c+1, fill_count);
+    fprintf(fp,"\t\tTry = %5d : 2nd FLUID fill by BID = %15ld\n\n", c+1, fill_count);
+  }
+  
+
   
   
   // 固体に変更
@@ -1424,7 +1565,7 @@ void FFV::fill(FILE* fp)
   while ( fill_count > 0 ) {
     
     // 未ペイントのセルに対して、固体IDを与える
-    unsigned long fc = (unsigned long)V.fill_inside(d_mid, id_of_solid);
+    unsigned long fc = (unsigned long)V.fill_inside(d_mid, 0, C.Fill_Solid);
     unsigned long t_fc = fc;
     
     if ( numProc > 1 )
@@ -1450,8 +1591,6 @@ void FFV::fill(FILE* fp)
   
   
   // 確認 paintedは未ペイントセルがある場合に1
-  // Allreduce時の桁あふれ対策のため、unsigned long で集約
-  
   unsigned long painted = (unsigned long)V.fill_check(d_mid);
   
   if ( numProc > 1 )
@@ -1469,7 +1608,7 @@ void FFV::fill(FILE* fp)
     }
     Exit(0);
   }
-  
+  Ex->writeSVX(d_mid, &C); Exit(0);
 }
 
 

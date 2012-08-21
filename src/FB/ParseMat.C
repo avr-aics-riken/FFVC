@@ -17,6 +17,7 @@
 #include "ParseMat.h"
 
 
+// #################################################################
 // ラベルの重複を調べる
 bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label)
 {
@@ -27,6 +28,8 @@ bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string
 }
 
 
+
+// #################################################################
 // 取得したCompoList[]の内容を表示する
 void ParseMat::chkList(FILE* fp, CompoList* compo, const int basicEq)
 {
@@ -81,7 +84,7 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, const int basicEq)
 }
 
 
-
+// #################################################################
 // 媒質情報の内容物をチェックする
 bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 {
@@ -105,6 +108,7 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 
 
 
+// #################################################################
 // matの変数値を格納する
 void ParseMat::copyProperty(MediumList* mat, const int n)
 {
@@ -135,6 +139,7 @@ void ParseMat::copyProperty(MediumList* mat, const int n)
 
 
 
+// #################################################################
 // Medium_Tableを読んでMediumTableInfoクラスオブジェクトに格納
 int ParseMat::get_MediumTable()
 {
@@ -206,7 +211,7 @@ int ParseMat::get_MediumTable()
 }
 
 
-
+// #################################################################
 // MediumListを作成する
 bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
 {
@@ -238,6 +243,7 @@ bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
 
 
 
+// #################################################################
 // 警告メッセージの表示
 int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 {
@@ -249,6 +255,7 @@ int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 
 
 
+// #################################################################
 // 媒質情報の表示
 // Hostonly
 void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
@@ -279,6 +286,7 @@ void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
 }
 
 
+// #################################################################
 // CompoList[]とMediumList[]のチェック
 void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
 {  
@@ -304,7 +312,7 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
 }
 
 
-
+// #################################################################
 //TPのポインタを受け取る
 bool ParseMat::importTP(TPControl* tp) 
 { 
@@ -315,7 +323,7 @@ bool ParseMat::importTP(TPControl* tp)
 }
 
 
-
+// #################################################################
 // 媒質情報の初期化
 void ParseMat::setControlVars(const int m_NoCompo,
                               const int m_NoBC,
