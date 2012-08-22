@@ -5253,3 +5253,121 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       break;
   }
 }
+
+/**
+ @brief
+ */
+void SetBC3D::WriteBoundaryPLOT3D(FileIO_PLOT3D_WRITE* FP3DW, std::vector<std::string>& bcname)
+{
+  REAL_TYPE flop, tc;
+  int st[3], ed[3];
+  int typ;
+  int gd = guide;
+  
+  string ResultFlag;
+  int o_dir, c_dir;
+  int dir;
+  int gridnum;
+  
+  //write fvbnd header 1
+  FP3DW->WriteFVBNDHEAD1();
+  
+  //write boundary name
+  std::vector<std::string>::const_iterator it;
+  for (it = bcname.begin(); it != bcname.end(); it++) {
+    FP3DW->WriteSTRING((*it).c_str());
+  }
+  
+  //write fvbnd header 2
+  FP3DW->WriteFVBNDHEAD2();
+  
+  // 内部境界条件
+  for (int n=1; n<=NoBC; n++) {
+    
+    //typ = cmp[n].getType();
+    typ=0;
+    for (it = bcname.begin(); it != bcname.end(); it++) {
+      typ++;
+      if( FBUtility::compare( (*it).c_str(),cmp[n].getLabel().c_str() ) ) break;
+    }
+    
+    cmp[n].getBbox(st, ed);
+    
+    gridnum=1;//grid number
+    
+    //c_dir = cmp[n].getPeriodicDir();
+    //switch (c_dir) {
+    //  case X_MINUS: dir=-1; break;
+    //  case X_PLUS:  dir= 1; break;
+    //  case Y_MINUS: dir=-2; break;
+    //  case Y_PLUS:  dir= 2; break;
+    //  case Z_MINUS: dir=-3; break;
+    //  case Z_PLUS:  dir= 3; break;
+    //  default: Exit(0); break;
+    //}
+    dir=0;
+    
+#if 0
+    cout << endl;
+    cout << "face --- " << face << endl;
+    cout << st[0] << " " << st[1] << " " << st[2] << endl;
+    cout << ed[0] << " " << ed[1] << " " << ed[2] << endl;
+    cout << "typ = " << typ << endl;
+    cout << "gridnum = " << gridnum << endl;
+    cout << "dir = " << dir << endl;
+    cout << "name  " << obc[face].get_Alias().c_str() << endl;
+#endif
+    
+    ResultFlag="F";//T or F
+    FP3DW->WriteFVBND(
+                      typ,gridnum,
+                      st[0],ed[0],st[1],ed[1],
+                      st[2],ed[2],ResultFlag,dir);//dir = 0 : 面の法線方向を指定しない
+    
+  }
+  
+  // 外部境界条件
+  for (int face=0; face<NOFACE; face++) {
+    
+    //typ = obc[face].get_Class();
+    typ=0;
+    for (it = bcname.begin(); it != bcname.end(); it++) {
+      typ++;
+      if( FBUtility::compare( (*it).c_str(),obc[face].get_Alias().c_str() ) ) break;
+    }
+    
+    getOuterLoopIdx(face, st, ed);
+    
+    gridnum=1;//grid number
+    
+    //o_dir = obc[face].get_DriverDir();
+    //switch (face) {
+    //  case 0: dir=-1; break;//X_MINUS
+    //  case 1: dir= 1; break;//X_PLUS
+    //  case 2: dir=-2; break;//Y_MINUS
+    //  case 3: dir= 2; break;//Y_PLUS
+    //  case 4: dir=-3; break;//Z_MINUS
+    //  case 5: dir= 3; break;//Z_PLUS
+    //  default: Exit(0); break;
+    //}
+    dir=0;
+    
+#if 0
+    cout << endl;
+    cout << "face --- " << face << endl;
+    cout << st[0] << " " << st[1] << " " << st[2] << endl;
+    cout << ed[0] << " " << ed[1] << " " << ed[2] << endl;
+    cout << "typ = " << typ << endl;
+    cout << "gridnum = " << gridnum << endl;
+    cout << "dir = " << dir << endl;
+    cout << "name  " << obc[face].get_Alias().c_str() << endl;
+#endif
+    
+    ResultFlag="F";//T or F
+    FP3DW->WriteFVBND(
+                      typ,gridnum,
+                      st[0],ed[0],st[1],ed[1],
+                      st[2],ed[2],ResultFlag,dir);//dir = 0 : 面の法線方向を指定しない
+  }
+  
+}

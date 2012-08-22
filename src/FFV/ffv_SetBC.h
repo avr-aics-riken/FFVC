@@ -103,6 +103,12 @@ public:
   void updateOuter          (REAL_TYPE* d_v, REAL_TYPE* vc);
   
   REAL_TYPE setDirectForcing (REAL_TYPE* d_v, int* d_bx, int n, REAL_TYPE v00);
+  
+  /**
+   * @brief *.fvbndの書き出し
+   */
+  void WriteBoundaryPLOT3D(FileIO_PLOT3D_WRITE* FP3DW, std::vector<std::string>& bcname);
+  
 };
 
 #endif // _FFV_SETBC_H_

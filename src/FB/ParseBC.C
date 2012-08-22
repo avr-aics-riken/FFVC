@@ -16,6 +16,7 @@
 #include "ParseBC.h"
 
 
+// #################################################################
 // KOSと境界条件数の整合性をチェックする
 void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 {
@@ -42,7 +43,7 @@ void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 }
 
 
-
+// #################################################################
 // ラベルの重複を調べる
 bool ParseBC::chkDuplicate(const int n, const std::string m_label)
 {
@@ -53,7 +54,7 @@ bool ParseBC::chkDuplicate(const int n, const std::string m_label)
 }
 
 
-
+// #################################################################
 // KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
 void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 {
@@ -81,7 +82,7 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 }
 
 
-
+// #################################################################
 // 外部境界条件のキーワードを照合し， BCの文字列を返す
 std::string ParseBC::getOBCstr(const int id)
 {
@@ -98,7 +99,7 @@ std::string ParseBC::getOBCstr(const int id)
 }
 
 
-
+// #################################################################
 // 単位ベクトルを計算して戻す
 void ParseBC::getUnitVec(REAL_TYPE* v)
 {
@@ -119,7 +120,7 @@ void ParseBC::getUnitVec(REAL_TYPE* v)
 
 
 
-
+// #################################################################
 // LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
 // 境界条件数がゼロでもエラーではない
 int ParseBC::getNoLocalBC()
@@ -139,7 +140,7 @@ int ParseBC::getNoLocalBC()
 }
 
 
-
+// #################################################################
 // 境界条件の値(REAL_TYPE型)を取得し，返す
 REAL_TYPE ParseBC::get_BCval_real(const std::string label)
 {
@@ -153,7 +154,7 @@ REAL_TYPE ParseBC::get_BCval_real(const std::string label)
 }
 
 
-
+// #################################################################
 // 内部境界条件の座標値を取得し，登録する
 void ParseBC::get_Center(const std::string label_base, REAL_TYPE* v)
 {
@@ -170,6 +171,7 @@ void ParseBC::get_Center(const std::string label_base, REAL_TYPE* v)
 }
 
 
+// #################################################################
 // Darcyのパラメータを取得する
 void ParseBC::get_Darcy(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -199,7 +201,7 @@ void ParseBC::get_Darcy(const std::string label_base, const int n, CompoList* cm
 }
 
 
-
+// #################################################################
 // 内部境界条件の方向ベクトル値を取得し，登録する
 void ParseBC::get_Dir(const std::string label_base, REAL_TYPE* v)
 {
@@ -218,7 +220,7 @@ void ParseBC::get_Dir(const std::string label_base, REAL_TYPE* v)
 }
 
 
-
+// #################################################################
 // Direct Forcingのパラメータを取得する
 void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -252,7 +254,7 @@ void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n, CompoLis
 }
 
 
-
+// #################################################################
 // HeatExchangerのパラメータを取得する
 ///> @note この時点ではRefDensityの値が未定なので，あとでパラメータ処理
 ///> @see Control::setParameters()
@@ -351,7 +353,7 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n, CompoLi
 }
 
 
-
+// #################################################################
 // Fanのパラメータを取得する
 void ParseBC::get_IBC_Fan(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -415,7 +417,7 @@ void ParseBC::get_IBC_Fan(const std::string label_base, const int n, CompoList* 
 }
 
 
-
+// #################################################################
 // Monitorの設定内容をパースし，パラメータを保持する
 void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -620,7 +622,7 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, CompoLi
 }
 
 
-
+// #################################################################
 // 内部の周期境界のパラメータを取得する
 void ParseBC::get_IBC_Periodic(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -677,7 +679,7 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n, CompoL
 }
 
 
-
+// #################################################################
 // Adiabaticのパラメータを取得する
 void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -709,7 +711,7 @@ void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n, Compo
 
 
 
-
+// #################################################################
 // Direct_Fluxのパラメータを取得する
 void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -738,6 +740,7 @@ void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n, CompoL
 }
 
 
+// #################################################################
 // HeatTransfer_Nのパラメータを取得する
 void ParseBC::get_IBC_HT_N(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -767,7 +770,7 @@ void ParseBC::get_IBC_HT_N(const std::string label_base, const int n, CompoList*
 }
 
 
-
+// #################################################################
 // HeatTransfer_Sのパラメータを取得す
 void ParseBC::get_IBC_HT_S(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -803,7 +806,7 @@ void ParseBC::get_IBC_HT_S(const std::string label_base, const int n, CompoList*
 }
 
 
-
+// #################################################################
 // HeatTransfer_SNのパラメータを取得する
 void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -886,7 +889,7 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n, CompoList
 }
 
 
-
+// #################################################################
 // HeatTransfer_SFのパラメータを取得する
 void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -941,7 +944,7 @@ void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n, CompoList
 }
 
 
-
+// #################################################################
 // HeatTransfer_Bのパラメータを取得する
 void ParseBC::get_IBC_HT_B(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -975,7 +978,7 @@ void ParseBC::get_IBC_HT_B(const std::string label_base, const int n, CompoList*
 
 
 
-
+// #################################################################
 // 境界条件IsoThermalのパラメータを取得し保持する
 void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -1004,6 +1007,7 @@ void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n, CompoL
 }
 
 
+// #################################################################
 // 境界条件Radiantのパラメータを取得し保持する
 // 境界条件自体は未実装
 void ParseBC::get_IBC_Radiant(const std::string label_base, const int n, CompoList* cmp)
@@ -1036,7 +1040,7 @@ void ParseBC::get_IBC_Radiant(const std::string label_base, const int n, CompoLi
 }
 
 
-
+// #################################################################
 // Heat_Generationのパラメータを取得する
 void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -1089,7 +1093,7 @@ void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n, CompoLi
 }
 
 
-
+// #################################################################
 // Const_Temperatureのパラメータを取得する
 void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -1115,7 +1119,7 @@ void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n, CompoL
 }
 
 
-
+// #################################################################
 // 内部の流出境界のパラメータを取得する
 void ParseBC::get_IBC_Outflow(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -1182,7 +1186,7 @@ void ParseBC::get_IBC_Outflow(const std::string label_base, const int n, CompoLi
 }
 
 
-
+// #################################################################
 // 内部の流入境界のパラメータを取得する
 // Control::setparameters()でcmp[].ca[]に値をセットする
 void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoList* cmp)
@@ -1265,7 +1269,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
 }
 
 
-
+// #################################################################
 /**
  @fn void ParseBC::get_Medium_InitTemp(void)
  @brief 温度計算の場合の各媒質の初期値を取得する
@@ -1361,7 +1365,7 @@ void ParseBC::get_Medium_InitTemp()
 }
 
 
-
+// #################################################################
 // 内部境界条件の法線ベクトル値を取得し，登録する
 void ParseBC::get_NV(const std::string label_base, REAL_TYPE* v)
 {
@@ -1380,7 +1384,7 @@ void ParseBC::get_NV(const std::string label_base, REAL_TYPE* v)
 }
 
 
-
+// #################################################################
 /**
  @fn void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
  @brief 外部境界の壁面条件のパラメータを取得する
@@ -1472,7 +1476,7 @@ void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
 }
 
 
-
+// #################################################################
 /**
  @fn void ParseBC::get_OBC_Outflow(const string label_base, const int n)
  @brief 外部境界の流出条件のパラメータを取得する
@@ -1545,6 +1549,7 @@ void ParseBC::get_OBC_Outflow(const std::string label_base, const int n)
 }
 
 
+// #################################################################
 /**
  @fn void ParseBC::get_OBC_SpecVH(const std::string label_base, const int n)
  @brief 外部境界の流入条件のパラメータを取得する
@@ -1591,6 +1596,7 @@ void ParseBC::get_OBC_SpecVH(const std::string label_base, const int n)
 }
 
 
+// #################################################################
 /**
  @fn void ParseBC::get_OBC_Trcfree(const std::string label_base, const int n)
  @brief 外部境界の流入条件のパラメータを取得する
@@ -1624,6 +1630,7 @@ void ParseBC::get_OBC_Trcfree(const std::string label_base, const int n)
 }
 
 
+// #################################################################
 /**
  @fn void ParseBC::get_OBC_FarField(const std::string label_base, const int n)
  @brief 外部境界の遠方境界のパラメータを取得する
@@ -1658,7 +1665,7 @@ void ParseBC::get_OBC_FarField(const std::string label_base, const int n)
 }
 
 
-
+// #################################################################
 /**
  @fn void ParseBC::get_OBC_Periodic(const std::string label_base, const int n)
  @brief 外部境界の周期条件のパラメータを取得する
@@ -1768,6 +1775,7 @@ void ParseBC::get_OBC_Periodic(const std::string label_base, const int n)
 }
 
 
+// #################################################################
 /*
  @fn void ParseBC::get_OBC_HT(const std::string label_base, const int n, const std::string kind)
  @brief 外部の壁面熱伝達境界のパラメータを取得する
@@ -1896,6 +1904,7 @@ void ParseBC::get_OBC_HT(const std::string label_base, const int n, const std::s
 
 
 
+// #################################################################
 // 2相流問題で気相か液相かを取得する
 void ParseBC::get_Phase(CompoList* cmp)
 {
@@ -1989,7 +1998,7 @@ void ParseBC::get_Phase(CompoList* cmp)
 
 
 
-
+// #################################################################
 //@brief 外部境界の速度境界条件のタイプを取得し，返す
 int ParseBC::get_Vel_profile(const std::string label_base)
 {
@@ -2015,7 +2024,7 @@ int ParseBC::get_Vel_profile(const std::string label_base)
 }
 
 
-
+// #################################################################
 /**
  @fn void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
  @brief 速度のパラメータを取得する
@@ -2094,7 +2103,7 @@ void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_
 }
 
 
-
+// #################################################################
 // TPのポインタを受け取る
 void ParseBC::importTP(TPControl* tp) 
 { 
@@ -2103,7 +2112,7 @@ void ParseBC::importTP(TPControl* tp)
 }
 
 
-
+// #################################################################
 // コンポーネントが存在するかどうかを調べる
 bool ParseBC::isComponent(const int label, const CompoList* cmp)
 {
@@ -2114,7 +2123,7 @@ bool ParseBC::isComponent(const int label, const CompoList* cmp)
 }
 
 
-
+// #################################################################
 // HTコンポーネントが存在するかどうかを調べる
 bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 {
@@ -2125,7 +2134,7 @@ bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 }
 
 
-
+// #################################################################
 // 同じラベルが既にコンポーネントに登録されているかを調べる
 bool ParseBC::isLabelinCompo(const std::string candidate, const int now, const CompoList* cmp)
 {
@@ -2137,7 +2146,7 @@ bool ParseBC::isLabelinCompo(const std::string candidate, const int now, const C
 
 
 
-
+// #################################################################
 // 最初にBCの情報を登録，その後IDの情報を登録
 // パラメータファイルから各内部BCのidをパースし，cmpに保持する
 // 格納番号は1からスタート
@@ -2340,7 +2349,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
 }
 
 
-
+// #################################################################
 // パラメータファイルをパースして，外部境界条件を取得，保持する
 void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp)
 {
@@ -2614,7 +2623,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
 }
 
 
-
+// #################################################################
 // 外部境界面の反対方向を返す
 int ParseBC::oppositeDir(const int dir)
 {
@@ -2631,7 +2640,7 @@ int ParseBC::oppositeDir(const int dir)
 }
 
 
-
+// #################################################################
 // コンポーネントの情報を表示する
 void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc)
 {
@@ -3213,6 +3222,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 
 
 
+// #################################################################
 // 外部境界条件の各面の情報を表示する
 void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat)
 {
@@ -3229,6 +3239,7 @@ void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter
 
 
 
+// #################################################################
 // 速度の外部境界条件処理の表示
 void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat, const REAL_TYPE* G_reg, const int face)
 {
@@ -3407,6 +3418,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
 
 
 
+// #################################################################
 //@brief 変数の初期化
 void ParseBC::setControlVars(Control* Cref)
 {
@@ -3481,6 +3493,7 @@ void ParseBC::setControlVars(Control* Cref)
 
 
 
+// #################################################################
 // 内部境界条件のdef_faceを取得し，登録する
 void ParseBC::set_Deface(const std::string label_base, const int n, CompoList* cmp)
 {
@@ -3503,7 +3516,7 @@ void ParseBC::set_Deface(const std::string label_base, const int n, CompoList* c
 }
 
 
-
+// #################################################################
 //@brief 内部境界条件の照合を行う
 //@note SPEC_VEL_WHは陽には現れず，get_IBC_SpecVel()内で登録される
 void ParseBC::setKeywordLBC(const std::string keyword, const int m, CompoList* cmp)
@@ -3535,6 +3548,7 @@ void ParseBC::setKeywordLBC(const std::string keyword, const int m, CompoList* c
 }
 
 
+// #################################################################
 //@brief 外部境界条件のキーワードを照合し，コードを登録する
 void ParseBC::setKeywordOBC(const std::string keyword, const int m)
 {
@@ -3552,7 +3566,7 @@ void ParseBC::setKeywordOBC(const std::string keyword, const int m)
 }
 
 
-
+// #################################################################
 // 指定した媒質IDから参照物理量を設定する
 void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref)
 {
@@ -3584,4 +3598,24 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, 
   
   RefDensity      = rho;
   RefSpecificHeat = cp;
+}
+
+
+// #################################################################
+// 境界名の取得
+void ParseBC::GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp)
+{
+  std::string str;
+  
+  //inner boundary
+  for (int odr=1; odr<=NoBC; odr++) {
+    str=cmp[odr].getLabel();
+    bcname.push_back(str.c_str());
+  }
+  
+  //outer boundary
+  for (int i=0; i<NoBaseBC; i++) {
+    //cout << i << " : name = " << BaseBc[i].get_Alias().c_str() << endl;
+    bcname.push_back(BaseBc[i].get_Alias().c_str());
+  }
 }

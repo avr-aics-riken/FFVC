@@ -764,6 +764,8 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
     {
+      setValuePlot3D();
+      
       //初期値設定がまだ？すべて0になってるので出力停止?--->あとで調査
       OutputPlot3D_post(flop_task);
     }
@@ -844,7 +846,7 @@ int FFV::Initialize(int argc, char **argv)
   // 形状データの書き出し
   if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
   {
-    setValuePlot3D();
+    
     if(C.P3Op.IS_xyz == ON) OutputPlot3D_xyz();
     if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name(); 
     if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();

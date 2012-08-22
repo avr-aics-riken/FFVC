@@ -477,6 +477,15 @@ public:
   void get_Medium_InitTemp();
   
   
+  
+  /**
+   * @brief 境界名の取得
+   * @param [out] bcname 境界名vector
+   * @param [out] cmp    CompoList
+   */
+  void GetBoundaryNameforPLOT3D(std::vector<std::string>& bcname, CompoList* cmp);
+  
+  
   /**
    * @brief TPのポインタを受け取る
    * @param [in] tp  TPControlクラスのポインタ

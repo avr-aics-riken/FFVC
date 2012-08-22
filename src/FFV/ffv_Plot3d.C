@@ -43,7 +43,10 @@ void FFV::OutputPlot3D_xyz(const bool restart)
   int *id,*jd,*kd;
   REAL_TYPE *x,*y,*z;
   int *iblank;
-  
+
+  // ガイドセル出力
+  int gc_out = C.GuideOut;
+
   //allocate
   ngrid=C.P3Op.ngrid;
   id = new int[ngrid];
@@ -54,23 +57,28 @@ void FFV::OutputPlot3D_xyz(const bool restart)
   //for(igrid=0;igrid<ngrid;igrid++;){ //--->BCMでループが必要になる？
   
   igrid=0;
-  id[igrid]=size[0]+2*guide;//将来的にGRIDはBCMのブロックになる？
-  jd[igrid]=size[1]+2*guide;
-  kd[igrid]=size[2]+2*guide;
+  id[igrid]=size[0]+2*gc_out;
+  jd[igrid]=size[1]+2*gc_out;
+  kd[igrid]=size[2]+2*gc_out;
   
+  int out_length = id[igrid]*jd[igrid]*kd[igrid];
+
   //}//igrid loop
   
   
   //set filename
   
   // 出力ファイル名
-  std::string tmp;
-  
+  std::string tmp,rtmp;
+
   // 並列出力モード
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
-  
-  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "xyz", 0, myRank, pout);
-  if ( restart ) tmp = "restart_" + tmp; // リスタート用
+
+  rtmp = C.P3Op.basename;
+  if ( restart ) rtmp = "restart_" + rtmp;
+  tmp = DFI.Generate_FileName_Free(rtmp, "xyz", 0, myRank, pout);
+  //tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "xyz", 0, myRank, pout);
+  //if ( restart ) tmp = "restart_" + tmp; // リスタート用
   
   //open file
   FP3DW.setFileName(tmp.c_str());
@@ -99,13 +107,14 @@ void FFV::OutputPlot3D_xyz(const bool restart)
     for(int j=0;j<jd[igrid];j++){
       for(int i=0;i<id[igrid];i++){
         int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-        x[ip]=origin[0]+pitch[0]*(REAL_TYPE)i-pitch[0]*(REAL_TYPE)guide;
-        y[ip]=origin[1]+pitch[1]*(REAL_TYPE)j-pitch[1]*(REAL_TYPE)guide;
-        z[ip]=origin[2]+pitch[2]*(REAL_TYPE)k-pitch[2]*(REAL_TYPE)guide;
+        x[ip]=origin[0]+pitch[0]*(REAL_TYPE)i-pitch[0]*(REAL_TYPE)gc_out;
+        y[ip]=origin[1]+pitch[1]*(REAL_TYPE)j-pitch[1]*(REAL_TYPE)gc_out;
+        z[ip]=origin[2]+pitch[2]*(REAL_TYPE)k-pitch[2]*(REAL_TYPE)gc_out;
       }
     }
   }
-  
+
+
   //set iblank
   if(FP3DW.IsIBlankFlag()){
     iblank = new int[ id[igrid]*jd[igrid]*kd[igrid] ];
@@ -161,21 +170,21 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   REAL_TYPE *x,*y,*z;
   int *nvar;
   REAL_TYPE *d;
-  
+
   //
   REAL_TYPE scale = 1.0;
   int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  
+
   // 出力用のヘッダ
   REAL_TYPE m_org[3], m_pit[3];
-  
+
   //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
   for (int i=0; i<3; i++)
   {
     m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
     m_pit[i] = pitch[i];
   }
-  
+
   // 出力ファイルの指定が有次元の場合
   if ( C.Unit.File == DIMENSIONAL )
   {
@@ -185,7 +194,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
       m_pit[i] *= C.RefLength;
     }
   }
-  
+
   // ステップ数
   int m_step = (int)CurrentStep;
   
@@ -199,7 +208,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   {
     m_time = (REAL_TYPE)CurrentTime;
   }
-  
+
   // ガイドセル出力
   int gc_out = C.GuideOut;
   
@@ -215,23 +224,28 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   //for(igrid=0;igrid<ngrid;igrid++;){ //--->BCMでループが必要になる？
   
   igrid=0;
-  id[igrid]=size[0]+2*guide;//将来的にGRIDはBCMのブロックになる？
-  jd[igrid]=size[1]+2*guide;
-  kd[igrid]=size[2]+2*guide;
+  id[igrid]=size[0]+2*gc_out;
+  jd[igrid]=size[1]+2*gc_out;
+  kd[igrid]=size[2]+2*gc_out;
   nvar[igrid]=C.P3Op.nvar;
   
+  int out_length = id[igrid]*jd[igrid]*kd[igrid];
+
   //}//igrid loop
-  
+
   //set filename
   
   // 出力ファイル名
-  std::string tmp;
+  std::string tmp,rtmp;
   
   // 並列出力モード
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
   
-  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "func", m_step, myRank, pout);
-  if ( restart ) tmp = "restart_" + tmp; // リスタート用
+  rtmp = C.P3Op.basename;
+  if ( restart ) rtmp = "restart_" + rtmp;
+  tmp = DFI.Generate_FileName_Free(rtmp, "func", m_step, myRank, pout);
+  //tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "func", m_step, myRank, pout);
+  //if ( restart ) tmp = "restart_" + tmp; // リスタート用
   
   //open file
   FP3DW.setFileName(tmp.c_str());
@@ -245,7 +259,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   FP3DW.WriteFuncBlockData(id,jd,kd,nvar,ngrid);
   
   //write function data
-  
+
   //for(igrid=0;igrid<ngrid;igrid++;){ //--->BCMでループが必要になる？
   
   igrid=0;
@@ -268,12 +282,25 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
   }
   
-  //F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
-  for(int k=0;k<kd[igrid];k++){
-    for(int j=0;j<jd[igrid];j++){
-      for(int i=0;i<id[igrid];i++){
-        int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-        d[ip+d_length*ivar]=d_ws[ip];
+  if(gc_out==0){
+
+    for(int k=0+guide;k<kd[igrid]+guide;k++){
+      for(int j=0+guide;j<jd[igrid]+guide;j++){
+        for(int i=0+guide;i<id[igrid]+guide;i++){
+          int ip1=k*(id[igrid]+2*guide)*(jd[igrid]+2*guide)+j*(id[igrid]+2*guide)+i;
+          int ip2=(k-guide)*id[igrid]*jd[igrid]+(j-guide)*id[igrid]+(i-guide);
+          d[ip2+out_length*ivar]=d_ws[ip1];
+        }
+      }
+    }
+  }
+  else{
+    for(int k=0;k<kd[igrid];k++){
+      for(int j=0;j<jd[igrid];j++){
+        for(int i=0;i<id[igrid];i++){
+          int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
+          d[ip+out_length*ivar]=d_ws[ip];
+        }
       }
     }
   }
@@ -282,20 +309,35 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
-  
+
   //F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out);
-  for(int k=0;k<kd[igrid];k++){
-    for(int j=0;j<jd[igrid];j++){
-      for(int i=0;i<id[igrid];i++){
-        int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-        d[ip+d_length*(ivar+0)]=d_wo[ip*3+0];
-        d[ip+d_length*(ivar+1)]=d_wo[ip*3+1];
-        d[ip+d_length*(ivar+2)]=d_wo[ip*3+2];
+  if(gc_out==0){
+    for(int k=0+guide;k<kd[igrid]+guide;k++){
+      for(int j=0+guide;j<jd[igrid]+guide;j++){
+        for(int i=0+guide;i<id[igrid]+guide;i++){
+          int ip1=k*(id[igrid]+2*guide)*(jd[igrid]+2*guide)+j*(id[igrid]+2*guide)+i;
+          int ip2=(k-guide)*id[igrid]*jd[igrid]+(j-guide)*id[igrid]+(i-guide);
+          d[ip2+out_length*(ivar+0)]=d_wo[ip1*3+0];
+          d[ip2+out_length*(ivar+1)]=d_wo[ip1*3+1];
+          d[ip2+out_length*(ivar+2)]=d_wo[ip1*3+2];
+        }
+      }
+    }
+  }
+  else{
+    for(int k=0;k<kd[igrid];k++){
+      for(int j=0;j<jd[igrid];j++){
+        for(int i=0;i<id[igrid];i++){
+          int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
+          d[ip+out_length*(ivar+0)]=d_wo[ip*3+0];
+          d[ip+out_length*(ivar+1)]=d_wo[ip*3+1];
+          d[ip+out_length*(ivar+2)]=d_wo[ip*3+2];
+        }
       }
     }
   }
   ivar=ivar+3;
-  
+
   // Tempearture
   if( C.isHeatProblem() )
   {
@@ -309,17 +351,30 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
       fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
     }
     
-    for(int k=0;k<kd[igrid];k++){
-      for(int j=0;j<jd[igrid];j++){
-        for(int i=0;i<id[igrid];i++){
-          int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-          d[ip+d_length*ivar]=d_ws[ip];
+    if(gc_out==0){
+      for(int k=0+guide;k<kd[igrid]+guide;k++){
+        for(int j=0+guide;j<jd[igrid]+guide;j++){
+          for(int i=0+guide;i<id[igrid]+guide;i++){
+            int ip1=k*(id[igrid]+2*guide)*(jd[igrid]+2*guide)+j*(id[igrid]+2*guide)+i;
+            int ip2=(k-guide)*id[igrid]*jd[igrid]+(j-guide)*id[igrid]+(i-guide);
+            d[ip2+out_length*ivar]=d_ws[ip1];
+          }
+        }
+      }
+    }
+    else{
+      for(int k=0;k<kd[igrid];k++){
+        for(int j=0;j<jd[igrid];j++){
+          for(int i=0;i<id[igrid];i++){
+            int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
+            d[ip+out_length*ivar]=d_ws[ip];
+          }
         }
       }
     }
     ivar++;
   }
-  
+
   // Total Pressure
   if (C.Mode.TP == ON ) {
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
@@ -335,17 +390,30 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
       tp = d_ws; d_ws = d_p0; d_p0 = tp;
     }
     
-    for(int k=0;k<kd[igrid];k++){
-      for(int j=0;j<jd[igrid];j++){
-        for(int i=0;i<id[igrid];i++){
-          int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-          d[ip+d_length*ivar]=d_ws[ip];
+    if(gc_out==0){
+      for(int k=0+guide;k<kd[igrid]+guide;k++){
+        for(int j=0+guide;j<jd[igrid]+guide;j++){
+          for(int i=0+guide;i<id[igrid]+guide;i++){
+            int ip1=k*(id[igrid]+2*guide)*(jd[igrid]+2*guide)+j*(id[igrid]+2*guide)+i;
+            int ip2=(k-guide)*id[igrid]*jd[igrid]+(j-guide)*id[igrid]+(i-guide);
+            d[ip2+out_length*ivar]=d_ws[ip1];
+          }
+        }
+      }
+    }
+    else{
+      for(int k=0;k<kd[igrid];k++){
+        for(int j=0;j<jd[igrid];j++){
+          for(int i=0;i<id[igrid];i++){
+            int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
+            d[ip+out_length*ivar]=d_ws[ip];
+          }
         }
       }
     }
     ivar++;
   }
-  
+
   // Vorticity
   if (C.Mode.VRT == ON )
   {
@@ -356,19 +424,35 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
-    for(int k=0;k<kd[igrid];k++){
-      for(int j=0;j<jd[igrid];j++){
-        for(int i=0;i<id[igrid];i++){
-          int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-          d[ip+d_length*(ivar+0)]=d_wo[ip*3+0];
-          d[ip+d_length*(ivar+1)]=d_wo[ip*3+1];
-          d[ip+d_length*(ivar+2)]=d_wo[ip*3+2];
+    if(gc_out==0){
+      for(int k=0+guide;k<kd[igrid]+guide;k++){
+        for(int j=0+guide;j<jd[igrid]+guide;j++){
+          for(int i=0+guide;i<id[igrid]+guide;i++){
+            int ip1=k*(id[igrid]+2*guide)*(jd[igrid]+2*guide)+j*(id[igrid]+2*guide)+i;
+            int ip2=(k-guide)*id[igrid]*jd[igrid]+(j-guide)*id[igrid]+(i-guide);
+            d[ip2+out_length*(ivar+0)]=d_wo[ip1*3+0];
+            d[ip2+out_length*(ivar+1)]=d_wo[ip1*3+1];
+            d[ip2+out_length*(ivar+2)]=d_wo[ip1*3+2];
+          }
+        }
+      }
+    }
+    else{
+      for(int k=0;k<kd[igrid];k++){
+        for(int j=0;j<jd[igrid];j++){
+          for(int i=0;i<id[igrid];i++){
+            int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
+            d[ip+out_length*(ivar+0)]=d_wo[ip*3+0];
+            d[ip+out_length*(ivar+1)]=d_wo[ip*3+1];
+            d[ip+out_length*(ivar+2)]=d_wo[ip*3+2];
+          }
         }
       }
     }
     ivar=ivar+3;
   }
-  
+
+
   //// 2nd Invariant of Velocity Gradient Tensor
   //if (C.Mode.I2VGT == ON ) {
   //}
@@ -382,11 +466,24 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     
-    for(int k=0;k<kd[igrid];k++){
-      for(int j=0;j<jd[igrid];j++){
-        for(int i=0;i<id[igrid];i++){
-          int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
-          d[ip+d_length*ivar]=d_ws[ip];
+    if(gc_out==0){
+      for(int k=0+guide;k<kd[igrid]+guide;k++){
+        for(int j=0+guide;j<jd[igrid]+guide;j++){
+          for(int i=0+guide;i<id[igrid]+guide;i++){
+            int ip1=k*(id[igrid]+2*guide)*(jd[igrid]+2*guide)+j*(id[igrid]+2*guide)+i;
+            int ip2=(k-guide)*id[igrid]*jd[igrid]+(j-guide)*id[igrid]+(i-guide);
+            d[ip2+out_length*ivar]=d_ws[ip1];
+          }
+        }
+      }
+    }
+    else{
+      for(int k=0;k<kd[igrid];k++){
+        for(int j=0;j<jd[igrid];j++){
+          for(int i=0;i<id[igrid];i++){
+            int ip=k*id[igrid]*jd[igrid]+j*id[igrid]+i;
+            d[ip+out_length*ivar]=d_ws[ip];
+          }
         }
       }
     }
@@ -396,9 +493,9 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   //write all
   FP3DW.setFuncData(ivar,d);
   if(!FP3DW.WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
-  
+
   delete [] d;
-  
+
   //}//igrid loop
   
   //close file
@@ -474,56 +571,8 @@ void FFV::OutputPlot3D_function_name()
 //
 void FFV::OutputPlot3D_fvbnd()
 {
-  //return;
-  
   //HostRankでデータ集約する？
   //if(myRank != 0 ) return;
-  
-  //set debug test data
-  int nbname=5;
-  int nb=3;
-  int type[3];
-  int gridnum[3];
-  int Imin[3];
-  int Imax[3];
-  int Jmin[3];
-  int Jmax[3];
-  int Kmin[3];
-  int Kmax[3];
-  int dir[3];
-  string ResultFlag;
-
-  type[0]=1;
-  gridnum[0]=1;
-  Imin[0]=1;
-  Imax[0]=1;
-  Jmin[0]=1;
-  Jmax[0]=11;
-  Kmin[0]=12;
-  Kmax[0]=441;
-  dir[0]=1;
-  
-  type[1]=4;
-  gridnum[1]=2;
-  Imin[1]=1;
-  Imax[1]=1;
-  Jmin[1]=1;
-  Jmax[1]=3;
-  Kmin[1]=6;
-  Kmax[1]=66;
-  dir[1]=0;
-  
-  type[2]=5;
-  gridnum[2]=3;
-  Imin[2]=1;
-  Imax[2]=1;
-  Jmin[2]=1;
-  Jmax[2]=44;
-  Kmin[2]=53;
-  Kmax[2]=3;
-  dir[2]=0;
-
-// write start
 
   //fvbndファイルはかならずformatted形式
   int keep_format=FP3DW.GetFormat();
@@ -535,7 +584,8 @@ void FFV::OutputPlot3D_fvbnd()
   // 並列出力モード
   bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
   
-  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "fvbnd", 0, myRank, pout);
+  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "xyz", 0, myRank, pout);
+  tmp = tmp + ".fvbnd";
   
   //open file
   FP3DW.setFileName(tmp.c_str());
@@ -544,101 +594,26 @@ void FFV::OutputPlot3D_fvbnd()
     Exit(0);
   }
 
-  //write fvbnd header 1
-  FP3DW.WriteFVBNDHEAD1();
+  //境界名の取得--->将来的に独立ルーチンにして名前だけ保持し続ける？*.fvbndが複数の場合に対処
+  vector<string> bcname;
+  bcname.clear();
+  B.GetBoundaryNameforPLOT3D(bcname,cmp);
 
-  //write boundary name
-  FP3DW.WriteSTRING("wall");
-  FP3DW.WriteSTRING("slide wall");
-  FP3DW.WriteSTRING("outflow");
-  FP3DW.WriteSTRING("inflow");
-  FP3DW.WriteSTRING("synmmetry");
-  
-  //write fvbnd header 2
-  FP3DW.WriteFVBNDHEAD2();
-
-  //write boundary condition
-  for(int i=0;i<nb;i++){
-    ResultFlag="T";//T or F
-    FP3DW.WriteFVBND(
-      type[i],gridnum[i],
-      Imin[i],Imax[i],Jmin[i],Jmax[i],
-      Kmin[i],Kmax[i],ResultFlag,dir[i]);
+#if 0
+  vector<string>::const_iterator it;
+  for (it = bcname.begin(); it != bcname.end(); it++) {
+    cout << "name = " << (*it).c_str() << endl;
   }
+#endif
+
+  //write boundary
+  BC.WriteBoundaryPLOT3D(&FP3DW,bcname);
 
   //close file
   FP3DW.CloseFile();
   
   //reset option
   if(!FP3DW.setFormat(keep_format)) std::cout << "error set" << std::endl;
-  
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-// read test start ////////////////////////////////////////////////////////////
 
-  keep_format=FP3DR.GetFormat();
-  if(!FP3DR.setFormat(2)) std::cout << "error set" << std::endl;
-  
-  // 並列出力モード
-  pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
-  
-  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "fvbnd", 0, myRank, pout);
-  
-  //open file
-  FP3DR.setFileName(tmp.c_str());
-  if(!FP3DR.OpenFile()){
-    Hostonly_ printf("Error : error OpenFile\n");
-    Exit(0);
-  }
-
-  string buff;
-
-  //read fvbnd header 1
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-
-  //read boundary name
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-
-  //read fvbnd header 2
-  FP3DR.ReadSTRING(&buff);
-  cout << buff << endl;
-
-  //write boundary condition
-  int l_type, l_gridnum;
-  int l_Imin, l_Imax, l_Jmin, l_Jmax, l_Kmin, l_Kmax;
-  string l_ResultFlag;
-  int l_dir;
-  for(int i=0;i<nb;i++){
-    FP3DR.ReadFVBND(
-      &l_type, &l_gridnum, 
-      &l_Imin, &l_Imax, &l_Jmin, &l_Jmax,
-      &l_Kmin, &l_Kmax, &l_ResultFlag, &l_dir);
-    cout << "type = " << l_type << endl;
-    cout << "gridnum = " << l_gridnum << endl;
-    cout << "Imin = " << l_Imin << endl;
-    cout << "Imax = " << l_Imax << endl;
-    cout << "Jmin = " << l_Jmin << endl;
-    cout << "Jmax = " << l_Jmax << endl;
-    cout << "Kmin = " << l_Kmin << endl;
-    cout << "Kmax = " << l_Kmax << endl;
-    cout << "ResultFlag = " << l_ResultFlag << endl;
-    cout << "dir = " << l_dir << endl;
-  }
-
-  //close file
-  FP3DR.CloseFile();
-  
-  //reset option
-  if(!FP3DR.setFormat(keep_format)) std::cout << "error set" << std::endl;
-
+  return;
 }
