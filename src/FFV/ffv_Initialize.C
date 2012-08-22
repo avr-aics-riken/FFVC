@@ -1599,7 +1599,7 @@ void FFV::fill(FILE* fp)
     }
     Exit(0);
   }
-  Ex->writeSVX(d_mid, &C); Exit(0);
+
 }
 
 
