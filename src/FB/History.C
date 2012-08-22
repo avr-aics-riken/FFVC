@@ -46,7 +46,7 @@ void History::printHistoryItr(FILE* fp, const int itr, const REAL_TYPE nrm, cons
 
 // #################################################################
 // 標準履歴モニタのヘッダー出力
-void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C)
+void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, const bool disp)
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
@@ -107,13 +107,18 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C)
     fprintf(fp, "     deltaT       avrT");
   }
   
+  if ( disp )
+  {
+    fprintf(fp, "     time[sec]");
+  }
+  
   fprintf(fp, "\n");
 }
 
 
 // #################################################################
 // 標準履歴の出力
-void History::printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C)
+void History::printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C, const double stptm, const bool disp)
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  ///< 粘性項のCrank-Nicolson反復
@@ -160,6 +165,10 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
     fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
   }
   
+  if ( disp )
+  {
+    fprintf(fp, "%14.6e", stptm);
+  }
   fprintf(fp, "\n");
   fflush(fp);
 }

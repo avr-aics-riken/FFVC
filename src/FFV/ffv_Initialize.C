@@ -2284,7 +2284,7 @@ void FFV::prep_HistoryOutput()
   H = new History(&C);
   
   Hostonly_ {
-    H->printHistoryTitle(stdout, IC, &C);
+    H->printHistoryTitle(stdout, IC, &C, true);
     
     // コンポーネント情報
     if ( C.Mode.Log_Base == ON ) 
@@ -2295,7 +2295,7 @@ void FFV::prep_HistoryOutput()
         stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryName.c_str());
         Exit(0);
       }
-      H->printHistoryTitle(fp_b, IC, &C);
+      H->printHistoryTitle(fp_b, IC, &C, false);
       
       // コンポーネント履歴情報
       if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) 

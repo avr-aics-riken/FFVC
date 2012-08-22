@@ -106,6 +106,8 @@ private:
   double Session_StartTime;     ///< セッションの開始時間
   double Session_CurrentTime;   ///< セッションの現在時間
   
+  double step_start;            ///< 1stepのelapse time(sec)
+  
   unsigned CurrentStep;         ///< 計算開始からの積算ステップ（ケース）
   unsigned CurrentStep_Avr;     ///< 平均操作の積算ステップ数（ケース）
   unsigned Session_StartStep;   ///< セッションの開始ステップ

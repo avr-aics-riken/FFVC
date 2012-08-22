@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file main.C
- * @brief ffvのmain関数
+ * @file   main.C
+ * @brief  ffvのmain関数
  * @author kero
  */
 

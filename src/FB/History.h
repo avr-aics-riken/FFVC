@@ -202,13 +202,15 @@ public:
   
   /**
    * @brief 標準履歴の出力
-   * @param [in] fp  出力ファイルポインタ
-   * @param [in] avr 1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
-   * @param [in] rms 1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
-   * @param [in] IC  ItrCtlクラスのポインタ
-   * @param [in] C   Controlクラスへのポインタ
+   * @param [in] fp    出力ファイルポインタ
+   * @param [in] avr   1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] rms   1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] IC    ItrCtlクラスのポインタ
+   * @param [in] C     Controlクラスへのポインタ
+   * @param [in] stptm 1タイムステップの計算時間
+   * @param [in] disp  計算時間表示の有無
    */
-  void printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C);
+  void printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C, const double stptm, const bool disp);
   
   
   /**
@@ -216,8 +218,9 @@ public:
    * @param [in] fp 出力ファイルポインタ
    * @param [in] IC 反復管理クラス
    * @param [in] C  制御クラス
+   * @param [in] disp  計算時間表示の有無
    */
-  void printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C);
+  void printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, const bool disp);
   
   
   /**

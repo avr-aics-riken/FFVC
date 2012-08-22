@@ -20,6 +20,10 @@
 // タイムステップループの処理
 int FFV::Loop(const unsigned step) 
 {
+  // 1 step elapse
+  step_start = cpm_Base::GetWTime();
+  double step_end;
+  
   double flop_count=0.0;   /// 浮動小数演算数
   double avr_Var[3];       /// 平均値（速度、圧力、温度）
   double rms_Var[3];       /// 変動値
@@ -184,16 +188,7 @@ int FFV::Loop(const unsigned step)
   // Historyクラスのタイムスタンプを更新
   H->updateTimeStamp(CurrentStep, (REAL_TYPE)CurrentTime, vMax);
   
-  // 基本履歴情報をコンソールに出力
-  if ( C.Mode.Log_Base == ON) 
-  {
-    if ( C.Interval[Interval_Manager::tg_console].isTriggered(CurrentStep, CurrentTime) ) 
-    {
-      TIMING_start(tm_hstry_stdout);
-      Hostonly_ H->printHistory(stdout, avr_Var, rms_Var, IC, &C);
-      TIMING_stop(tm_hstry_stdout, 0.0);
-    }
-  }
+  
   
   // 瞬時値のデータ出力
   
@@ -275,6 +270,21 @@ int FFV::Loop(const unsigned step)
   }
   
   
+  // 1 step elapse
+  step_end = cpm_Base::GetWTime() - step_start;
+  
+  
+  // 基本履歴情報をコンソールに出力
+  if ( C.Mode.Log_Base == ON)
+  {
+    if ( C.Interval[Interval_Manager::tg_console].isTriggered(CurrentStep, CurrentTime) )
+    {
+      TIMING_start(tm_hstry_stdout);
+      Hostonly_ H->printHistory(stdout, avr_Var, rms_Var, IC, &C, step_end, true);
+      TIMING_stop(tm_hstry_stdout, 0.0);
+    }
+  }
+  
   
   // 履歴のファイル出力
   if ( C.Interval[Interval_Manager::tg_history].isTriggered(CurrentStep, CurrentTime) ) 
@@ -284,7 +294,7 @@ int FFV::Loop(const unsigned step)
     if ( C.Mode.Log_Base == ON ) 
     {
       TIMING_start(tm_hstry_base);
-      Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C);
+      Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C, step_end, false);
       TIMING_stop(tm_hstry_base, 0.0);
     }
     
