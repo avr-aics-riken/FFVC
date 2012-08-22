@@ -56,7 +56,7 @@ public:
   };
   
   Interval_Manager() {
-    id         = 0;
+    id         = -1;
     mode       = 0;
     intvl_step = 0;
     next_step  = 0;

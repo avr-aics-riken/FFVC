@@ -554,11 +554,11 @@ void Control::get_Average_option()
   // 平均操作開始時間
   if ( Mode.Average == ON )
   {
-	  label="/Steer/Average_option/Start_Type";
+	  label = "/Steer/Average_option/Start_Type";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Average_option/Start_Type'\n");
+		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
 	  }
 	  else
@@ -573,14 +573,14 @@ void Control::get_Average_option()
 		  }
 		  else
       {
-			  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/Average_option/Start_Type'\n");
+			  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
 			  Exit(0);
 		  }
 		  
-		  label="/Steer/Average_option/Start";
+		  label = "/Steer/Average_option/Start";
 		  if ( !(tpCntl->GetValue(label, &ct )) )
       {
-			  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Average_option/Start'\n");
+			  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 			  Exit(0);
 		  }
 		  else
@@ -3866,7 +3866,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
         break;
 		}
 	}
-	else { // CONJUGATE_HEAT_TRANSFER
+	else
+  { // CONJUGATE_HEAT_TRANSFER
 		;
 	}
   
@@ -3877,21 +3878,9 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // タイミングパラメータの無次元化
   Tscale = RefLength / RefVelocity;
   
-  // 入力モードが有次元の場合に，無次元に変換
-  if ( Unit.Param == DIMENSIONAL ) {
-    Interval[Interval_Manager::tg_compute].normalizeInterval(Tscale);
-    Interval[Interval_Manager::tg_console].normalizeInterval(Tscale);
-    Interval[Interval_Manager::tg_history].normalizeInterval(Tscale);
-    Interval[Interval_Manager::tg_instant].normalizeInterval(Tscale);
-    Interval[Interval_Manager::tg_average].normalizeInterval(Tscale);
-    Interval[Interval_Manager::tg_accelra].normalizeInterval(Tscale);
-    Interval[Interval_Manager::tg_avstart].normalizeInterval(Tscale);
-  }
   
-  // Reference frame
-  RF->setAccel( Interval[Interval_Manager::tg_accelra].getIntervalTime() );
-  
-  if ( Unit.Param == DIMENSIONAL ) {
+  if ( Unit.Param == DIMENSIONAL )
+  {
     double g[3];
     RF->copyGridVel(g);
     g[0] /= (double)RefVelocity;

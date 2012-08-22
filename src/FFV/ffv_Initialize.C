@@ -820,18 +820,7 @@ int FFV::Initialize(int argc, char **argv)
     printf("\n\n");
     fprintf(fp, "\n\n");
   }
-  /*
-  printf("CurrentTime         = %e\n",CurrentTime);
-  printf("CurrentTime_Avr     = %e\n",CurrentTime_Avr);
-  printf("Session_StartTime   = %e\n",Session_StartTime);
-  printf("Session_CurrentTime = %e\n",Session_CurrentTime);
-  
-  printf("Session_LastStep    = %u\n",Session_LastStep);
-  printf("Session_CurrentStep = %u\n",Session_CurrentStep);
-  printf("Session_StartStep   = %u\n",Session_StartStep);
-  printf("CurrentStep         = %u\n",CurrentStep);
-  printf("CurrentStep_Avr     = %u\n",CurrentStep_Avr);
-  */
+
   
   // 履歴出力準備
   prep_HistoryOutput();
@@ -2153,6 +2142,24 @@ void FFV::init_Interval()
     C.Interval[i].setTime_init(Session_StartTime);
   }
   
+  
+  // 入力モードが有次元の場合に，無次元に変換
+  if ( C.Unit.Param == DIMENSIONAL )
+  {
+    C.Interval[Interval_Manager::tg_compute].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_console].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_history].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_instant].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_average].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_accelra].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_avstart].normalizeInterval(C.Tscale);
+  }
+  
+  // Reference frame
+  RF.setAccel( C.Interval[Interval_Manager::tg_accelra].getIntervalTime() );
+  
+  
+  
   // インターバルの初期化
   double m_dt    = DT.get_DT();
   double m_tm    = CurrentTime;  // 設定した？
@@ -2175,11 +2182,8 @@ void FFV::init_Interval()
   }
   if ( C.Mode.Average == ON )
   {
-    //if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) { // 平均値ファイル
-    //  Hostonly_ printf("\t Error : Interval for Average output is asigned to zero.\n");
-    //  Exit(0);
-    //}
     // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
+    
     if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) )  // 平均値開始
     {
       Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
@@ -2195,6 +2199,8 @@ void FFV::init_Interval()
       Exit(0);
     }    
   }
+  
+  
   
 }
 
@@ -3343,8 +3349,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   {
     Hostonly_
     {
-      fprintf(fp,"\tRank [%d]: p_polylib->init_parallel_info() failed.", myRank);
-      printf("\tRank [%d]: p_polylib->init_parallel_info() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
+      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
     }
     Exit(0);
   }
@@ -3359,8 +3365,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   {
     Hostonly_
     {
-      printf("\tRank [%d]: p_polylib->load_rank0() failed.", myRank);
-      fprintf(fp,"\tRank [%d]: p_polylib->load_rank0() failed.", myRank);
+      printf    ("\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
     }
     Exit(0);
   }
@@ -3380,8 +3386,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\t  ID :     No. : Polygon Group\n");
-    fprintf(fp, "\t  ID :     No. : Polygon Group\n");
+    printf(     "\t     ID :          No. : Polygon Group\n");
+    fprintf(fp, "\t     ID :          No. : Polygon Group\n");
   }
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
@@ -3397,8 +3403,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     
     Hostonly_
     {
-      printf(    "\t %3d : %7d : %s\n", m_id, ntria, m_pg.c_str());
-      fprintf(fp,"\t %3d : %7d : %s\n", m_id, ntria, m_pg.c_str());
+      printf(    "\t %6d : %10d : %s\n", m_id, ntria, m_pg.c_str());
+      fprintf(fp,"\t %6d : %10d : %s\n", m_id, ntria, m_pg.c_str());
     }
 // ##########
 #if 0

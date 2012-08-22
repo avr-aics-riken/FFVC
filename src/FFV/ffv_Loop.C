@@ -397,7 +397,8 @@ int FFV::Loop(const unsigned step)
   
   // 計算時間がtimeにより指定されている場合の終了判断
   if ( !C.Interval[Interval_Manager::tg_compute].isStep() ) {
-    if ( C.Interval[Interval_Manager::tg_compute].getIntervalTime() < CurrentTime ) {
+    //if ( C.Interval[Interval_Manager::tg_compute].getIntervalTime() < CurrentTime ) {
+    if ( C.Interval[Interval_Manager::tg_compute].isTriggered(CurrentStep, CurrentTime) ) {
       Hostonly_ 
       {
         printf      ("\tFinish : Time = %e\n", CurrentTime);
