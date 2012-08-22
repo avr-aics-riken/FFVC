@@ -2,7 +2,7 @@
 !
 !   FFV : Frontflow / violet
 !
-!   Copyright (c) All right reserved. 2012
+!   Copyright (c) 2012 All right reserved.
 !
 !   Institute of Industrial Science, The University of Tokyo, Japan. 
 !

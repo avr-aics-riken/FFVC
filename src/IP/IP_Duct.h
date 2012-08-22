@@ -5,15 +5,15 @@
 //
 // CAERU Library
 //
-// Copyright (c) All right reserved. 2012
+// Copyright (c) 2012 All right reserved.
 //
 // Institute of Industrial Science, The University of Tokyo, Japan. 
 //
 // #################################################################
 
 /** 
- * @file IP_Duct.h
- * @brief IP_Duct class Header
+ * @file   IP_Duct.h
+ * @brief  IP_Duct class Header
  * @author kero
  */
 
