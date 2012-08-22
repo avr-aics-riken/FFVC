@@ -2182,7 +2182,11 @@ void Control::get_start_condition()
     }
     Restart_step = ct;
     
-    
+  }
+  
+  // リスタート時のタイムスタンプ Coarse_restart
+  if ( Start == coarse_restart )
+  {
     label="/Steer/Start_condition/Prefix_of_Coarse_Pressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
