@@ -2,10 +2,12 @@
 Release Note
 ************
 
+  FFV : Frontflow / violet Cartesian
+  
 	Intrinsic class ( Intrinsic Problems )
 	
-	Copyright (c) 2012 Institute of Industrial Scienece. All rights reserved.
-  The University of Tokyo, Japan.
+	Copyright (c) 2012 All rights reserved.
+  Institute of Industrial Scienece, The University of Tokyo, Japan.
   
   @author kero
 

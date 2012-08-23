@@ -1,6 +1,6 @@
 !********************************************************************
 !
-!   FFV : Frontflow / violet
+!   FFV : Frontflow / violet Cartesian
 !
 !   Copyright (c) 2012 All right reserved.
 !

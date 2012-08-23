@@ -1,6 +1,6 @@
 Release Note
 
-	FrontFlow / Violet
+	FFV : Frontflow / violet Cartesian
 	
 	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
   The University of Tokyo, Japan. 

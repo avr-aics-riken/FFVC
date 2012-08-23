@@ -1,6 +1,6 @@
 !********************************************************************
 !
-!   FFV : Frontflow / violet
+!   FFV : Frontflow / violet Cartesian
 !
 !   Copyright (c) 2012 All right reserved.
 !
@@ -1047,9 +1047,9 @@
     pp = p(i,j,k) * actv
 
     ! 各方向に壁がある場合、かつ流体セルのみ力を積算
-    fx = fx + pp * ( qe - qw ) * actv
-    fy = fy + pp * ( qn - qs ) * actv
-    fz = fz + pp * ( qt - qb ) * actv
+    fx = fx + pp * ( qe - qw )
+    fy = fy + pp * ( qn - qs )
+    fz = fz + pp * ( qt - qb )
 
   end do
   end do
@@ -1065,4 +1065,3 @@
 
   return
   end subroutine force
-
