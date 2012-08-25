@@ -1,0 +1,9 @@
+#! /bin/bash
+#platex Polylib_UG
+#jbibtex Polylib_UG
+platex Polylib_UG
+platex Polylib_UG
+mendex -s myindex Polylib_UG.idx
+platex Polylib_UG
+dvipdfmx Polylib_UG
+open Polylib_UG.pdf

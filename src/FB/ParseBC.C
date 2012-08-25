@@ -1199,17 +1199,21 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
   // 指定タイプの特定
   label = label_base + "/type";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : Invalid Specified_Type in 'LocalBoundary > Specified_Type'\n");
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
     Exit(0);
   }
-  if ( !strcasecmp("velocity", str.c_str()) ) {
+  if ( !strcasecmp("velocity", str.c_str()) )
+  {
 	  cmp[n].set_VBC_policy(true);
   }
-  else if ( !strcasecmp("massflow", str.c_str()) ) {
+  else if ( !strcasecmp("massflow", str.c_str()) )
+  {
 	  cmp[n].set_VBC_policy(false);
   }
-  else {
+  else
+  {
 	  printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
 	  Exit(0);
   }
@@ -1228,16 +1232,20 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
   
   
   // heat problem
-  if ( HeatProblem ) {
+  if ( HeatProblem )
+  {
     label = label_base + "/temperature";
     
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
-      stamped_printf("\tParsing error : fail to get 'Temperature' in 'LocalBoundary > Specified_Velocity'\n");
+    if ( !(tpCntl->GetValue(label, &ct )) )
+    {
+      stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    else {
+    else
+    {
       cmp[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
-      if ( Unit_Param != DIMENSIONAL ) {
+      if ( Unit_Param != DIMENSIONAL )
+      {
         stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
         Exit(0);
       }
@@ -1247,20 +1255,25 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
   
   
   // 境界条件位置の指定
-  if ( isCDS ) {
+  if ( isCDS )
+  {
     label = label_base + "/BC_direction";
     
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : Invalid Specified_Type in 'LocalBoundary > BC_direction'\n");
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
       Exit(0);
     }
-    if ( !strcasecmp("same", str.c_str()) ) {
+    if ( !strcasecmp("same", str.c_str()) )
+    {
       cmp[n].setBClocation(CompoList::same_direction);
     }
-    else if ( !strcasecmp("opposite", str.c_str()) ) {
+    else if ( !strcasecmp("opposite", str.c_str()) )
+    {
       cmp[n].setBClocation(CompoList::opposite_direction);
     }
-    else {
+    else
+    {
       printf("\tParsing error : Invalid string value '%s' for 'BC_direction'\n", str.c_str());
       Exit(0);
     }
@@ -2189,13 +2202,12 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
    /////////////////////////////////////////////////////////////////////////////// */
   
   // 内部境界条件の有無を調べる
-  
   label_base = "/BC_Table/LocalBoundary";
   n = tpCntl->countLabels(label_base);
   
   if ( n != NoBC) 
   {
-    stamped_printf("\tLocalBoundary error %s\n", label_base.c_str());
+    stamped_printf("\tLocalBoundary error : '%s'\n", label_base.c_str());
     Exit(0);
   }
   
@@ -2211,21 +2223,22 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
-    label_ename = label_base + "/" + str;
+    label_leaf = label_base + "/" + str;
     ename = str;
     
     // cmp[].type, h_typeのセット ---> setType
     setKeywordLBC(ename, odr, cmp);
     
-    // nodeの移動
-    if ( !tpCntl->GetNodeStr(label_ename, 1, &str) )
+    // alias
+    label = label_leaf + "/alias";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
     {
-      stamped_printf("\tParsing error : No Leaf Node \n");
+      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
-    label_leaf = label_ename + "/" + str;
     
-    // Labelの取得
+    // Labelの設定
     cmp[odr].setLabel(str);
     
     // 各BCの処理
@@ -2361,7 +2374,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
   
   if ( !tpCntl->chkNode(label_base) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing '/BC_Table/OuterBoundary'\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label.c_str());
     Exit(0);
   }
   

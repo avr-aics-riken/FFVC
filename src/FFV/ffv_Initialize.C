@@ -3396,7 +3396,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     int ntria= (*it)->get_group_num_tria();
-    
+
     if ( numProc > 1 )
     {
       int tmp = ntria;
@@ -3405,8 +3405,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     
     Hostonly_
     {
-      printf(    "\t %6d : %10d : %s\n", m_id, ntria, m_pg.c_str());
-      fprintf(fp,"\t %6d : %10d : %s\n", m_id, ntria, m_pg.c_str());
+      printf(    "\t %6d : %12d : %s\n", m_id, ntria, m_pg.c_str());
+      fprintf(fp,"\t %6d : %12d : %s\n", m_id, ntria, m_pg.c_str());
     }
 // ##########
 #if 0

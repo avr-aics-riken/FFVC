@@ -1,0 +1,11 @@
+このディレクトリに収められている例は、次のコマンドで生成されます。
+
+$make
+
+ただし、Polylibライブラリのビルドが終わっていることが前提です。
+
+プログラムは以下の様に動かします。
+$./test
+$mpirun -np 4 ./test_mpi
+$cp data_bck/* .; mpirun -np 4 ./test_mpi2
+$mpirun -np 4 ./test_mpi3

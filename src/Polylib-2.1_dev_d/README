@@ -1,0 +1,49 @@
+/*
+ * Polylib - Polygon Management Library
+ *
+ * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
+ *
+ * Polylib version 2.0.3       22 Apr. 2012
+ *
+ * Functionality Simulation and Information Team
+ * VCAD System Research Program
+ *
+ * Signatured by Kenji Ono (keno@riken.jp)
+ */
+
+ソフトウェア概要
+  Polygon Management Library (以下、Polylib)は、V-SphereのソルバークラスCBCか
+  ら呼び出して利用することが可能な、ポリゴンデータを保持・管理するためのクラス
+  ライブラリです。
+  以下の機能を備えます。
+   ・STL形式によるポリゴンデータのロードとセーブ
+   ・ロードされたポリゴンデータの領域範囲指定検索
+   ・XML形式設定ファイルによるポリゴンデータのグルーピング指定
+   ・並列計算環境下におけるポリゴンデータの分散管理
+   ・ユーザ定義関数によるポリゴン座標の移動処理
+   ・上記移動処理に伴う並列プロセス間のポリゴンデータマイグレーション
+
+
+開発、動作環境
+ 以下の環境で動作確認を行っています。
+
+	ハードウェア：IA32互換CPUのPC
+	              Apple(R) Intel Mac
+
+	OS          ：Linux kernel 2.6x
+	              MacOS/X 10.5   (Apple(R) Intel Mac)
+
+	コンパイラ  ：GNU C++ Compiler
+	              Intel C++ Compiler (Linux, MacOSX)
+
+
+Note:
+
+AUTHORS;	著者のシグネチャ
+ChangeLog;	リリース毎の変更点
+COPYING;	コピーライト
+INSTALL;	インストール方法の説明
+NEWS;		リリースノート
+README;		このドキュメント
+
+

@@ -111,11 +111,6 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
       }
     }
   }
-  if ( id == tg_compute )
-  {
-    printf("trig : next_tm=%e\n", next_tm);
-    printf("trig : int_step=%d\n", intvl_step);
-  }
   
   init_state = true;
   return true;
@@ -134,7 +129,7 @@ void Interval_Manager::setInterval(const double m_interval)
   {
     intvl_tm = (double)m_interval;
   }
-  if ( id == tg_compute ) printf("int_tm=%e\n", intvl_tm);
+
 }
 
 
@@ -145,7 +140,6 @@ void Interval_Manager::normalizeInterval(const double scale)
   if (mode == By_time)
   {
     intvl_tm /= scale;
-    if ( id == tg_compute ) printf("n-int_tm=%e\n", intvl_tm);
   }
 }
 
@@ -155,5 +149,4 @@ void Interval_Manager::normalizeInterval(const double scale)
 void Interval_Manager::setTime_init(const double m_tm) 
 {
   init_tm = m_tm;
-  if ( id == tg_compute ) printf("init : int_tm=%e\n", intvl_tm);
 }
