@@ -17,7 +17,8 @@
  * @author kero
  */
 
-#include "cpm_Define.h"
+#include <string.h>
+#include "FB_Define.h"
 
 
 class Alloc {

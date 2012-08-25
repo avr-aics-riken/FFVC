@@ -18,6 +18,7 @@
  */
 
 #include <string>
+#include "FB_Define.h"
 #include "cpm_ParaManager.h"
 
 class DomainInfo {
@@ -128,16 +129,16 @@ public:
     size[2] = l_sz[2];
     
     // 領域基点 (Local)
-    const REAL_TYPE* l_org = paraMngr->GetLocalOrigin();
-    origin[0] = l_org[0];
-    origin[1] = l_org[1];
-    origin[2] = l_org[2];
+    const double* l_org = paraMngr->GetLocalOrigin();
+    origin[0] = (REAL_TYPE)l_org[0];
+    origin[1] = (REAL_TYPE)l_org[1];
+    origin[2] = (REAL_TYPE)l_org[2];
     
     // 領域サイズ (Local)
-    const REAL_TYPE* l_reg = paraMngr->GetLocalRegion();
-    region[0] = l_reg[0];
-    region[1] = l_reg[1];
-    region[2] = l_reg[2];
+    const double* l_reg = paraMngr->GetLocalRegion();
+    region[0] = (REAL_TYPE)l_reg[0];
+    region[1] = (REAL_TYPE)l_reg[1];
+    region[2] = (REAL_TYPE)l_reg[2];
     
     // 領域分割数 (Global)
     const int* g_sz  = paraMngr->GetGlobalVoxelSize();
@@ -146,20 +147,20 @@ public:
     G_size[2] = g_sz[2];
     
     // 領域基点   (Global)
-    const REAL_TYPE* g_org = paraMngr->GetGlobalOrigin();
-    G_origin[0] = g_org[0];
-    G_origin[1] = g_org[1];
-    G_origin[2] = g_org[2];
+    const double* g_org = paraMngr->GetGlobalOrigin();
+    G_origin[0] = (REAL_TYPE)g_org[0];
+    G_origin[1] = (REAL_TYPE)g_org[1];
+    G_origin[2] = (REAL_TYPE)g_org[2];
     
     // 領域サイズ (Global)
-    const REAL_TYPE* g_reg = paraMngr->GetGlobalRegion();
-    G_region[0] = g_reg[0];
-    G_region[1] = g_reg[1];
-    G_region[2] = g_reg[2];
+    const double* g_reg = paraMngr->GetGlobalRegion();
+    G_region[0] = (REAL_TYPE)g_reg[0];
+    G_region[1] = (REAL_TYPE)g_reg[1];
+    G_region[2] = (REAL_TYPE)g_reg[2];
     
     // 格子幅
-    const REAL_TYPE* m_pch = paraMngr->GetPitch();
-    pitch[0] = m_pch[0];
+    const double* m_pch = paraMngr->GetPitch();
+    pitch[0] = (REAL_TYPE)m_pch[0];
     deltaX = pitch[0];
     pitch[1] = deltaX;
     pitch[2] = deltaX;

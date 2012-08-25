@@ -19,11 +19,22 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 95
+#define FB_VERS 96
 
 #define MODEL_ID_MAX 255
 
 // precision
+#ifdef _REAL_IS_DOUBLE_
+#define REAL_TYPE double
+#else
+/** 実数型の指定
+ * - デフォルトでは、REAL_TYPE=float
+ * - コンパイル時オプション-D_REAL_IS_DOUBLE_を付与することで
+ *   REAL_TYPE=doubleになる
+ */
+#define REAL_TYPE float
+#endif
+
 #define SINGLE_EPSILON 2.4e-7
 #define DOUBLE_EPSILON 4.4e-16
 

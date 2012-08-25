@@ -9,6 +9,10 @@ Release Note
 
 #######################################
 
+Ver 0.7.2   25 Aug. 2012
+  - CPMlib-1.0.6対応
+  - 領域情報関連の浮動小数点変数はdoubleのインターフェイス
+  
 Ver 0.7.1   19 Aug. 2012
   - domain.tpにlength_of_unitパラメータを導入
   

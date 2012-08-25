@@ -53,7 +53,7 @@ int main( int argc, char **argv )
     if ( ffv.IsMaster() )
     {
       printf("\n\tusage\n");
-      printf("\n\t$ ffv <input_file> <domain_file> \n");
+      printf("\n\t$ ffvc <input_file> <domain_file> \n");
     }
     Exit(0);
   }

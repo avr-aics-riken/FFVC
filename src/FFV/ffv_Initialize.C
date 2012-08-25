@@ -1089,8 +1089,8 @@ void FFV::DomainInitialize(const string dom_file)
   }
 
   
-  REAL_TYPE m_org[3] = {G_origin[0], G_origin[1], G_origin[2]};
-  REAL_TYPE m_reg[3] = {G_region[0], G_region[1], G_region[2]};
+  double m_org[3] = {G_origin[0], G_origin[1], G_origin[2]};
+  double m_reg[3] = {G_region[0], G_region[1], G_region[2]};
   
   
   // 領域分割モードのパターン

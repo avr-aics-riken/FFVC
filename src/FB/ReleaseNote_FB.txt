@@ -9,6 +9,10 @@ Release Note
 
 #######################################
 
+Ver 0.9.6   25 Aug. 2012
+  - CPMlib-1.0.6対応
+  - REAL_TYPEの定義をFB_Define.hへ移す
+  
 Ver 0.9.5   19 Aug. 2012
   - domain.tpにlength_of_unitパラメータを導入
   
