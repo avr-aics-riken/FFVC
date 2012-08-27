@@ -94,8 +94,8 @@ FileIO.o: FileIO.h DomainInfo.h FB_Define.h mydebug.h FB_Ffunc.h
 Component.o: Component.h FB_Define.h mydebug.h
 BndOuter.o: BndOuter.h FB_Define.h mydebug.h
 Interval_Mngr.o: Interval_Mngr.h FB_Define.h mydebug.h
-Alloc.o: Alloc.h
-VoxInfo.o: VoxInfo.h DomainInfo.h FBUtility.h FB_Define.h mydebug.h
+Alloc.o: Alloc.h FB_Define.h mydebug.h
+VoxInfo.o: VoxInfo.h DomainInfo.h FB_Define.h mydebug.h FBUtility.h
 VoxInfo.o: Component.h Medium.h SetBC.h BndOuter.h Control.h Interval_Mngr.h
 VoxInfo.o: TPControl.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
 VoxInfo.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h CompoFraction.h

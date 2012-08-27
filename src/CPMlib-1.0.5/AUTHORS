@@ -1,9 +1,0 @@
-/*
- * CPMlib - Cartesian Partition Manager Library
- *
- * Copyright (C) 2012 University of Tokyo.
- *
- */
-
-構造格子空間の領域分割情報管理クラスライブラリ
-

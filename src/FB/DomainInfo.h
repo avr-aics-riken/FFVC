@@ -160,8 +160,7 @@ public:
     
     // 格子幅
     const double* m_pch = paraMngr->GetPitch();
-    pitch[0] = (REAL_TYPE)m_pch[0];
-    deltaX = pitch[0];
+    deltaX = pitch[0] = (REAL_TYPE)m_pch[0];
     pitch[1] = deltaX;
     pitch[2] = deltaX;
     
