@@ -11,7 +11,8 @@
 ############################################################################
 
 # FX10の場合，MPI_DIRはコメントアウト
-MPI_DIR		= /opt/openmpi
+MPI_INC_DIR	= /opt/openmpi/include
+TP_INC_DIR  = /usr/local/textparser/include
 
 #CXX			= g++
 CXX			= icpc
@@ -37,9 +38,9 @@ TARGET_DIR	= ../lib
 
 CFLAGS		= -O3 -Wall \
             -I../include \
-            -I$(MPI_DIR)/include \
+            -I$(MPI_INC_DIR) \
             -fno-strict-aliasing \
-            -I/usr/local/textparser/include \
+            -I$(TP_INC_DIR) \
 #            -I/usr/include \
 #            -DSAVE_ID_ASCII -DDEBUG
 
@@ -49,7 +50,7 @@ CFLAGS		= -O3 -Wall \
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include \
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include/mpi/fujitsu \
 #		-I/usr/include \
-#		-I/home/textparser/include \
+#		-I$(TP_INC_DIR) \
 #		-fno-strict-aliasing
 
 # K
@@ -58,7 +59,7 @@ CFLAGS		= -O3 -Wall \
 #   -I/opt/FJSVtclang/GM-1.2.0-07/include \
 #   -I/opt/FJSVtclang/GM-1.2.0-07/include/mpi/fujitsu \
 #   -I/usr/include \
-#   -I/home/g00001/k00011/ffv/textparser-1.0/include \
+#   -I$(TP_INC_DIR) \
 #   -fno-strict-aliasing
 
 #####################################

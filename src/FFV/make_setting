@@ -20,7 +20,7 @@ RM          = \rm -f
 MPI_DIR	    = /opt/openmpi
 CPM_DIR     = /usr/local/cpm
 TP_DIR      = /usr/local/textparser
-POLYLIB_DIR = ../Polylib-2.1_dev_b
+POLYLIB_DIR = ../Polylib-2.1_dev_b+
 CUTLIB_DIR  = ../Cutlib-2.0.3
 PMLIB_DIR   = ../PMlib-1.3
 OMP_FLAGS   = -openmp -par-report=2 -vec-report=2
@@ -46,7 +46,7 @@ LIBS        = -lifport -lifcore
 #MPI_DIR     =
 #CPM_DIR     = /hoge
 #TP_DIR      = /funya
-#POLYLIB_DIR = ../Polylib-2.1_dev_b
+#POLYLIB_DIR = ../Polylib-2.1_dev_b+
 #CUTLIB_DIR  = ../Cutlib-2.0.3
 #PMLIB_DIR   = ../PMlib-1.3
 #OMP_FLAGS   =
@@ -72,7 +72,7 @@ LIBS        = -lifport -lifcore
 #MPI_DIR     =
 #CPM_DIR     = /hoge
 #TP_DIR      = /funya
-#POLYLIB_DIR = ../Polylib-2.1_dev_b
+#POLYLIB_DIR = ../Polylib-2.1_dev_b+
 #CUTLIB_DIR  = ../Cutlib-2.0.3
 #PMLIB_DIR   = ../PMlib-1.3
 #OMP_FLAGS   = -qsmp=omp

@@ -346,7 +346,7 @@ PL_DBGOSH << "PolylibConfig::tp_parse():Elem:name=" << *it << endl;
 		parent->set_elem(elem);
 		++it;
 
-		if( tp->changeNode(node) != TP_NO_ERROR ) {
+		if( tp->changeNode("..") != TP_NO_ERROR ) {
 			return PLSTAT_NG;
 		}
 	}
@@ -445,6 +445,7 @@ const PolylibCfgElem* PolylibCfgElem::next_element (
 
 	vector<PolylibCfgElem*>::const_iterator itr = m_elem->begin();
 	bool flg = false;
+
 	for (itr = m_elem->begin(); itr != m_elem->end(); itr++) {
 		if (*itr == elem) {
 			flg = true;
@@ -453,7 +454,7 @@ const PolylibCfgElem* PolylibCfgElem::next_element (
 		if (flg == false) {
 			continue;
 		}
-		if (name.empty() == true && (*itr)->get_name() == elem->get_name()) {
+		if (name.empty() == true ) {
 			return *itr;
 		}
 		else if (name.empty() == false && (*itr)->get_name() == name) {
