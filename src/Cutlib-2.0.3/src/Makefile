@@ -43,23 +43,7 @@ all: $(CUTLIB)
 
 OBJS = Cutlib.o CutlibCore.o CutUtil.o CutTriangle.o CutBoundary.o
 #OBJS = Cutlib.o CutlibCore.o CutUtil.o CutTriangle.o CutBoundary.o CutTiming.o
- 
-#CXX = g++
-#CXX = mpiFCCpx
-CXX = icpc
 
-#AR = ar cr
-AR = ar cru
-RANLIB = ranlib
-
-POLYLIB_DIR = ../../Polylib-2.1_dev_b
-
-POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I/usr/local/textparser/include
-
-# FX10/K
-#POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
-#   -fno-strict-aliasing \
-#   -I/home/g00001/k00011/ffv/textparser-1.0/include
 
 # with Octree lib ############################################################
 #OCTREE_DIR = ../../sgi-octree
@@ -80,12 +64,45 @@ DEFINES = -DIGNORE_NORMAL_DIRECTION
 DEFINES += -DIGNORE_STL_NORMAL
 #DEFINES = 
 
+
+
+POLYLIB_DIR = ../../Polylib-2.1_dev_f
+TP_INC_DIR = /usr/local/textparser/include
+
+POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I$(TP_INC_DIR)
+
+###########################################################################
+# INTEL
+
+#CXX    = g++
+CXX     = icpc
+AR      = ar cru
+RANLIB  = ranlib
+
 #CFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
-# FX10
+###########################################################################
+# FX10/K
+#POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
+#   -fno-strict-aliasing \
+#   -I/home/g00001/k00011/ffv/textparser-1.0/include
+
 #CFLAGS = -Kfast,ocl,preex,simd=2 \
 #        -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+
+
+###########################################################################
+# BG/P
+
+#CXX     = mpixlcxx_r
+#AR      = ar crv
+#RANLIB  = ranlib
+
+#CFLAGS = -O3 -qarch=450d -qtune=450 -qsmp=omp -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+
+###########################################################################
+
 
 $(CUTLIB): $(OBJS)
 	$(AR) $@ $(OBJS)
