@@ -22,11 +22,11 @@
 void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 {
   const char* OUT_OF_REGION = "out of region";
-  Vec3r st(from);
-  Vec3r ed(to);
-  Vec3r r0 = g_org;
-  Vec3r r1 = r0 + g_box;
-  Vec3r d = ed - st;
+  FB::Vec3r st(from);
+  FB::Vec3r ed(to);
+  FB::Vec3r r0 = g_org;
+  FB::Vec3r r1 = r0 + g_box;
+  FB::Vec3r d = ed - st;
   
   
   // 境界上に端点が存在する場合は、少し計算領域内にずらす
@@ -369,7 +369,7 @@ void MonitorList::write_ID(int* id)
       {
         if (!monGroup[i]->check_region(m, org, box)) continue;
         
-        Vec3i index = monGroup[i]->getSamplingCellIndex(m);
+        FB::Vec3i index = monGroup[i]->getSamplingCellIndex(m);
         q = _F_IDX_S3D(index.x, index.y, index.z, ix, jx, kx, gd);
         id[q] = 255;
       }

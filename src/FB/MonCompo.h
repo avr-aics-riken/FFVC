@@ -42,7 +42,7 @@ public:
   
   /// PointSet要素用構造体
   struct MonitorPoint {
-    Vec3r crd;      ///< モニタ点座標
+    FB::Vec3r crd;      ///< モニタ点座標
     string label;   ///< モニタ点ラベル
     MonitorPoint(const REAL_TYPE v[3], const char* str) : crd(v), label(str) {}
     ~MonitorPoint() {}
@@ -60,7 +60,7 @@ public:
     REAL_TYPE refDensity;    /// 基準密度
     REAL_TYPE refLength;     /// 代表長さ
     REAL_TYPE basePrs;       /// 基準圧力
-    Vec3r v00;               /// 参照（座標系移動）速度
+    FB::Vec3r v00;               /// 参照（座標系移動）速度
   };
   
   /// モニタ点指定タイプ型
@@ -91,12 +91,12 @@ protected:
   
   Sampling** mon;    ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
   
-  Vec3r org;         ///< ローカル基点座標
-  Vec3r pch;         ///< セル幅
-  Vec3r box;         ///< ローカル領域サイズ
+  FB::Vec3r org;         ///< ローカル基点座標
+  FB::Vec3r pch;         ///< セル幅
+  FB::Vec3r box;         ///< ローカル領域サイズ
   
-  Vec3r g_org;       ///< グローバル基点座標
-  Vec3r g_box;       ///< グローバル領域サイズ
+  FB::Vec3r g_org;       ///< グローバル基点座標
+  FB::Vec3r g_box;       ///< グローバル領域サイズ
   
   ReferenceVariables refVar;  ///< 参照用パラメータ変数
   
@@ -110,16 +110,16 @@ protected:
   REAL_TYPE* tSource;  ///< 温度サンプリング元データ
   
   
-  Vec3r* crd;      ///< モニタ点座標配列
+  FB::Vec3r* crd;      ///< モニタ点座標配列
   int* rank;       ///< モニタ点担当ランク番号配列
   string* comment; ///< モニタ点コメント配列
   int* pointStatus;///< 不正モニタ点フラグ配列
   
-  Vec3r* vel;      ///< 速度サンプリング結果配列
+  FB::Vec3r* vel;      ///< 速度サンプリング結果配列
   REAL_TYPE* prs;  ///< 圧力サンプリング結果配列
   REAL_TYPE* tmp;  ///< 温度サンプリング結果配列
   REAL_TYPE* tp;   ///< 全圧サンプリング結果配列
-  Vec3r* vor;      ///< 渦度サンプリング結果配列
+  FB::Vec3r* vor;      ///< 渦度サンプリング結果配列
   
   CompoList* cmp;  ///< 内部境界条件指定の場合の対応するコンポーネントへのポインタ
   
@@ -148,7 +148,7 @@ public:
   ///   param[in] refVar  参照パラメータ
   ///   param[in] bcd  BCindex ID
   ///
-  MonitorCompo(Vec3r org, Vec3r pch, Vec3r box, Vec3r g_org, Vec3r g_box, 
+  MonitorCompo(FB::Vec3r org, FB::Vec3r pch, FB::Vec3r box, FB::Vec3r g_org, FB::Vec3r g_box, 
                ReferenceVariables refVar,
                int* bcd, int num_process) {
     nPoint = 0;
@@ -196,7 +196,7 @@ public:
   ///   @param[in] flag メッセージ出力フラグ(trueの時出力)
   ///   @return true=領域内/false=領域外
   ///
-  bool check_region(int m, Vec3r org, Vec3r box, bool flag=false);
+  bool check_region(int m, FB::Vec3r org, FB::Vec3r box, bool flag=false);
   
   
   /// PointSet登録.
@@ -289,9 +289,9 @@ public:
   Type getType() { return type; }
   
   /// m番目のモニタ点を含むセルインデクスを返す.
-  Vec3i getSamplingCellIndex(int m) {
-    Vec3i index;
-    Vec3r c = (crd[m] - org) / pch;
+  FB::Vec3i getSamplingCellIndex(int m) {
+    FB::Vec3i index;
+    FB::Vec3r c = (crd[m] - org) / pch;
     index.x = int(c.x) + 1;
     index.y = int(c.y) + 1;
     index.z = int(c.z) + 1;
@@ -335,7 +335,7 @@ protected:
   ///   @param[in,out] v ベクトル変数配列
   ///   @param  vSendBuf,vRecvBuf  通信用work領域
   ///
-  void gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
+  void gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
   
   /// モニタ対象物理量の設定.
   ///
@@ -395,7 +395,7 @@ protected:
   ///   @param[in] v ベクトル変数配列
   ///   @return モニタ領域内平均値
   ///
-  Vec3r averageVector(Vec3r* v);
+  FB::Vec3r averageVector(FB::Vec3r* v);
   
   
   /// 各モニタ点を担当するランク番号を配列rank[]にセット.

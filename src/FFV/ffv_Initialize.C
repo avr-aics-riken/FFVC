@@ -2559,7 +2559,7 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 void FFV::setBCinfo()
 {
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBC_Local(&C, mat, M.export_MTI(), cmp);
+  B.loadBC_Local(&C, mat, M.export_MTI(), cmp, PL);
   
   
   // 各コンポーネントが存在するかどうかを保持しておく
@@ -3387,8 +3387,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\t     ID :          No. : Polygon Group\n");
-    fprintf(fp, "\t     ID :          No. : Polygon Group\n");
+    printf(     "\t Medium ID :          No. : Polygon Group Label\n");
+    fprintf(fp, "\t        ID :          No. : Polygon Group Label\n");
   }
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
@@ -3404,8 +3404,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     
     Hostonly_
     {
-      printf(    "\t %6d : %12d : %s\n", m_id, ntria, m_pg.c_str());
-      fprintf(fp,"\t %6d : %12d : %s\n", m_id, ntria, m_pg.c_str());
+      printf(    "\t %9d : %12d : %s\n", m_id, ntria, m_pg.c_str());
+      fprintf(fp,"\t %9d : %12d : %s\n", m_id, ntria, m_pg.c_str());
     }
 // ##########
 #if 0

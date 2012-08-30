@@ -19,7 +19,7 @@
 #include "vec3.h"
 #include "basic_func.h"
 
-using namespace FB;
+//using namespace FB;
 
 /**
  * Samplingクラス
@@ -41,9 +41,9 @@ protected:
   int size[3];  ///< セル(ローカル)サイズ
   int guide;    ///< ガイドセル数
 
-  Vec3i cIndex; ///< モニタ点を含むセルのインデックス
-  Vec3r pch;    ///< セル幅
-  Vec3r v00;    ///< 座標系移動速度
+  FB::Vec3i cIndex; ///< モニタ点を含むセルのインデックス
+  FB::Vec3r pch;    ///< セル幅
+  FB::Vec3r v00;    ///< 座標系移動速度
   int* bcd;     ///< BCindex ID
   
 public:
@@ -60,7 +60,7 @@ public:
   ///   @param[in] bcd  BCindex ID
   ///
   Sampling(int mode, int size[], int guide,
-           Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd) {
+           FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) {
     this->mode = mode;
     this->size[0] = size[0];
     this->size[1] = size[1];
@@ -70,7 +70,7 @@ public:
     this->v00 = v00;
     this->bcd = bcd;
 
-    Vec3r c = (crd - org) / pch;
+    FB::Vec3r c = (crd - org) / pch;
     cIndex.x = (int)(c.x) + 1;
     cIndex.y = (int)(c.y) + 1;
     cIndex.z = (int)(c.z) + 1;
@@ -90,7 +90,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  virtual Vec3r samplingVelocity(const REAL_TYPE* v) = 0;
+  virtual FB::Vec3r samplingVelocity(const REAL_TYPE* v) = 0;
 
   /// 圧力をサンプリング.
   ///
@@ -115,7 +115,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  virtual Vec3r samplingVorticity(const REAL_TYPE* v) = 0;
+  virtual FB::Vec3r samplingVorticity(const REAL_TYPE* v) = 0;
 
 protected:
   /// 全圧を計算.
@@ -123,8 +123,8 @@ protected:
   ///   @param[in] v  速度
   ///   @param[in] p  圧力
   ///   @return 全圧
-  REAL_TYPE calcTotalPressure(const Vec3r v, REAL_TYPE p) {
-    Vec3r v1 = v - v00;
+  REAL_TYPE calcTotalPressure(const FB::Vec3r v, REAL_TYPE p) {
+    FB::Vec3r v1 = v - v00;
     return 0.5 * v1.lengthSquared() + p;
   }
 
@@ -134,53 +134,53 @@ protected:
   ///   @param[in] index セルインデックス
   ///   @return 渦度ベクトル
   ///
-  Vec3r calcVorticity(const REAL_TYPE* v, Vec3i index);
+  FB::Vec3r calcVorticity(const REAL_TYPE* v, FB::Vec3i index);
 
 
   /// セルインデックスを(1,0,0)シフト.
-  Vec3i shift1(Vec3i index) { return Vec3i(index.x+1, index.y  , index.z  ); }
+  FB::Vec3i shift1(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y  , index.z  ); }
 
   /// セルインデックスを(0,1,0)シフト.
-  Vec3i shift2(Vec3i index) { return Vec3i(index.x  , index.y+1, index.z  ); }
+  FB::Vec3i shift2(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y+1, index.z  ); }
 
   /// セルインデックスを(1,1,0)シフト.
-  Vec3i shift3(Vec3i index) { return Vec3i(index.x+1, index.y+1, index.z  ); }
+  FB::Vec3i shift3(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y+1, index.z  ); }
 
   /// セルインデックスを(0,0,1)シフト.
-  Vec3i shift4(Vec3i index) { return Vec3i(index.x  , index.y  , index.z+1); }
+  FB::Vec3i shift4(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y  , index.z+1); }
 
   /// セルインデックスを(1,0,1)シフト.
-  Vec3i shift5(Vec3i index) { return Vec3i(index.x+1, index.y  , index.z+1); }
+  FB::Vec3i shift5(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y  , index.z+1); }
 
   /// セルインデックスを(0,1,1)シフト.
-  Vec3i shift6(Vec3i index) { return Vec3i(index.x  , index.y+1, index.z+1); }
+  FB::Vec3i shift6(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y+1, index.z+1); }
 
   /// セルインデックスを(1,1,1)シフト.
-  Vec3i shift7(Vec3i index) { return Vec3i(index.x+1, index.y+1, index.z+1); }
+  FB::Vec3i shift7(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y+1, index.z+1); }
 
   /// セルインデックスを-xシフト.
-  Vec3i shift_xm(Vec3i index) { return Vec3i(index.x-1, index.y  , index.z  ); }
+  FB::Vec3i shift_xm(FB::Vec3i index) { return FB::Vec3i(index.x-1, index.y  , index.z  ); }
 
   /// セルインデックスを+xシフト.
-  Vec3i shift_xp(Vec3i index) { return Vec3i(index.x+1, index.y  , index.z  ); }
+  FB::Vec3i shift_xp(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y  , index.z  ); }
 
   /// セルインデックスを-yシフト.
-  Vec3i shift_ym(Vec3i index) { return Vec3i(index.x  , index.y-1, index.z  ); }
+  FB::Vec3i shift_ym(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y-1, index.z  ); }
 
   /// セルインデックスを+yシフト.
-  Vec3i shift_yp(Vec3i index) { return Vec3i(index.x  , index.y+1, index.z  ); }
+  FB::Vec3i shift_yp(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y+1, index.z  ); }
 
   /// セルインデックスを-zシフト.
-  Vec3i shift_zm(Vec3i index) { return Vec3i(index.x  , index.y  , index.z-1); }
+  FB::Vec3i shift_zm(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y  , index.z-1); }
 
   /// セルインデックスを+zシフト.
-  Vec3i shift_zp(Vec3i index) { return Vec3i(index.x  , index.y  , index.z+1); }
+  FB::Vec3i shift_zp(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y  , index.z+1); }
 
   /// セルが流体セルかどうか調べる.
   ///
   ///    @param[in] index セルインデックス
   ///
-  bool isFluid(Vec3i index) {
+  bool isFluid(FB::Vec3i index) {
     size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
     return IS_FLUID(bcd[m]);
   }
@@ -191,7 +191,7 @@ protected:
   ///    @param [in] index セルインデックス
   ///    @return セルでのスカラー値
   ///
-  REAL_TYPE getScalar(const REAL_TYPE* s, Vec3i index) {
+  REAL_TYPE getScalar(const REAL_TYPE* s, FB::Vec3i index) {
     size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
     return s[m];
   }
@@ -202,8 +202,8 @@ protected:
   ///    @param [in] index セルインデックス
   ///    @return セルでのベクトル値
   ///
-  Vec3r getVector(const REAL_TYPE* v, Vec3i index) {
-    Vec3r vRet;
+  FB::Vec3r getVector(const REAL_TYPE* v, FB::Vec3i index) {
+    FB::Vec3r vRet;
     int ix = size[0];
     int jx = size[1];
     int kx = size[2];
@@ -247,7 +247,7 @@ public:
   ///   @param[in] bcd  BCindex ID
   ///
   Nearest(int mode, int size[], int guide,
-          Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
+          FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~Nearest() {}
@@ -256,7 +256,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVelocity(const REAL_TYPE* v);
+  FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
   /// 圧力をサンプリング.
   ///
@@ -281,7 +281,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVorticity(const REAL_TYPE* v);
+  FB::Vec3r samplingVorticity(const REAL_TYPE* v);
 };
 
 
@@ -310,7 +310,7 @@ protected:
   ///
   ///    @param[in] index セルインデックス
   ///
-  bool permitToAdd(Vec3i index) {
+  bool permitToAdd(FB::Vec3i index) {
     if      (mode == SAMPLING_FLUID_ONLY) return isFluid(index);
     else if (mode == SAMPLING_SOLID_ONLY) return !isFluid(index);
     else return true;  // モードがallの場合はセルのfluid/solidは考慮しない
@@ -336,7 +336,7 @@ public:
   ///   @param [in] bcd  BCindex ID
   ///
   Smoothing(int mode, int size[], int guide,
-            Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
+            FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~Smoothing() {}
@@ -345,7 +345,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVelocity(const REAL_TYPE* v);
+  FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
   /// 圧力をサンプリング.
   ///
@@ -370,7 +370,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVorticity(const REAL_TYPE* v);
+  FB::Vec3r samplingVorticity(const REAL_TYPE* v);
 
 };
 
@@ -386,13 +386,13 @@ public:
  */
 class Interpolation : public Sampling {
 protected:
-  Vec3i base;       ///< 線形補間基準セルのインデックス
+  FB::Vec3i base;       ///< 線形補間基準セルのインデックス
   REAL_TYPE coef[3]; ///< 線形補間係数
 
   bool onBoundary;  ///< 8セルにモードと違う態(流体/固体)があるかどうかのフラグ
 
   /// そのセルがモードと違うかどうか調べる.
-  bool checkBoundary(Vec3i index) {
+  bool checkBoundary(FB::Vec3i index) {
     if      (mode == SAMPLING_FLUID_ONLY) return !isFluid(index);
     else if (mode == SAMPLING_SOLID_ONLY) return isFluid(index);
     else return false;  // モードがallの場合はセルのfluid/solidは考慮しない
@@ -419,7 +419,7 @@ public:
   ///   @param [in] bcd  BCindex ID
   ///
   Interpolation(int mode, int size[], int guide,
-                Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
+                FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~Interpolation() {}
@@ -428,7 +428,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVelocity(const REAL_TYPE* v);
+  FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
   /// 圧力をサンプリング.
   ///
@@ -453,7 +453,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVorticity(const REAL_TYPE* v);
+  FB::Vec3r samplingVorticity(const REAL_TYPE* v);
 };
 
 
@@ -466,7 +466,7 @@ public:
  */
 class InterpolationStgV : public Interpolation {
 protected:
-  Vec3i base_s;        ///< 線形補間基準セルのインデックス(スタガード配置)
+  FB::Vec3i base_s;        ///< 線形補間基準セルのインデックス(スタガード配置)
   REAL_TYPE coef_s[3];  ///< 線形補間係数(スタガード配置)
 
 public:
@@ -481,7 +481,7 @@ public:
   ///   @param [in] bcd  BCindex ID
   ///
   InterpolationStgV(int mode, int size[], int guide,
-                    Vec3r crd, Vec3r org, Vec3r pch, Vec3r v00, int* bcd);
+                    FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
 
   /// デストラクタ.
   ~InterpolationStgV() {}
@@ -490,7 +490,7 @@ public:
   ///
   ///   @param[in] v サンプリング元速度配列
   ///
-  Vec3r samplingVelocity(const REAL_TYPE* v);
+  FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
 };
 

@@ -48,12 +48,12 @@ protected:
   int nGroup;    ///< モニタリンググループ数
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
   
-  Vec3r org;         ///< ローカル基点座標
-  Vec3r pch;         ///< セル幅
-  Vec3r box;         ///< ローカル領域サイズ
+  FB::Vec3r org;         ///< ローカル基点座標
+  FB::Vec3r pch;         ///< セル幅
+  FB::Vec3r box;         ///< ローカル領域サイズ
   
-  Vec3r g_org;       ///< グローバル基点座標
-  Vec3r g_box;       ///< グローバル領域サイズ
+  FB::Vec3r g_org;       ///< グローバル基点座標
+  FB::Vec3r g_box;       ///< グローバル領域サイズ
   
   MonitorCompo:: ReferenceVariables refVar;  ///< 参照用パラメータ変数
   

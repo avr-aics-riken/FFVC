@@ -30,6 +30,12 @@
 #include "Intrinsic.h"
 #include "TPControl.h"
 
+// Polylib
+#include "Polylib.h"
+#include "MPIPolylib.h"
+
+using namespace std;
+using namespace PolylibNS;
 
 class ParseBC : public DomainInfo {
 private:
@@ -89,7 +95,7 @@ private:
    * @param [in] n       テストするBaseBcの格納番号の最大値
    * @param [in] m_label テストラベル
    */
-  bool chkDuplicate(const int n, const std::string m_label);
+  bool chkDuplicate(const int n, const string m_label);
   
   
   /**
@@ -109,17 +115,17 @@ private:
    * @brief 境界条件の値(REAL_TYPE型)を取得し，返す
    * @param [in] label テストラベル
    */
-  REAL_TYPE get_BCval_real(const std::string label);
+  REAL_TYPE get_BCval_real(const string label);
   
   
   /**
    * @brief 外部境界条件のキーワードを照合し， BCの文字列を返す
    * @param [in] id 
    */
-  std::string getOBCstr(const int id);
+  string getOBCstr(const int id);
   
 
-  int get_Vel_profile(const std::string label_base);
+  int get_Vel_profile(const string label_base);
   
   
   
@@ -169,7 +175,7 @@ private:
    * @param [in]  label_base ラベルディレクトリ
    * @param [out] v          ベクトルパラメータ
    */
-  void get_Center(const std::string label_base, REAL_TYPE* v);
+  void get_Center(const string label_base, REAL_TYPE* v);
   
   
   /**
@@ -177,7 +183,7 @@ private:
    * @param [in] label_base ラベルディレクトリ   
    * @param [out v          ベクトルパラメータ
    */
-  void get_Dir(const std::string label_base, REAL_TYPE* v);
+  void get_Dir(const string label_base, REAL_TYPE* v);
   
   
   
@@ -186,7 +192,7 @@ private:
    * @param [in] label_base ラベルディレクトリ   
    * @param [out v          ベクトルパラメータ
    */
-  void get_NV(const std::string label_base, REAL_TYPE* v);
+  void get_NV(const string label_base, REAL_TYPE* v);
   
   
   /**
@@ -195,7 +201,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_Adiabatic(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -204,7 +210,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_CnstTemp(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_CnstTemp(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -213,7 +219,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_Fan(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_Fan(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -222,7 +228,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_IBM_DF(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -231,7 +237,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HeatFlux(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HeatFlux(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -240,7 +246,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HeatSrc(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HeatSrc(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -249,7 +255,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HT_B(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_B(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -258,7 +264,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HT_N(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_N(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -267,7 +273,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HT_S(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_S(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -276,7 +282,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HT_SF(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -285,7 +291,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_HT_SN(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -294,7 +300,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_IsoTherm(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_IsoTherm(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -303,7 +309,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_Monitor(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_Monitor(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -312,7 +318,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_Outflow(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_Outflow(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -321,7 +327,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_Periodic(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_Periodic(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -330,7 +336,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_PrsLoss(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_PrsLoss(const string label_base, const int n, CompoList* cmp);
   
   
   /** 境界条件Radiantのパラメータを取得し保持する
@@ -339,7 +345,7 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_IBC_Radiant(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_Radiant(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -347,8 +353,9 @@ private:
    * @param [in]  label_base ラベルディレクトリ
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
+   * @param [in]  PL         MPIPolylib
    */
-  void get_IBC_SpecVel(const std::string label_base, const int n, CompoList* cmp);
+  void get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp, MPIPolylib* PL);
   
   
   /**
@@ -357,16 +364,16 @@ private:
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
    */
-  void get_Darcy(const std::string label_base, const int n, CompoList* cmp);
+  void get_Darcy(const string label_base, const int n, CompoList* cmp);
   
   
-  void get_OBC_FarField   (const std::string label_base, const int n);
-  void get_OBC_HT         (const std::string label_base, const int n, const std::string kind);
-  void get_OBC_Outflow    (const std::string label_base, const int n);
-  void get_OBC_Periodic   (const std::string label_base, const int n);
-  void get_OBC_SpecVH     (const std::string label_base, const int n);
-  void get_OBC_Trcfree    (const std::string label_base, const int n);
-  void get_OBC_Wall       (const std::string label_base, const int n);
+  void get_OBC_FarField   (const string label_base, const int n);
+  void get_OBC_HT         (const string label_base, const int n, const string kind);
+  void get_OBC_Outflow    (const string label_base, const int n);
+  void get_OBC_Periodic   (const string label_base, const int n);
+  void get_OBC_SpecVH     (const string label_base, const int n);
+  void get_OBC_Trcfree    (const string label_base, const int n);
+  void get_OBC_Wall       (const string label_base, const int n);
   
   
   /**
@@ -376,7 +383,7 @@ private:
   void getUnitVec(REAL_TYPE* v);
   
   
-  void get_Vel_Params(const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
+  void get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
   
   
   /**
@@ -422,7 +429,7 @@ private:
    * @param [in]  m       BaseBcの格納番号
    * @param [out] cmp     CompoList
    */
-  void setKeywordLBC(const std::string keyword, const int m, CompoList* cmp);
+  void setKeywordLBC(const string keyword, const int m, CompoList* cmp);
   
   
   
@@ -431,7 +438,7 @@ private:
    * @param [in] keyword テストキーワード
    * @param [in] m       コンポーネントの格納番号
    */
-  void setKeywordOBC(const std::string keyword, const int m);
+  void setKeywordOBC(const string keyword, const int m);
   
   
   /**
@@ -440,7 +447,7 @@ private:
    * @param [in]  n          コンポーネントリストのエントリ番号
    * @param [out] cmp        CompoList
    */
-  void set_Deface(const std::string label_base, const int n, CompoList* cmp);
+  void set_Deface(const string label_base, const int n, CompoList* cmp);
   
   
 public:
@@ -483,7 +490,7 @@ public:
    * @param [out] bcname 境界名vector
    * @param [out] cmp    CompoList
    */
-  void GetBoundaryNameforPLOT3D(std::vector<std::string>& bcname, CompoList* cmp);
+  void GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp);
   
   
   /**
@@ -500,7 +507,7 @@ public:
    * @param [in] now       コンポーネントリストの現在までのエントリ番号
    * @param [in] cmp       CompoList
    */
-  bool isLabelinCompo(const std::string candidate, const int now, const CompoList* cmp);
+  bool isLabelinCompo(const string candidate, const int now, const CompoList* cmp);
   
   
   
@@ -510,8 +517,9 @@ public:
    * @param [in]  mat   MediumList
    * @param [in]  MTITP MediumTableInfo
    * @param [out] cmp   CompoList
+   * @param [in]  PL    MPIPolylib
    */
-  void loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp);
+  void loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp, MPIPolylib* PL);
   
   
   /**

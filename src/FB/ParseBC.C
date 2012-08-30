@@ -45,7 +45,7 @@ void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 
 // #################################################################
 // ラベルの重複を調べる
-bool ParseBC::chkDuplicate(const int n, const std::string m_label)
+bool ParseBC::chkDuplicate(const int n, const string m_label)
 {
 	for (int i=0; i<n; i++){
     if ( BaseBc[i].get_Alias() == m_label ) return false;
@@ -84,9 +84,9 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 
 // #################################################################
 // 外部境界条件のキーワードを照合し， BCの文字列を返す
-std::string ParseBC::getOBCstr(const int id)
+string ParseBC::getOBCstr(const int id)
 {
-  std::string bc;
+  string bc;
   if     ( id == OBC_WALL )      bc = "Wall";
   else if( id == OBC_OUTFLOW )   bc = "Outflow";
   else if( id == OBC_SPEC_VEL )  bc = "Specified_Velocity";
@@ -126,8 +126,8 @@ void ParseBC::getUnitVec(REAL_TYPE* v)
 int ParseBC::getNoLocalBC()
 {  
   int nobc=0;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   label="/BC_Table/LocalBoundary";
   
@@ -142,7 +142,7 @@ int ParseBC::getNoLocalBC()
 
 // #################################################################
 // 境界条件の値(REAL_TYPE型)を取得し，返す
-REAL_TYPE ParseBC::get_BCval_real(const std::string label)
+REAL_TYPE ParseBC::get_BCval_real(const string label)
 {
   REAL_TYPE df=0.0f;
   if ( !(tpCntl->GetValue(label, &df )) ) 
@@ -156,9 +156,9 @@ REAL_TYPE ParseBC::get_BCval_real(const std::string label)
 
 // #################################################################
 // 内部境界条件の座標値を取得し，登録する
-void ParseBC::get_Center(const std::string label_base, REAL_TYPE* v)
+void ParseBC::get_Center(const string label_base, REAL_TYPE* v)
 {
-  std::string label;
+  string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
   
   label = label_base + "/Center";
@@ -173,7 +173,7 @@ void ParseBC::get_Center(const std::string label_base, REAL_TYPE* v)
 
 // #################################################################
 // Darcyのパラメータを取得する
-void ParseBC::get_Darcy(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_Darcy(const string label_base, const int n, CompoList* cmp)
 {
   REAL_TYPE v[3];
   string label;
@@ -203,9 +203,9 @@ void ParseBC::get_Darcy(const std::string label_base, const int n, CompoList* cm
 
 // #################################################################
 // 内部境界条件の方向ベクトル値を取得し，登録する
-void ParseBC::get_Dir(const std::string label_base, REAL_TYPE* v)
+void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
 {
-  std::string label;
+  string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
   
   label = label_base + "/Dir";
@@ -222,12 +222,12 @@ void ParseBC::get_Dir(const std::string label_base, REAL_TYPE* v)
 
 // #################################################################
 // Direct Forcingのパラメータを取得する
-void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp)
 {
   int d;
   int nnode=0;
   REAL_TYPE v[3];
-  std::string str;
+  string str;
   string label;
   
   // check number of Elem
@@ -258,9 +258,9 @@ void ParseBC::get_IBC_IBM_DF(const std::string label_base, const int n, CompoLis
 // HeatExchangerのパラメータを取得する
 ///> @note この時点ではRefDensityの値が未定なので，あとでパラメータ処理
 ///> @see Control::setParameters()
-void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* cmp)
 {
-  std::string str,str_u;
+  string str,str_u;
   string label;
   REAL_TYPE v[4], ct;
   int nnode=0;
@@ -355,9 +355,9 @@ void ParseBC::get_IBC_PrsLoss(const std::string label_base, const int n, CompoLi
 
 // #################################################################
 // Fanのパラメータを取得する
-void ParseBC::get_IBC_Fan(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
 {
-  std::string str,str_u;
+  string str,str_u;
   string label;
   REAL_TYPE v[4], ct;
   int nnode=0;
@@ -371,7 +371,7 @@ void ParseBC::get_IBC_Fan(const std::string label_base, const int n, CompoList* 
   
   // 入力単位の指定
   label=label_base+"/unit";//
-  //std::cout <<  "label : " << label << std::endl;
+  //cout <<  "label : " << label << endl;
   if ( !(tpCntl->GetValue(label, &str_u )) ) {
 		stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
 		Exit(0);
@@ -419,11 +419,11 @@ void ParseBC::get_IBC_Fan(const std::string label_base, const int n, CompoList* 
 
 // #################################################################
 // Monitorの設定内容をパースし，パラメータを保持する
-void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* cmp)
 {
   int nvc=0;
   REAL_TYPE v[3];
-  std::string str,pnt;
+  string str,pnt;
   string label,label_leaf;
   
   // モードと形状
@@ -624,12 +624,12 @@ void ParseBC::get_IBC_Monitor(const std::string label_base, const int n, CompoLi
 
 // #################################################################
 // 内部の周期境界のパラメータを取得する
-void ParseBC::get_IBC_Periodic(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* cmp)
 {
   int dir=0;
   REAL_TYPE ct=0.0;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 上流側の方向
   label = label_base + "/upstream_direction";
@@ -681,10 +681,10 @@ void ParseBC::get_IBC_Periodic(const std::string label_base, const int n, CompoL
 
 // #################################################################
 // Adiabaticのパラメータを取得する
-void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp)
 {
-  std::string str, str_u;
-  std::string label;
+  string str, str_u;
+  string label;
   REAL_TYPE v[4], ct;
   int nnode=0;
   
@@ -713,9 +713,9 @@ void ParseBC::get_IBC_Adiabatic(const std::string label_base, const int n, Compo
 
 // #################################################################
 // Direct_Fluxのパラメータを取得する
-void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HeatFlux(const string label_base, const int n, CompoList* cmp)
 {
-  std::string label;
+  string label;
   int nnode=0;
   
   // check number of Elem
@@ -742,9 +742,9 @@ void ParseBC::get_IBC_HeatFlux(const std::string label_base, const int n, CompoL
 
 // #################################################################
 // HeatTransfer_Nのパラメータを取得する
-void ParseBC::get_IBC_HT_N(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_N(const string label_base, const int n, CompoList* cmp)
 {
-  std::string label;
+  string label;
   int nnode=0;
   
   // check number of Elem
@@ -772,9 +772,9 @@ void ParseBC::get_IBC_HT_N(const std::string label_base, const int n, CompoList*
 
 // #################################################################
 // HeatTransfer_Sのパラメータを取得す
-void ParseBC::get_IBC_HT_S(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp)
 {
-  std::string label;
+  string label;
   int nnode=0;
   
   // check number of Elem
@@ -808,10 +808,10 @@ void ParseBC::get_IBC_HT_S(const std::string label_base, const int n, CompoList*
 
 // #################################################################
 // HeatTransfer_SNのパラメータを取得する
-void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp)
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   int nnode=0;
   
   // check number of Elem
@@ -891,9 +891,9 @@ void ParseBC::get_IBC_HT_SN(const std::string label_base, const int n, CompoList
 
 // #################################################################
 // HeatTransfer_SFのパラメータを取得する
-void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp)
 {
-  std::string str;
+  string str;
   string label;
   int nnode=0;
   
@@ -946,7 +946,7 @@ void ParseBC::get_IBC_HT_SF(const std::string label_base, const int n, CompoList
 
 // #################################################################
 // HeatTransfer_Bのパラメータを取得する
-void ParseBC::get_IBC_HT_B(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_B(const string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -980,7 +980,7 @@ void ParseBC::get_IBC_HT_B(const std::string label_base, const int n, CompoList*
 
 // #################################################################
 // 境界条件IsoThermalのパラメータを取得し保持する
-void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_IsoTherm(const string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1010,7 +1010,7 @@ void ParseBC::get_IBC_IsoTherm(const std::string label_base, const int n, CompoL
 // #################################################################
 // 境界条件Radiantのパラメータを取得し保持する
 // 境界条件自体は未実装
-void ParseBC::get_IBC_Radiant(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Radiant(const string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1042,10 +1042,10 @@ void ParseBC::get_IBC_Radiant(const std::string label_base, const int n, CompoLi
 
 // #################################################################
 // Heat_Generationのパラメータを取得する
-void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HeatSrc(const string label_base, const int n, CompoList* cmp)
 {
   REAL_TYPE hsrc=0.0f;
-  std::string str;
+  string str;
   string label;
   int nnode=0;
   
@@ -1095,7 +1095,7 @@ void ParseBC::get_IBC_HeatSrc(const std::string label_base, const int n, CompoLi
 
 // #################################################################
 // Const_Temperatureのパラメータを取得する
-void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_CnstTemp(const string label_base, const int n, CompoList* cmp)
 {
   string label;
   int nnode=0;
@@ -1121,13 +1121,13 @@ void ParseBC::get_IBC_CnstTemp(const std::string label_base, const int n, CompoL
 
 // #################################################################
 // 内部の流出境界のパラメータを取得する
-void ParseBC::get_IBC_Outflow(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Outflow(const string label_base, const int n, CompoList* cmp)
 {
   int def;
   REAL_TYPE ct;
   REAL_TYPE v[3];
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // 圧力境界のタイプ default
   cmp[n].set_P_BCtype( P_GRAD_ZERO );
@@ -1189,10 +1189,10 @@ void ParseBC::get_IBC_Outflow(const std::string label_base, const int n, CompoLi
 // #################################################################
 // 内部の流入境界のパラメータを取得する
 // Control::setparameters()でcmp[].ca[]に値をセットする
-void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp, MPIPolylib* PL)
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   REAL_TYPE ct;
   REAL_TYPE v[3];
   
@@ -1201,7 +1201,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
     Exit(0);
   }
   if ( !strcasecmp("velocity", str.c_str()) )
@@ -1214,7 +1214,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
   }
   else
   {
-	  printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
+	  Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
 	  Exit(0);
   }
   
@@ -1238,7 +1238,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
     
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
-      stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     else
@@ -1246,7 +1246,7 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
       cmp[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
       if ( Unit_Param != DIMENSIONAL )
       {
-        stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+        Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
         Exit(0);
       }
       cmp[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
@@ -1254,29 +1254,36 @@ void ParseBC::get_IBC_SpecVel(const std::string label_base, const int n, CompoLi
   }
   
   
-  // 境界条件位置の指定
-  if ( isCDS )
+  // ポリゴンの境界条件ラベル
+  label = label_base + "/BC_label";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
   {
-    label = label_base + "/BC_direction";
+    Hostonly_ stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+    string m_pg = (*it)->get_name();
+    int m_id  = (*it)->get_id();
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( FBUtility::compare(m_pg, str) )
     {
-      stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
-      Exit(0);
+      cmp[n].setMatOdr(m_id);
+      break;
     }
-    if ( !strcasecmp("same", str.c_str()) )
-    {
-      cmp[n].setBClocation(CompoList::same_direction);
-    }
-    else if ( !strcasecmp("opposite", str.c_str()) )
-    {
-      cmp[n].setBClocation(CompoList::opposite_direction);
-    }
-    else
-    {
-      printf("\tParsing error : Invalid string value '%s' for 'BC_direction'\n", str.c_str());
-      Exit(0);
-    }
+  }
+  
+  delete pg_roots;
+  
+  
+  if ( cmp[n].getMatOdr() == 0 )
+  {
+    Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'BC_direction'\n", str.c_str());
+    Exit(0);
   }
   
 }
@@ -1294,8 +1301,8 @@ void ParseBC::get_Medium_InitTemp()
   int Cell_state;
   REAL_TYPE ct;
   
-  std::string label, label_base;
-  std::string str;
+  string label, label_base;
+  string str;
   int counter=0;
   int nnode=0;
   
@@ -1313,8 +1320,8 @@ void ParseBC::get_Medium_InitTemp()
     stamped_printf("\tParsing error : at Init_Temp_of_Medium\n");
     Exit(0);
   }
-  //std::cout <<  "nnode : " << nnode << std::endl;
-  //std::cout <<  "m_no_medium : " << m_no_medium << std::endl;
+  //cout <<  "nnode : " << nnode << endl;
+  //cout <<  "m_no_medium : " << m_no_medium << endl;
   
   
   // load statement list
@@ -1380,9 +1387,9 @@ void ParseBC::get_Medium_InitTemp()
 
 // #################################################################
 // 内部境界条件の法線ベクトル値を取得し，登録する
-void ParseBC::get_NV(const std::string label_base, REAL_TYPE* v)
+void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
 {
-  std::string label;
+  string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
   
   label = label_base + "/Normal";
@@ -1399,17 +1406,17 @@ void ParseBC::get_NV(const std::string label_base, REAL_TYPE* v)
 
 // #################################################################
 /**
- @fn void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
+ @fn void ParseBC::get_OBC_Wall(const string label_base, const int n)
  @brief 外部境界の壁面条件のパラメータを取得する
  @param label_base 
  @param n 面番号
  */
-void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
+void ParseBC::get_OBC_Wall(const string label_base, const int n)
 {
   REAL_TYPE vel, ct;
   REAL_TYPE v[3];
-  std::string str;
-  std::string label, label2;
+  string str;
+  string label, label2;
   
   // 速度のタイプの特定
   label = label_base + "/type";
@@ -1497,10 +1504,10 @@ void ParseBC::get_OBC_Wall(const std::string label_base, const int n)
  @param n 面番号
  @note 圧力の値は，Control::setParameters()で無次元化する
  */
-void ParseBC::get_OBC_Outflow(const std::string label_base, const int n)
+void ParseBC::get_OBC_Outflow(const string label_base, const int n)
 {
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   REAL_TYPE ct;
   
   
@@ -1564,17 +1571,17 @@ void ParseBC::get_OBC_Outflow(const std::string label_base, const int n)
 
 // #################################################################
 /**
- @fn void ParseBC::get_OBC_SpecVH(const std::string label_base, const int n)
+ @fn void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
  @brief 外部境界の流入条件のパラメータを取得する
  @param label_base 
  @param n 面番号
  */
-void ParseBC::get_OBC_SpecVH(const std::string label_base, const int n)
+void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
 {
   REAL_TYPE vel, ct;
   REAL_TYPE v[3];
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   
   // 速度境界条件のプロファイル
@@ -1611,16 +1618,16 @@ void ParseBC::get_OBC_SpecVH(const std::string label_base, const int n)
 
 // #################################################################
 /**
- @fn void ParseBC::get_OBC_Trcfree(const std::string label_base, const int n)
+ @fn void ParseBC::get_OBC_Trcfree(const string label_base, const int n)
  @brief 外部境界の流入条件のパラメータを取得する
  @param label_base 
  @param n 面番号
  */
-void ParseBC::get_OBC_Trcfree(const std::string label_base, const int n)
+void ParseBC::get_OBC_Trcfree(const string label_base, const int n)
 {
   REAL_TYPE ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   BaseBc[n].set_pType(P_DIRICHLET);
   BaseBc[n].p = 0.0; // ゲージ圧zero 固定
@@ -1645,16 +1652,16 @@ void ParseBC::get_OBC_Trcfree(const std::string label_base, const int n)
 
 // #################################################################
 /**
- @fn void ParseBC::get_OBC_FarField(const std::string label_base, const int n)
+ @fn void ParseBC::get_OBC_FarField(const string label_base, const int n)
  @brief 外部境界の遠方境界のパラメータを取得する
  @param label_base 
  @param n 面番号
  */
-void ParseBC::get_OBC_FarField(const std::string label_base, const int n)
+void ParseBC::get_OBC_FarField(const string label_base, const int n)
 {
   REAL_TYPE ct;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   BaseBc[n].set_pType(P_GRAD_ZERO);
   BaseBc[n].p = 0.0; // ダミー値
@@ -1680,18 +1687,18 @@ void ParseBC::get_OBC_FarField(const std::string label_base, const int n)
 
 // #################################################################
 /**
- @fn void ParseBC::get_OBC_Periodic(const std::string label_base, const int n)
+ @fn void ParseBC::get_OBC_Periodic(const string label_base, const int n)
  @brief 外部境界の周期条件のパラメータを取得する
  @param label_base 
  @param n 面番号
  @note 圧力の値は，Control::setParameters()で無次元化する
  */
-void ParseBC::get_OBC_Periodic(const std::string label_base, const int n)
+void ParseBC::get_OBC_Periodic(const string label_base, const int n)
 {
   REAL_TYPE ct;
   int def;
-  std::string str;
-  std::string label;
+  string str;
+  string label;
   
   // モード
   label = label_base + "/mode";
@@ -1790,16 +1797,16 @@ void ParseBC::get_OBC_Periodic(const std::string label_base, const int n)
 
 // #################################################################
 /*
- @fn void ParseBC::get_OBC_HT(const std::string label_base, const int n, const std::string kind)
+ @fn void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind)
  @brief 外部の壁面熱伝達境界のパラメータを取得する
  @param label_base 
  @param n 面番号
  @param kind 熱伝達境界の種類
  */ 
-void ParseBC::get_OBC_HT(const std::string label_base, const int n, const std::string kind)
+void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind)
 {
-  std::string label;
-  std::string str;
+  string label;
+  string str;
   REAL_TYPE ct;
   
   if ( !strcasecmp(kind.c_str(), "HeatTransfer_B") ) {
@@ -1923,7 +1930,7 @@ void ParseBC::get_Phase(CompoList* cmp)
 {
   int m_phase;
   int id;
-  std::string str,p;
+  string str,p;
   string label,label_base;
   int NoParam;
   
@@ -1934,7 +1941,7 @@ void ParseBC::get_Phase(CompoList* cmp)
   
   
   label_base="/Steer/Phase_Idetification";
-  //std::cout <<  "label : " << label << std::endl;
+  //cout <<  "label : " << label << endl;
   if ( !(tpCntl->chkNode(label_base)) ) {
     stamped_printf("\tParsing error : Missing the section of 'Phase_Idetification'\n");
     Exit(0);
@@ -2013,9 +2020,9 @@ void ParseBC::get_Phase(CompoList* cmp)
 
 // #################################################################
 //@brief 外部境界の速度境界条件のタイプを取得し，返す
-int ParseBC::get_Vel_profile(const std::string label_base)
+int ParseBC::get_Vel_profile(const string label_base)
 {
-  std::string label, str;
+  string label, str;
   
   label = label_base + "/Profile";
   
@@ -2039,7 +2046,7 @@ int ParseBC::get_Vel_profile(const std::string label_base)
 
 // #################################################################
 /**
- @fn void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
+ @fn void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
  @brief 速度のパラメータを取得する
  @param label_base 
  @param ca 係数パラメータの配列
@@ -2049,9 +2056,9 @@ int ParseBC::get_Vel_profile(const std::string label_base)
  - 速度プロファイルは単振動と一定値の場合で係数の保持パターンが異なる
  - 内部境界の場合には，流量指定と速度指定があるので分岐処理（未実装）
  */
-void ParseBC::get_Vel_Params(const std::string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
+void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
 {
-  std::string label;
+  string label;
   REAL_TYPE ct=0.0, vel;
   
   if ( prof == CompoList::vel_zero ) {
@@ -2149,7 +2156,7 @@ bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 
 // #################################################################
 // 同じラベルが既にコンポーネントに登録されているかを調べる
-bool ParseBC::isLabelinCompo(const std::string candidate, const int now, const CompoList* cmp)
+bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoList* cmp)
 {
   for (int i=1; i<now; i++) {
     if ( FBUtility::compare(candidate, cmp[i].getLabel()) ) return false;
@@ -2163,24 +2170,24 @@ bool ParseBC::isLabelinCompo(const std::string candidate, const int now, const C
 // 最初にBCの情報を登録，その後IDの情報を登録
 // パラメータファイルから各内部BCのidをパースし，cmpに保持する
 // 格納番号は1からスタート
-void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp)
+void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp, MPIPolylib* PL)
 { 
-  std::string str, label, ename;
-  std::string label_base, label_ename, label_leaf;
+  string str, label, ename;
+  string label_base, label_ename, label_leaf;
   REAL_TYPE fval;
   int n=0;
   int ide;
   int tp;
   
   /* Medium_Table debug print ///////////////////////////////////////////////////
-   std::cout << std::endl;
-   std::cout << std::endl;
+   cout << endl;
+   cout << endl;
    cout << "**********************" << endl;
    cout << "*****loadBC_Local*****" << endl;
    cout << "**********************" << endl;
    cout << "NoMedium : " << NoMedium << endl;
    // イテレータを生成
-   std::map<string, REAL_TYPE>::iterator itr;
+   map<string, REAL_TYPE>::iterator itr;
    for (int i=1; i<=NoMedium; i++) { //Medium_Table loop
    cout << "at glance" << i+1 << endl;
    cout << "type  : " << MTITP[i].type << endl;
@@ -2190,15 +2197,15 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
    for (itr = MTITP[i].m_fval.begin(); itr != MTITP[i].m_fval.end(); itr++)
    {
    icounter++;
-   std::string a1 = itr->first;// キー取得
+   string a1 = itr->first;// キー取得
    REAL_TYPE a2 = itr->second;// 値取得
    cout << "i = " << i << "  icounter = " << icounter 
    << "  key:" << a1 << "  value:" << a2 << endl;
    }
    }
-   std::cout << " NoBC   = " << NoBC  << std::endl;
-   std::cout << std::endl;
-   std::cout << std::endl;
+   cout << " NoBC   = " << NoBC  << endl;
+   cout << endl;
+   cout << endl;
    /////////////////////////////////////////////////////////////////////////////// */
   
   // 内部境界条件の有無を調べる
@@ -2234,7 +2241,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -2246,7 +2253,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     
     if ( tp == SPEC_VEL ) 
     {
-      get_IBC_SpecVel(label_leaf, odr, cmp);      
+      get_IBC_SpecVel(label_leaf, odr, cmp, PL);
     }
     else if ( tp == OUTFLOW ) 
     {
@@ -2284,7 +2291,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     {
       if ( C->KindOfSolver == FLOW_ONLY ) 
       {
-        stamped_printf("Parse Error : Heat BC is not allowed on FLOW_ONLY mode.\n");
+        Hostonly_ stamped_printf("Parse Error : Heat BC is not allowed on FLOW_ONLY mode.\n");
         Exit(0);
       }
       
@@ -2300,7 +2307,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       }
       else if ( tp == TRANSFER ) 
       {
-        switch ( cmp[odr].getHtype() ) 
+        switch ( cmp[odr].getHtype() )
         {
           case HT_N:
             get_IBC_HT_N(label_leaf, odr, cmp);
@@ -2347,7 +2354,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       }
       else 
       {
-        printf("\tError : Invalid Local BC keyword [%d]\n", tp);
+        Hostonly_ printf("\tError : Invalid Local BC keyword [%d]\n", tp);
         Exit(0);
       }
     }
@@ -2366,8 +2373,8 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
 // パラメータファイルをパースして，外部境界条件を取得，保持する
 void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp)
 {
-  std::string label_base, label_leaf, label;
-  std::string str;
+  string label_base, label_leaf, label;
+  string str;
   
   // Basic Outer BCリストの読み込み
   label_base = "/BC_Table/OuterBoundary";
@@ -3472,8 +3479,8 @@ void ParseBC::setControlVars(Control* Cref)
   }
   
   // 外部境界条件の種類数を取得し，内部保持配列をインスタンス
-  std::string label;
-  std::string str;
+  string label;
+  string str;
   
   label = "/BC_Table/OuterBoundary";
   
@@ -3508,10 +3515,10 @@ void ParseBC::setControlVars(Control* Cref)
 
 // #################################################################
 // 内部境界条件のdef_faceを取得し，登録する
-void ParseBC::set_Deface(const std::string label_base, const int n, CompoList* cmp)
+void ParseBC::set_Deface(const string label_base, const int n, CompoList* cmp)
 {
   int def=0;
-  std::string label;
+  string label;
   
   label = label_base + "/face_label";
   
@@ -3532,7 +3539,7 @@ void ParseBC::set_Deface(const std::string label_base, const int n, CompoList* c
 // #################################################################
 //@brief 内部境界条件の照合を行う
 //@note SPEC_VEL_WHは陽には現れず，get_IBC_SpecVel()内で登録される
-void ParseBC::setKeywordLBC(const std::string keyword, const int m, CompoList* cmp)
+void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 {
   if     ( FBUtility::compare(keyword, "Adiabatic") )             cmp[m].setType(ADIABATIC);
   else if( FBUtility::compare(keyword, "Direct_Heat_Flux") )      cmp[m].setType(HEATFLUX);
@@ -3563,7 +3570,7 @@ void ParseBC::setKeywordLBC(const std::string keyword, const int m, CompoList* c
 
 // #################################################################
 //@brief 外部境界条件のキーワードを照合し，コードを登録する
-void ParseBC::setKeywordOBC(const std::string keyword, const int m)
+void ParseBC::setKeywordOBC(const string keyword, const int m)
 {
   if     ( FBUtility::compare(keyword, "Wall") )               BaseBc[m].set_Class(OBC_WALL);
   else if( FBUtility::compare(keyword, "Outflow") )            BaseBc[m].set_Class(OBC_OUTFLOW);
@@ -3618,7 +3625,7 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, 
 // 境界名の取得
 void ParseBC::GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp)
 {
-  std::string str;
+  string str;
   
   //inner boundary
   for (int odr=1; odr<=NoBC; odr++) {

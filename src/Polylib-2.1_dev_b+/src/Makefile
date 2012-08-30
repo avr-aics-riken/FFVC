@@ -71,7 +71,6 @@ GFX_OBJS	= Polylib.o \
 			  polygons/Polygons.o \
 			  polygons/TriMesh.o \
 			  groups/PolygonGroup.o \
-			  file_io/PolylibConfig.o \
 			  file_io/TriMeshIO.o \
 			  file_io/stl.o \
 			  file_io/triangle_id.o \
