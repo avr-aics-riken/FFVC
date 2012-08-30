@@ -35,6 +35,8 @@ F90         = ifort
 F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
 LDFLAGS     = -L/opt/intel/composerxe/lib
 LIBS        = -lifport -lifcore
+UDEF_LIB_PATH_SPEC =
+UDEF_LIBS_SPEC     =
 
 
 #
@@ -61,6 +63,8 @@ LIBS        = -lifport -lifcore
 #F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
 #LDFLAGS     = --linkfortran
 #LIBS        =
+#UDEF_LIB_PATH_SPEC =
+#UDEF_LIBS_SPEC     =
 
 
 #
@@ -87,6 +91,8 @@ LIBS        = -lifport -lifcore
 #F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS) -WF,-D_STATIC
 #LDFLAGS     =
 #LIBS        =
+#UDEF_LIB_PATH_SPEC = /soft/apps/ibmcmp/xlf/bg/11.1/bglib
+#UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath
 
 ###################################################################
 
@@ -108,6 +114,8 @@ UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
               -L../FB \
               -L../IP \
               -L../F_CORE \
-              -L$(MPI_DIR)/lib
+              -L$(MPI_DIR)/lib \
+              -L$(UDEF_LIB_PATH_SPEC)
               
-UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib
+UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
+            $(UDEF_LIBS_SPEC)

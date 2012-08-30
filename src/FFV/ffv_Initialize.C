@@ -831,6 +831,7 @@ int FFV::Initialize(int argc, char **argv)
   
   Hostonly_ if ( fp ) fclose(fp);
   
+  TIMING_stop(tm_init_sct);
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON)
@@ -851,8 +852,6 @@ int FFV::Initialize(int argc, char **argv)
     if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name(); 
     if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
   }
-  
-  TIMING_stop(tm_init_sct);
 
   return 1;
 }
