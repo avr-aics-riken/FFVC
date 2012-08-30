@@ -2039,7 +2039,7 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
           s_t = bcp[m_t];
           s_b = bcp[m_b];
           
-          // 外部境界面は除外
+
           // X_MINUS
           //if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
             if ( !IS_FLUID( s_w ) && (c_w == idd) ) // Wセルが指定ID，かつ固体である
