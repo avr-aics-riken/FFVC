@@ -2226,39 +2226,46 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
 
 
 // #################################################################
-/**
- @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
- @retval エンコードしたセル数
- @param [in]     order cmp[]のエントリ番号
- @param [in]     id    媒質ID
- @param [in]     bid   カットID配列
- @param [in,out] bcd   BCindex ID
- @param [in,out] bcp   BCindex P
- @param [in]     nv    法線ベクトル
- @note
- - 対象セルが流体セル，かつターゲットの隣接セルが固体の場合，隣接する面にNeumannフラグをエンコードする
- - 同種のBCは1セルに一つだけ
- */
+// 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
+// 対象セルが流体セル，かつ隣接方向にBCカットがある場合，対象面にNeumannフラグをエンコードする
+// 同種のBCは1セルに一つだけ
 unsigned long VoxInfo::encPbit_N_IBC(const int order,
                                      const int id,
                                      const int* bid,
                                      int* bcd,
                                      int* bcp,
-                                     const REAL_TYPE* nv)
+                                     const float* vec,
+                                     const int bc_dir)
 {
   unsigned long g=0;
-  int qw, qe, qs, qn, qb, qt, qq;
 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
   int idd = id;
   int odr = order;
   
+  FB::Vec3f nv(vec);
+  
+  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
+  if ( bc_dir == CompoList::opposite_direction )
+  {
+    nv *= -1.0;
+  }
+  
+  FB::Vec3f e_w(-1.0,  0.0,  0.0);
+  FB::Vec3f e_e(+1.0,  0.0,  0.0);
+  FB::Vec3f e_s( 0.0, -1.0,  0.0);
+  FB::Vec3f e_n( 0.0, +1.0,  0.0);
+  FB::Vec3f e_b( 0.0,  0.0, -1.0);
+  FB::Vec3f e_t( 0.0,  0.0, +1.0);
+  
+  printf("(%f %f %f)\n", nv.x, nv.y, nv.z);
+  
+  
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, idd, odr) \
-private(qw, qe, qs, qn, qb, qt, qq) \
+firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
 schedule(static) reduction(+:g)
   
   for (int k=1; k<=kx; k++) {
@@ -2268,36 +2275,38 @@ schedule(static) reduction(+:g)
         int d = bcd[m];
         int s = bcp[m];
         
-        qq = bid[m];
+        int qq = bid[m];
         
-        // 隣接セルの方向に対するカットのID>> 0ならばカット無し
-        qw = get_BID5(X_MINUS, qq);
-        qe = get_BID5(X_PLUS,  qq);
-        qs = get_BID5(Y_MINUS, qq);
-        qn = get_BID5(Y_PLUS,  qq);
-        qb = get_BID5(Z_MINUS, qq);
-        qt = get_BID5(Z_PLUS,  qq);
-        
-        if ( IS_FLUID( s ) ) // 対象セルが流体セル
+        if ( IS_FLUID(s) && TEST_BC(qq) ) // 対象セルが流体でカットがある場合
         {
+          // 隣接セルの方向に対するカットのID>> 0ならばカット無し
+          int qw = get_BID5(X_MINUS, qq);
+          int qe = get_BID5(X_PLUS,  qq);
+          int qs = get_BID5(Y_MINUS, qq);
+          int qn = get_BID5(Y_PLUS,  qq);
+          int qb = get_BID5(Z_MINUS, qq);
+          int qt = get_BID5(Z_PLUS,  qq);
+          
           // X_MINUS
-          if ( (qw == idd) && (nv[0] < 0.0) )
+          if ( (qw == idd) ) //&& (dot(e_w, nv) < 0.0) )
           {
+            //printf("w : %f\n",dot(e_w, nv));
             d |= odr; // dにエントリをエンコード
             s = offBit( s, BC_N_W );
             g++;
           }
           
           // X_PLUS
-          if ( qe == idd )
+          if ( (qe == idd) ) //&& (dot(e_e, nv) < 0.0) )
           {
+            printf("e : %f\n",dot(e_e, nv));
             d |= odr;
             s = offBit( s, BC_N_E );
             g++;
           }
           
           // Y_MINUS
-          if ( qs == idd )
+          if ( (qs == idd) && (dot(e_s, nv) < 0.0) )
           {
             d |= odr;
             s = offBit( s, BC_N_S );
@@ -2305,7 +2314,7 @@ schedule(static) reduction(+:g)
           }
           
           // Y_PLUS
-          if ( qn == idd )
+          if ( (qn == idd) && (dot(e_n, nv) < 0.0) )
           {
             d |= odr;
             s = offBit( s, BC_N_N );
@@ -2313,7 +2322,7 @@ schedule(static) reduction(+:g)
           }
           
           // Z_MINUS
-          if ( qb == idd )
+          if ( (qb == idd) && (dot(e_b, nv) < 0.0) )
           {
             d |= odr;
             s = offBit( s, BC_N_B );
@@ -2321,7 +2330,7 @@ schedule(static) reduction(+:g)
           }
           
           // Z_PLUS
-          if ( qt == idd )
+          if ( (qt == idd) && (dot(e_t, nv) < 0.0) )
           {
             d |= odr;
             s = offBit( s, BC_N_T );
@@ -2331,6 +2340,7 @@ schedule(static) reduction(+:g)
           bcd[m] = d;
           bcp[m] = s;
         }
+
       }
     }
   }
@@ -3964,7 +3974,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
           s   = bv[m_p];
           q   = bp[m_p];
           
-          if ( IS_FLUID(s) ) { // 流体かつdefaceであるセルがテスト対象
+          if ( IS_FLUID(s) ) { // 流体セルがテスト対象
             // 各方向のID
             id_w = get_BID5(X_MINUS, bid);
             id_e = get_BID5(X_PLUS,  bid);
@@ -5994,17 +6004,17 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
   }
 
   // 内部境界のコンポーネントのエンコード
-  int id;
-  int deface;
-  REAL_TYPE nv[3];
+  int id, m_dir;
+  float vec[3];
   
   for (int n=1; n<=NoBC; n++) {
     id = cmp[n].getMatOdr();
-    //deface = cmp[n].getDef();
-    nv[0] = cmp[n].nv[0];
-    nv[1] = cmp[n].nv[1];
-    nv[2] = cmp[n].nv[2];
-    printf("IBC %d : %d (%f %f %f)\n", n, id, nv[0], nv[1], nv[2]);
+    vec[0] = (float)cmp[n].nv[0];
+    vec[1] = (float)cmp[n].nv[1];
+    vec[2] = (float)cmp[n].nv[2];
+    m_dir = cmp[n].getBClocation();
+    
+    printf("IBC %d : %d (%f %f %f) %d\n", n, id, vec[0], vec[1], vec[2], m_dir);
     
     switch ( cmp[n].getType() )
     {
@@ -6012,7 +6022,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
       case SPEC_VEL_WH:
       case OUTFLOW:
         //cmp[n].setElement( encPbit_N_IBC(n, id, mid, bcd, bcp, deface) );
-        cmp[n].setElement( encPbit_N_IBC(n, id, bid, bcd, bcp, nv) );
+        cmp[n].setElement( encPbit_N_IBC(n, id, bid, bcd, bcp, vec, m_dir) );
         break;
     }
   }

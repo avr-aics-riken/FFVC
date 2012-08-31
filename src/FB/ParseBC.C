@@ -1253,6 +1253,27 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
     }
   }
   
+  // 境界条件の方向
+  label = label_base + "/Fluid_direction";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if ( !strcasecmp("same_side_of_normal", str.c_str()) )
+  {
+    cmp[n].setBClocation(CompoList::same_direction);
+  }
+  else if ( !strcasecmp("opposite_side_of_normal", str.c_str()) )
+  {
+    cmp[n].setBClocation(CompoList::opposite_direction);
+  }
+  else
+  {
+    printf("\tParsing error : Invalid string value '%s' for 'Fluid_direction'\n", str.c_str());
+    Exit(0);
+  }
   
   // ポリゴンの境界条件ラベル
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();

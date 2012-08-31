@@ -433,11 +433,9 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   
-  // CDSのとき，ポリゴンからVBCのコンポーネント情報を設定
-  if ( C.isCDS() )
-  {
-    VIBC_Bbox_from_Cut();
-  }
+  // ポリゴンからVBCのコンポーネント情報を設定
+  VIBC_Bbox_from_Cut();
+  
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode();

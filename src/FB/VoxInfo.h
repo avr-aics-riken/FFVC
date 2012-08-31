@@ -126,12 +126,25 @@ private:
                               int* bcp, 
                               const int deface);
   
+  /**
+   * @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
+   * @retval エンコードしたセル数
+   * @param [in]     order  cmp[]のエントリ番号
+   * @param [in]     id     媒質ID
+   * @param [in]     bid    カットID配列
+   * @param [in,out] bcd    BCindex ID
+   * @param [in,out] bcp    BCindex P
+   * @param [in]     vec    法線ベクトル
+   * @param [in]     bc_dir 境界条件の方向
+   */
   unsigned long encPbit_N_IBC(const int order,
                               const int id,
                               const int* bid,
                               int* bcd,
                               int* bcp,
-                              const REAL_TYPE* nv);
+                              const float* vec,
+                              const int bc_dir);
+  
   
   unsigned long encQface(const int order,
                          const int id, 
