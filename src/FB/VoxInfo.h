@@ -111,7 +111,11 @@ private:
                               int* bcp, 
                               const int deface);
   
+  
+  
   unsigned long encPbit_N_Binary(int* bx);
+  
+  unsigned long encPbit_N_Cut(int* bx, const int* bid, const float* cut, const bool convergence);
   
   unsigned long encPbit_N_Cut(int* bx, const float* cut, const bool convergence);
   
@@ -122,7 +126,14 @@ private:
                               int* bcp, 
                               const int deface);
   
-  unsigned long encQface(const int order, 
+  unsigned long encPbit_N_IBC(const int order,
+                              const int id,
+                              const int* bid,
+                              int* bcd,
+                              int* bcp,
+                              const REAL_TYPE* nv);
+  
+  unsigned long encQface(const int order,
                          const int id, 
                          const int* mid, 
                          int* bcd, 
@@ -456,11 +467,12 @@ public:
    * @param [in,out] mid   ID配列
    * @param [in]     BC    SetBCクラスのポインタ
    * @param [in,out] cmp   CompoList
-   * @param [in]     isCDS CDS->true
    * @param [in]     cut   距離情報
+   * @param [in]     bid   カットID情報
+   * @param [in]     isCDS CDS->true
    * @retval 表面セル数
    */
-  unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const bool isCDS=false, const float* cut=NULL);
+  unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const float* cut, const int* bid, const bool isCDS);
   
   
   /**

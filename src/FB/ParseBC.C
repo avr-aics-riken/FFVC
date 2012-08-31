@@ -1255,14 +1255,6 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   
   
   // ポリゴンの境界条件ラベル
-  label = label_base + "/BC_label";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
   
@@ -1270,7 +1262,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
     string m_pg = (*it)->get_name();
     int m_id  = (*it)->get_id();
     
-    if ( FBUtility::compare(m_pg, str) )
+    if ( FBUtility::compare(m_pg, cmp[n].getLabel()) )
     {
       cmp[n].setMatOdr(m_id);
       break;
@@ -1282,7 +1274,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   
   if ( cmp[n].getMatOdr() == 0 )
   {
-    Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'BC_direction'\n", str.c_str());
+    Hostonly_ printf("\tError : Alias '%s' is not listed in PolygonGroup\n", cmp[n].getLabel().c_str());
     Exit(0);
   }
   

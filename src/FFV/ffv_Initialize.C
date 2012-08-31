@@ -3724,11 +3724,11 @@ void FFV::VoxEncode()
   // BCIndexP に圧力計算のビット情報をエンコードする -----
   if ( C.isCDS() ) 
   {
-    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, true, d_cut);
+    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, d_cut, d_bid, true);
   }
   else // binary
   {
-    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp);
+    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, d_cut, d_bid, false);
   }
 
 #if 0

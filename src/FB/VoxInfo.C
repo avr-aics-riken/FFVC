@@ -1759,6 +1759,264 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
  @param[in] cut 距離情報
  @param convergence カットのあるセルは収束判定をしないオプション（trueの時）
  @retval 固体表面セル数
+ @note
+ - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
+ - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ */
+unsigned long VoxInfo::encPbit_N_Cut(int* bx, const int* bid, const float* cut, const bool convergence)
+{
+  int qw, qe, qs, qn, qb, qt, qq;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  // ノイマンフラグ
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) \
+private(qw, qe, qs, qn, qb, qt, qq) \
+schedule(static)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m_p];
+        
+        if ( IS_FLUID( s ) )
+        {
+          qq = bid[m_p];
+          
+          // 隣接セルの方向に対するカットの有無>> 0ならばカット無し
+          qw = get_BID5(X_MINUS, qq);
+          qe = get_BID5(X_PLUS,  qq);
+          qs = get_BID5(Y_MINUS, qq);
+          qn = get_BID5(Y_PLUS,  qq);
+          qb = get_BID5(Z_MINUS, qq);
+          qt = get_BID5(Z_PLUS,  qq);
+          
+          // X_MINUS
+          if (qw != 0)  // 交点があるなら壁面なのでノイマン条件をセット
+          {
+            s = offBit( s, BC_N_W );
+          }
+          
+          // X_PLUS
+          if (qe != 0)
+          {
+            s = offBit( s, BC_N_E );
+          }
+          
+          // Y_MINUS
+          if (qs != 0)
+          {
+            s = offBit( s, BC_N_S );
+          }
+          
+          // Y_PLUS
+          if (qn != 0)
+          {
+            s = offBit( s, BC_N_N );
+          }
+          
+          // Z_MINUS
+          if (qb != 0)
+          {
+            s = offBit( s, BC_N_B );
+          }
+          
+          // Z_PLUS
+          if (qt != 0)
+          {
+            s = offBit( s, BC_N_T );
+          }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  // wall locationフラグ
+  unsigned long c = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) \
+private(qw, qe, qs, qn, qb, qt, qq) \
+schedule(static) reduction(+:c)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m_p];
+        
+        if ( IS_FLUID( s ) )
+        {
+          qq = bid[m_p];
+
+          qw = get_BID5(X_MINUS, qq);
+          qe = get_BID5(X_PLUS,  qq);
+          qs = get_BID5(Y_MINUS, qq);
+          qn = get_BID5(Y_PLUS,  qq);
+          qb = get_BID5(Z_MINUS, qq);
+          qt = get_BID5(Z_PLUS,  qq);
+          
+          if ( qw != 0 )
+          {
+            s = onBit(s, FACING_W); c++;
+          }
+          if ( qe != 0 )
+          {
+            s = onBit(s, FACING_E); c++;
+          }
+          if ( qs != 0 )
+          {
+            s = onBit(s, FACING_S); c++;
+          }
+          if ( qn != 0 )
+          {
+            s = onBit(s, FACING_N); c++;
+          }
+          if ( qb != 0 )
+          {
+            s = onBit(s, FACING_B); c++;
+          }
+          if ( qt != 0 )
+          {
+            s = onBit(s, FACING_T); c++;
+          }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = c;
+    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // 収束判定の有効フラグ
+  float q0, q1, q2, q3, q4, q5;
+  unsigned long g=0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) \
+private(q0, q1, q2, q3, q4, q5) \
+schedule(static) reduction(+:g)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m_p];
+        
+        if ( IS_FLUID( s ) )
+        {
+          size_t m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+          const float* pos = &cut[m];
+          
+          q0 = floor(pos[0]);
+          q1 = floor(pos[1]);
+          q2 = floor(pos[2]);
+          q3 = floor(pos[3]);
+          q4 = floor(pos[4]);
+          q5 = floor(pos[5]);
+          
+          // 全周カットがあるセルは孤立セルとして固体セルへ変更
+          if ( (q0+q1+q2+q3+q4+q5) == 0.0 )
+          {
+            s = offBit(s, VLD_CNVG);    // Out of scope
+            s = offBit(s, STATE_BIT );  // Solid
+            s = offBit(s, ACTIVE_BIT ); // Inactive
+            g++;
+          }
+          else
+          {
+            s = onBit(s, VLD_CNVG);
+          }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %ld\n\n", g);
+  
+  
+  // カットのあるセルの収束判定をしないオプション
+  if ( convergence )
+  {
+    g = 0;
+
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) \
+private(q0, q1, q2, q3, q4, q5) \
+schedule(static) reduction(+:g)
+    
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int s = bx[m_p];
+          
+          if ( IS_FLUID( s ) )
+          {
+            size_t m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            const float* pos = &cut[m];
+            
+            q0 = floor(pos[0]);
+            q1 = floor(pos[1]);
+            q2 = floor(pos[2]);
+            q3 = floor(pos[3]);
+            q4 = floor(pos[4]);
+            q5 = floor(pos[5]);
+            
+            // いずれかのセルがひとつでもカットがある場合
+            if ( (q0+q1+q2+q3+q4+q5) != 6.0 )
+            {
+              s = offBit(s, VLD_CNVG);    // Out of scope  @todo check
+              g++;
+            }
+            
+            bx[m_p] = s;
+          }
+        }
+      }
+    }
+    
+    if ( numProc > 1 )
+    {
+      unsigned long tmp = g;
+      if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %ld\n\n", g);
+    
+  }
+  
+  
+  return c;
+}
+
+
+
+// #################################################################
+/**
+ @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
+ @param[in,out] bx BCindex P
+ @param[in] cut 距離情報
+ @param convergence カットのあるセルは収束判定をしないオプション（trueの時）
+ @retval 固体表面セル数
  @note 
  - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
  - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
@@ -1766,6 +2024,7 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
 unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool convergence)
 {
   size_t m_p, m;
+  int qw, qe, qs, qn, qb, qt, qq;
   int s;
   float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
   const float* ct;
@@ -1788,52 +2047,40 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
           ct = &cut[m];
 
           // X_MINUS
-          //if ( !((nID[X_MINUS] < 0) && (i == 1)) ) {
-            if (ct[0] < 1.0)         // 交点があるなら壁面なのでノイマン条件をセット
-            {
-              s = offBit( s, BC_N_W );
-            }
-          //}
+          if (ct[0] < 1.0)  // 交点があるなら壁面なのでノイマン条件をセット
+          {
+            s = offBit( s, BC_N_W );
+          }
           
           // X_PLUS
-          //if ( !((nID[X_PLUS] < 0) && (i == ix)) ) {
-            if (ct[1] < 1.0)
-            {
-              s = offBit( s, BC_N_E );
-            }
-          //}
+          if (ct[1] < 1.0)
+          {
+            s = offBit( s, BC_N_E );
+          }
           
           // Y_MINUS
-          //if ( !((nID[Y_MINUS] < 0) && (j == 1)) ) {
-            if (ct[2] < 1.0)
-            {
-              s = offBit( s, BC_N_S );
-            }
-          //}
+          if (ct[2] < 1.0)
+          {
+            s = offBit( s, BC_N_S );
+          }
           
           // Y_PLUS
-          //if ( !((nID[Y_PLUS] < 0) && (j == jx)) ) {
-            if (ct[3] < 1.0)
-            {
-              s = offBit( s, BC_N_N );
-            }
-          //}
+          if (ct[3] < 1.0)
+          {
+            s = offBit( s, BC_N_N );
+          }
           
           // Z_MINUS
-          //if ( !((nID[Z_MINUS] < 0) && (k == 1)) ) {
-            if (ct[4] < 1.0)
-            {
-              s = offBit( s, BC_N_B );
-            }
-          //}
+          if (ct[4] < 1.0)
+          {
+            s = offBit( s, BC_N_B );
+          }
           
           // Z_PLUS
-          //if ( !((nID[Z_PLUS] < 0) && (k == kx)) ) {
-            if (ct[5] < 1.0)
-            {
-              s = offBit( s, BC_N_T );
-            }
-          //}
+          if (ct[5] < 1.0)
+          {
+            s = offBit( s, BC_N_T );
+          }
           
           bx[m_p] = s;
         }
@@ -1975,6 +2222,127 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
   
   
   return c;
+}
+
+
+// #################################################################
+/**
+ @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
+ @retval エンコードしたセル数
+ @param [in]     order cmp[]のエントリ番号
+ @param [in]     id    媒質ID
+ @param [in]     bid   カットID配列
+ @param [in,out] bcd   BCindex ID
+ @param [in,out] bcp   BCindex P
+ @param [in]     nv    法線ベクトル
+ @note
+ - 対象セルが流体セル，かつターゲットの隣接セルが固体の場合，隣接する面にNeumannフラグをエンコードする
+ - 同種のBCは1セルに一つだけ
+ */
+unsigned long VoxInfo::encPbit_N_IBC(const int order,
+                                     const int id,
+                                     const int* bid,
+                                     int* bcd,
+                                     int* bcp,
+                                     const REAL_TYPE* nv)
+{
+  unsigned long g=0;
+  int qw, qe, qs, qn, qb, qt, qq;
+
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int idd = id;
+  int odr = order;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, idd, odr) \
+private(qw, qe, qs, qn, qb, qt, qq) \
+schedule(static) reduction(+:g)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int d = bcd[m];
+        int s = bcp[m];
+        
+        qq = bid[m];
+        
+        // 隣接セルの方向に対するカットのID>> 0ならばカット無し
+        qw = get_BID5(X_MINUS, qq);
+        qe = get_BID5(X_PLUS,  qq);
+        qs = get_BID5(Y_MINUS, qq);
+        qn = get_BID5(Y_PLUS,  qq);
+        qb = get_BID5(Z_MINUS, qq);
+        qt = get_BID5(Z_PLUS,  qq);
+        
+        if ( IS_FLUID( s ) ) // 対象セルが流体セル
+        {
+          // X_MINUS
+          if ( (qw == idd) && (nv[0] < 0.0) )
+          {
+            d |= odr; // dにエントリをエンコード
+            s = offBit( s, BC_N_W );
+            g++;
+          }
+          
+          // X_PLUS
+          if ( qe == idd )
+          {
+            d |= odr;
+            s = offBit( s, BC_N_E );
+            g++;
+          }
+          
+          // Y_MINUS
+          if ( qs == idd )
+          {
+            d |= odr;
+            s = offBit( s, BC_N_S );
+            g++;
+          }
+          
+          // Y_PLUS
+          if ( qn == idd )
+          {
+            d |= odr;
+            s = offBit( s, BC_N_N );
+            g++;
+          }
+          
+          // Z_MINUS
+          if ( qb == idd )
+          {
+            d |= odr;
+            s = offBit( s, BC_N_B );
+            g++;
+          }
+          
+          // Z_PLUS
+          if ( qt == idd )
+          {
+            d |= odr;
+            s = offBit( s, BC_N_T );
+            g++;
+          }
+          
+          bcd[m] = d;
+          bcp[m] = s;
+        }
+      }
+    }
+  }
+  
+
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  printf("g=%ld\n", g);
+  return g;
 }
 
 
@@ -4808,8 +5176,6 @@ void VoxInfo::get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::M
     case SPEC_VEL_WH:
     case OUTFLOW:
       
-      printf("\t  ID : Polygon Group : Area (m*m)\n");
-      
       for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
         std::string m_pg = (*it)->get_name();
         int m_id = (*it)->get_id();
@@ -5564,7 +5930,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
 
 // #################################################################
 // 圧力境界条件のビット情報をエンコードする
-unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const bool isCDS, const float* cut)
+unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const float* cut, const int* bid, const bool isCDS)
 {
   unsigned long surface = 0;
 
@@ -5630,17 +5996,23 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
   // 内部境界のコンポーネントのエンコード
   int id;
   int deface;
+  REAL_TYPE nv[3];
   
   for (int n=1; n<=NoBC; n++) {
     id = cmp[n].getMatOdr();
-    deface = cmp[n].getDef();
+    //deface = cmp[n].getDef();
+    nv[0] = cmp[n].nv[0];
+    nv[1] = cmp[n].nv[1];
+    nv[2] = cmp[n].nv[2];
+    printf("IBC %d : %d (%f %f %f)\n", n, id, nv[0], nv[1], nv[2]);
     
     switch ( cmp[n].getType() )
     {
       case SPEC_VEL:
       case SPEC_VEL_WH:
       case OUTFLOW:
-        cmp[n].setElement( encPbit_N_IBC(n, id, mid, bcd, bcp, deface) );
+        //cmp[n].setElement( encPbit_N_IBC(n, id, mid, bcd, bcp, deface) );
+        cmp[n].setElement( encPbit_N_IBC(n, id, bid, bcd, bcp, nv) );
         break;
     }
   }
@@ -5660,7 +6032,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
   int i=1;
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
-      m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
+      m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
       w = GET_SHIFT_F(bcp[m], BC_N_W);
       q = GET_SHIFT_F(bcp[m], BC_NDAG_W);
       printf("(1, %3d, %3d) N=%f Coef_W=%f\n", j,k,w,q);
