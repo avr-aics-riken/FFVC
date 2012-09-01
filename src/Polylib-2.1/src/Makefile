@@ -21,34 +21,34 @@
 TARGET_DIR	= ../lib
 
 MPI_INC_DIR	= /opt/openmpi/include
-TP_INC_DIR  = /usr/local/textparser/include
+TP_INC_DIR	= /usr/local/textparser/include
 
 
 #####################################
 # INTEL
 
-#CXX		= g++
-CXX			= icpc
-AR			= ar cru
+#CXX	= g++
+CXX	= icpc
+AR	= ar cru
 RANLIB	= ranlib
-RM      = \rm -f
+RM	= \rm -f
 
-CFLAGS		= -O3 -Wall \
-            -I../include \
-            -I$(MPI_INC_DIR) \
-            -I$(TP_INC_DIR) \
-            -fno-strict-aliasing \
-#            -I/usr/include \
-#            -DSAVE_ID_ASCII -DDEBUG
+CFLAGS	= -O3 -Wall \
+	-I../include \
+	-I$(MPI_INC_DIR) \
+	-I$(TP_INC_DIR) \
+	-fno-strict-aliasing \
+#	-I/usr/include \
+#	-DSAVE_ID_ASCII -DDEBUG
 
 
 #####################################
 # FX10
 
-#CXX			= mpiFCCpx
-#AR			  = ar cr
-#RANLIB		= ranlib
-#RM       = \rm -f
+#CXX	= mpiFCCpx
+#AR	= ar cr
+#RANLIB	= ranlib
+#RM	= \rm -f
 
 #CFLAGS		= -Kfast, simd=2, ocl, preex \
 #		-I../include\
@@ -82,22 +82,21 @@ CFLAGS		= -O3 -Wall \
 #####################################
 SNG_TARGET	= $(TARGET_DIR)/libPolylib.a
 GFX_OBJS	= Polylib.o \
-			  polygons/VTree.o \
-			  polygons/Polygons.o \
-			  polygons/TriMesh.o \
-			  groups/PolygonGroup.o \
-			  file_io/TriMeshIO.o \
-			  file_io/stl.o \
-			  file_io/triangle_id.o \
-			  c_lang/CPolylib.o 
+		  polygons/VTree.o \
+		  polygons/Polygons.o \
+		  polygons/TriMesh.o \
+		  groups/PolygonGroup.o \
+		  file_io/TriMeshIO.o \
+		  file_io/stl.o \
+		  file_io/triangle_id.o \
+		  c_lang/CPolylib.o 
 
-#			  file_io/PolylibConfig.o \
 #####################################
 # MPI版マクロ
 #####################################
 MPI_TARGET	= $(TARGET_DIR)/libMPIPolylib.a
 MPI_OBJS	= MPIPolylib.o \
-			  c_lang/CMPIPolylib.o
+		  c_lang/CMPIPolylib.o
 
 #####################################
 # ユーティリティ
@@ -118,7 +117,7 @@ all : depend single mpi
 #####################################
 # single版作成ルール
 #####################################
-single			: $(SNG_TARGET)
+single		: $(SNG_TARGET)
 $(SNG_TARGET)	: $(GFX_OBJS) $(UTIL_OBJS)
 	$(AR) $@ $^
 	$(RANLIB) $(SNG_TARGET)
@@ -126,7 +125,7 @@ $(SNG_TARGET)	: $(GFX_OBJS) $(UTIL_OBJS)
 #####################################
 # MPI版作成ルール
 #####################################
-mpi				: $(MPI_TARGET)
+mpi		: $(MPI_TARGET)
 $(MPI_TARGET)	: $(GFX_OBJS) $(MPI_OBJS) $(UTIL_OBJS)
 	$(AR) $@ $^
 	$(RANLIB) $(MPI_TARGET)

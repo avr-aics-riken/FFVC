@@ -277,9 +277,6 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-
-  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
-  B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
   
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
@@ -288,6 +285,12 @@ int FFV::Initialize(int argc, char **argv)
   // CompoListの設定，外部境界条件の読み込み保持
   setBCinfo();
   
+  
+  // Binaryの場合に，非BCポリゴンからSOLIDセルを生成
+  if ( !C.isCDS() && (C.Mode.Example == id_Polygon) )
+  {
+    generate_Solid(fp);
+  }
   
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++)
@@ -310,7 +313,6 @@ int FFV::Initialize(int argc, char **argv)
     
     fill(fp);
   }
-  
   
   
   
@@ -406,9 +408,7 @@ int FFV::Initialize(int argc, char **argv)
     
     setComponentVF();
   }
-  
-  // コンポーネントのローカルインデクスを保存
-  setLocalCmpIdx_Binary();
+
 
   
   // 内部周期境界の場合のガイドセルのコピー処理
@@ -433,14 +433,23 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   }
   
+  
+  // コンポーネント情報を保存
+  //setLocalCmpIdx_Binary();
+  
   // ポリゴンからVBCのコンポーネント情報を設定
   VIBC_Bbox_from_Cut();
   
+  for (int n=1; n<=C.NoBC; n++) {
+    int st[3], ed[3];
+    cmp[n].getBbox(st, ed);
+    mark();
+    printf("(%3d %3d %3d)-(%3d %3d %3d)\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
+  }
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode();
   
-
   
   // 体積力を使う場合のコンポーネント配列の確保
   TIMING_start(tm_init_alloc);
@@ -1896,6 +1905,24 @@ void FFV::gather_DomainInfo()
 
 
 // #################################################################
+// 各種例題のモデルをセット
+void FFV::generate_Solid(FILE* fp)
+{
+  unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut, cmp);
+  Hostonly_
+  {
+    printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
+    fprintf(fp,"\tGenerated Solid cell from cut = %ld\n", zc);
+  }
+  
+  // midのガイドセル同期
+  if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  
+}
+
+
+
+// #################################################################
 // グローバルな領域情報を取得
 int FFV::get_DomainInfo(const string dom_file)
 {
@@ -2556,6 +2583,10 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 // 外部境界条件を読み込み，Controlクラスに保持する
 void FFV::setBCinfo()
 {
+  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
+  B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
+  
+  
   // パラメータファイルの情報を元にCompoListの情報を設定する
   B.loadBC_Local(&C, mat, M.export_MTI(), cmp, PL);
   
@@ -2758,6 +2789,7 @@ void FFV::setGlobalCmpIdx()
     else // コンポーネントが存在する場合
     {
       cmp[m].getBbox(st, ed);
+      printf("(%3d %3d %3d)-(%3d %3d %3d)\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
       st_i = st[0];
       st_j = st[1];
       st_k = st[2];
@@ -2787,6 +2819,7 @@ void FFV::setGlobalCmpIdx()
         cgb[6*m+4] = ed_j;
         cgb[6*m+5] = ed_k;
       }
+      printf("(%3d %3d %3d)-(%3d %3d %3d)\n", cgb[6*m+0], cgb[6*m+1], cgb[6*m+2], cgb[6*m+3], cgb[6*m+4], cgb[6*m+5]);
     }
   }
   
@@ -3082,17 +3115,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       
       // PolylibとCutlibのセットアップ
       setup_Polygon2CutInfo(PrepMemory, TotalMemory, fp);
-      
-      
-      if ( !C.isCDS() ) // binary
-      {
-        unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut, cmp);
-        Hostonly_
-        {
-          printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
-          fprintf(fp,"\tGenerated Solid cell from cut = %ld\n", zc);
-        }
-      }
       break;
       
     case id_Sphere:
@@ -3121,7 +3143,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
 }
-
 
 
 
@@ -3678,12 +3699,20 @@ void FFV::VIBC_Bbox_from_Cut()
     
     if ( cmp[n].isVBC_IO() ) // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
     {
-      // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
-      V.findVIBCbbox(n, d_bcv, f_st, f_ed);
+      int tg = cmp[n].getMatOdr();
       
-      // インデクスのサイズ登録と存在フラグ
-      cmp[n].setBbox(f_st, f_ed);
-      cmp[n].setEns(ON);
+      // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+      if ( V.findVIBCbbox(tg, d_bid, f_st, f_ed) )
+      {
+        // インデクスのサイズ登録と存在フラグ
+        cmp[n].setBbox(f_st, f_ed);
+        cmp[n].setEns(ON);
+      }
+      else
+      {
+        cmp[n].setEns(OFF);
+      }
+      
     }
   }
   
@@ -3707,6 +3736,7 @@ void FFV::VoxEncode()
   if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
   
 
+
   V.setBCIndex_base2(d_bcd, d_mid, L_Acell, G_Acell, C.KindOfSolver, cmp);
 
   // STATEとACTIVEビットのコピー
@@ -3718,6 +3748,8 @@ void FFV::VoxEncode()
     V.copyBCIbase(d_bh1, d_bcd);
     V.copyBCIbase(d_bh2, d_bcd);
   }
+  
+
 
   // BCIndexP に圧力計算のビット情報をエンコードする -----
   if ( C.isCDS() ) 
@@ -3733,6 +3765,8 @@ void FFV::VoxEncode()
   V.dbg_chkBCIndexP(d_bcd, d_bcp, "BCindexP.txt", cmp);
 #endif
   
+  
+  
   // BCIndexV に速度計算のビット情報をエンコードする -----
   if ( C.isCDS() ) 
   {
@@ -3742,6 +3776,7 @@ void FFV::VoxEncode()
   {
     V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp);
   }
+  
 
 
 // ##########
@@ -3768,8 +3803,7 @@ void FFV::VoxEncode()
   
 
   // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
-  resizeCompoBV(C.KindOfSolver, C.isHeatProblem());
-
+  //resizeCompoBV(C.KindOfSolver, C.isHeatProblem());
 }
 
 

@@ -474,6 +474,12 @@ private:
   
   
   /**
+   * @brief binaryの場合に，非BCポリゴンからSOLIDセルを生成
+   */
+  void generate_Solid(FILE* fp);
+  
+  
+  /**
    * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
    * @param [in]  i                 密格子　開始インデクスi
    * @param [in]  j                        同j

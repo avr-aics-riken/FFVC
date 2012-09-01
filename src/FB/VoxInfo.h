@@ -371,12 +371,12 @@ public:
   
   /**
    @brief VBCのbboxを取得する
-   @param [in]  odr コンポーネント配列のインデクス
-   @param [in]  bv  BCindex V
+   @param [in]  tgt コンポーネント配列のインデクス
+   @param [in]  bid カットID情報
    @param [out] st  コンポーネントbboxの開始セル
    @param [out] ed  コンポーネントbboxの終端セル
    */
-  void findVIBCbbox(const int id, const int* bv, int* st, int* ed);
+  bool findVIBCbbox(const int tgt, const int* bid, int* st, int* ed);
   
   
   //@fn const int* getColorList() const
@@ -386,8 +386,8 @@ public:
   
   /*
    * @brief 指定面方向のカットIDをとりだす
-   * @param [in]     dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
-   * @param [in,out] bid  CutBid5のBoundrary ID
+   * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+   * @param [in] bid  CutBid5のBoundrary ID
    */
   inline int get_BID5(const int dir, const int bid) {
     return ( (bid >> dir*5) & MASK_5 );

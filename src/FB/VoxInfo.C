@@ -5046,61 +5046,105 @@ int VoxInfo::find_mat_odr(const int mat_id, CompoList* cmp)
 
 // #################################################################
 // VBCのbboxを取得する
-void VoxInfo::findVIBCbbox(const int odr, const int* bv, int* st, int* ed)
+bool VoxInfo::findVIBCbbox(const int tgt, const int* bid, int* st, int* ed)
 {
-  int s;
+  int qq, qw, qe, qs, qn, qb, qt;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-
+  int tg = tgt;
+  
   st[0] = ix;
   st[1] = jx;
   st[2] = kx;
   ed[0] = 0;
   ed[1] = 0;
   ed[2] = 0;
-  
-  // search
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        s = bv[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)]; //FBUtility::getFindexS3D(sz, gd, i, j, k);
-        
-        bool m_flag = false;
-        
-        // X-
-        if ( GET_FACE_BC(s, BC_FACE_W) == odr ) m_flag = true;
-        
-        // X+
-        if ( GET_FACE_BC(s, BC_FACE_E) == odr ) m_flag = true;
-        
-        // Y-
-        if ( GET_FACE_BC(s, BC_FACE_S) == odr ) m_flag = true;
-        
-        // Y+
-        if ( GET_FACE_BC(s, BC_FACE_N) == odr ) m_flag = true;
-        
-        // Z-
-        if ( GET_FACE_BC(s, BC_FACE_B) == odr ) m_flag = true;
-        
-        // Z+
-        if ( GET_FACE_BC(s, BC_FACE_T) == odr ) m_flag = true;
-        
-        // min, max
-        if ( m_flag )
-        {
-          int tmp[3] = {i, j, k};
-          FB::vec3_min(st, st, tmp);
-          FB::vec3_max(ed, ed, tmp);
+
+#pragma omp parallel firstprivate(ix, jx, kx, gd, tg, st, ed) \
+            private(qq, qw, qe, qs, qn, qb, qt)
+  {
+    int s[3] = {ix, jx, kx};
+    int e[3] = {0, 0, 0};
+    
+#pragma omp for schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          qq = bid[m];
+          
+          // 隣接セルの方向に対するカットID >> 0ならばカット無し
+          qw = get_BID5(X_MINUS, qq);
+          qe = get_BID5(X_PLUS,  qq);
+          qs = get_BID5(Y_MINUS, qq);
+          qn = get_BID5(Y_PLUS,  qq);
+          qb = get_BID5(Z_MINUS, qq);
+          qt = get_BID5(Z_PLUS,  qq);
+          
+          int m_flag = 0;
+          
+          // X-
+          if ( qw == tg ) m_flag++;
+          
+          // X+
+          if ( qe == tg ) m_flag++;
+          
+          // Y-
+          if ( qs == tg ) m_flag++;
+          
+          // Y+
+          if ( qn == tg ) m_flag++;
+          
+          // Z-
+          if ( qb == tg ) m_flag++;
+          
+          // Z+
+          if ( qt == tg ) m_flag++;
+          
+          // min, max
+          if ( m_flag > 0 )
+          {
+            int tmp[3] = {i, j, k};
+            FB::vec3_min(s, s, tmp);
+            FB::vec3_max(e, e, tmp);
+          }
+          
         }
-        
       }
     }
+    
+#pragma omp critical
+    {
+      FB::vec3_min(st, st, s);
+      FB::vec3_max(ed, ed, e);
+    }
+    
   }
-
+  
+  int len[3];
+  len[0] = ed[0] - st[0];
+  len[1] = ed[1] - st[1];
+  len[2] = ed[2] - st[2];
+  
+  // 各方向長さが全て1以上の場合に，コンポーネントが存在する
+  if ( (len[0] > 0) && (len[1] > 0) && (len[2] > 0) )
+  {
+    return true;
+  }
+  else
+  {
+    st[0] = 0;
+    st[1] = 0;
+    st[2] = 0;
+    ed[0] = 0;
+    ed[1] = 0;
+    ed[2] = 0;
+    return false;
+  }
 }
 
 
@@ -6013,8 +6057,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
     vec[1] = (float)cmp[n].nv[1];
     vec[2] = (float)cmp[n].nv[2];
     m_dir = cmp[n].getBClocation();
-    
-    printf("IBC %d : %d (%f %f %f) %d\n", n, id, vec[0], vec[1], vec[2], m_dir);
+
     
     switch ( cmp[n].getType() )
     {
@@ -6442,6 +6485,7 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
 
 // #################################################################
 // ボクセルモデルにカット情報から得られた固体情報を転写する
+// 境界条件ポリゴンのIDへペイントしないので，予めチェック用のリストをつくっておき，ペイント時に確認
 unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, CompoList* cmp)
 {
   unsigned long c=0;
@@ -6451,18 +6495,20 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
   int kx = size[2];
   int gd = guide;
   
-  int id;
-  
+  // チェック用のリスト
+  int* list=NULL;
+  list = new int[NoBC+1];
   for (int n=1; n<=NoBC; n++) {
-    id = cmp[n].getMatOdr();
-    
-    
+    list[n] = cmp[n].getMatOdr();
   }
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, list) \
+            schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-
+        
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = bid[m];
         int bx = 0;
@@ -6471,21 +6517,47 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
         {
           size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
           const float* pos = &cut[mp];
+          int tgt=0;
+          int paint=0;
           
           for (int l=0; l<6; l++) {
             if ( pos[l] <= 0.5 ) // セル内部にカットが存在する
             {
-              bx = (bd >> l*5)  & MASK_5; // カット面のID，カットがなければゼロ, 6方向のカット面のIDのうち最大のものを使う
-              mid[m] = max( mid[m], bx );
-              if ( bx == 0 ) Exit(0); // 交点があるのに，IDがない
-              c++;
+              bx = (bd >> l*5)  & MASK_5; // カット面のID，カットがなければゼロ
+              tgt = max( tgt, bx ); // 6方向のカット面のIDのうち最大のものを使う
+              paint++;
             }
           }
-        }
+          
+          if ( paint > 0 )
+          {
+            if ( tgt != 0 )
+            {
+              // 除外IDの確認
+              int flag = 0;
+              for (int n=1; n<=NoBC; n++) {
+                if ( list[n] == tgt ) flag++;
+              }
+
+              if ( flag == 0 )
+              {
+                mid[m] = tgt;
+                c++;
+              }
+            }
+            else // 交点があるのに，IDがない
+            {
+              Exit(0);
+            }
+            
+          }
+          
+        } // TEST_BC
         
       }
     }
   }
+
   
   unsigned long cl = c;
   
@@ -6494,6 +6566,8 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
     unsigned long tmp = cl;
     if ( paraMngr->Allreduce(&tmp, &cl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
+  
+  if ( list ) delete [] list;
   
   return cl;
 }

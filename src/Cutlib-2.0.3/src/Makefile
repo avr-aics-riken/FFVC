@@ -66,7 +66,7 @@ DEFINES += -DIGNORE_STL_NORMAL
 
 
 
-POLYLIB_DIR = ../../Polylib-2.1_dev_f
+POLYLIB_DIR = ../../Polylib-2.1
 TP_INC_DIR = /usr/local/textparser/include
 
 POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I$(TP_INC_DIR)

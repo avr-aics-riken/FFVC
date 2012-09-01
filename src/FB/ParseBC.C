@@ -3478,7 +3478,8 @@ void ParseBC::setControlVars(Control* Cref)
   s = (double)MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
   m = (int)(log10(s+1.0)/log10(two) );
   
-  if ( NoCompo > s ) {
+  if ( NoCompo > s )
+  {
     printf("Error : No. of Component (= NoBC + NoMedium) must be less or equal %d(%dbit-width)\n", (int)s, m);
     Exit(0);
   }
@@ -3486,7 +3487,8 @@ void ParseBC::setControlVars(Control* Cref)
   s = (double)(MASK_5-1); // 0と31を除く
   m = (int)( log10(s+2.0)/log10(two) );
   
-  if ( NoBC > s ) {
+  if ( NoBC > s )
+  {
     printf("Error : No. of BC must be less or equal %d(%dbit-width)\n", (int)s, m);
     Exit(0);
   }
@@ -3497,22 +3499,25 @@ void ParseBC::setControlVars(Control* Cref)
   
   label = "/BC_Table/OuterBoundary";
   
-  if ( !tpCntl->chkNode(label) ) {
-    stamped_printf("\tParsing error : Missing '/BC_Table/OuterBoundary'\n");
+  if ( !tpCntl->chkNode(label) )
+  {
+    stamped_printf("\tParsing error : Missing '%s\n", label.c_str());
     Exit(0);
   }
   
   // タグ内の数をチェック
   int nnode = tpCntl->countLabels(label);
-  if ( nnode == 0 ) {
+  if ( nnode == 0 )
+  {
     stamped_printf("\tNo OuterBoundary defined\n");
     return;
   }
   
   int counter=0;
-  for(int i=1; i<=nnode; i++){
+  for (int i=1; i<=nnode; i++) {
     
-    if(!tpCntl->GetNodeStr(label, i, &str)){
+    if ( !tpCntl->GetNodeStr(label, i, &str) )
+    {
       stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
