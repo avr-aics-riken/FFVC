@@ -524,8 +524,19 @@ public:
   
   /**
    * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+   * @param [in,out] mid    セルID
+   * @param [in]     bid    カットID情報
+   * @param [in]     cut    距離情報
+   * @param [in]     target CompoListクラス
+   * @retval 固体セル数
+   */
+  unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target);
+  
+  
+  /**
+   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
    * @param [in,out] mid セルID
-   * @param [in]     bid ID情報
+   * @param [in]     bid カットID情報
    * @param [in]     cut 距離情報
    * @param [in]     cmp CompoListクラス
    * @retval 固体セル数

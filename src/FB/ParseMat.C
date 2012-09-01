@@ -161,7 +161,9 @@ int ParseMat::get_MediumTable()
   MTITP = new MediumTableInfo[NoMedium+1];
   
   for (int i1=1; i1<=NoMedium; i1++) {
-    if ( !tpCntl->GetNodeStr(label_base, i1, &str) ) {
+    
+    if ( !tpCntl->GetNodeStr(label_base, i1, &str) )
+    {
       Exit(0);
     }
     
@@ -169,37 +171,49 @@ int ParseMat::get_MediumTable()
     n2 = tpCntl->countLabels(label_m);
     
     for (int i2=1; i2<=n2; i2++) {
-      if ( !tpCntl->GetNodeStr(label_m, i2, &str) ) {
+      
+      if ( !tpCntl->GetNodeStr(label_m, i2, &str) )
+      {
         Exit(0);
       }
       
       label_leaf = label_m + "/" + str;
       
-      if ( !strcasecmp(str.c_str(), "type") ) {
-        if ( !(tpCntl->GetValue(label_leaf, &label)) ){
+      if ( !strcasecmp(str.c_str(), "type") )
+      {
+        if ( !(tpCntl->GetValue(label_leaf, &label)) )
+        {
           ;
         }
-        else {
+        else
+        {
           if     ( !strcasecmp(label.c_str(), "Fluid") ) MTITP[i1].type = FLUID;
           else if( !strcasecmp(label.c_str(), "Solid") ) MTITP[i1].type = SOLID;
-          else {
+          else
+          {
             Exit(0);
           }
         }
       }
-      else if( !strcasecmp(str.c_str(), "label") ){
-        if ( !(tpCntl->GetValue(label_leaf, &label)) ){
+      else if( !strcasecmp(str.c_str(), "label") )
+      {
+        if ( !(tpCntl->GetValue(label_leaf, &label)) )
+        {
           ;
         }
-        else {
+        else
+        {
           MTITP[i1].label = label;
         }
       }
-      else {
-        if ( !(tpCntl->GetValue(label_leaf, &fval)) ){
+      else
+      {
+        if ( !(tpCntl->GetValue(label_leaf, &fval)) )
+        {
           ;
         }
-        else{
+        else
+        {
           // データをmapに追加
           MTITP[i1].m_fval.insert( std::pair<std::string, REAL_TYPE>(str, fval) );
         }

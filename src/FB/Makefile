@@ -99,7 +99,7 @@ VoxInfo.o: VoxInfo.h DomainInfo.h FB_Define.h mydebug.h FBUtility.h
 VoxInfo.o: Component.h Medium.h SetBC.h BndOuter.h Control.h Interval_Mngr.h
 VoxInfo.o: TPControl.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
 VoxInfo.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h CompoFraction.h
-VoxInfo.o: FindexS3D.h
+VoxInfo.o: FindexS3D.h fill_bid.h
 History.o: History.h Control.h DomainInfo.h FB_Define.h mydebug.h Medium.h
 History.o: Component.h FBUtility.h BndOuter.h Interval_Mngr.h TPControl.h
 History.o: PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h

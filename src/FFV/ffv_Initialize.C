@@ -300,6 +300,7 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   
+  
   // Fill
   if ( (C.Mode.Example == id_Polygon) )
   {
@@ -314,7 +315,7 @@ int FFV::Initialize(int argc, char **argv)
     fill(fp);
   }
   
-  
+  Ex->writeSVX(d_mid, &C);
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
   if ( !DT.chkDtSelect() )
@@ -375,7 +376,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // チェック出力　デバッグ
-  Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
+  //Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
@@ -1905,10 +1906,46 @@ void FFV::gather_DomainInfo()
 
 
 // #################################################################
-// 各種例題のモデルをセット
+// Binary voxelをカット情報から生成
+// 非境界条件ポリゴンのみを対象とする．BCポリゴンのIDは除外する．
 void FFV::generate_Solid(FILE* fp)
 {
-  unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut, cmp);
+  
+  // チェック用のリスト
+  int* list = NULL;
+  
+  list = new int[C.NoBC+1];
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    list[n] = cmp[n].getMatOdr();
+  }
+  
+  unsigned long zc;
+  
+  // 非BCポリゴンのループ 
+  for (int m=C.NoBC+1; m<=C.NoCompo; m++) {
+    
+    if ( cmp[m].getState() == SOLID )
+    {
+      int tgt = cmp[m].getMatOdr();
+      
+      // 除外IDの確認
+      int flag = 0;
+      for (int n=1; n<=C.NoBC; n++) {
+        if ( list[n] == tgt ) flag++;
+      }
+      
+      printf("odr=%d tgt=%d flag=%d\n", m, tgt, flag);
+      
+      if ( flag == 0 )
+      {
+        zc = V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
+      }
+    }
+
+  }
+      
+      
   Hostonly_
   {
     printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
@@ -1918,6 +1955,7 @@ void FFV::generate_Solid(FILE* fp)
   // midのガイドセル同期
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
+  if ( list ) delete [] list;
 }
 
 
@@ -3406,14 +3444,15 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\t Medium ID :          No. : Polygon Group Label\n");
-    fprintf(fp, "\t        ID :          No. : Polygon Group Label\n");
+    printf(     "\t Medium ID          Material:          No. : Polygon Group Label\n");
+    fprintf(fp, "\t        ID          Material:          No. : Polygon Group Label\n");
   }
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     int ntria= (*it)->get_group_num_tria();
+    std::string m_mat = (*it)->get_label();
 
     if ( numProc > 1 )
     {
@@ -3423,8 +3462,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     
     Hostonly_
     {
-      printf(    "\t %9d : %12d : %s\n", m_id, ntria, m_pg.c_str());
-      fprintf(fp,"\t %9d : %12d : %s\n", m_id, ntria, m_pg.c_str());
+      printf(    "\t %9d %16s : %12d : %s\n", m_id, m_mat.c_str(), ntria, m_pg.c_str());
+      fprintf(fp,"\t %9d %16s : %12d : %s\n", m_id, m_mat.c_str(), ntria, m_pg.c_str());
     }
 // ##########
 #if 0
