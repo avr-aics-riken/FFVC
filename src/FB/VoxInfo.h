@@ -527,9 +527,10 @@ public:
    * @param [in,out] mid セルID
    * @param [in]     bid ID情報
    * @param [in]     cut 距離情報
+   * @param [in]     cmp CompoListクラス
    * @retval 固体セル数
    */
-  unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut);
+  unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, CompoList* cmp);
   
   
   // ----> debug function

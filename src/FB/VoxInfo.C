@@ -6442,7 +6442,7 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
 
 // #################################################################
 // ボクセルモデルにカット情報から得られた固体情報を転写する
-unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut)
+unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, CompoList* cmp)
 {
   unsigned long c=0;
   
@@ -6451,6 +6451,13 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
   int kx = size[2];
   int gd = guide;
   
+  int id;
+  
+  for (int n=1; n<=NoBC; n++) {
+    id = cmp[n].getMatOdr();
+    
+    
+  }
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {

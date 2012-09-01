@@ -3086,7 +3086,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       
       if ( !C.isCDS() ) // binary
       {
-        unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut);
+        unsigned long zc = V.Solid_from_Cut(d_mid, d_bid, d_cut, cmp);
         Hostonly_
         {
           printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
