@@ -1916,14 +1916,14 @@ void FFV::gather_DomainInfo()
 void FFV::generate_Solid(FILE* fp)
 {
   
-  // チェック用のリスト
+  /* チェック用のリスト
   int* list = NULL;
   
   list = new int[C.NoBC+1];
   
   for (int n=1; n<=C.NoBC; n++) {
     list[n] = cmp[n].getMatOdr();
-  }
+  }*/
   
   unsigned long zc;
   
