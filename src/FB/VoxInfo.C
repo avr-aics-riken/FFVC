@@ -3550,6 +3550,7 @@ schedule(static) reduction(+:g)
             s |= (odr << BC_FACE_W);
             q = offBit(q, FACING_W);
             g++;
+            //printf("X- : %d %d %d\n",i,j,k);
           }
           
           // X+
@@ -3558,6 +3559,7 @@ schedule(static) reduction(+:g)
             s |= (odr << BC_FACE_E);
             q = offBit(q, FACING_E);
             g++;
+            //printf("X+ : %d %d %d\n",i,j,k);
           }
           
           // Y-

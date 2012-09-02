@@ -1991,7 +1991,6 @@ void FFV::get_Compo_Normal()
           }
           
           cmp[n].area = area;
-          printf("area = %e\n", area);
         }
       }
 
@@ -3778,7 +3777,7 @@ void FFV::setVOF()
 // ポリゴンのカット情報からVBCのboxをセット
 void FFV::VIBC_Bbox_from_Cut()
 {
-  int f_st[3], f_ed[3];
+  int f_st[3], f_ed[3], len[3];
   
   for (int n=1; n<=C.NoBC; n++) {
     
@@ -3789,7 +3788,21 @@ void FFV::VIBC_Bbox_from_Cut()
       // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
       if ( V.findVIBCbbox(tg, d_bid, d_cut, f_st, f_ed) )
       {
-        // インデクスのサイズ登録と存在フラグ
+        len[0] = f_ed[0] - f_st[0] + 1;
+        len[1] = f_ed[1] - f_st[1] + 1;
+        len[2] = f_ed[2] - f_st[2] + 1;
+        
+        for (int d=0; d<3; d++)
+        {
+          int tmp_st=0;
+          int tmp_ed=0;
+          
+          EnlargeIndex(tmp_st, tmp_ed, f_st[d], len[d], size[d], d, tg);
+          
+          f_st[d] = tmp_st;
+          f_ed[d] = tmp_ed;
+        }
+        
         cmp[n].setBbox(f_st, f_ed);
         cmp[n].setEns(ON);
       }
@@ -3888,7 +3901,7 @@ void FFV::VoxEncode()
   
 
   // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
-  //resizeCompoBV(C.KindOfSolver, C.isHeatProblem());
+  resizeCompoBV(C.KindOfSolver, C.isHeatProblem());
 }
 
 
