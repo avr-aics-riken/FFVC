@@ -31,9 +31,6 @@
 #include "vec3.h"
 #include "CompoFraction.h"
 
-#include "Polylib.h"
-#include "MPIPolylib.h"
-
 #include "mpi.h"
 #include "limits.h"
 
@@ -119,27 +116,21 @@ private:
   
   unsigned long encPbit_N_Cut(int* bx, const float* cut, const bool convergence);
   
-  unsigned long encPbit_N_IBC(const int order, 
-                              const int id, 
-                              const int* mid, 
-                              int* bcd, 
-                              int* bcp, 
-                              const int deface);
   
   /**
    * @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
    * @retval エンコードしたセル数
    * @param [in]     order  cmp[]のエントリ番号
-   * @param [in]     id     媒質ID
-   * @param [in]     bid    カットID配列
+   * @param [in]     target BCのID
+   * @param [in]     mid    媒質ID配列
    * @param [in,out] bcd    BCindex ID
    * @param [in,out] bcp    BCindex P
    * @param [in]     vec    法線ベクトル
    * @param [in]     bc_dir 境界条件の方向
    */
-  unsigned long encPbit_N_IBC_Bin(const int order,
-                              const int id,
-                              const int* bid,
+  unsigned long encPbit_N_IBC(const int order,
+                              const int target,
+                              const int* mid,
                               int* bcd,
                               int* bcp,
                               const float* vec,
@@ -166,7 +157,7 @@ private:
   unsigned long encQfaceHT_S(const int order, 
                              const int id, 
                              const int* mid, 
-                             int* bcd, 
+                             int* bcd,
                              int* bh1, 
                              int* bh2, 
                              const int deface);
@@ -187,12 +178,25 @@ private:
                                int* bh2, 
                                const int deface);
   
-  unsigned long encVbit_IBC(const int order, 
-                            const int id, 
-                            const int* mid, 
-                            int* bv, 
-                            const int deface, 
-                            int* bp);
+  /**
+   * @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
+   * @retval エンコードしたセル数
+   * @param [in]     order  cmp[]のエントリ番号
+   * @param [in]     target 境界条件ID
+   * @param [in]     mid    ボクセル配列
+   * @param [in,out] bv     BCindex V
+   * @param [in,out] bp     BCindex P
+   * @param [in]     vec    法線ベクトル
+   * @param [in]     bc_dir 境界条件の方向
+   */
+  unsigned long encVbit_IBC(const int order,
+                            const int target,
+                            const int* mid,
+                            int* bv,
+                            int* bp,
+                            const float* vec,
+                            const int bc_dir);
+  
   
   unsigned long encVbit_IBC_Cut(const int order, 
                                 const int id, 
@@ -363,13 +367,14 @@ public:
   
   
   /**
-   @brief VBCのbboxを取得する
-   @param [in]  tgt コンポーネント配列のインデクス
-   @param [in]  bid カットID情報
-   @param [out] st  コンポーネントbboxの開始セル
-   @param [out] ed  コンポーネントbboxの終端セル
+   * @brief VBCのbboxを取得する
+   * @param [in]  tgt コンポーネント配列のID
+   * @param [in]  bid カットID情報
+   * @param [in]  cut カット情報
+   * @param [out] st  コンポーネントbboxの開始セル
+   * @param [out] ed  コンポーネントbboxの終端セル
    */
-  bool findVIBCbbox(const int tgt, const int* bid, int* st, int* ed);
+  bool findVIBCbbox(const int tgt, const int* bid, const float* cut, int* st, int* ed);
   
   
   //@fn const int* getColorList() const
@@ -385,16 +390,6 @@ public:
   inline int get_BID5(const int dir, const int bid) {
     return ( (bid >> dir*5) & MASK_5 );
   }
-  
-  
-  /**
-   * @brief コンポーネントの断面積を求める
-   * @param [in]     n   エントリ番号
-   * @param [in,out] cmp CompoList
-   * @param [int]    PL  MPIPolylibクラス
-   */
-  void get_Compo_Area_Cut(const int n, CompoList* cmp, const PolylibNS::MPIPolylib* PL);
-  
   
   
 
@@ -536,6 +531,20 @@ public:
    */
   unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, CompoList* cmp);
   
+  /**
+   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+   * @param [in,out] mid      セルID
+   * @param [in]     target   VBCのID
+   * @param [in]     solid_id 置換する固体ID
+   * @param [in]     vec      法線
+   * @param [in]     bc_dir   流体側の方向フラグ
+   * @retval 置換セル数
+   */
+  unsigned long Solid_from_Cut_VBC(int* mid,
+                                   const int target,
+                                   const int solid_id,
+                                   const float* vec,
+                                   const int bc_dir);
   
   // ----> debug function
   

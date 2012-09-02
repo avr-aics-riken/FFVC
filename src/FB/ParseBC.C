@@ -2683,12 +2683,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   // VBC ---------------------------------------------------
   if ( isComponent(SPEC_VEL, cmp) || isComponent(SPEC_VEL_WH, cmp) ) {
     fprintf(fp, "\n\t[SPECIFIED_VELOCITY]\n");
-    fprintf(fp, "\t no                    Label   Mat   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]\n");
+    fprintf(fp, "\t no                    Label   Mat    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]\n");
     
     for(n=1; n<=NoBC; n++){
       if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )  {
-        fprintf(fp,"\t%3d %24s %5d %5d %7d %7d %7d %7d %7d %7d %11.4e\n",
-                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(),
+        fprintf(fp,"\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e\n",
+                n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 

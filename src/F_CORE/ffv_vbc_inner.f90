@@ -266,7 +266,7 @@
 !! @param dh 格子幅
 !! @param v00 参照速度
 !! @param rei Reynolds数の逆数
-!! @param v 速度ベクトル（u^n, セルセンタ）
+!! @param v 速度ベクトル（u^n）
 !! @param bv BCindex V
 !! @param odr 内部境界処理時の速度境界条件のエントリ
 !! @param vec 指定する速度ベクトル
@@ -279,7 +279,7 @@
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
-    double precision                                          ::  flop
+    double precision                                            ::  flop
     real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1

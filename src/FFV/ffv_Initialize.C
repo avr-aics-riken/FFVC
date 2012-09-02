@@ -286,7 +286,7 @@ int FFV::Initialize(int argc, char **argv)
   setBCinfo();
   
   
-  // Binaryの場合に，非BCポリゴンからSOLIDセルを生成
+  // Binaryの場合に，SOLIDセルを生成
   if ( !C.isCDS() && (C.Mode.Example == id_Polygon) )
   {
     generate_Solid(fp);
@@ -441,12 +441,7 @@ int FFV::Initialize(int argc, char **argv)
   // ポリゴンからVBCのコンポーネント情報を設定
   VIBC_Bbox_from_Cut();
   
-  for (int n=1; n<=C.NoBC; n++) {
-    int st[3], ed[3];
-    cmp[n].getBbox(st, ed);
-    mark();
-    printf("(%3d %3d %3d)-(%3d %3d %3d)\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
-  }
+
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode();
@@ -512,26 +507,14 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 法線計算
-  if ( C.NoBC != 0 )
-  {
-    // コンポーネントで指定されるID面の法線を計算，向きはblowing/suctionにより決まる．　bcdをセットしたあとに処理
-    for (int n=1; n<=C.NoBC; n++) {
-      if ( C.Mode.Example == id_Polygon )
-      {
-        V.get_Compo_Area_Cut(n, cmp, PL);
-      }
-      else
-      {
-        //Vinfo.cal_Compo_Area_Normal(n, bcd, bcv, bh1, C.dh*C.RefLength, &compo_global_bbox[n*6]);
-      }
-    }
-  }
+  get_Compo_Normal();
+  
   
   
   // 時間積分幅 deltaT や物理パラメータの設定
   setParameters();
 
-  
+
   
   // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> setParameters()の後
   BC.setControlVars(&C, mat, cmp, &RF, Ex);
@@ -569,6 +552,7 @@ int FFV::Initialize(int argc, char **argv)
     B.get_Phase(cmp);
   }
   
+
   
   // CompoListの内容とセル数の情報を表示する
   Hostonly_
@@ -1442,8 +1426,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tTry = %5d : FLUID fill by BID = %15ld\n", c+1, fill_count);
-    fprintf(fp,"\t\tTry = %5d : FLUID fill by BID = %15ld\n", c+1, fill_count);
+    printf(    "\t\tIteration = %5d : FLUID filling by BID = %15ld\n", c+1, fill_count);
+    fprintf(fp,"\t\tIteration = %5d : FLUID filling by BID = %15ld\n", c+1, fill_count);
   }
   
   
@@ -1479,8 +1463,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tIteration = %5d : SOLID fill by MID = %15ld\n", c+1, z2);
-    fprintf(fp,"\t\tIteration = %5d : SOLID fill by MID = %15ld\n", c+1, z2);
+    printf(    "\t\tIteration = %5d : Hole  filling by MID = %15ld\n", c+1, z2);
+    fprintf(fp,"\t\tIteration = %5d : Hole  filling by MID = %15ld\n", c+1, z2);
   }
   
   
@@ -1556,8 +1540,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tIteration = %5d : FLUID fill by BID = %15ld\n\n", c+1, fill_count);
-    fprintf(fp,"\t\tIteration = %5d : FLUID fill by BID = %15ld\n\n", c+1, fill_count);
+    printf(    "\t\tIteration = %5d : FLUID filling by BID = %15ld\n\n", c+1, fill_count);
+    fprintf(fp,"\t\tIteration = %5d : FLUID filling by BID = %15ld\n\n", c+1, fill_count);
   }
   
   
@@ -1586,9 +1570,9 @@ void FFV::fill(FILE* fp)
   {
     printf(    "\tSOLID\n");
     fprintf(fp,"\tSOLID\n");
-    
-    printf(    "\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
-    fprintf(fp,"\t\tTry = %5d : Filled cell = %15ld\n\n", c, fill_count);
+
+    printf(    "\t\tIteration = %5d : Filled cell =          %15ld\n\n", c, fill_count);
+    fprintf(fp,"\t\tIteration = %5d : Filled cell =          %15ld\n\n", c, fill_count);
   }
   
   
@@ -1912,7 +1896,6 @@ void FFV::gather_DomainInfo()
 
 // #################################################################
 // Binary voxelをカット情報から生成
-// 非境界条件ポリゴンのみを対象とする．BCポリゴンのIDは除外する．
 void FFV::generate_Solid(FILE* fp)
 {
   
@@ -1925,42 +1908,98 @@ void FFV::generate_Solid(FILE* fp)
     list[n] = cmp[n].getMatOdr();
   }*/
   
-  unsigned long zc;
+  unsigned long zc=0;
   
-  // 非BCポリゴンのループ 
-  for (int m=C.NoBC+1; m<=C.NoCompo; m++) {
+
+  for (int m=1; m<=C.NoCompo; m++) {
     
     if ( cmp[m].getState() == SOLID )
     {
       int tgt = cmp[m].getMatOdr();
       
-      // 除外IDの確認
+      /* 除外IDの確認
       int flag = 0;
       for (int n=1; n<=C.NoBC; n++) {
         if ( list[n] == tgt ) flag++;
       }
       
       if ( flag == 0 )
-      {
-        zc = V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
-      }
+      {*/
+        zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
+      //}
     }
-
   }
-      
+  
+  // BC
+  for (int m=1; m<=C.NoBC; m++) {
+    
+    int target = cmp[m].getMatOdr();
+    int m_dir  = cmp[m].getBClocation();
+    float vec[3] = { (float)cmp[m].nv[0], (float)cmp[m].nv[1], (float)cmp[m].nv[2] };
+    
+    zc += V.Solid_from_Cut_VBC(d_mid, target, C.Fill_Solid, vec, m_dir);
+  }
       
   Hostonly_
   {
-    printf(    "\tGenerated Solid cell from cut = %ld\n", zc);
-    fprintf(fp,"\tGenerated Solid cell from cut = %ld\n", zc);
+    printf(    "\n\tGenerated Solid cell from cut = %ld\n", zc);
+    fprintf(fp,"\n\tGenerated Solid cell from cut = %ld\n", zc);
   }
   
   // midのガイドセル同期
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
-  if ( list ) delete [] list;
+  //if ( list ) delete [] list;
 }
 
+
+
+// #################################################################
+// コンポーネントの法線を計算
+void FFV::get_Compo_Normal()
+{
+
+  if ( C.NoBC == 0 ) return;
+  if ( C.Mode.Example != id_Polygon ) return;
+  
+  
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  float area=0.0;
+  
+  // コンポーネントで指定されるID面の法線を計算
+  for (int n=1; n<=C.NoBC; n++) {
+    int type = cmp[n].getType();
+    
+    if ( (type==SPEC_VEL) || (type==SPEC_VEL_WH) || (type==OUTFLOW) )
+    {
+      string label = cmp[n].getLabel();
+      
+      for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+        
+        string m_pg = (*it)->get_name();
+        
+        if ( FBUtility::compare(m_pg, label) )
+        {
+          area = (*it)->get_group_area();
+          
+          if ( numProc > 1 )
+          {
+            float ta = area;
+            if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          }
+          
+          cmp[n].area = area;
+          printf("area = %e\n", area);
+        }
+      }
+
+    }
+  }
+  
+  delete pg_roots;
+}
 
 
 // #################################################################
@@ -2830,7 +2869,7 @@ void FFV::setGlobalCmpIdx()
     else // コンポーネントが存在する場合
     {
       cmp[m].getBbox(st, ed);
-      printf("(%3d %3d %3d)-(%3d %3d %3d)\n", st[0], st[1], st[2], ed[0], ed[1], ed[2]);
+
       st_i = st[0];
       st_j = st[1];
       st_k = st[2];
@@ -2860,7 +2899,7 @@ void FFV::setGlobalCmpIdx()
         cgb[6*m+4] = ed_j;
         cgb[6*m+5] = ed_k;
       }
-      printf("(%3d %3d %3d)-(%3d %3d %3d)\n", cgb[6*m+0], cgb[6*m+1], cgb[6*m+2], cgb[6*m+3], cgb[6*m+4], cgb[6*m+5]);
+
     }
   }
   
@@ -3447,8 +3486,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\t Medium ID          Material:          No. : Polygon Group Label\n");
-    fprintf(fp, "\t        ID          Material:          No. : Polygon Group Label\n");
+    printf(     "\t Medium ID         Material :          No. : Polygon Group Label :    Area\n");
+    fprintf(fp, "\t        ID         Material :          No. : Polygon Group Label :    Area\n");
   }
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
@@ -3456,17 +3495,21 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     int m_id = (*it)->get_id();
     int ntria= (*it)->get_group_num_tria();
     std::string m_mat = (*it)->get_label();
+    float area = (*it)->get_group_area();
 
     if ( numProc > 1 )
     {
       int tmp = ntria;
       if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      
+      float ta = area;
+      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
     
     Hostonly_
     {
-      printf(    "\t %9d %16s : %12d : %s\n", m_id, m_mat.c_str(), ntria, m_pg.c_str());
-      fprintf(fp,"\t %9d %16s : %12d : %s\n", m_id, m_mat.c_str(), ntria, m_pg.c_str());
+      printf(    "\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
+      fprintf(fp,"\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
     }
 // ##########
 #if 0
@@ -3744,7 +3787,7 @@ void FFV::VIBC_Bbox_from_Cut()
       int tg = cmp[n].getMatOdr();
       
       // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
-      if ( V.findVIBCbbox(tg, d_bid, f_st, f_ed) )
+      if ( V.findVIBCbbox(tg, d_bid, d_cut, f_st, f_ed) )
       {
         // インデクスのサイズ登録と存在フラグ
         cmp[n].setBbox(f_st, f_ed);

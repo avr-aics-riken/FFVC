@@ -503,6 +503,12 @@ private:
                         int* block
                         );
   
+  
+  /** コンポーネントの面積を計算する
+   */
+  void get_Compo_Normal();
+  
+  
   /** グローバルな領域情報を取得 
    * @param [in] dom_file  ドメインファイル名
    * @return 分割指示 (1-with / 2-without)
