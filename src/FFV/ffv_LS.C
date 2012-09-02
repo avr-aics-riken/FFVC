@@ -222,7 +222,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   
   comm_size = count_comm_size(size, guide);
   
-	// c_p   圧力 p^{n+1}
+	// d_p   圧力 p^{n+1}
   // d_p0  圧力 p^n
 	// d_ws  非反復のソース項
   // d_sq  反復毎に変化するソース項

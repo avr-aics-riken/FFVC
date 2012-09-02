@@ -358,6 +358,17 @@ private:
   
   
   /**
+   * @brief Boussinesq浮力項の計算
+   * @param [out]    v    速度
+   * @param [in]     dgr  係数
+   * @param [in]     t    温度
+   * @param [in]     bd   BCindex ID
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  void Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop);
+  
+  
+  /**
    @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
    @retval エラーコード
    */
@@ -593,6 +604,11 @@ private:
    */
   void NS_FS_E_Binary();
   
+  /**
+   * @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
+   */
+  void NS_FS_E_CDS();
+  
   
   /**
    * @brief 履歴の出力準備
@@ -611,6 +627,58 @@ private:
    */
   void printDomainInfo();
 
+  
+  /* 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
+   */
+  void PS_Binary();
+  
+  
+  /**
+   * @brief 移流項のEuler陽解法による時間積分
+   * @param [in,out] tc      対流項の流束の和/部分段階の温度
+   * @param [in]     delta_t 時間積分幅
+   * @param [in]     bd      BCindex ID
+   * @param [in]     t0      nステップの温度
+   * @param [in,out] flop    浮動小数演算数
+   * @note tc = t0 + dt/dh*sum_flux(n)
+   */
+  void ps_ConvectionEE(REAL_TYPE* tc, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* t0, double& flop);
+  
+  
+  
+  /**
+   * @brief 単媒質に対する熱伝導方程式をEuler陽解法で解く
+   * @retval 拡散項の変化量Δθの絶対値
+   * @param [in,out] t    n+1時刻の温度場
+   * @param [in]     dt   時間積分幅
+   * @param [in]     qbc  境界条件熱流束
+   * @param [in]     bh2  BCindex H2
+   * @param [in]     ws   部分段階の温度
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  REAL_TYPE ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, double& flop);
+  
+  
+  /**
+   * @brief 単媒質に対する熱伝導方程式をEuler陰解法で解く
+   * @retval ローカルノードの変化量の自乗和
+   * @param [in,out] t    n+1時刻の温度場
+   * @param [out]    b2   ソースベクトルの自乗和
+   * @param [in]     dt   時間積分幅
+   * @param [in]     qbc  境界条件熱流束
+   * @param [in]     bh2  BCindex H2
+   * @param [in]     ws   部分段階の温度
+   * @param [in]     IC   ItrCtlクラス
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  REAL_TYPE ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop);
+  
+  /**
+   * @brief 単媒質に対する熱伝導方程式を陰解法で解く
+   * @param IC IterationCtlクラス
+   */
+  void ps_LS(ItrCtl* IC);
+  
   
   /**
    * @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする

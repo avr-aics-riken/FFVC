@@ -1,14 +1,17 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet Cartesian
 !
-!   *********************************************************
+!   Copyright (c) 2012 All right reserved.
 !
-!> @file cds_poisson.f90
-!> @brief Poisson routines for CDS
-!> @author keno, FSI Team, VCAD, RIKEN
+!   Institute of Industrial Science, The University of Tokyo, Japan.
+!
+!********************************************************************
+!
+!> @file   ffv_poisson_cds.f90
+!! @brief  速度計算のルーチン群（バイナリモデル）
+!! @author kero
+!<
     
 !  *********************************************************************
 !> @subroutine cds_psor (p, sz, g, omg, res, div, bnd, cut, e, para_key)

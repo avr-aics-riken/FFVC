@@ -235,3 +235,17 @@ NS_FS_E_Binary.o: ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h
 NS_FS_E_Binary.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
 NS_FS_E_Binary.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
 NS_FS_E_Binary.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
+NS_FS_E_CDS.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
+NS_FS_E_CDS.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
+NS_FS_E_CDS.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
+NS_FS_E_CDS.o: ../FB/TPControl.h ../FB/PLOT3D_read.h ../FB/PLOT3D.h
+NS_FS_E_CDS.o: ../FB/FB_Ffunc.h ../FB/PLOT3D_write.h ../FB/Alloc.h
+NS_FS_E_CDS.o: ../FB/FileIO.h ../FB/ParseBC.h ../FB/vec3.h ../FB/vec3_func.h
+NS_FS_E_CDS.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
+NS_FS_E_CDS.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h
+NS_FS_E_CDS.o: ffv_SetBC.h ffv_Ffunc.h ../FB/dfi.h ../FB/History.h
+NS_FS_E_CDS.o: ../FB/Monitor.h ../FB/MonCompo.h ../FB/basic_func.h
+NS_FS_E_CDS.o: ../FB/Sampling.h ../IP/IP_Duct.h ../IP/IP_Define.h
+NS_FS_E_CDS.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h
+NS_FS_E_CDS.o: ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h
+NS_FS_E_CDS.o: ../IP/IP_Polygon.h ../IP/IP_Sphere.h

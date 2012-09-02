@@ -18,7 +18,7 @@
 
 
 // Fractional Step法でNavier-Stokes方程式を解く．距離情報近似．
-void FFV::NS_FS_E_CDS(void)
+void FFV::NS_FS_E_CDS()
 {
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   int v_length = s_length * 3;
