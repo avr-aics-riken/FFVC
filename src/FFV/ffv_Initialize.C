@@ -315,7 +315,6 @@ int FFV::Initialize(int argc, char **argv)
     fill(fp);
   }
   
-  Ex->writeSVX(d_mid, &C);
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
   if ( !DT.chkDtSelect() )
@@ -376,7 +375,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // チェック出力　デバッグ
-  //Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
+  Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
@@ -414,6 +413,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 内部周期境界の場合のガイドセルのコピー処理
   V.adjMediumPrdc_Inner(d_mid, cmp);
+  
   
   // 媒質数とKindOfSolverの整合性をチェックする
   if ( !chkMediumConsistency() )
@@ -1358,8 +1358,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\tFLUID\n");
-    fprintf(fp,"\tFLUID\n");
+    printf(    "\t1st Fill*****\n\n\tFLUID\n");
+    fprintf(fp,"\t1st Fill*****\n\n\tFLUID\n");
 
     printf    ("\t\tInitial target count : %15ld\n", fill_count);
     fprintf(fp,"\t\tInitial target count : %15ld\n", fill_count);
@@ -1442,8 +1442,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tTry = %5d : 1st FLUID fill by BID = %15ld\n", c+1, fill_count);
-    fprintf(fp,"\t\tTry = %5d : 1st FLUID fill by BID = %15ld\n", c+1, fill_count);
+    printf(    "\t\tTry = %5d : FLUID fill by BID = %15ld\n", c+1, fill_count);
+    fprintf(fp,"\t\tTry = %5d : FLUID fill by BID = %15ld\n", c+1, fill_count);
   }
   
   
@@ -1479,15 +1479,21 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tTry = %5d : 1st SOLID fill by mid = %15ld\n", c+1, z2);
-    fprintf(fp,"\t\tTry = %5d : 1st SOLID fill by mid = %15ld\n", c+1, z2);
+    printf(    "\t\tIteration = %5d : SOLID fill by MID = %15ld\n", c+1, z2);
+    fprintf(fp,"\t\tIteration = %5d : SOLID fill by MID = %15ld\n", c+1, z2);
   }
   
   
   
   // 2nd pass
   
-  // clear
+  Hostonly_
+  {
+    printf(    "\n\t2nd Fill*****\n\n\tFLUID\n");
+    fprintf(fp,"\n\t2nd Fill*****\n\n\tFLUID\n");
+  }
+  
+  // 既にペイントした流体セルをクリア
   unsigned long fz = (unsigned long)V.fill_inside(d_mid, C.Fill_Fluid, 0);
   
   if ( numProc > 1 )
@@ -1550,11 +1556,10 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tTry = %5d : 2nd FLUID fill by BID = %15ld\n\n", c+1, fill_count);
-    fprintf(fp,"\t\tTry = %5d : 2nd FLUID fill by BID = %15ld\n\n", c+1, fill_count);
+    printf(    "\t\tIteration = %5d : FLUID fill by BID = %15ld\n\n", c+1, fill_count);
+    fprintf(fp,"\t\tIteration = %5d : FLUID fill by BID = %15ld\n\n", c+1, fill_count);
   }
   
-
   
   
   // 固体に変更
@@ -1934,8 +1939,6 @@ void FFV::generate_Solid(FILE* fp)
       for (int n=1; n<=C.NoBC; n++) {
         if ( list[n] == tgt ) flag++;
       }
-      
-      printf("odr=%d tgt=%d flag=%d\n", m, tgt, flag);
       
       if ( flag == 0 )
       {

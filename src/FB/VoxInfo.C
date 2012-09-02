@@ -2229,7 +2229,7 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
 // 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
 // 対象セルが流体セル，かつ隣接方向にBCカットがある場合，対象面にNeumannフラグをエンコードする
 // 同種のBCは1セルに一つだけ
-unsigned long VoxInfo::encPbit_N_IBC(const int order,
+unsigned long VoxInfo::encPbit_N_IBC_Bin(const int order,
                                      const int id,
                                      const int* bid,
                                      int* bcd,
@@ -4376,14 +4376,13 @@ int VoxInfo::fill_check(const int* mid)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  size_t m;
   
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        //m = FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( mid[m] == 0 ) return 1;
+
+        if ( mid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] == 0 ) return 1;
         
       }
     }
@@ -4395,7 +4394,8 @@ int VoxInfo::fill_check(const int* mid)
 
 
 // #################################################################
-// 流体媒質のフィルを実行
+// カットID情報に基づく流体媒質のフィルを実行
+// Symmetric fillにより反復回数を減少
 unsigned VoxInfo::fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
 {
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -4448,7 +4448,8 @@ schedule(static) reduction(+:c)
 }
 
 // #################################################################
-// 流体媒質のフィルを実行
+// 媒質ID情報に基づく流体媒質のフィルを実行
+// Symmetric fillにより反復回数を減少
 unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
 {
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
@@ -4474,7 +4475,7 @@ unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, 
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
        
-#include "fill_bid.h"
+#include "fill_mid.h"
         
       }
     }
@@ -4490,7 +4491,7 @@ schedule(static) reduction(+:c)
     for (int j=jx; j>=1; j--) {
       for (int i=ix; i>=1; i--) {
         
-#include "fill_bid.h"
+#include "fill_mid.h"
         
       }
     }
@@ -4522,7 +4523,7 @@ unsigned VoxInfo::fill_inside(int* mid, const int target, const int fill_id)
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
-        // 未ペイントの場合
+        // 対象セルがtargetの場合
         if ( mid[m] == tg )
         {
           mid[m] = sd;
@@ -4533,48 +4534,6 @@ unsigned VoxInfo::fill_inside(int* mid, const int target, const int fill_id)
   }
   
   return c;
-}
-
-
-// #################################################################
-/**
- @brief フィルを実行
- @param[in] bid カット点のID
- @param mid ID配列
- @param[in] isolated 連結部が孤立したセルの数
- @param[in] solid_id 固体セルのID
- */
-void VoxInfo::fill_isolated_cells(const int* bid, int* mid, const int isolated, const int solid_id)
-{
-  size_t m_p;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  unsigned c = 0; /// count 
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        // テストセルがマークされている場合
-        if ( mid[m_p] == -1 )
-        {
-          mid[m_p] = solid_id;
-          c++;
-        }       
-      }
-    }
-  }
-  
-  if ( c != isolated )
-  {
-    Hostonly_ printf("Error : The number of cells filled as solid = %d , while isolated cell = %d\n", c, isolated);
-    Exit(0);
-  }
-  
 }
 
 
@@ -4589,6 +4548,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  int tg = target;
   unsigned long c = 0;
   
   
@@ -4597,11 +4557,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case X_MINUS:
       if ( nID[face] < 0 )
       {
-        int i = 1;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, 1, j, k, 6, ix, jx, kx, gd);
             const float* pos = &cut[mp];
             int flag = 0;
             
@@ -4614,10 +4574,10 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
-              mid[m] = target;
+              mid[m] = tg;
               c++;
             }
-
+            
           }
         }
       }
@@ -4626,11 +4586,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case X_PLUS:
       if ( nID[face] < 0 )
       {
-        int i = ix;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, ix, j, k, 6, ix, jx, kx, gd);
             const float* pos = &cut[mp];
             int flag = 0;
             
@@ -4643,7 +4603,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
-              mid[m] = target;
+              mid[m] = tg;
               c++;
             }
           }
@@ -4654,11 +4614,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Y_MINUS:
       if ( nID[face] < 0 )
       {
-        int j = 1;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, 1, k, 6, ix, jx, kx, gd);
             const float* pos = &cut[mp];
             int flag = 0;
             
@@ -4668,10 +4628,10 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
                 flag++;
               }
             }
-              
+            
             if ( (flag == 0) && (mid[m] == 0) )
             {
-              mid[m] = target;
+              mid[m] = tg;
               c++;
             }
           }
@@ -4682,11 +4642,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Y_PLUS:
       if ( nID[face] < 0 )
       {
-        int j = jx;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
-            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, jx, k, 6, ix, jx, kx, gd);
             const float* pos = &cut[mp];
             int flag = 0;
             
@@ -4699,10 +4659,10 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
-              mid[m] = target;
+              mid[m] = tg;
               c++;
             }
-
+            
           }
         }
       }
@@ -4711,11 +4671,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Z_MINUS:
       if ( nID[face] < 0 )
       {
-        int k = 1;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, 1, 6, ix, jx, kx, gd);
             const float* pos = &cut[mp];
             int flag = 0;
             
@@ -4728,10 +4688,10 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
-              mid[m] = target;
+              mid[m] = tg;
               c++;
             }
-
+            
           }
         }
       }
@@ -4740,11 +4700,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Z_PLUS:
       if ( nID[face] < 0 )
       {
-        int k = kx;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+            size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+            size_t mp = _F_IDX_S4DEX(0, i, j, kx, 6, ix, jx, kx, gd);
             const float* pos = &cut[mp];
             int flag = 0;
             
@@ -4757,18 +4717,17 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
-              mid[m] = target;
+              mid[m] = tg;
               c++;
             }
-
+            
           }
         }
       }
       break;
       
   } // end of switch
-  
-  // 固体面があれば，ゼロを返す（エラー）
+
   return c;
 }
 
@@ -6312,7 +6271,7 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
 
 
 // #################################################################
-// カット情報を用いて，ボクセルに指定固体情報を転写する
+// カット情報を用いて，指定IDからバイナリボクセルを作成する
 unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target)
 {
   unsigned long c=0;
@@ -6322,8 +6281,6 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
   int kx = size[2];
   int gd = guide;
   int tg = target;
-  
-  printf("solid cut %d\n", tg);
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
             schedule(static) reduction(+:c)

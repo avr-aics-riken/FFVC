@@ -137,7 +137,7 @@ private:
    * @param [in]     vec    法線ベクトル
    * @param [in]     bc_dir 境界条件の方向
    */
-  unsigned long encPbit_N_IBC(const int order,
+  unsigned long encPbit_N_IBC_Bin(const int order,
                               const int id,
                               const int* bid,
                               int* bcd,
@@ -360,13 +360,6 @@ public:
                               const int id, 
                               const int* mid, 
                               int* bx);
-  
-  
-
-  
-  
-  
-  void fill_isolated_cells   (const int* bid, int* mid, const int isolated, const int solid_id);
   
   
   /**

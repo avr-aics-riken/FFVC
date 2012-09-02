@@ -48,8 +48,8 @@ if ( zp == tg )
   
   if ( ((zs != 0) && (zs != tg)  &&  // X平面：ゼロでなく、かつ、targetでもない ==> 固体
         (zn != 0) && (zn != tg)) ||
-      ((zb != 0) && (zb != tg)  &&
-       (zt != 0) && (zt != tg)) )
+       ((zb != 0) && (zb != tg)  &&
+        (zt != 0) && (zt != tg)) )
   {
     
     if ( (zw == tg) && (qw == 0) ) // from X-
@@ -70,8 +70,8 @@ if ( zp == tg )
   
   if ( ((zw != 0) && (zw != tg)  && // Y平面
         (ze != 0) && (ze != tg)) ||
-      ((zb != 0) && (zb != tg)  &&
-       (zt != 0) && (zt != tg)) )
+       ((zb != 0) && (zb != tg)  &&
+        (zt != 0) && (zt != tg)) )
   {
     
     if ( (zs == tg) && (qs == 0) ) // from Y-
@@ -92,8 +92,8 @@ if ( zp == tg )
   
   if ( ((zw != 0) && (zw != tg)  && // Z平面
         (ze != 0) && (ze != tg)) ||
-      ((zs != 0) && (zs != tg)  &&
-       (zn != 0) && (zn != tg)) )
+       ((zs != 0) && (zs != tg)  &&
+        (zn != 0) && (zn != tg)) )
   {
     if ( (zb == tg) && (qb == 0) ) // from Z-
     {

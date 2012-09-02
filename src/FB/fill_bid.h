@@ -36,7 +36,7 @@ if ( zp == 0 )
 {
   qq = bid[m_p];
   
-  // 隣接セルの方向に対するカットの有無>> 0ならばカット無し、チェック半径は1
+  // 隣接セルの方向に対するカットIDの有無>> 0ならばカット無し、チェック半径は1
   qw = get_BID5(X_MINUS, qq);
   qe = get_BID5(X_PLUS,  qq);
   qs = get_BID5(Y_MINUS, qq);
