@@ -1,17 +1,19 @@
-!   *********************************************************
+!********************************************************************
 !
-!   SPHERE - Skeleton for PHysical and Engineering REsearch
-!  
-!   Copyright (c) RIKEN, Japan. All right reserved. 2004-2012
+!   FFV : Frontflow / violet Cartesian
 !
-!   *********************************************************
+!   Copyright (c) 2012 All right reserved.
 !
-!> @file cds_vector.f90
-!> @brief vector routines for CDS
-!> @author keno, FSI Team, VCAD, RIKEN
+!   Institute of Industrial Science, The University of Tokyo, Japan.
+!
+!********************************************************************
 
-!  ********************************************************************************************
-!> @subroutine cds_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, cut, flop)
+!> @file   ffv_velocity_cds.f90
+!! @brief  速度計算のルーチン群（バイナリモデル）
+!! @author kero
+!<
+
+!> ***************************************************************************
 !! @brief 疑似ベクトルの計算
 !! @param wv 仮のベクトル
 !! @param sz 配列長
@@ -27,12 +29,13 @@
 !! @param cut カット情報(float)
 !! @param[out] flop
 !<
-    subroutine cds_pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, cut, flop)
+    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, cut, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode
     integer, dimension(3)                                       ::  sz
-    real                                                        ::  dh, dh1, dh2, ck, cnv_u, cnv_v, cnv_w, b, flop
+    double precision                                            ::  flop
+    real                                                        ::  dh, dh1, dh2, ck, cnv_u, cnv_v, cnv_w, b
     real                                                        ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, ss, vcs
     real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb
     real                                                        ::  Uw_r, Ue_r, Us_r, Un_r, Ub_r, Ut_r
@@ -71,7 +74,7 @@
 		real                                                        ::  EX, EY, EZ
     real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
-    real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
+    real(4), dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
     real, dimension(0:3)                                        ::  v00
     
@@ -116,7 +119,7 @@
     cm1 = 1.0 - ck
     cm2 = 1.0 + ck
     
-    flop = flop + real(ix)*real(jx)*real(kx)*1221.0 + 34.0
+    flop = flop + dble(ix) * dble(jx) * dble(kx) * 1221.0d0 + 34.0d0
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
@@ -173,7 +176,7 @@
       cnv_w = 0.0
       
       ! 変数のロード
-      include '../F_CBC/load_var_stencil5.h'
+      include '../F_CORE/load_var_stencil5.h'
             
       bvx = bv(i,j,k)
       bpx = bp(i,j,k)
@@ -380,7 +383,7 @@
       dv2 = Up0 - Uw1
       dv1 = Uw1 - Uw2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Uer = Ue1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Uel = Up0 + (cm1 * g3 + cm2 * g4) * s4e
@@ -394,7 +397,7 @@
       dv2 = Vp0 - Vw1
       dv1 = Vw1 - Vw2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Ver = Ve1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Vel = Vp0 + (cm1 * g3 + cm2 * g4) * s4e
@@ -408,7 +411,7 @@
       dv2 = Wp0 - Ww1
       dv1 = Ww1 - Ww2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Wer = We1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Wel = Wp0 + (cm1 * g3 + cm2 * g4) * s4e
@@ -482,7 +485,7 @@
       dv2 = Up0 - Us1
       dv1 = Us1 - Us2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Unr = Un1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Unl = Up0 + (cm1 * g3 + cm2 * g4) * s4n
@@ -496,7 +499,7 @@
       dv2 = Vp0 - Vs1
       dv1 = Vs1 - Vs2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Vnr = Vn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Vnl = Vp0 + (cm1 * g3 + cm2 * g4) * s4n
@@ -510,7 +513,7 @@
       dv2 = Wp0 - Ws1
       dv1 = Ws1 - Ws2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Wnr = Wn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Wnl = Wp0 + (cm1 * g3 + cm2 * g4) * s4n
@@ -584,7 +587,7 @@
       dv2 = Up0 - Ub1
       dv1 = Ub1 - Ub2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Utr = Ut1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Utl = Up0 + (cm1 * g3 + cm2 * g4) * s4t
@@ -598,7 +601,7 @@
       dv2 = Vp0 - Vb1
       dv1 = Vb1 - Vb2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Vtr = Vt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Vtl = Vp0 + (cm1 * g3 + cm2 * g4) * s4t
@@ -612,7 +615,7 @@
       dv2 = Wp0 - Wb1
       dv1 = Wb1 - Wb2
       
-      include '../F_CBC/muscl.h'
+      include '../F_CORE/muscl.h'
       
       Wtr = Wt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Wtl = Wp0 + (cm1 * g3 + cm2 * g4) * s4t
@@ -671,10 +674,9 @@
 !$OMP END PARALLEL
 
 		return
-    end subroutine cds_pvec_muscl
+    end subroutine pvec_muscl_cds
 
-!  **************************************************************************************
-!> @subroutine cds_update_vec (v, div, sz, g, delta_t, dh, vc, p, bp, bv, cut, v00, flop)
+!> ****************************************************************************
 !! @brief 次のステップのセルセンターの速度を更新し，発散値を計算する
 !! @param[out] v n+1時刻のセルセンターの速度ベクトル
 !! @param div 発散値
@@ -690,12 +692,13 @@
 !! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine cds_update_vec (v, div, sz, g, delta_t, dh, vc, p, bp, bv, cut, v00, flop)
+    subroutine update_vec_cds (v, div, sz, g, delta_t, dh, vc, p, bp, bv, cut, v00, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                       ::  sz
-    real                                                        ::  dh, delta_t, dd, flop, coef, actv, r_actv
+    double precision                                            ::  flop
+    real                                                        ::  dh, delta_t, dd, coef, actv, r_actv
     real                                                        ::  pc, gpx, gpy, gpz
     real                                                        ::  gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r
     real                                                        ::  gpw_c, gpe_c, gps_c, gpn_c, gpb_c, gpt_c
@@ -729,7 +732,7 @@
     v_ref = v00(2)
     w_ref = v00(3)
     
-    flop = flop + real(ix)*real(jx)*real(kx)*228.0 + 16.0
+    flop = flop + dble(ix) * dble(jx) * dble(kx) * 228.0d0 + 16.0d0
 
 
 !$OMP PARALLEL &
@@ -927,10 +930,9 @@
 !$OMP END PARALLEL
     
     return 
-    end subroutine cds_update_vec
+    end subroutine update_vec_cds
 
-!  *************************************************************
-!> @subroutine cds_div (div, sz, g, coef, v, bv, cut, v00, flop)
+!> *************************************************************
 !! @brief 速度の発散を計算する
 !! @param div 速度の発散値
 !! @param sz 配列長
@@ -942,11 +944,12 @@
 !! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine cds_div (div, sz, g, coef, v, bv, cut, v00, flop)
+    subroutine divergence_cds (div, sz, g, coef, v, bv, cut, v00, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                       ::  sz
+    double precision                                            ::  flop
     real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                        ::  Ue_f, Uw_f, Vn_f, Vs_f, Wt_f, Wb_f
     real                                                        ::  Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r
@@ -958,7 +961,7 @@
     real                                                        ::  ww, we, ws, wn, wb, wt
     real                                                        ::  qw, qe, qs, qn, qb, qt
     real                                                        ::  r_qw, r_qe, r_qs, r_qn, r_qb, r_qt
-    real                                                        ::  coef, flop, actv, r_actv, u_ref, v_ref, w_ref
+    real                                                        ::  coef, actv, r_actv, u_ref, v_ref, w_ref
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
@@ -973,7 +976,7 @@
     v_ref = v00(2)
     w_ref = v00(3)
     
-    flop = flop + real(ix)*real(jx)*real(kx)*152.0
+    flop = flop + dble(ix) * dble(jx) * dble(kx) * 152.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef, u_ref, v_ref, w_ref) &
@@ -1118,10 +1121,9 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine cds_div
+    end subroutine divergence_cds
 
-!  *****************************************************************************************
-!> @subroutine cds_eddy_viscosity (vt, sz, g, dh, re, cs, v, cut, vt_range, yp_range, v00)
+!> ****************************************************************************
 !! @brief Smagorinsky Modelによる乱流渦粘性係数の計算，減衰関数を併用
 !! @param vt 乱流渦粘性係数
 !! @param sz 配列長
@@ -1134,18 +1136,18 @@
 !! @param vt_range 渦粘性係数の最小値と最大値
 !! @param yp_range Y+の最小値と最大値
 !! @param v00 参照速度
-!! @date 2009/02/17
 !! @note
 !!    - vtmin, vtmax > vt_range(2)
 !!    - ypmin, ypmax > yp_range(2)
 !! @todo
 !!    - 境界条件は必要か？
 !<
-    subroutine cds_eddy_viscosity (vt, sz, g, dh, re, cs, v, cut, vt_range, yp_range, v00)
+    subroutine eddy_viscosity_cds (vt, sz, g, dh, re, cs, v, cut, vt_range, yp_range, v00, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, m
     integer, dimension(3)                                       ::  sz
+    double precision                                            ::  flop
     real, dimension(2)                                          ::  vt_range, yp_range
     real                                                        ::  dh, re, cs, yp, Ut, Ut0
     real                                                        ::  dudx, dudy, dudz
@@ -1255,10 +1257,9 @@
     end do
 
     return
-    end subroutine cds_eddy_viscosity
+    end subroutine eddy_viscosity_cds
 
-!  **************************************************************
-!> @subroutine cds_force (force, sz, g, p, bp, bid, id, dh, flop)
+!> **************************************************************
 !! @brief 物体表面の力を計算する
 !! @param[out] force 力の成分
 !! @param sz 配列長
@@ -1270,14 +1271,15 @@
 !! @param dh 無次元格子幅
 !! @param[out] flop flop count
 !<
-    subroutine cds_force (force, sz, g, p, bp, bid, id, dh, flop)
+    subroutine force_cds (force, sz, g, p, bp, bid, id, dh, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, id, bd
     integer, dimension(3)                                       ::  sz
+    double precision                                            ::  flop
     real                                                        ::  fx, fy, fz
     real                                                        ::  qw, qe, qs, qn, qb, qt
-    real                                                        ::  flop, actv, pp, dh, cf
+    real                                                        ::  actv, pp, dh, cf
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bid, bp
     real, dimension(3)                                          ::  force
@@ -1286,7 +1288,7 @@
     jx = sz(2)
     kx = sz(3)
 
-    flop = flop + real(ix)*real(jx)*real(kx)*11.0 + 5.0
+    flop = flop + dble(ix) * dble(jx) * dble(kx) * 11.0d0 + 5.0d0
 
     fx = 0.0
     fy = 0.0
@@ -1353,4 +1355,4 @@
     force(3) = fz * cf
 
     return
-    end subroutine cds_force
+    end subroutine force_cds

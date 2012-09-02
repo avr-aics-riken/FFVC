@@ -20,6 +20,7 @@ CXXSRCS = \
     ffv_Post.C \
     ffv_Plot3d.C \
     NS_FS_E_Binary.C \
+    NS_FS_E_CDS.C \
 
 SRCS = $(CXXSRCS)
 

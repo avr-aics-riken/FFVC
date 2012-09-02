@@ -53,7 +53,6 @@ void FFV::NS_FS_E_Binary()
   ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
 
-  
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
   // d_v0  セルセンタ速度 v^nの保持
@@ -71,8 +70,7 @@ void FFV::NS_FS_E_Binary()
   // d_t0  温度 t^n 
   // d_vt  LES計算の渦粘性係数
   // d_ab0 Adams-Bashforth用のワーク
-  
-  
+
   
   // >>> Fractional step section
   TIMING_start(tm_frctnl_stp_sct); 
@@ -105,7 +103,7 @@ void FFV::NS_FS_E_Binary()
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
   
-  // 対流項と粘性項の評価 >> In use (dc_vc, dc_wv)
+  // 対流項と粘性項の評価 >> In use (d_vc, d_wv)
   switch (C.AlgorithmF) {
     case Control::Flow_FS_EE_EE:
     case Control::Flow_FS_AB2:
@@ -114,11 +112,13 @@ void FFV::NS_FS_E_Binary()
       flop = 0.0;
       v_mode = (C.Mode.Wall_profile == Control::Log_Law) ? 2 : 1;
 
-      if ( C.LES.Calc == ON ) {
+      if ( C.LES.Calc == ON )
+      {
         //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
         Exit(0);
       }
-      else {
+      else
+      {
         pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &flop); 
       }
       TIMING_stop(tm_pseudo_vec, flop);
@@ -133,10 +133,12 @@ void FFV::NS_FS_E_Binary()
       TIMING_start(tm_pseudo_vec);
       flop = 0.0;
       v_mode = 0;
-      if ( C.LES.Calc == ON ) {
+      if ( C.LES.Calc == ON )
+      {
         //pvec_les_(wv, sz, &guide, &dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
       }
-      else {
+      else
+      {
         pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &flop); 
       }
       TIMING_stop(tm_pseudo_vec, flop);
@@ -386,7 +388,6 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分
-    
     if ( C.isOutflow() == ON ) 
     {
       if ( !C.isCDS() ) // Binary
@@ -394,16 +395,14 @@ void FFV::NS_FS_E_Binary()
         if ( numProc > 1 ) 
         {
           TIMING_start(tm_prj_vec_bc_comm);
-          for (int n=0; n<=2*C.NoBC; n++) 
-          {
+          for (int n=0; n<=2*C.NoBC; n++) {
             m_tmp[n] = m_buf[n];
           }
           if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
           TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
         }
         
-        for (int n=1; n<=C.NoBC; n++) 
-        {
+        for (int n=1; n<=C.NoBC; n++) {
           if ( cmp[n].getType() == OUTFLOW ) 
           {
             cmp[n].val[var_Velocity] = m_buf[2*n]/m_buf[2*n+1]; // 無次元平均流速
@@ -434,8 +433,7 @@ void FFV::NS_FS_E_Binary()
         if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0);
       }
-      for (int n=1; n<=C.NoBC; n++) 
-      {
+      for (int n=1; n<=C.NoBC; n++) {
         if ( cmp[n].isFORCING() ) 
         {
           m_buf[2*n]   /= (REAL_TYPE)cmp[n].getElement();
@@ -531,7 +529,10 @@ void FFV::NS_FS_E_Binary()
   // 圧力値の引き戻しオプション
   if ( C.Mode.Pshift != -1 ) 
   {
+    TIMING_start(tm_pressure_shift);
+    flop = 0.0;
     Pressure_Shift();
+    TIMING_stop(tm_pressure_shift, flop);
   }
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);

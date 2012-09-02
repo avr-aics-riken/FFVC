@@ -79,7 +79,7 @@ int FFV::Loop(const unsigned step)
           NS_FS_E_Binary();
         }
         else if (C.Mode.ShapeAprx == CUT_INFO) {
-          //NS_FS_E_CDS();
+          NS_FS_E_CDS();
         }          
         break;
         
