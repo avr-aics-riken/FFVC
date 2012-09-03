@@ -34,17 +34,92 @@ public:
   virtual ~SetBC3D() {}
   
 protected:
-  REAL_TYPE extractVel_IBC        (int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
-  REAL_TYPE extractVel_OBC        (int n, REAL_TYPE* vec, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
+  
+  /**
+   * @brief コンポーネントから速度境界条件の成分を取り出す
+   * @param [in]     n    コンポーネントのインデクス
+   * @param [out]    vec  ベクトル成分
+   * @param [in]     tm   時刻
+   * @param [in]     v00  格子速度
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  REAL_TYPE extractVel_IBC (const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop);
+  
+  /**
+   * @brief コンポーネントから速度境界条件の成分を取り出す
+   * @param [in]     n    コンポーネントのインデクス
+   * @param [out]    vec  ベクトル成分
+   * @param [in]     tm   時刻
+   * @param [in]     v00  格子速度
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  REAL_TYPE extractVel_OBC (const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop);
+  
+  /**
+   * @brief 温度一定の境界条件
+   * @param [in,out] d_t 温度場
+   * @param [in]     bh2 BCindex H2
+   * @param [in]     n   境界条件コンポーネントのエントリ番号
+   */
+  void ps_IBC_ConstTemp (REAL_TYPE* d_t, const int* d_bh2, const int n);
+  
+  
   REAL_TYPE ps_IBC_Heatflux       (REAL_TYPE* d_qbc, int* d_bh1, int n, double& flop);
   REAL_TYPE ps_IBC_HeatGen_SM     (REAL_TYPE* d_t,   int* d_bh2, int n, REAL_TYPE dt, double& flop);
   REAL_TYPE ps_IBC_IsoThermal_SM  (REAL_TYPE* d_qbc, int* d_bh1, int n, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
+  
+  
+  /**
+   * @brief 内部領域のOutflowの境界条件処理
+   * @retval 熱量[W]
+   * @param [in,out] d_ws  温度増分
+   * @param [in]     d_bh1 BCindex H1
+   * @param [in]     n     コンポーネントリストのインデクス
+   * @param [in]     d_v   速度
+   * @param [in]     d_t   温度
+   * @param [in]     v00   参照速度
+   * @param [in,out] flop  浮動小数演算数
+   * @note モニタ量の熱量va(W)は系に対する流入量なので，基準温度に対する熱量
+   */
+  REAL_TYPE ps_IBC_Outflow (REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_t, const REAL_TYPE* v00, double& flop);
+  
+  
+  /**
+   * @brief 内部領域の速度と温度の指定境界条件
+   * @retval 熱量[-]
+   * @param [in,out] d_ws   温度増分
+   * @param [in]     d_bh1  BCindex H1
+   * @param [in]     n      コンポーネントリストのインデクス
+   * @param [in]     v00    参照速度
+   * @param [in]     vec    指定ベクトル
+   * @param [in,out] flop   浮動小数演算数
+   * @note モニタ量の熱量va(無次元)は系に対する流入量なので，基準温度に対する熱量
+   */
+  REAL_TYPE ps_IBC_SpecVH (REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE v00, const REAL_TYPE* vec, double& flop);
+  
+  
   REAL_TYPE ps_IBC_Transfer_B_SM  (REAL_TYPE* d_qbc, int* d_bh1, int n, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   REAL_TYPE ps_IBC_Transfer_S_SM  (REAL_TYPE* d_qbc, int* d_bh1, int n, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   REAL_TYPE ps_IBC_Transfer_SF_SM (REAL_TYPE* d_qbc, int* d_bh1, int n, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
-  REAL_TYPE ps_IBC_Transfer_SN_SM (REAL_TYPE* d_qbc, int* d_bh1, int n, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
-  REAL_TYPE ps_IBC_Outflow        (REAL_TYPE* d_ws,  int* d_bh1, int n, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE* v00, double& flop);
-  REAL_TYPE ps_IBC_SpecVH         (REAL_TYPE* d_ws,  int* d_bh1, int n, REAL_TYPE v00, REAL_TYPE* vec, double& flop);
+  
+  
+  /**
+   * @brief 単媒質の場合の熱伝達温境界条件タイプSN（自然対流）　流体のみを解く場合
+   * @retval 熱流束の和 (W/m^2)
+   * @param [out]    d_qbc  境界条件熱流束
+   * @param [in]     d_bh1  BCindex H1
+   * @param [in]     n      境界条件コンポーネントのエントリ番号
+   * @param [in,out] d_t    n+1時刻の温度場
+   * @param [in]     d_t0   n時刻の温度場
+   * @note
+   *    - 熱流束は加算（他の条件と合成）
+   *    - pセルは流体セル
+   */
+  REAL_TYPE ps_IBC_Transfer_SN_SM (REAL_TYPE* d_qbc, const int* d_bh1, const int n, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
+  
+
+  
+  
   REAL_TYPE ps_OBC_Free           (REAL_TYPE* d_ws,  int* d_bh1, const int face, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE* v00, double& flop);
   REAL_TYPE ps_OBC_Heatflux       (REAL_TYPE* d_qbc, int* d_bh1, const int face, double& flop);
   REAL_TYPE ps_OBC_SpecVH         (REAL_TYPE* d_ws,  int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
@@ -56,7 +131,6 @@ protected:
   void Pibc_Prdc                (REAL_TYPE* d_p, int* st, int* ed, int* d_bcd, int odr, int dir, REAL_TYPE pv);
   void Pobc_Prdc_Directional    (REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod);
   void Pobc_Prdc_Simple         (REAL_TYPE* d_p, const int face);
-  void ps_IBC_ConstTemp         (REAL_TYPE* d_t, int* d_bh2, int n);
   
   
   /**

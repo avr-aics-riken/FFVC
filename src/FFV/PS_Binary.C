@@ -70,7 +70,7 @@ void FFV::PS_Binary()
     TIMING_start(tm_heat_cnv);
     flop = 0.0;
     int swt = 0; // 断熱壁
-    ps_muscl_(d_ws, size, &guide, &dh, &cnv_Scheme, v00, d_v, d_t0, d_bcv, d_bh1, d_bh2, &swt, &flop);
+    ps_muscl_(d_ws, size, &guide, &dh, &cnv_scheme, v00, d_v, d_t0, d_bcv, d_bcp, d_bh1, d_bh2, &swt, &flop);
     TIMING_stop(tm_heat_cnv, flop);
 
 		// 対流フェイズの流束型境界条件

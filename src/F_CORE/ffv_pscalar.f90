@@ -24,12 +24,13 @@
 !! @param v cell center u^{n+1}
 !! @param t 温度
 !! @param bv  BCindex V
+!! @param bp  BCindex P
 !! @param bh1 BCindex H1
 !! @param bh2 BCindex H2
 !! @param swt 固定壁の扱い（0-断熱，1-共役熱移動）
 !! @param[out] flop
 !<
-    subroutine ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bh1, bh2, swt, flop)
+    subroutine ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bp, bh1, bh2, swt, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, idx, swt, hdx
@@ -46,12 +47,13 @@
     real                                                        ::  a_e, a_w, a_n, a_s, a_t, a_b
     real                                                        ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4
     real                                                        ::  Fr_r, Fr_l, Fl_r, Fl_l
-    real                                                        ::  cr, cl, acr, acl, cnv, ss, b
+    real                                                        ::  cr, cl, acr, acl, cnv, ss, b, cm1, cm2, ss_4
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
+    real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  t, ws
     real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh1, bh2, bv
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh1, bh2, bv, bp
     
     ix = sz(1)
     jx = sz(2)
@@ -76,11 +78,41 @@
       b  = (3.0-ck)/(1.0-ck)
     endif
 
+    ss_4 = 0.25*ss
+
+    cm1 = 1.0 - ck
+    cm2 = 1.0 + ck
+
     ! /3 + 2 = 26 ! DP 41
-    ! loop : 6+1+6+36 + ( 4+36+32+4+17 )*3dir + 2 + 3 = 333
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*333.0d0 + 26.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*333.0d0 + 41.0d0 ! DP
+    ! loop : 6+1+6+36 + ( 4+36+22+4+17 )*3dir + 2 + 3 = 333
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*303.0d0 + 26.0d0
+    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*303.0d0 + 41.0d0 ! DP
     
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, ss, ck, b, u_ref, v_ref, w_ref, swt, cm1, cm2, ss_4) &
+!$OMP PRIVATE(cnv, idx, hdx, actv) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(Fp0, Fe1, Fe2, Fw1, Fw2, Fs1, Fs2, Fn1, Fn2, Fb1, Fb2, Ft1, Ft2) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP PRIVATE(a_e, a_w, a_n, a_s, a_t, a_b) &
+!$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
+!$OMP PRIVATE(Up0, Ue1, Uw1) &
+!$OMP PRIVATE(Vp0, Vs1, Vn1) &
+!$OMP PRIVATE(Wp0, Wb1, Wt1) &
+!$OMP PRIVATE(dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
+!$OMP PRIVATE(Fr_r, Fr_l, Fl_r, Fl_l) &
+!$OMP PRIVATE(cr, cl, acr, acl)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -158,6 +190,29 @@
       a_t = real(ibits(hdx, adbtc_T, 1))
       a_b = real(ibits(hdx, adbtc_B, 1)) ! real*6 = 6 flop
 
+      ! 延びたステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
+      lmt_w = 1.0
+      lmt_e = 1.0
+      lmt_s = 1.0
+      lmt_n = 1.0
+      lmt_b = 1.0
+      lmt_t = 1.0
+
+      if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+
+      ! 外部境界条件の場合
+      if ( (i == 1)  .and. (ibits(bp(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (i == ix) .and. (ibits(bp(ix+1, j   , k   ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (j == 1)  .and. (ibits(bp(i   , 0   , k   ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (j == jx) .and. (ibits(bp(i   , jx+1, k   ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+
       Up0 = v(1, i  ,j  ,k  )
       Vp0 = v(2, i  ,j  ,k  )
       Wp0 = v(3, i  ,j  ,k  )
@@ -192,10 +247,10 @@
       
       include 'muscl.h' ! 36 flop
       
-      Fr_r = Fe1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Fr_l = Fp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Fl_r = Fp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Fl_l = Fw1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss ! 32 flop
+      Fr_r = Fe1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
+      Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
+      Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
+      Fl_l = Fw1 + (cm1*g1+cm2*g2)*ss_4 * lmt_w ! 22 flop
       
       ! 流束　壁面上で速度ゼロ->対流熱流束がゼロになる >  4 flop
       cr  = UPe - u_ref
@@ -223,10 +278,10 @@
       
       include 'muscl.h'
       
-      Fr_r = Fn1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Fr_l = Fp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Fl_r = Fp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Fl_l = Fs1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Fr_r = Fn1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
+      Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
+      Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
+      Fl_l = Fs1 + (cm1*g1+cm2*g2)*ss_4 * lmt_s
       
       cr  = VPn - v_ref
       cl  = VPs - v_ref
@@ -252,10 +307,10 @@
       
       include 'muscl.h'
       
-      Fr_r = Ft1 - 0.25*((1-ck)*g6+(1+ck)*g5)*ss
-      Fr_l = Fp0 + 0.25*((1-ck)*g3+(1+ck)*g4)*ss
-      Fl_r = Fp0 - 0.25*((1-ck)*g4+(1+ck)*g3)*ss
-      Fl_l = Fb1 + 0.25*((1-ck)*g1+(1+ck)*g2)*ss
+      Fr_r = Ft1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
+      Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
+      Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
+      Fl_l = Fb1 + (cm1*g1+cm2*g2)*ss_4 * lmt_b
       
       cr  = WPt - w_ref
       cl  = WPb - w_ref
@@ -269,6 +324,8 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine ps_muscl
@@ -302,6 +359,17 @@
     
     flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0 + 3.0d0
 
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dgr)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -309,6 +377,8 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine ps_buoyancy
@@ -329,7 +399,7 @@
 !<
     subroutine ps_diff_ee (t, sz, g, res, dh, dt, pei, qbc, bh, ws, flop)
     implicit none
-    include 'ffv_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
@@ -352,6 +422,23 @@
     ! loop : 6 + 6 + 1 + 51 = 64 flop
     flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 17.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 27.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2) &
+!$OMP PRIVATE(idx, delta) &
+!$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
+!$OMP PRIVATE(g_p, g_w, g_e, g_s, g_n, g_b, g_t) &
+!$OMP PRIVATE(a_w, a_e, a_s, a_n, a_b, a_t)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+!$OMP REDUCTION(+:res)
 
     do k=1,kx
     do j=1,jx
@@ -401,6 +488,8 @@
     end do
     end do
     end do
+!$OMP END DO
+!$OMP END PARALLEL
 
     return
     end subroutine ps_diff_ee
@@ -418,13 +507,25 @@
 !<
     subroutine hbc_drchlt (t, sz, g, st, ed, bh, odr, tc)
     implicit none
-    include 'ffv_f_params.h'
+    include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  tc
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  t
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh
-    
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(st, ed, odr, tc) &
+!$OMP PRIVATE(idx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
     do k=st(3),ed(3)
     do j=st(2),ed(2)
     do i=st(1),ed(1)
@@ -460,6 +561,8 @@
     end do
     end do
     end do
-    
+!$OMP END DO
+!$OMP END PARALLEL
+
     return
     end subroutine hbc_drchlt

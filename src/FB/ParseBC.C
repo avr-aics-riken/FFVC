@@ -817,8 +817,9 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
   // check number of Elem
   nnode = tpCntl->countLabels(label_base);
   
-  if ( nnode != 13) {
-    stamped_printf("\tParsing error : 13 params should be found in 'LocalBoundary > HeatTransfer_SN'\n");
+  if ( nnode != 13)
+  {
+    stamped_printf("\tParsing error : 13 params should be found in '%s'\n", label_base.c_str());
     Exit(0);
   }
   
@@ -835,20 +836,26 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
   // type
   label = label_base + "/Ref_Temp_Mode";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : Invalid int value for 'Ref_Temp_Mode' in 'LocalBoundary > HeatTransfer_SN'\n");
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
     Exit(0);
   }
-  if ( !strcasecmp("bulk_temperature", str.c_str()) ) {
+  
+  if ( !strcasecmp("bulk_temperature", str.c_str()) )
+  {
 	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
   }
-  else if ( !strcasecmp("local_temperature", str.c_str()) ) {
+  else if ( !strcasecmp("local_temperature", str.c_str()) )
+  {
 	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
   }
-  else {
+  else
+  {
 	  stamped_printf("\tParsing error : Invalid string value for 'Ref_Temp_Mode' : %s\n", str.c_str());
 	  Exit(0);
   }
+  
   
   // Vertical and upper face values
   label = label_base + "/vertical_laminar_alpha";
@@ -866,6 +873,7 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
   label = label_base + "/vertical_Ra_critial";
   cmp[n].ca[CompoList::vert_Ra_critial]       = get_BCval_real(label);
   
+  
   // Lower face values
   label = label_base + "/lower_laminar_alpha";
   cmp[n].cb[CompoList::lower_laminar_alpha]   = get_BCval_real(label);
@@ -882,7 +890,9 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
   label = label_base + "/lower_Ra_critial";
   cmp[n].cb[CompoList::lower_Ra_critial]      = get_BCval_real(label);
   
-  if ( Unit_Param != DIMENSIONAL ) {
+  
+  if ( Unit_Param != DIMENSIONAL )
+  {
     stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
     Exit(0);
   }

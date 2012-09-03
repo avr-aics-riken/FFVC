@@ -164,7 +164,9 @@ protected:
 		float al = a.length();
 		float bl = b.length();
 		float ab = dot(a,b);
-		m_area = 0.5*sqrtf(al*al*bl*bl - ab*ab);
+		float f = al*al*bl*bl - ab*ab;
+		if(f<0.0) f=0.0;
+		m_area = 0.5*sqrtf(f);
 	}
 
 	//=======================================================================
