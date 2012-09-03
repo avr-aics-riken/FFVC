@@ -28,6 +28,9 @@
 
 #include "ffv.h"
 
+
+
+// #################################################################
 // 移流項のEuler陽解法による時間積分
 void FFV::ps_ConvectionEE(REAL_TYPE* tc, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* t0, double& flop)
 {
@@ -52,6 +55,8 @@ void FFV::ps_ConvectionEE(REAL_TYPE* tc, const REAL_TYPE delta_t, const int* bd,
 }
 
 
+
+// #################################################################
 // Boussinesq浮力項の計算
 void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop)
 {
@@ -77,10 +82,10 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
   }
 }
 
-/**
- @brief 単媒質に対する熱伝導方程式を陰解法で解く
- @param IC IterationCtlクラス
- */
+
+
+// #################################################################
+// 単媒質に対する熱伝導方程式を陰解法で解く
 void FFV::ps_LS(ItrCtl* IC)
 {
   double flop = 0.0;      /// 浮動小数点演算数
@@ -138,7 +143,7 @@ void FFV::ps_LS(ItrCtl* IC)
         REAL_TYPE tmp_wk[2], m_tmp[2];
         tmp_wk[0] = m_tmp[0] = res;
         tmp_wk[1] = m_tmp[1] = b2;
-        if ( paraMngr->Allreduce(&tmp_wk, m_tmp, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(tmp_wk, m_tmp, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         TIMING_stop(tm_heat_diff_res_comm, 2.0*numProc*2.0*sizeof(REAL_TYPE) );
         
         res = sqrt( m_tmp[0]/(REAL_TYPE)G_Acell ); // 残差のRMS
@@ -162,6 +167,7 @@ void FFV::ps_LS(ItrCtl* IC)
 }
 
 
+// #################################################################
 // 単媒質に対する熱伝導方程式をEuler陽解法で解く
 REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, double& flop)
 {
@@ -170,6 +176,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
   REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
   REAL_TYPE      a_w, a_e, a_s, a_n, a_b, a_t;
   REAL_TYPE dth1, dth2, delta, res;
+  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   int s;
   
   int ix = size[0];
@@ -177,13 +184,12 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
   int kx = size[2];
   int gd = guide;
 
-  dth1 = dt/C.dh;
-  dth2 = dth1*C.getRcpPeclet()/C.dh;
+  dth1 = dt/dh;
+  dth2 = dth1*C.getRcpPeclet()/dh;
   res  = 0.0;
   flop += (double)(ix*jx*kx)* 50.0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dth1, dth2) \
-            firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
             private(m_p, m_w, m_e, m_s, m_n, m_b, m_t) \
             private(t_p, t_w, t_e, t_s, t_n, t_b, t_t) \
             private(g_p, g_w, g_e, g_s, g_n, g_b, g_t) \
@@ -249,6 +255,8 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
   return res;
 }
 
+
+// #################################################################
 // 単媒質に対する熱伝導方程式をEuler陰解法で解く
 REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop)
 {
@@ -258,8 +266,10 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
   REAL_TYPE a_p, a_w, a_e, a_s, a_n, a_b, a_t;
   REAL_TYPE dth1, dth2;
   REAL_TYPE s0, dd, delta, sb;
+  REAL_TYPE bb=0.0;
   REAL_TYPE omg;
   REAL_TYPE res; // 残差の自乗和
+  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   int s;
 
   int ix = size[0];
@@ -267,20 +277,19 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
   int kx = size[2];
   int gd = guide;
   
-  dth1 = dt/C.dh;
-  dth2 = dth1*C.getRcpPeclet()/C.dh;
+  dth1 = dt/dh;
+  dth2 = dth1*C.getRcpPeclet()/dh;
   omg = IC->get_omg();
   res = b2 = 0.0;
   flop += (double)(ix*jx*kx)* 58.0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dth1, dth2, omg) \
-            firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
             private(m_p, m_w, m_e, m_s, m_n, m_b, m_t) \
             private(t_p, t_w, t_e, t_s, t_n, t_b, t_t) \
             private(g_p, g_w, g_e, g_s, g_n, g_b, g_t) \
             private(a_p, a_w, a_e, a_s, a_n, a_b, a_t) \
             private(s, dd, sb, s0, delta) \
-            schedule(static) reduction(+:res) reduction(+:b2)
+            schedule(static) reduction(+:res) reduction(+:bb)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -324,7 +333,7 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
                     -(1.0-g_b)*a_b * qbc[_F_IDX_V3DEX(2, i  , j  , k-1, ix, jx, kx, gd)]
                     +(1.0-g_t)*a_t * qbc[_F_IDX_V3DEX(2, i  , j  , k  , ix, jx, kx, gd)]
                     );
-        b2 += sb*sb * a_p;
+        bb += sb*sb * a_p;
         s0 = sb + ws[m_p]
           + dth2*( g_w * a_w * t_w  // west  
                  + g_e * a_e * t_e  // east  
@@ -339,6 +348,8 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
       }
     }
   }
+  
+  b2 = bb;
 
 	return res;
 }

@@ -27,22 +27,22 @@
  */
 void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
 {
-  REAL_TYPE flop, tc;
-  int st[3], ed[3];
-  int typ;
-  int gd = guide;
+  REAL_TYPE tc;
   
   // 内部境界条件による修正
   for (int n=1; n<=NoBC; n++) {
-    typ = cmp[n].getType();
     
+    int st[3], ed[3];
+    
+    int typ = cmp[n].getType();
+
     cmp[n].getBbox(st, ed);
     
     switch (typ)
     {
       case SPEC_VEL_WH:
-        tc  = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
-        hbc_drchlt_(d_t, size, &gd, st, ed, d_bh1, &n, &tc);
+        tc = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
+        hbc_drchlt_(d_t, size, &guide, st, ed, d_bh1, &n, &tc);
         break;
     }
   }

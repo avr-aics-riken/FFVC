@@ -26,7 +26,7 @@ void FFV::NS_FS_E_Binary()
   
   // local variables
   REAL_TYPE dt = deltaT;               /// 時間積分幅
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
+  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   double flop;                         /// 浮動小数演算数
   REAL_TYPE convergence=0.0;           /// 定常収束モニター量
   REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
@@ -61,7 +61,7 @@ void FFV::NS_FS_E_Binary()
   // d_p   圧力 p^n -> p^{n+1}
   // d_p0  圧力 p^nの保持
   // d_ws  Poissonのソース項0　速度境界を考慮
-  // d_sq Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値, div(u)の値を保持，出力のところまでは再利用しないこと
+  // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値, div(u)の値を保持，出力のところまでは再利用しないこと
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
   // d_bcv 速度のビットフラグ

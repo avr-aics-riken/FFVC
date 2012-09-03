@@ -75,10 +75,12 @@ int FFV::Loop(const unsigned step)
       case Control::Flow_FS_EE_EE:
       case Control::Flow_FS_AB2:
       case Control::Flow_FS_AB_CN:
-        if (C.Mode.ShapeAprx == BINARY) {
+        if (C.Mode.ShapeAprx == BINARY)
+        {
           NS_FS_E_Binary();
         }
-        else if (C.Mode.ShapeAprx == CUT_INFO) {
+        else if (C.Mode.ShapeAprx == CUT_INFO)
+        {
           NS_FS_E_CDS();
         }          
         break;
@@ -96,7 +98,7 @@ int FFV::Loop(const unsigned step)
   if ( C.isHeatProblem() ) 
   {
     TIMING_start(tm_heat_sct);
-    //PS_E_CBC();
+    //PS_E_Binary();
     TIMING_stop(tm_heat_sct, 0.0);
   }
   

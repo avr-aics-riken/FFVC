@@ -91,7 +91,7 @@ UDEF_LIBS_SPEC     =
 #F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS) -WF,-D_STATIC
 #LDFLAGS     =
 #LIBS        =
-#UDEF_LIB_PATH_SPEC = /soft/apps/ibmcmp/xlf/bg/11.1/bglib
+#UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib
 #UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath
 
 ###################################################################
@@ -115,7 +115,6 @@ UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
               -L../IP \
               -L../F_CORE \
               -L$(MPI_DIR)/lib \
-              -L$(UDEF_LIB_PATH_SPEC)
               
 UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
             $(UDEF_LIBS_SPEC)

@@ -176,7 +176,7 @@
       cnv_w = 0.0
       
       ! 変数のロード
-      include '../F_CORE/load_var_stencil5.h'
+      include 'load_var_stencil5.h'
             
       bvx = bv(i,j,k)
       bpx = bp(i,j,k)
@@ -383,7 +383,7 @@
       dv2 = Up0 - Uw1
       dv1 = Uw1 - Uw2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Uer = Ue1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Uel = Up0 + (cm1 * g3 + cm2 * g4) * s4e
@@ -397,7 +397,7 @@
       dv2 = Vp0 - Vw1
       dv1 = Vw1 - Vw2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Ver = Ve1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Vel = Vp0 + (cm1 * g3 + cm2 * g4) * s4e
@@ -411,7 +411,7 @@
       dv2 = Wp0 - Ww1
       dv1 = Ww1 - Ww2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Wer = We1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Wel = Wp0 + (cm1 * g3 + cm2 * g4) * s4e
@@ -485,7 +485,7 @@
       dv2 = Up0 - Us1
       dv1 = Us1 - Us2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Unr = Un1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Unl = Up0 + (cm1 * g3 + cm2 * g4) * s4n
@@ -499,7 +499,7 @@
       dv2 = Vp0 - Vs1
       dv1 = Vs1 - Vs2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Vnr = Vn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Vnl = Vp0 + (cm1 * g3 + cm2 * g4) * s4n
@@ -513,7 +513,7 @@
       dv2 = Wp0 - Ws1
       dv1 = Ws1 - Ws2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Wnr = Wn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Wnl = Wp0 + (cm1 * g3 + cm2 * g4) * s4n
@@ -587,7 +587,7 @@
       dv2 = Up0 - Ub1
       dv1 = Ub1 - Ub2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Utr = Ut1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Utl = Up0 + (cm1 * g3 + cm2 * g4) * s4t
@@ -601,7 +601,7 @@
       dv2 = Vp0 - Vb1
       dv1 = Vb1 - Vb2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Vtr = Vt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Vtl = Vp0 + (cm1 * g3 + cm2 * g4) * s4t
@@ -615,7 +615,7 @@
       dv2 = Wp0 - Wb1
       dv1 = Wb1 - Wb2
       
-      include '../F_CORE/muscl.h'
+      include 'muscl.h'
       
       Wtr = Wt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Wtl = Wp0 + (cm1 * g3 + cm2 * g4) * s4t
@@ -1173,6 +1173,8 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
+
+    flop = flop + dble(ix) * dble(jx) * dble(kx) * 1.0d0
 
     do k=1,kx
     do j=1,jx

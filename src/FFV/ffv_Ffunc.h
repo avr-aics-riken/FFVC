@@ -105,10 +105,10 @@
 #define vof_muscl_              VOF_MUSCL
 
 // cds_vector.f90
-#define cds_pvec_muscl_         CDS_PVEC_MUSCL
-#define cds_update_vec_         CDS_UPDATE_VEC
-#define cds_div_                CDS_DIV
-#define cds_force_              CDS_FORCE
+#define pvec_muscl_cds_     PVEC_MUSCL_CDS
+#define update_vec_cds_     UPDATE_VEC_CDS
+#define divergence_cds_     DIVERGENCE_CDS
+#define force_cds_          FORCE_CDS
 
 
 #endif // _WIN32
@@ -252,6 +252,7 @@ extern "C" {
   void vof_muscl_  (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, double* flop);
   
   
+  //***********************************************************************************************
   // cds_vector.f90
   void pvec_muscl_cds_    (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
                            int* bv, int* bp, int* v_mode, float* cut, double* flop);
