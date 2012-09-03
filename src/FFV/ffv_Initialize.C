@@ -701,24 +701,6 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
     
     display_Parameters(fp);
-    
-    
-    /* モニタ情報の表示
-     if ( C.Sampling.log == ON ) {
-     
-     MO.printMonitorInfo(mp, C.HistoryMonitorName, false); // ヘッダのみ
-     
-     FILE *fp_mon=NULL;
-     Hostonly_ {
-     if ( !(fp_mon=fopen("sampling_info.txt", "w")) ) {
-     stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
-     return -1;
-     }
-     }
-     
-     MO.printMonitorInfo(fp_mon, C.HistoryMonitorName, true);  // 詳細モード
-     Hostonly_ if ( fp_mon ) fclose(fp_mon);
-     }*/
   }
   
 
