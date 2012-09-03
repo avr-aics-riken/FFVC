@@ -1912,7 +1912,7 @@ void FFV::generate_Solid(FILE* fp)
     }
   }
   
-  // BC
+  /* BC
   for (int m=1; m<=C.NoBC; m++) {
     
     int target = cmp[m].getMatOdr();
@@ -1920,7 +1920,7 @@ void FFV::generate_Solid(FILE* fp)
     float vec[3] = { (float)cmp[m].nv[0], (float)cmp[m].nv[1], (float)cmp[m].nv[2] };
     
     zc += V.Solid_from_Cut_VBC(d_mid, target, C.Fill_Solid, vec, m_dir);
-  }
+  }*/
       
   Hostonly_
   {

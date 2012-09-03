@@ -3527,9 +3527,9 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
   
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr) \
-firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
-private(m_e, m_w, m_n, m_s, m_t, m_b) \
-schedule(static) reduction(+:g)
+            firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
+            private(m_e, m_w, m_n, m_s, m_t, m_b) \
+            schedule(static) reduction(+:g)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -3549,6 +3549,7 @@ schedule(static) reduction(+:g)
           {
             s |= (odr << BC_FACE_W);
             q = offBit(q, FACING_W);
+            q = onBit(q, VBC_UWD);
             g++;
             //printf("X- : %d %d %d\n",i,j,k);
           }
@@ -3558,6 +3559,7 @@ schedule(static) reduction(+:g)
           {
             s |= (odr << BC_FACE_E);
             q = offBit(q, FACING_E);
+            q = onBit(q, VBC_UWD);
             g++;
             //printf("X+ : %d %d %d\n",i,j,k);
           }
@@ -3567,6 +3569,7 @@ schedule(static) reduction(+:g)
           {
             s |= (odr<< BC_FACE_S);
             q = offBit(q, FACING_S);
+            q = onBit(q, VBC_UWD);
             g++;
           }
           
@@ -3575,6 +3578,7 @@ schedule(static) reduction(+:g)
           {
             s |= (odr << BC_FACE_N);
             q = offBit(q, FACING_N);
+            q = onBit(q, VBC_UWD);
             g++;
           }
           
@@ -3583,6 +3587,7 @@ schedule(static) reduction(+:g)
           {
             s |= (odr << BC_FACE_B);
             q = offBit(q, FACING_B);
+            q = onBit(q, VBC_UWD);
             g++;
           }
           
@@ -3591,6 +3596,7 @@ schedule(static) reduction(+:g)
           {
             s |= (odr << BC_FACE_T);
             q = offBit(q, FACING_T);
+            q = onBit(q, VBC_UWD);
             g++;
           }
           
@@ -3601,7 +3607,7 @@ schedule(static) reduction(+:g)
     }
   }
   
-  // targetセルのSTATE_BITをFLUIDに変更 >> bvのみ違う参照をさせるため
+  /* targetセルのSTATE_BITをFLUIDに変更 >> bvのみ違う参照をさせるため
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
 firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
@@ -3658,7 +3664,7 @@ schedule(static)
         }
       }
     }
-  }
+  }*/
   
   if ( numProc > 1 )
   {
@@ -3685,7 +3691,7 @@ schedule(static)
  @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
  */
 unsigned long VoxInfo::encVbit_IBC_Cut(const int order, 
-                                       const int id, 
+                                       const int target,
                                        int* bv, 
                                        int* bp, 
                                        const float* cut, 
@@ -3721,7 +3727,9 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
   int kx = size[2];
   int gd = guide;
   
-  int idd = id;
+  int tg = target;
+  
+
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -3748,7 +3756,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             id_t = get_BID5(Z_PLUS,  bid);
             
             // X-
-            if ( (id_w == idd) && (dot(e_w, nv) < 0.0) ) {
+            if ( (id_w == tg) && (dot(e_w, nv) < 0.0) ) {
               s |= (order << BC_FACE_W);
               q = offBit(q, FACING_W);
               q = onBit(q, VBC_UWD);
@@ -3756,7 +3764,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             }
             
             // X+
-            if ( (id_e == idd) && (dot(e_e, nv) < 0.0) ) {
+            if ( (id_e == tg) && (dot(e_e, nv) < 0.0) ) {
               s |= (order << BC_FACE_E);
               q = offBit(q, FACING_E);
               q = onBit(q, VBC_UWD);
@@ -3764,7 +3772,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             }
             
             // Y-
-            if ( (id_s == idd) && (dot(e_s, nv) < 0.0) ) {
+            if ( (id_s == tg) && (dot(e_s, nv) < 0.0) ) {
               s |= (order << BC_FACE_S);
               q = offBit(q, FACING_S);
               q = onBit(q, VBC_UWD);
@@ -3772,7 +3780,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             }
             
             // Y+
-            if ( (id_n == idd) && (dot(e_n, nv) < 0.0) ) {
+            if ( (id_n == tg) && (dot(e_n, nv) < 0.0) ) {
               s |= (order << BC_FACE_N);
               q = offBit(q, FACING_N);
               q = onBit(q, VBC_UWD);
@@ -3780,7 +3788,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             }
             
             // Z-
-            if ( (id_b == idd) && (dot(e_b, nv) < 0.0) ) {
+            if ( (id_b == tg) && (dot(e_b, nv) < 0.0) ) {
               s |= (order << BC_FACE_B);
               q = offBit(q, FACING_B);
               q = onBit(q, VBC_UWD);
@@ -3788,7 +3796,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             }
             
             // Z+
-            if ( (id_t == idd) && (dot(e_t, nv) < 0.0) ) {
+            if ( (id_t == tg) && (dot(e_t, nv) < 0.0) ) {
               s |= (order << BC_FACE_T);
               q = offBit(q, FACING_T);
               q = onBit(q, VBC_UWD);
@@ -3830,12 +3838,12 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
     }
   }
 #endif
-// ##########  
+// ##########
   
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -5285,7 +5293,7 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
   for (size_t m=0; m<nx; m++) {
     s = bx[m];
     odr = DECODE_MAT( s );
-    
+
     if ( mat[odr].getState() == FLUID )
     {
       s = onBit( s, STATE_BIT );
