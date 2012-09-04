@@ -1,36 +1,34 @@
 -----
-CBC SolverClass on V-Sphere
+FFV : Frontflow / Violet Cartesian
 
 Kenji Ono 	keno@riken.jp
-VCAD Research Program, RIKEN
-April 2012
+AICS, RIKEN
+September 2012
 -----
 
-このソースに含まれるコード群は，非定常物理シミュレーションのアプリケーション開発のフレームワークとして設計されたV-Sphere上で動作するソルバークラス群です．本ソースをコンパイルする前に，並列ライブラリ，V-Sphereをインストールしておく必要があります．
 
 
 --- Ingredients
 
-BUILD		コンパイルのメモ
-COPYING		コピーライト
-README		このファイル
-RELEASE		リリースノート
+BUILD		How to compilation
+COPYING		Copyright
+README		This file
+RELEASE		Release note
 
-doc/		ドキュメント
+bin/           ffvc : Executable module
 
-doxygen/        Doxygenドキュメント
+doc/		Documents
+
+doxygen/       Doxygen files
 	
-example/	例題
+example/	example files
 	
-src/		ソース群
-	F_CBC		CBCソルバークラスのコアサブルーチン群（f90）
-	F_CDS		Cut-Distance Schemeのコアサブルーチン群（f90）
-	F_VOF		VOFルーチン (f90)
-	FB		流体解析の基本クラスライブラリ
-	IP		組み込み例題群
-	PRJ_CBC		CBCソルバー
-	Polylib		ポリゴン管理ライブラリ
-	Cutlib		カット情報ライブラリ
-
---- Reporting Bugs
-	http://vcad-hpsv.riken.jp/
+src/		source files
+	Cutlib-x.x.x    cut information library
+	F_CORE          f90 subroutines in ffvc
+	F_VOF		VOF routines
+	FB		base class
+	FFV		ffvc class
+	IP		intrinsic problems
+	PMlib-x.x	performance measurement library
+	Polylib-x.x	polygon data management library
