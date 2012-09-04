@@ -184,7 +184,7 @@ Steer {
 
   Version_Info {
     FFV       = 80
-    Flow_Base = 97
+    Flow_Base = 98
   }
 
 } //Steer
@@ -241,64 +241,9 @@ Medium_Table {
 
 BC_Table {
 
-/*
   LocalBoundary {
-    specified_velocity {
-      suction {
-        type           = "velocity"
-        profile        = "constant"
-        velocity       = 3.0
-        Normal         = (0.0, 0.0, -1.0)
-        BC_direction   = "opposite"
-        //frequency      = 0.0 //REAL
-        //initial_phase  = 0.0 //REAL
-        //constant_bias  = 0.0 //REAL
-        temperature    = 35.0 //REAL
-      }
-    }
 
-    Pressure_Loss {
-      radiator1 {
-        "normal" = (1.0, 0.0, 0.3) //REAL
-        "dir[@]" = (0.0, 1.0, 0.0) //REAL
-        "center" = (6.0, 1.6, 0.3) //REAL
-        "depth" = 0.2 //REAL
-        "width" = 2.0 //REAL
-        "height" = 1.0 //REAL
-        "c" = (1.0, 0.0, 0.0, 0.8) //REAL
-        "u_threshold" = 0.2 //REAL
-        "thickness" = 80.0 //REAL
-        "unit" = "non_dimension" //STRING
-        "vector" = "directional" //STRING
-      }
-    }
-      "Fan"{
-        "fan"{
-          "normal" = (1.0, 1.0, 0.0) //REAL
-          "center" = (5.0, 1.0, 0.5) //REAL
-          "depth" = 0.3 //REAL
-          "fan_radius" = 1.0 //REAL
-          "boss_radius" = 0.5 //REAL
-          "unit" = "non_dimension" //STRING
-        }
-      }
-      "Cell_Monitor"{
-        "sensor"{
-          "shape" = "cylinder" //STRING
-          "normal" = (0.0, 0.0, -1.0) //REAL
-          "center" = (0.0, 0.0, -0.198) //REAL
-          "depth" = 0.01 //REAL
-          "radius" = 0.022 //REAL
-          "Sampling_Method" = "nearest" //STRING
-          "Sampling_Mode" = "Fluid" //STRING
-          "Variables[@]"= "velocity"
-          "Variables[@]"= "pressure"
-          //"Variables[@]"= "temperature" //commentout = off
-          "Variables[@]"= "total_pressure"
-        }
-      }
-  } //LocalBoundary
-*/
+  }
 
 
   OuterBoundary {

@@ -13,7 +13,7 @@ September 2012
 BUILD		How to compilation
 COPYING		Copyright
 README		This file
-RELEASE		Release note
+RELEASE		Release Note
 
 bin/           ffvc : Executable module
 
