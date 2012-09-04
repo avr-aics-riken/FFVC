@@ -796,7 +796,7 @@ void Control::get_FileIO()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/File_IO/Unit_of_file'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -804,7 +804,7 @@ void Control::get_FileIO()
   else if( !strcasecmp(str.c_str(), "Non_Dimensional") )  Unit.File = NONDIMENSIONAL;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Unit_of_file'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -814,7 +814,7 @@ void Control::get_FileIO()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Guide_Out'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
 	  Exit(0);
   }
@@ -823,7 +823,7 @@ void Control::get_FileIO()
   else if( !strcasecmp(str.c_str(), "with") )     GuideOut = guide;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Guide_Out'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -833,7 +833,7 @@ void Control::get_FileIO()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Debug_divergence'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -841,52 +841,35 @@ void Control::get_FileIO()
   else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Debug_divergence'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   
-  /* 入力ファイルの並列処理方式を選択 >> 固定パラメータへ
-  label = "/Steer/File_IO/Parallel_Input";
+  // ボクセルファイル出力
+  label = "/Steer/File_IO/Voxel_Output";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Parallel_Input'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Master") )  FIO.IO_Input = IO_GATHER;
-  else if( !strcasecmp(str.c_str(), "Local") )   FIO.IO_Input = IO_DISTRIBUTE;
+  if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
+  else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Parallel_Input'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
-  // 出力ファイルの並列処理方式を選択
-  label = "/Steer/File_IO/Parallel_Output";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Parallel_Output'\n");
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Master") )  FIO.IO_Output = IO_GATHER;
-  else if( !strcasecmp(str.c_str(), "Local") )   FIO.IO_Output = IO_DISTRIBUTE;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Parallel_Output'\n");
-    Exit(0);
-  }
-  */
   
   // インターバル 瞬時値
   label = "/Steer/File_IO/Instant_Interval_Type";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Instant_Interval_Type'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -901,7 +884,7 @@ void Control::get_FileIO()
     }
     else
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/File_IO/Instant_Interval_Type'\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -909,7 +892,7 @@ void Control::get_FileIO()
     
     if ( !(tpCntl->GetValue(label, &f_val )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Instant_Interval'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     else
@@ -924,7 +907,7 @@ void Control::get_FileIO()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Averaged_Interval_Type'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -939,7 +922,7 @@ void Control::get_FileIO()
     }
     else
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/File_IO/Averaged_Interval_Type'\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -947,7 +930,7 @@ void Control::get_FileIO()
     
     if ( !(tpCntl->GetValue(label, &f_val )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Averaged_Interval'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     else
@@ -962,14 +945,14 @@ void Control::get_FileIO()
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/File_IO/Format'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   if     ( !strcasecmp(str.c_str(), "sph") )    FIO.IO_Format = FILE_FMT_SPH;
   else if( !strcasecmp(str.c_str(), "plot3d") ) FIO.IO_Format = FILE_FMT_PLOT3D;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/File_IO/Format'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -3480,6 +3463,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   // Output guide
   fprintf(fp,"\t     Guide cell for output    :   %d\n", GuideOut);
+  
+  // Voxel output
+  fprintf(fp,"\t     Voxel model output       :   %s\n", (FIO.IO_Voxel==Sphere_SVX) ? "svx" : "None");
+  
   
   
   // ログ出力 ------------------

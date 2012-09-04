@@ -11,7 +11,7 @@
 
 # depends on the platform
 
-#
+########################
 # INTEL
 #
 AR          = ar cru
@@ -38,8 +38,14 @@ LIBS        = -lifport -lifcore
 UDEF_LIB_PATH_SPEC =
 UDEF_LIBS_SPEC     =
 
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += 
+#F90FLAGS   += 
 
-#
+
+########################
 # FX10, K
 #
 #AR          = ar cr
@@ -66,8 +72,14 @@ UDEF_LIBS_SPEC     =
 #UDEF_LIB_PATH_SPEC =
 #UDEF_LIBS_SPEC     =
 
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += -CcdRR8
+#F90FLAGS   += -CcdRR8
 
-#
+
+########################
 # BG/P
 #
 #AR          = ar crv
@@ -93,6 +105,14 @@ UDEF_LIBS_SPEC     =
 #LIBS        =
 #UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib
 #UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath
+
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += 
+#F90FLAGS   += 
+
+
 
 ###################################################################
 

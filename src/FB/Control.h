@@ -445,6 +445,7 @@ public:
     int IO_Output;
     int Div_Debug;
     int IO_Format; //=0 : *.sph , =1 : PLOT3D
+    int IO_Voxel;
   } File_IO_Cntl;
   
   /** PLOT3D オプション */
@@ -784,10 +785,11 @@ public:
     LES.Cs = 0.0;
     LES.damping_factor=0.0;
     
-    FIO.IO_Input = 0;
+    FIO.IO_Input  = 0;
     FIO.IO_Output = 0;
     FIO.Div_Debug = 0;
     FIO.IO_Format = 0; //=0 : *.sph , =1 : PLOT3D
+    FIO.IO_Voxel  = 0;
     
     P3Op.IS_xyz = ON;
     P3Op.IS_q = OFF;

@@ -375,7 +375,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // チェック出力　デバッグ
-  Ex->writeSVX(d_mid, &C); // writeSPH(d_mid, &C);
+  if (C.FIO.IO_Voxel == Control::Sphere_SVX) Ex->writeSVX(d_mid, &C);
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
