@@ -18,6 +18,7 @@ $ sudo make install または make install
 $ make distclean
 
 
+
 2.　CPMlibのインストール
 
 CPMlib-x.x.x.tar.gzを展開し，トップディレクトリのconfig_cpm.shを実行．
@@ -28,6 +29,8 @@ $ sudo make install または make install
 $ make distclean
 
 configureがうまくいかない場合は，Makefile_handを使い，コンパイルする．
+
+$ make -f Makefile_hand mpi
 
 
 

@@ -69,8 +69,8 @@ CFLAGS	= -O3 -Wall \
 
 #CFLAGS	 = -Kfast, simd=2, ocl, preex \
 #   -I../include\
-#   -I/opt/FJSVtclang/GM-1.2.0-07/include \
-#   -I/opt/FJSVtclang/GM-1.2.0-07/include/mpi/fujitsu \
+#   -I/opt/FJSVtclang/GM-1.2.0-08/include \
+#   -I/opt/FJSVtclang/GM-1.2.0-08/include/mpi/fujitsu \
 #   -I/usr/include \
 #   -I$(TP_INC_DIR) \
 #   -fno-strict-aliasing

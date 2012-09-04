@@ -84,12 +84,12 @@ CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 ###########################################################################
 # FX10/K
-#POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include \
-#   -fno-strict-aliasing \
-#   -I/home/g00001/k00011/ffv/textparser-1.0/include
 
-#CFLAGS = -Kfast,ocl,preex,simd=2 \
-#        -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+#CXX     = mpiFCCpx
+#AR      = ar crv
+#RANLIB  = ranlib
+
+#CFLAGS = -Kfast,ocl,preex,simd=2 -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 
 ###########################################################################
