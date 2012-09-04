@@ -38,6 +38,7 @@ Steer {
     Instant_Interval       = 1.0
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 2.0
+    Voxel_Output           = "off"
   }
 
   Iteration {

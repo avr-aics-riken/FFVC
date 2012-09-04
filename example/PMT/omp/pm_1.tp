@@ -38,6 +38,7 @@ Steer {
     Instant_Interval       = 1000
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 1000
+    Voxel_Output           = "off"
   }
 
   Geometry_Model {
