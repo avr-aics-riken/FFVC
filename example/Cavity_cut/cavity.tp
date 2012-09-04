@@ -34,18 +34,24 @@ Steer {
     Guide_Out              = "Without"
     Format                 = "sph"
     Debug_Divergence       = "Off"
-    Instant_Interval_Type  = "Time"
-    Instant_Interval       = 1.0
+    Instant_Interval_Type  = "step"
+    Instant_Interval       = 200
     Averaged_Interval_Type = "Time"
-    Averaged_Interval      = 2.0
+    Averaged_Interval      = 200
+  }
+
+  Geometry_Model {
+    Polylib_File          = "hoge.tp"
+    Fill_Medium           = "air"
+    Hint_of_Filling_Fluid = "y_plus"
   }
 
   Iteration {
     Flow {
       Poisson {
-        Iteration     = 50
-        Epsilon       = 1.0e-3
-        Omega         = 1.2
+        Iteration     = 200
+        Epsilon       = 1.0e-4
+        Omega         = 1.1
         Norm          = "v_div_max"
         Linear_Solver = "SOR2SMA"
         Comm_mode     = "async"
@@ -80,17 +86,17 @@ Steer {
   }
 
   Monitor_List {
-    Log                    = "On"
+    Log                    = "Off"
     Output_File            = "sample.log"
     Output_Mode            = "Gather"
     Unit                   = "Non_Dimensional"
-    Sampling_Interval_Type = "Time"
-    Sampling_Interval      = 0.1
+    Sampling_Interval_Type = "step"
+    Sampling_Interval      = 100
     Cell_Monitor           = "off"
 
     list[@] {
       type            = "Line"
-      label           = "line1z0"
+      label           = "line1"
       value           = "x"
       Variable        = "Velocity"
       Sampling_Method = "Interpolation"
@@ -102,62 +108,13 @@ Steer {
 
     list[@] {
       type            = "Line"
-      label           = "line2z0"
-      value           = "z"
+      label           = "line2"
       Variable        = "Velocity"
       Sampling_Method = "Interpolation"
       Sampling_Mode   = "Fluid"
       Division        = 64
-      From            = (0.0, -0.5, 0.0)
-      To              = (0.0, 0.5, 0.0)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line1z0.5"
-      value           = "x"
-      Variable        = "Velocity"
-      Sampling_Method = "Interpolation"
-      Sampling_Mode   = "Fluid"
-      Division        = 64
-      From            = (-0.5, 0.0, 0.5)
-      To              = (0.5, 0.0, 0.5)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line2z0.5"
-      value           = "z"
-      Variable        = "Velocity"
-      Sampling_Method = "Interpolation"
-      Sampling_Mode   = "Fluid"
-      Division        = 64
-      From            = (0.0, -0.5, 0.5)
-      To              = (0.0, 0.5, 0.5)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line1z0.75"
-      value           = "x"
-      Variable        = "Velocity"
-      Sampling_Method = "Interpolation"
-      Sampling_Mode   = "Fluid"
-      Division        = 64
-      From            = (-0.5, 0.0, 0.75)
-      To              = (0.5, 0.0, 0.75)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line2z0.75"
-      value           = "z"
-      Variable        = "Velocity"
-      Sampling_Method = "Interpolation"
-      Sampling_Mode   = "Fluid"
-      Division        = 64
-      From            = (0.0, -0.5, 0.75)
-      To              = (0.0, 0.5, 0.75)
+      From            = (0.0, 0.0, -0.5)
+      To              = (0.0, 0.0, 0.5)
     }
   }
 
@@ -188,7 +145,7 @@ Steer {
     dfi_file_pressure  = "prs_64_id000000.dfi"
     dfi_file_velocity  = "vel_64_id000000.dfi"
     Initial_State {
-      Density     = 998.2
+      Density     = 1.0
       Pressure    = 0.0
       Temperature = 20.0
       Velocity    = (0.0, 0.0, 0.0)
@@ -200,18 +157,18 @@ Steer {
     Buoyancy            = "No_Buoyancy"
     Kind_of_Solver      = "Flow_Only"
     PDE_type            = "Navier_Stokes"
-    Shape_Approximation = "Binary"
+    Shape_Approximation = "cut_distance"
     Time_Variation      = "Unsteady"
     Pressure_Shift      = "off"
   }
 
   Time_Control {
     Acceleration_Type  = "Time"
-    Acceleration       = 0.05
+    Acceleration       = 1.0
     Dt_Type            = "CFL_Reference_Velocity"
-    Delta_T            = 0.1
-    Period_Type        = "Time"
-    Calculation_Period = 41.33333
+    Delta_T            = 0.2
+    Period_Type        = "step"
+    Calculation_Period = 10000
   }
 
   Treatment_of_Wall {
@@ -220,7 +177,7 @@ Steer {
   }
 
   Unit {
-    Unit_of_Input_Parameter = "Dimensional"
+    Unit_of_Input_Parameter = "Non_Dimensional"
     Pressure                = "Gauge"
     Temperature             = "Celsius"
   }
@@ -234,13 +191,13 @@ Steer {
 
 Parameter {
   Reference {
-    Length        = 6.2e-2
-    Velocity      = 1.8e-2
+    Length        = 1.0
+    Velocity      = 1.0
     Gravity       = 9.8
     Base_Pressure = 0.0
-    // Reynolds      = 1000.0
-    // Prandtl       = 0.71
-    Medium   = "water"
+    Reynolds      = 1000.0
+    Prandtl       = 0.71
+    Medium        = "air"
   }
       
   Temperature {
@@ -249,7 +206,7 @@ Parameter {
   }
 
   Intrinsic_Example {
-    fluid_medium = "water"
+    fluid_medium = "air"
     solid_medium = "fe"
     check_even = "yes"
   }
@@ -261,18 +218,6 @@ Medium_Table {
 
   Medium[@] {
     type                 = "Fluid"
-    label                = "Water"
-    Density              = 998.2
-    Specific_Heat        = 4182
-    Thermal_Conductivity = 593e-03
-    Kinematic_Viscosity  = 1.004e-06
-    Viscosity            = 1002.6e-06
-    Sound_of_Speed       = 1500.0
-    volume_expansion     = 0.04e-3 
-  }
-/*
-  Medium[@] {
-    type                 = "Fluid"
     label                = "Air"
     Density              = 1.1763
     Specific_Heat        = 1007
@@ -282,7 +227,7 @@ Medium_Table {
     Sound_of_Speed       = 340.0
     volume_expansion     = 0.04e-3 
   }
-*/
+
   Medium[@] {
     type                 = "Solid"
     label                = "Fe"
@@ -369,8 +314,8 @@ BC_Table {
       class    = "wall"
       Type     = "slide"
       Profile  = "Constant"
-      Normal   = (-1.0, 0.0, 0.0)
-      Velocity = 1.8e-2
+      Normal   = (1.0, 0.0, 0.0)
+      Velocity = 1.0
     }
     Basic_BCs[@] {
       alias    = "inlet_1"
@@ -396,7 +341,7 @@ BC_Table {
         medium_on_guide_cell = "Fe"
       }
       Y_minus {
-        kind   = "slide_wall"
+        kind   = "outer_wall"
         medium_on_guide_cell = "Fe"
       }
       Y_plus {
@@ -408,7 +353,7 @@ BC_Table {
         medium_on_guide_cell = "Fe"
       }
       Z_plus {
-        kind   = "outer_wall"
+        kind   = "slide_wall"
         medium_on_guide_cell = "Fe"
       }
     }
