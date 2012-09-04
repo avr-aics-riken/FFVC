@@ -1240,28 +1240,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   get_NV(label_base, v);
   copyVec(cmp[n].nv, v);
   
-  
-  // heat problem
-  if ( HeatProblem )
-  {
-    label = label_base + "/temperature";
-    
-    if ( !(tpCntl->GetValue(label, &ct )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      cmp[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
-      if ( Unit_Param != DIMENSIONAL )
-      {
-        Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
-        Exit(0);
-      }
-      cmp[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
-    }
-  }
+
   
   // 境界条件の方向
   label = label_base + "/Fluid_direction";
@@ -1285,7 +1264,8 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
     Exit(0);
   }
   
-  // ポリゴンの境界条件ラベル
+  
+  // Polylib_*.tpの境界条件ラベル（媒質名）とaliasの一致を検証 >> @todo 媒質名とidの整合性の検証，現在は媒質IDがゼロで無いことを見ているだけ
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
   
@@ -1307,6 +1287,29 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   {
     Hostonly_ printf("\tError : Alias '%s' is not listed in PolygonGroup\n", cmp[n].getLabel().c_str());
     Exit(0);
+  }
+  
+  
+  // heat problem
+  if ( HeatProblem )
+  {
+    label = label_base + "/temperature";
+    
+    if ( !(tpCntl->GetValue(label, &ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      cmp[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      if ( Unit_Param != DIMENSIONAL )
+      {
+        Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+        Exit(0);
+      }
+      cmp[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
+    }
   }
   
 }
@@ -2195,7 +2198,7 @@ bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoL
 // 格納番号は1からスタート
 void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp, MPIPolylib* PL)
 { 
-  string str, label, ename;
+  string str, label;
   string label_base, label_ename, label_leaf;
   REAL_TYPE fval;
   int n=0;
@@ -2254,7 +2257,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       Exit(0);
     }
     
-    if( strcasecmp(str.substr(0,3).c_str(), "tag") ) continue;
+    if( strcasecmp(str.substr(0,2).c_str(), "BC") ) continue;
     
     label_leaf = label_base + "/" + str;
     
@@ -2267,9 +2270,11 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       Exit(0);
     }
     
+    // cmp[].type, h_typeのセット ---> setType
+    setKeywordLBC(str, odr, cmp);
+    
     
     // alias
-    label_leaf = label_base + "/" + str;
     label = label_leaf + "/alias";
     
     if ( !(tpCntl->GetValue(label, &str )) )
@@ -2280,19 +2285,6 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     
     // Labelの設定
     cmp[odr].setLabel(str);
-    
-    
-    
-    
-    
-    
-    ename = str;
-    
-    // cmp[].type, h_typeのセット ---> setType
-    setKeywordLBC(ename, odr, cmp);
-    
-    
-    
     
     
     
