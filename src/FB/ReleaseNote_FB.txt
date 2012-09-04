@@ -9,6 +9,10 @@ Release Note
 
 #######################################
 
+
+Ver 0.9.8    5 Sep. 2012
+  - LocalBoundaryの記述形式を変更
+  
 Ver 0.9.7    3 Sep. 2012
   - Polylib-2.1対応
   

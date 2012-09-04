@@ -353,9 +353,8 @@ private:
    * @param [in]  label_base ラベルディレクトリ
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
-   * @param [in]  PL         MPIPolylib
    */
-  void get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp, MPIPolylib* PL);
+  void get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp);
   
   
   /**
@@ -367,18 +366,54 @@ private:
   void get_Darcy(const string label_base, const int n, CompoList* cmp);
   
   
-  void get_OBC_FarField   (const string label_base, const int n);
+  /**
+   * @brief 外部境界の遠方境界のパラメータを取得する
+   * @param [in] label_base ラベルディレクトリ
+   * @param [in] n          面番号
+   */
+  void get_OBC_FarField (const string label_base, const int n);
+  
+  
   void get_OBC_HT         (const string label_base, const int n, const string kind);
-  void get_OBC_Outflow    (const string label_base, const int n);
+  
+  /**
+   * @brief 外部境界の流出条件のパラメータを取得する
+   * @param [in] label_base ラベルディレクトリ
+   * @param [in] n          面番号
+   * @note 圧力の値は，Control::setParameters()で無次元化する
+   */
+  void get_OBC_Outflow (const string label_base, const int n);
+  
+  
   void get_OBC_Periodic   (const string label_base, const int n);
-  void get_OBC_SpecVH     (const string label_base, const int n);
-  void get_OBC_Trcfree    (const string label_base, const int n);
-  void get_OBC_Wall       (const string label_base, const int n);
+  
+  /**
+   * @brief 外部境界の流入条件のパラメータを取得する
+   * @param [in] label_base ラベルディレクトリ
+   * @param [in] n          面番号
+   */
+  void get_OBC_SpecVH (const string label_base, const int n);
+  
+  
+  /**
+   * @brief 外部境界の流入条件のパラメータを取得する
+   * @param [in] label_base ラベルディレクトリ
+   * @param [in] n          面番号
+   */
+  void get_OBC_Trcfree (const string label_base, const int n);
+  
+  
+  /**
+   * @brief 外部境界の壁面条件のパラメータを取得する
+   * @param [in] label_base ラベルディレクトリ
+   * @param [in] n          面番号
+   */
+  void get_OBC_Wall (const string label_base, const int n);
   
   
   /**
    * @brief 単位ベクトルを計算して戻す
-   * @param [in,out] v
+   * @param [in,out] v ベクトル値
    */
   void getUnitVec(REAL_TYPE* v);
   

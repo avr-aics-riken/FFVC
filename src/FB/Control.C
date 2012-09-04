@@ -999,7 +999,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   // チェック
   if ( Fill_Fluid == 0 )
   {
-    Hostonly_ stamped_printf("\tError : Medium '%s' in not listed in 'Medium_Table'\n", str.c_str());
+    Hostonly_ stamped_printf("\tError : Medium '%s' is not listed in '%s'\n", str.c_str(), label.c_str());
     Exit(0);
   }
   
@@ -1026,7 +1026,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   // チェック
   if ( Fill_Solid == 0 )
   {
-    Hostonly_ stamped_printf("\tError : Medium '%s' in not listed in 'Medium_Table'\n", str.c_str());
+    Hostonly_ stamped_printf("\tError : Medium '%s' in not listed in '%s'\n", str.c_str(), label.c_str());
     Exit(0);
   }
   
@@ -1064,25 +1064,25 @@ void Control::get_Iteration(ItrCtl* IC)
   string str;
   string label1, label2;
   
-  label1="/Steer/Iteration";
-  label2="/Steer/Iteration/Flow";
+  label1 = "/Steer/Iteration";
+  label2 = label1 + "/Flow";
   
   // Iteration
   if( !tpCntl->chkNode(label1) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '/Steer/Iteration'\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label1.c_str());
     Exit(0);
   }
   
   // Flow
   if( !tpCntl->chkNode(label2) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '/Steer/Iteration/Flow'\n");
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label2.c_str());
     Exit(0);
   }
   
   
-  // Iteration/Flow
+  // Flow
   switch (AlgorithmF)
   {
     case Flow_FS_EE_EE:
@@ -1102,18 +1102,18 @@ void Control::get_Iteration(ItrCtl* IC)
       break;
       
     default:
-      Hostonly_ stamped_printf("\tSomething wrong in '/Steer/Iteration/Flow'\n");
+      Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label2.c_str());
       Exit(0);
   }
   
   // Heat
-  label2="/Steer/Iteration/Heat";
+  label2 = label1 + "/Heat";
   
   if ( isHeatProblem() )
   {
-    if( tpCntl->chkNode(label2) )
+    if( !tpCntl->chkNode(label2) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Missing the section of '/Steer/Iteration/Heat'\n");
+      Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label2.c_str());
       Exit(0);
     }
     
@@ -1127,7 +1127,7 @@ void Control::get_Iteration(ItrCtl* IC)
         break;
         
       default:
-        Hostonly_ stamped_printf("\tSomething wrong in '/Steer/Iteration/Heat'\n");
+        Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label2.c_str());
         Exit(0);
     }
   }
