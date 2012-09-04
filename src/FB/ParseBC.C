@@ -2245,7 +2245,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
   //内部境界の条件設定 --- NoBC = 内部境界の数
   //
   
-  // 境界条件がなければ，スキップ
+  // BC[@]をサーチ
   for (int odr=1; odr<=NoBC; odr++) {
     
     if( !tpCntl->GetNodeStr(label_base, odr, &str))
@@ -2253,13 +2253,23 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
-    label_leaf = label_base + "/" + str;
-    ename = str;
     
-    // cmp[].type, h_typeのセット ---> setType
-    setKeywordLBC(ename, odr, cmp);
+    if( strcasecmp(str.substr(0,3).c_str(), "tag") ) continue;
+    
+    label_leaf = label_base + "/" + str;
+    
+    // class
+    label = label_leaf + "/class";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
     
     // alias
+    label_leaf = label_base + "/" + str;
     label = label_leaf + "/alias";
     
     if ( !(tpCntl->GetValue(label, &str )) )
@@ -2270,6 +2280,21 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     
     // Labelの設定
     cmp[odr].setLabel(str);
+    
+    
+    
+    
+    
+    
+    ename = str;
+    
+    // cmp[].type, h_typeのセット ---> setType
+    setKeywordLBC(ename, odr, cmp);
+    
+    
+    
+    
+    
     
     // 各BCの処理
     tp = cmp[odr].getType();
