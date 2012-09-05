@@ -93,7 +93,7 @@ int main( int argc, char **argv )
   {
     case -1:
       if ( ffv.IsMaster() ) printf("\n\tSolver error.\n\n");
-      return 0;
+      break;
 
     case 0:
       if ( ffv.IsMaster() ) printf("\n\tSolver forced termination time-step loop.\n\n");

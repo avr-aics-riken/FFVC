@@ -450,6 +450,7 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
   int st[3], ed[3];
   int typ=0;
   int gd = guide;
+  double fcount = 0.0;
   
   // 内部境界条件による修正
   if ( isCDS ) // Cut-Distance
@@ -462,13 +463,13 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
       switch (typ)
       {
         case OUTFLOW:
-          //div_ibc_oflow_vec_(div, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*n], &flop);
+          //div_ibc_oflow_vec_(div, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*n], &fcount);
           break;
           
         case SPEC_VEL:
         case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
-          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
+          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &fcount);
           break;
           
         default:
@@ -486,13 +487,13 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
       switch (typ)
       {
         case OUTFLOW:
-          div_ibc_oflow_vec_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, &avr[2*n], &flop);
+          div_ibc_oflow_vec_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, &avr[2*n], &fcount);
           break;
           
         case SPEC_VEL:
         case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, flop); // 指定された無次元平均流速
-          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
+          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &fcount);
           break;
           
         default:
@@ -519,14 +520,14 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
     switch (typ) 
     {
       case OBC_OUTFLOW:
-        div_obc_oflow_vec_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &flop); // vecは流用
+        div_obc_oflow_vec_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &fcount); // vecは流用
         obc[face].set_DomainV(vec, face, true); // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
         break;
         
       case OBC_SPEC_VEL:
       case OBC_WALL:
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
-        div_obc_drchlt_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, fcount);
+        div_obc_drchlt_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &fcount);
         obc[face].set_DomainV(vec, face); // 速度の形式
         break;
         
@@ -543,6 +544,8 @@ void SetBC3D::mod_div(REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm,
         break;
     }
   }
+  
+  flop += fcount;
 }
 
 
@@ -862,6 +865,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
   REAL_TYPE dh = deltaX;
   int typ;
   int gd = guide;
+  double fcount = 0.0;
   
   // 内部境界条件による修正
   if ( isCDS ) // Cut-Distance
@@ -875,8 +879,8 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
         case SPEC_VEL:
         case SPEC_VEL_WH:
         {
-          REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, flop);
-          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, fcount);
+          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &fcount);
           break;
         }
           
@@ -899,14 +903,14 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
         case SPEC_VEL:
         case SPEC_VEL_WH:
         {
-          REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, flop);
-          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &flop);
+          REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, fcount);
+          div_ibc_drchlt_(d_div, size, &gd, st, ed, v00, &coef, d_bv, &n, vec, &fcount);
           break;
         }
           
         case OUTFLOW:
           vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-          div_ibc_oflow_pvec_(d_div, size, &gd, st, ed, v00, &vel, &coef, d_bv, &n, d_v0, &flop);
+          div_ibc_oflow_pvec_(d_div, size, &gd, st, ed, v00, &vel, &coef, d_bv, &n, d_v0, &fcount);
           break;
           
         default:
@@ -928,20 +932,20 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
       case OBC_SPEC_VEL:
       case OBC_WALL:
       {
-        REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, flop);
-        div_obc_drchlt_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &flop);
+        REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
+        div_obc_drchlt_(d_div, size, &gd, &face, v00, &coef, d_bv, vec, &fcount);
         break;
       }
         
       case OBC_SYMMETRIC:
         // 境界面の法線速度はゼロなので，修正不要 移動格子の場合は必要
         //vec[0] = vec[1] = vec[2] = 0.0;
-        //div_obc_drchlt_(div, size, &gd, &face, v00, &coef, d_bv, vec, &flop);
+        //div_obc_drchlt_(div, size, &gd, &face, v00, &coef, d_bv, vec, &fcount);
         break;
         
       case OBC_OUTFLOW:
         vel = C->V_Dface[face] * dt / dh;
-        div_obc_oflow_pvec_(d_div, size, &gd, &face, v00, &vel, &coef, d_bv, d_v0, &flop);
+        div_obc_oflow_pvec_(d_div, size, &gd, &face, v00, &vel, &coef, d_bv, d_v0, &fcount);
         break;
         
       case OBC_TRC_FREE:
@@ -950,6 +954,8 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, R
         break;
     }
   }
+  
+  flop += fcount;
 }
 
 

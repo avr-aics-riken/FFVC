@@ -404,11 +404,11 @@ void MonitorList::get_Monitor(Control* C)
   // ログ出力のON/OFFはControl::getTP_Sampling()で取得済み
   
   // 集約モード
-  label="/Steer/Monitor_List/output_mode";
+  label = "/Steer/Monitor_List/output_mode";
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Output_Mode' in 'Monitor_List'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -434,7 +434,7 @@ void MonitorList::get_Monitor(Control* C)
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval_Type' in 'Monitor_List'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else 
@@ -449,7 +449,7 @@ void MonitorList::get_Monitor(Control* C)
     }
     else 
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for 'Sampling_Interval_Type' in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -457,7 +457,7 @@ void MonitorList::get_Monitor(Control* C)
     
     if ( !(tpCntl->GetValue(label, &f_val )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'Sampling_Interval' in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     else 
@@ -471,7 +471,7 @@ void MonitorList::get_Monitor(Control* C)
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid string for 'Unit' in 'Monitor_List'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -487,7 +487,7 @@ void MonitorList::get_Monitor(Control* C)
   }
   else 
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit' section\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -501,9 +501,9 @@ void MonitorList::get_Monitor(Control* C)
   // 指定モニタ個数のチェック
   int nnode=0;
   int nlist=0;
-  label_base="/Steer/Monitor_List";
+  label_base = "/Steer/Monitor_List";
   
-  nnode=tpCntl->countLabels(label_base);
+  nnode = tpCntl->countLabels(label_base);
   if ( nnode == 0 ) 
   {
     stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
@@ -511,40 +511,45 @@ void MonitorList::get_Monitor(Control* C)
   }
   
   for (int i=0; i<nnode; i++) {
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str)){
-      printf("\tParsing error : No Elem name\n");
+    
+    if(!tpCntl->GetNodeStr(label_base, i+1, &str))
+    {
+      printf("\tParsing error : No No List[@]\n");
       Exit(0);
     }
+    
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
+    
     nlist++;
   }
   
   if (nlist==0 && C->isMonitor() == OFF) 
   {
-    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in TP. \n");
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in Input parameter file. \n");
     Exit(0);
   }
   
   // モニターリストの読み込み
-  label_base="/Steer/Monitor_List";
+  label_base = "/Steer/Monitor_List";
   
   for (int i=0; i<nnode; i++) 
   {
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    if(!tpCntl->GetNodeStr(label_base, i+1, &str))
     {
-      printf("\tParsing error : No Elem name\n");
+      printf("\tParsing error : No List[@]\n");
       Exit(0);
     }
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
     
-    label_leaf=label_base+"/"+str;
+    
+    label_leaf = label_base + "/" + str;
     
     // sampling type & param check
-    label=label_leaf+"/type";
+    label = label_leaf + "/type";
     
     if ( !(tpCntl->GetValue(label, &str )) ) 
     {
-      stamped_printf("\tParsing error : No entory 'Guide_Cell_ID' in 'Face_BC'\n");
+      stamped_printf("\tParsing error : No entory '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -558,55 +563,59 @@ void MonitorList::get_Monitor(Control* C)
     }
     else 
     {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in '%s'\n", label.c_str());
       Exit(0);
     }
     
-    // Labelの取得．ラベルなしでもエラーではない
-    label=label_leaf+"/label";
+    // Labelの取得
+    label = label_leaf + "/label";
     
     if ( !(tpCntl->GetValue(label, &name )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing warning : No commnet in '%s'\n", name.c_str());
+      Hostonly_ stamped_printf("\tParsing warning : No label in '%s'\n", label.c_str());
+      Exit(0);
     }
     
     // variable ---> 複数setできるような仕様にする？
     variables.clear();
-    label=label_leaf+"/variable";
+    
+    label = label_leaf + "/variable";
     
     if ( !(tpCntl->GetValue(label, &str )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'variable' in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
     }
     variables.push_back(str.c_str());
 
     
     if (variables.size() == 0) 
     {
-      Hostonly_ stamped_printf("\tParsing error : No 'variable' in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : No 'variable' in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // method
-    label=label_leaf+"/sampling_method";
+    label = label_leaf + "/sampling_method";
     
     if ( !(tpCntl->GetValue(label, &method )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // mode
-    label=label_leaf+"/sampling_mode";
+    label = label_leaf + "/sampling_mode";
     
     if ( !(tpCntl->GetValue(label, &mode )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in 'Monitor_List'\n");
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // get coordinate
-    if ( type == MonitorCompo::POINT_SET ) {
+    if ( type == MonitorCompo::POINT_SET )
+    {
       vector<MonitorCompo::MonitorPoint> pointSet;
     }
     else 
@@ -682,6 +691,8 @@ void MonitorList::get_Mon_Pointset(Control* C,
                                    const string label_base,
                                    vector<MonitorCompo::MonitorPoint>& pointSet)
 {
+  
+  
   /*
    
    REAL_TYPE v[3];

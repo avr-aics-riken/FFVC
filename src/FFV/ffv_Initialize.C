@@ -3467,8 +3467,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\t Medium ID         Material :          No. : Polygon Group Label :    Area\n");
-    fprintf(fp, "\t        ID         Material :          No. : Polygon Group Label :    Area\n");
+    printf(     "\t Medium ID         Material :          No. :  Polygon Group Label :    Area\n");
+    fprintf(fp, "\t        ID         Material :          No. :  Polygon Group Label :    Area\n");
   }
   
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
@@ -3493,7 +3493,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       fprintf(fp,"\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
     }
 // ##########
-#if 0
+#if 1
     PL->show_group_info(m_pg); //debug
 #endif
 // ##########

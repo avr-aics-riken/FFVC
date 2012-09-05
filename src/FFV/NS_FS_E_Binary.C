@@ -311,6 +311,7 @@ void FFV::NS_FS_E_Binary()
   {
     TIMING_start(tm_poi_src_nrm);
     b2 = 0.0;
+    flop = 0.0;
     div_cnst_(d_ws, size, &guide, &b2, d_bcp, &flop);
     b2 = sqrt(b2);
     TIMING_stop(tm_poi_src_nrm, flop);
