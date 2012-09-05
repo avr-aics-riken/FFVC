@@ -296,7 +296,7 @@ int FFV::Loop(const unsigned step)
     if ( C.Mode.Log_Base == ON ) 
     {
       TIMING_start(tm_hstry_base);
-      Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C, step_end, false);
+      Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C, step_end, true);
       TIMING_stop(tm_hstry_base, 0.0);
     }
     
