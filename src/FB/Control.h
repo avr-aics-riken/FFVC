@@ -435,7 +435,6 @@ public:
     int Change_ID;
     int Range_Limit;
     int PM_Test;
-    REAL_TYPE Scaling_Factor;
   } Hidden_Parameter;
   
   /** File IO control */
@@ -629,6 +628,8 @@ public:
   
   unsigned Restart_step;       ///< リスタートステップ
   unsigned long NoWallSurface; ///< 固体表面セル数
+  
+  float Scaling_Factor;  ///< ポリゴンのスケーリングファクター
 	
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;
@@ -735,6 +736,7 @@ public:
     Start = 0;
     version = 0;
     
+    Scaling_Factor = 1.0;
     
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
@@ -800,7 +802,6 @@ public:
     Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
-    Hide.Scaling_Factor = 0.0;
     
     Unit.Param = 0;
     Unit.Prs   = 0;
@@ -965,14 +966,6 @@ protected:
   void get_ReferenceFrame (ReferenceFrame* RF);
   
   
-  ////void get_restart_rough  ();
-  
-  
-  /**
-   * @brief スケーリングファクタを取得する（隠しパラメータ）
-   * @note 'Scaling_factor'の文字列チェックはしないので注意して使うこと
-   */
-  void get_Scaling();
   
   
   /** ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する */

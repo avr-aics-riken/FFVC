@@ -1054,6 +1054,28 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
       Exit(0);
     }
   }
+  
+
+  // スケーリングファクター
+  REAL_TYPE ct=0.0;
+  
+  label = "/Steer/Geometry_Model/Scaling_Factor";
+  
+  if ( !tpCntl->GetValue(label, &ct) )
+  {
+	  ; // 無くても可
+  }
+  else
+  {
+    if ( ct <= 0.0 )
+    {
+      Hostonly_ stamped_printf("Error : Scaling factor should be positive [%f]\n", ct);
+      Exit(0);
+    }
+    
+    Scaling_Factor = ct;
+  }
+  
 }
 
 
@@ -1961,35 +1983,6 @@ void Control::get_Sampling()
 
 
 // #################################################################
-// スケーリングファクタを取得する（隠しパラメータ）
-// 'Scaling_factor'の文字列チェックはしないので注意して使うこと
-void Control::get_Scaling()
-{
-  string str;
-  string label;
-  REAL_TYPE ct=0.0;
-  Hide.Scaling_Factor = 1.0;
-  
-  label = "/Steer/Scaling_factor";
-  
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-	  return;
-  }
-  
-  Hide.Scaling_Factor = ( ct <= 0.0 ) ? 0.0 : ct;
-  
-  if ( Hide.Scaling_Factor <= 0.0 )
-  {
-    Hostonly_ stamped_printf("Error : Scaling factor should be positive [%f]\n", ct);
-    Exit(0);
-  }
-  
-}
-
-
-
-// #################################################################
 // ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
 void Control::get_Solver_Properties()
 {
@@ -2327,9 +2320,6 @@ void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_W
   
   // パラメータチェック
   get_CheckParameter();
-  
-  // スケーリングファクタの取得　***隠しパラメータ
-  get_Scaling();
   
   // モニターのON/OFF 詳細パラメータはget_Monitor()で行う
   get_Sampling();
@@ -3701,12 +3691,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   
-  // Hidden parameter ------------------
-  fprintf(fp,"\n\tHidden Parameters\n");
-  if ( Hide.Scaling_Factor != 1.0 )
-  {
-    fprintf(fp,"\t     Scaling Factor           :   %f\n", Hide.Scaling_Factor);
-  }
+  // Hidden parameter -----------------
   
   if (Hide.Change_ID != 0 )
   {

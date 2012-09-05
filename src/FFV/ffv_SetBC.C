@@ -4403,16 +4403,13 @@ void SetBC3D::setInitialTemp_Compo(int n, int* d_bx, REAL_TYPE* d_t)
   int kx = size[2];
   int gd = guide;
   
-  int register m;
-  REAL_TYPE ref;
-  
-  ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
+  REAL_TYPE ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
   int id = cmp[n].getMatOdr();
 	
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         if ( DECODE_ID(d_bx[m]) == id ) {
           d_t[m] = ref; 
         }

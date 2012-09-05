@@ -3438,8 +3438,10 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   
-  // Polylib: STLデータ読み込み
+  // Polylib: STLデータ読み込みとスケーリング
   TIMING_start(tm_polygon_load);
+  
+  // ロード
   poly_stat = PL->load_rank0( C.PolylibConfigName );
   
   if( poly_stat != PLSTAT_OK )
@@ -3451,6 +3453,27 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
     Exit(0);
   }
+  
+  // スケーリングする場合のみ表示
+  if ( C.Scaling_Factor != 1.0 )
+  {
+    fprintf(fp,"\n\tScaling Factor           :   %f\n", C.Scaling_Factor);
+  }
+  
+  // スケーリング
+  poly_stat = PL->rescale_polygons(C.Scaling_Factor);
+  
+  if( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      printf    ("\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  
   TIMING_stop(tm_polygon_load);
   
   // 階層情報表示 debug
@@ -3493,7 +3516,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       fprintf(fp,"\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
     }
 // ##########
-#if 1
+#if 0
     PL->show_group_info(m_pg); //debug
 #endif
 // ##########

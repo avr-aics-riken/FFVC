@@ -543,6 +543,29 @@ int PolygonGroup::get_group_num_tria( void ) {
 }// add keno 20120331
 
 
+POLYLIB_STAT PolygonGroup::rescale_polygons( float scale )
+{
+	vector<PrivateTriangle*>* tmp_list = m_polygons->get_tri_list();
+	vector<PrivateTriangle*>::iterator it;
+	for (it = tmp_list->begin(); it != tmp_list->end(); it++) {
+		Vec3f* org = (*it)->get_vertex();
+		Vec3f  scaled[3];
+		scaled[0][0] = org[0][0] * scale;
+		scaled[0][1] = org[0][1] * scale;
+		scaled[0][2] = org[0][2] * scale;
+		scaled[1][0] = org[1][0] * scale;
+		scaled[1][1] = org[1][1] * scale;
+		scaled[1][2] = org[1][2] * scale;
+		scaled[2][0] = org[2][0] * scale;
+		scaled[2][1] = org[2][1] * scale;
+		scaled[2][2] = org[2][2] * scale;
+		(*it)->set_vertexes( scaled, true, true );
+	}
+	m_need_rebuild = true;
+	return rebuild_polygons();
+}
+
+
 // TextParser Version
 // protected //////////////////////////////////////////////////////////////////
 POLYLIB_STAT PolygonGroup::setup_attribute (

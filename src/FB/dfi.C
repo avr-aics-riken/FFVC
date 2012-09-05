@@ -22,7 +22,7 @@ std::string DFI::Generate_DFI_Name(const std::string prefix)
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 5; // postfix(4) + 1
+  int len = prefix.size() + 5; // postfix(4) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
@@ -42,7 +42,7 @@ std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_st
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1
+  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
@@ -69,7 +69,7 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1
+  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   

@@ -295,6 +295,9 @@ public:
   
   /// ポリゴンの面積を積算して返す
   float get_group_area( void );
+
+  /// ポリゴンの縮尺変換＆KD木再構築
+  POLYLIB_STAT rescale_polygons( float scale );
   
 	//=======================================================================
 	// Setter/Getter

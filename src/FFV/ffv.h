@@ -844,9 +844,9 @@ private:
   
   /**
    * @brief 幾何形状情報を準備し，交点計算を行う
-   * @param [in,out] m_prep  前処理用のメモリサイズ
-   * @param [in,out] m_total 本計算用のメモリリサイズ
-   * @param [in]     fp      ファイルポインタ
+   * @param [in,out] m_prep   前処理用のメモリサイズ
+   * @param [in,out] m_total  本計算用のメモリリサイズ
+   * @param [in]     fp       ファイルポインタ
    */
   void setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
   
