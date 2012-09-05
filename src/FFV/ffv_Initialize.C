@@ -1077,15 +1077,15 @@ void FFV::DomainInitialize(const string dom_file)
   switch (div_type) 
   {
     case 1: // 分割数が指示されている場合
-      if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+      if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
       {
         cout << "Domain decomposition error : " << endl;
         Exit(0);
       }
       break;
       
-    case 2: // 分割数が指示されていない場合
-      if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+    case 2: // 分割数が指示されていない場
+      if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
       {
         cout << "Domain decomposition error : " << endl;
         Exit(0);
@@ -2005,7 +2005,7 @@ int FFV::get_DomainInfo(const string dom_file)
   string label, str;
   REAL_TYPE *rvec;
   int *ivec;
-  int div_type = 1;
+  int div_type = 1; // 指定分割 => 1
   
   
   // 長さの単位
@@ -2127,7 +2127,7 @@ int FFV::get_DomainInfo(const string dom_file)
   if ( !tp_dom.GetVector(label, ivec, 3) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
-    div_type = 2;
+    div_type = 2; // 自動分割
   }
   
   // プロセス分割数が指定されている場合のチェック
