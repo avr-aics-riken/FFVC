@@ -8,8 +8,8 @@
 //
 // #################################################################
 
-//@file ParseBC.C
-//@brief FlowBase ParseBC class
+//@file   ParseBC.C
+//@brief  FlowBase ParseBC class
 //@author kero
 
 #include <math.h>
@@ -217,10 +217,6 @@ void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
 // Adiabaticのパラメータを取得する
 void ParseBC::get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp)
 {
-  
-  // 面指定
-  set_Deface(label_base, n, cmp);
-  
   // zero heat flux
   cmp[n].set_Heatflux( 0.0 );
 }
@@ -301,9 +297,6 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
 // Direct_Fluxのパラメータを取得する
 void ParseBC::get_IBC_HeatFlux(const string label_base, const int n, CompoList* cmp)
 {
-  // 面指定
-  set_Deface(label_base, n, cmp);
-  
   string label = label_base + "/Heat_Flux";
   
   cmp[n].set_Heatflux( get_BCval_real(label) ); /// @note [W/m^2]
@@ -366,9 +359,6 @@ void ParseBC::get_IBC_HeatSrc(const string label_base, const int n, CompoList* c
 // HeatTransfer_Nのパラメータを取得する
 void ParseBC::get_IBC_HT_N(const string label_base, const int n, CompoList* cmp)
 {
-  // 面指定
-  set_Deface(label_base, n, cmp);
-  
   // 熱伝達係数
   string label = label_base + "/Coef_of_Heat_Transfer";
   
@@ -381,9 +371,6 @@ void ParseBC::get_IBC_HT_N(const string label_base, const int n, CompoList* cmp)
 void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp)
 {
   string label;
-
-  // 面指定
-  set_Deface(label_base, n, cmp);
   
   // 熱伝達係数
   label = label_base + "/Coef_of_Heat_Transfer";
@@ -410,9 +397,6 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
   
   REAL_TYPE st = get_BCval_real(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
-  
-  // 面指定
-  set_Deface(label_base, n, cmp);
   
   // type
   label = label_base + "/Ref_Temp_Mode";
@@ -485,9 +469,6 @@ void ParseBC::get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp
   REAL_TYPE st = get_BCval_real(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
-  // 面指定
-  set_Deface(label_base, n, cmp);
-  
   // type
   label=label_base+"/Ref_Temp_Mode";//
   if ( !(tpCntl->GetValue(label, &str )) ) {
@@ -520,10 +501,6 @@ void ParseBC::get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp
 void ParseBC::get_IBC_HT_B(const string label_base, const int n, CompoList* cmp)
 {
   string label;
-
-  
-  // 面指定
-  set_Deface(label_base, n, cmp);
   
   // 熱伝達係数
   label=label_base+"/Coef_of_Heat_Transfer";
@@ -571,15 +548,11 @@ void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cm
 void ParseBC::get_IBC_IsoTherm(const string label_base, const int n, CompoList* cmp)
 {
   string label;
-
   
   // 表面温度
   label=label_base+"/temperature";
   REAL_TYPE tmp = get_BCval_real(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
-	
-  // 面指定
-  set_Deface(label_base, n, cmp);
 }
 
 
@@ -825,9 +798,6 @@ void ParseBC::get_IBC_Outflow(const string label_base, const int n, CompoList* c
     }
   }
   
-  // 面指定
-  set_Deface(label_base, n, cmp);
-  
   // 流出速度のタイプ
   cmp[n].setOutflowType(V_AVERAGE);
   
@@ -869,29 +839,37 @@ void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* 
   // 上流側の方向
   label = label_base + "/upstream_direction";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
 	  printf("\tParsing error : fail to get 'upstream_direction' in 'LocalBoundary > Periodic'\n");
 	  Exit(0);
   }
-  if ( !strcasecmp("x_minus", str.c_str()) ) {
+  if ( !strcasecmp("x_minus", str.c_str()) )
+  {
 		dir = X_MINUS;
 	}
-  else if ( !strcasecmp("x_plus", str.c_str()) ) {
+  else if ( !strcasecmp("x_plus", str.c_str()) )
+  {
     dir = X_PLUS;
   }
-  else if ( !strcasecmp("y_minus", str.c_str()) ) {
+  else if ( !strcasecmp("y_minus", str.c_str()) )
+  {
     dir = Y_MINUS;
   }
-  else if ( !strcasecmp("y_plus", str.c_str()) ) {
+  else if ( !strcasecmp("y_plus", str.c_str()) )
+  {
     dir = Y_PLUS;
   }
-  else if ( !strcasecmp("z_minus", str.c_str()) ) {
+  else if ( !strcasecmp("z_minus", str.c_str()) )
+  {
     dir = Z_MINUS;
   }
-  else if ( !strcasecmp("z_plus", str.c_str()) ) {
+  else if ( !strcasecmp("z_plus", str.c_str()) )
+  {
     dir = Z_PLUS;
   }
-  else {
+  else
+  {
     stamped_printf("\tParsing error : Invalid direction in 'LocalBoundary > Periodic'\n");
     Exit(0);
   }
@@ -901,16 +879,15 @@ void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* 
   // 圧力差
   label = label_base + "/pressure_difference";
   
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
     printf("\tParsing error : Invalid value of 'Pressure difference' in 'LocalBoundary > Periodic'\n");
     Exit(0);
   }
-  else {
+  else
+  {
     cmp[n].ca[0] = ct;
   }
-  
-  // 面指定
-  set_Deface(label_base, n, cmp);
 }
 
 
@@ -1013,10 +990,6 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
 void ParseBC::get_IBC_Radiant(const string label_base, const int n, CompoList* cmp)
 {
   string label;
-
-  
-  // 面指定
-  set_Deface(label_base, n, cmp);
   
   // 係数
   label=label_base+"/epsilon";
@@ -1124,86 +1097,56 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-/**
- @fn void ParseBC::get_Medium_InitTemp(void)
- @brief 温度計算の場合の各媒質の初期値を取得する
- */
-void ParseBC::get_Medium_InitTemp()
-{
-  int id;
-  const char* p=NULL;
-  int Cell_state;
-  REAL_TYPE ct;
-  
+// 温度計算の場合の各媒質の初期値を取得する
+void ParseBC::get_Medium_InitTemp(CompoList* cmp)
+{  
   string label, label_base;
   string str;
-  int counter=0;
   
-  label_base="/Parameter/Init_Temp_of_Medium";
-  if ( !tpCntl->chkNode(label_base) ) {
-    stamped_printf("\tParsing error : Missing the section of 'Init_Temp_of_Medium'\n");
+  label_base = "/Parameter/Init_Temp_of_Medium";
+  
+  if ( !tpCntl->chkNode(label_base) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label_base.c_str());
     Exit(0);
   }
   
   int m_no_medium = NoCompo - NoBC;
   
   
-  // load statement list
   for (int i=1; i<=m_no_medium; i++) {
     
-    if(!tpCntl->GetNodeStr(label_base,i,&str)){
-      stamped_printf("\tGetNodeStr error\n");
+    if ( !tpCntl->GetNodeStr(label_base, i, &str) )
+    {
+      Hostonly_ stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
     
-    // state
-    label=label_base+"/"+str;
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
-      Exit(0);
-    }
-    if ( !strcasecmp("Solid", str.c_str()) ) Cell_state = SOLID;
-    else if ( !strcasecmp("Fluid", str.c_str()) ) Cell_state = FLUID;
-    else {
-      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
+    // medium name
+    label = label_base + "/" + str;
+    REAL_TYPE ct;
+    
+    if ( !tpCntl->GetValue(label, &ct) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
       Exit(0);
     }
     
-    //// ID
-    //if ( !param->isSetID() ) {
-    //  stamped_printf("\tParsing error : No ID for statement in 'Init_Temp_of_Medium'\n");
-    //  Exit(0);
-    //}
-    //if ( -1 == (id=param->GetID()) ) {
-    //  stamped_printf("\tParsing error : No valid ID for statement in 'Init_Temp_of_Medium'\n");
-    //  Exit(0);
-    //}
+    int flag = 0;
     
-    //// マッチング
-    //bool m_flag = false;
-    //for (int m=NoBC+1; m<=NoCompo; m++) {
-    //  
-    //  if ( cmp[m].getID() == (int)id ) {
-    //    m_flag = true;
-    //    if ( cmp[m].getState() != Cell_state ) {
-    //      stamped_printf("\tError : Inconsistent the cell state between 'Model_Setting' and 'Init_Temp_of_Medium' : Medium ID=%d\n", id);
-    //      Exit(0);
-    //    }
-    //    
-    //    if ( !param->GetData(&ct) ) {
-    //      stamped_printf("\tParsing error : No initial temperature in 'Init_Temp_of_Medium'\n");
-    //      Exit(0);
-    //    }
-    //    cmp[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
-    //    break;
-    //  }
-    //}
+    for (int m=NoBC+1; m<=NoCompo; m++) {
+      if ( FBUtility::compare(cmp[m].getLabel(), str) )
+      {
+        cmp[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+        flag++;
+      }
+    }
     
-    ////check
-    //if ( !m_flag ) {
-    //  stamped_printf("\tError : could not find ID=%d in ComponentList\n", id);
-    //  Exit(0);
-    //}
+    if ( flag == 0)
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
+      Exit(0);
+    }
     
   }
 }
@@ -2022,49 +1965,21 @@ bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoL
 // 最初にBCの情報を登録，その後IDの情報を登録
 // パラメータファイルから各内部BCのidをパースし，cmpに保持する
 // 格納番号は1からスタート
-void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp, MPIPolylib* PL)
+void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Control::Polygon_property* polyP)
 { 
   string str, label;
   string label_base, label_ename, label_leaf;
   REAL_TYPE fval;
-  int n=0;
+  int nbc=0;
   int ide;
   int tp;
   
-  /* Medium_Table debug print ///////////////////////////////////////////////////
-   cout << endl;
-   cout << endl;
-   cout << "**********************" << endl;
-   cout << "*****loadBC_Local*****" << endl;
-   cout << "**********************" << endl;
-   cout << "NoMedium : " << NoMedium << endl;
-   // イテレータを生成
-   map<string, REAL_TYPE>::iterator itr;
-   for (int i=1; i<=NoMedium; i++) { //Medium_Table loop
-   cout << "at glance" << i+1 << endl;
-   cout << "type  : " << MTITP[i].type << endl;
-   cout << "label : " << MTITP[i].label << endl;
-   
-   int icounter=0;
-   for (itr = MTITP[i].m_fval.begin(); itr != MTITP[i].m_fval.end(); itr++)
-   {
-   icounter++;
-   string a1 = itr->first;// キー取得
-   REAL_TYPE a2 = itr->second;// 値取得
-   cout << "i = " << i << "  icounter = " << icounter 
-   << "  key:" << a1 << "  value:" << a2 << endl;
-   }
-   }
-   cout << " NoBC   = " << NoBC  << endl;
-   cout << endl;
-   cout << endl;
-   /////////////////////////////////////////////////////////////////////////////// */
   
   // 内部境界条件の有無を調べる
   label_base = "/BC_Table/LocalBoundary";
-  n = tpCntl->countLabels(label_base);
+  nbc = tpCntl->countLabels(label_base);
   
-  if ( n != NoBC) 
+  if ( nbc != NoBC)
   {
     stamped_printf("\tLocalBoundary error : '%s'\n", label_base.c_str());
     Exit(0);
@@ -2112,30 +2027,19 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, const MediumTableI
     // Labelの設定
     cmp[odr].setLabel(str);
     
-    // Polylib_*.tpの境界条件ラベル（媒質名）とaliasの一致を検証 >> @todo 媒質名とidの整合性の検証，現在は媒質IDがゼロで無いことを見ているだけ
-    vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-    vector<PolygonGroup*>::iterator it;
     
-    for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
-      string m_pg = (*it)->get_name();
-      int m_id  = (*it)->get_id();
+    // 媒質IDの登録
+    for (int i=0; i<C->num_of_polygrp; i++) {
       
-      if ( FBUtility::compare(m_pg, cmp[n].getLabel()) )
+      string m_pg = polyP[i].label;
+      int m_id    = polyP[i].mat;
+      
+      if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
       {
-        cmp[n].setMatOdr(m_id);
+        cmp[odr].setMatOdr(m_id);
         break;
       }
     }
-    
-    delete pg_roots;
-    
-    
-    if ( cmp[n].getMatOdr() == 0 )
-    {
-      Hostonly_ printf("\tError : Alias '%s' is not listed in PolygonGroup\n", cmp[n].getLabel().c_str());
-      Exit(0);
-    }
-    
     
     
     // 各BCの処理
@@ -3383,7 +3287,7 @@ void ParseBC::setControlVars(Control* Cref)
   
   if ( !tpCntl->chkNode(label) )
   {
-    stamped_printf("\tParsing error : Missing '%s\n", label.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s\n", label.c_str());
     Exit(0);
   }
   
@@ -3391,7 +3295,7 @@ void ParseBC::setControlVars(Control* Cref)
   int nnode = tpCntl->countLabels(label);
   if ( nnode == 0 )
   {
-    stamped_printf("\tNo OuterBoundary defined\n");
+    Hostonly_ stamped_printf("\tNo OuterBoundary defined\n");
     return;
   }
   
@@ -3400,7 +3304,7 @@ void ParseBC::setControlVars(Control* Cref)
     
     if ( !tpCntl->GetNodeStr(label, i, &str) )
     {
-      stamped_printf("\tGetNodeStr error\n");
+      Hostonly_ stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
     
@@ -3411,29 +3315,6 @@ void ParseBC::setControlVars(Control* Cref)
   BaseBc = new BoundaryOuter[NoBaseBC];
 }
 
-
-
-// #################################################################
-// 内部境界条件のdef_faceを取得し，登録する
-void ParseBC::set_Deface(const string label_base, const int n, CompoList* cmp)
-{
-  int def=0;
-  string label;
-  
-  label = label_base + "/face_label";
-  
-  if ( !(tpCntl->GetValue(label, &def )) ) {
-	  stamped_printf("\tParsing error : fail to get 'face_label' in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  // IDが媒質に含まれているかを調べる
-  if ( (0 >= def) || (def > NoMedium) ) {
-	  stamped_printf("\tParsing error : ID[%d] described in 'def_face' is not included in 'Model_Setting'\n", def);
-	  Exit(0);
-  }
-  cmp[n].setDef(def);
-}
 
 
 // #################################################################

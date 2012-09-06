@@ -507,7 +507,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 法線計算
-  get_Compo_Normal();
+  get_Compo_Area();
   
   
   
@@ -543,7 +543,7 @@ int FFV::Initialize(int argc, char **argv)
     {
       cout <<  "now heat probrem *** initialize" << endl;
     }
-    B.get_Medium_InitTemp();
+    B.get_Medium_InitTemp(cmp);
   }
   
   // set phase 
@@ -1937,16 +1937,13 @@ void FFV::generate_Solid(FILE* fp)
 
 
 // #################################################################
-// コンポーネントの法線を計算
-void FFV::get_Compo_Normal()
+// コンポーネントの面積を計算
+void FFV::get_Compo_Area()
 {
 
   if ( C.NoBC == 0 ) return;
   if ( C.Mode.Example != id_Polygon ) return;
   
-  
-  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-  vector<PolygonGroup*>::iterator it;
   
   float area=0.0;
   
@@ -1958,13 +1955,11 @@ void FFV::get_Compo_Normal()
     {
       string label = cmp[n].getLabel();
       
-      for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+      for (int i=0; i<C.num_of_polygrp; i++) {
         
-        string m_pg = (*it)->get_name();
-        
-        if ( FBUtility::compare(m_pg, label) )
+        if ( FBUtility::compare(poly_prop[i].label, label) )
         {
-          area = (*it)->get_group_area();
+          area = poly_prop[i].area;
           
           if ( numProc > 1 )
           {
@@ -1978,8 +1973,6 @@ void FFV::get_Compo_Normal()
 
     }
   }
-  
-  delete pg_roots;
 }
 
 
@@ -2649,7 +2642,7 @@ void FFV::setBCinfo()
   
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBC_Local(&C, mat, M.export_MTI(), cmp, PL);
+  B.loadBC_Local(&C, mat, cmp, poly_prop);
   
   
   // 各コンポーネントが存在するかどうかを保持しておく
@@ -3484,22 +3477,40 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 #endif
 // ##########
   
-  // IDの表示
+  
+  // ポリゴン情報へのアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
   
+  // Polygon Groupの数
+  C.num_of_polygrp = pg_roots->size();
+  
+  // ポリゴングループの属性保持のstruct array
+  poly_prop = new Control::Polygon_property[C.num_of_polygrp];
+  
   Hostonly_
   {
-    printf(     "\t Medium ID         Material :          No. :  Polygon Group Label :    Area\n");
-    fprintf(fp, "\t        ID         Material :          No. :  Polygon Group Label :    Area\n");
+    printf(     "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
+    fprintf(fp, "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
+    
+    printf(     "\t Medium ID         Material :          No. :  Polygon Group Label :         Area\n");
+    fprintf(fp, "\t        ID         Material :          No. :  Polygon Group Label :         Area\n");
   }
   
+  
+  // ポリゴン情報の表示
+  int c = 0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     int ntria= (*it)->get_group_num_tria();
     std::string m_mat = (*it)->get_label();
     float area = (*it)->get_group_area();
+    
+    poly_prop[c].mat   = m_id;
+    poly_prop[c].label = m_pg;
+    poly_prop[c].area  = area;
+    c++;
 
     if ( numProc > 1 )
     {
@@ -3515,11 +3526,13 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       printf(    "\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
       fprintf(fp,"\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
     }
+    
 // ##########
 #if 0
     PL->show_group_info(m_pg); //debug
 #endif
 // ##########
+    
   }
   
   delete pg_roots;
@@ -3529,6 +3542,23 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     printf("\n");
     fprintf(fp, "\n");
   }
+  
+  
+  // PolygonGroupの媒質の範囲チェック >> 1以上、Medium_Tableの数以下であること
+  for (int i=0; i<C.num_of_polygrp; i++) {
+    int m_id = poly_prop[i].mat;
+    
+    if ( (m_id < 1) || (m_id > C.NoMedium) )
+    {
+      Hostonly_
+      {
+        printf("\tError : Material ID associated with '%s' is not listed in Medium_Table\n", poly_prop[i].label.c_str());
+        Exit(0);
+      }
+    }
+  }
+  
+  
   
   // 使用メモリ量　基本クラスのみ
   double poly_mem, G_poly_mem;

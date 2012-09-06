@@ -9,8 +9,11 @@ Release Note
 
 #######################################
 
+Ver 0.8.2    6 Sep. 2012
+  - coarse restartの特殊版getCoraseResult2
+  
 Ver 0.8.1    5 Sep. 2012
-  - ポリゴンのスケーリング機能
+  - ポリゴンのスケーリング機能 >> Hidden
   
 Ver 0.8.0    3 Sep. 2012
   - 温度計算組み込み

@@ -512,6 +512,16 @@ public:
     int monitor;
   } Ens_of_Compo;
   
+  
+  // polygon gourp
+  typedef struct {
+    int mat;
+    string label;
+    float area;
+  } Polygon_property;
+  
+  
+  
   /** 偏微分方程式の型 */
   enum PDE_type 
    {
@@ -620,6 +630,7 @@ public:
   int NoMediumSolid;
   int num_process;
   int num_thread;
+  int num_of_polygrp;
   int Parallelism;
   int RefMat;     ///< 参照媒質インデクス
   int Start;

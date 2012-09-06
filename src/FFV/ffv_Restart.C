@@ -199,6 +199,126 @@ bool FFV::getCoarseResult (int i, int j, int k,
 }
 
 
+// 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+bool FFV::getCoarseResult2(int i, int j, int k,
+                           std::string& coarse_dfi_fname,
+                           std::string& coarse_prefix,
+                           const int m_step,
+                           std::string& coarse_sph_fname,
+                           int* c_size,
+                           int* coarse,
+                           int* block
+                           )
+{
+	// 密格子のi,j,kを粗格子のi0,j0,k0に変換
+	int i0 = (i+1)/2;
+  int j0 = (j+1)/2;
+  int k0 = (k+1)/2;
+  
+  // ステップ数の文字列を生成
+  char tmp[10]; // 10 digit
+  memset(tmp, 0, sizeof(char)*10);
+  sprintf(tmp, "%010d", m_step);
+  std::string step(tmp);
+  
+  
+	// dfiファイルローダをインスタンス
+  TPControl tp_dfi;
+  
+  tp_dfi.getTPinstance();
+  
+  // 入力ファイルをオープン
+  int ierror = tp_dfi.readTPfile(coarse_dfi_fname);
+  
+  std::string str;
+  std::string label;
+  std::string label_base;
+  std::string label_leaf;
+  int ibuf;
+  int iv[3];
+  
+	
+  std::string buf;
+	int rank = -1;
+	int hi, hj, hk, ti, tj, tk;
+  
+  // サブドメインの分割数（粗格子）
+  int Ci, Cj, Ck;
+  
+  
+  // ノード情報を探索
+  label_base = "/Distributed_File_Info/NodeInfo";
+  
+  if ( !tp_dfi.chkNode(label_base) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label_base.c_str());
+    Exit(0);
+  }
+  
+  const int* m_tail = paraMngr->GetVoxelTailIndex();
+  int tail[3];
+  tail[0] = m_tail[0] + 1;
+  tail[1] = m_tail[1] + 1;
+  tail[2] = m_tail[2] + 1;
+  
+	rank = myRank;
+	Ci = size[0]/2;
+	Cj = size[1]/2;
+	Ck = size[2]/2;
+	hi = (head[0]+1)/2;
+	hj = (head[1]+1)/2;
+	hk = (head[2]+1)/2;
+	ti = (tail[0]+1)/2;
+	tj = (tail[1]+1)/2;
+	tk = (tail[2]+1)/2;
+  
+  
+  // 見つけられなかった
+  if ( rank == -1 ) return false;
+  
+  
+  // ランク番号のファイル名を生成する
+  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, true);
+  if ( target.empty() ) return false;
+  
+  
+  
+  // 各方向に含まれるブロック数（dx_C/dx_F = 2）
+  int bi = Ci * 2 / size[0];
+  int bj = Cj * 2 / size[1];
+  int bk = Ck * 2 / size[2];
+  
+  // 粗格子の読み込み開始のローカルインデクス
+  int bh_i = i0 - hi + 1;
+  int bh_j = j0 - hj + 1;
+  int bh_k = k0 - hk + 1;
+  
+  
+  // return value
+  coarse_sph_fname = target;
+  
+  c_size[0] = Ci;
+  c_size[1] = Cj;
+  c_size[2] = Ck;
+  
+	coarse[0] = bh_i;
+	coarse[1] = bh_j;
+	coarse[2] = bh_k;
+  
+  block[0] = bi;
+  block[1] = bj;
+  block[2] = bk;
+  
+  //
+  //printf("rk=%4d : fine(%4d %4d %4d) : coarse(%4d %4d %4d) : head(%4d %4d %4d) : cblk(%4d %4d %4d): block(%4d %4d %4d) : %s\n",
+  //       pn.myrank,  i,j,k,  i0,j0,k0,  bh_i,bh_j,bh_k,  Ci,Cj,Ck,  Fi,Fj,Fk,  coarse_sph_fname.c_str());
+  //
+  
+	return true;
+}
+
+
+
 // 粗格子から密格子へ内挿
 void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 {
@@ -544,13 +664,13 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     k = head[2];
     
     // crs_i, _j, _kには同じ値が入る
-    if ( !getCoarseResult(i, j, k, C.f_Coarse_dfi_prs, C.f_Coarse_pressure, C.Restart_step, f_prs, r_size, crs, num_block) )
+    if ( !getCoarseResult2(i, j, k, C.f_Coarse_dfi_prs, C.f_Coarse_pressure, C.Restart_step, f_prs, r_size, crs, num_block) )
     {
       Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
       Exit(0);
     }
     
-    if ( !getCoarseResult(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, C.Restart_step, f_vel, r_size, crs, num_block) )
+    if ( !getCoarseResult2(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, C.Restart_step, f_vel, r_size, crs, num_block) )
     {
       Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
       Exit(0);
@@ -558,7 +678,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     
     if ( C.isHeatProblem() )
     {
-      if ( !getCoarseResult(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, C.Restart_step, f_temp, r_size, crs, num_block) )
+      if ( !getCoarseResult2(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, C.Restart_step, f_temp, r_size, crs, num_block) )
       {
         Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
         Exit(0);
@@ -607,8 +727,9 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   F.readPressure(fp, f_prs, r_size, guide, d_r_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
-  Session_StartStep = step;
-  Session_StartTime = time;
+
+  Session_StartStep = CurrentStep = step;
+  Session_StartTime = CurrentTime = time;
   
   // v00[]に値をセット
   copyV00fromRF(Session_StartTime);

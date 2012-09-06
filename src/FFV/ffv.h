@@ -181,6 +181,8 @@ private:
   
   int* compo_global_bbox; ///< グローバルなコンポーネントBbox 表示に利用
   
+  // PolygonGroupの管理
+  Control::Polygon_property* poly_prop;
   
   // カット
   CutPos32Array *cutPos;
@@ -514,10 +516,20 @@ private:
                         int* block
                         );
   
+  bool getCoarseResult2(int i, int j, int k,
+                        std::string& coarse_dfi_fname,
+                        std::string& coarse_prefix,
+                        const int m_step,
+                        std::string& coarse_sph_fname,
+                        int* c_size,
+                        int* coarse,
+                        int* block
+                        );
+  
   
   /** コンポーネントの面積を計算する
    */
-  void get_Compo_Normal();
+  void get_Compo_Area();
   
   
   /** グローバルな領域情報を取得 

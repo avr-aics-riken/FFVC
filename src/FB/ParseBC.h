@@ -30,12 +30,8 @@
 #include "Intrinsic.h"
 #include "TPControl.h"
 
-// Polylib
-#include "Polylib.h"
-#include "MPIPolylib.h"
-
 using namespace std;
-using namespace PolylibNS;
+
 
 class ParseBC : public DomainInfo {
 private:
@@ -476,13 +472,6 @@ private:
   void setKeywordOBC(const string keyword, const int m);
   
   
-  /**
-   * @brief 内部境界条件のdef_faceを取得し，登録する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストのエントリ番号
-   * @param [out] cmp        CompoList
-   */
-  void set_Deface(const string label_base, const int n, CompoList* cmp);
   
   
 public:
@@ -515,8 +504,11 @@ public:
   void get_Phase(CompoList* cmp);
   
   
-  
-  void get_Medium_InitTemp();
+  /**
+   * @brief 温度計算の場合の各媒質の初期値を取得する
+   * @param [in,out] cmp    CompoList
+   */
+  void get_Medium_InitTemp(CompoList* cmp);
   
   
   
@@ -550,11 +542,10 @@ public:
    * @brief CompoListに内部境界条件の情報を設定する
    * @param [in]  C     Control
    * @param [in]  mat   MediumList
-   * @param [in]  MTITP MediumTableInfo
    * @param [out] cmp   CompoList
-   * @param [in]  PL    MPIPolylib
+   * @param [in]  polyP ポリゴン管理構造体
    */
-  void loadBC_Local(Control* C, const MediumList* mat, const MediumTableInfo *MTITP, CompoList* cmp, MPIPolylib* PL);
+  void loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Control::Polygon_property* polyP);
   
   
   /**
