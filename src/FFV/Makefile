@@ -15,13 +15,34 @@ include make_setting
 
 all:
 	( \
+	cd ../Polylib-2.1.1/src; \
+	make \
+		CXX='$(CXX)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+		MPI_DIR='$(MPI_DIR)' \
+		TP_DIR='$(TP_DIR)' \
+	)
+
+	( \
+	cd ../Cutlib-2.0.4/src; \
+	make \
+		CXX='$(CXX)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+		TP_DIR='$(TP_DIR)' \
+	)
+
+	( \
 	cd ../PMlib-1.4/src; \
 	make \
 		CXX='$(CXX)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
-    MPI_DIR='$(MPI_DIR)' \
+		MPI_DIR='$(MPI_DIR)' \
 	)
 
 	( \
@@ -73,7 +94,7 @@ all:
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
-    CPM_DIR='$(CPM_DIR)' \
+		CPM_DIR='$(CPM_DIR)' \
 	)
   
 	( \
@@ -91,19 +112,27 @@ all:
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
-    UDEF_LIB_PATH_SPEC='$(UDEF_LIB_PATH_SPEC)' \
+		UDEF_LIB_PATH_SPEC='$(UDEF_LIB_PATH_SPEC)' \
 	)
 
-clean:
+clean: 
 	(cd ../IP; make clean)
 	(cd ../FB; make clean)
 	(cd ../F_CORE; make clean)
 	(make -f MakeFFV clean)
+  
+mostlyclean: clean
+	(cd ../Polylib-2.1.1/src; make clean)
+	(cd ../Cutlib-2.0.4/src; make clean)
+	(cd ../PMlib-1.4/src; make clean)
 
-allclean: clean
+allclean: mostlyclean
 	(cd ../../bin; $(RM) $(TARGET) )
 
 depend:
+	(cd ../Polylib-2.1.1/src; make depend)
+	(cd ../Cutlib-2.0.4/src; make depend)
+	(cd ../PMlib-1.4/src; make depend)
 	(cd ../IP; make depend)
 	(cd ../FB; make depend)
 	(cd ../F_CORE; make depend)

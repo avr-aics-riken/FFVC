@@ -21,7 +21,7 @@ MPI_DIR	    = /opt/openmpi
 CPM_DIR     = /usr/local/cpm
 TP_DIR      = /usr/local/textparser
 POLYLIB_DIR = ../Polylib-2.1.1
-CUTLIB_DIR  = ../Cutlib-2.0.3
+CUTLIB_DIR  = ../Cutlib-2.0.4
 PMLIB_DIR   = ../PMlib-1.4
 OMP_FLAGS   = -openmp -par-report=2 -vec-report=2
 UDEF_OPT    =
@@ -55,7 +55,7 @@ UDEF_LIBS_SPEC     =
 #CPM_DIR     = /hoge
 #TP_DIR      = /funya
 #POLYLIB_DIR = ../Polylib-2.1.1
-#CUTLIB_DIR  = ../Cutlib-2.0.3
+#CUTLIB_DIR  = ../Cutlib-2.0.4
 #PMLIB_DIR   = ../PMlib-1.4
 #OMP_FLAGS   =
 #UDEF_OPT    = -D__K_FPCOLL -D__ARCH_FX
@@ -89,7 +89,7 @@ UDEF_LIBS_SPEC     =
 #CPM_DIR     = /hoge
 #TP_DIR      = /funya
 #POLYLIB_DIR = ../Polylib-2.1.1
-#CUTLIB_DIR  = ../Cutlib-2.0.3
+#CUTLIB_DIR  = ../Cutlib-2.0.4
 #PMLIB_DIR   = ../PMlib-1.4
 #OMP_FLAGS   = -qsmp=omp
 #UDEF_OPT    = -WF,-D__ARCH_BG
