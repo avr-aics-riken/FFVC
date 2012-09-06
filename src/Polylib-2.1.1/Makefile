@@ -1,0 +1,59 @@
+#####################################################################################
+#
+#  Polylib コンパイル方法
+#  -----------------------
+#
+#  環境に合わせて、make_settingマクロを編集後、make
+#
+#
+#####################################################################################
+
+BASEDIR  = $(PWD)
+
+include make_setting
+
+all:
+	( \
+	cd src; \
+	make \
+		CXX='$(CXX)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+		MPI_DIR='$(MPI_DIR)' \
+    TP_DIR='$(TP_DIR)' \
+	)
+
+single:
+	( \
+	cd src; \
+	make single \
+		CXX='$(CXX)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+		MPI_DIR='$(MPI_DIR)' \
+    TP_DIR='$(TP_DIR)' \
+	)
+
+mpi:
+	( \
+	cd src; \
+	make mpi \
+		CXX='$(CXX)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+		MPI_DIR='$(MPI_DIR)' \
+    TP_DIR='$(TP_DIR)' \
+	)
+  
+
+clean:
+	(cd src; make clean)
+
+allclean: clean
+	(cd lib; $(RM) $(TARGET) )
+
+depend:
+	(cd src; make depend)

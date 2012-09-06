@@ -1,10 +1,20 @@
------
-Cutlib
+/*
+ * Cutlib - Cut Information Library
+ *
+ * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
+ *
+ * Cutlib version 2.0.4       6 Sep. 2012
+ *
+ */
 
 Kenji Ono 	keno@riken.jp
 Advanced Visualization Research Team, AICS, RIKEN
-April 2012
+Sep. 2012
 -----
+
+2012-09-06
+  * Version 2.0.4
+  * コンパイル方法を単体とFFVディレクトリ内で共通化
 
 2012-04-21
   * Version 2.0.3

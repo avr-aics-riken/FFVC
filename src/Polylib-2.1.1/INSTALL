@@ -3,23 +3,18 @@
  *
  * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
  *
- * Polylib version 2.1       31 Aug. 2012
+ * Polylib version 2.1.1       6 Sep. 2012
  *
- * Functionality Simulation and Information Team
- * VCAD System Research Program
- *
- * Signatured by Kenji Ono (keno@riken.jp)
  */
 
 Polylibライブラリのビルドおよびインストール方法
 
 1) 以下の手順でライブラリのビルドを行います。
+   make_settingのマクロを環境に合わせて編集します．
+   
+	> make
 
-	> cd src/
-	> make all
 
-   Makefile内で利用しているC++コンパイラはg++です。
-   必要に応じてMakefileを編集しコンパイラを変更して下さい。
 
 2) ビルドされたライブラリファイルは lib/に配置されます。
    ライブラリファイルは以下の2つです。利用するユーザプロ

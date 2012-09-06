@@ -15,7 +15,7 @@ include make_setting
 
 all:
 	( \
-	cd ../PMlib-1.3/src; \
+	cd ../PMlib-1.4/src; \
 	make \
 		CXX='$(CXX)' \
 		AR='$(AR)' \

@@ -1,9 +1,16 @@
------
-Cutlib 2.0.3
+/*
+ * Cutlib - Cut Information Library
+ *
+ * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
+ *
+ * Cutlib version 2.0.4       6 Sep. 2012
+ *
+ */
+
 
 Kenji Ono 	keno@riken.jp
 Advanced Visualization Research Team, AICS, RIKEN
-April 2012
+Sep. 2012
 -----
 
 インストール方法
@@ -29,6 +36,10 @@ doxygen/
 include/        ヘッダファイル
 
 lib/            コンパイル済みのアーカイブ格納ディレクトリ
+
+make_setting    コンパイルマクロ
+
+Makefile
 
 README.txt      このファイル
 

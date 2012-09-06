@@ -66,18 +66,12 @@ DEFINES += -DIGNORE_STL_NORMAL
 
 
 
-POLYLIB_DIR = ../../Polylib-2.1
-TP_INC_DIR = /usr/local/textparser/include
+POLYLIB_DIR = ../../Polylib-2.1.1
 
-POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I$(TP_INC_DIR)
+POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I$(TP_DIR)/include
 
 ###########################################################################
 # INTEL
-
-#CXX    = g++
-CXX     = icpc
-AR      = ar cru
-RANLIB  = ranlib
 
 #CFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
@@ -85,19 +79,11 @@ CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 ###########################################################################
 # FX10/K
 
-#CXX     = mpiFCCpx
-#AR      = ar crv
-#RANLIB  = ranlib
-
 #CFLAGS = -Kfast,ocl,preex,simd=2 -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 
 ###########################################################################
 # BG/P
-
-#CXX     = mpixlcxx_r
-#AR      = ar crv
-#RANLIB  = ranlib
 
 #CFLAGS = -O3 -qarch=450d -qtune=450 -qsmp=omp -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 

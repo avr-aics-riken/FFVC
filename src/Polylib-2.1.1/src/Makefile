@@ -3,8 +3,8 @@
 # sigle版アーカイブ、mpi版アーカイブ作成用Makefile
 #													Create	2010.08.20
 #													Update	2010.10.25
-# sigle版アーカイブのみ作成		: make single
-# mpi版アーカイブのみ作成		: make mpi
+# sigle版アーカイブのみ作成		  : make single
+# mpi版アーカイブのみ作成	      : make mpi
 # single版、mpi版をまとめて作成	: make
 # includeファイルの依存関係更新 : make depend
 #
@@ -20,59 +20,37 @@
 
 TARGET_DIR	= ../lib
 
-MPI_INC_DIR	= /opt/openmpi/include
-TP_INC_DIR	= /usr/local/textparser/include
-
 
 #####################################
 # INTEL
 
-#CXX	= g++
-CXX	= icpc
-AR	= ar cru
-RANLIB	= ranlib
-RM	= \rm -f
-
 CFLAGS	= -O3 -Wall \
 	-I../include \
-	-I$(MPI_INC_DIR) \
-	-I$(TP_INC_DIR) \
+	-I$(MPI_DIR)/include \
+	-I$(TP_DIR)/include \
 	-fno-strict-aliasing \
-#	-I/usr/include \
 #	-DSAVE_ID_ASCII -DDEBUG
 
 
 #####################################
 # FX10
 
-#CXX	= mpiFCCpx
-#AR	= ar cr
-#RANLIB	= ranlib
-#RM	= \rm -f
-
 #CFLAGS		= -Kfast, simd=2, ocl, preex \
 #		-I../include\
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include \
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include/mpi/fujitsu \
-#		-I/usr/include \
-#		-I$(TP_INC_DIR) \
+#		-I$(TP_DIR)/iclude \
 #		-fno-strict-aliasing
 
 
 #####################################
 # K
 
-#CXX			= mpiFCCpx
-#AR			  = ar cr
-#RANLIB		= ranlib
-#RM       = \rm -f
-
 #CFLAGS	 = -Kfast, simd=2, ocl, preex \
 #   -I../include\
 #   -I/opt/FJSVtclang/GM-1.2.0-08/include \
 #   -I/opt/FJSVtclang/GM-1.2.0-08/include/mpi/fujitsu \
-#   -I/usr/include \
-#   -I$(TP_INC_DIR) \
+#   -I$(TP_DIR)/include \
 #   -fno-strict-aliasing
 
 
