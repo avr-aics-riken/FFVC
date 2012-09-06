@@ -3454,7 +3454,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     Exit(0);
   }
   
-  // スケーリングする場合のみ表示
+  /* スケーリングする場合のみ表示
   if ( C.Scaling_Factor != 1.0 )
   {
     fprintf(fp,"\n\tScaling Factor           :   %f\n", C.Scaling_Factor);
@@ -3471,7 +3471,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       fprintf(fp,"\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
     }
     Exit(0);
-  }
+  }*/
   
   
   TIMING_stop(tm_polygon_load);
