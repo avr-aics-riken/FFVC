@@ -1,18 +1,23 @@
 -----
-PMlib 1.3
+PMlib 1.4
 
 Corresponding author Kenji Ono 	keno@riken.jp
 Advanced Visualization Research Team, AICS, RIKEN
 
 written by Soichiro Suzuki, IIS, The University of Tokyo
 
-July 2012
+Sep. 2012
 -----
+
+
 
 インストール方法
 ----------------
 
-src/Makefileのコメントを参照ください．
+1) トップディレクトリのmake_settingのマクロを編集
+2) トップディレクトリでmakeを実施
+
+
 
 
 ファイル・ディレクトリ構成
@@ -29,6 +34,10 @@ doc/            ドキュメント
 include/        ヘッダファイル
 
 lib/            コンパイル済みのアーカイブ格納ディレクトリ
+
+make_setting    コンパイル用の環境マクロ設定
+
+Makefile
 
 README.txt      このファイル
 

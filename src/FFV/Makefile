@@ -15,6 +15,16 @@ include make_setting
 
 all:
 	( \
+	cd ../PMlib-1.3/src; \
+	make \
+		CXX='$(CXX)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+    MPI_DIR='$(MPI_DIR)' \
+	)
+
+	( \
 	cd ../IP; \
 	make \
 		CXX='$(CXX)' \
@@ -30,6 +40,7 @@ all:
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
 	)
+  
 	( \
 	cd ../FB; \
 	make \
@@ -46,6 +57,7 @@ all:
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
 	)
+  
 	( \
 	cd ../F_CORE; \
 	make \
@@ -63,6 +75,7 @@ all:
 		RM='$(RM)' \
     CPM_DIR='$(CPM_DIR)' \
 	)
+  
 	( \
 	make -f MakeFFV \
 		TARGET='$(TARGET)' \
