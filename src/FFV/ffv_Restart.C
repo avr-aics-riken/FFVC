@@ -330,12 +330,12 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
   bk[1] = m_bk[1];
   bk[2] = m_bk[2];
   
-  fb_interp_coarse_s_(d_p, size, &guide, d_r_p, st, bk);
-  fb_interp_coarse_v_(d_v, size, &guide, d_r_v, st, bk);
+  fb_interp_coarse0_s_(d_p, size, &guide, d_r_p, st, bk);
+  fb_interp_coarse0_v_(d_v, size, &guide, d_r_v, st, bk);
   
   if ( C.isHeatProblem() )
   {
-    fb_interp_coarse_s_(d_t, size, &guide, d_r_t, st, bk);
+    fb_interp_coarse0_s_(d_t, size, &guide, d_r_t, st, bk);
   }
   
 }

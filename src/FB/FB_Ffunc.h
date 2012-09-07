@@ -150,18 +150,32 @@ extern "C" {
                            REAL_TYPE* v, 
                            double* flop);
   
-  void fb_interp_coarse_s_(REAL_TYPE* dst, 
+  void fb_interp_coarse0_s_(REAL_TYPE* dst,
                            int* sz, 
                            int* g, 
                            REAL_TYPE* src, 
                            int* st, 
                            int* bk);
   
-  void fb_interp_coarse_v_(REAL_TYPE* dst, 
+  void fb_interp_coarse0_v_(REAL_TYPE* dst,
                            int* sz, 
                            int* g, 
                            REAL_TYPE* src, 
                            int* st, 
+                           int* bk);
+  
+  void fb_interp_coarse_s_(REAL_TYPE* dst,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* src,
+                           int* st,
+                           int* bk);
+  
+  void fb_interp_coarse_v_(REAL_TYPE* dst,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* src,
+                           int* st,
                            int* bk);
   
   void fb_prs_d2nd_       (REAL_TYPE* s, 

@@ -680,7 +680,8 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 平均値のロード
-  if ( C.Start == restart ) {
+  if ( C.Start == restart )
+  {
     TIMING_start(tm_restart);
     if ( C.Mode.Average == ON ) Restart_avrerage(fp, flop_task);
     TIMING_stop(tm_restart);

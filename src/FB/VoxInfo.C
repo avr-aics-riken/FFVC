@@ -3551,7 +3551,6 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
             q = offBit(q, FACING_W);
             q = onBit(q, VBC_UWD);
             g++;
-            //printf("X- : %d %d %d\n",i,j,k);
           }
           
           // X+
@@ -3561,7 +3560,6 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
             q = offBit(q, FACING_E);
             q = onBit(q, VBC_UWD);
             g++;
-            //printf("X+ : %d %d %d\n",i,j,k);
           }
           
           // Y-
@@ -4958,6 +4956,10 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   }
   
   NoVoxID = b-1;
+  
+  for (int i=1; i<=NoVoxID; i++) {
+    printf("id = %d\n", colorList[i]);
+  }
   
   return NoVoxID;
 }

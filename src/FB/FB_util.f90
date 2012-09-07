@@ -14,6 +14,152 @@
 !<
 
 !> ********************************************************************
+!! @brief 粗い格子から密な格子への補間（ゼロ次）
+!! @param dst 密な格子系
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param src 粗い格子系
+!! @param st 粗い格子の開始インデクス
+!! @param bk ブロック数
+!<
+subroutine fb_interp_coarse0_s(dst, sz, g, src, st, bk)
+implicit none
+integer                                                      ::  i, j, k          ! 粗い格子のループインデクス
+integer                                                      ::  ii, jj, kk       ! 密な格子のループインデクス
+integer                                                      ::  ix, jx, kx, g, si, sj, sk
+integer, dimension(3)                                        ::  sz, st, bk
+real                                                         ::  q
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
+real, dimension(1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+si = st(1)
+sj = st(2)
+sk = st(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, si, sj, sk) &
+!$OMP PRIVATE(q) &
+!$OMP PRIVATE(ii, jj, kk)
+
+!$OMP DO SCHEDULE(static)
+
+do k=sk, sk+kx/2-1
+kk = 2*k - (2*k-1)/kx * kx
+do j=sj, sj+jx/2-1
+jj = 2*j - (2*j-1)/jx * jx
+do i=si, si+ix/2-1
+ii = 2*i - (2*i-1)/ix * ix
+
+q = src(i  , j  , k  )
+
+dst(ii-1, jj-1, kk-1) = q
+dst(ii  , jj-1, kk-1) = q
+dst(ii-1, jj  , kk-1) = q
+dst(ii  , jj  , kk-1) = q
+dst(ii-1, jj-1, kk  ) = q
+dst(ii  , jj-1, kk  ) = q
+dst(ii-1, jj  , kk  ) = q
+dst(ii  , jj  , kk  ) = q
+
+end do
+end do
+end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine fb_interp_coarse0_s
+
+!> ********************************************************************
+!! @brief 粗い格子から密な格子への補間（ゼロ次）
+!! @param dst 密な格子系
+!! @param sz 配列長
+!! @param g ガイドセル長
+!! @param src 粗い格子系
+!! @param st 粗い格子の開始インデクス
+!! @param bk ブロック数
+!<
+subroutine fb_interp_coarse0_v(dst, sz, g, src, st, bk)
+implicit none
+integer                                                         ::  i, j, k          ! 粗い格子のループインデクス
+integer                                                         ::  ii, jj, kk       ! 密な格子のループインデクス
+integer                                                         ::  ix, jx, kx, g, si, sj, sk
+integer, dimension(3)                                           ::  sz, st, bk
+real                                                            ::  q1, q2, q3
+real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
+real, dimension(3, 1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
+
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+si = st(1)
+sj = st(2)
+sk = st(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, si, sj, sk) &
+!$OMP PRIVATE(ii, jj, kk, q1, q2, q3)
+
+!$OMP DO SCHEDULE(static)
+
+do k=sk, sk+kx/2-1
+kk = 2*k - (2*k-1)/kx * kx
+do j=sj, sj+jx/2-1
+jj = 2*j - (2*j-1)/jx * jx
+do i=si, si+ix/2-1
+ii = 2*i - (2*i-1)/ix * ix
+
+!   u
+q1 = src(1, i  , j  , k  )
+q2 = src(2, i  , j  , k  )
+q3 = src(3, i  , j  , k  )
+
+
+dst(1, ii-1, jj-1, kk-1) = q1
+dst(1, ii  , jj-1, kk-1) = q1
+dst(1, ii-1, jj  , kk-1) = q1
+dst(1, ii  , jj  , kk-1) = q1
+dst(1, ii-1, jj-1, kk  ) = q1
+dst(1, ii  , jj-1, kk  ) = q1
+dst(1, ii-1, jj  , kk  ) = q1
+dst(1, ii  , jj  , kk  ) = q1
+
+dst(2, ii-1, jj-1, kk-1) = q2
+dst(2, ii  , jj-1, kk-1) = q2
+dst(2, ii-1, jj  , kk-1) = q2
+dst(2, ii  , jj  , kk-1) = q2
+dst(2, ii-1, jj-1, kk  ) = q2
+dst(2, ii  , jj-1, kk  ) = q2
+dst(2, ii-1, jj  , kk  ) = q2
+dst(2, ii  , jj  , kk  ) = q2
+
+dst(3, ii-1, jj-1, kk-1) = q3
+dst(3, ii  , jj-1, kk-1) = q3
+dst(3, ii-1, jj  , kk-1) = q3
+dst(3, ii  , jj  , kk-1) = q3
+dst(3, ii-1, jj-1, kk  ) = q3
+dst(3, ii  , jj-1, kk  ) = q3
+dst(3, ii-1, jj  , kk  ) = q3
+dst(3, ii  , jj  , kk  ) = q3
+
+end do
+end do
+end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine fb_interp_coarse0_v
+
+
+
+!> ********************************************************************
 !! @brief 粗い格子から密な格子への補間
 !! @param dst 密な格子系
 !! @param sz 配列長
