@@ -44,5 +44,5 @@ TP_DIR      = /usr/local/textparser
 #RANLIB      = ranlib
 #RM          = \rm -f
 #CXX         = mpixlcxx_r
-#MPI_DIR     =
+#MPI_DIR     = /bgsys/drivers/ppcfloor/comm
 #TP_DIR      = 

@@ -41,5 +41,5 @@ CXX         = icpc
 #AR          = ar crv
 #RANLIB      = ranlib
 #RM          = \rm -f
-#MPI_DIR     =
+#MPI_DIR     = /bgsys/drivers/ppcfloor/comm
 #CXX         = mpixlcxx_r
