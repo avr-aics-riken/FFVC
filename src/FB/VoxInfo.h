@@ -137,14 +137,31 @@ private:
                               const int bc_dir);
   
   
+  /**
+   * @brief 熱境界条件のBCエントリをエンコードする
+   * @retval カウントしたセル数
+   * @param [in]     order  CompoListのエントリ
+   * @param [in]     target 対象セルID
+   * @param [in]     mid    セルID配列
+   * @param [in,out] bcd    BCindex ID
+   * @param [in,out] bh1    BCindex H1
+   * @param [in,out] bh2    BCindex H2
+   * @param [in]     deface フラグエンコードの対象セルID
+   * @param [in]     flag   断熱ビットのon(true)/off(false)
+   * @note
+   *   - targetとdefaceで挟まれる面に対して適用
+   *   - 対象面の断熱ビットはflagで判断
+   */
   unsigned long encQface(const int order,
-                         const int id, 
+                         const int target,
                          const int* mid, 
                          int* bcd, 
                          int* bh1, 
                          int* bh2, 
                          const int deface, 
                          const bool flag);
+  
+  
   
   unsigned long encQfaceHT_B(const int order, 
                              const int id, 
@@ -367,14 +384,14 @@ public:
   
   
   /**
-   * @brief VBCのbboxを取得する
+   * @brief IBCのbboxを取得する
    * @param [in]  tgt コンポーネント配列のID
    * @param [in]  bid カットID情報
    * @param [in]  cut カット情報
    * @param [out] st  コンポーネントbboxの開始セル
    * @param [out] ed  コンポーネントbboxの終端セル
    */
-  bool findVIBCbbox(const int tgt, const int* bid, const float* cut, int* st, int* ed);
+  bool find_IBC_bbox(const int tgt, const int* bid, const float* cut, int* st, int* ed);
   
   
   //@fn const int* getColorList() const
@@ -457,8 +474,12 @@ public:
    @param [in]     BC  SetBCクラスのポインタ
    @param [in]     kos KindOfSolver
    @param [in,out] cmp CompoList
+   * @param [in]     isCDS CDS->true
+   * @param [in]     cut 距離情報
+   * @param [in]     cut_id カット点ID
    */
-  void setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp);
+  void setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp,
+                   bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   
   
   /**

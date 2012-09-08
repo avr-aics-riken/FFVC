@@ -354,6 +354,12 @@ private:
   
   
   /**
+   * @brief ポリゴンのカット情報からIBCのboxをセット
+   */
+  void Bbox_IBC();
+  
+  
+  /**
    * @brief ファイルのオープンチェック
    */
   bool checkFile(string fname);
@@ -925,12 +931,6 @@ private:
    * @param [in,out] flop 浮動小数演算数
    */
   void Variation_Space(double* avr, double* rms, double& flop);
-  
-  
-  /**
-   * @brief ポリゴンのカット情報からVBCのboxをセット
-   */
-  void VIBC_Bbox_from_Cut();
   
   
   /**

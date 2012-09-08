@@ -372,10 +372,7 @@ int FFV::Initialize(int argc, char **argv)
     return -1;
 	}
 
-  
 
-  // チェック出力　デバッグ
-  if (C.FIO.IO_Voxel == Control::Sphere_SVX) Ex->writeSVX(d_mid, &C);
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
@@ -438,10 +435,9 @@ int FFV::Initialize(int argc, char **argv)
   // コンポーネント情報を保存
   //setLocalCmpIdx_Binary();
   
-  // ポリゴンからVBCのコンポーネント情報を設定
-  VIBC_Bbox_from_Cut();
+  // ポリゴンからBCのコンポーネント情報を設定
+  Bbox_IBC();
   
-
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   VoxEncode();
@@ -539,10 +535,6 @@ int FFV::Initialize(int argc, char **argv)
   // 温度計算の場合の初期値指定
   if ( C.isHeatProblem() )
   {
-    Hostonly_
-    {
-      cout <<  "now heat probrem *** initialize" << endl;
-    }
     B.get_Medium_InitTemp(cmp);
   }
   
@@ -598,19 +590,14 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) ) MO.setInnerBoundary(cmp, C.NoBC);
   
   
-  // MonitorListの場合に，svxファイルを出力する．
-  if ( C.Sampling.log == ON )
+  // 性能測定モードがオフのときのみ，出力指定，あるいはMonitorListの場合に，svxファイルを出力する．
+  if ( C.Hide.PM_Test == OFF )
   {
-    Hostonly_
+    if ( (C.Sampling.log == ON) || (C.FIO.IO_Voxel == Control::Sphere_SVX) )
     {
-      printf(    "\n\twrite ID which includes Monitor List ID\n\n");
-      fprintf(fp,"\n\twrite ID which includes Monitor List ID\n\n");
+      Ex->writeSVX(d_mid, &C);
     }
-    
-    // 性能測定モードがオフのときのみ出力
-    if ( C.Hide.PM_Test == OFF ) Ex->writeSPH(d_mid, &C);
   }
-  
   
   
   // mid[]を解放する  ---------------------------
@@ -829,6 +816,47 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   return 1;
+}
+
+
+
+// #################################################################
+// ポリゴンのカット情報からVBCのboxをセット
+void FFV::Bbox_IBC()
+{
+  int f_st[3], f_ed[3], len[3];
+  
+  for (int n=1; n<=C.NoBC; n++) {
+    
+    int tg = cmp[n].getMatOdr();
+    
+    // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+    if ( V.find_IBC_bbox(tg, d_bid, d_cut, f_st, f_ed) )
+    {
+      len[0] = f_ed[0] - f_st[0] + 1;
+      len[1] = f_ed[1] - f_st[1] + 1;
+      len[2] = f_ed[2] - f_st[2] + 1;
+      
+      for (int d=0; d<3; d++)
+      {
+        int tmp_st=0;
+        int tmp_ed=0;
+        
+        EnlargeIndex(tmp_st, tmp_ed, f_st[d], len[d], size[d], d, tg);
+        
+        f_st[d] = tmp_st;
+        f_ed[d] = tmp_ed;
+      }
+      
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEns(ON);
+    }
+    else
+    {
+      cmp[n].setEns(OFF);
+    }
+  }
+  
 }
 
 
@@ -2234,6 +2262,7 @@ void FFV::init_Interval()
     C.Interval[Interval_Manager::tg_average].normalizeInterval(C.Tscale);
     C.Interval[Interval_Manager::tg_accelra].normalizeInterval(C.Tscale);
     C.Interval[Interval_Manager::tg_avstart].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_sampled].normalizeInterval(C.Tscale);
   }
   
   // Reference frame
@@ -2243,20 +2272,26 @@ void FFV::init_Interval()
   
   // インターバルの初期化
   double m_dt    = DT.get_DT();
-  double m_tm    = CurrentTime;  // 設定した？
+  double m_tm    = CurrentTime;  // Restart()で設定
   unsigned m_stp = CurrentStep;
   
-  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) )  // 基本履歴のコンソールへの出力
+  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute, C.Tscale) )
+  {
+    Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
+    Exit(0);
+  }
+  
+  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console, C.Tscale) )  // 基本履歴のコンソールへの出力
   {
     Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) )  // 履歴のファイルへの出力
+  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history, C.Tscale) )  // 履歴のファイルへの出力
   {
     Hostonly_ printf("\t Error : Interval for History output is asigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) )  // 瞬時値ファイル
+  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant, C.Tscale) )  // 瞬時値ファイル
   {
     Hostonly_ printf("\t Error : Interval for Instantaneous output is asigned to zero.\n");
     Exit(0);
@@ -2265,7 +2300,7 @@ void FFV::init_Interval()
   {
     // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
     
-    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart) )  // 平均値開始
+    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart, C.Tscale) )  // 平均値開始
     {
       Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
       Exit(0);
@@ -2274,14 +2309,14 @@ void FFV::init_Interval()
     
   if ( C.Sampling.log == ON )
   {
-    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) )  // サンプリング履歴
+    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled, C.Tscale) )  // サンプリング履歴
     {
       Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
       Exit(0);
     }    
   }
   
-  
+  Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
   
 }
 
@@ -3304,17 +3339,18 @@ void FFV::setParameters()
   // 無次元時間積分幅
   deltaT = DT.get_DT();
   
-  // Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
+  
+  /* Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
   if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(0, 0.0, DT.get_DT(), Interval_Manager::tg_compute, 
                                                              (double)(C.RefLength/C.RefVelocity)) ) 
   {
     Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
     Exit(0);
   }
+  
   Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
+  */
   
-  
-  // C.Interval[Interval_Manager::tg_compute].initTrigger()で初期化後
   C.setParameters(mat, cmp, &RF, BC.export_OBC());
   
   
@@ -3810,51 +3846,6 @@ void FFV::setVOF()
 
 
 // #################################################################
-// ポリゴンのカット情報からVBCのboxをセット
-void FFV::VIBC_Bbox_from_Cut()
-{
-  int f_st[3], f_ed[3], len[3];
-  
-  for (int n=1; n<=C.NoBC; n++) {
-    
-    if ( cmp[n].isVBC_IO() ) // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
-    {
-      int tg = cmp[n].getMatOdr();
-      
-      // インデクスの計算 > インデクスの登録はVoxEncode()で、コンポーネント領域のリサイズ後に行う
-      if ( V.findVIBCbbox(tg, d_bid, d_cut, f_st, f_ed) )
-      {
-        len[0] = f_ed[0] - f_st[0] + 1;
-        len[1] = f_ed[1] - f_st[1] + 1;
-        len[2] = f_ed[2] - f_st[2] + 1;
-        
-        for (int d=0; d<3; d++)
-        {
-          int tmp_st=0;
-          int tmp_ed=0;
-          
-          EnlargeIndex(tmp_st, tmp_ed, f_st[d], len[d], size[d], d, tg);
-          
-          f_st[d] = tmp_st;
-          f_ed[d] = tmp_ed;
-        }
-        
-        cmp[n].setBbox(f_st, f_ed);
-        cmp[n].setEns(ON);
-      }
-      else
-      {
-        cmp[n].setEns(OFF);
-      }
-      
-    }
-  }
-  
-}
-
-
-
-// #################################################################
 // BCIndexにビット情報をエンコードする
 void FFV::VoxEncode()
 {
@@ -3920,8 +3911,17 @@ void FFV::VoxEncode()
 // ##########
   
   // BCIndexT に温度計算のビット情報をエンコードする -----
-  if ( C.isHeatProblem() ) {
-    V.setBCIndexH(d_bcd, d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp);
+  if ( C.isHeatProblem() )
+  {
+    if ( C.isCDS() )
+    {
+      V.setBCIndexH(d_bcd, d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp, true, d_cut, d_bid);
+    }
+    else // binary
+    {
+      V.setBCIndexH(d_bcd, d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp);
+    }
+    
     
 // ##########
 #if 0

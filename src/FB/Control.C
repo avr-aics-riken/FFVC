@@ -3348,15 +3348,9 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // Calculation time/step
-  if ( !Interval[Interval_Manager::tg_compute].isStep() )
-  {
-    itm = Interval[Interval_Manager::tg_compute].getIntervalTime();
-    fprintf(fp,"\t     Calculation Time         :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
-  }
-  else
-  {
-    fprintf(fp,"\t     Calculation Step         :   %12d\n", Interval[Interval_Manager::tg_compute].getIntervalStep());
-  }
+  itm = Interval[Interval_Manager::tg_compute].getIntervalTime();
+  fprintf(fp,"\t     Calculation Time         :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
+  fprintf(fp,"\t     Calculation Step         :   %12d\n", Interval[Interval_Manager::tg_compute].getIntervalStep());
   
   
   
@@ -3733,9 +3727,6 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
  - 熱対流　　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
  - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
  - 固体熱伝導　有次元　（代表長さ，温度拡散係数 > Peclet=1）？
- @see 
- - bool Control::getXML_Para_ND(void)
- - void Control::getXML_Para_Init(void)
  */
 void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO)
 {
@@ -3745,9 +3736,12 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   
   // get reference values
   for (int n=NoBC+1; n<=NoCompo; n++) {
-    if ( cmp[n].getMatOdr() == RefMat ) {
+    
+    if ( cmp[n].getMatOdr() == RefMat )
+    {
       m = cmp[n].getMatOdr();
-      if ( mat[m].getState() == FLUID ) {
+      if ( mat[m].getState() == FLUID )
+      {
         rho   = mat[m].P[p_density];
         mu    = mat[m].P[p_viscosity];
         nyu   = mat[m].P[p_kinematic_viscosity];
@@ -3756,7 +3750,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
         beta  = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
         snd_spd = mat[m].P[p_sound_of_speed];
       }
-      else {
+      else
+      {
         rho   = mat[m].P[p_density];
         cp    = mat[m].P[p_specific_heat];
         lambda = mat[m].P[p_thermal_conductivity];
@@ -3771,30 +3766,38 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   RefLambda       = lambda;
   RefSoundSpeed   = snd_spd;
   
-  if (KindOfSolver == SOLID_CONDUCTION) {
-    if (Unit.Param == DIMENSIONAL) {
+  if (KindOfSolver == SOLID_CONDUCTION)
+  {
+    if (Unit.Param == DIMENSIONAL)
+    {
       Peclet   = 1.0;
     }
-    else {
+    else
+    {
       Hostonly_ printf("Error : Solid conduction(ND)\n");
 			Exit(0);
     }
   }
-  else if (KindOfSolver == FLOW_ONLY) {
-    if (Unit.Param == DIMENSIONAL) {
+  else if (KindOfSolver == FLOW_ONLY)
+  {
+    if (Unit.Param == DIMENSIONAL)
+    {
       Reynolds = RefVelocity * RefLength / nyu;
       Prandtl  = rho * cp * nyu / lambda;
     }
   }
 	else if (KindOfSolver==THERMAL_FLOW) {
-    switch (Mode.Buoyancy) {
+    switch (Mode.Buoyancy)
+    {
       case NO_BUOYANCY:
-        if (Unit.Param == DIMENSIONAL) {
+        if (Unit.Param == DIMENSIONAL)
+        {
           Reynolds = RefVelocity * RefLength / nyu;
           Prandtl  = rho * cp * nyu / lambda;
           Peclet   = Prandtl * Reynolds;
         }
-        else {
+        else
+        {
           Hostonly_ printf("Error : Thermal flow /wo buoyancy(ND)\n");
 					Exit(0);
         }
@@ -3802,7 +3805,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
         
       case BOUSSINESQ:
       case LOW_MACH:
-        if (Unit.Param == DIMENSIONAL) {
+        if (Unit.Param == DIMENSIONAL)
+        {
           Reynolds = RefVelocity * RefLength / nyu;
           Prandtl  = rho * cp * nyu / lambda;
           Peclet   = Prandtl * Reynolds;
@@ -3812,18 +3816,22 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
           Grashof  = c1 * c2 * c3;
           Rayleigh = Prandtl * Grashof;
         }
-        else {
+        else
+        {
           Hostonly_ printf("Error : Thermal flow /w buoyancy(ND)\n");
 					Exit(0);
         }
         break;
     }
   }
-  else if (KindOfSolver==THERMAL_FLOW_NATURAL) {
-    switch (Mode.Buoyancy) {
+  else if (KindOfSolver==THERMAL_FLOW_NATURAL)
+  {
+    switch (Mode.Buoyancy)
+    {
       case BOUSSINESQ:
       case LOW_MACH:
-        if (Unit.Param == DIMENSIONAL) {
+        if (Unit.Param == DIMENSIONAL)
+        {
           Prandtl  = rho * cp * nyu / lambda;
           Reynolds = RefVelocity * RefLength / nyu;
 					Peclet   = Prandtl * Reynolds;
@@ -3833,11 +3841,13 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
           Grashof  = c1 * c2 * c3;
           Rayleigh = Prandtl * Grashof;
         }
-        else {
+        else
+        {
           Hostonly_ printf("Error : Natural Convection(ND)\n");
 					Exit(0);
         }
         break;
+        
       default:
         break;
 		}
@@ -3867,23 +3877,30 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   
   // コンポーネントの指定速度
   for (int n=1; n<=NoBC; n++) {
-    if ( (cmp[n].getType()==SPEC_VEL_WH) || (cmp[n].getType()==SPEC_VEL) ) {
-			if ( cmp[n].isPolicy_Massflow() ) { //ポリシーが流量の場合
-				if ( Unit.Param == DIMENSIONAL ) {
+    if ( (cmp[n].getType()==SPEC_VEL_WH) || (cmp[n].getType()==SPEC_VEL) )
+    {
+			if ( cmp[n].isPolicy_Massflow() ) //ポリシーが流量の場合
+      {
+				if ( Unit.Param == DIMENSIONAL )
+        {
 					cmp[n].set_Velocity( cmp[n].get_Massflow() / cmp[n].area );  // attenltion! Velocity and MassFlow use same variable
 				}
-				else {
+				else
+        {
 					cmp[n].set_Velocity( cmp[n].get_Massflow()*RefVelocity*RefLength*RefLength / cmp[n].area );
 				}
 			}
       
 			// 流量指定のときのみ，ca[]に有次元速度パラメータを保存  >> 速度指定の場合には，parseBC::getXML_IBC_SpecVel()で設定済み
-      if ( cmp[n].isPolicy_Massflow() ) {
-        if ( Unit.Param != DIMENSIONAL ) {
+      if ( cmp[n].isPolicy_Massflow() )
+      {
+        if ( Unit.Param != DIMENSIONAL )
+        {
           Hostonly_ stamped_printf("Error: Non-dimensional condition\n");
           Exit(0);
         }
-        else {
+        else
+        {
           cmp[n].ca[CompoList::amplitude] = cmp[n].get_Velocity();
           cmp[n].ca[CompoList::bias] = cmp[n].ca[CompoList::bias] / cmp[n].area; // dimensional velocity
         }
@@ -3897,12 +3914,17 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   vol = a*a*a;
   
   for (int n=1; n<=NoBC; n++) {
-    if ( cmp[n].getType()==HEAT_SRC ) {
+    
+    if ( cmp[n].getType()==HEAT_SRC )
+    {
       m = cmp[n].getMatOdr();
-      if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt) {
+      
+      if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt)
+      {
         cmp[n].set_HeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
-      else { // 発熱密度
+      else // 発熱密度
+      {
         cmp[n].set_HeatValue( cmp[n].get_HeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
     }
@@ -3912,7 +3934,9 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // C[0-2]; 有次元，C[3-5]; 無次元係数
   REAL_TYPE ki;
   for (int n=1; n<=NoBC; n++) {
-    if ( cmp[n].getType()==DARCY ) {
+    
+    if ( cmp[n].getType()==DARCY )
+    {
       m = cmp[n].getMatOdr();
       ki = (mat[m].P[p_viscosity]*RefLength) / (mat[m].P[p_density]*RefVelocity);
       cmp[n].ca[3] = ki / cmp[n].ca[0];
@@ -3924,7 +3948,9 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // Pressure Loss
   REAL_TYPE DensityOfMedium, cf[6];
   for (int n=1; n<=NoBC; n++) {
-    if ( cmp[n].getType()==HEX ) {
+    
+    if ( cmp[n].getType()==HEX )
+    {
       m = cmp[n].getMatOdr();
       for (int i=0; i<6; i++) cf[i] = cmp[n].ca[i];
       
@@ -3933,20 +3959,24 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
       cmp[n].set_CoefPrsLoss( cf[5] * RefDensity * RefVelocity * RefVelocity / RefLength );
       
       // Normalize
-      if ( cmp[n].getPrsUnit() == CompoList::unit_mmAq ) {
+      if ( cmp[n].getPrsUnit() == CompoList::unit_mmAq )
+      {
         // Water: T=300K, p=101.325kPa > 996.62 kg/m^3
         DensityOfMedium = 996.62;
         convertHexCoef(cf, DensityOfMedium);
       }
-      else if ( cmp[n].getPrsUnit() == CompoList::unit_mmHg ) {
+      else if ( cmp[n].getPrsUnit() == CompoList::unit_mmHg )
+      {
         // Mercury: T=300K > 13538 kg/m^3
         DensityOfMedium = 13538.0;
         convertHexCoef(cf, DensityOfMedium);
       }
-      else if ( cmp[n].getPrsUnit() == CompoList::unit_Pa ) {
+      else if ( cmp[n].getPrsUnit() == CompoList::unit_Pa )
+      {
         convertHexCoef(cf);
       }
-      else if ( cmp[n].getPrsUnit() == CompoList::unit_NonDimensional ) {
+      else if ( cmp[n].getPrsUnit() == CompoList::unit_NonDimensional )
+      {
         cf[4] /= RefVelocity; // 無次元の場合には単位変更のみ
         cf[5] *= (1e-3/RefLength);
       }
@@ -3959,7 +3989,9 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // 外部境界面の速度の指定パラメータを有次元化
   if ( Unit.Param == NONDIMENSIONAL ) {
     for (int n=0; n<NOFACE; n++) {
-      switch ( BO[n].get_Class() ) {
+      
+      switch ( BO[n].get_Class() )
+      {
         case OBC_WALL:
         case OBC_SPEC_VEL:
           BO[n].ca[CompoList::amplitude] *= RefVelocity;
@@ -3975,19 +4007,24 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   }
   
   // 外部境界面の圧力の有次元化
-  if ( Unit.Param == NONDIMENSIONAL ) {
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
     for (int n=0; n<NOFACE; n++) {
-      switch ( BO[n].get_Class() ) {
+      
+      switch ( BO[n].get_Class() )
+      {
         case OBC_OUTFLOW:
         case OBC_TRC_FREE:
-          if ( BO[n].get_pType() == P_DIRICHLET ) {
+          if ( BO[n].get_pType() == P_DIRICHLET )
+          {
             BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs); 
           }          
           break;
           
         case OBC_PERIODIC:
-          if ( BO[n].get_PrdcMode() != BoundaryOuter::prdc_Simple ) { // Dirichlet or Bidirectionalを指定の場合
-            BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs); 
+          if ( BO[n].get_PrdcMode() != BoundaryOuter::prdc_Simple ) // Dirichlet or Bidirectionalを指定の場合
+          {
+            BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs);
           }
           break;
           
@@ -3998,18 +4035,23 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   }
   
   // 初期条件の値の有次元化
-  if ( Unit.Param == NONDIMENSIONAL )  {
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
     iv.Pressure = FBUtility::convND2D_P(iv.Pressure, BasePrs, RefDensity, RefVelocity, Unit.Prs);
     iv.Density *= RefDensity;
 		iv.VecU    *= RefVelocity;
 		iv.VecV    *= RefVelocity;
 		iv.VecW    *= RefVelocity;
-    if ( isHeatProblem() ) {
+    
+    if ( isHeatProblem() )
+    {
 			iv.Temperature = FBUtility::convND2Kelvin(iv.Temperature, BaseTemp, DiffTemp); //内部表現をKelvinに
     }
 	}
-	else {
-		if ( isHeatProblem() ) {
+	else
+  {
+		if ( isHeatProblem() )
+    {
 			iv.Temperature = FBUtility::convTemp2K(iv.Temperature, Unit.Temp);
     }
 	}

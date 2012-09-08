@@ -98,7 +98,7 @@ int FFV::Loop(const unsigned step)
   if ( C.isHeatProblem() ) 
   {
     TIMING_start(tm_heat_sct);
-    //PS_E_Binary();
+    PS_Binary();
     TIMING_stop(tm_heat_sct, 0.0);
   }
   
@@ -243,14 +243,15 @@ int FFV::Loop(const unsigned step)
     {
       if (CurrentStep >= C.Interval[Interval_Manager::tg_avstart].getIntervalStep()) j_flag=true;
     }
-    else {
+    else
+    {
       if (CurrentTime >= C.Interval[Interval_Manager::tg_avstart].getIntervalTime()) j_flag=true;
     }
     
     if ( j_flag ) 
     {
       // 初期化は1回だけ
-      if ( !C.Interval[Interval_Manager::tg_average].initTrigger(CurrentStep, CurrentTime, DT.get_DT(), Interval_Manager::tg_average) ) Exit(0);
+      if ( !C.Interval[Interval_Manager::tg_average].initTrigger(CurrentStep, CurrentTime, DT.get_DT(), Interval_Manager::tg_average, C.Tscale) ) Exit(0);
       if ( C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) ) 
       {
         TIMING_start(tm_file_out);
@@ -363,7 +364,7 @@ int FFV::Loop(const unsigned step)
   // コンポーネント履歴
   if ( C.Sampling.log == ON ) 
   {
-    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) ) 
+    if ( C.Interval[Interval_Manager::tg_history].isTriggered(CurrentStep, CurrentTime) ) 
     {
       TIMING_start(tm_compo_monitor);
       flop_count=0.0;
@@ -379,7 +380,8 @@ int FFV::Loop(const unsigned step)
   // サンプリング履歴
   if ( C.Sampling.log == ON ) 
   {
-    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) ) {
+    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
+    {
       TIMING_start(tm_sampling);
       MO.sampling();
       TIMING_stop(tm_sampling, 0.0);
@@ -398,7 +400,8 @@ int FFV::Loop(const unsigned step)
   // 発散時の打ち切り
   if ( CurrentStep > 1 ) 
   {
-    if ( (convergence_rate > 100.0) ) {
+    if ( (convergence_rate > 100.0) )
+    {
       Hostonly_ {
         printf      ("\tForced termination : converegence rate >> 100.0\n");
         fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
@@ -408,15 +411,16 @@ int FFV::Loop(const unsigned step)
   }
   
   // 計算時間がtimeにより指定されている場合の終了判断
-  if ( !C.Interval[Interval_Manager::tg_compute].isStep() ) {
-    //if ( C.Interval[Interval_Manager::tg_compute].getIntervalTime() < CurrentTime ) {
-    if ( C.Interval[Interval_Manager::tg_compute].isTriggered(CurrentStep, CurrentTime) ) {
+  if ( !C.Interval[Interval_Manager::tg_compute].isStep() )
+  {
+    if ( C.Interval[Interval_Manager::tg_compute].getIntervalTime() < CurrentTime )
+    {
       Hostonly_ 
       {
         printf      ("\tFinish : Time = %e\n", CurrentTime);
         fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime);
       }
-      return (0);
+      return 0;
     }
   }
   

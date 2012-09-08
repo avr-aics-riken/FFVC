@@ -30,9 +30,10 @@
 !! @param wall_type 壁面条件 (0=no_slip, 1=slip)
 !! @param bd BCindex ID
 !! @param cvf コンポーネント体積率
-!! @param[out] flop
+!! @param [in]  vcs_coef 粘性項の係数
+!! @param [out] flop
 !<
-    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, flop)
+    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, vcs_coef, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
@@ -43,7 +44,7 @@
     real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
     real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
     real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-    real                                                      ::  ck, dh, dh1, dh2, vcs
+    real                                                      ::  ck, dh, dh1, dh2, vcs, vcs_coef
     real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4, tmp1, tmp2
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
@@ -75,6 +76,9 @@
     else
       vcs = 1.0
     endif
+
+    ! vcs = 1.0 (Euler Explicit) / 0.5 (CN)
+    vcs = vcs * vcs_coef
     
     ! 参照座標系の速度
     u_ref = v00(1)

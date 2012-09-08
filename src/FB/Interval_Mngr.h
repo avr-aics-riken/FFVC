@@ -13,7 +13,7 @@
 
 /** 
  * @file   Interval_Mngr.h
- * @brief  FlowBase Interval_Manager class Header 出力ファイルおよび計算時間のタイミングを管理する
+ * @brief  FlowBase Interval_Manager class Header 出力ファイルおよび計算時間のタイミングを無次元で管理する
  * @author kero
  */
 
@@ -79,7 +79,7 @@ public:
    * @param [in] m_id   管理対象を示すID
    * @param [in] tscale タイムスケール(デフォルト 0.0)
    */
-  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale=0.0);
+  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale);
   
   
   /**

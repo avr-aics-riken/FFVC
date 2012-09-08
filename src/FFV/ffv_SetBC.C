@@ -1062,7 +1062,6 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
     
     if ( obc[face].get_Class() == OBC_PERIODIC )
     {
-      mark();
       int pm = obc[face].get_PrdcMode();
       if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
       { // BoundaryOuter::prdc_Driverに対しては処理不要

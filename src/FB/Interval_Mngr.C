@@ -64,6 +64,7 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
   delta_t = m_dt;
   id = m_id;
   
+  
   // 平均値トリガーの場合には，初期化は一度だけを保証し，初期化済みの場合はなにもしない
   if ( id == tg_average )
   {
@@ -96,19 +97,18 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
     {
       next_tm = floor(tm/intvl_tm + 1.0)*intvl_tm; 
     }
-    
-    // フレームワークに対するダミー用の値をいれておく
-    if ( intvl_step == 0 )
+  }
+  
+  // 全計算時間は，step/timeの両方で制御
+  if ( id == tg_compute )
+  {
+    if ( mode == By_step )
     {
-      if ( id == tg_compute )
-      {
-        if ( tscale == 0.0 ) Exit(0);
-        intvl_step = intvl_tm/(delta_t*tscale) + 1;
-      }
-      else
-      {
-        intvl_step = 1; // 必ず1を入れておくこと．フレームワーク側のタイミング管理を常にtrueにするため．
-      }
+      intvl_tm = (double)(intvl_step+1) * delta_t;
+    }
+    else
+    {
+      intvl_step = (int)(intvl_tm/delta_t + 1);
     }
   }
   

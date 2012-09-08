@@ -215,8 +215,11 @@ void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
 
 // #################################################################
 // Adiabaticのパラメータを取得する
-void ParseBC::get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
 {
+  // 隣接セル媒質
+  get_Neighbor(label_base, n, cmp, mat);
+  
   // zero heat flux
   cmp[n].set_Heatflux( 0.0 );
 }
@@ -368,7 +371,7 @@ void ParseBC::get_IBC_HT_N(const string label_base, const int n, CompoList* cmp)
 
 // #################################################################
 // HeatTransfer_Sのパラメータを取得す
-void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
 {
   string label;
   
@@ -382,12 +385,15 @@ void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp)
   
   REAL_TYPE st = get_BCval_real(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  
+  // 隣接セル媒質
+  get_Neighbor(label_base, n, cmp, mat);
 }
 
 
 // #################################################################
 // HeatTransfer_SNのパラメータを取得する
-void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp)
+void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
 {
   string str;
   string label;
@@ -420,6 +426,9 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
 	  stamped_printf("\tParsing error : Invalid string value for 'Ref_Temp_Mode' : %s\n", str.c_str());
 	  Exit(0);
   }
+  
+  // 隣接セル媒質
+  get_Neighbor(label_base, n, cmp, mat);
   
   
   // Vertical and upper face values
@@ -1142,7 +1151,7 @@ void ParseBC::get_Medium_InitTemp(CompoList* cmp)
       }
     }
     
-    if ( flag == 0)
+    if ( flag == 0 )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
       Exit(0);
@@ -1151,6 +1160,37 @@ void ParseBC::get_Medium_InitTemp(CompoList* cmp)
   }
 }
 
+
+// #################################################################
+// 隣接セル媒質のパラメータを取得する
+void ParseBC::get_Neighbor(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
+{
+  string label = label_base + "/Neighbor_Medium";
+  string str;
+  
+  if ( !tpCntl->GetValue(label, &str) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
+    Exit(0);
+  }
+  
+  bool flag = false;
+  for (int i=1; i<=NoMedium; i++) {
+    if ( FBUtility::compare(str, mat[i].getLabel()) )
+    {
+      cmp[n].setDef(i);
+      flag = true;
+      break;
+    }
+  }
+  
+  if ( !flag )
+  {
+    Hostonly_ stamped_printf("\tError : Keyword '%s' is not listed on Medium_Table\n", str.c_str());
+    Exit(0);
+  }
+  
+}
 
 // #################################################################
 // 内部境界条件の法線ベクトル値を取得し，登録する
@@ -1880,7 +1920,7 @@ void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE*
       stamped_printf("\tParsing error : fail to get 'Amplitude' in '%s'\n", label_base.c_str());
       Exit(0);
     }
-    ca[CompoList::amplitude] = vel;
+    ca[CompoList::amplitude] = ct;
     
     label = label_base + "/frequency";
     
@@ -2028,8 +2068,8 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     cmp[odr].setLabel(str);
     
     
-    // 媒質IDの登録
-    for (int i=0; i<C->num_of_polygrp; i++) {
+    // ポリゴンの媒質IDの登録
+    for (int i=0; i<C->NoMedium; i++) {
       
       string m_pg = polyP[i].label;
       int m_id    = polyP[i].mat;
@@ -2097,7 +2137,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
       
       if ( tp == ADIABATIC ) 
       {
-        get_IBC_Adiabatic(label_leaf, odr, cmp);
+        get_IBC_Adiabatic(label_leaf, odr, cmp, mat);
         
       }
       else if ( tp == HEATFLUX ) 
@@ -2115,12 +2155,12 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
             break;
             
           case HT_S:
-            get_IBC_HT_S(label_leaf, odr, cmp);
+            get_IBC_HT_S(label_leaf, odr, cmp, mat);
 
             break;
             
           case HT_SN:
-            get_IBC_HT_SN(label_leaf, odr, cmp);
+            get_IBC_HT_SN(label_leaf, odr, cmp, mat);
 
             break;
             
@@ -2797,12 +2837,14 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
       }
     }
+    fprintf(fp, "\n");
+    
     fprintf(fp, "\t no                    Label   Mat  vert_lam_a  vert_lam_b vert_turb_a vert_turb_b  vert_Ra_cr   lwr_lam_a   lwr_lam_b  lwr_turb_a  lwr_turb_b   lwr_Ra_cr\n");
     for(n=1; n<=NoBC; n++) {
       if ( cmp[n].getHtype() == HT_SN ) {
         fprintf(fp, "\t%3d %24s %5d %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n", 
                 n, 
-                cmp[n].getLabel().c_str(), 
+                cmp[n].getLabel().c_str(),
                 cmp[n].getMatOdr(), 
                 cmp[n].ca[CompoList::vert_laminar_alpha], 
                 cmp[n].ca[CompoList::vert_laminar_beta], 

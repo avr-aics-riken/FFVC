@@ -3298,7 +3298,7 @@ void SklSolverCBC::setBbox_of_VIBC_Cut(VoxInfo* Vinfo, const unsigned* bv)
     if ( cmp[n].isVBC_IO() ) { // SPEC_VEL || SPEC_VEL_WH || OUTFLOW
 
       // インデクスの計算 > あとで，VoxEncode()でresize
-      Vinfo->findVIBCbbox(n, bv, f_st, f_ed);
+      Vinfo->find_IBC_bbox(n, bv, f_st, f_ed);
       
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);

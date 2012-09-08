@@ -2560,23 +2560,9 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
 
 
 // #################################################################
-/**
- @brief 熱境界条件のBCエントリをエンコードする
- @retval カウントしたセル数
- @param order CompoListのエントリ
- @param id 対象セルID
- @param mid セルID配列
- @param bcd BCindex ID
- @param bh1 BCindex H1
- @param bh2 BCindex H2
- @param deface 界面指定セルID
- @param flag 断熱ビットのon(true)/off(false)
- @note
- - idとdefaceで挟まれる面に対して適用
- - 対象面の断熱ビットはflagで判断
- */
+// 熱境界条件のBCエントリをエンコードする
 unsigned long VoxInfo::encQface(const int order,
-                                const int id,
+                                const int target,
                                 const int* mid,
                                 int* bcd,
                                 int* bh1,
@@ -2585,95 +2571,91 @@ unsigned long VoxInfo::encQface(const int order,
                                 const bool flag)
 {
   unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s1, s2, d;
+  size_t m_e, m_w, m_n, m_s, m_t, m_b;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int idd = id;
-  
+  int tg  = target;
+  int odr = order;
+  int def = deface;
+
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr, def) \
+            private(m_e, m_w, m_n, m_s, m_t, m_b) \
+            schedule(static) reduction(+:g)
+
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
         
-        if ( c_p == deface)
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int d  = bcd[m];
+        int s1 = bh1[m];
+        int s2 = bh2[m];
+        
+        if ( mid[m] == def ) // エンコード対象セル
         {
 #include "FindexS3D.h"
           
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          d  = bcd[m_p];
-          s1 = bh1[m_p];
-          s2 = bh2[m_p];
-          
           // X-
-          if ( c_w == idd )
+          if ( mid[m_w] == tg )
           {
-            d |= order; // エントリをエンコード
-            s1 |= (order << BC_FACE_W);  // エントリをエンコード
+            d |= odr; // エントリをエンコード
+            s1 |= (odr << BC_FACE_W);  // エントリをエンコード
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W );
             g++;
           }
           
           // X+
-          if ( c_e == idd )
+          if ( mid[m_e] == tg )
           {
-            d |= order;
-            s1 |= (order << BC_FACE_E);
+            d |= odr;
+            s1 |= (odr << BC_FACE_E);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
             g++;
           }
           
           // Y-
-          if ( c_s == idd )
+          if ( mid[m_s] == tg )
           {
-            d |= order;
-            s1 |= (order << BC_FACE_S);
+            d |= odr;
+            s1 |= (odr<< BC_FACE_S);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
             g++;
           }
           
           // Y+
-          if ( c_n == idd )
+          if ( mid[m_n] == tg )
           {
-            d |= order;
-            s1 |= (order << BC_FACE_N);
+            d |= odr;
+            s1 |= (odr << BC_FACE_N);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
             g++;
           }
           
           // Z-
-          if ( c_b == idd )
+          if ( mid[m_b] == tg )
           {
-            d |= order;
-            s1 |= (order << BC_FACE_B);
+            d |= odr;
+            s1 |= (odr << BC_FACE_B);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
             g++;
           }
           
           // Z+
-          if ( c_t == idd )
+          if ( mid[m_t] == tg )
           {
-            d |= order;
-            s1 |= (order << BC_FACE_T);
+            d |= odr;
+            s1 |= (odr << BC_FACE_T);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
             g++;
           }
           
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
+          bcd[m] = d;
+          bh1[m] = s1;
+          bh2[m] = s2;
         }
         
       }
@@ -2683,7 +2665,7 @@ unsigned long VoxInfo::encQface(const int order,
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -2707,7 +2689,7 @@ unsigned long VoxInfo::encQface(const int order,
  - 対象面の断熱ビットを非断熱(1)に戻しておく
  */
 unsigned long VoxInfo::encQfaceHT_S(const int order,
-                                    const int id,
+                                    const int target,
                                     const int* mid,
                                     int* bcd,
                                     int* bh1,
@@ -2715,121 +2697,109 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
                                     const int deface)
 {
   unsigned long g=0;
-  size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
-  int c_p, c_e, c_w, c_n, c_s, c_t, c_b;
-  int s_e, s_w, s_n, s_s, s_t, s_b;
-  int s1, s2, d;
+  size_t m_e, m_w, m_n, m_s, m_t, m_b;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int idd = id;
+  int tg  = target;
+  int odr = order;
+  int def = deface;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr, def) \
+            private(m_e, m_w, m_n, m_s, m_t, m_b) \
+            schedule(static) reduction(+:g)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        c_p = mid[m_p];
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
-        d  = bcd[m_p];
-        s1 = bh1[m_p];
-        s2 = bh2[m_p];
+        int d  = bcd[m];
+        int s1 = bh1[m];
+        int s2 = bh2[m];
         
-        if ( (c_p == deface) && IS_FLUID(s2) ) // 流体セルに対してのみ適用
+        if ( (mid[m] == def) && IS_FLUID(s2) ) // 流体セルに対してのみ適用
         {
 #include "FindexS3D.h"
           
-          c_e = mid[m_e];
-          c_w = mid[m_w];
-          c_n = mid[m_n];
-          c_s = mid[m_s];
-          c_t = mid[m_t];
-          c_b = mid[m_b];
-          
-          s_e = bh2[m_e];
-          s_w = bh2[m_w];
-          s_n = bh2[m_n];
-          s_s = bh2[m_s];
-          s_t = bh2[m_t];
-          s_b = bh2[m_b];
-          
           // X-
-          if ( c_w == idd ) // 指定IDで挟まれる面の候補
+          if ( mid[m_w] == tg ) // 指定IDで挟まれる面の候補
           {
-            if ( !IS_FLUID(s_w) )        // 隣接セルが固体であること
+            if ( !IS_FLUID(bh2[m_w]) )        // 隣接セルが固体であること
             {
-              d |= order; // エントリをエンコード
-              s1 |= (order << BC_FACE_W);  // エントリをエンコード
+              d |= odr; // エントリをエンコード
+              s1 |= (odr << BC_FACE_W);  // エントリをエンコード
               s2 = onBit(s2, ADIABATIC_W); // 断熱ビットを非断熱
               g++;
             }
           }
           
           // X+
-          if ( c_e == idd )
+          if ( mid[m_e] == tg )
           {
-            if ( !IS_FLUID(s_e) )
+            if ( !IS_FLUID(bh2[m_e]) )
             {
-              d |= order;
-              s1 |= (order << BC_FACE_E);
+              d |= odr;
+              s1 |= (odr << BC_FACE_E);
               s2 = onBit(s2, ADIABATIC_E);
               g++;
             }
           }
           
           // Y-
-          if ( c_s == idd )
+          if ( mid[m_s] == tg )
           {
-            if ( !IS_FLUID(s_s) )
+            if ( !IS_FLUID(bh2[m_s]) )
             {
-              d |= order;
-              s1 |= (order << BC_FACE_S);
+              d |= odr;
+              s1 |= (odr << BC_FACE_S);
               s2 = onBit(s2, ADIABATIC_S);
               g++;
             }
           }
           
           // Y+
-          if ( c_n == idd )
+          if ( mid[m_n] == tg )
           {
-            if ( !IS_FLUID(s_n) )
+            if ( !IS_FLUID(bh2[m_n]) )
             {
-              d |= order;
-              s1 |= (order << BC_FACE_N);
+              d |= odr;
+              s1 |= (odr << BC_FACE_N);
               s2 = onBit(s2, ADIABATIC_N);
               g++;
             }
           }
           
           // Z-
-          if ( c_b == idd )
+          if ( mid[m_b] == tg )
           {
-            if ( !IS_FLUID(s_b) )
+            if ( !IS_FLUID(bh2[m_b]) )
             {
-              d |= order;
-              s1 |= (order << BC_FACE_B);
+              d |= odr;
+              s1 |= (odr << BC_FACE_B);
               s2 = onBit(s2, ADIABATIC_B);
               g++;
             }
           }
           
           // Z+
-          if ( c_t == idd )
+          if ( mid[m_t] == tg )
           {
-            if ( !IS_FLUID(s_t) )
+            if ( !IS_FLUID(bh2[m_t]) )
             {
-              d |= order;
-              s1 |= (order << BC_FACE_T);
+              d |= odr;
+              s1 |= (odr << BC_FACE_T);
               s2 = onBit(s2, ADIABATIC_T);
               g++;
             }
           }
           
-          bcd[m_p] = d;
-          bh1[m_p] = s1;
-          bh2[m_p] = s2;
+          bcd[m] = d;
+          bh1[m] = s1;
+          bh2[m] = s2;
         }
         
       }
@@ -2840,7 +2810,7 @@ unsigned long VoxInfo::encQfaceHT_S(const int order,
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -3507,7 +3477,7 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
   int kx = size[2];
   int gd = guide;
   
-  int tg = target;
+  int tg  = target;
   int odr = order;
   
   FB::Vec3f nv(vec);
@@ -3605,64 +3575,6 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
     }
   }
   
-  /* targetセルのSTATE_BITをFLUIDに変更 >> bvのみ違う参照をさせるため
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
-firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
-private(m_e, m_w, m_n, m_s, m_t, m_b) \
-schedule(static)
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int s = bv[m_p];
-        
-        if ( IS_FLUID(s) )
-        {
-
-#include "FindexS3D.h"
-          
-          // X-
-          if ( (mid[m_w] == tg) && (dot(e_w, nv) < 0.0) )
-          {
-            bv[m_w] = onBit( bv[m_w], STATE_BIT );
-          }
-          
-          // X+
-          if ( (mid[m_e] == tg) && (dot(e_e, nv) < 0.0) )
-          {
-            bv[m_e] = onBit( bv[m_e], STATE_BIT );
-          }
-          
-          // Y-
-          if ( (mid[m_s] == tg) && (dot(e_s, nv) < 0.0) )
-          {
-            bv[m_s] = onBit( bv[m_s], STATE_BIT );
-          }
-          
-          // Y+
-          if ( (mid[m_n] == tg) && (dot(e_n, nv) < 0.0) )
-          {
-            bv[m_n] = onBit( bv[m_n], STATE_BIT );
-          }
-          
-          // Z-
-          if ( (mid[m_b] == tg) && (dot(e_b, nv) < 0.0) )
-          {
-            bv[m_b] = onBit( bv[m_b], STATE_BIT );
-          }
-          
-          // Z+
-          if ( (mid[m_t] == tg) && (dot(e_t, nv) < 0.0) )
-          {
-            bv[m_t] = onBit( bv[m_t], STATE_BIT );
-          }
-        }
-      }
-    }
-  }*/
   
   if ( numProc > 1 )
   {
@@ -4606,7 +4518,7 @@ int VoxInfo::find_mat_odr(const int mat_id, CompoList* cmp)
 // #################################################################
 // VBCのbboxを取得する
 // 1セル内に対象IDがあるかどうかを判断する
-bool VoxInfo::findVIBCbbox(const int tgt, const int* bid, const float* cut, int* st, int* ed)
+bool VoxInfo::find_IBC_bbox(const int tgt, const int* bid, const float* cut, int* st, int* ed)
 {
   int qw, qe, qs, qn, qb, qt;
   
@@ -4956,10 +4868,6 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
   }
   
   NoVoxID = b-1;
-  
-  for (int i=1; i<=NoVoxID; i++) {
-    printf("id = %d\n", colorList[i]);
-  }
   
   return NoVoxID;
 }
@@ -5353,10 +5261,8 @@ void VoxInfo::setBCIndex_base2(int* bx, int* mid, unsigned long& Lcell, unsigned
 
 // #################################################################
 // 境界条件のビット情報をエンコードする
-void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp)
+void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp, bool isCDS, float* cut, int* bid)
 {
-  int id;
-  int deface;
   size_t m;
   
   int ix = size[0];
@@ -5368,7 +5274,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
   for (int k=0; k<=kx+1; k++) {
     for (int j=0; j<=jx+1; j++) {
       for (int i=0; i<=ix+1; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i  , j  , k  );
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         bh2[m] |= ( 0x3f << ADIABATIC_W ); // 6bitまとめて初期化
       }
     }
@@ -5405,21 +5311,22 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
   
   // bh2の下位5ビットにはBCのエントリのみ(1~31)エンコード
   for (int n=1; n<=NoBC; n++) {
-    id = cmp[n].getMatOdr();
-    deface = cmp[n].getDef();
+    int tg     = cmp[n].getMatOdr();
+    int deface = cmp[n].getDef();
     
-    switch ( cmp[n].getType() ) {
+    switch ( cmp[n].getType() )
+    {
       case ADIABATIC:
-        cmp[n].setElement( encQface(n, id, mid, bcd, bh1, bh2, deface, false) ); // 断熱ビット(0)
+        cmp[n].setElement( encQface(n, tg, mid, bcd, bh1, bh2, deface, false) ); // 断熱ビット(0)
         break;
         
       case HEATFLUX:
-        cmp[n].setElement( encQface(n, id, mid, bcd, bh1, bh2, deface, true) ); // 断熱ビット(1)
+        cmp[n].setElement( encQface(n, tg, mid, bcd, bh1, bh2, deface, true) ); // 断熱ビット(1)
         break;
         
       case SPEC_VEL_WH: // 要素数については，setBCIndexV()でカウントしているので，不要
       case OUTFLOW:
-        encQfaceSVO(n, id, mid, bcd, bh1, bh2, deface);
+        encQfaceSVO(n, tg, mid, bcd, bh1, bh2, deface);
         // ?? setInactive_Compo(id, cmp[n].getDef(), mid, bh1, bh2); // 不活性セルの指定
         break;
         
@@ -5440,7 +5347,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
             }
             else
             {
-              cmp[n].setElement( encQfaceHT_S(n, id, mid, bcd, bh1, bh2, deface) );
+              cmp[n].setElement( encQfaceHT_S(n, tg, mid, bcd, bh1, bh2, deface) );
             }
             break;
             
@@ -5452,7 +5359,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
             }
             else
             {
-              cmp[n].setElement( encQfaceHT_B(n, id, mid, bcd, bh1, bh2, deface) );
+              cmp[n].setElement( encQfaceHT_B(n, tg, mid, bcd, bh1, bh2, deface) );
             }
             break;
         }
@@ -5461,12 +5368,12 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
       case ISOTHERMAL:
         if ( (kos == THERMAL_FLOW) || (kos == THERMAL_FLOW_NATURAL) )
         {
-          cmp[n].setElement( encQfaceISO_SF(n, id, mid, bcd, bh1, bh2, deface) );
+          cmp[n].setElement( encQfaceISO_SF(n, tg, mid, bcd, bh1, bh2, deface) );
           
         }
         else
         {
-          cmp[n].setElement( encQfaceISO_SS(n, id, mid, bcd, bh1, bh2, deface) );
+          cmp[n].setElement( encQfaceISO_SS(n, tg, mid, bcd, bh1, bh2, deface) );
         }
         break;
         
@@ -5476,7 +5383,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
         // Q BC at Volume; idのガイドセルチェックなし
       case HEAT_SRC:
       case CNST_TEMP:
-        cmp[n].setElement( encodeOrder(n, id, mid, bh2) );
+        cmp[n].setElement( encodeOrder(n, tg, mid, bh2) );
         break;
     }
     

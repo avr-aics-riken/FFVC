@@ -33,7 +33,8 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
-  REAL_TYPE half = 0.5;                /// 定数                          
+  REAL_TYPE half = 0.5;                /// 定数
+  REAL_TYPE one = 1.0;                 /// 定数
   double comm_size;                    /// 通信面1面あたりの通信量
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
@@ -119,7 +120,7 @@ void FFV::NS_FS_E_Binary()
       }
       else
       {
-        pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &flop); 
+        pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &one, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
 
@@ -139,7 +140,7 @@ void FFV::NS_FS_E_Binary()
       }
       else
       {
-        pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &flop); 
+        pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &half, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
       
@@ -228,7 +229,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start(tm_buoyancy);
     REAL_TYPE dgr = dt*C.Grashof*rei*rei;
     flop = 3.0;
-    //Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
+    Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
     TIMING_stop(tm_buoyancy, flop);
   }
 

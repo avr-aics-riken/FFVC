@@ -196,8 +196,9 @@ private:
    * @param [in]  label_base ラベルディレクトリ
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
+   * @param [in]  mat        MediumList
    */
-  void get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp);
+  void get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
   /**
@@ -268,8 +269,9 @@ private:
    * @param [in]  label_base ラベルディレクトリ
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
+   * @param [in]  mat        MediumList
    */
-  void get_IBC_HT_S(const string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
   /**
@@ -286,8 +288,9 @@ private:
    * @param [in]  label_base ラベルディレクトリ
    * @param [in]  n          コンポーネントリストの格納番号
    * @param [out] cmp        CompoList
+   * @param [in]  mat        MediumList
    */
-  void get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp);
+  void get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
   /**
@@ -406,6 +409,15 @@ private:
    */
   void get_OBC_Wall (const string label_base, const int n);
   
+  
+  /**
+   * @brief 隣接セルラベルを取得する
+   * @param [in]  label_base ラベルディレクトリ
+   * @param [in]  n          コンポーネントリストの格納番号
+   * @param [out] cmp        CompoList
+   * @param [in]  mat        MediumList
+   */
+  void get_Neighbor(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   /**
    * @brief 単位ベクトルを計算して戻す

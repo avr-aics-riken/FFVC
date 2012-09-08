@@ -351,6 +351,9 @@ void FFV::Restart(FILE* fp)
   
   if ( C.Start == initial_start) // 初期スタートのステップ，時間を設定する
   {
+    CurrentTime = 0.0;
+    CurrentStep = 0;
+    
     // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
     if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
     else                      RF.setV00(CurrentTime);
