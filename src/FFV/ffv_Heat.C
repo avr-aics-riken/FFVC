@@ -67,7 +67,7 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
   
   REAL_TYPE d = dgr;
   
-  flop += (double)(ix*jx*kx)* 2.0;
+  flop += (double)(ix*jx*kx)* 3.0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, d) schedule(static)
   

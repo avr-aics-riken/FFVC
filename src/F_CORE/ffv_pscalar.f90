@@ -190,7 +190,7 @@
       a_t = real(ibits(hdx, adbtc_T, 1))
       a_b = real(ibits(hdx, adbtc_B, 1)) ! real*6 = 6 flop
 
-      ! 延びたステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
+      ! 延びたステンシルの参照先がIBCである場合のスキームの破綻を回避，１次精度におとす
       lmt_w = 1.0
       lmt_e = 1.0
       lmt_s = 1.0
@@ -335,19 +335,18 @@
 !! @param[in,out] v 速度ベクトル
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param gr Grashof数
-!! @param rei Reynolds数の逆数
+!! @param dgr 係数
 !! @param t 温度
 !! @param bd BCindex ID
 !! @param[out] flop
 !<
-    subroutine ps_buoyancy (v, sz, g, dt, gr, rei, t, bd, flop)
+    subroutine ps_buoyancy (v, sz, g, dgr, t, bd, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  dt, gr, rei, dgr
+    real                                                      ::  dgr
     real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
@@ -355,9 +354,8 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    dgr = dt*gr*rei*rei
     
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0 + 3.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dgr)

@@ -213,14 +213,8 @@ bool FFV::hasLinearSolver(const int L)
 void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 {	
   double flop_count=0.0;         /// 浮動小数点演算数
-  double comm_size;              /// 通信面1面あたりの通信量
-  REAL_TYPE clear_value=0.0;	   /// 初期化の値
   REAL_TYPE omg = IC->get_omg(); /// 加速係数
 	REAL_TYPE res = 0.0;           /// 残差
-  int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
-                                 /// ip=0 > R, ip=1 > B
-  
-  comm_size = count_comm_size(size, guide);
   
 	// d_p   圧力 p^{n+1}
   // d_p0  圧力 p^n
@@ -286,80 +280,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       
   
     case SOR2SMA:
-      // 2色のマルチカラー(Red&Black)のセットアップ
-      TIMING_start(tm_poi_setup);
-      
-      MPI_Request req[12]; /// 送信ID
-      
-      for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
-      
-      // ip = 0 基点(1,1,1)がRからスタート
-      //    = 1 基点(1,1,1)がBからスタート
-      if ( numProc > 1 ) 
-      {
-        ip = (head[0]+head[1]+head[2]+1) % 2;
-      } 
-      else 
-      {
-        ip = 0;
-      }
-      TIMING_stop(tm_poi_setup, 0.0);
-      
-      
-      // 各カラー毎の間に同期, 残差は色間で積算する
-      // R - color=0 / B - color=1
-      for (int color=0; color<2; color++) {
-        TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
-        
-        TIMING_start(tm_poi_SOR2SMA);
-        flop_count = 0.0; // 色間で積算しない
-        psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
-        //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
-        TIMING_stop(tm_poi_SOR2SMA, flop_count);
-        
-        // 境界条件
-        TIMING_start(tm_poi_BC);
-        BC.OuterPBC(d_p);
-        if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
-        TIMING_stop(tm_poi_BC, 0.0);
-        
-        TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
-        
-        
-        TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
-        
-        // 同期処理
-        if ( numProc > 1 ) 
-        {
-          TIMING_start(tm_poi_comm);
-          if (IC->get_SyncMode() == comm_sync ) 
-          {
-            if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-          }
-          else 
-          {
-            //if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
-            //if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
-            //comm_SOR2SMA(color, ip, req);
-            //wait_SOR2SMA(color, ip, req);
-            int ireq[12];
-            sma_comm_     (d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
-            sma_comm_wait_(d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
-          }
-          TIMING_stop(tm_poi_comm, comm_size*0.5);
-        }
-        
-        TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
-      }
-      
-      // 残差の集約
-      if ( numProc > 1 ) 
-      {
-        TIMING_start(tm_poi_res_comm);
-        REAL_TYPE tmp = res;
-        if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
-      }
+      res = SOR_2_SMA(IC);
       
       break;
       
@@ -368,6 +289,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
       Exit(0);
       break;
   }
+  
   
   // 残差の保存 
   /// @note Control::p_res_l2_r/aのときのみ，それ以外はNorm_Poissonで計算
@@ -379,6 +301,99 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
     REAL_TYPE nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;
     IC->set_normValue( nrm );
   }
+}
+
+
+
+// SOR2SMA
+REAL_TYPE FFV::SOR_2_SMA(ItrCtl* IC)
+{
+  int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
+                                 /// ip=0 > R, ip=1 > B
+  double flop_count=0.0;         /// 浮動小数点演算数
+  double comm_size;              /// 通信面1面あたりの通信量
+  REAL_TYPE omg = IC->get_omg(); /// 加速係数
+	REAL_TYPE res = 0.0;           /// 残差
+  
+  comm_size = count_comm_size(size, guide);
+  
+  
+  // 2色のマルチカラー(Red&Black)のセットアップ
+  TIMING_start(tm_poi_setup);
+  
+  MPI_Request req[12]; /// 送信ID
+  
+  for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
+  
+  // ip = 0 基点(1,1,1)がRからスタート
+  //    = 1 基点(1,1,1)がBからスタート
+  if ( numProc > 1 )
+  {
+    ip = (head[0]+head[1]+head[2]+1) % 2;
+  }
+  else
+  {
+    ip = 0;
+  }
+  TIMING_stop(tm_poi_setup, 0.0);
+  
+  
+  // 各カラー毎の間に同期, 残差は色間で積算する
+  // R - color=0 / B - color=1
+  for (int color=0; color<2; color++) {
+    TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
+    
+    TIMING_start(tm_poi_SOR2SMA);
+    flop_count = 0.0; // 色間で積算しない
+    psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
+    //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
+    TIMING_stop(tm_poi_SOR2SMA, flop_count);
+    
+    // 境界条件
+    TIMING_start(tm_poi_BC);
+    BC.OuterPBC(d_p);
+    if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
+    TIMING_stop(tm_poi_BC, 0.0);
+    
+    TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+    
+    
+    TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
+    
+    // 同期処理
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_poi_comm);
+      if (IC->get_SyncMode() == comm_sync )
+      {
+        if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+      }
+      else
+      {
+        //if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
+        //if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
+        //comm_SOR2SMA(color, ip, req);
+        //wait_SOR2SMA(color, ip, req);
+        int ireq[12];
+        sma_comm_     (d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
+        sma_comm_wait_(d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
+      }
+      TIMING_stop(tm_poi_comm, comm_size*0.5);
+    }
+    
+    TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+  }
+  
+  // 残差の集約
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_poi_res_comm);
+    REAL_TYPE tmp = res;
+    if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
+  }
+  
+  return res;
 }
 
 

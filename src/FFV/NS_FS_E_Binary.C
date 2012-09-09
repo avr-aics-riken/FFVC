@@ -32,7 +32,7 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
-  REAL_TYPE b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
+  double b2 = 0.0;                     /// 反復解法での定数項ベクトルのノルム
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
   double comm_size;                    /// 通信面1面あたりの通信量
@@ -227,9 +227,10 @@ void FFV::NS_FS_E_Binary()
   if ( C.isHeatProblem() && (C.Mode.Buoyancy == BOUSSINESQ) ) 
   {
     TIMING_start(tm_buoyancy);
-    REAL_TYPE dgr = dt*C.Grashof*rei*rei;
+    REAL_TYPE dgr = dt*C.Grashof*rei*rei * v00[0];
     flop = 3.0;
-    Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
+    //Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
+    ps_buoyancy_(d_vc, size, &guide, &dgr, d_t0, d_bcd, &flop);
     TIMING_stop(tm_buoyancy, flop);
   }
 
@@ -308,22 +309,22 @@ void FFV::NS_FS_E_Binary()
   //hogehoge
   
   // 連立一次方程式の定数項の計算は圧力相対残差の場合のみ >> @todo 発散項以外の外力の影響なども含める
-  if ( ICp->get_normType() == ItrCtl::p_res_l2_r) 
+  TIMING_start(tm_poi_src_nrm);
+  b2 = 0.0;
+  flop = 0.0;
+  div_cnst_(d_ws, size, &guide, &b2, d_bcp, &flop);
+  
+  // 境界条件分を追加
+  
+  b2 = sqrt(b2);
+  TIMING_stop(tm_poi_src_nrm, flop);
+  
+  if ( numProc > 1 )
   {
-    TIMING_start(tm_poi_src_nrm);
-    b2 = 0.0;
-    flop = 0.0;
-    div_cnst_(d_ws, size, &guide, &b2, d_bcp, &flop);
-    b2 = sqrt(b2);
-    TIMING_stop(tm_poi_src_nrm, flop);
-    
-    if ( numProc > 1 ) 
-    {
-      TIMING_start(tm_poi_src_comm);
-      REAL_TYPE m_tmp = b2;
-      if ( paraMngr->Allreduce(&m_tmp, &b2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
-    }
+    TIMING_start(tm_poi_src_comm);
+    double m_tmp = b2;
+    if ( paraMngr->Allreduce(&m_tmp, &b2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
 
   TIMING_stop(tm_poi_src_sct, 0.0);

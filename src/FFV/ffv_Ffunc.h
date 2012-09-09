@@ -140,7 +140,7 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_poisson.f90
-  void div_cnst_(REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* b2, int* bp, double* flop);
+  void div_cnst_(REAL_TYPE* dv, int* sz, int* g, double* b2, int* bp, double* flop);
   void psor_(REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
                          int* bp, double* flop);
   void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
@@ -150,10 +150,16 @@ extern "C" {
   
   
   //***********************************************************************************************
+  // ffv_poisson2.f90
+  void mv_prod_  (REAL_TYPE* bt,  int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
+  void multiply_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* s, REAL_TYPE* src, double* flop);
+  
+  
+  //***********************************************************************************************
   // ffv_pscalar.f90
   void ps_muscl_      (REAL_TYPE* ws, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* t, int* bv, int* bp,
                        int* bh1, int* bh2, int* swt, double* flop);
-  void ps_buoyancy_   (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* gr, REAL_TYPE* rei, REAL_TYPE* t, int* bd, double* flop);
+  void ps_buoyancy_   (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* dgr, REAL_TYPE* t, int* bd, double* flop);
   void ps_diff_ee_    (REAL_TYPE* t, int* sz, int* g, REAL_TYPE* res, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* pei, REAL_TYPE* qbc, 
                        int* bh, REAL_TYPE* ws, double* flop);
   void hbc_drchlt_    (REAL_TYPE* t,  int* sz, int* g, int* st, int* ed, int* bh, int* odr, REAL_TYPE* tc);

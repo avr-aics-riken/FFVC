@@ -177,6 +177,16 @@ private:
   REAL_TYPE *d_r_p;  ///< 粗格子の圧力
   REAL_TYPE *d_r_t;  ///< 粗格子の温度
   
+  // GMRES
+  REAL_TYPE * d_xt;
+  REAL_TYPE * d_yt;
+  REAL_TYPE * d_rest;
+  REAL_TYPE * d_res_fct;
+  REAL_TYPE * d_vm;
+  REAL_TYPE * d_zm;
+  
+  
+  
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   
   int* compo_global_bbox; ///< グローバルなコンポーネントBbox 表示に利用
@@ -878,6 +888,9 @@ private:
   /** 毎ステップ後に行う処理 */
   bool stepPost();
   
+  
+  /** 2色オーダリングSORのストライドメモリアクセス版 **/
+  REAL_TYPE SOR_2_SMA(ItrCtl* IC);
   
   
   /**

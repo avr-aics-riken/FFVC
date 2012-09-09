@@ -161,6 +161,34 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
 }
 
 
+// Runge-Kutta法に用いる配列のアロケーション
+void FFV::allocArray_Krylov(double &total)
+{
+  double mc = (double)(size[0] * size[1] * size[2]);
+  
+  if ( !(d_xt = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_yt = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_rest = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_res_fct = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_vm = Alloc::Real_S4D(size, guide, 15)) ) Exit(0); // 15 : GMRESのアルゴをハードコード
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_zm = Alloc::Real_S4D(size, guide, 15)) ) Exit(0); // 15 : GMRESのアルゴをハードコード
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+}
+
+
+
+
 // 熱の主計算部分に用いる配列のアロケーション
 void FFV::allocArray_Heat(double &total)
 {

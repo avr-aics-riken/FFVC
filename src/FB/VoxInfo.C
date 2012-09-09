@@ -2356,7 +2356,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       {
         int i = 1;
         
-        if ("Neumann"==key) {
+        if ("Neumann"==key)
+        {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2369,7 +2370,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
             }
           }
         }
-        else {
+        else
+        {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2390,7 +2392,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       {
         int i = ix;
         
-        if ("Neumann"==key) {
+        if ("Neumann"==key)
+        {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2403,7 +2406,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
             }
           }
         }
-        else {
+        else
+        {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2424,7 +2428,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       {
         int j = 1;
         
-        if ("Neumann"==key) {
+        if ("Neumann"==key)
+        {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2437,7 +2442,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
             }
           }
         }
-        else {
+        else
+        {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2458,7 +2464,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       {
         int j = jx;
         
-        if ("Neumann"==key) {
+        if ("Neumann"==key)
+        {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2471,7 +2478,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
             }
           }
         }
-        else {
+        else
+        {
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2492,7 +2500,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       {
         int k = 1;
         
-        if ("Neumann"==key) {
+        if ("Neumann"==key)
+        {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2505,7 +2514,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
             }
           }
         }
-        else {
+        else
+        {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2526,7 +2536,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       {
         int k = kx;
         
-        if ("Neumann"==key) {
+        if ("Neumann"==key)
+        {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -2539,7 +2550,8 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
             }
           }
         }
-        else {
+        else
+        {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
@@ -5442,10 +5454,12 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
         break;
         
       case OBC_OUTFLOW:
-        if ( m_obc->get_pType() == P_DIRICHLET ) {
+        if ( m_obc->get_pType() == P_DIRICHLET )
+        {
           encPbit_OBC(face, bcp, "Dirichlet", false);
         }
-        else {
+        else
+        {
           encPbit_OBC(face, bcp, "Neumann", false);
         }
         break;
