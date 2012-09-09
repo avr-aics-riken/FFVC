@@ -24,6 +24,7 @@ F90SRCS = \
 	ffv_velocity_binary.f90 \
   ffv_pscalar.f90 \
   ffv_poisson.f90 \
+  ffv_poisson2.f90 \
   ffv_velocity_cds.f90 \
 #  ffv_poisson_cds.f90 \
 

@@ -175,9 +175,6 @@ void FFV::allocArray_Krylov(double &total)
   if ( !(d_rest = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  if ( !(d_res_fct = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
   if ( !(d_vm = Alloc::Real_S4D(size, guide, 15)) ) Exit(0); // 15 : GMRESのアルゴをハードコード
   total+= mc * (double)sizeof(REAL_TYPE);
   

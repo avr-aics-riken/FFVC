@@ -82,7 +82,7 @@ void FFV::NS_FS_E_Binary()
   
   // n stepの値を保持 >> In use (d_v0, d_p0)
   TIMING_start(tm_copy_array);
-  fb_copy_real_(d_p0, d_p, &s_length);
+  fb_copy_real_(d_p0, d_p, &s_length); // @todo size_t でC関数へ
   fb_copy_real_(d_v0, d_v, &v_length);
   TIMING_stop(tm_copy_array, 0.0, 2);
   
@@ -308,15 +308,13 @@ void FFV::NS_FS_E_Binary()
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  // 連立一次方程式の定数項の計算は圧力相対残差の場合のみ >> @todo 発散項以外の外力の影響なども含める
+  // 定数項の残差　b2
   TIMING_start(tm_poi_src_nrm);
   b2 = 0.0;
   flop = 0.0;
   div_cnst_(d_ws, size, &guide, &b2, d_bcp, &flop);
+
   
-  // 境界条件分を追加
-  
-  b2 = sqrt(b2);
   TIMING_stop(tm_poi_src_nrm, flop);
   
   if ( numProc > 1 )
@@ -326,6 +324,8 @@ void FFV::NS_FS_E_Binary()
     if ( paraMngr->Allreduce(&m_tmp, &b2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
+  
+  b2 = sqrt(b2);
 
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section

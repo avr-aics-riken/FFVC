@@ -181,7 +181,6 @@ private:
   REAL_TYPE * d_xt;
   REAL_TYPE * d_yt;
   REAL_TYPE * d_rest;
-  REAL_TYPE * d_res_fct;
   REAL_TYPE * d_vm;
   REAL_TYPE * d_zm;
   
