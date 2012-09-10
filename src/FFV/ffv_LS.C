@@ -17,6 +17,7 @@
 #include "ffv.h"
 
 
+// #################################################################
 // SOR2SMAの非同期通信処理
 // 並列時のみコールされる
 void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
@@ -198,7 +199,7 @@ void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
 }
 
 
-
+// #################################################################
 // 種類Lの線形ソルバを利用する場合，trueを返す
 bool FFV::hasLinearSolver(const int L)
 {
@@ -209,80 +210,27 @@ bool FFV::hasLinearSolver(const int L)
 }
 
 
+// #################################################################
 // 線形ソルバーの選択実行
-void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
+void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam, double* rparam)
 {	
-  double flop_count=0.0;         /// 浮動小数点演算数
-  REAL_TYPE omg = IC->get_omg(); /// 加速係数
-	REAL_TYPE res = 0.0;           /// 残差
-  
-	// d_p   圧力 p^{n+1}
-  // d_p0  圧力 p^n
-	// d_ws  非反復のソース項
-  // d_sq  反復毎に変化するソース項
-	// d_bcp ビットフラグ
-  
+	double res = 0.0;    /// 残差
+
   
   // 反復処理
   switch (IC->get_LS()) 
   {
     case SOR:
-      TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
-      
-      // 反復処理
-      TIMING_start(tm_poi_PSOR);
-      flop_count = 0.0;
-      psor_(d_p, size, &guide, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
-      //r = PSOR(p, d_ws, d_sq, bcp, IC, flop_count); //実装速度比較
-      TIMING_stop(tm_poi_PSOR, flop_count);
-      
-      // 境界条件
-      TIMING_start(tm_poi_BC);
-      BC.OuterPBC(d_p);
-      if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
-      TIMING_stop(tm_poi_BC, 0.0);
-      
-      TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
-      
-      
-      TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
-      
-      // 同期処理
-      if ( numProc > 1 ) 
-      {
-        TIMING_start(tm_poi_comm);
-        if (IC->get_SyncMode() == comm_sync ) 
-        {
-          if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-        }
-        else 
-        {
-          MPI_Request req[12];
-          for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
-          
-          if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-          if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-        }
-        TIMING_stop(tm_poi_comm, comm_size);
-      }
-      
-      // 残差の集約
-      if ( numProc > 1 ) 
-      {
-        TIMING_start(tm_poi_res_comm);
-        REAL_TYPE tmp = res;
-        if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
-      }
-      
-      TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+      res = Point_SOR(IC);
       break;
       
   
     case SOR2SMA:
       res = SOR_2_SMA(IC);
-      
       break;
+      
+    case GMRES:
+      res = Gmres_SOR(IC, rhs_nrm, iparam, rparam);
       
     default:
       printf("\tInvalid Linear Solver for Pressure\n");
@@ -296,7 +244,7 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
   if ( (IC->get_normType() == ItrCtl::p_res_l2_r) || (IC->get_normType() == ItrCtl::p_res_l2_a) ) 
   {
     REAL_TYPE res_a = sqrt( res /(REAL_TYPE)G_Acell ); // 残差のRMS
-    REAL_TYPE bb  = sqrt( b2/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
+    REAL_TYPE bb  = sqrt( rhs_nrm/(double)G_Acell ); // ソースベクトルのRMS
     REAL_TYPE res_r = ( bb == 0.0 ) ? res_a : res_a/bb;
     REAL_TYPE nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;
     IC->set_normValue( nrm );
@@ -304,18 +252,94 @@ void FFV::LS_Binary(ItrCtl* IC, REAL_TYPE b2)
 }
 
 
+// #################################################################
+// Point SOR
+double FFV::PointSOR(ItrCtl* IC)
+{
+  double flop_count=0.0;         /// 浮動小数点演算数
+  double comm_size;              /// 通信面1面あたりの通信量
+  REAL_TYPE omg = IC->get_omg(); /// 加速係数
+	double res = 0.0;              /// 残差
+  
+  // d_p   圧力 p^{n+1}
+  // d_p0  圧力 p^n
+	// d_ws  非反復のソース項
+  // d_sq  反復毎に変化するソース項
+	// d_bcp ビットフラグ
+  
+  
+  TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
+  
+  // 反復処理
+  TIMING_start(tm_poi_PSOR);
+  flop_count = 0.0;
+  psor_(d_p, size, &guide, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
+  //r = PSOR(p, d_ws, d_sq, bcp, IC, flop_count); //実装速度比較
+  TIMING_stop(tm_poi_PSOR, flop_count);
+  
+  // 境界条件
+  TIMING_start(tm_poi_BC);
+  BC.OuterPBC(d_p);
+  if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
+  TIMING_stop(tm_poi_BC, 0.0);
+  
+  TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+  
+  
+  TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
+  
+  // 同期処理
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_poi_comm);
+    if (IC->get_SyncMode() == comm_sync )
+    {
+      if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+    }
+    else
+    {
+      MPI_Request req[12];
+      for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
+      
+      if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+      if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+    }
+    TIMING_stop(tm_poi_comm, comm_size);
+  }
+  
+  // 残差の集約
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_poi_res_comm);
+    double tmp = res;
+    if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+  }
+  
+  TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+  
+}
 
+
+// #################################################################
 // SOR2SMA
-REAL_TYPE FFV::SOR_2_SMA(ItrCtl* IC)
+double FFV::SOR_2_SMA(ItrCtl* IC)
 {
   int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                  /// ip=0 > R, ip=1 > B
   double flop_count=0.0;         /// 浮動小数点演算数
   double comm_size;              /// 通信面1面あたりの通信量
   REAL_TYPE omg = IC->get_omg(); /// 加速係数
-	REAL_TYPE res = 0.0;           /// 残差
+	double res = 0.0;              /// 残差
   
   comm_size = count_comm_size(size, guide);
+  
+  
+  // d_p   圧力 p^{n+1}
+  // d_p0  圧力 p^n
+	// d_ws  非反復のソース項
+  // d_sq  反復毎に変化するソース項
+	// d_bcp ビットフラグ
   
   
   // 2色のマルチカラー(Red&Black)のセットアップ
@@ -388,7 +412,7 @@ REAL_TYPE FFV::SOR_2_SMA(ItrCtl* IC)
   if ( numProc > 1 )
   {
     TIMING_start(tm_poi_res_comm);
-    REAL_TYPE tmp = res;
+    double tmp = res;
     if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
   }

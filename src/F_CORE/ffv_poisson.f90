@@ -15,12 +15,12 @@
 
 !> ********************************************************************
 !! @brief 連立一次方程式の定数項の計算
-!! @param div 速度の発散値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param b2 定数ベクトルの自乗和
-!! @param bp BCindex P
-!! @param[out] flop flop count
+!! @param [in]  div  速度の発散値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [out] b2   定数ベクトルの自乗和
+!! @param [in]  bp   BCindex P
+!! @param [out] flop flop count
 !<
     subroutine div_cnst (div, sz, g, b2, bp, flop)
     implicit none
@@ -83,9 +83,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
+    double precision                                          ::  flop, res
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp, res
+    real                                                      ::  omg, dd, ss, dp
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -132,7 +132,7 @@
          + src1(i,j,k)
       dp = ( dd*ss - p(i,j,k) )
       p(i,j,k) = p(i,j,k) + omg*dp
-      res = res + dp*dp*real(ibits(idx, Active, 1))
+      res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
     end do
     end do
     end do
@@ -161,9 +161,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
+    double precision                                          ::  flop, res
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp, res, pp
+    real                                                      ::  omg, dd, ss, dp, pp
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
     integer                                                   ::  ip, color
@@ -210,7 +210,7 @@
          + src1(i,j,k)
       dp = (dd*ss - pp)
       p(i,j,k) = pp + omg*dp
-      res = res + dp*dp*real(ibits(idx, Active, 1))
+      res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
     end do
     end do
     end do

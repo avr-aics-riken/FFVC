@@ -581,6 +581,16 @@ private:
   
   
   /**
+   * @brief GMRES-SOR
+   * @param [in]     IC      ItrCtlクラス
+   * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
+   * @param [in,out] iparam  ステップパラメータ
+   * @param [in,out] iparam  収束パラメータ
+   */
+  double Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam, double *rparam);
+  
+  
+  /**
    * @brief インターバルの初期化
    */
   void init_Interval();
@@ -604,10 +614,12 @@ private:
   
   /**
    * @brief 線形ソルバーの選択実行
-   * @param [in] IC ItrCtlクラス
-   * @param [in] b2 ソースベクトルの自乗和
+   * @param [in]     IC      ItrCtlクラス
+   * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
+   * @param [in,out] iparam  ステップパラメータ
+   * @param [in,out] iparam  収束パラメータ
    */
-  void LS_Binary(ItrCtl* IC, REAL_TYPE b2);
+  void LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam, double* rparam);
   
   
   /**
@@ -699,6 +711,12 @@ private:
    * @param [in,out] flop 浮動小数点演算数
    */
   REAL_TYPE ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop);
+  
+  
+  /** SOR法
+   * @param [in] IC IterationCtlクラス
+   */
+  double Point_SOR(ItrCtl* IC);
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
@@ -888,8 +906,10 @@ private:
   bool stepPost();
   
   
-  /** 2色オーダリングSORのストライドメモリアクセス版 **/
-  REAL_TYPE SOR_2_SMA(ItrCtl* IC);
+  /** 2色オーダリングSORのストライドメモリアクセス版
+   * @param [in] IC IterationCtlクラス
+   */
+  double SOR_2_SMA(ItrCtl* IC);
   
   
   /**

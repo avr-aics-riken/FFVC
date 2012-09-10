@@ -19,7 +19,7 @@
 
 
 
-void FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, double& flop)
+double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam, double *rparam)
 {
   int err[3];
   const int m_max = 15;
@@ -29,10 +29,11 @@ void FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, double& flop)
   const double eps1 = 1.0e-30;
   double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
   double r4[6];
+  double flop=0.0;
   
   size_t s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
-  if ( iparam[8] < 0) return;
+  if ( iparam[8] < 0 ) return;
   
   err[1] = 0;
   int isfin  = 0;
@@ -56,7 +57,7 @@ void FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, double& flop)
   
   
   double *rgm = new double[m_max, m_max];
-  double *hgm = new double[m_max=1, m_max];
+  double *hgm = new double[m_max+1, m_max];
   double *cgm = new double[m_max];
   double *sgm = new double[m_max];
   double *bgm = new double[m_max];
@@ -71,7 +72,7 @@ void FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, double& flop)
   
   t_eps = res_rhs * t_eps;
   
-  res = (double)SOR_2_SMA(IC);
+  res = SOR_2_SMA(IC);
   
   r4[1] = sqrt(res/res_rhs);
   
@@ -92,7 +93,7 @@ void FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, double& flop)
   
   for (int i_iter=1; i_iter<=n_iter; i_iter++) {
     
-    res = (double)SOR_2_SMA(IC);
+    res = SOR_2_SMA(IC);
     iparam[2]++;
     
     if (res < t_eps) goto jump_3;
@@ -158,7 +159,7 @@ void FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, double& flop)
       
       for (int i_inner=1; i_inner<=n_inner; i_inner++) {
         
-        res = (double)SOR_2_SMA(IC);
+        res = SOR_2_SMA(IC);
         iparam[2]++;
         
       }
@@ -253,7 +254,7 @@ jump_1:
   
 jump_2:
   
-  res = (double)SOR_2_SMA(IC);
+  res = SOR_2_SMA(IC);
   
   
 jump_3:

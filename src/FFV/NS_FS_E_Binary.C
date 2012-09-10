@@ -32,13 +32,22 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
-  double b2 = 0.0;                     /// 反復解法での定数項ベクトルのノルム
+  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
   double comm_size;                    /// 通信面1面あたりの通信量
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   REAL_TYPE clear_value = 0.0;
+  
+  // for iteration count
+  int iparam[10];
+  iparam[0] = 0;
+  iparam[1] = 0;
+  iparam[2] = 0;
+  iparam[7] = 0;
+  
+  double rparam[10];
   
   
   // 境界処理用
@@ -283,15 +292,18 @@ void FFV::NS_FS_E_Binary()
   // >>> Poisson Source section
   TIMING_start(tm_poi_src_sct);
   
+  
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
   fb_copy_real_(d_v, d_vc, &v_length);
   TIMING_stop(tm_copy_array, 0.0);
   
+  
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
   fb_set_real_(d_ws, &s_length, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
+  
   
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
   TIMING_start(tm_div_pvec);
@@ -299,20 +311,23 @@ void FFV::NS_FS_E_Binary()
   divergence_(d_ws, size, &guide, &coef, d_vc, d_bcv, v00, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
+  
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
   BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, coef, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
+  
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  // 定数項の残差　b2
+  
+  // 定数項の残差　rhs_nrm
   TIMING_start(tm_poi_src_nrm);
-  b2 = 0.0;
+  rhs_nrm = 0.0;
   flop = 0.0;
-  div_cnst_(d_ws, size, &guide, &b2, d_bcp, &flop);
+  div_cnst_(d_ws, size, &guide, &rhs_nrm, d_bcp, &flop);
 
   
   TIMING_stop(tm_poi_src_nrm, flop);
@@ -320,12 +335,12 @@ void FFV::NS_FS_E_Binary()
   if ( numProc > 1 )
   {
     TIMING_start(tm_poi_src_comm);
-    double m_tmp = b2;
-    if ( paraMngr->Allreduce(&m_tmp, &b2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    double m_tmp = rhs_nrm;
+    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
-  b2 = sqrt(b2);
+  rhs_nrm = sqrt(rhs_nrm);
 
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
@@ -371,10 +386,14 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_poi_itr_sct_1, 0.0);
     // <<< Poisson Iteration subsection 1
 
-    // 線形ソルバー
-    LS_Binary(ICp, b2);
     
+    // 線形ソルバー
+    rparam[0] = IC[0].get_eps();
+    iparam[5] = (int)Session_CurrentStep;
+    LS_Binary(ICp, rhs_nrm, iparam, rparam);
+    iparam[7]++;
 
+    
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
 
@@ -384,11 +403,13 @@ void FFV::NS_FS_E_Binary()
     update_vec_(d_v, d_sq, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
+    
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
     BC.mod_div(d_sq, d_bcv, coef, CurrentTime, v00, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
+    
     
     // セルフェイス速度の境界条件の通信部分
     if ( C.isOutflow() == ON ) 
@@ -474,8 +495,8 @@ void FFV::NS_FS_E_Binary()
 
   TIMING_stop(tm_poi_itr_sct, 0.0);
   // <<< Poisson Iteration section
-  
 
+  
   
   /// >>> NS Loop post section
   TIMING_start(tm_NS_loop_post_sct);
@@ -488,11 +509,13 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);
   }
   
+  
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
   flop=0.0;
   DomainMonitor(BC.export_OBC(), &C, flop );
   TIMING_stop(tm_domain_monitor, flop);
+  
   
   // 流出境界のガイドセル値の更新と速度境界条件
   TIMING_start(tm_VBC_update);
@@ -500,6 +523,7 @@ void FFV::NS_FS_E_Binary()
   BC.InnerVBC(d_v, d_bcv, CurrentTime, v00, flop);
   BC.OuterVBC(d_v, d_vc, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_VBC_update, flop);
+  
   
   // 非同期にして隠す
   if (C.LES.Calc==ON) 
@@ -516,6 +540,23 @@ void FFV::NS_FS_E_Binary()
       TIMING_stop(tm_LES_eddy_comm, comm_size*guide);
     }
   }
+  
+  
+  // GMres
+  if (iparam[1] == 0)
+  {
+    iparam[1] = IC[0].LoopCount;
+  }
+  if ( !(fplsl = fopen("history_gmres.txt", "a")) )
+  {
+    Hostonly_ stamped_printf("\tSorry, can't open 'test_linear.txt' file.\n");
+    Exit(0);
+  }
+  fprintf(fplsl, "step=%15ld ip[0]=%d ip[1]=%d ip[2]=%d\n", Session_CurrentStep, iparam[0], iparam[1], iparam[2]);
+  fclose(fplsl);
+  
+  
+  
   
   // ノルムの増加率が規定値をこえたら，終了
   if (convergence_prev != 0.0 ) 
