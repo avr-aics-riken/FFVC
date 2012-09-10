@@ -216,8 +216,8 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   int k0 = (k+1)/2;
   
   // ステップ数の文字列を生成
-  char tmp[10]; // 10 digit
-  memset(tmp, 0, sizeof(char)*10);
+  char tmp[10+1]; // 10 digit + \0
+  memset(tmp, 0, sizeof(char)*11);
   sprintf(tmp, "%010d", m_step);
   std::string step(tmp);
   
