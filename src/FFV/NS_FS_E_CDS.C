@@ -20,24 +20,31 @@
 // Fractional Step法でNavier-Stokes方程式を解く．距離情報近似．
 void FFV::NS_FS_E_CDS()
 {
-  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  int v_length = s_length * 3;
-  
   // local variables
+  double flop;                         /// 浮動小数演算数
+  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
+  double comm_size;                    /// 通信面1面あたりの通信量
+  double convergence=0.0;              /// 定常収束モニター量
+  
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
-  double flop;                         /// 浮動小数演算数
-  REAL_TYPE convergence=0.0;           /// 定常収束モニター量
   REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
-  REAL_TYPE b2 = 0.0;                  /// 反復解法での定数項ベクトルのノルム
   REAL_TYPE half = 0.5;                /// 定数
-  double comm_size;                    /// 通信面1面あたりの通信量
+  REAL_TYPE clear_value = 0.0;
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
-  REAL_TYPE clear_value = 0.0;
   
+  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  int v_length = s_length * 3;
+  
+  int iparam[10];                      /// for iteration count
+  
+  iparam[0] = 0;
+  iparam[1] = 0;
+  iparam[2] = 0;
+  iparam[7] = 0;
   
   // 境界処理用
   REAL_TYPE* m_buf = NULL;
@@ -281,15 +288,18 @@ void FFV::NS_FS_E_CDS()
   // >>> Poisson Source section
   TIMING_start(tm_poi_src_sct);
   
+  
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
   fb_copy_real_(d_v, d_vc, &v_length);
   TIMING_stop(tm_copy_array, 0.0);
   
+  
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
   fb_set_real_(d_ws, &s_length, &clear_value);
   TIMING_stop(tm_assign_const, 0.0);
+  
   
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
   TIMING_start(tm_div_pvec);
@@ -297,11 +307,13 @@ void FFV::NS_FS_E_CDS()
   divergence_cds_(d_ws, size, &guide, &coef, d_vc, d_bcv, d_cut, v00, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
+  
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
   BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, coef, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
+  
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
@@ -310,17 +322,17 @@ void FFV::NS_FS_E_CDS()
   if ( ICp->get_normType() == ItrCtl::p_res_l2_r)
   {
     TIMING_start(tm_poi_src_nrm);
-    b2 = 0.0;
-    div_cnst_(d_ws, size, &guide, &b2, d_bcp, &flop);
-    b2 = sqrt(b2);
+    rhs_nrm = 0.0;
+    div_cnst_(d_ws, size, &guide, &rhs_nrm, d_bcp, &flop);
+    rhs_nrm = sqrt(rhs_nrm);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
     {
       TIMING_start(tm_poi_src_comm);
-      REAL_TYPE m_tmp = b2;
-      if ( paraMngr->Allreduce(&m_tmp, &b2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+      double m_tmp = rhs_nrm;
+      if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
   }
   
@@ -369,7 +381,9 @@ void FFV::NS_FS_E_CDS()
     // <<< Poisson Iteration subsection 1
 
     // 線形ソルバー
-    LS_Binary(ICp, b2);
+    iparam[5] = (int)Session_CurrentStep;
+    LS_Binary(ICp, rhs_nrm, iparam);
+    iparam[7]++;
     
 
     // >>> Poisson Iteration subsection 4

@@ -30,8 +30,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
     integer, dimension(3)                                     ::  sz, idx
-    double precision                                          ::  flop
-    real                                                      ::  ds, r, coef, rm, d
+    double precision                                          ::  flop, rm, ds, r, d
+    real                                                      ::  coef
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -63,7 +63,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = dble(div(i,j,k) * coef) * dble(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
       d = abs(r)
       rm = rm + r*r
       
@@ -103,8 +103,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  ds, r, coef
+    double precision                                          ::  flop, ds
+    real                                                      ::  r, coef
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -131,7 +131,7 @@
     do j=1,jx
     do i=1,ix
       r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
-      ds = ds + r*r
+      ds = ds + dble(r*r)
     end do
     end do
     end do
@@ -156,8 +156,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  ds, r, coef
+    double precision                                          ::  flop, ds, r
+    real                                                      ::  coef
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -183,7 +183,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = dble(div(i,j,k) * coef) * dble(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
       ds = max(ds, abs(r) )
     end do
     end do

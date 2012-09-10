@@ -345,7 +345,7 @@ void Control::findCriteria(const string label1, const string label2, const int o
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Epsilon' of %s in Criteria\n", key.c_str());
       Exit(0);
     }
-    IC[order].set_eps(tmp);
+    IC[order].set_eps((double)tmp);
     
     key = "/Omega";
     label = label0 + key;
@@ -459,10 +459,11 @@ void Control::findCriteria(const string label1, const string label2, const int o
     }
     
     // 線形ソルバーの種類
-    if     ( !strcasecmp(str.c_str(), "SOR") )      IC[order].set_LS(SOR);
-    else if( !strcasecmp(str.c_str(), "SOR2SMA") )  IC[order].set_LS(SOR2SMA);
-    else if( !strcasecmp(str.c_str(), "SOR2CMA") )  IC[order].set_LS(SOR2CMA);
-    else if( !strcasecmp(str.c_str(), "JACOBI") )   IC[order].set_LS(JACOBI);
+    if     ( !strcasecmp(str.c_str(), "SOR") )         IC[order].set_LS(SOR);
+    else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC[order].set_LS(SOR2SMA);
+    else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC[order].set_LS(SOR2CMA);
+    else if( !strcasecmp(str.c_str(), "JACOBI") )      IC[order].set_LS(JACOBI);
+    else if( !strcasecmp(str.c_str(), "GMRES_SOR") )   IC[order].set_LS(GMRES_SOR);
     else 
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
@@ -2883,6 +2884,10 @@ void Control::printLS(FILE* fp, const ItrCtl* IC)
       
     case SOR2CMA:
       fprintf(fp,"\t       Linear Solver          :   2-colored SOR CMA (Consecutive Memory Access)\n");
+      break;
+      
+    case GMRES_SOR:
+      fprintf(fp,"\t       Linear Solver          :   GMRES SOR\n");
       break;
       
     default:

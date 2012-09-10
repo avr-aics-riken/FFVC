@@ -20,34 +20,30 @@
 // Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
 void FFV::NS_FS_E_Binary()
 {
-  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  int v_length = s_length * 3;
-  
-  
   // local variables
+  double flop;                         /// 浮動小数演算数
+  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
+  double comm_size;                    /// 通信面1面あたりの通信量
+  double convergence=0.0;              /// 定常収束モニター量
+  
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
-  double flop;                         /// 浮動小数演算数
-  REAL_TYPE convergence=0.0;           /// 定常収束モニター量
   REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
-  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
-  double comm_size;                    /// 通信面1面あたりの通信量
+  REAL_TYPE clear_value = 0.0;
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
-  REAL_TYPE clear_value = 0.0;
+  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  int v_length = s_length * 3;
+  int iparam[10];                      /// for iteration count
   
-  // for iteration count
-  int iparam[10];
   iparam[0] = 0;
   iparam[1] = 0;
   iparam[2] = 0;
   iparam[7] = 0;
-  
-  double rparam[10];
   
   
   // 境界処理用
@@ -388,9 +384,8 @@ void FFV::NS_FS_E_Binary()
 
     
     // 線形ソルバー
-    rparam[0] = IC[0].get_eps();
     iparam[5] = (int)Session_CurrentStep;
-    LS_Binary(ICp, rhs_nrm, iparam, rparam);
+    LS_Binary(ICp, rhs_nrm, iparam);
     iparam[7]++;
 
     
@@ -545,17 +540,17 @@ void FFV::NS_FS_E_Binary()
   // GMres
   if (iparam[1] == 0)
   {
-    iparam[1] = IC[0].LoopCount;
+    iparam[1] = ICp->LoopCount;
   }
-  if ( !(fplsl = fopen("history_gmres.txt", "a")) )
+  
+  FILE* fp_hg;
+  if ( !(fp_hg = fopen("history_gmres.txt", "a")) )
   {
     Hostonly_ stamped_printf("\tSorry, can't open 'test_linear.txt' file.\n");
     Exit(0);
   }
-  fprintf(fplsl, "step=%15ld ip[0]=%d ip[1]=%d ip[2]=%d\n", Session_CurrentStep, iparam[0], iparam[1], iparam[2]);
-  fclose(fplsl);
-  
-  
+  fprintf(fp_hg, "step=%15ld ip[0]=%d ip[1]=%d ip[2]=%d\n", Session_CurrentStep, iparam[0], iparam[1], iparam[2]);
+  fclose(fp_hg);
   
   
   // ノルムの増加率が規定値をこえたら，終了

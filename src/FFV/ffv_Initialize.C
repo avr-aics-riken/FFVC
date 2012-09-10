@@ -754,8 +754,18 @@ int FFV::Initialize(int argc, char **argv)
   
   
   
-  // SOR2SMA用のバッファ確保
-  allocate_SOR2SMA_buffer(TotalMemory);
+  // 反復解法のワークメモリ確保
+  switch (IC->get_LS())
+  {
+    case SOR2SMA:
+    case SOR2CMA:
+      allocate_SOR2SMA_buffer(TotalMemory);
+      break;
+      
+    case GMRES_SOR:
+      allocArray_Krylov(TotalMemory);
+      break;
+  }
   
   
   // メモリ使用量の表示

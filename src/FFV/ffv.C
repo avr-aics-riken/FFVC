@@ -73,7 +73,7 @@ FFV::~FFV()
 }
 
 
-
+// #################################################################
 // 時間平均値のファイル出力
 void FFV::AverageOutput(double& flop)
 {
@@ -153,7 +153,7 @@ void FFV::AverageOutput(double& flop)
 }
 
 
-
+// #################################################################
 // 時間平均操作を行う
 void FFV::Averaging_Time(double& flop)
 {
@@ -170,7 +170,7 @@ void FFV::Averaging_Time(double& flop)
 }
 
 
-
+// #################################################################
 // 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
 double FFV::count_comm_size(const int sz[3], const int guide)
 {
@@ -211,7 +211,7 @@ double FFV::count_comm_size(const int sz[3], const int guide)
 }
 
 
-
+// #################################################################
 // 外部計算領域の各面における総流量と対流流出速度を計算する
 // 流出境界のみ和をとる，その他は既知
 void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
@@ -298,7 +298,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
 }
 
 
-
+// #################################################################
 // ファイル出力
 void FFV::FileOutput(double& flop, const bool restart)
 {
@@ -525,7 +525,7 @@ void FFV::FileOutput(double& flop, const bool restart)
 
 }
 
-
+// #################################################################
 // タイムステップループ
 int FFV::MainLoop()
 {
@@ -564,23 +564,17 @@ int FFV::MainLoop()
 }
 
 
-
-/**
- * @brief Poissonのノルムを計算する
- * @retval 収束値
- * @param [in] IC ItrCtlクラス
- */
-REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
+// #################################################################
+// Poissonのノルムを計算する
+double FFV::Norm_Poisson(ItrCtl* IC)
 {
-  REAL_TYPE nrm;
-  REAL_TYPE rms;
-  REAL_TYPE convergence; /// 収束判定値
-  REAL_TYPE coef = deltaT/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-  REAL_TYPE tmp; /// テンポラリバッファ
+  double nrm;
+  double rms;
+  double convergence; /// 収束判定値
   double flop_count;
+  REAL_TYPE coef = deltaT/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
   
   //d_sqに発散がストアされている
-  
   
   switch (IC->get_normType()) 
   {
@@ -595,9 +589,9 @@ REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_norm_comm);
-        tmp = nrm;
+        double tmp = nrm;
         if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
       }
       convergence = nrm;
       IC->set_normValue( convergence );
@@ -616,9 +610,9 @@ REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_norm_comm);
-        tmp = rms; 
+        double tmp = rms;
         if ( paraMngr->Allreduce(&tmp, &rms, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
       }
       convergence = sqrt(rms/(REAL_TYPE)numProc); //RMS
       IC->set_normValue( convergence );
@@ -648,13 +642,14 @@ REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_norm_comm);
+        double tmp;
         tmp = nrm;
         if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
         tmp = rms;
         if ( paraMngr->Allreduce(&tmp, &rms, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double)*2.0 ); // 双方向 x ノード数
       }
-      rms = sqrt(rms/(REAL_TYPE)numProc); // RMS
+      rms = sqrt(rms/(double)numProc); // RMS
       convergence = nrm; // ノルムは最大値を返す
       IC->set_normValue( convergence );
       
@@ -675,7 +670,7 @@ REAL_TYPE FFV::Norm_Poisson(ItrCtl* IC)
 }
 
 
-
+// #################################################################
 // 圧力の引き戻し操作を行う
 void FFV::Pressure_Shift()
 {
@@ -688,6 +683,7 @@ void FFV::Pressure_Shift()
 }
 
 
+// #################################################################
 // タイミング測定区間にラベルを与えるラッパー
 void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive)
 {
@@ -714,6 +710,7 @@ void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exc
 }
 
 
+// #################################################################
 // タイミング測定区間にラベルを与える
 void FFV::set_timing_label()
 {
@@ -912,6 +909,7 @@ void FFV::set_timing_label()
 }
 
 
+// #################################################################
 // タイムステップループの後の処理
 bool FFV::stepPost() 
 {
@@ -919,7 +917,7 @@ bool FFV::stepPost()
 }
 
 
-
+// #################################################################
 // 利用例の表示
 void FFV::Usage()
 {
@@ -936,7 +934,7 @@ void FFV::Usage()
 }
 
 
-
+// #################################################################
 // 空間平均操作と変動量の計算を行う
 // スカラ値は算術平均，ベクトル値は自乗和
 void FFV::Variation_Space(double* avr, double* rms, double& flop)

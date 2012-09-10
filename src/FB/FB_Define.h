@@ -78,6 +78,7 @@
 #define SOR       2
 #define SOR2SMA   3
 #define SOR2CMA   4
+#define GMRES_SOR 5
 
 // KindOfSolver
 #define FLOW_ONLY               0

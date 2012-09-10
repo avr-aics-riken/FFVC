@@ -25,7 +25,7 @@
     subroutine div_cnst (div, sz, g, b2, bp, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g
+    integer                                                     ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop, b2, dv, dd
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
@@ -39,7 +39,7 @@
     flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(dv) &
+!$OMP PRIVATE(dv, dd, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
@@ -54,8 +54,8 @@
     do j=1,jx
     do i=1,ix
       idx = bp(i,j,k)
-      dd = 1.0 / double(ibits(idx, bc_diag, 3))  ! diagonal
-      dv = dd * div(i,j,k)*double(ibits(bp(i,j,k), Active, 1))
+      dd = 1.0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
+      dv = dd * div(i,j,k)*dble(ibits(bp(i,j,k), Active, 1))
       b2 = b2 + dv*dv
     end do
     end do

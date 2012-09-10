@@ -12,8 +12,8 @@
 // #################################################################
 
 /** 
- * @file History.h
- * @brief FlowBase History class Header
+ * @file   History.h
+ * @brief  FlowBase History class Header
  * @author kero
  */
 
@@ -277,7 +277,7 @@ public:
    * @param [in] nrm ノルム
    * @param [in] idx divの最大値の発生セルインデクス
    */
-  void printHistoryItr(FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx);
+  void printHistoryItr(FILE* fp, const int itr, const double nrm, const int* idx);
   
   
   /**

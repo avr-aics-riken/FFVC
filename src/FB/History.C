@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file History.C
- * @brief FlowBase History class
+ * @file   History.C
+ * @brief  FlowBase History class
  * @author kero
  */
 
@@ -38,7 +38,7 @@ void History::printHistoryItrTitle(FILE* fp)
 
 // #################################################################
 // コンポーネントモニタの履歴出力
-void History::printHistoryItr(FILE* fp, const int itr, const REAL_TYPE nrm, const int* idx)
+void History::printHistoryItr(FILE* fp, const int itr, const double nrm, const int* idx)
 {
 	fprintf(fp, "                                           %8d %13.6e (%12d, %12d, %12d)\n", itr+1, nrm, idx[0], idx[1], idx[2]);
 }

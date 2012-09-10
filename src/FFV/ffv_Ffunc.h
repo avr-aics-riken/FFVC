@@ -141,9 +141,8 @@ extern "C" {
   //***********************************************************************************************
   // ffv_poisson.f90
   void div_cnst_(REAL_TYPE* dv, int* sz, int* g, double* b2, int* bp, double* flop);
-  void psor_(REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, REAL_TYPE* s1, 
-                         int* bp, double* flop);
-  void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* s0, 
+  void psor_(REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, double* res, REAL_TYPE* s0, REAL_TYPE* s1, int* bp, double* flop);
+  void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, double* res, REAL_TYPE* s0,
                          REAL_TYPE* s1, int* bp, double* flop);
   void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key, int* nID);
   void sma_comm_wait_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key);
@@ -240,9 +239,9 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_utility.f90
-  void norm_v_div_dbg_    (REAL_TYPE* ds, REAL_TYPE* rm, int* index, int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, double* flop);
-  void norm_v_div_l2_     (REAL_TYPE* rms,   int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, double* flop);
-  void norm_v_div_max_    (REAL_TYPE* ds,    int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, double* flop);
+  void norm_v_div_dbg_    (double* ds, double* rm, int* index, int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, double* flop);
+  void norm_v_div_l2_     (double* rms, int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, double* flop);
+  void norm_v_div_max_    (double* ds,  int* sz, int* g, REAL_TYPE* div, REAL_TYPE* coef, int* bp, double* flop);
   void helicity_          (REAL_TYPE* ht,    int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
   void i2vgt_             (REAL_TYPE* q,     int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
   void rot_v_             (REAL_TYPE* rot,   int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);

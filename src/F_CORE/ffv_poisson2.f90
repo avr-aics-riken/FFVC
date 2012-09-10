@@ -30,7 +30,7 @@
   double precision                                          ::  flop
   real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
   real                                                      ::  dd, ss
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, bt
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, ax
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
   ix = sz(1)
@@ -44,13 +44,12 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:res)
 
   do k=1,kx
   do j=1,jx
@@ -100,9 +99,10 @@
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
   integer, dimension(3)                                     ::  sz
-  double precision                                          ::  flop
+  double precision                                          ::  flop, res_a, res
+  real                                                      ::  al, dd
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, ax, rest
-  real                                                      ::  res, al, res_a, dd
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
   ix = sz(1)
   jx = sz(2)
@@ -131,7 +131,7 @@
     dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
     al = ( -dd * div(i,j,k) - ax(i,j,k) ) * real(ibits(idx, Active, 1))
     rest(i,j,k) = al
-    res = res + al*al
+    res = res + dble(al*al)
   end do
   end do
   end do
@@ -173,9 +173,9 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, s)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
@@ -218,9 +218,9 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, im)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
@@ -228,7 +228,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-  dst(i, j, k) = src(i, j, k, im)
+    dst(i, j, k) = src(i, j, k, im)
   end do
   end do
   end do
@@ -263,9 +263,9 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, im)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
@@ -313,9 +313,9 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, lm)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
@@ -363,9 +363,9 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, lm)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
@@ -407,12 +407,12 @@
   flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, lm)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif

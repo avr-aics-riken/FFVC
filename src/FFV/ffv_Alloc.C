@@ -161,7 +161,7 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
 }
 
 
-// Runge-Kutta法に用いる配列のアロケーション
+// Krylov-subspace法に用いる配列のアロケーション
 void FFV::allocArray_Krylov(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);

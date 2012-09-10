@@ -303,6 +303,13 @@ private:
   
   
   /**
+   * @brief Krylov-subspace Iteration
+   * @param [in,out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_Krylov(double &total);
+  
+  
+  /**
    * @brief LES計算に用いる配列のアロケーション
    * @param [in,out] total ソルバーに使用するメモリ量
    */
@@ -585,9 +592,8 @@ private:
    * @param [in]     IC      ItrCtlクラス
    * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
    * @param [in,out] iparam  ステップパラメータ
-   * @param [in,out] iparam  収束パラメータ
    */
-  double Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam, double *rparam);
+  double Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam);
   
   
   /**
@@ -617,9 +623,8 @@ private:
    * @param [in]     IC      ItrCtlクラス
    * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
    * @param [in,out] iparam  ステップパラメータ
-   * @param [in,out] iparam  収束パラメータ
    */
-  void LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam, double* rparam);
+  void LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam);
   
   
   /**
@@ -635,7 +640,7 @@ private:
    * @retval 収束値
    * @param [in] IC ItrCtlクラス
    */
-  REAL_TYPE Norm_Poisson(ItrCtl* IC);
+  double Norm_Poisson(ItrCtl* IC);
   
   
   /**

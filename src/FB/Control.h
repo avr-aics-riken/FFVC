@@ -35,6 +35,7 @@
 
 using namespace std;
 
+// #################################################################
 class DTcntl {
 public:
   /** 時間積分幅の指定種別 */
@@ -146,7 +147,7 @@ public:
 };
 
 
-
+// #################################################################
 class ReferenceFrame {
   
 protected:
@@ -245,17 +246,17 @@ public:
 };
 
 
-
+// #################################################################
 class ItrCtl {
 private:
+  double NormValue;      ///< ノルムの値
+  double eps;            ///< 収束閾値
+  REAL_TYPE omg;         ///< 加速/緩和係数
   int NormType;          ///< ノルムの種類
   int SubType;           ///< SKIP LOOP or MASK LOOP
   int ItrMax;            ///< 最大反復数
   int LinearSolver;      ///< 線形ソルバーの種類
   int SyncMode;          ///< 同期モード (comm_sync, comm_async)
-  REAL_TYPE eps;         ///< 収束閾値
-  REAL_TYPE omg;         ///< 加速/緩和係数
-  REAL_TYPE NormValue;   ///< ノルムの値
   
 public:
   /** 反復制御リスト */
@@ -324,7 +325,7 @@ public:
   }
   
   /** @brief 収束閾値を返す */
-  REAL_TYPE get_eps() const 
+  double get_eps() const
   { 
     return eps; 
   }
@@ -336,7 +337,7 @@ public:
   }
   
   /** @brief keyに対応するノルムの値を返す */
-  REAL_TYPE get_normValue() const 
+  double get_normValue() const
   { 
     return NormValue; 
   }
@@ -373,7 +374,7 @@ public:
   }
   
   /** @brief 収束閾値を保持 */
-  void set_eps(const REAL_TYPE r) 
+  void set_eps(const double r)
   { 
     eps = r; 
   }
@@ -385,7 +386,7 @@ public:
   }
   
   /** @brief ノルム値を保持 */
-  void set_normValue(const REAL_TYPE r) 
+  void set_normValue(const double r)
   { 
     NormValue = r; 
   }
@@ -398,7 +399,7 @@ public:
 };
 
 
-
+// #################################################################
 class Control : public DomainInfo {
 protected:
   TPControl* tpCntl;   ///< テキストパーサへのポインタ
