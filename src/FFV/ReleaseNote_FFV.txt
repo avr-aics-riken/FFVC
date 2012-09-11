@@ -9,6 +9,9 @@ Release Note
 
 #######################################
 
+Ver 0.8.3   11 Sep. 2012
+  - Gmres追加
+
 Ver 0.8.2    6 Sep. 2012
   - coarse restartの特殊版getCoraseResult2
   

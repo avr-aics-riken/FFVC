@@ -648,6 +648,10 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
   // 残差収束チェック
   if ( res_rhs < eps_1 ) return res_rhs;
   
+  
+  // >>> Gmres section
+  TIMING_start(tm_gmres_sor_sct);
+  
   double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
   double r4;
   double flop=0.0;
@@ -718,19 +722,26 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
     
     if (res < t_eps) goto jump_3;
 
-    
+    TIMING_start(tm_gmres_mvprod);
+    flop = 0.0;
     mv_prod_(d_yt, size, &guide, d_p, d_bcp, &flop);
+    TIMING_stop(tm_gmres_mvprod, flop);
+    
     Sync_Scalar(IC, d_yt, 1);
-    iparam[3]++;
     
-    
+    TIMING_start(tm_gmres_res_sample);
+    flop = 0.0;
     res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_yt, d_bcp, &flop);
+    TIMING_stop(tm_gmres_res_sample, flop);
     
+    
+    TIMING_start(tm_gmres_comm);
     if ( numProc > 1 )
     {
       double tmp = res_abs;
       if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
+    TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
     
     
     beta = sqrt(res_abs);
@@ -777,21 +788,27 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       
       copy_2_(d_zm, size, &guide, &m_max, d_xt, &im);
       
-      
+      TIMING_start(tm_gmres_mvprod);
+      flop = 0.0;
       mv_prod_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      TIMING_stop(tm_gmres_mvprod, flop);
+      
       Sync_Scalar(IC, d_xt, 1);
-      iparam[3]++;
       
 
       for (int km=1; km<=im; km++) {
         al = 0.0;
         ml_add_1_(&al, size, &guide, &m_max, d_vm, d_yt, &km, &flop);
         
+        
+        TIMING_start(tm_gmres_comm);
         if ( numProc > 1 )
         {
           double tmp = al;
           if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         }
+        TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
+        
         
         hgm[_IDX2D(km, im, Nmax)] = al;
         
@@ -803,17 +820,26 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       al =0.0;
       ml_add_2_(&al, size, &guide, d_yt, &flop);
       
+      
+      TIMING_start(tm_gmres_comm);
       if ( numProc > 1 )
       {
         double tmp = al;
         if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       }
+      TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
+      
+      
+      TIMING_start(tm_gmres_others);
+      flop = 0.0;
       
       hgm[_IDX2D(im+1, im, Nmax)] = sqrt(al);
+      flop += 20.0;
       
       if ( hgm[_IDX2D(im+1, im, Nmax)] < eps_1 )
       {
         nrm = im-1;
+        TIMING_stop(tm_gmres_others, flop);
         goto jump_1;
       }
 
@@ -821,6 +847,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       {
         int idx = im + 1;
         al = 1.0 / hgm[_IDX2D(idx, im, Nmax)];
+        flop += 13.0;
         multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_yt, &flop);
       }
 
@@ -830,12 +857,15 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
         rgm[_IDX2D(km  , im, Nmax)] = cgm[km-1]*hgm[_IDX2D(km, im, Nmax)] - sgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
         rgm[_IDX2D(km-1, im, Nmax)] = sgm[km-1]*hgm[_IDX2D(km, im, Nmax)] + cgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
       }
+      flop += (double)(im-2+1)*6.0;
       
       al = sqrt(rgm[_IDX2D(im, im, Nmax)]*rgm[_IDX2D(im, im, Nmax)] + hgm[_IDX2D(im+1, im, Nmax)]*hgm[_IDX2D(im+1, im, Nmax)]);
+      flop += 23;
       
       if ( al < eps_1 )
       {
         nrm = im - 1;
+        TIMING_stop(tm_gmres_others, flop);
         goto jump_1;
       }
 
@@ -848,13 +878,17 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       bgm[im]    =   cgm[im]*bgm[im];
       
       al = bgm[im+1] * bgm[im+1];
-      iparam[1]++;
+
+      flop += 2.0*13.0 + 4.0;
 
       if (al < eps_abs)
       {
         nrm = im;
+        TIMING_stop(tm_gmres_others, flop);
         goto jump_1;
       }
+      
+      TIMING_stop(tm_gmres_others, flop);
 
     } // loop; im
     
@@ -903,6 +937,9 @@ jump_4:
   if ( sgm ) delete [] sgm;
   if ( bgm ) delete [] bgm;
   if ( ygm ) delete [] ygm;
+  
+  TIMING_stop(tm_gmres_sor_sct, 0.0);
+  // <<< Poisson Source section
   
   return res;
 }

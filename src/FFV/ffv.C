@@ -823,6 +823,12 @@ void FFV::set_timing_label()
   set_label(tm_pressure_shift,     "Shift_Pressure",          PerfMonitor::COMM);
   // end of NS: Loop Post Section
   
+  set_label(tm_gmres_sor_sct,      "Poisson__GMRES_Sct",      PerfMonitor::CALC, false);
+  set_label(tm_gmres_mvprod,       "GMRES_MV_Product",        PerfMonitor::CALC);
+  set_label(tm_gmres_res_sample,   "GMRES_Res_sample",        PerfMonitor::CALC);
+  set_label(tm_gmres_others,       "GMRES_Others",            PerfMonitor::CALC);
+  set_label(tm_gmres_comm,         "A_R_GMRES",               PerfMonitor::COMM);
+  
   // end of Flow section
   
   

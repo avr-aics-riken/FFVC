@@ -17,7 +17,7 @@
  * @author kero
  */
 
-#define FFV_VERS   82
+#define FFV_VERS   83
 #define TM_LABEL_MAX 24
   
 /** 計算性能測定キー番号 */
@@ -105,6 +105,12 @@ enum timing_key {
         tm_norm_div_l2,
         tm_norm_div_max_dbg,
         tm_norm_comm,
+  
+      tm_gmres_sor_sct,
+        tm_gmres_mvprod,
+        tm_gmres_res_sample,
+        tm_gmres_others,
+        tm_gmres_comm,
   
     tm_NS_loop_post_sct,
       tm_vectors_comm,
