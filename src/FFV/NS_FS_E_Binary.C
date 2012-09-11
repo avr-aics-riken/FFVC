@@ -38,12 +38,12 @@ void FFV::NS_FS_E_Binary()
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   int v_length = s_length * 3;
-  int iparam[10];                      /// for iteration count
+  int iparam[10+1];                    /// Iteration count, +1はFortranインデクスと整合性をとるため，0はダミー
   
-  iparam[0] = 0;
   iparam[1] = 0;
   iparam[2] = 0;
-  iparam[7] = 0;
+  iparam[3] = 0;
+  iparam[8] = 0;
   
   
   // 境界処理用
@@ -384,9 +384,9 @@ void FFV::NS_FS_E_Binary()
 
     
     // 線形ソルバー
-    iparam[5] = (int)Session_CurrentStep;
+    iparam[6] = (int)Session_CurrentStep;
     LS_Binary(ICp, rhs_nrm, iparam);
-    iparam[7]++;
+    iparam[8]++;
 
     
     // >>> Poisson Iteration subsection 4
@@ -538,9 +538,9 @@ void FFV::NS_FS_E_Binary()
   
   
   // GMres
-  if (iparam[1] == 0)
+  if (iparam[2] == 0)
   {
-    iparam[1] = ICp->LoopCount;
+    iparam[2] = ICp->LoopCount;
   }
   
   FILE* fp_hg;
@@ -549,7 +549,7 @@ void FFV::NS_FS_E_Binary()
     Hostonly_ stamped_printf("\tSorry, can't open 'test_linear.txt' file.\n");
     Exit(0);
   }
-  fprintf(fp_hg, "step=%15ld ip[0]=%d ip[1]=%d ip[2]=%d\n", Session_CurrentStep, iparam[0], iparam[1], iparam[2]);
+  fprintf(fp_hg, "step=%15ld ip[0]=%d ip[1]=%d ip[2]=%d\n", Session_CurrentStep, iparam[1], iparam[2], iparam[3]);
   fclose(fp_hg);
   
   

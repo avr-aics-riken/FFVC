@@ -183,7 +183,7 @@ private:
   REAL_TYPE * d_rest;
   REAL_TYPE * d_vm;
   REAL_TYPE * d_zm;
-  
+#define RESTART_PERIOD 15 // リスタート周期
   
   
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理

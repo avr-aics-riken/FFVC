@@ -150,17 +150,18 @@
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  nc   サイズ
+!! @param [in]  l    インデクス
 !! @param [in]  s    スカラー値
 !! @param [in]  src  被積分配列
 !! @param [out] flop  flop count
 !<
-  subroutine multiply (dst, sz, g, s, src, flop)
+  subroutine multiply (dst, sz, g, nc, l, s, src, flop)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g
+  integer                                                     ::  i, j, k, ix, jx, kx, g, l, nc
   integer, dimension(3)                                       ::  sz
   double precision                                            ::  flop, s
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 15)  ::  dst
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  dst
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src
 
   ix = sz(1)
@@ -170,7 +171,7 @@
   flop = flop + dble(ix)*dble(jx)*dble(kx)*1.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, s)
+!$OMP FIRSTPRIVATE(ix, jx, kx, s, l)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -183,7 +184,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    dst(i, j, k, 1) = real(s) * src(i,j,k)
+    dst(i, j, k, l) = real(s) * src(i,j,k)
   end do
   end do
   end do
@@ -199,15 +200,16 @@
 !! @param [out] dst  
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
+!! @param [in]  nc   サイズ
 !! @param [in]  src  被積分配列
 !! @param [in]  im   列番号
 !<
-  subroutine copy_1 (dst, sz, g, src, im)
+  subroutine copy_1 (dst, sz, g, nc, src, im)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g, im
+  integer                                                     ::  i, j, k, ix, jx, kx, g, im, nc
   integer, dimension(3)                                       ::  sz
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 15)  ::  src
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  src
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  dst
 
   ix = sz(1)
@@ -244,15 +246,16 @@
 !! @param [out] dst
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
+!! @param [in]  nc   サイズ
 !! @param [in]  src  被積分配列
 !! @param [in]  im   列番号
 !<
-  subroutine copy_2 (dst, sz, g, src, im)
+  subroutine copy_2 (dst, sz, g, nc, src, im)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g, im
+  integer                                                     ::  i, j, k, ix, jx, kx, g, im, nc
   integer, dimension(3)                                       ::  sz
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 15)  ::  dst
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  dst
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src
 
   ix = sz(1)
@@ -260,7 +263,7 @@
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, im)
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, im)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -270,9 +273,9 @@
 !$OMP DO SCHEDULE(hoge)
 #endif
 
-  do k=1,kx
-  do j=1,jx
-  do i=1,ix
+  do k=1-g,kx+g
+  do j=1-g,jx+g
+  do i=1-g,ix+g
     dst(i, j, k, im) = src(i, j, k)
   end do
   end do
@@ -289,18 +292,19 @@
 !! @param [out] ac   和
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
+!! @param [in]  nc   サイズ
 !! @param [in]  s4   被積分配列（4次元）
 !! @param [in]  s3   被積分配列（3次元）
 !! @param [in]  lm   列番号
 !! @param [out] flop flop count
 !<
-  subroutine ml_add_1 (ac, sz, g, s4, s3, lm, flop)
+  subroutine ml_add_1 (ac, sz, g, nc, s4, s3, lm, flop)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g, lm
+  integer                                                     ::  i, j, k, ix, jx, kx, g, lm, nc
   integer, dimension(3)                                       ::  sz
   double precision                                            ::  flop, ac
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 15)  ::  s4
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  s4
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  s3
 
   ix = sz(1)
@@ -332,56 +336,6 @@
 
   return
   end subroutine ml_add_1
-
-
-!> ********************************************************************
-!! @brief 積和関数
-!! @param [out] s3   出力
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  s    スカラー
-!! @param [in]  s4   被積分配列（4次元）
-!! @param [in]  lm   列番号
-!! @param [out] flop flop count
-!<
-  subroutine ml_add_3 (s3, sz, g, s, s4, lm, flop)
-  implicit none
-  include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g, lm
-  integer, dimension(3)                                       ::  sz
-  double precision                                            ::  flop, s
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 15)  ::  s4
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  s3
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, lm)
-
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
-  do k=1,kx
-  do j=1,jx
-  do i=1,ix
-    s3(i,j,k) = s3(i,j,k) + real(s) * s4(i, j, k, lm)
-  end do
-  end do
-  end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-  return
-  end subroutine ml_add_3
 
 
 !> ********************************************************************
@@ -429,3 +383,105 @@
 
   return
   end subroutine ml_add_2
+
+
+!> ********************************************************************
+!! @brief 積和関数
+!! @param [out] s3   出力
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  nc   サイズ
+!! @param [in]  s    スカラー
+!! @param [in]  s4   被積分配列（4次元）
+!! @param [in]  lm   列番号
+!! @param [out] flop flop count
+!<
+  subroutine ml_add_3 (s3, sz, g, nc, s, s4, lm, flop)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                     ::  i, j, k, ix, jx, kx, g, lm, nc
+  integer, dimension(3)                                       ::  sz
+  double precision                                            ::  flop, s
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  s4
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  s3
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, lm)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    s3(i,j,k) = s3(i,j,k) + real(s) * s4(i, j, k, lm)
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine ml_add_3
+
+
+!> ********************************************************************
+!! @brief 積和関数
+!! @param [out] s3   出力
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  nc   サイズ
+!! @param [in]  s    スカラー
+!! @param [in]  s4   被積分配列（4次元）
+!! @param [in]  lm   列番号
+!! @param [out] flop flop count
+!<
+  subroutine ml_add_4 (s3, sz, g, nc, s, s4, lm, flop)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                     ::  i, j, k, ix, jx, kx, g, lm, nc
+  integer, dimension(3)                                       ::  sz
+  double precision                                            ::  flop, s
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  s4
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  s3
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, lm)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do k=1-g,kx+g
+  do j=1-g,jx+g
+  do i=1-g,ix+g
+    s3(i,j,k) = s3(i,j,k) + real(s) * s4(i, j, k, lm)
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine ml_add_4
