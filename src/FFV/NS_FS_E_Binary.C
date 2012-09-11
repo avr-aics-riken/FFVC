@@ -40,10 +40,11 @@ void FFV::NS_FS_E_Binary()
   int v_length = s_length * 3;
   int iparam[10+1];                    /// Iteration count, +1はFortranインデクスと整合性をとるため，0はダミー
   
-  iparam[1] = 0;
-  iparam[2] = 0;
-  iparam[3] = 0;
-  iparam[8] = 0;
+  iparam[1] = 0; // Gmresメインのコール回数
+  iparam[2] = 0; // スムーザーの総回数
+  iparam[3] = 0; // Ax計算の回数
+  iparam[6] = 0; // Session_CurrentStep
+  iparam[8] = 0; // ステップに１回インクリメント >> Session_CurrentStepと同じ？
   
   
   // 境界処理用

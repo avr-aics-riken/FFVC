@@ -918,6 +918,15 @@ private:
   
   
   /**
+   * @brief 反復の同期処理
+   * @param [in]     IC        ItrCtlクラス
+   * @param [in,out] d_class   対象データ
+   * @param [in]     num_layer 通信の袖数
+   */
+  void Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer);
+  
+  
+  /**
    * @brief タイミング測定開始
    * @param [in] key 格納番号
    */

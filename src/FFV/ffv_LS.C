@@ -296,29 +296,10 @@ double FFV::Point_SOR(ItrCtl* IC)
   TIMING_start(tm_poi_itr_sct_3); // >>> Poisson Iteration section 3
   
   // 同期処理
-  if ( numProc > 1 )
-  {
-    TIMING_start(tm_poi_comm);
-    
-    /// 通信面1面あたりの通信量
-    double comm_size = count_comm_size(size, guide);
-    
-    if (IC->get_SyncMode() == comm_sync )
-    {
-      if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-    }
-    else
-    {
-      MPI_Request req[12];
-      for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
-      
-      if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-      if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req ) != CPM_SUCCESS ) Exit(0); // 1 layer communication
-    }
-    TIMING_stop(tm_poi_comm, comm_size);
-  }
+  Sync_Scalar(IC, d_p, 1);
   
   TIMING_stop(tm_poi_itr_sct_3, 0.0); // <<< Poisson Iteration subsection 3
+  
   
   // 残差の集約
   if ( numProc > 1 )
@@ -331,6 +312,35 @@ double FFV::Point_SOR(ItrCtl* IC)
 
   return res;
 }
+
+
+// #################################################################
+// 反復変数の同期処理
+void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
+{
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_poi_comm);
+    
+    /// 通信面1面あたりの通信量
+    double comm_size = count_comm_size(size, guide);
+    
+    if (IC->get_SyncMode() == comm_sync )
+    {
+      if ( paraMngr->BndCommS3D(d_class, size[0], size[1], size[2], guide, num_layer) != CPM_SUCCESS ) Exit(0);
+    }
+    else
+    {
+      MPI_Request req[12];
+      for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
+      
+      if ( paraMngr->BndCommS3D_nowait(d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->wait_BndCommS3D  (d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
+    }
+    TIMING_stop(tm_poi_comm, comm_size*(double)num_layer);
+  }
+}
+
 
 
 // #################################################################
@@ -631,31 +641,31 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
 // iparam[]は，Fortranイメージで0はダミー
 double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
 {
-  const double fct2 = 6.0;
+  const double fct2  = 6.0;
   const double eps_1 = 1.0e-30;
   const double eps_2 = IC->get_eps();
+  
+  // 残差収束チェック
+  if ( res_rhs < eps_1 ) return res_rhs;
   
   double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
   double r4;
   double flop=0.0;
   
-  const int iter_max = IC->get_ItrMax();
+  const int Iteration_Max = IC->get_ItrMax();
   int m_max = RESTART_PERIOD;
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
-  if ( iparam[8] < 0 ) return res_rhs;
-  
   int isfin  = 0;
   
-  // n_iter = min(iparam[8], iter_max);
-  // nrc    = min(iparam[8], nrc_max);
+  // Iteration_Max = min(iparam[8], Iteration_Max);
+  // nrc           = min(iparam[8], nrc_max);
   
-  int oki  = 4;
-  int step = 6;
-  int n_iter  = iter_max;
+  const int oki  = 4;
+  const int step = 6;
   int iter = 0;
   int nrm  = 0;
-  
+
   if ( C.Mode.Precision == sizeof(float) )
   {
     t_eps = 0.995 * eps_2 * eps_2;
@@ -664,7 +674,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
   {
     t_eps = 0.999 * eps_2 * eps_2;
   }
-  
+
   const int Nmax = m_max+1; // 配列確保用，ゼロはダミー
   
   double *rgm = new double[Nmax * Nmax];     // (Nmax, Nmax)
@@ -681,57 +691,63 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
   
   int column = 1;
   
-  if ( res_rhs < eps_1 ) return res_rhs;
-  
   t_eps = res_rhs * t_eps;
-  
+
   res = SOR_2_SMA(IC);
-  
+
   r4 = sqrt(res/res_rhs);
+
   
   if (res < t_eps)
   {
-    printf("Final : %e\n", r4);
+    Hostonly_ printf("Final : %e\n", r4);
     isfin = 1;
     goto jump_4;
   }
+  
   
   if ( res > (fct2*t_eps) ) t_eps = res/fct2;
   
   eps_abs = 0.15 * t_eps;
   
   
-  for (int i_iter=1; i_iter<=n_iter; i_iter++) {
+  for (int i_iter=1; i_iter<=Iteration_Max; i_iter++) {
     
     res = SOR_2_SMA(IC);
     iparam[2]++;
     
     if (res < t_eps) goto jump_3;
-    
+
     
     mv_prod_(d_yt, size, &guide, d_p, d_bcp, &flop);
+    Sync_Scalar(IC, d_yt, 1);
     iparam[3]++;
+    
     
     res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_yt, d_bcp, &flop);
     
-    double tmp = res_abs;
-    if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( numProc > 1 )
+    {
+      double tmp = res_abs;
+      if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
     beta = sqrt(res_abs);
     
     if (beta < eps_1) goto jump_2;
+    
     
     beta_1 = 1.0/beta;
     
     multiply_(d_vm, size, &guide, &m_max, &column, &beta_1, d_rest, &flop);
     
-    bgm[1] = beta;
     
+    bgm[1] = beta;
     
     for (int i=2; i<=m_max; i++) {
       bgm[i] = 0.0;
     }
-    
-    //if (m > m_max) m = m_max;
     
     
     
@@ -740,36 +756,18 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       
       copy_1_(d_rest, size, &guide, &m_max, d_vm, &im);
       
+      
 #pragma omp parallel for firstprivate(s_length)
       for (int i=0; i<s_length; i++) {
         d_xt[i] = 0.0;
       }
       
-      int n_inner;
       
-      if ( iter <= oki )
-      {
-        n_inner = step;
-      }
-      else if ( iter <= 2*oki )
-      {
-        n_inner = 2*step;
-      }
-      else if ( iter <= 3*oki )
-      {
-        n_inner = 3*step;
-      }
-      else if ( iter <= 4*oki )
-      {
-        n_inner = 4*step;
-      }
-      else
-      {
-        n_inner = 5*step;
-      }
+      // Decide the number of iteration for inner-iteration
+      int n_inner = ((iter / oki) + 1) * step;
       
-      if (n_inner < 1) n_inner = 1;
       
+      // Inner-iteration
       for (int i_inner=1; i_inner<=n_inner; i_inner++) {
         
         res = SOR_2_SMA(IC);
@@ -777,23 +775,39 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
         
       }
       
-      copy_2_(d_zm, size, &guide, &m_max, d_xt, &im); // copy range
+      copy_2_(d_zm, size, &guide, &m_max, d_xt, &im);
+      
       
       mv_prod_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      Sync_Scalar(IC, d_xt, 1);
       iparam[3]++;
       
+
       for (int km=1; km<=im; km++) {
         al = 0.0;
         ml_add_1_(&al, size, &guide, &m_max, d_vm, d_yt, &km, &flop);
+        
+        if ( numProc > 1 )
+        {
+          double tmp = al;
+          if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        }
         
         hgm[_IDX2D(km, im, Nmax)] = al;
         
         double r_al = -al;
         ml_add_3_(d_yt, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
       }
+
       
       al =0.0;
       ml_add_2_(&al, size, &guide, d_yt, &flop);
+      
+      if ( numProc > 1 )
+      {
+        double tmp = al;
+        if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
       
       hgm[_IDX2D(im+1, im, Nmax)] = sqrt(al);
       
@@ -802,14 +816,14 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
         nrm = im-1;
         goto jump_1;
       }
-      
+
       if (im < m_max)
       {
         int idx = im + 1;
         al = 1.0 / hgm[_IDX2D(idx, im, Nmax)];
         multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_yt, &flop);
       }
-      
+
       rgm[_IDX2D(1, im, Nmax)] = hgm[_IDX2D(1, im, Nmax)];
       
       for (int km=2; km<=im; km++) {
@@ -824,7 +838,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
         nrm = im - 1;
         goto jump_1;
       }
-      
+
       cgm[im]    = rgm[_IDX2D(im,  im, Nmax)] / al;
       sgm[im]    = hgm[_IDX2D(im+1,im, Nmax)] / al;
       
@@ -835,13 +849,13 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       
       al = bgm[im+1] * bgm[im+1];
       iparam[1]++;
-      
+
       if (al < eps_abs)
       {
         nrm = im;
         goto jump_1;
       }
-      
+
     } // loop; im
     
     nrm = m_max;

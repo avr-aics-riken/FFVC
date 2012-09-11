@@ -334,26 +334,23 @@ void FFV::allocate_SOR2SMA_buffer(double &total)
   int jx = size[1];
   int kx = size[2];
   
-  if ( hasLinearSolver(SOR2SMA) ) 
-  {
-    cf_sz[0] = (jx+1) * (kx+1) / 2; // バッファサイズ
-    cf_sz[1] = (kx+1) * (ix+1) / 2; // +1はマージン
-    cf_sz[2] = (ix+1) * (jx+1) / 2;
-    
-    size_t n1 = cf_sz[0]*4;
-    size_t n2 = cf_sz[1]*4;
-    size_t n3 = cf_sz[2]*4;
-    
-    if( (cf_x = new REAL_TYPE[n1]) == NULL ) Exit(0);
-    if( (cf_y = new REAL_TYPE[n2]) == NULL ) Exit(0);
-    if( (cf_z = new REAL_TYPE[n3]) == NULL ) Exit(0);
-    
-    memset(cf_x, 0, sizeof(REAL_TYPE)*n1);
-    memset(cf_y, 0, sizeof(REAL_TYPE)*n2);
-    memset(cf_z, 0, sizeof(REAL_TYPE)*n3);
-    
-    total += (double)( (n1+n2+n3)*sizeof(REAL_TYPE) );
-  }
+  cf_sz[0] = (jx+1) * (kx+1) / 2; // バッファサイズ
+  cf_sz[1] = (kx+1) * (ix+1) / 2; // +1はマージン
+  cf_sz[2] = (ix+1) * (jx+1) / 2;
+  
+  size_t n1 = cf_sz[0]*4;
+  size_t n2 = cf_sz[1]*4;
+  size_t n3 = cf_sz[2]*4;
+  
+  if( (cf_x = new REAL_TYPE[n1]) == NULL ) Exit(0);
+  if( (cf_y = new REAL_TYPE[n2]) == NULL ) Exit(0);
+  if( (cf_z = new REAL_TYPE[n3]) == NULL ) Exit(0);
+  
+  memset(cf_x, 0, sizeof(REAL_TYPE)*n1);
+  memset(cf_y, 0, sizeof(REAL_TYPE)*n2);
+  memset(cf_z, 0, sizeof(REAL_TYPE)*n3);
+  
+  total += (double)( (n1+n2+n3)*sizeof(REAL_TYPE) );
 }
 
 
