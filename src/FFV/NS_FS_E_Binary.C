@@ -38,13 +38,6 @@ void FFV::NS_FS_E_Binary()
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   int v_length = s_length * 3;
-  int iparam[10+1];                    /// Iteration count, +1はFortranインデクスと整合性をとるため，0はダミー
-  
-  iparam[1] = 0; // Gmresメインのコール回数
-  iparam[2] = 0; // スムーザーの総回数
-  iparam[3] = 0; // Ax計算の回数
-  iparam[6] = 0; // Session_CurrentStep
-  iparam[8] = 0; // ステップに１回インクリメント >> Session_CurrentStepと同じ？
   
   
   // 境界処理用
@@ -385,9 +378,7 @@ void FFV::NS_FS_E_Binary()
 
     
     // 線形ソルバー
-    iparam[6] = (int)Session_CurrentStep;
-    LS_Binary(ICp, rhs_nrm, iparam);
-    iparam[8]++;
+    LS_Binary(ICp, rhs_nrm);
 
     
     // >>> Poisson Iteration subsection 4
@@ -536,22 +527,6 @@ void FFV::NS_FS_E_Binary()
       TIMING_stop(tm_LES_eddy_comm, comm_size*guide);
     }
   }
-  
-  
-  // GMres
-  if (iparam[2] == 0)
-  {
-    iparam[2] = ICp->LoopCount;
-  }
-  
-  FILE* fp_hg;
-  if ( !(fp_hg = fopen("history_gmres.txt", "a")) )
-  {
-    Hostonly_ stamped_printf("\tSorry, can't open 'test_linear.txt' file.\n");
-    Exit(0);
-  }
-  fprintf(fp_hg, "step=%15ld ip[0]=%d ip[1]=%d ip[2]=%d\n", Session_CurrentStep, iparam[1], iparam[2], iparam[3]);
-  fclose(fp_hg);
   
   
   // ノルムの増加率が規定値をこえたら，終了

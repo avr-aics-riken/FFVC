@@ -220,7 +220,7 @@ bool FFV::hasLinearSolver(const int L)
 
 // #################################################################
 // 線形ソルバーの選択実行
-void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam)
+void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm)
 {	
 	double res = 0.0;    /// 残差
 
@@ -237,7 +237,7 @@ void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam)
       break;
       
     case GMRES_SOR:
-      res = Gmres_SOR(IC, rhs_nrm, iparam);
+      res = Gmres_SOR(IC, rhs_nrm);
       break;
       
     default:
@@ -638,8 +638,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
 
 // #################################################################
 // GMres SOR
-// iparam[]は，Fortranイメージで0はダミー
-double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
+double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
 {
   const double fct2  = 6.0;
   const double eps_1 = 1.0e-30;
@@ -662,12 +661,8 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
   
   int isfin  = 0;
   
-  // Iteration_Max = min(iparam[8], Iteration_Max);
-  // nrc           = min(iparam[8], nrc_max);
-  
-  const int oki  = 4;
-  const int step = 6;
-  int iter = 0;
+  const int oki  = 2;
+  const int step = 3;
   int nrm  = 0;
 
   if ( C.Mode.Precision == sizeof(float) )
@@ -717,17 +712,15 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
   
   for (int i_iter=1; i_iter<=Iteration_Max; i_iter++) {
     
-    res = SOR_2_SMA(IC);
-    iparam[2]++;
-    
-    if (res < t_eps) goto jump_3;
+    // テスト的にはずす >> 収束性良い？
+    //res = SOR_2_SMA(IC);
+    //if (res < t_eps) goto jump_3;
 
     TIMING_start(tm_gmres_mvprod);
     flop = 0.0;
     mv_prod_(d_yt, size, &guide, d_p, d_bcp, &flop);
     TIMING_stop(tm_gmres_mvprod, flop);
     
-    Sync_Scalar(IC, d_yt, 1);
     
     TIMING_start(tm_gmres_res_sample);
     flop = 0.0;
@@ -763,7 +756,6 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
     
     
     for (int im=1; im<=m_max; im++) {
-      iter++;
       
       copy_1_(d_rest, size, &guide, &m_max, d_vm, &im);
       
@@ -775,15 +767,13 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       
       
       // Decide the number of iteration for inner-iteration
-      int n_inner = ((iter / oki) + 1) * step;
+      int n_inner = 3; //((im / oki) + 1) * step;
       
       
       // Inner-iteration
       for (int i_inner=1; i_inner<=n_inner; i_inner++) {
         
         res = SOR_2_SMA(IC);
-        iparam[2]++;
-        
       }
       
       copy_2_(d_zm, size, &guide, &m_max, d_xt, &im);
@@ -792,8 +782,6 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam)
       flop = 0.0;
       mv_prod_(d_xt, size, &guide, d_p, d_bcp, &flop);
       TIMING_stop(tm_gmres_mvprod, flop);
-      
-      Sync_Scalar(IC, d_xt, 1);
       
 
       for (int km=1; km<=im; km++) {

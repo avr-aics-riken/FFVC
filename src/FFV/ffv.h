@@ -591,9 +591,8 @@ private:
    * @brief GMRES-SOR
    * @param [in]     IC      ItrCtlクラス
    * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
-   * @param [in,out] iparam  ステップパラメータ
    */
-  double Gmres_SOR(ItrCtl* IC, double res_rhs, int *iparam);
+  double Gmres_SOR(ItrCtl* IC, double res_rhs);
   
   
   /**
@@ -622,9 +621,8 @@ private:
    * @brief 線形ソルバーの選択実行
    * @param [in]     IC      ItrCtlクラス
    * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
-   * @param [in,out] iparam  ステップパラメータ
    */
-  void LS_Binary(ItrCtl* IC, const double rhs_nrm, int* iparam);
+  void LS_Binary(ItrCtl* IC, const double rhs_nrm);
   
   
   /**

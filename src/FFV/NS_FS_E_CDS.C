@@ -39,12 +39,6 @@ void FFV::NS_FS_E_CDS()
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   int v_length = s_length * 3;
   
-  int iparam[10];                      /// for iteration count
-  
-  iparam[0] = 0;
-  iparam[1] = 0;
-  iparam[2] = 0;
-  iparam[7] = 0;
   
   // 境界処理用
   REAL_TYPE* m_buf = NULL;
@@ -381,9 +375,7 @@ void FFV::NS_FS_E_CDS()
     // <<< Poisson Iteration subsection 1
 
     // 線形ソルバー
-    iparam[5] = (int)Session_CurrentStep;
-    LS_Binary(ICp, rhs_nrm, iparam);
-    iparam[7]++;
+    LS_Binary(ICp, rhs_nrm);
     
 
     // >>> Poisson Iteration subsection 4
