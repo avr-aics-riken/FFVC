@@ -1925,16 +1925,6 @@ void FFV::gather_DomainInfo()
 // Binary voxelをカット情報から生成
 void FFV::generate_Solid(FILE* fp)
 {
-  
-  /* チェック用のリスト
-  int* list = NULL;
-  
-  list = new int[C.NoBC+1];
-  
-  for (int n=1; n<=C.NoBC; n++) {
-    list[n] = cmp[n].getMatOdr();
-  }*/
-  
   unsigned long zc=0;
   
 
@@ -1944,16 +1934,7 @@ void FFV::generate_Solid(FILE* fp)
     {
       int tgt = cmp[m].getMatOdr();
       
-      /* 除外IDの確認
-      int flag = 0;
-      for (int n=1; n<=C.NoBC; n++) {
-        if ( list[n] == tgt ) flag++;
-      }
-      
-      if ( flag == 0 )
-      {*/
-        zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
-      //}
+      zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
     }
   }
   
@@ -1976,7 +1957,6 @@ void FFV::generate_Solid(FILE* fp)
   // midのガイドセル同期
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
-  //if ( list ) delete [] list;
 }
 
 
