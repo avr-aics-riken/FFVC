@@ -569,46 +569,59 @@ void ParseBC::get_IBC_IsoTherm(const string label_base, const int n, CompoList* 
 // Monitorの設定内容をパースし，パラメータを保持する
 void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* cmp)
 {
-  int nvc=0;
+  int nvc = 0;
   REAL_TYPE v[3];
-  string str,pnt;
-  string label,label_leaf;
+  string str, pnt;
+  string label, label_leaf;
   
   // モードと形状
-  label=label_base+"/shape";
+  label = label_base + "/shape";
   
-  if ( !(tpCntl->GetValue(label, &pnt )) ) {
+  if ( !tpCntl->GetValue(label, &pnt) )
+  {
+    ;
   }
-  else{
-    if ( !strcasecmp("cylinder", pnt.c_str()) ) {
+  else
+  {
+    if ( !strcasecmp("cylinder", pnt.c_str()) )
+    {
       cmp[n].set_Shape(SHAPE_CYLINDER);
     }
-    else if ( !strcasecmp("box", pnt.c_str()) ) {
+    else if ( !strcasecmp("box", pnt.c_str()) )
+    {
       cmp[n].set_Shape(SHAPE_BOX);
     }
-    else if ( !strcasecmp("voxel_model", pnt.c_str()) ) {
+    else if ( !strcasecmp("polygon", pnt.c_str()) )
+    {
       cmp[n].set_Shape(SHAPE_VOXEL);
     }
-    else {
-      stamped_printf("\tParsing error : Invalid string value for 'Shape' : %s\n", pnt.c_str());
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Shape' : %s\n", pnt.c_str());
       Exit(0);
     }
   }
   
   // reference 隠しコマンドに
-  label=label_base+"/reference";
+  label = label_base + "/reference";
   
-  if ( !(tpCntl->GetValue(label, &pnt )) ) {
+  if ( !(tpCntl->GetValue(label, &pnt )) )
+  {
+    ;
   }
-  else{
-    if ( !strcasecmp("yes", pnt.c_str()) ) {
+  else
+  {
+    if ( !strcasecmp("yes", pnt.c_str()) )
+    {
       cmp[n].setStateCellMonitor(ON);
     }
-    else if ( !strcasecmp("no", pnt.c_str()) ) {
+    else if ( !strcasecmp("no", pnt.c_str()) )
+    {
       cmp[n].setStateCellMonitor(OFF);
     }
-    else {
-      stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt.c_str());
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'reference' : %s\n", pnt.c_str());
       Exit(0);
     }
   }
@@ -619,14 +632,15 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   
   int shp = cmp[n].get_Shape();
   
-  if ( (shp == SHAPE_BOX) || (shp == SHAPE_CYLINDER) ) {
+  if ( (shp == SHAPE_BOX) || (shp == SHAPE_CYLINDER) )
+  {
     // 中心座標の取得
     get_Center(label_base, v);
     copyVec(cmp[n].oc, v);
-    
   }
   
-  if ( shp == SHAPE_BOX ) {
+  if ( shp == SHAPE_BOX )
+  {
     // 方向ベクトルの取得
     get_Dir(label_base, v);
     copyVec(cmp[n].dr, v);
@@ -640,7 +654,8 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
     cmp[n].shp_p2 = get_BCval_real(label);
   }
   
-  if ( shp == SHAPE_CYLINDER ) {
+  if ( shp == SHAPE_CYLINDER )
+  {
     // 形状パラメータ
     label=label_base+"/depth";
     cmp[n].depth  = get_BCval_real(label);
@@ -650,48 +665,62 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   
   
   // Variables
-  label_leaf=label_base+"/Variables";
-  if ( !(tpCntl->chkNode(label_leaf)) ) {
-    stamped_printf("\tParsing error : No 'Variables' keyword in 'Cell_Monitor'\n");
+  label_leaf = label_base + "/Variables";
+  if ( !(tpCntl->chkNode(label_leaf)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No 'Variables' keyword in '%s'\n", label_leaf.c_str());
     Exit(0);
   }
   
   // サンプリングモード
-  label=label_leaf+"/sampling_mode";
-  if ( !(tpCntl->GetValue(label, &pnt )) ) {
+  label = label_leaf + "/sampling_mode";
+  if ( !(tpCntl->GetValue(label, &pnt )) )
+  {
+    ;
   }
-  else{
-    if ( !strcasecmp("all", pnt.c_str()) ) {
+  else
+  {
+    if ( !strcasecmp("all", pnt.c_str()) )
+    {
       cmp[n].set_SamplingMode(SAMPLING_ALL);
     }
-    else if ( !strcasecmp("fluid", pnt.c_str()) ) {
+    else if ( !strcasecmp("fluid", pnt.c_str()) )
+    {
       cmp[n].set_SamplingMode(SAMPLING_FLUID_ONLY);
     }
-    else if ( !strcasecmp("solid", pnt.c_str()) ) {
+    else if ( !strcasecmp("solid", pnt.c_str()) )
+    {
       cmp[n].set_SamplingMode(SAMPLING_SOLID_ONLY);
     }
-    else {
-      stamped_printf("\tParsing error : Invalid string value for 'Sampling_Mode' : %s\n", pnt.c_str());
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Sampling_Mode' : %s\n", pnt.c_str());
       Exit(0);
     }
   }
   
   // サンプリング方法
-  label=label_leaf+"/sampling_method";
-  if ( !(tpCntl->GetValue(label, &pnt )) ) {
+  label = label_leaf + "/sampling_method";
+  if ( !(tpCntl->GetValue(label, &pnt )) )
+  {
   }
-  else{
-    if ( !strcasecmp("Nearest", pnt.c_str()) ) {
+  else
+  {
+    if ( !strcasecmp("Nearest", pnt.c_str()) )
+    {
       cmp[n].set_SamplingMethod(SAMPLING_NEAREST);
     }
-    else if ( !strcasecmp("Interpolation", pnt.c_str()) ) {
+    else if ( !strcasecmp("Interpolation", pnt.c_str()) )
+    {
       cmp[n].set_SamplingMethod(SAMPLING_INTERPOLATION);
     }
-    else if ( !strcasecmp("Smoothing", pnt.c_str()) ) {
+    else if ( !strcasecmp("Smoothing", pnt.c_str()) )
+    {
       cmp[n].set_SamplingMethod(SAMPLING_SMOOTHING);
     }
-    else {
-      stamped_printf("\tParsing error : Invalid string value for 'Sampling_Method' : %s\n", pnt.c_str());
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Sampling_Method' : %s\n", pnt.c_str());
       Exit(0);
     }
   }
@@ -700,68 +729,93 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   nvc = 0;
   
   // 速度
-  label=label_leaf+"/velocity";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Velocity' in 'Cell_Monitor'\n");
+  label = label_leaf + "/velocity";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  if     ( !strcasecmp(str.c_str(), "on") )  {
+  if ( !strcasecmp(str.c_str(), "on") )
+  {
     cmp[n].encodeVarType(var_Velocity);
     nvc++;
   }
-  else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Velocity'\n");
+  else if( !strcasecmp(str.c_str(), "off") )
+  {
+    ;  // nothing
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // 圧力
-  label=label_leaf+"/pressure";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Pressure' in 'Cell_Monitor'\n");
+  label = label_leaf + "/pressure";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  if     ( !strcasecmp(str.c_str(), "on") )  {
+  if ( !strcasecmp(str.c_str(), "on") )
+  {
     cmp[n].encodeVarType(var_Pressure);
     nvc++;
   }
-  else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Pressure'\n");
+  else if( !strcasecmp(str.c_str(), "off") )
+  {
+    ;  // nothing
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // 温度
-  if ( HeatProblem ) {
-    label=label_leaf+"/temperature";
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      stamped_printf("\tParsing error : fail to get 'Temperature' in 'Cell_Monitor'\n");
+  if ( HeatProblem )
+  {
+    label = label_leaf + "/temperature";
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    if     ( !strcasecmp(str.c_str(), "on") )  {
+    if ( !strcasecmp(str.c_str(), "on") )
+    {
       cmp[n].encodeVarType(var_Temperature);
       nvc++;
     }
-    else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
-    else {
-      stamped_printf("\tInvalid keyword is described for 'Temperature'\n");
+    else if( !strcasecmp(str.c_str(), "off") )
+    {
+      ;  // nothing
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
   
   // 全圧
-  label=label_leaf+"/total_pressure";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    stamped_printf("\tParsing error : fail to get 'Total_Pressure' in 'Cell_Monitor'\n");
+  label = label_leaf + "/Total_Pressure";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  if     ( !strcasecmp(str.c_str(), "on") )  {
+  if ( !strcasecmp(str.c_str(), "on") )
+  {
     cmp[n].encodeVarType(var_TotalP);
     nvc++;
   }
-  else if( !strcasecmp(str.c_str(), "off") ) {;} // nothing
-  else {
-    stamped_printf("\tInvalid keyword is described for 'Total_Pressure'\n");
+  else if( !strcasecmp(str.c_str(), "off") )
+  {
+    ;  // nothing
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   

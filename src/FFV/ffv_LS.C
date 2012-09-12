@@ -699,7 +699,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
   
   if (res < t_eps)
   {
-    Hostonly_ printf("Final : %e\n", r4);
+    //Hostonly_ printf("Final : %e\n", r4);
     isfin = 1;
     goto jump_4;
   }
