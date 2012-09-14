@@ -13,7 +13,7 @@ September 2012
 1. TextParserのインストール
 textParser-x.x.tar.gzを展開し，トップディレクトリのconfig_tp.shを実行．
 
-$ configure_tp.sh /usr/local/textparser
+$ configure_tp.sh /usr/local/TextParser
 $ make
 $ sudo make install または make install
 $ make distclean

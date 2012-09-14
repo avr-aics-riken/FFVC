@@ -41,6 +41,11 @@ Steer {
     Voxel_Output           = "off"
   }
 
+  Geometry_Model {
+    Polylib_File = ""
+    Base_Medium  = "air"
+  }
+
   Iteration {
     Flow {
       Poisson {
@@ -69,12 +74,12 @@ Steer {
   }
 
   Log {
-    Unit_of_Log           = "Non_Dimensional"
+    Unit_of_Log           = "Dimensional" //"Non_Dimensional"
     Log_Base              = "On"
     Log_Iteration         = "Off"
     Log_Profiling         = "On"
     Log_Wall_Info         = "Off"
-    Console_Interval_Type = "Step"
+    Console_Interval_Type = "step"
     Console_Interval      = 1
     History_Interval_Type = "Step"
     History_Interval      = 1
@@ -211,8 +216,8 @@ Steer {
     Acceleration       = 0.05
     Dt_Type            = "CFL_Reference_Velocity"
     Delta_T            = 0.1
-    Period_Type        = "Time"
-    Calculation_Period = 41.33333
+    Period_Type        = "time"
+    Calculation_Period = 1.0 //41.33333
   }
 
   Treatment_of_Wall {
@@ -227,7 +232,7 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 82
+    FFV       = 83
     Flow_Base = 99
   }
 
@@ -271,7 +276,7 @@ Medium_Table {
     Sound_of_Speed       = 1500.0
     volume_expansion     = 0.04e-3 
   }
-/*
+
   Medium[@] {
     type                 = "Fluid"
     label                = "Air"
@@ -283,7 +288,7 @@ Medium_Table {
     Sound_of_Speed       = 340.0
     volume_expansion     = 0.04e-3 
   }
-*/
+
   Medium[@] {
     type                 = "Solid"
     label                = "Fe"
@@ -297,9 +302,65 @@ Medium_Table {
 
 BC_Table {
 
+/*
   LocalBoundary {
+    specified_velocity {
+      suction {
+        type           = "velocity"
+        profile        = "constant"
+        velocity       = 3.0
+        Normal         = (0.0, 0.0, -1.0)
+        BC_direction   = "opposite"
+        //frequency      = 0.0 //REAL
+        //initial_phase  = 0.0 //REAL
+        //constant_bias  = 0.0 //REAL
+        temperature    = 35.0 //REAL
+      }
+    }
 
-  }
+    Pressure_Loss {
+      radiator1 {
+        "normal" = (1.0, 0.0, 0.3) //REAL
+        "dir[@]" = (0.0, 1.0, 0.0) //REAL
+        "center" = (6.0, 1.6, 0.3) //REAL
+        "depth" = 0.2 //REAL
+        "width" = 2.0 //REAL
+        "height" = 1.0 //REAL
+        "c" = (1.0, 0.0, 0.0, 0.8) //REAL
+        "u_threshold" = 0.2 //REAL
+        "thickness" = 80.0 //REAL
+        "unit" = "non_dimension" //STRING
+        "vector" = "directional" //STRING
+      }
+    }
+      "Fan"{
+        "fan"{
+          "normal" = (1.0, 1.0, 0.0) //REAL
+          "center" = (5.0, 1.0, 0.5) //REAL
+          "depth" = 0.3 //REAL
+          "fan_radius" = 1.0 //REAL
+          "boss_radius" = 0.5 //REAL
+          "unit" = "non_dimension" //STRING
+        }
+      }
+      "Cell_Monitor"{
+        "sensor"{
+          "shape" = "cylinder" //STRING
+          "normal" = (0.0, 0.0, -1.0) //REAL
+          "center" = (0.0, 0.0, -0.198) //REAL
+          "depth" = 0.01 //REAL
+          "radius" = 0.022 //REAL
+          "Sampling_Method" = "nearest" //STRING
+          "Sampling_Mode" = "Fluid" //STRING
+          "Variables[@]"= "velocity"
+          "Variables[@]"= "pressure"
+          //"Variables[@]"= "temperature" //commentout = off
+          "Variables[@]"= "total_pressure"
+        }
+      }
+  } //LocalBoundary
+*/
+
 
   OuterBoundary {
       
