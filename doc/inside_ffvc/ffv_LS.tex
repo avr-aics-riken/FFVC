@@ -1,0 +1,110 @@
+\graphicspath{{./fig_EBCS/}}
+%
+\section{圧力のPoisson方程式}
+
+圧力のPoisson方程式は \textbf{式(\ref{eq:Poisson_from_FS})}を再掲すると，
+
+\begin{equation}
+\nabla \left( \nabla p^{\,n+1} \right) \,=\, \frac{1}{\Delta t} div\, (u^{\,*}) \equiv \psi
+\label{eq:Poisson_from_FS2}
+\end{equation}
+
+ノイマン条件とディリクレ条件のフラグを導入し，\textbf{式(\ref{eq:ebcs_poisson3})}のように書ける．
+これを対角項が１となるようにスケーリングして，連立一次方程式$A\underline{x} = \underline{b}$を得る．
+
+\begin{equation}
+\underbrace{ p  -  \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A \underline{x} }
+\,=\,
+ \displaystyle { 
+\underbrace{ 
+\frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
+\{ 
+- h^2 \,\psi \,-\,  \psi^{BC}
+\}
+} \limits_{ \underline{b} }
+}
+\label{eq:ebcs_poisson_4}
+\end{equation}
+
+
+反復回数を$k$としてSOR法系の反復式を構成すると，
+
+\begin{equation}
+\left.
+\begin{array}{lll}
+\vspace{2mm}
+\tilde{p} & = & \displaystyle {  \underline{b} \, + \,
+ \frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
+ \,=\,
+\frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} 
+\left \{ \,
+\sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
+- h^2 \,\psi \,-\,  \psi^{BC}
+\, \right \} } \\
+\vspace{2mm}
+\Delta p & = & \tilde{p} \,-\, p^{\,k} \\
+\vspace{5mm}
+p^{\,k+1} & = & p^{\,k} \,+\, \omega\, \,\Delta p \\
+
+\end{array} \qquad \right \}
+\label{eq:poisson_iteration}
+\end{equation}
+
+
+%
+\section{GMRES}
+
+GMRES(Generalized Minimum Residual)は，大型疎行列を係数行列にもつ連立一次方程式$A \underline{x} = \underline{b}$の解法アルゴリズムで，Krylov部分空間法に分類される．
+係数行列$A$は正則な$m \times m$行列であり，非対称行列($A \neq A^T$)でもよい．右辺の定数項は$\|\underline{b}\|_2=1$となるよう正規化する．
+
+n次のKrylov部分空間は
+\begin{equation}
+K_n \,=\, span \{ b,\, Ab,\, A^2b,\, ...,\, A^{n-1}b \}
+\label{eq:subspace}
+\end{equation}
+
+\noindent である．GMRES法は，各反復毎に残差ノルムを最小にするように解ベクトル$\underline{x}_n$を選ぶので，残差ノルムは単調に減少する特徴をもつ．
+このとき，Arnoldi過程により$K_n$の基底を構成する正規直交ベクトル列$\underline{Q}_n\,=\,\{\underline{q}_1,\,\underline{q}_2,\,...,\,\underline{q}_n\}$を計算する．
+$\underline{Q}_n$は$m\times n$行列である．
+また，標準基底$\mathbb{R}^{n+1}$の第一ベクトルを次のように定める．
+
+\begin{equation}
+\underline{e}_1 \,=\, (1,\,0,\,0,\,...,\,0)
+\label{eq:1st basis}
+\end{equation}
+
+Arnoldi過程では，次の関係を満たすHessenberg行列$\tilde{H}_n$が作られる．
+
+\begin{equation}
+A Q_n \,=\, Q_{n+1} \tilde{H}_n
+\label{eq:Hessenberg matrix}
+\end{equation}
+
+$\underline{x}_n\,=\,Q_n \underline{y}_n$なので，次式が成り立つ．
+
+\begin{equation}
+\| A \underline{x}_n - \underline{b} \| \,=\, \| \tilde{H}_n \underline{y}_n - \underline{e}_1 \|
+\label{eq:Hessenberg norm}
+\end{equation}
+
+したがって，近似解$\underline{x}_n$は残差$\underline{r}_n$を最小化する（最小自乗法など）ことにより計算できる．
+
+\begin{equation}
+\underline{r}_n \,=\, \tilde{H}_n \underline{y}_n - \underline{e}_1 
+\label{eq:Hessenberg redsidual}
+\end{equation}
+
+Krylov部分空間法は$A^{-1}$を反転して$\underline{x}$を直接求めるのではなく，前処理行列$C$を用いた方程式$A C^{-1} (C \underline{x}) = \underline{b}$の近似解を求める．
+$C$の逆行列が簡単に推定でき，前処理行列を係数行列とする連立一次方程式$C \underline{y} = \underline{z}$がSOR法などの数回の緩和で近似解が得られると仮定する．つまり，任意のベクトル$\underline{z}$に対して$C^{-1}\underline{z}$が比較的簡単に計算できるとしよう．
+
+
+
+
+
+
+
+
+
+
+
+

@@ -8,7 +8,7 @@
 FFV-Cソルバーでは，境界条件を外部境界条件と局所境界条件の２つに分けて指定します．
 外部境界条件は計算領域外部面に指定する境界条件で，局所境界条件は計算領域内部に指定する境界条件です．
 \textbf{図\ref{fig:BCs}}に示すように，計算領域を構成する6面が外部境界面で，この部分に与える境界条件が外部境界条件です．
-それ以外の内部領域（セル体積とセルフェイス）に作用する境界条件は局所境界条件として扱います．
+それ以外の内部領域に作用する境界条件は局所境界条件として扱います．
 外部境界面には，外部境界条件が各面に対して1種類のみ与えることができ，局所境界条件を部分的に適用することができます．
 
 \begin{figure}[htbp]
@@ -30,60 +30,19 @@ BC\_Tableセクションでは，次のように局所境界条件LocalBoundary\
 BC_Table {
 
   LocalBoundary {
-    specified_velocity {
-      suction {
-        type           = "velocity"
-        profile        = "constant"
-        velocity       = 3.0
-        Normal         = (0.0, 0.0, -1.0)
-        BC_direction   = "opposite"
-        //frequency      = 0.0 //REAL
-        //initial_phase  = 0.0 //REAL
-        //constant_bias  = 0.0 //REAL
-        temperature    = 35.0 //REAL
-      }
+    BC[@] {
+      class           = "Specified_Velocity"
+      alias           = "Blower"
+      type            = "velocity"
+      profile         = "constant"
+      velocity        = 3.4
+      Normal          = (-1.0, 0.0, 0.0)
+      Fluid_direction = "same_side_of_normal"
+      frequency       = 0.0
+      initial_phase   = 0.0
+      constant_bias   = 0.0
+      temperature     = 35.0
     }
-
-    Pressure_Loss {
-      radiator1 {
-        "normal" = (1.0, 0.0, 0.3) //REAL
-        "dir[@]" = (0.0, 1.0, 0.0) //REAL
-        "center" = (6.0, 1.6, 0.3) //REAL
-        "depth" = 0.2 //REAL
-        "width" = 2.0 //REAL
-        "height" = 1.0 //REAL
-        "c" = (1.0, 0.0, 0.0, 0.8) //REAL
-        "u_threshold" = 0.2 //REAL
-        "thickness" = 80.0 //REAL
-        "unit" = "non_dimension" //STRING
-        "vector" = "directional" //STRING
-      }
-    }
-      "Fan"{
-        "fan"{
-          "normal" = (1.0, 1.0, 0.0) //REAL
-          "center" = (5.0, 1.0, 0.5) //REAL
-          "depth" = 0.3 //REAL
-          "fan_radius" = 1.0 //REAL
-          "boss_radius" = 0.5 //REAL
-          "unit" = "non_dimension" //STRING
-        }
-      }
-      "Cell_Monitor"{
-        "sensor"{
-          "shape" = "cylinder" //STRING
-          "normal" = (0.0, 0.0, -1.0) //REAL
-          "center" = (0.0, 0.0, -0.198) //REAL
-          "depth" = 0.01 //REAL
-          "radius" = 0.022 //REAL
-          "Sampling_Method" = "nearest" //STRING
-          "Sampling_Mode" = "Fluid" //STRING
-          "Variables[@]"= "velocity"
-          "Variables[@]"= "pressure"
-          //"Variables[@]"= "temperature" //commentout = off
-          "Variables[@]"= "total_pressure"
-        }
-      }
   } //LocalBoundary
 
   OuterBoundary {
@@ -349,19 +308,13 @@ V \,{=}\, A \sin \left( 2 \mathrm{\pi} ft \,+\, \phi \right) \,+\, b
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      <Param name="Normal_x"        dtype="REAL"   value="0.0" />
-      <Param name="Normal_y"        dtype="REAL"   value="1.0" />
-      <Param name="Normal_z"        dtype="REAL"   value="0.0" />
-      <param name="Profile"         dtype="STRING" value="Constant" />
-      <param name="Specified_Type"  dtype="STRING" value="Velocity" />
-      <Param name="Specified_Value" dtype="REAL"   value="0.0" />
-      <Param name="Heat_Type"       dtype="STRING" value="Adiabatic" />
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+    Basic_BCs[@] {
+      class                    = "Adiabatic"
+      alias                    = "Eng_Block"
+      neighbor_medium          = "air-100c"
+    }
+}
 \end{program}
 }
 
@@ -510,26 +463,25 @@ Type\_SNの境界条件は，上式のパラメータを実装しています．
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      ...
-      <Param name="Heat_Type"                dtype="STRING" value="HeatTransfer_SN" />
-      <Param name="Surface_Temperature"      dtype="REAL"   value="500.0"/>
-      <Param name="Ref_Temp_Mode"            dtype="STRING" value="Bulk_Temperature"/>
-      <Param name="vertival_laminar_alpha"   dtype="REAL"   value="0.59"/>
-      <Param name="vertival_laminar_beta"    dtype="REAL"   value="0.25"/>
-      <Param name="vertival_turbulent_alpha" dtype="REAL"   value="0.1"/>
-      <Param name="vertival_turbulent_beta"  dtype="REAL"   value="0.3333333"/>
-      <Param name="vertival_ra_critial"      dtype="REAL"   value="1.0e9"/>
-      <Param name="lower_laminar_alpha"      dtype="REAL"   value="0.27"/>
-      <Param name="lower_laminar_beta"       dtype="REAL"   value="0.25"/>
-      <Param name="lower_turbulent_alpha"    dtype="REAL"   value="0.27"/>
-      <Param name="lower_turbulent_beta"     dtype="REAL"   value="0.25"/>
-      <Param name="lower_ra_critial"         dtype="REAL"   value="1.0e9"/>
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+    BC[@] {
+      class                    = "HeatTransfer_SN"
+      alias                    = "Eng_Block"
+      neighbor_medium          = "air-100c"
+      Surface_Temperature      = 100.0
+      Ref_Temp_Mode            = "Bulk_Temperature"
+      vertical_laminar_alpha   = 0.59
+      vertical_laminar_beta    = 0.25
+      vertical_turbulent_alpha = 0.1
+      vertical_turbulent_beta  = 0.3333333
+      vertical_Ra_critial      = 1.0e9
+      lower_laminar_alpha      = 0.27
+      lower_laminar_beta       = 0.25
+      lower_turbulent_alpha    = 0.27
+      lower_turbulent_beta     = 0.25
+      lower_Ra_critial         = 1.0e9
+    }
+}
 \end{program}
 }
 
@@ -1020,11 +972,13 @@ Conjugate\_Heat\_Transferの場合には，流体と固体の両方の熱移動�
 
 {\small
 \begin{program}
-<LocalBoundary>
-  <Elem name="Adiabatic" ID="6" comment="shield">
-    <Param name="Def_Face" dtype="INT" value="3"/>
-  </Elem>
-</LocalBoundary>
+LocalBoundary {
+    BC[@] {
+      class                    = "Adiabatic"
+      alias                    = "Eng_Block"
+      neighbor_medium          = "air-100c"
+    }
+}
 \end{program}
 }
 この例では，ID=\lq\lq 6\rq\rq の固体セルのうち，ID=\lq\lq 3\rq\rq の流体セルに接する面に対して，断熱境界条件を指定しています．
@@ -1073,23 +1027,25 @@ Type\_Sは固体表面温度と熱伝達係数を与え，熱流束を計算し�
 
 {\small
 \begin{program}
-<LocalBoundary>
-  <Elem name="HeatTransfer_SN" ID="6" comment="engine">
-    <Param name="Def_Face"                 dtype="INT"    value="3"/>
-    <Param name="Surface_Temperature"      dtype="REAL"   value="500.0"/>
-    <Param name="Ref_Temp_Mode"            dtype="STRING" value="Bulk_Temperature"/>
-    <Param name="vertical_laminar_alpha"   dtype="REAL"   value="0.59"/>
-    <Param name="vertical_laminar_beta"    dtype="REAL"   value="0.25"/>
-    <Param name="vertical_turbulent_alpha" dtype="REAL"   value="0.1"/>
-    <Param name="vertical_turbulent_beta"  dtype="REAL"   value="0.3333333"/>
-    <Param name="vertical_ra_critial"      dtype="REAL"   value="1.0e9"/>
-    <Param name="lower_laminar_alpha"      dtype="REAL"   value="0.27"/>
-    <Param name="lower_laminar_beta"       dtype="REAL"   value="0.25"/>
-    <Param name="lower_turbulent_alpha"    dtype="REAL"   value="0.27"/>
-    <Param name="lower_turbulent_beta"     dtype="REAL"   value="0.25"/>
-    <Param name="lower_ra_critial"         dtype="REAL"   value="1.0e9"/>
-  </Elem>
-</LocalBoundary>
+LocalBoundary {
+    BC[@] {
+      class                    = "HeatTransfer_SN"
+      alias                    = "Exhaust"
+      neighbor_medium          = "air-100c"
+      Surface_Temperature      = 500.0
+      Ref_Temp_Mode            = "Bulk_Temperature"
+      vertical_laminar_alpha   = 0.59
+      vertical_laminar_beta    = 0.25
+      vertical_turbulent_alpha = 0.1
+      vertical_turbulent_beta  = 0.3333333
+      vertical_Ra_critial      = 1.0e9
+      lower_laminar_alpha      = 0.27
+      lower_laminar_beta       = 0.25
+      lower_turbulent_alpha    = 0.27
+      lower_turbulent_beta     = 0.25
+      lower_Ra_critial         = 1.0e9
+    }
+}
 \end{program}
 }
 

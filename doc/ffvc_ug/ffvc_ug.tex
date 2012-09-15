@@ -61,7 +61,7 @@
 {\huge \textbf{Frontflow / violet Cartesian}}\\
 \vspace{1cm}
 
-{\large \textbf{Ver. 0.5.0}}\\
+{\large \textbf{Ver. 0.6.0}}\\
 \vspace{1.5cm}
 
 {\large \textbf{Center of Research on Innovative Simulation Software}\\
@@ -75,7 +75,7 @@
 \url{http://www.iis.u-tokyo.ac.jp/}\\
 \vspace{1cm}
 
-July 2012\\
+September 2012\\
 \vspace{4cm}
 
 \includegraphics[width=6cm]{UT.eps}
@@ -88,7 +88,8 @@ July 2012\\
 \frontmatter
 
 \begin{tabular}{llllr}
-First Edition  &  Version 0.5.0  &  14 July  & 2012
+First Edition  &  Version 0.5.0  &  14 July & 2012\\
+                       &  Version 0.6.0  &  15 Sep.  & 2012
                
 
 \end{tabular}
@@ -125,7 +126,7 @@ Institute of Industrial Science, The University of Tokyo, All rights reserved.\\
 \chapter{インストール}
 
 \begin{abstract}
-この章では，MPI通信ライブラリ，CPMlib，textparserなど，FFV-Cに必要なライブラリ群のインストールとコンパイル，およびFFV-Cのコンパイルについて説明します．
+この章では，MPI通信ライブラリ，CPMlib，TextParserなど，FFV-Cに必要なライブラリ群のインストールとコンパイル，およびFFV-Cのコンパイルについて説明します．
 \end{abstract}
 %
 \include{ffvc_Install}
@@ -158,9 +159,8 @@ Institute of Industrial Science, The University of Tokyo, All rights reserved.\\
 \chapter{制御と物理パラメータ}
 
 \begin{abstract}
-FFV-Cソルバーの入力パラメータは，記述性とマルチプラットホームでの稼働を考慮し，軽量の簡易パースライブラリ（textparser）を利用しています．
+FFV-Cソルバーの入力パラメータは，記述性とマルチプラットホームでの稼働を考慮し，軽量の簡易パースライブラリ（TextParser）を利用しています．
 構文は階層化され，テキストで容易に記述できます．
-このパラメータをtextparser内部でstringオブジェクトとして構文解析および操作します．
 本章では，FFV-Cソルバーの制御と物理パラメータについて説明します．
 \end{abstract}
 %
@@ -190,10 +190,6 @@ FFV-Cソルバーには，計算中の任意点の物理量をモニターする
 \end{abstract}
 %
 \include{ffvc_monitor}
-
-%\chapter{パラメータ入力}
-%\label{chpt:vxpit}
-%\include{CBC_vxpit}
 
 
 

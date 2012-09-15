@@ -24,7 +24,7 @@ textparserライブラリのExamplesディレクトリにパラメータの様�
 
 %
 \subsection{パラメータファイルの種類と構造}
-FFV-Cでは，\textbf{表\ref{tbl:input_files}}に示す二つの入力ファイルを使います．
+FFV-Cでは，\textbf{表\ref{tbl:input_files}}に示す3つの入力ファイルを使います．
 
 \begin{table}[htdp]
 \caption{パラメータファイル内のセクション}
@@ -33,7 +33,8 @@ FFV-Cでは，\textbf{表\ref{tbl:input_files}}に示す二つの入力ファイ
 \begin{tabular}{ll} \toprule
 ファイル & 記述内容\\ \midrule
 input.tp & 入力パラメータファイル\\
-domain.tp & 計算領域情報ファイル\\ \bottomrule
+domain.tp & 計算領域情報ファイル\\ 
+polygon.tp & 入力幾何形状ファイル\\ \bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:input_files}
@@ -59,7 +60,7 @@ Medium\_Table & 媒質情報\\ \bottomrule
 \end{table}
 
 
-起動時には，次のようにコマンドラインで実行します．
+起動時には，次のようにコマンドラインでタイプし実行します．
 {
 \small 
 \begin{program}
@@ -83,6 +84,7 @@ $ ffvc input.tp domain.tp
 {\small
 \begin{program}
 DomainInfo {
+  Unit_of_length  = "M"
   Global_origin   = (-0.5, -0.5, -0.5   )
   Global_region   = (1.0,  1.0,  1.0    )
   Global_voxel    = (128   , 128   , 128   )
@@ -90,7 +92,7 @@ DomainInfo {
   //Global_pitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //Global_division = (1    , 1    , 1    )
 
-  ActiveSubDomain_File = ""
+  ActiveSubDomain_File = "hoge"
 }
 \end{program}
 }
@@ -103,6 +105,7 @@ DomainInfo {
 \small
 \begin{tabular}{lll} \toprule
 ラベル & 指定内容 & 補足\\ \midrule
+Unit\_of\_Length & DomainInfoファイルに記述された長さの単位を指定する & (Non\_Dimensional $|$ M $|$ cm $|$ mm)\\
 Global\_division & 並列計算時の各軸方向の分割数指定 & 任意\\ 
 Global\_origin & 計算空間における座標値の最小値 & 必須\\
 Global\_pitch & 各軸方向の分割幅 &Global\_voxelと排他，同時指定時に優先\\
@@ -410,11 +413,15 @@ H \,=\, \overrightarrow{u} \cdot \overrightarrow{\omega}
 \small
 \begin{tabular}{ll} \toprule
 ラベル & 例題\\ \midrule
-Cavity3D & 立方体キャビティ\\
-Duct3D & 直方体と円形断面のダクト\\
-LDC112 & 辺長比1:1:2の三次元キャビティ\\
+Back\_Step & バックステップ形状\\
+Cylinder & 円柱・角柱\\
+Duct & 直方体と円形断面のダクト\\
+Parallel\_Plate\_2D & 二次元の並行平板\\
 Performance\_Test & 性能評価\\
-SHC1D & 固体熱伝導\\ \bottomrule
+Rectangular & 矩形計算領域の問題\\
+SHC1D & 固体熱伝導\\ 
+Sphere & 球\\ 
+Users & ユーザ例題\\ \bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:intrinsic_example}
@@ -436,13 +443,12 @@ SHC1D & 固体熱伝導\\ \bottomrule
   File_IO {
     Unit_of_File           = "Non_Dimensional"
     Guide_Out              = "Without"
-    Parallel_Input         = "master"
-    Parallel_Output        = "master"
     Debug_Divergence       = "Off"
     Instant_Interval_Type  = "step"
     Instant_Interval       = 1000
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 1000
+    Voxel_Output           = "off"
   }
 \end{program}
 }
@@ -463,25 +469,21 @@ Unit\_of\_File & 入出力ファイルの単位 & Dimensional & 有次元\\
 & & Non\_Dimensional & 無次元\\ \hline
 Guide\_Out & ガイドセル出力モード & with & ガイドセルを一緒に出力\\
 & & without & 内部領域のみ出力\\ \hline
-Parallel\_Input & ファイル入力 & Master & マスターノードで単一ファイル入出力\\
-& & Local  & ローカルノードで分散ファイル入出力 \\ \hline
-Parallel\_Output & ファイル出力 & Master & マスターノードで単一ファイル入出力\\
-& & Local  & ローカルノードで分散ファイル入出力 \\ \hline
-Debug\_divergence & デバッグ時のファイル出力 & On$|$Off & $\nabla \cdot \bm{u}$の出力（無次元値）\\ \hline
+Debug\_divergence & デバッグ時のファイル出力 & On $|$ Off & $\nabla \cdot \bm{u}$の出力（無次元値）\\ \hline
 Instant\_Interval\_Type & 瞬時値の出力指定形式 & Step & ステップ数指定\\
 & & Time & 時間間隔の指定\\
 Instant\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
 Averaged\_Interval\_Type & 平均値の出力指定形式 & Step & ステップ数指定\\
 & & Time & 時間間隔の指定\\
-Averaged\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\\bottomrule
+Averaged\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
+Voxel\_Output & ボクセルファイルの出力指定 & | & off $|$ svx\\
+\bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:file_IO_parameter}
 \end{table}
 
 
-
-Parallel\_Input/Outputでは，並列計算時のファイル入出力のモードを指定します．
 単一ファイルとして入出力する場合には，Masterを指定します．
 
 デバッグのため，$\nabla \cdot \bm{u}$の値を無次元で出力します．
@@ -489,9 +491,38 @@ Parallel\_Input/Outputでは，並列計算時のファイル入出力のモー�
 Intervalのラベルにより，ファイル出力間隔を指定します．
 対象となる出力ファイルに対して，時刻またはステップ数によりファイル出力間隔を指定できます．
 Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq の場合，時刻の単位は\hyperlink{tgt:unit}{Unit\_of\_Input\_Parameter}で指定したモードに従います．
+
+ボクセルファイルを確認のため出力する場合には，ファイル形式を指定します．
 \end{indentation}
 
 
+
+%%%
+\pagebreak
+\subsubsection{Polygon\_File}
+計算に用いる\hypertarget{tgt:poly_file_name}{ポリゴンファイル名}を指定します．
+
+\begin{indentation}{3zw}{0zw}
+
+幾何形状ファイルを指定で計算をする場合には，Exampleで\hyperlink{tgt:example}{users}を指定します．
+
+{\small
+\begin{program}
+  Geometry_Model {
+    Polylib_File          = "polylib_m3.tp"
+    Fluid_Medium_for_Fill = "air"
+    Solid_Medium_for_Fill = "fe"
+    Hint_of_Filling_Fluid = "z_plus"
+  }
+\end{program}
+}
+
+
+
+
+
+
+\end{indentation}
 
 
 
@@ -604,10 +635,12 @@ P\_Res\_L2\_Relative & 相対残差のRMS $\displaystyle {\frac{ \sqrt{ \frac{1}
 \small
 \begin{tabular}{llc} \toprule
 ラベル & 反復解法 & 並列計算への適用\\ \midrule
-Jacobi & 緩和Point Jacobi法 & ○\\
+%Jacobi & 緩和Point Jacobi法 & ○\\
 SOR & Point SOR法 & △\\
 %SOR2CMA & 連続メモリアクセス型の2色SOR法\\
-SOR2SMA & ストライドメモリアクセス型の2色SOR法 & ○\\ \bottomrule
+SOR2SMA & ストライドメモリアクセス型の2色SOR法 & ○\\ 
+GMRES & GMRES(m)　リスタート周期 m & ○\\ 
+\bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:LS}
@@ -869,31 +902,6 @@ Sampling\_Mode & All & 全セルを対象とする\\
 
 
 
-%%%
-\begin{comment}
-\pagebreak
-\subsubsection{Polygon\_File}
-\hypertarget{tgt:poly_file_name}{ポリゴンファイル名}を指定します．
-
-\begin{indentation}{3zw}{0zw}
-\small
-
-\hyperlink{tgt:solver_property}{Shape\_Approximation}でDistance\_Infoを指定すると，距離情報を用いたスキームでの計算となります．この場合，ポリゴンファイルが必要となりますが，そのポリゴンファイルを記述したファイル名をこのセクションで指定します．
-ポリゴンファイルと\hyperlink{tgt:domaininfo}{DomainInfo}の指定のみで計算をする場合には，\hyperlink{tgt:polygon_class}{IP\_Polygonクラス}を指定します．
-
-\begin{program}
-<Elem name="Polygon_File">
-  <Param name="File_Name" dtype="string" value="polygon.xml"/>
-</Elem>
-\end{program}
-
-\end{indentation}
-\end{comment}
-
-
-\pagebreak
-\mbox{ }
-
 
 %%%
 \pagebreak
@@ -946,12 +954,13 @@ Translational & $u,\,v,\,w$ & 並進運動する移動座標系\\ \bottomrule
 {\small
 \begin{program}
   Start_Condition {
-    Start_Type         = "initial"
-    Restart_step       = 200
-    Prefix_of_Pressure = "prs_"
-    Prefix_of_Velocity = "vel_"
-    dfi_file_pressure  = "prs_64_id000000.dfi"
-    dfi_file_velocity  = "vel_64_id000000.dfi"
+    start_type                   = "restart_from_coarse_data"
+    Restart_step                 = 600
+    Prefix_of_Coarse_Pressure    = "prs_64_"
+    Prefix_of_Coarse_Velocity    = "vel_64_"
+    Prefix_of_Coarse_Temperature = "vel_64_"
+    dfi_file_pressure            = "prs_64.dfi"
+    dfi_file_velocity            = "vel_64.dfi"
     Initial_State {
       Density     = 1.0
       Pressure    = 0.0
@@ -962,8 +971,6 @@ Translational & $u,\,v,\,w$ & 並進運動する移動座標系\\ \bottomrule
 \end{program}
 }
 
-\textbf{表\ref{tbl:start}}に選択肢を示します．
-
 
 \begin{table}[htdp]
 \caption{Start\_Conditionのパラメータ指定}
@@ -973,13 +980,16 @@ Translational & $u,\,v,\,w$ & 並進運動する移動座標系\\ \bottomrule
 ラベル & スタートの種類 & \\ \midrule
 Start\_Type & スタートの種類 & \\
  & Initial & 時刻ゼロからの初期スタート\\
- & Restart & リスタート\\ \hline
+ & Restart & リスタート\\
+ & Restart\_from\_Coarse\_Data & 粗格子の結果を用いたリスタート\\ \hline
 Restart\_Step & & リスタートのステップ数を指定\\ \hline
-dfi\_file\_pressure & & 粗格子からリスタートする場合の圧力ファイル名を指定\\
-dfi\_file\_velocity & & 粗格子からリスタートする場合の速度ファイル名を指定\\ \hline
-Initial\_State & 初期条件を指定 & \\
+Prefix\_of\_Coarse\_Pressure & & 粗格子からリスタートする場合の圧力ファイルの接頭子名を指定\\
+Prefix\_of\_Coarse\_Velocity & & 粗格子からリスタートする場合の速度ファイルの接頭子名を指定\\
+Prefix\_of\_Coarse\_Temperature & & 粗格子からリスタートする場合の温度ファイルの接頭子名を指定\\ \hline
+Initial\_State & & 初期条件を指定\\
 Density & & 密度\\
 Pressure & & 圧力\\
+Temperature & & 温度\\
 Velocity & & 速度ベクトル\\ \bottomrule
 \end{tabular}
 \end{center}
@@ -987,7 +997,6 @@ Velocity & & 速度ベクトル\\ \bottomrule
 \end{table}
 
 \hypertarget{tgt:initial_state}{物理変数}の初期値\index{しょきち@初期値}を指定します．
-
 記述する初期値は有次元量で指定しますが，Solver\_Propertyセクションで\hyperlink{tgt:solver_property}{Kind\_of\_Solver}=\lq\lq Flow\_Only\rq\rq を指定した場合のみ，無次元での指定も可能です．
 圧力値は，\hyperlink{tgt:unit}{Unit}で指定する圧力の単位に従います．
 各変数の無次元化は以下のようになり，添え字の0は代表値または基準値を意味します．
@@ -1005,6 +1014,115 @@ Velocity & & 速度ベクトル\\ \bottomrule
 \displaystyle{ \theta \,=\, \frac{\theta^{\prime}-\theta_{0}^{\prime}}{\Delta \theta^{\prime}} } 
 \end{array} \qquad \right \}
 \end{equation}
+
+
+\paragraph{粗格子の結果を用いたリスタート}
+準定常状態の流れを短時間で計算するために，次の方法により計算を行います．
+
+\begin{enumerate}
+\item 粗い格子を用いてタイムステップを大きくとり，流れを発達させます．
+\item 粗格子の半分のセル幅の格子を用意し，粗格子で計算した結果を初期値としてリスタート計算を行います．
+\item 上記の手順を数回繰り返し，所望の格子密度での計算を行います．
+\end{enumerate}
+
+この方法は，リスタート時に粗格子から倍の密度を持つ格子に内挿処理を行います．
+したがって，リスタート時の初期値は方程式を満足しないため反復回数が増加しますが，馴染ませると収束に向かいます．
+
+計算を実行すると，\verb|*.dfi|ファイルが生成されます．
+各出力ファイルに対して，\textbf{表\ref{tbl:dfi}}に示すようなデフォルト名が付けられています．
+
+\begin{table}[htdp]
+\caption{dfiファイルのファイル名}
+\begin{center}
+\small
+\begin{tabular}{ll} \toprule
+変数 & dfiのファイル名 \\ \midrule
+圧力 & prs\_\\
+速度 & vel\_\\
+温度 & tmp\_\\
+圧力平均値 & prsa\_\\
+速度平均値 & vela\_\\
+温度平均値 & tmpa\_\\
+発散値 & div\_\\
+ヘリシティ & hlt\_\\
+全圧 & tp\_\\
+速度勾配テンソルの第二不変量$\lambda_2$ & i2vgt\_\\
+渦度 & vrt\_\\ \bottomrule
+\end{tabular}
+\end{center}
+\label{tbl:dfi}
+\end{table}
+
+このdfiファイルには，次のようにテキストパーサー表記により，並列計算時に各プロセスが書き出すファイルを管理する情報が書かれています．
+
+{\small
+\begin{program}
+Distributed_File_Info {
+
+  Prefix = "vel_"                 // dfiファイルの接頭子
+
+  RankID_in_MPIworld  = 0         // プロセス番号
+  GroupID_in_MPIworld = 0         // プロセスグループ番号
+
+  Number_of_Rank_in_MPIworld  = 2 // プロセス数
+  Number_of_Group_in_MPIworld = 1 // プロセスグループ数
+
+  Global_Voxel = (128, 128, 128)  // 計算領域全体の要素数
+
+  Global_Division = (2, 1, 1)     // 計算領域の分割数
+
+  FileFormat = "sph"              // ファイルフォーマット
+
+  GuideCell = 0                   // 出力ガイドセル数
+
+  NodeInfo {                      // 各プロセスの分割情報
+    Node[@] {
+      RankID    = 0               // ランク番号
+      HostName  = "Iridium.local" // ホスト名
+      VoxelSize = (64, 128, 128)  // サブドメインの要素数
+      HeadIndex = (1, 1, 1)       // グローバルな基点セルインデクス
+      TailIndex = (64, 128, 128)  // グローバルな終点セルインデクス
+    }
+    Node[@] {
+      RankID    = 1
+      HostName  = "Iridium.local"
+      VoxelSize = (64, 128, 128)
+      HeadIndex = (65, 1, 1)
+      TailIndex = (128, 128, 128)
+    }
+  }
+
+  FileInfo {                      // 出力されたステップ数
+    Step[@] = 0
+    Step[@] = 100
+    Step[@] = 200
+    Step[@] = 300
+  }
+}
+\end{program}
+}
+
+圧力，速度，温度の瞬時値の値のファイル名の接頭子は，デフォルトでそれぞれ\verb|prs, vel, tmp|です．ファイル名は接頭子にステップ数とランク番号，および拡張子が結合されています．
+
+粗格子の結果を用いてリスタートするケースについて説明します．
+最初に10mmの格子を用い，順次5mm, 2.5mmと細かくなる場合を想定します．
+10mm格子の計算が10000ステップまで終了し，\verb|prs_0000010000_id*.sph, prs_.dfi|ができます．
+次に，5mmの計算を行う時にはこの2つのファイルを適当なファイル名にリネームし，\verb|prs_10_0000010000_id*.sph, prs_10.dfi|として，パラメータファイルを次のように指定します．
+
+{\small
+\begin{program}
+  Start_Condition {
+    start_type                   = "restart_from_coarse_data"
+    Restart_step                 = 10000
+    Prefix_of_Coarse_Pressure    = "prs_10_"
+    dfi_file_pressure            = "prs_10.dfi"
+    ...
+  }
+\end{program}
+}
+
+5mm格子の計算が次の5000ステップで終了すると，\verb|prs_0000015000_id*.sph, prs_.dfi|ができます．
+上記の手順を再帰的に繰り返して計算を進めます．
 
 \end{indentation}
 
@@ -1399,14 +1517,13 @@ normal & 制限しません\\ \bottomrule
 {\small
 \begin{program}
   Init_Temp_of_Medium {
-    Medium[@] {
-      label       = "air"
-      Temperature = 20.0
-    }
-    Medium[@] {
-      label       = "Fe"
-      Temperature = 50.0
-    }
+    air-100c      = 72.0
+    Al-insulator  = 72.0
+    Fe-heat_src_1 = 100.0
+    Fe-heat_src_2 = 500.0
+    Fe-heat_src_3 = 150.0
+    Fe-heat_src_4 = 400.0
+    Fe-heat_src_5 = 340.0
   }
 \end{program}
 }
@@ -1438,10 +1555,10 @@ normal & 制限しません\\ \bottomrule
 \small
 \begin{tabular}{llll} \toprule
 組み込み例題 & 指定パラメータラベル & dtype & 指定値\\ \midrule
-Duct3D & Shape     & STRING & Circular, Rectangular\\
-       & Diameter  & REAL   & 断面径 [m]\\
-       & Direction & STRING & X\_minus $|$ X\_plus $|$ Y\_minus $|$ Y\_plus $|$ Z\_minus $|$ Z\_plus\\
-       & Driver    & REAL   & ドライバ部分の長さ [m]\\ \bottomrule
+Duct & Shape     & STRING & Circular, Rectangular\\
+     & Diameter  & REAL   & 断面径 [m]\\
+     & Direction & STRING & X\_minus $|$ X\_plus $|$ Y\_minus $|$ Y\_plus $|$ Z\_minus $|$ Z\_plus\\
+     & Driver    & REAL   & ドライバ部分の長さ [m]\\ \bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:intrinsic_parameter}

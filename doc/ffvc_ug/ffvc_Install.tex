@@ -80,10 +80,10 @@ export DYLD_LIBRARY_PATH=/opt/openmpi/lib:$DYLD_LIBRARY_PATH
 
 
 %
-\section{textparserのインストール}
+\section{TextParserのインストール}
 
-MPI通信ライブラリのインストールの後に，textparserをインストールします．
-インストールの詳細は，textparserのINSTALLをご覧ください．
+MPI通信ライブラリのインストールの後に，TextParserをインストールします．
+インストールの詳細は，TextParserのINSTALLをご覧ください．
 幾つかのインストール方法がありますが，ここではconfigureを使った方法を説明します．
 
 %
@@ -96,11 +96,13 @@ $ ./configure --prefix=$1 \
               CXX=mpicc \
 	      --enable-mpi
 	    
-$ config_tp.sh /usr/local/textparser
+$ config_tp.sh /usr/local/TextParser
+$ make
+$ sudo make install
 \end{program}
 }
 
-上記の例では，textparserライブラリを\verb|/usr/local/textparser|にインストールします．
+上記の例では，TextParserライブラリを\verb|/usr/local/TextParser|にインストールします．
 
 
 
@@ -111,22 +113,34 @@ CPMlibのインストールを行います．
 
 %
 \subsection{configureを用いたコンパイル環境の設定}
-まず，\verb|configure|の設定を行います．
-次のスクリプトの例では，インストールディレクトリを\verb|/usr/local/cpm_float/|に指定，既にインストールしたMPIライブラリとtextparserライブラリのインストールディレクトリパスを指定しています．
+まず \verb|configure|の設定を行います．
+次のスクリプトの例では，インストールディレクトリを\verb|/usr/local/cpm/|に指定，既にインストールしたMPIライブラリとTextParserライブラリのインストールディレクトリパスを指定しています．
 もし，\verb|/usr/local/|領域へのアクセス権限がない場合には，各ユーザが書き込める場所を指定します．
 インストールの詳細はCPMlibのINSTALLをご覧ください．
 
 {\small
 \begin{program}
-$ cat config_cpm_float.sh
-$ ./configure --prefix=$1 \
-              --with-comp=INTEL \
-              --with-ompi=/opt/openmpi \
-              --with-parser=/usr/local/textparser \
-              --with-real=float \
-              CXX=icpc \
-              CXXFLAGS=-O3 \
-              FC=ifort
+$ cat config_cpm.sh
+#! /bin/sh
+#
+# at .bashrc
+#
+# Compiler options:
+#
+#   --with-comp=INTEL|FJ;      If compiler does not fall under the category, this option is blank.
+#   --with-ompi=/hoge;         In case of using wrapper compiler, this option may be omitted.
+#   --with-f90real=4|8;        Specify real type in fortran
+#   --with-f90example=yes|no;  Specify compilation of fortran sample included. 
+#   --host=hostname;           Specify in case of cross-compilation.
+#
+./configure --prefix=$1 \
+            --with-comp=INTEL \
+            --with-ompi=/opt/openmpi \
+            --with-parser=/usr/local/TextParser \
+            --with-f90example=no \
+            CXX=icpc \
+            CXXFLAGS=-O3 \
+	        FC=ifort
 \end{program}
 }
 
@@ -137,7 +151,7 @@ $ ./configure --prefix=$1 \
 
 {\small
 \begin{program}
-$ config_cpm_float.sh /usr/local/cpm_float
+$ config_cpm.sh /usr/local/cpm
 \end{program}
 }
 
@@ -161,25 +175,10 @@ export LD_LIBRARY_PATH=/opt/intel/Compiler/11.1/089/lib:$LD_LIBRARY_PATH
 
 
 %
-\subsection{倍精度計算モジュール}
-単精度計算と倍精度計算では，それぞれ専用のCMPlibライブラリが必要になり，単精度計算と倍精度計算で異なる精度のモジュールを別々に用意します．
-倍精度計算モジュールを生成する場合には，configure時に\verb|--with-real=double|オプションを追加してください．
-
-
-%
-\section{関連ライブラリのビルド}
-
-FFV-Cに必要なPMlib, Polylib, Cutlibライブラリをビルドします．
-各ライブラリのsrcディレクトリに入り，下記を実行します．
-各ライブラリのlibディレクトリにアーカイブが生成されます．
-
-{\small
-\begin{program}
-$ make clean
-$ make depend
-$ make
-\end{program}
-}
+\subsection{Fortranインターフェイスと倍精度計算モジュール}
+C++版のCPMlib自体は，単精度と倍精度に対応しています．
+Fortranインターフェイスを利用する場合には，configure時に\verb|--with-f90example=yes|を指定してください．
+また，倍精度計算モジュールを生成する場合には，configure時に\verb|--with-f90real=8|オプションが必要になります．
 
 
 
@@ -230,7 +229,6 @@ ffvc-x.x.x
       +- Cutlib-x.x.x             カットライブラリ
       +- FB                       FlowBaseクラス（ユーザー定義クラス群）
       +- FFV                      FFV-CソルバのFortranファイル
-      +- F_CDS                    CPCクラスのFortranファイル
       +- F_CORE                   Fortranのコアプログラム（Binary版）
       +- F_VOF                    VOFクラスのFortranファイル
       +- IP                       組み込み例題クラス群

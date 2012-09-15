@@ -4,7 +4,7 @@
 %
 \section{形状近似度による解析モデルの分類}
 \label{sec:classification of model}
-直交格子を用いる流体解析では，解析対象となる形状を直交格子上でどのように扱うかにより，計算のロバスト性，予測精度，計算時間，計算格子（解析モデル）の作りやすさなどの特性が異なります．一般には，\textbf{図\ref{fig:class model}}のように分類することができます\cite{CFDハンドブック:03}．
+直交格子を用いる流体解析では，解析対象となる形状を直交格子上でどのように扱うかにより，計算のロバスト性，予測精度，計算時間，計算格子（解析モデル）の作りやすさなどの特性が異なります．一般には，\textbf{図\ref{fig:class model}}のように分類することができます\cite{CFDhandbook:03}．
 
 \begin{figure}[htdp]
 \begin{center}
@@ -16,187 +16,136 @@
 
 %
 \subsection{Binary Voxel}
-\label{sec:binary voxel}
 Binary Voxel\index{Binary Voxel}モデルは，\textbf{図\ref{fig:Eport binary voxel}}に示すように立方体のセル要素単位で形状を表現する解析モデルです．
 物体の形状近似としては最も簡単であり，モデル作成時のロバスト性に大きな利点があります．
 
 \begin{figure}[htbp]
-\begin{minipage}{.6\textwidth}
 \begin{center}
 \includegraphics[width=8cm,clip]{eport.eps}
 \end{center}
-\caption{バイナリボクセルによる機械部品の形状表現とセルID設定}
+\caption{バイナリボクセルによる機械部品の形状表現}
 \label{fig:Eport binary voxel}
-\end{minipage} \hfill
-\begin{minipage}{.38\textwidth}
-\begin{center}
-\includegraphics[width=6cm,clip]{Mlist.eps}
-\end{center}
-\caption{V-XgenでのセルID設定リスト}
-\label{fig:ID set on V-Xgen}
-\end{minipage}
 \end{figure}
 
 %
 \subsection{体積率モデル}
 Binary Voxelの形状近似度を改善する方法の一つで，セル内における流体の占有率を考慮した計算をする場合に利用します．
-陽的な面の情報をもたないので，界面は拡散的に表現される傾向です．補助的に面における開口率を用いる場合には，有限体積法との親和性が高く保存性が改善されます．
-%
-\subsection{カットモデル}
-\label{sec:planar cut}
-Binary Voxelでは形状が階段状に近似されるため，計算精度が不足する場合があります．そこで，形状を区分的にカットされた平面として近似するモデルを用います．
-CPCソルバー\footnote{\today 未実装．}では，物理量の定義点から物体までの距離情報を用いることにより，ロバスト性と精度向上の両立を図っています．通常のボクセルについてはバイナリボクセルと同様です．
-
+FFV-Cソルバーでは，圧力損失部などの境界条件の実装に用いています．
 
 %
-\section{セルIDによる境界条件の指定}
-\label{sec:ID connection}
+\subsection{距離情報モデル}
+Binary Voxelでは形状が階段状に近似されるため，計算精度が不足する場合があります．そこで，格子の定義点から物体表面までの距離を用いて流束計算を行うスキームを用います．
 
-CBC/CPCソルバーでは，ボクセルの各セルにIDを与え，このセルIDとパラメータファイルに記述された境界条件情報から，境界条件を設定するしくみになっています．
-例えば，ボクセルモデルのセルIDとXML記述のパラメータファイル中では，次のように媒質IDと結びつけられます．
+
+%
+\section{ポリゴンによる境界条件の指定}
+
+FFV-Cソルバーでは，解析する形状を表すポリゴンにIDを与え，このIDとパラメータファイルに記述された境界条件情報を結びつけ，境界条件を設定するしくみになっています．
+
+下記のファイルは，計算に利用する解析モデルのポリゴン情報ファイルの内容です．
+Eng\_BlockとExhaustの２つのグループがあります．
 
 {\small
 \begin{program}
-<Elem name="Model_Setting">
-  <Param name="fluid" id="1"   dtype="INT" value="100" comment="air"/>
-  <Param name="solid" id="600" dtype="INT" value="600" comment="wall"/>
-  <Param name="solid" id="610" dtype="INT" value="600" comment="piston_head"/>
-</Elem>
+$ cat polylib.tp
+
+Polylib {
+
+  Eng_Block {
+    class_name = "PolygonGroup"
+    filepath ="./geom_scaled/Eng_Block.stl"
+    movable = "false"
+    id = 3
+    label = "Fe-heat_src_1"
+  }
+
+  Exhaust {
+    class_name = "PolygonGroup"
+    filepath = "./geom_scaled/Exhaust.stl"
+    movable = "false"
+    id = 4
+    label = "Fe-heat_src_2"
+  }
+}
 \end{program}
 }
 
-\noindent ここでは，流体であるセルID=1は媒質ID=100によりその物性値が定義され，airのコメントがつけられています．
+\noindent ここでは，Eng\_Blockには，Fe-heat\_src\_1のラベルが付与されています．
+このラベルは媒質を表しており，
 参照される媒質IDは，Medium\_Tableタグによって次のように指定されます．
 
 {\small
 \begin{program}
-<Medium_Table>
-  <Elem name="Fluid" id="100" comment="Air">
-    <Param name="density"              dtype="REAL" value="1.1763" />
-    <Param name="specific_heat"        dtype="REAL" value="1007" />
-    <Param name="thermal_conductivity" dtype="REAL" value="2.614e-02" />
-    <Param name="kinematic_viscosity"  dtype="REAL" value="15.83e-06" />
-    <Param name="viscosity"            dtype="REAL" value="18.62e-06" />
-    <Param name="sound_of_speed"       dtype="REAL" value="340.0" />
-  </Elem>
-  <Elem name="Solid" id="600" comment="Fe">
-    <Param name="density"              dtype="REAL" value="7870.0" />
-    <Param name="specific_heat"        dtype="REAL" value="442.0" />
-    <Param name="thermal_conductivity" dtype="REAL" value="80.3" />
-  </Elem>
-</Medium_Table>
+Medium_Table {
+  Medium[@] { // Eng_Block
+    type                 = "Solid"
+    label                = "Fe-heat_src_1"
+    Density              = 7870.0
+    Specific_Heat        = 442.0
+    Thermal_Conductivity = 80.3
+  }
+  Medium[@] { // Exhaust
+    type                 = "Solid"
+    label                = "Fe-heat_src_2"
+    Density              = 7870.0
+    Specific_Heat        = 442.0
+    Thermal_Conductivity = 80.3
+  }
+}
 \end{program}
 }
 
 媒質IDの指定についての詳細は，\hyperlink{tgt:medium_table}{Medium\_Table}セクションを参照してください．
 
-\pagebreak
-%
-\section{形状データからの解析モデルの作成手順}
-\label{sec:modeling procedure}
-V-Xgen\index{V-Xgen}を用いた解析モデル作成の手順を簡単に示します．操作の詳細は，V-Xgenユーザーガイド，およびチュートリアルを参照してください．
-
-\begin{enumerate}
-\item V-Xgenの起動\\
-アイコンのダブルクリック，または下記のようにコマンドラインからアプリケーションを起動します．
+Eng\_BlockとExhaustの各ポリゴン部分が境界条件を表しますが，LocalBoundaryで具体的な境界条件の種類を指定します．
 
 {\small
 \begin{program}
-$ Vxgen.sh　または　Vxgen
+BC_Table {
+
+  LocalBoundary {
+
+    BC[@] {
+      class                    = "HeatTransfer_SN"
+      alias                    = "Eng_Block"
+      neighbor_medium          = "air-100c"
+      Surface_Temperature      = 100.0
+      Ref_Temp_Mode            = "Bulk_Temperature"
+      vertical_laminar_alpha   = 0.59
+      vertical_laminar_beta    = 0.25
+      vertical_turbulent_alpha = 0.1
+      vertical_turbulent_beta  = 0.3333333
+      vertical_Ra_critial      = 1.0e9
+      lower_laminar_alpha      = 0.27
+      lower_laminar_beta       = 0.25
+      lower_turbulent_alpha    = 0.27
+      lower_turbulent_beta     = 0.25
+      lower_Ra_critial         = 1.0e9
+    }
+
+    BC[@] {
+      class                    = "HeatTransfer_SN"
+      alias                    = "Exhaust"
+      neighbor_medium          = "air-100c"
+      Surface_Temperature      = 500.0
+      Ref_Temp_Mode            = "Bulk_Temperature"
+      vertical_laminar_alpha   = 0.59
+      vertical_laminar_beta    = 0.25
+      vertical_turbulent_alpha = 0.1
+      vertical_turbulent_beta  = 0.3333333
+      vertical_Ra_critial      = 1.0e9
+      lower_laminar_alpha      = 0.27
+      lower_laminar_beta       = 0.25
+      lower_turbulent_alpha    = 0.27
+      lower_turbulent_beta     = 0.25
+      lower_Ra_critial         = 1.0e9
+    }
 \end{program}
 }
 
-\item ファイルの読み込み\\
-入力となる幾何形状STLファイル\index{STL}を読み込みます．
-\verb|File > Import > Shape (obj/stl) data files...|のコマンドを実行し，ファイルリストから幾何形状ファイルを選択しロードすると，\textbf{図\ref{fig:V-Xgen mesh}}のように形状モデルが描画されます．\\
-
-\begin{figure}[htbp]
-\begin{minipage}{.6\textwidth}
-\begin{center}
-\includegraphics[width=8.5cm,clip]{WJ_mesh.eps}
-\end{center}
-\caption{V-Xgenでのファイル読み込み}
-\label{fig:V-Xgen mesh}
-\end{minipage} \hfill
-\begin{minipage}{.38\textwidth}
-\begin{center}
-\includegraphics[width=6cm,clip]{SV_dialog.eps}
-\end{center}
-\caption{ボクセル作成のパラメータ設定ダイアログ}
-\label{fig:SV menue}
-\end{minipage}
-\end{figure}
-
-\item バイナリボクセルの作成\\
-\verb|Voxelization > Simple Voxel(SV) ...|を実行すると，\textbf{図\ref{fig:SV menue}}のような直交等間隔ボクセルを作成するダイアログが表示されます．
-パラメータを適切に設定して，ボクセルを作成すると，\textbf{図\ref{fig:V-Xgen voxelize}}のようなボクセルのバウンディングボックスが表示されます．
-ここで作成するボクセルモデルの範囲は，\textbf{図\ref{fig:cal. region}}に示す計算領域の部分です．
-計算に必要な計算領域の外部に位置する仮想セル領域の媒質はXMLパラメータファイルのOuterBoundary$\to$Face\_BC中のCell\_IDタグで指定します．\\
-
-\begin{figure}[htbp]
-\begin{minipage}{.48\textwidth}
-\begin{center}
-\includegraphics[width=8cm,clip]{voxelize.eps}
-\end{center}
-\caption{V-Xgenでのボクセル生成}
-\label{fig:V-Xgen voxelize}
-\end{minipage} \hfill
-\begin{minipage}{.48\textwidth}
-\begin{center}
-\includegraphics[width=7cm,clip]{WJ_voxel.eps}
-\end{center}
-\caption{ボクセルモデル．V-XppのVOIコマンドによる選択状態の表示}
-\label{fig:V-Xpp voxel}
-\end{minipage}
-\end{figure}
-
-\begin{figure}[htdp]
-\begin{center}
-\includegraphics[width=12cm,clip]{clip006.eps}
-\caption{計算領域とガイドセル領域の定義}
-\label{fig:cal. region}
-\end{center}
-\end{figure}
-
-
-\item セルIDの設定\\
-V-Xgenで作成したボクセルモデルファイルを，アプリケーションV-Xpp\index{V-Xpp}を用いてセルIDを編集します\footnote{次のバージョンでは，V-Xppの機能をV-Xgenに統合予定です．}．V-Xppを起動し，\verb|File > Open...|を実行してボクセルモデルファイル（*.svx, *.sbx, *.ovx）を選択しロードすると，\textbf{図\ref{fig:V-Xpp voxel}}のようにボクセライズされた形状データが表示されます．\\
-
- 次に，\verb|Volume > Medium List...|を選択し，\textbf{図\ref{fig:V-Xpp Medium list}}に示すセルIDリストを編集します．
-ボクセルモデルを\verb|VOI > Select VOI...|や\verb|VOI > Slice Control...|によりボクセルを選択，\verb|VOI > Set Cell ID...|コマンド（\textbf{図\ref{fig:V-Xpp set cell ID}}）によりセルIDを選択対象セルに設定します．
-セルIDを編集したボクセルモデルは\textbf{図\ref{fig:editted voxel}}のようになるのでファイルに保存します．
-ここで，約束事として，\textbf{セルID=0は予約番号でユーザは設定しないこと}に注意してください．\\
-
-また，利用できるIDの設定数に関しては，\hyperlink{tgt:localboundary}{LocalBoundary}で説明していますが，\textbf{指定できる内部境界条件の数は30個が上限で，かつ指定境界条件数と媒質数の和は63個以下}となる点に注意してください．
-
-\begin{figure}[htbp]
-\begin{minipage}{.48\textwidth}
-\begin{center}
-\includegraphics[width=6cm,clip]{VXpp_Mlist.eps}
-\end{center}
-\caption{セルID編集ダイアログ}
-\label{fig:V-Xpp Medium list}
-\end{minipage} \hfill
-\begin{minipage}{.48\textwidth}
-\begin{center}
-\includegraphics[width=6cm,clip]{VXpp_setID.eps}
-\end{center}
-\caption{セルID設定ダイアログ}
-\label{fig:V-Xpp set cell ID}
-\end{minipage}
-\end{figure}
-
-\begin{figure}[htdp]
-\begin{center}
-\includegraphics[width=12cm,clip]{VXpp_coloredVoxel.eps}
-\caption{V-XppでセルIDを編集したボクセルモデル}
-\label{fig:editted voxel}
-\end{center}
-\end{figure}
-
-\end{enumerate}
-
 \pagebreak
+%
+\section{形状データからの解析モデルの作成手順}
 
 
 %% 
