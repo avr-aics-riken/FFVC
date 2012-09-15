@@ -1,0 +1,384 @@
+\graphicspath{{./fig_APDX/}}
+%
+
+\section{回転行列}
+
+%
+\subsection{回転行列の性質}
+回転行列の一般的な性質について述べる~\cite{shimada:00:cadcg, ohishi:94:graphics}．
+ある座標$\bm p$が原点を通る回転軸によって回転して$\bm q$に移動する状態変化は，回転行列$\bm T$を用いて，
+
+\begin{equation}
+\bm q \,=\, \bm{T\,p}
+\label{eq:trans-matrix}
+\end{equation}
+
+ただし，
+\begin{equation}
+\bm T \,=\, \left[
+\begin{array}{ccc}
+a_1 & b_1 & c_1 \\
+a_2 & b_2 & c_2 \\
+a_3 & b_3 & c_3 
+\end{array}
+\right] \,=\, (\bm a,\, \bm b,\, \bm c)
+\label{eq:matrix def}
+\end{equation}
+
+また，行列$\bm T$は，
+
+\begin{equation}
+\bm T \,=\, \bm{ai} + \bm{bj} + \bm{ck}
+\label{eq:matrixT}
+\end{equation}
+
+つまり，ある座標軸を表すベクトル$(\bm i,\, \bm j,\, \bm k)$を，それぞれベクトル$(\bm a,\, \bm b,\, \bm c)$に変換することを意味している\footnote{ここで，扱うベクトルは右手系とする．}．
+
+%
+\subsection{回転の合成}
+三次元空間における任意の回転は，座標軸周りに3回回転させる．
+各軸周りの回転は座標軸の正方向に向かって右回りを回転の正方向とする．
+回転の順序は任意であるが，通常$x$軸，$y$軸，$z$軸の順序でこれをオイラー回転という．
+各軸周りの回転行列をそれぞれ${\bm T}_x,\, {\bm T}_y,\, {\bm T}_z$とすると，
+
+\begin{equation}
+{\bm T}_x \,=\,
+\left[
+\begin{array}{ccc}
+1 & 0 & 0\\
+0 & \mathrm{cos}\,\theta_x & \mathrm{-sin}\,\theta_x\\
+0 & \mathrm{sin}\,\theta_x & \mathrm{cos}\,\theta_x
+\end{array}
+\right]
+\label{eq:Tx}
+\end{equation}
+
+\begin{equation}
+{\bm T}_y \,=\,
+\left[
+\begin{array}{ccc}
+\mathrm{cos}\,\theta_y & 0 & \mathrm{sin}\,\theta_y\\
+0 & 1 & 0\\
+\mathrm{-sin}\,\theta_y & 0 & \mathrm{cos}\,\theta_y
+\end{array}
+\right]
+\label{eq:Ty}
+\end{equation}
+
+\begin{equation}
+{\bm T}_z \,=\,
+\left[
+\begin{array}{ccc}
+\mathrm{cos}\,\theta_z & \mathrm{-sin}\,\theta_z & 0\\
+\mathrm{sin}\,\theta_z & \mathrm{cos}\,\theta_z & 0\\
+0 & 0 & 1
+\end{array}
+\right]
+\label{eq:Tz}
+\end{equation}
+
+\vspace{3mm}
+
+合成された回転行列は，
+
+\begin{equation}
+{\bm T}_{xyz} \,=\, {\bm T}_z\, {\bm T}_y\, {\bm T}_x \,=\,
+\left[
+\begin{array}{ccc}
+C_y\,C_z & S_x\,S_y\,C_z\,-\,C_x\,S_z & C_x\,S_y\,C_z\,+\,S_x\,S_z\\
+C_y\,S_z & S_x\,S_y\,S_z\,+\,C_x\,C_z & C_x\,S_y\,S_z\,-\,S_x\,C_z\\
+-\,S_y & S_x\,C_y & C_x\,C_y
+\end{array}
+\right]
+\label{eq:Txyz}
+\end{equation}
+
+\noindent ここで，例えば，$C_x$は$\mathrm{cos}\,\theta_x$を表す．
+
+行列積は一般に$\bm{AB} \neq \bm{BA}$なので，行列を作用させる順番で答えが異なる．
+したがって，回転の順番を変えると，同じ角度であっても異なる位置に変換されることになるので注意．
+
+また，逆変換の回転行列は，
+
+\begin{equation}
+{\bm T}_{zyx} \,=\, {\bm T}_x\, {\bm T}_y\, {\bm T}_z \,=\,
+\left[
+\begin{array}{ccc}
+C_y\,C_z & C_y\,S_z & -S_y\\
+S_x\,S_y\,C_z\,-\,C_x\,S_z & S_x\,S_y\,S_z\,+\,C_x\,C_z & S_x\,C_y\\
+C_x\,S_y\,C_z\,+\,S_x\,S_z & C_x\,S_y\,S_z\,-\,S_x\,C_z & C_x\,C_y
+\end{array}
+\right]
+\label{eq:Tzyx}
+\end{equation}
+
+%%
+\subsection{座標軸まわりの回転角度}
+\textbf{式(\ref{eq:matrix def})}に示した行列要素から座標軸ごとの回転角度を求める．
+$\theta_x,\,\theta_y,\,\theta_z$をそれぞれ$\alpha,\,\beta,\,\gamma$とする．
+
+\begin{enumerate}
+\item コンポーネントの流出方向の指定ベクトル$\overrightarrow{n}$がz軸の単位ベクトル$\overrightarrow{e}_3$と作る角度$\alpha$を求める．$\overrightarrow{n}$をyz面へ射影したベクトルと$\overrightarrow{e}_3$と内積をとり，方向角を求める．射影ベクトルの大きさがゼロの場合には回転角はゼロとする．
+\item 回転角$(\alpha,\, 0.0,\, 0.0)$でベクトル$\overrightarrow{n}$を回転し，xz面へ射影したベクトルとz軸の単位ベクトルと作る角度$\beta$を求める．ベクトル$\overrightarrow{n}$がx軸とy軸の両方から見て$\overrightarrow{e}_3$と反対の場合にだけ，y軸回りのみ回転する．
+\item 矩形形状の場合には，さらに方向ベクトルの向きも合わせる．回転角$(\alpha,\, \beta,\, 0.0)$でベクトル$\overrightarrow{n}$を回転すると，xy平面へ射影されたベクトルとなる．この射影されたベクトルとx軸の単位ベクトル$\overrightarrow{e}_1$と作る角度$\gamma$を求める．
+\end{enumerate}
+
+
+
+
+
+%%%
+\begin{comment}
+\subsection{任意方向の回転軸まわりの回転}
+回転軸が決まっていて，それを軸にした回転運動を求める．
+座標軸は原点を通るものとし，回転軸の軸ベクトルを$\bm u =(u_1,\, u_2,\, u_3)$とする．
+補助ベクトルとして$\bm u$に直交する2つのベクトル$\bm v,\, \bm w$を考える．
+
+任意の座標点$\bm p$を$\bm u,\, \bm v,\, \bm w)$の成分で表すと，
+
+\begin{equation}
+\bm p \,=\, (\bm p \cdot \bm u)\,\bm u + (\bm p \cdot \bm v)\,\bm v + (\bm p \cdot \bm w)\,\bm w
+\,=\, (\bm{uu} + \bm{vv} + \bm{ww})\, \bm p
+\,=\, \bm E \, \bm p
+\label{eq:rot 1}
+\end{equation}
+
+回転による変換\textbf{式(\ref{eq:trans-matrix})}では，回転行列$\bm T$により$\bm p$が$\bm q$になる，つまり，
+基底ベクトル$(\bm u,\, \bm v,\, \bm w)$から$(\bm a,\, \bm b,\, \bm c)$に変換される．\textbf{式(\ref{eq:matrixT})}を参考に，
+
+\begin{equation}
+\bm q \,=\, (\bm p \cdot \bm u)\,\bm a + (\bm p \cdot \bm v)\,\bm b + (\bm p \cdot \bm w)\,\bm c
+\,=\, (\bm{au} + \bm{bv} + \bm{cw})\, \bm p
+\,=\, \bm T \, \bm p
+\label{eq:rot 2}
+\end{equation}
+
+その向きは，
+
+\[
+\left\{
+\begin{array}{lllllll}
+\bm a & = & \bm u & & & &\\
+\bm b & = & &   & \bm v\, \mathrm{cos}\, \theta & + & \bm w\, \mathrm{sin}\, \theta \\
+\bm c & = & & - & \bm v\, \mathrm{sin}\, \theta & + & \bm w\, \mathrm{cos}\, \theta 
+\end{array}
+\right.
+\]
+
+回転行列$\bm T$を$(\bm u,\, \bm v,\, \bm w)$で表すと，
+
+\begin{equation}
+\bm T \,=\, (\bm{au} + \bm{bv} + \bm{cw})
+\,=\, \bm{uu} + (\bm{vv}+\bm{ww})\,\mathrm{cos}\,\theta + (\bm{wv}-\bm{vw})\,\mathrm{sin}\,\theta
+\label{eq:rot 3}
+\end{equation}
+
+
+\noindent さらに$\bm v,\,\bm w$を成分で表記すると$\bm u$のみで表せる．
+
+\begin{equation}
+\bm T
+\,=\, \bm E \,\mathrm{cos}\,\theta + (1-\mathrm{cos}\,\theta)\,\bm{uu} + \bm D\, \mathrm{sin}\,\theta
+\label{eq:rot 3}
+\end{equation}
+
+\begin{equation}
+\bm D \,=\, (\bm{wv}-\bm{vw}) \,=\,
+\left[
+\begin{array}{ccc}
+0  & -u_3  & u_2  \\
+u_3  &  0 & -u_1  \\
+-u_2  & u_1  &  0 
+\end{array}
+\right]
+\label{eq:rot 4}
+\end{equation}
+
+\noindent $\bm D$の非対角成分は回転部分を表すことに注意．
+
+%
+\subsection{座標軸まわりの回転角度}
+\textbf{式(\ref{eq:matrix def})}に示した行列要素から座標軸ごとの回転角度を求める．
+$\theta_x,\,\theta_y,\,\theta_z$をそれぞれ$\alpha,\,\beta,\,\gamma$とする．
+
+\begin{enumerate}
+\item \textbf{式(\ref{eq:matrix def})}と\textbf{式(\ref{eq:Txyz})}を比較し，$a_3\,=\,-S_y$なので，
+
+\begin{equation}
+\left\{
+\begin{array}{lllll}
+\mathrm{sin}\,\beta & = & S_y & = & -a_3\\
+\mathrm{cos}\,\beta & = & C_y & = & \sqrt{1-a_3^2}
+\end{array}
+\right.
+\label{eq:angle 1}
+\end{equation}
+
+仮に$C_y>0$とすると，$-\pi/2<\beta<\pi/2$を仮定したことになる．
+\vspace{2mm}
+
+\item もし，$|a_3|=1$ならば，$a_1,\,a_2,\,b_3,\,c_3$も0となる．この場合には，次の二つのケースが考えられる．
+
+\begin{enumerate}
+\item $a_3=1$の場合，$\beta=-\pi/2$である．\textbf{式(\ref{eq:Txyz})}は，次式のように簡単になる．
+\begin{equation}
+{\bm T}_{xyz} \,=\,
+\left[
+\begin{array}{ccc}
+0 & -S_x C_z - C_x S_z & S_x S_z - C_x C_z\\
+0 & -S_x S_z + C_x C_z & -C_x S_z - S_x C_z\\
+1 & 0 & 0
+\end{array}
+\right]
+\label{eq:Txyz=1}
+\end{equation}
+
+したがって，
+\begin{equation}
+\left\{
+\begin{array}{lllllll}
+b_1 & = & c_2  & = & -S_x C_z - C_x S_z & = & -\mathrm{sin}\,(\alpha+\gamma)\\
+b_2 & = & -c_1 & = & S_x S_z - C_x C_z  & = &  \mathrm{cos}\,(\alpha+\gamma)
+\end{array}
+\right.
+\label{eq:angle 2}
+\end{equation}
+\vspace{2mm}
+
+\item $a_3=-1$の場合，$\beta=\pi/2$である．\textbf{式(\ref{eq:Txyz})}は，次式のように簡単になる．
+\begin{equation}
+{\bm T}_{xyz} \,=\,
+\left[
+\begin{array}{ccc}
+0 & S_x C_z - C_x S_z & S_x S_z + C_x C_z\\
+0 & S_x S_z + C_x C_z & C_x S_z - S_x C_z\\
+1 & 0 & 0
+\end{array}
+\right]
+\label{eq:Txyz=-1}
+\end{equation}
+\end{enumerate}
+
+したがって，
+\begin{equation}
+\left\{
+\begin{array}{lllllll}
+b_1 & = & -c_2 & = & S_x C_z - C_x S_z & = & \mathrm{sin}\,(\alpha-\gamma)\\
+b_2 & = & c_1  & = & S_x S_z + C_x C_z & = & \mathrm{cos}\,(\alpha-\gamma)
+\end{array}
+\right.
+\label{eq:angle 3}
+\end{equation}
+
+(a), (b)の2つのケースから，$\alpha=0$つまり$x$軸周りに回転しないことにすると，
+2つのケースは同じになり，$\beta$の符号を気にしないで済み，\textbf{式(\ref{eq:angle 4})}で求められる．
+
+\vspace{2mm}
+
+\item $|a_3|<1$の場合，$\beta$は\textbf{式(\ref{eq:angle 1})}で求められる．
+$\alpha,\,\gamma$については，\textbf{式(\ref{eq:Txyz})}の$a_1,\,a_2,\,b_3,\,c_3$から，
+\begin{equation}
+\left\{
+\begin{array}{lllllll}
+\mathrm{cos}\,\gamma \,=\, a_1/C_y, & \mathrm{sin}\,\gamma \,=\, a_2/C_y\\
+\mathrm{cos}\,\alpha \,=\, c_3/C_y, & \mathrm{sin}\,\alpha \,=\, b_3/C_y
+\end{array}
+\right.
+\label{eq:angle 4}
+\end{equation}
+
+\end{enumerate}
+
+
+%
+\hypertarget{tgt:affin}{\section{アフィン変換}}
+2つの6面体があり，一方の6面体をもう一方の6面体にはめ込むように移動・回転・変形を行う~\cite{shimada:00:cadcg}．
+平行6面体の8コの頂点の内，1つの頂点を共有する3辺の4頂点の座標を考える．
+変換元の6面体を単位立方体とし，共通点を原点におく．変換先の6面体には対応する4頂点を考える．
+変換元の座標を$x,\,y,\,z$で，変換先の座標を$X,\,Y,\,Z$で表すと，一般式は，
+
+\begin{equation}
+\left\{
+\begin{array}{lllllllll}
+X & = & a_1\, x & + & b_1\, y & + & c_1\, z & + & d_1\\
+Y & = & a_2\, x & + & b_2\, y & + & c_2\, z & + & d_2\\
+Z & = & a_3\, x & + & b_3\, y & + & c_3\, z & + & d_3
+\end{array}
+\right.
+\label{eq:trns-before}
+\end{equation}
+
+\begin{equation}
+\left\{
+\begin{array}{lllllllll}
+x & = & A_1\, X & + & B_1\, Y & + & C_1\, Z & + & D_1\\
+y & = & A_2\, X & + & B_2\, Y & + & C_2\, Z & + & D_2\\
+z & = & A_3\, X & + & B_3\, Y & + & C_3\, Z & + & D_3
+\end{array}
+\right.
+\label{eq:trns-after}
+\end{equation}
+
+4頂点は\textbf{表\ref{tbl:mapping node}}のように対応させる．
+簡単のため共通点を原点にオフセットした状態を考える．
+この場合，$d_1\,=\,d_2\,=\,d_3\,=\,0$および$D_1\,=\,D_2\,=\,D_3\,=\,0$になる．
+
+\begin{table}[htdp]
+\caption{変換元と変換先の座標値のマッピング．}
+\begin{center}
+\begin{tabular}{cccc} \toprule
+  & $(x,\,y,\,z)$ & $\Leftrightarrow$ & $(X,\,Y,\,Z)$ \\ \midrule
+1 & (0,0,0) & $\Leftrightarrow$ & (0,0,0)\\
+2 & (1,0,0) & $\Leftrightarrow$ & $(X_2,\,Y_2,\,Z_2)$\\
+3 & (0,1,0) & $\Leftrightarrow$ & $(X_3,\,Y_3,\,Z_3)$\\
+4 & (0,0,1) & $\Leftrightarrow$ & $(X_4,\,Y_4,\,Z_4)$\\ \bottomrule
+\end{tabular}
+\end{center}
+\label{tbl:mapping node}
+\end{table}
+
+
+\textbf{表\ref{tbl:mapping node}}の対応から，直交基底$(\bm i,\,\bm j,\,\bm k)$から$(\bm a,\,\bm b,\,\bm c)$への回転と考えることができる．ここで，$\bm a=(X_2,\,Y_2,\,Z_2)$，$\bm b=(X_3,\,Y_3,\,Z_3)$，$\bm c=(X_4,\,Y_4,\,Z_4)$である．
+\textbf{式(\ref{eq:matrixT})}から，係数は次のようになる．
+
+\begin{equation}
+\left\{
+\begin{array}{lll}
+a_1 \,=\, X_2 & b_1 \,=\, X_3 & c_1 \,=\, X_4\\
+a_2 \,=\, Y_2 & b_2 \,=\, Y_3 & c_2 \,=\, Y_4\\
+a_3 \,=\, Z_2 & b_3 \,=\, Z_3 & c_3 \,=\, Z_4
+\end{array}
+\right.
+\label{eq:coef-before}
+\end{equation}
+
+逆変換は逆行列の形式を用いて，
+
+\begin{equation}
+\left\{
+\begin{array}{lll}
+A_1 \,=\, (Y_3\,Z_4 - Y_4\,Z_3)/\Delta\\
+A_2 \,=\, (Y_4\,Z_2 - Y_2\,Z_4)/\Delta\\
+A_3 \,=\, (Y_2\,Z_3 - Y_3\,Z_2)/\Delta\\
+B_1 \,=\, (Z_3\,X_4 - Z_4\,X_3)/\Delta\\
+B_2 \,=\, (Z_4\,X_2 - Z_2\,X_4)/\Delta\\
+B_3 \,=\, (Z_2\,X_3 - Z_3\,X_2)/\Delta\\
+C_1 \,=\, (X_3\,Y_4 - X_4\,Y_3)/\Delta\\
+C_2 \,=\, (X_4\,Y_2 - X_2\,Y_4)/\Delta\\
+C_3 \,=\, (X_2\,Y_3 - X_3\,Y_2)/\Delta
+\end{array}
+\right.
+\label{eq:coef-after}
+\end{equation}
+
+ここで，
+\[
+\begin{array}{lllll}
+\Delta & = & X_2\,Y_3\,Z_4 & - & X_2\,Y_4\,Z_3 \\
+       & + & X_3\,Y_4\,Z_2 & - & X_3\,Y_2\,Z_4 \\
+       & + & X_4\,Y_2\,Z_3 & - & X_4\,Y_3\,Z_2 \\
+\end{array}
+\]
+
+\end{comment}
+%%%

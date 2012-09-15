@@ -1,0 +1,36 @@
+\graphicspath{{./fig_intro/}}
+
+
+%
+\section{FFV-Cの特徴}
+FFV-C(Frontflow/violet Cartesian)は，直交等間隔格子上で三次元非定常非圧縮性熱流体を解析するシステムです．
+ソルバーを構築する上で必要な，パラメータハンドリング，主要な境界条件処理とパラメータの関連づけ，ファイル入出力，並列計算処理，組み込み例題など，コアアルゴリズム以外の部分は，FlowBaseクラスなどにパッケージ化しています．
+
+CBCソルバークラスは，下記のような特徴を持っています．
+
+\begin{description}
+\item[ ] 形状近似　　　：キューブ近似（Binary），任意形状（距離情報）
+\item[ ] 変数配置　　　：コロケート
+\item[ ] 離散化　　　　：有限体積法，差分法
+\item[ ] 時間積分　　　：一次精度Euler陽解法%，二次精度Adams-Bashforth法，二次精度Crank-Nicolson法
+\item[ ] 空間スキーム　：一次精度風上，三次精度MUSCL%，二次精度中心，
+\item[ ] 解法　　　　　：Fractional Step法
+\item[ ] 反復法　　　　：Jacobi緩和法, Point SOR, 2-colored SOR-SMA（ストライドメモリアクセス版）
+%\item[ ] 　　　　　　　　2-colored SOR-CMA（連続メモリアクセス版）
+\item[ ] スタート機能　：Initial(Impulsive, Smooth), 指定時刻からの再スタート，粗格子からの内挿リスタート
+\item[ ] 入力ファイル　：モデルファイル（STL/拡張STLフォーマット），テキストファイル（計算条件など）
+\item[ ] 出力ファイル　：sphフォーマット，PLOT3Dフォーマット，履歴ファイル，モニター出力，性能情報など
+\item[ ] 外部境界条件　：固定・移動壁面，流入，流出，周期，対称，トラクションフリー
+\item[ ] 内部境界条件　：壁面，速度規定，流出，部分周期境界，圧力損失，多孔質
+\item[ ] 温度境界条件　：断熱，熱伝導，熱伝達，輻射，熱流束，等温
+\item[ ] 並列ライブラリ：OpenMPI
+\item[ ] 並列化　　　　：等分割，Hybrid並列（プロセス並列とOpneMPによるスレッド並列）
+\item[ ] 組込み例題機能：キャビティフロー問題など，基本的な問題
+\item[ ] 利用ライブラリ：\\
+\qquad CPMlib\quad 直交等間隔格子の並列領域分割の制御と通信機能を提供するライブラリ\\
+\qquad PMlib\quad 性能測定パッケージライブラリ \\
+\qquad textparser\quad YAMLに類似した形式で 記述されたテキストのパラメータをパースするライブラリ\\
+\qquad Polylib\quad 幾何形状データを並列領域で管理する機能を提供するライブラリ\\
+\qquad Cutlib\quad 幾何形状が表す面と背景の直交格子の交点を計算するライブラリ\\
+\end{description}
+

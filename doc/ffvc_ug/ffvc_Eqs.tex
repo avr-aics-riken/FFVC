@@ -1,0 +1,468 @@
+
+%
+\section{支配方程式}
+\label{sec:basic eqs}
+FFV-Cソルバーは，圧力や温度の変化により生じる流体の密度変化\index{みつどへんか@密度変化}が小さく．代表的な流速が音速に比べてかなり低い場合を仮定して，非圧縮性流体の基礎方程式を用いています．
+
+%
+\subsection{非圧縮性流体}
+解析対象とする流れの特徴を以下のように仮定し，支配方程式を記述します．
+
+\begin{itemize}
+\item 流れの速度が音速に比べて十分に低く，流れの運動に対する圧縮性の影響は小さいと仮定して，流れを非圧縮性として取り扱います．
+\item 温度場の代表的な温度差スケールが$30\ {}^\circ\mathrm{C}$以下で，密度変化が小さいと仮定します．この場合，密度変化が質量保存則へ与える影響は小さく，密度変化が流れの運動に及ぼす影響をBoussinesq近似\index{ぶしねきんじ@Boussinesq近似}\index{Boussinesq}によりモデル化できます．
+\end{itemize}
+
+支配方程式として，非圧縮性流れに対する質量保存則\textbf{式(\ref{eq:continuity eq})}，運動量保存則\textbf{式(\ref{eq:NS eq})}，エネルギー保存則\textbf{式(\ref{eq:energy eq})}を用います．
+$\delta$はクロネッカーのデルタで重力方向 (i=3) のときに浮力が作用します．
+ここで，プライム$[{}^{\prime}]$は有次元量を表します．物性値など有次元であることが明らかなものにはプライムは付けていません．
+
+\begin{equation}
+\frac{ \partial{{u}_{i}}^{\prime} }{ \partial{{x}_{i}}^{\prime} }\,{=}\,{0}
+\label{eq:continuity eq}
+\end{equation}
+
+\begin{equation}
+\rho^{\prime} \frac{\partial{{u}_{i}}^{\prime}}{\partial{t}^{\prime}} + \rho^{\prime} \frac{\partial}{\partial{{x}_{j}}^{\prime}} \left \{ \,\left( u_j^\prime - u_j^{\,g\,\prime} \right) \,u_i^\prime\,\right \}
+\,{=}\,
+- \frac{\partial{P}^{\prime}}{\partial{{x}_{i}}^{\prime}} + \frac{\partial}{\partial{{x}_{j}}^{\prime}} \left[ {\mu\left({ \frac{\partial{{u}_{i}}^{\prime}}{\partial{{x}_{j}}^{\prime}} + \frac{\partial{{u}_{j}}^{\prime}}{\partial{{x}_{i}}^{\prime}}} \right)} \right] - \rho^{\prime} {g}{\delta}_{i3}
+\label{eq:NS eq}
+\end{equation}
+
+\begin{equation}
+\rho^\prime C_p \left[ \frac{\partial \theta^\prime}{\partial t^\prime} + \frac{\partial}{\partial x_i^\prime} \left\{ \, \left( u_i^\prime - u_i^{\,g\,\prime} \right) \theta^\prime \, \right\} \right] 
+\,{=}\,
+\frac{D{P}^{\prime}}{D{t}^{\prime}} + \frac{\partial}{\partial{{x}_{i}}^{\prime}} \left( {\lambda \frac{\partial{\theta}^{\prime}}{\partial{{x}_{i}}^{\prime}}} \right) + \mu\Phi + {Q}^{\prime}
+\label{eq:energy eq}
+\end{equation}
+
+\vspace{1.0cm}
+\begin{center}
+\begin{tabular}{lll}
+$\rho^{\prime}$ &  $[kg\,/\,m^3]$ & density \\
+$P^{\prime}$ & $[Pa]$ & pressure \\
+${C}_{p}$ & $[J\,/\,(kg\,K)]$ & specific heat at constant pressure \\
+$\theta^{\prime}$ & $[K]$ & temperature \\
+$\lambda$ & $[W\,/\,(m\,K)]$ & heat conductivity \\
+${{u}_{j}}^{\prime}$ & $[m\,/\,s]$ & velocity components \\
+$u_j^{\,g\,\prime}$ & $[m\,/\,s]$ & velocity components of a grid point \\
+${{x}_{j}}^{\prime}$ & $[m]$ & coordinate axis\\
+$t^{\prime}$ & $[s]$ & time\\
+$\mu$ & $[Pa\,s]$ & viscosity\\
+$g$ & $[m\,/\,s^2]$ & gravitational acceleration\\
+$\Phi$ & $[1/s^{2}]$ & dissipation function\\
+$Q^{\prime}$ & $[W\,/\,m^3]$ & heat source\\
+\end{tabular}
+\end{center}
+\vspace{1.0cm}
+
+\noindent \textbf{式(\ref{eq:NS eq})}は形式的にALE(Arbitrary Lagrangian and Eulerian)\index{ALE}で書かれていますが，速度$u_j^{\,g\,\prime}$で移動する格子系での保存則を表現しています．格子点を固定($u_j^{\,g\,\prime}=0$)すればEuler表現，流体粒子と一緒に移動($u_j^{\,g\,\prime}=u_j^\prime$)させればLagrangian表現となります．ここでは，並進や回転などの任意の格子移動速度を与えるために$u_j^{\,g\,\prime}$を利用します．\\
+
+\noindent 低マッハ数\index{ていまっはすう@低マッハ数}を仮定すると，散逸関数$\Phi$は$M^2$に比例するので，その寄与は小さく圧力の全微分の項の影響も小さいので，\textbf{式(\ref{eq:energy eq})}は，次のようなパッシブスカラの移流拡散方程式になります．
+
+\begin{equation}
+\frac{\partial \theta^{\prime}}{\partial{t}^{\prime}} + \frac{\partial}{\partial{{x}_{i}}^{\prime}} \left\{ \, \left( u_i^\prime - u_i^{\,g\,\prime} \right) \, \theta^\prime \, \right \}
+\,{=}\, 
+\frac{\partial}{\partial{{x}_{i}}^{\prime}} \left({ \mathrm{\alpha} \frac{\partial \theta^{\prime}}{\partial{{x}_{i}}^{\prime}} }\right) + \frac{Q^{\prime}}{\rho^{\prime}{C}_{p}}
+\label{eq:thermal transport eq}
+\end{equation}
+
+\noindent ここで$\alpha$は温度拡散係数\index{おんどかくさんけいすう@温度拡散係数}で$[m^2/s]$の単位です．
+
+\begin{equation}
+\qquad \left.
+\begin{array}{ll}
+\vspace{2mm}
+\alpha\,=\, \displaystyle{ \frac{\lambda}{\rho^{\prime} C_{p}} } & [m^2/s]\\
+\vspace{2mm}
+\nu\,=\, \displaystyle{ \frac{\mu}{\rho^{\prime}} } & [m^2s]\\
+\vspace{2mm}
+p\,=\, \displaystyle{ \frac{{\tilde{p}}^{\prime}}{{\rho_{0}}^{\prime}} } & [m^2/s^2]
+\end{array} \quad \right\}
+\label{eq:thermal transport eq2}
+\end{equation}
+
+\noindent 温度拡散係数$\alpha$が一定の場合には下記のようになります．
+
+\begin{equation}
+\frac{\partial \theta^{\prime}}{\partial{t}^{\prime}} + \frac{\partial}{\partial{{x}_{i}}^{\prime}} \left\{ \, \left( u_i^\prime - u_i^{\,g\,\prime} \right) \, \theta^\prime \, \right \} 
+\,{=}\,
+\mathrm{\alpha} \frac{\partial}{\partial{{x}_{i}}^{\prime}} \left({ \frac{\partial \theta^{\prime}}{\partial{{x}_{i}}^{\prime}} }\right) + \frac{Q^{\prime}} {\rho^{\prime} {C}_{p}}
+\label{eq:thermal transport eq:const alpha}
+\end{equation}
+
+
+%
+\section{無次元化}
+\label{sec:non dimensionalize}
+代表速度$u_0^\prime$, 代表長さ$L^\prime$, 代表温度スケール$\Delta \theta^\prime$と基準温度$\theta_0^\prime$で\textbf{式(\ref{eq:continuity eq})}, \textbf{(\ref{eq:NS eq})}, \textbf{(\ref{eq:thermal transport eq:const alpha})}を無次元化\index{むじげんか@無次元化}します．
+
+\begin{equation}
+\left.{ \begin{array}{l}
+\vspace{2mm}
+{u \,{=}\, \displaystyle{ \frac{ u^{\prime} } { {u_{0}}^{\prime}} } }\\
+\vspace{2mm}
+x \,{=}\, \displaystyle{ \frac{x^{\prime}}{L^{\prime}} }\\
+\vspace{2mm}
+p \,=\, \displaystyle{ \frac{p^\prime - {p_0}^\prime}{\rho^\prime {u_0^\prime}^2} }\\
+\vspace{2mm}
+\theta \,{=}\, \displaystyle{ \frac{\theta^{\prime} - {\theta_{0}}^{\prime}}{\Delta \theta^{\prime}} }
+\end{array}\quad }\right\}
+\label{eq:non dimensional basis}
+\end{equation}
+
+%
+\subsection{無次元化された支配方程式}
+\label{sec:natural_convection}
+以下の\textbf{式(\ref{eq:continuity eq:ND})}--\textbf{(\ref{eq:thermal transport eq:ND})}は，単一成分の熱流動を表します．
+
+\begin{equation}
+\frac{\partial{u}_{i}}{\partial{x}_{i}}\,{=}\,{0}
+\label{eq:continuity eq:ND}
+\end{equation}
+
+\begin{equation}
+\frac{\partial{u}_{i}}{\partial{t}}{+}\frac{\partial}{\partial{x}_{j}} \left\{ \, \left( u_j - u_j^{\,g} \right) \, u_i \, \right\}
+\,{=}\,
+{-}\frac{\partial{p}}{\partial{x}_{i}}{+}\frac{1}{Re}\frac{\partial}{\partial{x}_{j}}\left({\frac{\partial{u}_{i}}{\partial{x}_{j}}{+}\frac{\partial{u}_{j}}{\partial{x}_{i}}}\right){+}\frac{Gr}{{Re}^{2}}{\mathrm{\delta}}_{i3}\mathrm{\theta}
+\label{eq:NS eq:ND}
+\end{equation}
+
+\begin{equation}
+\frac{\partial\mathrm{\theta}}{\partial{t}}{+}\frac{\partial}{\partial{x}_{i}} \left\{ \, \left( u_i - u_i^{\,g} \right) \, \mathrm{\theta} \, \right\}
+\,{=}\,
+\frac{1}{Pe}\frac{\partial}{\partial{x}_{i}}\frac{\partial\mathrm{\theta}}{\partial{x}_{i}}{+}\mathrm{\Theta}
+\label{eq:thermal transport eq:ND}
+\end{equation}
+
+\begin{equation}
+\left.{\begin{array}{l}
+\vspace{2mm}
+{{Re}\,{=}\,\frac{\displaystyle {{u}'}_{0}{L}'}{\displaystyle \mathrm{\nu}}}\\
+\vspace{2mm}
+{{Pr}\,{=}\,\frac{\displaystyle \mathrm{\mu}{C}_{p}}{\displaystyle \mathrm{\lambda}}\,{=}\,\frac{\displaystyle \mathrm{\nu}}{\displaystyle \mathrm{\alpha}}}\\
+\vspace{2mm}
+{{Gr}\,{=}\,\frac{\displaystyle {g}\mathrm{\beta}\mathrm{\Delta}{\mathrm{\theta}}'{{L}'}^{3}}{\displaystyle {\mathrm{\nu}}^{2}}}\\
+\vspace{2mm}
+{{Ra}\,{=}\,{Pr}\mathrm{\cdot}{Gr}}\\
+\vspace{2mm}
+{{Pe}\,{=}\,{Pr}\mathrm{\cdot}{Re}}\\
+\vspace{2mm}
+{\mathrm{\Theta}\,{=}\,\frac{\displaystyle Q^{\prime}}{\displaystyle {\mathrm{\rho}}'{C}_{p}}\frac{\displaystyle {L}'}{\displaystyle {{u}'}_{0}\mathrm{\Delta}{\mathrm{\theta}}'}}
+\end{array}\quad }\right\}
+\label{eq:ND definition}
+\end{equation}
+
+\noindent ここで，
+\vspace{1.0cm}
+\begin{center}
+\begin{tabular}{lll}
+$Pr$ & Prandtl数 & 粘性と熱の拡散率の比\\
+$Re$ & Reynolds数 & 慣性力と粘性力の比\\
+$Gr$ & Grashof数 & 浮力と粘性力の比\\
+$Ra$ & Rayleigh数 & 不安定性のパラメータ\\
+$Pe$ & Peclet数 & 対流と熱伝達のエネルギー輸送の比\\
+$\Theta$ & - & 無次元の温度変化率\\
+\end{tabular}
+\end{center}
+\vspace{1.0cm}
+
+\noindent \textbf{式(\ref{eq:NS eq:ND})}は強制対流と自然対流を表現し，右辺第三項が自然対流と強制対流の比を表しています．
+つまり，$Gr/Re^2 \gg 1$の場合には自然対流が支配的で，$Gr/Re^2 \ll 1$の場合には強制対流が支配的となります．$Gr = 0$つまり温度差が無い場合には純強制対流です．
+一方，$Gr/Re^2 \rightarrow \infty$の場合には純自然対流で，流れは浮力によって駆動されるため代表速度が自明ではありません．
+また，$Gr > 10^9$となるような流れは非定常性が強くなります．
+
+\subsection{無次元化パラメータの選択}
+FFV-Cソルバーは，支配方程式を無次元化して解いています．このため，無次元化のパラメータを選択する必要がありますが，解くべき現象に応じて適切に選択します．
+
+
+\subsubsection{純強制対流}
+\begin{indentation}{5zw}{0zw}
+\noindent \textbf{式(\ref{eq:NS eq:ND})}においては$\,Gr=0\,$なので$\,Re\,$が支配パラメータとなります．
+無次元化のスケーリングは，$\,{u_{0}}^{\prime},\,L^{\prime},\,\nu,\,\,\alpha\,(\,=\lambda / \rho^{\prime} C_{p})\,$を与えます．\\
+
+\end{indentation}
+
+\subsubsection{熱対流}
+\begin{indentation}{5zw}{0zw}
+\paragraph{浮力の効果を考慮しない場合}
+\noindent \textbf{式(\ref{eq:NS eq:ND})}において，純強制対流と同じく$\,Gr=0\,$です．\textbf{式(\ref{eq:thermal transport eq:ND})}では$Pe\,$が支配パラメータとなります．
+無次元化のスケーリングは，$\,{u_{0}}^{\prime},\,L^{\prime},\,\nu,\,\,\alpha\,(\,=\lambda / \rho^{\prime} C_{p})\,$を与えます．\\
+\paragraph{浮力の効果を考慮する場合}
+\textbf{式(\ref{eq:NS eq:ND})}では$\,Gr,\,Re\,$が，\textbf{式(\ref{eq:thermal transport eq:ND})}では$\,Pe\,$が支配パラメータとなります．
+無次元化のスケーリングは，$\,{u_{0}}^{\prime},\,L^{\prime},\,\Delta\theta^{\prime},\,\beta,\,g,\,\nu,\,\alpha,\,Pr\,$を与えます．\\
+\end{indentation}
+
+\subsubsection{純自然対流}
+\begin{indentation}{5zw}{0zw}
+\noindent 浮力の効果を考慮した熱対流と同じでです．ただし，${u_{0}}^{\prime}$は自明でないので，純自然対流の場合の代表流速はスケールアナリシスから推測され\cite{nakayama:02:netsuryuutai}，$Pr$数が小さい場合は次式のように見積もることができます．
+
+\begin{equation}
+u_{\mathit 0}^\prime \, = \, \sqrt{g \beta \Delta \theta^\prime L^\prime}
+\label{eq:scaling natural u_ref}
+\end{equation}
+
+\noindent 自然対流の場合の代表速度は\textbf{式(\ref{eq:scaling natural u_ref})}の関係を用いて見積もり，代表速度パラメータとして与えます．
+自然対流と強制対流が共存する共存対流の場合には，各々の代表スケールの平均値や大きい方の値を代表速度とします．\\
+
+\end{indentation}
+
+\subsubsection{固体熱伝導}
+\begin{indentation}{5zw}{0zw}
+\noindent \textbf{式(\ref{eq:thermal transport eq:ND})}の形式で$\,Pe\,$が支配パラメータとなります．ただし，対流項の寄与はありません．
+無次元化のスケーリングは，$\,L^{\prime},\,\Delta \theta^{\prime},\,\alpha,\,$を与えます．
+$\,{u_{0}}^{\prime}$には，一般に熱輸送の時間スケールと代表速度は熱流の伝播速度に相当すると考え，次式を用います．
+
+\begin{equation}
+{u_{\mathit{0}}}^{\prime} \,= \,\frac{\alpha}{L^{\prime}}
+\label{eq:velocity scale in natural convection}
+\end{equation}\\
+\end{indentation}
+
+%%
+\begin{comment}
+\subsubsection{共役熱移動}
+\begin{indentation}{5zw}{0zw}
+\noindent 共役熱移動は，固体中の熱移動と流体中の熱流動を同時に扱うので，必然的に多媒質の熱移動問題となります．熱流動は浮力効果を考慮しています．
+%式(\ref{eq:NS eq:ND})では$\,Gr,\,Re$，式(\ref{thermal transport eq:ND})では$Pe\,$が支配パラメータとなる．無次元化のスケーリングは，$\,L^{\prime},\,\Delta\theta^{\prime},\,\beta,\,g,\,\nu,\,\alpha,\,Pr,\,$を与え，適切な$\,{u_{0}}^{\prime}$を用いる．\\
+\end{indentation}
+\end{comment}
+%%
+
+%
+\section{解法アルゴリズム}
+\label{sec:Algorithm NS}
+この節では前節の支配方程式に対して，非圧縮性流体の解法に使われる分離解法\index{ぶんりかいほう@分離解法}を適用し，有限体積法で離散化する．
+
+\subsection{Fractional Step法}
+\label{sec:fractional step}
+非圧縮性のNavier-Stokes方程式\textbf{(\ref{eq:NS eq:ND})}の解法として，Fractional step法\index{Fractional step}を用いる．これは，任意のベクトル場が非回転場と湧き出し無しの直交するベクトル場に分解できる性質を利用して，二つのベクトルの和をとることにより解を求める分離解法である．
+
+離散式のコーディングポリシーとして，各セル単位で計算を進めていく．保存的な支配方程式を解くのでセル界面の流束ベースの評価が素直で演算量も少なくなるが，コロケートでは固体面や境界面の処理を考える上でセル単位毎の方が計算処理がしやすい．
+
+%
+\subsubsection{Euler Explicit}
+\begin{indentation}{5zw}{0zw}
+一次精度の時間進行法である．
+
+\paragraph{Navier-Stokes equations} $\mbox{}$\\
+\textbf{式(\ref{eq:NS eq:ND})}の対流項と粘性項をそれぞれ$C_i,\,D_i$，浮力項を外力$f_i$で表すと，
+
+\begin{equation}
+\left.
+\begin{array}{l}
+\vspace{2mm}
+\displaystyle{ \frac{\partial u_i}{\partial t} + C_i \,=\, - \frac{\partial p}{\partial x_i} + D_i + f_i } \\
+\vspace{2mm}
+\qquad \displaystyle{ C_i \,=\, \frac{\partial}{\partial x_j} \left\{ \, \left( u_j - u_j^{\,g} \right) \, u_i \, \right\} } \\
+\vspace{2mm}
+\qquad \displaystyle{ D_i \,=\, \frac{1}{Re}\frac{\partial}{\partial x_j} \left( \frac{\partial u_i}{\partial x_j} + \frac{\partial u_j}{\partial x_i} \right) } \\
+\vspace{2mm}
+\qquad \displaystyle{ f_i \,=\, \frac{Gr}{{Re}^2} \delta_{i3} \theta } \\
+\end{array} \quad \right \}
+\label{eq:NS eq CDf}
+\end{equation}
+
+\noindent 疑似ベクトルの予測式は，
+\begin{equation}
+u_i^{\,*} \,=\, u_i^{\,n} + \Delta t \left( D_i^{\,n} - C_i^{\,n} + f_i^{\,n} \right)
+\label{eq:pseudo vector EE}
+\end{equation}
+
+\noindent 連続の式による拘束条件から，圧力のPoisson方程式は，
+\begin{equation}
+\frac{\partial}{\partial x_i} {\frac{\partial p}{\partial x_i}}^{n+1}
+\,=\,
+\frac{1}{\Delta t} {\frac{\partial \bar{u}_i}{\partial x_i}}^* \vspace{1mm}
+\label{eq:Poisson eq}
+\end{equation}
+
+\noindent 圧力ポテンシャルによるセルセンターとスタガード位置の速度ベクトルの修正式は，
+\begin{equation}
+u_i^{\,n+1} \,=\, u_i^{\,*} - \Delta t {\frac{\partial p}{\partial x_i}}^{n+1}
+\label{eq:Pressure correction CC}
+\end{equation}
+
+\begin{equation}
+u_{i,\,face}^{\,n+1} \,=\, \bar{u}_{i,\,face}^{\,*} - \Delta t {\frac{\partial p}{\partial x_i}}^{n+1}
+\label{eq:Pressure correction CF}
+\end{equation}
+
+\paragraph{Thermal transport equation} $\mbox{}$\\
+\textbf{式(\ref{eq:thermal transport eq:ND})}の移流項と拡散項をそれぞれ$Cs_i,\,Ds_i$で表すと，
+
+\begin{equation}
+\left.
+\begin{array}{l} 
+\vspace{2mm}
+\displaystyle { \frac{\partial \theta}{\partial t} + Cs_i \,=\, Ds_i + \Theta } \\
+\vspace{2mm}
+\qquad \displaystyle{ Cs_i \,=\, \frac{\partial}{\partial x_i} \left\{ \, \left( u_i - u_i^{\,g} \right) \, \theta \, \right\} } \\
+\vspace{2mm}
+\qquad \displaystyle{ Ds_i \,=\, \frac{1}{Pe}\frac{\partial}{\partial x_i} \frac{\partial \theta}{\partial x_i} } \\
+\end{array} \quad \right \}
+\label{eq:thermal transport eqs}
+\end{equation}
+
+\begin{equation}
+\theta^{\,n+1} \,=\, \theta^{\,n} + \Delta t \left( Ds_i^{\,n} - Cs_i^{\,n} + \Theta^{\,n} \right)
+\label{eq:thermal transport EE}
+\end{equation}
+
+\end{indentation}
+
+%
+\begin{comment}
+\subsubsection{Adams-Bashforth}
+\begin{indentation}{5zw}{0zw}
+二次精度ではあるが，安定条件が厳しい．
+
+\paragraph{Navier-Stokes equations}
+\begin{equation}
+u_i^{\,*} \,=\, u_i^{\,n} + \Delta t \left[ \frac{1}{2} \left\{  3 \left( D_i^{\,n} - C_i^{\,n} \right)
+               - \left( D_i^{\,n-1} - C_i^{\,n-1} \right) \, \right\} + \frac{1}{2} \left( 3f_i^{\,n} - f_i^{\,n-1} \right) \, \right]
+\label{eq:pseudo vector AB}
+\end{equation}
+
+\paragraph{Thermal transport equation}
+\begin{equation}
+\theta^{\,n+1} \,=\, \theta^{\,n} + \Delta t \left[ \frac{1}{2} \left\{ 3\left( Ds_i^{\,n}- Cs_i^{\,n} \right) - \left( Ds_i^{\,n-1}- Cs_i^{\,n-1} \right) \right\} + \frac{1}{2} \left( 3\Theta^{\,n} -\Theta^{\,n-1} \right) \, \right]
+\label{eq:thermal transport AB}
+\end{equation}
+
+\end{indentation}
+
+%
+\subsubsection{Adams-Bashforth + Crank-Nicolson}
+\begin{indentation}{5zw}{0zw}
+拡散項に由来する安定条件による時間積分幅の制限を緩和するため，陰解法を導入する．
+
+\paragraph{Navier-Stokes equations}
+\begin{equation}
+u_i^{\,*} \,=\, u_i^{\,n} + \Delta t \left[ - \frac{1}{2} \left(  3 C_i^{\,n} - C_i^{\,n-1} \right)
+               + \frac{1}{2} \left( D_i^{\,n} + D_i^{\,*}  \right) + \frac{1}{2} \left( 3f_i^{\,n} - f_i^{\,n-1} \right) \, \right]
+\label{eq:pseudo vector ABCN}
+\end{equation}
+
+\noindent 実装は，
+
+\begin{equation}
+\left.
+\begin{array}{l}
+\vspace{2mm}
+\displaystyle{ \bar{u}_i \,=\, u_i^{\,n} \,+\, \Delta t \left[ - \frac{1}{2} \left(  3 C_i^{\,n} - C_i^{\,n-1} \right)
++ \frac{1}{2} D_i^{\,n} + \frac{1}{2} \left( 3f_i^{\,n} - f_i^{\,n-1} \right) \, \right] } \\
+\vspace{2mm}
+\displaystyle{ u_i^* \,=\, \bar{u}_i \,+\, \frac{\Delta t}{2} \bar{D} }\\
+\vspace{2mm}
+\displaystyle{ u_{\,i,j,k}^* \,=\, \bar{u}_{\,i,j,k} \,+\, \frac{\Delta t}{2\,Re\,h^2} \left( \sum \limits_l {u_{\,l}^*} - 6\,u_{\,i,j,k}^* \right) } \\
+\vspace{2mm}
+\displaystyle{ \left( 1 + \frac{3\,\Delta t}{Re\,h^2} \right) u_{\,i,j,k}^* \,=\, \bar{u}_{\,i,j,k} + \frac{\Delta t}{2\,Re\,h^2} \sum \limits_l {u_{\,l}^*} } \\
+\end{array} \quad \right\}
+\label{eq:CN iteration ABCN}
+\end{equation}
+
+\paragraph{Thermal transport equation}
+\begin{equation}
+\theta^{\,n+1} \,=\, \theta^{\,n} + \Delta t \left[ - \frac{1}{2} \left( 3 Cs_i^{\,n} - Cs_i^{\,n-1} \right) + 
+\frac{1}{2} \left( Ds_i^{\,n} + Ds_i^{\,n+1}\right) + \frac{1}{2} \left( 3\Theta^{\,n} -\Theta^{\,n-1} \right) \, \right]
+\label{eq:thermal transport ABCN}
+\end{equation}
+
+\noindent 実装は，
+
+\begin{equation}
+\left.
+\begin{array}{l}
+\vspace{2mm}
+\displaystyle{ \bar{\theta} \,=\, \theta^{\,n} + \Delta t \left[ - \frac{1}{2} \left( 3 Cs_i^{\,n} - Cs_i^{\,n-1} \right) + 
+\frac{1}{2} Ds_i^{\,n} + \frac{1}{2} \left( 3\Theta^{\,n} -\Theta^{\,n-1} \right) \, \right] } \\
+\vspace{2mm}
+\displaystyle{ \theta^{\,n+1} \,=\, \bar{\theta} + \frac{\Delta t}{2} Ds_i^{\,n+1} } \\
+\vspace{2mm}
+\displaystyle{ \theta_{\,i,j,k}^{\,n+1} \,=\, \bar{\theta}_{\,i,j,k} + \frac{\Delta t}{2\,Pe\,h^2} \left( \sum \limits_l {\theta_{\,l}^{\,n+1}} - 6\,\theta_{\,i,j,k}^{\,n+1} \right) } \\
+\vspace{2mm}
+\displaystyle{ \left( 1 + \frac{3\,\Delta t}{Pe\,h^2} \right) \theta_{\,i,j,k}^{\,n+1} \,=\, \bar{\theta}_{\,i,j,k} + \frac{\Delta t}{2\,Pe\,h^2} \sum \limits_l {\theta_{\,l}^{\,n+1}} } \\
+\end{array} \quad \right\}
+\label{eq:CN iteration ABCN thermal}
+\end{equation}
+
+\end{indentation}
+
+%
+\subsubsection{Runge-Kutta + Crank-Nicolson}
+\begin{indentation}{5zw}{0zw}
+二次精度の時間進行法，対流項には2段階Runge-Kutta法\index{Runge-Kutta}，拡散項にはCrank-Nicolson法\index{Crank-Nicolson}を用いる．
+
+\paragraph{1st step : Predictor} $\mbox{}$\\
+積分幅を$\Delta t/2$にとりEuler陽解法で時間積分し，n+1/2タイムレベルでの予測値を得る．
+
+\subparagraph{Navier-Stokes equations}
+
+\begin{equation}
+u_i^{\,*,\,n+1/2} \,=\, u_i^{\,n} + \frac{\Delta t}{2} \left( D_i^{\,n} - C_i^{\,n} + f_i^{\,n} \right) \vspace{2mm}
+\label{eq:pseudo vector RKCN predictor}
+\end{equation}
+
+$n+1/2\,$タイムレベルの圧力Poisson式
+\begin{equation}
+\frac{\partial}{\partial x_i} {\frac{\partial p}{\partial x_i}}^{n+1/2}
+\,=\,
+\frac{2}{\Delta t} {\frac{\partial u_i}{\partial x_i}}^{*,\,n+1/2} \vspace{2mm}
+\label{eq:Poisson RKCN predictor}
+\end{equation}
+
+$n+1/2\,$タイムレベルの圧力ポテンシャルによる速度の修正式
+\begin{equation}
+u_i^{\,n+1/2} \,=\, u_i^{\,*,\,n+1/2} - \frac{\Delta t}{2} {\frac{\partial p}{\partial x_i}}^{n+1/2} \vspace{2mm}
+\label{eq:1st Pressure correction RKCN predictor}
+\end{equation}
+
+\subparagraph{Thermal transport equation}
+
+\begin{equation}
+\theta^{\,n+1/2} \,=\, \theta^{\,n} + \frac{\Delta t}{2} \left( Ds_i^{\,n} - Cs_i^{\,n} + \Theta^{\,n} \right)
+\label{eq:thermal transport RKCN predictor}
+\end{equation}
+
+
+\paragraph{2nd step : Corrector}
+\subparagraph{Navier-Stokes equations} $\mbox{}$\\
+$u^{\,*,\,n+1}$について反復的に解く．
+\begin{equation}
+u_i^{\,*,\,n+1} \,=\, u_i^{\,n} + \Delta t \left\{ \frac{1}{2} \left( D_i^{\,n} + D_i^{\,*,\,n+1} \right) - C_i^{\,n+1/2} + f_i^{\,n+1/2} \right\} \vspace{2mm}
+\label{eq:pseudo vector RKCN corrector}
+\end{equation}
+
+
+\begin{equation}
+\frac{\partial}{\partial x_i} {\frac{\partial p}{\partial x_i}}^{n+1}
+\,=\,
+\frac{1}{\Delta t} {\frac{\partial u_i}{\partial x_i}}^{*,\,n+1}
+\label{eq:Poisson RKCN corrector}
+\end{equation}
+
+\begin{equation}
+u_i^{\,n+1} \,=\, u_i^{\,*,\,n+1} - \Delta t {\frac{\partial p}{\partial x_i}}^{n+1} \vspace{1mm}
+\label{eq:Pressure correction RKCN corrector}
+\end{equation}
+
+
+\subparagraph{Thermal transport equation} $\mbox{}$\\
+拡散項にCrank-Nicolson法\index{Crank-Nicolson}を用いると，
+
+\begin{equation}
+\theta^{\,n+1} \,=\, \theta^{\,n} + \Delta t \left\{ \frac{1}{2} \left( Ds_i^{\,n} + Ds_i^{\,n+1} \right) - Cs_i^{\,n+1/2} + \Theta^{\,n+1/2} \right\}
+\label{eq:thermal transport RKCN corrector2}
+\end{equation}
+
+\noindent 一方，拡散項にもRunge-Kuttaスキームを用いる場合には，次のようになる．
+
+\begin{equation}
+\theta^{\,n+1} \,=\, \theta^{\,n} + \Delta t \left( Ds_i^{\,n+1/2} - Cs_i^{\,n+1/2} + \Theta^{\,n+1/2} \right)
+\label{eq:thermal transport RKCN corrector1}
+\end{equation}
+
+\end{indentation}
+
+\end{comment}
