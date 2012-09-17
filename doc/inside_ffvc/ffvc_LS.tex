@@ -1,0 +1,279 @@
+\graphicspath{{./fig_EBCS/}}
+%
+\section{圧力のPoisson方程式}
+
+圧力のPoisson方程式は \textbf{式(\ref{eq:Poisson_from_FS})}を再掲すると，
+
+\begin{equation}
+\nabla \left( \nabla p^{\,n+1} \right) \,=\, \frac{1}{\Delta t} div\, (u^{\,*}) \equiv \psi
+\label{eq:Poisson_from_FS2}
+\end{equation}
+
+ノイマン条件とディリクレ条件のフラグを導入し，\textbf{式(\ref{eq:ebcs_poisson3})}のように書ける．
+これを対角項が１となるようにスケーリングして，連立一次方程式$A\underline{x} = \underline{b}$を得る．
+
+\begin{equation}
+\underbrace{ p  -  \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A \underline{x} }
+\,=\,
+ \displaystyle { 
+\underbrace{ 
+\frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
+\{ 
+- h^2 \,\psi \,-\,  \psi^{BC}
+\}
+} \limits_{ \underline{b} }
+}
+\label{eq:ebcs_poisson_4}
+\end{equation}
+
+
+反復回数を$k$としてSOR法系の反復式を構成すると，
+
+\begin{equation}
+\left.
+\begin{array}{lll}
+\vspace{2mm}
+\tilde{p} & = & \displaystyle {  \underline{b} \, + \,
+ \frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
+ \,=\,
+\frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} 
+\left \{ \,
+\sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
+- h^2 \,\psi \,-\,  \psi^{BC}
+\, \right \} } \\
+\vspace{2mm}
+\Delta p & = & \tilde{p} \,-\, p^{\,k} \\
+\vspace{5mm}
+p^{\,k+1} & = & p^{\,k} \,+\, \omega\, \,\Delta p \\
+
+\end{array} \qquad \right \}
+\label{eq:poisson_iteration}
+\end{equation}
+
+
+%
+\section{GMRES}
+
+GMRES(Generalized Minimum Residual)は，大型疎行列を係数行列にもつ連立一次方程式$A x = b$の解法アルゴリズムで，Krylov部分空間法に分類される．
+
+
+m次のKrylov部分空間は
+\begin{equation}
+\displaystyle{ K_m \,=\, span \{ v^{(1)},\, Av^{(1)},\, A^2 v^{(1)},\, ...,\, A^{m-1} v^{(1)} \} }
+\label{eq:subspace}
+\end{equation}
+
+\noindent で，$v^{(1)}=r^{(0)}/\|r^{(0)}\|$である\footnote{上付きの$(i)$を反復，下付きの$i$を要素として表記する．}．
+GMRES法は，Krylov部分空間の直交基底ベクトル列をArnoldi-modified Gram-Schmidt法により構築し，
+$x^{(0)}+K_m$の形式の全ベクトルの残差のユークリッドノルムを最小化する．
+各反復毎に残差ノルムが最小になるので，残差ノルムは単調に減少する特徴をもつ．
+
+GMRESアルゴリズムを適用するためには，係数行列$A$は正則である必要があるが，非対称($A \neq A^T$)でもよい．
+Arnoldi過程に基づく長い漸化式を用いるので，GMRES法は反復回数の増加に伴い，1反復あたりの演算量と記憶容量が増大する問題点がある．このため，実用上「リスタート」が併用される．リスタートがない場合，GMRES法はnステップ（$n \times n$の行列サイズの場合）で収束が保証されるが，多大な記憶領域と演算量となるので，リスタートは必須である．
+
+\vspace{3mm}
+GMRESのアルゴリズムはmodified Gram-Schmidt直交化を用いるので，直交基底は次のようになる\cite{bahi:07}．
+
+\begin{algorithm}
+\caption{Orthogonal basis function. Count i means a number of iteration.}
+\label{algo:GS-ortho}
+\begin{algorithmic}
+
+\State $w^{(i)} \,\gets \, A v^{(i)}$
+\For {$k=1$ to $i$}
+\State $w^{(i)} \,\gets \, w^{(i)} - (w^{(i)}, v^{(k)})\, v^{(k)}$
+\EndFor
+\State $v^{(i+1)} \,\gets \, w^{(i)} \,/\, \|w^{(i)}\|_2$
+
+\end{algorithmic}
+\end{algorithm}
+
+
+GMRESアルゴリズムは，残差ノルムを反復なしに計算することができる．
+十分に正確になるまで一連の残差ノルムを計算し，それから時間のかかる反復を行う効率的な計算ができる．
+$y_k$は残差ノルムを最小化するベクトルに選ぶと，反復過程は次式になる．
+
+\begin{equation}
+x^{(i)} \,=\, x^{(0)} \,+\, y_1 v^{(1)} \,+\, y_2 v^{(2)} \,+\, \dots \,+\, y_i v^{(i)}
+\label{eq:GMRES iteration}
+\end{equation}
+
+
+アルゴリズム\ref{algo:GS-ortho}に示すように，GMRES法は反復回数の増加に従い，ベクトル$w^{(i)}$の記憶容量が増加し，演算量も線形に増える．この問題点を解消するためにリスタートが用いられる．リスタートではリスタート周期(Frequency of restart)としてm回の反復数を選び，反復をm回で打ち切る．次のm回の反復の初期値として前回の中間値を用いる．
+mの選択は一意ではなく，少なすぎると収束が遅くなり，多すぎると記憶容量と演算量が過大になる．
+
+\vspace{3mm}
+GMRESのアルゴリズムは，次のようになる．
+\begin{enumerate}
+\item QR分解を用いたHessenberg行列$H$と直交基底$V$を与えるArnoldi過程を計算する．
+\item 残差の最小化問題をHessenberg行列を用いて解く際にQR分解を行うが，それにはGivens回転を計算する．$H$の前の要素にGivens回転を適用し，次の新しい回転を計算，最後に最小化問題の右辺ベクトル$Z$に適用する．
+\item 必要であれば，解ベクトル$X$を更新するため，$H$と$Z$を用いて最小化問題を解く．
+\end{enumerate}
+
+
+
+FGMRES(Flexible GMRES)法は，収束性を高めるために前処理を用いる方法である．前処理にはSORやGMRES自身など様々な反復法が利用できる．
+
+
+
+%
+\begin{algorithm}
+\caption{FGMRES algorithm}
+\label{algo:fgmres}
+
+\begin{algorithmic}
+\State m             : Number of iterations between each restart (Frequency of restart)
+\State size          : Size of a matrix
+\State Iter\_Max     : Upper limit of GMRES iteration
+\State x(size)       : Solution vector
+\State b(size)       : right hand side vector
+\State w(size)       : Intermediate vector used in the Arnoldi's process to compute H
+\State r(size)       : Residual vector r = b - Ax
+\State rm(m+1)       : Residual vector of the minimization problem
+\State c(m+1)        : Cosine for Givens rotations
+\State s(m+1)        : Sine for Givens rotations
+\State h(m+1, m+1)   : Matrix for the Hessenberg decomposition
+\State v(size, m+1)  : Orthogonal basis for the Krylov subspace
+\State z(size, m+1)  : 
+\State K             : Approximately inverse matrix of A
+\State $\epsilon$    : Convergence criteria
+\State $\varepsilon$ : Convergence criteria
+\State 
+
+\State Initialize: $w,c,s,r,h,v,z \gets 0$
+\State $x \gets x_0$
+\State
+
+% outer loop
+\For {$j=1$ to Iter\_Max}
+
+\State $r \gets b - Ax$
+\State $\beta \gets \|r\|$
+
+% 収束のチェック
+\If {($\beta < \epsilon \|r\|$)}
+\State \bf{return}
+\EndIf
+
+% 残差ベクトル列
+\State $rm \gets \{\beta,\,0,\,...,\,0\}^T$
+\State $v^{(1)} \gets r / \beta$
+\State
+
+% inner loop
+\For {$i=1$ to $m$}
+\State $z^{(i)} \gets K^{-1}_{i,\,j}\, v^{(i)} \quad or \quad z^{(i)} \gets v^{(i)}\,(without\, preconditioning)$
+\State $w \gets A z^{(i)}$
+
+\For {$k=1$ to $i$}
+\State $h_{k,\,i} \gets (w,\,v^{(k)})$
+\State $w \gets w - h_{k,\,i}\,v^{(k)}$
+\EndFor
+
+\State $h_{i+1,\,i} \gets \|w\|$
+\State
+
+\If {($h_{i+1,\,i} < \epsilon$)}
+\State Warning: pseudo-converge
+\State $n \gets i-1$
+\State goto jump\_1
+\EndIf
+\State
+
+\State $v^{(i+1)} \gets w / h_{i+1,\,i}$
+
+\algstore{fgmres}
+\end{algorithmic}
+
+\end{algorithm}
+
+%
+\clearpage
+
+%
+\begin{algorithm}
+\caption{FGMRES algorithm (continued)}
+
+\begin{algorithmic}
+
+\algrestore{fgmres}
+\State 
+
+\For {$k=2$ to $i$}
+\State $ht \gets h_{k-1,\,i}$
+\State $h_{k-1,\,i}\, \gets \,  c_{k-1} ht \,+\, s_{k-1} h_{k,\,i}$
+\State $h_{k,\,i}\,   \gets \, -s_{k-1} ht \,+\, c_{k-1} h_{k,\,i}$
+\EndFor
+
+\State
+\State $\delta \gets \sqrt{h_{i,\,i}^2 + h_{i+1,\,i}^2}$
+
+\State
+\If {($\delta < \epsilon$)}
+\State $n \gets i-1$
+\State goto jump\_1
+\EndIf
+\State
+
+\State $c_i \gets h_{i,\,i} / \delta$
+\State $s_i \gets h_{i+1,\,i} / \delta$
+\State $h_{i,\,i} \gets c_i h_{i,\,i} + s_i h_{i+1,\,i}$
+\State
+
+\State $rm_{i+1} \gets -s_i r_i$
+\State $rm_{i} \gets c_i r_i$
+\State $\rho \gets |rm_{i+1}|$
+\State
+
+\If {($\rho < \varepsilon \|b\|$)}
+\State $n \gets i$
+\State goto jump\_1
+\EndIf
+
+\EndFor
+
+\State
+\State $n \gets m$
+
+\State
+\State \bf{jump\_1:}
+\State
+
+
+\For {$j=n$ downto 2}
+\State $rm_j \gets rm_j / h_{j,\,j}$
+
+\For {$k=1$ to $j-1$}
+\State $rm_k \gets rm_k - rm_j \, h_{k,\,j}$
+\EndFor
+
+\EndFor
+
+\State
+\State $rm_1 \gets rm_1 / h_{1,\,1}$
+\State
+
+\For {$i=1$ to $n$}
+\State $x \gets x + rm_i \, z^{(i)}$
+\EndFor
+
+\EndFor
+
+\end{algorithmic}
+
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
