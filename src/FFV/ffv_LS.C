@@ -635,6 +635,302 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
 }
 
+// #################################################################
+// Flexible gmres(m)
+double FFV::Fgmres(ItrCtl* IC, double res_rhs)
+{
+  const double fct2  = 6.0;
+  const double eps_1 = 1.0e-30;
+  const double eps_2 = IC->get_eps();
+  
+  // 残差収束チェック
+  if ( res_rhs < eps_1 ) return res_rhs;
+  
+  
+  // >>> Gmres section
+  TIMING_start(tm_gmres_sor_sct);
+  
+  double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
+  double r4;xs
+  double flop=0.0;
+  
+  const int Iteration_Max = IC->get_ItrMax();
+  int m_max = FREQ_OF_RESTART;
+  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  
+  int isfin  = 0;
+  
+  const int oki  = 2;
+  const int step = 3;
+  int nrm  = 0;
+  
+  if ( C.Mode.Precision == sizeof(float) )
+  {
+    t_eps = 0.995 * eps_2 * eps_2;
+  }
+  else
+  {
+    t_eps = 0.999 * eps_2 * eps_2;
+  }
+  
+  const int Nmax = m_max+1; // 配列確保用，ゼロはダミー
+  
+  double *rgm = new double[Nmax * Nmax];     // (Nmax, Nmax)
+  double *hgm = new double[(Nmax+1) * Nmax]; // (Nmax+1, Nmax)
+  double *cgm = new double[Nmax];
+  double *sgm = new double[Nmax];
+  double *bgm = new double[Nmax];
+  double *ygm = new double[Nmax];
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int column = 1;
+  
+  t_eps = res_rhs * t_eps;
+  
+  res = SOR_2_SMA(IC);
+  
+  r4 = sqrt(res/res_rhs);
+  
+  
+  if (res < t_eps)
+  {
+    //Hostonly_ printf("Final : %e\n", r4);
+    isfin = 1;
+    goto jump_4;
+  }
+  
+  
+  if ( res > (fct2*t_eps) ) t_eps = res/fct2;
+  
+  eps_abs = 0.15 * t_eps;
+  
+  
+  for (int i_iter=1; i_iter<=Iteration_Max; i_iter++) {
+    
+    // テスト的にはずす >> 収束性良い？
+    //res = SOR_2_SMA(IC);
+    //if (res < t_eps) goto jump_3;
+    
+    TIMING_start(tm_gmres_mvprod);
+    flop = 0.0;
+    mv_prod_(d_yt, size, &guide, d_p, d_bcp, &flop);
+    TIMING_stop(tm_gmres_mvprod, flop);
+    
+    
+    TIMING_start(tm_gmres_res_sample);
+    flop = 0.0;
+    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_yt, d_bcp, &flop);
+    TIMING_stop(tm_gmres_res_sample, flop);
+    
+    
+    TIMING_start(tm_gmres_comm);
+    if ( numProc > 1 )
+    {
+      double tmp = res_abs;
+      if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
+    
+    
+    beta = sqrt(res_abs);
+    
+    if (beta < eps_1) goto jump_2;
+    
+    
+    beta_1 = 1.0/beta;
+    
+    multiply_(d_vm, size, &guide, &m_max, &column, &beta_1, d_rest, &flop);
+    
+    
+    bgm[1] = beta;
+    
+    for (int i=2; i<=m_max; i++) {
+      bgm[i] = 0.0;
+    }
+    
+    
+    
+    for (int im=1; im<=m_max; im++) {
+      
+      copy_1_(d_rest, size, &guide, &m_max, d_vm, &im);
+      
+      
+#pragma omp parallel for firstprivate(s_length)
+      for (int i=0; i<s_length; i++) {
+        d_xt[i] = 0.0;
+      }
+      
+      
+      // Decide the number of iteration for inner-iteration
+      int n_inner = 3; //((im / oki) + 1) * step;
+      
+      
+      // Inner-iteration
+      for (int i_inner=1; i_inner<=n_inner; i_inner++) {
+        
+        res = SOR_2_SMA(IC);
+      }
+      
+      copy_2_(d_zm, size, &guide, &m_max, d_xt, &im);
+      
+      TIMING_start(tm_gmres_mvprod);
+      flop = 0.0;
+      mv_prod_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      TIMING_stop(tm_gmres_mvprod, flop);
+      
+      
+      for (int km=1; km<=im; km++) {
+        al = 0.0;
+        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_yt, &km, &flop);
+        
+        
+        TIMING_start(tm_gmres_comm);
+        if ( numProc > 1 )
+        {
+          double tmp = al;
+          if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        }
+        TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
+        
+        
+        hgm[_IDX2D(km, im, Nmax)] = al;
+        
+        double r_al = -al;
+        ml_add_3_(d_yt, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
+      }
+      
+      
+      al =0.0;
+      ml_add_2_(&al, size, &guide, d_yt, &flop);
+      
+      
+      TIMING_start(tm_gmres_comm);
+      if ( numProc > 1 )
+      {
+        double tmp = al;
+        if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
+      TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
+      
+      
+      TIMING_start(tm_gmres_others);
+      flop = 0.0;
+      
+      hgm[_IDX2D(im+1, im, Nmax)] = sqrt(al);
+      flop += 20.0;
+      
+      if ( hgm[_IDX2D(im+1, im, Nmax)] < eps_1 )
+      {
+        nrm = im-1;
+        TIMING_stop(tm_gmres_others, flop);
+        goto jump_1;
+      }
+      
+      if (im < m_max)
+      {
+        int idx = im + 1;
+        al = 1.0 / hgm[_IDX2D(idx, im, Nmax)];
+        flop += 13.0;
+        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_yt, &flop);
+      }
+      
+      rgm[_IDX2D(1, im, Nmax)] = hgm[_IDX2D(1, im, Nmax)];
+      
+      for (int km=2; km<=im; km++) {
+        rgm[_IDX2D(km  , im, Nmax)] = cgm[km-1]*hgm[_IDX2D(km, im, Nmax)] - sgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
+        rgm[_IDX2D(km-1, im, Nmax)] = sgm[km-1]*hgm[_IDX2D(km, im, Nmax)] + cgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
+      }
+      flop += (double)(im-2+1)*6.0;
+      
+      al = sqrt(rgm[_IDX2D(im, im, Nmax)]*rgm[_IDX2D(im, im, Nmax)] + hgm[_IDX2D(im+1, im, Nmax)]*hgm[_IDX2D(im+1, im, Nmax)]);
+      flop += 23;
+      
+      if ( al < eps_1 )
+      {
+        nrm = im - 1;
+        TIMING_stop(tm_gmres_others, flop);
+        goto jump_1;
+      }
+      
+      cgm[im]    = rgm[_IDX2D(im,  im, Nmax)] / al;
+      sgm[im]    = hgm[_IDX2D(im+1,im, Nmax)] / al;
+      
+      rgm[_IDX2D(im, im, Nmax)] = cgm[im] * rgm[_IDX2D(im, im, Nmax)] + sgm[im] * hgm[_IDX2D(im+1, im, Nmax)];
+      
+      bgm[im+1]  = - sgm[im]*bgm[im];
+      bgm[im]    =   cgm[im]*bgm[im];
+      
+      al = bgm[im+1] * bgm[im+1];
+      
+      flop += 2.0*13.0 + 4.0;
+      
+      if (al < eps_abs)
+      {
+        nrm = im;
+        TIMING_stop(tm_gmres_others, flop);
+        goto jump_1;
+      }
+      
+      TIMING_stop(tm_gmres_others, flop);
+      
+    } // loop; im
+    
+    nrm = m_max;
+    
+  jump_1:
+    
+    ygm[nrm] = bgm[nrm] / rgm[_IDX2D(nrm, nrm, Nmax)];
+    
+    for (int im=nrm-1; im>=1; im--) {
+      al = bgm[im];
+      
+      for (int jm=im+1; jm<=nrm; jm++) {
+        al -= rgm[_IDX2D(im, jm, Nmax)] * ygm[jm];
+      }
+      
+      ygm[im] = al / rgm[_IDX2D(im, im, Nmax)];
+    }
+    
+    for (int im=1; im<=nrm; im++) {
+      al = ygm[im];
+      
+      ml_add_4_(d_p, size, &guide, &m_max, &al, d_zm, &im, &flop);
+    }
+    
+  } // loop; i_iter
+  
+jump_2:
+  
+  res = SOR_2_SMA(IC);
+  
+  
+jump_3:
+  
+  
+jump_4:
+  
+  if ( (isfin == 0) && (res < (res_rhs * eps_2 * eps_2)) )
+  {
+    res = 100.0 * res_rhs * eps_2 * eps_2;
+  }
+  
+  if ( rgm ) delete [] rgm;
+  if ( hgm ) delete [] hgm;
+  if ( cgm ) delete [] cgm;
+  if ( sgm ) delete [] sgm;
+  if ( bgm ) delete [] bgm;
+  if ( ygm ) delete [] ygm;
+  
+  TIMING_stop(tm_gmres_sor_sct, 0.0);
+  // <<< Poisson Source section
+  
+  return res;
+}
+
 
 // #################################################################
 // GMres SOR
@@ -656,7 +952,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
   double flop=0.0;
   
   const int Iteration_Max = IC->get_ItrMax();
-  int m_max = RESTART_PERIOD;
+  int m_max = FREQ_OF_RESTART;
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
   int isfin  = 0;
