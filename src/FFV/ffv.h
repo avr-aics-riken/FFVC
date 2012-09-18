@@ -588,6 +588,13 @@ private:
   
   
   /**
+   * @brief FGMRES
+   * @param [in]     IC      ItrCtlクラス
+   * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
+   */
+  double Fgmres(ItrCtl* IC, double res_rhs);
+  
+  /**
    * @brief GMRES-SOR
    * @param [in]     IC      ItrCtlクラス
    * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム

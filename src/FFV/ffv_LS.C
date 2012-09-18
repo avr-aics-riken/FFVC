@@ -651,7 +651,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
   TIMING_start(tm_gmres_sor_sct);
   
   double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
-  double r4;xs
+  double r4;
   double flop=0.0;
   
   const int Iteration_Max = IC->get_ItrMax();
