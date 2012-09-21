@@ -14,7 +14,7 @@
 !<
 
 !> ********************************************************************
-!! @brief Matrix x Vector product
+!! @brief Matrix Vector product
 !! @param [out] ax   Ax
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
@@ -22,7 +22,7 @@
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-  subroutine mv_prod (ax, sz, g, p, bp, flop)
+  subroutine MatVec (ax, sz, g, p, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -79,7 +79,7 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine mv_prod
+  end subroutine MatVec
 
 
 

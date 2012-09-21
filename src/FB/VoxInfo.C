@@ -1461,7 +1461,7 @@ void VoxInfo::encPbit(int* bx)
   for (m=0; m<nx; m++) {
     s = bx[m];
     if ( ((s>>BC_DIAG) & 0x7) == 0 ) { // 0x7 = 3 bit
-      bx[m] = s | (0x1<<BC_DIAG);
+      bx[m] = s | (0x6<<BC_DIAG);
     }
   }
 }

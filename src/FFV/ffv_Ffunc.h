@@ -150,7 +150,7 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_poisson2.f90
-  void mv_prod_  (REAL_TYPE* ax,   int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
+  void MatVec_   (REAL_TYPE* ax,   int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
   void multiply_ (REAL_TYPE* dst,  int* sz, int* g, int* nc, int* l, double* s, REAL_TYPE* src, double* flop);
   void res_smpl_ (REAL_TYPE* rest, int* sz, int* g, double* res_a, REAL_TYPE* div, REAL_TYPE* ax, int* bp, double* flop);
   void copy_1_   (REAL_TYPE* dst,  int* sz, int* g, int* nc, REAL_TYPE* src, int* im);

@@ -169,7 +169,7 @@ void FFV::allocArray_Krylov(double &total)
   if ( !(d_xt = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  if ( !(d_yt = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_wg = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
   if ( !(d_rest = Alloc::Real_S3D(size, guide)) ) Exit(0);

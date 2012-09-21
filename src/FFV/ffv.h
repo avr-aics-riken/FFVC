@@ -179,10 +179,10 @@ private:
   
   // GMRES
   REAL_TYPE * d_xt;
-  REAL_TYPE * d_yt;
+  REAL_TYPE * d_wg;   ///< テンポラリの配列 [size] 
   REAL_TYPE * d_rest;
-  REAL_TYPE * d_vm;
-  REAL_TYPE * d_zm;
+  REAL_TYPE * d_vm;   ///< Kryolov subspaceの直交基底 [size*FREQ_OF_RESTART]
+  REAL_TYPE * d_zm;   ///< Right-hand side vector for the residual minimization problem [size*FREQ_OF_RESTART]
 #define FREQ_OF_RESTART 15 // リスタート周期
   
   

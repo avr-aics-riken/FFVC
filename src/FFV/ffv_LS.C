@@ -639,7 +639,6 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
 // Flexible gmres(m)
 double FFV::Fgmres(ItrCtl* IC, double res_rhs)
 {
-  const double fct2  = 6.0;
   const double eps_1 = 1.0e-30;
   const double eps_2 = IC->get_eps();
   
@@ -674,12 +673,11 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
   }
   
   const int Nmax = m_max+1; // 配列確保用，ゼロはダミー
-  
-  double *rgm = new double[Nmax * Nmax];     // (Nmax, Nmax)
-  double *hgm = new double[(Nmax+1) * Nmax]; // (Nmax+1, Nmax)
-  double *cgm = new double[Nmax];
-  double *sgm = new double[Nmax];
-  double *bgm = new double[Nmax];
+      
+  double *hg = new double[(Nmax+1) * Nmax]; // Hessnberg matrix
+  double *cs = new double[Nmax];            // Cosine for Givens rotations
+  double *sn = new double[Nmax];            // Sine   for Givens rotations
+  double *rm = new double[Nmax];            // residual vector for minimization problem
   double *ygm = new double[Nmax];
   
   int ix = size[0];
@@ -717,13 +715,13 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     
     TIMING_start(tm_gmres_mvprod);
     flop = 0.0;
-    mv_prod_(d_yt, size, &guide, d_p, d_bcp, &flop);
+    MatVec_(d_wg, size, &guide, d_p, d_bcp, &flop);
     TIMING_stop(tm_gmres_mvprod, flop);
     
     
     TIMING_start(tm_gmres_res_sample);
     flop = 0.0;
-    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_yt, d_bcp, &flop);
+    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_wg, d_bcp, &flop);
     TIMING_stop(tm_gmres_res_sample, flop);
     
     
@@ -746,10 +744,10 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     multiply_(d_vm, size, &guide, &m_max, &column, &beta_1, d_rest, &flop);
     
     
-    bgm[1] = beta;
+    rm[1] = beta;
     
     for (int i=2; i<=m_max; i++) {
-      bgm[i] = 0.0;
+      rm[i] = 0.0;
     }
     
     
@@ -779,13 +777,13 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       
       TIMING_start(tm_gmres_mvprod);
       flop = 0.0;
-      mv_prod_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      MatVec_(d_xt, size, &guide, d_p, d_bcp, &flop);
       TIMING_stop(tm_gmres_mvprod, flop);
       
       
       for (int km=1; km<=im; km++) {
         al = 0.0;
-        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_yt, &km, &flop);
+        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_wg, &km, &flop);
         
         
         TIMING_start(tm_gmres_comm);
@@ -797,15 +795,15 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
         TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
         
         
-        hgm[_IDX2D(km, im, Nmax)] = al;
+        hg[_IDX2D(km, im, Nmax)] = al;
         
         double r_al = -al;
-        ml_add_3_(d_yt, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
+        ml_add_3_(d_wg, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
       }
       
       
       al =0.0;
-      ml_add_2_(&al, size, &guide, d_yt, &flop);
+      ml_add_2_(&al, size, &guide, d_wg, &flop);
       
       
       TIMING_start(tm_gmres_comm);
@@ -820,10 +818,10 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       TIMING_start(tm_gmres_others);
       flop = 0.0;
       
-      hgm[_IDX2D(im+1, im, Nmax)] = sqrt(al);
+      hg[_IDX2D(im+1, im, Nmax)] = sqrt(al);
       flop += 20.0;
       
-      if ( hgm[_IDX2D(im+1, im, Nmax)] < eps_1 )
+      if ( hg[_IDX2D(im+1, im, Nmax)] < eps_1 )
       {
         nrm = im-1;
         TIMING_stop(tm_gmres_others, flop);
@@ -833,20 +831,20 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       if (im < m_max)
       {
         int idx = im + 1;
-        al = 1.0 / hgm[_IDX2D(idx, im, Nmax)];
+        al = 1.0 / hg[_IDX2D(idx, im, Nmax)];
         flop += 13.0;
-        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_yt, &flop);
+        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_wg, &flop);
       }
       
-      rgm[_IDX2D(1, im, Nmax)] = hgm[_IDX2D(1, im, Nmax)];
+      rm[_IDX2D(1, im, Nmax)] = hg[_IDX2D(1, im, Nmax)];
       
       for (int km=2; km<=im; km++) {
-        rgm[_IDX2D(km  , im, Nmax)] = cgm[km-1]*hgm[_IDX2D(km, im, Nmax)] - sgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
-        rgm[_IDX2D(km-1, im, Nmax)] = sgm[km-1]*hgm[_IDX2D(km, im, Nmax)] + cgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
+        rm[_IDX2D(km  , im, Nmax)] = cs[km-1]*hg[_IDX2D(km, im, Nmax)] - sn[km-1]*rm[_IDX2D(km-1, im, Nmax)];
+        rm[_IDX2D(km-1, im, Nmax)] = sn[km-1]*hg[_IDX2D(km, im, Nmax)] + cs[km-1]*rm[_IDX2D(km-1, im, Nmax)];
       }
       flop += (double)(im-2+1)*6.0;
       
-      al = sqrt(rgm[_IDX2D(im, im, Nmax)]*rgm[_IDX2D(im, im, Nmax)] + hgm[_IDX2D(im+1, im, Nmax)]*hgm[_IDX2D(im+1, im, Nmax)]);
+      al = sqrt(rm[_IDX2D(im, im, Nmax)]*rm[_IDX2D(im, im, Nmax)] + hg[_IDX2D(im+1, im, Nmax)]*hg[_IDX2D(im+1, im, Nmax)]);
       flop += 23;
       
       if ( al < eps_1 )
@@ -856,15 +854,15 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
         goto jump_1;
       }
       
-      cgm[im]    = rgm[_IDX2D(im,  im, Nmax)] / al;
-      sgm[im]    = hgm[_IDX2D(im+1,im, Nmax)] / al;
+      cs[im]    = rm[_IDX2D(im,  im, Nmax)] / al;
+      sn[im]    = hg[_IDX2D(im+1,im, Nmax)] / al;
       
-      rgm[_IDX2D(im, im, Nmax)] = cgm[im] * rgm[_IDX2D(im, im, Nmax)] + sgm[im] * hgm[_IDX2D(im+1, im, Nmax)];
+      rm[_IDX2D(im, im, Nmax)] = cs[im] * rm[_IDX2D(im, im, Nmax)] + sn[im] * hg[_IDX2D(im+1, im, Nmax)];
       
-      bgm[im+1]  = - sgm[im]*bgm[im];
-      bgm[im]    =   cgm[im]*bgm[im];
+      rm[im+1]  = - sn[im]*rm[im];
+      rm[im]    =   cs[im]*rm[im];
       
-      al = bgm[im+1] * bgm[im+1];
+      al = bgm[im+1] * rm[im+1];
       
       flop += 2.0*13.0 + 4.0;
       
@@ -883,16 +881,16 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     
   jump_1:
     
-    ygm[nrm] = bgm[nrm] / rgm[_IDX2D(nrm, nrm, Nmax)];
+    ygm[nrm] = bgm[nrm] / rm[_IDX2D(nrm, nrm, Nmax)];
     
     for (int im=nrm-1; im>=1; im--) {
       al = bgm[im];
       
       for (int jm=im+1; jm<=nrm; jm++) {
-        al -= rgm[_IDX2D(im, jm, Nmax)] * ygm[jm];
+        al -= rm[_IDX2D(im, jm, Nmax)] * ygm[jm];
       }
       
-      ygm[im] = al / rgm[_IDX2D(im, im, Nmax)];
+      ygm[im] = al / rm[_IDX2D(im, im, Nmax)];
     }
     
     for (int im=1; im<=nrm; im++) {
@@ -918,10 +916,10 @@ jump_4:
     res = 100.0 * res_rhs * eps_2 * eps_2;
   }
   
-  if ( rgm ) delete [] rgm;
-  if ( hgm ) delete [] hgm;
-  if ( cgm ) delete [] cgm;
-  if ( sgm ) delete [] sgm;
+  if ( rm ) delete [] rm;
+  if ( hg ) delete [] hg;
+  if ( cs ) delete [] cs;
+  if ( sn ) delete [] sn;
   if ( bgm ) delete [] bgm;
   if ( ygm ) delete [] ygm;
   
@@ -972,10 +970,10 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
 
   const int Nmax = m_max+1; // 配列確保用，ゼロはダミー
   
-  double *rgm = new double[Nmax * Nmax];     // (Nmax, Nmax)
-  double *hgm = new double[(Nmax+1) * Nmax]; // (Nmax+1, Nmax)
-  double *cgm = new double[Nmax];
-  double *sgm = new double[Nmax];
+  double *rm = new double[Nmax * Nmax];     // (Nmax, Nmax)
+  double *hg = new double[(Nmax+1) * Nmax]; // (Nmax+1, Nmax)
+  double *cs = new double[Nmax];
+  double *sn = new double[Nmax];
   double *bgm = new double[Nmax];
   double *ygm = new double[Nmax];
   
@@ -1014,13 +1012,13 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
 
     TIMING_start(tm_gmres_mvprod);
     flop = 0.0;
-    mv_prod_(d_yt, size, &guide, d_p, d_bcp, &flop);
+    MatVec_(d_wg, size, &guide, d_p, d_bcp, &flop);
     TIMING_stop(tm_gmres_mvprod, flop);
     
     
     TIMING_start(tm_gmres_res_sample);
     flop = 0.0;
-    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_yt, d_bcp, &flop);
+    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_wg, d_bcp, &flop);
     TIMING_stop(tm_gmres_res_sample, flop);
     
     
@@ -1076,13 +1074,13 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
       
       TIMING_start(tm_gmres_mvprod);
       flop = 0.0;
-      mv_prod_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      MatVec_(d_xt, size, &guide, d_p, d_bcp, &flop);
       TIMING_stop(tm_gmres_mvprod, flop);
       
 
       for (int km=1; km<=im; km++) {
         al = 0.0;
-        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_yt, &km, &flop);
+        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_wg, &km, &flop);
         
         
         TIMING_start(tm_gmres_comm);
@@ -1094,15 +1092,15 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
         TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
         
         
-        hgm[_IDX2D(km, im, Nmax)] = al;
+        hg[_IDX2D(km, im, Nmax)] = al;
         
         double r_al = -al;
-        ml_add_3_(d_yt, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
+        ml_add_3_(d_wg, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
       }
 
       
       al =0.0;
-      ml_add_2_(&al, size, &guide, d_yt, &flop);
+      ml_add_2_(&al, size, &guide, d_wg, &flop);
       
       
       TIMING_start(tm_gmres_comm);
@@ -1117,10 +1115,10 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
       TIMING_start(tm_gmres_others);
       flop = 0.0;
       
-      hgm[_IDX2D(im+1, im, Nmax)] = sqrt(al);
+      hg[_IDX2D(im+1, im, Nmax)] = sqrt(al);
       flop += 20.0;
       
-      if ( hgm[_IDX2D(im+1, im, Nmax)] < eps_1 )
+      if ( hg[_IDX2D(im+1, im, Nmax)] < eps_1 )
       {
         nrm = im-1;
         TIMING_stop(tm_gmres_others, flop);
@@ -1130,20 +1128,20 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
       if (im < m_max)
       {
         int idx = im + 1;
-        al = 1.0 / hgm[_IDX2D(idx, im, Nmax)];
+        al = 1.0 / hg[_IDX2D(idx, im, Nmax)];
         flop += 13.0;
-        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_yt, &flop);
+        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_wg, &flop);
       }
 
-      rgm[_IDX2D(1, im, Nmax)] = hgm[_IDX2D(1, im, Nmax)];
+      rm[_IDX2D(1, im, Nmax)] = hg[_IDX2D(1, im, Nmax)];
       
       for (int km=2; km<=im; km++) {
-        rgm[_IDX2D(km  , im, Nmax)] = cgm[km-1]*hgm[_IDX2D(km, im, Nmax)] - sgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
-        rgm[_IDX2D(km-1, im, Nmax)] = sgm[km-1]*hgm[_IDX2D(km, im, Nmax)] + cgm[km-1]*rgm[_IDX2D(km-1, im, Nmax)];
+        rm[_IDX2D(km  , im, Nmax)] = cs[km-1]*hg[_IDX2D(km, im, Nmax)] - sn[km-1]*rm[_IDX2D(km-1, im, Nmax)];
+        rm[_IDX2D(km-1, im, Nmax)] = sn[km-1]*hg[_IDX2D(km, im, Nmax)] + cs[km-1]*rm[_IDX2D(km-1, im, Nmax)];
       }
       flop += (double)(im-2+1)*6.0;
       
-      al = sqrt(rgm[_IDX2D(im, im, Nmax)]*rgm[_IDX2D(im, im, Nmax)] + hgm[_IDX2D(im+1, im, Nmax)]*hgm[_IDX2D(im+1, im, Nmax)]);
+      al = sqrt(rm[_IDX2D(im, im, Nmax)]*rm[_IDX2D(im, im, Nmax)] + hg[_IDX2D(im+1, im, Nmax)]*hg[_IDX2D(im+1, im, Nmax)]);
       flop += 23;
       
       if ( al < eps_1 )
@@ -1153,13 +1151,13 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
         goto jump_1;
       }
 
-      cgm[im]    = rgm[_IDX2D(im,  im, Nmax)] / al;
-      sgm[im]    = hgm[_IDX2D(im+1,im, Nmax)] / al;
+      cs[im]    = rm[_IDX2D(im,  im, Nmax)] / al;
+      sn[im]    = hg[_IDX2D(im+1,im, Nmax)] / al;
       
-      rgm[_IDX2D(im, im, Nmax)] = cgm[im] * rgm[_IDX2D(im, im, Nmax)] + sgm[im] * hgm[_IDX2D(im+1, im, Nmax)];
+      rm[_IDX2D(im, im, Nmax)] = cs[im] * rm[_IDX2D(im, im, Nmax)] + sn[im] * hg[_IDX2D(im+1, im, Nmax)];
       
-      bgm[im+1]  = - sgm[im]*bgm[im];
-      bgm[im]    =   cgm[im]*bgm[im];
+      bgm[im+1]  = - sn[im]*bgm[im];
+      bgm[im]    =   cs[im]*bgm[im];
       
       al = bgm[im+1] * bgm[im+1];
 
@@ -1180,16 +1178,16 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
     
   jump_1:
     
-    ygm[nrm] = bgm[nrm] / rgm[_IDX2D(nrm, nrm, Nmax)];
+    ygm[nrm] = bgm[nrm] / rm[_IDX2D(nrm, nrm, Nmax)];
     
     for (int im=nrm-1; im>=1; im--) {
       al = bgm[im];
       
       for (int jm=im+1; jm<=nrm; jm++) {
-        al -= rgm[_IDX2D(im, jm, Nmax)] * ygm[jm];
+        al -= rm[_IDX2D(im, jm, Nmax)] * ygm[jm];
       }
       
-      ygm[im] = al / rgm[_IDX2D(im, im, Nmax)];
+      ygm[im] = al / rm[_IDX2D(im, im, Nmax)];
     }
     
     for (int im=1; im<=nrm; im++) {
@@ -1215,10 +1213,10 @@ jump_4:
     res = 100.0 * res_rhs * eps_2 * eps_2;
   }
   
-  if ( rgm ) delete [] rgm;
-  if ( hgm ) delete [] hgm;
-  if ( cgm ) delete [] cgm;
-  if ( sgm ) delete [] sgm;
+  if ( rm ) delete [] rm;
+  if ( hg ) delete [] hg;
+  if ( cs ) delete [] cs;
+  if ( sn ) delete [] sn;
   if ( bgm ) delete [] bgm;
   if ( ygm ) delete [] ygm;
   
