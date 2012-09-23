@@ -85,23 +85,22 @@
 
 !> ********************************************************************
 !! @brief 残差の計算
-!! @param [out] rest  残差 b-Ax
-!! @param [in]  sz    配列長
-!! @param [in]  g     ガイドセル長
-!! @param [out] res_a 残差のノルム
-!! @param [in]  div   rhs
-!! @param [in]  ax    Ax
-!! @param [in]  bp    BCindex P
-!! @param [out] flop  flop count
+!! @param [in,out] rs    Axの値 / 残差 rs=b-Ax
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [out]    res_a 残差の自乗和
+!! @param [in]     div   rhs
+!! @param [in]     bp    BCindex P
+!! @param [out]    flop  flop count
 !<
-  subroutine res_smpl (rest, sz, g, res_a, div, ax, bp, flop)
+  subroutine residual (rs, sz, g, res_a, div, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop, res_a, res
   real                                                      ::  al, dd
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, ax, rest
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, rs
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
   ix = sz(1)
@@ -129,8 +128,8 @@
   do i=1,ix
     idx = bp(i,j,k)
     dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
-    al = ( -dd * div(i,j,k) - ax(i,j,k) ) * real(ibits(idx, Active, 1))
-    rest(i,j,k) = al
+    al = ( -dd * div(i,j,k) - rs(i,j,k) ) * real(ibits(idx, Active, 1))
+    rs(i,j,k) = al
     res = res + dble(al*al)
   end do
   end do
@@ -141,28 +140,28 @@
   res_a = res
 
   return
-  end subroutine res_smpl
+  end subroutine residual
 
 
 !> ********************************************************************
-!! @brief 乗算関数
-!! @param [out] dst  目的の積
+!! @brief 直交基底
+!! @param [out] v    直交基底
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  nc   サイズ
 !! @param [in]  l    インデクス
 !! @param [in]  s    スカラー値
-!! @param [in]  src  被積分配列
+!! @param [in]  res  残差
 !! @param [out] flop  flop count
 !<
-  subroutine multiply (dst, sz, g, nc, l, s, src, flop)
+  subroutine orth_basis (v, sz, g, nc, l, s, res, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                     ::  i, j, k, ix, jx, kx, g, l, nc
   integer, dimension(3)                                       ::  sz
   double precision                                            ::  flop, s
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  dst
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  v
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  res
 
   ix = sz(1)
   jx = sz(2)
@@ -184,7 +183,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    dst(i, j, k, l) = real(s) * src(i,j,k)
+    v(i, j, k, l) = real(s) * res(i,j,k)
   end do
   end do
   end do
@@ -192,7 +191,7 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine multiply
+  end subroutine orth_basis
 
 
 !> ********************************************************************

@@ -172,13 +172,13 @@ void FFV::allocArray_Krylov(double &total)
   if ( !(d_wg = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  if ( !(d_rest = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_res = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  if ( !(d_vm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART)) ) Exit(0);
+  if ( !(d_vm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  if ( !(d_zm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART)) ) Exit(0);
+  if ( !(d_zm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
 }

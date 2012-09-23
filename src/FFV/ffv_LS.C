@@ -636,11 +636,12 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
 }
 
 // #################################################################
-// Flexible gmres(m)
+// Flexible Gmres(m)
 double FFV::Fgmres(ItrCtl* IC, double res_rhs)
 {
   const double eps_1 = 1.0e-30;
   const double eps_2 = IC->get_eps();
+  int mode_precond = 1; // pre-conditioning
   
   // 残差収束チェック
   if ( res_rhs < eps_1 ) return res_rhs;
@@ -654,7 +655,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
   double flop=0.0;
   
   const int Iteration_Max = IC->get_ItrMax();
-  int m_max = FREQ_OF_RESTART;
+  int m = FREQ_OF_RESTART;
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
   int isfin  = 0;
@@ -672,13 +673,12 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     t_eps = 0.999 * eps_2 * eps_2;
   }
   
-  const int Nmax = m_max+1; // 配列確保用，ゼロはダミー
+  int Nmax = m+1; // 配列確保用，ゼロはダミー
       
-  double *hg = new double[(Nmax+1) * Nmax]; // Hessnberg matrix
-  double *cs = new double[Nmax];            // Cosine for Givens rotations
-  double *sn = new double[Nmax];            // Sine   for Givens rotations
-  double *rm = new double[Nmax];            // residual vector for minimization problem
-  double *ygm = new double[Nmax];
+  double *hg = new double[(Nmax+1) * (Nmax+1)]; // Hessnberg matrix
+  double *cs = new double[Nmax+1];              // Cosine for Givens rotations
+  double *sn = new double[Nmax+1];              // Sine   for Givens rotations
+  double *rm = new double[Nmax+1];              // residual vector for minimization problem
   
   int ix = size[0];
   int jx = size[1];
@@ -686,32 +686,10 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
   int gd = guide;
   
   int column = 1;
+
   
-  t_eps = res_rhs * t_eps;
-  
-  res = SOR_2_SMA(IC);
-  
-  r4 = sqrt(res/res_rhs);
-  
-  
-  if (res < t_eps)
-  {
-    //Hostonly_ printf("Final : %e\n", r4);
-    isfin = 1;
-    goto jump_4;
-  }
-  
-  
-  if ( res > (fct2*t_eps) ) t_eps = res/fct2;
-  
-  eps_abs = 0.15 * t_eps;
-  
-  
-  for (int i_iter=1; i_iter<=Iteration_Max; i_iter++) {
-    
-    // テスト的にはずす >> 収束性良い？
-    //res = SOR_2_SMA(IC);
-    //if (res < t_eps) goto jump_3;
+  // Outer iteration
+  for (int j=1; j<=Iteration_Max; j++) {
     
     TIMING_start(tm_gmres_mvprod);
     flop = 0.0;
@@ -721,7 +699,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     
     TIMING_start(tm_gmres_res_sample);
     flop = 0.0;
-    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_wg, d_bcp, &flop);
+    residual_(d_wg, size, &guide, &res_abs, d_ws, d_bcp, &flop);
     TIMING_stop(tm_gmres_res_sample, flop);
     
     
@@ -736,25 +714,40 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     
     beta = sqrt(res_abs);
     
+    // convergence check
     if (beta < eps_1) goto jump_2;
     
     
-    beta_1 = 1.0/beta;
-    
-    multiply_(d_vm, size, &guide, &m_max, &column, &beta_1, d_rest, &flop);
-    
-    
+    // set initial value of residual vector
     rm[1] = beta;
-    
-    for (int i=2; i<=m_max; i++) {
+    for (int i=2; i<=Nmax; i++) {
       rm[i] = 0.0;
     }
     
+    beta_1 = 1.0/beta;
+    
+    orth_basis_(d_vm, size, &guide, &Nmax, &column, &beta_1, d_wg, &flop);
     
     
-    for (int im=1; im<=m_max; im++) {
+    
+    // Orthogoanl basis
+    for (int i=1; i<=m; i++) {
       
-      copy_1_(d_rest, size, &guide, &m_max, d_vm, &im);
+      if ( mode_precond == 1)
+      {
+        // Decide the number of iteration for inner-iteration
+        int n_inner = 3; //((im / oki) + 1) * step;
+        
+        // Inner-iteration
+        for (int i_inner=1; i_inner<=n_inner; i_inner++) {
+          res = SOR_2_SMA(IC);
+        }
+      }
+      else
+      {
+        
+      }
+      copy_1_(d_res, size, &guide, &m, d_vm, &i);
       
       
 #pragma omp parallel for firstprivate(s_length)
@@ -763,17 +756,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       }
       
       
-      // Decide the number of iteration for inner-iteration
-      int n_inner = 3; //((im / oki) + 1) * step;
-      
-      
-      // Inner-iteration
-      for (int i_inner=1; i_inner<=n_inner; i_inner++) {
-        
-        res = SOR_2_SMA(IC);
-      }
-      
-      copy_2_(d_zm, size, &guide, &m_max, d_xt, &im);
+      copy_2_(d_zm, size, &guide, &m_for, d_xt, &im);
       
       TIMING_start(tm_gmres_mvprod);
       flop = 0.0;
@@ -783,7 +766,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       
       for (int km=1; km<=im; km++) {
         al = 0.0;
-        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_wg, &km, &flop);
+        ml_add_1_(&al, size, &guide, &m_for, d_vm, d_wg, &km, &flop);
         
         
         TIMING_start(tm_gmres_comm);
@@ -798,7 +781,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
         hg[_IDX2D(km, im, Nmax)] = al;
         
         double r_al = -al;
-        ml_add_3_(d_wg, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
+        ml_add_3_(d_wg, size, &guide, &m_for, &r_al, d_vm, &km, &flop);
       }
       
       
@@ -828,12 +811,12 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
         goto jump_1;
       }
       
-      if (im < m_max)
+      if (im < m_for)
       {
         int idx = im + 1;
         al = 1.0 / hg[_IDX2D(idx, im, Nmax)];
         flop += 13.0;
-        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_wg, &flop);
+        multiply_(d_vm, size, &guide, &m_for, &idx, &al, d_wg, &flop);
       }
       
       rm[_IDX2D(1, im, Nmax)] = hg[_IDX2D(1, im, Nmax)];
@@ -877,7 +860,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       
     } // loop; im
     
-    nrm = m_max;
+    nrm = m_for;
     
   jump_1:
     
@@ -896,10 +879,10 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     for (int im=1; im<=nrm; im++) {
       al = ygm[im];
       
-      ml_add_4_(d_p, size, &guide, &m_max, &al, d_zm, &im, &flop);
+      ml_add_4_(d_p, size, &guide, &m_for, &al, d_zm, &im, &flop);
     }
     
-  } // loop; i_iter
+  } // loop; j
   
 jump_2:
   
@@ -950,7 +933,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
   double flop=0.0;
   
   const int Iteration_Max = IC->get_ItrMax();
-  int m_max = FREQ_OF_RESTART;
+  int m_for = FREQ_OF_RESTART;
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
   int isfin  = 0;
@@ -968,7 +951,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
     t_eps = 0.999 * eps_2 * eps_2;
   }
 
-  const int Nmax = m_max+1; // 配列確保用，ゼロはダミー
+  const int Nmax = m_for+1; // 配列確保用，ゼロはダミー
   
   double *rm = new double[Nmax * Nmax];     // (Nmax, Nmax)
   double *hg = new double[(Nmax+1) * Nmax]; // (Nmax+1, Nmax)
@@ -1038,20 +1021,20 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
     
     beta_1 = 1.0/beta;
     
-    multiply_(d_vm, size, &guide, &m_max, &column, &beta_1, d_rest, &flop);
+    multiply_(d_vm, size, &guide, &m_for, &column, &beta_1, d_rest, &flop);
     
     
     bgm[1] = beta;
     
-    for (int i=2; i<=m_max; i++) {
+    for (int i=2; i<=m_for; i++) {
       bgm[i] = 0.0;
     }
     
     
     
-    for (int im=1; im<=m_max; im++) {
+    for (int im=1; im<=m_for; im++) {
       
-      copy_1_(d_rest, size, &guide, &m_max, d_vm, &im);
+      copy_1_(d_rest, size, &guide, &m_for, d_vm, &im);
       
       
 #pragma omp parallel for firstprivate(s_length)
@@ -1070,7 +1053,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
         res = SOR_2_SMA(IC);
       }
       
-      copy_2_(d_zm, size, &guide, &m_max, d_xt, &im);
+      copy_2_(d_zm, size, &guide, &m_for, d_xt, &im);
       
       TIMING_start(tm_gmres_mvprod);
       flop = 0.0;
@@ -1080,7 +1063,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
 
       for (int km=1; km<=im; km++) {
         al = 0.0;
-        ml_add_1_(&al, size, &guide, &m_max, d_vm, d_wg, &km, &flop);
+        ml_add_1_(&al, size, &guide, &m_for, d_vm, d_wg, &km, &flop);
         
         
         TIMING_start(tm_gmres_comm);
@@ -1095,7 +1078,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
         hg[_IDX2D(km, im, Nmax)] = al;
         
         double r_al = -al;
-        ml_add_3_(d_wg, size, &guide, &m_max, &r_al, d_vm, &km, &flop);
+        ml_add_3_(d_wg, size, &guide, &m_for, &r_al, d_vm, &km, &flop);
       }
 
       
@@ -1125,12 +1108,12 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
         goto jump_1;
       }
 
-      if (im < m_max)
+      if (im < m_for)
       {
         int idx = im + 1;
         al = 1.0 / hg[_IDX2D(idx, im, Nmax)];
         flop += 13.0;
-        multiply_(d_vm, size, &guide, &m_max, &idx, &al, d_wg, &flop);
+        multiply_(d_vm, size, &guide, &m_for, &idx, &al, d_wg, &flop);
       }
 
       rm[_IDX2D(1, im, Nmax)] = hg[_IDX2D(1, im, Nmax)];
@@ -1174,7 +1157,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
 
     } // loop; im
     
-    nrm = m_max;
+    nrm = m_for;
     
   jump_1:
     
@@ -1193,7 +1176,7 @@ double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
     for (int im=1; im<=nrm; im++) {
       al = ygm[im];
       
-      ml_add_4_(d_p, size, &guide, &m_max, &al, d_zm, &im, &flop);
+      ml_add_4_(d_p, size, &guide, &m_for, &al, d_zm, &im, &flop);
     }
     
   } // loop; i_iter

@@ -150,15 +150,15 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_poisson2.f90
-  void MatVec_   (REAL_TYPE* ax,   int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
-  void multiply_ (REAL_TYPE* dst,  int* sz, int* g, int* nc, int* l, double* s, REAL_TYPE* src, double* flop);
-  void res_smpl_ (REAL_TYPE* rest, int* sz, int* g, double* res_a, REAL_TYPE* div, REAL_TYPE* ax, int* bp, double* flop);
-  void copy_1_   (REAL_TYPE* dst,  int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
-  void copy_2_   (REAL_TYPE* dst,  int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
-  void ml_add_1_ (double* ac,      int* sz, int* g, int* nc, REAL_TYPE* s4, REAL_TYPE* s3, int* lm, double* flop);
-  void ml_add_2_ (double* ac,      int* sz, int* g, REAL_TYPE* s3, double* flop);
-  void ml_add_3_ (REAL_TYPE* s3,   int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
-  void ml_add_4_ (REAL_TYPE* s3,   int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
+  void MatVec_     (REAL_TYPE* ax,  int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
+  void residual_   (REAL_TYPE* rs,  int* sz, int* g, double* res_a, REAL_TYPE* div, int* bp, double* flop);
+  void orth_basis_ (REAL_TYPE* dst, int* sz, int* g, int* nc, int* l, double* s, REAL_TYPE* src, double* flop);
+  void copy_1_   (REAL_TYPE* dst, int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
+  void copy_2_   (REAL_TYPE* dst, int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
+  void ml_add_1_ (double* ac,     int* sz, int* g, int* nc, REAL_TYPE* s4, REAL_TYPE* s3, int* lm, double* flop);
+  void ml_add_2_ (double* ac,     int* sz, int* g, REAL_TYPE* s3, double* flop);
+  void ml_add_3_ (REAL_TYPE* s3,  int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
+  void ml_add_4_ (REAL_TYPE* s3,  int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
   
   //***********************************************************************************************
   // ffv_pscalar.f90
