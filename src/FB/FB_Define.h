@@ -12,14 +12,14 @@
 // #################################################################
 
 /**
- @file   FB_Define.h
- @brief  FlowBase Definition Header
- @author kero
+ * @file   FB_Define.h
+ * @brief  FlowBase Definition Header
+ * @author kero
  */
 
 #include "mydebug.h"
 
-#define FB_VERS 99
+#define FB_VERS 100
 
 #define MODEL_ID_MAX 255
 
@@ -363,7 +363,7 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 
 
 
-// 変数の種類
+/// 変数の種類
 enum Kind_of_vars {
   var_Velocity=0,
   var_Pressure,
@@ -427,6 +427,12 @@ enum Async_Buffer_Direction {
   face_p_send,
   face_p_recv,
   face_m_recv
+};
+
+/// スカラ/ベクトルの種別
+enum sv_type {
+  kind_scalar=1,
+  kind_vector
 };
 
 #endif // _FB_DEFINE_H_

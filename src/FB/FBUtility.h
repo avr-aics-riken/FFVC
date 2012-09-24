@@ -28,6 +28,7 @@
 
 using namespace std;
 
+// #################################################################
 class FBUtility {
 
 public:
@@ -247,6 +248,42 @@ public:
     const REAL_TYPE a = var * (RefV*RefV*rho);
     return ( (mode==Unit_Absolute) ? bp+a : a );
   }
+  
+  
+  /**
+   * @brief スカラー倍コピー
+   * @param [out]    dst   出力
+   * @param [in]     size  配列サイズ
+   * @param [in]     guide ガイドセルサイズ
+   * @param [in]     src   入力
+   * @param [in]     scale スカラー倍数
+   * @param [in]     mode  スカラー or ベクトル
+   * @param [in,out] flop  浮動小数点演算
+   */
+  template<typename T>
+  void xcopy (T* dst, const int* size, const int guide, const T* src, const T scale, const int mode, double& flop);
+  
+  /**
+   * @brief 初期化
+   * @param [out]    dst   出力
+   * @param [in]     size  配列サイズ
+   * @param [in]     guide ガイドセルサイズ
+   * @param [in]     init  定数
+   * @param [in]     mode  スカラー or ベクトル
+   */
+  template<typename T>
+  void xset (T* dst, const int* size, const int guide, const T init, const int mode);
+  
+  
+  /**
+   * @brief ベクトルの初期化（内部のみ）
+   * @param [out]    dst   出力
+   * @param [in]     size  配列サイズ
+   * @param [in]     guide ガイドセルサイズ
+   * @param [in]     init  定数
+   */
+  template<typename T>
+  void xsetv (T* dst, const int* size, const int guide, const T* init);
   
 };
 

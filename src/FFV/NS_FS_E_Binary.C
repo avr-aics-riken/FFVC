@@ -37,8 +37,6 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE clear_value = 0.0;
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
-  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  int v_length = s_length * 3;
   
   
   // 境界処理用
@@ -82,9 +80,10 @@ void FFV::NS_FS_E_Binary()
   
   // n stepの値を保持 >> In use (d_v0, d_p0)
   TIMING_start(tm_copy_array);
-  fb_copy_real_(d_p0, d_p, &s_length); // @todo size_t でC関数へ
-  fb_copy_real_(d_v0, d_v, &v_length);
-  TIMING_stop(tm_copy_array, 0.0, 2);
+  flop = 0.0;
+  U.xcopy(d_p0, size, guide, d_p, one, kind_scalar, flop);
+  U.xcopy(d_v0, size, guide, d_v, one, kind_vector, flop);
+  TIMING_stop(tm_copy_array, flop, 2);
   
 
   // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
@@ -262,8 +261,9 @@ void FFV::NS_FS_E_Binary()
   if ( C.AlgorithmF == Control::Flow_FS_AB_CN ) 
   {
     TIMING_start(tm_copy_array);
-    fb_copy_real_(d_wv, d_vc, &v_length);
-    TIMING_stop(tm_copy_array, 0.0);
+    flop = 0.0;
+    U.xcopy(d_wv, size, guide, d_vc, one, kind_vector, flop);
+    TIMING_stop(tm_copy_array, flop);
     
     for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
       //CN_Itr(ICv);
@@ -286,7 +286,8 @@ void FFV::NS_FS_E_Binary()
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  fb_copy_real_(d_v, d_vc, &v_length);
+  flop = 0.0;
+  U.xcopy(d_v, size, guide, d_vc, one, kind_vector, flop);
   TIMING_stop(tm_copy_array, 0.0);
   
   

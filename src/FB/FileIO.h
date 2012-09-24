@@ -59,15 +59,6 @@ public:
   ~FileIO() {}
   
   
-protected:
-  
-  /** sphファイルのスカラ/ベクトルの種別 */
-  enum sv_type {
-    kind_scalar=1,
-    kind_vector
-  };
-  
-  
 public:
   
   /**

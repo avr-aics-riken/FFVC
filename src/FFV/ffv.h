@@ -227,6 +227,7 @@ private:
   History* H;                ///< 履歴クラス
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
+  FBUtility U;               ///< ユーティリティクラス
   
   MonitorList MO;            ///< Monitorクラス 
   FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス

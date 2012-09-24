@@ -25,8 +25,6 @@
 // FB_util.f90
 #define fb_average_s_         FB_AVERAGE_S
 #define fb_average_v_         FB_AVERAGE_V
-#define fb_copy_real_s_       FB_COPY_REAL_S
-#define fb_copy_real_v_       FB_COPY_REAL_V
 #define fb_delta_s_           FB_DELTA_S
 #define fb_delta_v_           FB_DELTA_V
 #define fb_interp_coarse_s_   FB_INTERP_COARSE_S
@@ -42,8 +40,6 @@
 #define fb_shift_refv_out_    FB_SHIFT_REFV_OUT
 #define fb_totalp_            FB_TOTALP
 
-#define fb_copy_real_         FB_COPY_REAL
-#define fb_copy_int_          FB_COPY_INT
 #define fb_set_int_           FB_SET_INT
 #define fb_set_real_          FB_SET_REAL
 #define fb_prs_d2nd_          FB_PRS_D2ND
@@ -56,15 +52,6 @@
 
 extern "C" {
 	// FB_util.f90
-  void fb_copy_real_s_    (REAL_TYPE* dst,
-                           REAL_TYPE* src,
-                           int* sz,
-                           int* g);
-  
-  void fb_copy_real_v_    (REAL_TYPE* dst,
-                           REAL_TYPE* src,
-                           int* sz,
-                           int* g);
   
   void fb_delta_s_        (double* d,
                            int* sz,
@@ -115,14 +102,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* vec);
-  
-  void fb_copy_real_      (REAL_TYPE* dst,
-                           REAL_TYPE* src,
-                           int* sz);
-  
-  void fb_copy_int_       (int* dst,
-                           int* src,
-                           int* sz);
   
   void fb_set_int_        (int* var,
                            int* sz,
