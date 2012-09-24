@@ -22,7 +22,8 @@ void FFV::NS_FS_E_Binary()
 {
   // local variables
   double flop;                         /// 浮動小数演算数
-  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
+  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
+  double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
   double comm_size;                    /// 通信面1面あたりの通信量
   double convergence=0.0;              /// 定常収束モニター量
   
@@ -313,29 +314,53 @@ void FFV::NS_FS_E_Binary()
   //hogehoge
   
   
-  // 定数項の残差　rhs_nrm
-  TIMING_start(tm_poi_src_nrm);
-  rhs_nrm = 0.0;
-  flop = 0.0;
-  div_cnst_(d_ws, size, &guide, &rhs_nrm, d_bcp, &flop);
-
   
-  TIMING_stop(tm_poi_src_nrm, flop);
-  
-  if ( numProc > 1 )
+  // 定数項のL2ノルム　rhs_nrm
+  if ( (ICp->get_normType() == ItrCtl::dx_b) || (ICp->get_normType() == ItrCtl::r_b) )
   {
-    TIMING_start(tm_poi_src_comm);
-    double m_tmp = rhs_nrm;
-    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    TIMING_start(tm_poi_src_nrm);
+    rhs_nrm = 0.0;
+    flop = 0.0;
+    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_bcp, &flop);
+    TIMING_stop(tm_poi_src_nrm, flop);
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_poi_src_comm);
+      double m_tmp = rhs_nrm;
+      if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    }
+    
+    rhs_nrm = sqrt(rhs_nrm);
   }
   
-  rhs_nrm = sqrt(rhs_nrm);
+  // Initial residual
+  if ( ICp->get_normType() == ItrCtl::r_r0 )
+  {
+    TIMING_start(tm_poi_src_nrm);
+    res_init = 0.0;
+    flop = 0.0;
+    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_bcp, &flop);
+    TIMING_stop(tm_poi_src_nrm, flop);
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_poi_src_comm);
+      double m_tmp = res_init;
+      if ( paraMngr->Allreduce(&m_tmp, &res_init, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    }
+    
+    res_init = sqrt(res_init);
+  }
+  
 
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
   
 
+  
   
   // VP-Iteration
   // >>> Poisson Iteration section
@@ -378,13 +403,13 @@ void FFV::NS_FS_E_Binary()
 
     
     // 線形ソルバー
-    LS_Binary(ICp, rhs_nrm);
+    LS_Binary(ICp, rhs_nrm, res_init);
 
     
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
 
-    // 速度のスカラポテンシャルによる射影と速度の発散の計算 src1はdiv(u)のテンポラリ保持に利用
+    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_sqはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
     update_vec_(d_v, d_sq, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);

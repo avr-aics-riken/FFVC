@@ -543,7 +543,7 @@ Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq 
         Iteration     = 20
         Epsilon       = 1.0e-3
         Omega         = 1.2
-        Norm          = "v_div_max"
+        Norm          = "dx_b"
         Linear_Solver = "SOR"
         Comm_mode     = "sync"
       }
@@ -553,7 +553,7 @@ Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq 
         Iteration     = 30
         Epsilon       = 1.0e-2
         Omega         = 1.2
-        Norm          = "T_Res_L2_Absolute"
+        Norm          = "r_r0"
         Linear_Solver = "SOR"
         Comm_mode     = "async"
       }     
@@ -563,7 +563,7 @@ Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq 
 }
 
 反復法を用いる場合は，\hyperlink{tgt:algorithm}{Algorithm}セクションで反復法を含む解法を指定します．
-第2レベルで指定するElem\_nameのラベルは，指定するアルゴリズムに応じて異なり，
+第2レベルで指定するラベルは指定するアルゴリズムに応じて異なります．
 \textbf{表\ref{tbl:itr_flow_algo}}に指定アルゴリズムと指定ラベルの関係を示します．
 %2nd\_Poissonは二次精度Runge-Kutta法の場合の2nd stepの圧力反復の収束条件を意味します．
 
@@ -614,15 +614,16 @@ Comm\_Mode & 袖通信のモード\\
 \begin{center}
 \small
 \begin{tabular}{lll} \toprule
-ラベル & 収束判定基準 & 履歴出力のラベル\\ \midrule
-V\_Div\_Max & 発散の最大値 $max\left|div\,\bm{u}\right|$ & V\_Div\_Max\\
+ラベル & 収束判定基準 & 評価式\\ \midrule
+dx\_b & 反復相対残差の$L_2$ノルムを右辺ベクトルの$L_2$ノルムで除したもの & $\|x^{m+1}-x^m \|_2 \bigg / \|b\|_2$\\
 \vspace{2mm}
-V\_Div\_Max\_Monitor & 発散の最大値 $max\left|div\,\bm{u}\right|$の値とセル位置を出力する\footnotemark[1] & V\_Div\_Max\\
+r\_b & 残差の$L_2$ノルムを右辺ベクトルの$L_2$ノルムで除したもの & $\| r \|_2 \bigg / \|b\|_2$\\
 \vspace{2mm}
-V\_Div\_L2 & 発散の自乗和平方根 $\displaystyle \sqrt{ \sum_{i,j,k}^{Max}{{( {div\,\bm{u}} )}^2}}$ & V\_Div\_L2\\
+r\_r0 & 残差の$L_2$ノルムを初期残差ベクトルの$L_2$ノルムで除したもの & $\|r\|_2 \bigg / \|r_0\|_2$\\ 
+v\_div\_max & 発散の最大値 & $max\left|div\,\bm{u}\right|$\\
 \vspace{2mm}
-P\_Res\_L2\_Absolute & 絶対残差のRMS $\displaystyle \sqrt{ \frac{1}{N} \sum_{i,j,k}^{Max} {\|\vec{b}- A \vec{x}\|}_{2} }$ & P\_Res\_L2\_A\\ 
-P\_Res\_L2\_Relative & 相対残差のRMS $\displaystyle {\frac{ \sqrt{ \frac{1}{N} \sum_{i,j,k}^{Max}{\|\vec{b}- A \vec{x}\|}_{2}} } {\sum_{i,j,k}^{Max} {\|\vec{b}\|}_{2} }}$ & P\_Res\_L2\_R\\ \bottomrule
+v\_div\_dbg & 発散の最大値の値とセル位置を出力する\footnotemark[1] & $max\left|div\,\bm{u}\right|$\\
+\bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:norm-type}
@@ -652,8 +653,7 @@ GMRES & GMRES(m)　リスタート周期 m & ○\\
 Flow, Heatのラベルは，それぞれ，流れ計算と熱計算のパラメータであることを示します．
 \textbf{表\ref{tbl:itr_temp_algo}}に，指定アルゴリズムと指定ラベルの関係を示します．
 
-温度解析の反復解法のパラメータは，\textbf{表\ref{tbl:flow_itr}}と同じです．
-収束ノルムのタイプは\textbf{表\ref{tbl:norm-type4temp}}で指定します．
+温度解析の反復解法のパラメータと収束ノルムのタイプは，それぞれ\textbf{表\ref{tbl:flow_itr}}，\textbf{表\ref{tbl:norm-type}}と同様です．
 
 \begin{table}[htdp]
 \caption{温度解析のアルゴリズムと指定ラベル}
@@ -667,20 +667,6 @@ C\_EE\_D\_EI & Euler\_Implicit\\ \bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:itr_temp_algo}
-\end{table}
-
-\begin{table}[htdp]
-\caption{温度計算における反復のノルムの指定}
-\begin{center}
-\small
-\begin{tabular}{lll} \toprule
-ラベル & 収束判定 & 履歴出力のラベル\\ \midrule
-\vspace{2mm}
-T\_Res\_L2\_Absolute & 絶対残差のRMS $\displaystyle \sqrt{ \frac{1}{N} \sum_{i,j,k}^{Max} {\|\vec{b}- A \vec{x}\|}_{2} }$ & T\_Res\_L2\_A\\ 
-T\_Res\_L2\_Relative & 相対残差のRMS $\displaystyle {\frac{ \sqrt{ \frac{1}{N} \sum_{i,j,k}^{Max}{\|\vec{b}- A \vec{x}\|}_{2}} } {\sum_{i,j,k}^{Max} {\|\vec{b}\|}_{2} }}$ & T\_Res\_L2\_R\\ \bottomrule
-\end{tabular}
-\end{center}
-\label{tbl:norm-type4temp}
 \end{table}
 
 \end{indentation}

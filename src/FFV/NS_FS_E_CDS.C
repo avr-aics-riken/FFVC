@@ -23,6 +23,7 @@ void FFV::NS_FS_E_CDS()
   // local variables
   double flop;                         /// 浮動小数演算数
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
+  double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
   double comm_size;                    /// 通信面1面あたりの通信量
   double convergence=0.0;              /// 定常収束モニター量
   
@@ -312,13 +313,13 @@ void FFV::NS_FS_E_CDS()
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  // 連立一次方程式の定数項の計算は圧力相対残差の場合のみ >> @todo 発散項以外の外力の影響なども含める
-  if ( ICp->get_normType() == ItrCtl::p_res_l2_r)
+  // 定数項のL2ノルム　rhs_nrm
+  if ( (ICp->get_normType() == ItrCtl::dx_b) || (ICp->get_normType() == ItrCtl::r_b) )
   {
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
-    div_cnst_(d_ws, size, &guide, &rhs_nrm, d_bcp, &flop);
-    rhs_nrm = sqrt(rhs_nrm);
+    flop = 0.0;
+    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -328,6 +329,28 @@ void FFV::NS_FS_E_CDS()
       if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
+    
+    rhs_nrm = sqrt(rhs_nrm);
+  }
+  
+  // Initial residual
+  if ( ICp->get_normType() == ItrCtl::r_r0 )
+  {
+    TIMING_start(tm_poi_src_nrm);
+    res_init = 0.0;
+    flop = 0.0;
+    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_bcp, &flop);
+    TIMING_stop(tm_poi_src_nrm, flop);
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_poi_src_comm);
+      double m_tmp = res_init;
+      if ( paraMngr->Allreduce(&m_tmp, &res_init, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    }
+    
+    res_init = sqrt(res_init);
   }
   
   TIMING_stop(tm_poi_src_sct, 0.0);
@@ -375,7 +398,7 @@ void FFV::NS_FS_E_CDS()
     // <<< Poisson Iteration subsection 1
 
     // 線形ソルバー
-    LS_Binary(ICp, rhs_nrm);
+    LS_Binary(ICp, rhs_nrm, res_init);
     
 
     // >>> Poisson Iteration subsection 4

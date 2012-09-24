@@ -392,25 +392,28 @@ void Control::findCriteria(const string label1, const string label2, const int o
       case ItrCtl::ic_prs_cr: // Corrector phase
         if (Mode.Log_Itr == ON) 
         {
-          IC[order].set_normType(ItrCtl::v_div_max_dbg);
+          if ( !strcasecmp(str.c_str(), "v_div_dbg") )
+          {
+            IC[order].set_normType(ItrCtl::v_div_dbg);
+          }
         }
         else 
         {
-          if ( !strcasecmp(str.c_str(), "v_div_max") ) 
+          if ( !strcasecmp(str.c_str(), "dx_b") ) 
+          {
+            IC[order].set_normType(ItrCtl::dx_b);
+          }
+          else if ( !strcasecmp(str.c_str(), "r_b") ) 
+          {
+            IC[order].set_normType(ItrCtl::r_b);
+          }
+          else if ( !strcasecmp(str.c_str(), "r_r0") ) 
+          {
+            IC[order].set_normType(ItrCtl::r_r0);
+          }
+          else if ( !strcasecmp(str.c_str(), "v_div_max") )
           {
             IC[order].set_normType(ItrCtl::v_div_max);
-          }
-          else if ( !strcasecmp(str.c_str(), "v_div_L2") ) 
-          {
-            IC[order].set_normType(ItrCtl::v_div_l2);
-          }
-          else if ( !strcasecmp(str.c_str(), "p_res_L2_absolute") ) 
-          {
-            IC[order].set_normType(ItrCtl::p_res_l2_a);
-          }
-          else if ( !strcasecmp(str.c_str(), "p_res_L2_relative") ) 
-          {
-            IC[order].set_normType(ItrCtl::p_res_l2_r);
           }
           else 
           {
@@ -421,13 +424,17 @@ void Control::findCriteria(const string label1, const string label2, const int o
         break;
         
       case ItrCtl::ic_tdf_ei: // Temperature Euler Implicit
-        if ( !strcasecmp(str.c_str(), "t_res_L2_absolute") ) 
+        if ( !strcasecmp(str.c_str(), "dx_b") ) 
         {
-          IC[order].set_normType(ItrCtl::t_res_l2_a);
+          IC[order].set_normType(ItrCtl::dx_b);
         }
-        else if ( !strcasecmp(str.c_str(), "t_res_L2_relative") ) 
+        else if ( !strcasecmp(str.c_str(), "r_b") ) 
         {
-          IC[order].set_normType(ItrCtl::t_res_l2_r);
+          IC[order].set_normType(ItrCtl::r_b);
+        }
+        else if ( !strcasecmp(str.c_str(), "r_r0") )
+        {
+          IC[order].set_normType(ItrCtl::r_r0);
         }
         else 
         {
@@ -437,9 +444,17 @@ void Control::findCriteria(const string label1, const string label2, const int o
         break;
         
       case ItrCtl::ic_vis_cn: // Velocity Crank-Nicolosn
-        if ( !strcasecmp(str.c_str(), "v_res_L2_relative") ) 
+        if ( !strcasecmp(str.c_str(), "dx_b") ) 
         {
-          IC[order].set_normType(ItrCtl::v_res_l2_r);
+          IC[order].set_normType(ItrCtl::dx_b);
+        }
+        if ( !strcasecmp(str.c_str(), "r_b") )
+        {
+          IC[order].set_normType(ItrCtl::r_b);
+        }
+        if ( !strcasecmp(str.c_str(), "r_r0") )
+        {
+          IC[order].set_normType(ItrCtl::r_r0);
         }
         else 
         {
@@ -463,7 +478,7 @@ void Control::findCriteria(const string label1, const string label2, const int o
     else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC[order].set_LS(SOR2SMA);
     else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC[order].set_LS(SOR2CMA);
     else if( !strcasecmp(str.c_str(), "JACOBI") )      IC[order].set_LS(JACOBI);
-    else if( !strcasecmp(str.c_str(), "GMRES_SOR") )   IC[order].set_LS(GMRES_SOR);
+    else if( !strcasecmp(str.c_str(), "GMRES") )       IC[order].set_LS(GMRES);
     else 
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
@@ -1462,15 +1477,11 @@ string Control::getNormString(const int d)
 {
   string nrm;
 	
-  if      (d == ItrCtl::v_div_max)       nrm = "V - Max. Norm of Divergence";
-	else if (d == ItrCtl::v_div_max_dbg)   nrm = "V - Max. Norm of Divergence with Monitoring  ### Forced to be selected since Iteration Log is specified ###";
-  else if (d == ItrCtl::v_div_l2)        nrm = "V - L2 Norm of Divergence";
-  else if (d == ItrCtl::p_res_l2_a)      nrm = "P - L2 Norm of Absolute Residual";
-  else if (d == ItrCtl::p_res_l2_r)      nrm = "P - L2 Norm of Relative Residual";
-	else if (d == ItrCtl::v_res_l2_a)      nrm = "V - L2 Norm of Absolute Residual";
-  else if (d == ItrCtl::v_res_l2_r)      nrm = "V - L2 Norm of Relative Residual";
-  else if (d == ItrCtl::t_res_l2_a)      nrm = "T - L2 Norm of Absolute Residual";
-  else if (d == ItrCtl::t_res_l2_r)      nrm = "T - L2 Norm of Relative Residual";
+	if      (d == ItrCtl::v_div_dbg) nrm = "Max. Norm : Divergence of velocity with Monitoring  ### Forced to be selected since Iteration Log is specified ###";
+  else if (d == ItrCtl::v_div_max) nrm = "Max. Norm : Divergence of velocity";
+  else if (d == ItrCtl::dx_b)      nrm = "L2 Norm : Increment of vector x divided by RHS vector b";
+  else if (d == ItrCtl::r_b)       nrm = "L2 Norm : Residual vector divided by RHS vector b";
+	else if (d == ItrCtl::r_r0)      nrm = "L2 Norm : Residual vector divided by initial residual vector";
 	
   return nrm;
 }
@@ -2886,8 +2897,8 @@ void Control::printLS(FILE* fp, const ItrCtl* IC)
       fprintf(fp,"\t       Linear Solver          :   2-colored SOR CMA (Consecutive Memory Access)\n");
       break;
       
-    case GMRES_SOR:
-      fprintf(fp,"\t       Linear Solver          :   GMRES SOR\n");
+    case GMRES:
+      fprintf(fp,"\t       Linear Solver          :   GMRES\n");
       break;
       
     default:

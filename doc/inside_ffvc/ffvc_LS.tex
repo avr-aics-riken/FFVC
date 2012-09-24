@@ -2,6 +2,8 @@
 %
 \section{圧力のPoisson方程式}
 
+\subsection{反復処理}
+
 圧力のPoisson方程式は \textbf{式(\ref{eq:Poisson_from_FS})}を再掲すると，
 
 \begin{equation}
@@ -10,45 +12,80 @@
 \end{equation}
 
 ノイマン条件とディリクレ条件のフラグを導入し，\textbf{式(\ref{eq:ebcs_poisson3})}のように書ける．
-これを対角項が１となるようにスケーリングして，連立一次方程式$A\underline{x} = \underline{b}$を得る．
+これを対角項が１となるようにスケーリングして，連立一次方程式$Ax = b$を得る．
 
 \begin{equation}
-\underbrace{ p  -  \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A \underline{x} }
+\underbrace{ p  -  \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A x }
 \,=\,
  \displaystyle { 
-\underbrace{ 
+\underbrace{ -
 \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
 \{ 
-- h^2 \,\psi \,-\,  \psi^{BC}
+h^2 \,\psi \,+\,  \psi^{BC}
 \}
-} \limits_{ \underline{b} }
+} \limits_{ b }
 }
 \label{eq:ebcs_poisson_4}
 \end{equation}
 
 
-反復回数を$k$としてSOR法系の反復式を構成すると，
+反復回数を$m$としてSOR法系の反復式を構成すると，
 
 \begin{equation}
 \left.
 \begin{array}{lll}
 \vspace{2mm}
-\tilde{p} & = & \displaystyle {  \underline{b} \, + \,
- \frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
+\tilde{p} & = & \displaystyle {  b \, + \,
+ \frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} \sum \limits_l {\left( p^m \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
  \,=\,
 \frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} 
 \left \{ \,
-\sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
-- h^2 \,\psi \,-\,  \psi^{BC}
+\sum \limits_l {\left( p^m \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
+- \left( h^2 \,\psi \,+\,  \psi^{BC} \, \right)
 \, \right \} } \\
 \vspace{2mm}
-\Delta p & = & \tilde{p} \,-\, p^{\,k} \\
+\Delta p & = & \tilde{p} \,-\, p^{\,m} \\
 \vspace{5mm}
-p^{\,k+1} & = & p^{\,k} \,+\, \omega\, \,\Delta p \\
+p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
 
 \end{array} \qquad \right \}
 \label{eq:poisson_iteration}
 \end{equation}
+
+
+%
+\subsection{ノルム}
+ノルムの定義は，下記とする．
+\begin{equation}
+\begin{array}{ll}
+L_2 &
+\displaystyle{ \| x \|_p \,=\, 
+\left( \sum_{p=0}^n {|x_i|^p} \right)^{\frac{1}{p}}
+}\\
+\vspace{2mm}
+Maximum & \| x \|_{\infty} \,=\, max|x_i|\\
+\end{array}
+\label{eq:def_norm}
+\end{equation}
+
+利用可能なノルムは，次の3種類である．
+
+\begin{equation}
+\begin{array}{lc} \toprule
+Type & Norm \\ \midrule
+\vspace{2mm}
+\Delta x / b & \displaystyle{ \frac{\|x^{m+1}-x^m \|_2}{\|b\|_2} } \\ 
+\vspace{2mm}
+r/b & \displaystyle{ \frac{\| r \|_2}{\|b\|_2} } \\ 
+\vspace{2mm}
+r/r_0 & \displaystyle{ \frac{\|r\|_2}{\|r_0\|_2} } \\  \bottomrule
+\end{array}
+\label{eq:iter_norm}
+\end{equation}
+
+
+
+
 
 
 %

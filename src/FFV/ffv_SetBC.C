@@ -748,14 +748,14 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYP
 // #################################################################
 /**
  @brief 速度境界条件による流束の修正
- @param [in,out] wv 疑似ベクトル
- @param v 速度ベクトル u^n
- @param bv BCindex V
- @param tm 無次元時刻
- @param C
- @param v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
- @param v00
- @param [out] flop
+ @param [in,out] d_wv   疑似速度ベクトル u^*
+ @param [in]     d_v    速度ベクトル u^n
+ @param [in]     d_bv   BCindex V
+ @param [in]     tm     無次元時刻
+ @param [in]     C      Control class
+ @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
+ @param [in]     v00    基準速度
+ @param [out]    flop   flop count
  */
 void SetBC3D::mod_Pvec_Flux(REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
@@ -847,16 +847,16 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYP
 // #################################################################
 /**
  @brief 速度境界条件によるPoisosn式のソース項の修正
- @param[out] div divergence field
- @param vc セルセンタ疑似速度
- @param v0 セルセンタ速度 u^n
- @param coef 係数
- @param bv BCindex V
- @param tm 
- @param dt
- @param C
- @param v00
- @param[out] flop
+ @param [out] d_div Poisson source term (h^2 \Psi)
+ @param [in]  d_vc  セルセンタ疑似速度
+ @param [in]  d_v0  セルセンタ速度 u^n
+ @param [in]  coef  係数 dx/dt
+ @param [in]  bv    BCindex V
+ @param [in]  tm    無次元時刻
+ @param [in]  dt    時間積分幅
+ @param [in]  C     Control class
+ @param [in]  v00   基準速度
+ @param [out] flop  flop count
  */
 void SetBC3D::mod_Psrc_VBC(REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE coef, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {

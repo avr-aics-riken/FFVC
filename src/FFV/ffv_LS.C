@@ -220,24 +220,24 @@ bool FFV::hasLinearSolver(const int L)
 
 // #################################################################
 // 線形ソルバーの選択実行
-void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm)
+void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm, const double r0)
 {	
 	double res = 0.0;    /// 残差
+  double flop = 0.0;
 
-  
   // 反復処理
   switch (IC->get_LS()) 
   {
     case SOR:
-      res = Point_SOR(IC);
+      res = Point_SOR(IC); // return x^{m+1} - x^m
       break;
       
     case SOR2SMA:
-      res = SOR_2_SMA(IC);
+      res = SOR_2_SMA(IC); // return x^{m+1} - x^m
       break;
       
-    case GMRES_SOR:
-      res = Gmres_SOR(IC, rhs_nrm);
+    case GMRES:
+      res = Fgmres(IC, rhs_nrm); // return ?
       break;
       
     default:
@@ -247,16 +247,52 @@ void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm)
   }
   
   
-  // 残差の保存 
-  /// @note Control::p_res_l2_r/aのときのみ，それ以外はNorm_Poissonで計算
-  if ( (IC->get_normType() == ItrCtl::p_res_l2_r) || (IC->get_normType() == ItrCtl::p_res_l2_a) )
+  // Residual resを上書き
+  switch ( IC->get_normType() )
   {
-    double res_a = sqrt( res / (double)G_Acell ); // 残差のRMS
-    double bb  = sqrt( rhs_nrm / (double)G_Acell ); // ソースベクトルのRMS
-    double res_r = ( bb == 0.0 ) ? res_a : res_a/bb;
-    double nrm = ( IC->get_normType() == ItrCtl::p_res_l2_r ) ? res_r : res_a;
-    IC->set_normValue( nrm );
+    case ItrCtl::r_b:
+    case ItrCtl::r_r0:
+      
+      TIMING_start(tm_poi_src_nrm);
+      res = 0.0;
+      flop = 0.0;
+      res_sor_prs_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
+      TIMING_stop(tm_poi_src_nrm, flop);
+      
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_poi_src_comm);
+        double m_tmp = res;
+        if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      }
+      
+      res = sqrt(res);
+      break;
   }
+  
+  
+  // 残差の保存
+  switch ( IC->get_normType() )
+  {
+    case ItrCtl::dx_b:
+      IC->set_normValue( res/rhs_nrm );
+      break;
+      
+    case ItrCtl::r_b:
+      IC->set_normValue( res/rhs_nrm );
+      break;
+      
+    case ItrCtl::r_r0:
+      IC->set_normValue( res/r0 );
+      break;
+      
+    case ItrCtl::v_div_max:
+    case ItrCtl::v_div_dbg:
+      // Norm_Poisson()で処理
+      break;
+  }
+
 }
 
 
@@ -309,6 +345,8 @@ double FFV::Point_SOR(ItrCtl* IC)
     if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
+  
+  res = sqrt(res);
 
   return res;
 }
@@ -389,7 +427,6 @@ double FFV::SOR_2_SMA(ItrCtl* IC)
     TIMING_start(tm_poi_SOR2SMA);
     flop_count = 0.0; // 色間で積算しない
     psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
-    //PSOR2sma_core(p, ip, color, d_ws, d_sq, bcp, IC, flop_count);
     TIMING_stop(tm_poi_SOR2SMA, flop_count);
     
     // 境界条件
@@ -437,8 +474,10 @@ double FFV::SOR_2_SMA(ItrCtl* IC)
     TIMING_start(tm_poi_res_comm);
     double tmp = res;
     if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(REAL_TYPE)*0.5 ); // 双方向 x ノード数 check
+    TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(double)*0.5 ); // 双方向 x ノード数 check
   }
+  
+  res = sqrt(res);
   
   return res;
 }
@@ -635,9 +674,11 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
   }
 }
 
+
+
 // #################################################################
 // Flexible Gmres(m)
-double FFV::Fgmres(ItrCtl* IC, double res_rhs)
+double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
 {
   const double eps_1 = 1.0e-30;
   const double eps_2 = IC->get_eps();
@@ -693,7 +734,7 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
     
     TIMING_start(tm_gmres_mvprod);
     flop = 0.0;
-    MatVec_(d_wg, size, &guide, d_p, d_bcp, &flop);
+    matvec_p_(d_wg, size, &guide, d_p, d_bcp, &flop);
     TIMING_stop(tm_gmres_mvprod, flop);
     
     
@@ -751,22 +792,22 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       
       
 #pragma omp parallel for firstprivate(s_length)
-      for (int i=0; i<s_length; i++) {
-        d_xt[i] = 0.0;
+      for (int l=0; l<s_length; l++) {
+        d_xt[l] = 0.0;
       }
       
       
-      copy_2_(d_zm, size, &guide, &m_for, d_xt, &im);
+      copy_2_(d_zm, size, &guide, &Nmax, d_xt, &i);
       
       TIMING_start(tm_gmres_mvprod);
       flop = 0.0;
-      MatVec_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      matvec_p_(d_xt, size, &guide, d_p, d_bcp, &flop);
       TIMING_stop(tm_gmres_mvprod, flop);
       
       
-      for (int km=1; km<=im; km++) {
+      for (int km=1; km<=i; km++) {
         al = 0.0;
-        ml_add_1_(&al, size, &guide, &m_for, d_vm, d_wg, &km, &flop);
+        ml_add_1_(&al, size, &guide, &Nmax, d_vm, d_wg, &km, &flop);
         
         
         TIMING_start(tm_gmres_comm);
@@ -778,10 +819,10 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
         TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
         
         
-        hg[_IDX2D(km, im, Nmax)] = al;
+        hg[_IDX2D(km, i, Nmax)] = al;
         
         double r_al = -al;
-        ml_add_3_(d_wg, size, &guide, &m_for, &r_al, d_vm, &km, &flop);
+        ml_add_3_(d_wg, size, &guide, &Nmax, &r_al, d_vm, &km, &flop);
       }
       
       
@@ -801,57 +842,57 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       TIMING_start(tm_gmres_others);
       flop = 0.0;
       
-      hg[_IDX2D(im+1, im, Nmax)] = sqrt(al);
+      hg[_IDX2D(i+1, i, Nmax)] = sqrt(al);
       flop += 20.0;
       
-      if ( hg[_IDX2D(im+1, im, Nmax)] < eps_1 )
+      if ( hg[_IDX2D(i+1, i, Nmax)] < eps_1 )
       {
-        nrm = im-1;
+        nrm = i-1;
         TIMING_stop(tm_gmres_others, flop);
         goto jump_1;
       }
       
-      if (im < m_for)
+      if (i < Nmax)
       {
-        int idx = im + 1;
-        al = 1.0 / hg[_IDX2D(idx, im, Nmax)];
+        int idx = i + 1;
+        al = 1.0 / hg[_IDX2D(idx, i, Nmax)];
         flop += 13.0;
-        multiply_(d_vm, size, &guide, &m_for, &idx, &al, d_wg, &flop);
+        orth_basis_(d_vm, size, &guide, &Nmax, &idx, &al, d_wg, &flop);
       }
       
-      rm[_IDX2D(1, im, Nmax)] = hg[_IDX2D(1, im, Nmax)];
+      rm[_IDX2D(1, i, Nmax)] = hg[_IDX2D(1, i, Nmax)];
       
-      for (int km=2; km<=im; km++) {
-        rm[_IDX2D(km  , im, Nmax)] = cs[km-1]*hg[_IDX2D(km, im, Nmax)] - sn[km-1]*rm[_IDX2D(km-1, im, Nmax)];
-        rm[_IDX2D(km-1, im, Nmax)] = sn[km-1]*hg[_IDX2D(km, im, Nmax)] + cs[km-1]*rm[_IDX2D(km-1, im, Nmax)];
+      for (int km=2; km<=i; km++) {
+        rm[_IDX2D(km  , i, Nmax)] = cs[km-1]*hg[_IDX2D(km, i, Nmax)] - sn[km-1]*rm[_IDX2D(km-1, i, Nmax)];
+        rm[_IDX2D(km-1, i, Nmax)] = sn[km-1]*hg[_IDX2D(km, i, Nmax)] + cs[km-1]*rm[_IDX2D(km-1, i, Nmax)];
       }
-      flop += (double)(im-2+1)*6.0;
+      flop += (double)(i-2+1)*6.0;
       
-      al = sqrt(rm[_IDX2D(im, im, Nmax)]*rm[_IDX2D(im, im, Nmax)] + hg[_IDX2D(im+1, im, Nmax)]*hg[_IDX2D(im+1, im, Nmax)]);
+      al = sqrt(rm[_IDX2D(i, i, Nmax)]*rm[_IDX2D(i, i, Nmax)] + hg[_IDX2D(i+1, i, Nmax)]*hg[_IDX2D(i+1, i, Nmax)]);
       flop += 23;
       
       if ( al < eps_1 )
       {
-        nrm = im - 1;
+        nrm = i - 1;
         TIMING_stop(tm_gmres_others, flop);
         goto jump_1;
       }
       
-      cs[im]    = rm[_IDX2D(im,  im, Nmax)] / al;
-      sn[im]    = hg[_IDX2D(im+1,im, Nmax)] / al;
+      cs[i]    = rm[_IDX2D(i,  i, Nmax)] / al;
+      sn[i]    = hg[_IDX2D(i+1,i, Nmax)] / al;
       
-      rm[_IDX2D(im, im, Nmax)] = cs[im] * rm[_IDX2D(im, im, Nmax)] + sn[im] * hg[_IDX2D(im+1, im, Nmax)];
+      rm[_IDX2D(i, i, Nmax)] = cs[i] * rm[_IDX2D(i, i, Nmax)] + sn[i] * hg[_IDX2D(i+1, i, Nmax)];
       
-      rm[im+1]  = - sn[im]*rm[im];
-      rm[im]    =   cs[im]*rm[im];
+      rm[i+1]  = - sn[i]*rm[i];
+      rm[i]    =   cs[i]*rm[i];
       
-      al = bgm[im+1] * rm[im+1];
+      al = rm[i+1] * rm[i+1];
       
       flop += 2.0*13.0 + 4.0;
       
       if (al < eps_abs)
       {
-        nrm = im;
+        nrm = i;
         TIMING_stop(tm_gmres_others, flop);
         goto jump_1;
       }
@@ -860,26 +901,26 @@ double FFV::Fgmres(ItrCtl* IC, double res_rhs)
       
     } // loop; im
     
-    nrm = m_for;
+    nrm = Nmax;
     
   jump_1:
     
-    ygm[nrm] = bgm[nrm] / rm[_IDX2D(nrm, nrm, Nmax)];
+    rm[nrm] = rm[nrm] / rm[_IDX2D(nrm, nrm, Nmax)];
     
     for (int im=nrm-1; im>=1; im--) {
-      al = bgm[im];
+      al = rm[im];
       
       for (int jm=im+1; jm<=nrm; jm++) {
-        al -= rm[_IDX2D(im, jm, Nmax)] * ygm[jm];
+        al -= rm[_IDX2D(im, jm, Nmax)] * rm[jm];
       }
       
-      ygm[im] = al / rm[_IDX2D(im, im, Nmax)];
+      rm[im] = al / rm[_IDX2D(im, im, Nmax)];
     }
     
     for (int im=1; im<=nrm; im++) {
-      al = ygm[im];
+      al = rm[im];
       
-      ml_add_4_(d_p, size, &guide, &m_for, &al, d_zm, &im, &flop);
+      ml_add_4_(d_p, size, &guide, &Nmax, &al, d_zm, &im, &flop);
     }
     
   } // loop; j
@@ -903,305 +944,6 @@ jump_4:
   if ( hg ) delete [] hg;
   if ( cs ) delete [] cs;
   if ( sn ) delete [] sn;
-  if ( bgm ) delete [] bgm;
-  if ( ygm ) delete [] ygm;
-  
-  TIMING_stop(tm_gmres_sor_sct, 0.0);
-  // <<< Poisson Source section
-  
-  return res;
-}
-
-
-// #################################################################
-// GMres SOR
-double FFV::Gmres_SOR(ItrCtl* IC, double res_rhs)
-{
-  const double fct2  = 6.0;
-  const double eps_1 = 1.0e-30;
-  const double eps_2 = IC->get_eps();
-  
-  // 残差収束チェック
-  if ( res_rhs < eps_1 ) return res_rhs;
-  
-  
-  // >>> Gmres section
-  TIMING_start(tm_gmres_sor_sct);
-  
-  double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
-  double r4;
-  double flop=0.0;
-  
-  const int Iteration_Max = IC->get_ItrMax();
-  int m_for = FREQ_OF_RESTART;
-  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  
-  int isfin  = 0;
-  
-  const int oki  = 2;
-  const int step = 3;
-  int nrm  = 0;
-
-  if ( C.Mode.Precision == sizeof(float) )
-  {
-    t_eps = 0.995 * eps_2 * eps_2;
-  }
-  else
-  {
-    t_eps = 0.999 * eps_2 * eps_2;
-  }
-
-  const int Nmax = m_for+1; // 配列確保用，ゼロはダミー
-  
-  double *rm = new double[Nmax * Nmax];     // (Nmax, Nmax)
-  double *hg = new double[(Nmax+1) * Nmax]; // (Nmax+1, Nmax)
-  double *cs = new double[Nmax];
-  double *sn = new double[Nmax];
-  double *bgm = new double[Nmax];
-  double *ygm = new double[Nmax];
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int column = 1;
-  
-  t_eps = res_rhs * t_eps;
-
-  res = SOR_2_SMA(IC);
-
-  r4 = sqrt(res/res_rhs);
-
-  
-  if (res < t_eps)
-  {
-    //Hostonly_ printf("Final : %e\n", r4);
-    isfin = 1;
-    goto jump_4;
-  }
-  
-  
-  if ( res > (fct2*t_eps) ) t_eps = res/fct2;
-  
-  eps_abs = 0.15 * t_eps;
-  
-  
-  for (int i_iter=1; i_iter<=Iteration_Max; i_iter++) {
-    
-    // テスト的にはずす >> 収束性良い？
-    //res = SOR_2_SMA(IC);
-    //if (res < t_eps) goto jump_3;
-
-    TIMING_start(tm_gmres_mvprod);
-    flop = 0.0;
-    MatVec_(d_wg, size, &guide, d_p, d_bcp, &flop);
-    TIMING_stop(tm_gmres_mvprod, flop);
-    
-    
-    TIMING_start(tm_gmres_res_sample);
-    flop = 0.0;
-    res_smpl_(d_rest, size, &guide, &res_abs, d_ws, d_wg, d_bcp, &flop);
-    TIMING_stop(tm_gmres_res_sample, flop);
-    
-    
-    TIMING_start(tm_gmres_comm);
-    if ( numProc > 1 )
-    {
-      double tmp = res_abs;
-      if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-    TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
-    
-    
-    beta = sqrt(res_abs);
-    
-    if (beta < eps_1) goto jump_2;
-    
-    
-    beta_1 = 1.0/beta;
-    
-    multiply_(d_vm, size, &guide, &m_for, &column, &beta_1, d_rest, &flop);
-    
-    
-    bgm[1] = beta;
-    
-    for (int i=2; i<=m_for; i++) {
-      bgm[i] = 0.0;
-    }
-    
-    
-    
-    for (int im=1; im<=m_for; im++) {
-      
-      copy_1_(d_rest, size, &guide, &m_for, d_vm, &im);
-      
-      
-#pragma omp parallel for firstprivate(s_length)
-      for (int i=0; i<s_length; i++) {
-        d_xt[i] = 0.0;
-      }
-      
-      
-      // Decide the number of iteration for inner-iteration
-      int n_inner = 3; //((im / oki) + 1) * step;
-      
-      
-      // Inner-iteration
-      for (int i_inner=1; i_inner<=n_inner; i_inner++) {
-        
-        res = SOR_2_SMA(IC);
-      }
-      
-      copy_2_(d_zm, size, &guide, &m_for, d_xt, &im);
-      
-      TIMING_start(tm_gmres_mvprod);
-      flop = 0.0;
-      MatVec_(d_xt, size, &guide, d_p, d_bcp, &flop);
-      TIMING_stop(tm_gmres_mvprod, flop);
-      
-
-      for (int km=1; km<=im; km++) {
-        al = 0.0;
-        ml_add_1_(&al, size, &guide, &m_for, d_vm, d_wg, &km, &flop);
-        
-        
-        TIMING_start(tm_gmres_comm);
-        if ( numProc > 1 )
-        {
-          double tmp = al;
-          if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        }
-        TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
-        
-        
-        hg[_IDX2D(km, im, Nmax)] = al;
-        
-        double r_al = -al;
-        ml_add_3_(d_wg, size, &guide, &m_for, &r_al, d_vm, &km, &flop);
-      }
-
-      
-      al =0.0;
-      ml_add_2_(&al, size, &guide, d_wg, &flop);
-      
-      
-      TIMING_start(tm_gmres_comm);
-      if ( numProc > 1 )
-      {
-        double tmp = al;
-        if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      }
-      TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
-      
-      
-      TIMING_start(tm_gmres_others);
-      flop = 0.0;
-      
-      hg[_IDX2D(im+1, im, Nmax)] = sqrt(al);
-      flop += 20.0;
-      
-      if ( hg[_IDX2D(im+1, im, Nmax)] < eps_1 )
-      {
-        nrm = im-1;
-        TIMING_stop(tm_gmres_others, flop);
-        goto jump_1;
-      }
-
-      if (im < m_for)
-      {
-        int idx = im + 1;
-        al = 1.0 / hg[_IDX2D(idx, im, Nmax)];
-        flop += 13.0;
-        multiply_(d_vm, size, &guide, &m_for, &idx, &al, d_wg, &flop);
-      }
-
-      rm[_IDX2D(1, im, Nmax)] = hg[_IDX2D(1, im, Nmax)];
-      
-      for (int km=2; km<=im; km++) {
-        rm[_IDX2D(km  , im, Nmax)] = cs[km-1]*hg[_IDX2D(km, im, Nmax)] - sn[km-1]*rm[_IDX2D(km-1, im, Nmax)];
-        rm[_IDX2D(km-1, im, Nmax)] = sn[km-1]*hg[_IDX2D(km, im, Nmax)] + cs[km-1]*rm[_IDX2D(km-1, im, Nmax)];
-      }
-      flop += (double)(im-2+1)*6.0;
-      
-      al = sqrt(rm[_IDX2D(im, im, Nmax)]*rm[_IDX2D(im, im, Nmax)] + hg[_IDX2D(im+1, im, Nmax)]*hg[_IDX2D(im+1, im, Nmax)]);
-      flop += 23;
-      
-      if ( al < eps_1 )
-      {
-        nrm = im - 1;
-        TIMING_stop(tm_gmres_others, flop);
-        goto jump_1;
-      }
-
-      cs[im]    = rm[_IDX2D(im,  im, Nmax)] / al;
-      sn[im]    = hg[_IDX2D(im+1,im, Nmax)] / al;
-      
-      rm[_IDX2D(im, im, Nmax)] = cs[im] * rm[_IDX2D(im, im, Nmax)] + sn[im] * hg[_IDX2D(im+1, im, Nmax)];
-      
-      bgm[im+1]  = - sn[im]*bgm[im];
-      bgm[im]    =   cs[im]*bgm[im];
-      
-      al = bgm[im+1] * bgm[im+1];
-
-      flop += 2.0*13.0 + 4.0;
-
-      if (al < eps_abs)
-      {
-        nrm = im;
-        TIMING_stop(tm_gmres_others, flop);
-        goto jump_1;
-      }
-      
-      TIMING_stop(tm_gmres_others, flop);
-
-    } // loop; im
-    
-    nrm = m_for;
-    
-  jump_1:
-    
-    ygm[nrm] = bgm[nrm] / rm[_IDX2D(nrm, nrm, Nmax)];
-    
-    for (int im=nrm-1; im>=1; im--) {
-      al = bgm[im];
-      
-      for (int jm=im+1; jm<=nrm; jm++) {
-        al -= rm[_IDX2D(im, jm, Nmax)] * ygm[jm];
-      }
-      
-      ygm[im] = al / rm[_IDX2D(im, im, Nmax)];
-    }
-    
-    for (int im=1; im<=nrm; im++) {
-      al = ygm[im];
-      
-      ml_add_4_(d_p, size, &guide, &m_for, &al, d_zm, &im, &flop);
-    }
-    
-  } // loop; i_iter
-  
-jump_2:
-  
-  res = SOR_2_SMA(IC);
-  
-  
-jump_3:
-  
-  
-jump_4:
-  
-  if ( (isfin == 0) && (res < (res_rhs * eps_2 * eps_2)) )
-  {
-    res = 100.0 * res_rhs * eps_2 * eps_2;
-  }
-  
-  if ( rm ) delete [] rm;
-  if ( hg ) delete [] hg;
-  if ( cs ) delete [] cs;
-  if ( sn ) delete [] sn;
-  if ( bgm ) delete [] bgm;
-  if ( ygm ) delete [] ygm;
   
   TIMING_stop(tm_gmres_sor_sct, 0.0);
   // <<< Poisson Source section

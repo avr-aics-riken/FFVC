@@ -574,68 +574,51 @@ double FFV::Norm_Poisson(ItrCtl* IC)
   double flop_count;
   REAL_TYPE coef = deltaT/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
   
-  //d_sqに発散がストアされている
+  // divergenceの計算　d_sqに発散がストアされている
+  TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
+  TIMING_start(tm_norm_div_max);
+  flop_count=0.0;
+  norm_v_div_max_(&nrm, size, &guide, d_sq, &coef, d_bcp, &flop_count);
+  TIMING_stop(tm_norm_div_max, flop_count);
   
-  switch (IC->get_normType()) 
+  if ( numProc > 1 )
   {
-    case ItrCtl::v_div_max:
-      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
-      
-      TIMING_start(tm_norm_div_max);
-      flop_count=0.0;
-      norm_v_div_max_(&nrm, size, &guide, d_sq, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_max, flop_count);
-      
-      if ( numProc > 1 ) 
-      {
-        TIMING_start(tm_norm_comm);
-        double tmp = nrm;
-        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-      }
-      convergence = nrm;
-      IC->set_normValue( convergence );
-      
-      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
-      break;
-      
-    case ItrCtl::v_div_l2:
-      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
-      
-      TIMING_start(tm_norm_div_l2);
-      flop_count=0.0;
-      norm_v_div_l2_(&rms, size, &guide, d_sq, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_l2, flop_count);
-      
-      if ( numProc > 1 ) 
-      {
-        TIMING_start(tm_norm_comm);
-        double tmp = rms;
-        if ( paraMngr->Allreduce(&tmp, &rms, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-      }
-      convergence = sqrt(rms/(REAL_TYPE)numProc); //RMS
-      IC->set_normValue( convergence );
-      
-      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
-      break;
-      
-    case ItrCtl::p_res_l2_a:
-    case ItrCtl::p_res_l2_r:
+    TIMING_start(tm_norm_comm);
+    double tmp;
+    tmp = nrm;
+    if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+    TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+  }
+  IC->set_div( nrm );
+  TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
+  
+  
+  switch (IC->get_normType())
+  {
+    case ItrCtl::dx_b:
+    case ItrCtl::r_b:
+    case ItrCtl::r_r0:
       convergence = IC->get_normValue();
       break;
       
-    case ItrCtl::v_div_max_dbg:
+      
+    case ItrCtl::v_div_max:
+      convergence = nrm; // ノルムは最大値を返す
+      IC->set_normValue( nrm );
+      break;
+
+      
+    case ItrCtl::v_div_dbg: // max( div(u) ) の判定を2回行うことになるが，debugなので．．
       TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
       
-      TIMING_start(tm_norm_div_max_dbg);
+      TIMING_start(tm_norm_div_dbg);
       flop_count=0.0;
       int index[3];
       index[0] = 0;
       index[1] = 0;
       index[2] = 0;
       norm_v_div_dbg_(&nrm, &rms, index, size, &guide, d_sq, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_max_dbg, flop_count);
+      TIMING_stop(tm_norm_div_dbg, flop_count);
       
       //@todo ここで，最大値のグローバルなindexの位置を計算する
       
@@ -660,6 +643,7 @@ double FFV::Norm_Poisson(ItrCtl* IC)
       
       TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
       break;
+      
       
     default:
       stamped_printf("\tInvalid convergence type\n");
@@ -807,8 +791,7 @@ void FFV::set_timing_label()
   
   set_label(tm_poi_itr_sct_5,      "Poisson__Itr_Sct_5",      PerfMonitor::CALC, false);
   set_label(tm_norm_div_max,       "Poisson_Norm_Div_max",    PerfMonitor::CALC);
-  set_label(tm_norm_div_l2,        "Poisson_Norm_Div_L2",     PerfMonitor::CALC);
-  set_label(tm_norm_div_max_dbg,   "Poi_Norm_Div_Max_Dbg",    PerfMonitor::CALC);
+  set_label(tm_norm_div_dbg,       "Poisson_Norm_Div_dbg",    PerfMonitor::CALC);
   set_label(tm_norm_comm,          "A_R_Poisson_Norm",        PerfMonitor::COMM);
   // end of Poisson: Itr. Sct:5
   

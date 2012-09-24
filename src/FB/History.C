@@ -52,43 +52,57 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
   const ItrCtl* ICt  = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
   
-  if ( Unit_Log == DIMENSIONAL ) {
+  if ( Unit_Log == DIMENSIONAL )
+  {
     fprintf(fp, "    step      time[sec]  v_max[m/s]");
   }
-  else {
+  else
+  {
     fprintf(fp, "    step        time[-]    v_max[-]");
   }
   
-  if ( C->KindOfSolver != SOLID_CONDUCTION ) {
-    switch (C->AlgorithmF) {
+  if ( C->KindOfSolver != SOLID_CONDUCTION )
+  {
+    switch (C->AlgorithmF)
+    {
       case Control::Flow_FS_EE_EE:
       case Control::Flow_FS_AB2:
       case Control::Flow_FS_AB_CN:
         fprintf(fp, "  ItrP");
-        if        (ICp1->get_normType() == ItrCtl::v_div_l2)      fprintf(fp, "    V_div_L2");
-        else if ( (ICp1->get_normType() == ItrCtl::v_div_max_dbg) 
-                ||(ICp1->get_normType() == ItrCtl::v_div_max) )   fprintf(fp, "   V_div_Max");
-        else if   (ICp1->get_normType() == ItrCtl::p_res_l2_a)    fprintf(fp, "  P_res_L2_A");
-        else if   (ICp1->get_normType() == ItrCtl::p_res_l2_r)    fprintf(fp, "  P_res_L2_R");
+        fprintf(fp, "   v_div_max");
+        if      (ICp1->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
+        else if (ICp1->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
+        else if (ICp1->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
         break;
     }
     
-    if (C->AlgorithmF == Control::Flow_FS_AB_CN) {
+    if (C->AlgorithmF == Control::Flow_FS_AB_CN)
+    {
       fprintf(fp, "  ItrV");
-      if (ICv->get_normType() == ItrCtl::v_res_l2_r) {
-        fprintf(fp, "  V_res_L2_R");
-      }
-      else {
+      if      (ICv->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
+      else if (ICv->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
+      else if (ICv->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+      else
+      {
         printf("\n\tError : Norm selection type=%d\n", ICv->get_normType());
         Exit(0);
       }
     }
     
-    if ( C->isHeatProblem() ) {
-      switch (C->AlgorithmH) {
+    if ( C->isHeatProblem() )
+    {
+      switch (C->AlgorithmH)
+      {
         case Control::Heat_EE_EI:
           fprintf(fp, "  ItrT");
-          (ICt->get_normType() == ItrCtl::t_res_l2_a) ? fprintf(fp, "  T_res_L2_A") : fprintf(fp, "  T_res_L2_R");
+          if      (ICt->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
+          else if (ICt->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
+          else if (ICt->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+          else
+          {
+            printf("\n\tError : Norm selection type=%d\n", ICt->get_normType());
+            Exit(0);
+          }
           break;
       }
     }
@@ -96,11 +110,20 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
     fprintf(fp, "     deltaP       avrP     deltaV       avrV");
     if ( C->isHeatProblem() ) fprintf(fp, "     deltaT       avrT");
   }
-  else {
-    switch (C->AlgorithmH) {
+  else
+  {
+    switch (C->AlgorithmH)
+    {
       case Control::Heat_EE_EI:
         fprintf(fp, "  ItrT");
-        (ICt->get_normType() == ItrCtl::t_res_l2_a) ? fprintf(fp, "  T_res_L2_A") : fprintf(fp, "  T_res_L2_R");
+        if      (ICt->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
+        else if (ICt->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
+        else if (ICt->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+        else
+        {
+          printf("\n\tError : Norm selection type=%d\n", ICt->get_normType());
+          Exit(0);
+        }
         break;
     }
     
@@ -128,17 +151,25 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
 
   if ( C->KindOfSolver != SOLID_CONDUCTION ) 
   {
-    switch (C->AlgorithmF) {
+    switch (C->AlgorithmF)
+    {
       case Control::Flow_FS_EE_EE:
       case Control::Flow_FS_AB2:
       case Control::Flow_FS_AB_CN:
-        fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
+        if ( (IC->get_normType() != ItrCtl::v_div_max) && (IC->get_normType() != ItrCtl::v_div_dbg) )
+        {
+          fprintf(fp, " %5d %11.4e %11.4e", ICp1->LoopCount+1, ICp1->get_div(), ICp1->get_normValue());
+        }
+        else
+        {
+          fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
+        }
         break;
     }
     
     if (C->AlgorithmF == Control::Flow_FS_AB_CN) 
     {
-      fprintf(fp, " %5d %11.4e", ICv->LoopCount+1, ICv->get_normValue());
+      fprintf(fp, " %5d %11.4e %11.4e", ICp1->LoopCount+1, ICp1->get_div(), ICp1->get_normValue());
     }
     
     if ( C->isHeatProblem() ) 

@@ -86,14 +86,13 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式を陰解法で解く
-void FFV::ps_LS(ItrCtl* IC)
+void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
 {
   double flop = 0.0;      /// 浮動小数点演算数
   double comm_size;       /// 通信面1面あたりの通信量
-  REAL_TYPE res=0.0;      /// 残差
-  REAL_TYPE b2=0.0;       /// 反復式のソースベクトルのノルム
-  REAL_TYPE res_r =0.0;   ///
-  REAL_TYPE nrm = 0.0;    ///
+  double res=0.0;         /// 残差
+  double b2=0.0;          /// 反復式のソースベクトルのノルム
+  double nrm = 0.0;       ///
   REAL_TYPE dt = deltaT;  /// 時間積分幅
   
   comm_size = count_comm_size(size, guide);
@@ -150,11 +149,6 @@ void FFV::ps_LS(ItrCtl* IC)
         b2  = sqrt( m_tmp[1]/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
       }
       
-      // 残差の保存
-      res_r = (b2 == 0.0) ? res : res/b2;
-      nrm = ( IC->get_normType() == ItrCtl::t_res_l2_r ) ? res_r : res;
-      IC->set_normValue( nrm );
-      
       TIMING_stop(tm_heat_diff_sct_3, 0.0);
       // <<< Passive scalar Diffusion subsection 3
       break;
@@ -164,6 +158,48 @@ void FFV::ps_LS(ItrCtl* IC)
       Exit(0);
       break;
   }
+  
+  // Residual resを上書き
+  switch ( IC->get_normType() )
+  {
+    case ItrCtl::r_b:
+    case ItrCtl::r_r0:
+      
+      TIMING_start(tm_poi_src_nrm);
+      res = 0.0;
+      flop = 0.0;
+      //res_sor_prs_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
+      TIMING_stop(tm_poi_src_nrm, flop);
+      
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_poi_src_comm);
+        double m_tmp = res;
+        if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      }
+      
+      res = sqrt(res);
+      break;
+  }
+  
+  // 残差の保存
+  switch ( IC->get_normType() )
+  {
+      
+    case ItrCtl::dx_b:
+      IC->set_normValue( res/rhs_nrm );
+      break;
+      
+    case ItrCtl::r_b:
+      IC->set_normValue( res/rhs_nrm );
+      break;
+      
+    case ItrCtl::r_r0:
+      IC->set_normValue( res/r0 );
+      break;
+  }
+  
 }
 
 
@@ -258,7 +294,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式をEuler陰解法で解く
-REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop)
+double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop)
 {
   size_t m_p, m_w, m_e, m_s, m_n, m_b, m_t;
   REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
@@ -266,9 +302,9 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
   REAL_TYPE a_p, a_w, a_e, a_s, a_n, a_b, a_t;
   REAL_TYPE dth1, dth2;
   REAL_TYPE s0, dd, delta, sb;
-  REAL_TYPE bb=0.0;
+  double bb=0.0;
   REAL_TYPE omg;
-  REAL_TYPE res; // 残差の自乗和
+  double res; // 残差の自乗和
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   int s;
 
@@ -333,7 +369,7 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
                     -(1.0-g_b)*a_b * qbc[_F_IDX_V3DEX(2, i  , j  , k-1, ix, jx, kx, gd)]
                     +(1.0-g_t)*a_t * qbc[_F_IDX_V3DEX(2, i  , j  , k  , ix, jx, kx, gd)]
                     );
-        bb += sb*sb * a_p;
+        bb += (double)(sb*sb * a_p);
         s0 = sb + ws[m_p]
           + dth2*( g_w * a_w * t_w  // west  
                  + g_e * a_e * t_e  // east  
@@ -344,7 +380,7 @@ REAL_TYPE FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, 
                  );
         delta = (dd * s0 - t_p) * a_p;
         t[m_p] += omg*delta;
-        res += delta*delta;
+        res += (double)(delta*delta);
       }
     }
   }

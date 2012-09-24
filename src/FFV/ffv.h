@@ -50,6 +50,7 @@
 #include "dfi.h"
 #include "History.h"
 #include "Monitor.h"
+#include "ffv_Ffunc.h"
 
 #include "omp.h"
 
@@ -591,16 +592,9 @@ private:
   /**
    * @brief FGMRES
    * @param [in]     IC      ItrCtlクラス
-   * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
+   * @param [in]     rhs_nrm Poisson定数項ベクトルのL2ノルム
    */
-  double Fgmres(ItrCtl* IC, double res_rhs);
-  
-  /**
-   * @brief GMRES-SOR
-   * @param [in]     IC      ItrCtlクラス
-   * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
-   */
-  double Gmres_SOR(ItrCtl* IC, double res_rhs);
+  double Fgmres(ItrCtl* IC, const double rhs_nrm);
   
   
   /**
@@ -627,10 +621,11 @@ private:
   
   /**
    * @brief 線形ソルバーの選択実行
-   * @param [in]     IC      ItrCtlクラス
-   * @param [in]     rhs_nrm Poisson定数項ベクトルの自乗和ノルム
+   * @param [in]  IC       ItrCtlクラス
+   * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
+   * @param [in]  res_init 初期残差ベクトル
    */
-  void LS_Binary(ItrCtl* IC, const double rhs_nrm);
+  void LS_Binary(ItrCtl* IC, const double rhs_nrm, const double rhs_init);
   
   
   /**
@@ -721,7 +716,7 @@ private:
    * @param [in]     IC   ItrCtlクラス
    * @param [in,out] flop 浮動小数点演算数
    */
-  REAL_TYPE ps_Diff_SM_PSOR(REAL_TYPE* t, REAL_TYPE& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop);
+  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop);
   
   
   /** SOR法
@@ -731,9 +726,11 @@ private:
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
-   * @param IC IterationCtlクラス
+   * @param [in]  IC IterationCtlクラス
+   * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
+   * @param [in]  res_init 初期残差ベクトル
    */
-  void ps_LS(ItrCtl* IC);
+  void ps_LS(ItrCtl* IC, const double rhs_nrm, const double rhs_nrm);
   
   
   /**

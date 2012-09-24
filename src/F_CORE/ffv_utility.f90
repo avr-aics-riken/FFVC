@@ -45,7 +45,7 @@
     ds = 0.0
     rm = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r, d) &
@@ -87,59 +87,6 @@
 
     return
     end subroutine norm_v_div_dbg
-   
-!> ********************************************************************
-!! @brief 速度成分の最大値を計算する
-!! @param ds 最大値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param div 速度の発散
-!! @param coef 係数
-!! @param bp BCindex P
-!! @param flop
-!<
-    subroutine norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, ds
-    real                                                      ::  r, coef
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
-
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    ds = 0.0
-
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
-
-!$OMP PARALLEL &
-!$OMP PRIVATE(r) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, coef)
-
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-!$OMP REDUCTION(+:ds) 
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
-      ds = ds + dble(r*r)
-    end do
-    end do
-    end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-    return
-    end subroutine norm_v_div_l2
 
 !> ********************************************************************
 !! @brief 速度成分の最大値を計算する
@@ -166,7 +113,7 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r) &

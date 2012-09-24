@@ -15,6 +15,7 @@
  */
 
 #include "ffv.h"
+#include "limits.h"
 
 
 int FFV::Initialize(int argc, char **argv)
@@ -759,7 +760,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     case SOR2SMA:
     case SOR2CMA:
-    case GMRES_SOR:
+    case GMRES:
       allocate_SOR2SMA_buffer(TotalMemory);
       break;
   }
@@ -767,7 +768,7 @@ int FFV::Initialize(int argc, char **argv)
   // GMRES
   switch (IC[ItrCtl::ic_prs_pr].get_LS())
   {
-    case GMRES_SOR:
+    case GMRES:
       allocArray_Krylov(TotalMemory);
       break;
   }

@@ -14,29 +14,30 @@
 !<
 
 !> ********************************************************************
-!! @brief 連立一次方程式の定数項の計算
-!! @param [in]  div  速度の発散値
+!! @brief 圧力Poissonの定数項の計算
+!! @param [out] rhs  定数ベクトルの自乗和
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [out] b2   定数ベクトルの自乗和
+!! @param [in]  div  div(u^*)/dt
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine div_cnst (div, sz, g, b2, bp, flop)
+    subroutine poi_rhs (rhs, sz, g, div, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                       ::  sz
-    double precision                                            ::  flop, b2, dv, dd
+    double precision                                            ::  flop, rhs, dv, dd
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    b2 = 0.0
+    rhs = 0.0
     
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*14.0d0
+! flop = flop + dble(ix)*dble(jx)*dble(kx)*19.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(dv, dd, idx) &
@@ -49,14 +50,14 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:b2)
+!$OMP REDUCTION(+:rhs)
     do k=1,kx
     do j=1,jx
     do i=1,ix
       idx = bp(i,j,k)
-      dd = 1.0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
+      dd = -1.0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
       dv = dd * div(i,j,k)*dble(ibits(bp(i,j,k), Active, 1))
-      b2 = b2 + dv*dv
+      rhs = rhs + dv*dv
     end do
     end do
     end do
@@ -64,8 +65,82 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine div_cnst
+    end subroutine poi_rhs
     
+
+!> ********************************************************************
+!! @brief SOR法の残差計算
+!! @param [out] res  残差
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  p    圧力
+!! @param [in]  src0 固定ソース項
+!! @param [in]  bp   BCindex P
+!! @param [out] flop
+!<
+  subroutine res_sor_prs (res, sz, g, p, src0, bp, flop)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                   ::  i, j, k, ix, jx, kx, g, idx
+  integer, dimension(3)                                     ::  sz
+  double precision                                          ::  flop, res
+  real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
+  real                                                      ::  dd, ss, dp
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  res = 0.0
+
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*33.0d0
+! flop = flop + dble(ix)*dble(jx)*dble(kx)*38.0d0 ! DP
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1) &
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static) &
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+!$OMP REDUCTION(+:res)
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    idx = bp(i,j,k)
+    ndag_e = real(ibits(idx, bc_ndag_E, 1))  ! e, non-diagonal
+    ndag_w = real(ibits(idx, bc_ndag_W, 1))  ! w
+    ndag_n = real(ibits(idx, bc_ndag_N, 1))  ! n
+    ndag_s = real(ibits(idx, bc_ndag_S, 1))  ! s
+    ndag_t = real(ibits(idx, bc_ndag_T, 1))  ! t
+    ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
+
+    dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
+
+    ss =  ndag_e * p(i+1,j  ,k  ) &
+        + ndag_w * p(i-1,j  ,k  ) &
+        + ndag_n * p(i  ,j+1,k  ) &
+        + ndag_s * p(i  ,j-1,k  ) &
+        + ndag_t * p(i  ,j  ,k+1) &
+        + ndag_b * p(i  ,j  ,k-1) &
+        - src0(i,j,k)
+    dp = dd*ss - p(i,j,k)
+    res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine res_sor_prs
+
+
 !> ********************************************************************
 !! @brief point SOR法
 !! @param[in,out] p 圧力
@@ -130,7 +205,7 @@
          + ndag_b * p(i  ,j  ,k-1) &
          - src0(i,j,k)             &
          + src1(i,j,k)
-      dp = ( dd*ss - p(i,j,k) )
+      dp = dd*ss - p(i,j,k)
       p(i,j,k) = p(i,j,k) + omg*dp
       res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
     end do
@@ -171,7 +246,7 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    flop = flop + dble(ix)*dble(jx)*dble(kx) * 36.0d0 * 0.5d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx) * 37.0d0 * 0.5d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
 
 !$OMP PARALLEL &
@@ -208,7 +283,7 @@
          + ndag_b * p(i  ,j  ,k-1) &
          - src0(i,j,k)             &
          + src1(i,j,k)
-      dp = (dd*ss - pp)
+      dp = dd*ss - pp
       p(i,j,k) = pp + omg*dp
       res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
     end do

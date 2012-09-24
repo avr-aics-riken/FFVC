@@ -29,6 +29,8 @@ void FFV::PS_Binary()
   double flop;                           /// 浮動小数演算数
   REAL_TYPE pei=C.getRcpPeclet();        /// ペクレ数の逆数　
   REAL_TYPE res=0.0;                     /// 残差
+  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
+  double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
   REAL_TYPE convergence=0.0;             /// 定常収束モニター量
   double comm_size = 0.0;                /// 通信面1面あたりの通信量を全ノードで積算した通信量(Byte)
   ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 拡散項の反復
@@ -210,15 +212,13 @@ void FFV::PS_Binary()
     for (ICt->LoopCount=0; ICt->LoopCount< ICt->get_ItrMax(); ICt->LoopCount++) {
 
       // 線形ソルバー
-      ps_LS(ICt);
+      ps_LS(ICt, rhs_nrm, res_init);
       
       switch (ICt->get_normType())
       {
-        case ItrCtl::t_res_l2_a:
-          convergence = ICt->get_normValue();
-          break;
-          
-        case ItrCtl::t_res_l2_r:
+        case ItrCtl::dx_b:
+        case ItrCtl::r_b:
+        case ItrCtl::r_r0:
           convergence = ICt->get_normValue();
           break;
           

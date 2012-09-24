@@ -724,17 +724,17 @@
 
 !> ********************************************************************
 !! @brief 内部速度指定境界条件による疑似速度の発散の修正
-!! @param[out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param v00 参照速度
-!! @param coef 係数
-!! @param bv BCindex V
-!! @param odr 速度境界条件のエントリ
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop flop count 近似
+!! @param [out] div  速度の発散
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  st   ループの開始インデクス
+!! @param [in]  ed   ループの終了インデクス
+!! @param [in]  v00  参照速度
+!! @param [in]  coef 係数 dx/dt
+!! @param [in]  bv   BCindex V
+!! @param [in]  odr  速度境界条件のエントリ
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [out] flop flop count 近似
 !<
     subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
     implicit none

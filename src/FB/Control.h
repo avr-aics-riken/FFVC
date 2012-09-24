@@ -251,6 +251,7 @@ class ItrCtl {
 private:
   double NormValue;      ///< ノルムの値
   double eps;            ///< 収束閾値
+  double div_max;        ///< 発散の最大値
   REAL_TYPE omg;         ///< 加速/緩和係数
   int NormType;          ///< ノルムの種類
   int SubType;           ///< SKIP LOOP or MASK LOOP
@@ -275,14 +276,10 @@ public:
   enum norm_type 
   { 
     v_div_max,
-    v_div_max_dbg,
-    v_div_l2,
-    v_res_l2_a,
-    v_res_l2_r,
-    p_res_l2_a,
-    p_res_l2_r,
-    t_res_l2_a,
-    t_res_l2_r
+    v_div_dbg,
+    dx_b,
+    r_b,
+    r_r0
   };
   
   int LoopCount;  ///< 反復回数
@@ -293,6 +290,7 @@ public:
     ItrMax = LoopCount = LinearSolver = SubType = 0;
     SyncMode = 0;
     eps = omg = 0.0;
+    NormValue = div_max = 0.0;
   }
   
   /**　デストラクタ */
@@ -328,6 +326,12 @@ public:
   double get_eps() const
   { 
     return eps; 
+  }
+  
+  /** @brief 発散値を返す */
+  double get_div() const
+  {
+    return div_max;
   }
   
   /** @brief ノルムのタイプを返す */
@@ -377,6 +381,12 @@ public:
   void set_eps(const double r)
   { 
     eps = r; 
+  }
+  
+  /** @brief 発散値を保持 */
+  void set_div(const double r)
+  {
+    div_max = r;
   }
   
   /** @brief ノルムのタイプを保持 */

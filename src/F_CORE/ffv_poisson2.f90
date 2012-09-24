@@ -22,7 +22,7 @@
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-  subroutine MatVec (ax, sz, g, p, bp, flop)
+  subroutine MatVec_p (ax, sz, g, p, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -79,7 +79,7 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine MatVec
+  end subroutine MatVec_p
 
 
 
