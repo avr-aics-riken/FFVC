@@ -103,6 +103,51 @@ public:
   }
 
   
+  
+  /**
+   * @brief 圧力値を有次元から無次元へ変換し，scale倍
+   * @param [out]    dst      圧力
+   * @param [in]     size     配列長
+   * @param [in]     guide    ガイドセル
+   * @param [in]     Base_prs 基準圧力(Pa) 基準圧がゼロのとき，ゲージ圧
+   * @param [in]     Ref_rho  代表密度(kg/m^3)
+   * @param [in]     Ref_v    代表速度(m/s)
+   * @param [in]     scale    倍数（瞬時値のとき1.0）
+   * @param [in,out] flop     浮動小数演算数
+   */
+  void prs_array_D2ND(REAL_TYPE* dst,
+                      const int* size,
+                      const int guide,
+                      const REAL_TYPE Base_prs,
+                      const REAL_TYPE Ref_rho,
+                      const REAL_TYPE Ref_v,
+                      const REAL_TYPE scale,
+                      double& flop);
+  
+  
+  /**
+   * @brief 圧力値を無次元から有次元へ変換し，scale倍
+   * @param [out]    dst      有次元圧力
+   * @param [in]     size     配列長
+   * @param [in]     guide    ガイドセル
+   * @param [in]     src      無次元圧力
+   * @param [in]     Base_prs 基準圧力(Pa) 基準圧がゼロのとき，ゲージ圧
+   * @param [in]     Ref_rho  代表密度(kg/m^3)
+   * @param [in]     Ref_v    代表速度(m/s)
+   * @param [in]     scale    倍数（瞬時値のとき1.0）
+   * @param [in,out] flop     浮動小数演算数
+   */
+  void prs_array_ND2D(REAL_TYPE* dst,
+                      const int* size,
+                      const int guide,
+                      const REAL_TYPE* src,
+                      const REAL_TYPE Base_prs,
+                      const REAL_TYPE Ref_rho,
+                      const REAL_TYPE Ref_v,
+                      const REAL_TYPE scale,
+                      double& flop);
+  
+  
   /**
    * @brief 温度値を有次元から無次元へ変換し，scale倍
    * @param [out]    dst      温度
@@ -307,8 +352,8 @@ public:
    * @param [in,out] flop  浮動小数点演算
    */
   void xcopy (REAL_TYPE* dst,
-              const int* size, c
-              onst int guide,
+              const int* size,
+              const int guide,
               const REAL_TYPE* src,
               const REAL_TYPE scale,
               const int mode,

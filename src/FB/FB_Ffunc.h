@@ -37,9 +37,6 @@
 #define fb_shift_refv_out_    FB_SHIFT_REFV_OUT
 #define fb_totalp_            FB_TOTALP
 
-#define fb_prs_d2nd_          FB_PRS_D2ND
-#define fb_prs_nd2d_          FB_PRS_ND2D
-
 #endif // _WIN32
 
 extern "C" {
@@ -119,23 +116,6 @@ extern "C" {
                            REAL_TYPE* src,
                            int* st,
                            int* bk);
-  
-  void fb_prs_d2nd_       (REAL_TYPE* s, 
-                           int* sz, 
-                           REAL_TYPE* Base_prs, 
-                           REAL_TYPE* Ref_rho, 
-                           REAL_TYPE* Ref_v, 
-                           REAL_TYPE* scale, 
-                           double* flop);
-  
-  void fb_prs_nd2d_       (REAL_TYPE* dst, 
-                           REAL_TYPE* src, 
-                           int* sz, 
-                           REAL_TYPE* Base_prs, 
-                           REAL_TYPE* Ref_rho, 
-                           REAL_TYPE* Ref_v, 
-                           REAL_TYPE* scale, 
-                           double* flop);
   
   void fb_read_sph_s_     (REAL_TYPE* s, 
                            int* sz, 

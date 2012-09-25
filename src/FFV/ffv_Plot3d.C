@@ -173,7 +173,6 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
 
   //
   REAL_TYPE scale = 1.0;
-  int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
 
   // 出力用のヘッダ
   REAL_TYPE m_org[3], m_pit[3];
@@ -275,7 +274,8 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   if (C.Unit.File == DIMENSIONAL)
   {
     REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-    fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
+    U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C.RefDensity, C.RefVelocity, scale, flop);
+    
   }
   else
   {
@@ -463,7 +463,6 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
-    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     if(gc_out==0){

@@ -90,7 +90,7 @@ ParseBC.o: TPControl.h PLOT3D_read.h PLOT3D.h FB_Ffunc.h PLOT3D_write.h
 ParseBC.o: vec3.h vec3_func.h vec3f_func.h Intrinsic.h
 ParseMat.o: ParseMat.h FB_Define.h mydebug.h Medium.h Component.h TPControl.h
 ParseMat.o: FBUtility.h
-FileIO.o: FileIO.h DomainInfo.h FB_Define.h mydebug.h FB_Ffunc.h
+FileIO.o: FileIO.h DomainInfo.h FB_Define.h mydebug.h FB_Ffunc.h FBUtility.h
 Component.o: Component.h FB_Define.h mydebug.h
 BndOuter.o: BndOuter.h FB_Define.h mydebug.h
 Interval_Mngr.o: Interval_Mngr.h FB_Define.h mydebug.h

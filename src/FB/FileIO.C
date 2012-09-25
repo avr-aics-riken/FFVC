@@ -217,7 +217,8 @@ void FileIO::readPressure(FILE* fp,
   
   if ( fname.empty() ) Exit(0);
   
-  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+  if ( fname.size() > FB_FILE_PATH_LENGTH )
+  {
     Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
     Exit(0);
   }
@@ -234,8 +235,10 @@ void FileIO::readPressure(FILE* fp,
   
   fb_read_sph_s_ (p, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
   
-  if ( !mode ) {
-    if ( (step_avr == 0) || (time_avr <= 0.0) ) {
+  if ( !mode )
+  {
+    if ( (step_avr == 0) || (time_avr <= 0.0) )
+    {
       Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", a_step, a_time);
       Exit(0);
     }
@@ -243,21 +246,20 @@ void FileIO::readPressure(FILE* fp,
 
   
   // 有次元ファイルの場合，無次元に変換する
-  if ( Dmode == DIMENSIONAL ) {
-    int d_length = (sz[0]+2*gc) * (sz[1]+2*gc) * (sz[2]+2*gc);
+  if ( Dmode == DIMENSIONAL )
+  {
     REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
-    REAL_TYPE basep = BasePrs;
-    REAL_TYPE ref_d = RefDensity;
-    REAL_TYPE ref_v = RefVelocity;
   
-    fb_prs_d2nd_(p, &d_length, &basep, &ref_d, &ref_v, &scale, &flop);
+    U.prs_array_D2ND(p, sz, gc, BasePrs, RefDensity, RefVelocity, scale, flop);
   }
   
-  if ( mode ) {
+  if ( mode )
+  {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
-  else {
+  else
+  {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
                           tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
@@ -293,7 +295,8 @@ void FileIO::readVelocity(FILE* fp,
   
   if ( fname.empty() ) Exit(0);
   
-  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+  if ( fname.size() > FB_FILE_PATH_LENGTH )
+  {
     Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
     Exit(0);
   }
@@ -309,7 +312,8 @@ void FileIO::readVelocity(FILE* fp,
   
   fb_read_sph_v_ (v, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
   
-  if ( !mode ) {
+  if ( !mode )
+  {
     if ( (a_step == 0) || (a_time <= 0.0) ) {
       Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", a_step, a_time);
       Exit(0);
@@ -326,11 +330,13 @@ void FileIO::readVelocity(FILE* fp,
 
   fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &flop);
 
-  if ( mode ) {
+  if ( mode )
+  {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e [%s]\n", tmp, f_step, f_time, (Dmode==DIMENSIONAL)?"sec.":"-");
   }
-  else {
+  else
+  {
     Hostonly_ printf     ("\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n",
                           tmp, f_step, f_time, a_step, a_time, (Dmode==DIMENSIONAL)?"sec.":"-");
     Hostonly_ fprintf(fp, "\t[%s] has read :\tstep=%d  time=%e \t:Averaged step=%d  time=%e [%s]\n", 
@@ -365,7 +371,8 @@ void FileIO::readTemperature(FILE* fp,
   
   if ( fname.empty() ) Exit(0);
   
-  if ( fname.size() > FB_FILE_PATH_LENGTH ) {
+  if ( fname.size() > FB_FILE_PATH_LENGTH )
+  {
     Hostonly_ printf ("Error : Length of file path is greater than %d\n", FB_FILE_PATH_LENGTH);
     Exit(0);
   }
@@ -390,7 +397,6 @@ void FileIO::readTemperature(FILE* fp,
   }
   
   // 有次元ファイルの場合，無次元に変換する
-  int d_length = (sz[0]+2*gc) * (sz[1]+2*gc) * (sz[2]+2*gc);
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   
   if ( Dmode == DIMENSIONAL )

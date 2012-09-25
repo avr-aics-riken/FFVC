@@ -17,11 +17,47 @@
 
 #include "FBUtility.h"
 
+// #################################################################v
+// 圧力値を有次元から無次元へ変換し，scale倍
+void FBUtility::prs_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const REAL_TYPE scale, double& flop)
+{
+  REAL_TYPE dp = scale / (Ref_rho * Ref_v * Ref_v);
+  REAL_TYPE bp = Base_prs;
+
+  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 10.0;
+  
+  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
+  
+#pragma omp parallel for firstprivate(n, dp, bp) schedule(static)
+  for (size_t i=0; i<n; i++) {
+    dst[i] = ( dst[i] - bp ) * dp;
+  }
+}
+
+
+// #################################################################
+// 圧力値を無次元から有次元へ変換し，scale倍
+void FBUtility::prs_array_ND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const REAL_TYPE scale, double& flop)
+{
+  REAL_TYPE dp = scale * (Ref_rho * Ref_v * Ref_v);
+  REAL_TYPE bp = Base_prs;
+  
+  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 3.0;
+  
+  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
+  
+#pragma omp parallel for firstprivate(n, dp, bp) schedule(static)
+  for (size_t i=0; i<n; i++) {
+    dst[i] = src[i] * dp + bp;
+  }
+}
+
+
 // #################################################################
 // 温度値を有次元から無次元へ変換し，scale倍
 void FBUtility::tmp_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const REAL_TYPE klv, const REAL_TYPE scale, double& flop)
 {
-  REAL_TYPE dp = scale / abs(Diff_tmp);
+  REAL_TYPE dp = scale / fabs(Diff_tmp);
   REAL_TYPE bt = klv - Base_tmp;
   
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
@@ -39,7 +75,7 @@ void FBUtility::tmp_array_D2ND(REAL_TYPE* dst, const int* size, const int guide,
 // 温度値を無次元から有次元へ変換し，scale倍
 void FBUtility::tmp_array_ND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const REAL_TYPE klv, const REAL_TYPE scale, double& flop)
 {
-  REAL_TYPE dp = scale * abs(Diff_tmp);
+  REAL_TYPE dp = scale * fabs(Diff_tmp);
   REAL_TYPE bt = Base_tmp - klv;
 
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);

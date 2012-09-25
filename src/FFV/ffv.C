@@ -107,14 +107,13 @@ void FFV::AverageOutput(double& flop)
   
   // 出力ファイル名
   std::string tmp;
-  
-  int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+
   
   // Pressure
   if (C.Unit.File == DIMENSIONAL) 
   {
     REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-    fb_prs_nd2d_(d_ws, d_ap, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
+    U.prs_array_ND2D(d_ws, size, guide, d_ap, bp, C.RefDensity, C.RefVelocity, scale, flop);
   }
   else 
   {
@@ -303,7 +302,6 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
 void FFV::FileOutput(double& flop, const bool restart)
 {
   REAL_TYPE scale = 1.0;
-  int d_length;
   
   // d_p0をワークとして使用
   
@@ -371,12 +369,10 @@ void FFV::FileOutput(double& flop, const bool restart)
   std::string temp_restart("temp_restart_");
   
   // Pressure
-  d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  
   if (C.Unit.File == DIMENSIONAL) 
   {
     REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-    fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C.RefDensity, &C.RefVelocity, &scale, &flop);
+    U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C.RefDensity, C.RefVelocity, scale, flop);
   }
   else 
   {
@@ -418,8 +414,6 @@ void FFV::FileOutput(double& flop, const bool restart)
   // Tempearture
   if( C.isHeatProblem() )
   {
-    
-    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     
     if (C.Unit.File == DIMENSIONAL) 
     {
@@ -496,7 +490,6 @@ void FFV::FileOutput(double& flop, const bool restart)
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
-    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, pout);
@@ -513,7 +506,6 @@ void FFV::FileOutput(double& flop, const bool restart)
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
-    d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, pout);
