@@ -279,7 +279,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
   }
   else
   {
-    fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar, flop);
   }
   
   if(gc_out==0){
@@ -344,11 +344,11 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     if (C.Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
+      U.tmp_array_ND2D(d_ws, size, guide, d_t, C.BaseTemp, C.DiffTemp, klv, scale, flop);
     }
     else
     {
-      fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
+      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar, flop);
     }
     
     if(gc_out==0){
@@ -464,7 +464,7 @@ void FFV::OutputPlot3D_function(double& flop, const bool restart)
     
     // 無次元で出力
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     if(gc_out==0){
       for(int k=0+guide;k<kd[igrid]+guide;k++){

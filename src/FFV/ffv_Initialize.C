@@ -3020,7 +3020,7 @@ void FFV::setInitialCondition()
       ip = C.iv.Pressure;
     }
     
-    fb_set_real_s_(d_p, size, &guide, &ip);
+    U.xset(d_p, size, guide, ip, kind_scalar);
 		BC.OuterPBC(d_p);
     
 		// 温度
@@ -3033,7 +3033,7 @@ void FFV::setInitialCondition()
         it = C.iv.Temperature;
       }
       
-      fb_set_real_s_(d_t, size, &guide, &it);
+      U.xset(d_t, size, guide, it, kind_scalar);
       
       // コンポーネントの初期値
       for (int m=C.NoBC+1; m<=C.NoCompo; m++) {

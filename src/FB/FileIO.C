@@ -20,9 +20,7 @@
 // ファイル出力時，発散値を計算する
 void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, double& flop)
 {
-  if( !dst || !src || !sz ) Exit(0);
-
-  fb_mulcpy_ (dst, src, sz, &gc, &coef, &flop);
+  U.xcopy(dst, sz, gc, src, coef, kind_scalar, flop);
 }
 
 
@@ -31,11 +29,9 @@ void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE 
 void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, 
                          const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
 {
-  if( !dst || !src || !sz ) Exit(0);
-  
   REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
   
-  fb_mulcpy_ (dst, src, sz, &gc, &cf, &flop);
+  U.xcopy(dst, sz, gc, src, cf, kind_scalar, flop);
 }
 
 
@@ -60,7 +56,8 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   }
   
   ofstream ofs(sph_fname, ios::out | ios::binary);
-  if (!ofs) {
+  if (!ofs)
+  {
     cout << "\tCan't open " << sph_fname << " file" << endl;
     Exit(0);
   }
@@ -82,7 +79,8 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   //printf("dx : %f %f %f\n", dx, dy, dz);
   
   svType = kind_scalar;
-  if ( sizeof(REAL_TYPE) == sizeof(double) ) {
+  if ( sizeof(REAL_TYPE) == sizeof(double) )
+  {
     for (i=0; i<3; i++)   szl[i] = (long long)sz[i];
   }
   
@@ -93,8 +91,8 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   for (k=1; k<=kx; k++) {
     for (j=1; j<=jx; j++) {
       for (i=1; i<=ix; i++) {
-        l = ix*jx*(k-1) + ix*(j-1) + i-1;
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gc, i, j, k);
+        l = _F_IDX_S3D(i, j, k, ix, jx, kx, 0);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         f[l] = (REAL_TYPE)vf[m];
       }
     }
@@ -356,8 +354,8 @@ void FileIO::readTemperature(FILE* fp,
                              double& time, 
                              const int Dmode, 
                              const REAL_TYPE Base_tmp, 
-                             const REAL_TYPE Diff_tmp, 
-                             const REAL_TYPE Kelvin, 
+                             const REAL_TYPE Diff_tmp,
+                             const REAL_TYPE Kelvin,
                              double& flop, 
                              const int guide_out,
                              const bool mode,
@@ -382,8 +380,10 @@ void FileIO::readTemperature(FILE* fp,
   REAL_TYPE f_time, a_time;
   
   fb_read_sph_s_ (t, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
-  if ( !mode ) {
-    if ( (a_step == 0) || (a_time <= 0.0) ) {
+  if ( !mode )
+  {
+    if ( (a_step == 0) || (a_time <= 0.0) )
+    {
       Hostonly_ printf ("Error : restarted step[%d] or time[%e] is invalid\n", a_step, a_time);
       Exit(0);
     }
@@ -392,12 +392,10 @@ void FileIO::readTemperature(FILE* fp,
   // 有次元ファイルの場合，無次元に変換する
   int d_length = (sz[0]+2*gc) * (sz[1]+2*gc) * (sz[2]+2*gc);
   REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
-  REAL_TYPE base_t = Base_tmp;
-  REAL_TYPE diff_t = Diff_tmp;
-  REAL_TYPE klv    = Kelvin;
   
-  if ( Dmode == DIMENSIONAL ) {
-    fb_tmp_d2nd_(t, &d_length, &base_t, &diff_t, &klv, &scale, &flop);
+  if ( Dmode == DIMENSIONAL )
+  {
+    U.tmp_array_D2ND(t, sz, gc, Base_tmp, Diff_tmp, Kelvin, scale, flop);
   }
   
   if ( mode ) {

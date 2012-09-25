@@ -34,7 +34,7 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
-  REAL_TYPE clear_value = 0.0;
+  REAL_TYPE zero = 0.0;                /// 定数
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
@@ -293,7 +293,7 @@ void FFV::NS_FS_E_Binary()
   
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
-  fb_set_real_(d_ws, &s_length, &clear_value);
+  U.xset(d_ws, size, guide, zero, kind_scalar);
   TIMING_stop(tm_assign_const, 0.0);
   
   
@@ -382,7 +382,7 @@ void FFV::NS_FS_E_Binary()
     
     // 反復ソース項のゼロクリア => src1
     TIMING_start(tm_assign_const);
-    fb_set_real_(d_sq, &s_length, &clear_value);
+    U.xset(d_sq, size, guide, zero, kind_scalar);
     TIMING_stop(tm_assign_const, 0.0);
 
     // Forcingコンポーネントによるソース項の寄与分

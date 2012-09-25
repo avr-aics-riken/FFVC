@@ -33,6 +33,7 @@
 
 #include "mpi.h"
 #include "limits.h"
+#include "omp.h"
 
 class VoxInfo : public DomainInfo {
   

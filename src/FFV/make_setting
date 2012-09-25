@@ -23,7 +23,7 @@ TP_DIR      = /usr/local/textparser
 POLYLIB_DIR = ../Polylib-2.1.1
 CUTLIB_DIR  = ../Cutlib-2.0.4
 PMLIB_DIR   = ../PMlib-1.4
-OMP_FLAGS   = -openmp -par-report=2 -vec-report=2
+OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
 UDEF_OPT    =
 CC          = icc
 CFLAGS      = -O3

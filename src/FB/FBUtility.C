@@ -17,6 +17,41 @@
 
 #include "FBUtility.h"
 
+// #################################################################
+// 温度値を有次元から無次元へ変換し，scale倍
+void FBUtility::tmp_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const REAL_TYPE klv, const REAL_TYPE scale, double& flop)
+{
+  REAL_TYPE dp = scale / abs(Diff_tmp);
+  REAL_TYPE bt = klv - Base_tmp;
+  
+  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
+  
+  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 9.0;
+  
+#pragma omp parallel for firstprivate(n, dp, bt) schedule(static)
+  for (size_t i=0; i<n; i++) {
+    dst[i] = ( dst[i] + bt ) * dp;
+  }
+}
+
+
+// #################################################################
+// 温度値を無次元から有次元へ変換し，scale倍
+void FBUtility::tmp_array_ND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const REAL_TYPE klv, const REAL_TYPE scale, double& flop)
+{
+  REAL_TYPE dp = scale * abs(Diff_tmp);
+  REAL_TYPE bt = Base_tmp - klv;
+
+  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
+  
+  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 3.0;
+  
+#pragma omp parallel for firstprivate(n, dp, bt) schedule(static)
+  for (size_t i=0; i<n; i++) {
+    dst[i] = src[i] * dp + bt;
+  }
+}
+
 
 // #################################################################
 // メモリ使用量を表示する
@@ -102,61 +137,36 @@ void FBUtility::MemoryRequirement(const char* mode, const double Memory, const d
 }
 
 
-
 // #################################################################
 // スカラー倍してコピー
-template<typename T>
-void FBUtility::xcopy(T* dst, const int* size, const int guide, const T* src, const T scale, const int mode, double& flop)
+void FBUtility::xcopy(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale, const int mode, double& flop)
 {
-  T s = scale;
+  REAL_TYPE s = scale;
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
-  if ( mode == kind_vector ) size_t n *= 3;
+  if ( mode == kind_vector ) n *= 3;
   
   flop += (double)n;
   
 #pragma omp parallel for firstprivate(n, s) schedule(static)
-  for (int i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++) {
     dst[i] = s * src[i];
   }
 }
 
 
+
 // #################################################################
 // 初期化
-template<typename T>
-void FBUtility::xset(T* dst, const int* size, const int guide, const T init, const int mode)
+void FBUtility::xset(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init, const int mode)
 {
-  T s = init;
+  REAL_TYPE s = init;
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
-  if ( mode == kind_vector ) size_t n *= 3;
+  if ( mode == kind_vector ) n *= 3;
   
 #pragma omp parallel for firstprivate(n, s) schedule(static)
-  for (int i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++) {
     dst[i] = s;
-  }
-}
-
-
-// #################################################################
-// ベクトルの初期化（内部のみ）
-template<typename T>
-void FBUtility::xsetv(T* dst, const int* size, const int guide, const T* init)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  T[3] s = {init[0], init[1], init[2]};
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        dst[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] = s;
-      }
-    }
   }
 }

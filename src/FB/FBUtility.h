@@ -26,6 +26,8 @@
 #include "FB_Define.h"
 #include "cpm_Define.h"
 
+#include "omp.h"
+
 using namespace std;
 
 // #################################################################
@@ -100,6 +102,50 @@ public:
     fprintf(fp, "\n\t%s \tVersion %d.%d.%d\n", str.c_str(), a, b, c);
   }
 
+  
+  /**
+   * @brief 温度値を有次元から無次元へ変換し，scale倍
+   * @param [out]    dst      温度
+   * @param [in]     size     配列長
+   * @param [in]     guide    ガイドセル
+   * @param [in]     Base_tmp 基準温度(K or C)
+   * @param [in]     Diff_tmp 代表温度差(K or C)
+   * @param [in]     klv      絶対温度への変換（入力Cのときklv=273.15, Kのときklv=0）
+   * @param [in]     scale    倍数（瞬時値のとき1.0）
+   * @param [in,out] flop     浮動小数演算数
+   */
+  void tmp_array_D2ND(REAL_TYPE* dst,
+                      const int* size,
+                      const int guide,
+                      const REAL_TYPE Base_tmp,
+                      const REAL_TYPE Diff_tmp,
+                      const REAL_TYPE klv,
+                      const REAL_TYPE scale,
+                      double& flop);
+  
+  
+  /**
+   * @brief 温度値を無次元から有次元へ変換し，scale倍して出力
+   * @param [out]    dst      有次元の温度
+   * @param [in]     size     配列長
+   * @param [in]     guide    ガイドセル
+   * @param [in]     src      無次元温度
+   * @param [in]     Base_tmp 基準温度(K or C)
+   * @param [in]     Diff_tmp 代表温度差(K or C)
+   * @param [in]     klv      絶対温度への変換（入力Cのときklv=273.15, Kのときklv=0）
+   * @param [in]     scale    倍数（瞬時値のとき1.0）
+   * @param [in,out] flop     浮動小数演算数
+   */
+  void tmp_array_ND2D(REAL_TYPE* dst,
+                      const int* size,
+                      const int guide,
+                      const REAL_TYPE* src,
+                      const REAL_TYPE Base_tmp,
+                      const REAL_TYPE Diff_tmp,
+                      const REAL_TYPE klv,
+                      const REAL_TYPE scale,
+                      double& flop);
+  
   
 	/**
    * @brief 無次元温度varを有次元(Kelvin)にして返す
@@ -260,8 +306,14 @@ public:
    * @param [in]     mode  スカラー or ベクトル
    * @param [in,out] flop  浮動小数点演算
    */
-  template<typename T>
-  void xcopy (T* dst, const int* size, const int guide, const T* src, const T scale, const int mode, double& flop);
+  void xcopy (REAL_TYPE* dst,
+              const int* size, c
+              onst int guide,
+              const REAL_TYPE* src,
+              const REAL_TYPE scale,
+              const int mode,
+              double& flop);
+
   
   /**
    * @brief 初期化
@@ -271,19 +323,11 @@ public:
    * @param [in]     init  定数
    * @param [in]     mode  スカラー or ベクトル
    */
-  template<typename T>
-  void xset (T* dst, const int* size, const int guide, const T init, const int mode);
-  
-  
-  /**
-   * @brief ベクトルの初期化（内部のみ）
-   * @param [out]    dst   出力
-   * @param [in]     size  配列サイズ
-   * @param [in]     guide ガイドセルサイズ
-   * @param [in]     init  定数
-   */
-  template<typename T>
-  void xsetv (T* dst, const int* size, const int guide, const T* init);
+  void xset (REAL_TYPE* dst,
+             const int* size,
+             const int guide,
+             const REAL_TYPE init,
+             const int mode);
   
 };
 

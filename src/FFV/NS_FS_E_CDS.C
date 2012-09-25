@@ -33,12 +33,10 @@ void FFV::NS_FS_E_CDS()
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE half = 0.5;                /// 定数
-  REAL_TYPE clear_value = 0.0;
+  REAL_TYPE one = 1.0;                 /// 定数
+  REAL_TYPE zero = 0.0;                /// 定数
   int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
-  
-  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  int v_length = s_length * 3;
   
   
   // 境界処理用
@@ -83,9 +81,10 @@ void FFV::NS_FS_E_CDS()
   
   // n stepの値を保持 >> In use (d_v0, d_p0)
   TIMING_start(tm_copy_array);
-  fb_copy_real_(d_p0, d_p, &s_length);
-  fb_copy_real_(d_v0, d_v, &v_length);
-  TIMING_stop(tm_copy_array, 0.0, 2);
+  flop = 0.0;
+  U.xcopy(d_p0, size, guide, d_p, one, kind_scalar, flop);
+  U.xcopy(d_v0, size, guide, d_v, one, kind_vector, flop);
+  TIMING_stop(tm_copy_array, flop, 2);
   
   
   // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
@@ -262,7 +261,7 @@ void FFV::NS_FS_E_CDS()
   if ( C.AlgorithmF == Control::Flow_FS_AB_CN )
   {
     TIMING_start(tm_copy_array);
-    fb_copy_real_(d_wv, d_vc, &v_length);
+    U.xcopy(d_wv, size, guide, d_vc, one, kind_vector, flop);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
@@ -286,13 +285,13 @@ void FFV::NS_FS_E_CDS()
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  fb_copy_real_(d_v, d_vc, &v_length);
+  U.xcopy(d_v, size, guide, d_vc, one, kind_vector, flop);
   TIMING_stop(tm_copy_array, 0.0);
   
   
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
-  fb_set_real_(d_ws, &s_length, &clear_value);
+  U.xset(d_ws, size, guide, zero, kind_scalar);
   TIMING_stop(tm_assign_const, 0.0);
   
   
@@ -377,7 +376,7 @@ void FFV::NS_FS_E_CDS()
     
     // 反復ソース項のゼロクリア => src1
     TIMING_start(tm_assign_const);
-    fb_set_real_(d_sq, &s_length, &clear_value);
+    U.xset(d_sq, size, guide, zero, kind_scalar);
     TIMING_stop(tm_assign_const, 0.0);
     
     // Forcingコンポーネントによるソース項の寄与分

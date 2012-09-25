@@ -19,26 +19,24 @@
 // 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
 void FFV::PS_Binary()
 {
-  int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  int v_length = s_length * 3;
-  
-  
   // local variables
-  REAL_TYPE dt = deltaT;                 /// 時間積分幅
-  REAL_TYPE dh = (REAL_TYPE)deltaX;      /// 空間幅
-  double flop;                           /// 浮動小数演算数
-  REAL_TYPE pei=C.getRcpPeclet();        /// ペクレ数の逆数　
-  REAL_TYPE res=0.0;                     /// 残差
+  REAL_TYPE dt = deltaT;               /// 時間積分幅
+  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
+  double flop;                         /// 浮動小数演算数
+  REAL_TYPE pei=C.getRcpPeclet();      /// ペクレ数の逆数
+  REAL_TYPE res=0.0;                   /// 残差
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
-  REAL_TYPE convergence=0.0;             /// 定常収束モニター量
-  double comm_size = 0.0;                /// 通信面1面あたりの通信量を全ノードで積算した通信量(Byte)
+  REAL_TYPE half = 0.5;                /// 定数
+  REAL_TYPE one = 1.0;                 /// 定数
+  REAL_TYPE zero = 0.0;                /// 定数
+  REAL_TYPE convergence=0.0;           /// 定常収束モニター量
+  double comm_size = 0.0;              /// 通信面1面あたりの通信量を全ノードで積算した通信量(Byte)
+  int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
+  
   ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 拡散項の反復
-  int cnv_scheme = C.CnvScheme;          /// 対流項スキーム
-  REAL_TYPE clear_value = 0.0;
   
   comm_size = count_comm_size(size, guide);
-  
   
   
   // >>> Passive scalar Convection section
@@ -56,8 +54,9 @@ void FFV::PS_Binary()
   
   // n stepの値をdc_t0に保持，dc_tはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
-  fb_copy_real_(d_t0, d_t, &s_length); //@todo s_length がオーバーフローの可能性 > unsigned long Cで記述
-  TIMING_stop(tm_copy_array, 0.0);
+  flop = 0.0;
+  U.xcopy(d_t0, size, guide, d_t, one, kind_scalar, flop);
+  TIMING_stop(tm_copy_array, flop);
   
   
   // 指定境界条件の参照値を代入する
@@ -90,8 +89,9 @@ void FFV::PS_Binary()
   else // 熱伝導の場合，対流項の寄与分はないので前ステップの値
   {
     TIMING_start(tm_copy_array);
-    fb_copy_real_(d_ws, d_t0, &s_length);
-    TIMING_stop(tm_copy_array, 0.0);
+    flop = 0.0;
+    U.xcopy(d_ws, size, guide, d_t0, one, kind_scalar, flop);
+    TIMING_stop(tm_copy_array, flop);
   }
 
   TIMING_stop(tm_heat_convection_sct, 0.0);
@@ -138,7 +138,7 @@ void FFV::PS_Binary()
   
   // 熱流束境界条件のクリア qbcは積算するため
   TIMING_start(tm_assign_const);
-  fb_set_real_(d_qbc, &s_length, &clear_value);
+  U.xset(d_qbc, size, guide, zero, kind_vector);
   TIMING_stop(tm_assign_const, 0.0);
   
   
@@ -206,7 +206,8 @@ void FFV::PS_Binary()
   {
     // 反復初期値
     TIMING_start(tm_copy_array);
-    fb_copy_real_(d_t, d_ws, &s_length);
+    flop=0.0;
+    U.xcopy(d_t, size, guide, d_ws, one, kind_scalar, flop);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICt->LoopCount=0; ICt->LoopCount< ICt->get_ItrMax(); ICt->LoopCount++) {

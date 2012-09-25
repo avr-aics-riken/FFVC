@@ -118,7 +118,7 @@ void FFV::AverageOutput(double& flop)
   }
   else 
   {
-    fb_xcopy_(d_ws, d_ap, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar, flop);
   }
   
   tmp = DFI.Generate_FileName(C.f_AvrPressure, stepAvr, myRank, (bool)C.FIO.IO_Output);
@@ -139,11 +139,11 @@ void FFV::AverageOutput(double& flop)
     if (C.Unit.File == DIMENSIONAL) 
     {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      fb_tmp_nd2d_(d_ws, d_at, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
+      U.tmp_array_ND2D(d_ws, size, guide, d_at, C.BaseTemp, C.DiffTemp, klv, scale, flop);
     }
     else 
     {
-      fb_xcopy_(d_ws, d_at, &d_length, &scale, &flop);
+      U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar, flop);
     }
     
     tmp = DFI.Generate_FileName(C.f_AvrTemperature, stepAvr, myRank, (bool)C.FIO.IO_Output);
@@ -380,7 +380,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   }
   else 
   {
-    fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar, flop);
   }
   
   if ( !restart ) 
@@ -424,11 +424,11 @@ void FFV::FileOutput(double& flop, const bool restart)
     if (C.Unit.File == DIMENSIONAL) 
     {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      fb_tmp_nd2d_(d_ws, d_t, &d_length, &C.BaseTemp, &C.DiffTemp, &klv, &scale, &flop);
+      U.tmp_array_ND2D(d_ws, size, guide, d_t, C.BaseTemp, C.DiffTemp, klv, scale, flop);
     }
     else 
     {
-      fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
+      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar, flop);
     }
     
     if ( !restart ) 
@@ -497,7 +497,7 @@ void FFV::FileOutput(double& flop, const bool restart)
     
     // 無次元で出力
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -514,7 +514,7 @@ void FFV::FileOutput(double& flop, const bool restart)
     
     // 無次元で出力
     d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);

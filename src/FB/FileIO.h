@@ -28,7 +28,7 @@
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FB_Ffunc.h"
-#include "mydebug.h"
+#include "FBUtility.h"
 
 
 #ifndef _WIN32
@@ -60,6 +60,10 @@ public:
   
   
 public:
+  
+  FBUtility U;
+  
+  
   
   /**
    * @brief ファイル出力時，発散値を計算する

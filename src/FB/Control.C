@@ -1479,9 +1479,9 @@ string Control::getNormString(const int d)
 	
 	if      (d == ItrCtl::v_div_dbg) nrm = "Max. Norm : Divergence of velocity with Monitoring  ### Forced to be selected since Iteration Log is specified ###";
   else if (d == ItrCtl::v_div_max) nrm = "Max. Norm : Divergence of velocity";
-  else if (d == ItrCtl::dx_b)      nrm = "L2 Norm : Increment of vector x divided by RHS vector b";
-  else if (d == ItrCtl::r_b)       nrm = "L2 Norm : Residual vector divided by RHS vector b";
-	else if (d == ItrCtl::r_r0)      nrm = "L2 Norm : Residual vector divided by initial residual vector";
+  else if (d == ItrCtl::dx_b)      nrm = "dx_b : Increment of vector x divided by RHS vector b";
+  else if (d == ItrCtl::r_b)       nrm = "r_b  : Residual vector divided by RHS vector b";
+	else if (d == ItrCtl::r_r0)      nrm = "r_r0 : Residual vector divided by initial residual vector";
 	
   return nrm;
 }
