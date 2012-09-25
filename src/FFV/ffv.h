@@ -333,13 +333,6 @@ private:
   void allocArray_Prep(double &prep, double &total);
   
   
-  /**
-   * @brief Runge-Kutta法に用いる配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
-  void allocArray_RK(double &total);
-  
-  
   
   /**
    * @brief 主計算部分に用いる配列のアロケーション

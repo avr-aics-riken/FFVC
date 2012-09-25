@@ -878,7 +878,7 @@
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
       
       ! VBC面の影響をフラグで無効化 >> OBC_SPEC_VEL, OBC_WALL, OBC_SYMMETRIC, OBC_OUTFLOW  13flops
-      div(i,j,k) =( Ue*c_e - Uw*c_w + Vn*c_n - Vs*c_s + Wt*c_t - Wb*c_b ) * coef * actv
+      div(i,j,k) = ( Ue*c_e - Uw*c_w + Vn*c_n - Vs*c_s + Wt*c_t - Wb*c_b ) * coef * actv
     end do
     end do
     end do

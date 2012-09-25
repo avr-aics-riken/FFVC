@@ -60,7 +60,8 @@ void FFV::NS_FS_E_Binary()
   // d_p   圧力 p^n -> p^{n+1}
   // d_p0  圧力 p^nの保持
   // d_ws  Poissonのソース項0　速度境界を考慮
-  // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値, div(u)の値を保持，出力のところまでは再利用しないこと
+  // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
+  // d_dp  発散値, div(u)の値を保持
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
   // d_bcv 速度のビットフラグ
@@ -315,6 +316,28 @@ void FFV::NS_FS_E_Binary()
   //hogehoge
   
   
+  // 反復ソース項のゼロクリア => src1
+  TIMING_start(tm_assign_const);
+  U.xset(d_sq, size, guide, zero, kind_scalar);
+  TIMING_stop(tm_assign_const, 0.0);
+  
+  
+  // Forcingコンポーネントによるソース項の寄与分
+  if ( C.isForcing() == ON )
+  {
+    TIMING_start(tm_force_src);
+    flop=0.0;
+    BC.mod_Psrc_Forcing(d_sq, d_v0, d_bcd, d_cvf, v00, component_array, flop);
+    TIMING_stop(tm_force_src, flop);
+  }
+  
+  
+  // 内部周期境界部分のディリクレソース項
+  //TIMING_start(tm_prdc_src);
+  //BC.InnerPrdc_Src(d_sq, d_p, d_bcd);
+  //TIMING_stop(tm_prdc_src, flop);
+  
+  
   
   // 定数項のL2ノルム　rhs_nrm
   if ( (ICp->get_normType() == ItrCtl::dx_b) || (ICp->get_normType() == ItrCtl::r_b) )
@@ -322,7 +345,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
     flop = 0.0;
-    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_bcp, &flop);
+    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_sq, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -336,13 +359,14 @@ void FFV::NS_FS_E_Binary()
     rhs_nrm = sqrt(rhs_nrm);
   }
   
+  
   // Initial residual
   if ( ICp->get_normType() == ItrCtl::r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_bcp, &flop);
+    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_sq, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -376,33 +400,6 @@ void FFV::NS_FS_E_Binary()
   
   for (ICp->LoopCount=0; ICp->LoopCount< ICp->get_ItrMax(); ICp->LoopCount++) 
   {
-    
-    // >>> Poisson Iteration subsection 1
-    TIMING_start(tm_poi_itr_sct_1);
-    
-    // 反復ソース項のゼロクリア => src1
-    TIMING_start(tm_assign_const);
-    U.xset(d_sq, size, guide, zero, kind_scalar);
-    TIMING_stop(tm_assign_const, 0.0);
-
-    // Forcingコンポーネントによるソース項の寄与分
-    if ( C.isForcing() == ON ) 
-    {
-      TIMING_start(tm_force_src);
-      flop=0.0;
-      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
-      TIMING_stop(tm_force_src, flop);
-    }
-
-    // 内部周期境界部分のディリクレソース項
-    //TIMING_start(tm_prdc_src);
-    //BC.InnerPrdc_Src(d_sq, d_p, d_bcd);
-    //TIMING_stop(tm_prdc_src, flop);
-
-    TIMING_stop(tm_poi_itr_sct_1, 0.0);
-    // <<< Poisson Iteration subsection 1
-
-    
     // 線形ソルバー
     LS_Binary(ICp, rhs_nrm, res_init);
 
@@ -410,17 +407,17 @@ void FFV::NS_FS_E_Binary()
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
 
-    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_sqはdiv(u)のテンポラリ保持に利用
+    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dpはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_(d_v, d_sq, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
+    update_vec_(d_v, d_dp, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
     
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_sq, d_bcv, coef, CurrentTime, v00, m_buf, flop);
+    BC.mod_div(d_dp, d_bcv, coef, CurrentTime, v00, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     
@@ -457,7 +454,7 @@ void FFV::NS_FS_E_Binary()
     {
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;
-      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_sq, dt, v00, m_buf, component_array, flop);
+      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_dp, dt, v00, m_buf, component_array, flop);
       TIMING_stop(tm_prj_frc_mod, flop);
 
       // 通信部分

@@ -318,7 +318,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
     flop = 0.0;
-    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_bcp, &flop);
+    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_sq, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -338,7 +338,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_bcp, &flop);
+    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_sq, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )

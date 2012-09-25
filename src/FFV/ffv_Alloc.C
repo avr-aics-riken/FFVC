@@ -264,6 +264,10 @@ void FFV::allocArray_Main(double &total)
   // d_sq
   if ( !(d_sq = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
+  // d_dp
+  if ( !(d_dp = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
 }
 
 
@@ -312,18 +316,6 @@ void FFV::allocArray_Prep(double &prep, double &total)
 }
 
 
-
-// Runge-Kutta法に用いる配列のアロケーション
-void FFV::allocArray_RK(double &total)
-{
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-  // d_dp
-  if ( !(d_dp = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-}
-
-
 // SOR2SMAのバッファ確保
 void FFV::allocate_SOR2SMA_buffer(double &total)
 {
@@ -367,11 +359,6 @@ void FFV::allocate_Main(double &total)
   if ( C.isHeatProblem() ) 
   {
     allocArray_Heat(total);
-  }
-  
-  if ( C.AlgorithmF == Control::Flow_FS_RK_CN ) 
-  {
-    allocArray_RK(total);
   }
   
   if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) 

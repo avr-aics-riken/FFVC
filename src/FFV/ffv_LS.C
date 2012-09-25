@@ -256,7 +256,7 @@ void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm, const double r0)
       TIMING_start(tm_poi_src_nrm);
       res = 0.0;
       flop = 0.0;
-      res_sor_prs_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
+      res_sor_prs_(&res, size, &guide, d_p, d_ws, d_sq, d_bcp, &flop);
       TIMING_stop(tm_poi_src_nrm, flop);
       
       if ( numProc > 1 )
@@ -316,7 +316,6 @@ double FFV::Point_SOR(ItrCtl* IC)
   TIMING_start(tm_poi_PSOR);
   flop_count = 0.0;
   psor_(d_p, size, &guide, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
-  //r = PSOR(p, d_ws, d_sq, bcp, IC, flop_count); //実装速度比較
   TIMING_stop(tm_poi_PSOR, flop_count);
   
   // 境界条件
@@ -693,7 +692,7 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
   // >>> Gmres section
   TIMING_start(tm_gmres_sor_sct);
   
-  double t_eps, beta, beta1, res, eps_abs, res_abs, al;
+  double beta, beta1, res, eps_abs, res_abs, al;
   double r4;
   double flop=0.0;
   
@@ -739,7 +738,7 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
     
     TIMING_start(tm_gmres_res_sample);
     flop = 0.0;
-    residual_(d_wg, size, &guide, &res_abs, d_ws, d_bcp, &flop); // d_wg <- b - Ax (= r); res_abs <- \sum{r^2}
+    residual_(d_wg, size, &guide, &res_abs, d_ws, d_sq, d_bcp, &flop); // d_wg <- b - Ax (= r); res_abs <- \sum{r^2}
     TIMING_stop(tm_gmres_res_sample, flop);
     
     
@@ -763,7 +762,7 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
     rm[1] = beta; // rm <- {\beta, 0, 0, ..., 0}^T
 
     
-    beta1 = 1.0d0 / beta;
+    beta1 = 1.0 / beta;
     
     orth_basis_(d_vm, size, &guide, &Nmax, &first, &beta1, d_wg, &flop); // d_vm(1) <- v^1 
     
@@ -788,7 +787,7 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
       }
       else
       {
-        cp_orth_basis_(d_zm, size, &guide, &Nmax, d_vm, &i); // z^i <- v^i
+        cp_orth_basis_(&d_zm[adrs], size, &guide, &d_vm[adrs]); // z^i <- v^i
       }
       
       TIMING_start(tm_gmres_mvprod);
@@ -919,7 +918,7 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
   
 jump_2:
   
-  res = SOR_2_SMA(IC);
+  res = SOR_2_SMA(IC, d_zm, d_vm, d_sq);
   
   
 jump_3:

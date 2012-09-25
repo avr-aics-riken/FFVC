@@ -18,17 +18,18 @@
 !! @param [out] rhs  定数ベクトルの自乗和
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [in]  div  div(u^*)/dt
+!! @param [in]  div  div(u^*)*dh/dt
+!! @param [in]  src  div(f)
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine poi_rhs (rhs, sz, g, div, bp, flop)
+    subroutine poi_rhs (rhs, sz, g, div, src, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop, rhs, dv, dd
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div, src
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
 
     ix = sz(1)
@@ -36,8 +37,8 @@
     kx = sz(3)
     rhs = 0.0
     
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*14.0d0
-! flop = flop + dble(ix)*dble(jx)*dble(kx)*19.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*15.0d0
+! flop = flop + dble(ix)*dble(jx)*dble(kx)*20.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(dv, dd, idx) &
@@ -55,8 +56,8 @@
     do j=1,jx
     do i=1,ix
       idx = bp(i,j,k)
-      dd = -1.0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
-      dv = dd * div(i,j,k)*dble(ibits(bp(i,j,k), Active, 1))
+      dd = -1.0d0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
+      dv = dd * (div(i,j,k) + src(i,j,k) ) * dble(ibits(bp(i,j,k), Active, 1))
       rhs = rhs + dv*dv
     end do
     end do
@@ -75,10 +76,11 @@
 !! @param [in]  g    ガイドセル長
 !! @param [in]  p    圧力
 !! @param [in]  src0 固定ソース項
+!! @param [in]  src1 反復ソース項
 !! @param [in]  bp   BCindex P
 !! @param [out] flop
 !<
-  subroutine res_sor_prs (res, sz, g, p, src0, bp, flop)
+  subroutine res_sor_prs (res, sz, g, p, src0, src1, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -86,7 +88,7 @@
   double precision                                          ::  flop, res
   real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
   real                                                      ::  dd, ss, dp
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
   ix = sz(1)
@@ -94,8 +96,8 @@
   kx = sz(3)
   res = 0.0
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*33.0d0
-! flop = flop + dble(ix)*dble(jx)*dble(kx)*38.0d0 ! DP
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*34.0d0
+! flop = flop + dble(ix)*dble(jx)*dble(kx)*39.0d0 ! DP
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
@@ -128,7 +130,8 @@
         + ndag_s * p(i  ,j-1,k  ) &
         + ndag_t * p(i  ,j  ,k+1) &
         + ndag_b * p(i  ,j  ,k-1) &
-        - src0(i,j,k)
+        - src0(i,j,k)             &
+        - src1(i,j,k)
     dp = dd*ss - p(i,j,k)
     res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
   end do

@@ -288,7 +288,6 @@ public:
   void allocArray_LES          (unsigned long &total);
   void allocArray_main         (unsigned long &total);
   void allocArray_prep         (unsigned long &prep, unsigned long &total);
-  void allocArray_RK           (unsigned long &total);
   void allocArray_CoarseMesh   (unsigned* r_size);
   void allocComponentArray     (unsigned long& m_prep, unsigned long& m_total, FILE* fp);
   

@@ -353,7 +353,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   {
     
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-    F.cnv_Div(d_ws, d_sq, size, guide, coef, flop);
+    F.cnv_Div(d_ws, d_dp, size, guide, coef, flop);
     
     tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -566,11 +566,11 @@ double FFV::Norm_Poisson(ItrCtl* IC)
   double flop_count;
   REAL_TYPE coef = deltaT/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
   
-  // divergenceの計算　d_sqに発散がストアされている
+  // divergenceの計算　d_dpに発散がストアされている
   TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
   TIMING_start(tm_norm_div_max);
   flop_count=0.0;
-  norm_v_div_max_(&nrm, size, &guide, d_sq, &coef, d_bcp, &flop_count);
+  norm_v_div_max_(&nrm, size, &guide, d_dp, &coef, d_bcp, &flop_count);
   TIMING_stop(tm_norm_div_max, flop_count);
   
   if ( numProc > 1 )
@@ -609,7 +609,7 @@ double FFV::Norm_Poisson(ItrCtl* IC)
       index[0] = 0;
       index[1] = 0;
       index[2] = 0;
-      norm_v_div_dbg_(&nrm, &rms, index, size, &guide, d_sq, &coef, d_bcp, &flop_count);
+      norm_v_div_dbg_(&nrm, &rms, index, size, &guide, d_dp, &coef, d_bcp, &flop_count);
       TIMING_stop(tm_norm_div_dbg, flop_count);
       
       //@todo ここで，最大値のグローバルなindexの位置を計算する

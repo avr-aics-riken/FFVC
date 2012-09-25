@@ -139,9 +139,9 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_poisson.f90
-  void poi_rhs_(double* rhs, int* sz, int* g, REAL_TYPE* dv, int* bp, double* flop);
+  void poi_rhs_(double* rhs, int* sz, int* g, REAL_TYPE* dv, REAL_TYPE* src, int* bp, double* flop);
   void psor_(REAL_TYPE* p,  int* sz, int* g, REAL_TYPE* omg, double* res, REAL_TYPE* s0, REAL_TYPE* s1, int* bp, double* flop);
-  void res_sor_prs_ (double* res, int* sz, int* g, REAL_TYPE* p, REAL_TYPE* src0, int* bp, double* flop);
+  void res_sor_prs_ (double* res, int* sz, int* g, REAL_TYPE* p, REAL_TYPE* src0, REAL_TYPE* src1, int* bp, double* flop);
   void psor2sma_core_(REAL_TYPE* p,  int* sz, int* g, int* ip, int* color, REAL_TYPE* omg, double* res, REAL_TYPE* s0,
                          REAL_TYPE* s1, int* bp, double* flop);
   void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key, int* nID);
@@ -151,9 +151,9 @@ extern "C" {
   //***********************************************************************************************
   // ffv_poisson2.f90
   void matvec_p_   (REAL_TYPE* ax,  int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
-  void residual_   (REAL_TYPE* rs,  int* sz, int* g, double* res_a, REAL_TYPE* div, int* bp, double* flop);
+  void residual_   (REAL_TYPE* rs,  int* sz, int* g, double* res_a, REAL_TYPE* div, REAL_TYPE* src, int* bp, double* flop);
   void orth_basis_ (REAL_TYPE* dst, int* sz, int* g, int* nc, int* l, double* s, REAL_TYPE* src, double* flop);
-  void cp_orth_basis_ (REAL_TYPE* z, int* sz, int* g, int* nc, REAL_TYPE* v, int* im);
+  void cp_orth_basis_ (REAL_TYPE* z, int* sz, int* g, REAL_TYPE* v);
   void copy_1_   (REAL_TYPE* dst, int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
   void copy_2_   (REAL_TYPE* dst, int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
   void ml_add_1_ (double* ac,     int* sz, int* g, int* nc, REAL_TYPE* s4, REAL_TYPE* s3, int* lm, double* flop);

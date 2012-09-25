@@ -89,18 +89,19 @@
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
 !! @param [out]    res_a 残差の自乗和
-!! @param [in]     div   rhs
+!! @param [in]     div   div(u) dh/dt
+!! @param [in]     src   div(f)
 !! @param [in]     bp    BCindex P
 !! @param [out]    flop  flop count
 !<
-  subroutine residual (rs, sz, g, res_a, div, bp, flop)
+  subroutine residual (rs, sz, g, res_a, div, src, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop, res_a, res
   real                                                      ::  al, dd
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, rs
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, rs, src
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
   ix = sz(1)
@@ -108,7 +109,7 @@
   kx = sz(3)
   res = 0.0
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*16.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*17.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(al, idx, dd) &
@@ -128,7 +129,7 @@
   do i=1,ix
     idx = bp(i,j,k)
     dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
-    al = ( -dd * div(i,j,k) - rs(i,j,k) ) * real(ibits(idx, Active, 1))
+    al = ( -dd * (div(i,j,k) + src(i,j,k)) - rs(i,j,k) ) * real(ibits(idx, Active, 1))
     rs(i,j,k) = al
     res = res + dble(al*al)
   end do
@@ -199,23 +200,21 @@
 !! @param [out] z    前処理された直交基底?  
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [in]  nc   サイズ
 !! @param [in]  v    直交基底
-!! @param [in]  im   列番号
 !<
-  subroutine cp_orth_basis (z, sz, g, nc, v, im)
+  subroutine cp_orth_basis (z, sz, g, v)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                     ::  i, j, k, ix, jx, kx, g, nc, im
+  integer                                                     ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                       ::  sz
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  z, v
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  z, v
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, im)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -228,7 +227,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    z(i, j, k, im) = v(i, j, k, im)
+    z(i, j, k) = v(i, j, k)
   end do
   end do
   end do
