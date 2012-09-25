@@ -179,7 +179,6 @@ private:
   REAL_TYPE *d_r_t;  ///< 粗格子の温度
   
   // GMRES
-  REAL_TYPE * d_xt;
   REAL_TYPE * d_wg;   ///< テンポラリの配列 [size] 
   REAL_TYPE * d_res;  ///< 残差 = b - Ax
   REAL_TYPE * d_vm;   ///< Kryolov subspaceの直交基底 [size*FREQ_OF_RESTART]
@@ -404,11 +403,12 @@ private:
   
   /**
    * @brief SOR2SMAの非同期通信処理
-   * @param [in]  col オーダリングカラーの番号
-   * @param [in]  ip  オーダリングカラー0の最初のインデクス
-   * @param [out] key 送信ID
+   * @param [in,out] d_x  解ベクトル
+   * @param [in]     col  オーダリングカラーの番号
+   * @param [in]     ip   オーダリングカラー0の最初のインデクス
+   * @param [out]    key  送信ID
    */
-  void comm_SOR2SMA(const int col, const int ip, MPI_Request* key);
+  void comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
   
   
   /**
@@ -916,9 +916,12 @@ private:
   
   
   /** 2色オーダリングSORのストライドメモリアクセス版
-   * @param [in] IC IterationCtlクラス
+   * @param [in]     IC   IterationCtlクラス
+   * @param [in,out] d_x  解ベクトル
+   * @param [in]     d_s0 ソースベクトル0
+   * @param [in]     d_s1 ソースベクトル1
    */
-  double SOR_2_SMA(ItrCtl* IC);
+  double SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_s1);
   
   
   /**
@@ -998,11 +1001,12 @@ private:
   
   /**
    * @brief SOR2SMAの非同期通信処理
+   * @param [in,out] d_x 同期する変数
    * @param [in]     col オーダリングカラーの番号
    * @param [in]     ip  オーダリングカラー0の最初のインデクス
    * @param [in,out] key 送信ID
    */
-  void wait_SOR2SMA(const int col, const int ip, MPI_Request* key);
+  void wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
   
   
   // for plot3d ---> ffv_plot3d.C

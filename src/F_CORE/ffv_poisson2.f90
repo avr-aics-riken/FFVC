@@ -22,7 +22,7 @@
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-  subroutine MatVec_p (ax, sz, g, p, bp, flop)
+  subroutine matvec_p (ax, sz, g, p, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -37,7 +37,7 @@
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*15.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*30.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, idx) &
@@ -79,7 +79,7 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine MatVec_p
+  end subroutine matvec_p
 
 
 
@@ -108,7 +108,7 @@
   kx = sz(3)
   res = 0.0
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*7.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*16.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(al, idx, dd) &
@@ -183,7 +183,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    v(i, j, k, l) = real(s) * res(i,j,k)
+    v(i, j, k, l) = real(s) * res(i, j, k)
   end do
   end do
   end do
@@ -192,6 +192,51 @@
 
   return
   end subroutine orth_basis
+
+
+!> ********************************************************************
+!! @brief コピー
+!! @param [out] z    前処理された直交基底?  
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  nc   サイズ
+!! @param [in]  v    直交基底
+!! @param [in]  im   列番号
+!<
+  subroutine cp_orth_basis (z, sz, g, nc, v, im)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                     ::  i, j, k, ix, jx, kx, g, nc, im
+  integer, dimension(3)                                       ::  sz
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, nc)  ::  z, v
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, im)
+
+#ifdef _DYNAMIC
+!$OMP DO SCHEDULE(dynamic,1)
+#elif defined _STATIC
+!$OMP DO SCHEDULE(static)
+#else
+!$OMP DO SCHEDULE(hoge)
+#endif
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    z(i, j, k, im) = v(i, j, k, im)
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine cp_orth_basis
 
 
 !> ********************************************************************

@@ -305,9 +305,9 @@
  *  @return 1次元インデクス
  */
 #define _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
-( size_t(_K+_VC-1) * size_t(_NI+2*_VC) * size_t(_NJ+2*_VC) \
-+ size_t(_J+_VC-1) * size_t(_NI+2*_VC) \
-+ size_t(_I+_VC-1) \
+( (size_t)(_K+_VC-1) * (size_t)(_NI+2*_VC) * (size_t)(_NJ+2*_VC) \
++ (size_t)(_J+_VC-1) * (size_t)(_NI+2*_VC) \
++ (size_t)(_I+_VC-1) \
 )
 
 
@@ -325,9 +325,9 @@
  *  @return 1次元インデクス
  */
 #define _F_IDX_S4DEX(_N,_I,_J,_K,_NN,_NI,_NJ,_NK,_VC) \
-( size_t(_NN) * \
+( (size_t)(_NN) * \
 _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
-+ size_t(_N) )
++ (size_t)(_N) )
 
 
 /** 3次元インデクス(3,i,j,k) -> 1次元インデクス変換マクロ
@@ -343,6 +343,23 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
  */
 #define _F_IDX_V3DEX(_N,_I,_J,_K,_NI,_NJ,_NK,_VC) (_F_IDX_S4DEX(_N,_I,_J,_K,3,_NI,_NJ,_NK,_VC))
 
+
+/** 4次元インデクス(i,j,k,n) -> 1次元インデクス変換マクロ
+ *  @note i,j,kインデクスはF表記、nはC表記
+ *  @param [in] _I  i方向インデクス
+ *  @param [in] _J  j方向インデクス
+ *  @param [in] _K  k方向インデクス
+ *  @param [in] _N  成分インデクス
+ *  @param [in] _NI i方向インデクスサイズ
+ *  @param [in] _NJ j方向インデクスサイズ
+ *  @param [in] _NK k方向インデクスサイズ
+ *  @param [in] _VC 仮想セル数
+ *  @return 1次元インデクス
+ */
+#define _F_IDX_S4D(_I,_J,_K,_N,_NI,_NJ,_NK,_VC) \
+( (size_t)(_N) * (size_t)(_NI+2*_VC) * (size_t)(_NJ+2*_VC) * (size_t)(_NK+2*_VC) \
++ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
+)
 
 /**
  * @brief 非同期通信のリクエストIDアクセス

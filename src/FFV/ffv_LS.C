@@ -28,7 +28,7 @@
 // #################################################################
 // SOR2SMAの非同期通信処理
 // 並列時のみコールされる
-void FFV::comm_SOR2SMA(const int col, const int ip, MPI_Request* key)
+void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key)
 {
   // cf_sz バッファサイズ
   // cf_x x方向のバッファ (cf_sz[0]*4) 
@@ -233,7 +233,7 @@ void FFV::LS_Binary(ItrCtl* IC, const double rhs_nrm, const double r0)
       break;
       
     case SOR2SMA:
-      res = SOR_2_SMA(IC); // return x^{m+1} - x^m
+      res = SOR_2_SMA(IC, d_p, d_ws, d_sq); // return x^{m+1} - x^m
       break;
       
     case GMRES:
@@ -305,7 +305,6 @@ double FFV::Point_SOR(ItrCtl* IC)
 	double res = 0.0;              /// 残差
   
   // d_p   圧力 p^{n+1}
-  // d_p0  圧力 p^n
 	// d_ws  非反復のソース項
   // d_sq  反復毎に変化するソース項
 	// d_bcp ビットフラグ
@@ -383,7 +382,7 @@ void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-double FFV::SOR_2_SMA(ItrCtl* IC)
+double FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_s1)
 {
   int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                  /// ip=0 > R, ip=1 > B
@@ -392,10 +391,9 @@ double FFV::SOR_2_SMA(ItrCtl* IC)
 	double res = 0.0;              /// 残差
   
   
-  // d_p   圧力 p^{n+1}
-  // d_p0  圧力 p^n
-	// d_ws  非反復のソース項
-  // d_sq  反復毎に変化するソース項
+  // d_x   圧力 p^{n+1}
+	// d_s0  非反復のソース項 d_ws
+  // d_s1  反復毎に変化するソース項 d_sq
 	// d_bcp ビットフラグ
   
   
@@ -426,13 +424,13 @@ double FFV::SOR_2_SMA(ItrCtl* IC)
     
     TIMING_start(tm_poi_SOR2SMA);
     flop_count = 0.0; // 色間で積算しない
-    psor2sma_core_(d_p, size, &guide, &ip, &color, &omg, &res, d_ws, d_sq, d_bcp, &flop_count);
+    psor2sma_core_(d_x, size, &guide, &ip, &color, &omg, &res, d_s0, d_s1, d_bcp, &flop_count);
     TIMING_stop(tm_poi_SOR2SMA, flop_count);
     
     // 境界条件
     TIMING_start(tm_poi_BC);
-    BC.OuterPBC(d_p);
-    if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_p, d_bcd);
+    BC.OuterPBC(d_x);
+    if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(d_x, d_bcd);
     TIMING_stop(tm_poi_BC, 0.0);
     
     TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
@@ -450,17 +448,17 @@ double FFV::SOR_2_SMA(ItrCtl* IC)
       
       if (IC->get_SyncMode() == comm_sync )
       {
-        if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+        if ( paraMngr->BndCommS3D(d_x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
       }
       else
       {
-        //if ( paraMngr->BndCommS3D_nowait(d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
-        //if ( paraMngr->wait_BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
-        //comm_SOR2SMA(color, ip, req);
-        //wait_SOR2SMA(color, ip, req);
+        //if ( paraMngr->BndCommS3D_nowait(d_x, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
+        //if ( paraMngr->wait_BndCommS3D  (d_x, size[0], size[1], size[2], guide, 1, req) != CPM_SUCCESS ) Exit(0);
+        //comm_SOR2SMA(d_x, color, ip, req);
+        //wait_SOR2SMA(d_x, color, ip, req);
         int ireq[12];
-        sma_comm_     (d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
-        sma_comm_wait_(d_p, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
+        sma_comm_     (d_x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
+        sma_comm_wait_(d_x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
       }
       TIMING_stop(tm_poi_comm, comm_size*0.5);
     }
@@ -486,7 +484,7 @@ double FFV::SOR_2_SMA(ItrCtl* IC)
 // #################################################################
 // SOR2SMAの非同期通信処理
 // 並列時のみコールされる
-void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
+void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key)
 {
   int ix = size[0];
   int jx = size[1];
@@ -516,7 +514,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
       int js= (k + ic + i) % 2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, face_p_recv, c)];
+        d_x[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, face_p_recv, c)];
         c++;
       }
     }
@@ -536,7 +534,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
       int js= (k + ic + i) % 2;
       
       for (int j=1+js; j<=jx; j+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, face_m_recv, c)];
+        d_x[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_x[_PACK(cx, face_m_recv, c)];
         c++;
       }
     }
@@ -556,7 +554,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
       int is= (k + ic + j) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, face_p_recv, c)];
+        d_x[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, face_p_recv, c)];
         c++;
       }
     }
@@ -576,7 +574,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
       int is= (k + ic + j) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, face_m_recv, c)];
+        d_x[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_y[_PACK(cy, face_m_recv, c)];
         c++;
       }
     }
@@ -596,7 +594,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
       int is= (j + ic + k) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, face_p_recv, c)];
+        d_x[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, face_p_recv, c)];
         c++;
       }
     }
@@ -616,7 +614,7 @@ void FFV::wait_SOR2SMA(const int col, const int ip, MPI_Request* key)
       int is= (j + ic + k) % 2;
       
       for (int i=1+is; i<=ix; i+=2) {
-        d_p[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, face_m_recv, c)];
+        d_x[ _F_IDX_S3D(i, j, k, ix, jx, kx, gd) ] = cf_z[_PACK(cz, face_m_recv, c)];
         c++;
       }
     }
@@ -687,11 +685,15 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
   // 残差収束チェック
   if ( res_rhs < eps_1 ) return res_rhs;
   
+  // d_wg : work
+  // d_ws : h^2 \Psi
+  // d_p  : x
+  // 
   
   // >>> Gmres section
   TIMING_start(tm_gmres_sor_sct);
   
-  double t_eps, beta, beta_1, res, eps_abs, res_abs, al;
+  double t_eps, beta, beta1, res, eps_abs, res_abs, al;
   double r4;
   double flop=0.0;
   
@@ -705,14 +707,6 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
   const int step = 3;
   int nrm  = 0;
   
-  if ( C.Mode.Precision == sizeof(float) )
-  {
-    t_eps = 0.995 * eps_2 * eps_2;
-  }
-  else
-  {
-    t_eps = 0.999 * eps_2 * eps_2;
-  }
   
   int Nmax = m+1; // 配列確保用，ゼロはダミー
       
@@ -721,12 +715,17 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
   double *sn = new double[Nmax+1];              // Sine   for Givens rotations
   double *rm = new double[Nmax+1];              // residual vector for minimization problem
   
+  memset(hg, 0, (Nmax+1)*(Nmax+1)*sizeof(double) );
+  memset(cs, 0, (Nmax+1)*sizeof(double) );
+  memset(sn, 0, (Nmax+1)*sizeof(double) );
+  memset(rm, 0, (Nmax+1)*sizeof(double) );
+  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int column = 1;
+  int first = 1;
 
   
   // Outer iteration
@@ -734,13 +733,13 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
     
     TIMING_start(tm_gmres_mvprod);
     flop = 0.0;
-    matvec_p_(d_wg, size, &guide, d_p, d_bcp, &flop);
+    matvec_p_(d_wg, size, &guide, d_p, d_bcp, &flop); // d_wg <- Ax
     TIMING_stop(tm_gmres_mvprod, flop);
     
     
     TIMING_start(tm_gmres_res_sample);
     flop = 0.0;
-    residual_(d_wg, size, &guide, &res_abs, d_ws, d_bcp, &flop);
+    residual_(d_wg, size, &guide, &res_abs, d_ws, d_bcp, &flop); // d_wg <- b - Ax (= r); res_abs <- \sum{r^2}
     TIMING_stop(tm_gmres_res_sample, flop);
     
     
@@ -753,26 +752,29 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
     TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
     
     
-    beta = sqrt(res_abs);
+    beta = sqrt(res_abs); // beta <- \|r\|_2
     
     // convergence check
     if (beta < eps_1) goto jump_2;
     
     
+    
     // set initial value of residual vector
-    rm[1] = beta;
-    for (int i=2; i<=Nmax; i++) {
-      rm[i] = 0.0;
-    }
+    rm[1] = beta; // rm <- {\beta, 0, 0, ..., 0}^T
+
     
-    beta_1 = 1.0/beta;
+    beta1 = 1.0d0 / beta;
     
-    orth_basis_(d_vm, size, &guide, &Nmax, &column, &beta_1, d_wg, &flop);
+    orth_basis_(d_vm, size, &guide, &Nmax, &first, &beta1, d_wg, &flop); // d_vm(1) <- v^1 
     
     
     
     // Orthogoanl basis
     for (int i=1; i<=m; i++) {
+      
+      // address
+      int g = guide;
+      size_t adrs = _F_IDX_S4D(1-g, 1-g, 1-g, i-1, size[0], size[1], size[2], guide);
       
       if ( mode_precond == 1)
       {
@@ -781,27 +783,17 @@ double FFV::Fgmres(ItrCtl* IC, const double res_rhs)
         
         // Inner-iteration
         for (int i_inner=1; i_inner<=n_inner; i_inner++) {
-          res = SOR_2_SMA(IC);
+          res = SOR_2_SMA(IC, &d_zm[adrs], &d_vm[adrs], d_sq); // z^i <- K^{-1} v^i
         }
       }
       else
       {
-        
+        cp_orth_basis_(d_zm, size, &guide, &Nmax, d_vm, &i); // z^i <- v^i
       }
-      copy_1_(d_res, size, &guide, &m, d_vm, &i);
-      
-      
-#pragma omp parallel for firstprivate(s_length)
-      for (int l=0; l<s_length; l++) {
-        d_xt[l] = 0.0;
-      }
-      
-      
-      copy_2_(d_zm, size, &guide, &Nmax, d_xt, &i);
       
       TIMING_start(tm_gmres_mvprod);
       flop = 0.0;
-      matvec_p_(d_xt, size, &guide, d_p, d_bcp, &flop);
+      matvec_p_(d_wg, size, &guide, &d_zm[adrs], d_bcp, &flop); // d_wg <- Az^i
       TIMING_stop(tm_gmres_mvprod, flop);
       
       
