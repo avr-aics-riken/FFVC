@@ -160,18 +160,20 @@ private:
   int *d_bcv;
   int *d_bh1;
   int *d_bh2;
-  REAL_TYPE *d_ws;
-  REAL_TYPE *d_p;
-  REAL_TYPE *d_sq;
-  REAL_TYPE *d_dp;
-  REAL_TYPE *d_p0;
-  REAL_TYPE *d_t;
-  REAL_TYPE *d_t0;
+  
+  REAL_TYPE *d_p;   ///< 圧力
+  REAL_TYPE *d_p0;  ///< 圧力（1ステップ前）
+  REAL_TYPE *d_ws;  ///< 反復中に固定のソース
+  REAL_TYPE *d_sq;  ///< 反復中に変化するソース
+  REAL_TYPE *d_div; ///< div(u)の保存
+  REAL_TYPE *d_b;   ///< Ax=bの右辺ベクトル
+  REAL_TYPE *d_t;   ///< 温度
+  REAL_TYPE *d_t0;  ///< 温度（1ステップ前）
   REAL_TYPE *d_vt;
   REAL_TYPE *d_vof;
-  REAL_TYPE *d_ap;
-  REAL_TYPE *d_at;
-  float *d_cvf;
+  REAL_TYPE *d_ap;  ///< 圧力（時間平均値）
+  REAL_TYPE *d_at;  ///< 温度（時間平均値）
+  float *d_cvf;     ///< 体積率
   
   // Coarse initial
   REAL_TYPE *d_r_v;  ///< 粗格子の速度
@@ -912,9 +914,9 @@ private:
    * @param [in]     IC   IterationCtlクラス
    * @param [in,out] d_x  解ベクトル
    * @param [in]     d_s0 ソースベクトル0
-   * @param [in]     d_s1 ソースベクトル1
+   * @param [in]     d_b ソースベクトル1
    */
-  double SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_s1);
+  double SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_b);
   
   
   /**

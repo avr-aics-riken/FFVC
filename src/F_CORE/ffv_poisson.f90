@@ -18,18 +18,17 @@
 !! @param [out] rhs  定数ベクトルの自乗和
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [in]  div  div(u^*)*dh/dt
-!! @param [in]  src  div(f)
+!! @param [in]  src  div(u^*)*dh/dt + div(f)
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine poi_rhs (rhs, sz, g, div, src, bp, flop)
+    subroutine poi_rhs (rhs, b, sz, g, src, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop, rhs, dv, dd
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div, src
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src, b
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
 
     ix = sz(1)
@@ -58,6 +57,7 @@
       idx = bp(i,j,k)
       dd = -1.0d0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
       dv = dd * (div(i,j,k) + src(i,j,k) ) * dble(ibits(bp(i,j,k), Active, 1))
+      b(i,j,k) = dv
       rhs = rhs + dv*dv
     end do
     end do

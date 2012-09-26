@@ -158,7 +158,7 @@ public:
   void mod_Dir_Forcing      (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
   void mod_Psrc_VBC         (REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE coef, 
                              int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
-  void mod_Psrc_Forcing     (REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, 
+  void mod_Psrc_Forcing     (REAL_TYPE* src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, 
                              REAL_TYPE** c_array, double& flop);
   void mod_Pvec_Flux        (REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop);
   void mod_Pvec_Forcing     (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);

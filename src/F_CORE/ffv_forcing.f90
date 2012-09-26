@@ -160,7 +160,7 @@
 
 !> ********************************************************************
 !! @brief 圧力損失部におけるPoissonのソース項を計算する
-!! @param[out] src ソース項
+!! @param [in,out] src ソース項
 !! @param sz 配列長
 !! @param g ガイドセル長
 !! @param st ループの開始インデクス
@@ -269,14 +269,14 @@
 
       include 'force.h' ! 179 flop
 
-      src(i,j,k) = cf * ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
+      src(i,j,k) = src(i,j,k) + cf * ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
     end do
     end do
     end do
 !$OMP END DO
 !$OMP END PARALLEL
     
-    flop = flop + dble(cz(1)+2)*(cz(2)+2)*(cz(3)+2)*200.0d0
+    flop = flop + dble(cz(1)+2)*(cz(2)+2)*(cz(3)+2)*201.0d0
 
     return
     end subroutine hex_psrc

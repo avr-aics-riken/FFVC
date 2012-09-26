@@ -651,7 +651,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
  @param c_array コンポーネントワーク配列の管理ポインタ
  @param[out] flop
  */
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE** c_array, double &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -673,7 +673,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* d_src, REAL_TYPE* d_v, int* d_bd, floa
     switch ( cmp[n].getType() )
     {
       case HEX:
-        hex_psrc_(d_src, size, &gd, st, ed, d_bd, d_cvf, w_ptr, csz, &n, v00, &dh, vec, &cmp[n].ca[0], &flop);
+        hex_psrc_(src, size, &gd, st, ed, d_bd, d_cvf, w_ptr, csz, &n, v00, &dh, vec, &cmp[n].ca[0], &flop);
         break;
         
       case FAN:

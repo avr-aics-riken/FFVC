@@ -61,7 +61,8 @@ void FFV::NS_FS_E_Binary()
   // d_p0  圧力 p^nの保持
   // d_ws  Poissonのソース項0　速度境界を考慮
   // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
-  // d_dp  発散値, div(u)の値を保持
+  // d_div 発散値, div(u)の値を保持
+  // d_b   反復の右辺ベクトル
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
   // d_bcv 速度のビットフラグ
@@ -289,13 +290,7 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_copy_array);
   flop = 0.0;
   U.xcopy(d_v, size, guide, d_vc, one, kind_vector, flop);
-  TIMING_stop(tm_copy_array, 0.0);
-  
-  
-  // 非反復ソース項のゼロクリア src0
-  TIMING_start(tm_assign_const);
-  U.xset(d_ws, size, guide, zero, kind_scalar);
-  TIMING_stop(tm_assign_const, 0.0);
+  TIMING_stop(tm_copy_array, flop);
   
   
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
@@ -316,11 +311,11 @@ void FFV::NS_FS_E_Binary()
   //hogehoge
   
   
-  // 反復ソース項のゼロクリア => src1
-  TIMING_start(tm_assign_const);
-  U.xset(d_sq, size, guide, zero, kind_scalar);
-  TIMING_stop(tm_assign_const, 0.0);
-  
+  // ソース項のコピー
+  TIMING_start(tm_copy_array);
+  flop = 0.0;
+  U.xcopy(d_sq, size, guide, d_ws, one, kind_scalar, flop);
+  TIMING_stop(tm_copy_array, flop);
   
   // Forcingコンポーネントによるソース項の寄与分
   if ( C.isForcing() == ON )
@@ -407,17 +402,17 @@ void FFV::NS_FS_E_Binary()
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
 
-    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dpはdiv(u)のテンポラリ保持に利用
+    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_divはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_(d_v, d_dp, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
+    update_vec_(d_v, d_div, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
     
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_dp, d_bcv, coef, CurrentTime, v00, m_buf, flop);
+    BC.mod_div(d_div, d_bcv, coef, CurrentTime, v00, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     
@@ -454,7 +449,7 @@ void FFV::NS_FS_E_Binary()
     {
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;
-      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_dp, dt, v00, m_buf, component_array, flop);
+      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_div, dt, v00, m_buf, component_array, flop);
       TIMING_stop(tm_prj_frc_mod, flop);
 
       // 通信部分

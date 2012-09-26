@@ -381,7 +381,7 @@ void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-double FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_s1)
+double FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_b)
 {
   int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                  /// ip=0 > R, ip=1 > B
@@ -392,7 +392,7 @@ double FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_
   
   // d_x   圧力 p^{n+1}
 	// d_s0  非反復のソース項 d_ws
-  // d_s1  反復毎に変化するソース項 d_sq
+  // d_b  反復毎に変化するソース項 d_sq
 	// d_bcp ビットフラグ
   
   
@@ -423,7 +423,7 @@ double FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_
     
     TIMING_start(tm_poi_SOR2SMA);
     flop_count = 0.0; // 色間で積算しない
-    psor2sma_core_(d_x, size, &guide, &ip, &color, &omg, &res, d_s0, d_s1, d_bcp, &flop_count);
+    psor2sma_core_(d_x, size, &guide, &ip, &color, &omg, &res, d_s0, d_b, d_bcp, &flop_count);
     TIMING_stop(tm_poi_SOR2SMA, flop_count);
     
     // 境界条件

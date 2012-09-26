@@ -4,15 +4,18 @@
 
 \subsection{反復処理}
 
-圧力のPoisson方程式は \textbf{式(\ref{eq:Poisson_from_FS})}を再掲すると，
+FFVCで扱う圧力のPoisson方程式は，次のような形式となる．
 
 \begin{equation}
-\nabla \left( \nabla p^{\,n+1} \right) \,=\, \frac{1}{\Delta t} div\, (u^{\,*}) \equiv \psi
-\label{eq:Poisson_from_FS2}
+\nabla \left( \nabla p^{\,n+1} \right) \,=\, \frac{1}{\Delta t} div\, ( \bm{u}^{\,*}) \,+\, div( \beta \bm{F} )
+\label{eq:Poisson_ffvc}
 \end{equation}
 
-ノイマン条件とディリクレ条件のフラグを導入し，\textbf{式(\ref{eq:ebcs_poisson3})}のように書ける．
-これを対角項が１となるようにスケーリングして，連立一次方程式$Ax = b$を得る．
+
+\noindent ここで，$\beta$は体積率，$\bm{F}$は外力ベクトルである．
+
+ノイマン条件とディリクレ条件のフラグを導入し，
+対角項が１となるようにスケーリングして，連立一次方程式$Ax = b$を得る．
 
 \begin{equation}
 \underbrace{ p  -  \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A x }
@@ -20,13 +23,15 @@
  \displaystyle { 
 \underbrace{ -
 \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
-\{ 
-h^2 \,\psi \,+\,  \psi^{BC}
-\}
+\left\{ 
+\frac{h}{\Delta t} \,\sum \limits_l u^*_l \,+\, \sum \limits_l (\beta F_l)
+\right\}
 } \limits_{ b }
 }
-\label{eq:ebcs_poisson_4}
+\label{eq:ebcs_poisson-discrete}
 \end{equation}
+
+\noindent 右辺ベクトルの第一項めは境界条件も含む．
 
 
 反復回数を$m$としてSOR法系の反復式を構成すると，
@@ -51,6 +56,64 @@ p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
 \end{array} \qquad \right \}
 \label{eq:poisson_iteration}
 \end{equation}
+
+
+
+\begin{algorithm}
+\caption{Iterative procedure in Fractional step method.}
+\label{algo:FS}
+\begin{algorithmic}
+
+\State Increment state : $\bm{u}^{\,n} \gets  \bm{u}^{\,n-1}, \quad p^{\,n} \gets  p^{\,n-1}$
+
+\State Evaluate space term : $\displaystyle{ \bm{w} \gets \frac{1}{Re} \frac{\partial^2 \bm{u}^{\,n}}{\partial x^2} \,-\, \frac{\partial}{\partial x} (\bm{u} \bm{u})^{\,n} }$
+
+\State Time integration : $\bm{u}^* \,=\, \bm{u}^n \,+\, \Delta t \, \bm{w}$
+
+\State External force : $\bm{u}^* += \Delta t \bm{f}$
+
+\State Boundary condition for $\bm{u}^*$
+
+\State Set initial value for iteration : $\bm{u}^{(0)} \,\gets \, \bm{u}^*$
+
+\State Calculate non-iterative source : $ \displaystyle{ \bm{s}_0 \gets \frac{\Delta x}{\Delta t} \sum \limits_l u^*_l }$
+
+\State Copy source term : $\bm{s}_1 \gets \bm{s}_0$
+
+\State Add iterative source and set initial value : $\bm{s}_1^{(0)} \gets \bm{s}_1 += \sum \limits_l (\beta F^n_l), \quad \bm{F}^n = f(\bm{u}^{\,n})$
+
+\State RHS vector of Poisson : $ \displaystyle{ \bm{b}^{(0)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \bm{s}_1^{(0)} \right) \,\equiv\,
+- \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
+\left\{ \frac{h}{\Delta t} \,\sum \limits_l u^*_l \,+\, \sum \limits_l (\beta F^n_l) \right\} }$
+
+\State Calculate $L_2$ norm of $\bm{b}^{(0)}$ : $\| \bm{b}^{(0)} \|_2$
+
+\State Calculate initial residual : $ \bm{r}^{(0)} \gets \bm{b}^{(0)} -A \bm{x}^{(0)}, \quad \bm{x}^{(0)} = \{p^n_0,\,p^n_1,\,...,p^n_{imax \times jmax \times kmax}\}^T$
+
+\State Take $L_2$ norm of $\bm{r}^{(0)}$ : $\| \bm{r}^{(0)} \|_2$
+
+\For {$m=0$ to IterationMax}
+
+\State Solve $A \bm{x}^{(m+1)} = \bm{b}^{(m)}$
+
+\State Update velocity : $\bm{u}^{(m+1)} \gets \bm{u}^* - \Delta t \,\nabla p^{(m+1)}$
+
+\State Calculate divergence : $\bm{dv} \gets div(\bm{u}^{(m+1)})$
+
+\State Calculate source term : $\bm{s}_1^{(m+1)} \gets \bm{s}_0 + \sum \limits_l \left(\beta F^{(m+1)}_l \right), \quad \bm{F}^{(m+1)} = f(\bm{u}^{(m+1)})$
+
+\State Calculate RHS vector : $ \displaystyle{ \bm{b}^{(m+1)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \bm{s}_1^{(m+1)} \right)}$
+
+\If {$(\bm{dv} < \varepsilon)$}
+\State Break Loop
+\EndIf
+
+\EndFor
+
+\end{algorithmic}
+\end{algorithm}
+
+
 
 
 %
