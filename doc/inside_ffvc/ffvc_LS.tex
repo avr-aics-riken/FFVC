@@ -24,7 +24,7 @@ FFVCで扱う圧力のPoisson方程式は，次のような形式となる．
 \underbrace{ -
 \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
 \left\{ 
-\frac{h}{\Delta t} \,\sum \limits_l u^*_l \,+\, \sum \limits_l (\beta F_l)
+\frac{\Delta x}{\Delta t} \,\sum \limits_l u^*_l \,+\, \Delta x \sum \limits_l (\beta F_l)
 \right\}
 } \limits_{ b }
 }
@@ -78,13 +78,11 @@ p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
 
 \State Calculate non-iterative source : $ \displaystyle{ \bm{s}_0 \gets \frac{\Delta x}{\Delta t} \sum \limits_l u^*_l }$
 
-\State Copy source term : $\bm{s}_1 \gets \bm{s}_0$
-
-\State Add iterative source and set initial value : $\bm{s}_1^{(0)} \gets \bm{s}_1 += \sum \limits_l (\beta F^n_l), \quad \bm{F}^n = f(\bm{u}^{\,n})$
+\State Add iterative source and set initial value : $\bm{s}_1^{(0)} \gets \bm{s}_0 + \Delta x \sum \limits_l (\beta F^n_l), \quad \bm{F}^n = f(\bm{u}^{\,n})$
 
 \State RHS vector of Poisson : $ \displaystyle{ \bm{b}^{(0)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \bm{s}_1^{(0)} \right) \,\equiv\,
 - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
-\left\{ \frac{h}{\Delta t} \,\sum \limits_l u^*_l \,+\, \sum \limits_l (\beta F^n_l) \right\} }$
+\left\{ \frac{\Delta x}{\Delta t} \,\sum \limits_l u^*_l \,+\, \Delta x \sum \limits_l (\beta F^n_l) \right\} }$
 
 \State Calculate $L_2$ norm of $\bm{b}^{(0)}$ : $\| \bm{b}^{(0)} \|_2$
 
@@ -98,13 +96,13 @@ p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
 
 \State Update velocity : $\bm{u}^{(m+1)} \gets \bm{u}^* - \Delta t \,\nabla p^{(m+1)}$
 
-\State Calculate divergence : $\bm{dv} \gets div(\bm{u}^{(m+1)})$
+\State Calculate divergence : $\displaystyle{ \bm{dv} \gets \frac{\Delta x}{\Delta t} \sum \limits_l u^{m+1}_l }$
 
-\State Calculate source term : $\bm{s}_1^{(m+1)} \gets \bm{s}_0 + \sum \limits_l \left(\beta F^{(m+1)}_l \right), \quad \bm{F}^{(m+1)} = f(\bm{u}^{(m+1)})$
+\State Calculate source term : $\bm{s}_1^{(m+1)} \gets \bm{s}_0 + \Delta x \sum \limits_l \left(\beta F^{(m+1)}_l \right), \quad \bm{F}^{(m+1)} = f(\bm{u}^{(m+1)})$
 
 \State Calculate RHS vector : $ \displaystyle{ \bm{b}^{(m+1)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \bm{s}_1^{(m+1)} \right)}$
 
-\If {$(\bm{dv} < \varepsilon)$}
+\If {$\displaystyle{ (\frac{\Delta t}{\Delta x} \times \bm{dv} < \varepsilon) }$}
 \State Break Loop
 \EndIf
 
