@@ -165,7 +165,7 @@ private:
   REAL_TYPE *d_p0;  ///< 圧力（1ステップ前）
   REAL_TYPE *d_ws;  ///< 反復中に固定のソース
   REAL_TYPE *d_sq;  ///< 反復中に変化するソース
-  REAL_TYPE *d_div; ///< div(u)の保存
+  REAL_TYPE *d_dv;  ///< div(u)の保存
   REAL_TYPE *d_b;   ///< Ax=bの右辺ベクトル
   REAL_TYPE *d_t;   ///< 温度
   REAL_TYPE *d_t0;  ///< 温度（1ステップ前）
@@ -461,9 +461,8 @@ private:
    * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
    * @param [in] ptr  BoundaryOuterクラスのポインタ
    * @param [in] R    Controlクラスのポインタ
-   * @param [in] flop 浮動小数点演算数
    */
-  void DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop);
+  void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
   
   /**
@@ -588,9 +587,10 @@ private:
   /**
    * @brief FGMRES
    * @param [in]     IC      ItrCtlクラス
-   * @param [in]     rhs_nrm Poisson定数項ベクトルのL2ノルム
+   * @param [in]     rhs_nrm RHS vectorのL2ノルム
+   * @param [in]     r0      初期残差ベクトル
    */
-  double Fgmres(ItrCtl* IC, const double rhs_nrm);
+  void Fgmres(ItrCtl* IC, const double rhs_nrm, const double r0);
   
   
   /**
@@ -633,11 +633,10 @@ private:
   
   
   /**
-   * @brief Poissonのノルムを計算する
-   * @retval 収束値
+   * @brief VP反復の発散値を計算する
    * @param [in] IC ItrCtlクラス
    */
-  double Norm_Poisson(ItrCtl* IC);
+  void Norm_Div(ItrCtl* IC);
   
   
   /**
@@ -716,9 +715,13 @@ private:
   
   
   /** SOR法
-   * @param [in] IC IterationCtlクラス
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
    */
-  double Point_SOR(ItrCtl* IC);
+  void Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
@@ -911,12 +914,13 @@ private:
   
   
   /** 2色オーダリングSORのストライドメモリアクセス版
-   * @param [in]     IC   IterationCtlクラス
-   * @param [in,out] d_x  解ベクトル
-   * @param [in]     d_s0 ソースベクトル0
-   * @param [in]     d_b ソースベクトル1
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
    */
-  double SOR_2_SMA(ItrCtl* IC, REAL_TYPE* d_x, REAL_TYPE* d_s0, REAL_TYPE* d_b);
+  void SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   
   /**

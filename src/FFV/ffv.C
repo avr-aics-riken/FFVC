@@ -213,7 +213,7 @@ double FFV::count_comm_size(const int sz[3], const int guide)
 // #################################################################
 // 外部計算領域の各面における総流量と対流流出速度を計算する
 // 流出境界のみ和をとる，その他は既知
-void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
+void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 {
   if ( !ptr ) Exit(0);
   BoundaryOuter* obc=NULL;
@@ -223,7 +223,6 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
   REAL_TYPE ddh;
   REAL_TYPE *vv, ec;
   REAL_TYPE u_sum, u_min, u_max, u_avr;
-  REAL_TYPE tmp_sum, tmp_min, tmp_max;
   int ofv;
   
 	ddh = deltaX * deltaX;
@@ -245,19 +244,16 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
     // 流出境界のモード
     if (ofv == V_AVERAGE) // average
     {
-      
       // 非境界面にはゼロなので，単に足し込むだけ
       u_sum = vv[0];
       
       if ( numProc > 1 ) 
       {
-        tmp_sum = u_sum;
+        REAL_TYPE tmp_sum = u_sum;
         if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       }
 
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
-      flop = flop + 1.0;
-      
     }
     else if (ofv == V_MINMAX) // minmax
     {
@@ -269,29 +265,26 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R, double& flop)
       
       if ( numProc > 1 )
       {
-        tmp_sum = u_sum;
-        tmp_min = u_min;
-        tmp_max = u_max;
+        REAL_TYPE tmp_sum = u_sum;
+        REAL_TYPE tmp_min = u_min;
+        REAL_TYPE tmp_max = u_max;
         if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         if ( paraMngr->Allreduce(&tmp_min, &u_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
         if ( paraMngr->Allreduce(&tmp_max, &u_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
       }
 
       u_avr = 0.5*(u_min+u_max);
-      flop = flop + 2.0;
       //Hostonly_ printf("*rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, u_avr);
     }
     else // 非OUTFLOW BCは速度がストアされている
     {
       u_sum = vv[0] * ec;
       u_avr = vv[0];
-      flop = flop + 1.0;
     }
     
     // コントロールクラスにコピー
     R->V_Dface[face] = u_avr;
     R->Q_Dface[face] = u_sum * ddh;
-    flop = flop + 1.0;
   }
   
 }
@@ -353,7 +346,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   {
     
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-    F.cnv_Div(d_ws, d_div, size, guide, coef, flop);
+    F.cnv_Div(d_ws, d_dv, size, guide, coef, flop);
     
     tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, pout);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -557,50 +550,36 @@ int FFV::MainLoop()
 
 
 // #################################################################
-// Poissonのノルムを計算する
-double FFV::Norm_Poisson(ItrCtl* IC)
+// V-P反復のdiv(u)ノルムを計算する
+void FFV::Norm_Div(ItrCtl* IC)
 {
   double nrm;
-  double rms;
-  double convergence; /// 収束判定値
   double flop_count;
-  REAL_TYPE coef = deltaT/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-  
-  // divergenceの計算
-  TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
-  TIMING_start(tm_norm_div_max);
-  flop_count=0.0;
-  norm_v_div_max_(&nrm, size, &guide, d_div, &coef, d_bcp, &flop_count);
-  TIMING_stop(tm_norm_div_max, flop_count);
-  
-  if ( numProc > 1 )
-  {
-    TIMING_start(tm_norm_comm);
-    double tmp;
-    tmp = nrm;
-    if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-    TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-  }
-  IC->set_div( nrm );
-  TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
-  
+  REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
+
   
   switch (IC->get_normType())
   {
-    case ItrCtl::dx_b:
-    case ItrCtl::r_b:
-    case ItrCtl::r_r0:
-      convergence = IC->get_normValue();
-      break;
-      
-      
-    case ItrCtl::v_div_max:
-      convergence = nrm; // ノルムは最大値を返す
-      IC->set_normValue( nrm );
-      break;
 
+    case ItrCtl::v_div_max:
+      TIMING_start(tm_norm_div_max);
+      flop_count=0.0;
+      norm_v_div_max_(&nrm, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+      TIMING_stop(tm_norm_div_max, flop_count);
       
-    case ItrCtl::v_div_dbg: // max( div(u) ) の判定を2回行うことになるが，debugなので．．
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_norm_comm);
+        double tmp;
+        tmp = nrm;
+        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      }
+      IC->set_normValue(nrm);
+      break;
+      
+      
+    case ItrCtl::v_div_dbg:
       TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
       
       TIMING_start(tm_norm_div_dbg);
@@ -609,24 +588,19 @@ double FFV::Norm_Poisson(ItrCtl* IC)
       index[0] = 0;
       index[1] = 0;
       index[2] = 0;
-      norm_v_div_dbg_(&nrm, &rms, index, size, &guide, d_div, &coef, d_bcp, &flop_count);
+      norm_v_div_dbg_(&nrm, index, size, &guide, d_dv, &coef, d_bcp, &flop_count);
       TIMING_stop(tm_norm_div_dbg, flop_count);
       
       //@todo ここで，最大値のグローバルなindexの位置を計算する
       
-      if ( numProc > 1 ) 
+      if ( numProc > 1 )
       {
         TIMING_start(tm_norm_comm);
         double tmp;
         tmp = nrm;
         if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-        tmp = rms;
-        if ( paraMngr->Allreduce(&tmp, &rms, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 和
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double)*2.0 ); // 双方向 x ノード数
       }
-      rms = sqrt(rms/(double)numProc); // RMS
-      convergence = nrm; // ノルムは最大値を返す
-      IC->set_normValue( convergence );
+      IC->set_normValue(nrm);
       
       Hostonly_ {
         H->printHistoryItr(fp_i, IC->LoopCount, nrm, index);
@@ -641,8 +615,6 @@ double FFV::Norm_Poisson(ItrCtl* IC)
       stamped_printf("\tInvalid convergence type\n");
       Exit(0);
   }
-  
-  return convergence;
 }
 
 

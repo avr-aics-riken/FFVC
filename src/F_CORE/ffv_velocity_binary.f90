@@ -643,18 +643,18 @@
 
 !> ********************************************************************
 !! @brief 次ステップのセルセンターの速度を更新
-!! @param[out] v n+1時刻の速度ベクトル
-!! @param[out] div 速度の発散値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dt 時間積分幅
-!! @param dh 格子幅
-!! @param vc 疑似速度ベクトル
-!! @param p 圧力
-!! @param bp BCindex P
-!! @param bv BCindex V
-!! @param v00 参照速度
-!! @param[out] flop flop count
+!! @param [out] v    n+1時刻の速度ベクトル
+!! @param [out] div  \sum {u^{n+1}}
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dt   時間積分幅
+!! @param [in]  dh   格子幅
+!! @param [in]  vc   疑似速度ベクトル
+!! @param [in]  p    圧力
+!! @param [in]  bp   BCindex P
+!! @param [in]  bv   BCindex V
+!! @param [in]  v00  参照速度
+!! @param [out] flop flop count
 !! @note 
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !!    - VBC(OUTFLOW, SPEC_VEL)の参照セルでは不定値となるが，InnerVBC()で上書き
@@ -665,7 +665,7 @@
     integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  dh, dt, dd, coef, actv, r_actv
+    real                                                      ::  dh, dt, dd, actv, r_actv
     real                                                      ::  pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt
     real                                                      ::  u_ref, v_ref, w_ref
     real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
@@ -685,10 +685,8 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    coef = dh/dt
     
-    ! loop : 2 + 6 + 6 + 36 + 18 + 25 + 15 = 108
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 16.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*107.0 + 16.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 26.0d0 ! DP
 
 
@@ -700,7 +698,7 @@
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref, coef)
+!$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -784,14 +782,13 @@
                   + (Vn - dd * pyn) * c4 &
                   - (Vs - dd * pys) * c3 &
                   + (Wt - dd * pzt) * c6 &
-                  - (Wb - dd * pzb) * c5 ) * coef * actv
+                  - (Wb - dd * pzb) * c5 ) * actv
       
       ! セルセンタの速度更新 15flop
       v(1,i,j,k) = ( Up0-px*dd )*actv + r_actv*u_ref
       v(2,i,j,k) = ( Vp0-py*dd )*actv + r_actv*v_ref
       v(3,i,j,k) = ( Wp0-pz*dd )*actv + r_actv*w_ref
-      
-      !if ( (i>=99) .and. (i<=103) .and. (j==100) .and. (k<=4) ) write (*,'(3I5,3F)') i,j,k,v(1,i,j,k),v(2,i,j,k),v(3,i,j,k)
+
     end do
     end do
     end do
@@ -802,24 +799,21 @@
     end subroutine update_vec
 
 !> ********************************************************************
-!! @brief 速度の発散を計算する
-!! @param div 速度の発散値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param coef 係数 dh/dt
-!! @param v0 疑似ベクトル
-!! @param bv BCindex V
-!! @param v00 参照速度
-!! @param[out] flop flop count
-!! @note divの値は計算対象のFluidセルでのみ有効であればよいので，bvを使ってよい
+!! @brief 速度の発散に使う\sum{u^*}を計算する
+!! @param [out] div  速度の発散値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  v0   疑似ベクトル
+!! @param [in]  bv   BCindex V
+!! @param [in]  v00  参照速度
+!! @param [out] flop flop count
 !<
-    subroutine divergence (div, sz, g, coef, v0, bv, v00, flop)
+    subroutine divergence (div, sz, g, v0, bv, v00, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  coef
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, actv
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                      ::  u_ref, v_ref, w_ref
@@ -838,7 +832,7 @@
     w_ref = v00(3)
     
     ! loop : 1 + 42 + 13
-    flop  = flop + dble(ix)*dble(jx)*dble(kx)*56.0d0
+    flop  = flop + dble(ix)*dble(jx)*dble(kx)*55.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bvx, actv) &
@@ -846,7 +840,7 @@
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, coef)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
@@ -863,7 +857,7 @@
       
       include 'd_o_o_p.h' ! 42flops
       
-      ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC) 
+      ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
       c_e = 1.0
       c_w = 1.0
       c_n = 1.0
@@ -878,7 +872,7 @@
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
       
       ! VBC面の影響をフラグで無効化 >> OBC_SPEC_VEL, OBC_WALL, OBC_SYMMETRIC, OBC_OUTFLOW  13flops
-      div(i,j,k) = ( Ue*c_e - Uw*c_w + Vn*c_n - Vs*c_s + Wt*c_t - Wb*c_b ) * coef * actv
+      div(i,j,k) = ( Ue*c_e - Uw*c_w + Vn*c_n - Vs*c_s + Wt*c_t - Wb*c_b ) * actv
     end do
     end do
     end do

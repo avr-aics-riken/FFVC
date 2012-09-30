@@ -14,23 +14,22 @@
 !<
 
 !> ********************************************************************
-!! @brief 有効セルに対する発散の最大値と自乗和を計算，絶対値の最大値の位置を返す
-!! @param ds 残差の絶対値
-!! @param rm 残差の自乗和
-!! @param idx ノルムの最大値の位置
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param div 発散値のベース
-!! @param coef 係数
-!! @param bp BCindex P
-!! @param flop
+!! @brief 有効セルに対する発散の最大値を計算，絶対値の最大値の位置を返す
+!! @param [out] ds   残差の絶対値
+!! @param [out] idx  ノルムの最大値の位置
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  div  発散値のベース
+!! @param [in]  coef 係数
+!! @param [in]  bp   BCindex P
+!! @param [in]  flop flop count
 !<
-    subroutine norm_v_div_dbg (ds, rm, idx, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_dbg (ds, idx, sz, g, div, coef, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
     integer, dimension(3)                                     ::  sz, idx
-    double precision                                          ::  flop, rm, ds, r, d
+    double precision                                          ::  flop, ds, r, d
     real                                                      ::  coef
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -43,9 +42,8 @@
     j0 = 0
     k0 = 0
     ds = 0.0
-    rm = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r, d) &
@@ -53,19 +51,17 @@
 !$OMP SHARED(ds, i0, j0, k0)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:rm)
     do k=1,kx
     do j=1,jx
     do i=1,ix
       r = dble(div(i,j,k) * coef) * dble(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
       d = abs(r)
-      rm = rm + r*r
       
       if ( d > ds ) then
 !$OMP CRITICAL

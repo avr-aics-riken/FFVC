@@ -51,6 +51,7 @@ void FFV::NS_FS_E_Binary()
   
   ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
+  ItrCtl* ICd = &IC[ItrCtl::ic_div];     /// 圧力-速度反復
 
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -61,7 +62,7 @@ void FFV::NS_FS_E_Binary()
   // d_p0  圧力 p^nの保持
   // d_ws  Poissonのソース項0　速度境界を考慮
   // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
-  // d_div 発散値, div(u)の値を保持
+  // d_dv  発散値, div(u)の値を保持
   // d_b   反復の右辺ベクトル
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
@@ -293,29 +294,34 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop(tm_copy_array, flop);
   
   
-  // 非VBC面に対してのみ，セルセンターの値から発散量を計算
+  // 非VBC面に対してのみ，セルセンターの値から \sum{u^*} を計算
   TIMING_start(tm_div_pvec);
   flop = 0.0;
-  divergence_(d_ws, size, &guide, &coef, d_vc, d_bcv, v00, &flop);
+  divergence_(d_ws, size, &guide, d_vc, d_bcv, v00, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
   
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, coef, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  
+
   // ソース項のコピー
-  TIMING_start(tm_copy_array);
-  flop = 0.0;
-  U.xcopy(d_sq, size, guide, d_ws, one, kind_scalar, flop);
-  TIMING_stop(tm_copy_array, flop);
+  //TIMING_start(tm_copy_array);
+  //flop = 0.0;
+  //U.xcopy(d_sq, size, guide, d_ws, one, kind_scalar, flop);
+  //TIMING_stop(tm_copy_array, flop);
+
+  // 反復ソースの初期化
+  TIMING_start(tm_assign_const);
+  U.xset(d_sq, size, guide, zero, kind_scalar);
+  TIMING_stop(tm_assign_const, 0.0);
   
   // Forcingコンポーネントによるソース項の寄与分
   if ( C.isForcing() == ON )
@@ -333,14 +339,13 @@ void FFV::NS_FS_E_Binary()
   //TIMING_stop(tm_prdc_src, flop);
   
   
-  
   // 定数項のL2ノルム　rhs_nrm
   if ( (ICp->get_normType() == ItrCtl::dx_b) || (ICp->get_normType() == ItrCtl::r_b) )
   {
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
     flop = 0.0;
-    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_sq, d_bcp, &flop);
+    poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -361,7 +366,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_sq, d_bcp, &flop);
+    poi_residual_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -396,23 +401,42 @@ void FFV::NS_FS_E_Binary()
   for (ICp->LoopCount=0; ICp->LoopCount< ICp->get_ItrMax(); ICp->LoopCount++) 
   {
     // 線形ソルバー
-    LS_Binary(ICp, rhs_nrm, res_init);
+    switch (ICp->get_LS())
+    {
+      case SOR:
+        Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init);
+        break;
+        
+      case SOR2SMA:
+        SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init);
+        break;
+        
+      case GMRES:
+        Fgmres(ICp, rhs_nrm, res_init);
+        break;
+        
+      default:
+        printf("\tInvalid Linear Solver for Pressure\n");
+        Exit(0);
+        break;
+    }
 
     
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
 
-    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_divはdiv(u)のテンポラリ保持に利用
+    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_(d_v, d_div, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
+    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
     
     // セルフェイス速度の境界条件による修正
+    // m_bufのアドレス計算に注意（Fortran <-> C）
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_div, d_bcv, coef, CurrentTime, v00, m_buf, flop);
+    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     
@@ -424,7 +448,7 @@ void FFV::NS_FS_E_Binary()
         if ( numProc > 1 ) 
         {
           TIMING_start(tm_prj_vec_bc_comm);
-          for (int n=0; n<=2*C.NoBC; n++) {
+          for (int n=0; n<2*C.NoBC; n++) {
             m_tmp[n] = m_buf[n];
           }
           if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
@@ -434,7 +458,7 @@ void FFV::NS_FS_E_Binary()
         for (int n=1; n<=C.NoBC; n++) {
           if ( cmp[n].getType() == OUTFLOW ) 
           {
-            cmp[n].val[var_Velocity] = m_buf[2*n]/m_buf[2*n+1]; // 無次元平均流速
+            cmp[n].val[var_Velocity] = m_buf[2*(n-1)]/m_buf[2*(n-1)+1]; // 無次元平均流速
           }
         }
       }
@@ -447,16 +471,17 @@ void FFV::NS_FS_E_Binary()
     // Forcingコンポーネントによる速度と発散値の修正
     if ( C.isForcing() == ON ) 
     {
+      // m_bufのアドレス計算に注意（Fortran <-> C）
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;
-      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_div, dt, v00, m_buf, component_array, flop);
+      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_dv, dt, v00, m_buf, component_array, flop);
       TIMING_stop(tm_prj_frc_mod, flop);
 
       // 通信部分
       if ( numProc > 1 ) 
       {
         TIMING_start(tm_prj_frc_mod_comm);
-        for (int n=0; n<=2*C.NoBC; n++) {
+        for (int n=0; n<2*C.NoBC; n++) {
           m_tmp[n] = m_buf[n];
         }
         if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
@@ -465,10 +490,9 @@ void FFV::NS_FS_E_Binary()
       for (int n=1; n<=C.NoBC; n++) {
         if ( cmp[n].isFORCING() ) 
         {
-          m_buf[2*n]   /= (REAL_TYPE)cmp[n].getElement();
-          m_buf[2*n+1] /= (REAL_TYPE)cmp[n].getElement();
-          cmp[n].val[var_Velocity] = m_buf[2*n];   // 平均速度
-          cmp[n].val[var_Pressure] = m_buf[2*n+1]; // 平均圧力損失量
+          REAL_TYPE aa = (REAL_TYPE)cmp[n].getElement();
+          cmp[n].val[var_Velocity] = m_buf[2*(n-1)]   / aa; // 平均速度
+          cmp[n].val[var_Pressure] = m_buf[2*(n-1)+1] / aa; // 平均圧力損失量
         }
       }
     }
@@ -485,7 +509,7 @@ void FFV::NS_FS_E_Binary()
     
     
     // ノルムの計算
-    convergence = Norm_Poisson(ICp);
+    Norm_Div(ICd);
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
     TIMING_start(tm_prj_frc_dir);
@@ -495,7 +519,7 @@ void FFV::NS_FS_E_Binary()
     */
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (convergence < ICp->get_eps()) ) break;
+    if ( (C.Hide.PM_Test == OFF) && (ICd->get_normValue() < ICd->get_eps()) ) break;
   } // end of iteration
 
   TIMING_stop(tm_poi_itr_sct, 0.0);
@@ -518,7 +542,7 @@ void FFV::NS_FS_E_Binary()
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
   flop=0.0;
-  DomainMonitor(BC.export_OBC(), &C, flop );
+  DomainMonitor(BC.export_OBC(), &C);
   TIMING_stop(tm_domain_monitor, flop);
   
   

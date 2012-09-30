@@ -159,31 +159,29 @@
     end subroutine force_keep_vec
 
 !> ********************************************************************
-!! @brief 圧力損失部におけるPoissonのソース項を計算する
-!! @param [in,out] src ソース項
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param bd BCindex ID
-!! @param vf コンポーネントの体積率
-!! @param wk テンポラリのワークベクトル 速度ベクトル (n+1,k)
-!! @param cz コンポーネントの配列長
-!! @param odr 速度境界条件のエントリ
-!! @param v00 参照速度
-!! @param dh 格子幅
-!! @param nv 法線ベクトル
-!! @param c 圧力損失部の係数
-!! @param[out] flop flop count
+!! @brief 圧力損失部におけるPoissonの反復ソース項を計算する
+!! @param [in,out] src  反復ソース項 \sum {\beta F}
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     st   ループの開始インデクス
+!! @param [in]     ed   ループの終了インデクス
+!! @param [in]     bd   BCindex ID
+!! @param [in]     vf   コンポーネントの体積率
+!! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル (n+1,k)
+!! @param [in]     cz   コンポーネントの配列長
+!! @param [in]     odr  速度境界条件のエントリ
+!! @param [in]     v00  参照速度
+!! @param [in]     nv   法線ベクトル
+!! @param [in]     c    圧力損失部の係数
+!! @param [out]    flop flop count
 !<
-    subroutine hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dh, nv, c, flop)
+    subroutine hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, nv, c, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
     double precision                                            ::  flop
-    real                                                        ::  dh, cf
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
@@ -217,7 +215,6 @@
     c3 = c(3)
     c4 = c(4)
     ep = c(5)         ! threshold
-    cf = -0.5*dh
 
     is = st(1)
     ie = ed(1)
@@ -225,11 +222,9 @@
     je = ed(2)
     ks = st(3)
     ke = ed(3)
-    
-
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
 !$OMP PRIVATE(idx, pick, es, ii, jj, kk) &
 !$OMP PRIVATE(be, bw, bn, bs, bt, bb, b0) &
@@ -269,14 +264,14 @@
 
       include 'force.h' ! 179 flop
 
-      src(i,j,k) = src(i,j,k) + cf * ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
+      src(i,j,k) = ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
     end do
     end do
     end do
 !$OMP END DO
 !$OMP END PARALLEL
     
-    flop = flop + dble(cz(1)+2)*(cz(2)+2)*(cz(3)+2)*201.0d0
+    flop = flop + dble(cz(1)+2)*(cz(2)+2)*(cz(3)+2)*200.0d0
 
     return
     end subroutine hex_psrc
@@ -399,24 +394,24 @@
 
 !> ********************************************************************
 !! @brief 圧力損失部における速度の修正と発散値の修正
-!! @param[in,out] v 速度ベクトル(n+1,k+1)
-!! @param[in,out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param bd BCindex ID
-!! @param vf コンポーネントの体積率
-!! @param wk テンポラリのワークベクトル 速度ベクトル (n+1,k)
-!! @param cz コンポーネントの配列長
-!! @param odr 速度境界条件のエントリ
-!! @param v00 参照速度
-!! @param dt 時間積分幅
-!! @param dh 格子幅
-!! @param nv 法線ベクトル
-!! @param c 圧力損失部の係数
-!! @param am 平均速度と圧損量
-!! @param[out] flop flop count
+!! @param [in,out] v    速度ベクトル(n+1,k+1)
+!! @param [in,out] div  速度の発散
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     st   ループの開始インデクス
+!! @param [in]     ed   ループの終了インデクス
+!! @param [in]     bd   BCindex ID
+!! @param [in]     vf   コンポーネントの体積率
+!! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル (n+1,k)
+!! @param [in]     cz   コンポーネントの配列長
+!! @param [in]     odr  速度境界条件のエントリ
+!! @param [in]     v00  参照速度
+!! @param [in]     dt   時間積分幅
+!! @param [in]     dh   格子幅
+!! @param [in]     nv   法線ベクトル
+!! @param [in]     c    圧力損失部の係数
+!! @param [in]     am   平均速度と圧損量
+!! @param [out]    flop flop count
 !<
     subroutine hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
     implicit none
@@ -425,7 +420,7 @@
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
     double precision                                            ::  flop
-    real                                                        ::  dt, dh, cf1, cf2, beta
+    real                                                        ::  dt, dh, beta
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
@@ -461,8 +456,6 @@
     c3 = c(3)
     c4 = c(4)
     ep = c(5)         ! threshold
-    cf1= 0.5*dt
-    cf2= 0.5*dh
 
     is = st(1)
     ie = ed(1)
@@ -475,7 +468,7 @@
     am2 = 0.0 ! 圧損量の積算値
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf1, cf2) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, dt) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
 !$OMP PRIVATE(idx, es, beta, pick, ii, jj, kk) &
 !$OMP PRIVATE(be, bw, bn, bs, bt, bb, b0) &
@@ -518,9 +511,9 @@
       include 'force.h' ! 179 flop
 
       ! 発散値の修正 セルフェイスのフラックスの和
-      div(i,j,k) = div(i,j,k) + cf2 * ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
+      div(i,j,k) = div(i,j,k) + dt * ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
 
-      beta = cf1 * b0 * q_p
+      beta = dt * b0 * q_p
       v(1,i,j,k) = v(1,i,j,k) + beta * Fx_p
       v(2,i,j,k) = v(2,i,j,k) + beta * Fy_p
       v(3,i,j,k) = v(3,i,j,k) + beta * Fz_p

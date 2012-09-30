@@ -723,26 +723,24 @@
 
 
 !> ********************************************************************
-!! @brief 内部速度指定境界条件による疑似速度の発散の修正
-!! @param [out] div  速度の発散
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  st   ループの開始インデクス
-!! @param [in]  ed   ループの終了インデクス
-!! @param [in]  v00  参照速度
-!! @param [in]  coef 係数 dx/dt
-!! @param [in]  bv   BCindex V
-!! @param [in]  odr  速度境界条件のエントリ
-!! @param [in]  vec  指定する速度ベクトル
-!! @param [out] flop flop count 近似
+!! @brief 内部速度指定境界条件による疑似速度の\sum{u}の修正
+!! @param [in,out] div  \sum{u}
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     st   ループの開始インデクス
+!! @param [in]     ed   ループの終了インデクス
+!! @param [in]     v00  参照速度
+!! @param [in]     bv   BCindex V
+!! @param [in]     odr  速度境界条件のエントリ
+!! @param [in]     vec  指定する速度ベクトル
+!! @param [out]    flop flop count 近似
 !<
-    subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, coef, bv, odr, vec, flop)
+    subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, bv, odr, vec, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                     ::  sz, st, ed
     double precision                                          ::  flop
-    real                                                      ::  coef
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
     real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref, m
     real, dimension(3)                                        ::  vec
@@ -763,10 +761,10 @@
     ke = ed(3)
     
     m = real( (ie-is+1)*(je-js+1)*(ke-ks+1) )
-    flop = flop + dble(m)*7.0d0 + 3.0d0
+    flop = flop + dble(m)*6.0d0 + 3.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr, coef) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
 !$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
 
 #ifdef _DYNAMIC
@@ -796,7 +794,7 @@
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) Wt_t = w_bc_ref
 
         ! VBCの面だけUe_tなどは値をもつ  対象セルは流体なのでマスク不要
-        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) * coef
+        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t )
       end if
     end do
     end do
@@ -810,28 +808,27 @@
 
 !> ********************************************************************
 !! @brief 内部流出境界条件による疑似速度ベクトルの発散の修正
-!! @param[out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param v00 参照速度
-!! @param cf u_out*dt/dh
-!! @param coef 係数
-!! @param bv BCindex V
-!! @param odr 速度境界条件のエントリ
-!! @param v0 セルセンター速度　u^n
-!! @param[out] flop flop count
+!! @param [in,out] div  速度の発散
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     st   ループの開始インデクス
+!! @param [in]     ed   ループの終了インデクス
+!! @param [in]     v00  参照速度
+!! @param [in]     cf   u_out*dt/dh
+!! @param [in]     bv   BCindex V
+!! @param [in]     odr  速度境界条件のエントリ
+!! @param [in]     v0   セルセンター速度　u^n
+!! @param [out]    flop flop count
 !! @note 流出境界面ではu_e^{n+1}=u_e^n-cf*(u_e^n-u_w^n)を予測値としてdivの寄与として加算．u_e^nの値は連続の式から計算する．
 !! @note flop countはコスト軽減のため近似
 !<
-    subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, coef, bv, odr, v0, flop)
+    subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, bv, odr, v0, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                     ::  sz, st, ed
     double precision                                          ::  flop
-    real                                                      ::  coef, m
+    real                                                      ::  m
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
@@ -857,7 +854,7 @@
     m = 0.0
     
 !$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, coef, cf) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
 !$OMP PRIVATE(bvx) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
@@ -928,7 +925,7 @@
         endif
 
         ! VBCの面だけUe_tなどは値をもつ
-        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) * coef ! 対象セルは流体なのでマスク不要
+        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) ! 対象セルは流体なのでマスク不要
         m = m + 1.0
       end if
     end do
@@ -937,47 +934,39 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + dble(m)*91.0d0
+    flop = flop + dble(m)*90.0d0
 
     return
     end subroutine div_ibc_oflow_pvec
     
 !> ********************************************************************
 !! @brief 内部流出境界条件によるn+1時刻の速度の発散の修正と流量の積算
-!! @param[in,out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param v00 参照速度
-!! @param coef 係数 h/dt
-!! @param bv BCindex V
-!! @param odr 速度境界条件のエントリ
-!! @param[out] av 積算流量と面積
-!! @param[out] flop flop count
+!! @param [in,out] div  速度の発散
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     st   ループの開始インデクス
+!! @param [in]     ed   ループの終了インデクス
+!! @param [in]     bv   BCindex V
+!! @param [in]     odr  速度境界条件のエントリ
+!! @param [out]    av   積算流量と面積
+!! @param [out]    flop flop count
 !! @note div(u)=0から，内部流出境界のセルで計算されたdivの値が流出速度となる
+!! @note 1つのセルに複数の速度境界条件がある場合にはだめ
 !! @note flop countはコスト軽減のため近似
 !<
-    subroutine div_ibc_oflow_vec (div, sz, g, st, ed, v00, coef, bv, odr, av, flop)
+    subroutine div_ibc_oflow_vec (div, sz, g, st, ed, bv, odr, av, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                     ::  sz, st, ed
     double precision                                          ::  flop
-    real                                                      ::  coef, rc
-    real                                                      ::  u_ref, v_ref, w_ref, dv, a1, m
-    real, dimension(0:3)                                      ::  v00
+    real                                                      ::  dv, a1, m
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(2)                                        ::  av
     
-    ! 参照速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     a1 = 0.0
     m = 0.0
-    rc = 1.0/coef
 
     is = st(1)
     ie = ed(1)
@@ -986,12 +975,11 @@
     ks = st(3)
     ke = ed(3)
 
-    flop = flop + 8.0d0 ! DP 13 flop
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a1) &
 !$OMP REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, rc, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
 !$OMP PRIVATE(bvx, dv)
 
 #ifdef _DYNAMIC
@@ -1007,30 +995,30 @@
     do i=is,ie
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
-        dv = div(i,j,k) * rc
+        dv = div(i,j,k)
         
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then ! u_w
-          a1 = a1 + dv - u_ref
+          a1 = a1 + dv
         endif
         
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then ! u_e
-          a1 = a1 - dv - u_ref
+          a1 = a1 - dv
         endif
         
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
-          a1 = a1 + dv - v_ref
+          a1 = a1 + dv
         endif
         
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
-          a1 = a1 - dv - v_ref
+          a1 = a1 - dv
         endif
         
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
-          a1 = a1 + dv - w_ref
+          a1 = a1 + dv
         endif
         
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
-          a1 = a1 - dv - w_ref
+          a1 = a1 - dv
         endif
 
         div(i,j,k) = 0.0 ! 対象セルは発散をゼロにする
@@ -1044,7 +1032,7 @@
 
     av(1) = a1
     av(2) = m
-    flop = flop + dble(m)*13.0d0
+    flop = flop + dble(m)*2.0d0
 
     return
     end subroutine div_ibc_oflow_vec

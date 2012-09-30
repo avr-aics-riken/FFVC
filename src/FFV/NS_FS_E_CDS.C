@@ -51,6 +51,7 @@ void FFV::NS_FS_E_CDS()
   
   ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
   ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
+  ItrCtl* ICd = &IC[ItrCtl::ic_div];     /// 圧力-速度反復
   
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -305,7 +306,7 @@ void FFV::NS_FS_E_CDS()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, coef, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
   
@@ -318,7 +319,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
     flop = 0.0;
-    poi_rhs_(&rhs_nrm, size, &guide, d_ws, d_sq, d_bcp, &flop);
+    poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -338,7 +339,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    res_sor_prs_(&res_init, size, &guide, d_p, d_ws, d_sq, d_bcp, &flop);
+    poi_residual_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -397,7 +398,25 @@ void FFV::NS_FS_E_CDS()
     // <<< Poisson Iteration subsection 1
 
     // 線形ソルバー
-    LS_Binary(ICp, rhs_nrm, res_init);
+    switch (ICp->get_LS())
+    {
+      case SOR:
+        Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
+        break;
+        
+      case SOR2SMA:
+        SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
+        break;
+        
+      case GMRES:
+        Fgmres(ICp, rhs_nrm, res_init); // return ?
+        break;
+        
+      default:
+        printf("\tInvalid Linear Solver for Pressure\n");
+        Exit(0);
+        break;
+    }
     
 
     // >>> Poisson Iteration subsection 4
@@ -412,7 +431,7 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_sq, d_bcv, coef, CurrentTime, v00, m_buf, flop);
+    BC.mod_div(d_sq, d_bcv, CurrentTime, v00, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分
@@ -423,7 +442,7 @@ void FFV::NS_FS_E_CDS()
         if ( numProc > 1 )
         {
           TIMING_start(tm_prj_vec_bc_comm);
-          for (int n=0; n<=2*C.NoBC; n++) {
+          for (int n=0; n<2*C.NoBC; n++) {
             m_tmp[n] = m_buf[n];
           }
           if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
@@ -484,7 +503,7 @@ void FFV::NS_FS_E_CDS()
  
     
     // ノルムの計算
-    convergence = Norm_Poisson(ICp);
+    Norm_Div(ICd);
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
      TIMING_start(tm_prj_frc_dir);
@@ -516,7 +535,7 @@ void FFV::NS_FS_E_CDS()
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
   flop=0.0;
-  DomainMonitor(BC.export_OBC(), &C, flop);
+  DomainMonitor(BC.export_OBC(), &C);
   TIMING_stop(tm_domain_monitor, flop);
   
   // 流出境界のガイドセル値の更新

@@ -2135,24 +2135,22 @@
 
 !> ********************************************************************
 !! @brief 外部指定境界条件による速度の発散の修正
-!! @param[out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param face 面番号
-!! @param v00 参照速度
-!! @param coef 係数
-!! @param bv BCindex V
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop flop count
+!! @param [in,out] div   速度の発散
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     face  面番号
+!! @param [in]     v00   参照速度
+!! @param [in]     bv    BCindex V
+!! @param [in]     vec   指定する速度ベクトル
+!! @param [out]    flop flop count
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !<
-    subroutine div_obc_drchlt (div, sz, g, face, v00, coef, bv, vec, flop)
+    subroutine div_obc_drchlt (div, sz, g, face, v00, bv, vec, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  coef
     real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
     real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  vec
@@ -2168,11 +2166,11 @@
     rkx = dble(ix)*dble(jx)
     
     ! 参照座標系の速度に係数をかけておく
-    u_bc_ref = (vec(1) + v00(1)) * coef
-    v_bc_ref = (vec(2) + v00(2)) * coef
-    w_bc_ref = (vec(3) + v00(3)) * coef
+    u_bc_ref = (vec(1) + v00(1))
+    v_bc_ref = (vec(2) + v00(2))
+    w_bc_ref = (vec(3) + v00(3))
     
-    flop = flop + 6.0d0
+    flop = flop + 3.0d0
 
 !$OMP PARALLEL REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, face) &
@@ -2326,25 +2324,24 @@
 
 !> ********************************************************************
 !! @brief 外部流出境界条件による疑似速度ベクトルの発散の修正
-!! @param[out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param face 面番号
-!! @param v00 参照速度
-!! @param v_out u_out*dt/dh
-!! @param coef 係数 dh/dt
-!! @param bv BCindex V
-!! @param v0 速度ベクトル u^n
-!! @param[out] flop flop count
+!! @param [in,out] div   速度の発散
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     face  面番号
+!! @param [in]     v00   参照速度
+!! @param [in]     v_out u_out*dt/dh
+!! @param [in]     bv    BCindex V
+!! @param [in]     v0    速度ベクトル u^n
+!! @param [out]    flop  flop count
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !<
-    subroutine div_obc_oflow_pvec (div, sz, g, face, v00, v_out, coef, bv, v0, flop)
+    subroutine div_obc_oflow_pvec (div, sz, g, face, v00, v_out, bv, v0, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  coef, v_out
+    real                                                      ::  v_out
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real                                                      ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
@@ -2367,7 +2364,7 @@
     m = 0.0
 
 !$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, face, coef, v_out) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, face, v_out) &
 !$OMP PRIVATE(i, j, k, bvx) &
 !$OMP PRIVATE(Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
@@ -2397,7 +2394,7 @@
           
           Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
           Uw_t = Uw - v_out*(Ue-Uw)
-          div(i,j,k) = div(i,j,k) - Uw_t * coef
+          div(i,j,k) = div(i,j,k) - Uw_t
           m = m + 1.0
         endif
       end do
@@ -2425,7 +2422,7 @@
           
           Ue = Uw - (Vn - Vs + Wt - Wb)
           Ue_t = Ue - v_out*(Ue-Uw)
-          div(i,j,k) = div(i,j,k) + Ue_t * coef
+          div(i,j,k) = div(i,j,k) + Ue_t
           m = m + 1.0
         endif
       end do
@@ -2453,7 +2450,7 @@
         
           Vs = Vn + (Ue - Uw + Wt - Wb)
           Vs_t = Vs - v_out*(Vn-Vs)
-          div(i,j,k) = div(i,j,k) - Vs_t * coef
+          div(i,j,k) = div(i,j,k) - Vs_t
           m = m + 1.0
         endif
       end do
@@ -2481,7 +2478,7 @@
         
           Vn = Vs - (Ue - Uw + Wt - Wb)
           Vn_t = Vn - v_out*(Vn-Vs)
-          div(i,j,k) = div(i,j,k) + Vn_t * coef
+          div(i,j,k) = div(i,j,k) + Vn_t
           m = m + 1.0
         endif
       end do
@@ -2509,7 +2506,7 @@
         
           Wb = Wt + (Ue - Uw + Vn - Vs)
           Wb_t = Wb - v_out*(Wt-Wb)
-          div(i,j,k) = div(i,j,k) - Wb_t * coef
+          div(i,j,k) = div(i,j,k) - Wb_t
           m = m + 1.0
         endif
       end do
@@ -2537,7 +2534,7 @@
         
           Wt = Wb - (Ue - Uw + Vn - Vs)
           Wt_t = Wt - v_out*(Wt-Wb)
-          div(i,j,k) = div(i,j,k) + Wt_t * coef
+          div(i,j,k) = div(i,j,k) + Wt_t
           m = m + 1.0
         endif
       end do
@@ -2549,32 +2546,31 @@
 
 !$OMP END PARALLEL
     
-    flop = flop + dble(m)*51.0d0
+    flop = flop + dble(m)*50.0d0
 
     return
     end subroutine div_obc_oflow_pvec
 
 !> ********************************************************************
 !! @brief 外部流出境界条件による速度ベクトルの発散の修正
-!! @param[out] div 速度の発散
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param face 面番号
-!! @param v00 参照速度
-!! @param coef 係数
-!! @param bv BCindex V
-!! @param[out] aa 領域境界の積算値
-!! @param[out] flop flop count 近似
+!! @param [in,out] div  \sum{u}
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     face 面番号
+!! @param [in]     v00  参照速度
+!! @param [in]     bv   BCindex V
+!! @param [out]    aa   領域境界の積算値
+!! @param [out]    flop flop count 近似
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !!       div(u)=0から，内部流出境界のセルで計算されたdivが流出速度となる
 !<
-    subroutine div_obc_oflow_vec (div, sz, g, face, v00, coef, bv, aa, flop)
+    subroutine div_obc_oflow_vec (div, sz, g, face, v00, bv, aa, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  coef, dv, a1, a2, a3, u_ref, v_ref, w_ref, rc
+    real                                                      ::  dv, a1, a2, a3, u_ref, v_ref, w_ref
     real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  aa
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
@@ -2591,10 +2587,6 @@
     a2 = 1.0e6 ! min
     a3 =-1.0e6 ! max
     
-    rc = 1.0/coef
-
-    flop = flop + 8.0d0 ! DP 13 flop
-    
     ! 参照速度
     u_ref = v00(1)
     v_ref = v00(2)
@@ -2605,14 +2597,12 @@
 !$OMP REDUCTION(min:a2) &
 !$OMP REDUCTION(max:a3) &
 !$OMP REDUCTION(+:flop) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, rc, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, face) &
 !$OMP PRIVATE(i, j, k, bvx, dv)
 
     FACES : select case (face)
     
     case (X_minus)
-      i = 1
-      
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2622,24 +2612,22 @@
 #endif
       do k=1,kx
       do j=1,jx
-        bvx = bv(i,j,k)
+        bvx = bv(1,j,k)
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          dv = div(i,j,k) * rc - u_ref
+          dv = div(1,j,k) - u_ref
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
-          div(i,j,k) = 0.0 ! 対象セルは発散をゼロにする
+          div(1,j,k) = 0.0 ! 対象セルは発散をゼロにする
         endif
       end do
       end do
 !$OMP END DO
       
-      flop = flop + rix*5.0d0
+      flop = flop + rix*4.0d0
       
       
     case (X_plus)
-      i = ix
-      
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2649,24 +2637,22 @@
 #endif
       do k=1,kx
       do j=1,jx
-        bvx = bv(i,j,k)
+        bvx = bv(ix,j,k)
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          dv = -div(i,j,k) * rc  - u_ref
+          dv = -div(ix,j,k) - u_ref
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
-          div(i,j,k) = 0.0
+          div(ix,j,k) = 0.0
         endif
       end do
       end do
 !$OMP END DO
 
-      flop = flop + rix*5.0d0
+      flop = flop + rix*4.0d0
       
       
     case (Y_minus)
-      j = 1
-      
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2676,24 +2662,22 @@
 #endif
       do k=1,kx
       do i=1,ix
-        bvx = bv(i,j,k)
+        bvx = bv(i,1,k)
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          dv = div(i,j,k) * rc - v_ref
+          dv = div(i,1,k) - v_ref
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
-          div(i,j,k) = 0.0
+          div(i,1,k) = 0.0
         endif
       end do
       end do
 !$OMP END DO
 
-      flop = flop + rjx*5.0d0
+      flop = flop + rjx*4.0d0
       
       
     case (Y_plus)
-      j = jx
-      
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2703,23 +2687,22 @@
 #endif
       do k=1,kx
       do i=1,ix
-        bvx = bv(i,j,k)
+        bvx = bv(i,jx,k)
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          dv = -div(i,j,k) * rc - v_ref
+          dv = -div(i,jx,k) - v_ref
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
-          div(i,j,k) = 0.0
+          div(i,jx,k) = 0.0
         endif
       end do
       end do
 !$OMP END DO
 
-      flop = flop + rjx*5.0d0
+      flop = flop + rjx*4.0d0
     
     
     case (Z_minus)
-      k = 1
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2729,23 +2712,22 @@
 #endif
       do j=1,jx
       do i=1,ix
-        bvx = bv(i,j,k)
+        bvx = bv(i,j,1)
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          dv = div(i,j,k) * rc - w_ref
+          dv = div(i,j,1) - w_ref
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
-          div(i,j,k) = 0.0
+          div(i,j,1) = 0.0
         endif
       end do
       end do
 !$OMP END DO
 
-      flop = flop + rkx*5.0d0
+      flop = flop + rkx*4.0d0
       
       
     case (Z_plus)
-      k = kx
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
@@ -2755,19 +2737,19 @@
 #endif
       do j=1,jx
       do i=1,ix
-        bvx = bv(i,j,k)
+        bvx = bv(i,j,kx)
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          dv = -div(i,j,k) * rc - w_ref
+          dv = -div(i,j,kx) - w_ref
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
-          div(i,j,k) = 0.0
+          div(i,j,kx) = 0.0
         endif
       end do
       end do
 !$OMP END DO
 
-      flop = flop + rkx*5.0d0
+      flop = flop + rkx*4.0d0
     
     case default
     end select FACES

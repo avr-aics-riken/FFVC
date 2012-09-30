@@ -2,7 +2,7 @@
 %
 \section{圧力のPoisson方程式}
 
-\subsection{反復処理}
+\subsection{反復アルゴリズム}
 
 FFVCで扱う圧力のPoisson方程式は，次のような形式となる．
 
@@ -15,16 +15,18 @@ FFVCで扱う圧力のPoisson方程式は，次のような形式となる．
 \noindent ここで，$\beta$は体積率，$\bm{F}$は外力ベクトルである．
 
 ノイマン条件とディリクレ条件のフラグを導入し，
-対角項が１となるようにスケーリングして，連立一次方程式$Ax = b$を得る．
+対角項が１となるようにスケーリングして，連立一次方程式$Ax = b$を得る．ここで$Face$はセルを構成する面，$\bm{n}$は各面の外側法線ベクトルとする．
 
 \begin{equation}
-\underbrace{ p  -  \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \sum \limits_l {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A x }
+\underbrace{ p  -  \frac{1}{\sum \limits_{l}^{Face} \phi^{\,N}_{\,l}} \sum \limits_l^{Face} {\left( p \,\phi^{\,D} \,\phi^{\,N} \right)}_{\,l} } \limits_{A x }
 \,=\,
  \displaystyle { 
 \underbrace{ -
-\frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
+\frac{1}{\sum \limits_l^{Face} \phi^{\,N}_{\,l}} 
 \left\{ 
-\frac{\Delta x}{\Delta t} \,\sum \limits_l u^*_l \,+\, \Delta x \sum \limits_l (\beta F_l)
+\frac{\Delta x}{\Delta t} \,\sum \limits_l^{Face} \left( \bm{u}^*_l \cdot \bm{n}_l \right)
+\,+\, 
+\Delta x \sum \limits_l^{Face} \left( \beta \bm{F}_l \cdot \bm{n}_l \right)
 \right\}
 } \limits_{ b }
 }
@@ -34,30 +36,7 @@ FFVCで扱う圧力のPoisson方程式は，次のような形式となる．
 \noindent 右辺ベクトルの第一項めは境界条件も含む．
 
 
-反復回数を$m$としてSOR法系の反復式を構成すると，
-
-\begin{equation}
-\left.
-\begin{array}{lll}
-\vspace{2mm}
-\tilde{p} & = & \displaystyle {  b \, + \,
- \frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} \sum \limits_l {\left( p^m \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
- \,=\,
-\frac{1}{\sum \limits_l \left( \, \phi^{\,N}_{\,l} \, \right)} 
-\left \{ \,
-\sum \limits_l {\left( p^m \,\phi^{\,D} \,\phi^{\,N}\right)}_{\,l} 
-- \left( h^2 \,\psi \,+\,  \psi^{BC} \, \right)
-\, \right \} } \\
-\vspace{2mm}
-\Delta p & = & \tilde{p} \,-\, p^{\,m} \\
-\vspace{5mm}
-p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
-
-\end{array} \qquad \right \}
-\label{eq:poisson_iteration}
-\end{equation}
-
-
+Fractional step法を基本に，$\bm{u}^{n+1}$に基づく体積力を圧力反復過程に組み込まむ場合，収束判定は圧力Poisson方程式の収束と速度-圧力反復過程での非圧縮条件の2つを考える．
 
 \begin{algorithm}
 \caption{Iterative procedure in Fractional step method.}
@@ -76,13 +55,11 @@ p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
 
 \State Set initial value for iteration : $\bm{u}^{(0)} \,\gets \, \bm{u}^*$
 
-\State Calculate non-iterative source : $ \displaystyle{ \bm{s}_0 \gets \frac{\Delta x}{\Delta t} \sum \limits_l u^*_l }$
+\State Calculate a part of non-iterative source : $ \displaystyle{ \bm{s}_0 \gets \sum \limits_l^{Face} \left( \bm{u}^*_l \cdot \bm{n}_l \right) }$
 
-\State Add iterative source and set initial value : $\bm{s}_1^{(0)} \gets \bm{s}_0 + \Delta x \sum \limits_l (\beta F^n_l), \quad \bm{F}^n = f(\bm{u}^{\,n})$
+\State Calculate a part of iterative source : $\bm{s}_1 \gets \sum \limits_l^{Face} \left( \beta \bm{F}_l^n \cdot \bm{n}_l \right)$
 
-\State RHS vector of Poisson : $ \displaystyle{ \bm{b}^{(0)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \bm{s}_1^{(0)} \right) \,\equiv\,
-- \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} 
-\left\{ \frac{\Delta x}{\Delta t} \,\sum \limits_l u^*_l \,+\, \Delta x \sum \limits_l (\beta F^n_l) \right\} }$
+\State Initial RHS vector of Poisson : $ \displaystyle{ \bm{b}^{(0)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \frac{\Delta x}{\Delta t} \, \bm{s}_0 + \Delta x \, \bm{s}_1 \right) }$
 
 \State Calculate $L_2$ norm of $\bm{b}^{(0)}$ : $\| \bm{b}^{(0)} \|_2$
 
@@ -90,20 +67,31 @@ p^{\,m+1} & = & p^{\,m} \,+\, \omega\, \,\Delta p \\
 
 \State Take $L_2$ norm of $\bm{r}^{(0)}$ : $\| \bm{r}^{(0)} \|_2$
 
-\For {$m=0$ to IterationMax}
+\For {$m=0$ to VP-IterMax}
 
-\State Solve $A \bm{x}^{(m+1)} = \bm{b}^{(m)}$
+\State $\bm{x}^{(k)} \gets \bm{x}^{(m)}$
+\State $\bm{b}^{(k)} \gets \bm{b}^{(m)}$
+
+\For {$k=0$ to P-IterMax}
+
+\State Solve $A \bm{x}^{(k+1)} = \bm{b}^{(k)}$
+
+\If {convergence}
+\State Break k-Loop
+\EndIf
+
+\EndFor
 
 \State Update velocity : $\bm{u}^{(m+1)} \gets \bm{u}^* - \Delta t \,\nabla p^{(m+1)}$
 
-\State Calculate divergence : $\displaystyle{ \bm{dv} \gets \frac{\Delta x}{\Delta t} \sum \limits_l u^{m+1}_l }$
+\State Calculate a part of divergence : $\displaystyle{ \bm{dv} \gets \sum \limits_l^{Face} \left( \bm{u}^{m+1}_l \cdot \bm{n}_l \right) }$
 
-\State Calculate source term : $\bm{s}_1^{(m+1)} \gets \bm{s}_0 + \Delta x \sum \limits_l \left(\beta F^{(m+1)}_l \right), \quad \bm{F}^{(m+1)} = f(\bm{u}^{(m+1)})$
+\State Calculate a part of iterative source term : $\bm{s}_1^{(m+1)} \gets \sum \limits_l^{Face} \left( \beta \bm{F}_l^{m+1} \cdot \bm{n}_l \right)$
 
-\State Calculate RHS vector : $ \displaystyle{ \bm{b}^{(m+1)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \bm{s}_1^{(m+1)} \right)}$
+\State Calculate RHS vector : $ \displaystyle{ \bm{b}^{(m+1)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \frac{\Delta x}{\Delta t} \, \bm{s}_0 + \Delta x \, \bm{s}_1^{(m+1)} \right) }$
 
 \If {$\displaystyle{ (\frac{\Delta t}{\Delta x} \times \bm{dv} < \varepsilon) }$}
-\State Break Loop
+\State Break m-Loop
 \EndIf
 
 \EndFor

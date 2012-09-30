@@ -15,33 +15,39 @@
 
 !> ********************************************************************
 !! @brief 圧力Poissonの定数項の計算
-!! @param [out] rhs  定数ベクトルの自乗和
+!! @param [out] rhs  右辺ベクトルの自乗和
+!! @param [out] b    RHS vector
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [in]  src  div(u^*)*dh/dt + div(f)
+!! @param [in]  s_0  \sum {u^*}
+!! @param [in]  s_1  \sum {\beta F}
 !! @param [in]  bp   BCindex P
+!! @param [in]  dh   格子幅
+!! @param [in]  dt   時間積分幅
 !! @param [out] flop flop count
 !<
-    subroutine poi_rhs (rhs, b, sz, g, src, bp, flop)
+    subroutine poi_rhs (rhs, b, sz, g, s_0, s_1, bp, dh, dt, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                       ::  sz
-    double precision                                            ::  flop, rhs, dv, dd
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src, b
+    double precision                                            ::  flop, rhs
+    real                                                        ::  dh, dt, c1, dv, dd
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  s_0, s_1, b
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     rhs = 0.0
+    c1 = dh / dt
     
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*15.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*18.0d0 + 8.0d0
 ! flop = flop + dble(ix)*dble(jx)*dble(kx)*20.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(dv, dd, idx) &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP FIRSTPRIVATE(ix, jx, kx, c1, dh)
 
 #ifdef _DYNAMIC
 !$OMP DO SCHEDULE(dynamic,1) &
@@ -55,10 +61,10 @@
     do j=1,jx
     do i=1,ix
       idx = bp(i,j,k)
-      dd = -1.0d0 / dble(ibits(idx, bc_diag, 3))  ! diagonal
-      dv = dd * (div(i,j,k) + src(i,j,k) ) * dble(ibits(bp(i,j,k), Active, 1))
+      dd = -1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
+      dv = dd * real( c1 * s_0(i,j,k) + dh * s_1(i,j,k) ) * real(ibits(bp(i,j,k), Active, 1))
       b(i,j,k) = dv
-      rhs = rhs + dv*dv
+      rhs = rhs + dble(dv*dv)
     end do
     end do
     end do
@@ -70,17 +76,16 @@
     
 
 !> ********************************************************************
-!! @brief SOR法の残差計算
+!! @brief 残差計算
 !! @param [out] res  残差
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  p    圧力
-!! @param [in]  src0 固定ソース項
-!! @param [in]  src1 反復ソース項
+!! @param [in]  b    RHS vector
 !! @param [in]  bp   BCindex P
-!! @param [out] flop
+!! @param [out] flop flop count
 !<
-  subroutine res_sor_prs (res, sz, g, p, src0, src1, bp, flop)
+  subroutine poi_residual (res, sz, g, p, b, bp, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -88,7 +93,7 @@
   double precision                                          ::  flop, res
   real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
   real                                                      ::  dd, ss, dp
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
   ix = sz(1)
@@ -129,11 +134,9 @@
         + ndag_n * p(i  ,j+1,k  ) &
         + ndag_s * p(i  ,j-1,k  ) &
         + ndag_t * p(i  ,j  ,k+1) &
-        + ndag_b * p(i  ,j  ,k-1) &
-        - src0(i,j,k)             &
-        - src1(i,j,k)
-    dp = dd*ss - p(i,j,k)
-    res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
+        + ndag_b * p(i  ,j  ,k-1)
+    dp = ( b(i,j,k) + dd*ss - p(i,j,k) ) * real(ibits(idx, Active, 1))
+    res = res + dble(dp*dp)
   end do
   end do
   end do
@@ -141,30 +144,30 @@
 !$OMP END PARALLEL
 
   return
-  end subroutine res_sor_prs
+  end subroutine poi_residual
 
 
 !> ********************************************************************
 !! @brief point SOR法
-!! @param[in,out] p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param omg 加速係数
-!! @param[out] res 絶対残差と相対残差
-!! @param src0 固定ソース項
-!! @param src1 反復毎に変化するソース項
-!! @param bp BCindex P
-!! @param[out] flop
+!! @param [in,out] p    圧力
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     omg  加速係数
+!! @param [out]    res  相対残差
+!! @param [in]     b    RHS vector
+!! @param [in]     bp   BCindex P
+!! @param [out]    flop flop count
+!! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
 !<
-    subroutine psor (p, sz, g, omg, res, src0, src1, bp, flop)
+    subroutine psor (p, sz, g, omg, res, b, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, res
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
+    real                                                      ::  omg, dd, ss, dp, pp
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
     ix = sz(1)
@@ -176,7 +179,7 @@
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*41.0d0 ! DP
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
+!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx, pp) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg)
 
 #ifdef _DYNAMIC
@@ -199,18 +202,16 @@
       ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
       
       dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
-      
+      pp = p(i,j,k)
       ss = ndag_e * p(i+1,j  ,k  ) &
          + ndag_w * p(i-1,j  ,k  ) &
          + ndag_n * p(i  ,j+1,k  ) &
          + ndag_s * p(i  ,j-1,k  ) &
          + ndag_t * p(i  ,j  ,k+1) &
-         + ndag_b * p(i  ,j  ,k-1) &
-         - src0(i,j,k)             &
-         + src1(i,j,k)
-      dp = dd*ss - p(i,j,k)
-      p(i,j,k) = p(i,j,k) + omg*dp
-      res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
+         + ndag_b * p(i  ,j  ,k-1)
+      dp = ( dd*ss + b(i,j,k) - pp ) * omg
+      p(i,j,k) = pp + dp
+      res = res + dble(dp*dp) * dble(ibits(idx, Active, 1)) ! activeマスクはここ
     end do
     end do
     end do
@@ -228,13 +229,13 @@
 !! @param [in]     ip    開始点インデクス
 !! @param [in]     color グループ番号
 !! @param [in]     omg   加速係数
-!! @param [in,out] res   絶対残差と相対残差
-!! @param [in]     src0  固定ソース項
-!! @param [in]     src1  反復毎に変化するソース項
+!! @param [in,out] res   相対残差
+!! @param [in]     b     RHS vector
 !! @param [in]     bp    BCindex P
 !! @param [out]    flop  浮動小数演算数
+!! @note resは積算
 !<
-    subroutine psor2sma_core (p, sz, g, ip, color, omg, res, src0, src1, bp, flop)
+    subroutine psor2sma_core (p, sz, g, ip, color, omg, res, b, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -242,14 +243,14 @@
     double precision                                          ::  flop, res
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
     real                                                      ::  omg, dd, ss, dp, pp
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, src0, src1
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
     integer                                                   ::  ip, color
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    flop = flop + dble(ix)*dble(jx)*dble(kx) * 37.0d0 * 0.5d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx) * 36.0d0 * 0.5d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
 
 !$OMP PARALLEL &
@@ -283,11 +284,9 @@
          + ndag_n * p(i  ,j+1,k  ) &
          + ndag_s * p(i  ,j-1,k  ) &
          + ndag_t * p(i  ,j  ,k+1) &
-         + ndag_b * p(i  ,j  ,k-1) &
-         - src0(i,j,k)             &
-         + src1(i,j,k)
-      dp = dd*ss - pp
-      p(i,j,k) = pp + omg*dp
+         + ndag_b * p(i  ,j  ,k-1)
+      dp = ( dd*ss + b(i,j,k) - pp ) * omg
+      p(i,j,k) = pp + dp
       res = res + dble(dp*dp) * dble(ibits(idx, Active, 1))
     end do
     end do

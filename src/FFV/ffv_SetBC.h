@@ -138,7 +138,7 @@ protected:
    * @param [in] t    温度のデータクラス
    * @param [in] face 面番号
    */
-  void Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face);
+  void Tobc_Prdc_Simple (REAL_TYPE* d_t, const int face);
   
   void Vibc_Prdc        (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
   void Vobc_Prdc         (REAL_TYPE* d_v, const int face);
@@ -153,17 +153,114 @@ public:
   void InnerTBCvol          (REAL_TYPE* d_t, int* d_bx, REAL_TYPE dt, double& flop);
   void InnerVBC             (REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
   void InnerVBC_Periodic    (REAL_TYPE* d_v, int* d_bd);
-  void mod_div              (REAL_TYPE* d_div, int* d_bv, REAL_TYPE coef, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, 
-                             double& flop);
-  void mod_Dir_Forcing      (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
-  void mod_Psrc_VBC         (REAL_TYPE* d_div, REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE coef, 
-                             int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
-  void mod_Psrc_Forcing     (REAL_TYPE* src, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, 
-                             REAL_TYPE** c_array, double& flop);
-  void mod_Pvec_Flux        (REAL_TYPE* d_wv, REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop);
+  
+  /**
+   * @brief 速度境界条件による速度の発散の修正ほか
+   * @param [in,out] dv     \sum{u}
+   * @param [in]     bv     BCindex V
+   * @param [in]     tm     無次元時刻
+   * @param [in]     v00    基準速度
+   * @param [in]     avr[2] 平均値計算のテンポラリ値
+   * @param [in]     flop   flop count
+   * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
+   */
+  void mod_div (REAL_TYPE* dv,
+                int* bv,
+                REAL_TYPE tm,
+                REAL_TYPE* v00,
+                REAL_TYPE* avr,
+                double& flop);
+  
+  
+  void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
+  
+  /**
+   @brief 速度境界条件によるPoisosn式のソース項の修正
+   @param [out] s_0   \sum{u^*}
+   @param [in]  vc    セルセンタ疑似速度
+   @param [in]  v0    セルセンタ速度 u^n
+   @param [in]  bv    BCindex V
+   @param [in]  tm    無次元時刻
+   @param [in]  dt    時間積分幅
+   @param [in]  C     Control class
+   @param [in]  v00   基準速度
+   @param [out] flop  flop count
+   */
+  void mod_Psrc_VBC (REAL_TYPE* s_0,
+                     REAL_TYPE* vc,
+                     REAL_TYPE* v0,
+                     int* bv,
+                     REAL_TYPE tm,
+                     REAL_TYPE dt,
+                     Control* C,
+                     REAL_TYPE* v00,
+                     double& flop);
+  
+  /**
+   @brief 圧力損失部によるPoisosn式のソース項の修正とワーク用の速度を保持
+   @param [in,out] s_1     Poisson方程式の反復ソース項
+   @param [in]     v       速度ベクトル
+   @param [in]     bd      BCindex ID
+   @param [in]     cvf     コンポーネントの体積率
+   @param [in]     v00     参照速度
+   @param [in]     c_array コンポーネントワーク配列の管理ポインタ
+   @param [out]    flop    flop count
+   */
+  void mod_Psrc_Forcing (REAL_TYPE* s_1,
+                         REAL_TYPE* v,
+                         int* bd,
+                         float* cvf,
+                         REAL_TYPE* v00,
+                         REAL_TYPE** c_array,
+                         double& flop);
+  
+  
+  /**
+   @brief 速度境界条件による流束の修正
+   @param [in,out] wv     疑似速度ベクトル u^*
+   @param [in]     v      速度ベクトル u^n
+   @param [in]     bv     BCindex V
+   @param [in]     tm     無次元時刻
+   @param [in]     C      Control class
+   @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
+   @param [in]     v00    基準速度
+   @param [out]    flop   flop count
+   */
+  void mod_Pvec_Flux (REAL_TYPE* wv,
+                      REAL_TYPE* v,
+                      int* bv,
+                      REAL_TYPE tm,
+                      Control* C,
+                      int v_mode,
+                      REAL_TYPE* v00,
+                      double& flop);
+  
   void mod_Pvec_Forcing     (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);
-  void mod_Vdiv_Forcing     (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* d_div, REAL_TYPE dt, REAL_TYPE* v00, 
-                             REAL_TYPE* am, REAL_TYPE** c_array, double& flop);
+  
+  /**
+   * @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
+   * @param [in,out] v          セルセンターの速度
+   * @param [in]     bd         BCindex ID
+   * @param [in]     cvf        コンポーネントの体積率
+   * @param [in]     dv         \sum{u}
+   * @param [in]     dt         時間積分幅
+   * @param [in]     v00        参照速度
+   * @param [in]     am[2*NoBC] モニター用配列
+   * @param [in]     c_array    コンポーネントワーク配列の管理ポインタ
+   * @param [out]    flop       flop count
+   * @note am[]のインデクスに注意 (Fortran <-> C)
+   */
+  void mod_Vdiv_Forcing (REAL_TYPE* v,
+                         int* bd,
+                         float* cvf,
+                         REAL_TYPE* dv,
+                         REAL_TYPE dt,
+                         REAL_TYPE* v00,
+                         REAL_TYPE* am,
+                         REAL_TYPE** c_array,
+                         double& flop);
+  
+  
   void mod_Vis_EE           (REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop);
   void OuterPBC             (REAL_TYPE* d_p);
   void OuterTBC             (REAL_TYPE* d_t);

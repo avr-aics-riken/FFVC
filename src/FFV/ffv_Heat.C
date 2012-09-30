@@ -168,7 +168,7 @@ void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
       TIMING_start(tm_poi_src_nrm);
       res = 0.0;
       flop = 0.0;
-      //res_sor_prs_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
+      //poi_residual_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
       TIMING_stop(tm_poi_src_nrm, flop);
       
       if ( numProc > 1 )

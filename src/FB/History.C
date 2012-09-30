@@ -54,11 +54,11 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
   
   if ( Unit_Log == DIMENSIONAL )
   {
-    fprintf(fp, "    step      time[sec]  v_max[m/s]");
+    fprintf(fp, "    step      time[sec]  v_max[m/s] ItrVP v_div_max[-]");
   }
   else
   {
-    fprintf(fp, "    step        time[-]    v_max[-]");
+    fprintf(fp, "    step        time[-]    v_max[-] ItrVP v_div_max[-]");
   }
   
   if ( C->KindOfSolver != SOLID_CONDUCTION )
@@ -69,7 +69,6 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
       case Control::Flow_FS_AB2:
       case Control::Flow_FS_AB_CN:
         fprintf(fp, "  ItrP");
-        fprintf(fp, "   v_div_max");
         if      (ICp1->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
         else if (ICp1->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
         else if (ICp1->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
@@ -146,8 +145,10 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
   const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  ///< 粘性項のCrank-Nicolson反復
   const ItrCtl* ICt  = &IC[ItrCtl::ic_tdf_ei];  ///< 温度の拡散項の反復
+  const ItrCtl* ICd  = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
   
-  fprintf(fp, "%8d %14.6e %11.4e", step, printTime(), printVmax() );
+  fprintf(fp, "%8d %14.6e %11.4e %5d %11.4e ",
+          step, printTime(), printVmax(), ICd->LoopCount+1, ICd->get_normValue() );
 
   if ( C->KindOfSolver != SOLID_CONDUCTION ) 
   {
@@ -158,7 +159,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
       case Control::Flow_FS_AB_CN:
         if ( (IC->get_normType() != ItrCtl::v_div_max) && (IC->get_normType() != ItrCtl::v_div_dbg) )
         {
-          fprintf(fp, " %5d %11.4e %11.4e", ICp1->LoopCount+1, ICp1->get_div(), ICp1->get_normValue());
+          fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
         }
         else
         {
@@ -169,7 +170,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
     
     if (C->AlgorithmF == Control::Flow_FS_AB_CN) 
     {
-      fprintf(fp, " %5d %11.4e %11.4e", ICp1->LoopCount+1, ICp1->get_div(), ICp1->get_normValue());
+      fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
     }
     
     if ( C->isHeatProblem() ) 

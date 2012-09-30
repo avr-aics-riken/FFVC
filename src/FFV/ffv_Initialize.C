@@ -3003,7 +3003,7 @@ void FFV::setInitialCondition()
 		fb_set_vector_(d_v, size, &guide, U0, d_bcd);
     
 		// 外部境界面の流出流量と移流速度
-    DomainMonitor( BC.export_OBC(), &C, flop_task);
+    DomainMonitor( BC.export_OBC(), &C);
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
     BC.OuterVBC_Periodic(d_v);
@@ -3058,11 +3058,12 @@ void FFV::setInitialCondition()
     BC.OuterVBC(d_v, d_v, d_bcv, tm, deltaT, &C, v00, flop_task);
     BC.OuterVBC_Periodic(d_v);
     
-    //流出境界の流出速度の算出
-    REAL_TYPE coef = deltaX/deltaT;
-    REAL_TYPE m_av[2];
-    BC.mod_div(d_ws, d_bcv, coef, tm, v00, m_av, flop_task);
-    DomainMonitor(BC.export_OBC(), &C, flop_task);
+    // 流出境界の流出速度の算出
+    // dummy
+    REAL_TYPE* m_buf = new REAL_TYPE [C.NoBC*2];
+    BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, flop_task);
+    if ( m_buf ) delete [] m_buf; m_buf=NULL;
+    DomainMonitor(BC.export_OBC(), &C);
     
     //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
     
