@@ -651,6 +651,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf
     cmp[n].get_cmp_sz(csz);
     w_ptr = c_array[n];
     
+    // w_ptrに
     if ( cmp[n].isFORCING() ) force_keep_vec_(w_ptr, csz, st, ed, v, size, &gd);
 
     switch ( cmp[n].getType() )

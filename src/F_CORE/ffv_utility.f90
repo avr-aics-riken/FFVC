@@ -22,7 +22,7 @@
 !! @param [in]  div  発散値のベース
 !! @param [in]  coef 係数
 !! @param [in]  bp   BCindex P
-!! @param [in]  flop flop count
+!! @param [out] flop flop count
 !<
     subroutine norm_v_div_dbg (ds, idx, sz, g, div, coef, bp, flop)
     implicit none
@@ -57,6 +57,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -86,13 +87,13 @@
 
 !> ********************************************************************
 !! @brief 速度成分の最大値を計算する
-!! @param ds 最大値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param div 速度の発散
-!! @param coef 係数
-!! @param bp BCindex P
-!! @param flop
+!! @param [out] ds   最大値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  div  速度の発散
+!! @param [in]  coef 係数
+!! @param [in]  bp   BCindex P
+!! @param [out] flop flop count
 !<
     subroutine norm_v_div_max (ds, sz, g, div, coef, bp, flop)
     implicit none
@@ -112,17 +113,18 @@
     flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(max:ds) &
 !$OMP PRIVATE(r) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(max:ds)
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -136,15 +138,16 @@
 
     return
     end subroutine norm_v_div_max
-    
+
+
 !> ********************************************************************
 !! @brief 速度成分の最大値を計算する
-!! @param v_max 最大値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param v00 参照速度
-!! @param v 速度ベクトル
-!! @param flop
+!! @param [out] v_max 最大値
+!! @param [in]  sz    配列長
+!! @param [in]  g     ガイドセル長
+!! @param [in]  v00   参照速度
+!! @param [in]  v     速度ベクトル
+!! @param [out] flop  flop count
 !<
     subroutine find_vmax (v_max, sz, g, v00, v, flop)
     implicit none
@@ -167,18 +170,19 @@
     flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 2.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(max:vm1) &
+!$OMP REDUCTION(max:vm2) &
+!$OMP REDUCTION(max:vm3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(max:vm1) &
-!$OMP REDUCTION(max:vm2) &
-!$OMP REDUCTION(max:vm3)
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -195,7 +199,8 @@
 
     return
     end subroutine find_vmax
-    
+
+
 !> ********************************************************************
 !! @brief 速度勾配テンソルの第２不変量の計算
 !! @param[out] q 速度勾配テンソルの第２不変量
@@ -259,6 +264,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -438,6 +444,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -606,6 +613,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -941,21 +949,21 @@
   fz = 0.0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:fx) &
+!$OMP REDUCTION(+:fy) &
+!$OMP REDUCTION(+:fz) &
 !$OMP FIRSTPRIVATE(ix, jx, kx) &
 !$OMP PRIVATE(actv, pp) &
 !$OMP PRIVATE(bw, be, bs, bn, bb, bt) &
 !$OMP PRIVATE(qw, qe, qs, qn, qb, qt)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:fx) &
-!$OMP REDUCTION(+:fy) &
-!$OMP REDUCTION(+:fz)
 
   do k=1,kx
   do j=1,jx

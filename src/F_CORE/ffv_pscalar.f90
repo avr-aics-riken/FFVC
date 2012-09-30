@@ -422,6 +422,7 @@
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 27.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:res) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2) &
 !$OMP PRIVATE(idx, delta) &
 !$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
@@ -429,14 +430,12 @@
 !$OMP PRIVATE(a_w, a_e, a_s, a_n, a_b, a_t)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-
-!$OMP REDUCTION(+:res)
 
     do k=1,kx
     do j=1,jx

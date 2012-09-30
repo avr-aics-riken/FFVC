@@ -566,6 +566,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -657,6 +658,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -774,6 +776,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=ks,ke
     do j=js,je
     do i=is,ie

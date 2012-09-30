@@ -355,8 +355,7 @@ void CompoList::setType(const int key)
 
 // #################################################################
 //@brief コンポーネントのサイズを計算
-//@note ガイドセルは片側2層を仮定(c_sizeには含めない)
-void CompoList::set_cmp_sz(void) 
+void CompoList::set_cmp_sz(void)
 {
   c_size[0] = ed[0] - st[0] + 1;
   c_size[1] = ed[1] - st[1] + 1;

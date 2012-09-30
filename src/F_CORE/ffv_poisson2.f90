@@ -112,17 +112,17 @@
   flop = flop + dble(ix)*dble(jx)*dble(kx)*17.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:res) &
 !$OMP PRIVATE(al, idx, dd) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:res)
 
   do k=1,kx
   do j=1,jx
@@ -357,16 +357,17 @@
   flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:ac) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, lm)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:ac)
+
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -404,16 +405,17 @@
   flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:ac) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:ac)
+
   do k=1,kx
   do j=1,jx
   do i=1,ix

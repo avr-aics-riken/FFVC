@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <algorithm>
+#include <errno.h>
+#include <sys/stat.h>
 
 #include "FB_Define.h"
 #include "cpm_Define.h"
@@ -73,6 +75,12 @@ public:
     else if (dir == Z_PLUS)  face = "Z+";
     return face;
   }
+  
+  /**
+   * @brief ディレクトリを作成
+   * @param [in] path ディレクトリパス
+   */
+  int c_mkdir(char* path);
   
   
   /**

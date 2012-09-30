@@ -15,29 +15,29 @@
 
 !> ********************************************************************
 !! @brief 粗い格子から密な格子への補間（ゼロ次）
-!! @param dst 密な格子系
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param src 粗い格子系
-!! @param st 粗い格子の開始インデクス
-!! @param bk ブロック数
+!! @param [out] dst 密な格子系
+!! @param [in]  sz 配列長
+!! @param [in]  g ガイドセル長
+!! @param [in]  src 粗い格子系
+!! @param [in]  st 粗い格子の開始インデクス
+!! @param [in]  bk ブロック数
 !<
-subroutine fb_interp_coarse0_s(dst, sz, g, src, st, bk)
-implicit none
-integer                                                      ::  i, j, k          ! 粗い格子のループインデクス
-integer                                                      ::  ii, jj, kk       ! 密な格子のループインデクス
-integer                                                      ::  ix, jx, kx, g, si, sj, sk
-integer, dimension(3)                                        ::  sz, st, bk
-real                                                         ::  q
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
-real, dimension(1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
+  subroutine fb_interp_coarse0_s(dst, sz, g, src, st, bk)
+  implicit none
+  integer                                                      ::  i, j, k          ! 粗い格子のループインデクス
+  integer                                                      ::  ii, jj, kk       ! 密な格子のループインデクス
+  integer                                                      ::  ix, jx, kx, g, si, sj, sk
+  integer, dimension(3)                                        ::  sz, st, bk
+  real                                                         ::  q
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
+  real, dimension(1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
 
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-si = st(1)
-sj = st(2)
-sk = st(3)
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  si = st(1)
+  sj = st(2)
+  sk = st(3)
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, si, sj, sk) &
@@ -46,60 +46,60 @@ sk = st(3)
 
 !$OMP DO SCHEDULE(static)
 
-do k=sk, sk+kx/2-1
-kk = 2*k - (2*k-1)/kx * kx
-do j=sj, sj+jx/2-1
-jj = 2*j - (2*j-1)/jx * jx
-do i=si, si+ix/2-1
-ii = 2*i - (2*i-1)/ix * ix
+  do k=sk, sk+kx/2-1
+    kk = 2*k - (2*k-1)/kx * kx
+  do j=sj, sj+jx/2-1
+    jj = 2*j - (2*j-1)/jx * jx
+  do i=si, si+ix/2-1
+    ii = 2*i - (2*i-1)/ix * ix
 
-q = src(i  , j  , k  )
+    q = src(i  , j  , k  )
 
-dst(ii-1, jj-1, kk-1) = q
-dst(ii  , jj-1, kk-1) = q
-dst(ii-1, jj  , kk-1) = q
-dst(ii  , jj  , kk-1) = q
-dst(ii-1, jj-1, kk  ) = q
-dst(ii  , jj-1, kk  ) = q
-dst(ii-1, jj  , kk  ) = q
-dst(ii  , jj  , kk  ) = q
+    dst(ii-1, jj-1, kk-1) = q
+    dst(ii  , jj-1, kk-1) = q
+    dst(ii-1, jj  , kk-1) = q
+    dst(ii  , jj  , kk-1) = q
+    dst(ii-1, jj-1, kk  ) = q
+    dst(ii  , jj-1, kk  ) = q
+    dst(ii-1, jj  , kk  ) = q
+    dst(ii  , jj  , kk  ) = q
 
-end do
-end do
-end do
+  end do
+  end do
+  end do
 
 !$OMP END DO
 !$OMP END PARALLEL
 
-return
-end subroutine fb_interp_coarse0_s
+  return
+  end subroutine fb_interp_coarse0_s
 
 !> ********************************************************************
 !! @brief 粗い格子から密な格子への補間（ゼロ次）
-!! @param dst 密な格子系
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param src 粗い格子系
-!! @param st 粗い格子の開始インデクス
-!! @param bk ブロック数
+!! @param [out] dst 密な格子系
+!! @param [in]  sz 配列長
+!! @param [in]  g ガイドセル長
+!! @param [in]  src 粗い格子系
+!! @param [in]  st 粗い格子の開始インデクス
+!! @param [in]  bk ブロック数
 !<
-subroutine fb_interp_coarse0_v(dst, sz, g, src, st, bk)
-implicit none
-integer                                                         ::  i, j, k          ! 粗い格子のループインデクス
-integer                                                         ::  ii, jj, kk       ! 密な格子のループインデクス
-integer                                                         ::  ix, jx, kx, g, si, sj, sk
-integer, dimension(3)                                           ::  sz, st, bk
-real                                                            ::  q1, q2, q3
-real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
-real, dimension(3, 1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
+  subroutine fb_interp_coarse0_v(dst, sz, g, src, st, bk)
+  implicit none
+  integer                                                         ::  i, j, k          ! 粗い格子のループインデクス
+  integer                                                         ::  ii, jj, kk       ! 密な格子のループインデクス
+  integer                                                         ::  ix, jx, kx, g, si, sj, sk
+  integer, dimension(3)                                           ::  sz, st, bk
+  real                                                            ::  q1, q2, q3
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
+  real, dimension(3, 1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
 
 
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-si = st(1)
-sj = st(2)
-sk = st(3)
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  si = st(1)
+  sj = st(2)
+  sk = st(3)
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, si, sj, sk) &
@@ -107,66 +107,66 @@ sk = st(3)
 
 !$OMP DO SCHEDULE(static)
 
-do k=sk, sk+kx/2-1
-kk = 2*k - (2*k-1)/kx * kx
-do j=sj, sj+jx/2-1
-jj = 2*j - (2*j-1)/jx * jx
-do i=si, si+ix/2-1
-ii = 2*i - (2*i-1)/ix * ix
+  do k=sk, sk+kx/2-1
+    kk = 2*k - (2*k-1)/kx * kx
+  do j=sj, sj+jx/2-1
+    jj = 2*j - (2*j-1)/jx * jx
+  do i=si, si+ix/2-1
+    ii = 2*i - (2*i-1)/ix * ix
 
 !   u
-q1 = src(1, i  , j  , k  )
-q2 = src(2, i  , j  , k  )
-q3 = src(3, i  , j  , k  )
+    q1 = src(1, i  , j  , k  )
+    q2 = src(2, i  , j  , k  )
+    q3 = src(3, i  , j  , k  )
 
 
-dst(1, ii-1, jj-1, kk-1) = q1
-dst(1, ii  , jj-1, kk-1) = q1
-dst(1, ii-1, jj  , kk-1) = q1
-dst(1, ii  , jj  , kk-1) = q1
-dst(1, ii-1, jj-1, kk  ) = q1
-dst(1, ii  , jj-1, kk  ) = q1
-dst(1, ii-1, jj  , kk  ) = q1
-dst(1, ii  , jj  , kk  ) = q1
+    dst(1, ii-1, jj-1, kk-1) = q1
+    dst(1, ii  , jj-1, kk-1) = q1
+    dst(1, ii-1, jj  , kk-1) = q1
+    dst(1, ii  , jj  , kk-1) = q1
+    dst(1, ii-1, jj-1, kk  ) = q1
+    dst(1, ii  , jj-1, kk  ) = q1
+    dst(1, ii-1, jj  , kk  ) = q1
+    dst(1, ii  , jj  , kk  ) = q1
 
-dst(2, ii-1, jj-1, kk-1) = q2
-dst(2, ii  , jj-1, kk-1) = q2
-dst(2, ii-1, jj  , kk-1) = q2
-dst(2, ii  , jj  , kk-1) = q2
-dst(2, ii-1, jj-1, kk  ) = q2
-dst(2, ii  , jj-1, kk  ) = q2
-dst(2, ii-1, jj  , kk  ) = q2
-dst(2, ii  , jj  , kk  ) = q2
+    dst(2, ii-1, jj-1, kk-1) = q2
+    dst(2, ii  , jj-1, kk-1) = q2
+    dst(2, ii-1, jj  , kk-1) = q2
+    dst(2, ii  , jj  , kk-1) = q2
+    dst(2, ii-1, jj-1, kk  ) = q2
+    dst(2, ii  , jj-1, kk  ) = q2
+    dst(2, ii-1, jj  , kk  ) = q2
+    dst(2, ii  , jj  , kk  ) = q2
 
-dst(3, ii-1, jj-1, kk-1) = q3
-dst(3, ii  , jj-1, kk-1) = q3
-dst(3, ii-1, jj  , kk-1) = q3
-dst(3, ii  , jj  , kk-1) = q3
-dst(3, ii-1, jj-1, kk  ) = q3
-dst(3, ii  , jj-1, kk  ) = q3
-dst(3, ii-1, jj  , kk  ) = q3
-dst(3, ii  , jj  , kk  ) = q3
+    dst(3, ii-1, jj-1, kk-1) = q3
+    dst(3, ii  , jj-1, kk-1) = q3
+    dst(3, ii-1, jj  , kk-1) = q3
+    dst(3, ii  , jj  , kk-1) = q3
+    dst(3, ii-1, jj-1, kk  ) = q3
+    dst(3, ii  , jj-1, kk  ) = q3
+    dst(3, ii-1, jj  , kk  ) = q3
+    dst(3, ii  , jj  , kk  ) = q3
 
-end do
-end do
-end do
+  end do
+  end do
+  end do
 
 !$OMP END DO
 !$OMP END PARALLEL
 
-return
-end subroutine fb_interp_coarse0_v
+  return
+  end subroutine fb_interp_coarse0_v
 
 
 
 !> ********************************************************************
 !! @brief 粗い格子から密な格子への補間
-!! @param dst 密な格子系
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param src 粗い格子系
-!! @param st 粗い格子の開始インデクス
-!! @param bk ブロック数
+!! @param [out] dst 密な格子系
+!! @param [in]  sz 配列長
+!! @param [in]  g ガイドセル長
+!! @param [in]  src 粗い格子系
+!! @param [in]  st 粗い格子の開始インデクス
+!! @param [in]  bk ブロック数
 !<
   subroutine fb_interp_coarse_s(dst, sz, g, src, st, bk)
   implicit none
@@ -290,12 +290,12 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief 粗い格子から密な格子への補間
-!! @param dst 密な格子系
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param src 粗い格子系
-!! @param st 粗い格子の開始インデクス
-!! @param bk ブロック数
+!! @param [out] dst 密な格子系
+!! @param [in]  sz 配列長
+!! @param [in]  g ガイドセル長
+!! @param [in]  src 粗い格子系
+!! @param [in]  st 粗い格子の開始インデクス
+!! @param [in]  bk ブロック数
 !<
   subroutine fb_interp_coarse_v(dst, sz, g, src, st, bk)
   implicit none
@@ -571,19 +571,19 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief スカラー値の書き出し
-!! @param v 速度ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param fname ファイル名
-!! @param step ステップ数
-!! @param time 時刻
-!! @param org 起点座標
-!! @param pit 格子幅
-!! @param d_type (1-float, 2-double)
-!! @param gs guide cell (0-without, others-with)
-!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
-!! @param step_avr
-!! @param time_avr
+!! @param [in] s        スカラー値
+!! @param [in] sz       配列長
+!! @param [in] g        ガイドセル長
+!! @param [in] fname    ファイル名
+!! @param [in] step     ステップ数
+!! @param [in] time     時刻
+!! @param [in] org      起点座標
+!! @param [in] pit      格子幅
+!! @param [in] d_type   (1-float, 2-double)
+!! @param [in] gs       guide cell (0-without, others-with)
+!! @param [in] avs      平均値識別子 (0-average, 1-instantaneous) 
+!! @param [in] step_avr 平均ステップ
+!! @param [in] time_avr 平均時刻
 !<
   subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
   implicit none
@@ -636,19 +636,19 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief ベクトル値の書き出し
-!! @param v ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param fname ファイル名
-!! @param step ステップ数
-!! @param time 時刻
-!! @param org 起点座標
-!! @param pit 格子幅
-!! @param d_type (1-float, 2-double)
-!! @param gs guide cell (0-without, others-with)
-!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
-!! @param step_avr
-!! @param time_avr
+!! @param [in] v        ベクトル値
+!! @param [in] sz       配列長
+!! @param [in] g        ガイドセル長
+!! @param [in] fname    ファイル名
+!! @param [in] step     ステップ数
+!! @param [in] time     時刻
+!! @param [in] org      起点座標
+!! @param [in] pit      格子幅
+!! @param [in] d_type   (1-float, 2-double)
+!! @param [in] gs       guide cell (0-without, others-with)
+!! @param [in] avs      平均値識別子 (0-average, 1-instantaneous)
+!! @param [in] step_avr 平均ステップ
+!! @param [in] time_avr 平均時刻
 !<
   subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
   implicit none
@@ -701,16 +701,16 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief スカラ値のロード
-!! @param s スカラ
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param fname ファイル名
-!! @param step ステップ数
-!! @param time 時刻
-!! @param gs ガイドセルスイッチ (0-without, others-with)
-!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
-!! @param step_avr
-!! @param time_avr
+!! @param [out] s        スカラ
+!! @param [in]  sz       配列長
+!! @param [in]  g        ガイドセル長
+!! @param [in]  fname    ファイル名
+!! @param [out] step     ステップ数
+!! @param [out] time     時刻
+!! @param [in]  gs       ガイドセルスイッチ (0-without, others-with)
+!! @param [in]  avs      平均値識別子 (0-average, 1-instantaneous) 
+!! @param [out] step_avr 平均ステップ数
+!! @param [out] time_avr 平均時刻
 !<
   subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
   implicit none
@@ -768,16 +768,16 @@ end subroutine fb_interp_coarse0_v
   
 !> ********************************************************************
 !! @brief ベクトルのロード
-!! @param v ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param fname ファイル名
-!! @param step ステップ数
-!! @param time 時刻
-!! @param gs ガイドセルスイッチ (0-without, others-with)
-!! @param avs 平均値識別子 (0-average, 1-instantaneous) 
-!! @param step_avr
-!! @param time_avr
+!! @param [out] v        ベクトル値
+!! @param [in]  sz       配列長
+!! @param [in]  g        ガイドセル長
+!! @param [in]  fname    ファイル名
+!! @param [out] step     ステップ数
+!! @param [out] time     時刻
+!! @param [in]  gs       ガイドセルスイッチ (0-without, others-with)
+!! @param [in]  avs      平均値識別子 (0-average, 1-instantaneous)
+!! @param [out] step_avr 平均ステップ数
+!! @param [out] time_avr 平均時刻
 !<
   subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
   implicit none
@@ -836,13 +836,13 @@ end subroutine fb_interp_coarse0_v
   
 !> ********************************************************************
 !! @brief 速度ベクトルの格子速度変換
-!! @param v 変換されたベクトル（平均場の場合は積算値）
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param v00 参照速度
-!! @param sacle 倍数　（瞬時値の場合には1）
-!! @param refv 代表速度
-!! @param flop 浮動小数演算数
+!! @param [in,out] v     変換されたベクトル（平均場の場合は積算値）
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     v00   参照速度
+!! @param [in]     sacle 倍数　（瞬時値の場合には1）
+!! @param [in]     refv  代表速度
+!! @param [out]    flop  浮動小数演算数
 !! @note dst[] = ( src[]/refv + v00 ) * scale, 有次元のときrefvは次元速度，無次元のとき1.0
 !<
   subroutine fb_shift_refv_in (v, sz, g, v00, scale, refv, flop)
@@ -890,14 +890,14 @@ end subroutine fb_interp_coarse0_v
   
 !> ********************************************************************
 !! @brief 速度ベクトルの格子速度変換をして，scale倍する
-!! @param vout 変換されたベクトル
-!! @param vin 変換前
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param v00 参照速度
-!! @param scale 倍数（瞬時値の場合には1）
-!! @param unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
-!! @param flop 浮動小数演算数
+!! @param [out] vout   変換されたベクトル
+!! @param [in]  vin    変換前
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  v00    参照速度
+!! @param [in]  scale  倍数（瞬時値の場合には1）
+!! @param [in]  unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
+!! @param [out] flop   浮動小数演算数
 !! @note dst[] = ( src[] * stepAvr ) - v00
 !<
   subroutine fb_shift_refv_out (vout, vin, sz, g, v00, scale, unit_v, flop)
@@ -945,13 +945,13 @@ end subroutine fb_interp_coarse0_v
   
 !> ********************************************************************
 !! @brief 有効セルに対する，1タイムステップ進行時のベクトルの絶対値の変化量の和と平均値
-!! @param d 戻り値（変化量の2乗和と平均値）
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param vn ベクトル値 n+1 step
-!! @param vo ベクトル値 n step
-!! @param bx BCindex
-!! @param flop 浮動小数演算数
+!! @param [out] d    戻り値（変化量の2乗和と平均値）
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  vn   ベクトル値 n+1 step
+!! @param [in]  vo   ベクトル値 n step
+!! @param [in]  bx   BCindex
+!! @param [out] flop 浮動小数演算数
 !<
   subroutine fb_delta_v (d, sz, g, vn, vo, bx, flop)
   implicit none
@@ -975,12 +975,13 @@ end subroutine fb_interp_coarse0_v
   rm = 0.0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:av) &
+!$OMP REDUCTION(+:rm) &
 !$OMP PRIVATE(actv, u, v, w, x, y, z) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-!$OMP DO SCHEDULE(static) &
-!$OMP REDUCTION(+:av) &
-!$OMP REDUCTION(+:rm)
+!$OMP DO SCHEDULE(static)
+
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -1011,13 +1012,13 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
-!! @param d 戻り値（変化量の2乗和と平均値）
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param sn スカラー値 n+1 step
-!! @param so スカラー値 n step
-!! @param bx BCindex
-!! @param flop 浮動小数演算数
+!! @param [out] d    戻り値（変化量の2乗和と平均値）
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  sn   スカラー値 n+1 step
+!! @param [in]  so   スカラー値 n step
+!! @param [in]  bx   BCindex
+!! @param [out] flop 浮動小数演算数
 !<
   subroutine fb_delta_s (d, sz, g, sn, so, bx, flop)
   implicit none
@@ -1039,12 +1040,13 @@ end subroutine fb_interp_coarse0_v
   rm = 0.0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:av) &
+!$OMP REDUCTION(+:rm) &
 !$OMP PRIVATE(actv, s, a) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-!$OMP DO SCHEDULE(static) &
-!$OMP REDUCTION(+:av) &
-!$OMP REDUCTION(+:rm)
+!$OMP DO SCHEDULE(static)
+
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -1069,11 +1071,11 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief ベクトル値を加算する
-!! @param avr 平均値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param v ベクトル値
-!! @param flop 浮動小数演算数
+!! @param [in,out] avr  平均値
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     v    ベクトル値
+!! @param [out]    flop 浮動小数演算数
 !<
   subroutine fb_average_v (avr, sz, g, v, flop)
   implicit none
@@ -1110,11 +1112,11 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief スカラ値を加算する
-!! @param avr 平均値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param s スカラ値
-!! @param flop 浮動小数演算数
+!! @param [in,out] avr  平均値
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     s    スカラ値
+!! @param [out]    flop 浮動小数演算数
 !<
   subroutine fb_average_s (avr, sz, g, s, flop)
   implicit none
@@ -1150,13 +1152,13 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief 全圧を計算する
-!! @param tp 全圧
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param v 速度ベクトル
-!! @param p 圧力
-!! @param v00 参照速度
-!! @param flop 浮動小数演算数
+!! @param [out] tp   全圧
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  v    速度ベクトル
+!! @param [in]  p    圧力
+!! @param [in]  v00  参照速度
+!! @param [out] flop 浮動小数演算数
 !<
     subroutine fb_totalp (tp, sz, g, v, p, v00, flop)
     implicit none
@@ -1201,13 +1203,13 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief 速度の最小値と最大値を計算する
-!! @param v_min 最小値
-!! @param v_max 最大値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param v00 参照速度
-!! @param v 速度ベクトル
-!! @param flop 浮動小数演算数
+!! @param [out] v_min 最小値
+!! @param [out] v_max 最大値
+!! @param [in]  sz    配列長
+!! @param [in]  g     ガイドセル長
+!! @param [in]  v00   参照速度
+!! @param [in]  v     速度ベクトル
+!! @param [out] flop  浮動小数演算数
 !<
     subroutine fb_minmax_v (v_min, v_max, sz, g, v00, v)
     implicit none
@@ -1231,13 +1233,13 @@ end subroutine fb_interp_coarse0_v
     ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(min:v_min) &
+!$OMP REDUCTION(max:v_max) &
 !$OMP PRIVATE(u1, u2, u3, uu) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 
-!$OMP REDUCTION(min:v_min) &
-!$OMP REDUCTION(max:v_max)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -1258,12 +1260,12 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief スカラ値の最小値と最大値を計算する
-!! @param f_min 最小値
-!! @param f_max 最大値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param s スカラ値
-!! @param flop 浮動小数演算数
+!! @param [out] f_min 最小値
+!! @param [out] f_max 最大値
+!! @param [in]  sz    配列長
+!! @param [in]  g     ガイドセル長
+!! @param [in]  s     スカラ値
+!! @param [out] flop  浮動小数演算数
 !<
     subroutine fb_minmax_s (f_min, f_max, sz, g, s, flop)
     implicit none
@@ -1282,11 +1284,12 @@ end subroutine fb_interp_coarse0_v
     flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(min:f_min) &
+!$OMP REDUCTION(max:f_max) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-!$OMP DO SCHEDULE(static) &
-!$OMP REDUCTION(min:f_min) &
-!$OMP REDUCTION(max:f_max)
+!$OMP DO SCHEDULE(static)
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -1303,11 +1306,11 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief ベクトル値を設定する
-!! @param var ベクトル配列
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param val ベクトル値
-!! @param bv
+!! @param [out] var ベクトル配列
+!! @param [in]  sz  配列長
+!! @param [in]  g   ガイドセル長
+!! @param [in]  val ベクトル値
+!! @param [in]  bv  BCindex V
 !<
     subroutine fb_set_vector (var, sz, g, val, bv)
     implicit none
@@ -1351,9 +1354,9 @@ end subroutine fb_interp_coarse0_v
 
 !> ********************************************************************
 !! @brief スカラ値の値を[0, 1]に制限する
-!! @param t スカラ値
-!! @param sz 配列長
-!! @param g ガイドセル長
+!! @param [in,out] t  スカラ値
+!! @param [in]     sz 配列長
+!! @param [in]     g  ガイドセル長
 !<
     subroutine fb_limit_scalar (t, sz, g)
     implicit none
@@ -1386,4 +1389,3 @@ end subroutine fb_interp_coarse0_v
 
     return
     end subroutine fb_limit_scalar
-

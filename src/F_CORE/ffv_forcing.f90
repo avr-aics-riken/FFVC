@@ -102,13 +102,13 @@
     
 !> ********************************************************************
 !! @brief コンポーネントのワーク配列に速度ベクトルを保持
-!! @param wk テンポラリのワークベクトル
-!! @param cz コンポーネントの配列長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param v 速度ベクトル (n+1,k)
-!! @param sz 配列長
-!! @param g ガイドセル長
+!! @param [out] wk テンポラリのワークベクトル
+!! @param [in]  cz コンポーネントの配列長
+!! @param [in]  st ループの開始インデクス
+!! @param [in]  ed ループの終了インデクス
+!! @param [in]  v  速度ベクトル (n+1,k)
+!! @param [in]  sz 配列長
+!! @param [in]  g  ガイドセル長
 !<
     subroutine force_keep_vec (wk, cz, st, ed, v, sz, g)
     implicit none
@@ -167,7 +167,7 @@
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     bd   BCindex ID
 !! @param [in]     vf   コンポーネントの体積率
-!! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル (n+1,k)
+!! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル
 !! @param [in]     cz   コンポーネントの配列長
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [in]     v00  参照速度
@@ -468,6 +468,8 @@
     am2 = 0.0 ! 圧損量の積算値
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:am1) &
+!$OMP REDUCTION(+:am2) &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, dt) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
 !$OMP PRIVATE(idx, es, beta, pick, ii, jj, kk) &
@@ -485,14 +487,13 @@
 
 ! 周囲の1セルを含めてサーチ
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
-!$OMP DO SCHEDULE(hoge) &
+!$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:am1) &
-!$OMP REDUCTION(+:am2)
+
     do k=ks-1,ke+1
       kk = k - ks + 1
 

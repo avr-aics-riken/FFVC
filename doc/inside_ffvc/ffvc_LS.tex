@@ -36,7 +36,7 @@ FFVCで扱う圧力のPoisson方程式は，次のような形式となる．
 \noindent 右辺ベクトルの第一項めは境界条件も含む．
 
 
-Fractional step法を基本に，$\bm{u}^{n+1}$に基づく体積力を圧力反復過程に組み込まむ場合，収束判定は圧力Poisson方程式の収束と速度-圧力反復過程での非圧縮条件の2つを考える．
+Fractional step法を基本に，$\bm{u}^{n+1}$に基づく体積力を圧力反復過程に組み込む場合，収束判定は圧力Poisson方程式の収束と速度-圧力反復過程での非圧縮条件の2つを考える．アルゴリズムを\ref{algo:FS}に示す．
 
 \begin{algorithm}
 \caption{Iterative procedure in Fractional step method.}
@@ -84,13 +84,15 @@ Fractional step法を基本に，$\bm{u}^{n+1}$に基づく体積力を圧力反
 
 \State Update velocity : $\bm{u}^{(m+1)} \gets \bm{u}^* - \Delta t \,\nabla p^{(m+1)}$
 
-\State Calculate a part of divergence : $\displaystyle{ \bm{dv} \gets \sum \limits_l^{Face} \left( \bm{u}^{m+1}_l \cdot \bm{n}_l \right) }$
+\State Calculate a part of divergence : $\displaystyle{ \bm{dv} \gets \sum \limits_l^{Face} \left( \bm{u}^{(m+1)}_l \cdot \bm{n}_l \right) }$
 
-\State Calculate a part of iterative source term : $\bm{s}_1^{(m+1)} \gets \sum \limits_l^{Face} \left( \beta \bm{F}_l^{m+1} \cdot \bm{n}_l \right)$
+\State Calculate a part of iterative source term : $\bm{s}_1^{(m+1)} \gets \sum \limits_l^{Face} \left( \beta \bm{F}_l^{(m+1)} \cdot \bm{n}_l \right)$
 
 \State Calculate RHS vector : $ \displaystyle{ \bm{b}^{(m+1)} \gets - \frac{1}{\sum \limits_l \phi^{\,N}_{\,l}} \left( \frac{\Delta x}{\Delta t} \, \bm{s}_0 + \Delta x \, \bm{s}_1^{(m+1)} \right) }$
 
-\If {$\displaystyle{ (\frac{\Delta t}{\Delta x} \times \bm{dv} < \varepsilon) }$}
+\State Calculate $L_2$ norm of $\bm{b}^{(m+1)}$ : $\| \bm{b}^{(m+1)} \|_2$
+
+\If {$\displaystyle{ (\bm{dv} / \Delta x < \varepsilon) }$}
 \State Break m-Loop
 \EndIf
 

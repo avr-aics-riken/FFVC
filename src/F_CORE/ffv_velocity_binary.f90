@@ -133,6 +133,7 @@
     vflop = 0.0d0;
 
 !$OMP PARALLEL &
+!$OMP REDUCTION(+:vflop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, dh, v_mode) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2, bdx) &
@@ -154,13 +155,13 @@
 !$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
 
 #ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
+!$OMP DO SCHEDULE(dynamic,1)
 #elif defined _STATIC
-!$OMP DO SCHEDULE(static) &
+!$OMP DO SCHEDULE(static)
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
-!$OMP REDUCTION(+:vflop)
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -707,6 +708,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -849,6 +851,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -920,6 +923,7 @@
 #else
 !$OMP DO SCHEDULE(hoge)
 #endif
+
     do k=1,kx
     do j=1,jx
     do i=1,ix

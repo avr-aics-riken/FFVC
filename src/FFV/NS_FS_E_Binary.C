@@ -487,6 +487,7 @@ void FFV::NS_FS_E_Binary()
         if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0);
       }
+      
       for (int n=1; n<=C.NoBC; n++) {
         if ( cmp[n].isFORCING() ) 
         {
@@ -497,6 +498,32 @@ void FFV::NS_FS_E_Binary()
       }
     }
 
+    // 反復ソース項
+    if ( C.isForcing() == ON )
+    {
+      TIMING_start(tm_force_src);
+      flop=0.0;
+      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
+      TIMING_stop(tm_force_src, flop);
+      
+      TIMING_start(tm_poi_src_nrm);
+      rhs_nrm = 0.0;
+      flop = 0.0;
+      poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
+      TIMING_stop(tm_poi_src_nrm, flop);
+      
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_poi_src_comm);
+        double m_tmp = rhs_nrm;
+        if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      }
+      
+      rhs_nrm = sqrt(rhs_nrm);
+    }
+    
+    
     // 周期型の速度境界条件
     TIMING_start(tm_vec_BC);
     flop=0.0;

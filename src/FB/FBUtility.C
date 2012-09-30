@@ -17,7 +17,30 @@
 
 #include "FBUtility.h"
 
-// #################################################################v
+
+// #################################################################
+// ディレクトリがなければ作成、既存なら何もしない
+int FBUtility::c_mkdir(char *path)
+{
+  // 標準ライブラリ呼び出し
+  // パーミッションはumaskで指定
+  int rc = mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
+  
+  if (0 != rc)
+  {
+    // 既存エラー以外のエラー場合
+    if (EEXIST != errno)
+    {
+      printf("str error(errno)=[%s]\n", strerror(errno));
+      Exit(-1);
+    }
+  }
+  
+  return 0;
+}
+
+
+// #################################################################
 // 圧力値を有次元から無次元へ変換し，scale倍
 void FBUtility::prs_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const REAL_TYPE scale, double& flop)
 {

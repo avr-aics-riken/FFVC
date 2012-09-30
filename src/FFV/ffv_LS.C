@@ -429,18 +429,6 @@ void FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
       }
     }
     
-      
-    // 残差の集約
-    if ( numProc > 1 )
-    {
-      TIMING_start(tm_poi_res_comm);
-      double tmp = res;
-      if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(double)*0.5 ); // 双方向 x ノード数 check
-    }
-    
-    res = sqrt(res);
-    
     
     // Residual
     switch ( IC->get_normType() )
@@ -452,22 +440,23 @@ void FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
         res = 0.0;
         poi_residual_(&res, size, &guide, x, b, d_bcp, &flop_count);
         TIMING_stop(tm_poi_src_nrm, flop_count);
-        
-        if ( numProc > 1 )
-        {
-          TIMING_start(tm_poi_src_comm);
-          double m_tmp = res;
-          if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-        }
-        
-        res = sqrt(res);
         break;
         
       case ItrCtl::dx_b:
         // nothing to do, dx is already obtained in psor_(&res,...)
         break;
     }
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_poi_src_comm);
+      double m_tmp = res;
+      if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    }
+    
+    res = sqrt(res);
+    
     
     // 残差の保存
     switch ( IC->get_normType() )

@@ -120,8 +120,8 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
   
   // リサイズ後のインデクスサイズの登録と配列領域の確保
   int c_sz[3];
-  int gd=2; // 両側それぞれ2セル
-  unsigned long m_cmp_size=0;
+  int gd=2;    // ガイドセルは，両側それぞれ2セル
+  size_t m_cmp_size=0;
   
   for (int n=1; n<=C.NoBC; n++) 
   {
@@ -134,7 +134,7 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
       
       // ワーク用の配列を確保
       size_t array_size = (c_sz[0]+2*gd) * (c_sz[1]+2*gd) * (c_sz[2]+2*gd) * 3;
-      component_array[n] = new REAL_TYPE[array_size];
+      component_array[n-1] = new REAL_TYPE[array_size];
       m_cmp_size += array_size;
     }
   }

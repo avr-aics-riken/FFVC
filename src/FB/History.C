@@ -147,7 +147,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   const ItrCtl* ICt  = &IC[ItrCtl::ic_tdf_ei];  ///< 温度の拡散項の反復
   const ItrCtl* ICd  = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
   
-  fprintf(fp, "%8d %14.6e %11.4e %5d %11.4e ",
+  fprintf(fp, "%8d %14.6e %11.4e %5d  %11.4e",
           step, printTime(), printVmax(), ICd->LoopCount+1, ICd->get_normValue() );
 
   if ( C->KindOfSolver != SOLID_CONDUCTION ) 
