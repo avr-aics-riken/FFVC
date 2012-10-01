@@ -9,40 +9,27 @@ Release Note
 
 #######################################
 
+Ver 1.0.2    1 Oct. 2012
+  - ファイル出力のディレクトリ対応
+
 Ver 1.0.1   30 Sep. 2012
   - 反復法のプロセス変更
   - c_mkdir()追加
-
-Ver 1.0.0   25 Sep. 2012
   - コピー，初期化関数のsize_tチェック
-
-Ver 0.9.9    6 Sep. 2012
   - 温度パラメータの記述変更
-  
-Ver 0.9.8    5 Sep. 2012
   - LocalBoundaryの記述形式を変更
-  
-Ver 0.9.7    3 Sep. 2012
   - Polylib-2.1対応
   
 Ver 0.9.6   25 Aug. 2012
   - CPMlib-1.0.6対応
   - REAL_TYPEの定義をFB_Define.hへ移す
-  
-Ver 0.9.5   19 Aug. 2012
   - domain.tpにlength_of_unitパラメータを導入
-  
-Ver 0.9.4   19 Aug. 2012
   - dfi対応
   - Parallel_Input/Outputパラメータを固定(IO_Distribute)へ変更
   
 Ver 0.9.3  30 July 2012
   - plylib-2.1_Dev_b対応
-
-Ver 0.9.2  23 July 2012
   - PLOT3Dフォーマットテスト導入
-
-Ver 0.9.1  21 July 2012
   - 全メソッドTextParsar対応
   
 Ver 0.9.0  11 July 2012

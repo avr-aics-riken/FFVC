@@ -947,6 +947,18 @@ void Control::get_FileIO()
     Exit(0);
   }
   
+  
+  // Output Directory
+  label = "/Steer/File_IO/Output_Directory";
+  
+  tpCntl->GetValue(label, &str);
+
+  // 指定が無ければ，空のまま
+  if ( !str.empty() )
+  {
+    FIO.IO_dir = str;
+  }
+  
 }
 
 

@@ -444,6 +444,7 @@ public:
     int Div_Debug;
     int IO_Format; //=0 : *.sph , =1 : PLOT3D
     int IO_Voxel;
+    string IO_dir;
   } File_IO_Cntl;
   
   /** PLOT3D オプション */

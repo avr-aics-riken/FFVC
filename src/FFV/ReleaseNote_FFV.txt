@@ -9,46 +9,29 @@ Release Note
 
 #######################################
 
+Ver 0.8.5    1 Oct. 2012
+  - ファイル出力のディレクトリ対応
+  
 Ver 0.8.4   30 Sep. 2012
   - 反復法のプロセスを変更
-
-Ver 0.8.3   11 Sep. 2012
   - Gmres追加
-
-Ver 0.8.2    6 Sep. 2012
   - coarse restartの特殊版getCoraseResult2
-  
-Ver 0.8.1    5 Sep. 2012
   - ポリゴンのスケーリング機能 >> Hidden
-  
-Ver 0.8.0    3 Sep. 2012
   - 温度計算組み込み
   
 Ver 0.7.2   25 Aug. 2012
   - CPMlib-1.0.6対応
   - 領域情報関連の浮動小数点変数はdoubleのインターフェイス
-  
-Ver 0.7.1   19 Aug. 2012
   - domain.tpにlength_of_unitパラメータを導入
-  
-Ver 0.7.0   19 Aug. 2012
   - dfi対応
   - textparser 1.1対応
 
 Ver 0.6.0   30 July 2012
   - Polylib-2.1_Dev_b対応
-
-Ver 0.5.0   23 July 2012
   - PLOT3Dフォーマット導入
-
-Ver 0.4.0   11 July 2012
   - SOR2SMAのCPMlib実装
-
-Ver 0.3.0    9 July 2012
   - データクラスをポインタへ置換
 
 Ver 0.2.0   30 June 2012
   - 関数名を再構築
-
-Ver 0.1.0   23 June 2012
   - CPMライブラリを用いて並列管理テスト
