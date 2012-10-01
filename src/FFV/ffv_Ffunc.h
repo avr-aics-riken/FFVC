@@ -221,8 +221,28 @@ extern "C" {
                        int* bp,
                        double* flop);
   
-  void sma_comm_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key, int* nID);
-  void sma_comm_wait_(REAL_TYPE* p, int* sz, int* g, int* col, int* ip, int* cf_sz, REAL_TYPE* cf_x, REAL_TYPE* cf_y, REAL_TYPE* cf_z, int* key);
+  void sma_comm_      (REAL_TYPE* p,
+                       int* sz,
+                       int* g,
+                       int* col,
+                       int* ip,
+                       int* cf_sz,
+                       REAL_TYPE* cf_x,
+                       REAL_TYPE* cf_y,
+                       REAL_TYPE* cf_z,
+                       int* key,
+                       int* nID);
+  
+  void sma_comm_wait_ (REAL_TYPE* p,
+                       int* sz,
+                       int* g,
+                       int* col,
+                       int* ip,
+                       int* cf_sz,
+                       REAL_TYPE* cf_x,
+                       REAL_TYPE* cf_y,
+                       REAL_TYPE* cf_z,
+                       int* key);
   
   
   //***********************************************************************************************

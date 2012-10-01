@@ -378,6 +378,7 @@ void FFV::NS_FS_E_Binary()
     }
     
     res_init = sqrt(res_init);
+    cout << res_init << endl;
   }
   
 

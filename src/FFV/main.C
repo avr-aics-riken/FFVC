@@ -46,12 +46,12 @@ int main( int argc, char **argv )
   
   
   // 引数チェック
-  if ( argc != 3 )
+  if ( argc != 2 )
   {
     if ( ffv.IsMaster() )
     {
       printf("\n\tusage\n");
-      printf("\n\t$ ffvc <input_file> <domain_file> \n");
+      printf("\n\t$ ffvc <input_file>\n");
     }
     return -1;
   }

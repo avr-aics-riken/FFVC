@@ -463,10 +463,9 @@ private:
   
   
   /** 計算領域情報を設定する
-   * @param [in] dom_file  ドメインファイル名
+   * @param [in] tp_dom  TPControlクラス
    */
-  void DomainInitialize(const string dom_file);
-  
+  void DomainInitialize(TPControl* tp_dom);
   
   /**
    * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
@@ -563,10 +562,10 @@ private:
   
   
   /** グローバルな領域情報を取得 
-   * @param [in] dom_file  ドメインファイル名
+   * @param [in] tp_dom  TPControlクラス
    * @return 分割指示 (1-with / 2-without)
    */
-  int get_DomainInfo(const string dom_info);
+  int get_DomainInfo(TPControl* tp_dom);
   
   
   /**

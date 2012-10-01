@@ -135,12 +135,11 @@ int FFV::Initialize(int argc, char **argv)
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
   
   
-  
-  // 領域情報を記述したファイル名の取得
-  string dom_file = argv[2]; 
+
   
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
-  DomainInitialize(dom_file);
+  DomainInitialize(&tp_ffv);
+
   
   // 各クラスで領域情報を保持
   C.setNeighborInfo(C.guide);
@@ -1075,10 +1074,10 @@ void FFV::display_Parameters(FILE* fp)
 
 // #################################################################
 // 計算領域情報を設定する
-void FFV::DomainInitialize(const string dom_file)
+void FFV::DomainInitialize(TPControl* tp_dom)
 {
   // メンバ変数にパラメータをロード : 分割指示 (1-with / 2-without)
-  int div_type = get_DomainInfo(dom_file);
+  int div_type = get_DomainInfo(tp_dom);
 
   
 // ##########  
@@ -2050,7 +2049,7 @@ void FFV::get_Compo_Area()
 
 // #################################################################
 // グローバルな領域情報を取得
-int FFV::get_DomainInfo(const string dom_file)
+int FFV::get_DomainInfo(TPControl* tp_dom)
 {
   // 領域分割モードのパターン
   //      分割指定(G_div指定)    |     domain.txt 
@@ -2058,13 +2057,6 @@ int FFV::get_DomainInfo(const string dom_file)
   // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
   // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
   // 4)  G_div指定あり          |   + ActiveDomainInfo
-  
-  // 領域パラメータのローダ
-  TPControl tp_dom;
-  
-  tp_dom.getTPinstance();
-
-  int ierror = tp_dom.readTPfile(dom_file);
   
   
   string label, str;
@@ -2076,7 +2068,7 @@ int FFV::get_DomainInfo(const string dom_file)
   // 長さの単位
   label = "/DomainInfo/Unit_of_Length";
   
-  if ( !(tp_dom.GetValue(label, &str )) )
+  if ( !tp_dom->GetValue(label, &str) )
   {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2097,7 +2089,7 @@ int FFV::get_DomainInfo(const string dom_file)
   rvec  = G_origin;
   label = "/DomainInfo/Global_origin";
   
-  if ( !tp_dom.GetVector(label, rvec, 3) )
+  if ( !tp_dom->GetVector(label, rvec, 3) )
   {
     cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -2107,7 +2099,7 @@ int FFV::get_DomainInfo(const string dom_file)
   rvec  = G_region;
   label = "/DomainInfo/Global_region";
   
-  if ( !tp_dom.GetVector(label, rvec, 3) )
+  if ( !tp_dom->GetVector(label, rvec, 3) )
   {
     Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -2129,7 +2121,7 @@ int FFV::get_DomainInfo(const string dom_file)
   rvec  = pitch;
   label = "/DomainInfo/Global_pitch";
   
-  if ( !tp_dom.GetVector(label, rvec, 3) )
+  if ( !tp_dom->GetVector(label, rvec, 3) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
     flag = false;
@@ -2162,7 +2154,7 @@ int FFV::get_DomainInfo(const string dom_file)
     ivec  = G_size;
     label = "/DomainInfo/Global_voxel";
     
-    if ( !tp_dom.GetVector(label, ivec, 3) )
+    if ( !tp_dom->GetVector(label, ivec, 3) )
     {
       Hostonly_ cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
       Exit(0); // pitchもvoxelも有効でない
@@ -2189,7 +2181,7 @@ int FFV::get_DomainInfo(const string dom_file)
   ivec  = G_division;
   label = "/DomainInfo/Global_division";
   
-  if ( !tp_dom.GetVector(label, ivec, 3) )
+  if ( !tp_dom->GetVector(label, ivec, 3) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
     div_type = 2; // 自動分割
@@ -2241,7 +2233,7 @@ int FFV::get_DomainInfo(const string dom_file)
   // ActiveSubdomainファイル名の取得
   label = "/DomainInfo/ActiveSubDomain_File";
   
-  if ( !tp_dom.GetValue(label, &str ) )
+  if ( !tp_dom->GetValue(label, &str ) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
