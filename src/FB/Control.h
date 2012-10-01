@@ -403,6 +403,7 @@ protected:
   TPControl* tpCntl;   ///< テキストパーサへのポインタ
   
 public:
+    
   
   /** 各種モード　パラメータ */
   typedef struct 
@@ -444,7 +445,8 @@ public:
     int Div_Debug;
     int IO_Format; //=0 : *.sph , =1 : PLOT3D
     int IO_Voxel;
-    string IO_dir;
+    int IO_Mode;
+    string IO_DirPath;
   } File_IO_Cntl;
   
   /** PLOT3D オプション */
@@ -607,6 +609,14 @@ public:
     OpenMP,
     FlatMPI,
     Hybrid
+  };
+  
+  /** ファイル出力モード */
+  enum File_IO_Mode
+  {
+    io_current=1,
+    io_specified,
+    io_time_slice
   };
   
   
@@ -803,6 +813,7 @@ public:
     FIO.Div_Debug = 0;
     FIO.IO_Format = 0; //=0 : *.sph , =1 : PLOT3D
     FIO.IO_Voxel  = 0;
+    FIO.IO_Mode   = 0;
     
     P3Op.IS_xyz = ON;
     P3Op.IS_q = OFF;

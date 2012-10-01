@@ -245,7 +245,7 @@ public:
   
   
 private:
-
+  
   /**
    * @brief Adams-Bashforth法に用いる配列のアロケーション
    * @param [in,out] total ソルバーに使用するメモリ量
@@ -428,6 +428,17 @@ private:
    * @param [in] guide ガイドセル
    */
   double count_comm_size(const int sz[3], const int guide);
+  
+  
+  /**
+   * @brief 指定の出力ディレクトリとファイル名を結合
+   * @retval フルパスファイル名
+   * @param [in] path      ディレクトリパス名
+   * @param [in] fname     ファイル名
+   * @param [in] io_mode   ファイル出力モード
+   @ @param [in] para_mode 並列モード
+   */
+  string directory_prefix(string path, const string fname, const int io_mode, const int para_mode);
   
   
   /**

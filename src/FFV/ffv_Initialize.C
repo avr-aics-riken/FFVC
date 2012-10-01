@@ -1669,6 +1669,52 @@ void FFV::fixed_parameters()
 }
 
 
+// #################################################################
+// 固定パラメータの設定
+string FFV::directory_prefix(string path, const string fname, const int io_mode, const int para_mode)
+{
+  string tmp;
+  
+  switch (io_mode)
+  {
+    case Control::io_current:
+      tmp = fname;
+      break;
+      
+      
+    case Control::io_specified:
+      
+      if ( !FBUtility::c_mkdir(path) )
+      {
+        Hostonly_ printf("Failed to create directory \"%s\"\n", path.c_str() );
+        Exit(0);
+      }
+      tmp = path + "/" + fname;
+      break;
+      
+      
+    case Control::io_time_slice:
+      
+      // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
+      if ( (para_mode == Control::Serial) || (para_mode == Control::OpenMP) )
+      {
+        return fname;
+      }
+      else
+      {
+        if ( !FBUtility::c_mkdir(path) )
+        {
+          Hostonly_ printf("Failed to create directory \"%s\"\n", path.c_str() );
+          Exit(0);
+        }
+        tmp = path + "/" + fname;
+      }
+      break;
+  }
+  
+  return tmp;
+}
+
 
 // #################################################################
 // 並列処理時の各ノードの分割数を集めてファイルに保存する

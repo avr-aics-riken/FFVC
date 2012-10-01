@@ -80,7 +80,7 @@ public:
    * @brief ディレクトリを作成
    * @param [in] path ディレクトリパス
    */
-  int c_mkdir(char* path);
+  static int c_mkdir(string path);
   
   
   /**

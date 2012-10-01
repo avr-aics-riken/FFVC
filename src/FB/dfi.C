@@ -15,7 +15,26 @@
 #include "dfi.h"
 #include "util_Path.h"
 
-           
+
+// #################################################################
+// 出力ディレクトリ名を作成する
+std::string DFI::Generate_DirName(const std::string prefix, const unsigned m_step)
+{
+  if ( prefix.empty() ) return NULL;
+  
+  int len = prefix.size() + 11; // postfix(10) + 1(\0)
+  char* tmp = new char[len];
+  memset(tmp, 0, sizeof(char)*len);
+  
+  sprintf(tmp, "%s%010d", prefix.c_str(), m_step);
+  
+  std::string fname(tmp);
+  if ( tmp ) delete [] tmp;
+  
+  return fname;
+}
+
+
 // #################################################################
 // 出力DFIファイル名を作成する
 std::string DFI::Generate_DFI_Name(const std::string prefix)

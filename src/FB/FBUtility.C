@@ -20,23 +20,25 @@
 
 // #################################################################
 // ディレクトリがなければ作成、既存なら何もしない
-int FBUtility::c_mkdir(char *path)
+int FBUtility::c_mkdir(string path)
 {
   // 標準ライブラリ呼び出し
   // パーミッションはumaskで指定
-  int rc = mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
+  umask(022);
   
-  if (0 != rc)
+  int ret = mkdir(path.c_str(), 0777); // rwx
+  
+  if ( 0 != ret )
   {
-    // 既存エラー以外のエラー場合
-    if (EEXIST != errno)
+    // 既存以外のエラー
+    if ( EEXIST != errno )
     {
-      printf("str error(errno)=[%s]\n", strerror(errno));
-      Exit(-1);
+      printf( "\tError(errno)=[%s]\n", strerror(errno) );
+      return 0;
     }
   }
   
-  return 0;
+  return 1;
 }
 
 

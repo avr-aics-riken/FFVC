@@ -206,6 +206,14 @@ protected:
 public:
   
   /**
+   * @brief ディレクトリ名を作成する
+   * @param [in] prefix ファイル接頭文字
+   * @param [in] m_step ステップ数
+   */
+  std::string Generate_DirName(const std::string prefix, const unsigned m_step);
+  
+  
+  /**
    * @brief ファイル名を作成する
    * @param [in] prefix ファイル接頭文字
    * @param [in] m_step ステップ数

@@ -948,15 +948,52 @@ void Control::get_FileIO()
   }
   
   
-  // Output Directory
-  label = "/Steer/File_IO/Output_Directory";
+  // ファイル出力モード
+  label = "/Steer/File_IO/Output_Mode";
   
-  tpCntl->GetValue(label, &str);
-
-  // 指定が無ければ，空のまま
-  if ( !str.empty() )
+  if ( !(tpCntl->GetValue(label, &str )) )
   {
-    FIO.IO_dir = str;
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if ( !strcasecmp(str.c_str(), "current") )
+    {
+      FIO.IO_Mode = io_current;
+    }
+    else if ( !strcasecmp(str.c_str(), "specified") )
+    {
+      FIO.IO_Mode = io_specified;
+    }
+    else if ( !strcasecmp(str.c_str(), "time_slice") )
+    {
+      FIO.IO_Mode = io_time_slice;
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    // Output Directory_Path
+    if ( FIO.IO_Mode == io_specified )
+    {
+      label = "/Steer/File_IO/Directory_Path";
+      
+      if ( !(tpCntl->GetValue(label, &str)) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      // 指定が無ければ，空のまま
+      if ( !str.empty() )
+      {
+        FIO.IO_DirPath = str;
+      }
+    }
+
   }
   
 }
@@ -3417,7 +3454,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   
   // parallel mode ------------------
-  fprintf(fp,"\n\tParallel Mode & File IO\n");
+  fprintf(fp,"\n\tParallel Mode\n");
   
   switch (Parallelism)
   {
@@ -3445,6 +3482,11 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   fprintf(fp,"\t     Space Partitioning       :   Equal Partitioning\n");
   
   
+  
+  
+  // File IO mode ------------------
+  fprintf(fp,"\n\tFile IO Mode\n");
+  
   fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   
   // InputMode >> デフォルトでローカル
@@ -3457,6 +3499,25 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   // Voxel output
   fprintf(fp,"\t     Voxel model output       :   %s\n", (FIO.IO_Voxel==Sphere_SVX) ? "svx" : "None");
   
+  
+  // Output mode
+  switch (FIO.IO_Mode)
+  {
+    case io_current:
+      fprintf(fp,"\t     Output Mode              :   Current Directory\n");
+      break;
+      
+    case io_specified:
+      fprintf(fp,"\t     Output Mode              :   Specified Directory \"%s\"\n", FIO.IO_DirPath.c_str());
+      break;
+      
+    case io_time_slice:
+      fprintf(fp,"\t     Output Mode              :   TIme Slice\n");
+      break;
+      
+    default:
+      break;
+  }
   
   
   // ログ出力 ------------------
