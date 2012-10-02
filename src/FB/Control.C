@@ -333,6 +333,14 @@ void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
     }
     IC->set_ItrMax(itr);
     
+    if (order == ItrCtl::ic_div)
+    {
+      if (itr == 1)
+      {
+        IC->set_ItrMax(2); // minimum 2
+      }
+    }
+    
     
     label = label0 + "/Epsilon";
     if ( !(tpCntl->GetValue(label, &tmp )) ) 
