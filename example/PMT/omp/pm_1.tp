@@ -1,3 +1,15 @@
+DomainInfo {
+  Global_origin   = (-0.5, -0.5, -0.5   )
+  Global_region   = (1.0,  1.0,  1.0    )
+  Global_voxel    = (128   , 128   , 128   )
+  
+  //Global_pitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
+  //Global_division = (1    , 1    , 1    )
+
+  ActiveSubDomain_File = ""
+}
+
+
 Steer {
 
   Operator = "Kenji_Ono"
@@ -39,22 +51,30 @@ Steer {
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 1000
     Voxel_Output           = "off"
+    Output_Mode            = "specified"
+    Directory_Path         = "hoge"
   }
 
   Geometry_Model {
     Polylib_File = ""
     Base_Medium  = "air"
+    Hint_of_Filling_Fluid = "y_plus"
   }
 
   Iteration {
     Flow {
       Poisson {
         Iteration     = 20
-        Epsilon       = 1.0e-3
+        Epsilon       = 1.0e-4
         Omega         = 1.2
-        Norm          = "v_div_max"
+        Norm          = "r_b"
         Linear_Solver = "SOR2SMA"
         Comm_mode     = "async"
+      }
+      VP {
+        Iteration     = 20
+        Epsilon       = 1.0e-4
+        Norm          = "v_div_max"
       }
     }
     Heat {
@@ -183,8 +203,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 83
-    Flow_Base = 99
+    FFV       = 86
+    Flow_Base = 102
   }
 
 } //Steer

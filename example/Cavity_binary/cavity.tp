@@ -1,3 +1,16 @@
+DomainInfo {
+  Unit_of_Length  = "Non_Dimensional"
+  Global_origin   = (-0.5, -0.5, -0.5   )
+  Global_region   = (1.0,  1.0,  1.0    )
+  Global_voxel    = (64   , 64   , 64   )
+  
+  //Global_pitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
+  //Global_division = (1    , 1    , 1    )
+
+  ActiveSubDomain_File = "hoge"
+}
+
+
 Steer {
 
   Operator = "Kenji_Ono"
@@ -35,10 +48,12 @@ Steer {
     Format                 = "sph"
     Debug_Divergence       = "Off"
     Instant_Interval_Type  = "step"
-    Instant_Interval       = 100
+    Instant_Interval       = 10
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 200
     Voxel_Output           = "off"
+    Output_Mode            = "specified"
+    Directory_Path         = "hoge"
   }
 
   Geometry_Model {
@@ -50,12 +65,17 @@ Steer {
   Iteration {
     Flow {
       Poisson {
-        Iteration     = 200
+        Iteration     = 100
         Epsilon       = 1.0e-4
         Omega         = 1.1
-        Norm          = "v_div_max"
+        Norm          = "r_r0"
         Linear_Solver = "sor2sma"
         Comm_mode     = "async"
+      }
+      VP {
+        Iteration     = 20
+        Epsilon       = 1.0e-4
+        Norm          = "v_div_max"
       }
     }
     Heat {
@@ -169,7 +189,7 @@ Steer {
     Dt_Type            = "CFL_Reference_Velocity"
     Delta_T            = 0.2
     Period_Type        = "step"
-    Calculation_Period = 100
+    Calculation_Period = 1000
   }
 
   Treatment_of_Wall {
@@ -184,8 +204,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 83
-    Flow_Base = 99
+    FFV       = 86
+    Flow_Base = 102
   }
 
 } //Steer
