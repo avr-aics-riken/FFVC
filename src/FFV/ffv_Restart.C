@@ -343,7 +343,7 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 
 
 // リスタートプロセス
-void FFV::Restart(FILE* fp, double& G_prep, double& prep)
+void FFV::Restart(FILE* fp)
 {
   double flop_task;
   
@@ -379,7 +379,7 @@ void FFV::Restart(FILE* fp, double& G_prep, double& prep)
     
     // 粗い格子のファイルをロードし、内挿処理を行う
     flop_task = 0.0;
-    Restart_coarse(fp, G_prep, prep, flop_task);
+    Restart_coarse(fp, flop_task);
     
     Hostonly_ fprintf(stdout,"\n");
     Hostonly_ fprintf(fp,"\n");
@@ -643,7 +643,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
 
 
 // 粗い格子を用いたリスタート
-void FFV::Restart_coarse(FILE* fp, double& G_prep, double& prep, double& flop)
+void FFV::Restart_coarse(FILE* fp, double& flop)
 {
   std::string f_prs;
   std::string f_vel;
@@ -703,9 +703,12 @@ void FFV::Restart_coarse(FILE* fp, double& G_prep, double& prep, double& flop)
   }
   
   // テンポラリのファイルロード用メモリ領域
-  allocArray_CoarseMesh(r_size, prep);
+  double G_c_mem=0.0;
+  double c_mem=0.0;
   
-  display_memory_info(fp, G_prep, prep, "Coarse Mesh reading");
+  allocArray_CoarseMesh(r_size, c_mem);
+  
+  display_memory_info(fp, G_c_mem, c_mem, "Coarse Mesh reading");
   
   
   // ガイド出力

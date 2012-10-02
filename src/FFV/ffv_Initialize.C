@@ -649,7 +649,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // リスタート処理
-  Restart(fp, G_PrepMemory, PrepMemory);
+  Restart(fp);
 
   
   

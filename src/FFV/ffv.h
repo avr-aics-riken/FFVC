@@ -786,10 +786,8 @@ private:
   /**
    * @brief リスタートプロセス
    * @param [in]     fp     ファイルポインタ
-   * @param [in,out] G_prep 前処理のメモリ消費量カウンタ グローバル
-   * @param [in,out] prep   前処理のメモリ消費量カウンタ ローカル
    */
-  void Restart(FILE* fp, double& G_prep, double& prep);
+  void Restart(FILE* fp);
   
   
   /**
@@ -811,11 +809,9 @@ private:
   /**
    * @brief 粗い格子を用いたリスタート
    * @param [in]     fp     ファイルポインタ
-   * @param [in,out] G_prep 前処理のメモリ消費量カウンタ グローバル
-   * @param [in,out] prep   前処理のメモリ消費量カウンタ ローカル
    * @param [out]    flop   浮動小数点演算数
    */
-  void Restart_coarse(FILE* fp, double& G_prep, double& prep, double& flop);
+  void Restart_coarse(FILE* fp, double& flop);
   
   
   /**
