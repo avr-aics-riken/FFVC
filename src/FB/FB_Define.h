@@ -379,6 +379,12 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 #define _PACK(_SZ,_BF,_L) (_BF*_SZ+_L)
 
 
+// AoS
+typedef struct {
+  REAL_TYPE p0;
+  REAL_TYPE p1;
+} Gemini_R;
+
 
 /// 変数の種類
 enum Kind_of_vars {

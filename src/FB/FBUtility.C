@@ -127,24 +127,7 @@ void FBUtility::MemoryRequirement(const char* mode, const double Memory, const d
   const double PB = 1024.0*TB;
   const double factor = 1.05; // estimate 5% for addtional
 
-  if ( !strcasecmp(mode,"prep") ) {
-    fprintf (fp,"\t>> Memory required for Preprocessor : ");
-  }
-  else if ( !strcasecmp(mode,"solver") ) {
-    fprintf (fp,"\t>> Memory required for Solver : ");
-  }
-  else if ( !strcasecmp(mode,"polygon") ) {
-    fprintf (fp,"\t>> Memory required for Polygon : ");
-  }
-  else if ( !strcasecmp(mode,"cut") ) {
-    fprintf (fp,"\t>> Memory required for Cut : ");
-  }
-  else if ( !strcasecmp(mode,"component") ) {
-    fprintf (fp,"\t>> Memory required for Component : ");
-  }
-  else {
-    Exit(0);
-  }
+  fprintf (fp,"\t>> Memory required for %s : ", mode);
 
   // Global memory
   fprintf (fp," Global=");

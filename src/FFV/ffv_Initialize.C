@@ -256,6 +256,7 @@ int FFV::Initialize(int argc, char **argv)
     C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
   }
   
+  
   // メモリ消費量の情報を表示
   Hostonly_
   {
@@ -264,17 +265,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   G_PrepMemory = PrepMemory;
   
-  if( numProc > 1 )
-  {
-    tmp_memory = G_PrepMemory;
-    if ( paraMngr->Allreduce(&tmp_memory, &G_PrepMemory, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  Hostonly_
-  {
-    FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, stdout);
-    FBUtility::MemoryRequirement("prep", G_PrepMemory, PrepMemory, fp);
-  }
+  display_memory_info(fp, G_PrepMemory, PrepMemory, "Preprocessor");
   
   
   
@@ -658,7 +649,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // リスタート処理
-  Restart(fp);
+  Restart(fp, G_PrepMemory, PrepMemory);
 
   
   
@@ -782,25 +773,10 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   G_TotalMemory = TotalMemory;
-  if ( numProc > 1 )
-  {
-    tmp_memory = G_TotalMemory;
-    if ( paraMngr->Allreduce(&tmp_memory, &G_TotalMemory, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  Hostonly_
-  {
-    double n = (double)( (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide) * 3 );
-    double mc = n * (double)sizeof(REAL_TYPE); // temporaty array for vector output, see prepOutput();
-    FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, stdout);
-    FBUtility::MemoryRequirement("solver", G_TotalMemory, TotalMemory, fp);
-  }
   
-  Hostonly_ 
-  {
-    printf("\n\n");
-    fprintf(fp, "\n\n");
-  }
+  display_memory_info(fp, G_TotalMemory, TotalMemory, "Solver");
 
+  
   
   // 履歴出力準備
   prep_HistoryOutput();
@@ -1712,6 +1688,30 @@ string FFV::directory_prefix(string path, const string fname, const int io_mode,
   }
   
   return tmp;
+}
+
+
+// #################################################################
+// メモリ使用量の表示
+void FFV::display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str)
+{
+  if ( numProc > 1 )
+  {
+    double tmp_memory = G_mem;
+    if ( paraMngr->Allreduce(&tmp_memory, &G_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    FBUtility::MemoryRequirement(str, G_mem, L_mem, stdout);
+    FBUtility::MemoryRequirement(str, G_mem, L_mem, fp);
+  }
+  
+  Hostonly_
+  {
+    printf("\n\n");
+    fprintf(fp, "\n\n");
+  }
 }
 
 
@@ -3098,9 +3098,10 @@ void FFV::setInitialCondition()
     
     // 流出境界の流出速度の算出
     // dummy
-    REAL_TYPE* m_buf = new REAL_TYPE [C.NoBC*2];
+    Gemini_R* m_buf = new Gemini_R [C.NoBC];
     BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, flop_task);
-    if ( m_buf ) delete [] m_buf; m_buf=NULL;
+    if ( m_buf ) { delete [] m_buf; m_buf=NULL; }
+    
     DomainMonitor(BC.export_OBC(), &C);
     
     //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
@@ -3121,7 +3122,8 @@ void FFV::setInitialCondition()
   }
 
   // VOF
-  if ( C.BasicEqs == INCMP_2PHASE ) {
+  if ( C.BasicEqs == INCMP_2PHASE )
+  {
     setVOF();
     if ( numProc > 1 )
     {
@@ -3428,16 +3430,10 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   m_prep += cut_mem;
   m_total+= cut_mem;
   
-  if ( numProc > 1 ) 
-  {
-    if ( paraMngr->Allreduce(&cut_mem, &G_cut_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
   
-  Hostonly_  
-  {
-    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, stdout);
-    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
-  }
+  display_memory_info(fp, G_cut_mem, cut_mem, "Cut");
+  
+
   
   // 初期値のセット
   for (size_t i=0; i<size_n_cell*6; i++) {
@@ -3639,17 +3635,9 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   m_prep += poly_mem;
   m_total+= poly_mem;
   
+  display_memory_info(fp, G_poly_mem, poly_mem, "Polygon");
   
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->Allreduce(&poly_mem, &G_poly_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  Hostonly_
-  {
-    FBUtility::MemoryRequirement("Polygon", G_poly_mem, poly_mem, stdout);
-    FBUtility::MemoryRequirement("Polygon", G_poly_mem, poly_mem, fp);
-  }
+
   
   
   // Triangle display >> Debug
@@ -3763,16 +3751,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   m_prep += cut_mem;
   m_total+= cut_mem;
   
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->Allreduce(&cut_mem, &G_cut_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
   
-  Hostonly_
-  {
-    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, stdout);
-    FBUtility::MemoryRequirement("Cut", G_cut_mem, cut_mem, fp);
-  }
+  display_memory_info(fp, G_cut_mem, cut_mem, "Cut");
   
   
   // カットとID情報をポイント

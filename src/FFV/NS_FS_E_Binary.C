@@ -40,10 +40,9 @@ void FFV::NS_FS_E_Binary()
   
   
   // 境界処理用
-  REAL_TYPE* m_buf = NULL;
-  REAL_TYPE* m_tmp = NULL;
-  m_buf = new REAL_TYPE [C.NoBC*2];
-  m_tmp = new REAL_TYPE [C.NoBC*2];
+  Gemini_R* m_buf = new Gemini_R [C.NoBC];
+  REAL_TYPE* m_snd = new REAL_TYPE [C.NoBC*2];
+  REAL_TYPE* m_rcv = new REAL_TYPE [C.NoBC*2];
   
   comm_size = count_comm_size(size, 1);
   
@@ -433,7 +432,6 @@ void FFV::NS_FS_E_Binary()
 
     
     // セルフェイス速度の境界条件による修正
-    // m_bufのアドレス計算に注意（Fortran <-> C）
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
     BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, flop);
@@ -447,18 +445,25 @@ void FFV::NS_FS_E_Binary()
       {
         if ( numProc > 1 ) 
         {
-          TIMING_start(tm_prj_vec_bc_comm);
-          for (int n=0; n<2*C.NoBC; n++) {
-            m_tmp[n] = m_buf[n];
+          for (int n=0; n<C.NoBC; n++) {
+            m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
+            m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
           }
-          if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          
+          TIMING_start(tm_prj_vec_bc_comm);
+          if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
           TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+          
+          for (int n=0; n<C.NoBC; n++) {
+            m_buf[n].p0 = m_rcv[2*n];
+            m_buf[n].p1 = m_rcv[2*n+1];
+          }
         }
         
         for (int n=1; n<=C.NoBC; n++) {
           if ( cmp[n].getType() == OUTFLOW ) 
           {
-            cmp[n].val[var_Velocity] = m_buf[2*(n-1)]/m_buf[2*(n-1)+1]; // 無次元平均流速
+            cmp[n].val[var_Velocity] = m_buf[n-1].p0 / m_buf[n-1].p1; // 無次元平均流速
           }
         }
       }
@@ -471,7 +476,6 @@ void FFV::NS_FS_E_Binary()
     // Forcingコンポーネントによる速度と発散値の修正
     if ( C.isForcing() == ON ) 
     {
-      // m_bufのアドレス計算に注意（Fortran <-> C）
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;
       BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_dv, dt, v00, m_buf, component_array, flop);
@@ -480,20 +484,27 @@ void FFV::NS_FS_E_Binary()
       // 通信部分
       if ( numProc > 1 ) 
       {
-        TIMING_start(tm_prj_frc_mod_comm);
-        for (int n=0; n<2*C.NoBC; n++) {
-          m_tmp[n] = m_buf[n];
+        for (int n=0; n<C.NoBC; n++) {
+          m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
+          m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算圧力損失
         }
-        if ( paraMngr->Allreduce(m_tmp, m_buf, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        
+        TIMING_start(tm_prj_frc_mod_comm);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0);
+        
+        for (int n=0; n<C.NoBC; n++) {
+          m_buf[n].p0 = m_rcv[2*n];
+          m_buf[n].p1 = m_rcv[2*n+1];
+        }
       }
       
       for (int n=1; n<=C.NoBC; n++) {
         if ( cmp[n].isFORCING() ) 
         {
           REAL_TYPE aa = (REAL_TYPE)cmp[n].getElement();
-          cmp[n].val[var_Velocity] = m_buf[2*(n-1)]   / aa; // 平均速度
-          cmp[n].val[var_Pressure] = m_buf[2*(n-1)+1] / aa; // 平均圧力損失量
+          cmp[n].val[var_Velocity] = m_buf[n-1].p0 / aa; // 平均速度
+          cmp[n].val[var_Pressure] = m_buf[n-1].p1 / aa; // 平均圧力損失量
         }
       }
     }
@@ -628,6 +639,7 @@ void FFV::NS_FS_E_Binary()
   
   // 後始末
   if ( m_buf ) delete [] m_buf;
-  if ( m_tmp ) delete [] m_tmp;
+  if ( m_snd ) delete [] m_snd;
+  if ( m_rcv ) delete [] m_rcv;
 
 }

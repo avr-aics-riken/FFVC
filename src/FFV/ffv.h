@@ -88,6 +88,7 @@ using namespace PolylibNS;
 using namespace cutlib;
 
 
+
 class FFV : public DomainInfo {
 private:
   int ffv_procGrp;         ///< プロセスグループ番号 => 0
@@ -462,7 +463,18 @@ private:
   void display_Parameters(FILE* fp);
   
   
-  /** 計算領域情報を設定する
+  /**
+   * @brief メモリ消費情報を表示
+   * @param [in]     fp    ファイルポインタ
+   * @param [in,out] G_mem グローバルメモリサイズ
+   * @param [in]     L_mem ローカルメモリサイズ
+   * @param [in]     str   表示用文字列
+   */
+  void display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str);
+  
+  
+  /** 
+   * @brief 計算領域情報を設定する
    * @param [in] tp_dom  TPControlクラス
    */
   void DomainInitialize(TPControl* tp_dom);
@@ -736,11 +748,11 @@ private:
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
-   * @param [in]  IC IterationCtlクラス
+   * @param [in]  IC       IterationCtlクラス
    * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
-   * @param [in]  res_init 初期残差ベクトル
+   * @param [in]  r0       初期残差ベクトル
    */
-  void ps_LS(ItrCtl* IC, const double rhs_nrm, const double rhs_nrm);
+  void ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0);
   
   
   /**
@@ -773,9 +785,11 @@ private:
   
   /**
    * @brief リスタートプロセス
-   * @param [in]  fp   ファイルポインタ
+   * @param [in]     fp     ファイルポインタ
+   * @param [in,out] G_prep 前処理のメモリ消費量カウンタ グローバル
+   * @param [in,out] prep   前処理のメモリ消費量カウンタ ローカル
    */
-  void Restart(FILE* fp);
+  void Restart(FILE* fp, double& G_prep, double& prep);
   
   
   /**
@@ -796,10 +810,12 @@ private:
   
   /**
    * @brief 粗い格子を用いたリスタート
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
+   * @param [in]     fp     ファイルポインタ
+   * @param [in,out] G_prep 前処理のメモリ消費量カウンタ グローバル
+   * @param [in,out] prep   前処理のメモリ消費量カウンタ ローカル
+   * @param [out]    flop   浮動小数点演算数
    */
-  void Restart_coarse(FILE* fp, double& flop);
+  void Restart_coarse(FILE* fp, double& G_prep, double& prep, double& flop);
   
   
   /**

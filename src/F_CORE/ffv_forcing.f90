@@ -529,8 +529,8 @@
 
     flop = flop + dble(ie-is+3)*(je-js+3)*(ke-ks+3)*213.0d0
 
-    am(1) = am1
-    am(2) = am2
+    am(1) = am1 ! accumulated velocity
+    am(2) = am2 ! accumulated pressure loss
 
     return
     end subroutine hex_force_vec

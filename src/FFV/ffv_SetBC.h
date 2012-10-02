@@ -160,7 +160,7 @@ public:
    * @param [in]     bv     BCindex V
    * @param [in]     tm     無次元時刻
    * @param [in]     v00    基準速度
-   * @param [in]     avr[2] 平均値計算のテンポラリ値
+   * @param [in]     avr    平均値計算のテンポラリ値
    * @param [in]     flop   flop count
    * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
    */
@@ -168,7 +168,7 @@ public:
                 int* bv,
                 REAL_TYPE tm,
                 REAL_TYPE* v00,
-                REAL_TYPE* avr,
+                Gemini_R* avr,
                 double& flop);
   
   
@@ -245,7 +245,7 @@ public:
    * @param [in]     dv         \sum{u}
    * @param [in]     dt         時間積分幅
    * @param [in]     v00        参照速度
-   * @param [in]     am[2*NoBC] モニター用配列
+   * @param [in]     am         平均速度と圧力損失
    * @param [in]     c_array    コンポーネントワーク配列の管理ポインタ
    * @param [out]    flop       flop count
    * @note am[]のインデクスに注意 (Fortran <-> C)
@@ -256,7 +256,7 @@ public:
                          REAL_TYPE* dv,
                          REAL_TYPE dt,
                          REAL_TYPE* v00,
-                         REAL_TYPE* am,
+                         Gemini_R* am,
                          REAL_TYPE** c_array,
                          double& flop);
   

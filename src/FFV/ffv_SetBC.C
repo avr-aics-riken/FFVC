@@ -436,13 +436,14 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
 // 速度境界条件による速度の発散の修正ほか
 // 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
 // avr[]のインデクスに注意 (Fortran <-> C)
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL_TYPE* avr, double& flop)
+void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
   int typ=0;
   int gd = guide;
   double fcount = 0.0;
+  REAL_TYPE aa[2];
   
   // 内部境界条件による修正
   if ( isCDS ) // Cut-Distance
@@ -479,7 +480,14 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, REAL
       switch (typ)
       {
         case OUTFLOW:
-          div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, &avr[2*(n-1)], &fcount);
+          div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
+          avr[n-1].p0 = aa[0]; // 積算速度
+          avr[n-1].p1 = aa[1]; // 積算回数
+          if ( aa[1] == 0.0 )
+          {
+            Hostonly_ printf("\tError : Number of accumulation is zero\n");
+            Exit(0);
+          }
           break;
           
         case SPEC_VEL:
@@ -678,13 +686,14 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf
 // #################################################################
 // 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
 // am[]のインデクスに注意 (Fortran <-> C)
-void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv, REAL_TYPE dt, REAL_TYPE* v00, REAL_TYPE* am, REAL_TYPE** c_array, double &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv, REAL_TYPE dt, REAL_TYPE* v00, Gemini_R* am, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
   REAL_TYPE* w_ptr=NULL;
   REAL_TYPE dh = deltaX;
   int gd = guide;
+  REAL_TYPE aa[2];
   
   for (int n=1; n<=NoBC; n++) {
     if ( cmp[n].isFORCING() )
@@ -700,7 +709,9 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
       switch ( cmp[n].getType() )
       {
         case HEX:
-          hex_force_vec_(v, dv, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], &am[2*(n-1)], &flop);
+          hex_force_vec_(v, dv, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], aa, &flop);
+          am[n-1].p0 = aa[0];
+          am[n-1].p1 = aa[1];
           break;
           
         case FAN:

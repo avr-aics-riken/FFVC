@@ -951,7 +951,7 @@
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     bv   BCindex V
 !! @param [in]     odr  速度境界条件のエントリ
-!! @param [out]    av   積算流量と面積
+!! @param [out]    av   積算速度と積算数
 !! @param [out]    flop flop count
 !! @note div(u)=0から，内部流出境界のセルで計算されたdivの値が流出速度となる
 !! @note 1つのセルに複数の速度境界条件がある場合にはだめ

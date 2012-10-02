@@ -343,7 +343,7 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 
 
 // リスタートプロセス
-void FFV::Restart(FILE* fp)
+void FFV::Restart(FILE* fp, double& G_prep, double& prep)
 {
   double flop_task;
   
@@ -379,7 +379,7 @@ void FFV::Restart(FILE* fp)
     
     // 粗い格子のファイルをロードし、内挿処理を行う
     flop_task = 0.0;
-    Restart_coarse(fp, flop_task);
+    Restart_coarse(fp, G_prep, prep, flop_task);
     
     Hostonly_ fprintf(stdout,"\n");
     Hostonly_ fprintf(fp,"\n");
@@ -643,7 +643,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
 
 
 // 粗い格子を用いたリスタート
-void FFV::Restart_coarse(FILE* fp, double& flop)
+void FFV::Restart_coarse(FILE* fp, double& G_prep, double& prep, double& flop)
 {
   std::string f_prs;
   std::string f_vel;
@@ -702,8 +702,10 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     }
   }
   
-  // テンポラリのファイルロード
-  allocArray_CoarseMesh(r_size, flop);
+  // テンポラリのファイルロード用メモリ領域
+  allocArray_CoarseMesh(r_size, prep);
+  
+  display_memory_info(fp, G_prep, prep, "Coarse Mesh reading");
   
   
   // ガイド出力
@@ -788,6 +790,28 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   
   // 内挿処理
   Interpolation_from_coarse_initial(crs, num_block);
+  
+  // Delete temporary array
+  if ( d_r_p )
+  {
+    delete [] d_r_p;
+    d_r_p=NULL;
+  }
+  
+  if ( d_r_v )
+  {
+    delete [] d_r_v;
+    d_r_v=NULL;
+  }
+  
+  if ( C.isHeatProblem() )
+  {
+    if ( d_r_t )
+    {
+      delete [] d_r_t;
+      d_r_t=NULL;
+    }
+  }
 }
 
 
