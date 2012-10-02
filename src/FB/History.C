@@ -40,7 +40,7 @@ void History::printHistoryItrTitle(FILE* fp)
 // コンポーネントモニタの履歴出力
 void History::printHistoryItr(FILE* fp, const int itr, const double nrm, const int* idx)
 {
-	fprintf(fp, "                                           %8d %13.6e (%12d, %12d, %12d)\n", itr+1, nrm, idx[0], idx[1], idx[2]);
+	fprintf(fp, "                                           %8d %13.6e (%12d, %12d, %12d)\n", itr, nrm, idx[0], idx[1], idx[2]);
 }
 
 
@@ -148,7 +148,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   const ItrCtl* ICd  = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
   
   fprintf(fp, "%8d %14.6e %11.4e %5d  %11.4e",
-          step, printTime(), printVmax(), ICd->LoopCount+1, ICd->get_normValue() );
+          step, printTime(), printVmax(), ICd->LoopCount, ICd->get_normValue() );
 
   if ( C->KindOfSolver != SOLID_CONDUCTION ) 
   {
@@ -159,18 +159,18 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
       case Control::Flow_FS_AB_CN:
         if ( (IC->get_normType() != ItrCtl::v_div_max) && (IC->get_normType() != ItrCtl::v_div_dbg) )
         {
-          fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
+          fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
         }
         else
         {
-          fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
+          fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
         }
         break;
     }
     
     if (C->AlgorithmF == Control::Flow_FS_AB_CN) 
     {
-      fprintf(fp, " %5d %11.4e", ICp1->LoopCount+1, ICp1->get_normValue());
+      fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
     }
     
     if ( C->isHeatProblem() ) 
@@ -178,7 +178,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
       switch (C->AlgorithmH) 
       {				
         case Control::Heat_EE_EI:
-          fprintf(fp, " %5d %11.4e", ICt->LoopCount+1, ICt->get_normValue());
+          fprintf(fp, " %5d %11.4e", ICt->LoopCount, ICt->get_normValue());
           break;
       }
     }
@@ -191,7 +191,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
     switch (C->AlgorithmH) 
     {				
       case Control::Heat_EE_EI:
-        fprintf(fp, " %5d %11.4e", ICt->LoopCount+1, ICt->get_normValue());
+        fprintf(fp, " %5d %11.4e", ICt->LoopCount, ICt->get_normValue());
         break;
     }
     fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);

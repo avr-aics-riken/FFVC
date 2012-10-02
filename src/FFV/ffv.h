@@ -725,13 +725,14 @@ private:
   
   
   /** SOR法
+   * @retval 反復数
    * @param [in]     IC      IterationCtlクラス
    * @param [in,out] x       解ベクトル
    * @param [in]     b  RHS  vector
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  void Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
@@ -924,13 +925,14 @@ private:
   
   
   /** 2色オーダリングSORのストライドメモリアクセス版
+   * @retval 反復数
    * @param [in]     IC      IterationCtlクラス
    * @param [in,out] x       解ベクトル
    * @param [in]     b  RHS  vector
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  void SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   
   /**

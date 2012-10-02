@@ -220,11 +220,12 @@ bool FFV::hasLinearSolver(const int L)
 
 // #################################################################
 // Point SOR
-void FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
   double flop_count=0.0;         /// 浮動小数点演算数
   REAL_TYPE omg = IC->get_omg(); /// 加速係数
 	double res = 0.0;              /// 残差
+  int lc=0;                      /// ループカウント
   
   // x     圧力 p^{n+1}
 	// b     RHS vector
@@ -233,7 +234,7 @@ void FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
-  for (IC->LoopCount=0; IC->LoopCount< IC->get_ItrMax(); IC->LoopCount++)
+  for (lc=1; lc<IC->get_ItrMax(); lc++)
   {
     // 反復処理
     TIMING_start(tm_poi_PSOR);
@@ -316,6 +317,8 @@ void FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
   }
   
   TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+  
+  return lc;
 }
 
 
@@ -350,13 +353,14 @@ void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-void FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
   int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                  /// ip=0 > R, ip=1 > B
   double flop_count=0.0;         /// 浮動小数点演算数
   REAL_TYPE omg = IC->get_omg(); /// 加速係数
 	double res = 0.0;              /// 残差
+  int lc=0;                      /// ループカウント
   
   // x     圧力 p^{n+1}
   // b     RHS vector
@@ -365,7 +369,7 @@ void FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
-  for (IC->LoopCount=0; IC->LoopCount< IC->get_ItrMax(); IC->LoopCount++)
+  for (lc=1; lc<IC->get_ItrMax(); lc++)
   {
     // 2色のマルチカラー(Red&Black)のセットアップ
     TIMING_start(tm_poi_setup);
@@ -485,6 +489,8 @@ void FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
   }
   
   TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
+  
+  return lc;
 }
 
 

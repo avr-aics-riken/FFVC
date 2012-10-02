@@ -259,6 +259,8 @@ private:
   int SyncMode;          ///< 同期モード (comm_sync, comm_async)
   
 public:
+  int LoopCount;  ///< 反復回数
+  
   /** 反復制御リスト */
   enum itr_cntl_key 
   {
@@ -275,14 +277,13 @@ public:
   /** 反復法の収束基準種別 */
   enum norm_type 
   { 
-    v_div_max,
+    v_div_max=1,
     v_div_dbg,
     dx_b,
     r_b,
     r_r0
   };
-  
-  int LoopCount;  ///< 反復回数
+
   
   /** コンストラクタ */
   ItrCtl() {
@@ -865,12 +866,11 @@ protected:
   
   /**
    * @brief 反復の収束判定パラメータを取得
-   * @param [in]     label1  Nodeのラベル1
-   * @param [in]     label2  Nodeのラベル2
-   * @param [in]     order   ItrCtl配列の格納番号
+   * @param [in]     label0  Nodeのラベル
+   * @param [in]     order   格納番号
    * @param [in,out] IC      反復制御用クラスの配列
    */
-  void findCriteria(const string label1, const string label2, const int order, ItrCtl* IC);
+  void findCriteria(const string label0, const int order, ItrCtl* IC);
   
   
   /** 

@@ -317,45 +317,40 @@ int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::stri
 
 // #################################################################
 // 反復の収束判定パラメータを取得
-void Control::findCriteria(const string label1, const string label2, const int order, ItrCtl* IC)
+void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
 {
   int itr=0;
   REAL_TYPE tmp=0.0;
-  int LinearSolver=0;
-  string str;
-  string label, label0, key;
-  
-  label0 = label1 + "/" + label2;
+  string str, label;
   
   if ( tpCntl->chkNode(label0) )
   {
-    key = "/Iteration";
-    label = label0 + key;
+    label = label0 + "/Iteration";
     if ( !(tpCntl->GetValue(label, &itr )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid integer value for 'Iteration' of %s in Criteria\n", key.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
       Exit(0);
     }
-    IC[order].set_ItrMax(itr);
+    IC->set_ItrMax(itr);
     
     
-    key = "/Epsilon";
-    label = label0 + key;
+    label = label0 + "/Epsilon";
     if ( !(tpCntl->GetValue(label, &tmp )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Epsilon' of %s in Criteria\n", key.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
-    IC[order].set_eps((double)tmp);
+    IC->set_eps((double)tmp);
     
     
-    key = "/norm";
-    label = label0 + key;
+    label = label0 + "/norm";
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Norm' of %s in Criteria\n", key.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
       Exit(0);
     }
+    
+    
     
     // normのタイプ
     switch (order)
@@ -367,15 +362,15 @@ void Control::findCriteria(const string label1, const string label2, const int o
         
         if ( !strcasecmp(str.c_str(), "dx_b") )
         {
-          IC[order].set_normType(ItrCtl::dx_b);
+          IC->set_normType(ItrCtl::dx_b);
         }
         else if ( !strcasecmp(str.c_str(), "r_b") )
         {
-          IC[order].set_normType(ItrCtl::r_b);
+          IC->set_normType(ItrCtl::r_b);
         }
         else if ( !strcasecmp(str.c_str(), "r_r0") )
         {
-          IC[order].set_normType(ItrCtl::r_r0);
+          IC->set_normType(ItrCtl::r_r0);
         }
         else
         {
@@ -387,72 +382,71 @@ void Control::findCriteria(const string label1, const string label2, const int o
       case ItrCtl::ic_div: // VP iteration
         if ( !strcasecmp(str.c_str(), "v_div_max") )
         {
-          IC[order].set_normType(ItrCtl::v_div_max);
+          IC->set_normType(ItrCtl::v_div_max);
         }
         else if ( !strcasecmp(str.c_str(), "v_div_dbg") )
         {
-          IC[order].set_normType(ItrCtl::v_div_dbg);
+          IC->set_normType(ItrCtl::v_div_dbg);
           Mode.Log_Itr == ON;
         }
         else
         {
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for heat iteration\n", str.c_str());
+          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
           Exit(0);
         }
         break;
         
         default:
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for heat iteration\n", str.c_str());
+          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
           Exit(0);
     }
     
     
     if ( order != ItrCtl::ic_div )
     {
-      key = "/Omega";
-      label = label0 + key;
+      label = label0 + "/Omega";
       if ( !(tpCntl->GetValue(label, &tmp )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : Invalid float value for 'Omega' of %s in Criteria\n", key.c_str());
+        Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
         Exit(0);
       }
-      IC[order].set_omg(tmp);
+      IC->set_omg(tmp);
       
-      key = "/comm_mode";
-      label = label0 + key;
+      
+      label = label0 + "/comm_mode";
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Comm_Mode' of %s in Criteria\n", key.c_str());
+        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
         Exit(0);
       }
       if ( !strcasecmp(str.c_str(), "sync") )
       {
-        IC[order].set_SyncMode(comm_sync);
+        IC->set_SyncMode(comm_sync);
       }
       else if ( !strcasecmp(str.c_str(), "async") )
       {
-        IC[order].set_SyncMode(comm_async);
+        IC->set_SyncMode(comm_async);
       }
       else
       {
-        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Comm_Mode' of %s in Criteria\n", key.c_str());
+        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
         Exit(0);
       }
       
-      key = "/Linear_Solver";
-      label = label0 + key;
+
+      label = label0 + "/Linear_Solver";
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for 'Linear_Solver' of %s in Criteria\n", key.c_str());
+        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
         Exit(0);
       }
       
       // 線形ソルバーの種類
-      if     ( !strcasecmp(str.c_str(), "SOR") )         IC[order].set_LS(SOR);
-      else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC[order].set_LS(SOR2SMA);
-      else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC[order].set_LS(SOR2CMA);
-      else if( !strcasecmp(str.c_str(), "JACOBI") )      IC[order].set_LS(JACOBI);
-      else if( !strcasecmp(str.c_str(), "GMRES") )       IC[order].set_LS(GMRES);
+      if     ( !strcasecmp(str.c_str(), "SOR") )         IC->set_LS(SOR);
+      else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC->set_LS(SOR2SMA);
+      else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
+      else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
+      else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
@@ -463,7 +457,7 @@ void Control::findCriteria(const string label1, const string label2, const int o
   }
   else 
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword of '%s' in Iteration_Flow/Heat\n", key.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword of '%s'\n", label.c_str());
     Exit(0);
   }
 
@@ -1124,22 +1118,23 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
 void Control::get_Iteration(ItrCtl* IC)
 {
   string str;
-  string label1, label2;
+  string label;
   
-  label1 = "/Steer/Iteration";
-  label2 = label1 + "/Flow";
+  label = "/Steer/Iteration";
   
   // Iteration
-  if( !tpCntl->chkNode(label1) )
+  if( !tpCntl->chkNode(label) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label1.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
     Exit(0);
   }
   
+  label = "/Steer/Iteration/Flow";
+  
   // Flow
-  if( !tpCntl->chkNode(label2) )
+  if( !tpCntl->chkNode(label) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label2.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -1149,36 +1144,36 @@ void Control::get_Iteration(ItrCtl* IC)
   {
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
-      findCriteria(label2, "Poisson", ItrCtl::ic_prs_pr, IC);
-      findCriteria(label2, "VP",      ItrCtl::ic_div,    IC);
+      findCriteria("/Steer/Iteration/Flow/Poisson", ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      findCriteria("/Steer/Iteration/Flow/VP",      ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     case Flow_FS_AB_CN:
-      findCriteria(label2, "Poisson", ItrCtl::ic_prs_pr, IC);
-      findCriteria(label2, "NS_CN",   ItrCtl::ic_vis_cn, IC);
-      findCriteria(label2, "VP",      ItrCtl::ic_div,    IC);
+      findCriteria("/Steer/Iteration/Flow/Poisson", ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      findCriteria("/Steer/Iteration/Flow/NS_CN",   ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
+      findCriteria("/Steer/Iteration/Flow/VP",      ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     case Flow_FS_RK_CN:
-      findCriteria(label2, "Poisson",     ItrCtl::ic_prs_pr, IC);
-      findCriteria(label2, "Poisson_2nd", ItrCtl::ic_prs_cr, IC);
-      findCriteria(label2, "NS_CN",       ItrCtl::ic_vis_cn, IC);
-      findCriteria(label2, "VP",          ItrCtl::ic_div,    IC);
+      findCriteria("/Steer/Iteration/Flow/Poisson",     ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      findCriteria("/Steer/Iteration/Flow/Poisson_2nd", ItrCtl::ic_prs_cr, &IC[ItrCtl::ic_prs_cr]);
+      findCriteria("/Steer/Iteration/Flow/NS_CN",       ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
+      findCriteria("/Steer/Iteration/Flow/VP",          ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     default:
-      Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label2.c_str());
+      Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label.c_str());
       Exit(0);
   }
   
   // Heat
-  label2 = label1 + "/Heat";
+  label = "/Steer/Iteration/Heat";
   
   if ( isHeatProblem() )
   {
-    if( !tpCntl->chkNode(label2) )
+    if( !tpCntl->chkNode(label) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label2.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -1188,11 +1183,11 @@ void Control::get_Iteration(ItrCtl* IC)
         break;
         
       case Heat_EE_EI:
-        findCriteria(label2, "Euler_Implicit", ItrCtl::ic_tdf_ei, IC);
+        findCriteria("/Steer/Iteration/Heat/Euler_Implicit", ItrCtl::ic_tdf_ei, &IC[ItrCtl::ic_tdf_ei]);
         break;
         
       default:
-        Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label2.c_str());
+        Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label.c_str());
         Exit(0);
     }
   }

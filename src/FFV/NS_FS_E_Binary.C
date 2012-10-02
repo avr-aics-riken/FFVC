@@ -340,24 +340,21 @@ void FFV::NS_FS_E_Binary()
   
   
   // 定数項のL2ノルム　rhs_nrm
-  if ( (ICp->get_normType() == ItrCtl::dx_b) || (ICp->get_normType() == ItrCtl::r_b) )
+  TIMING_start(tm_poi_src_nrm);
+  rhs_nrm = 0.0;
+  flop = 0.0;
+  poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
+  TIMING_stop(tm_poi_src_nrm, flop);
+  
+  if ( numProc > 1 )
   {
-    TIMING_start(tm_poi_src_nrm);
-    rhs_nrm = 0.0;
-    flop = 0.0;
-    poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
-    TIMING_stop(tm_poi_src_nrm, flop);
-    
-    if ( numProc > 1 )
-    {
-      TIMING_start(tm_poi_src_comm);
-      double m_tmp = rhs_nrm;
-      if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-    }
-    
-    rhs_nrm = sqrt(rhs_nrm);
+    TIMING_start(tm_poi_src_comm);
+    double m_tmp = rhs_nrm;
+    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
+  
+  rhs_nrm = sqrt(rhs_nrm);
   
   
   // Initial residual
@@ -376,9 +373,6 @@ void FFV::NS_FS_E_Binary()
       if ( paraMngr->Allreduce(&m_tmp, &res_init, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
-    
-    res_init = sqrt(res_init);
-    cout << res_init << endl;
   }
   
 
@@ -392,6 +386,7 @@ void FFV::NS_FS_E_Binary()
   // >>> Poisson Iteration section
   TIMING_start(tm_poi_itr_sct);
   
+  
   if ( C.Mode.Log_Itr == ON ) 
   {
     TIMING_start(tm_hstry_itr);
@@ -399,17 +394,21 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_hstry_itr, 0.0);
   }
   
-  for (ICp->LoopCount=0; ICp->LoopCount< ICp->get_ItrMax(); ICp->LoopCount++) 
+  // 反復回数の積算
+  int lc = 0;
+  ICp->LoopCount = 0;
+  
+  for (ICd->LoopCount=1; ICd->LoopCount< ICd->get_ItrMax(); ICd->LoopCount++)
   {
     // 線形ソルバー
     switch (ICp->get_LS())
     {
       case SOR:
-        Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init);
+        lc += Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       case SOR2SMA:
-        SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init);
+        lc += SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       case GMRES:
@@ -536,7 +535,7 @@ void FFV::NS_FS_E_Binary()
     // <<< Poisson Iteration subsection 4
     
     
-    // ノルムの計算
+    // div(u^{n+1})の計算
     Norm_Div(ICd);
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
@@ -550,6 +549,10 @@ void FFV::NS_FS_E_Binary()
     if ( (C.Hide.PM_Test == OFF) && (ICd->get_normValue() < ICd->get_eps()) ) break;
   } // end of iteration
 
+  
+  ICp->LoopCount = lc;
+  
+  
   TIMING_stop(tm_poi_itr_sct, 0.0);
   // <<< Poisson Iteration section
 
