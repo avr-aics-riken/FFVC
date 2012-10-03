@@ -1,0 +1,6 @@
+#! /bin/bash
+platex readme
+pbibtex readme
+platex readme
+dvipdfmx readme
+open readme.pdf

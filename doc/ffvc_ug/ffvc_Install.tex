@@ -221,19 +221,21 @@ ffvc-x.x.x
   |   +- IP                       Intrinsicクラスのドキュメント
   |
   +- example                      例題
-  |   +- 3Dcavity                 三次元のキャビティフロー（立方体領域）
-  |   +- PMT                      性能測定用パラメータ群
-  |   +- SHC1D                    定常1次元熱伝導
+  |   +- Cavity_binary            三次元のキャビティフロー例題（バイナリモデル）
+  |   +- Cavity_cut               三次元のキャビティフロー例題（カット情報モデル）
+  |   +- LDC                      辺長比1:1:2のキャビティフロー例題（実験値との比較）
+  |   +- PMT                      性能測定用例題
+  |   +- SHC1D                    定常1次元熱伝導の例題
   |
-  +- src                          ソースコード
+  +- src                          ソースコードディレクトリ
       +- Cutlib-x.x.x             カットライブラリ
-      +- FB                       FlowBaseクラス（ユーザー定義クラス群）
-      +- FFV                      FFV-CソルバのFortranファイル
       +- F_CORE                   Fortranのコアプログラム（Binary版）
       +- F_VOF                    VOFクラスのFortranファイル
+      +- FB                       FlowBaseクラス（ユーザー定義クラス群）
+      +- FFV                      FFV-Cソルバ
       +- IP                       組み込み例題クラス群
-      +- PMlib_x.x	             性能測定ライブラリ
-      +- Polylib-x.x.x             ポリゴン管理ライブラリ
+      +- PMlib-x.x                性能測定ライブラリ
+      +- Polylib-x.x.x            ポリゴン管理ライブラリ
 
 \end{program}
 }
