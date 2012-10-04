@@ -11,7 +11,7 @@ October 2012
 
 
 1. TextParserのインストール
-textParser-x.x.tar.gzを展開し，トップディレクトリのconfig_tp.shを実行．
+TextParser-x.x.tar.gzを展開し，トップディレクトリのconfig_tp.shを実行．
 
 $ configure_tp.sh /usr/local/TextParser
 $ make
@@ -78,9 +78,9 @@ Direction of compile
 
 Please find a ffvc_ug.pdf file in document directory and see how to install in detail.
 
-$ tar xvfz ffv-x.x.x.tar.gz
+$ tar xvfz ffvc-x.x.x.tar.gz
 
-$ cd ffv-x.x.x/src/FFV
+$ cd ffvc-x.x.x/src/FFV
 
 $ make depend
 
