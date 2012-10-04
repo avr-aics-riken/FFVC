@@ -1,13 +1,13 @@
 DomainInfo {
-  Unit_of_Length  = "Non_Dimensional"
-  Global_origin   = (-0.5, -0.5, -0.5   )
-  Global_region   = (1.0,  1.0,  1.0    )
-  Global_voxel    = (128   , 128   , 128   )
+  Unit_of_length  = "M"
+  Global_origin   = (-3.1e-2, -3.1e-2, -6.2e-2   )
+  Global_region   = (6.2e-2,  6.2e-2,  1.24e-1   )
+  Global_voxel    = (64   , 64   , 128  )
   
-  //Global_pitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
+  //Global_pitch    = (9.6875e-04, 9.6875e-04, 9.6875e-04)
   //Global_division = (1    , 1    , 1    )
 
-  ActiveSubDomain_File = ""
+  ActiveSubDomain_File = "hoge"
 }
 
 
@@ -40,49 +40,41 @@ Steer {
     2nd_Invariant_of_VGT = "Off"
   }
 
-  Example = "Performance_Test"
+  Example = "Rectangular"
 
   File_IO {
     Unit_of_File           = "Non_Dimensional"
     Guide_Out              = "Without"
     Format                 = "sph"
     Debug_Divergence       = "Off"
-    Instant_Interval_Type  = "step"
-    Instant_Interval       = 1000
+    Instant_Interval_Type  = "Time"
+    Instant_Interval       = 1.0
     Averaged_Interval_Type = "Time"
-    Averaged_Interval      = 1000
+    Averaged_Interval      = 2.0
     Voxel_Output           = "off"
-    Output_Mode            = "specified"
-    Directory_Path         = "hoge"
   }
 
   Geometry_Model {
     Polylib_File = ""
     Base_Medium  = "air"
-    Hint_of_Filling_Fluid = "y_plus"
   }
 
   Iteration {
     Flow {
       Poisson {
-        Iteration     = 30
-        Epsilon       = 1.0e-4
+        Iteration     = 50
+        Epsilon       = 1.0e-3
         Omega         = 1.2
-        Norm          = "r_b"
+        Norm          = "v_div_max"
         Linear_Solver = "SOR2SMA"
         Comm_mode     = "async"
-      }
-      VP {
-        Iteration     = 20
-        Epsilon       = 1.0e-4
-        Norm          = "v_div_max"
       }
     }
     Heat {
       Euler_Implicit {
         Iteration     = 30
         Epsilon       = 1.0e-2
-        Omega         = 1.2
+        Omega         = 1.1
         Norm          = "T_Res_L2_Absolute"
         Linear_Solver = "SOR"
         Comm_mode     = "sync"
@@ -95,29 +87,29 @@ Steer {
   }
 
   Log {
-    Unit_of_Log           = "Non_Dimensional"
+    Unit_of_Log           = "Dimensional" //"Non_Dimensional"
     Log_Base              = "On"
     Log_Iteration         = "Off"
-    Log_Profiling         = "on"
+    Log_Profiling         = "On"
     Log_Wall_Info         = "Off"
-    Console_Interval_Type = "Step"
+    Console_Interval_Type = "step"
     Console_Interval      = 1
     History_Interval_Type = "Step"
     History_Interval      = 1
   }
 
   Monitor_List {
-    Log                    = "Off"
+    Log                    = "On"
     Output_File            = "sample.log"
     Output_Mode            = "Gather"
     Unit                   = "Non_Dimensional"
-    Sampling_Interval_Type = "step"
-    Sampling_Interval      = 100
+    Sampling_Interval_Type = "Time"
+    Sampling_Interval      = 0.1
     Cell_Monitor           = "off"
 
     list[@] {
       type            = "Line"
-      label           = "line1"
+      label           = "line1z0"
       value           = "x"
       Variable        = "Velocity"
       Sampling_Method = "Interpolation"
@@ -129,29 +121,78 @@ Steer {
 
     list[@] {
       type            = "Line"
-      label           = "line2"
+      label           = "line2z0"
+      value           = "z"
       Variable        = "Velocity"
       Sampling_Method = "Interpolation"
       Sampling_Mode   = "Fluid"
       Division        = 64
-      From            = (0.0, 0.0, -0.5)
-      To              = (0.0, 0.0, 0.5)
+      From            = (0.0, -0.5, 0.0)
+      To              = (0.0, 0.5, 0.0)
+    }
+
+    list[@] {
+      type            = "Line"
+      label           = "line1z0.5"
+      value           = "x"
+      Variable        = "Velocity"
+      Sampling_Method = "Interpolation"
+      Sampling_Mode   = "Fluid"
+      Division        = 64
+      From            = (-0.5, 0.0, 0.5)
+      To              = (0.5, 0.0, 0.5)
+    }
+
+    list[@] {
+      type            = "Line"
+      label           = "line2z0.5"
+      value           = "z"
+      Variable        = "Velocity"
+      Sampling_Method = "Interpolation"
+      Sampling_Mode   = "Fluid"
+      Division        = 64
+      From            = (0.0, -0.5, 0.5)
+      To              = (0.0, 0.5, 0.5)
+    }
+
+    list[@] {
+      type            = "Line"
+      label           = "line1z0.75"
+      value           = "x"
+      Variable        = "Velocity"
+      Sampling_Method = "Interpolation"
+      Sampling_Mode   = "Fluid"
+      Division        = 64
+      From            = (-0.5, 0.0, 0.75)
+      To              = (0.5, 0.0, 0.75)
+    }
+
+    list[@] {
+      type            = "Line"
+      label           = "line2z0.75"
+      value           = "z"
+      Variable        = "Velocity"
+      Sampling_Method = "Interpolation"
+      Sampling_Mode   = "Fluid"
+      Division        = 64
+      From            = (0.0, -0.5, 0.75)
+      To              = (0.0, 0.5, 0.75)
     }
   }
 
   PLOT3D_Options {
-    filename         = ""
-    grid_kind        = "single_grid"
-    grid_mobility    = "immovable"
-    state_of_time    = "unsteady"
-    set_iblank_flag  = "off"
-    Dimension        = "3D"
-    Format_type      = "unformatted"
-    Output_xyz       = "off"
-    Output_q         = "off"
-    Output_function  = "off"
-    Output_func_name = "off"
-    Output_fvbnd     = "off"
+    filename       = ""
+    grid_kind      = "single_grid"
+    grid_mobility  = "immovable"
+    state_of_time  = "unsteady"
+    Iblank         = "off"
+    Dimension      = "3D"
+    Format_type    = "unformatted"
+    File_plot3d_xyz= "off"
+    File_plot3d_q  = "off"
+    File_plot3d_function = "off"
+    File_plot3d_function_name = "off"
+    File_plot3d_fvbnd = "off"
   }
 
   Reference_Frame {
@@ -166,7 +207,7 @@ Steer {
     dfi_file_pressure  = "prs_64_id000000.dfi"
     dfi_file_velocity  = "vel_64_id000000.dfi"
     Initial_State {
-      Density     = 1.0
+      Density     = 998.2
       Pressure    = 0.0
       Temperature = 20.0
       Velocity    = (0.0, 0.0, 0.0)
@@ -185,11 +226,11 @@ Steer {
 
   Time_Control {
     Acceleration_Type  = "Time"
-    Acceleration       = 1.0
+    Acceleration       = 0.05
     Dt_Type            = "CFL_Reference_Velocity"
-    Delta_T            = 0.2
-    Period_Type        = "step"
-    Calculation_Period = 20
+    Delta_T            = 0.1
+    Period_Type        = "time"
+    Calculation_Period = 1.0 //41.33333
   }
 
   Treatment_of_Wall {
@@ -198,27 +239,27 @@ Steer {
   }
 
   Unit {
-    Unit_of_Input_Parameter = "Non_Dimensional"
+    Unit_of_Input_Parameter = "Dimensional"
     Pressure                = "Gauge"
     Temperature             = "Celsius"
   }
 
   Version_Info {
-    FFV       = 86
-    Flow_Base = 102
+    FFV       = 83
+    Flow_Base = 99
   }
 
 } //Steer
 
 Parameter {
   Reference {
-    Length        = 1.0
-    Velocity      = 1.0
+    Length        = 6.2e-2
+    Velocity      = 1.8e-2
     Gravity       = 9.8
     Base_Pressure = 0.0
-    Reynolds      = 1000.0
-    Prandtl       = 0.71
-    Medium        = "air"
+    // Reynolds      = 1000.0
+    // Prandtl       = 0.71
+    Medium   = "water"
   }
       
   Temperature {
@@ -227,7 +268,7 @@ Parameter {
   }
 
   Intrinsic_Example {
-    fluid_medium = "air"
+    fluid_medium = "water"
     solid_medium = "fe"
     check_even = "yes"
   }
@@ -236,6 +277,18 @@ Parameter {
 
 
 Medium_Table {
+
+  Medium[@] {
+    type                 = "Fluid"
+    label                = "Water"
+    Density              = 998.2
+    Specific_Heat        = 4182
+    Thermal_Conductivity = 593e-03
+    Kinematic_Viscosity  = 1.004e-06
+    Viscosity            = 1002.6e-06
+    Sound_of_Speed       = 1500.0
+    volume_expansion     = 0.04e-3 
+  }
 
   Medium[@] {
     type                 = "Fluid"
@@ -324,7 +377,7 @@ BC_Table {
 
   OuterBoundary {
       
-    // candidates
+    // 境界条件候補リスト
     Basic_BCs[@] {
       alias    = "outer_wall"
       class    = "Wall"
@@ -335,8 +388,8 @@ BC_Table {
       class    = "wall"
       Type     = "slide"
       Profile  = "Constant"
-      Normal   = (1.0, 0.0, 0.0)
-      Velocity = 1.0
+      Normal   = (-1.0, 0.0, 0.0)
+      Velocity = 1.8e-2
     }
     Basic_BCs[@] {
       alias    = "inlet_1"
@@ -351,7 +404,7 @@ BC_Table {
       velocity_Type = "Average"
     }
       
-    // outer BC
+    //外部境界条件
     Face_BC {
       X_minus {
         kind   = "outer_wall"
@@ -362,7 +415,7 @@ BC_Table {
         medium_on_guide_cell = "Fe"
       }
       Y_minus {
-        kind   = "outer_wall"
+        kind   = "slide_wall"
         medium_on_guide_cell = "Fe"
       }
       Y_plus {
@@ -374,7 +427,7 @@ BC_Table {
         medium_on_guide_cell = "Fe"
       }
       Z_plus {
-        kind   = "slide_wall"
+        kind   = "outer_wall"
         medium_on_guide_cell = "Fe"
       }
     }

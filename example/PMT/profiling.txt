@@ -1,0 +1,44 @@
+
+	-----------------------------------------------------------------
+	Report of Timing Statistics PMlib version 1.3
+
+	Operator  : Kenji_Ono
+	Host name : Xenon.local
+	Date      : 2012/10/04 : 16:33:02
+
+	Parallel Mode                    :   Serial 
+
+	Total execution time            = 3.208129e+02 [sec]
+	Total time of measured sections = 3.205902e+02 [sec]
+
+	Statistics per MPI process [Node Average]
+	Label                   |     call     |              accumulated time                    |          flop | messages[Bytes]
+	                        |              |   avr[sec]    avr[%]     sdv[sec]  avr/call[sec] |   avr         sdv         speed
+	------------------------+--------------+--------------------------------------------------+--------------------------------------
+	Poisson_SOR2_SMA        :        22040   1.591982e+02   49.66   0.0000e+00  7.223148e-03    8.320e+11   0.000e+00     4.87 Gflops
+	Poisson_Src_Norm        :        11040   1.374317e+02   42.87   0.0000e+00  1.244852e-02    1.203e+12   0.000e+00     8.15 Gflops
+	Projection_Velocity     :          380   1.035466e+01    3.23   0.0000e+00  2.724910e-02    8.527e+10   0.000e+00     7.67 Gflops
+	Pseudo_Velocity         :           20   1.030565e+01    3.21   0.0000e+00  5.152825e-01    3.347e+10   0.000e+00     3.02 Gflops
+	Poisson_Norm_Div_max    :          380   1.048314e+00    0.33   0.0000e+00  2.758722e-03    4.782e+09   0.000e+00     4.25 Gflops
+	Variation_Space         :           20   5.308456e-01    0.17   0.0000e+00  2.654228e-02    2.726e+09   0.000e+00     4.78 Gflops
+	Projection_Velocity_BC  :          380   4.153531e-01    0.13   0.0000e+00  1.093034e-03    1.121e+08   0.000e+00   257.40 Mflops
+	Copy_Array              :           40   4.030356e-01    0.13   0.0000e+00  1.007589e-02    5.060e+08   0.000e+00     1.17 Gflops
+	Divergence_of_Pvec      :           20   3.531630e-01    0.11   0.0000e+00  1.765815e-02    2.307e+09   0.000e+00     6.08 Gflops
+	Pvec_Euler_Explicit     :           20   2.076063e-01    0.06   0.0000e+00  1.038032e-02    3.355e+08   0.000e+00     1.51 Gflops
+	Search_Vmax             :           20   1.108029e-01    0.03   0.0000e+00  5.540144e-03    3.775e+08   0.000e+00     3.17 Gflops
+	Allocate_Arrays         :            3   1.030247e-01    0.03   0.0000e+00  3.434157e-02    0.000e+00   0.000e+00     0.00 Mflops
+	Pseudo_Vel_Flux_BC      :           20   5.573606e-02    0.02   0.0000e+00  2.786803e-03    2.360e+07   0.000e+00   403.75 Mflops
+	assign_Const_to_Array   :           20   3.297019e-02    0.01   0.0000e+00  1.648510e-03    0.000e+00   0.000e+00     0.00 Mflops
+	Poisson_Src_VBC         :           20   2.245283e-02    0.01   0.0000e+00  1.122642e-03    5.900e+06   0.000e+00   250.61 Mflops
+	Poisson_BC              :        22040   1.259303e-02    0.00   0.0000e+00  5.713716e-07    0.000e+00   0.000e+00     0.00 Mflops
+	Poisson_Setup_for_Itr   :        11020   1.797915e-03    0.00   0.0000e+00  1.631501e-07    0.000e+00   0.000e+00     0.00 Mflops
+	History_Stdout          :           20   9.987354e-04    0.00   0.0000e+00  4.993677e-05    0.000e+00   0.000e+00     0.00 Mflops
+	History_Base            :           20   6.875992e-04    0.00   0.0000e+00  3.437996e-05    0.000e+00   0.000e+00     0.00 Mflops
+	Velocity_BC             :          380   2.970695e-04    0.00   0.0000e+00  7.817620e-07    0.000e+00   0.000e+00     0.00 Mflops
+	History_Domain_Flux     :           20   2.784729e-04    0.00   0.0000e+00  1.392365e-05    0.000e+00   0.000e+00     0.00 Mflops
+	Pseudo_Velocity_BC      :           20   4.386902e-05    0.00   0.0000e+00  2.193451e-06    0.000e+00   0.000e+00     0.00 Mflops
+	Domain_Monitor          :           20   2.193451e-05    0.00   0.0000e+00  1.096725e-06    0.000e+00   0.000e+00     0.00 Mflops
+	Velocity_BC_Update      :           20   1.597404e-05    0.00   0.0000e+00  7.987022e-07    0.000e+00   0.000e+00     0.00 Mflops
+	Restart_Process         :            1   9.536743e-07    0.00   0.0000e+00  9.536743e-07    0.000e+00   0.000e+00     0.00 Mflops
+	------------------------+--------------+--------------------------------------------------+--------------------------------------
+	Total                   |                3.205902e+02                                       2.164e+12                 6.29 Gflops

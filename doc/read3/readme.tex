@@ -300,6 +300,7 @@ FFV-Cソルバーを実行すると，\textbf{表\ref{tbl:logfiles}}に示すフ
 サンプルデータとして，exampleディレクトリ配下にあるPMTをご利用ください．
 PMTの例題は，並列性能の測定を行う例題でファイルは出力しません．
 反復法の上限値を変更することにより，実行時間を調整することが出来ます．
+サンプルの入力ファイルでは，Intel Xeon Core i7 2.66GHz (1thread)で320秒程度の実行時間です．
    
 %
 \subsection{実行方法 (Run)}
@@ -319,6 +320,7 @@ $ ffvc pm_1.tp
 {\small
 \begin{program}
 DomainInfo {
+  Unit_of_Length  = "Non_Dimensional"
   Global_origin   = (-0.5, -0.5, -0.5   )
   Global_region   = (1.0,  1.0,  1.0    )
   Global_voxel    = (128   , 128   , 128   )
