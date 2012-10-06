@@ -78,6 +78,11 @@ UDEF_LIBS_SPEC     =
 #FCFLAGS    += -CcdRR8
 #F90FLAGS   += -CcdRR8
 
+## iff different restart with staging
+#CFLAGS     += -D_STAGING_
+#CXXFLAGS   += -D_STAGING_
+#FCFLAGS    += 
+#F90FLAGS   += 
 
 ########################
 # BG/P

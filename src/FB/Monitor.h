@@ -87,8 +87,7 @@ public:
    @param nDivision Line分割数
    @note データは無次元化して保持
    */
-  void get_Mon_Line(
-                    Control* C,
+  void get_Mon_Line(Control* C,
                     const string label_base,
                     REAL_TYPE from[3],
                     REAL_TYPE to[3],
@@ -100,8 +99,7 @@ public:
    @param pointSet PointSet配列
    @note データは無次元化して保持
    */
-  void get_Mon_Pointset(//未修正
-                        Control* C,
+  void get_Mon_Pointset(Control* C,
                         const string label_base,
                         vector<MonitorCompo::MonitorPoint>& pointSet);
   

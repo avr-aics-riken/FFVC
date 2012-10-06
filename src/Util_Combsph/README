@@ -1,0 +1,92 @@
+-----
+combsph for FrontFlow / violet Cartesian
+
+Kenji Ono 	keno@riken.jp
+AICS, RIKEN
+October 2012
+-----
+
+このプログラムは，FFVで領域分割出力された計算結果ファイル（*.sph）に対して，次の二つの機能を提供します.
+1) sphファイルを1つにまとめたファイルを作成します．
+2) sphファイルからPLOT3Dデータファイルを作成します．
+
+
+
+--- コンパイル方法
+
+1) 環境変数の設定はsrc/FFV/make_settingを編集します．
+2) makeを実行します．
+
+binの下にcombsphという実行ファイルが生成されます．
+
+
+
+--- 利用方法
+
+$ combsph -f input_file
+
+combsphを-hオプションをつけて実行すると，usageが表示されます．
+実行後には，ログファイルとしてlog_comb.txtが出力されます．
+
+Usage: combsph <option> filename
+
+ Options:
+  -d dirname   : Specify output directory name (default : ./ )
+  -f filename  : Input file name
+  -h           : Show usage
+  -l log out   : print out logfile
+  -v verbose   : print more info
+
+
+-d オプションについて
+
+dirnameにはファイルを出力するディレクトリを指定します．
+-fオプションで指定した入力ファイルにディレクトリの指定がある場合はそちらが優先されます．
+
+
+---　入力ファイル
+
+以下に入力ファイルの例を示します．
+入力ファイルは，FFVで利用するテキストパーサ形式で記述します．
+CombDataタグの下に読み込むdfiファイルのリストを記述します．
+出力フォーマットはout_formatで指定します．
+plot3dを指定した場合は、PLOT3D_Optionsタグに必要な項目を記述する必要があります．
+
+※ sphファイルがfloatで記述されているとき、PLOT3Dオプションでreal_type="double"を選択しても、出力はfloatに変更されます．
+※ PLOT3D_Options/real_typeが指定されている場合、CombData/output_real_typeより優先されます．
+※ 精度の指定がない場合は読み込みsphファイルの精度に従います．
+※ 出力ディレクトリの指定がない場合はカレントディレクトリに出力します．
+
+
+ファイル名：comb.tp
+ -----------
+
+  CombData{
+
+    //変換する出力ファイルの*.dfiファイルを記述
+    list[@]="prs_.dfi" 
+    list[@]="vel_.dfi"
+
+    //ファイルフォーマットを指定
+    out_format="sph"
+    //out_format="plot3d"
+  }
+
+  // Plot3dの場合のオプションを記述
+  PLOT3D_Options {
+    filename        = "test"
+    grid_kind       = "multi_grid"
+    grid_mobility   = "immovable"
+    state_of_time   = "unsteady"
+    Dimension       = "3D"
+    //Format_type     = "formatted"
+    //Format_type     = "unformatted"
+    Format_type     = "binary"
+    divide_func     = "on" // divide_funcをonにすると項目ごとにファイルを分割して出力します
+    real_type       = "float" // PLOT3D出力の単精度・倍精度を指定します
+  }
+
+ -----------
+
+
+

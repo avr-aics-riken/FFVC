@@ -373,7 +373,14 @@ private:
   void get_OBC_FarField (const string label_base, const int n);
   
   
-  void get_OBC_HT         (const string label_base, const int n, const string kind);
+  /**
+   * @brief 外部の壁面熱伝達境界のパラメータを取得する
+   * @param [in] label_base ラベルディレクトリ
+   * @param [in] n          面番号
+   * @param [in] kind       熱伝達境界の種類
+   */
+  void get_OBC_HT (const string label_base, const int n, const string kind);
+  
   
   /**
    * @brief 外部境界の流出条件のパラメータを取得する
@@ -384,7 +391,14 @@ private:
   void get_OBC_Outflow (const string label_base, const int n);
   
   
-  void get_OBC_Periodic   (const string label_base, const int n);
+  /**
+   * @brief 外部境界の周期条件のパラメータを取得する
+   * @param label_base
+   * @param n 面番号
+   * @note 圧力の値は，Control::setParameters()で無次元化する
+   */
+  void get_OBC_Periodic (const string label_base, const int n);
+  
   
   /**
    * @brief 外部境界の流入条件のパラメータを取得する

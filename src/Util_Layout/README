@@ -1,0 +1,70 @@
+-----
+Tool to combine divided sph file 
+
+Kenji Ono 	keno@riken.jp
+VCAD Research Program, RIKEN
+April 2012
+-----
+
+FFVで領域分割出力されたPLOT3Dフォーマットの結果ファイルをFieldViewにより並列化しかするために必要なlayoutファイルを作成するツールを提供します。
+
+--- コンパイル方法
+
+makeを実行。
+binの下にlayoutという実行ファイルができます。
+環境変数の設定はsrc/FFV/make_settingを編集します。
+（FFVのツールとしてFFVと同じ環境でビルドすることを想定しています）
+
+--- 使い方
+
+layoutをオプションなしで実行するとusageが表示されます。
+
+＜usageの表示＞
+Usage: layout <option> filename <option> dirname <options> mchname <options>
+ filename: file name when -f specified
+ dirname: directory name when -d specified
+ mchname: client machine name when -s specified
+ Options:
+  -a           : 0 step skip option
+  -f filename  : input file name
+  -h           : Show usage and exit
+
+filenameには用意した入力ファイルの名前を記述します。
+入力ファイルの形式は、FFVに習い独自のテキストパーサを利用した文法になります。
+LayoutDataタグの下に読み込むdfiファイル、ランクによる分割のリストを記述します。
+分割のリスト内の項目は、
+machine:担当ホスト名
+rank:担当ランク
+dir:可視化時にファイルが存在ディレクトリ
+
+以下に入力ファイルの例を示します。
+
+ファイル名：layout.tp
+入力例：
+ -----------
+
+  LayoutData{
+
+    //読み込む*.dfiファイルのリストを記述
+    list[@]="test_.dfi"
+    //list[@]="prs_.dfi"
+    //list[@]="vel_.dfi"
+
+    //ランクごとの分割のリストを記述
+    divide[@]{
+      machine="ELSA5"
+      rank=(0,1)
+      dir="/home/ida/usb2/ffv/example/layout_test"
+    }
+
+    divide[@]{
+      machine="ELSA5"
+      rank=(1,2)
+      dir="/home/ida/usb2/ffv/example/layout_test"
+    }
+
+  }
+
+ -----------
+
+

@@ -1075,32 +1075,37 @@
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
 !! @param [in]     v    ベクトル値
+!! @param [in]     nadd 加算回数
 !! @param [out]    flop 浮動小数演算数
 !<
-  subroutine fb_average_v (avr, sz, g, v, flop)
+  subroutine fb_average_v (avr, sz, g, v, nadd, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop
+  real                                                      ::  nadd, val1, val2
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, avr
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
+
+  val1 = (nadd-1.0)/nadd
+  val2 = 1.0/nadd
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP FIRSTPRIVATE(ix, jx, kx, val1, val2)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    avr(1,i,j,k) = avr(1,i,j,k) + v(1,i,j,k)
-    avr(2,i,j,k) = avr(2,i,j,k) + v(2,i,j,k)
-    avr(3,i,j,k) = avr(3,i,j,k) + v(3,i,j,k)
+    avr(1,i,j,k) = val1 * avr(1,i,j,k) + val2 * v(1,i,j,k)
+    avr(2,i,j,k) = val1 * avr(2,i,j,k) + val2 * v(2,i,j,k)
+    avr(3,i,j,k) = val1 * avr(3,i,j,k) + val2 * v(3,i,j,k)
   end do
   end do
   end do
@@ -1116,20 +1121,25 @@
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
 !! @param [in]     s    スカラ値
+!! @param [in]     nadd 加算回数
 !! @param [out]    flop 浮動小数演算数
 !<
-  subroutine fb_average_s (avr, sz, g, s, flop)
+  subroutine fb_average_s (avr, sz, g, s, nadd, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop
+  real                                                      ::  nadd, val1, val2
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s, avr
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*1.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
+
+  val1 = (nadd-1.0)/nadd
+  val2 = 1.0/nadd
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
@@ -1139,7 +1149,7 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    avr(i,j,k) = avr(i,j,k) + s(i,j,k)
+    avr(i,j,k) = val1 * avr(i,j,k) + val2 * s(i,j,k)
   end do
   end do
   end do

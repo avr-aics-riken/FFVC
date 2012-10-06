@@ -30,7 +30,7 @@ protected:
   int div_domain[3];     ///< 全計算領域のノード分割数
   int procGrp;           ///< プロセスグループ（デフォルト0）
   int guide;             ///< ガイドセル数
-  int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2）
+  int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2, restart_different_nproc=3）
   int* head;             ///< bboxの開始インデクス(C index) [3*Num_Node]
   int* tail;             ///< bboxの終端インデクス(C index) [3*Num_Node]
   std::string hostname;  ///< ラベル
@@ -75,6 +75,26 @@ protected:
   
   
   /**
+   * @brief データをファイルに書き込む
+   * @param [in] prefix  ファイル接頭文字
+   * @param [in] step    ステップ
+   * @param [in] dfi_mng 出力管理カウンタ
+   * @param [in] mio     出力時の分割指定　 true = local / false = gather
+   */
+  bool Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
+  
+  /**
+   * @brief データをファイルに書き込む
+   * @param [in] prefix  ファイル接頭文字
+   * @param [in] step    ステップ
+   * @param [in] time    時間
+   * @param [in] dfi_mng 出力管理カウンタ
+   * @param [in] mio     出力時の分割指定　 true = local / false = gather
+   */
+  bool Write_DFI_File(const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio);
+
+  
+  /**
    * @brief DFIファイルを出力する
    * @param [in] dfi_name  DFIファイル名
    * @param [in] prefix    ファイル接頭文字
@@ -83,6 +103,17 @@ protected:
    * @param [in] mio       出力時の分割指定　 true = local / false = gather
    */
   bool Write_File(const std::string dfi_name, const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
+  
+  /**
+   * @brief DFIファイルを出力する
+   * @param [in] dfi_name  DFIファイル名
+   * @param [in] prefix    ファイル接頭文字
+   * @param [in] step      ステップ数
+   * @param [in] time      時間
+   * @param [in] dfi_mng   出力管理カウンタ
+   * @param [in] mio       出力時の分割指定　 true = local / false = gather
+   */
+  bool Write_File(const std::string dfi_name, const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio);
   
   
   /**
@@ -127,9 +158,21 @@ protected:
    * @param [in] prefix  ファイル接頭文字
    * @param [in] tab     インデント
    * @param [in] step    ステップ数
-   * @param [in] mio    出力時の分割指定　 true = local / false = gather
+   * @param [in] mio     出力時の分割指定　 true = local / false = gather
    */
   bool Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const bool mio);
+  
+  
+  /**
+   * @brief DFIファイル:出力ファイル情報要素を出力する
+   * @param [in] fp      ファイルポインタ
+   * @param [in] prefix  ファイル接頭文字
+   * @param [in] tab     インデント
+   * @param [in] step    ステップ数
+   * @param [in] time    時間
+   * @param [in] mio     出力時の分割指定　 true = local / false = gather
+   */
+  bool Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const double time, const bool mio);
   
   
   /**
@@ -146,8 +189,8 @@ protected:
 
   /**
    * @brief DFIファイル:ガイドセル要素を出力する
-   * @param [in] fp      ファイルポインタ
-   * @param [in] tab     インデント
+   * @param [in] fp     ファイルポインタ
+   * @param [in] tab    インデント
    * @param [in] gc     ガイドセル
    */
   void Write_GuideCell(FILE* fp, const unsigned tab);
@@ -246,15 +289,6 @@ public:
    */
   bool init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host);
   
-  
-  /**
-   * @brief データをファイルに書き込む
-   * @param [in] prefix  ファイル接頭文字
-   * @param [in] step    ステップ
-   * @param [in] dfi_mng 出力管理カウンタ
-   * @param [in] mio     出力時の分割指定　 true = local / false = gather
-   */
-  bool Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
 };
 
 #endif // _CBC_DFI_H_

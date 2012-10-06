@@ -16,25 +16,37 @@
 
 #include "PLOT3D_read.h"
 
-
 /**
  * @brief PLOT3Dの入力ファイルオープン
  */
 bool FileIO_PLOT3D_READ::OpenFile()
 {
-  //set file name
-  char tmp[FB_FILE_PATH_LENGTH];
-  memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
-  strcpy(tmp, fname.c_str());
 
-  int len = strlen(tmp);
-
-  //open file
-  int flag=P3Op.Format;
-  int fnsize=FB_FILE_PATH_LENGTH;
   int ierror=0;
-  //open_plot3d_inputfile_(&flag,tmp,&ifl,&fnsize,&ierror);
-  open_plot3d_inputfile_(&flag,tmp,&ifl,&len,&ierror);
+  switch (P3Op.Format) {
+    case UNFORMATTED:
+    case FORMATTED:
+
+      char tmp[FB_FILE_PATH_LENGTH];
+      memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
+      strcpy(tmp, fname.c_str());
+
+      int len=strlen(tmp);
+      int flag=P3Op.Format;
+      int fnsize=FB_FILE_PATH_LENGTH;
+
+      //open_plot3d_inputfile_(&flag,tmp,&ifl,&fnsize,&ierror);
+      open_plot3d_inputfile_(&flag,tmp,&ifl,&len,&ierror);
+      break;
+
+    case C_BINARY:
+      if( (fp = fopen(fname.c_str(), "rb")) == NULL ) {
+        fprintf(stderr, "Can't open file.(%s)\n", fname.c_str());
+        return false;
+      }
+      ierror = true;
+      break;
+  }
 
   return ierror;
 }
@@ -60,7 +72,8 @@ void FileIO_PLOT3D_READ::ReadNgrid(int* ngrid)
     case FORMATTED:
       read_ngrid_data_formatted_(ngrid, &ifl);
       break;
-    case UNFORMATTED_SPECIAL:
+    case C_BINARY:
+      fread(ngrid, sizeof(int), 1, fp);
       break;
     default:
       break;
@@ -79,7 +92,10 @@ void FileIO_PLOT3D_READ::ReadBlockData(int* id, int* jd, int* kd)
 	case FORMATTED:
       read_block_data_formatted_(id, jd, kd, &ifl);
       break;
-    case UNFORMATTED_SPECIAL:
+    case C_BINARY:
+      fread(id, sizeof(int), 1, fp);
+      fread(jd, sizeof(int), 1, fp);
+      fread(kd, sizeof(int), 1, fp);
       break;
     default:
       break;
@@ -98,7 +114,9 @@ void FileIO_PLOT3D_READ::ReadBlockData2D(int* id, int* jd)
     case FORMATTED:
       read_block_data_2d_formatted_(id, jd, &ifl);
       break;
-    case UNFORMATTED_SPECIAL:
+    case C_BINARY:
+      fread(id, sizeof(int), 1, fp);
+      fread(jd, sizeof(int), 1, fp);
       break;
     default:
       break;
@@ -119,7 +137,12 @@ void FileIO_PLOT3D_READ::ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar,
         case FORMATTED:
           read_func_block_data_2d_formatted_(id, jd, nvar, &ngrid, &ifl);
           break;
-        case UNFORMATTED_SPECIAL:
+        case C_BINARY:
+          for(int igrid=0;igrid<ngrid;igrid++){
+            fread(id, sizeof(int), 1, fp);
+            fread(jd, sizeof(int), 1, fp);
+            fread(nvar, sizeof(int), 1, fp);
+          }
           break;
         default:
           break;
@@ -132,7 +155,13 @@ void FileIO_PLOT3D_READ::ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar,
         case FORMATTED:
           read_func_block_data_formatted_(id, jd, kd, nvar, &ngrid, &ifl);
           break;
-        case UNFORMATTED_SPECIAL:
+        case C_BINARY:
+          for(int igrid=0;igrid<ngrid;igrid++){
+            fread(id, sizeof(int), 1, fp);
+            fread(jd, sizeof(int), 1, fp);
+            fread(kd, sizeof(int), 1, fp);
+            fread(nvar, sizeof(int), 1, fp);
+          }
           break;
         default:
           break;
@@ -147,8 +176,9 @@ void FileIO_PLOT3D_READ::ReadFuncBlockData(int* id, int* jd, int* kd, int* nvar,
  */
 void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED()
 {
-  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  if(d_type==1)
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
@@ -164,18 +194,19 @@ void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED()
         break;
     }
   }
-  else if(d_type==2)
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        dread_xyz_2d_(&id, &jd, x, y, &ifl);
+        dread_xyz_2d_(&id, &jd, dx, dy, &ifl);
         break;
       case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
-          dread_xyz_3d_(&id, &jd, &kd, x, y, z, &ifl);
+          dread_xyz_3d_(&id, &jd, &kd, dx, dy, dz, &ifl);
         }
         else if(P3Op.IBlankFlag == SET_IBLANK){
-          dread_xyz_3d_iblank_(&id, &jd, &kd, x, y, z, iblank, &ifl);
+          dread_xyz_3d_iblank_(&id, &jd, &kd, dx, dy, dz, iblank, &ifl);
         }
         break;
     }
@@ -187,8 +218,9 @@ void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED()
  */
 void FileIO_PLOT3D_READ::ReadXYZ_FORMATTED()
 {
-  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  if(d_type==1)
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
@@ -204,18 +236,19 @@ void FileIO_PLOT3D_READ::ReadXYZ_FORMATTED()
         break;
     }
   }
-  else if(d_type==2)
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        read_xyz_2d_formatted_(&id, &jd, x, y, &ifl);
+        dread_xyz_2d_formatted_(&id, &jd, dx, dy, &ifl);
         break;
       case DIMENSION_3D:
         if(P3Op.IBlankFlag == NOT_SET_IBLANK){
-          dread_xyz_3d_formatted_(&id, &jd, &kd, x, y, z, &ifl);
+          dread_xyz_3d_formatted_(&id, &jd, &kd, dx, dy, dz, &ifl);
         }
         else if(P3Op.IBlankFlag == SET_IBLANK){
-          dread_xyz_3d_iblank_formatted_(&id, &jd, &kd, x, y, z, iblank, &ifl);
+          dread_xyz_3d_iblank_formatted_(&id, &jd, &kd, dx, dy, dz, iblank, &ifl);
         }
         break;
     }
@@ -224,11 +257,47 @@ void FileIO_PLOT3D_READ::ReadXYZ_FORMATTED()
 
 
 /**
- * @brief グリッド座標ファイルの読み込み（UNFORMATTED）特別仕様フォーマット
+ * @brief グリッド座標ファイルの読み込み（C_BINARY）
  */
-void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED_SPECIAL()
+void FileIO_PLOT3D_READ::ReadXYZ_C_BINARY()
 {
-
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
+  {
+    switch (P3Op.DimIs) {
+      case DIMENSION_2D:
+        fread(x, sizeof(float), id*jd, fp);
+        fread(y, sizeof(float), id*jd, fp);
+        break;
+      case DIMENSION_3D:
+        fread(x, sizeof(float), id*jd*kd, fp);
+        fread(y, sizeof(float), id*jd*kd, fp);
+        fread(z, sizeof(float), id*jd*kd, fp);
+        if(P3Op.IBlankFlag == SET_IBLANK){
+          fread(iblank, sizeof(int), id*jd*kd, fp);
+        }
+        break;
+    }
+  }
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
+  {
+    switch (P3Op.DimIs) {
+      case DIMENSION_2D:
+        fread(dx, sizeof(double), id*jd, fp);
+        fread(dy, sizeof(double), id*jd, fp);
+        break;
+      case DIMENSION_3D:
+        fread(dx, sizeof(double), id*jd*kd, fp);
+        fread(dy, sizeof(double), id*jd*kd, fp);
+        fread(dz, sizeof(double), id*jd*kd, fp);
+        if(P3Op.IBlankFlag == SET_IBLANK){
+          fread(iblank, sizeof(int), id*jd*kd, fp);
+        }
+        break;
+    }
+  }
 }
 
 /**
@@ -236,8 +305,9 @@ void FileIO_PLOT3D_READ::ReadXYZ_UNFORMATTED_SPECIAL()
  */
 void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
 {
-  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  if(d_type==1)
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
@@ -248,14 +318,15 @@ void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
         break;
     }
   }
-  else if(d_type==2)
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        dread_q_2d_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
+        dread_q_2d_(&id, &jd, &dfsmach, &dalpha, &dre, &dtime, dq, &ifl);
         break;
       case DIMENSION_3D:
-        dread_q_3d_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
+        dread_q_3d_(&id, &jd, &kd, &dfsmach, &dalpha, &dre, &dtime, dq, &ifl);
         break;
     }
   }
@@ -266,8 +337,9 @@ void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
  */
 void FileIO_PLOT3D_READ::ReadQ_FORMATTED()
 {
-  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  if(d_type==1)
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
@@ -278,35 +350,37 @@ void FileIO_PLOT3D_READ::ReadQ_FORMATTED()
         break;
     }
   }
-  else if(d_type==2)
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        dread_q_2d_formatted_(&id, &jd, &fsmach, &alpha, &re, &time, q, &ifl);
+        dread_q_2d_formatted_(&id, &jd, &dfsmach, &dalpha, &dre, &dtime, dq, &ifl);
         break;
       case DIMENSION_3D:
-        dread_q_3d_formatted_(&id, &jd, &kd, &fsmach, &alpha, &re, &time, q, &ifl);
+        dread_q_3d_formatted_(&id, &jd, &kd, &dfsmach, &dalpha, &dre, &dtime, dq, &ifl);
         break;
     }
   }
 }
 
+
 /**
- * @brief 計算結果Qファイルの読み込み（UNFORMATTED）特別仕様フォーマット
+ * @brief 計算結果Qファイルの読み込み（C_BINARY）
  */
-void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED_SPECIAL()
+void FileIO_PLOT3D_READ::ReadQ_C_BINARY()
 {
 
 }
-
 
 /**
  * @brief 計算結果Functionファイルの読み込み（UNFORMATTED）
  */
 void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
 {
-  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  if(d_type==1)
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
@@ -317,14 +391,15 @@ void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
         break;
     }
   }
-  else if(d_type==2)
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        dread_func_2d_(&id, &jd, &nvar, d, &ifl);
+        dread_func_2d_(&id, &jd, &nvar, dd, &ifl);
         break;
       case DIMENSION_3D:
-        dread_func_3d_(&id, &jd, &kd, &nvar, d, &ifl);
+        dread_func_3d_(&id, &jd, &kd, &nvar, dd, &ifl);
         break;
     }
   }
@@ -335,8 +410,9 @@ void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
  */
 void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
 {
-  int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  if(d_type==1)
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
@@ -347,26 +423,87 @@ void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
         break;
     }
   }
-  else if(d_type==2)
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        dread_func_2d_formatted_(&id, &jd, &nvar, d, &ifl);
+        dread_func_2d_formatted_(&id, &jd, &nvar, dd, &ifl);
         break;
       case DIMENSION_3D:
-        dread_func_3d_formatted_(&id, &jd, &kd, &nvar, d, &ifl);
+        dread_func_3d_formatted_(&id, &jd, &kd, &nvar, dd, &ifl);
         break;
     }
   }
 }
 
+
 /**
- * @brief 計算結果Functionファイルの読み込み（UNFORMATTED）特別仕様フォーマット
+ * @brief 計算結果Functionファイルの読み込み（C_BINARY）
  */
-void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED_SPECIAL()
+void FileIO_PLOT3D_READ::ReadFunc_C_BINARY()
 {
 
+#if 1 //項目ごと
+
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
+  {
+    switch (P3Op.DimIs) {
+      case DIMENSION_2D:
+        fread(d, sizeof(float), id*jd, fp);
+        break;
+      case DIMENSION_3D:
+        fread(d, sizeof(float), id*jd*kd, fp);
+        break;
+    }
+  }
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
+  {
+    switch (P3Op.DimIs) {
+      case DIMENSION_2D:
+        fread(dd, sizeof(double), id*jd, fp);
+        break;
+      case DIMENSION_3D:
+        fread(dd, sizeof(double), id*jd*kd, fp);
+        break;
+    }
+  }
+
+#else //全項目
+
+  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+  //if(d_type==1)
+  if(P3Op.realtype==1)
+  {
+    switch (P3Op.DimIs) {
+      case DIMENSION_2D:
+        fread(d, sizeof(float), id*jd*nvar, fp);
+        break;
+      case DIMENSION_3D:
+        fread(d, sizeof(float), id*jd*kd*nvar, fp);
+        break;
+    }
+  }
+  //else if(d_type==2)
+  else if(P3Op.realtype==2)
+  {
+    switch (P3Op.DimIs) {
+      case DIMENSION_2D:
+        fread(dd, sizeof(double), id*jd*nvar, fp);
+        break;
+      case DIMENSION_3D:
+        fread(dd, sizeof(double), id*jd*kd*nvar, fp);
+        break;
+    }
+  }
+
+#endif
+
 }
+
 
 /**
  * @brief グリッド座標ファイルの読み込み
@@ -380,8 +517,8 @@ bool FileIO_PLOT3D_READ::ReadXYZData()
     case FORMATTED:
       ReadXYZ_FORMATTED();
       break;
-    case UNFORMATTED_SPECIAL:
-      ReadXYZ_UNFORMATTED_SPECIAL();
+    case C_BINARY:
+      ReadXYZ_C_BINARY();
       break;
     default:
       return false;
@@ -395,11 +532,11 @@ bool FileIO_PLOT3D_READ::ReadXYZData()
  * @brief 計算結果Qファイルの読み込み
  */
 bool FileIO_PLOT3D_READ::ReadQData(
-  REAL_TYPE* m_fsmach,
-  REAL_TYPE* m_alpha,
-  REAL_TYPE* m_re,
-  REAL_TYPE* m_time,
-  REAL_TYPE* m_q)
+  float* m_fsmach,
+  float* m_alpha,
+  float* m_re,
+  float* m_time,
+  float* m_q)
 {
   //set pointer
   q=m_q;
@@ -411,8 +548,8 @@ bool FileIO_PLOT3D_READ::ReadQData(
     case FORMATTED:
       ReadQ_FORMATTED();
       break;
-    case UNFORMATTED_SPECIAL:
-      ReadQ_UNFORMATTED_SPECIAL();
+    case C_BINARY:
+      ReadQ_C_BINARY();
       break;
     default:
       return false;
@@ -428,6 +565,43 @@ bool FileIO_PLOT3D_READ::ReadQData(
 }
 
 /**
+ * @brief 計算結果Qファイルの読み込み
+ */
+bool FileIO_PLOT3D_READ::ReadQData(
+  double* m_fsmach,
+  double* m_alpha,
+  double* m_re,
+  double* m_time,
+  double* m_q)
+{
+  //set pointer
+  dq=m_q;
+
+  switch (P3Op.Format) {
+    case UNFORMATTED:
+      ReadQ_UNFORMATTED();
+      break;
+    case FORMATTED:
+      ReadQ_FORMATTED();
+      break;
+    case C_BINARY:
+      ReadQ_C_BINARY();
+      break;
+    default:
+      return false;
+      break;
+  }
+
+  *m_fsmach=dfsmach;
+  *m_alpha=dalpha;
+  *m_re=dre;
+  *m_time=dtime;
+
+  return true;
+}
+
+
+/**
  * @brief 計算結果Functionファイルの読み込み
  */
 bool FileIO_PLOT3D_READ::ReadFuncData()
@@ -439,8 +613,8 @@ bool FileIO_PLOT3D_READ::ReadFuncData()
     case FORMATTED:
       ReadFunc_FORMATTED();
       break;
-    case UNFORMATTED_SPECIAL:
-      ReadFunc_UNFORMATTED_SPECIAL();
+    case C_BINARY:
+      ReadFunc_C_BINARY();
       break;
     default:
       return false;
@@ -557,3 +731,4 @@ void FileIO_PLOT3D_READ::ReadFVBND(
 //  }
 //
 //}
+

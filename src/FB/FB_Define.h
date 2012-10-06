@@ -239,9 +239,6 @@
 #define SAMPLING_FLUID_ONLY 2 ///< 流体セルのみを対象
 #define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
 
-// ファイル形式 ---> C.File_IO_Cntl.IO_Format
-#define FILE_FMT_SPH    0  /// .sphファイル
-#define FILE_FMT_PLOT3D 1  ///　PLOT3D形式
 
 // GRIDの種類
 #define SINGLE_GRID 0
@@ -258,8 +255,12 @@
 // PLOT3D File Format
 #define UNFORMATTED         1
 #define FORMATTED           2
-#define UNFORMATTED_SPECIAL 3
+#define C_BINARY            3
 
+// output real type (plot3d)
+#define OUTPUT_REAL_UNKNOWN 0
+#define OUTPUT_FLOAT        1
+#define OUTPUT_DOUBLE       2
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)
@@ -402,6 +403,7 @@ enum Kind_of_vars {
   var_Vorticity,
   var_I2vgt,
   var_Divergence,
+  var_Plot3D,
   var_END
 };
 
@@ -409,7 +411,8 @@ enum Kind_of_vars {
 enum start_type {
   initial_start=0,
   restart,
-  coarse_restart
+  coarse_restart,
+  restart_different_nproc
 };
 
 /// 圧力単位

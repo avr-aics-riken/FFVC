@@ -100,7 +100,7 @@ void FFV::AverageOutput(double& flop)
   
   // 平均操作の母数
   int stepAvr = (int)CurrentStep_Avr;
-  REAL_TYPE scale = 1.0 / (REAL_TYPE)stepAvr;
+  REAL_TYPE scale = 1.0;
   
   // ガイドセル出力
   int gc_out = C.GuideOut;
@@ -164,13 +164,14 @@ void FFV::Averaging_Time(double& flop)
 {
   CurrentStep_Avr++;
   CurrentTime_Avr += DT.get_DT();
+  REAL_TYPE nadd = (REAL_TYPE)CurrentStep_Avr;
   
-  fb_average_s_(d_ap, size, &guide, d_p, &flop);
-  fb_average_v_(d_av, size, &guide, d_v, &flop);
+  fb_average_s_(d_ap, size, &guide, d_p, &nadd, &flop);
+  fb_average_v_(d_av, size, &guide, d_v, &nadd, &flop);
   
   if ( C.isHeatProblem() ) 
   {
-    fb_average_s_(d_at, size, &guide, d_t, &flop);
+    fb_average_s_(d_at, size, &guide, d_t, &nadd, &flop);
   }
 }
 

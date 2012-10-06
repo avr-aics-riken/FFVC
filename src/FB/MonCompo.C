@@ -270,12 +270,6 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
       if( MPI_Gather(s, nPoint, MPI_FLOAT, sRecvBuf, nPoint, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
     }
   }
-  else
-  {
-    //for (int m = 0; m < nPoint*np; m++) {
-    //  vRecvBuf[m] = s[m]
-    //}
-  }
   
   if (myRank == 0) 
   {
@@ -327,14 +321,6 @@ void MonitorCompo::gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_T
     {
       if( MPI_Gather(vSendBuf, nPoint*3, MPI_FLOAT, vRecvBuf, nPoint*3, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
     }
-  }
-  else
-  {
-    //for (int m = 0; m < nPoint; m++) {
-    //  vRecvBuf[3*m  ] = vSendBuf[3*m  ]
-    //  vRecvBuf[3*m+1] = vSendBuf[3*m+1]
-    //  vRecvBuf[3*m+2] = vSendBuf[3*m+2]
-    //}
   }
   
   if (myRank == 0) 

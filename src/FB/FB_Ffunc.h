@@ -80,13 +80,15 @@ extern "C" {
   void fb_average_s_      (REAL_TYPE* avr, 
                            int* sz, 
                            int* g, 
-                           REAL_TYPE* s, 
+                           REAL_TYPE* s,
+                           REAL_TYPE* nadd,
                            double* flop);
   
   void fb_average_v_      (REAL_TYPE* avr, 
                            int* sz, 
                            int* g, 
-                           REAL_TYPE* v, 
+                           REAL_TYPE* v,
+                           REAL_TYPE* nadd,
                            double* flop);
   
   void fb_interp_coarse0_s_(REAL_TYPE* dst,

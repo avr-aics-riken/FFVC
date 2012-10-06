@@ -30,6 +30,7 @@ CXXSRCS = \
   SetBC.C \
   CompoFraction.C \
   dfi.C \
+  dfiinfo.C \
   DataHolder.C \
   Monitor.C \
   MonCompo.C \

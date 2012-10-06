@@ -338,7 +338,7 @@
     real*4, dimension(id, jd, kd, 5) :: q
     integer :: i, j, k, nx
 
-    read(ifl,'(4f8.4)') fsmach,alpha,re,time
+    read(ifl,'(4e15.6)') fsmach,alpha,re,time
     do nx=1,5
     do k=1,kd
       read(ifl,'(10e15.6)') ((q(i,j,k,nx),i=1,id),j=1,jd)
@@ -380,7 +380,7 @@
     real*4, dimension(id, jd, 5) :: q
     integer :: i, j, nx
 
-    read(ifl,'(4f8.4)') fsmach,alpha,re,time
+    read(ifl,'(4e15.6)') fsmach,alpha,re,time
     do nx=1,5
       read(ifl,'(10e15.6)') ((q(i,j,nx),i=1,id),j=1,jd)
     end do
@@ -635,7 +635,7 @@
     real*8, dimension(id, jd, kd, 5) :: q
     integer :: i, j, k, nx
 
-    read(ifl,'(4f8.4)') fsmach,alpha,re,time
+    read(ifl,'(4e15.6)') fsmach,alpha,re,time
     do nx=1,5
     do k=1,kd
       read(ifl,'(10e15.6)') ((q(i,j,k,nx),i=1,id),j=1,jd)
@@ -677,7 +677,7 @@
     real*8, dimension(id, jd, 5) :: q
     integer :: i, j, nx
 
-    read(ifl,'(4f8.4)') fsmach,alpha,re,time
+    read(ifl,'(4e15.6)') fsmach,alpha,re,time
     do nx=1,5
       read(ifl,'(10e15.6)') ((q(i,j,nx),i=1,id),j=1,jd)
     end do

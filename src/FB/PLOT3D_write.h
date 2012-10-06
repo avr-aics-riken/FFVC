@@ -87,61 +87,61 @@ extern "C" {
   void write_func_block_data_2d_formatted_  (
                                              int* id, int* jd, int* nvar, int* ngrid, int* ifl);
   void write_xyz_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* ifl);
   void write_xyz_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* ifl);
   void write_xyz_3d_iblank_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* iblank, int* ifl);
   void write_xyz_3d_iblank_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* iblank, int* ifl);
   void write_xyz_2d_ (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, float* x, float* y, int* ifl);
   void write_xyz_2d_formatted_  (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, float* x, float* y, int* ifl);
   void write_q_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void write_q_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void write_q_2d_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void write_q_2d_formatted_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void write_func_3d_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, float* d, int* ifl);
   void write_func_3d_formatted_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, float* d, int* ifl);
   void write_func_2d_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, float* d, int* ifl);
   void write_func_2d_formatted_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, float* d, int* ifl);
   void dwrite_xyz_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* ifl);
   void dwrite_xyz_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* ifl);
   void dwrite_xyz_3d_iblank_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* iblank, int* ifl);
   void dwrite_xyz_3d_iblank_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* iblank, int* ifl);
   void dwrite_xyz_2d_ (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, double* x, double* y, int* ifl);
   void dwrite_xyz_2d_formatted_  (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, double* x, double* y, int* ifl);
   void dwrite_q_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dwrite_q_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dwrite_q_2d_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dwrite_q_2d_formatted_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dwrite_func_3d_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, double* d, int* ifl);
   void dwrite_func_3d_formatted_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, double* d, int* ifl);
   void dwrite_func_2d_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, double* d, int* ifl);
   void dwrite_func_2d_formatted_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, double* d, int* ifl);
 
 }
 
@@ -170,10 +170,11 @@ protected:
    */
   void WriteXYZ_FORMATTED();
 
+
   /**
-   * @brief グリッド座標ファイルの書き出し（UNFORMATTED）特別仕様フォーマット
+   * @brief グリッド座標ファイルの書き出し（C_BINARY）
    */
-  void WriteXYZ_UNFORMATTED_SPECIAL();
+  void WriteXYZ_C_BINARY();
 
   /**
    * @brief 計算結果Qファイルの書き出し（UNFORMATTED）
@@ -185,25 +186,29 @@ protected:
    */
   void WriteQ_FORMATTED();
 
+
   /**
-   * @brief 計算結果Qファイルの書き出し（UNFORMATTED）特別仕様フォーマット
+   * @brief 計算結果Qファイルの書き出し（C_BINARY）
    */
-  void WriteQ_UNFORMATTED_SPECIAL();
+  void WriteQ_C_BINARY();
 
   /**
    * @brief 計算結果Functionファイルの書き出し（UNFORMATTED）
+   * @note  出力項目すべてを一度に書き出し ---> nvar:出力項目数
    */
   void WriteFunc_UNFORMATTED();
 
   /**
    * @brief 計算結果Functionファイルの書き出し（FORMATTED）
+   * @note  出力項目すべてを一度に書き出し ---> nvar:出力項目数
    */
   void WriteFunc_FORMATTED();
 
   /**
-   * @brief 計算結果Functionファイルの書き出し（UNFORMATTED）特別仕様フォーマット
+   * @brief 計算結果Functionファイルの書き出し（C_BINARY）
+   * @note  C_BINARYでの出力は項目ごとに書き出し
    */
-  void WriteFunc_UNFORMATTED_SPECIAL();
+  void WriteFunc_C_BINARY();
 
 public:
 
@@ -275,18 +280,10 @@ public:
     int Imin, int Imax, int Jmin, int Jmax,
     int Kmin, int Kmax, string ResultFlag,int dir);
 
-  ///**
-  // * @brief FVBNDファイルの書き出し
-  // */
-  //void WriteFVBND(
-  //  const int nbname, const int nb,
-  //  string* boundary_name,
-  //  int* type, int* gridnum,
-  //  int* Imin, int* Imax,
-  //  int* Jmin, int* Jmax,
-  //  int* Kmin, int* Kmax,
-  //   string* ResultFlag,
-  //  int* dir);
+  /**
+   * @brief C_BINARY用ヘッダorフッタの書き出し
+   */
+  void WriteMarker(int dmy);
 
 };
 

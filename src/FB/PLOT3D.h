@@ -59,7 +59,7 @@
 
 // general
 //#define FB_FILE_PATH_LENGTH 64
-#define FB_BUFF_LENGTH      80
+#define FB_BUFF_LENGTH      256
 
 
 #ifdef _WIN32
@@ -69,8 +69,8 @@
 #define open_plot3d_outputfile_ OPEN_PLOT3D_OUTPUTFILE
 #define open_plot3d_inputfile_  OPEN_PLOT3D_INPUTFILE
 #define close_plot3d_file_      CLOSE_PLOT3D_FILE
-#define write_line_             WRITE_FUNCTION_NAME
-#define read_line_              READ_FUNCTION_NAME
+#define write_line_             WRITE_LINE
+#define read_line_              READ_LINE
 #define write_fvbnd_boundary_   WRITE_FVBND_BOUNDARY
 #define read_fvbnd_boundary_    READ_FVBND_BOUNDARY
 
@@ -110,10 +110,10 @@ public:
     P3Op.IBlankFlag = NOT_SET_IBLANK;
     P3Op.DimIs      = DIMENSION_3D;
     P3Op.Format     = UNFORMATTED; 
+    P3Op.realtype   = OUTPUT_FLOAT; 
 
-    fp_xyz = NULL;
-    fp_q = NULL;
-	  ifl = 31;
+    fp = NULL;
+	ifl = 31;
   }
 
   /**　デストラクタ */
@@ -122,27 +122,36 @@ public:
 //private:
   string fname;
 
-  FILE* fp_xyz;
-  FILE* fp_q;
+  FILE* fp;
   int ifl;
 
-  ////データ変数ポインタ
   int id;
   int jd;
   int kd;
   int ngrid;
-  REAL_TYPE* x;
-  REAL_TYPE* y;
-  REAL_TYPE* z;
   int* iblank;
-  REAL_TYPE fsmach;
-  REAL_TYPE alpha;
-  REAL_TYPE re;
-  REAL_TYPE time;
-  REAL_TYPE* q;
   int nvar;
-  REAL_TYPE* d;
   string funcname;
+
+  float* x;
+  float* y;
+  float* z;
+  float fsmach;
+  float alpha;
+  float re;
+  float time;
+  float* q;
+  float* d;
+
+  double* dx;
+  double* dy;
+  double* dz;
+  double dfsmach;
+  double dalpha;
+  double dre;
+  double dtime;
+  double* dq;
+  double* dd;
 
 protected:
 //  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
@@ -155,6 +164,7 @@ protected:
     int IBlankFlag;  ///=0:not set IBlank, =1 :set IBlank
     int DimIs;       ///=2:2D, =3:3D
     int Format;      ///
+    int realtype;    ///=1:float,2=double output flag
   } Plot3D_Option;
 
   Plot3D_Option P3Op;
@@ -170,58 +180,69 @@ public:
   //@brief return 0 : single grid, return 1 : multi grid
   int IsGridKind(void) const {
     return P3Op.GridKind;
-  }
+  };
 
   //@fn int IsMoveGrid(void) const
   //@brief return 0 : not move, return 1 : move
   int IsMoveGrid(void) const {
     return P3Op.MoveGrid;
-  }
+  };
 
   //@fn int IsSteady(void) const
   //@brief return 0 : Steady, return 1 : Unsteady
   int IsSteady(void) const {
     return P3Op.Steady;
-  }
+  };
 
   //@fn int IsIBlankFlag(void) const
   //@brief return 0 : not set IBlank, return 1 : set IBlank
   int IsIBlankFlag(void) const {
     return P3Op.IBlankFlag;
-  }
+  };
 
   //@fn int GetDim(void) const
   //@brief 
   int GetDim(void) const { 
     return P3Op.DimIs; ///=2:2D, =3:3D
-  }
+  };
 
   //@fn int GetFormat(void) const
   //@brief 
   int GetFormat(void) const { 
     return P3Op.Format; 
-  }
+  };
+
+  //@fn int GetRealType(void) const
+  //@brief 
+  int GetRealType(void) const { 
+    return P3Op.realtype; 
+  };
 
   /**
    * @brief MoveGridを設定する
    * @retval 設定の成否
    * @param is フラグ
    */
-  bool setMoveGrid(const int is);
+  void setMoveGrid(const int is);
 
   /**
    * @brief Steadyを設定する
    * @retval 設定の成否
    * @param is フラグ
    */
-  bool setSteady(const int is);
+  void setSteady(const int is);
 
   /**
    * @brief IBlankFlagを設定する
    * @retval 設定の成否
    * @param is フラグ
    */
-  bool setIBlankFlag(const int is);
+  void setIBlankFlag(const int is);
+
+  /**
+   * @brief 次元を設定する
+   */
+  void setDim(const int is){ P3Op.DimIs=is; };
 
   /**
    * @brief 次元を2Dに設定する
@@ -232,6 +253,11 @@ public:
    * @brief 次元を3Dに設定する
    */
   void setDimension3D(){ P3Op.DimIs=DIMENSION_3D; };
+
+  /**
+   * @brief GridKindを設定する
+   */
+  void setGridKind(const int is){ P3Op.GridKind=is; };
 
   /**
    * @brief SINGLE_GRIDに設定する
@@ -245,17 +271,21 @@ public:
 
   /**
    * @brief PLOT3Dのファイルフォーマットを設定する
-   * @retval 設定の成否
    * @param is フラグ
    */
-  bool setFormat(const int is);
+  void setFormat(const int is);
 
   /**
-   * @brief IBlankFlagを設定する
-   * @retval 設定の成否
+   * @brief fortarn出力時のファイル装置番号のセット
+   * @param is ファイル装置番号
+   */
+  void setFilePortNumber(const int is){ ifl=is; };
+
+  /**
+   * @brief 出力時の単精度or倍精度フラグ
    * @param is フラグ
    */
-  void setFilePortNumver(const int is){ ifl=is; };
+  void setRealType(const int is){ P3Op.realtype=is; };
 
   /**
    * @brief Gridデータのセット
@@ -278,35 +308,74 @@ public:
    * @brief 形状データのセット
    */
   void setXYZData(
-  REAL_TYPE* m_x,
-  REAL_TYPE* m_y,
-  REAL_TYPE* m_z,
+  float* m_x,
+  float* m_y,
+  float* m_z,
+  int* m_iblank);
+
+  /**
+   * @brief 形状データのセット
+   */
+  void setXYZData(
+  double* m_x,
+  double* m_y,
+  double* m_z,
   int* m_iblank);
 
   /**
    * @brief 形状データのセット（2D）
    */
   void setXYZData2D(
-  REAL_TYPE* m_x,
-  REAL_TYPE* m_y,
+  float* m_x,
+  float* m_y,
+  int* m_iblank);
+
+  /**
+   * @brief 形状データのセット（2D）
+   */
+  void setXYZData2D(
+  double* m_x,
+  double* m_y,
   int* m_iblank);
 
   /**
    * @brief 結果Qデータのセット
    */
   void setQData(
-  REAL_TYPE m_fsmach,
-  REAL_TYPE m_alpha,
-  REAL_TYPE m_re,
-  REAL_TYPE m_time,
-  REAL_TYPE* m_q);
+  float m_fsmach,
+  float m_alpha,
+  float m_re,
+  float m_time,
+  float* m_q);
+
+  /**
+   * @brief 結果Qデータのセット
+   */
+  void setQData(
+  double m_fsmach,
+  double m_alpha,
+  double m_re,
+  double m_time,
+  double* m_q);
+
+  /**
+   * @brief 結果Funcデータ項目数のセット
+   */
+  void setFuncDataNum(
+  int m_nvar);
 
   /**
    * @brief 結果Funcデータのセット
    */
   void setFuncData(
-  int m_nvar,
-  REAL_TYPE* m_d);
+  float* m_d);
+
+  /**
+   * @brief 結果Funcデータのセット
+   */
+  void setFuncData(
+  double* m_d);
+
 
   /**
    * @brief PLOT3Dのファイル名保持

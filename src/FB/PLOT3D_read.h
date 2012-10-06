@@ -19,7 +19,6 @@
 
 #include "PLOT3D.h"
 
-
 #ifdef _WIN32
 
 // PLT3D_read.f90
@@ -87,61 +86,61 @@ extern "C" {
   void read_func_block_data_2d_formatted_  (
       int* id, int* jd, int* nvar, int* ngrid, int* ifl);
   void read_xyz_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* ifl);
   void read_xyz_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* ifl);
   void read_xyz_3d_iblank_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* iblank, int* ifl);
   void read_xyz_3d_iblank_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, float* x, float* y, float* z, int* iblank, int* ifl);
   void read_xyz_2d_ (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, float* x, float* y, int* ifl);
   void read_xyz_2d_formatted_  (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, float* x, float* y, int* ifl);
   void read_q_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void read_q_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void read_q_2d_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void read_q_2d_formatted_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, float* fsmach, float* alpha, float* re, float* time, float* q, int* ifl);
   void read_func_3d_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, float* d, int* ifl);
   void read_func_3d_formatted_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, float* d, int* ifl);
   void read_func_2d_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, float* d, int* ifl);
   void read_func_2d_formatted_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, float* d, int* ifl);
   void dread_xyz_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* ifl);
   void dread_xyz_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* ifl);
   void dread_xyz_3d_iblank_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* iblank, int* ifl);
   void dread_xyz_3d_iblank_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* x, REAL_TYPE* y, REAL_TYPE* z, int* iblank, int* ifl);
+      int* id, int* jd, int* kd, double* x, double* y, double* z, int* iblank, int* ifl);
   void dread_xyz_2d_ (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, double* x, double* y, int* ifl);
   void dread_xyz_2d_formatted_  (
-      int* id, int* jd, REAL_TYPE* x, REAL_TYPE* y, int* ifl);
+      int* id, int* jd, double* x, double* y, int* ifl);
   void dread_q_3d_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dread_q_3d_formatted_ (
-      int* id, int* jd, int* kd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, int* kd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dread_q_2d_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dread_q_2d_formatted_ (
-      int* id, int* jd, REAL_TYPE* fsmach, REAL_TYPE* alpha, REAL_TYPE* re, REAL_TYPE* time, REAL_TYPE* q, int* ifl);
+      int* id, int* jd, double* fsmach, double* alpha, double* re, double* time, double* q, int* ifl);
   void dread_func_3d_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, double* d, int* ifl);
   void dread_func_3d_formatted_ (
-      int* id, int* jd, int* kd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* kd, int* nvar, double* d, int* ifl);
   void dread_func_2d_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, double* d, int* ifl);
   void dread_func_2d_formatted_ (
-      int* id, int* jd, int* nvar, REAL_TYPE* d, int* ifl);
+      int* id, int* jd, int* nvar, double* d, int* ifl);
 }
 
 using namespace std;
@@ -170,9 +169,9 @@ protected:
   void ReadXYZ_FORMATTED();
 
   /**
-   * @brief グリッド座標ファイルの読み込み（UNFORMATTED）特別仕様フォーマット
+   * @brief グリッド座標ファイルの読み込み（C_BINARY）
    */
-  void ReadXYZ_UNFORMATTED_SPECIAL();
+  void ReadXYZ_C_BINARY();
 
   /**
    * @brief 計算結果Qファイルの読み込み（UNFORMATTED）
@@ -185,9 +184,9 @@ protected:
   void ReadQ_FORMATTED();
 
   /**
-   * @brief 計算結果Qファイルの読み込み（UNFORMATTED）特別仕様フォーマット
+   * @brief 計算結果Qファイルの読み込み（C_BINARY）
    */
-  void ReadQ_UNFORMATTED_SPECIAL();
+  void ReadQ_C_BINARY();
 
   /**
    * @brief 計算結果Functionファイルの読み込み（UNFORMATTED）
@@ -200,9 +199,9 @@ protected:
   void ReadFunc_FORMATTED();
 
   /**
-   * @brief 計算結果Functionファイルの読み込み（UNFORMATTED）特別仕様フォーマット
+   * @brief 計算結果Functionファイルの読み込み（C_BINARY）
    */
-  void ReadFunc_UNFORMATTED_SPECIAL();
+  void ReadFunc_C_BINARY();
 
 public:
 
@@ -240,11 +239,21 @@ public:
    * @brief 計算結果Qファイルの読み込み
    */
   bool ReadQData(
-    REAL_TYPE* m_fsmach,
-    REAL_TYPE* m_alpha,
-    REAL_TYPE* m_re,
-    REAL_TYPE* m_time,
-    REAL_TYPE* m_q);
+    float* m_fsmach,
+    float* m_alpha,
+    float* m_re,
+    float* m_time,
+    float* m_q);
+
+  /**
+   * @brief 計算結果Qファイルの読み込み
+   */
+  bool ReadQData(
+    double* m_fsmach,
+    double* m_alpha,
+    double* m_re,
+    double* m_time,
+    double* m_q);
 
   /**
    * @brief 計算結果Functionファイルの読み込み
@@ -271,19 +280,6 @@ public:
     int* m_Kmin,int* m_Kmax,
     string* m_ResultFlag,
     int* m_dir);
-
-  ///**
-  // * @brief FVBNDファイルの読み込み
-  // */
-  //void ReadFVBND(
-  //  const int nbname, const int nb,
-  //  string* boundary_name,
-  //  int* type, int* gridnum,
-  //  int* Imin,int* Imax,
-  //  int* Jmin,int* Jmax,
-  //  int* Kmin,int* Kmax,
-  //  string* ResultFlag,
-  //  int* dir);
 
 };
 

@@ -28,8 +28,6 @@
        open(unit=ifl, err=10, file=fname, status='new', access='sequential', form='unformatted')
     else if(iflag.eq.2) then !FORMATTED
       open(unit=ifl, err=10, file=fname, status='new', access='sequential', form='formatted')
-    else if(iflag.eq.3) then !SPECIAL FORMAT WRITTEN BY UNFORMATTED
-      open(unit=ifl, err=10, file=fname, status='new', access='sequential', form='unformatted')
     end if
     ierror=1 !true
     return
@@ -54,8 +52,6 @@
        open(unit=ifl, err=10, file=fname, status='unknown', access='sequential', form='unformatted')
     else if(iflag.eq.2) then !FORMATTED
       open(unit=ifl, err=10, file=fname, status='unknown', access='sequential', form='formatted')
-    else if(iflag.eq.3) then !SPECIAL FORMAT WRITTEN BY UNFORMATTED
-      open(unit=ifl, err=10, file=fname, status='unknown', access='sequential', form='unformatted')
     end if
     ierror=1 !true
     return
@@ -80,8 +76,6 @@
        open(unit=ifl, err=10, file=fname, status='old', access='sequential', form='unformatted')
     else if(iflag.eq.2) then !FORMATTED
       open(unit=ifl, err=10, file=fname, status='old', access='sequential', form='formatted')
-    else if(iflag.eq.3) then !SPECIAL FORMAT WRITTEN BY UNFORMATTED
-      open(unit=ifl, err=10, file=fname, status='old', access='sequential', form='unformatted')
     end if
     ierror=1 !true
     return

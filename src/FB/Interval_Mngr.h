@@ -46,6 +46,7 @@ public:
     tg_sampled,  ///< サンプリング出力 
     tg_accelra,  ///< 加速時間
     tg_avstart,  ///< 平均開始時間
+    tg_plot3d,   ///< PLOT3D瞬時値出力
     tg_END
   };
   

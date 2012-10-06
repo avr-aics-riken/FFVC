@@ -12,9 +12,9 @@
 // #################################################################
 
 /**
- @file   Control.h
- @brief  FlowBase Control class Header
- @author kero
+ * @file   Control.h
+ * @brief  FlowBase Control class Header
+ * @author kero
  */
 
 #include <math.h>
@@ -444,7 +444,7 @@ public:
     int IO_Input;
     int IO_Output;
     int Div_Debug;
-    int IO_Format; //=0 : *.sph , =1 : PLOT3D
+    int PLOT3D_OUT;
     int IO_Voxel;
     int IO_Mode;
     string IO_DirPath;
@@ -459,6 +459,7 @@ public:
     int IS_funciton;
     int IS_function_name;
     int IS_fvbnd;
+    int IS_DivideFunc;
     //Initializeでセット
     int ngrid; //出力ブロック数
     int nvar;  //出力項目数
@@ -713,6 +714,14 @@ public:
   string f_Coarse_dfi_vel;
   string f_Coarse_dfi_temp;
   
+  string f_different_nproc_dir_prefix;
+  string f_different_nproc_pressure;
+  string f_different_nproc_velocity;
+  string f_different_nproc_temperature;
+  string f_different_nproc_dfi_prs;
+  string f_different_nproc_dfi_vel;
+  string f_different_nproc_dfi_temp;
+  
   string f_Velocity;
   string f_Pressure;
   string f_Temperature;
@@ -809,12 +818,12 @@ public:
     LES.Cs = 0.0;
     LES.damping_factor=0.0;
     
-    FIO.IO_Input  = 0;
-    FIO.IO_Output = 0;
-    FIO.Div_Debug = 0;
-    FIO.IO_Format = 0; //=0 : *.sph , =1 : PLOT3D
-    FIO.IO_Voxel  = 0;
-    FIO.IO_Mode   = 0;
+    FIO.IO_Input   = 0;
+    FIO.IO_Output  = 0;
+    FIO.Div_Debug  = 0;
+    FIO.PLOT3D_OUT = 0; //=0 : *.sph , =1 : PLOT3D
+    FIO.IO_Voxel   = 0;
+    FIO.IO_Mode    = 0;
     
     P3Op.IS_xyz = ON;
     P3Op.IS_q = OFF;
