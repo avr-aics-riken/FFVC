@@ -48,6 +48,7 @@
 #include "ffv_SetBC.h"
 #include "CompoFraction.h"
 #include "dfi.h"
+#include "dfiinfo.h"
 #include "History.h"
 #include "Monitor.h"
 #include "ffv_Ffunc.h"
@@ -823,6 +824,131 @@ private:
   
   
   /**
+   * @brief リスタート時の瞬時値ファイル読み込み（並列数が異なる場合）
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   */
+  void Restart_different(FILE* fp, double& flop);
+  
+  
+  /**
+   * @brief オーバーラップ領域を計算
+   * @param [out] overlap_h オーバーラップ領域の起点
+   * @param [out] overlap_t オーバーラップ領域の終点
+   * @param [in]  h         自領域の起点
+   * @param [in]  t         自領域の終点
+   * @param [in]  head      読み込む領域の起点
+   * @param [in]  tail      読み込む領域の終点
+   */
+  void CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, int* tail);
+  
+  
+  /**
+   * @brief オーバーラップ領域を計算
+   * @param [out] write_wk  書き込み領域
+   * @param [in]  read_wk   読み込み領域
+   * @param [in]  dim       次元（scalar:1、vector:3）
+   * @param [in]  gd        ガイドセル
+   * @param [in]  h         自領域の起点
+   * @param [in]  s         自領域のサイズ
+   * @param [in]  overlap_h オーバーラップ領域の起点
+   * @param [in]  overlap_t オーバーラップ領域の終点
+   * @param [in]  head      読み込む領域の起点
+   * @param [in]  size      読み込む領域のサイズ
+   */
+  void SetOverlap(REAL_TYPE* write_wk,
+                  REAL_TYPE* read_wk,
+                  int dim,
+                  int gd,
+                  int* h,
+                  int* s,
+                  int* overlap_h,
+                  int* overlap_t,
+                  int* head,
+                  int* size);
+  
+  
+  /**
+   * @brief ファイル読み込み＋オーバーラップを移しこみ
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
+   * @param [in]  d_wk 読み込み用ワークエリア
+   */
+  void ReadOverlap(FILE* fp,
+                   double& flop,
+                   DifferentRestartInfo* DRI,
+                   REAL_TYPE* d_wk);
+  
+  
+  /**
+   * @brief ファイル読み込み＋オーバーラップを移しこみ（圧力）
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
+   * @param [in]  d_wk 読み込み用ワークエリア
+   * @param [in]  rank_list 各プロセスが読むファイルのリスト
+   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
+   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
+   * @param [in]  nassign   自身のランクにステージングされているファイルの数
+   */
+  void ReadOverlap_Pressure(FILE* fp,
+                            double& flop,
+                            DifferentRestartInfo* DRI,
+                            DfiInfo* DI,
+                            REAL_TYPE* d_wk,
+                            int* rank_list,
+                            int recv_rank,
+                            int* assign,
+                            int nassign);
+  
+  
+  /**
+   * @brief ファイル読み込み＋オーバーラップを移しこみ（流速）
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
+   * @param [in]  d_wk 読み込み用ワークエリア
+   * @param [in]  rank_list 各プロセスが読むファイルのリスト
+   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
+   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
+   * @param [in]  nassign   自身のランクにステージングされているファイルの数
+   */
+  void ReadOverlap_Velocity(FILE* fp,
+                            double& flop,
+                            DifferentRestartInfo* DRI,
+                            DfiInfo* DI,
+                            REAL_TYPE* d_wk,
+                            int* rank_list,
+                            int recv_rank,
+                            int* assign,
+                            int nassign);
+  
+  
+  /**
+   * @brief ファイル読み込み＋オーバーラップを移しこみ（温度）
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
+   * @param [in]  d_wk 読み込み用ワークエリア
+   * @param [in]  rank_list 各プロセスが読むファイルのリスト
+   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
+   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
+   * @param [in]  nassign   自身のランクにステージングされているファイルの数
+   */
+  void ReadOverlap_Temperature(FILE* fp,
+                               double& flop,
+                               DifferentRestartInfo* DRI,
+                               DfiInfo* DI,
+                               REAL_TYPE* d_wk,
+                               int* rank_list,
+                               int recv_rank,
+                               int* assign,
+                               int nassign);
+  
+
+  
+  /**
    * @brief 外部境界条件を読み込み，Controlクラスに保持する
    */
   void setBCinfo();
@@ -1040,32 +1166,40 @@ private:
    */
   void setValuePlot3D();
   
+  
   /**
    * @brief 形状データファイル（*.xyz）の出力
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
-  void OutputPlot3D_xyz(const bool restart=false);
+  void OutputPlot3D_xyz();
+  
   
   /**
    * @brief PLOT3Dファイルのポスト出力
    * @param [in,out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
-  void OutputPlot3D_post(double& flop, const bool restart=false);
+  void OutputPlot3D_post(double& flop);
+  
   
   /**
    * @brief 圧縮性流体のための計算結果ファイル（*.q）出力（未整備）
    * @param [in,out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
-  void OutputPlot3D_q(double& flop, const bool restart=false);
+  void OutputPlot3D_q(double& flop);
+  
   
   /**
    * @brief 計算結果ファイル（*.func）出力
    * @param [in,out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
    */
-  void OutputPlot3D_function(double& flop, const bool restart=false);
+  void OutputPlot3D_function(double& flop);
+  
+  
+  /**
+   * @brief 項目別計算結果ファイル（*.func）出力
+   * @param [in,out] flop    浮動小数点演算数
+   */
+  void OutputPlot3D_function_divide(double& flop);
+  
   
   /**
    * @brief 計算結果ファイルの項目（*.nam）出力
@@ -1073,12 +1207,408 @@ private:
    */
   void OutputPlot3D_function_name();
   
+  
+  /**
+   * @brief 項目別計算結果ファイルの項目（*.nam）出力
+   *
+   */
+  void OutputPlot3D_function_name_divide();
+  
+  
   /**
    * @brief 境界面定義ファイル（*.fvbnd）出力（未整備）
    * @note BCMになるとりメッシュされたときに対応できないため出力することはない？
    */
   void OutputPlot3D_fvbnd();
   
+  
+  /**
+   * @brief Iblankのセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    iblank   iblank = 1 : 計算グリッド, = 0 : 非計算グリッド, = 2 : 壁面グリッド
+   * @param [in]     id       iblanx x方向サイズ
+   * @param [in]     jd       iblanx y方向サイズ
+   * @param [in]     kd       iblanx z方向サイズ
+   */
+  void setIblank(int* iblank, int id, int jd, int kd);
+  
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  // float ---> float
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridData(float* d, float* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridData(float* d, float* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridData(float* d, float* data, int id, int jd, int kd, int ivar);
+  
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  // double ---> double
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridData(double* d, double* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridData(double* d, double* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridData(double* d, double* data, int id, int jd, int kd, int ivar);
+  
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  // double ---> float
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridData(float* d, double* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridData(float* d, double* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridData(float* d, double* data, int id, int jd, int kd, int ivar);
+  
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  // float ---> double
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridData(double* d, float* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridData(double* d, float* data, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridData(double* d, float* data, int id, int jd, int kd, int ivar);
+  
+  
+  /**
+   * @brief Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setScalarGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   */
+  void setVectorGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
+  
+  
+  /**
+   * @brief 成分別Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    d        格子点data
+   * @param [in]     data     セル中心data
+   * @param [in]     id       セル中心data x方向サイズ
+   * @param [in]     jd       セル中心data y方向サイズ
+   * @param [in]     kd       セル中心data z方向サイズ
+   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
+   */
+  void setVectorComponentGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  // float
+  
+  /**
+   * @brief 内部の格子点のデータを8で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  void VolumeDataDivideBy8(float* d, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 面上の格子点のデータを4で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  void FaceDataDivideBy4(float* d, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 辺上の格子点のデータを2で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  void LineDataDivideBy2(float* d, int id, int jd, int kd);
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  //double
+  
+  /**
+   * @brief 内部の格子点のデータを8で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  void VolumeDataDivideBy8(double* d, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 面上の格子点のデータを4で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  void FaceDataDivideBy4(double* d, int id, int jd, int kd);
+  
+  
+  /**
+   * @brief 辺上の格子点のデータを2で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  void LineDataDivideBy2(double* d, int id, int jd, int kd);
+  
+  
+  //*****************************************************************************
+  //*****************************************************************************
+  //*****************************************************************************
+  
+  /**
+   * @brief Iblankのセット（ガイドセルに値があることを想定しているバージョン）
+   * @param [out]    iblank   iblank = 1 : 計算グリッド, = 0 : 非計算グリッド, = 2 : 壁面グリッド
+   * @param [in]     id       iblanx x方向サイズ
+   * @param [in]     jd       iblanx y方向サイズ
+   * @param [in]     kd       iblanx z方向サイズ
+   */
+  void setIblankGuide(int* iblank, int id, int jd, int kd);
+  
+
   
 public:
   

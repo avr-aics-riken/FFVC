@@ -933,23 +933,6 @@ void Control::get_FileIO()
   }
   
   
-  // File format ---> sph or plot3d
-  label = "/Steer/File_IO/Format";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  if     ( !strcasecmp(str.c_str(), "sph") )    FIO.IO_Format = FILE_FMT_SPH;
-  else if( !strcasecmp(str.c_str(), "plot3d") ) FIO.IO_Format = FILE_FMT_PLOT3D;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
   // ファイル出力モード
   label = "/Steer/File_IO/Output_Mode";
   
@@ -996,6 +979,64 @@ void Control::get_FileIO()
       }
     }
 
+  }
+  
+  
+  // File format
+  label = "/Steer/File_IO/output_plot3d";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    FIO.PLOT3D_OUT = OFF;
+  }
+  if     ( !strcasecmp(str.c_str(), "off") ) FIO.PLOT3D_OUT = OFF;
+  else if( !strcasecmp(str.c_str(), "on") )  FIO.PLOT3D_OUT = ON;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // インターバル PLOT3D
+  if(FIO.PLOT3D_OUT == ON)
+  {
+    label = "/Steer/File_IO/PLOT3D_Interval_Type";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      if     ( !strcasecmp(str.c_str(), "step") )
+      {
+        Interval[Interval_Manager::tg_plot3d].setMode_Step();
+      }
+      else if( !strcasecmp(str.c_str(), "time") )
+      {
+        Interval[Interval_Manager::tg_plot3d].setMode_Time();
+      }
+      else
+      {
+        Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      label="/Steer/File_IO/PLOT3D_Interval";
+      
+      if ( !(tpCntl->GetValue(label, &f_val )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      else
+      {
+        Interval[Interval_Manager::tg_plot3d].setInterval((double)f_val);
+      }
+    }
   }
   
 }
@@ -1669,9 +1710,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // File_plot3d_filename --- option
   label = "/Steer/plot3d_options/Filename";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->GetValue(label, &str)) )
   {
-    ;
+    P3Op.basename = "PLOT3Doutput_";
   }
   else
   {
@@ -1684,7 +1725,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Grid_kind'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -1693,7 +1734,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "multi_grid") )  FP3DR->setMultiGrid();
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Grid_kind'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1704,7 +1745,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Grid_Mobility'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -1713,7 +1754,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "immovable") ) FP3DR->setMoveGrid(GRID_NOT_MOVE);
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Grid_Mobility'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1724,8 +1765,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/state_of_time'\n");
-    Exit(0);
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/state_of_time'\n");
+    //Exit(0);
+    FP3DR->setSteady(FB_UNSTEADY);
   }
   else
   {
@@ -1733,7 +1775,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "unsteady") ) FP3DR->setSteady(FB_UNSTEADY);
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/state_of_time'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1744,8 +1786,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/set_iblank_flag'\n");
-    Exit(0);
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/set_iblank_flag'\n");
+    //Exit(0);
+    FP3DR->setIBlankFlag(SET_IBLANK);
   }
   else
   {
@@ -1753,7 +1796,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "off") ) FP3DR->setIBlankFlag(NOT_SET_IBLANK);
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/set_iblank_flag'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1763,8 +1806,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   label = "/Steer/plot3d_options/dimension";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/dimension'\n");
-    Exit(0);
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/dimension'\n");
+    //Exit(0);
+    FP3DR->setDimension3D();
   }
   else
   {
@@ -1772,7 +1816,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "3d") ) FP3DR->setDimension3D();
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/dimension'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1782,29 +1826,51 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   label = "/Steer/plot3d_options/Format_Type";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Format_Type'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
   {
     if     ( !strcasecmp(str.c_str(), "unformatted") )  FP3DR->setFormat(UNFORMATTED);
     else if( !strcasecmp(str.c_str(), "formatted") )    FP3DR->setFormat(FORMATTED);
-    else if( !strcasecmp(str.c_str(), "special") )      FP3DR->setFormat(UNFORMATTED_SPECIAL);
+    else if( !strcasecmp(str.c_str(), "binary") )       FP3DR->setFormat(C_BINARY);
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Format_Type'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // 出力の単精度or倍精度指定
+  label = "/Steer/plot3d_options/real_type";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+    FP3DR->setRealType(d_type);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "float") ) FP3DR->setRealType(OUTPUT_FLOAT);
+    else if( !strcasecmp(str.c_str(), "double") ) FP3DR->setRealType(OUTPUT_DOUBLE);
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
   
   
   //copy options read to write
-  FP3DW->setMoveGrid(FP3DR->IsGridKind());
+  FP3DW->setGridKind(FP3DR->IsGridKind());
   FP3DW->setMoveGrid(FP3DR->IsMoveGrid());
   FP3DW->setSteady(FP3DR->IsSteady());
   FP3DW->setIBlankFlag(FP3DR->IsIBlankFlag());
-  FP3DW->setFormat(FP3DR->GetDim());
+  FP3DW->setDim(FP3DR->GetDim());
   FP3DW->setFormat(FP3DR->GetFormat());
+  FP3DW->setRealType(FP3DR->GetRealType());
   
   
   // Output_xyz
@@ -1812,7 +1878,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/output_xyz\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -1821,7 +1887,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_xyz = OFF;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/output_xyz'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1832,8 +1898,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Output_q'\n");
-    Exit(0);
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    P3Op.IS_q = OFF;
   }
   else
   {
@@ -1841,7 +1908,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_q = OFF;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Output_q'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1852,7 +1919,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Output_function'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -1861,7 +1928,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_funciton = OFF;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Output_function'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1872,7 +1939,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Output_func_name'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   else
@@ -1881,7 +1948,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_function_name = OFF;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Output_func_name'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -1892,8 +1959,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/Output_fvbnd'\n");
-    Exit(0);
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    P3Op.IS_fvbnd = OFF;
   }
   else
   {
@@ -1901,7 +1969,27 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_fvbnd = OFF;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/plot3d_options/Output_fvbnd'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  // divide_func ---> 出力を項目別にファイル分割するオプション
+  label = "/Steer/plot3d_options/divide_func";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    P3Op.IS_DivideFunc = OFF;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_DivideFunc = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_DivideFunc = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
@@ -2181,6 +2269,7 @@ void Control::get_start_condition()
   if      ( !strcasecmp(str.c_str(), "initial") )                  Start = initial_start;
   else if ( !strcasecmp(str.c_str(), "restart") )                  Start = restart;
   else if ( !strcasecmp(str.c_str(), "restart_from_coarse_data") ) Start = coarse_restart;
+  else if ( !strcasecmp(str.c_str(), "restart_different_nproc") )  Start = restart_different_nproc;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2189,7 +2278,7 @@ void Control::get_start_condition()
   
   
   // リスタート時のタイムスタンプ
-  if ( (Start == restart) || (Start == coarse_restart) )
+  if ( (Start == restart) || (Start == coarse_restart) || (Start == restart_different_nproc) )
   {
     label="/Steer/Start_condition/restart_step";
     
@@ -2289,6 +2378,102 @@ void Control::get_start_condition()
   }
   
   
+  // 異なる並列数からリスタートする場合の初期値データのプリフィクス
+  if ( Start == restart_different_nproc )
+  {
+    
+#ifdef _STAGING_
+    
+    label="/Steer/Start_condition/Prefix_of_different_nproc_dir";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    f_different_nproc_dir_prefix = str.c_str();
+    
+#endif
+    
+    label="/Steer/Start_condition/Prefix_of_different_nproc_Pressure";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    f_different_nproc_pressure = str.c_str();
+    
+    
+    label="/Steer/Start_condition/Prefix_of_different_nproc_Velocity";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    f_different_nproc_velocity = str.c_str();
+    
+    
+    if ( isHeatProblem() )
+    {
+      label="/Steer/Start_condition/Prefix_of_different_nproc_Temperature";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      f_different_nproc_temperature = str.c_str();
+    }
+    
+    // プロセス並列時にローカルでのファイル入力を指定した場合 --- always IO_DISTRIBUTE
+    if ( FIO.IO_Input == IO_DISTRIBUTE )
+    {
+      label="/Steer/Start_condition/dfi_file_pressure";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      f_different_nproc_dfi_prs = str.c_str();
+      
+      
+      label="/Steer/Start_condition/dfi_file_velocity";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      f_different_nproc_dfi_vel = str.c_str();
+      
+      
+      if ( isHeatProblem() )
+      {
+        label="/Steer/Start_condition/dfi_file_temperature";
+        
+        if ( !(tpCntl->GetValue(label, &str )) )
+        {
+          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+          Exit(0);
+        }
+        
+        f_different_nproc_dfi_temp = str.c_str();
+        
+      }
+    }
+    
+  }
+  
+  
   // 初期条件
   if ( Start == initial_start )
   {
@@ -2370,7 +2555,7 @@ void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_W
   get_FileIO();
   
   // PLOT3Dファイル入出力に関するパラメータ
-  if (FIO.IO_Format == FILE_FMT_PLOT3D) get_PLOT3D(FP3DR,FP3DW);
+  if (FIO.PLOT3D_OUT == ON) get_PLOT3D(FP3DR,FP3DW);
   
 }
 
@@ -3418,6 +3603,10 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       fprintf(fp,"\t     Start Condition          :   Restart from coarse grid data\n");
       break;
       
+    case restart_different_nproc:
+      fprintf(fp,"\t     Start Condition          :   Restart from previous session that nproc differ from\n");
+      break;
+      
     default:
       stamped_printf("Error: start condition section\n");
       err=false;
@@ -3455,6 +3644,38 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     
   }
   
+  // 異なる並列数からリスタート
+  if ( Start == restart_different_nproc )
+  {
+    if ( FIO.IO_Input == IO_GATHER )
+    {
+      fprintf(fp,"\t     with different_nproc Initial data files\n");
+      fprintf(fp,"\t          Pressure            :   %s\n", f_different_nproc_pressure.c_str());
+      fprintf(fp,"\t          Velocity            :   %s\n", f_different_nproc_velocity.c_str());
+      if ( isHeatProblem() )
+      {
+        fprintf(fp,"\t          Temperature         :   %s\n", f_different_nproc_temperature.c_str());
+      }
+    }
+    else
+    {
+      fprintf(fp,"\t     with different_nproc Initial data files\n");
+      fprintf(fp,"\t          DFI file Pressure   :   %s\n", f_different_nproc_dfi_prs.c_str());
+      fprintf(fp,"\t          DFI file Velocity   :   %s\n", f_different_nproc_dfi_vel.c_str());
+      if ( isHeatProblem() )
+      {
+        fprintf(fp,"\t          DFI file Temperature:   %s\n", f_different_nproc_dfi_temp.c_str());
+      }
+      fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_different_nproc_pressure.c_str());
+      fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_different_nproc_velocity.c_str());
+      if ( isHeatProblem() )
+      {
+        fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_different_nproc_temperature.c_str());
+      }
+    }
+    
+  }
+
   
   // parallel mode ------------------
   fprintf(fp,"\n\tParallel Mode\n");
@@ -3606,6 +3827,20 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     }
   }
   
+  // PLOT3D 瞬間値のファイル出力
+  if(FIO.PLOT3D_OUT == ON)
+  {
+    if ( !Interval[Interval_Manager::tg_plot3d].isStep() )
+    {
+      itm = Interval[Interval_Manager::tg_plot3d].getIntervalTime();
+      fprintf(fp,"\t     Instant data             :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+    }
+    else
+    {
+      fprintf(fp,"\t     Instant data             :   %12d [step]\n", Interval[Interval_Manager::tg_plot3d].getIntervalStep());
+    }
+  }
+
   
   // Criteria ------------------
   fprintf(fp,"\n\tParameter of Linear Equation\n");

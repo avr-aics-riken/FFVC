@@ -8,9 +8,11 @@
 //
 // #################################################################
 
-//@file   Monitor.C
-//@brief  FlowBase MonitorList class
-//@author kero
+/**
+ * @file   Monitor.C
+ * @brief  FlowBase MonitorList class
+ * @author kero
+ */
 
 #include "Monitor.h"
 
@@ -617,14 +619,14 @@ void MonitorList::get_Monitor(Control* C)
     if ( type == MonitorCompo::POINT_SET )
     {
       vector<MonitorCompo::MonitorPoint> pointSet;
+      get_Mon_Pointset(C, label_leaf, pointSet);
+      setPointSet(name.c_str(), variables, method.c_str(), mode.c_str(), pointSet);
     }
     else 
     {
-      cout << "Monitor --- Line = " << name << endl;
       REAL_TYPE from[3], to[3];
       int nDivision;
       get_Mon_Line(C, label_leaf, from, to, nDivision);
-      //この中でLineの領域内外判定をしているが、サブドメインの設定がまだなのでコメントアウト
       setLine(name.c_str(), variables, method.c_str(), mode.c_str(), from, to, nDivision);
     }
   }
@@ -691,47 +693,68 @@ void MonitorList::get_Mon_Pointset(Control* C,
                                    const string label_base,
                                    vector<MonitorCompo::MonitorPoint>& pointSet)
 {
+  REAL_TYPE v[3];
+  char tmpstr[20];
+  std::string str,label;
+  string label_leaf;
   
+  // PointSet個数のチェック
+  int nnode=0;
+  int nlist=0;
   
-  /*
-   
-   REAL_TYPE v[3];
-   const char* str=NULL;
-   char tmpstr[20];
-   
-   v[0] = v[1] = v[2] = 0.0;
-   
-   // load parameter for a set
-   elmL3 = elmL2->GetElemFirst();
-   
-   for (unsigned j=0; j<elmL2->GetElemSize(); j++) {
-   
-   if ( strcasecmp("set", elmL3->GetName()) ) { // not agree
-   Hostonly_ stamped_printf("\tParsing error : fail to get 'set' in 'point_set' >> %s\n", elmL3->GetName());
-   Exit(0);
-   }
-   if ( !elmL3->GetVctValue("x", "y", "z", &v[0], &v[1], &v[2]) ) {
-   Hostonly_ stamped_printf("\tParsing error : fail to get vec params in 'point_set'\n");
-   Exit(0);
-   }
-   if (C->Sampling.unit == DIMENSIONAL) {
-   normalizeCord(C->RefLength,v);
-   }
-   
-   // set Labelの取得．ラベルなしでもエラーではない
-   if ( !(str = elmL3->GetComment()) ) {
-   Hostonly_ stamped_printf("\tParsing warning : No commnet for 'set'\n");
-   }
-   if ( !str ) {
-   sprintf(tmpstr, "point_%d",j);
-   str = tmpstr;
-   }
-   
-   pointSet.push_back(MonitorCompo::MonitorPoint(v, str));
-   
-   elmL3 = elmL2->GetElemNext(elmL3); // ahead on the next pointer
-   }  
-   
-   */
+  nnode=tpCntl->countLabels(label_base);
+  if ( nnode == 0 )
+  {
+    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
+    Exit(0);
+  }
+  
+  for (int i=0; i<nnode; i++) {
+    if(!tpCntl->GetNodeStr(label_base,i+1,&str)){
+      printf("\tParsing error : No Elem name\n");
+      Exit(0);
+    }
+    if( strcasecmp(str.substr(0,3).c_str(), "set") ) continue;
+    nlist++;
+  }
+  
+  // PointSet取得
+  int pc=0;
+  for (int i=0; i<nnode; i++)
+  {
+    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    {
+      printf("\tParsing error : No Elem name\n");
+      Exit(0);
+    }
+    if( strcasecmp(str.substr(0,3).c_str(), "set") ) continue;
+    pc++;
+    
+    label_leaf = label_base + "/" + str;
+    
+    // set coordinate
+    label=label_leaf+"/coordinate";
+    for (int n=0; n<3; n++) v[n]=0.0;
+    if ( !(tpCntl->GetVector(label, v, 3 )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    if (C->Sampling.unit == DIMENSIONAL) {
+      normalizeCord(C->RefLength,v);
+    }
+    
+    // set Labelの取得．ラベルなしでもエラーではない
+    label=label_leaf+"/label";
+    if ( !(tpCntl->GetValue(label, &str )) ) {
+      Hostonly_ stamped_printf("\tParsing warning : No commnet for '%s'\n", label.c_str());
+    }
+    if ( !strcasecmp(str.c_str(), "") ) {
+      sprintf(tmpstr, "point_%d",pc);
+      str = tmpstr;
+    }
+    
+    pointSet.push_back(MonitorCompo::MonitorPoint(v, str.c_str()));
+  }
   
 }

@@ -88,14 +88,15 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 24; // step(10) + id(9) + postfix(4) + 1(\0)
+  int len = prefix.size() + 30; // step(10) + id(9) + postfix(10) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
   // local出力が指定された場合、分割出力
   if ( mio )
   {
-    sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
+    sprintf(tmp, "%s%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
+    //sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
   }
   else
   {
@@ -511,4 +512,164 @@ void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
   fprintf(fp, "Global_Voxel = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
+}
+
+
+
+// #################################################################
+// データをファイルに書き込む
+bool DFI::Write_DFI_File(const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio)
+{
+  if ( prefix.empty() ) return NULL;
+  
+  // master node only
+  int mm;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mm);
+  
+  if ( mm != 0 ) return false;
+  
+  std::string dfi_name;
+  
+  if ( mio )
+  {
+    dfi_name = Generate_DFI_Name(prefix);
+    
+    if( dfi_name.empty() )
+    {
+      return false;
+    }
+    
+    if( !Write_File(dfi_name, prefix, step, time, dfi_mng, mio) )
+    {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+
+// #################################################################
+// DFIファイルを出力する
+bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio)
+{
+  if ( dfi_name.empty() ) return false;
+  if ( prefix.empty() ) return false;
+  
+  FILE* fp = NULL;
+  
+  // File exist ?
+  bool flag = false;
+  if ( fp = fopen(dfi_name.c_str(), "r") )
+  {
+    flag = true;
+    fclose(fp);
+  }
+  
+  
+  if ( (dfi_mng == 0) || !flag )// || (start_type == coarse_restart) ) // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
+  {
+    if( !(fp = fopen(dfi_name.c_str(), "w")) )
+    {
+      fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
+      return false;
+    }
+    
+    if (fp) fprintf(fp, "Distributed_File_Info {\n");
+    if (fp) fprintf(fp, "\n");
+    
+    if( !Write_Header(fp, 0, prefix) )
+    {
+      if (fp) fclose(fp);
+      return false;
+    }
+    
+    if (fp) fprintf(fp, "\n");
+    
+    if (fp) Write_Tab(fp, 1);
+    if (fp) fprintf(fp, "FileInfo {\n");
+    
+    if ( !Write_OutFileInfo(fp, 1, prefix, step, time, mio) )
+    {
+      if (fp) fclose(fp);
+      return false;
+    }
+    
+    if (fp) Write_Tab(fp, 1);
+    if (fp) fprintf(fp, "}\n");
+    if (fp) fprintf(fp, "}\n");
+    if (fp) fclose(fp);
+    
+  }
+  else // 既存ファイルが存在する、あるいはセッションが始まり既に書き込み済み >> 追記
+  {
+    
+    // ファイルの内容をバッファ
+    fp = fopen(dfi_name.c_str(), "r");
+    
+    std::string str;
+    while( !feof(fp) ){
+      int c = fgetc(fp);
+      if( !feof(fp) ) str += c;
+    }
+    fclose(fp);
+    
+    register int i = str.size() - 1;
+    while( --i > 0 ) {
+      if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
+    }
+    
+    while( --i > 0 ) {
+      if( str[i] == '\n' ) { str[i+1] = '\0'; break; }
+    }
+    
+    // 新規ファイルを生成し、バッファを書きだしたあとにファイル情報を追記
+    if( !(fp = fopen(dfi_name.c_str(), "w")) )
+    {
+      fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
+      return false;
+    }
+    
+    if ( fp && fwrite(str.c_str(), sizeof(char), strlen(str.c_str()), fp) != strlen(str.c_str()) )
+    {
+      if (fp) fclose(fp);
+      return false;
+    }
+    
+    if ( !Write_OutFileInfo(fp, 1, prefix, step, time, mio) )
+    {
+      if (fp) fclose(fp);
+      return false;
+    }
+    
+    if (fp) Write_Tab(fp, 1);
+    if (fp) fprintf(fp, "}\n");
+    if (fp) fprintf(fp, "}\n");
+    if (fp) fclose(fp);
+    
+  }
+  
+  dfi_mng++;
+  
+  return true;
+}
+
+
+// #################################################################
+// DFIファイル:出力ファイル情報要素を出力する
+bool DFI::Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const double time, const bool mio)
+{
+  if (fp)
+  {
+    Write_Tab(fp, tab+1);
+    fprintf(fp, "Step[@] = %d\n", step);
+  }
+  
+  if (fp)
+  {
+    Write_Tab(fp, tab+1);
+    fprintf(fp, "Time[@] = %f\n", time);
+  }
+  
+  return true;
 }

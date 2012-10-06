@@ -710,22 +710,26 @@ int FFV::Initialize(int argc, char **argv)
     }
   }
   
+  // PLOT3D形状データの書き出し
+  if (C.FIO.PLOT3D_OUT == ON)
+  {
+    setValuePlot3D();
+    if(C.P3Op.IS_xyz == ON) OutputPlot3D_xyz();// ---> moving grid を考慮したときOutputPlot3D_postに組み込む
+    if(C.P3Op.IS_DivideFunc == ON) {
+      if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name_divide();
+    }else{
+      if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name();
+    }
+    if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
+  }
+
   
   // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
     flop_task = 0.0;
-    if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
-    {
-      setValuePlot3D();
-      
-      //初期値設定がまだ？すべて0になってるので出力停止?--->あとで調査
-      OutputPlot3D_post(flop_task);
-    }
-    else if(C.FIO.IO_Format == FILE_FMT_SPH)
-    {
-      FileOutput(flop_task);
-    }
+    FileOutput(flop_task);
+    if (C.FIO.PLOT3D_OUT == ON) OutputPlot3D_post(flop_task);
   }
   
   
@@ -733,14 +737,8 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Start == coarse_restart )
   {
     flop_task = 0.0;
-    if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
-    {
-      OutputPlot3D_post(flop_task, true);
-    }
-    else if (C.FIO.IO_Format == FILE_FMT_SPH)
-    {
-      FileOutput(flop_task, true);
-    }
+    FileOutput(flop_task, true);
+    if (C.FIO.PLOT3D_OUT == ON) OutputPlot3D_post(flop_task);
   }
   
   
@@ -797,15 +795,6 @@ int FFV::Initialize(int argc, char **argv)
     }
     return 0;
 	}
-  
-  // 形状データの書き出し
-  if (C.FIO.IO_Format == FILE_FMT_PLOT3D)
-  {
-    
-    if(C.P3Op.IS_xyz == ON) OutputPlot3D_xyz();
-    if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name(); 
-    if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
-  }
 
   return 1;
 }
@@ -2298,6 +2287,7 @@ void FFV::init_Interval()
     C.Interval[Interval_Manager::tg_accelra].normalizeInterval(C.Tscale);
     C.Interval[Interval_Manager::tg_avstart].normalizeInterval(C.Tscale);
     C.Interval[Interval_Manager::tg_sampled].normalizeInterval(C.Tscale);
+    C.Interval[Interval_Manager::tg_plot3d].normalizeInterval(C.Tscale);
   }
   
   // Reference frame
@@ -2349,6 +2339,15 @@ void FFV::init_Interval()
       Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
       Exit(0);
     }    
+  }
+  
+  if (C.FIO.PLOT3D_OUT == ON)
+  {
+    if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d, C.Tscale) )  // 瞬時値ファイル
+    {
+      Hostonly_ printf("\t Error : Interval for plot3d output is asigned to zero.\n");
+      Exit(0);
+    }
   }
   
   Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();

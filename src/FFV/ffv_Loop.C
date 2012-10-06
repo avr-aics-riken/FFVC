@@ -199,14 +199,7 @@ int FFV::Loop(const unsigned step)
   {
     TIMING_start(tm_file_out);
     flop_count=0.0;
-    if(C.FIO.IO_Format == FILE_FMT_PLOT3D)
-    {
-      OutputPlot3D_post(flop_count);
-    }
-    else if(C.FIO.IO_Format == FILE_FMT_SPH)
-    {
-      FileOutput(flop_count);
-    }
+    FileOutput(flop_count);
     TIMING_stop(tm_file_out, flop_count); 
   }
   
@@ -220,19 +213,41 @@ int FFV::Loop(const unsigned step)
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        if(C.FIO.IO_Format == FILE_FMT_PLOT3D)
-        {
-          OutputPlot3D_post(flop_count);
-        }
-        else if(C.FIO.IO_Format == FILE_FMT_SPH)
-        {
-          FileOutput(flop_count);
-        }
+        FileOutput(flop_count);
         TIMING_stop(tm_file_out, flop_count); 
       }
     }
   }
   
+  
+  // PLOT3D output
+  if(C.FIO.PLOT3D_OUT == ON)
+  {
+    // 通常
+    if ( C.Interval[Interval_Manager::tg_plot3d].isTriggered(CurrentStep, CurrentTime) )
+    {
+      TIMING_start(tm_file_out);
+      flop_count=0.0;
+      OutputPlot3D_post(flop_count);
+      TIMING_stop(tm_file_out, flop_count);
+    }
+    
+    // 最終ステップ
+    if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
+    {
+      // 指定間隔の出力がない場合のみ（重複を避ける）
+      if ( !C.Interval[Interval_Manager::tg_plot3d].isTriggered(CurrentStep, CurrentTime) )
+      {
+        if ( C.Hide.PM_Test != ON )
+        {
+          TIMING_start(tm_file_out);
+          flop_count=0.0;
+          OutputPlot3D_post(flop_count);
+          TIMING_stop(tm_file_out, flop_count);
+        }
+      }
+    }
+  }
   
   // 平均値のデータ出力 >　アルゴいまいち
   if (C.Mode.Average == ON) 
