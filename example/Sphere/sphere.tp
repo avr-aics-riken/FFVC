@@ -52,8 +52,15 @@ Steer {
     Averaged_Interval_Type = "step"
     Averaged_Interval      = 200
     Voxel_Output           = "off"
-    Output_Mode            = "specified"
-    Directory_Path         = "hoge"
+    Output_Mode {
+      Mode                 = "specified"
+      Directory_Path       = "hoge"
+    }
+    Plot3d {
+      Option               = "off"
+      Interval_Type        = "step"
+      Interval             = 10
+    }
   }
 
   Geometry_Model {
@@ -147,11 +154,12 @@ Steer {
     Iblank         = "off"
     Dimension      = "3D"
     Format_type    = "unformatted"
-    File_plot3d_xyz= "off"
-    File_plot3d_q  = "off"
-    File_plot3d_function = "off"
-    File_plot3d_function_name = "off"
-    File_plot3d_fvbnd = "off"
+    Output_xyz       = "on"
+    Output_q         = "on"
+    Output_function  = "on"
+    Output_func_name = "on"
+    Output_fvbnd     = "on"
+    Divide_func      = "off"
   }
 
   Reference_Frame {
@@ -204,8 +212,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 86
-    Flow_Base = 102
+    FFV       = 87
+    Flow_Base = 103
   }
 
 } //Steer
@@ -216,8 +224,6 @@ Parameter {
     Velocity      = 27.8
     Gravity       = 9.8
     Base_Pressure = 0.0
-    // Reynolds      = 1000.0
-    // Prandtl       = 0.71
     Medium        = "air"
   }
       

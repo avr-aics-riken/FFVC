@@ -52,8 +52,15 @@ Steer {
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 1000
     Voxel_Output           = "off"
-    Output_Mode            = "specified"
-    Directory_Path         = "hoge"
+    Output_Mode {
+      Mode                 = "specified"
+      Directory_Path       = "hoge"
+    }
+    Plot3d {
+      Option               = "off"
+      Interval_Type        = "step"
+      Interval             = 10
+    }
   }
 
   Geometry_Model {
@@ -152,6 +159,7 @@ Steer {
     Output_function  = "off"
     Output_func_name = "off"
     Output_fvbnd     = "off"
+    Divide_func      = "off"
   }
 
   Reference_Frame {
@@ -204,8 +212,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 86
-    Flow_Base = 102
+    FFV       = 87
+    Flow_Base = 103
   }
 
 } //Steer
