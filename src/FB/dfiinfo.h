@@ -81,7 +81,7 @@ public:
     int TailIndex[3];
     long IJK;    //(I,J,K)一次元アドレス変換
     long IJK_JK; //一次元アドレスY面
-	long IJK_K;  //一次元アドレスZ面
+	  long IJK_K;  //一次元アドレスZ面
   } NodeInfo;
 
   string Prefix;

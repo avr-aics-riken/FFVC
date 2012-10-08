@@ -58,7 +58,6 @@ void DfiInfo::ReadDfiFile(string fname)
 
   //TPインスタンス生成
   tpCntl.getTPinstance();
-  //tpCntl.getTPinstance_singleton();
 
   //入力ファイルをセット
   int ierror = tpCntl.readTPfile(fname);
