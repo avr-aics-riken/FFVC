@@ -1,19 +1,27 @@
 -----
-Tool to combine divided sph file 
+Tool to make layout file for PLOT3D
 
 Kenji Ono 	keno@riken.jp
-VCAD Research Program, RIKEN
-April 2012
+AICS, RIKEN
+October 2012
 -----
 
 FFVで領域分割出力されたPLOT3Dフォーマットの結果ファイルをFieldViewにより並列化しかするために必要なlayoutファイルを作成するツールを提供します。
 
+
+
 --- コンパイル方法
 
-makeを実行。
-binの下にlayoutという実行ファイルができます。
-環境変数の設定はsrc/FFV/make_settingを編集します。
-（FFVのツールとしてFFVと同じ環境でビルドすることを想定しています）
+1) 単体でビルド
+環境変数の設定はsrc/FFV/make_settingを編集します．
+$ make
+
+2) FFVディレクトリから一括ビルド
+FFVディレクトリでffvcのコンパイルを行うと，layoutが生成されます．
+
+../../binの下にlayoutという実行ファイルが生成されます．
+
+
 
 --- 使い方
 

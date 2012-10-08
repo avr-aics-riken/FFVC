@@ -623,7 +623,8 @@ void COMB::CheckDir(string dirstr)
   if( !(dir = opendir(dirstr.c_str())) ) {
     if( errno == ENOENT ) {
       mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-      if( mkdir(dirstr.c_str(), mode) == -1 ) {
+      if ( !FBUtility::c_mkdir(dirstr.c_str()) )
+      {
         printf("\tCan't generate directory(%s).\n", dirstr.c_str());
         Exit(0);
       }

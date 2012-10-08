@@ -38,6 +38,7 @@
 
 //#include "DomainInfo.h"
 #include "FB_Define.h"
+#include "FBUtility.h"
 #include "mydebug.h"
 #include "TPControl.h"
 #include "dfi.h"

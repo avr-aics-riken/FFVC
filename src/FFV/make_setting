@@ -143,3 +143,5 @@ UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
               
 UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
             $(UDEF_LIBS_SPEC)
+
+UDEF_LIBS_UTIL = -lmpi -lFB -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)

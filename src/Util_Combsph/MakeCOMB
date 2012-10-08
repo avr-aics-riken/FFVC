@@ -8,6 +8,8 @@
 #
 ###################################################################
 
+TARGET   = combsph
+
 CXXSRCS = \
     main.C \
     comb.C \
@@ -17,7 +19,6 @@ CXXSRCS = \
     FileIO_read_sph.C
 
 F90SRCS =
-
 
 SRCS  = $(CXXSRCS) $(F90SRCS)
 
@@ -41,9 +42,10 @@ $(TARGET):$(OBJS)
 
 clean:
 	$(RM) $(OBJS)
+	(cd ../../bin; $(RM) $(TARGET) )
 
 depend:
-	makedepend -I. -Y $(CXXSRCS)
+	makedepend -I. -I../FB -I$(PMLIB_DIR) -Y $(CXXSRCS)
 
 # DO NOT DELETE
 

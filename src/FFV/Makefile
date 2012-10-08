@@ -8,14 +8,11 @@
 #
 ###################################################################
 
-BASEDIR  = $(PWD)
-TARGET   = ffvc
-
 include make_setting
 
 all:
 	( \
-	cd ../Polylib-2.1.1/src; \
+	cd $(POLYLIB_DIR)/src; \
 	make \
 		CXX='$(CXX)' \
 		AR='$(AR)' \
@@ -26,7 +23,7 @@ all:
 	)
 
 	( \
-	cd ../Cutlib-2.0.4/src; \
+	cd $(CUTLIB_DIR)/src; \
 	make \
 		CXX='$(CXX)' \
 		AR='$(AR)' \
@@ -36,7 +33,7 @@ all:
 	)
 
 	( \
-	cd ../PMlib-1.4/src; \
+	cd $(PMLIB_DIR)/src; \
 	make \
 		CXX='$(CXX)' \
 		AR='$(AR)' \
@@ -99,7 +96,6 @@ all:
   
 	( \
 	make -f MakeFFV \
-		TARGET='$(TARGET)' \
 		CXX='$(CXX)' \
 		CXXFLAGS='$(CXXFLAGS)' \
 		F90='$(F90)' \
@@ -114,6 +110,40 @@ all:
 		RM='$(RM)' \
 		UDEF_LIB_PATH_SPEC='$(UDEF_LIB_PATH_SPEC)' \
 	)
+  
+	( \
+	cd ../Util_Combsph; \
+	make -f MakeCOMB \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
+		LDFLAGS='$(LDFLAGS)' \
+		LIBS='$(LIBS)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+		UDEF_LIB_PATH='$(UDEF_LIB_PATH)' \
+		UDEF_LIBS='$(UDEF_LIBS_UTIL)' \
+		RM='$(RM)' \
+		UDEF_LIB_PATH_SPEC='$(UDEF_LIB_PATH_SPEC)' \
+	)
+  
+  
+	( \
+	cd ../Util_Layout; \
+	make -f MakeLAYOUT \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
+		LDFLAGS='$(LDFLAGS)' \
+		LIBS='$(LIBS)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+		UDEF_LIB_PATH='$(UDEF_LIB_PATH)' \
+		UDEF_LIBS='$(UDEF_LIBS_UTIL)' \
+		RM='$(RM)' \
+		UDEF_LIB_PATH_SPEC='$(UDEF_LIB_PATH_SPEC)' \
+	)
+  
 
 clean: 
 	(cd ../IP; make clean)
@@ -122,21 +152,24 @@ clean:
 	(make -f MakeFFV clean)
   
 mostlyclean: clean
-	(cd ../Polylib-2.1.1/src; make clean)
-	(cd ../Cutlib-2.0.4/src; make clean)
-	(cd ../PMlib-1.4/src; make clean)
+	(cd $(POLYLIB_DIR)/src; make clean)
+	(cd $(CUTLIB_DIR)/src; make clean)
+	(cd $(PMLIB_DIR)/src; make clean)
 
 allclean: mostlyclean
-	(cd ../../bin; $(RM) $(TARGET) )
+	(cd ../Util_Combsph; make -f MakeCOMB clean)
+	(cd ../Util_Layout; make -f MakeLAYOUT clean)
 
 depend:
-	(cd ../Polylib-2.1.1/src; make depend)
-	(cd ../Cutlib-2.0.4/src; make depend)
-	(cd ../PMlib-1.4/src; make depend)
+	(cd $(POLYLIB_DIR)/src; make depend)
+	(cd $(CUTLIB_DIR)/src; make depend)
+	(cd $(PMLIB_DIR)/src; make depend)
 	(cd ../IP; make depend)
 	(cd ../FB; make depend)
 	(cd ../F_CORE; make depend)
 	(make -f MakeFFV depend)
+	(cd ../Util_Combsph; make -f MakeCOMB depend)
+	(cd ../Util_Layout; make -f MakeLAYOUT depend)
 
 # DO NOT DELETE
 

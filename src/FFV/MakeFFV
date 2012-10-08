@@ -8,6 +8,8 @@
 #
 ###################################################################
 
+TARGET = ffvc
+
 CXXSRCS = \
     main.C \
     ffv.C \
@@ -33,13 +35,14 @@ OBJS  = $(CXXOBJS)
 $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \
 	$(LDFLAGS) $(UDEF_LIB_PATH) $(LIBS) $(UDEF_LIBS) $(UDEF_LIB_PATH_SPEC)
-	mv $(TARGET) ../../bin/.
+	mv $(TARGET) ../../bin
 
 .C.o:
 	$(CXX) $(CXXFLAGS) $(UDEF_OPT) $(UDEF_INC_PATH) -c $<
 
 clean:
 	$(RM) $(OBJS)
+	$(RM) ../../bin/$(TARGET)
 
 depend:
 	makedepend -I. -I../IP -I../FB -I../F_CORE -Y $(CXXSRCS)

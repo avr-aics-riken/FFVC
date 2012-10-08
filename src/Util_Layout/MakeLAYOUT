@@ -8,6 +8,8 @@
 #
 ###################################################################
 
+TARGET   = layout
+
 CXXSRCS = \
     main.C \
     layout.C \
@@ -36,9 +38,10 @@ $(TARGET):$(OBJS)
 
 clean:
 	$(RM) $(OBJS)
+	(cd ../../bin; $(RM) $(TARGET) )
 
 depend:
-	makedepend -I. -Y $(CXXSRCS)
+	makedepend -I. -I../FB -I$(PMLIB_DIR) -Y $(CXXSRCS)
 
 # DO NOT DELETE
 

@@ -52,8 +52,8 @@ void LAYOUT::ReadInit()
 
   // TPインスタンス生成
   TPControl tpCntl;
-  //tpCntl.getTPinstance();
-  tpCntl.getTPinstance_singleton();
+  tpCntl.getTPinstance();
+  //tpCntl.getTPinstance_singleton();
 
   //入力ファイルをセット
   int ierror = tpCntl.readTPfile(fname);

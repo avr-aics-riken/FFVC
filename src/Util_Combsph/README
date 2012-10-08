@@ -14,10 +14,14 @@ October 2012
 
 --- コンパイル方法
 
-1) 環境変数の設定はsrc/FFV/make_settingを編集します．
-2) makeを実行します．
+1) 単体でビルド
+環境変数の設定はsrc/FFV/make_settingを編集します．
+$ make
 
-binの下にcombsphという実行ファイルが生成されます．
+2) FFVディレクトリから一括ビルド
+FFVディレクトリでffvcのコンパイルを行うと，combsphが生成されます．
+
+../../binの下にcombsphという実行ファイルが生成されます．
 
 
 
