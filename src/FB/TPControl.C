@@ -364,23 +364,30 @@ bool TPControl::chkNode(const string label)
 
   // Nodeがあるかチェック
   ierror=tp->getAllLabels(labels);
-  if (ierror != 0){
+  
+  if (ierror != 0)
+  {
     cout <<  "ERROR in TextParser::getAllLabels file: "  
-        << " ERROR CODE "<< ierror << endl;
+         << " ERROR CODE "<< ierror << endl;
     return false;
   }
+  
   int flag=0;
   for (int i = 0; i < labels.size(); i++) {
-	  node=labels[i].substr(0,len);
+	  node = labels[i].substr(0,len);
 
-	  if( node==label ){
+	  if ( node==label )
+    {
 		  flag=1;
 		  break;
 	  }
   }
-  if(flag==0){
+  
+  if (flag==0)
+  {
 	  return false;
   }
+  
   return true;
 }
 

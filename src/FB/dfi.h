@@ -72,26 +72,6 @@ protected:
    * @param [in] prefix  ファイル接頭文字
    */
   void Write_BaseName(FILE* fp, const unsigned tab, const std::string prefix);
-  
-  
-  /**
-   * @brief データをファイルに書き込む
-   * @param [in] prefix  ファイル接頭文字
-   * @param [in] step    ステップ
-   * @param [in] dfi_mng 出力管理カウンタ
-   * @param [in] mio     出力時の分割指定　 true = local / false = gather
-   */
-  bool Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
-  
-  /**
-   * @brief データをファイルに書き込む
-   * @param [in] prefix  ファイル接頭文字
-   * @param [in] step    ステップ
-   * @param [in] time    時間
-   * @param [in] dfi_mng 出力管理カウンタ
-   * @param [in] mio     出力時の分割指定　 true = local / false = gather
-   */
-  bool Write_DFI_File(const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio);
 
   
   /**
@@ -289,6 +269,26 @@ public:
    */
   bool init(const int* g_size, const int* m_div, const int gc, const int stype, const int* hidx, const int* tidx, const std::string m_host);
   
+  
+  /**
+   * @brief データをファイルに書き込む
+   * @param [in] prefix  ファイル接頭文字
+   * @param [in] step    ステップ
+   * @param [in] dfi_mng 出力管理カウンタ
+   * @param [in] mio     出力時の分割指定　 true = local / false = gather
+   */
+  bool Write_DFI_File(const std::string prefix, const unsigned step, int& dfi_mng, const bool mio);
+  
+  
+  /**
+   * @brief データをファイルに書き込む
+   * @param [in] prefix  ファイル接頭文字
+   * @param [in] step    ステップ
+   * @param [in] time    時間
+   * @param [in] dfi_mng 出力管理カウンタ
+   * @param [in] mio     出力時の分割指定　 true = local / false = gather
+   */
+  bool Write_DFI_File(const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio);
 };
 
 #endif // _CBC_DFI_H_

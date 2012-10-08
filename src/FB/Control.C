@@ -782,7 +782,7 @@ void Control::get_FileIO()
   REAL_TYPE f_val=0.0;
   REAL_TYPE ct;
   string str;
-  string label;
+  string label, leaf;
   
   // 出力単位
   label = "/Steer/File_IO/Unit_of_file";
@@ -936,9 +936,17 @@ void Control::get_FileIO()
   // ファイル出力モード
   label = "/Steer/File_IO/Output_Mode";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if( !tpCntl->chkNode(label) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  leaf = label + "/Mode";
+  
+  if ( !(tpCntl->GetValue(leaf, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", leaf.c_str());
     Exit(0);
   }
   else
@@ -957,14 +965,14 @@ void Control::get_FileIO()
     }
     else
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", leaf.c_str());
       Exit(0);
     }
     
     // Output Directory_Path
     if ( FIO.IO_Mode == io_specified )
     {
-      label = "/Steer/File_IO/Directory_Path";
+      label = "/Steer/File_IO/Output_Mode/Directory_Path";
       
       if ( !(tpCntl->GetValue(label, &str)) )
       {
@@ -982,27 +990,34 @@ void Control::get_FileIO()
   }
   
   
-  // File format
-  label = "/Steer/File_IO/output_plot3d";
+  // PLOT3D Option
+  label = "/Steer/File_IO/PLOT3D";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if( !tpCntl->chkNode(label) )
   {
-    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
-    FIO.PLOT3D_OUT = OFF;
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  leaf = label + "/Option";
+  
+  if ( !tpCntl->GetValue(leaf, &str) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", leaf.c_str());
+    Exit(0);
   }
   if     ( !strcasecmp(str.c_str(), "off") ) FIO.PLOT3D_OUT = OFF;
   else if( !strcasecmp(str.c_str(), "on") )  FIO.PLOT3D_OUT = ON;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", leaf.c_str());
     Exit(0);
   }
   
   // インターバル PLOT3D
   if(FIO.PLOT3D_OUT == ON)
   {
-    label = "/Steer/File_IO/PLOT3D_Interval_Type";
+    label = "/Steer/File_IO/PLOT3D/Interval_Type";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -1025,7 +1040,7 @@ void Control::get_FileIO()
         Exit(0);
       }
       
-      label="/Steer/File_IO/PLOT3D_Interval";
+      label="/Steer/File_IO/PLOT3D/Interval";
       
       if ( !(tpCntl->GetValue(label, &f_val )) )
       {

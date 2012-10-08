@@ -111,6 +111,7 @@ SetBC.o: vec3_func.h vec3f_func.h
 CompoFraction.o: CompoFraction.h FB_Define.h mydebug.h vec3.h vec3_func.h
 CompoFraction.o: vec3f_func.h
 dfi.o: dfi.h FB_Define.h mydebug.h util_Path.h
+dfiinfo.o: dfiinfo.h DomainInfo.h FB_Define.h mydebug.h TPControl.h
 DataHolder.o: DataHolder.h FB_Define.h mydebug.h TPControl.h DomainInfo.h
 Monitor.o: Monitor.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
 Monitor.o: vec3f_func.h MonCompo.h basic_func.h Component.h Sampling.h
