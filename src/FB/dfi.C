@@ -95,8 +95,8 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
   // local出力が指定された場合、分割出力
   if ( mio )
   {
+    // FieldView がランク番号+ステップ数の記述のため
     sprintf(tmp, "%s%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
-    //sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
   }
   else
   {

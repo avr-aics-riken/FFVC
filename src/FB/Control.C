@@ -1994,9 +1994,8 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
-    P3Op.IS_DivideFunc = OFF;
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
   }
   else
   {
