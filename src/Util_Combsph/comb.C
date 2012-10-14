@@ -25,7 +25,8 @@ COMB::COMB()
   numProc = 0;
 
   filename="";
-  dirname="";
+  out_dirname="./";
+  in_dirname="./";
   pflag=0;
   pflagv=0;
   lflag=0;
@@ -70,7 +71,6 @@ void COMB::ReadInit(string input_file)
   // TPインスタンス生成
   TPControl tpCntl;
   tpCntl.getTPinstance();
-  //tpCntl.getTPinstance_singleton();
 
   //入力ファイルをセット
   int ierror = tpCntl.readTPfile(input_file);
@@ -129,16 +129,30 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   }
 #endif
 
+
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
   label = "/CombData/output_dir";
   if ( (tpCntl->GetValue(label, &str )) )
   {
-    dirname=str;
-    LOG_OUT_ fprintf(fplog,"\tReset Output Directory '%s'\n", dirname.c_str());
-    STD_OUT_ printf("\tReset Output Directory '%s'\n", dirname.c_str());
-    CheckDir(dirname);
-    if( dirname.size() != 0 ) dirname=dirname+"/";
+    out_dirname=str;
+    LOG_OUT_ fprintf(fplog,"\tReset Output Directory '%s'\n", out_dirname.c_str());
+    STD_OUT_ printf("\tReset Output Directory '%s'\n", out_dirname.c_str());
+    CheckDir(out_dirname);
+    if( out_dirname.size() != 0 ) out_dirname=out_dirname+"/";
   }
+
+
+  //入力ディレクトリの指定
+  label = "/CombData/input_dir";
+  if ( (tpCntl->GetValue(label, &str )) )
+  {
+    in_dirname=str;
+    LOG_OUT_ fprintf(fplog,"\tReset Input Directory '%s'\n", in_dirname.c_str());
+    STD_OUT_ printf("\tReset Input Directory '%s'\n", in_dirname.c_str());
+    CheckDir(in_dirname);
+    if( in_dirname.size() != 0 ) in_dirname=in_dirname+"/";
+  }
+
 
   //出力の単精度or倍精度指定 ---> PLOT3Dの場合は、optionに記述があればそちらを優先
   label = "/CombData/output_real_type";
@@ -733,7 +747,6 @@ void COMB::CombineFiles()
   else if( out_format == OUTFORMAT_IS_PLOT3D )
   {
      output_plot3d();
-     //output_plot3d_on_cell();
   }
 }
 
@@ -789,7 +802,7 @@ std::string COMB::Generate_FileName_Free(const std::string prefix, const std::st
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 30; // step(10) + id(9) + postfix(4) + 1
+  int len = prefix.size() + xxx.size() + 21; // step(10) + id(9) + 1(.拡張子) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
@@ -903,7 +916,7 @@ void COMB::MemoryRequirement(const double Memory, FILE* fp)
 
 // #################################################################
 // メモリ使用量を表示する
-void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, const double plot3dMemory, FILE* fp)
+void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, const double plot3dMemory, const double thinMemory, FILE* fp)
 {
   double mem;
   const double KB = 1024.0;
@@ -942,6 +955,30 @@ void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, c
 
   mem = plot3dMemory;
   fprintf (fp,"  write PLOT3D MemorySize = ");
+  if ( mem > PB ) {
+    fprintf (fp,"%6.2f (PB)", mem / PB *factor);
+  }
+  else if ( mem > TB ) {
+    fprintf (fp,"%6.2f (TB)", mem / TB *factor);
+  }
+  else if ( mem > GB ) {
+    fprintf (fp,"%6.2f (GB)", mem / GB *factor);
+  }
+  else if ( mem > MB ) {
+    fprintf (fp,"%6.2f (MB)", mem / MB *factor);
+  }
+  else if ( mem > KB ) {
+    fprintf (fp,"%6.2f (KB)", mem / KB *factor);
+  }
+  else if ( mem <= KB ){
+    fprintf (fp,"%6.2f (B)", mem *factor);
+  }
+  else {
+    fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
+  }
+
+  mem = thinMemory;
+  fprintf (fp,"  write thin out MemorySize = ");
   if ( mem > PB ) {
     fprintf (fp,"%6.2f (PB)", mem / PB *factor);
   }
@@ -1134,11 +1171,31 @@ void COMB::CombineLayerData(
   int jy = sz[1];
   int kz = sz[2];
 
+  //for(int j=0;j<jy;j++){
+  //  int ipss=z*dim*ix*jy+j*dim*ix;
+  //  int ipds=(ys+j)*dim*xsize+xs*dim;
+  //  for(int i=0;i<dim*ix;i++){
+  //    d[ipds+i]=s[ipss+i];
+  //  }
+  //}
   for(int j=0;j<jy;j++){
+    int yp=ys+j;
+    int yrest=yp%thin_count;
+    if(yrest != 0) continue;
+
     int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(ys+j)*dim*xsize+xs*dim;
-    for(int i=0;i<dim*ix;i++){
-      d[ipds+i]=s[ipss+i];
+    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
+
+    int ic=0;
+    for(int i=0;i<ix;i++){
+      int xp=xs+i;
+      int xrest=xp%thin_count;
+      if(xrest != 0) continue;
+
+      for(int idim=0;idim<dim;idim++){
+        d[ipds+ic]=s[ipss+i*dim+idim];
+        ic++;
+      }
     }
   }
 
@@ -1157,11 +1214,31 @@ void COMB::CombineLayerData(
   int jy = sz[1];
   int kz = sz[2];
 
+  //for(int j=0;j<jy;j++){
+  //  int ipss=z*dim*ix*jy+j*dim*ix;
+  //  int ipds=(ys+j)*dim*xsize+xs*dim;
+  //  for(int i=0;i<dim*ix;i++){
+  //    d[ipds+i]=s[ipss+i];
+  //  }
+  //}
   for(int j=0;j<jy;j++){
+    int yp=ys+j;
+    int yrest=yp%thin_count;
+    if(yrest != 0) continue;
+
     int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(ys+j)*dim*xsize+xs*dim;
-    for(int i=0;i<dim*ix;i++){
-      d[ipds+i]=s[ipss+i];
+    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
+
+    int ic=0;
+    for(int i=0;i<ix;i++){
+      int xp=xs+i;
+      int xrest=xp%thin_count;
+      if(xrest != 0) continue;
+
+      for(int idim=0;idim<dim;idim++){
+        d[ipds+ic]=s[ipss+i*dim+idim];
+        ic++;
+      }
     }
   }
 
@@ -1180,11 +1257,31 @@ void COMB::CombineLayerData(
   int jy = sz[1];
   int kz = sz[2];
 
+  //for(int j=0;j<jy;j++){
+  //  int ipss=z*dim*ix*jy+j*dim*ix;
+  //  int ipds=(ys+j)*dim*xsize+xs*dim;
+  //  for(int i=0;i<dim*ix;i++){
+  //    d[ipds+i]=(double)s[ipss+i];
+  //  }
+  //}
   for(int j=0;j<jy;j++){
+    int yp=ys+j;
+    int yrest=yp%thin_count;
+    if(yrest != 0) continue;
+
     int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(ys+j)*dim*xsize+xs*dim;
-    for(int i=0;i<dim*ix;i++){
-      d[ipds+i]=(double)s[ipss+i];
+    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
+
+    int ic=0;
+    for(int i=0;i<ix;i++){
+      int xp=xs+i;
+      int xrest=xp%thin_count;
+      if(xrest != 0) continue;
+
+      for(int idim=0;idim<dim;idim++){
+        d[ipds+ic]=(double)s[ipss+i*dim+idim];
+        ic++;
+      }
     }
   }
 
@@ -1203,11 +1300,31 @@ void COMB::CombineLayerData(
   int jy = sz[1];
   int kz = sz[2];
 
+  //for(int j=0;j<jy;j++){
+  //  int ipss=z*dim*ix*jy+j*dim*ix;
+  //  int ipds=(ys+j)*dim*xsize+xs*dim;
+  //  for(int i=0;i<dim*ix;i++){
+  //    d[ipds+i]=(float)s[ipss+i];
+  //  }
+  //}
   for(int j=0;j<jy;j++){
+    int yp=ys+j;
+    int yrest=yp%thin_count;
+    if(yrest != 0) continue;
+
     int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(ys+j)*dim*xsize+xs*dim;
-    for(int i=0;i<dim*ix;i++){
-      d[ipds+i]=(float)s[ipss+i];
+    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
+
+    int ic=0;
+    for(int i=0;i<ix;i++){
+      int xp=xs+i;
+      int xrest=xp%thin_count;
+      if(xrest != 0) continue;
+
+      for(int idim=0;idim<dim;idim++){
+        d[ipds+ic]=(float)s[ipss+i*dim+idim];
+        ic++;
+      }
     }
   }
 

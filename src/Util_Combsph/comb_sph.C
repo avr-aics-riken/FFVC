@@ -43,7 +43,10 @@ void COMB::output_sph()
   float *wk1, *wk2;
   double *dwk1, *dwk2;
   int jsNode,jeNode,ksNode,keNode;
-  int m_imax_th,m_jmax_th,m_kmax_th; //for thin_out option
+
+  //for thin_out option
+  int m_imax_th,m_jmax_th,m_kmax_th;
+  long long m_dimax_th,m_djmax_th,m_dkmax_th;
 
 #if defined (_STAGING_)
 #elif defined (_NO_STAGING_)
@@ -99,6 +102,7 @@ void COMB::output_sph()
       m_step = DI[i].step[0];
       m_rank = DI[i].Node[0].RankID;
       infile = Generate_FileName(prefix, m_step, m_rank, true);
+      infile = in_dirname + infile;
       ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
       dim=m_sv_type;
     }
@@ -122,7 +126,7 @@ void COMB::output_sph()
 
       //連結出力ファイルオープン
       outfile = Generate_FileName(prefix, m_step, 0, false);
-      outfile = dirname + outfile;
+      outfile = out_dirname + outfile;
       memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
       strcpy(tmp, outfile.c_str());
       if( (fp = fopen(outfile.c_str(), "wb")) == NULL ) {
@@ -132,6 +136,7 @@ void COMB::output_sph()
 
       //rank0のheader読み込み ---> 最初のファイルを開いてheaderだけ先に記述
       infile = Generate_FileName(prefix, m_step, 0, true);
+      infile = in_dirname + infile;
       ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
       if( output_real_type == OUTPUT_REAL_UNKNOWN )
       {
@@ -148,32 +153,46 @@ void COMB::output_sph()
         m_time=(float)m_dtime;
       }
 
-      //連結ファイルのheader書き込み
+      //全体サイズのキープ
       m_imax= DI[i].Global_Voxel[0] + 2*DI[i].GuideCell;
       m_jmax= DI[i].Global_Voxel[1] + 2*DI[i].GuideCell;
       m_kmax= DI[i].Global_Voxel[2] + 2*DI[i].GuideCell;
+
+      //間引きを考慮
+      m_imax_th=m_imax/thin_count;//間引き後のxサイズ
+      m_jmax_th=m_jmax/thin_count;//間引き後のyサイズ
+      m_kmax_th=m_kmax/thin_count;//間引き後のzサイズ
+      if(m_imax%thin_count != 0) m_imax_th++;
+      if(m_jmax%thin_count != 0) m_jmax_th++;
+      if(m_kmax%thin_count != 0) m_kmax_th++;
+
+      //連結ファイルのheader書き込み
       if( m_d_type == SPH_FLOAT && output_real_type == OUTPUT_FLOAT)
       { // float ---> float
-        if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax, m_jmax, m_kmax, m_time, m_org, m_pit, fp)) ) {
+        float out_pit[3];
+        for(int ic=0;ic<3;ic++) out_pit[ic]=m_pit[ic]*float(thin_count);
+        if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax_th, m_jmax_th, m_kmax_th, m_time, m_org, out_pit, fp)) ) {
           printf("\twrite header error\n");
           Exit(0);
         }
       }
       else if( m_d_type == SPH_DOUBLE && output_real_type == OUTPUT_DOUBLE)
       { // double ---> double
-        m_dimax=(long long)m_imax;
-        m_djmax=(long long)m_jmax;
-        m_dkmax=(long long)m_kmax;
-        if( !(WriteSphHeader(m_dstep, m_sv_type, d_type, m_dimax, m_djmax, m_dkmax, m_dtime, m_dorg, m_dpit, fp)) ) {
+        m_dimax_th=(long long)m_imax_th;
+        m_djmax_th=(long long)m_jmax_th;
+        m_dkmax_th=(long long)m_kmax_th;
+        double out_dpit[3];
+        for(int ic=0;ic<3;ic++) out_dpit[ic]=m_dpit[ic]*double(thin_count);
+        if( !(WriteSphHeader(m_dstep, m_sv_type, d_type, m_dimax_th, m_djmax_th, m_dkmax_th, m_dtime, m_dorg, out_dpit, fp)) ) {
           printf("\twrite header error\n");
           Exit(0);
         }
       }
       if( m_d_type == SPH_FLOAT && output_real_type == OUTPUT_DOUBLE)
       { // float ---> double
-        m_dimax=(long long)m_imax;
-        m_djmax=(long long)m_jmax;
-        m_dkmax=(long long)m_kmax;
+        m_dimax_th=(long long)m_imax_th;
+        m_djmax_th=(long long)m_jmax_th;
+        m_dkmax_th=(long long)m_kmax_th;
         m_dstep=(long long)m_step;
         m_dtime=(double)m_time;
         m_dorg[0]=(double)m_org[0];
@@ -182,7 +201,9 @@ void COMB::output_sph()
         m_dpit[0]=(double)m_pit[0];
         m_dpit[1]=(double)m_pit[1];
         m_dpit[2]=(double)m_pit[2];
-        if( !(WriteSphHeader(m_dstep, m_sv_type, d_type, m_dimax, m_djmax, m_dkmax, m_dtime, m_dorg, m_dpit, fp)) ) {
+        double out_dpit[3];
+        for(int ic=0;ic<3;ic++) out_dpit[ic]=m_dpit[ic]*double(thin_count);
+        if( !(WriteSphHeader(m_dstep, m_sv_type, d_type, m_dimax_th, m_djmax_th, m_dkmax_th, m_dtime, m_dorg, out_dpit, fp)) ) {
           printf("\twrite header error\n");
           Exit(0);
         }
@@ -195,7 +216,9 @@ void COMB::output_sph()
         m_pit[0]=(float)m_dpit[0];
         m_pit[1]=(float)m_dpit[1];
         m_pit[2]=(float)m_dpit[2];
-        if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax, m_jmax, m_kmax, m_time, m_org, m_pit, fp)) ) {
+        float out_pit[3];
+        for(int ic=0;ic<3;ic++) out_pit[ic]=m_pit[ic]*float(thin_count);
+        if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax_th, m_jmax_th, m_kmax_th, m_time, m_org, out_pit, fp)) ) {
           printf("\twrite header error\n");
           Exit(0);
         }
@@ -205,12 +228,6 @@ void COMB::output_sph()
       int dummy;
       size_t dLen;
       //dLen = (size_t)(m_imax * m_jmax * m_kmax);
-      m_imax_th=m_imax/thin_out;//間引き後のxサイズ
-      m_jmax_th=m_jmax/thin_out;//間引き後のyサイズ
-      m_kmax_th=m_kmax/thin_out;//間引き後のzサイズ
-      if(m_imax%thin_out != 0) m_imax_th++;
-      if(m_jmax%thin_out != 0) m_jmax_th++;
-      if(m_kmax%thin_out != 0) m_kmax_th++;
       dLen = (size_t)(m_imax_th * m_jmax_th * m_kmax_th);
       if( m_sv_type == SPH_VECTOR ) dLen *= 3;
       //if( m_d_type == SPH_FLOAT ) dummy = dLen * sizeof(float);
@@ -221,21 +238,17 @@ void COMB::output_sph()
         Exit(0);
       }
 
-      //間引きに対して余りを初期化
-      //int xrest=0;
-      //int yrest=0;
-      int zrest=0;
-
       //同一Z面ループ
+      int zstart=0;
       for(int kp=0; kp< DI[i].index_z.size()-1; kp++ ) {
         ksNode = DI[i].index_z[kp];
         keNode = DI[i].index_z[kp+1];
 
         //書き込みworkareaのサイズ決め
-        m_imax_th=m_imax/thin_out;//間引き後のxサイズ
-        m_jmax_th=m_jmax/thin_out;//間引き後のyサイズ
-        if(m_imax%thin_out != 0) m_imax_th++;
-        if(m_jmax%thin_out != 0) m_jmax_th++;
+        m_imax_th=m_imax/thin_count;//間引き後のxサイズ
+        m_jmax_th=m_jmax/thin_count;//間引き後のyサイズ
+        if(m_imax%thin_count != 0) m_imax_th++;
+        if(m_jmax%thin_count != 0) m_jmax_th++;
         //xsize=m_imax;
         //ysize=m_jmax;
         xsize=m_imax_th;
@@ -314,76 +327,78 @@ void COMB::output_sph()
         }
 
         //同一Y面ループをz方向高さ分だけ繰り返しファイルをcombine
-        int xrest=0;
-        int yrest=0;
         int zzz=0;
         while(zzz != zsize){
+          int zh = zstart + zzz;
+          int zrest=zh%thin_count;
 
-          xrest=0;
-          yrest=0;
-          int ystart=0;
-          for(int jp=index_y_s; jp< index_y_e; jp++ ) {
-            jsNode = DI[i].index_y[jp];
-            jeNode = DI[i].index_y[jp+1];
-            LOG_OUTV_ fprintf(fplog,"\t  Node %4d - Node %4d\n", jsNode, jeNode-1);
-            STD_OUTV_ printf("\t  Node %4d - Node %4d\n", jsNode, jeNode-1);
+          if(zrest == 0){
 
-            int xstart=0;
-            for(int n=jsNode; n< jeNode; n++ ) {
+            int ystart=0;
+            for(int jp=index_y_s; jp< index_y_e; jp++ ) {
+              jsNode = DI[i].index_y[jp];
+              jeNode = DI[i].index_y[jp+1];
+              LOG_OUTV_ fprintf(fplog,"\t  Node %4d - Node %4d\n", jsNode, jeNode-1);
+              STD_OUTV_ printf("\t  Node %4d - Node %4d\n", jsNode, jeNode-1);
+           
+              int xstart=0;
+              for(int n=jsNode; n< jeNode; n++ ) {
+           
+                //連結対象ファイルオープン
+                m_rank=DI[i].Node[n].RankID;
+                infile = Generate_FileName(prefix, m_step, m_rank, true);
+                infile = in_dirname + infile;
 
-              //連結対象ファイルオープン
-              m_rank=DI[i].Node[n].RankID;
-              infile = Generate_FileName(prefix, m_step, m_rank, true);
-
-              //combine
-              sz[0]=DI[i].Node[n].VoxelSize[0];
-              sz[1]=DI[i].Node[n].VoxelSize[1];
-              sz[2]=DI[i].Node[n].VoxelSize[2];
-              if( m_d_type == SPH_FLOAT ){
-                ReadSphData ( wk2, wk2size, sz, dim, fp_in, infile );
-                if( output_real_type == OUTPUT_FLOAT ){
-                  CombineLayerData(
-                    wk1, wk1size, wk2, wk2size, xsize, ysize, zsize,
-                    zzz, sz, dim, xstart, ystart );
-                }else if( output_real_type == OUTPUT_DOUBLE ){
-                  CombineLayerData(
-                    dwk1, wk1size, wk2, wk2size, xsize, ysize, zsize,
-                    zzz, sz, dim, xstart, ystart );
+                //combine
+                sz[0]=DI[i].Node[n].VoxelSize[0];
+                sz[1]=DI[i].Node[n].VoxelSize[1];
+                sz[2]=DI[i].Node[n].VoxelSize[2];
+                if( m_d_type == SPH_FLOAT ){
+                  ReadSphData ( wk2, wk2size, sz, dim, fp_in, infile );
+                  if( output_real_type == OUTPUT_FLOAT ){
+                    CombineLayerData(
+                      wk1, wk1size, wk2, wk2size, xsize, ysize, zsize,
+                      zzz, sz, dim, xstart, ystart );
+                  }else if( output_real_type == OUTPUT_DOUBLE ){
+                    CombineLayerData(
+                      dwk1, wk1size, wk2, wk2size, xsize, ysize, zsize,
+                      zzz, sz, dim, xstart, ystart );
+                  }
+                }else{
+                  ReadSphData ( dwk2, wk2size, sz, dim, fp_in, infile );
+                  if( output_real_type == OUTPUT_FLOAT ){
+                    CombineLayerData(
+                      wk1, wk1size, dwk2, wk2size, xsize, ysize, zsize,
+                      zzz, sz, dim, xstart, ystart );
+                  }else if( output_real_type == OUTPUT_DOUBLE ){
+                    CombineLayerData(
+                      dwk1, wk1size, dwk2, wk2size, xsize, ysize, zsize,
+                      zzz, sz, dim, xstart, ystart );
+                  }
                 }
-              }else{
-                ReadSphData ( dwk2, wk2size, sz, dim, fp_in, infile );
-                if( output_real_type == OUTPUT_FLOAT ){
-                  CombineLayerData(
-                    wk1, wk1size, dwk2, wk2size, xsize, ysize, zsize,
-                    zzz, sz, dim, xstart, ystart );
-
-                }else if( output_real_type == OUTPUT_DOUBLE ){
-                  CombineLayerData(
-                    dwk1, wk1size, dwk2, wk2size, xsize, ysize, zsize,
-                    zzz, sz, dim, xstart, ystart );
-                }
+           
+                //書き込みデータスタート位置の更新
+                xstart=xstart+DI[i].Node[n].VoxelSize[0];
+           
               }
-
+           
               //書き込みデータスタート位置の更新
-              xstart=xstart+DI[i].Node[n].VoxelSize[0];
-
+              ystart=ystart+DI[i].Node[jsNode].VoxelSize[1];
+            }
+           
+            //write
+            if( output_real_type == OUTPUT_FLOAT ){
+              if( !(WriteCombineData(wk1, (size_t)wk1size, fp)) ) {
+                printf("\twrite data footer error\n");
+                Exit(0);
+              }
+            }else{
+              if( !(WriteCombineData(dwk1, (size_t)wk1size, fp)) ) {
+                printf("\twrite data footer error\n");
+                Exit(0);
+              }
             }
 
-            //書き込みデータスタート位置の更新
-            ystart=ystart+DI[i].Node[jsNode].VoxelSize[1];
-          }
-
-          //write
-          if( output_real_type == OUTPUT_FLOAT ){
-            if( !(WriteCombineData(wk1, (size_t)wk1size, fp)) ) {
-              printf("\twrite data footer error\n");
-              Exit(0);
-            }
-          }else{
-            if( !(WriteCombineData(dwk1, (size_t)wk1size, fp)) ) {
-              printf("\twrite data footer error\n");
-              Exit(0);
-            }
           }
 
           zzz++;
@@ -394,6 +409,9 @@ void COMB::output_sph()
         else                        delete[] dwk2;
         if( output_real_type == OUTPUT_FLOAT ) delete[] wk1;
         else                                   delete[] dwk1;
+
+        //書き込みデータスタート位置の更新
+        zstart=zstart+DI[i].Node[jsNode].VoxelSize[2];
 
 	  }//z --- kp
 

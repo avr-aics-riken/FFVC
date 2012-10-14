@@ -59,7 +59,15 @@ int main( int argc, char **argv )
       mname = optarg;
       out_layout_machine = true;
       break;
-    case 'h':
+    case 'h': // Show usage and exit
+      usage(progname);
+      return 0;
+      break;
+    case ':': // not find argument
+      usage(progname);
+      return 0;
+      break;
+    case '?': // unknown option
       usage(progname);
       return 0;
       break;

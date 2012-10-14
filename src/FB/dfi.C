@@ -88,7 +88,7 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 30; // step(10) + id(9) + postfix(10) + 1(\0)
+  int len = prefix.size() + xxx.size() + 21; // step(10) + id(9) + 1(.拡張子) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   

@@ -86,19 +86,20 @@ int main( int argc, char **argv )
       thin_out = true;
       thin_count = atoi(optarg);
       break;
-    case 'h':
+    case 'h': // Show usage and exit
       usage(progname);
       return 0;
       break;
-    case ':':
+    case ':': // not find argument
+      usage(progname);
+      return 0;
+      break;
+    case '?': // unknown option
       usage(progname);
       return 0;
       break;
     }
   }
-
-  cout << thin_count << endl;
-  return 0;
 
   // 入力ファイルが存在するかどうか
   if( !(out_comb) ){
@@ -128,7 +129,7 @@ int main( int argc, char **argv )
   // ##################################################################
   // 引数のセット
   comb.filename=fname;
-  comb.dirname=dname;
+  comb.out_dirname=dname;
   comb.pflag=pflag;
   comb.pflagv=pflagv;
   comb.lflag=lflag;

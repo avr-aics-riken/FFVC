@@ -53,7 +53,6 @@ void LAYOUT::ReadInit()
   // TPインスタンス生成
   TPControl tpCntl;
   tpCntl.getTPinstance();
-  //tpCntl.getTPinstance_singleton();
 
   //入力ファイルをセット
   int ierror = tpCntl.readTPfile(fname);
@@ -237,6 +236,16 @@ void LAYOUT::OutLay(DfiInfo *D)
   int is=0;
   if(skip0) is=1;
 
+// error check
+  if( D->step.size() == 0 ) {
+    fprintf(stderr, "error : step size == 0\n");
+    return;
+  }
+  if( D->NodeInfoSize == 0 ) {
+    fprintf(stderr, "error : node size == 0\n");
+    return;
+  }
+
 //xyz file
 
   //xyz.layoutファイルオープン
@@ -319,7 +328,7 @@ std::string LAYOUT::Generate_LayoutFileName(const std::string prefix, const std:
   if ( prefix.empty() ) return NULL;
   if ( str.empty() ) return NULL;
 
-  int len = prefix.size() + 28; // step(10) + str(10) + postfix(7) + 1
+  int len = prefix.size() + str.size() + 28; // step(10) + postfix(7) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
@@ -337,7 +346,7 @@ std::string LAYOUT::Generate_FileName_Free(const std::string prefix, const std::
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + 30; // step(10) + id(9) + postfix(4) + 1
+  int len = prefix.size() + xxx.size() + 21; // step(10) + id(9) + 1(.拡張子) + 1(\0)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   

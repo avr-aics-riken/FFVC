@@ -39,22 +39,30 @@ Usage: combsph <option> filename
   -f filename  : Input file name
   -h           : Show usage
   -l log out   : print out logfile
+  -s thin out  : thin out option
   -v verbose   : print more info
 
 
--d オプションについて
+■ -d オプション
 
 dirnameにはファイルを出力するディレクトリを指定します．
 -fオプションで指定した入力ファイルにディレクトリの指定がある場合はそちらが優先されます．
 
+■ -f オプション
 
----　入力ファイル
-
-以下に入力ファイルの例を示します．
+filenameには用意した入力ファイルの名前を記述します。
 入力ファイルは，FFVで利用するテキストパーサ形式で記述します．
 CombDataタグの下に読み込むdfiファイルのリストを記述します．
 出力フォーマットはout_formatで指定します．
 plot3dを指定した場合は、PLOT3D_Optionsタグに必要な項目を記述する必要があります．
+
+■ -s オプション
+
+データを間引くためのオプションです。
+sphファイルを1つにまとめる場合、PLOT3Dに変換する場合ともに有効です．
+以下は -s 3 を指定した場合の間引きのイメージです．
+元のデータ      ○○○○○○○○○○○○...
+間引き後データ   ○●●○●●○●●○●●...
 
 ※ sphファイルがfloatで記述されているとき、PLOT3Dオプションでreal_type="double"を選択しても、出力はfloatに変更されます．
 ※ PLOT3D_Options/real_typeが指定されている場合、CombData/output_real_typeより優先されます．
@@ -62,7 +70,11 @@ plot3dを指定した場合は、PLOT3D_Optionsタグに必要な項目を記述
 ※ 出力ディレクトリの指定がない場合はカレントディレクトリに出力します．
 
 
+
+以下に入力ファイルの例を示します．
+
 ファイル名：comb.tp
+入力例：
  -----------
 
   CombData{
@@ -74,6 +86,16 @@ plot3dを指定した場合は、PLOT3D_Optionsタグに必要な項目を記述
     //ファイルフォーマットを指定
     out_format="sph"
     //out_format="plot3d"
+
+    //出力時の単精度・倍精度を指定
+    output_real_type="float"
+
+    //入力データのディレクトリ指定
+    input_dir="comb_in"
+
+    //出力データのディレクトリ指定
+    output_dir="comb_out"
+
   }
 
   // Plot3dの場合のオプションを記述

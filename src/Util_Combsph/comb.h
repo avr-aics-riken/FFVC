@@ -86,7 +86,8 @@ private:
 public:
   
   string filename;
-  string dirname;
+  string out_dirname;
+  string in_dirname;
   int pflag;
   int pflagv;
   int lflag;
@@ -356,9 +357,10 @@ public:
    * @param [in] TotalMemory トータルメモリ使用量最大値
    * @param [in] sphMemory sphファイル読み込みのためのwkメモリ使用量最大値
    * @param [in] plot3dMemory plot3dファイル書き込みのためのメモリ使用量最大値
+   * @param [in] 間引きオプションのためのメモリ使用量最大値
    * @param [in] fp     ファイルポインタ
    */
-  void MemoryRequirement(const double TotalMemory, const double sphMemory, const double plot3dMemory, FILE* fp);
+  void MemoryRequirement(const double TotalMemory, const double sphMemory, const double plot3dMemory, const double thinMemory, FILE* fp);
 
 
   /**
@@ -800,23 +802,31 @@ public:
 
 
   /**
-   * @brief PLOT3Dファイルの出力（セル中心での出力）
+   * @brief 辺上の格子点のデータを2で割る（float）
+   * @param [out]    dt       間引き後格子点data
+   * @param [in]     d        格子点data
+   * @param [in]     idt      間引き後セル中心dt x方向サイズ
+   * @param [in]     jdt      間引き後セル中心dt y方向サイズ
+   * @param [in]     kdt      間引き後セル中心dt z方向サイズ
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
    */
-  void output_plot3d_on_cell();
+  void thinout_plot3d(float* dt, float* d, int idt, int jdt, int kdt, int id, int jd, int kd);
+
 
   /**
-   * @brief xyzファイルの出力（sph:float,plot3d:float）
-   * @param [in] m_step     ステップ 
-   * @param [in] m_rank     ランク
-   * @param [in] guide      ガイドセル数
-   * @param [in] origin     基点座標
-   * @param [in] pitch      ピッチ
-   * @param [in] size       セルサイズ
-   * @param [in] x          x方向座標ワーク
-   * @param [in] y          y方向座標ワーク
-   * @param [in] z          z方向座標ワーク
+   * @brief 辺上の格子点のデータを2で割る（double）
+   * @param [out]    dt       間引き後格子点data
+   * @param [in]     d        格子点data
+   * @param [in]     idt      間引き後セル中心dt x方向サイズ
+   * @param [in]     jdt      間引き後セル中心dt y方向サイズ
+   * @param [in]     kdt      間引き後セル中心dt z方向サイズ
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
    */
-  void OutputPlot3D_xyz_on_cell(int m_step, int m_rank, int guide, float* origin, float* pitch, int* size, float* x, float* y, float* z);
+  void thinout_plot3d(double* dt, double* d, int idt, int jdt, int kdt, int id, int jd, int kd);
 
 };
 
