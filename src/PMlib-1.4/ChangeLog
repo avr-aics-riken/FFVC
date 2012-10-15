@@ -1,24 +1,19 @@
+/*
+ * PMlib  -  Performance Monitor Library
+ *
+ * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
+ *
+ */
+ 
 -----
-PMlib  Performance Monitor Library
 
-Kenji Ono 	keno@riken.jp
+2012-09-06  Version 1.4
 
-Advanced Visualization Research Team, AICS, RIKEN
-Sep. 2012
------
+2012-07-23  Version 1.3
 
-2012-09-06
-  * Version 1.4 released.
+2012-07-11  Version 1.2
 
-2012-07-23
-  * Version 1.3 released.
+2012-05-02  Version 1.1
 
-2012-07-11
-  * Version 1.2 released.
-
-2012-05-02
-  * Version 1.1 released.
-
-2012-04-28
-  * Version 1.0 released.
+2012-04-28  Version 1.0
 

@@ -3498,7 +3498,7 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, 
 }
 
 
-// #################################################################
+/* #################################################################
 // 境界名の取得
 void ParseBC::GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp)
 {
@@ -3516,3 +3516,4 @@ void ParseBC::GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp)
     bcname.push_back(BaseBc[i].get_Alias().c_str());
   }
 }
+ */

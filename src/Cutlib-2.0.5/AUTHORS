@@ -1,14 +1,12 @@
 /*
- * Polylib - Polygon Management Library
+ * Cutlib - Cut Information Library
  *
  * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
- *
- * Polylib version 2.1.1       6 Sep. 2012
  *
  *
  * 2010 - 2011
  * Functionality Simulation and Information Team
- * VCAD System Research Program
+ * VCAD System Research Program, RIKEN
  *
  * 2012 -
  * Advanced Visualization Research Team

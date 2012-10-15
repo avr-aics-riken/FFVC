@@ -277,8 +277,8 @@ public:
   
   /**
    * @brief *.fvbndの書き出し
-   */
   void WriteBoundaryPLOT3D(FileIO_PLOT3D_WRITE* FP3DW, std::vector<std::string>& bcname);
+   */
   
 };
 

@@ -23,7 +23,7 @@ RANLIB      = ranlib
 RM          = \rm -f
 CXX         = icpc
 MPI_DIR	    = /opt/openmpi
-TP_DIR      = /usr/local/textparser
+TP_DIR      = /usr/local/TextParser
 
 
 ########################

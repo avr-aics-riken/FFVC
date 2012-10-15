@@ -1,0 +1,22 @@
+/*
+ * PMlib  -  Performance Monitor Library
+ *
+ * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
+ *
+ */
+
+PMlibのビルドおよびインストール方法
+
+1) 以下の手順でライブラリのビルドを行います。
+
+1-1) 単体でビルドする場合
+   make_settingのマクロを環境に合わせて編集します．
+   
+	> make
+
+1-2) FFVからコンパイルする場合
+   ../FFV/make_settingのマクロを環境に合わせて編集します．
+   FFVディレクトリでmakeします．
+
+
+2) ビルドされたライブラリファイルは lib/に配置されます。

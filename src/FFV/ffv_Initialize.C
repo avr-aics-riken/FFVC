@@ -1001,7 +1001,7 @@ void FFV::display_CompoList(FILE* fp)
 // 制御パラメータ，物理パラメータの表示
 void FFV::display_Parameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, IC, &DT, &RF, mat);
+  C.displayParams(stdout, fp, IC, &DT, &RF, mat, &FP3DW);
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
   

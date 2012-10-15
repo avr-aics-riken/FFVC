@@ -289,10 +289,10 @@ int Control::countCompo(CompoList* cmp, const int label)
 
 // #################################################################
 // 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat)
+void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW)
 {
-  printSteerConditions(mp, IC, DT, RF);
-  printSteerConditions(fp, IC, DT, RF);
+  printSteerConditions(mp, IC, DT, RF, FP3DW);
+  printSteerConditions(fp, IC, DT, RF, FP3DW);
   printParaConditions(mp, mat);
   printParaConditions(fp, mat);
   printInitValues(mp);
@@ -1733,7 +1733,10 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   {
     P3Op.basename = str;
   }
-  
+  if ( P3Op.basename.empty() )
+  {
+    P3Op.basename = "PLOT3Doutput_";
+  }
   
   // File_plot3d_grid_kind
   label = "/Steer/plot3d_options/Grid_kind";
@@ -1909,8 +1912,10 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // Output_q
-  label = "/Steer/plot3d_options/Output_q";
   
+  /*
+  label = "/Steer/plot3d_options/Output_q";
+   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -1926,7 +1931,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
       Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
-  }
+  }*/
+  
+  P3Op.IS_q = OFF; // 常にoff
   
   
   // Output_function
@@ -1970,8 +1977,10 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // Output_fvbnd
-  label = "/Steer/plot3d_options/Output_fvbnd";
   
+  /*
+  label = "/Steer/plot3d_options/Output_fvbnd";
+   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -1987,7 +1996,9 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
       Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
-  }
+  }*/
+  
+  P3Op.IS_fvbnd = OFF; // 常にoff
   
   // divide_func ---> 出力を項目別にファイル分割するオプション
   label = "/Steer/plot3d_options/divide_func";
@@ -3220,7 +3231,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 
 // #################################################################
 // 制御パラメータSTEERの表示
-void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF)
+void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW)
 {
   if ( !fp )
   {
@@ -3847,13 +3858,38 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     if ( !Interval[Interval_Manager::tg_plot3d].isStep() )
     {
       itm = Interval[Interval_Manager::tg_plot3d].getIntervalTime();
-      fprintf(fp,"\t     Instant data             :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+      fprintf(fp,"\t     Plot3d Instant data      :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
     }
     else
     {
-      fprintf(fp,"\t     Instant data             :   %12d [step]\n", Interval[Interval_Manager::tg_plot3d].getIntervalStep());
+      fprintf(fp,"\t     Plot3d Instant data      :   %12d [step]\n", Interval[Interval_Manager::tg_plot3d].getIntervalStep());
     }
   }
+
+  
+  // PLOT3D Options
+  if(FIO.PLOT3D_OUT == ON)
+  {
+    fprintf(fp,"\n\tPLOT3D Options\n");
+    fprintf(fp,"\t     file prefix              :   %s\n", P3Op.basename.c_str());
+    fprintf(fp,"\t     grid kind                :   %s\n", (FP3DW->IsGridKind()) ? "multi grid" : "single grid");
+    fprintf(fp,"\t     grid mobility            :   %s\n", (FP3DW->IsMoveGrid()) ? "movable" : "immovable");
+    fprintf(fp,"\t     state of time            :   %s\n", (FP3DW->IsSteady()) ? "unsteady" : "steady");
+    fprintf(fp,"\t     output iblank            :   %s\n", (FP3DW->IsIBlankFlag()) ? "on" : "off");
+    if (      FP3DW->GetFormat() == UNFORMATTED ) fprintf(fp,"\t     output format            :   %s\n", "Fortran Unformatted");
+    else if ( FP3DW->GetFormat() == FORMATTED   ) fprintf(fp,"\t     output format            :   %s\n", "Fortran Formatted");
+    else if ( FP3DW->GetFormat() == C_BINARY    ) fprintf(fp,"\t     output format            :   %s\n", "C Binary");
+    fprintf(fp,"\t     output dimention         :   %iD\n", FP3DW->GetDim());
+    if (      FP3DW->GetRealType() == OUTPUT_FLOAT  ) fprintf(fp,"\t     output format            :   %s\n", "float");
+    else if ( FP3DW->GetRealType() == OUTPUT_DOUBLE ) fprintf(fp,"\t     output format            :   %s\n", "double");
+    fprintf(fp,"\t     output xyz file          :   %s\n", (P3Op.IS_xyz) ? "on" : "off");
+    fprintf(fp,"\t     output q file            :   %s\n", (P3Op.IS_q) ? "on" : "off");
+    fprintf(fp,"\t     output function file     :   %s\n", (P3Op.IS_funciton) ? "on" : "off");
+    fprintf(fp,"\t     output funciton name file:   %s\n", (P3Op.IS_function_name) ? "on" : "off");
+    fprintf(fp,"\t     output fvbnd file        :   %s\n", (P3Op.IS_fvbnd) ? "on" : "off");
+    fprintf(fp,"\t     function per item        :   %s\n", (P3Op.IS_DivideFunc) ? "on" : "off");
+  }
+  
 
   
   // Criteria ------------------

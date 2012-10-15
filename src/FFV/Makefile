@@ -13,7 +13,7 @@ include make_setting
 all:
 	( \
 	cd $(POLYLIB_DIR)/src; \
-	make \
+	make -f MakePolylib \
 		CXX='$(CXX)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
@@ -24,7 +24,7 @@ all:
 
 	( \
 	cd $(CUTLIB_DIR)/src; \
-	make \
+	make -f MakeCutlib \
 		CXX='$(CXX)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \

@@ -22,7 +22,7 @@ AR          = ar cru
 RANLIB      = ranlib
 RM          = \rm -f
 CXX         = icpc
-TP_DIR      = /usr/local/textparser
+TP_DIR      = /usr/local/TextParser
 
 
 ########################

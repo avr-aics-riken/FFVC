@@ -1062,8 +1062,9 @@ protected:
    * @param [in] IC ItrCtl
    * @param [in] DT DTcntl
    * @param [in] RF ReferenceFrame
+   * @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
+  void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW);
 
   
 public:
@@ -1109,8 +1110,9 @@ public:
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
    * @param [in] mat MediumList
+   * @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
+  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
 
   
   /**

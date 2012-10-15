@@ -3,8 +3,6 @@
  *
  * Copyright (c) RIKEN, Japan. All right reserved. 2010-2012
  *
- * Polylib version 2.1.1       6 Sep. 2012
- *
  */
 
 ソフトウェア概要
@@ -22,24 +20,28 @@
  以下の環境で動作確認を行っています。
 
 	ハードウェア：IA32互換CPUのPC
-	              Apple(R) Intel Mac
+              Apple(R) Intel Mac
 
-	OS          ：Linux kernel 2.6x
-	              MacOS/X 10.5   (Apple(R) Intel Mac)
+	OS        ：Linux kernel 2.6x
+              MacOS/X 10.5 or later  (Apple(R) Intel Mac)
 
 	コンパイラ  ：GNU C++ Compiler
-	              Intel C++ Compiler (Linux, MacOSX)
+              Intel C++ Compiler (Linux, MacOSX)
 
 
-Note:
+ファイル・ディレクトリ構成
 
-AUTHORS;	   著者のシグネチャ
-ChangeLog;   リリース毎の変更点
-COPYING;	   コピーライト
-INSTALL;	   インストール方法の説明
-make_setting Makefileのマクロ
-Makefile
-NEWS;		     リリースノート
-README;		   このドキュメント
+AUTHORS 	   著者のシグネチャ
+ChangeLog    リリース毎の変更点
+COPYING 	   コピーライト
+docs/        ドキュメント
+examples/    コード例
+iclude/      インクルードファイル格納ディレクトリ
+INSTALL 	   インストール方法の説明
+lib/         ライブラリ格納ディレクトリ
+make_setting 単体でビルドする場合のMakefileのマクロ
+Makefile     単体でビルドする場合のMakefile
+MakePolylib  FFVから一括でコンパイルする場合のMakefile
+README 		   このドキュメント
 
 
