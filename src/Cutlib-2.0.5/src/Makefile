@@ -66,9 +66,7 @@ DEFINES += -DIGNORE_STL_NORMAL
 
 
 
-POLYLIB_DIR = ../../Polylib-2.1.1
-
-POLYLIB_FLAGS = -I$(POLYLIB_DIR)/include -I$(TP_DIR)/include
+POLYLIB_FLAGS = -I../$(POLYLIB_DIR)/include -I$(TP_DIR)/include
 
 ###########################################################################
 # INTEL
