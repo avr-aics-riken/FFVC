@@ -41,7 +41,6 @@ INSTALL 	   インストール方法の説明
 lib/         ライブラリ格納ディレクトリ
 make_setting 単体でビルドする場合のMakefileのマクロ
 Makefile     単体でビルドする場合のMakefile
-MakePolylib  FFVから一括でコンパイルする場合のMakefile
 README 		   このドキュメント
 
 

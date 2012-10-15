@@ -22,7 +22,6 @@ INSTALL         ビルド方法
 lib/            コンパイル済みのアーカイブ格納ディレクトリ
 make_setting    単体でビルドする場合のMakefileのマクロ
 Makefile        単体ビルド用のMakefile
-MakeCutlib      FFVディレクトリからの一括ビルド用
 README          このファイル
 src/            ソースコード
 test/           テストプログラム

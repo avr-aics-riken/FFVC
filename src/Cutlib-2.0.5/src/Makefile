@@ -109,95 +109,16 @@ depend:
   CutBoundary.cpp
 # DO NOT DELETE
 
-Cutlib.o: ../include/Cutlib.h ../../Polylib-2.1.1/include/Polylib.h
-Cutlib.o: ../../Polylib-2.1.1/include/polygons/Polygons.h
-Cutlib.o: ../../Polylib-2.1.1/include/polygons/VTree.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/BBox.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/Vec2.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/Vec3.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/vec3_func.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/vec3f_func.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/axis.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/PolylibStat.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/PolylibCommon.h
-Cutlib.o: ../../Polylib-2.1.1/include/common/tt.h
-Cutlib.o: ../../Polylib-2.1.1/include/polygons/TriMesh.h
-Cutlib.o: ../../Polylib-2.1.1/include/polygons/Triangle.h
-Cutlib.o: ../../Polylib-2.1.1/include/groups/PolygonGroup.h
-Cutlib.o: ../../Polylib-2.1.1/include/groups/PolygonGroupFactory.h
-Cutlib.o: ../include/CutInfo/CutInfoArray.h ../include/CutInfo/CutInfo.h
-Cutlib.o: CutlibCore.h CutBoundary.h CutTriangle.h CutUtil.h
+Cutlib.o: ../include/Cutlib.h ../include/CutInfo/CutInfoArray.h
+Cutlib.o: ../include/CutInfo/CutInfo.h CutlibCore.h CutBoundary.h
+Cutlib.o: CutTriangle.h CutUtil.h
 CutlibCore.o: CutlibCore.h ../include/Cutlib.h
-CutlibCore.o: ../../Polylib-2.1.1/include/Polylib.h
-CutlibCore.o: ../../Polylib-2.1.1/include/polygons/Polygons.h
-CutlibCore.o: ../../Polylib-2.1.1/include/polygons/VTree.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/BBox.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/Vec2.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/Vec3.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/vec3_func.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/vec3f_func.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/axis.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/PolylibStat.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/PolylibCommon.h
-CutlibCore.o: ../../Polylib-2.1.1/include/common/tt.h
-CutlibCore.o: ../../Polylib-2.1.1/include/polygons/TriMesh.h
-CutlibCore.o: ../../Polylib-2.1.1/include/polygons/Triangle.h
-CutlibCore.o: ../../Polylib-2.1.1/include/groups/PolygonGroup.h
-CutlibCore.o: ../../Polylib-2.1.1/include/groups/PolygonGroupFactory.h
 CutlibCore.o: ../include/CutInfo/CutInfoArray.h ../include/CutInfo/CutInfo.h
 CutlibCore.o: CutBoundary.h CutTriangle.h CutUtil.h CutTiming.h
-CutUtil.o: CutUtil.h ../include/Cutlib.h
-CutUtil.o: ../../Polylib-2.1.1/include/Polylib.h
-CutUtil.o: ../../Polylib-2.1.1/include/polygons/Polygons.h
-CutUtil.o: ../../Polylib-2.1.1/include/polygons/VTree.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/BBox.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/Vec2.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/Vec3.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/vec3_func.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/vec3f_func.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/axis.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/PolylibStat.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/PolylibCommon.h
-CutUtil.o: ../../Polylib-2.1.1/include/common/tt.h
-CutUtil.o: ../../Polylib-2.1.1/include/polygons/TriMesh.h
-CutUtil.o: ../../Polylib-2.1.1/include/polygons/Triangle.h
-CutUtil.o: ../../Polylib-2.1.1/include/groups/PolygonGroup.h
-CutUtil.o: ../../Polylib-2.1.1/include/groups/PolygonGroupFactory.h
-CutUtil.o: ../include/CutInfo/CutInfoArray.h ../include/CutInfo/CutInfo.h
+CutUtil.o: CutUtil.h ../include/Cutlib.h ../include/CutInfo/CutInfoArray.h
+CutUtil.o: ../include/CutInfo/CutInfo.h
 CutTriangle.o: CutTriangle.h ../include/Cutlib.h
-CutTriangle.o: ../../Polylib-2.1.1/include/Polylib.h
-CutTriangle.o: ../../Polylib-2.1.1/include/polygons/Polygons.h
-CutTriangle.o: ../../Polylib-2.1.1/include/polygons/VTree.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/BBox.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/Vec2.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/Vec3.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/vec3_func.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/vec3f_func.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/axis.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/PolylibStat.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/PolylibCommon.h
-CutTriangle.o: ../../Polylib-2.1.1/include/common/tt.h
-CutTriangle.o: ../../Polylib-2.1.1/include/polygons/TriMesh.h
-CutTriangle.o: ../../Polylib-2.1.1/include/polygons/Triangle.h
-CutTriangle.o: ../../Polylib-2.1.1/include/groups/PolygonGroup.h
-CutTriangle.o: ../../Polylib-2.1.1/include/groups/PolygonGroupFactory.h
 CutTriangle.o: ../include/CutInfo/CutInfoArray.h ../include/CutInfo/CutInfo.h
 CutTriangle.o: CutBoundary.h
 CutBoundary.o: CutBoundary.h ../include/Cutlib.h
-CutBoundary.o: ../../Polylib-2.1.1/include/Polylib.h
-CutBoundary.o: ../../Polylib-2.1.1/include/polygons/Polygons.h
-CutBoundary.o: ../../Polylib-2.1.1/include/polygons/VTree.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/BBox.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/Vec2.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/Vec3.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/vec3_func.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/vec3f_func.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/axis.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/PolylibStat.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/PolylibCommon.h
-CutBoundary.o: ../../Polylib-2.1.1/include/common/tt.h
-CutBoundary.o: ../../Polylib-2.1.1/include/polygons/TriMesh.h
-CutBoundary.o: ../../Polylib-2.1.1/include/polygons/Triangle.h
-CutBoundary.o: ../../Polylib-2.1.1/include/groups/PolygonGroup.h
-CutBoundary.o: ../../Polylib-2.1.1/include/groups/PolygonGroupFactory.h
 CutBoundary.o: ../include/CutInfo/CutInfoArray.h ../include/CutInfo/CutInfo.h
