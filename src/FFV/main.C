@@ -41,7 +41,7 @@ int main( int argc, char **argv )
   // ここでMPI_Initも行う
   if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) )
   {
-    return -1;
+    Exit(-1);
   }
   
   
@@ -53,7 +53,7 @@ int main( int argc, char **argv )
       printf("\n\tusage\n");
       printf("\n\t$ ffvc <input_file>\n");
     }
-    return -1;
+    Exit(-1);
   }
   
   
@@ -63,11 +63,11 @@ int main( int argc, char **argv )
   {
     case -1:
       if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
-      return -1;
+      Exit(-1);
 
     case 0:
       if ( ffv.IsMaster() ) printf("\n\tForced termination during initialization.\n\n");
-      return -1;
+      Exit(-1);
       
     case 1:
       // keep going on processing
@@ -75,7 +75,7 @@ int main( int argc, char **argv )
       
     default:
       if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
-      return -1;
+      Exit(-1);
   }
   
   init_end = cpm_Base::GetWTime();
@@ -113,7 +113,7 @@ int main( int argc, char **argv )
   if( !ffv.Post() )
   {
     printf("solver post error.\n");
-    return -1;
+    Exit(-1);
   }
   
   post_end = cpm_Base::GetWTime();
@@ -131,7 +131,9 @@ int main( int argc, char **argv )
     printf("TIME : Solver Total %10.3f sec.\n", init+main+post);
   }
   
-  if ( loop_ret != 1 ) return -1;
+  if ( loop_ret != 1 ) Exit(-1);
+  
+  printf("\nHPCPF_EXIT_STATUS : status code = %d :\n", 0);
   
   return 0;
 }
