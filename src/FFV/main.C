@@ -20,6 +20,11 @@
   #include "include/_debug.h"
 #endif
 
+// HPCPF status
+FILE* fp_hpcpf = NULL;
+
+#define hpcpf_status(x) \
+(fprintf(fp_hpcpf, "status code = %d\nexit at %s:%u\n", x, __FILE__, __LINE__))
 
 // return; 0 - normal
 //         1 - others
@@ -29,19 +34,31 @@ int main( int argc, char **argv )
   double init_str, init_end;
   double main_str, main_end;
   double post_str, post_end;
-
+  
   // FFV classのインスタンス
   FFV ffv;
 
   // ##################################################################
   // 初期化
   init_str = cpm_Base::GetWTime();
+
   
   // 並列管理クラスのインスタンスと初期化
   // ここでMPI_Initも行う
   if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) )
   {
-    Exit(-1);
+    return 1;
+  }
+  
+  
+  // Open HPCPF_STATUS file
+  if (cpm_ParaManager::get_instance()->GetMyRankID()==0)
+  {
+    if ( !(fp_hpcpf=fopen("HPCPF_EXIT_STATUS", "w")) )
+    {
+      hpcpf_status(1);
+      return 1;
+    }
   }
   
   
@@ -53,7 +70,8 @@ int main( int argc, char **argv )
       printf("\n\tusage\n");
       printf("\n\t$ ffvc <input_file>\n");
     }
-    Exit(-1);
+    if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+    return 1;
   }
   
   
@@ -63,11 +81,15 @@ int main( int argc, char **argv )
   {
     case -1:
       if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
-      Exit(-1);
+      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+      return 1;
+      break;
 
     case 0:
       if ( ffv.IsMaster() ) printf("\n\tForced termination during initialization.\n\n");
-      Exit(-1);
+      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+      return 1;
+      break;
       
     case 1:
       // keep going on processing
@@ -75,7 +97,9 @@ int main( int argc, char **argv )
       
     default:
       if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
-      Exit(-1);
+      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+      return 1;
+      break;
   }
   
   init_end = cpm_Base::GetWTime();
@@ -113,7 +137,8 @@ int main( int argc, char **argv )
   if( !ffv.Post() )
   {
     printf("solver post error.\n");
-    Exit(-1);
+    if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+    return 1;
   }
   
   post_end = cpm_Base::GetWTime();
@@ -131,9 +156,17 @@ int main( int argc, char **argv )
     printf("TIME : Solver Total %10.3f sec.\n", init+main+post);
   }
   
-  if ( loop_ret != 1 ) Exit(-1);
-  
-  printf("\nHPCPF_EXIT_STATUS : status code = %d :\n", 0);
+  if ( loop_ret != 1 )
+  {
+    if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+    return 1;
+  }
+
+  // Normal return code
+  if (cpm_ParaManager::get_instance()->GetMyRankID()==0)
+  {
+    fprintf(fp_hpcpf, "status code = 0\n");
+  }
   
   return 0;
 }
