@@ -48,43 +48,38 @@ void COMB::output_sph()
   int m_imax_th,m_jmax_th,m_kmax_th;
   long long m_dimax_th,m_djmax_th,m_dkmax_th;
 
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
+
   //並列処理のためのインデックス作成
   int iproc=0;
   int ips=0;
   int ip;
-  index.clear();
-  for(int i=0;i<ndfi;i++){
-    for(int j=0; j< DI[i].step.size(); j++ ) {
-      ip=ips+j;
-      if(myRank==iproc) index.push_back(ip);
-      iproc++;
-      if(iproc==numProc) iproc=0;
+  if(numProc > 1) {
+    index.clear();
+    for(int i=0;i<ndfi;i++){
+      for(int j=0; j< DI[i].step.size(); j++ ) {
+        ip=ips+j;
+        if(myRank==iproc) index.push_back(ip);
+        iproc++;
+        if(iproc==numProc) iproc=0;
+      }
+      ips=ips+DI[i].step.size();
     }
-    ips=ips+DI[i].step.size();
-  }
-  LOG_OUTV_ {
-    fprintf(fplog,"\n");
-    for(int j=0; j< index.size(); j++ ) {
-      fprintf(fplog,"\tindex[%4d] = %d\n",j,index[j]);
+    LOG_OUTV_ {
+      fprintf(fplog,"\n");
+      for(int j=0; j< index.size(); j++ ) {
+        fprintf(fplog,"\tindex[%4d] = %d\n",j,index[j]);
+      }
+    }
+    STD_OUTV_ {
+      printf("\n");
+      for(int j=0; j< index.size(); j++ ) {
+        printf("\tindex[%4d] = %d\n",j,index[j]);
+      }
     }
   }
-  STD_OUTV_ {
-    printf("\n");
-    for(int j=0; j< index.size(); j++ ) {
-      printf("\tindex[%4d] = %d\n",j,index[j]);
-    }
-  }
-#else
-#endif
 
   //dfi file loop ---> prs_, vel, ,,,
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-  ips=0;
-#else
-#endif
+  if(numProc > 1) ips=0;
   for(int i=0;i<ndfi;i++){
     prefix=DI[i].Prefix;
     LOG_OUTV_ fprintf(fplog,"  COMBINE SPH START : %s\n", prefix.c_str());
@@ -109,17 +104,18 @@ void COMB::output_sph()
 
     //step loop
     for(int j=0; j< DI[i].step.size(); j++ ) {
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
+
       //並列処理
-      int iskip=0;
-      ip=ips+j;
-      for(int ic=0; ic< index.size(); ic++ ) {
-        if(ip==index[ic]) iskip=1;
+      int iskip=1;
+      if(numProc > 1) {
+        iskip=0;
+        ip=ips+j;
+        for(int ic=0; ic< index.size(); ic++ ) {
+          if(ip==index[ic]) iskip=1;
+        }
       }
       if(!iskip) continue;
-#else
-#endif
+
       m_step=DI[i].step[j];
       LOG_OUTV_ fprintf(fplog,"\tstep = %d\n", m_step);
       STD_OUTV_ printf("\tstep = %d\n", m_step);
@@ -426,11 +422,7 @@ void COMB::output_sph()
       //出力ファイルクローズ
       fclose(fp);
     }
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-    ips=ips+DI[i].step.size();
-#else
-#endif
+    if(numProc > 1) ips=ips+DI[i].step.size();
   }
 
 }

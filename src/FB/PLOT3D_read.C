@@ -261,21 +261,22 @@ void FileIO_PLOT3D_READ::ReadXYZ_FORMATTED()
  */
 void FileIO_PLOT3D_READ::ReadXYZ_C_BINARY()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+  size_t s1 = (size_t)id * (size_t)jd;
+  size_t s2 = s1 * (size_t)kd;
+  
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fread(x, sizeof(float), id*jd, fp);
-        fread(y, sizeof(float), id*jd, fp);
+        fread(x, sizeof(float), s1, fp);
+        fread(y, sizeof(float), s1, fp);
         break;
       case DIMENSION_3D:
-        fread(x, sizeof(float), id*jd*kd, fp);
-        fread(y, sizeof(float), id*jd*kd, fp);
-        fread(z, sizeof(float), id*jd*kd, fp);
+        fread(x, sizeof(float), s2, fp);
+        fread(y, sizeof(float), s2, fp);
+        fread(z, sizeof(float), s2, fp);
         if(P3Op.IBlankFlag == SET_IBLANK){
-          fread(iblank, sizeof(int), id*jd*kd, fp);
+          fread(iblank, sizeof(int), s2, fp);
         }
         break;
     }
@@ -285,15 +286,15 @@ void FileIO_PLOT3D_READ::ReadXYZ_C_BINARY()
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fread(dx, sizeof(double), id*jd, fp);
-        fread(dy, sizeof(double), id*jd, fp);
+        fread(dx, sizeof(double), s1, fp);
+        fread(dy, sizeof(double), s1, fp);
         break;
       case DIMENSION_3D:
-        fread(dx, sizeof(double), id*jd*kd, fp);
-        fread(dy, sizeof(double), id*jd*kd, fp);
-        fread(dz, sizeof(double), id*jd*kd, fp);
+        fread(dx, sizeof(double), s2, fp);
+        fread(dy, sizeof(double), s2, fp);
+        fread(dz, sizeof(double), s2, fp);
         if(P3Op.IBlankFlag == SET_IBLANK){
-          fread(iblank, sizeof(int), id*jd*kd, fp);
+          fread(iblank, sizeof(int), s2, fp);
         }
         break;
     }
@@ -305,8 +306,7 @@ void FileIO_PLOT3D_READ::ReadXYZ_C_BINARY()
  */
 void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -318,7 +318,6 @@ void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -337,8 +336,7 @@ void FileIO_PLOT3D_READ::ReadQ_UNFORMATTED()
  */
 void FileIO_PLOT3D_READ::ReadQ_FORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -350,7 +348,6 @@ void FileIO_PLOT3D_READ::ReadQ_FORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -378,8 +375,7 @@ void FileIO_PLOT3D_READ::ReadQ_C_BINARY()
  */
 void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -391,7 +387,6 @@ void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -410,8 +405,7 @@ void FileIO_PLOT3D_READ::ReadFunc_UNFORMATTED()
  */
 void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -423,7 +417,6 @@ void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -444,58 +437,58 @@ void FileIO_PLOT3D_READ::ReadFunc_FORMATTED()
 void FileIO_PLOT3D_READ::ReadFunc_C_BINARY()
 {
 
+  size_t s1 = (size_t)id * (size_t)jd;
+  size_t s2 = s1 * (size_t)kd;
+  size_t s3 = s1 * (size_t)nvar;
+  size_t s4 = s2 * (size_t)nvar;
+  
 #if 1 //項目ごと
 
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fread(d, sizeof(float), id*jd, fp);
+        fread(d, sizeof(float), s1, fp);
         break;
       case DIMENSION_3D:
-        fread(d, sizeof(float), id*jd*kd, fp);
+        fread(d, sizeof(float), s2, fp);
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fread(dd, sizeof(double), id*jd, fp);
+        fread(dd, sizeof(double), s1, fp);
         break;
       case DIMENSION_3D:
-        fread(dd, sizeof(double), id*jd*kd, fp);
+        fread(dd, sizeof(double), s2, fp);
         break;
     }
   }
 
 #else //全項目
 
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fread(d, sizeof(float), id*jd*nvar, fp);
+        fread(d, sizeof(float), s3, fp);
         break;
       case DIMENSION_3D:
-        fread(d, sizeof(float), id*jd*kd*nvar, fp);
+        fread(d, sizeof(float), s4, fp);
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fread(dd, sizeof(double), id*jd*nvar, fp);
+        fread(dd, sizeof(double), s3, fp);
         break;
       case DIMENSION_3D:
-        fread(dd, sizeof(double), id*jd*kd*nvar, fp);
+        fread(dd, sizeof(double), s4, fp);
         break;
     }
   }

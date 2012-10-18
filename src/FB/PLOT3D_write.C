@@ -165,8 +165,7 @@ void FileIO_PLOT3D_WRITE::WriteFuncBlockData(int* id, int* jd, int* kd, int* nva
  */
 void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -183,7 +182,6 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -207,8 +205,7 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -225,7 +222,6 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -251,39 +247,40 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteXYZ_C_BINARY()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
+  size_t s1 = (size_t)id * (size_t)jd;
+  size_t s2 = s1 * (size_t)kd;
+  
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fwrite(x, sizeof(float), id*jd, fp);
-        fwrite(y, sizeof(float), id*jd, fp);
+        fwrite(x, sizeof(float), s1, fp);
+        fwrite(y, sizeof(float), s1, fp);
         break;
       case DIMENSION_3D:
-        fwrite(x, sizeof(float), id*jd*kd, fp);
-        fwrite(y, sizeof(float), id*jd*kd, fp);
-        fwrite(z, sizeof(float), id*jd*kd, fp);
+        fwrite(x, sizeof(float), s2, fp);
+        fwrite(y, sizeof(float), s2, fp);
+        fwrite(z, sizeof(float), s2, fp);
         if(P3Op.IBlankFlag == SET_IBLANK){
-          fwrite(iblank, sizeof(int), id*jd*kd, fp);
+          fwrite(iblank, sizeof(int), s2, fp);
         }
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fwrite(dx, sizeof(double), id*jd, fp);
-        fwrite(dy, sizeof(double), id*jd, fp);
+        fwrite(dx, sizeof(double), s1, fp);
+        fwrite(dy, sizeof(double), s1, fp);
         break;
       case DIMENSION_3D:
-        fwrite(dx, sizeof(double), id*jd*kd, fp);
-        fwrite(dy, sizeof(double), id*jd*kd, fp);
-        fwrite(dz, sizeof(double), id*jd*kd, fp);
+        fwrite(dx, sizeof(double), s2, fp);
+        fwrite(dy, sizeof(double), s2, fp);
+        fwrite(dz, sizeof(double), s2, fp);
         if(P3Op.IBlankFlag == SET_IBLANK){
-          fwrite(iblank, sizeof(int), id*jd*kd, fp);
+          fwrite(iblank, sizeof(int), s2, fp);
         }
         break;
     }
@@ -296,8 +293,7 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_C_BINARY()
  */
 void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -309,7 +305,6 @@ void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -328,8 +323,7 @@ void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteQ_FORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -341,7 +335,6 @@ void FileIO_PLOT3D_WRITE::WriteQ_FORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -370,8 +363,7 @@ void FileIO_PLOT3D_WRITE::WriteQ_C_BINARY()
  */
 void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -383,7 +375,6 @@ void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -403,8 +394,7 @@ void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
 {
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
+
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -416,7 +406,6 @@ void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
@@ -438,58 +427,57 @@ void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
 void FileIO_PLOT3D_WRITE::WriteFunc_C_BINARY()
 {
 
+  size_t s1 = (size_t)id * (size_t)jd;
+  size_t s2 = s1 * (size_t)kd;
+  size_t s3 = s1 * (size_t)nvar;
+  size_t s4 = s2 * (size_t)nvar;
+  
 #if 1 //項目ごと
 
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fwrite(d, sizeof(float), id*jd, fp);
+        fwrite(d, sizeof(float), s1, fp);
         break;
       case DIMENSION_3D:
-        fwrite(d, sizeof(float), id*jd*kd, fp);
+        fwrite(d, sizeof(float), s2, fp);
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fwrite(dd, sizeof(double), id*jd, fp);
+        fwrite(dd, sizeof(double), s1, fp);
         break;
       case DIMENSION_3D:
-        fwrite(dd, sizeof(double), id*jd*kd, fp);
+        fwrite(dd, sizeof(double), s2, fp);
         break;
     }
   }
 
 #else //全項目
 
-  //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-  //if(d_type==1)
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fwrite(d, sizeof(float), id*jd*nvar, fp);
+        fwrite(d, sizeof(float), s3, fp);
         break;
       case DIMENSION_3D:
-        fwrite(d, sizeof(float), id*jd*kd*nvar, fp);
+        fwrite(d, sizeof(float), s4, fp);
         break;
     }
   }
-  //else if(d_type==2)
   else if(P3Op.realtype==2)
   {
     switch (P3Op.DimIs) {
       case DIMENSION_2D:
-        fwrite(dd, sizeof(double), id*jd*nvar, fp);
+        fwrite(dd, sizeof(double), s3, fp);
         break;
       case DIMENSION_3D:
-        fwrite(dd, sizeof(double), id*jd*kd*nvar, fp);
+        fwrite(dd, sizeof(double), s4, fp);
         break;
     }
   }

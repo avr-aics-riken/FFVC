@@ -992,27 +992,38 @@ void FFV::Restart_different(FILE* fp, double& flop)
   
   // ランクごとに前計算時のどのランクのファイルを必要とするかテーブルで持っておく
   int frank_size=numProc*max_nDRI;
-  int frank[frank_size];
+  
+  int* frank = new int[frank_size];
+  
   for(int i=0;i<frank_size;i++) frank[i]=0;
+  
   if ( C.FIO.IO_Input == IO_DISTRIBUTE ) // Gather出力されていた場合は0ランクを見に行くのでMPI_SUM必要なし
   {
     for(int ic=0;ic<nDRI;ic++){
       frank[myRank*max_nDRI+ic]=DRI[ic].rank;
     }
-    int tmp[frank_size];
+    
+    int* tmp = new int[frank_size];
+    
     for(int i=0;i<frank_size;i++) tmp[i]=frank[i];
+    
     if ( numProc > 1 )
     {
       MPI_Allreduce(tmp, frank, frank_size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     }
+    
+    if ( tmp ) delete [] tmp;
   }
   
   // ランクごとに前計算時のどのファイルが自身のランクにステージングされているかリストしておく
   int numProc_last=DI[0].Number_of_Rank_in_MPIworld;
   int nassign=numProc_last/numProc;
   if( (numProc_last%numProc) > 0 ) nassign++;
-  int assign[nassign];
+  
+  int* assign = new int[nassign];
+  
   for(int i=0;i<nassign;i++) assign[i]=-1;
+  
   int irank=0;
   int iassign=0;
   for(int i=0;i<numProc_last;i++){
@@ -1133,48 +1144,50 @@ void FFV::Restart_different(FILE* fp, double& flop)
   
 #endif
   
-  
-#ifdef _STAGING_
-  
-  for(int ic=0;ic<max_nDRI;ic++){
-    
-    // 各プロセスが今読みたいファイルの前計算時のリストを作る
-    int rank_list[numProc];
-    for(int i=0;i<numProc;i++) rank_list[i]=0;
-    rank_list[myRank]=DRI[ic].rank;
-    if ( C.FIO.IO_Input == IO_DISTRIBUTE )
-    {
-      int tmp[numProc];
-      for(int i=0;i<numProc;i++) tmp[i]=0;
-      tmp[myRank]=DRI[ic].rank;
-      if ( numProc > 1 )
+  if( C.Restart_staging )
+  {
+    for(int ic=0;ic<max_nDRI;ic++){
+      
+      // 各プロセスが今読みたいファイルの前計算時のリストを作る
+      int* rank_list = new int[numProc];
+      
+      for(int i=0;i<numProc;i++) rank_list[i]=0;
+      rank_list[myRank]=DRI[ic].rank;
+      
+      if ( C.FIO.IO_Input == IO_DISTRIBUTE )
       {
-        MPI_Allreduce(tmp, rank_list, numProc, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+        int tmp[numProc];
+        for(int i=0;i<numProc;i++) tmp[i]=0;
+        tmp[myRank]=DRI[ic].rank;
+        if ( numProc > 1 )
+        {
+          MPI_Allreduce(tmp, rank_list, numProc, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+        }
       }
+      else
+      {
+        //通信の必要なし ---> すべて0のはず
+      }
+      
+      int recv_rank=DRI[ic].rank%numProc;// 自分が読みたいファイルがステージングされているランク
+      if(DRI[ic].rank < 0) recv_rank=-1;
+      
+      // オーバーラップ分をファイルから読み込み
+      ReadOverlap_Pressure(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
+      ReadOverlap_Velocity(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
+      if ( C.isHeatProblem() ) ReadOverlap_Temperature(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
+      
+      if ( rank_list ) delete [] rank_list;
     }
-    else
-    {
-      //通信の必要なし ---> すべて0のはず
-    }
-    int recv_rank=DRI[ic].rank%numProc;// 自分が読みたいファイルがステージングされているランク
-    if(DRI[ic].rank < 0) recv_rank=-1;
-    
+  }
+  else
+  {
     // オーバーラップ分をファイルから読み込み
-    ReadOverlap_Pressure(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
-    ReadOverlap_Velocity(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
-    if ( C.isHeatProblem() ) ReadOverlap_Temperature(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
+    for(int ic=0;ic<max_nDRI;ic++){
+      ReadOverlap(fp, flop, &DRI[ic], d_wk);
+    }
   }
   
-#else // _STAGING_
-  
-  // オーバーラップ分をファイルから読み込み
-  for(int ic=0;ic<max_nDRI;ic++){
-    ReadOverlap(fp, flop, &DRI[ic], d_wk);
-  }
-  
-#endif
-  
-  //Exit(0);
   
 #if 0
   if (ifdg) fclose(ifdg);
@@ -1183,6 +1196,8 @@ void FFV::Restart_different(FILE* fp, double& flop)
   if ( DI ) delete [] DI;
   if ( DRI ) delete [] DRI;
   if ( d_wk ) delete [] d_wk;
+  if ( frank ) delete [] frank;
+  if ( assign ) delete [] assign;
   
 }
 
@@ -1245,23 +1260,24 @@ void FFV::SetOverlap(REAL_TYPE* write_wk, REAL_TYPE* read_wk, int dim, int gd,
   int isx = overlap_h[0]-h[0];
   int isy = overlap_h[1]-h[1];
   int isz = overlap_h[2]-h[2];
-  int ips = dim*( (s[0]+2*gd)*(s[1]+2*gd)*(isz+gd)+(s[0]+2*gd)*(isy+gd)+(isx+gd) );
+  size_t ips = (size_t)dim * (size_t)( (s[0]+2*gd)*(s[1]+2*gd)*(isz+gd)+(s[0]+2*gd)*(isy+gd)+(isx+gd) );
   
   int isxr = overlap_h[0]-head[0];
   int isyr = overlap_h[1]-head[1];
   int iszr = overlap_h[2]-head[2];
-  int ipsr = dim*( (size[0]+2*gd)*(size[1]+2*gd)*(iszr+gd) +(size[0]+2*gd)*(isyr+gd) +(isxr+gd) );
+  size_t ipsr = (size_t)dim * (size_t)( (size[0]+2*gd)*(size[1]+2*gd)*(iszr+gd) +(size[0]+2*gd)*(isyr+gd) +(isxr+gd) );
   
   int szx = overlap_t[0]-overlap_h[0]+1;
   int szy = overlap_t[1]-overlap_h[1]+1;
   int szz = overlap_t[2]-overlap_h[2]+1;
+  
   for(int k=0;k<szz;k++){
     for(int j=0;j<szy;j++){
       for(int i=0;i<szx;i++){
         for(int id=0;id<dim;id++){
-          int ip =ips +dim*(s[0]+2*gd)*(s[1]+2*gd)*k+dim*(s[0]+2*gd)*j+dim*i+id;
-          int ipr=ipsr+dim*(size[0]+2*gd)*(size[1]+2*gd)*k+dim*(size[0]+2*gd)*j+dim*i+id;
-          write_wk[ip]=read_wk[ipr];
+          size_t ip  = ips  + (size_t)dim*( _F_IDX_S3D(i+1, j+1, k+1, (s[0]+2*gd), (s[1]+2*gd), (s[2]+2*gd), 0) ) + (size_t)id;
+          size_t ipr = ipsr + (size_t)dim*( _F_IDX_S3D(i+1, j+1, k+1, (size[0]+2*gd), (size[1]+2*gd), (size[2]+2*gd), 0) ) + (size_t)id;
+          write_wk[ip] = read_wk[ipr];
         }
       }
     }
@@ -1407,6 +1423,13 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(int i=0;i<3;i++){
           d_size[i] = DI[0].Node[read_rank].VoxelSize[i];
         }
+        
+        double check = (double)(d_size[0]+2*guide)*(double)(d_size[1]+2*guide)*(double)(d_size[2]+2*guide);
+        if(check>(double)INT_MAX){
+          printf("\tsize error : sendsize>INT_MAX\n");
+          Exit(0);
+        }
+        
         unsigned sendsize=(d_size[0]+2*guide)*(d_size[1]+2*guide)*(d_size[2]+2*guide);
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
@@ -1415,7 +1438,7 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
-          Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+          printf("\n\tError : File open '%s'\n", tmp.c_str());
           Exit(0);
         }
         F.readPressure(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
@@ -1448,7 +1471,7 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
     tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + DRI->f_prs;
     if ( !checkFile(tmp) )
     {
-      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+      printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
     F.readPressure(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
@@ -1520,6 +1543,13 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(int i=0;i<3;i++){
           d_size[i] = DI[0].Node[read_rank].VoxelSize[i];
         }
+        
+        double check = (double)(d_size[0]+2*guide)*(double)(d_size[1]+2*guide)*(double)(d_size[2]+2*guide);
+        if(check>(double)INT_MAX){
+          printf("\tsize error : sendsize>INT_MAX\n");
+          Exit(0);
+        }
+        
         unsigned sendsize=(d_size[0]+2*guide)*(d_size[1]+2*guide)*(d_size[2]+2*guide)*3;
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
@@ -1528,7 +1558,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
-          Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+          printf("\n\tError : File open '%s'\n", tmp.c_str());
           Exit(0);
         }
         F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
@@ -1646,6 +1676,13 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
         for(int i=0;i<3;i++){
           d_size[i] = DI[0].Node[read_rank].VoxelSize[i];
         }
+        
+        double check = (double)(d_size[0]+2*guide)*(double)(d_size[1]+2*guide)*(double)(d_size[2]+2*guide);
+        if(check>(double)INT_MAX){
+          printf("\tsize error : sendsize>INT_MAX\n");
+          Exit(0);
+        }
+        
         unsigned sendsize=(d_size[0]+2*guide)*(d_size[1]+2*guide)*(d_size[2]+2*guide);
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
@@ -1654,7 +1691,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
-          Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+          printf("\n\tError : File open '%s'\n", tmp.c_str());
           Exit(0);
         }
         F.readTemperature(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);

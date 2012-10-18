@@ -2319,7 +2319,7 @@ void Control::get_start_condition()
   // リスタート時のタイムスタンプ Coarse_restart
   if ( Start == coarse_restart )
   {
-    label="/Steer/Start_condition/Prefix_of_Coarse_Pressure";
+    label="/Steer/Start_condition/Coarse_Restart/Prefix_of_Pressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2330,7 +2330,7 @@ void Control::get_start_condition()
     f_Coarse_pressure = str.c_str();
     
     
-    label="/Steer/Start_condition/Prefix_of_Coarse_Velocity";
+    label="/Steer/Start_condition/Coarse_Restart/Prefix_of_Velocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2343,7 +2343,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/Start_condition/Prefix_of_Coarse_Temperature";
+      label="/Steer/Start_condition/Coarse_Restart/Prefix_of_Temperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2355,73 +2355,45 @@ void Control::get_start_condition()
     }
     
   }
-  
-  
-  // 粗い格子を使う場合の初期値データのプリフィクス
-  if ( Start == coarse_restart )
-  {
-    // プロセス並列時にローカルでのファイル入力を指定した場合
-    if ( FIO.IO_Input == IO_DISTRIBUTE )
-    {
-      label="/Steer/Start_condition/dfi_file_pressure";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
-      
-      f_Coarse_dfi_prs = str.c_str();
-      
-      
-      label="/Steer/Start_condition/dfi_file_velocity";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
-      
-      f_Coarse_dfi_vel = str.c_str();
-      
-      
-      if ( isHeatProblem() )
-      {
-        label="/Steer/Start_condition/dfi_file_temperature";
-        
-        if ( !(tpCntl->GetValue(label, &str )) )
-        {
-          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-          Exit(0);
-        }
-        
-        f_Coarse_dfi_temp = str.c_str();
-        
-      }
-    }
-    
-  }
-  
-  
+
+
   // 異なる並列数からリスタートする場合の初期値データのプリフィクス
   if ( Start == restart_different_nproc )
   {
     
-#ifdef _STAGING_
-    
-    label="/Steer/Start_condition/Prefix_of_different_nproc_dir";
+    label="/Steer/Start_condition/restart_from_Different_Nproc/staging";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
+    else
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )  Restart_staging = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) Restart_staging = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+
+    //if( Restart_staging ) {
     
-    f_different_nproc_dir_prefix = str.c_str();
+      label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_dir";
     
-#endif
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
     
-    label="/Steer/Start_condition/Prefix_of_different_nproc_Pressure";
+      f_different_nproc_dir_prefix = str.c_str();
+    
+    //}
+    
+    label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_Pressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2432,7 +2404,7 @@ void Control::get_start_condition()
     f_different_nproc_pressure = str.c_str();
     
     
-    label="/Steer/Start_condition/Prefix_of_different_nproc_Velocity";
+    label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_Velocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2445,7 +2417,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/Start_condition/Prefix_of_different_nproc_Temperature";
+      label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_Temperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2456,10 +2428,17 @@ void Control::get_start_condition()
       f_different_nproc_temperature = str.c_str();
     }
     
-    // プロセス並列時にローカルでのファイル入力を指定した場合 --- always IO_DISTRIBUTE
+  }
+
+
+
+  //read prefix of DFI file
+  if ( Start == coarse_restart || (Start == restart_different_nproc) )
+  {
+    // プロセス並列時にローカルでのファイル入力を指定した場合
     if ( FIO.IO_Input == IO_DISTRIBUTE )
     {
-      label="/Steer/Start_condition/dfi_file_pressure";
+      label="/Steer/Start_condition/DFI_file/pressure";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2467,10 +2446,10 @@ void Control::get_start_condition()
         Exit(0);
       }
       
+      f_Coarse_dfi_prs = str.c_str();
       f_different_nproc_dfi_prs = str.c_str();
       
-      
-      label="/Steer/Start_condition/dfi_file_velocity";
+      label="/Steer/Start_condition/DFI_file/velocity";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2478,12 +2457,12 @@ void Control::get_start_condition()
         Exit(0);
       }
       
+      f_Coarse_dfi_vel = str.c_str();
       f_different_nproc_dfi_vel = str.c_str();
-      
       
       if ( isHeatProblem() )
       {
-        label="/Steer/Start_condition/dfi_file_temperature";
+        label="/Steer/Start_condition/DFI_file/temperature";
         
         if ( !(tpCntl->GetValue(label, &str )) )
         {
@@ -2491,13 +2470,13 @@ void Control::get_start_condition()
           Exit(0);
         }
         
+        f_Coarse_dfi_temp = str.c_str();
         f_different_nproc_dfi_temp = str.c_str();
-        
+
       }
     }
     
   }
-  
   
   // 初期条件
   if ( Start == initial_start )

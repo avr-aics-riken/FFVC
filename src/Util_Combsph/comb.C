@@ -50,6 +50,8 @@ COMB::COMB()
   // dfi管理
   for (int i=0; i<var_END; i++) dfi_mng[i]=0;
 
+  staging=0;
+
 }
 
 
@@ -151,6 +153,26 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     STD_OUT_ printf("\tReset Input Directory '%s'\n", in_dirname.c_str());
     CheckDir(in_dirname);
     if( in_dirname.size() != 0 ) in_dirname=in_dirname+"/";
+  }
+
+
+  //並列実行時のSTAGINGのON/OFF
+  label = "/CombData/staging";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    staging = OFF;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  staging = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) staging = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
   }
 
 

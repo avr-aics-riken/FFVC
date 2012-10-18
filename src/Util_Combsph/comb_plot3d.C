@@ -74,37 +74,34 @@ void COMB::output_plot3d()
   int nnode=DI[0].NodeInfoSize;
 
 
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
 //並列処理のためのインデックス作成
   int iproc=0;
   int ips=0;
   int ip;
-  index.clear();
-  for(int istep=0; istep< nstep; istep++ ) { // step loop
-    for(int inode=0; inode< nnode; inode++ ) { // node loop
-      ip=ips+inode;
-      if(myRank==iproc) index.push_back(ip);
-      iproc++;
-      if(iproc==numProc) iproc=0;
+  if(numProc > 1) {
+    index.clear();
+    for(int istep=0; istep< nstep; istep++ ) { // step loop
+      for(int inode=0; inode< nnode; inode++ ) { // node loop
+        ip=ips+inode;
+        if(myRank==iproc) index.push_back(ip);
+        iproc++;
+        if(iproc==numProc) iproc=0;
+      }
+      ips=ips+nstep;
     }
-    ips=ips+nstep;
-  }
-  LOG_OUTV_ {
-    fprintf(fplog,"\n");
-    for(int j=0; j< index.size(); j++ ) {
-      fprintf(fplog,"\tindex[%4d] = %d\n",j,index[j]);
+    LOG_OUTV_ {
+      fprintf(fplog,"\n");
+      for(int j=0; j< index.size(); j++ ) {
+        fprintf(fplog,"\tindex[%4d] = %d\n",j,index[j]);
+      }
+    }
+    STD_OUTV_ {
+      fprintf(fplog,"\n");
+      for(int j=0; j< index.size(); j++ ) {
+        printf("\tindex[%4d] = %d\n",j,index[j]);
+      }
     }
   }
-  STD_OUTV_ {
-    fprintf(fplog,"\n");
-    for(int j=0; j< index.size(); j++ ) {
-      printf("\tindex[%4d] = %d\n",j,index[j]);
-    }
-  }
-#else
-#endif
-
 
 // copy dfi file
   string dfi_in = Generate_DFI_Name(DI[0].Prefix);
@@ -138,26 +135,22 @@ void COMB::output_plot3d()
   }
 
 // set work area size
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-  ips=0;
-#else
-#endif
+  if(numProc > 1) ips=0;
   for(int istep=0; istep< nstep; istep++ ) { // step loop
     m_step=DI[0].step[istep];
 
     for(int inode=0; inode< nnode; inode++ ) { // node loop
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
+
       //並列処理
-      int iskip=0;
-      ip=ips+inode;
-      for(int ic=0; ic< index.size(); ic++ ) {
-        if(ip==index[ic]) iskip=1;
+      int iskip=1;
+      if(numProc > 1) {
+        iskip=0;
+        ip=ips+inode;
+        for(int ic=0; ic< index.size(); ic++ ) {
+          if(ip==index[ic]) iskip=1;
+        }
       }
       if(!iskip) continue;
-#else
-#endif
 
       int ivar=0;
       for(int i=0;i<ndfi;i++){
@@ -217,11 +210,7 @@ void COMB::output_plot3d()
       if(maxkd<kd) maxkd=kd;
 
     }
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-    ips=ips+nnode;
-#else
-#endif
+    if(numProc > 1) ips=ips+nnode;
   }
 
 // write memory size
@@ -268,8 +257,8 @@ void COMB::output_plot3d()
   STD_OUT_ MemoryRequirement(TotalMemory,sphMemory,plot3dMemory,thinMemory,stdout);
 
 // allocate work area
-  size_t wkmaxsize = maxsize*maxdim;
-  size_t psize = maxid*maxjd*maxkd*maxnvar;
+  size_t wkmaxsize = (size_t)(maxsize*maxdim);
+  size_t psize = (size_t)(maxid*maxjd*maxkd*maxnvar);
   if( d_type == SPH_FLOAT ){
     if ( !(wk = new float[wkmaxsize]) ){
       printf("\tallocate error : wk\n");
@@ -293,7 +282,7 @@ void COMB::output_plot3d()
     }
   }
 
-  size_t psize_thin = maxid_thin*maxjd_thin*maxkd_thin*maxnvar;
+  size_t psize_thin = (size_t)(maxid_thin*maxjd_thin*maxkd_thin*maxnvar);
   if(thin_out){
     if( FP3DW.GetRealType() == OUTPUT_FLOAT ){
       if ( !(d_thin = new float[psize_thin]) ){
@@ -313,11 +302,7 @@ void COMB::output_plot3d()
   STD_OUT_ printf("\t*** output xyz file ***\n");
 
   // step loop
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-  ips=0;
-#else
-#endif
+  if(numProc > 1) ips=0;
   for(int istep=0; istep< nstep; istep++ ) {
     m_step=DI[0].step[istep];
     LOG_OUT_ fprintf(fplog,"\tstep = %d\n", m_step);
@@ -325,17 +310,17 @@ void COMB::output_plot3d()
 
     // node loop
     for(int inode=0; inode< nnode; inode++ ) {
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
+
       //並列処理
-      int iskip=0;
-      ip=ips+inode;
-      for(int ic=0; ic< index.size(); ic++ ) {
-        if(ip==index[ic]) iskip=1;
+      int iskip=1;
+      if(numProc > 1) {
+        iskip=0;
+        ip=ips+inode;
+        for(int ic=0; ic< index.size(); ic++ ) {
+          if(ip==index[ic]) iskip=1;
+        }
       }
       if(!iskip) continue;
-#else
-#endif
 
       // read sph header
       prefix=DI[0].Prefix;
@@ -400,11 +385,7 @@ void COMB::output_plot3d()
       }
 
     } // node
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-    ips=ips+nnode;
-#else
-#endif
+    if(numProc > 1) ips=ips+nnode;
   } // step
 
 // output function file
@@ -412,11 +393,7 @@ void COMB::output_plot3d()
   STD_OUT_ printf("\t*** output func file ***\n");
 
   // step loop
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-  ips=0;
-#else
-#endif
+  if(numProc > 1) ips=0;
   for(int istep=0; istep< nstep; istep++ ) {
     m_step=DI[0].step[istep];
     LOG_OUT_ fprintf(fplog,"\tstep = %d\n", m_step);
@@ -428,17 +405,16 @@ void COMB::output_plot3d()
       LOG_OUT_ fprintf(fplog,"\t  rank = %d\n", m_rank);
       STD_OUT_ printf("\t  rank = %d\n", m_rank);
 
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
       //並列処理
-      int iskip=0;
-      ip=ips+inode;
-      for(int ic=0; ic< index.size(); ic++ ) {
-        if(ip==index[ic]) iskip=1;
+      int iskip=1;
+      if(numProc > 1) {
+        iskip=0;
+        ip=ips+inode;
+        for(int ic=0; ic< index.size(); ic++ ) {
+          if(ip==index[ic]) iskip=1;
+        }
       }
       if(!iskip) continue;
-#else
-#endif
 
       if(P3Op.IS_DivideFunc == OFF){ // 一括出力のとき、先にヘッダーを呼んでgridなどを書き出す
 
@@ -816,11 +792,7 @@ void COMB::output_plot3d()
       if(inode == 0) if ( !DFI.Write_DFI_File(dfipre, (unsigned)m_step, (double)m_time, dfi_mng[var_Plot3D], true) ) Exit(0);
 
     }//node loop
-#if defined (_STAGING_)
-#elif defined (_NO_STAGING_)
-    ips=ips+nnode;
-#else
-#endif
+    if(numProc > 1) ips=ips+nnode;
   }//step loop
 
 
@@ -980,8 +952,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
   //for(int k=0;k<kd;k++){
   //  for(int j=0;j<jd;j++){
   //    for(int i=0;i<id;i++){
-  //      size_t ip=k*id*jd+j*id+i;
-  //      //size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+  //      size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
   //      x[ip]=m_org[0]+m_pit[0]*(float)i;//-pitch[0]*(float)gc_out;
   //      y[ip]=m_org[1]+m_pit[1]*(float)j;//-pitch[1]*(float)gc_out;
   //      z[ip]=m_org[2]+m_pit[2]*(float)k;//-pitch[2]*(float)gc_out;
@@ -991,8 +962,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
   for(int k=0;k<kd;k++){
     for(int j=0;j<jd;j++){
       for(int i=0;i<id;i++){
-        size_t ip=k*id*jd+j*id+i;
-        //size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         x[ip]=m_org[0]+(float)thin_count*m_pit[0]*(float)i;//-pitch[0]*(float)gc_out;
         y[ip]=m_org[1]+(float)thin_count*m_pit[1]*(float)j;//-pitch[1]*(float)gc_out;
         z[ip]=m_org[2]+(float)thin_count*m_pit[2]*(float)k;//-pitch[2]*(float)gc_out;
@@ -1005,7 +975,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
     for(int k=0;k<kd;k++){
       for(int j=0;j<jd;j++){
         //for(int i=id-1;i<id;i++){
-          size_t ip=k*id*jd+j*id+id-1;
+          size_t ip = _F_IDX_S3D(id, j+1, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+j*id+id-1;
           x[ip]=m_org[0]+(float)thin_count*m_pit[0]*(float)(id-2)+(float)irest*m_pit[0];//-pitch[0]*(float)gc_out;
         //}
       }
@@ -1017,7 +988,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
     for(int k=0;k<kd;k++){
       //for(int j=jd-1;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=k*id*jd+(jd-1)*id+i;
+          size_t ip = _F_IDX_S3D(i+1, jd, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+(jd-1)*id+i;
           y[ip]=m_org[1]+(float)thin_count*m_pit[1]*(float)(jd-2)+(float)jrest*m_pit[1];//-pitch[1]*(float)gc_out;
         }
       //}
@@ -1029,7 +1001,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
     //for(int k=kd-1;k<kd;k++){
       for(int j=0;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=(kd-1)*id*jd+j*id+i;
+          size_t ip = _F_IDX_S3D(i+1, j+1, kd, id, jd, kd, 0);
+          //size_t ip=(kd-1)*id*jd+j*id+i;
           z[ip]=m_org[2]+(float)thin_count*m_pit[2]*(float)(kd-2)+(float)krest*m_pit[2];//-pitch[2]*(float)gc_out;
         }
       }
@@ -1106,8 +1079,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
   //for(int k=0;k<kd;k++){
   //  for(int j=0;j<jd;j++){
   //    for(int i=0;i<id;i++){
-  //      size_t ip=k*id*jd+j*id+i;
-  //      //size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+  //      size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
   //      x[ip]=m_org[0]+m_pit[0]*(double)i;//-pitch[0]*(double)gc_out;
   //      y[ip]=m_org[1]+m_pit[1]*(double)j;//-pitch[1]*(double)gc_out;
   //      z[ip]=m_org[2]+m_pit[2]*(double)k;//-pitch[2]*(double)gc_out;
@@ -1117,8 +1089,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
   for(int k=0;k<kd;k++){
     for(int j=0;j<jd;j++){
       for(int i=0;i<id;i++){
-        int ip=k*id*jd+j*id+i;
-        //size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         x[ip]=m_org[0]+(double)thin_count*m_pit[0]*(double)i;//-pitch[0]*(double)gc_out;
         y[ip]=m_org[1]+(double)thin_count*m_pit[1]*(double)j;//-pitch[1]*(double)gc_out;
         z[ip]=m_org[2]+(double)thin_count*m_pit[2]*(double)k;//-pitch[2]*(double)gc_out;
@@ -1131,7 +1102,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     for(int k=0;k<kd;k++){
       for(int j=0;j<jd;j++){
         //for(int i=id-1;i<id;i++){
-          size_t ip=k*id*jd+j*id+id-1;
+          size_t ip = _F_IDX_S3D(id, j+1, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+j*id+id-1;
           x[ip]=m_org[0]+(double)thin_count*m_pit[0]*(double)(id-2)+(double)irest*m_pit[0];//-pitch[0]*(double)gc_out;
         //}
       }
@@ -1143,7 +1115,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     for(int k=0;k<kd;k++){
       //for(int j=jd-1;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=k*id*jd+(jd-1)*id+i;
+          size_t ip = _F_IDX_S3D(i+1, jd, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+(jd-1)*id+i;
           y[ip]=m_org[1]+(double)thin_count*m_pit[1]*(double)(jd-2)+(double)jrest*m_pit[1];//-pitch[1]*(double)gc_out;
         }
       //}
@@ -1155,7 +1128,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     //for(int k=kd-1;k<kd;k++){
       for(int j=0;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=(kd-1)*id*jd+j*id+i;
+          size_t ip = _F_IDX_S3D(i+1, j+1, kd, id, jd, kd, 0);
+          //size_t ip=(kd-1)*id*jd+j*id+i;
           z[ip]=m_org[2]+(double)thin_count*m_pit[2]*(double)(kd-2)+(double)krest*m_pit[2];//-pitch[2]*(double)gc_out;
         }
       }
@@ -1241,8 +1215,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
   for(int k=0;k<kd;k++){
     for(int j=0;j<jd;j++){
       for(int i=0;i<id;i++){
-        int ip=k*id*jd+j*id+i;
-        //size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         x[ip]=m_org[0]+(double)thin_count*m_pit[0]*(double)i;//-pitch[0]*(double)gc_out;
         y[ip]=m_org[1]+(double)thin_count*m_pit[1]*(double)j;//-pitch[1]*(double)gc_out;
         z[ip]=m_org[2]+(double)thin_count*m_pit[2]*(double)k;//-pitch[2]*(double)gc_out;
@@ -1255,7 +1228,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
     for(int k=0;k<kd;k++){
       for(int j=0;j<jd;j++){
         //for(int i=id-1;i<id;i++){
-          size_t ip=k*id*jd+j*id+id-1;
+          size_t ip = _F_IDX_S3D(id, j+1, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+j*id+id-1;
           x[ip]=m_org[0]+(double)thin_count*m_pit[0]*(double)(id-2)+(double)irest*m_pit[0];//-pitch[0]*(double)gc_out;
         //}
       }
@@ -1267,7 +1241,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
     for(int k=0;k<kd;k++){
       //for(int j=jd-1;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=k*id*jd+(jd-1)*id+i;
+          size_t ip = _F_IDX_S3D(i+1, jd, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+(jd-1)*id+i;
           y[ip]=m_org[1]+(double)thin_count*m_pit[1]*(double)(jd-2)+(double)jrest*m_pit[1];//-pitch[1]*(double)gc_out;
         }
       //}
@@ -1279,7 +1254,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, float* origin, fl
     //for(int k=kd-1;k<kd;k++){
       for(int j=0;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=(kd-1)*id*jd+j*id+i;
+          size_t ip = _F_IDX_S3D(i+1, j+1, kd, id, jd, kd, 0);
+          //size_t ip=(kd-1)*id*jd+j*id+i;
           z[ip]=m_org[2]+(double)thin_count*m_pit[2]*(double)(kd-2)+(double)krest*m_pit[2];//-pitch[2]*(double)gc_out;
         }
       }
@@ -1355,8 +1331,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
   //for(int k=0;k<kd;k++){
   //  for(int j=0;j<jd;j++){
   //    for(int i=0;i<id;i++){
-  //      size_t ip=k*id*jd+j*id+i;
-  //      //size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+  //      size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
   //      x[ip]=m_org[0]+m_pit[0]*(float)i;//-pitch[0]*(float)gc_out;
   //      y[ip]=m_org[1]+m_pit[1]*(float)j;//-pitch[1]*(float)gc_out;
   //      z[ip]=m_org[2]+m_pit[2]*(float)k;//-pitch[2]*(float)gc_out;
@@ -1366,8 +1341,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
   for(int k=0;k<kd;k++){
     for(int j=0;j<jd;j++){
       for(int i=0;i<id;i++){
-        size_t ip=k*id*jd+j*id+i;
-        //int ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         x[ip]=m_org[0]+(float)thin_count*m_pit[0]*(float)i;//-pitch[0]*(float)gc_out;
         y[ip]=m_org[1]+(float)thin_count*m_pit[1]*(float)j;//-pitch[1]*(float)gc_out;
         z[ip]=m_org[2]+(float)thin_count*m_pit[2]*(float)k;//-pitch[2]*(float)gc_out;
@@ -1380,7 +1354,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     for(int k=0;k<kd;k++){
       for(int j=0;j<jd;j++){
         //for(int i=id-1;i<id;i++){
-          size_t ip=k*id*jd+j*id+id-1;
+          size_t ip = _F_IDX_S3D(id, j+1, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+j*id+id-1;
           x[ip]=m_org[0]+(float)thin_count*m_pit[0]*(float)(id-2)+(float)irest*m_pit[0];//-pitch[0]*(float)gc_out;
         //}
       }
@@ -1392,7 +1367,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     for(int k=0;k<kd;k++){
       //for(int j=jd-1;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=k*id*jd+(jd-1)*id+i;
+          size_t ip = _F_IDX_S3D(i+1, jd, k+1, id, jd, kd, 0);
+          //size_t ip=k*id*jd+(jd-1)*id+i;
           y[ip]=m_org[1]+(float)thin_count*m_pit[1]*(float)(jd-2)+(float)jrest*m_pit[1];//-pitch[1]*(float)gc_out;
         }
       //}
@@ -1404,7 +1380,8 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     //for(int k=kd-1;k<kd;k++){
       for(int j=0;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=(kd-1)*id*jd+j*id+i;
+          size_t ip = _F_IDX_S3D(i+1, j+1, kd, id, jd, kd, 0);
+          //size_t ip=(kd-1)*id*jd+j*id+i;
           z[ip]=m_org[2]+(float)thin_count*m_pit[2]*(float)(kd-2)+(float)krest*m_pit[2];//-pitch[2]*(float)gc_out;
         }
       }
@@ -1416,7 +1393,7 @@ void COMB::OutputPlot3D_xyz(int m_step, int m_rank, int guide, double* origin, d
     for(int k=kd-1;k<kd;k++){
       for(int j=0;j<jd;j++){
         for(int i=0;i<id;i++){
-          size_t ip=k*id*jd+j*id+i;
+          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
           z[ip]=m_org[2]+(float)krest*m_pit[2]*(float)k;//-pitch[2]*(float)gc_out;
         }
       }
@@ -1444,7 +1421,9 @@ void COMB::setScalarGridData(int* size, int guide, float* d, float* data, int id
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
 
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -1454,14 +1433,22 @@ void COMB::setScalarGridData(int* size, int guide, float* d, float* data, int id
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1495,11 +1482,12 @@ void COMB::setVectorGridData(int* size, int guide, float* d, float* data, int id
   int kx = size[2];
   int gd = guide;
 
-  size_t dsize=id*jd*kd;
+  size_t dsize = (size_t)(id*jd*kd);
+  size_t dsize3 = (size_t)(id*jd*kd*3);
 
-  for (size_t i=0; i<id*jd*kd*3; i++) d[i]=0.0;
+  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
 
-  for (int ivar=0;ivar<3;ivar++){
+  for (size_t ivar=0;ivar<3;ivar++){
 
     for (int km=1; km<=kx; km++) {
       for (int jm=1; jm<=jx; jm++) {
@@ -1509,14 +1497,22 @@ void COMB::setVectorGridData(int* size, int guide, float* d, float* data, int id
           int i=im-1;
           int j=jm-1;
           int k=km-1;
-          size_t ip1= k   *id*jd+ j   *id+i;
-          size_t ip2= k   *id*jd+ j   *id+i+1;
-          size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          size_t ip4= k   *id*jd+(j+1)*id+i;
-          size_t ip5=(k+1)*id*jd+ j   *id+i;
-          size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+          //size_t ip1= k   *id*jd+ j   *id+i;
+          //size_t ip2= k   *id*jd+ j   *id+i+1;
+          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+          //size_t ip4= k   *id*jd+(j+1)*id+i;
+          //size_t ip5=(k+1)*id*jd+ j   *id+i;
+          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
           d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
           d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
@@ -1553,8 +1549,10 @@ void COMB::setVectorComponentGridData(int* size, int guide, float* d, float* dat
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
- 
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
+
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
       for (int im=1; im<=ix; im++) {
@@ -1563,14 +1561,22 @@ void COMB::setVectorComponentGridData(int* size, int guide, float* d, float* dat
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1608,7 +1614,9 @@ void COMB::setScalarGridData(int* size, int guide, double* d, double* data, int 
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
 
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -1618,14 +1626,22 @@ void COMB::setScalarGridData(int* size, int guide, double* d, double* data, int 
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1659,11 +1675,12 @@ void COMB::setVectorGridData(int* size, int guide, double* d, double* data, int 
   int kx = size[2];
   int gd = guide;
 
-  size_t dsize=id*jd*kd;
+  size_t dsize = (size_t)(id*jd*kd);
+  size_t dsize3 = (size_t)(id*jd*kd*3);
 
-  for (size_t i=0; i<id*jd*kd*3; i++) d[i]=0.0;
+  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
 
-  for (int ivar=0;ivar<3;ivar++){
+  for (size_t ivar=0;ivar<3;ivar++){
 
     for (int km=1; km<=kx; km++) {
       for (int jm=1; jm<=jx; jm++) {
@@ -1673,14 +1690,22 @@ void COMB::setVectorGridData(int* size, int guide, double* d, double* data, int 
           int i=im-1;
           int j=jm-1;
           int k=km-1;
-          size_t ip1= k   *id*jd+ j   *id+i;
-          size_t ip2= k   *id*jd+ j   *id+i+1;
-          size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          size_t ip4= k   *id*jd+(j+1)*id+i;
-          size_t ip5=(k+1)*id*jd+ j   *id+i;
-          size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+          //size_t ip1= k   *id*jd+ j   *id+i;
+          //size_t ip2= k   *id*jd+ j   *id+i+1;
+          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+          //size_t ip4= k   *id*jd+(j+1)*id+i;
+          //size_t ip5=(k+1)*id*jd+ j   *id+i;
+          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
           d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
           d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
@@ -1716,7 +1741,9 @@ void COMB::setVectorComponentGridData(int* size, int guide, double* d, double* d
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
  
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -1726,14 +1753,22 @@ void COMB::setVectorComponentGridData(int* size, int guide, double* d, double* d
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1772,7 +1807,9 @@ void COMB::setScalarGridData(int* size, int guide, float* d, double* data, int i
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
 
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -1782,14 +1819,22 @@ void COMB::setScalarGridData(int* size, int guide, float* d, double* data, int i
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1823,11 +1868,12 @@ void COMB::setVectorGridData(int* size, int guide, float* d, double* data, int i
   int kx = size[2];
   int gd = guide;
 
-  size_t dsize=id*jd*kd;
+  size_t dsize = (size_t)(id*jd*kd);
+  size_t dsize3 = (size_t)(id*jd*kd*3);
 
-  for (size_t i=0; i<id*jd*kd*3; i++) d[i]=0.0;
+  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
 
-  for (int ivar=0;ivar<3;ivar++){
+  for (size_t ivar=0;ivar<3;ivar++){
 
     for (int km=1; km<=kx; km++) {
       for (int jm=1; jm<=jx; jm++) {
@@ -1837,14 +1883,22 @@ void COMB::setVectorGridData(int* size, int guide, float* d, double* data, int i
           int i=im-1;
           int j=jm-1;
           int k=km-1;
-          size_t ip1= k   *id*jd+ j   *id+i;
-          size_t ip2= k   *id*jd+ j   *id+i+1;
-          size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          size_t ip4= k   *id*jd+(j+1)*id+i;
-          size_t ip5=(k+1)*id*jd+ j   *id+i;
-          size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+          //size_t ip1= k   *id*jd+ j   *id+i;
+          //size_t ip2= k   *id*jd+ j   *id+i+1;
+          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+          //size_t ip4= k   *id*jd+(j+1)*id+i;
+          //size_t ip5=(k+1)*id*jd+ j   *id+i;
+          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
           d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
           d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
@@ -1880,7 +1934,9 @@ void COMB::setVectorComponentGridData(int* size, int guide, float* d, double* da
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
  
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -1890,14 +1946,22 @@ void COMB::setVectorComponentGridData(int* size, int guide, float* d, double* da
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1936,7 +2000,9 @@ void COMB::setScalarGridData(int* size, int guide, double* d, float* data, int i
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
 
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -1946,14 +2012,22 @@ void COMB::setScalarGridData(int* size, int guide, double* d, float* data, int i
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -1987,11 +2061,12 @@ void COMB::setVectorGridData(int* size, int guide, double* d, float* data, int i
   int kx = size[2];
   int gd = guide;
 
-  size_t dsize=id*jd*kd;
+  size_t dsize = (size_t)(id*jd*kd);
+  size_t dsize3 = (size_t)(id*jd*kd*3);
 
-  for (size_t i=0; i<id*jd*kd*3; i++) d[i]=0.0;
+  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
 
-  for (int ivar=0;ivar<3;ivar++){
+  for (size_t ivar=0;ivar<3;ivar++){
 
     for (int km=1; km<=kx; km++) {
       for (int jm=1; jm<=jx; jm++) {
@@ -2001,14 +2076,22 @@ void COMB::setVectorGridData(int* size, int guide, double* d, float* data, int i
           int i=im-1;
           int j=jm-1;
           int k=km-1;
-          size_t ip1= k   *id*jd+ j   *id+i;
-          size_t ip2= k   *id*jd+ j   *id+i+1;
-          size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          size_t ip4= k   *id*jd+(j+1)*id+i;
-          size_t ip5=(k+1)*id*jd+ j   *id+i;
-          size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+          //size_t ip1= k   *id*jd+ j   *id+i;
+          //size_t ip2= k   *id*jd+ j   *id+i+1;
+          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+          //size_t ip4= k   *id*jd+(j+1)*id+i;
+          //size_t ip5=(k+1)*id*jd+ j   *id+i;
+          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
           d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
           d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
@@ -2044,7 +2127,9 @@ void COMB::setVectorComponentGridData(int* size, int guide, double* d, float* da
   int kx = size[2];
   int gd = guide;
 
-  for (size_t i=0; i<id*jd*kd; i++) d[i]=0.0;
+  size_t dsize = (size_t)(id*jd*kd);
+
+  for (size_t i=0; i<dsize; i++) d[i]=0.0;
  
   for (int km=1; km<=kx; km++) {
     for (int jm=1; jm<=jx; jm++) {
@@ -2054,14 +2139,22 @@ void COMB::setVectorComponentGridData(int* size, int guide, double* d, float* da
         int i=im-1;
         int j=jm-1;
         int k=km-1;
-        size_t ip1= k   *id*jd+ j   *id+i;
-        size_t ip2= k   *id*jd+ j   *id+i+1;
-        size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        size_t ip4= k   *id*jd+(j+1)*id+i;
-        size_t ip5=(k+1)*id*jd+ j   *id+i;
-        size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        size_t ip8=(k+1)*id*jd+(j+1)*id+i;
+        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+        //size_t ip1= k   *id*jd+ j   *id+i;
+        //size_t ip2= k   *id*jd+ j   *id+i+1;
+        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
+        //size_t ip4= k   *id*jd+(j+1)*id+i;
+        //size_t ip5=(k+1)*id*jd+ j   *id+i;
+        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
+        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
+        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
         d[ip1]=d[ip1]+ddd;
         d[ip2]=d[ip2]+ddd;
         d[ip3]=d[ip3]+ddd;
@@ -2100,7 +2193,7 @@ void COMB::VolumeDataDivideBy8(float* d, int id, int jd, int kd)
   for (k=1; k<kd-1; k++){
     for (j=1; j<jd-1; j++){
       for (i=1; i<id-1; i++){
-        ip=k*id*jd+j*id+i;
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         d[ip]=d[ip]*0.125;
       }
     }
@@ -2116,7 +2209,7 @@ void COMB::FaceDataDivideBy4(float* d, int id, int jd, int kd)
   i=0;
   for (k=1; k<kd-1; k++){
     for (j=1; j<jd-1; j++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2124,7 +2217,7 @@ void COMB::FaceDataDivideBy4(float* d, int id, int jd, int kd)
   i=id-1;
   for (k=1; k<kd-1; k++){
     for (j=1; j<jd-1; j++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2132,7 +2225,7 @@ void COMB::FaceDataDivideBy4(float* d, int id, int jd, int kd)
   j=0;
   for (k=1; k<kd-1; k++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2140,7 +2233,7 @@ void COMB::FaceDataDivideBy4(float* d, int id, int jd, int kd)
   j=jd-1;
   for (k=1; k<kd-1; k++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2148,7 +2241,7 @@ void COMB::FaceDataDivideBy4(float* d, int id, int jd, int kd)
   k=0;
   for (j=1; j<jd-1; j++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2156,7 +2249,7 @@ void COMB::FaceDataDivideBy4(float* d, int id, int jd, int kd)
   k=kd-1;
   for (j=1; j<jd-1; j++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2170,73 +2263,73 @@ void COMB::LineDataDivideBy2(float* d, int id, int jd, int kd)
 
   i=0; j=0;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=0; j=jd-1;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=0; k=0;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=0; k=kd-1;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=0; k=0;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=0; k=kd-1;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=jd-1; k=0;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=jd-1; k=kd-1;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; j=0;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; j=jd-1;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; k=0;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; k=kd-1;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
@@ -2255,7 +2348,7 @@ void COMB::VolumeDataDivideBy8(double* d, int id, int jd, int kd)
   for (k=1; k<kd-1; k++){
     for (j=1; j<jd-1; j++){
       for (i=1; i<id-1; i++){
-        ip=k*id*jd+j*id+i;
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         d[ip]=d[ip]*0.125;
       }
     }
@@ -2271,7 +2364,7 @@ void COMB::FaceDataDivideBy4(double* d, int id, int jd, int kd)
   i=0;
   for (k=1; k<kd-1; k++){
     for (j=1; j<jd-1; j++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2279,7 +2372,7 @@ void COMB::FaceDataDivideBy4(double* d, int id, int jd, int kd)
   i=id-1;
   for (k=1; k<kd-1; k++){
     for (j=1; j<jd-1; j++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2287,7 +2380,7 @@ void COMB::FaceDataDivideBy4(double* d, int id, int jd, int kd)
   j=0;
   for (k=1; k<kd-1; k++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2295,7 +2388,7 @@ void COMB::FaceDataDivideBy4(double* d, int id, int jd, int kd)
   j=jd-1;
   for (k=1; k<kd-1; k++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2303,7 +2396,7 @@ void COMB::FaceDataDivideBy4(double* d, int id, int jd, int kd)
   k=0;
   for (j=1; j<jd-1; j++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2311,7 +2404,7 @@ void COMB::FaceDataDivideBy4(double* d, int id, int jd, int kd)
   k=kd-1;
   for (j=1; j<jd-1; j++){
     for (i=1; i<id-1; i++){
-      ip=k*id*jd+j*id+i;
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
       d[ip]=d[ip]*0.25;
     }
   }
@@ -2325,73 +2418,73 @@ void COMB::LineDataDivideBy2(double* d, int id, int jd, int kd)
 
   i=0; j=0;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=0; j=jd-1;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=0; k=0;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=0; k=kd-1;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=0; k=0;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=0; k=kd-1;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=jd-1; k=0;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   j=jd-1; k=kd-1;
   for (i=1; i<id-1; i++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; j=0;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; j=jd-1;
   for (k=1; k<kd-1; k++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; k=0;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
   i=id-1; k=kd-1;
   for (j=1; j<jd-1; j++){
-    ip=k*id*jd+j*id+i;
+    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
     d[ip]=d[ip]*0.5;
   }
 
@@ -2417,14 +2510,16 @@ void COMB::thinout_plot3d(float* dt, float* d, int idt, int jdt, int kdt, int id
 
         ipt=k*idt*jdt+j*idt+i;
 
-        //ip=k*id*jd+j*id+i;
+        //ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         ix=tc*i;
         jy=tc*j;
         kz=tc*k;
         if(i==idt-1) ix=tc*(i-1)+irest;
         if(j==jdt-1) jy=tc*(j-1)+jrest;
         if(k==kdt-1) kz=tc*(k-1)+krest;
-        ip=kz*id*jd+jy*id+ix;
+
+        ip = _F_IDX_S3D(ix+1, jy+1, kz+1, id, jd, kd, 0);
+        //ip=kz*id*jd+jy*id+ix;
 
         dt[ipt]=d[ip];
       }
@@ -2452,14 +2547,16 @@ void COMB::thinout_plot3d(double* dt, double* d, int idt, int jdt, int kdt, int 
 
         ipt=k*idt*jdt+j*idt+i;
 
-        //ip=k*id*jd+j*id+i;
+        //ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
         ix=tc*i;
         jy=tc*j;
         kz=tc*k;
         if(i==idt-1) ix=tc*(i-1)+irest;
         if(j==jdt-1) jy=tc*(j-1)+jrest;
         if(k==kdt-1) kz=tc*(k-1)+krest;
-        ip=kz*id*jd+jy*id+ix;
+
+        ip = _F_IDX_S3D(ix+1, jy+1, kz+1, id, jd, kd, 0);
+        //ip=kz*id*jd+jy*id+ix;
 
         dt[ipt]=d[ip];
       }

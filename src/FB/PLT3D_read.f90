@@ -250,7 +250,6 @@
     implicit none
     integer :: id, jd, kd, ifl
     real*4, dimension(id, jd, kd) :: x, y, z
-!   real*4, dimension(id*jd*kd) :: x, y, z
     integer, dimension(id, jd, kd) :: iblank
     integer :: i, j, k
 

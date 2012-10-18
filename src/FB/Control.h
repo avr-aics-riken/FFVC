@@ -648,7 +648,7 @@ public:
   int Start;
   int version;    ///< FFVバージョン番号
   
-  
+  unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned Restart_step;       ///< リスタートステップ
   unsigned long NoWallSurface; ///< 固体表面セル数
   
@@ -763,6 +763,7 @@ public:
     num_thread = 0;
     Parallelism = 0;
     RefMat = 0;
+    Restart_staging = 0;    
     Restart_step = 0;
     Start = 0;
     version = 0;

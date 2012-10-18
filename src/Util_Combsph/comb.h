@@ -83,6 +83,9 @@ private:
   // ラフリスタートの場合には、新規dfiファイルを生成する >> dfi.C
   int dfi_mng[var_END];
 
+  //並列実行時のSTAGINGのON/OFF
+  unsigned staging;
+
 public:
   
   string filename;
