@@ -250,12 +250,13 @@ Specified\_Temperature & セル要素 & 熱流れ & 温度指定 & セルの温�
 \begin{program}
 OuterBoundary {
   Basic_BCs[@] {
-    alias    = "inlet_2"
-    class    = "Specified_Velocity"
-    Profile  = "Harmonic"
-    Normal   = (0.0, 1.0, 0.0)
-    amplitude= 7.0
-    frequency= 2.0
+    alias         = "sine_wall"
+    class         = "Wall"
+    Type          = "slide"
+    Normal        = (0.0, 1.0, 0.0)
+    Profile       = "Harmonic"
+    amplitude     = 7.0
+    frequency     = 2.0
     initial_phase = 0.0
     constant_bias = 0.0
   }
@@ -309,11 +310,13 @@ V \,{=}\, A \sin \left( 2 \mathrm{\pi} ft \,+\, \phi \right) \,+\, b
 {\small
 \begin{program}
 OuterBoundary {
-    Basic_BCs[@] {
-      class                    = "Adiabatic"
-      alias                    = "Eng_Block"
-      neighbor_medium          = "air-100c"
-    }
+  Basic_BCs[@] {
+    alias            = "Eng_Block"
+    class            = "Wall"
+    Type             = "Fixed"
+    heat_type        = "Adiabatic"
+    neighbor_medium  = "air-100c"
+  }
 }
 \end{program}
 }
@@ -326,15 +329,15 @@ OuterBoundary {
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      ...
-      <Param name="Heat_Type"       dtype="STRING" value="HeatFlux" />
-      <Param name="Heat_Flux"       dtype="REAL"   value="12.0" />
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+  Basic_BCs[@] {
+    alias            = "Eng_Block"
+    class            = "Wall"
+    Type             = "Fixed"
+    heat_type        = "heatflux"
+    heat_flux        = 12.0
+  }
+}
 \end{program}
 }
 
@@ -393,16 +396,16 @@ Type\_Sは表面温度と熱伝達係数を与え，熱流束を計算します�
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      ...
-      <Param name="Heat_Type"             dtype="STRING" value="HeatTransfer_S" />
-      <Param name="Surface_Temperature"   dtype="REAL"   value="300.0"/>
-      <Param name="Coef_of_Heat_Transfer" dtype="REAL"   value="20.0"/>
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+  Basic_BCs[@] {
+    alias                 = "Exhaust"
+    class                 = "Wall"
+    Type                  = "Fixed"
+    heat_type             = "HeatTransfer_S"
+    Surface_Temperature   = 300.0
+    Coef_of_Heat_Transfer = 20.0
+  }
+}
 \end{program}
 }
 
@@ -464,23 +467,24 @@ Type\_SNの境界条件は，上式のパラメータを実装しています．
 {\small
 \begin{program}
 OuterBoundary {
-    BC[@] {
-      class                    = "HeatTransfer_SN"
-      alias                    = "Eng_Block"
-      neighbor_medium          = "air-100c"
-      Surface_Temperature      = 100.0
-      Ref_Temp_Mode            = "Bulk_Temperature"
-      vertical_laminar_alpha   = 0.59
-      vertical_laminar_beta    = 0.25
-      vertical_turbulent_alpha = 0.1
-      vertical_turbulent_beta  = 0.3333333
-      vertical_Ra_critial      = 1.0e9
-      lower_laminar_alpha      = 0.27
-      lower_laminar_beta       = 0.25
-      lower_turbulent_alpha    = 0.27
-      lower_turbulent_beta     = 0.25
-      lower_Ra_critial         = 1.0e9
-    }
+  Basic_BCs[@] {
+    alias                    = "Exhaust"
+    class                    = "Wall"
+    Type                     = "Fixed"
+    heat_type                = "HeatTransfer_SN"
+    Surface_Temperature      = 100.0
+    Ref_Temp_Mode            = "Bulk_Temperature"
+    vertical_laminar_alpha   = 0.59
+    vertical_laminar_beta    = 0.25
+    vertical_turbulent_alpha = 0.1
+    vertical_turbulent_beta  = 0.3333333
+    vertical_Ra_critial      = 1.0e9
+    lower_laminar_alpha      = 0.27
+    lower_laminar_beta       = 0.25
+    lower_turbulent_alpha    = 0.27
+    lower_turbulent_beta     = 0.25
+    lower_Ra_critial         = 1.0e9
+  }
 }
 \end{program}
 }
@@ -532,19 +536,19 @@ H \,=\, \alpha Re_L^\beta \, Pr^\gamma \, \frac{\lambda}{L^\prime}
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      ...
-      <Param name="Heat_Type"           dtype="STRING" value="HeatTransfer_SF" />
-      <Param name="Surface_Temperature" dtype="REAL"   value="500.0"/>
-      <Param name="Ref_Temp_Mode"       dtype="STRING" value="Bulk_Temperature"/>
-      <Param name="alpha"               dtype="REAL"   value="0.037"/>
-      <Param name="beta"                dtype="REAL"   value="0.8"/>
-      <Param name="gamma"               dtype="REAL"   value="0.333333"/>
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+  Basic_BCs[@] {
+    alias               = "Exhaust"
+    class               = "Wall"
+    Type                = "Fixed"
+    heat_type           = "HeatTransfer_SF"
+    Surface_Temperature = 500.0
+    Ref_Temp_Mode       = "Bulk_Temperature"
+    alpha               = 0.037
+    beta                = 0.8
+    gamma               = 0.333333
+  }
+}
 \end{program}
 }
 
@@ -571,16 +575,16 @@ Ref\_Temp\_Mode & Bulk\_Temperature or Local\_Temperature\\ \bottomrule
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      ...
-      <Param name="Heat_Type"             dtype="STRING" value="HeatTransfer_SF" />
-      <Param name="Bulk_Temperature"      dtype="REAL"   value="500.0"/>
-      <Param name="Coef_of_Heat_Transfer" dtype="REAL"   value="0.12"/>
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+  Basic_BCs[@] {
+    alias                 = "Exhaust"
+    class                 = "Wall"
+    Type                  = "Fixed"
+    heat_type             = "HeatTransfer_B"
+    Coef_of_Heat_Transfer = 0.12
+    Bulk_Temperature      = 500.0
+  }
+}
 \end{program}
 }
 
@@ -614,15 +618,15 @@ q^{\prime}_{ISO,\,1/2} \,=\, -\mathit{\lambda}_1 \frac{\mathit{\theta}^{\prime}_
 
 {\small
 \begin{program}
-<OuterBoundary>
-  <Elem name="Basic_BCs">
-    <Elem name="wall" id="1">
-      ...
-      <Param name="Heat_Type"   dtype="STRING" value="IsoThermal" />
-      <Param name="Temperature" dtype="REAL"   value="100.0"/>
-    </Elem>
-  </Elem>
-</OuterBoundary>
+OuterBoundary {
+  Basic_BCs[@] {
+    alias            = "Exhaust"
+    class            = "Wall"
+    Type             = "Fixed"
+    heat_type        = "IsoThermal"
+    Temperature      = 100.0
+  }
+}
 \end{program}
 }
 
@@ -956,7 +960,7 @@ Binary近似の場合には，固体壁面との界面で$\nabla p=0$を満た�
 \label{fig:heat bc on solid}
 \end{figure}
 
-CBCの熱流体解析には幾つかのモードがあります．\hyperlink{tgt:solver_property}{Kind\_of\_Solver}の指定モードによって，計算空間内の計算対象とする部分が異なります．
+FFV-Cの熱流体解析には幾つかのモードがあります．\hyperlink{tgt:solver_property}{Kind\_of\_Solver}の指定モードによって，計算空間内の計算対象とする部分が異なります．
 Thermal\_FlowとThermal\_Flow\_Naturalの場合は，熱流動計算で流体の温度のみを解きます\footnote{計算の実装上，固体部分も解いていますが，その値はマスクされ，無効化されています．}．したがって，固体部分は計算対象とはならず不活性セルとして扱います．これより，流体-固体の境界面で与える熱境界条件（熱流束）は，流体セル側のみに指定されます．
 
 一方，Solid\_Conductionの場合は，固体部分の熱伝導のみを解くので，流体部分を不活性セルとして扱います．したがって，流体-固体の境界面で与える熱境界条件は，固体セル側のみに指定されます．

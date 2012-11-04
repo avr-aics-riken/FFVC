@@ -94,7 +94,7 @@ MPI通信ライブラリのインストールの後に，TextParserをインス�
 $ cat config_tp.sh
 $ ./configure --prefix=$1 \
               CXX=mpicc \
-	      --enable-mpi
+              --enable-mpi
 	    
 $ config_tp.sh /usr/local/TextParser
 $ make
@@ -151,7 +151,7 @@ $ cat config_cpm.sh
 
 {\small
 \begin{program}
-$ config_cpm.sh /usr/local/cpm
+$ config_cpm.sh /usr/local/CPMlib
 \end{program}
 }
 
@@ -229,7 +229,7 @@ ffvc-x.x.x
   |
   +- src                          ソースコードディレクトリ
       +- Cutlib-x.x.x             カットライブラリ
-      +- F_CORE                   Fortranのコアプログラム（Binary版）
+      +- F_CORE                   Fortranのコアプログラム
       +- F_VOF                    VOFクラスのFortranファイル
       +- FB                       FlowBaseクラス（ユーザー定義クラス群）
       +- FFV                      FFV-Cソルバ

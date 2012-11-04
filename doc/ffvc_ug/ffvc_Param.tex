@@ -5,7 +5,7 @@
 %
 \subsection{パラメータ記述}
 textparserライブラリが扱うパラメータデータベースは，下記のようにノードの階層構造にリーフ（ラベル/値のペア）を格納した構造になっています．パラメータ値のうち，文字列についてはダブルクォーテーションにより囲みます．
-textparserライブラリのExamplesディレクトリにパラメータの様々な記述例があるので，参考にしてください．
+TextParserライブラリのExamplesディレクトリにパラメータの様々な記述例があるので，参考にしてください．
 
 {
 \small 
@@ -24,7 +24,7 @@ textparserライブラリのExamplesディレクトリにパラメータの様�
 
 %
 \subsection{パラメータファイルの種類と構造}
-FFV-Cでは，\textbf{表\ref{tbl:input_files}}に示す3つの入力ファイルを使います．
+FFV-Cでは，\textbf{表\ref{tbl:input_files}}に示す2つの入力ファイルを使います．
 
 \begin{table}[htdp]
 \caption{パラメータファイル内のセクション}
@@ -33,7 +33,6 @@ FFV-Cでは，\textbf{表\ref{tbl:input_files}}に示す3つの入力ファイ�
 \begin{tabular}{ll} \toprule
 ファイル & 記述内容\\ \midrule
 input.tp & 入力パラメータファイル\\
-domain.tp & 計算領域情報ファイル\\ 
 polygon.tp & 入力幾何形状ファイル\\ \bottomrule
 \end{tabular}
 \end{center}
@@ -50,6 +49,7 @@ polygon.tp & 入力幾何形状ファイル\\ \bottomrule
 \small
 \begin{tabular}{ll} \toprule
 セクション & パラメータ\\ \midrule
+DomainInfo & 計算領域情報\\
 Steer & ソルバー制御\\
 Parameter & 計算条件\\
 BC\_Table & 境界条件\\
@@ -64,7 +64,7 @@ Medium\_Table & 媒質情報\\ \bottomrule
 {
 \small 
 \begin{program}
-$ ffvc input.tp domain.tp
+$ ffvc input.tp
 \end{program}
 }
 
@@ -73,11 +73,13 @@ $ ffvc input.tp domain.tp
 
 \pagebreak
 %%
-\section{計算領域情報ファイル}
-計算対象となる領域の情報を与えます．
+\section{入力パラメータファイル}
+
 
 %
 \subsection{DomainInfo}
+
+計算対象となる領域の情報を与えます．
 
 \begin{indentation}{3zw}{0zw}
 
@@ -121,11 +123,8 @@ ActiveSubDomain\_File & サブドメインの活性・不活性を指定する�
 
 
 
-\pagebreak
-%%
-\section{入力パラメータファイル}
-
 %
+\pagebreak
 \subsection{Steerセクション}
 
 Steerセクションでは，実行制御パラメータ\index{じっこうせいぎょぱらめーた@実行制御パラメータ}を記述します．\\
@@ -434,7 +433,7 @@ Users & ユーザ例題\\ \bottomrule
 \pagebreak
 \subsubsection{File\_IO}
 
-\hypertarget{tgt:fileio}{ファイル入出力モード}を指定します．このセクションでは，入出力ファイルの単位，ガイドセルのモード，ファイル出力モード，並列入出力モード，デバッグ時のファイルなどを指定します．
+\hypertarget{tgt:fileio}{ファイル入出力モード}を指定します．このセクションでは，入出力ファイルの単位，ガイドセルのモード，並列入出力モード，デバッグ時のファイルなどを指定します．
 
 \begin{indentation}{3zw}{0zw}
 
@@ -449,12 +448,23 @@ Users & ユーザ例題\\ \bottomrule
     Averaged_Interval_Type = "Time"
     Averaged_Interval      = 1000
     Voxel_Output           = "off"
+    
+    Output_Mode {
+      Mode                 = "specified"
+      Directory_Path       = "hoge"
+    }
+    
+    Plot3d {
+      Option               = "on"
+      Interval_Type        = "step"
+      Interval             = 10
+    }
   }
 \end{program}
 }
 
 \textbf{表\ref{tbl:file_IO_parameter}}に指定するパラメータの内容を示します．
-Unit\_of\_Fileでは入出力する結果ファイル(*.sph)の単位を指定し，有次元か無次元を指定できます．
+Unit\_of\_Fileでは入出力する結果ファイルの単位を指定し，有次元か無次元を指定できます．
 
 Guide\_Outラベルで\lq\lq with\rq\rq を指定した場合の出力ガイドセルのサイズは\hyperlink{tgt:convection_term}{Convection\_Term}の項を参照してください．
 
@@ -476,7 +486,19 @@ Instant\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
 Averaged\_Interval\_Type & 平均値の出力指定形式 & Step & ステップ数指定\\
 & & Time & 時間間隔の指定\\
 Averaged\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
-Voxel\_Output & ボクセルファイルの出力指定 & | & off $|$ svx\\
+Voxel\_Output & ボクセルファイルの出力指定 & | & off\\
+ & & bx & ビットボクセル\\
+ & & svx & svx フォーマット\\ \hline
+Output\_Mode & & & \\
+Mode & 出力ディレクトリモード & current & ソルバー起動ディレクトリに出力\\
+ & & specified & 指定ディレクトリに出力\\
+ & & time\_slice & 出力時刻毎にディレクトリを作成して出力\\
+Directory\_Path & 出力ディレクトリを指定 & & ディレクトリパスを記述\\ \hline
+PLOT3D & & & \\
+Option & PLOT3D形式での出力 & On $|$ Off & \\
+Interval\_Type & 出力指定形式 & Step & ステップ数指定\\
+ & & Time & 時間間隔の指定\\
+Interval & 出力間隔 & | & ステップ数$|$時間間隔\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -484,15 +506,20 @@ Voxel\_Output & ボクセルファイルの出力指定 & | & off $|$ svx\\
 \end{table}
 
 
-単一ファイルとして入出力する場合には，Masterを指定します．
-
-デバッグのため，$\nabla \cdot \bm{u}$の値を無次元で出力します．
+Debug\_Divergenceは，デバッグのため$\nabla \cdot \bm{u}$の値を無次元で出力します．
 
 Intervalのラベルにより，ファイル出力間隔を指定します．
 対象となる出力ファイルに対して，時刻またはステップ数によりファイル出力間隔を指定できます．
 Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq の場合，時刻の単位は\hyperlink{tgt:unit}{Unit\_of\_Input\_Parameter}で指定したモードに従います．
 
-ボクセルファイルを確認のため出力する場合には，ファイル形式を指定します．
+Voxel\_Outputは，ボクセルファイルを確認のため出力する場合に利用し，ファイル形式を指定します．
+
+Output\_Modeは，ファイルの出力方法を指定します．FFV-Cソルバーは大規模並列実行を想定しています．
+つまり，多数のプロセスが各々の担当領域の結果をファイルに出力する場合，1つのディレクトリのファイル数が多くなり，ハンドリングが困難になります．これを回避するため，time\_sliceモードを用意しています．
+このtime\_sliceモードは，出力のタイミング毎にディレクトリを自動的に作成し，そのディレクトリ内に結果ファイルを出力します．例えば，2,000プロセスで計算し，速度と圧力，および全圧の結果を出力することを指定すると，1時刻につき6,000ファイルが生成されますが，それ以上にはなりません．
+
+PLOT3Dの出力については，PLOT3D\_Optionsセクションで詳細な指定が行えます．
+
 \end{indentation}
 
 
@@ -509,7 +536,7 @@ Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq 
 {\small
 \begin{program}
   Geometry_Model {
-    Polylib_File          = "polylib_m3.tp"
+    Polylib_File          = "foo.tp"
     Fluid_Medium_for_Fill = "air"
     Solid_Medium_for_Fill = "fe"
     Hint_of_Filling_Fluid = "z_plus"
@@ -518,9 +545,28 @@ Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq 
 }
 
 
+\begin{table}[htdp]
+\caption{幾何形状のパラメータ指定}
+\begin{center}
+\small
+\begin{tabular}{llll} \toprule
+ラベル & 指定項目 & ラベル & 指定内容 \\ \midrule
+Polylib\_File & Polylibへの入力ファイル & & テキストパーサー形式\\
+Fluid\_Medium\_for\_Fill & フィルを実行する場合の流体媒質名 & & \\
+Solid\_Medium\_for\_Fill & フィルを実行する場合の固体媒質名 & & \\
+Hint\_of\_Filling\_Fluid & フィルを実行する場合の基点のヒント & X\_Minus & X-方向からフィル\\
+& & X\_Plus  & X+方向からフィル\\
+& & Y\_Minus & Y-方向からフィル\\
+& & Y\_Plus  & Y+方向からフィル\\
+& & Z\_Minus & Z-方向からフィル\\
+& & Z\_Plus  & Z+方向からフィル\\
+\bottomrule
+\end{tabular}
+\end{center}
+\label{tbl:file_geometry}
+\end{table}
 
-
-
+Fluid\_Medium\_for\_FillとSolid\_Medium\_for\_Fillは，Medium\_Tableで指定されている媒質ラベルを指定します．
 
 \end{indentation}
 
@@ -540,55 +586,65 @@ Instant\_Interval\_TypeあるいはAveraged\_Interval\_Typeが\lq\lq time\rq\rq 
   Iteration {
     Flow {
       Poisson {
-        Iteration     = 20
-        Epsilon       = 1.0e-3
-        Omega         = 1.2
-        Norm          = "dx_b"
-        Linear_Solver = "SOR"
-        Comm_mode     = "sync"
+        Iteration     = 50
+        Epsilon       = 1.0e-4
+        Omega         = 1.1
+        Norm          = "r_r0"
+        Linear_Solver = "sor2sma"
+        Comm_mode     = "async"
+      }
+      VP {
+        Iteration     = 100
+        Epsilon       = 1.0e-4
+        Norm          = "v_div_max"
       }
     }
     Heat {
       Euler_Implicit {
         Iteration     = 30
         Epsilon       = 1.0e-2
-        Omega         = 1.2
-        Norm          = "r_r0"
+        Omega         = 1.1
+        Norm          = "T_Res_L2_Absolute"
         Linear_Solver = "SOR"
-        Comm_mode     = "async"
+        Comm_mode     = "sync"
       }     
     }     
   }
 \end{program}
 }
 
+FFV-Cの反復過程は，フラクショナルステップ法を基本としていますが，ダルシー則のような速度の関数で圧力勾配が決まるような境界条件を陰的に扱えるように工夫されています．
+このため，HSMACのように圧力のアップデートと同時に速度のアップデートも毎回行い，$\bm{u}^{n+1}$の値を毎回計算し，$\nabla \cdot \bm{u}^{n+1}$を評価し，速度の発散が指定値以下になったら収束したと判断しています．
+つまり，圧力Poissonの収束と速度の発散値の収束の2つの閾値で収束判定を行っています．
+
 反復法を用いる場合は，\hyperlink{tgt:algorithm}{Algorithm}セクションで反復法を含む解法を指定します．
-第2レベルで指定するラベルは指定するアルゴリズムに応じて異なります．
-\textbf{表\ref{tbl:itr_flow_algo}}に指定アルゴリズムと指定ラベルの関係を示します．
+
+%第2レベルで指定するラベルは指定するアルゴリズムに応じて異なります．
+%\textbf{表\ref{tbl:itr_flow_algo}}に指定アルゴリズムと指定ラベルの関係を示します．
 %2nd\_Poissonは二次精度Runge-Kutta法の場合の2nd stepの圧力反復の収束条件を意味します．
 
 \textbf{表\ref{tbl:flow_itr}}には，流動解析の反復解法の指定パラメータを示します．
-また，指定可能な収束判定ノルムの種類を\textbf{表\ref{tbl:norm-type}}に示します．
-
+圧力のPoisson反復式に指定可能な収束判定ノルムの種類を\textbf{表\ref{tbl:norm-type Poisson}}に示します．
+また，圧力速度の反復過程の収束条件は\textbf{表\ref{tbl:norm-type VP}}で指定します．
 
 \textbf{表\ref{tbl:LS}}に選択できる反復解法を示します．
 表中の△は，並列処理時のデータ依存性（再帰干渉）のために，逐次と並列時で異なる収束特性を示すことを意味します．
 %SOR2CMAは反復過程でメモリアクセスが連続になるように並べ替えを行うためにオーバーヘッドが生じるので，反復回数が少ない場合には計算速度向上の効果はない．\\
 
-\begin{table}[htdp]
-\caption{流動解析のアルゴリズムと指定ラベル}
-\begin{center}
-\small
-\begin{tabular}{ll} \toprule
-Algorithm & 必要なラベル\\ \midrule
-FS\_C\_EE\_D\_EE & Poisson\\ \bottomrule
+%\begin{table}[htdp]
+%\caption{流動解析のアルゴリズムと指定ラベル}
+%\begin{center}
+%\small
+%\begin{tabular}{ll} \toprule
+%Algorithm & 必要なラベル\\ \midrule
+%FS\_C\_EE\_D\_EE & Poisson\\ \bottomrule
 %FS\_C\_AB\_D\_AB & Poisson\\ \bottomrule
 %FS\_C\_RK\_D\_ME & 1st\_Iteration, 2nd\_Iteration\\
 %FS\_C\_RK\_D\_CN & 1st\_Iteration, 2nd\_Iteration\\ \bottomrule
-\end{tabular}
-\end{center}
-\label{tbl:itr_flow_algo}
-\end{table}
+%\end{tabular}
+%\end{center}
+%\label{tbl:itr_flow_algo}
+%\end{table}
 
 \begin{table}[htdp]
 \caption{反復条件の指定}
@@ -609,8 +665,9 @@ Comm\_Mode & 袖通信のモード\\
 \label{tbl:flow_itr}
 \end{table}
 
+
 \begin{table}[htdp]
-\caption{流動計算における圧力反復のノルムの指定}
+\caption{流動計算における圧力Poisson反復のノルムの指定}
 \begin{center}
 \small
 \begin{tabular}{lll} \toprule
@@ -620,18 +677,32 @@ dx\_b & 反復相対残差の$L_2$ノルムを右辺ベクトルの$L_2$ノル�
 r\_b & 残差の$L_2$ノルムを右辺ベクトルの$L_2$ノルムで除したもの & $\| r \|_2 \bigg / \|b\|_2$\\
 \vspace{2mm}
 r\_r0 & 残差の$L_2$ノルムを初期残差ベクトルの$L_2$ノルムで除したもの & $\|r\|_2 \bigg / \|r_0\|_2$\\ 
+\bottomrule
+\end{tabular}
+\end{center}
+\label{tbl:norm-type Poisson}
+\end{table}
+
+
+\begin{table}[htdp]
+\caption{流動計算における圧力速度の同時反復のノルムの指定}
+\begin{center}
+\small
+\begin{tabular}{lll} \toprule
+ラベル & 収束判定基準 & 評価式\\ \midrule 
 v\_div\_max & 発散の最大値 & $max\left|div\,\bm{u}\right|$\\
 \vspace{2mm}
 v\_div\_dbg & 発散の最大値の値とセル位置を出力する\footnotemark[1] & $max\left|div\,\bm{u}\right|$\\
 \bottomrule
 \end{tabular}
 \end{center}
-\label{tbl:norm-type}
+\label{tbl:norm-type VP}
 \end{table}
 \footnotetext[1]{サーチを行うので，実行速度は遅くなる（デバッグ利用）．}
 
+
 \begin{table}[htdp]
-\caption{Linear\_Solverのパラメータ指定}
+\caption{Linear\_Solverの選択}
 \begin{center}
 \small
 \begin{tabular}{llc} \toprule
@@ -648,12 +719,14 @@ GMRES & GMRES(m)　リスタート周期 m & ○\\
 \end{table}
 
 
+
+
 温度計算で反復法を用いる場合は，\hyperlink{tgt:algorithm}{Algorithm}セクションで反復法を含む解法を指定します．
 
 Flow, Heatのラベルは，それぞれ，流れ計算と熱計算のパラメータであることを示します．
 \textbf{表\ref{tbl:itr_temp_algo}}に，指定アルゴリズムと指定ラベルの関係を示します．
 
-温度解析の反復解法のパラメータと収束ノルムのタイプは，それぞれ\textbf{表\ref{tbl:flow_itr}}，\textbf{表\ref{tbl:norm-type}}と同様です．
+温度解析の反復解法のパラメータと収束ノルムのタイプは，それぞれ\textbf{表\ref{tbl:flow_itr}}，\textbf{表\ref{tbl:norm-type Poisson}}と同様です．
 
 \begin{table}[htdp]
 \caption{温度解析のアルゴリズムと指定ラベル}
@@ -887,6 +960,36 @@ Sampling\_Mode & All & 全セルを対象とする\\
 \end{indentation}
 
 
+%%%
+\pagebreak
+\subsubsection{PLOT3D\_Options}
+
+PLOT3Dフォーマットで，結果を出力する場合のオプションを記述します．
+
+\begin{indentation}{3zw}{0zw}
+\small
+
+\begin{program}
+  PLOT3D_Options {
+    filename         = "hoge"
+    grid_kind        = "single_grid"
+    grid_mobility    = "immovable"
+    state_of_time    = "unsteady"
+    set_iblank_flag  = "on"
+    Dimension        = "3D"
+    Format_type      = "unformatted"
+    Output_xyz       = "on"
+    Output_q         = "on"
+    Output_function  = "on"
+    Output_func_name = "on"
+    Output_fvbnd     = "on"
+    Divide_func      = "off"
+    real_type        = "float"
+  }
+\end{program}
+
+\end{indentation}
+
 
 
 %%%
@@ -940,13 +1043,28 @@ Translational & $u,\,v,\,w$ & 並進運動する移動座標系\\ \bottomrule
 {\small
 \begin{program}
   Start_Condition {
-    start_type                   = "restart_from_coarse_data"
-    Restart_step                 = 600
-    Prefix_of_Coarse_Pressure    = "prs_64_"
-    Prefix_of_Coarse_Velocity    = "vel_64_"
-    Prefix_of_Coarse_Temperature = "vel_64_"
-    dfi_file_pressure            = "prs_64.dfi"
-    dfi_file_velocity            = "vel_64.dfi"
+    start_type         = "initial"
+    Restart_step       = 200
+
+    Restart_from_Different_Nproc {
+      Staging = "on"
+      Prefix_of_dir = "hoge_restart_"
+      Prefix_of_Pressure = "prs_dr_"
+      Prefix_of_Velocity = "vel_dr_"
+    }
+
+    DFI_file {
+      pressure  = "prs_dr_.dfi"
+      velocity  = "vel_dr_.dfi"
+      //pressure  = "prs_64_id000000.dfi"
+      //velocity  = "vel_64_id000000.dfi"
+    }
+
+    Coarse_Restart {
+      Prefix_of_Pressure = "prs_64_"
+      Prefix_of_Velocity = "vel_64_"
+    }
+
     Initial_State {
       Density     = 1.0
       Pressure    = 0.0
@@ -963,15 +1081,27 @@ Translational & $u,\,v,\,w$ & 並進運動する移動座標系\\ \bottomrule
 \begin{center}
 \small
 \begin{tabular}{lll} \toprule
-ラベル & スタートの種類 & \\ \midrule
+ラベル & パラメータ & 指定内容\\ \midrule
 Start\_Type & スタートの種類 & \\
  & Initial & 時刻ゼロからの初期スタート\\
  & Restart & リスタート\\
- & Restart\_from\_Coarse\_Data & 粗格子の結果を用いたリスタート\\ \hline
-Restart\_Step & & リスタートのステップ数を指定\\ \hline
-Prefix\_of\_Coarse\_Pressure & & 粗格子からリスタートする場合の圧力ファイルの接頭子名を指定\\
-Prefix\_of\_Coarse\_Velocity & & 粗格子からリスタートする場合の速度ファイルの接頭子名を指定\\
-Prefix\_of\_Coarse\_Temperature & & 粗格子からリスタートする場合の温度ファイルの接頭子名を指定\\ \hline
+ & Restart\_from\_Coarse\_Data & 粗格子の結果を用いたリスタート\\ 
+ & Restart\_from\_Different\_Nproc & 異なるプロセス数を用いたリスタート\\ \hline
+Restart\_Step & ステップ数 & リスタートのステップ数を指定\\ \hline
+Restart\_from\_Different\_Nproc & & \\
+ & Prefix\_of\_Dir & リスタートファイルのあるディレクトリの指定\\
+ & Prefix\_of\_Pressure & 圧力ファイルの接頭子名を指定\\
+ & Prefix\_of\_Velocity & 速度ファイルの接頭子名を指定\\
+ & Prefix\_of\_Temperature & 温度ファイルの接頭子名を指定\\
+ & Staging & on $|$ off　ステージングオプションの指定\\ \hline
+DFI\_file & & インデクスファイルの指定\\
+ & Pressure & 圧力のインデクスファイル名\\
+ & Velocity & 速度のインデクスファイル名\\
+ & Temperature & 温度のインデクスファイル名\\ \hline
+Coarse\_Restart & & 粗格子からリスタートする場合のパラメータ\\
+ & Prefix\_of\_Pressure & 圧力ファイルの接頭子名を指定\\
+ & Prefix\_of\_Velocity & 速度ファイルの接頭子名を指定\\
+ & Prefix\_of\_Temperature & 温度ファイルの接頭子名を指定\\ \hline
 Initial\_State & & 初期条件を指定\\
 Density & & 密度\\
 Pressure & & 圧力\\
@@ -982,7 +1112,8 @@ Velocity & & 速度ベクトル\\ \bottomrule
 \label{tbl:start}
 \end{table}
 
-\hypertarget{tgt:initial_state}{物理変数}の初期値\index{しょきち@初期値}を指定します．
+\paragraph{初期値の指定}
+Initial\_Stateで，\hypertarget{tgt:initial_state}{物理変数}の初期値\index{しょきち@初期値}を指定します．
 記述する初期値は有次元量で指定しますが，Solver\_Propertyセクションで\hyperlink{tgt:solver_property}{Kind\_of\_Solver}=\lq\lq Flow\_Only\rq\rq を指定した場合のみ，無次元での指定も可能です．
 圧力値は，\hyperlink{tgt:unit}{Unit}で指定する圧力の単位に従います．
 各変数の無次元化は以下のようになり，添え字の0は代表値または基準値を意味します．

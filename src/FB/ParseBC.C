@@ -1749,7 +1749,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      stamped_printf("\tParsing error : fail to get 'Heat_Type' in 'Basic_BCs > wall'\n");
+      stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     if ( Unit_Param != DIMENSIONAL )

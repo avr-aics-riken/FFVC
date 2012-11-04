@@ -2291,10 +2291,10 @@ void Control::get_start_condition()
     Exit(0);
   }
   
-  if      ( !strcasecmp(str.c_str(), "initial") )                  Start = initial_start;
-  else if ( !strcasecmp(str.c_str(), "restart") )                  Start = restart;
-  else if ( !strcasecmp(str.c_str(), "restart_from_coarse_data") ) Start = coarse_restart;
-  else if ( !strcasecmp(str.c_str(), "restart_different_nproc") )  Start = restart_different_nproc;
+  if      ( !strcasecmp(str.c_str(), "initial") )                       Start = initial_start;
+  else if ( !strcasecmp(str.c_str(), "restart") )                       Start = restart;
+  else if ( !strcasecmp(str.c_str(), "restart_from_coarse_data") )      Start = coarse_restart;
+  else if ( !strcasecmp(str.c_str(), "restart_from_different_nproc") )  Start = restart_different_nproc;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());

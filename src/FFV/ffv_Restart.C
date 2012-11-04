@@ -1156,13 +1156,14 @@ void FFV::Restart_different(FILE* fp, double& flop)
       
       if ( C.FIO.IO_Input == IO_DISTRIBUTE )
       {
-        int tmp[numProc];
+        int *tmp = new int[numProc];
         for(int i=0;i<numProc;i++) tmp[i]=0;
         tmp[myRank]=DRI[ic].rank;
         if ( numProc > 1 )
         {
           MPI_Allreduce(tmp, rank_list, numProc, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
         }
+        if ( tmp) delete [] tmp;
       }
       else
       {
