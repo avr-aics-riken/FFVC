@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2012 All right reserved.
 #
-# Institute of Industrial Science, The University of Tokyo, Japan. 
+# Institute of Industrial Science, University of Tokyo, Japan. 
 #
 ###################################################################
 
@@ -45,18 +45,6 @@ clean:
 	$(RM) ../../bin/$(TARGET)
 
 depend:
-	makedepend -I. -I../IP -I../FB -I../F_CORE -Y $(CXXSRCS)
+	makedepend -I. -I../IP -I../FB -I../F_CORE -I../PLOT3D -Y $(SRCS)
 
 # DO NOT DELETE
-
-ffv.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h
-ffv.o: ../FB/FB_Define.h ../FB/Control.h ../FB/Medium.h ../FB/Component.h
-ffv.o: ../FB/BndOuter.h ../FB/Interval_Mngr.h ../FB/TPControl.h
-ffv_Initialize.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
-ffv_Initialize.o: ../FB/FBUtility.h ../FB/FB_Define.h ../FB/Control.h
-ffv_Initialize.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
-ffv_Initialize.o: ../FB/Interval_Mngr.h ../FB/TPControl.h
-main.o: ffv.h ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h
-main.o: ../FB/FBUtility.h ../FB/FB_Define.h ../FB/Control.h ../FB/Medium.h
-main.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
-main.o: ../FB/TPControl.h

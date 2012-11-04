@@ -3,11 +3,14 @@ Release Note
 	FFV : Frontflow / violet Cartesian
 	
 	2012　 Copyright (c) Institute of Industrial Scienece. All rights reserved.
-  The University of Tokyo, Japan. 
+  University of Tokyo, Japan. 
 
   @author kero
 
 #######################################
+
+Ver 1.0.5    4 Nov. 2012
+  - PLOT3D関連ファイルを別ディレクトリに移動
 
 Ver 1.0.4   17 Oct. 2012
   - HPCPF_EXIT_STATUSを追加

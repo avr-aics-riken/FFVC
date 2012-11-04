@@ -7,7 +7,7 @@
 //
 // Copyright (c) 2012 All right reserved.
 //
-// Institute of Industrial Science, The University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan. 
 //
 // #################################################################
 
@@ -80,16 +80,51 @@
 extern "C" {
 
 // PLT3D.f90
-  void open_plot3d_file_ (int* iflag, char* fname, int* ifl, int* fnsize, int* ierror);
-  void open_plot3d_outputfile_ (int* iflag, char* fname, int* ifl, int* fnsize, int* ierror);
-  void open_plot3d_inputfile_ (int* iflag, char* fname, int* ifl, int* fnsize, int* ierror);
+  void open_plot3d_file_ (int* iflag,
+                          char* fname,
+                          int* ifl,
+                          int* fnsize,
+                          int* ierror);
+  void open_plot3d_outputfile_ (int* iflag,
+                                char* fname,
+                                int* ifl,
+                                int* fnsize,
+                                int* ierror);
+  void open_plot3d_inputfile_ (int* iflag,
+                               char* fname,
+                               int* ifl,
+                               int* fnsize,
+                               int* ierror);
   void close_plot3d_file_ (int* ifl);
-  void write_line_ (char* buff, int* ifl, int* fnsize);
-  void read_line_ (char* buff, int* ifl, int* fnsize, int* iend);
-  void write_fvbnd_boundary_ (
-	  int* tp, int* gn, int* imin, int* imsx, int* jmin, int* jmax, int* kmin, int* kmax, char* flag, int* dir, int* ifl);
-  void read_fvbnd_boundary_ (
-	  int* tp, int* gn, int* imin, int* imsx, int* jmin, int* jmax, int* kmin, int* kmax, char* flag, int* dir, int* ifl);
+  void write_line_ (char* buff,
+                    int* ifl,
+                    int* fnsize);
+  void read_line_ (char* buff,
+                   int* ifl,
+                   int* fnsize,
+                   int* iend);
+  void write_fvbnd_boundary_ (int* tp,
+                              int* gn,
+                              int* imin,
+                              int* imsx,
+                              int* jmin,
+                              int* jmax,
+                              int* kmin,
+                              int* kmax,
+                              char* flag,
+                              int* dir,
+                              int* ifl);
+  void read_fvbnd_boundary_ (int* tp,
+                             int* gn,
+                             int* imin,
+                             int* imsx,
+                             int* jmin,
+                             int* jmax,
+                             int* kmin,
+                             int* kmax,
+                             char* flag,
+                             int* dir,
+                             int* ifl);
 }
 
 
@@ -102,7 +137,6 @@ public:
   /** コンストラクタ */
   FileIO_PLOT3D() 
   {
-    //paraMngr = NULL;
 
     P3Op.GridKind   = SINGLE_GRID;
     P3Op.MoveGrid   = GRID_NOT_MOVE;
@@ -113,7 +147,7 @@ public:
     P3Op.realtype   = OUTPUT_FLOAT; 
 
     fp = NULL;
-	ifl = 31;
+	  ifl = 31;
   }
 
   /**　デストラクタ */
@@ -154,8 +188,7 @@ public:
   double* dd;
 
 protected:
-//  cpm_ParaManager *paraMngr; ///< Cartesian Partition Maneger
-
+  
   // オプション
   typedef struct {
     int GridKind;    ///=0:single grid, =1:multi grid

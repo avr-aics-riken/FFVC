@@ -3,12 +3,15 @@ Release Note
 	FFV : Frontflow / violet Cartesian
 	
 	Copyright (c) 2012 Institute of Industrial Scienece. All rights reserved.
-  The University of Tokyo, Japan. 
+  University of Tokyo, Japan. 
 
   @author kero
 
 #######################################
 
+Ver 0.9.0    4 Nov. 2012
+  - PLOT3DオプションをPLOT3Dディレクトリに移動
+  
 Ver 0.8.9   18 Oct. 2012
   - リスタートパラメータの指定を変更．ステージングオプション
   - ビルドを一括で行う >> Polylib-2.1.2, CUtlib-2.0.5, PMlib-1.5, TextParser-1.1

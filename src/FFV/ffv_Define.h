@@ -7,7 +7,7 @@
 //
 // Copyright (c) 2012 All right reserved.
 //
-// Institute of Industrial Science, The University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan. 
 //
 // #################################################################
 
@@ -17,7 +17,7 @@
  * @author kero
  */
 
-#define FFV_VERS   89
+#define FFV_VERS   90
 #define TM_LABEL_MAX 24
   
 /** 計算性能測定キー番号 */
