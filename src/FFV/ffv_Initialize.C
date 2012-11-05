@@ -713,14 +713,17 @@ int FFV::Initialize(int argc, char **argv)
   // PLOT3D形状データの書き出し
   if (C.FIO.PLOT3D_OUT == ON)
   {
-    setValuePlot3D();
-    if(C.P3Op.IS_xyz == ON) OutputPlot3D_xyz();// ---> moving grid を考慮したときOutputPlot3D_postに組み込む
-    if(C.P3Op.IS_DivideFunc == ON) {
-      if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name_divide();
-    }else{
-      if(C.P3Op.IS_function_name == ON) OutputPlot3D_function_name();
+    PLT3D.setValuePlot3D(&C);
+    if (C.P3Op.IS_xyz == ON) PLT3D.OutputPlot3D_xyz(size, guide, CurrentStep, &C, &FP3DW, &DFI);// ---> moving grid を考慮したときOutputPlot3D_postに組み込む
+    if (C.P3Op.IS_DivideFunc == ON)
+    {
+      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.OutputPlot3D_function_name_divide(&C, &FP3DW, &DFI);
     }
-    if(C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
+    else
+    {
+      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.OutputPlot3D_function_name(&C, &FP3DW, &DFI);
+    }
+    if (C.P3Op.IS_fvbnd == ON) OutputPlot3D_fvbnd();
   }
 
   
@@ -729,7 +732,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task);
-    if (C.FIO.PLOT3D_OUT == ON) OutputPlot3D_post(flop_task);
+    if (C.FIO.PLOT3D_OUT == ON) PLT3D.OutputPlot3D_post(size, guide, CurrentStep, CurrentTime, &C, &FP3DW, &DFI, d_ws, d_p, flop_task);
   }
   
   
@@ -738,7 +741,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task, true);
-    if (C.FIO.PLOT3D_OUT == ON) OutputPlot3D_post(flop_task);
+    if (C.FIO.PLOT3D_OUT == ON) PLT3D.OutputPlot3D_post(size, guide, CurrentStep, CurrentTime, &C, &FP3DW, &DFI, d_ws, d_p, flop_task);
   }
   
   

@@ -20,7 +20,6 @@ CXXSRCS = \
     ffv_Loop.C \
     ffv_LS.C \
     ffv_Post.C \
-    ffv_Plot3d.C \
     ffv_Heat.C \
     NS_FS_E_Binary.C \
     NS_FS_E_CDS.C \

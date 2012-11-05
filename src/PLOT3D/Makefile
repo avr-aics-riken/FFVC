@@ -17,6 +17,7 @@ CXXSRCS = \
   PLOT3D.C \
   PLOT3D_read.C \
   PLOT3D_write.C \
+  ffv_PLOT3D.C \
 
 
 F90SRCS = \
@@ -56,3 +57,4 @@ depend:
 PLOT3D.o: PLOT3D.h
 PLOT3D_read.o: PLOT3D_read.h PLOT3D.h
 PLOT3D_write.o: PLOT3D_write.h PLOT3D.h
+ffv_PLOT3D.o: ffv_PLOT3D.h PLOT3D_write.h PLOT3D.h PLOT3D_read.h

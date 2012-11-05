@@ -4,11 +4,11 @@
 //
 // Copyright (c) 2012 All right reserved.
 //
-// Institute of Industrial Science, The University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan. 
 //
 // #################################################################
 
-/** 
+/**
  * @file   ffv_plot3d.C
  * @brief  FFV Class
  * @author kero
@@ -17,7 +17,7 @@
 #include "ffv.h"
 
 
-//
+/*
 void FFV::setValuePlot3D()
 {
   //set ngrid
@@ -32,6 +32,7 @@ void FFV::setValuePlot3D()
   if (C.Mode.Helicity == ON ) nvar++;
   C.P3Op.nvar=nvar;
 }
+
 
 //
 void FFV::OutputPlot3D_post(double& flop)
@@ -51,7 +52,6 @@ void FFV::OutputPlot3D_post(double& flop)
   }
 
 }
-
 
 //
 void FFV::OutputPlot3D_xyz()
@@ -290,15 +290,15 @@ void FFV::OutputPlot3D_xyz()
   FP3DW.CloseFile();
 
 }
-
+*/
 
 // 圧縮性流体のための計算結果ファイル（*.q）出力
-void FFV::OutputPlot3D_q(double& flop)
-{
-  
-}
+//void FFV::OutputPlot3D_q(double& flop)
+//{
+//
+//}
 
-
+/*
 // 計算結果ファイル（*.func）出力
 void FFV::OutputPlot3D_function(double& flop)
 {
@@ -1340,7 +1340,6 @@ void FFV::OutputPlot3D_function_name_divide()
   
 }
 
-
 // 境界面定義ファイル（*.fvbnd）出力
 void FFV::OutputPlot3D_fvbnd()
 {
@@ -2079,7 +2078,6 @@ void FFV::setIblank(int* iblank, int id, int jd, int kd)
 
 }
 
-
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -2144,6 +2142,7 @@ void FFV::setScalarGridData(float* d, float* data, int id, int jd, int kd)
   //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
 
 }
+
 
 // Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
 void FFV::setVectorGridData(float* d, float* data, int id, int jd, int kd)
@@ -2338,6 +2337,7 @@ void FFV::setScalarGridData(double* d, double* data, int id, int jd, int kd)
 
 }
 
+
 // Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
 void FFV::setVectorGridData(double* d, double* data, int id, int jd, int kd)
 {
@@ -2531,6 +2531,7 @@ void FFV::setScalarGridData(float* d, double* data, int id, int jd, int kd)
 
 }
 
+
 // Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
 void FFV::setVectorGridData(float* d, double* data, int id, int jd, int kd)
 {
@@ -2663,6 +2664,7 @@ void FFV::setVectorComponentGridData(float* d, double* data, int id, int jd, int
 //*****************************************************************************
 //*****************************************************************************
 
+
 // Scalarの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
 void FFV::setScalarGridData(double* d, float* data, int id, int jd, int kd)
 {
@@ -2723,6 +2725,7 @@ void FFV::setScalarGridData(double* d, float* data, int id, int jd, int kd)
   //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
 
 }
+
 
 // Vectorの格子点での値をセット（ガイドセルの値は計算対象にいれていない）
 void FFV::setVectorGridData(double* d, float* data, int id, int jd, int kd)
@@ -3005,11 +3008,12 @@ void FFV::LineDataDivideBy2(float* d, int id, int jd, int kd)
   }
 
 }
-
+*/
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
 
+/*
 //内部の格子点のデータを8で割る
 void FFV::VolumeDataDivideBy8(double* d, int id, int jd, int kd)
 {
@@ -3025,6 +3029,7 @@ void FFV::VolumeDataDivideBy8(double* d, int id, int jd, int kd)
     }
   }
 }
+
 
 //面上の格子点のデータを4で割る
 void FFV::FaceDataDivideBy4(double* d, int id, int jd, int kd)
@@ -3160,12 +3165,12 @@ void FFV::LineDataDivideBy2(double* d, int id, int jd, int kd)
   }
 
 }
-
+*/
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
 // float ---> float
-
+/*
 // Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out)
 {
@@ -3253,6 +3258,7 @@ void FFV::setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, 
   if (wkd) delete [] wkd;
 
 }
+ 
 
 // Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setVectorGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out)
@@ -3440,7 +3446,7 @@ void FFV::setVectorComponentGridDataGuide(float* d, float* data, int id, int jd,
 //*****************************************************************************
 //*****************************************************************************
 // double ---> double
-
+/*
 // Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out)
 {
@@ -3528,6 +3534,7 @@ void FFV::setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd
   if (wkd) delete [] wkd;
 
 }
+
 
 // Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setVectorGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out)
@@ -3806,6 +3813,7 @@ void FFV::setScalarGridDataGuide(double* d, float* data, int id, int jd, int kd,
 
 }
 
+
 // Vectorの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setVectorGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out)
 {
@@ -3994,7 +4002,7 @@ void FFV::setVectorComponentGridDataGuide(double* d, float* data, int id, int jd
 //*****************************************************************************
 //*****************************************************************************
 // double ---> float
-
+/*
 // Scalarの格子点での値をセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setScalarGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out)
 {
@@ -4259,7 +4267,7 @@ void FFV::setVectorComponentGridDataGuide(float* d, double* data, int id, int jd
 }
 
 
-// Iblankのセット（ガイドセルに値があることを想定しているバージョン）
+/* Iblankのセット（ガイドセルに値があることを想定しているバージョン）
 void FFV::setIblankGuide(int* iblank, int id, int jd, int kd)
 {
   //iblank = 1 : 計算グリッド
@@ -4929,3 +4937,4 @@ void FFV::setIblankGuide(int* iblank, int id, int jd, int kd)
 #endif
 
 }
+*/

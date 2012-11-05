@@ -55,7 +55,7 @@
 
 #include "omp.h"
 
-
+// Intrinsic class
 #include "IP_Duct.h"
 #include "IP_PPLT2D.h"
 #include "IP_SHC1D.h"
@@ -65,6 +65,9 @@
 #include "IP_Cylinder.h"
 #include "IP_Polygon.h"
 #include "IP_Sphere.h"
+
+// PLOT3D
+#include "ffv_PLOT3D.h"
 
 // FX10 profiler
 #if defined __K_FPCOLL
@@ -231,6 +234,7 @@ private:
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス
+  Plot3D PLT3D;              ///< PLOT3Dクラス
   
   MonitorList MO;            ///< Monitorクラス 
   FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
@@ -1164,62 +1168,62 @@ private:
    * @brief グリッド数、出力項目数をセット（BCMへ移行する場合要編集）
    *
    */
-  void setValuePlot3D();
+  //void setValuePlot3D();
   
   
   /**
    * @brief 形状データファイル（*.xyz）の出力
    */
-  void OutputPlot3D_xyz();
+  //void OutputPlot3D_xyz();
   
   
   /**
    * @brief PLOT3Dファイルのポスト出力
    * @param [in,out] flop    浮動小数点演算数
    */
-  void OutputPlot3D_post(double& flop);
+  //void OutputPlot3D_post(double& flop);
   
   
   /**
    * @brief 圧縮性流体のための計算結果ファイル（*.q）出力（未整備）
    * @param [in,out] flop    浮動小数点演算数
    */
-  void OutputPlot3D_q(double& flop);
+  //void OutputPlot3D_q(double& flop);
   
   
   /**
    * @brief 計算結果ファイル（*.func）出力
    * @param [in,out] flop    浮動小数点演算数
    */
-  void OutputPlot3D_function(double& flop);
+  //void OutputPlot3D_function(double& flop);
   
   
   /**
    * @brief 項目別計算結果ファイル（*.func）出力
    * @param [in,out] flop    浮動小数点演算数
    */
-  void OutputPlot3D_function_divide(double& flop);
+  //void OutputPlot3D_function_divide(double& flop);
   
   
   /**
    * @brief 計算結果ファイルの項目（*.nam）出力
    *
    */
-  void OutputPlot3D_function_name();
+  //void OutputPlot3D_function_name();
   
   
   /**
    * @brief 項目別計算結果ファイルの項目（*.nam）出力
    *
    */
-  void OutputPlot3D_function_name_divide();
+  //void OutputPlot3D_function_name_divide();
   
   
   /**
    * @brief 境界面定義ファイル（*.fvbnd）出力（未整備）
    * @note BCMになるとりメッシュされたときに対応できないため出力することはない？
    */
-  void OutputPlot3D_fvbnd();
+  //void OutputPlot3D_fvbnd();
   
   
   /**
@@ -1229,7 +1233,7 @@ private:
    * @param [in]     jd       iblanx y方向サイズ
    * @param [in]     kd       iblanx z方向サイズ
    */
-  void setIblank(int* iblank, int id, int jd, int kd);
+  //void setIblank(int* iblank, int id, int jd, int kd);
   
   
   
@@ -1246,7 +1250,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridData(float* d, float* data, int id, int jd, int kd);
+  //void setScalarGridData(float* d, float* data, int id, int jd, int kd);
   
   
   /**
@@ -1257,7 +1261,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridData(float* d, float* data, int id, int jd, int kd);
+  //void setVectorGridData(float* d, float* data, int id, int jd, int kd);
   
   
   /**
@@ -1269,7 +1273,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridData(float* d, float* data, int id, int jd, int kd, int ivar);
+  //void setVectorComponentGridData(float* d, float* data, int id, int jd, int kd, int ivar);
   
   
   /**
@@ -1280,7 +1284,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
+  //void setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1291,7 +1295,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
+  //void setVectorGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1303,7 +1307,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
+  //void setVectorComponentGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
   
   
   //*****************************************************************************
@@ -1319,7 +1323,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridData(double* d, double* data, int id, int jd, int kd);
+  //void setScalarGridData(double* d, double* data, int id, int jd, int kd);
   
   
   /**
@@ -1330,7 +1334,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridData(double* d, double* data, int id, int jd, int kd);
+  //void setVectorGridData(double* d, double* data, int id, int jd, int kd);
   
   
   /**
@@ -1342,7 +1346,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridData(double* d, double* data, int id, int jd, int kd, int ivar);
+  //void setVectorComponentGridData(double* d, double* data, int id, int jd, int kd, int ivar);
   
   
   /**
@@ -1353,7 +1357,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
+  //void setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1364,7 +1368,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
+  //void setVectorGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1376,7 +1380,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
+  //void setVectorComponentGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
   
   
   //*****************************************************************************
@@ -1392,7 +1396,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridData(float* d, double* data, int id, int jd, int kd);
+  //void setScalarGridData(float* d, double* data, int id, int jd, int kd);
   
   
   /**
@@ -1403,7 +1407,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridData(float* d, double* data, int id, int jd, int kd);
+  //void setVectorGridData(float* d, double* data, int id, int jd, int kd);
   
   
   /**
@@ -1415,7 +1419,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridData(float* d, double* data, int id, int jd, int kd, int ivar);
+  //void setVectorComponentGridData(float* d, double* data, int id, int jd, int kd, int ivar);
   
   
   /**
@@ -1426,7 +1430,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
+  //void setScalarGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1437,7 +1441,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
+  //void setVectorGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1449,7 +1453,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
+  //void setVectorComponentGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
   
   
   //*****************************************************************************
@@ -1465,7 +1469,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridData(double* d, float* data, int id, int jd, int kd);
+  //void setScalarGridData(double* d, float* data, int id, int jd, int kd);
   
   
   /**
@@ -1476,7 +1480,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridData(double* d, float* data, int id, int jd, int kd);
+  //void setVectorGridData(double* d, float* data, int id, int jd, int kd);
   
   
   /**
@@ -1488,7 +1492,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridData(double* d, float* data, int id, int jd, int kd, int ivar);
+  //void setVectorComponentGridData(double* d, float* data, int id, int jd, int kd, int ivar);
   
   
   /**
@@ -1499,7 +1503,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setScalarGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
+  //void setScalarGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1510,7 +1514,7 @@ private:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
+  //void setVectorGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
   
   
   /**
@@ -1522,7 +1526,7 @@ private:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
+  //void setVectorComponentGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
   
   
   //*****************************************************************************
@@ -1537,7 +1541,7 @@ private:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void VolumeDataDivideBy8(float* d, int id, int jd, int kd);
+  //void VolumeDataDivideBy8(float* d, int id, int jd, int kd);
   
   
   /**
@@ -1547,7 +1551,7 @@ private:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void FaceDataDivideBy4(float* d, int id, int jd, int kd);
+  //void FaceDataDivideBy4(float* d, int id, int jd, int kd);
   
   
   /**
@@ -1557,7 +1561,7 @@ private:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void LineDataDivideBy2(float* d, int id, int jd, int kd);
+  //void LineDataDivideBy2(float* d, int id, int jd, int kd);
   
   
   //*****************************************************************************
@@ -1572,7 +1576,7 @@ private:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void VolumeDataDivideBy8(double* d, int id, int jd, int kd);
+  //void VolumeDataDivideBy8(double* d, int id, int jd, int kd);
   
   
   /**
@@ -1582,7 +1586,7 @@ private:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void FaceDataDivideBy4(double* d, int id, int jd, int kd);
+  //void FaceDataDivideBy4(double* d, int id, int jd, int kd);
   
   
   /**
@@ -1592,7 +1596,7 @@ private:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void LineDataDivideBy2(double* d, int id, int jd, int kd);
+  //void LineDataDivideBy2(double* d, int id, int jd, int kd);
   
   
   //*****************************************************************************
@@ -1606,7 +1610,7 @@ private:
    * @param [in]     jd       iblanx y方向サイズ
    * @param [in]     kd       iblanx z方向サイズ
    */
-  void setIblankGuide(int* iblank, int id, int jd, int kd);
+  //void setIblankGuide(int* iblank, int id, int jd, int kd);
   
 
   
