@@ -50,11 +50,18 @@ clean:
 	$(RM) $(OBJS) $(TARGET)
 
 depend:
-	makedepend -I. -Y $(SRCS)
+	makedepend -I. -I../FB -I../F_CORE -Y $(SRCS)
 
 # DO NOT DELETE
 
-PLOT3D.o: PLOT3D.h
-PLOT3D_read.o: PLOT3D_read.h PLOT3D.h
-PLOT3D_write.o: PLOT3D_write.h PLOT3D.h
-ffv_PLOT3D.o: ffv_PLOT3D.h PLOT3D_write.h PLOT3D.h PLOT3D_read.h
+PLOT3D.o: PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
+PLOT3D.o: ../FB/FB_Ffunc.h
+PLOT3D_read.o: PLOT3D_read.h PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Define.h
+PLOT3D_read.o: ../FB/mydebug.h ../FB/FB_Ffunc.h
+PLOT3D_write.o: PLOT3D_write.h PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Define.h
+PLOT3D_write.o: ../FB/mydebug.h ../FB/FB_Ffunc.h
+ffv_PLOT3D.o: ffv_PLOT3D.h ../FB/FB_Ffunc.h ../FB/FB_Define.h ../FB/mydebug.h
+ffv_PLOT3D.o: ../FB/Control.h ../FB/DomainInfo.h ../FB/Medium.h
+ffv_PLOT3D.o: ../FB/Component.h ../FB/FBUtility.h ../FB/BndOuter.h
+ffv_PLOT3D.o: ../FB/Interval_Mngr.h ../FB/TPControl.h PLOT3D_read.h PLOT3D.h
+ffv_PLOT3D.o: PLOT3D_write.h ../FB/dfi.h ../F_CORE/ffv_Ffunc.h
