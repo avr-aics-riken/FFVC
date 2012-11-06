@@ -62,43 +62,6 @@ public:
 public:
   
   FBUtility U;
-  
-  
-  
-  /**
-   * @brief ファイル出力時，発散値を計算する
-   * @param [out]    dst  単位変換後のデータ
-   * @param [in]     src  単位変換前のデータ
-   * @param [in]     sz   分割数
-   * @param [in]     gc   ガイドセル数
-   * @param [in]     coef 係数
-   * @param [in,out] flop 浮動小数演算数
-   */
-  void cnv_Div(REAL_TYPE* dst, 
-               REAL_TYPE* src, 
-               int* sz, 
-               int gc, 
-               REAL_TYPE coef, 
-               double& flop);
-  
-  
-  /**
-   * @brief 全圧データについて，無次元から有次元単位に変換する
-   * @param [out]    dst     単位変換後のデータ
-   * @param [in]     src     単位変換前のデータ
-   * @param [in]     sz      分割数
-   * @param [in]     gc      ガイドセル数
-   * @param [in]     Ref_rho 代表密度(kg/m^3)
-   * @param [in]     Ref_v   代表速度(m/s)
-   * @param [in,out] flop    浮動小数演算数
-   */
-  void cnv_TP_ND2D(REAL_TYPE* dst, 
-                   REAL_TYPE* src, 
-                   int* sz, 
-                   int gc, 
-                   const REAL_TYPE Ref_rho, 
-                   const REAL_TYPE Ref_v, 
-                   double& flop);
 
   
   /**

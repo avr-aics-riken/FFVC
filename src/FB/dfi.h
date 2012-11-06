@@ -1,5 +1,5 @@
-#ifndef _CBC_DFI_H_
-#define _CBC_DFI_H_
+#ifndef _FB_DFI_H_
+#define _FB_DFI_H_
 
 // #################################################################
 //
@@ -291,4 +291,4 @@ public:
   bool Write_DFI_File(const std::string prefix, const unsigned step, const double time, int& dfi_mng, const bool mio);
 };
 
-#endif // _CBC_DFI_H_
+#endif // _FB_DFI_H_

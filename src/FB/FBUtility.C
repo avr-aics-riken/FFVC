@@ -43,6 +43,23 @@ int FBUtility::c_mkdir(string path)
 
 
 // #################################################################
+// ファイル出力時，発散値を計算する
+void FBUtility::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, double& flop)
+{
+  xcopy(dst, sz, gc, src, coef, kind_scalar, flop);
+}
+
+
+// #################################################################
+// 全圧データについて，無次元から有次元単位に変換する
+void FBUtility::tp_array_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
+{
+  REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
+  
+  xcopy(dst, sz, gc, src, cf, kind_scalar, flop);
+}
+
+// #################################################################
 // 圧力値を有次元から無次元へ変換し，scale倍
 void FBUtility::prs_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const REAL_TYPE scale, double& flop)
 {

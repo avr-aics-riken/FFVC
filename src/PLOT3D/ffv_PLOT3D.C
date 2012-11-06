@@ -18,7 +18,68 @@
 
 
 // #################################################################
-void Plot3D::Initialize(const int* m_size, const int m_guide)
+// IOモードに対応したディレクトリパスを返す
+string Plot3D::directory_prefix(string path, const string fname, const int io_mode, const int para_mode)
+{
+  string tmp;
+  
+  switch (io_mode)
+  {
+    case Control::io_current:
+      tmp = fname;
+      break;
+      
+      
+    case Control::io_specified:
+      
+      if ( !FBUtility::c_mkdir(path) )
+      {
+        if (myRank==0) printf("Failed to create directory \"%s\"\n", path.c_str() );
+        Exit(0);
+      }
+      tmp = path + "/" + fname;
+      break;
+      
+      
+    case Control::io_time_slice:
+      
+      // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
+      if ( (para_mode == Control::Serial) || (para_mode == Control::OpenMP) )
+      {
+        return fname;
+      }
+      else
+      {
+        if ( !FBUtility::c_mkdir(path) )
+        {
+          if (myRank==0) printf("Failed to create directory \"%s\"\n", path.c_str() );
+          Exit(0);
+        }
+        tmp = path + "/" + fname;
+      }
+      break;
+  }
+  
+  return tmp;
+}
+
+// #################################################################
+void Plot3D::Initialize(const int* m_size,
+                        const int m_guide,
+                        const REAL_TYPE m_deltaX,
+                        const int m_dfi_plot3d,
+                        Control* m_C,
+                        FileIO_PLOT3D_WRITE* m_FP3DW,
+                        DFI* m_dfi,
+                        REAL_TYPE* m_d_ws,
+                        REAL_TYPE* m_d_p,
+                        REAL_TYPE* m_d_wo,
+                        REAL_TYPE* m_d_v,
+                        REAL_TYPE* m_d_t,
+                        REAL_TYPE* m_d_p0,
+                        REAL_TYPE* m_d_wv,
+                        int*       m_d_bcv,
+                        int*       m_d_bcd)
 {
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   
@@ -26,7 +87,22 @@ void Plot3D::Initialize(const int* m_size, const int m_guide)
   size[1] = m_size[1];
   size[2] = m_size[2];
   guide   = m_guide;
+  deltaX  = m_deltaX;
+  dfi_plot3d = m_dfi_plot3d;
   
+  C    = m_C;
+  FP3DW= m_FP3DW;
+  dfi  = m_dfi;
+  
+  d_ws = m_d_ws;
+  d_p  = m_d_p;
+  d_wo = m_d_wo;
+  d_v  = m_d_v;
+  d_t  = m_d_t;
+  d_p0 = m_d_p0;
+  d_wv = m_d_wv;
+  d_bcv= m_d_bcv;
+  d_bcd= m_d_bcd;
 }
 
 // double
@@ -345,13 +421,9 @@ void Plot3D::VolumeDataDivideBy8(float* d, int id, int jd, int kd)
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_function(Control* C,
-                                   unsigned CurrentStep,
-                                   double CurrentTime,
-                                   FileIO_PLOT3D_WRITE* FP3DW,
-                                   DFI* DFI,
-                                   REAL_TYPE* d_ws,
-                                   REAL_TYPE* d_p,
+void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
+                                   const double CurrentTime,
+                                   REAL_TYPE* v00,
                                    double& flop)
 {
   //value
@@ -448,8 +520,8 @@ void Plot3D::OutputPlot3D_function(Control* C,
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "func", m_step, myRank, pout);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "func", m_step, myRank, pout);
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
   //open file
@@ -608,7 +680,7 @@ void Plot3D::OutputPlot3D_function(Control* C,
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C->Unit.File == DIMENSIONAL)
     {
-      F.cnv_TP_ND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity, flop);
+      U.tp_array_ND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity, flop);
     }
     else
     {
@@ -771,13 +843,442 @@ void Plot3D::OutputPlot3D_function(Control* C,
   delete [] kd;
   
   //dfiファイルの出力
-  if (myRank==0) if ( !DFI->Write_DFI_File(C->P3Op.basename, m_step, (double)m_time, dfi_mng[var_Plot3D], pout) ) Exit(0);
+  if (myRank==0) if ( !dfi->Write_DFI_File(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
   
 }
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_function_name(Control* C, FileIO_PLOT3D_WRITE* FP3DW, DFI* DFI)
+void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
+                                          const double CurrentTime,
+                                          REAL_TYPE* v00,
+                                          double& flop)
+{
+  //value
+  int igrid;
+  int ngrid;
+  int *id,*jd,*kd;
+  int *nvar;
+  int ix,jx,kx;
+  //REAL_TYPE *d;
+  float *d;
+  double *dd;
+  int *nvar_scalar;
+  int *nvar_vector;
+  
+  //
+  REAL_TYPE scale = 1.0;
+  //int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  
+  // ガイドセル出力
+  //int gc_out = C->GuideOut;
+  int gc_out = 0;//plot3dは常にガイドセルを出力しない
+  
+  // ステップ数
+  int m_step = (int)CurrentStep;
+  
+  // 時間の次元変換
+  REAL_TYPE m_time;
+  if (C->Unit.File == DIMENSIONAL)
+  {
+    m_time = (REAL_TYPE)CurrentTime * C->Tscale;
+  }
+  else
+  {
+    m_time = (REAL_TYPE)CurrentTime;
+  }
+  
+  //allocate
+  ngrid=C->P3Op.ngrid;
+  id = new int[ngrid];
+  jd = new int[ngrid];
+  kd = new int[ngrid];
+  nvar = new int[ngrid];
+  nvar_scalar = new int[ngrid];
+  nvar_vector = new int[ngrid];
+  
+  //set grid data and nvar and work area size
+  int maxid=0;
+  int maxjd=0;
+  int maxkd=0;
+  
+  //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+  
+  igrid=0;
+  id[igrid]=size[0]+1+2*gc_out;
+  jd[igrid]=size[1]+1+2*gc_out;
+  kd[igrid]=size[2]+1+2*gc_out;
+  nvar[igrid]=C->P3Op.nvar;
+  nvar_scalar[igrid]=1;
+  nvar_vector[igrid]=3;
+  
+  if(maxid<id[igrid]) maxid=id[igrid];
+  if(maxjd<jd[igrid]) maxjd=jd[igrid];
+  if(maxkd<kd[igrid]) maxkd=kd[igrid];
+  
+  //}//igrid loop
+  
+  //allocate workarea
+  if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+    if (!(d = new float[ maxid*maxjd*maxkd ])){
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+      Exit(0);
+    }
+  }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+    if (!(dd = new double[ maxid*maxjd*maxkd ])){
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+      Exit(0);
+    }
+  }
+  
+  // 並列出力モード
+  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
+  
+  // 出力ファイル名
+  std::string tmp,fname,dfi_name;
+  std::string dtmp;
+  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "func", m_step, myRank, pout);
+  
+  
+  // Pressure
+  //if (C->Unit.File == DIMENSIONAL)
+  //{
+  //  REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+  //  fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C->RefDensity, &C->RefVelocity, &scale, &flop);
+  //}
+  //else
+  //{
+  //  fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
+  //}
+  if (C->Unit.File == DIMENSIONAL)
+  {
+    REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+    U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C->RefDensity, C->RefVelocity, scale, flop);
+  }
+  else
+  {
+    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar, flop);
+  }
+  
+  fname = "prs_" + tmp;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+  FP3DW->setFileName(fname.c_str());
+  if(!FP3DW->OpenFile()){
+    std::cout << "error OpenFile" << std::endl;
+    Exit(0);
+  }
+  
+  FP3DW->WriteNgrid(ngrid);
+  FP3DW->WriteFuncBlockData(id,jd,kd,nvar_scalar,ngrid);
+  
+  //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+  igrid=0;
+  FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+  FP3DW->setFuncDataNum(nvar_scalar[igrid]);
+  if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+    setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+    FP3DW->setFuncData(d);
+  }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+    setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+    FP3DW->setFuncData(dd);
+  }
+  if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+  //}//igrid loop
+  FP3DW->CloseFile();
+  dfi_name = "prs_" + C->P3Op.basename;
+  if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  
+  // Velocity
+  REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
+  fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  
+  fname = "vel_" + tmp;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+  FP3DW->setFileName(fname.c_str());
+  if(!FP3DW->OpenFile()){
+    std::cout << "error OpenFile" << std::endl;
+    Exit(0);
+  }
+  
+  FP3DW->WriteNgrid(ngrid);
+  FP3DW->WriteFuncBlockData(id,jd,kd,nvar_vector,ngrid);
+  
+  //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+  igrid=0;
+  FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+  FP3DW->setFuncDataNum(nvar_vector[igrid]);
+  if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+    FP3DW->setFuncData(d);
+  }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+    FP3DW->setFuncData(dd);
+  }
+  if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+  if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+    FP3DW->setFuncData(d);
+  }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+    FP3DW->setFuncData(dd);
+  }
+  if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+  if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+    FP3DW->setFuncData(d);
+  }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+    FP3DW->setFuncData(dd);
+  }
+  if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+  //}//igrid loop
+  FP3DW->CloseFile();
+  dfi_name = "vel_" + C->P3Op.basename;
+  if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  
+  // Tempearture
+  if( C->isHeatProblem() ){
+    //if (C->Unit.File == DIMENSIONAL)
+    //{
+    //  REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
+    //  fb_tmp_nd2d_(d_ws, d_t, &d_length, &C->BaseTemp, &C->DiffTemp, &klv, &scale, &flop);
+    //}
+    //else
+    //{
+    //  fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
+    //}
+    if (C->Unit.File == DIMENSIONAL)
+    {
+      REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
+      U.tmp_array_ND2D(d_ws, size, guide, d_t, C->BaseTemp, C->DiffTemp, klv, scale, flop);
+    }
+    else
+    {
+      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar, flop);
+    }
+    
+    fname = "tmp_" + tmp;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+    FP3DW->setFileName(fname.c_str());
+    if(!FP3DW->OpenFile()){
+      std::cout << "error OpenFile" << std::endl;
+      Exit(0);
+    }
+    
+    FP3DW->WriteNgrid(ngrid);
+    FP3DW->WriteFuncBlockData(id,jd,kd,nvar_scalar,ngrid);
+    //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+    igrid=0;
+    FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+    FP3DW->setFuncDataNum(nvar_scalar[igrid]);
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(dd);
+    }
+    if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+    //}//igrid loop
+    FP3DW->CloseFile();
+    dfi_name = "tmp_" + C->P3Op.basename;
+    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  }
+  
+  // Total Pressure
+  if (C->Mode.TP == ON ){
+    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
+    
+    // convert non-dimensional to dimensional, iff file is dimensional
+    if (C->Unit.File == DIMENSIONAL)
+    {
+      U.tp_array_ND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity, flop);
+    }
+    else
+    {
+      REAL_TYPE* tp;
+      tp = d_ws; d_ws = d_p0; d_p0 = tp;
+    }
+    
+    fname = "tp_" + tmp;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+    FP3DW->setFileName(fname.c_str());
+    if(!FP3DW->OpenFile()){
+      std::cout << "error OpenFile" << std::endl;
+      Exit(0);
+    }
+    
+    FP3DW->WriteNgrid(ngrid);
+    FP3DW->WriteFuncBlockData(id,jd,kd,nvar_scalar,ngrid);
+    //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+    igrid=0;
+    FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+    FP3DW->setFuncDataNum(nvar_scalar[igrid]);
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(dd);
+    }
+    if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+    //}//igrid loop
+    FP3DW->CloseFile();
+    dfi_name = "tp_" + C->P3Op.basename;
+    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  }
+  
+  // Vorticity
+  if (C->Mode.VRT == ON ){
+    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    
+    REAL_TYPE  vz[3];
+    vz[0] = vz[1] = vz[2] = 0.0;
+    unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
+    fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    
+    fname = "vrt_" + tmp;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+    FP3DW->setFileName(fname.c_str());
+    if(!FP3DW->OpenFile()){
+      std::cout << "error OpenFile" << std::endl;
+      Exit(0);
+    }
+    
+    FP3DW->WriteNgrid(ngrid);
+    FP3DW->WriteFuncBlockData(id,jd,kd,nvar_vector,ngrid);
+    //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+    igrid=0;
+    FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+    FP3DW->setFuncDataNum(nvar_vector[igrid]);
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+      FP3DW->setFuncData(dd);
+    }
+    if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+      FP3DW->setFuncData(dd);
+    }
+    if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+      FP3DW->setFuncData(dd);
+    }
+    
+    //}//igrid loop
+    FP3DW->CloseFile();
+    dfi_name = "vrt_" + C->P3Op.basename;
+    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  }
+  
+  // 2nd Invariant of Velocity Gradient Tensor
+  if (C->Mode.I2VGT == ON ) {
+    
+    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    
+    // 無次元で出力
+    //d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+    //fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
+    
+    fname = "iv2gt_" + tmp;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+    FP3DW->setFileName(fname.c_str());
+    if(!FP3DW->OpenFile()){
+      std::cout << "error OpenFile" << std::endl;
+      Exit(0);
+    }
+    
+    FP3DW->WriteNgrid(ngrid);
+    FP3DW->WriteFuncBlockData(id,jd,kd,nvar_scalar,ngrid);
+    //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+    igrid=0;
+    FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+    FP3DW->setFuncDataNum(nvar_scalar[igrid]);
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(dd);
+    }
+    if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+    //}//igrid loop
+    FP3DW->CloseFile();
+    dfi_name = "iv2gt_" + C->P3Op.basename;
+    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+    
+  }
+  
+  
+  // Helicity
+  if (C->Mode.Helicity == ON ){
+    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    
+    // 無次元で出力
+    //d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+    //fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
+    
+    fname = "hlt_" + tmp;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
+    FP3DW->setFileName(fname.c_str());
+    if(!FP3DW->OpenFile()){
+      std::cout << "error OpenFile" << std::endl;
+      Exit(0);
+    }
+    
+    FP3DW->WriteNgrid(ngrid);
+    FP3DW->WriteFuncBlockData(id,jd,kd,nvar_scalar,ngrid);
+    //for(igrid=0;igrid<ngrid;igrid++){ //--->BCMでループが必要になる？
+    igrid=0;
+    FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
+    FP3DW->setFuncDataNum(nvar_scalar[igrid]);
+    if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(d);
+    }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      FP3DW->setFuncData(dd);
+    }
+    if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
+    //}//igrid loop
+    FP3DW->CloseFile();
+    dfi_name = "hlt_" + C->P3Op.basename;
+    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  }
+  
+  //deallocate
+  delete [] d;
+  delete [] id;
+  delete [] jd;
+  delete [] kd;
+  
+  //dfiファイルの出力
+  if (myRank==0) if ( !dfi->Write_DFI_File(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  
+}
+
+
+// #################################################################
+void Plot3D::OutputPlot3D_function_name()
 {  
   //function_nameファイルはかならずformatted形式
   int keep_format=FP3DW->GetFormat();
@@ -792,9 +1293,9 @@ void Plot3D::OutputPlot3D_function_name(Control* C, FileIO_PLOT3D_WRITE* FP3DW, 
   // 並列出力モード
   bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
   
-  //tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, pout);
-  tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, false);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, pout);
+  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, false);
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
   //open file
@@ -841,7 +1342,7 @@ void Plot3D::OutputPlot3D_function_name(Control* C, FileIO_PLOT3D_WRITE* FP3DW, 
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* FP3DW, DFI* DFI)
+void Plot3D::OutputPlot3D_function_name_divide()
 {  
   //function_nameファイルはかならずformatted形式
   int keep_format=FP3DW->GetFormat();
@@ -853,12 +1354,12 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   // 出力ファイル名
   std::string tmp,fname;
   std::string dtmp;
-  //tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, pout);
-  tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, false);
+  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, pout);
+  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, false);
   
   // Pressure
   fname = "prs_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
   FP3DW->setFileName(fname.c_str());
   if(!FP3DW->OpenFile()){
@@ -870,7 +1371,7 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   
   // Velocity
   fname = "vel_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
   FP3DW->setFileName(fname.c_str());
   if(!FP3DW->OpenFile()){
@@ -885,7 +1386,7 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   // Tempearture
   if( C->isHeatProblem() ){
     fname = "tmp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -899,7 +1400,7 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   // Total Pressure
   if (C->Mode.TP == ON ){
     fname = "tp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -913,7 +1414,7 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   // Vorticity
   if (C->Mode.VRT == ON ){
     fname = "vrt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -929,7 +1430,7 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->Mode.I2VGT == ON ){
     fname = "i2vgt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -944,7 +1445,7 @@ void Plot3D::OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* 
   // Helicity
   if (C->Mode.Helicity == ON ){
     fname = "hlt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -972,25 +1473,25 @@ void Plot3D::OutputPlot3D_fvbnd()
   
   //////
   //////  //fvbndファイルはかならずformatted形式
-  //////  int keep_format=FP3DW.GetFormat();
-  //////  FP3DW.setFormat(FORMATTED);
+  //////  int keep_format=FP3DW->GetFormat();
+  //////  FP3DW->setFormat(FORMATTED);
   //////
   //////  // 出力ファイル名
   //////  std::string tmp;
   //////  std::string dtmp;
   //////
   //////  // 並列出力モード
-  //////  bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
+  //////  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
   //////
-  //////  //tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "xyz", 0, myRank, pout);
-  //////  tmp = DFI.Generate_FileName_Free(C.P3Op.basename, "xyz", 0, myRank, false);
+  //////  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, pout);
+  //////  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, false);
   //////  tmp = tmp + ".fvbnd";
-  //////  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_DivDebug, 0) : C.FIO.IO_DirPath;
-  //////  tmp = directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
+  //////  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  //////  tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   //////
   //////  //open file
-  //////  FP3DW.setFileName(tmp.c_str());
-  //////  if(!FP3DW.OpenFile()){
+  //////  FP3DW->setFileName(tmp.c_str());
+  //////  if(!FP3DW->OpenFile()){
   //////    if (myRank==0) printf("Error : error OpenFile\n");
   //////    Exit(0);
   //////  }
@@ -1008,44 +1509,42 @@ void Plot3D::OutputPlot3D_fvbnd()
   //////#endif
   //////
   //////  //write boundary
-  //////  BC.WriteBoundaryPLOT3D(&FP3DW,bcname);
+  //////  BC->WriteBoundaryPLOT3D(&FP3DW,bcname);
   //////
   //////  //close file
-  //////  FP3DW.CloseFile();
+  //////  FP3DW->CloseFile();
   //////
   //////  //reset option
-  //////  FP3DW.setFormat(keep_format);
+  //////  FP3DW->setFormat(keep_format);
   //////
   //////  return;
 }
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_post(unsigned CurrentStep,
-                               double CurrentTime,
-                               Control* C,
-                               FileIO_PLOT3D_WRITE* FP3DW,
-                               DFI* DFI,
-                               REAL_TYPE* d_ws,
-                               REAL_TYPE* d_p,
+void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
+                               const double CurrentTime,
+                               REAL_TYPE* v00,
+                               const REAL_TYPE* origin,
+                               const REAL_TYPE* pitch,
                                double& flop)
 {
   if ( C->P3Op.IS_q == ON ) OutputPlot3D_q(flop);
   
   if ( C->P3Op.IS_DivideFunc == ON )
   {
-    if ( C->P3Op.IS_funciton == ON ) OutputPlot3D_function_divide(flop);
+    if ( C->P3Op.IS_funciton == ON ) OutputPlot3D_function_divide(CurrentStep, CurrentTime, v00, flop);
   }
   else
   {
-    if ( C->P3Op.IS_funciton == ON ) OutputPlot3D_function(size, guide, C, CurrentStep, CurrentTime, FP3DW, DFI, d_ws, d_p, flop);
+    if ( C->P3Op.IS_funciton == ON ) OutputPlot3D_function(CurrentStep, CurrentTime, v00, flop);
   }
   
   if ( C->P3Op.IS_xyz == ON )
   {
     if ( FP3DW->IsMoveGrid() )
     {
-      OutputPlot3D_xyz(size, guide, CurrentStep, C, FP3DW, DFI);
+      OutputPlot3D_xyz(CurrentStep, origin, pitch);
     }
   }
   
@@ -1060,7 +1559,7 @@ void Plot3D::OutputPlot3D_q(double& flop)
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_xyz(unsigned CurrentStep, Control* C, FileIO_PLOT3D_WRITE* FP3DW, DFI* DFI)
+void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origin, const REAL_TYPE* pitch)
 {
   //value
   int igrid;
@@ -1142,13 +1641,13 @@ void Plot3D::OutputPlot3D_xyz(unsigned CurrentStep, Control* C, FileIO_PLOT3D_WR
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "xyz", m_step, myRank, pout);
-  //tmp = DFI->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, pout);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? DFI->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", m_step, myRank, pout);
+  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, pout);
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
   //open file
-  FP3DW.setFileName(tmp.c_str());
+  FP3DW->setFileName(tmp.c_str());
   if(!FP3DW->OpenFile()){
     if (myRank==0) printf("Error : error OpenFile\n");
     Exit(0);
@@ -1299,7 +1798,7 @@ void Plot3D::OutputPlot3D_xyz(unsigned CurrentStep, Control* C, FileIO_PLOT3D_WR
 
 
 // #################################################################
-void Plot3D::setIblank(int* iblank, int id, int jd, int kd, int* d_bcd)
+void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
 {
   //iblank = 1 : 計算グリッド
   //       = 0 : 非計算グリッド
@@ -1979,7 +2478,7 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd, int* d_bcd)
 
 
 // #################################################################
-void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd, int* d_bcd)
+void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
 {
   //iblank = 1 : 計算グリッド
   //       = 0 : 非計算グリッド
@@ -4515,7 +5014,7 @@ void Plot3D::setVectorComponentGridDataGuide(double* d, float* data, int id, int
 
 
 // #################################################################
-void Plot3D::setValuePlot3D(Control* C)
+void Plot3D::setValuePlot3D()
 {
   //set ngrid
   C->P3Op.ngrid=1;

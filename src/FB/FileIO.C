@@ -17,23 +17,6 @@
 #include "FileIO.h"
 
 
-// ファイル出力時，発散値を計算する
-void FileIO::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, double& flop)
-{
-  U.xcopy(dst, sz, gc, src, coef, kind_scalar, flop);
-}
-
-
-
-// 全圧データについて，無次元から有次元単位に変換する
-void FileIO::cnv_TP_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, 
-                         const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
-{
-  REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
-  
-  U.xcopy(dst, sz, gc, src, cf, kind_scalar, flop);
-}
-
 
 // sphファイルの書き出し（内部領域のみ）
 void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)

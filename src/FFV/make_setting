@@ -141,7 +141,7 @@ UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
               -L../IP \
               -L../F_CORE \
               -L../PLOT3D \
-              -L$(MPI_DIR)/lib \
+              -L$(MPI_DIR)/lib
               
 UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
             $(UDEF_LIBS_SPEC)

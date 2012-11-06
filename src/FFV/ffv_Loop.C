@@ -228,7 +228,7 @@ int FFV::Loop(const unsigned step)
     {
       TIMING_start(tm_file_out);
       flop_count=0.0;
-      PLT3D.OutputPlot3D_post(size, guide, CurrentStep, CurrentTime, &C, &FP3DW, &DFI, d_ws, d_p, flop_count);
+      PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_count);
       TIMING_stop(tm_file_out, flop_count);
     }
     
@@ -242,7 +242,7 @@ int FFV::Loop(const unsigned step)
         {
           TIMING_start(tm_file_out);
           flop_count=0.0;
-          PLT3D.OutputPlot3D_post(size, guide, CurrentStep, CurrentTime, &C, &FP3DW, &DFI, d_ws, d_p, flop_count);
+          PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_count);
           TIMING_stop(tm_file_out, flop_count);
         }
       }

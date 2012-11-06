@@ -1,5 +1,5 @@
-#ifndef _DFIINFO_H_
-#define _DFIINFO_H_
+#ifndef _FB_DFIINFO_H_
+#define _FB_DFIINFO_H_
 
 // #################################################################
 //
@@ -121,4 +121,4 @@ public:
 
 };
 
-#endif // _DFIINFO_H_
+#endif // _FB_DFIINFO_H_

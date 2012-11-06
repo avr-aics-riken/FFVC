@@ -1,3 +1,5 @@
+#ifndef _PLT3D_FFV_PLOT3D_H_
+#define _PLT3D_FFV_PLOT3D_H_
 // #################################################################
 //
 // FFV : Frontflow / violet Cartesian
@@ -14,19 +16,38 @@
  * @author kero
  */
 
+#include <string>
 #include <mpi.h>
 
+#include "FB_Ffunc.h"
 #include "Control.h"
 #include "dfi.h"
 #include "PLOT3D_write.h"
 #include "PLOT3D_read.h"
+#include "ffv_Ffunc.h"
 
 class Plot3D {
 private:
-  int myRank;
-  int size[3];
-  int guide;
+  int myRank;        ///< ランク番号
+  int size[3];       ///< 配列サイズ
+  int guide;         ///< ガイドセルサイズ
+  REAL_TYPE deltaX;  ///< 等間隔格子の無次元格子幅
+  int dfi_plot3d;    ///< PLOT3D管理用
   
+  Control* C;                 ///< Controlクラス
+  FileIO_PLOT3D_WRITE* FP3DW; ///< PLOT3D format wirte class
+  DFI* dfi;                   ///< Distributed File Information
+  
+  REAL_TYPE* d_ws;   ///< 出力データコンテナ配列
+  REAL_TYPE* d_p;    ///< 圧力データ配列
+  REAL_TYPE* d_wo;   ///< ベクトル出力コンテナ配列
+  REAL_TYPE* d_v;    ///< 速度ベクトルデータ配列
+  REAL_TYPE* d_t;    ///< 温度データ配列
+  REAL_TYPE* d_p0;   ///< スカラーデータ配列
+  REAL_TYPE* d_wv;   ///< ベクトルデータ配列
+  int* d_bcv;        ///< BCindexV
+  int* d_bcd;        ///< BCindexID
+
 public:
   
   /** コンストラクタ */
@@ -34,6 +55,18 @@ public:
     myRank = 0;
     size[0] = size[1] = size[2] = 0;
     guide = 0;
+    deltaX = 0.0;
+    dfi_plot3d = 0;
+    
+    d_ws = NULL;
+    d_p  = NULL;
+    d_wo = NULL;
+    d_v  = NULL;
+    d_t  = NULL;
+    d_p0 = NULL;
+    d_wv = NULL;
+    d_bcv= NULL;
+    d_bcd= NULL;
   }
   
   /**　デストラクタ */
@@ -43,6 +76,17 @@ public:
 protected:
   
   FBUtility U;      ///< ユーティリティクラス
+  
+  /**
+   * @brief 指定の出力ディレクトリとファイル名を結合
+   * @retval フルパスファイル名
+   * @param [in] path      ディレクトリパス名
+   * @param [in] fname     ファイル名
+   * @param [in] io_mode   ファイル出力モード
+   @ @param [in] para_mode 並列モード
+   */
+  string directory_prefix(string path, const string fname, const int io_mode, const int para_mode);
+  
   
 // float
   /**
@@ -108,23 +152,28 @@ protected:
   
   /**
    * @brief 計算結果ファイル（*.func）出力
-   * @param [in,out] C           Controlクラス
    * @param [in]     CurrentStep 現在のステップ数
    * @param [in]     CurrentTime 現在の時刻
-   * @param [in]     FP3DW       FileIO_PLOT3D_WRITE
-   * @param [in]     DFI         DFI
-   * @param [in]     d_ws        出力データ配列
-   * @param [in]     d_p         圧力データ配列 
+   * @param [in]     v00         格子速度
    * @param [in,out] flop        浮動小数点演算数
    */
-  void OutputPlot3D_function(Control* C,
-                             unsigned CurrentStep,
-                             double CurrentTime,
-                             FileIO_PLOT3D_WRITE* FP3DW,
-                             DFI* DFI,
-                             REAL_TYPE* d_ws,
-                             REAL_TYPE* d_p,
+  void OutputPlot3D_function(const unsigned CurrentStep,
+                             const double CurrentTime,
+                             REAL_TYPE* v00,
                              double& flop);
+  
+  
+  /**
+   * @brief 項目別計算結果ファイル（*.func）出力
+   * @param [in]     CurrentStep 現在のステップ数
+   * @param [in]     CurrentTime 現在の時刻
+   * @param [in]     v00         格子速度
+   * @param [in,out] flop    浮動小数点演算数
+   */
+  void OutputPlot3D_function_divide(const unsigned CurrentStep,
+                                    const double CurrentTime,
+                                    REAL_TYPE* v00,
+                                    double& flop);
   
   
   /**
@@ -140,9 +189,8 @@ protected:
    * @param [in]     id       iblanx x方向サイズ
    * @param [in]     jd       iblanx y方向サイズ
    * @param [in]     kd       iblanx z方向サイズ
-   * @param [in,out] d_bcd    BCindex
    */
-  void setIblank(int* iblank, int id, int jd, int kd, int* d_bcd);
+  void setIblank(int* iblank, int id, int jd, int kd);
   
   
   /**
@@ -151,9 +199,8 @@ protected:
    * @param [in]     id       iblanx x方向サイズ
    * @param [in]     jd       iblanx y方向サイズ
    * @param [in]     kd       iblanx z方向サイズ
-   * @param [in,out] d_bcd    BCindex
    */
-  void setIblankGuide(int* iblank, int id, int jd, int kd, int* d_bcd);
+  void setIblankGuide(int* iblank, int id, int jd, int kd);
   
   
 // flaot >> float
@@ -439,27 +486,14 @@ public:
 
   /**
    * @brief 計算結果ファイルの項目（*.nam）出力
-   * @param [in,out] C           Controlクラス
-   * @param [in]     FP3DW       FileIO_PLOT3D_WRITE
-   * @param [in]     DFI         DFI
    */
-  void OutputPlot3D_function_name(Control* C, FileIO_PLOT3D_WRITE* FP3DW, DFI* DFI);
+  void OutputPlot3D_function_name();
   
   
   /**
    * @brief 項目別計算結果ファイルの項目（*.nam）出力
-   * @param [in,out] C           Controlクラス
-   * @param [in]     FP3DW       FileIO_PLOT3D_WRITE
-   * @param [in]     DFI         DFI
    */
-  void OutputPlot3D_function_name_divide(Control* C, FileIO_PLOT3D_WRITE* FP3DW, DFI* DFI);
-  
-  
-  /**
-   * @brief 項目別計算結果ファイル（*.func）出力
-   * @param [in,out] flop    浮動小数点演算数
-   */
-  void OutputPlot3D_function_divide(double& flop);
+  void OutputPlot3D_function_name_divide();
   
   
   /**
@@ -473,44 +507,69 @@ public:
    * @brief PLOT3Dファイルのポスト出力
    * @param [in]     CurrentStep 現在のステップ数
    * @param [in]     CurrentTime 現在の時刻
-   * @param [in,out] C           Controlクラス
-   * @param [in]     FP3DW       FileIO_PLOT3D_WRITE
-   * @param [in]     DFI         DFI
-   * @param [in]     d_ws        出力データ配列 
-   * @param [in]     d_p         圧力データ配列 
+   * @param [in]     v00         格子速度
+   * @param [in]     origin      基点座標
+   * @param [in]     pitch       格子幅
    * @param [in,out] flop        浮動小数点演算数
    */
-  void OutputPlot3D_post(unsigned CurrentStep,
-                         double CurrentTime,
-                         Control* C,
-                         FileIO_PLOT3D_WRITE* FP3DW,
-                         DFI* DFI,
-                         REAL_TYPE* d_ws,
-                         REAL_TYPE* d_p,
+  void OutputPlot3D_post(const unsigned CurrentStep,
+                         const double CurrentTime,
+                         REAL_TYPE* v00,
+                         const REAL_TYPE* origin,
+                         const REAL_TYPE* pitch,
                          double& flop);
   
   
   /**
    * @brief 形状データファイル（*.xyz）の出力
    * @param [in]     CurrentStep 現在のステップ数
-   * @param [in,out] C           Controlクラス
-   * @param [in]     FP3DW       FileIO_PLOT3D_WRITE
-   * @param [in]     DFI         DFI
+   * @param [in]     origin      基点座標
+   * @param [in]     pitch       格子幅
    */
-  void OutputPlot3D_xyz(unsigned CurrentStep, Control* C, FileIO_PLOT3D_WRITE* FP3DW, DFI* DFI);
+  void OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origin, const REAL_TYPE* pitch);
   
   
   /**
    * @brief グリッド数、出力項目数をセット（BCMへ移行する場合要編集）
-   * @param [in,out] C Controlクラス
    */
-  void setValuePlot3D(Control* C);
+  void setValuePlot3D();
 
   
   /**
    * @brief メンバ変数の初期化
-   * @param [in]     m_size        配列サイズ
-   * @param [in]     m_guide       ガイドセルサイズ
+   * @param [in]     m_size      配列サイズ
+   * @param [in]     m_guide     ガイドセルサイズ
+   * @param [in]     m_deltaX    格子幅
+   * @param [in]     dfi_plot3d  PLOT3D管理用
+   * @param [in]     m_C         Controlクラス
+   * @param [in]     m_FP3DW     FileIO_PLOT3D_WRITE
+   * @param [in]     m_DFI       DFI
+   * @param [in]     m_d_ws      出力データコンテナ配列
+   * @param [in]     m_d_p       圧力データ
+   * @param [in]     m_d_wo      ベクトル出力データコンテナ配列
+   * @param [in]     m_d_v       速度データ
+   * @param [in]     m_d_t       温度データ
+   * @param [in]     m_d_p0      スカラーデータ
+   * @param [in]     m_d_wv      ベクトルデータ
+   * @param [in]     m_d_bcv     BCindexV
+   * @param [in]     m_d_bcd     BCindexID
    */
-  void Initialize(const int* m_size, const int m_guide);
+  void Initialize(const int* m_size,
+                  const int m_guide,
+                  const REAL_TYPE m_deltaX,
+                  const int dfi_plot3d,
+                  Control* m_C,
+                  FileIO_PLOT3D_WRITE* m_FP3DW,
+                  DFI* m_dfi,
+                  REAL_TYPE* m_d_ws,
+                  REAL_TYPE* m_d_p,
+                  REAL_TYPE* m_d_wo,
+                  REAL_TYPE* m_d_v,
+                  REAL_TYPE* m_d_t,
+                  REAL_TYPE* m_d_p0,
+                  REAL_TYPE* m_d_wv,
+                  int*       m_d_bcv,
+                  int*       m_d_bcd);
 };
+
+#endif // _PLT3D_FFV_PLOT3D_H_
