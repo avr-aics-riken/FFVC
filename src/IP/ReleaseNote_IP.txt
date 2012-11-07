@@ -7,7 +7,7 @@ Release Note
 	Intrinsic class ( Intrinsic Problems )
 	
 	Copyright (c) 2012 All rights reserved.
-  Institute of Industrial Scienece, The University of Tokyo, Japan.
+  Institute of Industrial Scienece, University of Tokyo, Japan.
   
   @author kero
 

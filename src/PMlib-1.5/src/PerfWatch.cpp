@@ -7,7 +7,7 @@
 
 //@file PerfWatch.cpp
 //@brief PerfWatch class
-//@author keno, Vis Team, AICS, RIKEN / Soichiro Suzuki, IIS, The University of Tokyo
+//@author keno, Vis Team, AICS, RIKEN / Soichiro Suzuki, IIS, University of Tokyo
 
 #include <cmath>
 #include <mpi.h>

@@ -4,7 +4,7 @@
 //
 // Copyright (c) All right reserved. 2012
 //
-// Institute of Industrial Science, The University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan. 
 //
 // #################################################################
 

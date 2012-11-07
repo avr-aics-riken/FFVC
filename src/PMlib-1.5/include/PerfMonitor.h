@@ -10,7 +10,7 @@
 
 //@file PerfMonitor.h
 //@brief PerfMonitor class Header
-//@author keno, Vis Team, AICS, RIKEN / Soichiro Suzuki, IIS, The University of Tokyo
+//@author keno, Vis Team, AICS, RIKEN / Soichiro Suzuki, IIS, University of Tokyo
 //@note MPI_Init(), MPI_Finalize()はライブラリ外で行う。
 
 #include <cstdio>
