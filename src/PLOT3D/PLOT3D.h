@@ -35,28 +35,6 @@
 #include "FB_Ffunc.h"
 #include "mydebug.h"
 
-//#ifndef _WIN32
-//#include <unistd.h>
-//#include <strings.h>
-//#else
-//#include "sph_win32_util.h"
-//#endif
-//#include <sys/types.h>
-//
-//#if defined(IA32_LINUX) || defined(IA64_LINUX) || defined(SGI_ALTIX)
-//#include <sys/stat.h>
-//#endif
-
-//#ifdef MacOSX
-//#include <sys/uio.h>
-//#endif
-//
-//#ifdef REAL_TYPE_DOUBLE
-//#define REAL_TYPE float
-//#else
-//#define REAL_TYPE double
-//#endif
-
 // general
 //#define FB_FILE_PATH_LENGTH 64
 #define FB_BUFF_LENGTH      256
@@ -203,11 +181,6 @@ protected:
   Plot3D_Option P3Op;
 
 public:
-  
-  /** CPMlibのポインタをセット 
-   * @param [in] m_paraMngr  CPMクラスのポインタ
-   */
-  //void importCPM(cpm_ParaManager* m_paraMngr);
 
   //@fn int IsGridKind(void) const
   //@brief return 0 : single grid, return 1 : multi grid

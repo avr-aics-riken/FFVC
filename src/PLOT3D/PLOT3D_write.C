@@ -4,11 +4,11 @@
 //
 // Copyright (c) 2012 All right reserved.
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan.
 //
 // #################################################################
 
-/** 
+/**
  * @file   PLOT3D_write.C
  * @brief  FlowBase FileIO_PLOT3D_WRITE class Header
  * @author kero
@@ -21,23 +21,27 @@
  */
 bool FileIO_PLOT3D_WRITE::OpenFile()
 {
+  char tmp[FB_FILE_PATH_LENGTH];
+  int len;
+  int flag;
+  int fnsize;
+  
   int ierror=0;
   switch (P3Op.Format) {
     case UNFORMATTED:
     case FORMATTED:
-
-      char tmp[FB_FILE_PATH_LENGTH];
+      
       memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
       strcpy(tmp, fname.c_str());
-
-      int len = strlen(tmp);
-      int flag=P3Op.Format;
-      int fnsize=FB_FILE_PATH_LENGTH;
-
+      
+      len = strlen(tmp);
+      flag=P3Op.Format;
+      fnsize=FB_FILE_PATH_LENGTH;
+      
       //open_plot3d_outputfile_(&flag,tmp,&ifl,&fnsize,&ierror);
       open_plot3d_outputfile_(&flag,tmp,&ifl,&len,&ierror);
       break;
-
+      
     case C_BINARY:
       if( (fp = fopen(fname.c_str(), "wb")) == NULL ) {
         fprintf(stderr, "Can't open file.(%s)\n", fname.c_str());
@@ -46,7 +50,7 @@ bool FileIO_PLOT3D_WRITE::OpenFile()
       ierror = true;
       break;
   }
-
+  
   return ierror;
 }
 
@@ -165,7 +169,6 @@ void FileIO_PLOT3D_WRITE::WriteFuncBlockData(int* id, int* jd, int* kd, int* nva
  */
 void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
 {
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -205,7 +208,6 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_UNFORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
 {
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -247,7 +249,6 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_FORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteXYZ_C_BINARY()
 {
-
   size_t s1 = (size_t)id * (size_t)jd;
   size_t s2 = s1 * (size_t)kd;
   
@@ -293,7 +294,6 @@ void FileIO_PLOT3D_WRITE::WriteXYZ_C_BINARY()
  */
 void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
 {
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -323,7 +323,6 @@ void FileIO_PLOT3D_WRITE::WriteQ_UNFORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteQ_FORMATTED()
 {
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -354,7 +353,7 @@ void FileIO_PLOT3D_WRITE::WriteQ_FORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteQ_C_BINARY()
 {
-
+  
 }
 
 /**
@@ -363,7 +362,6 @@ void FileIO_PLOT3D_WRITE::WriteQ_C_BINARY()
  */
 void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
 {
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -394,7 +392,6 @@ void FileIO_PLOT3D_WRITE::WriteFunc_UNFORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
 {
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -426,14 +423,11 @@ void FileIO_PLOT3D_WRITE::WriteFunc_FORMATTED()
  */
 void FileIO_PLOT3D_WRITE::WriteFunc_C_BINARY()
 {
-
   size_t s1 = (size_t)id * (size_t)jd;
   size_t s2 = s1 * (size_t)kd;
   size_t s3 = s1 * (size_t)nvar;
   size_t s4 = s2 * (size_t)nvar;
   
-#if 1 //項目ごと
-
   if(P3Op.realtype==1)
   {
     switch (P3Op.DimIs) {
@@ -456,34 +450,6 @@ void FileIO_PLOT3D_WRITE::WriteFunc_C_BINARY()
         break;
     }
   }
-
-#else //全項目
-
-  if(P3Op.realtype==1)
-  {
-    switch (P3Op.DimIs) {
-      case DIMENSION_2D:
-        fwrite(d, sizeof(float), s3, fp);
-        break;
-      case DIMENSION_3D:
-        fwrite(d, sizeof(float), s4, fp);
-        break;
-    }
-  }
-  else if(P3Op.realtype==2)
-  {
-    switch (P3Op.DimIs) {
-      case DIMENSION_2D:
-        fwrite(dd, sizeof(double), s3, fp);
-        break;
-      case DIMENSION_3D:
-        fwrite(dd, sizeof(double), s4, fp);
-        break;
-    }
-  }
-
-#endif
-
 }
 
 
@@ -559,11 +525,11 @@ bool FileIO_PLOT3D_WRITE::WriteFuncData()
 void FileIO_PLOT3D_WRITE::WriteFunctionName(const char* fn)
 {
   funcname=fn;
-
+  
   char tmp[FB_BUFF_LENGTH];
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, funcname.c_str());
-
+  
   int len = strlen(tmp);
   write_line_(tmp,&ifl,&len);
 }
@@ -577,7 +543,7 @@ void FileIO_PLOT3D_WRITE::WriteFVBNDHEAD1()
   int len;
   string buff;
   char tmp[FB_BUFF_LENGTH];
-
+  
   buff = "FVBND 1 4";
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, buff.c_str());
@@ -592,11 +558,11 @@ void FileIO_PLOT3D_WRITE::WriteFVBNDHEAD1()
 void FileIO_PLOT3D_WRITE::WriteSTRING(const char* buff)
 {
   string dum=buff;
-
+  
   char tmp[FB_BUFF_LENGTH];
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, dum.c_str());
-
+  
   int len = strlen(tmp);
   write_line_(tmp,&ifl,&len);
 }
@@ -609,7 +575,7 @@ void FileIO_PLOT3D_WRITE::WriteFVBNDHEAD2()
   int len;
   string buff;
   char tmp[FB_BUFF_LENGTH];
-
+  
   buff = "BOUNDARIES";
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, buff.c_str());
@@ -621,21 +587,21 @@ void FileIO_PLOT3D_WRITE::WriteFVBNDHEAD2()
  * @brief FVBNDファイルの書き出し
  */
 void FileIO_PLOT3D_WRITE::WriteFVBND(
-  int type, int gridnum,
-  int Imin, int Imax,
-  int Jmin, int Jmax,
-  int Kmin, int Kmax,
-  string ResultFlag,
-  int dir)
+                                     int type, int gridnum,
+                                     int Imin, int Imax,
+                                     int Jmin, int Jmax,
+                                     int Kmin, int Kmax,
+                                     string ResultFlag,
+                                     int dir)
 {
   string buff;
   char tmp[FB_BUFF_LENGTH];
-
-//write boundaries
+  
+  //write boundaries
   memset(tmp, '\0', sizeof(char)*FB_BUFF_LENGTH);
   strcpy(tmp, ResultFlag.c_str());
   write_fvbnd_boundary_(
-    &type,&gridnum,&Imin,&Imax,&Jmin,&Jmax,&Kmin,&Kmax,tmp,&dir,&ifl);
+                        &type,&gridnum,&Imin,&Imax,&Jmin,&Jmax,&Kmin,&Kmax,tmp,&dir,&ifl);
 }
 
 /**

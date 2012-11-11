@@ -105,319 +105,23 @@ void Plot3D::Initialize(const int* m_size,
   d_bcd= m_d_bcd;
 }
 
-// double
 // #################################################################
-void Plot3D::FaceDataDivideBy4(double* d, int id, int jd, int kd)
+void Plot3D::setValuePlot3D()
 {
-  int i,j,k;
-  size_t ip;
+  //set ngrid
+  C->P3Op.ngrid=1;
   
-  i=0;
-  for (k=1; k<kd-1; k++){
-    for (j=1; j<jd-1; j++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
+  //set nvar
+  int nvar=4;//pressure + velocity(3)
   
-  i=id-1;
-  for (k=1; k<kd-1; k++){
-    for (j=1; j<jd-1; j++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
+  if ( C->isHeatProblem() )     nvar++;
+  if ( C->Mode.TP == ON )       nvar++;
+  if ( C->Mode.VRT == ON )      nvar+3;
+  if ( C->Mode.I2VGT == ON )    nvar++;
+  if ( C->Mode.Helicity == ON ) nvar++;
   
-  j=0;
-  for (k=1; k<kd-1; k++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  j=jd-1;
-  for (k=1; k<kd-1; k++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  k=0;
-  for (j=1; j<jd-1; j++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  k=kd-1;
-  for (j=1; j<jd-1; j++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
+  C->P3Op.nvar=nvar;
 }
-
-
-// double
-// #################################################################
-void Plot3D::LineDataDivideBy2(double* d, int id, int jd, int kd)
-{
-  int i,j,k;
-  size_t ip;
-  
-  i=0; j=0;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=0; j=jd-1;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=0; k=0;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=0; k=kd-1;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=0; k=0;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=0; k=kd-1;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=jd-1; k=0;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=jd-1; k=kd-1;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; j=0;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; j=jd-1;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; k=0;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; k=kd-1;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-}
-
-
-// double
-// #################################################################
-void Plot3D::VolumeDataDivideBy8(double* d, int id, int jd, int kd)
-{
-  int i,j,k;
-  size_t ip;
-  
-  for (k=1; k<kd-1; k++){
-    for (j=1; j<jd-1; j++){
-      for (i=1; i<id-1; i++){
-        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        d[ip]=d[ip]*0.125;
-      }
-    }
-  }
-}
-
-
-//float
-// #################################################################
-void Plot3D::FaceDataDivideBy4(float* d, int id, int jd, int kd)
-{
-  int i,j,k;
-  size_t ip;
-  
-  i=0;
-  for (k=1; k<kd-1; k++){
-    for (j=1; j<jd-1; j++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  i=id-1;
-  for (k=1; k<kd-1; k++){
-    for (j=1; j<jd-1; j++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  j=0;
-  for (k=1; k<kd-1; k++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  j=jd-1;
-  for (k=1; k<kd-1; k++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  k=0;
-  for (j=1; j<jd-1; j++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-  
-  k=kd-1;
-  for (j=1; j<jd-1; j++){
-    for (i=1; i<id-1; i++){
-      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-      d[ip]=d[ip]*0.25;
-    }
-  }
-}
-
-
-//float
-// #################################################################
-void Plot3D::LineDataDivideBy2(float* d, int id, int jd, int kd)
-{
-  int i,j,k;
-  size_t ip;
-  
-  i=0; j=0;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=0; j=jd-1;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=0; k=0;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=0; k=kd-1;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=0; k=0;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=0; k=kd-1;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=jd-1; k=0;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  j=jd-1; k=kd-1;
-  for (i=1; i<id-1; i++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; j=0;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; j=jd-1;
-  for (k=1; k<kd-1; k++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; k=0;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-  i=id-1; k=kd-1;
-  for (j=1; j<jd-1; j++){
-    ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-    d[ip]=d[ip]*0.5;
-  }
-  
-}
-
-
-//float
-// #################################################################
-void Plot3D::VolumeDataDivideBy8(float* d, int id, int jd, int kd)
-{
-  int i,j,k;
-  size_t ip;
-  
-  for (k=1; k<kd-1; k++){
-    for (j=1; j<jd-1; j++){
-      for (i=1; i<id-1; i++){
-        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        d[ip]=d[ip]*0.125;
-      }
-    }
-  }
-}
-
 
 
 // #################################################################
@@ -432,13 +136,11 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   int *id,*jd,*kd;
   int *nvar;
   int ix,jx,kx;
-  //REAL_TYPE *d;
   float *d;
   double *dd;
   
   //
   REAL_TYPE scale = 1.0;
-  //int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
   // ガイドセル出力
   //int gc_out = C->GuideOut;
@@ -550,15 +252,6 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   int ivar=0;
   
   // Pressure
-  //if (C->Unit.File == DIMENSIONAL)
-  //{
-  //  REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
-  //  fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C->RefDensity, &C->RefVelocity, &scale, &flop);
-  //}
-  //else
-  //{
-  //  fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
-  //}
   if (C->Unit.File == DIMENSIONAL)
   {
     REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
@@ -571,10 +264,10 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   
   if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -582,9 +275,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   else//Fortranによる出力では出力項目すべてを一度に書き出し
   {
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
     }
   }
   ivar++;
@@ -595,26 +288,26 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   
   if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -622,9 +315,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   else//Fortranによる出力では出力項目すべてを一度に書き出し
   {
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorGridData(&d[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid]);
+      setVectorGridData(&d[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid],gc_out);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorGridData(&dd[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid]);
+      setVectorGridData(&dd[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid],gc_out);
     }
   }
   ivar=ivar+3;
@@ -632,15 +325,6 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   // Tempearture
   if( C->isHeatProblem() )
   {
-    //if (C->Unit.File == DIMENSIONAL)
-    //{
-    //  REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    //  fb_tmp_nd2d_(d_ws, d_t, &d_length, &C->BaseTemp, &C->DiffTemp, &klv, &scale, &flop);
-    //}
-    //else
-    //{
-    //  fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
-    //}
     if (C->Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
@@ -653,10 +337,10 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -664,9 +348,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     else//Fortranによる出力では出力項目すべてを一度に書き出し
     {
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }
     }
     ivar++;
@@ -690,10 +374,10 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -701,9 +385,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     else//Fortranによる出力では出力項目すべてを一度に書き出し
     {
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }
     }
     ivar++;
@@ -721,26 +405,26 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+        setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+        setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+        setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+        setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+        setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+        setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -748,9 +432,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     else//Fortranによる出力では出力項目すべてを一度に書き出し
     {
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setVectorGridData(&d[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid]);
+        setVectorGridData(&d[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid],gc_out);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setVectorGridData(&dd[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid]);
+        setVectorGridData(&dd[out_length*ivar],d_wo,id[igrid],jd[igrid],kd[igrid],gc_out);
       }
     }
     ivar=ivar+3;
@@ -760,17 +444,14 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   if (C->Mode.I2VGT == ON ) {
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
-    // 無次元で出力
-    //d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    //fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -778,9 +459,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     else//Fortranによる出力では出力項目すべてを一度に書き出し
     {
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }
     }
     ivar++;
@@ -791,17 +472,14 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   {
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
-    // 無次元で出力
-    //d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    //fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(d);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
         FP3DW->setFuncData(dd);
       }
       if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -809,9 +487,9 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     else//Fortranによる出力では出力項目すべてを一度に書き出し
     {
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&d[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid]);
+        setScalarGridData(&dd[out_length*ivar],d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       }
     }
     ivar++;
@@ -860,7 +538,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   int *id,*jd,*kd;
   int *nvar;
   int ix,jx,kx;
-  //REAL_TYPE *d;
   float *d;
   double *dd;
   int *nvar_scalar;
@@ -868,7 +545,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   //
   REAL_TYPE scale = 1.0;
-  //int d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
   // ガイドセル出力
   //int gc_out = C->GuideOut;
@@ -941,15 +617,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   
   // Pressure
-  //if (C->Unit.File == DIMENSIONAL)
-  //{
-  //  REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
-  //  fb_prs_nd2d_(d_ws, d_p, &d_length, &bp, &C->RefDensity, &C->RefVelocity, &scale, &flop);
-  //}
-  //else
-  //{
-  //  fb_xcopy_(d_ws, d_p, &d_length, &scale, &flop);
-  //}
   if (C->Unit.File == DIMENSIONAL)
   {
     REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
@@ -977,10 +644,10 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
   FP3DW->setFuncDataNum(nvar_scalar[igrid]);
   if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-    setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+    setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
     FP3DW->setFuncData(d);
   }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-    setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+    setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
     FP3DW->setFuncData(dd);
   }
   if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -1010,26 +677,26 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
   FP3DW->setFuncDataNum(nvar_vector[igrid]);
   if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
     FP3DW->setFuncData(d);
   }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
     FP3DW->setFuncData(dd);
   }
   if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
     FP3DW->setFuncData(d);
   }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
     FP3DW->setFuncData(dd);
   }
   if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+    setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
     FP3DW->setFuncData(d);
   }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+    setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
     FP3DW->setFuncData(dd);
   }
   if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -1040,15 +707,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   // Tempearture
   if( C->isHeatProblem() ){
-    //if (C->Unit.File == DIMENSIONAL)
-    //{
-    //  REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    //  fb_tmp_nd2d_(d_ws, d_t, &d_length, &C->BaseTemp, &C->DiffTemp, &klv, &scale, &flop);
-    //}
-    //else
-    //{
-    //  fb_xcopy_(d_ws, d_t, &d_length, &scale, &flop);
-    //}
     if (C->Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
@@ -1075,10 +733,10 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
     FP3DW->setFuncDataNum(nvar_scalar[igrid]);
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -1119,10 +777,10 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
     FP3DW->setFuncDataNum(nvar_scalar[igrid]);
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -1157,26 +815,26 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
     FP3DW->setFuncDataNum(nvar_vector[igrid]);
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0);//0:x
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],0,gc_out);//0:x
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1);//1:y
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],1,gc_out);//1:y
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+      setVectorComponentGridData(d,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2);//2:z
+      setVectorComponentGridData(dd,d_wo,id[igrid],jd[igrid],kd[igrid],2,gc_out);//2:z
       FP3DW->setFuncData(dd);
     }
     
@@ -1191,9 +849,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
-    // 無次元で出力
-    //d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    //fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     fname = "iv2gt_" + tmp;
@@ -1212,10 +867,10 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
     FP3DW->setFuncDataNum(nvar_scalar[igrid]);
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -1231,9 +886,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   if (C->Mode.Helicity == ON ){
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
-    // 無次元で出力
-    //d_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-    //fb_xcopy_(d_ws, d_p0, &d_length, &scale, &flop);
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     fname = "hlt_" + tmp;
@@ -1252,10 +904,10 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     FP3DW->setGridData(id[igrid],jd[igrid],kd[igrid],ngrid);
     FP3DW->setFuncDataNum(nvar_scalar[igrid]);
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
-      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(d,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(d);
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
-      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid]);
+      setScalarGridData(dd,d_ws,id[igrid],jd[igrid],kd[igrid],gc_out);
       FP3DW->setFuncData(dd);
     }
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
@@ -1465,59 +1117,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
 // #################################################################
 void Plot3D::OutputPlot3D_fvbnd()
 {
-  //領域を超えてfvbndを出力するのは結構難しい＆あまりメリットはない--->当面保留
-  return;
-  
-  //HostRankのみ出力
-  //if(myRank != 0 ) return;
-  
-  //////
-  //////  //fvbndファイルはかならずformatted形式
-  //////  int keep_format=FP3DW->GetFormat();
-  //////  FP3DW->setFormat(FORMATTED);
-  //////
-  //////  // 出力ファイル名
-  //////  std::string tmp;
-  //////  std::string dtmp;
-  //////
-  //////  // 並列出力モード
-  //////  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
-  //////
-  //////  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, pout);
-  //////  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, false);
-  //////  tmp = tmp + ".fvbnd";
-  //////  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-  //////  tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
-  //////
-  //////  //open file
-  //////  FP3DW->setFileName(tmp.c_str());
-  //////  if(!FP3DW->OpenFile()){
-  //////    if (myRank==0) printf("Error : error OpenFile\n");
-  //////    Exit(0);
-  //////  }
-  //////
-  //////  //境界名の取得--->将来的に独立ルーチンにして名前だけ保持し続ける？*.fvbndが複数の場合に対処
-  //////  vector<string> bcname;
-  //////  bcname.clear();
-  //////  B.GetBoundaryNameforPLOT3D(bcname,cmp);
-  //////
-  //////#if 0
-  //////  vector<string>::const_iterator it;
-  //////  for (it = bcname.begin(); it != bcname.end(); it++) {
-  //////    cout << "name = " << (*it).c_str() << endl;
-  //////  }
-  //////#endif
-  //////
-  //////  //write boundary
-  //////  BC->WriteBoundaryPLOT3D(&FP3DW,bcname);
-  //////
-  //////  //close file
-  //////  FP3DW->CloseFile();
-  //////
-  //////  //reset option
-  //////  FP3DW->setFormat(keep_format);
-  //////
-  //////  return;
+
 }
 
 
@@ -1565,7 +1165,6 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   int igrid;
   int ngrid;
   int *id,*jd,*kd;//出力サイズ
-  //REAL_TYPE *x,*y,*z;
   float *x,*y,*z;
   double *dx,*dy,*dz;
   int *iblank,*iblankr;
@@ -1574,26 +1173,6 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-#if 0
-  size_t m;
-  int s, odr;
-  for (int k=1-gd; k<=kx+gd; k++) {  // ガイドセルを含む全領域
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = d_bcd[m];
-        if (myRank==0) fprintf(stdout, "[%4d %4d %4d], state=%1d: cmp=%3d  ID=%3d mat=%3d  vf=%3d force=%3d\n",
-                          i, j, k, IS_FLUID(s),
-                          DECODE_CMP(s),
-                          DECODE_ID(s),
-                          DECODE_MAT(s),
-                          DECODE_VF(s),
-                          (s>>FORCING_BIT)&0x1);
-      }
-    }
-  }
-#endif
   
   // ガイドセル出力
   //int gc_out = C->GuideOut;
@@ -1831,7 +1410,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
       for (int im=1; im<=ix; im++) {
         mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
         s = d_bcd[mip];
-        //if(d_mid[mip]==1){//流体であれば
         if(IS_FLUID(s)){//流体であれば
           i=im-1;
           j=jm-1;
@@ -1844,14 +1422,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
           size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
           size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
           size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           iblank[ip1]=1;
           iblank[ip2]=1;
           iblank[ip3]=1;
@@ -1864,25 +1434,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
       }
     }
   }
-  
-#if 0
-  
-  cout << endl;
-  cout << "iblank debug" << endl;
-  for(k=0;k<kd;k++){
-    for(j=0;j<jd;j++){
-      //cout << "j = " << j << " k = " << k << endl;
-      for(i=0;i<id;i++){
-        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        //cout << "iblank[" << ip << "] = " << iblank[ip];
-        cout << " " << iblank[ip];
-      }
-      cout << endl;
-    }
-    cout << endl;
-  }
-  
-#endif
   
 #else //壁面ibrankあり
   
@@ -1906,9 +1457,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
       for (int im=1; im<=ix; im++) {
         mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
         s = d_bcd[mip];
-        //if(d_mid[mip]==id_of_solid){//固体であれば
-        //if(d_mid[mip]!=target_id){//流体でなければ
-        //if(d_mid[mip]!=1){//流体でなければ
         if(!IS_FLUID(s)){//流体でなければ
           i=im-1;
           j=jm-1;
@@ -1921,14 +1469,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
           size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
           size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
           size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           iblank[ip1]=0;
           iblank[ip2]=0;
           iblank[ip3]=0;
@@ -1955,7 +1495,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
             for(int l=-1;l<=1;l++){
               if((l+m+n)==0) continue;
               size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-              //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
               if( iblank[ipwk]==1){
                 iblank[ip]=2;
                 break;
@@ -1982,7 +1521,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
           int l=0;
           if((l+m+n)==0) continue;
           size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-          //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
           if( iblank[ipwk]==1){
             iblank[ip]=2;
             break;
@@ -2005,7 +1543,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
           int l=0;
           if((l+m+n)==0) continue;
           size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-          //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
           if( iblank[ipwk]==1){
             iblank[ip]=2;
             break;
@@ -2028,7 +1565,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
         for(int l=-1;l<=1;l++){
           if((l+m+n)==0) continue;
           size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-          //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
           if( iblank[ipwk]==1){
             iblank[ip]=2;
             break;
@@ -2051,7 +1587,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
         for(int l=-1;l<=1;l++){
           if((l+m+n)==0) continue;
           size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-          //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
           if( iblank[ipwk]==1){
             iblank[ip]=2;
             break;
@@ -2074,7 +1609,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
         for(int l=-1;l<=1;l++){
           if((l+m+n)==0) continue;
           size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-          //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
           if( iblank[ipwk]==1){
             iblank[ip]=2;
             break;
@@ -2097,7 +1631,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
         for(int l=-1;l<=1;l++){
           if((l+m+n)==0) continue;
           size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-          //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
           if( iblank[ipwk]==1){
             iblank[ip]=2;
             break;
@@ -2119,7 +1652,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int n=-1;n<=1;n++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2137,7 +1669,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int n=-1;n<=1;n++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2155,7 +1686,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int m=-1;m<=1;m++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2173,7 +1703,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int m=-1;m<=1;m++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2191,7 +1720,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int l=-1;l<=1;l++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2209,7 +1737,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int l=-1;l<=1;l++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2227,7 +1754,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int l=-1;l<=1;l++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2245,7 +1771,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int l=-1;l<=1;l++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2263,7 +1788,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int n=-1;n<=1;n++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2281,7 +1805,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int n=-1;n<=1;n++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2299,7 +1822,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     for(int m=-1;m<=1;m++){
       if((l+m+n)==0) continue;
       size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
-      //size_t ipwk = _F_IDX_S3D(i+l+1, j+m+1, k+n+1, id, jd, kd, 0);
       if( iblank[ipwk]==1){
         iblank[ip]=2;
         break;
@@ -2332,10 +1854,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j+1)*id+i+1;
     if( iblank[ipxp]==1 || iblank[ipyp]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2348,10 +1866,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j+2, k+2, id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j+1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipyp]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2364,10 +1878,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j  , k+2, id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j-1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipym]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2380,10 +1890,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i+2, j  , k+2, id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j-1)*id+i+1;
     if( iblank[ipxp]==1 || iblank[ipym]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2395,11 +1901,7 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipxp = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
-    ipcr = _F_IDX_S3D(i+2, j+2, k  , id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j+1)*id+i+1;
+    ipcr = _F_IDX_S3D(i+2, j+2, k  , id, jd, kd, 0);;
     if( iblank[ipxp]==1 || iblank[ipyp]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2412,10 +1914,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j+2, k  , id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j+1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipyp]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2428,10 +1926,6 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j  , k  , id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j-1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipym]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -2444,32 +1938,9 @@ void Plot3D::setIblank(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j  , k  , id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j-1)*id+i-1;
     if( iblank[ipxp]==1 || iblank[ipym]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
-  }
-  
-#endif
-  
-#if 0
-  
-  cout << endl;
-  cout << "iblank debug" << endl;
-  for(k=0;k<kd;k++){
-    for(j=0;j<jd;j++){
-      //cout << "j = " << j << " k = " << k << endl;
-      for(i=0;i<id;i++){
-        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        //cout << "iblank[" << ip << "] = " << iblank[ip];
-        cout << " " << iblank[ip];
-      }
-      cout << endl;
-    }
-    cout << endl;
   }
   
 #endif
@@ -2507,16 +1978,11 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
   int kx = size[2];
   int gd = guide;
   
-  //障害物セルを構成する格子点すべてiblank=0
-  //int target_id = C->Fill_Medium;
-  //cout << "target_id = " << target_id << endl;
-  
   for (int km=1-gd; km<=kx+gd; km++) {
     for (int jm=1-gd; jm<=jx+gd; jm++) {
       for (int im=1-gd; im<=ix+gd; im++) {
         mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
         s = d_bcd[mip];
-        //if(d_mid[mip]==1){//流体であれば
         if(IS_FLUID(s)){//流体であれば
           i=im-1+gd;
           j=jm-1+gd;
@@ -2529,14 +1995,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
           size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
           size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
           size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           iblank[ip1]=1;
           iblank[ip2]=1;
           iblank[ip3]=1;
@@ -2549,25 +2007,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
       }
     }
   }
-  
-#if 0
-  
-  cout << endl;
-  cout << "iblank debug" << endl;
-  for(k=0;k<kd;k++){
-    for(j=0;j<jd;j++){
-      //cout << "j = " << j << " k = " << k << endl;
-      for(i=0;i<id;i++){
-        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        //cout << "iblank[" << ip << "] = " << iblank[ip];
-        cout << " " << iblank[ip];
-      }
-      cout << endl;
-    }
-    cout << endl;
-  }
-  
-#endif
   
 #else //壁面ibrankあり
   
@@ -2587,18 +2026,11 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
   int kx = size[2];
   int gd = guide;
   
-  //障害物セルを構成する格子点すべてiblank=0
-  //int target_id = C->Fill_Medium;
-  //cout << "target_id = " << target_id << endl;
-  
   for (int km=1-gd; km<=kx+gd; km++) {
     for (int jm=1-gd; jm<=jx+gd; jm++) {
       for (int im=1-gd; im<=ix+gd; im++) {
         mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
         s = d_bcd[mip];
-        //if(d_mid[mip]==id_of_solid){//固体であれば
-        //if(d_mid[mip]!=target_id){//流体でなければ
-        //if(d_mid[mip]!=1){//流体でなければ
         if(!IS_FLUID(s)){//流体でなければ
           i=im-1+gd;
           j=jm-1+gd;
@@ -2611,14 +2043,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
           size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
           size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
           size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
           iblank[ip1]=0;
           iblank[ip2]=0;
           iblank[ip3]=0;
@@ -3004,10 +2428,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j+1)*id+i+1;
     if( iblank[ipxp]==1 || iblank[ipyp]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3020,10 +2440,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j+2, k+2, id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j+1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipyp]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3036,10 +2452,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j  , k+2, id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j-1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipym]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3052,10 +2464,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzp = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i+2, j  , k+2, id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzp=(k+1)*id*jd+ j   *id+i;
-    //ipcr=(k+1)*id*jd+(j-1)*id+i+1;
     if( iblank[ipxp]==1 || iblank[ipym]==1 || iblank[ipzp]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3068,10 +2476,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i+2, j+2, k  , id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j+1)*id+i+1;
     if( iblank[ipxp]==1 || iblank[ipyp]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3084,10 +2488,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipyp = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j+2, k  , id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipyp= k   *id*jd+(j+1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j+1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipyp]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3100,10 +2500,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j  , k  , id, jd, kd, 0);
-    //ipxm= k   *id*jd+ j   *id+i-1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j-1)*id+i-1;
     if( iblank[ipxm]==1 || iblank[ipym]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3116,10 +2512,6 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
     ipym = _F_IDX_S3D(i+1, j  , k+1, id, jd, kd, 0);
     ipzm = _F_IDX_S3D(i+1, j+1, k  , id, jd, kd, 0);
     ipcr = _F_IDX_S3D(i  , j  , k  , id, jd, kd, 0);
-    //ipxp= k   *id*jd+ j   *id+i+1;
-    //ipym= k   *id*jd+(j-1)*id+i;
-    //ipzm=(k-1)*id*jd+ j   *id+i;
-    //ipcr=(k-1)*id*jd+(j-1)*id+i-1;
     if( iblank[ipxp]==1 || iblank[ipym]==1 || iblank[ipzm]==1 || iblank[ipcr]==1){
       iblank[ip]=2;
     }
@@ -3127,1906 +2519,5 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
   
 #endif
   
-#if 0
-  
-  cout << endl;
-  cout << "iblank debug" << endl;
-  for(k=0;k<kd;k++){
-    for(j=0;j<jd;j++){
-      //cout << "j = " << j << " k = " << k << endl;
-      for(i=0;i<id;i++){
-        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        //cout << "iblank[" << ip << "] = " << iblank[ip];
-        cout << " " << iblank[ip];
-      }
-      cout << endl;
-    }
-    cout << endl;
-  }
-  
-#endif
-  
 }
 
-
-
-// float >> float
-// #################################################################
-void Plot3D::setScalarGridData(float* d, float* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        float ddd=data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// float >> float
-// #################################################################
-void Plot3D::setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  float *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  
-  if (!(wkd = new float[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setScalarGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        float ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-  
-}
-
-
-// float >> float
-// #################################################################
-void Plot3D::setVectorGridData(float* d, float* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  size_t dsize3 = (size_t)(id*jd*kd*3);
-  
-  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (int km=1; km<=kx; km++) {
-      for (int jm=1; jm<=jx; jm++) {
-        for (int im=1; im<=ix; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          float ddd=data[mip];
-          int i=im-1;
-          int j=jm-1;
-          int k=km-1;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-          d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
-          d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
-          d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
-          d[ip4+dsize*ivar]=d[ip4+dsize*ivar]+ddd;
-          d[ip5+dsize*ivar]=d[ip5+dsize*ivar]+ddd;
-          d[ip6+dsize*ivar]=d[ip6+dsize*ivar]+ddd;
-          d[ip7+dsize*ivar]=d[ip7+dsize*ivar]+ddd;
-          d[ip8+dsize*ivar]=d[ip8+dsize*ivar]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(&d[dsize*ivar], id, jd, kd);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(&d[dsize*ivar], id, jd, kd);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(&d[dsize*ivar], id, jd, kd);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-    
-  }//loop ivar
-  
-}
-
-
-// float >> float
-// #################################################################
-void Plot3D::setVectorGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  float *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new float[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-    
-    for (int km=1-gd; km<=kx+gd; km++) {
-      for (int jm=1-gd; jm<=jx+gd; jm++) {
-        for (int im=1-gd; im<=ix+gd; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          float ddd=data[mip];
-          int i=im-1+gd;
-          int j=jm-1+gd;
-          int k=km-1+gd;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-          //size_t ip1= k   *iw*jw+ j   *iw+i;
-          //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-          //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-          //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-          //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-          //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-          //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-          //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-          wkd[ip1]=wkd[ip1]+ddd;
-          wkd[ip2]=wkd[ip2]+ddd;
-          wkd[ip3]=wkd[ip3]+ddd;
-          wkd[ip4]=wkd[ip4]+ddd;
-          wkd[ip5]=wkd[ip5]+ddd;
-          wkd[ip6]=wkd[ip6]+ddd;
-          wkd[ip7]=wkd[ip7]+ddd;
-          wkd[ip8]=wkd[ip8]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(wkd, iw, jw, kw);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(wkd, iw, jw, kw);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(wkd, iw, jw, kw);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-    
-    //set d <--- wkd
-    size_t dsize = (size_t)(id*jd*kd);
-    if(gc_out==0){
-      for(int k=0;k<kd;k++){
-        for(int j=0;j<jd;j++){
-          for(int i=0;i<id;i++){
-            size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-            size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-            d[ip+dsize*ivar]=wkd[ipw];
-          }
-        }
-      }
-    }
-    else{
-      for (size_t i=0; i<iw*jw*kw; i++) d[i+dsize*ivar]=wkd[i];
-    }
-    
-  }//loop ivar
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-// float >> float
-// #################################################################
-void Plot3D::setVectorComponentGridData(float* d, float* data, int id, int jd, int kd, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        float ddd=data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// float >> float
-// #################################################################
-void Plot3D::setVectorComponentGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  float *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new float[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        float ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  
-  //set d <--- wkd
-  size_t dsize = (size_t)(id*jd*kd);
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-
-// double >> float
-// #################################################################
-void Plot3D::setScalarGridData(float* d, double* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        float ddd=(float)data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// double >> float
-// #################################################################
-void Plot3D::setScalarGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  double *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  
-  if (!(wkd = new double[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setScalarGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        double ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=(float)wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=(float)wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-  
-}
-
-
-// double >> float
-// #################################################################
-void Plot3D::setVectorGridData(float* d, double* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  size_t dsize3 = (size_t)(id*jd*kd*3);
-  
-  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (int km=1; km<=kx; km++) {
-      for (int jm=1; jm<=jx; jm++) {
-        for (int im=1; im<=ix; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          float ddd=(float)data[mip];
-          int i=im-1;
-          int j=jm-1;
-          int k=km-1;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-          d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
-          d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
-          d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
-          d[ip4+dsize*ivar]=d[ip4+dsize*ivar]+ddd;
-          d[ip5+dsize*ivar]=d[ip5+dsize*ivar]+ddd;
-          d[ip6+dsize*ivar]=d[ip6+dsize*ivar]+ddd;
-          d[ip7+dsize*ivar]=d[ip7+dsize*ivar]+ddd;
-          d[ip8+dsize*ivar]=d[ip8+dsize*ivar]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(&d[dsize*ivar], id, jd, kd);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(&d[dsize*ivar], id, jd, kd);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(&d[dsize*ivar], id, jd, kd);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-  }//loop ivar
-  
-}
-
-
-// double >> float
-// #################################################################
-void Plot3D::setVectorGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  double *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new double[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-    
-    for (int km=1-gd; km<=kx+gd; km++) {
-      for (int jm=1-gd; jm<=jx+gd; jm++) {
-        for (int im=1-gd; im<=ix+gd; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          double ddd=data[mip];
-          int i=im-1+gd;
-          int j=jm-1+gd;
-          int k=km-1+gd;
-          size_t ip1= k   *iw*jw+ j   *iw+i;
-          size_t ip2= k   *iw*jw+ j   *iw+i+1;
-          size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-          size_t ip4= k   *iw*jw+(j+1)*iw+i;
-          size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-          size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-          size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-          size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-          wkd[ip1]=wkd[ip1]+ddd;
-          wkd[ip2]=wkd[ip2]+ddd;
-          wkd[ip3]=wkd[ip3]+ddd;
-          wkd[ip4]=wkd[ip4]+ddd;
-          wkd[ip5]=wkd[ip5]+ddd;
-          wkd[ip6]=wkd[ip6]+ddd;
-          wkd[ip7]=wkd[ip7]+ddd;
-          wkd[ip8]=wkd[ip8]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(wkd, iw, jw, kw);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(wkd, iw, jw, kw);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(wkd, iw, jw, kw);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-    
-    //set d <--- wkd
-    size_t dsize = (size_t)(id*jd*kd);
-    if(gc_out==0){
-      for(int k=0;k<kd;k++){
-        for(int j=0;j<jd;j++){
-          for(int i=0;i<id;i++){
-            size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-            size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-            d[ip+dsize*ivar]=(float)wkd[ipw];
-          }
-        }
-      }
-    }
-    else{
-      for (size_t i=0; i<iw*jw*kw; i++) d[i+dsize*ivar]=(float)wkd[i];
-    }
-    
-  }//loop ivar
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-// double >> float
-// #################################################################
-void Plot3D::setVectorComponentGridData(float* d, double* data, int id, int jd, int kd, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        float ddd=(float)data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// double >> float
-// #################################################################
-void Plot3D::setVectorComponentGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  double *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new double[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        double ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  size_t dsize = (size_t)(id*jd*kd);
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=(float)wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=(float)wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-// double >> double
-// #################################################################
-void Plot3D::setScalarGridData(double* d, double* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        double ddd=data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// double >> double
-// #################################################################
-void Plot3D::setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  double *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  
-  if (!(wkd = new double[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setScalarGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        double ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-  
-}
-
-
-// double >> double
-// #################################################################
-void Plot3D::setVectorGridData(double* d, double* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  size_t dsize3 = (size_t)(id*jd*kd*3);
-  
-  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (int km=1; km<=kx; km++) {
-      for (int jm=1; jm<=jx; jm++) {
-        for (int im=1; im<=ix; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          double ddd=data[mip];
-          int i=im-1;
-          int j=jm-1;
-          int k=km-1;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-          d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
-          d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
-          d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
-          d[ip4+dsize*ivar]=d[ip4+dsize*ivar]+ddd;
-          d[ip5+dsize*ivar]=d[ip5+dsize*ivar]+ddd;
-          d[ip6+dsize*ivar]=d[ip6+dsize*ivar]+ddd;
-          d[ip7+dsize*ivar]=d[ip7+dsize*ivar]+ddd;
-          d[ip8+dsize*ivar]=d[ip8+dsize*ivar]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(&d[dsize*ivar], id, jd, kd);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(&d[dsize*ivar], id, jd, kd);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(&d[dsize*ivar], id, jd, kd);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-  }//loop ivar
-  
-}
-
-
-// double >> double
-// #################################################################
-void Plot3D::setVectorGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  double *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new double[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-    
-    for (int km=1-gd; km<=kx+gd; km++) {
-      for (int jm=1-gd; jm<=jx+gd; jm++) {
-        for (int im=1-gd; im<=ix+gd; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          double ddd=data[mip];
-          int i=im-1+gd;
-          int j=jm-1+gd;
-          int k=km-1+gd;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-          //size_t ip1= k   *iw*jw+ j   *iw+i;
-          //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-          //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-          //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-          //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-          //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-          //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-          //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-          wkd[ip1]=wkd[ip1]+ddd;
-          wkd[ip2]=wkd[ip2]+ddd;
-          wkd[ip3]=wkd[ip3]+ddd;
-          wkd[ip4]=wkd[ip4]+ddd;
-          wkd[ip5]=wkd[ip5]+ddd;
-          wkd[ip6]=wkd[ip6]+ddd;
-          wkd[ip7]=wkd[ip7]+ddd;
-          wkd[ip8]=wkd[ip8]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(wkd, iw, jw, kw);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(wkd, iw, jw, kw);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(wkd, iw, jw, kw);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-    
-    //set d <--- wkd
-    size_t dsize = (size_t)(id*jd*kd);
-    if(gc_out==0){
-      for(int k=0;k<kd;k++){
-        for(int j=0;j<jd;j++){
-          for(int i=0;i<id;i++){
-            size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-            size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-            d[ip+dsize*ivar]=wkd[ipw];
-          }
-        }
-      }
-    }
-    else{
-      for (size_t i=0; i<iw*jw*kw; i++) d[i+dsize*ivar]=wkd[i];
-    }
-    
-  }//loop ivar
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-// double >> double
-// #################################################################
-void Plot3D::setVectorComponentGridData(double* d, double* data, int id, int jd, int kd, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        double ddd=data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-}
-
-
-// double >> double
-// #################################################################
-void Plot3D::setVectorComponentGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  double *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new double[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        double ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  size_t dsize = (size_t)(id*jd*kd);
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-
-// float >> double
-// #################################################################
-void Plot3D::setScalarGridData(double* d, float* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        double ddd=(double)data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// float >> double
-// #################################################################
-void Plot3D::setScalarGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  float *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  
-  if (!(wkd = new float[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setScalarGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
-        float ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=(double)wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=(double)wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-  
-}
-
-
-// float >> double
-// #################################################################
-void Plot3D::setVectorGridData(double* d, float* data, int id, int jd, int kd)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  size_t dsize3 = (size_t)(id*jd*kd*3);
-  
-  for (size_t i=0; i<dsize3; i++) d[i]=0.0;
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (int km=1; km<=kx; km++) {
-      for (int jm=1; jm<=jx; jm++) {
-        for (int im=1; im<=ix; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          double ddd=(double)data[mip];
-          int i=im-1;
-          int j=jm-1;
-          int k=km-1;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-          //size_t ip1= k   *id*jd+ j   *id+i;
-          //size_t ip2= k   *id*jd+ j   *id+i+1;
-          //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-          //size_t ip4= k   *id*jd+(j+1)*id+i;
-          //size_t ip5=(k+1)*id*jd+ j   *id+i;
-          //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-          //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-          //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-          d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
-          d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
-          d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
-          d[ip4+dsize*ivar]=d[ip4+dsize*ivar]+ddd;
-          d[ip5+dsize*ivar]=d[ip5+dsize*ivar]+ddd;
-          d[ip6+dsize*ivar]=d[ip6+dsize*ivar]+ddd;
-          d[ip7+dsize*ivar]=d[ip7+dsize*ivar]+ddd;
-          d[ip8+dsize*ivar]=d[ip8+dsize*ivar]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(&d[dsize*ivar], id, jd, kd);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(&d[dsize*ivar], id, jd, kd);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(&d[dsize*ivar], id, jd, kd);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-  }//loop ivar
-  
-}
-
-
-// float >> double
-// #################################################################
-void Plot3D::setVectorGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  float *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new float[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t ivar=0;ivar<3;ivar++){
-    
-    for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-    
-    for (int km=1-gd; km<=kx+gd; km++) {
-      for (int jm=1-gd; jm<=jx+gd; jm++) {
-        for (int im=1-gd; im<=ix+gd; im++) {
-          size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-          float ddd=data[mip];
-          int i=im-1+gd;
-          int j=jm-1+gd;
-          int k=km-1+gd;
-          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-          //size_t ip1= k   *iw*jw+ j   *iw+i;
-          //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-          //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-          //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-          //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-          //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-          //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-          //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-          wkd[ip1]=wkd[ip1]+ddd;
-          wkd[ip2]=wkd[ip2]+ddd;
-          wkd[ip3]=wkd[ip3]+ddd;
-          wkd[ip4]=wkd[ip4]+ddd;
-          wkd[ip5]=wkd[ip5]+ddd;
-          wkd[ip6]=wkd[ip6]+ddd;
-          wkd[ip7]=wkd[ip7]+ddd;
-          wkd[ip8]=wkd[ip8]+ddd;
-        }
-      }
-    }
-    
-    //内部の格子点のデータを8で割る
-    VolumeDataDivideBy8(wkd, iw, jw, kw);
-    
-    //面上の格子点のデータを4で割る
-    FaceDataDivideBy4(wkd, iw, jw, kw);
-    
-    //辺上の格子点のデータを2で割る
-    LineDataDivideBy2(wkd, iw, jw, kw);
-    
-    //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-    
-    
-    //set d <--- wkd
-    size_t dsize = (size_t)(id*jd*kd);
-    if(gc_out==0){
-      for(int k=0;k<kd;k++){
-        for(int j=0;j<jd;j++){
-          for(int i=0;i<id;i++){
-            size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-            size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-            d[ip+dsize*ivar]=(double)wkd[ipw];
-          }
-        }
-      }
-    }
-    else{
-      for (size_t i=0; i<iw*jw*kw; i++) d[i+dsize*ivar]=(double)wkd[i];
-    }
-    
-  }//loop ivar
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-// float >> double
-// #################################################################
-void Plot3D::setVectorComponentGridData(double* d, float* data, int id, int jd, int kd, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  size_t dsize = (size_t)(id*jd*kd);
-  
-  for (size_t i=0; i<dsize; i++) d[i]=0.0;
-  
-  for (int km=1; km<=kx; km++) {
-    for (int jm=1; jm<=jx; jm++) {
-      for (int im=1; im<=ix; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        double ddd=(double)data[mip];
-        int i=im-1;
-        int j=jm-1;
-        int k=km-1;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
-        //size_t ip1= k   *id*jd+ j   *id+i;
-        //size_t ip2= k   *id*jd+ j   *id+i+1;
-        //size_t ip3= k   *id*jd+(j+1)*id+i+1;
-        //size_t ip4= k   *id*jd+(j+1)*id+i;
-        //size_t ip5=(k+1)*id*jd+ j   *id+i;
-        //size_t ip6=(k+1)*id*jd+ j   *id+i+1;
-        //size_t ip7=(k+1)*id*jd+(j+1)*id+i+1;
-        //size_t ip8=(k+1)*id*jd+(j+1)*id+i;
-        d[ip1]=d[ip1]+ddd;
-        d[ip2]=d[ip2]+ddd;
-        d[ip3]=d[ip3]+ddd;
-        d[ip4]=d[ip4]+ddd;
-        d[ip5]=d[ip5]+ddd;
-        d[ip6]=d[ip6]+ddd;
-        d[ip7]=d[ip7]+ddd;
-        d[ip8]=d[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(d, id, jd, kd);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(d, id, jd, kd);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(d, id, jd, kd);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-}
-
-
-// float >> double
-// #################################################################
-void Plot3D::setVectorComponentGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out, int ivar)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  float *wkd;
-  int iw=size[0]+2*guide+1;
-  int jw=size[1]+2*guide+1;
-  int kw=size[2]+2*guide+1;
-  if (!(wkd = new float[ iw*jw*kw ])){
-    if (myRank==0)  printf(    "\t>> cannot allocate work area : setVectorGridData\n\n");
-    Exit(0);
-  }
-  
-  for (size_t i=0; i<iw*jw*kw; i++) wkd[i]=0.0;
-  
-  for (int km=1-gd; km<=kx+gd; km++) {
-    for (int jm=1-gd; jm<=jx+gd; jm++) {
-      for (int im=1-gd; im<=ix+gd; im++) {
-        size_t mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);//ivar=0:x方向、ivar=1:y方向、ivar=2:z方向
-        float ddd=data[mip];
-        int i=im-1+gd;
-        int j=jm-1+gd;
-        int k=km-1+gd;
-        size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, iw, jw, kw, 0);
-        size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, iw, jw, kw, 0);
-        size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, iw, jw, kw, 0);
-        size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, iw, jw, kw, 0);
-        size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, iw, jw, kw, 0);
-        size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, iw, jw, kw, 0);
-        size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, iw, jw, kw, 0);
-        size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, iw, jw, kw, 0);
-        //size_t ip1= k   *iw*jw+ j   *iw+i;
-        //size_t ip2= k   *iw*jw+ j   *iw+i+1;
-        //size_t ip3= k   *iw*jw+(j+1)*iw+i+1;
-        //size_t ip4= k   *iw*jw+(j+1)*iw+i;
-        //size_t ip5=(k+1)*iw*jw+ j   *iw+i;
-        //size_t ip6=(k+1)*iw*jw+ j   *iw+i+1;
-        //size_t ip7=(k+1)*iw*jw+(j+1)*iw+i+1;
-        //size_t ip8=(k+1)*iw*jw+(j+1)*iw+i;
-        wkd[ip1]=wkd[ip1]+ddd;
-        wkd[ip2]=wkd[ip2]+ddd;
-        wkd[ip3]=wkd[ip3]+ddd;
-        wkd[ip4]=wkd[ip4]+ddd;
-        wkd[ip5]=wkd[ip5]+ddd;
-        wkd[ip6]=wkd[ip6]+ddd;
-        wkd[ip7]=wkd[ip7]+ddd;
-        wkd[ip8]=wkd[ip8]+ddd;
-      }
-    }
-  }
-  
-  //内部の格子点のデータを8で割る
-  VolumeDataDivideBy8(wkd, iw, jw, kw);
-  
-  //面上の格子点のデータを4で割る
-  FaceDataDivideBy4(wkd, iw, jw, kw);
-  
-  //辺上の格子点のデータを2で割る
-  LineDataDivideBy2(wkd, iw, jw, kw);
-  
-  //境界条件処理（wkdにガイドセルを含む格子点上のデータ）
-  
-  //set d <--- wkd
-  size_t dsize = (size_t)(id*jd*kd);
-  if(gc_out==0){
-    for(int k=0;k<kd;k++){
-      for(int j=0;j<jd;j++){
-        for(int i=0;i<id;i++){
-          size_t ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
-          size_t ipw = _F_IDX_S3D(i+gd+1, j+gd+1, k+gd+1, iw, jw, kw, 0);
-          d[ip]=(double)wkd[ipw];
-        }
-      }
-    }
-  }
-  else{
-    for (size_t i=0; i<iw*jw*kw; i++) d[i]=(double)wkd[i];
-  }
-  
-  //delete [] wkd;
-  if (wkd) delete [] wkd;
-}
-
-
-// #################################################################
-void Plot3D::setValuePlot3D()
-{
-  //set ngrid
-  C->P3Op.ngrid=1;
-  
-  //set nvar
-  int nvar=4;//pressure + velocity(3)
-  
-  if ( C->isHeatProblem() )     nvar++;
-  if ( C->Mode.TP == ON )       nvar++;
-  if ( C->Mode.VRT == ON )      nvar+3;
-  if ( C->Mode.I2VGT == ON )    nvar++;
-  if ( C->Mode.Helicity == ON ) nvar++;
-  
-  C->P3Op.nvar=nvar;
-}

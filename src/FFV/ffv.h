@@ -229,7 +229,7 @@ private:
   VoxInfo V;                 ///< ボクセル前処理クラス
   ParseBC B;                 ///< 境界条件のパースクラス
   SetBC3D BC;                ///< BCクラス
-  DFI DFI;                   ///< 分散ファイルインデクス管理クラス
+  ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   History* H;                ///< 履歴クラス
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値

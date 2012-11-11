@@ -4,11 +4,11 @@
 //
 // Copyright (c) 2012 All right reserved.
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan.
 //
 // #################################################################
 
-/** 
+/**
  * @file   PLOT3D.C
  * @brief  FlowBase FileIO_PLOT3D class Header
  * @author kero
@@ -17,27 +17,21 @@
 #include "PLOT3D.h"
 
 
-//// CPMクラスポインタのコピー
-//void FileIO_PLOT3D::importCPM(cpm_ParaManager* m_paraMngr)
-//{
-//  //if ( !m_paraMngr ) Exit(0);//Exit0)が未定義でコンパイラに怒られる
-//  paraMngr = m_paraMngr;
-//}
-
 /**
  * @brief MoveGridを設定する
  * @retval 設定の成否
  * @param is フラグ
  */
-
-
-void FileIO_PLOT3D::setMoveGrid(const int is){
-  switch (is) {
+void FileIO_PLOT3D::setMoveGrid(const int is)
+{
+  switch (is)
+  {
     case GRID_NOT_MOVE:
     case GRID_MOVE:
       P3Op.MoveGrid=is;
       return;
       break;
+      
     default:
       P3Op.MoveGrid=-1;
       return;
@@ -51,13 +45,16 @@ void FileIO_PLOT3D::setMoveGrid(const int is){
  * @retval 設定の成否
  * @param is フラグ
  */
-void FileIO_PLOT3D::setSteady(const int is){
-  switch (is) {
+void FileIO_PLOT3D::setSteady(const int is)
+{
+  switch (is)
+  {
     case FB_STEADY:
     case FB_UNSTEADY:
       P3Op.Steady=is;
       return;
       break;
+      
     default:
       P3Op.Steady=-1;
       return;
@@ -71,14 +68,17 @@ void FileIO_PLOT3D::setSteady(const int is){
  * @retval 設定の成否
  * @param is フラグ
  */
-void FileIO_PLOT3D::setIBlankFlag(const int is){
-
-  switch (is) {
+void FileIO_PLOT3D::setIBlankFlag(const int is)
+{
+  
+  switch (is)
+  {
     case NOT_SET_IBLANK:
     case SET_IBLANK:
       P3Op.IBlankFlag=is;
       return;
       break;
+      
     default:
       P3Op.IBlankFlag=-1;
       return;
@@ -94,15 +94,17 @@ void FileIO_PLOT3D::setIBlankFlag(const int is){
  */
 void FileIO_PLOT3D::setFormat(const int is)
 {
-  switch (is) {
+  switch (is)
+  {
     case UNFORMATTED:
     case FORMATTED:
     case C_BINARY:
-      P3Op.Format=is; 
+      P3Op.Format=is;
       return;
       break;
+      
     default:
-      P3Op.Format=-1; 
+      P3Op.Format=-1;
       return;
       break;
   }
@@ -114,10 +116,10 @@ void FileIO_PLOT3D::setFormat(const int is)
  * @brief Gridデータのセット
  */
 void FileIO_PLOT3D::setGridData(
-  int m_id,
-  int m_jd,
-  int m_kd,
-  int m_ngrid)
+                                int m_id,
+                                int m_jd,
+                                int m_kd,
+                                int m_ngrid)
 {
   id = m_id;
   jd = m_jd;
@@ -126,12 +128,12 @@ void FileIO_PLOT3D::setGridData(
 }
 
 /**
-　* @brief Gridデータのセット
+ 　* @brief Gridデータのセット
  */
 void FileIO_PLOT3D::setGridData2D(
-  int m_id,
-  int m_jd,
-  int m_ngrid)
+                                  int m_id,
+                                  int m_jd,
+                                  int m_ngrid)
 {
   id = m_id;
   jd = m_jd;
@@ -142,10 +144,10 @@ void FileIO_PLOT3D::setGridData2D(
  * @brief 形状データのセット
  */
 void FileIO_PLOT3D::setXYZData(
-  float* m_x,
-  float* m_y,
-  float* m_z,
-  int* m_iblank)
+                               float* m_x,
+                               float* m_y,
+                               float* m_z,
+                               int* m_iblank)
 {
   x = m_x;
   y = m_y;
@@ -157,10 +159,10 @@ void FileIO_PLOT3D::setXYZData(
  * @brief 形状データのセット
  */
 void FileIO_PLOT3D::setXYZData(
-  double* m_x,
-  double* m_y,
-  double* m_z,
-  int* m_iblank)
+                               double* m_x,
+                               double* m_y,
+                               double* m_z,
+                               int* m_iblank)
 {
   dx = m_x;
   dy = m_y;
@@ -172,9 +174,9 @@ void FileIO_PLOT3D::setXYZData(
  * @brief 形状データのセット
  */
 void FileIO_PLOT3D::setXYZData2D(
-  float* m_x,
-  float* m_y,
-  int* m_iblank)
+                                 float* m_x,
+                                 float* m_y,
+                                 int* m_iblank)
 {
   x = m_x;
   y = m_y;
@@ -185,9 +187,9 @@ void FileIO_PLOT3D::setXYZData2D(
  * @brief 形状データのセット
  */
 void FileIO_PLOT3D::setXYZData2D(
-  double* m_x,
-  double* m_y,
-  int* m_iblank)
+                                 double* m_x,
+                                 double* m_y,
+                                 int* m_iblank)
 {
   dx = m_x;
   dy = m_y;
@@ -198,11 +200,11 @@ void FileIO_PLOT3D::setXYZData2D(
  * @brief 結果Qデータのセット
  */
 void FileIO_PLOT3D::setQData(
-  float m_fsmach,
-  float m_alpha,
-  float m_re,
-  float m_time,
-  float* m_q)
+                             float m_fsmach,
+                             float m_alpha,
+                             float m_re,
+                             float m_time,
+                             float* m_q)
 {
   fsmach  = m_fsmach;
   alpha   = m_alpha;
@@ -215,11 +217,11 @@ void FileIO_PLOT3D::setQData(
  * @brief 結果Qデータのセット
  */
 void FileIO_PLOT3D::setQData(
-  double m_fsmach,
-  double m_alpha,
-  double m_re,
-  double m_time,
-  double* m_q)
+                             double m_fsmach,
+                             double m_alpha,
+                             double m_re,
+                             double m_time,
+                             double* m_q)
 {
   dfsmach  = m_fsmach;
   dalpha   = m_alpha;
@@ -232,7 +234,7 @@ void FileIO_PLOT3D::setQData(
  * @brief 結果Funcデータ項目数のセット
  */
 void FileIO_PLOT3D::setFuncDataNum(
-  int m_nvar)
+                                   int m_nvar)
 {
   nvar  = m_nvar;
 }
@@ -241,7 +243,7 @@ void FileIO_PLOT3D::setFuncDataNum(
  * @brief 結果Funcデータのセット
  */
 void FileIO_PLOT3D::setFuncData(
-  float* m_d)
+                                float* m_d)
 {
   d  = m_d;
 }
@@ -250,7 +252,7 @@ void FileIO_PLOT3D::setFuncData(
  * @brief 結果Funcデータのセット
  */
 void FileIO_PLOT3D::setFuncData(
-  double* m_d)
+                                double* m_d)
 {
   dd  = m_d;
 }
@@ -261,33 +263,38 @@ void FileIO_PLOT3D::setFuncData(
  */
 bool FileIO_PLOT3D::OpenFile()
 {
+  char tmp[FB_FILE_PATH_LENGTH];
+  int len;
+  int flag;
+  int fnsize;
   int ierror=0;
-  switch (P3Op.Format) {
+  
+  switch (P3Op.Format)
+  {
     case UNFORMATTED:
     case FORMATTED:
-
-      char tmp[FB_FILE_PATH_LENGTH];
+      
       memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
       strcpy(tmp, fname.c_str());
-
-      int len = strlen(tmp);
-      int flag=P3Op.Format;
-      int fnsize=FB_FILE_PATH_LENGTH;
-
-      //open_plot3d_file_(&flag,tmp,&ifl,&fnsize,&ierror);
+      
+      len = strlen(tmp);
+      flag=P3Op.Format;
+      fnsize=FB_FILE_PATH_LENGTH;
+      
       open_plot3d_file_(&flag,tmp,&ifl,&len,&ierror);
-
+      
       break;
-
+      
     case C_BINARY:
-      if( (fp = fopen(fname.c_str(), "wb")) == NULL ) {
+      if( (fp = fopen(fname.c_str(), "wb")) == NULL )
+      {
         fprintf(stderr, "Can't open file.(%s)\n", fname.c_str());
         return false;
       }
       ierror = true;
       break;
   }
-
+  
   return ierror;
 }
 
@@ -296,14 +303,16 @@ bool FileIO_PLOT3D::OpenFile()
  */
 void FileIO_PLOT3D::CloseFile()
 {
-  switch (P3Op.Format) {
+  switch (P3Op.Format)
+  {
     case UNFORMATTED:
     case FORMATTED:
       close_plot3d_file_(&ifl);
       break;
+      
     case C_BINARY:
       fclose(fp);
       break;
   }
-
+  
 }

@@ -86,69 +86,7 @@ protected:
    @ @param [in] para_mode 並列モード
    */
   string directory_prefix(string path, const string fname, const int io_mode, const int para_mode);
-  
-  
-// float
-  /**
-   * @brief 内部の格子点のデータを8で割る
-   * @param [out]    d        格子点data
-   * @param [in]     id       セル中心d x方向サイズ
-   * @param [in]     jd       セル中心d y方向サイズ
-   * @param [in]     kd       セル中心d z方向サイズ
-   */
-  void VolumeDataDivideBy8(float* d, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief 面上の格子点のデータを4で割る
-   * @param [out]    d        格子点data
-   * @param [in]     id       セル中心d x方向サイズ
-   * @param [in]     jd       セル中心d y方向サイズ
-   * @param [in]     kd       セル中心d z方向サイズ
-   */
-  void FaceDataDivideBy4(float* d, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief 辺上の格子点のデータを2で割る
-   * @param [out]    d        格子点data
-   * @param [in]     id       セル中心d x方向サイズ
-   * @param [in]     jd       セル中心d y方向サイズ
-   * @param [in]     kd       セル中心d z方向サイズ
-   */
-  void LineDataDivideBy2(float* d, int id, int jd, int kd);
-  
-  
-// double
-  /**
-   * @brief 内部の格子点のデータを8で割る
-   * @param [out]    d        格子点data
-   * @param [in]     id       セル中心d x方向サイズ
-   * @param [in]     jd       セル中心d y方向サイズ
-   * @param [in]     kd       セル中心d z方向サイズ
-   */
-  void VolumeDataDivideBy8(double* d, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief 面上の格子点のデータを4で割る
-   * @param [out]    d        格子点data
-   * @param [in]     id       セル中心d x方向サイズ
-   * @param [in]     jd       セル中心d y方向サイズ
-   * @param [in]     kd       セル中心d z方向サイズ
-   */
-  void FaceDataDivideBy4(double* d, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief 辺上の格子点のデータを2で割る
-   * @param [out]    d        格子点data
-   * @param [in]     id       セル中心d x方向サイズ
-   * @param [in]     jd       セル中心d y方向サイズ
-   * @param [in]     kd       セル中心d z方向サイズ
-   */
-  void LineDataDivideBy2(double* d, int id, int jd, int kd);
-  
+
   
   /**
    * @brief 計算結果ファイル（*.func）出力
@@ -202,264 +140,319 @@ protected:
    */
   void setIblankGuide(int* iblank, int id, int jd, int kd);
   
-  
-// flaot >> float
-  /**
-   * @brief Scalarの格子点での値をセット（float -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridData(float* d, float* data, int id, int jd, int kd);
-
-  
-  /**
-   * @brief Scalarの格子点での値をセット（float -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
-  
-  
-  /**
-   * @brief Vectorの格子点での値をセット（float -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setVectorGridData(float* d, float* data, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief Vectorの格子点での値をセット（float -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setVectorGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out);
-  
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（float -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridData(float* d, float* data, int id, int jd, int kd, int ivar);
-  
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（float -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridDataGuide(float* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
-  
-  
-// double >> double
-  /**
-   * @brief Scalarの格子点での値をセット（double -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridData(double* d, double* data, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief Scalarの格子点での値をセット（double -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
-  
-  
-  /**
-   * @brief Vectorの格子点での値をセット（double -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setVectorGridData(double* d, double* data, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief Vectorの格子点での値をセット（double -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setVectorGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out);
-  
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（double -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridData(double* d, double* data, int id, int jd, int kd, int ivar);
-  
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（double -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridDataGuide(double* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
-  
-  
-  
-// double >> float
-  /**
-   * @brief Scalarの格子点での値をセット（double -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridData(float* d, double* data, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief Scalarの格子点での値をセット（double -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
-  
-  
-  /**
-   * @brief Vectorの格子点での値をセット（double -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setVectorGridData(float* d, double* data, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief Vectorの格子点での値をセット（double -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setVectorGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out);
-  
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（double -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridData(float* d, double* data, int id, int jd, int kd, int ivar);
-  
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（double -> float）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridDataGuide(float* d, double* data, int id, int jd, int kd, int gc_out, int ivar);
-  
-  
-  
-// float >> double
-  /**
-   * @brief Scalarの格子点での値をセット（float -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridData(double* d, float* data, int id, int jd, int kd);
-  
-  
-  /**
-   * @brief Scalarの格子点での値をセット（float -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   */
-  void setScalarGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
-  
-  
 
   /**
-   * @brief Vectorの格子点での値をセット（float -> double）
+   * @brief 内部の格子点のデータを8で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  template<class T>
+  void VolumeDataDivideBy8(T* d, int id, int jd, int kd)
+  {
+    int i,j,k;
+    size_t ip;
+    
+    for (k=1; k<kd-1; k++){
+      for (j=1; j<jd-1; j++){
+        for (i=1; i<id-1; i++){
+          ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          d[ip]=d[ip]*0.125;
+        }
+      }
+    }
+  };
+
+
+  /**
+   * @brief 面上の格子点のデータを4で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  template<class T>
+  void FaceDataDivideBy4(T* d, int id, int jd, int kd)
+  {
+    int i,j,k;
+    size_t ip;
+    
+    i=0;
+    for (k=1; k<kd-1; k++){
+      for (j=1; j<jd-1; j++){
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        d[ip]=d[ip]*0.25;
+      }
+    }
+    
+    i=id-1;
+    for (k=1; k<kd-1; k++){
+      for (j=1; j<jd-1; j++){
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        d[ip]=d[ip]*0.25;
+      }
+    }
+    
+    j=0;
+    for (k=1; k<kd-1; k++){
+      for (i=1; i<id-1; i++){
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        d[ip]=d[ip]*0.25;
+      }
+    }
+    
+    j=jd-1;
+    for (k=1; k<kd-1; k++){
+      for (i=1; i<id-1; i++){
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        d[ip]=d[ip]*0.25;
+      }
+    }
+    
+    k=0;
+    for (j=1; j<jd-1; j++){
+      for (i=1; i<id-1; i++){
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        d[ip]=d[ip]*0.25;
+      }
+    }
+    
+    k=kd-1;
+    for (j=1; j<jd-1; j++){
+      for (i=1; i<id-1; i++){
+        ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+        d[ip]=d[ip]*0.25;
+      }
+    }
+  };
+
+
+  /**
+   * @brief 辺上の格子点のデータを2で割る
+   * @param [out]    d        格子点data
+   * @param [in]     id       セル中心d x方向サイズ
+   * @param [in]     jd       セル中心d y方向サイズ
+   * @param [in]     kd       セル中心d z方向サイズ
+   */
+  template<class T>
+  void LineDataDivideBy2(T* d, int id, int jd, int kd)
+  {
+    int i,j,k;
+    size_t ip;
+    
+    i=0; j=0;
+    for (k=1; k<kd-1; k++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=0; j=jd-1;
+    for (k=1; k<kd-1; k++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=0; k=0;
+    for (j=1; j<jd-1; j++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=0; k=kd-1;
+    for (j=1; j<jd-1; j++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    j=0; k=0;
+    for (i=1; i<id-1; i++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    j=0; k=kd-1;
+    for (i=1; i<id-1; i++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    j=jd-1; k=0;
+    for (i=1; i<id-1; i++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    j=jd-1; k=kd-1;
+    for (i=1; i<id-1; i++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=id-1; j=0;
+    for (k=1; k<kd-1; k++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=id-1; j=jd-1;
+    for (k=1; k<kd-1; k++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=id-1; k=0;
+    for (j=1; j<jd-1; j++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+    
+    i=id-1; k=kd-1;
+    for (j=1; j<jd-1; j++){
+      ip = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+      d[ip]=d[ip]*0.5;
+    }
+  
+  };
+
+
+  /**
+   * @brief Scalarの格子点での値をセット
    * @param [out]    d        格子点data
    * @param [in]     data     セル中心data
    * @param [in]     id       セル中心data x方向サイズ
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridData(double* d, float* data, int id, int jd, int kd);
+  template<class T1, class T2>
+  void setScalarGridData(T1* d, T2* data, int id, int jd, int kd, int gc_out)
+  {
+    int ix = size[0];
+    int jx = size[1];
+    int kx = size[2];
+    int gd = guide;
+ 
+    size_t mip;
+    float ddd;
+    int i,j,k;
+ 
+    size_t dsize = (size_t)(id*jd*kd);
+    
+    for (size_t l=0; l<dsize; l++) d[l]=0.0;
+    
+    for (int km=1-gc_out; km<=kx+gc_out; km++) {
+      for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
+        for (int im=1-gc_out; im<=ix+gc_out; im++) {
+          mip = _F_IDX_S3D(im, jm, km, ix, jx, kx, gd);
+          ddd=(T1)data[mip];
+          i=im-1+gc_out;
+          j=jm-1+gc_out;
+          k=km-1+gc_out;
+          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+          d[ip1]=d[ip1]+ddd;
+          d[ip2]=d[ip2]+ddd;
+          d[ip3]=d[ip3]+ddd;
+          d[ip4]=d[ip4]+ddd;
+          d[ip5]=d[ip5]+ddd;
+          d[ip6]=d[ip6]+ddd;
+          d[ip7]=d[ip7]+ddd;
+          d[ip8]=d[ip8]+ddd;
+        }
+      }
+    }
+    
+    //内部の格子点のデータを8で割る
+    VolumeDataDivideBy8(d, id, jd, kd);
+    
+    //面上の格子点のデータを4で割る
+    FaceDataDivideBy4(d, id, jd, kd);
+    
+    //辺上の格子点のデータを2で割る
+    LineDataDivideBy2(d, id, jd, kd);
   
-  
+  };
+
   /**
-   * @brief Vectorの格子点での値をセット（float -> double）
+   * @brief Vectorの格子点での値をセット
    * @param [out]    d        格子点data
    * @param [in]     data     セル中心data
    * @param [in]     id       セル中心data x方向サイズ
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
-  void setVectorGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out);
+  template<class T1, class T2>
+  void setVectorGridData(T1* d, T2* data, int id, int jd, int kd, int gc_out)
+  {
+    int ix = size[0];
+    int jx = size[1];
+    int kx = size[2];
+    int gd = guide;
+ 
+    size_t mip;
+    T1 ddd;
+    int i,j,k;
+ 
+    size_t dsize = (size_t)(id*jd*kd);
+    size_t dsize3 = (size_t)(id*jd*kd*3);
+ 
+    for (size_t l=0; l<dsize3; i++) d[l]=0.0;
+    
+    for (size_t ivar=0;ivar<3;ivar++){
+      
+      for (int km=1-gc_out; km<=kx+gc_out; km++) {
+        for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
+          for (int im=1-gc_out; im<=ix+gc_out; im++) {
+            mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);
+            ddd=(T1)data[mip];
+            i=im-1+gc_out;
+            j=jm-1+gc_out;
+            k=km-1+gc_out;
+            size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+            size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+            size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+            size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+            size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+            size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+            size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+            size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+            d[ip1+dsize*ivar]=d[ip1+dsize*ivar]+ddd;
+            d[ip2+dsize*ivar]=d[ip2+dsize*ivar]+ddd;
+            d[ip3+dsize*ivar]=d[ip3+dsize*ivar]+ddd;
+            d[ip4+dsize*ivar]=d[ip4+dsize*ivar]+ddd;
+            d[ip5+dsize*ivar]=d[ip5+dsize*ivar]+ddd;
+            d[ip6+dsize*ivar]=d[ip6+dsize*ivar]+ddd;
+            d[ip7+dsize*ivar]=d[ip7+dsize*ivar]+ddd;
+            d[ip8+dsize*ivar]=d[ip8+dsize*ivar]+ddd;
+          }
+        }
+      }
+      
+      //内部の格子点のデータを8で割る
+      VolumeDataDivideBy8(&d[dsize*ivar], id, jd, kd);
+      
+      //面上の格子点のデータを4で割る
+      FaceDataDivideBy4(&d[dsize*ivar], id, jd, kd);
+      
+      //辺上の格子点のデータを2で割る
+      LineDataDivideBy2(&d[dsize*ivar], id, jd, kd);
+      
+      //境界条件処理
+      
+      
+    }//loop ivar
   
-  
+  };
+
+
   /**
-   * @brief 成分別Vectorの格子点での値をセット（float -> double）
+   * @brief 成分別Vectorの格子点での値をセット
    * @param [out]    d        格子点data
    * @param [in]     data     セル中心data
    * @param [in]     id       セル中心data x方向サイズ
@@ -467,20 +460,60 @@ protected:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
-  void setVectorComponentGridData(double* d, float* data, int id, int jd, int kd, int ivar);
+  template<class T1, class T2>
+  void setVectorComponentGridData(T1* d, T2* data, int id, int jd, int kd, int ivar, int gc_out)
+  {
+    int ix = size[0];
+    int jx = size[1];
+    int kx = size[2];
+    int gd = guide;
+    
+    size_t mip;
+    T1 ddd;
+    int i,j,k;
+ 
+    size_t dsize = (size_t)(id*jd*kd);
+ 
+    for (size_t l=0; l<dsize; l++) d[l]=0.0;
+    
+    for (int km=1-gc_out; km<=kx+gc_out; km++) {
+      for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
+        for (int im=1-gc_out; im<=ix+gc_out; im++) {
+          mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);
+          ddd=(T1)data[mip];
+          i=im-1+gc_out;
+          j=jm-1+gc_out;
+          k=km-1+gc_out;
+          size_t ip1 = _F_IDX_S3D(i+1, j+1, k+1, id, jd, kd, 0);
+          size_t ip2 = _F_IDX_S3D(i+2, j+1, k+1, id, jd, kd, 0);
+          size_t ip3 = _F_IDX_S3D(i+2, j+2, k+1, id, jd, kd, 0);
+          size_t ip4 = _F_IDX_S3D(i+1, j+2, k+1, id, jd, kd, 0);
+          size_t ip5 = _F_IDX_S3D(i+1, j+1, k+2, id, jd, kd, 0);
+          size_t ip6 = _F_IDX_S3D(i+2, j+1, k+2, id, jd, kd, 0);
+          size_t ip7 = _F_IDX_S3D(i+2, j+2, k+2, id, jd, kd, 0);
+          size_t ip8 = _F_IDX_S3D(i+1, j+2, k+2, id, jd, kd, 0);
+          d[ip1]=d[ip1]+ddd;
+          d[ip2]=d[ip2]+ddd;
+          d[ip3]=d[ip3]+ddd;
+          d[ip4]=d[ip4]+ddd;
+          d[ip5]=d[ip5]+ddd;
+          d[ip6]=d[ip6]+ddd;
+          d[ip7]=d[ip7]+ddd;
+          d[ip8]=d[ip8]+ddd;
+        }
+      }
+    }
+    
+    //内部の格子点のデータを8で割る
+    VolumeDataDivideBy8(d, id, jd, kd);
+    
+    //面上の格子点のデータを4で割る
+    FaceDataDivideBy4(d, id, jd, kd);
+    
+    //辺上の格子点のデータを2で割る
+    LineDataDivideBy2(d, id, jd, kd);
   
-  
-  /**
-   * @brief 成分別Vectorの格子点での値をセット（float -> double）
-   * @param [out]    d        格子点data
-   * @param [in]     data     セル中心data
-   * @param [in]     id       セル中心data x方向サイズ
-   * @param [in]     jd       セル中心data y方向サイズ
-   * @param [in]     kd       セル中心data z方向サイズ
-   * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
-   */
-  void setVectorComponentGridDataGuide(double* d, float* data, int id, int jd, int kd, int gc_out, int ivar);
-  
+  };
   
 public:
 

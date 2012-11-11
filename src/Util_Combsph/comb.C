@@ -1,14 +1,14 @@
 // #################################################################
 //
-// Combine sph files and output 
+// Combine sph files and output
 //
 // Copyright (c) All right reserved. 2012
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, The University of Tokyo, Japan.
 //
 // #################################################################
 
-/** 
+/**
  * @file   comb.C
  * @brief  COMB Class
  * @author kero
@@ -23,7 +23,7 @@ COMB::COMB()
   procGrp = 0;
   myRank  = -1;
   numProc = 0;
-
+  
   filename="";
   out_dirname="./";
   in_dirname="./";
@@ -32,7 +32,7 @@ COMB::COMB()
   lflag=0;
   lflagv=0;
   thin_out = false;
-
+  
   P3Op.IS_xyz = ON;
   P3Op.IS_q = OFF;
   P3Op.IS_funciton = ON;
@@ -41,17 +41,17 @@ COMB::COMB()
   P3Op.IS_DivideFunc=OFF;
   P3Op.ngrid=0; //出力ブロック数
   P3Op.nvar=0;  //出力項目数
-
+  
   output_real_type=0;
   out_format=0;
   ndfi=0;
   DI=NULL;
-
+  
   // dfi管理
   for (int i=0; i<var_END; i++) dfi_mng[i]=0;
-
+  
   staging=0;
-
+  
 }
 
 
@@ -63,36 +63,36 @@ COMB::~COMB()
 }
 
 // #################################################################
-// 
+//
 void COMB::ReadInit(string input_file)
 {
-
+  
   // ------------------------------------
   FILE* fp = NULL;
-
+  
   // TPインスタンス生成
   TPControl tpCntl;
   tpCntl.getTPinstance();
-
+  
   //入力ファイルをセット
   int ierror = tpCntl.readTPfile(input_file);
-
+  
   //入力ファイルの読み込み--->パラメータのセット
   ReadInputFile(&tpCntl);
-
+  
   //TextParserの破棄
   tpCntl.remove();
-
+  
   return;
 }
 
 // #################################################################
-// 
+//
 void COMB::ReadInputFile(TPControl* tpCntl)
 {
   string str;
   string label,label_base,label_leaf;
-
+  
   // node数の取得
   int nnode=0;
   label_base = "/CombData";
@@ -100,12 +100,12 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   {
     nnode = tpCntl->countLabels(label_base);
   }
-
+  
   // dfi_nameの取得
   dfi_name.clear();
   label_base = "/CombData";
   for (int i=0; i<nnode; i++) {
-
+    
     if(!tpCntl->GetNodeStr(label_base,i+1,&str))
     {
       printf("\tParsing error : No Elem name\n");
@@ -113,16 +113,16 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     }
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
     label=label_base+"/"+str;
-
+    
     if ( !(tpCntl->GetValue(label, &str )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-	//FList[ilist].name = str;
+    //FList[ilist].name = str;
     dfi_name.push_back(str.c_str());
-
+    
   }
-
+  
 #if 0
   cout << "dfi_name.size() = " << dfi_name.size() << endl;
   vector<string>::const_iterator it;
@@ -130,8 +130,8 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     cout << "name = " << (*it).c_str() << endl;
   }
 #endif
-
-
+  
+  
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
   label = "/CombData/output_dir";
   if ( (tpCntl->GetValue(label, &str )) )
@@ -142,8 +142,8 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     CheckDir(out_dirname);
     if( out_dirname.size() != 0 ) out_dirname=out_dirname+"/";
   }
-
-
+  
+  
   //入力ディレクトリの指定
   label = "/CombData/input_dir";
   if ( (tpCntl->GetValue(label, &str )) )
@@ -154,8 +154,8 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     CheckDir(in_dirname);
     if( in_dirname.size() != 0 ) in_dirname=in_dirname+"/";
   }
-
-
+  
+  
   //並列実行時のSTAGINGのON/OFF
   label = "/CombData/staging";
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -174,8 +174,8 @@ void COMB::ReadInputFile(TPControl* tpCntl)
       Exit(0);
     }
   }
-
-
+  
+  
   //出力の単精度or倍精度指定 ---> PLOT3Dの場合は、optionに記述があればそちらを優先
   label = "/CombData/output_real_type";
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -191,7 +191,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
-
+  
   // 連結ファイルの出力フォーマット
   label = "/CombData/out_format";
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -206,10 +206,10 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     printf("\tInvalid keyword is described for  '%s'\n", label.c_str());
     Exit(0);
   }
-
+  
   // PLOT3Dオプションの読み込み
   if( out_format == OUTFORMAT_IS_PLOT3D ) get_PLOT3D(tpCntl);
-
+  
 }
 
 
@@ -251,7 +251,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   
-
+  
   // 格子の移動
   label = "/plot3d_options/Grid_Mobility";
   
@@ -333,7 +333,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   
-
+  
   //File_plot3d_format
   label = "/plot3d_options/Format_Type";
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -353,7 +353,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   
-
+  
   // 出力の単精度or倍精度指定
   FP3DR.setRealType(output_real_type);
   label = "/plot3d_options/real_type";
@@ -404,7 +404,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   
-
+  
   // Output_q
   label = "/plot3d_options/Output_q";
   
@@ -470,7 +470,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   // Output_fvbnd
   label = "/plot3d_options/Output_fvbnd";
-
+  
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -488,7 +488,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   
-
+  
   // divide_func ---> 出力を項目別にファイル分割するオプション
   label = "/plot3d_options/divide_func";
   
@@ -508,27 +508,27 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
       Exit(0);
     }
   }
-
+  
 }
 
 
 // #################################################################
-// 
+//
 void COMB::ReadDfiFiles()
 {
   // allocate dfi info class
   ndfi=dfi_name.size();
   DI = new DfiInfo[ndfi];
-
+  
   // set dfi info class
   int ic=0;
   vector<string>::const_iterator it;
   for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
-	string fname=(*it).c_str();
+    string fname=(*it).c_str();
     DI[ic].ReadDfiFile(fname);
-	ic++;
+    ic++;
   }
-
+  
   LOG_OUTV_ {
     fprintf(fplog,"\n");
     fprintf(fplog,"*** dfi file info ***\n");
@@ -565,17 +565,17 @@ void COMB::ReadDfiFiles()
         fprintf(fplog,"\t  DI[%2d].Node[%4d].IJK_JK       = %ld\n",i,j,DI[i].Node[j].IJK_JK);
         fprintf(fplog,"\t  DI[%2d].Node[%4d].IJK_K        = %ld\n",i,j,DI[i].Node[j].IJK_K);
       }
-
+      
       fprintf(fplog,"\n");
       for(int j=0; j< DI[i].step.size(); j++ ) {
         fprintf(fplog,"\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
       }
-
+      
       fprintf(fplog,"\n");
       for(int j=0; j< DI[i].index_y.size(); j++ ) {
         fprintf(fplog,"\t  DI[%2d].index_y[%4d] = %d\n",i,j,DI[i].index_y[j]);
       }
-
+      
       fprintf(fplog,"\n");
       for(int j=0; j< DI[i].index_y.size(); j++ ) {
         fprintf(fplog,"\t  DI[%2d].index_z[%4d] = %d\n",i,j,DI[i].index_z[j]);
@@ -583,136 +583,131 @@ void COMB::ReadDfiFiles()
     }
     fprintf(fplog,"\n");
   }
-
+  
   STD_OUTV_ {
-   printf("\n");
-   printf("*** dfi file info ***\n");
-   printf("\n");
+    printf("\n");
+    printf("*** dfi file info ***\n");
+    printf("\n");
     for(int i=0;i<ndfi;i++){
-     printf("\tDI[%2d].Prefix                      = %s\n",i,DI[i].Prefix.c_str());
-     printf("\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
-     printf("\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
-     printf("\tDI[%2d].Number_of_Rank_in_MPIworld  = %d\n",i,DI[i].Number_of_Rank_in_MPIworld);
-     printf("\tDI[%2d].Number_of_Group_in_MPIworld = %d\n",i,DI[i].Number_of_Group_in_MPIworld);
-     printf("\tDI[%2d].Global_Voxel[0]             = %d\n",i,DI[i].Global_Voxel[0]);
-     printf("\tDI[%2d].Global_Voxel[1]             = %d\n",i,DI[i].Global_Voxel[1]);
-     printf("\tDI[%2d].Global_Voxel[2]             = %d\n",i,DI[i].Global_Voxel[2]);
-     printf("\tDI[%2d].Global_Division[0]          = %d\n",i,DI[i].Global_Division[0]);
-     printf("\tDI[%2d].Global_Division[1]          = %d\n",i,DI[i].Global_Division[1]);
-     printf("\tDI[%2d].Global_Division[2]          = %d\n",i,DI[i].Global_Division[2]);
-     printf("\tDI[%2d].FileFormat                  = %s\n",i,DI[i].FileFormat.c_str());
-     printf("\tDI[%2d].GuideCell                   = %d\n",i,DI[i].GuideCell);
-     printf("\n");
-     printf("\tDI[%2d].NodeInfoSizet = %d\n",i,DI[i].NodeInfoSize);
+      printf("\tDI[%2d].Prefix                      = %s\n",i,DI[i].Prefix.c_str());
+      printf("\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
+      printf("\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
+      printf("\tDI[%2d].Number_of_Rank_in_MPIworld  = %d\n",i,DI[i].Number_of_Rank_in_MPIworld);
+      printf("\tDI[%2d].Number_of_Group_in_MPIworld = %d\n",i,DI[i].Number_of_Group_in_MPIworld);
+      printf("\tDI[%2d].Global_Voxel[0]             = %d\n",i,DI[i].Global_Voxel[0]);
+      printf("\tDI[%2d].Global_Voxel[1]             = %d\n",i,DI[i].Global_Voxel[1]);
+      printf("\tDI[%2d].Global_Voxel[2]             = %d\n",i,DI[i].Global_Voxel[2]);
+      printf("\tDI[%2d].Global_Division[0]          = %d\n",i,DI[i].Global_Division[0]);
+      printf("\tDI[%2d].Global_Division[1]          = %d\n",i,DI[i].Global_Division[1]);
+      printf("\tDI[%2d].Global_Division[2]          = %d\n",i,DI[i].Global_Division[2]);
+      printf("\tDI[%2d].FileFormat                  = %s\n",i,DI[i].FileFormat.c_str());
+      printf("\tDI[%2d].GuideCell                   = %d\n",i,DI[i].GuideCell);
+      printf("\n");
+      printf("\tDI[%2d].NodeInfoSizet = %d\n",i,DI[i].NodeInfoSize);
       for(int j=0; j< DI[i].NodeInfoSize; j++ ) {
-       printf("\t  DI[%2d].Node[%4d].RankID = %d\n",i,j,DI[i].Node[j].RankID);
-       printf("\t  DI[%2d].Node[%4d].HostName = %s\n",i,j,DI[i].Node[j].HostName.c_str());
-       printf("\t  DI[%2d].Node[%4d].VoxelSize[0] = %d\n",i,j,DI[i].Node[j].VoxelSize[0]);
-       printf("\t  DI[%2d].Node[%4d].VoxelSize[1] = %d\n",i,j,DI[i].Node[j].VoxelSize[1]);
-       printf("\t  DI[%2d].Node[%4d].VoxelSize[2] = %d\n",i,j,DI[i].Node[j].VoxelSize[2]);
-       printf("\t  DI[%2d].Node[%4d].HeadIndex[0] = %d\n",i,j,DI[i].Node[j].HeadIndex[0]);
-       printf("\t  DI[%2d].Node[%4d].HeadIndex[1] = %d\n",i,j,DI[i].Node[j].HeadIndex[1]);
-       printf("\t  DI[%2d].Node[%4d].HeadIndex[2] = %d\n",i,j,DI[i].Node[j].HeadIndex[2]);
-       printf("\t  DI[%2d].Node[%4d].TailIndex[0] = %d\n",i,j,DI[i].Node[j].TailIndex[0]);
-       printf("\t  DI[%2d].Node[%4d].TailIndex[1] = %d\n",i,j,DI[i].Node[j].TailIndex[1]);
-       printf("\t  DI[%2d].Node[%4d].TailIndex[2] = %d\n",i,j,DI[i].Node[j].TailIndex[2]);
-       printf("\t  DI[%2d].Node[%4d].IJK          = %ld\n",i,j,DI[i].Node[j].IJK);
-       printf("\t  DI[%2d].Node[%4d].IJK_JK       = %ld\n",i,j,DI[i].Node[j].IJK_JK);
-       printf("\t  DI[%2d].Node[%4d].IJK_K        = %ld\n",i,j,DI[i].Node[j].IJK_K);
+        printf("\t  DI[%2d].Node[%4d].RankID = %d\n",i,j,DI[i].Node[j].RankID);
+        printf("\t  DI[%2d].Node[%4d].HostName = %s\n",i,j,DI[i].Node[j].HostName.c_str());
+        printf("\t  DI[%2d].Node[%4d].VoxelSize[0] = %d\n",i,j,DI[i].Node[j].VoxelSize[0]);
+        printf("\t  DI[%2d].Node[%4d].VoxelSize[1] = %d\n",i,j,DI[i].Node[j].VoxelSize[1]);
+        printf("\t  DI[%2d].Node[%4d].VoxelSize[2] = %d\n",i,j,DI[i].Node[j].VoxelSize[2]);
+        printf("\t  DI[%2d].Node[%4d].HeadIndex[0] = %d\n",i,j,DI[i].Node[j].HeadIndex[0]);
+        printf("\t  DI[%2d].Node[%4d].HeadIndex[1] = %d\n",i,j,DI[i].Node[j].HeadIndex[1]);
+        printf("\t  DI[%2d].Node[%4d].HeadIndex[2] = %d\n",i,j,DI[i].Node[j].HeadIndex[2]);
+        printf("\t  DI[%2d].Node[%4d].TailIndex[0] = %d\n",i,j,DI[i].Node[j].TailIndex[0]);
+        printf("\t  DI[%2d].Node[%4d].TailIndex[1] = %d\n",i,j,DI[i].Node[j].TailIndex[1]);
+        printf("\t  DI[%2d].Node[%4d].TailIndex[2] = %d\n",i,j,DI[i].Node[j].TailIndex[2]);
+        printf("\t  DI[%2d].Node[%4d].IJK          = %ld\n",i,j,DI[i].Node[j].IJK);
+        printf("\t  DI[%2d].Node[%4d].IJK_JK       = %ld\n",i,j,DI[i].Node[j].IJK_JK);
+        printf("\t  DI[%2d].Node[%4d].IJK_K        = %ld\n",i,j,DI[i].Node[j].IJK_K);
       }
-
-     printf("\n");
+      
+      printf("\n");
       for(int j=0; j< DI[i].step.size(); j++ ) {
-       printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
+        printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
       }
-
-     printf("\n");
+      
+      printf("\n");
       for(int j=0; j< DI[i].index_y.size(); j++ ) {
-       printf("\t  DI[%2d].index_y[%4d] = %d\n",i,j,DI[i].index_y[j]);
+        printf("\t  DI[%2d].index_y[%4d] = %d\n",i,j,DI[i].index_y[j]);
       }
-
-     printf("\n");
+      
+      printf("\n");
       for(int j=0; j< DI[i].index_y.size(); j++ ) {
-       printf("\t  DI[%2d].index_z[%4d] = %d\n",i,j,DI[i].index_z[j]);
+        printf("\t  DI[%2d].index_z[%4d] = %d\n",i,j,DI[i].index_z[j]);
       }
     }
     printf("\n");
   }
-
+  
 }
 
 // #################################################################
-// 
+//
 void COMB::CheckDir(string dirstr)
 {
   Hostonly_
   {
-
+    
 #ifndef _WIN32
-
-  if( dirstr.size() == 0 ) {
-     printf("\toutput current directory\n");
-     return;
-  }
-
-  DIR* dir;
-  if( !(dir = opendir(dirstr.c_str())) ) {
-    if( errno == ENOENT ) {
-      mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-      if ( !FBUtility::c_mkdir(dirstr.c_str()) )
-      {
-        printf("\tCan't generate directory(%s).\n", dirstr.c_str());
+    
+    if( dirstr.size() == 0 ) {
+      printf("\toutput current directory\n");
+      return;
+    }
+    
+    DIR* dir;
+    if( !(dir = opendir(dirstr.c_str())) ) {
+      if( errno == ENOENT ) {
+        mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+        if ( !FBUtility::c_mkdir(dirstr.c_str()) )
+        {
+          printf("\tCan't generate directory(%s).\n", dirstr.c_str());
+          Exit(0);
+        }
+      }
+      else {
+        printf("Directory open error.(%s)", dirstr.c_str());
         Exit(0);
       }
     }
     else {
-      printf("Directory open error.(%s)", dirstr.c_str());
-      Exit(0);
+      if( closedir(dir) == -1 ) {
+        printf("Directory close error.(%s)", dirstr.c_str());
+        Exit(0);
+      }
     }
-  }
-  else {
-    if( closedir(dir) == -1 ) {
-      printf("Directory close error.(%s)", dirstr.c_str());
-      Exit(0);
-    }
-  }
-
+    
 #else // for windows
-
-  if( dirstr.size() == 0 ) {
-     printf("\toutput current directory\n");
-     return;
-  }
-
-  // check to exist directory
-  if (IsDirExsist(dirstr)) {
-    // exist directory
-    return;
+    
+    if( dirstr.size() == 0 ) {
+      printf("\toutput current directory\n");
+      return;
+    }
+    
+    // check to exist directory
+    if (IsDirExsist(dirstr)) {
+      // exist directory
+      return;
+    }
+    
+    // make directory
+    if(!CreateDirectory(dirstr.c_str(), NULL)){
+      printf("\tCan't generate directory(%s).\n", dirstr.c_str());
+      Exit(0);
+    }
+    
+#endif  // _WIN32
+    
   }
   
-  // make directory
-  if(!CreateDirectory(dirstr.c_str(), NULL)){
-    printf("\tCan't generate directory(%s).\n", dirstr.c_str());
-    Exit(0);
-  }
-
-#endif  // _WIN32
-
-  }
-
   return;
 }
 
 
 // #################################################################
-// 
+//
 void COMB::OpenLogFile()
 {
-  //cout << "procGrp = " << procGrp << endl;
-  //cout << "myRank = " << myRank << endl;
-  //cout << "numProc = " << numProc << endl;
-  //cout << "HostName = " << HostName << endl;
-
   //log file open
   string prefix="log_comb_id";
   int len = prefix.size()+10;//+6+4
@@ -731,24 +726,24 @@ void COMB::OpenLogFile()
   fprintf(fplog,"### log_comb.txt ###\n",logname.c_str());
   fprintf(fplog,"####################\n",logname.c_str());
   fprintf(fplog,"\n");
-
+  
   fprintf(fplog,"procGrp  = %d\n", procGrp);
   fprintf(fplog,"myRank   = %d\n", myRank);
   fprintf(fplog,"numProc  = %d\n", numProc);
-  fprintf(fplog,"HostName = %s\n", HostName);
+  fprintf(fplog,"HostName = %s\n", HostName.c_str());
   fprintf(fplog,"\n");
-
+  
 }
 
 // #################################################################
-// 
+//
 void COMB::CloseLogFile()
 {
   fclose(fplog);
 }
 
 // #################################################################
-// 
+//
 void COMB::WriteTime(double* tt)
 {
   fprintf(fplog,"\n\n");
@@ -759,16 +754,16 @@ void COMB::WriteTime(double* tt)
 }
 
 // #################################################################
-// 
+//
 void COMB::CombineFiles()
 {
   if( out_format == OUTFORMAT_IS_SPH )
   {
-     output_sph();
+    output_sph();
   }
   else if( out_format == OUTFORMAT_IS_PLOT3D )
   {
-     output_plot3d();
+    output_plot3d();
   }
 }
 
@@ -853,15 +848,15 @@ bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name,
   if ( base_name.empty() ) return false;
   if ( new_name.empty() ) return false;
   if ( prefix.empty() ) return false;
-
+  
   FILE* fpin;
   FILE* fpout;
   char buff[DFI_LINE_LENGTH];
   string buffs;
-
+  
   if ( !(fpin = fopen(base_name.c_str(), "r")) ) return false;
   if ( !(fpout = fopen(new_name.c_str(), "w")) ) return false;
-
+  
   while( fgets(buff,DFI_LINE_LENGTH,fpin) != NULL ) {
     buffs=buff;
     if( !strcasecmp(buffs.c_str(), "  FileInfo {\n" ) ) break;
@@ -874,18 +869,18 @@ bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name,
       fputs(buff,fpout);
     }
   }
-
+  
   if (fpout) Write_Tab(fpout, 1);
   if (fpout) fprintf(fpout, "FileInfo {\n");
   if (fpout) Write_Tab(fpout, 1);
   if (fpout) fprintf(fpout, "}\n");
   if (fpout) fprintf(fpout, "}\n");
-
+  
   fclose(fpin);
   fclose(fpout);
   
   dfi_mng++;
-
+  
   return true;
 }
 
@@ -908,7 +903,7 @@ void COMB::MemoryRequirement(const double Memory, FILE* fp)
   const double TB = 1024.0*GB;
   const double PB = 1024.0*TB;
   const double factor = 1.05; // estimate 5% for addtional
-
+  
   // Global memory
   fprintf (fp," MemorySize = ");
   if ( mem > PB ) {
@@ -932,7 +927,7 @@ void COMB::MemoryRequirement(const double Memory, FILE* fp)
   else {
     fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
   }
-
+  
   fflush(fp);
 }
 
@@ -947,10 +942,10 @@ void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, c
   const double TB = 1024.0*GB;
   const double PB = 1024.0*TB;
   const double factor = 1.05; // estimate 5% for addtional
-
+  
   fprintf (fp,"*** Required MemorySize ***");
   fprintf (fp,"\n");
-
+  
   mem = sphMemory;
   fprintf (fp,"  read SPH MemorySize = ");
   if ( mem > PB ) {
@@ -974,7 +969,7 @@ void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, c
   else {
     fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
   }
-
+  
   mem = plot3dMemory;
   fprintf (fp,"  write PLOT3D MemorySize = ");
   if ( mem > PB ) {
@@ -998,7 +993,7 @@ void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, c
   else {
     fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
   }
-
+  
   mem = thinMemory;
   fprintf (fp,"  write thin out MemorySize = ");
   if ( mem > PB ) {
@@ -1022,7 +1017,7 @@ void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, c
   else {
     fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
   }
-
+  
   mem = TotalMemory;
   fprintf (fp,"  TotalMemorySize = ");
   if ( mem > PB ) {
@@ -1046,21 +1041,21 @@ void COMB::MemoryRequirement(const double TotalMemory, const double sphMemory, c
   else {
     fprintf (fp,"Caution! Memory required : %d (Byte)", (int)(mem *factor) );
   }
-
+  
   fprintf (fp,"\n");
   fprintf (fp,"\n");
-
+  
   fflush(fp);
 }
 
 
 // #################################################################
-// 
+//
 int COMB::tt_check_machine_endian()
 {
 	int v = 1;
 	char* p = (char*)&v;
-
+  
 	if (p[0])					return TT_LITTLE_ENDIAN;
 	else if (p[sizeof(int)-1])	return TT_BIG_ENDIAN;
 	else						return TT_OTHER_ENDIAN;
@@ -1068,7 +1063,7 @@ int COMB::tt_check_machine_endian()
 
 
 // #################################################################
-// 
+//
 bool COMB::ReadSphDataType(int* m_sv_type, int* m_d_type, int fp_in, string fname)
 {
   if( !(FileIO_SPH::GetDataType(fname.c_str(), m_d_type, m_sv_type)) ){
@@ -1079,7 +1074,7 @@ bool COMB::ReadSphDataType(int* m_sv_type, int* m_d_type, int fp_in, string fnam
 }
 
 // #################################################################
-// 
+//
 bool COMB::ReadSphHeader(int* m_step,
                          int* m_sv_type,
                          int* m_d_type,
@@ -1104,7 +1099,7 @@ bool COMB::ReadSphHeader(int* m_step,
 }
 
 // #################################################################
-// 
+//
 bool COMB::ReadSphHeader(long long* m_step,
                          int* m_sv_type,
                          int* m_d_type,
@@ -1130,7 +1125,7 @@ bool COMB::ReadSphHeader(long long* m_step,
 
 
 // #################################################################
-// 
+//
 bool COMB::ReadSphData(float* wk,
                        int wksize,
                        int* size,
@@ -1154,7 +1149,7 @@ bool COMB::ReadSphData(float* wk,
 }
 
 // #################################################################
-// 
+//
 bool COMB::ReadSphData(double* wk,
                        int wksize,
                        int* size,
@@ -1176,180 +1171,3 @@ bool COMB::ReadSphData(double* wk,
   }
   return true;
 }
-
-
-
-
-
-
-// #################################################################
-// combine layer float ---> float
-void COMB::CombineLayerData(
-  float* d, int size_d, float* s, int size_s,
-  int xsize, int ysize, int zsize,
-  int z, int* sz, int dim, int xs, int ys) //z=zzz ; z!=zh
-{
-  int ix = sz[0];
-  int jy = sz[1];
-  int kz = sz[2];
-
-  //for(int j=0;j<jy;j++){
-  //  int ipss=z*dim*ix*jy+j*dim*ix;
-  //  int ipds=(ys+j)*dim*xsize+xs*dim;
-  //  for(int i=0;i<dim*ix;i++){
-  //    d[ipds+i]=s[ipss+i];
-  //  }
-  //}
-  for(int j=0;j<jy;j++){
-    int yp=ys+j;
-    int yrest=yp%thin_count;
-    if(yrest != 0) continue;
-
-    int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
-
-    int ic=0;
-    for(int i=0;i<ix;i++){
-      int xp=xs+i;
-      int xrest=xp%thin_count;
-      if(xrest != 0) continue;
-
-      for(int idim=0;idim<dim;idim++){
-        d[ipds+ic]=s[ipss+i*dim+idim];
-        ic++;
-      }
-    }
-  }
-
-  return;
-}
-
-
-// #################################################################
-// combine layer double ---> double
-void COMB::CombineLayerData(
-  double* d, int size_d, double* s, int size_s,
-  int xsize, int ysize, int zsize,
-  int z, int* sz, int dim, int xs, int ys) //z=zzz ; z!=zh
-{
-  int ix = sz[0];
-  int jy = sz[1];
-  int kz = sz[2];
-
-  //for(int j=0;j<jy;j++){
-  //  int ipss=z*dim*ix*jy+j*dim*ix;
-  //  int ipds=(ys+j)*dim*xsize+xs*dim;
-  //  for(int i=0;i<dim*ix;i++){
-  //    d[ipds+i]=s[ipss+i];
-  //  }
-  //}
-  for(int j=0;j<jy;j++){
-    int yp=ys+j;
-    int yrest=yp%thin_count;
-    if(yrest != 0) continue;
-
-    int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
-
-    int ic=0;
-    for(int i=0;i<ix;i++){
-      int xp=xs+i;
-      int xrest=xp%thin_count;
-      if(xrest != 0) continue;
-
-      for(int idim=0;idim<dim;idim++){
-        d[ipds+ic]=s[ipss+i*dim+idim];
-        ic++;
-      }
-    }
-  }
-
-  return;
-}
-
-
-// #################################################################
-// combine layer float ---> double
-void COMB::CombineLayerData(
-  double* d, int size_d, float* s, int size_s,
-  int xsize, int ysize, int zsize,
-  int z, int* sz, int dim, int xs, int ys) //z=zzz ; z!=zh
-{
-  int ix = sz[0];
-  int jy = sz[1];
-  int kz = sz[2];
-
-  //for(int j=0;j<jy;j++){
-  //  int ipss=z*dim*ix*jy+j*dim*ix;
-  //  int ipds=(ys+j)*dim*xsize+xs*dim;
-  //  for(int i=0;i<dim*ix;i++){
-  //    d[ipds+i]=(double)s[ipss+i];
-  //  }
-  //}
-  for(int j=0;j<jy;j++){
-    int yp=ys+j;
-    int yrest=yp%thin_count;
-    if(yrest != 0) continue;
-
-    int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
-
-    int ic=0;
-    for(int i=0;i<ix;i++){
-      int xp=xs+i;
-      int xrest=xp%thin_count;
-      if(xrest != 0) continue;
-
-      for(int idim=0;idim<dim;idim++){
-        d[ipds+ic]=(double)s[ipss+i*dim+idim];
-        ic++;
-      }
-    }
-  }
-
-  return;
-}
-
-
-// #################################################################
-// combine layer double ---> float
-void COMB::CombineLayerData(
-  float* d, int size_d, double* s, int size_s,
-  int xsize, int ysize, int zsize,
-  int z, int* sz, int dim, int xs, int ys) //z=zzz ; z!=zh
-{
-  int ix = sz[0];
-  int jy = sz[1];
-  int kz = sz[2];
-
-  //for(int j=0;j<jy;j++){
-  //  int ipss=z*dim*ix*jy+j*dim*ix;
-  //  int ipds=(ys+j)*dim*xsize+xs*dim;
-  //  for(int i=0;i<dim*ix;i++){
-  //    d[ipds+i]=(float)s[ipss+i];
-  //  }
-  //}
-  for(int j=0;j<jy;j++){
-    int yp=ys+j;
-    int yrest=yp%thin_count;
-    if(yrest != 0) continue;
-
-    int ipss=z*dim*ix*jy+j*dim*ix;
-    int ipds=(yp/thin_count)*dim*xsize+(xs/thin_count)*dim;
-
-    int ic=0;
-    for(int i=0;i<ix;i++){
-      int xp=xs+i;
-      int xrest=xp%thin_count;
-      if(xrest != 0) continue;
-
-      for(int idim=0;idim<dim;idim++){
-        d[ipds+ic]=(float)s[ipss+i*dim+idim];
-        ic++;
-      }
-    }
-  }
-
-  return;
-}
-
