@@ -22,8 +22,4 @@
 #define OUTFORMAT_IS_SPH    0
 #define OUTFORMAT_IS_PLOT3D 1
 
-// general
-//#define FB_FILE_PATH_LENGTH 64
-#define FB_BUFF_LENGTH      256
-
 #endif // _LAYOUT_DEFINE_H_

@@ -16,6 +16,8 @@
  * @author kero
  */
 
+#define PLT3D_VERS 100
+
 #include <string>
 #include <mpi.h>
 

@@ -35,10 +35,6 @@
 #include "FB_Ffunc.h"
 #include "mydebug.h"
 
-// general
-//#define FB_FILE_PATH_LENGTH 64
-#define FB_BUFF_LENGTH      256
-
 
 #ifdef _WIN32
 

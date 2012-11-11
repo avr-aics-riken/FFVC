@@ -47,6 +47,7 @@
 #define OFF         0
 #define DETAIL      2
 #define FB_FILE_PATH_LENGTH 64
+#define FB_BUFF_LENGTH      256
 
 // DIMENSITON
 #define DIMENSION_2D 2

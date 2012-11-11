@@ -74,9 +74,14 @@ Steer {
       Poisson {
         Iteration     = 100
         Epsilon       = 1.0e-4
-        Omega         = 1.1
-        Norm          = "r_r0"
-        Linear_Solver = "sor2sma"
+        //Omega         = 1.1
+        //Norm          = "r_r0"
+        //Linear_Solver = "sor2sma"
+
+        Omega         = 1.0
+        Norm          = "r_b"
+        Linear_Solver = "PBiCGSTAB"
+
         Comm_mode     = "async"
       }
       VP {
@@ -212,8 +217,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 87
-    Flow_Base = 103
+    FFV       = 90
+    Flow_Base = 105
   }
 
 } //Steer
