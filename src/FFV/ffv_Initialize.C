@@ -755,16 +755,27 @@ int FFV::Initialize(int argc, char **argv)
     case SOR2SMA:
     case SOR2CMA:
     case GMRES:
+    case RBGS:
+		case PCG:
+		case PBiCGSTAB:
       allocate_SOR2SMA_buffer(TotalMemory);
       break;
   }
   
-  // GMRES
+  // Krylov subspace
   switch (IC[ItrCtl::ic_prs_pr].get_LS())
   {
     case GMRES:
       allocArray_Krylov(TotalMemory);
       break;
+      
+    case PCG:
+			allocArray_PCG(TotalMemory);
+			break;
+      
+		case PBiCGSTAB:
+			allocArray_PBiCGSTAB(TotalMemory);
+			break;
   }
   
   

@@ -244,6 +244,84 @@ extern "C" {
                        REAL_TYPE* cf_z,
                        int* key);
   
+  //***********************************************************************************************
+  // ffv_blas.f90
+	void blas_clear_    (REAL_TYPE* x,
+											 int* sz,
+											 int* g);
+	void blas_copy_     (REAL_TYPE* y,
+											 REAL_TYPE* x,
+											 int* sz,
+											 int* g);
+	void blas_xpay_     (REAL_TYPE* y,
+											 REAL_TYPE* x,
+											 REAL_TYPE* a,
+											 int* sz,
+											 int* g);
+	void blas_axpy_     (REAL_TYPE* y,
+											 REAL_TYPE* x,
+											 REAL_TYPE* a,
+											 int* sz,
+											 int* g);
+	void blas_axpyz_    (REAL_TYPE* z,
+											 REAL_TYPE* x,
+											 REAL_TYPE* y,
+											 REAL_TYPE* a,
+											 int* sz,
+											 int* g);
+	void blas_axpbypz_  (REAL_TYPE* z,
+											 REAL_TYPE* x,
+											 REAL_TYPE* y,
+											 REAL_TYPE* a,
+											 REAL_TYPE* b,
+											 int* sz,
+											 int* g);
+	void blas_dot_      (REAL_TYPE* pq,
+											 REAL_TYPE* p,
+											 REAL_TYPE* q,
+											 int* sz,
+											 int* g);
+	void blas_calcr_    (REAL_TYPE* r,
+											 REAL_TYPE* p,
+											 REAL_TYPE* b,
+											 int* bp,
+											 int* sz,
+											 int* g);
+	void blas_calcr2_   (REAL_TYPE* rr,
+											 REAL_TYPE* p,
+											 REAL_TYPE* b,
+											 int* bp,
+											 int* sz,
+											 int* g);
+	void blas_calcax_   (REAL_TYPE* ap,
+											 REAL_TYPE* p,
+											 int* bp,
+											 int* sz,
+											 int* g);
+	void blas_calcb_    (REAL_TYPE* b,
+											 REAL_TYPE* s_0,
+											 REAL_TYPE* s_1,
+											 int* bp,
+											 REAL_TYPE* dh,
+											 REAL_TYPE* dt,
+											 int* sz,
+											 int* g);
+	void blas_smoother_core_  (REAL_TYPE* x,
+                             REAL_TYPE* b,
+                             int* bp,
+                             int* ip,
+                             int* color,
+                             REAL_TYPE* omg,
+                             int* sz,
+                             int* g);
+
+	void blas_preconditioner_  (REAL_TYPE* y,
+                              REAL_TYPE* x,
+                              int* bp,
+                              REAL_TYPE* omg,
+                              int* sz,
+                              int* g);
+  
   
   //***********************************************************************************************
   // ffv_poisson2.f90

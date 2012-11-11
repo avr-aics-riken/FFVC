@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2012 All right reserved.
 #
-# Institute of Industrial Science, University of Tokyo, Japan. 
+# Institute of Industrial Science, The University of Tokyo, Japan. 
 #
 ###################################################################
 
@@ -23,19 +23,18 @@ TP_DIR      = /usr/local/TextParser
 POLYLIB_DIR = ../Polylib-2.1.2
 CUTLIB_DIR  = ../Cutlib-2.0.5
 PMLIB_DIR   = ../PMlib-1.5
-OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
+OMP_FLAGS   = -fopenmp 
 UDEF_OPT    =
-CC          = icc
+CC          = mpicc
 CFLAGS      = -O3
-CXX         = icpc
+CXX         = mpicxx
 CXXFLAGS    = -O3 $(OMP_FLAGS)
-FC          = ifort
+FC          = mpif90
 FCFLAGS     = -O3
-F90         = ifort
-F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS) -D_STATIC
-LDFLAGS     = -L/opt/intel/composerxe/lib
-#LDFLAGS     = -L/opt/intel/composerxe/lib -lmpi_cxx
-LIBS        = -lifport -lifcore
+F90         = mpif90
+F90FLAGS    = -O3 -cpp $(OMP_FLAGS) -D_STATIC
+LDFLAGS     = 
+LIBS        = -lgfortran
 UDEF_LIB_PATH_SPEC =
 UDEF_LIBS_SPEC     =
 

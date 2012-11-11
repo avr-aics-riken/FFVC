@@ -29,6 +29,8 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <math.h>
+#include <float.h>
 
 #include "cpm_ParaManager.h"
 
@@ -193,6 +195,21 @@ private:
   
 #define FREQ_OF_RESTART 15 // リスタート周期
   
+  // PCG & PBiCGSTAB
+	REAL_TYPE *d_pcg_r;
+	REAL_TYPE *d_pcg_p;
+  
+	// PCG
+	REAL_TYPE *d_pcg_q;
+	REAL_TYPE *d_pcg_z;
+  
+	// PBiCGSTAB
+	REAL_TYPE *d_pcg_r0;
+	REAL_TYPE *d_pcg_p_;
+	REAL_TYPE *d_pcg_q_;
+	REAL_TYPE *d_pcg_s;
+	REAL_TYPE *d_pcg_s_;
+	REAL_TYPE *d_pcg_t_;
   
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   
@@ -317,6 +334,20 @@ private:
    * @param [in,out] total ソルバーに使用するメモリ量
    */
   void allocArray_Krylov(double &total);
+  
+  
+  /**
+   * @brief PCG Iteration
+   * @param [in,out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_PCG(double &total);
+  
+  
+  /**
+   * @brief PBiCGSTAB Iteration
+   * @param [in,out] total ソルバーに使用するメモリ量
+   */
+  void allocArray_PBiCGSTAB(double &total);
   
   
   /**
@@ -620,6 +651,75 @@ private:
   void Fgmres(ItrCtl* IC, const double rhs_nrm, const double r0);
   
   
+  
+  
+  /**
+   * @brief  FRBGS
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
+   */
+  int Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  
+  /**
+   * @brief  FPCG
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
+   */
+  int Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  
+  /**
+   * @brief  FPBiCGSTAB
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
+   */
+  int Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  
+  /**
+   * @brief  Fcheck
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]       RHS  vector
+   */
+	bool Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0);
+  
+  /**
+   * @brief  Fpreconditioner
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   */
+	int Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b);
+  
+  /**
+   * @brief  Fsmoother
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]       RHS  vector
+   */
+	void Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg);
+  
+  /**
+   * @brief  Fdot
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]       RHS  vector
+   */
+	void Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y);
+  
+
   /**
    * @brief インターバルの初期化
    */

@@ -345,6 +345,16 @@ void FFV::NS_FS_E_Binary()
   poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
   TIMING_stop(tm_poi_src_nrm, flop);
   
+  if ( ICp->get_LS() == RBGS ||
+       ICp->get_LS() == PCG  ||
+       ICp->get_LS() == PBiCGSTAB )
+  {
+		blas_calcb_(d_b, d_ws, d_sq, d_bcp, &dh, &dt, size, &guide);
+		REAL_TYPE bb = 0.0;
+		blas_dot_(&bb, d_b, d_b, size, &guide);
+		rhs_nrm = bb;
+	}
+  
   if ( numProc > 1 )
   {
     TIMING_start(tm_poi_src_comm);
@@ -412,6 +422,18 @@ void FFV::NS_FS_E_Binary()
         
       case GMRES:
         Fgmres(ICp, rhs_nrm, res_init);
+        break;
+        
+      case RBGS:
+        lc += Frbgs(ICp, d_p, d_b, rhs_nrm, res_init);
+        break;
+        
+      case PCG:
+        lc += Fpcg(ICp, d_p, d_b, rhs_nrm, res_init);
+        break;
+        
+      case PBiCGSTAB:
+        lc += Fpbicgstab(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       default:

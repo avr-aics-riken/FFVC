@@ -181,6 +181,54 @@ void FFV::allocArray_Krylov(double &total)
 }
 
 
+// PCG法に用いる配列のアロケーション
+void FFV::allocArray_PCG(double &total)
+{
+  double mc = (double)(size[0] * size[1] * size[2]);
+  
+  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+}
+
+
+// PBiCGSTAB法に用いる配列のアロケーション
+void FFV::allocArray_PBiCGSTAB(double &total)
+{
+  double mc = (double)(size[0] * size[1] * size[2]);
+  
+  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_q_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+	if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+	if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+}
 
 
 // 熱の主計算部分に用いる配列のアロケーション

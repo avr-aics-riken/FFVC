@@ -9,8 +9,9 @@ Release Note
 
 #######################################
 
-Ver 1.0.5    7 Nov. 2012
+Ver 1.0.6   11 Nov. 2012
   - PLOT3D関連ファイルを別ディレクトリに移動
+  - 反復解法に PCG, PBiCGSTAB, RBGSを追加
 
 Ver 1.0.4   17 Oct. 2012
   - HPCPF_EXIT_STATUSを追加

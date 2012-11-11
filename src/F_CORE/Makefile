@@ -26,6 +26,7 @@ F90SRCS = \
   ffv_poisson.f90 \
   ffv_poisson2.f90 \
   ffv_velocity_cds.f90 \
+  ffv_blas.f90 \
 #  ffv_poisson_cds.f90 \
 
 

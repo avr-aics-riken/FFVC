@@ -2180,8 +2180,10 @@
       U_t0 = 0.0
       
       flop = flop + 23.0d0
-      
-      if ( (0 /= ibits(bpx, facing_W, 6)) .and. (ug >= eps1) ) then ! 6面のうちのどれか隣接壁への方向フラグが立っている場合，かつ速度がeps1以上
+
+      ! 6面のうちのどれか隣接壁への方向フラグが立っている場合，かつ速度がeps1以上
+      if ( (0 /= ibits(bpx, facing_W, 6)) .and. (ug >= eps1) ) then
+
         T_w = ug*dd
         U_t0= sqrt(T_w)
         Yp  = dis*U_t0*re

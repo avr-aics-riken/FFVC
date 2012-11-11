@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 105
+#define FB_VERS 106
 
 #define MODEL_ID_MAX 255
 
@@ -80,6 +80,9 @@
 #define SOR2SMA   3
 #define SOR2CMA   4
 #define GMRES     5
+#define RBGS      6
+#define PCG       7
+#define PBiCGSTAB 8
 
 // KindOfSolver
 #define FLOW_ONLY               0

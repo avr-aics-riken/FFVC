@@ -951,3 +951,287 @@ jump_4:
   // <<< Poisson Source section
 
 }
+
+// #################################################################
+// RBGS
+int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
+  REAL_TYPE omg = IC->get_omg();
+  int lc=0;                      /// ループカウント
+  for (lc=1; lc<IC->get_ItrMax(); lc++) {
+		Fsmoother(x, b, omg);
+    
+		REAL_TYPE rr = 0.0;
+		blas_calcr2_(&rr, x, b, d_bcp, size, &guide);
+    
+    if ( numProc > 1 ) {
+      REAL_TYPE m_tmp = rr;
+      if ( paraMngr->Allreduce(&m_tmp, &rr, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    REAL_TYPE res = sqrt(rr);
+    
+		if( Fcheck(IC, res, rhs_nrm, r0) == true ) {
+			break;
+		}
+    
+	}
+	Sync_Scalar(IC, x, 1);
+  
+	return lc;
+}
+
+// #################################################################
+// PCG
+int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
+	REAL_TYPE res = 0.0;
+  REAL_TYPE omg = IC->get_omg();
+  
+	blas_clear_(d_pcg_r , size, &guide);
+	blas_clear_(d_pcg_p , size, &guide);
+	blas_clear_(d_pcg_q , size, &guide);
+	blas_clear_(d_pcg_z , size, &guide);
+  
+	blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide);
+	Sync_Scalar(IC, d_pcg_r, 1);
+  
+	REAL_TYPE rr0 = 1.0;
+	REAL_TYPE rr1 = 0.0;
+  int lc=0;                      /// ループカウント
+  for (lc=1; lc<IC->get_ItrMax(); lc++) {
+		blas_clear_(d_pcg_z, size, &guide);
+		Fpreconditioner(IC, d_pcg_z, d_pcg_r);
+    
+		rr1 = 0.0;
+		Fdot(&rr1, d_pcg_r, d_pcg_z);
+    
+		if( fabs(rr1) < FLT_MIN ) {
+			res = rr1;
+			lc = 0;
+			break;
+		}
+    
+		REAL_TYPE beta = rr1/rr0;
+    
+		if( lc == 1 ) {
+			blas_copy_(d_pcg_p, d_pcg_z, size, &guide);
+		} else {
+			blas_xpay_(d_pcg_p, d_pcg_z, &beta, size, &guide);
+		}
+		Sync_Scalar(IC, d_pcg_p, 1);
+    
+		blas_calcax_(d_pcg_q, d_pcg_p, d_bcp, size, &guide);
+    
+		REAL_TYPE qp = 0.0;
+		Fdot(&qp, d_pcg_q, d_pcg_p);
+    
+		REAL_TYPE alpha  = rr1/qp;
+		REAL_TYPE alphan = -alpha;
+    
+		blas_axpy_(x      , d_pcg_p, &alpha , size, &guide);
+		blas_axpy_(d_pcg_r, d_pcg_q, &alphan, size, &guide);
+		Sync_Scalar(IC, d_pcg_r, 1);
+    
+		REAL_TYPE rr = 0.0;
+		Fdot(&rr, d_pcg_r, d_pcg_r);
+    
+    res = sqrt(rr);
+    
+		if( Fcheck(IC, res, rhs_nrm, r0) == true ) {
+			break;
+		}
+    
+		rr0 = rr1;
+	}
+	BC.OuterPBC(x);
+	if ( C.isPeriodic() == ON ) {
+		BC.InnerPBC_Periodic(x, d_bcd);
+	}
+	Sync_Scalar(IC, x, 1);
+  
+	return lc;
+}
+
+int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
+	REAL_TYPE res = 0.0;
+  REAL_TYPE omg = IC->get_omg();
+  
+	blas_clear_(d_pcg_r , size, &guide);
+	blas_clear_(d_pcg_p , size, &guide);
+  
+	blas_clear_(d_pcg_r0, size, &guide);
+	blas_clear_(d_pcg_p_, size, &guide);
+	blas_clear_(d_pcg_q_, size, &guide);
+	blas_clear_(d_pcg_s , size, &guide);
+	blas_clear_(d_pcg_s_, size, &guide);
+	blas_clear_(d_pcg_t_, size, &guide);
+  
+	blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide);
+	Sync_Scalar(IC, d_pcg_r, 1);
+  
+	blas_copy_(d_pcg_r0, d_pcg_r, size, &guide);
+  
+	REAL_TYPE rr0 = 1.0;
+	REAL_TYPE alpha = 0.0;
+	REAL_TYPE gamma  = 1.0;
+	REAL_TYPE gamman = -gamma;
+  int lc=0;                      /// ループカウント
+  for (lc=1; lc<IC->get_ItrMax(); lc++) {
+		REAL_TYPE rr1 = 0.0;
+		Fdot(&rr1, d_pcg_r, d_pcg_r0);
+    
+		if( fabs(rr1) < FLT_MIN ) {
+			res = rr1;
+			lc = 0;
+			break;
+		}
+    
+		if( lc == 1 ) {
+			blas_copy_(d_pcg_p, d_pcg_r, size, &guide);
+		} else {
+			REAL_TYPE beta = rr1/rr0*alpha/gamma;
+			blas_axpy_(d_pcg_p, d_pcg_q_, &gamman, size, &guide);
+			blas_xpay_(d_pcg_p, d_pcg_r , &beta  , size, &guide);
+		}
+		Sync_Scalar(IC, d_pcg_p, 1);
+    
+		blas_clear_(d_pcg_p_, size, &guide);
+		Fpreconditioner(IC, d_pcg_p_, d_pcg_p);
+    
+		blas_calcax_(d_pcg_q_, d_pcg_p_, d_bcp, size, &guide);
+    
+		REAL_TYPE q_r0 = 0.0;
+		Fdot(&q_r0, d_pcg_q_, d_pcg_r0);
+    
+		REAL_TYPE alpha  = rr1/q_r0;
+		REAL_TYPE alphan = -alpha;
+		blas_axpyz_(d_pcg_s, d_pcg_q_, d_pcg_r, &alphan, size, &guide);
+		Sync_Scalar(IC, d_pcg_s, 1);
+    
+		blas_clear_(d_pcg_s_, size, &guide);
+		Fpreconditioner(IC, d_pcg_s_, d_pcg_s);
+    
+		blas_calcax_(d_pcg_t_, d_pcg_s_, d_bcp, size, &guide);
+    
+		REAL_TYPE t_s = 0.0;
+		Fdot(&t_s, d_pcg_t_, d_pcg_s);
+    
+		REAL_TYPE t_t_ = 0.0;
+		Fdot(&t_t_, d_pcg_t_, d_pcg_t_);
+    
+		gamma  = t_s/t_t_;
+		gamman = -gamma;
+    
+		blas_axpbypz_(x      , d_pcg_p_, d_pcg_s_, &alpha , &gamma, size, &guide);
+		blas_axpyz_  (d_pcg_r, d_pcg_t_, d_pcg_s , &gamman, size, &guide);
+    
+		REAL_TYPE rr = 0.0;
+		Fdot(&rr, d_pcg_r, d_pcg_r);
+    
+    res = sqrt(rr);
+    
+		if( Fcheck(IC, res, rhs_nrm, r0) == true ) {
+			break;
+		}
+    
+		rr0 = rr1;
+	}
+	BC.OuterPBC(x);
+	if ( C.isPeriodic() == ON ) {
+		BC.InnerPBC_Periodic(x, d_bcd);
+	}
+	Sync_Scalar(IC, x, 1);
+  
+	return lc;
+}
+
+// #################################################################
+// Check
+bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0) {
+	switch ( IC->get_normType() ) {
+		case ItrCtl::dx_b:
+			IC->set_normValue( res/rhs_nrm );
+			break;
+		case ItrCtl::r_b:
+			IC->set_normValue( res/rhs_nrm );
+			break;
+		case ItrCtl::r_r0:
+			IC->set_normValue( res/r0 );
+			break;
+		default:
+			printf("\tInvalid Linear Solver for Pressure\n");
+			Exit(0);
+			break;
+	}
+  
+	if ( (C.Hide.PM_Test == OFF) && (IC->get_normValue() < IC->get_eps()) ) {
+		return true;
+	}
+  
+	return false;
+}
+
+// #################################################################
+// Preconditioner
+int FFV::Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b) {
+  REAL_TYPE omg = IC->get_omg();
+  
+  int lc=0;                      /// ループカウント
+	int lc_max = 4;
+  
+  // 前処理なし(コピー)
+	if( lc_max == 0 ) {
+		blas_copy_(x, b, size, &guide);
+		return lc;
+	}
+  
+  for (lc=0; lc<lc_max; lc++) {
+		Fsmoother(x, b, omg);
+	}
+  
+	return lc;
+}
+
+// #################################################################
+// Smoother
+void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg) {
+	int ip = 0;
+	if ( numProc > 1 ) {
+		ip = (head[0]+head[1]+head[2]+1) % 2;
+	} else {
+		ip = 0;
+	}
+  
+	for (int color=0; color<2; color++) {
+		blas_smoother_core_(x, b, d_bcp, &ip, &color, &omg, size, &guide);
+    
+		BC.OuterPBC(x);
+		if ( C.isPeriodic() == ON ) {
+			BC.InnerPBC_Periodic(x, d_bcd);
+		}
+    
+		if ( numProc > 1 ) {
+			double comm_size = count_comm_size(size, guide);
+			if (IC->get_SyncMode() == comm_sync ) {
+				if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) {
+					Exit(0);
+				}
+			} else {
+				int ireq[12];
+				sma_comm_     (x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
+				sma_comm_wait_(x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
+			}
+		}
+	}
+}
+
+// #################################################################
+// Dot
+void FFV::Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y) {
+	blas_dot_(xy, x, y, size, &guide);
+	if ( numProc > 1 ) {
+		REAL_TYPE xy_tmp = *xy;
+		if ( paraMngr->Allreduce(&xy_tmp, xy, 1, MPI_SUM) != CPM_SUCCESS ) {
+			Exit(0);
+		}
+	}
+}

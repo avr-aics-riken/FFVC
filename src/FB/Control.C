@@ -455,6 +455,9 @@ void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
       else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
       else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
       else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
+      else if( !strcasecmp(str.c_str(), "RBGS") )        IC->set_LS(RBGS);
+      else if( !strcasecmp(str.c_str(), "PCG") )         IC->set_LS(PCG);
+      else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   IC->set_LS(PBiCGSTAB);
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
@@ -3118,6 +3121,18 @@ void Control::printLS(FILE* fp, const ItrCtl* IC)
       
     case GMRES:
       fprintf(fp,"\t       Linear Solver          :   GMRES\n");
+      break;
+      
+    case RBGS:
+      fprintf(fp,"\t       Linear Solver          :   RBGS\n");
+      break;
+      
+    case PCG:
+      fprintf(fp,"\t       Linear Solver          :   PCG\n");
+      break;
+      
+    case PBiCGSTAB:
+      fprintf(fp,"\t       Linear Solver          :   PBiCGSTAB\n");
       break;
       
     default:
