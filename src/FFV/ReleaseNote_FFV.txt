@@ -9,11 +9,16 @@ Release Note
 
 #######################################
 
-Ver 0.9.3   13 Nov. 2012
+Ver 0.9.4   13 Nov. 2012
   - PLOT3D関連ソースをPLOT3Dディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加
   - セルフェイス速度d_vf
   - 速度を V(3,i,j,k) -> V(i,j,k,3)
+  - makeの方法を変更．コマンドラインでマクロを指定し，分岐
+      $ make                 << intel (default)
+      $ make FFV_C=gnu       << gnu
+      $ make FFV_C=fujitsu   << FX10, K
+      $ make FFV_C=ibm       << BG
   
 Ver 0.8.9   18 Oct. 2012
   - リスタートパラメータの指定を変更．ステージングオプション

@@ -9,7 +9,7 @@
 ###################################################################
 
 ########################
-# INTEL(gcc)
+# INTEL (gcc, build openmpi with gcc)
 ########################
 
 AR          = ar cru
@@ -28,7 +28,7 @@ CFLAGS      = -O3
 CXX         = mpicxx
 CXXFLAGS    = -O3 $(OMP_FLAGS)
 FC          = mpif90
-FCFLAGS     = -O3
+FCFLAGS     = -O3 -ffree-form
 F90         = mpif90
 F90FLAGS    = -O3 -cpp $(OMP_FLAGS) -D_STATIC
 LDFLAGS     = 

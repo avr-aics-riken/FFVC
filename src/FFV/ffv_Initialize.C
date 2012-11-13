@@ -691,8 +691,7 @@ int FFV::Initialize(int argc, char **argv)
   // 初期条件の条件設定
   setInitialCondition();
   
-  
-  
+
 
   if ( C.Sampling.log == ON ) 
   {
@@ -737,7 +736,7 @@ int FFV::Initialize(int argc, char **argv)
     FileOutput(flop_task);
     if (C.FIO.PLOT3D_OUT == ON) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
   }
-  
+
   
   // 粗い格子を用いたリスタート時には出力
   if ( C.Start == coarse_restart )
@@ -747,7 +746,7 @@ int FFV::Initialize(int argc, char **argv)
     if (C.FIO.PLOT3D_OUT == ON) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
   }
   
-  
+
   
   // SOR2SMA
   switch (IC[ItrCtl::ic_prs_pr].get_LS())
@@ -778,7 +777,7 @@ int FFV::Initialize(int argc, char **argv)
 			break;
   }
   
-  
+  mark();
   
   // メモリ使用量の表示
   Hostonly_

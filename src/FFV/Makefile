@@ -11,19 +11,22 @@
 
 ### compiler detection
 
-ifeq ($(CXX),mpicxx)
+FFV_C=
+
+ifeq ($(FFV_C),gnu)
 include make_setting.gcc
 endif
 
-ifeq ($(CXX),mpiFCCpx)
+ifeq ($(FFV_C),fujitsu)
 include make_setting.fx
 endif
 
-ifeq ($(CXX),mpixlcxx_r)
+ifeq ($(FFV_C),ibm)
 include make_setting.bg
 endif
 
-ifneq ($(CXX),)
+# default
+ifeq ($(strip $(FFV_C)),)
 include make_setting.intel
 endif
 
