@@ -11,19 +11,19 @@
 
 ### compiler detection
 
-ifeq ($(FFV_C),gnu)
+ifeq ($(FFVC),gnu)
 include make_setting.gcc
 endif
 
-ifeq ($(FFV_C),fujitsu)
+ifeq ($(FFVC),fujitsu)
 include make_setting.fx
 endif
 
-ifeq ($(FFV_C),ibm)
+ifeq ($(FFVC),ibm)
 include make_setting.bg
 endif
 
-ifeq ($(FFV_C),intel)
+ifeq ($(FFVC),intel)
 include make_setting.intel
 endif
 
