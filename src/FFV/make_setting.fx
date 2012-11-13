@@ -28,9 +28,9 @@
 #CXX         = mpiFCCpx
 #CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
 #FC          = mpifrtpx
-#FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
+#FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
 #F90         = mpifrtpx
-#F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt -D_STATIC
+#F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
 #LDFLAGS     = --linkfortran
 #LIBS        =
 #UDEF_LIB_PATH_SPEC =

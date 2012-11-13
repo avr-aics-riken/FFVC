@@ -37,16 +37,17 @@
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
-    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
+    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2
+    integer                                                   ::  b_b2, b_p
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, vflop
     real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb, u1, u2, u3, ug, e1, e2, e3, u_tau
     real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
     real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
     real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-    real                                                      ::  ck, dh, dh1, dh2, vcs, vcs_coef
+    real                                                      ::  ck, dh, dh1, dh2, vcs, vcs_coef, tmp1, tmp2
     real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
-    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4, tmp1, tmp2
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                      ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
     real                                                      ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
@@ -154,13 +155,7 @@
 !$OMP PRIVATE(u1, u2, u3, ug, e1, e2, e3, u_tau) &
 !$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -701,13 +696,7 @@
 !$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -846,13 +835,7 @@
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -918,13 +901,7 @@
 !$OMP PRIVATE(actv) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dt)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx

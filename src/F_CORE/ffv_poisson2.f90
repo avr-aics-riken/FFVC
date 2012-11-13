@@ -43,13 +43,7 @@
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -116,13 +110,7 @@
 !$OMP PRIVATE(al, idx, dd) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -173,13 +161,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, s, l)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -216,13 +198,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -262,13 +238,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, im)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -308,13 +278,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g, im)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1-g,kx+g
   do j=1-g,jx+g
@@ -360,13 +324,7 @@
 !$OMP REDUCTION(+:ac) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, lm)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -408,13 +366,7 @@
 !$OMP REDUCTION(+:ac) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -459,13 +411,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, lm, s)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -510,13 +456,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, lm, g, s)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1-g,kx+g
   do j=1-g,jx+g

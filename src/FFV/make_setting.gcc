@@ -30,9 +30,10 @@ CXXFLAGS    = -O3 $(OMP_FLAGS)
 FC          = mpif90
 FCFLAGS     = -O3 -ffree-form
 F90         = mpif90
-F90FLAGS    = -O3 -cpp $(OMP_FLAGS) -D_STATIC
+F90FLAGS    = -O3 -cpp $(OMP_FLAGS) -ffree-form
 LDFLAGS     = 
-LIBS        = -lgfortran
+LIBS        =
+#LIBS        = -lgfortran
 UDEF_LIB_PATH_SPEC =
 UDEF_LIBS_SPEC     =
 

@@ -30,7 +30,7 @@
 #FC          = mpixlf90_r
 #FCFLAGS     = -O3 -qarch=450d -qtune=450 -qextname
 #F90         = mpixlf90_r
-#F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS) -WF,-D_STATIC
+#F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS)
 #LDFLAGS     =
 #LIBS        =
 #UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib

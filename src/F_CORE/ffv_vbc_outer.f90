@@ -88,13 +88,7 @@
     case (X_minus)
       i = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -132,13 +126,7 @@
     case (X_plus)
       i = ix
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -176,13 +164,7 @@
     case (Y_minus)
       j = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -220,13 +202,7 @@
     case (Y_plus)
       j = jx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -263,14 +239,8 @@
       
     case (Z_minus)
       k = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -308,13 +278,7 @@
     case (Z_plus)
       k = kx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -432,13 +396,7 @@
     case (X_minus)
       i = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -474,13 +432,7 @@
     case (X_plus)
       i = ix
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -516,13 +468,7 @@
     case (Y_minus)
       j = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -558,13 +504,7 @@
     case (Y_plus)
       j = jx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -600,13 +540,7 @@
     case (Z_minus)
       k = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -641,13 +575,7 @@
     case (Z_plus)
       k = kx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -736,13 +664,7 @@
     case (X_minus)
       i = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -761,13 +683,7 @@
     case (X_plus)
       i = ix
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -786,13 +702,7 @@
     case (Y_minus)
       j = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -811,13 +721,7 @@
     case (Y_plus)
       j = jx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -836,13 +740,7 @@
     case (Z_minus)
       k = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -861,13 +759,7 @@
     case (Z_plus)
       k = kx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -968,13 +860,7 @@
     case (X_minus)
       i = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -1004,14 +890,8 @@
       
     case (X_plus)
       i = ix
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -1041,14 +921,8 @@
       
     case (Y_minus)
       j = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1078,14 +952,8 @@
       
     case (Y_plus)
       j = jx
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1115,14 +983,8 @@
       
     case (Z_minus)
       k = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1152,14 +1014,8 @@
       
     case (Z_plus)
       k = kx
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1236,13 +1092,8 @@
     
     case (X_minus)
       i = 1
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -1258,13 +1109,8 @@
       
     case (X_plus)
       i = ix
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -1280,13 +1126,8 @@
       
     case (Y_minus)
       j = 1
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1302,13 +1143,8 @@
       
     case (Y_plus)
       j = jx
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1324,13 +1160,8 @@
       
     case (Z_minus)
       k = 1
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1346,13 +1177,8 @@
       
     case (Z_plus)
       k = kx
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -1398,14 +1224,7 @@
     FACES : select case (face)
     case (X_minus)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
       do k=1,kx
       do j=1,jx
         v(0, j, k, 1) = v(1, j, k, 1)
@@ -1413,20 +1232,12 @@
         v(0, j, k, 3) = v(1, j, k, 3)
       end do
       end do
-      
 !$OMP END DO
       
 
     case (X_plus)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
       do k=1,kx
       do j=1,jx
         v(ix+1, j, k, 1) = v(ix, j, k, 1)
@@ -1434,20 +1245,12 @@
         v(ix+1, j, k, 3) = v(ix, j, k, 3)
       end do
       end do
-      
 !$OMP END DO
       
 
     case (Y_minus)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
       do k=1,kx
       do i=1,ix
         v(i, 0, k, 1) = v(i, 1, k, 1)
@@ -1455,20 +1258,12 @@
         v(i, 0, k, 3) = v(i, 1, k, 3)
       end do
       end do
-      
 !$OMP END DO
       
 
     case (Y_plus)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
       do k=1,kx
       do i=1,ix      
         v(i, jx+1, k, 1) = v(i, jx, k, 1)
@@ -1476,20 +1271,12 @@
         v(i, jx+1, k, 3) = v(i, jx, k, 3)
       end do
       end do
-      
 !$OMP END DO
       
 
     case (Z_minus)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
       do j=1,jx
       do i=1,ix
         v(i, j, 0, 1) = v(i, j, 1, 1)
@@ -1497,20 +1284,12 @@
         v(i, j, 0, 3) = v(i, j, 1, 3)
       end do
       end do
-      
 !$OMP END DO
       
 
     case (Z_plus)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-
       do j=1,jx
       do i=1,ix
         v(i, j, kx+1, 1) = v(i, j, kx, 1)
@@ -1518,9 +1297,8 @@
         v(i, j, kx+1, 3) = v(i, j, kx, 3)
       end do
       end do
-      
 !$OMP END DO
-      
+
 
     case default
     end select FACES
@@ -1573,14 +1351,7 @@
       if ( c>0.0 ) c=0.0
       i = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      
       do k=1,kx
       do j=1,jx
         idx = bv(i,j,k)
@@ -1607,14 +1378,7 @@
       if ( c<0.0 ) c=0.0
       i = ix
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      
       do k=1,kx
       do j=1,jx
         idx = bv(i,j,k)
@@ -1640,15 +1404,8 @@
     case (Y_minus)
     if ( c>0.0 ) c=0.0
       j = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      
       do k=1,kx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1675,14 +1432,7 @@
       if ( c<0.0 ) c=0.0
       j = jx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      
       do k=1,kx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1709,14 +1459,7 @@
     if ( c>0.0 ) c=0.0
       k = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      
       do j=1,jx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1743,14 +1486,7 @@
       if ( c<0.0 ) c=0.0
       k = kx
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
-      
       do j=1,jx
       do i=1,ix
         idx = bv(i,j,k)
@@ -1813,13 +1549,7 @@
     case (X_minus)
       i = 1
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
 
@@ -1842,13 +1572,7 @@
     case (X_plus)
       i = ix
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
 
@@ -1871,13 +1595,7 @@
     case (Y_minus)
       j = 1
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
 
@@ -1900,13 +1618,7 @@
     case (Y_plus)
       j = jx
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
 
@@ -1929,13 +1641,7 @@
     case (Z_minus)
       k=1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
 
@@ -1958,13 +1664,7 @@
     case (Z_plus)
       k = kx
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
 
@@ -2018,13 +1718,8 @@
     FACES : select case (face)
     case (X_minus)
       i = 0
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         v(i,j,k,1) = vc(i,j,k,1)
@@ -2036,13 +1731,8 @@
       
     case (X_plus)
       i = ix+1
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         v(i,j,k,1) = vc(i,j,k,1)
@@ -2054,13 +1744,8 @@
       
     case (Y_minus)
       j = 0
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         v(i,j,k,1) = vc(i,j,k,1)
@@ -2072,13 +1757,8 @@
       
     case (Y_plus)
       j = jx+1
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         v(i,j,k,1) = vc(i,j,k,1)
@@ -2090,13 +1770,8 @@
       
     case (Z_minus)
       k = 0
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         v(i,j,k,1) = vc(i,j,k,1)
@@ -2108,13 +1783,8 @@
       
     case (Z_plus)
       k = kx+1
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         v(i,j,k,1) = vc(i,j,k,1)
@@ -2180,13 +1850,7 @@
     case (X_minus)
       i = 1
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2203,13 +1867,7 @@
     case (X_plus)
       i = ix
       
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2225,14 +1883,8 @@
       
     case (Y_minus)
       j = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2248,14 +1900,8 @@
       
     case (Y_plus)
       j = jx
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2271,14 +1917,8 @@
     
     case (Z_minus)
       k = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2294,14 +1934,8 @@
       
     case (Z_plus)
       k = kx
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2377,14 +2011,8 @@
     case (X_minus)
       if ( v_out>0.0 ) v_out=0.0
       i = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2405,14 +2033,8 @@
     case (X_plus)
       if ( v_out<0.0 ) v_out=0.0
       i = ix
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(i,j,k)
@@ -2433,14 +2055,8 @@
     case (Y_minus)
       if ( v_out>0.0 ) v_out=0.0
       j = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2461,14 +2077,8 @@
     case (Y_plus)
       if ( v_out<0.0 ) v_out=0.0
       j = jx
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2489,14 +2099,8 @@
     case (Z_minus)
       if ( v_out>0.0 ) v_out=0.0
       k = 1
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2517,14 +2121,8 @@
     case (Z_plus)
       if ( v_out<0.0 ) v_out=0.0
       k = kx
-      
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,k)
@@ -2603,13 +2201,8 @@
     FACES : select case (face)
     
     case (X_minus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(1,j,k)
@@ -2628,13 +2221,8 @@
       
       
     case (X_plus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do j=1,jx
         bvx = bv(ix,j,k)
@@ -2653,13 +2241,8 @@
       
       
     case (Y_minus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,1,k)
@@ -2678,13 +2261,8 @@
       
       
     case (Y_plus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do k=1,kx
       do i=1,ix
         bvx = bv(i,jx,k)
@@ -2703,13 +2281,8 @@
     
     
     case (Z_minus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,1)
@@ -2728,13 +2301,8 @@
       
       
     case (Z_plus)
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
       do j=1,jx
       do i=1,ix
         bvx = bv(i,j,kx)

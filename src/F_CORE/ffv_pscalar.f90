@@ -34,7 +34,8 @@
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, idx, swt, hdx
-    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
+    integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    integer                                                     ::  b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop
     real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb
@@ -105,13 +106,7 @@
 !$OMP PRIVATE(Fr_r, Fr_l, Fl_r, Fl_l) &
 !$OMP PRIVATE(cr, cl, acr, acl)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -362,13 +357,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dgr)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -431,13 +420,7 @@
 !$OMP PRIVATE(g_p, g_w, g_e, g_s, g_n, g_b, g_t) &
 !$OMP PRIVATE(a_w, a_e, a_s, a_n, a_b, a_t)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -517,13 +500,7 @@
 !$OMP FIRSTPRIVATE(st, ed, odr, tc) &
 !$OMP PRIVATE(idx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=st(3),ed(3)
     do j=st(2),ed(2)

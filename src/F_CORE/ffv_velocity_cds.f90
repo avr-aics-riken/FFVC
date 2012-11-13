@@ -50,16 +50,20 @@
     real                                                        ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
     real                                                        ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
     real                                                        ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-    real                                                        ::  Ue1_t, Ue2_t, Uw1_t, Uw2_t, Us1_t, Us2_t, Un1_t, Un2_t, Ub1_t, Ub2_t, Ut1_t, Ut2_t
-    real                                                        ::  Ve1_t, Ve2_t, Vw1_t, Vw2_t, Vs1_t, Vs2_t, Vn1_t, Vn2_t, Vb1_t, Vb2_t, Vt1_t, Vt2_t
-    real                                                        ::  We1_t, We2_t, Ww1_t, Ww2_t, Ws1_t, Ws2_t, Wn1_t, Wn2_t, Wb1_t, Wb2_t, Wt1_t, Wt2_t
+    real                                                        ::  Ue1_t, Ue2_t, Uw1_t, Uw2_t, Us1_t, Us2_t, Un1_t, Un2_t
+    real                                                        ::  Ub1_t, Ub2_t, Ut1_t, Ut2_t
+    real                                                        ::  Ve1_t, Ve2_t, Vw1_t, Vw2_t, Vs1_t, Vs2_t, Vn1_t, Vn2_t
+    real                                                        ::  Vb1_t, Vb2_t, Vt1_t, Vt2_t
+    real                                                        ::  We1_t, We2_t, Ww1_t, Ww2_t, Ws1_t, Ws2_t, Wn1_t, Wn2_t
+    real                                                        ::  Wb1_t, Wb2_t, Wt1_t, Wt2_t
     real                                                        ::  cw, ce, cs, cn, cb, ct
     real                                                        ::  ww, we, ws, wn, wb, wt
     real                                                        ::  dw, de, ds, dn, db, dt, dww, dee, dss, dnn, dbb, dtt
     real                                                        ::  hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt
     real                                                        ::  qw, qe, qs, qn, qb, qt, qww, qee, qss, qnn, qbb, qtt
     real                                                        ::  rw, re, rs, rn, rb, rt, rww, ree, rss, rnn, rbb, rtt
-    real                                                        ::  r_qw, r_qe, r_qs, r_qn, r_qb, r_qt, r_qww, r_qee, r_qss, r_qnn, r_qbb, r_qtt
+    real                                                        ::  r_qw, r_qe, r_qs, r_qn, r_qb, r_qt
+    real                                                        ::  r_qww, r_qee, r_qss, r_qnn, r_qbb, r_qtt
     real                                                        ::  dv1, dv2, dv3, dv4, s1, s2, s3, s4, g1, g2, g3, g4, g5, g6
     real                                                        ::  Uer, Uel, Uwr, Uwl, Ver, Vel, Vwr, Vwl, Wer, Wel, Wwr, Wwl
     real                                                        ::  Unr, Unl, Usr, Usl, Vnr, Vnl, Vsr, Vsl, Wnr, Wnl, Wsr, Wsl
@@ -160,13 +164,7 @@
 !$OMP PRIVATE(dw_e, dw_w, dw_s, dw_n, dw_b, dw_t) &
 !$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -755,13 +753,7 @@
 !$OMP PRIVATE(Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c) &
 !$OMP PRIVATE(Ue_f, Uw_f, Vn_f, Vs_f, Wt_f, Wb_f)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -995,13 +987,7 @@
 !$OMP PRIVATE(Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c) &
 !$OMP PRIVATE(Ue_f, Uw_f, Vn_f, Vs_f, Wt_f, Wb_f)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -1305,13 +1291,7 @@
 !$OMP PRIVATE(actv, bd, pp) &
 !$OMP PRIVATE(qw, qe, qs, qn, qb, qt)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1) &
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static) &
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 !$OMP REDUCTION(+:fx) &
 !$OMP REDUCTION(+:fy) &
 !$OMP REDUCTION(+:fz)

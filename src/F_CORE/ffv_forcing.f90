@@ -60,14 +60,8 @@
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr) &
 !$OMP FIRSTPRIVATE(nx, ny, nz) &
 !$OMP PRIVATE(idx, b0, es, bes, u1, u2, u3, r_bt, uu)
-
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -130,13 +124,8 @@
 !$OMP PRIVATE(ii, jj, kk)
 
 ! ガイドセルも含めてコピーする
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=ks-2,ke+2
       kk = k - ks + 1
 
@@ -240,13 +229,8 @@
 !$OMP PRIVATE(q_w, q_e, q_s, q_n, q_b, q_t, q_p, qq)
 
     ! 周囲の1セルを含めてサーチ
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
+
     do k=ks-1,ke+1
       kk = k - ks + 1
 
@@ -338,13 +322,7 @@
 !$OMP PRIVATE(idx, b0, d_b, u_p, v_p, w_p, g_p, d_p, Fx_p, Fy_p, Fz_p) &
 !$OMP PRIVATE(r_bt, uu, u1, u2, u3, es, bes)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -486,13 +464,7 @@
 !$OMP PRIVATE(q_w, q_e, q_s, q_n, q_b, q_t, q_p)
 
 ! 周囲の1セルを含めてサーチ
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks-1,ke+1
       kk = k - ks + 1

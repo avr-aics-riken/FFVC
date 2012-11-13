@@ -11,8 +11,6 @@
 
 ### compiler detection
 
-FFV_C=
-
 ifeq ($(FFV_C),gnu)
 include make_setting.gcc
 endif
@@ -25,8 +23,7 @@ ifeq ($(FFV_C),ibm)
 include make_setting.bg
 endif
 
-# default
-ifeq ($(strip $(FFV_C)),)
+ifeq ($(FFV_C),intel)
 include make_setting.intel
 endif
 

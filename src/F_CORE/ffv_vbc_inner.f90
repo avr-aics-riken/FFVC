@@ -80,13 +80,7 @@
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
 !$OMP PRIVATE(EX, EY, EZ)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks,ke
     do j=js,je
@@ -335,14 +329,8 @@
 !$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l)
-    
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
+
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
     
     do k=ks,ke
     do j=js,je
@@ -559,13 +547,7 @@
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
 !$OMP PRIVATE(idx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks,ke
     do j=js,je
@@ -651,13 +633,7 @@
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
 !$OMP PRIVATE(idx, Up, Vp, Wp)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks,ke
     do j=js,je
@@ -769,13 +745,7 @@
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
 !$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks,ke
     do j=js,je
@@ -864,13 +834,7 @@
 !$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
 !$OMP PRIVATE(Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks,ke
     do j=js,je
@@ -985,13 +949,7 @@
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
 !$OMP PRIVATE(bvx, dv)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=ks,ke
     do j=js,je

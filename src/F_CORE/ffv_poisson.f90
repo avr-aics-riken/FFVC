@@ -50,13 +50,7 @@
 !$OMP PRIVATE(dv, dd, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, c1, dh)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -110,13 +104,7 @@
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
   do k=1,kx
   do j=1,jx
@@ -185,13 +173,7 @@
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx, pp) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
@@ -261,13 +243,7 @@
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, pp, ss, dp, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
 
-#ifdef _DYNAMIC
-!$OMP DO SCHEDULE(dynamic,1)
-#elif defined _STATIC
 !$OMP DO SCHEDULE(static)
-#else
-!$OMP DO SCHEDULE(hoge)
-#endif
 
     do k=1,kx
     do j=1,jx
