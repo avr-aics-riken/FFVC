@@ -791,8 +791,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   }
 
   // 同期
-  if ( paraMngr->BndCommS3D  (d_r_p, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  if ( paraMngr->BndCommV3DEx(d_r_v, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommS3D(d_r_p, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommV3D(d_r_v, r_size[0], r_size[1], r_size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   
   if ( C.isHeatProblem() )
   {

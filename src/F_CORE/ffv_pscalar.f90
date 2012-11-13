@@ -50,7 +50,7 @@
     real                                                        ::  cr, cl, acr, acl, cnv, ss, b, cm1, cm2, ss_4
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  t, ws
     real, dimension(0:3)                                        ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh1, bh2, bv, bp
@@ -213,15 +213,17 @@
       if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
       if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
 
-      Up0 = v(1, i  ,j  ,k  )
-      Vp0 = v(2, i  ,j  ,k  )
-      Wp0 = v(3, i  ,j  ,k  )
-      Uw1 = v(1, i-1,j  ,k  )
-      Ue1 = v(1, i+1,j  ,k  )
-      Vs1 = v(2, i  ,j-1,k  )
-      Vn1 = v(2, i  ,j+1,k  )
-      Wb1 = v(3, i  ,j  ,k-1)
-      Wt1 = v(3, i  ,j  ,k+1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
       
       ! 界面速度（スタガード位置）> 36 flop
       UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
@@ -347,7 +349,7 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  dgr
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
 
@@ -371,7 +373,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-        v(3,i,j,k) = v(3,i,j,k) + dgr*t(i,j,k) * real(ibits(bd(i,j,k), State, 1))
+        v(i,j,k,3) = v(i,j,k,3) + dgr*t(i,j,k) * real(ibits(bd(i,j,k), State, 1))
     end do
     end do
     end do

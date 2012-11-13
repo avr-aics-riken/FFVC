@@ -52,12 +52,14 @@ public:
 
   /// コンストラクタ.
   ///
-  ///   @param[in] mode サンプリングモード
-  ///   @param[in] size,guide ローカルセル数，ガイドセル数
-  ///   @param[in] crd  モニタ点座標
-  ///   @param[in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param[in] v00  座標系移動速度
-  ///   @param[in] bcd  BCindex ID
+  ///   @param[in] mode  サンプリングモード
+  ///   @param[in] size  ローカルセル数
+  ///   @param[in] guide ガイドセル数
+  ///   @param[in] crd   モニタ点座標
+  ///   @param[in] org   ローカル領域基点座標
+  ///   @param[in] pch   セル幅
+  ///   @param[in] v00   座標系移動速度
+  ///   @param[in] bcd   BCindex ID
   ///
   Sampling(int mode, int size[], int guide,
            FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) {
@@ -209,9 +211,9 @@ protected:
     int kx = size[2];
     int gd = guide;
     
-    size_t m_x = _F_IDX_V3DEX(0, index.x, index.y, index.z, ix, jx, kx, gd);
-    size_t m_y = _F_IDX_V3DEX(1, index.x, index.y, index.z, ix, jx, kx, gd);
-    size_t m_z = _F_IDX_V3DEX(2, index.x, index.y, index.z, ix, jx, kx, gd);
+    size_t m_x = _F_IDX_V3D(index.x, index.y, index.z, 0, ix, jx, kx, gd);
+    size_t m_y = _F_IDX_V3D(index.x, index.y, index.z, 1, ix, jx, kx, gd);
+    size_t m_z = _F_IDX_V3D(index.x, index.y, index.z, 2, ix, jx, kx, gd);
     vRet.x = v[m_x];
     vRet.y = v[m_y];
     vRet.z = v[m_z];

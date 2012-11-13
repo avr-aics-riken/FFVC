@@ -39,7 +39,7 @@ FFV::FFV()
   CurrentStep = 0;
   CurrentStep_Avr = 0;
   
-  REAL_TYPE deltaT; ///< 時間積分幅（無次元）
+  deltaT = 0.0;
   
   for (int i=0; i<3; i++) 
   {
@@ -63,6 +63,80 @@ FFV::FFV()
   cmp = NULL;
   paraMngr = NULL;
   
+  // Vector3D
+  d_v   = NULL;
+  d_vf  = NULL;
+  d_vc  = NULL;
+  d_v0  = NULL;
+  d_wv  = NULL;
+  d_abf = NULL;
+  d_av  = NULL;
+  d_wo  = NULL;
+  d_qbc = NULL;
+  
+  // Scalar3D
+  d_mid = NULL;
+  d_bcd = NULL;
+  d_bcp = NULL;
+  d_bcv = NULL;
+  d_bh1 = NULL;
+  d_bh2 = NULL;
+  
+  d_p   = NULL;
+  d_p0  = NULL;
+  d_ws  = NULL;
+  d_sq  = NULL;
+  d_dv  = NULL;
+  d_b   = NULL;
+  d_t   = NULL;
+  d_t0  = NULL;
+  d_vt  = NULL;
+  d_vof = NULL;
+  d_ap  = NULL;
+  d_at  = NULL;
+  d_cvf = NULL;
+  
+  // Coarse initial
+  d_r_v = NULL;
+  d_r_p = NULL;
+  d_r_t = NULL;
+  
+  // GMRES
+  d_wg  = NULL;
+  d_res = NULL;
+  d_vm  = NULL;
+  d_zm  = NULL;
+
+  
+  // PCG & PBiCGSTAB
+	d_pcg_r = NULL;
+  d_pcg_p = NULL;
+  
+	// PCG
+	d_pcg_q = NULL;
+	d_pcg_z = NULL;
+  
+	// PBiCGSTAB
+	d_pcg_r0 = NULL;
+	d_pcg_p_ = NULL;
+	d_pcg_q_ = NULL;
+	d_pcg_s  = NULL;
+	d_pcg_s_ = NULL;
+	d_pcg_t_ = NULL;
+  
+  compo_global_bbox = NULL;
+  
+  cutPos = NULL;
+  cutBid = NULL;
+  
+  // カット情報
+  d_cut = NULL;
+  d_bid = NULL;
+  
+  // SOR2のバッファ
+  cf_x = NULL;
+  cf_y = NULL;
+  cf_z = NULL;
 }
 
 
@@ -133,7 +207,7 @@ void FFV::AverageOutput(double& flop)
   tmp = DFI.Generate_FileName(C.f_AvrVelocity, stepAvr, myRank, (bool)C.FIO.IO_Output);
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrVelocity, stepAvr) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
-  F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out, 1);
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrVelocity, stepAvr, dfi_mng[var_Velocity_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
   
   // Temperature
@@ -413,7 +487,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Velocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
-  F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out);
+  F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], pout) ) Exit(0);
   
@@ -490,7 +564,7 @@ void FFV::FileOutput(double& flop, const bool restart)
     tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, pout);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Vorticity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
-    F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out);
+    F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
     
     Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
 

@@ -249,7 +249,7 @@ int FFV::Loop(const unsigned step)
     }
   }
   
-  // 平均値のデータ出力 >　アルゴいまいち
+  // 平均値のデータ出力 
   if (C.Mode.Average == ON) 
   {
     // 開始時刻を過ぎているか

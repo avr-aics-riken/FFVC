@@ -46,7 +46,7 @@
     real                                                      ::  cnv_u, cnv_v, cnv_w, cr, cl, m
     real                                                      ::  u_bc, v_bc, w_bc
     real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv
     real, dimension(3)                                        ::  vec
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
@@ -99,9 +99,9 @@
         cnv_w = 0.0
         
         ! 変数のロード
-        Up0 = v(1,i,j,k)
-        Vp0 = v(2,i,j,k)
-        Wp0 = v(3,i,j,k)
+        Up0 = v(i,j,k,1)
+        Vp0 = v(i,j,k,2)
+        Wp0 = v(i,j,k,3)
       
         Uw1 = 0.0
         Ue1 = 0.0
@@ -237,9 +237,9 @@
            + ( Wt1 - Wp0 ) * c_t &
            + ( Wb1 - Wp0 ) * c_b
 
-        wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
-        wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
-        wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
+        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
+        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
         m = m + 1.0
       endif
     end do
@@ -289,7 +289,7 @@
     real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
     real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  vec
@@ -355,9 +355,9 @@
         cnv_w = 0.0
         
         ! 変数のロード
-        Up0 = v(1,i,j,k)
-        Vp0 = v(2,i,j,k)
-        Wp0 = v(3,i,j,k)
+        Up0 = v(i,j,k,1)
+        Vp0 = v(i,j,k,2)
+        Wp0 = v(i,j,k,3)
       
         Uw1 = 0.0
         Ue1 = 0.0
@@ -499,9 +499,9 @@
            + ( Wt1 - Wp0 ) * c_t &
            + ( Wb1 - Wp0 ) * c_b
 
-        wv(1,i,j,k) = wv(1,i,j,k) + ( -cnv_u*dh1 + EX*dh2 )
-        wv(2,i,j,k) = wv(2,i,j,k) + ( -cnv_v*dh1 + EY*dh2 )
-        wv(3,i,j,k) = wv(3,i,j,k) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
+        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
+        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
         m1 = m1 + 1.0
         
       endif
@@ -538,7 +538,7 @@
     integer                                                     ::  i, j, k, g, idx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  vec
@@ -575,39 +575,39 @@
       if ( 0 /= iand(idx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
 
         if ( ibits(idx, bc_face_W, bitw_5) == odr ) then
-          v(1, i-1, j, k) = u_bc_ref
-          v(2, i-1, j, k) = v_bc_ref
-          v(3, i-1, j, k) = w_bc_ref
+          v(i-1, j, k, 1) = u_bc_ref
+          v(i-1, j, k, 2) = v_bc_ref
+          v(i-1, j, k, 3) = w_bc_ref
         end if
 
         if ( ibits(idx, bc_face_E, bitw_5) == odr ) then
-          v(1, i+1, j, k) = u_bc_ref
-          v(2, i+1, j, k) = v_bc_ref
-          v(3, i+1, j, k) = w_bc_ref
+          v(i+1, j, k, 1) = u_bc_ref
+          v(i+1, j, k, 2) = v_bc_ref
+          v(i+1, j, k, 3) = w_bc_ref
         end if
 
         if ( ibits(idx, bc_face_S, bitw_5) == odr ) then
-          v(1, i, j-1, k) = u_bc_ref
-          v(2, i, j-1, k) = v_bc_ref
-          v(3, i, j-1, k) = w_bc_ref
+          v(i, j-1, k, 1) = u_bc_ref
+          v(i, j-1, k, 2) = v_bc_ref
+          v(i, j-1, k, 3) = w_bc_ref
         end if
         
         if ( ibits(idx, bc_face_N, bitw_5) == odr ) then
-          v(1, i, j+1, k) = u_bc_ref
-          v(2, i, j+1, k) = v_bc_ref
-          v(3, i, j+1, k) = w_bc_ref
+          v(i, j+1, k, 1) = u_bc_ref
+          v(i, j+1, k, 2) = v_bc_ref
+          v(i, j+1, k, 3) = w_bc_ref
         end if
         
         if ( ibits(idx, bc_face_B, bitw_5) == odr ) then
-          v(1, i, j, k-1) = u_bc_ref
-          v(2, i, j, k-1) = v_bc_ref
-          v(3, i, j, k-1) = w_bc_ref
+          v(i, j, k-1, 1) = u_bc_ref
+          v(i, j, k-1, 2) = v_bc_ref
+          v(i, j, k-1, 3) = w_bc_ref
         end if
 			
         if ( ibits(idx, bc_face_T, bitw_5) == odr ) then
-          v(1, i, j, k+1) = u_bc_ref
-          v(2, i, j, k+1) = v_bc_ref
-          v(3, i, j, k+1) = w_bc_ref
+          v(i, j, k+1, 1) = u_bc_ref
+          v(i, j, k+1, 2) = v_bc_ref
+          v(i, j, k+1, 3) = w_bc_ref
         end if
 
       endif
@@ -637,7 +637,7 @@
     integer                                                     ::  i, j, k, g, idx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     real                                                        ::  Up, Vp, Wp
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     
     is = st(1)
@@ -666,50 +666,50 @@
       idx = bv(i,j,k)
       if ( 0 /= iand(idx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
 
-        Up = v(1,i,j,k)
-        Vp = v(2,i,j,k)
-        Wp = v(3,i,j,k)
+        Up = v(i,j,k,1)
+        Vp = v(i,j,k,2)
+        Wp = v(i,j,k,3)
         
         ! X-
         if ( ibits(idx, bc_face_W, bitw_5) == odr ) then
-          v(1, i-1, j, k) = Up
-          v(2, i-1, j, k) = Vp
-          v(3, i-1, j, k) = Wp
+          v(i-1, j, k, 1) = Up
+          v(i-1, j, k, 2) = Vp
+          v(i-1, j, k, 3) = Wp
         end if
         
         ! X+
         if ( ibits(idx, bc_face_E, bitw_5) == odr ) then
-          v(1, i+1, j, k) = Up
-          v(2, i+1, j, k) = Vp
-          v(3, i+1, j, k) = Wp
+          v(i+1, j, k, 1) = Up
+          v(i+1, j, k, 2) = Vp
+          v(i+1, j, k, 3) = Wp
         end if
         
         ! Y-
         if ( ibits(idx, bc_face_S, bitw_5) == odr ) then
-          v(1, i, j-1, k) = Up
-          v(2, i, j-1, k) = Vp
-          v(3, i, j-1, k) = Wp
+          v(i, j-1, k, 1) = Up
+          v(i, j-1, k, 2) = Vp
+          v(i, j-1, k, 3) = Wp
         end if
         
         ! Y+
         if ( ibits(idx, bc_face_N, bitw_5) == odr ) then
-          v(1, i, j+1, k) = Up
-          v(2, i, j+1, k) = Vp
-          v(3, i, j+1, k) = Wp
+          v(i, j+1, k, 1) = Up
+          v(i, j+1, k, 2) = Vp
+          v(i, j+1, k, 3) = Wp
         end if
         
         ! Z-
         if ( ibits(idx, bc_face_B, bitw_5) == odr ) then
-          v(1, i, j, k-1) = Up
-          v(2, i, j, k-1) = Vp
-          v(3, i, j, k-1) = Wp
+          v(i, j, k-1, 1) = Up
+          v(i, j, k-1, 2) = Vp
+          v(i, j, k-1, 3) = Wp
         end if
 			  
         ! Z+
         if ( ibits(idx, bc_face_T, bitw_5) == odr ) then
-          v(1, i, j, k+1) = Up
-          v(2, i, j, k+1) = Vp
-          v(3, i, j, k+1) = Wp
+          v(i, j, k+1, 1) = Up
+          v(i, j, k+1, 2) = Vp
+          v(i, j, k+1, 3) = Wp
         end if
         
       endif
@@ -839,7 +839,7 @@
     real                                                      ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
     real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ! 参照速度

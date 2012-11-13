@@ -35,7 +35,7 @@
     real                                                      :: bc, be, bw, bn, bs, bt, bb
     real                                                      :: re, rw, rn, rs, rt, rb
     real                                                      :: u_ref, v_ref, w_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    :: f, q
     real, dimension(0:3)                                      :: v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: bx
@@ -52,12 +52,12 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      ur = v(1, i  ,j  ,k  ) - u_ref
-      ul = v(1, i-1,j  ,k  ) - u_ref
-      vr = v(2, i  ,j  ,k  ) - v_ref
-      vl = v(2, i  ,j-1,k  ) - v_ref
-      wr = v(3, i  ,j  ,k  ) - w_ref
-      wl = v(3, i  ,j  ,k-1) - w_ref
+      ur = v(i  ,j  ,k  , 1) - u_ref
+      ul = v(i-1,j  ,k  , 1) - u_ref
+      vr = v(i  ,j  ,k  , 2) - v_ref
+      vl = v(i  ,j-1,k  , 2) - v_ref
+      wr = v(i  ,j  ,k  , 3) - w_ref
+      wl = v(i  ,j  ,k-1, 3) - w_ref
       
       idx = bx(i,j,k)
       bc = real(ibits(idx, Active,    1))
@@ -91,12 +91,12 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      ur = v(1, i  ,j  ,k  )
-      ul = v(1, i-1,j  ,k  )
-      vr = v(2, i  ,j  ,k  )
-      vl = v(2, i  ,j-1,k  )
-      wr = v(3, i  ,j  ,k  )
-      wl = v(3, i  ,j  ,k-1)
+      ur = v(i  ,j  ,k  , 1)
+      ul = v(i-1,j  ,k  , 1)
+      vr = v(i  ,j  ,k  , 2)
+      vl = v(i  ,j-1,k  , 2)
+      wr = v(i  ,j  ,k  , 3)
+      wl = v(i  ,j  ,k-1, 3)
       f(i,j,k) = q(i,j,k) + dth*f(i,j,k)*(ur-ul+vr-vl+wr-wl)
     end do
     end do
@@ -127,7 +127,7 @@
     real                                                      ::  di1, di2, di3, si1, si2, si3, si4, gi1, gi2, gi3, gi4, tr1, tl1, c1
     real                                                      ::  dj1, dj2, dj3, sj1, sj2, sj3, sj4, gj1, gj2, gj3, gj4, tr2, tl2, c2
     real                                                      ::  dk1, dk2, dk3, sk1, sk2, sk3, sk4, gk1, gk2, gk3, gk4, tr3, tl3, c3
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  bnd, f, fn
     real, dimension(0:3)                                      ::  v00
 
@@ -140,7 +140,7 @@
     do k=0,kx
     do j=0,jx
     do i=0,ix
-         c1 =v(1,i,j,k)-v00(1)
+         c1 =v(i,j,k,1)-v00(1)
          si1=bnd(i  ,j,k)*bnd(i-1,j,k)
          si2=bnd(i+1,j,k)*bnd(i  ,j,k)
          si3=bnd(i+2,j,k)*bnd(i+1,j,k)
@@ -159,7 +159,7 @@
          tr1=f(i+1,j  ,k  )-0.25*si2*((1.0-ck)*gi3+(1.0+ck)*gi4)
          fn(i,j,k)=0.5*(c1*(tr1+tl1)-abs(c1)*(tr1-tl1))
 
-         c2 =v(2,i,j,k)-v00(2)
+         c2 =v(i,j,k,2)-v00(2)
          sj1=bnd(i,j  ,k)*bnd(i,j-1,k)
          sj2=bnd(i,j+1,k)*bnd(i,j  ,k)
          sj3=bnd(i,j+2,k)*bnd(i,j+1,k)
@@ -178,7 +178,7 @@
          tr2=f(i  ,j+1,k  )-0.25*sj2*((1.0-ck)*gj3+(1.0+ck)*gj4)
          fn(i,j,k)=0.5*(c2*(tr2+tl2)-abs(c2)*(tr2-tl2))
 
-         c3 =v(3,i,j,k)-v00(3)
+         c3 =v(i,j,k,3)-v00(3)
          sk1=bnd(i,j,k  )*bnd(i,j,k-1)
          sk2=bnd(i,j,k+1)*bnd(i,j,k  )
          sk3=bnd(i,j,k+2)*bnd(i,j,k+1)

@@ -36,7 +36,7 @@
     double precision                                            ::  flop
     real                                                        ::  u_ref, v_ref, w_ref, es, bes
     real                                                        ::  nx, ny, nz, b0, r_bt, uu, u1, u2, u3
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
     real, dimension(0:3)                                        ::  v00
@@ -79,15 +79,15 @@
       bes = b0*es ! 体積率とコンポーネントの両方でチェック
 
       ! 擬似速度の方向の強制
-      u1 = v(1,i,j,k) - u_ref
-      u2 = v(2,i,j,k) - v_ref
-      u3 = v(3,i,j,k) - w_ref
+      u1 = v(i,j,k,1) - u_ref
+      u2 = v(i,j,k,2) - v_ref
+      u3 = v(i,j,k,3) - w_ref
       r_bt = 1.0 - bes
       uu = sqrt(u1*u1 + u2*u2 + u3*u3) * bes
 
-      v(1,i,j,k) = (r_bt*u1 + uu*nx) + u_ref
-      v(2,i,j,k) = (r_bt*u2 + uu*ny) + v_ref
-      v(3,i,j,k) = (r_bt*u3 + uu*nz) + w_ref
+      v(i,j,k,1) = (r_bt*u1 + uu*nx) + u_ref
+      v(i,j,k,2) = (r_bt*u2 + uu*ny) + v_ref
+      v(i,j,k,3) = (r_bt*u3 + uu*nz) + w_ref
 
     end do
     end do
@@ -115,8 +115,8 @@
     integer                                                     ::  i, j, k, g, ii, jj, kk
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, cz, st, ed
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
-    real, dimension(3, -1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2)      ::  wk
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
+    real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
 
     is = st(1)
     ie = ed(1)
@@ -146,9 +146,9 @@
     do i=is-2,ie+2
       ii = i - is + 1
 
-      wk(1,ii,jj,kk) = v(1,i,j,k)
-      wk(2,ii,jj,kk) = v(2,i,j,k)
-      wk(3,ii,jj,kk) = v(3,i,j,k)
+      wk(ii,jj,kk,1) = v(i,j,k,1)
+      wk(ii,jj,kk,2) = v(i,j,k,2)
+      wk(ii,jj,kk,3) = v(i,j,k,3)
     end do
     end do
     end do
@@ -199,7 +199,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
-    real, dimension(3, -1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2)      ::  wk
+    real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
@@ -305,7 +305,7 @@
     real                                                        ::  u_p, v_p, w_p, g_p, d_p, Fx_p, Fy_p, Fz_p
     real                                                        ::  nx, ny, nz, b0, d_b, r_bt, uu, u1, u2, u3
     real                                                        ::  c1, c2, c3, c4, ep, bes
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
     real, dimension(6)                                          ::  c
@@ -356,9 +356,9 @@
       bes = b0*es ! 体積率とコンポーネントの両方でチェック
 
       ! 圧損による外力の計算(v^n)
-      u_p = v(1,i,j,k) - u_ref
-      v_p = v(2,i,j,k) - v_ref
-      w_p = v(3,i,j,k) - w_ref
+      u_p = v(i,j,k,1) - u_ref
+      v_p = v(i,j,k,2) - v_ref
+      w_p = v(i,j,k,3) - w_ref
       g_p = sqrt(u_p*u_p + v_p*v_p + w_p*w_p)
       d_p = c1*g_p*g_p + c2*g_p + c3
       if (g_p < ep) d_p = c4*g_p*g_p
@@ -367,9 +367,9 @@
       Fz_p = -sign(1.0, w_p)*d_p*nz
 
       ! 擬似速度の方向の強制
-      u1 = vc(1,i,j,k) - u_ref
-      u2 = vc(2,i,j,k) - v_ref
-      u3 = vc(3,i,j,k) - w_ref
+      u1 = vc(i,j,k,1) - u_ref
+      u2 = vc(i,j,k,2) - v_ref
+      u3 = vc(i,j,k,3) - w_ref
       r_bt = 1.0 - bes
       uu = sqrt(u1*u1 + u2*u2 + u3*u3) * bes
       u1 = (r_bt*u1 + uu*nx) + u_ref
@@ -377,9 +377,9 @@
       u3 = (r_bt*u3 + uu*nz) + w_ref
 
       d_b = cf * bes
-      vc(1,i,j,k) = u1 + d_b * Fx_p
-      vc(2,i,j,k) = u2 + d_b * Fy_p
-      vc(3,i,j,k) = u3 + d_b * Fz_p
+      vc(i,j,k,1) = u1 + d_b * Fx_p
+      vc(i,j,k,2) = u2 + d_b * Fy_p
+      vc(i,j,k,3) = u3 + d_b * Fz_p
 
     end do
     end do
@@ -436,10 +436,10 @@
     real                                                        ::  c1, c2, c3, c4, ep, am1, am2, pick
     real                                                        ::  q_w, q_e, q_s, q_n, q_b, q_t, q_p
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
-    real, dimension(3, -1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2)      ::  wk
+    real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
@@ -515,9 +515,9 @@
       div(i,j,k) = div(i,j,k) + dt * ( be*re - bw*rw + bn*rn - bs*rs + bt*rt - bb*rb ) * es ! esはマスク
 
       beta = dt * b0 * q_p
-      v(1,i,j,k) = v(1,i,j,k) + beta * Fx_p
-      v(2,i,j,k) = v(2,i,j,k) + beta * Fy_p
-      v(3,i,j,k) = v(3,i,j,k) + beta * Fz_p
+      v(i,j,k,1) = v(i,j,k,1) + beta * Fx_p
+      v(i,j,k,2) = v(i,j,k,2) + beta * Fy_p
+      v(i,j,k,3) = v(i,j,k,3) + beta * Fz_p
       am1 = am1 + g_p * q_p
       am2 = am2 + d_p * q_p
       

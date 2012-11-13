@@ -1,0 +1,43 @@
+###################################################################
+#
+# FFV : Frontflow / violet Cartesian
+#
+# Copyright (c) 2012 All right reserved.
+#
+# Institute of Industrial Science, University of Tokyo, Japan. 
+#
+###################################################################
+
+########################
+# BG/P
+########################
+
+#AR          = ar crv
+#RANLIB      = ranlib
+#RM          = \rm -f
+#MPI_DIR     = /bgsys/drivers/ppcfloor/comm
+#CPM_DIR     = /hoge
+#TP_DIR      = /funya
+#POLYLIB_DIR = ../Polylib-2.1.2
+#CUTLIB_DIR  = ../Cutlib-2.0.5
+#PMLIB_DIR   = ../PMlib-1.5
+#OMP_FLAGS   = -qsmp=omp
+#UDEF_OPT    = -WF,-D__ARCH_BG
+#CC          = mpixlc_r
+#CFLAGS      = -O3 -qarch=450d -qtune=450
+#CXX         = mpixlcxx_r
+#CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+#FC          = mpixlf90_r
+#FCFLAGS     = -O3 -qarch=450d -qtune=450 -qextname
+#F90         = mpixlf90_r
+#F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS) -WF,-D_STATIC
+#LDFLAGS     =
+#LIBS        =
+#UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib
+#UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath
+
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += 
+#F90FLAGS   += 

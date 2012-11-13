@@ -8,7 +8,63 @@
 #
 ###################################################################
 
-include make_setting
+
+### compiler detection
+
+ifeq ($(CXX),mpicxx)
+include make_setting.gcc
+endif
+
+ifeq ($(CXX),mpiFCCpx)
+include make_setting.fx
+endif
+
+ifeq ($(CXX),mpixlcxx_r)
+include make_setting.bg
+endif
+
+ifneq ($(CXX),)
+include make_setting.intel
+endif
+
+
+
+#####
+
+
+
+UDEF_INC_PATH=-I$(CUTLIB_DIR)/include \
+              -I$(POLYLIB_DIR)/include \
+              -I$(PMLIB_DIR)/include \
+              -I$(TP_DIR)/include \
+              -I$(CPM_DIR)/include \
+              -I../FB \
+              -I../IP \
+              -I../F_CORE \
+              -I../PLOT3D \
+              -I$(MPI_DIR)/include
+              
+UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
+              -L$(CUTLIB_DIR)/lib \
+              -L$(PMLIB_DIR)/lib \
+              -L$(TP_DIR)/lib \
+              -L$(CPM_DIR)/lib \
+              -L../FB \
+              -L../IP \
+              -L../F_CORE \
+              -L../PLOT3D \
+              -L$(MPI_DIR)/lib
+              
+UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
+            $(UDEF_LIBS_SPEC)
+
+UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
+
+
+
+#####
+
+
 
 all:
 	( \

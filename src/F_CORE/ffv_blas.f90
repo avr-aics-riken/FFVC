@@ -618,4 +618,3 @@ end do
 
 return
 end subroutine blas_smoother_core
-

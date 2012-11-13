@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 106
+#define FB_VERS 107
 
 #define MODEL_ID_MAX 255
 
@@ -317,7 +317,7 @@
 
 
 /** 4次元インデクス(n,i,j,k) -> 1次元インデクス変換マクロ
- *  @note i,j,kインデクスはF表記、nはC表記
+ *  @note i,j,kインデクスはF表記、NはC表記
  *  @param [in] _N  成分インデクス
  *  @param [in] _I  i方向インデクス
  *  @param [in] _J  j方向インデクス
@@ -336,7 +336,7 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 
 
 /** 3次元インデクス(3,i,j,k) -> 1次元インデクス変換マクロ
- *  @note i,j,kインデクスはF表記、nはC表記
+ *  @note i,j,kインデクスはF表記、NはC表記
  *  @param [in] _N  成分インデクス
  *  @param [in] _I  i方向インデクス
  *  @param [in] _J  j方向インデクス
@@ -350,7 +350,7 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 
 
 /** 4次元インデクス(i,j,k,n) -> 1次元インデクス変換マクロ
- *  @note i,j,kインデクスはF表記、nはC表記
+ *  @note i,j,kインデクスはF表記、NはC表記
  *  @param [in] _I  i方向インデクス
  *  @param [in] _J  j方向インデクス
  *  @param [in] _K  k方向インデクス
@@ -365,6 +365,22 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 ( (size_t)(_N) * (size_t)(_NI+2*_VC) * (size_t)(_NJ+2*_VC) * (size_t)(_NK+2*_VC) \
 + _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 )
+
+
+/** 3次元インデクス(i,j,k,3) -> 1次元インデクス変換マクロ
+ *  @note i,j,kインデクスはF表記、NはC表記
+ *  @param[in] _I  i方向インデクス
+ *  @param[in] _J  j方向インデクス
+ *  @param[in] _K  k方向インデクス
+ *  @param[in] _N  成分インデクス
+ *  @param[in] _NI i方向インデクスサイズ
+ *  @param[in] _NJ j方向インデクスサイズ
+ *  @param[in] _NK k方向インデクスサイズ
+ *  @param[in] _VC 仮想セル数
+ *  @return 1次元インデクス
+ */
+#define _F_IDX_V3D(_I,_J,_K,_N,_NI,_NJ,_NK,_VC) (_F_IDX_S4D(_I,_J,_K,_N,_NI,_NJ,_NK,_VC))
+
 
 /**
  * @brief 非同期通信のリクエストIDアクセス

@@ -247,7 +247,7 @@ void FFV::NS_FS_E_Binary()
   if ( numProc > 1 ) 
   {
     TIMING_start(tm_pvec_comm);
-    if ( paraMngr->BndCommV3DEx(d_vc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_vc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_pvec_comm, comm_size*1.0*3.0); // ガイドセル数 x ベクトル
   }
 
@@ -598,7 +598,7 @@ void FFV::NS_FS_E_Binary()
   if ( numProc > 1 )
   {
     TIMING_start(tm_vectors_comm);
-    if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);
   }
   

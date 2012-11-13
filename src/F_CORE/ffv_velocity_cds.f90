@@ -73,7 +73,7 @@
     real                                                        ::  dw_e, dw_w, dw_s, dw_n, dw_b, dw_t
 		real                                                        ::  EX, EY, EZ
     real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
     real(4), dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
     real, dimension(0:3)                                        ::  v00
@@ -663,9 +663,9 @@
            ) * dh2
 			
       ! 対流項と粘性項の和
-      wv(1,i,j,k) = -cnv_u * dh1 + EX * vcs
-      wv(2,i,j,k) = -cnv_v * dh1 + EY * vcs
-      wv(3,i,j,k) = -cnv_w * dh1 + EZ * vcs
+      wv(i,j,k,1) = -cnv_u * dh1 + EX * vcs
+      wv(i,j,k,2) = -cnv_v * dh1 + EY * vcs
+      wv(i,j,k,3) = -cnv_w * dh1 + EZ * vcs
       
     end do
     end do
@@ -718,7 +718,7 @@
     real                                                        ::  N_e, N_w, N_n, N_s, N_t, N_b
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp, bv
     real, dimension(0:3)                                        ::  v00
@@ -778,16 +778,18 @@
       N_n = real(ibits(bpx, bc_n_N, 1))  ! n
       N_b = real(ibits(bpx, bc_n_B, 1))  ! b
       N_t = real(ibits(bpx, bc_n_T, 1))  ! t
-      
-      Up0 = vc(1, i  ,j  ,k  )
-      Vp0 = vc(2, i  ,j  ,k  )
-      Wp0 = vc(3, i  ,j  ,k  )
-      Uw0 = vc(1, i-1,j  ,k  )
-      Ue0 = vc(1, i+1,j  ,k  )
-      Vs0 = vc(2, i  ,j-1,k  )
-      Vn0 = vc(2, i  ,j+1,k  )
-      Wb0 = vc(3, i  ,j  ,k-1)
-      Wt0 = vc(3, i  ,j  ,k+1)
+
+      Uw0 = vc(i-1,j  ,k  , 1)
+      Up0 = vc(i  ,j  ,k  , 1)
+      Ue0 = vc(i+1,j  ,k  , 1)
+
+      Vs0 = vc(i  ,j-1,k  , 2)
+      Vp0 = vc(i  ,j  ,k  , 2)
+      Vn0 = vc(i  ,j+1,k  , 2)
+
+      Wb0 = vc(i  ,j  ,k-1, 3)
+      Wp0 = vc(i  ,j  ,k  , 3)
+      Wt0 = vc(i  ,j  ,k+1, 3)
       
       ! 距離情報 [0, 1]
       dw = cut(1,i,j,k) ! d_{i}^-
@@ -919,9 +921,9 @@
                    -(Wb_f - dd * gpb) * cb ) * coef * actv
       
       ! セルセンタの速度更新
-      v(1,i,j,k) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
-      v(2,i,j,k) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
-      v(3,i,j,k) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
+      v(i,j,k,1) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
+      v(i,j,k,2) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
+      v(i,j,k,3) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
 
     end do
     end do
@@ -962,7 +964,7 @@
     real                                                        ::  qw, qe, qs, qn, qb, qt
     real                                                        ::  r_qw, r_qe, r_qs, r_qn, r_qb, r_qt
     real                                                        ::  coef, actv, r_actv, u_ref, v_ref, w_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
@@ -1006,16 +1008,18 @@
     do i=1,ix
       bvx = bv(i,j,k)
       actv= real(ibits(bvx, State, 1))
-      
-      Up0 = v(1, i  ,j  ,k  )
-      Vp0 = v(2, i  ,j  ,k  )
-      Wp0 = v(3, i  ,j  ,k  )
-      Uw0 = v(1, i-1,j  ,k  )
-      Ue0 = v(1, i+1,j  ,k  )
-      Vs0 = v(2, i  ,j-1,k  )
-      Vn0 = v(2, i  ,j+1,k  )
-      Wb0 = v(3, i  ,j  ,k-1)
-      Wt0 = v(3, i  ,j  ,k+1)
+
+      Uw0 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue0 = v(i+1,j  ,k  , 1)
+
+      Vs0 = v(i  ,j-1,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Vn0 = v(i  ,j+1,k  , 2)
+
+      Wb0 = v(i  ,j  ,k-1, 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      Wt0 = v(i  ,j  ,k+1, 3)
       
       dw = cut(1,i,j,k) ! d_{i}^-
       de = cut(2,i,j,k) ! d_{i}^+

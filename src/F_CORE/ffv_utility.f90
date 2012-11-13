@@ -155,7 +155,7 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  vm1, vm2, vm3, v_max, vx, vy, vz
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
@@ -186,9 +186,9 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      vm1 = max(vm1, abs(v(1,i,j,k)-vx ) )
-      vm2 = max(vm2, abs(v(2,i,j,k)-vy ) )
-      vm3 = max(vm3, abs(v(3,i,j,k)-vz ) )
+      vm1 = max(vm1, abs(v(i,j,k,1)-vx ) )
+      vm2 = max(vm2, abs(v(i,j,k,2)-vy ) )
+      vm3 = max(vm3, abs(v(i,j,k,3)-vz ) )
     end do
     end do
     end do
@@ -228,7 +228,7 @@
     real                                                      ::  w12, w13, w23
     real                                                      ::  q11, q22, q33, q12, q13, q23
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  q
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(0:3)                                      ::  v00
 
@@ -270,33 +270,29 @@
     do i=1,ix
       idx = bv(i,j,k)
 
-      Ub1 = v(1, i  ,j  ,k-1)
-      Vb1 = v(2, i  ,j  ,k-1)
-      Wb1 = v(3, i  ,j  ,k-1)
+      Ub1 = v(i  ,j  ,k-1, 1)
+      Us1 = v(i  ,j-1,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1)
+      Ut1 = v(i  ,j  ,k+1, 1)
 
-      Us1 = v(1, i  ,j-1,k  )
-      Vs1 = v(2, i  ,j-1,k  )
-      Ws1 = v(3, i  ,j-1,k  )
+      Vb1 = v(i  ,j  ,k-1, 2)
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+      Vt1 = v(i  ,j  ,k+1, 2)
 
-      Uw1 = v(1, i-1,j  ,k  )
-      Vw1 = v(2, i-1,j  ,k  )
-      Ww1 = v(3, i-1,j  ,k  )
-
-      Up0 = v(1, i  ,j  ,k  )
-      Vp0 = v(2, i  ,j  ,k  )
-      Wp0 = v(3, i  ,j  ,k  )
-      
-      Ue1 = v(1, i+1,j  ,k  )
-      Ve1 = v(2, i+1,j  ,k  )
-      We1 = v(3, i+1,j  ,k  )
-      
-      Un1 = v(1, i  ,j+1,k  )
-      Vn1 = v(2, i  ,j+1,k  )
-      Wn1 = v(3, i  ,j+1,k  )
-
-      Ut1 = v(1, i  ,j  ,k+1)
-      Vt1 = v(2, i  ,j  ,k+1)
-      Wt1 = v(3, i  ,j  ,k+1)
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Ws1 = v(i  ,j-1,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
       
       ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
@@ -410,7 +406,7 @@
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
     real                                                      ::  r1, r2, r3
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, rot
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, rot
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(0:3)                                      ::  v00
 
@@ -450,33 +446,29 @@
     do i=1,ix
       idx = bv(i,j,k)
 
-      Ub1 = v(1, i  ,j  ,k-1)
-      Vb1 = v(2, i  ,j  ,k-1)
-      Wb1 = v(3, i  ,j  ,k-1)
+      Ub1 = v(i  ,j  ,k-1, 1)
+      Us1 = v(i  ,j-1,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1)
+      Ut1 = v(i  ,j  ,k+1, 1)
 
-      Us1 = v(1, i  ,j-1,k  )
-      Vs1 = v(2, i  ,j-1,k  )
-      Ws1 = v(3, i  ,j-1,k  )
+      Vb1 = v(i  ,j  ,k-1, 2)
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+      Vt1 = v(i  ,j  ,k+1, 2)
 
-      Uw1 = v(1, i-1,j  ,k  )
-      Vw1 = v(2, i-1,j  ,k  )
-      Ww1 = v(3, i-1,j  ,k  )
-
-      Up0 = v(1, i  ,j  ,k  )
-      Vp0 = v(2, i  ,j  ,k  )
-      Wp0 = v(3, i  ,j  ,k  )
-
-      Ue1 = v(1, i+1,j  ,k  )
-      Ve1 = v(2, i+1,j  ,k  )
-      We1 = v(3, i+1,j  ,k  )
-
-      Un1 = v(1, i  ,j+1,k  )
-      Vn1 = v(2, i  ,j+1,k  )
-      Wn1 = v(3, i  ,j+1,k  )
-
-      Ut1 = v(1, i  ,j  ,k+1)
-      Vt1 = v(2, i  ,j  ,k+1)
-      Wt1 = v(3, i  ,j  ,k+1)
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Ws1 = v(i  ,j-1,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
       
       ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
@@ -542,9 +534,9 @@
       r2 = h*( (Ut1-Ub1) - (We1-Ww1) )
       r3 = h*( (Ve1-Vw1) - (Un1-Us1) )
       
-      rot(1,i,j,k) = r1 * actv ! 3 flop
-      rot(2,i,j,k) = r2 * actv
-      rot(3,i,j,k) = r3 * actv
+      rot(i,j,k,1) = r1 * actv ! 3 flop
+      rot(i,j,k,2) = r2 * actv
+      rot(i,j,k,3) = r3 * actv
     end do
     end do
     end do
@@ -579,7 +571,7 @@
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
     real                                                      ::  r1, r2, r3, u1, u2, u3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ht
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(0:3)                                      ::  v00
 
@@ -619,37 +611,33 @@
     do i=1,ix
       idx = bv(i,j,k)
 
-      Ub1 = v(1, i  ,j  ,k-1)
-      Vb1 = v(2, i  ,j  ,k-1)
-      Wb1 = v(3, i  ,j  ,k-1)
+      Ub1 = v(i  ,j  ,k-1, 1)
+      Us1 = v(i  ,j-1,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1)
+      Ut1 = v(i  ,j  ,k+1, 1)
 
-      Us1 = v(1, i  ,j-1,k  )
-      Vs1 = v(2, i  ,j-1,k  )
-      Ws1 = v(3, i  ,j-1,k  )
+      Vb1 = v(i  ,j  ,k-1, 2)
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+      Vt1 = v(i  ,j  ,k+1, 2)
 
-      Uw1 = v(1, i-1,j  ,k  )
-      Vw1 = v(2, i-1,j  ,k  )
-      Ww1 = v(3, i-1,j  ,k  )
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Ws1 = v(i  ,j-1,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
 
-      Up0 = v(1, i  ,j  ,k  )
-      Vp0 = v(2, i  ,j  ,k  )
-      Wp0 = v(3, i  ,j  ,k  )
-
-      Ue1 = v(1, i+1,j  ,k  )
-      Ve1 = v(2, i+1,j  ,k  )
-      We1 = v(3, i+1,j  ,k  )
-
-      Un1 = v(1, i  ,j+1,k  )
-      Vn1 = v(2, i  ,j+1,k  )
-      Wn1 = v(3, i  ,j+1,k  )
-
-      Ut1 = v(1, i  ,j  ,k+1)
-      Vt1 = v(2, i  ,j  ,k+1)
-      Wt1 = v(3, i  ,j  ,k+1)
-      
       ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
-      
+
       b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
       b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
       b_s1= ibits(bv(i  ,j-1,k  ), State, 1)

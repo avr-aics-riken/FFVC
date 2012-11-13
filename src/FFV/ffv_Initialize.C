@@ -3128,8 +3128,8 @@ void FFV::setInitialCondition()
   // 初期解およびリスタート解の同期
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommV3DEx(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D  (d_p, size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
     
     if ( C.isHeatProblem() ) 
     {

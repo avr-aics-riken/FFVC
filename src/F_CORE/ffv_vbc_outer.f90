@@ -46,7 +46,7 @@
     real                                                      ::  Ue0, Uw0, Vs0, Vn0, Wb0, Wt0
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(3)                                        ::  vec
@@ -100,9 +100,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           include 'd_o_o_p.h' ! 42 flop
           
@@ -119,9 +119,9 @@
           EY = Vw1 - Vp0
           EZ = Ww1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -144,9 +144,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           include 'd_o_o_p.h'
           
@@ -163,9 +163,9 @@
           EY = Ve1 - Vp0
           EZ = We1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -188,9 +188,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
             
           include 'd_o_o_p.h'
           
@@ -207,9 +207,9 @@
           EY = Vs1 - Vp0
           EZ = Ws1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -232,9 +232,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
             
           include 'd_o_o_p.h'
             
@@ -251,9 +251,9 @@
           EY = Vn1 - Vp0
           EZ = Wn1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -276,9 +276,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           include 'd_o_o_p.h'
           
@@ -295,9 +295,9 @@
           EY = Vb1 - Vp0
           EZ = Wb1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -320,9 +320,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           include 'd_o_o_p.h'
           
@@ -339,9 +339,9 @@
           EY = Vt1 - Vp0
           EZ = Wt1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -388,7 +388,7 @@
     real                                                      ::  u_ref, v_ref, w_ref, m
     real                                                      ::  fu, fv, fw, c, ac
     real                                                      ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  vec
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -444,9 +444,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Uw1 = u_bc_ref
           Vw1 = v_bc_ref
@@ -461,9 +461,9 @@
           EY = Vw1 - Vp0
           EZ = Ww1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + ( fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -486,9 +486,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then ! 方向によって実装が異なるのでチェック
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Ue1 = u_bc_ref
           Ve1 = v_bc_ref
@@ -503,9 +503,9 @@
           EY = Ve1 - Vp0
           EZ = We1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -528,9 +528,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Us1 = u_bc_ref
           Vs1 = v_bc_ref
@@ -545,9 +545,9 @@
           EY = Vs1 - Vp0
           EZ = Ws1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -570,9 +570,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Un1 = u_bc_ref
           Vn1 = v_bc_ref
@@ -587,9 +587,9 @@
           EY = Vn1 - Vp0
           EZ = Wn1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -612,9 +612,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Ub1 = u_bc_ref
           Vb1 = v_bc_ref
@@ -629,9 +629,9 @@
           EY = Vb1 - Vp0
           EZ = Wb1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -653,9 +653,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Ut1 = u_bc_ref
           Vt1 = v_bc_ref
@@ -670,9 +670,9 @@
           EY = Vt1 - Vp0
           EZ = Wt1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + ( -fu*dh1 + EX*dh2 )
-          wv(2,i,j,k) = wv(2,i,j,k) + ( -fv*dh1 + EY*dh2 )
-          wv(3,i,j,k) = wv(3,i,j,k) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
           m = m + 1.0
         endif
       end do
@@ -711,7 +711,7 @@
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  dh, dh1, dh2, rei
     real                                                      ::  Up0, Vp0, Wp0
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     
     ix = sz(1)
@@ -748,8 +748,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          wv(1,i,j,k) = wv(1,i,j,k) + Up0*dh2
+          Up0 = v0(i,j,k,1)
+          wv(i,j,k,1) = wv(i,j,k,1) + Up0*dh2
         endif
       end do
       end do
@@ -773,8 +773,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          wv(1,i,j,k) = wv(1,i,j,k) - Up0*dh2
+          Up0 = v0(i,j,k,1)
+          wv(i,j,k,1) = wv(i,j,k,1) - Up0*dh2
         endif
       end do
       end do
@@ -798,8 +798,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          Vp0 = v0(2,i,j,k)
-          wv(2,i,j,k) = wv(2,i,j,k) + Vp0*dh2
+          Vp0 = v0(i,j,k,2)
+          wv(i,j,k,2) = wv(i,j,k,2) + Vp0*dh2
         endif
       end do
       end do
@@ -823,8 +823,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          Vp0 = v0(2,i,j,k)
-          wv(2,i,j,k) = wv(2,i,j,k) - Vp0*dh2
+          Vp0 = v0(i,j,k,2)
+          wv(i,j,k,2) = wv(i,j,k,2) - Vp0*dh2
         endif
       end do
       end do
@@ -848,8 +848,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          Wp0 = v0(3,i,j,k)
-          wv(3,i,j,k) = wv(3,i,j,k) + Wp0*dh2
+          Wp0 = v0(i,j,k,3)
+          wv(i,j,k,3) = wv(i,j,k,3) + Wp0*dh2
         endif
       end do
       end do
@@ -873,8 +873,8 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          Wp0 = v0(3,i,j,k)
-          wv(3,i,j,k) = wv(3,i,j,k) - Wp0*dh2
+          Wp0 = v0(i,j,k,3)
+          wv(i,j,k,3) = wv(i,j,k,3) - Wp0*dh2
         endif
       end do
       end do
@@ -907,7 +907,7 @@
 !! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
 !! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
 !<
-    subroutine pvec_vobc_wall  (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
+    subroutine pvec_vobc_wall (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, face
@@ -921,7 +921,7 @@
     real                                                      ::  u_ref, v_ref, w_ref, m
     real                                                      ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
     real                                                      ::  u_bc_ref2, v_bc_ref2, w_bc_ref2
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  vec
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -980,9 +980,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
           
           Uw1  = u_bc_ref2 - Up0
           Vw1  = v_bc_ref2 - Vp0
@@ -992,9 +992,9 @@
           EY = Vw1 - Vp0
           EZ = Ww1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
+          wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
+          wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
           m = m + 1.0
         endif
       end do
@@ -1017,9 +1017,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           Ue1  = u_bc_ref2 - Up0
           Ve1  = v_bc_ref2 - Vp0
@@ -1029,9 +1029,9 @@
           EY = Ve1 - Vp0
           EZ = We1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
+          wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
+          wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
           m = m + 1.0
         endif
       end do
@@ -1054,9 +1054,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           Us1  = u_bc_ref2 - Up0
           Vs1  = v_bc_ref2 - Vp0
@@ -1066,9 +1066,9 @@
           EY = Vs1 - Vp0
           EZ = Ws1 - Wp0
 
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
+          wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
+          wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
           m = m + 1.0
         endif
       end do
@@ -1091,9 +1091,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           Un1  = u_bc_ref2 - Up0
           Vn1  = v_bc_ref2 - Vp0
@@ -1103,9 +1103,9 @@
           EY = Vn1 - Vp0
           EZ = Wn1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
+          wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
+          wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
           m = m + 1.0
         endif
       end do
@@ -1128,9 +1128,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           Ub1  = u_bc_ref2 - Up0
           Vb1  = v_bc_ref2 - Vp0
@@ -1140,9 +1140,9 @@
           EY = Vb1 - Vp0
           EZ = Wb1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
+          wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
+          wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
           m = m + 1.0
         endif
       end do
@@ -1165,9 +1165,9 @@
         bvx = bv(i,j,k)
         
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          Up0 = v0(1,i,j,k)
-          Vp0 = v0(2,i,j,k)
-          Wp0 = v0(3,i,j,k)
+          Up0 = v0(i,j,k,1)
+          Vp0 = v0(i,j,k,2)
+          Wp0 = v0(i,j,k,3)
 
           Ut1  = u_bc_ref2 - Up0
           Vt1  = v_bc_ref2 - Vp0
@@ -1177,9 +1177,9 @@
           EY = Vt1 - Vp0
           EZ = Wt1 - Wp0
           
-          wv(1,i,j,k) = wv(1,i,j,k) + EX*dh2
-          wv(2,i,j,k) = wv(2,i,j,k) + EY*dh2
-          wv(3,i,j,k) = wv(3,i,j,k) + EZ*dh2
+          wv(i,j,k,1) = wv(i,j,k,1) + EX*dh2
+          wv(i,j,k,2) = wv(i,j,k,2) + EY*dh2
+          wv(i,j,k,3) = wv(i,j,k,3) + EZ*dh2
           m = m + 1.0
         endif
       end do
@@ -1214,7 +1214,7 @@
     integer                                                     ::  i, j, k, g, face, ix, jx, kx, bvx
     integer, dimension(3)                                       ::  sz
     real                                                        ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
     real, dimension(0:3)                                        ::  v00
@@ -1247,9 +1247,9 @@
       do j=1,jx
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          v(1, i-1, j, k) = u_bc_ref
-          v(2, i-1, j, k) = v_bc_ref
-          v(3, i-1, j, k) = w_bc_ref
+          v(i-1, j, k, 1) = u_bc_ref
+          v(i-1, j, k, 2) = v_bc_ref
+          v(i-1, j, k, 3) = w_bc_ref
         endif
       end do
       end do
@@ -1269,9 +1269,9 @@
       do j=1,jx
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          v(1, i+1, j, k) = u_bc_ref
-          v(2, i+1, j, k) = v_bc_ref
-          v(3, i+1, j, k) = w_bc_ref
+          v(i+1, j, k, 1) = u_bc_ref
+          v(i+1, j, k, 2) = v_bc_ref
+          v(i+1, j, k, 3) = w_bc_ref
         endif
       end do
       end do
@@ -1291,9 +1291,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          v(1, i, j-1, k) = u_bc_ref
-          v(2, i, j-1, k) = v_bc_ref
-          v(3, i, j-1, k) = w_bc_ref
+          v(i, j-1, k, 1) = u_bc_ref
+          v(i, j-1, k, 2) = v_bc_ref
+          v(i, j-1, k, 3) = w_bc_ref
         endif
       end do
       end do
@@ -1313,9 +1313,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          v(1, i, j+1, k) = u_bc_ref
-          v(2, i, j+1, k) = v_bc_ref
-          v(3, i, j+1, k) = w_bc_ref
+          v(i, j+1, k, 1) = u_bc_ref
+          v(i, j+1, k, 2) = v_bc_ref
+          v(i, j+1, k, 3) = w_bc_ref
         endif
       end do
       end do
@@ -1335,9 +1335,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          v(1, i, j, k-1) = u_bc_ref
-          v(2, i, j, k-1) = v_bc_ref
-          v(3, i, j, k-1) = w_bc_ref
+          v(i, j, k-1, 1) = u_bc_ref
+          v(i, j, k-1, 2) = v_bc_ref
+          v(i, j, k-1, 3) = w_bc_ref
         endif
       end do
       end do
@@ -1357,9 +1357,9 @@
       do i=1,ix
         bvx = bv(i,j,k)
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          v(1, i, j, k+1) = u_bc_ref
-          v(2, i, j, k+1) = v_bc_ref
-          v(3, i, j, k+1) = w_bc_ref
+          v(i, j, k+1, 1) = u_bc_ref
+          v(i, j, k+1, 2) = v_bc_ref
+          v(i, j, k+1, 3) = w_bc_ref
         endif
       end do
       end do
@@ -1385,7 +1385,7 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 
     ix = sz(1)
     jx = sz(2)
@@ -1408,9 +1408,9 @@
 
       do k=1,kx
       do j=1,jx
-        v(1, 0, j, k) = v(1, 1, j, k)
-        v(2, 0, j, k) = v(2, 1, j, k)
-        v(3, 0, j, k) = v(3, 1, j, k)
+        v(0, j, k, 1) = v(1, j, k, 1)
+        v(0, j, k, 2) = v(1, j, k, 2)
+        v(0, j, k, 3) = v(1, j, k, 3)
       end do
       end do
       
@@ -1429,9 +1429,9 @@
 
       do k=1,kx
       do j=1,jx
-        v(1, ix+1, j, k) = v(1, ix, j, k)
-        v(2, ix+1, j, k) = v(2, ix, j, k)
-        v(3, ix+1, j, k) = v(3, ix, j, k)
+        v(ix+1, j, k, 1) = v(ix, j, k, 1)
+        v(ix+1, j, k, 2) = v(ix, j, k, 2)
+        v(ix+1, j, k, 3) = v(ix, j, k, 3)
       end do
       end do
       
@@ -1450,9 +1450,9 @@
 
       do k=1,kx
       do i=1,ix
-        v(1, i, 0, k) = v(1, i, 1, k)
-        v(2, i, 0, k) = v(2, i, 1, k)
-        v(3, i, 0, k) = v(3, i, 1, k)
+        v(i, 0, k, 1) = v(i, 1, k, 1)
+        v(i, 0, k, 2) = v(i, 1, k, 2)
+        v(i, 0, k, 3) = v(i, 1, k, 3)
       end do
       end do
       
@@ -1471,9 +1471,9 @@
 
       do k=1,kx
       do i=1,ix      
-        v(1, i, jx+1, k) = v(1, i, jx, k)
-        v(2, i, jx+1, k) = v(2, i, jx, k)
-        v(3, i, jx+1, k) = v(3, i, jx, k)
+        v(i, jx+1, k, 1) = v(i, jx, k, 1)
+        v(i, jx+1, k, 2) = v(i, jx, k, 2)
+        v(i, jx+1, k, 3) = v(i, jx, k, 3)
       end do
       end do
       
@@ -1492,9 +1492,9 @@
 
       do j=1,jx
       do i=1,ix
-        v(1, i, j, 0) = v(1, i, j, 1)
-        v(2, i, j, 0) = v(2, i, j, 1)
-        v(3, i, j, 0) = v(3, i, j, 1)
+        v(i, j, 0, 1) = v(i, j, 1, 1)
+        v(i, j, 0, 2) = v(i, j, 1, 2)
+        v(i, j, 0, 3) = v(i, j, 1, 3)
       end do
       end do
       
@@ -1513,9 +1513,9 @@
 
       do j=1,jx
       do i=1,ix
-        v(1, i, j, kx+1) = v(1, i, j, kx)
-        v(2, i, j, kx+1) = v(2, i, j, kx)
-        v(3, i, j, kx+1) = v(3, i, j, kx)
+        v(i, j, kx+1, 1) = v(i, j, kx, 1)
+        v(i, j, kx+1, 2) = v(i, j, kx, 2)
+        v(i, j, kx+1, 3) = v(i, j, kx, 3)
       end do
       end do
       
@@ -1551,7 +1551,7 @@
     real                                                      ::  Ve, Vw, Vn, Vs, Vt, Vb
     real                                                      ::  We, Ww, Wn, Ws, Wt, Wb
     real                                                      ::  c
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, v0
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
@@ -1585,16 +1585,16 @@
       do j=1,jx
         idx = bv(i,j,k)
         if ( ibits(idx, bc_face_W, bitw_5) == obc_mask ) then
-          Uw = v0(1, i-1,j  ,k  )
-          Vw = v0(2, i-1,j  ,k  )
-          Ww = v0(3, i-1,j  ,k  )
-          Ue = v0(1, i  ,j  ,k  )
-          Ve = v0(2, i  ,j  ,k  )
-          We = v0(3, i  ,j  ,k  )
+          Uw = v0(i-1,j  ,k  , 1)
+          Ue = v0(i  ,j  ,k  , 1)
+          Vw = v0(i-1,j  ,k  , 2)
+          Ve = v0(i  ,j  ,k  , 2)
+          Ww = v0(i-1,j  ,k  , 3)
+          We = v0(i  ,j  ,k  , 3)
 
-          v(1, i-1, j  ,k  ) = Uw - c*(Ue-Uw)
-          v(2, i-1, j  ,k  ) = Vw - c*(Ve-Vw)
-          v(3, i-1, j  ,k  ) = Ww - c*(We-Ww)
+          v(i-1, j  ,k  , 1) = Uw - c*(Ue-Uw)
+          v(i-1, j  ,k  , 2) = Vw - c*(Ve-Vw)
+          v(i-1, j  ,k  , 3) = Ww - c*(We-Ww)
         endif
       end do
       end do
@@ -1619,16 +1619,16 @@
       do j=1,jx
         idx = bv(i,j,k)
         if ( ibits(idx, bc_face_E, bitw_5) == obc_mask ) then
-          Uw = v0(1, i  ,j  ,k  )
-          Vw = v0(2, i  ,j  ,k  )
-          Ww = v0(3, i  ,j  ,k  )
-          Ue = v0(1, i+1,j  ,k  )
-          Ve = v0(2, i+1,j  ,k  )
-          We = v0(3, i+1,j  ,k  )
+          Uw = v0(i  ,j  ,k  , 1)
+          Ue = v0(i+1,j  ,k  , 1)
+          Vw = v0(i  ,j  ,k  , 2)
+          Ve = v0(i+1,j  ,k  , 2)
+          Ww = v0(i  ,j  ,k  , 3)
+          We = v0(i+1,j  ,k  , 3)
           
-          v(1, i+1, j  ,k  ) = Ue - c*(Ue-Uw)
-          v(2, i+1, j  ,k  ) = Ve - c*(Ve-Vw)
-          v(3, i+1, j  ,k  ) = We - c*(We-Ww)
+          v(i+1, j  ,k  , 1) = Ue - c*(Ue-Uw)
+          v(i+1, j  ,k  , 2) = Ve - c*(Ve-Vw)
+          v(i+1, j  ,k  , 3) = We - c*(We-Ww)
         endif
       end do
       end do
@@ -1653,16 +1653,16 @@
       do i=1,ix
         idx = bv(i,j,k)
         if ( ibits(idx, bc_face_S, bitw_5) == obc_mask ) then
-          Us = v0(1, i  ,j-1,k  )
-          Vs = v0(2, i  ,j-1,k  )
-          Ws = v0(3, i  ,j-1,k  )
-          Un = v0(1, i  ,j  ,k  )
-          Vn = v0(2, i  ,j  ,k  )
-          Wn = v0(3, i  ,j  ,k  )
+          Us = v0(i  ,j-1,k  , 1)
+          Un = v0(i  ,j  ,k  , 1)
+          Vs = v0(i  ,j-1,k  , 2)
+          Vn = v0(i  ,j  ,k  , 2)
+          Ws = v0(i  ,j-1,k  , 3)
+          Wn = v0(i  ,j  ,k  , 3)
 
-          v(1, i  ,j-1, k  ) = Us - c*(Un-Us)
-          v(2, i  ,j-1, k  ) = Vs - c*(Vn-Vs)
-          v(3, i  ,j-1, k  ) = Ws - c*(Wn-Ws)
+          v(i  ,j-1, k  , 1) = Us - c*(Un-Us)
+          v(i  ,j-1, k  , 2) = Vs - c*(Vn-Vs)
+          v(i  ,j-1, k  , 3) = Ws - c*(Wn-Ws)
         endif
       end do
       end do
@@ -1687,16 +1687,16 @@
       do i=1,ix
         idx = bv(i,j,k)
         if ( ibits(idx, bc_face_N, bitw_5) == obc_mask ) then
-          Us = v0(1, i  ,j  ,k  )
-          Vs = v0(2, i  ,j  ,k  )
-          Ws = v0(3, i  ,j  ,k  )
-          Un = v0(1, i  ,j+1,k  )
-          Vn = v0(2, i  ,j+1,k  )
-          Wn = v0(3, i  ,j+1,k  )
+          Us = v0(i  ,j  ,k  , 1)
+          Un = v0(i  ,j+1,k  , 1)
+          Vs = v0(i  ,j  ,k  , 2)
+          Vn = v0(i  ,j+1,k  , 2)
+          Ws = v0(i  ,j  ,k  , 3)
+          Wn = v0(i  ,j+1,k  , 3)
 
-          v(1, i  ,j+1, k  ) = Un - c*(Un-Us)
-          v(2, i  ,j+1, k  ) = Vn - c*(Vn-Vs)
-          v(3, i  ,j+1, k  ) = Wn - c*(Wn-Ws)
+          v(i  ,j+1, k  , 1) = Un - c*(Un-Us)
+          v(i  ,j+1, k  , 2) = Vn - c*(Vn-Vs)
+          v(i  ,j+1, k  , 3) = Wn - c*(Wn-Ws)
         endif
       end do
       end do
@@ -1721,16 +1721,16 @@
       do i=1,ix
         idx = bv(i,j,k)
         if ( ibits(idx, bc_face_B, bitw_5) == obc_mask ) then
-          Ub = v0(1, i  ,j  ,k-1)
-          Vb = v0(2, i  ,j  ,k-1)
-          Wb = v0(3, i  ,j  ,k-1)
-          Ut = v0(1, i  ,j  ,k  )
-          Vt = v0(2, i  ,j  ,k  )
-          Wt = v0(3, i  ,j  ,k  )
+          Ub = v0(i  ,j  ,k-1, 1)
+          Ut = v0(i  ,j  ,k  , 1)
+          Vb = v0(i  ,j  ,k-1, 2)
+          Vt = v0(i  ,j  ,k  , 2)
+          Wb = v0(i  ,j  ,k-1, 3)
+          Wt = v0(i  ,j  ,k  , 3)
 
-          v(1, i  ,j  , k-1) = Ub - c*(Ut-Ub)
-          v(2, i  ,j  , k-1) = Vb - c*(Vt-Vb)
-          v(3, i  ,j  , k-1) = Wb - c*(Wt-Wb)
+          v(i  ,j  , k-1, 1) = Ub - c*(Ut-Ub)
+          v(i  ,j  , k-1, 2) = Vb - c*(Vt-Vb)
+          v(i  ,j  , k-1, 3) = Wb - c*(Wt-Wb)
         endif
       end do
       end do
@@ -1755,16 +1755,16 @@
       do i=1,ix
         idx = bv(i,j,k)
         if ( ibits(idx, bc_face_T, bitw_5) == obc_mask ) then
-          Ub = v0(1, i  ,j  ,k  )
-          Vb = v0(2, i  ,j  ,k  )
-          Wb = v0(3, i  ,j  ,k  )
-          Ut = v0(1, i  ,j  ,k+1)
-          Vt = v0(2, i  ,j  ,k+1)
-          Wt = v0(3, i  ,j  ,k+1)
+          Ub = v0(i  ,j  ,k  , 1)
+          Ut = v0(i  ,j  ,k+1, 1)
+          Vb = v0(i  ,j  ,k  , 2)
+          Vt = v0(i  ,j  ,k+1, 2)
+          Wb = v0(i  ,j  ,k  , 3)
+          Wt = v0(i  ,j  ,k+1, 3)
 
-          v(1, i  ,j  , k+1) = Ut - c*(Ut-Ub)
-          v(2, i  ,j  , k+1) = Vt - c*(Vt-Vb)
-          v(3, i  ,j  , k+1) = Wt - c*(Wt-Wb)
+          v(i  ,j  , k+1, 1) = Ut - c*(Ut-Ub)
+          v(i  ,j  , k+1, 2) = Vt - c*(Vt-Vb)
+          v(i  ,j  , k+1, 3) = Wt - c*(Wt-Wb)
         endif
       end do
       end do
@@ -1796,7 +1796,7 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  v1, v2, v3, v4
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 
     ix = sz(1)
     jx = sz(2)
@@ -1823,14 +1823,14 @@
       do k=1,kx
       do j=1,jx
 
-        v1 = 0.5 * (v(1, i-1, j+1, k  ) + v(1, i, j+1, k  ))
-        v2 = 0.5 * (v(1, i-1, j-1, k  ) + v(1, i, j-1, k  ))
-        v3 = 0.5 * (v(1, i-1, j  , k+1) + v(1, i, j  , k+1))
-        v4 = 0.5 * (v(1, i-1, j  , k-1) + v(1, i, j  , k-1))
+        v1 = 0.5 * (v(i-1, j+1, k  , 1) + v(i, j+1, k  , 1))
+        v2 = 0.5 * (v(i-1, j-1, k  , 1) + v(i, j-1, k  , 1))
+        v3 = 0.5 * (v(i-1, j  , k+1, 1) + v(i, j  , k+1, 1))
+        v4 = 0.5 * (v(i-1, j  , k-1, 1) + v(i, j  , k-1, 1))
 
-        v(1, i-1, j, k) = v(1, i, j, k)
-        v(2, i-1, j, k) = v(2, i, j, k) + 0.5 * (v1 - v2)
-        v(3, i-1, j, k) = v(3, i, j, k) + 0.5 * (v3 - v4)
+        v(i-1, j, k, 1) = v(i, j, k, 1)
+        v(i-1, j, k, 2) = v(i, j, k, 2) + 0.5 * (v1 - v2)
+        v(i-1, j, k, 3) = v(i, j, k, 3) + 0.5 * (v3 - v4)
 
       end do
       end do
@@ -1852,14 +1852,14 @@
       do k=1,kx
       do j=1,jx
 
-        v1 = 0.5 * (v(1, i+1, j+1, k  ) + v(1, i, j+1, k  ))
-        v2 = 0.5 * (v(1, i+1, j-1, k  ) + v(1, i, j-1, k  ))
-        v3 = 0.5 * (v(1, i+1, j  , k+1) + v(1, i, j  , k+1))
-        v4 = 0.5 * (v(1, i+1, j  , k-1) + v(1, i, j  , k-1))
+        v1 = 0.5 * (v(i+1, j+1, k  , 1) + v(i, j+1, k  , 1))
+        v2 = 0.5 * (v(i+1, j-1, k  , 1) + v(i, j-1, k  , 1))
+        v3 = 0.5 * (v(i+1, j  , k+1, 1) + v(i, j  , k+1, 1))
+        v4 = 0.5 * (v(i+1, j  , k-1, 1) + v(i, j  , k-1, 1))
         
-        v(1, i+1, j, k) = v(1, i, j, k)
-        v(2, i+1, j, k) = v(2, i, j, k) - 0.5 * (v1 - v2)
-        v(3, i+1, j, k) = v(3, i, j, k) - 0.5 * (v3 - v4)
+        v(i+1, j, k, 1) = v(i, j, k, 1)
+        v(i+1, j, k, 2) = v(i, j, k, 2) - 0.5 * (v1 - v2)
+        v(i+1, j, k, 3) = v(i, j, k, 3) - 0.5 * (v3 - v4)
 
       end do
       end do
@@ -1881,14 +1881,14 @@
       do k=1,kx
       do i=1,ix
 
-        v1 = 0.5 * (v(2, i+1, j-1, k  ) + v(2, i+1, j, k  ))
-        v2 = 0.5 * (v(2, i-1, j-1, k  ) + v(2, i-1, j, k  ))
-        v3 = 0.5 * (v(2, i  , j-1, k+1) + v(2, i  , j, k+1))
-        v4 = 0.5 * (v(2, i  , j-1, k-1) + v(2, i  , j, k-1))
+        v1 = 0.5 * (v(i+1, j-1, k  , 2) + v(i+1, j, k  , 2))
+        v2 = 0.5 * (v(i-1, j-1, k  , 2) + v(i-1, j, k  , 2))
+        v3 = 0.5 * (v(i  , j-1, k+1, 2) + v(i  , j, k+1, 2))
+        v4 = 0.5 * (v(i  , j-1, k-1, 2) + v(i  , j, k-1, 2))
                 
-        v(1, i, j-1, k) = v(1, i, j, k) + 0.5 * (v1 - v2)
-        v(2, i, j-1, k) = v(2, i, j, k)
-        v(3, i, j-1, k) = v(3, i, j, k) + 0.5 * (v3 - v4)
+        v(i, j-1, k, 1) = v(i, j, k, 1) + 0.5 * (v1 - v2)
+        v(i, j-1, k, 2) = v(i, j, k, 2)
+        v(i, j-1, k, 3) = v(i, j, k, 3) + 0.5 * (v3 - v4)
 
       end do
       end do
@@ -1910,14 +1910,14 @@
       do k=1,kx
       do i=1,ix
 
-        v1 = 0.5 * (v(2, i+1, j+1, k  ) + v(2, i+1, j, k  ))
-        v2 = 0.5 * (v(2, i-1, j+1, k  ) + v(2, i-1, j, k  ))
-        v3 = 0.5 * (v(2, i  , j+1, k+1) + v(2, i  , j, k+1))
-        v4 = 0.5 * (v(2, i  , j+1, k-1) + v(2, i  , j, k-1))
+        v1 = 0.5 * (v(i+1, j+1, k  , 2) + v(i+1, j, k  , 2))
+        v2 = 0.5 * (v(i-1, j+1, k  , 2) + v(i-1, j, k  , 2))
+        v3 = 0.5 * (v(i  , j+1, k+1, 2) + v(i  , j, k+1, 2))
+        v4 = 0.5 * (v(i  , j+1, k-1, 2) + v(i  , j, k-1, 2))
                 
-        v(1, i, j+1, k) = v(1, i, j, k) - 0.5 * (v1 - v2)
-        v(2, i, j+1, k) = v(2, i, j, k)
-        v(3, i, j+1, k) = v(3, i, j, k) - 0.5 * (v3 - v4)
+        v(i, j+1, k, 1) = v(i, j, k, 1) - 0.5 * (v1 - v2)
+        v(i, j+1, k, 2) = v(i, j, k, 2)
+        v(i, j+1, k, 3) = v(i, j, k, 3) - 0.5 * (v3 - v4)
 
       end do
       end do
@@ -1939,14 +1939,14 @@
       do j=1,jx
       do i=1,ix
 
-        v1 = 0.5 * (v(3, i+1, j  , k-1) + v(3, i+1, j  , k))
-        v2 = 0.5 * (v(3, i-1, j  , k-1) + v(3, i-1, j  , k))
-        v3 = 0.5 * (v(3, i  , j+1, k-1) + v(3, i  , j+1, k))
-        v4 = 0.5 * (v(3, i  , j-1, k-1) + v(3, i  , j-1, k))
+        v1 = 0.5 * (v(i+1, j  , k-1, 3) + v(i+1, j  , k, 3))
+        v2 = 0.5 * (v(i-1, j  , k-1, 3) + v(i-1, j  , k, 3))
+        v3 = 0.5 * (v(i  , j+1, k-1, 3) + v(i  , j+1, k, 3))
+        v4 = 0.5 * (v(i  , j-1, k-1, 3) + v(i  , j-1, k, 3))
                 
-        v(1, i, j, k-1) = v(1, i, j, k) + 0.5 * (v1 - v2)
-        v(2, i, j, k-1) = v(2, i, j, k) + 0.5 * (v3 - v4)
-        v(3, i, j, k-1) = v(3, i, j, k)
+        v(i, j, k-1, 1) = v(i, j, k, 1) + 0.5 * (v1 - v2)
+        v(i, j, k-1, 2) = v(i, j, k, 2) + 0.5 * (v3 - v4)
+        v(i, j, k-1, 3) = v(i, j, k, 3)
 
       end do
       end do
@@ -1968,14 +1968,14 @@
       do j=1,jx
       do i=1,ix
 
-        v1= 0.5 * (v(3, i+1, j  , k+1) + v(3, i+1, j  , k))
-        v2= 0.5 * (v(3, i-1, j  , k+1) + v(3, i-1, j  , k))
-        v3= 0.5 * (v(3, i  , j+1, k+1) + v(3, i  , j+1, k))
-        v4= 0.5 * (v(3, i  , j-1, k+1) + v(3, i  , j-1, k))
+        v1= 0.5 * (v(i+1, j  , k+1, 3) + v(i+1, j  , k, 3))
+        v2= 0.5 * (v(i-1, j  , k+1, 3) + v(i-1, j  , k, 3))
+        v3= 0.5 * (v(i  , j+1, k+1, 3) + v(i  , j+1, k, 3))
+        v4= 0.5 * (v(i  , j-1, k+1, 3) + v(i  , j-1, k, 3))
                 
-        v(1, i, j, k+1) = v(1, i, j, k) - 0.5 * (v1 - v2)
-        v(2, i, j, k+1) = v(2, i, j, k) - 0.5 * (v3 - v4)
-        v(3, i, j, k+1) = v(3, i, j, k)
+        v(i, j, k+1, 1) = v(i, j, k, 1) - 0.5 * (v1 - v2)
+        v(i, j, k+1, 2) = v(i, j, k, 2) - 0.5 * (v3 - v4)
+        v(i, j, k+1, 3) = v(i, j, k, 3)
 
       end do
       end do
@@ -2005,7 +2005,7 @@
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ix, jx, kx, face
     integer, dimension(3)                                       ::  sz
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
 
     ix = sz(1)
     jx = sz(2)
@@ -2027,9 +2027,9 @@
 #endif
       do k=1,kx
       do j=1,jx
-        v(1,i,j,k) = vc(1,i,j,k)
-        v(2,i,j,k) = vc(2,i,j,k)
-        v(3,i,j,k) = vc(3,i,j,k)
+        v(i,j,k,1) = vc(i,j,k,1)
+        v(i,j,k,2) = vc(i,j,k,2)
+        v(i,j,k,3) = vc(i,j,k,3)
       end do
       end do
 !$OMP END DO
@@ -2045,9 +2045,9 @@
 #endif
       do k=1,kx
       do j=1,jx
-        v(1,i,j,k) = vc(1,i,j,k)
-        v(2,i,j,k) = vc(2,i,j,k)
-        v(3,i,j,k) = vc(3,i,j,k)
+        v(i,j,k,1) = vc(i,j,k,1)
+        v(i,j,k,2) = vc(i,j,k,2)
+        v(i,j,k,3) = vc(i,j,k,3)
       end do
       end do
 !$OMP END DO
@@ -2063,9 +2063,9 @@
 #endif
       do k=1,kx
       do i=1,ix
-        v(1,i,j,k) = vc(1,i,j,k)
-        v(2,i,j,k) = vc(2,i,j,k)
-        v(3,i,j,k) = vc(3,i,j,k)
+        v(i,j,k,1) = vc(i,j,k,1)
+        v(i,j,k,2) = vc(i,j,k,2)
+        v(i,j,k,3) = vc(i,j,k,3)
       end do
       end do
 !$OMP END DO
@@ -2081,9 +2081,9 @@
 #endif
       do k=1,kx
       do i=1,ix
-        v(1,i,j,k) = vc(1,i,j,k)
-        v(2,i,j,k) = vc(2,i,j,k)
-        v(3,i,j,k) = vc(3,i,j,k)
+        v(i,j,k,1) = vc(i,j,k,1)
+        v(i,j,k,2) = vc(i,j,k,2)
+        v(i,j,k,3) = vc(i,j,k,3)
       end do
       end do
 !$OMP END DO
@@ -2099,9 +2099,9 @@
 #endif
       do j=1,jx
       do i=1,ix
-        v(1,i,j,k) = vc(1,i,j,k)
-        v(2,i,j,k) = vc(2,i,j,k)
-        v(3,i,j,k) = vc(3,i,j,k)
+        v(i,j,k,1) = vc(i,j,k,1)
+        v(i,j,k,2) = vc(i,j,k,2)
+        v(i,j,k,3) = vc(i,j,k,3)
       end do
       end do
 !$OMP END DO
@@ -2117,9 +2117,9 @@
 #endif
       do j=1,jx
       do i=1,ix
-        v(1,i,j,k) = vc(1,i,j,k)
-        v(2,i,j,k) = vc(2,i,j,k)
-        v(3,i,j,k) = vc(3,i,j,k)
+        v(i,j,k,1) = vc(i,j,k,1)
+        v(i,j,k,2) = vc(i,j,k,2)
+        v(i,j,k,3) = vc(i,j,k,3)
       end do
       end do
 !$OMP END DO
@@ -2350,7 +2350,7 @@
     real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
 
     ix = sz(1)
     jx = sz(2)

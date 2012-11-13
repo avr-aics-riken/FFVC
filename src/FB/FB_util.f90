@@ -90,8 +90,8 @@
   integer                                                         ::  ix, jx, kx, g, si, sj, sk
   integer, dimension(3)                                           ::  sz, st, bk
   real                                                            ::  q1, q2, q3
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
-  real, dimension(3, 1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)       ::  dst
+  real, dimension(1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g, 3) ::  src
 
 
   ix = sz(1)
@@ -115,37 +115,36 @@
     ii = 2*i - (2*i-1)/ix * ix
 
 !   u
-    q1 = src(1, i  , j  , k  )
-    q2 = src(2, i  , j  , k  )
-    q3 = src(3, i  , j  , k  )
+    q1 = src(i  , j  , k  , 1)
+    q2 = src(i  , j  , k  , 2)
+    q3 = src(i  , j  , k  , 3)
 
+    dst(ii-1, jj-1, kk-1, 1) = q1
+    dst(ii  , jj-1, kk-1, 1) = q1
+    dst(ii-1, jj  , kk-1, 1) = q1
+    dst(ii  , jj  , kk-1, 1) = q1
+    dst(ii-1, jj-1, kk  , 1) = q1
+    dst(ii  , jj-1, kk  , 1) = q1
+    dst(ii-1, jj  , kk  , 1) = q1
+    dst(ii  , jj  , kk  , 1) = q1
 
-    dst(1, ii-1, jj-1, kk-1) = q1
-    dst(1, ii  , jj-1, kk-1) = q1
-    dst(1, ii-1, jj  , kk-1) = q1
-    dst(1, ii  , jj  , kk-1) = q1
-    dst(1, ii-1, jj-1, kk  ) = q1
-    dst(1, ii  , jj-1, kk  ) = q1
-    dst(1, ii-1, jj  , kk  ) = q1
-    dst(1, ii  , jj  , kk  ) = q1
+    dst(ii-1, jj-1, kk-1, 2) = q2
+    dst(ii  , jj-1, kk-1, 2) = q2
+    dst(ii-1, jj  , kk-1, 2) = q2
+    dst(ii  , jj  , kk-1, 2) = q2
+    dst(ii-1, jj-1, kk  , 2) = q2
+    dst(ii  , jj-1, kk  , 2) = q2
+    dst(ii-1, jj  , kk  , 2) = q2
+    dst(ii  , jj  , kk  , 2) = q2
 
-    dst(2, ii-1, jj-1, kk-1) = q2
-    dst(2, ii  , jj-1, kk-1) = q2
-    dst(2, ii-1, jj  , kk-1) = q2
-    dst(2, ii  , jj  , kk-1) = q2
-    dst(2, ii-1, jj-1, kk  ) = q2
-    dst(2, ii  , jj-1, kk  ) = q2
-    dst(2, ii-1, jj  , kk  ) = q2
-    dst(2, ii  , jj  , kk  ) = q2
-
-    dst(3, ii-1, jj-1, kk-1) = q3
-    dst(3, ii  , jj-1, kk-1) = q3
-    dst(3, ii-1, jj  , kk-1) = q3
-    dst(3, ii  , jj  , kk-1) = q3
-    dst(3, ii-1, jj-1, kk  ) = q3
-    dst(3, ii  , jj-1, kk  ) = q3
-    dst(3, ii-1, jj  , kk  ) = q3
-    dst(3, ii  , jj  , kk  ) = q3
+    dst(ii-1, jj-1, kk-1, 3) = q3
+    dst(ii  , jj-1, kk-1, 3) = q3
+    dst(ii-1, jj  , kk-1, 3) = q3
+    dst(ii  , jj  , kk-1, 3) = q3
+    dst(ii-1, jj-1, kk  , 3) = q3
+    dst(ii  , jj-1, kk  , 3) = q3
+    dst(ii-1, jj  , kk  , 3) = q3
+    dst(ii  , jj  , kk  , 3) = q3
 
   end do
   end do
@@ -310,8 +309,8 @@
   real                                                            ::  s_211, s_212, s_213, s_221, s_222, s_223, s_231, s_232, s_233
   real                                                            ::         s_312,        s_321, s_322, s_323,        s_332
   real                                                            ::  q
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)       ::  dst
-  real, dimension(3, 1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g) ::  src
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)       ::  dst
+  real, dimension(1-g:sz(1)*bk(1)/2+g, 1-g:sz(2)*bk(2)/2+g, 1-g:sz(3)*bk(3)/2+g, 3) ::  src
 
 
   ix = sz(1)
@@ -341,27 +340,27 @@
     ii = 2*i - (2*i-1)/ix * ix
 
 !   u
-    s_112 = src(1, i-1, j-1, k  )
-    s_121 = src(1, i-1, j  , k-1)
-    s_122 = src(1, i-1, j  , k  )
-    s_123 = src(1, i-1, j  , k+1)
-    s_132 = src(1, i-1, j+1, k  )
+    s_112 = src(i-1, j-1, k  , 1)
+    s_121 = src(i-1, j  , k-1, 1)
+    s_122 = src(i-1, j  , k  , 1)
+    s_123 = src(i-1, j  , k+1, 1)
+    s_132 = src(i-1, j+1, k  , 1)
         
-    s_211 = src(1, i  , j-1, k-1)
-    s_212 = src(1, i  , j-1, k  )
-    s_213 = src(1, i  , j-1, k+1)
-    s_221 = src(1, i  , j  , k-1)
-    s_222 = src(1, i  , j  , k  )
-    s_223 = src(1, i  , j  , k+1)
-    s_231 = src(1, i  , j+1, k-1)
-    s_232 = src(1, i  , j+1, k  )
-    s_233 = src(1, i  , j+1, k+1)
+    s_211 = src(i  , j-1, k-1, 1)
+    s_212 = src(i  , j-1, k  , 1)
+    s_213 = src(i  , j-1, k+1, 1)
+    s_221 = src(i  , j  , k-1, 1)
+    s_222 = src(i  , j  , k  , 1)
+    s_223 = src(i  , j  , k+1, 1)
+    s_231 = src(i  , j+1, k-1, 1)
+    s_232 = src(i  , j+1, k  , 1)
+    s_233 = src(i  , j+1, k+1, 1)
             
-    s_312 = src(1, i+1, j-1, k  )
-    s_321 = src(1, i+1, j  , k-1)
-    s_322 = src(1, i+1, j  , k  )
-    s_323 = src(1, i+1, j  , k+1)
-    s_332 = src(1, i+1, j+1, k  )
+    s_312 = src(i+1, j-1, k  , 1)
+    s_321 = src(i+1, j  , k-1, 1)
+    s_322 = src(i+1, j  , k  , 1)
+    s_323 = src(i+1, j  , k+1, 1)
+    s_332 = src(i+1, j+1, k  , 1)
 
     u_x = ( s_322 - s_122 ) * 0.25
     u_y = ( s_232 - s_212 ) * 0.25
@@ -403,38 +402,38 @@
 
     q = s_222 + 0.125 * ( u_xx + u_yy + u_zz )
     
-    dst(1, ii-1, jj-1, kk-1) = q - u_x - u_y - u_z + 0.25 * (+ u_xy + u_yz + u_zx )
-    dst(1, ii  , jj-1, kk-1) = q + u_x - u_y - u_z + 0.25 * (- u_xy + u_yz + u_zx )
-    dst(1, ii-1, jj  , kk-1) = q - u_x + u_y - u_z + 0.25 * (- u_xy - u_yz + u_zx )
-    dst(1, ii  , jj  , kk-1) = q + u_x + u_y - u_z + 0.25 * (+ u_xy - u_yz - u_zx )
-    dst(1, ii-1, jj-1, kk  ) = q - u_x - u_y + u_z + 0.25 * (+ u_xy - u_yz - u_zx )
-    dst(1, ii  , jj-1, kk  ) = q + u_x - u_y + u_z + 0.25 * (- u_xy - u_yz + u_zx )
-    dst(1, ii-1, jj  , kk  ) = q - u_x + u_y + u_z + 0.25 * (- u_xy + u_yz - u_zx )
-    dst(1, ii  , jj  , kk  ) = q + u_x + u_y + u_z + 0.25 * (+ u_xy + u_yz + u_zx )
+    dst(ii-1, jj-1, kk-1, 1) = q - u_x - u_y - u_z + 0.25 * (+ u_xy + u_yz + u_zx )
+    dst(ii  , jj-1, kk-1, 1) = q + u_x - u_y - u_z + 0.25 * (- u_xy + u_yz + u_zx )
+    dst(ii-1, jj  , kk-1, 1) = q - u_x + u_y - u_z + 0.25 * (- u_xy - u_yz + u_zx )
+    dst(ii  , jj  , kk-1, 1) = q + u_x + u_y - u_z + 0.25 * (+ u_xy - u_yz - u_zx )
+    dst(ii-1, jj-1, kk  , 1) = q - u_x - u_y + u_z + 0.25 * (+ u_xy - u_yz - u_zx )
+    dst(ii  , jj-1, kk  , 1) = q + u_x - u_y + u_z + 0.25 * (- u_xy - u_yz + u_zx )
+    dst(ii-1, jj  , kk  , 1) = q - u_x + u_y + u_z + 0.25 * (- u_xy + u_yz - u_zx )
+    dst(ii  , jj  , kk  , 1) = q + u_x + u_y + u_z + 0.25 * (+ u_xy + u_yz + u_zx )
 
 
 !   v
-    s_112 = src(2, i-1, j-1, k  )
-    s_121 = src(2, i-1, j  , k-1)
-    s_122 = src(2, i-1, j  , k  )
-    s_123 = src(2, i-1, j  , k+1)
-    s_132 = src(2, i-1, j+1, k  )
+    s_112 = src(i-1, j-1, k  , 2)
+    s_121 = src(i-1, j  , k-1, 2)
+    s_122 = src(i-1, j  , k  , 2)
+    s_123 = src(i-1, j  , k+1, 2)
+    s_132 = src(i-1, j+1, k  , 2)
         
-    s_211 = src(2, i  , j-1, k-1)
-    s_212 = src(2, i  , j-1, k  )
-    s_213 = src(2, i  , j-1, k+1)
-    s_221 = src(2, i  , j  , k-1)
-    s_222 = src(2, i  , j  , k  )
-    s_223 = src(2, i  , j  , k+1)
-    s_231 = src(2, i  , j+1, k-1)
-    s_232 = src(2, i  , j+1, k  )
-    s_233 = src(2, i  , j+1, k+1)
+    s_211 = src(i  , j-1, k-1, 2)
+    s_212 = src(i  , j-1, k  , 2)
+    s_213 = src(i  , j-1, k+1, 2)
+    s_221 = src(i  , j  , k-1, 2)
+    s_222 = src(i  , j  , k  , 2)
+    s_223 = src(i  , j  , k+1, 2)
+    s_231 = src(i  , j+1, k-1, 2)
+    s_232 = src(i  , j+1, k  , 2)
+    s_233 = src(i  , j+1, k+1, 2)
             
-    s_312 = src(2, i+1, j-1, k  )
-    s_321 = src(2, i+1, j  , k-1)
-    s_322 = src(2, i+1, j  , k  )
-    s_323 = src(2, i+1, j  , k+1)
-    s_332 = src(2, i+1, j+1, k  )
+    s_312 = src(i+1, j-1, k  , 2)
+    s_321 = src(i+1, j  , k-1, 2)
+    s_322 = src(i+1, j  , k  , 2)
+    s_323 = src(i+1, j  , k+1, 2)
+    s_332 = src(i+1, j+1, k  , 2)
 
     v_x = ( s_322 - s_122 ) * 0.25
     v_y = ( s_232 - s_212 ) * 0.25
@@ -476,38 +475,38 @@
 
     q = s_222 + 0.125 * ( v_xx + v_yy + v_zz )
     
-    dst(2, ii-1, jj-1, kk-1) = q - v_x - v_y - v_z + 0.25 * (+ v_xy + v_yz + v_zx )
-    dst(2, ii  , jj-1, kk-1) = q + v_x - v_y - v_z + 0.25 * (- v_xy + v_yz + v_zx )
-    dst(2, ii-1, jj  , kk-1) = q - v_x + v_y - v_z + 0.25 * (- v_xy - v_yz + v_zx )
-    dst(2, ii  , jj  , kk-1) = q + v_x + v_y - v_z + 0.25 * (+ v_xy - v_yz - v_zx )
-    dst(2, ii-1, jj-1, kk  ) = q - v_x - v_y + v_z + 0.25 * (+ v_xy - v_yz - v_zx )
-    dst(2, ii  , jj-1, kk  ) = q + v_x - v_y + v_z + 0.25 * (- v_xy - v_yz + v_zx )
-    dst(2, ii-1, jj  , kk  ) = q - v_x + v_y + v_z + 0.25 * (- v_xy + v_yz - v_zx )
-    dst(2, ii  , jj  , kk  ) = q + v_x + v_y + v_z + 0.25 * (+ v_xy + v_yz + v_zx )
+    dst(ii-1, jj-1, kk-1, 2) = q - v_x - v_y - v_z + 0.25 * (+ v_xy + v_yz + v_zx )
+    dst(ii  , jj-1, kk-1, 2) = q + v_x - v_y - v_z + 0.25 * (- v_xy + v_yz + v_zx )
+    dst(ii-1, jj  , kk-1, 2) = q - v_x + v_y - v_z + 0.25 * (- v_xy - v_yz + v_zx )
+    dst(ii  , jj  , kk-1, 2) = q + v_x + v_y - v_z + 0.25 * (+ v_xy - v_yz - v_zx )
+    dst(ii-1, jj-1, kk  , 2) = q - v_x - v_y + v_z + 0.25 * (+ v_xy - v_yz - v_zx )
+    dst(ii  , jj-1, kk  , 2) = q + v_x - v_y + v_z + 0.25 * (- v_xy - v_yz + v_zx )
+    dst(ii-1, jj  , kk  , 2) = q - v_x + v_y + v_z + 0.25 * (- v_xy + v_yz - v_zx )
+    dst(ii  , jj  , kk  , 2) = q + v_x + v_y + v_z + 0.25 * (+ v_xy + v_yz + v_zx )
 
 
 !   w
-    s_112 = src(3, i-1, j-1, k  )
-    s_121 = src(3, i-1, j  , k-1)
-    s_122 = src(3, i-1, j  , k  )
-    s_123 = src(3, i-1, j  , k+1)
-    s_132 = src(3, i-1, j+1, k  )
+    s_112 = src(i-1, j-1, k  , 3)
+    s_121 = src(i-1, j  , k-1, 3)
+    s_122 = src(i-1, j  , k  , 3)
+    s_123 = src(i-1, j  , k+1, 3)
+    s_132 = src(i-1, j+1, k  , 3)
         
-    s_211 = src(3, i  , j-1, k-1)
-    s_212 = src(3, i  , j-1, k  )
-    s_213 = src(3, i  , j-1, k+1)
-    s_221 = src(3, i  , j  , k-1)
-    s_222 = src(3, i  , j  , k  )
-    s_223 = src(3, i  , j  , k+1)
-    s_231 = src(3, i  , j+1, k-1)
-    s_232 = src(3, i  , j+1, k  )
-    s_233 = src(3, i  , j+1, k+1)
+    s_211 = src(i  , j-1, k-1, 3)
+    s_212 = src(i  , j-1, k  , 3)
+    s_213 = src(i  , j-1, k+1, 3)
+    s_221 = src(i  , j  , k-1, 3)
+    s_222 = src(i  , j  , k  , 3)
+    s_223 = src(i  , j  , k+1, 3)
+    s_231 = src(i  , j+1, k-1, 3)
+    s_232 = src(i  , j+1, k  , 3)
+    s_233 = src(i  , j+1, k+1, 3)
             
-    s_312 = src(3, i+1, j-1, k  )
-    s_321 = src(3, i+1, j  , k-1)
-    s_322 = src(3, i+1, j  , k  )
-    s_323 = src(3, i+1, j  , k+1)
-    s_332 = src(3, i+1, j+1, k  )
+    s_312 = src(i+1, j-1, k  , 3)
+    s_321 = src(i+1, j  , k-1, 3)
+    s_322 = src(i+1, j  , k  , 3)
+    s_323 = src(i+1, j  , k+1, 3)
+    s_332 = src(i+1, j+1, k  , 3)
 
     w_x = ( s_322 - s_122 ) * 0.25
     w_y = ( s_232 - s_212 ) * 0.25
@@ -549,14 +548,14 @@
 
     q = s_222 + 0.125 * ( w_xx + w_yy + w_zz )
     
-    dst(3, ii-1, jj-1, kk-1) = q - w_x - w_y - w_z + 0.25 * (+ w_xy + w_yz + w_zx )
-    dst(3, ii  , jj-1, kk-1) = q + w_x - w_y - w_z + 0.25 * (- w_xy + w_yz + w_zx )
-    dst(3, ii-1, jj  , kk-1) = q - w_x + w_y - w_z + 0.25 * (- w_xy - w_yz + w_zx )
-    dst(3, ii  , jj  , kk-1) = q + w_x + w_y - w_z + 0.25 * (+ w_xy - w_yz - w_zx )
-    dst(3, ii-1, jj-1, kk  ) = q - w_x - w_y + w_z + 0.25 * (+ w_xy - w_yz - w_zx )
-    dst(3, ii  , jj-1, kk  ) = q + w_x - w_y + w_z + 0.25 * (- w_xy - w_yz + w_zx )
-    dst(3, ii-1, jj  , kk  ) = q - w_x + w_y + w_z + 0.25 * (- w_xy + w_yz - w_zx )
-    dst(3, ii  , jj  , kk  ) = q + w_x + w_y + w_z + 0.25 * (+ w_xy + w_yz + w_zx )
+    dst(ii-1, jj-1, kk-1, 3) = q - w_x - w_y - w_z + 0.25 * (+ w_xy + w_yz + w_zx )
+    dst(ii  , jj-1, kk-1, 3) = q + w_x - w_y - w_z + 0.25 * (- w_xy + w_yz + w_zx )
+    dst(ii-1, jj  , kk-1, 3) = q - w_x + w_y - w_z + 0.25 * (- w_xy - w_yz + w_zx )
+    dst(ii  , jj  , kk-1, 3) = q + w_x + w_y - w_z + 0.25 * (+ w_xy - w_yz - w_zx )
+    dst(ii-1, jj-1, kk  , 3) = q - w_x - w_y + w_z + 0.25 * (+ w_xy - w_yz - w_zx )
+    dst(ii  , jj-1, kk  , 3) = q + w_x - w_y + w_z + 0.25 * (- w_xy - w_yz + w_zx )
+    dst(ii-1, jj  , kk  , 3) = q - w_x + w_y + w_z + 0.25 * (- w_xy + w_yz - w_zx )
+    dst(ii  , jj  , kk  , 3) = q + w_x + w_y + w_z + 0.25 * (+ w_xy + w_yz + w_zx )
 
   end do
   end do
@@ -656,7 +655,7 @@
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  time, time_avr
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
   real, dimension(3)                                        ::  org, pit
   character(64)                                             ::  fname
 
@@ -684,11 +683,11 @@
   write(16) step, time
 
   if ( gs /= 0 ) then
-    write(16) ((((v(l,i,j,k),l=1,3),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
+    write(16) ((((v(i,j,k,l),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g),l=1,3)
   else
-    write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
+    write(16) ((((v(i,j,k,l),i=1,ix),j=1,jx),k=1,kx),l=1,3)
   end if
-  
+
   if ( avs == 0 ) then
     write(16) step_avr, time_avr
   end if
@@ -754,7 +753,7 @@
   if ( gs == 0 ) then
     read(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
   else
-    read(16) (((s(i,j,k),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+    read(16) (((s(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
   end if
   
   if ( avs == 0 ) then
@@ -785,7 +784,7 @@
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
   character(64)                                             ::  fname
 
   ix = sz(1)
@@ -816,11 +815,11 @@
   read(16) x_org, y_org, z_org
   read(16) dx, dy, dz
   read(16) step, time
-  
+
   if ( gs == 0 ) then
-    read(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
+    read(16) ((((v(i,j,k,l),i=1,ix),j=1,jx),k=1,kx),l=1,3)
   else
-    read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
+    read(16) ((((v(i,j,k,l),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g),l=1,3)
   end if
 
   if ( avs == 0 ) then
@@ -851,7 +850,7 @@
   integer, dimension(3)                                     ::  sz
   real                                                      ::  scale, u_ref, v_ref, w_ref, refv, rr
   double precision                                          ::  flop
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -875,9 +874,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    v(1,i,j,k) = ( v(1,i,j,k) * rr + u_ref ) * scale
-    v(2,i,j,k) = ( v(2,i,j,k) * rr + v_ref ) * scale
-    v(3,i,j,k) = ( v(3,i,j,k) * rr + w_ref ) * scale
+    v(i,j,k,1) = ( v(i,j,k,1) * rr + u_ref ) * scale
+    v(i,j,k,2) = ( v(i,j,k,2) * rr + v_ref ) * scale
+    v(i,j,k,3) = ( v(i,j,k,3) * rr + w_ref ) * scale
   end do
   end do
   end do
@@ -906,7 +905,7 @@
   integer, dimension(3)                                     ::  sz
   real                                                      ::  u_ref, v_ref, w_ref, unit_v, scale, unit
   double precision                                          ::  flop
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout, vin
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vout, vin
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -930,9 +929,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vout(1,i,j,k) = ( vin(1,i,j,k) * scale - u_ref ) * unit
-    vout(2,i,j,k) = ( vin(2,i,j,k) * scale - v_ref ) * unit
-    vout(3,i,j,k) = ( vin(3,i,j,k) * scale - w_ref ) * unit
+    vout(i,j,k,1) = ( vin(i,j,k,1) * scale - u_ref ) * unit
+    vout(i,j,k,2) = ( vin(i,j,k,2) * scale - v_ref ) * unit
+    vout(i,j,k,3) = ( vin(i,j,k,3) * scale - w_ref ) * unit
   end do
   end do
   end do
@@ -960,7 +959,7 @@
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  u, v, w, x, y, z, actv
   double precision                                          ::  flop, av, rm
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vn, vo
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vn, vo
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
   double precision, dimension(2)                            ::  d
 
@@ -988,14 +987,14 @@
 
     actv = real(ibits(bx(i,j,k), State, 1))
     
-    u = dble(vn(1,i,j,k))
-    v = dble(vn(2,i,j,k))
-    w = dble(vn(3,i,j,k))
+    u = dble(vn(i,j,k,1))
+    v = dble(vn(i,j,k,2))
+    w = dble(vn(i,j,k,3))
     av = av + sqrt(u*u + v*v + w*w)*actv
     
-    x = u - dble(vo(1,i,j,k))
-    y = v - dble(vo(2,i,j,k))
-    z = w - dble(vo(3,i,j,k))
+    x = u - dble(vo(i,j,k,1))
+    y = v - dble(vo(i,j,k,2))
+    z = w - dble(vo(i,j,k,3))
     rm = rm + sqrt(x*x + y*y + z*z)*actv
 
   end do
@@ -1084,7 +1083,7 @@
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop
   real                                                      ::  nadd, val1, val2
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, avr
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, avr
 
   ix = sz(1)
   jx = sz(2)
@@ -1103,9 +1102,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    avr(1,i,j,k) = val1 * avr(1,i,j,k) + val2 * v(1,i,j,k)
-    avr(2,i,j,k) = val1 * avr(2,i,j,k) + val2 * v(2,i,j,k)
-    avr(3,i,j,k) = val1 * avr(3,i,j,k) + val2 * v(3,i,j,k)
+    avr(i,j,k,1) = val1 * avr(i,j,k,1) + val2 * v(i,j,k,1)
+    avr(i,j,k,2) = val1 * avr(i,j,k,2) + val2 * v(i,j,k,2)
+    avr(i,j,k,3) = val1 * avr(i,j,k,3) + val2 * v(i,j,k,3)
   end do
   end do
   end do
@@ -1176,7 +1175,7 @@
     integer, dimension(3)                                     ::  sz
     real                                                      ::  u1, u2, u3, vx, vy, vz
     double precision                                          ::  flop
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, tp
     real, dimension(0:3)                                      ::  v00
 
@@ -1196,9 +1195,9 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      u1 = v(1,i,j,k) - vx
-      u2 = v(2,i,j,k) - vy
-      u3 = v(3,i,j,k) - vz
+      u1 = v(i,j,k,1) - vx
+      u2 = v(i,j,k,2) - vy
+      u3 = v(i,j,k,3) - vz
       tp(i,j,k) = 0.5*(u1*u1 + u2*u2 + u3*u3) + p(i,j,k)
     end do
     end do
@@ -1226,7 +1225,7 @@
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     real                                                      ::  v_min, v_max, u1, u2, u3, uu, flop, vx, vy, vz
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
@@ -1253,9 +1252,9 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-			u1 = v(1,i,j,k)-vx
-			u2 = v(2,i,j,k)-vy
-			u3 = v(3,i,j,k)-vz
+			u1 = v(i,j,k,1)-vx
+			u2 = v(i,j,k,2)-vy
+			u3 = v(i,j,k,3)-vz
 			uu = sqrt( u1*u1 + u2*u2 + u3*u3 )
       v_min = min(v_min, uu)
       v_max = max(v_max, uu)
@@ -1329,7 +1328,7 @@
     integer, dimension(3)                                     ::  sz
     real                                                      ::  u1, u2, u3
     real, dimension(3)                                        ::  val
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  var
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  var
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
@@ -1350,9 +1349,9 @@
     do j=1-g, jx+g
     do i=1-g, ix+g
         bvx = ibits(bv(i,j,k), State, 1)
-        var(1,i,j,k) = u1 * real(bvx)
-        var(2,i,j,k) = u2 * real(bvx)
-        var(3,i,j,k) = u3 * real(bvx)
+        var(i,j,k,1) = u1 * real(bvx)
+        var(i,j,k,2) = u2 * real(bvx)
+        var(i,j,k,3) = u3 * real(bvx)
     end do
     end do
     end do

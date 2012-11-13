@@ -285,6 +285,10 @@ void FFV::allocArray_Main(double &total)
   if ( !(d_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
+  // d_vf
+  if ( !(d_vf = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  
   // d_vc
   if ( !(d_vc = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;

@@ -151,11 +151,11 @@ private:
   
   // Vector3D
   REAL_TYPE *d_v;
+  REAL_TYPE *d_vf;
   REAL_TYPE *d_vc;
   REAL_TYPE *d_v0;
   REAL_TYPE *d_wv;
   REAL_TYPE *d_abf;
-  REAL_TYPE *d_vf0;
   REAL_TYPE *d_av;
   REAL_TYPE *d_wo;
   REAL_TYPE *d_qbc;

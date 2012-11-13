@@ -75,7 +75,7 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        size_t l = _F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd); // k方向が重力方向
+        size_t l = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd); // k方向が重力方向
         v[l] += d * t[m]* GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の計算なので，状態を参照
       }
     }

@@ -56,7 +56,7 @@
     real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
     real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
     real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cvf
     real, dimension(0:3)                                      ::  v00
@@ -252,9 +252,9 @@
       
       ! 速度指定の場合にMUSCLスキームの参照先として，固体内にテンポラリに与えた値を使う
       if ( (b_e2 == 0)  ) then  ! 7 flops
-        Ue2 = u_ref2    - v(1, i+1,j  ,k  )
-        Ve2 = wm1*v_ref + v(2, i+1,j  ,k  )*wm2
-        We2 = wm1*w_ref + v(3, i+1,j  ,k  )*wm2
+        Ue2 = u_ref2    - v(i+1,j  ,k  , 1)
+        Ve2 = wm1*v_ref + v(i+1,j  ,k  , 2)*wm2
+        We2 = wm1*w_ref + v(i+1,j  ,k  , 3)*wm2
         !Ve2 = v_ref2 - v(2, i+1,j  ,k  )
         !We2 = w_ref2 - v(3, i+1,j  ,k  )
       endif
@@ -280,9 +280,9 @@
       end if
       
       if ( (b_w2 == 0)  ) then ! 7 flops
-        Uw2 = u_ref2    - v(1, i-1,j  ,k  )
-        Vw2 = wm1*v_ref + v(2, i-1,j  ,k  )*wm2
-        Ww2 = wm1*w_ref + v(3, i-1,j  ,k  )*wm2
+        Uw2 = u_ref2    - v(i-1,j  ,k  , 1)
+        Vw2 = wm1*v_ref + v(i-1,j  ,k  , 2)*wm2
+        Ww2 = wm1*w_ref + v(i-1,j  ,k  , 3)*wm2
         !Vw2 = v_ref2 - v(2, i-1,j  ,k  )
         !Ww2 = w_ref2 - v(3, i-1,j  ,k  )
       end if
@@ -343,9 +343,9 @@
       ! Y方向 ---------------------------------------
       
       if ( (b_n2 == 0)  ) then
-        Un2 = wm1*u_ref + v(1, i  ,j+1,k  )*wm2
-        Vn2 = v_ref2    - v(2, i  ,j+1,k  )
-        Wn2 = wm1*w_ref + v(3, i  ,j+1,k  )*wm2
+        Un2 = wm1*u_ref + v(i  ,j+1,k  , 1)*wm2
+        Vn2 = v_ref2    - v(i  ,j+1,k  , 2)
+        Wn2 = wm1*w_ref + v(i  ,j+1,k  , 3)*wm2
         !Un2 = u_ref2 - v(1, i  ,j+1,k  )
         !Wn2 = w_ref2 - v(3, i  ,j+1,k  )
       endif
@@ -370,9 +370,9 @@
       endif
       
       if ( (b_s2 == 0)  ) then
-        Us2 = wm1*u_ref + v(1, i  ,j-1,k  )*wm2
-        Vs2 = v_ref2    - v(2, i  ,j-1,k  )
-        Ws2 = wm1*w_ref + v(3, i  ,j-1,k  )*wm2
+        Us2 = wm1*u_ref + v(i  ,j-1,k  , 1)*wm2
+        Vs2 = v_ref2    - v(i  ,j-1,k  , 2)
+        Ws2 = wm1*w_ref + v(i  ,j-1,k  , 3)*wm2
         !Us2 = u_ref2 - v(1, i  ,j-1,k  )
         !Ws2 = w_ref2 - v(3, i  ,j-1,k  )
       endif
@@ -434,9 +434,9 @@
       
       ! 壁面の場合の参照速度の修正
       if ( (b_t2 == 0)  ) then
-        Ut2 = wm1*u_ref + v(1, i  ,j  ,k+1)*wm2
-        Vt2 = wm1*v_ref + v(2, i  ,j  ,k+1)*wm2
-        Wt2 = w_ref2    - v(3, i  ,j  ,k+1)
+        Ut2 = wm1*u_ref + v(i  ,j  ,k+1, 1)*wm2
+        Vt2 = wm1*v_ref + v(i  ,j  ,k+1, 2)*wm2
+        Wt2 = w_ref2    - v(i  ,j  ,k+1, 3)
         !Ut2 = u_ref2 - v(1, i  ,j  ,k+1)
         !Vt2 = v_ref2 - v(2, i  ,j  ,k+1)
       end if
@@ -461,9 +461,9 @@
       end if
       
       if ( (b_b2 == 0)  ) then
-        Ub2 = wm1*u_ref + v(1, i  ,j  ,k-1)*wm2
-        Vb2 = wm1*v_ref + v(2, i  ,j  ,k-1)*wm2
-        Wb2 = w_ref2    - v(3, i  ,j  ,k-1)
+        Ub2 = wm1*u_ref + v(i  ,j  ,k-1, 1)*wm2
+        Vb2 = wm1*v_ref + v(i  ,j  ,k-1, 2)*wm2
+        Wb2 = w_ref2    - v(i  ,j  ,k-1, 3)
         !Ub2 = u_ref2 - v(1, i  ,j  ,k-1)
         !Vb2 = v_ref2 - v(2, i  ,j  ,k-1)
       end if
@@ -628,9 +628,9 @@
            - ww_b * c_b ) * dh1 ! > 2*6*3 = 36 flops
 			
       ! 対流項と粘性項の和 > 4*3 = 12 flops
-      wv(1,i,j,k) = -cnv_u*dh1 + beta*EX*vcs
-      wv(2,i,j,k) = -cnv_v*dh1 + beta*EY*vcs
-      wv(3,i,j,k) = -cnv_w*dh1 + beta*EZ*vcs
+      wv(i,j,k,1) = -cnv_u*dh1 + beta*EX*vcs
+      wv(i,j,k,2) = -cnv_v*dh1 + beta*EY*vcs
+      wv(i,j,k,3) = -cnv_w*dh1 + beta*EZ*vcs
     end do
     end do
     end do
@@ -674,7 +674,7 @@
     real                                                      ::  c1, c2, c3, c4, c5, c6
     real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
@@ -733,15 +733,17 @@
       N_t = real(ibits(bpx, bc_n_T, 1))  ! t
       
       ! 疑似ベクトル
-      Up0 = vc(1, i  ,j  ,k  )
-      Vp0 = vc(2, i  ,j  ,k  )
-      Wp0 = vc(3, i  ,j  ,k  )
-      Uw0 = vc(1, i-1,j  ,k  )
-      Ue0 = vc(1, i+1,j  ,k  )
-      Vs0 = vc(2, i  ,j-1,k  )
-      Vn0 = vc(2, i  ,j+1,k  )
-      Wb0 = vc(3, i  ,j  ,k-1)
-      Wt0 = vc(3, i  ,j  ,k+1)      
+      Uw0 = vc(i-1,j  ,k  , 1)
+      Up0 = vc(i  ,j  ,k  , 1)
+      Ue0 = vc(i+1,j  ,k  , 1)
+
+      Vs0 = vc(i  ,j-1,k  , 2)
+      Vp0 = vc(i  ,j  ,k  , 2)
+      Vn0 = vc(i  ,j+1,k  , 2)
+
+      Wb0 = vc(i  ,j  ,k-1, 3)
+      Wp0 = vc(i  ,j  ,k  , 3)
+      Wt0 = vc(i  ,j  ,k+1, 3)
       
       ! 壁面による修正 (0-solid / 1-fluid) > 6 flop
       b_w = real( ibits(bv(i-1,j  ,k  ), State, 1) )
@@ -787,9 +789,9 @@
                   - (Wb - dd * pzb) * c5 ) * actv
       
       ! セルセンタの速度更新 15flop
-      v(1,i,j,k) = ( Up0-px*dd )*actv + r_actv*u_ref
-      v(2,i,j,k) = ( Vp0-py*dd )*actv + r_actv*v_ref
-      v(3,i,j,k) = ( Wp0-pz*dd )*actv + r_actv*w_ref
+      v(i,j,k,1) = ( Up0-px*dd )*actv + r_actv*u_ref
+      v(i,j,k,2) = ( Vp0-py*dd )*actv + r_actv*v_ref
+      v(i,j,k,3) = ( Wp0-pz*dd )*actv + r_actv*w_ref
 
     end do
     end do
@@ -821,7 +823,7 @@
     real                                                      ::  u_ref, v_ref, w_ref
     real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -903,7 +905,7 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  actv, dt
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vc, v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
     
     ix = sz(1)
@@ -929,9 +931,9 @@
     do i=1,ix
       actv = dt * real(ibits(bd(i,j,k), State, 1))
 
-      vc(1,i,j,k) = v(1,i,j,k) + vc(1,i,j,k)* actv
-      vc(2,i,j,k) = v(2,i,j,k) + vc(2,i,j,k)* actv
-      vc(3,i,j,k) = v(3,i,j,k) + vc(3,i,j,k)* actv
+      vc(i,j,k,1) = v(i,j,k,1) + vc(i,j,k,1)* actv
+      vc(i,j,k,2) = v(i,j,k,2) + vc(i,j,k,2)* actv
+      vc(i,j,k,3) = v(i,j,k,3) + vc(i,j,k,3)* actv
     end do
     end do
     end do
@@ -940,6 +942,7 @@
     
     return
     end subroutine euler_explicit
+
 
 !> ********************************************************************
 !! @brief 粘性項の計算（Euler陽解法，壁面境界の影響のみ考慮する）
@@ -969,7 +972,7 @@
     real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
     real                                                      ::  EX, EY, EZ, rei, cf, dt, uq, vq, wq, actv
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v, wv, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vc
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
     
@@ -986,29 +989,29 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      Up0 = v(1, i  ,j  ,k  )
-      Uw1 = v(1, i-1,j  ,k  )
-      Ue1 = v(1, i+1,j  ,k  )
-      Us1 = v(1, i  ,j-1,k  )
-      Un1 = v(1, i  ,j+1,k  )
-      Ub1 = v(1, i  ,j  ,k-1)
-      Ut1 = v(1, i  ,j  ,k+1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+      Us1 = v(i  ,j-1,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1)
+      Ub1 = v(i  ,j  ,k-1, 1)
+      Ut1 = v(i  ,j  ,k+1, 1)
 			
-      Vp0 = v(2, i  ,j  ,k  )
-      Vw1 = v(2, i-1,j  ,k  )
-      Ve1 = v(2, i+1,j  ,k  )
-      Vs1 = v(2, i  ,j-1,k  )
-      Vn1 = v(2, i  ,j+1,k  )
-      Vb1 = v(2, i  ,j  ,k-1)
-      Vt1 = v(2, i  ,j  ,k+1)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2)
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+      Vb1 = v(i  ,j  ,k-1, 2)
+      Vt1 = v(i  ,j  ,k+1, 2)
 
-      Wp0 = v(3, i  ,j  ,k  )
-      Ww1 = v(3, i-1,j  ,k  )
-      We1 = v(3, i+1,j  ,k  )
-      Ws1 = v(3, i  ,j-1,k  )
-      Wn1 = v(3, i  ,j+1,k  )
-      Wb1 = v(3, i  ,j  ,k-1)
-      Wt1 = v(3, i  ,j  ,k+1)
+      Wp0 = v(i  ,j  ,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3)
+      Ws1 = v(i  ,j-1,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3)
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
       
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
@@ -1094,9 +1097,9 @@
          + ( Wt1 - Wp0 ) * c_t &
          + ( Wb1 - Wp0 ) * c_b
 			
-      vc(1,i,j,k) = ( wv(1,i,j,k) + EX*dh2 )
-      vc(2,i,j,k) = ( wv(2,i,j,k) + EY*dh2 )
-      vc(3,i,j,k) = ( wv(3,i,j,k) + EZ*dh2 )
+      vc(i,j,k,1) = ( wv(i,j,k,1) + EX*dh2 )
+      vc(i,j,k,2) = ( wv(i,j,k,2) + EY*dh2 )
+      vc(i,j,k,3) = ( wv(i,j,k,3) + EZ*dh2 )
     end do
     end do
     end do
@@ -1626,7 +1629,7 @@
     real                                                        ::  fs, aaa, Vmag, dis, tw, up1
     real                                                        ::  u_ref, v_ref, w_ref, u1, u2, u3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vt
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(0:3)                                        ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
 
@@ -1646,17 +1649,17 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      DUDX=(v(1, i+1,j,k)-v(1, i-1,j,k)) * dd
-      DUDY=(v(1, i,j+1,k)-v(1, i,j-1,k)) * dd
-      DUDZ=(v(1, i,j,k+1)-v(1, i,j,k-1)) * dd
+      DUDX=(v(i+1,j  ,k  , 1)-v(i-1,j  ,k  , 1)) * dd
+      DUDY=(v(i  ,j+1,k  , 1)-v(i  ,j-1,k  , 1)) * dd
+      DUDZ=(v(i  ,j  ,k+1, 1)-v(i  ,j  ,k-1, 1)) * dd
 
-      DVDX=(v(2, i+1,j,k)-v(2, i-1,j,k)) * dd
-      DVDY=(v(2, i,j+1,k)-v(2, i,j-1,k)) * dd
-      DVDZ=(v(2, i,j,k+1)-v(2, i,j,k-1)) * dd
+      DVDX=(v(i+1,j  ,k  , 2)-v(i-1,j  ,k  , 2)) * dd
+      DVDY=(v(i  ,j+1,k  , 2)-v(i  ,j-1,k  , 2)) * dd
+      DVDZ=(v(i  ,j  ,k+1, 2)-v(i  ,j  ,k-1, 2)) * dd
 
-      DWDX=(v(3, i+1,j,k)-v(3, i-1,j,k)) * dd
-      DWDY=(v(3, i,j+1,k)-v(3, i,j-1,k)) * dd
-      DWDZ=(v(3, i,j,k+1)-v(3, i,j,k-1)) * dd
+      DWDX=(v(i+1,j  ,k  , 3)-v(i-1,j  ,k  , 3)) * dd
+      DWDY=(v(i  ,j+1,k  , 3)-v(i  ,j-1,k  , 3)) * dd
+      DWDZ=(v(i  ,j  ,k+1, 3)-v(i  ,j  ,k-1, 3)) * dd
 
       D1  = DUDX*DUDX + DVDY*DVDY + DWDZ*DWDZ
       c1  = DUDY+DVDX
@@ -1670,9 +1673,9 @@
       !AAA= bx(i,j,k) * bx(i,j,k)   &
       !    *bx(i,j,k) * bx(i,j,k)   &
       !    *bx(i,j,k) * bx(i,j,k)
-      u1 = v(1,i,j,k) - u_ref
-      u2 = v(2,i,j,k) - v_ref
-      u3 = v(3,i,j,k) - w_ref
+      u1 = v(i,j,k,1) - u_ref
+      u2 = v(i,j,k,2) - v_ref
+      u3 = v(i,j,k,3) - w_ref
       Vmag = SQRT(u1*u1 + u2*u2 + u3*u3)
 
       IF ( (AAA < 1.0) .AND. (Vmag >= 0.001) ) THEN
@@ -1748,7 +1751,7 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vc, v, ab
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v, ab
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
     
@@ -1765,17 +1768,17 @@
     do i=1,ix
       actv = real(ibits(bd(i,j,k), State, 1))
       
-      ab_u = ab(1,i,j,k)
-      ab_v = ab(2,i,j,k)
-      ab_w = ab(3,i,j,k)
+      ab_u = ab(i,j,k,1)
+      ab_v = ab(i,j,k,2)
+      ab_w = ab(i,j,k,3)
       
-      ab(1,i,j,k) = vc(1,i,j,k)
-      ab(2,i,j,k) = vc(2,i,j,k)
-      ab(3,i,j,k) = vc(3,i,j,k)
+      ab(i,j,k,1) = vc(i,j,k,1)
+      ab(i,j,k,2) = vc(i,j,k,2)
+      ab(i,j,k,3) = vc(i,j,k,3)
 
-      vc(1,i,j,k) = ( v(1,i,j,k) + dt*0.5*( 3.0*vc(1,i,j,k)-ab_u ) )* actv + (1.0-actv)*u_ref
-      vc(2,i,j,k) = ( v(2,i,j,k) + dt*0.5*( 3.0*vc(2,i,j,k)-ab_v ) )* actv + (1.0-actv)*v_ref
-      vc(3,i,j,k) = ( v(3,i,j,k) + dt*0.5*( 3.0*vc(3,i,j,k)-ab_w ) )* actv + (1.0-actv)*w_ref
+      vc(i,j,k,1) = ( v(i,j,k,1) + dt*0.5*( 3.0*vc(i,j,k,1)-ab_u ) )* actv + (1.0-actv)*u_ref
+      vc(i,j,k,2) = ( v(i,j,k,2) + dt*0.5*( 3.0*vc(i,j,k,2)-ab_v ) )* actv + (1.0-actv)*v_ref
+      vc(i,j,k,3) = ( v(i,j,k,3) + dt*0.5*( 3.0*vc(i,j,k,3)-ab_w ) )* actv + (1.0-actv)*w_ref
     end do
     end do
     end do
@@ -2142,7 +2145,7 @@
     real                                                      ::  T_w, U_t, U_t0, Yp, dut
     real                                                      ::  u_ref, v_ref, w_ref, u1, u2, u3, ug
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -2173,9 +2176,9 @@
     do i=1,ix
       bpx = bp(i,j,k)
 
-      u1 = v(1,i,j,k) - u_ref
-      u2 = v(2,i,j,k) - v_ref
-      u3 = v(3,i,j,k) - w_ref
+      u1 = v(i,j,k,1) - u_ref
+      u2 = v(i,j,k,2) - v_ref
+      u3 = v(i,j,k,3) - w_ref
       ug = sqrt(u1*u1 + u2*u2 + u3*u3)
       U_t0 = 0.0
       
