@@ -777,7 +777,6 @@ int FFV::Initialize(int argc, char **argv)
 			break;
   }
   
-  mark();
   
   // メモリ使用量の表示
   Hostonly_

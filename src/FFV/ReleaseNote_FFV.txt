@@ -9,7 +9,7 @@ Release Note
 
 #######################################
 
-Ver 0.9.5   13 Nov. 2012
+Ver 0.9.5   15 Nov. 2012
   - PLOT3D関連ソースをPLOT3Dディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加
   - セルフェイス速度d_vf
@@ -17,8 +17,9 @@ Ver 0.9.5   13 Nov. 2012
   - makeの方法を変更．コマンドラインでマクロを指定し，分岐
       $ make FFVC=intel     << intel
       $ make FFVC=gnu       << gnu
-      $ make FFVC=fujitsu   << FX10, K
-      $ make FFVC=ibm       << BG
+      $ make FFVC=fx        << FX10, K
+      $ make FFVC=ibm       << IBM BG
+      あるいは，makefileの先頭にマクロを定義する
   - OpenMPのDOループはSTATICに固定
   
 Ver 0.8.9   18 Oct. 2012

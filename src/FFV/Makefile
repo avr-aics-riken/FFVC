@@ -8,6 +8,8 @@
 #
 ###################################################################
 
+// Default environment
+FFVC=intel
 
 ### compiler detection
 

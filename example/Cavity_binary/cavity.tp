@@ -45,7 +45,6 @@ Steer {
   File_IO {
     Unit_of_File           = "Non_Dimensional"
     Guide_Out              = "Without"
-    Format                 = "sph"
     Debug_Divergence       = "Off"
     Instant_Interval_Type  = "step"
     Instant_Interval       = 10
@@ -65,27 +64,23 @@ Steer {
 
   Geometry_Model {
     Polylib_File          = "hoge.tp"
-    Fill_Medium           = "air"
-    Hint_of_Filling_Fluid = "y_plus"
+    Fluid_Medium_for_Fill = "air"
+    Solid_Medium_for_Fill = "fe"
+    Hint_of_Filling_Fluid = "z_plus"
   }
 
   Iteration {
     Flow {
       Poisson {
-        Iteration     = 100
+        Iteration     = 50
         Epsilon       = 1.0e-4
-        //Omega         = 1.1
-        //Norm          = "r_r0"
-        //Linear_Solver = "sor2sma"
-
-        Omega         = 1.0
-        Norm          = "r_b"
-        Linear_Solver = "PBiCGSTAB"
-
+        Omega         = 1.1
+        Norm          = "r_r0"
+        Linear_Solver = "sor2sma"
         Comm_mode     = "async"
       }
       VP {
-        Iteration     = 20
+        Iteration     = 100
         Epsilon       = 1.0e-4
         Norm          = "v_div_max"
       }
@@ -152,19 +147,20 @@ Steer {
   }
 
   PLOT3D_Options {
-    filename       = ""
-    grid_kind      = "single_grid"
-    grid_mobility  = "immovable"
-    state_of_time  = "unsteady"
-    Iblank         = "off"
-    Dimension      = "3D"
-    Format_type    = "unformatted"
+    filename         = ""
+    grid_kind        = "single_grid"
+    grid_mobility    = "immovable"
+    state_of_time    = "unsteady"
+    set_iblank_flag  = "on"
+    Dimension        = "3D"
+    Format_type      = "unformatted"
     Output_xyz       = "on"
     Output_q         = "on"
     Output_function  = "on"
     Output_func_name = "on"
     Output_fvbnd     = "on"
     Divide_func      = "off"
+    real_type        = "float"
   }
 
   Reference_Frame {
@@ -174,10 +170,26 @@ Steer {
   Start_Condition {
     start_type         = "initial"
     Restart_step       = 200
-    Prefix_of_Coarse_Pressure = "prs_64_"
-    Prefix_of_Coarse_Velocity = "vel_64_"
-    dfi_file_pressure  = "prs_64_id000000.dfi"
-    dfi_file_velocity  = "vel_64_id000000.dfi"
+
+    Restart_from_Different_Nproc {
+      Staging = "on"
+      Prefix_of_dir = "hoge_restart_"
+      Prefix_of_Pressure = "prs_dr_"
+      Prefix_of_Velocity = "vel_dr_"
+    }
+
+    DFI_file {
+      pressure  = "prs_dr_.dfi"
+      velocity  = "vel_dr_.dfi"
+      //pressure  = "prs_64_id000000.dfi"
+      //velocity  = "vel_64_id000000.dfi"
+    }
+
+    Coarse_Restart {
+      Prefix_of_Pressure = "prs_64_"
+      Prefix_of_Velocity = "vel_64_"
+    }
+
     Initial_State {
       Density     = 1.0
       Pressure    = 0.0
@@ -202,7 +214,7 @@ Steer {
     Dt_Type            = "CFL_Reference_Velocity"
     Delta_T            = 0.2
     Period_Type        = "step"
-    Calculation_Period = 1000
+    Calculation_Period = 100
   }
 
   Treatment_of_Wall {
@@ -217,8 +229,8 @@ Steer {
   }
 
   Version_Info {
-    FFV       = 90
-    Flow_Base = 105
+    FFV       = 95
+    Flow_Base = 107
   }
 
 } //Steer

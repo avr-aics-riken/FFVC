@@ -471,7 +471,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_Pressure, m_step, dfi_mng[var_Pressure], pout) ) Exit(0);
   
-  
+
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
