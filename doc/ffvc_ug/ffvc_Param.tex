@@ -4,19 +4,19 @@
 \section{入力パラメータファイルの記述構文}
 %
 \subsection{パラメータ記述}
-textparserライブラリが扱うパラメータデータベースは，下記のようにノードの階層構造にリーフ（ラベル/値のペア）を格納した構造になっています．パラメータ値のうち，文字列についてはダブルクォーテーションにより囲みます．
+Textparserライブラリが扱うパラメータデータベースは，下記のようにノードの階層構造にリーフ（ラベル/値のペア）を格納した構造になっています．パラメータ値のうち，文字列についてはダブルクォーテーションにより囲みます．
 TextParserライブラリのExamplesディレクトリにパラメータの様々な記述例があるので，参考にしてください．
 
 {
 \small 
 \begin{program}
   Time_Control {
-    Acceleration_Type  = "Time"
-    Acceleration       = 1.0
-    Dt_Type            = "CFL_Reference_Velocity"
-    Delta_T            = 0.2
-    Period_Type        = "step"
-    Calculation_Period = 20
+    AccelerationType  = "Time"
+    Acceleration      = 1.0
+    DtType            = "CFL_Reference_Velocity"
+    DeltaT            = 0.2
+    PeriodType        = "step"
+    CalculationPeriod = 20
   }
 \end{program}
 }
@@ -52,8 +52,8 @@ polygon.tp & 入力幾何形状ファイル\\ \bottomrule
 DomainInfo & 計算領域情報\\
 Steer & ソルバー制御\\
 Parameter & 計算条件\\
-BC\_Table & 境界条件\\
-Medium\_Table & 媒質情報\\ \bottomrule
+BcTable & 境界条件\\
+MediumTable & 媒質情報\\ \bottomrule
 \end{tabular}
 \end{center}
 \label{tbl:param_tag}
@@ -86,15 +86,15 @@ $ ffvc input.tp
 {\small
 \begin{program}
 DomainInfo {
-  Unit_of_length  = "M"
-  Global_origin   = (-0.5, -0.5, -0.5   )
-  Global_region   = (1.0,  1.0,  1.0    )
-  Global_voxel    = (128   , 128   , 128   )
+  UnitOfLength  = "M"
+  GlobalOrigin  = (-0.5, -0.5, -0.5   )
+  GlobalRegion  = (1.0,  1.0,  1.0    )
+  GlobalVoxel   = (128   , 128   , 128   )
   
-  //Global_pitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
-  //Global_division = (1    , 1    , 1    )
+  //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
+  //GlobalDivision = (1    , 1    , 1    )
 
-  ActiveSubDomain_File = "hoge"
+  ActiveSubDomainFile = "hoge"
 }
 \end{program}
 }
@@ -440,33 +440,33 @@ Users & ユーザ例題\\ \bottomrule
 {\small
 \begin{program}
   File_IO {
-    Unit_of_File           = "Non_Dimensional"
-    Guide_Out              = "Without"
-    Debug_Divergence       = "Off"
-    Instant_Interval_Type  = "step"
-    Instant_Interval       = 1000
-    Averaged_Interval_Type = "Time"
-    Averaged_Interval      = 1000
-    Voxel_Output           = "off"
+    UnitOfFile           = "NonDimensional"
+    GuideOut             = "Without"
+    DebugDivergence      = "Off"
+    InstantIntervalType  = "step"
+    InstantInterval      = 1000
+    AveragedIntervalType = "Time"
+    AveragedInterval     = 1000
+    VoxelOutput          = "off"
     
     Output_Mode {
-      Mode                 = "specified"
-      Directory_Path       = "hoge"
+      Mode               = "specified"
+      Directory_Path     = "hoge"
     }
     
     Plot3d {
-      Option               = "on"
-      Interval_Type        = "step"
-      Interval             = 10
+      Option             = "on"
+      IntervalType       = "step"
+      Interval           = 10
     }
   }
 \end{program}
 }
 
 \textbf{表\ref{tbl:file_IO_parameter}}に指定するパラメータの内容を示します．
-Unit\_of\_Fileでは入出力する結果ファイルの単位を指定し，有次元か無次元を指定できます．
+UnitOfFileでは入出力する結果ファイルの単位を指定し，有次元か無次元を指定できます．
 
-Guide\_Outラベルで\lq\lq with\rq\rq を指定した場合の出力ガイドセルのサイズは\hyperlink{tgt:convection_term}{Convection\_Term}の項を参照してください．
+GuideOutラベルで\lq\lq with\rq\rq を指定した場合の出力ガイドセルのサイズは\hyperlink{tgt:convection_term}{Convection\_Term}の項を参照してください．
 
 
 \begin{table}[htdp]
@@ -475,28 +475,28 @@ Guide\_Outラベルで\lq\lq with\rq\rq を指定した場合の出力ガイド�
 \small
 \begin{tabular}{llll} \toprule
 ラベル & 指定項目 & ラベル & 指定内容 \\ \midrule
-Unit\_of\_File & 入出力ファイルの単位 & Dimensional & 有次元\\
-& & Non\_Dimensional & 無次元\\ \hline
-Guide\_Out & ガイドセル出力モード & with & ガイドセルを一緒に出力\\
+UnitOfFile & 入出力ファイルの単位 & Dimensional & 有次元\\
+& & NonDimensional & 無次元\\ \hline
+GuideOut & ガイドセル出力モード & with & ガイドセルを一緒に出力\\
 & & without & 内部領域のみ出力\\ \hline
-Debug\_divergence & デバッグ時のファイル出力 & On $|$ Off & $\nabla \cdot \bm{u}$の出力（無次元値）\\ \hline
-Instant\_Interval\_Type & 瞬時値の出力指定形式 & Step & ステップ数指定\\
+DebugDivergence & デバッグ時のファイル出力 & On $|$ Off & $\nabla \cdot \bm{u}$の出力（無次元値）\\ \hline
+InstantIntervalType & 瞬時値の出力指定形式 & Step & ステップ数指定\\
 & & Time & 時間間隔の指定\\
-Instant\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
-Averaged\_Interval\_Type & 平均値の出力指定形式 & Step & ステップ数指定\\
+InstantInterval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
+AveragedIntervalType & 平均値の出力指定形式 & Step & ステップ数指定\\
 & & Time & 時間間隔の指定\\
-Averaged\_Interval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
-Voxel\_Output & ボクセルファイルの出力指定 & | & off\\
+AveragedInterval & 出力間隔 & | & ステップ数$|$時間間隔\\ \hline
+VoxelOutput & ボクセルファイルの出力指定 & | & off\\
  & & bx & ビットボクセル\\
  & & svx & svx フォーマット\\ \hline
-Output\_Mode & & & \\
+OutputMode & & & \\
 Mode & 出力ディレクトリモード & current & ソルバー起動ディレクトリに出力\\
  & & specified & 指定ディレクトリに出力\\
  & & time\_slice & 出力時刻毎にディレクトリを作成して出力\\
 Directory\_Path & 出力ディレクトリを指定 & & ディレクトリパスを記述\\ \hline
 PLOT3D & & & \\
 Option & PLOT3D形式での出力 & On $|$ Off & \\
-Interval\_Type & 出力指定形式 & Step & ステップ数指定\\
+IntervalType & 出力指定形式 & Step & ステップ数指定\\
  & & Time & 時間間隔の指定\\
 Interval & 出力間隔 & | & ステップ数$|$時間間隔\\
 \bottomrule
@@ -506,7 +506,7 @@ Interval & 出力間隔 & | & ステップ数$|$時間間隔\\
 \end{table}
 
 
-Debug\_Divergenceは，デバッグのため$\nabla \cdot \bm{u}$の値を無次元で出力します．
+DebugDivergenceは，デバッグのため$\nabla \cdot \bm{u}$の値を無次元で出力します．
 
 Intervalのラベルにより，ファイル出力間隔を指定します．
 対象となる出力ファイルに対して，時刻またはステップ数によりファイル出力間隔を指定できます．
@@ -518,7 +518,7 @@ Output\_Modeは，ファイルの出力方法を指定します．FFV-Cソルバ
 つまり，多数のプロセスが各々の担当領域の結果をファイルに出力する場合，1つのディレクトリのファイル数が多くなり，ハンドリングが困難になります．これを回避するため，time\_sliceモードを用意しています．
 このtime\_sliceモードは，出力のタイミング毎にディレクトリを自動的に作成し，そのディレクトリ内に結果ファイルを出力します．例えば，2,000プロセスで計算し，速度と圧力，および全圧の結果を出力することを指定すると，1時刻につき6,000ファイルが生成されますが，それ以上にはなりません．
 
-PLOT3Dの出力については，PLOT3D\_Optionsセクションで詳細な指定が行えます．
+\hyperlink{tgt:plot3d\_options}{PLOT3D\_Options}ラベルで必要な各パラメータを設定する必要があります．
 
 \end{indentation}
 
@@ -961,32 +961,110 @@ Sampling\_Mode & All & 全セルを対象とする\\
 
 
 %%%
-\pagebreak
+\clearpage
+%\pagebreak
 \subsubsection{PLOT3D\_Options}
 
 PLOT3Dフォーマットで，結果を出力する場合のオプションを記述します．
+\hyperlink{tgt:fileio}{File\_IO}のでPLOT3D出力形式のファイル出力をOnにした場合に設定する必要があります．
 
 \begin{indentation}{3zw}{0zw}
 \small
 
 \begin{program}
   PLOT3D_Options {
-    filename         = "hoge"
-    grid_kind        = "single_grid"
-    grid_mobility    = "immovable"
-    state_of_time    = "unsteady"
-    set_iblank_flag  = "on"
-    Dimension        = "3D"
-    Format_type      = "unformatted"
+    filename       = "hoge_"
+    grid_kind      = "single_grid"
+    grid_mobility  = "immovable"
+    state_of_time  = "unsteady"
+    Iblank         = "off"
+    Dimension      = "3D"
+    Format_type    = "unformatted"
     Output_xyz       = "on"
     Output_q         = "on"
     Output_function  = "on"
     Output_func_name = "on"
     Output_fvbnd     = "on"
     Divide_func      = "off"
-    real_type        = "float"
   }
 \end{program}
+
+
+PLOT3D\_Optionsラベルでは，PLOT3D形式の出力ファイルに関するさまざまな指定を行います．
+
+
+\begin{table}[htdp]
+\caption{PLOT3D形式ファイルの出力指定}
+\begin{center}
+\small
+\begin{tabular}{lll} \toprule
+ラベル & 指定内容 & ラベル$|$指定内容\\ \midrule
+filename & 出力ファイルのprefix指定  & |  \\ \hline
+grid\_kind & gridの指定& single\_grid $|$ multi\_grid\\
+grid\_mobility & gridの時間による変化の有無 & immovable $|$ movable\\
+state\_of\_time & 定常・非定常 & steady $|$ unsteady\\
+Iblank & Iblankの出力指定 & ON $|$ OFF\\
+Dimension & 次元の指定 & ２D $|$ ３D\\ \hline
+Format\_type & 出力フォーマット指定 & \\
+ & Fortran Formatted & Formatted \\
+ & Fortran Unformatted & Unformatted \\
+ & C Binary & C\_Binary \\ \hline
+Output\_xyz & 形状ファイル出力 & ON $|$ OFF\\
+Output\_q & 圧縮性流体計算結果出力 & ON $|$ OFF\\
+Output\_function & 計算結果出力 & ON $|$ OFF\\
+Output\_func\_name & 計算結果出力項目 & ON $|$ OFF\\
+Output\_fvbnd & 境界面定義ファイル出力 & ON $|$ OFF\\
+Divide\_func & 計算結果の項目別出力 & ON $|$ OFF\\\bottomrule
+\end{tabular}
+\end{center}
+\label{tbl:log_output}
+\end{table}
+
+
+filenameラベルは，出力されるPLOT3D形式のファイルのファイル名につけられる冠名を指定します．
+入力がない場合は，" PLOT3Doutput\_ "という冠名が出力ファイルにつけられます．
+
+grid\_kindラベルは，グリッドが1つしかない場合single\_gridを，グリッドが複数ある場合multi\_gridを指定します．
+グリッドとは計算領域セルを構成する格子点のことで，
+Domainラベル，Subdomainラベルで指定される計算領域が複数ある場合，グリッドも複数領域があると考えます．
+
+grid\_mobilityラベルは，グリッドが時間発展計算中に変化しない場合immovableを，変化する場合movableを指定します．
+
+state\_of\_timeラベルは，定常計算の場合steadyを，非定常計算の場合unsteadyを指定します．
+
+Iblankラベルは，Onの時，計算領域中流体セルでない領域を非計算グリッドとして出力します．
+
+Dimensionラベルは，次元を指定します．ffvcでは計算は常に3次元で行われるため，
+２Dを指定した場合もプログラム中で３Dに変更されます．
+
+Format\_typeラベルは，出力するファイルのフォーマットを指定します．
+指定できるフォーマットは，Fortran言語で出力されるFormatted形式，Unformatted形式，
+C言語で出力されるBinary形式があります．
+Formatted形式で出力した場合，ファイルはテキストエディタで見ることが可能になりますが，ファイルサイズが大きくなります．
+Unformatted形式，Binary形式で出力した場合はテキストエディタで見ることができません．
+Unformatted形式を選択した場合，出力項目数分だけプログラム内で領域が確保する必要があるため，
+Binary形式に比べ大きなメモリ領域が必要になります．
+ただし，出力は単精度，倍精度の計算結果どちらにも対応します．
+一方，Binary形式を選択した場合，メモリ領域は出力領域分のスカラ値相当のメモリ領域で十分ですが，
+倍精度の計算結果も単精度出力に変更されます．
+
+Output\_xyzラベルは，計算領域の形状データファイルの出力の有無を指定します．
+
+Output\_xyzラベルは，圧縮性流体計算結果の出力の有無を指定します．
+現在，ffvcは非圧縮性流体のみを扱っているため，入力の指定によらず，
+プログラム内でoffにされます．
+
+Output\_functionラベルは，計算結果ファイルの出力の有無を指定します．
+出力項目は\hyperlink{tgt:solver_property}{Solver\_Property}ラベルで指定するKind\_of\_Solverの指定によります．
+
+Output\_func\_nameラベルは，計算結果ファイルに出力される項目ファイルの出力の有無を指定します．
+計算結果項目ファイルは，テキストファイルで出力します．
+
+Output\_fvbndラベルは，
+現在，境界面定義ファイルの出力は，入力の指定によらず，プログラム内でoffにされます．
+
+Divide\_funcラベルは，計算結果出力ファイルを項目ごとに分割するかどうかのオプションになり，
+onを指定した場合，項目別に結果ファイルが分割されて出力されます．
 
 \end{indentation}
 

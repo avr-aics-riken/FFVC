@@ -8,21 +8,21 @@
 #
 ###################################################################
 
-// Default environment
+# Default environment
 FFVC=intel
 
 ### compiler detection
 
 ifeq ($(FFVC),gnu)
-include make_setting.gcc
+include make_setting.gnu
 endif
 
-ifeq ($(FFVC),fujitsu)
+ifeq ($(FFVC),fx)
 include make_setting.fx
 endif
 
 ifeq ($(FFVC),ibm)
-include make_setting.bg
+include make_setting.ibm
 endif
 
 ifeq ($(FFVC),intel)

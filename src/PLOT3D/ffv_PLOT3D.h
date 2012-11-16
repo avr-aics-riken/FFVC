@@ -411,7 +411,7 @@ protected:
       for (int km=1-gc_out; km<=kx+gc_out; km++) {
         for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
           for (int im=1-gc_out; im<=ix+gc_out; im++) {
-            mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);
+            mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd);
             ddd=(T1)data[mip];
             i=im-1+gc_out;
             j=jm-1+gc_out;
@@ -481,7 +481,7 @@ protected:
     for (int km=1-gc_out; km<=kx+gc_out; km++) {
       for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
         for (int im=1-gc_out; im<=ix+gc_out; im++) {
-          mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd);
+          mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd);
           ddd=(T1)data[mip];
           i=im-1+gc_out;
           j=jm-1+gc_out;
