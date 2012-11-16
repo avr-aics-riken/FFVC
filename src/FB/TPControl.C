@@ -117,11 +117,13 @@ int TPControl::countLabels(const string label)
   
   // Nodeがあるかチェック
   ierror=tp->getAllLabels(labels);
+  
   if (ierror != 0){
     cout <<  "ERROR in TextParser::getAllLabels file: "
     << " ERROR CODE "<< ierror << endl;
     return -1;
   }
+  
   for (int i = 0; i < labels.size(); i++) {
 	  node=labels[i].substr(0,len);
     
@@ -158,42 +160,53 @@ void TPControl::getTPinstance()
 // ノード以下のnnode番目の文字列を取得する
 bool TPControl::GetNodeStr(const string label, const int nnode, string *ct)
 {
+  if ( !tp ) return -1;
+  
   int ierror;
-  string node,str,chkstr="";
-  vector<string> labels;
   int len=label.length();
   int flag=0;
   int inode=0;
   int next=0;
   
-  if( !tp ) return -1;
+  string node;
+  string str;
+  string chkstr="";
+  vector<string> labels;
+
   
   // Nodeがあるかチェック
-  ierror=tp->getAllLabels(labels);
-  if (ierror != 0){
-    cout <<  "ERROR in TextParser::getAllLabels file: "
-    << " ERROR CODE "<< ierror << endl;
+  ierror = tp->getAllLabels(labels);
+  
+  if (ierror != 0)
+  {
+    cout <<  "ERROR in TextParser::getAllLabels file: " << " ERROR CODE "<< ierror << endl;
     return false;
   }
+  
   for (int i = 0; i < labels.size(); i++) {
-	  node=labels[i].substr(0,len);
+	  node = labels[i].substr(0, len);
     
-	  if( !strcasecmp(node.c_str(), label.c_str()) ){
-		  str=labels[i].substr(len+1);
-		  next=str.find("/");
+	  if ( !strcasecmp(node.c_str(), label.c_str()) )
+    {
+		  str = labels[i].substr(len+1);
+		  next = str.find("/");
       
-		  if(next==0){
+		  if ( next == 0 )
+      {
 			  inode++;
 		  }
-		  else{
-			  if(chkstr!=str.substr(0,next)){
-				  chkstr=str.substr(0,next);
+		  else
+      {
+			  if ( chkstr != str.substr(0, next) )
+        {
+				  chkstr = str.substr(0, next);
 				  inode++;
 			  }
 		  }
       
-		  if(inode==nnode){
-			  *ct=chkstr;
+		  if ( inode == nnode )
+      {
+			  *ct = chkstr;
 			  return true;
 		  }
 	  }

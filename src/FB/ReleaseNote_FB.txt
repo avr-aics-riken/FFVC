@@ -9,11 +9,12 @@ Release Note
 
 #######################################
 
-Ver 1.0.7   13 Nov. 2012
+Ver 1.0.8   16 Nov. 2012
   - PLOT3D関連ファイルを別ディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加
   - セルフェイス速度d_vf，および_F_IDX_V3D()を追加
   - 速度を V(3,i,j,k) -> V(i,j,k,3)
+  - パラメータをアンダースコア区切りから，大文字小文字区切りへ変更, ex.) Time_Control >> TimeControl
 
 Ver 1.0.4   17 Oct. 2012
   - HPCPF_EXIT_STATUSを追加

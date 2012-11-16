@@ -496,4 +496,3 @@ void FileIO::writeVector(const string fname,
   fb_write_sph_v_ (v, sz, &gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
 
 }
-

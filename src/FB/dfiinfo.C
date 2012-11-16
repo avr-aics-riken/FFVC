@@ -68,7 +68,7 @@ void DfiInfo::ReadDfiFile(string fname)
   }
 
   //Prefix
-  label = "/Distributed_File_Info/Prefix";
+  label = "/DistributedFileInfo/Prefix";
   if ( !(tpCntl.GetValue(label, &str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
@@ -77,7 +77,7 @@ void DfiInfo::ReadDfiFile(string fname)
   Prefix=str;
 
   //RankID_in_MPIworld
-  label = "/Distributed_File_Info/RankID_in_MPIworld";
+  label = "/DistributedFileInfo/RankIDinMPIworld";
   if ( !(tpCntl.GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -87,7 +87,7 @@ void DfiInfo::ReadDfiFile(string fname)
   }
 
   //GroupID_in_MPIworld
-  label = "/Distributed_File_Info/GroupID_in_MPIworld";
+  label = "/DistributedFileInfo/GroupIDinMPIworld";
   if ( !(tpCntl.GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -97,7 +97,7 @@ void DfiInfo::ReadDfiFile(string fname)
   }
 
   //Number_of_Rank_in_MPIworld
-  label = "/Distributed_File_Info/Number_of_Rank_in_MPIworld";
+  label = "/DistributedFileInfo/NumberOfRankInMPIworld";
   if ( !(tpCntl.GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -107,7 +107,7 @@ void DfiInfo::ReadDfiFile(string fname)
   }
 
   //Number_of_Group_in_MPIworld
-  label = "/Distributed_File_Info/Number_of_Group_in_MPIworld";
+  label = "/DistributedFileInfo/NumberOfGroupInMPIworld";
   if ( !(tpCntl.GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -117,7 +117,7 @@ void DfiInfo::ReadDfiFile(string fname)
   }
 
   //Global_Voxel
-  label = "/Distributed_File_Info/Global_Voxel";
+  label = "/DistributedFileInfo/GlobalVoxel";
   for (int n=0; n<3; n++) v[n]=0.0;
   if ( !(tpCntl.GetVector(label, v, 3 )) ) 
   {
@@ -129,7 +129,7 @@ void DfiInfo::ReadDfiFile(string fname)
   Global_Voxel[2]=v[2];
 
   //Global_Division
-  label = "/Distributed_File_Info/Global_Division";
+  label = "/DistributedFileInfo/GlobalDivision";
   for (int n=0; n<3; n++) v[n]=0.0;
   if ( !(tpCntl.GetVector(label, v, 3 )) ) 
   {
@@ -141,7 +141,7 @@ void DfiInfo::ReadDfiFile(string fname)
   Global_Division[2]=v[2];
 
   //FileFormat
-  label = "/Distributed_File_Info/FileFormat";
+  label = "/DistributedFileInfo/FileFormat";
   if ( !(tpCntl.GetValue(label, &str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
@@ -150,7 +150,7 @@ void DfiInfo::ReadDfiFile(string fname)
   FileFormat=str;
 
   //GuideCell
-  label = "/Distributed_File_Info/GuideCell";
+  label = "/DistributedFileInfo/GuideCell";
   if ( !(tpCntl.GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -161,7 +161,7 @@ void DfiInfo::ReadDfiFile(string fname)
 
   //NodeInfo
   nnode=0;
-  label_base = "/Distributed_File_Info/NodeInfo";
+  label_base = "/DistributedFileInfo/NodeInfo";
   if ( tpCntl.chkNode(label_base) )  //nodeがあれば
   {
     nnode = tpCntl.countLabels(label_base);
@@ -237,7 +237,7 @@ void DfiInfo::ReadDfiFile(string fname)
 
   //FileInfo
   nnode=0;
-  label_base = "/Distributed_File_Info/FileInfo";
+  label_base = "/DistributedFileInfo/FileInfo";
   if ( tpCntl.chkNode(label_base) )  //nodeがあれば
   {
     nnode = tpCntl.countLabels(label_base);
@@ -276,16 +276,16 @@ void DfiInfo::ReadDfiFile(string fname)
   for(int i=0;i<ndfi;i++){
     cout << "" << endl;
     cout << "Prefix = " << this->Prefix << endl;
-    cout << "RankID_in_MPIworld = " << this->RankID_in_MPIworld << endl;
-    cout << "GroupID_in_MPIworld = " << this->GroupID_in_MPIworld << endl;
-    cout << "Number_of_Rank_in_MPIworld = " << this->Number_of_Rank_in_MPIworld << endl;
-    cout << "Number_of_Group_in_MPIworld = " << this->Number_of_Group_in_MPIworld << endl;
-    cout << "Global_Voxel[0] = " << this->Global_Voxel[0] << endl;
-    cout << "Global_Voxel[1] = " << this->Global_Voxel[1] << endl;
-    cout << "Global_Voxel[2] = " << this->Global_Voxel[2] << endl;
-    cout << "Global_Division[0] = " << this->Global_Division[0] << endl;
-    cout << "Global_Division[1] = " << this->Global_Division[1] << endl;
-    cout << "Global_Division[2] = " << this->Global_Division[2] << endl;
+    cout << "RankIDinMPIworld = " << this->RankID_in_MPIworld << endl;
+    cout << "GroupIDinMPIworld = " << this->GroupID_in_MPIworld << endl;
+    cout << "NumberOfRankInMPIworld = " << this->Number_of_Rank_in_MPIworld << endl;
+    cout << "NumberOfGroupInMPIworld = " << this->Number_of_Group_in_MPIworld << endl;
+    cout << "GlobalVoxel[0] = " << this->Global_Voxel[0] << endl;
+    cout << "GlobalVoxel[1] = " << this->Global_Voxel[1] << endl;
+    cout << "GlobalVoxel[2] = " << this->Global_Voxel[2] << endl;
+    cout << "GlobalDivision[0] = " << this->Global_Division[0] << endl;
+    cout << "GlobalDivision[1] = " << this->Global_Division[1] << endl;
+    cout << "GlobalDivision[2] = " << this->Global_Division[2] << endl;
     cout << "FileFormat = " << this->FileFormat << endl;
     cout << "GuideCell = " << this->GuideCell << endl;
     cout << "" << endl;

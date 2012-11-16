@@ -218,16 +218,16 @@ void DataHolderManager::readData()
   string label_base,label_leaf,str;
   string label,file;
   
-  label_base="/Parameter/Data_Holder";
+  label_base="/Parameter/DataHolder";
   if ( !tpCntl->chkNode(label_base) ) {
-    stamped_printf("\tParsing error : Missing the section of 'Data_Holder' in 'Parameter'\n");
+    stamped_printf("\tParsing error : Missing the section of 'DataHolder' in 'Parameter'\n");
     Exit(0);
   }
   
   // check number of Elem
   int ndata=tpCntl->countLabels(label_base);
   if ( ndata == 0 ) {
-    stamped_printf("\tParsing error : No Data at Data_Holder\n");
+    stamped_printf("\tParsing error : No Data at DataHolder\n");
     Exit(0);
   }
   
@@ -240,18 +240,18 @@ void DataHolderManager::readData()
     }
     
     // name
-    label_leaf=label_base+"/"+str+"/name";
+    label_leaf=label_base+"/"+str+"/Name";
 
     if ( !(tpCntl->GetValue(label_leaf, &label )) ) {
-      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
+      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'InitTempOfMedium'\n");
       Exit(0);
     }
     
     // file
-    label_leaf=label_base+"/"+str+"/file";
+    label_leaf=label_base+"/"+str+"/File";
 
     if ( !(tpCntl->GetValue(label_leaf, &file )) ) {
-      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'Init_Temp_of_Medium'\n");
+      stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'InitTempOfMedium'\n");
       Exit(0);
     }
     

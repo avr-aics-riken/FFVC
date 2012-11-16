@@ -80,7 +80,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
   
 
   // ノード情報を探索
-  label_base = "/Distributed_File_Info/NodeInfo";
+  label_base = "/DistributedFileInfo/NodeInfo";
   
   if ( !tp_dfi.chkNode(label_base) )
   {
@@ -247,7 +247,7 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   
   
   // ノード情報を探索
-  label_base = "/Distributed_File_Info/NodeInfo";
+  label_base = "/DistributedFileInfo/NodeInfo";
   
   if ( !tp_dfi.chkNode(label_base) )
   {

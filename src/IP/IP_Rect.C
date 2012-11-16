@@ -25,7 +25,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 分割数の偶数チェックオプション
-  label="/Parameter/Intrinsic_Example/Check_Even";
+  label="/Parameter/IntrinsicExample/CheckEven";
 
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -48,7 +48,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   }
   
   // 媒質指定
-  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  label="/Parameter/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -57,7 +57,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   }
   m_fluid = str;
   
-  label="/Parameter/Intrinsic_Example/Solid_medium";
+  label="/Parameter/IntrinsicExample/SolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {

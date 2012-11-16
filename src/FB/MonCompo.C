@@ -346,11 +346,11 @@ string MonitorCompo::getTypeStr()
   
   switch (type) {
     case POINT_SET:
-      str = "Point_set"; break;
+      str = "PointSet"; break;
     case LINE:
       str = "Line"; break;
     case INNER_BOUNDARY:
-      str = "Local Boundary"; break;
+      str = "LocalBoundary"; break;
     default:
       Exit(0);
   }
@@ -804,10 +804,10 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
 ///
 void MonitorCompo::setMonitorVar(const char* str) 
 {
-  if      (!strcasecmp("velocity", str))        variable[VELOCITY] = true;
-  else if (!strcasecmp("pressure", str))        variable[PRESSURE] = true;
-  else if (!strcasecmp("temperature", str))     variable[TEMPERATURE] = true;
-  else if (!strcasecmp("total_pressure", str))  variable[TOTAL_PRESSURE] = true;
+  if      (!strcasecmp("velocity", str))       variable[VELOCITY] = true;
+  else if (!strcasecmp("pressure", str))       variable[PRESSURE] = true;
+  else if (!strcasecmp("temperature", str))    variable[TEMPERATURE] = true;
+  else if (!strcasecmp("totalpressure", str))  variable[TOTAL_PRESSURE] = true;
   //else if (!strcasecmp("vorticity", str))       variable[VORTICITY] = true;
   else {
     Hostonly_ stamped_printf("\tError : Invalid variable keyword [%s]\n", str);

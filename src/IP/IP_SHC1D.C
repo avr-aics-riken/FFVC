@@ -24,37 +24,37 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 媒質指定
-  label="/Parameter/Intrinsic_Example/Inactive_medium";
+  label="/Parameter/IntrinsicExample/InactiveMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Inactive_medium' in 'Intrinsic_Example'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_inactive = str;
   
-  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  label="/Parameter/IntrinsicExample/FluidMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fluid_medium' in 'Intrinsic_Example'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
-  label="/Parameter/Intrinsic_Example/Fin_medium";
+  label="/Parameter/IntrinsicExample/FinMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'Fin_medium' in 'Intrinsic_Example'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fin = str;
   
-  label="/Parameter/Intrinsic_Example/isothermal_medium";
+  label="/Parameter/IntrinsicExample/IsothermalMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'driver_medium' in 'Intrinsic_Example'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_isothermal = str;
   
-  label="/Parameter/Intrinsic_Example/adiabatic_medium";
+  label="/Parameter/IntrinsicExample/AdiabaticMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'adiabatic_medium' in 'Intrinsic_Example'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_adiabatic = str;

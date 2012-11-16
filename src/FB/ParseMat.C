@@ -150,7 +150,7 @@ int ParseMat::get_MediumTable()
   
   int NoMedium = 0;
   
-  label_base = "/Medium_Table";
+  label_base = "/MediumTable";
   
   // 媒質の個数を取得
   n1 = tpCntl->countLabels(label_base);
@@ -179,7 +179,7 @@ int ParseMat::get_MediumTable()
       
       label_leaf = label_m + "/" + str;
       
-      if ( !strcasecmp(str.c_str(), "type") )
+      if ( !strcasecmp(str.c_str(), "Type") )
       {
         if ( !(tpCntl->GetValue(label_leaf, &label)) )
         {

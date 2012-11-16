@@ -312,8 +312,8 @@ int FFV::Initialize(int argc, char **argv)
   {
     Hostonly_
     {
-      printf(    "\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
-      fprintf(fp,"\tCombination of specified 'Time_Increment' and 'Kind_of_Solver' is not permitted.\n");
+      printf(    "\tCombination of specified 'TimeIncrement' and 'KindOfSolver' is not permitted.\n");
+      fprintf(fp,"\tCombination of specified 'TimeIncrement' and 'KindOfSolver' is not permitted.\n");
     }
     return -1;
   }
@@ -460,8 +460,8 @@ int FFV::Initialize(int argc, char **argv)
   {
     Hostonly_
     {
-      printf(     "RefMat[%d] is not listed in Medium_Table.\n", C.RefMat);
-      fprintf(fp, "RefMat[%d] is not listed in Medium_Table.\n", C.RefMat);
+      printf(     "RefMat[%d] is not listed in MediumTable.\n", C.RefMat);
+      fprintf(fp, "RefMat[%d] is not listed in MediumTable.\n", C.RefMat);
     }
     return -1;
   }
@@ -514,7 +514,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     Hostonly_
     {
-      stamped_printf("\tVoxInfo::dbg_chkBCIndexP()\n");
+      stamped_printf("\tVoxInfo::DbgChkBCIndexP()\n");
     }
     return -1;
   }
@@ -1630,17 +1630,17 @@ void FFV::fixed_parameters()
   C.HistoryItrName     = "history_iteration.txt";
   C.HistoryMonitorName = "sampling.txt";
   
-  C.f_Pressure       = "prs_";
-  C.f_Velocity       = "vel_";
-  C.f_Temperature    = "tmp_";
-  C.f_AvrPressure    = "prsa_";
-  C.f_AvrVelocity    = "vela_";
-  C.f_AvrTemperature = "tmpa_";
-  C.f_DivDebug       = "div_";
-  C.f_Helicity       = "hlt_";
-  C.f_TotalP         = "tp_";
-  C.f_I2VGT          = "i2vgt_";
-  C.f_Vorticity      = "vrt_";
+  C.f_Pressure       = "prs";
+  C.f_Velocity       = "vel";
+  C.f_Temperature    = "tmp";
+  C.f_AvrPressure    = "prsa";
+  C.f_AvrVelocity    = "vela";
+  C.f_AvrTemperature = "tmpa";
+  C.f_DivDebug       = "div";
+  C.f_Helicity       = "hlt";
+  C.f_TotalP         = "tp";
+  C.f_I2VGT          = "i2vgt";
+  C.f_Vorticity      = "vrt";
   
   C.FIO.IO_Input  = IO_DISTRIBUTE;
   C.FIO.IO_Output = IO_DISTRIBUTE;
@@ -2070,7 +2070,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   
   // 長さの単位
-  label = "/DomainInfo/Unit_of_Length";
+  label = "/DomainInfo/UnitOfLength";
   
   if ( !tp_dom->GetValue(label, &str) )
   {
@@ -2078,10 +2078,10 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Non_Dimensional") )  C.Unit.Length = LTH_ND;
-  else if( !strcasecmp(str.c_str(), "M") )                C.Unit.Length = LTH_m;
-  else if( !strcasecmp(str.c_str(), "cm") )               C.Unit.Length = LTH_cm;
-  else if( !strcasecmp(str.c_str(), "mm") )               C.Unit.Length = LTH_mm;
+  if     ( !strcasecmp(str.c_str(), "NonDimensional") )  C.Unit.Length = LTH_ND;
+  else if( !strcasecmp(str.c_str(), "M") )               C.Unit.Length = LTH_m;
+  else if( !strcasecmp(str.c_str(), "cm") )              C.Unit.Length = LTH_cm;
+  else if( !strcasecmp(str.c_str(), "mm") )              C.Unit.Length = LTH_mm;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
@@ -2091,7 +2091,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   // G_origin　必須
   rvec  = G_origin;
-  label = "/DomainInfo/Global_origin";
+  label = "/DomainInfo/GlobalOrigin";
   
   if ( !tp_dom->GetVector(label, rvec, 3) )
   {
@@ -2101,7 +2101,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   // G_region 必須
   rvec  = G_region;
-  label = "/DomainInfo/Global_region";
+  label = "/DomainInfo/GlobalRegion";
   
   if ( !tp_dom->GetVector(label, rvec, 3) )
   {
@@ -2123,7 +2123,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   // pitch オプション
   bool flag = true; // 排他チェック（voxel, pitch）
   rvec  = pitch;
-  label = "/DomainInfo/Global_pitch";
+  label = "/DomainInfo/GlobalPitch";
   
   if ( !tp_dom->GetVector(label, rvec, 3) )
   {
@@ -2156,11 +2156,11 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   else
   {
     ivec  = G_size;
-    label = "/DomainInfo/Global_voxel";
+    label = "/DomainInfo/GlobalVoxel";
     
     if ( !tp_dom->GetVector(label, ivec, 3) )
     {
-      Hostonly_ cout << "ERROR : Neither Global_pitch nor Global_voxel is specified." << endl;
+      Hostonly_ cout << "ERROR : Neither GlobalPitch nor GlobalVoxel is specified." << endl;
       Exit(0); // pitchもvoxelも有効でない
     }
     
@@ -2183,7 +2183,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   // G_division オプション
   ivec  = G_division;
-  label = "/DomainInfo/Global_division";
+  label = "/DomainInfo/GlobalDivision";
   
   if ( !tp_dom->GetVector(label, ivec, 3) )
   {
@@ -2235,7 +2235,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   
   // ActiveSubdomainファイル名の取得
-  label = "/DomainInfo/ActiveSubDomain_File";
+  label = "/DomainInfo/ActiveSubDomainFile";
   
   if ( !tp_dom->GetValue(label, &str ) )
   {
@@ -2263,10 +2263,10 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
     Exit(0);
   }
   
-  if     ( FBUtility::compare(keyword, "Parallel_Plate_2D") ) Cref->Mode.Example = id_PPLT2D;
+  if     ( FBUtility::compare(keyword, "ParallelPlate2D") ) Cref->Mode.Example = id_PPLT2D;
   else if( FBUtility::compare(keyword, "Duct") )              Cref->Mode.Example = id_Duct;
   else if( FBUtility::compare(keyword, "SHC1D") )             Cref->Mode.Example = id_SHC1D;
-  else if( FBUtility::compare(keyword, "Performance_Test") )  Cref->Mode.Example = id_PMT;
+  else if( FBUtility::compare(keyword, "PerformanceTest") )  Cref->Mode.Example = id_PMT;
   else if( FBUtility::compare(keyword, "Rectangular") )       Cref->Mode.Example = id_Rect;
   else if( FBUtility::compare(keyword, "Cylinder") )          Cref->Mode.Example = id_Cylinder;
   else if( FBUtility::compare(keyword, "Back_Step") )         Cref->Mode.Example = id_Step;
@@ -2517,11 +2517,11 @@ void FFV::prep_HistoryOutput()
 void FFV::printDomainInfo()
 {
   cout << "\n####### read parameters ########" << endl;
-  cout << " G_org      = " << G_origin[0] << "," << G_origin[1] << "," << G_origin[2] << endl;
-  cout << " G_voxel    = " << G_size[0]   << "," << G_size[1]   << "," << G_size[2]   << endl;
-  cout << " G_pitch    = " << pitch[0]    << "," << pitch[1]    << "," << pitch[2]    << endl;
-  cout << " G_region   = " << G_region[0] << "," << G_region[1] << "," << G_region[2] << endl;
-  cout << " G_div      = " << G_division[0]  << "," << G_division[1]  << "," << G_division[2]  << endl;
+  cout << " Gorg      = " << G_origin[0] << "," << G_origin[1] << "," << G_origin[2] << endl;
+  cout << " Gvoxel    = " << G_size[0]   << "," << G_size[1]   << "," << G_size[2]   << endl;
+  cout << " Gpitch    = " << pitch[0]    << "," << pitch[1]    << "," << pitch[2]    << endl;
+  cout << " Gregion   = " << G_region[0] << "," << G_region[1] << "," << G_region[2] << endl;
+  cout << " Gdiv      = " << G_division[0]  << "," << G_division[1]  << "," << G_division[2]  << endl;
 }
 
 
@@ -2886,13 +2886,13 @@ void FFV::setEnsComponent()
   // MONITOR_LISTでCELL_MONITORが指定されている場合，C.EnsCompo.monitor==ON
   if ( (C.isMonitor() == ON) && (c < 1) ) 
   {
-    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is specified, however any MONITOR can not be found.\n");
+    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is specified, however any Monitor can not be found.\n");
     Exit(0);
   }
   
   if ( (C.isMonitor() == OFF) && (c > 0) ) 
   {
-    Hostonly_ stamped_printf("\tError : Cell_Monitor in MONITOR_LIST is NOT specified, however MONITOR section is found in LocalBoundary.\n");
+    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is NOT specified, however Monitor section is found in LocalBoundary.\n");
     Exit(0);
   }
   

@@ -5354,7 +5354,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
           case HT_SF:
             if ( (kos == CONJUGATE_HEAT_TRANSFER) || (kos == SOLID_CONDUCTION) )
             {
-              Hostonly_ printf("\tHeat Transfer(_S, _SF, _SN) can be specified only in the case of 'THERMAL_FLOW' or 'THERMAL_FLOW_NATURAL'\n");
+              Hostonly_ printf("\tHeat Transfer(S, SF, SN) can be specified only in the case of 'ThermalFlow' or 'ThermalFlowNatural'\n");
               Exit(0);
             }
             else
@@ -5366,7 +5366,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
           case HT_B:
             if ( (kos == THERMAL_FLOW) || (kos == THERMAL_FLOW_NATURAL) )
             {
-              Hostonly_ printf("\tHeat Transfer(_B) can be specified only in the case of 'CONJUGATE_HEAT_TRANSFER' or 'SOLID_CONDUCTION'\n");
+              Hostonly_ printf("\tHeat Transfer(B) can be specified only in the case of 'ConjugateHeatTransfer' or 'SolidConduction'\n");
               Exit(0);
             }
             else
@@ -5554,7 +5554,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_PERIODIC:
-        encVbit_OBC(face, bv, "fluid", false, "no_check", bp, false); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
+        encVbit_OBC(face, bv, "fluid", false, "nocheck", bp, false); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
         break;
         
       default:

@@ -47,8 +47,8 @@ std::string CompoList::getBCstr()
   else if ( type == HEATFLUX )      bc = "Direct Heat Flux";
   else if ( type == ISOTHERMAL )    bc = "Isothermal";
   else if ( type == RADIANT )       bc = "Radiant";
-  else if ( type == SPEC_VEL)       bc = "Specified_Velocity";
-  else if ( type == SPEC_VEL_WH)    bc = "Specified_Velocity with Temperature";
+  else if ( type == SPEC_VEL)       bc = "Specified Velocity";
+  else if ( type == SPEC_VEL_WH)    bc = "Specified Velocity with Temperature";
   else if ( type == OUTFLOW)        bc = "Outflow";
   else if ( type == IBM_DF )        bc = "Immersed Boundary Method(Direct Forcing)";
   else if ( type == HEAT_SRC )      bc = "Heat Source";
@@ -56,7 +56,7 @@ std::string CompoList::getBCstr()
   else if ( type == HEX )           bc = "Pressure Loss";
   else if ( type == FAN )           bc = "Fan";
   else if ( type == DARCY )         bc = "Darcy";
-  else if ( type == CELL_MONITOR )  bc = "Cell_Monitor";
+  else if ( type == CELL_MONITOR )  bc = "Cell Monitor";
   else if ( type == PERIODIC )      bc = "Periodic";
   else if ( type == INACTIVE )      bc = "Inactive";
   else if ( type == TRANSFER ) {

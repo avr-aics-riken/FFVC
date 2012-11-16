@@ -100,14 +100,14 @@ public:
   {
     int key=-1;
     
-    if      ( !(strcasecmp(p, "density")) )              key = p_density;
-    else if ( !(strcasecmp(p, "kinematic_viscosity")) )  key = p_kinematic_viscosity;
-    else if ( !(strcasecmp(p, "viscosity")) )            key = p_viscosity;
-    else if ( !(strcasecmp(p, "thermal_conductivity")) ) key = p_thermal_conductivity;
-    else if ( !(strcasecmp(p, "thermal_diffusivity")) )  key = p_thermal_diffusivity;
-    else if ( !(strcasecmp(p, "specific_heat")) )        key = p_specific_heat;
-    else if ( !(strcasecmp(p, "sound_of_speed")) )       key = p_sound_of_speed;
-    else if ( !(strcasecmp(p, "volume_expansion")) )     key = p_vol_expansion;
+    if      ( !(strcasecmp(p, "Density")) )             key = p_density;
+    else if ( !(strcasecmp(p, "KinematicViscosity")) )  key = p_kinematic_viscosity;
+    else if ( !(strcasecmp(p, "Viscosity")) )           key = p_viscosity;
+    else if ( !(strcasecmp(p, "ThermalConductivity")) ) key = p_thermal_conductivity;
+    else if ( !(strcasecmp(p, "ThermalDiffusivity")) )  key = p_thermal_diffusivity;
+    else if ( !(strcasecmp(p, "SpecificHeat")) )        key = p_specific_heat;
+    else if ( !(strcasecmp(p, "SoundOfSpeed")) )        key = p_sound_of_speed;
+    else if ( !(strcasecmp(p, "VolumeExpansion")) )     key = p_vol_expansion;
     
     return key;
   }
@@ -124,28 +124,28 @@ public:
     
     switch (key) {
       case p_density:
-        name = "density";
+        name = "Density";
         break;
       case p_kinematic_viscosity:
-        name = "kinematic_viscosity";
+        name = "KinematicViscosity";
         break;
       case p_viscosity:
-        name = "viscosity";
+        name = "Viscosity";
         break;
       case p_thermal_conductivity:
-        name = "thermal_conductivity";
+        name = "ThermalConductivity";
         break;
       case p_thermal_diffusivity:
-        name = "thermal_diffusivity";
+        name = "ThermalDiffusivity";
         break;
       case p_specific_heat:
-        name = "specific_heat";
+        name = "SpecificHeat";
         break;
       case p_sound_of_speed:
-        name = "sound_of_speed";
+        name = "SoundOfSpeed";
         break;
       case p_vol_expansion:
-        name = "volume_expansion";
+        name = "VolumeExpansion";
         break;
     }
     return name;

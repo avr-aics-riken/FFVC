@@ -63,8 +63,8 @@ bool FreeJet::getParaXML(SklSolverConfig* CF, Control* R)
 {
   ParsePara Tree(CF);
   
-  if ( !Tree.IsSetElem("Intrinsic_Examples") )  return false;
-  if ( !Tree.getEParam("Plot_Interval", R->PlotIntvl)) return false;
+  if ( !Tree.IsSetElem("IntrinsicExamples") )  return false;
+  if ( !Tree.getEParam("PlotInterval", R->PlotIntvl)) return false;
   return true;
 }
 

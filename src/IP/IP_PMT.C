@@ -25,7 +25,7 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 媒質指定
-  label="/Parameter/Intrinsic_Example/Fluid_medium";
+  label="/Parameter/IntrinsicExample/Fluid_medium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -34,7 +34,7 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
   }
   m_fluid = str;
   
-  label="/Parameter/Intrinsic_Example/Solid_medium";
+  label="/Parameter/IntrinsicExample/SolidMedium";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());

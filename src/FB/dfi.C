@@ -359,10 +359,10 @@ bool DFI::Write_Header(FILE* fp, const unsigned tab, const std::string prefix)
 void DFI::Write_MyID(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "RankID_in_MPIworld = %d\n", my_id);
+  fprintf(fp, "RankIDinMPIworld = %d\n", my_id);
   
   Write_Tab(fp, tab);
-  fprintf(fp, "GroupID_in_MPIworld = %d\n", my_id);
+  fprintf(fp, "GroupIDinMPIworld = %d\n", my_id);
 }
 
 
@@ -439,10 +439,10 @@ bool DFI::Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix)
 void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "Number_of_Rank_in_MPIworld = %d\n", Num_Node);
+  fprintf(fp, "NumberOfRankInMPIworld = %d\n", Num_Node);
   
   Write_Tab(fp, tab);
-  fprintf(fp, "Number_of_Group_in_MPIworld = %d\n", 1);
+  fprintf(fp, "NumberOfGroupInMPIworld = %d\n", 1);
 }
 
 
@@ -452,7 +452,7 @@ void DFI::Write_NodeNum(FILE* fp, const unsigned tab)
 void DFI::Write_NumDivDomain(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "Global_Division = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
+  fprintf(fp, "GlobalDivision = (%d, %d, %d)\n", div_domain[0], div_domain[1], div_domain[2]);
 }
 
 
@@ -513,7 +513,7 @@ void DFI::Write_Tab(FILE* fp, const unsigned tab)
 void DFI::Write_WholeSize(FILE* fp, const unsigned tab)
 {
   Write_Tab(fp, tab);
-  fprintf(fp, "Global_Voxel = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
+  fprintf(fp, "GlobalVoxel = (%d, %d, %d)\n", Gsize[0], Gsize[1], Gsize[2]);
 }
 
 
@@ -577,7 +577,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
       return false;
     }
     
-    if (fp) fprintf(fp, "Distributed_File_Info {\n");
+    if (fp) fprintf(fp, "DistributedFileInfo {\n");
     if (fp) fprintf(fp, "\n");
     
     if( !Write_Header(fp, 0, prefix) )

@@ -406,7 +406,7 @@ void MonitorList::get_Monitor(Control* C)
   // ログ出力のON/OFFはControl::getTP_Sampling()で取得済み
   
   // 集約モード
-  label = "/Steer/Monitor_List/output_mode";
+  label = "/Steer/MonitorList/OutputMode";
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
   {
@@ -426,13 +426,13 @@ void MonitorList::get_Monitor(Control* C)
   }
   else 
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyord for 'Output_Mode' in 'Monitor_List'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyord for 'Output_Mode' in 'MonitorList'\n");
     Exit(0);
   }
   
   
   // サンプリング間隔
-  label="/Steer/Monitor_List/Sampling_Interval_Type";
+  label="/Steer/MonitorList/SamplingIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
   {
@@ -455,7 +455,7 @@ void MonitorList::get_Monitor(Control* C)
       Exit(0);
     }
     
-    label="/Steer/Monitor_List/Sampling_Interval";
+    label="/Steer/MonitorList/SamplingInterval";
     
     if ( !(tpCntl->GetValue(label, &f_val )) ) 
     {
@@ -469,7 +469,7 @@ void MonitorList::get_Monitor(Control* C)
   }
   
   // 単位指定
-  label="/Steer/Monitor_List/Unit";
+  label="/Steer/MonitorList/Unit";
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
   {
@@ -482,7 +482,7 @@ void MonitorList::get_Monitor(Control* C)
     C->Sampling.unit = DIMENSIONAL;
     setSamplingUnit(DIMENSIONAL);
   }
-  else if( !strcasecmp(str.c_str(), "Non_Dimensional") ) 
+  else if( !strcasecmp(str.c_str(), "NonDimensional") ) 
   {
     C->Sampling.unit = NONDIMENSIONAL;
     setSamplingUnit(NONDIMENSIONAL);
@@ -503,7 +503,7 @@ void MonitorList::get_Monitor(Control* C)
   // 指定モニタ個数のチェック
   int nnode=0;
   int nlist=0;
-  label_base = "/Steer/Monitor_List";
+  label_base = "/Steer/MonitorList";
   
   nnode = tpCntl->countLabels(label_base);
   if ( nnode == 0 ) 
@@ -520,19 +520,19 @@ void MonitorList::get_Monitor(Control* C)
       Exit(0);
     }
     
-    if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
+    if( strcasecmp(str.substr(0,4).c_str(), "List") ) continue;
     
     nlist++;
   }
   
   if (nlist==0 && C->isMonitor() == OFF) 
   {
-    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'Monitor_List' and 'InnerBoundary' in Input parameter file. \n");
+    Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'MonitorList' and 'InnerBoundary' in Input parameter file. \n");
     Exit(0);
   }
   
   // モニターリストの読み込み
-  label_base = "/Steer/Monitor_List";
+  label_base = "/Steer/MonitorList";
   
   for (int i=0; i<nnode; i++) 
   {
@@ -541,13 +541,13 @@ void MonitorList::get_Monitor(Control* C)
       printf("\tParsing error : No List[@]\n");
       Exit(0);
     }
-    if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
+    if( strcasecmp(str.substr(0,4).c_str(), "List") ) continue;
     
     
     label_leaf = label_base + "/" + str;
     
     // sampling type & param check
-    label = label_leaf + "/type";
+    label = label_leaf + "/Type";
     
     if ( !(tpCntl->GetValue(label, &str )) ) 
     {
@@ -555,33 +555,33 @@ void MonitorList::get_Monitor(Control* C)
       Exit(0);
     }
     
-    if ( !strcasecmp(str.c_str(), "point_set") ) 
+    if ( !strcasecmp(str.c_str(), "PointSet") ) 
     {
       type = MonitorCompo::POINT_SET;
     }
-    else if ( !strcasecmp(str.c_str(), "line") ) 
+    else if ( !strcasecmp(str.c_str(), "Line") ) 
     {
       type = MonitorCompo::LINE;
     }
     else 
     {
-      Hostonly_ stamped_printf("\tParsing error : No valid keyword [point_set / line] in '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : No valid keyword [PointSet / Line] in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // Labelの取得
-    label = label_leaf + "/label";
+    label = label_leaf + "/Label";
     
     if ( !(tpCntl->GetValue(label, &name )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing warning : No label in '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // variable ---> 複数setできるような仕様にする？
     variables.clear();
     
-    label = label_leaf + "/variable";
+    label = label_leaf + "/Variable";
     
     if ( !(tpCntl->GetValue(label, &str )) ) 
     {
@@ -593,25 +593,25 @@ void MonitorList::get_Monitor(Control* C)
     
     if (variables.size() == 0) 
     {
-      Hostonly_ stamped_printf("\tParsing error : No 'variable' in '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : No 'Variable' in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // method
-    label = label_leaf + "/sampling_method";
+    label = label_leaf + "/SamplingMethod";
     
     if ( !(tpCntl->GetValue(label, &method )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_method' in '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'SamplingMethod' in '%s'\n", label.c_str());
       Exit(0);
     }
     
     // mode
-    label = label_leaf + "/sampling_mode";
+    label = label_leaf + "/SamplingMode";
     
     if ( !(tpCntl->GetValue(label, &mode )) ) 
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get 'sampling_mode' in '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : fail to get 'SamplingMode' in '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -645,22 +645,22 @@ void MonitorList::get_Mon_Line(Control* C,
   std::string str,label;
   REAL_TYPE v[3];
   
-  label=label_base+"/division";
+  label=label_base+"/Division";
 
   if ( !(tpCntl->GetValue(label, &nDivision )) ) 
   {
-	  Hostonly_ stamped_printf("\tParsing error : no division\n");
+	  Hostonly_ stamped_printf("\tParsing error : No Division\n");
 	  Exit(0);
   }
   if ( nDivision == 0 ) Exit(0);
   
   // load parameter of 'from' and 'to'
-  label=label_base+"/from";
+  label=label_base+"/From";
 
   for (int n=0; n<3; n++) v[n]=0.0;
   if ( !(tpCntl->GetVector(label, v, 3 )) ) 
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'from' in 'line'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'From' in 'Line'\n");
     Exit(0);
   }
   from[0]=v[0];
@@ -671,12 +671,12 @@ void MonitorList::get_Mon_Line(Control* C,
     normalizeCord(C->RefLength,from);
   }
   
-  label=label_base+"/to";
+  label=label_base+"/To";
 
   for (int n=0; n<3; n++) v[n]=0.0;
   if ( !(tpCntl->GetVector(label, v, 3 )) ) 
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get 'to' in 'line'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'To' in 'Line'\n");
     Exit(0);
   }
   to[0]=v[0];
@@ -733,7 +733,7 @@ void MonitorList::get_Mon_Pointset(Control* C,
     label_leaf = label_base + "/" + str;
     
     // set coordinate
-    label=label_leaf+"/coordinate";
+    label=label_leaf+"/Coordinate";
     for (int n=0; n<3; n++) v[n]=0.0;
     if ( !(tpCntl->GetVector(label, v, 3 )) )
     {
@@ -745,7 +745,7 @@ void MonitorList::get_Mon_Pointset(Control* C,
     }
     
     // set Labelの取得．ラベルなしでもエラーではない
-    label=label_leaf+"/label";
+    label=label_leaf+"/Label";
     if ( !(tpCntl->GetValue(label, &str )) ) {
       Hostonly_ stamped_printf("\tParsing warning : No commnet for '%s'\n", label.c_str());
     }

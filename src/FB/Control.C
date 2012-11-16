@@ -113,7 +113,7 @@ bool DTcntl::set_Scheme(const char* str, const double val)
   {
     scheme = dt_direct;
   }
-  else if ( !strcasecmp(str, "CFL_Reference_Velocity") )
+  else if ( !strcasecmp(str, "CflReferenceVelocity") )
   {
     scheme = dt_cfl_ref_v;
   }
@@ -124,7 +124,7 @@ bool DTcntl::set_Scheme(const char* str, const double val)
   {
     scheme = dt_dfn;
   }
-  else if ( !strcasecmp(str, "CFL_Diffusion_Reference_Velocity") )
+  else if ( !strcasecmp(str, "CflDiffusionReferenceVelocity") )
   {
     scheme = dt_cfl_dfn_ref_v;
   }
@@ -368,15 +368,15 @@ void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
       case ItrCtl::ic_vis_cn: // Velocity Crank-Nicolosn
       case ItrCtl::ic_tdf_ei: // Temperature Euler Implicit
         
-        if ( !strcasecmp(str.c_str(), "dx_b") )
+        if ( !strcasecmp(str.c_str(), "DXbyB") )
         {
           IC->set_normType(ItrCtl::dx_b);
         }
-        else if ( !strcasecmp(str.c_str(), "r_b") )
+        else if ( !strcasecmp(str.c_str(), "RbyB") )
         {
           IC->set_normType(ItrCtl::r_b);
         }
-        else if ( !strcasecmp(str.c_str(), "r_r0") )
+        else if ( !strcasecmp(str.c_str(), "RbyR0") )
         {
           IC->set_normType(ItrCtl::r_r0);
         }
@@ -388,11 +388,11 @@ void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
         break;
         
       case ItrCtl::ic_div: // VP iteration
-        if ( !strcasecmp(str.c_str(), "v_div_max") )
+        if ( !strcasecmp(str.c_str(), "VdivMax") )
         {
           IC->set_normType(ItrCtl::v_div_max);
         }
-        else if ( !strcasecmp(str.c_str(), "v_div_dbg") )
+        else if ( !strcasecmp(str.c_str(), "VdivDbg") )
         {
           IC->set_normType(ItrCtl::v_div_dbg);
           Mode.Log_Itr == ON;
@@ -421,7 +421,7 @@ void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
       IC->set_omg(tmp);
       
       
-      label = label0 + "/comm_mode";
+      label = label0 + "/commMode";
       if ( !(tpCntl->GetValue(label, &str )) )
       {
         Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
@@ -442,7 +442,7 @@ void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
       }
       
 
-      label = label0 + "/Linear_Solver";
+      label = label0 + "/LinearSolver";
       if ( !(tpCntl->GetValue(label, &str )) )
       {
         Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
@@ -532,10 +532,10 @@ void Control::get_Average_option()
   string str;
   string label;
   
-  label="/Steer/Average_option/Operation";
+  label="/Steer/AverageOption/Operation";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Average_option/Operation'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -543,14 +543,14 @@ void Control::get_Average_option()
   else if( !strcasecmp(str.c_str(), "off") )  Mode.Average = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Average_option/Operation'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // 平均操作開始時間
   if ( Mode.Average == ON )
   {
-	  label = "/Steer/Average_option/Start_Type";
+	  label = "/Steer/Average_option/StartType";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -597,7 +597,7 @@ void Control::get_ChangeID()
   int ct=0;
   string label;
   
-  label="/Steer/Change_ID";
+  label="/Steer/ChangeID";
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
 	  return;
@@ -623,7 +623,7 @@ void Control::get_CheckParameter()
   string str;
   string label;
   
-  label = "/Steer/Check_Parameter";
+  label = "/Steer/CheckParameter";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -634,7 +634,7 @@ void Control::get_CheckParameter()
   else if( !strcasecmp(str.c_str(), "Off") )  CheckParam = OFF;
   else
   {
-    Hostonly_ printf("\tInvalid keyword is described for '/Steer/Check_Parameter'\n");
+    Hostonly_ printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
 }
@@ -659,39 +659,39 @@ void Control::get_Convection()
   string label;
   
   // scheme
-  label="/Steer/Convection_Term/scheme";
+  label="/Steer/ConvectionTerm/scheme";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '/Steer/Convection_Term/scheme'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "O1_Upwind") )    CnvScheme = O1_upwind;
-  else if( !strcasecmp(str.c_str(), "O3_muscl") )     CnvScheme = O3_muscl;
-  else if( !strcasecmp(str.c_str(), "O2_central") )   CnvScheme = O2_central;
-  else if( !strcasecmp(str.c_str(), "O4_central") ) { CnvScheme = O4_central; Exit(0); }  // not yet implemented
+  if     ( !strcasecmp(str.c_str(), "O1Upwind") )    CnvScheme = O1_upwind;
+  else if( !strcasecmp(str.c_str(), "O3muscl") )     CnvScheme = O3_muscl;
+  else if( !strcasecmp(str.c_str(), "O2central") )   CnvScheme = O2_central;
+  else if( !strcasecmp(str.c_str(), "O4central") ) { CnvScheme = O4_central; Exit(0); }  // not yet implemented
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Convection_Term/scheme'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // Limiter
   if ( CnvScheme == O3_muscl )
   {
-		label="/Steer/Convection_Term/limiter";
+		label="/Steer/ConvectionTerm/limiter";
     
 		if ( !(tpCntl->GetValue(label, &str )) )
     {
-			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '/Steer/Convection_Term/limiter'\n");
+			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 			Exit(0);
 		}
     
-		if     ( !strcasecmp(str.c_str(), "No_Limiter") )  Limiter = No_Limiter;
-		else if( !strcasecmp(str.c_str(), "Minmod") )      Limiter = MinMod;
+		if     ( !strcasecmp(str.c_str(), "NoLimiter") )  Limiter = No_Limiter;
+		else if( !strcasecmp(str.c_str(), "Minmod") )     Limiter = MinMod;
 		else
     {
-			Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Convection_Term/limiter'\n");
+			Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
 			Exit(0);
 		}
   }
@@ -706,11 +706,11 @@ void Control::get_Derived()
   string label;
   
   // 全圧
-  label="/Steer/Derived_Variable/Total_Pressure";
+  label="/Steer/DerivedVariable/TotalPressure";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Derived_Variable/Total_Pressure'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -718,16 +718,16 @@ void Control::get_Derived()
   else if( !strcasecmp(str.c_str(), "off") ) Mode.TP = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Derived_Variable/Total_Pressure\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // 渦度ベクトル
-  label="/Steer/Derived_Variable/Vorticity";
+  label="/Steer/DerivedVariable/Vorticity";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Derived_Variable/Vorticity'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -735,16 +735,16 @@ void Control::get_Derived()
   else if( !strcasecmp(str.c_str(), "off") ) Mode.VRT = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Derived_Variable/Vorticity'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // 速度勾配テンソルの第2不変量
-  label="/Steer/Derived_Variable/2nd_Invariant_of_VGT";
+  label="/Steer/DerivedVariable/2ndInvariantOfVGT";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Derived_Variable/2nd_Invariant_of_VGT'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -752,16 +752,16 @@ void Control::get_Derived()
   else if( !strcasecmp(str.c_str(), "off") ) Mode.I2VGT = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Derived_Variable/2nd_Invariant_of_VGT'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // ヘリシティ
-  label="/Steer/Derived_Variable/Helicity";
+  label="/Steer/DerivedVariable/Helicity";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Derived_Variable/Helicity'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -769,7 +769,7 @@ void Control::get_Derived()
   else if( !strcasecmp(str.c_str(), "off") ) Mode.Helicity = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Derived_Variable/Helicity\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -788,7 +788,7 @@ void Control::get_FileIO()
   string label, leaf;
   
   // 出力単位
-  label = "/Steer/File_IO/Unit_of_file";
+  label = "/Steer/FileIO/UnitOfFile";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -796,8 +796,8 @@ void Control::get_FileIO()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Dimensional") )      Unit.File = DIMENSIONAL;
-  else if( !strcasecmp(str.c_str(), "Non_Dimensional") )  Unit.File = NONDIMENSIONAL;
+  if     ( !strcasecmp(str.c_str(), "Dimensional") )     Unit.File = DIMENSIONAL;
+  else if( !strcasecmp(str.c_str(), "NonDimensional") )  Unit.File = NONDIMENSIONAL;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -806,7 +806,7 @@ void Control::get_FileIO()
   
   
   // 出力ガイドセルモード
-  label = "/Steer/File_IO/Guide_Out";
+  label = "/Steer/FileIO/GuideOut";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -825,7 +825,7 @@ void Control::get_FileIO()
   
   
   // デバッグ用のdiv(u)の出力指定
-  label = "/Steer/File_IO/Debug_divergence";
+  label = "/Steer/FileIO/DebugDivergence";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -843,7 +843,7 @@ void Control::get_FileIO()
   
   
   // ボクセルファイル出力
-  label = "/Steer/File_IO/Voxel_Output";
+  label = "/Steer/FileIO/VoxelOutput";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -861,7 +861,7 @@ void Control::get_FileIO()
   
   
   // インターバル 瞬時値
-  label = "/Steer/File_IO/Instant_Interval_Type";
+  label = "/Steer/FileIO/InstantIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -884,7 +884,7 @@ void Control::get_FileIO()
       Exit(0);
     }
     
-    label="/Steer/File_IO/Instant_Interval";
+    label="/Steer/FileIO/InstantInterval";
     
     if ( !(tpCntl->GetValue(label, &f_val )) )
     {
@@ -899,7 +899,7 @@ void Control::get_FileIO()
   
   
   // インターバル　平均値
-  label = "/Steer/File_IO/Averaged_Interval_Type";
+  label = "/Steer/FileIO/AveragedIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -922,7 +922,7 @@ void Control::get_FileIO()
       Exit(0);
     }
     
-    label="/Steer/File_IO/Averaged_Interval";
+    label="/Steer/FileIO/AveragedInterval";
     
     if ( !(tpCntl->GetValue(label, &f_val )) )
     {
@@ -937,7 +937,7 @@ void Control::get_FileIO()
   
   
   // ファイル出力モード
-  label = "/Steer/File_IO/Output_Mode";
+  label = "/Steer/FileIO/OutputMode";
   
   if( !tpCntl->chkNode(label) )
   {
@@ -975,7 +975,7 @@ void Control::get_FileIO()
     // Output Directory_Path
     if ( FIO.IO_Mode == io_specified )
     {
-      label = "/Steer/File_IO/Output_Mode/Directory_Path";
+      label = "/Steer/FileIO/OutputMode/DirectoryPath";
       
       if ( !(tpCntl->GetValue(label, &str)) )
       {
@@ -994,7 +994,7 @@ void Control::get_FileIO()
   
   
   // PLOT3D Option
-  label = "/Steer/File_IO/PLOT3D";
+  label = "/Steer/FileIO/PLOT3D";
   
   if( !tpCntl->chkNode(label) )
   {
@@ -1020,7 +1020,7 @@ void Control::get_FileIO()
   // インターバル PLOT3D
   if(FIO.PLOT3D_OUT == ON)
   {
-    label = "/Steer/File_IO/PLOT3D/Interval_Type";
+    label = "/Steer/FileIO/PLOT3D/IntervalType";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -1043,7 +1043,7 @@ void Control::get_FileIO()
         Exit(0);
       }
       
-      label="/Steer/File_IO/PLOT3D/Interval";
+      label="/Steer/FileIO/PLOT3D/Interval";
       
       if ( !(tpCntl->GetValue(label, &f_val )) )
       {
@@ -1068,7 +1068,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   string label;
   
   // ファイル名を取得
-  label = "/Steer/Geometry_Model/Polylib_File";
+  label = "/Steer/GeometryModel/PolylibFile";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1079,7 +1079,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   
   
   // フィルの流体媒質番号の指定
-  label = "/Steer/Geometry_Model/Fluid_Medium_for_Fill";
+  label = "/Steer/GeometryModel/FluidMediumForFill";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1106,7 +1106,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   
   
   // フィルの固体媒質番号の指定
-  label = "/Steer/Geometry_Model/Solid_Medium_for_Fill";
+  label = "/Steer/GeometryModel/SolidMediumForFill";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1133,7 +1133,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   
   
   // 流体セルのフィルのヒント
-  label = "/Steer/Geometry_Model/Hint_of_Filling_Fluid";
+  label = "/Steer/GeometryModel/HintOfFillingFluid";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1143,12 +1143,12 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   else
   {
     if     ( !strcasecmp(str.c_str(), "no" ) )      Fill_Hint = -1;
-    else if( !strcasecmp(str.c_str(), "x_minus" ) ) Fill_Hint = X_MINUS;
-    else if( !strcasecmp(str.c_str(), "x_plus" ) )  Fill_Hint = X_PLUS;
-    else if( !strcasecmp(str.c_str(), "y_minus" ) ) Fill_Hint = Y_MINUS;
-    else if( !strcasecmp(str.c_str(), "y_plus" ) )  Fill_Hint = Y_PLUS;
-    else if( !strcasecmp(str.c_str(), "z_minus" ) ) Fill_Hint = Z_MINUS;
-    else if( !strcasecmp(str.c_str(), "z_plus" ) )  Fill_Hint = Z_PLUS;
+    else if( !strcasecmp(str.c_str(), "xminus" ) ) Fill_Hint = X_MINUS;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  Fill_Hint = X_PLUS;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) Fill_Hint = Y_MINUS;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  Fill_Hint = Y_PLUS;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) Fill_Hint = Z_MINUS;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  Fill_Hint = Z_PLUS;
     else
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -1160,7 +1160,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   // スケーリングファクター
   REAL_TYPE ct=0.0;
   
-  label = "/Steer/Geometry_Model/Scaling_Factor";
+  label = "/Steer/GeometryModel/ScalingFactor";
   
   if ( !tpCntl->GetValue(label, &ct) )
   {
@@ -1217,15 +1217,15 @@ void Control::get_Iteration(ItrCtl* IC)
       
     case Flow_FS_AB_CN:
       findCriteria("/Steer/Iteration/Flow/Poisson", ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      findCriteria("/Steer/Iteration/Flow/NS_CN",   ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
+      findCriteria("/Steer/Iteration/Flow/NSCN",    ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
       findCriteria("/Steer/Iteration/Flow/VP",      ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     case Flow_FS_RK_CN:
-      findCriteria("/Steer/Iteration/Flow/Poisson",     ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      findCriteria("/Steer/Iteration/Flow/Poisson_2nd", ItrCtl::ic_prs_cr, &IC[ItrCtl::ic_prs_cr]);
-      findCriteria("/Steer/Iteration/Flow/NS_CN",       ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
-      findCriteria("/Steer/Iteration/Flow/VP",          ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
+      findCriteria("/Steer/Iteration/Flow/Poisson",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      findCriteria("/Steer/Iteration/Flow/Poisson_2nd",ItrCtl::ic_prs_cr, &IC[ItrCtl::ic_prs_cr]);
+      findCriteria("/Steer/Iteration/Flow/NSCN",       ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
+      findCriteria("/Steer/Iteration/Flow/VP",         ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     default:
@@ -1250,7 +1250,7 @@ void Control::get_Iteration(ItrCtl* IC)
         break;
         
       case Heat_EE_EI:
-        findCriteria("/Steer/Iteration/Heat/Euler_Implicit", ItrCtl::ic_tdf_ei, &IC[ItrCtl::ic_tdf_ei]);
+        findCriteria("/Steer/Iteration/Heat/EulerImplicit", ItrCtl::ic_tdf_ei, &IC[ItrCtl::ic_tdf_ei]);
         break;
         
       default:
@@ -1269,39 +1269,39 @@ void Control::get_KindOfSolver()
   string str;
   string label;
   
-  label="/Steer/Solver_Property/Kind_of_solver";
+  label="/Steer/SolverProperty/KindOfSolver";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '/Steer/Solver_Property/Kind_of_solver\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Flow_Only" ) )                KindOfSolver = FLOW_ONLY;
-  else if( !strcasecmp(str.c_str(), "Thermal_Flow" ) )             KindOfSolver = THERMAL_FLOW;
-  else if( !strcasecmp(str.c_str(), "Thermal_Flow_Natural" ) )     KindOfSolver = THERMAL_FLOW_NATURAL;
-  else if( !strcasecmp(str.c_str(), "Conjugate_Heat_Transfer" ) )  KindOfSolver = CONJUGATE_HEAT_TRANSFER;
-  else if( !strcasecmp(str.c_str(), "Solid_Conduction" ) )         KindOfSolver = SOLID_CONDUCTION;
+  if     ( !strcasecmp(str.c_str(), "FlowOnly" ) )               KindOfSolver = FLOW_ONLY;
+  else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )            KindOfSolver = THERMAL_FLOW;
+  else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )     KindOfSolver = THERMAL_FLOW_NATURAL;
+  else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )  KindOfSolver = CONJUGATE_HEAT_TRANSFER;
+  else if( !strcasecmp(str.c_str(), "SolidConduction" ) )        KindOfSolver = SOLID_CONDUCTION;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Kind_of_solver'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // Buoyancy option
   if ( (KindOfSolver==THERMAL_FLOW) || (KindOfSolver==THERMAL_FLOW_NATURAL) || (KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
   {
-    label="/Steer/Solver_Property/Buoyancy";
+    label="/Steer/SolverProperty/Buoyancy";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '/Steer/Solver_Property/Buoyancy'\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "Boussinesq" ) )   Mode.Buoyancy = BOUSSINESQ;
-    else if( !strcasecmp(str.c_str(), "Low_Mach" ) )     Mode.Buoyancy = LOW_MACH;
-    else if( !strcasecmp(str.c_str(), "No_Buoyancy" ) )  Mode.Buoyancy = NO_BUOYANCY;
+    if     ( !strcasecmp(str.c_str(), "Boussinesq" ) )  Mode.Buoyancy = BOUSSINESQ;
+    else if( !strcasecmp(str.c_str(), "LowMach" ) )     Mode.Buoyancy = LOW_MACH;
+    else if( !strcasecmp(str.c_str(), "NoBuoyancy" ) )  Mode.Buoyancy = NO_BUOYANCY;
     else
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Buoyancy'\n");
@@ -1321,11 +1321,11 @@ void Control::get_LES_option()
   string label;
   
   // 計算オプション
-  label="/Steer/LES_Option/LES_Calculation";
+  label="/Steer/LESoption/LEScalculation";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/LES_Option/LES_Calculation'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -1333,7 +1333,7 @@ void Control::get_LES_option()
   else if( !strcasecmp(str.c_str(), "off") )   LES.Calc = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/LES_Option/LES_Calculation'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -1341,38 +1341,38 @@ void Control::get_LES_option()
   
   
   // モデル
-  label="/Steer/LES_Option/Model";
+  label="/Steer/LESoption/Model";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/LES_Option/Model'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
-  if      ( !strcasecmp(str.c_str(), "smagorinsky") )  LES.Model = Smagorinsky;
-  else if ( !strcasecmp(str.c_str(), "Low_Reynolds") ) LES.Model = Low_Reynolds;
-  else if ( !strcasecmp(str.c_str(), "Dynamic") )      LES.Model = Dynamic;
+  if      ( !strcasecmp(str.c_str(), "smagorinsky") ) LES.Model = Smagorinsky;
+  else if ( !strcasecmp(str.c_str(), "LowReynolds") ) LES.Model = Low_Reynolds;
+  else if ( !strcasecmp(str.c_str(), "Dynamic") )     LES.Model = Dynamic;
   else
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/LES_Option/Model'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
     Exit(0);
   }
   
   
   // Cs係数
-  label="/Steer/LES_Option/Cs";
+  label="/Steer/LESoption/Cs";
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/LES_Option/Cs'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   LES.Cs = ct;
   
   // Cs係数
-  label="/Steer/LES_Option/Damping_Factor";
+  label="/Steer/LESoption/DampingFactor";
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/LES_Option/Damping_Factor'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   LES.damping_factor = ct;
@@ -1391,29 +1391,29 @@ void Control::get_Log()
   string label;
   
   // 出力単位
-  label="/Steer/Log/Unit_of_Log";
+  label="/Steer/Log/UnitOfLog";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Log/Unit_of_Log'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Dimensional") )      Unit.Log = DIMENSIONAL;
-  else if( !strcasecmp(str.c_str(), "Non_Dimensional") )  Unit.Log = NONDIMENSIONAL;
+  if     ( !strcasecmp(str.c_str(), "Dimensional") )     Unit.Log = DIMENSIONAL;
+  else if( !strcasecmp(str.c_str(), "NonDimensional") )  Unit.Log = NONDIMENSIONAL;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described at 'Unit_of_Log' section\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
   }
   
   
   // Log_Base
-  label="/Steer/Log/Log_Base";
+  label="/Steer/Log/LogBase";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Log/Log_Base'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -1421,17 +1421,17 @@ void Control::get_Log()
   else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Base = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Log/Log_Base'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   
   // Log_Iteration
-  label="/Steer/Log/Log_Iteration";
+  label="/Steer/Log/LogIteration";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Log/Log_Iteration'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -1439,7 +1439,7 @@ void Control::get_Log()
   else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Itr = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Log/Log_Iteration'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -1447,11 +1447,11 @@ void Control::get_Log()
   // Log_Wall_Info
   if ( Mode.Wall_profile == Log_Law )
   {
-	  label="/Steer/Log/Log_Wall_Info";
+	  label="/Steer/Log/LogWallInfo";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Log/Log_Wall_Info'\n");
+		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 		  Exit(0);
 	  }
 	  
@@ -1459,18 +1459,18 @@ void Control::get_Log()
 	  else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Wall = OFF;
 	  else
     {
-		  Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Log/Log_Wall_Info'\n");
+		  Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
 		  Exit(0);
 	  }
   }
   
   
   // Log_Profiling
-  label="/Steer/Log/Log_Profiling";
+  label="/Steer/Log/LogProfiling";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Log/Log_Profiling'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -1479,16 +1479,16 @@ void Control::get_Log()
   else if( !strcasecmp(str.c_str(), "detail") ) Mode.Profiling = DETAIL;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Log/Log_Profiling'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   // Interval console
-  label="/Steer/Log/Console_Interval_Type";
+  label="/Steer/Log/ConsoleIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Log/Console_Interval_Type'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   else
@@ -1503,15 +1503,15 @@ void Control::get_Log()
 	  }
 	  else
     {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/Log/Console_Interval_Type'\n");
+		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
 		  Exit(0);
 	  }
 	  
-	  label="/Steer/Log/Console_Interval";
+	  label="/Steer/Log/ConsoleInterval";
     
 	  if ( !(tpCntl->GetValue(label, &f_val )) )
     {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Log/Console_Interval'\n");
+		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
 	  }
 	  else
@@ -1521,11 +1521,11 @@ void Control::get_Log()
   }
   
   // Interval file_history
-  label="/Steer/Log/History_Interval_Type";
+  label="/Steer/Log/HistoryIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Log/History_Interval_Type'\n");
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   else
@@ -1540,15 +1540,15 @@ void Control::get_Log()
 	  }
 	  else
     {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/Log/History_Interval_Type'\n");
+		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
 		  Exit(0);
 	  }
     
-	  label="/Steer/Log/History_Interval";
+	  label="/Steer/Log/HistoryInterval";
     
 	  if ( !(tpCntl->GetValue(label, &f_val )) )
     {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Log/History_Interval'\n");
+		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
 	  }
 	  else
@@ -1659,7 +1659,7 @@ void Control::get_Para_Ref()
   }
   Gravity = ct2;
   
-  label = "/Parameter/Reference/Base_Pressure";
+  label = "/Parameter/Reference/BasePressure";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
@@ -1726,7 +1726,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   string label;
   
   // File_plot3d_filename --- option
-  label = "/Steer/plot3d_options/Filename";
+  label = "/Steer/Plot3dOptions/Filename";
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
@@ -1742,7 +1742,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   }
   
   // File_plot3d_grid_kind
-  label = "/Steer/plot3d_options/Grid_kind";
+  label = "/Steer/Plot3dOptions/GridKind";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1751,8 +1751,8 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   }
   else
   {
-    if     ( !strcasecmp(str.c_str(), "single_grid") ) FP3DR->setSingleGrid();
-    else if( !strcasecmp(str.c_str(), "multi_grid") )  FP3DR->setMultiGrid();
+    if     ( !strcasecmp(str.c_str(), "SingleGrid") ) FP3DR->setSingleGrid();
+    else if( !strcasecmp(str.c_str(), "MultiGrid") )  FP3DR->setMultiGrid();
     else
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -1762,7 +1762,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // 格子の移動
-  label = "/Steer/plot3d_options/Grid_Mobility";
+  label = "/Steer/Plot3dOptions/GridMobility";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1782,7 +1782,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // 時間方向の変化
-  label = "/Steer/plot3d_options/state_of_time";
+  label = "/Steer/Plot3dOptions/StateOfTime";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1803,7 +1803,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // IBLANKファイル
-  label = "/Steer/plot3d_options/set_iblank_flag";
+  label = "/Steer/Plot3dOptions/SetIblankFlag";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1824,7 +1824,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // 次元数
-  label = "/Steer/plot3d_options/dimension";
+  label = "/Steer/Plot3dOptions/Dimension";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/dimension'\n");
@@ -1844,7 +1844,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   //File_plot3d_format
-  label = "/Steer/plot3d_options/Format_Type";
+  label = "/Steer/Plot3dOptions/FormatType";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -1864,7 +1864,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // 出力の単精度or倍精度指定
-  label = "/Steer/plot3d_options/real_type";
+  label = "/Steer/Plot3dOptions/RealType";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -1895,7 +1895,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // Output_xyz
-  label = "/Steer/plot3d_options/output_xyz";
+  label = "/Steer/Plot3dOptions/OutputXyz";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1940,7 +1940,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // Output_function
-  label = "/Steer/plot3d_options/Output_function";
+  label = "/Steer/Plot3dOptions/OutputFunction";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1960,7 +1960,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // Output_function_name
-  label = "/Steer/plot3d_options/Output_func_name";
+  label = "/Steer/Plot3dOptions/OutputFuncName";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2004,7 +2004,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   P3Op.IS_fvbnd = OFF; // 常にoff
   
   // divide_func ---> 出力を項目別にファイル分割するオプション
-  label = "/Steer/plot3d_options/divide_func";
+  label = "/Steer/Plot3dOptions/DivideFunc";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2034,7 +2034,7 @@ void Control::get_PMtest()
   string str;
   string label;
   
-  label="/Steer/Performance_Test";
+  label="/Steer/PerformanceTest";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2045,7 +2045,7 @@ void Control::get_PMtest()
   else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Performance_Test'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
 }
@@ -2058,10 +2058,10 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
   string str;
   string label;
   
-  label="/Steer/Reference_Frame/Reference_Frame_Type";
+  label="/Steer/ReferenceFrame/ReferenceFrameType";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Reference_Frame/Reference_Frame_Type'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -2077,14 +2077,14 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
     
     if( tpCntl->GetVector(label, xyz, 3) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid values for Translational Reference_Frame\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid values for '%s'\n", label.c_str());
       Exit(0);
     }
     RF->setGridVel((double*)xyz);
   }
   else
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/Reference_Frame/Reference_Frame_Type'\n");
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
     Exit(0);
   }
 }
@@ -2099,11 +2099,11 @@ void Control::get_Sampling()
   string label;
   
   // ログ出力
-  label = "/Steer/Monitor_List/log";
+  label = "/Steer/MonitorList/log";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Monitor_List/Log'\n");
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
   }
   
@@ -2111,7 +2111,7 @@ void Control::get_Sampling()
   else if( !strcasecmp(str.c_str(), "off") )  Sampling.log = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Monitor_List/Log'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -2119,11 +2119,11 @@ void Control::get_Sampling()
   /// @see Initialize.C setEnsComponent()
   if ( Sampling.log == ON )
   {
-	  label = "/Steer/Monitor_List/Cell_Monitor";
+	  label = "/Steer/MonitorList/CellMonitor";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '/Steer/Monitor_List/Cell_Monitor'\n");
+		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 		  Exit(0);
 	  }
     
@@ -2131,7 +2131,7 @@ void Control::get_Sampling()
 	  else if( !strcasecmp(str.c_str(), "off") )  EnsCompo.monitor = OFF;
 	  else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Monitor_List/Cell_Monitor'\n");
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
 		  Exit(0);
 	  }
   }
@@ -2148,66 +2148,66 @@ void Control::get_Solver_Properties()
   string label;
   
   // 形状近似度の取得
-  label = "/Steer/Solver_Property/Shape_Approximation";
+  label = "/Steer/SolverProperty/ShapeApproximation";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Solver_Property/Shape_Approximation'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Binary") )       Mode.ShapeAprx = BINARY;
-  else if( !strcasecmp(str.c_str(), "cut_distance") ) Mode.ShapeAprx = CUT_INFO;
+  if     ( !strcasecmp(str.c_str(), "Binary") )      Mode.ShapeAprx = BINARY;
+  else if( !strcasecmp(str.c_str(), "CutDistance") ) Mode.ShapeAprx = CUT_INFO;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Shape_Approximation'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   
   // 支配方程式の型（PDE_NS / Euler）を取得
-  label = "/Steer/Solver_Property/PDE_type";
+  label = "/Steer/SolverProperty/PDEType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Solver_Property/PDE_type'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Navier_Stokes" ) ) Mode.PDE = PDE_NS;
+  if     ( !strcasecmp(str.c_str(), "NavierStokes" ) ) Mode.PDE = PDE_NS;
   else if( !strcasecmp(str.c_str(), "Euler" ) )         Mode.PDE = PDE_EULER;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/PDE_type'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   
   // 基礎方程式の種類を取得する
-  label = "/Steer/Solver_Property/Basic_Equation";
+  label = "/Steer/SolverProperty/BasicEquation";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Solver_Property/Basic_Equation'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Incompressible" ) )            BasicEqs = INCMP;
-  else if( !strcasecmp(str.c_str(), "Limited_Compressible" ) )      BasicEqs = LTDCMP;
-  else if( !strcasecmp(str.c_str(), "Compressible" ) )              BasicEqs = CMPRSS;
-  else if( !strcasecmp(str.c_str(), "Incompressible_Two_Phase" ) )  BasicEqs = INCMP_2PHASE;
+  if     ( !strcasecmp(str.c_str(), "Incompressible" ) )        BasicEqs = INCMP;
+  else if( !strcasecmp(str.c_str(), "LimitedCompressible" ) )   BasicEqs = LTDCMP;
+  else if( !strcasecmp(str.c_str(), "Compressible" ) )          BasicEqs = CMPRSS;
+  else if( !strcasecmp(str.c_str(), "Incompressible2Phase" ) )  BasicEqs = INCMP_2PHASE;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Basic_Equation'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
   
   // 非定常計算，または定常計算の種別を取得する
-  label = "/Steer/Solver_Property/Time_Variation";
+  label = "/Steer/SolverProperty/TimeVariation";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Solver_Property/Time_Variation'\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -2215,7 +2215,7 @@ void Control::get_Solver_Properties()
   else if( !strcasecmp(str.c_str(), "Unsteady" ) )  Mode.Steady = FB_UNSTEADY;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Time_Variation'\n");
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
@@ -2253,7 +2253,7 @@ void Control::get_Solver_Properties()
   
   
   // 平均値の引き戻しオプション
-  label = "/Steer/Solver_Property/Pressure_Shift";
+  label = "/Steer/SolverProperty/PressureShift";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2262,12 +2262,12 @@ void Control::get_Solver_Properties()
   }
   
   if     ( !strcasecmp(str.c_str(), "off" ) )     Mode.Pshift = -1;
-  else if( !strcasecmp(str.c_str(), "x_minus" ) ) Mode.Pshift = X_MINUS;
-  else if( !strcasecmp(str.c_str(), "x_plus" ) )  Mode.Pshift = X_PLUS;
-  else if( !strcasecmp(str.c_str(), "y_minus" ) ) Mode.Pshift = Y_MINUS;
-  else if( !strcasecmp(str.c_str(), "y_plus" ) )  Mode.Pshift = Y_PLUS;
-  else if( !strcasecmp(str.c_str(), "z_minus" ) ) Mode.Pshift = Z_MINUS;
-  else if( !strcasecmp(str.c_str(), "z_plus" ) )  Mode.Pshift = Z_PLUS;
+  else if( !strcasecmp(str.c_str(), "xminus" ) ) Mode.Pshift = X_MINUS;
+  else if( !strcasecmp(str.c_str(), "xplus" ) )  Mode.Pshift = X_PLUS;
+  else if( !strcasecmp(str.c_str(), "yminus" ) ) Mode.Pshift = Y_MINUS;
+  else if( !strcasecmp(str.c_str(), "yplus" ) )  Mode.Pshift = Y_PLUS;
+  else if( !strcasecmp(str.c_str(), "zminus" ) ) Mode.Pshift = Z_MINUS;
+  else if( !strcasecmp(str.c_str(), "zplus" ) )  Mode.Pshift = Z_PLUS;
   else
   {
     stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2286,7 +2286,7 @@ void Control::get_start_condition()
   string str;
   string label;
   
-  label="/Steer/Start_condition/start_type";
+  label="/Steer/StartCondition/StartType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2294,10 +2294,10 @@ void Control::get_start_condition()
     Exit(0);
   }
   
-  if      ( !strcasecmp(str.c_str(), "initial") )                       Start = initial_start;
-  else if ( !strcasecmp(str.c_str(), "restart") )                       Start = restart;
-  else if ( !strcasecmp(str.c_str(), "restart_from_coarse_data") )      Start = coarse_restart;
-  else if ( !strcasecmp(str.c_str(), "restart_from_different_nproc") )  Start = restart_different_nproc;
+  if      ( !strcasecmp(str.c_str(), "Initial") )                    Start = initial_start;
+  else if ( !strcasecmp(str.c_str(), "Restart") )                    Start = restart;
+  else if ( !strcasecmp(str.c_str(), "RestartFromCoarseData") )      Start = coarse_restart;
+  else if ( !strcasecmp(str.c_str(), "RestartFromDifferentNproc") )  Start = restart_different_nproc;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2308,7 +2308,7 @@ void Control::get_start_condition()
   // リスタート時のタイムスタンプ
   if ( (Start == restart) || (Start == coarse_restart) || (Start == restart_different_nproc) )
   {
-    label="/Steer/Start_condition/restart_step";
+    label="/Steer/StartCondition/RestartStep";
     
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
@@ -2322,7 +2322,7 @@ void Control::get_start_condition()
   // リスタート時のタイムスタンプ Coarse_restart
   if ( Start == coarse_restart )
   {
-    label="/Steer/Start_condition/Coarse_Restart/Prefix_of_Pressure";
+    label="/Steer/StartCondition/CoarseRestart/PrefixOfPressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2333,7 +2333,7 @@ void Control::get_start_condition()
     f_Coarse_pressure = str.c_str();
     
     
-    label="/Steer/Start_condition/Coarse_Restart/Prefix_of_Velocity";
+    label="/Steer/StartCondition/CoarseRestart/PrefixOfVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2346,7 +2346,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/Start_condition/Coarse_Restart/Prefix_of_Temperature";
+      label="/Steer/StartCondition/CoarseRestart/PrefixOfTemperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2364,7 +2364,7 @@ void Control::get_start_condition()
   if ( Start == restart_different_nproc )
   {
     
-    label="/Steer/Start_condition/restart_from_Different_Nproc/staging";
+    label="/Steer/StartCondition/RestartFromDifferentNproc/Staging";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2384,7 +2384,7 @@ void Control::get_start_condition()
 
     //if( Restart_staging ) {
     
-      label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_dir";
+      label="/Steer/StartCondition/restartFromDifferentNproc/PrefixOfDir";
     
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2396,7 +2396,7 @@ void Control::get_start_condition()
     
     //}
     
-    label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_Pressure";
+    label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfPressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2407,7 +2407,7 @@ void Control::get_start_condition()
     f_different_nproc_pressure = str.c_str();
     
     
-    label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_Velocity";
+    label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2420,7 +2420,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/Start_condition/restart_from_Different_Nproc/Prefix_of_Temperature";
+      label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfTemperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2441,7 +2441,7 @@ void Control::get_start_condition()
     // プロセス並列時にローカルでのファイル入力を指定した場合
     if ( FIO.IO_Input == IO_DISTRIBUTE )
     {
-      label="/Steer/Start_condition/DFI_file/pressure";
+      label="/Steer/StartCondition/DFIfile/pressure";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2452,7 +2452,7 @@ void Control::get_start_condition()
       f_Coarse_dfi_prs = str.c_str();
       f_different_nproc_dfi_prs = str.c_str();
       
-      label="/Steer/Start_condition/DFI_file/velocity";
+      label="/Steer/StartCondition/DFIfile/velocity";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2465,7 +2465,7 @@ void Control::get_start_condition()
       
       if ( isHeatProblem() )
       {
-        label="/Steer/Start_condition/DFI_file/temperature";
+        label="/Steer/StartCondition/DFIfile/Temperature";
         
         if ( !(tpCntl->GetValue(label, &str )) )
         {
@@ -2485,7 +2485,7 @@ void Control::get_start_condition()
   if ( Start == initial_start )
   {
     // Density
-    label="/Steer/Start_condition/Initial_State/Density";
+    label="/Steer/StartCondition/InitialState/Density";
     
     if ( !(tpCntl->GetValue(label, &iv.Density )) )
     {
@@ -2494,7 +2494,7 @@ void Control::get_start_condition()
     }
     
     // Pressure
-    label="/Steer/Start_condition/Initial_State/Pressure";
+    label="/Steer/StartCondition/InitialState/Pressure";
     
     if ( !(tpCntl->GetValue(label, &iv.Pressure )) )
     {
@@ -2505,7 +2505,7 @@ void Control::get_start_condition()
     // Velocity
     REAL_TYPE v[3];
     for (int n=0; n<3; n++) v[n]=0.0;
-    label="/Steer/Start_condition/Initial_State/Velocity";
+    label="/Steer/StartCondition/InitialState/Velocity";
     
     if( !(tpCntl->GetVector(label, v, 3)) )
     {
@@ -2519,7 +2519,7 @@ void Control::get_start_condition()
     // Temperature
     if ( isHeatProblem() )
     {
-      label="/Steer/Start_condition/Initial_State/Temperature";
+      label="/Steer/StartCondition/InitialState/Temperature";
       
       if ( !(tpCntl->GetValue(label, &iv.Temperature )) )
       {
@@ -2638,7 +2638,7 @@ void Control::get_Time_Control(DTcntl* DT)
   string label;
   
   // 加速時間
-  label = "/Steer/Time_Control/Acceleration_Type";
+  label = "/Steer/TimeControl/AccelerationType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2661,7 +2661,7 @@ void Control::get_Time_Control(DTcntl* DT)
 		  Exit(0);
 	  }
 	  
-	  label = "/Steer/Time_Control/Acceleration";
+	  label = "/Steer/TimeControl/Acceleration";
     
 	  if ( !(tpCntl->GetValue(label, &ct )) )
     {
@@ -2676,7 +2676,7 @@ void Control::get_Time_Control(DTcntl* DT)
   
   
   // 時間積分幅を取得する
-  label = "/Steer/Time_Control/Dt_Type";
+  label = "/Steer/TimeControl/DtType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2685,7 +2685,7 @@ void Control::get_Time_Control(DTcntl* DT)
   }
   
   
-  label = "/Steer/Time_Control/Delta_t";
+  label = "/Steer/TimeControl/DeltaT";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -2711,12 +2711,12 @@ void Control::get_Time_Control(DTcntl* DT)
   
   if ( !DT->set_Scheme(str.c_str(), cc) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to set DELTA_T\n");
+    Hostonly_ stamped_printf("\tParsing error : fail to set DeltaT\n");
     Exit(0);
   }
   
   // 計算する時間を取得する
-  label = "/Steer/Time_Control/Period_Type";
+  label = "/Steer/TimeControl/PeriodType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2740,7 +2740,7 @@ void Control::get_Time_Control(DTcntl* DT)
     }
     
     
-    label = "/Steer/Time_Control/Calculation_Period";
+    label = "/Steer/TimeControl/CalculationPeriod";
     
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
@@ -2764,7 +2764,7 @@ void Control::get_Unit()
   string str;
   string label;
   
-  label = "/Steer/Unit/Unit_of_Input_Parameter";
+  label = "/Steer/Unit/UnitOfInputParameter";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2772,8 +2772,8 @@ void Control::get_Unit()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Dimensional") )      Unit.Param = DIMENSIONAL;
-  else if( !strcasecmp(str.c_str(), "Non_Dimensional") )  Unit.Param = NONDIMENSIONAL;
+  if     ( !strcasecmp(str.c_str(), "Dimensional") )     Unit.Param = DIMENSIONAL;
+  else if( !strcasecmp(str.c_str(), "NonDimensional") )  Unit.Param = NONDIMENSIONAL;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
@@ -2781,7 +2781,7 @@ void Control::get_Unit()
   }
   
   
-  label = "/Steer/Unit/pressure";
+  label = "/Steer/Unit/Pressure";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2799,7 +2799,7 @@ void Control::get_Unit()
   
   if ( isHeatProblem() )
   {
-    label = "/Steer/Unit/temperature";
+    label = "/Steer/Unit/Temperature";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2827,7 +2827,7 @@ void Control::get_VarRange()
   string str;
   string label;
 
-  label="/Steer/Variable_Range";
+  label="/Steer/VariableRange";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2854,7 +2854,7 @@ void Control::get_Version()
   string label;
   
   // FlowBase
-  label = "/Steer/Version_Info/Flow_Base";
+  label = "/Steer/VersionInfo/FlowBase";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -2864,7 +2864,7 @@ void Control::get_Version()
   FB_version = ct;
   
   // FFV
-  label = "/Steer/Version_Info/FFV";
+  label = "/Steer/VersionInfo/FFV";
   
   if ( !(tpCntl->GetValue(label, &ct)) )
   {
@@ -2884,7 +2884,7 @@ void Control::get_Wall_type()
   string label;
   
   // 圧力のタイプ
-  label="/Steer/Treatment_of_wall/Pressure_Gradient";
+  label="/Steer/TreatmentOfWall/PressureGradient";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2892,8 +2892,8 @@ void Control::get_Wall_type()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "grad_zero") )   Mode.PrsNeuamnnType = P_GRAD_ZERO;
-  else if( !strcasecmp(str.c_str(), "grad_NS") )     Mode.PrsNeuamnnType = P_GRAD_NS;
+  if     ( !strcasecmp(str.c_str(), "GradZero") )   Mode.PrsNeuamnnType = P_GRAD_ZERO;
+  else if( !strcasecmp(str.c_str(), "GradNS") )     Mode.PrsNeuamnnType = P_GRAD_NS;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2901,7 +2901,7 @@ void Control::get_Wall_type()
   }
   
   // 壁面摩擦応力の計算モード
-  label="/Steer/Treatment_of_wall/Velocity_Profile";
+  label="/Steer/TreatmentOfWall/VelocityProfile";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2909,9 +2909,9 @@ void Control::get_Wall_type()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "no_slip") )     Mode.Wall_profile = No_Slip;
-  else if( !strcasecmp(str.c_str(), "Slip") )        Mode.Wall_profile = Slip;
-  else if( !strcasecmp(str.c_str(), "Law_of_Wall") ) Mode.Wall_profile = Log_Law;
+  if     ( !strcasecmp(str.c_str(), "NoSlip") )    Mode.Wall_profile = No_Slip;
+  else if( !strcasecmp(str.c_str(), "Slip") )      Mode.Wall_profile = Slip;
+  else if( !strcasecmp(str.c_str(), "LawOfWall") ) Mode.Wall_profile = Log_Law;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());

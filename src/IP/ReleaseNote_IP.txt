@@ -13,6 +13,9 @@ Release Note
 
 ****************************************************************************
   
+Ver 1.2.1    16 Nov. 2012
+  - パラメータをアンダースコア区切りから，大文字小文字区切りへ変更, ex.) Time_Control >> TimeControl
+  
 Ver 1.2.0    20 Aug. 2012
   - TPの媒質指定に対応 >> PMT, Polygon, PPLT2D, RECT, SPHERE
   

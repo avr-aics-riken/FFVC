@@ -9,7 +9,7 @@ Release Note
 
 #######################################
 
-Ver 0.9.5   15 Nov. 2012
+Ver 0.9.6   16 Nov. 2012
   - PLOT3D関連ソースをPLOT3Dディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加
   - セルフェイス速度d_vf
@@ -21,6 +21,7 @@ Ver 0.9.5   15 Nov. 2012
       $ make FFVC=ibm       << IBM BG
       あるいは，makefileの先頭にマクロを定義する
   - OpenMPのDOループはSTATICに固定
+  - パラメータをアンダースコア区切りから，大文字小文字区切りへ変更, ex.) Time_Control >> TimeControl
   
 Ver 0.8.9   18 Oct. 2012
   - リスタートパラメータの指定を変更．ステージングオプション

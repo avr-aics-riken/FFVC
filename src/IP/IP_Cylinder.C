@@ -26,7 +26,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // 2D or 3D mode
-  label = "/Parameter/Intrinsic_Example/mode";
+  label = "/Parameter/IntrinsicExample/Mode";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -49,7 +49,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // x-dir step
-  label = "/Parameter/Intrinsic_Example/width";
+  label = "/Parameter/IntrinsicExample/Width";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -62,7 +62,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // z-dir step
-  label="/Parameter/Intrinsic_Example/height";
+  label="/Parameter/IntrinsicExample/Height";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -75,7 +75,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label = "/Parameter/Intrinsic_Example/Driver";
+  label = "/Parameter/IntrinsicExample/Driver";
   
   if ( tpCntl->GetValue(label, &ct ) )
   {
@@ -89,7 +89,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   if ( drv_length < 0.0 )
   {
-    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'Intrinsic_Example' must be positive.\n");
+    Hostonly_ stamped_printf("\tError : Value of 'Driver' in 'IntrinsicExample' must be positive.\n");
     return false;
   }
   
@@ -103,7 +103,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   
   // 媒質指定
-  label = "/Parameter/Intrinsic_Example/Fluid_medium";
+  label = "/Parameter/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -113,7 +113,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   m_fluid = str;
   
   
-  label = "/Parameter/Intrinsic_Example/Solid_medium";
+  label = "/Parameter/IntrinsicExample/SolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -124,7 +124,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   if ( drv_mode == ON )
   {
-    label = "/Parameter/Intrinsic_Example/driver_medium";
+    label = "/Parameter/IntrinsicExample/DriverMedium";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -134,7 +134,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
     m_driver = str;
     
     
-    label = "/Parameter/Intrinsic_Example/driver_face_medium";
+    label = "/Parameter/IntrinsicExample/DriverFaceMedium";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {

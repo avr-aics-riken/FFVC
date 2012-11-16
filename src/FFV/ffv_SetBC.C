@@ -1537,7 +1537,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
 
   if ( numProc > 1 ) 
   {
-    printf("Error : 'Pibc_Prdc' method is limited to use for serial execution\n.");
+    printf("Error : 'PibcPrdc' method is limited to use for serial execution\n.");
     Exit(0);
   }
   
