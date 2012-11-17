@@ -599,13 +599,13 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
 // #################################################################
 /**
  @brief 圧力損失部による疑似速度方向の修正
- @param[in,out] vc 疑似速度ベクトル
- @param[in] v 速度ベクトル n-step
- @param bd BCindex ID
- @param cvf コンポーネントの体積率
- @param v00 参照速度
- @param dt 時間積分幅
- @param[in,out] flop
+ @param [in,out] vc   疑似速度ベクトル
+ @param [in]     v    速度ベクトル n-step
+ @param [in]     bd   BCindex ID
+ @param [in]     cvf  コンポーネントの体積率
+ @param [in]     v00  参照速度
+ @param [in]     dt   時間積分幅
+ @param [in,out] flop 浮動小数点演算数
  */
 void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double &flop)
 {
@@ -732,7 +732,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
 
 // #################################################################
 // 速度境界条件による流束の修正
-void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
+void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3];
   int st[3], ed[3];
@@ -811,7 +811,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, 
         
       case OBC_OUTFLOW:
         vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-        pvec_vobc_oflow_(wv, size, &gd, &dh, v00, &rei, v, bv, vec, &face, &flop);
+        pvec_vobc_oflow_(wv, size, &gd, &dh, v00, &rei, v, vf, bv, vec, &face, &flop);
         break;
     }
   }
@@ -822,7 +822,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, 
 
 // #################################################################
 // 速度境界条件によるPoisosn式のソース項の修正
-void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, int* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
+void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], vel;
@@ -874,7 +874,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, int* bv
           
         case OUTFLOW:
           vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-          div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, &fcount);
+          div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
           break;
           
         default:
@@ -909,7 +909,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, int* bv
         
       case OBC_OUTFLOW:
         vel = C->V_Dface[face] * dt / dh;
-        div_obc_oflow_pvec_(s_0, size, &gd, &face, v00, &vel, bv, v0, &fcount);
+        div_obc_oflow_pvec_(s_0, size, &gd, &face, v00, &vel, bv, vf, &fcount);
         break;
         
       case OBC_TRC_FREE:
@@ -1088,14 +1088,14 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
 // #################################################################
 /**
  @brief 疑似速度の外部境界条件処理
- @param[out] vc 疑似速度ベクトル v^*
- @param v0 速度ベクトル v^n
- @param bv BCindex V
- @param tm
- @param dt 
- @param C
- @param v00
- @param flop
+ @param [out]    d_vc   疑似速度ベクトル v^*
+ @param [in]     d_v0   セルセンター速度ベクトル v^n
+ @param [in]     d_bv   BCindex V
+ @param [in]     tm     時刻
+ @param [in]     dt     時間積分幅
+ @param [in]     C      Control class
+ @param [in]     v00    参照速度
+ @param [in,out] flop   浮動小数点演算数
  */
 void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop)
 {

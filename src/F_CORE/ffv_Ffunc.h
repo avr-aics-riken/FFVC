@@ -349,10 +349,33 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_vbc_inner.f90
-  void pvec_vibc_oflow_   (REAL_TYPE* wv, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* rei, REAL_TYPE* v, 
-                           int* bv, int* odr, REAL_TYPE* vec, double* flop);
-  void pvec_vibc_specv_   (REAL_TYPE* wv, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
-                           int* bv, int* odr, REAL_TYPE* vec, double* flop);
+  void pvec_vibc_oflow_   (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           int* st,
+                           int* ed,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           int* odr,
+                           REAL_TYPE* vec,
+                           double* flop);
+  
+  void pvec_vibc_specv_   (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           int* st,
+                           int* ed,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           int* odr,
+                           REAL_TYPE* vec,
+                           double* flop);
+  
   void vibc_drchlt_       (REAL_TYPE* v, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, int* bv, int* odr, REAL_TYPE* vec);
   void vibc_outflow_      (REAL_TYPE* vc,int* sz, int* g, int* st, int* ed, int* bv, int* odr);
   
@@ -377,6 +400,7 @@ extern "C" {
                            int* bv,
                            int* odr,
                            REAL_TYPE* v0,
+                           REAL_TYPE* vf,
                            double* flop);
   
   void div_ibc_oflow_vec_ (REAL_TYPE* div,
@@ -392,13 +416,52 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_vbc_outer.f90
-  void pvec_vobc_oflow_   (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
-                           int* bv, REAL_TYPE* vec, int* face, double* flop);
-  void pvec_vobc_specv_   (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
-                           int* bv, REAL_TYPE* vec, int* face, double* flop);
-  void pvec_vobc_symtrc_  (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* rei, REAL_TYPE* v, int* bv, int* face, double* flop);
-  void pvec_vobc_wall_    (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
-                           int* bv, REAL_TYPE* vec, int* face, double* flop);
+  void pvec_vobc_oflow_   (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           REAL_TYPE* vf,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           int* face,
+                           double* flop);
+  
+  void pvec_vobc_specv_   (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           int* face,
+                           double* flop);
+  
+  void pvec_vobc_symtrc_  (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           int* face,
+                           double* flop);
+  
+  void pvec_vobc_wall_    (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           int* face,
+                           double* flop);
   
   void vobc_drchlt_       (REAL_TYPE* v,
                            int* sz,
@@ -429,7 +492,7 @@ extern "C" {
                            REAL_TYPE* v00,
                            REAL_TYPE* v_out,
                            int* bv,
-                           REAL_TYPE* v0,
+                           REAL_TYPE* vf,
                            double* flop);
   
   void div_obc_oflow_vec_ (REAL_TYPE* div,
@@ -445,16 +508,71 @@ extern "C" {
   //***********************************************************************************************
   // ffv_velocity_binary.f90
   void ab2_               (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, REAL_TYPE* ab, int* bd, REAL_TYPE* v00, double* flop);
-  void divergence_        (REAL_TYPE* dv, int* sz, int* g, REAL_TYPE* vc, int* bv, REAL_TYPE* v00, double* flop);
-  void eddy_viscosity_    (REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, int* bx, 
-                           REAL_TYPE* vt_range, REAL_TYPE* yp_range, REAL_TYPE* v00);
-  void euler_explicit_    (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, int* bd, double* flop);
+  
+  void divergence_        (REAL_TYPE* dv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* vc,
+                           int* bv,
+                           REAL_TYPE* v00,
+                           double* flop);
+  
+  void eddy_viscosity_    (REAL_TYPE* vt,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* re,
+                           REAL_TYPE* cs,
+                           REAL_TYPE* v,
+                           int* bx,
+                           REAL_TYPE* vt_range,
+                           REAL_TYPE* yp_range,
+                           REAL_TYPE* v00);
+  
+  void euler_explicit_    (REAL_TYPE* vc,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dt,
+                           REAL_TYPE* v,
+                           int* bd,
+                           double* flop);
+  
   void friction_velocity_ (REAL_TYPE* ut, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* v, int* bp, 
                            REAL_TYPE* range_Yp, REAL_TYPE* range_Ut, REAL_TYPE* v00, double* flop);
-  void pvec_muscl_        (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v, 
-                           int* bv, int* bp, int* v_mode, REAL_TYPE* ut, int* wall_type, int* bd, float* cvf, REAL_TYPE* vcs_coef, double* flop);
-  void update_vec_        (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p, int* bp, int* bv, 
-                           REAL_TYPE* v00, double* flop);
+  
+  void pvec_muscl_        (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           int* c_scheme,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           REAL_TYPE* vf,
+                           int* bv,
+                           int* bp,
+                           int* v_mode,
+                           REAL_TYPE* ut,
+                           int* wall_type,
+                           int* bd,
+                           float* cvf,
+                           REAL_TYPE* vcs_coef,
+                           double* flop);
+  
+  void update_vec_        (REAL_TYPE* v,
+                           REAL_TYPE* div,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dt,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* vc,
+                           REAL_TYPE* vf,
+                           REAL_TYPE* p,
+                           int* bp,
+                           int* bv,
+                           REAL_TYPE* v00,
+                           double* flop);
+  
   void vis_cn_jcb_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
                            REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, double* flop);
   void vis_cn_mod_jcb_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 

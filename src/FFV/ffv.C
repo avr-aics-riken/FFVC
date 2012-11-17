@@ -315,7 +315,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     ofv = obc[face].get_ofv();
     
     // OUTFLOW, SPEC_VELのときの有効セル数
-    ec = (REAL_TYPE)obc[face].get_ValidCell();
+    ec = (REAL_TYPE)obc[face].get_ValidCell(); // @todo 有効セル数と積算回数の一致をチェック
 
     
     // 各プロセスの外部領域面の速度をvv[]にコピー
@@ -444,6 +444,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   std::string prs_restart("prs_restart_");
   std::string vel_restart("vel_restart_");
   std::string temp_restart("temp_restart_");
+  std::string fvel_restart("fvel_restart_");
   
   // Pressure
   if (C.Unit.File == DIMENSIONAL) 
@@ -490,6 +491,25 @@ void FFV::FileOutput(double& flop, const bool restart)
   F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], pout) ) Exit(0);
+  
+  
+  // Face Velocity
+  fb_shift_refv_out_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+  
+  if ( !restart )
+  {
+    tmp = DFI.Generate_FileName(C.f_Fvelocity, m_step, myRank, pout);
+  }
+  else
+  {
+    tmp = DFI.Generate_FileName(fvel_restart, m_step, myRank, pout);
+  }
+  
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Fvelocity, m_step) : C.FIO.IO_DirPath;
+  tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
+  F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
+  
+  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Fvelocity, m_step, dfi_mng[var_FaceVelocity], pout) ) Exit(0);
   
   
   // Tempearture

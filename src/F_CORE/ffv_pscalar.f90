@@ -329,13 +329,13 @@
 
 !> ********************************************************************
 !! @brief 浮力項の計算
-!! @param[in,out] v 速度ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dgr 係数
-!! @param t 温度
-!! @param bd BCindex ID
-!! @param[out] flop
+!! @param [in,out] v    速度ベクトル
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     dgr  係数
+!! @param [in]     t    温度
+!! @param [in]     bd   BCindex ID
+!! @param [in,out] flop 浮動小数点演算数
 !<
     subroutine ps_buoyancy (v, sz, g, dgr, t, bd, flop)
     implicit none
@@ -358,7 +358,6 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, dgr)
 
 !$OMP DO SCHEDULE(static)
-
     do k=1,kx
     do j=1,jx
     do i=1,ix

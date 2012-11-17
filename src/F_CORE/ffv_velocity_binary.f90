@@ -15,25 +15,26 @@
 
 !> ********************************************************************
 !! @brief 対流項と粘性項の計算
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param c_scheme 対流項スキームのモード（1-UWD, 2-center, 3-MUSCL）
-!! @param v00 参照速度
-!! @param rei レイノルズ数の逆数
-!! @param v 速度ベクトル（n-step, collocated）
-!! @param bv BCindex V
-!! @param bp BCindex P
-!! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
-!! @param ut 摩擦速度
-!! @param wall_type 壁面条件 (0=no_slip, 1=slip)
-!! @param bd BCindex ID
-!! @param cvf コンポーネント体積率
-!! @param [in]  vcs_coef 粘性項の係数
-!! @param [out] flop
+!! @param [out] wv        疑似ベクトルの空間項の評価値
+!! @param [in]  sz        配列長
+!! @param [in]  g         ガイドセル長
+!! @param [in]  dh        格子幅
+!! @param [in]  c_scheme  対流項スキームのモード（1-UWD, 2-center, 3-MUSCL）
+!! @param [in]  v00       参照速度
+!! @param [in]  rei       レイノルズ数の逆数
+!! @param [in]  v         セルセンター速度ベクトル（n-step）
+!! @param [in]  vf        セルフェイス速度ベクトル（n-step）
+!! @param [in]  bv        BCindex V
+!! @param [in]  bp        BCindex P
+!! @param [in]  v_mode    粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
+!! @param [in]  ut        摩擦速度
+!! @param [in]  wall_type 壁面条件 (0=no_slip, 1=slip)
+!! @param [in]  bd        BCindex ID
+!! @param [in]  cvf       コンポーネント体積率
+!! @param [in]  vcs_coef  粘性項の係数
+!! @param [out] flop      浮動小数点演算数
 !<
-    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, ut, wall_type, bd, cvf, vcs_coef, flop)
+    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, v_mode, ut, wall_type, bd, cvf, vcs_coef, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
@@ -57,7 +58,7 @@
     real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
     real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
     real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
     real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cvf
     real, dimension(0:3)                                      ::  v00
@@ -230,14 +231,21 @@
       if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
       if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
       
-      ! 界面速度（スタガード位置） > 36 flops
-      UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
-      UPw = 0.5*(Up0+Uw1)*w_w + u_ref*(1.0-w_w)
-      VPn = 0.5*(Vp0+Vn1)*w_n + v_ref*(1.0-w_n)
-      VPs = 0.5*(Vp0+Vs1)*w_s + v_ref*(1.0-w_s)
-      WPt = 0.5*(Wp0+Wt1)*w_t + w_ref*(1.0-w_t)
-      WPb = 0.5*(Wp0+Wb1)*w_b + w_ref*(1.0-w_b)
-      
+      ! 界面速度（スタガード位置） > 24 flops
+      UPe = vf(i  , j  , k  ,1)*w_e + u_ref*(1.0-w_e)
+      UPw = vf(i-1, j  , k  ,1)*w_w + u_ref*(1.0-w_w)
+      VPn = vf(i  , j  , k  ,2)*w_n + v_ref*(1.0-w_n)
+      VPs = vf(i  , j-1, k  ,2)*w_s + v_ref*(1.0-w_s)
+      WPt = vf(i  , j  , k  ,3)*w_t + w_ref*(1.0-w_t)
+      WPb = vf(i  , j  , k-1,3)*w_b + w_ref*(1.0-w_b)
+
+!UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
+!UPw = 0.5*(Up0+Uw1)*w_w + u_ref*(1.0-w_w)
+!VPn = 0.5*(Vp0+Vn1)*w_n + v_ref*(1.0-w_n)
+!VPs = 0.5*(Vp0+Vs1)*w_s + v_ref*(1.0-w_s)
+!WPt = 0.5*(Wp0+Wt1)*w_t + w_ref*(1.0-w_t)
+!WPb = 0.5*(Wp0+Wb1)*w_b + w_ref*(1.0-w_b)
+
       ! セルセンターからの壁面修正速度 > 2 flops
       uq = u_ref2 - Up0
       vq = v_ref2 - Vp0
@@ -645,7 +653,8 @@
 !! @param [in]  g    ガイドセル長
 !! @param [in]  dt   時間積分幅
 !! @param [in]  dh   格子幅
-!! @param [in]  vc   疑似速度ベクトル
+!! @param [in]  vc   セルセンター疑似速度ベクトル
+!! @param [in]  vf   セルフェイス速度ベクトル
 !! @param [in]  p    圧力
 !! @param [in]  bp   BCindex P
 !! @param [in]  bv   BCindex V
@@ -655,7 +664,7 @@
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !!    - VBC(OUTFLOW, SPEC_VEL)の参照セルでは不定値となるが，InnerVBC()で上書き
 !<
-    subroutine update_vec (v, div, sz, g, dt, dh, vc, p, bp, bv, v00, flop)
+    subroutine update_vec (v, div, sz, g, dt, dh, vc, vf, p, bp, bv, v00, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx
@@ -666,10 +675,11 @@
     real                                                      ::  u_ref, v_ref, w_ref
     real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                      ::  c1, c2, c3, c4, c5, c6
+    real                                                      ::  Uef, Uwf, Vnf, Vsf, Wtf, Wbf
+    real                                                      ::  c1, c2, c3, c4, c5, c6, d1, d2, d3
     real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
@@ -681,23 +691,23 @@
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
-    
+
     flop = flop + dble(ix)*dble(jx)*dble(kx)*107.0 + 16.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 26.0d0 ! DP
 
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bpx, bvx, actv, r_actv) &
-!$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
+!$OMP PRIVATE(c1, c2, c3, c4, c5, c6, d1, d2, d3) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(Uef, Uwf, Vnf, Vsf, Wtf, Wbf) &
 !$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref)
 
 !$OMP DO SCHEDULE(static)
-
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -705,7 +715,11 @@
       bvx = bv(i,j,k)
       actv = real(ibits(bvx, State,  1))
       r_actv = 1.0 - actv
-      
+
+      d1 = r_actv * u_ref
+      d2 = r_actv * v_ref
+      d3 = r_actv * w_ref
+
       c1 = 1.0
       c2 = 1.0
       c3 = 1.0
@@ -770,36 +784,48 @@
       pz = 0.5*(pzt + pzb)
 
       ! 発散値 VBCの寄与と壁面の影響は除外 25flop
-      div(i,j,k) = ((Ue - dd * pxe) * c2 &
-                  - (Uw - dd * pxw) * c1 &
-                  + (Vn - dd * pyn) * c4 &
-                  - (Vs - dd * pys) * c3 &
-                  + (Wt - dd * pzt) * c6 &
-                  - (Wb - dd * pzb) * c5 ) * actv
+      Uwf = (Uw - dd * pxw) * c1
+      Uef = (Ue - dd * pxe) * c2
+      Vsf = (Vs - dd * pys) * c3
+      Vnf = (Vn - dd * pyn) * c4
+      Wbf = (Wb - dd * pzb) * c5
+      Wtf = (Wt - dd * pzt) * c6
+
+      ! 固体の場合は，平面速度
+      ! i=1-ix >> vfは0-ixの範囲をカバーするので，通信不要
+      vf(i-1,j  ,k  ,1) = Uwf*actv + d1
+      vf(i  ,j  ,k  ,1) = Uef*actv + d1
+      vf(i  ,j-1,k  ,2) = Vsf*actv + d2
+      vf(i  ,j  ,k  ,2) = Vnf*actv + d2
+      vf(i  ,j  ,k-1,3) = Wbf*actv + d3
+      vf(i  ,j  ,k  ,3) = Wtf*actv + d3
+
+      div(i,j,k) = (Uef - Uwf + Vnf - Vsf + Wtf - Wbf) * actv
       
       ! セルセンタの速度更新 15flop
-      v(i,j,k,1) = ( Up0-px*dd )*actv + r_actv*u_ref
-      v(i,j,k,2) = ( Vp0-py*dd )*actv + r_actv*v_ref
-      v(i,j,k,3) = ( Wp0-pz*dd )*actv + r_actv*w_ref
+      v(i,j,k,1) = ( Up0-px*dd ) * actv + d1
+      v(i,j,k,2) = ( Vp0-py*dd ) * actv + d2
+      v(i,j,k,3) = ( Wp0-pz*dd ) * actv + d3
 
     end do
     end do
     end do
 !$OMP END DO
+
 !$OMP END PARALLEL
-    
+
     return
     end subroutine update_vec
 
 !> ********************************************************************
 !! @brief 速度の発散に使う\sum{u^*}を計算する
-!! @param [out] div  速度の発散値
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  v0   疑似ベクトル
-!! @param [in]  bv   BCindex V
-!! @param [in]  v00  参照速度
-!! @param [out] flop flop count
+!! @param [out]    div  速度の発散値
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     v0   セルセンター疑似ベクトル
+!! @param [in]     bv   BCindex V
+!! @param [in]     v00  参照速度
+!! @param [in,out] flop flop count
 !<
     subroutine divergence (div, sz, g, v0, bv, v00, flop)
     implicit none
@@ -808,9 +834,9 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, actv
+    real                                                      ::  Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                      ::  u_ref, v_ref, w_ref
-    real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
@@ -829,9 +855,9 @@
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bvx, actv) &
-!$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
+!$OMP PRIVATE(Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref)
 
@@ -843,8 +869,34 @@
       bvx = bv(i,j,k)
       actv= real(ibits(bvx, State, 1))
       
-      include 'd_o_o_p.h' ! 42flops
-      
+      ! 各セルフェイス位置の変数ロード
+      Uw0 = v0(i-1,j  ,k  , 1)
+      Up0 = v0(i  ,j  ,k  , 1)
+      Ue0 = v0(i+1,j  ,k  , 1)
+
+      Vs0 = v0(i  ,j-1,k  , 2)
+      Vp0 = v0(i  ,j  ,k  , 2)
+      Vn0 = v0(i  ,j+1,k  , 2)
+
+      Wb0 = v0(i  ,j  ,k-1, 3)
+      Wp0 = v0(i  ,j  ,k  , 3)
+      Wt0 = v0(i  ,j  ,k+1, 3)
+
+      ! 壁面による修正 (0-solid / 1-fluid)
+      b_w = real( ibits(bv(i-1,j  ,k  ), State, 1) )
+      b_e = real( ibits(bv(i+1,j  ,k  ), State, 1) )
+      b_s = real( ibits(bv(i  ,j-1,k  ), State, 1) )
+      b_n = real( ibits(bv(i  ,j+1,k  ), State, 1) )
+      b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
+      b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
+
+      Uw = 0.5*( Up0 + Uw0 )*b_w + (1.0-b_w)*u_ref
+      Ue = 0.5*( Up0 + Ue0 )*b_e + (1.0-b_e)*u_ref
+      Vs = 0.5*( Vp0 + Vs0 )*b_s + (1.0-b_s)*v_ref
+      Vn = 0.5*( Vp0 + Vn0 )*b_n + (1.0-b_n)*v_ref
+      Wb = 0.5*( Wp0 + Wb0 )*b_b + (1.0-b_b)*w_ref
+      Wt = 0.5*( Wp0 + Wt0 )*b_t + (1.0-b_t)*w_ref
+
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
       c_e = 1.0
       c_w = 1.0
@@ -872,13 +924,13 @@
     
 !> ********************************************************************
 !! @brief 疑似ベクトルの時間積分（Euler陽解法）
-!! @param[in,out] vc 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dt 時間積分幅
-!! @param v 速度ベクトル（n-step, collocated）
-!! @param bd BCindex ID
-!! @param[out] flop
+!! @param [in,out] vc   疑似ベクトル
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     dt   時間積分幅
+!! @param [in]     v    速度ベクトル（n-step, collocated）
+!! @param [in]     bd   BCindex ID
+!! @param [in,out] flop 浮動小数点演算数
 !! @note ここのマスクはIDのこと，VSPEC, OUTFLOWの増分をキャンセルするため
 !<
     subroutine euler_explicit (vc, sz, g, dt, v, bd, flop)
@@ -902,7 +954,6 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, dt)
 
 !$OMP DO SCHEDULE(static)
-
     do k=1,kx
     do j=1,jx
     do i=1,ix

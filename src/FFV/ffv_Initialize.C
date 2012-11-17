@@ -1632,6 +1632,7 @@ void FFV::fixed_parameters()
   
   C.f_Pressure       = "prs";
   C.f_Velocity       = "vel";
+  C.f_Fvelocity      = "fvel";
   C.f_Temperature    = "tmp";
   C.f_AvrPressure    = "prsa";
   C.f_AvrVelocity    = "vela";

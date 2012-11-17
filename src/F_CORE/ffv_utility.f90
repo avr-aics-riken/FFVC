@@ -112,7 +112,6 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef)
 
 !$OMP DO SCHEDULE(static)
-
     do k=1,kx
     do j=1,jx
     do i=1,ix

@@ -515,6 +515,28 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Exit(0);
   }
   
+  
+  // Instantaneous Face Velocity fields
+  tmp = DFI.Generate_FileName(C.f_Fvelocity, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+  
+  if ( !checkFile(tmp) )
+  {
+    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    Exit(0);
+  }
+  
+  F.readVelocity(fp, tmp, size, guide, d_vf, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  
+  if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
+  
+  if ( (step != Session_StartStep) || (time != Session_StartTime) )
+  {
+    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+    Exit(0);
+  }
+  
+  
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() )
   {

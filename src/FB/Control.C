@@ -2280,6 +2280,7 @@ void Control::get_Solver_Properties()
 
 // #################################################################
 //初期値とリスタート条件
+//@todo セルフェイスの粗格子リスタート
 void Control::get_start_condition()
 {
   int ct;

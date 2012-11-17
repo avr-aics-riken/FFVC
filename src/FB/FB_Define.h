@@ -424,6 +424,7 @@ enum Kind_of_vars {
   var_I2vgt,
   var_Divergence,
   var_Plot3D,
+  var_FaceVelocity,
   var_END
 };
 

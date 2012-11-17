@@ -150,15 +150,15 @@ private:
   // データ領域ポインタ
   
   // Vector3D
-  REAL_TYPE *d_v;
-  REAL_TYPE *d_vf;
-  REAL_TYPE *d_vc;
-  REAL_TYPE *d_v0;
-  REAL_TYPE *d_wv;
-  REAL_TYPE *d_abf;
-  REAL_TYPE *d_av;
-  REAL_TYPE *d_wo;
-  REAL_TYPE *d_qbc;
+  REAL_TYPE *d_v;   ///< セルセンター速度
+  REAL_TYPE *d_vf;  ///< セルフェイス速度
+  REAL_TYPE *d_vc;  ///< セルセンター疑似速度
+  REAL_TYPE *d_v0;  ///< n-stepの速度保持
+  REAL_TYPE *d_wv;  ///< ワーク配列
+  REAL_TYPE *d_abf; ///< Adams-bashforthワーク
+  REAL_TYPE *d_av;  ///< 平均値
+  REAL_TYPE *d_wo;  ///< 
+  REAL_TYPE *d_qbc; ///< 熱BC flux保持
   
   // Scalar3D
   int *d_mid;

@@ -126,7 +126,7 @@ void FFV::NS_FS_E_CDS()
 
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.mod_Pvec_Flux(d_vc, d_v0, d_vf, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -146,7 +146,7 @@ void FFV::NS_FS_E_CDS()
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.mod_Pvec_Flux(d_wv, d_v0, d_vf, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -305,7 +305,7 @@ void FFV::NS_FS_E_CDS()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
   

@@ -713,6 +713,7 @@ public:
   string f_Coarse_dfi_prs;
   string f_Coarse_dfi_vel;
   string f_Coarse_dfi_temp;
+  string f_Coarse_fvelocity;
   
   string f_different_nproc_dir_prefix;
   string f_different_nproc_pressure;
@@ -721,6 +722,7 @@ public:
   string f_different_nproc_dfi_prs;
   string f_different_nproc_dfi_vel;
   string f_different_nproc_dfi_temp;
+  string f_different_nproc_fvelocity;
   
   string f_Velocity;
   string f_Pressure;
@@ -733,6 +735,7 @@ public:
   string f_TotalP;
   string f_I2VGT;
   string f_Vorticity;
+  string f_Fvelocity;
   
   string Ref_Medium;
   string OperatorName;

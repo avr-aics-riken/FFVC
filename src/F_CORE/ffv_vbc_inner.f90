@@ -16,19 +16,19 @@
 
 !> ********************************************************************
 !! @brief 内部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param dh 格子幅
-!! @param rei Reynolds数の逆数
-!! @param v 速度ベクトル（u^n, セルセンタ）
-!! @param bv BCindex V
-!! @param odr 内部境界処理時の速度境界条件のエントリ
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  st   ループの開始インデクス
+!! @param [in]  ed   ループの終了インデクス
+!! @param [in]  dh   格子幅
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v    セルセンター速度ベクトル（u^n）
+!! @param [in]  bv   BCindex V
+!! @param [in]  odr  内部境界処理時の速度境界条件のエントリ
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [out] flop 浮動小数点演算数
+!! @note vecには，流出条件のとき対流流出速度
 !! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
 !! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
 !<
@@ -252,19 +252,19 @@
 
 !> ********************************************************************
 !! @brief 内部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param dh 格子幅
-!! @param v00 参照速度
-!! @param rei Reynolds数の逆数
-!! @param v 速度ベクトル（u^n）
-!! @param bv BCindex V
-!! @param odr 内部境界処理時の速度境界条件のエントリ
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  st   ループの開始インデクス
+!! @param [in]  ed   ループの終了インデクス
+!! @param [in]  dh   格子幅
+!! @param [in]  v00  参照速度
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v    セルセンター速度ベクトル（u^n）
+!! @param [in]  bv   BCindex V
+!! @param [in]  odr  内部境界処理時の速度境界条件のエントリ
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [out] flop 浮動小数点演算数
 !! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度，カット位置に関わらず指定速度で流束を計算
 !! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
 !<
@@ -634,7 +634,6 @@
 !$OMP PRIVATE(idx, Up, Vp, Wp)
 
 !$OMP DO SCHEDULE(static)
-
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -702,7 +701,7 @@
 
 !> ********************************************************************
 !! @brief 内部速度指定境界条件による疑似速度の\sum{u}の修正
-!! @param [in,out] div  \sum{u}
+!! @param [in,out] div  \sum{u_j}
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
 !! @param [in]     st   ループの開始インデクス
@@ -711,7 +710,7 @@
 !! @param [in]     bv   BCindex V
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [in]     vec  指定する速度ベクトル
-!! @param [out]    flop flop count 近似
+!! @param [in,out] flop flop count 近似
 !<
     subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, bv, odr, vec, flop)
     implicit none
@@ -791,25 +790,26 @@
 !! @param [in]     bv   BCindex V
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [in]     v0   セルセンター速度　u^n
-!! @param [out]    flop flop count
-!! @note 流出境界面ではu_e^{n+1}=u_e^n-cf*(u_e^n-u_w^n)を予測値としてdivの寄与として加算．u_e^nの値は連続の式から計算する．
+!! @param [in]     vf   セルフェイス速度ベクトル（n-step）
+!! @param [in,out] flop flop count
+!! @note 流出境界面ではu_e^{n+1}=u_e^n-cf*(u_e^n-u_w^n)を予測値としてdivの寄与として加算
 !! @note flop countはコスト軽減のため近似
 !<
-    subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, bv, odr, v0, flop)
+    subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, bv, odr, v0, vf, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                     ::  sz, st, ed
     double precision                                          ::  flop
     real                                                      ::  m
-    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p
+    real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
     real                                                      ::  cf, u_ref, v_ref, w_ref
-    real                                                      ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
     real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ! 参照速度
@@ -829,10 +829,10 @@
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
 !$OMP PRIVATE(bvx) &
-!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t, b_p) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
-!$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
-!$OMP PRIVATE(Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0)
+!$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
 
 !$OMP DO SCHEDULE(static)
 
@@ -854,39 +854,39 @@
         
         ! X方向 ---------------------------------------
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then
-          Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
+          !Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
           if ( cf>0.0 ) cf=0.0
           Uw_t = Uw - cf*(Ue-Uw)
         endif
         
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then
-          Ue = Uw - (Vn - Vs + Wt - Wb)
+          !Ue = Uw - (Vn - Vs + Wt - Wb)
           if ( cf<0.0 ) cf=0.0
           Ue_t = Ue - cf*(Ue-Uw)
         endif
         
         ! Y方向 ---------------------------------------
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
-          Vs = Vn + (Ue - Uw + Wt - Wb)
+          !Vs = Vn + (Ue - Uw + Wt - Wb)
           if ( cf>0.0 ) cf=0.0
           Vs_t = Vs - cf*(Vn-Vs)
         endif
         
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
-          Vn = Vs - (Ue - Uw + Wt - Wb)
+          !Vn = Vs - (Ue - Uw + Wt - Wb)
           if ( cf<0.0 ) cf=0.0
           Vn_t = Vn - cf*(Vn-Vs)
         endif
         
         ! Z方向 ---------------------------------------
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
-          Wb = Wt + (Ue - Uw + Vn - Vs)
+          !Wb = Wt + (Ue - Uw + Vn - Vs)
           if ( cf>0.0 ) cf=0.0
           Wb_t = Wb - cf*(Wt-Wb)
         endif
         
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
-          Wt = Wb - (Ue - Uw + Vn - Vs)
+          !Wt = Wb - (Ue - Uw + Vn - Vs)
           if ( cf<0.0 ) cf=0.0
           Wt_t = Wt - cf*(Wt-Wb)
         endif
@@ -901,7 +901,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + dble(m)*90.0d0
+    flop = flop + dble(m)*66.0d0
 
     return
     end subroutine div_ibc_oflow_pvec
@@ -950,7 +950,6 @@
 !$OMP PRIVATE(bvx, dv)
 
 !$OMP DO SCHEDULE(static)
-
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -961,7 +960,7 @@
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then ! u_w
           a1 = a1 + dv
         endif
-        
+
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then ! u_e
           a1 = a1 - dv
         endif

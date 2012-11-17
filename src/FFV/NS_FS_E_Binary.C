@@ -54,6 +54,7 @@ void FFV::NS_FS_E_Binary()
 
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
+  // d_vf  セルフェイス速度
   // d_v0  セルセンタ速度 v^nの保持
   // d_vc  疑似速度ベクトル
   // d_wv  ワーク　陰解法の時の疑似速度ベクトル，射影ステップの境界条件
@@ -121,13 +122,13 @@ void FFV::NS_FS_E_Binary()
       }
       else
       {
-        pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &one, &flop);
+        pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &one, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
 
       TIMING_start(tm_pvec_flux);      
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.mod_Pvec_Flux(d_vc, d_v0, d_vf, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -141,13 +142,13 @@ void FFV::NS_FS_E_Binary()
       }
       else
       {
-        pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &half, &flop);
+        pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bcv, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &half, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.mod_Pvec_Flux(d_wv, d_v0, d_vf, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -303,7 +304,7 @@ void FFV::NS_FS_E_Binary()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
   
@@ -449,7 +450,7 @@ void FFV::NS_FS_E_Binary()
     // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, v00, &flop);
+    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_bcv, v00, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
     

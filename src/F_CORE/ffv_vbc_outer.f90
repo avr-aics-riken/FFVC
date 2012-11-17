@@ -16,20 +16,21 @@
 
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v00 参照速度
-!! @param rei Reynolds数の逆数
-!! @param v0 速度ベクトル（n-step）
-!! @param bv BCindex V
-!! @param vec 指定する速度ベクトル
-!! @param face 外部境界処理のときの面番号
-!! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  v00  参照速度
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v0   セルセンター速度ベクトル（n-step）
+!! @param [in]  vf   セルフェイス速度ベクトル（n-step）
+!! @param [in]  bv   BCindex V
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [in]  face 外部境界処理のときの面番号
+!! @param [out] flop 浮動小数点演算数
+!! @note vecには，流出境界の流束はローカルのセルフェイス速度を使う．vecは使っていない
 !<
-    subroutine pvec_vobc_oflow (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
+    subroutine pvec_vobc_oflow (wv, sz, g, dh, v00, rei, v0, vf, bv, vec, face, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, face
@@ -43,10 +44,10 @@
     real                                                      ::  u_ref, v_ref, w_ref, m
     real                                                      ::  u_bc, v_bc, w_bc
     real                                                      ::  fu, fv, fw, c, EX, EY, EZ
-    real                                                      ::  Ue0, Uw0, Vs0, Vn0, Wb0, Wt0
+    real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
-    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv, vf
     real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(3)                                        ::  vec
@@ -79,9 +80,9 @@
 !$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
 !$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
-!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t, b_p) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
-!$OMP PRIVATE(Ue0, Uw0, Vs0, Vn0, Wb0, Wt0) &
 !$OMP PRIVATE(fu, fv, fw, c, EX, EY, EZ)
     
     FACES : select case (face)
@@ -325,18 +326,18 @@
     
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v00 参照速度
-!! @param rei Reynolds数の逆数
-!! @param v0 速度ベクトル（n-step）
-!! @param bv BCindex V
-!! @param vec 指定する速度ベクトル
-!! @param face 外部境界処理のときの面番号
-!! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  v00  参照速度
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v0   速度ベクトル（n-step）
+!! @param [in]  bv   BCindex V
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [in]  face 外部境界処理のときの面番号
+!! @param [out] flop 浮動小数点演算数
+!! @note vecには，流入条件のとき指定速度
 !<
     subroutine pvec_vobc_specv (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
     implicit none
@@ -619,15 +620,15 @@
     
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param rei Reynolds数の逆数
-!! @param v0 速度ベクトル（n-step）
-!! @param bv BCindex V
-!! @param face 外部境界処理のときの面番号
-!! @param[out] flop
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v0   速度ベクトル（n-step）
+!! @param [in]  bv   BCindex V
+!! @param [in]  face 外部境界処理のときの面番号
+!! @param [out] flop 浮動小数点演算数
 !! @note 境界面で対流流束はゼロ，粘性流束のみ
 !<
     subroutine pvec_vobc_symtrc (wv, sz, g, dh, rei, v0, bv, face, flop)
@@ -785,18 +786,17 @@
     
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param[out] wv 疑似ベクトルの空間項の評価値
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v00 参照速度
-!! @param rei Reynolds数の逆数
-!! @param v0 速度ベクトル（n-step）
-!! @param bv BCindex V
-!! @param vec 指定する速度ベクトル
-!! @param face 外部境界処理のときの面番号
-!! @param[out] flop
-!! @note vecには，流入条件のとき指定速度，流出境界の流束はローカルのセルフェイス速度を使うこと
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  v00  参照速度
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v0   速度ベクトル（n-step）
+!! @param [in]  bv   BCindex V
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [in]  face 外部境界処理のときの面番号
+!! @param [out] flop 浮動小数点演算数
 !! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
 !<
     subroutine pvec_vobc_wall (wv, sz, g, dh, v00, rei, v0, bv, vec, face, flop)
@@ -1310,14 +1310,14 @@
 
 !> ********************************************************************
 !! @brief 外部流出境界で，次ステップの流出速度を対流流出条件で予測し，ガイドセルに参照値として代入する
-!! @param[out] v 速度 u^*
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param c uc*dt/dh
-!! @param bv BCindex V
-!! @param face 外部境界の面番号
-!! @param v0 セルセンタ速度 u^n
-!! @param[out] flop
+!! @param [out]    v    速度 u^*
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     c    uc*dt/dh
+!! @param [in]     bv   BCindex V
+!! @param [in]     face 外部境界の面番号
+!! @param [in]     v0   セルセンタ速度 u^n
+!! @param [in,out] flop 浮動小数点演算数
 !<
     subroutine vobc_outflow (v, sz, g, c, bv, face, v0, flop)
     implicit none
@@ -1812,7 +1812,7 @@
 !! @param [in]     v00   参照速度
 !! @param [in]     bv    BCindex V
 !! @param [in]     vec   指定する速度ベクトル
-!! @param [out]    flop flop count
+!! @param [in,out] flop  flop count
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !<
     subroutine div_obc_drchlt (div, sz, g, face, v00, bv, vec, flop)
@@ -1965,26 +1965,26 @@
 !! @param [in]     v00   参照速度
 !! @param [in]     v_out u_out*dt/dh
 !! @param [in]     bv    BCindex V
-!! @param [in]     v0    速度ベクトル u^n
+!! @param [in]     vf    セルフェイス速度ベクトル（n-step）
 !! @param [out]    flop  flop count
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !<
-    subroutine div_obc_oflow_pvec (div, sz, g, face, v00, v_out, bv, v0, flop)
+    subroutine div_obc_oflow_pvec (div, sz, g, face, v00, v_out, bv, vf, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  v_out
-    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real                                                      ::  Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0
+    real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p
+    real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
     real                                                      ::  u_ref, v_ref, w_ref, m
     real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
 
     ix = sz(1)
     jx = sz(2)
@@ -2000,10 +2000,10 @@
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, face, v_out) &
 !$OMP PRIVATE(i, j, k, bvx) &
-!$OMP PRIVATE(Up0, Ue0, Uw0, Vp0, Vs0, Vn0, Wp0, Wb0, Wt0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
-!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t)
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t, b_p)
 
 
     FACES : select case (face)
