@@ -550,7 +550,7 @@ void Control::get_Average_option()
   // 平均操作開始時間
   if ( Mode.Average == ON )
   {
-	  label = "/Steer/Average_option/StartType";
+	  label = "/Steer/AverageOption/StartType";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -573,7 +573,7 @@ void Control::get_Average_option()
 			  Exit(0);
 		  }
 		  
-		  label = "/Steer/Average_option/Start";
+		  label = "/Steer/AverageOption/Start";
 		  if ( !(tpCntl->GetValue(label, &ct )) )
       {
 			  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -2028,7 +2028,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
 
 // #################################################################
 // 性能試験モードを取得する（隠しパラメータ）
-// 'Performance_Test'の文字列チェックはしないので注意して使うこと
+// 'PerformanceTest'の文字列チェックはしないので注意して使うこと
 void Control::get_PMtest()
 {
   string str;

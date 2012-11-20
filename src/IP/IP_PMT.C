@@ -25,7 +25,7 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 媒質指定
-  label="/Parameter/IntrinsicExample/Fluid_medium";
+  label="/Parameter/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
