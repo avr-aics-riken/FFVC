@@ -1028,6 +1028,27 @@ private:
                             int* assign,
                             int nassign);
   
+  /**
+   * @brief ファイル読み込み＋オーバーラップを移しこみ（境界流速）
+   * @param [in]  fp   ファイルポインタ
+   * @param [out] flop 浮動小数点演算数
+   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
+   * @param [in]  d_wk 読み込み用ワークエリア
+   * @param [in]  rank_list 各プロセスが読むファイルのリスト
+   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
+   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
+   * @param [in]  nassign   自身のランクにステージングされているファイルの数
+   */
+  void ReadOverlap_FVelocity(FILE* fp,
+                             double& flop,
+                             DifferentRestartInfo* DRI,
+                             DfiInfo* DI,
+                             REAL_TYPE* d_wk,
+                             int* rank_list,
+                             int recv_rank,
+                             int* assign,
+                             int nassign);
+  
   
   /**
    * @brief ファイル読み込み＋オーバーラップを移しこみ（温度）

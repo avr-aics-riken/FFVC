@@ -133,7 +133,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
-  label = "/CombData/output_dir";
+  label = "/CombData/OutputDir";
   if ( (tpCntl->GetValue(label, &str )) )
   {
     out_dirname=str;
@@ -145,7 +145,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   
   //入力ディレクトリの指定
-  label = "/CombData/input_dir";
+  label = "/CombData/InputDir";
   if ( (tpCntl->GetValue(label, &str )) )
   {
     in_dirname=str;
@@ -157,7 +157,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   
   //並列実行時のSTAGINGのON/OFF
-  label = "/CombData/staging";
+  label = "/CombData/Staging";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -177,7 +177,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   
   //出力の単精度or倍精度指定 ---> PLOT3Dの場合は、optionに記述があればそちらを優先
-  label = "/CombData/output_real_type";
+  label = "/CombData/OutputRealType";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     //printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -193,7 +193,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   }
   
   // 連結ファイルの出力フォーマット
-  label = "/CombData/out_format";
+  label = "/CombData/OutFormat";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -220,8 +220,8 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   string str;
   string label;
   
-  // File_plot3d_filename --- option
-  label = "/plot3d_options/Filename";
+  // Filename
+  label = "/Plot3dOptions/Filename";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -232,8 +232,8 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     P3Op.basename = str;
   }
   
-  // File_plot3d_grid_kind
-  label = "/plot3d_options/Grid_kind";
+  // GridKind
+  label = "/Plot3dOptions/GridKind";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -253,7 +253,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   
   // 格子の移動
-  label = "/plot3d_options/Grid_Mobility";
+  label = "/Plot3dOptions/GridMobility";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -273,12 +273,10 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   
   // 時間方向の変化
-  label = "/plot3d_options/state_of_time";
+  label = "/Plot3dOptions/StateOfTime";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '/Steer/plot3d_options/state_of_time'\n");
-    //Exit(0);
     FP3DR.setSteady(FB_UNSTEADY);
   }
   else
@@ -294,12 +292,10 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   
   // IBLANKファイル
-  label = "/plot3d_options/set_iblank_flag";
+  label = "/Plot3dOptions/SetIblankFlag";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     FP3DR.setIBlankFlag(NOT_SET_IBLANK);
   }
   else
@@ -315,11 +311,9 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   FP3DR.setIBlankFlag(NOT_SET_IBLANK); //sphファイルの情報からIblankは作れないので常にoff
   
   // 次元数
-  label = "/plot3d_options/dimension";
+  label = "/Plot3dOptions/Dimension";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     FP3DR.setDimension3D();
   }
   else
@@ -334,8 +328,8 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   }
   
   
-  //File_plot3d_format
-  label = "/plot3d_options/Format_Type";
+  //FormatType
+  label = "/Plot3dOptions/FormatType";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -355,14 +349,12 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   
   // 出力の単精度or倍精度指定
-  FP3DR.setRealType(output_real_type);
-  label = "/plot3d_options/real_type";
+  label = "/Plot3dOptions/RealType";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
-    int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-    FP3DR.setRealType(d_type);
+    //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+    //FP3DR.setRealType(d_type);
+    FP3DR.setRealType(output_real_type);
   }
   else
   {
@@ -384,13 +376,11 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   FP3DW.setFormat(FP3DR.GetFormat());
   FP3DW.setRealType(FP3DR.GetRealType());
   
-  // Output_xyz
-  label = "/plot3d_options/output_xyz";
+  // OutputXyz
+  label = "/Plot3dOptions/OutputXyz";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     P3Op.IS_xyz = ON;
   }
   else
@@ -405,13 +395,12 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   }
   
   
-  // Output_q
-  label = "/plot3d_options/Output_q";
+  /*
+  // OutputQ
+  label = "/Plot3dOptions/OutputQ";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     P3Op.IS_q = OFF;
   }
   else
@@ -424,10 +413,11 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
       Exit(0);
     }
   }
+  */
+    P3Op.IS_q = OFF;
   
-  
-  // Output_function
-  label = "/plot3d_options/Output_function";
+  // OutputFunction
+  label = "/Plot3dOptions/OutputFunction";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -447,13 +437,11 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   }
   
   
-  // Output_function_name
-  label = "/plot3d_options/Output_func_name";
+  // OutputFuncName
+  label = "/Plot3dOptions/OutputFuncName";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     P3Op.IS_function_name = ON;
   }
   else
@@ -467,14 +455,12 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   
-  
+  /*
   // Output_fvbnd
-  label = "/plot3d_options/Output_fvbnd";
+  label = "/Plot3dOptions/Output_fvbnd";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     P3Op.IS_fvbnd = OFF;
   }
   else
@@ -487,16 +473,17 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
       Exit(0);
     }
   }
+*/
   
+    P3Op.IS_fvbnd = OFF;
   
-  // divide_func ---> 出力を項目別にファイル分割するオプション
-  label = "/plot3d_options/divide_func";
+  // DivideFunc ---> 出力を項目別にファイル分割するオプション
+  label = "/Steer/Plot3dOptions/DivideFunc";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
-    P3Op.IS_DivideFunc = OFF;
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
   }
   else
   {
@@ -504,7 +491,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_DivideFunc = OFF;
     else
     {
-      printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }

@@ -1725,7 +1725,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   string str;
   string label;
   
-  // File_plot3d_filename --- option
+  // Filename --- option
   label = "/Steer/Plot3dOptions/Filename";
   
   if ( !(tpCntl->GetValue(label, &str)) )
@@ -1741,24 +1741,28 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
     P3Op.basename = "PLOT3Doutput_";
   }
   
-  // File_plot3d_grid_kind
-  label = "/Steer/Plot3dOptions/GridKind";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "SingleGrid") ) FP3DR->setSingleGrid();
-    else if( !strcasecmp(str.c_str(), "MultiGrid") )  FP3DR->setMultiGrid();
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
+  // GridKind
+  /*
+   label = "/Steer/Plot3dOptions/GridKind";
+   
+   if ( !(tpCntl->GetValue(label, &str )) )
+   {
+   Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+   Exit(0);
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "SingleGrid") ) FP3DR->setSingleGrid();
+   else if( !strcasecmp(str.c_str(), "MultiGrid") )  FP3DR->setMultiGrid();
+   else
+   {
+   Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }
+   */
+  FP3DR->setMultiGrid(); // 常にmulti grid
   
   
   // 格子の移動
@@ -1786,8 +1790,6 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/state_of_time'\n");
-    //Exit(0);
     FP3DR->setSteady(FB_UNSTEADY);
   }
   else
@@ -1807,8 +1809,6 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/set_iblank_flag'\n");
-    //Exit(0);
     FP3DR->setIBlankFlag(SET_IBLANK);
   }
   else
@@ -1824,6 +1824,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   
   // 次元数
+  /*
   label = "/Steer/Plot3dOptions/Dimension";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1841,9 +1842,10 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
       Exit(0);
     }
   }
+  */
+  FP3DR->setDimension3D(); // 常に三次元
   
-  
-  //File_plot3d_format
+  // FormatType
   label = "/Steer/Plot3dOptions/FormatType";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1894,7 +1896,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   FP3DW->setRealType(FP3DR->GetRealType());
   
   
-  // Output_xyz
+  // OutputXyz
   label = "/Steer/Plot3dOptions/OutputXyz";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -1914,10 +1916,10 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   }
   
   
-  // Output_q
+  // OutputQ
   
   /*
-  label = "/Steer/plot3d_options/Output_q";
+  label = "/Steer/plot3d_options/OutputQ";
    
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1939,7 +1941,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   P3Op.IS_q = OFF; // 常にoff
   
   
-  // Output_function
+  // OutputFunction
   label = "/Steer/Plot3dOptions/OutputFunction";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -1959,7 +1961,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   }
   
   
-  // Output_function_name
+  // OutputFuncName
   label = "/Steer/Plot3dOptions/OutputFuncName";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -1979,10 +1981,10 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   }
   
   
-  // Output_fvbnd
+  // OutputFvbnd
   
   /*
-  label = "/Steer/plot3d_options/Output_fvbnd";
+  label = "/Steer/plot3d_options/OutputFvbnd";
    
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2003,7 +2005,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   P3Op.IS_fvbnd = OFF; // 常にoff
   
-  // divide_func ---> 出力を項目別にファイル分割するオプション
+  // DivideFunc ---> 出力を項目別にファイル分割するオプション
   label = "/Steer/Plot3dOptions/DivideFunc";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -2345,6 +2347,17 @@ void Control::get_start_condition()
     f_Coarse_velocity = str.c_str();
     
     
+    label="/Steer/StartCondition/CoarseRestart/PrefixOfFVelocity";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    f_Coarse_fvelocity = str.c_str();
+    
+    
     if ( isHeatProblem() )
     {
       label="/Steer/StartCondition/CoarseRestart/PrefixOfTemperature";
@@ -2419,6 +2432,17 @@ void Control::get_start_condition()
     f_different_nproc_velocity = str.c_str();
     
     
+    label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfFVelocity";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    f_different_nproc_fvelocity = str.c_str();
+    
+    
     if ( isHeatProblem() )
     {
       label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfTemperature";
@@ -2463,6 +2487,19 @@ void Control::get_start_condition()
       
       f_Coarse_dfi_vel = str.c_str();
       f_different_nproc_dfi_vel = str.c_str();
+      
+      
+      label="/Steer/StartCondition/DFIfile/fvelocity";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      f_Coarse_dfi_fvel = str.c_str();
+      f_different_nproc_dfi_fvel = str.c_str();
+      
       
       if ( isHeatProblem() )
       {
@@ -3638,27 +3675,29 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     if ( FIO.IO_Input == IO_GATHER )
     {
       fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          Pressure            :   %s\n", f_Coarse_pressure.c_str());
-      fprintf(fp,"\t          Velocity            :   %s\n", f_Coarse_velocity.c_str());
+      fprintf(fp,"\t          Pressure                 :   %s\n", f_Coarse_pressure.c_str());
+      fprintf(fp,"\t          Velocity                 :   %s\n", f_Coarse_velocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Temperature         :   %s\n", f_Coarse_temperature.c_str());
+        fprintf(fp,"\t          Temperature              :   %s\n", f_Coarse_temperature.c_str());
       }
     }
     else
     {
       fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          DFI file Pressure   :   %s\n", f_Coarse_dfi_prs.c_str());
-      fprintf(fp,"\t          DFI file Velocity   :   %s\n", f_Coarse_dfi_vel.c_str());
+      fprintf(fp,"\t          DFI file Pressure        :   %s\n", f_Coarse_dfi_prs.c_str());
+      fprintf(fp,"\t          DFI file Velocity        :   %s\n", f_Coarse_dfi_vel.c_str());
+      fprintf(fp,"\t          DFI file Face Velocity   :   %s\n", f_Coarse_dfi_fvel.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          DFI file Temperature:   %s\n", f_Coarse_dfi_temp.c_str());
+        fprintf(fp,"\t          DFI file Temperature     :   %s\n", f_Coarse_dfi_temp.c_str());
       }
-      fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_Coarse_pressure.c_str());
-      fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_Coarse_velocity.c_str());
+      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_Coarse_pressure.c_str());
+      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_Coarse_velocity.c_str());
+      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_Coarse_fvelocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_Coarse_temperature.c_str());
+        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_Coarse_temperature.c_str());
       }
     }
     
@@ -3670,27 +3709,29 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     if ( FIO.IO_Input == IO_GATHER )
     {
       fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          Pressure            :   %s\n", f_different_nproc_pressure.c_str());
-      fprintf(fp,"\t          Velocity            :   %s\n", f_different_nproc_velocity.c_str());
+      fprintf(fp,"\t          Pressure                 :   %s\n", f_different_nproc_pressure.c_str());
+      fprintf(fp,"\t          Velocity                 :   %s\n", f_different_nproc_velocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Temperature         :   %s\n", f_different_nproc_temperature.c_str());
+        fprintf(fp,"\t          Temperature              :   %s\n", f_different_nproc_temperature.c_str());
       }
     }
     else
     {
       fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          DFI file Pressure   :   %s\n", f_different_nproc_dfi_prs.c_str());
-      fprintf(fp,"\t          DFI file Velocity   :   %s\n", f_different_nproc_dfi_vel.c_str());
+      fprintf(fp,"\t          DFI file Pressure        :   %s\n", f_different_nproc_dfi_prs.c_str());
+      fprintf(fp,"\t          DFI file Velocity        :   %s\n", f_different_nproc_dfi_vel.c_str());
+      fprintf(fp,"\t          DFI file Face Velocity   :   %s\n", f_different_nproc_dfi_fvel.c_str());
       if ( isHeatProblem() )
       {
         fprintf(fp,"\t          DFI file Temperature:   %s\n", f_different_nproc_dfi_temp.c_str());
       }
-      fprintf(fp,"\t          Prefix of Pressure  :   %s\n", f_different_nproc_pressure.c_str());
-      fprintf(fp,"\t          Prefix of Velocity  :   %s\n", f_different_nproc_velocity.c_str());
+      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_different_nproc_pressure.c_str());
+      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_different_nproc_velocity.c_str());
+      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_different_nproc_fvelocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Prefix of Temp.     :   %s\n", f_different_nproc_temperature.c_str());
+        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_different_nproc_temperature.c_str());
       }
     }
     

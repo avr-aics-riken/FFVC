@@ -120,7 +120,7 @@ Steer {
     Unit                 = "NonDimensional"
     SamplingIntervalType = "step"
     SamplingInterval     = 100
-    Cell_Monitor          = "off"
+    CellMonitor          = "off"
 
     list[@] {
       type            = "Line"
@@ -146,7 +146,7 @@ Steer {
     }
   }
 
-  PLOT3D_Options {
+  PLOT3DOptions {
     Filename        = ""
     GridKind        = "SingleGrid"
     GridMobility    = "immovable"

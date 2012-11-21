@@ -930,6 +930,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
   {
     dfi_name.push_back(C.f_different_nproc_dfi_prs.c_str());
     dfi_name.push_back(C.f_different_nproc_dfi_vel.c_str());
+    dfi_name.push_back(C.f_different_nproc_dfi_fvel.c_str());
     if ( C.isHeatProblem() ) dfi_name.push_back(C.f_different_nproc_dfi_temp.c_str());
   }
   
@@ -990,8 +991,9 @@ void FFV::Restart_different(FILE* fp, double& flop)
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_head[i]=DI[0].Node[j].HeadIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_tail[i]=DI[0].Node[j].TailIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_size[i]=DI[0].Node[j].VoxelSize[i];
-      DRI[ic].f_prs = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, DI[0].Node[j].RankID, true);
-      DRI[ic].f_vel = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, DI[0].Node[j].RankID, true);
+      DRI[ic].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, DI[0].Node[j].RankID, true);
+      DRI[ic].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, DI[0].Node[j].RankID, true);
+      DRI[ic].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, DI[0].Node[j].RankID, true);
       if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, DI[0].Node[j].RankID, true);
       ic++;
     }
@@ -1007,8 +1009,9 @@ void FFV::Restart_different(FILE* fp, double& flop)
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_head[i]=1;
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_tail[i]=G_size[i];
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_size[i]=G_size[i];
-    DRI[0].f_prs = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, myRank);
-    DRI[0].f_vel = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, myRank);
+    DRI[0].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, myRank);
+    DRI[0].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, myRank);
+    DRI[0].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, myRank);
     if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, myRank);
   }
   
@@ -1198,6 +1201,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
       // オーバーラップ分をファイルから読み込み
       ReadOverlap_Pressure(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
       ReadOverlap_Velocity(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
+      ReadOverlap_FVelocity(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
       if ( C.isHeatProblem() ) ReadOverlap_Temperature(fp, flop, &DRI[ic], DI, d_wk, rank_list, recv_rank, assign, nassign);
       
       if ( rank_list ) delete [] rank_list;
@@ -1276,7 +1280,7 @@ void FFV::CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, 
 }
 
 
-// 圧力のオーバーラップ分を移す
+// 
 void FFV::SetOverlap(REAL_TYPE* write_wk, REAL_TYPE* read_wk, int dim, int gd,
                      int* h, int* s, int* overlap_h, int* overlap_t, int* head, int* size)
 {
@@ -1373,6 +1377,28 @@ void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TY
     Exit(0);
   }
   
+
+  // Face Velocity のオーバーラップ分を移す
+  if ( !checkFile(DRI->f_fvel) )
+  {
+    Hostonly_ printf("\n\tError : File open '%s'\n", DRI->f_fvel.c_str());
+    Exit(0);
+  }
+  
+  F.readVelocity(fp, DRI->f_fvel, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  SetOverlap(d_vf,d_wk,3,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
+             DRI->read_file_voxel_head,DRI->read_file_voxel_size);
+
+  if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
+  
+  if ( (step != Session_StartStep) || (time != Session_StartTime) )
+  {
+    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+    Exit(0);
+  }
+
+
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() )
   {
@@ -1652,6 +1678,138 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
              DRI->read_file_voxel_head,DRI->read_file_voxel_size);
   
 }
+
+
+
+void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DRI, DfiInfo* DI, REAL_TYPE* d_wk,
+                               int* rank_list, int recv_rank, int* assign, int nassign)
+{
+  MPI_Request mpi_req;
+  double time;
+  unsigned step;
+  string tmp;
+  
+  // set rank_dir
+  int len = 6;
+  char* buff = new char[len];
+  memset(buff, 0, sizeof(char)*len);
+  sprintf(buff, "%06d", myRank);
+  std::string rank_dir(buff);
+  if ( buff ) delete [] buff;
+  
+  // ガイド出力
+  int gs = C.GuideOut;
+  
+  // dummy
+  unsigned i_dummy=0;
+  double f_dummy=0.0;
+  
+  // 読み込み領域の格子の分割サイズ
+  int d_size[3];
+  
+  // ファイルの送信
+  for(int k=0;k<numProc;k++){
+    if(rank_list[k]==-1) continue;
+    for(int j=0;j<nassign;j++){
+      if(assign[j]==-1) continue;
+      
+      if(assign[j]==rank_list[k]){ // 自身のランクにステージングされたファイルに一致するものがあれば
+        int send_rank=k;
+        int read_rank=rank_list[k];
+        
+        if(send_rank==myRank) continue; // 自身のランクであれば送る必要なし
+        
+        // 読み込み領域の格子の分割サイズ
+        for(int i=0;i<3;i++){
+          d_size[i] = DI[0].Node[read_rank].VoxelSize[i];
+        }
+        
+        double check = (double)(d_size[0]+2*guide)*(double)(d_size[1]+2*guide)*(double)(d_size[2]+2*guide);
+        if(check>(double)INT_MAX){
+          printf("\tsize error : sendsize>INT_MAX\n");
+          Exit(0);
+        }
+        
+        unsigned sendsize=(d_size[0]+2*guide)*(d_size[1]+2*guide)*(d_size[2]+2*guide)*3;
+        for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
+        
+        // ファイルの読み込み
+        tmp = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, read_rank, true);
+        tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
+        if ( !checkFile(tmp) )
+        {
+          printf("\n\tError : File open '%s'\n", tmp.c_str());
+          Exit(0);
+        }
+        F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+        
+        if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
+        if ( (step != Session_StartStep) || (time != Session_StartTime) )
+        {
+          Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+          Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+          Exit(0);
+        }
+        
+        // 送信
+        if (paraMngr->Isend( &time, 1, send_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
+        if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
+        if (paraMngr->Isend( &step, 1, send_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
+        if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
+        if (paraMngr->Isend( d_wk, sendsize, send_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
+        if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
+      }
+    }
+  }
+  
+  // 送信だけしてリターン
+  if(DRI->rank==-1) return;
+  
+  // ファイルの読み込み（受信）
+  
+  // 読み込み領域の格子の分割サイズ
+  for(int i=0;i<3;i++){
+    d_size[i] = DRI->read_file_voxel_size[i];
+  }
+  
+  // 速度のオーバーラップ分を移す
+  if(recv_rank==myRank)
+  {
+    // ファイルから読み込み
+    tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + DRI->f_fvel;
+    if ( !checkFile(tmp) )
+    {
+      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+      Exit(0);
+    }
+    F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+    
+    if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
+    
+    if ( (step != Session_StartStep) || (time != Session_StartTime) )
+    {
+      Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+      Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+      Exit(0);
+    }
+  }
+  else
+  {
+    // 受信
+    unsigned recvsize=(d_size[0]+2*guide)*(d_size[1]+2*guide)*(d_size[2]+2*guide)*3;
+    for(unsigned i=0;i<recvsize;i++) d_wk[i] = 0.0;
+    if (paraMngr->Irecv( &time, 1, recv_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
+    if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
+    if (paraMngr->Irecv( &step, 1, recv_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
+    if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
+    if (paraMngr->Irecv( d_wk, recvsize, recv_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
+    if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
+  }
+  SetOverlap(d_vf,d_wk,3,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
+             DRI->read_file_voxel_head,DRI->read_file_voxel_size);
+  
+}
+
 
 
 void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* DRI, DfiInfo* DI, REAL_TYPE* d_wk,

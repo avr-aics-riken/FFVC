@@ -404,7 +404,7 @@ protected:
     size_t dsize = (size_t)(id*jd*kd);
     size_t dsize3 = (size_t)(id*jd*kd*3);
  
-    for (size_t l=0; l<dsize3; i++) d[l]=0.0;
+    for (size_t l=0; l<dsize3; l++) d[l]=0.0;
     
     for (size_t ivar=0;ivar<3;ivar++){
       

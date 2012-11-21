@@ -712,17 +712,20 @@ public:
   string f_Coarse_temperature;
   string f_Coarse_dfi_prs;
   string f_Coarse_dfi_vel;
+  string f_Coarse_dfi_fvel;
   string f_Coarse_dfi_temp;
   string f_Coarse_fvelocity;
   
   string f_different_nproc_dir_prefix;
   string f_different_nproc_pressure;
   string f_different_nproc_velocity;
+  string f_different_nproc_fvelocity;
   string f_different_nproc_temperature;
   string f_different_nproc_dfi_prs;
   string f_different_nproc_dfi_vel;
+  string f_different_nproc_dfi_fvel;
   string f_different_nproc_dfi_temp;
-  string f_different_nproc_fvelocity;
+  string f_different_nproc_dfi_fvelocity;
   
   string f_Velocity;
   string f_Pressure;

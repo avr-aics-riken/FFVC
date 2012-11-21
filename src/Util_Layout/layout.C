@@ -153,7 +153,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
 
 
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
-  label = "/LayoutData/output_dir";
+  label = "/LayoutData/OutputDir";
   if ( (tpCntl->GetValue(label, &str )) )
   {
     dirname=str;

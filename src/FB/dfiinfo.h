@@ -40,6 +40,7 @@ public:
   int read_file_voxel_size[3];
   string f_prs;
   string f_vel;
+  string f_fvel;
   string f_temp;
 
 public:
