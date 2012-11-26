@@ -12,8 +12,8 @@
 // #################################################################
 
 /**
- @file IP_SHC1D.h
- @brief IP_SHC1D class Header
+ @file   IP_SHC1D.h
+ @brief  IP_SHC1D class Header
  @author kero
  */
 
@@ -22,13 +22,10 @@
 
 class IP_SHC1D : public Intrinsic {
   
-public:
-  std::string m_inactive;
-  std::string m_fin;
-  std::string m_isothermal;
-  std::string m_adiabatic;
+public:   
   std::string m_fluid;      ///< 流体のラベル
   std::string m_solid;      ///< 固体のラベル
+  std::string m_inactive;   ///< 固体で不活性セルのラベル
   
 public:
   /** コンストラクタ */
@@ -36,8 +33,6 @@ public:
   
   /**　デストラクタ */
   ~IP_SHC1D() {}
-  
-protected:
 
 public:
   /** パラメータをロード
@@ -66,6 +61,12 @@ public:
    * @param [in]     mat   MediumListクラスのポインタ
    */
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
+  
+  
+  /** 矩形の計算領域のセルIDを設定する
+   * @param [in,out] bid  カット点の境界条件ID
+   */
+  virtual void setup_bc(int* bid);
   
   
   /** 

@@ -1240,7 +1240,7 @@ void ParseBC::get_Neighbor(const string label_base, const int n, CompoList* cmp,
   
   if ( !flag )
   {
-    Hostonly_ stamped_printf("\tError : Keyword '%s' is not listed on Medium_Table\n", str.c_str());
+    Hostonly_ stamped_printf("\tError : Keyword '%s' is not listed on MediumTable\n", str.c_str());
     Exit(0);
   }
   
@@ -1467,7 +1467,7 @@ void ParseBC::get_OBC_Outflow(const string label_base, const int n)
   }
   else
   {
-	  stamped_printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str.c_str());
+	  stamped_printf("\tParsing error : Invalid string value for 'VelocityType' : %s\n", str.c_str());
 	  Exit(0);
   }
   
@@ -1777,7 +1777,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
   // heat problem
   if ( HeatProblem )
   {
-    label = label_base + "/HeatType";
+    label = label_base + "/ThermalType";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -1822,7 +1822,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
     }
     else
     {
-      stamped_printf("\tParsing error : Invalid string value for 'HeatType' : %s\n", str.c_str());
+      stamped_printf("\tParsing error : Invalid string value for 'ThermalType' : %s\n", str.c_str());
       Exit(0);
     }
   }
@@ -2154,7 +2154,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     cmp[odr].setLabel(str);
     
     
-    // ポリゴンの媒質IDの登録
+    // ポリゴンの媒質IDの登録 >> ポリゴンがない場合は？？
     for (int i=0; i<C->NoMedium; i++) {
       
       string m_pg = polyP[i].label;

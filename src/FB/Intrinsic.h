@@ -128,8 +128,22 @@ public:
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
   
   
-  
+  /**
+   * @brief 計算領域のセルIDとカット情報を設定する
+   * @param [in,out] mid    IDの配列
+   * @param [in]     R      Controlクラスのポインタ
+   * @param [in]     G_org  グローバルな原点（無次元）
+   * @param [in]     Nmax
+   * @param [in]     mat    MediumListクラスのポインタ
+   * @param [out]    cut    カット情報
+   */
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
+  
+  
+  /** 矩形の計算領域のセルIDを設定する
+   * @param [in,out] bid  カット点の境界条件ID
+   */
+  virtual void setup_bc(int* bid) {};
   
   
   /**

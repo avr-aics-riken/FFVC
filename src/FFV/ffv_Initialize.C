@@ -267,7 +267,7 @@ int FFV::Initialize(int argc, char **argv)
   
   display_memory_info(fp, G_PrepMemory, PrepMemory, "Preprocessor");
   
-  
+  mark();
   
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
@@ -275,14 +275,14 @@ int FFV::Initialize(int argc, char **argv)
   
   // CompoListの設定，外部境界条件の読み込み保持
   setBCinfo();
-  
+  mark();
   
   // Binaryの場合に，SOLIDセルを生成
   if ( !C.isCDS() && (C.Mode.Example == id_Polygon) )
   {
     generate_Solid(fp);
   }
-  
+  mark();
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++)
   {
@@ -290,7 +290,7 @@ int FFV::Initialize(int argc, char **argv)
                       BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
 
-  
+  mark();
   
   // Fill
   if ( (C.Mode.Example == id_Polygon) )
@@ -3271,6 +3271,11 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
         Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
       }
+      break;
+      
+    case id_SHC1D:
+      setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      Ex->setup_bc(d_bid);
       break;
       
     default: // ほかのIntrinsic problems
