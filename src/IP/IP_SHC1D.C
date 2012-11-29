@@ -124,7 +124,6 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Med
   }
   
   
-  
   // SOLID_CONDUCTIONモードでは，fluidセルはInactive
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
@@ -166,9 +165,9 @@ void IP_SHC1D::setup_bc(int* bid)
   int gd = guide;
   
   // カット情報
-  int id_isothermal   = 3;
-  int id_adiabatic    = 4;
-  int id_heattransfer = 5;
+  int id_isothermal   = 4;
+  int id_adiabatic    = 5;
+  int id_heattransfer = 6;
   
   // Direction
   // 0 - w

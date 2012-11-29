@@ -267,7 +267,7 @@ int FFV::Initialize(int argc, char **argv)
   
   display_memory_info(fp, G_PrepMemory, PrepMemory, "Preprocessor");
   
-  mark();
+  
   
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
@@ -275,14 +275,14 @@ int FFV::Initialize(int argc, char **argv)
   
   // CompoListの設定，外部境界条件の読み込み保持
   setBCinfo();
-  mark();
+  
   
   // Binaryの場合に，SOLIDセルを生成
   if ( !C.isCDS() && (C.Mode.Example == id_Polygon) )
   {
     generate_Solid(fp);
   }
-  mark();
+  
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++)
   {
@@ -290,7 +290,7 @@ int FFV::Initialize(int argc, char **argv)
                       BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
   }
 
-  mark();
+  
   
   // Fill
   if ( (C.Mode.Example == id_Polygon) )
@@ -397,7 +397,7 @@ int FFV::Initialize(int argc, char **argv)
     setComponentVF();
   }
 
-
+  
   
   // 内部周期境界の場合のガイドセルのコピー処理
   V.adjMediumPrdc_Inner(d_mid, cmp);
@@ -453,9 +453,10 @@ int FFV::Initialize(int argc, char **argv)
   }
 #endif
 // ########## 
-  
+  mark();
   
   // Ref_MediumがCompoList中にあるかどうかをチェックし、RefMatを設定
+  printf("NoCOmpo=%d %s\n", C.NoCompo, C.Ref_Medium.c_str());
   if ( (C.RefMat = C.find_ID_from_Label(mat, C.NoCompo, C.Ref_Medium)) == 0 )
   {
     Hostonly_
@@ -465,19 +466,19 @@ int FFV::Initialize(int argc, char **argv)
     }
     return -1;
   }
-  
+  mark();
 
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
   BC.setBCIperiodic(d_bcd);
   BC.setBCIperiodic(d_bcp);
   BC.setBCIperiodic(d_bcv);
-  
+  mark();
   if ( C.isHeatProblem() )
   {
     BC.setBCIperiodic(d_bh1);
     BC.setBCIperiodic(d_bh2);
   }
-  
+  mark();
   // bcd/bcp/bcv/bchの同期
   if ( numProc > 1 )
   {
@@ -491,7 +492,7 @@ int FFV::Initialize(int argc, char **argv)
       if ( paraMngr->BndCommS3D(d_bh2, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     }
   }
-
+  mark();
   
   // 法線計算
   get_Compo_Area();
@@ -535,7 +536,7 @@ int FFV::Initialize(int argc, char **argv)
     B.get_Phase(cmp);
   }
   
-
+  mark();
   
   // CompoListの内容とセル数の情報を表示する
   Hostonly_
@@ -558,7 +559,7 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\n---------------------------------------------------------------------------\n\n\n");
   }
   
-  
+  mark();
   
   // Monitor Listの処理 --------------------------------------------
   MO.setControlVars(d_bcd,
@@ -3275,6 +3276,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       
     case id_SHC1D:
       setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
+      Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
       Ex->setup_bc(d_bid);
       break;
       

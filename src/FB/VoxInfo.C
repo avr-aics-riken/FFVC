@@ -4785,7 +4785,7 @@ int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
         target = cell[m];
         if ( target<=0 )
         {
-          Hostonly_ stamped_printf("\tVoxel data includes non-positive ID [%d] at (%d, %d, %d)\n", target, i, j, k);
+          stamped_printf("\tVoxel data includes non-positive ID [%d] at (%d, %d, %d) in Rank %d\n", target, i, j, k, myRank);
           Exit(0);
         }
       }

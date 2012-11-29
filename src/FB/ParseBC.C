@@ -2154,17 +2154,41 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     cmp[odr].setLabel(str);
     
     
-    // ポリゴンの媒質IDの登録 >> ポリゴンがない場合は？？
-    for (int i=0; i<C->NoMedium; i++) {
-      
-      string m_pg = polyP[i].label;
-      int m_id    = polyP[i].mat;
-      
-      if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
-      {
-        cmp[odr].setMatOdr(m_id);
+    // 媒質IDの登録
+    string m_pg;
+    int m_id;
+    
+    switch (C->Mode.Example == id_Polygon) {
+    
+      case id_Polygon:
+
+        for (int i=0; i<C->NoMedium; i++) {
+          
+          m_pg = polyP[i].label;
+          m_id = polyP[i].mat;
+          
+          if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
+          {
+            cmp[odr].setMatOdr(m_id);
+            break;
+          }
+        }
         break;
-      }
+        
+      case id_SHC1D:
+        if (odr==1) cmp[odr].setMatOdr(4); // id_isothermal
+        if (odr==2) cmp[odr].setMatOdr(5); // id_adiabatic
+        if (odr==3) cmp[odr].setMatOdr(6); // id_heattransfer
+        if (odr==4) cmp[odr].setMatOdr(1); // fluid
+        if (odr==5) cmp[odr].setMatOdr(2); // solid
+        if (odr==6) cmp[odr].setMatOdr(3); // solid_inactive
+        break;
+        
+      case id_Sphere:
+        break;
+        
+      default:
+        break;
     }
     
     

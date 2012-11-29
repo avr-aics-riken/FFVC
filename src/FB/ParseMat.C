@@ -140,7 +140,7 @@ void ParseMat::copyProperty(MediumList* mat, const int n)
 
 
 // #################################################################
-// Medium_Tableを読んでMediumTableInfoクラスオブジェクトに格納
+// MediumTableを読んでMediumTableInfoクラスオブジェクトに格納
 int ParseMat::get_MediumTable()
 {
   std::string str, label;
