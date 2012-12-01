@@ -115,7 +115,7 @@ public:
   
   
   /**
-   * @brief Medium_Tableを読んでMediumTableInfoクラスオブジェクトに格納
+   * @brief MediumTableを読んでMediumTableInfoクラスオブジェクトに格納
    */
   int get_MediumTable();
   

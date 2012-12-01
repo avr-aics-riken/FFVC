@@ -206,7 +206,15 @@ int ParseMat::get_MediumTable()
           MTITP[i1].label = label;
         }
       }
-      else
+      else if( !strcasecmp(str.c_str(), "color") )
+      {
+        ; // FXgenが吐き出す情報でffvcでは不使用
+      }
+      else if( !strcasecmp(str.c_str(), "id") )
+      {
+        ; // FXgenが吐き出す情報でffvcでは不使用
+      }
+      else // その他のパラメータは浮動小数点データとしてロード
       {
         if ( !(tpCntl->GetValue(label_leaf, &fval)) )
         {

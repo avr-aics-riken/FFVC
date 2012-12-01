@@ -308,7 +308,7 @@ public:
   
   /**
    * @brief パラメータファイルとスキャンしたIDの同一性をチェック
-   * @param [in] m_NoMedium  Medium_Tableに記述されたIDの個数
+   * @param [in] m_NoMedium  MediumTableに記述されたIDの個数
    */
   bool chkIDconsistency      (const int m_NoMedium);
   

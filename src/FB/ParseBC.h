@@ -189,16 +189,7 @@ private:
    * @param [out v          ベクトルパラメータ
    */
   void get_NV(const string label_base, REAL_TYPE* v);
-  
-  
-  /**
-   * @brief Adiabaticのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   * @param [in]  mat        MediumList
-   */
-  void get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
+
   
   
   /**

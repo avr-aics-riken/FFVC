@@ -36,7 +36,7 @@ bool TPControl::chkLabel(const string label)
   {
     cout <<  "ERROR in TextParser::getAllLabels file: "
     << " ERROR CODE "<< ierror << endl;
-    return false;
+    Exit(0);
   }
   
   int flag=0;
@@ -77,7 +77,7 @@ bool TPControl::chkNode(const string label)
   {
     cout <<  "ERROR in TextParser::getAllLabels file: "
     << " ERROR CODE "<< ierror << endl;
-    return false;
+    Exit(0);
   }
   
   int flag=0;
@@ -180,7 +180,7 @@ bool TPControl::GetNodeStr(const string label, const int nnode, string *ct)
   if (ierror != 0)
   {
     cout <<  "ERROR in TextParser::getAllLabels file: " << " ERROR CODE "<< ierror << endl;
-    return false;
+    Exit(0);
   }
   
   for (int i = 0; i < labels.size(); i++) {
@@ -273,7 +273,7 @@ bool TPControl::GetVector(const string label, REAL_TYPE *vec, const int nvec)
   // get value
   if( (ierr = tp->getValue(label, value)) != TP_NO_ERROR ){
     cout << " GetVector debug 333" << endl;
-	  return false;
+	  Exit(0);
   }
 
   // get type
@@ -357,7 +357,7 @@ bool TPControl::GetValue(const string label, int *ct)
   if (ierror != TP_NO_ERROR){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR no label " << label << ierror << endl;
-	  return false;
+	  Exit(0);
   }
 
   //型の取得
@@ -365,12 +365,12 @@ bool TPControl::GetValue(const string label, int *ct)
   if (ierror != TP_NO_ERROR){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
   if( type != TP_NUMERIC_VALUE ){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
 
   // string to real
@@ -378,7 +378,7 @@ bool TPControl::GetValue(const string label, int *ct)
   if (ierror != TP_NO_ERROR){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR convertInt " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
 
   *ct=val;
@@ -407,7 +407,7 @@ bool TPControl::GetValue(const string label, REAL_TYPE *ct)
   if (ierror != TP_NO_ERROR){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR no label " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
 
   //型の取得
@@ -415,12 +415,12 @@ bool TPControl::GetValue(const string label, REAL_TYPE *ct)
   if (ierror != TP_NO_ERROR){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
   if( type != TP_NUMERIC_VALUE ){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
 
   // string to real
@@ -428,7 +428,7 @@ bool TPControl::GetValue(const string label, REAL_TYPE *ct)
   if (ierror != TP_NO_ERROR){
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR convertInt " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
 
   *ct=val;
@@ -459,7 +459,7 @@ bool TPControl::GetValue(const string label, string *ct)
   {
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR no label " << label << endl;
-	  return false;
+	  Exit(0);
   }
   
   //型の取得
@@ -468,14 +468,14 @@ bool TPControl::GetValue(const string label, string *ct)
   {
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::getType file: " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
   
   if( type != TP_STRING_VALUE )
   {
 	  cout << " label: " << label << endl;
 	  cout <<  "ERROR in TextParser::Type error: " << ierror << endl;
-	  return false;
+	  Exit(0);
   }
   
   *ct=value;

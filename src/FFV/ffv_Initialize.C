@@ -174,7 +174,7 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\n\t>> Medium List\n\n");
   }
   
-  // 媒質情報をロードし、 Medium_Tableタグ内の媒質数を保持
+  // 媒質情報をロードし、 MediumTableタグ内の媒質数を保持
   C.NoMedium = M.get_MediumTable();
   
   // 媒質リストをインスタンス
@@ -3635,7 +3635,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
-  // PolygonGroupの媒質の範囲チェック >> 1以上、Medium_Tableの数以下であること
+  // PolygonGroupの媒質の範囲チェック >> 1以上、MediumTableの数以下であること
   for (int i=0; i<C.num_of_polygrp; i++) {
     int m_id = poly_prop[i].mat;
     
@@ -3643,7 +3643,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     {
       Hostonly_
       {
-        printf("\tError : Material ID associated with '%s' is not listed in Medium_Table\n", poly_prop[i].label.c_str());
+        printf("\tError : Material ID associated with '%s' is not listed in MediumTable\n", poly_prop[i].label.c_str());
         Exit(0);
       }
     }

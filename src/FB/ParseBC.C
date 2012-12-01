@@ -213,18 +213,6 @@ void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
 }
 
 
-// #################################################################
-// Adiabaticのパラメータを取得する
-void ParseBC::get_IBC_Adiabatic(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
-{
-  // 隣接セル媒質
-  get_Neighbor(label_base, n, cmp, mat);
-  
-  // zero heat flux
-  cmp[n].set_Heatflux( 0.0 );
-}
-
-
 
 // #################################################################
 // Const_Temperatureのパラメータを取得する
@@ -1777,7 +1765,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
   // heat problem
   if ( HeatProblem )
   {
-    label = label_base + "/ThermalType";
+    label = label_base + "/ThermalOption";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -1822,7 +1810,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
     }
     else
     {
-      stamped_printf("\tParsing error : Invalid string value for 'ThermalType' : %s\n", str.c_str());
+      stamped_printf("\tParsing error : Invalid string value for 'ThermalOption' : %s\n", str.c_str());
       Exit(0);
     }
   }
@@ -2247,7 +2235,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
       
       if ( tp == ADIABATIC ) 
       {
-        get_IBC_Adiabatic(label_leaf, odr, cmp, mat);
+        cmp[odr].set_Heatflux( 0.0 );
         
       }
       else if ( tp == HEATFLUX ) 
