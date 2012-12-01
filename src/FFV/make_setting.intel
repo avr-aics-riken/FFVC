@@ -18,7 +18,7 @@ RM          = \rm -f
 MPI_DIR	    = /opt/openmpi
 CPM_DIR     = /usr/local/CPMlib
 TP_DIR      = /usr/local/TextParser
-POLYLIB_DIR = ../Polylib-2.1.2
+POLYLIB_DIR = ../Polylib-2.2
 CUTLIB_DIR  = ../Cutlib-2.0.5
 PMLIB_DIR   = ../PMlib-1.5
 OMP_FLAGS   = -openmp -par-report=3 -vec-report=2

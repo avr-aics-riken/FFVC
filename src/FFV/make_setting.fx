@@ -18,7 +18,7 @@
 #MPI_DIR     =
 #CPM_DIR     = /hoge
 #TP_DIR      = /funya
-#POLYLIB_DIR = ../Polylib-2.1.2
+#POLYLIB_DIR = ../Polylib-2.2
 #CUTLIB_DIR  = ../Cutlib-2.0.5
 #PMLIB_DIR   = ../PMlib-1.5
 #OMP_FLAGS   =
