@@ -9,6 +9,10 @@ Release Note
 
 #######################################
 
+
+Ver 0.9.7    1 Dec. 2012
+  - Polylib-2.2, TextParser-1.2対応
+
 Ver 0.9.6   16 Nov. 2012
   - PLOT3D関連ソースをPLOT3Dディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加

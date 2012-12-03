@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 108
+#define FB_VERS 110
 
 #define MODEL_ID_MAX 255
 
@@ -37,6 +37,7 @@
 
 #define SINGLE_EPSILON 2.4e-7
 #define DOUBLE_EPSILON 4.4e-16
+#define ROUND_EPS 2.0e-6
 
 #define KELVIN    273.15
 #define BOLTZMAN  1.0

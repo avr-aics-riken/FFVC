@@ -203,7 +203,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
     for (int j=0; j<=(jmax+1); j++) {
       for (int i=0; i<=(imax+1); i++) {
         l = (size_t)(ix*jx*k + ix*j + i);
-        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
         q[l] = id[m];
         f[l] = (float)vf[m];
       }
@@ -308,7 +308,7 @@ void Intrinsic::writeSVX(int *id, Control* R)
     for (int j=0; j<=(jmax+1); j++) {
       for (int i=0; i<=(imax+1); i++) {
         l = (size_t)(ix*jx*k + ix*j + i);
-        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
         q[l] = id[m];
       }
     }

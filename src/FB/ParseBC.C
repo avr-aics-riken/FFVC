@@ -2146,14 +2146,16 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     string m_pg;
     int m_id;
     
-    switch (C->Mode.Example == id_Polygon) {
+    switch (C->Mode.Example) {
     
       case id_Polygon:
-
-        for (int i=0; i<C->NoMedium; i++) {
+        
+        //for (int i=0; i<C->NoMedium; i++) {
+        for (int i=0; i<NoBC; i++) {
           
           m_pg = polyP[i].label;
           m_id = polyP[i].mat;
+          printf("id=%d str=%s\n", m_id, m_pg.c_str());
           
           if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
           {
@@ -2164,12 +2166,6 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
         break;
         
       case id_SHC1D:
-        if (odr==1) cmp[odr].setMatOdr(4); // id_isothermal
-        if (odr==2) cmp[odr].setMatOdr(5); // id_adiabatic
-        if (odr==3) cmp[odr].setMatOdr(6); // id_heattransfer
-        if (odr==4) cmp[odr].setMatOdr(1); // fluid
-        if (odr==5) cmp[odr].setMatOdr(2); // solid
-        if (odr==6) cmp[odr].setMatOdr(3); // solid_inactive
         break;
         
       case id_Sphere:

@@ -14,6 +14,8 @@
  * @author kero
  */
 
+// tg; Fluid
+// sd; Solid
 
 m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
 

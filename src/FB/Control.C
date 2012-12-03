@@ -2885,36 +2885,6 @@ void Control::get_VarRange()
 
 
 // #################################################################
-// バージョン情報の取得
-void Control::get_Version()
-{
-  int ct;
-  string label;
-  
-  // FlowBase
-  label = "/Steer/VersionInfo/FlowBase";
-  
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  FB_version = ct;
-  
-  // FFV
-  label = "/Steer/VersionInfo/FFV";
-  
-  if ( !(tpCntl->GetValue(label, &ct)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  version = ct;
-}
-
-
-
-// #################################################################
 //壁面上の扱いを指定する
 void Control::get_Wall_type()
 {

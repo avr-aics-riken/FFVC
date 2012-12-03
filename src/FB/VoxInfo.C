@@ -2028,37 +2028,37 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool conve
           ct = &cut[m];
 
           // X_MINUS
-          if (ct[0] < 1.0)  // 交点があるなら壁面なのでノイマン条件をセット
+          if ((ct[0] - ROUND_EPS) < 1.0)  // 交点があるなら壁面なのでノイマン条件をセット
           {
             s = offBit( s, BC_N_W );
           }
           
           // X_PLUS
-          if (ct[1] < 1.0)
+          if ((ct[1] - ROUND_EPS) < 1.0)
           {
             s = offBit( s, BC_N_E );
           }
           
           // Y_MINUS
-          if (ct[2] < 1.0)
+          if ((ct[2] - ROUND_EPS) < 1.0)
           {
             s = offBit( s, BC_N_S );
           }
           
           // Y_PLUS
-          if (ct[3] < 1.0)
+          if ((ct[3] - ROUND_EPS) < 1.0)
           {
             s = offBit( s, BC_N_N );
           }
           
           // Z_MINUS
-          if (ct[4] < 1.0)
+          if ((ct[4] - ROUND_EPS) < 1.0)
           {
             s = offBit( s, BC_N_B );
           }
           
           // Z_PLUS
-          if (ct[5] < 1.0)
+          if ((ct[5] - ROUND_EPS) < 1.0)
           {
             s = offBit( s, BC_N_T );
           }
@@ -4235,8 +4235,8 @@ unsigned VoxInfo::fill_inside(int* mid, const int target, const int fill_id)
 
 // #################################################################
 // シード点をペイントする
-// ヒントとして与えられた外部境界面に接するセルでカットが無い（つまり固体でない）セルをフィルする
-// もし，ヒント面に固体があれば、ぬれ面はフィルしない
+// ヒントとして与えられた外部境界面に接するセルにおいて，確実に流体セルであるセルをフィルする
+// もし，ヒント面に固体候補があれば、ぬれ面はフィルしない
 unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, const float* cut)
 {
   int ix = size[0];
@@ -4260,13 +4260,15 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             const float* pos = &cut[mp];
             int flag = 0;
             
+            // 対象セルの周囲6方向にセル内のカットがあるかを調べる
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 )
+              if ( (pos[l] - ROUND_EPS) <= 0.5) // 誤差を許容してテストする
               {
                 flag++;
               }
             }
             
+            // カットがなく，未ペイントのセルの場合に流体セルとしてペイントする
             if ( (flag == 0) && (mid[m] == 0) )
             {
               mid[m] = tg;
@@ -4290,7 +4292,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             int flag = 0;
             
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 )
+              if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
                 flag++;
               }
@@ -4318,7 +4320,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             int flag = 0;
             
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 )
+              if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
                 flag++;
               }
@@ -4346,7 +4348,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             int flag = 0;
             
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 )
+              if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
                 flag++;
               }
@@ -4375,7 +4377,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             int flag = 0;
             
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 )
+              if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
                 flag++;
               }
@@ -4404,7 +4406,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             int flag = 0;
             
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 )
+              if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
                 flag++;
               }
@@ -4569,7 +4571,7 @@ bool VoxInfo::find_IBC_bbox(const int tgt, const int* bid, const float* cut, int
             int bx;
             
             for (int l=0; l<6; l++) {
-              if ( pos[l] <= 0.5 ) // セル内部にカットが存在する
+              if ( (pos[l] - ROUND_EPS) <= 0.5 ) // セル内部にカットが存在する
               {
                 bx = (qq >> l*5) & MASK_5; // カット面のID，カットがなければゼロ
                 if ( bx == tg ) paint++;
@@ -5899,6 +5901,7 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
 
 // #################################################################
 // カット情報を用いて，指定IDからバイナリボクセルを作成する
+// 距離情報は，0.5付近で曖昧さがある．単精度の丸め誤差を考慮した判定
 unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target)
 {
   unsigned long c=0;
@@ -5917,19 +5920,16 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = bid[m];
-        int bx;
         
         if ( TEST_BC(bd) ) // 6方向のいずれかにIDがある
         {
           size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          const float* pos = &cut[mp];
-
           int paint=0;
           
           for (int l=0; l<6; l++) {
-            if ( pos[l] <= 0.5 ) // セル内部にカットが存在する
+            if ( (cut[mp+l] - 0.5) <= -ROUND_EPS ) // セル内部にカットが存在する（1/2未満）
             {
-              bx = (bd >> l*5) & MASK_5; // カット面のID，カットがなければゼロ
+              int bx = (bd >> (l*5)) & MASK_5; // カット面のID，カットがなければゼロ
               if ( bx == tg ) paint++;
             }
           }
@@ -5940,6 +5940,24 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
             c++;
           }
           
+// ##########
+#if 0 // debug
+          int b0 = (bd >> 0)  & MASK_5;
+          int b1 = (bd >> 5)  & MASK_5;
+          int b2 = (bd >> 10) & MASK_5;
+          int b3 = (bd >> 15) & MASK_5;
+          int b4 = (bd >> 20) & MASK_5;
+          int b5 = (bd >> 25) & MASK_5;
+          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+                 cut[mp+0],
+                 cut[mp+1],
+                 cut[mp+2],
+                 cut[mp+3],
+                 cut[mp+4],
+                 cut[mp+5],
+                 b0, b1, b2, b3, b4, b5);
+#endif
+// ##########
         } // TEST_BC
         
       }
@@ -5997,7 +6015,7 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
           int paint=0;
           
           for (int l=0; l<6; l++) {
-            if ( pos[l] <= 0.5 ) // セル内部にカットが存在する
+            if ( (pos[l] - ROUND_EPS) <= 0.5 ) // セル内部にカットが存在する
             {
               bx = (bd >> l*5)  & MASK_5; // カット面のID，カットがなければゼロ
               tgt = max( tgt, bx ); // 6方向のカット面のIDのうち最大のものを使う

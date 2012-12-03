@@ -46,7 +46,8 @@ int FFV::Initialize(int argc, char **argv)
   // condition fileのオープン
   Hostonly_
   {
-    if ( !(fp=fopen("condition.txt", "w")) ) {
+    if ( !(fp=fopen("condition.txt", "w")) )
+    {
       stamped_printf("\tSorry, can't open 'condition.txt' file. Write failed.\n");
       return -1;
     }
@@ -105,30 +106,6 @@ int FFV::Initialize(int argc, char **argv)
   MO.setRankInfo(paraMngr, procGrp);
   FP3DR.setRankInfo(paraMngr, procGrp);
   FP3DW.setRankInfo(paraMngr, procGrp);
-  
-  
-  
-  // バージョン情報を取得し，ソルバークラスのバージョンと一致するかをチェックする
-  C.get_Version();
-  
-  if ( C.version != FFV_VERS )
-  {
-    Hostonly_
-    {
-      printf(     "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
-      fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FFV ver. %d #####\n", C.version, FFV_VERS);
-    }
-    return -1;
-  }
-  if ( C.FB_version != FB_VERS )
-  {
-    Hostonly_
-    {
-      printf(     "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
-      fprintf(fp, "\t##### Version of Input file (%d) is NOT compliant with FB ver. %d #####\n", C.FB_version, FB_VERS);
-    }
-    return -1;
-  }
   
   
   // 最初のパラメータの取得
@@ -276,12 +253,15 @@ int FFV::Initialize(int argc, char **argv)
   // CompoListの設定，外部境界条件の読み込み保持
   setBCinfo();
   
+
   
   // Binaryの場合に，SOLIDセルを生成
   if ( !C.isCDS() && (C.Mode.Example == id_Polygon) )
   {
     generate_Solid(fp);
   }
+  
+  
   
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++)
@@ -444,7 +424,7 @@ int FFV::Initialize(int argc, char **argv)
   V.setCmpFraction(cmp, d_bcd, d_cvf);
 
 // ########## 
-#if 0
+#if 1
   // CompoListとMediumListの関連を表示
   Hostonly_ 
   {
@@ -453,10 +433,10 @@ int FFV::Initialize(int argc, char **argv)
   }
 #endif
 // ########## 
-  mark();
+
   
   // Ref_MediumがCompoList中にあるかどうかをチェックし、RefMatを設定
-  printf("NoCOmpo=%d %s\n", C.NoCompo, C.Ref_Medium.c_str());
+  printf("NoCompo=%d %s\n", C.NoCompo, C.Ref_Medium.c_str());
   if ( (C.RefMat = C.find_ID_from_Label(mat, C.NoCompo, C.Ref_Medium)) == 0 )
   {
     Hostonly_
@@ -1350,8 +1330,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t1st Fill*****\n\n\tFLUID\n");
-    fprintf(fp,"\t1st Fill*****\n\n\tFLUID\n");
+    printf(    "\t1st Fill -----\n\n\tFLUID\n");
+    fprintf(fp,"\t1st Fill -----\n\n\tFLUID\n");
 
     printf    ("\t\tInitial target count : %15ld\n", fill_count);
     fprintf(fp,"\t\tInitial target count : %15ld\n", fill_count);
@@ -1369,7 +1349,10 @@ void FFV::fill(FILE* fp)
   
   // 1st pass
   
-  if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
+  // ヒントが与えられている場合
+  // 確実に流体のセルのみをペイントする
+  
+  if ( C.Fill_Hint >= 0 )
   {
     fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut);
 
@@ -1406,7 +1389,9 @@ void FFV::fill(FILE* fp)
   }
 
 
+
   // BIDによるフィル
+  // 隣接する流体セルと接続しており，かつ固体セルに挟まれていないセルのみペイントする
   int c=0;
   while (fill_count > 0) {
     
@@ -1437,6 +1422,7 @@ void FFV::fill(FILE* fp)
     printf(    "\t\tIteration = %5d : FLUID filling by BID = %15ld\n", c+1, fill_count);
     fprintf(fp,"\t\tIteration = %5d : FLUID filling by BID = %15ld\n", c+1, fill_count);
   }
+  
   
   
   // midによる穴埋め
@@ -1481,8 +1467,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\n\t2nd Fill*****\n\n\tFLUID\n");
-    fprintf(fp,"\n\t2nd Fill*****\n\n\tFLUID\n");
+    printf(    "\n\t2nd Fill -----\n\n\tFLUID\n");
+    fprintf(fp,"\n\t2nd Fill -----\n\n\tFLUID\n");
   }
   
   // 既にペイントした流体セルをクリア
@@ -1518,6 +1504,7 @@ void FFV::fill(FILE* fp)
       Exit(0);
     }
   }
+  
   
   
   // BIDによるフィル
@@ -1583,7 +1570,7 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tIteration = %5d : Filled cell =          %15ld\n\n", c, fill_count);
   }
   
-  
+
   
   // 確認 paintedは未ペイントセルがある場合に1
   unsigned long painted = (unsigned long)V.fill_check(d_mid);
@@ -2265,10 +2252,10 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
     Exit(0);
   }
   
-  if     ( FBUtility::compare(keyword, "ParallelPlate2D") ) Cref->Mode.Example = id_PPLT2D;
+  if     ( FBUtility::compare(keyword, "ParallelPlate2D") )   Cref->Mode.Example = id_PPLT2D;
   else if( FBUtility::compare(keyword, "Duct") )              Cref->Mode.Example = id_Duct;
   else if( FBUtility::compare(keyword, "SHC1D") )             Cref->Mode.Example = id_SHC1D;
-  else if( FBUtility::compare(keyword, "PerformanceTest") )  Cref->Mode.Example = id_PMT;
+  else if( FBUtility::compare(keyword, "PerformanceTest") )   Cref->Mode.Example = id_PMT;
   else if( FBUtility::compare(keyword, "Rectangular") )       Cref->Mode.Example = id_Rect;
   else if( FBUtility::compare(keyword, "Cylinder") )          Cref->Mode.Example = id_Cylinder;
   else if( FBUtility::compare(keyword, "Back_Step") )         Cref->Mode.Example = id_Step;
@@ -2432,12 +2419,15 @@ void FFV::min_distance(float* cut, FILE* fp)
     if ( paraMngr->Allreduce(&tmp_g, &gl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
 
-  
-  Hostonly_
+  if ( gl > 0 )
   {
-    fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
-    printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+    Hostonly_
+    {
+      fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+      printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+    }
   }
+
 }
 
 
@@ -3635,17 +3625,13 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
-  // PolygonGroupの媒質の範囲チェック >> 1以上、MediumTableの数以下であること
-  for (int i=0; i<C.num_of_polygrp; i++) {
-    int m_id = poly_prop[i].mat;
-    
-    if ( (m_id < 1) || (m_id > C.NoMedium) )
+  // PolygonGroupの媒質数は，1以上、MediumTableの数以下であること
+  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoMedium) )
+  {
+    Hostonly_
     {
-      Hostonly_
-      {
-        printf("\tError : Material ID associated with '%s' is not listed in MediumTable\n", poly_prop[i].label.c_str());
-        Exit(0);
-      }
+      printf("\tError : No of PolygonGroup must be less than one of Medium.\n");
+      Exit(0);
     }
   }
   
@@ -3821,7 +3807,13 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
             int b4 = (bd >> 20) & MASK_5;
             int b5 = (bd >> 25) & MASK_5;
             printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-                   pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], b0, b1, b2, b3, b4, b5);
+                   d_cut[mp+0],
+                   d_cut[mp+1],
+                   d_cut[mp+2],
+                   d_cut[mp+3],
+                   d_cut[mp+4],
+                   d_cut[mp+5],
+                   b0, b1, b2, b3, b4, b5);
 #endif
 // ##########            
           }

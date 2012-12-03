@@ -1306,9 +1306,6 @@ public:
    */
   void get_Steer_2(ItrCtl* IC, ReferenceFrame* RF);
   
-  
-  /** バージョン番号の取得 */
-  void get_Version();
  
 
 };

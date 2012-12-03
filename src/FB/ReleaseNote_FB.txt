@@ -9,6 +9,11 @@ Release Note
 
 #######################################
 
+Ver 1.1.0    3 Dec. 2012
+  - fill_bid.hのバグ修正
+  - Versionチェックなし
+  - 丸め誤差を考慮したfloatの判定 (pos < 0.5) >> (pos-ROUND_EPS) < 0.5)
+  
 Ver 1.0.8   16 Nov. 2012
   - PLOT3D関連ファイルを別ディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加
