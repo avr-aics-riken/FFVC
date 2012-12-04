@@ -305,12 +305,12 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
 int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
 {
   std::string str = key;
-  
+
   for (int i=1; i<=Nmax; i++) 
   {
     if ( !strcasecmp(str.c_str(), mat[i].getLabel().c_str()) ) return i;
   }
-  
+
   return 0;
 }
 

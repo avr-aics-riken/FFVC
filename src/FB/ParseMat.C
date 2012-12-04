@@ -206,11 +206,11 @@ int ParseMat::get_MediumTable()
           MTITP[i1].label = label;
         }
       }
-      else if( !strcasecmp(str.c_str(), "color") )
+      else if( !strcasecmp(str.c_str(), "fxgencolor") )
       {
         ; // FXgenが吐き出す情報でffvcでは不使用
       }
-      else if( !strcasecmp(str.c_str(), "id") )
+      else if( !strcasecmp(str.c_str(), "fxgenid") )
       {
         ; // FXgenが吐き出す情報でffvcでは不使用
       }

@@ -2570,6 +2570,123 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
 }
 
 
+// #################################################################
+// 熱境界条件のBCエントリをエンコードする
+unsigned long VoxInfo::encQface_cut(const int order,
+                                const int target,
+                                const int* mid,
+                                int* bcd,
+                                int* bh1,
+                                int* bh2,
+                                const int testid,
+                                const bool flag)
+{
+  unsigned long g=0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int tg  = target;
+  int odr = order;
+  int tid = testid;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr, tid) \
+schedule(static) reduction(+:g)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m  = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int d  = bcd[m];
+        int s1 = bh1[m];
+        int s2 = bh2[m];
+        
+        // 6面のうち，いずれかにカットがある
+        if ( TEST_BC(d) && (mid[m] == tid) )
+        {
+          int b0 = (d >> 0)  & MASK_5;
+          int b1 = (d >> 5)  & MASK_5;
+          int b2 = (d >> 10) & MASK_5;
+          int b3 = (d >> 15) & MASK_5;
+          int b4 = (d >> 20) & MASK_5;
+          int b5 = (d >> 25) & MASK_5;
+          
+          // X-
+          if ( b0 == tg )
+          {
+            d |= odr; // エントリをエンコード
+            s1 |= (odr << BC_FACE_W);  // エントリをエンコード
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W );
+            g++;
+          }
+          
+          // X+
+          if ( b1 == tg )
+          {
+            d |= odr;
+            s1 |= (odr << BC_FACE_E);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
+            g++;
+          }
+          
+          // Y-
+          if ( b2 == tg )
+          {
+            d |= odr;
+            s1 |= (odr<< BC_FACE_S);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
+            g++;
+          }
+          
+          // Y+
+          if ( b3 == tg )
+          {
+            d |= odr;
+            s1 |= (odr << BC_FACE_N);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
+            g++;
+          }
+          
+          // Z-
+          if ( b4 == tg )
+          {
+            d |= odr;
+            s1 |= (odr << BC_FACE_B);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
+            g++;
+          }
+          
+          // Z+
+          if ( b5 == tg )
+          {
+            d |= odr;
+            s1 |= (odr << BC_FACE_T);
+            s2 = ( flag == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
+            g++;
+          }
+          
+          bcd[m] = d;
+          bh1[m] = s1;
+          bh2[m] = s2;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return g;
+}
+
+
 
 // #################################################################
 // 熱境界条件のBCエントリをエンコードする
@@ -5331,7 +5448,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
     switch ( cmp[n].getType() )
     {
       case ADIABATIC:
-        cmp[n].setElement( encQface(n, tg, mid, bcd, bh1, bh2, deface, false) ); // 断熱ビット(0)
+        cmp[n].setElement( encQface_cut(n, tg, mid, bcd, bh1, bh2, deface, false) ); // 断熱ビット(0)
         break;
         
       case HEATFLUX:

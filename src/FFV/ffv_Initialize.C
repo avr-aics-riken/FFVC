@@ -435,9 +435,8 @@ int FFV::Initialize(int argc, char **argv)
 // ########## 
 
   
-  // Ref_MediumがCompoList中にあるかどうかをチェックし、RefMatを設定
-  printf("NoCompo=%d %s\n", C.NoCompo, C.Ref_Medium.c_str());
-  if ( (C.RefMat = C.find_ID_from_Label(mat, C.NoCompo, C.Ref_Medium)) == 0 )
+  // Ref_MediumがMediumList中にあるかどうかをチェックし、RefMatを設定
+  if ( (C.RefMat = C.find_ID_from_Label(mat, C.NoMedium, C.Ref_Medium)) == 0 )
   {
     Hostonly_
     {
@@ -446,19 +445,19 @@ int FFV::Initialize(int argc, char **argv)
     }
     return -1;
   }
-  mark();
+
 
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
   BC.setBCIperiodic(d_bcd);
   BC.setBCIperiodic(d_bcp);
   BC.setBCIperiodic(d_bcv);
-  mark();
+
   if ( C.isHeatProblem() )
   {
     BC.setBCIperiodic(d_bh1);
     BC.setBCIperiodic(d_bh2);
   }
-  mark();
+
   // bcd/bcp/bcv/bchの同期
   if ( numProc > 1 )
   {
@@ -472,7 +471,7 @@ int FFV::Initialize(int argc, char **argv)
       if ( paraMngr->BndCommS3D(d_bh2, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     }
   }
-  mark();
+
   
   // 法線計算
   get_Compo_Area();
@@ -516,7 +515,7 @@ int FFV::Initialize(int argc, char **argv)
     B.get_Phase(cmp);
   }
   
-  mark();
+
   
   // CompoListの内容とセル数の情報を表示する
   Hostonly_
@@ -539,7 +538,7 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\n---------------------------------------------------------------------------\n\n\n");
   }
   
-  mark();
+
   
   // Monitor Listの処理 --------------------------------------------
   MO.setControlVars(d_bcd,
@@ -2021,7 +2020,7 @@ void FFV::get_Compo_Area()
       
       for (int i=0; i<C.num_of_polygrp; i++) {
         
-        if ( FBUtility::compare(poly_prop[i].label, label) )
+        if ( FBUtility::compare(poly_prop[i].label_grp, label) )
         {
           area = poly_prop[i].area;
           
@@ -3588,9 +3587,10 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     std::string m_mat = (*it)->get_label();
     float area = (*it)->get_group_area();
     
-    poly_prop[c].mat   = m_id;
-    poly_prop[c].label = m_pg;
-    poly_prop[c].area  = area;
+    poly_prop[c].mat_id    = m_id;  // polylib.tpのID
+    poly_prop[c].label_grp = m_pg;  // グループラベル
+    poly_prop[c].label_mat = m_mat; // 媒質ラベル
+    poly_prop[c].area      = area;  // ポリゴンの総面積
     c++;
 
     if ( numProc > 1 )
@@ -3625,7 +3625,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
-  // PolygonGroupの媒質数は，1以上、MediumTableの数以下であること
+  /* PolygonGroupの媒質数は，1以上、MediumTableの数以下であること
   if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoMedium) )
   {
     Hostonly_
@@ -3633,7 +3633,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       printf("\tError : No of PolygonGroup must be less than one of Medium.\n");
       Exit(0);
     }
-  }
+  }*/
   
   
   

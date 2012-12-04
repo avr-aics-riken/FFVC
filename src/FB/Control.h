@@ -519,8 +519,9 @@ public:
   
   // polygon gourp
   typedef struct {
-    int mat;
-    string label;
+    int mat_id;
+    string label_grp;
+    string label_mat;
     float area;
   } Polygon_property;
   

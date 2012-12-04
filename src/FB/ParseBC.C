@@ -1255,6 +1255,23 @@ void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
 
 
 // #################################################################
+// 基点の媒質名を取得する
+void ParseBC::get_Origin(const string label_base, const int n, CompoList* cmp)
+{
+  string label = label_base + "/Origin";
+  string str;
+  
+  if ( !tpCntl->GetValue(label, &str) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword of '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+}
+
+
+// #################################################################
 // 外部境界の遠方境界のパラメータを取得する
 void ParseBC::get_OBC_FarField(const string label_base, const int n)
 {
@@ -2143,7 +2160,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     
     
     // 媒質IDの登録
-    string m_pg;
+    string m_pg, m_mat;
     int m_id;
     
     switch (C->Mode.Example) {
@@ -2153,13 +2170,28 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
         //for (int i=0; i<C->NoMedium; i++) {
         for (int i=0; i<NoBC; i++) {
           
-          m_pg = polyP[i].label;
-          m_id = polyP[i].mat;
-          printf("id=%d str=%s\n", m_id, m_pg.c_str());
+          m_pg  = polyP[i].label_grp; // ポリゴンラベル
+          m_mat = polyP[i].label_mat; // ポリゴンの媒質ラベル
+          m_id  = polyP[i].mat_id;
+          printf("\t%s : %s id=%d\n", m_pg.c_str(), m_mat.c_str(), m_id);
           
+          // コンポーネントの登録ラベルがポリゴンの媒質ラベルと一致する場合
           if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
           {
-            cmp[odr].setMatOdr(m_id);
+            // ポリゴンラベルが媒質にリストアップされている場合，媒質情報を設定
+            bool flag = false;
+            for (int i=1; i<=NoMedium; i++) {
+              printf("%d : %s st=%d %s\n", i, m_mat.c_str(), mat[i].getState(), mat[i].getLabel().c_str());
+              if ( FBUtility::compare(m_mat, mat[i].getLabel()) )
+              {
+                cmp[odr].setState(mat[i].getState());
+                cmp[odr].setMatOdr(i);
+                flag = true;
+                break;
+              }
+            }
+            if ( !flag ) Exit(0);
+            
             break;
           }
         }
