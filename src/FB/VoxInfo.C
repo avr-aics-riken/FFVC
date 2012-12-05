@@ -2578,7 +2578,7 @@ unsigned long VoxInfo::encQface_cut(const int order,
                                 int* bcd,
                                 int* bh1,
                                 int* bh2,
-                                const int testid,
+                                const int cutid,
                                 const bool flag)
 {
   unsigned long g=0;
@@ -2588,11 +2588,11 @@ unsigned long VoxInfo::encQface_cut(const int order,
   int kx = size[2];
   int gd = guide;
   
-  int tg  = target;
-  int odr = order;
-  int tid = testid;
+  int tg  = target; // テスト対象のセル媒質ID
+  int odr = order;  // エンコードするコンポーネントリストのエントリ番号
+  int cid = cutid;  // カットID
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr, tid) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr, cid) \
 schedule(static) reduction(+:g)
   
   for (int k=1; k<=kx; k++) {
@@ -2605,7 +2605,7 @@ schedule(static) reduction(+:g)
         int s2 = bh2[m];
         
         // 6面のうち，いずれかにカットがある
-        if ( TEST_BC(d) && (mid[m] == tid) )
+        if ( TEST_BC(d) && (mid[m] == tg) )
         {
           int b0 = (d >> 0)  & MASK_5;
           int b1 = (d >> 5)  & MASK_5;
@@ -2615,54 +2615,54 @@ schedule(static) reduction(+:g)
           int b5 = (d >> 25) & MASK_5;
           
           // X-
-          if ( b0 == tg )
+          if ( b0 == cid )
           {
-            d |= odr; // エントリをエンコード
+            d  |= odr; // エントリをエンコード
             s1 |= (odr << BC_FACE_W);  // エントリをエンコード
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W );
             g++;
           }
           
           // X+
-          if ( b1 == tg )
+          if ( b1 == cid )
           {
-            d |= odr;
+            d  |= odr;
             s1 |= (odr << BC_FACE_E);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
             g++;
           }
           
           // Y-
-          if ( b2 == tg )
+          if ( b2 == cid )
           {
-            d |= odr;
+            d  |= odr;
             s1 |= (odr<< BC_FACE_S);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
             g++;
           }
           
           // Y+
-          if ( b3 == tg )
+          if ( b3 == cid )
           {
-            d |= odr;
+            d  |= odr;
             s1 |= (odr << BC_FACE_N);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
             g++;
           }
           
           // Z-
-          if ( b4 == tg )
+          if ( b4 == cid )
           {
-            d |= odr;
+            d  |= odr;
             s1 |= (odr << BC_FACE_B);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
             g++;
           }
           
           // Z+
-          if ( b5 == tg )
+          if ( b5 == cid )
           {
-            d |= odr;
+            d  |= odr;
             s1 |= (odr << BC_FACE_T);
             s2 = ( flag == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
             g++;
@@ -5411,6 +5411,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
     }
   }
   
+  
   // THERMAL_FLOW, THERMAL_FLOW_NATURAL, SOLID_CONDUCTIONのときに，デフォルトとしてSolid-Fluid面を断熱にする
   switch (kos)
   {
@@ -5424,6 +5425,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
       break;
   }
   
+  
   // 対称境界面に断熱マスクをセット
   for (int face=0; face<NOFACE; face++) {
     if ( BC->export_OBC(face)->get_Class() == OBC_SYMMETRIC )
@@ -5432,6 +5434,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
     }
   }
   
+  
   // 不活性セルの場合の断熱マスク処理
   for (int n=1; n<=NoBC; n++) {
     if ( cmp[n].getType() == INACTIVE )
@@ -5439,6 +5442,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
       setAmask_InActive(cmp[n].getMatOdr(), mid, bh2);
     }
   }
+  
   
   // bh2の下位5ビットにはBCのエントリのみ(1~31)エンコード
   for (int n=1; n<=NoBC; n++) {

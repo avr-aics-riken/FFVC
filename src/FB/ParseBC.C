@@ -1256,7 +1256,7 @@ void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
 
 // #################################################################
 // 基点の媒質名を取得する
-void ParseBC::get_Origin(const string label_base, const int n, CompoList* cmp)
+string ParseBC::get_Origin(const string label_base)
 {
   string label = label_base + "/Origin";
   string str;
@@ -1267,7 +1267,7 @@ void ParseBC::get_Origin(const string label_base, const int n, CompoList* cmp)
     Exit(0);
   }
   
-  
+  return str;
 }
 
 
@@ -2159,59 +2159,58 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     cmp[odr].setLabel(str);
     
     
-    // 媒質IDの登録
-    string m_pg, m_mat;
-    int m_id;
-    
-    switch (C->Mode.Example) {
-    
-      case id_Polygon:
+    // Aliasで設定したラベルに対する属性の取得（Polylib.tpの情報を利用する場合）
+    if ( C->Mode.Example == id_Polygon )
+    {
+      string m_pg, m_mat;
+      
+      for (int i=0; i<C->num_of_polygrp; i++) {
         
-        //for (int i=0; i<C->NoMedium; i++) {
-        for (int i=0; i<NoBC; i++) {
+        m_pg  = polyP[i].label_grp; // ポリゴンラベル
+        m_mat = polyP[i].label_mat; // ポリゴンの媒質ラベル
+        printf("mat=%s  grp=%s\n", m_mat.c_str(), m_pg.c_str());
+        
+        // ポリゴンのラベルとコンポーネントの登録ラベル(alias)が一致する場合
+        if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
+        {
+          // ポリゴンの媒質ラベルがMediumTableに含まれているかを調べ，媒質情報を設定
+          bool flag = false;
           
-          m_pg  = polyP[i].label_grp; // ポリゴンラベル
-          m_mat = polyP[i].label_mat; // ポリゴンの媒質ラベル
-          m_id  = polyP[i].mat_id;
-          printf("\t%s : %s id=%d\n", m_pg.c_str(), m_mat.c_str(), m_id);
-          
-          // コンポーネントの登録ラベルがポリゴンの媒質ラベルと一致する場合
-          if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )
-          {
-            // ポリゴンラベルが媒質にリストアップされている場合，媒質情報を設定
-            bool flag = false;
-            for (int i=1; i<=NoMedium; i++) {
-              printf("%d : %s st=%d %s\n", i, m_mat.c_str(), mat[i].getState(), mat[i].getLabel().c_str());
-              if ( FBUtility::compare(m_mat, mat[i].getLabel()) )
-              {
-                cmp[odr].setState(mat[i].getState());
-                cmp[odr].setMatOdr(i);
-                flag = true;
-                break;
-              }
+          for (int i=1; i<=NoMedium; i++) {
+            if ( FBUtility::compare(m_mat, mat[i].getLabel()) )
+            {
+              cmp[odr].setState(mat[i].getState());
+              cmp[odr].setMatOdr(i);
+              flag = true;
+              break;
             }
-            if ( !flag ) Exit(0);
-            
-            break;
           }
+          
+          // 含まれていない場合はエラー
+          if ( !flag )
+          {
+            Hostonly_ stamped_printf("\tMedium label '%s' associated with Polygon group '%s' is not listed in MediumTable\n", m_mat.c_str(), m_pg.c_str());
+            Exit(0);
+          }
+          
+          break;
         }
-        break;
-        
-      case id_SHC1D:
-        break;
-        
-      case id_Sphere:
-        break;
-        
-      default:
-        break;
+      }
+      
+      // aliasで指定したラベルがPolylib.tpの中に見つけられない場合，stateは未設定
+      if ( cmp[odr].getState() == -1 )
+      {
+        Hostonly_ stamped_printf("\tLocal boundary condition '%s' is not listed in Polygon group\n", cmp[odr].getLabel().c_str());
+        Exit(0);
+      }
+
     }
     
     
     // 各BCの処理
     tp = cmp[odr].getType();
     
-    if ( tp == SPEC_VEL ) 
+    if ( tp == SPEC_VEL )
     {
       get_IBC_SpecVel(label_leaf, odr, cmp);
     }
@@ -2249,7 +2248,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     }
     else if ( HeatProblem ) // Incase of Heat problem
     {
-      if ( C->KindOfSolver == FLOW_ONLY ) 
+      if ( C->KindOfSolver == FLOW_ONLY )
       {
         Hostonly_ stamped_printf("Parse Error : Heat BC is not allowed on FLOWONLY mode.\n");
         Exit(0);
@@ -2263,6 +2262,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
       
       if ( tp == ADIABATIC ) 
       {
+        //cmp[odr].
         cmp[odr].set_Heatflux( 0.0 );
         
       }

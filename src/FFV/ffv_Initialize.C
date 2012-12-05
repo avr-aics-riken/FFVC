@@ -1365,16 +1365,16 @@ void FFV::fill(FILE* fp)
     {
       Hostonly_
       {
-        printf(    "Failed first painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
-        fprintf(fp,"Failed first painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        printf(    "Failed first painting (%s includes solid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        fprintf(fp,"Failed first painting (%s includes solid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
       }
       Exit(0);
     }
     
     Hostonly_
     {
-      printf(    "\t\tPainted %ld by Hint (%s includes soid cell)\n", fs, FBUtility::getDirection(C.Fill_Hint).c_str());
-      fprintf(fp,"\t\tPainted %ld by Hint (%s includes soid cell)\n", fs, FBUtility::getDirection(C.Fill_Hint).c_str());
+      printf(    "\t\tPainted %ld by Hint (%s includes solid cell)\n", fs, FBUtility::getDirection(C.Fill_Hint).c_str());
+      fprintf(fp,"\t\tPainted %ld by Hint (%s includes solid cell)\n", fs, FBUtility::getDirection(C.Fill_Hint).c_str());
     }
   }
 
@@ -1497,8 +1497,8 @@ void FFV::fill(FILE* fp)
     {
       Hostonly_
       {
-        printf(    "Failed second painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
-        fprintf(fp,"Failed second painting (%s includes soid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        printf(    "Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        fprintf(fp,"Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
       }
       Exit(0);
     }

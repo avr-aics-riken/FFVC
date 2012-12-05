@@ -198,7 +198,13 @@ namespace pm_lib {
       if (w.m_label.empty()) continue;  //
       if (w.m_valid) {
         if ( w.m_count > 0 ) {
-          double flops_av = (w.m_count==0) ? 0.0 : w.m_flop_av/w.m_time_av;
+          double flops_av;
+          if (w.m_time_av == 0.0) {
+            flops_av = 0.0;
+          }
+          else {
+            flops_av = (w.m_count==0) ? 0.0 : w.m_flop_av/w.m_time_av;
+          }
           fprintf(fp, "\t%-*s: %12ld   %12.6e  %6.2f  %11.4e  %12.6e    %8.3e   %8.3e  %7.2f %s\n",
                   maxLabelLen,
                   w.m_label.c_str(), 

@@ -4384,6 +4384,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
       {
         case OBC_OUTFLOW:
         case OBC_TRC_FREE:
+        case OBC_FAR_FIELD:
           if ( BO[n].get_pType() == P_DIRICHLET )
           {
             BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs); 

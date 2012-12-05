@@ -234,7 +234,7 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
-  for (lc=1; lc<IC->get_ItrMax(); lc++)
+  for (lc=1; lc<=IC->get_ItrMax(); lc++)
   {
     // 反復処理
     TIMING_start(tm_poi_PSOR);
@@ -369,7 +369,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
-  for (lc=1; lc<IC->get_ItrMax(); lc++)
+  for (lc=1; lc<=IC->get_ItrMax(); lc++)
   {
     // 2色のマルチカラー(Red&Black)のセットアップ
     TIMING_start(tm_poi_setup);
@@ -957,7 +957,7 @@ jump_4:
 int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
   REAL_TYPE omg = IC->get_omg();
   int lc=0;                      /// ループカウント
-  for (lc=1; lc<IC->get_ItrMax(); lc++) {
+  for (lc=1; lc<=IC->get_ItrMax(); lc++) {
 		Fsmoother(x, b, omg);
     
 		REAL_TYPE rr = 0.0;
@@ -997,7 +997,7 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
 	REAL_TYPE rr0 = 1.0;
 	REAL_TYPE rr1 = 0.0;
   int lc=0;                      /// ループカウント
-  for (lc=1; lc<IC->get_ItrMax(); lc++) {
+  for (lc=1; lc<=IC->get_ItrMax(); lc++) {
 		blas_clear_(d_pcg_z, size, &guide);
 		Fpreconditioner(IC, d_pcg_z, d_pcg_r);
     
@@ -1077,7 +1077,7 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 	REAL_TYPE gamma  = 1.0;
 	REAL_TYPE gamman = -gamma;
   int lc=0;                      /// ループカウント
-  for (lc=1; lc<IC->get_ItrMax(); lc++) {
+  for (lc=1; lc<=IC->get_ItrMax(); lc++) {
 		REAL_TYPE rr1 = 0.0;
 		Fdot(&rr1, d_pcg_r, d_pcg_r0);
     

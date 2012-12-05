@@ -27,7 +27,7 @@ namespace pm_lib {
 #define PM_TIMING_DETAIL__  if (PerfMonitor::TimingLevel > 1)
 
   /// バージョン情報
-#define PMLIB_VERS 13
+#define PMLIB_VERS 15
   
   /**
    * 計算性能測定管理クラス.

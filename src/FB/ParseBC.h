@@ -191,6 +191,12 @@ private:
   void get_NV(const string label_base, REAL_TYPE* v);
 
   
+  /**
+   * @brief Originのキーワードに対する文字列をパースし，返す
+   * @param [in] label_base ラベルディレクトリ
+   */
+  string get_Origin(const string label_base);
+  
   
   /**
    * @brief Const_Temperatureのパラメータを取得する

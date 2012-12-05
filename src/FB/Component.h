@@ -125,6 +125,7 @@ private:
   int c_size[3];         /// コンポーネントワーク配列の大きさ
   int def;               /// BC指定時の面を挟む相手先のセルID
   int mat_odr;           /// 媒質リストのインデクス
+  int mat_id;            /// 媒質ID
   int shape;             /// 形状パラメータ
   int sampling_method;   /// サンプリングの方法（NEAREST, INTERPOLATION, SMOOTHING）
   int sampling_mode;     /// サンプリングモード（ALL, FLOW, SOLID）
@@ -156,6 +157,7 @@ public:
     element = 0;
     type = variable = attrb = bc_dir = 0;
     mat_odr = 0;
+    mat_id = 0;
     h_type = 0;
     state = shape = -1;
     def = 0;
@@ -384,6 +386,11 @@ public:
   int get_SamplingMode() const
   { 
     return sampling_mode; 
+  }
+  
+  int getMatID() const
+  {
+    return mat_id;
   }
   
   int getMatOdr() const

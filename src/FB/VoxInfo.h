@@ -166,15 +166,14 @@ private:
    * @brief 熱境界条件のBCエントリをエンコードする
    * @retval カウントしたセル数
    * @param [in]     order  CompoListのエントリ
-   * @param [in]     target 対象セルID
+   * @param [in]     target テスト対象セルID
    * @param [in]     mid    セルID配列
    * @param [in,out] bcd    BCindex ID
    * @param [in,out] bh1    BCindex H1
    * @param [in,out] bh2    BCindex H2
-   * @param [in]     testid テスト対象セルID
+   * @param [in]     cutid  カットID
    * @param [in]     flag   断熱ビットのon(true)/off(false)
    * @note
-   *   - testidのセルでtarget方向の面に対して適用
    *   - 対象面の断熱ビットはflagで判断
    */
   unsigned long encQface_cut(const int order,
@@ -183,7 +182,7 @@ private:
                          int* bcd,
                          int* bh1,
                          int* bh2,
-                         const int testid,
+                         const int cutid,
                          const bool flag);
   
   
