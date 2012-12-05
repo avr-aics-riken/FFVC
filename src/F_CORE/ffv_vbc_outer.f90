@@ -41,8 +41,7 @@
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                      ::  dh, dh1, dh2, rei
-    real                                                      ::  u_ref, v_ref, w_ref, m
-    real                                                      ::  u_bc, v_bc, w_bc
+    real                                                      ::  u_bc, v_bc, w_bc, m
     real                                                      ::  fu, fv, fw, c, EX, EY, EZ
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
@@ -58,11 +57,6 @@
     
     dh1= 1.0/dh
     dh2= rei*dh1*dh1
-
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     
     ! u_bcは境界速度
     u_bc = vec(1)
@@ -75,7 +69,7 @@
     
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, dh1, dh2) &
+!$OMP FIRSTPRIVATE(dh1, dh2) &
 !$OMP PRIVATE(i, j, k, bvx) &
 !$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
@@ -99,12 +93,12 @@
           Vp0 = v0(i,j,k,2)
           Wp0 = v0(i,j,k,3)
           
-          include 'd_o_o_p.h' ! 42 flop
+          include 'd_o_o_p.h' ! 25 flop
           
           Uw1 = v0(i-1,j  ,k  ,1)
           Vw1 = v0(i-1,j  ,k  ,2)
           Ww1 = v0(i-1,j  ,k  ,3)
-          c   = Ue + (Vn - Vs + Wt - Wb) - u_ref
+          c   = Uw
           if ( c>0.0 ) c=0.0
           fu  = c * Up0
           fv  = c * Vp0
@@ -142,7 +136,7 @@
           Ue1 = v0(i+1,j  ,k  ,1)
           Ve1 = v0(i+1,j  ,k  ,2)
           We1 = v0(i+1,j  ,k  ,3)
-          c   = Uw - (Vn - Vs + Wt - Wb) - u_ref
+          c   = Ue
           if ( c<0.0 ) c=0.0
           fu  = c * Up0
           fv  = c * Vp0
@@ -180,7 +174,7 @@
           Us1 = v0(i  ,j-1,k  ,1)
           Vs1 = v0(i  ,j-1,k  ,2)
           Ws1 = v0(i  ,j-1,k  ,3)
-          c   = Vn + (Ue - Uw + Wt - Wb) - v_ref
+          c   = Vs
           if ( c>0.0 ) c=0.0
           fu  = c * Up0
           fv  = c * Vp0
@@ -218,7 +212,7 @@
           Un1 = v0(i  ,j+1,k  ,1)
           Vn1 = v0(i  ,j+1,k  ,2)
           Wn1 = v0(i  ,j+1,k  ,3)
-          c   = Vs - (Ue - Uw + Wt - Wb) - v_ref
+          c   = Vn
           if ( c<0.0 ) c=0.0
           fu  = c * Up0
           fv  = c * Vp0
@@ -256,7 +250,7 @@
           Ub1 = v0(i  ,j  ,k-1,1)
           Vb1 = v0(i  ,j  ,k-1,2)
           Wb1 = v0(i  ,j  ,k-1,3)
-          c   = Wt + (Ue - Uw + Vn - Vs) - w_ref
+          c   = Wb
           if ( c>0.0 ) c=0.0
           fu  = c * Up0
           fv  = c * Vp0
@@ -294,7 +288,7 @@
           Ut1 = v0(i  ,j  ,k+1,1)
           Vt1 = v0(i  ,j  ,k+1,2)
           Wt1 = v0(i  ,j  ,k+1,3)
-          c   = Wb - (Ue - Uw + Vn - Vs) - w_ref
+          c   = Wt
           if ( c<0.0 ) c=0.0
           fu  = c * Up0
           fv  = c * Vp0
@@ -319,7 +313,7 @@
     
 !$OMP END PARALLEL
 
-    flop = flop + dble(m)*68.0d0
+    flop = flop + dble(m)*42.0d0
       
     return
     end subroutine pvec_vobc_oflow
@@ -1064,7 +1058,7 @@
 !! @param vec 指定する速度ベクトル
 !! @note 流束型の境界条件を用いるので，内点の計算に使う参照点に値があればよい（1層）
 !<
-    subroutine vobc_drchlt (v, sz, g, v00, bv, face, vec)
+    subroutine vobc_drchlt (v, sz, g, bv, face, vec)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, face, ix, jx, kx, bvx
@@ -1073,16 +1067,15 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
-    real, dimension(0:3)                                        ::  v00
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     
-    ! u_bc_refは参照座標系での境界速度
-    u_bc_ref = vec(1) + v00(1)
-    v_bc_ref = vec(2) + v00(2)
-    w_bc_ref = vec(3) + v00(3)
+    ! u_bc_refは境界速度
+    u_bc_ref = vec(1)
+    v_bc_ref = vec(2)
+    w_bc_ref = vec(3)
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc_ref, v_bc_ref, w_bc_ref, face) &
@@ -1835,10 +1828,9 @@
     rjx = dble(ix)*dble(kx)
     rkx = dble(ix)*dble(jx)
     
-    ! 参照座標系の速度に係数をかけておく
-    u_bc_ref = (vec(1) + v00(1))
-    v_bc_ref = (vec(2) + v00(2))
-    w_bc_ref = (vec(3) + v00(3))
+    u_bc_ref = vec(1)
+    v_bc_ref = vec(2)
+    w_bc_ref = vec(3)
     
     flop = flop + 3.0d0
 
@@ -2168,7 +2160,7 @@
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  dv, a1, a2, a3, u_ref, v_ref, w_ref
+    real                                                      ::  dv, a1, a2, a3
     real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  aa
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
@@ -2185,17 +2177,13 @@
     a2 = 1.0e6 ! min
     a3 =-1.0e6 ! max
     
-    ! 参照速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a1) &
 !$OMP REDUCTION(min:a2) &
 !$OMP REDUCTION(max:a3) &
 !$OMP REDUCTION(+:flop) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rix, rjx, rkx, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rix, rjx, rkx, face) &
 !$OMP PRIVATE(i, j, k, bvx, dv)
 
     FACES : select case (face)
@@ -2207,7 +2195,7 @@
       do j=1,jx
         bvx = bv(1,j,k)
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          dv = div(1,j,k) - u_ref
+          dv = div(1,j,k)
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
@@ -2227,7 +2215,7 @@
       do j=1,jx
         bvx = bv(ix,j,k)
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          dv = -div(ix,j,k) - u_ref
+          dv = -div(ix,j,k)
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
@@ -2247,7 +2235,7 @@
       do i=1,ix
         bvx = bv(i,1,k)
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          dv = div(i,1,k) - v_ref
+          dv = div(i,1,k)
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
@@ -2267,7 +2255,7 @@
       do i=1,ix
         bvx = bv(i,jx,k)
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          dv = -div(i,jx,k) - v_ref
+          dv = -div(i,jx,k)
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
@@ -2287,7 +2275,7 @@
       do i=1,ix
         bvx = bv(i,j,1)
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          dv = div(i,j,1) - w_ref
+          dv = div(i,j,1)
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)
@@ -2307,7 +2295,7 @@
       do i=1,ix
         bvx = bv(i,j,kx)
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          dv = -div(i,j,kx) - w_ref
+          dv = -div(i,j,kx)
           a1 = a1 + dv
           a2 = min(a2, dv)
           a3 = max(a3, dv)

@@ -466,7 +466,6 @@ extern "C" {
   void vobc_drchlt_       (REAL_TYPE* v,
                            int* sz,
                            int* g,
-                           REAL_TYPE* v00,
                            int* bv,
                            int* face,
                            REAL_TYPE* vec);

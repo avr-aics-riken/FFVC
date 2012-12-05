@@ -128,7 +128,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
       {
         vec[0] = vec[1] = vec[2] = 0.0;
       }
-      vobc_drchlt_(d_v, size, &gd, v00, d_bv, &face, vec);
+      vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
     }
   }
 }
@@ -1066,7 +1066,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
         
       case OBC_SPEC_VEL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        vobc_drchlt_(d_v, size, &gd, v00, d_bv, &face, vec);
+        vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
         break;
         
       case OBC_TRC_FREE:

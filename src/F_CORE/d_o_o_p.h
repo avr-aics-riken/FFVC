@@ -37,12 +37,12 @@
       w_t = real(b_t * b_p)
       w_b = real(b_b * b_p)
 
-      ! 界面速度（スタガード位置） > 24 flops
-      Uw = vf(i-1, j  , k  ,1)*w_w + u_ref*(1.0-w_w)
-      Ue = vf(i  , j  , k  ,1)*w_e + u_ref*(1.0-w_e)
-      Vs = vf(i  , j-1, k  ,2)*w_s + v_ref*(1.0-w_s)
-      Vn = vf(i  , j  , k  ,2)*w_n + v_ref*(1.0-w_n)
-      Wb = vf(i  , j  , k-1,3)*w_b + w_ref*(1.0-w_b)
-      Wt = vf(i  , j  , k  ,3)*w_t + w_ref*(1.0-w_t)
+      ! 界面速度（スタガード位置） > 6 flops
+      Uw = vf(i-1, j  , k  ,1)*w_w
+      Ue = vf(i  , j  , k  ,1)*w_e
+      Vs = vf(i  , j-1, k  ,2)*w_s
+      Vn = vf(i  , j  , k  ,2)*w_n
+      Wb = vf(i  , j  , k-1,3)*w_b
+      Wt = vf(i  , j  , k  ,3)*w_t
 
-      ! real*6 real*6 + 6 + 24 = 42 flops
+      ! real*7 real*6 + 6 + 6 = 25 flops
