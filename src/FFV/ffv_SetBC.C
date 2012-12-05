@@ -520,7 +520,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
     switch (typ) 
     {
       case OBC_OUTFLOW:
-        div_obc_oflow_vec_(dv, size, &gd, &face, v00, bv, vec, &fcount); // vecは流用
+        div_obc_oflow_vec_(dv, size, &gd, &face, bv, vec, &fcount); // vecは流用
         obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
         // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
         break;
@@ -909,7 +909,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         
       case OBC_OUTFLOW:
         vel = C->V_Dface[face] * dt / dh;
-        div_obc_oflow_pvec_(s_0, size, &gd, &face, v00, &vel, bv, vf, &fcount);
+        div_obc_oflow_pvec_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
         break;
         
       case OBC_TRC_FREE:

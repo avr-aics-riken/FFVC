@@ -297,7 +297,7 @@ void FFV::NS_FS_E_Binary()
   // 非VBC面に対してのみ，セルセンターの値から \sum{u^*} を計算
   TIMING_start(tm_div_pvec);
   flop = 0.0;
-  divergence_(d_ws, size, &guide, d_vc, d_bcv, v00, &flop);
+  divergence_(d_ws, size, &guide, d_vc, d_bcv, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
   
@@ -450,7 +450,7 @@ void FFV::NS_FS_E_Binary()
     // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_bcv, v00, &flop);
+    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_bcv, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
     

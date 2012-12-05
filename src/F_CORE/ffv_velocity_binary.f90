@@ -658,54 +658,48 @@
 !! @param [in]  p    圧力
 !! @param [in]  bp   BCindex P
 !! @param [in]  bv   BCindex V
-!! @param [in]  v00  参照速度
 !! @param [out] flop flop count
 !! @note 
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !!    - VBC(OUTFLOW, SPEC_VEL)の参照セルでは不定値となるが，InnerVBC()で上書き
 !<
-    subroutine update_vec (v, div, sz, g, dt, dh, vc, vf, p, bp, bv, v00, flop)
+    subroutine update_vec (v, div, sz, g, dt, dh, vc, vf, p, bp, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  dh, dt, dd, actv, r_actv
+    real                                                      ::  dh, dt, dd, actv
     real                                                      ::  pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt
-    real                                                      ::  u_ref, v_ref, w_ref
     real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                      ::  Uef, Uwf, Vnf, Vsf, Wtf, Wbf
-    real                                                      ::  c1, c2, c3, c4, c5, c6, d1, d2, d3
+    real                                                      ::  c1, c2, c3, c4, c5, c6
     real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
-    real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     dd = dt/dh
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*107.0 + 16.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*87.0 + 8.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 26.0d0 ! DP
 
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(bpx, bvx, actv, r_actv) &
-!$OMP PRIVATE(c1, c2, c3, c4, c5, c6, d1, d2, d3) &
+!$OMP PRIVATE(bpx, bvx, actv) &
+!$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Uef, Uwf, Vnf, Vsf, Wtf, Wbf) &
 !$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref)
+!$OMP FIRSTPRIVATE(ix, jx, kx, dd)
 
 !$OMP DO SCHEDULE(static)
     do k=1,kx
@@ -714,11 +708,6 @@
       bpx = bp(i,j,k)
       bvx = bv(i,j,k)
       actv = real(ibits(bvx, State,  1))
-      r_actv = 1.0 - actv
-
-      d1 = r_actv * u_ref
-      d2 = r_actv * v_ref
-      d3 = r_actv * w_ref
 
       c1 = 1.0
       c2 = 1.0
@@ -756,12 +745,12 @@
       b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
       b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
 
-      Uw = 0.5*( Up0 + Uw0 )*b_w + (1.0-b_w)*u_ref ! 36 flop
-      Ue = 0.5*( Up0 + Ue0 )*b_e + (1.0-b_e)*u_ref
-      Vs = 0.5*( Vp0 + Vs0 )*b_s + (1.0-b_s)*v_ref
-      Vn = 0.5*( Vp0 + Vn0 )*b_n + (1.0-b_n)*v_ref
-      Wb = 0.5*( Wp0 + Wb0 )*b_b + (1.0-b_b)*w_ref
-      Wt = 0.5*( Wp0 + Wt0 )*b_t + (1.0-b_t)*w_ref
+      Uw = 0.5*( Up0 + Uw0 )*b_w ! 18 flop
+      Ue = 0.5*( Up0 + Ue0 )*b_e
+      Vs = 0.5*( Vp0 + Vs0 )*b_s
+      Vn = 0.5*( Vp0 + Vn0 )*b_n
+      Wb = 0.5*( Wp0 + Wb0 )*b_b
+      Wt = 0.5*( Wp0 + Wt0 )*b_t
       
       ! c=0.0(VBC), 1.0(Fluid); VBCは内部と外部の両方
       if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c1 = 0.0
@@ -783,7 +772,7 @@
       py = 0.5*(pyn + pys)
       pz = 0.5*(pzt + pzb)
 
-      ! 発散値 VBCの寄与と壁面の影響は除外 25flop
+      ! セルフェイス VBCの寄与と壁面の影響は除外 18flop
       Uwf = (Uw - dd * pxw) * c1
       Uef = (Ue - dd * pxe) * c2
       Vsf = (Vs - dd * pys) * c3
@@ -791,21 +780,20 @@
       Wbf = (Wb - dd * pzb) * c5
       Wtf = (Wt - dd * pzt) * c6
 
-      ! 固体の場合は，平面速度
-      ! i=1-ix >> vfは0-ixの範囲をカバーするので，通信不要
-      vf(i-1,j  ,k  ,1) = Uwf*actv + d1
-      vf(i  ,j  ,k  ,1) = Uef*actv + d1
-      vf(i  ,j-1,k  ,2) = Vsf*actv + d2
-      vf(i  ,j  ,k  ,2) = Vnf*actv + d2
-      vf(i  ,j  ,k-1,3) = Wbf*actv + d3
-      vf(i  ,j  ,k  ,3) = Wtf*actv + d3
+      ! i=1-ix >> vfは0-ixの範囲をカバーするので，通信不要 6flop
+      vf(i-1,j  ,k  ,1) = Uwf * actv
+      vf(i  ,j  ,k  ,1) = Uef * actv
+      vf(i  ,j-1,k  ,2) = Vsf * actv
+      vf(i  ,j  ,k  ,2) = Vnf * actv
+      vf(i  ,j  ,k-1,3) = Wbf * actv
+      vf(i  ,j  ,k  ,3) = Wtf * actv
 
-      div(i,j,k) = (Uef - Uwf + Vnf - Vsf + Wtf - Wbf) * actv
+      div(i,j,k) = (Uef - Uwf + Vnf - Vsf + Wtf - Wbf) * actv ! 6flop
       
-      ! セルセンタの速度更新 15flop
-      v(i,j,k,1) = ( Up0-px*dd ) * actv + d1
-      v(i,j,k,2) = ( Vp0-py*dd ) * actv + d2
-      v(i,j,k,3) = ( Wp0-pz*dd ) * actv + d3
+      ! セルセンタの速度更新 9flop
+      v(i,j,k,1) = ( Up0-px*dd ) * actv
+      v(i,j,k,2) = ( Vp0-py*dd ) * actv
+      v(i,j,k,3) = ( Wp0-pz*dd ) * actv
 
     end do
     end do
@@ -824,10 +812,9 @@
 !! @param [in]     g    ガイドセル長
 !! @param [in]     v0   セルセンター疑似ベクトル
 !! @param [in]     bv   BCindex V
-!! @param [in]     v00  参照速度
 !! @param [in,out] flop flop count
 !<
-    subroutine divergence (div, sz, g, v0, bv, v00, flop)
+    subroutine divergence (div, sz, g, v0, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
@@ -836,22 +823,17 @@
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, actv
     real                                                      ::  Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                      ::  u_ref, v_ref, w_ref
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    real, dimension(0:3)                                      ::  v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     
     ! loop : 1 + 42 + 13
-    flop  = flop + dble(ix)*dble(jx)*dble(kx)*55.0d0
+    flop  = flop + dble(ix)*dble(jx)*dble(kx)*37.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bvx, actv) &
@@ -859,7 +841,7 @@
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static)
 
@@ -890,12 +872,12 @@
       b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
       b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
 
-      Uw = 0.5*( Up0 + Uw0 )*b_w + (1.0-b_w)*u_ref
-      Ue = 0.5*( Up0 + Ue0 )*b_e + (1.0-b_e)*u_ref
-      Vs = 0.5*( Vp0 + Vs0 )*b_s + (1.0-b_s)*v_ref
-      Vn = 0.5*( Vp0 + Vn0 )*b_n + (1.0-b_n)*v_ref
-      Wb = 0.5*( Wp0 + Wb0 )*b_b + (1.0-b_b)*w_ref
-      Wt = 0.5*( Wp0 + Wt0 )*b_t + (1.0-b_t)*w_ref
+      Uw = 0.5*( Up0 + Uw0 )*b_w
+      Ue = 0.5*( Up0 + Ue0 )*b_e
+      Vs = 0.5*( Vp0 + Vs0 )*b_s
+      Vn = 0.5*( Vp0 + Vn0 )*b_n
+      Wb = 0.5*( Wp0 + Wb0 )*b_b
+      Wt = 0.5*( Wp0 + Wt0 )*b_t
 
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
       c_e = 1.0

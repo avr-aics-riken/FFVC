@@ -471,7 +471,16 @@ extern "C" {
                            REAL_TYPE* vec);
   
   void vobc_neumann_      (REAL_TYPE* v, int* sz, int* g, int* face);
-  void vobc_outflow_      (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* c, int* bv, int* face, REAL_TYPE* v0, double* flop);
+  
+  void vobc_outflow_ (REAL_TYPE* v,
+                      int* sz,
+                      int* g,
+                      REAL_TYPE* c,
+                      int* bv,
+                      int* face,
+                      REAL_TYPE* v0,
+                      double* flop);
+  
   void vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, double* flop);
   void vobc_update_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE*vc, int* face);
   
@@ -488,7 +497,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            int* face,
-                           REAL_TYPE* v00,
                            REAL_TYPE* v_out,
                            int* bv,
                            REAL_TYPE* vf,
@@ -498,7 +506,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            int* face,
-                           REAL_TYPE* v00,
                            int* bv,
                            REAL_TYPE* aa,
                            double* flop);
@@ -513,7 +520,6 @@ extern "C" {
                            int* g,
                            REAL_TYPE* vc,
                            int* bv,
-                           REAL_TYPE* v00,
                            double* flop);
   
   void eddy_viscosity_    (REAL_TYPE* vt,
@@ -569,7 +575,6 @@ extern "C" {
                            REAL_TYPE* p,
                            int* bp,
                            int* bv,
-                           REAL_TYPE* v00,
                            double* flop);
   
   void vis_cn_jcb_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 

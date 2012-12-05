@@ -13,7 +13,6 @@
 !! @author kero
 !<
 
-!    real                                                        ::  u_ref, v_ref, w_ref
 !    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p
 !    real                                                        ::  w_w, w_e, w_s, w_n, w_b, w_t
 !    real                                                        ::  Ue, Uw, Vn, Vs, Wt, Wb

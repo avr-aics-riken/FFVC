@@ -1954,26 +1954,23 @@
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
 !! @param [in]     face  面番号
-!! @param [in]     v00   参照速度
 !! @param [in]     v_out u_out*dt/dh
 !! @param [in]     bv    BCindex V
 !! @param [in]     vf    セルフェイス速度ベクトル（n-step）
 !! @param [out]    flop  flop count
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !<
-    subroutine div_obc_oflow_pvec (div, sz, g, face, v00, v_out, bv, vf, flop)
+    subroutine div_obc_oflow_pvec (div, sz, g, face, v_out, bv, vf, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  v_out
+    real                                                      ::  v_out, m
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                      ::  u_ref, v_ref, w_ref, m
-    real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
@@ -1981,16 +1978,11 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
-    ! 参照速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
     m = 0.0
 
 !$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, face, v_out) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, v_out) &
 !$OMP PRIVATE(i, j, k, bvx) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
@@ -2147,21 +2139,19 @@
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
 !! @param [in]     face 面番号
-!! @param [in]     v00  参照速度
 !! @param [in]     bv   BCindex V
 !! @param [out]    aa   領域境界の積算値
 !! @param [out]    flop flop count 近似
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !!       div(u)=0から，内部流出境界のセルで計算されたdivが流出速度となる
 !<
-    subroutine div_obc_oflow_vec (div, sz, g, face, v00, bv, aa, flop)
+    subroutine div_obc_oflow_vec (div, sz, g, face, bv, aa, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  dv, a1, a2, a3
-    real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  aa
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
