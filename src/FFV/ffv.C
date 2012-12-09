@@ -311,57 +311,61 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   for (int face=0; face<NOFACE; face++) 
   {
     
-    // ofv (1-MINMAX, 2-AVERAGE) ゼロでなければ，流出境界
-    ofv = obc[face].get_ofv();
-    
-    // OUTFLOW, SPEC_VELのときの有効セル数
+    // 有効セル数
     ec = (REAL_TYPE)obc[face].get_ValidCell(); // @todo 有効セル数と積算回数の一致をチェック
-
     
     // 各プロセスの外部領域面の速度をvv[]にコピー
     vv = obc[face].getDomainV();
     
     
-    // 流出境界のモード
-    if (ofv == V_AVERAGE) // average
+    if ( obc[face].get_Class() == OBC_OUTFLOW)
     {
-      // 非境界面にはゼロなので，単に足し込むだけ
-      u_sum = vv[0];
+      // ofv (1-MINMAX, 2-AVERAGE) ゼロでなければ，流出境界
+      ofv = obc[face].get_ofv();
       
-      if ( numProc > 1 ) 
+      // 流出境界のモード
+      if (ofv == V_AVERAGE) // average
       {
-        REAL_TYPE tmp_sum = u_sum;
-        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        // 非境界面ではvv[]はゼロなので，単に足し込むだけ
+        u_sum = vv[0];
+        
+        if ( numProc > 1 )
+        {
+          REAL_TYPE tmp_sum = u_sum;
+          if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        }
+        
+        u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
       }
-
+      else if (ofv == V_MINMAX) // minmax
+      {
+        u_sum = vv[0];
+        u_min = vv[1];
+        u_max = vv[2];
+        
+        //printf(" rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, 0.5*(u_min+u_max));
+        
+        if ( numProc > 1 )
+        {
+          REAL_TYPE tmp_sum = u_sum;
+          REAL_TYPE tmp_min = u_min;
+          REAL_TYPE tmp_max = u_max;
+          if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->Allreduce(&tmp_min, &u_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->Allreduce(&tmp_max, &u_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        }
+        
+        u_avr = 0.5*(u_min+u_max);
+        //Hostonly_ printf("*rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, u_avr);
+      }
+      
+    }
+    else // 非OUTFLOW BCは無次元流量がストアされている
+    {
+      u_sum = vv[0];
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
     }
-    else if (ofv == V_MINMAX) // minmax
-    {
-      u_sum = vv[0];
-      u_min = vv[1];
-      u_max = vv[2];
-
-      //printf(" rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, 0.5*(u_min+u_max));
-      
-      if ( numProc > 1 )
-      {
-        REAL_TYPE tmp_sum = u_sum;
-        REAL_TYPE tmp_min = u_min;
-        REAL_TYPE tmp_max = u_max;
-        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        if ( paraMngr->Allreduce(&tmp_min, &u_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-        if ( paraMngr->Allreduce(&tmp_max, &u_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-      }
-
-      u_avr = 0.5*(u_min+u_max);
-      //Hostonly_ printf("*rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, u_avr);
-    }
-    else // 非OUTFLOW BCは速度がストアされている
-    {
-      u_sum = vv[0] * ec;
-      u_avr = vv[0];
-    }
+    
     
     // コントロールクラスにコピー
     R->V_Dface[face] = u_avr;
@@ -669,12 +673,16 @@ int FFV::MainLoop()
 
 // #################################################################
 // V-P反復のdiv(u)ノルムを計算する
-void FFV::Norm_Div(ItrCtl* IC)
+FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
 {
   double nrm;
   double flop_count;
   REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
 
+  int index[3];
+  index[0] = 0;
+  index[1] = 0;
+  index[2] = 0;
   
   switch (IC->get_normType())
   {
@@ -702,10 +710,7 @@ void FFV::Norm_Div(ItrCtl* IC)
       
       TIMING_start(tm_norm_div_dbg);
       flop_count=0.0;
-      int index[3];
-      index[0] = 0;
-      index[1] = 0;
-      index[2] = 0;
+      
       norm_v_div_dbg_(&nrm, index, size, &guide, d_dv, &coef, d_bcp, &flop_count);
       TIMING_stop(tm_norm_div_dbg, flop_count);
       
@@ -720,10 +725,6 @@ void FFV::Norm_Div(ItrCtl* IC)
       }
       IC->set_normValue(nrm);
       
-      Hostonly_ {
-        H->printHistoryItr(fp_i, IC->LoopCount, nrm, index);
-        fflush(fp_i);
-      }
       
       TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
       break;
@@ -733,6 +734,10 @@ void FFV::Norm_Div(ItrCtl* IC)
       stamped_printf("\tInvalid convergence type\n");
       Exit(0);
   }
+  
+  FB::Vec3i idx ( index[0], index[1], index[2] );
+  
+  return idx;
 }
 
 

@@ -405,20 +405,22 @@ void FFV::NS_FS_E_Binary()
   }
   
   // 反復回数の積算
-  int lc = 0;
+  int loop_p = 0;
   ICp->LoopCount = 0;
+  ICd->LoopCount = 0;
   
-  for (ICd->LoopCount=1; ICd->LoopCount< ICd->get_ItrMax(); ICd->LoopCount++)
+  for (int loop_d=0; loop_d<ICd->get_ItrMax(); loop_d++)
   {
+
     // 線形ソルバー
     switch (ICp->get_LS())
     {
       case SOR:
-        lc += Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init);
+        loop_p += Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       case SOR2SMA:
-        lc += SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init);
+        loop_p += SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       case GMRES:
@@ -426,15 +428,15 @@ void FFV::NS_FS_E_Binary()
         break;
         
       case RBGS:
-        lc += Frbgs(ICp, d_p, d_b, rhs_nrm, res_init);
+        loop_p += Frbgs(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       case PCG:
-        lc += Fpcg(ICp, d_p, d_b, rhs_nrm, res_init);
+        loop_p += Fpcg(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       case PBiCGSTAB:
-        lc += Fpbicgstab(ICp, d_p, d_b, rhs_nrm, res_init);
+        loop_p += Fpbicgstab(ICp, d_p, d_b, rhs_nrm, res_init);
         break;
         
       default:
@@ -570,7 +572,22 @@ void FFV::NS_FS_E_Binary()
     
     
     // div(u^{n+1})の計算
-    Norm_Div(ICd);
+    FB::Vec3i divmaxidx = Norm_Div(ICd);
+    
+    // 総反復回数を代入
+    ICp->LoopCount = loop_p;
+    ICd->LoopCount++;
+    
+    if ( C.Mode.Log_Itr == ON )
+    {
+      TIMING_start(tm_hstry_itr);
+      Hostonly_ {
+        H->printHistoryItr(fp_i, IC, divmaxidx);
+        fflush(fp_i);
+      }
+      TIMING_stop(tm_hstry_itr, 0.0);
+    }
+    
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
     TIMING_start(tm_prj_frc_dir);
@@ -579,12 +596,11 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_prj_frc_dir, flop);
     */
     
+    
     // 収束判定　性能測定モードのときは収束判定を行わない
     if ( (C.Hide.PM_Test == OFF) && (ICd->get_normValue() < ICd->get_eps()) ) break;
   } // end of iteration
 
-  
-  ICp->LoopCount = lc;
   
   
   TIMING_stop(tm_poi_itr_sct, 0.0);

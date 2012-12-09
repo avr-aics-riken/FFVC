@@ -32,15 +32,20 @@ void History::updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_
 // 反復過程の状況モニタのヘッダー出力
 void History::printHistoryItrTitle(FILE* fp)
 {
-  fprintf(fp, "step=%16d  time=%13.6e  Itration          Norm (           i,            j,            k)\n", step, printTime());
+  fprintf(fp, "step=%16d  time=%13.6e    Itr_VP         Div_V    Itr_P          Norm (           i,            j,            k)\n", step, printTime());
 }
 
 
 // #################################################################
-// コンポーネントモニタの履歴出力
-void History::printHistoryItr(FILE* fp, const int itr, const double nrm, const int* idx)
+// 反復履歴出力
+void History::printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx)
 {
-	fprintf(fp, "                                           %8d %13.6e (%12d, %12d, %12d)\n", itr, nrm, idx[0], idx[1], idx[2]);
+  const ItrCtl* ICd = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
+  const ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
+	fprintf(fp, "                                           %8d %13.6e %8d %13.6e (%12d, %12d, %12d)\n",
+          ICd->LoopCount, ICd->get_normValue(),
+          ICp->LoopCount, ICp->get_normValue(),
+          idx.x, idx.y, idx.z);
 }
 
 
@@ -157,20 +162,13 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
       case Control::Flow_FS_EE_EE:
       case Control::Flow_FS_AB2:
       case Control::Flow_FS_AB_CN:
-        if ( (IC->get_normType() != ItrCtl::v_div_max) && (IC->get_normType() != ItrCtl::v_div_dbg) )
-        {
-          fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
-        }
-        else
-        {
-          fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
-        }
+        fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
         break;
     }
     
     if (C->AlgorithmF == Control::Flow_FS_AB_CN) 
     {
-      fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
+      fprintf(fp, " %5d %11.4e", ICv->LoopCount, ICv->get_normValue());
     }
     
     if ( C->isHeatProblem() ) 

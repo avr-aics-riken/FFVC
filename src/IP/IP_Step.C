@@ -9,14 +9,15 @@
 // #################################################################
 
 /** 
- * @file IP_Step.C
- * @brief IP_Step class
+ * @file   IP_Step.C
+ * @brief  IP_Step class
  * @author kero
  */
 
 #include "IP_Step.h"
 
 
+// #################################################################
 //@brief パラメータを取得する
 bool IP_Step::getTP(Control* R, TPControl* tpCntl)
 {
@@ -44,7 +45,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // x-dir step
-  label="/Parameter/IntrinsicExample/Width";
+  label="/Parameter/IntrinsicExample/StepLength";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -54,7 +55,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // z-dir step
-  label="/Parameter/IntrinsicExample/Height";
+  label="/Parameter/IntrinsicExample/StepHeight";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -64,7 +65,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/Parameter/IntrinsicExample/Driver";
+  label="/Parameter/IntrinsicExample/DriverLength";
   if ( tpCntl->GetValue(label, &ct ) ) {
     drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
@@ -93,24 +94,29 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   m_solid = str;
   
-  label="/Parameter/IntrinsicExample/DriverMedium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
+  // Only driver is specified
+  if ( drv_length > 0.0 )
+  {
+    label="/Parameter/IntrinsicExample/DriverMedium";
+    if ( !(tpCntl->GetValue(label, &str )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    m_driver = str;
+    
+    label="/Parameter/IntrinsicExample/DriverFaceMedium";
+    if ( !(tpCntl->GetValue(label, &str )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    m_driver_face = str;
   }
-  m_driver = str;
-  
-  label="/Parameter/IntrinsicExample/DriverFaceMedium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  m_driver_face = str;
   
   return true;
 }
 
 
+// #################################################################
 // パラメータの表示
 void IP_Step::printPara(FILE* fp, const Control* R)
 {
@@ -131,6 +137,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 }
 
 
+// #################################################################
 // 領域情報を設定する
 void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
@@ -148,7 +155,7 @@ void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
   if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
        ((int)(reg[1]/pch[1]) != sz[1]) ||
        ((int)(reg[2]/pch[2]) != sz[2]) ) {
-    Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
+    Hostonly_ printf("Error : Invalid parameters among 'GlobalRegion', 'GlobalPitch', and 'GlobalVoxel' in DomainInfo section.\n");
     Exit(0);
   }
 
@@ -161,32 +168,51 @@ void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 }
 
 
+// #################################################################
 // 計算領域のセルIDを設定する
 void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int mid_fluid=1;        /// 流体
-  int mid_solid=2;        /// 固体
-  int mid_driver=3;       /// ドライバ部
-  int mid_driver_face=4;  /// ドライバ流出面
+  int mid_fluid, mid_solid, mid_driver, mid_driver_face;
+  
+  // 流体
+  if ( (mid_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
+    Exit(0);
+  }
+  
+  // 固体
+  if ( (mid_solid = R->find_ID_from_Label(mat, Nmax, m_solid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
+    Exit(0);
+  }
+  
+  if ( drv_length > 0.0 )
+  {
+    // ドライバ部
+    if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
+    {
+      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
+      Exit(0);
+    }
+    
+    // ドライバ流出面
+    if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
+    {
+      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
+      Exit(0);
+    }
+  }
 
-  REAL_TYPE x, y, z, dh, len, ht;
-  REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
-  REAL_TYPE ox_g, oy_g, oz_g;
+
+  REAL_TYPE ox, oy, oz, dh;
   
   // ノードローカルの無次元値
   ox = origin[0];
   oy = origin[1];
   oz = origin[2];
-  Lx = region[0];
-  Ly = region[1];
-  Lz = region[2];
   dh = deltaX;
-
-  ox_g = G_origin[0];
-  oy_g = G_origin[1];
-  oz_g = G_origin[2];
-  
-  size_t m;
   
   // ローカルにコピー
   int ix = size[0];
@@ -195,14 +221,15 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   int gd = guide;
 
   // length, widthなどは有次元値
-  len = ox_g + (drv_length+width)/R->RefLength; // グローバルな無次元位置
-  ht  = oy_g + height/R->RefLength;
+  REAL_TYPE len = G_origin[0] + (drv_length+width)/R->RefLength; // グローバルな無次元位置
+  REAL_TYPE ht  = G_origin[1] + height/R->RefLength;
   
   // Initialize  内部領域をfluidにしておく
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         mid[m] = mid_fluid;
       }
     }
@@ -210,46 +237,56 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 ) {
+    
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, ox, dh, len) \
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-          x = ox + 0.5*dh + dh*(i-1);
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          REAL_TYPE x = ox + 0.5*dh + dh*(i-1);
           if ( x < len ) mid[m] = mid_driver;
         }
       }
-    }  
+    }
+    
   }
   
   // ドライバの下流面にIDを設定
-  if ( drv_length > 0.0 ) {
+  if ( drv_length > 0.0 )
+  {
     
-    size_t m1;
-    
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, mid_fluid, mid_driver_face) \
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
-          m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
+          size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
+          size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
           if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
             mid[m] = mid_driver_face;
           }
         }
       }
-    }    
+    }
+    
   }
 
   // ステップ部分を上書き
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, dh, len, ht) \
+schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-        x = ox + 0.5*dh + dh*(i-1);
-        y = oy + 0.5*dh + dh*(j-1);
-        if ( (x < len) && (y < ht) ) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        REAL_TYPE x = ox + 0.5*dh + dh*(i-1);
+        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
+        if ( (x < len) && (y < ht) )
+        {
           mid[m] = mid_solid;
         }
       }
     }
   }
+  
 }

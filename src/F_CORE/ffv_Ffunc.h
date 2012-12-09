@@ -488,7 +488,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            int* face,
-                           REAL_TYPE* v00,
                            int* bv,
                            REAL_TYPE* vec,
                            double* flop);

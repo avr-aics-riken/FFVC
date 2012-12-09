@@ -368,7 +368,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_stop(tm_hstry_itr, 0.0);
   }
 
-  for (ICp->LoopCount=0; ICp->LoopCount< ICp->get_ItrMax(); ICp->LoopCount++)
+  for (ICp->LoopCount=0; ICp->LoopCount <= ICp->get_ItrMax(); ICp->LoopCount++)
   {
     
     // >>> Poisson Iteration subsection 1

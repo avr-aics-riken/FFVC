@@ -517,25 +517,25 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       continue;
     }
     
+    // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
     switch (typ) 
     {
       case OBC_OUTFLOW:
         div_obc_oflow_vec_(dv, size, &gd, &face, bv, vec, &fcount); // vecは流用
         obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
-        // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
         break;
         
       case OBC_SPEC_VEL:
       case OBC_WALL:
         dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-        div_obc_drchlt_(dv, size, &gd, &face, v00, bv, vec, &fcount);
-        obc[face].set_DomainV(vec, face); // 速度の形式
+        div_obc_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
+        obc[face].set_DomainV(vec, face);
         break;
         
       case OBC_SYMMETRIC:
         vec[0] = vec[1] = vec[2] = 0.0;
         // fluxはゼロなので処理不要
-        obc[face].set_DomainV(vec, face); // 速度の形式
+        obc[face].set_DomainV(vec, face);
         break;
         
       case OBC_FAR_FIELD:
@@ -897,14 +897,14 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       case OBC_WALL:
       {
         REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-        div_obc_drchlt_(s_0, size, &gd, &face, v00, bv, vec, &fcount);
+        div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
         break;
       }
         
       case OBC_SYMMETRIC:
         // 境界面の法線速度はゼロなので，修正不要 移動格子の場合は必要
         //vec[0] = vec[1] = vec[2] = 0.0;
-        //div_obc_drchlt_(s_0, size, &gd, &face, v00, bv, vec, &fcount);
+        //div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
         break;
         
       case OBC_OUTFLOW:
@@ -4776,15 +4776,15 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
     
     switch (face) {
       case X_MINUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case Y_MINUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case Z_MINUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
     }
   }
@@ -4797,9 +4797,9 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1-gd; i<=0; i++) {
-                d_v[_F_IDX_V3D(i,    j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i,    j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i,    j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4811,9 +4811,9 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
           for (int k=1; k<=kx; k++) {
             for (int j=1-gd; j<=0; j++) {
               for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j,    k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j,    k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j,    k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4825,9 +4825,9 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
           for (int k=1-gd; k<=0; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k,    0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k,    1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k,    2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4859,27 +4859,27 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
     switch (face) 
     {
       case X_MINUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case X_PLUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case Y_MINUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case Y_PLUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case Z_MINUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
       case Z_PLUS:
-        if ( paraMngr->PeriodicCommV3DEx(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
     }
   }
@@ -4892,9 +4892,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1-gd; i<=0; i++) {
-                d_v[_F_IDX_V3D(i,    j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i,    j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i,    j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4906,9 +4906,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=ix+1; i<=ix+gd; i++) {
-                d_v[_F_IDX_V3D(i,    j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i,    j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i,    j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4920,9 +4920,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
           for (int k=1; k<=kx; k++) {
             for (int j=1-gd; j<=0; j++) {
               for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j,    k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j,    k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j,    k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4934,9 +4934,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
           for (int k=1; k<=kx; k++) {
             for (int j=jx+1; j<=jx+gd; j++) {
               for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j,    k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j,    k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j,    k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4948,9 +4948,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
           for (int k=1-gd; k<=0; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k,    0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k,    1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k,    2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -4962,9 +4962,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
           for (int k=kx+1; k<=kx+gd; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k,    0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k,    1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k,    2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 2, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 2, ix, jx, kx, gd)];
               }
             }
           }
@@ -5136,122 +5136,3 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       break;
   }
 }
-
-/**
- @brief
-
-void SetBC3D::WriteBoundaryPLOT3D(FileIO_PLOT3D_WRITE* FP3DW, std::vector<std::string>& bcname)
-{
-  REAL_TYPE flop, tc;
-  int st[3], ed[3];
-  int typ;
-  int gd = guide;
-  
-  string ResultFlag;
-  int o_dir, c_dir;
-  int dir;
-  int gridnum;
-  
-  //write fvbnd header 1
-  FP3DW->WriteFVBNDHEAD1();
-  
-  //write boundary name
-  std::vector<std::string>::const_iterator it;
-  for (it = bcname.begin(); it != bcname.end(); it++) {
-    FP3DW->WriteSTRING((*it).c_str());
-  }
-  
-  //write fvbnd header 2
-  FP3DW->WriteFVBNDHEAD2();
-  
-  // 内部境界条件
-  for (int n=1; n<=NoBC; n++) {
-    
-    //typ = cmp[n].getType();
-    typ=0;
-    for (it = bcname.begin(); it != bcname.end(); it++) {
-      typ++;
-      if( FBUtility::compare( (*it).c_str(),cmp[n].getLabel().c_str() ) ) break;
-    }
-    
-    cmp[n].getBbox(st, ed);
-    
-    gridnum=1;//grid number
-    
-    //c_dir = cmp[n].getPeriodicDir();
-    //switch (c_dir) {
-    //  case X_MINUS: dir=-1; break;
-    //  case X_PLUS:  dir= 1; break;
-    //  case Y_MINUS: dir=-2; break;
-    //  case Y_PLUS:  dir= 2; break;
-    //  case Z_MINUS: dir=-3; break;
-    //  case Z_PLUS:  dir= 3; break;
-    //  default: Exit(0); break;
-    //}
-    dir=0;
-    
-#if 0
-    cout << endl;
-    cout << "face --- " << face << endl;
-    cout << st[0] << " " << st[1] << " " << st[2] << endl;
-    cout << ed[0] << " " << ed[1] << " " << ed[2] << endl;
-    cout << "typ = " << typ << endl;
-    cout << "gridnum = " << gridnum << endl;
-    cout << "dir = " << dir << endl;
-    cout << "name  " << obc[face].get_Alias().c_str() << endl;
-#endif
-    
-    ResultFlag="F";//T or F
-    FP3DW->WriteFVBND(
-                      typ,gridnum,
-                      st[0],ed[0],st[1],ed[1],
-                      st[2],ed[2],ResultFlag,dir);//dir = 0 : 面の法線方向を指定しない
-    
-  }
-  
-  // 外部境界条件
-  for (int face=0; face<NOFACE; face++) {
-    
-    //typ = obc[face].get_Class();
-    typ=0;
-    for (it = bcname.begin(); it != bcname.end(); it++) {
-      typ++;
-      if( FBUtility::compare( (*it).c_str(),obc[face].get_Alias().c_str() ) ) break;
-    }
-    
-    getOuterLoopIdx(face, st, ed);
-    
-    gridnum=1;//grid number
-    
-    //o_dir = obc[face].get_DriverDir();
-    //switch (face) {
-    //  case 0: dir=-1; break;//X_MINUS
-    //  case 1: dir= 1; break;//X_PLUS
-    //  case 2: dir=-2; break;//Y_MINUS
-    //  case 3: dir= 2; break;//Y_PLUS
-    //  case 4: dir=-3; break;//Z_MINUS
-    //  case 5: dir= 3; break;//Z_PLUS
-    //  default: Exit(0); break;
-    //}
-    dir=0;
-    
-#if 0
-    cout << endl;
-    cout << "face --- " << face << endl;
-    cout << st[0] << " " << st[1] << " " << st[2] << endl;
-    cout << ed[0] << " " << ed[1] << " " << ed[2] << endl;
-    cout << "typ = " << typ << endl;
-    cout << "gridnum = " << gridnum << endl;
-    cout << "dir = " << dir << endl;
-    cout << "name  " << obc[face].get_Alias().c_str() << endl;
-#endif
-    
-    ResultFlag="F";//T or F
-    FP3DW->WriteFVBND(
-                      typ,gridnum,
-                      st[0],ed[0],st[1],ed[1],
-                      st[2],ed[2],ResultFlag,dir);//dir = 0 : 面の法線方向を指定しない
-  }
-  
-}
- */

@@ -762,8 +762,9 @@ private:
   /**
    * @brief VP反復の発散値を計算する
    * @param [in] IC ItrCtlクラス
+   * @retval 発散値の最大の場所のインデクス
    */
-  void Norm_Div(ItrCtl* IC);
+  FB::Vec3i Norm_Div(ItrCtl* IC);
   
   
   /**

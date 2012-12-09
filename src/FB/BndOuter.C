@@ -47,9 +47,9 @@ void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, bool mode)
         break;
     }
     
-    dm[0] = a;
-    dm[1] = a;
-    dm[2] = a;
+    dm[0] = a*(REAL_TYPE)valid_cell;
+    dm[1] = a*(REAL_TYPE)valid_cell;
+    dm[2] = a*(REAL_TYPE)valid_cell;
   }
 }
 

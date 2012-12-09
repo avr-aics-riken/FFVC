@@ -21,6 +21,7 @@
 #include "Control.h"
 #include "Component.h"
 #include "FBUtility.h"
+#include "vec3.h"
 
 class History {
 protected:
@@ -273,11 +274,10 @@ public:
   /**
    * @brief コンポーネントモニタの履歴出力
    * @param [in] fp  出力ファイルポインタ
-   * @param [in] itr 反復回数
-   * @param [in] nrm ノルム
+   * @param [in] IC  反復管理クラス
    * @param [in] idx divの最大値の発生セルインデクス
    */
-  void printHistoryItr(FILE* fp, const int itr, const double nrm, const int* idx);
+  void printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx);
   
   
   /**

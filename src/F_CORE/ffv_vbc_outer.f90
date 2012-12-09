@@ -1802,20 +1802,18 @@
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
 !! @param [in]     face  面番号
-!! @param [in]     v00   参照速度
 !! @param [in]     bv    BCindex V
 !! @param [in]     vec   指定する速度ベクトル
 !! @param [in,out] flop  flop count
 !! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
 !<
-    subroutine div_obc_drchlt (div, sz, g, face, v00, bv, vec, flop)
+    subroutine div_obc_drchlt (div, sz, g, face, bv, vec, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  vec
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv

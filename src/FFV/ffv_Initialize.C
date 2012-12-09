@@ -2257,7 +2257,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
   else if( FBUtility::compare(keyword, "PerformanceTest") )   Cref->Mode.Example = id_PMT;
   else if( FBUtility::compare(keyword, "Rectangular") )       Cref->Mode.Example = id_Rect;
   else if( FBUtility::compare(keyword, "Cylinder") )          Cref->Mode.Example = id_Cylinder;
-  else if( FBUtility::compare(keyword, "Back_Step") )         Cref->Mode.Example = id_Step;
+  else if( FBUtility::compare(keyword, "BackStep") )          Cref->Mode.Example = id_Step;
   else if( FBUtility::compare(keyword, "Users") )             Cref->Mode.Example = id_Polygon;
   else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
   else
