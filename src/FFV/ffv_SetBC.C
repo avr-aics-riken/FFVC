@@ -802,11 +802,11 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
         
       case OBC_WALL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        pvec_vobc_wall_(wv, size, &gd, &dh, v00, &rei, v, bv, vec, &face, &flop);
+        pvec_vobc_wall_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
         break;
         
       case OBC_SYMMETRIC:
-        pvec_vobc_symtrc_(wv, size, &gd, &dh, &rei, v, bv, &face, &flop);
+        //pvec_vobc_symtrc_(wv, size, &gd, &dh, &rei, v, bv, &face, &flop);
         break;
         
       case OBC_OUTFLOW:

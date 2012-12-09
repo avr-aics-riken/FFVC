@@ -455,7 +455,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* dh,
-                           REAL_TYPE* v00,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            int* bv,
