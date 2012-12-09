@@ -157,23 +157,26 @@ void COMB::output_plot3d()
       int ivar=0;
       for(int i=0;i<ndfi;i++){
         prefix=DI[i].Prefix;
-        if     ( !strcasecmp(prefix.c_str(), "prs_" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vel_" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "tmp_" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "tp_"  ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vrt_" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "i2vgt_" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "hlt_" ) ) dim=1;
+        if     ( !strcasecmp(prefix.c_str(), "prs" ) ) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "vel" ) ) dim=3;
+        else if( !strcasecmp(prefix.c_str(), "fvel" )) dim=3;
+        else if( !strcasecmp(prefix.c_str(), "tmp" ) ) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "tp"  ) ) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "vrt" ) ) dim=3;
+        else if( !strcasecmp(prefix.c_str(), "i2vgt")) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "hlt" ) ) dim=1;
         else{
           m_step = DI[i].step[istep];
           m_rank = DI[i].Node[inode].RankID;
           infile = Generate_FileName(prefix, m_step, m_rank, true);
           infile = in_dirname + infile;
           ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
-          dim=m_sv_type;
+          dim=1;
+          if( m_sv_type == SPH_VECTOR ) dim = 3;
         }
         if(maxdim<dim) maxdim=dim;
         ivar=ivar+dim;
+        DI[i].dim=dim;
       }
       nvar=ivar;
       
@@ -491,20 +494,22 @@ void COMB::output_plot3d()
         STD_OUTV_ printf("\t    COMPONENT : %s\n", prefix.c_str());
         
         // Scalar or Vector
-        if     ( !strcasecmp(prefix.c_str(), "prs_" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vel_" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "tmp_" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "tp_"  ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vrt_" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "i2vgt_" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "hlt_" ) ) dim=1;
+        if     ( !strcasecmp(prefix.c_str(), "prs" ) ) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "vel" ) ) dim=3;
+        else if( !strcasecmp(prefix.c_str(), "fvel" )) dim=3;
+        else if( !strcasecmp(prefix.c_str(), "tmp" ) ) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "tp"  ) ) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "vrt" ) ) dim=3;
+        else if( !strcasecmp(prefix.c_str(), "i2vgt")) dim=1;
+        else if( !strcasecmp(prefix.c_str(), "hlt" ) ) dim=1;
         else{
           m_step = DI[i].step[istep];
           m_rank = DI[i].Node[inode].RankID;
           infile = Generate_FileName(prefix, m_step, m_rank, true);
           infile = in_dirname + infile;
           ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
-          dim=m_sv_type;
+          dim=1;
+          if( m_sv_type == SPH_VECTOR ) dim = 3;
         }
         
         // read sph header
@@ -850,25 +855,40 @@ void COMB::output_plot3d()
     }
     
     // write comp name
-    if     ( !strcasecmp(comp.c_str(), "prs_" ) ){
+    if     ( !strcasecmp(comp.c_str(), "prs" ) )
+    {
       FP3DW.WriteFunctionName("Pressure");
-    }else if( !strcasecmp(comp.c_str(), "vel_" ) ){
+    }
+    else if( !strcasecmp(comp.c_str(), "vel" ) )
+    {
       FP3DW.WriteFunctionName("U-Velocity ; Velocity");
       FP3DW.WriteFunctionName("V-Velocity");
       FP3DW.WriteFunctionName("W-Velocity");
-    }else if( !strcasecmp(comp.c_str(), "tmp_" ) ){
+    }
+    else if( !strcasecmp(comp.c_str(), "tmp" ) )
+    {
       FP3DW.WriteFunctionName("Tempearture");
-    }else if( !strcasecmp(comp.c_str(), "tp_"  ) ){
+    }
+    else if( !strcasecmp(comp.c_str(), "tp"  ) )
+    {
       FP3DW.WriteFunctionName("Total_Pressure");
-    }else if( !strcasecmp(comp.c_str(), "vrt_" ) ){
+    }
+    else if( !strcasecmp(comp.c_str(), "vrt" ) )
+    {
       FP3DW.WriteFunctionName("U-Vorticity ; Vorticity");
       FP3DW.WriteFunctionName("V-Vorticity");
       FP3DW.WriteFunctionName("W-Vorticity");
-    }else if( !strcasecmp(comp.c_str(), "i2vgt_"  ) ){
+    }
+    else if( !strcasecmp(comp.c_str(), "i2vgt"  ) )
+    {
       FP3DW.WriteFunctionName("2nd Invariant of Velocity Gradient Tensor");
-    }else if( !strcasecmp(comp.c_str(), "hlt_" ) ){
+    }
+    else if( !strcasecmp(comp.c_str(), "hlt" ) )
+    {
       FP3DW.WriteFunctionName("Helicity");
-    }else{
+    }
+    else
+    {
 #if 0
       unknowncomp++;
       char* numbuff = new char[DFI_LINE_LENGTH];
@@ -879,7 +899,17 @@ void COMB::output_plot3d()
       FP3DW.WriteFunctionName(compbuff.c_str());
       if ( numbuff ) delete [] numbuff;
 #else
-      FP3DW.WriteFunctionName(comp.c_str());
+      if( DI[i].dim == 1){
+        FP3DW.WriteFunctionName(comp.c_str());
+      }else if( DI[i].dim == 3){
+        string compbuff;
+        compbuff = "X-" + comp + " ; " + comp;
+        FP3DW.WriteFunctionName(compbuff.c_str());
+        compbuff = "Y-" + comp;
+        FP3DW.WriteFunctionName(compbuff.c_str());
+        compbuff = "Z-" + comp;
+        FP3DW.WriteFunctionName(compbuff.c_str());
+      }
 #endif
     }
     

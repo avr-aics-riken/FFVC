@@ -81,6 +81,9 @@ using namespace std;
 
 class LAYOUT {
 
+public:
+  cpm_ParaManager* paraMngr; ///< Cartesian Partition Manager
+  
 private:
   string fname;
   DfiInfo* DI;
@@ -94,8 +97,13 @@ private:
   vector<int> rankis;
   vector<int> rankie;
 
-  string dirname;//出力ディレクトリ指定
+  string dirname; //出力ディレクトリ指定
 
+  int procGrp;           ///< プロセスグループ番号
+  int myRank;            ///< 自ノードのランク番号
+  int numProc;           ///< 全ランク数
+  std::string HostName;  ///< ホスト名
+  
 public:
   /** コンストラクタ */
   LAYOUT();
@@ -103,6 +111,32 @@ public:
   /**　デストラクタ */
   ~LAYOUT();
 
+  /**
+   * @brief CPMのポインタをコピーし、ランク情報を設定
+   * @param [in] m_paraMngr  cpm_ParaManagerクラス
+   * @return  エラーコード
+   */
+  bool importCPM(cpm_ParaManager* m_paraMngr)
+  {
+    if ( !m_paraMngr ) return false;
+    paraMngr = m_paraMngr;
+    setRankInfo();
+    return true;
+  }
+  
+  /**
+   * @brief ランク情報をセットする
+   * @param [in] m_paraMngr  CPMlibポインタ
+   * @param [in] m_proGrp    プロセスグループ番号
+   */
+  void setRankInfo()
+  {
+    procGrp = 0;
+    myRank  = paraMngr->GetMyRankID();
+    numProc = paraMngr->GetNumRank();
+    HostName= paraMngr->GetHostName();
+  }
+  
   /**  
    * @brief 引数のキープ
    * @param [in] m_fname  ファイル名

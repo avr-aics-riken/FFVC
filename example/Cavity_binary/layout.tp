@@ -1,0 +1,39 @@
+
+  LayoutData{
+
+    output_dir = "hoge"
+
+    list[@]="test.dfi"
+
+    divide[@]{
+      machine="ELSA5"
+      rank=(0,3)
+      dir="/home/ida/usb2/ffv/example/layout_test"
+    }
+
+//  divide[@]{
+//    machine="ELSA5"
+//    rank=(0,1)
+//    dir="/home/ida/usb2/ffv/example/layout_test_1"
+//  }
+
+//  divide[@]{
+//    machine="ELSA5"
+//    rank=(2,3)
+//    dir="/home/ida/usb2/ffv/example/layout_test_2"
+//  }
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+

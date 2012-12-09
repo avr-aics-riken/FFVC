@@ -79,28 +79,33 @@ void COMB::output_sph()
   }
 
   //dfi file loop ---> prs_, vel, ,,,
-  if(numProc > 1) ips=0;
-  for(int i=0;i<ndfi;i++){
+  if (numProc > 1) ips=0;
+  
+  for (int i=0;i<ndfi;i++) {
     prefix=DI[i].Prefix;
     LOG_OUTV_ fprintf(fplog,"  COMBINE SPH START : %s\n", prefix.c_str());
     STD_OUTV_ printf("  COMBINE SPH START : %s\n", prefix.c_str());
 
     //Scalar or Vector
-    if     ( !strcasecmp(prefix.c_str(), "prs_" ) ) dim=1;
-    else if( !strcasecmp(prefix.c_str(), "vel_" ) ) dim=3;
-    else if( !strcasecmp(prefix.c_str(), "tmp_" ) ) dim=1;
-    else if( !strcasecmp(prefix.c_str(), "tp_"  ) ) dim=1;
-    else if( !strcasecmp(prefix.c_str(), "vrt_" ) ) dim=3;
-    else if( !strcasecmp(prefix.c_str(), "i2vgt_" ) ) dim=1;
-    else if( !strcasecmp(prefix.c_str(), "hlt_" ) ) dim=1;
-	else{
+    if     ( !strcasecmp(prefix.c_str(), "prs" ) ) dim=1;
+    else if( !strcasecmp(prefix.c_str(), "vel" ) ) dim=3;
+    else if( !strcasecmp(prefix.c_str(), "fvel" )) dim=3;
+    else if( !strcasecmp(prefix.c_str(), "tmp" ) ) dim=1;
+    else if( !strcasecmp(prefix.c_str(), "tp"  ) ) dim=1;
+    else if( !strcasecmp(prefix.c_str(), "vrt" ) ) dim=3;
+    else if( !strcasecmp(prefix.c_str(), "i2vgt")) dim=1;
+    else if( !strcasecmp(prefix.c_str(), "hlt" ) ) dim=1;
+    else
+    {
       m_step = DI[i].step[0];
       m_rank = DI[i].Node[0].RankID;
       infile = Generate_FileName(prefix, m_step, m_rank, true);
       infile = in_dirname + infile;
       ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
-      dim=m_sv_type;
+      dim=1;
+      if ( m_sv_type == SPH_VECTOR ) dim = 3;
     }
+    DI[i].dim=dim;
 
     //step loop
     for(int j=0; j< DI[i].step.size(); j++ ) {

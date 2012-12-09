@@ -158,6 +158,7 @@ public:
    */
   void setRankInfo()
   {
+    procGrp = 0;
     myRank  = paraMngr->GetMyRankID();
     numProc = paraMngr->GetNumRank();
     HostName= paraMngr->GetHostName();

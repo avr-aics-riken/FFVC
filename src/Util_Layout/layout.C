@@ -23,6 +23,10 @@ LAYOUT::LAYOUT()
 {
   ndfi=0;
   DI=NULL;
+  
+  procGrp = 0;
+  myRank  = -1;
+  numProc = 0;
 }
 
 
@@ -168,19 +172,26 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
 // 
 void LAYOUT::ReadDfiFiles()
 {
+  int ic;
+  vector<string>::const_iterator it;
+  
   // allocate dfi info class
   ndfi=dfi_name.size();
   DI = new DfiInfo[ndfi];
-
-  // set dfi info class
-  int ic=0;
-  vector<string>::const_iterator it;
+  
+  // ランク情報をセット
+  ic=0;
   for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
-	string fname=(*it).c_str();
-    //ReadDfiFile(fname,&DI[ic]);
-    //DI[ic].setRankInfo(paraMngr, procGrp);
+    DI[ic].setRankInfo(paraMngr, procGrp);
+    ic++;
+  }
+  
+  // set dfi info class
+  ic=0;
+  for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
+    string fname=(*it).c_str();
     DI[ic].ReadDfiFile(fname);
-	ic++;
+    ic++;
   }
 }
 

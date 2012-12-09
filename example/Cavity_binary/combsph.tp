@@ -1,0 +1,30 @@
+
+  CombData{
+
+    list[@]="prs.dfi"
+    list[@]="vel.dfi"
+    list[@]="fvel.dfi"
+
+    //OutFormat="sph"
+    OutFormat="plot3d"
+
+    OutputRealType="float"
+
+    InputDir="hoge"
+    //OutputDir="hoge_sph"
+    OutputDir="hoge_plot3d"
+
+  }
+
+  Plot3dOptions {
+    filename        = "test"
+    GridKind       = "multi_grid"
+    GridMobility   = "immovable"
+    StateOfTime   = "unsteady"
+    //FormatType     = "formatted"
+    //FormatType     = "unformatted"
+    FormatType     = "binary"
+    DivideFunc = "off"
+    RealType = "float"
+  }
+

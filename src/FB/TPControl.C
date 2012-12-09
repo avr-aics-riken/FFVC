@@ -271,8 +271,8 @@ bool TPControl::GetVector(const string label, REAL_TYPE *vec, const int nvec)
   }
 
   // get value
-  if( (ierr = tp->getValue(label, value)) != TP_NO_ERROR ){
-    cout << " GetVector debug 333" << endl;
+  if ( (ierr = tp->getValue(label, value)) != TP_NO_ERROR )
+  {
 	  Exit(0);
   }
 

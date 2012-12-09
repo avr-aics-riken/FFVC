@@ -225,14 +225,14 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    P3Op.basename = "PLOT3Doutput_";
+    P3Op.basename = "PLOT3Doutput";
   }
   else
   {
     P3Op.basename = str;
   }
   
-  // GridKind
+  /* GridKind
   label = "/Plot3dOptions/GridKind";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -250,7 +250,8 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
       Exit(0);
     }
   }
-  
+  */
+  FP3DR.setMultiGrid(); // 常にmulti grid
   
   // 格子の移動
   label = "/Plot3dOptions/GridMobility";
@@ -291,7 +292,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   }
   
   
-  // IBLANKファイル
+  /* IBLANKファイル
   label = "/Plot3dOptions/SetIblankFlag";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -307,10 +308,10 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
       printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
-  }
+  }*/
   FP3DR.setIBlankFlag(NOT_SET_IBLANK); //sphファイルの情報からIblankは作れないので常にoff
   
-  // 次元数
+  /* 次元数
   label = "/Plot3dOptions/Dimension";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -325,7 +326,8 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
       printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
-  }
+  }*/
+  FP3DR.setDimension3D(); // 常に三次元
   
   
   //FormatType
@@ -414,7 +416,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
   */
-    P3Op.IS_q = OFF;
+  P3Op.IS_q = OFF;
   
   // OutputFunction
   label = "/Plot3dOptions/OutputFunction";
@@ -474,11 +476,11 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
     }
   }
 */
+  P3Op.IS_fvbnd = OFF;
   
-    P3Op.IS_fvbnd = OFF;
   
   // DivideFunc ---> 出力を項目別にファイル分割するオプション
-  label = "/Steer/Plot3dOptions/DivideFunc";
+  label = "/Plot3dOptions/DivideFunc";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -503,13 +505,22 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
 //
 void COMB::ReadDfiFiles()
 {
+  int ic=0;
+  vector<string>::const_iterator it;
+  
   // allocate dfi info class
   ndfi=dfi_name.size();
   DI = new DfiInfo[ndfi];
   
+  // ランク情報をセット
+  ic=0;
+  for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
+    DI[ic].setRankInfo(paraMngr, procGrp);
+    ic++;
+  }
+  
   // set dfi info class
-  int ic=0;
-  vector<string>::const_iterator it;
+  ic=0;
   for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
     string fname=(*it).c_str();
     DI[ic].ReadDfiFile(fname);
@@ -700,7 +711,7 @@ void COMB::OpenLogFile()
   int len = prefix.size()+10;//+6+4
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
-  sprintf(tmp, "%s%06d.%s", prefix.c_str(), myRank, "txt");
+  sprintf(tmp, "%s_%06d.%s", prefix.c_str(), myRank, "txt");
   
   std::string logname(tmp);
   if ( tmp ) delete [] tmp;
@@ -786,11 +797,11 @@ std::string COMB::Generate_FileName(const std::string prefix, const unsigned m_s
   // local出力が指定された場合、分割出力
   if ( mio )
   {
-    sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
+    sprintf(tmp, "%s_%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
   }
   else
   {
-    sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, "sph");
+    sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, "sph");
   }
   
   std::string fname(tmp);
@@ -813,12 +824,12 @@ std::string COMB::Generate_FileName_Free(const std::string prefix, const std::st
   // local出力が指定された場合、分割出力
   if ( mio )
   {
-    sprintf(tmp, "%s%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
-    //sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
+    sprintf(tmp, "%s_%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
+    //sprintf(tmp, "%s_%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
   }
   else
   {
-    sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, xxx.c_str());
+    sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, xxx.c_str());
   }
   
   std::string fname(tmp);

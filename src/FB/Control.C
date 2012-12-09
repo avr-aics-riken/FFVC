@@ -1730,7 +1730,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
-    P3Op.basename = "PLOT3Doutput_";
+    P3Op.basename = "PLOT3Doutput";
   }
   else
   {
@@ -1738,7 +1738,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   }
   if ( P3Op.basename.empty() )
   {
-    P3Op.basename = "PLOT3Doutput_";
+    P3Op.basename = "PLOT3Doutput";
   }
   
   

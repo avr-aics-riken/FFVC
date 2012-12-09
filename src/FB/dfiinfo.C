@@ -28,6 +28,7 @@ DfiInfo::DfiInfo()
   for(int i=0;i<3;i++) Global_Division[i]=0;
   GuideCell=0;
   NodeInfoSize=0;
+  dim=0;
 
   Node=NULL;
 

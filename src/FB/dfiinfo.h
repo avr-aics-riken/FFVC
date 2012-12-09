@@ -89,6 +89,7 @@ public:
   int GuideCell;
   NodeInfo *Node;
   vector<int> step;
+  int dim;
 
   int NodeInfoSize;//=RankID_in_MPIworld
   vector<int> index_y;

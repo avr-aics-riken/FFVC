@@ -26,7 +26,7 @@ std::string DFI::Generate_DirName(const std::string prefix, const unsigned m_ste
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
-  sprintf(tmp, "%s%010d", prefix.c_str(), m_step);
+  sprintf(tmp, "%s_%010d", prefix.c_str(), m_step);
   
   std::string fname(tmp);
   if ( tmp ) delete [] tmp;
@@ -68,11 +68,11 @@ std::string DFI::Generate_FileName(const std::string prefix, const unsigned m_st
   // local出力が指定された場合、分割出力
   if ( mio )
   {
-    sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
+    sprintf(tmp, "%s_%010d_id%06d.%s", prefix.c_str(), m_step, m_id, "sph");
   }
   else
   {
-    sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, "sph");
+    sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, "sph");
   }
   
   std::string fname(tmp);
@@ -98,11 +98,11 @@ std::string DFI::Generate_FileName_Free(const std::string prefix, const std::str
   if ( mio )
   {
     // FieldView がランク番号+ステップ数の記述のため
-    sprintf(tmp, "%s%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
+    sprintf(tmp, "%s_%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
   }
   else
   {
-    sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, xxx.c_str());
+    sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, xxx.c_str());
   }
   
   std::string fname(tmp);
@@ -221,7 +221,7 @@ bool DFI::Write_File(const std::string dfi_name, const std::string prefix, const
       return false;
     }
     
-    if (fp) fprintf(fp, "Distributed_File_Info {\n");
+    if (fp) fprintf(fp, "DistributedFileInfo {\n");
     if (fp) fprintf(fp, "\n");
     
     if( !Write_Header(fp, 0, prefix) )
