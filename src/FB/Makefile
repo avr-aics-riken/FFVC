@@ -94,6 +94,7 @@ VoxInfo.o: TPControl.h Intrinsic.h vec3.h vec3_func.h vec3f_func.h
 VoxInfo.o: CompoFraction.h FindexS3D.h fill_bid.h fill_mid.h
 History.o: History.h Control.h DomainInfo.h FB_Define.h mydebug.h Medium.h
 History.o: Component.h FBUtility.h BndOuter.h Interval_Mngr.h TPControl.h
+History.o: vec3.h vec3_func.h vec3f_func.h
 SetBC.o: SetBC.h DomainInfo.h FB_Define.h mydebug.h BndOuter.h Control.h
 SetBC.o: Medium.h Component.h FBUtility.h Interval_Mngr.h TPControl.h
 SetBC.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h

@@ -239,7 +239,7 @@ void FFV::NS_FS_E_Binary()
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
   flop = 0.0;
-  BC.OuterVBC_Pseudo(d_vc, d_v0, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.OuterVBC_Pseudo(d_vc, d_v0, d_bcv, CurrentTime, dt, &C, d_vf, flop);
   BC.OuterVBC_Periodic(d_vc);
   BC.InnerVBC_Periodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, flop);
@@ -306,7 +306,7 @@ void FFV::NS_FS_E_Binary()
   flop = 0.0;
   BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
-  
+
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
@@ -455,13 +455,13 @@ void FFV::NS_FS_E_Binary()
     update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_bcv, &flop);
     TIMING_stop(tm_prj_vec, flop);
 
-    
+
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, flop);
+    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
-    
+
     
     // セルフェイス速度の境界条件の通信部分
     if ( C.isOutflow() == ON ) 
@@ -558,7 +558,7 @@ void FFV::NS_FS_E_Binary()
       
       rhs_nrm = sqrt(rhs_nrm);
     }
-    
+
     
     // 周期型の速度境界条件
     TIMING_start(tm_vec_BC);
@@ -569,7 +569,7 @@ void FFV::NS_FS_E_Binary()
     
     TIMING_stop(tm_poi_itr_sct_4, 0.0);
     // <<< Poisson Iteration subsection 4
-    
+
     
     // div(u^{n+1})の計算
     FB::Vec3i divmaxidx = Norm_Div(ICd);
@@ -588,7 +588,7 @@ void FFV::NS_FS_E_Binary()
       TIMING_stop(tm_hstry_itr, 0.0);
     }
     
-    
+
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
     TIMING_start(tm_prj_frc_dir);
     flop=0.0;

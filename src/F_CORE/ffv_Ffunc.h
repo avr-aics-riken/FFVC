@@ -420,12 +420,10 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* dh,
-                           REAL_TYPE* v00,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
                            int* bv,
-                           REAL_TYPE* vec,
                            int* face,
                            double* flop);
   
@@ -478,6 +476,7 @@ extern "C" {
                       int* bv,
                       int* face,
                       REAL_TYPE* v0,
+                      REAL_TYPE* vf,
                       double* flop);
   
   void vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, double* flop);
@@ -495,7 +494,7 @@ extern "C" {
                            int* sz,
                            int* g,
                            int* face,
-                           REAL_TYPE* v_out,
+                           REAL_TYPE* cf,
                            int* bv,
                            REAL_TYPE* vf,
                            double* flop);
@@ -506,6 +505,7 @@ extern "C" {
                            int* face,
                            int* bv,
                            REAL_TYPE* aa,
+                           REAL_TYPE* vf,
                            double* flop);
 
   

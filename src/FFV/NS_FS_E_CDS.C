@@ -236,7 +236,7 @@ void FFV::NS_FS_E_CDS()
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
   flop = 0.0;
-  BC.OuterVBC_Pseudo(d_vc, d_v0, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.OuterVBC_Pseudo(d_vc, d_v0, d_bcv, CurrentTime, dt, &C, d_vf, flop);
   BC.OuterVBC_Periodic(d_vc);
   BC.InnerVBC_Periodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, flop);
@@ -430,7 +430,7 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, flop);
+    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分

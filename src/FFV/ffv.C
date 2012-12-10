@@ -671,8 +671,12 @@ int FFV::MainLoop()
 }
 
 
-// #################################################################
-// V-P反復のdiv(u)ノルムを計算する
+
+/**
+ * @brief VP反復の発散値を計算する
+ * @param [in] IC ItrCtlクラス
+ * @retval 発散値の最大の場所のインデクス
+ */
 FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
 {
   double nrm;

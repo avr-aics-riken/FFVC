@@ -5664,6 +5664,9 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_SPEC_VEL:
+        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
+        break;
+        
       case OBC_OUTFLOW:
         encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
         break;

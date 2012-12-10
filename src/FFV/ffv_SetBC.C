@@ -432,11 +432,21 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
 }
 
 
-// #################################################################
-// 速度境界条件による速度の発散の修正ほか
-// 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
-// avr[]のインデクスに注意 (Fortran <-> C)
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, double& flop)
+
+/**
+ * @brief 速度境界条件による速度の発散の修正ほか
+ * @param [in,out] dv     \sum{u}
+ * @param [in]     bv     BCindex V
+ * @param [in]     tm     無次元時刻
+ * @param [in]     v00    基準速度
+ * @param [in]     avr    平均値計算のテンポラリ値
+ * @param [in,out] d_vf   セルフェイス速度 u^{n+1}
+ * @param [in]     flop   flop count
+ * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
+ *       avr[]のインデクスに注意 (Fortran <-> C)
+ */
+
+void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* d_vf, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -501,7 +511,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       }
     }
   }
-  
+
   
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++) {
@@ -521,7 +531,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
     switch (typ) 
     {
       case OBC_OUTFLOW:
-        div_obc_oflow_vec_(dv, size, &gd, &face, bv, vec, &fcount); // vecは流用
+        div_obc_oflow_vec_(dv, size, &gd, &face, bv, vec, d_vf, &fcount); // vecは流用
         obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
         break;
         
@@ -810,8 +820,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
         break;
         
       case OBC_OUTFLOW:
-        vec[0] = vec[1] = vec[2] = C->V_Dface[face];
-        pvec_vobc_oflow_(wv, size, &gd, &dh, v00, &rei, v, vf, bv, vec, &face, &flop);
+        pvec_vobc_oflow_(wv, size, &gd, &dh, &rei, v, vf, bv, &face, &flop);
         break;
     }
   }
@@ -820,8 +829,19 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
 
 
 
-// #################################################################
-// 速度境界条件によるPoisosn式のソース項の修正
+/**
+ @brief 速度境界条件によるPoisosn式のソース項の修正
+ @param [out] s_0   \sum{u^*}
+ @param [in]  vc    セルセンタ疑似速度
+ @param [in]  v0    セルセンタ速度 u^n
+ @param [in]  vf    セルフェイス速度 u^n
+ @param [in]  bv    BCindex V
+ @param [in]  tm    無次元時刻
+ @param [in]  dt    時間積分幅
+ @param [in]  C     Control class
+ @param [in]  v00   基準速度
+ @param [out] flop  flop count
+ */
 void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
@@ -886,10 +906,11 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_Class();
     
     // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     if( nID[face] >= 0 ) continue;
+    
+    typ = obc[face].get_Class();
     
     switch ( typ )
     {
@@ -902,13 +923,14 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       }
         
       case OBC_SYMMETRIC:
-        // 境界面の法線速度はゼロなので，修正不要 移動格子の場合は必要
+        // 境界面の法線速度はゼロなので，修正不要
         //vec[0] = vec[1] = vec[2] = 0.0;
         //div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
         break;
         
       case OBC_OUTFLOW:
-        vel = C->V_Dface[face] * dt / dh;
+        //vel = C->V_Dface[face] * dt / dh;
+        vel = dt / dh;
         div_obc_oflow_pvec_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
         break;
         
@@ -1094,10 +1116,10 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
  @param [in]     tm     時刻
  @param [in]     dt     時間積分幅
  @param [in]     C      Control class
- @param [in]     v00    参照速度
+ @param [in]     d_vf   セルフェイス速度ベクトル v^n
  @param [in,out] flop   浮動小数点演算数
  */
-void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* d_vf, double& flop)
 {
   REAL_TYPE v_cnv;
   REAL_TYPE dh = deltaX;
@@ -1111,8 +1133,9 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_
     switch ( obc[face].get_Class() )
     {
       case OBC_OUTFLOW:
-        v_cnv = C->V_Dface[face] * dt / dh;
-        vobc_outflow_(d_vc, size, &gd, &v_cnv, d_bv, &face, d_v0, &flop);
+        //v_cnv = C->V_Dface[face] * dt / dh;
+        v_cnv = dt / dh;
+        vobc_outflow_(d_vc, size, &gd, &v_cnv, d_bv, &face, d_v0, d_vf, &flop);
         break;
     }
     

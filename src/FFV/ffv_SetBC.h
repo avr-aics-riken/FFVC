@@ -154,40 +154,21 @@ public:
   void InnerVBC             (REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
   void InnerVBC_Periodic    (REAL_TYPE* d_v, int* d_bd);
   
-  /**
-   * @brief 速度境界条件による速度の発散の修正ほか
-   * @param [in,out] dv     \sum{u}
-   * @param [in]     bv     BCindex V
-   * @param [in]     tm     無次元時刻
-   * @param [in]     v00    基準速度
-   * @param [in]     avr    平均値計算のテンポラリ値
-   * @param [in]     flop   flop count
-   * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
-   */
+  
+  // 速度境界条件による速度の発散の修正ほか
   void mod_div (REAL_TYPE* dv,
                 int* bv,
                 REAL_TYPE tm,
                 REAL_TYPE* v00,
                 Gemini_R* avr,
+                REAL_TYPE* d_vf,
                 double& flop);
   
   
   void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
   
   
-  /**
-   @brief 速度境界条件によるPoisosn式のソース項の修正
-   @param [out] s_0   \sum{u^*}
-   @param [in]  vc    セルセンタ疑似速度
-   @param [in]  v0    セルセンタ速度 u^n
-   @param [in]  vf    セルフェイス速度 u^n
-   @param [in]  bv    BCindex V
-   @param [in]  tm    無次元時刻
-   @param [in]  dt    時間積分幅
-   @param [in]  C     Control class
-   @param [in]  v00   基準速度
-   @param [out] flop  flop count
-   */
+  // 速度境界条件によるPoisosn式のソース項の修正
   void mod_Psrc_VBC (REAL_TYPE* s_0,
                      REAL_TYPE* vc,
                      REAL_TYPE* v0,
@@ -273,7 +254,16 @@ public:
   void OuterTBCface         (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop);
   void OuterVBC             (REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
   void OuterVBC_Periodic    (REAL_TYPE* d_v);
-  void OuterVBC_Pseudo      (REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
+  
+  void OuterVBC_Pseudo      (REAL_TYPE* d_vc,
+                             REAL_TYPE* d_v0,
+                             int* d_bv,
+                             REAL_TYPE tm,
+                             REAL_TYPE dt,
+                             Control* C,
+                             REAL_TYPE* d_vf,
+                             double& flop);
+  
   void ps_BC_Convection     (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
   void setBCIperiodic       (int* d_bx);
   void setInitialTemp_Compo (int n, int* d_bx, REAL_TYPE* d_t);

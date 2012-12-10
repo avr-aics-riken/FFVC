@@ -759,11 +759,7 @@ private:
   void min_distance(float* cut, FILE* fp);
   
   
-  /**
-   * @brief VP反復の発散値を計算する
-   * @param [in] IC ItrCtlクラス
-   * @retval 発散値の最大の場所のインデクス
-   */
+  // V-P反復のdiv(u)ノルムを計算する
   FB::Vec3i Norm_Div(ItrCtl* IC);
   
   
