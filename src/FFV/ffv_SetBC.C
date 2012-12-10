@@ -1126,7 +1126,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
         break;
         
       case OBC_FAR_FIELD:
-        vobc_neumann_(d_v, size, &gd, &face);
+        vobc_update_(d_v, size, &gd, d_vc, &face);
         break;
         
       default:
@@ -1160,9 +1160,17 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
     {
       // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
       
-      if ( obc[face].get_Class() == OBC_OUTFLOW )
-      {
-        vobc_outflow_(d_vc, size, &gd, &v_cnv, &face, d_v0, d_vf, &flop);
+      switch ( obc[face].get_Class() ) {
+        case OBC_OUTFLOW :
+          vobc_outflow_(d_vc, size, &gd, &v_cnv, &face, d_v0, d_vf, &flop);
+          break;
+          
+        case OBC_FAR_FIELD:
+          vobc_neumann_(d_vc, size, &gd, &face);
+          break;
+          
+        default:
+          break;
       }
     }
   }  
