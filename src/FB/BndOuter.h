@@ -208,13 +208,9 @@ public:
   void set_Class      (const int key);
   void set_CoefHT     (REAL_TYPE val);
   
-  /**
-   * @brief モニタ値を保持する
-   * @param [in] vv   指定速度ベクトル
-   * @param [in] face 面番号
-   * @param [in] mode true-outflow, false-others(default)
-   */
-  void set_DomainV(const REAL_TYPE* vv, const int face, bool mode=false);
+  
+  // モニタ値を保持する
+  void set_DomainV(const REAL_TYPE* vv, const int face, const int mode);
   
   void set_DriverDir  (int key);
   void set_DriverIndex(int key);

@@ -569,12 +569,13 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
 
 // #################################################################
 /**
- @brief 外部境界面の有効セル数をカウントする
- @param face 外部境界面番号
- @param bv BCindex V
- @note 外部境界面の両側のセルがFluidのときのみカウント
+ * @brief 外部境界面の有効セル数をカウントする
+ * @param [in] face 外部境界面番号
+ * @param [in] bv   BCindex V
+ * @param [in] typ  BC class
+ * @note 外部境界面の両側のセルがFluidのときのみカウント
  */
-unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
+unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const int typ)
 {
   size_t m1, m2;
   int s1, s2;
@@ -598,7 +599,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
             m2 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            if ( GET_FACE_BC(s1, BC_FACE_W) == OBC_MASK )
+            //typ = GET_FACE_BC(s1, BC_FACE_W);
+            if ( (typ==OBC_SPEC_VEL) ||
+                 (typ==OBC_OUTFLOW)  ||
+                 (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
             }
@@ -616,7 +621,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
             m2 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            if ( GET_FACE_BC(s1, BC_FACE_E) == OBC_MASK )
+            //typ = GET_FACE_BC(s1, BC_FACE_E);
+            if ( (typ==OBC_SPEC_VEL) ||
+                 (typ==OBC_OUTFLOW)  ||
+                 (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
             }
@@ -634,7 +643,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
             m2 = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            if ( GET_FACE_BC(s1, BC_FACE_S) == OBC_MASK )
+            //typ = GET_FACE_BC(s1, BC_FACE_S);
+            if ( (typ==OBC_SPEC_VEL) ||
+                 (typ==OBC_OUTFLOW)  ||
+                 (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
             }
@@ -652,7 +665,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
             m2 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            if ( GET_FACE_BC(s1, BC_FACE_N) == OBC_MASK )
+            //typ = GET_FACE_BC(s1, BC_FACE_N);
+            if ( (typ==OBC_SPEC_VEL) ||
+                 (typ==OBC_OUTFLOW)  ||
+                 (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
             }
@@ -670,7 +687,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
             m2 = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            if ( GET_FACE_BC(s1, BC_FACE_B) == OBC_MASK )
+            //typ = GET_FACE_BC(s1, BC_FACE_B);
+            if ( (typ==OBC_SPEC_VEL) ||
+                 (typ==OBC_OUTFLOW)  ||
+                 (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
             }
@@ -688,7 +709,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv)
             m2 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            if ( GET_FACE_BC(s1, BC_FACE_T) == OBC_MASK )
+            //typ = GET_FACE_BC(s1, BC_FACE_T);
+            if ( (typ==OBC_SPEC_VEL) ||
+                 (typ==OBC_OUTFLOW)  ||
+                 (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
             }
@@ -5676,7 +5701,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_FAR_FIELD:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
         break;
         
       case OBC_PERIODIC:
@@ -5688,7 +5713,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
     }
     
     // 有効セル数をカウントし，集約
-    m_obc->set_ValidCell( count_ValidCell_OBC(face, bv) );
+    m_obc->set_ValidCell( count_ValidCell_OBC(face, bv, F) );
   }
   
   // 内部境界のコンポーネントのエンコード

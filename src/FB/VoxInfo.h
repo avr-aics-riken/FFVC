@@ -85,7 +85,7 @@ private:
   
   unsigned long countState(int id, int* mid);
   
-  unsigned long count_ValidCell_OBC (const int face, const int* bv);
+  unsigned long count_ValidCell_OBC (const int face, const int* bv, const int typ);
   
   
   /**

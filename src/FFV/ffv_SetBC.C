@@ -116,20 +116,23 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
     typ = obc[face].get_Class();
     getOuterLoopIdx(face, st, ed);
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( nID[face] >= 0 ) continue;
-    
-    if ( typ == OBC_SPEC_VEL )
+    // 内部領域のときは，処理しない
+    if ( nID[face] < 0 )
     {
-      if ( !clear ) {
-        extractVel_OBC(face, vec, tm, v00, flop);
-      }
-      else
+      if ( typ == OBC_SPEC_VEL )
       {
-        vec[0] = vec[1] = vec[2] = 0.0;
+        if ( !clear )
+        {
+          extractVel_OBC(face, vec, tm, v00, flop);
+        }
+        else
+        {
+          vec[0] = vec[1] = vec[2] = 0.0;
+        }
+        vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
       }
-      vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
     }
+
   }
 }
 
@@ -517,69 +520,55 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ
-    if( nID[face] >= 0 ) 
+    // 内部領域のときは，処理しない
+    if( nID[face] < 0 )
     {
       vec[0] =  0.0;   // sum
       vec[1] =  1.0e6; // min
       vec[2] = -1.0e6; // max
-      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく, trueで初期値を設定
-      continue;
-    }
-    
-    // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
-    switch (typ) 
-    {
-      case OBC_OUTFLOW:
-        div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, &fcount); // vecは流用
-        obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
-        break;
-        
-      case OBC_SPEC_VEL:
-      case OBC_WALL:
-        dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-        div_obc_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
-        vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
-        obc[face].set_DomainV(vec, face);
-        break;
-        
-      case OBC_SYMMETRIC:
-        vec[0] = vec[1] = vec[2] = 0.0;
-        vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
-        obc[face].set_DomainV(vec, face);
-        break;
-        
-      case OBC_FAR_FIELD:
-      case OBC_TRC_FREE:
-        vec[0] = vec[1] = vec[2] = 0.0;
-        // nothing
-        break;
+      obc[face].set_DomainV(vec, face, OBC_OUTFLOW); // gatherする場合のダミー値を与えておく, OBC_OUTFLOWで初期値を設定
+
+      // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
+      switch (typ)
+      {
+        case OBC_SPEC_VEL:
+        case OBC_WALL:
+          dummy = extractVel_OBC(face, vec, tm, v00, fcount);
+          div_obc_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
+          vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
+          obc[face].set_DomainV(vec, face, typ);
+          break;
+          
+        case OBC_SYMMETRIC:
+          vec[0] = vec[1] = vec[2] = 0.0;
+          vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
+          obc[face].set_DomainV(vec, face, typ);
+          break;
+          
+        case OBC_FAR_FIELD:
+        case OBC_TRC_FREE:
+          div_obc_vec_(size, &gd, &face, vec, vf, &fcount); // vecを流用
+          obc[face].set_DomainV(vec, face, typ);
+          break;
+      }
     }
   }
   
-  /*
+  // OUTFLOWの面は最後に処理
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ
-    if( nID[face] >= 0 )
+    // 内部領域のときは，処理しない
+    if( nID[face] < 0 )
     {
-      vec[0] =  0.0;   // sum
-      vec[1] =  1.0e6; // min
-      vec[2] = -1.0e6; // max
-      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく, trueで初期値を設定
-      continue;
+      // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
+      if (typ == OBC_OUTFLOW)
+      {
+          div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, &fcount); // vecは流用
+          obc[face].set_DomainV(vec, face, typ);
+      }
     }
-    
-    // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
-    switch (typ)
-    {
-      case OBC_OUTFLOW:
-        div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, &fcount); // vecは流用
-        obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
-        break;
-    }
-  }*/
+  }
   
   flop += fcount;
 }
@@ -825,28 +814,29 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( nID[face] >= 0 ) continue;
-    
-    switch ( typ )
+    // 内部領域のときは，処理しない
+    if ( nID[face] < 0 )
     {
-      case OBC_SPEC_VEL:
-        extractVel_OBC(face, vec, tm, v00, flop);
-        pvec_vobc_specv_(wv, size, &gd, &dh, v00, &rei, v, bv, vec, &face, &flop);
-        break;
-        
-      case OBC_WALL:
-        extractVel_OBC(face, vec, tm, v00, flop);
-        pvec_vobc_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
-        break;
-        
-      case OBC_SYMMETRIC:
-        //pvec_vobc_symtrc_(wv, size, &gd, &dh, &rei, v, bv, &face, &flop);
-        break;
-        
-      case OBC_OUTFLOW:
-        pvec_vobc_oflow_(wv, size, &gd, &dh, &rei, v, vf, bv, &face, &flop);
-        break;
+      switch ( typ )
+      {
+        case OBC_SPEC_VEL:
+          extractVel_OBC(face, vec, tm, v00, flop);
+          pvec_vobc_specv_(wv, size, &gd, &dh, v00, &rei, v, bv, vec, &face, &flop);
+          break;
+          
+        case OBC_WALL:
+          extractVel_OBC(face, vec, tm, v00, flop);
+          pvec_vobc_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
+          break;
+          
+        case OBC_SYMMETRIC:
+          //pvec_vobc_symtrc_(wv, size, &gd, &dh, &rei, v, bv, &face, &flop);
+          break;
+          
+        case OBC_OUTFLOW:
+          pvec_vobc_oflow_(wv, size, &gd, &dh, &rei, v, vf, bv, &face, &flop);
+          break;
+      }
     }
   }
   
@@ -932,38 +922,51 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++) {
     
-    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    if( nID[face] >= 0 ) continue;
-    
-    typ = obc[face].get_Class();
-    
-    switch ( typ )
+    // 内部領域のときは，処理しない
+    if( nID[face] < 0 )
     {
-      case OBC_SPEC_VEL:
-      case OBC_WALL:
+      typ = obc[face].get_Class();
+      
+      switch ( typ )
       {
-        REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-        div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
-        break;
+        case OBC_SPEC_VEL:
+        case OBC_WALL:
+        {
+          REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
+          div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
+          break;
+        }
+          
+        case OBC_SYMMETRIC:
+          // 境界面の法線速度はゼロなので，修正不要
+          //vec[0] = vec[1] = vec[2] = 0.0;
+          //div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
+          break;
+          
+        case OBC_TRC_FREE:
+        case OBC_FAR_FIELD:
+          // 境界値を与え，通常スキームで計算するので不要
+          break;
       }
-        
-      case OBC_SYMMETRIC:
-        // 境界面の法線速度はゼロなので，修正不要
-        //vec[0] = vec[1] = vec[2] = 0.0;
-        //div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
-        break;
-        
-      case OBC_OUTFLOW:
-        //vel = C->V_Dface[face] * dt / dh;
+    }
+
+  }
+  
+  // OUTFLOWは最後に
+  for (int face=0; face<NOFACE; face++) {
+    
+    // 内部領域のときは，処理しない
+    if( nID[face] < 0 )
+    {
+      typ = obc[face].get_Class();
+      
+      if ( typ == OBC_OUTFLOW )
+      {
         vel = dt / dh;
         div_obc_oflow_pvec_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
-        break;
-        
-      case OBC_TRC_FREE:
-      case OBC_FAR_FIELD:
-        // 境界値を与え，通常スキームで計算するので不要
-        break;
+      }
     }
+    
   }
   
   flop += fcount;
@@ -1044,18 +1047,20 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
     }
     else // 周期境界条件以外の処理
     {
-      if( nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-      
-      switch ( F )
+      if( nID[face] < 0 ) // @note 並列時，内部領域のときは，処理しない
       {
-        case OBC_TRC_FREE:
-          pobc_drchlt_ (d_p, size, &gd, &face, &pv);
-          break;
-          
-        case OBC_FAR_FIELD:
-          pobc_neumann_(d_p, size, &gd, &face);
-          break;
+        switch ( F )
+        {
+          case OBC_TRC_FREE:
+            pobc_drchlt_ (d_p, size, &gd, &face, &pv);
+            break;
+            
+          case OBC_FAR_FIELD:
+            pobc_neumann_(d_p, size, &gd, &face);
+            break;
+        }
       }
+
     }
   }
 }
@@ -1145,24 +1150,21 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
  */
 void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* d_vf, double& flop)
 {
-  REAL_TYPE v_cnv;
   REAL_TYPE dh = deltaX;
+  REAL_TYPE v_cnv = dt / dh;
   int gd = guide;
   
   for (int face=0; face<NOFACE; face++) {
     
-    if( nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
-    
-    switch ( obc[face].get_Class() )
+    if( nID[face] < 0 )  // @note 並列時，内部領域のときは，処理しない
     {
-      case OBC_OUTFLOW:
-        //v_cnv = C->V_Dface[face] * dt / dh;
-        v_cnv = dt / dh;
+      // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
+      
+      if ( obc[face].get_Class() == OBC_OUTFLOW )
+      {
         vobc_outflow_(d_vc, size, &gd, &v_cnv, &face, d_v0, d_vf, &flop);
-        break;
+      }
     }
-    
   }  
 }
 

@@ -15,41 +15,48 @@
 #include "BndOuter.h"
 
 
-// #################################################################
-// モニタ値を保持する
-void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, bool mode)
+/**
+ * @brief モニタ値を保持する
+ * @param [in] vv   指定速度ベクトル
+ * @param [in] face 面番号
+ * @param [in] mode BCの種類
+ */
+void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, const int mode)
 {
-  if ( mode ) // outflow
-  {
-    dm[0] = vv[0];
-    dm[1] = vv[1];
-    dm[2] = vv[2];
-  }
-  else // othersの場合は，各軸方向への寄与は成分のみ
-  {
-    REAL_TYPE a=0.0;
-    
-    switch (face) 
-    {
-      case X_MINUS:
-      case X_PLUS:
+  REAL_TYPE a;
+  
+  switch (mode) {
+    case OBC_OUTFLOW :
+      dm[0] = vv[0]; // sum
+      dm[1] = vv[1]; // min
+      dm[2] = vv[2]; // max
+      break;
+      
+    case OBC_SPEC_VEL:
+      if ( (face==X_MINUS) || (face==X_PLUS) )
+      {
         a = vv[0];
-        break;
-        
-      case Y_MINUS:
-      case Y_PLUS:
+      }
+      else if ( (face==Y_MINUS) || (face==Y_PLUS) )
+      {
         a = vv[1];
-        break;
-        
-      case Z_MINUS:
-      case Z_PLUS:
+      }
+      else // Z_MINUS, Z_PLUS
+      {
         a = vv[2];
-        break;
-    }
-    
-    dm[0] = a*(REAL_TYPE)valid_cell;
-    dm[1] = a*(REAL_TYPE)valid_cell;
-    dm[2] = a*(REAL_TYPE)valid_cell;
+      }
+      
+      dm[0] = a*(REAL_TYPE)valid_cell;
+      dm[1] = a*(REAL_TYPE)valid_cell;
+      dm[2] = a*(REAL_TYPE)valid_cell;
+      break;
+      
+    default:
+      a = vv[0]; // sumのみ
+      dm[0] = a;
+      dm[1] = a;
+      dm[2] = a;
+      break;
   }
 }
 

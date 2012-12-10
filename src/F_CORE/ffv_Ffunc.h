@@ -71,6 +71,7 @@
 #define div_obc_drchlt_     DIV_OBC_DRCHLT
 #define div_obc_oflow_pvec_ DIV_OBC_OFLOW_PVEC
 #define div_obc_oflow_vec_  DIV_OBC_OFLOW_VEC
+#define div_obc_vec_        DIV_OBC_VEC
 
 // ffv_velocity_binary.f90
 #define ab2_                AB2
@@ -512,6 +513,13 @@ extern "C" {
                            REAL_TYPE* aa,
                            REAL_TYPE* vf,
                            double* flop);
+  
+  void div_obc_vec_ (int* sz,
+                     int* g,
+                     int* face,
+                     REAL_TYPE* aa,
+                     REAL_TYPE* vf,
+                     double* flop);
 
   
   //***********************************************************************************************

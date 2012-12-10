@@ -2095,6 +2095,132 @@
     return
     end subroutine div_obc_oflow_vec
 
+
+!> ********************************************************************
+!! @brief 外部流出境界条件による速度ベクトルの発散の修正
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     face 面番号
+!! @param [out]    a1   領域境界の積算値
+!! @param [in]     vf   セルフェイス速度 n+1
+!! @param [out]    flop flop count 近似
+!! @note 指定面でも固体部分は対象外とするのでループ中に判定あり
+!!       div(u)=0から，内部流出境界のセルで計算されたdivが流出速度となる
+!<
+    subroutine div_obc_vec (sz, g, face, a1, vf, flop)
+    implicit none
+    include 'ffv_f_params.h'
+    integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop, rix, rjx, rkx
+    real                                                      ::  a1
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
+
+    a1 = 0.0   ! sum
+
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(+:a1) &
+!$OMP REDUCTION(+:flop) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rix, rjx, rkx, face) &
+!$OMP PRIVATE(i, j, k)
+
+    FACES : select case (face)
+
+      case (X_minus)
+
+!$OMP DO SCHEDULE(static)
+        do k=1,kx
+        do j=1,jx
+          a1 = a1 + vf(0,j,k,1)
+        end do
+        end do
+!$OMP END DO
+
+        flop = flop + rix*1.0d0
+
+
+      case (X_plus)
+
+!$OMP DO SCHEDULE(static)
+        do k=1,kx
+        do j=1,jx
+          a1 = a1 + vf(ix,j,k,1)
+        end do
+        end do
+!$OMP END DO
+
+        flop = flop + rix*1.0d0
+
+
+      case (Y_minus)
+
+!$OMP DO SCHEDULE(static)
+        do k=1,kx
+        do i=1,ix
+          a1 = a1 + vf(i,0,k,2)
+        end do
+        end do
+!$OMP END DO
+
+        flop = flop + rjx*1.0d0
+
+
+      case (Y_plus)
+
+!$OMP DO SCHEDULE(static)
+        do k=1,kx
+        do i=1,ix
+          a1 = a1 + vf(i,jx,k,2)
+        end do
+        end do
+!$OMP END DO
+
+        flop = flop + rjx*1.0d0
+
+
+      case (Z_minus)
+
+!$OMP DO SCHEDULE(static)
+        do j=1,jx
+        do i=1,ix
+          a1 = a1 + vf(i,j,0,3)
+        end do
+        end do
+!$OMP END DO
+
+        flop = flop + rkx*1.0d0
+
+
+      case (Z_plus)
+
+!$OMP DO SCHEDULE(static)
+        do j=1,jx
+        do i=1,ix
+          a1 = a1 + vf(i,j,kx,3)
+        end do
+        end do
+!$OMP END DO
+
+        flop = flop + rkx*1.0d0
+
+      case default
+    end select FACES
+
+!$OMP END PARALLEL
+
+    return
+    end subroutine div_obc_vec
+
+
 !> ********************************************************************
 !! @brief セルフェイスの値をセットする
 !! @param [out] v    セルフェイス速度
