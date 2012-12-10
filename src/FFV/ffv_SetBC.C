@@ -17,7 +17,7 @@
 #include "ffv_SetBC.h"
 
 
-// #################################################################
+
 /**
  @brief 温度指定境界条件に必要な温度をセットする
  @param t 温度場
@@ -71,7 +71,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度指定境界条件に必要な参照速度をセットする
  @param v セルセンタ速度ベクトル (n step)
@@ -134,7 +134,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
 }
 
 
-// #################################################################
+
 /**
  @brief ドライバ指定のチェック
  @param fp
@@ -254,7 +254,7 @@ REAL_TYPE SetBC3D::extractVel_OBC(const int n, REAL_TYPE* vec, const REAL_TYPE t
 }
 
 
-// #################################################################
+
 /**
  @brief セルに対する温度の内部境界をセットする
  @param t 温度
@@ -280,7 +280,7 @@ void SetBC3D::InnerTBCvol(REAL_TYPE* d_t, int* d_bh2, REAL_TYPE dt, double& flop
 }
 
 
-// #################################################################
+
 /**
  @brief 速度ベクトルの内部周期境界条件処理
  @param d_v 速度ベクトルのデータクラス
@@ -302,7 +302,7 @@ void SetBC3D::InnerVBC_Periodic(REAL_TYPE* d_v, int* d_bd)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度ベクトルの内部境界条件処理(タイムステップに一度)
  @param v 速度ベクトル
@@ -363,7 +363,7 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, 
 }
 
 
-// #################################################################
+
 /**
  @brief 拡散部分に関する温度の内部境界処理
  @param qbc 境界条件熱流束
@@ -407,7 +407,7 @@ void SetBC3D::InnerTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TY
 }
 
 
-// #################################################################
+
 /**
  @brief 圧力の内部境界条件処理
  @param d_p 圧力のデータクラス
@@ -446,7 +446,7 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
  *       avr[]のインデクスに注意 (Fortran <-> C)
  */
 
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* d_vf, double& flop)
+void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -531,7 +531,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
     switch (typ) 
     {
       case OBC_OUTFLOW:
-        div_obc_oflow_vec_(dv, size, &gd, &face, bv, vec, d_vf, &fcount); // vecは流用
+        div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, &fcount); // vecは流用
         obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
         break;
         
@@ -539,12 +539,13 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       case OBC_WALL:
         dummy = extractVel_OBC(face, vec, tm, v00, fcount);
         div_obc_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
+        vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
         obc[face].set_DomainV(vec, face);
         break;
         
       case OBC_SYMMETRIC:
         vec[0] = vec[1] = vec[2] = 0.0;
-        // fluxはゼロなので処理不要
+        vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
         obc[face].set_DomainV(vec, face);
         break;
         
@@ -556,11 +557,35 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
     }
   }
   
+  /*
+  for (int face=0; face<NOFACE; face++) {
+    typ = obc[face].get_Class();
+    
+    // 計算領域の最外郭領域でないときに，境界処理をスキップ
+    if( nID[face] >= 0 )
+    {
+      vec[0] =  0.0;   // sum
+      vec[1] =  1.0e6; // min
+      vec[2] = -1.0e6; // max
+      obc[face].set_DomainV(vec, face, true); // gatherする場合のダミー値を与えておく, trueで初期値を設定
+      continue;
+    }
+    
+    // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
+    switch (typ)
+    {
+      case OBC_OUTFLOW:
+        div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, &fcount); // vecは流用
+        obc[face].set_DomainV(vec, face, true); // true でoutflowを指定
+        break;
+    }
+  }*/
+  
   flop += fcount;
 }
 
 
-// #################################################################
+
 /**
  @brief 圧力損失部による速度の方向修正
  @param[in,out] v 速度
@@ -606,7 +631,7 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
 }
 
 
-// #################################################################
+
 /**
  @brief 圧力損失部による疑似速度方向の修正
  @param [in,out] vc   疑似速度ベクトル
@@ -812,7 +837,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
         
       case OBC_WALL:
         extractVel_OBC(face, vec, tm, v00, flop);
-        pvec_vobc_wall_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
+        pvec_vobc_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
         break;
         
       case OBC_SYMMETRIC:
@@ -945,7 +970,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
 }
 
 
-// #################################################################
+
 /**
  @brief Euler陽解法のときの速度境界条件による粘性項の修正
  @param[out] vc 疑似ベクトル
@@ -1036,7 +1061,7 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度の外部境界条件処理
  @param d_v 速度ベクトルのデータクラス
@@ -1058,7 +1083,7 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度の外部境界条件処理(タイムステップに一度)
  @param[out] v 速度ベクトル v^{n+1}
@@ -1107,19 +1132,18 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
 }
 
 
-// #################################################################
+
 /**
  @brief 疑似速度の外部境界条件処理
  @param [out]    d_vc   疑似速度ベクトル v^*
  @param [in]     d_v0   セルセンター速度ベクトル v^n
- @param [in]     d_bv   BCindex V
  @param [in]     tm     時刻
  @param [in]     dt     時間積分幅
  @param [in]     C      Control class
  @param [in]     d_vf   セルフェイス速度ベクトル v^n
  @param [in,out] flop   浮動小数点演算数
  */
-void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* d_vf, double& flop)
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* d_vf, double& flop)
 {
   REAL_TYPE v_cnv;
   REAL_TYPE dh = deltaX;
@@ -1135,7 +1159,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_
       case OBC_OUTFLOW:
         //v_cnv = C->V_Dface[face] * dt / dh;
         v_cnv = dt / dh;
-        vobc_outflow_(d_vc, size, &gd, &v_cnv, d_bv, &face, d_v0, d_vf, &flop);
+        vobc_outflow_(d_vc, size, &gd, &v_cnv, &face, d_v0, d_vf, &flop);
         break;
     }
     
@@ -1143,7 +1167,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_bv, REAL_
 }
 
 
-// #################################################################
+
 /**
  @brief 温度の外部境界条件処理の分岐
  @param d_t 温度のデータクラス
@@ -1181,7 +1205,7 @@ void SetBC3D::OuterTBC(REAL_TYPE* d_t)
 }
 
 
-// #################################################################
+
 /**
  @brief 拡散部分に関する温度の外部部境界処理（固体壁の場合）
  @param qbc 境界条件熱流束
@@ -1225,7 +1249,7 @@ void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TY
 }
 
 
-// #################################################################
+
 /**
  @brief 圧力の外部周期境界条件（単純なコピー）
  @param d_p 圧力
@@ -1356,7 +1380,7 @@ void SetBC3D::Pobc_Prdc_Simple(REAL_TYPE* d_p, const int face)
 }
 
 
-// #################################################################
+
 /**
  @brief 圧力の外部周期境界条件（双方向に圧力差を設定）
  @param d_p 圧力のデータクラス
@@ -1544,7 +1568,7 @@ void SetBC3D::Pobc_Prdc_Directional(REAL_TYPE* d_p, const int face, REAL_TYPE pv
 }
 
 
-// #################################################################
+
 /**
  @brief 圧力の内部周期境界条件（一方向の圧力差）
  @param d_p 圧力のデータクラス
@@ -2064,7 +2088,7 @@ REAL_TYPE SetBC3D::ps_IBC_Outflow(REAL_TYPE* d_ws, const int* d_bh1, const int n
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域のOutflow, In_out, T_Freeの境界条件処理
  @retval 熱量(-)
@@ -2248,7 +2272,7 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域の速度指定の境界条件処理
  @retval 熱量(-)
@@ -2427,7 +2451,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域の等温熱流束の境界条件処理
  @retval 熱量(-)
@@ -2579,7 +2603,7 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域の熱流束指定の境界条件処理
  @retval 熱量(-)
@@ -2716,7 +2740,7 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域の熱伝達境界の境界条件処理
  @retval 熱量(-)
@@ -2869,7 +2893,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域の熱伝達境界の境界条件処理
  @retval 熱量(-)
@@ -3121,7 +3145,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face
 }
 
 
-// #################################################################
+
 /**
  @brief 外部領域の熱伝達境界の境界条件処理
  @retval 熱量(-)
@@ -3385,7 +3409,7 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const in
 }
 
 
-// #################################################################
+
 /**
  @brief 内部領域の熱流束指定境界条件
  @retval 熱量(W)
@@ -3547,7 +3571,7 @@ REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, in
 }*/
 
 
-// #################################################################
+
 /**
  @brief 単媒質の場合の熱伝達温境界条件タイプS　流体の流動のみを解く場合
  @retval 熱流束の和 (W/m^2)
@@ -3833,7 +3857,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, const int* d_bh1, con
 }
 
 
-// #################################################################
+
 /**
  @brief 単媒質の場合の熱伝達温境界条件タイプSF（強制対流）　流体のみを解く場合
  @retval 熱流束の和 (W/m^2)
@@ -4012,7 +4036,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, RE
 }
 
 
-// #################################################################
+
 /**
  @brief 単媒質の場合の熱伝達境界条件タイプB 固体のみを解く場合
  @retval 熱流束の和 (W/m^2)
@@ -4192,7 +4216,7 @@ REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n
 }*/
 
 
-// #################################################################
+
 /**
  @brief 単媒質の場合の等温境界条件
  @retval 熱流束の和 (W/m^2)
@@ -4373,7 +4397,7 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n, R
 }*/
 
 
-// #################################################################
+
 /**
  @brief 初期温度を代入
  @param n エントリ
@@ -4403,7 +4427,7 @@ void SetBC3D::setInitialTemp_Compo(int n, int* d_bx, REAL_TYPE* d_t)
 }
 
 
-// #################################################################
+
 /**
  @brief 周期境界の場合のインデクスの同期
  @param bx BCindexのデータクラス
@@ -4656,7 +4680,7 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, int* bx, RE
 }*/
 
 
-// #################################################################
+
 /**
  * @brief 温度の外部周期境界条件（単純なコピー）
  * @param [in] t    温度のデータクラス
@@ -4779,7 +4803,7 @@ void SetBC3D::Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル（セルフェイス）
@@ -4861,7 +4885,7 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度の外部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
@@ -4998,7 +5022,7 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
 }
 
 
-// #################################################################
+
 /**
  @brief 速度の内部周期境界条件（単純なコピー）
  @param d_v 速度ベクトル
@@ -5107,7 +5131,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
                   size_t m2 = _F_IDX_V3D(i, j+jj-jx-1, k, l, ix, jx, kx, gd);
                   d_v[m0] = d_v[m2];
                 }
-              }              
+              }
             }
           }
         }

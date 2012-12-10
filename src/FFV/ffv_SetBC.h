@@ -257,7 +257,6 @@ public:
   
   void OuterVBC_Pseudo      (REAL_TYPE* d_vc,
                              REAL_TYPE* d_v0,
-                             int* d_bv,
                              REAL_TYPE tm,
                              REAL_TYPE dt,
                              Control* C,

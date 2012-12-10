@@ -64,6 +64,7 @@
 #define pvec_vobc_wall_     PVEC_VOBC_WALL
 #define pvec_vobc_symtrc_   PVEC_VOBC_SYMTRC
 #define vobc_drchlt_        VOBC_DRCHLT
+#define vobc_drchlt_vf_     VOBC_DRCHLT_VF
 #define vobc_outflow_       VOBC_OUTFLOW
 #define vobc_tfree_         VOBC_TFREE
 #define vobc_update_        VOBC_UPDATE
@@ -455,12 +456,18 @@ extern "C" {
                            REAL_TYPE* dh,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
-                           int* bv,
                            REAL_TYPE* vec,
                            int* face,
                            double* flop);
   
   void vobc_drchlt_       (REAL_TYPE* v,
+                           int* sz,
+                           int* g,
+                           int* bv,
+                           int* face,
+                           REAL_TYPE* vec);
+  
+  void vobc_drchlt_vf_    (REAL_TYPE* v,
                            int* sz,
                            int* g,
                            int* bv,
@@ -473,7 +480,6 @@ extern "C" {
                       int* sz,
                       int* g,
                       REAL_TYPE* c,
-                      int* bv,
                       int* face,
                       REAL_TYPE* v0,
                       REAL_TYPE* vf,
@@ -503,7 +509,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            int* face,
-                           int* bv,
                            REAL_TYPE* aa,
                            REAL_TYPE* vf,
                            double* flop);

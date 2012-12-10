@@ -5676,7 +5676,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_FAR_FIELD:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
         break;
         
       case OBC_PERIODIC:
