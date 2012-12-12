@@ -774,7 +774,7 @@
       Wbf = (Wb - dd * pzb) * c5
       Wtf = (Wt - dd * pzt) * c6
 
-      ! i=1-ix >> vfは0-ixの範囲をカバーするので，通信不要 6flop
+      ! i=1...ix >> vfは0...ixの範囲をカバーするので，通信不要 6flop
       vf(i-1,j  ,k  ,1) = Uwf * actv
       vf(i  ,j  ,k  ,1) = Uef * actv
       vf(i  ,j-1,k  ,2) = Vsf * actv
