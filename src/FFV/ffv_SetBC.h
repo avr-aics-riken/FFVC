@@ -260,7 +260,7 @@ public:
                              REAL_TYPE tm,
                              REAL_TYPE dt,
                              Control* C,
-                             REAL_TYPE* d_vf,
+                             int* d_bv,
                              double& flop);
   
   void ps_BC_Convection     (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);

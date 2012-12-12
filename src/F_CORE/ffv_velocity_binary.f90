@@ -239,12 +239,6 @@
       WPt = vf(i  , j  , k  ,3)*w_t + w_ref*(1.0-w_t)
       WPb = vf(i  , j  , k-1,3)*w_b + w_ref*(1.0-w_b)
 
-!UPe = 0.5*(Up0+Ue1)*w_e + u_ref*(1.0-w_e)
-!UPw = 0.5*(Up0+Uw1)*w_w + u_ref*(1.0-w_w)
-!VPn = 0.5*(Vp0+Vn1)*w_n + v_ref*(1.0-w_n)
-!VPs = 0.5*(Vp0+Vs1)*w_s + v_ref*(1.0-w_s)
-!WPt = 0.5*(Wp0+Wt1)*w_t + w_ref*(1.0-w_t)
-!WPb = 0.5*(Wp0+Wb1)*w_b + w_ref*(1.0-w_b)
 
       ! セルセンターからの壁面修正速度 > 2 flops
       uq = u_ref2 - Up0

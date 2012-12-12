@@ -547,7 +547,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
           
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
-          div_obc_vec_(size, &gd, &face, vec, vf, &fcount); // vecを流用
+          div_obc_vec_(size, &gd, &face, vec, vf, bv, &fcount); // vecを流用
           obc[face].set_DomainV(vec, face, typ);
           break;
       }
@@ -564,7 +564,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
       if (typ == OBC_OUTFLOW)
       {
-          div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, &fcount); // vecは流用
+          div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
           obc[face].set_DomainV(vec, face, typ);
       }
     }
@@ -758,7 +758,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
 // 速度境界条件による流束の修正
 void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
-  REAL_TYPE vec[3];
+  REAL_TYPE vec[3], vel;
   int st[3], ed[3];
   int typ;
   REAL_TYPE dh = deltaX;
@@ -821,7 +821,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
       {
         case OBC_SPEC_VEL:
           extractVel_OBC(face, vec, tm, v00, flop);
-          pvec_vobc_specv_(wv, size, &gd, &dh, v00, &rei, v, bv, vec, &face, &flop);
+          pvec_vobc_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
           break;
           
         case OBC_WALL:
@@ -834,7 +834,8 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
           break;
           
         case OBC_OUTFLOW:
-          pvec_vobc_oflow_(wv, size, &gd, &dh, &rei, v, vf, bv, &face, &flop);
+          vel = C->V_Dface[face];
+          pvec_vobc_oflow_(wv, size, &gd, &dh, &rei, v, bv, &face, &vel, &flop);
           break;
       }
     }
@@ -1145,13 +1146,13 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
  @param [in]     tm     時刻
  @param [in]     dt     時間積分幅
  @param [in]     C      Control class
- @param [in]     d_vf   セルフェイス速度ベクトル v^n
+ @param [in]     d_bv   BCindex V
  @param [in,out] flop   浮動小数点演算数
  */
-void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* d_vf, double& flop)
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, int* d_bv, double& flop)
 {
   REAL_TYPE dh = deltaX;
-  REAL_TYPE v_cnv = dt / dh;
+  REAL_TYPE vel;
   int gd = guide;
   
   for (int face=0; face<NOFACE; face++) {
@@ -1162,7 +1163,8 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
       
       switch ( obc[face].get_Class() ) {
         case OBC_OUTFLOW :
-          vobc_outflow_(d_vc, size, &gd, &v_cnv, &face, d_v0, d_vf, &flop);
+          vel = C->V_Dface[face] * dt / dh;
+          vobc_outflow_(d_vc, size, &gd, &vel, &face, d_v0, d_bv, &flop);
           break;
           
         case OBC_FAR_FIELD:

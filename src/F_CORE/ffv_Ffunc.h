@@ -424,16 +424,15 @@ extern "C" {
                            REAL_TYPE* dh,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
-                           REAL_TYPE* vf,
                            int* bv,
                            int* face,
+                           REAL_TYPE* cf,
                            double* flop);
   
   void pvec_vobc_specv_   (REAL_TYPE* wv,
                            int* sz,
                            int* g,
                            REAL_TYPE* dh,
-                           REAL_TYPE* v00,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            int* bv,
@@ -480,10 +479,10 @@ extern "C" {
   void vobc_outflow_ (REAL_TYPE* v,
                       int* sz,
                       int* g,
-                      REAL_TYPE* c,
+                      REAL_TYPE* cf,
                       int* face,
                       REAL_TYPE* v0,
-                      REAL_TYPE* vf,
+                      int* bv,
                       double* flop);
   
   void vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, double* flop);
@@ -512,6 +511,7 @@ extern "C" {
                            int* face,
                            REAL_TYPE* aa,
                            REAL_TYPE* vf,
+                           int* bv,
                            double* flop);
   
   void div_obc_vec_ (int* sz,
@@ -519,6 +519,7 @@ extern "C" {
                      int* face,
                      REAL_TYPE* aa,
                      REAL_TYPE* vf,
+                     int* bv,
                      double* flop);
 
   
