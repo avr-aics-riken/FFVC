@@ -3918,16 +3918,16 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
 // #################################################################
 /**
  @brief 外部境界に接するセルにおいて，各種速度境界条件に対応する媒質をチェックし，bv[]にビットフラグをセットする
- @param face 外部境界面番号
- @param bv BCindex V
- @param key fluid or solid　指定するBCが要求するガイドセルの状態 >> エラーチェックに使う
- @param enc_sw trueのとき，エンコードする．falseの場合にはガイドセルの状態チェックのみ
- @param chk ガイドセルの状態をチェックするかどうかを指定
- @param bp BCindex P
- @param enc_uwd trueのとき，1次精度のスイッチオン
+ @param [in]     face    外部境界面番号
+ @param [in,out] bv      BCindex V
+ @param [in]     key     fluid or solid　指定するBCが要求するガイドセルの状態 >> エラーチェックに使う
+ @param [in]     enc_sw  trueのとき，エンコードする．falseの場合にはガイドセルの状態チェックのみ
+ @param [in]     chk     ガイドセルの状態をチェックするかどうかを指定
+ @param [in]     bp      BCindex P
+ @param [in]     enc_uwd trueのとき，1次精度のスイッチオン
  @note 
- - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
- - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
+  - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
+  - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
  */
 void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, const bool enc_uwd)
 {
@@ -5683,7 +5683,6 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
     
     switch ( F )
     {
-      case OBC_SYMMETRIC:
       case OBC_WALL:
         encVbit_OBC(face, bv, "solid", true, "check", bp, false); // 流束形式
         break;
@@ -5702,6 +5701,10 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         
       case OBC_FAR_FIELD:
         encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
+        break;
+        
+      case OBC_SYMMETRIC:
+        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 境界値指定
         break;
         
       case OBC_PERIODIC:

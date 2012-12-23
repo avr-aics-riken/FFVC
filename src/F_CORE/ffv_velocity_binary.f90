@@ -671,6 +671,7 @@
     real                                                      ::  c1, c2, c3, c4, c5, c6
     real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real                                                      ::  w_w, w_e, w_s, w_n, w_b, w_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
@@ -680,8 +681,7 @@
     kx = sz(3)
     dd = dt/dh
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*87.0 + 8.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*108.0 + 26.0d0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*94.0 + 8.0d0
 
 
 !$OMP PARALLEL &
@@ -689,6 +689,7 @@
 !$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(w_w, w_e, w_s, w_n, w_b, w_t) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Uef, Uwf, Vnf, Vsf, Wtf, Wbf) &
@@ -739,12 +740,19 @@
       b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
       b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
 
-      Uw = 0.5*( Up0 + Uw0 )*b_w ! 18 flop
-      Ue = 0.5*( Up0 + Ue0 )*b_e
-      Vs = 0.5*( Vp0 + Vs0 )*b_s
-      Vn = 0.5*( Vp0 + Vn0 )*b_n
-      Wb = 0.5*( Wp0 + Wb0 )*b_b
-      Wt = 0.5*( Wp0 + Wt0 )*b_t
+      w_w = b_w * actv
+      w_e = b_e * actv
+      w_s = b_s * actv
+      w_n = b_n * actv
+      w_b = b_b * actv
+      w_t = b_t * actv
+
+      Uw = 0.5*( Up0 + Uw0 )*w_w ! 18 flop
+      Ue = 0.5*( Up0 + Ue0 )*w_e
+      Vs = 0.5*( Vp0 + Vs0 )*w_s
+      Vn = 0.5*( Vp0 + Vn0 )*w_n
+      Wb = 0.5*( Wp0 + Wb0 )*w_b
+      Wt = 0.5*( Wp0 + Wt0 )*w_t
       
       ! c=0.0(VBC), 1.0(Fluid); VBCは内部と外部の両方
       if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c1 = 0.0
@@ -775,12 +783,12 @@
       Wtf = (Wt - dd * pzt) * c6
 
       ! i=1...ix >> vfは0...ixの範囲をカバーするので，通信不要 6flop
-      vf(i-1,j  ,k  ,1) = Uwf * actv
-      vf(i  ,j  ,k  ,1) = Uef * actv
-      vf(i  ,j-1,k  ,2) = Vsf * actv
-      vf(i  ,j  ,k  ,2) = Vnf * actv
-      vf(i  ,j  ,k-1,3) = Wbf * actv
-      vf(i  ,j  ,k  ,3) = Wtf * actv
+      vf(i-1,j  ,k  ,1) = Uwf * w_w
+      vf(i  ,j  ,k  ,1) = Uef * w_e
+      vf(i  ,j-1,k  ,2) = Vsf * w_s
+      vf(i  ,j  ,k  ,2) = Vnf * w_n
+      vf(i  ,j  ,k-1,3) = Wbf * w_b
+      vf(i  ,j  ,k  ,3) = Wtf * w_t
 
       div(i,j,k) = (Uef - Uwf + Vnf - Vsf + Wtf - Wbf) * actv ! 6flop
       

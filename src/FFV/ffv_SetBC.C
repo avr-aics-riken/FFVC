@@ -443,13 +443,14 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
  * @param [in]     tm     無次元時刻
  * @param [in]     v00    基準速度
  * @param [in]     avr    平均値計算のテンポラリ値
- * @param [in,out] d_vf   セルフェイス速度 u^{n+1}
+ * @param [in,out] vf     セルフェイス速度 u^{n+1}
+ * @param [in,out] v      セルセンター速度 u^{n+1}
  * @param [in]     flop   flop count
  * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
  *       avr[]のインデクスに注意 (Fortran <-> C)
  */
 
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, double& flop)
+void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -534,20 +535,22 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
         case OBC_SPEC_VEL:
         case OBC_WALL:
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-          div_obc_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
-          vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
+          vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
+          vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
           obc[face].set_DomainV(vec, face, typ);
           break;
           
         case OBC_SYMMETRIC:
+          // 対称面で流束はゼロ．divergence_()でマスクによりゼロとなっている
+          vobc_neumann_(v, size, &gd, &face);
           vec[0] = vec[1] = vec[2] = 0.0;
-          vobc_drchlt_vf_(vf, size, &gd, bv, &face, vec);
+          vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
           obc[face].set_DomainV(vec, face, typ);
           break;
           
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
-          div_obc_vec_(size, &gd, &face, vec, vf, bv, &fcount); // vecを流用
+          vobc_div_vec_(size, &gd, &face, vec, vf, bv, &fcount); // vecを流用
           obc[face].set_DomainV(vec, face, typ);
           break;
       }
@@ -564,7 +567,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
       if (typ == OBC_OUTFLOW)
       {
-          div_obc_oflow_vec_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
+          vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
           obc[face].set_DomainV(vec, face, typ);
       }
     }
@@ -821,21 +824,21 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
       {
         case OBC_SPEC_VEL:
           extractVel_OBC(face, vec, tm, v00, flop);
-          pvec_vobc_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
+          vobc_pv_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
           break;
           
         case OBC_WALL:
           extractVel_OBC(face, vec, tm, v00, flop);
-          pvec_vobc_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
-          break;
-          
-        case OBC_SYMMETRIC:
-          //pvec_vobc_symtrc_(wv, size, &gd, &dh, &rei, v, bv, &face, &flop);
+          vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
           break;
           
         case OBC_OUTFLOW:
           vel = C->V_Dface[face];
-          pvec_vobc_oflow_(wv, size, &gd, &dh, &rei, v, bv, &face, &vel, &flop);
+          vobc_pv_oflow_(wv, size, &gd, &dh, &rei, v, bv, &face, &vel, &flop);
+          break;
+          
+        case OBC_SYMMETRIC:
+          // 対称面での流束はゼロなので，BCによる寄与は不要
           break;
       }
     }
@@ -934,14 +937,12 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         case OBC_WALL:
         {
           REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-          div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
+          vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
           break;
         }
           
         case OBC_SYMMETRIC:
           // 境界面の法線速度はゼロなので，修正不要
-          //vec[0] = vec[1] = vec[2] = 0.0;
-          //div_obc_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
           break;
           
         case OBC_TRC_FREE:
@@ -964,7 +965,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       if ( typ == OBC_OUTFLOW )
       {
         vel = dt / dh;
-        div_obc_oflow_pvec_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
+        vobc_div_pv_oflow_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
       }
     }
     
@@ -1092,14 +1093,14 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
 
 /**
  @brief 速度の外部境界条件処理(タイムステップに一度)
- @param[out] v 速度ベクトル v^{n+1}
- @param vc 速度ベクトル v^*
- @param bv BCindex V
- @param tm
- @param dt 
- @param C
- @param v00
- @param flop
+ @param [in,out] d_v  速度ベクトル v^{n+1}
+ @param [in]     d_vc 速度ベクトル v^*
+ @param [in]     bv   BCindex V
+ @param [in]     tm
+ @param [in]     dt
+ @param [in]     C
+ @param [in]     v00
+ @param [in,out] flop
  */
 void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop)
 {
@@ -1108,32 +1109,37 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
   
   for (int face=0; face<NOFACE; face++) {
 
-    if( nID[face] >= 0 ) continue; // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
+    // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
     // @note ここでスキップする場合には，tfreeの処理でMPI通信をしないこと（参加しないノードがあるためエラーとなる）
-    
-    switch ( obc[face].get_Class() )
+    if( nID[face] < 0 )
     {
-      case OBC_OUTFLOW:
-        vobc_update_(d_v, size, &gd, d_vc, &face);
-        break;
-        
-      case OBC_SPEC_VEL:
-        extractVel_OBC(face, vec, tm, v00, flop);
-        vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
-        break;
-        
-      case OBC_TRC_FREE:
-        vobc_tfree_(d_v, size, &gd, &face, &flop);
-        break;
-        
-      case OBC_FAR_FIELD:
-        vobc_update_(d_v, size, &gd, d_vc, &face);
-        break;
-        
-      default:
-        break;
+      switch ( obc[face].get_Class() )
+      {
+        case OBC_OUTFLOW:
+          vobc_update_(d_v, size, &gd, d_vc, &face);
+          break;
+          
+        case OBC_SPEC_VEL:
+          extractVel_OBC(face, vec, tm, v00, flop);
+          vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
+          break;
+          
+        case OBC_TRC_FREE:
+          vobc_tfree_(d_v, size, &gd, &face, &flop);
+          break;
+          
+        case OBC_FAR_FIELD:
+          vobc_update_(d_v, size, &gd, d_vc, &face);
+          break;
+          
+        case OBC_SYMMETRIC:
+          vobc_neumann_(d_v, size, &gd, &face);
+          break;
+          
+        default:
+          break;
+      }
     }
-    
   }  
 }
 

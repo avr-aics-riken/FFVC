@@ -3104,7 +3104,7 @@ void FFV::setInitialCondition()
     // 流出境界の流出速度の算出
     // dummy
     Gemini_R* m_buf = new Gemini_R [C.NoBC];
-    BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, d_vf, flop_task);
+    BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, flop_task);
     if ( m_buf ) { delete [] m_buf; m_buf=NULL; }
     
     DomainMonitor(BC.export_OBC(), &C);

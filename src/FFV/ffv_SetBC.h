@@ -161,7 +161,8 @@ public:
                 REAL_TYPE tm,
                 REAL_TYPE* v00,
                 Gemini_R* avr,
-                REAL_TYPE* d_vf,
+                REAL_TYPE* vf,
+                REAL_TYPE* v, 
                 double& flop);
   
   

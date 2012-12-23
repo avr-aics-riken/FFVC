@@ -59,19 +59,18 @@
 #define div_ibc_oflow_vec_  DIV_IBC_OFLOW_VEC
 
 // ffv_vbc_outer.f90
-#define pvec_vobc_specv_    PVEC_VOBC_SPECV
-#define pvec_vobc_oflow_    PVEC_VOBC_OFLOW
-#define pvec_vobc_wall_     PVEC_VOBC_WALL
-#define pvec_vobc_symtrc_   PVEC_VOBC_SYMTRC
+#define vobc_pv_specv_      VOBC_PV_SPECV
+#define vobc_pv_oflow_      VOBC_PV_OFLOW
+#define vobc_pv_wall_       VOBC_PV_WALL
 #define vobc_drchlt_        VOBC_DRCHLT
-#define vobc_drchlt_vf_     VOBC_DRCHLT_VF
+#define vobc_face_drchlt_   VOBC_FACE_DRCHLT
 #define vobc_outflow_       VOBC_OUTFLOW
 #define vobc_tfree_         VOBC_TFREE
 #define vobc_update_        VOBC_UPDATE
-#define div_obc_drchlt_     DIV_OBC_DRCHLT
-#define div_obc_oflow_pvec_ DIV_OBC_OFLOW_PVEC
-#define div_obc_oflow_vec_  DIV_OBC_OFLOW_VEC
-#define div_obc_vec_        DIV_OBC_VEC
+#define vobc_div_drchlt_    VOBC_DIV_DRCHLT
+#define vobc_div_pv_oflow_  VOBC_DIV_PV_OFLOW
+#define vobc_div_oflow_     VOBC_DIV_OFLOW
+#define vobc_div_vec_       VOBC_DIV_VEC
 
 // ffv_velocity_binary.f90
 #define ab2_                AB2
@@ -418,7 +417,7 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_vbc_outer.f90
-  void pvec_vobc_oflow_   (REAL_TYPE* wv,
+  void vobc_pv_oflow_     (REAL_TYPE* wv,
                            int* sz,
                            int* g,
                            REAL_TYPE* dh,
@@ -429,7 +428,7 @@ extern "C" {
                            REAL_TYPE* cf,
                            double* flop);
   
-  void pvec_vobc_specv_   (REAL_TYPE* wv,
+  void vobc_pv_specv_     (REAL_TYPE* wv,
                            int* sz,
                            int* g,
                            REAL_TYPE* dh,
@@ -440,17 +439,7 @@ extern "C" {
                            int* face,
                            double* flop);
   
-  void pvec_vobc_symtrc_  (REAL_TYPE* wv,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* rei,
-                           REAL_TYPE* v,
-                           int* bv,
-                           int* face,
-                           double* flop);
-  
-  void pvec_vobc_wall_    (REAL_TYPE* wv,
+  void vobc_pv_wall_      (REAL_TYPE* wv,
                            int* sz,
                            int* g,
                            REAL_TYPE* dh,
@@ -467,7 +456,7 @@ extern "C" {
                            int* face,
                            REAL_TYPE* vec);
   
-  void vobc_drchlt_vf_    (REAL_TYPE* v,
+  void vobc_face_drchlt_  (REAL_TYPE* vf,
                            int* sz,
                            int* g,
                            int* bv,
@@ -488,7 +477,7 @@ extern "C" {
   void vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, double* flop);
   void vobc_update_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE*vc, int* face);
   
-  void div_obc_drchlt_    (REAL_TYPE* div,
+  void vobc_div_drchlt_   (REAL_TYPE* div,
                            int* sz,
                            int* g,
                            int* face,
@@ -496,7 +485,7 @@ extern "C" {
                            REAL_TYPE* vec,
                            double* flop);
   
-  void div_obc_oflow_pvec_(REAL_TYPE* div,
+  void vobc_div_pv_oflow_ (REAL_TYPE* div,
                            int* sz,
                            int* g,
                            int* face,
@@ -505,7 +494,7 @@ extern "C" {
                            REAL_TYPE* vf,
                            double* flop);
   
-  void div_obc_oflow_vec_ (REAL_TYPE* div,
+  void vobc_div_oflow_    (REAL_TYPE* div,
                            int* sz,
                            int* g,
                            int* face,
@@ -514,7 +503,7 @@ extern "C" {
                            int* bv,
                            double* flop);
   
-  void div_obc_vec_ (int* sz,
+  void vobc_div_vec_(int* sz,
                      int* g,
                      int* face,
                      REAL_TYPE* aa,
