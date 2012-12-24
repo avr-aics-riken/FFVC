@@ -826,6 +826,7 @@
     real                                                      ::  Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
+    real                                                      ::  w_w, w_e, w_s, w_n, w_b, w_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -840,6 +841,7 @@
 !$OMP PARALLEL &
 !$OMP PRIVATE(bvx, actv) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
+!$OMP PRIVATE(w_w, w_e, w_s, w_n, w_b, w_t) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
@@ -874,12 +876,19 @@
       b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
       b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
 
-      Uw = 0.5*( Up0 + Uw0 )*b_w
-      Ue = 0.5*( Up0 + Ue0 )*b_e
-      Vs = 0.5*( Vp0 + Vs0 )*b_s
-      Vn = 0.5*( Vp0 + Vn0 )*b_n
-      Wb = 0.5*( Wp0 + Wb0 )*b_b
-      Wt = 0.5*( Wp0 + Wt0 )*b_t
+      w_w = b_w * actv
+      w_e = b_e * actv
+      w_s = b_s * actv
+      w_n = b_n * actv
+      w_b = b_b * actv
+      w_t = b_t * actv
+
+      Uw = 0.5*( Up0 + Uw0 )*w_w
+      Ue = 0.5*( Up0 + Ue0 )*w_e
+      Vs = 0.5*( Vp0 + Vs0 )*w_s
+      Vn = 0.5*( Vp0 + Vn0 )*w_n
+      Wb = 0.5*( Wp0 + Wb0 )*w_b
+      Wt = 0.5*( Wp0 + Wt0 )*w_t
 
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
       c_e = 1.0
