@@ -32,3 +32,8 @@ src/		source files
 	IP		intrinsic problems
 	PMlib-x.x	performance measurement library
 	Polylib-x.x	polygon data management library
+
+
+--- 　Comments & Known Problems
+
+2012-12-25 流出境界条件としてFAR_FIELDを使うと，計算初期に流出ベクトルが振動する．流れが発達し，一様流速に近づくと振動は小さくなる．

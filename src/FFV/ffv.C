@@ -393,6 +393,12 @@ void FFV::FileOutput(double& flop, const bool restart)
     m_pit[i] = pitch[i];
   }
   
+  // セルセンター位置を基点とする
+  for (int i=0; i<3; i++)
+  {
+    m_org[i] += 0.5*m_pit[i];
+  }
+  
   // 出力ファイルの指定が有次元の場合
   if ( C.Unit.File == DIMENSIONAL ) 
   {

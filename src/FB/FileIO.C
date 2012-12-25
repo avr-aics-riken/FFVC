@@ -434,13 +434,9 @@ void FileIO::writeScalar(const string fname,
   int stp = (int)step;
   REAL_TYPE tm = (REAL_TYPE)time;
   int g = guide_out;
-  REAL_TYPE o[3], p[3];
-  o[0] = org[0];
-  o[1] = org[1];
-  o[2] = org[2];
-  p[0] = pit[0];
-  p[1] = pit[1];
-  p[2] = pit[2];
+
+  REAL_TYPE o[3] = {org[0], org[1], org[2]};
+  REAL_TYPE p[3] = {pit[0], pit[1], pit[2]};
   
   int avs = (mode == true) ? 1 : 0;
   int stp_a = (int)step_avr;
@@ -480,13 +476,9 @@ void FileIO::writeVector(const string fname,
   int stp = (int)step;
   REAL_TYPE tm = (REAL_TYPE)time;
   int g = guide_out;
-  REAL_TYPE o[3], p[3];
-  o[0] = org[0];
-  o[1] = org[1];
-  o[2] = org[2];
-  p[0] = pit[0];
-  p[1] = pit[1];
-  p[2] = pit[2];
+  
+  REAL_TYPE o[3] = {org[0], org[1], org[2]};
+  REAL_TYPE p[3] = {pit[0], pit[1], pit[2]};
   
   int avs = (mode == true) ? 1 : 0;
   int stp_a = (int)step_avr;

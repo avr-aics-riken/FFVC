@@ -307,12 +307,12 @@ void SetBC3D::InnerVBC_Periodic(REAL_TYPE* d_v, int* d_bd)
 
 
 /**
- @brief 速度ベクトルの内部境界条件処理(タイムステップに一度)
- @param v 速度ベクトル
- @param bv BCindex V
- @param tm
- @param v00
- @param flop
+ * @brief 速度ベクトルの内部境界条件処理
+ * @param [in,out] v    速度ベクトル
+ * @param [in]     bv   BCindex V
+ * @param [in]     tm   時刻
+ * @param [in]     v00  参照速度
+ * @param [in,out] flop 浮動小数演算数
  */
 void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, double& flop)
 {
@@ -567,8 +567,9 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
       if (typ == OBC_OUTFLOW)
       {
-          vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
-          obc[face].set_DomainV(vec, face, typ);
+        vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
+        obc[face].set_DomainV(vec, face, typ);
+        //printf("%e %e %e\n", vec[0], vec[1], vec[2]);
       }
     }
   }
@@ -1096,11 +1097,11 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
  @param [in,out] d_v  速度ベクトル v^{n+1}
  @param [in]     d_vc 速度ベクトル v^*
  @param [in]     bv   BCindex V
- @param [in]     tm
- @param [in]     dt
- @param [in]     C
- @param [in]     v00
- @param [in,out] flop
+ @param [in]     tm   時刻
+ @param [in]     dt   時間積分幅
+ @param [in]     C    コントロールクラス
+ @param [in]     v00  参照速度
+ @param [in,out] flop 浮動小数点演算数
  */
 void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop)
 {
@@ -1129,7 +1130,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
           break;
           
         case OBC_FAR_FIELD:
-          vobc_update_(d_v, size, &gd, d_vc, &face);
+          vobc_neumann_(d_v, size, &gd, &face);
           break;
           
         case OBC_SYMMETRIC:
@@ -1146,14 +1147,14 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
 
 
 /**
- @brief 疑似速度の外部境界条件処理
- @param [out]    d_vc   疑似速度ベクトル v^*
- @param [in]     d_v0   セルセンター速度ベクトル v^n
- @param [in]     tm     時刻
- @param [in]     dt     時間積分幅
- @param [in]     C      Control class
- @param [in]     d_bv   BCindex V
- @param [in,out] flop   浮動小数点演算数
+ * @brief 疑似速度の外部境界条件処理
+ * @param [out]    d_vc   疑似速度ベクトル v^*
+ * @param [in]     d_v0   セルセンター速度ベクトル v^n
+ * @param [in]     tm     時刻
+ * @param [in]     dt     時間積分幅
+ * @param [in]     C      Control class
+ * @param [in]     d_bv   BCindex V
+ * @param [in,out] flop   浮動小数点演算数
  */
 void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, int* d_bv, double& flop)
 {
@@ -1163,10 +1164,10 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
   
   for (int face=0; face<NOFACE; face++) {
     
-    if( nID[face] < 0 )  // @note 並列時，内部領域のときは，処理しない
+    // @note 並列時，内部領域のときは，処理しない
+    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
+    if( nID[face] < 0 )  
     {
-      // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
-      
       switch ( obc[face].get_Class() ) {
         case OBC_OUTFLOW :
           vel = C->V_Dface[face] * dt / dh;

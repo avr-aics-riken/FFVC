@@ -840,7 +840,7 @@
     kx = sz(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face)
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, face)
 
     FACES : select case (face)
     case (X_minus)
@@ -848,9 +848,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        v(0, j, k, 1) = v(1, j, k, 1)
-        v(0, j, k, 2) = v(1, j, k, 2)
-        v(0, j, k, 3) = v(1, j, k, 3)
+      do i=1-g,0
+        v(i, j, k, 1) = v(1-i, j, k, 1)
+        v(i, j, k, 2) = v(1-i, j, k, 2)
+        v(i, j, k, 3) = v(1-i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -861,9 +863,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        v(ix+1, j, k, 1) = v(ix, j, k, 1)
-        v(ix+1, j, k, 2) = v(ix, j, k, 2)
-        v(ix+1, j, k, 3) = v(ix, j, k, 3)
+      do i=ix+1,ix+g
+        v(i, j, k, 1) = v(2*ix+1-i, j, k, 1)
+        v(i, j, k, 2) = v(2*ix+1-i, j, k, 2)
+        v(i, j, k, 3) = v(2*ix+1-i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -873,10 +877,12 @@
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
+      do j=1-g,0
       do i=1,ix
-        v(i, 0, k, 1) = v(i, 1, k, 1)
-        v(i, 0, k, 2) = v(i, 1, k, 2)
-        v(i, 0, k, 3) = v(i, 1, k, 3)
+        v(i, j, k, 1) = v(i, 1-j, k, 1)
+        v(i, j, k, 2) = v(i, 1-j, k, 2)
+        v(i, j, k, 3) = v(i, 1-j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -886,10 +892,12 @@
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
-      do i=1,ix      
-        v(i, jx+1, k, 1) = v(i, jx, k, 1)
-        v(i, jx+1, k, 2) = v(i, jx, k, 2)
-        v(i, jx+1, k, 3) = v(i, jx, k, 3)
+      do j=jx+1,jx+g
+      do i=1,ix
+        v(i, j, k, 1) = v(i, 2*jx+1-j, k, 1)
+        v(i, j, k, 2) = v(i, 2*jx+1-j, k, 2)
+        v(i, j, k, 3) = v(i, 2*jx+1-j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -899,10 +907,12 @@
 
 !$OMP DO SCHEDULE(static)
       do j=1,jx
+      do k=1-g,0
       do i=1,ix
-        v(i, j, 0, 1) = v(i, j, 1, 1)
-        v(i, j, 0, 2) = v(i, j, 1, 2)
-        v(i, j, 0, 3) = v(i, j, 1, 3)
+        v(i, j, k, 1) = v(i, j, 1-k, 1)
+        v(i, j, k, 2) = v(i, j, 1-k, 2)
+        v(i, j, k, 3) = v(i, j, 1-k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -912,10 +922,12 @@
 
 !$OMP DO SCHEDULE(static)
       do j=1,jx
+      do k=kx+1,kx+g
       do i=1,ix
-        v(i, j, kx+1, 1) = v(i, j, kx, 1)
-        v(i, j, kx+1, 2) = v(i, j, kx, 2)
-        v(i, j, kx+1, 3) = v(i, j, kx, 3)
+        v(i, j, k, 1) = v(i, j, 2*kx+1-k, 1)
+        v(i, j, k, 2) = v(i, j, 2*kx+1-k, 2)
+        v(i, j, k, 3) = v(i, j, 2*kx+1-k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1938,6 +1950,7 @@
 
     a = 0.0   ! sum
 
+
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face) &
@@ -1951,9 +1964,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        if ( ibits(bv(i,j,k), bc_face_W, bitw_5) == obc_mask ) then
-          a = a + vf(i-1,j,k,1)
-        end if
+        a = a + vf(i-1,j,k,1)
       end do
       end do
 !$OMP END DO
@@ -1965,9 +1976,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        if ( ibits(bv(i,j,k), bc_face_E, bitw_5) == obc_mask ) then
-          a = a + vf(i,j,k,1)
-        end if
+        a = a + vf(i,j,k,1)
       end do
       end do
 !$OMP END DO
@@ -1979,9 +1988,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_S, bitw_5) == obc_mask ) then
-          a = a + vf(i,j-1,k,2)
-        end if
+        a = a + vf(i,j-1,k,2)
       end do
       end do
 !$OMP END DO
@@ -1993,9 +2000,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_N, bitw_5) == obc_mask ) then
-          a = a + vf(i,j,k,2)
-        end if
+        a = a + vf(i,j,k,2)
       end do
       end do
 !$OMP END DO
@@ -2007,9 +2012,7 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_B, bitw_5) == obc_mask ) then
-          a = a + vf(i,j,k-1,3)
-        end if
+        a = a + vf(i,j,k-1,3)
       end do
       end do
 !$OMP END DO
@@ -2021,9 +2024,7 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_T, bitw_5) == obc_mask ) then
-          a = a + vf(i,j,k,3)
-        end if
+        a = a + vf(i,j,k,3)
       end do
       end do
 !$OMP END DO
