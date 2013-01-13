@@ -504,11 +504,11 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Exit(0);
   }
   
-  F.readVelocity(fp, tmp, size, guide, d_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, tmp, size, guide, d_v, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
-  if ( (step != Session_StartStep) || (time != Session_StartTime) ) 
+  if ( (step != Session_StartStep) || (time != Session_StartTime) )
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -525,7 +525,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Exit(0);
   }
   
-  F.readVelocity(fp, tmp, size, guide, d_vf, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, tmp, size, guide, d_vf, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -638,7 +638,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, tmp, size, guide, d_av, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
+  F.readVelocity(fp, tmp, size, guide, d_av, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
   if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
   {
@@ -779,7 +779,8 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     Hostonly_ printf("\n\tError : File open '%s'\n", f_vel.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, f_vel, r_size, guide, d_r_v, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  // d_r_vはr_size, d_woはsize, rsize<sizeなのでバッファとして利用
+  F.readVelocity(fp, f_vel, r_size, guide, d_r_v, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -1364,7 +1365,8 @@ void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TY
     Exit(0);
   }
   
-  F.readVelocity(fp, DRI->f_vel, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  // ？？？　ベクトルなのになぜd_wk、多分バグ
+  F.readVelocity(fp, DRI->f_vel, d_size, guide, d_wk, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   SetOverlap(d_v,d_wk,3,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
              DRI->read_file_voxel_head,DRI->read_file_voxel_size);
   
@@ -1385,7 +1387,7 @@ void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TY
     Exit(0);
   }
   
-  F.readVelocity(fp, DRI->f_fvel, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, DRI->f_fvel, d_size, guide, d_wk, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
   SetOverlap(d_vf,d_wk,3,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
              DRI->read_file_voxel_head,DRI->read_file_voxel_size);
 
@@ -1610,7 +1612,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
           printf("\n\tError : File open '%s'\n", tmp.c_str());
           Exit(0);
         }
-        F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+        F.readVelocity(fp, tmp, d_size, guide, d_wk, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
         
         if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
         if ( (step != Session_StartStep) || (time != Session_StartTime) )
@@ -1741,7 +1743,7 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
           printf("\n\tError : File open '%s'\n", tmp.c_str());
           Exit(0);
         }
-        F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+        F.readVelocity(fp, tmp, d_size, guide, d_wk, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
         
         if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
         if ( (step != Session_StartStep) || (time != Session_StartTime) )
@@ -1782,7 +1784,7 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+    F.readVelocity(fp, tmp, d_size, guide, d_wk, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
     

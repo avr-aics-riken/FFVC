@@ -64,16 +64,7 @@ public:
   FBUtility U;
 
   
-  /**
-   * @brief sphファイルの書き出し（内部領域のみ）
-   * @param [in] vf               スカラデータ
-   * @param [in] sz               配列サイズ
-   * @param [in] gc               ガイドセル
-   * @param [in] org              基点
-   * @param [in] ddx              ピッチ
-   * @param [in] m_ModePrecision  浮動小数点の精度
-   * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
-   */
+  // sphファイルの書き出し（内部領域のみ）
   void writeRawSPH(const REAL_TYPE *vf, 
                    const int* sz, 
                    const int gc, 
@@ -81,25 +72,7 @@ public:
                    const REAL_TYPE* ddx, 
                    const int m_ModePrecision);
   
-  /**
-   * @brief 圧力のファイルをロードする
-   * @param [in]     fp          ファイルポインタ（ファイル出力）
-   * @param [in]     fname       ファイル名
-   * @param [in]     sz          サイズ
-   * @param [in]     gc          ガイドセルサイズ
-   * @param [out]    p           圧力データポインタ
-   * @param [out]    step        ステップ
-   * @param [out]    time        時刻
-   * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
-   * @param [in]     BasePrs     基準圧力
-   * @param [in]     RefDensity　代表密度
-   * @param [in]     RefVelocity 代表速度
-   * @param [in,out] flop        浮動小数点演算数
-   * @param [in]     guide_out   出力ガイドセル数
-   * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
-   * @param [out]    step_avr    平均操作したステップ数
-   * @param [out]    time_avr    平均操作した時間
-   */
+  // 圧力のファイルをロードする
   void readPressure(FILE* fp, 
                     const string fname, 
                     int* sz, 
@@ -118,29 +91,13 @@ public:
                     double& time_avr);
   
   
-  /**
-   * @brief 速度のファイルをロードする
-   * @param [in]     fp          ファイルポインタ（ファイル出力）
-   * @param [in]     fname       ファイル名
-   * @param [in]     sz          サイズ
-   * @param [in]     gc          ガイドセルサイズ
-   * @param [out]    v           速度データポインタ
-   * @param [out]    step        ステップ
-   * @param [out]    time        時刻
-   * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
-   * @param [in]     BasePrs     基準圧力
-   * @param [in]     RefVelocity 代表速度
-   * @param [in,out] flop        浮動小数点演算数
-   * @param [in]     guide_out   出力ガイドセル数
-   * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
-   * @param [out]    step_avr    平均操作したステップ数
-   * @param [out]    time_avr    平均操作した時間
-   */
+  // 速度のファイルをロードする
   void readVelocity(FILE* fp, 
                     const string fname, 
                     int* sz, 
                     int gc, 
-                    REAL_TYPE* v, 
+                    REAL_TYPE* v,
+                    REAL_TYPE* v_buf,
                     unsigned& step, 
                     double& time, 
                     const REAL_TYPE *v00, 
@@ -153,25 +110,7 @@ public:
                     double& time_avr);
   
   
-  /**
-   * @brief 温度のファイルをロードする
-   * @param [in]     fp          ファイルポインタ（ファイル出力）
-   * @param [in]     fname       ファイル名
-   * @param [in]     sz          サイズ
-   * @param [in]     gc          ガイドセルサイズ
-   * @param [out]    t           温度データポインタ
-   * @param [out]    step        ステップ
-   * @param [out]    time        時刻
-   * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
-   * @param [in]     Base_tmp    基準温度
-   * @param [in]     Diff_tmp  　代表温度差
-   * @param [in]     Kelvin      定数
-   * @param [in,out] flop        浮動小数点演算数
-   * @param [in]     guide_out   出力ガイドセル数
-   * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
-   * @param [out]    step_avr    平均操作したステップ数
-   * @param [out]    time_avr    平均操作した時間
-   */
+  // 温度のファイルをロードする
   void readTemperature(FILE* fp, 
                        const string fname, 
                        int* sz, 
@@ -190,21 +129,7 @@ public:
                        double& time_avr);
   
   
-  /** 
-   * @brief スカラーファイルを出力する
-   * @param [in] fname     ファイル名
-   * @param [in] sz        分割数
-   * @param [in] gc        ガイドセル数
-   * @param [in] s         スカラー場
-   * @param [in] step      ステップ
-   * @param [in] time      時刻
-   * @param [in] org       領域の基点
-   * @param [in] pit       セル幅
-   * @param [in] guide_out ガイドセル数
-   * @param [in] mode      平均値出力指示（瞬時値のときtrue，平均値のときfalse）
-   * @param [in] step_avr  平均操作したステップ数
-   * @param [in] time_avr  平均操作した時間
-   */
+  // スカラーファイルを出力する
   void writeScalar(const string fname, 
                    int* sz, 
                    int gc,
@@ -219,21 +144,7 @@ public:
                    const double time_avr=0.0);
   
   
-  /** 
-   * @brief ベクトルファイルを出力する
-   * @param [in] fname     ファイル名
-   * @param [in] sz        分割数
-   * @param [in] gc        ガイドセル数
-   * @param [in] v         ベクトル場
-   * @param [in] step      ステップ
-   * @param [in] time      時刻
-   * @param [in] org       領域の基点
-   * @param [in] pit       セル幅
-   * @param [in] guide_out ガイドセル数
-   * @param [in] mode      平均値出力指示（瞬時値のときtrue，平均値のときfalse）
-   * @param [in] step_avr  平均操作したステップ数
-   * @param [in] time_avr  平均操作した時間
-   */
+  // ベクトルファイルを出力する
   void writeVector(const string fname, 
                    int* sz, 
                    int gc, 

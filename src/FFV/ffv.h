@@ -157,7 +157,7 @@ private:
   REAL_TYPE *d_wv;  ///< ワーク配列
   REAL_TYPE *d_abf; ///< Adams-bashforthワーク
   REAL_TYPE *d_av;  ///< 平均値
-  REAL_TYPE *d_wo;  ///< 
+  REAL_TYPE *d_wo;  ///< 入出力のバッファワーク
   REAL_TYPE *d_qbc; ///< 熱BC flux保持
   
   // Scalar3D
@@ -536,12 +536,9 @@ private:
   void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
   
   
-  /**
-   * @brief ファイル出力
-   * @param [in,out] flop    浮動小数点演算数
-   * @param [in]     restart リスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
-   */
-  void FileOutput(double& flop, const bool restart=false);
+
+  //ファイル出力
+  void FileOutput(double& flop, const bool crs_restart=false);
   
   
   /*

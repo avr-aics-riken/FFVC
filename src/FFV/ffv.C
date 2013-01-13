@@ -376,8 +376,12 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 
 
 // #################################################################
-// ファイル出力
-void FFV::FileOutput(double& flop, const bool restart)
+/**
+ * @brief ファイル出力
+ * @param [in,out] flop    浮動小数点演算数
+ * @param [in]     restart 粗格子を用いたリスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
+ */
+void FFV::FileOutput(double& flop, const bool crs_restart)
 {
   REAL_TYPE scale = 1.0;
   
@@ -450,7 +454,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   }
   
   
-  // リスタート用
+  // 粗格子リスタートの場合の出力ファイル名
   std::string prs_restart("prs_restart_");
   std::string vel_restart("vel_restart_");
   std::string temp_restart("temp_restart_");
@@ -467,7 +471,7 @@ void FFV::FileOutput(double& flop, const bool restart)
     U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar, flop);
   }
   
-  if ( !restart ) 
+  if ( !crs_restart )
   {
     tmp = DFI.Generate_FileName(C.f_Pressure, m_step, myRank, pout);
   }
@@ -487,7 +491,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  if ( !restart ) 
+  if ( !crs_restart )
   {
     tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, pout);
   }
@@ -506,7 +510,7 @@ void FFV::FileOutput(double& flop, const bool restart)
   // Face Velocity
   fb_shift_refv_out_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  if ( !restart )
+  if ( !crs_restart )
   {
     tmp = DFI.Generate_FileName(C.f_Fvelocity, m_step, myRank, pout);
   }
@@ -536,7 +540,7 @@ void FFV::FileOutput(double& flop, const bool restart)
       U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar, flop);
     }
     
-    if ( !restart ) 
+    if ( !crs_restart )
     {
       tmp = DFI.Generate_FileName(C.f_Temperature, m_step, myRank, pout);
     }

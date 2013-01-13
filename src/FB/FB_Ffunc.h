@@ -147,9 +147,10 @@ extern "C" {
                            REAL_TYPE* val, 
                            int* bv);
   
-  void fb_shift_refv_in_  (REAL_TYPE* v, 
+  void fb_shift_refv_in_  (REAL_TYPE* vo,
                            int* sz,
-                           int* g, 
+                           int* g,
+                           REAL_TYPE* vi,
                            REAL_TYPE* v00, 
                            REAL_TYPE* scale, 
                            REAL_TYPE* refv, 

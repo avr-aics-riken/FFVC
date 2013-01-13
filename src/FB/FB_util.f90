@@ -114,7 +114,6 @@
   do i=si, si+ix/2-1
     ii = 2*i - (2*i-1)/ix * ix
 
-!   u
     q1 = src(i  , j  , k  , 1)
     q2 = src(i  , j  , k  , 2)
     q3 = src(i  , j  , k  , 3)
@@ -655,7 +654,7 @@
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  time, time_avr
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(3)                                        ::  org, pit
   character(64)                                             ::  fname
 
@@ -683,9 +682,9 @@
   write(16) step, time
 
   if ( gs /= 0 ) then
-    write(16) ((((v(i,j,k,l),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g),l=1,3)
+    write(16) ((((v(l,i,j,k),l=1,3),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
   else
-    write(16) ((((v(i,j,k,l),i=1,ix),j=1,jx),k=1,kx),l=1,3)
+    write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
   end if
 
   if ( avs == 0 ) then
@@ -784,7 +783,7 @@
   integer                                                   ::  sv_type, d_type, imax, jmax, kmax
   integer, dimension(3)                                     ::  sz
   real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   character(64)                                             ::  fname
 
   ix = sz(1)
@@ -817,9 +816,9 @@
   read(16) step, time
 
   if ( gs == 0 ) then
-    read(16) ((((v(i,j,k,l),i=1,ix),j=1,jx),k=1,kx),l=1,3)
+    read(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
   else
-    read(16) ((((v(i,j,k,l),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g),l=1,3)
+    read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
   end if
 
   if ( avs == 0 ) then
@@ -835,22 +834,24 @@
   
 !> ********************************************************************
 !! @brief 速度ベクトルの格子速度変換
-!! @param [in,out] v     変換されたベクトル（平均場の場合は積算値）
+!! @param [out]    vo    変換されたベクトル（平均場の場合は積算値）
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
+!! @param [in]     vi    入力速度場
 !! @param [in]     v00   参照速度
 !! @param [in]     sacle 倍数　（瞬時値の場合には1）
 !! @param [in]     refv  代表速度
 !! @param [out]    flop  浮動小数演算数
 !! @note dst[] = ( src[]/refv + v00 ) * scale, 有次元のときrefvは次元速度，無次元のとき1.0
 !<
-  subroutine fb_shift_refv_in (v, sz, g, v00, scale, refv, flop)
+  subroutine fb_shift_refv_in (vo, sz, g, vi, v00, scale, refv, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
   real                                                      ::  scale, u_ref, v_ref, w_ref, refv, rr
   double precision                                          ::  flop
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vo
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vi
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -874,9 +875,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    v(i,j,k,1) = ( v(i,j,k,1) * rr + u_ref ) * scale
-    v(i,j,k,2) = ( v(i,j,k,2) * rr + v_ref ) * scale
-    v(i,j,k,3) = ( v(i,j,k,3) * rr + w_ref ) * scale
+    vo(i,j,k,1) = ( vi(1,i,j,k) * rr + u_ref ) * scale
+    vo(i,j,k,2) = ( vi(2,i,j,k) * rr + v_ref ) * scale
+    vo(i,j,k,3) = ( vi(3,i,j,k) * rr + w_ref ) * scale
   end do
   end do
   end do
@@ -905,7 +906,8 @@
   integer, dimension(3)                                     ::  sz
   real                                                      ::  u_ref, v_ref, w_ref, unit_v, scale, unit
   double precision                                          ::  flop
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vout, vin
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vin
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout
   real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
@@ -929,9 +931,9 @@
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vout(i,j,k,1) = ( vin(i,j,k,1) * scale - u_ref ) * unit
-    vout(i,j,k,2) = ( vin(i,j,k,2) * scale - v_ref ) * unit
-    vout(i,j,k,3) = ( vin(i,j,k,3) * scale - w_ref ) * unit
+    vout(1,i,j,k) = ( vin(i,j,k,1) * scale - u_ref ) * unit
+    vout(2,i,j,k) = ( vin(i,j,k,2) * scale - v_ref ) * unit
+    vout(3,i,j,k) = ( vin(i,j,k,3) * scale - w_ref ) * unit
   end do
   end do
   end do
@@ -1091,8 +1093,8 @@
 
   flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
 
-  val1 = (nadd-1.0)/nadd
   val2 = 1.0/nadd
+  val1 = 1.0 - val2
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, val1, val2)
@@ -1137,8 +1139,8 @@
 
   flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
 
-  val1 = (nadd-1.0)/nadd
   val2 = 1.0/nadd
+  val1 = 1.0 - val2
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)

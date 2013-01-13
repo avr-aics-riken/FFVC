@@ -709,7 +709,7 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   
-  // 初期状態のファイル出力  リスタート時と性能測定モードのときには出力しない
+  // セッションを開始したときに、初期値をファイル出力  リスタートと性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
     flop_task = 0.0;

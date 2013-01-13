@@ -18,7 +18,17 @@
 
 
 
-// sphファイルの書き出し（内部領域のみ）
+
+/**
+ * @brief sphファイルの書き出し（内部領域のみ）
+ * @param [in] vf               スカラデータ
+ * @param [in] sz               配列サイズ
+ * @param [in] gc               ガイドセル
+ * @param [in] org              基点
+ * @param [in] ddx              ピッチ
+ * @param [in] m_ModePrecision  浮動小数点の精度
+ * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
+ */
 void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)
 {
   int pad, dType, stp, svType;
@@ -178,7 +188,26 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
 
 
 
-// 圧力のファイルをロードする
+
+/**
+ * @brief 圧力のファイルをロードする
+ * @param [in]     fp          ファイルポインタ（ファイル出力）
+ * @param [in]     fname       ファイル名
+ * @param [in]     sz          サイズ
+ * @param [in]     gc          ガイドセルサイズ
+ * @param [out]    p           圧力データポインタ
+ * @param [out]    step        ステップ
+ * @param [out]    time        時刻
+ * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
+ * @param [in]     BasePrs     基準圧力
+ * @param [in]     RefDensity　代表密度
+ * @param [in]     RefVelocity 代表速度
+ * @param [in,out] flop        浮動小数点演算数
+ * @param [in]     guide_out   出力ガイドセル数
+ * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ * @param [out]    step_avr    平均操作したステップ数
+ * @param [out]    time_avr    平均操作した時間
+ */
 void FileIO::readPressure(FILE* fp,
                           const string fname,
                           int* sz,
@@ -258,12 +287,32 @@ void FileIO::readPressure(FILE* fp,
 
 
 
-// 速度のファイルをロードする
-void FileIO::readVelocity(FILE* fp, 
+
+/**
+ * @brief 速度のファイルをロードする
+ * @param [in]     fp          ファイルポインタ（ファイル出力）
+ * @param [in]     fname       ファイル名
+ * @param [in]     sz          サイズ
+ * @param [in]     gc          ガイドセルサイズ
+ * @param [out]    v           速度データポインタ
+ * @param [in]     v_buf       速度の入力バッファ
+ * @param [out]    step        ステップ
+ * @param [out]    time        時刻
+ * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
+ * @param [in]     BasePrs     基準圧力
+ * @param [in]     RefVelocity 代表速度
+ * @param [in,out] flop        浮動小数点演算数
+ * @param [in]     guide_out   出力ガイドセル数
+ * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ * @param [out]    step_avr    平均操作したステップ数
+ * @param [out]    time_avr    平均操作した時間
+ */
+void FileIO::readVelocity(FILE* fp,
                           const string fname,
                           int* sz, 
                           int gc, 
-                          REAL_TYPE* v, 
+                          REAL_TYPE* v,
+                          REAL_TYPE* v_buf,
                           unsigned& step, 
                           double& time, 
                           const REAL_TYPE *v00, 
@@ -293,7 +342,7 @@ void FileIO::readVelocity(FILE* fp,
   int f_step, a_step;
   REAL_TYPE f_time, a_time;
   
-  fb_read_sph_v_ (v, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
+  fb_read_sph_v_ (v_buf, sz, &gc, tmp, &f_step, &f_time, &g, &avs, &a_step, &a_time);
   
   if ( !mode )
   {
@@ -311,7 +360,7 @@ void FileIO::readVelocity(FILE* fp,
   u0[2] = v00[2];
   u0[3] = v00[3];
 
-  fb_shift_refv_in_(v, sz, &gc, u0, &scale, &refv, &flop);
+  fb_shift_refv_in_(v, sz, &gc, v_buf, u0, &scale, &refv, &flop);
 
   if ( mode )
   {
@@ -333,8 +382,27 @@ void FileIO::readVelocity(FILE* fp,
 }
 
 
-// 温度のファイルをロードする
-void FileIO::readTemperature(FILE* fp, 
+
+/**
+ * @brief 温度のファイルをロードする
+ * @param [in]     fp          ファイルポインタ（ファイル出力）
+ * @param [in]     fname       ファイル名
+ * @param [in]     sz          サイズ
+ * @param [in]     gc          ガイドセルサイズ
+ * @param [out]    t           温度データポインタ
+ * @param [out]    step        ステップ
+ * @param [out]    time        時刻
+ * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
+ * @param [in]     Base_tmp    基準温度
+ * @param [in]     Diff_tmp  　代表温度差
+ * @param [in]     Kelvin      定数
+ * @param [in,out] flop        浮動小数点演算数
+ * @param [in]     guide_out   出力ガイドセル数
+ * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ * @param [out]    step_avr    平均操作したステップ数
+ * @param [out]    time_avr    平均操作した時間
+ */
+void FileIO::readTemperature(FILE* fp,
                              const string fname,
                              int* sz, 
                              int gc, 
@@ -405,8 +473,23 @@ void FileIO::readTemperature(FILE* fp,
 }
 
 
-// スカラーファイルを出力する
-void FileIO::writeScalar(const string fname, 
+
+/**
+ * @brief スカラーファイルを出力する
+ * @param [in] fname     ファイル名
+ * @param [in] sz        分割数
+ * @param [in] gc        ガイドセル数
+ * @param [in] s         スカラー場
+ * @param [in] step      ステップ
+ * @param [in] time      時刻
+ * @param [in] org       領域の基点
+ * @param [in] pit       セル幅
+ * @param [in] guide_out ガイドセル数
+ * @param [in] mode      平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ * @param [in] step_avr  平均操作したステップ数
+ * @param [in] time_avr  平均操作した時間
+ */
+void FileIO::writeScalar(const string fname,
                          int* sz, 
                          int gc,
                          REAL_TYPE* s, 
@@ -448,8 +531,23 @@ void FileIO::writeScalar(const string fname,
 }
 
 
-// ベクトルファイルを出力する
-void FileIO::writeVector(const string fname, 
+
+/**
+ * @brief ベクトルファイルを出力する
+ * @param [in] fname     ファイル名
+ * @param [in] sz        分割数
+ * @param [in] gc        ガイドセル数
+ * @param [in] v         ベクトル場
+ * @param [in] step      ステップ
+ * @param [in] time      時刻
+ * @param [in] org       領域の基点
+ * @param [in] pit       セル幅
+ * @param [in] guide_out ガイドセル数
+ * @param [in] mode      平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+ * @param [in] step_avr  平均操作したステップ数
+ * @param [in] time_avr  平均操作した時間
+ */
+void FileIO::writeVector(const string fname,
                          int* sz, 
                          int gc, 
                          REAL_TYPE* v, 
