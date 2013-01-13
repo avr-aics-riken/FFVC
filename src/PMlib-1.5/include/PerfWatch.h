@@ -4,7 +4,7 @@
 /*
  * Performance Monitor Library
  *
- * Copyright (c) RIKEN, Japan. All right reserved. 2012
+ * Copyright (c) RIKEN, Japan. All right reserved. 2012 - 2013
  *
  */
 

@@ -2,7 +2,7 @@
 //
 // Combine sph files and output
 //
-// Copyright (c) All right reserved. 2012
+// Copyright (c) 2012-2013  All right reserved.
 //
 // Institute of Industrial Science, The University of Tokyo, Japan.
 //
