@@ -25,15 +25,15 @@ class Interval_Manager {
 protected:
   int id;              ///< 管理対象を表すID
   int mode;            ///< 出力指定モード
+  int start_step;      ///< 開始ステップ数
   int intvl_step;      ///< ステップ数指定のインターバル
   int next_step;       ///< ステップ数指定の場合の次の出力ステップ
   int m_count;         ///< セッション内のインターバル数のカウント
-  double   intvl_tm;   ///< 時刻指定のインターバル（無次元） tg_avstartの場合には，スタート開始時刻として扱う
+  double   intvl_tm;   ///< 時刻指定のインターバル（無次元）
+  double   start_tm;   ///< 開始時刻（無次元）
   double   next_tm;    ///< 時刻指定の場合の次の出力時刻（無次元）
   double   delta_t;    ///< 時間積分幅（無次元）
-  double   init_tm;    ///< セッションの初期時刻（無次元）
   bool     step_flag;  ///< 1ステップの間に複数回のコールを許すためのフラグ 
-  bool     init_state; ///< 初期化確認フラグ
 
 public:
   /** 管理対象のリスト */
@@ -45,7 +45,6 @@ public:
     tg_average,  ///< 平均値出力
     tg_sampled,  ///< サンプリング出力 
     tg_accelra,  ///< 加速時間
-    tg_avstart,  ///< 平均開始時間
     tg_plot3d,   ///< PLOT3D瞬時値出力
     tg_END
   };
@@ -57,104 +56,99 @@ public:
   };
   
   Interval_Manager() {
-    id         = -1;
     mode       = 0;
     intvl_step = 0;
     next_step  = 0;
     m_count    = 1;
+    start_step = 0;
     next_tm    = 0.0;
     intvl_tm   = 0.0;
     delta_t    = 0.0;
-    init_tm    = 0.0;
+    start_tm   = 0.0;
     step_flag  = false;
-    init_state = false;
   }
   ~Interval_Manager() {}
   
 public:
-  /**
-   * @brief トリガーを初期化する
-   * @param [in] stp    現在ステップ
-   * @param [in] tm     現時刻（無次元）
-   * @param [in] m_dt   時間積分幅（無次元）
-   * @param [in] m_id   管理対象を示すID
-   * @param [in] tscale タイムスケール(デフォルト 0.0)
-   */
+  
+  // トリガーを初期化する
   bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale);
   
   
-  /**
-   * @brief 指定の時刻になったかどうかを判断する
-   * @retval 出力タイミングの場合，trueを返す
-   * @param [in] stp    現在ステップ
-   * @param [in] tm     現時刻
-   * @param [in] d_flag 表示用フラグ（デバッグ）
-   */
+  // 指定の時刻になったかどうかを判断する
   bool isTriggered(const int stp, const double tm, bool d_flag=false);
  
   
-  /**
-   * @brief インターバル値をセットする
-   * @param [in] m_interval インターバル値
-   */
+  // インターバル値をセットする
   void setInterval(const double m_interval);
   
   
-  /**
-   * @brief インターバル値を無次元化する
-   * @param [in] scale  時間スケール
-   * @note BY_timeの場合には単にゼロになるだけ
-   */
-  void normalizeInterval(const double scale);
+  // 開始時刻とインターバル時刻を無次元化する
+  void normalizeTime(const double scale);
   
   
-  /**
-   * @brief セッションの開始時刻をセットする
-   * @param [in] m_tm 無次元時刻
-   */
-  void setTime_init(const double m_tm);
+  // セッションの開始時刻をセットする
+  void setStart(const double m_start);
   
   
-  /** 指定モードをステップにする */
+  // 指定モードをステップにする
   void setMode_Step() 
   {
     mode = By_step;
   }
   
 
-  /** 指定モードをステップにする */
+  // 指定モードをステップにする
   void setMode_Time() 
   {
     mode = By_time;
   }
   
   
-  /** 各タイムステップの最初にstep_flagをリセットする */
+  // 各タイムステップの最初にstep_flagをリセットする 
   void resetTrigger() 
   {
     step_flag = false;
   }
   
 
-  /** インターバル（ステップ）を返す */
+  // インターバル（ステップ）を返す
   int getIntervalStep() const 
   {
     return intvl_step;
   }
   
 
-  /** インターバル（時刻）を返す */
+  // インターバル（時刻）を返す
   double getIntervalTime() const 
   {
     return intvl_tm;
   }
   
+  
+  // 開始ステップを返す
+  int getStartStep() const
+  {
+    return start_step;
+  }
+  
+  
+  // 開始時刻を返す
+  double getStartTime() const
+  {
+    return start_tm;
+  }
+  
 
-  /** インターバル指定がステップの場合trueを返す */
+  // インターバル指定がステップの場合trueを返す
   bool isStep() const 
   {
     return (mode==By_step) ? true : false;
   }
+  
+  // 開始時刻を過ぎているかどうかを判断
+  bool isStarted(const double m_time, const unsigned m_step);
+
 };
 
 #endif // _FB_INTVL_MNGR_H_

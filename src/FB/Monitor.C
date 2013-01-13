@@ -496,7 +496,7 @@ void MonitorList::get_Monitor(Control* C)
   // サンプリングの指定単位が有次元の場合に，無次元に変換
   if ( C->Sampling.unit == DIMENSIONAL ) 
   {
-    C->Interval[Interval_Manager::tg_sampled].normalizeInterval(C->Tscale);
+    C->Interval[Interval_Manager::tg_sampled].normalizeTime(C->Tscale);
   }
   
   

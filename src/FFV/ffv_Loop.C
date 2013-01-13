@@ -119,7 +119,7 @@ int FFV::Loop(const unsigned step)
   TIMING_start(tm_loop_uty_sct_1);
   
   // 時間平均値操作
-  if ( (C.Mode.Average == ON) && (CurrentTime > C.Interval[Interval_Manager::tg_avstart].getIntervalTime()) ) 
+  if ( (C.Mode.Average == ON) && C.Interval[Interval_Manager::tg_average].isStarted(CurrentTime, CurrentStep))
   {
     TIMING_start(tm_average_time);
     flop_count=0.0;
@@ -252,21 +252,10 @@ int FFV::Loop(const unsigned step)
   // 平均値のデータ出力 
   if (C.Mode.Average == ON) 
   {
-    // 開始時刻を過ぎているか
-    bool j_flag = false;
-    if ( C.Interval[Interval_Manager::tg_avstart].isStep() ) 
-    {
-      if (CurrentStep >= C.Interval[Interval_Manager::tg_avstart].getIntervalStep()) j_flag=true;
-    }
-    else
-    {
-      if (CurrentTime >= C.Interval[Interval_Manager::tg_avstart].getIntervalTime()) j_flag=true;
-    }
     
-    if ( j_flag ) 
+    // 開始時刻を過ぎているか
+    if ( C.Interval[Interval_Manager::tg_average].isStarted(CurrentTime, CurrentStep) )
     {
-      // 初期化は1回だけ
-      if ( !C.Interval[Interval_Manager::tg_average].initTrigger(CurrentStep, CurrentTime, DT.get_DT(), Interval_Manager::tg_average, C.Tscale) ) Exit(0);
       if ( C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) ) 
       {
         TIMING_start(tm_file_out);

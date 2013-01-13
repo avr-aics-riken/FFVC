@@ -148,20 +148,12 @@ FFV::~FFV()
 
 
 // #################################################################
-// 時間平均値のファイル出力
+/**
+ * @brief 時間平均値のファイル出力
+ * @param [in,out] flop 浮動小数点演算数
+ */
 void FFV::AverageOutput(double& flop)
-{
-  // 出力ファイルの指定が有次元の場合
-  REAL_TYPE timeAvr;
-  if (C.Unit.File == DIMENSIONAL) 
-  {
-    timeAvr = CurrentTime_Avr * C.Tscale;
-  }
-  else 
-  {
-    timeAvr = CurrentTime_Avr;
-  }
-  
+{  
   // 出力用のヘッダ
   REAL_TYPE m_org[3], m_pit[3];
   
@@ -170,6 +162,33 @@ void FFV::AverageOutput(double& flop)
   {
     m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
     m_pit[i] = pitch[i];
+  }
+  
+  // セルセンター位置を基点とする
+  for (int i=0; i<3; i++)
+  {
+    m_org[i] += 0.5*m_pit[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL )
+  {
+    for (int i=0; i<3; i++)
+    {
+      m_org[i] *= C.RefLength;
+      m_pit[i] *= C.RefLength;
+    }
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  REAL_TYPE timeAvr;
+  if (C.Unit.File == DIMENSIONAL)
+  {
+    timeAvr = CurrentTime_Avr * C.Tscale;
+  }
+  else
+  {
+    timeAvr = CurrentTime_Avr;
   }
   
   // 平均操作の母数
@@ -182,6 +201,8 @@ void FFV::AverageOutput(double& flop)
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
+  
+  printf("%d %f\n", stepAvr, timeAvr);
   
   // Pressure
   if (C.Unit.File == DIMENSIONAL) 

@@ -388,10 +388,7 @@ private:
   
   
   
-  /**
-   * @brief 時間平均値のファイル出力
-   * @param [in,out] flop 浮動小数点演算数
-   */
+  // 時間平均値のファイル出力
   void AverageOutput(double& flop);
   
   

@@ -351,8 +351,8 @@ void FFV::Restart(FILE* fp)
   
   if ( C.Start == initial_start) // 初期スタートのステップ，時間を設定する
   {
-    CurrentTime = 0.0;
-    CurrentStep = 0;
+    Session_StartStep = CurrentStep = 0;
+    Session_StartTime = CurrentTime = 0.0;
     
     // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
     if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
@@ -577,9 +577,9 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // ガイド出力
   int gs = C.GuideOut;
   
-  if ( C.Interval[Interval_Manager::tg_avstart].isStep() )
+  if ( C.Interval[Interval_Manager::tg_average].isStep() )
   {
-    if ( step > C.Interval[Interval_Manager::tg_avstart].getIntervalStep() )
+    if ( step > C.Interval[Interval_Manager::tg_average].getStartStep() )
     {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
@@ -593,7 +593,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   }
   else
   {
-    if ( time > C.Interval[Interval_Manager::tg_avstart].getIntervalTime() )
+    if ( time > C.Interval[Interval_Manager::tg_average].getStartTime() )
     {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
@@ -1653,7 +1653,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readVelocity(fp, tmp, d_size, guide, d_wk, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+    F.readVelocity(fp, tmp, d_size, guide, d_wk, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
     

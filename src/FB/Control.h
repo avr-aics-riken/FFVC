@@ -1151,23 +1151,8 @@ public:
   void printNoCompo(FILE* fp);
   
   
-  /**
-   * @brief 無次元パラメータを各種モードに応じて設定する
-   * @param [in,out] mat
-   * @param [in,out] cmp
-   * @param [in,out] RF
-   * @param [in,out] BO
-   * @note
-   * - 代表長さと代表速度はパラメータで必ず与えること（読み込んだ値は変更しない）
-   * - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
-   * -           無次元　（Pr, Re > RefV=RefL=1）
-   * - 熱対流　　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
-   * - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
-   * - 固体熱伝導　有次元　（代表長さ，温度拡散係数 > Peclet=1）？
-   * @see
-   *  - bool Control::getXML_Para_ND(void)
-   *  - void Control::getXML_Para_Init(void)
-   */
+
+  // @brief 無次元パラメータを各種モードに応じて設定する
   void setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
   
   
@@ -1290,21 +1275,11 @@ public:
   void get_Sampling();
   
   
-  /**
-   * @brief 制御，計算パラメータ群の取得
-   * @param [in] DT     DTctlクラス ポインタ
-   * @param [in] FP3DR  PLOT3D READクラス ポインタ
-   * @param [in] FP3DW  PLOT3D WRITEクラス ポインタ
-   * @note 他のパラメータ取得に先んじて処理しておくもの
-   */
+  // 制御，計算パラメータ群の取得
   void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
   
 
-  /**
-   * @brief 制御，計算パラメータ群の取得
-   * @param [in] IC  反復制御クラス
-   * @param [in] RF  ReferenceFrameクラス
-   */
+  // 制御，計算パラメータ群の取得
   void get_Steer_2(ItrCtl* IC, ReferenceFrame* RF);
   
  

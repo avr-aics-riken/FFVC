@@ -550,7 +550,7 @@ void Control::get_Average_option()
   // 平均操作開始時間
   if ( Mode.Average == ON )
   {
-	  label = "/Steer/AverageOption/StartType";
+	  label = "/Steer/AverageOption/SpecifiedType";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -561,11 +561,11 @@ void Control::get_Average_option()
     {
 		  if     ( !strcasecmp(str.c_str(), "step") )
       {
-			  Interval[Interval_Manager::tg_avstart].setMode_Step();
+        Interval[Interval_Manager::tg_average].setMode_Step();
 		  }
 		  else if( !strcasecmp(str.c_str(), "time") )
       {
-			  Interval[Interval_Manager::tg_avstart].setMode_Time();
+        Interval[Interval_Manager::tg_average].setMode_Time();
 		  }
 		  else
       {
@@ -581,8 +581,21 @@ void Control::get_Average_option()
 		  }
 		  else
       {
-			  Interval[Interval_Manager::tg_avstart].setInterval((double)ct);
+        Interval[Interval_Manager::tg_average].setStart((double)ct);
 		  }
+      
+      label="/Steer/AverageOption/Interval";
+      
+      if ( !(tpCntl->GetValue(label, &ct )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      else
+      {
+        Interval[Interval_Manager::tg_average].setInterval((double)ct);
+      }
+      
 	  }
   }
 }
@@ -897,43 +910,6 @@ void Control::get_FileIO()
     }
   }
   
-  
-  // インターバル　平均値
-  label = "/Steer/FileIO/AveragedIntervalType";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if ( !strcasecmp(str.c_str(), "step") )
-    {
-      Interval[Interval_Manager::tg_average].setMode_Step();
-    }
-    else if ( !strcasecmp(str.c_str(), "time") )
-    {
-      Interval[Interval_Manager::tg_average].setMode_Time();
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    label="/Steer/FileIO/AveragedInterval";
-    
-    if ( !(tpCntl->GetValue(label, &f_val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      Interval[Interval_Manager::tg_average].setInterval((double)f_val);
-    }
-  }
   
   
   // ファイル出力モード
@@ -2573,7 +2549,13 @@ void Control::get_start_condition()
 
 
 // #################################################################
-// 制御，計算パラメータ群の取得
+/**
+ * @brief 制御，計算パラメータ群の取得
+ * @param [in] DT     DTctlクラス ポインタ
+ * @param [in] FP3DR  PLOT3D READクラス ポインタ
+ * @param [in] FP3DW  PLOT3D WRITEクラス ポインタ
+ * @note 他のパラメータ取得に先んじて処理しておくもの
+ */
 void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
 {
   
@@ -2606,7 +2588,11 @@ void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_W
 
 
 // #################################################################
-// 制御，計算パラメータ群の取得
+/**
+ * @brief 制御，計算パラメータ群の取得
+ * @param [in] IC  反復制御クラス
+ * @param [in] RF  ReferenceFrameクラス
+ */
 void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
 {
   // 流体の解法アルゴリズムを取得
@@ -3523,19 +3509,19 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   // 時間平均
   if ( Mode.Average == ON )
   {
-    if ( !Interval[Interval_Manager::tg_avstart].isStep() )
+    if ( !Interval[Interval_Manager::tg_average].isStep() )
     {
-      itm = Interval[Interval_Manager::tg_avstart].getIntervalTime();
-      fprintf(fp,"\t     Averaging Operation      :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
+      itm = Interval[Interval_Manager::tg_average].getStartTime();
+      fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
     }
     else
     {
-      fprintf(fp,"\t     Averaging Operation      :   %12d\n", Interval[Interval_Manager::tg_avstart].getIntervalStep());
+      fprintf(fp,"\t     Averaging Start          :   %12d\n", Interval[Interval_Manager::tg_average].getStartStep());
     }
   }
   else
   {
-    fprintf(fp,"\t     Averaging Operation      :   OFF\n");
+    fprintf(fp,"\t     Averaging Start          :   OFF\n");
   }
   
   // Time Increment
@@ -4096,6 +4082,9 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
  - 熱対流　　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
  - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
  - 固体熱伝導　有次元　（代表長さ，温度拡散係数 > Peclet=1）？
+ * @see
+ *  - bool Control::getXML_Para_ND(void)
+ *  - void Control::getXML_Para_Init(void)
  */
 void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO)
 {

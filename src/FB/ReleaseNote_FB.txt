@@ -11,7 +11,11 @@ Release Note
 
 #######################################
 
-Ver 1.1.0    3 Dec. 2012
+
+Ver 1.1.1   13 Jan. 2013
+  - ベクトルのファイル出力フォーマットを V(i,j,k,3) -> V(3,i,j,k)に戻す
+
+Ver 1.1.0   25 Dec. 2012
   - fill_bid.hのバグ修正
   - Versionチェックなし
   - 丸め誤差を考慮したfloatの判定 (pos < 0.5) >> (pos-ROUND_EPS) < 0.5)
@@ -49,8 +53,6 @@ Ver 0.9.3  30 July 2012
   - plylib-2.1_Dev_b対応
   - PLOT3Dフォーマットテスト導入
   - 全メソッドTextParsar対応
-  
-Ver 0.9.0  11 July 2012
   - Operator追加
   - hostnameを取得
   - Iteration/Synchronizationに "sync/async" を追加

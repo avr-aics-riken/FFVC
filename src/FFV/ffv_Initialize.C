@@ -2275,22 +2275,23 @@ void FFV::init_Interval()
   
   // セッションの初期時刻をセット
   for (int i=0; i<Interval_Manager::tg_END; i++) {
-    C.Interval[i].setTime_init(Session_StartTime);
+    if ( i != Interval_Manager::tg_average)
+    {
+      C.Interval[i].setStart(Session_StartTime);
+    }
+    else
+    {
+      // tg_averageの場合は、get_Average_option()で指定済み
+    }
   }
   
   
   // 入力モードが有次元の場合に，無次元に変換
   if ( C.Unit.Param == DIMENSIONAL )
   {
-    C.Interval[Interval_Manager::tg_compute].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_console].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_history].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_instant].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_average].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_accelra].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_avstart].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_sampled].normalizeInterval(C.Tscale);
-    C.Interval[Interval_Manager::tg_plot3d].normalizeInterval(C.Tscale);
+    for (int i=0; i<Interval_Manager::tg_END; i++) {
+      C.Interval[i].normalizeTime(C.Tscale);
+    }
   }
   
   // Reference frame
@@ -2305,32 +2306,31 @@ void FFV::init_Interval()
   
   if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute, C.Tscale) )
   {
-    Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
+    Hostonly_ printf("\t Error : Computation Period is assigned to zero.\n");
     Exit(0);
   }
   
   if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console, C.Tscale) )  // 基本履歴のコンソールへの出力
   {
-    Hostonly_ printf("\t Error : Interval for Console output is asigned to zero.\n");
+    Hostonly_ printf("\t Error : Interval for Console output is assigned to zero.\n");
     Exit(0);
   }
   if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history, C.Tscale) )  // 履歴のファイルへの出力
   {
-    Hostonly_ printf("\t Error : Interval for History output is asigned to zero.\n");
+    Hostonly_ printf("\t Error : Interval for History output is assigned to zero.\n");
     Exit(0);
   }
   if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant, C.Tscale) )  // 瞬時値ファイル
   {
-    Hostonly_ printf("\t Error : Interval for Instantaneous output is asigned to zero.\n");
+    Hostonly_ printf("\t Error : Interval for Instantaneous output is assigned to zero.\n");
     Exit(0);
   }
+  
   if ( C.Mode.Average == ON )
   {
-    // tg_averageの初期化はLoop中で行う．平均値開始時刻が未知のため．
-    
-    if ( !C.Interval[Interval_Manager::tg_avstart].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_avstart, C.Tscale) )  // 平均値開始
+    if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average, C.Tscale) ) // 平均値ファイル
     {
-      Hostonly_ printf("\t Error : Interval for Average start is asigned to zero.\n");
+      Hostonly_ printf("\t Error : Interval for Average output is assigned to zero.\n");
       Exit(0);
     }
   }
@@ -2339,7 +2339,7 @@ void FFV::init_Interval()
   {
     if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled, C.Tscale) )  // サンプリング履歴
     {
-      Hostonly_ printf("\t Error : Interval for Sampling output is asigned to zero.\n");
+      Hostonly_ printf("\t Error : Interval for Sampling output is assigned to zero.\n");
       Exit(0);
     }    
   }
@@ -2348,7 +2348,7 @@ void FFV::init_Interval()
   {
     if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d, C.Tscale) )  // 瞬時値ファイル
     {
-      Hostonly_ printf("\t Error : Interval for plot3d output is asigned to zero.\n");
+      Hostonly_ printf("\t Error : Interval for plot3d output is assigned to zero.\n");
       Exit(0);
     }
   }
