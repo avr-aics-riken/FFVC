@@ -879,26 +879,15 @@ private:
   void resizeCompoBV(const int kos, const bool isHeat);
   
   
-  /**
-   * @brief リスタートプロセス
-   * @param [in]     fp     ファイルポインタ
-   */
+  // リスタートプロセス
   void Restart(FILE* fp);
   
   
-  /**
-   * @brief リスタート時の瞬時値ファイル読み込み
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   */
+  // リスタート時の瞬時値ファイル読み込み
   void Restart_std(FILE* fp, double& flop);
   
   
-  /**
-   * @brief リスタート時の平均値ファイル読み込み
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   */
+  // リスタート時の平均値ファイル読み込み
   void Restart_avrerage (FILE* fp, double& flop);
   
   

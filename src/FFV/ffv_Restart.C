@@ -159,7 +159,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
     
     
   // ランク番号のファイル名を生成する
-  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, true);
+  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, "local");
   if ( target.empty() ) return false;
   
   
@@ -278,7 +278,7 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   
   
   // ランク番号のファイル名を生成する
-  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, true);
+  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, "local");
   if ( target.empty() ) return false;
   
   
@@ -342,7 +342,11 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
 
 
 
-// リスタートプロセス
+// #################################################################
+/**
+ * @brief リスタートプロセス
+ * @param [in]     fp     ファイルポインタ
+ */
 void FFV::Restart(FILE* fp)
 {
   double flop_task;
@@ -459,7 +463,13 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
 }
 
 
-// リスタート時の瞬時値ファイル読み込み
+
+// #################################################################
+/**
+ * @brief リスタート時の瞬時値ファイル読み込み
+ * @param [in]  fp   ファイルポインタ
+ * @param [out] flop 浮動小数点演算数
+ */
 void FFV::Restart_std(FILE* fp, double& flop)
 {
   double time;
@@ -476,7 +486,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   unsigned i_dummy=0;
   double f_dummy=0.0;
   
-  tmp = DFI.Generate_FileName(C.f_Pressure, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_Pressure, C.Restart_step, myRank, "local");
   
   if ( !checkFile(tmp) )
   {
@@ -496,7 +506,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Velocity, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_Velocity, C.Restart_step, myRank, "local");
   
   if ( !checkFile(tmp) )
   {
@@ -517,7 +527,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   
   // Instantaneous Face Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Fvelocity, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_Fvelocity, C.Restart_step, myRank, "local");
   
   if ( !checkFile(tmp) )
   {
@@ -542,7 +552,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.Generate_FileName(C.f_Temperature, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+    tmp = DFI.Generate_FileName(C.f_Temperature, C.Restart_step, myRank, "local");
     
     if ( !checkFile(tmp) )
     {
@@ -565,7 +575,12 @@ void FFV::Restart_std(FILE* fp, double& flop)
 
 
 
-// リスタート時の平均値ファイル読み込み
+// #################################################################
+/**
+ * @brief リスタート時の平均値ファイル読み込み
+ * @param [in]  fp   ファイルポインタ
+ * @param [out] flop 浮動小数点演算数
+ */
 void FFV::Restart_avrerage (FILE* fp, double& flop)
 {
   std::string tmp;
@@ -579,7 +594,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   if ( C.Interval[Interval_Manager::tg_average].isStep() )
   {
-    if ( step > C.Interval[Interval_Manager::tg_average].getStartStep() )
+    if ( step >= C.Interval[Interval_Manager::tg_average].getStartStep() )
     {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
@@ -593,7 +608,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   }
   else
   {
-    if ( time > C.Interval[Interval_Manager::tg_average].getStartTime() )
+    if ( time >= C.Interval[Interval_Manager::tg_average].getStartTime() )
     {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
@@ -612,7 +627,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, C.Restart_step, myRank, "local");
   if ( !checkFile(tmp) )
   {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -632,7 +647,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   
   // Velocity
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, C.Restart_step, myRank, "local");
   if ( !checkFile(tmp) )
   {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -652,7 +667,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, C.Restart_step, myRank, (bool)C.FIO.IO_Input);
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, C.Restart_step, myRank, "local");
     if ( !checkFile(tmp) )
     {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -723,12 +738,12 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     crs[0] = 1;
     crs[1] = 1;
     crs[2] = 1;
-    f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, C.Restart_step, myRank);
-    f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, C.Restart_step, myRank);
+    f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, C.Restart_step, myRank, "local");
+    f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, C.Restart_step, myRank, "local");
     
     if ( C.isHeatProblem() )
     {
-      f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, C.Restart_step, myRank);
+      f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, C.Restart_step, myRank, "local");
     }
   }
   
@@ -992,10 +1007,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_head[i]=DI[0].Node[j].HeadIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_tail[i]=DI[0].Node[j].TailIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_size[i]=DI[0].Node[j].VoxelSize[i];
-      DRI[ic].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, DI[0].Node[j].RankID, true);
-      DRI[ic].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, DI[0].Node[j].RankID, true);
-      DRI[ic].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, DI[0].Node[j].RankID, true);
-      if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, DI[0].Node[j].RankID, true);
+      DRI[ic].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, DI[0].Node[j].RankID, "local");
+      DRI[ic].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, DI[0].Node[j].RankID, "local");
+      DRI[ic].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, DI[0].Node[j].RankID, "local");
+      if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, DI[0].Node[j].RankID, "local");
       ic++;
     }
   }
@@ -1010,10 +1025,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_head[i]=1;
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_tail[i]=G_size[i];
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_size[i]=G_size[i];
-    DRI[0].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, myRank);
-    DRI[0].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, myRank);
-    DRI[0].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, myRank);
-    if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, myRank);
+    DRI[0].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, myRank, "gather");
+    DRI[0].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, myRank, "gather");
+    DRI[0].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, myRank, "gather");
+    if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, myRank, "gather");
   }
   
   // ランクごとに前計算時のどのランクのファイルを必要とするかテーブルで持っておく
@@ -1485,7 +1500,7 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, read_rank, true);
+        tmp = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, read_rank, "local");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1605,7 +1620,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, read_rank, true);
+        tmp = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, read_rank, "local");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1736,7 +1751,7 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, read_rank, true);
+        tmp = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, read_rank, "local");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1870,7 +1885,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, read_rank, true);
+        tmp = DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, read_rank, "local");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {

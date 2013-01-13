@@ -132,15 +132,8 @@ protected:
   bool Write_NodeInfo(FILE* fp, const unsigned tab, const std::string prefix);
   
   
-  /**
-   * @brief DFIファイル:出力ファイル情報要素を出力する
-   * @param [in] fp      ファイルポインタ
-   * @param [in] prefix  ファイル接頭文字
-   * @param [in] tab     インデント
-   * @param [in] step    ステップ数
-   * @param [in] mio     出力時の分割指定　 true = local / false = gather
-   */
-  bool Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const bool mio);
+  // DFIファイル:出力ファイル情報要素を出力する
+  bool Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step);
   
   
   /**
@@ -155,16 +148,8 @@ protected:
   bool Write_OutFileInfo(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const double time, const bool mio);
   
   
-  /**
-   * @brief DFIファイル:ファイル名要素を出力する
-   * @param [in] fp     ファイルポインタ
-   * @param [in] tab    インデント
-   * @param [in] prefix ファイル接頭文字
-   * @param [in] step   ステップ数
-   * @param [in] id     対象ノードID
-   * @param [in] mio    出力時の分割指定　 true = local / false = gather
-   */
-  bool Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const int id, const bool mio);
+  // DFIファイル:ファイル名要素を出力する
+  bool Write_OutFileName(FILE* fp, const unsigned tab, const std::string prefix, const unsigned step, const int id, const char* mio);
   
 
   /**
@@ -236,14 +221,8 @@ public:
   std::string Generate_DirName(const std::string prefix, const unsigned m_step);
   
   
-  /**
-   * @brief ファイル名を作成する
-   * @param [in] prefix ファイル接頭文字
-   * @param [in] m_step ステップ数
-   * @param [in] m_id   ランク番号
-   * @param [in] mio    出力時の分割指定　 true = local / false = gather(default)
-   */
-  std::string Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const bool mio=false);
+  // ファイル名を作成する
+  std::string Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const char* mio);
   
 
   /**

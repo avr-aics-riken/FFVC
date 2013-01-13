@@ -217,7 +217,7 @@ void FFV::AverageOutput(double& flop)
     U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar, flop);
   }
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, myRank, (bool)C.FIO.IO_Output);
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, myRank, "local");
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrPressure, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
@@ -227,7 +227,7 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, myRank, (bool)C.FIO.IO_Output);
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, myRank, "local");
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrVelocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out, 1);
@@ -246,7 +246,7 @@ void FFV::AverageOutput(double& flop)
       U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar, flop);
     }
     
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, myRank, (bool)C.FIO.IO_Output);
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, myRank, "local");
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrTemperature, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
@@ -456,9 +456,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  
-  // 並列出力モード
-  bool pout = ( C.FIO.IO_Output == IO_GATHER ) ? false : true;
+
   
   // Divergence デバッグ用なので無次元のみ
   if ( C.FIO.Div_Debug == ON ) 
@@ -467,7 +465,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
     U.cnv_Div(d_ws, d_dv, size, guide, coef, flop);
     
-    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, "local");
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_DivDebug, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -496,11 +494,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   
   if ( !crs_restart )
   {
-    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, myRank, "local");
   }
   else 
   {
-    tmp = DFI.Generate_FileName(prs_restart, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(prs_restart, m_step, myRank, "local");
   }
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Pressure, m_step) : C.FIO.IO_DirPath;
@@ -516,11 +514,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   
   if ( !crs_restart )
   {
-    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, "local");
   }
   else 
   {
-    tmp = DFI.Generate_FileName(vel_restart, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(vel_restart, m_step, myRank, "local");
   }
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Velocity, m_step) : C.FIO.IO_DirPath;
@@ -535,11 +533,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   
   if ( !crs_restart )
   {
-    tmp = DFI.Generate_FileName(C.f_Fvelocity, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_Fvelocity, m_step, myRank, "local");
   }
   else
   {
-    tmp = DFI.Generate_FileName(fvel_restart, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(fvel_restart, m_step, myRank, "local");
   }
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Fvelocity, m_step) : C.FIO.IO_DirPath;
@@ -565,11 +563,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     
     if ( !crs_restart )
     {
-      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, myRank, pout);
+      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, myRank, "local");
     }
     else 
     {
-      tmp = DFI.Generate_FileName(temp_restart, m_step, myRank, pout);
+      tmp = DFI.Generate_FileName(temp_restart, m_step, myRank, "local");
     }
     
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Temperature, m_step) : C.FIO.IO_DirPath;
@@ -597,7 +595,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
       tp = d_ws; d_ws = d_p0; d_p0 = tp;
     }
     
-    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, myRank, "local");
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_TotalP, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -618,7 +616,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
-    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, "local");
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Vorticity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
@@ -636,7 +634,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     // 無次元で出力
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
-    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, "local");
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_I2VGT, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -654,7 +652,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     // 無次元で出力
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
-    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, pout);
+    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, "local");
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Helicity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);

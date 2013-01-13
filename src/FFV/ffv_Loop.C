@@ -256,22 +256,26 @@ int FFV::Loop(const unsigned step)
     // 開始時刻を過ぎているか
     if ( C.Interval[Interval_Manager::tg_average].isStarted(CurrentTime, CurrentStep) )
     {
+      // 通常
       if ( C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) ) 
       {
         TIMING_start(tm_file_out);
-        
         flop_count=0.0;
-
-        // 通常
         AverageOutput(flop_count);
-        
-        // 最終ステップ
-        if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) 
-        { 
-          AverageOutput(flop_count);
-        }
-        
         TIMING_stop(tm_file_out, flop_count);
+      }
+      
+      // 最終ステップ
+      if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
+      {
+        // 指定間隔の出力がない場合のみ（重複を避ける）
+        if ( !C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) )
+        {
+          TIMING_start(tm_file_out);
+          flop_count=0.0;
+          AverageOutput(flop_count);
+          TIMING_stop(tm_file_out, flop_count);
+        }
       }
     }
   }
