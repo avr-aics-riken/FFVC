@@ -24,7 +24,7 @@
  * @param [in] stp    現在ステップ
  * @param [in] tm     現時刻
  * @param [in] d_flag 表示用フラグ（デバッグ）
- * @note 指定時刻を過ぎて，かつ1時刻前が指定時刻に満たない場合が出力タイミングとなる
+ * @note 指定時刻を過ぎず，かつ1時刻後が指定時刻を超える場合が出力タイミングとなる
  */
 bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag)
 {
@@ -39,7 +39,7 @@ bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag)
   {
     if (mode == By_step)
     {
-      if ( (stp >= next_step) && ((stp-1) < next_step) )
+      if ( ((stp+1) > next_step) && (stp <= next_step) )
       {
         m_count++;
         next_step = start_step + m_count * intvl_step;
@@ -49,7 +49,7 @@ bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag)
     }
     else
     {
-      if ( (tm >= next_tm) && ((tm-delta_t) < next_tm) )
+      if ( ((tm+delta_t) > next_tm) && (tm <= next_tm) )
       {
         m_count++;
         next_tm = start_tm + (double)(m_count) * intvl_tm;
@@ -87,7 +87,7 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
     }
     else
     {
-      next_step = start_step + (stp/intvl_step + 1)*intvl_step;
+      next_step = start_step + (stp/intvl_step)*intvl_step;
     }
   }
   else // by_time
@@ -100,11 +100,11 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
     }
     else
     {
-      next_tm = start_tm + floor(tm/intvl_tm + 1.0)*intvl_tm; 
+      next_tm = start_tm + floor(tm/intvl_tm)*intvl_tm;
     }
   }
   
-  // 全計算時間は，step/timeの両方で制御
+  // 全計算時間は，step/timeの両方で制御 指定時刻を越えるように+1
   if ( m_id == tg_compute )
   {
     if ( mode == By_step )

@@ -198,11 +198,13 @@ void FFV::AverageOutput(double& flop)
   // ガイドセル出力
   int gc_out = C.GuideOut;
   
+  // ファイル出力のタイムスタンプに使うステップ数
+  int m_step = (int)CurrentStep;
+  
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
   
-  printf("%d %f\n", stepAvr, timeAvr);
   
   // Pressure
   if (C.Unit.File == DIMENSIONAL) 
@@ -215,8 +217,8 @@ void FFV::AverageOutput(double& flop)
     U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar, flop);
   }
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, stepAvr, myRank, (bool)C.FIO.IO_Output);
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrPressure, stepAvr) : C.FIO.IO_DirPath;
+  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, myRank, (bool)C.FIO.IO_Output);
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrPressure, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrPressure, stepAvr, dfi_mng[var_Pressure_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
@@ -225,8 +227,8 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, stepAvr, myRank, (bool)C.FIO.IO_Output);
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrVelocity, stepAvr) : C.FIO.IO_DirPath;
+  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, myRank, (bool)C.FIO.IO_Output);
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrVelocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out, 1);
   Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrVelocity, stepAvr, dfi_mng[var_Velocity_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
@@ -244,8 +246,8 @@ void FFV::AverageOutput(double& flop)
       U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar, flop);
     }
     
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, stepAvr, myRank, (bool)C.FIO.IO_Output);
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrTemperature, stepAvr) : C.FIO.IO_DirPath;
+    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, myRank, (bool)C.FIO.IO_Output);
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrTemperature, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
     Hostonly_ if( !DFI.Write_DFI_File(C.f_AvrTemperature, stepAvr, dfi_mng[var_Temperature_Avr], (bool)C.FIO.IO_Output) ) Exit(0);

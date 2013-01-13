@@ -193,7 +193,7 @@ int FFV::Loop(const unsigned step)
   
   
   // 瞬時値のデータ出力
-  
+
   // 通常
   if ( C.Interval[Interval_Manager::tg_instant].isTriggered(CurrentStep, CurrentTime) ) 
   {
@@ -218,7 +218,7 @@ int FFV::Loop(const unsigned step)
       }
     }
   }
-  
+
   
   // PLOT3D output
   if(C.FIO.PLOT3D_OUT == ON)
