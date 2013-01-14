@@ -425,9 +425,9 @@ bool DFI::WriteIndex(const std::string dfi_name,
                      const std::string shape,
                      const int compo,
                      const REAL_TYPE* minmax,
-                     bool avr_mode,
-                     unsigned a_step,
-                     double a_time)
+                     const bool avr_mode,
+                     const unsigned a_step,
+                     const double a_time)
 {
   if ( dfi_name.empty() ) return false;
   if ( prefix.empty() ) return false;
@@ -450,7 +450,6 @@ bool DFI::WriteIndex(const std::string dfi_name,
       fprintf(stderr, "Can't open file.(%s)\n", dfi_name.c_str());
       return false;
     }
-    
     
     // FileInfo {} -------------------------------
     fprintf(fp, "FileInfo {\n");
@@ -569,6 +568,8 @@ bool DFI::WriteIndex(const std::string dfi_name,
     
     // end of TimeSlice {}
     fprintf(fp, "}\n\n");
+    
+    if (fp) fclose(fp);
  
   }
   else // 既存ファイルが存在する、あるいはセッションが始まり既に書き込み済み >> 追記
@@ -608,6 +609,9 @@ bool DFI::WriteIndex(const std::string dfi_name,
     
     WriteTimeSlice(fp, 1, prefix, step, time, minmax, avr_mode, a_step, a_time);
     
+    // end of TimeSlice {}
+    fprintf(fp, "}\n\n");
+    
     if (fp) fclose(fp);
     
   }
@@ -637,9 +641,9 @@ void DFI::WriteTimeSlice(FILE* fp,
                          const unsigned step,
                          const double time,
                          const REAL_TYPE* minmax,
-                         bool avr_mode,
-                         unsigned a_step,
-                         double a_time)
+                         const bool avr_mode,
+                         const unsigned a_step,
+                         const double a_time)
 {
   WriteTab(fp, tab);
   fprintf(fp, "Slice[@] {\n");

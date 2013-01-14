@@ -929,6 +929,7 @@ void FFV::setDFI()
     g_bbox_ed[2] = size[2];
   }
   
+  
   std::string UnitL;
   
   switch (C.Unit.Length) {
@@ -952,7 +953,17 @@ void FFV::setDFI()
       break;
   }
   
-  std::string UnitV("m/s");
+  
+  std::string UnitV;
+  
+  if ( C.Unit.File == DIMENSIONAL )
+  {
+    UnitV = "m/s";
+  }
+  else
+  {
+    UnitV = "NonDimensional";
+  }
   
   
   // DFIクラスの初期化 >> 共通
