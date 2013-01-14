@@ -444,9 +444,9 @@ public:
     int IO_Input;
     int IO_Output;
     int Div_Debug;
-    int PLOT3D_OUT;
     int IO_Voxel;
     int IO_Mode;
+    int Format;
     string IO_DirPath;
   } File_IO_Cntl;
   
@@ -699,6 +699,8 @@ public:
   // class
   Interval_Manager  Interval[Interval_Manager::tg_END];
   
+  string file_fmt_ext;
+  
   string HistoryName;
   string HistoryCompoName;
   string HistoryDomfxName;
@@ -708,25 +710,20 @@ public:
   string PolylibConfigName;
   string HistoryForceName;
   
-  string f_Coarse_pressure;
-  string f_Coarse_velocity;
-  string f_Coarse_temperature;
-  string f_Coarse_dfi_prs;
-  string f_Coarse_dfi_vel;
-  string f_Coarse_dfi_fvel;
-  string f_Coarse_dfi_temp;
-  string f_Coarse_fvelocity;
+  string f_dfi_prfx_prs;
+  string f_dfi_prfx_vel;
+  string f_dfi_prfx_fvel;
+  string f_dfi_prfx_temp;
+  string f_dfi_prs;
+  string f_dfi_vel;
+  string f_dfi_fvel;
+  string f_dfi_temp;
   
   string f_different_nproc_dir_prefix;
   string f_different_nproc_pressure;
   string f_different_nproc_velocity;
   string f_different_nproc_fvelocity;
   string f_different_nproc_temperature;
-  string f_different_nproc_dfi_prs;
-  string f_different_nproc_dfi_vel;
-  string f_different_nproc_dfi_fvel;
-  string f_different_nproc_dfi_temp;
-  string f_different_nproc_dfi_fvelocity;
   
   string f_Velocity;
   string f_Pressure;
@@ -829,9 +826,9 @@ public:
     FIO.IO_Input   = 0;
     FIO.IO_Output  = 0;
     FIO.Div_Debug  = 0;
-    FIO.PLOT3D_OUT = 0; //=0 : *.sph , =1 : PLOT3D
     FIO.IO_Voxel   = 0;
     FIO.IO_Mode    = 0;
+    FIO.Format     = 0; // 0:sph, 1:PLOT3D, 2:BOV
     
     P3Op.IS_xyz = ON;
     P3Op.IS_q = OFF;

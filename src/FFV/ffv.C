@@ -201,6 +201,17 @@ void FFV::AverageOutput(double& flop)
   // ファイル出力のタイムスタンプに使うステップ数
   int m_step = (int)CurrentStep;
   
+  // ファイル出力のタイムスタンプの次元変換
+  REAL_TYPE m_time;
+  if (C.Unit.File == DIMENSIONAL)
+  {
+    m_time = (REAL_TYPE)CurrentTime * C.Tscale;
+  }
+  else
+  {
+    m_time = (REAL_TYPE)CurrentTime;
+  }
+  
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
@@ -217,21 +228,74 @@ void FFV::AverageOutput(double& flop)
     U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar, flop);
   }
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, m_step, myRank, "local");
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrPressure, m_step) : C.FIO.IO_DirPath;
+  // 最大値と最小値
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+  
+  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  REAL_TYPE minmax[2] = {f_min, f_max};
+  
+  tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, m_step, myRank, "divided");
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_AvrPressure, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
-  Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrPressure, stepAvr, dfi_mng[var_Pressure_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
+  Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrPressure,
+                                    dtmp,
+                                    C.file_fmt_ext,
+                                    m_step,
+                                    m_time,
+                                    dfi_mng[var_Pressure_Avr],
+                                    "ijkn",
+                                    1,
+                                    minmax,
+                                    "divided",
+                                    true,
+                                    stepAvr,
+                                    timeAvr) ) Exit(0);
   
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, m_step, myRank, "local");
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrVelocity, m_step) : C.FIO.IO_DirPath;
+  fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  minmax[0] = f_min;
+  minmax[1] = f_max;
+  
+  tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, m_step, myRank, "divided");
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_AvrVelocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out, 1);
-  Hostonly_ if ( !DFI.Write_DFI_File(C.f_AvrVelocity, stepAvr, dfi_mng[var_Velocity_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
+  Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrVelocity,
+                                    dtmp,
+                                    C.file_fmt_ext,
+                                    m_step,
+                                    m_time,
+                                    dfi_mng[var_Velocity_Avr],
+                                    "nijk",
+                                    3,
+                                    minmax,
+                                    "divided",
+                                    stepAvr,
+                                    timeAvr) ) Exit(0);
   
   // Temperature
   if( C.isHeatProblem() )
@@ -246,11 +310,36 @@ void FFV::AverageOutput(double& flop)
       U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar, flop);
     }
     
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, m_step, myRank, "local");
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_AvrTemperature, m_step) : C.FIO.IO_DirPath;
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, m_step, myRank, "divided");
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_AvrTemperature, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
-    Hostonly_ if( !DFI.Write_DFI_File(C.f_AvrTemperature, stepAvr, dfi_mng[var_Temperature_Avr], (bool)C.FIO.IO_Output) ) Exit(0);
+    Hostonly_ if( !DFI.WriteDFIindex(C.f_AvrTemperature,
+                                     dtmp,
+                                     C.file_fmt_ext,
+                                     m_step,
+                                     m_time,
+                                     dfi_mng[var_Temperature_Avr],
+                                     "ijkn",
+                                     1,
+                                     minmax,
+                                     "divided",
+                                     stepAvr,
+                                     timeAvr) ) Exit(0);
   }
 }
 
@@ -457,6 +546,9 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   std::string tmp;
   std::string dtmp;
 
+  // 最大値と最小値
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+  REAL_TYPE minmax[2];
   
   // Divergence デバッグ用なので無次元のみ
   if ( C.FIO.Div_Debug == ON ) 
@@ -465,17 +557,38 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
     U.cnv_Div(d_ws, d_dv, size, guide, coef, flop);
     
-    tmp = DFI.Generate_FileName(C.f_DivDebug, m_step, myRank, "local");
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_DivDebug, m_step) : C.FIO.IO_DirPath;
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    tmp = DFI.GenerateFileName(C.f_DivDebug, C.file_fmt_ext, m_step, myRank, "divided");
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_DivDebug, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_DivDebug, m_step, dfi_mng[var_Divergence], pout) ) Exit(0);
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_DivDebug,
+                                      dtmp,
+                                      C.file_fmt_ext,
+                                      m_step, m_time,
+                                      dfi_mng[var_Divergence],
+                                      "ijkn",
+                                      1,
+                                      minmax,
+                                      "divided") ) Exit(0);
     
   }
   
   
-  // 粗格子リスタートの場合の出力ファイル名
+  // 粗格子リスタートの場合、初期値を内挿してその結果を出力するファイル名
   std::string prs_restart("prs_restart_");
   std::string vel_restart("vel_restart_");
   std::string temp_restart("temp_restart_");
@@ -492,59 +605,123 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar, flop);
   }
   
+  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  minmax[0] = f_min;
+  minmax[1] = f_max;
+  
   if ( !crs_restart )
   {
-    tmp = DFI.Generate_FileName(C.f_Pressure, m_step, myRank, "local");
+    tmp = DFI.GenerateFileName(C.f_Pressure, C.file_fmt_ext, m_step, myRank, "divided");
   }
   else 
   {
-    tmp = DFI.Generate_FileName(prs_restart, m_step, myRank, "local");
+    tmp = DFI.GenerateFileName(prs_restart, C.file_fmt_ext, m_step, myRank, "divided");
   }
   
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Pressure, m_step) : C.FIO.IO_DirPath;
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Pressure, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
   
-  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Pressure, m_step, dfi_mng[var_Pressure], pout) ) Exit(0);
+  Hostonly_ if ( !DFI.WriteDFIindex(C.f_Pressure,
+                                    dtmp,
+                                    C.file_fmt_ext,
+                                    m_step,
+                                    m_time,
+                                    dfi_mng[var_Pressure],
+                                    "ijkn",
+                                    1,
+                                    minmax,
+                                    "divided") ) Exit(0);
   
 
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  minmax[0] = f_min;
+  minmax[1] = f_max;
   
   if ( !crs_restart )
   {
-    tmp = DFI.Generate_FileName(C.f_Velocity, m_step, myRank, "local");
+    tmp = DFI.GenerateFileName(C.f_Velocity, C.file_fmt_ext, m_step, myRank, "divided");
   }
   else 
   {
-    tmp = DFI.Generate_FileName(vel_restart, m_step, myRank, "local");
+    tmp = DFI.GenerateFileName(vel_restart, C.file_fmt_ext, m_step, myRank, "divided");
   }
   
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Velocity, m_step) : C.FIO.IO_DirPath;
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Velocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   
-  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Velocity, m_step, dfi_mng[var_Velocity], pout) ) Exit(0);
+  Hostonly_ if ( !DFI.WriteDFIindex(C.f_Velocity,
+                                    dtmp,
+                                    C.file_fmt_ext,
+                                    m_step,
+                                    m_time,
+                                    dfi_mng[var_Velocity],
+                                    "nijk",
+                                    3,
+                                    minmax,
+                                    "divided") ) Exit(0);
   
   
   // Face Velocity
   fb_shift_refv_out_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  minmax[0] = f_min;
+  minmax[1] = f_max;
   
   if ( !crs_restart )
   {
-    tmp = DFI.Generate_FileName(C.f_Fvelocity, m_step, myRank, "local");
+    tmp = DFI.GenerateFileName(C.f_Fvelocity, C.file_fmt_ext, m_step, myRank, "divided");
   }
   else
   {
-    tmp = DFI.Generate_FileName(fvel_restart, m_step, myRank, "local");
+    tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, "divided");
   }
   
-  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Fvelocity, m_step) : C.FIO.IO_DirPath;
+  dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Fvelocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   
-  Hostonly_ if ( !DFI.Write_DFI_File(C.f_Fvelocity, m_step, dfi_mng[var_FaceVelocity], pout) ) Exit(0);
+  Hostonly_ if ( !DFI.WriteDFIindex(C.f_Fvelocity,
+                                    dtmp,
+                                    C.file_fmt_ext,
+                                    m_step,
+                                    m_time,
+                                    dfi_mng[var_FaceVelocity],
+                                    "nijk",
+                                    3,
+                                    minmax,
+                                    "divided") ) Exit(0);
   
   
   // Tempearture
@@ -561,20 +738,42 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
       U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar, flop);
     }
     
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
     if ( !crs_restart )
     {
-      tmp = DFI.Generate_FileName(C.f_Temperature, m_step, myRank, "local");
+      tmp = DFI.GenerateFileName(C.f_Temperature, C.file_fmt_ext, m_step, myRank, "divided");
     }
     else 
     {
-      tmp = DFI.Generate_FileName(temp_restart, m_step, myRank, "local");
+      tmp = DFI.GenerateFileName(temp_restart, C.file_fmt_ext, m_step, myRank, "divided");
     }
     
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Temperature, m_step) : C.FIO.IO_DirPath;
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Temperature, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Temperature, m_step, dfi_mng[var_Temperature], pout) ) Exit(0);
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_Temperature,
+                                      dtmp,
+                                      C.file_fmt_ext,
+                                      m_step,
+                                      m_time,
+                                      dfi_mng[var_Temperature],
+                                      "ijkn",
+                                      1,
+                                      minmax,
+                                      "divided") ) Exit(0);
   }
 
   
@@ -595,12 +794,34 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
       tp = d_ws; d_ws = d_p0; d_p0 = tp;
     }
     
-    tmp = DFI.Generate_FileName(C.f_TotalP, m_step, myRank, "local");
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_TotalP, m_step) : C.FIO.IO_DirPath;
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    tmp = DFI.GenerateFileName(C.f_TotalP, C.file_fmt_ext, m_step, myRank, "divided");
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_TotalP, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_TotalP, m_step, dfi_mng[var_TotalP], pout) ) Exit(0);
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_TotalP,
+                                      dtmp,
+                                      C.file_fmt_ext,
+                                      m_step,
+                                      m_time,
+                                      dfi_mng[var_TotalP],
+                                      "ijkn",
+                                      1,
+                                      minmax,
+                                      "divided") ) Exit(0);
 
   }
   
@@ -615,13 +836,34 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
     
-    tmp = DFI.Generate_FileName(C.f_Vorticity, m_step, myRank, "local");
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Vorticity, m_step) : C.FIO.IO_DirPath;
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    tmp = DFI.GenerateFileName(C.f_Vorticity, C.file_fmt_ext, m_step, myRank, "divided");
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Vorticity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
     
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Vorticity, m_step, dfi_mng[var_Vorticity], pout) ) Exit(0);
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_Vorticity,
+                                      dtmp,
+                                      C.file_fmt_ext,
+                                      m_step,
+                                      m_time,
+                                      dfi_mng[var_Vorticity],
+                                      "nijk",
+                                      3,
+                                      minmax,
+                                      "divided") ) Exit(0);
 
   }
   
@@ -634,12 +876,34 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     // 無次元で出力
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
-    tmp = DFI.Generate_FileName(C.f_I2VGT, m_step, myRank, "local");
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_I2VGT, m_step) : C.FIO.IO_DirPath;
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    tmp = DFI.GenerateFileName(C.f_I2VGT, C.file_fmt_ext, m_step, myRank, "divided");
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_I2VGT, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_I2VGT, m_step, dfi_mng[var_I2vgt], pout) ) Exit(0);
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_I2VGT,
+                                      dtmp,
+                                      C.file_fmt_ext,
+                                      m_step,
+                                      m_time,
+                                      dfi_mng[var_I2vgt],
+                                      "ijkn",
+                                      1,
+                                      minmax,
+                                      "divided") ) Exit(0);
 
   }
   
@@ -652,12 +916,34 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     // 無次元で出力
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
-    tmp = DFI.Generate_FileName(C.f_Helicity, m_step, myRank, "local");
-    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.Generate_DirName(C.f_Helicity, m_step) : C.FIO.IO_DirPath;
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    tmp = DFI.GenerateFileName(C.f_Helicity, C.file_fmt_ext, m_step, myRank, "divided");
+    dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Helicity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
-    Hostonly_ if ( !DFI.Write_DFI_File(C.f_Helicity, m_step, dfi_mng[var_Helicity], pout) ) Exit(0);
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_Helicity,
+                                      dtmp,
+                                      C.file_fmt_ext,
+                                      m_step,
+                                      m_time,
+                                      dfi_mng[var_Helicity],
+                                      "ijkn",
+                                      1,
+                                      minmax,
+                                      "divided") ) Exit(0);
 
   }
 

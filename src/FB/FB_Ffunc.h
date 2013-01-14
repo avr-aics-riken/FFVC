@@ -77,7 +77,15 @@ extern "C" {
                            REAL_TYPE* v,
                            double* flop);
  
-  void fb_average_s_      (REAL_TYPE* avr, 
+  void fb_minmax_vex_     (REAL_TYPE* f_min,
+                           REAL_TYPE* f_max,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* v,
+                           double* flop);
+  
+  void fb_average_s_      (REAL_TYPE* avr,
                            int* sz, 
                            int* g, 
                            REAL_TYPE* s,

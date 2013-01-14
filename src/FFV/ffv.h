@@ -563,20 +563,7 @@ private:
   void generate_Solid(FILE* fp);
   
   
-  /**
-   * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-   * @param [in]  i                 密格子　開始インデクスi
-   * @param [in]  j                        同j
-   * @param [in]  k                        同k
-   * @param [in]  coarse_dfi_fname  粗格子のdfiファイル名（どの変数のものでも良い）
-   * @param [in]  coarse_prefix     粗格子計算結果ファイルプリフィクス e.g. "prs_16"
-   * @param [in]  m_step            探索するステップ数
-   * @param [out] coarse_sph_fname  ijk位置の結果を含む粗格子計算結果ファイル名
-   * @param [out] c_size            粗格子の分割数
-   * @param [out] coarse            粗格子　開始インデクス
-   * @param [out] block             含まれるブロック数
-   * return エラーコード
-   */
+  // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
   bool getCoarseResult (int i, int j, int k,
                         std::string& coarse_dfi_fname,
                         std::string& coarse_prefix,
@@ -587,6 +574,7 @@ private:
                         int* block
                         );
   
+  // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
   bool getCoarseResult2(int i, int j, int k,
                         std::string& coarse_dfi_fname,
                         std::string& coarse_prefix,

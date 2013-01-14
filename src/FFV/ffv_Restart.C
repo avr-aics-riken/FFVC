@@ -32,7 +32,21 @@ bool FFV::checkFile(std::string fname)
 
 
 
-// 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+
+/**
+ * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+ * @param [in]  i                 密格子　開始インデクスi
+ * @param [in]  j                        同j
+ * @param [in]  k                        同k
+ * @param [in]  coarse_dfi_fname  粗格子のdfiファイル名（どの変数のものでも良い）
+ * @param [in]  coarse_prefix     粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+ * @param [in]  m_step            探索するステップ数
+ * @param [out] coarse_sph_fname  ijk位置の結果を含む粗格子計算結果ファイル名
+ * @param [out] c_size            粗格子の分割数
+ * @param [out] coarse            粗格子　開始インデクス
+ * @param [out] block             含まれるブロック数
+ * return エラーコード
+ */
 bool FFV::getCoarseResult (int i, int j, int k,
                            std::string& coarse_dfi_fname,
                            std::string& coarse_prefix,
@@ -157,9 +171,9 @@ bool FFV::getCoarseResult (int i, int j, int k,
   // 見つけられなかった
   if ( rank == -1 ) return false;
     
-    
+  
   // ランク番号のファイル名を生成する
-  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, "local");
+  std::string target = DFI.GenerateFileName(coarse_prefix, C.file_fmt_ext, m_step, rank, "divided");
   if ( target.empty() ) return false;
   
   
@@ -199,7 +213,21 @@ bool FFV::getCoarseResult (int i, int j, int k,
 }
 
 
-// 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+
+/**
+ * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+ * @param [in]  i                 密格子　開始インデクスi
+ * @param [in]  j                        同j
+ * @param [in]  k                        同k
+ * @param [in]  coarse_dfi_fname  粗格子のdfiファイル名（どの変数のものでも良い）
+ * @param [in]  coarse_prefix     粗格子計算結果ファイルプリフィクス e.g. "prs_16"
+ * @param [in]  m_step            探索するステップ数
+ * @param [out] coarse_sph_fname  ijk位置の結果を含む粗格子計算結果ファイル名
+ * @param [out] c_size            粗格子の分割数
+ * @param [out] coarse            粗格子　開始インデクス
+ * @param [out] block             含まれるブロック数
+ * return エラーコード
+ */
 bool FFV::getCoarseResult2(int i, int j, int k,
                            std::string& coarse_dfi_fname,
                            std::string& coarse_prefix,
@@ -237,7 +265,7 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   int ibuf;
   int iv[3];
   
-	
+  
   std::string buf;
 	int rank = -1;
 	int hi, hj, hk, ti, tj, tk;
@@ -278,7 +306,7 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   
   
   // ランク番号のファイル名を生成する
-  std::string target = DFI.Generate_FileName(coarse_prefix, m_step, rank, "local");
+  std::string target = DFI.GenerateFileName(coarse_prefix, C.file_fmt_ext, m_step, rank, "divided");
   if ( target.empty() ) return false;
   
   
@@ -486,7 +514,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   unsigned i_dummy=0;
   double f_dummy=0.0;
   
-  tmp = DFI.Generate_FileName(C.f_Pressure, C.Restart_step, myRank, "local");
+  tmp = DFI.GenerateFileName(C.f_Pressure, C.file_fmt_ext, C.Restart_step, myRank, "divided");
   
   if ( !checkFile(tmp) )
   {
@@ -506,7 +534,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Velocity, C.Restart_step, myRank, "local");
+  tmp = DFI.GenerateFileName(C.f_Velocity, C.file_fmt_ext, C.Restart_step, myRank, "divided");
   
   if ( !checkFile(tmp) )
   {
@@ -527,7 +555,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   
   // Instantaneous Face Velocity fields
-  tmp = DFI.Generate_FileName(C.f_Fvelocity, C.Restart_step, myRank, "local");
+  tmp = DFI.GenerateFileName(C.f_Fvelocity, C.file_fmt_ext, C.Restart_step, myRank, "divided");
   
   if ( !checkFile(tmp) )
   {
@@ -552,7 +580,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.Generate_FileName(C.f_Temperature, C.Restart_step, myRank, "local");
+    tmp = DFI.GenerateFileName(C.f_Temperature, C.file_fmt_ext, C.Restart_step, myRank, "divided");
     
     if ( !checkFile(tmp) )
     {
@@ -627,7 +655,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = DFI.Generate_FileName(C.f_AvrPressure, C.Restart_step, myRank, "local");
+  tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, C.Restart_step, myRank, "divided");
   if ( !checkFile(tmp) )
   {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -647,7 +675,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   
   // Velocity
-  tmp = DFI.Generate_FileName(C.f_AvrVelocity, C.Restart_step, myRank, "local");
+  tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, C.Restart_step, myRank, "divided");
   if ( !checkFile(tmp) )
   {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -667,7 +695,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.Generate_FileName(C.f_AvrTemperature, C.Restart_step, myRank, "local");
+    tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, C.Restart_step, myRank, "divided");
     if ( !checkFile(tmp) )
     {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -712,13 +740,13 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     k = head[2];
     
     // crs_i, _j, _kには同じ値が入る
-    if ( !getCoarseResult2(i, j, k, C.f_Coarse_dfi_prs, C.f_Coarse_pressure, C.Restart_step, f_prs, r_size, crs, num_block) )
+    if ( !getCoarseResult2(i, j, k, C.f_dfi_prs, C.f_dfi_prfx_prs, C.Restart_step, f_prs, r_size, crs, num_block) )
     {
       Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
       Exit(0);
     }
     
-    if ( !getCoarseResult2(i, j, k, C.f_Coarse_dfi_vel, C.f_Coarse_velocity, C.Restart_step, f_vel, r_size, crs, num_block) )
+    if ( !getCoarseResult2(i, j, k, C.f_dfi_vel, C.f_dfi_prfx_vel, C.Restart_step, f_vel, r_size, crs, num_block) )
     {
       Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
       Exit(0);
@@ -726,7 +754,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     
     if ( C.isHeatProblem() )
     {
-      if ( !getCoarseResult2(i, j, k, C.f_Coarse_dfi_temp, C.f_Coarse_temperature, C.Restart_step, f_temp, r_size, crs, num_block) )
+      if ( !getCoarseResult2(i, j, k, C.f_dfi_temp, C.f_dfi_prfx_temp, C.Restart_step, f_temp, r_size, crs, num_block) )
       {
         Hostonly_ printf("\tError : Find invalid coarse sub-domain\n");
         Exit(0);
@@ -738,12 +766,12 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     crs[0] = 1;
     crs[1] = 1;
     crs[2] = 1;
-    f_prs = DFI.Generate_FileName(C.f_Coarse_pressure, C.Restart_step, myRank, "local");
-    f_vel = DFI.Generate_FileName(C.f_Coarse_velocity, C.Restart_step, myRank, "local");
+    f_prs = DFI.GenerateFileName(C.f_dfi_prfx_prs, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+    f_vel = DFI.GenerateFileName(C.f_dfi_prfx_vel, C.file_fmt_ext, C.Restart_step, myRank, "divided");
     
     if ( C.isHeatProblem() )
     {
-      f_temp= DFI.Generate_FileName(C.f_Coarse_temperature, C.Restart_step, myRank, "local");
+      f_temp= DFI.GenerateFileName(C.f_dfi_prfx_temp, C.file_fmt_ext, C.Restart_step, myRank, "divided");
     }
   }
   
@@ -901,9 +929,47 @@ void FFV::setDFI()
     g_bbox_ed[2] = size[2];
   }
   
+  std::string UnitL;
   
-  // DFIクラスの初期化
-  if ( !DFI.init(G_size, paraMngr->GetDivNum(), C.GuideOut, C.Start, g_bbox_st, g_bbox_ed, host) ) Exit(0);
+  switch (C.Unit.Length) {
+    case LTH_ND:
+      UnitL = "NonDimensional";
+      break;
+      
+    case LTH_m:
+      UnitL = "M";
+      break;
+      
+    case LTH_cm:
+      UnitL = "cm";
+      break;
+      
+    case LTH_mm:
+      UnitL = "mm";
+      break;
+      
+    default:
+      break;
+  }
+  
+  std::string UnitV("m/s");
+  
+  
+  // DFIクラスの初期化 >> 共通
+  if ( !DFI.init(G_size,
+                 paraMngr->GetDivNum(),
+                 C.GuideOut,
+                 C.Start,
+                 C.RefLength,
+                 C.RefVelocity,
+                 UnitL,
+                 UnitV,
+                 g_bbox_st,
+                 g_bbox_ed,
+                 host) ) Exit(0);
+  
+  // DFI proc fileを生成
+  Hostonly_ if ( !DFI.WriteDFIproc(G_origin, G_region) ) Exit(0);
   
   
   // 後始末
@@ -944,10 +1010,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
   dfi_name.clear();
   if ( C.FIO.IO_Input == IO_DISTRIBUTE ) // always IO_DISTRIBUTE
   {
-    dfi_name.push_back(C.f_different_nproc_dfi_prs.c_str());
-    dfi_name.push_back(C.f_different_nproc_dfi_vel.c_str());
-    dfi_name.push_back(C.f_different_nproc_dfi_fvel.c_str());
-    if ( C.isHeatProblem() ) dfi_name.push_back(C.f_different_nproc_dfi_temp.c_str());
+    dfi_name.push_back(C.f_dfi_prs.c_str());
+    dfi_name.push_back(C.f_dfi_vel.c_str());
+    dfi_name.push_back(C.f_dfi_fvel.c_str());
+    if ( C.isHeatProblem() ) dfi_name.push_back(C.f_dfi_temp.c_str());
   }
   
   // set dfi info class
@@ -1007,10 +1073,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_head[i]=DI[0].Node[j].HeadIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_tail[i]=DI[0].Node[j].TailIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_size[i]=DI[0].Node[j].VoxelSize[i];
-      DRI[ic].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, DI[0].Node[j].RankID, "local");
-      DRI[ic].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, DI[0].Node[j].RankID, "local");
-      DRI[ic].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, DI[0].Node[j].RankID, "local");
-      if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, DI[0].Node[j].RankID, "local");
+      DRI[ic].f_prs  = DFI.GenerateFileName(C.f_different_nproc_pressure,  C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
+      DRI[ic].f_vel  = DFI.GenerateFileName(C.f_different_nproc_velocity,  C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
+      DRI[ic].f_fvel = DFI.GenerateFileName(C.f_different_nproc_fvelocity, C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
+      if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.GenerateFileName(C.f_different_nproc_temperature, C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
       ic++;
     }
   }
@@ -1025,10 +1091,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_head[i]=1;
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_tail[i]=G_size[i];
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_size[i]=G_size[i];
-    DRI[0].f_prs  = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, myRank, "gather");
-    DRI[0].f_vel  = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, myRank, "gather");
-    DRI[0].f_fvel = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, myRank, "gather");
-    if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, myRank, "gather");
+    DRI[0].f_prs  = DFI.GenerateFileName(C.f_different_nproc_pressure, C.file_fmt_ext, C.Restart_step, myRank, "gather");
+    DRI[0].f_vel  = DFI.GenerateFileName(C.f_different_nproc_velocity, C.file_fmt_ext, C.Restart_step, myRank, "gather");
+    DRI[0].f_fvel = DFI.GenerateFileName(C.f_different_nproc_fvelocity, C.file_fmt_ext, C.Restart_step, myRank, "gather");
+    if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.GenerateFileName(C.f_different_nproc_temperature, C.file_fmt_ext, C.Restart_step, myRank, "gather");
   }
   
   // ランクごとに前計算時のどのランクのファイルを必要とするかテーブルで持っておく
@@ -1500,7 +1566,7 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_pressure, C.Restart_step, read_rank, "local");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_pressure, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1620,7 +1686,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_velocity, C.Restart_step, read_rank, "local");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_velocity, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1751,7 +1817,7 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_fvelocity, C.Restart_step, read_rank, "local");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_fvelocity, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1885,7 +1951,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.Generate_FileName(C.f_different_nproc_temperature, C.Restart_step, read_rank, "local");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_temperature, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {

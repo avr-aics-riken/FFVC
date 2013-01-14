@@ -75,6 +75,9 @@ void COMB::output_plot3d()
   int nstep=DI[0].step.size();
   int nnode=DI[0].NodeInfoSize;
   
+  // keno 2013-01-14 最大値と最小値のオプションを使う場合は計算すること
+  REAL_TYPE minmax[2]={0.0, 0.0}; 
+  
   
   //並列処理のためのインデックス作成
   int iproc=0;
@@ -768,7 +771,16 @@ void COMB::output_plot3d()
           std::string dfipre;
           dfipre = DI[i].Prefix + P3Op.basename;
           //dfipre = out_dirname + dfipre; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
-          if(inode == 0) if ( !DFI.Write_DFI_File(dfipre, (unsigned)m_step, (double)m_time, dfi_mng[var_Plot3D], true) ) Exit(0);
+          if(inode == 0) if ( !DFI.WriteDFIindex(dfipre,
+                                                 dfipre,
+                                                 "func",
+                                                 (unsigned)m_step,
+                                                 (double)m_time,
+                                                 dfi_mng[var_Plot3D],
+                                                 "ijkn",
+                                                 1,
+                                                 minmax,
+                                                 "divided") ) Exit(0); // keno 2013-01-14 適当
         }
         
         ivar=ivar+dim;
@@ -796,7 +808,16 @@ void COMB::output_plot3d()
       std::string dfipre;
       dfipre = P3Op.basename;
       //dfipre = out_dirname + P3Op.basename; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
-      if(inode == 0) if ( !DFI.Write_DFI_File(dfipre, (unsigned)m_step, (double)m_time, dfi_mng[var_Plot3D], true) ) Exit(0);
+      if(inode == 0) if ( !DFI.WriteDFIindex(dfipre,
+                                             dfipre,
+                                             "func",
+                                             (unsigned)m_step,
+                                             (double)m_time,
+                                             dfi_mng[var_Plot3D],
+                                             "ijkn",
+                                             1,
+                                             minmax,
+                                             "divided") ) Exit(0); // keno 2013-01-14 適当
       
     }//node loop
     if(numProc > 1) ips=ips+nnode;
@@ -826,7 +847,7 @@ void COMB::output_plot3d()
   // open file
   if(P3Op.IS_DivideFunc == OFF){ // 一括出力のとき
     std::string ptmp;
-    ptmp = DFI.Generate_FileName_Free(P3Op.basename, "nam", 0, 0, false);
+    ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, "single");
     ptmp = out_dirname + ptmp;
     FP3DW.setFileName(ptmp.c_str());
     if(!FP3DW.OpenFile()){
@@ -844,7 +865,7 @@ void COMB::output_plot3d()
     // open file
     if(P3Op.IS_DivideFunc == ON){ // 分割出力のとき
       std::string ptmp;
-      ptmp = Generate_FileName_Free(P3Op.basename, "nam", 0, 0, true);
+      ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, "divided");
       ptmp = DI[i].Prefix + ptmp;
       ptmp = out_dirname + ptmp;
       FP3DW.setFileName(ptmp.c_str());

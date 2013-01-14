@@ -221,7 +221,7 @@ int FFV::Loop(const unsigned step)
 
   
   // PLOT3D output
-  if(C.FIO.PLOT3D_OUT == ON)
+  if(C.FIO.Format == plt3d_fmt)
   {
     // 通常
     if ( C.Interval[Interval_Manager::tg_plot3d].isTriggered(CurrentStep, CurrentTime) )

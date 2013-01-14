@@ -1213,7 +1213,7 @@
     end subroutine fb_totalp
 
 !> ********************************************************************
-!! @brief 速度の最小値と最大値を計算する
+!! @brief 速度の最小値と最大値を計算する (shape:ijkn)
 !! @param [out] v_min 最小値
 !! @param [out] v_max 最大値
 !! @param [in]  sz    配列長
@@ -1268,6 +1268,64 @@
 
     return
     end subroutine fb_minmax_v
+
+!> ********************************************************************
+!! @brief 速度の最小値と最大値を計算する (shape:nijk)
+!! @param [out] v_min 最小値
+!! @param [out] v_max 最大値
+!! @param [in]  sz    配列長
+!! @param [in]  g     ガイドセル長
+!! @param [in]  v00   参照速度
+!! @param [in]  v     速度ベクトル
+!! @param [out] flop  浮動小数演算数
+!<
+  subroutine fb_minmax_vex (v_min, v_max, sz, g, v00, v)
+  implicit none
+  integer                                                   ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                     ::  sz
+  real                                                      ::  v_min, v_max, u1, u2, u3, uu, flop, vx, vy, vz
+  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
+  real, dimension(0:3)                                      ::  v00
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  vx = v00(1)
+  vy = v00(2)
+  vz = v00(3)
+  v_min =  1.0e6
+  v_max = -1.0e6
+
+  ! 10 + sqrt*1 = 20 ! DP 30
+  flop = flop + real(ix)*real(jx)*real(kx)*20.0d0
+  ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(min:v_min) &
+!$OMP REDUCTION(max:v_max) &
+!$OMP PRIVATE(u1, u2, u3, uu) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
+
+!$OMP DO SCHEDULE(static)
+
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    u1 = v(1,i,j,k)-vx
+    u2 = v(2,i,j,k)-vy
+    u3 = v(3,i,j,k)-vz
+    uu = sqrt( u1*u1 + u2*u2 + u3*u3 )
+    v_min = min(v_min, uu)
+    v_max = max(v_max, uu)
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine fb_minmax_vex
+
 
 !> ********************************************************************
 !! @brief スカラ値の最小値と最大値を計算する

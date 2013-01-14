@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 111
+#define FB_VERS 112
 
 #define MODEL_ID_MAX 255
 
@@ -481,6 +481,13 @@ enum Async_Buffer_Direction {
 enum sv_type {
   kind_scalar=1,
   kind_vector
+};
+
+/// File Format
+enum File_format {
+  sph_fmt=0,
+  plt3d_fmt,
+  bov_fmt
 };
 
 #endif // _FB_DEFINE_H_

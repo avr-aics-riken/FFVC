@@ -693,7 +693,7 @@ int FFV::Initialize(int argc, char **argv)
   // PLOT3D形状データの書き出し
   PLT3D.Initialize(size, guide, deltaX, dfi_mng[var_Plot3D], &C, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_t, d_p0, d_wv, d_bcv, d_bcd);
   
-  if (C.FIO.PLOT3D_OUT == ON)
+  if (C.FIO.Format == plt3d_fmt)
   {
     PLT3D.setValuePlot3D();
     if (C.P3Op.IS_xyz == ON) PLT3D.OutputPlot3D_xyz(CurrentStep, origin, pitch);// ---> moving grid を考慮したときOutputPlot3D_postに組み込む
@@ -714,7 +714,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task);
-    if (C.FIO.PLOT3D_OUT == ON) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
+    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
   }
 
   
@@ -723,7 +723,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task, true);
-    if (C.FIO.PLOT3D_OUT == ON) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
+    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
   }
   
 
@@ -2344,7 +2344,7 @@ void FFV::init_Interval()
     }    
   }
   
-  if (C.FIO.PLOT3D_OUT == ON)
+  if (C.FIO.Format == plt3d_fmt)
   {
     if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d, C.Tscale) )  // 瞬時値ファイル
     {

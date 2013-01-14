@@ -215,15 +215,13 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
       }
     }
   }
-  
-  // 並列出力モード
-  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
+
   
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "func", m_step, myRank, pout);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, "divided");
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
   //open file
@@ -521,7 +519,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   delete [] kd;
   
   //dfiファイルの出力
-  if (myRank==0) if ( !dfi->Write_DFI_File(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   
 }
 
@@ -607,13 +605,11 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     }
   }
   
-  // 並列出力モード
-  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
   
   // 出力ファイル名
   std::string tmp,fname,dfi_name;
   std::string dtmp;
-  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "func", m_step, myRank, pout);
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, "divided");
   
   
   // Pressure
@@ -628,7 +624,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   }
   
   fname = "prs_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
   FP3DW->setFileName(fname.c_str());
   if(!FP3DW->OpenFile()){
@@ -654,14 +650,14 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   //}//igrid loop
   FP3DW->CloseFile();
   dfi_name = "prs_" + C->P3Op.basename;
-  if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   
   // Velocity
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
   fname = "vel_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
   FP3DW->setFileName(fname.c_str());
   if(!FP3DW->OpenFile()){
@@ -703,7 +699,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   //}//igrid loop
   FP3DW->CloseFile();
   dfi_name = "vel_" + C->P3Op.basename;
-  if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   
   // Tempearture
   if( C->isHeatProblem() ){
@@ -718,7 +714,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     }
     
     fname = "tmp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -743,7 +739,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "tmp_" + C->P3Op.basename;
-    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   // Total Pressure
@@ -762,7 +758,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     }
     
     fname = "tp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -787,7 +783,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "tp_" + C->P3Op.basename;
-    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   // Vorticity
@@ -800,7 +796,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
     fname = "vrt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -841,7 +837,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "vrt_" + C->P3Op.basename;
-    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   // 2nd Invariant of Velocity Gradient Tensor
@@ -852,7 +848,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     fname = "iv2gt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -877,7 +873,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "iv2gt_" + C->P3Op.basename;
-    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
     
   }
   
@@ -889,7 +885,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     fname = "hlt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -914,7 +910,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "hlt_" + C->P3Op.basename;
-    if (myRank==0) if ( !dfi->Write_DFI_File(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   //deallocate
@@ -924,7 +920,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   delete [] kd;
   
   //dfiファイルの出力
-  if (myRank==0) if ( !dfi->Write_DFI_File(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0);
+  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   
 }
 
@@ -942,12 +938,9 @@ void Plot3D::OutputPlot3D_function_name()
   std::string tmp;
   std::string dtmp;
   
-  // 並列出力モード
-  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
   
-  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, pout);
-  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, false);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, "divided");
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
   //open file
@@ -1000,18 +993,15 @@ void Plot3D::OutputPlot3D_function_name_divide()
   int keep_format=FP3DW->GetFormat();
   FP3DW->setFormat(FORMATTED);
   
-  // 並列出力モード
-  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
   
   // 出力ファイル名
   std::string tmp,fname;
   std::string dtmp;
-  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, pout);
-  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "nam", 0, myRank, false);
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, "divided");
   
   // Pressure
   fname = "prs_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
   FP3DW->setFileName(fname.c_str());
   if(!FP3DW->OpenFile()){
@@ -1023,7 +1013,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   
   // Velocity
   fname = "vel_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
   FP3DW->setFileName(fname.c_str());
   if(!FP3DW->OpenFile()){
@@ -1038,7 +1028,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Tempearture
   if( C->isHeatProblem() ){
     fname = "tmp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -1052,7 +1042,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Total Pressure
   if (C->Mode.TP == ON ){
     fname = "tp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -1066,7 +1056,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Vorticity
   if (C->Mode.VRT == ON ){
     fname = "vrt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -1082,7 +1072,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->Mode.I2VGT == ON ){
     fname = "i2vgt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -1097,7 +1087,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Helicity
   if (C->Mode.Helicity == ON ){
     fname = "hlt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
+    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
     fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
     FP3DW->setFileName(fname.c_str());
     if(!FP3DW->OpenFile()){
@@ -1214,15 +1204,12 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   
   //}//igrid loop
   
-  // 並列出力モード
-  bool pout = ( C->FIO.IO_Output == IO_GATHER ) ? false : true;
   
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", m_step, myRank, pout);
-  //tmp = dfi->Generate_FileName_Free(C->P3Op.basename, "xyz", 0, myRank, pout);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->Generate_DirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "xyz", m_step, myRank, "divided");
+  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
   //open file
