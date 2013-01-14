@@ -83,6 +83,8 @@ bool FFV::getCoarseResult (int i, int j, int k,
   std::string label_leaf;
   int ibuf;
   int iv[3];
+  
+  std::string fmt(C.file_fmt_ext);
 
 	
   std::string buf;
@@ -167,13 +169,13 @@ bool FFV::getCoarseResult (int i, int j, int k,
     
     n++;
   }
-    
+  
   // 見つけられなかった
   if ( rank == -1 ) return false;
     
   
   // ランク番号のファイル名を生成する
-  std::string target = DFI.GenerateFileName(coarse_prefix, C.file_fmt_ext, m_step, rank, "divided");
+  std::string target = DFI.GenerateFileName(coarse_prefix, fmt, m_step, rank, true);
   if ( target.empty() ) return false;
   
   
@@ -265,6 +267,8 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   int ibuf;
   int iv[3];
   
+  std::string fmt(C.file_fmt_ext);
+  
   
   std::string buf;
 	int rank = -1;
@@ -306,7 +310,7 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   
   
   // ランク番号のファイル名を生成する
-  std::string target = DFI.GenerateFileName(coarse_prefix, C.file_fmt_ext, m_step, rank, "divided");
+  std::string target = DFI.GenerateFileName(coarse_prefix, fmt, m_step, rank, true);
   if ( target.empty() ) return false;
   
   
@@ -502,7 +506,8 @@ void FFV::Restart_std(FILE* fp, double& flop)
 {
   double time;
   unsigned step;
-  string tmp;
+  std::string tmp;
+  std::string fmt(C.file_fmt_ext);
   
   // 圧力の瞬時値　
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
@@ -514,7 +519,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   unsigned i_dummy=0;
   double f_dummy=0.0;
   
-  tmp = DFI.GenerateFileName(C.f_Pressure, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_Pressure, fmt, C.Restart_step, myRank, true);
   
   if ( !checkFile(tmp) )
   {
@@ -534,7 +539,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   
   // Instantaneous Velocity fields
-  tmp = DFI.GenerateFileName(C.f_Velocity, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_Velocity, fmt, C.Restart_step, myRank, true);
   
   if ( !checkFile(tmp) )
   {
@@ -555,7 +560,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   
   // Instantaneous Face Velocity fields
-  tmp = DFI.GenerateFileName(C.f_Fvelocity, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_Fvelocity, fmt, C.Restart_step, myRank, true);
   
   if ( !checkFile(tmp) )
   {
@@ -580,7 +585,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.GenerateFileName(C.f_Temperature, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_Temperature, fmt, C.Restart_step, myRank, true);
     
     if ( !checkFile(tmp) )
     {
@@ -612,6 +617,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
 void FFV::Restart_avrerage (FILE* fp, double& flop)
 {
   std::string tmp;
+  std::string fmt(C.file_fmt_ext);
   
   unsigned step = Session_StartStep;
   double   time = Session_StartTime;
@@ -655,7 +661,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_AvrPressure, fmt, C.Restart_step, myRank, true);
   if ( !checkFile(tmp) )
   {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -675,7 +681,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   
   // Velocity
-  tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_AvrVelocity, fmt, C.Restart_step, myRank, true);
   if ( !checkFile(tmp) )
   {
     Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -695,7 +701,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_AvrTemperature, fmt, C.Restart_step, myRank, true);
     if ( !checkFile(tmp) )
     {
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
@@ -721,6 +727,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   std::string f_prs;
   std::string f_vel;
   std::string f_temp;
+  std::string fmt(C.file_fmt_ext);
   
   // 粗格子の分割サイズ
   int r_size[3];
@@ -766,12 +773,12 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     crs[0] = 1;
     crs[1] = 1;
     crs[2] = 1;
-    f_prs = DFI.GenerateFileName(C.f_dfi_prfx_prs, C.file_fmt_ext, C.Restart_step, myRank, "divided");
-    f_vel = DFI.GenerateFileName(C.f_dfi_prfx_vel, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+    f_prs = DFI.GenerateFileName(C.f_dfi_prfx_prs, fmt, C.Restart_step, myRank, true);
+    f_vel = DFI.GenerateFileName(C.f_dfi_prfx_vel, fmt`, C.Restart_step, myRank, true);
     
     if ( C.isHeatProblem() )
     {
-      f_temp= DFI.GenerateFileName(C.f_dfi_prfx_temp, C.file_fmt_ext, C.Restart_step, myRank, "divided");
+      f_temp= DFI.GenerateFileName(C.f_dfi_prfx_temp, fmt, C.Restart_step, myRank, true);
     }
   }
   
@@ -1004,6 +1011,8 @@ void FFV::setDFI()
 // リスタート時の瞬時値ファイル読み込み（並列数が異なる場合）
 void FFV::Restart_different(FILE* fp, double& flop)
 {
+  std::string fmt(C.file_fmt_ext);
+  
   // 自身の領域終点インデックス
   int tail[3];
   for(int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
@@ -1084,10 +1093,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_head[i]=DI[0].Node[j].HeadIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_tail[i]=DI[0].Node[j].TailIndex[i];
       for(int i=0;i<3;i++) DRI[ic].read_file_voxel_size[i]=DI[0].Node[j].VoxelSize[i];
-      DRI[ic].f_prs  = DFI.GenerateFileName(C.f_different_nproc_pressure,  C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
-      DRI[ic].f_vel  = DFI.GenerateFileName(C.f_different_nproc_velocity,  C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
-      DRI[ic].f_fvel = DFI.GenerateFileName(C.f_different_nproc_fvelocity, C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
-      if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.GenerateFileName(C.f_different_nproc_temperature, C.file_fmt_ext, C.Restart_step, DI[0].Node[j].RankID, "divided");
+      DRI[ic].f_prs  = DFI.GenerateFileName(C.f_different_nproc_pressure,  fmt, C.Restart_step, DI[0].Node[j].RankID, true);
+      DRI[ic].f_vel  = DFI.GenerateFileName(C.f_different_nproc_velocity,  fmt, C.Restart_step, DI[0].Node[j].RankID, true);
+      DRI[ic].f_fvel = DFI.GenerateFileName(C.f_different_nproc_fvelocity, fmt, C.Restart_step, DI[0].Node[j].RankID, true);
+      if ( C.isHeatProblem() ) DRI[ic].f_temp= DFI.GenerateFileName(C.f_different_nproc_temperature, fmt, C.Restart_step, DI[0].Node[j].RankID, true);
       ic++;
     }
   }
@@ -1102,10 +1111,10 @@ void FFV::Restart_different(FILE* fp, double& flop)
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_head[i]=1;
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_tail[i]=G_size[i];
     for(int i=0;i<3;i++) DRI[0].read_file_voxel_size[i]=G_size[i];
-    DRI[0].f_prs  = DFI.GenerateFileName(C.f_different_nproc_pressure, C.file_fmt_ext, C.Restart_step, myRank, "gather");
-    DRI[0].f_vel  = DFI.GenerateFileName(C.f_different_nproc_velocity, C.file_fmt_ext, C.Restart_step, myRank, "gather");
-    DRI[0].f_fvel = DFI.GenerateFileName(C.f_different_nproc_fvelocity, C.file_fmt_ext, C.Restart_step, myRank, "gather");
-    if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.GenerateFileName(C.f_different_nproc_temperature, C.file_fmt_ext, C.Restart_step, myRank, "gather");
+    DRI[0].f_prs  = DFI.GenerateFileName(C.f_different_nproc_pressure, fmt, C.Restart_step, myRank);
+    DRI[0].f_vel  = DFI.GenerateFileName(C.f_different_nproc_velocity, fmt, C.Restart_step, myRank);
+    DRI[0].f_fvel = DFI.GenerateFileName(C.f_different_nproc_fvelocity, fmt, C.Restart_step, myRank);
+    if ( C.isHeatProblem() ) DRI[0].f_temp= DFI.GenerateFileName(C.f_different_nproc_temperature, fmt, C.Restart_step, myRank);
   }
   
   // ランクごとに前計算時のどのランクのファイルを必要とするかテーブルで持っておく
@@ -1527,7 +1536,9 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
   MPI_Request mpi_req;
   double time;
   unsigned step;
-  string tmp;
+  std::string tmp;
+  
+  std::string fmt(C.file_fmt_ext);
   
   // set rank_dir
   int len = 6;
@@ -1577,7 +1588,7 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.GenerateFileName(C.f_different_nproc_pressure, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_pressure, fmt, C.Restart_step, read_rank, true);
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1651,6 +1662,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
   double time;
   unsigned step;
   string tmp;
+  std::string fmt(C.file_fmt_ext);
   
   // set rank_dir
   int len = 6;
@@ -1697,7 +1709,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.GenerateFileName(C.f_different_nproc_velocity, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_velocity, fmt, C.Restart_step, read_rank, true);
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1783,6 +1795,8 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
   unsigned step;
   string tmp;
   
+  std::string fmt(C.file_fmt_ext);
+  
   // set rank_dir
   int len = 6;
   char* buff = new char[len];
@@ -1828,7 +1842,7 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.GenerateFileName(C.f_different_nproc_fvelocity, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_fvelocity, fmt, C.Restart_step, read_rank, true);
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {
@@ -1914,6 +1928,8 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
   unsigned step;
   string tmp;
   
+  std::string fmt(C.file_fmt_ext);
+  
   // set rank_dir
   int len = 6;
   char* buff = new char[len];
@@ -1962,7 +1978,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
         for(unsigned i=0;i<sendsize;i++) d_wk[i] = 0.0;
         
         // ファイルの読み込み
-        tmp = DFI.GenerateFileName(C.f_different_nproc_temperature, C.file_fmt_ext, C.Restart_step, read_rank, "divided");
+        tmp = DFI.GenerateFileName(C.f_different_nproc_temperature, fmt, C.Restart_step, read_rank, true);
         tmp = C.f_different_nproc_dir_prefix + rank_dir + "/" + tmp;
         if ( !checkFile(tmp) )
         {

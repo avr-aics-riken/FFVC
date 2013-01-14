@@ -490,6 +490,7 @@ public:
   typedef struct 
   {
     int Param;  /// 入力パラメータ単位 (Dimensional/NonDimensional)
+    int Output; /// 出力単位 (Dimensional/NonDimensional)
     int File;   /// ファイルの記述単位 (Dimensional/NonDimensional)
     int Log;    /// 出力ログの単位 (Dimensional/NonDimensional)
     int Prs;    /// 圧力単位 (Absolute/Gauge)
@@ -840,11 +841,12 @@ public:
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
     
-    Unit.Param = 0;
-    Unit.Prs   = 0;
-    Unit.Log   = 0;
-    Unit.File  = 0;
-    Unit.Temp  = 0;
+    Unit.Param  = 0;
+    Unit.Output = 0;
+    Unit.Prs    = 0;
+    Unit.Log    = 0;
+    Unit.File   = 0;
+    Unit.Temp   = 0;
     
     Sampling.log = 0;
     Sampling.out_mode = 0;

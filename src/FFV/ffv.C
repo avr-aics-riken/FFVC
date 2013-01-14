@@ -244,7 +244,7 @@ void FFV::AverageOutput(double& flop)
   
   REAL_TYPE minmax[2] = {f_min, f_max};
   
-  tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, m_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, m_step, myRank, true);
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_AvrPressure, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
@@ -257,8 +257,8 @@ void FFV::AverageOutput(double& flop)
                                     "ijkn",
                                     1,
                                     minmax,
-                                    "divided",
-                                    true,
+                                    true, // 分割
+                                    true, // 平均値
                                     stepAvr,
                                     timeAvr) ) Exit(0);
   
@@ -280,7 +280,7 @@ void FFV::AverageOutput(double& flop)
   minmax[0] = f_min;
   minmax[1] = f_max;
   
-  tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, m_step, myRank, "divided");
+  tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, m_step, myRank, true);
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_AvrVelocity, m_step) : C.FIO.IO_DirPath;
   tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
   F.writeVector(tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out, 1);
@@ -293,7 +293,8 @@ void FFV::AverageOutput(double& flop)
                                     "nijk",
                                     3,
                                     minmax,
-                                    "divided",
+                                    true,
+                                    true,
                                     stepAvr,
                                     timeAvr) ) Exit(0);
   
@@ -324,7 +325,7 @@ void FFV::AverageOutput(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, m_step, myRank, true);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_AvrTemperature, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
@@ -337,7 +338,8 @@ void FFV::AverageOutput(double& flop)
                                      "ijkn",
                                      1,
                                      minmax,
-                                     "divided",
+                                     true,
+                                     true,
                                      stepAvr,
                                      timeAvr) ) Exit(0);
   }
@@ -570,7 +572,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    tmp = DFI.GenerateFileName(C.f_DivDebug, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_DivDebug, C.file_fmt_ext, m_step, myRank, true);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_DivDebug, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -583,7 +585,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                       "ijkn",
                                       1,
                                       minmax,
-                                      "divided") ) Exit(0);
+                                      true) ) Exit(0);
     
   }
   
@@ -620,11 +622,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   
   if ( !crs_restart )
   {
-    tmp = DFI.GenerateFileName(C.f_Pressure, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_Pressure, C.file_fmt_ext, m_step, myRank, true);
   }
   else 
   {
-    tmp = DFI.GenerateFileName(prs_restart, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(prs_restart, C.file_fmt_ext, m_step, myRank, true);
   }
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Pressure, m_step) : C.FIO.IO_DirPath;
@@ -640,7 +642,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                     "ijkn",
                                     1,
                                     minmax,
-                                    "divided") ) Exit(0);
+                                    true) ) Exit(0);
   
 
   // Velocity
@@ -661,11 +663,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   
   if ( !crs_restart )
   {
-    tmp = DFI.GenerateFileName(C.f_Velocity, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_Velocity, C.file_fmt_ext, m_step, myRank, true);
   }
   else 
   {
-    tmp = DFI.GenerateFileName(vel_restart, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(vel_restart, C.file_fmt_ext, m_step, myRank, true);
   }
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Velocity, m_step) : C.FIO.IO_DirPath;
@@ -681,7 +683,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                     "nijk",
                                     3,
                                     minmax,
-                                    "divided") ) Exit(0);
+                                    true) ) Exit(0);
   
   
   // Face Velocity
@@ -701,11 +703,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
   
   if ( !crs_restart )
   {
-    tmp = DFI.GenerateFileName(C.f_Fvelocity, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_Fvelocity, C.file_fmt_ext, m_step, myRank, true);
   }
   else
   {
-    tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, true);
   }
   
   dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Fvelocity, m_step) : C.FIO.IO_DirPath;
@@ -721,7 +723,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                     "nijk",
                                     3,
                                     minmax,
-                                    "divided") ) Exit(0);
+                                    true) ) Exit(0);
   
   
   // Tempearture
@@ -753,11 +755,11 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     
     if ( !crs_restart )
     {
-      tmp = DFI.GenerateFileName(C.f_Temperature, C.file_fmt_ext, m_step, myRank, "divided");
+      tmp = DFI.GenerateFileName(C.f_Temperature, C.file_fmt_ext, m_step, myRank, true);
     }
     else 
     {
-      tmp = DFI.GenerateFileName(temp_restart, C.file_fmt_ext, m_step, myRank, "divided");
+      tmp = DFI.GenerateFileName(temp_restart, C.file_fmt_ext, m_step, myRank, true);
     }
     
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Temperature, m_step) : C.FIO.IO_DirPath;
@@ -773,7 +775,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                       "ijkn",
                                       1,
                                       minmax,
-                                      "divided") ) Exit(0);
+                                      true) ) Exit(0);
   }
 
   
@@ -807,7 +809,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    tmp = DFI.GenerateFileName(C.f_TotalP, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_TotalP, C.file_fmt_ext, m_step, myRank, true);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_TotalP, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -821,7 +823,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                       "ijkn",
                                       1,
                                       minmax,
-                                      "divided") ) Exit(0);
+                                      true) ) Exit(0);
 
   }
   
@@ -849,7 +851,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    tmp = DFI.GenerateFileName(C.f_Vorticity, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_Vorticity, C.file_fmt_ext, m_step, myRank, true);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Vorticity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeVector(tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
@@ -863,7 +865,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                       "nijk",
                                       3,
                                       minmax,
-                                      "divided") ) Exit(0);
+                                      true) ) Exit(0);
 
   }
   
@@ -889,7 +891,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    tmp = DFI.GenerateFileName(C.f_I2VGT, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_I2VGT, C.file_fmt_ext, m_step, myRank, true);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_I2VGT, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -903,7 +905,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                       "ijkn",
                                       1,
                                       minmax,
-                                      "divided") ) Exit(0);
+                                      true) ) Exit(0);
 
   }
   
@@ -929,7 +931,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    tmp = DFI.GenerateFileName(C.f_Helicity, C.file_fmt_ext, m_step, myRank, "divided");
+    tmp = DFI.GenerateFileName(C.f_Helicity, C.file_fmt_ext, m_step, myRank, true);
     dtmp = (C.FIO.IO_Mode == Control::io_time_slice) ? DFI.GenerateDirName(C.f_Helicity, m_step) : C.FIO.IO_DirPath;
     tmp = FFV::directory_prefix(dtmp, tmp, C.FIO.IO_Mode, C.Parallelism);
     F.writeScalar(tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
@@ -943,7 +945,7 @@ void FFV::FileOutput(double& flop, const bool crs_restart)
                                       "ijkn",
                                       1,
                                       minmax,
-                                      "divided") ) Exit(0);
+                                      true) ) Exit(0);
 
   }
 

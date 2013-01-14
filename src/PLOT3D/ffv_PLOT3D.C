@@ -220,7 +220,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, "divided");
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
   dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
@@ -609,7 +609,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   // 出力ファイル名
   std::string tmp,fname,dfi_name;
   std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, "divided");
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
   
   
   // Pressure
@@ -939,7 +939,7 @@ void Plot3D::OutputPlot3D_function_name()
   std::string dtmp;
   
   
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, "divided");
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
   dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   
@@ -997,7 +997,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // 出力ファイル名
   std::string tmp,fname;
   std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, "divided");
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
   
   // Pressure
   fname = "prs_" + tmp;
@@ -1208,7 +1208,7 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   // 出力ファイル名
   std::string tmp;
   std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "xyz", m_step, myRank, "divided");
+  tmp = dfi->GenerateFileName(C->P3Op.basename, "xyz", m_step, myRank, true);
   dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
   tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
   

@@ -35,9 +35,12 @@ protected:
   int* tail;             ///< bboxの終端インデクス(C index) [3*Num_Node]
   REAL_TYPE RefLength;   ///< 代表長さ
   REAL_TYPE RefVelocity; ///< 代表速度
+  REAL_TYPE BasePrs;     ///< 基準圧力
+  REAL_TYPE DiffPrs;     ///< 圧力差
   std::string hostname;  ///< ラベル
   std::string Unit_L;    ///< 長さの単位 (NonDimensional, m)
   std::string Unit_V;    ///< 速度の単位 (NonDimensional, m/s)
+  std::string Unit_P;    ///< 圧力の単位 (NonDimensional, Pa)
   
 public:
   DFI() {
@@ -50,6 +53,8 @@ public:
     tail       = NULL;
     RefLength  = 0.0;
     RefVelocity= 0.0;
+    BasePrs    = 0.0;
+    DiffPrs    = 0.0;
     
     for (int i=0; i<3; i++) {
       Gsize[i]      = 0;
@@ -115,7 +120,7 @@ public:
   
   
   // ファイル名を作成する
-  std::string GenerateFileName(const std::string prefix, const std::string fmt, const unsigned m_step, const int m_id, const char* mio);
+  std::string GenerateFileName(const std::string prefix, const std::string fmt, const unsigned m_step, const int m_id, bool divide=false);
 
   
   // 初期化
@@ -125,8 +130,11 @@ public:
             const int stype,
             const REAL_TYPE m_refL,
             const REAL_TYPE m_refV,
+            const REAL_TYPE m_BaseP,
+            const REAL_TYPE m_DiffP,
             const std::string m_UnitL,
             const std::string m_UnitV,
+            const std::string m_UnitP,
             const int* hidx,
             const int* tidx,
             const std::string m_host);
@@ -142,7 +150,7 @@ public:
                      const std::string shape,
                      const int compo,
                      const REAL_TYPE* minmax,
-                     const char* mio,
+                     const bool mio,
                      bool avr_mode=false,
                      unsigned a_step=0,
                      double a_time=0.0);

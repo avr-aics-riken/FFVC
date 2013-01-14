@@ -468,7 +468,7 @@ void MonitorList::get_Monitor(Control* C)
     }
   }
   
-  // 単位指定
+  /* 単位指定 >> Unitで一括指定
   label="/Steer/MonitorList/Unit";
   
   if ( !(tpCntl->GetValue(label, &str )) ) 
@@ -491,7 +491,20 @@ void MonitorList::get_Monitor(Control* C)
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
+  }*/
+  
+  if ( C->Unit.Output == DIMENSIONAL )
+  {
+    C->Sampling.unit = DIMENSIONAL;
+    setSamplingUnit(DIMENSIONAL);
   }
+  else // NonDimensional
+  {
+    C->Sampling.unit = NONDIMENSIONAL;
+    setSamplingUnit(NONDIMENSIONAL);
+  }
+  
+  
   
   // サンプリングの指定単位が有次元の場合に，無次元に変換
   if ( C->Sampling.unit == DIMENSIONAL ) 

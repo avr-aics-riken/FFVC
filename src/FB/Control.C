@@ -800,7 +800,7 @@ void Control::get_FileIO()
   string str;
   string label, leaf;
   
-  // 出力単位
+  /* 出力単位 >> Unitで一括指定
   label = "/Steer/FileIO/UnitOfFile";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -816,7 +816,7 @@ void Control::get_FileIO()
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
-  
+  */
   
   // 出力ガイドセルモード
   label = "/Steer/FileIO/GuideOut";
@@ -1384,7 +1384,7 @@ void Control::get_Log()
   string str;
   string label;
   
-  // 出力単位
+  /* 出力単位 >> Unitで一括指定
   label="/Steer/Log/UnitOfLog";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -1400,7 +1400,7 @@ void Control::get_Log()
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
   }
-  
+  */
   
   // Log_Base
   label="/Steer/Log/LogBase";
@@ -2574,7 +2574,7 @@ void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_W
   // ソルバーの具体的な種類を決めるパラメータを取得し，ガイドセルの値を設定する
   get_Solver_Properties();
   
-  // 指定単位が有次元か無次元かを取得
+  // 指定単位を取得
   get_Unit();
   
   // Reference parameter needs to be called before setDomain();
@@ -2810,6 +2810,33 @@ void Control::get_Unit()
   
   if     ( !strcasecmp(str.c_str(), "Dimensional") )     Unit.Param = DIMENSIONAL;
   else if( !strcasecmp(str.c_str(), "NonDimensional") )  Unit.Param = NONDIMENSIONAL;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+  label = "/Steer/Unit/UnitOfOutput";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "Dimensional") )
+  {
+    Unit.Output = DIMENSIONAL;
+    Unit.File   = DIMENSIONAL;
+    Unit.Log    = DIMENSIONAL;
+  }
+  else if( !strcasecmp(str.c_str(), "NonDimensional") )
+  {
+    Unit.Output = NONDIMENSIONAL;
+    Unit.File   = NONDIMENSIONAL;
+    Unit.Log    = NONDIMENSIONAL;
+  }
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());

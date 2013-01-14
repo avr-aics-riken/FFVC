@@ -92,9 +92,9 @@ std::string DFI::GenerateDFIname(const std::string prefix)
  * @param [in] fmt    ファイルフォーマット拡張子, 0:"sph", 2:"dat", 1:others(plot3dとして認識)
  * @param [in] m_step ステップ数
  * @param [in] m_id   ランク番号
- * @param [in] mio    出力時の分割指定　 "single" / "divided"
+ * @param [in] divide 出力時の分割指定　 single:false / divide:true
  */
-std::string DFI::GenerateFileName(const std::string prefix, const std::string fmt, const unsigned m_step, const int m_id, const char* mio)
+std::string DFI::GenerateFileName(const std::string prefix, const std::string fmt, const unsigned m_step, const int m_id, bool divide)
 {
   if ( prefix.empty() ) return NULL;
   if ( fmt.empty() ) return NULL;
@@ -104,7 +104,7 @@ std::string DFI::GenerateFileName(const std::string prefix, const std::string fm
   memset(tmp, 0, sizeof(char)*len);
   
   
-  if ( !strcasecmp(mio, "divided") )
+  if ( divide )
   {
     if ( !strcasecmp(fmt.c_str(), "sph") || !strcasecmp(fmt.c_str(), "dat") )
     {
@@ -130,17 +130,20 @@ std::string DFI::GenerateFileName(const std::string prefix, const std::string fm
 // #################################################################
 /**
  * @brief 初期化
- * @param [in] g_size グローバルサイズ
- * @param [in] m_div  ノード分割数
- * @param [in] gc     ガイドセル
- * @param [in] stype  スタートタイプ
- * @param [in] m_refL 代表長さ
- * @param [in] m_refV 代表速度
- * @param [in] Unit_L 長さの単位
- * @param [in] Unit_V 速度の単位
- * @param [in] hidx   開始インデクス
- * @param [in] tidx   終端インデクス
- * @param [in] m_host ホスト名
+ * @param [in] g_size  グローバルサイズ
+ * @param [in] m_div   ノード分割数
+ * @param [in] gc      ガイドセル
+ * @param [in] stype   スタートタイプ
+ * @param [in] m_refL  代表長さ
+ * @param [in] m_refV  代表速度
+ * @param [in] m_BaseP 基準圧力
+ * @param [in] m_DiffP 圧力差
+ * @param [in] Unit_L  長さの単位
+ * @param [in] Unit_V  速度の単位
+ * @param [in] Unit_P  圧力の単位
+ * @param [in] hidx    開始インデクス
+ * @param [in] tidx    終端インデクス
+ * @param [in] m_host  ホスト名
  */
 bool DFI::init(const int* g_size,
                const int* m_div,
@@ -148,11 +151,14 @@ bool DFI::init(const int* g_size,
                const int stype,
                const REAL_TYPE m_refL,
                const REAL_TYPE m_refV,
+               const REAL_TYPE m_BaseP,
+               const REAL_TYPE m_DiffP,
                const std::string m_UnitL,
                const std::string m_UnitV,
+               const std::string m_UnitP,
                const int* hidx,
                const int* tidx,
-               const std::string m_host)
+               const std::string m_host))
 {
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
   
@@ -176,9 +182,12 @@ bool DFI::init(const int* g_size,
   
   RefLength   = m_refL;
   RefVelocity = m_refV;
+  BasePrs     = m_BaseP;
+  DiffPrs     = m_DiffP;
   
   Unit_L = m_UnitL;
   Unit_V = m_UnitV;
+  Unit_P = m_UnitP;
   
   head = new int[3*Num_Node];
   tail = new int[3*Num_Node];
@@ -355,7 +364,7 @@ bool DFI::WriteDFIproc(const REAL_TYPE* g_org, const REAL_TYPE* g_reg)
  * @param [in]     shape    配列の形式 ("nijk" / "ijkn")
  * @param [in]     compo    データの成分数(n)
  * @param [in]     minmax   最小値、最大値
- * @param [in]     mio      出力時の分割指定　 "single" / "divided"
+ * @param [in]     mio      出力時の分割指定　 single:false / divide:true
  * @param [in]     avr_mode 平均値出力の場合、true
  * @param [in]     a_step   平均ステップ数
  * @param [in]     a_time   平均時間
@@ -369,7 +378,7 @@ bool DFI::WriteDFIindex(const std::string prefix,
                         const std::string shape,
                         const int compo,
                         const REAL_TYPE* minmax,
-                        const char* mio,
+                        const bool mio,
                         bool avr_mode,
                         unsigned a_step,
                         double a_time)
@@ -385,7 +394,7 @@ bool DFI::WriteDFIindex(const std::string prefix,
   
   std::string dfi_name;
   
-  if ( !strcasecmp(mio, "divided") )
+  if ( mio )
   {
     dfi_name = GenerateDFIname(prefix);
     
@@ -442,8 +451,9 @@ bool DFI::WriteIndex(const std::string dfi_name,
     fclose(fp);
   }
 
-  
-  if ( (dfi_mng == 0) || !flag || (start_type == coarse_restart) ) // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
+
+  // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
+  if ( (dfi_mng == 0) || !flag || (start_type == coarse_restart) ) 
   {
     if ( !(fp = fopen(dfi_name.c_str(), "w")) )
     {
@@ -541,6 +551,17 @@ bool DFI::WriteIndex(const std::string dfi_name,
     WriteTab(fp, 1);
     fprintf(fp, "V0            = %e\n", RefVelocity);
     
+    // Pressure
+    WriteTab(fp, 1);
+    fprintf(fp, "Pressure      = \"%s\"\n", Unit_P.c_str());
+    
+    // P0
+    WriteTab(fp, 1);
+    fprintf(fp, "P0            = %e\n", BasePrs);
+    
+    // DiffPrs
+    WriteTab(fp, 1);
+    fprintf(fp, "DiffPrs       = %e\n", DiffPrs);
     
     // end of Unit {}
     fprintf(fp, "}\n\n");
