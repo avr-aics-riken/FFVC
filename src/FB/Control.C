@@ -818,6 +818,31 @@ void Control::get_FileIO()
   }
   */
   
+  // 並列入出力モード
+  label = "/Steer/FileIO/IOmode";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "distributed") )  FIO.IOmode = IO_DISTRIBUTE;
+  else if( !strcasecmp(str.c_str(), "gathered") )     FIO.IOmode = IO_GATHER;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // 逐次実行の場合には、強制的に IO_GATHER
+  if ( (Parallelism == Serial) || (Parallelism == OpenMP) )
+  {
+    FIO.IOmode = IO_GATHER;
+  }
+  
+  
   // 出力ガイドセルモード
   label = "/Steer/FileIO/GuideOut";
   
@@ -2459,7 +2484,7 @@ void Control::get_start_condition()
   if ( Start == coarse_restart || (Start == restart_different_nproc) )
   {
     // プロセス並列時にローカルでのファイル入力を指定した場合
-    if ( FIO.IO_Input == IO_DISTRIBUTE )
+    if ( FIO.IOmode == IO_DISTRIBUTE )
     {
       label="/Steer/StartCondition/DFIfile/pressure";
       
@@ -3103,6 +3128,7 @@ void Control::printInitValues(FILE* fp)
     Exit(0);
   }
   
+  // ここでは動圧を表示、方程式の無次元化は ( /rho u^2 ) 
   REAL_TYPE DynamicPrs = 0.5*RefDensity * RefVelocity * RefVelocity;
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -3667,7 +3693,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   // 粗い格子の計算結果を使ったリスタート
   if ( Start == coarse_restart )
   {
-    if ( FIO.IO_Input == IO_GATHER )
+    if ( FIO.IOmode == IO_GATHER )
     {
       fprintf(fp,"\t     with Coarse Initial data files\n");
       fprintf(fp,"\t          Pressure                 :   %s\n", f_dfi_prfx_prs.c_str());
@@ -3701,7 +3727,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   // 異なる並列数からリスタート
   if ( Start == restart_different_nproc )
   {
-    if ( FIO.IO_Input == IO_GATHER )
+    if ( FIO.IOmode == IO_GATHER )
     {
       fprintf(fp,"\t     with different_nproc Initial data files\n");
       fprintf(fp,"\t          Pressure                 :   %s\n", f_different_nproc_pressure.c_str());
@@ -3770,7 +3796,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   
   // InputMode >> デフォルトでローカル
-  //fprintf(fp,"\t     Input Mode               :   %s\n", (FIO.IO_Input==IO_GATHER) ? "Master IO" : "Local IO");
+  fprintf(fp,"\t     IO Mode                  :   %s\n", (FIO.IOmode==IO_GATHER) ? "Gathered" : "Distributed");
   
   
   // Output guide

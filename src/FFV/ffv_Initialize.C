@@ -108,6 +108,10 @@ int FFV::Initialize(int argc, char **argv)
   FP3DW.setRankInfo(paraMngr, procGrp);
   
   
+  // 並列モードの取得
+  std::string str_para = setParallelism();
+  
+  
   // 最初のパラメータの取得
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
   
@@ -179,6 +183,8 @@ int FFV::Initialize(int argc, char **argv)
   cmp = new CompoList[C.NoCompo+1];
 
   
+  
+  
 
   
   // タイミング測定の初期化
@@ -187,7 +193,7 @@ int FFV::Initialize(int argc, char **argv)
     ModeTiming = ON;
     TIMING__ PM.initialize( tm_END );
     TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
-    TIMING__ PM.setParallelMode(setParallelism(), C.num_thread, C.num_process);
+    TIMING__ PM.setParallelMode(str_para, C.num_thread, C.num_process);
     set_timing_label();
   }
   
@@ -1629,9 +1635,6 @@ void FFV::fixed_parameters()
   C.f_TotalP         = "tp";
   C.f_I2VGT          = "i2vgt";
   C.f_Vorticity      = "vrt";
-  
-  C.FIO.IO_Input  = IO_DISTRIBUTE;
-  C.FIO.IO_Output = IO_DISTRIBUTE;
   
 }
 

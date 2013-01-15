@@ -441,8 +441,7 @@ public:
   /** File IO control */
   typedef struct 
   {
-    int IO_Input;
-    int IO_Output;
+    int IOmode;
     int Div_Debug;
     int IO_Voxel;
     int IO_Mode;
@@ -824,8 +823,7 @@ public:
     LES.Cs = 0.0;
     LES.damping_factor=0.0;
     
-    FIO.IO_Input   = 0;
-    FIO.IO_Output  = 0;
+    FIO.IOmode   = 0;
     FIO.Div_Debug  = 0;
     FIO.IO_Voxel   = 0;
     FIO.IO_Mode    = 0;

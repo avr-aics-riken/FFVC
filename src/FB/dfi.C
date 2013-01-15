@@ -158,7 +158,7 @@ bool DFI::init(const int* g_size,
                const std::string m_UnitP,
                const int* hidx,
                const int* tidx,
-               const std::string m_host))
+               const std::string m_host)
 {
   MPI_Comm_size(MPI_COMM_WORLD, &Num_Node);
   

@@ -739,7 +739,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   int num_block[3];
   
   //並列時には各ランクに必要なファイル名と開始インデクスを取得
-  if ( C.FIO.IO_Input == IO_DISTRIBUTE )
+  if ( C.FIO.IOmode == IO_DISTRIBUTE )
   {
     int i, j, k;  // 密格子のグローバル開始インデクス
     i = head[0];
@@ -774,7 +774,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
     crs[1] = 1;
     crs[2] = 1;
     f_prs = DFI.GenerateFileName(C.f_dfi_prfx_prs, fmt, C.Restart_step, myRank, true);
-    f_vel = DFI.GenerateFileName(C.f_dfi_prfx_vel, fmt`, C.Restart_step, myRank, true);
+    f_vel = DFI.GenerateFileName(C.f_dfi_prfx_vel, fmt, C.Restart_step, myRank, true);
     
     if ( C.isHeatProblem() )
     {
@@ -972,6 +972,19 @@ void FFV::setDFI()
     UnitV = "NonDimensional";
   }
   
+  std::string UnitP;
+  
+  if ( C.Unit.File == DIMENSIONAL )
+  {
+    UnitP = "Pa";
+  }
+  else
+  {
+    UnitP = "NonDimensional";
+  }
+  
+  // 無次元化の圧力差 != 動圧
+  REAL_TYPE dp = C.RefDensity * C.RefVelocity * C.RefVelocity;
   
   // DFIクラスの初期化 >> 共通
   if ( !DFI.init(G_size,
@@ -980,8 +993,11 @@ void FFV::setDFI()
                  C.Start,
                  C.RefLength,
                  C.RefVelocity,
+                 C.BasePrs,
+                 dp,
                  UnitL,
                  UnitV,
+                 UnitP,
                  g_bbox_st,
                  g_bbox_ed,
                  host) ) Exit(0);
@@ -1028,7 +1044,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
   // set dfi info class
   vector<string> dfi_name;
   dfi_name.clear();
-  if ( C.FIO.IO_Input == IO_DISTRIBUTE ) // always IO_DISTRIBUTE
+  if ( C.FIO.IOmode == IO_DISTRIBUTE ) // always IO_DISTRIBUTE
   {
     dfi_name.push_back(C.f_dfi_prs.c_str());
     dfi_name.push_back(C.f_dfi_vel.c_str());
@@ -1047,7 +1063,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
   int nDRI=0;
   int max_nDRI=0;
   DifferentRestartInfo* DRI;
-  if ( C.FIO.IO_Input == IO_DISTRIBUTE ) // always IO_DISTRIBUTE
+  if ( C.FIO.IOmode == IO_DISTRIBUTE ) // always IO_DISTRIBUTE
   {
     // 自身の領域が含まれる領域の数を数える
     for(int j=0; j< DI[0].NodeInfoSize; j++ ) {
@@ -1124,7 +1140,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
   
   for(int i=0;i<frank_size;i++) frank[i]=0;
   
-  if ( C.FIO.IO_Input == IO_DISTRIBUTE ) // Gather出力されていた場合は0ランクを見に行くのでMPI_SUM必要なし
+  if ( C.FIO.IOmode == IO_DISTRIBUTE ) // Gather出力されていた場合は0ランクを見に行くのでMPI_SUM必要なし
   {
     for(int ic=0;ic<nDRI;ic++){
       frank[myRank*max_nDRI+ic]=DRI[ic].rank;
@@ -1281,7 +1297,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
       for(int i=0;i<numProc;i++) rank_list[i]=0;
       rank_list[myRank]=DRI[ic].rank;
       
-      if ( C.FIO.IO_Input == IO_DISTRIBUTE )
+      if ( C.FIO.IOmode == IO_DISTRIBUTE )
       {
         int *tmp = new int[numProc];
         for(int i=0;i<numProc;i++) tmp[i]=0;

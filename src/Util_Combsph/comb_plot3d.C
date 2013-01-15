@@ -780,7 +780,7 @@ void COMB::output_plot3d()
                                                  "ijkn",
                                                  1,
                                                  minmax,
-                                                 "divided") ) Exit(0); // keno 2013-01-14 適当
+                                                 true) ) Exit(0); // keno 2013-01-14 適当
         }
         
         ivar=ivar+dim;
@@ -817,7 +817,7 @@ void COMB::output_plot3d()
                                              "ijkn",
                                              1,
                                              minmax,
-                                             "divided") ) Exit(0); // keno 2013-01-14 適当
+                                             true) ) Exit(0); // keno 2013-01-14 適当
       
     }//node loop
     if(numProc > 1) ips=ips+nnode;
