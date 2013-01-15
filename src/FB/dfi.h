@@ -151,7 +151,7 @@ public:
                      const int compo,
                      const REAL_TYPE* minmax,
                      const bool mio,
-                     bool avr_mode=false,
+                     bool avr_mode=true,
                      unsigned a_step=0,
                      double a_time=0.0);
   

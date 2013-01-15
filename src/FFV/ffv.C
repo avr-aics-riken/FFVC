@@ -260,8 +260,8 @@ void FFV::AverageOutput(double& flop)
                                     "ijkn",
                                     1,
                                     minmax,
-                                    mio,  // 分割
-                                    true, // 平均値
+                                    mio,   // 分割
+                                    false, // 平均値
                                     stepAvr,
                                     timeAvr) ) Exit(0);
   
@@ -297,7 +297,7 @@ void FFV::AverageOutput(double& flop)
                                     3,
                                     minmax,
                                     mio,
-                                    true,
+                                    false,
                                     stepAvr,
                                     timeAvr) ) Exit(0);
   
@@ -342,7 +342,7 @@ void FFV::AverageOutput(double& flop)
                                      1,
                                      minmax,
                                      mio,
-                                     true,
+                                     false,
                                      stepAvr,
                                      timeAvr) ) Exit(0);
   }

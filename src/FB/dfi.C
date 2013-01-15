@@ -365,7 +365,7 @@ bool DFI::WriteDFIproc(const REAL_TYPE* g_org, const REAL_TYPE* g_reg)
  * @param [in]     compo    データの成分数(n)
  * @param [in]     minmax   最小値、最大値
  * @param [in]     mio      出力時の分割指定　 single:false / divide:true
- * @param [in]     avr_mode 平均値出力の場合、true
+ * @param [in]     avr_mode 平均値出力の場合、false　デフォルトtrue
  * @param [in]     a_step   平均ステップ数
  * @param [in]     a_time   平均時間
  */
@@ -416,7 +416,7 @@ bool DFI::WriteDFIindex(const std::string prefix,
  * @param [in]     shape     配列の形式 ("nijk" / "ijkn")
  * @param [in]     compo     データの成分数(n)
  * @param [in]     minmax    最小値、最大値 
- * @param [in]     avr_mode  平均値出力の場合、true
+ * @param [in]     avr_mode  平均値出力の場合、false
  * @param [in]     a_step    平均ステップ数
  * @param [in]     a_time    平均時間
  */
@@ -648,7 +648,7 @@ bool DFI::WriteIndex(const std::string dfi_name,
  * @param [in] step     ステップ数
  * @param [in] time     時間
  * @param [in] minmax   最小値、最大値
- * @param [in] avr_mode 平均値出力の場合、true
+ * @param [in] avr_mode 平均値出力の場合、false
  * @param [in] a_step   平均ステップ数
  * @param [in] a_time   平均時間
  */
@@ -672,7 +672,7 @@ void DFI::WriteTimeSlice(FILE* fp,
   fprintf(fp, "Time         = %e\n", time);
   
   
-  if ( avr_mode )
+  if ( !avr_mode )
   {
     WriteTab(fp, tab+1);
     fprintf(fp, "AveragedStep = %u\n", a_step);
