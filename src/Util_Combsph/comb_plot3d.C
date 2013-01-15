@@ -847,7 +847,7 @@ void COMB::output_plot3d()
   // open file
   if(P3Op.IS_DivideFunc == OFF){ // 一括出力のとき
     std::string ptmp;
-    ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, "single");
+    ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, false); // keno 2013-01-15
     ptmp = out_dirname + ptmp;
     FP3DW.setFileName(ptmp.c_str());
     if(!FP3DW.OpenFile()){
@@ -865,7 +865,7 @@ void COMB::output_plot3d()
     // open file
     if(P3Op.IS_DivideFunc == ON){ // 分割出力のとき
       std::string ptmp;
-      ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, "divided");
+      ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, true); // keno 2013-01-15
       ptmp = DI[i].Prefix + ptmp;
       ptmp = out_dirname + ptmp;
       FP3DW.setFileName(ptmp.c_str());

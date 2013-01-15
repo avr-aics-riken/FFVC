@@ -385,7 +385,6 @@ bool DFI::WriteDFIindex(const std::string prefix,
 {
   if ( prefix.empty() ) return NULL;
   if ( dir.empty() ) return NULL;
-  if ( !mio ) return NULL;
   
   // check master node only
   int mm;
@@ -394,14 +393,11 @@ bool DFI::WriteDFIindex(const std::string prefix,
   
   std::string dfi_name;
   
-  if ( mio )
-  {
-    dfi_name = GenerateDFIname(prefix);
-    
-    if ( dfi_name.empty() ) return false;
-    
-    if ( !WriteIndex(dfi_name, prefix, dir, fmt, step, time, dfi_mng, shape, compo, minmax, avr_mode, a_step, a_time) ) return false;
-  }
+  dfi_name = GenerateDFIname(prefix);
+  
+  if ( dfi_name.empty() ) return false;
+  
+  if ( !WriteIndex(dfi_name, prefix, dir, fmt, step, time, dfi_mng, shape, compo, minmax, avr_mode, a_step, a_time) ) return false;
   
   return true;
 }
