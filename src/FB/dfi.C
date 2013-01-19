@@ -16,6 +16,7 @@
 #include "dfi.h"
 #include "util_Path.h"
 
+
 // #################################################################
 /**
  * @brief マシンのエンディアンを調べる
@@ -42,21 +43,27 @@ bool DFI::chekcEndian()
 // #################################################################
 /**
  * @brief ディレクトリ名を作成する
- * @param [in] prefix ディレクトリ名
- * @param [in] m_step ステップ数
+ * @param [in] path      ディレクトリ名
+ * @param [in] m_step    ステップ数
+ * @param [in] slice     時系列出力モード (ON / OFF)
  */
-std::string DFI::GenerateDirName(const std::string prefix, const unsigned m_step)
+std::string DFI::GenerateDirName(const std::string path, const unsigned m_step, const int slice)
 {
-  if ( prefix.empty() ) return NULL;
+  char digit[11];
+  memset(digit, 0, sizeof(char)*11);
+  std::string tmp;
   
-  int len = prefix.size() + 11; // postfix(10) + 1(\0)
-  char* tmp = new char[len];
-  memset(tmp, 0, sizeof(char)*len);
-  
-  sprintf(tmp, "%s_%010d", prefix.c_str(), m_step);
+  if (slice == OFF)
+  {
+    tmp = path + "/";
+  }
+  else
+  {
+    sprintf(digit, "%010u", m_step);
+    tmp = path + "/" + digit + "/";
+  }
   
   std::string fname(tmp);
-  if ( tmp ) delete [] tmp;
   
   return fname;
 }
@@ -108,16 +115,16 @@ std::string DFI::GenerateFileName(const std::string prefix, const std::string fm
   {
     if ( !strcasecmp(fmt.c_str(), "sph") || !strcasecmp(fmt.c_str(), "dat") )
     {
-      sprintf(tmp, "%s_%010d_id%06d.%s", prefix.c_str(), m_step, m_id, fmt.c_str());
+      sprintf(tmp, "%s_%010u_id%06d.%s", prefix.c_str(), m_step, m_id, fmt.c_str());
     }
     else // PLOT3D:FieldView がランク番号+ステップ数の記述のため
     {
-      sprintf(tmp, "%s_%06d_%010d.%s", prefix.c_str(), m_id, m_step, fmt.c_str());
+      sprintf(tmp, "%s_%06d_%010u.%s", prefix.c_str(), m_id, m_step, fmt.c_str());
     }
   }
   else
   {
-    sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, fmt.c_str());
+    sprintf(tmp, "%s_%010u.%s", prefix.c_str(), m_step, fmt.c_str());
   }
   
   std::string fname(tmp);
@@ -449,7 +456,7 @@ bool DFI::WriteIndex(const std::string dfi_name,
 
 
   // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
-  if ( (dfi_mng == 0) || !flag || (start_type == coarse_restart) ) 
+  if ( (dfi_mng == 0) || !flag || (start_type == restart_refinement) ) 
   {
     if ( !(fp = fopen(dfi_name.c_str(), "w")) )
     {

@@ -30,7 +30,7 @@ protected:
   int div_domain[3];     ///< 全計算領域のノード分割数
   int procGrp;           ///< プロセスグループ（デフォルト0）
   int guide;             ///< ガイドセル数
-  int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, coarse_restart=2, restart_different_nproc=3）
+  int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, restart_refinement=2, restart_different_proc=3）
   int* head;             ///< bboxの開始インデクス(C index) [3*Num_Node]
   int* tail;             ///< bboxの終端インデクス(C index) [3*Num_Node]
   REAL_TYPE RefLength;   ///< 代表長さ
@@ -116,7 +116,7 @@ protected:
 public:
   
   // 出力ディレクトリ名を作成する
-  std::string GenerateDirName(const std::string prefix, const unsigned m_step);
+  std::string GenerateDirName(const std::string path, const unsigned m_step, const int slice);
   
   
   // ファイル名を作成する

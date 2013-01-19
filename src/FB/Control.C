@@ -965,60 +965,57 @@ void Control::get_FileIO()
   
   
   
-  // ファイル出力モード
-  label = "/Steer/FileIO/OutputMode";
+  // ファイル入出力ディレクトリ
+  // Input Directory_Path
+  label = "/Steer/FileIO/Directory/InputPath";
   
-  if( !tpCntl->chkNode(label) )
+  if ( !(tpCntl->GetValue(label, &str)) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  // 指定が無ければ，空のまま
+  if ( !str.empty() )
+  {
+    FIO.InDirPath = str;
+  }
+  
+  
+  // Output Directory_Path
+  label = "/Steer/FileIO/Directory/OutputPath";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  // 指定が無ければ，空のまま
+  if ( !str.empty() )
+  {
+    FIO.OutDirPath = str;
+  }
+  
+  
+  // TimeSlice option
+  label = "/Steer/FileIO/Directory/TimeSlice";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
   
-  leaf = label + "/Mode";
-  
-  if ( !(tpCntl->GetValue(leaf, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", leaf.c_str());
-    Exit(0);
+  if ( !strcasecmp(str.c_str(), "on") ) {
+    FIO.Slice = ON;
   }
-  else
+  else {
+    FIO.Slice = OFF;
+  }
+  
+  // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
+  if ( (Parallelism == Serial) || (Parallelism == OpenMP) )
   {
-    if ( !strcasecmp(str.c_str(), "current") )
-    {
-      FIO.IO_Mode = io_current;
-    }
-    else if ( !strcasecmp(str.c_str(), "specified") )
-    {
-      FIO.IO_Mode = io_specified;
-    }
-    else if ( !strcasecmp(str.c_str(), "time_slice") )
-    {
-      FIO.IO_Mode = io_time_slice;
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", leaf.c_str());
-      Exit(0);
-    }
-    
-    // Output Directory_Path
-    if ( FIO.IO_Mode == io_specified )
-    {
-      label = "/Steer/FileIO/OutputMode/DirectoryPath";
-      
-      if ( !(tpCntl->GetValue(label, &str)) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
-      
-      // 指定が無ければ，空のまま
-      if ( !str.empty() )
-      {
-        FIO.IO_DirPath = str;
-      }
-    }
-
+    FIO.Slice = OFF;
   }
   
   
@@ -2318,8 +2315,8 @@ void Control::get_start_condition()
   
   if      ( !strcasecmp(str.c_str(), "Initial") )                    Start = initial_start;
   else if ( !strcasecmp(str.c_str(), "Restart") )                    Start = restart;
-  else if ( !strcasecmp(str.c_str(), "RestartFromCoarseData") )      Start = coarse_restart;
-  else if ( !strcasecmp(str.c_str(), "RestartFromDifferentNproc") )  Start = restart_different_nproc;
+  else if ( !strcasecmp(str.c_str(), "RestartFromCoarseData") )      Start = restart_refinement;
+  else if ( !strcasecmp(str.c_str(), "RestartFromDifferentNproc") )  Start = restart_different_proc;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2330,7 +2327,7 @@ void Control::get_start_condition()
   // リスタート時のタイムスタンプ
   if (Start != initial_start)
   {
-    label="/Steer/StartCondition/RestartStep";
+    label="/Steer/StartCondition/Restart/Step";
     
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
@@ -2342,10 +2339,9 @@ void Control::get_start_condition()
   }
   
   
-  // リスタート時のタイムスタンプ Coarse_restart
-  if ( Start == coarse_restart )
+  if ( Start == restart_refinement )
   {
-    label="/Steer/StartCondition/CoarseRestart/PrefixOfPressure";
+    label="/Steer/StartCondition/Refinement/PrefixOfPressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2356,7 +2352,7 @@ void Control::get_start_condition()
     f_dfi_prfx_prs = str.c_str();
     
     
-    label="/Steer/StartCondition/CoarseRestart/PrefixOfVelocity";
+    label="/Steer/StartCondition/Refinement/PrefixOfVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2367,7 +2363,7 @@ void Control::get_start_condition()
     f_dfi_prfx_vel = str.c_str();
     
     
-    label="/Steer/StartCondition/CoarseRestart/PrefixOfFVelocity";
+    label="/Steer/StartCondition/Refinement/PrefixOfFvelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2380,7 +2376,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/StartCondition/CoarseRestart/PrefixOfTemperature";
+      label="/Steer/StartCondition/Refinement/PrefixOfTemperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2391,14 +2387,59 @@ void Control::get_start_condition()
       f_dfi_prfx_temp = str.c_str();
     }
     
+    // プロセス並列時に分散ファイルを指定した場合
+    if ( FIO.IOmode == IO_DISTRIBUTE )
+    {
+      label="/Steer/StartCondition/Restart/Refinement/DFIofPressure";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      f_dfi_prs = str.c_str();
+      
+      label="/Steer/StartCondition/Restart/Refinement/DFIofVelocity";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      f_dfi_vel = str.c_str();
+      
+      
+      label="/Steer/StartCondition/Restart/Refinement/DFIofFvelocity";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      f_dfi_fvel = str.c_str();
+      
+      
+      if ( isHeatProblem() )
+      {
+        label="/Steer/StartCondition/Restart/Refinement/DFIofTemperature";
+        
+        if ( !(tpCntl->GetValue(label, &str )) )
+        {
+          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+          Exit(0);
+        }
+        f_dfi_temp = str.c_str();
+        
+      }
+    }
+    
   }
 
 
-  // 異なる並列数からリスタートする場合の初期値データのプリフィクス
-  if ( Start == restart_different_nproc )
+  if ( Start == restart_different_proc )
   {
     
-    label="/Steer/StartCondition/RestartFromDifferentNproc/Staging";
+    label="/Steer/StartCondition/Restart/DifferentProcess/Staging";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2416,21 +2457,19 @@ void Control::get_start_condition()
       }
     }
 
-    //if( Restart_staging ) {
     
-      label="/Steer/StartCondition/restartFromDifferentNproc/PrefixOfDir";
+    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfDir";
     
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
     
-      f_different_nproc_dir_prefix = str.c_str();
+    f_different_nproc_dir_prefix = str.c_str();
     
-    //}
     
-    label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfPressure";
+    label="/Steer/StartCondition/RRestart/DifferentProcess/PrefixOfPressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2441,7 +2480,7 @@ void Control::get_start_condition()
     f_different_nproc_pressure = str.c_str();
     
     
-    label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfVelocity";
+    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2452,7 +2491,7 @@ void Control::get_start_condition()
     f_different_nproc_velocity = str.c_str();
     
     
-    label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfFVelocity";
+    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfFvelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2465,7 +2504,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/StartCondition/RestartFromDifferentNproc/PrefixOfTemperature";
+      label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfTemperature";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2476,17 +2515,10 @@ void Control::get_start_condition()
       f_different_nproc_temperature = str.c_str();
     }
     
-  }
-
-
-
-  //read prefix of DFI file
-  if ( Start == coarse_restart || (Start == restart_different_nproc) )
-  {
-    // プロセス並列時にローカルでのファイル入力を指定した場合
+    // プロセス並列時に分散ファイルを指定した場合
     if ( FIO.IOmode == IO_DISTRIBUTE )
     {
-      label="/Steer/StartCondition/DFIfile/pressure";
+      label="/Steer/StartCondition/Restart/DifferentProcess/DFIofPressure";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2495,7 +2527,7 @@ void Control::get_start_condition()
       }
       f_dfi_prs = str.c_str();
       
-      label="/Steer/StartCondition/DFIfile/velocity";
+      label="/Steer/StartCondition/Restart/DifferentProcess/DFIofVelocity";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2505,7 +2537,7 @@ void Control::get_start_condition()
       f_dfi_vel = str.c_str();
       
       
-      label="/Steer/StartCondition/DFIfile/fvelocity";
+      label="/Steer/StartCondition/Restart/DifferentProcess/DFIofFvelocity";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
@@ -2517,7 +2549,7 @@ void Control::get_start_condition()
       
       if ( isHeatProblem() )
       {
-        label="/Steer/StartCondition/DFIfile/Temperature";
+        label="/Steer/StartCondition/Restart/DifferentProcess/DFIofTemperature";
         
         if ( !(tpCntl->GetValue(label, &str )) )
         {
@@ -2525,10 +2557,9 @@ void Control::get_start_condition()
           Exit(0);
         }
         f_dfi_temp = str.c_str();
-
+        
       }
     }
-    
   }
   
   
@@ -3677,11 +3708,11 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       fprintf(fp,"\t     Start Condition          :   Restart from previous session\n");
       break;
       
-    case coarse_restart:
+    case restart_refinement:
       fprintf(fp,"\t     Start Condition          :   Restart from coarse grid data\n");
       break;
       
-    case restart_different_nproc:
+    case restart_different_proc:
       fprintf(fp,"\t     Start Condition          :   Restart from previous session that nproc differ from\n");
       break;
       
@@ -3691,7 +3722,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // 粗い格子の計算結果を使ったリスタート
-  if ( Start == coarse_restart )
+  if ( Start == restart_refinement )
   {
     if ( FIO.IOmode == IO_GATHER )
     {
@@ -3706,12 +3737,12 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     else
     {
       fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          DFI file Pressure        :   %s\n", f_dfi_prs.c_str());
-      fprintf(fp,"\t          DFI file Velocity        :   %s\n", f_dfi_vel.c_str());
-      fprintf(fp,"\t          DFI file Face Velocity   :   %s\n", f_dfi_fvel.c_str());
+      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_prs.c_str());
+      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_vel.c_str());
+      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_fvel.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          DFI file Temperature     :   %s\n", f_dfi_temp.c_str());
+        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_temp.c_str());
       }
       fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_dfi_prfx_prs.c_str());
       fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_dfi_prfx_vel.c_str());
@@ -3725,7 +3756,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   
   // 異なる並列数からリスタート
-  if ( Start == restart_different_nproc )
+  if ( Start == restart_different_proc )
   {
     if ( FIO.IOmode == IO_GATHER )
     {
@@ -3740,12 +3771,12 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     else
     {
       fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          DFI file Pressure        :   %s\n", f_dfi_prs.c_str());
-      fprintf(fp,"\t          DFI file Velocity        :   %s\n", f_dfi_vel.c_str());
-      fprintf(fp,"\t          DFI file Face Velocity   :   %s\n", f_dfi_fvel.c_str());
+      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_prs.c_str());
+      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_vel.c_str());
+      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_fvel.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          DFI file Temperature:   %s\n", f_dfi_temp.c_str());
+        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_temp.c_str());
       }
       fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_different_nproc_pressure.c_str());
       fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_different_nproc_velocity.c_str());
@@ -3806,24 +3837,12 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   fprintf(fp,"\t     Voxel model output       :   %s\n", (FIO.IO_Voxel==Sphere_SVX) ? "svx" : "None");
   
   
-  // Output mode
-  switch (FIO.IO_Mode)
-  {
-    case io_current:
-      fprintf(fp,"\t     Output Mode              :   Current Directory\n");
-      break;
-      
-    case io_specified:
-      fprintf(fp,"\t     Output Mode              :   Specified Directory \"%s\"\n", FIO.IO_DirPath.c_str());
-      break;
-      
-    case io_time_slice:
-      fprintf(fp,"\t     Output Mode              :   TIme Slice\n");
-      break;
-      
-    default:
-      break;
-  }
+  // IO Directory
+  fprintf(fp,"\t     I/O Directory Input      :   \"%s\"\n", FIO.InDirPath.c_str());
+  fprintf(fp,"\t     I/O Directory Output     :   \"%s\"\n", FIO.OutDirPath.c_str());
+  
+  // Time Slice option
+  fprintf(fp,"\t     Time Slie Directory      :   %s\n", (FIO.Slice==ON) ? "On" : "Off");
   
   
   // ログ出力 ------------------

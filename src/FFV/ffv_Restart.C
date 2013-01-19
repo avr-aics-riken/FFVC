@@ -407,7 +407,7 @@ void FFV::Restart(FILE* fp)
     flop_task = 0.0;
     Restart_std(fp, flop_task); 
   }
-  else if ( C.Start == coarse_restart) // 粗い格子からのリスタート
+  else if ( C.Start == restart_refinement) // 粗い格子からのリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
@@ -420,7 +420,7 @@ void FFV::Restart(FILE* fp)
     Hostonly_ fprintf(stdout,"\n");
     Hostonly_ fprintf(fp,"\n");
   }
-  else if ( C.Start == restart_different_nproc) // 同一解像度、異なる並列数でのリスタート
+  else if ( C.Start == restart_different_proc) // 異なる並列数でのリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
@@ -437,7 +437,7 @@ void FFV::Restart(FILE* fp)
 // リスタートの最大値と最小値の表示
 void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
-  if ( (C.Start == restart) || (C.Start == coarse_restart) || (C.Start == restart_different_nproc) )
+  if ( (C.Start == restart) || (C.Start == restart_refinement) || (C.Start == restart_different_proc) )
   {
     Hostonly_ fprintf(stdout, "\tNon-dimensional value\n");
     Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
@@ -509,8 +509,11 @@ void FFV::Restart_std(FILE* fp, double& flop)
   std::string tmp;
   std::string fmt(C.file_fmt_ext);
   
-  // 圧力の瞬時値　
+
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+  REAL_TYPE refD = C.RefDensity;
+  REAL_TYPE refV = C.RefVelocity;
+  int Dmode = C.Unit.File;
   
   // ガイド出力
   int gs = C.GuideOut;
@@ -530,7 +533,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Exit(0);
   }
   
-  F.readPressure(fp, tmp, size, guide, d_p, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readPressure(fp, tmp, size, guide, d_p, step, time, Dmode, bp, refD, refV, flop, gs, true, i_dummy, f_dummy);
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -550,7 +553,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Exit(0);
   }
   
-  F.readVelocity(fp, tmp, size, guide, d_v, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, tmp, size, guide, d_v, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -571,7 +574,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Exit(0);
   }
   
-  F.readVelocity(fp, tmp, size, guide, d_vf, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, tmp, size, guide, d_vf, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -595,7 +598,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, size, guide, d_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    F.readTemperature(fp, tmp, size, guide, d_t, step, time, Dmode, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
     

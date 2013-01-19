@@ -19,7 +19,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 114
+#define FB_VERS 115
 
 #define MODEL_ID_MAX 255
 
@@ -433,8 +433,8 @@ enum Kind_of_vars {
 enum start_type {
   initial_start=0,
   restart,
-  coarse_restart,
-  restart_different_nproc
+  restart_refinement,
+  restart_different_proc
 };
 
 /// 圧力単位

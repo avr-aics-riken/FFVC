@@ -444,9 +444,10 @@ public:
     int IOmode;
     int Div_Debug;
     int IO_Voxel;
-    int IO_Mode;
     int Format;
-    string IO_DirPath;
+    int Slice;
+    string OutDirPath;
+    string InDirPath;
   } File_IO_Cntl;
   
   /** PLOT3D オプション */
@@ -618,8 +619,7 @@ public:
   enum File_IO_Mode
   {
     io_current=1,
-    io_specified,
-    io_time_slice
+    io_specified
   };
   
   
@@ -826,8 +826,8 @@ public:
     FIO.IOmode   = 0;
     FIO.Div_Debug  = 0;
     FIO.IO_Voxel   = 0;
-    FIO.IO_Mode    = 0;
     FIO.Format     = 0; // 0:sph, 1:PLOT3D, 2:BOV
+    FIO.Slice      = 0;
     
     P3Op.IS_xyz = ON;
     P3Op.IS_q = OFF;

@@ -17,7 +17,7 @@
  * @author kero
  */
 
-#define FFV_VERS   99
+#define FFV_VERS  100
 #define TM_LABEL_MAX 24
   
 /** 計算性能測定キー番号 */

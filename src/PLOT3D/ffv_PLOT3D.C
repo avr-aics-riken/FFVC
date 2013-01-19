@@ -18,52 +18,6 @@
 
 
 // #################################################################
-// IOモードに対応したディレクトリパスを返す
-string Plot3D::directory_prefix(string path, const string fname, const int io_mode, const int para_mode)
-{
-  string tmp;
-  
-  switch (io_mode)
-  {
-    case Control::io_current:
-      tmp = fname;
-      break;
-      
-      
-    case Control::io_specified:
-      
-      if ( !FBUtility::c_mkdir(path) )
-      {
-        if (myRank==0) printf("Failed to create directory \"%s\"\n", path.c_str() );
-        Exit(0);
-      }
-      tmp = path + "/" + fname;
-      break;
-      
-      
-    case Control::io_time_slice:
-      
-      // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
-      if ( (para_mode == Control::Serial) || (para_mode == Control::OpenMP) )
-      {
-        return fname;
-      }
-      else
-      {
-        if ( !FBUtility::c_mkdir(path) )
-        {
-          if (myRank==0) printf("Failed to create directory \"%s\"\n", path.c_str() );
-          Exit(0);
-        }
-        tmp = path + "/" + fname;
-      }
-      break;
-  }
-  
-  return tmp;
-}
-
-// #################################################################
 void Plot3D::Initialize(const int* m_size,
                         const int m_guide,
                         const REAL_TYPE m_deltaX,
@@ -218,14 +172,18 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
 
   
   // 出力ファイル名
-  std::string tmp;
-  std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-  tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
+  std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, m_step, C->FIO.Slice);
+  
+  // 出力ディレクトリの作成
+  if ( !FBUtility::c_mkdir(dtmp) ) {
+    if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
+    Exit(-1);
+  }
+  
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
   
   //open file
-  FP3DW->setFileName(tmp.c_str());
+  FP3DW->setFileName((dtmp+tmp).c_str());
   if(!FP3DW->OpenFile()){
     std::cout << "error OpenFile" << std::endl;
     Exit(0);
@@ -607,9 +565,16 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   
   // 出力ファイル名
-  std::string tmp,fname,dfi_name;
-  std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
+  std::string fname,dfi_name;
+  std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, m_step, C->FIO.Slice);
+  
+  // 出力ディレクトリの作成
+  if ( !FBUtility::c_mkdir(dtmp) ) {
+    if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
+    Exit(-1);
+  }
+  
+  std::string tmp  = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
   
   
   // Pressure
@@ -624,9 +589,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   }
   
   fname = "prs_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-  fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-  FP3DW->setFileName(fname.c_str());
+  FP3DW->setFileName((dtmp+fname).c_str());
   if(!FP3DW->OpenFile()){
     std::cout << "error OpenFile" << std::endl;
     Exit(0);
@@ -657,9 +620,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
   fname = "vel_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-  fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-  FP3DW->setFileName(fname.c_str());
+  FP3DW->setFileName((dtmp+fname).c_str());
   if(!FP3DW->OpenFile()){
     std::cout << "error OpenFile" << std::endl;
     Exit(0);
@@ -714,9 +675,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     }
     
     fname = "tmp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       std::cout << "error OpenFile" << std::endl;
       Exit(0);
@@ -758,9 +717,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     }
     
     fname = "tp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       std::cout << "error OpenFile" << std::endl;
       Exit(0);
@@ -796,9 +753,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
     fname = "vrt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       std::cout << "error OpenFile" << std::endl;
       Exit(0);
@@ -848,9 +803,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     fname = "iv2gt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       std::cout << "error OpenFile" << std::endl;
       Exit(0);
@@ -885,9 +838,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
     
     fname = "hlt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       std::cout << "error OpenFile" << std::endl;
       Exit(0);
@@ -935,16 +886,18 @@ void Plot3D::OutputPlot3D_function_name()
   //set filename
   
   // 出力ファイル名
-  std::string tmp;
-  std::string dtmp;
+  std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, 0, C->FIO.Slice);
   
+  // 出力ディレクトリの作成
+  if ( !FBUtility::c_mkdir(dtmp) ) {
+    if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
+    Exit(-1);
+  }
   
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-  tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
   
   //open file
-  FP3DW->setFileName(tmp.c_str());
+  FP3DW->setFileName((dtmp+tmp).c_str());
   if(!FP3DW->OpenFile()){
     if (myRank==0) printf("Error : error OpenFile\n");
     Exit(0);
@@ -995,15 +948,20 @@ void Plot3D::OutputPlot3D_function_name_divide()
   
   
   // 出力ファイル名
-  std::string tmp,fname;
-  std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
+  std::string fname;
+  std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, 0, C->FIO.Slice);
+  
+  // 出力ディレクトリの作成
+  if ( !FBUtility::c_mkdir(dtmp) ) {
+    if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
+    Exit(-1);
+  }
+  
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
   
   // Pressure
   fname = "prs_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-  fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-  FP3DW->setFileName(fname.c_str());
+  FP3DW->setFileName((dtmp+fname).c_str());
   if(!FP3DW->OpenFile()){
     if (myRank==0) printf("Error : error OpenFile\n");
     Exit(0);
@@ -1013,9 +971,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   
   // Velocity
   fname = "vel_" + tmp;
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-  fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-  FP3DW->setFileName(fname.c_str());
+  FP3DW->setFileName((dtmp+fname).c_str());
   if(!FP3DW->OpenFile()){
     if (myRank==0) printf("Error : error OpenFile\n");
     Exit(0);
@@ -1028,9 +984,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Tempearture
   if( C->isHeatProblem() ){
     fname = "tmp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       if (myRank==0) printf("Error : error OpenFile\n");
       Exit(0);
@@ -1042,9 +996,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Total Pressure
   if (C->Mode.TP == ON ){
     fname = "tp_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       if (myRank==0) printf("Error : error OpenFile\n");
       Exit(0);
@@ -1056,9 +1008,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Vorticity
   if (C->Mode.VRT == ON ){
     fname = "vrt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       if (myRank==0) printf("Error : error OpenFile\n");
       Exit(0);
@@ -1072,9 +1022,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->Mode.I2VGT == ON ){
     fname = "i2vgt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       if (myRank==0) printf("Error : error OpenFile\n");
       Exit(0);
@@ -1087,9 +1035,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   // Helicity
   if (C->Mode.Helicity == ON ){
     fname = "hlt_" + tmp;
-    dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, 0) : C->FIO.IO_DirPath;
-    fname = directory_prefix(dtmp, fname, C->FIO.IO_Mode, C->Parallelism);
-    FP3DW->setFileName(fname.c_str());
+    FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       if (myRank==0) printf("Error : error OpenFile\n");
       Exit(0);
@@ -1206,14 +1152,18 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   
   
   // 出力ファイル名
-  std::string tmp;
-  std::string dtmp;
-  tmp = dfi->GenerateFileName(C->P3Op.basename, "xyz", m_step, myRank, true);
-  dtmp = (C->FIO.IO_Mode == Control::io_time_slice) ? dfi->GenerateDirName(C->f_DivDebug, m_step) : C->FIO.IO_DirPath;
-  tmp = directory_prefix(dtmp, tmp, C->FIO.IO_Mode, C->Parallelism);
+  std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, m_step, C->FIO.Slice);
+  
+  // 出力ディレクトリの作成
+  if ( !FBUtility::c_mkdir(dtmp) ) {
+    if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
+    Exit(-1);
+  }
+  
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "xyz", m_step, myRank, true);
   
   //open file
-  FP3DW->setFileName(tmp.c_str());
+  FP3DW->setFileName((dtmp+tmp).c_str());
   if(!FP3DW->OpenFile()){
     if (myRank==0) printf("Error : error OpenFile\n");
     Exit(0);

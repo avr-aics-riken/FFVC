@@ -725,7 +725,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 粗い格子を用いたリスタート時には出力
-  if ( C.Start == coarse_restart )
+  if ( C.Start == restart_refinement )
   {
     flop_task = 0.0;
     FileOutput(flop_task, true);
@@ -1638,52 +1638,6 @@ void FFV::fixed_parameters()
   
 }
 
-
-// #################################################################
-// IOモードに対応したディレクトリパスを返す
-string FFV::directory_prefix(string path, const string fname, const int io_mode, const int para_mode)
-{
-  string tmp;
-  
-  switch (io_mode)
-  {
-    case Control::io_current:
-      tmp = fname;
-      break;
-      
-      
-    case Control::io_specified:
-      
-      if ( !FBUtility::c_mkdir(path) )
-      {
-        Hostonly_ printf("Failed to create directory \"%s\"\n", path.c_str() );
-        Exit(0);
-      }
-      tmp = path + "/" + fname;
-      break;
-      
-      
-    case Control::io_time_slice:
-      
-      // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
-      if ( (para_mode == Control::Serial) || (para_mode == Control::OpenMP) )
-      {
-        return fname;
-      }
-      else
-      {
-        if ( !FBUtility::c_mkdir(path) )
-        {
-          Hostonly_ printf("Failed to create directory \"%s\"\n", path.c_str() );
-          Exit(0);
-        }
-        tmp = path + "/" + fname;
-      }
-      break;
-  }
-  
-  return tmp;
-}
 
 
 // #################################################################

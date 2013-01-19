@@ -78,16 +78,6 @@ public:
 protected:
   
   FBUtility U;      ///< ユーティリティクラス
-  
-  /**
-   * @brief 指定の出力ディレクトリとファイル名を結合
-   * @retval フルパスファイル名
-   * @param [in] path      ディレクトリパス名
-   * @param [in] fname     ファイル名
-   * @param [in] io_mode   ファイル出力モード
-   @ @param [in] para_mode 並列モード
-   */
-  string directory_prefix(string path, const string fname, const int io_mode, const int para_mode);
 
   
   /**
