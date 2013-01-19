@@ -2336,6 +2336,15 @@ void Control::get_start_condition()
     }
     Restart_step = ct;
     
+    
+    label="/Steer/StartCondition/Restart/AverageStep";
+    
+    if ( !(tpCntl->GetValue(label, &ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    Restart_stepAvr = ct;
   }
   
   

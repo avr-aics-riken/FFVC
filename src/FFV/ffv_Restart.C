@@ -506,9 +506,8 @@ void FFV::Restart_std(FILE* fp, double& flop)
 {
   double time;
   unsigned step;
-  std::string tmp;
+  std::string tmp, dtmp, fname;
   std::string fmt(C.file_fmt_ext);
-  
 
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   REAL_TYPE refD = C.RefDensity;
@@ -525,15 +524,20 @@ void FFV::Restart_std(FILE* fp, double& flop)
   // 入出力モード
   bool mio = (bool)C.FIO.IOmode;
   
-  tmp = DFI.GenerateFileName(C.f_Pressure, fmt, C.Restart_step, myRank, mio);
+  // 入力ディレクトリ
+  dtmp= DFI.GenerateDirName(C.FIO.InDirPath, C.Restart_step, C.FIO.Slice);
   
-  if ( !checkFile(tmp) )
+  // Instantaneous Pressure
+  tmp = DFI.GenerateFileName(C.f_Pressure, fmt, C.Restart_step, myRank, mio);
+  fname = dtmp + tmp;
+  
+  if ( !checkFile(fname) )
   {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
     Exit(0);
   }
   
-  F.readPressure(fp, tmp, size, guide, d_p, step, time, Dmode, bp, refD, refV, flop, gs, true, i_dummy, f_dummy);
+  F.readPressure(fp, fname, size, guide, d_p, step, time, Dmode, bp, refD, refV, flop, gs, true, i_dummy, f_dummy);
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -546,14 +550,15 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   // Instantaneous Velocity fields
   tmp = DFI.GenerateFileName(C.f_Velocity, fmt, C.Restart_step, myRank, mio);
+  fname = dtmp + tmp;
   
-  if ( !checkFile(tmp) )
+  if ( !checkFile(fname) )
   {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
     Exit(0);
   }
   
-  F.readVelocity(fp, tmp, size, guide, d_v, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, fname, size, guide, d_v, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -567,14 +572,15 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   // Instantaneous Face Velocity fields
   tmp = DFI.GenerateFileName(C.f_Fvelocity, fmt, C.Restart_step, myRank, mio);
+  fname = dtmp + tmp;
   
-  if ( !checkFile(tmp) )
+  if ( !checkFile(fname) )
   {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
     Exit(0);
   }
   
-  F.readVelocity(fp, tmp, size, guide, d_vf, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
+  F.readVelocity(fp, fname, size, guide, d_vf, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -592,13 +598,14 @@ void FFV::Restart_std(FILE* fp, double& flop)
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
     tmp = DFI.GenerateFileName(C.f_Temperature, fmt, C.Restart_step, myRank, mio);
+    fname = dtmp + tmp;
     
-    if ( !checkFile(tmp) )
+    if ( !checkFile(fname) )
     {
-      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+      Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, size, guide, d_t, step, time, Dmode, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    F.readTemperature(fp, fname, size, guide, d_t, step, time, Dmode, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
     
@@ -622,7 +629,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
  */
 void FFV::Restart_avrerage (FILE* fp, double& flop)
 {
-  std::string tmp;
+  std::string tmp, dtmp, fname;
   std::string fmt(C.file_fmt_ext);
   
   unsigned step = Session_StartStep;
@@ -664,19 +671,25 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   unsigned step_avr = 0;
   double time_avr = 0.0;
   
-  // 出力モード
+  // 入出力モード
   bool mio = (bool)C.FIO.IOmode;
+  
+  // 入力ディレクトリ
+  dtmp = DFI.GenerateDirName(C.FIO.InDirPath, C.Restart_stepAvr, C.FIO.Slice);
+  
   
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  tmp = DFI.GenerateFileName(C.f_AvrPressure, fmt, C.Restart_step, myRank, mio);
-  if ( !checkFile(tmp) )
+  tmp = DFI.GenerateFileName(C.f_AvrPressure, fmt, C.Restart_stepAvr, myRank, mio);
+  fname = dtmp + tmp;
+  
+  if ( !checkFile(fname) )
   {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
     Exit(0);
   }
-  F.readPressure(fp, tmp, size, guide, d_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false, step_avr, time_avr);
+  F.readPressure(fp, fname, size, guide, d_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
   if ( (step != Session_StartStep) || (time != Session_StartTime) )
   {
@@ -690,13 +703,15 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   
   // Velocity
-  tmp = DFI.GenerateFileName(C.f_AvrVelocity, fmt, C.Restart_step, myRank, mio);
-  if ( !checkFile(tmp) )
+  tmp = DFI.GenerateFileName(C.f_AvrVelocity, fmt, C.Restart_stepAvr, myRank, mio);
+  fname = dtmp + tmp;
+  
+  if ( !checkFile(fname) )
   {
-    Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+    Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
     Exit(0);
   }
-  F.readVelocity(fp, tmp, size, guide, d_av, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
+  F.readVelocity(fp, fname, size, guide, d_av, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
   
   if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
   {
@@ -710,13 +725,15 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
-    tmp = DFI.GenerateFileName(C.f_AvrTemperature, fmt, C.Restart_step, myRank, mio);
-    if ( !checkFile(tmp) )
+    tmp = DFI.GenerateFileName(C.f_AvrTemperature, fmt, C.Restart_stepAvr, myRank, mio);
+    fname = dtmp + tmp;
+    
+    if ( !checkFile(fname) )
     {
-      Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
+      Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, size, guide, d_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false, step_avr, time_avr);
+    F.readTemperature(fp, fname, size, guide, d_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false, step_avr, time_avr);
     
     if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) )
     {

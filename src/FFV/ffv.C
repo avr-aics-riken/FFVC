@@ -192,7 +192,7 @@ void FFV::AverageOutput(double& flop)
   }
   
   // 平均操作の母数
-  int stepAvr = (int)CurrentStep_Avr;
+  unsigned stepAvr = (unsigned)CurrentStep_Avr;
   REAL_TYPE scale = 1.0;
   
   // ガイドセル出力
@@ -254,9 +254,9 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE minmax[2] = {f_min, f_max};
   
   tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, m_step, myRank, mio); // e.g., prsa_0000000000_id000000.sph
-  F.writeScalar(dtmp+tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+  F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, (double)timeAvr);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrPressure,
-                                    dtmp,
+                                    C.FIO.OutDirPath,
                                     C.file_fmt_ext,
                                     m_step,
                                     m_time,
@@ -288,9 +288,9 @@ void FFV::AverageOutput(double& flop)
   minmax[1] = f_max;
   
   tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, m_step, myRank, mio);
-  F.writeVector(dtmp+tmp, size, guide, d_wo, stepAvr, timeAvr, m_org, m_pit, gc_out, 1);
+  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, (double)timeAvr);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrVelocity,
-                                    dtmp,
+                                    C.FIO.OutDirPath,
                                     C.file_fmt_ext,
                                     m_step,
                                     m_time,
@@ -331,9 +331,9 @@ void FFV::AverageOutput(double& flop)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, m_step, myRank, mio);
-    F.writeScalar(dtmp+tmp, size, guide, d_ws, stepAvr, timeAvr, m_org, m_pit, gc_out);
+    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, (double)timeAvr);
     Hostonly_ if( !DFI.WriteDFIindex(C.f_AvrTemperature,
-                                     dtmp,
+                                     C.FIO.OutDirPath,
                                      C.file_fmt_ext,
                                      m_step,
                                      m_time,
@@ -588,7 +588,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_DivDebug,
-                                      dtmp,
+                                      C.FIO.OutDirPath,
                                       C.file_fmt_ext,
                                       m_step, m_time,
                                       dfi_mng[var_Divergence],
@@ -631,7 +631,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
   
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_Pressure,
-                                    dtmp,
+                                    C.FIO.OutDirPath,
                                     C.file_fmt_ext,
                                     m_step,
                                     m_time,
@@ -665,7 +665,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_Velocity,
-                                    dtmp,
+                                    C.FIO.OutDirPath,
                                     C.file_fmt_ext,
                                     m_step,
                                     m_time,
@@ -698,7 +698,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_Fvelocity,
-                                    dtmp,
+                                    C.FIO.OutDirPath,
                                     C.file_fmt_ext,
                                     m_step,
                                     m_time,
@@ -743,7 +743,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Temperature,
-                                      dtmp,
+                                      C.FIO.OutDirPath,
                                       C.file_fmt_ext,
                                       m_step,
                                       m_time,
@@ -789,7 +789,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_TotalP,
-                                      dtmp,
+                                      C.FIO.OutDirPath,
                                       C.file_fmt_ext,
                                       m_step,
                                       m_time,
@@ -829,7 +829,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Vorticity,
-                                      dtmp,
+                                      C.FIO.OutDirPath,
                                       C.file_fmt_ext,
                                       m_step,
                                       m_time,
@@ -867,7 +867,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_I2VGT,
-                                      dtmp,
+                                      C.FIO.OutDirPath,
                                       C.file_fmt_ext,
                                       m_step,
                                       m_time,
@@ -905,7 +905,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Helicity,
-                                      dtmp,
+                                      C.FIO.OutDirPath,
                                       C.file_fmt_ext,
                                       m_step,
                                       m_time,

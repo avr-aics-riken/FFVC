@@ -651,6 +651,7 @@ public:
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned Restart_step;       ///< リスタートステップ
+  unsigned Restart_stepAvr;    ///< 平均値のリスタートステップ
   unsigned long NoWallSurface; ///< 固体表面セル数
   
   float Scaling_Factor;  ///< ポリゴンのスケーリングファクター
@@ -769,6 +770,7 @@ public:
     RefMat = 0;
     Restart_staging = 0;    
     Restart_step = 0;
+    Restart_stepAvr = 0;
     Start = 0;
     version = 0;
     
