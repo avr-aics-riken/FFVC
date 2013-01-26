@@ -17,6 +17,6 @@
  * @author kero
  */
 
-#define IP_VERS 121
+#define IP_VERS 122
 
 #endif // _IP_DEFINE_H_

@@ -4,17 +4,17 @@
 //
 // Copyright (c) 2012-2013  All right reserved.
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan.
 //
 // #################################################################
 
-/** 
- * @file   IP_Step.C
- * @brief  IP_Step class
+/**
+ * @file   IP_Jet.C
+ * @brief  IP_Jet class
  * @author kero
  */
 
-#include "IP_Step.h"
+#include "IP_Jet.h"
 
 
 // #################################################################
@@ -23,11 +23,12 @@
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
  */
-bool IP_Step::getTP(Control* R, TPControl* tpCntl)
+bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
 {
   std::string str;
   std::string label;
   REAL_TYPE ct;
+
   
   // 2D or 3D mode
   label="/Parameter/IntrinsicExample/Mode";
@@ -48,101 +49,106 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
     return false;
   }
   
-  // x-dir step
-  label="/Parameter/IntrinsicExample/StepLength";
+  
+  // Core
+  label="/Parameter/IntrinsicExample/RadiusOfCore";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   else{
-	  width = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+	  r0 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
   
-  // z-dir step
-  label="/Parameter/IntrinsicExample/StepHeight";
+  label="/Parameter/IntrinsicExample/AngularVelocityOfCore";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   else{
-	  height = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+	  omg0 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
   }
   
-  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/Parameter/IntrinsicExample/DriverLength";
-  if ( tpCntl->GetValue(label, &ct ) ) {
-    drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
+  
+  // Ring1
+  label="/Parameter/IntrinsicExample/InnerRadiusOfRing1";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
+  else{
+	  r1i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
   
-  if ( drv_length < 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Value of '%s' must be positive.\n", label.c_str());
+  label="/Parameter/IntrinsicExample/OuterRadiusOfRing1";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
+  else{
+	  r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  
+  label="/Parameter/IntrinsicExample/AngularVelocityOfRing1";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  else{
+	  omg1 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
+  }
+  
+  // Ring2
+  label="/Parameter/IntrinsicExample/InnerRadiusOfRing2";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  else{
+	  r2i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  
+  label="/Parameter/IntrinsicExample/OuterRadiusOfRing2";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  else{
+	  r2o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  
+  label="/Parameter/IntrinsicExample/AngularVelocityOfRing2";
+  if ( !(tpCntl->GetValue(label, &ct )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  else{
+	  omg2 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
+  }
+  
   
   // 媒質指定
   label="/Parameter/IntrinsicExample/FluidMedium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
   label="/Parameter/IntrinsicExample/SolidMedium";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_solid = str;
   
-  // Only driver is specified
-  if ( drv_length > 0.0 )
-  {
-    label="/Parameter/IntrinsicExample/DriverMedium";
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      return false;
-    }
-    m_driver = str;
-    
-    label="/Parameter/IntrinsicExample/DriverFaceMedium";
-    if ( !(tpCntl->GetValue(label, &str )) ) {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      return false;
-    }
-    m_driver_face = str;
-  }
-  
   return true;
 }
 
-
-// #################################################################
-/**
- * @brief パラメータの表示
- * @param [in] fp ファイルポインタ
- * @param [in] R  コントロールクラスのポインタ
- */
-void IP_Step::printPara(FILE* fp, const Control* R)
-{
-  if ( !fp ) {
-    stamped_printf("\tFail to write into file\n");
-    Exit(0);
-  }
-  
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
-  
-  fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
-  fprintf(fp,"\tStep Width (x-dir.)    [m] / [-]   : %12.5e / %12.5e\n", width, width/RefL);
-  fprintf(fp,"\tStep Height(z-dir.)    [m] / [-]   : %12.5e / %12.5e\n", height, height/RefL);
-  if ( drv_length > 0.0 ) {
-    fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv_length, drv_length/RefL);
-  }
-}
 
 
 // #################################################################
@@ -153,33 +159,118 @@ void IP_Step::printPara(FILE* fp, const Control* R)
  * @param [in,out] reg 計算領域のbounding boxサイズ
  * @param [in,out] pch セル幅
  */
-void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
+void IP_Jet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
+  RefV = R->RefVelocity;
   
   reg[0] = pch[0]*(REAL_TYPE)sz[0];
   reg[1] = pch[1]*(REAL_TYPE)sz[1];
   reg[2] = pch[2]*(REAL_TYPE)sz[2];
   
   // チェック
-  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
+  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) )
+  {
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
+  
   if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
        ((int)(reg[1]/pch[1]) != sz[1]) ||
-       ((int)(reg[2]/pch[2]) != sz[2]) ) {
+       ((int)(reg[2]/pch[2]) != sz[2]) )
+  {
     Hostonly_ printf("Error : Invalid parameters among 'GlobalRegion', 'GlobalPitch', and 'GlobalVoxel' in DomainInfo section.\n");
     Exit(0);
   }
-
+  
   // 次元とサイズ
-  if (mode == dim_2d) {
-    if (size[2] != 3) {
+  if (mode == dim_2d)
+  {
+    if (size[2] != 3)
+    {
       Hostonly_ printf("Error : VoxelSize kmax must be 3 if 2-dimensional.\n");
     }
   }
+  
 }
+
+
+
+// #################################################################
+/**
+ * @brief パラメータの表示
+ * @param [in] fp ファイルポインタ
+ * @param [in] R  コントロールクラスのポインタ
+ */
+void IP_Jet::printPara(FILE* fp, const Control* R)
+{
+  if ( !fp )
+  {
+    stamped_printf("\tFail to write into file\n");
+    Exit(0);
+  }
+  
+  // パターンのチェック
+  
+  pat_0 = ( r0 == 0.0 ) ? 0 : 1;
+  
+  pat_1 = ( (r1i == 0.0) && (r1o == 0.0) ) ? 0 : 1;
+  
+  pat_2 = ( (r2i == 0.0) && (r2o == 0.0) ) ? 0 : 1;
+  
+  if ( pat_1 == 1 )
+  {
+    if ( r1i < r0 )
+    {
+      stamped_printf("\tInner Radius of Ring1 must be greater than Radius of Core\n");
+      Exit(0);
+    }
+    
+    if ( r1o < r1i )
+    {
+      stamped_printf("\tInner Radius of Ring1 must be smaller than Outer Radius\n");
+      Exit(0);
+    }
+  }
+
+  if ( pat_2 == 1)
+  {
+    if ( r2i < r1o )
+    {
+      stamped_printf("\tInner Radius of Ring2 must be greater than Outer Radius of Ring1\n");
+      Exit(0);
+    }
+    
+    if ( r2o < r2i )
+    {
+      stamped_printf("\tInner Radius of Ring2 must be smaller than Outer Radius\n");
+      Exit(0);
+    }
+  }
+  
+  
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
+  
+  fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
+  fprintf(fp,"\tCore  Radius           [m]   / [-] : %12.5e / %12.5e\n", r0, r0/RefL);
+  fprintf(fp,"\t      Angular Velocity [m/s] / [-] : %12.5e / %12.5e\n", omg0, omg0*RefL/RefV);
+  
+  if ( pat_1 == 1 )
+  {
+    fprintf(fp,"\tRing1 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r1i, r1i/RefL);
+    fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r1o, r1o/RefL);
+    fprintf(fp,"\t      Angular Velocity [m/s] / [-] : %12.5e / %12.5e\n", omg1, omg1*RefL/RefV);
+  }
+  
+  if ( pat_2 == 1)
+  {
+    fprintf(fp,"\tRing2 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r2i, r2i/RefL);
+    fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r2o, r2o/RefL);
+    fprintf(fp,"\t      Angular Velocity [m/s] / [-] : %12.5e / %12.5e\n", omg2, omg2*RefL/RefV);
+  }
+}
+
 
 
 // #################################################################
@@ -190,7 +281,7 @@ void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
  * @param [in]     Nmax  Controlクラスのポインタ
  * @param [in]     mat   MediumListクラスのポインタ
  */
-void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
+void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int mid_fluid, mid_solid, mid_driver, mid_driver_face;
   
@@ -207,6 +298,8 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
     Exit(0);
   }
+  
+  
   
   if ( drv_length > 0.0 )
   {
@@ -225,21 +318,19 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
     }
   }
 
-
-  REAL_TYPE ox, oy, oz, dh;
   
   // ノードローカルの無次元値
-  ox = origin[0];
-  oy = origin[1];
-  oz = origin[2];
-  dh = deltaX;
+  REAL_TYPE ox = origin[0];
+  REAL_TYPE oy = origin[1];
+  REAL_TYPE oz = origin[2];
+  REAL_TYPE dh = deltaX;
   
   // ローカルにコピー
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-
+  
   // length, widthなどは有次元値
   REAL_TYPE len = G_origin[0] + (drv_length+width)/R->RefLength; // グローバルな無次元位置
   REAL_TYPE ht  = G_origin[1] + height/R->RefLength;
@@ -291,7 +382,7 @@ schedule(static)
     }
     
   }
-
+  
   // ステップ部分を上書き
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, dh, len, ht) \
 schedule(static)

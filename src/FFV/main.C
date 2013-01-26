@@ -106,7 +106,6 @@ int main( int argc, char **argv )
   
   // シグナルハンドラの初期化
   FFV_TerminateCtrl::initialize(); 
-  printf("flag=%d\n",FFV_TerminateCtrl::getTerminateFlag());
   
   
   // ##################################################################
@@ -119,14 +118,17 @@ int main( int argc, char **argv )
   {
     case -1:
       if ( ffv.IsMaster() ) printf("\n\tSolver error.\n\n");
+      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
       break;
 
     case 0:
       if ( ffv.IsMaster() ) printf("\n\tSolver forced termination time-step loop.\n\n");
+      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
       break;
       
     case 1:
       if ( ffv.IsMaster() ) printf("\n\tSolver finished.\n\n");
+      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) fprintf(fp_hpcpf, "status code = 0\n");
       break;
   }
   
@@ -167,10 +169,7 @@ int main( int argc, char **argv )
   }
 
   // Normal return code
-  if (cpm_ParaManager::get_instance()->GetMyRankID()==0)
-  {
-    fprintf(fp_hpcpf, "status code = 0\n");
-  }
+  if (cpm_ParaManager::get_instance()->GetMyRankID()==0) fprintf(fp_hpcpf, "status code = 0\n");
   
   return 0;
 }

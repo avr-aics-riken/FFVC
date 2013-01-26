@@ -3613,9 +3613,18 @@ void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* 
 
 
 // #################################################################
-// bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く
-// 境界条件指定キーセルのSTATEを流体に変更する
-unsigned long VoxInfo::encVbit_IBC(const int order, 
+/**
+ * @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
+ * @retval エンコードしたセル数
+ * @param [in]     order  cmp[]のエントリ番号
+ * @param [in]     target 境界条件ID
+ * @param [in]     mid    ボクセル配列
+ * @param [in,out] bv     BCindex V
+ * @param [in,out] bp     BCindex P
+ * @param [in]     vec    法線ベクトル
+ * @param [in]     bc_dir 境界条件の方向
+ */
+unsigned long VoxInfo::encVbit_IBC(const int order,
                                    const int target,
                                    const int* mid, 
                                    int* bv,
@@ -3925,11 +3934,13 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
  @param [in]     chk     ガイドセルの状態をチェックするかどうかを指定
  @param [in]     bp      BCindex P
  @param [in]     enc_uwd trueのとき，1次精度のスイッチオン
+ @retval 開口セル数
  @note 
   - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
   - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
+  - 部分的な境界処理のために、ガイドセルの固体IDをマスクとして利用、開口セル数を返す
  */
-void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, const bool enc_uwd)
+REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, const bool enc_uwd)
 {
   size_t m, mt;
   int sw, cw;
@@ -3939,6 +3950,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  
+  unsigned op = 0;
   
   ( "fluid" == key ) ? sw=1 : sw=0;
   ( "check" == chk ) ? cw=1 : cw=0;
@@ -3962,6 +3975,9 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              
+              // 開口セル数
+              if ( IS_FLUID(bv[mt]) ) op++;
               
               // チェック
               if ( cw == 1 ) {
@@ -4006,6 +4022,9 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
+              // 開口セル数
+              if ( IS_FLUID(bv[mt]) ) op++;
+              
               // チェック
               if ( cw == 1 ) {
                 
@@ -4048,6 +4067,9 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              
+              // 開口セル数
+              if ( IS_FLUID(bv[mt]) ) op++;
               
               // チェック
               if ( cw == 1 ) {
@@ -4092,6 +4114,9 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
+              // 開口セル数
+              if ( IS_FLUID(bv[mt]) ) op++;
+              
               // チェック
               if ( cw == 1 ) {
                 
@@ -4134,6 +4159,9 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              
+              // 開口セル数
+              if ( IS_FLUID(bv[mt]) ) op++;
               
               // チェック
               if ( cw == 1 ) {
@@ -4178,6 +4206,9 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
+              // 開口セル数
+              if ( IS_FLUID(bv[mt]) ) op++;
+              
               // チェック
               if ( cw == 1 ) {
                 
@@ -4201,6 +4232,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       }
       break;
   } // end of switch
+  
+  return (REAL_TYPE)op;
 }
 
 
@@ -5669,7 +5702,18 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
 
 
 // #################################################################
-// bv[]に境界条件のビット情報をエンコードする
+/**
+ * @brief bv[]に境界条件のビット情報をエンコードする
+ * @param [in,out] bv    BCindex V
+ * @param [in,out] mid   ボクセルID配列
+ * @param [in,out] bp    BCindex P
+ * @param [in]     BC    SetBCクラスのポインタ
+ * @param [in]     cmp   CompoListクラスのポインタ
+ * @param [in]     isCDS カットかどうか
+ * @param [in]     cut   カット配列
+ * @param [in]     bid   BID配列
+ * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
+ */
 void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, bool isCDS, float* cut, int* bid)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
@@ -5688,7 +5732,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_SPEC_VEL:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
+        m_obc->set_OpenCell( encVbit_OBC(face, bv, "fluid", true, "check", bp, false) ); // 流束形式
         break;
         
       case OBC_OUTFLOW:

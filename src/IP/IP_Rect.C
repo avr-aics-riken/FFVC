@@ -18,7 +18,11 @@
 
 
 // #################################################################
-// パラメータを取得する
+/** パラメータをロード
+ * @param [in] R      Controlクラス
+ * @param [in] tpCntl テキストパーサクラス
+ * @return true-成功, false-エラー
+ */
 bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 {
   std::string str;
@@ -71,7 +75,13 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 
 
 // #################################################################
-// Rectの領域情報を設定する
+/** 領域を設定する
+ * @param [in]     R   Controlクラスのポインタ
+ * @param [in]     sz  分割数
+ * @param [in,out] org 計算領域の基点
+ * @param [in,out] reg 計算領域のbounding boxサイズ
+ * @param [in,out] pch セル幅
+ */
 void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
@@ -103,7 +113,13 @@ void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 
 
 // #################################################################
-// 計算領域のセルIDを設定する
+/** 矩形の計算領域のセルIDを設定する
+ * @param [in,out] mid   媒質情報の配列
+ * @param [in]     R     Controlクラスのポインタ
+ * @param [in]     G_org グローバルな原点（無次元）
+ * @param [in]     Nmax  MediumList配列のサイズ
+ * @param [in]     mat   MediumListクラスのポインタ
+ */
 void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   // ローカルにコピー

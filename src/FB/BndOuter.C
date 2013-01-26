@@ -117,6 +117,14 @@ void BoundaryOuter::set_Heatflux(REAL_TYPE val)
 
 
 // #################################################################
+// 開口セル数
+void BoundaryOuter::set_OpenCell(REAL_TYPE val)
+{
+  OpenCell = val;
+}
+
+
+// #################################################################
 // 周期境界のときの面の状況をセット
 void BoundaryOuter::set_FaceMode(int key)
 {

@@ -115,14 +115,7 @@ public:
   FB::Vec3i find_index(const FB::Vec3f p, const FB::Vec3f ol);
   
   
-  /**
-   * @brief 交点の無次元距離を計算する
-   * @param [in] p 基点座標
-   * @param [in] dir テスト方向
-   * @param [in] r radius
-   * @param [in] dh 格子幅
-   * @return 交点距離
-   */
+  // 交点計算
   float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
 };
 #endif // _IP_SHERE_H_

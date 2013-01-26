@@ -218,17 +218,9 @@ private:
                                int* bh2, 
                                const int deface);
   
-  /**
-   * @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
-   * @retval エンコードしたセル数
-   * @param [in]     order  cmp[]のエントリ番号
-   * @param [in]     target 境界条件ID
-   * @param [in]     mid    ボクセル配列
-   * @param [in,out] bv     BCindex V
-   * @param [in,out] bp     BCindex P
-   * @param [in]     vec    法線ベクトル
-   * @param [in]     bc_dir 境界条件の方向
-   */
+  
+  // bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く
+  // 境界条件指定キーセルのSTATEを流体に変更する
   unsigned long encVbit_IBC(const int order,
                             const int target,
                             const int* mid,
@@ -252,7 +244,10 @@ private:
   void encPbit               (int* bx);
   void encPbit_OBC           (int face, int* bx, string key, bool dir);
   void encQfaceSVO           (int order, int id, int* mid, int* bcd, int* bh1, int* bh2, int deface);
-  void encVbit_OBC           (int face, int* bv, string key, const bool enc_sw, string chk, int* bp, const bool enc_uwd);
+  
+  
+  // bv[]に境界条件のビット情報をエンコードする
+  REAL_TYPE encVbit_OBC(int face, int* bv, string key, const bool enc_sw, string chk, int* bp, const bool enc_uwd);
   
   
   /**

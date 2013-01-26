@@ -41,6 +41,7 @@ private:
   REAL_TYPE var1;    ///< 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
   REAL_TYPE var2;    ///< 多目的用の変数(温度)
   REAL_TYPE dm[3];   ///< ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
+  REAL_TYPE OpenCell;///< 開口セルの個数（set_DomainV()で利用）
   std::string label; ///< ラベル
   std::string alias; ///< 別名
   
@@ -83,6 +84,7 @@ public:
     HTmode = gc_medium = Prdc_mode = Face_mode = 0;
     p = var1 = var2 = 0.0;
     valid_cell = 0;
+    OpenCell = 0.0;
 		for (int i=0; i<5; i++) ca[i] = cb[i] = 0.0;
     for (int i=0; i<3; i++) nv[i] = 0.0;
     for (int i=0; i<3; i++) dm[i]=0.0;
@@ -223,6 +225,7 @@ public:
   void set_Label      (std::string key);
   void set_MonRef     (int key);
   void set_ofv        (int key);
+  void set_OpenCell   (REAL_TYPE val);
   void set_PrdcMode   (int key);
   void set_pType      (int key);
   void set_Temp       (REAL_TYPE val);

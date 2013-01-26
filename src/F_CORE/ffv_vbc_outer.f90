@@ -260,6 +260,7 @@
 !! @param [in]  face 外部境界処理のときの面番号
 !! @param [out] flop 浮動小数点演算数
 !! @note vecには，流入条件のとき指定速度
+!!  mskで部分的な速度を与える
 !<
     subroutine vobc_pv_specv (wv, sz, g, dh, rei, v0, bv, vec, face, flop)
     implicit none
@@ -270,7 +271,7 @@
     double precision                                          ::  flop
     real                                                      ::  Up, Vp, Wp, Ur, Vr, Wr
     real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
-    real                                                      ::  fu, fv, fw, c, ac
+    real                                                      ::  fu, fv, fw, c, ac, msk
     real                                                      ::  u_bc, v_bc, w_bc, m
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(3)                                        ::  vec
@@ -296,13 +297,13 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
 !$OMP FIRSTPRIVATE(dh1, dh2) &
 !$OMP PRIVATE(Up, Vp, Wp, Ur, Vr, Wr) &
-!$OMP PRIVATE(fu, fv, fw, EX, EY, EZ, c, ac) &
+!$OMP PRIVATE(fu, fv, fw, EX, EY, EZ, c, ac, msk) &
 !$OMP PRIVATE(i, j, k)
 
     FACES : select case (face)
     case (X_minus)
 
-      i =1
+      i = 1
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
@@ -324,10 +325,12 @@
           fu = 0.5*(c*(Up+Ur) - ac*EX)
           fv = 0.5*(c*(Vp+Vr) - ac*EY)
           fw = 0.5*(c*(Wp+Wr) - ac*EZ)
+
+          msk = real(ibits(bv(0,j,k), State, 1))
           
-          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 ) * msk
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 ) * msk
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 ) * msk
           m = m + 1.0
         endif
       end do
@@ -360,9 +363,11 @@
           fv = 0.5*(c*(Vr+Vp) - ac*EY)
           fw = 0.5*(c*(Wr+Wp) - ac*EZ)
 
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
+          msk = real(ibits(bv(ix+1,j,k), State, 1))
+
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 ) * msk
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 ) * msk
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 ) * msk
           m = m + 1.0
         endif
       end do
@@ -394,10 +399,12 @@
           fu = 0.5*(c*(Up+Ur) - ac*EX)
           fv = 0.5*(c*(Vp+Vr) - ac*EY)
           fw = 0.5*(c*(Wp+Wr) - ac*EZ)
+
+          msk = real(ibits(bv(i,0,k), State, 1))
           
-          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 ) * msk
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 ) * msk
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 ) * msk
           m = m + 1.0
         endif
       end do
@@ -429,10 +436,12 @@
           fu = 0.5*(c*(Ur+Up) - ac*EX)
           fv = 0.5*(c*(Vr+Vp) - ac*EY)
           fw = 0.5*(c*(Wr+Wp) - ac*EZ)
+
+          msk = real(ibits(bv(i,jx+1,k), State, 1))
           
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 ) * msk
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 ) * msk
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 ) * msk
           m = m + 1.0
         endif
       end do
@@ -464,10 +473,12 @@
           fu = 0.5*(c*(Up+Ur) - ac*EX)
           fv = 0.5*(c*(Vp+Vr) - ac*EY)
           fw = 0.5*(c*(Wp+Wr) - ac*EZ)
+
+          msk = real(ibits(bv(i,j,0), State, 1))
           
-          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 )
+          wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 ) * msk
+          wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 ) * msk
+          wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 ) * msk
           m = m + 1.0
         endif
       end do
@@ -499,10 +510,12 @@
           fu = 0.5*(c*(Ur+Up) - ac*EX)
           fv = 0.5*(c*(Vr+Vp) - ac*EY)
           fw = 0.5*(c*(Wr+Wp) - ac*EZ)
-          
-          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 )
-          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 )
-          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 )
+
+          msk = real(ibits(bv(i,j,kx+1), State, 1))
+
+          wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 ) * msk
+          wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 ) * msk
+          wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 ) * msk
           m = m + 1.0
         endif
       end do
@@ -1426,6 +1439,7 @@
 !! @param [in]     vec   指定する速度ベクトル
 !! @param [in,out] flop  flop count
 !! @note 固体部分は対象外とするのでループ中に判定あり
+!! 部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
     subroutine vobc_div_drchlt (div, sz, g, face, bv, vec, flop)
     implicit none
@@ -1457,7 +1471,7 @@
       do j=1,jx
         bvx = bv(1, j, k)
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          div(1, j, k) = div(1, j, k) - u_bc * real(ibits(bvx, State, 1))
+          div(1, j, k) = div(1, j, k) - u_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(0, j, k), State, 1))
         endif
       end do
       end do
@@ -1471,7 +1485,7 @@
       do j=1,jx
         bvx = bv(ix, j, k)
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          div(ix, j, k) = div(ix, j, k) + u_bc * real(ibits(bvx, State, 1))
+          div(ix, j, k) = div(ix, j, k) + u_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(ix+1, j, k), State, 1))
         endif
       end do
       end do
@@ -1485,7 +1499,7 @@
       do i=1,ix
         bvx = bv(i, 1, k)
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          div(i, 1, k) = div(i, 1, k) - v_bc * real(ibits(bvx, State, 1))
+          div(i, 1, k) = div(i, 1, k) - v_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, 0, k), State, 1))
         endif
       end do
       end do
@@ -1499,7 +1513,7 @@
       do i=1,ix
         bvx = bv(i, jx, k)
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          div(i, jx, k) = div(i, jx, k) + v_bc * real(ibits(bvx, State, 1))
+          div(i, jx, k) = div(i, jx, k) + v_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, jx+1, k), State, 1))
         endif
       end do
       end do
@@ -1513,7 +1527,7 @@
       do i=1,ix
         bvx = bv(i, j, 1)
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          div(i, j, 1) = div(i, j, 1) - w_bc * real(ibits(bvx, State, 1))
+          div(i, j, 1) = div(i, j, 1) - w_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, j, 0), State, 1))
         endif
       end do
       end do
@@ -1527,7 +1541,7 @@
       do i=1,ix
         bvx = bv(i, j, kx)
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          div(i, j, kx) = div(i, j, kx) + w_bc * real(ibits(bvx, State, 1))
+          div(i, j, kx) = div(i, j, kx) + w_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, j, kx+1), State, 1))
         endif
       end do
       end do
@@ -2075,6 +2089,7 @@
 !! @param [in]  bv   BCindex V
 !! @param [in]  face 外部境界の面番号
 !! @param [in]  vec  指定する速度ベクトル
+!! @note 部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
     subroutine vobc_face_drchlt (vf, sz, g, bv, face, vec)
     implicit none
@@ -2106,7 +2121,7 @@
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(1, j, k), bc_face_W, bitw_5) == obc_mask ) then
-          vf(0, j, k, 1) = u_bc
+          vf(0, j, k, 1) = u_bc * real(ibits(bv(0, j, k), State, 1))
         endif
       end do
       end do
@@ -2119,7 +2134,7 @@
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
-          vf(ix, j, k, 1) = u_bc
+          vf(ix, j, k, 1) = u_bc * real(ibits(bv(ix+1, j, k), State, 1))
         endif
       end do
       end do
@@ -2132,7 +2147,7 @@
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, 1, k), bc_face_S, bitw_5) == obc_mask ) then
-          vf(i, 0, k, 2) = v_bc
+          vf(i, 0, k, 2) = v_bc * real(ibits(bv(i, 0, k), State, 1))
         endif
       end do
       end do
@@ -2145,7 +2160,7 @@
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
-          vf(i, jx, k, 2) = v_bc
+          vf(i, jx, k, 2) = v_bc * real(ibits(bv(i, jx+1, k), State, 1))
         endif
       end do
       end do
@@ -2158,7 +2173,7 @@
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j ,1), bc_face_B, bitw_5) == obc_mask ) then
-          vf(i, j, 0, 3) = w_bc
+          vf(i, j, 0, 3) = w_bc * real(ibits(bv(i, j, 0), State, 1))
         endif
       end do
       end do
@@ -2171,7 +2186,7 @@
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
-          vf(i, j, kx, 3) = w_bc
+          vf(i, j, kx, 3) = w_bc * real(ibits(bv(i, j, kx+1), State, 1))
         endif
       end do
       end do
