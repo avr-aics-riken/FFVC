@@ -54,6 +54,7 @@
 #include "History.h"
 #include "Monitor.h"
 #include "ffv_Ffunc.h"
+#include "ffv_TerminateCtrl.h"
 
 #include "omp.h"
 

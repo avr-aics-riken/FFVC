@@ -21,6 +21,7 @@ CXXSRCS = \
     ffv_LS.C \
     ffv_Post.C \
     ffv_Heat.C \
+    ffv_TerminateCtrl.C \
     NS_FS_E_Binary.C \
     NS_FS_E_CDS.C \
     PS_Binary.C \

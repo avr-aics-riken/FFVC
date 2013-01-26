@@ -927,6 +927,12 @@ int FFV::MainLoop()
   
   for (int i=1; i<=Session_LastStep; i++)
   {
+    if ( FFV_TerminateCtrl::getTerminateFlag() )
+    {
+      return 0; // forced terminate
+      break;
+    }
+    
     Session_CurrentStep = i;
     
     int loop_ret = Loop(i);

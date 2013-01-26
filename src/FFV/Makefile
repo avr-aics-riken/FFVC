@@ -259,10 +259,11 @@ main.o: ../FB/FileIO.h ../FB/ParseBC.h ../FB/vec3.h ../FB/vec3_func.h
 main.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h ../FB/VoxInfo.h
 main.o: ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h
 main.o: ../FB/dfi.h ../FB/dfiinfo.h ../FB/History.h ../FB/Monitor.h
-main.o: ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h
-main.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h
-main.o: ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h
-main.o: ../IP/IP_Polygon.h ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+main.o: ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h
+main.o: ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_Define.h
+main.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
+main.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
+main.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 ffv.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -272,10 +273,10 @@ ffv.o: ../FB/ParseBC.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h
 ffv.o: ../FB/Intrinsic.h ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h
 ffv.o: ../FB/CompoFraction.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../FB/dfi.h
 ffv.o: ../FB/dfiinfo.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h
-ffv.o: ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h ../IP/IP_Define.h
-ffv.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-ffv.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-ffv.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+ffv.o: ../FB/basic_func.h ../FB/Sampling.h ffv_TerminateCtrl.h
+ffv.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
+ffv.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h
+ffv.o: ../IP/IP_Polygon.h ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 ffv_Initialize.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv_Initialize.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h
 ffv_Initialize.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
@@ -288,10 +289,10 @@ ffv_Initialize.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h
 ffv_Initialize.o: ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../FB/dfi.h
 ffv_Initialize.o: ../FB/dfiinfo.h ../FB/History.h ../FB/Monitor.h
 ffv_Initialize.o: ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h
-ffv_Initialize.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h
-ffv_Initialize.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-ffv_Initialize.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-ffv_Initialize.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+ffv_Initialize.o: ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_Define.h
+ffv_Initialize.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h
+ffv_Initialize.o: ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h
+ffv_Initialize.o: ../IP/IP_Polygon.h ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 ffv_Alloc.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv_Alloc.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv_Alloc.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -302,9 +303,9 @@ ffv_Alloc.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_Alloc.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h
 ffv_Alloc.o: ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h
 ffv_Alloc.o: ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h
-ffv_Alloc.o: ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h
-ffv_Alloc.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
-ffv_Alloc.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
+ffv_Alloc.o: ../FB/basic_func.h ../FB/Sampling.h ffv_TerminateCtrl.h
+ffv_Alloc.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h
+ffv_Alloc.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
 ffv_Alloc.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
 ffv_Alloc.o: ../PLOT3D/ffv_PLOT3D.h
 ffv_SetBC.o: ffv_SetBC.h ../FB/SetBC.h ../FB/DomainInfo.h ../FB/FB_Define.h
@@ -324,11 +325,11 @@ ffv_Restart.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_Restart.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h
 ffv_Restart.o: ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h
 ffv_Restart.o: ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h
-ffv_Restart.o: ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h
-ffv_Restart.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
-ffv_Restart.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
-ffv_Restart.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
-ffv_Restart.o: ../PLOT3D/ffv_PLOT3D.h
+ffv_Restart.o: ../FB/basic_func.h ../FB/Sampling.h ffv_TerminateCtrl.h
+ffv_Restart.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h
+ffv_Restart.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
+ffv_Restart.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
+ffv_Restart.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 ffv_Loop.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv_Loop.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv_Loop.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -339,10 +340,11 @@ ffv_Loop.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_Loop.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h
 ffv_Loop.o: ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h ../FB/History.h
 ffv_Loop.o: ../FB/Monitor.h ../FB/MonCompo.h ../FB/basic_func.h
-ffv_Loop.o: ../FB/Sampling.h ../IP/IP_Duct.h ../IP/IP_Define.h
-ffv_Loop.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-ffv_Loop.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-ffv_Loop.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+ffv_Loop.o: ../FB/Sampling.h ffv_TerminateCtrl.h ../IP/IP_Duct.h
+ffv_Loop.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
+ffv_Loop.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
+ffv_Loop.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
+ffv_Loop.o: ../PLOT3D/ffv_PLOT3D.h
 ffv_LS.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv_LS.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv_LS.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -353,10 +355,10 @@ ffv_LS.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_LS.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h
 ffv_LS.o: ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h ../FB/History.h
 ffv_LS.o: ../FB/Monitor.h ../FB/MonCompo.h ../FB/basic_func.h
-ffv_LS.o: ../FB/Sampling.h ../IP/IP_Duct.h ../IP/IP_Define.h
-ffv_LS.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-ffv_LS.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-ffv_LS.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+ffv_LS.o: ../FB/Sampling.h ffv_TerminateCtrl.h ../IP/IP_Duct.h
+ffv_LS.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h
+ffv_LS.o: ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h
+ffv_LS.o: ../IP/IP_Polygon.h ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 ffv_Post.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv_Post.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv_Post.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -367,10 +369,11 @@ ffv_Post.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_Post.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h
 ffv_Post.o: ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h ../FB/History.h
 ffv_Post.o: ../FB/Monitor.h ../FB/MonCompo.h ../FB/basic_func.h
-ffv_Post.o: ../FB/Sampling.h ../IP/IP_Duct.h ../IP/IP_Define.h
-ffv_Post.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-ffv_Post.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-ffv_Post.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+ffv_Post.o: ../FB/Sampling.h ffv_TerminateCtrl.h ../IP/IP_Duct.h
+ffv_Post.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
+ffv_Post.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
+ffv_Post.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
+ffv_Post.o: ../PLOT3D/ffv_PLOT3D.h
 ffv_Heat.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 ffv_Heat.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 ffv_Heat.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -381,10 +384,11 @@ ffv_Heat.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 ffv_Heat.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h
 ffv_Heat.o: ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h ../FB/History.h
 ffv_Heat.o: ../FB/Monitor.h ../FB/MonCompo.h ../FB/basic_func.h
-ffv_Heat.o: ../FB/Sampling.h ../IP/IP_Duct.h ../IP/IP_Define.h
-ffv_Heat.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-ffv_Heat.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-ffv_Heat.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h ../FB/FindexS3D.h
+ffv_Heat.o: ../FB/Sampling.h ffv_TerminateCtrl.h ../IP/IP_Duct.h
+ffv_Heat.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
+ffv_Heat.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
+ffv_Heat.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
+ffv_Heat.o: ../PLOT3D/ffv_PLOT3D.h ../FB/FindexS3D.h
 NS_FS_E_Binary.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 NS_FS_E_Binary.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h
 NS_FS_E_Binary.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
@@ -397,10 +401,10 @@ NS_FS_E_Binary.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h
 NS_FS_E_Binary.o: ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../FB/dfi.h
 NS_FS_E_Binary.o: ../FB/dfiinfo.h ../FB/History.h ../FB/Monitor.h
 NS_FS_E_Binary.o: ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h
-NS_FS_E_Binary.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h
-NS_FS_E_Binary.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
-NS_FS_E_Binary.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
-NS_FS_E_Binary.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
+NS_FS_E_Binary.o: ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_Define.h
+NS_FS_E_Binary.o: ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h
+NS_FS_E_Binary.o: ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h
+NS_FS_E_Binary.o: ../IP/IP_Polygon.h ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 NS_FS_E_CDS.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 NS_FS_E_CDS.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 NS_FS_E_CDS.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -411,11 +415,11 @@ NS_FS_E_CDS.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 NS_FS_E_CDS.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h
 NS_FS_E_CDS.o: ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h
 NS_FS_E_CDS.o: ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h
-NS_FS_E_CDS.o: ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h
-NS_FS_E_CDS.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
-NS_FS_E_CDS.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
-NS_FS_E_CDS.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
-NS_FS_E_CDS.o: ../PLOT3D/ffv_PLOT3D.h
+NS_FS_E_CDS.o: ../FB/basic_func.h ../FB/Sampling.h ffv_TerminateCtrl.h
+NS_FS_E_CDS.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h
+NS_FS_E_CDS.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h
+NS_FS_E_CDS.o: ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h
+NS_FS_E_CDS.o: ../IP/IP_Sphere.h ../PLOT3D/ffv_PLOT3D.h
 PS_Binary.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 PS_Binary.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h ../FB/Medium.h
 PS_Binary.o: ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h
@@ -426,8 +430,8 @@ PS_Binary.o: ../FB/vec3f_func.h ../FB/Intrinsic.h ../FB/ParseMat.h
 PS_Binary.o: ../FB/VoxInfo.h ../FB/SetBC.h ../FB/CompoFraction.h ffv_SetBC.h
 PS_Binary.o: ../F_CORE/ffv_Ffunc.h ../FB/dfi.h ../FB/dfiinfo.h
 PS_Binary.o: ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h
-PS_Binary.o: ../FB/basic_func.h ../FB/Sampling.h ../IP/IP_Duct.h
-PS_Binary.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
-PS_Binary.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
+PS_Binary.o: ../FB/basic_func.h ../FB/Sampling.h ffv_TerminateCtrl.h
+PS_Binary.o: ../IP/IP_Duct.h ../IP/IP_Define.h ../IP/IP_PPLT2D.h
+PS_Binary.o: ../IP/IP_SHC1D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
 PS_Binary.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
 PS_Binary.o: ../PLOT3D/ffv_PLOT3D.h
