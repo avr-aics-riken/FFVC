@@ -19,7 +19,12 @@
 
 
 // #################################################################
-// タイムスタンプの更新
+/**
+ * @brief タイムスタンプの更新
+ * @param [in] m_stp ステップ数
+ * @param [in] m_tm  時刻
+ * @param [in] vMax  速度最大値成分
+ */
 void History::updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax)
 {
   step  = m_stp;
@@ -29,7 +34,10 @@ void History::updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_
 
 
 // #################################################################
-// 反復過程の状況モニタのヘッダー出力
+/**
+ * @brief 反復過程の状況モニタのヘッダー出力
+ * @param [in] fp 出力ファイルポインタ
+ */
 void History::printHistoryItrTitle(FILE* fp)
 {
   fprintf(fp, "step=%16d  time=%13.6e    Itr_VP         Div_V    Itr_P          Norm (           i,            j,            k)\n", step, printTime());
@@ -37,7 +45,12 @@ void History::printHistoryItrTitle(FILE* fp)
 
 
 // #################################################################
-// 反復履歴出力
+/**
+ * @brief コンポーネントモニタの履歴出力
+ * @param [in] fp  出力ファイルポインタ
+ * @param [in] IC  反復管理クラス
+ * @param [in] idx divの最大値の発生セルインデクス
+ */
 void History::printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx)
 {
   const ItrCtl* ICd = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
@@ -50,7 +63,13 @@ void History::printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx)
 
 
 // #################################################################
-// 標準履歴モニタのヘッダー出力
+/**
+ * @brief 反復過程の状況モニタのヘッダー出力
+ * @param [in] fp 出力ファイルポインタ
+ * @param [in] IC 反復管理クラス
+ * @param [in] C  制御クラス
+ * @param [in] disp  計算時間表示の有無
+ */
 void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, const bool disp)
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
@@ -144,7 +163,16 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
 
 
 // #################################################################
-// 標準履歴の出力
+/**
+ * @brief 標準履歴の出力
+ * @param [in] fp    出力ファイルポインタ
+ * @param [in] avr   1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
+ * @param [in] rms   1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
+ * @param [in] IC    ItrCtlクラスのポインタ
+ * @param [in] C     Controlクラスへのポインタ
+ * @param [in] stptm 1タイムステップの計算時間
+ * @param [in] disp  計算時間表示の有無
+ */
 void History::printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C, const double stptm, const bool disp)
 {
   const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
@@ -206,8 +234,12 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
 
 
 // #################################################################
-// コンポーネントモニタのヘッダー出力
-// 有次元と無次元の表示
+/**
+ * @brief コンポーネントモニタのヘッダー出力
+ * @param [in] fp  出力ファイルポインタ
+ * @param [in] cmp CompoListクラスのポインタ
+ * @param [in] C   Controlクラスへのポインタ
+ */
 void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C)
 {
   int cid;
@@ -269,8 +301,12 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
 
 
 // #################################################################
-// コンポーネントモニタの履歴出力(dimensional value)
-// 有次元と無次元の表示
+/**
+ * @brief コンポーネントモニタの履歴出力(dimensional value)
+ * @param [in] fp  出力ファイルポインタ
+ * @param [in] cmp CompoListクラスのポインタ
+ * @param [in] C   Controlクラスへのポインタ
+ */
 void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C)
 {
   REAL_TYPE c, pp, dr, dp;
@@ -334,7 +370,11 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
 
 
 // #################################################################
-// 計算領域の流束履歴のヘッダー出力
+/**
+ * @brief 計算領域の流束履歴のヘッダー出力
+ * @param [in] fp 出力ファイルポインタ
+ * @param [in] C  コントロールクラス
+ */
 void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 {
   if ( Unit_Log == DIMENSIONAL ) {
@@ -358,7 +398,11 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 
 
 // #################################################################
-// 計算領域の流束履歴の出力
+/**
+ * @brief 計算領域の流束履歴の出力
+ * @param [in] fp 出力ファイルポインタ
+ * @param [in] C  Controlクラスへのポインタ
+ */
 void History::printHistoryDomfx(FILE* fp, const Control* C)
 {
   const REAL_TYPE sgn=-1.0;
@@ -386,7 +430,10 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
 
 
 // #################################################################
-// 物体に働く力の履歴のヘッダー出力
+/**
+ * @brief 物体に働く力の履歴のヘッダー出力
+ * @param [in] fp 出力ファイルポインタ
+ */
 void History::printHistoryForceTitle(FILE* fp)
 {
   if ( Unit_Log == DIMENSIONAL ) {
@@ -408,7 +455,10 @@ void History::printHistoryForceTitle(FILE* fp)
 
 
 // #################################################################
-// 物体に働く力の履歴の出力
+/**
+ * @brief 物体に働く力の履歴の出力
+ * @param [in] fp 出力ファイルポインタ
+ */
 void History::printHistoryForce(FILE* fp, const REAL_TYPE* force)
 {
   fprintf(fp, "%8d %14.6e", step, printTime());
@@ -420,7 +470,10 @@ void History::printHistoryForce(FILE* fp, const REAL_TYPE* force)
 
 
 // #################################################################
-// 壁面モニタのヘッダー出力
+/**
+ * @brief 反復過程の状況モニタのヘッダー出力
+ * @param [in] fp 出力ファイルポインタ
+ */
 void History::printHistoryWallTitle(FILE* fp)
 {
   if ( Unit_Log == DIMENSIONAL ) {
@@ -435,7 +488,12 @@ void History::printHistoryWallTitle(FILE* fp)
 
 
 // #################################################################
-// 壁面履歴の出力
+/**
+ * @brief 壁面履歴の出力
+ * @param [in] fp        出力ファイルポインタ
+ * @param [in] range_Yp  壁座標の最小最大値
+ * @param [in] range_Ut  摩擦速度の最小最大値
+ */
 void History::printHistoryWall(FILE* fp, const REAL_TYPE* range_Yp, const REAL_TYPE* range_Ut)
 {
   fprintf(fp, "%8d %14.6e ", step, printTime() );

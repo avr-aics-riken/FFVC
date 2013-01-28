@@ -138,7 +138,7 @@
           EX = v0(i, 0, k, 1) - Up0
           EY = v0(i, 0, k, 2) - Vp0
           EZ = v0(i, 0, k, 3) - Wp0
-          
+
           wv(i, 1, k, 1) = wv(i, 1, k, 1) + ( fu*dh1 + EX*dh2 )
           wv(i, 1, k, 2) = wv(i, 1, k, 2) + ( fv*dh1 + EY*dh2 )
           wv(i, 1, k, 3) = wv(i, 1, k, 3) + ( fw*dh1 + EZ*dh2 )
@@ -198,7 +198,7 @@
           EX = v0(i, j, 0, 1) - Up0
           EY = v0(i, j, 0, 2) - Vp0
           EZ = v0(i, j, 0, 3) - Wp0
-          
+
           wv(i, j, 1, 1) = wv(i, j, 1, 1) + ( fu*dh1 + EX*dh2 )
           wv(i, j, 1, 2) = wv(i, j, 1, 2) + ( fv*dh1 + EY*dh2 )
           wv(i, j, 1, 3) = wv(i, j, 1, 3) + ( fw*dh1 + EZ*dh2 )

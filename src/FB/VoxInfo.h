@@ -247,7 +247,7 @@ private:
   
   
   // bv[]に境界条件のビット情報をエンコードする
-  REAL_TYPE encVbit_OBC(int face, int* bv, string key, const bool enc_sw, string chk, int* bp, const bool enc_uwd);
+  void encVbit_OBC(int face, int* bv, string key, const bool enc_sw, string chk, int* bp, const bool enc_uwd);
   
   
   /**

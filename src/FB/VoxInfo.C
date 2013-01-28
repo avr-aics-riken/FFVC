@@ -736,10 +736,9 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
 
 // #################################################################
 /**
- @fn void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
  @brief  計算領域の外部境界で外側1層と内側の両方が流体セル数の場合にカウントする
- @param bx BCindex ID
- @param OpenArea 開口セル数
+ @param [in]  bx       BCindex ID
+ @param [out] OpenArea 開口セル数
  */
 void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
 {
@@ -3926,32 +3925,28 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
 
 // #################################################################
 /**
- @brief 外部境界に接するセルにおいて，各種速度境界条件に対応する媒質をチェックし，bv[]にビットフラグをセットする
- @param [in]     face    外部境界面番号
- @param [in,out] bv      BCindex V
- @param [in]     key     fluid or solid　指定するBCが要求するガイドセルの状態 >> エラーチェックに使う
- @param [in]     enc_sw  trueのとき，エンコードする．falseの場合にはガイドセルの状態チェックのみ
- @param [in]     chk     ガイドセルの状態をチェックするかどうかを指定
- @param [in]     bp      BCindex P
- @param [in]     enc_uwd trueのとき，1次精度のスイッチオン
- @retval 開口セル数
- @note 
+ * @brief 外部境界に接するセルにおいて，各種速度境界条件に対応する媒質をチェックし，bv[]にビットフラグをセットする
+ * @param [in]     face    外部境界面番号
+ * @param [in,out] bv      BCindex V
+ * @param [in]     key     fluid or solid　指定するBCが要求するガイドセルの状態 >> エラーチェックに使う
+ * @param [in]     enc_sw  trueのとき，エンコードする．falseの場合にはガイドセルの状態チェックのみ
+ * @param [in]     chk     ガイドセルの状態をチェックするかどうかを指定
+ * @param [in]     bp      BCindex P
+ * @param [in]     enc_uwd trueのとき，1次精度のスイッチオン
+ * @note
   - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
   - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
-  - 部分的な境界処理のために、ガイドセルの固体IDをマスクとして利用、開口セル数を返す
  */
-REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, const bool enc_uwd)
+void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, const bool enc_uwd)
 {
   size_t m, mt;
   int sw, cw;
-  int s, q;
+  int s, q, z;
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  unsigned op = 0;
   
   ( "fluid" == key ) ? sw=1 : sw=0;
   ( "check" == chk ) ? cw=1 : cw=0;
@@ -3965,6 +3960,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
             mt= _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
             
             s = bv[m];
+            z = bv[mt];
             q = bp[mt];
             
             if ( IS_FLUID(s) ) {
@@ -3976,20 +3972,17 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
-              // 開口セル数
-              if ( IS_FLUID(bv[mt]) ) op++;
-              
               // チェック
               if ( cw == 1 ) {
                 
                 if ( sw==1 ) { // ガイドセルが流体であることを要求
-                  if ( !IS_FLUID(bv[mt]) ) {
+                  if ( !IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary X- is required\n");
                     Exit(0);
                   }
                 }
                 else { // ガイドセルが固体であることを要求
-                  if ( IS_FLUID(bv[mt]) ) {
+                  if ( IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Solid cell at Outer boundary X- is required\n");
                     Exit(0);
                   }
@@ -4010,6 +4003,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
             mt= _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
             
             s = bv[m];
+            z = bv[mt];
             q = bp[mt];
             
             if ( IS_FLUID(s) ) {
@@ -4022,20 +4016,17 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
-              // 開口セル数
-              if ( IS_FLUID(bv[mt]) ) op++;
-              
               // チェック
               if ( cw == 1 ) {
                 
                 if ( sw==1 ) {
-                  if ( !IS_FLUID(bv[mt]) ) {
+                  if ( !IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary X+ is required\n");
                     Exit(0);
                   }
                 }
                 else {
-                  if ( IS_FLUID(bv[mt]) ) {
+                  if ( IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Solid cell at Outer boundary X+ is required\n");
                     Exit(0);
                   }
@@ -4056,6 +4047,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
             mt= _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
             
             s = bv[m];
+            z = bv[mt];
             q = bp[mt];
             
             if ( IS_FLUID(s) ) {
@@ -4068,20 +4060,17 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
-              // 開口セル数
-              if ( IS_FLUID(bv[mt]) ) op++;
-              
               // チェック
               if ( cw == 1 ) {
                 
                 if ( sw==1 ) {
-                  if ( !IS_FLUID(bv[mt]) ) {
+                  if ( !IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Y- is required\n");
                     Exit(0);
                   }
                 }
                 else {
-                  if ( IS_FLUID(bv[mt]) ) {
+                  if ( IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Y- is required\n");
                     Exit(0);
                   }
@@ -4102,6 +4091,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
             mt= _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
             
             s = bv[m];
+            z = bv[mt];
             q = bp[mt];
             
             if ( IS_FLUID(s) ) {
@@ -4114,20 +4104,17 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
-              // 開口セル数
-              if ( IS_FLUID(bv[mt]) ) op++;
-              
               // チェック
               if ( cw == 1 ) {
                 
                 if ( sw==1 ) {
-                  if ( !IS_FLUID(bv[mt]) ) {
+                  if ( !IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Y+ is required\n");
                     Exit(0);
                   }
                 }
                 else {
-                  if ( IS_FLUID(bv[mt]) ) {
+                  if ( IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Y+ is required\n");
                     Exit(0);
                   }
@@ -4148,6 +4135,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
             mt= _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
             
             s = bv[m];
+            z = bv[mt];
             q = bp[mt];
             
             if ( IS_FLUID(s) ) {
@@ -4160,20 +4148,17 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
-              // 開口セル数
-              if ( IS_FLUID(bv[mt]) ) op++;
-              
               // チェック
               if ( cw == 1 ) {
                 
                 if ( sw==1 ) {
-                  if ( !IS_FLUID(bv[mt]) ) {
+                  if ( !IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Z- is required\n");
                     Exit(0);
                   }
                 }
                 else {
-                  if ( IS_FLUID(bv[mt]) ) {
+                  if ( IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Z- is required\n");
                     Exit(0);
                   }
@@ -4194,6 +4179,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
             mt= _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
             
             s = bv[m];
+            z = bv[mt];
             q = bp[mt];
             
             if ( IS_FLUID(s) ) {
@@ -4206,20 +4192,17 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
               
-              // 開口セル数
-              if ( IS_FLUID(bv[mt]) ) op++;
-              
               // チェック
               if ( cw == 1 ) {
                 
                 if ( sw==1 ) {
-                  if ( !IS_FLUID(bv[mt]) ) {
+                  if ( !IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Z+ is required\n");
                     Exit(0);
                   }
                 }
                 else {
-                  if ( IS_FLUID(bv[mt]) ) {
+                  if ( IS_FLUID(z) ) {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Z+ is required\n");
                     Exit(0);
                   }
@@ -4232,8 +4215,7 @@ REAL_TYPE VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const 
       }
       break;
   } // end of switch
-  
-  return (REAL_TYPE)op;
+
 }
 
 
@@ -5732,7 +5714,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_SPEC_VEL:
-        m_obc->set_OpenCell( encVbit_OBC(face, bv, "fluid", true, "check", bp, false) ); // 流束形式
+        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
         break;
         
       case OBC_OUTFLOW:

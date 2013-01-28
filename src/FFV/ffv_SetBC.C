@@ -568,7 +568,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       if (typ == OBC_OUTFLOW)
       {
         vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
-        obc[face].set_DomainV(vec, face, typ);
+        obc[face].set_DomainV(vec, face, OBC_OUTFLOW);
         //printf("%e %e %e\n", vec[0], vec[1], vec[2]);
       }
     }
