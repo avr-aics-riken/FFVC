@@ -70,13 +70,19 @@ void COMB::output_plot3d()
   float *d_thin;
   double *dd_thin;
   
-  
   // set loop count
-  int nstep=DI[0].step.size();
+  //int nstep=DI[0].step.size();
+  int nstep=DI[0].Sc.size();
   int nnode=DI[0].NodeInfoSize;
   
+  // 出力モード
+  bool mio = false;
+  cout << "1 mio = " << mio << endl;
+  if(DI[0].NumberOfRank > 1) mio=true;
+  cout << "2 mio = " << mio << endl;
+  
   // keno 2013-01-14 最大値と最小値のオプションを使う場合は計算すること
-  REAL_TYPE minmax[2]={0.0, 0.0}; 
+  REAL_TYPE minmax[2]={0.0, 0.0};
   
   
   //並列処理のためのインデックス作成
@@ -110,27 +116,28 @@ void COMB::output_plot3d()
   
   // copy dfi file
   string dfi_in = Generate_DFI_Name(DI[0].Prefix);
-  string dfi_out = Generate_DFI_Name(P3Op.basename);
+  string dfi_out = Generate_DFI_Name(P3Op.basename_f);
   //dfi_out = out_dirname + dfi_out; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
-  Copy_DFIFile(dfi_in, dfi_out, P3Op.basename, dfi_mng[var_Plot3D]);
+  Copy_DFIFile(dfi_in, dfi_out, P3Op.basename_f);//, dfi_mng[var_Plot3D]);
   if(P3Op.IS_DivideFunc == ON){ // 分割出力のとき
     for(int i=0;i<ndfi;i++){
       dfi_mng[var_Plot3D]=0;//本来はカウンターだが初期判定にのみ利用
       std::string dfipre;
-      dfipre = DI[i].Prefix + P3Op.basename;
+      dfipre = DI[i].Prefix + "_" + P3Op.basename_f;
       cout << "dfipre = " << dfipre << endl;
       dfi_in = Generate_DFI_Name(DI[i].Prefix);
       dfi_out = Generate_DFI_Name(dfipre);
       //dfi_out = out_dirname + dfi_out; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
-      Copy_DFIFile(dfi_in, dfi_out, dfipre, dfi_mng[var_Plot3D]);
+      Copy_DFIFile(dfi_in, dfi_out, dfipre);//, dfi_mng[var_Plot3D]);
     }
   }
   
   // check data type
-  m_step = DI[0].step[0];
+  //m_step = DI[0].step[0];
+  m_step = DI[0].Sc[0]->step;
   m_rank = DI[0].Node[0].RankID;
   prefix = DI[0].Prefix;
-  infile = Generate_FileName(prefix, m_step, m_rank, true);
+  infile = Generate_FileName(prefix, m_step, m_rank, mio);
   infile = in_dirname + infile;
   ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
   d_type=m_d_type;
@@ -142,7 +149,8 @@ void COMB::output_plot3d()
   // set work area size
   if(numProc > 1) ips=0;
   for(int istep=0; istep< nstep; istep++ ) { // step loop
-    m_step=DI[0].step[istep];
+    //m_step=DI[0].step[istep];
+    m_step=DI[0].Sc[istep]->step;
     
     for(int inode=0; inode< nnode; inode++ ) { // node loop
       
@@ -159,27 +167,9 @@ void COMB::output_plot3d()
       
       int ivar=0;
       for(int i=0;i<ndfi;i++){
-        prefix=DI[i].Prefix;
-        if     ( !strcasecmp(prefix.c_str(), "prs" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vel" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "fvel" )) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "tmp" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "tp"  ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vrt" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "i2vgt")) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "hlt" ) ) dim=1;
-        else{
-          m_step = DI[i].step[istep];
-          m_rank = DI[i].Node[inode].RankID;
-          infile = Generate_FileName(prefix, m_step, m_rank, true);
-          infile = in_dirname + infile;
-          ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
-          dim=1;
-          if( m_sv_type == SPH_VECTOR ) dim = 3;
-        }
+        dim=DI[i].Component;
         if(maxdim<dim) maxdim=dim;
         ivar=ivar+dim;
-        DI[i].dim=dim;
       }
       nvar=ivar;
       
@@ -190,7 +180,7 @@ void COMB::output_plot3d()
       // read sph header
       prefix = DI[0].Prefix;
       m_rank = DI[0].Node[inode].RankID;
-      infile = Generate_FileName(prefix, m_step, m_rank, true);
+      infile = Generate_FileName(prefix, m_step, m_rank, mio);
       infile = in_dirname + infile;
       if( d_type == SPH_FLOAT ){
         ReadSphHeader (&m_step, &m_sv_type, &m_d_type, &m_imax, &m_jmax, &m_kmax, &m_time, m_org, m_pit, fp_in, infile);
@@ -312,7 +302,8 @@ void COMB::output_plot3d()
   // step loop
   if(numProc > 1) ips=0;
   for(int istep=0; istep< nstep; istep++ ) {
-    m_step=DI[0].step[istep];
+    //m_step=DI[0].step[istep];
+    m_step=DI[0].Sc[istep]->step;
     LOG_OUT_ fprintf(fplog,"\tstep = %d\n", m_step);
     STD_OUT_ printf("\tstep = %d\n", m_step);
     
@@ -333,7 +324,7 @@ void COMB::output_plot3d()
       // read sph header
       prefix=DI[0].Prefix;
       m_rank = DI[0].Node[inode].RankID;
-      infile = Generate_FileName(prefix, m_step, m_rank, true);
+      infile = Generate_FileName(prefix, m_step, m_rank, mio);
       infile = in_dirname + infile;
       if( d_type == SPH_FLOAT ){
         ReadSphHeader (&m_step, &m_sv_type, &m_d_type, &m_imax, &m_jmax, &m_kmax, &m_time, m_org, m_pit, fp_in, infile);
@@ -403,7 +394,8 @@ void COMB::output_plot3d()
   // step loop
   if(numProc > 1) ips=0;
   for(int istep=0; istep< nstep; istep++ ) {
-    m_step=DI[0].step[istep];
+    //m_step=DI[0].step[istep];
+    m_step=DI[0].Sc[istep]->step;
     LOG_OUT_ fprintf(fplog,"\tstep = %d\n", m_step);
     STD_OUT_ printf("\tstep = %d\n", m_step);
     
@@ -428,7 +420,7 @@ void COMB::output_plot3d()
         
         // read sph header
         prefix=DI[0].Prefix;
-        infile = Generate_FileName(prefix, m_step, m_rank, true);
+        infile = Generate_FileName(prefix, m_step, m_rank, mio);
         infile = in_dirname + infile;
         if( d_type == SPH_FLOAT ){
           ReadSphHeader (&m_step, &m_sv_type, &m_d_type, &m_imax, &m_jmax, &m_kmax, &m_time, m_org, m_pit, fp_in, infile);
@@ -475,7 +467,7 @@ void COMB::output_plot3d()
         
         // plot3d func file open
         std::string ptmp;
-        ptmp = Generate_FileName_Free(P3Op.basename, "func", m_step, m_rank, true);
+        ptmp = Generate_FileName_Free(P3Op.basename_f, "func", m_step, m_rank, true);
         ptmp = out_dirname + ptmp;
         FP3DW.setFileName(ptmp.c_str());
         if(!FP3DW.OpenFile()){
@@ -497,26 +489,10 @@ void COMB::output_plot3d()
         STD_OUTV_ printf("\t    COMPONENT : %s\n", prefix.c_str());
         
         // Scalar or Vector
-        if     ( !strcasecmp(prefix.c_str(), "prs" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vel" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "fvel" )) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "tmp" ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "tp"  ) ) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "vrt" ) ) dim=3;
-        else if( !strcasecmp(prefix.c_str(), "i2vgt")) dim=1;
-        else if( !strcasecmp(prefix.c_str(), "hlt" ) ) dim=1;
-        else{
-          m_step = DI[i].step[istep];
-          m_rank = DI[i].Node[inode].RankID;
-          infile = Generate_FileName(prefix, m_step, m_rank, true);
-          infile = in_dirname + infile;
-          ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
-          dim=1;
-          if( m_sv_type == SPH_VECTOR ) dim = 3;
-        }
+        dim=DI[i].Component;
         
         // read sph header
-        infile = Generate_FileName(prefix, m_step, m_rank, true);
+        infile = Generate_FileName(prefix, m_step, m_rank, mio);
         infile = in_dirname + infile;
         if( d_type == SPH_FLOAT ){
           ReadSphHeader (&m_step, &m_sv_type, &m_d_type, &m_imax, &m_jmax, &m_kmax, &m_time, m_org, m_pit, fp_in, infile);
@@ -576,7 +552,7 @@ void COMB::output_plot3d()
           
           // plot3d func file open
           std::string ptmp;
-          ptmp = Generate_FileName_Free(P3Op.basename, "func", m_step, m_rank, true);
+          ptmp = Generate_FileName_Free(P3Op.basename_f, "func", m_step, m_rank, true);
           ptmp = DI[i].Prefix + ptmp;
           ptmp = out_dirname + ptmp;
           FP3DW.setFileName(ptmp.c_str());
@@ -767,20 +743,20 @@ void COMB::output_plot3d()
           // plot3d func file close
           FP3DW.CloseFile();
           
-          //dfiファイルの出力
-          std::string dfipre;
-          dfipre = DI[i].Prefix + P3Op.basename;
-          //dfipre = out_dirname + dfipre; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
-          if(inode == 0) if ( !DFI.WriteDFIindex(dfipre,
-                                                 dfipre,
-                                                 "func",
-                                                 (unsigned)m_step,
-                                                 (double)m_time,
-                                                 dfi_mng[var_Plot3D],
-                                                 "ijkn",
-                                                 1,
-                                                 minmax,
-                                                 true) ) Exit(0); // keno 2013-01-14 適当
+          ////dfiファイルの出力
+          //std::string dfipre;
+          //dfipre = DI[i].Prefix + P3Op.basename_f;
+          ////dfipre = out_dirname + dfipre; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
+          //if(inode == 0) if ( !DFI.WriteDFIindex(dfipre,
+          //                                       dfipre,
+          //                                       "func",
+          //                                       (unsigned)m_step,
+          //                                       (double)m_time,
+          //                                       dfi_mng[var_Plot3D],
+          //                                       "ijkn",
+          //                                       1,
+          //                                       minmax,
+          //                                       true) ) Exit(0); // keno 2013-01-14 適当
         }
         
         ivar=ivar+dim;
@@ -804,20 +780,20 @@ void COMB::output_plot3d()
         FP3DW.CloseFile();
       }
       
-      //dfiファイルの出力
-      std::string dfipre;
-      dfipre = P3Op.basename;
-      //dfipre = out_dirname + P3Op.basename; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
-      if(inode == 0) if ( !DFI.WriteDFIindex(dfipre,
-                                             dfipre,
-                                             "func",
-                                             (unsigned)m_step,
-                                             (double)m_time,
-                                             dfi_mng[var_Plot3D],
-                                             "ijkn",
-                                             1,
-                                             minmax,
-                                             true) ) Exit(0); // keno 2013-01-14 適当
+      ////dfiファイルの出力
+      //std::string dfipre;
+      //dfipre = P3Op.basename_f;
+      ////dfipre = out_dirname + P3Op.basename_f; // dfiファイルは他のdfiファイルと同じディレクトリにコピー
+      //if(inode == 0) if ( !DFI.WriteDFIindex(dfipre,
+      //                                       dfipre,
+      //                                       "func",
+      //                                       (unsigned)m_step,
+      //                                       (double)m_time,
+      //                                       dfi_mng[var_Plot3D],
+      //                                       "ijkn",
+      //                                       1,
+      //                                       minmax,
+      //                                       true) ) Exit(0); // keno 2013-01-14 適当
       
     }//node loop
     if(numProc > 1) ips=ips+nnode;
@@ -847,7 +823,8 @@ void COMB::output_plot3d()
   // open file
   if(P3Op.IS_DivideFunc == OFF){ // 一括出力のとき
     std::string ptmp;
-    ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, false); // keno 2013-01-15
+    //ptmp = DFI.GenerateFileName(P3Op.basename_f, "nam", 0, 0, true); // keno 2013-01-15
+    ptmp = DFI.GenerateFileName(P3Op.basename_f, "nam", 0, 0, false); // keno 2013-01-15
     ptmp = out_dirname + ptmp;
     FP3DW.setFileName(ptmp.c_str());
     if(!FP3DW.OpenFile()){
@@ -865,7 +842,8 @@ void COMB::output_plot3d()
     // open file
     if(P3Op.IS_DivideFunc == ON){ // 分割出力のとき
       std::string ptmp;
-      ptmp = DFI.GenerateFileName(P3Op.basename, "nam", 0, 0, true); // keno 2013-01-15
+      //ptmp = DFI.GenerateFileName(P3Op.basename_f, "nam", 0, 0, true); // keno 2013-01-15
+      ptmp = DFI.GenerateFileName(P3Op.basename_f, "nam", 0, 0, false); // keno 2013-01-15
       ptmp = DI[i].Prefix + ptmp;
       ptmp = out_dirname + ptmp;
       FP3DW.setFileName(ptmp.c_str());
@@ -920,9 +898,9 @@ void COMB::output_plot3d()
       FP3DW.WriteFunctionName(compbuff.c_str());
       if ( numbuff ) delete [] numbuff;
 #else
-      if( DI[i].dim == 1){
+      if( DI[i].Component == 1){
         FP3DW.WriteFunctionName(comp.c_str());
-      }else if( DI[i].dim == 3){
+      }else if( DI[i].Component == 3){
         string compbuff;
         compbuff = "X-" + comp + " ; " + comp;
         FP3DW.WriteFunctionName(compbuff.c_str());

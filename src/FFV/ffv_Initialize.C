@@ -720,7 +720,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task);
-    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
+    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
   }
 
   
@@ -729,7 +729,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task, true);
-    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, flop_task);
+    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
   }
   
 

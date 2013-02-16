@@ -78,22 +78,56 @@ public:
 	  long IJK_K;  //一次元アドレスZ面
   } NodeInfo;
 
+  typedef struct
+  {
+    int step;
+    REAL_TYPE time;
+    //MinMax...
+  } Slice;
+  
+  //FileInfo
   string Prefix;
-  int RankID_in_MPIworld;
-  int GroupID_in_MPIworld;
-  int Number_of_Rank_in_MPIworld;
-  int Number_of_Group_in_MPIworld;
-  int Global_Voxel[3];
-  int Global_Division[3];
   string FileFormat;
   int GuideCell;
+  string DataType;
+  string Endian;
+  string ArrayShape;
+  int Component;
+  
+  //Unit
+  string Length;
+  REAL_TYPE L0;
+  string Velocity;
+  REAL_TYPE V0;
+  string Pressure;
+  REAL_TYPE P0;
+  REAL_TYPE DiffPrs;
+  
+  //FilePath
+  string dfi_proc;
+  
+  
+  //Process
+  int Global_Origin[3];
+  int Global_Region[3];
+  int Global_Voxel[3];
+  int Global_Division[3];
+  //int RankID_in_MPIworld;
+  //int GroupID_in_MPIworld;
+  int NumberOfRank;
+  int NumberOfGroup;
   NodeInfo *Node;
-  vector<int> step;
-  int dim;
+  
 
-  int NodeInfoSize;//=RankID_in_MPIworld
+  //TimeSlice
+  vector<Slice*> Sc;
+  
+  //others...
+  int dim;
+  int NodeInfoSize;
   vector<int> index_y;
   vector<int> index_z;
+  
 
 public:
   /** コンストラクタ */
@@ -105,9 +139,21 @@ public:
   /**
    * @brief dfiファイルの読み込み
    * @param [in] fname  dfiファイル名
-   * @param [in] D  DfiInfoクラスポインタ
    */
   void ReadDfiFile(string fname);
+  
+  /**
+   * @brief Sliceのセット
+   * @param [in] m_step
+   * @param [in] m_time
+   */
+  void SetSlice(int m_step, REAL_TYPE m_time);
+  
+  /**
+   * @brief dfi_procファイルの読み込み
+   * @param [in] fname  dfiファイル名
+   */
+  void ReadDfiProc(string fname);
 
   /**
    * @brief 内部変数の計算

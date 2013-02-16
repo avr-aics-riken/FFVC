@@ -1,9 +1,12 @@
-/*
- * SolvSkl - Solver Skeleton - a Framework for Physical Simulation
- *
- * Copyright (c) RIKEN, Japan. All right reserved. 2004-2011
- *
- */
+// #################################################################
+//
+// Combine sph files and output
+//
+// Copyright (c) 2012-2013  All right reserved.
+//
+// Institute of Industrial Science, The University of Tokyo, Japan.
+//
+// #################################################################
 
 /**
  * @file include/endianUtil.h

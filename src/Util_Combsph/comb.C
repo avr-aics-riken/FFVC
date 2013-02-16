@@ -221,36 +221,69 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   string label;
   
   // Filename
-  label = "/Plot3dOptions/Filename";
+  //label = "/Plot3dOptions/Filename";
+  //
+  //if ( !(tpCntl->GetValue(label, &str )) )
+  //{
+  //  P3Op.basename = "PLOT3Doutput";
+  //}
+  //else
+  //{
+  //  P3Op.basename = str;
+  //}
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  // FileNameGrid --- option
+  label = "/Steer/Plot3dOptions/FileNameGrid";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
   {
-    P3Op.basename = "PLOT3Doutput";
+    P3Op.basename_g = "PLOT3DoutputGrid";
   }
   else
   {
-    P3Op.basename = str;
+    P3Op.basename_g = str;
   }
+  if ( P3Op.basename_g.empty() )
+  {
+    P3Op.basename_g = "PLOT3DoutputGrid";
+  }
+  
+  // FileNameFunc --- option
+  label = "/Steer/Plot3dOptions/FileNameFunc";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    P3Op.basename_f = "PLOT3Doutput";
+  }
+  else
+  {
+    P3Op.basename_f = str;
+  }
+  if ( P3Op.basename_f.empty() )
+  {
+    P3Op.basename_f = "PLOT3Doutput";
+  }
+  
   
   /* GridKind
-  label = "/Plot3dOptions/GridKind";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "single_grid") ) FP3DR.setSingleGrid();
-    else if( !strcasecmp(str.c_str(), "multi_grid") )  FP3DR.setMultiGrid();
-    else
-    {
-      printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  */
+   label = "/Plot3dOptions/GridKind";
+   
+   if ( !(tpCntl->GetValue(label, &str )) )
+   {
+   printf("\tParsing error : fail to get '%s'\n", label.c_str());
+   Exit(0);
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "single_grid") ) FP3DR.setSingleGrid();
+   else if( !strcasecmp(str.c_str(), "multi_grid") )  FP3DR.setMultiGrid();
+   else
+   {
+   printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }
+   */
   FP3DR.setMultiGrid(); // 常にmulti grid
   
   // 格子の移動
@@ -293,40 +326,40 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   
   /* IBLANKファイル
-  label = "/Plot3dOptions/SetIblankFlag";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    FP3DR.setIBlankFlag(NOT_SET_IBLANK);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )  FP3DR.setIBlankFlag(SET_IBLANK);
-    else if( !strcasecmp(str.c_str(), "off") ) FP3DR.setIBlankFlag(NOT_SET_IBLANK);
-    else
-    {
-      printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }*/
+   label = "/Plot3dOptions/SetIblankFlag";
+   
+   if ( !(tpCntl->GetValue(label, &str )) )
+   {
+   FP3DR.setIBlankFlag(NOT_SET_IBLANK);
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "on") )  FP3DR.setIBlankFlag(SET_IBLANK);
+   else if( !strcasecmp(str.c_str(), "off") ) FP3DR.setIBlankFlag(NOT_SET_IBLANK);
+   else
+   {
+   printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }*/
   FP3DR.setIBlankFlag(NOT_SET_IBLANK); //sphファイルの情報からIblankは作れないので常にoff
   
   /* 次元数
-  label = "/Plot3dOptions/Dimension";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    FP3DR.setDimension3D();
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "2d") ) FP3DR.setDimension2D();
-    else if( !strcasecmp(str.c_str(), "3d") ) FP3DR.setDimension3D();
-    else
-    {
-      printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }*/
+   label = "/Plot3dOptions/Dimension";
+   if ( !(tpCntl->GetValue(label, &str )) )
+   {
+   FP3DR.setDimension3D();
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "2d") ) FP3DR.setDimension2D();
+   else if( !strcasecmp(str.c_str(), "3d") ) FP3DR.setDimension3D();
+   else
+   {
+   printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }*/
   FP3DR.setDimension3D(); // 常に三次元
   
   
@@ -398,24 +431,24 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   
   /*
-  // OutputQ
-  label = "/Plot3dOptions/OutputQ";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    P3Op.IS_q = OFF;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_q = ON;
-    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_q = OFF;
-    else
-    {
-      printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  */
+   // OutputQ
+   label = "/Plot3dOptions/OutputQ";
+   
+   if ( !(tpCntl->GetValue(label, &str )) )
+   {
+   P3Op.IS_q = OFF;
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_q = ON;
+   else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_q = OFF;
+   else
+   {
+   printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }
+   */
   P3Op.IS_q = OFF;
   
   // OutputFunction
@@ -458,24 +491,24 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   }
   
   /*
-  // Output_fvbnd
-  label = "/Plot3dOptions/Output_fvbnd";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    P3Op.IS_fvbnd = OFF;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_fvbnd = ON;
-    else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_fvbnd = OFF;
-    else
-    {
-      printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-*/
+   // Output_fvbnd
+   label = "/Plot3dOptions/Output_fvbnd";
+   
+   if ( !(tpCntl->GetValue(label, &str )) )
+   {
+   P3Op.IS_fvbnd = OFF;
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_fvbnd = ON;
+   else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_fvbnd = OFF;
+   else
+   {
+   printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }
+   */
   P3Op.IS_fvbnd = OFF;
   
   
@@ -533,10 +566,10 @@ void COMB::ReadDfiFiles()
     fprintf(fplog,"\n");
     for(int i=0;i<ndfi;i++){
       fprintf(fplog,"\tDI[%2d].Prefix                      = %s\n",i,DI[i].Prefix.c_str());
-      fprintf(fplog,"\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
-      fprintf(fplog,"\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
-      fprintf(fplog,"\tDI[%2d].Number_of_Rank_in_MPIworld  = %d\n",i,DI[i].Number_of_Rank_in_MPIworld);
-      fprintf(fplog,"\tDI[%2d].Number_of_Group_in_MPIworld = %d\n",i,DI[i].Number_of_Group_in_MPIworld);
+      //fprintf(fplog,"\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
+      //fprintf(fplog,"\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
+      fprintf(fplog,"\tDI[%2d].NumberOfRank                = %d\n",i,DI[i].NumberOfRank);
+      fprintf(fplog,"\tDI[%2d].NumberOfGroup               = %d\n",i,DI[i].NumberOfGroup);
       fprintf(fplog,"\tDI[%2d].Global_Voxel[0]             = %d\n",i,DI[i].Global_Voxel[0]);
       fprintf(fplog,"\tDI[%2d].Global_Voxel[1]             = %d\n",i,DI[i].Global_Voxel[1]);
       fprintf(fplog,"\tDI[%2d].Global_Voxel[2]             = %d\n",i,DI[i].Global_Voxel[2]);
@@ -565,8 +598,12 @@ void COMB::ReadDfiFiles()
       }
       
       fprintf(fplog,"\n");
-      for(int j=0; j< DI[i].step.size(); j++ ) {
-        fprintf(fplog,"\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
+      //for(int j=0; j< DI[i].step.size(); j++ ) {
+      //  fprintf(fplog,"\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
+      //}
+      for(int j=0; j< DI[i].Sc.size(); j++ ) {
+        fprintf(fplog,"\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].Sc[j]->step);
+        fprintf(fplog,"\t  DI[%2d].time[%4d] = %f\n",i,j,DI[i].Sc[j]->time);
       }
       
       fprintf(fplog,"\n");
@@ -588,10 +625,10 @@ void COMB::ReadDfiFiles()
     printf("\n");
     for(int i=0;i<ndfi;i++){
       printf("\tDI[%2d].Prefix                      = %s\n",i,DI[i].Prefix.c_str());
-      printf("\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
-      printf("\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
-      printf("\tDI[%2d].Number_of_Rank_in_MPIworld  = %d\n",i,DI[i].Number_of_Rank_in_MPIworld);
-      printf("\tDI[%2d].Number_of_Group_in_MPIworld = %d\n",i,DI[i].Number_of_Group_in_MPIworld);
+      //printf("\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
+      //printf("\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
+      printf("\tDI[%2d].NumberOfRank                = %d\n",i,DI[i].NumberOfRank);
+      printf("\tDI[%2d].NumberOfGroup               = %d\n",i,DI[i].NumberOfGroup);
       printf("\tDI[%2d].Global_Voxel[0]             = %d\n",i,DI[i].Global_Voxel[0]);
       printf("\tDI[%2d].Global_Voxel[1]             = %d\n",i,DI[i].Global_Voxel[1]);
       printf("\tDI[%2d].Global_Voxel[2]             = %d\n",i,DI[i].Global_Voxel[2]);
@@ -620,8 +657,12 @@ void COMB::ReadDfiFiles()
       }
       
       printf("\n");
-      for(int j=0; j< DI[i].step.size(); j++ ) {
-        printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
+      //for(int j=0; j< DI[i].step.size(); j++ ) {
+      //  printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
+      //}
+      for(int j=0; j< DI[i].Sc.size(); j++ ) {
+        printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].Sc[j]->step);
+        printf("\t  DI[%2d].time[%4d] = %f\n",i,j,DI[i].Sc[j]->time);
       }
       
       printf("\n");
@@ -649,7 +690,7 @@ void COMB::CheckDir(string dirstr)
 #ifndef _WIN32
     
     if( dirstr.size() == 0 ) {
-      printf("\toutput current directory\n");
+      //printf("\toutput current directory\n");
       return;
     }
     
@@ -841,7 +882,7 @@ std::string COMB::Generate_FileName_Free(const std::string prefix, const std::st
 
 // #################################################################
 // DFIファイルをコピーする
-bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name, const std::string prefix, int& dfi_mng)
+bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name, const std::string prefix)//, int& dfi_mng)
 {
   if ( base_name.empty() ) return false;
   if ( new_name.empty() ) return false;
@@ -857,27 +898,35 @@ bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name,
   
   while( fgets(buff,DFI_LINE_LENGTH,fpin) != NULL ) {
     buffs=buff;
-    if( !strcasecmp(buffs.c_str(), "  FileInfo {\n" ) ) break;
-    if( !strcasecmp(buffs.substr(0,12).c_str(), "  FileInfo {") ) break;
+    //if( !strcasecmp(buffs.c_str(), "  FileInfo {\n" ) ) break;
+    //if( !strcasecmp(buffs.substr(0,12).c_str(), "  FileInfo {") ) break;
     if( !strcasecmp(buffs.substr(0,8).c_str(), "  Prefix") ){
       Write_Tab(fpout, 1);
-      fprintf(fpout, "Prefix = \"%s\"\n", prefix.c_str());
+      fprintf(fpout, "Prefix        = \"%s\"\n", prefix.c_str());
+    }
+    else if( !strcasecmp(buffs.substr(0,9).c_str(), "      Min") ){
+      Write_Tab(fpout, 3);
+      fprintf(fpout, "Min  = %e\n", 0.0);
+    }
+    else if( !strcasecmp(buffs.substr(0,9).c_str(), "      Max") ){
+      Write_Tab(fpout, 3);
+      fprintf(fpout, "Max  = %e\n", 0.0);
     }
     else{
       fputs(buff,fpout);
     }
   }
   
-  if (fpout) Write_Tab(fpout, 1);
-  if (fpout) fprintf(fpout, "FileInfo {\n");
-  if (fpout) Write_Tab(fpout, 1);
-  if (fpout) fprintf(fpout, "}\n");
-  if (fpout) fprintf(fpout, "}\n");
+  //if (fpout) Write_Tab(fpout, 1);
+  //if (fpout) fprintf(fpout, "FileInfo {\n");
+  //if (fpout) Write_Tab(fpout, 1);
+  //if (fpout) fprintf(fpout, "}\n");
+  //if (fpout) fprintf(fpout, "}\n");
   
   fclose(fpin);
   fclose(fpout);
   
-  dfi_mng++;
+  //dfi_mng++;
   
   return true;
 }

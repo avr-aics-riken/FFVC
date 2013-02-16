@@ -101,7 +101,9 @@ public:
   /** PLOT3D オプション */
   typedef struct
   {
-    string basename;
+    //string basename;
+    string basename_g;
+    string basename_f;
     int IS_xyz;
     int IS_q;
     int IS_funciton;
@@ -337,7 +339,7 @@ public:
    * @param [in] base_name  コピー元ファイル
    * @param [out] new_name  コピー先ファイル
    */
-  bool Copy_DFIFile(const std::string base_name, const std::string new_name, const std::string prefix, int& dfi_mng);
+  bool Copy_DFIFile(const std::string base_name, const std::string new_name, const std::string prefix);//, int& dfi_mng);
   
   
   /**
@@ -579,7 +581,7 @@ public:
     
     // 出力ファイル名
     std::string tmp;
-    tmp = Generate_FileName_Free(P3Op.basename, "xyz", m_step, m_rank, true);
+    tmp = Generate_FileName_Free(P3Op.basename_g, "xyz", m_step, m_rank, true);
     tmp = out_dirname + tmp;
     
     //open file
@@ -933,7 +935,8 @@ public:
       for (int km=1-gc_out; km<=kx+gc_out; km++) {
         for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
           for (int im=1-gc_out; im<=ix+gc_out; im++) {
-            mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd);
+            //mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd); //(i,j,k,3)
+            mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd); //(3,i,j,k)
             ddd=(T1)data[mip];
             i=im-1+gc_out;
             j=jm-1+gc_out;
@@ -1003,7 +1006,8 @@ public:
     for (int km=1-gc_out; km<=kx+gc_out; km++) {
       for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
         for (int im=1-gc_out; im<=ix+gc_out; im++) {
-          mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd);
+          //mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd); //(i,j,k,3)
+          mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd); //(3,i,j,k)
           ddd=(T1)data[mip];
           i=im-1+gc_out;
           j=jm-1+gc_out;

@@ -5,9 +5,9 @@
 //
 // output layoutfiles
 //
-// Copyright (c) All right reserved. 2012
+// Copyright (c) All right reserved. 2012-2013
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan.
 //
 // #################################################################
 
@@ -16,6 +16,7 @@
  * @brief  LAYOUT Class Header
  * @author kero
  */
+
 
 #include <stdio.h>
 //#include <stdlib.h>
@@ -35,10 +36,10 @@
 
 // for GetFullPathName
 #if defined(_WIN32)
-  #include <stdlib.h>
+#include <stdlib.h>
 #else
-  #include <sys/param.h>
-  #include <stdlib.h>
+#include <sys/param.h>
+#include <stdlib.h>
 #endif
 
 #ifndef _WIN32
@@ -80,37 +81,41 @@ using namespace std;
 
 
 class LAYOUT {
-
+  
 public:
   cpm_ParaManager* paraMngr; ///< Cartesian Partition Manager
   
 private:
   string fname;
   DfiInfo* DI;
-
+  
   bool skip0;
-
-  int ndfi;//number of dfi file list
+  
+  int ndfi;  //number of dfi file list
   vector<string> dfi_name;
   vector<string> mname;
   vector<string> dname;
   vector<int> rankis;
   vector<int> rankie;
-
+  
   string dirname; //出力ディレクトリ指定
-
+  
   int procGrp;           ///< プロセスグループ番号
   int myRank;            ///< 自ノードのランク番号
   int numProc;           ///< 全ランク数
   std::string HostName;  ///< ホスト名
   
+  string basename_g;
+  string basename_f;
+  int IS_DivideFunc;
+  
 public:
   /** コンストラクタ */
   LAYOUT();
-
+  
   /**　デストラクタ */
   ~LAYOUT();
-
+  
   /**
    * @brief CPMのポインタをコピーし、ランク情報を設定
    * @param [in] m_paraMngr  cpm_ParaManagerクラス
@@ -137,62 +142,67 @@ public:
     HostName= paraMngr->GetHostName();
   }
   
-  /**  
+  /**
    * @brief 引数のキープ
    * @param [in] m_fname  ファイル名
    */
   void SetInput(bool m_skip0, string m_fname);
-
+  
   /**
    * @brief 入力ファイルの読み込み
    */
   void ReadInit();
-
+  
   /**
    * @brief dfiファイルの読み込みとDfiInfoクラスデータの作成
    */
   void ReadDfiFiles();
-
+  
   /**
    * @brief オプション入力からのディレクトリ名の反映
    */
   void SetDirName(string m_dname);
-
+  
   /**
    * @brief オプション入力からのマシン名の反映
    */
   void SetMachineName(string m_mname);
-
+  
   /**
    * @brief layoutファイルの出力
    */
   void OutputLayout();
-
+  
   /**
    * @brief 出力指定ディレクトリのチェック
    */
   void CheckDir(string dirstr);
-
+  
 private:
-
+  
   /**
    * @brief 入力ファイルの読み込み
    */
   void ReadInputFile(TPControl* tpCntl);
-
+  
   /**
-   * @brief layoutファイルの出力
+   * @brief layout grid ファイルの出力
    */
-  void OutLay(DfiInfo *D);
-
+  void OutLayGrid(DfiInfo *D);
+  
+  /**
+   * @brief layout func ファイルの出力
+   */
+  void OutLayFunc(DfiInfo *D);
+  
+  
   /**
    * @brief layoutファイル名を作成する
    * @param [in] prefix ファイル接頭文字
-   * @param [in] str    xyz,func,,,
    * @param [in] m_step ステップ数
    */
-  std::string Generate_LayoutFileName(const std::string prefix, const std::string str, const unsigned m_step);
-
+  std::string Generate_LayoutFileName(const std::string prefix, const unsigned m_step);
+  
   /**
    * @brief ファイル名を作成する。（拡張子自由）
    * @param [in] prefix ファイル接頭文字
@@ -202,7 +212,7 @@ private:
    * @param [in] mio    出力時の分割指定　 true = local / false = gather(default)
    */
   std::string Generate_FileName_Free(const std::string prefix, const std::string xxx, const unsigned m_step, const int m_id, const bool mio=false);
-
+  
 };
 
 #endif // _LAYOUT_H_

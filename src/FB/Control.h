@@ -453,7 +453,8 @@ public:
   /** PLOT3D オプション */
   typedef struct 
   {
-    string basename;
+    string basename_g;
+    string basename_f;
     int IS_xyz;
     int IS_q;
     int IS_funciton;

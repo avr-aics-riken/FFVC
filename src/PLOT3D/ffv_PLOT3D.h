@@ -401,7 +401,8 @@ protected:
       for (int km=1-gc_out; km<=kx+gc_out; km++) {
         for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
           for (int im=1-gc_out; im<=ix+gc_out; im++) {
-            mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd);
+            //mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd); //(i,j,k,3)
+            mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd); //(3,i,j,k)
             ddd=(T1)data[mip];
             i=im-1+gc_out;
             j=jm-1+gc_out;
@@ -471,7 +472,8 @@ protected:
     for (int km=1-gc_out; km<=kx+gc_out; km++) {
       for (int jm=1-gc_out; jm<=jx+gc_out; jm++) {
         for (int im=1-gc_out; im<=ix+gc_out; im++) {
-          mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd);
+          //mip = _F_IDX_V3D(im, jm, km, ivar, ix, jx, kx, gd); //(i,j,k,3)
+          mip = _F_IDX_V3DEX(ivar, im, jm, km, ix, jx, kx, gd); //(3,i,j,k)
           ddd=(T1)data[mip];
           i=im-1+gc_out;
           j=jm-1+gc_out;
@@ -535,6 +537,7 @@ public:
    * @param [in]     v00         格子速度
    * @param [in]     origin      基点座標
    * @param [in]     pitch       格子幅
+   * @param [in]     dfi_mng     dfi file for plot3d counter
    * @param [in,out] flop        浮動小数点演算数
    */
   void OutputPlot3D_post(const unsigned CurrentStep,
@@ -542,6 +545,7 @@ public:
                          REAL_TYPE* v00,
                          const REAL_TYPE* origin,
                          const REAL_TYPE* pitch,
+                         int& dfi_mng,
                          double& flop);
   
   

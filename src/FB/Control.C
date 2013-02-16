@@ -916,11 +916,9 @@ void Control::get_FileIO()
     Exit(0);
   }
   
-  if (FIO.Format == sph_fmt)
-  {
-    file_fmt_ext = "sph";
-  }
-  else if (FIO.Format == bov_fmt)
+  file_fmt_ext = "sph"; //default
+  
+  if (FIO.Format == bov_fmt)
   {
     file_fmt_ext = "dat";
   }
@@ -1741,22 +1739,37 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   string str;
   string label;
   
-  // Filename --- option
-  label = "/Steer/Plot3dOptions/Filename";
+  // FileNameGrid --- option
+  label = "/Steer/Plot3dOptions/FileNameGrid";
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
-    P3Op.basename = "PLOT3Doutput";
+    P3Op.basename_g = "PLOT3DoutputGrid";
   }
   else
   {
-    P3Op.basename = str;
+    P3Op.basename_g = str;
   }
-  if ( P3Op.basename.empty() )
+  if ( P3Op.basename_g.empty() )
   {
-    P3Op.basename = "PLOT3Doutput";
+    P3Op.basename_g = "PLOT3DoutputGrid";
   }
   
+  // FileNameFunc --- option
+  label = "/Steer/Plot3dOptions/FileNameFunc";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    P3Op.basename_f = "PLOT3Doutput";
+  }
+  else
+  {
+    P3Op.basename_f = str;
+  }
+  if ( P3Op.basename_f.empty() )
+  {
+    P3Op.basename_f = "PLOT3Doutput";
+  }
   
   // GridKind
   /*
@@ -1778,6 +1791,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
    }
    }
    */
+  
   FP3DR->setMultiGrid(); // 常にmulti grid
   
   
@@ -3956,7 +3970,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   if(FIO.Format == plt3d_fmt)
   {
     fprintf(fp,"\n\tPLOT3D Options\n");
-    fprintf(fp,"\t     file prefix              :   %s\n", P3Op.basename.c_str());
+    fprintf(fp,"\t     grid file prefix         :   %s\n", P3Op.basename_g.c_str());
+    fprintf(fp,"\t     function file prefix     :   %s\n", P3Op.basename_f.c_str());
     fprintf(fp,"\t     grid kind                :   %s\n", (FP3DW->IsGridKind()) ? "multi grid" : "single grid");
     fprintf(fp,"\t     grid mobility            :   %s\n", (FP3DW->IsMoveGrid()) ? "movable" : "immovable");
     fprintf(fp,"\t     state of time            :   %s\n", (FP3DW->IsSteady()) ? "unsteady" : "steady");

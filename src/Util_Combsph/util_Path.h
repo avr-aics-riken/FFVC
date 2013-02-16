@@ -3,11 +3,11 @@
 
 // #################################################################
 //
-// CAERU Library
+// Combine sph files and output
 //
 // Copyright (c) 2012-2013  All right reserved.
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, The University of Tokyo, Japan.
 //
 // #################################################################
 

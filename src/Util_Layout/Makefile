@@ -1,12 +1,12 @@
-###################################################################
+# #################################################################
 #
-# CAERU Library
+# output layoutfiles
 #
-# Copyright (c) All right reserved. 2012
+# Copyright (c) All right reserved. 2012-2013
 #
-# Institute of Industrial Science, University of Tokyo, Japan. 
+# Institute of Industrial Science, University of Tokyo, Japan.
 #
-###################################################################
+# #################################################################
 
 include ../FFV/make_setting
 

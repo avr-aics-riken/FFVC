@@ -180,7 +180,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     Exit(-1);
   }
   
-  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename_f, "func", m_step, myRank, true);
   
   //open file
   FP3DW->setFileName((dtmp+tmp).c_str());
@@ -476,8 +476,25 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   delete [] jd;
   delete [] kd;
   
-  //dfiファイルの出力
-  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
+  //// 出力モード
+  //bool mio = (bool)C->FIO.IOmode;
+  
+  //// 最大値と最小値
+  //REAL_TYPE minmax[2];
+  
+  //minmax[0] = 0.0;
+  //minmax[1] = 0.0;
+  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
+  ////Hostonly_ if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
+  //                                   C->FIO.OutDirPath,
+  //                                   C->file_fmt_ext,
+  //                                   m_step,
+  //                                   m_time,
+  //                                   dfi_mng[var_Plot3D],
+  //                                   "ijkn",
+  //                                   1,
+  //                                   minmax,
+  //                                   mio) ) Exit(0);
   
 }
 
@@ -574,7 +591,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     Exit(-1);
   }
   
-  std::string tmp  = dfi->GenerateFileName(C->P3Op.basename, "func", m_step, myRank, true);
+  std::string tmp  = dfi->GenerateFileName(C->P3Op.basename_f, "func", m_step, myRank, true);
   
   
   // Pressure
@@ -612,7 +629,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   //}//igrid loop
   FP3DW->CloseFile();
-  dfi_name = "prs_" + C->P3Op.basename;
+  dfi_name = "prs_" + C->P3Op.basename_f;
   //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   
   // Velocity
@@ -659,7 +676,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
   //}//igrid loop
   FP3DW->CloseFile();
-  dfi_name = "vel_" + C->P3Op.basename;
+  dfi_name = "vel_" + C->P3Op.basename_f;
   //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   
   // Tempearture
@@ -697,7 +714,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     //}//igrid loop
     FP3DW->CloseFile();
-    dfi_name = "tmp_" + C->P3Op.basename;
+    dfi_name = "tmp_" + C->P3Op.basename_f;
     //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
@@ -739,7 +756,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     //}//igrid loop
     FP3DW->CloseFile();
-    dfi_name = "tp_" + C->P3Op.basename;
+    dfi_name = "tp_" + C->P3Op.basename_f;
     //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
@@ -791,7 +808,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     
     //}//igrid loop
     FP3DW->CloseFile();
-    dfi_name = "vrt_" + C->P3Op.basename;
+    dfi_name = "vrt_" + C->P3Op.basename_f;
     //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
@@ -825,7 +842,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     //}//igrid loop
     FP3DW->CloseFile();
-    dfi_name = "iv2gt_" + C->P3Op.basename;
+    dfi_name = "iv2gt_" + C->P3Op.basename_f;
     //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
     
   }
@@ -860,7 +877,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     if(!FP3DW->WriteFuncData()) std::cout << "error WriteFuncData" << std::endl;
     //}//igrid loop
     FP3DW->CloseFile();
-    dfi_name = "hlt_" + C->P3Op.basename;
+    dfi_name = "hlt_" + C->P3Op.basename_f;
     //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
@@ -870,8 +887,25 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   delete [] jd;
   delete [] kd;
   
-  //dfiファイルの出力
-  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
+  //// 出力モード
+  //bool mio = (bool)C->FIO.IOmode;
+  
+  //// 最大値と最小値
+  //REAL_TYPE minmax[2];
+  
+  //minmax[0] = 0.0;
+  //minmax[1] = 0.0;
+  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
+  ////Hostonly_ if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
+  //                                   C->FIO.OutDirPath,
+  //                                   C->file_fmt_ext,
+  //                                   m_step,
+  //                                   m_time,
+  //                                   dfi_mng[var_Plot3D],
+  //                                   "ijkn",
+  //                                   1,
+  //                                   minmax,
+  //                                   mio) ) Exit(0);
   
 }
 
@@ -894,7 +928,7 @@ void Plot3D::OutputPlot3D_function_name()
     Exit(-1);
   }
   
-  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename_f, "nam", 0, myRank, false);
   
   //open file
   FP3DW->setFileName((dtmp+tmp).c_str());
@@ -957,7 +991,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
     Exit(-1);
   }
   
-  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "nam", 0, myRank, true);
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename_f, "nam", 0, myRank, false);
   
   // Pressure
   fname = "prs_" + tmp;
@@ -1063,6 +1097,7 @@ void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
                                REAL_TYPE* v00,
                                const REAL_TYPE* origin,
                                const REAL_TYPE* pitch,
+                               int& dfi_mng,
                                double& flop)
 {
   if ( C->P3Op.IS_q == ON ) OutputPlot3D_q(flop);
@@ -1083,6 +1118,43 @@ void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
       OutputPlot3D_xyz(CurrentStep, origin, pitch);
     }
   }
+  
+  //output dfi file for plot3d
+  
+  // ステップ数
+  int m_step = (int)CurrentStep;
+  
+  // 時間の次元変換
+  REAL_TYPE m_time;
+  if (C->Unit.File == DIMENSIONAL)
+  {
+    m_time = (REAL_TYPE)CurrentTime * C->Tscale;
+  }
+  else
+  {
+    m_time = (REAL_TYPE)CurrentTime;
+  }
+  
+  // 出力モード
+  bool mio = (bool)C->FIO.IOmode;
+  
+  // 最大値と最小値
+  REAL_TYPE minmax[2];
+  
+  minmax[0] = 0.0;
+  minmax[1] = 0.0;
+  if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
+                                          //Hostonly_ if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
+                                          C->FIO.OutDirPath,
+                                          C->file_fmt_ext,
+                                          m_step,
+                                          m_time,
+                                          //dfi_mng[var_Plot3D],
+                                          dfi_mng,
+                                          "ijkn",
+                                          1,
+                                          minmax,
+                                          mio) ) Exit(0);
   
 }
 
@@ -1160,7 +1232,7 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
     Exit(-1);
   }
   
-  std::string tmp = dfi->GenerateFileName(C->P3Op.basename, "xyz", m_step, myRank, true);
+  std::string tmp = dfi->GenerateFileName(C->P3Op.basename_g, "xyz", m_step, myRank, true);
   
   //open file
   FP3DW->setFileName((dtmp+tmp).c_str());

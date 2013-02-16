@@ -1191,7 +1191,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
   }
   
   // ランクごとに前計算時のどのファイルが自身のランクにステージングされているかリストしておく
-  int numProc_last=DI[0].Number_of_Rank_in_MPIworld;
+  int numProc_last=DI[0].NumberOfRank;
   int nassign=numProc_last/numProc;
   if( (numProc_last%numProc) > 0 ) nassign++;
   

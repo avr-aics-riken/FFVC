@@ -2,13 +2,13 @@
 //
 // output layoutfiles
 //
-// Copyright (c) All right reserved. 2012
+// Copyright (c) All right reserved. 2012-2013
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Institute of Industrial Science, University of Tokyo, Japan.
 //
 // #################################################################
 
-/** 
+/**
  * @file   layout.C
  * @brief  LAYOUT Class
  * @author kero
@@ -27,6 +27,8 @@ LAYOUT::LAYOUT()
   procGrp = 0;
   myRank  = -1;
   numProc = 0;
+  
+  IS_DivideFunc=OFF;
 }
 
 
@@ -38,7 +40,7 @@ LAYOUT::~LAYOUT()
 }
 
 // #################################################################
-// 
+//
 void LAYOUT::SetInput(bool m_skip0, string m_fname)
 {
   skip0 = m_skip0;
@@ -47,37 +49,37 @@ void LAYOUT::SetInput(bool m_skip0, string m_fname)
 }
 
 // #################################################################
-// 
+//
 void LAYOUT::ReadInit()
 {
-
+  
   // ------------------------------------
   FILE* fp = NULL;
-
+  
   // TPインスタンス生成
   TPControl tpCntl;
   tpCntl.getTPinstance();
-
+  
   //入力ファイルをセット
   int ierror = tpCntl.readTPfile(fname);
-
+  
   //入力ファイルの読み込み--->パラメータのセット
   ReadInputFile(&tpCntl);
-
+  
   //TextParserの破棄
   tpCntl.remove();
-
+  
   return;
 }
 
 
 // #################################################################
-// 
+//
 void LAYOUT::ReadInputFile(TPControl* tpCntl)
 {
   string str,buff;
   string label,label_base,label_leaf;
-
+  
   // node数の取得
   int nnode=0;
   label_base = "/LayoutData";
@@ -85,11 +87,11 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   {
     nnode = tpCntl->countLabels(label_base);
   }
-
+  
   // dfi_nameの取得
   dfi_name.clear();
   for (int i=0; i<nnode; i++) {
-
+    
     if(!tpCntl->GetNodeStr(label_base,i+1,&str))
     {
       printf("\tParsing error : No Elem name\n");
@@ -97,16 +99,16 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     }
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
     label=label_base+"/"+str;
-
+    
     if ( !(tpCntl->GetValue(label, &buff )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-	//FList[ilist].name = str;
+    //FList[ilist].name = str;
     dfi_name.push_back(buff.c_str());
-
+    
   }
-
+  
 #if 0
   cout << "dfi_name.size() = " << dfi_name.size() << endl;
   vector<string>::const_iterator it;
@@ -114,7 +116,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     cout << "name = " << (*it).c_str() << endl;
   }
 #endif
-
+  
   // dfi_nameの取得
   mname.clear();
   dname.clear();
@@ -122,21 +124,21 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   rankie.clear();
   label_base = "/LayoutData";
   for (int i=0; i<nnode; i++) {
-
+    
     if(!tpCntl->GetNodeStr(label_base,i+1,&str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
     }
     if( strcasecmp(str.substr(0,6).c_str(), "divide") ) continue;
-
+    
     label=label_base+"/"+str+"/machine";
     if ( !(tpCntl->GetValue(label, &buff )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
     mname.push_back(buff.c_str());
-
+    
     label=label_base+"/"+str+"/rank";
     int v[2];
     for (int n=0; n<2; n++) v[n]=0;
@@ -146,7 +148,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     }
     rankis.push_back(v[0]);
     rankie.push_back(v[1]);
-
+    
     label=label_base+"/"+str+"/dir";
     if ( !(tpCntl->GetValue(label, &buff )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -154,8 +156,8 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     }
     dname.push_back(buff.c_str());
   }
-
-
+  
+  
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
   label = "/LayoutData/OutputDir";
   if ( (tpCntl->GetValue(label, &str )) )
@@ -164,12 +166,64 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     CheckDir(dirname);
     if( dirname.size() != 0 ) dirname=dirname+"/";
   }
-
+  
+  // DivideFunc ---> 出力を項目別にファイル分割するオプション
+  label = "/LayoutData/FFVDivideFunc";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  IS_DivideFunc = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) IS_DivideFunc = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // FileNameGrid --- option
+  label = "/LayoutData/Plot3dOptions/FileNameGrid";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    basename_g = "PLOT3DoutputGrid";
+  }
+  else
+  {
+    basename_g = str;
+  }
+  if ( basename_g.empty() )
+  {
+    basename_g = "PLOT3DoutputGrid";
+  }
+  
+  // FileNameFunc --- option
+  label = "/LayoutData/Plot3dOptions/FileNameFunc";
+  
+  if ( !(tpCntl->GetValue(label, &str)) )
+  {
+    basename_f = "PLOT3Doutput";
+  }
+  else
+  {
+    basename_f = str;
+  }
+  if ( basename_f.empty() )
+  {
+    basename_f = "PLOT3Doutput";
+  }
+  
 }
 
 
 // #################################################################
-// 
+//
 void LAYOUT::ReadDfiFiles()
 {
   int ic;
@@ -197,7 +251,7 @@ void LAYOUT::ReadDfiFiles()
 
 
 // #################################################################
-// 
+//
 void LAYOUT::SetDirName(string m_dname)
 {
   dname.clear();
@@ -208,7 +262,7 @@ void LAYOUT::SetDirName(string m_dname)
 
 
 // #################################################################
-// 
+//
 void LAYOUT::SetMachineName(string m_mname)
 {
   mname.clear();
@@ -219,36 +273,55 @@ void LAYOUT::SetMachineName(string m_mname)
 
 
 // #################################################################
-// 
+//
 void LAYOUT::OutputLayout()
 {
-  for(int i=0;i<ndfi;i++){
-    OutLay(&DI[i]);
+  string prefix;
+  
+  if ( IS_DivideFunc == ON )
+  {
+    for(int i=0;i<ndfi;i++){
+      prefix=DI[i].Prefix;
+      DI[i].Prefix=basename_g + "_" + prefix;
+      OutLayGrid(&DI[i]);
+      DI[i].Prefix=basename_f + "_" + prefix;
+      OutLayFunc(&DI[i]);
+    }
   }
+  else
+  {
+    DI[0].Prefix=basename_g;
+    OutLayGrid(&DI[0]);
+    DI[0].Prefix=basename_f;
+    OutLayFunc(&DI[0]);
+  }
+  
 }
 
+
 // #################################################################
-// 
-void LAYOUT::OutLay(DfiInfo *D)
+//
+void LAYOUT::OutLayGrid(DfiInfo *D)
 {
   FILE* fp;
   int ifl=8;
   string layoutfile,nodefile;
   string d_name;
   string m_name;
-
+  
   char tmp[FB_FILE_PATH_LENGTH];
   char line[FB_BUFF_LENGTH];
-
+  
   int len ;
   int fnsize;
   int ierror;
-
-  int is=0;
-  if(skip0) is=1;
-
-// error check
-  if( D->step.size() == 0 ) {
+  
+  //int is=0;
+  //if(skip0) is=1;
+  
+  // error check
+  //if( D->step.size() == 0 ) {
+  if( D->Sc.size() == 0 ) {
     fprintf(stderr, "error : step size == 0\n");
     return;
   }
@@ -256,22 +329,23 @@ void LAYOUT::OutLay(DfiInfo *D)
     fprintf(stderr, "error : node size == 0\n");
     return;
   }
-
-//xyz file
-
+  
+  //xyz file
+  
   //xyz.layoutファイルオープン
-  layoutfile = Generate_LayoutFileName(D->Prefix, "xyz", D->step[0]);
+  //layoutfile = Generate_LayoutFileName(D->Prefix, "xyz", D->step[0]);
+  layoutfile = Generate_LayoutFileName(D->Prefix, D->Sc[0]->step);
   layoutfile = dirname + layoutfile;
   if( (fp = fopen(layoutfile.c_str(), "w")) == NULL ) {
     fprintf(stderr, "Can't open file.(%s)\n", layoutfile.c_str());
     return;
   }
-
+  
   //ファイル書き出し
   fprintf(fp,"FIELDVIEW LAYOUT 1\n");
   for(int j=0; j< D->NodeInfoSize; j++ ) {
-    nodefile = Generate_FileName_Free(D->Prefix, "xyz", D->step[0], D->Node[j].RankID, true);
-
+    nodefile = Generate_FileName_Free(D->Prefix, "xyz", D->Sc[0]->step, D->Node[j].RankID, true);
+    
     int found=0;
     for(int i=0; i<rankis.size(); i++ ) {
       if(rankis[i]<=D->Node[j].RankID && D->Node[j].RankID<=rankie[i]){
@@ -285,33 +359,68 @@ void LAYOUT::OutLay(DfiInfo *D)
       fprintf(stderr, "error : rank not found (%s)\n", nodefile.c_str());
       return;
     }
-
+    
     fprintf(fp,"%s\n", nodefile.c_str());
     fprintf(fp,"%s\n", m_name.c_str());
     fprintf(fp,"%s\n", d_name.c_str());
   }
-
+  
   //xyz.layoutファイルクローズ
   fclose(fp);
+  
+}
 
-//func file
 
+// #################################################################
+//
+void LAYOUT::OutLayFunc(DfiInfo *D)
+{
+  FILE* fp;
+  int ifl=8;
+  string layoutfile,nodefile;
+  string d_name;
+  string m_name;
+  
+  char tmp[FB_FILE_PATH_LENGTH];
+  char line[FB_BUFF_LENGTH];
+  
+  int len ;
+  int fnsize;
+  int ierror;
+  
+  int is=0;
+  if(skip0) is=1;
+  
+  // error check
+  //if( D->step.size() == 0 ) {
+  if( D->Sc.size() == 0 ) {
+    fprintf(stderr, "error : step size == 0\n");
+    return;
+  }
+  if( D->NodeInfoSize == 0 ) {
+    fprintf(stderr, "error : node size == 0\n");
+    return;
+  }
+  
+  //func file
+  
   //step loop
-  for(int i=is; i< D->step.size(); i++ ) {
-
+  //for(int i=is; i< D->step.size(); i++ ) {
+  for(int i=is; i< D->Sc.size(); i++ ) {
+    
     //func.layoutファイルオープン
-    layoutfile = Generate_LayoutFileName(D->Prefix, "func", D->step[i]);
+    layoutfile = Generate_LayoutFileName(D->Prefix, D->Sc[i]->step);
     layoutfile = dirname + layoutfile;
     if( (fp = fopen(layoutfile.c_str(), "w")) == NULL ) {
       fprintf(stderr, "Can't open file.(%s)\n", layoutfile.c_str());
       return;
     }
-
+    
     //ファイル書き出し
     fprintf(fp,"FIELDVIEW LAYOUT 1\n");
     for(int j=0; j< D->NodeInfoSize; j++ ) {
-      nodefile = Generate_FileName_Free(D->Prefix, "func", D->step[i], D->Node[j].RankID, true);
-
+      nodefile = Generate_FileName_Free(D->Prefix, "func", D->Sc[i]->step, D->Node[j].RankID, true);
+      
       for(int i=0; i<rankis.size(); i++ ) {
         if(rankis[i]<=D->Node[j].RankID && D->Node[j].RankID<=rankie[i]){
           m_name=mname[i];
@@ -323,27 +432,26 @@ void LAYOUT::OutLay(DfiInfo *D)
       fprintf(fp,"%s\n", m_name.c_str());
       fprintf(fp,"%s\n", d_name.c_str());
     }
-
+    
     //func.layoutファイルクローズ
     fclose(fp);
-
+    
   }
-
+  
 }
 
 
 // #################################################################
 // layoutファイル名を作成する
-std::string LAYOUT::Generate_LayoutFileName(const std::string prefix, const std::string str, const unsigned m_step)
+std::string LAYOUT::Generate_LayoutFileName(const std::string prefix, const unsigned m_step)
 {
   if ( prefix.empty() ) return NULL;
-  if ( str.empty() ) return NULL;
-
-  int len = prefix.size() + str.size() + 28; // step(10) + postfix(7) + 1(\0)
+  
+  int len = prefix.size() + 19; // step(10) + postfix(7) + 1(\0) + 1(under score)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
-  sprintf(tmp, "%s%s%010d.%s", prefix.c_str(), str.c_str(), m_step, "layout");
+  sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, "layout");
   
   std::string filename(tmp);
   if ( tmp ) delete [] tmp;
@@ -357,19 +465,19 @@ std::string LAYOUT::Generate_FileName_Free(const std::string prefix, const std::
 {
   if ( prefix.empty() ) return NULL;
   
-  int len = prefix.size() + xxx.size() + 21; // step(10) + id(9) + 1(.拡張子) + 1(\0)
+  int len = prefix.size() + xxx.size() + 23; // step(10) + id(9) + 1(.拡張子) + 1(\0) + 2(under score)
   char* tmp = new char[len];
   memset(tmp, 0, sizeof(char)*len);
   
   // local出力が指定された場合、分割出力
   if ( mio )
   {
-    sprintf(tmp, "%s%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
+    sprintf(tmp, "%s_%06d_%010d.%s", prefix.c_str(), m_id, m_step, xxx.c_str());
     //sprintf(tmp, "%s%010d_id%06d.%s", prefix.c_str(), m_step, m_id, xxx.c_str());
   }
   else
   {
-    sprintf(tmp, "%s%010d.%s", prefix.c_str(), m_step, xxx.c_str());
+    sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, xxx.c_str());
   }
   
   std::string fname(tmp);
@@ -380,19 +488,19 @@ std::string LAYOUT::Generate_FileName_Free(const std::string prefix, const std::
 
 
 // #################################################################
-// 
+//
 void LAYOUT::CheckDir(string dirstr)
 {
   //Hostonly_
   //{
-
+  
 #ifndef _WIN32
-
+  
   if( dirstr.size() == 0 ) {
-     printf("\toutput current directory\n");
-     return;
+    printf("\toutput current directory\n");
+    return;
   }
-
+  
   DIR* dir;
   if( !(dir = opendir(dirstr.c_str())) ) {
     if( errno == ENOENT ) {
@@ -413,14 +521,14 @@ void LAYOUT::CheckDir(string dirstr)
       Exit(0);
     }
   }
-
+  
 #else // for windows
-
+  
   if( dirstr.size() == 0 ) {
-     printf("\toutput current directory\n");
-     return;
+    printf("\toutput current directory\n");
+    return;
   }
-
+  
   // check to exist directory
   if (IsDirExsist(dirstr)) {
     // exist directory
@@ -432,10 +540,10 @@ void LAYOUT::CheckDir(string dirstr)
     printf("\tCan't generate directory(%s).\n", dirstr.c_str());
     Exit(0);
   }
-
+  
 #endif  // _WIN32
-
+  
   //}
-
+  
   return;
 }

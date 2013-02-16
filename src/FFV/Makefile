@@ -389,6 +389,7 @@ ffv_Heat.o: ../IP/IP_Define.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h
 ffv_Heat.o: ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h
 ffv_Heat.o: ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h
 ffv_Heat.o: ../PLOT3D/ffv_PLOT3D.h ../FB/FindexS3D.h
+ffv_TerminateCtrl.o: ffv_TerminateCtrl.h
 NS_FS_E_Binary.o: ffv.h ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h
 NS_FS_E_Binary.o: ffv_Define.h ../FB/FBUtility.h ../FB/Control.h
 NS_FS_E_Binary.o: ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h
