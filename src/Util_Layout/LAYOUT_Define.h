@@ -13,7 +13,7 @@
 
 /**
  @file   LAYOUT_Define.h
- @brief  FlowBase Definition Header
+ @brief  layout Header
  @author kero
  */
 

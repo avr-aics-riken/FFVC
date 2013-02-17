@@ -62,7 +62,7 @@ public:
   
   
   // 例題の名称を返す
-  virtual const char* getExampleName(void) 
+  virtual const char* getExampleName() 
   {
     return ("Back Step");
   }

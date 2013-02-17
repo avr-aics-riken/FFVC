@@ -123,6 +123,7 @@ std::string DFI::GenerateFileName(const std::string prefix, const std::string fm
     }
   }
   else
+  {
     if ( !strcasecmp(fmt.c_str(), "sph") || !strcasecmp(fmt.c_str(), "dat") )
     {
       sprintf(tmp, "%s_%010u.%s", prefix.c_str(), m_step, fmt.c_str());
@@ -132,7 +133,7 @@ std::string DFI::GenerateFileName(const std::string prefix, const std::string fm
       sprintf(tmp, "%s.%s", prefix.c_str(), fmt.c_str());
     }
   }
-  
+
   std::string fname(tmp);
   if ( tmp ) delete [] tmp;
   

@@ -11,14 +11,15 @@
 
 Kenji Ono 	keno@riken.jp
 AICS, RIKEN
-October 2012
 -----
 
-FFVで領域分割出力されたPLOT3Dフォーマットの結果ファイルをFieldViewにより並列化しかするために必要なlayoutファイルを作成するツールを提供します。
+#######################
+FFVで領域分割出力されたPLOT3Dフォーマットの結果ファイルをFieldViewにより並列可視化するために必要なlayoutファイルを作成するツール
 
 
 
---- コンパイル方法
+#######################
+コンパイル方法
 
 1) 単体でビルド
 環境変数の設定はsrc/FFV/make_settingを編集します．
@@ -31,9 +32,10 @@ FFVディレクトリでffvcのコンパイルを行うと，layoutが生成さ�
 
 
 
---- 使い方
+#######################
+使い方
 
-layoutをオプションなしで実行するとusageが表示されます。
+layoutをオプションなしで実行するとusageが表示されます.
 
 ＜usageの表示＞
 Usage: layout <option> filename <option> dirname <options> mchname <options>
@@ -50,22 +52,22 @@ Usage: layout <option> filename <option> dirname <options> mchname <options>
 
 ■ -d オプション
 
-dirnameにはlayoutファイル内に記述されるplot3dファイルのあるディレクトリの場所を指定します。
-このオプションは必ず指定する必要はありません。
+dirnameにはlayoutファイル内に記述されるplot3dファイルのあるディレクトリの場所を指定します.
+このオプションは必ず指定する必要はありません.
 このオプションで指定されたdirnameは，入力ファイルで記述するランクごとの分割記述です．
     divide[@]{
       machine="ELSA5"
       rank=(0,1)
       dir="/home/ida/usb2/ffv/example/layout_test"
     }
-で指定されるdirより優先されます。
+で指定されるdirより優先されます.
 
 ■ -f オプション
 
-filenameには用意した入力ファイルの名前を記述します。
+filenameには用意した入力ファイルの名前を記述します.
 入力ファイルは，FFVで利用するテキストパーサ形式で記述します．
-LayoutDataタグの下に読み込むdfiファイル、ランクによる分割のリストを記述します。
-layoutファイルの出力ディレクトリの指定はoutput_dirで指定できます。
+LayoutDataタグの下に読み込むdfiファイル、ランクによる分割のリストを記述します.
+layoutファイルの出力ディレクトリの指定はoutput_dirで指定できます.
 分割のリスト内の項目は、
 machine:担当ホスト名
 rank:担当ランク
@@ -73,19 +75,19 @@ dir:可視化時にファイルが存在ディレクトリ
 
 ■ -m オプション
 
-machinenameにはlayoutファイル内に記述されるplot3dファイルの子サーバを指定します。
-このオプションは必ずしてする必要はありません。
+machinenameにはlayoutファイル内に記述されるplot3dファイルの子サーバを指定します.
+このオプションは必ずしてする必要はありません.
 このオプションで指定されたmachinenameは入力ファイルで記述するランクごとの分割記述
     divide[@]{
       machine="ELSA5"
       rank=(0,1)
       dir="/home/ida/usb2/ffv/example/layout_test"
     }
-で指定されるmachineより優先されます。
+で指定されるmachineより優先されます.
 
 
 
-以下に入力ファイルの例を示します。
+以下に入力ファイルの例を示します.
 
 ファイル名：layout.tp
 入力例：
@@ -118,3 +120,11 @@ machinenameにはlayoutファイル内に記述されるplot3dファイルの子
  -----------
 
 
+#######################
+History
+
+Ver 1.0.1   17 Feb. 2013
+  - PLOT3D出力の様式変更への対応 >> ffv_PLOT3D.C/h
+
+Ver 1.0.0   2012
+  - prototype version

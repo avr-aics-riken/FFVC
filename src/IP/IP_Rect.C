@@ -18,7 +18,8 @@
 
 
 // #################################################################
-/** パラメータをロード
+/*
+ * @brief パラメータをロード
  * @param [in] R      Controlクラス
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
@@ -75,7 +76,8 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
 
 
 // #################################################################
-/** 領域を設定する
+/*
+ * @brief 領域を設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
@@ -113,7 +115,8 @@ void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 
 
 // #################################################################
-/** 矩形の計算領域のセルIDを設定する
+/*
+ * @brief 矩形の計算領域のセルIDを設定する
  * @param [in,out] mid   媒質情報の配列
  * @param [in]     R     Controlクラスのポインタ
  * @param [in]     G_org グローバルな原点（無次元）

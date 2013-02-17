@@ -283,47 +283,13 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
  */
 void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
-  int mid_fluid, mid_solid, mid_driver, mid_driver_face;
+  int mid_fluid=1;        /// 流体
+  int mid_solid=2;        /// 固体
+  int mid_driver=3;       /// ドライバ部
+  int mid_driver_face=4;  /// ドライバ流出面
   
-  // 流体
-  if ( (mid_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
-    Exit(0);
-  }
-  
-  // 固体
-  if ( (mid_solid = R->find_ID_from_Label(mat, Nmax, m_solid)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
-    Exit(0);
-  }
-  
-  
-  
-  if ( drv_length > 0.0 )
-  {
-    // ドライバ部
-    if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
-    {
-      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
-      Exit(0);
-    }
-    
-    // ドライバ流出面
-    if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
-    {
-      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
-      Exit(0);
-    }
-  }
-
-  
-  // ノードローカルの無次元値
-  REAL_TYPE ox = origin[0];
-  REAL_TYPE oy = origin[1];
-  REAL_TYPE oz = origin[2];
-  REAL_TYPE dh = deltaX;
+  REAL_TYPE x, y, z, dh, r, len;
+  REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   
   // ローカルにコピー
   int ix = size[0];
@@ -331,12 +297,22 @@ void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Mediu
   int kx = size[2];
   int gd = guide;
   
-  // length, widthなどは有次元値
-  REAL_TYPE len = G_origin[0] + (drv_length+width)/R->RefLength; // グローバルな無次元位置
-  REAL_TYPE ht  = G_origin[1] + height/R->RefLength;
+  // 隣接ランクのIDを取得 nID[6]
+  const int* nID = paraMngr->GetNeighborRankID();
+  
+  ox = origin[0];
+  oy = origin[1];
+  oz = origin[2];
+  Lx = region[0];
+  Ly = region[1];
+  Lz = region[2];
+  dh = deltaX;
+  r  = driver.diameter/R->RefLength * 0.5;
+  len= driver.length/R->RefLength;
   
   // Initialize  内部領域をfluidにしておく
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -347,7 +323,7 @@ void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Mediu
   }
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( drv_length > 0.0 ) {
+  if ( driver.length > 0.0 ) {
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, ox, dh, len) \
 schedule(static)
@@ -364,7 +340,7 @@ schedule(static)
   }
   
   // ドライバの下流面にIDを設定
-  if ( drv_length > 0.0 )
+  if ( driver.length > 0.0 )
   {
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, mid_fluid, mid_driver_face) \
@@ -381,23 +357,6 @@ schedule(static)
       }
     }
     
-  }
-  
-  // ステップ部分を上書き
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, dh, len, ht) \
-schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1);
-        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
-        if ( (x < len) && (y < ht) )
-        {
-          mid[m] = mid_solid;
-        }
-      }
-    }
   }
   
 }

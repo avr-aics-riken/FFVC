@@ -23,7 +23,7 @@ CXXSRCS = \
 	IP_Duct.C \
 	IP_SHC1D.C \
 	IP_Sphere.C \
-  IP_Jet \
+  IP_Jet.C \
 
 
 F90SRCS = \

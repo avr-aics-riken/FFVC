@@ -17,7 +17,14 @@
 #include "IP_Duct.h"
 
 
-//@brief パラメータを取得する
+
+// #################################################################
+/*
+ * @brief パラメータをロード
+ * @param [in] R      Controlクラス
+ * @param [in] tpCntl テキストパーサクラス
+ * @return true-成功, false-エラー
+ */
 bool IP_Duct::getTP(Control* R, TPControl* tpCntl)
 {
   std::string str;
@@ -129,7 +136,12 @@ bool IP_Duct::getTP(Control* R, TPControl* tpCntl)
 }
 
 
-// パラメータの表示
+// #################################################################
+/**
+ * @brief パラメータの表示
+ * @param [in] fp ファイルポインタ
+ * @param [in] R  コントロールクラスのポインタ
+ */
 void IP_Duct::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
@@ -169,7 +181,15 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
 }
 
 
-// Ductの領域情報を設定する
+// #################################################################
+/*
+ * @brief 領域を設定する
+ * @param [in]     R   Controlクラスのポインタ
+ * @param [in]     sz  分割数
+ * @param [in,out] org 計算領域の基点
+ * @param [in,out] reg 計算領域のbounding boxサイズ
+ * @param [in,out] pch セル幅
+ */
 void IP_Duct::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
@@ -193,7 +213,15 @@ void IP_Duct::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 }
 
 
-// Ductの計算領域のセルIDを設定する
+// #################################################################
+/*
+ * @brief Ductの計算領域のセルIDを設定する
+ * @param [in,out] mid   媒質情報の配列
+ * @param [in]     R     Controlクラスのポインタ
+ * @param [in]     G_org グローバルな原点（無次元）
+ * @param [in]     Nmax  Controlクラスのポインタ
+ * @param [in]     mat   MediumListクラスのポインタ
+ */
 void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
 {
   int mid_fluid=1;        /// 流体
@@ -202,8 +230,6 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   int mid_driver_face=4;  /// ドライバ流出面
   REAL_TYPE x, y, z, dh, r, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
-  
-  size_t m;
   
   // ローカルにコピー
   int ix = size[0];
@@ -225,10 +251,11 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   len= driver.length/R->RefLength;
   
   // Initialize  内部領域をsolidにしておく
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         mid[m] = mid_solid;
       }
     }
@@ -236,10 +263,12 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   
   // Inner
   if (driver.shape == id_rectangular ) { // 矩形管の場合は内部は全て流体
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           mid[m] = mid_fluid;
         }
       }
@@ -252,7 +281,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+              size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               y = oy + 0.5*dh + dh*(j-1);
               z = oz + 0.5*dh + dh*(k-1);
               if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_fluid;
@@ -266,7 +295,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+              size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               x = ox + 0.5*dh + dh*(i-1);
               z = oz + 0.5*dh + dh*(k-1);
               if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_fluid;
@@ -280,7 +309,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+              size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               x = ox + 0.5*dh + dh*(i-1);
               y = oy + 0.5*dh + dh*(j-1);
               if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) mid[m] = mid_fluid;
@@ -300,7 +329,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -323,7 +352,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -346,7 +375,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -369,7 +398,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -392,7 +421,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -415,7 +444,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
-                m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 x = ox + 0.5*dh + dh*(i-1);
                 y = oy + 0.5*dh + dh*(j-1);
                 z = oz + 0.5*dh + dh*(k-1);
@@ -438,16 +467,14 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
   // ドライバの下流面にIDを設定
   if ( driver.length > 0.0 ) {
     
-    size_t m1;
-    
     switch (driver.direction) 
     {
       case X_MINUS:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
-              m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i+1, j, k);
+              size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
+              size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
               {
                 mid[m] = mid_driver_face;
@@ -461,8 +488,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i,   j, k);
-              m1= _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i-1, j, k);
+              size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
+              size_t m1= _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
               {
                 mid[m] = mid_driver_face;
@@ -476,8 +503,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j,   k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j,   k);
-              m1= _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j+1, k);
+              size_t m = _F_IDX_S3D(i, j,   k, ix, jx, kx, gd);
+              size_t m1= _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
               {
                 mid[m] = mid_driver_face;
@@ -491,8 +518,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j,   k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j,   k);
-              m1= _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j-1, k);
+              size_t m = _F_IDX_S3D(i, j,   k, ix, jx, kx, gd);
+              size_t m1= _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
               {
                 mid[m] = mid_driver_face;
@@ -506,8 +533,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-              m1= _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k+1);
+              size_t m = _F_IDX_S3D(i, j, k,   ix, jx, kx, gd);
+              size_t m1= _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
               {
                 mid[m] = mid_driver_face;
@@ -521,8 +548,8 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Medi
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k,   ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-              m1= _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k-1);
+              size_t m = _F_IDX_S3D(i, j, k,   ix, jx, kx, gd);
+              size_t m1= _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
               if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
               {
                 mid[m] = mid_driver_face;

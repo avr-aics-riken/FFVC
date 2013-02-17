@@ -18,7 +18,8 @@
 
 
 // #################################################################
-/** パラメータをロード
+/*
+ * @brief パラメータをロード
  * @param [in] R      Controlクラス
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
@@ -146,7 +147,8 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/** 領域を設定する
+/*
+ * @brief 領域を設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
@@ -183,7 +185,8 @@ void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
 
 
 // #################################################################
-/** 計算領域のセルIDを設定する
+/*
+ * @brief 計算領域のセルIDを設定する
  * @param [in,out] mid   媒質情報の配列
  * @param [in]     R     Controlクラスのポインタ
  * @param [in]     G_org グローバルな原点（無次元）

@@ -22,7 +22,16 @@
 
 class IP_Jet : public Intrinsic {
 
-public:
+protected:
+  typedef struct {
+    unsigned shape;     ///< 形状
+    int direction;      ///< 方向
+    REAL_TYPE diameter; ///< 直径
+    REAL_TYPE length;   ///< 長さ
+  } Driver_property;
+  
+  Driver_property driver;    ///< ドライバの特性
+  
   int mode;                  ///< モード（2D or 3D）
   int pat_0;                 ///< ジェットのパターン (コア　 on/off)
   int pat_1;                 ///< ジェットのパターン (Ring1 on/off)
@@ -61,11 +70,17 @@ public:
     pat_0 = -1;
     pat_1 = -1;
     pat_2 = -1;
+    driver.shape = 0;
+    driver.direction = -1;
+    driver.diameter = 0.0;
+    driver.length = 0.0;
   }
   
   /**　デストラクタ */
   ~IP_Jet() {}
   
+  
+
   
 public:
 
@@ -82,11 +97,11 @@ public:
   
   
   // パラメータ表示
-  virtual bool printPara(FILE* fp, const Control* R);
+  virtual void printPara(FILE* fp, const Control* R);
   
   
   // 例題の名称を返す
-  virtual const char* getExampleName(void) 
+  virtual const char* getExampleName() 
   {
     return ("Jet");
   }

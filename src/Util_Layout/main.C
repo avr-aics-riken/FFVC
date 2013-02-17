@@ -9,8 +9,8 @@
 // #################################################################
 
 /** 
- * @file main.C
- * @brief layoutのmain関数
+ * @file   main.C
+ * @brief  layoutのmain関数
  * @author kero
  */
 
