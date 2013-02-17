@@ -217,7 +217,7 @@ void FFV::AverageOutput(double& flop)
   std::string dtmp = DFI.GenerateDirName(C.FIO.OutDirPath, m_step, C.FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     Hostonly_ printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }
@@ -552,7 +552,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   std::string dtmp = DFI.GenerateDirName(C.FIO.OutDirPath, m_step, C.FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     Hostonly_ printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }

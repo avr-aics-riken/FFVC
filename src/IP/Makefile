@@ -67,3 +67,4 @@ IP_PPLT2D.o: IP_PPLT2D.h IP_Define.h
 IP_Duct.o: IP_Duct.h IP_Define.h
 IP_SHC1D.o: IP_SHC1D.h IP_Define.h
 IP_Sphere.o: IP_Sphere.h IP_Define.h
+IP_Jet.o: IP_Jet.h IP_Define.h

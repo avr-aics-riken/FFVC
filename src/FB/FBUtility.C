@@ -19,14 +19,17 @@
 
 
 // #################################################################
-// ディレクトリがなければ作成、既存なら何もしない
-int FBUtility::c_mkdir(string path)
+/**
+ * @brief ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
+ * @param [in] path ディレクトリパス
+ */
+int FBUtility::c_mkdir(const char* path)
 {
   // 標準ライブラリ呼び出し
   // パーミッションはumaskで指定
   umask(022);
   
-  int ret = mkdir(path.c_str(), 0777); // rwx
+  int ret = mkdir(path, 0777); // rwx
   
   if ( 0 != ret )
   {
@@ -39,6 +42,48 @@ int FBUtility::c_mkdir(string path)
   }
   
   return 1;
+}
+
+
+
+// #################################################################
+/**
+ * @brief 階層ディレクトリの作成
+ * @param [in] path ディレクトリパス
+ */
+int FBUtility::mkdirs(string path)
+{
+  int len = path.size() + 4;
+  char* buf = new char[len];
+  
+  if ( !buf )
+  {
+    printf("Error: create buffer(%d) %s\n", errno, strerror(errno));
+    return(-1);
+  }
+  strcpy(buf, path.c_str());
+  
+  // 階層的にディレクトリを作成
+  char *p = NULL;
+  int ret = 0;
+  
+  for(p=strchr(buf+1, '/'); p; p=strchr(p+1, '/'))
+  {
+    *p = '\0';
+    ret = c_mkdir(buf);
+    if (ret != 1)
+    {
+      delete [] buf;
+      return(-1);
+    }
+    *p = '/';
+  }
+  
+  if (buf)
+  {
+    delete [] buf;
+  }
+  return(1);
 }
 
 

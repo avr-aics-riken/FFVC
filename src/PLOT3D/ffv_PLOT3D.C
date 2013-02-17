@@ -175,7 +175,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, m_step, C->FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }
@@ -586,7 +586,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, m_step, C->FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }
@@ -923,7 +923,7 @@ void Plot3D::OutputPlot3D_function_name()
   std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, 0, C->FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }
@@ -986,7 +986,7 @@ void Plot3D::OutputPlot3D_function_name_divide()
   std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, 0, C->FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }
@@ -1227,7 +1227,7 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   std::string dtmp = dfi->GenerateDirName(C->FIO.OutDirPath, m_step, C->FIO.Slice);
   
   // 出力ディレクトリの作成
-  if ( !FBUtility::c_mkdir(dtmp) ) {
+  if ( !FBUtility::mkdirs(dtmp) ) {
     if (myRank==0) printf("Error : create directory \"%s\"\n", dtmp.c_str());
     Exit(-1);
   }

@@ -24,6 +24,9 @@
 #include <algorithm>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "FB_Define.h"
 #include "cpm_Define.h"
@@ -76,11 +79,12 @@ public:
     return face;
   }
   
-  /**
-   * @brief ディレクトリを作成
-   * @param [in] path ディレクトリパス
-   */
-  static int c_mkdir(string path);
+  // ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
+  static int c_mkdir(const char* path);
+  
+  
+  // 階層ディレクトリの作成
+  static int mkdirs(string path);
   
   
   /**

@@ -87,13 +87,13 @@ main.o: /usr/include/secure/_string.h /usr/include/errno.h
 main.o: /usr/include/sys/errno.h /usr/include/dirent.h
 main.o: /usr/include/sys/dirent.h ../FB/FB_Define.h ../FB/mydebug.h
 main.o: ../FB/FBUtility.h /usr/include/math.h /usr/include/sys/stat.h
-main.o: ../FB/TPControl.h ../FB/dfi.h FileIO_sph.h endianUtil.h
 main.o: /usr/include/sys/types.h /usr/include/unistd.h
 main.o: /usr/include/sys/unistd.h /usr/include/sys/select.h
-main.o: /usr/include/sys/_select.h ../FB/dfiinfo.h ../FB/DomainInfo.h
-main.o: /usr/include/limits.h /usr/include/machine/limits.h
-main.o: /usr/include/i386/limits.h /usr/include/i386/_limits.h
-main.o: /usr/include/sys/syslimits.h COMB_Define.h
+main.o: /usr/include/sys/_select.h ../FB/TPControl.h ../FB/dfi.h FileIO_sph.h
+main.o: endianUtil.h ../FB/dfiinfo.h ../FB/DomainInfo.h /usr/include/limits.h
+main.o: /usr/include/machine/limits.h /usr/include/i386/limits.h
+main.o: /usr/include/i386/_limits.h /usr/include/sys/syslimits.h
+main.o: COMB_Define.h
 comb.o: comb.h /usr/include/stdio.h /usr/include/sys/cdefs.h
 comb.o: /usr/include/sys/_symbol_aliasing.h
 comb.o: /usr/include/sys/_posix_availability.h /usr/include/Availability.h
@@ -115,13 +115,13 @@ comb.o: /usr/include/secure/_string.h /usr/include/errno.h
 comb.o: /usr/include/sys/errno.h /usr/include/dirent.h
 comb.o: /usr/include/sys/dirent.h ../FB/FB_Define.h ../FB/mydebug.h
 comb.o: ../FB/FBUtility.h /usr/include/math.h /usr/include/sys/stat.h
-comb.o: ../FB/TPControl.h ../FB/dfi.h FileIO_sph.h endianUtil.h
 comb.o: /usr/include/sys/types.h /usr/include/unistd.h
 comb.o: /usr/include/sys/unistd.h /usr/include/sys/select.h
-comb.o: /usr/include/sys/_select.h ../FB/dfiinfo.h ../FB/DomainInfo.h
-comb.o: /usr/include/limits.h /usr/include/machine/limits.h
-comb.o: /usr/include/i386/limits.h /usr/include/i386/_limits.h
-comb.o: /usr/include/sys/syslimits.h COMB_Define.h
+comb.o: /usr/include/sys/_select.h ../FB/TPControl.h ../FB/dfi.h FileIO_sph.h
+comb.o: endianUtil.h ../FB/dfiinfo.h ../FB/DomainInfo.h /usr/include/limits.h
+comb.o: /usr/include/machine/limits.h /usr/include/i386/limits.h
+comb.o: /usr/include/i386/_limits.h /usr/include/sys/syslimits.h
+comb.o: COMB_Define.h
 comb_sph.o: comb.h /usr/include/stdio.h /usr/include/sys/cdefs.h
 comb_sph.o: /usr/include/sys/_symbol_aliasing.h
 comb_sph.o: /usr/include/sys/_posix_availability.h
@@ -143,10 +143,10 @@ comb_sph.o: /usr/include/secure/_string.h /usr/include/errno.h
 comb_sph.o: /usr/include/sys/errno.h /usr/include/dirent.h
 comb_sph.o: /usr/include/sys/dirent.h ../FB/FB_Define.h ../FB/mydebug.h
 comb_sph.o: ../FB/FBUtility.h /usr/include/math.h /usr/include/sys/stat.h
-comb_sph.o: ../FB/TPControl.h ../FB/dfi.h FileIO_sph.h endianUtil.h
 comb_sph.o: /usr/include/sys/types.h /usr/include/unistd.h
 comb_sph.o: /usr/include/sys/unistd.h /usr/include/sys/select.h
-comb_sph.o: /usr/include/sys/_select.h ../FB/dfiinfo.h ../FB/DomainInfo.h
+comb_sph.o: /usr/include/sys/_select.h ../FB/TPControl.h ../FB/dfi.h
+comb_sph.o: FileIO_sph.h endianUtil.h ../FB/dfiinfo.h ../FB/DomainInfo.h
 comb_sph.o: /usr/include/limits.h /usr/include/machine/limits.h
 comb_sph.o: /usr/include/i386/limits.h /usr/include/i386/_limits.h
 comb_sph.o: /usr/include/sys/syslimits.h COMB_Define.h
@@ -172,10 +172,10 @@ comb_plot3d.o: /usr/include/secure/_string.h /usr/include/errno.h
 comb_plot3d.o: /usr/include/sys/errno.h /usr/include/dirent.h
 comb_plot3d.o: /usr/include/sys/dirent.h ../FB/FB_Define.h ../FB/mydebug.h
 comb_plot3d.o: ../FB/FBUtility.h /usr/include/math.h /usr/include/sys/stat.h
-comb_plot3d.o: ../FB/TPControl.h ../FB/dfi.h FileIO_sph.h endianUtil.h
 comb_plot3d.o: /usr/include/sys/types.h /usr/include/unistd.h
 comb_plot3d.o: /usr/include/sys/unistd.h /usr/include/sys/select.h
-comb_plot3d.o: /usr/include/sys/_select.h ../FB/dfiinfo.h ../FB/DomainInfo.h
+comb_plot3d.o: /usr/include/sys/_select.h ../FB/TPControl.h ../FB/dfi.h
+comb_plot3d.o: FileIO_sph.h endianUtil.h ../FB/dfiinfo.h ../FB/DomainInfo.h
 comb_plot3d.o: /usr/include/limits.h /usr/include/machine/limits.h
 comb_plot3d.o: /usr/include/i386/limits.h /usr/include/i386/_limits.h
 comb_plot3d.o: /usr/include/sys/syslimits.h COMB_Define.h
