@@ -22,8 +22,9 @@ Steer {
 
   AverageOption {
     Operation  = "Off"
-    StartType  = "Time"
-    Start      = 500.0
+    SpecifiedType = "time"
+    Start         = 0.0005
+    Interval      = 0.001
   }
 
   CheckParameter = "Off"
@@ -43,20 +44,19 @@ Steer {
   Example = "Rectangular"
 
   FileIO {
-    UnitOfFile           = "NonDimensional"
+    IOmode               = "distributed"
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
     InstantInterval      = 10
-    AveragedIntervalType = "Time"
-    AveragedInterval     = 200
     VoxelOutput          = "off"
-    OutputMode {
-      Mode               = "specified"
-      DirectoryPath      = "hoge"
+    FileFormat           = "sph"
+    Directory {
+      InputPath       = "hoge"
+      OutputPath      = "hoge"
+      TimeSlice       = "off"
     }
     Plot3d {
-      Option             = "off"
       IntervalType       = "step"
       Interval           = 10
     }
@@ -102,7 +102,6 @@ Steer {
   }
 
   Log {
-    UnitOfLog           = "NonDimensional"
     LogBase             = "On"
     LogIteration        = "Off"
     LogProfiling        = "On"
@@ -117,10 +116,9 @@ Steer {
     Log                  = "Off"
     OutputFile           = "sample.log"
     OutputMode           = "Gather"
-    Unit                 = "NonDimensional"
     SamplingIntervalType = "step"
     SamplingInterval     = 100
-    Cell_Monitor          = "off"
+    CellMonitor          = "off"
 
     list[@] {
       type            = "Line"
@@ -146,19 +144,20 @@ Steer {
     }
   }
 
-  PLOT3D_Options {
-    Filename        = ""
-    GridKind        = "SingleGrid"
+  PLOT3Doptions {
+    FileNameGrid    = ""
+    FileNameFunc    = ""
+    GridKind        = "MultiGrid"
     GridMobility    = "immovable"
     StateOfTime     = "unsteady"
     SetIblankFlag   = "on"
     Dimension       = "3D"
     FormatType      = "Unformatted"
     OutputXyz       = "on"
-    OutputQ         = "on"
+    OutputQ         = "off"
     OutputFunction  = "on"
     OutputFuncName  = "on"
-    OutputFvbnd     = "on"
+    OutputFvbnd     = "off"
     DivideFunc      = "off"
     RealType        = "float"
   }
@@ -169,25 +168,29 @@ Steer {
 
   StartCondition {
     StartType         = "initial"
-    RestartStep       = 200
 
-    RestartFromDifferentNproc {
-      Staging          = "on"
-      PrefixOfDir      = "hoge_restart_"
-      PrefixOfPressure = "prs_dr_"
-      PrefixOfVelocity = "vel_dr_"
-    }
+    Restart {
+      Step        = 200
+      AverageStep = 400
 
-    DFIfile {
-      pressure  = "prs_dr_.dfi"
-      velocity  = "vel_dr_.dfi"
-      //pressure  = "prs_64_id000000.dfi"
-      //velocity  = "vel_64_id000000.dfi"
-    }
+      Refinement {
+        PrefixOfPressure  = "prs_64_"
+        PrefixOfVelocity  = "vel_64_"
+        PrefixOfFvelocity = "fvel_64_"
+        DFIofPressure     = "prs.dfi"
+        DFIofVelocity     = "vel.dfi"
+        DFIofFvelocity    = "fvel.dfi"
+      }
 
-    CoarseRestart {
-      PrefixOfPressure = "prs_64_"
-      PrefixOfVelocity = "vel_64_"
+      DifferentProcess {
+        Staging  = "off"
+        PrefixOfPressure  = "prs_64_"
+        PrefixOfVelocity  = "vel_64_"
+        PrefixOfFvelocity = "fvel_64_"
+        DFIofPressure     = "prs.dfi"
+        DFIofVelocity     = "vel.dfi"
+        DFIofFvelocity    = "fvel.dfi"
+      }
     }
 
     InitialState {
@@ -224,6 +227,7 @@ Steer {
 
   Unit {
     UnitOfInputParameter  = "NonDimensional"
+    UnitOfOutput          = "NonDimensional"
     Pressure              = "Gauge"
     Temperature           = "Celsius"
   }
@@ -266,7 +270,7 @@ MediumTable {
     KinematicViscosity  = 15.83e-06
     Viscosity           = 18.62e-06
     SoundOfSpeed        = 340.0
-    VolumeExpansion     = 0.04e-3 
+    VolumeExpansion     = 0.04e-3
   }
 
   Medium[@] {

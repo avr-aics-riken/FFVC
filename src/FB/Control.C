@@ -1858,7 +1858,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   label = "/Steer/Plot3dOptions/Dimension";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3d_options/dimension'\n");
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3doptions/dimension'\n");
     //Exit(0);
     FP3DR->setDimension3D();
   }
@@ -1949,7 +1949,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // OutputQ
   
   /*
-  label = "/Steer/plot3d_options/OutputQ";
+  label = "/Steer/plot3doptions/OutputQ";
    
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2014,7 +2014,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // OutputFvbnd
   
   /*
-  label = "/Steer/plot3d_options/OutputFvbnd";
+  label = "/Steer/plot3doptions/OutputFvbnd";
    
   if ( !(tpCntl->GetValue(label, &str )) )
   {

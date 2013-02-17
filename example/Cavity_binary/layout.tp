@@ -1,12 +1,24 @@
 
   LayoutData{
 
-    output_dir = "hoge"
+    OutputDir = "hoge_plot3d"
+    //OutputDir = "hoge_plot3d_divide"
+    FFVDivideFunc = "on"
 
-    list[@]="test.dfi"
+    list[@]="PLOT3Doutput.dfi"
+    //list[@]="prs.dfi"
+    //list[@]="vel.dfi"
+    //list[@]="i2vgt.dfi"
+    //list[@]="fvel.dfi"
+
+    PLOT3DOptions {
+      FileNameGrid = ""
+      FileNameFunc = ""
+    }
 
     divide[@]{
       machine="ELSA5"
+      //machine="ELSA10"
       rank=(0,3)
       dir="/home/ida/usb2/ffv/example/layout_test"
     }

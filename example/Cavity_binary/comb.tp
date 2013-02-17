@@ -1,0 +1,59 @@
+
+  CombData{
+
+    list[@]="prs.dfi"
+    list[@]="vel.dfi"
+    //list[@]="i2vgt.dfi"
+    //list[@]="fvel.dfi"
+
+    OutputRealType="float"
+
+    InputDir="hoge2"
+    //OutputDir="hoge"
+
+    OutFormat="sph"
+    OutputDir="hoge_sph"
+
+    //OutFormat="plot3d"
+    //OutputDir="hoge_plot3d"
+    //OutputDir="hoge_plot3d_divide"
+
+    Staging = "off"
+
+  }
+
+  PLOT3DOptions {
+    FileNameGrid  = ""
+    FileNameFunc  = ""
+    GridKind       = "multi_grid"
+    GridMobility   = "immovable"
+    StateOfTime   = "unsteady"
+    SetiblankFlag = "on"
+    Dimension       = "3D"
+    //FormatType     = "formatted"
+    //FormatTtype     = "unformatted"
+    FormatType     = "binary"
+    OutputXyz= "on"
+    OutputQ  = "off"
+    OutputFunction = "on"
+    OutputFuncName = "on"
+    OutputFvbnd = "on"
+    DivideFunc = "off"
+    //DivideFunc = "on"
+    RealType = "float"
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

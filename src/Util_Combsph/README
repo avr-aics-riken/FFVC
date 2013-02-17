@@ -20,6 +20,9 @@ AICS, RIKEN
 2) sphファイルからPLOT3Dデータファイルを作成します．
 
 
+
+
+
 ##################
 コンパイル方法
 
@@ -32,6 +35,8 @@ $ make
 FFVディレクトリでffvcのコンパイルを行うと，combsphが生成されます．
 
 ../../binの下にcombsphという実行ファイルが生成されます．
+
+
 
 
 
@@ -65,7 +70,7 @@ filenameには用意した入力ファイルの名前を記述します。
 入力ファイルは，FFVで利用するテキストパーサ形式で記述します．
 CombDataタグの下に読み込むdfiファイルのリストを記述します．
 出力フォーマットはout_formatで指定します．
-plot3dを指定した場合は、PLOT3D_Optionsタグに必要な項目を記述する必要があります．
+plot3dを指定した場合は、PLOT3Doptionsタグに必要な項目を記述する必要があります．
 
 ■ -s オプション
 
@@ -76,7 +81,7 @@ sphファイルを1つにまとめる場合、PLOT3Dに変換する場合とも�
 間引き後データ   ○●●○●●○●●○●●...
 
 ※ sphファイルがfloatで記述されているとき、PLOT3Dオプションでreal_type="double"を選択しても、出力はfloatに変更されます．
-※ PLOT3D_Options/real_typeが指定されている場合、CombData/output_real_typeより優先されます．
+※ PLOT3Doptions/real_typeが指定されている場合、CombData/output_real_typeより優先されます．
 ※ 精度の指定がない場合は読み込みsphファイルの精度に従います．
 ※ 出力ディレクトリの指定がない場合はカレントディレクトリに出力します．
 
@@ -91,39 +96,43 @@ sphファイルを1つにまとめる場合、PLOT3Dに変換する場合とも�
   CombData{
 
     //変換する出力ファイルの*.dfiファイルを記述
-    list[@]="prs_.dfi" 
-    list[@]="vel_.dfi"
+    list[@]="prs.dfi"
+    list[@]="vel.dfi"
 
     //ファイルフォーマットを指定
-    out_format="sph"
-    //out_format="plot3d"
+    OutFormat="sph"
+    //OutFormat="plot3d"
 
     //出力時の単精度・倍精度を指定
-    output_real_type="float"
+    OutputRealType="float"
 
     //入力データのディレクトリ指定
-    input_dir="comb_in"
+    InputDir="comb_in"
 
     //出力データのディレクトリ指定
-    output_dir="comb_out"
+    OutputDir="comb_out"
 
   }
 
   // Plot3dの場合のオプションを記述
-  PLOT3D_Options {
-    filename        = "test"
-    grid_kind       = "multi_grid"
-    grid_mobility   = "immovable"
-    state_of_time   = "unsteady"
+  PLOT3Doptions {
+    FileNameGrid    = "test"
+    FileNameFunc    = "test"
+    GridKind        = "multi_grid"
+    GridMobility    = "immovable"
+    StateOfTime     = "unsteady"
     Dimension       = "3D"
-    //Format_type     = "formatted"
-    //Format_type     = "unformatted"
-    Format_type     = "binary"
-    divide_func     = "on" // divide_funcをonにすると項目ごとにファイルを分割して出力します
-    real_type       = "float" // PLOT3D出力の単精度・倍精度を指定します
+    //FormatType     = "formatted"
+    //FormatType     = "unformatted"
+    FormatType      = "binary"
+    DivideFunc      = "on" // divide_funcをonにすると項目ごとにファイルを分割して出力します
+    RealType        = "float" // PLOT3D出力の単精度・倍精度を指定します
   }
 
  -----------
+
+
+
 
 
 #######################
