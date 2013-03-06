@@ -28,6 +28,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   std::string str;
   std::string label;
   REAL_TYPE ct;
+  const double pai = (double)(2.0*asin(1.0));
 
   
   // 2D or 3D mode
@@ -50,81 +51,128 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   }
   
   
-  // Core
-  label="/Parameter/IntrinsicExample/RadiusOfCore";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else{
-	  r0 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  
-  label="/Parameter/IntrinsicExample/AngularVelocityOfCore";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else{
-	  omg0 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
-  }
-  
-  
   // Ring1
-  label="/Parameter/IntrinsicExample/InnerRadiusOfRing1";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
+  label="/Parameter/IntrinsicExample/Ring1/UseRing1";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  else{
-	  r1i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  if     ( !strcasecmp(str.c_str(), "yes") ) {
+    pat_1 = ON;
+  }
+  else if( !strcasecmp(str.c_str(), "no") ) {
+    pat_1 = OFF;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid '%s'\n", label.c_str());
+    return false;
   }
   
-  label="/Parameter/IntrinsicExample/OuterRadiusOfRing1";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else{
-	  r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  if ( pat_1 == ON )
+  {
+    label="/Parameter/IntrinsicExample/Ring1/InnerRadius";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      r1i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+    }
+    
+    label="/Parameter/IntrinsicExample/RIng1/OuterRadius";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+    }
+    
+    label="/Parameter/IntrinsicExample/RIng1/RotationFrequency";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      n1 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
+    }
+    
+    label="/Parameter/IntrinsicExample/Ring1/InletMassFlow";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      q1 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL * RefL * RefV;
+    }
+    
+    omg1 = 2.0 * pai * n1;
+    a1 = pai * (r1o*r1o - r1i*r1i);
   }
   
-  label="/Parameter/IntrinsicExample/AngularVelocityOfRing1";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else{
-	  omg1 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
-  }
+  
   
   // Ring2
-  label="/Parameter/IntrinsicExample/InnerRadiusOfRing2";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
+  label="/Parameter/IntrinsicExample/Ring2/UseRing2";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  else{
-	  r2i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  if     ( !strcasecmp(str.c_str(), "yes") ) {
+    pat_2 = ON;
+  }
+  else if( !strcasecmp(str.c_str(), "no") ) {
+    pat_2 = OFF;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid '%s'\n", label.c_str());
+    return false;
   }
   
-  label="/Parameter/IntrinsicExample/OuterRadiusOfRing2";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else{
-	  r2o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  if ( pat_2 == ON )
+  {
+    label="/Parameter/IntrinsicExample/Ring2/InnerRadius";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      r2i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+    }
+    
+    label="/Parameter/IntrinsicExample/Ring2/OuterRadius";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      r2o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+    }
+    
+    label="/Parameter/IntrinsicExample/Ring2/RotationFrequency";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      n2 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
+    }
+    
+    label="/Parameter/IntrinsicExample/Ring2/InletMassFlow";
+    if ( !(tpCntl->GetValue(label, &ct )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else{
+      q2 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL * RefL * RefV;
+    }
+    
+    omg2 = 2.0 * pai * n2;
+    a2 = pai * (r2o*r2o - r2i*r2i);
   }
   
-  label="/Parameter/IntrinsicExample/AngularVelocityOfRing2";
-  if ( !(tpCntl->GetValue(label, &ct )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else{
-	  omg2 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
-  }
   
   
   // 媒質指定
@@ -210,15 +258,11 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
     Exit(0);
   }
   
-  // パターンのチェック
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
   
-  pat_0 = ( r0 == 0.0 ) ? 0 : 1;
-  
-  pat_1 = ( (r1i == 0.0) && (r1o == 0.0) ) ? 0 : 1;
-  
-  pat_2 = ( (r2i == 0.0) && (r2o == 0.0) ) ? 0 : 1;
-  
-  if ( pat_1 == 1 )
+  // Ring1のチェック
+  if ( pat_1 == ON )
   {
     if ( r1i < r0 )
     {
@@ -233,7 +277,8 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
     }
   }
 
-  if ( pat_2 == 1)
+  // Ring2のチェック
+  if ( pat_2 == ON)
   {
     if ( r2i < r1o )
     {
@@ -249,25 +294,31 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
   }
   
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
-  
+  // 次元モード
   fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
-  fprintf(fp,"\tCore  Radius           [m]   / [-] : %12.5e / %12.5e\n", r0, r0/RefL);
-  fprintf(fp,"\t      Angular Velocity [m/s] / [-] : %12.5e / %12.5e\n", omg0, omg0*RefL/RefV);
   
-  if ( pat_1 == 1 )
+  // Ring1
+  if ( pat_1 == ON )
   {
     fprintf(fp,"\tRing1 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r1i, r1i/RefL);
     fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r1o, r1o/RefL);
-    fprintf(fp,"\t      Angular Velocity [m/s] / [-] : %12.5e / %12.5e\n", omg1, omg1*RefL/RefV);
+    fprintf(fp,"\t      Massflow         [m^3/s]/[-] : %12.5e / %12.5e\n", q1, q1/(RefL*RefL*RefV));
+    fprintf(fp,"\t      Area             [m^2] / [-] : %12.5e / %12.5e\n", a1, a1/(RefL*RefL));
+    fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q1/a1, (q1/a1)/RefV);
+    fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg1, omg1*RefL/RefV);
+    fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n1, n1);
   }
   
-  if ( pat_2 == 1)
+  // Ring2
+  if ( pat_2 == ON )
   {
     fprintf(fp,"\tRing2 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r2i, r2i/RefL);
     fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r2o, r2o/RefL);
-    fprintf(fp,"\t      Angular Velocity [m/s] / [-] : %12.5e / %12.5e\n", omg2, omg2*RefL/RefV);
+    fprintf(fp,"\t      Massflow         [m^3/s]/[-] : %12.5e / %12.5e\n", q2, q2/(RefL*RefL*RefV));
+    fprintf(fp,"\t      Area             [m^2] / [-] : %12.5e / %12.5e\n", a2, a2/(RefL*RefL));
+    fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q2/a2, (q2/a2)/RefV);
+    fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg2, omg2*RefL/RefV);
+    fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n2, n2);
   }
 }
 
@@ -285,11 +336,6 @@ void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Mediu
 {
   int mid_fluid=1;        /// 流体
   int mid_solid=2;        /// 固体
-  int mid_driver=3;       /// ドライバ部
-  int mid_driver_face=4;  /// ドライバ流出面
-  
-  REAL_TYPE x, y, z, dh, r, len;
-  REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   
   // ローカルにコピー
   int ix = size[0];
@@ -300,63 +346,99 @@ void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Mediu
   // 隣接ランクのIDを取得 nID[6]
   const int* nID = paraMngr->GetNeighborRankID();
   
-  ox = origin[0];
-  oy = origin[1];
-  oz = origin[2];
-  Lx = region[0];
-  Ly = region[1];
-  Lz = region[2];
-  dh = deltaX;
-  r  = driver.diameter/R->RefLength * 0.5;
-  len= driver.length/R->RefLength;
   
-  // Initialize  内部領域をfluidにしておく
+  // グローバルな値
+  REAL_TYPE dh = deltaX;
+  REAL_TYPE ox_g = G_origin[0];
+  REAL_TYPE oy_g = G_origin[1];
+  REAL_TYPE oz_g = G_origin[2];
+
+  // ノードローカルの無次元値
+  FB::Vec3f org_l;
+  org_l.x = (float)origin[0];
+  org_l.y = (float)origin[1];
+  org_l.z = (float)origin[2];
+  REAL_TYPE Lx = region[0];
+  REAL_TYPE Ly = region[1];
+  REAL_TYPE Lz = region[2];
+  
+  
+  // Initialize  全領域をfluidにしておく
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
 schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         mid[m] = mid_fluid;
       }
     }
   }
   
-  // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( driver.length > 0.0 ) {
-    
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, ox, dh, len) \
-schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          REAL_TYPE x = ox + 0.5*dh + dh*(i-1);
-          if ( x < len ) mid[m] = mid_driver;
-        }
-      }
-    }
-    
-  }
   
-  // ドライバの下流面にIDを設定
-  if ( driver.length > 0.0 )
+  FB::Vec3f base, b, t;
+  float ph = (float)dh;
+  float r, ri, ro;
+  
+  // X-側のJet吹き出し部設定
+  if ( nID[X_MINUS] < 0 )
   {
+    int i=0;
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, mid_fluid, mid_driver_face) \
+    // デフォルトでガイドセルをSolidにする
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, mid_solid) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
-          size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) {
-            mid[m] = mid_driver_face;
-          }
-        }
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        mid[m] = mid_solid;
       }
     }
     
-  }
+    // Ring1
+    ri = r1i;
+    ro = r1o;
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, mid_fluid, ri, ro, org_l, ph) \
+private(b, r, base) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
+        b = org_l + base*ph;
+        r = b.length();
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          mid[m] = mid_fluid;
+        }
+        
+      }
+    }
+   
+    // Ring2
+    ri = r2i;
+    ro = r2o;
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, mid_fluid, ri, ro, org_l, ph) \
+private(b, r, base) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
+        b = org_l + base*ph;
+        r = b.length();
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          mid[m] = mid_fluid;
+        }
+        
+      }
+    }
+    
+    
+    
+  } // X_MINUS面の処理
   
 }

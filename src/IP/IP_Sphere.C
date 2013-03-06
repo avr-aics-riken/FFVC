@@ -230,7 +230,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Me
   REAL_TYPE ox_g, oy_g, oz_g;
   
   FB::Vec3f base, b, t, org_l;
-  REAL_TYPE ph = pch.x;
+  float ph = pch.x;
   REAL_TYPE r;
   REAL_TYPE rs = radius/R->RefLength;
   
