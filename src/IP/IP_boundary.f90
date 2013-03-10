@@ -29,7 +29,9 @@
 !! @note vecには，流入条件のとき指定速度
 !!  mskで部分的な速度を与える
 !<
-subroutine vobc_pv_jet (wv, sz, g, dh, rei, v0, bv, vec, face, flop)
+subroutine vobc_pv_jet (wv, sz, g, dh, rei, v0, bv, vec, face, &
+  pat1, r1i, r1o, omg1, q1, n1, a1, pat2, r2i, r2o, omg2, q2, n2, a2, &
+  flop)
 implicit none
 include '../F_CORE/ffv_f_params.h'
 integer                                                   ::  i, j, k, g, face
@@ -59,17 +61,19 @@ w_bc = vec(3)
 flop = flop + 13.0d0 ! DP 18 flop
 
 m = 0.0
+i = 1
 
-!$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
-!$OMP FIRSTPRIVATE(dh1, dh2) &
-!$OMP PRIVATE(Up, Vp, Wp, Ur, Vr, Wr) &
-!$OMP PRIVATE(fu, fv, fw, EX, EY, EZ, c, ac, msk) &
-!$OMP PRIVATE(i, j, k)
+
 
 ! X_MINUS
 
-i = 1
+
+!$OMP PARALLEL REDUCTION(+:m) &
+!$OMP FIRSTPRIVATE(i, ix, jx, kx, u_bc, v_bc, w_bc, face) &
+!$OMP FIRSTPRIVATE(dh1, dh2) &
+!$OMP PRIVATE(Up, Vp, Wp, Ur, Vr, Wr) &
+!$OMP PRIVATE(fu, fv, fw, EX, EY, EZ, c, ac, msk) &
+!$OMP PRIVATE(j, k)
 !$OMP DO SCHEDULE(static)
 do k=1,kx
 do j=1,jx

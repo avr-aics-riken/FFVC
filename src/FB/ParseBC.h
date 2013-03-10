@@ -86,11 +86,7 @@ public:
   
 private:
   
-  /**
-   * @brief ラベルの重複を調べる
-   * @param [in] n       テストするBaseBcの格納番号の最大値
-   * @param [in] m_label テストラベル
-   */
+  // ラベルの重複を調べる
   bool chkDuplicate(const int n, const string m_label);
   
   
@@ -107,22 +103,16 @@ private:
   }
   
   
-  /**
-   * @brief 境界条件の値(REAL_TYPE型)を取得し，返す
-   * @param [in] label テストラベル
-   */
+  // 境界条件の値(REAL_TYPE型)を取得し，返す
   REAL_TYPE get_BCval_real(const string label);
   
   
-  /**
-   * @brief 外部境界条件のキーワードを照合し， BCの文字列を返す
-   * @param [in] id 
-   */
+  // 外部境界条件のキーワードを照合し， BCの文字列を返す
   string getOBCstr(const int id);
   
 
+  // 外部境界の速度境界条件のタイプを取得し，返す
   int get_Vel_profile(const string label_base);
-  
   
   
   // コンポーネントのBbox情報st_xを返す
@@ -166,35 +156,19 @@ private:
   }
   
   
-  /**
-   * @brief 内部境界条件の座標値を取得し，登録する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [out] v          ベクトルパラメータ
-   */
+  // 内部境界条件の座標値を取得し，登録する
   void get_Center(const string label_base, REAL_TYPE* v);
   
   
-  /**
-   * @brief 内部境界条件の方向ベクトル値を取得し，登録する
-   * @param [in] label_base ラベルディレクトリ   
-   * @param [out v          ベクトルパラメータ
-   */
+  // 内部境界条件の方向ベクトル値を取得し，登録する
   void get_Dir(const string label_base, REAL_TYPE* v);
   
   
-  
-  /**
-   * @brief 内部境界条件の法線ベクトル値を取得し，登録する
-   * @param [in] label_base ラベルディレクトリ   
-   * @param [out v          ベクトルパラメータ
-   */
+  // 内部境界条件の法線ベクトル値を取得し，登録する
   void get_NV(const string label_base, REAL_TYPE* v);
 
   
-  /**
-   * @brief Originのキーワードに対する文字列をパースし，返す
-   * @param [in] label_base ラベルディレクトリ
-   */
+  // 基点の媒質名を取得する
   string get_Origin(const string label_base);
   
   
@@ -362,11 +336,7 @@ private:
   void get_Darcy(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief 外部境界の遠方境界のパラメータを取得する
-   * @param [in] label_base ラベルディレクトリ
-   * @param [in] n          面番号
-   */
+  // 外部境界の遠方境界のパラメータを取得する
   void get_OBC_FarField (const string label_base, const int n);
   
   
@@ -379,237 +349,114 @@ private:
   void get_OBC_HT (const string label_base, const int n, const string kind);
   
   
-  /**
-   * @brief 外部境界の流出条件のパラメータを取得する
-   * @param [in] label_base ラベルディレクトリ
-   * @param [in] n          面番号
-   * @note 圧力の値は，Control::setParameters()で無次元化する
-   */
+  // 外部境界の流出条件のパラメータを取得する
   void get_OBC_Outflow (const string label_base, const int n);
   
   
-  /**
-   * @brief 外部境界の周期条件のパラメータを取得する
-   * @param label_base
-   * @param n 面番号
-   * @note 圧力の値は，Control::setParameters()で無次元化する
-   */
+  // 外部境界の周期条件のパラメータを取得する
   void get_OBC_Periodic (const string label_base, const int n);
   
   
-  /**
-   * @brief 外部境界の流入条件のパラメータを取得する
-   * @param [in] label_base ラベルディレクトリ
-   * @param [in] n          面番号
-   */
+  // 外部境界の流入条件のパラメータを取得する
   void get_OBC_SpecVH (const string label_base, const int n);
   
   
-  /**
-   * @brief 外部境界の流入条件のパラメータを取得する
-   * @param [in] label_base ラベルディレクトリ
-   * @param [in] n          面番号
-   */
+  // トラクションフリーの外部境界のパラメータを取得する
   void get_OBC_Trcfree (const string label_base, const int n);
   
   
-  /**
-   * @brief 外部境界の壁面条件のパラメータを取得する
-   * @param [in] label_base ラベルディレクトリ
-   * @param [in] n          面番号
-   */
+  // 外部境界の壁面条件のパラメータを取得する
   void get_OBC_Wall (const string label_base, const int n);
   
   
-  /**
-   * @brief 隣接セルラベルを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   * @param [in]  mat        MediumList
-   */
+  // 隣接セル媒質のパラメータを取得する
   void get_Neighbor(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
-  /**
-   * @brief 単位ベクトルを計算して戻す
-   * @param [in,out] v ベクトル値
-   */
+  
+  // 単位ベクトルを計算して戻す
   void getUnitVec(REAL_TYPE* v);
   
   
+  // 速度のパラメータを取得する
   void get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
   
   
-  /**
-   * @brief コンポーネントが存在するかどうかを調べる
-   * @param [in] label  テストするラベル
-   * @param [in] cmp    CompoList
-   * @retval bool値
-   */
+  // コンポーネントが存在するかどうかを調べる
   bool isComponent(const int label, const CompoList* cmp);
   
   
-  /**
-   * @brief HTコンポーネントが存在するかどうかを調べる
-   * @param [in] label  テストするラベル
-   * @param [in] cmp    CompoList
-   * @retval bool値
-   */
+  // HTコンポーネントが存在するかどうかを調べる
   bool isCompoTransfer(const int label, const CompoList* cmp);
   
   
-  /**
-   * @brief 外部境界面の反対方向を返す
-   * @param [in] dir 評価する方向
-   * @return dirと反対方向
-   */
+  // 外部境界面の反対方向を返す
   int oppositeDir(const int dir);
   
   
-  /**
-   * @brief 速度の外部境界条件処理の表示
-   * @param [in] fp    ファイルポインタ
-   * @param [in] ref   BoundaryOuter
-   * @param [in] mat   MediumList
-   * @param [in] G_reg グローバルの領域の大きさ
-   * @param [in] face  面番号
-   */
+  // 速度の外部境界条件処理の表示
   void printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat, const REAL_TYPE* G_reg, const int face);
   
   
-  /**
-   * @brief 内部境界条件の照合を行う
-   * @param [in]  keyword テストキーワード
-   * @param [in]  m       BaseBcの格納番号
-   * @param [out] cmp     CompoList
-   */
+  // 内部境界条件の照合を行う
   void setKeywordLBC(const string keyword, const int m, CompoList* cmp);
   
   
-  
-  /**
-   * @brief 内部境界条件の照合を行う
-   * @param [in] keyword テストキーワード
-   * @param [in] m       コンポーネントの格納番号
-   */
+  // 外部境界条件のキーワードを照合し，コードを登録する
   void setKeywordOBC(const string keyword, const int m);
-  
   
   
   
 public:
 
-  /**
-   * @brief KOSと境界条件数の整合性をチェックする
-   * @param [in] kos KindOfSolver
-   */  
+  // KOSと境界条件数の整合性をチェックする  
   void chkBCconsistency(const int kos, CompoList* cmp);
   
   
-  /**
-   * @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
-   * @param [in] Cref Controlクラス
-   * @param [in] mat  MediumList
-   */
+  // KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
   void countMedium(Control* Cref, const MediumList* mat);
   
   
-  /**
-   * @brief LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
-   */
+  // LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
   int getNoLocalBC();
   
   
-  /**
-   * @brief 2相流問題で気相か液相かを取得する
-   * @param [out] cmp   CompoList
-   */
+  // 2相流問題で気相か液相かを取得する
   void get_Phase(CompoList* cmp);
   
   
-  /**
-   * @brief 温度計算の場合の各媒質の初期値を取得する
-   * @param [in,out] cmp    CompoList
-   */
+  // 温度計算の場合の各媒質の初期値を取得する
   void get_Medium_InitTemp(CompoList* cmp);
   
   
-  
-  /**
-   * @brief 境界名の取得
-   * @param [out] bcname 境界名vector
-   * @param [out] cmp    CompoList
-   *
-  void GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp);
-  */
-  
-  /**
-   * @brief TPのポインタを受け取る
-   * @param [in] tp  TPControlクラスのポインタ
-   */
+  // TPのポインタを受け取る
   void importTP(TPControl* tp);
   
   
-  /**
-   * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
-   * @retval 重複していればfalseを返す
-   * @param [in] candidate テストするラベル
-   * @param [in] now       コンポーネントリストの現在までのエントリ番号
-   * @param [in] cmp       CompoList
-   */
+  // 同じラベルが既にコンポーネントに登録されているかを調べる
   bool isLabelinCompo(const string candidate, const int now, const CompoList* cmp);
   
   
-  
-  /**
-   * @brief CompoListに内部境界条件の情報を設定する
-   * @param [in]  C     Control
-   * @param [in]  mat   MediumList
-   * @param [out] cmp   CompoList
-   * @param [in]  polyP ポリゴン管理構造体
-   */
+  // CompoListに内部境界条件の情報を設定する
   void loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Control::Polygon_property* polyP);
   
   
-  /**
-   * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
-   * @param [in,out] bc     BoundaryOuter
-   * @param [in]     MTITP  MediumTableInfo
-   * @param [out]    cmp    CompoList
-   */
+  // パラメータファイルをパースして，外部境界条件を取得，保持する
   void loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp);
   
   
-  /**
-   * @brief コンポーネントの情報を表示する
-   * @param [in] fp  ファイルポインタ
-   * @param [in] gci グローバルなコンポーネントのインデクス
-   * @param [in] mat MediumList
-   * @param [in] cmp CompoList
-   * @param [in] bc  BoundaryOuter
-   */
+  // コンポーネントの情報を表示する
   void printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc);
   
   
-  /**
-   * @brief 外部境界条件の各面の情報を表示する
-   * @param [in] fp    ファイルポインタ
-   * @param [in] G_reg グローバルの領域の大きさ
-   * @param [in] bc    BoundaryOuter
-   * @param [in] mat   MediumList
-   */
+  // 外部境界条件の各面の情報を表示する
   void printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat);
   
   
+  // 必要な変数をセットする
   void setControlVars(Control* Cref);
   
   
-  /**
-   * @brief 指定した媒質IDから参照物理量を設定する
-   * @param [in] mat MediumList
-   * @param [in] cmp CompoList
-   * @param [in] Ref 参照媒質番号
-   */
+  // 指定した媒質IDから参照物理量を設定する
   void setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref);
   
 };

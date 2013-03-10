@@ -17,7 +17,11 @@
 
 
 // #################################################################
-// KOSと境界条件数の整合性をチェックする
+/**
+ * @brief KOSと境界条件数の整合性をチェックする
+ * @param [in] kos KindOfSolver
+ * @param [in] cmp CompListクラスのポインタ
+ */
 void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 {
   if (kos == FLOW_ONLY) 
@@ -44,7 +48,11 @@ void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 
 
 // #################################################################
-// ラベルの重複を調べる
+/**
+ * @brief ラベルの重複を調べる
+ * @param [in] n       テストするBaseBcの格納番号の最大値
+ * @param [in] m_label テストラベル
+ */
 bool ParseBC::chkDuplicate(const int n, const string m_label)
 {
 	for (int i=0; i<n; i++){
@@ -55,7 +63,11 @@ bool ParseBC::chkDuplicate(const int n, const string m_label)
 
 
 // #################################################################
-// KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
+/**
+ * @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
+ * @param [in] Cref Controlクラス
+ * @param [in] mat  MediumList
+ */
 void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 {
   // check at least one fluid
@@ -83,7 +95,10 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 
 
 // #################################################################
-// 外部境界条件のキーワードを照合し， BCの文字列を返す
+/**
+ * @brief 外部境界条件のキーワードを照合し， BCの文字列を返す
+ * @param [in] id
+ */
 string ParseBC::getOBCstr(const int id)
 {
   string bc;
@@ -94,13 +109,17 @@ string ParseBC::getOBCstr(const int id)
   else if( id == OBC_PERIODIC )  bc = "Periodic";
   else if( id == OBC_TRC_FREE )  bc = "TractionFree";
   else if( id == OBC_FAR_FIELD ) bc = "FarField";
+  else if( id == OBC_INTRINSIC ) bc = "Intrinsic";
   else                           bc = "";
   return bc;
 }
 
 
 // #################################################################
-// 単位ベクトルを計算して戻す
+/**
+ * @brief 単位ベクトルを計算して戻す
+ * @param [in,out] v ベクトル値
+ */
 void ParseBC::getUnitVec(REAL_TYPE* v)
 {
 	REAL_TYPE a;
@@ -141,7 +160,10 @@ int ParseBC::getNoLocalBC()
 
 
 // #################################################################
-// 境界条件の値(REAL_TYPE型)を取得し，返す
+/**
+ * @brief 境界条件の値(REAL_TYPE型)を取得し，返す
+ * @param [in] label テストラベル
+ */
 REAL_TYPE ParseBC::get_BCval_real(const string label)
 {
   REAL_TYPE df=0.0f;
@@ -155,7 +177,11 @@ REAL_TYPE ParseBC::get_BCval_real(const string label)
 
 
 // #################################################################
-// 内部境界条件の座標値を取得し，登録する
+/**
+ * @brief 内部境界条件の座標値を取得し，登録する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [out] v          ベクトルパラメータ
+ */
 void ParseBC::get_Center(const string label_base, REAL_TYPE* v)
 {
   string label;
@@ -195,7 +221,11 @@ void ParseBC::get_Darcy(const string label_base, const int n, CompoList* cmp)
 
 
 // #################################################################
-// 内部境界条件の方向ベクトル値を取得し，登録する
+/**
+ * @brief 内部境界条件の方向ベクトル値を取得し，登録する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [out v          ベクトルパラメータ
+ */
 void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
 {
   string label;
@@ -1148,7 +1178,10 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-// 温度計算の場合の各媒質の初期値を取得する
+/**
+ * @brief 温度計算の場合の各媒質の初期値を取得する
+ * @param [in,out] cmp    CompoList
+ */
 void ParseBC::get_Medium_InitTemp(CompoList* cmp)
 {  
   string label, label_base;
@@ -1204,7 +1237,13 @@ void ParseBC::get_Medium_InitTemp(CompoList* cmp)
 
 
 // #################################################################
-// 隣接セル媒質のパラメータを取得する
+/**
+ * @brief 隣接セルラベルを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @param [in]  mat        MediumList
+ */
 void ParseBC::get_Neighbor(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
 {
   string label = label_base + "/NeighborMedium";
@@ -1235,7 +1274,11 @@ void ParseBC::get_Neighbor(const string label_base, const int n, CompoList* cmp,
 }
 
 // #################################################################
-// 内部境界条件の法線ベクトル値を取得し，登録する
+/**
+ * @brief 内部境界条件の法線ベクトル値を取得し，登録する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [out v          ベクトルパラメータ
+ */
 void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
 {
   string label;
@@ -1255,7 +1298,10 @@ void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
 
 
 // #################################################################
-// 基点の媒質名を取得する
+/**
+ * @brief Originのキーワードに対する文字列をパースし，返す
+ * @param [in] label_base ラベルディレクトリ
+ */
 string ParseBC::get_Origin(const string label_base)
 {
   string label = label_base + "/Origin";
@@ -1272,7 +1318,11 @@ string ParseBC::get_Origin(const string label_base)
 
 
 // #################################################################
-// 外部境界の遠方境界のパラメータを取得する
+/**
+ * @brief 外部境界の遠方境界のパラメータを取得する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [in] n          面番号
+ */
 void ParseBC::get_OBC_FarField(const string label_base, const int n)
 {
   BaseBc[n].set_pType(P_GRAD_ZERO);
@@ -1445,7 +1495,12 @@ void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind
 
 
 // #################################################################
-// 外部境界の流出条件のパラメータを取得する
+/**
+ * @brief 外部境界の流出条件のパラメータを取得する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [in] n          面番号
+ * @note 圧力の値は，Control::setParameters()で無次元化する
+ */
 void ParseBC::get_OBC_Outflow(const string label_base, const int n)
 {
   string str;
@@ -1529,11 +1584,10 @@ void ParseBC::get_OBC_Outflow(const string label_base, const int n)
 
 // #################################################################
 /**
- @fn void ParseBC::get_OBC_Periodic(const string label_base, const int n)
- @brief 外部境界の周期条件のパラメータを取得する
- @param label_base
- @param n 面番号
- @note 圧力の値は，Control::setParameters()で無次元化する
+ * @brief 外部境界の周期条件のパラメータを取得する
+ * @param [in] label_base ラベル
+ * @param [in] n          面番号
+ * @note 圧力の値は，Control::setParameters()で無次元化する
  */
 void ParseBC::get_OBC_Periodic(const string label_base, const int n)
 {
@@ -1658,7 +1712,11 @@ void ParseBC::get_OBC_Periodic(const string label_base, const int n)
 
 
 // #################################################################
-// 外部境界の流入条件のパラメータを取得する
+/**
+ * @brief 外部境界の流入条件のパラメータを取得する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [in] n          面番号
+ */
 void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
 {
   
@@ -1704,7 +1762,11 @@ void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
 
 
 // #################################################################
-//外部境界の流入条件のパラメータを取得する
+/**
+ * @brief トラクションフリーの外部境界のパラメータを取得する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [in] n          面番号
+ */
 void ParseBC::get_OBC_Trcfree(const string label_base, const int n)
 {
   BaseBc[n].set_pType(P_DIRICHLET);
@@ -1734,7 +1796,11 @@ void ParseBC::get_OBC_Trcfree(const string label_base, const int n)
 
 
 // #################################################################
-// 外部境界の壁面条件のパラメータを取得する
+/**
+ * @brief 外部境界の壁面条件のパラメータを取得する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [in] n          面番号
+ */
 void ParseBC::get_OBC_Wall(const string label_base, const int n)
 {
   REAL_TYPE vel, ct;
@@ -1836,7 +1902,10 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
 
 
 // #################################################################
-// 2相流問題で気相か液相かを取得する
+/**
+ * @brief 2相流問題で気相か液相かを取得する
+ * @param [out] cmp   CompoList
+ */
 void ParseBC::get_Phase(CompoList* cmp)
 {
   int m_phase;
@@ -1957,7 +2026,6 @@ int ParseBC::get_Vel_profile(const string label_base)
 
 // #################################################################
 /**
- @fn void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
  @brief 速度のパラメータを取得する
  @param label_base 
  @param ca 係数パラメータの配列
@@ -2050,8 +2118,11 @@ void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE*
 
 
 // #################################################################
-// TPのポインタを受け取る
-void ParseBC::importTP(TPControl* tp) 
+/**
+ * @brief TPのポインタを受け取る
+ * @param [in] tp  TPControlクラスのポインタ
+ */
+void ParseBC::importTP(TPControl* tp)
 { 
   if ( !tp ) Exit(0);
   tpCntl = tp;
@@ -2059,7 +2130,12 @@ void ParseBC::importTP(TPControl* tp)
 
 
 // #################################################################
-// コンポーネントが存在するかどうかを調べる
+/**
+ * @brief コンポーネントが存在するかどうかを調べる
+ * @param [in] label  テストするラベル
+ * @param [in] cmp    CompoList
+ * @retval bool値
+ */
 bool ParseBC::isComponent(const int label, const CompoList* cmp)
 {
   for (int n=1; n<=NoBC; n++) {
@@ -2070,7 +2146,12 @@ bool ParseBC::isComponent(const int label, const CompoList* cmp)
 
 
 // #################################################################
-// HTコンポーネントが存在するかどうかを調べる
+/**
+ * @brief HTコンポーネントが存在するかどうかを調べる
+ * @param [in] label  テストするラベル
+ * @param [in] cmp    CompoList
+ * @retval bool値
+ */
 bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 {
   for (int n=1; n<=NoBC; n++) {
@@ -2081,7 +2162,13 @@ bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 
 
 // #################################################################
-// 同じラベルが既にコンポーネントに登録されているかを調べる
+/**
+ * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
+ * @retval 重複していればfalseを返す
+ * @param [in] candidate テストするラベル
+ * @param [in] now       コンポーネントリストの現在までのエントリ番号
+ * @param [in] cmp       CompoList
+ */
 bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoList* cmp)
 {
   for (int i=1; i<now; i++) {
@@ -2093,9 +2180,16 @@ bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoL
 
 
 // #################################################################
-// 最初にBCの情報を登録，その後IDの情報を登録
-// パラメータファイルから各内部BCのidをパースし，cmpに保持する
-// 格納番号は1からスタート
+/**
+ * @brief CompoListに内部境界条件の情報を設定する
+ * @param [in]  C     Control
+ * @param [in]  mat   MediumList
+ * @param [out] cmp   CompoList
+ * @param [in]  polyP ポリゴン管理構造体
+ * @note 最初にBCの情報を登録，その後IDの情報を登録
+ * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
+ * @note 格納番号は1からスタート
+ */
 void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Control::Polygon_property* polyP)
 { 
   string str, label;
@@ -2335,7 +2429,12 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
 
 
 // #################################################################
-// パラメータファイルをパースして，外部境界条件を取得，保持する
+/**
+ * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
+ * @param [in,out] bc     BoundaryOuter
+ * @param [in]     MTITP  MediumTableInfo
+ * @param [out]    cmp    CompoList
+ */
 void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp)
 {
   string label_base, label_leaf, label;
@@ -2407,19 +2506,20 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
         get_OBC_SpecVH(label_leaf, i);
         break;
         
-      case OBC_TRC_FREE://Traction_Free
+      case OBC_TRC_FREE:
         get_OBC_Trcfree(label_leaf, i);
         break;
         
-      case OBC_FAR_FIELD://Far_Field
+      case OBC_FAR_FIELD:
         get_OBC_FarField(label_leaf, i);
         break;
         
-      case OBC_PERIODIC://Periodic
+      case OBC_PERIODIC:
         get_OBC_Periodic(label_leaf, i);
         break;
         
       case OBC_SYMMETRIC:
+      case OBC_INTRINSIC:
         // nothing to do
         break;
     }
@@ -2454,11 +2554,11 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
     label_leaf = label_base + "/" + str;
     
     // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
-    label = label_leaf + "/Kind";
+    label = label_leaf + "/alias";
     
     if ( !(tpCntl->GetValue(label, &str)) ) 
     {
-      Hostonly_ printf("\tParsing error : kind cannot found : FaceBC\n");
+      Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC\n");
       Exit(0);
     }
     
@@ -2611,7 +2711,11 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
 
 
 // #################################################################
-// 外部境界面の反対方向を返す
+/**
+ * @brief 外部境界面の反対方向を返す
+ * @param [in] dir 評価する方向
+ * @return dirと反対方向
+ */
 int ParseBC::oppositeDir(const int dir)
 {
   int n_pair=0;
@@ -2628,7 +2732,14 @@ int ParseBC::oppositeDir(const int dir)
 
 
 // #################################################################
-// コンポーネントの情報を表示する
+/**
+ * @brief コンポーネントの情報を表示する
+ * @param [in] fp  ファイルポインタ
+ * @param [in] gci グローバルなコンポーネントのインデクス
+ * @param [in] mat MediumList
+ * @param [in] cmp CompoList
+ * @param [in] bc  BoundaryOuter
+ */
 void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc)
 {
   int n, m;
@@ -3212,7 +3323,13 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 
 
 // #################################################################
-// 外部境界条件の各面の情報を表示する
+/**
+ * @brief 外部境界条件の各面の情報を表示する
+ * @param [in] fp    ファイルポインタ
+ * @param [in] G_reg グローバルの領域の大きさ
+ * @param [in] bc    BoundaryOuter
+ * @param [in] mat   MediumList
+ */
 void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat)
 {
   for (int i=0; i<NOFACE; i++) {
@@ -3229,7 +3346,14 @@ void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter
 
 
 // #################################################################
-// 速度の外部境界条件処理の表示
+/**
+ * @brief 速度の外部境界条件処理の表示
+ * @param [in] fp    ファイルポインタ
+ * @param [in] ref   BoundaryOuter
+ * @param [in] mat   MediumList
+ * @param [in] G_reg グローバルの領域の大きさ
+ * @param [in] face  面番号
+ */
 void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat, const REAL_TYPE* G_reg, const int face)
 {
   REAL_TYPE a, b, c;
@@ -3329,6 +3453,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       }
       break;
       
+      
     case OBC_OUTFLOW:
       fprintf(fp,"\t\t\tOutflow with %s convective velocity\n", (ref->get_ofv() == V_AVERAGE) ? "Average" : "Minmax" );
       if (ref->get_pType() == P_DIRICHLET) {
@@ -3350,8 +3475,6 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       }
       break;
       
-    case OBC_FAR_FIELD:
-      break;
       
     case OBC_PERIODIC:
       switch (ref->get_PrdcMode()) {
@@ -3393,8 +3516,12 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       }
       break;
       
+      
     case OBC_SYMMETRIC:
+    case OBC_INTRINSIC:
+    case OBC_FAR_FIELD:
       break;
+      
       
     default:
       printf("\n\tError : OuterBC\n");
@@ -3488,8 +3615,13 @@ void ParseBC::setControlVars(Control* Cref)
 
 
 // #################################################################
-//@brief 内部境界条件の照合を行う
-//@note SPEC_VEL_WHは陽には現れず，get_IBC_SpecVel()内で登録される
+/**
+ * @brief 内部境界条件の照合を行う
+ * @param [in]  keyword テストキーワード
+ * @param [in]  m       BaseBcの格納番号
+ * @param [out] cmp     CompoList
+ * @note SPEC_VEL_WHは陽には現れず，get_IBC_SpecVel()内で登録される
+ */
 void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 {
   if     ( FBUtility::compare(keyword, "Adiabatic") )            cmp[m].setType(ADIABATIC);
@@ -3520,7 +3652,11 @@ void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 
 
 // #################################################################
-//@brief 外部境界条件のキーワードを照合し，コードを登録する
+/**
+ * @brief 内部境界条件の照合を行う
+ * @param [in] keyword テストキーワード
+ * @param [in] m       コンポーネントの格納番号
+ */
 void ParseBC::setKeywordOBC(const string keyword, const int m)
 {
   if     ( FBUtility::compare(keyword, "Wall") )              BaseBc[m].set_Class(OBC_WALL);
@@ -3530,6 +3666,7 @@ void ParseBC::setKeywordOBC(const string keyword, const int m)
   else if( FBUtility::compare(keyword, "Periodic") )          BaseBc[m].set_Class(OBC_PERIODIC);
   else if( FBUtility::compare(keyword, "TractionFree") )      BaseBc[m].set_Class(OBC_TRC_FREE);
   else if( FBUtility::compare(keyword, "FarField") )          BaseBc[m].set_Class(OBC_FAR_FIELD);
+  else if( FBUtility::compare(keyword, "intrinsic") )         BaseBc[m].set_Class(OBC_INTRINSIC);
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword is described '%s'\n", keyword.c_str());
     Exit(0);
@@ -3538,7 +3675,12 @@ void ParseBC::setKeywordOBC(const string keyword, const int m)
 
 
 // #################################################################
-// 指定した媒質IDから参照物理量を設定する
+/**
+ * @brief 指定した媒質IDから参照物理量を設定する
+ * @param [in] mat MediumList
+ * @param [in] cmp CompoList
+ * @param [in] Ref 参照媒質番号
+ */
 void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref)
 {
   int m;
@@ -3570,24 +3712,3 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, 
   RefDensity      = rho;
   RefSpecificHeat = cp;
 }
-
-
-/* #################################################################
-// 境界名の取得
-void ParseBC::GetBoundaryNameforPLOT3D(vector<string>& bcname, CompoList* cmp)
-{
-  string str;
-  
-  //inner boundary
-  for (int odr=1; odr<=NoBC; odr++) {
-    str=cmp[odr].getLabel();
-    bcname.push_back(str.c_str());
-  }
-  
-  //outer boundary
-  for (int i=0; i<NoBaseBC; i++) {
-    //cout << i << " : name = " << BaseBc[i].get_Alias().c_str() << endl;
-    bcname.push_back(BaseBc[i].get_Alias().c_str());
-  }
-}
- */

@@ -113,6 +113,7 @@
 #define OBC_PERIODIC  5
 #define OBC_TRC_FREE  6
 #define OBC_FAR_FIELD 7
+#define OBC_INTRINSIC 8
 
 // エンコードビット　共通
 #define ACTIVE_BIT 31

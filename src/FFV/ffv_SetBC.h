@@ -201,18 +201,7 @@ public:
                          double& flop);
   
   
-  /**
-   @brief 速度境界条件による流束の修正
-   @param [in,out] wv     疑似速度ベクトル u^*
-   @param [in]     v      セルセンター速度ベクトル u^n
-   @param [in]     vf     セルフェイス速度ベクトル u^n
-   @param [in]     bv     BCindex V
-   @param [in]     tm     無次元時刻
-   @param [in]     C      Control class
-   @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
-   @param [in]     v00    基準速度
-   @param [out]    flop   flop count
-   */
+  // 速度境界条件による流束の修正
   void mod_Pvec_Flux (REAL_TYPE* wv,
                       REAL_TYPE* v,
                       REAL_TYPE* vf, 

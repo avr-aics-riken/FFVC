@@ -603,6 +603,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( (typ==OBC_SPEC_VEL) ||
                  (typ==OBC_OUTFLOW)  ||
                  (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_INTRINSIC)||
                  (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
@@ -625,6 +626,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( (typ==OBC_SPEC_VEL) ||
                  (typ==OBC_OUTFLOW)  ||
                  (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_INTRINSIC)||
                  (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
@@ -647,6 +649,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( (typ==OBC_SPEC_VEL) ||
                  (typ==OBC_OUTFLOW)  ||
                  (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_INTRINSIC)||
                  (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
@@ -669,6 +672,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( (typ==OBC_SPEC_VEL) ||
                  (typ==OBC_OUTFLOW)  ||
                  (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_INTRINSIC)||
                  (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
@@ -691,6 +695,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( (typ==OBC_SPEC_VEL) ||
                  (typ==OBC_OUTFLOW)  ||
                  (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_INTRINSIC)||
                  (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
@@ -713,6 +718,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( (typ==OBC_SPEC_VEL) ||
                  (typ==OBC_OUTFLOW)  ||
                  (typ==OBC_FAR_FIELD)||
+                 (typ==OBC_INTRINSIC)||
                  (typ==OBC_TRC_FREE) )
             {
               if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
@@ -5627,7 +5633,11 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
         }
         break;
         
-        // 外部境界値を指定
+      case OBC_INTRINSIC:
+        encPbit_OBC(face, bcp, "Neumann", false);
+        break;
+        
+      // 外部境界値を指定
       case OBC_PERIODIC:
         break;
         
@@ -5731,6 +5741,10 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         
       case OBC_SYMMETRIC:
         encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 境界値指定
+        break;
+        
+      case OBC_INTRINSIC:
+        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
         break;
         
       case OBC_PERIODIC:

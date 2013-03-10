@@ -2195,7 +2195,11 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
 
 
 // #################################################################
-// 組み込み例題の表示
+/**
+ * @brief 例題の設定
+ * @param [in] Cref    コントロールクラス
+ * @param [in] tpCntl  テキストパーサーのラッパー
+ */
 void FFV::getExample(Control* Cref, TPControl* tpCntl)
 {
   string keyword;

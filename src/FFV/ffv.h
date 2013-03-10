@@ -590,11 +590,7 @@ private:
   int get_DomainInfo(TPControl* tp_dom);
   
   
-  /**
-   * @brief 組み込み例題の設定
-   * @param [in] Cref    コントロールクラス
-   * @param [in] tpCntl  テキストパーサーのラッパー
-   */
+  // 例題の表示
   void getExample(Control* Cref, TPControl* tpCntl);
   
   
