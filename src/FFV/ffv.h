@@ -68,6 +68,7 @@
 #include "IP_Cylinder.h"
 #include "IP_Polygon.h"
 #include "IP_Sphere.h"
+#include "IP_Jet.h"
 
 // PLOT3D
 #include "ffv_PLOT3D.h"

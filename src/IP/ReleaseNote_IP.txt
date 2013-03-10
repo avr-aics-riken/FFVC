@@ -12,6 +12,9 @@ Release Note
   @author kero
 
 ****************************************************************************
+
+Ver 1.2.3     8 Mar. 2013
+  - IP_Jetの速度境界条件 vobc_intrinsic(), vobc_jet_()を導入
   
 Ver 1.2.2    26 Jan. 2013
   - IP_Jet

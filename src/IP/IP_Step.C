@@ -168,9 +168,10 @@ void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
     Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
     Exit(0);
   }
-  if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
-       ((int)(reg[1]/pch[1]) != sz[1]) ||
-       ((int)(reg[2]/pch[2]) != sz[2]) ) {
+  
+  if ( (reg[0] != (REAL_TYPE)sz[0]*pch[0]) ||
+       (reg[1] != (REAL_TYPE)sz[1]*pch[1]) ||
+       (reg[2] != (REAL_TYPE)sz[2]*pch[2]) ) {
     Hostonly_ printf("Error : Invalid parameters among 'GlobalRegion', 'GlobalPitch', and 'GlobalVoxel' in DomainInfo section.\n");
     Exit(0);
   }

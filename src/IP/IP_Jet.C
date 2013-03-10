@@ -18,7 +18,7 @@
 
 
 // #################################################################
-/** パラメータをロード
+/* @brief パラメータをロード
  * @param [in] R      Controlクラス
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
@@ -52,7 +52,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   
   
   // Ring1
-  label="/Parameter/IntrinsicExample/Ring1/UseRing1";
+  label="/Parameter/IntrinsicExample/Ring1/UseRing";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -114,7 +114,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   
   
   // Ring2
-  label="/Parameter/IntrinsicExample/Ring2/UseRing2";
+  label="/Parameter/IntrinsicExample/Ring2/UseRing";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -200,7 +200,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
 
 
 // #################################################################
-/** 領域を設定する
+/* @brief 領域を設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
@@ -223,10 +223,9 @@ void IP_Jet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg
     Exit(0);
   }
   
-  if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
-       ((int)(reg[1]/pch[1]) != sz[1]) ||
-       ((int)(reg[2]/pch[2]) != sz[2]) )
-  {
+  if ((reg[0] != (REAL_TYPE)sz[0]*pch[0]) ||
+      (reg[1] != (REAL_TYPE)sz[1]*pch[1]) ||
+      (reg[2] != (REAL_TYPE)sz[2]*pch[2]) ) {
     Hostonly_ printf("Error : Invalid parameters among 'GlobalRegion', 'GlobalPitch', and 'GlobalVoxel' in DomainInfo section.\n");
     Exit(0);
   }
@@ -245,7 +244,7 @@ void IP_Jet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg
 
 
 // #################################################################
-/**
+/*
  * @brief パラメータの表示
  * @param [in] fp ファイルポインタ
  * @param [in] R  コントロールクラスのポインタ
@@ -258,15 +257,27 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
     Exit(0);
   }
   
+  // REAL_TYPE r1i, r1o;        ///< Ring1の内外径
+  // REAL_TYPE r2i, r2o;        ///< Ring2の内外径
+  
+  /*
+   
+   0           r1i   r1o  r2i   r2o
+   |------------+-----+----+-----+-------> Radius
+   |    Solid   |  F  |  S |  F  |  Solid
+   
+   */
+  
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
+  
   
   // Ring1のチェック
   if ( pat_1 == ON )
   {
-    if ( r1i < r0 )
+    if ( r1i < 0.0 )
     {
-      stamped_printf("\tInner Radius of Ring1 must be greater than Radius of Core\n");
+      stamped_printf("\tInner Radius of Ring1 must be positive\n");
       Exit(0);
     }
     
@@ -325,7 +336,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/** 計算領域のセルIDを設定する
+/* @brief 計算領域のセルIDを設定する
  * @param [in,out] mid   媒質情報の配列
  * @param [in]     R     Controlクラスのポインタ
  * @param [in]     G_org グローバルな原点（無次元）

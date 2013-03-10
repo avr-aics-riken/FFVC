@@ -909,6 +909,7 @@ void FFV::connectExample(Control* Cref)
   else if ( Cref->Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
   else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
   else if ( Cref->Mode.Example == id_Sphere )  Ex = dynamic_cast<Intrinsic*>(new IP_Sphere);
+  else if ( Cref->Mode.Example == id_Jet )     Ex = dynamic_cast<Intrinsic*>(new IP_Jet);
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
@@ -2217,6 +2218,7 @@ void FFV::getExample(Control* Cref, TPControl* tpCntl)
   else if( FBUtility::compare(keyword, "BackStep") )          Cref->Mode.Example = id_Step;
   else if( FBUtility::compare(keyword, "Users") )             Cref->Mode.Example = id_Polygon;
   else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
+  else if( FBUtility::compare(keyword, "Jet") )               Cref->Mode.Example = id_Jet;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -3231,6 +3233,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       {
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       }
+      
       Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
       break;
   }

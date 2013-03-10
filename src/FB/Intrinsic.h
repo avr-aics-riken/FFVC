@@ -43,7 +43,8 @@ enum Intrinsic_class
   id_Cylinder,
   id_Step,
   id_Polygon,
-  id_Sphere
+  id_Sphere,
+  id_Jet
 };
 
 

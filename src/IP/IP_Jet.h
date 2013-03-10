@@ -113,6 +113,20 @@ public:
     return ("Jet");
   }
   
+
+// IP_boundary.f90
+#ifdef _WIN32
+  
+#define vobc_pv_jet_       VOBC_PV_JET
+
+#endif // _WIN32
+  
+  extern "C" {
+    
+    void vobc_pv_jet_(REAL_TYPE* v, int* sz, int* g, int* st, int* ed, int* bd, float* vf, int* odr, REAL_TYPE* v00, REAL_TYPE* nv, double* flop);
+    
+  }
+  
 };
 
 #endif // _IP_JET_H_

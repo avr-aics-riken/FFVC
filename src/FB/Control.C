@@ -818,7 +818,7 @@ void Control::get_FileIO()
   }
   */
   
-  // 並列入出力モード
+  /* 並列入出力モード
   label = "/Steer/FileIO/IOmode";
   
   if ( !(tpCntl->GetValue(label, &str )) )
@@ -835,6 +835,10 @@ void Control::get_FileIO()
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
+   */
+  
+  // Default setting
+  FIO.IOmode = IO_DISTRIBUTE;
   
   // 逐次実行の場合には、強制的に IO_GATHER
   if ( (Parallelism == Serial) || (Parallelism == OpenMP) )
@@ -916,6 +920,7 @@ void Control::get_FileIO()
     Exit(0);
   }
   
+  // 拡張子 plot3dの場合は、様々なのでPLOT3Dクラスで処理
   file_fmt_ext = "sph"; //default
   
   if (FIO.Format == bov_fmt)
@@ -3849,7 +3854,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   
-  // InputMode >> デフォルトでローカル
+  // InputMode >> Distributed by default
   fprintf(fp,"\t     IO Mode                  :   %s\n", (FIO.IOmode==IO_GATHER) ? "Gathered" : "Distributed");
   
   
