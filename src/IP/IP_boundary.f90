@@ -30,18 +30,20 @@
 !!  mskで部分的な速度を与える
 !<
 subroutine vobc_pv_jet (wv, sz, g, dh, rei, v0, bv, vec, face, &
-  pat1, r1i, r1o, omg1, q1, n1, a1, pat2, r2i, r2o, omg2, q2, n2, a2, &
+  pat1, r1i, r1o, omg1, q1, a1, pat2, r2i, r2o, omg2, q2, a2, &
   flop)
 implicit none
 include '../F_CORE/ffv_f_params.h'
 integer                                                   ::  i, j, k, g, face
-integer                                                   ::  ix, jx, kx
+integer                                                   ::  ix, jx, kx, pat1, pat2
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  Up, Vp, Wp, Ur, Vr, Wr
 real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
 real                                                      ::  fu, fv, fw, c, ac, msk
 real                                                      ::  u_bc, v_bc, w_bc, m
+real                                                      ::  r1i, r1o, omg1, q1, a1
+real                                                      ::  r2i, r2o, omg2, q2, a2
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
 real, dimension(3)                                        ::  vec
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv

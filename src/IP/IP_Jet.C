@@ -18,6 +18,41 @@
 
 
 // #################################################################
+/* @brief Jetの流入強化条件
+ * @param [in,out] v     速度
+ * @param [in]     R     Controlクラスのポインタ
+ * @param 
+ */
+void IP_Jet::vobc_jet_inflow(REAL_TYPE* v,
+                             Control* R,
+                             )
+{
+  
+  // グローバル
+  REAL_TYPE dh = deltaX;
+  REAL_TYPE ox_g = G_origin[0];
+  REAL_TYPE oy_g = G_origin[1];
+  REAL_TYPE oz_g = G_origin[2];
+  
+  // ノードローカル
+  REAL_TYPE ox = origin[0];
+  REAL_TYPE oy = origin[1];
+  REAL_TYPE oz = origin[2];
+  
+  REAL_TYPE x, y, z, r;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  
+  
+  
+}
+                             
+                     
+// #################################################################
 /* @brief パラメータをロード
  * @param [in] R      Controlクラス
  * @param [in] tpCntl テキストパーサクラス
