@@ -560,9 +560,33 @@ void FFV::NS_FS_E_Binary()
     }
 
     
-    // 周期型の速度境界条件
+    // 速度境界条件
     TIMING_start(tm_vec_BC);
     flop=0.0;
+    
+    // トラクションフリーの場合
+    if ( C.isTfree() ) {
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_vectors_comm);
+        if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);
+      }
+    }
+    for (int face=0; face<NOFACE; face++) {
+      if( nID[face] < 0 )
+      {
+        if ( obc[face].get_Class() == OBC_TRC_FREE )
+        {
+          vobc_tfree_(d_v, size, &gd, &face, d_vf, d_bv, &flop);
+        }
+        else if ( obc[face].get_Class() == OBC_FAR_FIELD )
+        {
+          vobc_neumann_(d_v, size, &gd, &face);
+        }
+      }
+    }
+    
     BC.OuterVBC_Periodic(d_v);
     BC.InnerVBC_Periodic(d_v, d_bcd);
     TIMING_stop(tm_vec_BC, flop);
@@ -627,7 +651,7 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop(tm_domain_monitor, flop);
   
   
-  // 流出境界のガイドセル値の更新と速度境界条件
+  // 流出境界のガイドセル値の更新とガイドセル代入
   TIMING_start(tm_VBC_update);
   flop=0.0;
   BC.InnerVBC(d_v, d_bcv, CurrentTime, v00, flop);

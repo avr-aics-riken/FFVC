@@ -474,7 +474,14 @@ extern "C" {
                       int* bv,
                       double* flop);
   
-  void vobc_tfree_        (REAL_TYPE* v, int* sz, int* g, int* face, double* flop);
+  void vobc_tfree_ (REAL_TYPE* v,
+                    int* sz,
+                    int* g,
+                    int* face,
+                    REAL_TYPE* vf,
+                    int* bv,
+                    double* flop);
+  
   void vobc_update_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE*vc, int* face);
   
   void vobc_div_drchlt_   (REAL_TYPE* div,

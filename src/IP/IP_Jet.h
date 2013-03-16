@@ -114,15 +114,7 @@ public:
   }
   
   // 流入境界条件
-  void vobc_jet_inflow(REAL_TYPE* v,
-                       Control* R,
-                       REAL_TYPE* G_org
-                       int* bd,
-                       float* vf,
-                       int* odr,
-                       REAL_TYPE* v00,
-                       REAL_TYPE* nv,
-                       double* flop);
+  void vobc_jet_inflow(REAL_TYPE* v, double* flop);
   
 
 /* IP_boundary.f90

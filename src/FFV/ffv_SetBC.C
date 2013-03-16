@@ -962,14 +962,9 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
           break;
         }
           
-        case OBC_SYMMETRIC:
-          // 境界面の法線速度はゼロなので，修正不要
-          break;
-          
-        case OBC_TRC_FREE:
-        case OBC_FAR_FIELD:
-          // 境界値を与え，通常スキームで計算するので不要
-          break;
+        // case OBC_SYMMETRIC: 境界面の法線速度はゼロなので，修正不要 
+        // case OBC_TRC_FREE:  境界値を与え，通常スキームで計算するので不要
+        // case OBC_FAR_FIELD: 境界値を与え，通常スキームで計算するので不要
       }
     }
 
@@ -1131,7 +1126,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
   for (int face=0; face<NOFACE; face++) {
 
     // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    // @note ここでスキップする場合には，tfreeの処理でMPI通信をしないこと（参加しないノードがあるためエラーとなる）
+    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
     if( nID[face] < 0 )
     {
       switch ( obc[face].get_Class() )
@@ -1143,14 +1138,6 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
         case OBC_SPEC_VEL:
           extractVel_OBC(face, vec, tm, v00, flop);
           vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
-          break;
-          
-        case OBC_TRC_FREE:
-          vobc_tfree_(d_v, size, &gd, &face, &flop);
-          break;
-          
-        case OBC_FAR_FIELD:
-          vobc_neumann_(d_v, size, &gd, &face);
           break;
           
         case OBC_SYMMETRIC:

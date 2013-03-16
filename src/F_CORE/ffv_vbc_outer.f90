@@ -1163,7 +1163,7 @@
     subroutine vobc_tfree (v, sz, g, face, vf, bv, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g, ii, jj, kk
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  v1, v2, v3, v4
@@ -1176,130 +1176,112 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
-!$OMP PRIVATE(i, j, k, ii, jj, kk, v1, v2, v3, v4)
+!$OMP PRIVATE(i, j, k, v1, v2, v3, v4)
 
     FACES : select case (face)
     case (X_minus)
-      i = 1
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        if ( ibits(bv(1, j, k), bc_face_W, bitw_5) == obc_mask ) then
-          v1 = 0.5 * (v(i-1, j+1, k  , 1) + v(i, j+1, k  , 1))
-          v2 = 0.5 * (v(i-1, j-1, k  , 1) + v(i, j-1, k  , 1))
-          v3 = 0.5 * (v(i-1, j  , k+1, 1) + v(i, j  , k+1, 1))
-          v4 = 0.5 * (v(i-1, j  , k-1, 1) + v(i, j  , k-1, 1))
+        v1 = 0.5 * (vf(1, j  , k  , 2) + vf(1, j-1, k  , 2))
+        v2 = 0.5 * (vf(0, j+1, k  , 1) - vf(0, j-1, k  , 1))
+        v3 = 0.5 * (vf(1, j  , k  , 3) + vf(1, j  , k-1, 3))
+        v4 = 0.5 * (vf(0, j  , k+1, 1) - vf(0, j  , k-1, 1))
 
-          v(i-1, j, k, 1) = v(i, j, k, 1)
-          v(i-1, j, k, 2) = v(i, j, k, 2) + 0.5 * (v1 - v2)
-          v(i-1, j, k, 3) = v(i, j, k, 3) + 0.5 * (v3 - v4)
-        end if
+        v(0, j, k, 1) = v(1, j, k, 1)
+        v(0, j, k, 2) = v1 + v2
+        v(0, j, k, 3) = v3 + v4
       end do
       end do
 !$OMP END DO
       
 
     case (X_plus)
-      i = ix
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
-          v1 = 0.5 * (v(i+1, j+1, k  , 1) + v(i, j+1, k  , 1))
-          v2 = 0.5 * (v(i+1, j-1, k  , 1) + v(i, j-1, k  , 1))
-          v3 = 0.5 * (v(i+1, j  , k+1, 1) + v(i, j  , k+1, 1))
-          v4 = 0.5 * (v(i+1, j  , k-1, 1) + v(i, j  , k-1, 1))
+        v1 = 0.5 * (vf(ix, j  , k  , 2) + vf(ix, j-1, k  , 2))
+        v2 = 0.5 * (vf(ix, j+1, k  , 1) - vf(ix, j-1, k  , 1))
+        v3 = 0.5 * (vf(ix, j  , k  , 3) + vf(ix, j  , k-1, 3))
+        v4 = 0.5 * (vf(ix, j  , k+1, 1) - vf(ix, j  , k-1, 1))
         
-          v(i+1, j, k, 1) = v(i, j, k, 1)
-          v(i+1, j, k, 2) = v(i, j, k, 2) - 0.5 * (v1 - v2)
-          v(i+1, j, k, 3) = v(i, j, k, 3) - 0.5 * (v3 - v4)
-        end if
+        v(ix+1, j, k, 1) = v(ix, j, k, 1)
+        v(ix+1, j, k, 2) = v1 - v2
+        v(ix+1, j, k, 3) = v3 - v4
       end do
       end do
 !$OMP END DO
       
 
     case (Y_minus)
-      j = 1
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        if ( ibits(bv(i, 1, k), bc_face_S, bitw_5) == obc_mask ) then
-          v1 = 0.5 * (v(i+1, j-1, k  , 2) + v(i+1, j, k  , 2))
-          v2 = 0.5 * (v(i-1, j-1, k  , 2) + v(i-1, j, k  , 2))
-          v3 = 0.5 * (v(i  , j-1, k+1, 2) + v(i  , j, k+1, 2))
-          v4 = 0.5 * (v(i  , j-1, k-1, 2) + v(i  , j, k-1, 2))
-                
-          v(i, j-1, k, 1) = v(i, j, k, 1) + 0.5 * (v1 - v2)
-          v(i, j-1, k, 2) = v(i, j, k, 2)
-          v(i, j-1, k, 3) = v(i, j, k, 3) + 0.5 * (v3 - v4)
-        end if
+        v1 = 0.5 * (vf(i  , 1, k  , 1) + vf(i-1, 1, k  , 1))
+        v2 = 0.5 * (vf(i+1, 0, k  , 2) - vf(i-1, 0, k  , 2))
+        v3 = 0.5 * (vf(i  , 1, k  , 3) + vf(i  , 1, k-1, 3))
+        v4 = 0.5 * (vf(i  , 0, k+1, 2) - vf(i  , 0, k-1, 2))
+
+        v(i, 0, k, 1) = v1 + v2
+        v(i, 0, k, 2) = v(i, 1, k, 2)
+        v(i, 0, k, 3) = v3 + v4
       end do
       end do
 !$OMP END DO
       
 
     case (Y_plus)
-      j = jx
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
-          v1 = 0.5 * (v(i+1, j+1, k  , 2) + v(i+1, j, k  , 2))
-          v2 = 0.5 * (v(i-1, j+1, k  , 2) + v(i-1, j, k  , 2))
-          v3 = 0.5 * (v(i  , j+1, k+1, 2) + v(i  , j, k+1, 2))
-          v4 = 0.5 * (v(i  , j+1, k-1, 2) + v(i  , j, k-1, 2))
-                
-          v(i, j+1, k, 1) = v(i, j, k, 1) - 0.5 * (v1 - v2)
-          v(i, j+1, k, 2) = v(i, j, k, 2)
-          v(i, j+1, k, 3) = v(i, j, k, 3) - 0.5 * (v3 - v4)
-        end if
+        v1 = 0.5 * (vf(i  , jx, k  , 1) + vf(i-1, jx, k  , 1))
+        v2 = 0.5 * (vf(i+1, jx, k  , 2) - vf(i-1, jx, k  , 2))
+        v3 = 0.5 * (vf(i  , jx, k  , 3) + vf(i  , jx, k-1, 3))
+        v4 = 0.5 * (vf(i  , jx, k+1, 2) - vf(i  , jx, k-1, 2))
+
+        v(i, jx+1, k, 1) = v1 - v2
+        v(i, jx+1, k, 2) = v(i, jx, k, 2)
+        v(i, jx+1, k, 3) = v3 - v4
       end do
       end do
 !$OMP END DO
       
 
     case (Z_minus)
-      k=1
       
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        if ( ibits(bv(i, j, 1), bc_face_B, bitw_5) == obc_mask ) then
-          v1 = 0.5 * (v(i+1, j  , k-1, 3) + v(i+1, j  , k, 3))
-          v2 = 0.5 * (v(i-1, j  , k-1, 3) + v(i-1, j  , k, 3))
-          v3 = 0.5 * (v(i  , j+1, k-1, 3) + v(i  , j+1, k, 3))
-          v4 = 0.5 * (v(i  , j-1, k-1, 3) + v(i  , j-1, k, 3))
-                
-          v(i, j, k-1, 1) = v(i, j, k, 1) + 0.5 * (v1 - v2)
-          v(i, j, k-1, 2) = v(i, j, k, 2) + 0.5 * (v3 - v4)
-          v(i, j, k-1, 3) = v(i, j, k, 3)
-        end if
+        v1 = 0.5 * (vf(i  , j  , 1, 1) + vf(i-1, j  , 1, 1))
+        v2 = 0.5 * (vf(i+1, j  , 0, 3) - vf(i-1, j  , 0, 3))
+        v3 = 0.5 * (vf(i  , j  , 1, 2) + vf(i  , j-1, 1, 2))
+        v4 = 0.5 * (vf(i  , j+1, 0, 3) - vf(i  , j-1, 0, 3))
+
+        v(i, j, 0, 1) = v1 + v2
+        v(i, j, 0, 2) = v3 + v4
+        v(i, j, 0, 3) = v(i, j, 1, 3)
       end do
       end do
 !$OMP END DO
       
 
     case (Z_plus)
-      k = kx
 
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
-          v1= 0.5 * (v(i+1, j  , k+1, 3) + v(i+1, j  , k, 3))
-          v2= 0.5 * (v(i-1, j  , k+1, 3) + v(i-1, j  , k, 3))
-          v3= 0.5 * (v(i  , j+1, k+1, 3) + v(i  , j+1, k, 3))
-          v4= 0.5 * (v(i  , j-1, k+1, 3) + v(i  , j-1, k, 3))
-                
-          v(i, j, k+1, 1) = v(i, j, k, 1) - 0.5 * (v1 - v2)
-          v(i, j, k+1, 2) = v(i, j, k, 2) - 0.5 * (v3 - v4)
-          v(i, j, k+1, 3) = v(i, j, k, 3)
-        end if
+        v1 = 0.5 * (vf(i  , j  , kx, 1) + vf(i-1, j  , kx, 1))
+        v2 = 0.5 * (vf(i+1, j  , kx, 3) - vf(i-1, j  , kx, 3))
+        v3 = 0.5 * (vf(i  , j  , kx, 2) + vf(i  , j-1, kx, 2))
+        v4 = 0.5 * (vf(i  , j+1, kx, 3) - vf(i  , j-1, kx, 3))
+
+        v(i, j, kx+1, 1) = v1 - v2
+        v(i, j, kx+1, 2) = v3 - v4
+        v(i, j, kx+1, 3) = v(i, j, kx, 3)
       end do
       end do
 !$OMP END DO
@@ -1310,33 +1292,33 @@
 !$OMP END PARALLEL
 
 
-  rix = dble(jx)*dble(kx)
-  rjx = dble(ix)*dble(kx)
-  rkx = dble(ix)*dble(jx)
+    rix = dble(jx)*dble(kx)
+    rjx = dble(ix)*dble(kx)
+    rkx = dble(ix)*dble(jx)
 
-  flop = flop + 9.0d0
+    flop = flop + 9.0d0
 
-  FACES2 : select case (face)
-  case (X_minus)
-    flop = flop + rix*12.0d0
+    FACES2 : select case (face)
+    case (X_minus)
+      flop = flop + rix*10.0d0
 
-  case (X_plus)
-    flop = flop + rix*12.0d0
+    case (X_plus)
+      flop = flop + rix*10.0d0
 
-  case (Y_minus)
-    flop = flop + rjx*12.0d0
+    case (Y_minus)
+      flop = flop + rjx*10.0d0
 
-  case (Y_plus)
-    flop = flop + rjx*12.0d0
+    case (Y_plus)
+      flop = flop + rjx*10.0d0
 
-  case (Z_minus)
-    flop = flop + rkx*12.0d0
+    case (Z_minus)
+      flop = flop + rkx*10.0d0
 
-  case (Z_plus)
-    flop = flop + rkx*12.0d0
+    case (Z_plus)
+      flop = flop + rkx*10.0d0
 
-  case default
-  end select FACES2
+    case default
+    end select FACES2
 
 
     return

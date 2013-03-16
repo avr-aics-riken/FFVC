@@ -2837,6 +2837,14 @@ void FFV::setEnsComponent()
     if ( cmp[n].isMONITOR() ) c++;
   }
   
+  // トラクションフリー
+  c = 0;
+  for (int n=0; n<NOFACE; n++)
+  {
+    if ( obc[n].get_Class()== OBC_TRC_FREE ) c++;
+  }
+  if ( c>0 ) C.EnsCompo.tfree = ON;
+  
   // MONITOR_LISTでCELL_MONITORが指定されている場合，C.EnsCompo.monitor==ON
   if ( (C.isMonitor() == ON) && (c < 1) ) 
   {

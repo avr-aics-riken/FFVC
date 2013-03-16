@@ -507,7 +507,7 @@ public:
     int unit;      /// 出力単位 (DImensional / NonDimensional)
   } Sampling_Def;
   
-  /** コンポーネントの存在 */
+  /** コンポーネント/BCの存在 */
   typedef struct 
   {
     int forcing;
@@ -516,6 +516,7 @@ public:
     int periodic;
     int fraction;
     int monitor;
+    int tfree;
   } Ens_of_Compo;
   
   
@@ -859,6 +860,7 @@ public:
     EnsCompo.periodic= 0;
     EnsCompo.fraction= 0;
     EnsCompo.monitor = 0;
+    EnsCompo.tfree   = 0;
   }
   
   /**　デストラクタ */
@@ -1218,6 +1220,12 @@ public:
   bool isHeatProblem() const 
   {
     return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
+  }
+  
+  //@brief トラクションフリー境界があれば1を返す
+  int isTfree() const
+  {
+    return EnsCompo.tfree;
   }
   
 

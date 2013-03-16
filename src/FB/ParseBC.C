@@ -3468,7 +3468,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       break;
       
     case OBC_TRC_FREE:
-      //fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
+      fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
       
       if ( HeatProblem ) {
         fprintf(fp, "\t\t\t    Ambient Temperature  = %12.6e \n", ref->get_Temp());

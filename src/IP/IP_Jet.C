@@ -20,12 +20,10 @@
 // #################################################################
 /* @brief Jetの流入強化条件
  * @param [in,out] v     速度
- * @param [in]     R     Controlクラスのポインタ
- * @param 
+ * @param [out]    sum   速度の積算 \sum{v}
+ * @param [in,out] flop  flop count
  */
-void IP_Jet::vobc_jet_inflow(REAL_TYPE* v,
-                             Control* R,
-                             )
+void IP_Jet::vobc_jet_inflow(REAL_TYPE* v)
 {
   
   // グローバル
@@ -39,14 +37,68 @@ void IP_Jet::vobc_jet_inflow(REAL_TYPE* v,
   REAL_TYPE oy = origin[1];
   REAL_TYPE oz = origin[2];
   
-  REAL_TYPE x, y, z, r;
-  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
+  REAL_TYPE r, ri, ro, x, y, z;
+  REAL_TYPE u1_in = (q1 / a1) / RefV;
+  REAL_TYPE u2_in = (q2 / a2) / RefV;
   
+  // X-側のJet吹き出し部設定
+  if ( nID[X_MINUS] < 0 )
+  {
+    int i=0;
+    
+    // Ring1
+    ri = r1i;
+    ro = r1o;
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg1, dh, u1_in) \
+private(x, y, z, r) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        x = ox + ( (REAL_TYPE)i-0.5 ) * dh;
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+
+        r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -omg1 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  omg1 * y;
+        }
+      }
+    }
+    
+    // Ring2
+    ri = r2i;
+    ro = r2o;
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg2, dh, u2_in) \
+private(x, y, z, r) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        x = ox + ( (REAL_TYPE)i-0.5 ) * dh;
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -omg2 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  omg2 * y;
+        }
+      }
+    }
+    
+    
+  } // X_MINUS面の処理
   
   
 }
