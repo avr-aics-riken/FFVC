@@ -504,11 +504,8 @@ private:
    */
   void DomainInitialize(TPControl* tp_dom);
   
-  /**
-   * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
-   * @param [in] ptr  BoundaryOuterクラスのポインタ
-   * @param [in] R    Controlクラスのポインタ
-   */
+  
+  // 外部計算領域の各面における総流量と対流流出速度を計算する
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
   

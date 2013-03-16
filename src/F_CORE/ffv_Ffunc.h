@@ -70,7 +70,7 @@
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
 #define vobc_div_pv_oflow_  VOBC_DIV_PV_OFLOW
 #define vobc_div_oflow_     VOBC_DIV_OFLOW
-#define vobc_div_vec_       VOBC_DIV_VEC
+#define vobc_get_massflow_  VOBC_GET_MASSFLOW
 
 // ffv_velocity_binary.f90
 #define ab2_                AB2
@@ -503,13 +503,13 @@ extern "C" {
                            int* bv,
                            double* flop);
   
-  void vobc_div_vec_(int* sz,
-                     int* g,
-                     int* face,
-                     REAL_TYPE* aa,
-                     REAL_TYPE* vf,
-                     int* bv,
-                     double* flop);
+  void vobc_get_massflow_(int* sz,
+                          int* g,
+                          int* face,
+                          REAL_TYPE* aa,
+                          REAL_TYPE* vf,
+                          int* bv,
+                          double* flop);
 
   
   //***********************************************************************************************

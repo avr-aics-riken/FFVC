@@ -522,15 +522,14 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
+    // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
+    vec[0] = vec[1] = vec[2] = 0.0;
+    obc[face].set_DomainV(vec, "vector");
+    
     // 内部領域のときは，処理しない
     if( nID[face] < 0 )
     {
-      vec[0] =  0.0;   // sum
-      vec[1] =  1.0e6; // min
-      vec[2] = -1.0e6; // max
-      obc[face].set_DomainV(vec, face, OBC_OUTFLOW); // gatherする場合のダミー値を与えておく, OBC_OUTFLOWで初期値を設定
-
-      // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
+      
       switch (typ)
       {
         case OBC_SPEC_VEL:
@@ -539,21 +538,21 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
           vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
-          obc[face].set_DomainV(vec, face, typ);
+          obc[face].setDomainV(vec, "scalar");
           break;
           
+        // 対称面で流束はゼロ．divergence_()でマスクによりゼロとなっている
         case OBC_SYMMETRIC:
-          // 対称面で流束はゼロ．divergence_()でマスクによりゼロとなっている
           vobc_neumann_(v, size, &gd, &face);
-          vec[0] = vec[1] = vec[2] = 0.0;
           vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
-          obc[face].set_DomainV(vec, face, typ);
+          // obc[face].setDomainV()は不要
           break;
           
+        // 流入出量\sum{vf}がvec[0]を使い、obc[].dm[0]に保存される
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
-          vobc_div_vec_(size, &gd, &face, vec, vf, bv, &fcount); // vecを流用
-          obc[face].set_DomainV(vec, face, typ);
+          vobc_get_massflow_(size, &gd, &face, vec, vf, bv, &fcount);
+          obc[face].setDomainV(vec, "scalar");
           break;
       }
     }
@@ -563,15 +562,16 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
+    vec[0] = vec[1] = vec[2] = 0.0;
+    obc[face].set_DomainV(vec, "vector");
+    
     // 内部領域のときは，処理しない
     if( nID[face] < 0 )
     {
-      // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
       if (typ == OBC_OUTFLOW)
       {
-        vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount); // vecは流用
-        obc[face].set_DomainV(vec, face, OBC_OUTFLOW);
-        //printf("%e %e %e\n", vec[0], vec[1], vec[2]);
+        vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount);
+        obc[face].setDomainV(vec, "vector");
       }
     }
   }
@@ -1195,6 +1195,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
           break;
           
         case OBC_FAR_FIELD:
+        case OBC_TRC_FREE:
           vobc_neumann_(d_vc, size, &gd, &face);
           break;
           

@@ -18,42 +18,20 @@
 // #################################################################
 /**
  * @brief モニタ値を保持する
- * @param [in] vv   指定速度ベクトル
- * @param [in] face 面番号
- * @param [in] mode BCの種類
+ * @param [in] vv   保持する値
+ * @param [in] mode "vector" or "scalar"
  */
-void BoundaryOuter::set_DomainV(const REAL_TYPE* vv, const int face, const int mode)
+void BoundaryOuter::setDomainV(const REAL_TYPE* vv, const char* mode)
 {
-  REAL_TYPE a, b;
-  
-  switch (mode)
+  if ( !strcasecmp(mode, "vector") )
   {
-    case OBC_OUTFLOW:
-      dm[0] = vv[0]; // sum
-      dm[1] = vv[1]; // min
-      dm[2] = vv[2]; // max
-      break;
-      
-    default:
-      if ( (face==X_MINUS) || (face==X_PLUS) )
-      {
-        a = vv[0];
-      }
-      else if ( (face==Y_MINUS) || (face==Y_PLUS) )
-      {
-        a = vv[1];
-      }
-      else // Z_MINUS, Z_PLUS
-      {
-        a = vv[2];
-      }
-      
-      b = a*(REAL_TYPE)valid_cell;
-      
-      dm[0] = b;
-      dm[1] = b;
-      dm[2] = b;
-      break;
+    dm[0] = vv[0]; // sum
+    dm[1] = vv[1]; // min
+    dm[2] = vv[2]; // max
+  }
+  else
+  {
+    dm[0] = vv[0];
   }
 }
 

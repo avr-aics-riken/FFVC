@@ -591,7 +591,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
   switch (face)
   {
     case X_MINUS:
-      if( nID[X_MINUS] < 0 ) // 外部境界をもつノードのみ
+      if( nID[face] < 0 ) // 外部境界をもつノードのみ
       {
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -599,22 +599,14 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             m2 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            //typ = GET_FACE_BC(s1, BC_FACE_W);
-            if ( (typ==OBC_SPEC_VEL) ||
-                 (typ==OBC_OUTFLOW)  ||
-                 (typ==OBC_FAR_FIELD)||
-                 (typ==OBC_INTRINSIC)||
-                 (typ==OBC_TRC_FREE) )
-            {
-              if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
-            }
+            if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }        
       }
       break;
       
     case X_PLUS:
-      if( nID[X_PLUS] < 0 )
+      if( nID[face] < 0 )
       {
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -622,22 +614,14 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             m2 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            //typ = GET_FACE_BC(s1, BC_FACE_E);
-            if ( (typ==OBC_SPEC_VEL) ||
-                 (typ==OBC_OUTFLOW)  ||
-                 (typ==OBC_FAR_FIELD)||
-                 (typ==OBC_INTRINSIC)||
-                 (typ==OBC_TRC_FREE) )
-            {
-              if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
-            }
+            if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
       }
       break;
       
     case Y_MINUS:
-      if( nID[Y_MINUS] < 0 )
+      if( nID[face] < 0 )
       {
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -645,22 +629,14 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             m2 = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            //typ = GET_FACE_BC(s1, BC_FACE_S);
-            if ( (typ==OBC_SPEC_VEL) ||
-                 (typ==OBC_OUTFLOW)  ||
-                 (typ==OBC_FAR_FIELD)||
-                 (typ==OBC_INTRINSIC)||
-                 (typ==OBC_TRC_FREE) )
-            {
-              if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
-            }
+            if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
       }
       break;
       
     case Y_PLUS:
-      if( nID[Y_PLUS] < 0 )
+      if( nID[face] < 0 )
       {
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -668,22 +644,14 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             m2 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            //typ = GET_FACE_BC(s1, BC_FACE_N);
-            if ( (typ==OBC_SPEC_VEL) ||
-                 (typ==OBC_OUTFLOW)  ||
-                 (typ==OBC_FAR_FIELD)||
-                 (typ==OBC_INTRINSIC)||
-                 (typ==OBC_TRC_FREE) )
-            {
-              if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
-            }
+            if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
       }
       break;
       
     case Z_MINUS:
-      if( nID[Z_MINUS] < 0 )
+      if( nID[face] < 0 )
       {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -691,22 +659,14 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             m2 = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            //typ = GET_FACE_BC(s1, BC_FACE_B);
-            if ( (typ==OBC_SPEC_VEL) ||
-                 (typ==OBC_OUTFLOW)  ||
-                 (typ==OBC_FAR_FIELD)||
-                 (typ==OBC_INTRINSIC)||
-                 (typ==OBC_TRC_FREE) )
-            {
-              if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
-            }
+            if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
       }
       break;
       
     case Z_PLUS:
-      if( nID[Z_PLUS] < 0 )
+      if( nID[face] < 0 )
       {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -714,15 +674,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             m2 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
             s1 = bv[m1];
             s2 = bv[m2];
-            //typ = GET_FACE_BC(s1, BC_FACE_T);
-            if ( (typ==OBC_SPEC_VEL) ||
-                 (typ==OBC_OUTFLOW)  ||
-                 (typ==OBC_FAR_FIELD)||
-                 (typ==OBC_INTRINSIC)||
-                 (typ==OBC_TRC_FREE) )
-            {
-              if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
-            }
+            if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
       }
@@ -733,7 +685,8 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    //MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -3959,7 +3912,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
   
   switch (face) {
     case X_MINUS:
-      if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+      if( nID[face] < 0 ){ // 外部境界をもつノードのみ
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
@@ -4002,7 +3955,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case X_PLUS:
-      if( nID[X_PLUS] < 0 ){
+      if( nID[face] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd);
@@ -4046,7 +3999,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Y_MINUS:
-      if( nID[Y_MINUS] < 0 ){
+      if( nID[face] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
@@ -4090,7 +4043,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Y_PLUS:
-      if( nID[Y_PLUS] < 0 ){
+      if( nID[face] < 0 ){
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
@@ -4134,7 +4087,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Z_MINUS:
-      if( nID[Z_MINUS] < 0 ){
+      if( nID[face] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
@@ -4178,7 +4131,7 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Z_PLUS:
-      if( nID[Z_PLUS] < 0 ){
+      if( nID[face] < 0 ){
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);

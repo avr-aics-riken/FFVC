@@ -26,7 +26,7 @@ class BoundaryOuter {
 private:
   int BCclass;       ///< 境界条件の種類
   int wallType;      ///< wall >> (fixed, slide)
-  int outType;       /// outflow >> 流出対流速度の評価モード（average, minmax）
+  int outType;       ///< outflow >> 流出対流速度の評価モード（average, minmax）
   int drv_dir;       ///< ドライバーの方向
   int drv_lid;       ///< ドライバフェイスIDの位置
   int gc_medium;     ///< ガイドセルの媒質インデクス
@@ -208,7 +208,7 @@ public:
   
   
   // モニタ値を保持する
-  void set_DomainV(const REAL_TYPE* vv, const int face, const int mode);
+  void setDomainV(const REAL_TYPE* vv, const char* mode);
   
   
   // ラベルを設定

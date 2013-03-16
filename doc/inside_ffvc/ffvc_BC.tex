@@ -947,18 +947,23 @@ z & ; & T_{\,i3}\,=\,0
 
 \noindent \textbf{図\ref{fig:x-trc}}では，速度成分を$u,\,v,\,w$で表し，添え字で格子インデクスを表している．各方向の式を\textbf{式(\ref{eq:trc_cnd})}に示す．
 
+
 \begin{figure}[htbp]
 \begin{center}
-\subfigure[X-方向のインデクス．]{
+\subfigure[X-方向のトラクションフリー条件.]{
 \includegraphics[height=6cm,clip]{T11.eps}
 }~
-\subfigure[X+方向のインデクス．]{
+\subfigure[X+方向のトラクションフリー条件.]{
 \includegraphics[height=6cm,clip]{T11+.eps}
 }
-\caption{外部境界のインデクス．○はセルセンターの定義点，十字（白）はスタガード位置の定義点，十字（灰）は外部境界面上の差分近似点で，定義点の値を用いて置き換える．} 
+\caption{外部境界のインデクス.} 
 \label{fig:x-trc}
 \end{center}
 \end{figure}
+
+
+
+
 
 \noindent 格子幅を$h$として$T_{\,21}$を外部境界面上で評価すると，
 \begin{equation}
@@ -1006,51 +1011,53 @@ w_{\,0,\,j,\,k} \,=\, w_{\,1,\,j,\,k} \,+\, \frac{1}{2} \left( u_{\,1/2,\,j,\,k+
 \left.
 \begin{array}{llll}
 \vspace{1mm}
-x-; & u_{\,0,\,j,\,k} &=& u_{\,1,\,j,\,k} \\
+x-; & v_{0,\,j,\,k} & = & v_{1,\,j,\,k}\, +\, u_{0,\,j+1,\,k}\, -\, u_{0,\,j,\,k} \\
 \vspace{1mm}
-& v_{\,0,\,j,\,k} &=& \displaystyle{ v_{\,1,\,j,\,k} \,+\, \frac{1}{2}\left( \tilde{u}_{\,1/2,\,j+1,\,k}-\tilde{u}_{\,1/2,\,j-1,\,k}\right)}\\
-\vspace{3mm}
-& w_{\,0,\,j,\,k} &=& \displaystyle{ w_{\,1,\,j,\,k} \,+\, \frac{1}{2}\left( \tilde{u}_{\,1/2,\,j,\,k+1}-\tilde{u}_{\,1/2,\,j,\,k-1}\right)}\\
-
-\vspace{1mm}
-x+; & u_{\,ix+1,\,j,\,k} &=& u_{\,ix,\,j,\,k} \\
-\vspace{1mm}
-& v_{\,ix+1,\,j,\,k} &=& \displaystyle{ v_{\,ix,\,j,\,k} \,-\, \frac{1}{2}\left( \tilde{u}_{\,ix+1/2,\,j+1,\,k}-\tilde{u}_{\,ix+1/2,\,j-1,\,k}\right)}\\
-\vspace{3mm}
-& w_{\,ix+1,\,j,\,k} &=& \displaystyle{ w_{\,ix,\,j,\,k} \,-\, \frac{1}{2}\left( \tilde{u}_{\,ix+1/2,\,j,\,k+1}-\tilde{u}_{\,ix+1/2,\,j,\,k-1}\right)}\\
-
-\vspace{1mm}
-y-; & u_{\,i,\,0,\,k} &=& \displaystyle{ u_{\,i,\,1,\,k} \,+\, \frac{1}{2}\left( \tilde{v}_{\,i+1,\,1/2,\,k}-\tilde{v}_{\,i-1,\,1/2,\,k}\right)}\\
-\vspace{1mm}
-& v_{\,i,\,0,\,k} &=& v_{\,i,\,1,\,k}\\
-\vspace{3mm}
-& w_{\,i,\,0,\,k} &=& \displaystyle{ w_{\,i,\,1,\,k} \,+\, \frac{1}{2}\left( \tilde{v}_{\,i,\,1/2,\,k+1}-\tilde{v}_{\,i,\,1/2,\,k-1}\right)}\\
-
-\vspace{1mm}
-y+; & u_{\,i,\,jx+1,\,k} &=& \displaystyle{ u_{\,i,\,jx,\,k} \,-\, \frac{1}{2}\left( \tilde{v}_{\,i+1,\,jx+1/2,\,k}-\tilde{v}_{\,i-1,\,jx+1/2,\,k}\right)}\\
-\vspace{1mm}
-& v_{\,i,\,jx+1,\,k} &=& v_{\,i,\,jx,\,k}\\
+ & w_{0,\,j,\,k} & = & w_{1,\,j,\,k}\, +\, u_{0,\,j,\,k+1}\, -\, u_{0,\,j,\,k} \\
 \vspace{4mm}
-& w_{\,i,\,jx+1,\,k} &=& \displaystyle{ w_{\,i,\,jx,\,k} \,-\, \frac{1}{2}\left( \tilde{v}_{\,i,\,jx+1/2,\,k+1}-\tilde{v}_{\,i,\,jx+1/2,\,k-1}\right)}\\
+ & u_{-1,\,j,\,k} & = & u_{0,\,j,\,k}\,+\,v_{0,\,j,\,k}\,-\,v_{0,\,j-1,\,k}\,+\,w_{0,\,j,\,k}\,-\,w_{0,\,j,\,k-1}\\
 
 \vspace{1mm}
-z-; & u_{\,i,\,j,\,0} &=& \displaystyle{ u_{\,i,\,j,\,1} \,+\, \frac{1}{2}\left( \tilde{w}_{\,i+1,\,j,\,1/2}-\tilde{w}_{\,i-1,\,j,\,1/2}\right)}\\
+x+; & v_{ix+1,\,j,\,k} & = & v_{ix,\,j,\,k}\, -\, u_{ix,\,j+1,\,k}\, +\, u_{ix,\,j,\,k} \\
 \vspace{1mm}
-& v_{\,i,\,j,\,0} &=& \displaystyle{ v_{\,i,\,j,\,1} \,+\, \frac{1}{2}\left( \tilde{w}_{\,i,\,j+1,\,1/2}-\tilde{w}_{\,i,\,j-1,\,1/2}\right)}\\
-\vspace{3mm}
-& w_{\,i,\,j,\,0} &=& w_{\,i,\,j,\,1}\\
+ & w_{ix+1,\,j,\,k} & = & w_{ix,\,j,\,k}\, -\, u_{ix,\,j,\,k+1}\, +\, u_{ix,\,j,\,k} \\
+\vspace{4mm}
+ & u_{ix+1,\,j,\,k} & = & u_{ix,\,j,\,k}\,-\,v_{ix+1,\,j,\,k}\,+\,v_{ix+1,\,j-1,\,k}\,-\,w_{ix+1,\,j,\,k}\,+\,w_{ix+1,\,j,\,k-1}\\
 
 \vspace{1mm}
-z-; & u_{\,i,\,j,\,kx+1} &=& \displaystyle{ u_{\,i,\,j,\,kx} \,-\, \frac{1}{2}\left( \tilde{w}_{\,i+1,\,j,\,kx+1/2}-\tilde{w}_{\,i-1,\,j,\,kx+1/2}\right)}\\
+y-; & u_{i,\,0,\,k} & = & u_{i,\,1,\,k}\, +\, v_{i+1,\,0,\,k}\, -\, v_{i,\,0,\,k} \\
 \vspace{1mm}
-& v_{\,i,\,j,\,kx+1} &=& \displaystyle{ v_{\,i,\,j,\,kx} \,-\, \frac{1}{2}\left( \tilde{w}_{\,i,\,j+1,\,kx+1/2}-\tilde{w}_{\,i,\,j-1,\,kx+1/2}\right)}\\
-\vspace{3mm}
-& w_{\,i,\,j,\,kx+1} &=& w_{\,i,\,j,\,kx}
-\end{array} \qquad \right \}
+ & w_{i,\,0,\,k} & = & w_{i,\,1,\,k}\, +\, v_{i,\,0,\,k+1}\, -\, v_{i,\,0,\,k} \\
+\vspace{4mm}
+ & v_{i,\,-1,\,k} & = & v_{i,\,0,\,k}\,+\,u_{i,\,0,\,k}\,-\,u_{i-1,\,0,\,k}\,+\,w_{i,\,0,\,k}\,-\,w_{i,\,0,\,k-1}\\
+
+\vspace{1mm}
+y+; & u_{i,\,jx+1,\,k} & = & u_{i,\,jx,\,k}\, -\, v_{i+1,\,jx,\,k}\, +\, v_{i,\,jx,\,k} \\
+\vspace{1mm}
+ & w_{i,\,jx+1,\,k} & = & w_{i,\,jx,\,k}\, -\, v_{i,\,jx,\,k+1}\, +\, v_{i,\,jx,\,k} \\
+\vspace{4mm}
+ & v_{i,\,jx+1,\,k} & = & v_{i,\,jx,\,k}\,-\,u_{i,\,jx+1,\,k}\,+\,u_{i-1,\,jx+1,\,k}\,- \,w_{i,\,jx+1,\,k}\,+\, w_{i,\,jx+1,\,k-1}\\
+
+\vspace{1mm}
+z-; & u_{i,\,j,\,0} & = & u_{i,\,j,\,1}\, +\, w_{i+1,\,j,\,0}\, -\, w_{i,\,j,\,0} \\
+\vspace{1mm}
+ & v_{i,\,j,\,0} & = & v_{i,\,j,\,1}\, +\, w_{i,\,j+1,\,0}\, -\, w_{i,\,j,\,0} \\
+\vspace{4mm}
+ & w_{i,\,j,\,-1} & = & w_{i,\,j,\,0}\,+\,u_{i,\,j,\,0}\,-\,u_{i-1,\,j,\,0}\,+\,v_{i,\,j,\,0}\,-\,v_{i,\,j-1,\,0}\\
+
+\vspace{1mm}
+z-; & u_{i,\,j,\,kx+1} & = & u_{i,\,j,\,kx}\, -\, w_{i+1,\,j,\,kx}\, +\, w_{i,\,j,\,kx} \\
+\vspace{1mm}
+ & v_{i,\,j,\,kx+1} & = & v_{i,\,j,\,kx}\, -\, w_{i,\,j+1,\,kx}\, +\, w_{i,\,j,\,kx} \\
+\vspace{4mm}
+ & w_{i,\,j,\,kx+1} & = & w_{i,\,j,\,kx}\,-\,u_{i,\,j,\,kx+1}\,+\,u_{i-1,\,j,\,kx+1}\,-\, v_{i,\,j,\,kx+1}\,+\, v_{i,\,j-1,\,kx+1}
+\end{array}
+\right \}
 \label{eq:trc_cnd}
 \end{equation}
 
-実装では，外部境界上にある壁面の速度成分も考慮している．
+
+実装では，壁面上の速度成分はマスク関数でマスクし，速度をゼロにしている．
 
 j=jxの場合に，$u_{0,\,jx+1,\,k}$の値を参照するので，境界条件処理で値を代入しておく必要がある．
 

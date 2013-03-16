@@ -409,8 +409,11 @@ double FFV::count_comm_size(const int sz[3], const int guide)
 
 
 // #################################################################
-// 外部計算領域の各面における総流量と対流流出速度を計算する
-// 流出境界のみ和をとる，その他は既知
+/**
+ * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
+ * @param [in] ptr  BoundaryOuterクラスのポインタ
+ * @param [in] R    Controlクラスのポインタ
+ */
 void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 {
   if ( !ptr ) Exit(0);
@@ -418,33 +421,30 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   
   obc = ptr;
   
-  REAL_TYPE ddh;
-  REAL_TYPE *vv, ec;
-  REAL_TYPE u_sum, u_min, u_max, u_avr;
-  int ofv;
-  
-	ddh = deltaX * deltaX;
+  REAL_TYPE ddh = deltaX * deltaX;
+  REAL_TYPE u_sum, u_avr;
+
   
   for (int face=0; face<NOFACE; face++) 
   {
     
-    // 有効セル数
-    ec = (REAL_TYPE)obc[face].get_ValidCell(); // @todo 有効セル数と積算回数の一致をチェック
+    // 有効セル数 => 外部境界でガイドセルと内側のセルで挟まれる面がFluidの場合のセル数
+    REAL_TYPE ec = (REAL_TYPE)obc[face].get_ValidCell();
     
     // 各プロセスの外部領域面の速度をvv[]にコピー
-    vv = obc[face].getDomainV();
-    
+    REAL_TYPE* vv = obc[face].getDomainV();
+
     
     if ( obc[face].get_Class() == OBC_OUTFLOW)
     {
       // ofv (1-MINMAX, 2-AVERAGE) ゼロでなければ，流出境界
-      ofv = obc[face].get_ofv();
+      int ofv = obc[face].get_ofv();
       
       // 流出境界のモード
       if (ofv == V_AVERAGE) // average
       {
-        // 非境界面ではvv[]はゼロなので，単に足し込むだけ
-        u_sum = vv[0];
+        // 外部境界以外はゼロにする
+        u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
         
         if ( numProc > 1 )
         {
@@ -456,11 +456,12 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
       }
       else if (ofv == V_MINMAX) // minmax
       {
-        u_sum = vv[0];
-        u_min = vv[1];
-        u_max = vv[2];
+        REAL_TYPE u_min, u_max;
         
-        //printf(" rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, 0.5*(u_min+u_max));
+        // 非外部境界は初期値にする
+        u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
+        u_min = ( nID[face] < 0 ) ? vv[1] : 1.0e6;
+        u_max = ( nID[face] < 0 ) ? vv[2] : -1.0e6;
         
         if ( numProc > 1 )
         {
@@ -473,20 +474,27 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
         }
         
         u_avr = 0.5*(u_min+u_max);
-        //Hostonly_ printf("*rank=%d : u_min=%e umax=%e u_avr=%e\n", myRank, u_min, u_max, u_avr);
       }
       
     }
-    else // 非OUTFLOW BCは無次元流量がストアされている
+    else // 非OUTFLOW BCは無次元流量がvv[0]にストアされている
     {
-      u_sum = vv[0];
+      // 外部境界以外はゼロにする
+      u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE tmp_sum = u_sum;
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
+      
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
     }
     
     
     // コントロールクラスにコピー
-    R->V_Dface[face] = u_avr;
-    R->Q_Dface[face] = u_sum * ddh;
+    R->V_Dface[face] = u_avr;       // 無次元平均流速
+    R->Q_Dface[face] = u_sum * ddh; // 無次元流量
   }
   
 }
