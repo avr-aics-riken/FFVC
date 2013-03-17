@@ -576,13 +576,13 @@ void FFV::NS_FS_E_Binary()
     for (int face=0; face<NOFACE; face++) {
       if( nID[face] < 0 )
       {
-        if ( obc[face].get_Class() == OBC_TRC_FREE )
+        if ( BC.export_OBC(face)->get_Class() == OBC_TRC_FREE )
         {
-          vobc_tfree_(d_v, size, &gd, &face, d_vf, d_bv, &flop);
+          vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bcv, &flop);
         }
-        else if ( obc[face].get_Class() == OBC_FAR_FIELD )
+        else if ( BC.export_OBC(face)->get_Class() == OBC_FAR_FIELD )
         {
-          vobc_neumann_(d_v, size, &gd, &face);
+          vobc_neumann_(d_v, size, &guide, &face);
         }
       }
     }

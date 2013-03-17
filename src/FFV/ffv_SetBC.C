@@ -524,7 +524,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
     
     // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
     vec[0] = vec[1] = vec[2] = 0.0;
-    obc[face].set_DomainV(vec, "vector");
+    obc[face].setDomainV(vec, "vector");
     
     // 内部領域のときは，処理しない
     if( nID[face] < 0 )
@@ -563,7 +563,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
     typ = obc[face].get_Class();
     
     vec[0] = vec[1] = vec[2] = 0.0;
-    obc[face].set_DomainV(vec, "vector");
+    obc[face].setDomainV(vec, "vector");
     
     // 内部領域のときは，処理しない
     if( nID[face] < 0 )
@@ -837,7 +837,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
       
       
       if ( (C->Mode.Example == id_Jet) && (face==0) ) {
-        
+        Ex->JetInflow(wv);
       }
       else
       {

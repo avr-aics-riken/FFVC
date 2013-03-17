@@ -73,45 +73,26 @@ public:
   virtual ~SetBC() {}
   
 protected:
-  /**
-   * @brief 外部境界処理用のループインデクスを取得する
-   * @param [in] face 外部境界面番号
-   * @param [out] st  開始インデクス
-   * @param [out] ed  終了インデクス
-   */
+  
+  // 外部境界処理用のループインデクスを取得する
   void getOuterLoopIdx(const int face, int* st, int* ed);
   
 
 public:
-  /**
-   @brief 静止座標系のときの流出速度制御の値を計算する
-   @param [in] tm 時刻
-   @retval 流出境界速度
-   @todo experimental
-   */
+  
+  // 静止座標系のときの流出速度制御の値を計算する
 	REAL_TYPE getVrefOut (const REAL_TYPE tm);
   
   
-  /** 
-   * @brief クラスに必要な変数のコピー
-   * @param [in] Cref       Controlクラス
-   * @param [in] mat        MediumListクラス
-   * @param [in] cmp        Componentクラス
-   * @param [in] RF         ReferenceFrameクラス
-   * @param [in] ExRef      Intrinsicクラス
-   */
+  // クラスに必要な変数のコピー
   void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
   
   
-  /** 
-   * @brief クラスのポインタコピー
-   * @param [in] m_CMP        CompoListクラス
-   * @param [in] m_MAT        MediumListクラス
-   */
+  // 作業用ポインタのコピー
   void importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT);
   
   
-  //@brief 流入出境界条件が設定されている場合にtrueを返す
+  // @brief 流入出境界条件が設定されている場合にtrueを返す
   bool has_InOut(void) 
   { 
     return inout_flag; 

@@ -17,8 +17,12 @@
 #include <math.h>
 #include "SetBC.h"
 
-
-// 作業用ポインタのコピー
+// #################################################################
+/**
+ * @brief クラスのポインタコピー
+ * @param [in] m_CMP        CompoListクラス
+ * @param [in] m_MAT        MediumListクラス
+ */
 void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);
@@ -29,7 +33,15 @@ void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 }
 
 
-// 必要な値のコピー
+// #################################################################
+/**
+ * @brief クラスに必要な変数のコピー
+ * @param [in] Cref       Controlクラス
+ * @param [in] mat        MediumListクラス
+ * @param [in] cmp        Componentクラス
+ * @param [in] RF         ReferenceFrameクラス
+ * @param [in] ExRef      Intrinsicクラス
+ */
 void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
 {
   Reynolds  = Cref->Reynolds;
@@ -84,7 +96,13 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
 }
 
 
-// 静止座標系のときの流出速度制御の値を計算する
+// #################################################################
+/**
+ * @brief 静止座標系のときの流出速度制御の値を計算する
+ * @param [in] tm 時刻
+ * @retval 流出境界速度
+ * @todo experimental
+ */
 REAL_TYPE SetBC::getVrefOut(const REAL_TYPE tm)
 {
 	REAL_TYPE u0;
@@ -102,7 +120,13 @@ REAL_TYPE SetBC::getVrefOut(const REAL_TYPE tm)
 }
 
 
-// 外部境界処理用のループインデクスを取得する
+// #################################################################
+/**
+ * @brief 外部境界処理用のループインデクスを取得する
+ * @param [in] face 外部境界面番号
+ * @param [out] st  開始インデクス
+ * @param [out] ed  終了インデクス
+ */
 void SetBC::getOuterLoopIdx(const int face, int* st, int* ed)
 {
   switch (face) 

@@ -12,9 +12,9 @@
 // #################################################################
 
 /**
- @file   IP_Jet.h
- @brief  IP_Jet class Header
- @author kero
+ * @file   IP_Jet.h
+ * @brief  IP_Jet class Header
+ * @author kero
  */
 
 #include "Intrinsic.h"
@@ -113,9 +113,11 @@ public:
     return ("Jet");
   }
   
-  // 流入境界条件
-  void vobc_jet_inflow(REAL_TYPE* v, double* flop);
+  // 流入境界条件のガイドセル代入
+  void vobcJetInflow(REAL_TYPE* v, double* flop);
   
+  // 流束型流入境界条件
+  void vobc_pv_JetInflow(REAL_TYPE* v, REAL_TYPE rei, REAL_TYPE* v0, REAL_TYPE* vec, double* flop);
 
 /* IP_boundary.f90
 #ifdef _WIN32
@@ -132,5 +134,6 @@ public:
   
 };
  */
+};
 
 #endif // _IP_JET_H_

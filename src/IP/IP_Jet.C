@@ -16,24 +16,20 @@
 
 #include "IP_Jet.h"
 
-
 // #################################################################
 /* @brief Jetの流入強化条件
- * @param [in,out] v     速度
- * @param [out]    sum   速度の積算 \sum{v}
+ * @param [in,out] wv    疑似速度
+ * @param [in]     rei   レイノルズ数の逆数
+ * @param [in]     v0    速度ベクトル（n-step）
  * @param [in,out] flop  flop count
  */
-void IP_Jet::vobc_jet_inflow(REAL_TYPE* v)
+void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv, REAL_TYPE rei, REAL_TYPE* v0, REAL_TYPE* vec, double* flop)
 {
   
   // グローバル
   REAL_TYPE dh = deltaX;
-  REAL_TYPE ox_g = G_origin[0];
-  REAL_TYPE oy_g = G_origin[1];
-  REAL_TYPE oz_g = G_origin[2];
   
   // ノードローカル
-  REAL_TYPE ox = origin[0];
   REAL_TYPE oy = origin[1];
   REAL_TYPE oz = origin[2];
   
@@ -42,68 +38,159 @@ void IP_Jet::vobc_jet_inflow(REAL_TYPE* v)
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE r, ri, ro, x, y, z;
+  REAL_TYPE r, ri, ro, y, z;
   REAL_TYPE u1_in = (q1 / a1) / RefV;
   REAL_TYPE u2_in = (q2 / a2) / RefV;
   
-  // X-側のJet吹き出し部設定
-  if ( nID[X_MINUS] < 0 )
-  {
-    int i=0;
-    
-    // Ring1
-    ri = r1i;
-    ro = r1o;
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg1, dh, u1_in) \
-private(x, y, z, r) schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        
-        x = ox + ( (REAL_TYPE)i-0.5 ) * dh;
-        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-
-        r = sqrt(y*y + z*z);
-        
-        if ( (ri < r) && (r < ro) )
-        {
-          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
-          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -omg1 * z;
-          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  omg1 * y;
-        }
-      }
-    }
-    
-    // Ring2
-    ri = r2i;
-    ro = r2o;
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg2, dh, u2_in) \
-private(x, y, z, r) schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        
-        x = ox + ( (REAL_TYPE)i-0.5 ) * dh;
-        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-        
-        r = sqrt(y*y + z*z);
-        
-        if ( (ri < r) && (r < ro) )
-        {
-          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
-          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -omg2 * z;
-          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  omg2 * y;
-        }
-      }
-    }
-    
-    
-  } // X_MINUS面の処理
+  REAL_TYPE o1 = omg1;
+  REAL_TYPE o2 = omg2;
   
   
+  // X-側のJet吹き出し流束
+  
+  int i=0;
+  
+  // Ring1
+  ri = r1i;
+  ro = r1o;
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in) \
+private(y, z, r) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      
+      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      
+      r = sqrt(y*y + z*z);
+      
+      if ( (ri < r) && (r < ro) ) // jet
+      {
+        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
+        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
+        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
+      }
+      else // wall
+      {
+        
+      }
+    }
+  }
+  
+  // Ring2
+  ri = r2i;
+  ro = r2o;
+  i = ix+1;
+  
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in) \
+private(y, z, r) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      
+      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      
+      r = sqrt(y*y + z*z);
+      
+      if ( (ri < r) && (r < ro) ) // jet
+      {
+        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
+        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
+        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+      }
+      else // wall
+      {
+        
+      }
+    }
+  }
+  
+  sum = (q1 + q2) / (RefV * RefL * RefL);
 }
-                             
-                     
+
+
+// #################################################################
+/* @brief Jetの流入強化条件
+ * @param [in,out] v     速度
+ * @param [in,out] flop  flop count
+ */
+void IP_Jet::vobcJetInflow(REAL_TYPE* v, double* flop)
+{
+  
+  // グローバル
+  REAL_TYPE dh = deltaX;
+  //REAL_TYPE ox_g = G_origin[0];
+  //REAL_TYPE oy_g = G_origin[1];
+  //REAL_TYPE oz_g = G_origin[2];
+  
+  // ノードローカル
+  //REAL_TYPE ox = origin[0];
+  REAL_TYPE oy = origin[1];
+  REAL_TYPE oz = origin[2];
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  REAL_TYPE r, ri, ro, y, z;
+  REAL_TYPE u1_in = (q1 / a1) / RefV;
+  REAL_TYPE u2_in = (q2 / a2) / RefV;
+  
+  REAL_TYPE o1 = omg1;
+  REAL_TYPE o2 = omg2;
+  
+  // X-側のJet吹き出し部設定
+
+  int i=0;
+  
+  // Ring1
+  ri = r1i;
+  ro = r1o;
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in) \
+private(y, z, r) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      
+      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      
+      r = sqrt(y*y + z*z);
+      
+      if ( (ri < r) && (r < ro) )
+      {
+        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
+        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
+        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
+      }
+    }
+  }
+  
+  // Ring2
+  ri = r2i;
+  ro = r2o;
+  i = ix+1;
+  
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in) \
+private(y, z, r) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      
+      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      
+      r = sqrt(y*y + z*z);
+      
+      if ( (ri < r) && (r < ro) )
+      {
+        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
+        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
+        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+      }
+    }
+  }
+}
+
+
 // #################################################################
 /* @brief パラメータをロード
  * @param [in] R      Controlクラス
@@ -356,7 +443,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
    */
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Jet Parameters\n\n");
   
   
   // Ring1のチェック
@@ -393,7 +480,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
   
   
   // 次元モード
-  fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
+  fprintf(fp,"\tDimension Mode                     :  %s\n\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
   
   // Ring1
   if ( pat_1 == ON )
@@ -405,6 +492,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
     fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q1/a1, (q1/a1)/RefV);
     fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg1, omg1*RefL/RefV);
     fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n1, n1);
+    fprintf(fp,"\n");
   }
   
   // Ring2

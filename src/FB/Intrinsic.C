@@ -17,8 +17,11 @@
 #include "Intrinsic.h"
 
 
-
-// 例題名称の表示
+// #################################################################
+/* @brief 例題名称の表示
+ * @param [in] fp   出力ファイルのファイルポインタ
+ * @param [in] str  表示文字列
+*/
 void Intrinsic::printExample(FILE* fp, const char* str)
 {
   if( !fp ) {
@@ -32,7 +35,12 @@ void Intrinsic::printExample(FILE* fp, const char* str)
 
 
 
-// パラメータの表示
+// #################################################################
+/**
+ @brief パラメータの表示
+ @param [in] fp ファイルポインタ
+ @param [in] R  コントロールクラスのポインタ
+ */
 void Intrinsic::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
@@ -43,7 +51,12 @@ void Intrinsic::printPara(FILE* fp, const Control* R)
 }
 
 
-// モデルIDをsphフォーマット(float)で出力する
+// #################################################################
+/**
+ * @brief モデルIDをsphフォーマット(float)で出力する
+ * @param [in] mid ID情報
+ * @param [in] R   コントロールクラスのポインタ
+ */
 void Intrinsic::writeSPH(const int *mid, const Control* R)
 {
   int ix, jx, kx;
@@ -154,8 +167,13 @@ void Intrinsic::writeSPH(const int *mid, const Control* R)
 }
 
 
-
-// 例題のモデルをsvxフォーマットで出力する(体積率とID)
+// #################################################################
+/**
+ * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
+ * @param [in] vf 体積占有率
+ * @param [in] id ID情報
+ * @param [in] R  コントロールクラスのポインタ
+ */
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
 
@@ -261,7 +279,12 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 }
 
 
-// 例題のモデルをsvxフォーマットで出力する(ID)
+// #################################################################
+/**
+ * @brief 例題のモデルをsvxフォーマットで出力する(ID)
+ * @param [in] id ID情報
+ * @param [in] R  コントロールクラスのポインタ
+ */
 void Intrinsic::writeSVX(int *id, Control* R)
 {
   

@@ -72,72 +72,40 @@ public:
   
 public:
   
-  /** 
-   @brief ユーザー例題の名称を返す
-   */
+  // ユーザー例題の名称を返す
   virtual const char* getExampleName() 
   { 
     return NULL; 
   }
   
-  /**
-   * @param [in] R       Controlクラスのポインタ
-   * @param [in] tpCntl  TPControlクラスのポインタ
-   * @return true-成功、false-エラー
-   */
+  // パラメータをロードする
   virtual bool getTP(Control* R, TPControl* tpCntl) 
   { 
     return true; 
   }
   
+  
+  // 
   virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
   
   
-  /**
-   @brief 例題名称の表示
-   @param [in] fp   出力ファイルのファイルポインタ
-   @param [in] str  表示文字列
-   */
+  // 例題名称の表示
   virtual void printExample(FILE* fp, const char* str);
   
   
-  /**
-   @brief パラメータの表示
-   @param [in] fp ファイルポインタ
-   @param [in] R  コントロールクラスのポインタ
-   */
+  // パラメータの表示
   virtual void printPara(FILE* fp, const Control* R);
   
   
-  /** 領域を設定する
-   * @param [in]     R   Controlクラスのポインタ
-   * @param [in]     sz  分割数
-   * @param [in,out] org 計算領域の基点
-   * @param [in,out] reg 計算領域の大きさ
-   * @param [in,out] pch セル幅
-   */
+  //領域を設定する
   virtual void setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch) {};
   
   
-  /** 計算領域の媒質情報を設定する
-   * @param [in,out] mid   媒質情報の配列
-   * @param [in]     R     Controlクラスのポインタ
-   * @param [in]     G_org Controlクラスのポインタ
-   * @param [in]     Nmax  Controlクラスのポインタ
-   * @param [in]     mat   MediumListクラスのポインタ
-   */
+  // 計算領域の媒質情報を設定する
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
   
   
-  /**
-   * @brief 計算領域のセルIDとカット情報を設定する
-   * @param [in,out] mid    IDの配列
-   * @param [in]     R      Controlクラスのポインタ
-   * @param [in]     G_org  グローバルな原点（無次元）
-   * @param [in]     Nmax
-   * @param [in]     mat    MediumListクラスのポインタ
-   * @param [out]    cut    カット情報
-   */
+  // 計算領域のセルIDとカット情報を設定する
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
   
   
@@ -147,28 +115,15 @@ public:
   virtual void setup_bc(int* bid) {};
   
   
-  /**
-   * @brief モデルIDをsphフォーマット(float)で出力する
-   * @param [in] mid ID情報
-   * @param [in] R   コントロールクラスのポインタ
-   */
+  // モデルIDをsphフォーマット(float)で出力する
   void writeSPH(const int *mid, const Control* R);
   
   
-  /**
-   * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
-   * @param [in] vf 体積占有率
-   * @param [in] id ID情報
-   * @param [in] R  コントロールクラスのポインタ
-   */
+  // 例題のモデルをsvxフォーマットで出力する(体積率とID)
   void writeSVX(REAL_TYPE *vf, int *id, Control* R);
   
   
-  /**
-   * @brief 例題のモデルをsvxフォーマットで出力する(ID)
-   * @param [in] id ID情報
-   * @param [in] R  コントロールクラスのポインタ
-   */
+  // 例題のモデルをsvxフォーマットで出力する(ID)
   void writeSVX(int *id, Control* R);
   
 };
