@@ -30,27 +30,63 @@ void IP_Jet::encVbit_OBC(int* bv, int* bp)
   int kx = size[2];
   int gd = guide;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) \
+  
+  // Ring1
+  if ( pat_1 == ON )
+  {
+    int i = 1;
+    REAL_TYPE ri = r1i;
+    REAL_TYPE ro = r1o;
+    
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, dh) \
 schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      
-      size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-      size_t mt= _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-      
-      int s = bv[m];
-      int z = bv[mt];
-      int q = bp[mt];
-      
-      if ( IS_FLUID(s) )
-      {
-        // エンコード処理
-        bv[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
         
-        // 外部境界で安定化のため，スキームを1次精度にする
-        bp[mt] = onBit(q, VBC_UWD);
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        REAL_TYPE r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          
+          bv[m] |= (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグをエンコード
+          
+        }
       }
     }
+    flop += (double)jx * (double)kx * 21.0; // DP 31.0
+  }
+  
+  
+  // Ring2
+  if ( pat_1 == ON )
+  {
+    int i = 1;
+    REAL_TYPE ri = r2i;
+    REAL_TYPE ro = r2o;
+    
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, dh) \
+schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        REAL_TYPE r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+        }
+      }
+    }
+    flop += (double)jx * (double)kx * 21.0; // DP 31.0
   }
   
 }
@@ -123,7 +159,7 @@ private(y, z, r) schedule(static)
   // Ring2
   if ( pat_1 == ON )
   {
-    int i = ix+1;
+    int i = 0;
     ri = r2i;
     ro = r2o;
     
@@ -252,7 +288,7 @@ private(y, z, r) schedule(static)
   // Ring2
   if ( pat_2 == ON )
   {
-    int i = ix;
+    int i = 1;
     ri = r2i;
     ro = r2o;
     
@@ -334,7 +370,6 @@ void IP_Jet::vobcJetInflow(REAL_TYPE* v, REAL_TYPE* vf, double& flop)
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE r, ri, ro, y, z;
   REAL_TYPE u1_in = (q1 / a1) / RefV;
   REAL_TYPE u2_in = (q2 / a2) / RefV;
   
@@ -346,24 +381,26 @@ void IP_Jet::vobcJetInflow(REAL_TYPE* v, REAL_TYPE* vf, double& flop)
   if ( pat_1 == ON )
   {
     int i = 0;
-    ri = r1i;
-    ro = r1o;
+    REAL_TYPE ri = r1i;
+    REAL_TYPE ro = r1o;
     
 #pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in) \
-private(y, z, r) schedule(static)
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
         
-        r = sqrt(y*y + z*z);
+        REAL_TYPE r = sqrt(y*y + z*z);
         
         if ( (ri < r) && (r < ro) )
         {
           v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
           v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
           v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
+          
+          vf[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
         }
       }
     }
@@ -374,25 +411,27 @@ private(y, z, r) schedule(static)
   // Ring2
   if ( pat_1 == ON )
   {
-    int i = ix+1;
+    int i = 0;
     ri = r2i;
     ro = r2o;
     
 #pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in) \
-private(y, z, r) schedule(static)
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
         
-        r = sqrt(y*y + z*z);
+        REAL_TYPE r = sqrt(y*y + z*z);
         
         if ( (ri < r) && (r < ro) )
         {
           v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
           v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
           v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+          
+          vf[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
         }
       }
     }
@@ -833,8 +872,6 @@ private(b, r, base) schedule(static)
         
       }
     }
-    
-    
     
   } // X_MINUS面の処理
   

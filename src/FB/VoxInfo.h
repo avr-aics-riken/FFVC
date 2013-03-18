@@ -44,7 +44,7 @@ private:
   int NoVoxID;                   ///< 含まれるIDの数(Local/Global)
   int colorList[MODEL_ID_MAX+1]; ///< ボクセルモデルに含まれるIDのリスト(Global)
   
-  Intrinsic *Ex; ///< 例題クラス
+  Intrinsic *Ex;                 ///< 例題クラスのポインタ
 
 public:
   /** コンストラクタ */
@@ -308,14 +308,7 @@ private:
   
 public:
   
-  /**
-   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする
-   * @param [in]     face      外部境界面番号
-   * @param [in,out] mid       ID配列のデータクラス
-   * @param [in]     BCtype    外部境界面の境界条件の種類
-   * @param [in]     c_id      媒質インデクス
-   * @param [in]     prdc_mode 周期境界条件のモード
-   */
+  // 計算領域外部のガイドセルに媒質IDをエンコードする
   void adjMedium_on_GC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode);
   
   
