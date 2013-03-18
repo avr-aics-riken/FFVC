@@ -174,6 +174,7 @@ int FFV::Initialize(int argc, char **argv)
   M.setControlVars(C.NoCompo, C.NoBC, C.Unit.Temp, C.KindOfSolver);
   
   V.setNoCompo_BC(C.NoBC, C.NoCompo);
+  V.setIntrinsic(Ex);
   
   B.setControlVars(&C);
   

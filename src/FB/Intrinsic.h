@@ -109,9 +109,7 @@ public:
   virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
   
   
-  /** 矩形の計算領域のセルIDを設定する
-   * @param [in,out] bid  カット点の境界条件ID
-   */
+  // 矩形の計算領域のセルIDを設定する
   virtual void setup_bc(int* bid) {};
   
   

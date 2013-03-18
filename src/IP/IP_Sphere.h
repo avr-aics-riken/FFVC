@@ -77,7 +77,7 @@ public:
   
   
   // 計算領域のセルIDとカット情報を設定する
-  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut);
+  void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut);
   
   
   // 点pの属するセルインデクスを求める

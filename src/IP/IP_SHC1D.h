@@ -47,10 +47,6 @@ public:
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
   
-  // 計算領域のセルIDとカット情報を設定する
-  virtual void setup_bc(int* bid);
-  
-  
   /** 
    @brief 例題の名称を返す
    */
@@ -58,6 +54,11 @@ public:
   {
     return ("Steady 1D Heat Conduction");
   }
+  
+  
+  // 計算領域のセルIDとカット情報を設定する
+  void setup_bc(int* bid);
+  
 };
 
 #endif // _IP_SHC1D_H_

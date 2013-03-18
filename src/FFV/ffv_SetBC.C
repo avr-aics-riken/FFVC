@@ -534,7 +534,6 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
       {
         case OBC_SPEC_VEL:
         case OBC_WALL:
-        case OBC_INTRINSIC:
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
           vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
@@ -552,6 +551,14 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
           vobc_get_massflow_(size, &gd, &face, vec, vf, bv, &fcount);
+          obc[face].setDomainV(vec, "scalar");
+          break;
+          
+        case OBC_INTRINSIC:
+          if ( (C->Mode.Example == id_Jet) && (face==0) )
+          {
+            
+          }
           obc[face].setDomainV(vec, "scalar");
           break;
       }
@@ -836,8 +843,9 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
     {
       
       
-      if ( (C->Mode.Example == id_Jet) && (face==0) ) {
-        Ex->JetInflow(wv);
+      if ( (C->Mode.Example == id_Jet) && (face==0) )
+      {
+        Ex->vobc_pv_JetInflow(wv, rei, v, bv, vec, flop);
       }
       else
       {

@@ -87,7 +87,6 @@ public:
   ~IP_Jet() {}
   
   
-
   
 public:
 
@@ -113,27 +112,17 @@ public:
     return ("Jet");
   }
   
-  // 流入境界条件のガイドセル代入
-  void vobcJetInflow(REAL_TYPE* v, double* flop);
+  
+  // Jetの流入境界条件をガイドセルとセルフェイス速度に代入
+  void vobcJetInflow(REAL_TYPE* v, REAL_TYPE* vf, double& flop);
+  
   
   // 流束型流入境界条件
-  void vobc_pv_JetInflow(REAL_TYPE* v, REAL_TYPE rei, REAL_TYPE* v0, REAL_TYPE* vec, double* flop);
-
-/* IP_boundary.f90
-#ifdef _WIN32
+  void vobc_pv_JetInflow(REAL_TYPE* wv, REAL_TYPE rei, REAL_TYPE* v0, int* bv, REAL_TYPE* vec, REAL_TYPE& sum, double& flop);
   
-#define vobc_pv_jet_       VOBC_PV_JET
-
-#endif // _WIN32
+  // ビットフラグのエンコード
+  void encVbit_OBC(int* bv, int* bp);
   
-  extern "C" {
-    
-    void vobc_pv_jet_(REAL_TYPE* v, int* sz, int* g, int* st, int* ed, int* bd, float* vf, int* odr, REAL_TYPE* v00, REAL_TYPE* nv, double* flop);
-    
-  }
-  
-};
- */
 };
 
 #endif // _IP_JET_H_

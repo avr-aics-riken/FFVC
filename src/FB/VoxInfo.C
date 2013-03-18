@@ -5654,12 +5654,13 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
  * @param [in,out] bp    BCindex P
  * @param [in]     BC    SetBCクラスのポインタ
  * @param [in]     cmp   CompoListクラスのポインタ
+ * @param [in]     icls  Intrinsic class
  * @param [in]     isCDS カットかどうか
  * @param [in]     cut   カット配列
  * @param [in]     bid   BID配列
  * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
  */
-void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, bool isCDS, float* cut, int* bid)
+void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, Intrinsic_class icls, bool isCDS, float* cut, int* bid)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;
@@ -5697,7 +5698,10 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_INTRINSIC:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
+        if ( (icls == id_Jet) && (face==0) )
+        {
+          Ex->encVbit_OBC(bv, bp); // 流束形式
+        }
         break;
         
       case OBC_PERIODIC:

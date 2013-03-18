@@ -17,110 +17,56 @@
 #include "IP_Jet.h"
 
 // #################################################################
-/* @brief Jetの流入強化条件
- * @param [in,out] wv    疑似速度
- * @param [in]     rei   レイノルズ数の逆数
- * @param [in]     v0    速度ベクトル（n-step）
- * @param [in,out] flop  flop count
+/**
+ * @brief 外部境界に接するセルにおいて，各種速度境界条件に対応する媒質をチェックし，bv[]にビットフラグをセットする
+ * @param [in,out] bv      BCindex V
+ * @param [in]     bp      BCindex P
+ * @note Xマイナス面のみ
  */
-void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv, REAL_TYPE rei, REAL_TYPE* v0, REAL_TYPE* vec, double* flop)
+void IP_Jet::encVbit_OBC(int* bv, int* bp)
 {
-  
-  // グローバル
-  REAL_TYPE dh = deltaX;
-  
-  // ノードローカル
-  REAL_TYPE oy = origin[1];
-  REAL_TYPE oz = origin[2];
-  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE r, ri, ro, y, z;
-  REAL_TYPE u1_in = (q1 / a1) / RefV;
-  REAL_TYPE u2_in = (q2 / a2) / RefV;
-  
-  REAL_TYPE o1 = omg1;
-  REAL_TYPE o2 = omg2;
-  
-  
-  // X-側のJet吹き出し流束
-  
-  int i=0;
-  
-  // Ring1
-  ri = r1i;
-  ro = r1o;
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in) \
-private(y, z, r) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) \
+schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       
-      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+      size_t mt= _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
       
-      r = sqrt(y*y + z*z);
+      int s = bv[m];
+      int z = bv[mt];
+      int q = bp[mt];
       
-      if ( (ri < r) && (r < ro) ) // jet
+      if ( IS_FLUID(s) )
       {
-        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
-        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
-        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
-      }
-      else // wall
-      {
+        // エンコード処理
+        bv[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
         
+        // 外部境界で安定化のため，スキームを1次精度にする
+        bp[mt] = onBit(q, VBC_UWD);
       }
     }
   }
   
-  // Ring2
-  ri = r2i;
-  ro = r2o;
-  i = ix+1;
-  
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in) \
-private(y, z, r) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      
-      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-      
-      r = sqrt(y*y + z*z);
-      
-      if ( (ri < r) && (r < ro) ) // jet
-      {
-        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
-        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
-        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
-      }
-      else // wall
-      {
-        
-      }
-    }
-  }
-  
-  sum = (q1 + q2) / (RefV * RefL * RefL);
 }
 
 
 // #################################################################
-/* @brief Jetの流入強化条件
- * @param [in,out] v     速度
+/* @brief Jetの流入境界条件による発散値の修正
+ * @param [in,out] div   発散値
+ * @param [in,out] bv    セルフェイス速度
  * @param [in,out] flop  flop count
  */
-void IP_Jet::vobcJetInflow(REAL_TYPE* v, double* flop)
+void IP_Jet::divJetInflow(REAL_TYPE* div, REAL_TYPE* bv, double& flop)
 {
   
   // グローバル
   REAL_TYPE dh = deltaX;
-  //REAL_TYPE ox_g = G_origin[0];
-  //REAL_TYPE oy_g = G_origin[1];
-  //REAL_TYPE oz_g = G_origin[2];
   
   // ノードローカル
   //REAL_TYPE ox = origin[0];
@@ -139,55 +85,320 @@ void IP_Jet::vobcJetInflow(REAL_TYPE* v, double* flop)
   REAL_TYPE o1 = omg1;
   REAL_TYPE o2 = omg2;
   
-  // X-側のJet吹き出し部設定
-
-  int i=0;
   
   // Ring1
-  ri = r1i;
-  ro = r1o;
+  if ( pat_1 == ON )
+  {
+    int i = 0;
+    ri = r1i;
+    ro = r1o;
+    
 #pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in) \
 private(y, z, r) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      
-      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-      
-      r = sqrt(y*y + z*z);
-      
-      if ( (ri < r) && (r < ro) )
-      {
-        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
-        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
-        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        int bx = bv[m];
+        GET_FACE_BC(s, BC_FACE_W)
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
+        }
       }
     }
+    flop += (double)jx * (double)kx * 21.0; // DP 31.0
   }
+  
   
   // Ring2
-  ri = r2i;
-  ro = r2o;
-  i = ix+1;
-  
+  if ( pat_1 == ON )
+  {
+    int i = ix+1;
+    ri = r2i;
+    ro = r2o;
+    
 #pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in) \
 private(y, z, r) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      
-      y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-      z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-      
-      r = sqrt(y*y + z*z);
-      
-      if ( (ri < r) && (r < ro) )
-      {
-        v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
-        v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
-        v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+        }
       }
     }
+    flop += (double)jx * (double)kx * 21.0; // DP 31.0
   }
+  
+}
+
+
+// #################################################################
+/* @brief Jetの流入強化条件
+ * @param [in,out] wv    疑似速度
+ * @param [in]     rei   レイノルズ数の逆数
+ * @param [in]     v0    速度ベクトル（n-step）
+ * @param [in]     bv    BCindex V
+ * @param [in]     vec   壁面速度
+ * @param [out]    sum   流入量（無次元）
+ * @param [in,out] flop  flop count
+ */
+void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv, REAL_TYPE rei, REAL_TYPE* v0, int* bv, REAL_TYPE* vec, REAL_TYPE& sum, double& flop)
+{
+  
+  // グローバル
+  REAL_TYPE dh = deltaX;
+  REAL_TYPE dh2= rei * dh * dh * 2.0;
+  
+  // ノードローカル
+  REAL_TYPE oy = origin[1];
+  REAL_TYPE oz = origin[2];
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  REAL_TYPE r, ri, ro, y, z;
+  REAL_TYPE u1_in = (q1 / a1) / RefV;
+  REAL_TYPE u2_in = (q2 / a2) / RefV;
+  
+  REAL_TYPE o1 = omg1;
+  REAL_TYPE o2 = omg2;
+  
+  REAL_TYPE ux = vec[0];
+  REAL_TYPE uy = vec[1];
+  REAL_TYPE uz = vec[2];
+
+  
+  // Ring1
+  if ( pat_1 == ON )
+  {
+    int i = 1;
+    ri = r1i;
+    ro = r1o;
+    
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in, ux, uy, uz, dh2) \
+private(y, z, r) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
+        size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
+        size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+        
+        if ( !((ri < r) && (r < ro)) ) // wall
+        {
+          wv[m1] += (uy - v0[m1]) * dh2;
+          wv[m2] += (uz - v0[m2]) * dh2;
+        }
+        else // jet
+        {
+          REAL_TYPE ur = u1_in;
+          REAL_TYPE vr = -o1 * z;
+          REAL_TYPE wr =  o1 * y;
+          
+          REAL_TYPE c  = u1_in;
+          REAL_TYPE ac = fabs(ux);
+          
+          REAL_TYPE up = v0[m0];
+          REAL_TYPE vp = v0[m1];
+          REAL_TYPE wp = v0[m2];
+          
+          REAL_TYPE ex = up - ur;
+          REAL_TYPE ey = vp - vr;
+          REAL_TYPE ez = wp - wr;
+          
+          REAL_TYPE fu = 0.5*(c*(up+ur) - ac*ex);
+          REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
+          REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
+          
+          REAL_TYPE msk = GET_SHIFT_F(bv[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], STATE_BIT);
+          
+          wv[m0] += (fu*dh - ex*dh2) * msk;
+          wv[m1] += (fv*dh - ey*dh2) * msk;
+          wv[m2] += (fw*dh - ez*dh2) * msk;
+        }
+      }
+    }
+    
+    sum += q1;
+    flop += (double)jx * (double)kx * 27.0; // DP 37.0
+  }
+
+  
+  // Ring2
+  if ( pat_2 == ON )
+  {
+    int i = ix;
+    ri = r2i;
+    ro = r2o;
+    
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in, ux, uy, uz, dh2) \
+private(y, z, r) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
+        size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
+        size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+        
+        if ( !((ri < r) && (r < ro)) ) // wall
+        {
+          wv[m1] += (uy - v0[m1]) * dh2;
+          wv[m2] += (uz - v0[m2]) * dh2;
+        }
+        else // jet
+        {
+          REAL_TYPE ur = u2_in;
+          REAL_TYPE vr = -o2 * z;
+          REAL_TYPE wr =  o2 * y;
+          
+          REAL_TYPE c  = u2_in;
+          REAL_TYPE ac = fabs(ux);
+          
+          REAL_TYPE up = v0[m0];
+          REAL_TYPE vp = v0[m1];
+          REAL_TYPE wp = v0[m2];
+          
+          REAL_TYPE ex = up - ur;
+          REAL_TYPE ey = vp - vr;
+          REAL_TYPE ez = wp - wr;
+          
+          REAL_TYPE fu = 0.5*(c*(up+ur) - ac*ex);
+          REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
+          REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
+          
+          REAL_TYPE msk = GET_SHIFT_F(bv[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], STATE_BIT);
+          
+          wv[m0] += (fu*dh - ex*dh2) * msk;
+          wv[m1] += (fv*dh - ey*dh2) * msk;
+          wv[m2] += (fw*dh - ez*dh2) * msk;
+        }
+      }
+    }
+    
+    sum += q2;
+    flop += (double)jx * (double)kx * 27.0; // DP 37.0
+  }
+  
+  sum /= (RefV * RefL * RefL);
+}
+
+
+// #################################################################
+/* @brief Jetの流入境界条件をガイドセルとセルフェイス速度に代入
+ * @param [in,out] v     セルセンター速度
+ * @param [in,out] vf    セルフェイス速度
+ * @param [in,out] flop  flop count
+ */
+void IP_Jet::vobcJetInflow(REAL_TYPE* v, REAL_TYPE* vf, double& flop)
+{
+  
+  // グローバル
+  REAL_TYPE dh = deltaX;
+  
+  // ノードローカル
+  //REAL_TYPE ox = origin[0];
+  REAL_TYPE oy = origin[1];
+  REAL_TYPE oz = origin[2];
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  REAL_TYPE r, ri, ro, y, z;
+  REAL_TYPE u1_in = (q1 / a1) / RefV;
+  REAL_TYPE u2_in = (q2 / a2) / RefV;
+  
+  REAL_TYPE o1 = omg1;
+  REAL_TYPE o2 = omg2;
+
+
+  // Ring1
+  if ( pat_1 == ON )
+  {
+    int i = 0;
+    ri = r1i;
+    ro = r1o;
+    
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o1, dh, u1_in) \
+private(y, z, r) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u1_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o1 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o1 * y;
+        }
+      }
+    }
+    flop += (double)jx * (double)kx * 21.0; // DP 31.0
+  }
+
+  
+  // Ring2
+  if ( pat_1 == ON )
+  {
+    int i = ix+1;
+    ri = r2i;
+    ro = r2o;
+    
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, o2, dh, u2_in) \
+private(y, z, r) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+        z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        r = sqrt(y*y + z*z);
+        
+        if ( (ri < r) && (r < ro) )
+        {
+          v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = u2_in;
+          v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = -o2 * z;
+          v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] =  o2 * y;
+        }
+      }
+    }
+    flop += (double)jx * (double)kx * 21.0; // DP 31.0
+  }
+
 }
 
 

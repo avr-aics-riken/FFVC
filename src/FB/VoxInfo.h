@@ -30,6 +30,7 @@
 #include "BndOuter.h"
 #include "vec3.h"
 #include "CompoFraction.h"
+#include "Intrinsic.h"
 
 #include "mpi.h"
 #include "limits.h"
@@ -42,6 +43,8 @@ private:
   int NoCompo;                   ///< コンポーネントの総数
   int NoVoxID;                   ///< 含まれるIDの数(Local/Global)
   int colorList[MODEL_ID_MAX+1]; ///< ボクセルモデルに含まれるIDのリスト(Global)
+  
+  Intrinsic *Ex; ///< 例題クラス
 
 public:
   /** コンストラクタ */
@@ -51,6 +54,8 @@ public:
     NoCompo = 0;
     
     for (int i=0; i<MODEL_ID_MAX+1; i++) colorList[i]=0;
+    
+    Ex = NULL;
   }
   
   /**　デストラクタ */
@@ -515,24 +520,24 @@ public:
   unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const float* cut, const int* bid, const bool isCDS);
   
   
-  /**
-   * @brief bv[]に境界条件のビット情報をエンコードする
-   * @param [in,out] bv BCindex V
-   * @param [in] mid ID配列
-   * @param [in,out] bp BCindex P
-   * @param [in]     BC SetBCクラスのポインタ
-   * @param [in,out] cmp CompoList
-   * @param [in]     isCDS CDS->true
-   * @param [in]     cut 距離情報
-   * @param [in]     cut_id カット点ID
-   */
-  void setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, 
+  // bv[]に境界条件のビット情報をエンコードする
+  void setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, Intrinsic_class icls, 
                    bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   
   
   void setCmpFraction        (CompoList* compo, int* bx, float* vf);
   
   void setAdiabatic4SF       (int* bh);
+  
+  
+  /*
+   * @brief 組み込み例題クラスをアサイン
+   * @param [in] ExRef  組み込み例題クラス
+   */
+  void setIntrinsic(Intrinsic* ExRef)
+  {
+    Ex = ExRef;
+  }
   
   
   void setNoCompo_BC         (int m_NoBC, int m_NoCompo);

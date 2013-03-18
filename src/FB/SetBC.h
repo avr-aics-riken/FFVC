@@ -85,7 +85,7 @@ public:
   
   
   // クラスに必要な変数のコピー
-  void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef=NULL);
+  void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef);
   
   
   // 作業用ポインタのコピー
