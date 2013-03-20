@@ -273,8 +273,15 @@ int FFV::Initialize(int argc, char **argv)
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++)
   {
-    V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(),
+    if ( (C.Mode.Example == id_Jet) && (face==0) )
+    {
+      // skip
+    }
+    else
+    {
+      V.adjMedium_on_GC(face, d_mid, BC.export_OBC(face)->get_Class(),
                       BC.export_OBC(face)->get_GuideMedium(), BC.export_OBC(face)->get_PrdcMode());
+    }
   }
 
   
@@ -661,11 +668,6 @@ int FFV::Initialize(int argc, char **argv)
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ 
   {
-    printf(    "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    printf(    "\t>> Outer Boundary Conditions\n\n");
-    fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
-    
     display_Parameters(fp);
   }
   
@@ -1014,6 +1016,11 @@ void FFV::display_Parameters(FILE* fp)
   
   // 境界条件のリストと外部境界面のBC設定を表示
 
+  printf(    "\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  printf(    "\t>> Outer Boundary Conditions\n\n");
+  fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
+  
   B.printFaceOBC(stdout, G_region, BC.export_OBC(), mat);
   B.printFaceOBC(fp, G_region, BC.export_OBC(), mat);
 
@@ -3076,7 +3083,7 @@ void FFV::setInitialCondition()
     // 流出境界の流出速度の算出
     // dummy
     Gemini_R* m_buf = new Gemini_R [C.NoBC];
-    BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, flop_task);
+    BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
     if ( m_buf ) { delete [] m_buf; m_buf=NULL; }
     
     DomainMonitor(BC.export_OBC(), &C);
@@ -3231,14 +3238,14 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       {
         // 初期値1.0をセット
         setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
-        Ex->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
+        ((IP_Sphere*)Ex)->setup_cut(d_mid, &C, G_origin, C.NoMedium, mat, d_cut);
       }
       break;
       
     case id_SHC1D:
       setup_CutInfo4IP(PrepMemory, TotalMemory, fp);
       Ex->setup(d_mid, &C, G_origin, C.NoMedium, mat);
-      Ex->setup_bc(d_bid);
+      ((IP_SHC1D*)Ex)->setup_bc(d_bid);
       break;
       
     default: // ほかのIntrinsic problems
@@ -3898,11 +3905,11 @@ void FFV::VoxEncode()
   // BCIndexV に速度計算のビット情報をエンコードする -----
   if ( C.isCDS() ) 
   {
-    V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, true, d_cut, d_bid);
+    V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example, true, d_cut, d_bid);
   }
   else // binary
   {
-    V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp);
+    V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example);
   }
   
 

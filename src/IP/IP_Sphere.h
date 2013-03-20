@@ -71,9 +71,9 @@ public:
   }
   
   
-
   // 計算領域のセルIDを設定する（バイナリー）
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
+  
   
   
   // 計算領域のセルIDとカット情報を設定する

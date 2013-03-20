@@ -105,14 +105,6 @@ public:
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
   
   
-  // 計算領域のセルIDとカット情報を設定する
-  virtual void setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat, float* cut) {};
-  
-  
-  // 矩形の計算領域のセルIDを設定する
-  virtual void setup_bc(int* bid) {};
-  
-  
   // モデルIDをsphフォーマット(float)で出力する
   void writeSPH(const int *mid, const Control* R);
   

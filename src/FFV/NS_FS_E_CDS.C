@@ -430,7 +430,7 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, flop);
+    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分

@@ -446,12 +446,13 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
  * @param [in]     avr    平均値計算のテンポラリ値
  * @param [in,out] vf     セルフェイス速度 u^{n+1}
  * @param [in,out] v      セルセンター速度 u^{n+1}
+ * @param [in]     C      Controlクラス
  * @param [in]     flop   flop count
  * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
  *       avr[]のインデクスに注意 (Fortran <-> C)
  */
 
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, double& flop)
+void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, Control* C, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -557,9 +558,9 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
-            
+            vec[0] = ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, fcount);
+            obc[face].setDomainV(vec, "scalar");
           }
-          obc[face].setDomainV(vec, "scalar");
           break;
       }
     }
@@ -842,31 +843,31 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
     if ( nID[face] < 0 )
     {
       
-      
-      if ( (C->Mode.Example == id_Jet) && (face==0) )
+      switch ( typ )
       {
-        Ex->vobc_pv_JetInflow(wv, rei, v, bv, vec, flop);
-      }
-      else
-      {
-        switch ( typ )
-        {
-          case OBC_SPEC_VEL:
-            extractVel_OBC(face, vec, tm, v00, flop);
-            vobc_pv_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
-            break;
-            
-          case OBC_WALL:
-            extractVel_OBC(face, vec, tm, v00, flop);
-            vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
-            break;
-            
-          case OBC_OUTFLOW:
-            vel = C->V_Dface[face];
-            vobc_pv_oflow_(wv, size, &gd, &dh, &rei, v, bv, &face, &vel, &flop);
-            break;
-        }
-        // OBC_SYMMETRIC >> 対称面での対流流束と粘性流速はそれぞれゼロなので，BCによる寄与は不要
+        case OBC_SPEC_VEL:
+          extractVel_OBC(face, vec, tm, v00, flop);
+          vobc_pv_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
+          break;
+          
+        case OBC_WALL:
+          extractVel_OBC(face, vec, tm, v00, flop);
+          vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
+          break;
+          
+        case OBC_OUTFLOW:
+          vel = C->V_Dface[face];
+          vobc_pv_oflow_(wv, size, &gd, &dh, &rei, v, bv, &face, &vel, &flop);
+          break;
+          
+        case OBC_INTRINSIC:
+          if ( (C->Mode.Example == id_Jet) && (face==0) )
+          {
+            ((IP_Jet*)Ex)->vobc_pv_JetInflow(wv, rei, v, bv, flop);
+          }
+          break;
+          
+          // OBC_SYMMETRIC >> 対称面での対流流束と粘性流速はそれぞれゼロなので，BCによる寄与は不要
       }
       
     } // end if nID[]
@@ -1150,6 +1151,13 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
           
         case OBC_SYMMETRIC:
           vobc_neumann_(d_v, size, &gd, &face);
+          break;
+          
+        case OBC_INTRINSIC:
+          if ( (C->Mode.Example == id_Jet) && (face==0) )
+          {
+            ((IP_Jet*)Ex)->vobcJetInflowGC(d_v);
+          }
           break;
           
         default:

@@ -521,8 +521,15 @@ public:
   
   
   // bv[]に境界条件のビット情報をエンコードする
-  void setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, Intrinsic_class icls, 
-                   bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
+  void setBCIndexV(int* bv,
+                   const int* mid,
+                   int* bp,
+                   SetBC* BC,
+                   CompoList* cmp,
+                   int icls,
+                   bool isCDS=false,
+                   float* cut=NULL,
+                   int* cut_id=NULL);
   
   
   void setCmpFraction        (CompoList* compo, int* bx, float* vf);

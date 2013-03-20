@@ -113,15 +113,21 @@ public:
   }
   
   
-  // Jetの流入境界条件をガイドセルとセルフェイス速度に代入
-  void vobcJetInflow(REAL_TYPE* v, REAL_TYPE* vf, double& flop);
+  
+  // Jetの流入境界条件による発散値の修正
+  REAL_TYPE divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, double& flop);
+  
+  
+  // Jetの流入境界条件をガイドセルに代入
+  void vobcJetInflowGC(REAL_TYPE* v);
   
   
   // 流束型流入境界条件
-  void vobc_pv_JetInflow(REAL_TYPE* wv, REAL_TYPE rei, REAL_TYPE* v0, int* bv, REAL_TYPE* vec, REAL_TYPE& sum, double& flop);
-  
-  // ビットフラグのエンコード
-  void encVbit_OBC(int* bv, int* bp);
+  void vobc_pv_JetInflow(REAL_TYPE* wv,
+                         const REAL_TYPE rei,
+                         const REAL_TYPE* v0,
+                         const int* bv,
+                         double& flop);
   
 };
 

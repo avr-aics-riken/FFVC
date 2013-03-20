@@ -22,6 +22,7 @@
 #include "SetBC.h"
 #include "ffv_Define.h"
 #include "ffv_Ffunc.h"
+#include "../IP/IP_Jet.h"
 
 
 class SetBC3D : public SetBC {
@@ -162,7 +163,8 @@ public:
                 REAL_TYPE* v00,
                 Gemini_R* avr,
                 REAL_TYPE* vf,
-                REAL_TYPE* v, 
+                REAL_TYPE* v,
+                Control* C,
                 double& flop);
   
   

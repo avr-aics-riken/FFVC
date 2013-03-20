@@ -3358,8 +3358,14 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
 {
   REAL_TYPE a, b, c;
   
-  fprintf(fp,"\t\t\tGuide Cell Medium = %s\n", mat[ref->get_GuideMedium()].getLabel().c_str());
-  
+  if ( ref->get_Class() == OBC_INTRINSIC)
+  {
+    fprintf(fp,"\t\t\tGuide Cell Medium = Intrinsic\n");
+  }
+  else
+  {
+    fprintf(fp,"\t\t\tGuide Cell Medium = %s\n", mat[ref->get_GuideMedium()].getLabel().c_str());
+  }
   switch ( ref->get_Class() ) {
     case OBC_WALL:
       if ( ref->get_V_Profile() == CompoList::vel_harmonic ) {

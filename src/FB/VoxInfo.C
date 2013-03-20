@@ -5660,7 +5660,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
  * @param [in]     bid   BID配列
  * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
  */
-void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, Intrinsic_class icls, bool isCDS, float* cut, int* bid)
+void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, int icls, bool isCDS, float* cut, int* bid)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;
@@ -5700,7 +5700,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
       case OBC_INTRINSIC:
         if ( (icls == id_Jet) && (face==0) )
         {
-          Ex->encVbit_OBC(bv, bp); // 流束形式
+          encVbit_OBC(face, bv, "fluid", true, "nocheck", bp, false); // 流束形式
         }
         break;
         
