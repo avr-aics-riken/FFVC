@@ -48,7 +48,7 @@ REAL_TYPE IP_Jet::divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, dou
   {
     REAL_TYPE ri = r1i;
     REAL_TYPE ro = r1o;
-    REAL_TYPE u_in = (q1 / a1) / RefV;
+    REAL_TYPE u_in = q1 / a1;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
 schedule(static)
@@ -80,7 +80,7 @@ schedule(static)
   {
     REAL_TYPE ri = r2i;
     REAL_TYPE ro = r2o;
-    REAL_TYPE u_in = (q2 / a2) / RefV;
+    REAL_TYPE u_in = q2 / a2;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
 schedule(static)
@@ -106,7 +106,6 @@ schedule(static)
     flop += (double)jx * (double)kx * 21.0; // DP 31.0
   }
   
-  sum /= (RefV * RefL * RefL);
   return sum;
 }
 
@@ -151,14 +150,14 @@ void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv,
     int i = 1;
     REAL_TYPE ri = r1i;
     REAL_TYPE ro = r1o;
-    REAL_TYPE u_in = (q1 / a1) / RefV;
+    REAL_TYPE u_in = q1 / a1;
     REAL_TYPE omg = omg1;
     
 #pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg, dh, u_in, uy, uz, dh2) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        
+
         REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
         REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
         
@@ -214,7 +213,7 @@ schedule(static)
     int i = 1;
     REAL_TYPE ri = r2i;
     REAL_TYPE ro = r2o;
-    REAL_TYPE u_in = (q2 / a2) / RefV;
+    REAL_TYPE u_in = q2 / a2;
     REAL_TYPE omg = omg2;
     
 #pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg, dh, u_in, uy, uz, dh2) \
@@ -299,7 +298,7 @@ void IP_Jet::vobcJetInflowGC(REAL_TYPE* v)
   {
     REAL_TYPE ri = r1i;
     REAL_TYPE ro = r1o;
-    REAL_TYPE u_in = (q1 / a1) / RefV;
+    REAL_TYPE u_in = q1 / a1;
     REAL_TYPE omg = omg1;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, omg, dh, u_in) \
@@ -328,7 +327,7 @@ schedule(static)
   {
     REAL_TYPE ri = r2i;
     REAL_TYPE ro = r2o;
-    REAL_TYPE u_in = (q2 / a2) / RefV;
+    REAL_TYPE u_in = q2 / a2;
     REAL_TYPE omg = omg2;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, omg, dh, u_in) \
@@ -387,6 +386,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     return false;
   }
   
+  // パラメータは無次元で保持
   
   // Ring1
   label="/Parameter/IntrinsicExample/Ring1/UseRing";
@@ -414,7 +414,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      r1i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+      r1i = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
     label="/Parameter/IntrinsicExample/RIng1/OuterRadius";
@@ -423,7 +423,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+      r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
     label="/Parameter/IntrinsicExample/RIng1/RotationFrequency";
@@ -432,7 +432,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      n1 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
+      n1 = ( R->Unit.Param == DIMENSIONAL ) ? ct * RefL / RefV : ct;
     }
     
     label="/Parameter/IntrinsicExample/Ring1/InletMassFlow";
@@ -441,11 +441,11 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      q1 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL * RefL * RefV;
+      q1 = ( R->Unit.Param == DIMENSIONAL ) ? ct / (RefL * RefL * RefV) : ct;
     }
     
     omg1 = 2.0 * pai * n1;
-    a1 = pai * (r1o*r1o - r1i*r1i);
+    a1 = pai * (r1o*r1o - r1i*r1i) / (RefL*RefL);
   }
   
   
@@ -476,7 +476,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      r2i = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+      r2i = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
     label="/Parameter/IntrinsicExample/Ring2/OuterRadius";
@@ -485,7 +485,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      r2o = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+      r2o = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
     label="/Parameter/IntrinsicExample/Ring2/RotationFrequency";
@@ -494,7 +494,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      n2 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL / RefV;
+      n2 = ( R->Unit.Param == DIMENSIONAL ) ? ct * RefL / RefV : ct;
     }
     
     label="/Parameter/IntrinsicExample/Ring2/InletMassFlow";
@@ -503,11 +503,11 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
       return false;
     }
     else{
-      q2 = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL * RefL * RefV;
+      q2 = ( R->Unit.Param == DIMENSIONAL ) ? ct / (RefL * RefL * RefV) : ct;
     }
     
     omg2 = 2.0 * pai * n2;
-    a2 = pai * (r2o*r2o - r2i*r2i);
+    a2 = pai * (r2o*r2o - r2i*r2i) / (RefL*RefL);
   }
   
   
@@ -648,26 +648,26 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
   // Ring1
   if ( pat_1 == ON )
   {
-    fprintf(fp,"\tRing1 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r1i, r1i/RefL);
-    fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r1o, r1o/RefL);
-    fprintf(fp,"\t      Massflow         [m^3/s]/[-] : %12.5e / %12.5e\n", q1, q1/(RefL*RefL*RefV));
-    fprintf(fp,"\t      Area             [m^2] / [-] : %12.5e / %12.5e\n", a1, a1/(RefL*RefL));
-    fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q1/a1, (q1/a1)/RefV);
-    fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg1, omg1*RefL/RefV);
-    fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n1, n1);
+    fprintf(fp,"\tRing1 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r1i*RefL, r1i);
+    fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r1o*RefL, r1o);
+    fprintf(fp,"\t      Massflow         [m^3/s]/[-] : %12.5e / %12.5e\n", q1*(RefL*RefL*RefV), q1);
+    fprintf(fp,"\t      Area             [m^2] / [-] : %12.5e / %12.5e\n", a1*(RefL*RefL), a1);
+    fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q1/a1*RefV, q1/a1);
+    fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg1*RefV/RefL, omg1);
+    fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n1*RefV/RefL, n1);
     fprintf(fp,"\n");
   }
   
   // Ring2
   if ( pat_2 == ON )
   {
-    fprintf(fp,"\tRing2 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r2i, r2i/RefL);
-    fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r2o, r2o/RefL);
-    fprintf(fp,"\t      Massflow         [m^3/s]/[-] : %12.5e / %12.5e\n", q2, q2/(RefL*RefL*RefV));
-    fprintf(fp,"\t      Area             [m^2] / [-] : %12.5e / %12.5e\n", a2, a2/(RefL*RefL));
-    fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q2/a2, (q2/a2)/RefV);
-    fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg2, omg2*RefL/RefV);
-    fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n2, n2);
+    fprintf(fp,"\tRing2 Inner Radius     [m]   / [-] : %12.5e / %12.5e\n", r2i*RefL, r2i);
+    fprintf(fp,"\t      Outer Radius     [m]   / [-] : %12.5e / %12.5e\n", r2o*RefL, r2o);
+    fprintf(fp,"\t      Massflow         [m^3/s]/[-] : %12.5e / %12.5e\n", q2*(RefL*RefL*RefV), q2);
+    fprintf(fp,"\t      Area             [m^2] / [-] : %12.5e / %12.5e\n", a2*(RefL*RefL), a2);
+    fprintf(fp,"\t      Inlet U(x-dir)   [m/s] / [-] : %12.5e / %12.5e\n", q2/a2*RefV, q2/a2);
+    fprintf(fp,"\t      Angular Velocity [rad/s]/[-] : %12.5e / %12.5e\n", omg2*RefV/RefL, omg2);
+    fprintf(fp,"\t      Rotation Freq.   [1/s] / [-] : %12.5e / %12.5e\n", n2*RefV/RefL, n2);
   }
 }
 
@@ -733,17 +733,17 @@ schedule(static)
   // X-側の場合に，Jet吹き出し部設定
   if ( nID[X_MINUS] < 0 )
   {
-    int i = 0;
-    
     // デフォルトでガイドセルをSolidにする
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, mid_solid) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
         mid[m] = mid_solid;
       }
     }
+    
+    printf("oy, oz, dh, r1i, r1o = %f, %f, %f, %f %f\n", oy, oz, dh, r1i, r1o);
     
     
     // Ring1
@@ -752,7 +752,7 @@ schedule(static)
       REAL_TYPE ri = r1i;
       REAL_TYPE ro = r1o;
       
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
 schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -764,7 +764,7 @@ schedule(static)
           
           if ( (ri < r) && (r < ro) )
           {
-            mid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] = mid_fluid;
+            mid[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = mid_fluid;
           }
           
         }
@@ -778,7 +778,7 @@ schedule(static)
       REAL_TYPE ri = r2i;
       REAL_TYPE ro = r2o;
       
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
 schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -790,7 +790,7 @@ schedule(static)
           
           if ( (ri < r) && (r < ro) )
           {
-            mid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] = mid_fluid;
+            mid[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = mid_fluid;
           }
           
         }

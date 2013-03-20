@@ -505,19 +505,16 @@ public:
                    bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   
   
-  /**
-   * @brief 圧力境界条件のビット情報をエンコードする
-   * @param [in,out] bcd   BCindex ID
-   * @param [in,out] bcp   BCindex P
-   * @param [in,out] mid   ID配列
-   * @param [in]     BC    SetBCクラスのポインタ
-   * @param [in,out] cmp   CompoList
-   * @param [in]     cut   距離情報
-   * @param [in]     bid   カットID情報
-   * @param [in]     isCDS CDS->true
-   * @retval 表面セル数
-   */
-  unsigned long setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const float* cut, const int* bid, const bool isCDS);
+  // 圧力境界条件のビット情報をエンコードする
+  unsigned long setBCIndexP(int* bcd,
+                            int* bcp,
+                            int* mid,
+                            SetBC* BC,
+                            CompoList* cmp,
+                            int icls,
+                            const float* cut,
+                            const int* bid,
+                            const bool isCDS);
   
   
   // bv[]に境界条件のビット情報をエンコードする

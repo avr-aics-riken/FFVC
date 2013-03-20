@@ -3005,6 +3005,7 @@ void FFV::setGlobalCmpIdx()
 void FFV::setInitialCondition()
 {
   double flop_task;
+  Gemini_R* m_buf = new Gemini_R [C.NoBC];
   
   REAL_TYPE tm = CurrentTime * C.Tscale;
   
@@ -3023,6 +3024,10 @@ void FFV::setInitialCondition()
       U0[2] = C.iv.VecW;
     }
 		fb_set_vector_(d_v, size, &guide, U0, d_bcd);
+    fb_set_fvector_(d_vf, size, &guide, U0, d_bcd);
+    
+    // セルフェイスの設定　発散値は関係なし
+    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
     
 		// 外部境界面の流出流量と移流速度
     DomainMonitor( BC.export_OBC(), &C);
@@ -3096,8 +3101,9 @@ void FFV::setInitialCondition()
   // 初期解およびリスタート解の同期
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_v,  size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_p,  size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
     
     if ( C.isHeatProblem() ) 
     {
@@ -3115,6 +3121,8 @@ void FFV::setInitialCondition()
     }
   }
   
+  // 後始末
+  if ( m_buf ) delete [] m_buf;
 }
 
 
@@ -3889,11 +3897,11 @@ void FFV::VoxEncode()
   // BCIndexP に圧力計算のビット情報をエンコードする -----
   if ( C.isCDS() ) 
   {
-    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, d_cut, d_bid, true);
+    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, true);
   }
   else // binary
   {
-    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, d_cut, d_bid, false);
+    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, false);
   }
 
 #if 0

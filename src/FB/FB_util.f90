@@ -1422,6 +1422,53 @@
     end subroutine fb_set_vector
 
 !> ********************************************************************
+!! @brief セルフェイスベクトル値を設定する
+!! @param [out] var ベクトル配列
+!! @param [in]  sz  配列長
+!! @param [in]  g   ガイドセル長
+!! @param [in]  val ベクトル値
+!! @param [in]  bv  BCindex V
+!<
+subroutine fb_set_fvector (var, sz, g, val, bv)
+implicit none
+include '../FB/ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
+integer, dimension(3)                                     ::  sz
+real                                                      ::  u1, u2, u3
+real, dimension(3)                                        ::  val
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  var
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+u1 = val(1)
+u2 = val(2)
+u3 = val(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(u1, u2, u3) &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(bvx)
+
+!$OMP DO SCHEDULE(static)
+
+do k=0, kx
+do j=0, jx
+do i=0, ix
+var(i,j,k,1) = u1 * real( ibits(bv(i,j,k), State, 1) * ibits(bv(i+1,j,k), State, 1) )
+var(i,j,k,2) = u2 * real( ibits(bv(i,j,k), State, 1) * ibits(bv(i,j+1,k), State, 1) )
+var(i,j,k,3) = u3 * real( ibits(bv(i,j,k), State, 1) * ibits(bv(i,j,k+1), State, 1) )
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine fb_set_fvector
+
+!> ********************************************************************
 !! @brief スカラ値の値を[0, 1]に制限する
 !! @param [in,out] t  スカラ値
 !! @param [in]     sz 配列長

@@ -3929,7 +3929,10 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              if ( enc_uwd ) {
+                bp[m]  = onBit(q, VBC_UWD);
+                bp[mt] = onBit(q, VBC_UWD);
+              }
               
               // チェック
               if ( cw == 1 ) {
@@ -3973,7 +3976,10 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              if ( enc_uwd ) {
+                bp[m]  = onBit(q, VBC_UWD);
+                bp[mt] = onBit(q, VBC_UWD);
+              }
               
               // チェック
               if ( cw == 1 ) {
@@ -4017,7 +4023,10 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              if ( enc_uwd ) {
+                bp[m]  = onBit(q, VBC_UWD);
+                bp[mt] = onBit(q, VBC_UWD);
+              }
               
               // チェック
               if ( cw == 1 ) {
@@ -4061,7 +4070,10 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              if ( enc_uwd ) {
+                bp[m]  = onBit(q, VBC_UWD);
+                bp[mt] = onBit(q, VBC_UWD);
+              }
               
               // チェック
               if ( cw == 1 ) {
@@ -4105,7 +4117,10 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              if ( enc_uwd ) {
+                bp[m]  = onBit(q, VBC_UWD);
+                bp[mt] = onBit(q, VBC_UWD);
+              }
               
               // チェック
               if ( cw == 1 ) {
@@ -4149,7 +4164,10 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) bp[mt] = onBit(q, VBC_UWD);
+              if ( enc_uwd ) {
+                bp[m]  = onBit(q, VBC_UWD);
+                bp[mt] = onBit(q, VBC_UWD);
+              }
               
               // チェック
               if ( cw == 1 ) {
@@ -5529,8 +5547,20 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
 
 
 // #################################################################
-// 圧力境界条件のビット情報をエンコードする
-unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, const float* cut, const int* bid, const bool isCDS)
+/**
+ * @brief 圧力境界条件のビット情報をエンコードする
+ * @param [in,out] bcd   BCindex ID
+ * @param [in,out] bcp   BCindex P
+ * @param [in,out] mid   ID配列
+ * @param [in]     BC    SetBCクラスのポインタ
+ * @param [in,out] cmp   CompoList
+ * @param [in]     icls  Intrinsic class
+ * @param [in]     cut   距離情報
+ * @param [in]     bid   カットID情報
+ * @param [in]     isCDS CDS->true
+ * @retval 表面セル数
+ */
+unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid, const bool isCDS)
 {
   unsigned long surface = 0;
 
@@ -5587,7 +5617,10 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
         break;
         
       case OBC_INTRINSIC:
-        encPbit_OBC(face, bcp, "Neumann", false);
+        if ( (icls == id_Jet) && (face==0) )
+        {
+          encPbit_OBC(face, bcp, "Neumann", false);
+        }
         break;
         
       // 外部境界値を指定

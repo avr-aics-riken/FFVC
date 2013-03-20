@@ -208,7 +208,7 @@
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
       
-      ! 延びたステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
+      ! 外部境界におけるステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
       lmt_w = 1.0
       lmt_e = 1.0
       lmt_s = 1.0

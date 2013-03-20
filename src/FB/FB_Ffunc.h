@@ -155,6 +155,12 @@ extern "C" {
                            REAL_TYPE* val, 
                            int* bv);
   
+  void fb_set_fvector_    (REAL_TYPE* var,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* val,
+                           int* bv);
+  
   void fb_shift_refv_in_  (REAL_TYPE* vo,
                            int* sz,
                            int* g,

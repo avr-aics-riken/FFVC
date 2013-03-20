@@ -34,17 +34,18 @@ protected:
   Driver_property driver;    ///< ドライバの特性
    */
   
+  // パラメータは無次元で保持
   int mode;                  ///< モード（2D or 3D）
   int pat_1;                 ///< ジェットのパターン (Ring1 on/off)
   int pat_2;                 ///< ジェットのパターン (Ring2 on/off)
-  REAL_TYPE r1i, r1o;        ///< Ring1の内外径
-  REAL_TYPE r2i, r2o;        ///< Ring2の内外径
+  REAL_TYPE r1i, r1o;        ///< Ring1の内外径 [m]
+  REAL_TYPE r2i, r2o;        ///< Ring2の内外径 [m]
   REAL_TYPE omg1;            ///< Ring1の角速度（符号が正のとき、x軸に向かって右ねじ）
   REAL_TYPE omg2;            ///< Ring2の角速度 [rad/s]
   REAL_TYPE q1, q2;          ///< Ring1, 2の流入流量 [m^3/s]
   REAL_TYPE n1, n2;          ///< Ring1, 2の回転数 [1/s]
   REAL_TYPE a1, a2;          ///< Ring1, 2の面積 [m^2]
-  REAL_TYPE RefV;            ///< 代表速度
+  REAL_TYPE RefV;            ///< 代表速度 [m/s]
   std::string m_fluid;       ///< 流体のラベル
   std::string m_solid;       ///< 固体のラベル
   
