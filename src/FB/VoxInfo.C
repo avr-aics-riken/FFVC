@@ -20,7 +20,16 @@
 #include "VoxInfo.h"
 
 
-// 計算領域外部のガイドセルに媒質IDをエンコードする
+
+// #################################################################
+/**
+ * @brief 計算領域外部のガイドセルに媒質IDをエンコードする
+ * @param [in]     face      外部境界面番号
+ * @param [in,out] mid       ID配列のデータクラス
+ * @param [in]     BCtype    外部境界面の境界条件の種類
+ * @param [in]     c_id      媒質インデクス
+ * @param [in]     prdc_mode 周期境界条件のモード
+ */
 void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode)
 {
   size_t m, m0, m1;

@@ -797,7 +797,6 @@ schedule(static)
       }
     }
     
-    
   } // X_MINUS面の処理
   
 }
