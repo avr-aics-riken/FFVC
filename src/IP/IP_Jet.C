@@ -125,7 +125,7 @@ void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv,
   
   // グローバル
   REAL_TYPE dh = deltaX;
-  REAL_TYPE dh2= rei * dh * dh * 2.0;
+  REAL_TYPE dh2= rei / (dh * dh);
   
   // ノードローカル
   REAL_TYPE oy = origin[1];
@@ -219,8 +219,8 @@ schedule(static)
       }
       else // Wall
       {
-        wv[m1] += (uy - v0[m1]) * dh2;
-        wv[m2] += (uz - v0[m2]) * dh2;
+        wv[m1] += (uy - v0[m1]) * dh2 * 2.0;
+        wv[m2] += (uz - v0[m2]) * dh2 * 2.0;
       }
     }
   }
