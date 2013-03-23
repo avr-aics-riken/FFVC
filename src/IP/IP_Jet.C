@@ -63,8 +63,7 @@ schedule(static)
         if ( (ri < r) && (r < ro) )
         {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          div[m] -= u_in * GET_SHIFT_F(bv[m],   STATE_BIT)
-                         * GET_SHIFT_F(bv[m-1], STATE_BIT);
+          div[m] -= u_in;
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
         }
       }
@@ -95,8 +94,7 @@ schedule(static)
         if ( (ri < r) && (r < ro) )
         {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          div[m] -= u_in * GET_SHIFT_F(bv[m],   STATE_BIT)
-                         * GET_SHIFT_F(bv[m-1], STATE_BIT);
+          div[m] -= u_in;
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
         }
       }
@@ -144,132 +142,91 @@ void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv,
   REAL_TYPE uz = 0.0;
 
   
-  // Ring1
-  if ( pat_1 == ON )
-  {
-    int i = 1;
-    REAL_TYPE ri = r1i;
-    REAL_TYPE ro = r1o;
-    REAL_TYPE u_in = q1 / a1;
-    REAL_TYPE omg = omg1;
-    
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg, dh, u_in, uy, uz, dh2) \
+  int i = 1;
+  REAL_TYPE rin_1  = r1i;
+  REAL_TYPE rout_1 = r1o;
+  REAL_TYPE rin_2  = r2i;
+  REAL_TYPE rout_2 = r2o;
+  REAL_TYPE uin_1  = q1 / a1;
+  REAL_TYPE uin_2  = q2 / a2;
+  REAL_TYPE omg_1  = omg1;
+  REAL_TYPE omg_2  = omg2;
+  
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, dh, dh2, uy, uz, \
+rin_1, rout_1, omg_1, uin_1, rin_2, rout_2, omg_2, uin_2) \
 schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      
+      REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+      REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      
+      REAL_TYPE r = sqrt(y*y + z*z);
+      
+      size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
+      size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
+      size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+      
+      if ( (rin_1 < r) && (r < rout_1) ) // Ring1
+      {
+        REAL_TYPE ur = uin_1;
+        REAL_TYPE vr = -omg_1 * z;
+        REAL_TYPE wr =  omg_1 * y;
+        
+        REAL_TYPE c  = uin_1;
+        REAL_TYPE ac = fabs(c);
+        
+        REAL_TYPE up = v0[m0];
+        REAL_TYPE vp = v0[m1];
+        REAL_TYPE wp = v0[m2];
+        
+        REAL_TYPE ex = up - ur;
+        REAL_TYPE ey = vp - vr;
+        REAL_TYPE ez = wp - wr;
+        
+        REAL_TYPE fu = 0.5*(c*(up+ur) - ac*ex);
+        REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
+        REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
 
-        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        wv[m0] += (fu*dh - ex*dh2);
+        wv[m1] += (fv*dh - ey*dh2);
+        wv[m2] += (fw*dh - ez*dh2);
+      }
+      else if ( (rin_2 < r) && (r < rout_2) ) // Ring2
+      {
+        REAL_TYPE ur = uin_2;
+        REAL_TYPE vr = -omg_2 * z;
+        REAL_TYPE wr =  omg_2 * y;
         
-        REAL_TYPE r = sqrt(y*y + z*z);
+        REAL_TYPE c  = uin_2;
+        REAL_TYPE ac = fabs(c);
         
-        size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
-        size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
-        size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+        REAL_TYPE up = v0[m0];
+        REAL_TYPE vp = v0[m1];
+        REAL_TYPE wp = v0[m2];
         
-        if ( !((ri < r) && (r < ro)) ) // wall
-        {
-          wv[m1] += (uy - v0[m1]) * dh2;
-          wv[m2] += (uz - v0[m2]) * dh2;
-        }
-        else // jet
-        {
-          REAL_TYPE ur = u_in;
-          REAL_TYPE vr = -omg * z;
-          REAL_TYPE wr =  omg * y;
-          
-          REAL_TYPE c  = u_in;
-          REAL_TYPE ac = fabs(c);
-          
-          REAL_TYPE up = v0[m0];
-          REAL_TYPE vp = v0[m1];
-          REAL_TYPE wp = v0[m2];
-          
-          REAL_TYPE ex = up - ur;
-          REAL_TYPE ey = vp - vr;
-          REAL_TYPE ez = wp - wr;
-          
-          REAL_TYPE fu = 0.5*(c*(up+ur) - ac*ex);
-          REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
-          REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
-          
-          REAL_TYPE msk = GET_SHIFT_F(bv[_F_IDX_S3D(1, j, k, ix, jx, kx, gd)], STATE_BIT)
-                        * GET_SHIFT_F(bv[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)], STATE_BIT);
-          
-          wv[m0] += (fu*dh - ex*dh2) * msk;
-          wv[m1] += (fv*dh - ey*dh2) * msk;
-          wv[m2] += (fw*dh - ez*dh2) * msk;
-        }
+        REAL_TYPE ex = up - ur;
+        REAL_TYPE ey = vp - vr;
+        REAL_TYPE ez = wp - wr;
+        
+        REAL_TYPE fu = 0.5*(c*(up+ur) - ac*ex);
+        REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
+        REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
+        
+        wv[m0] += (fu*dh - ex*dh2);
+        wv[m1] += (fv*dh - ey*dh2);
+        wv[m2] += (fw*dh - ez*dh2);
+      }
+      else // Wall
+      {
+        wv[m1] += (uy - v0[m1]) * dh2;
+        wv[m2] += (uz - v0[m2]) * dh2;
       }
     }
-    
-    flop += (double)jx * (double)kx * 27.0; // DP 37.0
   }
-
-  
-  // Ring2
-  if ( pat_2 == ON )
-  {
-    int i = 1;
-    REAL_TYPE ri = r2i;
-    REAL_TYPE ro = r2o;
-    REAL_TYPE u_in = q2 / a2;
-    REAL_TYPE omg = omg2;
-    
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, ri, ro, omg, dh, u_in, uy, uz, dh2) \
-schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        
-        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-        
-        REAL_TYPE r = sqrt(y*y + z*z);
-        
-        size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
-        size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
-        size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
-        
-        if ( !((ri < r) && (r < ro)) ) // wall
-        {
-          wv[m1] += (uy - v0[m1]) * dh2;
-          wv[m2] += (uz - v0[m2]) * dh2;
-        }
-        else // jet
-        {
-          REAL_TYPE ur = u_in;
-          REAL_TYPE vr = -omg * z;
-          REAL_TYPE wr =  omg * y;
-          
-          REAL_TYPE c  = u_in;
-          REAL_TYPE ac = fabs(c);
-          
-          REAL_TYPE up = v0[m0];
-          REAL_TYPE vp = v0[m1];
-          REAL_TYPE wp = v0[m2];
-          
-          REAL_TYPE ex = up - ur;
-          REAL_TYPE ey = vp - vr;
-          REAL_TYPE ez = wp - wr;
-          
-          REAL_TYPE fu = 0.5*(c*(up+ur) - ac*ex);
-          REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
-          REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
-          
-          REAL_TYPE msk = GET_SHIFT_F(bv[_F_IDX_S3D(1, j, k, ix, jx, kx, gd)], STATE_BIT)
-                        * GET_SHIFT_F(bv[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)], STATE_BIT);
-          
-          wv[m0] += (fu*dh - ex*dh2) * msk;
-          wv[m1] += (fv*dh - ey*dh2) * msk;
-          wv[m2] += (fw*dh - ez*dh2) * msk;
-        }
-      }
-    }
-    
-    flop += (double)jx * (double)kx * 27.0; // DP 37.0
-  }
-  
+  flop += (double)jx * (double)kx * 27.0; // DP 37.0
 }
+
 
 
 // #################################################################

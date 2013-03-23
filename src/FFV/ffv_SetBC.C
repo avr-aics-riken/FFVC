@@ -964,14 +964,20 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       {
         case OBC_SPEC_VEL:
         case OBC_WALL:
-        case OBC_INTRINSIC:
         {
           REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
           break;
         }
           
-        // case OBC_SYMMETRIC: 境界面の法線速度はゼロなので，修正不要 
+        case OBC_INTRINSIC:
+          if ( (C->Mode.Example == id_Jet) && (face==0) )
+          {
+            ((IP_Jet*)Ex)->divJetInflow(s_0, bv, vf, flop);
+          }
+          break;
+          
+        // case OBC_SYMMETRIC: 境界面の法線速度はゼロなので，修正不要
         // case OBC_TRC_FREE:  境界値を与え，通常スキームで計算するので不要
         // case OBC_FAR_FIELD: 境界値を与え，通常スキームで計算するので不要
       }

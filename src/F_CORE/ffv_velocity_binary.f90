@@ -855,7 +855,7 @@
       bvx = bv(i,j,k)
       actv= real(ibits(bvx, State, 1))
       
-      ! 各セルフェイス位置の変数ロード
+      ! 各セルセンター位置の変数ロード
       Uw0 = v0(i-1,j  ,k  , 1)
       Up0 = v0(i  ,j  ,k  , 1)
       Ue0 = v0(i+1,j  ,k  , 1)
