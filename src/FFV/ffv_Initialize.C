@@ -2838,13 +2838,6 @@ void FFV::setEnsComponent()
   }
   if ( c>0 ) C.EnsCompo.fraction = ON;
   
-  // モニタ
-  c = 0;
-  for (int n=1; n<=C.NoBC; n++) 
-  {
-    if ( cmp[n].isMONITOR() ) c++;
-  }
-  
   // トラクションフリー
   c = 0;
   for (int n=0; n<NOFACE; n++)
@@ -2852,6 +2845,13 @@ void FFV::setEnsComponent()
     if ( BC.export_OBC(n)->get_Class()== OBC_TRC_FREE ) c++;
   }
   if ( c>0 ) C.EnsCompo.tfree = ON;
+  
+  // モニタ
+  c = 0;
+  for (int n=1; n<=C.NoBC; n++) 
+  {
+    if ( cmp[n].isMONITOR() ) c++;
+  }
   
   // MONITOR_LISTでCELL_MONITORが指定されている場合，C.EnsCompo.monitor==ON
   if ( (C.isMonitor() == ON) && (c < 1) ) 

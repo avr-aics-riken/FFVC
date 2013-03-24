@@ -1193,7 +1193,7 @@
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  v1, v2, v3, v4
+    real                                                      ::  v1, v2, v3, v4, ut, vt, wt
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
@@ -1203,7 +1203,7 @@
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
-!$OMP PRIVATE(i, j, k, v1, v2, v3, v4)
+!$OMP PRIVATE(i, j, k, v1, v2, v3, v4, ut, vt, wt)
 
     FACES : select case (face)
     case (X_minus)
@@ -1216,9 +1216,16 @@
         v3 = 0.5 * (vf(1, j  , k  , 3) + vf(1, j  , k-1, 3))
         v4 = 0.5 * (vf(0, j  , k+1, 1) - vf(0, j  , k-1, 1))
 
-        v(0, j, k, 1) = v(1, j, k, 1)
-        v(0, j, k, 2) = v1 + v2
-        v(0, j, k, 3) = v3 + v4
+        ut = v(1, j, k, 1)
+        vt = v1 + v2
+        wt = v3 + v4
+
+        do i=1-g, 0
+          v(i, j, k, 1) = ut
+          v(i, j, k, 2) = vt
+          v(i, j, k, 3) = wt
+        end do
+
       end do
       end do
 !$OMP END DO
@@ -1233,10 +1240,17 @@
         v2 = 0.5 * (vf(ix, j+1, k  , 1) - vf(ix, j-1, k  , 1))
         v3 = 0.5 * (vf(ix, j  , k  , 3) + vf(ix, j  , k-1, 3))
         v4 = 0.5 * (vf(ix, j  , k+1, 1) - vf(ix, j  , k-1, 1))
-        
-        v(ix+1, j, k, 1) = v(ix, j, k, 1)
-        v(ix+1, j, k, 2) = v1 - v2
-        v(ix+1, j, k, 3) = v3 - v4
+
+        ut = v(ix, j, k, 1)
+        vt = v1 - v2
+        wt = v3 - v4
+
+        do i=ix+1, ix+g
+          v(i, j, k, 1) = ut
+          v(i, j, k, 2) = vt
+          v(i, j, k, 3) = wt
+        end do
+
       end do
       end do
 !$OMP END DO
@@ -1252,9 +1266,16 @@
         v3 = 0.5 * (vf(i  , 1, k  , 3) + vf(i  , 1, k-1, 3))
         v4 = 0.5 * (vf(i  , 0, k+1, 2) - vf(i  , 0, k-1, 2))
 
-        v(i, 0, k, 1) = v1 + v2
-        v(i, 0, k, 2) = v(i, 1, k, 2)
-        v(i, 0, k, 3) = v3 + v4
+        ut = v1 + v2
+        vt = v(i, 1, k, 2)
+        wt = v3 + v4
+
+        do j=1-g, 0
+          v(i, j, k, 1) = ut
+          v(i, j, k, 2) = vt
+          v(i, j, k, 3) = wt
+        end do
+
       end do
       end do
 !$OMP END DO
@@ -1270,9 +1291,16 @@
         v3 = 0.5 * (vf(i  , jx, k  , 3) + vf(i  , jx, k-1, 3))
         v4 = 0.5 * (vf(i  , jx, k+1, 2) - vf(i  , jx, k-1, 2))
 
-        v(i, jx+1, k, 1) = v1 - v2
-        v(i, jx+1, k, 2) = v(i, jx, k, 2)
-        v(i, jx+1, k, 3) = v3 - v4
+        ut = v1 - v2
+        vt = v(i, jx, k, 2)
+        wt = v3 - v4
+
+        do j=jx+1, jx+g
+          v(i, j, k, 1) = ut
+          v(i, j, k, 2) = vt
+          v(i, j, k, 3) = wt
+        end do
+
       end do
       end do
 !$OMP END DO
@@ -1288,9 +1316,16 @@
         v3 = 0.5 * (vf(i  , j  , 1, 2) + vf(i  , j-1, 1, 2))
         v4 = 0.5 * (vf(i  , j+1, 0, 3) - vf(i  , j-1, 0, 3))
 
-        v(i, j, 0, 1) = v1 + v2
-        v(i, j, 0, 2) = v3 + v4
-        v(i, j, 0, 3) = v(i, j, 1, 3)
+        ut = v1 + v2
+        vt = v3 + v4
+        wt = v(i, j, 1, 3)
+
+        do k=1-g, 0
+          v(i, j, k, 1) = ut
+          v(i, j, k, 2) = vt
+          v(i, j, k, 3) = wt
+        end do
+
       end do
       end do
 !$OMP END DO
@@ -1306,9 +1341,16 @@
         v3 = 0.5 * (vf(i  , j  , kx, 2) + vf(i  , j-1, kx, 2))
         v4 = 0.5 * (vf(i  , j+1, kx, 3) - vf(i  , j-1, kx, 3))
 
-        v(i, j, kx+1, 1) = v1 - v2
-        v(i, j, kx+1, 2) = v3 - v4
-        v(i, j, kx+1, 3) = v(i, j, kx, 3)
+        ut = v1 - v2
+        vt = v3 - v4
+        wt = v(i, j, kx, 3)
+
+        do k=kx+1, kx+g
+          v(i, j, k, 1) = ut
+          v(i, j, k, 2) = vt
+          v(i, j, k, 3) = wt
+        end do
+
       end do
       end do
 !$OMP END DO

@@ -3939,7 +3939,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) {
-                bp[m]  = onBit(q, VBC_UWD);
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
@@ -3986,7 +3985,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) {
-                bp[m]  = onBit(q, VBC_UWD);
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
@@ -4033,7 +4031,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) {
-                bp[m]  = onBit(q, VBC_UWD);
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
@@ -4080,7 +4077,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) {
-                bp[m]  = onBit(q, VBC_UWD);
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
@@ -4127,7 +4123,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) {
-                bp[m]  = onBit(q, VBC_UWD);
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
@@ -4174,7 +4169,6 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
               
               // 外部境界で安定化のため，スキームを1次精度にする
               if ( enc_uwd ) {
-                bp[m]  = onBit(q, VBC_UWD);
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
