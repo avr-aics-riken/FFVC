@@ -16,16 +16,16 @@
 
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param [out] wv   疑似ベクトルの空間項の評価値
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  dh   格子幅
-!! @param [in]  rei  Reynolds数の逆数
-!! @param [in]  v0   セルセンター速度ベクトル（n-step）
-!! @param [in]  bv   BCindex V
-!! @param [in]  face 外部境界処理のときの面番号
-!! @param [in]  cf   流出速度
-!! @param [out] flop 浮動小数点演算数
+!! @param [in,out] wv   疑似ベクトルの空間項
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     dh   格子幅
+!! @param [in]     rei  Reynolds数の逆数
+!! @param [in]     v0   セルセンター速度ベクトル（n-step）
+!! @param [in]     bv   BCindex V
+!! @param [in]     face 外部境界処理のときの面番号
+!! @param [in]     cf   流出速度
+!! @param [out]    flop 浮動小数点演算数
 !<
     subroutine vobc_pv_oflow (wv, sz, g, dh, rei, v0, bv, face, cf, flop)
     implicit none
@@ -34,8 +34,8 @@
     integer                                                   ::  ix, jx, kx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  Up0, Vp0, Wp0
-    real                                                      ::  dh, dh1, dh2, rei, c, cf, m
+    real                                                      ::  Up0, Vp0, Wp0, Ui, Vi, Wi
+    real                                                      ::  dh, dh1, dh2, rei, c, cf, m, ac
     real                                                      ::  fu, fv, fw, EX, EY, EZ
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -48,20 +48,20 @@
     dh2= rei*dh1*dh1
 
     c = cf
+    ac = abs(c)
     m =0.0
     
     flop = flop + 13.0d0 ! DP 15 flops
     
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP FIRSTPRIVATE(dh1, dh2, cf, c) &
-!$OMP PRIVATE(Up0, Vp0, Wp0) &
+!$OMP FIRSTPRIVATE(dh1, dh2, c, ac) &
+!$OMP PRIVATE(Up0, Vp0, Wp0, Ui, Vi, Wi) &
 !$OMP PRIVATE(fu, fv, fw, EX, EY, EZ)
     
     FACES : select case (face)
     case (X_minus)
 
-      if ( cf>0.0 ) c=0.0
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
@@ -70,14 +70,17 @@
           Up0 = v0(1, j, k, 1)
           Vp0 = v0(1, j, k, 2)
           Wp0 = v0(1, j, k, 3)
+          Ui  = v0(0, j, k, 1)
+          Vi  = v0(0, j, k, 2)
+          Wi  = v0(0, j, k, 3)
 
-          fu  = c * Up0
-          fv  = c * Vp0
-          fw  = c * Wp0
-          
-          EX = v0(0, j, k, 1) - Up0
-          EY = v0(0, j, k, 2) - Vp0
-          EZ = v0(0, j, k, 3) - Wp0
+          fu  = 0.5*( c*(Up0+Ui) - ac*(Up0-Ui) )
+          fv  = 0.5*( c*(Vp0+Vi) - ac*(Vp0-Vi) )
+          fw  = 0.5*( c*(Wp0+Wi) - ac*(Wp0-Wi) )
+
+          EX  = Ui - Up0
+          EY  = Vi - Vp0
+          EZ  = Wi - Wp0
 
           wv(1, j, k, 1) = wv(1, j, k, 1) + ( fu*dh1 + EX*dh2 )
           wv(1, j, k, 2) = wv(1, j, k, 2) + ( fv*dh1 + EY*dh2 )
@@ -91,23 +94,24 @@
 
     case (X_plus)
 
-      if ( cf<0.0 ) c=0.0
-
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
-          Up0 = v0(ix, j, k, 1)
-          Vp0 = v0(ix, j, k, 2)
-          Wp0 = v0(ix, j, k, 3)
+          Up0 = v0(ix  , j, k, 1)
+          Vp0 = v0(ix  , j, k, 2)
+          Wp0 = v0(ix  , j, k, 3)
+          Ui  = v0(ix+1, j, k, 1)
+          Vi  = v0(ix+1, j, k, 2)
+          Wi  = v0(ix+1, j, k, 3)
 
-          fu  = c * Up0
-          fv  = c * Vp0
-          fw  = c * Wp0
+          fu  = 0.5*( c*(Ui+Up0) - ac*(Ui-Up0) )
+          fv  = 0.5*( c*(Vi+Vp0) - ac*(Vi-Vp0) )
+          fw  = 0.5*( c*(Wi+Wp0) - ac*(Wi-Wp0) )
 
-          EX = v0(ix+1, j, k, 1) - Up0
-          EY = v0(ix+1, j, k, 2) - Vp0
-          EZ = v0(ix+1, j, k, 3) - Wp0
+          EX  = Ui - Up0
+          EY  = Vi - Vp0
+          EZ  = Wi - Wp0
 
           wv(ix, j, k, 1) = wv(ix, j, k, 1) + ( -fu*dh1 + EX*dh2 )
           wv(ix, j, k, 2) = wv(ix, j, k, 2) + ( -fv*dh1 + EY*dh2 )
@@ -121,8 +125,6 @@
       
     case (Y_minus)
 
-      if ( cf>0.0 ) c=0.0
-
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
@@ -130,14 +132,17 @@
           Up0 = v0(i, 1, k, 1)
           Vp0 = v0(i, 1, k, 2)
           Wp0 = v0(i, 1, k, 3)
+          Ui  = v0(i, 0, k, 1)
+          Vi  = v0(i, 0, k, 2)
+          Wi  = v0(i, 0, k, 3)
 
-          fu  = c * Up0
-          fv  = c * Vp0
-          fw  = c * Wp0
-        
-          EX = v0(i, 0, k, 1) - Up0
-          EY = v0(i, 0, k, 2) - Vp0
-          EZ = v0(i, 0, k, 3) - Wp0
+          fu  = 0.5*( c*(Up0+Ui) - ac*(Up0-Ui) )
+          fv  = 0.5*( c*(Vp0+Vi) - ac*(Vp0-Vi) )
+          fw  = 0.5*( c*(Wp0+Wi) - ac*(Wp0-Wi) )
+
+          EX  = Ui - Up0
+          EY  = Vi - Vp0
+          EZ  = Wi - Wp0
 
           wv(i, 1, k, 1) = wv(i, 1, k, 1) + ( fu*dh1 + EX*dh2 )
           wv(i, 1, k, 2) = wv(i, 1, k, 2) + ( fv*dh1 + EY*dh2 )
@@ -151,23 +156,24 @@
       
     case (Y_plus)
 
-      if ( cf<0.0 ) c=0.0
-
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
-          Up0 = v0(i, jx, k, 1)
-          Vp0 = v0(i, jx, k, 2)
-          Wp0 = v0(i, jx, k, 3)
+          Up0 = v0(i, jx  , k, 1)
+          Vp0 = v0(i, jx  , k, 2)
+          Wp0 = v0(i, jx  , k, 3)
+          Ui  = v0(i, jx+1, k, 1)
+          Vi  = v0(i, jx+1, k, 2)
+          Wi  = v0(i, jx+1, k, 3)
 
-          fu  = c * Up0
-          fv  = c * Vp0
-          fw  = c * Wp0
+          fu  = 0.5*( c*(Ui+Up0) - ac*(Ui-Up0) )
+          fv  = 0.5*( c*(Vi+Vp0) - ac*(Vi-Vp0) )
+          fw  = 0.5*( c*(Wi+Wp0) - ac*(Wi-Wp0) )
 
-          EX = v0(i, jx+1, k, 1) - Up0
-          EY = v0(i, jx+1, k, 2) - Vp0
-          EZ = v0(i, jx+1, k, 3) - Wp0
+          EX  = Ui - Up0
+          EY  = Vi - Vp0
+          EZ  = Wi - Wp0
           
           wv(i, jx, k, 1) = wv(i, jx, k, 1) + ( -fu*dh1 + EX*dh2 )
           wv(i, jx, k, 2) = wv(i, jx, k, 2) + ( -fv*dh1 + EY*dh2 )
@@ -181,8 +187,6 @@
       
     case (Z_minus)
 
-      if ( cf>0.0 ) c=0.0
-
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
@@ -190,14 +194,17 @@
           Up0 = v0(i, j, 1, 1)
           Vp0 = v0(i, j, 1, 2)
           Wp0 = v0(i, j, 1, 3)
+          Ui  = v0(i, j, 0, 1)
+          Vi  = v0(i, j, 0, 2)
+          Wi  = v0(i, j, 0, 3)
 
-          fu  = c * Up0
-          fv  = c * Vp0
-          fw  = c * Wp0
-          
-          EX = v0(i, j, 0, 1) - Up0
-          EY = v0(i, j, 0, 2) - Vp0
-          EZ = v0(i, j, 0, 3) - Wp0
+          fu  = 0.5*( c*(Up0+Ui) - ac*(Up0-Ui) )
+          fv  = 0.5*( c*(Vp0+Vi) - ac*(Vp0-Vi) )
+          fw  = 0.5*( c*(Wp0+Wi) - ac*(Wp0-Wi) )
+
+          EX  = Ui - Up0
+          EY  = Vi - Vp0
+          EZ  = Wi - Wp0
 
           wv(i, j, 1, 1) = wv(i, j, 1, 1) + ( fu*dh1 + EX*dh2 )
           wv(i, j, 1, 2) = wv(i, j, 1, 2) + ( fv*dh1 + EY*dh2 )
@@ -211,24 +218,25 @@
       
     case (Z_plus)
 
-      if ( cf<0.0 ) c=0.0
-
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
-          Up0 = v0(i, j, kx, 1)
-          Vp0 = v0(i, j, kx, 2)
-          Wp0 = v0(i, j, kx, 3)
+          Up0 = v0(i, j, kx  , 1)
+          Vp0 = v0(i, j, kx  , 2)
+          Wp0 = v0(i, j, kx  , 3)
+          Ui  = v0(i, j, kx+1, 1)
+          Vi  = v0(i, j, kx+1, 2)
+          Wi  = v0(i, j, kx+1, 3)
 
-          fu  = c * Up0
-          fv  = c * Vp0
-          fw  = c * Wp0
-          
-          EX = v0(i, j, kx+1, 1) - Up0
-          EY = v0(i, j, kx+1, 2) - Vp0
-          EZ = v0(i, j, kx+1, 3) - Wp0
-          
+          fu  = 0.5*( c*(Ui+Up0) - ac*(Ui-Up0) )
+          fv  = 0.5*( c*(Vi+Vp0) - ac*(Vi-Vp0) )
+          fw  = 0.5*( c*(Wi+Wp0) - ac*(Wi-Wp0) )
+
+          EX  = Ui - Up0
+          EY  = Vi - Vp0
+          EZ  = Wi - Wp0
+
           wv(i, j, kx, 1) = wv(i, j, kx, 1) + ( -fu*dh1 + EX*dh2 )
           wv(i, j, kx, 2) = wv(i, j, kx, 2) + ( -fv*dh1 + EY*dh2 )
           wv(i, j, kx, 3) = wv(i, j, kx, 3) + ( -fw*dh1 + EZ*dh2 )
@@ -242,7 +250,7 @@
     end select FACES
 !$OMP END PARALLEL
 
-    flop = flop + dble(m)*18.0d0
+    flop = flop + dble(m)*33.0d0
       
     return
     end subroutine vobc_pv_oflow
@@ -964,7 +972,7 @@
 !! @param [in]     bv   BCindex V
 !! @param [in,out] flop 浮動小数点演算数
 !<
-    subroutine vobc_outflow (v, sz, g, cf, face, v0, bv, flop)
+    subroutine vobc_pv_oflow_gc (v, sz, g, cf, face, v0, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, face, ix, jx, kx
@@ -973,7 +981,7 @@
     real                                                      ::  Ue, Uw, Un, Us, Ut, Ub
     real                                                      ::  Ve, Vw, Vn, Vs, Vt, Vb
     real                                                      ::  We, Ww, Wn, Ws, Wt, Wb
-    real                                                      ::  cf, c, m
+    real                                                      ::  cf, c, m, d
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, v0
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
@@ -983,9 +991,10 @@
 
     c = cf
     m = 0.0
+    d = 1.0
     
 !$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face, c, cf) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, c, cf, d) &
 !$OMP PRIVATE(Ue, Uw, Un, Us, Ut, Ub) &
 !$OMP PRIVATE(Ve, Vw, Vn, Vs, Vt, Vb) &
 !$OMP PRIVATE(We, Ww, Wn, Ws, Wt, Wb)
@@ -993,7 +1002,10 @@
     FACES : select case (face)
     case (X_minus)
 
-      if ( cf>0.0 ) c=0.0
+      if ( cf>0.0 ) then
+        c=0.0
+        d=0.0
+      end if
       
 !$OMP DO SCHEDULE(static)
       do k=1,kx
@@ -1006,9 +1018,9 @@
           Ww = v0(0, j, k, 3)
           We = v0(1, j, k, 3)
 
-          v(0, j ,k, 1) = Uw - c*(Ue-Uw)
-          v(0, j ,k, 2) = Vw - c*(Ve-Vw)
-          v(0, j ,k, 3) = Ww - c*(We-Ww)
+          v(0, j ,k, 1) = (Uw - c*(Ue-Uw))*d + v(1,j,k,1)*(1.0-d)
+          v(0, j ,k, 2) = (Vw - c*(Ve-Vw))*d + v(1,j,k,2)*(1.0-d)
+          v(0, j ,k, 3) = (Ww - c*(We-Ww))*d + v(1,j,k,3)*(1.0-d)
           m = m + 1.0
         endif
       end do
@@ -1018,7 +1030,10 @@
       
     case (X_plus)
 
-      if ( cf<0.0 ) c=0.0
+      if ( cf<0.0 ) then
+        c=0.0
+        d=0.0
+      end if
       
 !$OMP DO SCHEDULE(static)
       do k=1,kx
@@ -1031,9 +1046,9 @@
           Ww = v0(ix  , j, k, 3)
           We = v0(ix+1, j, k, 3)
 
-          v(ix+1, j ,k, 1) = Ue - c*(Ue-Uw)
-          v(ix+1, j ,k, 2) = Ve - c*(Ve-Vw)
-          v(ix+1, j ,k, 3) = We - c*(We-Ww)
+          v(ix+1, j ,k, 1) = (Ue - c*(Ue-Uw))*d + v(ix,j,k,1)*(1.0-d)
+          v(ix+1, j ,k, 2) = (Ve - c*(Ve-Vw))*d + v(ix,j,k,2)*(1.0-d)
+          v(ix+1, j ,k, 3) = (We - c*(We-Ww))*d + v(ix,j,k,3)*(1.0-d)
           m = m + 1.0
         endif
       end do
@@ -1043,7 +1058,10 @@
       
     case (Y_minus)
 
-      if ( cf>0.0 ) c=0.0
+      if ( cf>0.0 ) then
+        c=0.0
+        d=0.0
+      end if
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
@@ -1056,9 +1074,9 @@
           Ws = v0(i, 0, k, 3)
           Wn = v0(i, 1, k, 3)
 
-          v(i, 0, k, 1) = Us - c*(Un-Us)
-          v(i, 0, k, 2) = Vs - c*(Vn-Vs)
-          v(i, 0, k, 3) = Ws - c*(Wn-Ws)
+          v(i, 0, k, 1) = (Us - c*(Un-Us))*d + v(i,1,k,1)*(1.0-d)
+          v(i, 0, k, 2) = (Vs - c*(Vn-Vs))*d + v(i,1,k,2)*(1.0-d)
+          v(i, 0, k, 3) = (Ws - c*(Wn-Ws))*d + v(i,1,k,3)*(1.0-d)
           m = m + 1.0
         endif
       end do
@@ -1068,7 +1086,10 @@
       
     case (Y_plus)
 
-      if ( cf<0.0 ) c=0.0
+      if ( cf<0.0 ) then
+        c=0.0
+        d=0.0
+      end if
       
 !$OMP DO SCHEDULE(static)
       do k=1,kx
@@ -1081,9 +1102,9 @@
           Ws = v0(i, jx  , k, 3)
           Wn = v0(i, jx+1, k, 3)
 
-          v(i, jx+1, k, 1) = Un - c*(Un-Us)
-          v(i, jx+1, k, 2) = Vn - c*(Vn-Vs)
-          v(i, jx+1, k, 3) = Wn - c*(Wn-Ws)
+          v(i, jx+1, k, 1) = (Un - c*(Un-Us))*d + v(i,jx,k,1)*(1.0-d)
+          v(i, jx+1, k, 2) = (Vn - c*(Vn-Vs))*d + v(i,jx,k,2)*(1.0-d)
+          v(i, jx+1, k, 3) = (Wn - c*(Wn-Ws))*d + v(i,jx,k,3)*(1.0-d)
           m = m + 1.0
         endif
       end do
@@ -1093,7 +1114,10 @@
       
     case (Z_minus)
 
-      if ( cf>0.0 ) c=0.0
+      if ( cf>0.0 ) then
+        c=0.0
+        d=0.0
+      end if
 
 !$OMP DO SCHEDULE(static)
       do j=1,jx
@@ -1106,9 +1130,9 @@
           Wb = v0(i, j, 0, 3)
           Wt = v0(i, j, 1, 3)
 
-          v(i, j, 0, 1) = Ub - c*(Ut-Ub)
-          v(i, j, 0, 2) = Vb - c*(Vt-Vb)
-          v(i, j, 0, 3) = Wb - c*(Wt-Wb)
+          v(i, j, 0, 1) = (Ub - c*(Ut-Ub))*d + v(i,j,1,1)*(1.0-d)
+          v(i, j, 0, 2) = (Vb - c*(Vt-Vb))*d + v(i,j,1,2)*(1.0-d)
+          v(i, j, 0, 3) = (Wb - c*(Wt-Wb))*d + v(i,j,1,3)*(1.0-d)
           m = m + 1.0
         endif
       end do
@@ -1118,7 +1142,10 @@
       
     case (Z_plus)
 
-      if ( cf<0.0 ) c=0.0
+      if ( cf<0.0 ) then
+        c=0.0
+        d=0.0
+      end if
       
 !$OMP DO SCHEDULE(static)
       do j=1,jx
@@ -1131,9 +1158,9 @@
           Wb = v0(i, j, kx  , 3)
           Wt = v0(i, j, kx+1, 3)
 
-          v(i, j, kx+1, 1) = Ut - c*(Ut-Ub)
-          v(i, j, kx+1, 2) = Vt - c*(Vt-Vb)
-          v(i, j, kx+1, 3) = Wt - c*(Wt-Wb)
+          v(i, j, kx+1, 1) = (Ut - c*(Ut-Ub))*d + v(i,j,kx,1)*(1.0-d)
+          v(i, j, kx+1, 2) = (Vt - c*(Vt-Vb))*d + v(i,j,kx,2)*(1.0-d)
+          v(i, j, kx+1, 3) = (Wt - c*(Wt-Wb))*d + v(i,j,kx,3)*(1.0-d)
           m = m + 1.0
         endif
       end do
@@ -1144,10 +1171,10 @@
     end select FACES
 !$OMP END PARALLEL
 
-    flop = flop + dble(m)*9.0d0
+    flop = flop + dble(m)*21.0d0
 
     return
-    end subroutine vobc_outflow
+    end subroutine vobc_pv_oflow_gc
 
 !> ********************************************************************
 !! @brief 速度の外部境界：　トラクションフリー
@@ -1592,7 +1619,7 @@
 !! @param [in]     face  面番号
 !! @param [in]     cf    uc*dt/dh
 !! @param [in]     bv    BCindex V
-!! @param [in]     vf    セルフェイス速度ベクトル（n-step）
+!! @param [in]     vf    セルフェイス速度 u^n
 !! @param [out]    flop  flop count
 !<
     subroutine vobc_div_pv_oflow (div, sz, g, face, cf, bv, vf, flop)

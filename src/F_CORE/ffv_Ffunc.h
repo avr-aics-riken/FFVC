@@ -465,14 +465,14 @@ extern "C" {
   
   void vobc_neumann_      (REAL_TYPE* v, int* sz, int* g, int* face);
   
-  void vobc_outflow_ (REAL_TYPE* v,
-                      int* sz,
-                      int* g,
-                      REAL_TYPE* cf,
-                      int* face,
-                      REAL_TYPE* v0,
-                      int* bv,
-                      double* flop);
+  void vobc_pv_oflow_gc_ (REAL_TYPE* v,
+                          int* sz,
+                          int* g,
+                          REAL_TYPE* cf,
+                          int* face,
+                          REAL_TYPE* v0,
+                          int* bv,
+                          double* flop);
   
   void vobc_tfree_ (REAL_TYPE* v,
                     int* sz,

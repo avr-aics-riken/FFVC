@@ -880,7 +880,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
 /**
  @brief 速度境界条件によるPoisosn式のソース項の修正
  @param [out] s_0   \sum{u^*}
- @param [in]  vc    セルセンタ疑似速度
+ @param [in]  vc    セルセンタ疑似速度 u^*
  @param [in]  v0    セルセンタ速度 u^n
  @param [in]  vf    セルフェイス速度 u^n
  @param [in]  bv    BCindex V
@@ -997,6 +997,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       {
         vel = dt / dh;
         vobc_div_pv_oflow_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
+        //vobc_div_pv_oflow_(s_0, size, &gd, &face, &vel, bv, vc, &fcount);
       }
     }
     
@@ -1200,7 +1201,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
       switch ( obc[face].get_Class() ) {
         case OBC_OUTFLOW :
           vel = C->V_Dface[face] * dt / dh;
-          vobc_outflow_(d_vc, size, &gd, &vel, &face, d_v0, d_bv, &flop);
+          vobc_pv_oflow_gc_(d_vc, size, &gd, &vel, &face, d_v0, d_bv, &flop);
           break;
           
         case OBC_FAR_FIELD:

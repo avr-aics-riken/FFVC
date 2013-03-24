@@ -107,7 +107,7 @@ parameter ( gma_W = 18) ! FB_Define.h GMA_W
 parameter ( h_diag = 15 ) ! FB_Define.h H_DIAG
 
 ! 速度境界条件の種類
-parameter ( id_specvel   = 0 ) ! SetBC.h enum
+parameter ( id_specvel   = 0 ) ! SetBC.h outer boundary condition enum
 parameter ( id_outflow   = 1 ) ! SetBC.h 
 parameter ( id_wall      = 2 ) ! SetBC.h 
 parameter ( id_symmetric = 3 ) ! SetBC.h 
