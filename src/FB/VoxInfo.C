@@ -2321,15 +2321,14 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
 
 // #################################################################
 /**
- @brief 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
- @param face 外部境界面番号
- @param bx BCindex P
- @param key Dirichlet or Neumann
- @param dir 壁面の場合(true)，方向フラグをON
- @retval 固体表面セル数
- @note 
- - 流体セルに対してのみ，1-Normal, 0-BC
- - 固体セルに隣接する面のノイマンフラグをゼロにし，方向フラグを立てる
+ * @brief 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
+ * @param [in]     face 外部境界面番号
+ * @param [in,out] bx   BCindex P
+ * @param [in]     key  Dirichlet or Neumann
+ * @param [in]     dir  壁面の場合(true)，方向フラグをON
+ * @note
+   - 流体セルに対してのみ，1-Normal, 0-BC
+   - 固体セルに隣接する面のノイマンフラグをゼロにし，方向フラグを立てる
  */
 void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool dir)
 {
@@ -2341,6 +2340,7 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
   int kx = size[2];
   int gd = guide;
   
+
   switch (face)
   {
     case X_MINUS:

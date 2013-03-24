@@ -1621,6 +1621,7 @@
 !! @param [in]     bv    BCindex V
 !! @param [in]     vf    セルフェイス速度 u^n
 !! @param [out]    flop  flop count
+!! @note セルフェイスの速度を移流させた方が発散値が小さくなる
 !<
     subroutine vobc_div_pv_oflow (div, sz, g, face, cf, bv, vf, flop)
     implicit none

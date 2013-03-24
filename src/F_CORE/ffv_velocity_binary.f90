@@ -208,7 +208,7 @@
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
       
-      ! 外部境界におけるステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
+      ! ステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
       lmt_w = 1.0
       lmt_e = 1.0
       lmt_s = 1.0
@@ -216,20 +216,13 @@
       lmt_b = 1.0
       lmt_t = 1.0
 
-      !if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      !if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      !if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      !if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      !if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      !if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+      if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
       
-      ! 外部境界条件の場合
-      !if ( (i == 1)  .and. (ibits(bp(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      !if ( (i == ix) .and. (ibits(bp(ix+1, j   , k   ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      !if ( (j == 1)  .and. (ibits(bp(i   , 0   , k   ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      !if ( (j == jx) .and. (ibits(bp(i   , jx+1, k   ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      !if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      !if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
       
       ! 界面速度（スタガード位置） > 24 flops
       UPe = vf(i  , j  , k  ,1)*w_e + u_ref*(1.0-w_e)
@@ -289,12 +282,6 @@
       cl  = UPw - u_ref
       acr = abs(cr)
       acl = abs(cl)
-
-      ! 外部境界付近の逆流対策
-      !if ( (i==1)   .and.(cr>0.0) ) lmt_e = 0.0
-      !if ( (i==2)   .and.(cl>0.0) ) lmt_w = 0.0
-      !if ( (i==ix-1).and.(cr<0.0) ) lmt_e = 0.0
-      !if ( (i==ix)  .and.(cl<0.0) ) lmt_w = 0.0
       
       dv4 = Ue2-Ue1
       dv3 = Ue1-Up0
@@ -676,6 +663,7 @@
     real                                                      ::  Uef, Uwf, Vnf, Vsf, Wtf, Wbf
     real                                                      ::  c1, c2, c3, c4, c5, c6
     real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
+    real                                                      ::  D_e, D_w, D_n, D_s, D_t, D_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real                                                      ::  w_w, w_e, w_s, w_n, w_b, w_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
@@ -687,13 +675,14 @@
     kx = sz(3)
     dd = dt/dh
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*94.0 + 8.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*106.0 + 8.0d0
 
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bpx, bvx, actv) &
 !$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
+!$OMP PRIVATE(D_e, D_w, D_n, D_s, D_t, D_b) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(w_w, w_e, w_s, w_n, w_b, w_t) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
@@ -724,7 +713,16 @@
       N_n = real(ibits(bpx, bc_n_N, 1))  ! n
       N_b = real(ibits(bpx, bc_n_B, 1))  ! b
       N_t = real(ibits(bpx, bc_n_T, 1))  ! t
-      
+
+      ! Dirichlet(p=0)条件のとき 0.0 > 6 flop
+      D_w = real(ibits(bpx, bc_d_W, 1))  ! w
+      D_e = real(ibits(bpx, bc_d_E, 1))  ! e
+      D_s = real(ibits(bpx, bc_d_S, 1))  ! s
+      D_n = real(ibits(bpx, bc_d_N, 1))  ! n
+      D_b = real(ibits(bpx, bc_d_B, 1))  ! b
+      D_t = real(ibits(bpx, bc_d_T, 1))  ! t
+
+
       ! 疑似ベクトル
       Uw0 = vc(i-1,j  ,k  , 1)
       Up0 = vc(i  ,j  ,k  , 1)
@@ -770,12 +768,12 @@
       
       ! 圧力勾配 18flop
       pc  = p(i,  j,  k  )
-      pxw = (pc - p(i-1,j  ,k  )) * N_w
-      pxe = (p(i+1,j  ,k  ) - pc) * N_e
-      pys = (pc - p(i  ,j-1,k  )) * N_s
-      pyn = (p(i  ,j+1,k  ) - pc) * N_n
-      pzb = (pc - p(i  ,j  ,k-1)) * N_b
-      pzt = (p(i  ,j  ,k+1) - pc) * N_t
+      pxw = (-p(i-1,j  ,k  )*D_w + pc) * N_w
+      pxe = ( p(i+1,j  ,k  )*D_e - pc) * N_e
+      pys = (-p(i  ,j-1,k  )*D_s + pc) * N_s
+      pyn = ( p(i  ,j+1,k  )*D_n - pc) * N_n
+      pzb = (-p(i  ,j  ,k-1)*D_b + pc) * N_b
+      pzt = ( p(i  ,j  ,k+1)*D_t - pc) * N_t
       px = 0.5*(pxe + pxw)
       py = 0.5*(pyn + pys)
       pz = 0.5*(pzt + pzb)

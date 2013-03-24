@@ -995,9 +995,8 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       
       if ( typ == OBC_OUTFLOW )
       {
-        vel = dt / dh;
+        vel = C->V_Dface[face] * dt / dh;
         vobc_div_pv_oflow_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
-        //vobc_div_pv_oflow_(s_0, size, &gd, &face, &vel, bv, vc, &fcount);
       }
     }
     

@@ -700,8 +700,6 @@ schedule(static)
       }
     }
     
-    printf("oy, oz, dh, r1i, r1o = %f, %f, %f, %f %f\n", oy, oz, dh, r1i, r1o);
-    
     
     // Ring1
     if ( pat_1 == ON )
