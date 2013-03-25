@@ -546,19 +546,19 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
           obc[face].setDomainV(dd, "scalar");
           break;
           
-        // 流入出量\sum{vf}がvec[0]を使い、obc[].dm[0]に保存される
-        case OBC_FAR_FIELD:
-        case OBC_TRC_FREE:
-          vobc_get_massflow_(size, &gd, &face, vec, vf, bv, &fcount);
-          vobc_neumann_(v, size, &gd, &face, &dd);
-          obc[face].setDomainV(dd, "scalar");
-          break;
+        // NS_FS_E_Binary.Cに移す
+        //case OBC_FAR_FIELD:
+        //case OBC_TRC_FREE:
+        //  vobc_get_massflow_(size, &gd, &face, vec, vf, bv, &fcount);
+        //  vobc_neumann_(v, size, &gd, &face, &dd);
+        //  obc[face].setDomainV(dd, "scalar");
+        //  break;
           
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
-            dd = ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, fcount);
-            obc[face].setDomainV(dd, "scalar");
+            ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, vec, fcount);
+            obc[face].setDomainV(vec, "vector");
           }
           break;
       }
@@ -568,9 +568,6 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
   // OUTFLOWの面は最後に処理
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
-    
-    vec[0] = vec[1] = vec[2] = 0.0;
-    obc[face].setDomainV(vec, "vector");
     
     // 内部領域のときは，処理しない
     if( nID[face] < 0 )
@@ -972,7 +969,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
-            ((IP_Jet*)Ex)->divJetInflow(s_0, bv, vf, flop);
+            ((IP_Jet*)Ex)->divJetInflow(s_0, bv, vf, vec, flop);
           }
           break;
           

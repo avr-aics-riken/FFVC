@@ -3579,7 +3579,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       fprintf(fp, "\t\t\tVelocity : Neumann, Pressure : %s\n", (ref->get_pType() == P_DIRICHLET) ? "Dirichlet" : "Neumann");
       if (ref->get_pType() == P_DIRICHLET)
       {
-        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
+        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
       }
       else {
         fprintf(fp,"\t\t\tPressure Gradient is zero\n");

@@ -20,12 +20,12 @@
 // #################################################################
 /* @brief Jetの流入境界条件による発散値の修正
  * @param [in,out] div   発散値
- * @param [in] bv        BCindex V
- * @param [in,out] vf    セルフェイス速度    
+ * @param [in]     bv    BCindex V
+ * @param [in,out] vf    セルフェイス速度
+ * @param [out]    sum   sum[0] 無次元流入量, sum[1] 無次元平均速度のもと
  * @param [in,out] flop  flop count
- * @retval         sum   流入量（無次元）
  */
-REAL_TYPE IP_Jet::divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, double& flop)
+void IP_Jet::divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, REAL_TYPE* sum, double& flop)
 {
   
   // グローバル
@@ -41,7 +41,8 @@ REAL_TYPE IP_Jet::divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, dou
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE sum = 0.0;
+  REAL_TYPE s = 0.0;
+  REAL_TYPE a = 0.0;
   
   // Ring1
   if ( pat_1 == ON )
@@ -51,7 +52,7 @@ REAL_TYPE IP_Jet::divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, dou
     REAL_TYPE u_in = q1 / a1;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
-schedule(static)
+schedule(static) reduction(+:s) reduction(+:a)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
@@ -65,11 +66,12 @@ schedule(static)
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           div[m] -= u_in;
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
+          s += u_in;
+          a += 1.0;
         }
       }
     }
     
-    sum += q1;
     flop += (double)jx * (double)kx * 21.0; // DP 31.0
   }
   
@@ -82,7 +84,7 @@ schedule(static)
     REAL_TYPE u_in = q2 / a2;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
-schedule(static)
+schedule(static) reduction(+:s) reduction(+:a)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
@@ -96,15 +98,17 @@ schedule(static)
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           div[m] -= u_in;
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
+          s += u_in;
+          a += 1.0;
         }
       }
     }
     
-    sum += q2;
     flop += (double)jx * (double)kx * 21.0; // DP 31.0
   }
   
-  return sum;
+  sum[0] = s;
+  sum[1] = a;
 }
 
 

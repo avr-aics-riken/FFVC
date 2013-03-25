@@ -116,7 +116,7 @@ public:
   
   
   // Jetの流入境界条件による発散値の修正
-  REAL_TYPE divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, double& flop);
+  void divJetInflow(REAL_TYPE* div, const int* bv, REAL_TYPE* vf, REAL_TYPE* sum, double& flop);
   
   
   // Jetの流入境界条件をガイドセルに代入

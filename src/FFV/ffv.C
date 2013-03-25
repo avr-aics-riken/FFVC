@@ -433,7 +433,6 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     
     // 各プロセスの外部領域面の速度をvv[]にコピー
     REAL_TYPE* vv = obc[face].getDomainV();
-
     
     if ( obc[face].get_Class() == OBC_OUTFLOW)
     {
@@ -476,25 +475,51 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
         u_avr = 0.5*(u_min+u_max);
       }
       
+      R->V_Dface[face] = u_avr;       // 無次元平均流速
+      R->Q_Dface[face] = u_sum * ddh; // 無次元流量
     }
     else // 非OUTFLOW BCは無次元流量がvv[0]にストアされている
     {
-      // 外部境界以外はゼロにする
-      u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
       
-      if ( numProc > 1 )
+      // 特殊条件
+      if ( (R->Mode.Example == id_Jet) && (face==0) )
       {
-        REAL_TYPE tmp_sum = u_sum;
-        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        REAL_TYPE q[2] = {0.0, 0.0};
+        
+        // 外部境界以外はゼロにする
+        if ( nID[face] < 0 )
+        {
+          q[0] = vv[0]; // 無次元流量
+          q[1] = vv[1]; // セル数
+        }
+        
+        if ( numProc > 1 )
+        {
+          REAL_TYPE tmp[2] = {q[0], q[1]};
+          if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        }
+        
+        R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
+        R->Q_Dface[face] = q[0] * ddh; // 無次元流量
       }
-      
-      u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
+      else // 標準
+      {
+        // 外部境界以外はゼロにする
+        u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
+        
+        if ( numProc > 1 )
+        {
+          REAL_TYPE tmp_sum = u_sum;
+          if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        }
+        
+        u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
+        
+        R->V_Dface[face] = u_avr;       // 無次元平均流速
+        R->Q_Dface[face] = u_sum * ddh; // 無次元流量
+      }
     }
-    
-    
-    // コントロールクラスにコピー
-    R->V_Dface[face] = u_avr;       // 無次元平均流速
-    R->Q_Dface[face] = u_sum * ddh; // 無次元流量
+
   }
   
 }
