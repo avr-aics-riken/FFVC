@@ -11,8 +11,16 @@ Release Note
 
 #######################################
 
-Ver 1.0.4    8 Mar. 2013
+Ver 1.0.5   25 Mar. 2013
   - /Steer/FIleIO/IOmode >> distributed is default
+  - 領域分割時　G_Region = G_Voxel * G_Pitch でない場合のバグを修正 (get_DomainInfo)
+    分割のポリシー
+      G_regionは必須
+      G_voxelとG_pitchでは，G_voxelが優先．
+      両方が指定されている場合には，エラー
+      G_pitchが指定されている場合には，割り切れない場合，
+       G_voxel = (int)ceil(G_region/G_pitch)
+       G_region = G_pitch * G_voxel
 
 Ver 1.0.3   17 Feb. 2013
   - PLOT3D出力の様式変更への対応 >> ffv_Initialize.C, ffv_Loop.C

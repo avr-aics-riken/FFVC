@@ -271,6 +271,12 @@ public:
   
 private:
   
+  /** ffv_Initialize.C **/
+  
+  
+  
+  
+  
   /**
    * @brief Adams-Bashforth法に用いる配列のアロケーション
    * @param [in,out] total ソルバーに使用するメモリ量
@@ -425,10 +431,7 @@ private:
   void Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop);
   
   
-  /**
-   @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
-   @retval エラーコード
-   */
+  // 全Voxelモデルの媒質数とKOSの整合性をチェック
   bool chkMediumConsistency();
   
   
@@ -442,19 +445,12 @@ private:
   void comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
   
   
-  /**
-   * @brief 組み込み例題のインスタンス
-   * @param [in] Cref Controlクラスのポインタ
-   */
+  // 組み込み例題のインスタンス
   void connectExample(Control* Cref);
   
   
-  /**
-   * @brief 時刻をRFクラスからv00[4]にコピーする
-   * @param [in] time 設定する時刻
-   */
+  // 時刻をRFクラスからv00[4]にコピーする
   void copyV00fromRF(double m_time);
-  
   
   
   /**
@@ -466,42 +462,23 @@ private:
   double count_comm_size(const int sz[3], const int guide);
   
   
-  
-  /**
-   * @brief コンポーネントの内容リストを表示する
-   * @param [in]  fp   ファイルポインタ
-   */
+  // コンポーネントの内容リストを表示する
   void display_Compo_Info(FILE* fp);
   
   
-  /**
-   * @brief CompoListの内容とセル数の情報を表示する
-   * @param [in]  fp   ファイルポインタ
-   */
+  // CompoListの内容とセル数の情報を表示する
   void display_CompoList(FILE* fp);
   
    
-  /**
-   * @brief 制御パラメータ，物理パラメータの表示
-   * @param [in]  fp   ファイルポインタ
-   */
+  // 制御パラメータ，物理パラメータの表示
   void display_Parameters(FILE* fp);
   
   
-  /**
-   * @brief メモリ消費情報を表示
-   * @param [in]     fp    ファイルポインタ
-   * @param [in,out] G_mem グローバルメモリサイズ
-   * @param [in]     L_mem ローカルメモリサイズ
-   * @param [in]     str   表示用文字列
-   */
+  // メモリ使用量の表示
   void display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str);
   
   
-  /** 
-   * @brief 計算領域情報を設定する
-   * @param [in] tp_dom  TPControlクラス
-   */
+  // 計算領域情報を設定する
   void DomainInitialize(TPControl* tp_dom);
   
   
@@ -509,46 +486,27 @@ private:
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
   
-  /**
-   * @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
-   * @param [in,out] m_st 拡大された開始点（Fortranインデクス）
-   * @param [in,out] m_ed 拡大された終了点（Fortranインデクス）
-   * @param [in]     st_i 開始点（Cインデクス）
-   * @param [in]     len  コンポーネントの存在長さ
-   * @param [in]     m_x  軸方向のサイズ
-   * @param [in]     dir  方向
-   * @param [in]     m_id キーID
-   */
+  //初期インデクスの情報を元に，一層拡大したインデクス値を返す
   void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
   
   
-
   //ファイル出力
   void FileOutput(double& flop, const bool crs_restart=false);
   
   
-  /*
-   * @brief フィル
-   * @param [in] fp    ファイルポインタ
-   */
+  // ポリゴンの場合のフィル操作
   void fill(FILE* fp);
   
   
-  /**
-   * @brief 固定パラメータの設定
-   */
+  // 固定パラメータの設定
   void fixed_parameters();
   
   
-  /**
-   * @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
-   */
+  // 並列処理時の各ノードの分割数を集めてファイルに保存する
   void gather_DomainInfo();
   
   
-  /**
-   * @brief binaryの場合に，非BCポリゴンからSOLIDセルを生成
-   */
+  // Binary voxelをカット情報から生成
   void generate_Solid(FILE* fp);
   
   
@@ -562,6 +520,7 @@ private:
                         int* coarse,
                         int* block
                         );
+  
   
   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
   bool getCoarseResult2(int i, int j, int k,

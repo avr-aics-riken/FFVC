@@ -846,7 +846,10 @@ void FFV::Bbox_IBC()
 
 
 // #################################################################
-// 全Voxelモデルの媒質数とKOSの整合性をチェック
+/**
+ @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
+ @retval エラーコード
+ */
 bool FFV::chkMediumConsistency()
 {
   int nmSolid = C.NoMediumSolid;
@@ -900,7 +903,10 @@ bool FFV::chkMediumConsistency()
 }
 
 // #################################################################
-// 組み込み例題のインスタンス
+/**
+ * @brief 組み込み例題のインスタンス
+ * @param [in] Cref Controlクラスのポインタ
+ */
 void FFV::connectExample(Control* Cref)
 {
   if      ( Cref->Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
@@ -922,8 +928,11 @@ void FFV::connectExample(Control* Cref)
 
 
 // #################################################################
-// 時刻をRFクラスからv00[4]にコピーする
-void FFV::copyV00fromRF(double m_time) 
+/**
+ * @brief 時刻をRFクラスからv00[4]にコピーする
+ * @param [in] time 設定する時刻
+ */
+void FFV::copyV00fromRF(double m_time)
 {
   RF.setV00(m_time);
   
@@ -934,7 +943,10 @@ void FFV::copyV00fromRF(double m_time)
 
 
 // #################################################################
-// コンポーネントの内容リストを表示する
+/**
+ * @brief コンポーネントの内容リストを表示する
+ * @param [in]  fp   ファイルポインタ
+ */
 void FFV::display_Compo_Info(FILE* fp)
 {
   if ( C.NoBC >0 )
@@ -981,7 +993,10 @@ void FFV::display_Compo_Info(FILE* fp)
 
 
 // #################################################################
-// CompoListの内容とセル数の情報を表示する
+/**
+ * @brief CompoListの内容とセル数の情報を表示する
+ * @param [in]  fp   ファイルポインタ
+ */
 void FFV::display_CompoList(FILE* fp)
 {
   Hostonly_
@@ -1003,7 +1018,10 @@ void FFV::display_CompoList(FILE* fp)
 
 
 // #################################################################
-// 制御パラメータ，物理パラメータの表示
+/**
+ * @brief 制御パラメータ，物理パラメータの表示
+ * @param [in]  fp   ファイルポインタ
+ */
 void FFV::display_Parameters(FILE* fp)
 {
   C.displayParams(stdout, fp, IC, &DT, &RF, mat, &FP3DW);
@@ -1048,7 +1066,10 @@ void FFV::display_Parameters(FILE* fp)
 
 
 // #################################################################
-// 計算領域情報を設定する
+/**
+ * @brief 計算領域情報を設定する
+ * @param [in] tp_dom  TPControlクラス
+ */
 void FFV::DomainInitialize(TPControl* tp_dom)
 {
   // メンバ変数にパラメータをロード : 分割指示 (1-with / 2-without)
@@ -1135,7 +1156,16 @@ void FFV::DomainInitialize(TPControl* tp_dom)
 
 
 // #################################################################
-//初期インデクスの情報を元に，一層拡大したインデクス値を返す
+/**
+ * @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
+ * @param [in,out] m_st 拡大された開始点（Fortranインデクス）
+ * @param [in,out] m_ed 拡大された終了点（Fortranインデクス）
+ * @param [in]     st_i 開始点（Cインデクス）
+ * @param [in]     len  コンポーネントの存在長さ
+ * @param [in]     m_x  軸方向のサイズ
+ * @param [in]     dir  方向
+ * @param [in]     m_id キーID
+ */
 void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id)
 {
   int ed_i = st_i + len - 1;
@@ -1296,7 +1326,10 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 
 
 // #################################################################
-// ポリゴンの場合のフィル操作
+/*
+ * @brief ポリゴンの場合のフィル操作
+ * @param [in] fp    ファイルポインタ
+ */
 void FFV::fill(FILE* fp)
 {
   
@@ -1610,7 +1643,9 @@ void FFV::fill(FILE* fp)
 
 
 // #################################################################
-// 固定パラメータの設定
+/**
+ * @brief 固定パラメータの設定
+ */
 void FFV::fixed_parameters()
 {
   // 精度
@@ -1650,7 +1685,13 @@ void FFV::fixed_parameters()
 
 
 // #################################################################
-// メモリ使用量の表示
+/**
+ * @brief メモリ消費情報を表示
+ * @param [in]     fp    ファイルポインタ
+ * @param [in,out] G_mem グローバルメモリサイズ
+ * @param [in]     L_mem ローカルメモリサイズ
+ * @param [in]     str   表示用文字列
+ */
 void FFV::display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str)
 {
   if ( numProc > 1 )
@@ -1674,7 +1715,9 @@ void FFV::display_memory_info(FILE* fp, double G_mem, double L_mem, const char* 
 
 
 // #################################################################
-// 並列処理時の各ノードの分割数を集めてファイルに保存する
+/**
+ * @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
+ */
 void FFV::gather_DomainInfo()
 {
   // 統計処理の母数
@@ -1926,7 +1969,9 @@ void FFV::gather_DomainInfo()
 
 
 // #################################################################
-// Binary voxelをカット情報から生成
+/**
+ * @brief binaryの場合に，非BCポリゴンからSOLIDセルを生成
+ */
 void FFV::generate_Solid(FILE* fp)
 {
   unsigned long zc=0;
@@ -2016,6 +2061,14 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
   // 4)  G_div指定あり          |   + ActiveDomainInfo
   
+  /* Policy
+   G_regionは必須
+   G_voxelとG_pitchでは，G_voxelが優先．
+   両方が指定されている場合には，エラー
+   G_pitchが指定されている場合には，割り切れない場合，
+     G_voxel = (int)ceil(G_region/G_pitch)
+     G_region = G_pitch * G_voxel
+   */
   
   string label, str;
   REAL_TYPE *rvec;
@@ -2073,66 +2126,108 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
     Exit(0);
   }
   
+  // 排他チェックフラグ
+  bool g_flag = true;
+  bool p_flag = true;
   
-  // pitch オプション
-  bool flag = true; // 排他チェック（voxel, pitch）
+  
+  // G_voxel
+  ivec  = G_size;
+  label = "/DomainInfo/GlobalVoxel";
+  
+  if ( !tp_dom->GetVector(label, ivec, 3) ) g_flag = false;
+  
+  
+  // pitch
   rvec  = pitch;
   label = "/DomainInfo/GlobalPitch";
   
-  if ( !tp_dom->GetVector(label, rvec, 3) )
-  {
-    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
-    flag = false;
-  }
+  if ( !tp_dom->GetVector(label, rvec, 3) ) p_flag = false;
   
-  // pitchが入力されている場合のみチェック
-  if ( flag )
+  
+  // 排他チェック
+  if ( !g_flag && !p_flag ) // 両方とも指定されていない
+  {
+    Hostonly_ cout << "\tNeither GlobalVoxel nor GlobalPitch is specified. You need to choose either parameter.\n" << endl;
+    Exit(0);
+  }
+  else if ( g_flag && p_flag ) // 両方が指定されている
+  {
+    Hostonly_ cout << "\tBoth GlobalVoxel and GlobalPitch is specified. You need to choose either parameter." << endl;
+    Exit(0);
+  }
+  else if ( !g_flag && p_flag ) // pitchのみ
   {
     if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
     {
-      ; // skip
+      // 等方性チェック
+      if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
+      {
+        Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
+        Exit(0);
+      }
+      
+      // 切り上げ
+      G_size[0] = (int)ceil(G_region[0]/pitch[0]);
+      G_size[1] = (int)ceil(G_region[1]/pitch[1]);
+      G_size[2] = (int)ceil(G_region[2]/pitch[2]);
+      
+      REAL_TYPE gr[3];
+      gr[0] = (REAL_TYPE)G_size[0] * pitch[0];
+      gr[1] = (REAL_TYPE)G_size[1] * pitch[1];
+      gr[2] = (REAL_TYPE)G_size[2] * pitch[2];
+      
+      // 整合性チェック
+      if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) || (G_region[2] != gr[2]) )
+      {
+        Hostonly_ {
+          printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
+          printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
+                 G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
+        }
+        G_region[0] = gr[0];
+        G_region[1] = gr[1];
+        G_region[2] = gr[2];
+      }
     }
-    else
+    else // パラメータが無効の場合
     {
       Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
       Exit(0);
     }
-  }  
-  
-  
-  // G_size オプション
-  if ( flag ) // pitchが指定されている場合が優先
+  }
+  else if ( g_flag && !p_flag ) // G_voxelのみ
   {
-    G_size[0] = (int)(G_region[0]/pitch[0]);
-    G_size[1] = (int)(G_region[1]/pitch[1]);
-    G_size[2] = (int)(G_region[2]/pitch[2]);
+    if ( g_flag )
+    {
+      if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
+      {
+        pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
+        pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
+        pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
+        
+        // 等方性チェック
+        if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
+        {
+          Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
+          Exit(0);
+        }
+
+      }
+      else
+      {
+        Hostonly_ printf("ERROR : in parsing [%s] >> (%d, %d, %d)\n", label.c_str(), G_size[0], G_size[1], G_size[2] );
+        Exit(0);
+      }
+    }
   }
   else
   {
-    ivec  = G_size;
-    label = "/DomainInfo/GlobalVoxel";
-    
-    if ( !tp_dom->GetVector(label, ivec, 3) )
-    {
-      Hostonly_ cout << "ERROR : Neither GlobalPitch nor GlobalVoxel is specified." << endl;
-      Exit(0); // pitchもvoxelも有効でない
-    }
-    
-    if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
-    {
-      pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
-      pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
-      pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
-      
-      pitch[1] = pitch[0];
-      pitch[2] = pitch[0];
-    }
-    else
-    {
-      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
-      Exit(0);
-    }
+    Hostonly_ cout << "\tError : unknown\n" << endl;
+    Exit(0);
   }
+  
+
   
   
   // G_division オプション
@@ -2141,7 +2236,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   if ( !tp_dom->GetVector(label, ivec, 3) )
   {
-    Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
+    Hostonly_ cout << "\tAutomatic domain division is selected." << endl;
     div_type = 2; // 自動分割
   }
   
@@ -2150,7 +2245,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   {
     if ( (G_division[0]>0) && (G_division[1]>0) && (G_division[2]>0) ) 
     {
-      ; // skip
+      Hostonly_ printf("\tManual domain division is selected.\n");
     }
     else
     {
