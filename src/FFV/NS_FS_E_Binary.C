@@ -573,16 +573,22 @@ void FFV::NS_FS_E_Binary()
         TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);
       }
     }
+    
+    // 値を代入する境界条件
     for (int face=0; face<NOFACE; face++) {
+      REAL_TYPE vsum=0.0;
+      
       if( nID[face] < 0 )
       {
         if ( BC.export_OBC(face)->get_Class() == OBC_TRC_FREE )
         {
-          vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bcv, &flop);
+          vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bcv, &vsum, &flop);
+          BC.export_OBC(face)->setDomainV(vsum, "scalar");
         }
         else if ( BC.export_OBC(face)->get_Class() == OBC_FAR_FIELD )
         {
-          vobc_neumann_(d_v, size, &guide, &face);
+          vobc_neumann_(d_v, size, &guide, &face, &vsum);
+          BC.export_OBC(face)->setDomainV(vsum, "scalar");
         }
       }
     }

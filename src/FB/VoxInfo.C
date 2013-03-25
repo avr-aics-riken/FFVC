@@ -5605,7 +5605,14 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
         break;
         
       case OBC_FAR_FIELD:
-        encPbit_OBC(face, bcp, "Neumann", false);
+        if ( m_obc->get_pType() == P_DIRICHLET )
+        {
+          encPbit_OBC(face, bcp, "Dirichlet", false);
+        }
+        else
+        {
+          encPbit_OBC(face, bcp, "Neumann", false);
+        }
         break;
         
       case OBC_OUTFLOW:
@@ -5726,7 +5733,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         break;
         
       case OBC_FAR_FIELD:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
         break;
         
       case OBC_SYMMETRIC:

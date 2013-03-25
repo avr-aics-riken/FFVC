@@ -523,9 +523,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
   for (int face=0; face<NOFACE; face++) {
     typ = obc[face].get_Class();
     
-    // vec[0]は速度の和の形式で保持，vec[1]は最小値，vec[2]は最大値
-    vec[0] = vec[1] = vec[2] = 0.0;
-    obc[face].setDomainV(vec, "vector");
+    REAL_TYPE dd;
     
     // 内部領域のときは，処理しない
     if( nID[face] < 0 )
@@ -537,29 +535,30 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
         case OBC_WALL:
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
-          vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
-          obc[face].setDomainV(vec, "scalar");
+          vobc_face_drchlt_(vf, size, &gd, bv, &face, &dd);
+          obc[face].setDomainV(dd, "scalar");
           break;
           
         // 対称面で流束はゼロ．divergence_()でマスクによりゼロとなっている
         case OBC_SYMMETRIC:
-          vobc_neumann_(v, size, &gd, &face);
-          vobc_face_drchlt_(vf, size, &gd, bv, &face, vec);
-          // obc[face].setDomainV()は不要
+          vobc_neumann_(v, size, &gd, &face, &dd);
+          vobc_face_drchlt_(vf, size, &gd, bv, &face, &dd);
+          obc[face].setDomainV(dd, "scalar");
           break;
           
         // 流入出量\sum{vf}がvec[0]を使い、obc[].dm[0]に保存される
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
           vobc_get_massflow_(size, &gd, &face, vec, vf, bv, &fcount);
-          obc[face].setDomainV(vec, "scalar");
+          vobc_neumann_(v, size, &gd, &face, &dd);
+          obc[face].setDomainV(dd, "scalar");
           break;
           
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
-            vec[0] = ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, fcount);
-            obc[face].setDomainV(vec, "scalar");
+            dd = ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, fcount);
+            obc[face].setDomainV(dd, "scalar");
           }
           break;
       }
@@ -1088,9 +1087,9 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
             pobc_drchlt_ (d_p, size, &gd, &face, &pv);
             break;
             
-          case OBC_FAR_FIELD:
-            pobc_neumann_(d_p, size, &gd, &face);
-            break;
+          //case OBC_FAR_FIELD: ノイマン条件がスキーム中に実装されている
+          //  pobc_neumann_(d_p, size, &gd, &face);
+          //  break;
         }
       }
 
@@ -1137,6 +1136,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
 {
   REAL_TYPE vec[3];
   int gd = guide;
+  REAL_TYPE dd=0.0;
   
   for (int face=0; face<NOFACE; face++) {
 
@@ -1156,7 +1156,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
           break;
           
         case OBC_SYMMETRIC:
-          vobc_neumann_(d_v, size, &gd, &face);
+          vobc_neumann_(d_v, size, &gd, &face, &dd);
           break;
           
         case OBC_INTRINSIC:
@@ -1188,7 +1188,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
 void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, int* d_bv, double& flop)
 {
   REAL_TYPE dh = deltaX;
-  REAL_TYPE vel;
+  REAL_TYPE vel, dd=0.0;
   int gd = guide;
   
   for (int face=0; face<NOFACE; face++) {
@@ -1205,7 +1205,7 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
           
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
-          vobc_neumann_(d_vc, size, &gd, &face);
+          vobc_neumann_(d_vc, size, &gd, &face, &dd);
           break;
           
         default:

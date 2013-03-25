@@ -1325,6 +1325,10 @@ string ParseBC::get_Origin(const string label_base)
  */
 void ParseBC::get_OBC_FarField(const string label_base, const int n)
 {
+  string str;
+  string label;
+  REAL_TYPE ct;
+  
   BaseBc[n].set_pType(P_GRAD_ZERO);
   BaseBc[n].p = 0.0; // ダミー値
   
@@ -1337,7 +1341,7 @@ void ParseBC::get_OBC_FarField(const string label_base, const int n)
       Exit(0);
     }
     
-    string label = label_base + "/AmbientTemperature";
+    label = label_base + "/AmbientTemperature";
     REAL_TYPE ct;
     
     if ( !(tpCntl->GetValue(label, &ct )) )
@@ -1347,6 +1351,54 @@ void ParseBC::get_OBC_FarField(const string label_base, const int n)
     }
 
     BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+  }
+  
+  // 圧力境界のタイプ  default
+  BaseBc[n].set_pType(P_GRAD_ZERO);
+  BaseBc[n].p = 0.0; // ダミー値
+  
+  // Hidden option
+  label = label_base + "/PressureType";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    ; // エラーではない
+  }
+  else
+  {
+    if ( !strcasecmp("dirichlet", str.c_str()) )
+    {
+      BaseBc[n].set_pType(P_DIRICHLET);
+    }
+    else if ( !strcasecmp("gradzero", str.c_str()) )
+    {
+      BaseBc[n].set_pType(P_GRAD_ZERO);
+    }
+    else
+    {
+      stamped_printf("\tParsing error : Invalid string value for 'PressureType' : %s\n", str.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // 圧力の値
+  if ( BaseBc[n].get_pType() == P_DIRICHLET )
+  {
+    if ( !strcasecmp("dirichlet", str.c_str()) )
+    {
+      label = label_base + "/PrsValue";
+      
+      if ( !(tpCntl->GetValue(label, &ct )) )
+      {
+        stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      else
+      {
+        BaseBc[n].p = ct;
+      }
+    }
   }
   
 }
@@ -3523,9 +3575,20 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       break;
       
       
+    case OBC_FAR_FIELD:
+      fprintf(fp, "\t\t\tVelocity : Neumann, Pressure : %s\n", (ref->get_pType() == P_DIRICHLET) ? "Dirichlet" : "Neumann");
+      if (ref->get_pType() == P_DIRICHLET)
+      {
+        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
+      }
+      else {
+        fprintf(fp,"\t\t\tPressure Gradient is zero\n");
+      }
+      break;
+      
+      
     case OBC_SYMMETRIC:
     case OBC_INTRINSIC:
-    case OBC_FAR_FIELD:
       break;
       
       

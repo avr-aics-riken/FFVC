@@ -207,8 +207,12 @@ public:
   void dataCopy (BoundaryOuter* src);
   
   
-  // モニタ値を保持する
+  // モニタ値（ベクトル）を保持する
   void setDomainV(const REAL_TYPE* vv, const char* mode);
+  
+  
+  // モニタ値（スカラー）を保持する
+  void setDomainV(const REAL_TYPE vv, const char* mode);
   
   
   // ラベルを設定

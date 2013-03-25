@@ -843,16 +843,18 @@
     end subroutine vobc_drchlt
 
 !> ********************************************************************
-!! @brief 遠方境界の近似
-!! @param [out] v    速度ベクトル
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  face 外部境界面の番号
+!! @brief ノイマン条件
+!! @param [in,out] v    速度ベクトル
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     face 外部境界面の番号
+!! @param [out]    aa   積算値 \sum{v}
 !<
-    subroutine vobc_neumann (v, sz, g, face)
+    subroutine vobc_neumann (v, sz, g, face, aa)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    real                                                      ::  ux, uy, uz, aa
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 
@@ -860,8 +862,11 @@
     jx = sz(2)
     kx = sz(3)
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g, face)
+    aa = 0.0
+
+!$OMP PARALLEL REDUCTION(+:aa) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
+!$OMP PRIVATE(i, j, k, ux, uy, uz)
 
     FACES : select case (face)
     case (X_minus)
@@ -869,11 +874,16 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-      do i=1-g,0
-        v(i, j, k, 1) = v(1-i, j, k, 1)
-        v(i, j, k, 2) = v(1-i, j, k, 2)
-        v(i, j, k, 3) = v(1-i, j, k, 3)
-      end do
+        ux = v(1, j, k, 1)
+        uy = v(1, j, k, 2)
+        uz = v(1, j, k, 3)
+        aa = aa + ux
+
+        do i=1-g, 0
+          v(i, j, k, 1) = ux
+          v(i, j, k, 2) = uy
+          v(i, j, k, 3) = uz
+        end do
       end do
       end do
 !$OMP END DO
@@ -884,11 +894,16 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-      do i=ix+1,ix+g
-        v(i, j, k, 1) = v(2*ix+1-i, j, k, 1)
-        v(i, j, k, 2) = v(2*ix+1-i, j, k, 2)
-        v(i, j, k, 3) = v(2*ix+1-i, j, k, 3)
-      end do
+        ux = v(ix, j, k, 1)
+        uy = v(ix, j, k, 2)
+        uz = v(ix, j, k, 3)
+        aa = aa + ux
+
+        do i=ix+1, ix+g
+          v(i, j, k, 1) = ux
+          v(i, j, k, 2) = uy
+          v(i, j, k, 3) = uz
+        end do
       end do
       end do
 !$OMP END DO
@@ -898,12 +913,17 @@
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
-      do j=1-g,0
       do i=1,ix
-        v(i, j, k, 1) = v(i, 1-j, k, 1)
-        v(i, j, k, 2) = v(i, 1-j, k, 2)
-        v(i, j, k, 3) = v(i, 1-j, k, 3)
-      end do
+        ux = v(i, 1, k, 1)
+        uy = v(i, 1, k, 2)
+        uz = v(i, 1, k, 3)
+        aa = aa + uy
+
+        do j=1-g, 0
+          v(i, j, k, 1) = ux
+          v(i, j, k, 2) = uy
+          v(i, j, k, 3) = uz
+        end do
       end do
       end do
 !$OMP END DO
@@ -913,12 +933,17 @@
 
 !$OMP DO SCHEDULE(static)
       do k=1,kx
-      do j=jx+1,jx+g
       do i=1,ix
-        v(i, j, k, 1) = v(i, 2*jx+1-j, k, 1)
-        v(i, j, k, 2) = v(i, 2*jx+1-j, k, 2)
-        v(i, j, k, 3) = v(i, 2*jx+1-j, k, 3)
-      end do
+        ux = v(i, jx, k, 1)
+        uy = v(i, jx, k, 2)
+        uz = v(i, jx, k, 3)
+        aa = aa + uy
+
+        do j=jx+1, jx+g
+          v(i, j, k, 1) = ux
+          v(i, j, k, 2) = uy
+          v(i, j, k, 3) = uz
+        end do
       end do
       end do
 !$OMP END DO
@@ -928,12 +953,17 @@
 
 !$OMP DO SCHEDULE(static)
       do j=1,jx
-      do k=1-g,0
       do i=1,ix
-        v(i, j, k, 1) = v(i, j, 1-k, 1)
-        v(i, j, k, 2) = v(i, j, 1-k, 2)
-        v(i, j, k, 3) = v(i, j, 1-k, 3)
-      end do
+        ux = v(i, j, 1, 1)
+        uy = v(i, j, 1, 2)
+        uz = v(i, j, 1, 3)
+        aa = aa + uz
+
+        do k=1-g, 0
+          v(i, j, k, 1) = ux
+          v(i, j, k, 2) = uy
+          v(i, j, k, 3) = uz
+        end do
       end do
       end do
 !$OMP END DO
@@ -943,16 +973,20 @@
 
 !$OMP DO SCHEDULE(static)
       do j=1,jx
-      do k=kx+1,kx+g
       do i=1,ix
-        v(i, j, k, 1) = v(i, j, 2*kx+1-k, 1)
-        v(i, j, k, 2) = v(i, j, 2*kx+1-k, 2)
-        v(i, j, k, 3) = v(i, j, 2*kx+1-k, 3)
-      end do
+        ux = v(i, j, kx, 1)
+        uy = v(i, j, kx, 2)
+        uz = v(i, j, kx, 3)
+        aa = aa + uz
+
+        do k=kx+1, kx+g
+          v(i, j, k, 1) = ux
+          v(i, j, k, 2) = uy
+          v(i, j, k, 3) = uz
+        end do
       end do
       end do
 !$OMP END DO
-
 
     case default
     end select FACES
@@ -1184,16 +1218,17 @@
 !! @param [in]     face 外部境界面の番号
 !! @param [in,out] vf   セルフェイス速度
 !! @param [in]     bv   BCindex V
+!! @param [out]    aa   積算値 \sum{v}
 !! @param [in,out] flop 浮動小数演算数
 !! @note 今のところ、トラクションフリー面は全て流体
 !<
-    subroutine vobc_tfree (v, sz, g, face, vf, bv, flop)
+    subroutine vobc_tfree (v, sz, g, face, vf, bv, aa, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  v1, v2, v3, v4, ut, vt, wt
+    real                                                      ::  v1, v2, v3, v4, ut, vt, wt, aa
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
@@ -1201,7 +1236,9 @@
     jx = sz(2)
     kx = sz(3)
 
-!$OMP PARALLEL &
+    aa = 0.0
+
+!$OMP PARALLEL REDUCTION(+:aa) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
 !$OMP PRIVATE(i, j, k, v1, v2, v3, v4, ut, vt, wt)
 
@@ -1219,6 +1256,8 @@
         ut = v(1, j, k, 1)
         vt = v1 + v2
         wt = v3 + v4
+
+        aa = aa + vf(0, j, k, 1)
 
         do i=1-g, 0
           v(i, j, k, 1) = ut
@@ -1245,6 +1284,8 @@
         vt = v1 - v2
         wt = v3 - v4
 
+        aa = aa + vf(ix, j, k, 1)
+
         do i=ix+1, ix+g
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
@@ -1269,6 +1310,8 @@
         ut = v1 + v2
         vt = v(i, 1, k, 2)
         wt = v3 + v4
+
+        aa = aa + vf(i, 0, k, 2)
 
         do j=1-g, 0
           v(i, j, k, 1) = ut
@@ -1295,6 +1338,8 @@
         vt = v(i, jx, k, 2)
         wt = v3 - v4
 
+        aa = aa + vf(i, jx, k, 2)
+
         do j=jx+1, jx+g
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
@@ -1320,6 +1365,8 @@
         vt = v3 + v4
         wt = v(i, j, 1, 3)
 
+        aa = aa + vf(i, j, 0, 3)
+
         do k=1-g, 0
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
@@ -1344,6 +1391,8 @@
         ut = v1 - v2
         vt = v3 - v4
         wt = v(i, j, kx, 3)
+
+        aa = aa + vf(i, j, kx, 3)
 
         do k=kx+1, kx+g
           v(i, j, k, 1) = ut

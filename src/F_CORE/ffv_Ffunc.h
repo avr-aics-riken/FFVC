@@ -463,7 +463,11 @@ extern "C" {
                            int* face,
                            REAL_TYPE* vec);
   
-  void vobc_neumann_      (REAL_TYPE* v, int* sz, int* g, int* face);
+  void vobc_neumann_ (REAL_TYPE* v,
+                      int* sz,
+                      int* g,
+                      int* face,
+                      REAL_TYPE* aa);
   
   void vobc_pv_oflow_gc_ (REAL_TYPE* v,
                           int* sz,
@@ -480,17 +484,22 @@ extern "C" {
                     int* face,
                     REAL_TYPE* vf,
                     int* bv,
+                    REAL_TYPE* aa,
                     double* flop);
   
-  void vobc_update_       (REAL_TYPE* v, int* sz, int* g, REAL_TYPE*vc, int* face);
+  void vobc_update_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     REAL_TYPE*vc,
+                     int* face);
   
-  void vobc_div_drchlt_   (REAL_TYPE* div,
-                           int* sz,
-                           int* g,
-                           int* face,
-                           int* bv,
-                           REAL_TYPE* vec,
-                           double* flop);
+  void vobc_div_drchlt_ (REAL_TYPE* div,
+                         int* sz,
+                         int* g,
+                         int* face,
+                         int* bv,
+                         REAL_TYPE* vec,
+                         double* flop);
   
   void vobc_div_pv_oflow_ (REAL_TYPE* div,
                            int* sz,
@@ -501,22 +510,22 @@ extern "C" {
                            REAL_TYPE* vf,
                            double* flop);
   
-  void vobc_div_oflow_    (REAL_TYPE* div,
-                           int* sz,
+  void vobc_div_oflow_ (REAL_TYPE* div,
+                        int* sz,
+                        int* g,
+                        int* face,
+                        REAL_TYPE* aa,
+                        REAL_TYPE* vf,
+                        int* bv,
+                        double* flop);
+  
+  void vobc_get_massflow_ (int* sz,
                            int* g,
                            int* face,
                            REAL_TYPE* aa,
                            REAL_TYPE* vf,
                            int* bv,
                            double* flop);
-  
-  void vobc_get_massflow_(int* sz,
-                          int* g,
-                          int* face,
-                          REAL_TYPE* aa,
-                          REAL_TYPE* vf,
-                          int* bv,
-                          double* flop);
 
   
   //***********************************************************************************************
