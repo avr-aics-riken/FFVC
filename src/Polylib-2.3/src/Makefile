@@ -3,8 +3,8 @@
 # sigle版アーカイブ、mpi版アーカイブ作成用Makefile
 #													Create	2010.08.20
 #													Update	2010.10.25
-# sigle版アーカイブのみ作成		: make single
-# mpi版アーカイブのみ作成		: make mpi
+# sigle版アーカイブのみ作成		  : make single
+# mpi版アーカイブのみ作成	      : make mpi
 # single版、mpi版をまとめて作成	: make
 # includeファイルの依存関係更新 : make depend
 #
@@ -20,59 +20,37 @@
 
 TARGET_DIR	= ../lib
 
-MPI_INC_DIR	= /usr/include/openmpi-x86_64
-TP_INC_DIR  = /home/tkawanab/TextParser/textparser-1.1-dev_c/include
-
 
 #####################################
 # INTEL
 
-#CXX		= g++
-CXX			= mpicxx
-AR			= ar cru
-RANLIB	= ranlib
-RM      = \rm -f
-
-CFLAGS		= -O3 -Wall \
-            -I../include \
-            -I$(MPI_INC_DIR) \
-            -I$(TP_INC_DIR) \
-            -fno-strict-aliasing \
-            -DSAVE_ID_ASCII -DDEBUG
-#            -I/usr/include \
+CFLAGS	= -O3 -Wall \
+	-I../include \
+	-I$(MPI_DIR)/include \
+	-I$(TP_DIR)/include \
+	-fno-strict-aliasing \
+#	-DSAVE_ID_ASCII -DDEBUG
 
 
 #####################################
 # FX10
 
-#CXX			= mpiFCCpx
-#AR			  = ar cr
-#RANLIB		= ranlib
-#RM       = \rm -f
-
 #CFLAGS		= -Kfast, simd=2, ocl, preex \
 #		-I../include\
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include \
 #		-I/opt/FJSVfxlang/GM-1.2.0-03/include/mpi/fujitsu \
-#		-I/usr/include \
-#		-I$(TP_INC_DIR) \
+#		-I$(TP_DIR)/iclude \
 #		-fno-strict-aliasing
 
 
 #####################################
 # K
 
-#CXX			= mpiFCCpx
-#AR			  = ar cr
-#RANLIB		= ranlib
-#RM       = \rm -f
-
 #CFLAGS	 = -Kfast, simd=2, ocl, preex \
 #   -I../include\
-#   -I/opt/FJSVtclang/GM-1.2.0-07/include \
-#   -I/opt/FJSVtclang/GM-1.2.0-07/include/mpi/fujitsu \
-#   -I/usr/include \
-#   -I$(TP_INC_DIR) \
+#   -I/opt/FJSVtclang/GM-1.2.0-08/include \
+#   -I/opt/FJSVtclang/GM-1.2.0-08/include/mpi/fujitsu \
+#   -I$(TP_DIR)/include \
 #   -fno-strict-aliasing
 
 
@@ -82,22 +60,21 @@ CFLAGS		= -O3 -Wall \
 #####################################
 SNG_TARGET	= $(TARGET_DIR)/libPolylib.a
 GFX_OBJS	= Polylib.o \
-			  polygons/VTree.o \
-			  polygons/Polygons.o \
-			  polygons/TriMesh.o \
-			  groups/PolygonGroup.o \
-			  file_io/TriMeshIO.o \
-			  file_io/stl.o \
-			  file_io/triangle_id.o \
-			  c_lang/CPolylib.o 
+		  polygons/VTree.o \
+		  polygons/Polygons.o \
+		  polygons/TriMesh.o \
+		  groups/PolygonGroup.o \
+		  file_io/TriMeshIO.o \
+		  file_io/stl.o \
+		  file_io/triangle_id.o \
+		  c_lang/CPolylib.o 
 
-#			  file_io/PolylibConfig.o \
 #####################################
 # MPI版マクロ
 #####################################
 MPI_TARGET	= $(TARGET_DIR)/libMPIPolylib.a
 MPI_OBJS	= MPIPolylib.o \
-			  c_lang/CMPIPolylib.o
+		  c_lang/CMPIPolylib.o
 
 #####################################
 # ユーティリティ
@@ -118,7 +95,7 @@ all : depend single mpi
 #####################################
 # single版作成ルール
 #####################################
-single			: $(SNG_TARGET)
+single		: $(SNG_TARGET)
 $(SNG_TARGET)	: $(GFX_OBJS) $(UTIL_OBJS)
 	$(AR) $@ $^
 	$(RANLIB) $(SNG_TARGET)
@@ -126,7 +103,7 @@ $(SNG_TARGET)	: $(GFX_OBJS) $(UTIL_OBJS)
 #####################################
 # MPI版作成ルール
 #####################################
-mpi				: $(MPI_TARGET)
+mpi		: $(MPI_TARGET)
 $(MPI_TARGET)	: $(GFX_OBJS) $(MPI_OBJS) $(UTIL_OBJS)
 	$(AR) $@ $^
 	$(RANLIB) $(MPI_TARGET)
