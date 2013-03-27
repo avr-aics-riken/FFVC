@@ -559,11 +559,7 @@ void FFV::NS_FS_E_Binary()
       rhs_nrm = sqrt(rhs_nrm);
     }
 
-    
-    // 速度境界条件
-    TIMING_start(tm_vec_BC);
-    flop=0.0;
-    
+
     // トラクションフリーの場合
     if ( C.isTfree() ) {
       if ( numProc > 1 )
@@ -574,7 +570,10 @@ void FFV::NS_FS_E_Binary()
       }
     }
     
-    // 値を代入する境界条件
+    // 速度境界条件　値を代入する境界条件
+    TIMING_start(tm_vec_BC);
+    flop=0.0;
+    
     for (int face=0; face<NOFACE; face++) {
       REAL_TYPE vsum=0.0;
       
