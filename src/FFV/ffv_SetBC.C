@@ -221,7 +221,14 @@ void SetBC3D::checkDriver(FILE* fp)
 
 
 // #################################################################
-// コンポーネントから速度境界条件の成分を取り出す
+/**
+ * @brief コンポーネントから速度境界条件の成分を取り出す
+ * @param [in]     n    コンポーネントのインデクス
+ * @param [out]    vec  ベクトル成分
+ * @param [in]     tm   時刻
+ * @param [in]     v00  格子速度
+ * @param [in,out] flop 浮動小数点演算数
+ */
 REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE a, b, vel;
@@ -240,7 +247,14 @@ REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const REAL_TYPE t
 
 
 // #################################################################
-// 外部境界条件リストから速度境界条件の成分を取り出す
+/**
+ * @brief コンポーネントから速度境界条件の成分を取り出す
+ * @param [in]     n    コンポーネントのインデクス
+ * @param [out]    vec  ベクトル成分
+ * @param [in]     tm   時刻
+ * @param [in]     v00  格子速度
+ * @param [in,out] flop 浮動小数点演算数
+ */
 REAL_TYPE SetBC3D::extractVel_OBC(const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE a, b, vel;
@@ -766,16 +780,16 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
 
 // #################################################################
 /**
- @brief 速度境界条件による流束の修正
- @param [in,out] wv     疑似速度ベクトル u^*
- @param [in]     v      セルセンター速度ベクトル u^n
- @param [in]     vf     セルフェイス速度ベクトル u^n
- @param [in]     bv     BCindex V
- @param [in]     tm     無次元時刻
- @param [in]     C      Control class
- @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
- @param [in]     v00    基準速度
- @param [out]    flop   flop count
+ * @brief 速度境界条件による流束の修正
+ * @param [in,out] wv     疑似速度ベクトル u^*
+ * @param [in]     v      セルセンター速度ベクトル u^n
+ * @param [in]     vf     セルフェイス速度ベクトル u^n
+ * @param [in]     bv     BCindex V
+ * @param [in]     tm     無次元時刻
+ * @param [in]     C      Control class
+ * @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
+ * @param [in]     v00    基準速度
+ * @param [in,out] flop   flop count
  */
 void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
@@ -874,17 +888,17 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
 
 // #################################################################
 /**
- @brief 速度境界条件によるPoisosn式のソース項の修正
- @param [out] s_0   \sum{u^*}
- @param [in]  vc    セルセンタ疑似速度 u^*
- @param [in]  v0    セルセンタ速度 u^n
- @param [in]  vf    セルフェイス速度 u^n
- @param [in]  bv    BCindex V
- @param [in]  tm    無次元時刻
- @param [in]  dt    時間積分幅
- @param [in]  C     Control class
- @param [in]  v00   基準速度
- @param [out] flop  flop count
+ * @brief 速度境界条件によるPoisosn式のソース項の修正
+ * @param [in,out] s_0   \sum{u^*}
+ * @param [in]     vc    セルセンタ疑似速度 u^*
+ * @param [in]     v0    セルセンタ速度 u^n
+ * @param [in]     vf    セルフェイス速度 u^n
+ * @param [in]     bv    BCindex V
+ * @param [in]     tm    無次元時刻
+ * @param [in]     dt    時間積分幅
+ * @param [in]     C     Control class
+ * @param [in]     v00   基準速度
+ * @param [in,out] flop  flop count
  */
 void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {
@@ -1097,8 +1111,8 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
 
 // #################################################################
 /**
- @brief 速度の外部境界条件処理
- @param d_v 速度ベクトルのデータクラス
+ * @brief 速度の外部境界条件処理
+ * @param [in,out] d_v 速度ベクトルのデータクラス
  */
 void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
 {
@@ -1108,8 +1122,10 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
     if ( obc[face].get_Class() == OBC_PERIODIC )
     {
       int pm = obc[face].get_PrdcMode();
+      
+      // BoundaryOuter::prdc_Driverに対しては処理不要
       if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
-      { // BoundaryOuter::prdc_Driverに対しては処理不要
+      {
         Vobc_Prdc(d_v, face); // セルフェイスの値の周期処理は不要
       }
     }
@@ -1119,15 +1135,15 @@ void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
 
 // #################################################################
 /**
- @brief 速度の外部境界条件処理(タイムステップに一度)
- @param [in,out] d_v  速度ベクトル v^{n+1}
- @param [in]     d_vc 速度ベクトル v^*
- @param [in]     bv   BCindex V
- @param [in]     tm   時刻
- @param [in]     dt   時間積分幅
- @param [in]     C    コントロールクラス
- @param [in]     v00  参照速度
- @param [in,out] flop 浮動小数点演算数
+ * @brief 速度の外部境界条件処理(タイムステップに一度)
+ * @param [in,out] d_v  速度ベクトル v^{n+1}
+ * @param [in]     d_vc 速度ベクトル v^*
+ * @param [in]     bv   BCindex V
+ * @param [in]     tm   時刻
+ * @param [in]     dt   時間積分幅
+ * @param [in]     C    コントロールクラス
+ * @param [in]     v00  参照速度
+ * @param [in,out] flop 浮動小数点演算数
  */
 void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop)
 {
@@ -1194,7 +1210,8 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
     // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
     if( nID[face] < 0 )  
     {
-      switch ( obc[face].get_Class() ) {
+      switch ( obc[face].get_Class() )
+      {
         case OBC_OUTFLOW :
           vel = C->V_Dface[face] * dt / dh;
           vobc_pv_oflow_gc_(d_vc, size, &gd, &vel, &face, d_v0, d_bv, &flop);
@@ -4933,23 +4950,49 @@ void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
 
 // #################################################################
 /**
- @brief 速度の外部周期境界条件（単純なコピー）
- @param d_v 速度ベクトル
- @param face 面番号
- @param no_comm_face 通信面数
+ * @brief 速度の外部周期境界条件（単純なコピー）
+ * @param [in,out] d_v  速度ベクトル
+ * @param [in]     face 面番号
  */
 void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
-  if ( numProc > 1 ) 
+  switch (face)
   {
-    
-    switch (face) 
+    case X_MINUS:
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      break;
+      
+    case X_PLUS:
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      break;
+      
+    case Y_MINUS:
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      break;
+      
+    case Y_PLUS:
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      break;
+      
+    case Z_MINUS:
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      break;
+      
+    case Z_PLUS:
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      break;
+  }
+  
+  /*
+  if ( numProc > 1 )
+  {
+   
+    switch (face)
     {
       case X_MINUS:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
@@ -5011,8 +5054,8 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
       case Y_MINUS:
         if ( nID[face] < 0 ) {
           for (int k=1; k<=kx; k++) {
-            for (int j=1-gd; j<=0; j++) {
-              for (int i=1; i<=ix; i++) {
+            for (int i=1; i<=ix; i++) {
+              for (int j=1-gd; j<=0; j++) {
                 d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
@@ -5025,8 +5068,8 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
       case Y_PLUS:
         if ( nID[face] < 0 ) {
           for (int k=1; k<=kx; k++) {
-            for (int j=jx+1; j<=jx+gd; j++) {
-              for (int i=1; i<=ix; i++) {
+            for (int i=1; i<=ix; i++) {
+              for (int j=jx+1; j<=jx+gd; j++) {
                 d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 0, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 1, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 2, ix, jx, kx, gd)];
@@ -5038,9 +5081,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
         
       case Z_MINUS:
         if ( nID[face] < 0 ) {
-          for (int k=1-gd; k<=0; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
+              for (int k=1-gd; k<=0; k++) {
                 d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
@@ -5052,9 +5095,9 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
         
       case Z_PLUS:
         if ( nID[face] < 0 ) {
-          for (int k=kx+1; k<=kx+gd; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1; i<=ix; i++) {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
+              for (int k=kx+1; k<=kx+gd; k++) {
                 d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 0, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 1, ix, jx, kx, gd)];
                 d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 2, ix, jx, kx, gd)];
@@ -5065,6 +5108,7 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
         break;
     }
   }
+   */
 }
 
 

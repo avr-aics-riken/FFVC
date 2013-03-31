@@ -1107,7 +1107,6 @@ void FFV::DomainInitialize(TPControl* tp_dom)
 
   // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
   setNeighborInfo(C.guide);
-
   
   
   // チェック

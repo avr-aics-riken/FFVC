@@ -34,26 +34,14 @@ public:
   /**　デストラクタ */
   virtual ~SetBC3D() {}
   
+  
 protected:
   
-  /**
-   * @brief コンポーネントから速度境界条件の成分を取り出す
-   * @param [in]     n    コンポーネントのインデクス
-   * @param [out]    vec  ベクトル成分
-   * @param [in]     tm   時刻
-   * @param [in]     v00  格子速度
-   * @param [in,out] flop 浮動小数点演算数
-   */
+  // コンポーネントから速度境界条件の成分を取り出す
   REAL_TYPE extractVel_IBC (const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop);
   
-  /**
-   * @brief コンポーネントから速度境界条件の成分を取り出す
-   * @param [in]     n    コンポーネントのインデクス
-   * @param [out]    vec  ベクトル成分
-   * @param [in]     tm   時刻
-   * @param [in]     v00  格子速度
-   * @param [in,out] flop 浮動小数点演算数
-   */
+  
+  // 外部境界条件リストから速度境界条件の成分を取り出す
   REAL_TYPE extractVel_OBC (const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop);
   
   /**
@@ -141,9 +129,17 @@ protected:
    */
   void Tobc_Prdc_Simple (REAL_TYPE* d_t, const int face);
   
+  
   void Vibc_Prdc        (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
-  void Vobc_Prdc         (REAL_TYPE* d_v, const int face);
+  
+  
+  // 速度の外部周期境界条件（単純なコピー）
+  void Vobc_Prdc (REAL_TYPE* d_v, const int face);
+  
+  
   void Vobc_Prdc_CF     (REAL_TYPE* d_v, const int face);
+  
+  
   
 public:
   void assign_Temp          (REAL_TYPE* d_t, int* d_bh, REAL_TYPE tm, Control* C);
@@ -245,15 +241,21 @@ public:
   void OuterTBC             (REAL_TYPE* d_t);
   void OuterTBCface         (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop);
   void OuterVBC             (REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
-  void OuterVBC_Periodic    (REAL_TYPE* d_v);
   
-  void OuterVBC_Pseudo      (REAL_TYPE* d_vc,
-                             REAL_TYPE* d_v0,
-                             REAL_TYPE tm,
-                             REAL_TYPE dt,
-                             Control* C,
-                             int* d_bv,
-                             double& flop);
+  
+  // 速度の外部周期境界条件処理
+  void OuterVBC_Periodic (REAL_TYPE* d_v);
+  
+  
+  // 疑似速度の外部境界条件処理
+  void OuterVBC_Pseudo (REAL_TYPE* d_vc,
+                        REAL_TYPE* d_v0,
+                        REAL_TYPE tm,
+                        REAL_TYPE dt,
+                        Control* C,
+                        int* d_bv,
+                        double& flop);
+  
   
   void ps_BC_Convection     (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
   void setBCIperiodic       (int* d_bx);
