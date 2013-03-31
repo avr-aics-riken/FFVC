@@ -31,7 +31,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // 2D or 3D mode
-  label="/Parameter/IntrinsicExample/Mode";
+  label="/Parameter/IntrinsicExample/Dimension";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -135,7 +135,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
   }
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Intrinsic Backstep Parameters\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Backstep Class Parameters\n\n");
   
   fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
   fprintf(fp,"\tStep Width (x-dir.)    [m] / [-]   : %12.5e / %12.5e\n", width, width/RefL);
@@ -148,14 +148,14 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 /*
- * @brief 領域を設定する
+ * @brief 領域パラメータを設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
  * @param [in,out] reg 計算領域のbounding boxサイズ
  * @param [in,out] pch セル幅
  */
-void IP_Step::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
+void IP_Step::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
   

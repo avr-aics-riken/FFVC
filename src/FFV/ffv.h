@@ -274,6 +274,10 @@ private:
   /** ffv_Initialize.C **/
   
   
+  // パラメータのロードと計算領域を初期化し，並列モードを返す
+  std::string setupDomain(TPControl* tpf, FILE* fp);
+  
+  
   
   
   

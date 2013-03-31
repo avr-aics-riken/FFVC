@@ -97,8 +97,8 @@ public:
   virtual void printPara(FILE* fp, const Control* R);
   
   
-  //領域を設定する
-  virtual void setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch) {};
+  // 領域パラメータを設定する
+  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch) {};
   
   
   // 計算領域の媒質情報を設定する

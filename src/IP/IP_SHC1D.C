@@ -62,14 +62,14 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
 
 // #################################################################
 /*
- * @brief 領域を設定する
+ * @brief 領域パラメータを設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
  * @param [in,out] reg 計算領域のbounding boxサイズ
  * @param [in,out] pch セル幅
  */
-void IP_SHC1D::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
+void IP_SHC1D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
   

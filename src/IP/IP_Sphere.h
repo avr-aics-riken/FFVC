@@ -54,8 +54,8 @@ public:
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
   
-  // 領域情報を設定する
-  virtual void setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch);
+  // 領域パラメータを設定する
+  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch);
   
   
   // パラメータの表示

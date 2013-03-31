@@ -72,78 +72,20 @@ int FFV::Initialize(int argc, char **argv)
   
   tp_ffv.getTPinstance();
   
-  int ierror = tp_ffv.readTPfile(input_file);
-
   
-  // TPControlクラスのポインタを各クラスに渡す
-  C.importTP(&tp_ffv);
-  B.importTP(&tp_ffv);
-  M.importTP(&tp_ffv);
-  MO.importTP(&tp_ffv);
-  
-  
-  // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
-  getExample(&C, &tp_ffv);
-  
-  // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
-  connectExample(&C);
-  
-  
-  // 組み込み例題クラス名を表示
-  Hostonly_
+  // パラメータのロードと保持
+  if ( tp_ffv.readTPfile(input_file) )
   {
-    Ex->printExample(fp, Ex->getExampleName());
+    Hostonly_ stamped_printf("\tInput file '%s' can not find.\n", input_file.c_str());
+    Exit(0);
   }
   
   
-  // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
-  C.setRankInfo(paraMngr, procGrp);
-  B.setRankInfo(paraMngr, procGrp);
-  V.setRankInfo(paraMngr, procGrp);
-  F.setRankInfo(paraMngr, procGrp);
-  BC.setRankInfo(paraMngr, procGrp);
-  Ex->setRankInfo(paraMngr, procGrp);
-  MO.setRankInfo(paraMngr, procGrp);
-  FP3DR.setRankInfo(paraMngr, procGrp);
-  FP3DW.setRankInfo(paraMngr, procGrp);
-  
-  
-  // 並列モードの取得
-  std::string str_para = setParallelism();
-  
-  
-  // 最初のパラメータの取得
-  C.get_Steer_1(&DT, &FP3DR, &FP3DW);
-  
-  
+  // パラメータの取得と計算領域の初期化，並列モードを返す
+  std::string str_para = setupDomain(&tp_ffv, fp);
 
   
-  // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
-  DomainInitialize(&tp_ffv);
 
-  
-  // 各クラスで領域情報を保持
-  C.setNeighborInfo(C.guide);
-  B.setNeighborInfo(C.guide);
-  V.setNeighborInfo(C.guide);
-  F.setNeighborInfo(C.guide);
-  BC.setNeighborInfo(C.guide);
-  Ex->setNeighborInfo(C.guide);
-  MO.setNeighborInfo(C.guide);
-  FP3DR.setNeighborInfo(C.guide);
-  FP3DW.setNeighborInfo(C.guide);
-  
-  
-  // 各例題のパラメータ設定 -----------------------------------------------------
-  Ex->setDomain(&C, size, origin, region, pitch);
-
-  
-  // パラメータを取得
-  C.get_Steer_2(IC, &RF);
-  
-  
-  // 組み込み例題の固有パラメータ
-  if ( !Ex->getTP(&C, &tp_ffv) ) Exit(0);
   
   
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
@@ -3538,6 +3480,83 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
     d_bid[i] = 0;
   }
   
+}
+
+
+// #################################################################
+/* @brief パラメータのロードと計算領域を初期化し，並列モードを返す
+ * @param [in] tpf ffvのパラメータを保持するTextParserインスタンス
+ * @param [in] fp  stdout
+ * @retval 並列モード
+ */
+std::string FFV::setupDomain(TPControl* tpf, FILE* fp)
+{
+  // TPControlクラスのポインタを各クラスに渡す
+  C.importTP(tpf);
+  B.importTP(tpf);
+  M.importTP(tpf);
+  MO.importTP(tpf);
+  
+  // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
+  getExample(&C, tpf);
+  
+  // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
+  connectExample(&C);
+  
+  // 組み込み例題クラス名を表示
+  Hostonly_
+  {
+    Ex->printExample(fp, Ex->getExampleName());
+  }
+  
+  
+  // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
+  C.setRankInfo(paraMngr, procGrp);
+  B.setRankInfo(paraMngr, procGrp);
+  V.setRankInfo(paraMngr, procGrp);
+  F.setRankInfo(paraMngr, procGrp);
+  BC.setRankInfo(paraMngr, procGrp);
+  Ex->setRankInfo(paraMngr, procGrp);
+  MO.setRankInfo(paraMngr, procGrp);
+  FP3DR.setRankInfo(paraMngr, procGrp);
+  FP3DW.setRankInfo(paraMngr, procGrp);
+  
+  // 並列モードの取得
+  std::string str = setParallelism();
+  
+  
+  // 最初のパラメータの取得
+  C.get_Steer_1(&DT, &FP3DR, &FP3DW);
+  
+  
+  // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
+  DomainInitialize(tpf);
+  
+  
+  // 各クラスで領域情報を保持
+  C.setNeighborInfo(C.guide);
+  B.setNeighborInfo(C.guide);
+  V.setNeighborInfo(C.guide);
+  F.setNeighborInfo(C.guide);
+  BC.setNeighborInfo(C.guide);
+  Ex->setNeighborInfo(C.guide);
+  MO.setNeighborInfo(C.guide);
+  FP3DR.setNeighborInfo(C.guide);
+  FP3DW.setNeighborInfo(C.guide);
+  
+  
+  // 各例題の領域パラメータを設定する -----------------------------------------------------
+  Ex->setDomainParameter(&C, size, origin, region, pitch);
+  
+  
+  // パラメータを取得
+  C.get_Steer_2(IC, &RF);
+  
+  
+  // 組み込み例題の固有パラメータ
+  if ( !Ex->getTP(&C, tpf) ) Exit(0);
+  
+  return str;
 }
 
 

@@ -22,7 +22,8 @@
 
 class IP_Rect : public Intrinsic {
 protected:
-  unsigned even;       ///< 偶数分割のチェック
+  int even;       ///< 偶数分割のチェック
+  int mode;       ///< 次元数
   
 public:
   std::string m_fluid; ///< 流体のラベル
@@ -32,6 +33,7 @@ public:
   /** コンストラクタ */
   IP_Rect() {
     even = OFF;
+    mode = 0;
   }
   
   /**　デストラクタ */
@@ -43,12 +45,16 @@ public:
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
   
-  // Rectの領域情報を設定する
-  virtual void setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
+  // 領域パラメータを設定する
+  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
   
   // 計算領域のセルIDを設定する
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
+  
+  
+  // パラメータの表示
+  virtual void printPara(FILE* fp, const Control* R);
   
   
   // 例題の名称を返す

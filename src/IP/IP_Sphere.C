@@ -130,7 +130,7 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
   }
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Intrinsic Sphere Parameters\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Sphere Class Parameters\n\n");
   
   fprintf(fp,"\tRadius of Sphere       [m] / [-]   : %12.5e / %12.5e\n", radius, radius/RefL);
   
@@ -143,14 +143,14 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 /*
- * @brief 領域を設定する
+ * @brief 領域パラメータを設定する
  * @param [in]     R     Controlクラスのポインタ
  * @param [in]     sz    分割数
  * @param [in,out] m_org 計算領域の基点
  * @param [in,out] m_reg 計算領域のbounding boxサイズ
  * @param [in,out] m_pch セル幅
  */
-void IP_Sphere::setDomain(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
+void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
 {
   RefL = R->RefLength;
   

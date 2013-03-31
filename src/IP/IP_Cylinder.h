@@ -49,8 +49,8 @@ public:
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
   
-  // Cylinderの領域情報を設定する
-  virtual void setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
+  // 領域パラメータを設定する
+  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
   
   // Cylinderの計算領域のセルIDを設定する

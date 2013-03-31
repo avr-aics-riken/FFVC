@@ -498,14 +498,14 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
 
 
 // #################################################################
-/* @brief 領域を設定する
+/* @brief 領域パラメータを設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
  * @param [in,out] reg 計算領域のbounding boxサイズ
  * @param [in,out] pch セル幅
  */
-void IP_Jet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
+void IP_Jet::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
   RefV = R->RefVelocity;
@@ -542,8 +542,7 @@ void IP_Jet::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg
 
 
 // #################################################################
-/*
- * @brief パラメータの表示
+/* @brief パラメータの表示
  * @param [in] fp ファイルポインタ
  * @param [in] R  コントロールクラスのポインタ
  */
@@ -567,7 +566,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
    */
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-  fprintf(fp,"\n\t>> Intrinsic Jet Parameters\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Jet Class Parameters\n\n");
   
   
   // Ring1のチェック

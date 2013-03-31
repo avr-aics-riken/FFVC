@@ -44,7 +44,6 @@ Steer {
   Example = "Rectangular"
 
   FileIO {
-    IOmode               = "distributed"
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
@@ -144,7 +143,7 @@ Steer {
     }
   }
 
-  PLOT3Doptions {
+  PLOT3DOptions {
     FileNameGrid    = ""
     FileNameFunc    = ""
     GridKind        = "MultiGrid"
@@ -310,36 +309,31 @@ BcTable {
       Normal   = (1.0, 0.0, 0.0)
       velocity = 5.0
     }
-    BasicBCs[@] {
-      alias    = "outflow"
-      class    = "Outflow"
-      velocityType = "Average"
-    }
       
     //外部境界条件
     FaceBC {
       Xminus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Xplus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Yminus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Yplus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Zminus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Zplus {
-        kind   = "slide_wall"
+        alias   = "slide_wall"
         MediumOnGuideCell = "Fe"
       }
     }

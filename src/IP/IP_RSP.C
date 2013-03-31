@@ -12,7 +12,7 @@
 #include "IP_RSP.h"
 
 /**
- @fn bool IP_RSP::setDomain(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE reg[3], REAL_TYPE pch[3])
+ @fn bool IP_RSP::setDomainParameter(Control* R, unsigned sz[3], REAL_TYPE org[3], REAL_TYPE reg[3], REAL_TYPE pch[3])
  @brief RSPの領域情報を設定する
  @param R Controlクラスのポインタ
  @param sz グローバル計算領域のセルサイズ
@@ -20,7 +20,7 @@
  @param wth グローバル計算領域のbounding boxサイズ
  @param pch セルピッチ
  */
-void IP_RSP::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
+void IP_RSP::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
   

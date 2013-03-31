@@ -2661,7 +2661,7 @@ void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_W
   // 指定単位を取得
   get_Unit();
   
-  // Reference parameter needs to be called before setDomain();
+  // Reference parameter needs to be called before setDomainParameter();
   // パラメータの取得，代表値に関するもの．
   get_Para_Ref();
   

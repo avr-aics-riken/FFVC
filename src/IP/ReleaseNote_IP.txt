@@ -13,6 +13,9 @@ Release Note
 
 ****************************************************************************
 
+Ver 1.2.4    31 Mar. 2013
+  - 次元モードパラメータ >> /Parameter/IntrinsicExample/Dimension
+
 Ver 1.2.3     8 Mar. 2013
   - IP_Jetの速度境界条件 vobc_intrinsic(), vobc_jet_()を導入
   

@@ -29,6 +29,26 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   std::string str;
   std::string label;
   
+  // 2D or 3D mode
+  label="/Parameter/IntrinsicExample/Dimension";
+  
+  if ( !(tpCntl->GetValue(label, &str )) ) {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "2d") ) {
+    mode = dim_2d;
+  }
+  else if( !strcasecmp(str.c_str(), "3d") ) {
+    mode = dim_3d;
+  }
+  else {
+    Hostonly_ stamped_printf("\tParsing error : Invalid '%s'\n", label.c_str());
+    return false;
+  }
+  
+  
   // 分割数の偶数チェックオプション
   label="/Parameter/IntrinsicExample/CheckEven";
 
@@ -74,17 +94,36 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   return true;
 }
 
+// #################################################################
+/* @brief パラメータの表示
+ * @param [in] fp ファイルポインタ
+ * @param [in] R  コントロールクラスのポインタ
+ */
+void IP_Rect::printPara(FILE* fp, const Control* R)
+{
+  if ( !fp ) {
+    stamped_printf("\tFail to write into file\n");
+    Exit(0);
+  }
+  
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n\t>> Intrinsic Rectangular Class Parameters\n\n");
+  
+  fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
+  fprintf(fp,"\tCheck even number                  :  %s\n", (even == ON)?"Yes":"No");
+
+}
+
 
 // #################################################################
-/*
- * @brief 領域を設定する
+/* @brief 領域パラメータを設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
  * @param [in,out] reg 計算領域のbounding boxサイズ
  * @param [in,out] pch セル幅
  */
-void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
+void IP_Rect::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   RefL = R->RefLength;
   
@@ -105,18 +144,19 @@ void IP_Rect::setDomain(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* re
       printf("\tDimension size must be even for y direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
       Exit(0);
     }
-    if ( sz[2]/2*2 != sz[2] )
+    if ( (mode == dim_3d) && (sz[2]/2*2 != sz[2]) )
     {
       printf("\tDimension size must be even for z direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
       Exit(0);
     }
   }
+  
+  
 }
 
 
 // #################################################################
-/*
- * @brief 矩形の計算領域のセルIDを設定する
+/* @brief 矩形の計算領域のセルIDを設定する
  * @param [in,out] mid   媒質情報の配列
  * @param [in]     R     Controlクラスのポインタ
  * @param [in]     G_org グローバルな原点（無次元）
