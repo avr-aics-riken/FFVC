@@ -752,8 +752,7 @@ int FFV::Initialize(int argc, char **argv)
 
 
 // #################################################################
-/**
- * @brief 主計算部分に用いる配列のアロケーション
+/* @brief 主計算部分に用いる配列のアロケーション
  * @param [in,out] total ソルバーに使用するメモリ量
  */
 void FFV::allocate_Main(double &total)
@@ -794,7 +793,7 @@ void FFV::allocate_Main(double &total)
 
 
 // #################################################################
-// ポリゴンのカット情報からVBCのboxをセット
+// @brief ポリゴンのカット情報からIBCのboxをセット
 void FFV::Bbox_IBC()
 {
   int f_st[3], f_ed[3], len[3];
@@ -834,9 +833,8 @@ void FFV::Bbox_IBC()
 
 
 // #################################################################
-/**
- @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
- @retval エラーコード
+/* @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
+ * @retval エラーコード
  */
 bool FFV::chkMediumConsistency()
 {
@@ -893,8 +891,7 @@ bool FFV::chkMediumConsistency()
 
 
 // #################################################################
-/**
- * @brief 時刻をRFクラスからv00[4]にコピーする
+/* @brief 時刻をRFクラスからv00[4]にコピーする
  * @param [in] time 設定する時刻
  */
 void FFV::copyV00fromRF(double m_time)
@@ -908,8 +905,7 @@ void FFV::copyV00fromRF(double m_time)
 
 
 // #################################################################
-/**
- * @brief コンポーネントの内容リストを表示する
+/* @brief コンポーネントの内容リストを表示する
  * @param [in]  fp   ファイルポインタ
  */
 void FFV::display_Compo_Info(FILE* fp)
@@ -958,8 +954,7 @@ void FFV::display_Compo_Info(FILE* fp)
 
 
 // #################################################################
-/**
- * @brief CompoListの内容とセル数の情報を表示する
+/* @brief CompoListの内容とセル数の情報を表示する
  * @param [in]  fp   ファイルポインタ
  */
 void FFV::display_CompoList(FILE* fp)
@@ -983,8 +978,7 @@ void FFV::display_CompoList(FILE* fp)
 
 
 // #################################################################
-/**
- * @brief 制御パラメータ，物理パラメータの表示
+/* @brief 制御パラメータ，物理パラメータの表示
  * @param [in]  fp   ファイルポインタ
  */
 void FFV::display_Parameters(FILE* fp)
@@ -1128,8 +1122,7 @@ void FFV::DomainInitialize(TPControl* tp_dom)
 
 
 // #################################################################
-/**
- * @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
+/* @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
  * @param [in,out] m_st 拡大された開始点（Fortranインデクス）
  * @param [in,out] m_ed 拡大された終了点（Fortranインデクス）
  * @param [in]     st_i 開始点（Cインデクス）
@@ -1298,8 +1291,7 @@ void FFV::EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, cons
 
 
 // #################################################################
-/*
- * @brief ポリゴンの場合のフィル操作
+/* @brief ポリゴンの場合のフィル操作
  * @param [in] fp    ファイルポインタ
  */
 void FFV::fill(FILE* fp)
@@ -1615,8 +1607,7 @@ void FFV::fill(FILE* fp)
 
 
 // #################################################################
-/**
- * @brief 固定パラメータの設定
+/* @brief 固定パラメータの設定
  */
 void FFV::fixed_parameters()
 {
@@ -1657,8 +1648,7 @@ void FFV::fixed_parameters()
 
 
 // #################################################################
-/**
- * @brief メモリ消費情報を表示
+/* @brief メモリ消費情報を表示
  * @param [in]     fp    ファイルポインタ
  * @param [in,out] G_mem グローバルメモリサイズ
  * @param [in]     L_mem ローカルメモリサイズ
@@ -1687,8 +1677,7 @@ void FFV::display_memory_info(FILE* fp, double G_mem, double L_mem, const char* 
 
 
 // #################################################################
-/**
- * @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
+/* @brief 並列処理時の各ノードの分割数を集めてファイルに保存する
  */
 void FFV::gather_DomainInfo()
 {
@@ -1941,8 +1930,8 @@ void FFV::gather_DomainInfo()
 
 
 // #################################################################
-/**
- * @brief binaryの場合に，非BCポリゴンからSOLIDセルを生成
+/* @brief binaryの場合に，非BCポリゴンからSOLIDセルを生成
+ * @param [in] fp stdout
  */
 void FFV::generate_Solid(FILE* fp)
 {
@@ -1983,7 +1972,7 @@ void FFV::generate_Solid(FILE* fp)
 
 
 // #################################################################
-// コンポーネントの面積を計算
+// @brief コンポーネントの面積を計算
 void FFV::get_Compo_Area()
 {
 
@@ -2023,7 +2012,10 @@ void FFV::get_Compo_Area()
 
 
 // #################################################################
-// グローバルな領域情報を取得
+/* @ グローバルな領域情報を取得
+ * @param [in] tp_dom  TPControlクラス
+ * @return 分割指示 (1-with / 2-without)
+ */
 int FFV::get_DomainInfo(TPControl* tp_dom)
 {
   // 領域分割モードのパターン
@@ -2329,7 +2321,8 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
 
 
 // #################################################################
-// インターバルの初期化
+/* @brief インターバルの初期化
+ */
 void FFV::init_Interval()
 {
   
@@ -2419,7 +2412,10 @@ void FFV::init_Interval()
 
 
 // #################################################################
-// 距離の最小値を求める
+/* @brief 距離の最小値を求める
+ * @param [in,out] cut カット情報の配列
+ * @param [in]     fp  file pointer
+ */
 void FFV::min_distance(float* cut, FILE* fp)
 {
   float global_min;
@@ -2491,7 +2487,8 @@ void FFV::min_distance(float* cut, FILE* fp)
 
 
 // #################################################################
-// 履歴の出力準備
+/* @brief 履歴の出力準備
+ */
 void FFV::prep_HistoryOutput()
 {
   // マスターノードでの履歴出力準備
@@ -2564,7 +2561,8 @@ void FFV::prep_HistoryOutput()
 
 
 // #################################################################
-// 読み込んだ領域情報のデバッグライト
+/* @brief 読み込んだ領域情報のデバッグライト
+ */
 void FFV::printDomainInfo()
 {
   cout << "\n####### read parameters ########" << endl;
@@ -2577,7 +2575,59 @@ void FFV::printDomainInfo()
 
 
 // #################################################################
-// コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+/* @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+ * @param [in] st 開始インデクス
+ * @param [in] ed 終了インデクス
+ * @param [in] n  CompoListのエントリ
+ * @param [in] bx BCindex
+ */
+void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
+{
+  int s;
+  size_t m;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  // 初期値はローカルノードの大きさ
+  int nst[3] = {ix, jx, kx};
+  int ned[3] = {0, 0, 0};
+  
+  
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
+        
+        //m = FBUtility::getFindexS3D(size, guide, i, j, k);
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        s = bx[m];
+        
+        if ( ( s & MASK_6) == n )
+        {
+          if( i < nst[0] ) { nst[0] = i; }
+          if( i > ned[0] ) { ned[0] = i; }
+          if( j < nst[1] ) { nst[1] = j; }
+          if( j > ned[1] ) { ned[1] = j; }
+          if( k < nst[2] ) { nst[2] = k; }
+          if( k > ned[2] ) { ned[2] = k; }
+        }
+      }
+    }
+  }
+  
+  // replace
+  cmp[n].setBbox(nst, ned);
+}
+
+
+// #################################################################
+/* @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+ * @param [in] st 開始インデクス
+ * @param [in] ed 終了インデクス
+ * @param [in] n  CompoListのエントリ
+ * @param [in] bx BCindex
+ */
 void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
 {
   int s;
@@ -2668,49 +2718,10 @@ void FFV::resizeBVface(const int* st, const int* ed, const int n, const int* bx)
 
 
 // #################################################################
-// コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
-void FFV::resizeBVcell(const int* st, const int* ed, const int n, const int* bx)
-{
-  int s;
-  size_t m;
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  // 初期値はローカルノードの大きさ
-  int nst[3] = {ix, jx, kx};
-  int ned[3] = {0, 0, 0};
-
-  
-  for (int k=st[2]; k<=ed[2]; k++) {
-    for (int j=st[1]; j<=ed[1]; j++) {
-      for (int i=st[0]; i<=ed[0]; i++) {
-        
-        //m = FBUtility::getFindexS3D(size, guide, i, j, k);
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = bx[m];
-        
-        if ( ( s & MASK_6) == n ) 
-        {
-          if( i < nst[0] ) { nst[0] = i; }
-          if( i > ned[0] ) { ned[0] = i; }
-          if( j < nst[1] ) { nst[1] = j; }
-          if( j > ned[1] ) { ned[1] = j; }
-          if( k < nst[2] ) { nst[2] = k; }
-          if( k > ned[2] ) { ned[2] = k; }
-        }
-      }
-    }
-  }
-  
-  // replace
-  cmp[n].setBbox(nst, ned);
-}
-
-
-// #################################################################
-// コンポーネントリストに登録されたBV情報をリサイズする
+/* @brief コンポーネントリストに登録されたBV情報をリサイズする
+ * @param kos KOS
+ * @param isHeat 熱問題のときtrue
+ */
 void FFV::resizeCompoBV(const int kos, const bool isHeat)
 {
   int st[3], ed[3];
@@ -2770,7 +2781,8 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
 
 
 // #################################################################
-// 外部境界条件を読み込み，Controlクラスに保持する
+/* @brief 外部境界条件を読み込み，Controlクラスに保持する
+ */
 void FFV::setBCinfo()
 {
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
@@ -2792,8 +2804,9 @@ void FFV::setBCinfo()
 
 
 // #################################################################
-// HEX,FANコンポーネントなどの体積率とbboxなどをセット
-// インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+/* @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
+ * @note インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+ */
 void FFV::setComponentVF()
 {
   const int subsampling = 20; // 体積率のサブサンプリングの基数
@@ -2882,7 +2895,8 @@ void FFV::setComponentVF()
 
 
 // #################################################################
-// コンポーネントが存在するかを保持しておく
+/* @brief コンポーネントが存在するかを保持しておく
+ */
 void FFV::setEnsComponent()
 {
   int c;
@@ -2960,7 +2974,8 @@ void FFV::setEnsComponent()
 
 
 // #################################################################
-// コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
+/* @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
+ */
 void FFV::setGlobalCmpIdx()
 {
   int st_i, st_j, st_k, ed_i, ed_j, ed_k;
@@ -3090,7 +3105,8 @@ void FFV::setGlobalCmpIdx()
 
 
 // #################################################################
-// 初期条件の設定
+/* @brief 初期条件の設定
+ */
 void FFV::setInitialCondition()
 {
   double flop_task;
@@ -3214,10 +3230,11 @@ void FFV::setInitialCondition()
 
 
 // #################################################################
-// midの情報から各BCコンポーネントのローカルなインデクスを取得する
-// 計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
-// 外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
-// 内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
+/* @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
+ * @note  計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
+ *        外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
+ *        内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
+ */
 void FFV::setLocalCmpIdx_Binary()
 {
   int st_i[3], len[3];
@@ -3284,7 +3301,9 @@ void FFV::setLocalCmpIdx_Binary()
 
 
 // #################################################################
-// ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
+/* @brief ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
+ * @param [in] fp  ファイルポインタ
+ */
 void FFV::setMediumList(FILE* fp)
 {
   if ( !mat ) Exit(0);
@@ -3304,7 +3323,11 @@ void FFV::setMediumList(FILE* fp)
 
 
 // #################################################################
-// 各種例題のモデルをセット
+/* @brief 各種例題のモデルをセットアップ
+ * @param [in] PrepMemory  前処理に必要なメモリ
+ * @param [in] TotalMemory ソルバー実行に必要なメモリ
+ * @param [in] fp          ファイルポインタ
+ */
 void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
   // d_midをゼロで初期化
@@ -3360,7 +3383,9 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 
 
 // #################################################################
-// 並列化と分割の方法を保持
+/* @brief 並列化と分割の方法を保持
+ * @return 並列モード
+ */
 string FFV::setParallelism()
 {
   string para_mode;
@@ -3403,7 +3428,8 @@ string FFV::setParallelism()
 
 
 // #################################################################
-// 時間積分幅や物理パラメータの設定
+/* @brief 時間積分幅や物理パラメータの設定
+ */
 void FFV::setParameters()
 {
   // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
@@ -3461,18 +3487,7 @@ void FFV::setParameters()
   
   // 無次元時間積分幅
   deltaT = DT.get_DT();
-  
-  
-  /* Interval Managerの計算の主管理タグ[tg_compute]に値を初期値を設定
-  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(0, 0.0, DT.get_DT(), Interval_Manager::tg_compute, 
-                                                             (double)(C.RefLength/C.RefVelocity)) ) 
-  {
-    Hostonly_ printf("\t Error : Computation Period is asigned to zero.\n");
-    Exit(0);
-  }
-  
-  Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
-  */
+
   
   C.setParameters(mat, cmp, &RF, BC.export_OBC());
   
@@ -3484,7 +3499,11 @@ void FFV::setParameters()
 
 
 // #################################################################
-// IP用にカット領域をアロケートする
+/* @brief IP用にカット領域をアロケートする
+ * @param [in,out] m_prep  前処理用のメモリサイズ
+ * @param [in,out] m_total 本計算用のメモリリサイズ
+ * @param [in]     fp      ファイルポインタ
+ */
 void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
 {
   Hostonly_ 
@@ -3654,7 +3673,11 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
 
 
 // #################################################################
-// 幾何形状情報を準備し，交点計算を行う
+/* @brief 幾何形状情報を準備し，交点計算を行う
+ * @param [in,out] m_prep   前処理用のメモリサイズ
+ * @param [in,out] m_total  本計算用のメモリリサイズ
+ * @param [in]     fp       ファイルポインタ
+ */
 void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
   unsigned poly_gc[3];
@@ -4071,7 +4094,8 @@ void FFV::setVOF()
 
 
 // #################################################################
-// BCIndexにビット情報をエンコードする
+/* @brief BCIndexにビット情報をエンコードする
+ */
 void FFV::VoxEncode()
 {
   int ix = size[0];
@@ -4168,7 +4192,9 @@ void FFV::VoxEncode()
 
 
 // #################################################################
-// ボクセルをスキャンし情報を表示する
+/* @brief ボクセルをスキャンし情報を表示する
+ * @param [in] fp stdout
+ */
 void FFV::VoxScan(FILE* fp)
 {
   // 外部境界面の媒質IDとその個数を取得

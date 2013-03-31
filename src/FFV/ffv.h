@@ -342,9 +342,152 @@ private:
   void allocate_Main(double &total);
   
   
+  // ポリゴンのカット情報からVBCのboxをセット
+  void Bbox_IBC();
+  
+  
+  // 全Voxelモデルの媒質数とKOSの整合性をチェック
+  bool chkMediumConsistency();
+  
+  
+  // 時刻をRFクラスからv00[4]にコピーする
+  void copyV00fromRF(double m_time);
+  
+  
+  // コンポーネントの内容リストを表示する
+  void display_Compo_Info(FILE* fp);
+  
+  
+  // CompoListの内容とセル数の情報を表示する
+  void display_CompoList(FILE* fp);
+  
+  
+  // 制御パラメータ，物理パラメータの表示
+  void display_Parameters(FILE* fp);
+  
+  
+  // 計算領域情報を設定する
+  void DomainInitialize(TPControl* tp_dom);
+  
+  
+  //初期インデクスの情報を元に，一層拡大したインデクス値を返す
+  void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
+  
+  
+  // ポリゴンの場合のフィル操作
+  void fill(FILE* fp);
+  
+  
+  // 固定パラメータの設定
+  void fixed_parameters();
+  
+  
+  // メモリ使用量の表示
+  void display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str);
+  
+  
+  // 並列処理時の各ノードの分割数を集めてファイルに保存する
+  void gather_DomainInfo();
+  
+  
+  // Binary voxelをカット情報から生成
+  void generate_Solid(FILE* fp);
+  
+  
+  // コンポーネントの面積を計算する
+  void get_Compo_Area();
+  
+  
+  // グローバルな領域情報を取得
+  int get_DomainInfo(TPControl* tp_dom);
+  
+  
+  // インターバルの初期化
+  void init_Interval();
+  
+  
+  // 距離の最小値を求める
+  void min_distance(float* cut, FILE* fp);
+  
+  
+  // 履歴の出力準備
+  void prep_HistoryOutput();
+  
+  
+  // 読み込んだ領域情報のデバッグライト
+  void printDomainInfo();
+  
+  
+  // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+  void resizeBVface(const int* st, const int* ed, const int n, const int* bx);
+  
+  
+  // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
+  void resizeBVcell(const int* st, const int* ed, const int n, const int* bx);
+  
+  
+  // コンポーネントリストに登録されたBV情報をリサイズする
+  void resizeCompoBV(const int kos, const bool isHeat);
+  
+  
+  // 外部境界条件を読み込み，Controlクラスに保持する
+  void setBCinfo();
+  
+  
+  // HEX,FANコンポーネントなどの体積率とbboxなどをセット
+  void setComponentVF();
+  
+  
+  // コンポーネントが存在するかを保持しておく
+  void setEnsComponent();
+  
+  
+  // コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
+  void setGlobalCmpIdx();
+  
+  
+  // 初期条件の設定
+  void setInitialCondition();
+  
+  
+  // midの情報から各BCコンポーネントのローカルなインデクスを取得する
+  void setLocalCmpIdx_Binary();
+  
+  
+  // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
+  void setMediumList(FILE* fp);
+  
+  
+  // 各種例題のモデルをセットアップ
+  void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
+  
+  
+  // 並列化と分割の方法を保持
+  string setParallelism();
+  
+  
+  // 時間積分幅や物理パラメータの設定
+  void setParameters();
+  
+  
+  // IP用にカット領域をアロケートする
+  void setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp);
+  
+  
   // パラメータのロードと計算領域を初期化し，並列モードを返す
   string setupDomain(TPControl* tpf, FILE* fp);
   
+  
+  // 幾何形状情報を準備し，交点計算を行う
+  void setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
+  
+  
+  // BCIndexにビット情報をエンコードする
+  void VoxEncode();
+  
+  
+  // ボクセルをスキャンし情報を表示する
+  void VoxScan(FILE* fp);
   
   
   
@@ -363,10 +506,7 @@ private:
   void Averaging_Time(double& flop);
   
   
-  /**
-   * @brief ポリゴンのカット情報からIBCのboxをセット
-   */
-  void Bbox_IBC();
+
   
   
   /**
@@ -386,10 +526,6 @@ private:
   void Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop);
   
   
-  // 全Voxelモデルの媒質数とKOSの整合性をチェック
-  bool chkMediumConsistency();
-  
-  
   /**
    * @brief SOR2SMAの非同期通信処理
    * @param [in,out] d_x  解ベクトル
@@ -400,9 +536,6 @@ private:
   void comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
   
   
-  // 時刻をRFクラスからv00[4]にコピーする
-  void copyV00fromRF(double m_time);
-  
   
   /**
    * @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
@@ -411,54 +544,17 @@ private:
    * @param [in] guide ガイドセル
    */
   double count_comm_size(const int sz[3], const int guide);
-  
-  
-  // コンポーネントの内容リストを表示する
-  void display_Compo_Info(FILE* fp);
-  
-  
-  // CompoListの内容とセル数の情報を表示する
-  void display_CompoList(FILE* fp);
-  
-   
-  // 制御パラメータ，物理パラメータの表示
-  void display_Parameters(FILE* fp);
-  
-  
-  // メモリ使用量の表示
-  void display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str);
-  
-  
-  // 計算領域情報を設定する
-  void DomainInitialize(TPControl* tp_dom);
+
   
   
   // 外部計算領域の各面における総流量と対流流出速度を計算する
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
   
-  //初期インデクスの情報を元に，一層拡大したインデクス値を返す
-  void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
-  
   
   //ファイル出力
   void FileOutput(double& flop, const bool crs_restart=false);
   
-  
-  // ポリゴンの場合のフィル操作
-  void fill(FILE* fp);
-  
-  
-  // 固定パラメータの設定
-  void fixed_parameters();
-  
-  
-  // 並列処理時の各ノードの分割数を集めてファイルに保存する
-  void gather_DomainInfo();
-  
-  
-  // Binary voxelをカット情報から生成
-  void generate_Solid(FILE* fp);
   
   
   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
@@ -483,18 +579,6 @@ private:
                         int* coarse,
                         int* block
                         );
-  
-  
-  /** コンポーネントの面積を計算する
-   */
-  void get_Compo_Area();
-  
-  
-  /** グローバルな領域情報を取得 
-   * @param [in] tp_dom  TPControlクラス
-   * @return 分割指示 (1-with / 2-without)
-   */
-  int get_DomainInfo(TPControl* tp_dom);
   
   
   /**
@@ -523,8 +607,7 @@ private:
    */
   void Fgmres(ItrCtl* IC, const double rhs_nrm, const double r0);
   
-  
-  
+
   
   /**
    * @brief  FRBGS
@@ -593,12 +676,7 @@ private:
 	void Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y);
   
 
-  /**
-   * @brief インターバルの初期化
-   */
-  void init_Interval();
-  
-  
+
   /**
    * @brief 粗格子から密格子へ内挿
    * @param [in] m_st 粗い格子の開始インデクス
@@ -624,12 +702,7 @@ private:
   void LS_Binary(ItrCtl* IC, const double rhs_nrm, const double rhs_init);
   
   
-  /**
-   * @brief 距離の最小値を求める
-   * @param [in,out] cut カット情報の配列
-   * @param [in]     fp  file pointer
-   */
-  void min_distance(float* cut, FILE* fp);
+
   
   
   // V-P反復のdiv(u)ノルムを計算する
@@ -648,21 +721,10 @@ private:
   
   
   /**
-   * @brief 履歴の出力準備
-   */
-  void prep_HistoryOutput();
-  
-  
-  /**
    * @brief 圧力の引き戻し操作を行う
    */
   void Pressure_Shift();
-  
-  
-  /**
-   * @brief 読み込んだ領域情報のデバッグライト
-   */
-  void printDomainInfo();
+
 
   
   /* 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
@@ -730,32 +792,7 @@ private:
   void ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0);
   
   
-  /**
-   * @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
-   * @param [in] st 開始インデクス
-   * @param [in] ed 終了インデクス
-   * @param [in] n  CompoListのエントリ
-   * @param [in] bx BCindex
-   */
-  void resizeBVface(const int* st, const int* ed, const int n, const int* bx);
   
-  
-  /**
-   * @brief コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
-   * @param [in] st 開始インデクス
-   * @param [in] ed 終了インデクス
-   * @param [in] n  CompoListのエントリ
-   * @param [in] bx BCindex
-   */
-  void resizeBVcell(const int* st, const int* ed, const int n, const int* bx);
-  
-  
-  /**
-   * @brief コンポーネントリストに登録されたBV情報をリサイズする
-   * @param kos KOS
-   * @param isHeat 熱問題のときtrue
-   */
-  void resizeCompoBV(const int kos, const bool isHeat);
   
   
   // リスタートプロセス
@@ -930,68 +967,15 @@ private:
                                int* assign,
                                int nassign);
   
+  
 
-  
-  /**
-   * @brief 外部境界条件を読み込み，Controlクラスに保持する
-   */
-  void setBCinfo();
-  
-  
-  /**
-   * @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
-   */
-  void setComponentVF();
-  
-  
   
   /**
    * @brief 並列分散時のファイル名の管理を行う
    */
   void setDFI();
   
-  
-  /**
-   * @brief コンポーネントが存在するかを保持しておく
-   */
-  void setEnsComponent();
-  
-  
-  /**
-   * @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
-   */
-  void setGlobalCmpIdx();
-  
-  
-  /**
-   * @brief 初期条件の設定
-   */
-  void setInitialCondition();
-  
-  
-  /**
-   * @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
-   */
-  void setLocalCmpIdx_Binary();
-  
-  
-  /** ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
-   * @param [in] fp  ファイルポインタ
-   */
-  void setMediumList(FILE* fp);
-  
-  
-  /**
-   * @brief 並列化と分割の方法を保持
-   * @return 並列モード
-   */
-  string setParallelism();
-  
-  
-  /**
-   * @brief 時間積分幅や物理パラメータの設定
-   */
-  void setParameters();
+
   
   
   /**
@@ -1004,12 +988,7 @@ private:
   void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
   
   
-  /** モデルをセットアップ
-   * @param [in] PrepMemory  前処理に必要なメモリ
-   * @param [in] TotalMemory ソルバー実行に必要なメモリ
-   * @param [in] fp          ファイルポインタ
-   */
-  void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
+  
   
   
   /**
@@ -1017,24 +996,7 @@ private:
    */
   void set_timing_label();
   
-  
-  /**
-   * @brief IP用にカット領域をアロケートする
-   * @param [in,out] m_prep  前処理用のメモリサイズ
-   * @param [in,out] m_total 本計算用のメモリリサイズ
-   * @param [in]     fp      ファイルポインタ
-   */
-  void setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp);
-  
-  
-  /**
-   * @brief 幾何形状情報を準備し，交点計算を行う
-   * @param [in,out] m_prep   前処理用のメモリサイズ
-   * @param [in,out] m_total  本計算用のメモリリサイズ
-   * @param [in]     fp       ファイルポインタ
-   */
-  void setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
-  
+
   
   /**
    * @brief VOF値を気体(0.0)と液体(1.0)で初期化
@@ -1118,18 +1080,6 @@ private:
    */
   void Variation_Space(double* avr, double* rms, double& flop);
   
-  
-  /**
-   * @brief BCIndexにビット情報をエンコードする
-   */
-  void VoxEncode();
-  
-  
-  /**
-   * @brief ボクセルをスキャンし情報を表示する
-   * @param [in] fp ファイルポインタ 
-   */
-  void VoxScan(FILE* fp);
 
   
   /**
@@ -1140,8 +1090,6 @@ private:
    * @param [in,out] key 送信ID
    */
   void wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
-  
-  
   
 
   

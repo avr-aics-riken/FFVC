@@ -53,8 +53,7 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
 
 
 // #################################################################
-/*
- * @brief 領域パラメータを設定する
+/* @brief 領域パラメータを設定する
  * @param [in]     R   Controlクラスのポインタ
  * @param [in]     sz  分割数
  * @param [in,out] org 計算領域の基点
