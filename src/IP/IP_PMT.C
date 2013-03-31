@@ -61,9 +61,7 @@ bool IP_PMT::getTP(Control* R, TPControl* tpCntl)
  * @param [in,out] pch セル幅
  */
 void IP_PMT::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
-{
-  RefL = R->RefLength;
-  
+{  
   // forced
   if (R->Unit.Param != NONDIMENSIONAL)
   {
@@ -73,27 +71,13 @@ void IP_PMT::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
   
   // 性能測定モードをOnにする
   R->Hide.PM_Test = ON;
-
-  if ( pch[0] <= 0.0 )
-  {
-    Hostonly_ printf("Error : 'VoxelPitch' must be grater than zero.\n");
-    Exit(0);
-  }
   
-  reg[0] = pch[0]*(REAL_TYPE)sz[0];
-  reg[1] = pch[1]*(REAL_TYPE)sz[1];
-  reg[2] = pch[2]*(REAL_TYPE)sz[2];
+  // 偶数チェック
+  even = ON;
   
   org[0] = -0.5*reg[0];
   org[1] = -0.5*reg[1];
   org[2] = -0.5*reg[2];
-  
-  // Setting depends on Example,  INTRINSIC
-  if ( (sz[0]/2*2 != sz[0]) || (sz[1]/2*2 != sz[1]) || (sz[2]/2*2 != sz[2]) )
-  {
-    printf("\tDimension size must be even for all direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-    Exit(0);
-  }
 }
 
 

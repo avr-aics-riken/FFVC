@@ -18,8 +18,7 @@
 
 
 // #################################################################
-/*
- * @brief パラメータをロード
+/* @brief パラメータをロード
  * @param [in] R      Controlクラス
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
@@ -114,45 +113,6 @@ void IP_Rect::printPara(FILE* fp, const Control* R)
 
 }
 
-
-// #################################################################
-/* @brief 領域パラメータを設定する
- * @param [in]     R   Controlクラスのポインタ
- * @param [in]     sz  分割数
- * @param [in,out] org 計算領域の基点
- * @param [in,out] reg 計算領域のbounding boxサイズ
- * @param [in,out] pch セル幅
- */
-void IP_Rect::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
-{
-  RefL = R->RefLength;
-  
-  reg[0] = pch[0]*(REAL_TYPE)sz[0];
-  reg[1] = pch[1]*(REAL_TYPE)sz[1];
-  reg[2] = pch[2]*(REAL_TYPE)sz[2];
-  
-  // 偶数のチェック
-  if ( even == ON )
-  {
-    if ( sz[0]/2*2 != sz[0] )
-    {
-      printf("\tDimension size must be even for x direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-      Exit(0);
-    }
-    if ( sz[1]/2*2 != sz[1] )
-    {
-      printf("\tDimension size must be even for y direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-      Exit(0);
-    }
-    if ( (mode == dim_3d) && (sz[2]/2*2 != sz[2]) )
-    {
-      printf("\tDimension size must be even for z direction (%d %d %d)\n", sz[0], sz[1], sz[2]);
-      Exit(0);
-    }
-  }
-  
-  
-}
 
 
 // #################################################################

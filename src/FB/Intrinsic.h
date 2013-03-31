@@ -51,7 +51,15 @@ enum Intrinsic_class
 class Intrinsic : public DomainInfo {
   
 public:
-  REAL_TYPE RefL; ///< 代表長さ
+  
+  REAL_TYPE RefL;      ///< 代表長さ [m]
+  REAL_TYPE RefV;      ///< 代表速度 [m/s]
+  
+  int even;            ///< 偶数分割のチェック
+  int mode;            ///< 次元数
+  
+  std::string m_fluid; ///< 流体のラベル
+  std::string m_solid; ///< 固体のラベル
   
   /** 次元のモード */
   enum dim_mode 
@@ -64,6 +72,9 @@ public:
   Intrinsic() 
   { 
     RefL = 0.0;
+    RefV = 0.0;
+    even = 0;
+    mode = 0;
   }
   
   /**　デストラクタ */
@@ -72,28 +83,18 @@ public:
   
 public:
   
-  // ユーザー例題の名称を返す
-  virtual const char* getExampleName() 
-  { 
-    return NULL; 
-  }
-  
-  // パラメータをロードする
+  // 例題クラス固有のパラメータをロードする
   virtual bool getTP(Control* R, TPControl* tpCntl) 
   { 
     return true; 
   }
   
   
-  // 
-  virtual void initCond(REAL_TYPE* v, REAL_TYPE* p) {};
-  
-  
   // 例題名称の表示
-  virtual void printExample(FILE* fp, const char* str);
+  virtual void printExample(FILE* fp, const int m_id);
   
   
-  // パラメータの表示
+  // 例題クラス固有のパラメータの表示
   virtual void printPara(FILE* fp, const Control* R);
   
   
@@ -103,6 +104,16 @@ public:
   
   // 計算領域の媒質情報を設定する
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
+  
+  
+  
+  
+  // ユーザー例題の名称を返す
+  const char* getExampleName(int m_id);
+  
+  
+  // 代表パラメータのセット
+  void setRefParameter(Control* Cref);
   
   
   // モデルIDをsphフォーマット(float)で出力する

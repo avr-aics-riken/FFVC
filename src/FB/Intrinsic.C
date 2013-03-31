@@ -20,26 +20,45 @@
 // #################################################################
 /* @brief 例題名称の表示
  * @param [in] fp   出力ファイルのファイルポインタ
- * @param [in] str  表示文字列
+ * @param [in] m_id 例題ID
 */
-void Intrinsic::printExample(FILE* fp, const char* str)
+void Intrinsic::printExample(FILE* fp, const int m_id)
 {
-  if( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
-  fprintf(fp,"\n\tExample : %s\n\n", str); fflush(fp);
-
-  printf("\n\tExample : %s\n\n", str);
+  
+  string str;
+  
+  if      ( m_id == id_Polygon ) str = "Polygon";
+  else if ( m_id == id_Duct )    str = "Duct";
+  else if ( m_id == id_SHC1D)    str = "Steady 1D Heat Conduction";
+  else if ( m_id == id_PMT )     str = "Performance Test";
+  else if ( m_id == id_Rect )    str = "Rectangular";
+  else if ( m_id == id_Cylinder) str = "Cylinder";
+  else if ( m_id == id_Step )    str = "Back Step";
+  else if ( m_id == id_PPLT2D)   str = "Parallel Plate 2D";
+  else if ( m_id == id_Sphere )  str = "Sphere";
+  else if ( m_id == id_Jet )     str = "Jet";
+  else
+  {
+    stamped_printf("\tInvalid keyword is described for Exmple definition\n");
+    Exit(0);
+  }
+  
+  fprintf(fp,"\n\tExample : %s\n\n", str.c_str()); fflush(fp);
+  printf    ("\n\tExample : %s\n\n", str.c_str());
+  
 }
 
 
 
 // #################################################################
-/**
- @brief パラメータの表示
- @param [in] fp ファイルポインタ
- @param [in] R  コントロールクラスのポインタ
+/* @brief パラメータの表示
+ * @param [in] fp ファイルポインタ
+ * @param [in] R  コントロールクラスのポインタ
  */
 void Intrinsic::printPara(FILE* fp, const Control* R)
 {
@@ -52,8 +71,18 @@ void Intrinsic::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/**
- * @brief モデルIDをsphフォーマット(float)で出力する
+/* @brief 代表パラメータの設定
+ * @param [in] Cref  コントロールクラスのポインタ
+ */
+void Intrinsic::setRefParameter(Control* Cref)
+{
+  RefL = Cref->RefLength;
+  RefV = Cref->RefVelocity;
+}
+
+
+// #################################################################
+/* @brief モデルIDをsphフォーマット(float)で出力する
  * @param [in] mid ID情報
  * @param [in] R   コントロールクラスのポインタ
  */
@@ -168,8 +197,7 @@ void Intrinsic::writeSPH(const int *mid, const Control* R)
 
 
 // #################################################################
-/**
- * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
+/* @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
  * @param [in] vf 体積占有率
  * @param [in] id ID情報
  * @param [in] R  コントロールクラスのポインタ
@@ -280,8 +308,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 
 
 // #################################################################
-/**
- * @brief 例題のモデルをsvxフォーマットで出力する(ID)
+/* @brief 例題のモデルをsvxフォーマットで出力する(ID)
  * @param [in] id ID情報
  * @param [in] R  コントロールクラスのポインタ
  */

@@ -18,6 +18,11 @@
 #include "limits.h"
 
 
+// #################################################################
+/* @brief 初期化格子生成、ビットフラグ処理ほか
+ * @param [in] argc  main関数の引数の個数
+ * @param [in] argv  main関数の引数リスト
+ */
 int FFV::Initialize(int argc, char **argv)
 {
   double TotalMemory   = 0.0;  ///< 計算に必要なメモリ量（ローカル）
@@ -157,8 +162,8 @@ int FFV::Initialize(int argc, char **argv)
   {
     printf(    "\n---------------------------------------------------------------------------\n\n");
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    printf(    "\t>> Analysis Model Information\n\n");
-    fprintf(fp,"\t>> Analysis Model Information\n\n");
+    printf(    "\t>> Information of Model setting process\n\n");
+    fprintf(fp,"\t>> Information of Model setting process\n\n");
   }
   
   TIMING_start(tm_voxel_prep_sct);
@@ -746,6 +751,47 @@ int FFV::Initialize(int argc, char **argv)
 }
 
 
+// #################################################################
+/**
+ * @brief 主計算部分に用いる配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
+void FFV::allocate_Main(double &total)
+{
+  TIMING_start(tm_init_alloc);
+  allocArray_Main(total);
+  
+  //allocArray_Collocate (total);
+  
+  if ( C.LES.Calc == ON )
+  {
+    allocArray_LES (total);
+  }
+  
+  if ( C.isHeatProblem() )
+  {
+    allocArray_Heat(total);
+  }
+  
+  if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) )
+  {
+    allocArray_AB2(total);
+  }
+  
+  if ( C.BasicEqs == INCMP_2PHASE )
+  {
+    allocArray_Interface(total);
+  }
+  
+  // 時間平均用の配列をアロケート
+  if ( C.Mode.Average == ON )
+  {
+    allocArray_Average(total);
+  }
+  
+  TIMING_stop(tm_init_alloc);
+}
+
 
 // #################################################################
 // ポリゴンのカット情報からVBCのboxをセット
@@ -844,29 +890,6 @@ bool FFV::chkMediumConsistency()
   return true;
 }
 
-// #################################################################
-/**
- * @brief 組み込み例題のインスタンス
- * @param [in] Cref Controlクラスのポインタ
- */
-void FFV::connectExample(Control* Cref)
-{
-  if      ( Cref->Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
-  else if ( Cref->Mode.Example == id_SHC1D)    Ex = dynamic_cast<Intrinsic*>(new IP_SHC1D);
-  else if ( Cref->Mode.Example == id_Duct )    Ex = dynamic_cast<Intrinsic*>(new IP_Duct);
-  else if ( Cref->Mode.Example == id_PMT )     Ex = dynamic_cast<Intrinsic*>(new IP_PMT);
-  else if ( Cref->Mode.Example == id_Rect )    Ex = dynamic_cast<Intrinsic*>(new IP_Rect);
-  else if ( Cref->Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
-  else if ( Cref->Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
-  else if ( Cref->Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
-  else if ( Cref->Mode.Example == id_Sphere )  Ex = dynamic_cast<Intrinsic*>(new IP_Sphere);
-  else if ( Cref->Mode.Example == id_Jet )     Ex = dynamic_cast<Intrinsic*>(new IP_Jet);
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
-    Exit(0);
-  }
-}
 
 
 // #################################################################
@@ -1008,8 +1031,7 @@ void FFV::display_Parameters(FILE* fp)
 
 
 // #################################################################
-/**
- * @brief 計算領域情報を設定する
+/* @brief 計算領域情報を設定する
  * @param [in] tp_dom  TPControlクラス
  */
 void FFV::DomainInitialize(TPControl* tp_dom)
@@ -1044,19 +1066,27 @@ void FFV::DomainInitialize(TPControl* tp_dom)
     }
   }
 
-  
   double m_org[3] = {(double)G_origin[0], (double)G_origin[1], (double)G_origin[2]};
   double m_reg[3] = {(double)G_region[0], (double)G_region[1], (double)G_region[2]};
   
   
   // 領域分割モードのパターン
-  //      分割指定(G_div指定)    |     domain.txt 
-  // 1)  G_divなし >> 自動分割   |  G_orign + G_region + (G_pitch || G_voxel)
-  // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
-  // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
-  // 4)  G_div指定あり          |   + ActiveDomainInfo
+  //     分割指定(G_div指定)         domain.txt
+  // 1)  G_div指定なし |  G_orign + G_region + (G_pitch || G_voxel)
+  // 2)  G_div指定あり |  G_orign + G_region + (G_pitch || G_voxel)
+  // 3)  G_div指定なし |          + ActiveDomainInfo
+  // 4)  G_div指定あり |          + ActiveDomainInfo
   
-  // 分割数を元に分割する。pitchが指定値とならないこともある。
+  /* Policy
+   * G_regionは必須
+   * G_voxelとG_pitchでは，G_voxelが優先．両方が指定されている場合はエラー
+   * G_pitchが指定されており，割り切れない場合は，領域を拡大
+   *        G_voxel = (int)ceil(G_region/G_pitch)
+   *        G_region = G_pitch * G_voxel
+   */
+  
+  
+  // 分割数を元に分割する >> CPMlibの仕様
   switch (div_type) 
   {
     case 1: // 分割数が指示されている場合
@@ -1997,24 +2027,21 @@ void FFV::get_Compo_Area()
 int FFV::get_DomainInfo(TPControl* tp_dom)
 {
   // 領域分割モードのパターン
-  //      分割指定(G_div指定)    |     domain.txt 
-  // 1)  G_divなし >> 自動分割   |  G_orign + G_region + (G_pitch || G_voxel)
-  // 2)  G_div指定あり          |  G_orign + G_region + (G_pitch || G_voxel)
-  // 3)  G_divなし >> 自動分割   |   + ActiveDomainInfo
-  // 4)  G_div指定あり          |   + ActiveDomainInfo
+  //     分割指定(G_div指定)         domain.txt
+  // 1)  G_div指定なし |  G_orign + G_region + (G_pitch || G_voxel)
+  // 2)  G_div指定あり |  G_orign + G_region + (G_pitch || G_voxel)
+  // 3)  G_div指定なし |          + ActiveDomainInfo
+  // 4)  G_div指定あり |          + ActiveDomainInfo
   
   /* Policy
-   G_regionは必須
-   G_voxelとG_pitchでは，G_voxelが優先．
-   両方が指定されている場合には，エラー
-   G_pitchが指定されている場合には，割り切れない場合，
-     G_voxel = (int)ceil(G_region/G_pitch)
-     G_region = G_pitch * G_voxel
+   * G_regionは必須
+   * G_voxelとG_pitchでは，G_voxelが優先．両方が指定されている場合はエラー
+   * G_pitchが指定されており，割り切れない場合は，領域を拡大
+   *        G_voxel = (int)ceil(G_region/G_pitch)
+   *        G_region = G_pitch * G_voxel
    */
   
   string label, str;
-  REAL_TYPE *rvec;
-  int *ivec;
   int div_type = 1; // 指定分割 => 1
   
   
@@ -2039,20 +2066,18 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   
   // G_origin　必須
-  rvec  = G_origin;
   label = "/DomainInfo/GlobalOrigin";
   
-  if ( !tp_dom->GetVector(label, rvec, 3) )
+  if ( !tp_dom->GetVector(label, G_origin, 3) )
   {
     cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
   }
   
   // G_region 必須
-  rvec  = G_region;
   label = "/DomainInfo/GlobalRegion";
   
-  if ( !tp_dom->GetVector(label, rvec, 3) )
+  if ( !tp_dom->GetVector(label, G_region, 3) )
   {
     Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -2074,17 +2099,45 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   
   // G_voxel
-  ivec  = G_size;
   label = "/DomainInfo/GlobalVoxel";
   
-  if ( !tp_dom->GetVector(label, ivec, 3) ) g_flag = false;
+  if ( !tp_dom->GetVector(label, G_size, 3) ) g_flag = false;
+  
+  
+  // 2D check
+  if ( (Ex->mode == Intrinsic::dim_2d) && (G_size[2] != 3) )
+  {
+    Hostonly_ {
+      printf("\tError : In case of 2 dimensional problem, kmax must be 3.\n");
+      Exit(0);
+    }
+  }
+  
+  // 偶数のチェック
+  if ( Ex->even == ON )
+  {
+    if ( G_size[0]/2*2 != G_size[0] )
+    {
+      printf("\tDimension size must be even for x direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+      Exit(0);
+    }
+    if ( G_size[1]/2*2 != G_size[1] )
+    {
+      printf("\tDimension size must be even for y direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+      Exit(0);
+    }
+    if ( (Ex->mode == Intrinsic::dim_3d) && (G_size[2]/2*2 != G_size[2]) )
+    {
+      printf("\tDimension size must be even for z direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+      Exit(0);
+    }
+  }
   
   
   // pitch
-  rvec  = pitch;
   label = "/DomainInfo/GlobalPitch";
   
-  if ( !tp_dom->GetVector(label, rvec, 3) ) p_flag = false;
+  if ( !tp_dom->GetVector(label, pitch, 3) ) p_flag = false;
   
   
   // 排他チェック
@@ -2102,6 +2155,7 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   {
     if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
     {
+      
       // 等方性チェック
       if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
       {
@@ -2120,17 +2174,36 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
       gr[2] = (REAL_TYPE)G_size[2] * pitch[2];
       
       // 整合性チェック
-      if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) || (G_region[2] != gr[2]) )
+      if ( Ex->mode == Intrinsic::dim_3d )
       {
-        Hostonly_ {
-          printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
-          printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
-                 G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
+        if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) || (G_region[2] != gr[2]) )
+        {
+          Hostonly_ {
+            printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
+            printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
+                   G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
+          }
+          G_region[0] = gr[0];
+          G_region[1] = gr[1];
+          G_region[2] = gr[2];
         }
-        G_region[0] = gr[0];
-        G_region[1] = gr[1];
-        G_region[2] = gr[2];
       }
+      else // dim_2d
+      {
+        if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) )
+        {
+          Hostonly_ {
+            printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
+            printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
+                   G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
+          }
+          G_region[0] = gr[0];
+          G_region[1] = gr[1];
+          G_region[2] = gr[2];
+          G_origin[2] = -0.5 * pitch[2];
+        }
+      }
+      
     }
     else // パラメータが無効の場合
     {
@@ -2144,16 +2217,32 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
     {
       if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
       {
+        
         pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
         pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
         pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
         
         // 等方性チェック
-        if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
+        if ( Ex->mode == Intrinsic::dim_3d )
         {
-          Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
-          Exit(0);
+          if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
+          {
+            Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
+            Exit(0);
+          }
         }
+        else // dim_2d
+        {
+          if ( pitch[0] != pitch[1] )
+          {
+            Hostonly_ printf("\tGlobal Pitch must be same in X-Y direction (%14.6e, %14.6e)\n", pitch[0], pitch[1]);
+            Exit(0);
+          }
+          pitch[2] = pitch[0];
+          G_region[2] = (REAL_TYPE)G_size[2] * pitch[2];
+          G_origin[2] = -0.5 * pitch[2];
+        }
+        
 
       }
       else
@@ -2173,10 +2262,9 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   
   
   // G_division オプション
-  ivec  = G_division;
   label = "/DomainInfo/GlobalDivision";
   
-  if ( !tp_dom->GetVector(label, ivec, 3) )
+  if ( !tp_dom->GetVector(label, G_division, 3) )
   {
     Hostonly_ cout << "\tAutomatic domain division is selected." << endl;
     div_type = 2; // 自動分割
@@ -2238,42 +2326,6 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
   return div_type;
 }
 
-
-// #################################################################
-/**
- * @brief 例題の設定
- * @param [in] Cref    コントロールクラス
- * @param [in] tpCntl  テキストパーサーのラッパー
- */
-void FFV::getExample(Control* Cref, TPControl* tpCntl)
-{
-  string keyword;
-  string label;
-  
-  label = "/Steer/Example";
-  
-  if ( !(tpCntl->GetValue(label, &keyword )) )
-  {
-    Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if     ( FBUtility::compare(keyword, "ParallelPlate2D") )   Cref->Mode.Example = id_PPLT2D;
-  else if( FBUtility::compare(keyword, "Duct") )              Cref->Mode.Example = id_Duct;
-  else if( FBUtility::compare(keyword, "SHC1D") )             Cref->Mode.Example = id_SHC1D;
-  else if( FBUtility::compare(keyword, "PerformanceTest") )   Cref->Mode.Example = id_PMT;
-  else if( FBUtility::compare(keyword, "Rectangular") )       Cref->Mode.Example = id_Rect;
-  else if( FBUtility::compare(keyword, "Cylinder") )          Cref->Mode.Example = id_Cylinder;
-  else if( FBUtility::compare(keyword, "BackStep") )          Cref->Mode.Example = id_Step;
-  else if( FBUtility::compare(keyword, "Users") )             Cref->Mode.Example = id_Polygon;
-  else if( FBUtility::compare(keyword, "Sphere") )            Cref->Mode.Example = id_Sphere;
-  else if( FBUtility::compare(keyword, "Jet") )               Cref->Mode.Example = id_Jet;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-}
 
 
 // #################################################################
@@ -3107,9 +3159,6 @@ void FFV::setInitialCondition()
 			BC.OuterTBC(d_t);
 		}
     
-    // ユーザ例題のときに，速度の内部境界条件を設定する
-    Ex->initCond(d_v, d_p);
-    
   }
   else // リスタート時
   { 
@@ -3487,9 +3536,9 @@ void FFV::setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp)
 /* @brief パラメータのロードと計算領域を初期化し，並列モードを返す
  * @param [in] tpf ffvのパラメータを保持するTextParserインスタンス
  * @param [in] fp  stdout
- * @retval 並列モード
+ * @retval 並列モードの文字列
  */
-std::string FFV::setupDomain(TPControl* tpf, FILE* fp)
+string FFV::setupDomain(TPControl* tpf, FILE* fp)
 {
   // TPControlクラスのポインタを各クラスに渡す
   C.importTP(tpf);
@@ -3497,64 +3546,108 @@ std::string FFV::setupDomain(TPControl* tpf, FILE* fp)
   M.importTP(tpf);
   MO.importTP(tpf);
   
+  
   // 例題の種類を取得し，C.Mode.Exampleにフラグをセットする
-  getExample(&C, tpf);
+  string keyword;
+  string label;
   
-  // 組み込み例題クラスの実体をインスタンスし，*Exにポイントする
-  connectExample(&C);
+  label = "/Steer/Example";
   
-  // 組み込み例題クラス名を表示
-  Hostonly_
+  if ( !(tpf->GetValue(label, &keyword )) )
   {
-    Ex->printExample(fp, Ex->getExampleName());
+    Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if     ( FBUtility::compare(keyword, "ParallelPlate2D") )   C.Mode.Example = id_PPLT2D;
+  else if( FBUtility::compare(keyword, "Duct") )              C.Mode.Example = id_Duct;
+  else if( FBUtility::compare(keyword, "SHC1D") )             C.Mode.Example = id_SHC1D;
+  else if( FBUtility::compare(keyword, "PerformanceTest") )   C.Mode.Example = id_PMT;
+  else if( FBUtility::compare(keyword, "Rectangular") )       C.Mode.Example = id_Rect;
+  else if( FBUtility::compare(keyword, "Cylinder") )          C.Mode.Example = id_Cylinder;
+  else if( FBUtility::compare(keyword, "BackStep") )          C.Mode.Example = id_Step;
+  else if( FBUtility::compare(keyword, "Users") )             C.Mode.Example = id_Polygon;
+  else if( FBUtility::compare(keyword, "Sphere") )            C.Mode.Example = id_Sphere;
+  else if( FBUtility::compare(keyword, "Jet") )               C.Mode.Example = id_Jet;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
   }
   
   
+  // 例題クラスの実体をインスタンスし，Exにポイントする
+  if      ( C.Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
+  else if ( C.Mode.Example == id_Duct )    Ex = dynamic_cast<Intrinsic*>(new IP_Duct);
+  else if ( C.Mode.Example == id_SHC1D)    Ex = dynamic_cast<Intrinsic*>(new IP_SHC1D);
+  else if ( C.Mode.Example == id_PMT )     Ex = dynamic_cast<Intrinsic*>(new IP_PMT);
+  else if ( C.Mode.Example == id_Rect )    Ex = dynamic_cast<Intrinsic*>(new IP_Rect);
+  else if ( C.Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
+  else if ( C.Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
+  else if ( C.Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
+  else if ( C.Mode.Example == id_Sphere )  Ex = dynamic_cast<Intrinsic*>(new IP_Sphere);
+  else if ( C.Mode.Example == id_Jet )     Ex = dynamic_cast<Intrinsic*>(new IP_Jet);
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for Exmple definition\n");
+    Exit(0);
+  }
+  
+  
+  // 組み込み例題クラス名を表示
+  Hostonly_ Ex->printExample(fp, C.Mode.Example);
+  
+  
   // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
-  C.setRankInfo(paraMngr, procGrp);
-  B.setRankInfo(paraMngr, procGrp);
-  V.setRankInfo(paraMngr, procGrp);
-  F.setRankInfo(paraMngr, procGrp);
-  BC.setRankInfo(paraMngr, procGrp);
-  Ex->setRankInfo(paraMngr, procGrp);
-  MO.setRankInfo(paraMngr, procGrp);
+  C.setRankInfo    (paraMngr, procGrp);
+  B.setRankInfo    (paraMngr, procGrp);
+  V.setRankInfo    (paraMngr, procGrp);
+  F.setRankInfo    (paraMngr, procGrp);
+  BC.setRankInfo   (paraMngr, procGrp);
+  Ex->setRankInfo  (paraMngr, procGrp);
+  MO.setRankInfo   (paraMngr, procGrp);
   FP3DR.setRankInfo(paraMngr, procGrp);
   FP3DW.setRankInfo(paraMngr, procGrp);
   
+  
   // 並列モードの取得
-  std::string str = setParallelism();
+  string str = setParallelism();
   
   
   // 最初のパラメータの取得
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
   
   
+  // 例題クラス固有のパラメータを取得
+  if ( !Ex->getTP(&C, tpf) ) Exit(0);
+  
+  // 代表パラメータをコピー
+  Ex->setRefParameter(&C);
+  
+  
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   DomainInitialize(tpf);
   
   
+  // 各例題の領域パラメータを設定する
+  Ex->setDomainParameter(&C, size, origin, region, pitch);
+  
+  
   // 各クラスで領域情報を保持
-  C.setNeighborInfo(C.guide);
-  B.setNeighborInfo(C.guide);
-  V.setNeighborInfo(C.guide);
-  F.setNeighborInfo(C.guide);
-  BC.setNeighborInfo(C.guide);
-  Ex->setNeighborInfo(C.guide);
-  MO.setNeighborInfo(C.guide);
+  C.setNeighborInfo    (C.guide);
+  B.setNeighborInfo    (C.guide);
+  V.setNeighborInfo    (C.guide);
+  F.setNeighborInfo    (C.guide);
+  BC.setNeighborInfo   (C.guide);
+  Ex->setNeighborInfo  (C.guide);
+  MO.setNeighborInfo   (C.guide);
   FP3DR.setNeighborInfo(C.guide);
   FP3DW.setNeighborInfo(C.guide);
   
   
-  // 各例題の領域パラメータを設定する -----------------------------------------------------
-  Ex->setDomainParameter(&C, size, origin, region, pitch);
-  
-  
-  // パラメータを取得
+  // 従属的なパラメータの取得
   C.get_Steer_2(IC, &RF);
-  
-  
-  // 組み込み例題の固有パラメータ
-  if ( !Ex->getTP(&C, tpf) ) Exit(0);
+
   
   return str;
 }

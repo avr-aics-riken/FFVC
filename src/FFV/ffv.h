@@ -271,134 +271,85 @@ public:
   
 private:
   
-  /** ffv_Initialize.C **/
+  /** ffv_Alloc.C *******************************************************/
   
-  
-  // パラメータのロードと計算領域を初期化し，並列モードを返す
-  std::string setupDomain(TPControl* tpf, FILE* fp);
-  
-  
-  
-  
-  
-  /**
-   * @brief Adams-Bashforth法に用いる配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // Adams-Bashforth法に用いる配列のアロケーション
   void allocArray_AB2 (double &total);
   
   
-  /**
-   * @brief 平均値処理に用いる配列のアロケーション
-   * @param [in,out] total  ソルバーに使用するメモリ量
-   */
+  // 平均値処理に用いる配列のアロケーション
   void allocArray_Average (double &total);
   
   
-  /**
-   * @brief 粗格子読み込みに用いる配列のアロケーション
-   * @param [in]     r_size  粗格子の領域サイズ
-   * @param [in,out] prep    前処理に使用するメモリ量
-   */
+  // 粗格子読み込みに用いる配列のアロケーション
   void allocArray_CoarseMesh(const int* r_size, double &prep);
   
   
-  /**
-   * @brief コンポーネント体積率の配列のアロケーション
-   * @param [in,out] prep  前処理に使用するメモリ量
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // コンポーネント体積率の配列のアロケーション
   void allocArray_CompoVF(double &prep, double &total);
   
   
-  /**
-   * @brief カット情報の配列
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // カット情報の配列
   void allocArray_Cut(double &total);
   
   
-  /**
-   @brief コンポーネントのワーク用配列のアロケート
-   @param [in,out] m_prep  前処理用のメモリサイズ
-   @param [in,out] m_total 本計算用のメモリリサイズ
-   @param [in]     fp      ファイルポインタ
-   */
+  // コンポーネントのワーク用配列のアロケート
   void allocArray_Forcing(double& m_prep, double& m_total, FILE* fp);
   
   
-  /**
-   * @brief 熱の主計算部分に用いる配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // 熱の主計算部分に用いる配列のアロケーション
   void allocArray_Heat(double &total);
   
   
-  /**
-   * @brief 体積率の配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // 体積率の配列のアロケーション
   void allocArray_Interface(double &total);
   
   
-  /**
-   * @brief Krylov-subspace Iteration
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // Krylov-subspace法に用いる配列のアロケーション
   void allocArray_Krylov(double &total);
   
   
-  /**
-   * @brief PCG Iteration
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
-  void allocArray_PCG(double &total);
-  
-  
-  /**
-   * @brief PBiCGSTAB Iteration
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
-  void allocArray_PBiCGSTAB(double &total);
-  
-  
-  /**
-   * @brief LES計算に用いる配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // LES計算に用いる配列のアロケーション
   void allocArray_LES(double &total);
   
   
-  /**
-   * @brief 主計算部分に用いる配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // 主計算部分に用いる配列のアロケーション
   void allocArray_Main(double &total);
   
   
-  /**
-   * @brief 前処理に用いる配列のアロケーション
-   * @param [in,out] prep  前処理に使用するメモリ量
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // PCG法に用いる配列のアロケーション
+  void allocArray_PCG(double &total);
+  
+  
+  // PBiCGSTAB法に用いる配列のアロケーション
+  void allocArray_PBiCGSTAB(double &total);
+  
+  
+  // 前処理に用いる配列のアロケーション
   void allocArray_Prep(double &prep, double &total);
   
   
-  
-  /**
-   * @brief 主計算部分に用いる配列のアロケーション
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
-  void allocate_Main(double &total);
-  
-  
-  /**
-   * @brief SOR2SMAのバッファ確保
-   * @param [in,out] total ソルバーに使用するメモリ量
-   */
+  // SOR2SMAのバッファ確保
   void allocate_SOR2SMA_buffer(double &total);
   
   
+  
+  
+  
+  /** ffv_Initialize.C *******************************************************/
+  
+  // 主計算に用いる配列の確保
+  void allocate_Main(double &total);
+  
+  
+  // パラメータのロードと計算領域を初期化し，並列モードを返す
+  string setupDomain(TPControl* tpf, FILE* fp);
+  
+  
+  
+  
+  
+  /** ffv.C *******************************************************/
   
   // 時間平均値のファイル出力
   void AverageOutput(double& flop);
@@ -447,10 +398,6 @@ private:
    * @param [out]    key  送信ID
    */
   void comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
-  
-  
-  // 組み込み例題のインスタンス
-  void connectExample(Control* Cref);
   
   
   // 時刻をRFクラスからv00[4]にコピーする
@@ -548,10 +495,6 @@ private:
    * @return 分割指示 (1-with / 2-without)
    */
   int get_DomainInfo(TPControl* tp_dom);
-  
-  
-  // 例題の表示
-  void getExample(Control* Cref, TPControl* tpCntl);
   
   
   /**
@@ -1220,11 +1163,7 @@ public:
   }
   
   
-  /**  
-   * @brief 初期化格子生成、ビットフラグ処理ほか
-   * @param [in] argc  main関数の引数の個数
-   * @param [in] argv  main関数の引数リスト
-   */
+  // 初期化格子生成、ビットフラグ処理ほか
   int Initialize(int argc, char **argv);
   
   

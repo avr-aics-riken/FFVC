@@ -11,13 +11,17 @@ Release Note
 
 #######################################
 
-Ver 1.2.1   25 Mar. 2013
+Ver 1.2.2   31 Mar. 2013
   - /Steer/FIleIO/IOmode >> distributed is default
   - OBC_INTRINSICを導入
   - /FaceBC/Xminus/kind -> aliasに変更
   - Outflowの修正
   - TractionFreeの修正
   - FArFieldの修正
+  - Intrinsic class
+      メンバ変数追加 >> mode, even
+      setRefParameter()追加
+      getExampleName()を削除し，printExample()にまとめる
   
 Ver 1.1.7   17 Feb. 2013
   - PLOT3D出力の様式変更への対応 >> Control.C, dfi.C

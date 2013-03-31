@@ -33,8 +33,6 @@ protected:
   FB::Vec3i box_st;     ///< Bounding boxの始点インデクス
   FB::Vec3i box_ed;     ///< Bounding boxの終点インデクス
   
-  std::string m_fluid;       ///< 流体のラベル
-  std::string m_solid;       ///< 固体のラベル
   std::string m_driver;      ///< ドライバ部分のラベル
   std::string m_driver_face; ///< ドライバ指定面のラベル
   
@@ -50,28 +48,13 @@ public:
   ~IP_Sphere() {}
 
 public:
-  // パラメータを取得する
+
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
-  
-  // 領域パラメータを設定する
-  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch);
-  
-  
-  // パラメータの表示
   virtual void printPara(FILE* fp, const Control* R);
   
+  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch);
   
-  /** 
-   * @brief 例題の名称を返す
-   */
-  virtual const char* getExampleName() 
-  {
-    return ("Sphere");
-  }
-  
-  
-  // 計算領域のセルIDを設定する（バイナリー）
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
   

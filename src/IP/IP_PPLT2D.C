@@ -63,8 +63,6 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
  */
 void IP_PPLT2D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
-  RefL = R->RefLength;
-  
   // forced
   if (R->Unit.Param != NONDIMENSIONAL)
   {
@@ -72,11 +70,13 @@ void IP_PPLT2D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, RE
     Exit(0);
   }
   
-  // Z方向のチェック
-  if ( sz[2] != 3 )
+  // 2D
+  if (mode != dim_2d)
   {
-    Hostonly_ printf("\tError : The size of Z-direction must be 3.\n");
-    Exit(0);
+    Hostonly_ {
+      Hostonly_ printf("\tError : PPLT2D class is designed for 2 Dimensional\n");
+      Exit(0);
+    }
   }
   
   // 領域アスペクト比のチェック
@@ -94,12 +94,6 @@ void IP_PPLT2D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, RE
   
   pch[0] = reg[0] / (REAL_TYPE)sz[0];
   pch[1] = reg[1] / (REAL_TYPE)sz[1];
-  
-  if ( pch[0] != pch[1] )
-  {
-    Hostonly_ printf("\tVoxel width must be same between X and Y direction.\n");
-    Exit(0);
-  }
   
   // Z方向は3層に合わせて調整
   pch[2] =  pch[0];

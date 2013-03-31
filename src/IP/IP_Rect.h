@@ -21,46 +21,21 @@
 #include "IP_Define.h"
 
 class IP_Rect : public Intrinsic {
-protected:
-  int even;       ///< 偶数分割のチェック
-  int mode;       ///< 次元数
-  
-public:
-  std::string m_fluid; ///< 流体のラベル
-  std::string m_solid; ///< 固体のラベル
-  
+ 
 public:
   /** コンストラクタ */
-  IP_Rect() {
-    even = OFF;
-    mode = 0;
-  }
+  IP_Rect() {}
   
   /**　デストラクタ */
   ~IP_Rect() {}
 
 public:
   
-  // パラメータを取得する
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
-  
-  // 領域パラメータを設定する
-  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
-  
-  
-  // 計算領域のセルIDを設定する
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
-  
-  
-  // パラメータの表示
   virtual void printPara(FILE* fp, const Control* R);
   
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
-  // 例題の名称を返す
-  virtual const char* getExampleName(void) 
-  {
-    return ("Rectangular");
-  }
 };
 #endif // _IP_RECT_H_

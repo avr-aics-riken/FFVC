@@ -17,7 +17,11 @@
 
 #include "ffv.h"
 
-// Adams-Bashforth法に用いる配列のアロケーション
+
+// #################################################################
+/* @brief Adams-Bashforth法に用いる配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_AB2 (double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -28,8 +32,10 @@ void FFV::allocArray_AB2 (double &total)
 }
 
 
-
-// 平均値処理に用いる配列のアロケーション
+// #################################################################
+/* @brief 平均値処理に用いる配列のアロケーション
+ * @param [in,out] total  ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Average (double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -51,8 +57,11 @@ void FFV::allocArray_Average (double &total)
 }
 
 
-
-// 粗格子読み込みに用いる配列のアロケーション
+// #################################################################
+/* @brief 粗格子読み込みに用いる配列のアロケーション
+ * @param [in]     r_size  粗格子の領域サイズ
+ * @param [in,out] prep    前処理に使用するメモリ量
+ */
 void FFV::allocArray_CoarseMesh(const int* r_size, double &prep)
 {
   double mc = (double)(r_size[0] * r_size[1] * r_size[2]);
@@ -76,8 +85,12 @@ void FFV::allocArray_CoarseMesh(const int* r_size, double &prep)
 }
 
 
-
-// コンポーネント体積率の配列のアロケーション
+// #################################################################
+/**
+ * @brief コンポーネント体積率の配列のアロケーション
+ * @param [in,out] prep  前処理に使用するメモリ量
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_CompoVF(double &prep, double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -89,8 +102,11 @@ void FFV::allocArray_CompoVF(double &prep, double &total)
 }
 
 
-
-// カット情報の配列
+// #################################################################
+/**
+ * @brief カット情報の配列
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Cut(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -105,7 +121,13 @@ void FFV::allocArray_Cut(double &total)
 }
 
 
-// コンポーネントのワーク用配列のアロケート
+// #################################################################
+/**
+ @brief コンポーネントのワーク用配列のアロケート
+ @param [in,out] m_prep  前処理用のメモリサイズ
+ @param [in,out] m_total 本計算用のメモリリサイズ
+ @param [in]     fp      ファイルポインタ
+ */
 void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
 {
   
@@ -161,7 +183,11 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
 }
 
 
-// Krylov-subspace法に用いる配列のアロケーション
+// #################################################################
+/**
+ * @brief Krylov-subspace Iteration
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Krylov(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -181,57 +207,11 @@ void FFV::allocArray_Krylov(double &total)
 }
 
 
-// PCG法に用いる配列のアロケーション
-void FFV::allocArray_PCG(double &total)
-{
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-}
-
-
-// PBiCGSTAB法に用いる配列のアロケーション
-void FFV::allocArray_PBiCGSTAB(double &total)
-{
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_pcg_q_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-	if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-	if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-}
-
-
-// 熱の主計算部分に用いる配列のアロケーション
+// #################################################################
+/**
+ * @brief 熱の主計算部分に用いる配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Heat(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -250,8 +230,11 @@ void FFV::allocArray_Heat(double &total)
 }
 
 
-
-// 体積率の配列のアロケーション
+// #################################################################
+/**
+ * @brief 体積率の配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Interface(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -263,8 +246,11 @@ void FFV::allocArray_Interface(double &total)
 }
 
 
-
-// LES計算に用いる配列のアロケーション
+// #################################################################
+/**
+ * @brief LES計算に用いる配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_LES(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -275,8 +261,11 @@ void FFV::allocArray_LES(double &total)
 }
 
 
-
-// 主計算部分に用いる配列のアロケーション
+// #################################################################
+/**
+ * @brief 主計算部分に用いる配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Main(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -327,8 +316,70 @@ void FFV::allocArray_Main(double &total)
 }
 
 
+// #################################################################
+/**
+ * @brief PBiCGSTAB Iteration
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
+void FFV::allocArray_PBiCGSTAB(double &total)
+{
+  double mc = (double)(size[0] * size[1] * size[2]);
+  
+  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_q_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+	if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+	if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+}
 
-// 前処理に用いる配列のアロケーション
+
+// #################################################################
+/**
+ * @brief PCG Iteration
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
+void FFV::allocArray_PCG(double &total)
+{
+  double mc = (double)(size[0] * size[1] * size[2]);
+  
+  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE);
+}
+
+
+// #################################################################
+/**
+ * @brief 前処理に用いる配列のアロケーション
+ * @param [in,out] prep  前処理に使用するメモリ量
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocArray_Prep(double &prep, double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
@@ -372,7 +423,11 @@ void FFV::allocArray_Prep(double &prep, double &total)
 }
 
 
-// SOR2SMAのバッファ確保
+// #################################################################
+/**
+ * @brief SOR2SMAのバッファ確保
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
 void FFV::allocate_SOR2SMA_buffer(double &total)
 {
   int ix = size[0];
@@ -397,42 +452,3 @@ void FFV::allocate_SOR2SMA_buffer(double &total)
   
   total += (double)( (n1+n2+n3)*sizeof(REAL_TYPE) );
 }
-
-
-// 主計算に用いる配列の確保
-void FFV::allocate_Main(double &total)
-{
-  TIMING_start(tm_init_alloc);
-  allocArray_Main(total);
-  
-  //allocArray_Collocate (total);
-  
-  if ( C.LES.Calc == ON ) 
-  {
-    allocArray_LES (total);
-  }
-  
-  if ( C.isHeatProblem() ) 
-  {
-    allocArray_Heat(total);
-  }
-  
-  if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) ) 
-  {
-    allocArray_AB2(total);
-  }
-  
-  if ( C.BasicEqs == INCMP_2PHASE ) 
-  {
-    allocArray_Interface(total);
-  }
-  
-  // 時間平均用の配列をアロケート
-  if ( C.Mode.Average == ON ) 
-  {
-    allocArray_Average(total);
-  }
-  
-  TIMING_stop(tm_init_alloc);
-}
-

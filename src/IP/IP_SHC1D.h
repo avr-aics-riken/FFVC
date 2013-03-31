@@ -23,8 +23,6 @@
 class IP_SHC1D : public Intrinsic {
   
 public:   
-  std::string m_fluid;      ///< 流体のラベル
-  std::string m_solid;      ///< 固体のラベル
   std::string m_inactive;   ///< 固体で不活性セルのラベル
   
 public:
@@ -35,25 +33,13 @@ public:
   ~IP_SHC1D() {}
 
 public:
-  // パラメータを取得する
+
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
-  
-  // 領域パラメータを設定する
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
-  
-  // モデルIDのセットアップ
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
-  
-  /** 
-   @brief 例題の名称を返す
-   */
-  virtual const char* getExampleName() 
-  {
-    return ("Steady 1D Heat Conduction");
-  }
   
   
   // 計算領域のセルIDとカット情報を設定する

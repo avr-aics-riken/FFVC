@@ -35,7 +35,6 @@ protected:
    */
   
   // パラメータは無次元で保持
-  int mode;                  ///< モード（2D or 3D）
   int pat_1;                 ///< ジェットのパターン (Ring1 on/off)
   int pat_2;                 ///< ジェットのパターン (Ring2 on/off)
   REAL_TYPE r1i, r1o;        ///< Ring1の内外径 [m]
@@ -45,7 +44,6 @@ protected:
   REAL_TYPE q1, q2;          ///< Ring1, 2の流入流量 [m^3/s]
   REAL_TYPE n1, n2;          ///< Ring1, 2の回転数 [1/s]
   REAL_TYPE a1, a2;          ///< Ring1, 2の面積 [m^2]
-  REAL_TYPE RefV;            ///< 代表速度 [m/s]
   std::string m_fluid;       ///< 流体のラベル
   std::string m_solid;       ///< 固体のラベル
   
@@ -60,7 +58,6 @@ protected:
 public:
   /** コンストラクタ */
   IP_Jet(){
-    mode = 0;
     pat_1 = -1;
     pat_2 = -1;
     r1i  = 0.0;
@@ -75,7 +72,6 @@ public:
     n2   = 0.0;
     a1   = 0.0;
     a2   = 0.0;
-    RefV = 0.0;
 /*
     driver.shape = 0;
     driver.direction = -1;
@@ -91,27 +87,11 @@ public:
   
 public:
 
-  // パラメータを取得する
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
-  
-  // 領域パラメータを設定する
-  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
-  
-  
-  // 計算領域のセルIDを設定する
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
-  
-  
-  // パラメータ表示
   virtual void printPara(FILE* fp, const Control* R);
   
-  
-  // 例題の名称を返す
-  virtual const char* getExampleName() 
-  {
-    return ("Jet");
-  }
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
   
   

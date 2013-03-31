@@ -21,9 +21,6 @@
 #include "IP_Define.h"
 
 class IP_PPLT2D : public Intrinsic {
-public:
-  std::string m_fluid; ///< 流体のラベル
-  std::string m_solid; ///< 固体のラベル
   
 public:
   /** コンストラクタ */
@@ -36,24 +33,11 @@ protected:
 
 public:
   
-  // パラメータを取得する
   virtual bool getTP(Control* R, TPControl* tpCntl);
   
-  
-  // 領域パラメータを設定する
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
-  
-  // PPLT2Dの計算領域のセルIDを設定する
   virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
   
-  
-  /** 
-   * @brief 例題の名称を返す
-   */
-  virtual const char* getExampleName() 
-  {
-    return ("Parallel Plate 2D");
-  }
 };
 #endif // _IP_PPLT2D_H_

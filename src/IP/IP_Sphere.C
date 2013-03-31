@@ -152,8 +152,6 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
  */
 void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
 {
-  RefL = R->RefLength;
-  
   pch.x = (float)m_pch[0];
   pch.y = (float)m_pch[1];
   pch.z = (float)m_pch[2];
@@ -161,23 +159,6 @@ void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, 
   org.x = (float)m_org[0];
   org.y = (float)m_org[1];
   org.z = (float)m_org[2];
-  
-  // チェック
-  if ( (pch.x != pch.y) || (pch.y != pch.z) )
-  {
-    Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    Exit(0);
-  }
-  
-  // 領域サイズ
-  wth.x = pch.x * (float)size[0];
-  wth.y = pch.y * (float)size[1];
-  wth.z = pch.z * (float)size[2];
-  
-  m_reg[0] = wth.x;
-  m_reg[1] = wth.y;
-  m_reg[2] = wth.z;
-
 }
 
 

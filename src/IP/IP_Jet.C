@@ -498,50 +498,6 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
 
 
 // #################################################################
-/* @brief 領域パラメータを設定する
- * @param [in]     R   Controlクラスのポインタ
- * @param [in]     sz  分割数
- * @param [in,out] org 計算領域の基点
- * @param [in,out] reg 計算領域のbounding boxサイズ
- * @param [in,out] pch セル幅
- */
-void IP_Jet::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
-{
-  RefL = R->RefLength;
-  RefV = R->RefVelocity;
-  
-  reg[0] = pch[0]*(REAL_TYPE)sz[0];
-  reg[1] = pch[1]*(REAL_TYPE)sz[1];
-  reg[2] = pch[2]*(REAL_TYPE)sz[2];
-  
-  // チェック
-  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) )
-  {
-    Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    Exit(0);
-  }
-  
-  if ((reg[0] != (REAL_TYPE)sz[0]*pch[0]) ||
-      (reg[1] != (REAL_TYPE)sz[1]*pch[1]) ||
-      (reg[2] != (REAL_TYPE)sz[2]*pch[2]) ) {
-    Hostonly_ printf("Error : Invalid parameters among 'GlobalRegion', 'GlobalPitch', and 'GlobalVoxel' in DomainInfo section.\n");
-    Exit(0);
-  }
-  
-  // 次元とサイズ
-  if (mode == dim_2d)
-  {
-    if (size[2] != 3)
-    {
-      Hostonly_ printf("Error : VoxelSize kmax must be 3 if 2-dimensional.\n");
-    }
-  }
-  
-}
-
-
-
-// #################################################################
 /* @brief パラメータの表示
  * @param [in] fp ファイルポインタ
  * @param [in] R  コントロールクラスのポインタ

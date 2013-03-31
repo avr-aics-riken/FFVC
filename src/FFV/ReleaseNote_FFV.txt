@@ -11,7 +11,7 @@ Release Note
 
 #######################################
 
-Ver 1.0.7   26 Mar. 2013
+Ver 1.0.8   31 Mar. 2013
   - /Steer/FIleIO/IOmode >> distributed is default
   - 領域分割時　G_Region = G_Voxel * G_Pitch でない場合のバグを修正 (get_DomainInfo)
     分割のポリシー
@@ -23,7 +23,8 @@ Ver 1.0.7   26 Mar. 2013
        G_region = G_pitch * G_voxel
   - OBC_FAR_FIELDのノイマン条件実装
   - Polylib 2.3 対応
-  - OBC_TRC_FREE ?
+  - OBC_TRC_FREE再実装
+  - 初期化ルーチン再構築 >> setupDomain()
 
 Ver 1.0.3   17 Feb. 2013
   - PLOT3D出力の様式変更への対応 >> ffv_Initialize.C, ffv_Loop.C

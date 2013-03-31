@@ -181,36 +181,6 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
 }
 
 
-// #################################################################
-/* @brief 領域パラメータを設定する
- * @param [in]     R   Controlクラスのポインタ
- * @param [in]     sz  分割数
- * @param [in,out] org 計算領域の基点
- * @param [in,out] reg 計算領域のbounding boxサイズ
- * @param [in,out] pch セル幅
- */
-void IP_Duct::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
-{
-  RefL = R->RefLength;
-  
-  reg[0] = pch[0]*(REAL_TYPE)sz[0];
-  reg[1] = pch[1]*(REAL_TYPE)sz[1];
-  reg[2] = pch[2]*(REAL_TYPE)sz[2];
-  
-  // チェック
-  if ( (pch[0] != pch[1]) || (pch[1] != pch[2]) ) {
-    Hostonly_ printf("Error : 'VoxelPitch' in each direction must be same.\n");
-    Exit(0);
-  }
-  if ( ((int)(reg[0]/pch[0]) != sz[0]) ||
-       ((int)(reg[1]/pch[1]) != sz[1]) ||
-       ((int)(reg[2]/pch[2]) != sz[2]) ) {
-    Hostonly_ printf("Error : Invalid parameters among 'VoxelSize', 'VoxelPitch', and 'VoxelWidth' in DomainInfo section.\n");
-    Exit(0);
-  }
-
-}
-
 
 // #################################################################
 /*
