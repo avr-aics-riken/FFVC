@@ -1007,7 +1007,7 @@
     kx = sz(3)
     
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, g)
     
     FACES : select case (face)
     case (X_minus)
@@ -1015,9 +1015,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        v(0, j, k, 1) = vc(0, j, k, 1)
-        v(0, j, k, 2) = vc(0, j, k, 2)
-        v(0, j, k, 3) = vc(0, j, k, 3)
+      do i=1-g, 0
+        v(i, j, k, 1) = vc(i, j, k, 1)
+        v(i, j, k, 2) = vc(i, j, k, 2)
+        v(i, j, k, 3) = vc(i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1027,9 +1029,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        v(ix+1, j, k, 1) = vc(ix+1, j, k, 1)
-        v(ix+1, j, k, 2) = vc(ix+1, j, k, 2)
-        v(ix+1, j, k, 3) = vc(ix+1, j, k, 3)
+      do i=ix+1, ix+g
+        v(i, j, k, 1) = vc(i, j, k, 1)
+        v(i, j, k, 2) = vc(i, j, k, 2)
+        v(i, j, k, 3) = vc(i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1039,9 +1043,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        v(i, 0, k, 1) = vc(i, 0, k, 1)
-        v(i, 0, k, 2) = vc(i, 0, k, 2)
-        v(i, 0, k, 3) = vc(i, 0, k, 3)
+      do j=1-g, 0
+        v(i, j, k, 1) = vc(i, j, k, 1)
+        v(i, j, k, 2) = vc(i, j, k, 2)
+        v(i, j, k, 3) = vc(i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1051,9 +1057,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        v(i, jx+1, k, 1) = vc(i, jx+1, k, 1)
-        v(i, jx+1, k, 2) = vc(i, jx+1, k, 2)
-        v(i, jx+1, k, 3) = vc(i, jx+1, k, 3)
+      do j=jx+1, jx+g
+        v(i, j, k, 1) = vc(i, j, k, 1)
+        v(i, j, k, 2) = vc(i, j, k, 2)
+        v(i, j, k, 3) = vc(i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1063,9 +1071,11 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        v(i, j, 0, 1) = vc(i, j, 0, 1)
-        v(i, j, 0, 2) = vc(i, j, 0, 2)
-        v(i, j, 0, 3) = vc(i, j, 0, 3)
+      do k=1-g, 0
+        v(i, j, k, 1) = vc(i, j, k, 1)
+        v(i, j, k, 2) = vc(i, j, k, 2)
+        v(i, j, k, 3) = vc(i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1075,9 +1085,11 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        v(i, j, kx+1, 1) = vc(i, j, kx+1, 1)
-        v(i, j, kx+1, 2) = vc(i, j, kx+1, 2)
-        v(i, j, kx+1, 3) = vc(i, j, kx+1, 3)
+      do k=kx+1, kx+g
+        v(i, j, k, 1) = vc(i, j, k, 1)
+        v(i, j, k, 2) = vc(i, j, k, 2)
+        v(i, j, k, 3) = vc(i, j, k, 3)
+      end do
       end do
       end do
 !$OMP END DO
@@ -1254,19 +1266,19 @@
 !! @param [in]     g    ガイドセル長
 !! @param [in]     face 面番号
 !! @param [out]    sum  領域境界の流速の積算値 \sum{vf}
-!! @param [in]     vf   セルフェイス速度 n+1
+!! @param [in]     v    セルセンター速度 n+1
 !! @param [in]     bv   BCindex V
 !! @param [out]    flop flop count 近似
 !! @note 有効セルのマスクを掛けて、流量を積算
 !<
-    subroutine vobc_get_massflow (sz, g, face, sum, vf, bv, flop)
+    subroutine vobc_get_massflow (sz, g, face, sum, v, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  sum, a
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
+    real                                                      ::  sum, a, s
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     ix = sz(1)
@@ -1279,7 +1291,7 @@
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP PRIVATE(i, j, k)
+!$OMP PRIVATE(i, j, k, s)
 
     FACES : select case (face)
 
@@ -1288,7 +1300,8 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        a = a + vf(0,j,k,1) * real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
+        s = real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
+        a = a + 0.5*( v(0,j,k,1) + v(1,j,k,1)) * s
       end do
       end do
 !$OMP END DO
@@ -1299,7 +1312,8 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        a = a + vf(ix,j,k,1) * real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
+        s = real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
+        a = a + 0.5*( v(ix,j,k,1) + v(ix+1,j,k,1)) * s
       end do
       end do
 !$OMP END DO
@@ -1310,7 +1324,8 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        a = a + vf(i,0,k,2) * real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
+        s = real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
+        a = a + 0.5*( v(i,0,k,2) + v(i,1,k,2)) * s
       end do
       end do
 !$OMP END DO
@@ -1321,7 +1336,8 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        a = a + vf(i,jx,k,2) * real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
+        s = real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
+        a = a + 0.5*( v(i,jx,k,2) + v(i,jx+1,k,2)) * s
       end do
       end do
 !$OMP END DO
@@ -1332,7 +1348,8 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        a = a + vf(i,j,0,3) * real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
+        s = real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
+        a = a + 0.5*( v(i,j,0,3) + v(i,j,1,3)) * s
       end do
       end do
 !$OMP END DO
@@ -1343,7 +1360,8 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        a = a + vf(i,j,kx,3) * real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
+        s = real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
+        a = a + 0.5*( v(i,j,kx,3) + v(i,j,kx+1,3)) * s
       end do
       end do
 !$OMP END DO
@@ -1362,22 +1380,22 @@
     FACES2 : select case (face)
 
     case (X_minus)
-      flop = flop + rix*5.0d0
+      flop = flop + rix*7.0d0
 
     case (X_plus)
-      flop = flop + rix*5.0d0
+      flop = flop + rix*7.0d0
 
     case (Y_minus)
-      flop = flop + rjx*5.0d0
+      flop = flop + rjx*7.0d0
 
     case (Y_plus)
-      flop = flop + rjx*5.0d0
+      flop = flop + rjx*7.0d0
 
     case (Z_minus)
-      flop = flop + rkx*5.0d0
+      flop = flop + rkx*7.0d0
 
     case (Z_plus)
-      flop = flop + rkx*5.0d0
+      flop = flop + rkx*7.0d0
 
     case default
     end select FACES2

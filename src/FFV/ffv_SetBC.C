@@ -473,7 +473,8 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
   int typ=0;
   int gd = guide;
   double fcount = 0.0;
-  REAL_TYPE aa[2];
+  
+  REAL_TYPE aa[2]; // バッファ
   
   // 内部境界条件による修正
   if ( isCDS ) // Cut-Distance
@@ -550,21 +551,21 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
           vobc_face_drchlt_(vf, size, &gd, bv, &face, &dd);
-          obc[face].setDomainV(dd, "scalar");
+          obc[face].setDomainV(dd);
           break;
           
         // 対称面で流束はゼロ．divergence_()でマスクによりゼロとなっている
         case OBC_SYMMETRIC:
           vobc_neumann_(v, size, &gd, &face, &dd);
           vobc_face_drchlt_(vf, size, &gd, bv, &face, &dd);
-          obc[face].setDomainV(dd, "scalar");
+          obc[face].setDomainV(dd);
           break;
           
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
-            ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, vec, fcount);
-            obc[face].setDomainV(vec, "vector");
+            ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, aa, fcount);
+            obc[face].setDomainV(aa);
           }
           break;
       }
@@ -1043,15 +1044,9 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
     {
       if( nID[face] < 0 ) // @note 並列時，内部領域のときは，処理しない
       {
-        switch ( F )
+        if ( F == OBC_TRC_FREE )
         {
-          case OBC_TRC_FREE:
-            pobc_drchlt_ (d_p, size, &gd, &face, &pv);
-            break;
-            
-          //case OBC_FAR_FIELD: ノイマン条件がスキーム中に実装されている
-          //  pobc_neumann_(d_p, size, &gd, &face);
-          //  break;
+          pobc_drchlt_ (d_p, size, &gd, &face, &pv);            
         }
       }
 
@@ -1110,9 +1105,9 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
     {
       switch ( obc[face].get_Class() )
       {
-        case OBC_OUTFLOW:
-          vobc_update_(d_v, size, &gd, d_vc, &face);
-          break;
+        //case OBC_OUTFLOW: 先にやっておく
+        //  vobc_update_(d_v, size, &gd, d_vc, &face);
+        //  break;
           
         case OBC_SPEC_VEL:
           extractVel_OBC(face, vec, tm, v00, flop);

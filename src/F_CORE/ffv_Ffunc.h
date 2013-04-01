@@ -494,7 +494,7 @@ extern "C" {
                            int* g,
                            int* face,
                            REAL_TYPE* aa,
-                           REAL_TYPE* vf,
+                           REAL_TYPE* v,
                            int* bv,
                            double* flop);
 

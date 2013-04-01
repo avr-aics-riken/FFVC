@@ -19,38 +19,21 @@
 /**
  * @brief モニタ値（ベクトル）を保持する
  * @param [in] vv   保持する値
- * @param [in] mode "vector"
  */
-void BoundaryOuter::setDomainV(const REAL_TYPE* vv, const char* mode)
+void BoundaryOuter::setDomainV(const REAL_TYPE* vv)
 {
-  if ( !strcasecmp(mode, "vector") )
-  {
-    dm[0] = vv[0]; // sum
-    dm[1] = vv[1]; // min
-    dm[2] = vv[2]; // max
-  }
-  else
-  {
-    Exit(0);
-  }
+  dm[0] = vv[0];
+  dm[1] = vv[1];
 }
 
 // #################################################################
 /**
  * @brief モニタ値（スカラー）を保持する
  * @param [in] vv   保持する値
- * @param [in] mode "scalar"
  */
-void BoundaryOuter::setDomainV(const REAL_TYPE vv, const char* mode)
+void BoundaryOuter::setDomainV(const REAL_TYPE vv)
 {
-  if ( !strcasecmp(mode, "scalar") )
-  {
-    dm[0] = vv; // sum
-  }
-  else
-  {
-    Exit(0);
-  }
+  dm[0] = vv;
 }
 
 
@@ -63,7 +46,6 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
 {
   BCclass   = src->BCclass;
   wallType  = src->wallType;
-  outType   = src->outType;
   drv_dir   = src->drv_dir;
   drv_lid   = src->drv_lid;
   gc_medium = src->gc_medium;

@@ -26,7 +26,6 @@ class BoundaryOuter {
 private:
   int BCclass;       ///< 境界条件の種類
   int wallType;      ///< wall >> (fixed, slide)
-  int outType;       ///< outflow >> 流出対流速度の評価モード（average, minmax）
   int drv_dir;       ///< ドライバーの方向
   int drv_lid;       ///< ドライバフェイスIDの位置
   int gc_medium;     ///< ガイドセルの媒質インデクス
@@ -40,7 +39,7 @@ private:
   int valid_cell;    ///< 境界面で流量計算に有効なセル数（Fluid cell）
   REAL_TYPE var1;    ///< 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
   REAL_TYPE var2;    ///< 多目的用の変数(温度)
-  REAL_TYPE dm[3];   ///< ローカルな計算領域境界面のモニタ値 (0-sum, 1-min, 2-max) コピー不要
+  REAL_TYPE dm[2];   ///< ローカルな計算領域境界面のモニタ値 コピー不要
   std::string label; ///< ラベル
   std::string alias; ///< 別名
   
@@ -74,18 +73,17 @@ public:
   };
   
   /** コンストラクタ */
-  BoundaryOuter() 
+  BoundaryOuter()
   {
     BCclass = drv_dir = HTref = wallType = 0;
     drv_lid = 0;
-    outType = 0;
     mon_ref = pType = v_profile = hType = 0;
     HTmode = gc_medium = Prdc_mode = Face_mode = 0;
     p = var1 = var2 = 0.0;
     valid_cell = 0;
 		for (int i=0; i<5; i++) ca[i] = cb[i] = 0.0;
     for (int i=0; i<3; i++) nv[i] = 0.0;
-    for (int i=0; i<3; i++) dm[i]=0.0;
+    for (int i=0; i<2; i++) dm[i]=0.0;
   }
   
   /**　デストラクタ */
@@ -136,11 +134,6 @@ public:
   int get_MonRef() const
   {
     return mon_ref;
-  }
-  
-  int get_ofv() const
-  { 
-    return outType; 
   }
   
   int get_PrdcMode() const
@@ -195,7 +188,7 @@ public:
   
   /**
    * @brief ローカルのモニタ積算値
-   * @return dm[] (0-sum, 1-min, 2-max)
+   * @return dm[]
    */
   REAL_TYPE* getDomainV() 
   {
@@ -208,11 +201,11 @@ public:
   
   
   // モニタ値（ベクトル）を保持する
-  void setDomainV(const REAL_TYPE* vv, const char* mode);
+  void setDomainV(const REAL_TYPE* vv);
   
   
   // モニタ値（スカラー）を保持する
-  void setDomainV(const REAL_TYPE vv, const char* mode);
+  void setDomainV(const REAL_TYPE vv);
   
   
   // ラベルを設定
@@ -331,13 +324,6 @@ public:
   void set_MonRef(int key)
   {
     mon_ref = key;
-  }
-
-
-  // 流出境界条件のときの流出対流速度の評価モードを指定
-  void set_ofv(int key)
-  {
-    outType = key;
   }
   
   

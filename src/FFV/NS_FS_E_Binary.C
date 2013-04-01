@@ -397,7 +397,23 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_poi_itr_sct);
   
   
-  if ( C.Mode.Log_Itr == ON ) 
+  // 流出境界条件のアップデート（u^{n+1}を先に）
+  for (int face=0; face<NOFACE; face++)
+  {
+    if( nID[face] < 0 )
+    {
+      BoundaryOuter* T = BC.export_OBC(face);
+      
+      if ( T->get_Class() == OBC_OUTFLOW )
+      {
+        vobc_update_(d_v, size, &guide, d_vc, &face);
+      }
+      
+    }
+  }
+  
+  
+  if ( C.Mode.Log_Itr == ON )
   {
     TIMING_start(tm_hstry_itr);
     Hostonly_ H->printHistoryItrTitle(fp_i);
@@ -579,16 +595,29 @@ void FFV::NS_FS_E_Binary()
       
       if( nID[face] < 0 )
       {
-        if ( BC.export_OBC(face)->get_Class() == OBC_TRC_FREE )
+        BoundaryOuter* T = BC.export_OBC(face);
+        
+        switch (T->get_Class())
         {
-          vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bcv, &vsum, &flop);
-          BC.export_OBC(face)->setDomainV(vsum, "scalar");
+          case OBC_TRC_FREE:
+            vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bcv, &vsum, &flop);
+            T->setDomainV(vsum);
+            break;
+            
+          case OBC_FAR_FIELD:
+            vobc_neumann_(d_v, size, &guide, &face, &vsum);
+            T->setDomainV(vsum);
+            break;
+            
+          case OBC_OUTFLOW:
+            vobc_get_massflow_(size, &guide, &face, &vsum, d_v, d_bcv, &flop);
+            T->setDomainV(vsum);
+            break;
+            
+          default:
+            break;
         }
-        else if ( BC.export_OBC(face)->get_Class() == OBC_FAR_FIELD )
-        {
-          vobc_neumann_(d_v, size, &guide, &face, &vsum);
-          BC.export_OBC(face)->setDomainV(vsum, "scalar");
-        }
+        
       }
     }
     
