@@ -62,7 +62,6 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
   label     = src->label;
   alias     = src->alias;
   
-  mon_ref   = src->mon_ref;
   p         = src->p;
 
   for (int i=0; i<3; i++) {

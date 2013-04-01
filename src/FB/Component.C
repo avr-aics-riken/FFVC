@@ -274,15 +274,6 @@ void CompoList::setLabel(const std::string pnt)
 
 
 // #################################################################
-//@brief 流出速度のタイプを指定する
-//@note V_AVERAGE | V_MINMAX
-void CompoList::setOutflowType(const int key) 
-{
-  var_u1 = key;
-}
-
-
-// #################################################################
 //@brief 周期境界の上流方向を保持する
 void CompoList::setPeriodicDir(const int key) 
 {

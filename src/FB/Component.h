@@ -117,7 +117,7 @@ private:
   int variable;          ///
   int ens;               /// 
   int phase;             /// 
-  int var_u1;            /// 内部周期境界の方向，圧力単位指定，流出速度のタイプ，セルモニタの状態
+  int var_u1;            /// 内部周期境界の方向，圧力単位指定，セルモニタの状態
   int bc_dir;            /// VBCの指定方向
   int state;             /// Fluid(1) or Solid(0)
   int st[3];             /// コンポーネントインデクスBV範囲の始点
@@ -299,7 +299,6 @@ public:
   void setInitTemp         (const REAL_TYPE var);
   void setMatOdr           (const int key);
   void setLabel            (const std::string pnt);
-  void setOutflowType      (const int key);
   void setPeriodicDir      (const int key);
   void setPrsUnit          (const int key);
   void setPhase            (const int m_phase);
@@ -409,11 +408,6 @@ public:
   }
   
   int getPrsUnit() const
-  { 
-    return var_u1; 
-  }
-  
-  int getOutflowType() const
   { 
     return var_u1; 
   }

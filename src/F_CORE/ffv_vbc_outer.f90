@@ -601,6 +601,7 @@
     return
     end subroutine vobc_drchlt
 
+
 !> ********************************************************************
 !! @brief ノイマン条件
 !! @param [in,out] v    速度ベクトル
@@ -1412,14 +1413,15 @@
 !! @param [in]  bv   BCindex V
 !! @param [in]  face 外部境界の面番号
 !! @param [in]  vec  指定する速度ベクトル
+!! @param [out] vsum \sum{vf}
 !! @note 部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_face_drchlt (vf, sz, g, bv, face, vec)
+    subroutine vobc_face_drchlt (vf, sz, g, bv, face, vec, vsum)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, face, ix, jx, kx
     integer, dimension(3)                                       ::  sz
-    real                                                        ::  u_bc, v_bc, w_bc
+    real                                                        ::  u_bc, v_bc, w_bc, vsum, a
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
@@ -1433,8 +1435,12 @@
     v_bc = vec(2)
     w_bc = vec(3)
 
+    vsum = 0.0
+
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face)
+!$OMP REDUCTION(+:vsum) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
+!$OMP PRIVATE(a)
 
     FACES : select case (face)
 
@@ -1444,7 +1450,9 @@
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(1, j, k), bc_face_W, bitw_5) == obc_mask ) then
-          vf(0, j, k, 1) = u_bc * real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
+          a = u_bc * real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
+          vf(0, j, k, 1) = a
+          vsum = vsum + a
         endif
       end do
       end do
@@ -1457,7 +1465,9 @@
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
-          vf(ix, j, k, 1) = u_bc * real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
+          a = u_bc * real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
+          vf(ix, j, k, 1) = a
+          vsum = vsum + a
         endif
       end do
       end do
@@ -1470,7 +1480,9 @@
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, 1, k), bc_face_S, bitw_5) == obc_mask ) then
-          vf(i, 0, k, 2) = v_bc * real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
+          a = v_bc * real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
+          vf(i, 0, k, 2) = a
+          vsum = vsum + a
         endif
       end do
       end do
@@ -1483,7 +1495,9 @@
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
-          vf(i, jx, k, 2) = v_bc * real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
+          a = v_bc * real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
+          vf(i, jx, k, 2) = a
+          vsum = vsum + a
         endif
       end do
       end do
@@ -1496,7 +1510,9 @@
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j ,1), bc_face_B, bitw_5) == obc_mask ) then
-          vf(i, j, 0, 3) = w_bc * real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
+          a = w_bc * real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
+          vf(i, j, 0, 3) = a
+          vsum = vsum + a
         endif
       end do
       end do
@@ -1509,7 +1525,9 @@
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
-          vf(i, j, kx, 3) = w_bc * real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
+          a = w_bc * real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
+          vf(i, j, kx, 3) = a
+          vsum = vsum + a
         endif
       end do
       end do
@@ -1521,3 +1539,122 @@
 
     return
     end subroutine vobc_face_drchlt
+
+!> ********************************************************************
+!! @brief 対称条件
+!! @param [in,out] v    速度ベクトル
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     face 外部境界面の番号
+!<
+  subroutine vobc_symmetric (v, sz, g, face)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                   ::  i, j, k, ix, jx, kx, face, g
+  integer, dimension(3)                                     ::  sz
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
+!$OMP PRIVATE(i, j, k)
+
+  FACES : select case (face)
+  case (X_minus)
+
+!$OMP DO SCHEDULE(static)
+  do k=1,kx
+  do j=1,jx
+    do i=1-g, 0
+      v(i, j, k, 1) = -v(1-i, j, k, 1)
+      v(i, j, k, 2) =  v(1-i, j, k, 2)
+      v(i, j, k, 3) =  v(1-i, j, k, 3)
+    end do
+  end do
+  end do
+!$OMP END DO
+
+
+  case (X_plus)
+
+!$OMP DO SCHEDULE(static)
+  do k=1,kx
+  do j=1,jx
+    do i=ix+1, ix+g
+      v(i, j, k, 1) = -v(2*ix-i+1, j, k, 1)
+      v(i, j, k, 2) =  v(2*ix-i+1, j, k, 2)
+      v(i, j, k, 3) =  v(2*ix-i+1, j, k, 3)
+    end do
+  end do
+  end do
+!$OMP END DO
+
+
+  case (Y_minus)
+
+!$OMP DO SCHEDULE(static)
+  do k=1,kx
+  do i=1,ix
+    do j=1-g, 0
+      v(i, j, k, 1) =  v(i, 1-j, k, 1)
+      v(i, j, k, 2) = -v(i, 1-j, k, 2)
+      v(i, j, k, 3) =  v(i, 1-j, k, 3)
+    end do
+  end do
+  end do
+!$OMP END DO
+
+
+  case (Y_plus)
+
+!$OMP DO SCHEDULE(static)
+  do k=1,kx
+  do i=1,ix
+    do j=jx+1, jx+g
+      v(i, j, k, 1) =  v(i, 2*jx-j+1, k, 1)
+      v(i, j, k, 2) = -v(i, 2*jx-j+1, k, 2)
+      v(i, j, k, 3) =  v(i, 2*jx-j+1, k, 3)
+    end do
+  end do
+  end do
+!$OMP END DO
+
+
+  case (Z_minus)
+
+!$OMP DO SCHEDULE(static)
+  do j=1,jx
+  do i=1,ix
+    do k=1-g, 0
+      v(i, j, k, 1) =  v(i, j, 1-k, 1)
+      v(i, j, k, 2) =  v(i, j, 1-k, 2)
+      v(i, j, k, 3) = -v(i, j, 1-k, 3)
+    end do
+  end do
+  end do
+!$OMP END DO
+
+
+  case (Z_plus)
+
+!$OMP DO SCHEDULE(static)
+  do j=1,jx
+  do i=1,ix
+    do k=kx+1, kx+g
+      v(i, j, k, 1) =  v(i, j, 2*kx-k+1, 1)
+      v(i, j, k, 2) =  v(i, j, 2*kx-k+1, 2)
+      v(i, j, k, 3) = -v(i, j, 2*kx-k+1, 3)
+    end do
+  end do
+  end do
+!$OMP END DO
+
+  case default
+  end select FACES
+!$OMP END PARALLEL
+
+  return
+  end subroutine vobc_symmetric

@@ -550,14 +550,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
         case OBC_WALL:
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
-          vobc_face_drchlt_(vf, size, &gd, bv, &face, &dd);
-          obc[face].setDomainV(dd);
-          break;
-          
-        // 対称面で流束はゼロ．divergence_()でマスクによりゼロとなっている
-        case OBC_SYMMETRIC:
-          vobc_neumann_(v, size, &gd, &face, &dd);
-          vobc_face_drchlt_(vf, size, &gd, bv, &face, &dd);
+          vobc_face_drchlt_(vf, size, &gd, bv, &face, vec, &dd);
           obc[face].setDomainV(dd);
           break;
           
@@ -1114,10 +1107,6 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
           vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
           break;
           
-        case OBC_SYMMETRIC:
-          vobc_neumann_(d_v, size, &gd, &face, &dd);
-          break;
-          
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
@@ -1162,6 +1151,10 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
           vobc_neumann_(d_vc, size, &gd, &face, &dd);
+          break;
+        
+        case OBC_SYMMETRIC:
+          vobc_symmetric_(d_vc, size, &gd, &face);
           break;
           
         default:

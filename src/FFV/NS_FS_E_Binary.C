@@ -614,6 +614,12 @@ void FFV::NS_FS_E_Binary()
             T->setDomainV(vsum);
             break;
             
+          case OBC_SYMMETRIC:
+            vobc_symmetric_(d_v, size, &guide, &face);
+            vsum = 0.0;
+            T->setDomainV(vsum);
+            break;
+            
           default:
             break;
         }

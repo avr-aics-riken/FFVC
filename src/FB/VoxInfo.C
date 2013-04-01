@@ -3927,7 +3927,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
   - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
   - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
  */
-void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, const bool enc_uwd)
+void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, bool enc_uwd)
 {
   size_t m, mt;
   int sw, cw;
@@ -5658,7 +5658,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
         break;
         
       case OBC_TRC_FREE:
-        encPbit_OBC(face, bcp, "Dirichlet", false); // test
+        encPbit_OBC(face, bcp, "Dirichlet", false);
         break;
         
       case OBC_OUTFLOW:
@@ -5763,35 +5763,29 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
     switch ( F )
     {
       case OBC_WALL:
-        encVbit_OBC(face, bv, "solid", true, "check", bp, false); // 流束形式
+        encVbit_OBC(face, bv, "solid", true, "check", bp); // 流束形式
         break;
         
       case OBC_SPEC_VEL:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
+        encVbit_OBC(face, bv, "fluid", true, "check", bp); // 流束形式
         break;
       
       case OBC_TRC_FREE:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
-        break;
-        
       case OBC_OUTFLOW:
       case OBC_FAR_FIELD:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
-        break;
-        
       case OBC_SYMMETRIC:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 境界値指定
+        encVbit_OBC(face, bv, "fluid", false, "check", bp); // 境界値指定
         break;
         
       case OBC_INTRINSIC:
         if ( (icls == id_Jet) && (face==0) )
         {
-          encVbit_OBC(face, bv, "fluid", true, "nocheck", bp, false); // 流束形式
+          encVbit_OBC(face, bv, "fluid", true, "nocheck", bp); // 流束形式
         }
         break;
         
       case OBC_PERIODIC:
-        encVbit_OBC(face, bv, "fluid", false, "nocheck", bp, false); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
+        encVbit_OBC(face, bv, "fluid", false, "nocheck", bp); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
         break;
         
       default:

@@ -879,30 +879,9 @@ void ParseBC::get_IBC_Outflow(const string label_base, const int n, CompoList* c
     }
   }
   
-  // 流出速度のタイプ
-  cmp[n].setOutflowType(V_AVERAGE);
-  
   // 法線ベクトルの取得
   get_NV(label_base, v);
   copyVec(cmp[n].nv, v);
-  
-  /*
-   label=label_base+"/velocity_type";//
-   if ( !(tpCntl->GetValue(label, &str )) ) {
-   printf("\tParsing error : fail to get 'Velocity_Type' in 'LocalBoundary > Outflow'\n");
-   Exit(0);
-   }
-   if ( !strcasecmp("average", str.c_str()) ) {
-   cmp[n].flag = V_AVERAGE;
-   }
-   else if ( !strcasecmp("minmax", str.c_str()) ) {
-   cmp[n].flag = V_MINMAX;
-   }
-   else {
-   printf("\tParsing error : Invalid string value for 'Velocity_Type' : %s\n", str);
-   Exit(0);
-   }
-   */
   
 }
 
@@ -2858,8 +2837,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 n, cmp[n].getLabel().c_str(), cmp[n].getMatOdr(), cmp[n].getDef(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                (cmp[n].getOutflowType() == V_AVERAGE) ? "Average " : "Minmax ");
+                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
         if (cmp[n].get_P_BCtype() == P_DIRICHLET) {
           fprintf(fp, "%12.4e;", FBUtility::convND2D_P(cmp[n].get_Pressure(), BasePrs, RefDensity, RefVelocity, Unit_Prs) );
         }

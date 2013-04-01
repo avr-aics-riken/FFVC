@@ -1,8 +1,8 @@
 DomainInfo {
-  UnitOfLength   = "NonDimensional"
-  GlobalOrigin   = (-0.5, -0.5, -0.5   )
-  GlobalRegion   = (1.0,  1.0,  1.0    )
-  GlobalVoxel    = (64   , 64   , 3   )
+  UnitOfLength   = "M"
+  GlobalOrigin   = (0.0, -0.5, -0.5   )
+  GlobalRegion   = (0.5,  1.0,  1.0    )
+  GlobalVoxel    = (50   , 100   , 100   )
   
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //GlobalDivision = (1    , 1    , 1    )
@@ -41,14 +41,14 @@ Steer {
     2ndInvariantOfVGT = "Off"
   }
 
-  Example = "Rectangular"
+  Example = "Jet"
 
   FileIO {
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
     InstantInterval      = 10
-    VoxelOutput          = "off"
+    VoxelOutput          = "svx"
     FileFormat           = "sph"
     Directory {
       InputPath       = "hoge"
@@ -79,7 +79,7 @@ Steer {
         CommMode     = "async"
       }
       VP {
-        Iteration    = 100
+        Iteration    = 20
         Epsilon      = 1.0e-4
         Norm         = "VdivMax"
       }
@@ -212,11 +212,11 @@ Steer {
 
   TimeControl {
     AccelerationType  = "Time"
-    Acceleration      = 1.0
+    Acceleration      = 0.0
     DtType            = "CFLReferenceVelocity"
-    DeltaT            = 0.2
+    DeltaT            = 0.1
     PeriodType        = "step"
-    CalculationPeriod = 100
+    CalculationPeriod = 4000
   }
 
   TreatmentOfWall {
@@ -225,8 +225,8 @@ Steer {
   }
 
   Unit {
-    UnitOfInputParameter  = "NonDimensional"
-    UnitOfOutput          = "NonDimensional"
+    UnitOfInputParameter  = "Dimensional"
+    UnitOfOutput          = "Dimensional"
     Pressure              = "Gauge"
     Temperature           = "Celsius"
   }
@@ -235,7 +235,7 @@ Steer {
 
 Parameter {
   Reference {
-    Length        = 1.0
+    Length        = 0.1
     Velocity      = 1.0
     Gravity       = 9.8
     BasePressure  = 0.0
@@ -250,10 +250,26 @@ Parameter {
   }
 
   IntrinsicExample {
+    Mode        = "3d"
     FluidMedium = "air"
     SolidMedium = "fe"
-    CheckEven   = "yes"
-    Dimension   = "2d"
+
+    Ring1 {
+      UseRing     = "yes"
+      InnerRadius = 0.05
+      OuterRadius = 0.1
+      RotationFrequency = 6.0
+      InletMassFlow = 2.0e-2
+    }
+
+    Ring2 {
+      UseRing     = "yes"
+      InnerRadius = 0.15
+      OuterRadius = 0.2
+      RotationFrequency = -3.0
+      InletMassFlow = 5.0e-2
+    }
+
   }
 
 } //Parameter
@@ -293,7 +309,7 @@ BcTable {
     BasicBCs[@] {
       alias    = "outer_wall"
       class    = "Wall"
-Dimension   = "2d"      Type     = "fixed"
+      Type     = "fixed"
     }
     BasicBCs[@] {
       alias    = "slide_wall"
@@ -304,48 +320,61 @@ Dimension   = "2d"      Type     = "fixed"
       Velocity = 1.0
     }
     BasicBCs[@] {
-      alias    = "inlet_1"
-      class    = "SpecifiedVelocity"
-      Profile  = "Constant"
-      Normal   = (1.0, 0.0, 0.0)
-      velocity = 5.0
+      alias    = "outflow"
+      class    = "Outflow"
+      pressureType = "dirichlet"
+      PrsValue = 0.0
     }
     BasicBCs[@] {
-      alias    = "periodic"
-      class    = "periodic"
-      mode     = "simplecopy"
+      alias    = "jet"
+      class    = "intrinsic"
     }
     BasicBCs[@] {
-      alias    = "symmetric"
-      class    = "symmetric"
+      alias    = "tfree"
+      class    = "TractionFree"
+    }
+    BasicBCs[@] {
+      alias    = "farfield"
+      class    = "FarField"
+      pressureType = "dirichlet"
+      PrsValue = 0.0
     }
       
     //外部境界条件
     FaceBC {
       Xminus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        alias   = "jet"
+        MediumOnGuideCell = "air"
       }
       Xplus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        alias   = "outflow"
+        MediumOnGuideCell = "air"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
       }
       Yminus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
+        //alias   = ""
+        MediumOnGuideCell = "air"
       }
       Yplus {
-        alias   = "slide_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
+        MediumOnGuideCell = "air"
       }
       Zminus {
-        alias   = "symmetric"
-        //alias   = "periodic"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
         MediumOnGuideCell = "air"
       }
       Zplus {
-        alias   = "symmetric"
-        //alias   = "periodic"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
         MediumOnGuideCell = "air"
       }
     }

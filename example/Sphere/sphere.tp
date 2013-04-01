@@ -313,11 +313,14 @@ BcTable {
     BasicBCs[@] {
       alias    = "outflow"
       class    = "Outflow"
-      velocityType = "minmax"
+      pressureType = "dirichlet"
+      PrsValue = 0.0
     }
     BasicBCs[@] {
       alias    = "far"
       class    = "Farfield"
+      pressureType = "dirichlet"
+      PrsValue = 0.0
     }
       
     //外部境界条件
