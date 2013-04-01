@@ -406,7 +406,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     omg1 = 2.0 * pai * n1;
-    a1 = pai * (r1o*r1o - r1i*r1i) / (RefL*RefL);
+    a1 = pai * (r1o*r1o - r1i*r1i);
   }
   
   
@@ -468,7 +468,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     omg2 = 2.0 * pai * n2;
-    a2 = pai * (r2o*r2o - r2i*r2i) / (RefL*RefL);
+    a2 = pai * (r2o*r2o - r2i*r2i);
   }
   
   

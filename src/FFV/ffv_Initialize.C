@@ -3635,12 +3635,12 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
   // 最初のパラメータの取得
   C.get_Steer_1(&DT, &FP3DR, &FP3DW);
   
+  // 代表パラメータをコピー
+  Ex->setRefParameter(&C);
+  
   
   // 例題クラス固有のパラメータを取得
   if ( !Ex->getTP(&C, tpf) ) Exit(0);
-  
-  // 代表パラメータをコピー
-  Ex->setRefParameter(&C);
   
   
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
