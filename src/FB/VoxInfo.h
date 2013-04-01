@@ -63,50 +63,38 @@ public:
   
 private:
   
-  
-  int* allocTable(int size);
-  
-  void checkColorTable       (FILE* fp, int size, int* table);
+  // モデル情報テーブルを作成，0で初期化する
+  int* allocTable (const int size);
   
   
-  /**
-   * @brief 指定されたIDが計算領域内部にあるかどうかを判定する
-   * @param [in] id サーチ対象ID
-   * @param [in] mid ID配列
-   * @retval IDがあればtrue
-   */
+  // IDテーブルを表示（デバッグ用）
+  void checkColorTable (FILE* fp, const int size, const int* table);
+  
+  
+  // 指定されたIDが計算領域内部にあるかどうかを判定する
   bool chkIDinside(const int id, const int* mid);
   
-  /**
-   * @brief 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
-   * @param [in,out] mid   ID配列のデータクラス
-   * @param [in]     m_st  コンポーネントのbbox始点
-   * @param [in]     m_ed  コンポーネントのbbox終点
-   * @param [in]     m_id  対象のID
-   * @param [in]     m_dir ドライバの方向
-   */
+  
+  // 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
   void copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
   
   
-  unsigned long countState(int id, int* mid);
+  // 媒質idの数を数え，値を返す
+  unsigned long countState(const int id, const int* mid);
   
+  
+  // 外部境界面の有効セル数をカウントする
   unsigned long count_ValidCell_OBC (const int face, const int* bv, const int typ);
   
   
-  /**
-   * @brief CompoListのエントリをbx[]へエンコードする
-   * @param [in]     order エンコードするエントリ
-   * @param [in]     id    サーチ対象ID
-   * @param [in]     mid   セルID配列
-   * @param [in,out] bx    BCindex ID/H2
-   * @retval エンコードした個数
-   * @note mid[]のセルIDが指定されたidならば，bx[]に対してCompoListのエントリをエンコードする
-   */
+  // CompoListのエントリをbx[]へエンコードする
   unsigned long encodeOrder(const int order,
                             const int id, 
                             const int* mid, 
                             int* bx);
   
+  
+  // 圧力のディリクレ境界ビットをエンコードする
   unsigned long encPbit_D_IBC(const int order, 
                               const int id, 
                               const int* mid, 
@@ -115,11 +103,15 @@ private:
                               const int deface);
   
   
-  
+  // 圧力のノイマン境界ビットをエンコードする（バイナリボクセル）
   unsigned long encPbit_N_Binary(int* bx);
   
+  
+  // 圧力のノイマン境界ビットをエンコードする（カット）
   unsigned long encPbit_N_Cut(int* bx, const int* bid, const float* cut, const bool convergence);
   
+  
+  // 圧力のノイマン境界ビットをエンコードする（カット）
   unsigned long encPbit_N_Cut(int* bx, const float* cut, const bool convergence);
   
   
@@ -426,10 +418,7 @@ public:
   
   
 
-  /**
-   * @brief ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
-   * @param fp ファイル出力のファイルポインタ
-   */
+  // ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
   void printScannedCell(FILE* fp);
   
   
@@ -437,13 +426,7 @@ public:
   
   
 
-  /**
-   * @brief cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
-   * @return 含まれるセルIDの種類数
-   * @param [in,out] cell       ボクセルIDを保持する配列
-   * @param [in]     cid        セルIDリスト 
-   * @param [in]     ID_replace ID=0を置換するID
-   */ 
+  // cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
   int scanCell(int *cell, const int* cid, const int ID_replace);
   
   
@@ -457,43 +440,15 @@ public:
     bid |= (s_id << (dir*5));
   }
   
-  /**
-   * @brief bx[]に各境界条件の共通のビット情報をエンコードする（その1）
-   * @param [in,out] bx   BCindex ID
-   * @param [in,out] mid  ID配列
-   * @param [in]     cvf  コンポーネントの体積率
-   * @param [in]     mat  MediumList
-   * @param [in,out] cmp  CompoList
-   * @note 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
-   */
+  // bx[]に各境界条件の共通のビット情報をエンコードする（その1）
   void setBCIndex_base1(int* bd, int* mid, const float* cvf, const MediumList* mat, CompoList* cmp);
   
   
-  /**
-   * @brief bx[]に各境界条件の共通のビット情報をエンコードする（その2）
-   * @param [out]    bx    BCindex ID
-   * @param [in,out] mid   ID配列
-   * @param [in,out] Lcell ノードローカルの有効セル数
-   * @param [in,out] Gcell グローバルの有効セル数
-   * @param [in]     KOS   解くべき方程式の種類 KIND_OF_SOLVER
-   * @param [in,out] cmp   CompoList
-   */
+  // bx[]に各境界条件の共通のビット情報をエンコードする（その2）
   void setBCIndex_base2(int* bx, int* mid, unsigned long& Lcell, unsigned long& Gcell, const int KOS, CompoList* cmp);
   
   
-  /**
-   @brief 境界条件のビット情報をエンコードする
-   @param [in,out] bcd BCindex ID
-   @param [in,out] bh1 BCindex H1
-   @param [in,out] bh1 BCindex H2
-   @param [in,out] mid ID配列
-   @param [in]     BC  SetBCクラスのポインタ
-   @param [in]     kos KindOfSolver
-   @param [in,out] cmp CompoList
-   * @param [in]     isCDS CDS->true
-   * @param [in]     cut 距離情報
-   * @param [in]     cut_id カット点ID
-   */
+  // 境界条件のビット情報をエンコードする
   void setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp,
                    bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
   
@@ -541,46 +496,19 @@ public:
   void setOBC_Cut            (SetBC* BC, float* cut);
   
   
-  /**
-   * @brief Cell_Monitorで指定するIDでモニタ部分を指定するためのしかけ
-   * @param [in] mid  ID配列
-   * @param [in] SM   ShapeMonitorクラス
-   * @param [in] cmp  CompoListクラス
-   * @param [in] RefL 代表長さ
-   */
+  // Cell_Monitorで指定するIDでモニタ部分を指定するための準備
   void setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
   
   
-  /**
-   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
-   * @param [in,out] mid    セルID
-   * @param [in]     bid    カットID情報
-   * @param [in]     cut    距離情報
-   * @param [in]     target CompoListクラス
-   * @retval 固体セル数
-   */
+  // カット情報を用いて，指定IDからバイナリボクセルを作成する
   unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target);
   
   
-  /**
-   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
-   * @param [in,out] mid セルID
-   * @param [in]     bid カットID情報
-   * @param [in]     cut 距離情報
-   * @param [in]     cmp CompoListクラス
-   * @retval 固体セル数
-   */
+  // ボクセルモデルにカット情報から得られた固体情報を転写する
   unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, CompoList* cmp);
   
-  /**
-   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
-   * @param [in,out] mid      セルID
-   * @param [in]     target   VBCのID
-   * @param [in]     solid_id 置換する固体ID
-   * @param [in]     vec      法線
-   * @param [in]     bc_dir   流体側の方向フラグ
-   * @retval 置換セル数
-   */
+  
+  // // VBCコンポーネントのバックリング
   unsigned long Solid_from_Cut_VBC(int* mid,
                                    const int target,
                                    const int solid_id,

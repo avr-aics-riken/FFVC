@@ -2,7 +2,7 @@ DomainInfo {
   UnitOfLength   = "NonDimensional"
   GlobalOrigin   = (-0.5, -0.5, -0.5   )
   GlobalRegion   = (1.0,  1.0,  1.0    )
-  GlobalVoxel    = (256   , 256   , 256   )
+  GlobalVoxel    = (64   , 64   , 3   )
   
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //GlobalDivision = (1    , 1    , 1    )
@@ -41,13 +41,13 @@ Steer {
     2ndInvariantOfVGT = "Off"
   }
 
-  Example = "PerformanceTest"
+  Example = "Rectangular"
 
   FileIO {
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
-    InstantInterval      = 1000
+    InstantInterval      = 10
     VoxelOutput          = "off"
     FileFormat           = "sph"
     Directory {
@@ -79,7 +79,7 @@ Steer {
         CommMode     = "async"
       }
       VP {
-        Iteration    = 1
+        Iteration    = 100
         Epsilon      = 1.0e-4
         Norm         = "VdivMax"
       }
@@ -115,7 +115,6 @@ Steer {
     Log                  = "Off"
     OutputFile           = "sample.log"
     OutputMode           = "Gather"
-    Unit                 = "NonDimensional"
     SamplingIntervalType = "step"
     SamplingInterval     = 100
     CellMonitor          = "off"
@@ -217,7 +216,7 @@ Steer {
     DtType            = "CFLReferenceVelocity"
     DeltaT            = 0.2
     PeriodType        = "step"
-    CalculationPeriod = 20
+    CalculationPeriod = 100
   }
 
   TreatmentOfWall {
@@ -254,6 +253,7 @@ Parameter {
     FluidMedium = "air"
     SolidMedium = "fe"
     CheckEven   = "yes"
+    Dimension   = "2d"
   }
 
 } //Parameter
@@ -270,7 +270,7 @@ MediumTable {
     KinematicViscosity  = 15.83e-06
     Viscosity           = 18.62e-06
     SoundOfSpeed        = 340.0
-    VolumeExpansion     = 0.04e-3 
+    VolumeExpansion     = 0.04e-3
   }
 
   Medium[@] {
@@ -311,9 +311,13 @@ BcTable {
       velocity = 5.0
     }
     BasicBCs[@] {
-      alias    = "outflow"
-      class    = "Outflow"
-      velocityType = "Average"
+      alias    = "periodic"
+      class    = "periodic"
+      mode     = "simplecopy"
+    }
+    BasicBCs[@] {
+      alias    = "symmetric"
+      class    = "symmetric"
     }
       
     //外部境界条件
@@ -331,16 +335,18 @@ BcTable {
         MediumOnGuideCell = "Fe"
       }
       Yplus {
-        alias   = "outer_wall"
+        alias   = "slide_wall"
         MediumOnGuideCell = "Fe"
       }
       Zminus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "symmetric"
+        alias   = "periodic"
+        MediumOnGuideCell = "air"
       }
       Zplus {
-        alias   = "slide_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "symmetric"
+        alias   = "periodic"
+        MediumOnGuideCell = "air"
       }
     }
 

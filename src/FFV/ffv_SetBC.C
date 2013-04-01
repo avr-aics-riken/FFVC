@@ -4868,10 +4868,10 @@ void SetBC3D::Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face)
 
 // #################################################################
 /**
- @brief 速度の外部周期境界条件（単純なコピー）
- @param d_v 速度ベクトル（セルフェイス）
- @param face 面番号
- @note update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
+ * @brief 速度の外部周期境界条件（単純なコピー）
+ * @param d_v 速度ベクトル（セルフェイス）
+ * @param face 面番号
+ * @note update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
  */
 void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
 {
@@ -4961,34 +4961,7 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
   int kx = size[2];
   int gd = guide;
   
-  switch (face)
-  {
-    case X_MINUS:
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      break;
-      
-    case X_PLUS:
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-      break;
-      
-    case Y_MINUS:
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      break;
-      
-    case Y_PLUS:
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-      break;
-      
-    case Z_MINUS:
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      break;
-      
-    case Z_PLUS:
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-      break;
-  }
   
-  /*
   if ( numProc > 1 )
   {
    
@@ -5108,7 +5081,7 @@ void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
         break;
     }
   }
-   */
+  
 }
 
 

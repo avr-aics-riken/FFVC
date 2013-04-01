@@ -44,7 +44,6 @@ Steer {
   Example = "Rectangular"
 
   FileIO {
-    IOmode               = "distributed"
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
@@ -303,6 +302,7 @@ Parameter {
     FluidMedium = "water"
     SolidMedium = "fe"
     CheckEven   = "yes"
+    Dimension   = "3d"
   }
 
 } //Parameter
@@ -380,27 +380,27 @@ BcTable {
     //外部境界条件
     FaceBC {
       Xminus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Xplus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Yminus {
-        kind   = "slide_wall"
+        alias   = "slide_wall"
         MediumOnGuideCell = "Fe"
       }
       Yplus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Zminus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Zplus {
-        kind   = "outer_wall"
+        alias   = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
     }

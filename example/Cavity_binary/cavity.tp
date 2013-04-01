@@ -253,6 +253,7 @@ Parameter {
     FluidMedium = "air"
     SolidMedium = "fe"
     CheckEven   = "yes"
+    Dimension   = "3d"
   }
 
 } //Parameter

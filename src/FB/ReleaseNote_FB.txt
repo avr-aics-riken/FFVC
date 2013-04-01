@@ -11,6 +11,9 @@ Release Note
 
 #######################################
 
+Ver 1.2.3    1 Apr. 2013
+  - 周期境界のバグ修正
+
 Ver 1.2.2   31 Mar. 2013
   - /Steer/FIleIO/IOmode >> distributed is default
   - OBC_INTRINSICを導入

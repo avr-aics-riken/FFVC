@@ -44,7 +44,6 @@ Steer {
   Example = "Sphere"
 
   FileIO {
-    IOmode               = "distributed"
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
@@ -113,7 +112,7 @@ Steer {
   }
 
   MonitorList {
-    Log                  = "On"
+    Log                  = "Off"
     OutputFile           = "sample.log"
     OutputMode           = "Gather"
     SamplingIntervalType = "step"
@@ -144,7 +143,7 @@ Steer {
     }
   }
 
-  PLOT3Doptions {
+  PLOT3D_Options {
     FileNameGrid    = ""
     FileNameFunc    = ""
     GridKind        = "MultiGrid"
@@ -324,27 +323,27 @@ BcTable {
     //外部境界条件
     FaceBC {
       Xminus {
-        kind   = "inflow"
+        alias   = "inflow"
         mediumOnGuideCell = "air"
       }
       Xplus {
-        kind   = "outflow"
+        alias   = "outflow"
         mediumOnGuideCell = "air"
       }
       Yminus {
-        kind   = "outerwall"
+        alias   = "outerwall"
         mediumOnGuideCell = "Fe"
       }
       Yplus {
-        kind   = "outerwall"
+        alias   = "outerwall"
         mediumOnGuideCell = "Fe"
       }
       Zminus {
-        kind   = "outerwall"
+        alias   = "outerwall"
         mediumOnGuideCell = "Fe"
       }
       Zplus {
-        kind   = "outerwall"
+        alias   = "outerwall"
         mediumOnGuideCell = "Fe"
       }
     }

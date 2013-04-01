@@ -131,27 +131,27 @@ void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const 
         switch (face) 
         {
           case X_MINUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case X_PLUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Y_MINUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Y_PLUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Z_MINUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
             break;
             
           case Z_PLUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, 1, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
             break;
         }      
       }
@@ -284,12 +284,11 @@ void VoxInfo::adjMediumPrdc_Inner(int* mid, CompoList* cmp)
 
 // #################################################################
 /**
- @fn int* VoxInfo::allocTable(int size)
- @brief モデル情報テーブルを作成，0で初期化する
- @retval エラーの場合はNULL
- @param size アロケートするサイズ
+ * @brief モデル情報テーブルを作成，0で初期化する
+ * @param [in] size アロケートするサイズ
+ * @retval エラーの場合はNULL
  */
-int* VoxInfo::allocTable(int size)
+int* VoxInfo::allocTable(const int size)
 {
   int* table=NULL;
   if( (table = (int*)malloc(size*sizeof(int))) == NULL ) return NULL;
@@ -302,21 +301,19 @@ int* VoxInfo::allocTable(int size)
 
 // #################################################################
 /**
- @fn void VoxInfo::checkColorTable(FILE* fp, int size, int* table)
- @brief IDテーブルを表示
- @param fp 
- @param size 
- @param table ID table
- @note - デバッグ用
+ * @brief IDテーブルを表示
+ * @param [in] fp    stdout
+ * @param [in] size  配列サイズ
+ * @param [in] table ID table
+ * @note - デバッグ用
  */
-void VoxInfo::checkColorTable(FILE* fp, int size, int* table)
+void VoxInfo::checkColorTable(FILE* fp, const int size, const int* table)
 {
   for (int i=0; i<size; i++) {
     Hostonly_ fprintf(fp, "\t\t%d : %d\n", i, table[i]);
   }
   fflush(fp);
 }
-
 
 
 
@@ -346,7 +343,12 @@ bool VoxInfo::chkIDconsistency(const int m_NoMedium)
 
 
 // #################################################################
-// 指定されたIDが計算領域内部にあるかどうかを判定する
+/**
+ * @brief 指定されたIDが計算領域内部にあるかどうかを判定する
+ * @param [in] id  サーチ対象ID
+ * @param [in] mid ID配列
+ * @retval IDがあればtrue
+ */
 bool VoxInfo::chkIDinside(const int id, const int* mid)
 {
   size_t m;
@@ -391,7 +393,14 @@ void VoxInfo::copyBCIbase(int* dst, int* src)
 
 
 // #################################################################
-// 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
+/**
+ * @brief 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
+ * @param [in,out] mid   ID配列のデータクラス
+ * @param [in]     m_st  コンポーネントのbbox始点
+ * @param [in]     m_ed  コンポーネントのbbox終点
+ * @param [in]     m_id  対象のID
+ * @param [in]     m_dir ドライバの方向
+ */
 void VoxInfo::copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir)
 {
   size_t m0, m1, m2;
@@ -830,12 +839,12 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
 
 // #################################################################
 /**
- @brief 媒質idの数を数え，値を返す
- @retval 計算空間内における媒質idの数
- @param id カウントするid
- @param mid ボクセルID配列
+ * @brief 媒質idの数を数え，値を返す
+ * @retval 計算空間内における媒質idの数
+ * @param [in] id  カウントするid
+ * @param [in] mid ボクセルID配列
  */
-unsigned long VoxInfo::countState(int id, int* mid)
+unsigned long VoxInfo::countState(const int id, const int* mid)
 {
   size_t m;
   unsigned long g=0;
@@ -1298,7 +1307,15 @@ void VoxInfo::encHbit(int* bh1, int* bh2)
 
 
 // #################################################################
-// CompoListのエントリをbx[]へエンコードする
+/**
+ * @brief CompoListのエントリをbx[]へエンコードする
+ * @param [in]     order エンコードするエントリ
+ * @param [in]     id    サーチ対象ID
+ * @param [in]     mid   セルID配列
+ * @param [in,out] bx    BCindex ID/H2
+ * @retval エンコードした個数
+ * @note mid[]のセルIDが指定されたidならば，bx[]に対してCompoListのエントリをエンコードする
+ */
 unsigned long VoxInfo::encodeOrder(const int order, const int id, const int* mid, int* bx)
 {
   unsigned long g=0;
@@ -1462,16 +1479,17 @@ void VoxInfo::encPbit(int* bx)
 
 // #################################################################
 /**
- @retval エンコードしたセル数
- @param order cmp[]のエントリ番号
- @param id  CellID
- @param mid ボクセル配列
- @param bcd BCindex ID
- @param bcp BCindex P
- @param deface 面を指定するid
- @note
- - 対象セルが流体セルの場合，隣接する面にDirichletフラグをエンコードする
- - 同種のBCは1セルに一つだけ
+ * @brief 圧力のディリクレ境界ビットをエンコードする
+ * @retval エンコードしたセル数
+ * @param [in]     order  cmp[]のエントリ番号
+ * @param [in]     id     CellID
+ * @param [in]     mid    ボクセル配列
+ * @param [in,out] bcd    BCindex ID
+ * @param [in,out] bcp    BCindex P
+ * @param [in]     deface 面を指定するid
+ * @note
+   - 対象セルが流体セルの場合，隣接する面にDirichletフラグをエンコードする
+   - 同種のBCは1セルに一つだけ
  */
 unsigned long VoxInfo::encPbit_D_IBC(const int order, 
                                      const int id, 
@@ -1605,12 +1623,13 @@ unsigned long VoxInfo::encPbit_D_IBC(const int order,
 
 // #################################################################
 /**
- @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをエンコードする
- @param[in,out] bx BCindex P
- @retval 固体表面セル数
- @note 
- - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ * @brief 圧力のノイマン境界ビットをエンコードする（バイナリボクセル）
+ * @param [in,out] bx BCindex P
+ * @retval 固体表面セル数
+ * @note
+ *  - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
+ *  - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ *  - 収束判定の有効フラグをエンコードする
  */
 unsigned long VoxInfo::encPbit_N_Binary(int* bx)
 {
@@ -1727,14 +1746,16 @@ unsigned long VoxInfo::encPbit_N_Binary(int* bx)
 
 // #################################################################
 /**
- @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
- @param[in,out] bx BCindex P
- @param[in] cut 距離情報
- @param convergence カットのあるセルは収束判定をしないオプション（trueの時）
- @retval 固体表面セル数
- @note
- - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ * @brief 圧力のノイマン境界ビットをエンコードする（カット）
+ * @param [in,out] bx          BCindex P
+ * @param [in]     bid         カット点のID情報
+ * @param [in]     cut         距離情報
+ * @param [in]     convergence カットのあるセルは収束判定をしないオプション（trueの時）
+ * @retval 固体表面セル数
+ * @note
+ *   - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
+ *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ *   - 収束判定の有効フラグをカット情報からエンコードする
  */
 unsigned long VoxInfo::encPbit_N_Cut(int* bx, const int* bid, const float* cut, const bool convergence)
 {
@@ -1985,14 +2006,15 @@ schedule(static) reduction(+:g)
 
 // #################################################################
 /**
- @brief bcp[]に壁面境界の圧力ノイマン条件のビットフラグと固体に隣接するFセルに方向フラグ，収束判定の有効フラグをカット情報からエンコードする
- @param[in,out] bx BCindex P
- @param[in] cut 距離情報
- @param convergence カットのあるセルは収束判定をしないオプション（trueの時）
- @retval 固体表面セル数
- @note 
- - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ * @brief 圧力のノイマン境界ビットをエンコードする（カット）
+ * @param [in,out] bx          BCindex P
+ * @param [in]     cut         距離情報
+ * @param [in]     convergence カットのあるセルは収束判定をしないオプション（trueの時）
+ * @retval 固体表面セル数
+ * @note
+ *   - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
+ *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ *   - 収束判定の有効フラグをカット情報からエンコードする
  */
 unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool convergence)
 {
@@ -4867,7 +4889,10 @@ void VoxInfo::getOffset(int* st, int* ofst)
 
 
 // #################################################################
-// ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
+/**
+ * @brief ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
+ * @param fp ファイル出力のファイルポインタ
+ */
 void VoxInfo::printScannedCell(FILE* fp)
 {
   for (int i=1; i<=NoVoxID; i++) {
@@ -4884,7 +4909,13 @@ void VoxInfo::printScannedCell(FILE* fp)
 
 
 // #################################################################
-// cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
+/**
+ * @brief cellで保持されるボクセルid配列をスキャンし，coloList[]に登録する
+ * @return 含まれるセルIDの種類数
+ * @param [in,out] cell       ボクセルIDを保持する配列
+ * @param [in]     cid        セルIDリスト
+ * @param [in]     ID_replace ID=0を置換するID
+ */
 int VoxInfo::scanCell(int *cell, const int* cid, const int ID_replace)
 {
   int target;
@@ -5248,8 +5279,15 @@ void VoxInfo::setAmask_Thermal(int* bh)
 
 
 // #################################################################
-// bx[]に各境界条件の共通のビット情報をエンコードする（その1）
-// 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
+/**
+ * @brief bx[]に各境界条件の共通のビット情報をエンコードする（その1）
+ * @param [in,out] bx   BCindex ID
+ * @param [in,out] mid  ID配列
+ * @param [in]     cvf  コンポーネントの体積率
+ * @param [in]     mat  MediumList
+ * @param [in,out] cmp  CompoList
+ * @note 事前に，cmp[]へMediumListへのエントリ番号をエンコードしておく -> cmp[].setMatOdr()
+ */
 void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const MediumList* mat, CompoList* cmp)
 {
   int odr;
@@ -5371,8 +5409,15 @@ void VoxInfo::setBCIndex_base1(int* bx, int* mid, const float* cvf, const Medium
 
 
 // #################################################################
-// bx[]に各境界条件の共通のビット情報をエンコードする（その2）
-// 事前に，cmp[]へMediumListへのエントリをエンコードしておく -> cmp[].setMatOdr()
+/**
+ * @brief bx[]に各境界条件の共通のビット情報をエンコードする（その2）
+ * @param [out]    bx    BCindex ID
+ * @param [in,out] mid   ID配列
+ * @param [in,out] Lcell ノードローカルの有効セル数
+ * @param [in,out] Gcell グローバルの有効セル数
+ * @param [in]     KOS   解くべき方程式の種類 KIND_OF_SOLVER
+ * @param [in,out] cmp   CompoList
+ */
 void VoxInfo::setBCIndex_base2(int* bx, int* mid, unsigned long& Lcell, unsigned long& Gcell, const int KOS, CompoList* cmp)
 {
   // 孤立した流体セルの属性変更
@@ -5411,7 +5456,19 @@ void VoxInfo::setBCIndex_base2(int* bx, int* mid, unsigned long& Lcell, unsigned
 
 
 // #################################################################
-// 境界条件のビット情報をエンコードする
+/**
+ @brief 境界条件のビット情報をエンコードする
+ @param [in,out] bcd BCindex ID
+ @param [in,out] bh1 BCindex H1
+ @param [in,out] bh1 BCindex H2
+ @param [in,out] mid ID配列
+ @param [in]     BC  SetBCクラスのポインタ
+ @param [in]     kos KindOfSolver
+ @param [in,out] cmp CompoList
+ * @param [in]     isCDS CDS->true
+ * @param [in]     cut 距離情報
+ * @param [in]     cut_id カット点ID
+ */
 void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp, bool isCDS, float* cut, int* bid)
 {
   size_t m;
@@ -6018,7 +6075,13 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
 
 
 // #################################################################
-// Cell_Monitorで指定するIDでモニタ部分を指定するための準備
+/**
+ * @brief Cell_Monitorで指定するIDでモニタ部分を指定するためのしかけ
+ * @param [in] mid  ID配列
+ * @param [in] SM   ShapeMonitorクラス
+ * @param [in] cmp  CompoListクラス
+ * @param [in] RefL 代表長さ
+ */
 void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL)
 {
   int f_st[3], f_ed[3];
@@ -6092,8 +6155,15 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
 
 
 // #################################################################
-// カット情報を用いて，指定IDからバイナリボクセルを作成する
-// 距離情報は，0.5付近で曖昧さがある．単精度の丸め誤差を考慮した判定
+/**
+ * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+ * @param [in,out] mid    セルID
+ * @param [in]     bid    カットID情報
+ * @param [in]     cut    距離情報
+ * @param [in]     target ターゲットID
+ * @retval 固体セル数
+ * @attention 距離情報は，0.5付近で曖昧さがある．単精度の丸め誤差を考慮した判定
+ */
 unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target)
 {
   unsigned long c=0;
@@ -6170,8 +6240,15 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
 
 
 // #################################################################
-// ボクセルモデルにカット情報から得られた固体情報を転写する
-// 境界条件ポリゴンのIDへペイントしないので，予めチェック用のリストをつくっておき，ペイント時に確認
+/**
+ * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+ * @param [in,out] mid セルID
+ * @param [in]     bid カットID情報
+ * @param [in]     cut 距離情報
+ * @param [in]     cmp CompoListクラス
+ * @retval 固体セル数
+ * @attention 境界条件ポリゴンのIDへペイントしないので，予めチェック用のリストをつくっておき，ペイント時に確認
+ */
 unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, CompoList* cmp)
 {
   unsigned long c=0;
@@ -6259,12 +6336,20 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
 }
 
 // #################################################################
-// VBCコンポーネントのバックリング
-// VBCが設定される反対側のセルを2層固体にする
-// 定義点の極近傍にポリゴンがあると，定義点の両側にカット情報が計算されている場合がある
-// セルワイズでみると1セル内である．しかし，隣接セルからカット情報を頼りに探すと，
-// 反対側にカットがある場合には探索対象が見当たらないという状況になる
-// したがって，セル単位の探索にする
+/**
+ * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
+ * @param [in,out] mid      セルID
+ * @param [in]     target   VBCのID
+ * @param [in]     solid_id 置換する固体ID
+ * @param [in]     vec      法線
+ * @param [in]     bc_dir   流体側の方向フラグ
+ * @retval 置換セル数
+ * @note VBCが設定される反対側のセルを2層固体にする
+ *       定義点の極近傍にポリゴンがあると，定義点の両側にカット情報が計算されている場合がある
+ *       セルワイズでみると1セル内である．しかし，隣接セルからカット情報を頼りに探すと，
+ *       反対側にカットがある場合には探索対象が見当たらないという状況になる
+ *       したがって，セル単位の探索にする
+ */
 unsigned long VoxInfo::Solid_from_Cut_VBC(int* mid,
                                           const int target,
                                           const int solid_id,
