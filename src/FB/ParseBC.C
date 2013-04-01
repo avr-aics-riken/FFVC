@@ -1560,30 +1560,6 @@ void ParseBC::get_OBC_Outflow(const string label_base, const int n)
   REAL_TYPE ct;
   
   
-  // 流出速度のタイプ
-  label = label_base + "/VelocityType";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if ( !strcasecmp("Average", str.c_str()) )
-  {
-	  BaseBc[n].set_ofv(V_AVERAGE);
-  }
-  else if ( !strcasecmp("Minmax", str.c_str()) )
-  {
-	  BaseBc[n].set_ofv(V_MINMAX);
-  }
-  else
-  {
-	  stamped_printf("\tParsing error : Invalid string value for 'VelocityType' : %s\n", str.c_str());
-	  Exit(0);
-  }
-  
-  
   // 圧力境界のタイプ  default
   BaseBc[n].set_pType(P_GRAD_ZERO);
   BaseBc[n].p = 0.0; // ダミー値
@@ -1593,7 +1569,8 @@ void ParseBC::get_OBC_Outflow(const string label_base, const int n)
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    ; // エラーではない
+    printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
   }
   else
   {
@@ -3513,7 +3490,6 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       
     case OBC_OUTFLOW:
-      fprintf(fp,"\t\t\tOutflow with %s convective velocity\n", (ref->get_ofv() == V_AVERAGE) ? "Average" : "Minmax" );
       if (ref->get_pType() == P_DIRICHLET) {
         fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));        
       }
@@ -3524,6 +3500,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       }
       fprintf(fp,"\t\t\tNumber of Element = %d\n",ref->get_ValidCell());
       break;
+      
       
     case OBC_TRC_FREE:
       fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));

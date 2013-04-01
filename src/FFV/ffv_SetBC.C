@@ -560,14 +560,6 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
           obc[face].setDomainV(dd, "scalar");
           break;
           
-        // NS_FS_E_Binary.Cに移す
-        //case OBC_FAR_FIELD:
-        //case OBC_TRC_FREE:
-        //  vobc_get_massflow_(size, &gd, &face, vec, vf, bv, &fcount);
-        //  vobc_neumann_(v, size, &gd, &face, &dd);
-        //  obc[face].setDomainV(dd, "scalar");
-        //  break;
-          
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
@@ -575,21 +567,6 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
             obc[face].setDomainV(vec, "vector");
           }
           break;
-      }
-    }
-  }
-  
-  // OUTFLOWの面は最後に処理
-  for (int face=0; face<NOFACE; face++) {
-    typ = obc[face].get_Class();
-    
-    // 内部領域のときは，処理しない
-    if( nID[face] < 0 )
-    {
-      if (typ == OBC_OUTFLOW)
-      {
-        vobc_div_oflow_(dv, size, &gd, &face, vec, vf, bv, &fcount);
-        obc[face].setDomainV(vec, "vector");
       }
     }
   }
@@ -865,19 +842,12 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv,
           vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
           break;
           
-        case OBC_OUTFLOW:
-          vel = C->V_Dface[face];
-          vobc_pv_oflow_(wv, size, &gd, &dh, &rei, v, bv, &face, &vel, &flop);
-          break;
-          
         case OBC_INTRINSIC:
           if ( (C->Mode.Example == id_Jet) && (face==0) )
           {
             ((IP_Jet*)Ex)->vobc_pv_JetInflow(wv, rei, v, bv, flop);
           }
           break;
-          
-          // OBC_SYMMETRIC >> 対称面での対流流束と粘性流速はそれぞれゼロなので，BCによる寄与は不要
       }
       
     } // end if nID[]
@@ -987,29 +957,10 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
           }
           break;
           
-        // case OBC_SYMMETRIC: 境界面の法線速度はゼロなので，修正不要
-        // case OBC_TRC_FREE:  境界値を与え，通常スキームで計算するので不要
-        // case OBC_FAR_FIELD: 境界値を与え，通常スキームで計算するので不要
+        // 他は境界値を与え，通常スキームで計算するので不要
       }
     }
 
-  }
-  
-  // OUTFLOWは最後に
-  for (int face=0; face<NOFACE; face++) {
-    
-    // 内部領域のときは，処理しない
-    if( nID[face] < 0 )
-    {
-      typ = obc[face].get_Class();
-      
-      if ( typ == OBC_OUTFLOW )
-      {
-        vel = C->V_Dface[face] * dt / dh;
-        vobc_div_pv_oflow_(s_0, size, &gd, &face, &vel, bv, vf, &fcount);
-      }
-    }
-    
   }
   
   flop += fcount;
@@ -1213,10 +1164,6 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
       switch ( obc[face].get_Class() )
       {
         case OBC_OUTFLOW :
-          vel = C->V_Dface[face] * dt / dh;
-          vobc_pv_oflow_gc_(d_vc, size, &gd, &vel, &face, d_v0, d_bv, &flop);
-          break;
-          
         case OBC_FAR_FIELD:
         case OBC_TRC_FREE:
           vobc_neumann_(d_vc, size, &gd, &face, &dd);

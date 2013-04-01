@@ -434,90 +434,42 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     // 各プロセスの外部領域面の速度をvv[]にコピー
     REAL_TYPE* vv = obc[face].getDomainV();
     
-    if ( obc[face].get_Class() == OBC_OUTFLOW)
+    // 特殊条件
+    if ( (R->Mode.Example == id_Jet) && (face==0) )
     {
-      // ofv (1-MINMAX, 2-AVERAGE) ゼロでなければ，流出境界
-      int ofv = obc[face].get_ofv();
+      REAL_TYPE q[2] = {0.0, 0.0};
       
-      // 流出境界のモード
-      if (ofv == V_AVERAGE) // average
+      // 外部境界以外はゼロにする
+      if ( nID[face] < 0 )
       {
-        // 外部境界以外はゼロにする
-        u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
-        
-        if ( numProc > 1 )
-        {
-          REAL_TYPE tmp_sum = u_sum;
-          if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        }
-        
-        u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
+        q[0] = vv[0]; // 無次元流量
+        q[1] = vv[1]; // セル数
       }
-      else if (ofv == V_MINMAX) // minmax
+      
+      if ( numProc > 1 )
       {
-        REAL_TYPE u_min, u_max;
-        
-        // 非外部境界は初期値にする
-        u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
-        u_min = ( nID[face] < 0 ) ? vv[1] : 1.0e6;
-        u_max = ( nID[face] < 0 ) ? vv[2] : -1.0e6;
-        
-        if ( numProc > 1 )
-        {
-          REAL_TYPE tmp_sum = u_sum;
-          REAL_TYPE tmp_min = u_min;
-          REAL_TYPE tmp_max = u_max;
-          if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          if ( paraMngr->Allreduce(&tmp_min, &u_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-          if ( paraMngr->Allreduce(&tmp_max, &u_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-        }
-        
-        u_avr = 0.5*(u_min+u_max);
+        REAL_TYPE tmp[2] = {q[0], q[1]};
+        if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       }
+      
+      R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
+      R->Q_Dface[face] = q[0] * ddh; // 無次元流量
+    }
+    else // 標準
+    {
+      // 外部境界以外はゼロにする
+      u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE tmp_sum = u_sum;
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
       
       R->V_Dface[face] = u_avr;       // 無次元平均流速
       R->Q_Dface[face] = u_sum * ddh; // 無次元流量
-    }
-    else // 非OUTFLOW BCは無次元流量がvv[0]にストアされている
-    {
-      
-      // 特殊条件
-      if ( (R->Mode.Example == id_Jet) && (face==0) )
-      {
-        REAL_TYPE q[2] = {0.0, 0.0};
-        
-        // 外部境界以外はゼロにする
-        if ( nID[face] < 0 )
-        {
-          q[0] = vv[0]; // 無次元流量
-          q[1] = vv[1]; // セル数
-        }
-        
-        if ( numProc > 1 )
-        {
-          REAL_TYPE tmp[2] = {q[0], q[1]};
-          if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        }
-        
-        R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
-        R->Q_Dface[face] = q[0] * ddh; // 無次元流量
-      }
-      else // 標準
-      {
-        // 外部境界以外はゼロにする
-        u_sum = ( nID[face] < 0 ) ? vv[0] : 0.0;
-        
-        if ( numProc > 1 )
-        {
-          REAL_TYPE tmp_sum = u_sum;
-          if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        }
-        
-        u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
-        
-        R->V_Dface[face] = u_avr;       // 無次元平均流速
-        R->Q_Dface[face] = u_sum * ddh; // 無次元流量
-      }
     }
 
   }

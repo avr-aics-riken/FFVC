@@ -60,7 +60,6 @@
 
 // ffv_vbc_outer.f90
 #define vobc_pv_specv_      VOBC_PV_SPECV
-#define vobc_pv_oflow_      VOBC_PV_OFLOW
 #define vobc_pv_wall_       VOBC_PV_WALL
 #define vobc_drchlt_        VOBC_DRCHLT
 #define vobc_face_drchlt_   VOBC_FACE_DRCHLT
@@ -68,8 +67,6 @@
 #define vobc_tfree_         VOBC_TFREE
 #define vobc_update_        VOBC_UPDATE
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
-#define vobc_div_pv_oflow_  VOBC_DIV_PV_OFLOW
-#define vobc_div_oflow_     VOBC_DIV_OFLOW
 #define vobc_get_massflow_  VOBC_GET_MASSFLOW
 
 // ffv_velocity_binary.f90
@@ -250,26 +247,31 @@ extern "C" {
 	void blas_clear_    (REAL_TYPE* x,
 											 int* sz,
 											 int* g);
+  
 	void blas_copy_     (REAL_TYPE* y,
 											 REAL_TYPE* x,
 											 int* sz,
 											 int* g);
+  
 	void blas_xpay_     (REAL_TYPE* y,
 											 REAL_TYPE* x,
 											 REAL_TYPE* a,
 											 int* sz,
 											 int* g);
+  
 	void blas_axpy_     (REAL_TYPE* y,
 											 REAL_TYPE* x,
 											 REAL_TYPE* a,
 											 int* sz,
 											 int* g);
+  
 	void blas_axpyz_    (REAL_TYPE* z,
 											 REAL_TYPE* x,
 											 REAL_TYPE* y,
 											 REAL_TYPE* a,
 											 int* sz,
 											 int* g);
+  
 	void blas_axpbypz_  (REAL_TYPE* z,
 											 REAL_TYPE* x,
 											 REAL_TYPE* y,
@@ -277,28 +279,33 @@ extern "C" {
 											 REAL_TYPE* b,
 											 int* sz,
 											 int* g);
+  
 	void blas_dot_      (REAL_TYPE* pq,
 											 REAL_TYPE* p,
 											 REAL_TYPE* q,
 											 int* sz,
 											 int* g);
+  
 	void blas_calcr_    (REAL_TYPE* r,
 											 REAL_TYPE* p,
 											 REAL_TYPE* b,
 											 int* bp,
 											 int* sz,
 											 int* g);
+  
 	void blas_calcr2_   (REAL_TYPE* rr,
 											 REAL_TYPE* p,
 											 REAL_TYPE* b,
 											 int* bp,
 											 int* sz,
 											 int* g);
+  
 	void blas_calcax_   (REAL_TYPE* ap,
 											 REAL_TYPE* p,
 											 int* bp,
 											 int* sz,
 											 int* g);
+  
 	void blas_calcb_    (REAL_TYPE* b,
 											 REAL_TYPE* s_0,
 											 REAL_TYPE* s_1,
@@ -307,6 +314,7 @@ extern "C" {
 											 REAL_TYPE* dt,
 											 int* sz,
 											 int* g);
+  
 	void blas_smoother_core_  (REAL_TYPE* x,
                              REAL_TYPE* b,
                              int* bp,
@@ -417,16 +425,6 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_vbc_outer.f90
-  void vobc_pv_oflow_     (REAL_TYPE* wv,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* rei,
-                           REAL_TYPE* v,
-                           int* bv,
-                           int* face,
-                           REAL_TYPE* cf,
-                           double* flop);
   
   void vobc_pv_specv_     (REAL_TYPE* wv,
                            int* sz,
@@ -469,15 +467,6 @@ extern "C" {
                       int* face,
                       REAL_TYPE* aa);
   
-  void vobc_pv_oflow_gc_ (REAL_TYPE* v,
-                          int* sz,
-                          int* g,
-                          REAL_TYPE* cf,
-                          int* face,
-                          REAL_TYPE* v0,
-                          int* bv,
-                          double* flop);
-  
   void vobc_tfree_ (REAL_TYPE* v,
                     int* sz,
                     int* g,
@@ -500,24 +489,6 @@ extern "C" {
                          int* bv,
                          REAL_TYPE* vec,
                          double* flop);
-  
-  void vobc_div_pv_oflow_ (REAL_TYPE* div,
-                           int* sz,
-                           int* g,
-                           int* face,
-                           REAL_TYPE* cf,
-                           int* bv,
-                           REAL_TYPE* vf,
-                           double* flop);
-  
-  void vobc_div_oflow_ (REAL_TYPE* div,
-                        int* sz,
-                        int* g,
-                        int* face,
-                        REAL_TYPE* aa,
-                        REAL_TYPE* vf,
-                        int* bv,
-                        double* flop);
   
   void vobc_get_massflow_ (int* sz,
                            int* g,

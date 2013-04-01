@@ -21,7 +21,7 @@ integer     ::  bc_ndag_T, bc_ndag_B, bc_ndag_N, bc_ndag_S, bc_ndag_E, bc_ndag_W
 integer     ::  bc_face_T, bc_face_B, bc_face_N, bc_face_S, bc_face_E, bc_face_W
 integer     ::  adbtc_T, adbtc_B, adbtc_N, adbtc_S, adbtc_E, adbtc_W
 integer     ::  X_plus, X_minus, Y_plus, Y_minus, Z_plus, Z_minus
-integer     ::  id_specvel, id_outflow, id_wall, id_symmetric, id_periodic
+integer     ::  id_specvel, id_wall, id_symmetric, id_periodic
 integer     ::  obc_periodic, obc_outflow, obc_mask
 integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec
 integer     ::  facing_t, facing_b, facing_n, facing_s, facing_e, facing_w, vld_cnvg
@@ -108,7 +108,6 @@ parameter ( h_diag = 15 ) ! FB_Define.h H_DIAG
 
 ! 速度境界条件の種類
 parameter ( id_specvel   = 0 ) ! SetBC.h outer boundary condition enum
-parameter ( id_outflow   = 1 ) ! SetBC.h 
 parameter ( id_wall      = 2 ) ! SetBC.h 
 parameter ( id_symmetric = 3 ) ! SetBC.h 
 parameter ( id_periodic  = 4 ) ! SetBC.h 

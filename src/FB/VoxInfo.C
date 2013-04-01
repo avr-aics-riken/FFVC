@@ -5661,18 +5661,8 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
         encPbit_OBC(face, bcp, "Dirichlet", false); // test
         break;
         
-      case OBC_FAR_FIELD:
-        if ( m_obc->get_pType() == P_DIRICHLET )
-        {
-          encPbit_OBC(face, bcp, "Dirichlet", false);
-        }
-        else
-        {
-          encPbit_OBC(face, bcp, "Neumann", false);
-        }
-        break;
-        
       case OBC_OUTFLOW:
+      case OBC_FAR_FIELD:
         if ( m_obc->get_pType() == P_DIRICHLET )
         {
           encPbit_OBC(face, bcp, "Dirichlet", false);
@@ -5700,7 +5690,6 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
   }
 
   // 内部境界のコンポーネントのエンコード
-  
   
   for (int n=1; n<=NoBC; n++) {
     int id = cmp[n].getMatOdr();
@@ -5780,15 +5769,12 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
       case OBC_SPEC_VEL:
         encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
         break;
+      
+      case OBC_TRC_FREE:
+        encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
+        break;
         
       case OBC_OUTFLOW:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp, false); // 流束形式
-        break;
-        
-      case OBC_TRC_FREE:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp, true); // 境界値指定
-        break;
-        
       case OBC_FAR_FIELD:
         encVbit_OBC(face, bv, "fluid", false, "check", bp, false); // 境界値指定
         break;
