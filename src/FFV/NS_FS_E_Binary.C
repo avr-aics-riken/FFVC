@@ -236,14 +236,15 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_buoyancy, flop);
   }
 
+  
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
   flop = 0.0;
-  BC.OuterVBC_Pseudo(d_vc, d_v0, CurrentTime, dt, &C, d_bcv, flop);
-  BC.OuterVBC_Periodic(d_vc);
+  BC.OuterVBC_Pseudo(d_vc, d_bcv, CurrentTime, &C, flop);
   BC.InnerVBC_Periodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, flop);
 
+  
   // 疑似ベクトルの同期
   if ( numProc > 1 ) 
   {
@@ -589,47 +590,10 @@ void FFV::NS_FS_E_Binary()
     // 速度境界条件　値を代入する境界条件
     TIMING_start(tm_vec_BC);
     flop=0.0;
-    
-    for (int face=0; face<NOFACE; face++) {
-      REAL_TYPE vsum=0.0;
-      
-      if( nID[face] < 0 )
-      {
-        BoundaryOuter* T = BC.export_OBC(face);
-        
-        switch (T->get_Class())
-        {
-          case OBC_TRC_FREE:
-            vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bcv, &vsum, &flop);
-            T->setDomainV(vsum);
-            break;
-            
-          case OBC_FAR_FIELD:
-            vobc_neumann_(d_v, size, &guide, &face, &vsum);
-            T->setDomainV(vsum);
-            break;
-            
-          case OBC_OUTFLOW:
-            vobc_get_massflow_(size, &guide, &face, &vsum, d_v, d_bcv, &flop);
-            T->setDomainV(vsum);
-            break;
-            
-          case OBC_SYMMETRIC:
-            vobc_symmetric_(d_v, size, &guide, &face);
-            vsum = 0.0;
-            T->setDomainV(vsum);
-            break;
-            
-          default:
-            break;
-        }
-        
-      }
-    }
-    
-    BC.OuterVBC_Periodic(d_v);
+    BC.OuterVBC(d_v, d_vf, d_bcv, CurrentTime, &C, v00, flop);
     BC.InnerVBC_Periodic(d_v, d_bcd);
     TIMING_stop(tm_vec_BC, flop);
+    
     
     TIMING_stop(tm_poi_itr_sct_4, 0.0);
     // <<< Poisson Iteration subsection 4
@@ -691,11 +655,11 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop(tm_domain_monitor, flop);
   
   
-  // 流出境界のガイドセル値の更新とガイドセル代入
+  // 速度のガイドセルへの代入
   TIMING_start(tm_VBC_update);
   flop=0.0;
   BC.InnerVBC(d_v, d_bcv, CurrentTime, v00, flop);
-  BC.OuterVBC(d_v, d_vc, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.OuterVBC_GC(d_v, d_bcv, CurrentTime, &C, v00, flop);
   TIMING_stop(tm_VBC_update, flop);
   
   

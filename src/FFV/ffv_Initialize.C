@@ -3137,8 +3137,7 @@ void FFV::setInitialCondition()
     DomainMonitor( BC.export_OBC(), &C);
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
-    BC.OuterVBC_Periodic(d_v);
-		BC.OuterVBC(d_v, d_v, d_bcv, tm, deltaT, &C, v00, flop_task);
+		BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
     BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
     BC.InnerVBC_Periodic(d_v, d_bcd);
     
@@ -3176,15 +3175,14 @@ void FFV::setInitialCondition()
     
   }
   else // リスタート時
-  { 
+  {
     // 内部境界条件
     BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
     BC.InnerVBC_Periodic(d_v, d_bcd);
     BC.InnerPBC_Periodic(d_p, d_bcd);
     
     // 外部境界条件
-    BC.OuterVBC(d_v, d_v, d_bcv, tm, deltaT, &C, v00, flop_task);
-    BC.OuterVBC_Periodic(d_v);
+    BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
     
     // 流出境界の流出速度の算出
     // dummy

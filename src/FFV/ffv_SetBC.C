@@ -1050,45 +1050,87 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
 
 // #################################################################
 /**
- * @brief 速度の外部境界条件処理
- * @param [in,out] d_v 速度ベクトルのデータクラス
+ * @brief 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
+ * @param [in,out] d_v  セルセンター速度ベクトル v^{n+1}
+ * @param [in]     d_vf セルフェイス速度ベクトル v^{n+1}
+ * @param [in]     d_bv BCindex V
+ * @param [in]     tm   時刻
+ * @param [in]     C    コントロールクラス
+ * @param [in]     v00  参照速度
+ * @param [in,out] flop 浮動小数点演算数
  */
-void SetBC3D::OuterVBC_Periodic(REAL_TYPE* d_v)
+void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop)
 {
+  REAL_TYPE vec[3];
+  int gd = guide;
+  REAL_TYPE dd=0.0;
+  REAL_TYPE vsum=0.0;
+  int pm;
   
   for (int face=0; face<NOFACE; face++) {
     
-    if ( obc[face].get_Class() == OBC_PERIODIC )
+    if( nID[face] < 0 )
     {
-      int pm = obc[face].get_PrdcMode();
       
-      // BoundaryOuter::prdc_Driverに対しては処理不要
-      if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
+      switch ( obc[face].get_Class() )
       {
-        Vobc_Prdc(d_v, face); // セルフェイスの値の周期処理は不要
+        case OBC_TRC_FREE:
+          vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bv, &vsum, &flop);
+          obc[face].setDomainV(vsum);
+          break;
+          
+        case OBC_FAR_FIELD:
+          vobc_neumann_(d_v, size, &guide, &face, &vsum);
+          obc[face].setDomainV(vsum);
+          break;
+          
+        case OBC_OUTFLOW:
+          vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, &flop);
+          obc[face].setDomainV(vsum);
+          break;
+          
+        case OBC_SYMMETRIC:
+          vobc_symmetric_(d_v, size, &gd, &face);
+          vsum = 0.0;
+          obc[face].setDomainV(vsum);
+          break;
+          
+        case OBC_PERIODIC:
+          pm = obc[face].get_PrdcMode();
+          
+          // BoundaryOuter::prdc_Driverに対しては処理不要
+          if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
+          {
+            Vobc_Prdc(d_v, face); // セルフェイスの値の周期処理は不要
+            vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, &flop);
+            obc[face].setDomainV(vsum);
+          }
+          break;
+          
+        default:
+          break;
       }
     }
-  }  
+  }
+  
 }
 
 
 // #################################################################
 /**
- * @brief 速度の外部境界条件処理(タイムステップに一度)
+ * @brief 速度の外部境界処理(タイムステップに一度ガイドセルに値を設定する)
  * @param [in,out] d_v  速度ベクトル v^{n+1}
- * @param [in]     d_vc 速度ベクトル v^*
- * @param [in]     bv   BCindex V
+ * @param [in]     d_bv BCindex V
  * @param [in]     tm   時刻
- * @param [in]     dt   時間積分幅
  * @param [in]     C    コントロールクラス
  * @param [in]     v00  参照速度
  * @param [in,out] flop 浮動小数点演算数
  */
-void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3];
   int gd = guide;
-  REAL_TYPE dd=0.0;
+
   
   for (int face=0; face<NOFACE; face++) {
 
@@ -1098,10 +1140,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
     {
       switch ( obc[face].get_Class() )
       {
-        //case OBC_OUTFLOW: 先にやっておく
-        //  vobc_update_(d_v, size, &gd, d_vc, &face);
-        //  break;
-          
+        
         case OBC_SPEC_VEL:
           extractVel_OBC(face, vec, tm, v00, flop);
           vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
@@ -1126,18 +1165,17 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm,
 /**
  * @brief 疑似速度の外部境界条件処理
  * @param [out]    d_vc   疑似速度ベクトル v^*
- * @param [in]     d_v0   セルセンター速度ベクトル v^n
- * @param [in]     tm     時刻
- * @param [in]     dt     時間積分幅
- * @param [in]     C      Control class
  * @param [in]     d_bv   BCindex V
+ * @param [in]     tm     時刻
+ * @param [in]     C      Control class
  * @param [in,out] flop   浮動小数点演算数
  */
-void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, REAL_TYPE dt, Control* C, int* d_bv, double& flop)
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, Control* C, double& flop)
 {
-  REAL_TYPE dh = deltaX;
-  REAL_TYPE vel, dd=0.0;
+  REAL_TYPE dd=0.0;
   int gd = guide;
+  int pm;
+  
   
   for (int face=0; face<NOFACE; face++) {
     
@@ -1155,6 +1193,16 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE tm, RE
         
         case OBC_SYMMETRIC:
           vobc_symmetric_(d_vc, size, &gd, &face);
+          break;
+          
+        case OBC_PERIODIC:
+          pm = obc[face].get_PrdcMode();
+          
+          // BoundaryOuter::prdc_Driverに対しては処理不要
+          if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
+          {
+            Vobc_Prdc(d_vc, face); // セルフェイスの値の周期処理は不要
+          }
           break;
           
         default:

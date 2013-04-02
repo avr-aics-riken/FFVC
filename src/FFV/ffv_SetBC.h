@@ -240,21 +240,18 @@ public:
   void OuterPBC             (REAL_TYPE* d_p);
   void OuterTBC             (REAL_TYPE* d_t);
   void OuterTBCface         (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop);
-  void OuterVBC             (REAL_TYPE* d_v, REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double& flop);
   
   
-  // 速度の外部周期境界条件処理
-  void OuterVBC_Periodic (REAL_TYPE* d_v);
+  // 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
+  void OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
+  
+  
+  // 速度の外部境界処理(タイムステップに一度ガイドセルに値を設定する)
+  void OuterVBC_GC (REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
   
   
   // 疑似速度の外部境界条件処理
-  void OuterVBC_Pseudo (REAL_TYPE* d_vc,
-                        REAL_TYPE* d_v0,
-                        REAL_TYPE tm,
-                        REAL_TYPE dt,
-                        Control* C,
-                        int* d_bv,
-                        double& flop);
+  void OuterVBC_Pseudo (REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, Control* C, double& flop);
   
   
   void ps_BC_Convection     (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
