@@ -477,7 +477,7 @@
     subroutine vobc_drchlt (v, sz, g, bv, face, vec)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, face, ix, jx, kx
+    integer                                                     ::  i, j, k, g, face, ix, jx, kx, gc
     integer, dimension(3)                                       ::  sz
     real                                                        ::  u_bc, v_bc, w_bc
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
@@ -487,6 +487,7 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    gc = g
     
     ! u_bcは境界速度
     u_bc = vec(1)
@@ -494,106 +495,112 @@
     w_bc = vec(3)
     
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face, gc) &
 !$OMP PRIVATE(i, j, k)
 
     FACES : select case (face)
     
     case (X_minus)
 
-      i = 1
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(i,j,k), bc_face_W, bitw_5) == obc_mask ) then
-          v(i-1, j, k, 1) = u_bc
-          v(i-1, j, k, 2) = v_bc
-          v(i-1, j, k, 3) = w_bc
+          do i=1-gc, 0
+            v(i, j, k, 1) = u_bc
+            v(i, j, k, 2) = v_bc
+            v(i, j, k, 3) = w_bc
+          end do
         endif
       end do
       end do
 !$OMP END DO
-      
+
       
     case (X_plus)
 
-      i = ix
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(i,j,k), bc_face_E, bitw_5) == obc_mask ) then
-          v(i+1, j, k, 1) = u_bc
-          v(i+1, j, k, 2) = v_bc
-          v(i+1, j, k, 3) = w_bc
+          do i=ix+1, ix+gc
+            v(i, j, k, 1) = u_bc
+            v(i, j, k, 2) = v_bc
+            v(i, j, k, 3) = w_bc
+          end do
         endif
       end do
       end do
 !$OMP END DO
-      
+
       
     case (Y_minus)
 
-      j = 1
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i,j,k), bc_face_S, bitw_5) == obc_mask ) then
-          v(i, j-1, k, 1) = u_bc
-          v(i, j-1, k, 2) = v_bc
-          v(i, j-1, k, 3) = w_bc
+          do j=1-gc, 0
+            v(i, j, k, 1) = u_bc
+            v(i, j, k, 2) = v_bc
+            v(i, j, k, 3) = w_bc
+          end do
         endif
       end do
       end do
 !$OMP END DO
-      
+
       
     case (Y_plus)
 
-      j = jx
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i,j,k), bc_face_N, bitw_5) == obc_mask ) then
-          v(i, j+1, k, 1) = u_bc
-          v(i, j+1, k, 2) = v_bc
-          v(i, j+1, k, 3) = w_bc
+          do j=jx+1, jx+gc
+            v(i, j, k, 1) = u_bc
+            v(i, j, k, 2) = v_bc
+            v(i, j, k, 3) = w_bc
+          end do
         endif
       end do
       end do
 !$OMP END DO
-      
+
       
     case (Z_minus)
 
-      k = 1
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i,j,k), bc_face_B, bitw_5) == obc_mask ) then
-          v(i, j, k-1, 1) = u_bc
-          v(i, j, k-1, 2) = v_bc
-          v(i, j, k-1, 3) = w_bc
+          do k=1-gc, 0
+            v(i, j, k, 1) = u_bc
+            v(i, j, k, 2) = v_bc
+            v(i, j, k, 3) = w_bc
+          end do
         endif
       end do
       end do
 !$OMP END DO
-      
+
       
     case (Z_plus)
 
-      k = kx
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i,j,k), bc_face_T, bitw_5) == obc_mask ) then
-          v(i, j, k+1, 1) = u_bc
-          v(i, j, k+1, 2) = v_bc
-          v(i, j, k+1, 3) = w_bc
+          do k=kx+1, kx+gc
+            v(i, j, k, 1) = u_bc
+            v(i, j, k, 2) = v_bc
+            v(i, j, k, 3) = w_bc
+          end do
         endif
       end do
       end do
 !$OMP END DO
-      
+
     case default
     end select FACES
 !$OMP END PARALLEL
@@ -613,7 +620,7 @@
     subroutine vobc_neumann (v, sz, g, face, aa)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc
     real                                                      ::  ux, uy, uz, aa
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
@@ -621,11 +628,12 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    gc = g
 
     aa = 0.0
 
 !$OMP PARALLEL REDUCTION(+:aa) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &
 !$OMP PRIVATE(i, j, k, ux, uy, uz)
 
     FACES : select case (face)
@@ -639,7 +647,7 @@
         uz = v(1, j, k, 3)
         aa = aa + ux
 
-        do i=1-g, 0
+        do i=1-gc, 0
           v(i, j, k, 1) = ux
           v(i, j, k, 2) = uy
           v(i, j, k, 3) = uz
@@ -659,7 +667,7 @@
         uz = v(ix, j, k, 3)
         aa = aa + ux
 
-        do i=ix+1, ix+g
+        do i=ix+1, ix+gc
           v(i, j, k, 1) = ux
           v(i, j, k, 2) = uy
           v(i, j, k, 3) = uz
@@ -679,7 +687,7 @@
         uz = v(i, 1, k, 3)
         aa = aa + uy
 
-        do j=1-g, 0
+        do j=1-gc, 0
           v(i, j, k, 1) = ux
           v(i, j, k, 2) = uy
           v(i, j, k, 3) = uz
@@ -699,7 +707,7 @@
         uz = v(i, jx, k, 3)
         aa = aa + uy
 
-        do j=jx+1, jx+g
+        do j=jx+1, jx+gc
           v(i, j, k, 1) = ux
           v(i, j, k, 2) = uy
           v(i, j, k, 3) = uz
@@ -719,7 +727,7 @@
         uz = v(i, j, 1, 3)
         aa = aa + uz
 
-        do k=1-g, 0
+        do k=1-gc, 0
           v(i, j, k, 1) = ux
           v(i, j, k, 2) = uy
           v(i, j, k, 3) = uz
@@ -739,7 +747,7 @@
         uz = v(i, j, kx, 3)
         aa = aa + uz
 
-        do k=kx+1, kx+g
+        do k=kx+1, kx+gc
           v(i, j, k, 1) = ux
           v(i, j, k, 2) = uy
           v(i, j, k, 3) = uz
@@ -771,7 +779,7 @@
     subroutine vobc_tfree (v, sz, g, face, vf, bv, aa, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  v1, v2, v3, v4, ut, vt, wt, aa
@@ -781,11 +789,12 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    gc = g
 
     aa = 0.0
 
 !$OMP PARALLEL REDUCTION(+:aa) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &
 !$OMP PRIVATE(i, j, k, v1, v2, v3, v4, ut, vt, wt)
 
     FACES : select case (face)
@@ -805,7 +814,7 @@
 
         aa = aa + vf(0, j, k, 1)
 
-        do i=1-g, 0
+        do i=1-gc, 0
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
           v(i, j, k, 3) = wt
@@ -832,7 +841,7 @@
 
         aa = aa + vf(ix, j, k, 1)
 
-        do i=ix+1, ix+g
+        do i=ix+1, ix+gc
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
           v(i, j, k, 3) = wt
@@ -859,7 +868,7 @@
 
         aa = aa + vf(i, 0, k, 2)
 
-        do j=1-g, 0
+        do j=1-gc, 0
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
           v(i, j, k, 3) = wt
@@ -886,7 +895,7 @@
 
         aa = aa + vf(i, jx, k, 2)
 
-        do j=jx+1, jx+g
+        do j=jx+1, jx+gc
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
           v(i, j, k, 3) = wt
@@ -913,7 +922,7 @@
 
         aa = aa + vf(i, j, 0, 3)
 
-        do k=1-g, 0
+        do k=1-gc, 0
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
           v(i, j, k, 3) = wt
@@ -940,7 +949,7 @@
 
         aa = aa + vf(i, j, kx, 3)
 
-        do k=kx+1, kx+g
+        do k=kx+1, kx+gc
           v(i, j, k, 1) = ut
           v(i, j, k, 2) = vt
           v(i, j, k, 3) = wt
@@ -999,16 +1008,17 @@
     subroutine vobc_update (v, sz, g, vc, face)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, ix, jx, kx, face
+    integer                                                     ::  i, j, k, g, ix, jx, kx, face, gc
     integer, dimension(3)                                       ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    gc = g
     
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face, g)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, gc)
     
     FACES : select case (face)
     case (X_minus)
@@ -1016,7 +1026,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-      do i=1-g, 0
+      do i=1-gc, 0
         v(i, j, k, 1) = vc(i, j, k, 1)
         v(i, j, k, 2) = vc(i, j, k, 2)
         v(i, j, k, 3) = vc(i, j, k, 3)
@@ -1030,7 +1040,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-      do i=ix+1, ix+g
+      do i=ix+1, ix+gc
         v(i, j, k, 1) = vc(i, j, k, 1)
         v(i, j, k, 2) = vc(i, j, k, 2)
         v(i, j, k, 3) = vc(i, j, k, 3)
@@ -1044,7 +1054,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-      do j=1-g, 0
+      do j=1-gc, 0
         v(i, j, k, 1) = vc(i, j, k, 1)
         v(i, j, k, 2) = vc(i, j, k, 2)
         v(i, j, k, 3) = vc(i, j, k, 3)
@@ -1058,7 +1068,7 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-      do j=jx+1, jx+g
+      do j=jx+1, jx+gc
         v(i, j, k, 1) = vc(i, j, k, 1)
         v(i, j, k, 2) = vc(i, j, k, 2)
         v(i, j, k, 3) = vc(i, j, k, 3)
@@ -1072,7 +1082,7 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-      do k=1-g, 0
+      do k=1-gc, 0
         v(i, j, k, 1) = vc(i, j, k, 1)
         v(i, j, k, 2) = vc(i, j, k, 2)
         v(i, j, k, 3) = vc(i, j, k, 3)
@@ -1086,7 +1096,7 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-      do k=kx+1, kx+g
+      do k=kx+1, kx+gc
         v(i, j, k, 1) = vc(i, j, k, 1)
         v(i, j, k, 2) = vc(i, j, k, 2)
         v(i, j, k, 3) = vc(i, j, k, 3)
@@ -1550,16 +1560,17 @@
   subroutine vobc_symmetric (v, sz, g, face)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                   ::  i, j, k, ix, jx, kx, face, g
+  integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc
   integer, dimension(3)                                     ::  sz
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
+  gc = g
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &
 !$OMP PRIVATE(i, j, k)
 
   FACES : select case (face)
@@ -1568,7 +1579,7 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
-    do i=1-g, 0
+    do i=1-gc, 0
       v(i, j, k, 1) = -v(1-i, j, k, 1)
       v(i, j, k, 2) =  v(1-i, j, k, 2)
       v(i, j, k, 3) =  v(1-i, j, k, 3)
@@ -1583,7 +1594,7 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
-    do i=ix+1, ix+g
+    do i=ix+1, ix+gc
       v(i, j, k, 1) = -v(2*ix-i+1, j, k, 1)
       v(i, j, k, 2) =  v(2*ix-i+1, j, k, 2)
       v(i, j, k, 3) =  v(2*ix-i+1, j, k, 3)
@@ -1598,7 +1609,7 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do i=1,ix
-    do j=1-g, 0
+    do j=1-gc, 0
       v(i, j, k, 1) =  v(i, 1-j, k, 1)
       v(i, j, k, 2) = -v(i, 1-j, k, 2)
       v(i, j, k, 3) =  v(i, 1-j, k, 3)
@@ -1613,7 +1624,7 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do i=1,ix
-    do j=jx+1, jx+g
+    do j=jx+1, jx+gc
       v(i, j, k, 1) =  v(i, 2*jx-j+1, k, 1)
       v(i, j, k, 2) = -v(i, 2*jx-j+1, k, 2)
       v(i, j, k, 3) =  v(i, 2*jx-j+1, k, 3)
@@ -1628,7 +1639,7 @@
 !$OMP DO SCHEDULE(static)
   do j=1,jx
   do i=1,ix
-    do k=1-g, 0
+    do k=1-gc, 0
       v(i, j, k, 1) =  v(i, j, 1-k, 1)
       v(i, j, k, 2) =  v(i, j, 1-k, 2)
       v(i, j, k, 3) = -v(i, j, 1-k, 3)
@@ -1643,7 +1654,7 @@
 !$OMP DO SCHEDULE(static)
   do j=1,jx
   do i=1,ix
-    do k=kx+1, kx+g
+    do k=kx+1, kx+gc
       v(i, j, k, 1) =  v(i, j, 2*kx-k+1, 1)
       v(i, j, k, 2) =  v(i, j, 2*kx-k+1, 2)
       v(i, j, k, 3) = -v(i, j, 2*kx-k+1, 3)

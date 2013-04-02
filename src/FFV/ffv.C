@@ -1023,18 +1023,6 @@ FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
 }
 
 
-// #################################################################
-// 圧力の引き戻し操作を行う
-void FFV::Pressure_Shift()
-{
-  REAL_TYPE base=0.0;
-  
-  int n = C.Mode.Pshift;
-  
-  face_avr_sampling_(d_p, size, &guide, &n, &base);
-  shift_pressure_   (d_p, size, &guide, &base);
-}
-
 
 // #################################################################
 // タイミング測定区間にラベルを与えるラッパー

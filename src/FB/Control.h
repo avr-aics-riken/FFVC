@@ -427,7 +427,6 @@ public:
     int VRT;
     int Wall_profile;
     int Base_Medium;
-    int Pshift;
   } Mode_set;
   
   /** 隠しパラメータ */
@@ -812,7 +811,6 @@ public:
     Mode.Log_Itr = 0;
     Mode.Log_Wall = 0;
     Mode.PDE = 0;
-    Mode.Pshift = -1;
     Mode.Precision = 0;
     Mode.Profiling = 0;
     Mode.PrsNeuamnnType = 0;

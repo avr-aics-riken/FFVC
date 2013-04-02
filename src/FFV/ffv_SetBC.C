@@ -999,6 +999,8 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_
   }
 }
 
+
+// #################################################################
 /**
  @brief 圧力の外部境界条件
  @param d_p 圧力のデータクラス
@@ -4475,8 +4477,8 @@ void SetBC3D::setInitialTemp_Compo(int n, int* d_bx, REAL_TYPE* d_t)
 
 // #################################################################
 /**
- @brief 周期境界の場合のインデクスの同期
- @param bx BCindexのデータクラス
+ * @brief 周期境界の場合のインデクスの同期
+ * @param [in,out] bx BCindexのデータクラス
  */
 void SetBC3D::setBCIperiodic(int* d_bx)
 {
@@ -4852,88 +4854,6 @@ void SetBC3D::Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face)
 // #################################################################
 /**
  * @brief 速度の外部周期境界条件（単純なコピー）
- * @param d_v 速度ベクトル（セルフェイス）
- * @param face 面番号
- * @note update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
- */
-void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int sz[3] = {ix, jx, kx};
-  int gd = guide;
-  
-  if ( numProc > 1 )
-  {
-    
-    switch (face) {
-      case X_MINUS:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_MINUS:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_MINUS:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-    }
-  }
-  else { // Serial
-    
-    switch (face) 
-    {
-      case X_MINUS:
-        if ( nID[face] < 0 ) {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1-gd; i<=0; i++) {
-                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
-              }
-            }
-          }
-        }
-        break;
-        
-      case Y_MINUS:
-        if ( nID[face] < 0 ) {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1-gd; j<=0; j++) {
-              for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
-              }
-            }
-          }
-        }
-        break;
-        
-      case Z_MINUS:
-        if ( nID[face] < 0 ) {
-          for (int k=1-gd; k<=0; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
-              }
-            }
-          }
-        }
-        break;
-    }
-  }
-}
-
-
-// #################################################################
-/**
- * @brief 速度の外部周期境界条件（単純なコピー）
  * @param [in,out] d_v  速度ベクトル
  * @param [in]     face 面番号
  */
@@ -5229,3 +5149,86 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       break;
   }
 }
+
+
+// #################################################################
+/**
+ * @brief 速度の外部周期境界条件（単純なコピー）
+ * @param d_v 速度ベクトル（セルフェイス）
+ * @param face 面番号
+ * @note update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
+ *
+void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int sz[3] = {ix, jx, kx};
+  int gd = guide;
+  
+  if ( numProc > 1 )
+  {
+    
+    switch (face) {
+      case X_MINUS:
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        break;
+        
+      case Y_MINUS:
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        break;
+        
+      case Z_MINUS:
+        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+        break;
+    }
+  }
+  else { // Serial
+    
+    switch (face)
+    {
+      case X_MINUS:
+        if ( nID[face] < 0 ) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
+              for (int i=1-gd; i<=0; i++) {
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
+              }
+            }
+          }
+        }
+        break;
+        
+      case Y_MINUS:
+        if ( nID[face] < 0 ) {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1-gd; j<=0; j++) {
+              for (int i=1; i<=ix; i++) {
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
+              }
+            }
+          }
+        }
+        break;
+        
+      case Z_MINUS:
+        if ( nID[face] < 0 ) {
+          for (int k=1-gd; k<=0; k++) {
+            for (int j=1; j<=jx; j++) {
+              for (int i=1; i<=ix; i++) {
+                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
+                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
+              }
+            }
+          }
+        }
+        break;
+    }
+  }
+}
+*/

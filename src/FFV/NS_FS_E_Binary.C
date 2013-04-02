@@ -473,7 +473,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_stop(tm_prj_vec, flop);
 
 
-    // 速度の境界条件による修正
+    // 速度の流束形式の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
     BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
@@ -691,15 +691,7 @@ void FFV::NS_FS_E_Binary()
   }
   convergence_prev = convergence;
   
-  
-  // 圧力値の引き戻しオプション
-  if ( C.Mode.Pshift != -1 ) 
-  {
-    TIMING_start(tm_pressure_shift);
-    flop = 0.0;
-    Pressure_Shift();
-    TIMING_stop(tm_pressure_shift, flop);
-  }
+
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section

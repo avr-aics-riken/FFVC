@@ -135,9 +135,7 @@ protected:
   
   // 速度の外部周期境界条件（単純なコピー）
   void Vobc_Prdc (REAL_TYPE* d_v, const int face);
-  
-  
-  void Vobc_Prdc_CF     (REAL_TYPE* d_v, const int face);
+
   
   
   
@@ -255,16 +253,15 @@ public:
   
   
   void ps_BC_Convection     (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
-  void setBCIperiodic       (int* d_bx);
+  
+  
+  // 周期境界の場合のインデクスの同期
+  void setBCIperiodic (int* d_bx);
+  
+  
   void setInitialTemp_Compo (int n, int* d_bx, REAL_TYPE* d_t);
-  void updateOuter          (REAL_TYPE* d_v, REAL_TYPE* vc);
   
   REAL_TYPE setDirectForcing (REAL_TYPE* d_v, int* d_bx, int n, REAL_TYPE v00);
-  
-  /**
-   * @brief *.fvbndの書き出し
-  void WriteBoundaryPLOT3D(FileIO_PLOT3D_WRITE* FP3DW, std::vector<std::string>& bcname);
-   */
   
 };
 

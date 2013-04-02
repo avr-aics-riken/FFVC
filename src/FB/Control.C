@@ -2288,28 +2288,6 @@ void Control::get_Solver_Properties()
     }
   }
   
-  
-  // 平均値の引き戻しオプション
-  label = "/Steer/SolverProperty/PressureShift";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "off" ) )     Mode.Pshift = -1;
-  else if( !strcasecmp(str.c_str(), "xminus" ) ) Mode.Pshift = X_MINUS;
-  else if( !strcasecmp(str.c_str(), "xplus" ) )  Mode.Pshift = X_PLUS;
-  else if( !strcasecmp(str.c_str(), "yminus" ) ) Mode.Pshift = Y_MINUS;
-  else if( !strcasecmp(str.c_str(), "yplus" ) )  Mode.Pshift = Y_PLUS;
-  else if( !strcasecmp(str.c_str(), "zminus" ) ) Mode.Pshift = Z_MINUS;
-  else if( !strcasecmp(str.c_str(), "zplus" ) )  Mode.Pshift = Z_PLUS;
-  else
-  {
-    stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
 }
 
 
@@ -3599,15 +3577,6 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       err=false;
   }
   
-  // Pressure shift
-  if (Mode.Pshift == -1)
-  {
-    fprintf(fp,"\t     Pressure Shift           :   Off\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     Pressure Shift           :   %s\n", FBUtility::getDirection(Mode.Pshift).c_str());
-  }
   
   // 単位系 ------------------
   fprintf(fp,"\n\tUnit\n");
