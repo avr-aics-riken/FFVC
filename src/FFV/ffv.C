@@ -480,7 +480,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 // #################################################################
 /**
  * @brief ファイル出力
- * @param [in,out] flop    浮動小数点演算数
+ * @param [in,out] flop       浮動小数点演算数
  * @param [in]     refinement 粗格子を用いたリスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
  */
 void FFV::FileOutput(double& flop, const bool refinement)
@@ -661,39 +661,6 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                     mio) ) Exit(0);
   
   
-  // Face Velocity
-  fb_shift_refv_out_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-  fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
-  
-  if ( numProc > 1 )
-  {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-    
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-  }
-  minmax[0] = f_min;
-  minmax[1] = f_max;
-  
-  std::string fvel_restart;
-  fvel_restart = ( !refinement ) ? C.f_Fvelocity : "fvel_restart_";
-  
-  tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, mio);
-  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
-  
-  Hostonly_ if ( !DFI.WriteDFIindex(C.f_Fvelocity,
-                                    C.FIO.OutDirPath,
-                                    C.file_fmt_ext,
-                                    m_step,
-                                    m_time,
-                                    dfi_mng[var_FaceVelocity],
-                                    "nijk",
-                                    3,
-                                    minmax,
-                                    mio) ) Exit(0);
-  
-  
   // Tempearture
   if( C.isHeatProblem() )
   {
@@ -783,7 +750,6 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
-
   }
   
   
@@ -823,7 +789,6 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       3,
                                       minmax,
                                       mio) ) Exit(0);
-
   }
   
   
@@ -861,13 +826,12 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
-
   }
+  
   
   // Helicity
   if (C.Mode.Helicity == ON ) 
   {
-    
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
@@ -899,9 +863,45 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
-
   }
 
+  
+  // Face Velocity
+  if (C.Mode.FaceV == ON )
+  {
+    fb_shift_refv_out_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    std::string fvel_restart;
+    fvel_restart = ( !refinement ) ? C.f_Fvelocity : "fvel_restart_";
+    
+    tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, mio);
+    F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
+    
+    Hostonly_ if ( !DFI.WriteDFIindex(C.f_Fvelocity,
+                                      C.FIO.OutDirPath,
+                                      C.file_fmt_ext,
+                                      m_step,
+                                      m_time,
+                                      dfi_mng[var_FaceVelocity],
+                                      "nijk",
+                                      3,
+                                      minmax,
+                                      mio) ) Exit(0);
+  }
+  
+  
 }
 
 // #################################################################

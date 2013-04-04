@@ -786,6 +786,24 @@ void Control::get_Derived()
     Exit(0);
   }
   
+  
+  // FaceVelocity
+  label="/Steer/DerivedVariable/FaceVelocity";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )  Mode.FaceV = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) Mode.FaceV = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
 }
 
 
@@ -4119,6 +4137,15 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   else
   {
     fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
+  }
+  
+  // FaceVelocity
+  if ( Mode.FaceV == ON ) {
+    fprintf(fp,"\t     Face Velocity(Staggered) :   ON\n");
+  }
+  else
+  {
+    fprintf(fp,"\t     Face Velocity(Staggered) :   OFF\n");
   }
   
   

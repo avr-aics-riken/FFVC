@@ -413,6 +413,7 @@ public:
     int Buoyancy;
     int Example;
     int Helicity;
+    int FaceV;
     int I2VGT;
     int Log_Base;
     int Log_Itr;
@@ -807,6 +808,7 @@ public:
     Mode.Example = 0;
     Mode.Helicity = 0;
     Mode.I2VGT = 0;
+    Mode.FaceV = 0;
     Mode.Log_Base = 0;
     Mode.Log_Itr = 0;
     Mode.Log_Wall = 0;

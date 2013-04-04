@@ -17,6 +17,8 @@
 #include "ffv.h"
 
 
+
+// #################################################################
 // ファイルのオープンチェック
 bool FFV::checkFile(std::string fname)
 {
@@ -32,7 +34,7 @@ bool FFV::checkFile(std::string fname)
 
 
 
-
+// #################################################################
 /**
  * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
  * @param [in]  i                 密格子　開始インデクスi
@@ -216,6 +218,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
 
 
 
+// #################################################################
 /**
  * @brief 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
  * @param [in]  i                 密格子　開始インデクスi
@@ -434,6 +437,7 @@ void FFV::Restart(FILE* fp)
 
 
 
+// #################################################################
 // リスタートの最大値と最小値の表示
 void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
@@ -570,7 +574,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   }
   
   
-  // Instantaneous Face Velocity fields
+  /* Instantaneous Face Velocity fields
   tmp = DFI.GenerateFileName(C.f_Fvelocity, fmt, C.Restart_step, myRank, mio);
   fname = dtmp + tmp;
   
@@ -590,6 +594,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
   }
+   */
   
   
   // Instantaneous Temperature fields
@@ -746,7 +751,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
 
 
 
-
+// #################################################################
 // 粗い格子を用いたリスタート
 void FFV::Restart_coarse(FILE* fp, double& flop)
 {
@@ -929,6 +934,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
 
 
 
+// #################################################################
 // 並列分散時のファイル名の管理を行う
 void FFV::setDFI()
 {
@@ -1052,7 +1058,7 @@ void FFV::setDFI()
 
 
 
-
+// #################################################################
 // リスタート時の瞬時値ファイル読み込み（並列数が異なる場合）
 void FFV::Restart_different(FILE* fp, double& flop)
 {
@@ -1379,6 +1385,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
 }
 
 
+// #################################################################
 void FFV::CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, int* tail)
 {
   // pattern 1
@@ -1430,7 +1437,7 @@ void FFV::CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, 
 }
 
 
-// 
+// #################################################################
 void FFV::SetOverlap(REAL_TYPE* write_wk, REAL_TYPE* read_wk, int dim, int gd,
                      int* h, int* s, int* overlap_h, int* overlap_t, int* head, int* size)
 {
@@ -1462,6 +1469,7 @@ void FFV::SetOverlap(REAL_TYPE* write_wk, REAL_TYPE* read_wk, int dim, int gd,
 }
 
 
+// #################################################################
 void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TYPE* d_wk)
 {
   // ファイルの読み込み
@@ -1578,6 +1586,7 @@ void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TY
 }
 
 
+// #################################################################
 void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI, DfiInfo* DI, REAL_TYPE* d_wk,
                                int* rank_list, int recv_rank, int* assign, int nassign)
 {
@@ -1706,6 +1715,7 @@ void FFV::ReadOverlap_Pressure(FILE* fp, double& flop, DifferentRestartInfo* DRI
 }
 
 
+// #################################################################
 void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI, DfiInfo* DI, REAL_TYPE* d_wk,
                                int* rank_list, int recv_rank, int* assign, int nassign)
 {
@@ -1840,7 +1850,7 @@ void FFV::ReadOverlap_Velocity(FILE* fp, double& flop, DifferentRestartInfo* DRI
 }
 
 
-
+// #################################################################
 void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DRI, DfiInfo* DI, REAL_TYPE* d_wk,
                                int* rank_list, int recv_rank, int* assign, int nassign)
 {
@@ -1976,7 +1986,7 @@ void FFV::ReadOverlap_FVelocity(FILE* fp, double& flop, DifferentRestartInfo* DR
 }
 
 
-
+// #################################################################
 void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* DRI, DfiInfo* DI, REAL_TYPE* d_wk,
                                   int* rank_list, int recv_rank, int* assign, int nassign)
 {
