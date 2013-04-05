@@ -549,9 +549,9 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemi
         case OBC_SPEC_VEL:
         case OBC_WALL:
           dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-          vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &fcount);
-          vobc_face_drchlt_(vf, size, &gd, bv, &face, vec, &dd);
-          obc[face].setDomainV(dd);
+          vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &dd, &fcount);
+          //vobc_face_drchlt_(vf, size, &gd, bv, &face, vec, &dd);
+          obc[face].setDomainMF(dd);
           break;
           
         case OBC_INTRINSIC:
@@ -754,7 +754,6 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
  * @brief 速度境界条件による流束の修正
  * @param [in,out] wv     疑似速度ベクトル u^*
  * @param [in]     v      セルセンター速度ベクトル u^n
- * @param [in]     vf     セルフェイス速度ベクトル u^n
  * @param [in]     bv     BCindex V
  * @param [in]     tm     無次元時刻
  * @param [in]     C      Control class
@@ -762,7 +761,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
  * @param [in]     v00    基準速度
  * @param [in,out] flop   flop count
  */
-void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, REAL_TYPE* vf, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
+void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3], vel;
   int st[3], ed[3];
@@ -934,13 +933,15 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
     {
       typ = obc[face].get_Class();
       
+      REAL_TYPE dd; // dummy
+      
       switch ( typ )
       {
         case OBC_SPEC_VEL:
         case OBC_WALL:
         {
           REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
-          vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &fcount);
+          vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &dd, &fcount);
           break;
         }
           
@@ -1078,23 +1079,23 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm,
       {
         case OBC_TRC_FREE:
           vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bv, &vsum, &flop);
-          obc[face].setDomainV(vsum);
+          obc[face].setDomainMF(vsum);
           break;
           
         case OBC_FAR_FIELD:
           vobc_neumann_(d_v, size, &guide, &face, &vsum);
-          obc[face].setDomainV(vsum);
+          obc[face].setDomainMF(vsum);
           break;
           
         case OBC_OUTFLOW:
           vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, &flop);
-          obc[face].setDomainV(vsum);
+          obc[face].setDomainMF(vsum);
           break;
           
         case OBC_SYMMETRIC:
           vobc_symmetric_(d_v, size, &gd, &face);
           vsum = 0.0;
-          obc[face].setDomainV(vsum);
+          obc[face].setDomainMF(vsum);
           break;
           
         case OBC_PERIODIC:
@@ -1105,7 +1106,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm,
           {
             Vobc_Prdc(d_v, face); // セルフェイスの値の周期処理は不要
             vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, &flop);
-            obc[face].setDomainV(vsum);
+            obc[face].setDomainMF(vsum);
           }
           break;
           

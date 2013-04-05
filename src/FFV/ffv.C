@@ -439,7 +439,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     {
       REAL_TYPE q[2] = {0.0, 0.0};
       
-      // 外部境界以外はゼロにする
+      // 外部境界以外はゼロ
       if ( nID[face] < 0 )
       {
         q[0] = vv[0]; // 無次元流量

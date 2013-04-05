@@ -126,7 +126,7 @@ void FFV::NS_FS_E_CDS()
 
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_vc, d_v0, d_vf, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.mod_Pvec_Flux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -146,7 +146,7 @@ void FFV::NS_FS_E_CDS()
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_wv, d_v0, d_vf, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.mod_Pvec_Flux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       

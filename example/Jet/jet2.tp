@@ -1,10 +1,10 @@
 DomainInfo {
   UnitOfLength   = "M"
-  GlobalOrigin   = (-3.1e-2, -3.1e-2, -6.2e-2   )
-  GlobalRegion   = (6.2e-2,  6.2e-2,  1.24e-1   )
-  GlobalVoxel    = (64   , 64   , 128  )
+  GlobalOrigin   = (0.0, -1.0, -1.0   )
+  GlobalRegion   = (3.0,  2.0,  2.0    )
+  //GlobalVoxel    = (50   , 100   , 100   )
   
-  //GlobalPitch    = (9.6875e-04, 9.6875e-04, 9.6875e-04)
+  GlobalPitch    = (1.0e-02, 1.0e-02, 1.0e-02)
   //GlobalDivision = (1    , 1    , 1    )
 
   ActiveSubDomainFile = "hoge"
@@ -35,20 +35,20 @@ Steer {
   }
 
   DerivedVariable {
-    TotalPressure       = "Off"
-    Helicity            = "Off"
-    Vorticity           = "Off"
-    2ndInvariantOfVGT   = "Off"
+    TotalPressure     = "Off"
+    Helicity          = "Off"
+    Vorticity         = "Off"
+    2ndInvariantOfVGT = "On"
   }
 
-  Example = "Rectangular"
+  Example = "Jet"
 
   FileIO {
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
-    InstantInterval      = 10
-    VoxelOutput          = "off"
+    InstantInterval      = 20
+    VoxelOutput          = "svx"
     FileFormat           = "sph"
     Directory {
       InputPath       = "hoge"
@@ -61,7 +61,7 @@ Steer {
     }
   }
 
-  Geometry_Model {
+  GeometryModel {
     PolylibFile        = "hoge.tp"
     FluidMediumForFill = "air"
     SolidMediumForFill = "fe"
@@ -71,7 +71,7 @@ Steer {
   Iteration {
     Flow {
       Poisson {
-        Iteration    = 50
+        Iteration    = 20
         Epsilon      = 1.0e-4
         Omega        = 1.1
         Norm         = "RbyR0"
@@ -79,7 +79,7 @@ Steer {
         CommMode     = "async"
       }
       VP {
-        Iteration    = 100
+        Iteration    = 50
         Epsilon      = 1.0e-4
         Norm         = "VdivMax"
       }
@@ -112,16 +112,16 @@ Steer {
   }
 
   MonitorList {
-    Log                   = "On"
-    OutputFile            = "sample.log"
-    OutputMode            = "Gather"
-    SamplingIntervalType  = "Time"
-    SamplingInterval      = 0.1
-    CellMonitor           = "off"
+    Log                  = "Off"
+    OutputFile           = "sample.log"
+    OutputMode           = "Gather"
+    SamplingIntervalType = "step"
+    SamplingInterval     = 100
+    CellMonitor          = "off"
 
     list[@] {
       type            = "Line"
-      label           = "line1z0"
+      label           = "line1"
       value           = "x"
       Variable        = "Velocity"
       SamplingMethod  = "Interpolation"
@@ -133,62 +133,13 @@ Steer {
 
     list[@] {
       type            = "Line"
-      label           = "line2z0"
-      value           = "z"
+      label           = "line2"
       Variable        = "Velocity"
       SamplingMethod  = "Interpolation"
       SamplingMode    = "Fluid"
       Division        = 64
-      From            = (0.0, -0.5, 0.0)
-      To              = (0.0, 0.5, 0.0)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line1z0.5"
-      value           = "x"
-      Variable        = "Velocity"
-      SamplingMethod  = "Interpolation"
-      SamplingMode    = "Fluid"
-      Division        = 64
-      From            = (-0.5, 0.0, 0.5)
-      To              = (0.5, 0.0, 0.5)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line2z0.5"
-      value           = "z"
-      Variable        = "Velocity"
-      SamplingMethod  = "Interpolation"
-      SamplingMode    = "Fluid"
-      Division        = 64
-      From            = (0.0, -0.5, 0.5)
-      To              = (0.0, 0.5, 0.5)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line1z0.75"
-      value           = "x"
-      Variable        = "Velocity"
-      SamplingMethod  = "Interpolation"
-      SamplingMode    = "Fluid"
-      Division        = 64
-      From            = (-0.5, 0.0, 0.75)
-      To              = (0.5, 0.0, 0.75)
-    }
-
-    list[@] {
-      type            = "Line"
-      label           = "line2z0.75"
-      value           = "z"
-      Variable        = "Velocity"
-      SamplingMethod  = "Interpolation"
-      SamplingMode    = "Fluid"
-      Division        = 64
-      From            = (0.0, -0.5, 0.75)
-      To              = (0.0, 0.5, 0.75)
+      From            = (0.0, 0.0, -0.5)
+      To              = (0.0, 0.0, 0.5)
     }
   }
 
@@ -261,11 +212,11 @@ Steer {
 
   TimeControl {
     AccelerationType  = "Time"
-    Acceleration      = 0.05
+    Acceleration      = 0.0
     DtType            = "CFLReferenceVelocity"
     DeltaT            = 0.1
-    PeriodType        = "time"
-    CalculationPeriod = 1.0 //41.33333
+    PeriodType        = "step"
+    CalculationPeriod = 40000
   }
 
   TreatmentOfWall {
@@ -275,7 +226,7 @@ Steer {
 
   Unit {
     UnitOfInputParameter  = "Dimensional"
-    UnitOfOutput          = "NonDimensional"
+    UnitOfOutput          = "Dimensional"
     Pressure              = "Gauge"
     Temperature           = "Celsius"
   }
@@ -284,13 +235,13 @@ Steer {
 
 Parameter {
   Reference {
-    Length        = 6.2e-2
-    Velocity      = 1.8e-2
+    Length        = 0.1
+    Velocity      = 1.0
     Gravity       = 9.8
     BasePressure  = 0.0
     Reynolds      = 1000.0
     Prandtl       = 0.71
-    Medium   = "water"
+    Medium        = "air"
   }
       
   Temperature {
@@ -299,10 +250,26 @@ Parameter {
   }
 
   IntrinsicExample {
-    FluidMedium = "water"
+    Mode        = "3d"
+    FluidMedium = "air"
     SolidMedium = "fe"
-    CheckEven   = "yes"
-    Dimension   = "3d"
+
+    Ring1 {
+      UseRing     = "yes"
+      InnerRadius = 0.05
+      OuterRadius = 0.1
+      RotationFrequency = 6.0
+      InletMassFlow = 2.0e-2
+    }
+
+    Ring2 {
+      UseRing     = "yes"
+      InnerRadius = 0.15
+      OuterRadius = 0.2
+      RotationFrequency = -3.0
+      InletMassFlow = 5.0e-2
+    }
+
   }
 
 } //Parameter
@@ -311,35 +278,23 @@ Parameter {
 MediumTable {
 
   Medium[@] {
-    type                 = "Fluid"
-    label                = "Water"
-    Density              = 998.2
-    SpecificHeat         = 4182
-    ThermalConductivity  = 593e-03
-    KinematicViscosity   = 1.004e-06
-    Viscosity            = 1002.6e-06
-    SoundOfSpeed         = 1500.0
-    VolumeExpansion      = 0.04e-3 
+    type                = "Fluid"
+    label               = "Air"
+    Density             = 1.1763
+    SpecificHeat        = 1007
+    ThermalConductivity = 2.614e-02
+    KinematicViscosity  = 15.83e-06
+    Viscosity           = 18.62e-06
+    SoundOfSpeed        = 340.0
+    VolumeExpansion     = 0.04e-3
   }
 
   Medium[@] {
-    type                 = "Fluid"
-    label                = "Air"
-    Density              = 1.1763
-    SpecificHeat         = 1007
-    ThermalConductivity  = 2.614e-02
-    KinematicViscosity   = 15.83e-06
-    Viscosity            = 18.62e-06
-    SoundOfSpeed         = 340.0
-    VolumeExpansion      = 0.04e-3 
-  }
-
-  Medium[@] {
-    type                 = "Solid"
-    label                = "Fe"
-    Density              = 7870.0
-    SpecificHeat         = 442.0
-    ThermalConductivity  = 80.3
+    Type                = "Solid"
+    label               = "Fe"
+    Density             = 7870.0
+    SpecificHeat        = 442.0
+    ThermalConductivity = 80.3
   }
 
 } //MediumTable
@@ -361,47 +316,70 @@ BcTable {
       class    = "wall"
       Type     = "slide"
       Profile  = "Constant"
-      Normal   = (-1.0, 0.0, 0.0)
-      Velocity = 1.8e-2
+      Normal   = (1.0, 0.0, 0.0)
+      Velocity = 1.0
     }
     BasicBCs[@] {
-      alias    = "inlet_1"
-      class    = "SpecifiedVelocity"
-      Profile  = "Constant"
-      Normal   = (1.0, 0.0, 0.0)
-      velocity = 5.0
+      alias    = "outflow"
+      class    = "Outflow"
+      pressureType = "dirichlet"
+      PrsValue = 0.0
     }
-
+    BasicBCs[@] {
+      alias    = "jet"
+      class    = "intrinsic"
+    }
+    BasicBCs[@] {
+      alias    = "tfree"
+      class    = "TractionFree"
+    }
+    BasicBCs[@] {
+      alias    = "farfield"
+      class    = "FarField"
+      pressureType = "dirichlet"
+      PrsValue = 0.0
+    }
       
     //外部境界条件
     FaceBC {
       Xminus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        alias   = "jet"
+        MediumOnGuideCell = "air"
       }
       Xplus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        alias   = "outflow"
+        MediumOnGuideCell = "air"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
       }
       Yminus {
-        alias   = "slide_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
+        //alias   = ""
+        MediumOnGuideCell = "air"
       }
       Yplus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
+        MediumOnGuideCell = "air"
       }
       Zminus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
+        MediumOnGuideCell = "air"
       }
       Zplus {
-        alias   = "outer_wall"
-        MediumOnGuideCell = "Fe"
+        //alias   = "outer_wall"
+        //MediumOnGuideCell = "Fe"
+        alias   = "tfree"
+        MediumOnGuideCell = "air"
       }
     }
 
   } // OuterBoundary
 
-} // BCTable
+} // BcTable
 

@@ -191,12 +191,12 @@ public:
   void dataCopy (BoundaryOuter* src);
   
   
-  // モニタ値（ベクトル）を保持する
+  // 計算領域の流入出量と有効セル数を保持する
   void setDomainV(const REAL_TYPE* vv);
   
   
-  // モニタ値（スカラー）を保持する
-  void setDomainV(const REAL_TYPE vv);
+  // 計算領域の流入出量を保持する
+  void setDomainMF(const REAL_TYPE vv);
   
   
   // ラベルを設定

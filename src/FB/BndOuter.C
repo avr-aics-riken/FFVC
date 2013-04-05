@@ -17,7 +17,7 @@
 
 // #################################################################
 /**
- * @brief モニタ値（ベクトル）を保持する
+ * @brief 計算領域の流入出量と有効セル数を保持する
  * @param [in] vv   保持する値
  */
 void BoundaryOuter::setDomainV(const REAL_TYPE* vv)
@@ -28,10 +28,10 @@ void BoundaryOuter::setDomainV(const REAL_TYPE* vv)
 
 // #################################################################
 /**
- * @brief モニタ値（スカラー）を保持する
+ * @brief 計算領域の流入出量を保持する
  * @param [in] vv   保持する値
  */
-void BoundaryOuter::setDomainV(const REAL_TYPE vv)
+void BoundaryOuter::setDomainMF(const REAL_TYPE vv)
 {
   dm[0] = vv;
 }

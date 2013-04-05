@@ -787,21 +787,22 @@ void Control::get_Derived()
   }
   
   
-  // FaceVelocity
+  // FaceVelocity hidden parameter
   label="/Steer/DerivedVariable/FaceVelocity";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
+	  ;
   }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.FaceV = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.FaceV = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
+    if     ( !strcasecmp(str.c_str(), "on") )  Mode.FaceV = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) Mode.FaceV = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
   }
   
 }

@@ -200,7 +200,6 @@ public:
   // 速度境界条件による流束の修正
   void mod_Pvec_Flux (REAL_TYPE* wv,
                       REAL_TYPE* v,
-                      REAL_TYPE* vf, 
                       int* bv,
                       REAL_TYPE tm,
                       Control* C,

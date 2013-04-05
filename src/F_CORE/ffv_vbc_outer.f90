@@ -1122,17 +1122,18 @@
 !! @param [in]     face  面番号
 !! @param [in]     bv    BCindex V
 !! @param [in]     vec   指定する速度ベクトル
+!! @param [out]    vsum  \sum{v}
 !! @param [in,out] flop  flop count
 !! @note 固体部分は対象外とするのでループ中に判定あり
 !!       部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_div_drchlt (div, sz, g, face, bv, vec, flop)
+    subroutine vobc_div_drchlt (div, sz, g, face, bv, vec, vsum, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  u_bc, v_bc, w_bc
+    real                                                      ::  u_bc, v_bc, w_bc, vsum, b, a
     real, dimension(3)                                        ::  vec
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -1145,8 +1146,12 @@
     v_bc = vec(2)
     w_bc = vec(3)
 
+    b = 0.0
+
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face)
+!$OMP REDUCTION(+:b) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
+!$OMP PRIVATE(i, j, k, a)
 
     FACES : select case (face)
     case (X_minus)
@@ -1156,7 +1161,9 @@
       do j=1,jx
         bvx = bv(1, j, k)
         if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
-          div(1, j, k) = div(1, j, k) - u_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(0, j, k), State, 1))
+          a = u_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(0, j, k), State, 1))
+          div(1, j, k) = div(1, j, k) - a
+          b = b + a
         endif
       end do
       end do
@@ -1170,7 +1177,9 @@
       do j=1,jx
         bvx = bv(ix, j, k)
         if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
-          div(ix, j, k) = div(ix, j, k) + u_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(ix+1, j, k), State, 1))
+          a = u_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(ix+1, j, k), State, 1))
+          div(ix, j, k) = div(ix, j, k) + a
+          b = b + a
         endif
       end do
       end do
@@ -1184,7 +1193,9 @@
       do i=1,ix
         bvx = bv(i, 1, k)
         if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
-          div(i, 1, k) = div(i, 1, k) - v_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, 0, k), State, 1))
+          a = v_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, 0, k), State, 1))
+          div(i, 1, k) = div(i, 1, k) - a
+          b = b + a
         endif
       end do
       end do
@@ -1198,7 +1209,9 @@
       do i=1,ix
         bvx = bv(i, jx, k)
         if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
-          div(i, jx, k) = div(i, jx, k) + v_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, jx+1, k), State, 1))
+          a = v_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, jx+1, k), State, 1))
+          div(i, jx, k) = div(i, jx, k) + a
+          b = b + a
         endif
       end do
       end do
@@ -1212,7 +1225,9 @@
       do i=1,ix
         bvx = bv(i, j, 1)
         if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
-          div(i, j, 1) = div(i, j, 1) - w_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, j, 0), State, 1))
+          a = w_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, j, 0), State, 1))
+          div(i, j, 1) = div(i, j, 1) - a
+          b = b + a
         endif
       end do
       end do
@@ -1226,7 +1241,9 @@
       do i=1,ix
         bvx = bv(i, j, kx)
         if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
-          div(i, j, kx) = div(i, j, kx) + w_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, j, kx+1), State, 1))
+          a = w_bc * real(ibits(bvx, State, 1)) * real(ibits(bv(i, j, kx+1), State, 1))
+          div(i, j, kx) = div(i, j, kx) + a
+          b = b + a
         endif
       end do
       end do
@@ -1431,7 +1448,7 @@
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, face, ix, jx, kx
     integer, dimension(3)                                       ::  sz
-    real                                                        ::  u_bc, v_bc, w_bc, vsum, a
+    real                                                        ::  u_bc, v_bc, w_bc, vsum, a, b
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
@@ -1445,10 +1462,10 @@
     v_bc = vec(2)
     w_bc = vec(3)
 
-    vsum = 0.0
+    b = 0.0
 
 !$OMP PARALLEL &
-!$OMP REDUCTION(+:vsum) &
+!$OMP REDUCTION(+:b) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
 !$OMP PRIVATE(a)
 
@@ -1462,7 +1479,7 @@
         if ( ibits(bv(1, j, k), bc_face_W, bitw_5) == obc_mask ) then
           a = u_bc * real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
           vf(0, j, k, 1) = a
-          vsum = vsum + a
+          b = b + a
         endif
       end do
       end do
@@ -1477,7 +1494,7 @@
         if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
           a = u_bc * real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
           vf(ix, j, k, 1) = a
-          vsum = vsum + a
+          b = b + a
         endif
       end do
       end do
@@ -1492,7 +1509,7 @@
         if ( ibits(bv(i, 1, k), bc_face_S, bitw_5) == obc_mask ) then
           a = v_bc * real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
           vf(i, 0, k, 2) = a
-          vsum = vsum + a
+          b = b + a
         endif
       end do
       end do
@@ -1507,7 +1524,7 @@
         if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
           a = v_bc * real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
           vf(i, jx, k, 2) = a
-          vsum = vsum + a
+          b = b + a
         endif
       end do
       end do
@@ -1522,7 +1539,7 @@
         if ( ibits(bv(i, j ,1), bc_face_B, bitw_5) == obc_mask ) then
           a = w_bc * real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
           vf(i, j, 0, 3) = a
-          vsum = vsum + a
+          b = b + a
         endif
       end do
       end do
@@ -1537,7 +1554,7 @@
         if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
           a = w_bc * real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
           vf(i, j, kx, 3) = a
-          vsum = vsum + a
+          b = b + a
         endif
       end do
       end do
@@ -1546,6 +1563,8 @@
     case default
     end select FACES
 !$OMP END PARALLEL
+
+    vsum = b
 
     return
     end subroutine vobc_face_drchlt
