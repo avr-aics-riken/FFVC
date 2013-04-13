@@ -4,8 +4,9 @@
 #
 # Copyright (c) RIKEN, All right reserved. 2013
 #
+# Advanced Institute for Computational Science (AICS), RIKEN
+#
 ###################################################################
-
 
 TARGET = ../lib/libCIO.a
 
@@ -16,11 +17,11 @@ CXXSRCS = \
   cio_TextParser.C \
   cio_DFI_SPH.C \
   cio_DFI_BOV.C \
-  cio_DFI_Write.C \
+  cio_DFI_Write.C
 
 F90SRCS = \
   cio_DFI_COARSE.f90 \
-  cio_DFI_util.f90 \
+  cio_DFI_util.f90
 
 
 SRCS  = $(CSRCS) $(CXXSRCS) $(F90SRCS)
@@ -38,18 +39,31 @@ $(TARGET):$(OBJS)
 	$(RANLIB) $(TARGET)
 
 .c.o:
-	$(CC) $(CFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
+	$(CC) $(CFLAGS) -I../include $(UDEF_INC_PATH) -o $@ -c $<
 
 .C.o:
-	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) -I../include $(UDEF_INC_PATH) -o $@ -c $<
 
 .f90.o:
-	$(F90) $(F90FLAGS) $(UDEF_INC_PATH) -o $@ -c $<
+	$(F90) $(F90FLAGS) -I. -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS) $(TARGET)
 
 depend:
-	makedepend -I. -Y $(SRCS)
+	makedepend -I. -I../include -Y $(SRCS)
 
 # DO NOT DELETE
+
+cio_DFI.o: ../include/cio_DFI.h ../include/cio_TextParser.h
+cio_DFI.o: ../include/cio_Define.h ../include/cio_DFI_Ffunc.h
+cio_DFI.o: ../include/cio_DFI_SPH.h ../include/cio_DFI_BOV.h
+cio_TextParser.o: ../include/cio_TextParser.h ../include/cio_Define.h
+cio_DFI_SPH.o: ../include/cio_DFI.h ../include/cio_TextParser.h
+cio_DFI_SPH.o: ../include/cio_Define.h ../include/cio_DFI_Ffunc.h
+cio_DFI_SPH.o: ../include/cio_DFI_SPH.h
+cio_DFI_BOV.o: ../include/cio_DFI.h ../include/cio_TextParser.h
+cio_DFI_BOV.o: ../include/cio_Define.h ../include/cio_DFI_Ffunc.h
+cio_DFI_BOV.o: ../include/cio_DFI_BOV.h
+cio_DFI_Write.o: ../include/cio_DFI.h ../include/cio_TextParser.h
+cio_DFI_Write.o: ../include/cio_Define.h ../include/cio_DFI_Ffunc.h

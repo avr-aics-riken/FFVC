@@ -4,6 +4,8 @@
 !
 ! Copyright (c) AICS, RIKEN. All right reserved. 2013
 !
+! Advanced Institute for Computational Science (AICS), RIKEN
+!
 ! #################################################################
 
 !> @file   cio_DFI_util.f90

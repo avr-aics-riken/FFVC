@@ -2,7 +2,9 @@
 #
 # CIOlib - Cartesian Input / Output library
 #
-# Copyright (c) AICS, RIKEN. All right reserved. 2013
+# Copyright (c) RIKEN. All right reserved. 2013
+#
+# Advanced Institute for Computational Science (AICS), RIKEN
 #
 ###################################################################
 
@@ -25,7 +27,7 @@ CXXFLAGS    = -O3 $(OMP_FLAGS)
 FC          = ifort
 FCFLAGS     = -O3
 F90         = ifort
-F90FLAGS    = -O3 $(OMP_FLAGS)
+F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS)
 UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
 UDEF_LIB_PATH = -L$(TP_DIR)/lib -L$(MPI_DIR)/lib
 
