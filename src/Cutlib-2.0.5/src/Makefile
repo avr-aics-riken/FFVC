@@ -71,19 +71,19 @@ POLYLIB_FLAGS = -I../$(POLYLIB_DIR)/include -I$(TP_DIR)/include
 ###########################################################################
 # INTEL
 
-#CFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
-CFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+#CXXFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+CXXFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 ###########################################################################
 # FX10/K
 
-#CFLAGS = -Kfast,ocl,preex,simd=2 -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+#CXXFLAGS = -Kfast,ocl,preex,simd=2 -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 
 ###########################################################################
 # BG/P
 
-#CFLAGS = -O3 -qarch=450d -qtune=450 -qsmp=omp -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
+#CXXFLAGS = -O3 -qarch=450d -qtune=450 -qsmp=omp -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 ###########################################################################
 
@@ -93,18 +93,19 @@ $(CUTLIB): $(OBJS)
 	$(RANLIB) $@
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
 	rm -rf *.o $(CUTLIB)
 
 depend:
-	makedepend -I. -I../include $(POLYLIB_FLAGS)  -Y \
+	makedepend -I. -I../include -Y \
   Cutlib.cpp \
   CutlibCore.cpp \
   CutUtil.cpp \
   CutTriangle.cpp \
   CutBoundary.cpp
+  
 # DO NOT DELETE
 
 Cutlib.o: ../include/Cutlib.h ../include/CutInfo/CutInfoArray.h

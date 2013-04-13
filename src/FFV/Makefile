@@ -101,6 +101,21 @@ all:
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
 		MPI_DIR='$(MPI_DIR)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
+	)
+
+	( \
+	cd $(CIOLIB_DIR)/src; \
+	make \
+		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
+		F90='$(F90)' \
+		F90FLAGS='$(F90FLAGS)' \
+		AR='$(AR)' \
+		RANLIB='$(RANLIB)' \
+		RM='$(RM)' \
+		MPI_DIR='$(MPI_DIR)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
 	)
 
 	( \
