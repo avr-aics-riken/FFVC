@@ -9,32 +9,33 @@
 ###################################################################
 
 ########################
-# FX10
+# FX10, K
 ########################
 
-#AR          = ar cr
-#RANLIB      = ranlib
-#RM          = \rm -f
-#MPI_DIR     =
-#CPM_DIR     = /hoge
-#TP_DIR      = /funya
-#POLYLIB_DIR = ../Polylib-2.3
-#CUTLIB_DIR  = ../Cutlib-2.0.5
-#PMLIB_DIR   = ../PMlib-1.5
-#OMP_FLAGS   =
-#UDEF_OPT    = -D__K_FPCOLL -D__ARCH_FX
-#CC          =  mpifccpx
-#CFLAGS      = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
-#CXX         = mpiFCCpx
-#CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
-#FC          = mpifrtpx
-#FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
-#F90         = mpifrtpx
-#F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
-#LDFLAGS     = --linkfortran
-#LIBS        =
-#UDEF_LIB_PATH_SPEC =
-#UDEF_LIBS_SPEC     =
+AR          = ar cr
+RANLIB      = ranlib
+RM          = \rm -f
+MPI_DIR     =
+CPM_DIR     = /hoge
+TP_DIR      = /funya
+POLYLIB_DIR = ../Polylib-2.3
+CUTLIB_DIR  = ../Cutlib-2.0.5
+PMLIB_DIR   = ../PMlib-1.5
+CIOLIB_DIR  = ../CIOlib-1.0
+OMP_FLAGS   =
+UDEF_OPT    = -D__K_FPCOLL -D__ARCH_FX
+CC          =  mpifccpx
+CFLAGS      = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
+CXX         = mpiFCCpx
+CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+FC          = mpifrtpx
+FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
+F90         = mpifrtpx
+F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
+LDFLAGS     = --linkfortran
+LIBS        =
+UDEF_LIB_PATH_SPEC =
+UDEF_LIBS_SPEC     =
 
 ## iff double
 #CFLAGS     += -D_REAL_IS_DOUBLE_

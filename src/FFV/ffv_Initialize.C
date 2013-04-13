@@ -575,11 +575,6 @@ int FFV::Initialize(int argc, char **argv)
   
   
   
-  // 分散時のインデクスファイル生成
-  setDFI();
-  
-  
-  
   // スタート処理 瞬時値と平均値に分けて処理　------------------
   Hostonly_
   {
@@ -590,8 +585,18 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // リスタート処理
+  if ( C.Start != initial_start)
+  {
+    DFI_IN_PRS  = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_prs);
+    DFI_IN_VEL  = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_vel);
+    DFI_IN_FVEL = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_fvel);
+  }
+  
   Restart(fp);
 
+  
+  // 分散時のインデクスファイル生成
+  setDFI();
   
   
   // 制御インターバルの初期化
@@ -665,13 +670,144 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   
-  // セッションを開始したときに、初期値をファイル出力  リスタートと性能測定モードのときには出力しない
-  if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
+  // CIO  この部分はみなおし
+  
+  std::string hostname;
+  hostname = paraMngr->GetHostName();
+  std::string dfi_name;
+  dfi_name = "./"+C.FIO.OutDirPath+"/"+CIO.Generate_DFI_Name(C.f_Pressure);
+  //printf("dfi_name : %s\n",dfi_name.c_str());
+  
+  std::string datatype;
+  if ( sizeof(REAL_TYPE) == 4 )
   {
+    datatype="Float32";
+  }
+  std::string arrayshape="ijkn";
+  int comp = 1;
+  std::string process="./"+C.FIO.OutDirPath+"/proc.dfi";
+  //printf("process : %s\n",process.c_str());
+  
+  //process="proc.dfi";
+  int cio_tail[3],cio_div[3];
+  for(int i=0; i<3; i++) cio_tail[i]=size[i];
+  for(int i=0; i<3; i++) cio_div[i]=1;
+  if( numProc > 1) {
+    const int* p_tail = paraMngr->GetVoxelTailIndex();
+    for(int i=0; i<3; i++ ) cio_tail[i]=p_tail[i]+1;
+    const int* p_div = paraMngr->GetDivNum();
+    for(int i=0; i<3; i++ ) cio_div[i] = p_div[i];
+  }
+  std::string pass = C.FIO.OutDirPath;
+  //std::string pass = "hoge2";
+  int gc_out=C.GuideOut;
+  REAL_TYPE m_org[3], m_pit[3];
+  for (int i=0; i<3; i++)
+  {
+    m_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
+    m_pit[i] = pitch[i];
+  }
+  // セルセンター位置を基点とする
+  for (int i=0; i<3; i++)
+  {
+    m_org[i] += 0.5*m_pit[i];
+  }
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL )
+  {
+    for (int i=0; i<3; i++)
+    {
+      m_org[i] *= C.RefLength;
+      m_pit[i] *= C.RefLength;
+    }
+  }
+  
+  // make output directory
+  CIO.MakeDirectory(pass);
+  //Pressure
+  DFI_OUT_PRS = CIO.WriteInit(MPI_COMM_WORLD,
+                              dfi_name,
+                              //C.FIO.OutDirPath,
+                              pass,
+                              C.f_Pressure,
+                              C.file_fmt_ext,
+                              gc_out,
+                              datatype,
+                              arrayshape,
+                              comp,
+                              process,
+                              size,
+                              m_pit,
+                              m_org,
+                              cio_div,
+                              head,
+                              cio_tail,
+                              hostname);
+  
+  
+  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD,
+                                process,
+                                G_size,
+                                cio_div,
+                                head,
+                                cio_tail,
+                                G_origin,
+                                m_pit,
+                                hostname,
+                                true);
+  //velocity
+  dfi_name = "./"+C.FIO.OutDirPath+"/"+CIO.Generate_DFI_Name(C.f_Velocity);
+  arrayshape = "nijk";
+  comp = 3;
+  DFI_OUT_VEL = CIO.WriteInit(MPI_COMM_WORLD,
+                              dfi_name,
+                              pass,
+                              C.f_Velocity,
+                              C.file_fmt_ext,
+                              gc_out,
+                              datatype,
+                              arrayshape,
+                              comp,
+                              process,
+                              size,
+                              m_pit,
+                              m_org,
+                              cio_div,
+                              head,
+                              cio_tail,
+                              hostname);
+  //Fvelocity
+  dfi_name = "./"+C.FIO.OutDirPath+"/"+CIO.Generate_DFI_Name(C.f_Fvelocity);
+  arrayshape = "nijk";
+  comp = 3;
+  DFI_OUT_FVEL = CIO.WriteInit(MPI_COMM_WORLD,
+                               dfi_name,
+                               pass,
+                               C.f_Fvelocity,
+                               C.file_fmt_ext,
+                               gc_out,
+                               datatype,
+                               arrayshape,
+                               comp,
+                               process,
+                               size,
+                               m_pit,
+                               m_org,
+                               cio_div,
+                               head,
+                               cio_tail,
+                               hostname);
+  
+  // CIO
+  
+  
+  // セッションを開始したときに、初期値をファイル出力  リスタートと性能測定モードのときには出力しない
+  //if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) ) << CIOで、なぜコメントアウト？
+  //{
     flop_task = 0.0;
     FileOutput(flop_task);
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
-  }
+  //}
 
   
   // 粗い格子を用いたリスタート時には出力
@@ -2154,11 +2290,12 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
         Exit(0);
       }
       
-      // 切り上げ
+      // pitchを基準にして、全計算領域の分割数を計算する。切り上げ
       G_size[0] = (int)ceil(G_region[0]/pitch[0]);
       G_size[1] = (int)ceil(G_region[1]/pitch[1]);
       G_size[2] = (int)ceil(G_region[2]/pitch[2]);
       
+      // 再計算された全計算領域の分割数から、全計算領域の大きさを再計算
       REAL_TYPE gr[3];
       gr[0] = (REAL_TYPE)G_size[0] * pitch[0];
       gr[1] = (REAL_TYPE)G_size[1] * pitch[1];

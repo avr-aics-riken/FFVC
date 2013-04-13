@@ -11,13 +11,14 @@ Release Note
 
 #######################################
 
-Ver 1.1.1    4 Apr. 2013
+Ver 1.1.2   13 Apr. 2013
   - 周期境界のバグ修正
   - OBC_OUTFLOWを値指定方式に変更
   - OBC_FAR_FIELDを値指定のノイマン条件実装に変更
   - OBC_SYMMETRICを値指定実装
   - vobc_face_drchletの配列領域侵害のバグを修正
   - FaceVelocity出力をオプションに変更
+  - CIOlib導入
   
 Ver 1.0.8   31 Mar. 2013
   - /Steer/FIleIO/IOmode >> distributed is default

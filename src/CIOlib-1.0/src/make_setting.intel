@@ -1,0 +1,29 @@
+###################################################################
+#
+# CIOlib - Cartesian Input / Output library
+#
+# Copyright (c) RIKEN, All right reserved. 2013
+#
+###################################################################
+
+########################
+# INTEL (default, intel compiler)
+########################
+
+AR          = ar cru
+RANLIB      = ranlib
+RM          = \rm -f
+MPI_DIR	    = /opt/openmpi
+TP_DIR      = /usr/local/TextParser
+OMP_FLAGS   = -openmp
+CC          = icc
+CFLAGS      = -O3 -I$(TP_DIR)/include
+CXX         = icpc
+CXXFLAGS    = -O3 $(OMP_FLAGS) -I$(TP_DIR)/include -I../include
+FC          = ifort
+FCFLAGS     = -O3 -I$(TP_DIR)/include -I../include
+F90         = ifort
+F90FLAGS    = -O3 $(OMP_FLAGS) -I$(TP_DIR)/include -I../include
+LDFLAGS     = -L/opt/intel/composerxe/lib
+LIBS        = -lifport -lifcore
+

@@ -21,6 +21,7 @@ TP_DIR      = /usr/local/TextParser
 POLYLIB_DIR = ../Polylib-2.3
 CUTLIB_DIR  = ../Cutlib-2.0.5
 PMLIB_DIR   = ../PMlib-1.5
+CIOLIB_DIR  = ../CIOlib-1.0
 OMP_FLAGS   = -fopenmp 
 UDEF_OPT    =
 CC          = mpicc

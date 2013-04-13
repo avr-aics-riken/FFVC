@@ -613,6 +613,9 @@ void FFV::FileOutput(double& flop, const bool refinement)
   prs_restart = ( !refinement ) ? C.f_Pressure : "prs_restart_";
   
   tmp = DFI.GenerateFileName(prs_restart, C.file_fmt_ext, m_step, myRank, mio);
+  DFI_OUT_PRS->WriteData(m_step, guide, m_time, d_ws, minmax);
+  
+  /*
   F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
   
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_Pressure,
@@ -625,6 +628,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                     1,
                                     minmax,
                                     mio) ) Exit(0);
+   */
   
 
   // Velocity
@@ -647,8 +651,10 @@ void FFV::FileOutput(double& flop, const bool refinement)
   vel_restart = ( !refinement ) ? C.f_Velocity : "vel_restart_";
 
   tmp = DFI.GenerateFileName(vel_restart, C.file_fmt_ext, m_step, myRank, mio);
-  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
+  DFI_OUT_VEL->WriteData(m_step, guide, m_time, d_wo, minmax);
   
+  /*
+  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_Velocity,
                                     C.FIO.OutDirPath,
                                     C.file_fmt_ext,
@@ -659,6 +665,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                     3,
                                     minmax,
                                     mio) ) Exit(0);
+   */
   
   
   // Tempearture
@@ -887,6 +894,9 @@ void FFV::FileOutput(double& flop, const bool refinement)
     fvel_restart = ( !refinement ) ? C.f_Fvelocity : "fvel_restart_";
     
     tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, mio);
+    DFI_OUT_FVEL->WriteData(m_step, guide, m_time, d_wo, minmax);
+    
+    /*
     F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
     
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Fvelocity,
@@ -899,6 +909,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       3,
                                       minmax,
                                       mio) ) Exit(0);
+     */
   }
   
   

@@ -418,7 +418,7 @@ void FFV::Restart(FILE* fp)
     
     // 粗い格子のファイルをロードし、内挿処理を行う
     flop_task = 0.0;
-    Restart_coarse(fp, flop_task);
+    Restart_std(fp, flop_task);
     
     Hostonly_ fprintf(stdout,"\n");
     Hostonly_ fprintf(fp,"\n");
@@ -429,7 +429,7 @@ void FFV::Restart(FILE* fp)
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
     
     flop_task = 0.0;
-    Restart_different(fp, flop_task);
+    Restart_std(fp, flop_task);
   }
   
   TIMING_stop(tm_restart);
@@ -531,7 +531,8 @@ void FFV::Restart_std(FILE* fp, double& flop)
   // 入力ディレクトリ
   dtmp= DFI.GenerateDirName(C.FIO.InDirPath, C.Restart_step, C.FIO.Slice);
   
-  // Instantaneous Pressure
+  
+  /* Instantaneous Pressure
   tmp = DFI.GenerateFileName(C.f_Pressure, fmt, C.Restart_step, myRank, mio);
   fname = dtmp + tmp;
   
@@ -542,6 +543,20 @@ void FFV::Restart_std(FILE* fp, double& flop)
   }
   
   F.readPressure(fp, fname, size, guide, d_p, step, time, Dmode, bp, refD, refV, flop, gs, true, i_dummy, f_dummy);
+  */
+  
+  const int* m_div = paraMngr->GetDivNum();
+  
+  // 自身の領域終点インデックス
+  int tail[3];
+  for(int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
+  
+  REAL_TYPE r_time;
+  DFI_IN_PRS->ReadData(C.Restart_step, guide, G_size, (int *)m_div, head, tail, d_p, r_time);
+  if ( d_p == NULL ) Exit(0);
+  time = (double)r_time;
+  step = (unsigned)C.Restart_step;
+  
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -552,7 +567,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   copyV00fromRF(Session_StartTime);
   
   
-  // Instantaneous Velocity fields
+  /* Instantaneous Velocity fields
   tmp = DFI.GenerateFileName(C.f_Velocity, fmt, C.Restart_step, myRank, mio);
   fname = dtmp + tmp;
   
@@ -563,6 +578,23 @@ void FFV::Restart_std(FILE* fp, double& flop)
   }
   
   F.readVelocity(fp, fname, size, guide, d_v, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
+  */
+  
+  DFI_IN_VEL->ReadData(C.Restart_step, guide, G_size, (int *)m_div, head, tail, d_wo, r_time);
+  if( d_wo == NULL ) Exit(0);
+  
+  REAL_TYPE refv = (Dmode == DIMENSIONAL) ? refV : 1.0;
+  REAL_TYPE scale = 1.0; // 瞬時値の時スケールは1.0
+  REAL_TYPE u0[4];
+  u0[0] = v00[0];
+  u0[1] = v00[1];
+  u0[2] = v00[2];
+  u0[3] = v00[3];
+  
+  fb_shift_refv_in_(d_v, size, &guide, d_wo, u0, &scale, &refv, &flop);
+  
+  time = (double)r_time;
+  step = (unsigned)C.Restart_step;
   
   if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
   
@@ -572,29 +604,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
   }
-  
-  
-  /* Instantaneous Face Velocity fields
-  tmp = DFI.GenerateFileName(C.f_Fvelocity, fmt, C.Restart_step, myRank, mio);
-  fname = dtmp + tmp;
-  
-  if ( !checkFile(fname) )
-  {
-    Hostonly_ printf("\n\tError : File open '%s'\n", fname.c_str());
-    Exit(0);
-  }
-  
-  F.readVelocity(fp, fname, size, guide, d_vf, d_wo, step, time, v00, Dmode, refV, flop, gs, true, i_dummy, f_dummy);
-  
-  if (C.Unit.File == DIMENSIONAL) time /= (double)C.Tscale;
-  
-  if ( (step != Session_StartStep) || (time != Session_StartTime) )
-  {
-    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-    Exit(0);
-  }
-   */
+
   
   
   // Instantaneous Temperature fields
@@ -1036,9 +1046,6 @@ void FFV::setDFI()
                  g_bbox_st,
                  g_bbox_ed,
                  host) ) Exit(0);
-  
-  // DFI proc fileを生成
-  Hostonly_ if ( !DFI.WriteDFIproc(G_origin, G_region) ) Exit(0);
   
   
   // 後始末

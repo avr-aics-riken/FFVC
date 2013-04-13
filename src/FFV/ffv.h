@@ -90,6 +90,10 @@
 // Cutlib
 #include "Cutlib.h"
 
+// CIOlib
+#include "cio_DFI.h"
+
+
 using namespace std;
 using namespace pm_lib;
 using namespace PolylibNS;
@@ -260,6 +264,15 @@ private:
   FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
+  
+  cio_DFI CIO;              ///< CIO クラス
+  cio_DFI *DFI_IN_PRS;      ///< CIO Prs FileInPut
+  cio_DFI *DFI_IN_VEL;      ///< CIO Vel FileInPut
+  cio_DFI *DFI_IN_FVEL;     ///< CIO FVel FileInPut
+  cio_DFI *DFI_OUT_PRS;     ///< CIO Prs FileOutPut
+  cio_DFI *DFI_OUT_VEL;     ///< CIO Vel FileOutPut
+  cio_DFI *DFI_OUT_FVEL;    ///< CIO Fvel FileOutPut
+  
   
 public:
   /** コンストラクタ */
