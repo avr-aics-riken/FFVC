@@ -1,0 +1,50 @@
+###################################################################
+#
+# CIOlib - Cartesian Input / Output library
+#
+# Copyright (c) AICS, RIKEN. All right reserved. 2013
+#
+###################################################################
+
+
+# depends on the platform
+
+########################
+# INTEL
+#
+AR          = ar cru
+RANLIB      = ranlib
+RM          = \rm -f
+MPI_DIR	    = /opt/openmpi
+TP_DIR      = /usr/local/TextParser
+OMP_FLAGS   = -openmp
+CC          = icc
+CFLAGS      = -O3
+CXX         = icpc
+CXXFLAGS    = -O3 $(OMP_FLAGS) 
+FC          = ifort
+FCFLAGS     = -O3
+F90         = ifort
+F90FLAGS    = -O3 $(OMP_FLAGS)
+UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
+UDEF_LIB_PATH = -L$(TP_DIR)/lib -L$(MPI_DIR)/lib
+
+
+########################
+# FX10, K
+#
+#AR          = ar cr
+#RANLIB      = ranlib
+#RM          = \rm -f
+#MPI_DIR     =
+#CXX         = mpiFCCpx
+
+
+########################
+# BG/P
+#
+#AR          = ar crv
+#RANLIB      = ranlib
+#RM          = \rm -f
+#MPI_DIR     = /bgsys/drivers/ppcfloor/comm
+#CXX         = mpixlcxx_r

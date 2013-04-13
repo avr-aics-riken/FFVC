@@ -1,0 +1,30 @@
+/* ##################################################################
+ *
+ * PMlib - Performance Monitor library
+ *
+ * Copyright (c) RIKEN. All right reserved. 2010-2013
+ *
+ * 2010-2011  VCAD System Research Program, RIKEN
+ * 2012-2013  Advanced Institute for Computational Science (AICS), RIKEN
+ *
+ * ###################################################################
+ */
+
+
+Ingredients
+--------------------------
+
+AUTHORS 	             Contributors
+ChangeLog              History of modification
+COPYING                Copyright
+doc/                   Document
+  Doxyfile             Configuration file to generate a doxygen file
+  How_to_use_PMlib.pdf Explanation of usage (in Japanese)
+  PMlib.pdf            User's manual (in Japanese)
+include/               Header files
+INSTALL 	             How to install
+lib/                   Compiled module is stored
+make_setting           Environment setting
+Makefile               Use building PMlib
+README 		             This document
+src/                   Source codes
