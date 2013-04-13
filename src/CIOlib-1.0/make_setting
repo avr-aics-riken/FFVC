@@ -29,7 +29,6 @@ FCFLAGS     = -O3
 F90         = ifort
 F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS)
 UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
-UDEF_LIB_PATH = -L$(TP_DIR)/lib -L$(MPI_DIR)/lib
 
 
 ########################
