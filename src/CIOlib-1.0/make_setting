@@ -38,7 +38,18 @@ UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
 #RANLIB      = ranlib
 #RM          = \rm -f
 #MPI_DIR     =
+#TP_DIR      = /usr/local/TextParser
+#OMP_FLAGS   = 
+#CC          = mpifccpx
+#CFLAGS      = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
 #CXX         = mpiFCCpx
+#CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+#FC          = mpifrtpx
+#FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
+#F90         = mpifrtpx
+#F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
+#LDFLAGS     = --linkfortran
+#UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
 
 
 ########################
@@ -48,4 +59,16 @@ UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
 #RANLIB      = ranlib
 #RM          = \rm -f
 #MPI_DIR     = /bgsys/drivers/ppcfloor/comm
+#TP_DIR      = /usr/local/TextParser
+#OMP_FLAGS   = -qsmp=omp
+#CC          = mpixlc_r
+#CFLAGS      = -O3 -qarch=450d -qtune=450
 #CXX         = mpixlcxx_r
+#CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+#FC          = mpixlf90_r
+#FCFLAGS     = -O3 -qarch=450d -qtune=450 -qextname
+#F90         = mpixlf90_r
+#F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS)
+#UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
+#UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib
+#UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath

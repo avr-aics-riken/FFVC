@@ -8,19 +8,28 @@
  *
  */
 
-ソフトウェア概要
+CIO library
 
+This CIO library provides following functions for the Cartesian structured data.
 
-開発、動作環境
+  - Management of distributed files
+  - Restart from previous calculated data (standard)
+  - Restart from previous calculated data of the number of different process
+  - Restart from previous coarse data with interpolation
+  - Staging
 
 
 Note:
 
-AUTHORS;    Contributors
-ChangeLog;  History of development
-COPYING;	  Copyright
-INSTALL;    describes how to insalll
-NEWS;		    Release note
-README;		  This document
+AUTHORS     Contributors
+ChangeLog   History of development
+COPYING 	  Copyright
+INSTALL     describes how to insalll
+NEWS 		    Release note
+README 		  This document
+doc/        Documents
+include/    header files
+lib/        Compiled module
+src/        Source files
 
 
