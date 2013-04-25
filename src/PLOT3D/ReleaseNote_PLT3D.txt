@@ -11,6 +11,9 @@ Release Note
 
 #######################################
 
+Ver 1.0.2   26 Apr. 2013
+  - timeまわりをdoubleに修正
+
 Ver 1.0.1   17 Feb. 2013
   - PLOT3D出力の様式変更への対応 >> ffv_PLOT3D.C/h
   

@@ -25,7 +25,7 @@
  @param tm 無次元時刻
  @param C
  */
-void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
+void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, Control* C)
 {
   REAL_TYPE tc;
   
@@ -75,19 +75,20 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, REAL_TYPE tm, Control* C)
 // #################################################################
 /**
  @brief 速度指定境界条件に必要な参照速度をセットする
- @param v セルセンタ速度ベクトル (n step)
- @param bv BCindex V
- @param tm 無次元時刻
- @param v00
+ @param [in,out] v   セルセンタ速度ベクトル (n step)
+ @param [in]     bv  BCindex V
+ @param [in]     tm  無次元時刻
+ @param [in]     v00 参照速度
  @param clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
  */
-void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear)
+void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, bool clear)
 {
   double flop;
   REAL_TYPE vec[3];
   int st[3], ed[3];
   int typ;
   int gd = guide;
+  REAL_TYPE dummy;
   
   // 内部境界条件による修正
   for (int n=1; n<=NoBC; n++) {
@@ -101,7 +102,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
       case SPEC_VEL_WH:
         if ( !clear )
         {
-          extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVel_IBC(n, vec, tm, v00, flop);
         }
         else
         {
@@ -124,7 +125,7 @@ void SetBC3D::assign_Velocity(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE
       {
         if ( !clear )
         {
-          extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVel_OBC(face, vec, tm, v00, flop);
         }
         else
         {
@@ -229,13 +230,13 @@ void SetBC3D::checkDriver(FILE* fp)
  * @param [in]     v00  格子速度
  * @param [in,out] flop 浮動小数点演算数
  */
-REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop)
+REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE a, b, vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
   
   a = cmp[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
-  b = 2.0*c_pai*cmp[n].ca[CompoList::frequency]* RefL/RefV * tm + cmp[n].ca[CompoList::initphase];
+  b = 2.0*c_pai*cmp[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + cmp[n].ca[CompoList::initphase];
   vel = ( a*sin(b) + cmp[n].ca[CompoList::bias]/RefV ) * v00[0];
   vec[0] = cmp[n].nv[0] * vel;
   vec[1] = cmp[n].nv[1] * vel;
@@ -255,13 +256,13 @@ REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const REAL_TYPE t
  * @param [in]     v00  格子速度
  * @param [in,out] flop 浮動小数点演算数
  */
-REAL_TYPE SetBC3D::extractVel_OBC(const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop)
+REAL_TYPE SetBC3D::extractVel_OBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE a, b, vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
   
   a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
-  b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * tm + obc[n].ca[CompoList::initphase];
+  b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + obc[n].ca[CompoList::initphase];
   vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
   vec[0] = obc[n].nv[0] * vel;
   vec[1] = obc[n].nv[1] * vel;
@@ -329,11 +330,12 @@ void SetBC3D::InnerVBC_Periodic(REAL_TYPE* d_v, int* d_bd)
  * @param [in]     v00  参照速度
  * @param [in,out] flop 浮動小数演算数
  */
-void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, double& flop)
+void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, double& flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
   int gd = guide;
+  REAL_TYPE dummy;
   
   if ( isCDS ) // Cut-Distance
   {
@@ -363,7 +365,7 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, 
       {
         case SPEC_VEL:
         case SPEC_VEL_WH:
-          extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVel_IBC(n, vec, tm, v00, flop);
           vibc_drchlt_(d_v, size, &gd, st, ed, v00, d_bv, &n, vec);
           break;
           
@@ -466,7 +468,7 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
  *       avr[]のインデクスに注意 (Fortran <-> C)
  */
 
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, REAL_TYPE tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, Control* C, double& flop)
+void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, Control* C, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -761,9 +763,9 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
  * @param [in]     v00    基準速度
  * @param [in,out] flop   flop count
  */
-void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
+void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
-  REAL_TYPE vec[3], vel;
+  REAL_TYPE vec[3], vel, dummy;
   int st[3], ed[3];
   int typ;
   REAL_TYPE dh = deltaX;
@@ -781,7 +783,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, 
 
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
         {
-          extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVel_IBC(n, vec, tm, v00, flop);
           pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW )
@@ -802,7 +804,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, 
         
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
         {
-          extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVel_IBC(n, vec, tm, v00, flop);
           pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW )
@@ -826,12 +828,12 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, 
       switch ( typ )
       {
         case OBC_SPEC_VEL:
-          extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVel_OBC(face, vec, tm, v00, flop);
           vobc_pv_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
           break;
           
         case OBC_WALL:
-          extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVel_OBC(face, vec, tm, v00, flop);
           vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
           break;
           
@@ -863,7 +865,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, REAL_TYPE tm, 
  * @param [in]     v00   基準速度
  * @param [in,out] flop  flop count
  */
-void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, REAL_TYPE tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
+void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, const double tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], vel;
@@ -975,7 +977,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
  @param[out] flop
  @todo symmetricのときの修正
  */
-void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop)
+void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, const double tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -1062,7 +1064,7 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
  * @param [in]     v00  参照速度
  * @param [in,out] flop 浮動小数点演算数
  */
-void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3];
   int gd = guide;
@@ -1129,9 +1131,10 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm,
  * @param [in]     v00  参照速度
  * @param [in,out] flop 浮動小数点演算数
  */
-void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, const double tm, const Control* C, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3];
+  REAL_TYPE dummy;
   int gd = guide;
 
   
@@ -1143,9 +1146,8 @@ void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, R
     {
       switch ( obc[face].get_Class() )
       {
-        
         case OBC_SPEC_VEL:
-          extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVel_OBC(face, vec, tm, v00, flop);
           vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
           break;
           
@@ -1169,11 +1171,10 @@ void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, R
  * @brief 疑似速度の外部境界条件処理
  * @param [out]    d_vc   疑似速度ベクトル v^*
  * @param [in]     d_bv   BCindex V
- * @param [in]     tm     時刻
  * @param [in]     C      Control class
  * @param [in,out] flop   浮動小数点演算数
  */
-void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, Control* C, double& flop)
+void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, int* d_bv, Control* C, double& flop)
 {
   REAL_TYPE dd=0.0;
   int gd = guide;
@@ -1886,9 +1887,10 @@ void SetBC3D::ps_IBC_ConstTemp(REAL_TYPE* d_t, const int* d_bh2, const int n)
  @note
     - 熱量(-)はvalに保存
  */
-void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, const double tm, Control* C, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3];
+  REAL_TYPE dummy;
   
   // 外部
   for (int face=0; face<NOFACE; face++) {
@@ -1918,7 +1920,7 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL
     switch ( cmp[n].getType() )
     {
       case SPEC_VEL_WH:
-        extractVel_IBC(n, vec, tm, v00, flop);
+        dummy = extractVel_IBC(n, vec, tm, v00, flop);
         cmp[n].set_Mon_Calorie( ps_IBC_SpecVH(d_ws, d_bh1, n, v00[0], vec, flop) );
         break;
           
@@ -2335,7 +2337,7 @@ REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL
  @note
     - モニタ量の熱量va(-)は系に対する流入量なので，基準温度に対する熱量
  */
-REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE tm, REAL_TYPE* v00, double& flop)
+REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL_TYPE* d_t, const double tm, REAL_TYPE* v00, double& flop)
 {
   int ix = size[0];
   int jx = size[1];
@@ -2347,7 +2349,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
   REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
   REAL_TYPE dh = deltaX;
   REAL_TYPE dh1 = 1.0/dh;
-  REAL_TYPE u_ref, v_ref, w_ref;
+  REAL_TYPE u_ref, v_ref, w_ref, dummy;
   REAL_TYPE vec[3];
   
   u_ref = v00[1];
@@ -2362,7 +2364,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case X_MINUS:
       if( nID[face] < 0 )
       {
-        extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
         c = vec[0] - u_ref;
         f_w = c * t_nd;
         
@@ -2383,7 +2385,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case X_PLUS:
       if( nID[face] < 0 )
       {
-        extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
         c = vec[0] - u_ref;
         f_e = -c * t_nd; // ref_tが正のとき，X+方向のセルでは流出なので符号反転
         
@@ -2404,7 +2406,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Y_MINUS:
       if( nID[face] < 0 )
       {
-        extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
         c = vec[1] - v_ref;
         f_s = c * t_nd;
         
@@ -2425,7 +2427,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Y_PLUS:
       if( nID[face] < 0 )
       {
-        extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
         c = vec[1] - v_ref;
         f_n = -c * t_nd; // 符号反転
         
@@ -2446,7 +2448,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Z_MINUS:
       if( nID[face] < 0 )
       {
-        extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
         c = vec[2] - w_ref;
         f_b = c * t_nd;
         
@@ -2467,7 +2469,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Z_PLUS:
       if( nID[face] < 0 )
       {
-        extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVel_OBC(face, vec, tm, v00, flop);
         c = vec[2] - w_ref;
         f_t = -c * t_nd; // 符号反転
         

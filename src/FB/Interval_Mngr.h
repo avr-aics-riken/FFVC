@@ -72,7 +72,7 @@ public:
 public:
   
   // トリガーを初期化する
-  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale);
+  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id);
   
   
   // 指定の時刻になったかどうかを判断する
@@ -147,7 +147,7 @@ public:
   }
   
   // 開始時刻を過ぎているかどうかを判断
-  bool isStarted(const double m_time, const unsigned m_step);
+  bool isStarted(const unsigned m_step, const double m_time);
 
 };
 

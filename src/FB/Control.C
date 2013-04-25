@@ -3345,7 +3345,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     Exit(0);
   }
   
-  REAL_TYPE dt = (REAL_TYPE)DT->get_DT();
+  double dt = DT->get_DT();
   bool  err=true;
   double itm=0.0;
   
@@ -4327,7 +4327,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   Mach = RefVelocity / RefSoundSpeed;
   
   // タイミングパラメータの無次元化
-  Tscale = RefLength / RefVelocity;
+  Tscale = (double)RefLength / (double)RefVelocity;
   
   
   if ( Unit.Param == DIMENSIONAL )

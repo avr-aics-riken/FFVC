@@ -70,9 +70,8 @@ bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag)
  * @param [in] tm     現時刻（無次元）
  * @param [in] m_dt   時間積分幅（無次元）
  * @param [in] m_id   管理対象を示すID
- * @param [in] tscale タイムスケール
  */
-bool Interval_Manager::initTrigger(const int stp, const double tm, const double m_dt, const int m_id, const double tscale)
+bool Interval_Manager::initTrigger(const int stp, const double tm, const double m_dt, const int m_id)
 {
   delta_t = m_dt;
   
@@ -174,8 +173,13 @@ void Interval_Manager::setStart(const double m_start)
 }
 
 // #################################################################
-// 開始時刻が過ぎている場合、true
-bool Interval_Manager::isStarted(const double m_time, const unsigned m_step)
+/**
+ * @brief セッションの開始時刻が過ぎているかを判断する
+ * @param [in] m_step 無次元評価ステップ
+ * @param [in] m_time 無次元評価時刻
+ * @retval 開始時刻が過ぎている場合、true
+ */
+bool Interval_Manager::isStarted(const unsigned m_step, const double m_time)
 {
   if (mode == By_step)
   {

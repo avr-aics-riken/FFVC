@@ -107,7 +107,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   REAL_TYPE m_time;
   if (C->Unit.File == DIMENSIONAL)
   {
-    m_time = (REAL_TYPE)CurrentTime * C->Tscale;
+    m_time = (REAL_TYPE)(CurrentTime * C->Tscale);
   }
   else
   {
@@ -530,7 +530,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   REAL_TYPE m_time;
   if (C->Unit.File == DIMENSIONAL)
   {
-    m_time = (REAL_TYPE)CurrentTime * C->Tscale;
+    m_time = (REAL_TYPE)(CurrentTime * C->Tscale);
   }
   else
   {
@@ -1128,7 +1128,7 @@ void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
   REAL_TYPE m_time;
   if (C->Unit.File == DIMENSIONAL)
   {
-    m_time = (REAL_TYPE)CurrentTime * C->Tscale;
+    m_time = (REAL_TYPE)(CurrentTime * C->Tscale);
   }
   else
   {

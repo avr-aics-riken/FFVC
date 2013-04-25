@@ -92,7 +92,7 @@ bool cio_DFI::WriteProcDfiFile(MPI_Comm comm, string procFileName, int G_size[3]
   }
 
   if( out_host ) {
-  int LEN=256;
+  const int LEN=256;
   char *recbuf = new char[out_RankInfo.size()*LEN];
   char  sedbuf[LEN];
   sprintf(sedbuf,"%s",hostname.c_str());

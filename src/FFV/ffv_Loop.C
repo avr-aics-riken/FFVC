@@ -119,7 +119,7 @@ int FFV::Loop(const unsigned step)
   TIMING_start(tm_loop_uty_sct_1);
   
   // 時間平均値操作
-  if ( (C.Mode.Average == ON) && C.Interval[Interval_Manager::tg_average].isStarted(CurrentTime, CurrentStep))
+  if ( (C.Mode.Average == ON) && C.Interval[Interval_Manager::tg_average].isStarted(CurrentStep, CurrentTime))
   {
     TIMING_start(tm_average_time);
     flop_count=0.0;
@@ -254,7 +254,7 @@ int FFV::Loop(const unsigned step)
   {
     
     // 開始時刻を過ぎているか
-    if ( C.Interval[Interval_Manager::tg_average].isStarted(CurrentTime, CurrentStep) )
+    if ( C.Interval[Interval_Manager::tg_average].isStarted(CurrentStep, CurrentTime) )
     {
       // 通常
       if ( C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) ) 

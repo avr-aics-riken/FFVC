@@ -2493,23 +2493,23 @@ void FFV::init_Interval()
   double m_tm    = CurrentTime;  // Restart()で設定
   unsigned m_stp = CurrentStep;
   
-  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute, C.Tscale) )
+  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute) )
   {
     Hostonly_ printf("\t Error : Computation Period is assigned to zero.\n");
     Exit(0);
   }
   
-  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console, C.Tscale) )  // 基本履歴のコンソールへの出力
+  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) )  // 基本履歴のコンソールへの出力
   {
     Hostonly_ printf("\t Error : Interval for Console output is assigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history, C.Tscale) )  // 履歴のファイルへの出力
+  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) )  // 履歴のファイルへの出力
   {
     Hostonly_ printf("\t Error : Interval for History output is assigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant, C.Tscale) )  // 瞬時値ファイル
+  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) )  // 瞬時値ファイル
   {
     Hostonly_ printf("\t Error : Interval for Instantaneous output is assigned to zero.\n");
     Exit(0);
@@ -2517,7 +2517,7 @@ void FFV::init_Interval()
   
   if ( C.Mode.Average == ON )
   {
-    if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average, C.Tscale) ) // 平均値ファイル
+    if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) // 平均値ファイル
     {
       Hostonly_ printf("\t Error : Interval for Average output is assigned to zero.\n");
       Exit(0);
@@ -2526,7 +2526,7 @@ void FFV::init_Interval()
     
   if ( C.Sampling.log == ON )
   {
-    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled, C.Tscale) )  // サンプリング履歴
+    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) )  // サンプリング履歴
     {
       Hostonly_ printf("\t Error : Interval for Sampling output is assigned to zero.\n");
       Exit(0);
@@ -2535,7 +2535,7 @@ void FFV::init_Interval()
   
   if (C.FIO.Format == plt3d_fmt)
   {
-    if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d, C.Tscale) )  // 瞬時値ファイル
+    if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d) )  // 瞬時値ファイル
     {
       Hostonly_ printf("\t Error : Interval for plot3d output is assigned to zero.\n");
       Exit(0);
@@ -3241,14 +3241,13 @@ void FFV::setGlobalCmpIdx()
 
 
 // #################################################################
-/* @brief 初期条件の設定
- */
+// @brief 初期条件の設定
 void FFV::setInitialCondition()
 {
   double flop_task;
   Gemini_R* m_buf = new Gemini_R [C.NoBC];
   
-  REAL_TYPE tm = CurrentTime * C.Tscale;
+  double tm = CurrentTime * C.Tscale;
   
   if ( C.Start == initial_start ) {
 		REAL_TYPE U0[3];

@@ -658,6 +658,8 @@ public:
   
   float Scaling_Factor;  ///< ポリゴンのスケーリングファクター
 	
+  double Tscale;
+  
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;
   REAL_TYPE DiffTemp;
@@ -685,7 +687,6 @@ public:
   REAL_TYPE Reynolds;
   REAL_TYPE SpecificHeatRatio;
   REAL_TYPE timeflag;
-  REAL_TYPE Tscale;
   REAL_TYPE V_Dface[NOFACE];
   
   // struct
@@ -783,7 +784,8 @@ public:
     RefVelocity = RefLength = RefDensity = RefSoundSpeed = RefSpecificHeat = RefKviscosity = RefLambda = RefViscosity = 0.0;
     DiffTemp = BaseTemp = BasePrs = 0.0;
     Gravity = Mach = SpecificHeatRatio =  0.0;
-    timeflag = Tscale = 0.0;
+    timeflag = 0.0;
+    Tscale = 0.0;
     
     for (int i=0; i<NOFACE; i++) {
       OpenDomain[i]=0.0;

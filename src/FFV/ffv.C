@@ -181,7 +181,7 @@ void FFV::AverageOutput(double& flop)
   }
   
   // 出力ファイルの指定が有次元の場合
-  REAL_TYPE timeAvr;
+  double timeAvr;
   if (C.Unit.File == DIMENSIONAL)
   {
     timeAvr = CurrentTime_Avr * C.Tscale;
@@ -205,7 +205,7 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE m_time;
   if (C.Unit.File == DIMENSIONAL)
   {
-    m_time = (REAL_TYPE)CurrentTime * C.Tscale;
+    m_time = (REAL_TYPE)(CurrentTime * C.Tscale);
   }
   else
   {
@@ -254,7 +254,7 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE minmax[2] = {f_min, f_max};
   
   tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, m_step, myRank, mio); // e.g., prsa_0000000000_id000000.sph
-  F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, (double)timeAvr);
+  F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, timeAvr);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrPressure,
                                     C.FIO.OutDirPath,
                                     C.file_fmt_ext,
@@ -288,7 +288,7 @@ void FFV::AverageOutput(double& flop)
   minmax[1] = f_max;
   
   tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, m_step, myRank, mio);
-  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, (double)timeAvr);
+  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, timeAvr);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrVelocity,
                                     C.FIO.OutDirPath,
                                     C.file_fmt_ext,
@@ -331,7 +331,7 @@ void FFV::AverageOutput(double& flop)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, m_step, myRank, mio);
-    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, (double)timeAvr);
+    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, timeAvr);
     Hostonly_ if( !DFI.WriteDFIindex(C.f_AvrTemperature,
                                      C.FIO.OutDirPath,
                                      C.file_fmt_ext,
@@ -522,7 +522,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   REAL_TYPE m_time;
   if (C.Unit.File == DIMENSIONAL) 
   {
-    m_time = (REAL_TYPE)CurrentTime * C.Tscale;
+    m_time = (REAL_TYPE)(CurrentTime * C.Tscale);
   }
   else 
   {

@@ -38,11 +38,11 @@ public:
 protected:
   
   // コンポーネントから速度境界条件の成分を取り出す
-  REAL_TYPE extractVel_IBC (const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop);
+  REAL_TYPE extractVel_IBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop);
   
   
   // 外部境界条件リストから速度境界条件の成分を取り出す
-  REAL_TYPE extractVel_OBC (const int n, REAL_TYPE* vec, const REAL_TYPE tm, const REAL_TYPE* v00, double& flop);
+  REAL_TYPE extractVel_OBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop);
   
   /**
    * @brief 温度一定の境界条件
@@ -111,7 +111,9 @@ protected:
   
   REAL_TYPE ps_OBC_Free           (REAL_TYPE* d_ws,  int* d_bh1, const int face, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE* v00, double& flop);
   REAL_TYPE ps_OBC_Heatflux       (REAL_TYPE* d_qbc, int* d_bh1, const int face, double& flop);
-  REAL_TYPE ps_OBC_SpecVH         (REAL_TYPE* d_ws,  int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
+  
+  REAL_TYPE ps_OBC_SpecVH (REAL_TYPE* d_ws,  int* d_bh1, const int face, REAL_TYPE* d_t, const double tm, REAL_TYPE* v00, double& flop);
+  
   REAL_TYPE ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   REAL_TYPE ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   REAL_TYPE ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
@@ -140,20 +142,27 @@ protected:
   
   
 public:
-  void assign_Temp          (REAL_TYPE* d_t, int* d_bh, REAL_TYPE tm, Control* C);
-  void assign_Velocity      (REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, bool clear=false);
+  void assign_Temp (REAL_TYPE* d_t, int* d_bh, const double tm, Control* C);
+  
+  // 境界条件速度をセットする
+  void assignVelocity (REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, bool clear=false);
+  
   void checkDriver          (FILE* fp);
   void InnerPBC_Periodic    (REAL_TYPE* d_p, int* d_bcd);
   void InnerTBCface         (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   void InnerTBCvol          (REAL_TYPE* d_t, int* d_bx, REAL_TYPE dt, double& flop);
-  void InnerVBC             (REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, REAL_TYPE* v00, double& flop);
-  void InnerVBC_Periodic    (REAL_TYPE* d_v, int* d_bd);
+  
+  // 速度の内部境界条件
+  void InnerVBC (REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, double& flop);
+  
+  // 速度の内部周期境界条件
+  void InnerVBC_Periodic (REAL_TYPE* d_v, int* d_bd);
   
   
   // 速度境界条件による速度の発散の修正ほか
   void mod_div (REAL_TYPE* dv,
                 int* bv,
-                REAL_TYPE tm,
+                double tm_d,
                 REAL_TYPE* v00,
                 Gemini_R* avr,
                 REAL_TYPE* vf,
@@ -171,7 +180,7 @@ public:
                      REAL_TYPE* v0,
                      REAL_TYPE* vf, 
                      int* bv,
-                     REAL_TYPE tm,
+                     const double tm,
                      REAL_TYPE dt,
                      Control* C,
                      REAL_TYPE* v00,
@@ -201,7 +210,7 @@ public:
   void mod_Pvec_Flux (REAL_TYPE* wv,
                       REAL_TYPE* v,
                       int* bv,
-                      REAL_TYPE tm,
+                      const double tm,
                       Control* C,
                       int v_mode,
                       REAL_TYPE* v00,
@@ -233,25 +242,30 @@ public:
                          double& flop);
   
   
-  void mod_Vis_EE           (REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, REAL_TYPE tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop);
-  void OuterPBC             (REAL_TYPE* d_p);
-  void OuterTBC             (REAL_TYPE* d_t);
-  void OuterTBCface         (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop);
+  void mod_Vis_EE (REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, const double tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop);
   
+  // 圧力の外部境界条件
+  void OuterPBC (REAL_TYPE* d_p);
+  
+  // 温度の外部境界条件
+  void OuterTBC (REAL_TYPE* d_t);
+  
+  // 外部境界セルフェイスに対する温度条件
+  void OuterTBCface (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop);
   
   // 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
-  void OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
+  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop);
   
   
   // 速度の外部境界処理(タイムステップに一度ガイドセルに値を設定する)
-  void OuterVBC_GC (REAL_TYPE* d_v, int* d_bv, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
+  void OuterVBC_GC (REAL_TYPE* d_v, int* d_bv, const double tm, const Control* C, const REAL_TYPE* v00, double& flop);
   
   
   // 疑似速度の外部境界条件処理
-  void OuterVBC_Pseudo (REAL_TYPE* d_vc, int* d_bv, REAL_TYPE tm, Control* C, double& flop);
+  void OuterVBC_Pseudo (REAL_TYPE* d_vc, int* d_bv, Control* C, double& flop);
   
   
-  void ps_BC_Convection     (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE tm, Control* C, REAL_TYPE* v00, double& flop);
+  void ps_BC_Convection (REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, const double tm, Control* C, REAL_TYPE* v00, double& flop);
   
   
   // 周期境界の場合のインデクスの同期
