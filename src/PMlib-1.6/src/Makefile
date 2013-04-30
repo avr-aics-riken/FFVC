@@ -2,10 +2,8 @@
 #
 # PMlib - Performance Monitor library
 #
-# Copyright (c) RIKEN. All right reserved. 2010-2013
-#
-# 2010-2011  VCAD System Research Program, RIKEN
-# 2012-2013  Advanced Institute for Computational Science (AICS), RIKEN
+# Copyright (c) 2010-2013 Advanced Institute for Computational Science, RIKEN.
+# All right reserved.
 # 
 ###################################################################
 
