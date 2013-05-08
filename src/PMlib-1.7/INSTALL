@@ -8,19 +8,20 @@
  * ##################################################################
  */
 
+
 How to build PMlib and to install.
 
 
 1) Procedure of normal compilation
 
    Edit environmental variables in a make_setting.* file for a target machine. 
-   Specify target machine by MACHINE in Makefile. Then, 'make'.
+   Specify target machine by MACHINE macro in Makefile. Then, 'make'.
    
 
 2) Procedure of compilation from FFVC solver
    
-   Edit environmental variables in a FFVC/src/FFV/make_setting.* file for a target machine.
-   Execute 'make' command at FFVC/src/FFV/ directory.
+   Edit environmental variables in a FFV/src/FFV/make_setting.* file for a target machine.
+   Execute 'make' command at FFV/src/FFV/ directory.
 
 
-Compiled module will be placed in lib/ directory.
+A compiled module will be placed in lib/ directory.

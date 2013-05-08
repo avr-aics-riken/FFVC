@@ -2,17 +2,38 @@
 #
 # CIOlib - Cartesian Input / Output library
 #
-# Copyright (c) AICS, RIKEN. All right reserved. 2013
-#
-# Advanced Institute for Computational Science (AICS), RIKEN
+# Copyright (c) 2013 Advanced Institute for Computational Science, RIKEN.
+# All right reserved.
 #
 ###################################################################
 #
-#  At first, edit a make_setting file, then make
-#  If CIOlib is placed inside the directory of FFVC solver, this make file is ignored.
+#  At first, edit a make_setting.* file, then make
+#  If CIOlib is placed inside the directory of FFVC solver, this makefile is ignored.
 
 
-include make_setting
+# Default environment
+MACHINE=intel
+
+
+### compiler detection
+
+ifeq ($(MACHINE),gnu)
+include make_setting.gnu
+endif
+
+ifeq ($(MACHINE),fx)
+include make_setting.fx
+endif
+
+ifeq ($(MACHINE),ibm)
+include make_setting.ibm
+endif
+
+ifeq ($(MACHINE),intel)
+include make_setting.intel
+endif
+
+
 
 all:
 	( \

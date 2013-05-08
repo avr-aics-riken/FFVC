@@ -8,7 +8,7 @@
 ###################################################################
 #
 #  At first, editing a make_setting.* file, then make
-#  If PMlib is placed inside the directory of FFVC solver, this make file is ignored.
+#  If PMlib is placed inside the directory of FFVC solver, this makefile is ignored.
 
 
 # Default environment

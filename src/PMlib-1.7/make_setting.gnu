@@ -7,7 +7,8 @@
 #
 ###################################################################
 
-#  If PMlib is placed inside the directory of FFVC solver, this make file is ignored.
+#  If PMlib is placed inside the directory of FFVC solver, this make_setting is ignored.
+
 
 ##########
 # GNU
@@ -17,6 +18,6 @@ AR          = ar cru
 RANLIB      = ranlib
 RM          = \rm -f
 MPI_DIR	    = /opt/openmpi
-CXX         = gcc
+CXX         = mpicxx
 CXXFLAGS    = -O3 -Wall
 UDEF_INC_PATH = -I$(MPI_DIR)/include

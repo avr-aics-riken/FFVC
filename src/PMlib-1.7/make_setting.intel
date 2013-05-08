@@ -7,7 +7,8 @@
 #
 ###################################################################
 
-#  If PMlib is placed inside the directory of FFVC solver, this make file is ignored.
+#  If PMlib is placed inside the directory of FFVC solver, this make_setting is ignored.
+
 
 ##########
 # INTEL

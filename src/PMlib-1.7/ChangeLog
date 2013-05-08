@@ -9,8 +9,13 @@
  */
  
 -----
-2013-05-08  Version 1.6
+
+2013-05-08  Version 1.7
+ * Split make_setting file
+ 
+2013-04-13  Version 1.6
  * Change make procedure
+ * add LICENSE
 
 2012-12-05  Version 1.5
  * Change make procedure
