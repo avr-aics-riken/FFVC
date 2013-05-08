@@ -20,7 +20,7 @@ CPM_DIR     = /hoge
 TP_DIR      = /funya
 POLYLIB_DIR = ../Polylib-2.3
 CUTLIB_DIR  = ../Cutlib-2.0.5
-PMLIB_DIR   = ../PMlib-1.6
+PMLIB_DIR   = ../PMlib-1.7
 CIOLIB_DIR  = ../CIOlib-1.0
 OMP_FLAGS   = -qsmp=omp
 UDEF_OPT    = -WF,-D__ARCH_BG

@@ -7,11 +7,33 @@
 #
 ###################################################################
 #
-#  At first, editing a make_setting file, then make
+#  At first, editing a make_setting.* file, then make
 #  If PMlib is placed inside the directory of FFVC solver, this make file is ignored.
 
 
-include make_setting
+# Default environment
+MACHINE=intel
+
+
+### compiler detection
+
+ifeq ($(MACHINE),gnu)
+include make_setting.gnu
+endif
+
+ifeq ($(MACHINE),fx)
+include make_setting.fx
+endif
+
+ifeq ($(MACHINE),ibm)
+include make_setting.ibm
+endif
+
+ifeq ($(MACHINE),intel)
+include make_setting.intel
+endif
+
+
 
 all:
 	( \

@@ -17,7 +17,7 @@ doc/                   Document
 include/               Header files
 INSTALL 	             How to install
 lib/                   Compiled module is stored
-make_setting           Environment setting
+make_setting.*         Environment setting
 Makefile               Building PMlib
 README 		             This document
 src/                   Source codes

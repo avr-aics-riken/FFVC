@@ -1,0 +1,22 @@
+###################################################################
+#
+# PMlib - Performance Monitor library
+# 
+# Copyright (c) 2010-2013 Advanced Institute for Computational Science, RIKEN.
+# All right reserved.
+#
+###################################################################
+
+#  If PMlib is placed inside the directory of FFVC solver, this make file is ignored.
+
+##########
+# IBM BG/P
+##########
+
+AR          = ar crv
+RANLIB      = ranlib
+RM          = \rm -f
+MPI_DIR     = /bgsys/drivers/ppcfloor/comm
+CXX         = mpixlcxx_r
+CXXFLAGS    = -O3 -qarch=450d -qtune=450
+UDEF_INC_PATH =

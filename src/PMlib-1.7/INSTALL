@@ -13,7 +13,8 @@ How to build PMlib and to install.
 
 1) Procedure of normal compilation
 
-   Edit environmental variables in a make_setting file for a target machine, then 'make'.
+   Edit environmental variables in a make_setting.* file for a target machine. 
+   Specify target machine by MACHINE in Makefile. Then, 'make'.
    
 
 2) Procedure of compilation from FFVC solver
