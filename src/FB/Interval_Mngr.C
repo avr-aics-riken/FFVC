@@ -116,6 +116,7 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
     }
   }
   
+  
   return true;
 }
  
@@ -158,17 +159,18 @@ void Interval_Manager::normalizeTime(const double scale)
 // #################################################################
 /**
  * @brief セッションの開始時刻をセットする
- * @param [in] m_start 無次元時刻 or ステップ
+ * @param [in] m_step 無次元評価ステップ
+ * @param [in] m_time 無次元評価時刻
  */
-void Interval_Manager::setStart(const double m_start)
+void Interval_Manager::setStart(const unsigned m_step, const double m_time)
 {
   if (mode == By_step)
   {
-    start_step = (int)m_start;
+    start_step = (int)m_step;
   }
   else
   {
-    start_tm = (double)m_start;
+    start_tm = (double)m_time;
   }
 }
 

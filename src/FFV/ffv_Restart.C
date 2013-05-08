@@ -402,6 +402,7 @@ void FFV::Restart(FILE* fp)
     for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
     
   }
+  
   else if ( C.Start == restart) // 同一解像度のリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
@@ -410,6 +411,7 @@ void FFV::Restart(FILE* fp)
     flop_task = 0.0;
     Restart_std(fp, flop_task); 
   }
+  
   else if ( C.Start == restart_refinement) // 粗い格子からのリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
@@ -423,6 +425,7 @@ void FFV::Restart(FILE* fp)
     Hostonly_ fprintf(stdout,"\n");
     Hostonly_ fprintf(fp,"\n");
   }
+  
   else if ( C.Start == restart_different_proc) // 異なる並列数でのリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
@@ -529,7 +532,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   bool mio = (bool)C.FIO.IOmode;
   
   // 入力ディレクトリ
-  dtmp= DFI.GenerateDirName(C.FIO.InDirPath, C.Restart_step, C.FIO.Slice);
+  dtmp = DFI.GenerateDirName(C.FIO.InDirPath, C.Restart_step, C.FIO.Slice);
   
   const int* m_div = paraMngr->GetDivNum();
   
@@ -542,7 +545,6 @@ void FFV::Restart_std(FILE* fp, double& flop)
   if ( d_p == NULL ) Exit(0);
   time = (double)r_time;
   step = (unsigned)C.Restart_step;
-  
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;

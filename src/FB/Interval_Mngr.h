@@ -88,7 +88,7 @@ public:
   
   
   // セッションの開始時刻をセットする
-  void setStart(const double m_start);
+  void setStart(const unsigned m_step, const double m_time);
   
   
   // 指定モードをステップにする

@@ -589,7 +589,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     DFI_IN_PRS  = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_prs);
     DFI_IN_VEL  = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_vel);
-    DFI_IN_FVEL = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_fvel);
+    if ( C.Mode.FaceV == ON ) DFI_IN_FVEL = CIO.ReadInit(MPI_COMM_WORLD, C.f_dfi_fvel);
   }
   
   Restart(fp);
@@ -2466,7 +2466,7 @@ void FFV::init_Interval()
   for (int i=0; i<Interval_Manager::tg_END; i++) {
     if ( i != Interval_Manager::tg_average)
     {
-      C.Interval[i].setStart(Session_StartTime);
+      C.Interval[i].setStart(Session_StartStep, Session_StartTime);
     }
     else
     {
@@ -2492,6 +2492,7 @@ void FFV::init_Interval()
   double m_dt    = DT.get_DT();
   double m_tm    = CurrentTime;  // Restart()で設定
   unsigned m_stp = CurrentStep;
+
   
   if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute) )
   {

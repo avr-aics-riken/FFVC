@@ -511,15 +511,8 @@ private:
   void AverageOutput(double& flop);
   
   
-  
-  /**
-   * @brief 時間平均操作を行う
-   * @param [in,out] flop 浮動小数点演算数
-   */
+  // 時間平均操作を行う
   void Averaging_Time(double& flop);
-  
-  
-
   
   
   /**
@@ -550,24 +543,16 @@ private:
   
   
   
-  /**
-   * @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
-   * @retval 通信量(Byte)
-   * @param [in] sz    配列サイズ
-   * @param [in] guide ガイドセル
-   */
+  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
   double count_comm_size(const int sz[3], const int guide);
-
   
   
   // 外部計算領域の各面における総流量と対流流出速度を計算する
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
   
-  
   //ファイル出力
   void FileOutput(double& flop, const bool crs_restart=false);
-  
   
   
   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
@@ -1138,16 +1123,13 @@ public:
   }
   
   
-  /** 
-   * @brief シミュレーションの1ステップの処理
-   *  Loop() + stepPost()
-   */
+  // シミュレーションの1ステップの処理
   int MainLoop();
   
   
   /** 
    * @brief シミュレーションの終了時の処理
-   * プロファイルの統計処理ほか
+   * @note プロファイルの統計処理ほか
    */
   bool Post();
   

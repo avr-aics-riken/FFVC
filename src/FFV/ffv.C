@@ -350,7 +350,10 @@ void FFV::AverageOutput(double& flop)
 
 
 // #################################################################
-// 時間平均操作を行う
+/**
+ * @brief 時間平均操作を行う
+ * @param [in,out] flop 浮動小数点演算数
+ */
 void FFV::Averaging_Time(double& flop)
 {
   CurrentStep_Avr++;
@@ -368,7 +371,12 @@ void FFV::Averaging_Time(double& flop)
 
 
 // #################################################################
-// 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
+/**
+ * @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
+ * @retval 通信量(Byte)
+ * @param [in] sz    配列サイズ
+ * @param [in] guide ガイドセル
+ */
 double FFV::count_comm_size(const int sz[3], const int guide)
 {
   double c = 0.0;
@@ -615,21 +623,6 @@ void FFV::FileOutput(double& flop, const bool refinement)
   tmp = DFI.GenerateFileName(prs_restart, C.file_fmt_ext, m_step, myRank, mio);
   DFI_OUT_PRS->WriteData(m_step, guide, m_time, d_ws, minmax);
   
-  /*
-  F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
-  
-  Hostonly_ if ( !DFI.WriteDFIindex(C.f_Pressure,
-                                    C.FIO.OutDirPath,
-                                    C.file_fmt_ext,
-                                    m_step,
-                                    m_time,
-                                    dfi_mng[var_Pressure],
-                                    "ijkn",
-                                    1,
-                                    minmax,
-                                    mio) ) Exit(0);
-   */
-  
 
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
@@ -652,20 +645,6 @@ void FFV::FileOutput(double& flop, const bool refinement)
 
   tmp = DFI.GenerateFileName(vel_restart, C.file_fmt_ext, m_step, myRank, mio);
   DFI_OUT_VEL->WriteData(m_step, guide, m_time, d_wo, minmax);
-  
-  /*
-  F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
-  Hostonly_ if ( !DFI.WriteDFIindex(C.f_Velocity,
-                                    C.FIO.OutDirPath,
-                                    C.file_fmt_ext,
-                                    m_step,
-                                    m_time,
-                                    dfi_mng[var_Velocity],
-                                    "nijk",
-                                    3,
-                                    minmax,
-                                    mio) ) Exit(0);
-   */
   
   
   // Tempearture
@@ -896,27 +875,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
     tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, mio);
     DFI_OUT_FVEL->WriteData(m_step, guide, m_time, d_wo, minmax);
     
-    /*
-    F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
-    
-    Hostonly_ if ( !DFI.WriteDFIindex(C.f_Fvelocity,
-                                      C.FIO.OutDirPath,
-                                      C.file_fmt_ext,
-                                      m_step,
-                                      m_time,
-                                      dfi_mng[var_FaceVelocity],
-                                      "nijk",
-                                      3,
-                                      minmax,
-                                      mio) ) Exit(0);
-     */
   }
   
   
 }
 
+
 // #################################################################
-// タイムステップループ
+/**
+ * @brief シミュレーションの1ステップの処理
+ * @note Loop() + stepPost()
+ */
 int FFV::MainLoop()
 {
   int ret = 1;
@@ -961,6 +930,7 @@ int FFV::MainLoop()
 
 
 
+// #################################################################
 /**
  * @brief VP反復の発散値を計算する
  * @param [in] IC ItrCtlクラス

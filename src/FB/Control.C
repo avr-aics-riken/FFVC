@@ -581,7 +581,7 @@ void Control::get_Average_option()
 		  }
 		  else
       {
-        Interval[Interval_Manager::tg_average].setStart((double)ct);
+        Interval[Interval_Manager::tg_average].setStart((unsigned)ct, (double)ct);
 		  }
       
       label="/Steer/AverageOption/Interval";
@@ -2516,15 +2516,18 @@ void Control::get_start_condition()
     f_different_nproc_velocity = str.c_str();
     
     
-    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfFvelocity";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( Mode.FaceV == ON )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfFvelocity";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      f_different_nproc_fvelocity = str.c_str();
     }
-    
-    f_different_nproc_fvelocity = str.c_str();
     
     
     if ( isHeatProblem() )
@@ -2561,14 +2564,17 @@ void Control::get_start_condition()
     f_dfi_vel = str.c_str();
     
     
-    label="/Steer/StartCondition/Restart/DifferentProcess/DFIofFvelocity";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( Mode.FaceV == ON )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      label="/Steer/StartCondition/Restart/DifferentProcess/DFIofFvelocity";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      f_dfi_fvel = str.c_str();
     }
-    f_dfi_fvel = str.c_str();
     
     
     if ( isHeatProblem() )
