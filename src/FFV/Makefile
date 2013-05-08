@@ -80,6 +80,7 @@ all:
 		RM='$(RM)' \
 		MPI_DIR='$(MPI_DIR)' \
 		TP_DIR='$(TP_DIR)' \
+		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
 	)
 
 	( \

@@ -1,0 +1,27 @@
+###################################################################
+#
+# Polylib - Polygon Management library
+#
+# Copyright (c) 2013 Advanced Institute for Computational Science, RIKEN.
+# All right reserved.
+#
+###################################################################
+
+#  If polylib is placed inside the directory of FFVC solver, this make_setting is ignored.
+
+
+########################
+# BG/P
+########################
+
+AR          = ar crv
+RANLIB      = ranlib
+RM          = \rm -f
+MPI_DIR     = /bgsys/drivers/ppcfloor/comm
+TP_DIR      = /usr/local/TextParser
+OMP_FLAGS   =
+CXX         = mpixlcxx_r
+CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
+UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib
+UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath
