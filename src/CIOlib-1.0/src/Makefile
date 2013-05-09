@@ -37,8 +37,6 @@ $(TARGET):$(OBJS)
 	$(AR) $(TARGET) $(OBJS)
 	$(RANLIB) $(TARGET)
 
-.c.o:
-	$(CC) $(CFLAGS) -I../include $(UDEF_INC_PATH) -o $@ -c $<
 
 .C.o:
 	$(CXX) $(CXXFLAGS) -I../include $(UDEF_INC_PATH) -o $@ -c $<

@@ -28,4 +28,4 @@ FC          = mpif90
 FCFLAGS     = -O3
 F90         = mpif90
 F90FLAGS    = -O3 -fpp $(OMP_FLAGS) -ffree-form
-UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
+UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include

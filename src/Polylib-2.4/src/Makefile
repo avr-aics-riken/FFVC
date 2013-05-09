@@ -104,4 +104,4 @@ depend		 : $(HDRS)
 -include depend.inc
 
 clean:
-	rm -f $(SNG_TARGET) $(MPI_TARGET) $(GFX_OBJS) $(MPI_OBJS) $(UTIL_OBJS)
+	$(RM) $(SNG_TARGET) $(MPI_TARGET) $(GFX_OBJS) $(MPI_OBJS) $(UTIL_OBJS)

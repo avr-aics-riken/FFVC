@@ -75,11 +75,10 @@ all:
 	cd $(POLYLIB_DIR)/src; \
 	make \
 		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
-		MPI_DIR='$(MPI_DIR)' \
-		TP_DIR='$(TP_DIR)' \
 		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
 	)
 
@@ -87,6 +86,7 @@ all:
 	cd $(CUTLIB_DIR)/src; \
 	make \
 		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
@@ -98,10 +98,10 @@ all:
 	cd $(PMLIB_DIR)/src; \
 	make \
 		CXX='$(CXX)' \
+		CXXFLAGS='$(CXXFLAGS)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
-		MPI_DIR='$(MPI_DIR)' \
 		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
 	)
 
@@ -115,7 +115,6 @@ all:
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
-		MPI_DIR='$(MPI_DIR)' \
 		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
 	)
 

@@ -68,22 +68,6 @@ DEFINES += -DIGNORE_STL_NORMAL
 
 POLYLIB_FLAGS = -I../$(POLYLIB_DIR)/include -I$(TP_DIR)/include
 
-###########################################################################
-# INTEL
-
-#CXXFLAGS = -g -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
-CXXFLAGS = -O3 -Wall -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
-
-###########################################################################
-# FX10/K
-
-#CXXFLAGS = -Kfast,ocl,preex,simd=2 -I../include  $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
-
-
-###########################################################################
-# BG/P
-
-#CXXFLAGS = -O3 -qarch=450d -qtune=450 -qsmp=omp -I../include $(POLYLIB_FLAGS) $(OCTREE_FLAGS) $(DEFINES)
 
 ###########################################################################
 
@@ -93,18 +77,18 @@ $(CUTLIB): $(OBJS)
 	$(RANLIB) $@
 
 .cpp.o:
-	$(CXX) $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -I../include $(POLYLIB_FLAGS) -c $<
 
 clean:
-	rm -rf *.o $(CUTLIB)
+	$(RM) *.o $(CUTLIB)
 
 depend:
 	makedepend -I. -I../include -Y \
-  Cutlib.cpp \
-  CutlibCore.cpp \
-  CutUtil.cpp \
-  CutTriangle.cpp \
-  CutBoundary.cpp
+	Cutlib.cpp \
+	CutlibCore.cpp \
+	CutUtil.cpp \
+	CutTriangle.cpp \
+	CutBoundary.cpp
   
 # DO NOT DELETE
 

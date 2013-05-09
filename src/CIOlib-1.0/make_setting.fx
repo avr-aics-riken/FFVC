@@ -29,4 +29,4 @@ FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,op
 F90         = mpifrtpx
 F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
 LDFLAGS     = --linkfortran
-UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
+UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include

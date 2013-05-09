@@ -40,7 +40,7 @@ all:
 	cd src; \
 	make \
 		CXX='$(CXX)' \
-    CXXFLAGS='$(CXXFLAGS)' \
+		CXXFLAGS='$(CXXFLAGS)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \

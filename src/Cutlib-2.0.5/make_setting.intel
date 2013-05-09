@@ -1,13 +1,13 @@
 ###################################################################
 #
-# Polylib - Polygon Management library
+# Cutlib - Cut Information Library
 #
-# Copyright (c) 2013 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2010-2013 Advanced Institute for Computational Science, RIKEN.
 # All right reserved.
 #
 ###################################################################
 
-#  If Polylib is placed inside the directory of FFVC solver, this make_setting is ignored.
+#  If Cutlib is placed inside the directory of FFVC solver, this make_setting is ignored.
 
 
 ########################
@@ -17,9 +17,8 @@
 AR          = ar cru
 RANLIB      = ranlib
 RM          = \rm -f
-MPI_DIR	    = /opt/openmpi
 TP_DIR      = /usr/local/TextParser
 OMP_FLAGS   =
 CXX         = icpc
-CXXFLAGS    = -O3 $(OMP_FLAGS) -Wall -fno-strict-aliasing
-UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include
+CXXFLAGS    = -O3 -Wall $(OMP_FLAGS)
+POLYLIB_DIR = ../Polylib-2.4

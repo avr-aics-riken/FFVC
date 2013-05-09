@@ -22,4 +22,4 @@ TP_DIR      = /usr/local/TextParser
 OMP_FLAGS   =
 CXX         = mpiFCCpx
 CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
-UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include -I../include
+UDEF_INC_PATH = -I$(TP_DIR)/include -I$(MPI_DIR)/include

@@ -22,7 +22,7 @@ $(PMLIB): $(OBJS)
 	$(CXX) $(CXXFLAGS) -I../include $(UDEF_INC_PATH) -c $<
 
 clean:
-	rm -rf *.o $(PMLIB)
+	$(RM) *.o $(PMLIB)
 
 depend:
 	makedepend -I. -I../include -Y PerfWatch.cpp PerfMonitor.cpp
