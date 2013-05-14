@@ -70,13 +70,7 @@ void IP_PPLT2D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, RE
   }
   
   // 2D
-  if (mode != dim_2d)
-  {
-    Hostonly_ {
-      Hostonly_ printf("\tError : PPLT2D class is designed for 2 Dimensional\n");
-      Exit(0);
-    }
-  }
+  mode = dim_2d;
   
   // 領域アスペクト比のチェック
   if ( sz[0] != sz[1]*2 )
