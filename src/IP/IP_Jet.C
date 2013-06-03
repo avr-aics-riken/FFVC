@@ -329,7 +329,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
 
   
   // 2D or 3D mode
-  label="/Parameter/IntrinsicExample/Mode";
+  label="/Parameter/IntrinsicExample/Dimension";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
