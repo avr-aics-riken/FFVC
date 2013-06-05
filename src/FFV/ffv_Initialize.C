@@ -2273,12 +2273,14 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
     Hostonly_ cout << "\tNeither GlobalVoxel nor GlobalPitch is specified. You need to choose either parameter.\n" << endl;
     Exit(0);
   }
+  /* >> 20130606 コメントアウト
   else if ( g_flag && p_flag ) // 両方が指定されている
   {
     Hostonly_ cout << "\tBoth GlobalVoxel and GlobalPitch is specified. You need to choose either parameter." << endl;
     Exit(0);
   }
-  else if ( !g_flag && p_flag ) // pitchのみ
+   */
+  else if ( !g_flag && p_flag ) // pitchのみ >> @todo 機能するかチェックすること 20130606
   {
     if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
     {
