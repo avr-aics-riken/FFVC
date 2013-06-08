@@ -403,7 +403,7 @@ void FFV::Restart(FILE* fp)
     
   }
   
-  else if ( C.Start == restart) // 同一解像度のリスタート
+  else if ( DFI_IN_PRS->m_start_type == restart) // 同一解像度のリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
@@ -412,7 +412,7 @@ void FFV::Restart(FILE* fp)
     Restart_std(fp, flop_task); 
   }
   
-  else if ( C.Start == restart_refinement) // 粗い格子からのリスタート
+  else if ( DFI_IN_PRS->m_start_type == restart_refinement) // 粗い格子からのリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
@@ -426,7 +426,7 @@ void FFV::Restart(FILE* fp)
     Hostonly_ fprintf(fp,"\n");
   }
   
-  else if ( C.Start == restart_different_proc) // 異なる並列数でのリスタート
+  else if ( DFI_IN_PRS->m_start_type == restart_different_proc) // 異なる並列数でのリスタート
   {
     Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
     Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
@@ -538,12 +538,22 @@ void FFV::Restart_std(FILE* fp, double& flop)
   
   // 自身の領域終点インデックス
   int tail[3];
-  for(int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
+  for (int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
   
-  REAL_TYPE r_time;
-  DFI_IN_PRS->ReadData(C.Restart_step, guide, G_size, (int *)m_div, head, tail, d_p, r_time);
+  double r_time;
+  DFI_IN_PRS->ReadData(C.Restart_step,
+                       guide,
+                       G_size,
+                       (int *)m_div,
+                       head,
+                       tail,
+                       d_p,
+                       r_time,
+                       true,
+                       i_dummy,
+                       f_dummy);
   if ( d_p == NULL ) Exit(0);
-  time = (double)r_time;
+  time = r_time;
   step = (unsigned)C.Restart_step;
   
   // ここでタイムスタンプを得る
@@ -554,7 +564,17 @@ void FFV::Restart_std(FILE* fp, double& flop)
   // v00[]に値をセット
   copyV00fromRF(Session_StartTime);
   
-  DFI_IN_VEL->ReadData(C.Restart_step, guide, G_size, (int *)m_div, head, tail, d_wo, r_time);
+  DFI_IN_VEL->ReadData(C.Restart_step,
+                       guide,
+                       G_size,
+                       (int *)m_div,
+                       head,
+                       tail,
+                       d_wo,
+                       r_time,
+                       true,
+                       i_dummy,
+                       f_dummy);
   if( d_wo == NULL ) Exit(0);
   
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? refV : 1.0;
@@ -565,9 +585,9 @@ void FFV::Restart_std(FILE* fp, double& flop)
   u0[2] = v00[2];
   u0[3] = v00[3];
   
-  fb_shift_refv_in_(d_v, size, &guide, d_wo, u0, &scale, &refv, &flop);
+  fb_vin_nijk_(d_v, size, &guide, d_wo, u0, &scale, &refv, &flop);
   
-  time = (double)r_time;
+  time = r_time;
   step = (unsigned)C.Restart_step;
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -586,6 +606,7 @@ void FFV::Restart_std(FILE* fp, double& flop)
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
+    /*
     tmp = DFI.GenerateFileName(C.f_Temperature, fmt, C.Restart_step, myRank, mio);
     fname = dtmp + tmp;
     
@@ -595,6 +616,24 @@ void FFV::Restart_std(FILE* fp, double& flop)
       Exit(0);
     }
     F.readTemperature(fp, fname, size, guide, d_t, step, time, Dmode, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    */
+    
+    DFI_IN_TEMP->ReadData(C.Restart_step,
+                          guide,
+                          G_size,
+                          (int *)m_div,
+                          head,
+                          tail,
+                          d_t,
+                          r_time,
+                          true,
+                          i_dummy,
+                          f_dummy);
+    if( d_t == NULL ) Exit(0);
+    
+    time = r_time;
+    step = (unsigned)C.Restart_step;
+    
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     
@@ -670,6 +709,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
+  /*
   tmp = DFI.GenerateFileName(C.f_AvrPressure, fmt, C.Restart_stepAvr, myRank, mio);
   fname = dtmp + tmp;
   
@@ -679,6 +719,28 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
     Exit(0);
   }
   F.readPressure(fp, fname, size, guide, d_ap, step, time, C.Unit.File, bp, C.RefDensity, C.RefVelocity, flop, gs, false, step_avr, time_avr);
+   */
+  
+  // 分割数
+  const int* m_div = paraMngr->GetDivNum();
+  
+  //自身の領域終点インデックス
+  int tail[3];
+  for (int i=0; i<3; i++) tail[i] = head[i]+size[i]-1;
+  
+  double r_time;
+  DFI_IN_PRSA->ReadData(C.Restart_step,
+                        guide,
+                        G_size,
+                        (int *)m_div,
+                        head,
+                        tail,
+                        d_ap,
+                        r_time,
+                        false,
+                        step_avr,
+                        time_avr);
+  if( d_ap == NULL ) Exit(0);
   
   if ( (step != Session_StartStep) || (time != Session_StartTime) )
   {
@@ -692,6 +754,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   
   
   // Velocity
+  /*
   tmp = DFI.GenerateFileName(C.f_AvrVelocity, fmt, C.Restart_stepAvr, myRank, mio);
   fname = dtmp + tmp;
   
@@ -701,6 +764,32 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
     Exit(0);
   }
   F.readVelocity(fp, fname, size, guide, d_av, d_wo, step, time, v00, C.Unit.File, C.RefVelocity, flop, gs, false, step_avr, time_avr);
+  */
+  
+  DFI_IN_VELA->ReadData(C.Restart_step,
+                        guide,
+                        G_size,
+                        (int *)m_div,
+                        head,
+                        tail,
+                        d_wo,
+                        r_time,
+                        false,
+                        step_avr,
+                        time_avr);
+  if( d_wo == NULL ) Exit(0);
+  
+  int Dmode = C.Unit.File;
+  unsigned i_dummy=0;
+  REAL_TYPE refv = (Dmode == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  REAL_TYPE scale = (false == true) ? 1.0 : (REAL_TYPE)step_avr;
+  REAL_TYPE u0[4];
+  u0[0] = v00[0];
+  u0[1] = v00[1];
+  u0[2] = v00[2];
+  u0[3] = v00[3];
+  
+  fb_vin_nijk_(d_av, size, &guide, d_wo, u0, &scale, &refv, &flop);
   
   if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
   {
@@ -710,10 +799,12 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   }
   
   
+  // Temperature
   if ( C.isHeatProblem() )
   {
     REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
     
+    /*
     tmp = DFI.GenerateFileName(C.f_AvrTemperature, fmt, C.Restart_stepAvr, myRank, mio);
     fname = dtmp + tmp;
     
@@ -723,6 +814,20 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
       Exit(0);
     }
     F.readTemperature(fp, fname, size, guide, d_at, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, false, step_avr, time_avr);
+     */
+    
+    DFI_IN_TEMPA->ReadData(C.Restart_step,
+                           guide,
+                           G_size,
+                           (int *)m_div,
+                           head,
+                           tail,
+                           d_at,
+                           r_time,
+                           false,
+                           step_avr,
+                           time_avr);
+    if ( d_at == NULL ) Exit(0);
     
     if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) )
     {

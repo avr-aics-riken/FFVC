@@ -240,7 +240,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   
   // Velocity
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
   if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
@@ -357,7 +357,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
-    fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
@@ -634,7 +634,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   // Velocity
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
   
   fname = "vel_" + tmp;
   FP3DW->setFileName((dtmp+fname).c_str());
@@ -767,7 +767,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
-    fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
     
     fname = "vrt_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());

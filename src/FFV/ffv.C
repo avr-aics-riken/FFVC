@@ -254,6 +254,8 @@ void FFV::AverageOutput(double& flop)
   REAL_TYPE minmax[2] = {f_min, f_max};
   
   tmp = DFI.GenerateFileName(C.f_AvrPressure, C.file_fmt_ext, m_step, myRank, mio); // e.g., prsa_0000000000_id000000.sph
+  
+  /* old implementation
   F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, timeAvr);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrPressure,
                                     C.FIO.OutDirPath,
@@ -268,12 +270,35 @@ void FFV::AverageOutput(double& flop)
                                     false, // 平均値
                                     stepAvr,
                                     timeAvr) ) Exit(0);
+  */
+  int interval = 0;
+  interval = C.Interval[Interval_Manager::tg_average].getIntervalStep();
+  
+  DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
+                          guide,    // 仮想セル数
+                          &m_time,  // 出力時刻
+                          d_ws,     // フィールドデータポインタ
+                          minmax,   // 最小値と最大値
+                          interval, // 出力間隔
+                          false,    // ?
+                          stepAvr,  // 平均をとったステップ数
+                          timeAvr,  // 平均をとった時刻
+                          false);   // 強制出力指示 trueのとき？
   
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  fb_shift_refv_out_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop);
   
-  fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  if ( DFI_OUT_VELA->DFI_Finfo.ArrayShape == "nijk" )
+  {
+    fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 配列並びを変換
+    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  }
+  else
+  {
+    fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 並び変換なし
+    fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  }
+  
   
   if ( numProc > 1 )
   {
@@ -288,6 +313,8 @@ void FFV::AverageOutput(double& flop)
   minmax[1] = f_max;
   
   tmp = DFI.GenerateFileName(C.f_AvrVelocity, C.file_fmt_ext, m_step, myRank, mio);
+  
+  /*
   F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, timeAvr);
   Hostonly_ if ( !DFI.WriteDFIindex(C.f_AvrVelocity,
                                     C.FIO.OutDirPath,
@@ -302,6 +329,19 @@ void FFV::AverageOutput(double& flop)
                                     false,
                                     stepAvr,
                                     timeAvr) ) Exit(0);
+   */
+
+  DFI_OUT_VELA->WriteData(m_step,
+                          guide,
+                          &m_time,
+                          d_wo,
+                          minmax,
+                          interval,
+                          false,
+                          stepAvr,
+                          timeAvr,
+                          false);
+  
   
   // Temperature
   if( C.isHeatProblem() )
@@ -331,6 +371,8 @@ void FFV::AverageOutput(double& flop)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_AvrTemperature, C.file_fmt_ext, m_step, myRank, mio);
+    
+    /*
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out, false, stepAvr, timeAvr);
     Hostonly_ if( !DFI.WriteDFIindex(C.f_AvrTemperature,
                                      C.FIO.OutDirPath,
@@ -345,6 +387,17 @@ void FFV::AverageOutput(double& flop)
                                      false,
                                      stepAvr,
                                      timeAvr) ) Exit(0);
+     */
+    DFI_OUT_TEMPA->WriteData(m_step,
+                             guide,
+                             &m_time,
+                             d_ws,
+                             minmax,
+                             interval,
+                             false,
+                             stepAvr,
+                             timeAvr,
+                             false);
   }
 }
 
@@ -557,6 +610,11 @@ void FFV::FileOutput(double& flop, const bool refinement)
   REAL_TYPE f_min, f_max, min_tmp, max_tmp;
   REAL_TYPE minmax[2];
   
+  // 出力間隔
+  int interval = 0;
+  interval = C.Interval[Interval_Manager::tg_instant].getIntervalStep();
+  
+  
   // Divergence デバッグ用なので無次元のみ
   if ( C.FIO.Div_Debug == ON ) 
   {
@@ -621,13 +679,32 @@ void FFV::FileOutput(double& flop, const bool refinement)
   prs_restart = ( !refinement ) ? C.f_Pressure : "prs_restart_";
   
   tmp = DFI.GenerateFileName(prs_restart, C.file_fmt_ext, m_step, myRank, mio);
-  DFI_OUT_PRS->WriteData(m_step, guide, m_time, d_ws, minmax);
+
+  DFI_OUT_PRS->WriteData(m_step,
+                         guide,
+                         &m_time,
+                         d_ws,
+                         minmax,
+                         interval,
+                         true,
+                         0,
+                         0.0,
+                         true);
   
 
   // Velocity
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  fb_shift_refv_out_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
-  fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  
+  if( DFI_OUT_VEL->DFI_Finfo.ArrayShape == "nijk" )
+  {
+    fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  }
+  else
+  {
+    fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+    fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+  }
   
   if ( numProc > 1 )
   {
@@ -644,7 +721,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
   vel_restart = ( !refinement ) ? C.f_Velocity : "vel_restart_";
 
   tmp = DFI.GenerateFileName(vel_restart, C.file_fmt_ext, m_step, myRank, mio);
-  DFI_OUT_VEL->WriteData(m_step, guide, m_time, d_wo, minmax);
+
+  DFI_OUT_VEL->WriteData(m_step,
+                         guide,
+                         &m_time,
+                         d_wo,
+                         minmax,
+                         interval,
+                         true,
+                         0,
+                         0.0,
+                         true);
   
   
   // Tempearture
@@ -678,8 +765,9 @@ void FFV::FileOutput(double& flop, const bool refinement)
     temp_restart = ( !refinement ) ? C.f_Temperature : "temp_restart_";
     
     tmp = DFI.GenerateFileName(temp_restart, C.file_fmt_ext, m_step, myRank, mio);
-    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
+    /*
+    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Temperature,
                                       C.FIO.OutDirPath,
                                       C.file_fmt_ext,
@@ -690,6 +778,18 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
+     */
+    DFI_OUT_TEMP->WriteData(m_step,
+                            guide,
+                            &m_time,
+                            d_ws,
+                            minmax,
+                            interval,
+                            true,
+                            0,
+                            0.0,
+                            true);
+    
   }
 
   
@@ -724,8 +824,8 @@ void FFV::FileOutput(double& flop, const bool refinement)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_TotalP, C.file_fmt_ext, m_step, myRank, mio);
+    /*
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
-    
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_TotalP,
                                       C.FIO.OutDirPath,
                                       C.file_fmt_ext,
@@ -736,6 +836,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
+     */
+    DFI_OUT_TP->WriteData(m_step,
+                          guide,
+                          &m_time,
+                          d_ws,
+                          minmax,
+                          interval,
+                          true,
+                          0,
+                          0.0,
+                          true);
   }
   
   
@@ -748,8 +859,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
-    fb_shift_refv_out_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
-    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    
+    if ( DFI_OUT_VRT->DFI_Finfo.ArrayShape == "nijk" )
+    {
+      fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+      fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    }
+    else
+    {
+      fb_vout_ijkn_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+      fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    }
     
     if ( numProc > 1 )
     {
@@ -763,8 +883,9 @@ void FFV::FileOutput(double& flop, const bool refinement)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_Vorticity, C.file_fmt_ext, m_step, myRank, mio);
-    F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
     
+    /*
+    F.writeVector(dtmp+tmp, size, guide, d_wo, m_step, m_time, m_org, m_pit, gc_out, 1);
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Vorticity,
                                       C.FIO.OutDirPath,
                                       C.file_fmt_ext,
@@ -775,6 +896,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       3,
                                       minmax,
                                       mio) ) Exit(0);
+     */
+    DFI_OUT_VRT->WriteData(m_step,
+                           guide,
+                           &m_time,
+                           d_wo,
+                           minmax,
+                           interval,
+                           true,
+                           0,
+                           0.0,
+                           true);
   }
   
   
@@ -800,8 +932,8 @@ void FFV::FileOutput(double& flop, const bool refinement)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_I2VGT, C.file_fmt_ext, m_step, myRank, mio);
+    /*
     F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
-    
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_I2VGT,
                                       C.FIO.OutDirPath,
                                       C.file_fmt_ext,
@@ -812,6 +944,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
+     */
+    DFI_OUT_I2VGT->WriteData(m_step,
+                             guide,
+                             &m_time,
+                             d_ws,
+                             minmax,
+                             interval,
+                             true,
+                             0,
+                             0.0,
+                             true);
   }
   
   
@@ -837,8 +980,9 @@ void FFV::FileOutput(double& flop, const bool refinement)
     minmax[1] = f_max;
     
     tmp = DFI.GenerateFileName(C.f_Helicity, C.file_fmt_ext, m_step, myRank, mio);
-    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     
+    /*
+    F.writeScalar(dtmp+tmp, size, guide, d_ws, m_step, m_time, m_org, m_pit, gc_out);
     Hostonly_ if ( !DFI.WriteDFIindex(C.f_Helicity,
                                       C.FIO.OutDirPath,
                                       C.file_fmt_ext,
@@ -849,14 +993,33 @@ void FFV::FileOutput(double& flop, const bool refinement)
                                       1,
                                       minmax,
                                       mio) ) Exit(0);
+     */
+    DFI_OUT_HLT->WriteData(m_step,
+                           guide,
+                           &m_time,
+                           d_ws,
+                           minmax,
+                           interval,
+                           true,
+                           0,
+                           0.0,
+                           true);
   }
 
   
   // Face Velocity
   if (C.Mode.FaceV == ON )
   {
-    fb_shift_refv_out_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
+    {
+      fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    }
+    else
+    {
+      fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    }
     
     if ( numProc > 1 )
     {
@@ -873,8 +1036,17 @@ void FFV::FileOutput(double& flop, const bool refinement)
     fvel_restart = ( !refinement ) ? C.f_Fvelocity : "fvel_restart_";
     
     tmp = DFI.GenerateFileName(fvel_restart, C.file_fmt_ext, m_step, myRank, mio);
-    DFI_OUT_FVEL->WriteData(m_step, guide, m_time, d_wo, minmax);
-    
+
+    DFI_OUT_FVEL->WriteData(m_step,
+                            guide,
+                            &m_time,
+                            d_wo,
+                            minmax,
+                            interval,
+                            true,
+                            0,
+                            0.0,
+                            true);
   }
   
   

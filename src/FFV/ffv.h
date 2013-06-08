@@ -264,15 +264,31 @@ private:
   FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
+
   
-  cio_DFI CIO;              ///< CIO クラス
-  cio_DFI *DFI_IN_PRS;      ///< CIO Prs FileInPut
-  cio_DFI *DFI_IN_VEL;      ///< CIO Vel FileInPut
-  cio_DFI *DFI_IN_FVEL;     ///< CIO FVel FileInPut
-  cio_DFI *DFI_OUT_PRS;     ///< CIO Prs FileOutPut
-  cio_DFI *DFI_OUT_VEL;     ///< CIO Vel FileOutPut
-  cio_DFI *DFI_OUT_FVEL;    ///< CIO Fvel FileOutPut
+  // pointers to CIO class
   
+  // InFile
+  cio_DFI *DFI_IN_PRS;      ///< Pressure
+  cio_DFI *DFI_IN_VEL;      ///< Velocity
+  cio_DFI *DFI_IN_FVEL;     ///< Face velocity
+  cio_DFI *DFI_IN_TEMP;     ///< Temperature
+  cio_DFI *DFI_IN_PRSA;     ///< Averaged pressure
+  cio_DFI *DFI_IN_VELA;     ///< Averaged velocity
+  cio_DFI *DFI_IN_TEMPA;    ///< Averaged temperature
+  
+  // OutFile
+  cio_DFI *DFI_OUT_PRS;     ///< Pressure
+  cio_DFI *DFI_OUT_VEL;     ///< Velocity
+  cio_DFI *DFI_OUT_FVEL;    ///< Face velocity
+  cio_DFI *DFI_OUT_TEMP;    ///< Temperature
+  cio_DFI *DFI_OUT_PRSA;    ///< Averaged Pressure
+  cio_DFI *DFI_OUT_VELA;    ///< Averaged velocity
+  cio_DFI *DFI_OUT_TEMPA;   ///< Averaged temperature
+  cio_DFI *DFI_OUT_TP;      ///< Total Pressure
+  cio_DFI *DFI_OUT_VRT;     ///< Vorticity
+  cio_DFI *DFI_OUT_I2VGT;   ///< 2nd Invariant of Velocity Gradient Tensor
+  cio_DFI *DFI_OUT_HLT;     ///< Helicity
   
 public:
   /** コンストラクタ */

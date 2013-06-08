@@ -23,19 +23,20 @@
 
 #ifdef _WIN32
 // FB_util.f90
-#define fb_average_s_         FB_AVERAGE_S
-#define fb_average_v_         FB_AVERAGE_V
-#define fb_delta_s_           FB_DELTA_S
-#define fb_delta_v_           FB_DELTA_V
-#define fb_interp_coarse_s_   FB_INTERP_COARSE_S
-#define fb_interp_coarse_v_   FB_INTERP_COARSE_V
-#define fb_limit_scalar_      FB_LIMIT_SCALAR
-#define fb_minmax_s_          FB_MINMAX_S
-#define fb_minmax_v_          FB_MINMAX_V
-#define fb_set_vector_        FB_SET_VECTOR
-#define fb_shift_refv_in_     FB_SHIFT_REFV_IN
-#define fb_shift_refv_out_    FB_SHIFT_REFV_OUT
-#define fb_totalp_            FB_TOTALP
+#define fb_average_s_            FB_AVERAGE_S
+#define fb_average_v_            FB_AVERAGE_V
+#define fb_delta_s_              FB_DELTA_S
+#define fb_delta_v_              FB_DELTA_V
+#define fb_interp_coarse_s_      FB_INTERP_COARSE_S
+#define fb_interp_coarse_v_      FB_INTERP_COARSE_V
+#define fb_limit_scalar_         FB_LIMIT_SCALAR
+#define fb_minmax_s_             FB_MINMAX_S
+#define fb_minmax_v_             FB_MINMAX_V
+#define fb_set_vector_           FB_SET_VECTOR
+#define fb_vin_nijk_             FB_VIN_NIJK
+#define fb_vout_nijk_            FB_VOUT_NIJK
+#define fb_vout_ijkn_            FB_VOUT_IJKN
+#define fb_totalp_               FB_TOTALP
 
 #endif // _WIN32
 
@@ -161,7 +162,7 @@ extern "C" {
                            REAL_TYPE* val,
                            int* bv);
   
-  void fb_shift_refv_in_  (REAL_TYPE* vo,
+  void fb_vin_nijk_       (REAL_TYPE* vo,
                            int* sz,
                            int* g,
                            REAL_TYPE* vi,
@@ -170,7 +171,7 @@ extern "C" {
                            REAL_TYPE* refv, 
                            double* flop);
   
-  void fb_shift_refv_out_ (REAL_TYPE* vout, 
+  void fb_vout_nijk_      (REAL_TYPE* vout,
                            REAL_TYPE* vin, 
                            int* sz, 
                            int* g, 

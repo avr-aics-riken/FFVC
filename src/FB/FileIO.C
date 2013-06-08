@@ -360,7 +360,7 @@ void FileIO::readVelocity(FILE* fp,
   u0[2] = v00[2];
   u0[3] = v00[3];
 
-  fb_shift_refv_in_(v, sz, &gc, v_buf, u0, &scale, &refv, &flop);
+  fb_vin_nijk_(v, sz, &gc, v_buf, u0, &scale, &refv, &flop);
 
   if ( mode )
   {

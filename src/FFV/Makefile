@@ -40,11 +40,11 @@ UDEF_INC_PATH=-I$(CUTLIB_DIR)/include \
               -I$(PMLIB_DIR)/include \
               -I$(TP_DIR)/include \
               -I$(CPM_DIR)/include \
-              -I$(CIOLIB_DIR)/include \
               -I../FB \
               -I../IP \
               -I../F_CORE \
               -I../PLOT3D \
+              `$(CIO_DIR)/bin/cio-config --cflags` \
               -I$(MPI_DIR)/include
               
 UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
@@ -52,17 +52,17 @@ UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
               -L$(PMLIB_DIR)/lib \
               -L$(TP_DIR)/lib \
               -L$(CPM_DIR)/lib \
-              -L$(CIOLIB_DIR)/lib \
               -L../FB \
               -L../IP \
               -L../F_CORE \
               -L../PLOT3D \
+              `$(CIO_DIR)/bin/cio-config --libs` \
               -L$(MPI_DIR)/lib
               
-UDEF_LIBS = -lmpi -lCIO -lPLOT3D -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
+UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
             $(UDEF_LIBS_SPEC)
 
-UDEF_LIBS_UTIL = -lmpi -lCIO -lPLOT3D -lFB -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
+UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
 
 
 
@@ -99,19 +99,6 @@ all:
 	make \
 		CXX='$(CXX)' \
 		CXXFLAGS='$(CXXFLAGS)' \
-		AR='$(AR)' \
-		RANLIB='$(RANLIB)' \
-		RM='$(RM)' \
-		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
-	)
-
-	( \
-	cd $(CIOLIB_DIR)/src; \
-	make \
-		CXX='$(CXX)' \
-		CXXFLAGS='$(CXXFLAGS)' \
-		F90='$(F90)' \
-		F90FLAGS='$(F90FLAGS)' \
 		AR='$(AR)' \
 		RANLIB='$(RANLIB)' \
 		RM='$(RM)' \
@@ -248,7 +235,6 @@ mostlyclean: clean
 	(cd $(POLYLIB_DIR)/src; make clean)
 	(cd $(CUTLIB_DIR)/src; make clean)
 	(cd $(PMLIB_DIR)/src; make clean)
-	(cd $(CIOLIB_DIR)/src; make clean)
 
 allclean: mostlyclean
 	(cd ../Util_Combsph; make -f MakeCOMB clean)
@@ -258,7 +244,6 @@ depend:
 	(cd $(POLYLIB_DIR)/src; make depend)
 	(cd $(CUTLIB_DIR)/src; make depend)
 	(cd $(PMLIB_DIR)/src; make depend)
-	(cd $(CIOLIB_DIR)/src; make depend)
 	(cd ../IP; make depend)
 	(cd ../FB; make depend)
 	(cd ../F_CORE; make depend)

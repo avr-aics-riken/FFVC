@@ -922,7 +922,7 @@ void Control::get_FileIO()
   
   
   // ファイルフォーマット
-  label = "/Steer/FileIO/FileFormat";
+  label = "/Steer/FileIO/Output/FileFormat";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -993,8 +993,7 @@ void Control::get_FileIO()
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
+    ; // 入力なしでも可
   }
   // 指定が無ければ，空のまま
   if ( !str.empty() )
@@ -1004,7 +1003,7 @@ void Control::get_FileIO()
   
   
   // Output Directory_Path
-  label = "/Steer/FileIO/Directory/OutputPath";
+  label = "/Steer/FileIO/Output/DirectoryPath";
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
@@ -1019,7 +1018,7 @@ void Control::get_FileIO()
   
   
   // TimeSlice option
-  label = "/Steer/FileIO/Directory/TimeSlice";
+  label = "/Steer/FileIO/Output/TimeSlice";
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
@@ -2370,34 +2369,35 @@ void Control::get_start_condition()
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    
-    f_dfi_prfx_prs = str.c_str();
+    else
+    {
+      f_dfi_prfx_prs = str.c_str();
+    }
     
     
     label="/Steer/StartCondition/Refinement/PrefixOfVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    
-    f_dfi_prfx_vel = str.c_str();
-    
+    else
+    {
+      f_dfi_prfx_vel = str.c_str();
+    }
     
     label="/Steer/StartCondition/Refinement/PrefixOfFvelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    
-    f_dfi_prfx_fvel = str.c_str();
-    
+    else
+    {
+      f_dfi_prfx_fvel = str.c_str();
+    }
     
     if ( isHeatProblem() )
     {
@@ -2405,11 +2405,12 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      
-      f_dfi_prfx_temp = str.c_str();
+      else
+      {
+        f_dfi_prfx_temp = str.c_str();
+      }
     }
     
     // プロセス並列時に分散ファイルを指定した場合
@@ -2419,30 +2420,35 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      f_dfi_prs = str.c_str();
+      else
+      {
+        f_dfi_prs = str.c_str();
+      }
       
       label="/Steer/StartCondition/Restart/Refinement/DFIofVelocity";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      f_dfi_vel = str.c_str();
+      else
+      {
+        f_dfi_vel = str.c_str();
+      }
       
       
       label="/Steer/StartCondition/Restart/Refinement/DFIofFvelocity";
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      f_dfi_fvel = str.c_str();
-      
+      else
+      {
+        f_dfi_fvel = str.c_str();
+      }
       
       if ( isHeatProblem() )
       {
@@ -2450,17 +2456,18 @@ void Control::get_start_condition()
         
         if ( !(tpCntl->GetValue(label, &str )) )
         {
-          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-          Exit(0);
+          ;
         }
-        f_dfi_temp = str.c_str();
-        
+        else
+        {
+          f_dfi_temp = str.c_str();
+        }
       }
     }
     
   }
-
-
+  
+  
   if ( Start == restart_different_proc || Start == restart )
   {
     
@@ -2468,8 +2475,7 @@ void Control::get_start_condition()
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
     else
     {
@@ -2481,40 +2487,40 @@ void Control::get_start_condition()
         Exit(0);
       }
     }
-
+    
     
     label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfDir";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    
-    f_different_nproc_dir_prefix = str.c_str();
-    
+    else
+    {
+      f_different_nproc_dir_prefix = str.c_str();
+    }
     
     label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfPressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    
-    f_different_nproc_pressure = str.c_str();
-    
+    else
+    {
+      f_different_nproc_pressure = str.c_str();
+    }
     
     label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    
-    f_different_nproc_velocity = str.c_str();
-    
+    else
+    {
+      f_different_nproc_velocity = str.c_str();
+    }
     
     if ( Mode.FaceV == ON )
     {
@@ -2522,11 +2528,12 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      
-      f_different_nproc_fvelocity = str.c_str();
+      else
+      {
+        f_different_nproc_fvelocity = str.c_str();
+      }
     }
     
     
@@ -2536,33 +2543,37 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      
-      f_different_nproc_temperature = str.c_str();
+      else
+      {
+        f_different_nproc_temperature = str.c_str();
+      }
     }
     
     // プロセス並列時に分散ファイルを指定した場合
-
+    
     label="/Steer/StartCondition/Restart/DifferentProcess/DFIofPressure";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    f_dfi_prs = str.c_str();
+    else
+    {
+      f_dfi_prs = str.c_str();
+    }
     
     label="/Steer/StartCondition/Restart/DifferentProcess/DFIofVelocity";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      ;
     }
-    f_dfi_vel = str.c_str();
-    
+    else
+    {
+      f_dfi_vel = str.c_str();
+    }
     
     if ( Mode.FaceV == ON )
     {
@@ -2570,10 +2581,12 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        ;
       }
-      f_dfi_fvel = str.c_str();
+      else
+      {
+        f_dfi_fvel = str.c_str();
+      }
     }
     
     
@@ -2583,13 +2596,58 @@ void Control::get_start_condition()
       
       if ( !(tpCntl->GetValue(label, &str )) )
       {
+        ;
+      }
+      else
+      {
+        f_dfi_temp = str.c_str();
+      }
+    }
+  }
+
+  
+  if ( Start != initial_start )
+  {
+    label="/Steer/StartCondition/Restart/DFIfiles/Pressure";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    f_dfi_prs = str.c_str();
+    
+    label="/Steer/StartCondition/Restart/DFIfiles/Velocity";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    f_dfi_vel = str.c_str();
+    
+    label="/Steer/StartCondition/Restart/DFIfiles/Fvelocity";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    f_dfi_fvel = str.c_str();
+    
+    if ( isHeatProblem() )
+    {
+      label="/Steer/StartCondition/Restart/DFIfiles/Temperature";
+      
+      if ( !(tpCntl->GetValue(label, &str )) )
+      {
         Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
       }
       f_dfi_temp = str.c_str();
     }
   }
-
+  
 
   // 初期条件
   if ( Start == initial_start )
