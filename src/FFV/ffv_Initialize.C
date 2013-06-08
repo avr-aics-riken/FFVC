@@ -949,7 +949,7 @@ int FFV::Initialize(int argc, char **argv)
                                 head,
                                 cio_tail,
                                 G_origin,
-                                m_pit,
+                                cio_pit,
                                 hostname,
                                 true);
   

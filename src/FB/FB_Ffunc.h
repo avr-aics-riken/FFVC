@@ -181,6 +181,15 @@ extern "C" {
                            double* flop);
 
   
+  void fb_vout_ijkn_      (REAL_TYPE* vout,
+                           REAL_TYPE* vin,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* scale,
+                           REAL_TYPE* unit_v,
+                           double* flop);
+  
   void fb_totalp_         (REAL_TYPE* tp, 
                            int* sz, 
                            int* g, 
