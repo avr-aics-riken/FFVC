@@ -2280,6 +2280,47 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
     Exit(0);
   }
    */
+  else if ( g_flag ) // G_voxelの指定がある >> G_voxelが優先　&& !p_flag
+  {
+    if ( g_flag )
+    {
+      if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
+      {
+        
+        pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
+        pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
+        pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
+        
+        // 等方性チェック
+        if ( Ex->mode == Intrinsic::dim_3d )
+        {
+          if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
+          {
+            Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
+            Exit(0);
+          }
+        }
+        else // dim_2d
+        {
+          if ( pitch[0] != pitch[1] )
+          {
+            Hostonly_ printf("\tGlobal Pitch must be same in X-Y direction (%14.6e, %14.6e)\n", pitch[0], pitch[1]);
+            Exit(0);
+          }
+          pitch[2] = pitch[0];
+          G_region[2] = (REAL_TYPE)G_size[2] * pitch[2];
+          G_origin[2] = -0.5 * pitch[2];
+        }
+        
+        
+      }
+      else
+      {
+        Hostonly_ printf("ERROR : in parsing [%s] >> (%d, %d, %d)\n", label.c_str(), G_size[0], G_size[1], G_size[2] );
+        Exit(0);
+      }
+    }
+  }
   else if ( !g_flag && p_flag ) // pitchのみ >> @todo 機能するかチェックすること 20130606
   {
     if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
@@ -2339,47 +2380,6 @@ int FFV::get_DomainInfo(TPControl* tp_dom)
     {
       Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
       Exit(0);
-    }
-  }
-  else if ( g_flag && !p_flag ) // G_voxelのみ
-  {
-    if ( g_flag )
-    {
-      if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
-      {
-        
-        pitch[0] = G_region[0] / (REAL_TYPE)G_size[0];
-        pitch[1] = G_region[1] / (REAL_TYPE)G_size[1];
-        pitch[2] = G_region[2] / (REAL_TYPE)G_size[2];
-        
-        // 等方性チェック
-        if ( Ex->mode == Intrinsic::dim_3d )
-        {
-          if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
-          {
-            Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
-            Exit(0);
-          }
-        }
-        else // dim_2d
-        {
-          if ( pitch[0] != pitch[1] )
-          {
-            Hostonly_ printf("\tGlobal Pitch must be same in X-Y direction (%14.6e, %14.6e)\n", pitch[0], pitch[1]);
-            Exit(0);
-          }
-          pitch[2] = pitch[0];
-          G_region[2] = (REAL_TYPE)G_size[2] * pitch[2];
-          G_origin[2] = -0.5 * pitch[2];
-        }
-        
-
-      }
-      else
-      {
-        Hostonly_ printf("ERROR : in parsing [%s] >> (%d, %d, %d)\n", label.c_str(), G_size[0], G_size[1], G_size[2] );
-        Exit(0);
-      }
     }
   }
   else
