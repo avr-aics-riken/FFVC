@@ -666,14 +666,14 @@ int FFV::Initialize(int argc, char **argv)
   // 分散時のインデクスファイル生成
   setDFI();
   
-  
+
   // 制御インターバルの初期化
   init_Interval();
   
-  
-  // 平均値のロード
-  if ( DFI_IN_PRS->m_start_type == restart && C.Mode.Average == ON )
+
+  if ( (C.Start == restart) && (C.Mode.Average == ON) )
   {
+
     string dfiname = "prsa.dfi";
     DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, dfiname);
     
@@ -697,11 +697,12 @@ int FFV::Initialize(int argc, char **argv)
     TIMING_stop(tm_restart);
   }
   
+
   
   // リスタートの最大値と最小値の表示
   Restart_display_minmax(fp, flop_task);
   
-  
+
   
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ 
@@ -714,6 +715,7 @@ int FFV::Initialize(int argc, char **argv)
   // ドライバ条件のチェック
   BC.checkDriver(fp);
   
+
   
   // 初期条件の条件設定
   setInitialCondition();
@@ -754,6 +756,7 @@ int FFV::Initialize(int argc, char **argv)
     }
     if (C.P3Op.IS_fvbnd == ON) PLT3D.OutputPlot3D_fvbnd();
   }
+  
 
   
   std::string hostname;
@@ -1376,7 +1379,7 @@ int FFV::Initialize(int argc, char **argv)
     DFI_OUT_HLT->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
   }
 
-  
+
   
   // セッションを開始したときに、初期値をファイル出力  リスタートと性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
@@ -1400,7 +1403,6 @@ int FFV::Initialize(int argc, char **argv)
     FileOutput(flop_task, true);
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
   }
-  
 
   
   // SOR2SMA

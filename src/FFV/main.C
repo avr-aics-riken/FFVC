@@ -61,6 +61,9 @@ int main( int argc, char **argv )
     }
   }
   
+  // CIO lib version
+  cio_DFI::VersionInfo(std::cout);
+  
   
   // 引数チェック
   if ( argc != 2 )
