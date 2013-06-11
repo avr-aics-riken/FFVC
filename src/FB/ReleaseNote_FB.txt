@@ -11,7 +11,9 @@ Release Note
 
 #######################################
 
-Ver 1.2.8    9 June 2013
+Ver 1.2.9   11 June 2013
+  - PLOT3Dクラスのコメントアウト　20130611のラベル
+  - FFVCはdfi.C, dfiinfo.Cのビルドは不要だが，ユーティリティのために残す
   - fb_shift_refv_out() >> fb_vout_nijk()
   - fb_shift_refv_in()  >> fb_vin_nijk()
   - fb_vout_ijkn()を追加

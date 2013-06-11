@@ -29,13 +29,12 @@ CXXSRCS = \
   History.C \
   SetBC.C \
   CompoFraction.C \
-  dfi.C \
-  dfiinfo.C \
   DataHolder.C \
   Monitor.C \
   MonCompo.C \
   Sampling.C \
-
+  dfiinfo.C \
+  dfi.C \
 
 
 F90SRCS = \
@@ -100,8 +99,6 @@ SetBC.o: Medium.h Component.h FBUtility.h Interval_Mngr.h TPControl.h
 SetBC.o: Intrinsic.h vec3.h vec3_func.h vec3f_func.h
 CompoFraction.o: CompoFraction.h FB_Define.h mydebug.h vec3.h vec3_func.h
 CompoFraction.o: vec3f_func.h
-dfi.o: dfi.h FB_Define.h mydebug.h util_Path.h
-dfiinfo.o: dfiinfo.h DomainInfo.h FB_Define.h mydebug.h TPControl.h
 DataHolder.o: DataHolder.h FB_Define.h mydebug.h TPControl.h DomainInfo.h
 Monitor.o: Monitor.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
 Monitor.o: vec3f_func.h MonCompo.h basic_func.h Component.h Sampling.h
@@ -111,3 +108,5 @@ MonCompo.o: MonCompo.h DomainInfo.h FB_Define.h mydebug.h vec3.h vec3_func.h
 MonCompo.o: vec3f_func.h basic_func.h Component.h Sampling.h FBUtility.h
 Sampling.o: Sampling.h FB_Define.h mydebug.h vec3.h vec3_func.h vec3f_func.h
 Sampling.o: basic_func.h
+dfiinfo.o: dfiinfo.h DomainInfo.h FB_Define.h mydebug.h TPControl.h
+dfi.o: dfi.h FB_Define.h mydebug.h util_Path.h

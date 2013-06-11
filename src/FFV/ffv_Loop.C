@@ -220,7 +220,7 @@ int FFV::Loop(const unsigned step)
   }
 
   
-  // PLOT3D output
+  /* 20130611 commentout  PLOT3D output
   if(C.FIO.Format == plt3d_fmt)
   {
     // 通常
@@ -231,6 +231,7 @@ int FFV::Loop(const unsigned step)
       PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_count);
       TIMING_stop(tm_file_out, flop_count);
     }
+     
     
     // 最終ステップ
     if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
@@ -247,7 +248,7 @@ int FFV::Loop(const unsigned step)
         }
       }
     }
-  }
+  }*/
   
   // 平均値のデータ出力 
   if (C.Mode.Average == ON) 

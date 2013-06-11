@@ -30,8 +30,10 @@
 #include "Interval_Mngr.h"
 #include "TPControl.h"
 
+/* 20130611 commentout
 #include "PLOT3D_read.h"
 #include "PLOT3D_write.h"
+ */
 
 using namespace std;
 
@@ -948,15 +950,6 @@ protected:
    * @brief LES計算のオプションを取得する
    */
   void get_LES_option();
-  
-  
-  
-  /**
-   * @brief PLOT3Dファイル入出力に関するパラメータ
-   * @param [in]  FP3DR    PLOT3D READクラス ポインタ
-   * @param [in]  FP3DW    PLOT3D WRITEクラス ポインタ
-   */
-  void get_PLOT3D(FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
 
   
   
@@ -1069,15 +1062,24 @@ protected:
   void printParaConditions(FILE* fp, const MediumList* mat);
   
   
-  /** 
+  /** 20130611
    * @brief 制御パラメータSTEERの表示
    * @param [in] IC ItrCtl
    * @param [in] DT DTcntl
    * @param [in] RF ReferenceFrame
-   * @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
+   //* @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW);
-
+  void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
+  //void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW);
+  
+  
+  /**
+   * @brief PLOT3Dファイル入出力に関するパラメータ
+   * @param [in]  FP3DR    PLOT3D READクラス ポインタ
+   * @param [in]  FP3DW    PLOT3D WRITEクラス ポインタ
+   *
+  void get_PLOT3D(FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
+   */
   
 public:
   
@@ -1114,7 +1116,7 @@ public:
   REAL_TYPE OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size);
 	
   
-  /**
+  /** 20130611
    * @brief 制御，計算パラメータ群の表示
    * @param [in] mp  ファイルポインタ（標準出力）
    * @param [in] fp  ファイルポインタ（ファイル出力）
@@ -1122,9 +1124,10 @@ public:
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
    * @param [in] mat MediumList
-   * @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
+   //* @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
+  //void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
+  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
 
   
   /**
@@ -1285,8 +1288,9 @@ public:
   void get_Sampling();
   
   
-  // 制御，計算パラメータ群の取得
-  void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
+  // 制御，計算パラメータ群の取得 20130611
+  //void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
+  void get_Steer_1(DTcntl* DT);
   
 
   // 制御，計算パラメータ群の取得

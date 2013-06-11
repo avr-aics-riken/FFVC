@@ -49,8 +49,12 @@
 #include "TPControl.h"
 #include "ffv_SetBC.h"
 #include "CompoFraction.h"
+
+/* 20130606 commentout 
 #include "dfi.h"
 #include "dfiinfo.h"
+ */
+
 #include "History.h"
 #include "Monitor.h"
 #include "ffv_Ffunc.h"
@@ -70,8 +74,9 @@
 #include "IP_Sphere.h"
 #include "IP_Jet.h"
 
-// PLOT3D
+/* 20130606 commentout  PLOT3D
 #include "ffv_PLOT3D.h"
+ */
 
 // FX10 profiler
 #if defined __K_FPCOLL
@@ -140,14 +145,14 @@ private:
   REAL_TYPE *cf_y;  ///< j方向のバッファ
   REAL_TYPE *cf_z;  ///< k方向のバッファ
 
-  
+  /* 20130611 commentout 
+  // @attention CIOlib導入により，ポリシーの確認
   // dfi ファイル管理用 -> Kind_of_vars in FB_Define.h
   // 同じ解像度のリスタート時には、既にdfiファイルが存在する場合には、その内容を継続する
   // ラフリスタートの場合には、新規dfiファイルを生成する >> dfi.C
-  int dfi_mng[var_END];
+  //int dfi_mng[var_END];
+  */
   
-  
-  //REAL_TYPE *dh0;   ///< 格子幅（有次元）
   REAL_TYPE v00[4];      ///< 参照速度
   REAL_TYPE range_Ut[2]; ///< 
   REAL_TYPE range_Yp[2]; ///< 
@@ -252,16 +257,16 @@ private:
   VoxInfo V;                 ///< ボクセル前処理クラス
   ParseBC B;                 ///< 境界条件のパースクラス
   SetBC3D BC;                ///< BCクラス
-  ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   History* H;                ///< 履歴クラス
   MPIPolylib* PL;            ///< Polylibクラス
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス
-  Plot3D PLT3D;              ///< PLOT3Dクラス
+  MonitorList MO;            ///< Monitorクラス
   
-  MonitorList MO;            ///< Monitorクラス 
-  FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
-  FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
+  // 20130611 ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
+  // 20130611 Plot3D PLT3D;              ///< PLOT3Dクラス
+  // 20130611 FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
+  // 20130611 FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
 
@@ -289,6 +294,7 @@ private:
   cio_DFI *DFI_OUT_VRT;     ///< Vorticity
   cio_DFI *DFI_OUT_I2VGT;   ///< 2nd Invariant of Velocity Gradient Tensor
   cio_DFI *DFI_OUT_HLT;     ///< Helicity
+  cio_DFI *DFI_OUT_DIV;     ///< Divergence for debug
   
 public:
   /** コンストラクタ */
@@ -531,11 +537,6 @@ private:
   void Averaging_Time(double& flop);
   
   
-  /**
-   * @brief ファイルのオープンチェック
-   */
-  bool checkFile(string fname);
-  
   
   /**
    * @brief Boussinesq浮力項の計算
@@ -569,30 +570,6 @@ private:
   
   //ファイル出力
   void FileOutput(double& flop, const bool crs_restart=false);
-  
-  
-  // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-  bool getCoarseResult (int i, int j, int k,
-                        std::string& coarse_dfi_fname,
-                        std::string& coarse_prefix,
-                        const int m_step,
-                        std::string& coarse_sph_fname,
-                        int* c_size,
-                        int* coarse,
-                        int* block
-                        );
-  
-  
-  // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-  bool getCoarseResult2(int i, int j, int k,
-                        std::string& coarse_dfi_fname,
-                        std::string& coarse_prefix,
-                        const int m_step,
-                        std::string& coarse_sph_fname,
-                        int* c_size,
-                        int* coarse,
-                        int* block
-                        );
   
   
   /**
@@ -688,16 +665,6 @@ private:
    * @param [in]       RHS  vector
    */
 	void Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y);
-  
-
-
-  /**
-   * @brief 粗格子から密格子へ内挿
-   * @param [in] m_st 粗い格子の開始インデクス
-   * @param [in] m_bk ブロック数
-   * @brief 粗い格子を用いたリスタート値の内挿
-   */
-  void Interpolation_from_coarse_initial(const int* m_st, const int* m_bk);
   
   
   /** 1ステップのコアの処理
@@ -806,9 +773,6 @@ private:
   void ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0);
   
   
-  
-  
-  
   // リスタートプロセス
   void Restart(FILE* fp);
   
@@ -821,174 +785,8 @@ private:
   void Restart_avrerage (FILE* fp, double& flop);
   
   
-  /**
-   * @brief 粗い格子を用いたリスタート
-   * @param [in]     fp     ファイルポインタ
-   * @param [out]    flop   浮動小数点演算数
-   */
-  void Restart_coarse(FILE* fp, double& flop);
-  
-  
-  /**
-   * @brief リスタートの最大値と最小値の表示
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   */
+  // リスタートの最大値と最小値の表示
   void Restart_display_minmax(FILE* fp, double& flop);
-  
-  
-  /**
-   * @brief リスタート時の瞬時値ファイル読み込み（並列数が異なる場合）
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   */
-  void Restart_different(FILE* fp, double& flop);
-  
-  
-  /**
-   * @brief オーバーラップ領域を計算
-   * @param [out] overlap_h オーバーラップ領域の起点
-   * @param [out] overlap_t オーバーラップ領域の終点
-   * @param [in]  h         自領域の起点
-   * @param [in]  t         自領域の終点
-   * @param [in]  head      読み込む領域の起点
-   * @param [in]  tail      読み込む領域の終点
-   */
-  void CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, int* tail);
-  
-  
-  /**
-   * @brief オーバーラップ領域を計算
-   * @param [out] write_wk  書き込み領域
-   * @param [in]  read_wk   読み込み領域
-   * @param [in]  dim       次元（scalar:1、vector:3）
-   * @param [in]  gd        ガイドセル
-   * @param [in]  h         自領域の起点
-   * @param [in]  s         自領域のサイズ
-   * @param [in]  overlap_h オーバーラップ領域の起点
-   * @param [in]  overlap_t オーバーラップ領域の終点
-   * @param [in]  head      読み込む領域の起点
-   * @param [in]  size      読み込む領域のサイズ
-   */
-  void SetOverlap(REAL_TYPE* write_wk,
-                  REAL_TYPE* read_wk,
-                  int dim,
-                  int gd,
-                  int* h,
-                  int* s,
-                  int* overlap_h,
-                  int* overlap_t,
-                  int* head,
-                  int* size);
-  
-  
-  /**
-   * @brief ファイル読み込み＋オーバーラップを移しこみ
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
-   * @param [in]  d_wk 読み込み用ワークエリア
-   */
-  void ReadOverlap(FILE* fp,
-                   double& flop,
-                   DifferentRestartInfo* DRI,
-                   REAL_TYPE* d_wk);
-  
-  
-  /**
-   * @brief ファイル読み込み＋オーバーラップを移しこみ（圧力）
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
-   * @param [in]  d_wk 読み込み用ワークエリア
-   * @param [in]  rank_list 各プロセスが読むファイルのリスト
-   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
-   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
-   * @param [in]  nassign   自身のランクにステージングされているファイルの数
-   */
-  void ReadOverlap_Pressure(FILE* fp,
-                            double& flop,
-                            DifferentRestartInfo* DRI,
-                            DfiInfo* DI,
-                            REAL_TYPE* d_wk,
-                            int* rank_list,
-                            int recv_rank,
-                            int* assign,
-                            int nassign);
-  
-  
-  /**
-   * @brief ファイル読み込み＋オーバーラップを移しこみ（流速）
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
-   * @param [in]  d_wk 読み込み用ワークエリア
-   * @param [in]  rank_list 各プロセスが読むファイルのリスト
-   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
-   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
-   * @param [in]  nassign   自身のランクにステージングされているファイルの数
-   */
-  void ReadOverlap_Velocity(FILE* fp,
-                            double& flop,
-                            DifferentRestartInfo* DRI,
-                            DfiInfo* DI,
-                            REAL_TYPE* d_wk,
-                            int* rank_list,
-                            int recv_rank,
-                            int* assign,
-                            int nassign);
-  
-  /**
-   * @brief ファイル読み込み＋オーバーラップを移しこみ（境界流速）
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
-   * @param [in]  d_wk 読み込み用ワークエリア
-   * @param [in]  rank_list 各プロセスが読むファイルのリスト
-   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
-   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
-   * @param [in]  nassign   自身のランクにステージングされているファイルの数
-   */
-  void ReadOverlap_FVelocity(FILE* fp,
-                             double& flop,
-                             DifferentRestartInfo* DRI,
-                             DfiInfo* DI,
-                             REAL_TYPE* d_wk,
-                             int* rank_list,
-                             int recv_rank,
-                             int* assign,
-                             int nassign);
-  
-  
-  /**
-   * @brief ファイル読み込み＋オーバーラップを移しこみ（温度）
-   * @param [in]  fp   ファイルポインタ
-   * @param [out] flop 浮動小数点演算数
-   * @param [in]  DRI  RifferebtRestartInfoクラスポインタ
-   * @param [in]  d_wk 読み込み用ワークエリア
-   * @param [in]  rank_list 各プロセスが読むファイルのリスト
-   * @param [in]  recv_rank 自身が読むファイルを持っているプロセス
-   * @param [in]  assign    自身のランクにステージングされるファイルのリスト
-   * @param [in]  nassign   自身のランクにステージングされているファイルの数
-   */
-  void ReadOverlap_Temperature(FILE* fp,
-                               double& flop,
-                               DifferentRestartInfo* DRI,
-                               DfiInfo* DI,
-                               REAL_TYPE* d_wk,
-                               int* rank_list,
-                               int recv_rank,
-                               int* assign,
-                               int nassign);
-  
-  
-
-  
-  /**
-   * @brief 並列分散時のファイル名の管理を行う
-   */
-  void setDFI();
-  
 
   
   
@@ -1002,15 +800,11 @@ private:
   void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
   
   
-  
-  
-  
   /**
    * @brief タイミング測定区間にラベルを与える
    */
   void set_timing_label();
   
-
   
   /**
    * @brief VOF値を気体(0.0)と液体(1.0)で初期化
@@ -1094,7 +888,6 @@ private:
    */
   void Variation_Space(double* avr, double* rms, double& flop);
   
-
   
   /**
    * @brief SOR2SMAの非同期通信処理
@@ -1150,6 +943,125 @@ public:
   bool Post();
   
   
+  
+  
+//####################################################################
+/* CIOlib導入で利用しなくなったメソッド
+//####################################################################
+ 
+  // @brief 並列分散時のファイル名の管理を行う
+  void setDFI();
+  
+   // @brief ファイルのオープンチェック
+   bool checkFile(string fname);
+  
+  
+   // @brief 粗い格子を用いたリスタート
+   void Restart_coarse(FILE* fp, double& flop);
+   
+   
+   // @brief リスタート時の瞬時値ファイル読み込み（並列数が異なる場合）
+   void Restart_different(FILE* fp, double& flop);
+   
+   
+   // @brief ファイル読み込み＋オーバーラップを移しこみ（圧力）
+   void ReadOverlap_Pressure(FILE* fp,
+   double& flop,
+   DifferentRestartInfo* DRI,
+   DfiInfo* DI,
+   REAL_TYPE* d_wk,
+   int* rank_list,
+   int recv_rank,
+   int* assign,
+   int nassign);
+   
+   
+   // @brief ファイル読み込み＋オーバーラップを移しこみ（流速）
+   void ReadOverlap_Velocity(FILE* fp,
+   double& flop,
+   DifferentRestartInfo* DRI,
+   DfiInfo* DI,
+   REAL_TYPE* d_wk,
+   int* rank_list,
+   int recv_rank,
+   int* assign,
+   int nassign);
+   
+   
+   // @brief ファイル読み込み＋オーバーラップを移しこみ（境界流速）
+   void ReadOverlap_FVelocity(FILE* fp,
+   double& flop,
+   DifferentRestartInfo* DRI,
+   DfiInfo* DI,
+   REAL_TYPE* d_wk,
+   int* rank_list,
+   int recv_rank,
+   int* assign,
+   int nassign);
+   
+   
+   // @brief ファイル読み込み＋オーバーラップを移しこみ（温度）
+   void ReadOverlap_Temperature(FILE* fp,
+   double& flop,
+   DifferentRestartInfo* DRI,
+   DfiInfo* DI,
+   REAL_TYPE* d_wk,
+   int* rank_list,
+   int recv_rank,
+   int* assign,
+   int nassign);
+   
+   
+   // @brief ファイル読み込み＋オーバーラップを移しこみ
+   void ReadOverlap(FILE* fp,
+   double& flop,
+   DifferentRestartInfo* DRI,
+   REAL_TYPE* d_wk);
+   
+   // @brief オーバーラップ領域を計算
+   void SetOverlap(REAL_TYPE* write_wk,
+   REAL_TYPE* read_wk,
+   int dim,
+   int gd,
+   int* h,
+   int* s,
+   int* overlap_h,
+   int* overlap_t,
+   int* head,
+   int* size);
+   
+   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+   bool getCoarseResult (int i, int j, int k,
+   std::string& coarse_dfi_fname,
+   std::string& coarse_prefix,
+   const int m_step,
+   std::string& coarse_sph_fname,
+   int* c_size,
+   int* coarse,
+   int* block
+   );
+   
+   
+   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
+   bool getCoarseResult2(int i, int j, int k,
+   std::string& coarse_dfi_fname,
+   std::string& coarse_prefix,
+   const int m_step,
+   std::string& coarse_sph_fname,
+   int* c_size,
+   int* coarse,
+   int* block
+   );
+   
+   // @brief オーバーラップ領域を計算
+   void CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, int* tail);
+   
+   
+   // @brief 粗格子から密格子へ内挿
+   void Interpolation_from_coarse_initial(const int* m_st, const int* m_bk);
+   
+   
+  */
 };
 
 #endif // _FFV_H_

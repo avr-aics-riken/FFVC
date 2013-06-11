@@ -664,7 +664,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 分散時のインデクスファイル生成
-  setDFI();
+  //setDFI();
   
 
   // 制御インターバルの初期化
@@ -739,7 +739,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  // PLOT3D形状データの書き出し
+  /* 20130611 commentout PLOT3D形状データの書き出し
   PLT3D.Initialize(size, guide, deltaX, dfi_mng[var_Plot3D], &C, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_t, d_p0, d_wv, d_bcv, d_bcd);
   
   if (C.FIO.Format == plt3d_fmt)
@@ -756,16 +756,14 @@ int FFV::Initialize(int argc, char **argv)
     }
     if (C.P3Op.IS_fvbnd == ON) PLT3D.OutputPlot3D_fvbnd();
   }
-  
+  */
 
   
   std::string hostname;
   hostname = paraMngr->GetHostName();
-  std::string dfi_name;
-  //dfi_name = "./"+C.FIO.OutDirPath+"/"+CIO.Generate_DFI_Name(C.f_Pressure);
-  dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_Pressure);
-  //printf("dfi_name : %s\n",dfi_name.c_str());
+
   
+  // Format
   cio_DFI::E_CIO_FORMAT format;
   
   if ( C.FIO.Format == sph_fmt )
@@ -777,6 +775,7 @@ int FFV::Initialize(int argc, char **argv)
     format = cio_DFI::E_CIO_FMT_BOV;
   }
   
+  // Datatype
   cio_DFI::E_CIO_DTYPE datatype;
   
   if ( sizeof(REAL_TYPE) == 4 )
@@ -792,11 +791,6 @@ int FFV::Initialize(int argc, char **argv)
     Exit(0);
   }
   
-  int comp = 1;
-  //std::string process="./"+C.FIO.OutDirPath+"/proc.dfi";
-  std::string process="./proc.dfi";
-  //printf("process : %s\n",process.c_str());
-  
 
   int cio_tail[3], cio_div[3];
   for (int i=0; i<3; i++) cio_tail[i]=size[i];
@@ -811,15 +805,14 @@ int FFV::Initialize(int argc, char **argv)
     for (int i=0; i<3; i++ ) cio_div[i] = p_div[i];
   }
   
-  std::string path = C.FIO.OutDirPath;
   
-
-  int gc_out=C.GuideOut;
+  // 出力用のヘッダ
+  int gc_out = C.GuideOut;
   REAL_TYPE cio_org[3], cio_pit[3];
   
   for (int i=0; i<3; i++)
   {
-    cio_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut;
+    cio_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut; // ガイドセルによるオリジナルポイントの調整
     cio_pit[i] = pitch[i];
   }
   
@@ -840,7 +833,9 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // make output directory
+  std::string path = C.FIO.OutDirPath;
   cio_DFI::MakeDirectory(path);
+  
   
   cio_DFI::E_CIO_ONOFF TimeSliceDir;
   if ( C.FIO.Slice == ON )
@@ -853,7 +848,39 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  //Pressure
+  std::string process="./proc.dfi";
+  std::string dfi_name;
+  int comp = 1;
+  
+  
+  // Divergence for Debug
+  if ( C.FIO.Div_Debug == ON )
+  {
+    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_DivDebug);
+    DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
+                                     dfi_name,
+                                     path,
+                                     C.f_DivDebug,
+                                     format,
+                                     gc_out,
+                                     datatype,
+                                     cio_DFI::E_CIO_IJKN,
+                                     comp,
+                                     process,
+                                     size,
+                                     cio_pit,
+                                     cio_org,
+                                     cio_div,
+                                     head,
+                                     cio_tail,
+                                     hostname,
+                                     TimeSliceDir);
+    
+  }
+  
+  
+  // Pressure
+  dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_Pressure);
   DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                    dfi_name,
                                    path,
@@ -958,7 +985,6 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // Velocity
-  //dfi_name = "./"+C.FIO.OutDirPath+"/"+CIO.Generate_DFI_Name(C.f_Velocity);
   dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_Velocity);
   comp = 3;
   DFI_OUT_VEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -1002,7 +1028,6 @@ int FFV::Initialize(int argc, char **argv)
   // Fvelocity
   if (C.Mode.FaceV == ON )
   {
-    //dfi_name = "./"+C.FIO.OutDirPath+"/"+CIO.Generate_DFI_Name(C.f_Fvelocity);
     dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_Fvelocity);
     comp = 3;
     DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -1386,7 +1411,10 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task);
+    
+    /* 20130611 commentout
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
+    */
     
     if (C.Mode.Average == ON && DFI_IN_PRSA->m_start_type == restart)
     {
@@ -1401,7 +1429,10 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     FileOutput(flop_task, true);
+    
+    /* 20130611 commentout 
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
+     */
   }
 
   
@@ -1704,7 +1735,8 @@ void FFV::display_CompoList(FILE* fp)
  */
 void FFV::display_Parameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, IC, &DT, &RF, mat, &FP3DW);
+  // 20130611 C.displayParams(stdout, fp, IC, &DT, &RF, mat, &FP3DW);
+  C.displayParams(stdout, fp, IC, &DT, &RF, mat);
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
   
@@ -4339,8 +4371,10 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
   BC.setRankInfo   (paraMngr, procGrp);
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
+  /* 20130611
   FP3DR.setRankInfo(paraMngr, procGrp);
   FP3DW.setRankInfo(paraMngr, procGrp);
+   */
   
   
   // 並列モードの取得
@@ -4348,7 +4382,8 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
   
   
   // 最初のパラメータの取得
-  C.get_Steer_1(&DT, &FP3DR, &FP3DW);
+  // 20130611 C.get_Steer_1(&DT, &FP3DR, &FP3DW);
+  C.get_Steer_1(&DT);
   
   // 代表パラメータをコピー
   Ex->setRefParameter(&C);
@@ -4374,8 +4409,10 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
   BC.setNeighborInfo   (C.guide);
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
+  /* 20130611
   FP3DR.setNeighborInfo(C.guide);
   FP3DW.setNeighborInfo(C.guide);
+   */
   
   
   // 従属的なパラメータの取得
