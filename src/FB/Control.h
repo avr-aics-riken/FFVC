@@ -716,21 +716,30 @@ public:
   string PolylibConfigName;
   string HistoryForceName;
   
-  string f_dfi_prfx_prs;
-  string f_dfi_prfx_vel;
-  string f_dfi_prfx_fvel;
-  string f_dfi_prfx_temp;
-  string f_dfi_prs;
-  string f_dfi_vel;
-  string f_dfi_fvel;
-  string f_dfi_temp;
+  // 出力dfiファイルのプレフィックス
+  string f_dfi_out_prs;
+  string f_dfi_out_vel;
+  string f_dfi_out_fvel;
+  string f_dfi_out_temp;
+  string f_dfi_out_prsa;
+  string f_dfi_out_vela;
+  string f_dfi_out_tempa;
+  string f_dfi_out_hlt;
+  string f_dfi_out_tp;
+  string f_dfi_out_i2vgt;
+  string f_dfi_out_vrt;
+  string f_dfi_out_div;
   
-  string f_different_nproc_dir_prefix;
-  string f_different_nproc_pressure;
-  string f_different_nproc_velocity;
-  string f_different_nproc_fvelocity;
-  string f_different_nproc_temperature;
+  // 入力dfiファイルのプレフィックス
+  string f_dfi_in_prs;
+  string f_dfi_in_vel;
+  string f_dfi_in_fvel;
+  string f_dfi_in_temp;
+  string f_dfi_in_prsa;
+  string f_dfi_in_vela;
+  string f_dfi_in_tempa;
   
+  // 出力ファイルのプレフィックス
   string f_Velocity;
   string f_Pressure;
   string f_Temperature;

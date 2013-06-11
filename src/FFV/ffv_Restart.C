@@ -425,6 +425,91 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
 }
 
 
+// #################################################################
+/* @brief リスタートモードを判定
+ */
+void FFV::selectRestartMode()
+{
+  
+  if ( C.Start != initial_start)
+  {
+    DFI_IN_PRS = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs);
+    DFI_IN_VEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel);
+    if( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
+    
+    if ( C.Mode.FaceV == ON )
+    {
+      DFI_IN_FVEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel);
+      if ( DFI_IN_FVEL == NULL ) Exit(0);
+    }
+    
+    if ( C.isHeatProblem() )
+    {
+      DFI_IN_TEMP = cio_DFI::ReadInit(MPI_COMM_WORLD,C.f_dfi_in_temp);
+      if( DFI_IN_TEMP == NULL ) Exit(0);
+    }
+    
+    DFI_IN_PRS->m_start_type = restart;
+    DFI_IN_VEL->m_start_type = restart;
+    if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart;
+    if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart;
+    
+    
+    // 現在のセッションの領域分割数の取得
+    int gdiv[3]={1, 1, 1};
+    
+    if ( numProc > 1)
+    {
+      const int* p_div = paraMngr->GetDivNum();
+      for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
+    }
+    
+    // 前セッションと分割数が異なる場合
+    for (int i=0; i<3; i++ )
+    {
+      if ( gdiv[i] != DFI_IN_PRS->DFI_Domain.GlobalDivision[i] )
+      {
+        DFI_IN_PRS->m_start_type = restart_different_proc;
+        DFI_IN_VEL->m_start_type = restart_different_proc;
+        if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_different_proc;
+        if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_different_proc;
+      }
+    }
+    
+    // 前セッションと分割数が異なる場合 >>  @todo 2倍のチェックが必要？ アルゴリズムの再検討．リスタートの入力パラメータの仕様と齟齬あり
+    for (int i=0; i<3; i++ )
+    {
+      if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i] )
+      {
+        DFI_IN_PRS->m_start_type = restart_refinement;
+        DFI_IN_VEL->m_start_type = restart_refinement;
+        if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_refinement;
+        if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_refinement;
+      }
+    }
+    
+    if ( C.Start == restart_refinement )
+    {
+      DFI_IN_PRS->m_start_type=restart_refinement;
+      DFI_IN_VEL->m_start_type=restart_refinement;
+      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type=restart_refinement;
+      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type=restart_refinement;
+    }
+    else
+    {
+      if ( C.Start == restart_different_proc )
+      {
+        DFI_IN_PRS->m_start_type=restart_different_proc;
+        DFI_IN_VEL->m_start_type=restart_different_proc;
+        if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type=restart_different_proc;
+        if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type=restart_different_proc;
+      }
+    }
+  }
+  
+}
+
+
 
 
 /*

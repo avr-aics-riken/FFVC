@@ -465,6 +465,10 @@ private:
   void resizeCompoBV(const int kos, const bool isHeat);
   
   
+  // リスタートモードの選択
+  void selectRestartMode();
+  
+  
   // 外部境界条件を読み込み，Controlクラスに保持する
   void setBCinfo();
   

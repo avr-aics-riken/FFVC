@@ -989,22 +989,6 @@ void Control::get_FileIO()
   }
   
   
-  
-  // ファイル入出力ディレクトリ
-  // Input Directory_Path
-  label = "/Steer/FileIO/Directory/InputPath";
-  
-  if ( !(tpCntl->GetValue(label, &str)) )
-  {
-    ; // 入力なしでも可
-  }
-  // 指定が無ければ，空のまま
-  if ( !str.empty() )
-  {
-    FIO.InDirPath = str;
-  }
-  
-  
   // Output Directory_Path
   label = "/Steer/FileIO/Output/DirectoryPath";
   
@@ -1043,7 +1027,129 @@ void Control::get_FileIO()
   }
   
   
-  // PLOT3D Option
+  // 出力DFIファイル名
+  label = "/Steer/FileIO/Output/DFIfiles/Pressure";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_prs = "prs.dfi";
+  }
+  else
+  {
+    f_dfi_out_prs = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/Velocity";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_vel = "vel.dfi";
+  }
+  else
+  {
+    f_dfi_out_vel = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/Temperature";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_temp = "tmp.dfi";
+  }
+  else
+  {
+    f_dfi_out_temp = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/Fvelocity";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_fvel = "fvel.dfi";
+  }
+  else
+  {
+    f_dfi_out_fvel = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/AveragedPressure";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_prsa = "prsa.dfi";
+  }
+  else
+  {
+    f_dfi_out_prsa = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/AveragedVelocity";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_vela = "vela.dfi";
+  }
+  else
+  {
+    f_dfi_out_vela = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/AveragedTemperature";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_tempa = "tmpa.dfi";
+  }
+  else
+  {
+    f_dfi_out_tempa = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/Divergence";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_div = "div.dfi";
+  }
+  else
+  {
+    f_dfi_out_div = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/Vorticity";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_vrt = "vrt.dfi";
+  }
+  else
+  {
+    f_dfi_out_vrt = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/Helicity";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_hlt = "hlt.dfi";
+  }
+  else
+  {
+    f_dfi_out_hlt = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/TotalPressure";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_tp = "tp.dfi";
+  }
+  else
+  {
+    f_dfi_out_tp = str.c_str();
+  }
+  
+  label = "/Steer/FileIO/Output/DFIfiles/2ndInvariantOfVGT";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    f_dfi_out_i2vgt = "i2vgt.dfi";
+  }
+  else
+  {
+    f_dfi_out_i2vgt = str.c_str();
+  }
+  
+  
+  /* 20130611 PLOT3D Option
   if ( FIO.Format == plt3d_fmt )
   {
     label = "/Steer/FileIO/PLOT3D";
@@ -1095,7 +1201,7 @@ void Control::get_FileIO()
       }
     }
 
-  }
+  }*/
   
 }
 
@@ -2027,18 +2133,20 @@ void Control::get_start_condition()
     }
     Restart_step = ct;
     
-    
-    label="/Steer/StartCondition/Restart/AverageStep";
-    
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( C.Mode.Average == ON )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      label="/Steer/StartCondition/Restart/AverageStep";
+      
+      if ( !(tpCntl->GetValue(label, &ct )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      Restart_stepAvr = ct;
     }
-    Restart_stepAvr = ct;
   }
   
-  
+  /* 20130611
   if ( Start == restart_refinement )
   {
     label="/Steer/StartCondition/Refinement/PrefixOfPressure";
@@ -2088,6 +2196,7 @@ void Control::get_start_condition()
         f_dfi_prfx_temp = str.c_str();
       }
     }
+   
     
     // プロセス並列時に分散ファイルを指定した場合
     if ( FIO.IOmode == IO_DISTRIBUTE )
@@ -2142,7 +2251,7 @@ void Control::get_start_condition()
     }
     
   }
-  
+  */
   
   if ( Start == restart_different_proc || Start == restart )
   {
@@ -2164,7 +2273,7 @@ void Control::get_start_condition()
       }
     }
     
-    
+    /*
     label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfDir";
     
     if ( !(tpCntl->GetValue(label, &str )) )
@@ -2278,7 +2387,7 @@ void Control::get_start_condition()
       {
         f_dfi_temp = str.c_str();
       }
-    }
+    }*/
   }
 
   
@@ -2291,7 +2400,7 @@ void Control::get_start_condition()
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    f_dfi_prs = str.c_str();
+    f_dfi_in_prs = str.c_str();
     
     label="/Steer/StartCondition/Restart/DFIfiles/Velocity";
     
@@ -2300,7 +2409,7 @@ void Control::get_start_condition()
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    f_dfi_vel = str.c_str();
+    f_dfi_in_vel = str.c_str();
     
     label="/Steer/StartCondition/Restart/DFIfiles/Fvelocity";
     
@@ -2309,7 +2418,7 @@ void Control::get_start_condition()
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    f_dfi_fvel = str.c_str();
+    f_dfi_in_fvel = str.c_str();
     
     if ( isHeatProblem() )
     {
@@ -2320,7 +2429,7 @@ void Control::get_start_condition()
         Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
       }
-      f_dfi_temp = str.c_str();
+      f_dfi_in_temp = str.c_str();
     }
   }
   
