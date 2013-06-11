@@ -583,47 +583,36 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // リスタートモードの選択
-  selectRestartMode();
+  if ( C.Start != initial_start)
+  {
+    selectRestartMode();
+  }
   
   
+  // 瞬時値のリスタート
+  TIMING_start(tm_restart);
   Restart(fp);
+  TIMING_stop(tm_restart);
   
 
   // 制御インターバルの初期化
   init_Interval();
   
 
-  if ( (C.Start == restart) && (C.Mode.Average == ON) )
+  // 平均値のリスタート
+  if ( (C.Start != initial_start) && (C.Mode.Average == ON) )
   {
-
-    string dfiname = "prsa.dfi";
-    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, dfiname);
-    
-    dfiname = "vela.dfi";
-    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, dfiname);
-    
-    if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
-    
-    if ( C.isHeatProblem() )
-    {
-      dfiname = "tempa.dfi";
-      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, dfiname);
-      if ( DFI_IN_TEMPA == NULL ) Exit(0);
-    }
-    
-    DFI_IN_PRSA->m_start_type = DFI_IN_PRS->m_start_type;
-    DFI_IN_VELA->m_start_type = DFI_IN_VEL->m_start_type;
-    
     TIMING_start(tm_restart);
-    if ( DFI_IN_PRSA->m_start_type == restart ) Restart_avrerage(fp, flop_task);
+    Restart_avrerage(fp, flop_task);
     TIMING_stop(tm_restart);
   }
   
 
-  
   // リスタートの最大値と最小値の表示
-  Restart_display_minmax(fp, flop_task);
-  
+  if ( C.Start != initial_start)
+  {
+    Restart_display_minmax(fp, flop_task);
+  }
 
   
   // 制御パラメータ，物理パラメータの表示
@@ -695,7 +684,7 @@ int FFV::Initialize(int argc, char **argv)
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
     */
     
-    if (C.Mode.Average == ON && DFI_IN_PRSA->m_start_type == restart)
+    if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
     {
       double flop_count=0.0;
       AverageOutput(flop_count);
@@ -704,7 +693,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 粗い格子を用いたリスタート時には出力
-  if ( C.Start == restart_refinement )
+  if ( (C.Start == restart_sameDiv_refinement) || (C.Start == restart_diffDiv_refinement) )
   {
     flop_task = 0.0;
     FileOutput(flop_task, true);

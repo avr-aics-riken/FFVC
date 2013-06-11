@@ -462,8 +462,8 @@ bool DFI::WriteIndex(const std::string dfi_name,
   }
 
 
-  // カウントゼロ=セッションの開始、または既存ファイルが存在しない、または粗格子リスタート
-  if ( (dfi_mng == 0) || !flag || (start_type == restart_refinement) ) 
+  // カウントゼロ=セッションの開始、または既存ファイルが存在しない、またはリファインメントリスタート
+  if ( (dfi_mng == 0) || !flag || (start_type == restart_sameDiv_refinement) || (start_type == restart_diffDiv_refinement) )
   {
     if ( !(fp = fopen(dfi_name.c_str(), "w")) )
     {

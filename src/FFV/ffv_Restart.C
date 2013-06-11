@@ -26,57 +26,58 @@
 void FFV::Restart(FILE* fp)
 {
   double flop_task;
+  double g[4];
   
-  TIMING_start(tm_restart);
   
-  if ( C.Start == initial_start) // 初期スタートのステップ，時間を設定する
+  switch (C.Start)
   {
-    Session_StartStep = CurrentStep = 0;
-    Session_StartTime = CurrentTime = 0.0;
-    
-    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
-    else                      RF.setV00(CurrentTime);
-    
-    double g[4];
-    RF.copyV00(g);
-    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
-    
+    // 初期スタートのステップ，時間を設定する case initial_start:
+      Session_StartStep = CurrentStep = 0;
+      Session_StartTime = CurrentTime = 0.0;
+      
+      // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
+      if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
+      else                      RF.setV00(CurrentTime);
+      
+      RF.copyV00(g);
+      for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
+      break;
+      
+    // 同一解像度・同一分割数のリスタート
+    case restart_sameDiv_sameRes: 
+      Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and same num. of division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with same resolution and same num. of division\n\n");
+      
+      flop_task = 0.0;
+      Restart_instantaneous(fp, flop_task);
+      break;
+      
+    case restart_sameDiv_refinement: // 同一分割数・リファインメント
+      Hostonly_ fprintf(stdout, "\t>> Restart with refinemnt and same num. of division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with refinemnt and same num. of division\n\n");
+      flop_task = 0.0;
+      Restart_instantaneous(fp, flop_task);
+      break;
+      
+    case restart_diffDiv_sameRes:    // 異なる分割数・同一解像度
+      Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and different division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with same resolution and different division\n\n");
+      flop_task = 0.0;
+      Restart_instantaneous(fp, flop_task);
+      break;
+      
+    case restart_diffDiv_refinement: // 異なる分割数・リファインメント
+      Hostonly_ fprintf(stdout, "\t>> Restart with refinement and different division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with refinement and different division\n\n");
+      flop_task = 0.0;
+      Restart_instantaneous(fp, flop_task);
+      break;
+      
+    default:
+      Exit(0);
+      break;
   }
   
-  else if ( DFI_IN_PRS->m_start_type == restart) // 同一解像度のリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results\n\n");
-    
-    flop_task = 0.0;
-    Restart_std(fp, flop_task); 
-  }
-  
-  else if ( DFI_IN_PRS->m_start_type == restart_refinement) // 粗い格子からのリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Results on Coarse Mesh\n\n");
-    
-    
-    // 粗い格子のファイルをロードし、内挿処理を行う
-    flop_task = 0.0;
-    Restart_std(fp, flop_task);
-    
-    Hostonly_ fprintf(stdout,"\n");
-    Hostonly_ fprintf(fp,"\n");
-  }
-  
-  else if ( DFI_IN_PRS->m_start_type == restart_different_proc) // 異なる並列数でのリスタート
-  {
-    Hostonly_ fprintf(stdout, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
-    Hostonly_ fprintf(fp, "\t>> Restart from Previous Calculated Results That Nproc Differ from\n\n");
-    
-    flop_task = 0.0;
-    Restart_std(fp, flop_task);
-  }
-  
-  TIMING_stop(tm_restart);
 }
 
 
@@ -89,16 +90,47 @@ void FFV::Restart(FILE* fp)
  */
 void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
-  if ( (C.Start == restart) || (C.Start == restart_refinement) || (C.Start == restart_different_proc) )
+  Hostonly_ fprintf(stdout, "\tNon-dimensional value\n");
+  Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+  
+  // Velocity
+  fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_v, &flop); // allreduceすること
+  
+  if ( numProc > 1 )
   {
-    Hostonly_ fprintf(stdout, "\tNon-dimensional value\n");
-    Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
-    REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    // Velocity
-    fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_v, &flop); // allreduceすること
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  
+  
+  // Pressure
+  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_p, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    if ( numProc > 1 ) 
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  
+  // temperature
+  if ( C.isHeatProblem() )
+  {
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_t, &flop);
+    
+    if ( numProc > 1 )
     {
       min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
@@ -107,43 +139,10 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    
-    
-    // Pressure
-    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_p, &flop);
-    
-    if ( numProc > 1 ) 
-    {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    
-    // temperature
-    if ( C.isHeatProblem() ) 
-    {
-      fb_minmax_s_ (&f_min, &f_max, size, &guide, d_t, &flop);
-      
-      if ( numProc > 1 ) 
-      {
-        min_tmp = f_min;
-        if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-        
-        max_tmp = f_max;
-        if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-      }
-      
-      Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
-      Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    }
-	}
+    Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  }
+
 }
 
 
@@ -154,7 +153,7 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
  * @param [in]  fp   ファイルポインタ
  * @param [out] flop 浮動小数点演算数
  */
-void FFV::Restart_std(FILE* fp, double& flop)
+void FFV::Restart_instantaneous(FILE* fp, double& flop)
 {
   double time;
   unsigned step;
@@ -431,84 +430,135 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
 void FFV::selectRestartMode()
 {
   
-  if ( C.Start != initial_start)
+  // Instantaneous dataの初期化
+  DFI_IN_PRS = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs);
+  DFI_IN_VEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel);
+  if( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
+  
+  if ( C.Mode.FaceV == ON )
   {
-    DFI_IN_PRS = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs);
-    DFI_IN_VEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel);
-    if( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
-    
-    if ( C.Mode.FaceV == ON )
-    {
-      DFI_IN_FVEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel);
-      if ( DFI_IN_FVEL == NULL ) Exit(0);
-    }
+    DFI_IN_FVEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel);
+    if ( DFI_IN_FVEL == NULL ) Exit(0);
+  }
+  
+  if ( C.isHeatProblem() )
+  {
+    DFI_IN_TEMP = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_temp);
+    if( DFI_IN_TEMP == NULL ) Exit(0);
+  }
+  
+  // Averaged dataの初期化
+  if ( C.Mode.Average == ON )
+  {
+    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa);
+    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela);
+    if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
     
     if ( C.isHeatProblem() )
     {
-      DFI_IN_TEMP = cio_DFI::ReadInit(MPI_COMM_WORLD,C.f_dfi_in_temp);
-      if( DFI_IN_TEMP == NULL ) Exit(0);
+      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa);
+      if ( DFI_IN_TEMPA == NULL ) Exit(0);
     }
-    
-    DFI_IN_PRS->m_start_type = restart;
-    DFI_IN_VEL->m_start_type = restart;
-    if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart;
-    if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart;
-    
-    
-    // 現在のセッションの領域分割数の取得
-    int gdiv[3]={1, 1, 1};
-    
-    if ( numProc > 1)
+  }
+  
+  
+  // 現在のセッションの領域分割数の取得
+  int gdiv[3] = {1, 1, 1};
+  
+  if ( numProc > 1)
+  {
+    const int* p_div = paraMngr->GetDivNum();
+    for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
+  }
+  
+  bool isSameDiv = true; // 同一分割数
+  bool isSameRes = true; // 同一解像度
+  
+  // 前セッションと分割数が異なる場合
+  for (int i=0; i<3; i++ )
+  {
+    if ( gdiv[i] != DFI_IN_PRS->DFI_Domain.GlobalDivision[i] )
     {
-      const int* p_div = paraMngr->GetDivNum();
-      for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
+      isSameDiv = false;
     }
-    
-    // 前セッションと分割数が異なる場合
-    for (int i=0; i<3; i++ )
+  }
+  
+  // 前セッションと分割数が異なる場合 >>  @todo 2倍のチェックが必要？
+  for (int i=0; i<3; i++ )
+  {
+    if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i] )
     {
-      if ( gdiv[i] != DFI_IN_PRS->DFI_Domain.GlobalDivision[i] )
+      isSameRes = false;
+    }
+  }
+  
+  
+  // モード判定と登録
+  if ( isSameDiv )
+  {
+    if ( isSameRes ) // 同一解像度、同一分割数
+    {
+      DFI_IN_PRS->m_start_type = restart_sameDiv_sameRes;
+      DFI_IN_VEL->m_start_type = restart_sameDiv_sameRes;
+      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_sameDiv_sameRes;
+      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_sameDiv_sameRes;
+      
+      if ( C.Mode.Average == ON )
       {
-        DFI_IN_PRS->m_start_type = restart_different_proc;
-        DFI_IN_VEL->m_start_type = restart_different_proc;
-        if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_different_proc;
-        if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_different_proc;
+        DFI_IN_PRSA->m_start_type = restart_sameDiv_sameRes;
+        DFI_IN_VELA->m_start_type = restart_sameDiv_sameRes;
+        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_sameDiv_sameRes;
       }
     }
-    
-    // 前セッションと分割数が異なる場合 >>  @todo 2倍のチェックが必要？ アルゴリズムの再検討．リスタートの入力パラメータの仕様と齟齬あり
-    for (int i=0; i<3; i++ )
+    else // Refinement、同一分割数
     {
-      if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i] )
+      DFI_IN_PRS->m_start_type = restart_sameDiv_refinement;
+      DFI_IN_VEL->m_start_type = restart_sameDiv_refinement;
+      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_sameDiv_refinement;
+      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_sameDiv_refinement;
+      
+      if ( C.Mode.Average == ON )
       {
-        DFI_IN_PRS->m_start_type = restart_refinement;
-        DFI_IN_VEL->m_start_type = restart_refinement;
-        if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_refinement;
-        if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_refinement;
+        DFI_IN_PRSA->m_start_type = restart_sameDiv_refinement;
+        DFI_IN_VELA->m_start_type = restart_sameDiv_refinement;
+        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_sameDiv_refinement;
       }
     }
-    
-    if ( C.Start == restart_refinement )
+  }
+  else
+  {
+    if ( isSameRes ) // 同一解像度、異なる分割数
     {
-      DFI_IN_PRS->m_start_type=restart_refinement;
-      DFI_IN_VEL->m_start_type=restart_refinement;
-      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type=restart_refinement;
-      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type=restart_refinement;
-    }
-    else
-    {
-      if ( C.Start == restart_different_proc )
+      DFI_IN_PRS->m_start_type = restart_diffDiv_sameRes;
+      DFI_IN_VEL->m_start_type = restart_diffDiv_sameRes;
+      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_diffDiv_sameRes;
+      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_diffDiv_sameRes;
+      
+      if ( C.Mode.Average == ON )
       {
-        DFI_IN_PRS->m_start_type=restart_different_proc;
-        DFI_IN_VEL->m_start_type=restart_different_proc;
-        if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type=restart_different_proc;
-        if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type=restart_different_proc;
+        DFI_IN_PRSA->m_start_type = restart_diffDiv_sameRes;
+        DFI_IN_VELA->m_start_type = restart_diffDiv_sameRes;
+        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_diffDiv_sameRes;
+      }
+    }
+    else // Refinement、異なる分割数
+    {
+      DFI_IN_PRS->m_start_type = restart_diffDiv_refinement;
+      DFI_IN_VEL->m_start_type = restart_diffDiv_refinement;
+      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_diffDiv_refinement;
+      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_diffDiv_refinement;
+      
+      if ( C.Mode.Average == ON )
+      {
+        DFI_IN_PRSA->m_start_type = restart_diffDiv_refinement;
+        DFI_IN_VELA->m_start_type = restart_diffDiv_refinement;
+        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_diffDiv_refinement;
       }
     }
   }
   
-}
 
+}
 
 
 

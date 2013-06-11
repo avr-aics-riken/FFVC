@@ -2086,21 +2086,15 @@ void Control::get_start_condition()
     Exit(0);
   }
   
-  if      ( !strcasecmp(str.c_str(), "Initial") )                    Start = initial_start;
-  else if ( !strcasecmp(str.c_str(), "Restart") )                    Start = restart;
-  else if ( !strcasecmp(str.c_str(), "RestartFromCoarseData") )      Start = restart_refinement;
-  else if ( !strcasecmp(str.c_str(), "RestartFromDifferentNproc") )  Start = restart_different_proc;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
+  // デフォルトモード
+  Start = restart_sameDiv_sameRes;
+  if ( !strcasecmp(str.c_str(), "Initial") )  Start = initial_start;
   
   
   // リスタート時のタイムスタンプ
-  if (Start != initial_start)
+  if ( Start != initial_start )
   {
-    label="/Steer/StartCondition/Restart/Step";
+    label = "/Steer/StartCondition/Restart/Step";
     
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
@@ -2122,292 +2116,105 @@ void Control::get_start_condition()
     }
   }
   
-  /* 20130611
-  if ( Start == restart_refinement )
-  {
-    label="/Steer/StartCondition/Refinement/PrefixOfPressure";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_dfi_prfx_prs = str.c_str();
-    }
-    
-    
-    label="/Steer/StartCondition/Refinement/PrefixOfVelocity";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_dfi_prfx_vel = str.c_str();
-    }
-    
-    label="/Steer/StartCondition/Refinement/PrefixOfFvelocity";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_dfi_prfx_fvel = str.c_str();
-    }
-    
-    if ( isHeatProblem() )
-    {
-      label="/Steer/StartCondition/Refinement/PrefixOfTemperature";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_dfi_prfx_temp = str.c_str();
-      }
-    }
-   
-    
-    // プロセス並列時に分散ファイルを指定した場合
-    if ( FIO.IOmode == IO_DISTRIBUTE )
-    {
-      label="/Steer/StartCondition/Restart/Refinement/DFIofPressure";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_dfi_prs = str.c_str();
-      }
-      
-      label="/Steer/StartCondition/Restart/Refinement/DFIofVelocity";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_dfi_vel = str.c_str();
-      }
-      
-      
-      label="/Steer/StartCondition/Restart/Refinement/DFIofFvelocity";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_dfi_fvel = str.c_str();
-      }
-      
-      if ( isHeatProblem() )
-      {
-        label="/Steer/StartCondition/Restart/Refinement/DFIofTemperature";
-        
-        if ( !(tpCntl->GetValue(label, &str )) )
-        {
-          ;
-        }
-        else
-        {
-          f_dfi_temp = str.c_str();
-        }
-      }
-    }
-    
-  }
-  */
   
-  if ( Start == restart_different_proc || Start == restart )
+  // Staging option
+  label="/Steer/StartCondition/Restart/Staging";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
   {
-    
-    label="/Steer/StartCondition/Restart/DifferentProcess/Staging";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
+    ;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  Restart_staging = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) Restart_staging = OFF;
     else
     {
-      if     ( !strcasecmp(str.c_str(), "on") )  Restart_staging = ON;
-      else if( !strcasecmp(str.c_str(), "off") ) Restart_staging = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
     }
-    
-    /*
-    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfDir";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_different_nproc_dir_prefix = str.c_str();
-    }
-    
-    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfPressure";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_different_nproc_pressure = str.c_str();
-    }
-    
-    label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfVelocity";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_different_nproc_velocity = str.c_str();
-    }
-    
-    if ( Mode.FaceV == ON )
-    {
-      label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfFvelocity";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_different_nproc_fvelocity = str.c_str();
-      }
-    }
-    
-    
-    if ( isHeatProblem() )
-    {
-      label="/Steer/StartCondition/Restart/DifferentProcess/PrefixOfTemperature";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_different_nproc_temperature = str.c_str();
-      }
-    }
-    
-    // プロセス並列時に分散ファイルを指定した場合
-    
-    label="/Steer/StartCondition/Restart/DifferentProcess/DFIofPressure";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_dfi_prs = str.c_str();
-    }
-    
-    label="/Steer/StartCondition/Restart/DifferentProcess/DFIofVelocity";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      ;
-    }
-    else
-    {
-      f_dfi_vel = str.c_str();
-    }
-    
-    if ( Mode.FaceV == ON )
-    {
-      label="/Steer/StartCondition/Restart/DifferentProcess/DFIofFvelocity";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_dfi_fvel = str.c_str();
-      }
-    }
-    
-    
-    if ( isHeatProblem() )
-    {
-      label="/Steer/StartCondition/Restart/DifferentProcess/DFIofTemperature";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        ;
-      }
-      else
-      {
-        f_dfi_temp = str.c_str();
-      }
-    }*/
   }
 
   
+  // リスタート時のDFIファイル名
   if ( Start != initial_start )
   {
     label="/Steer/StartCondition/Restart/DFIfiles/Pressure";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( tpCntl->GetValue(label, &str ) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      f_dfi_in_prs = str.c_str();
     }
-    f_dfi_in_prs = str.c_str();
+    if ( f_dfi_in_prs.empty() == true ) f_dfi_in_prs = "prs";
+    
     
     label="/Steer/StartCondition/Restart/DFIfiles/Velocity";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( tpCntl->GetValue(label, &str ) )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      f_dfi_in_vel = str.c_str();
     }
-    f_dfi_in_vel = str.c_str();
+    if ( f_dfi_in_vel.empty() == true ) f_dfi_in_vel = "vel";
     
-    label="/Steer/StartCondition/Restart/DFIfiles/Fvelocity";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( Mode.FaceV == ON )
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
+      label="/Steer/StartCondition/Restart/DFIfiles/Fvelocity";
+      
+      if ( tpCntl->GetValue(label, &str ) )
+      {
+        f_dfi_in_fvel = str.c_str();
+      }
+      if ( f_dfi_in_fvel.empty() == true ) f_dfi_in_fvel = "fvel";
     }
-    f_dfi_in_fvel = str.c_str();
+    
     
     if ( isHeatProblem() )
     {
       label="/Steer/StartCondition/Restart/DFIfiles/Temperature";
       
-      if ( !(tpCntl->GetValue(label, &str )) )
+      if ( tpCntl->GetValue(label, &str ) )
       {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
+        f_dfi_in_temp = str.c_str();
       }
-      f_dfi_in_temp = str.c_str();
+      if ( f_dfi_in_temp.empty() == true ) f_dfi_in_temp = "tmp";
+    }
+    
+    
+    // 平均値
+    if ( Mode.Average == ON )
+    {
+      label="/Steer/StartCondition/Restart/DFIfiles/AveragedPressure";
+      
+      if ( tpCntl->GetValue(label, &str ) )
+      {
+        f_dfi_in_prsa = str.c_str();
+      }
+      if ( f_dfi_in_prsa.empty() == true ) f_dfi_in_prsa = "prsa";
+      
+      
+      label="/Steer/StartCondition/Restart/DFIfiles/AveragedVelocity";
+      
+      if ( tpCntl->GetValue(label, &str ) )
+      {
+        f_dfi_in_vela = str.c_str();
+      }
+      if ( f_dfi_in_vela.empty() == true ) f_dfi_in_vela = "vela";
+      
+      
+      if ( isHeatProblem() )
+      {
+        label="/Steer/StartCondition/Restart/DFIfiles/AveragedTemperature";
+        
+        if ( tpCntl->GetValue(label, &str ) )
+        {
+          f_dfi_in_tempa = str.c_str();
+        }
+        if ( f_dfi_in_tempa.empty() == true ) f_dfi_in_tempa = "tmpa";
+      }
     }
   }
+  
   
 
   // 初期条件
@@ -3546,89 +3353,25 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       fprintf(fp,"\t     Start Condition          :   Impulsive start\n");
       break;
       
-    case restart:
-      fprintf(fp,"\t     Start Condition          :   Restart from previous session\n");
+    case restart_sameDiv_sameRes:
+      fprintf(fp,"\t     Start Condition          :   Restart with same resolution and same num. of division\n");
       break;
       
-    case restart_refinement:
-      fprintf(fp,"\t     Start Condition          :   Restart from coarse grid data\n");
+    case restart_sameDiv_refinement:
+      fprintf(fp,"\t     Start Condition          :   Restart with refinment and same num. of division\n");
       break;
       
-    case restart_different_proc:
-      fprintf(fp,"\t     Start Condition          :   Restart from previous session that nproc differ from\n");
+    case restart_diffDiv_sameRes:
+      fprintf(fp,"\t     Start Condition          :   Restart with same resolution and different division\n");
+      break;
+      
+    case restart_diffDiv_refinement:
+      fprintf(fp,"\t     Start Condition          :   Restart with refinment and different division\n");
       break;
       
     default:
       stamped_printf("Error: start condition section\n");
       err=false;
-  }
-  
-  // 粗い格子の計算結果を使ったリスタート
-  if ( Start == restart_refinement )
-  {
-    if ( FIO.IOmode == IO_GATHER )
-    {
-      fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          Pressure                 :   %s\n", f_Pressure.c_str());
-      fprintf(fp,"\t          Velocity                 :   %s\n", f_Velocity.c_str());
-      if ( isHeatProblem() )
-      {
-        fprintf(fp,"\t          Temperature              :   %s\n", f_Temperature.c_str());
-      }
-    }
-    else
-    {
-      fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_in_prs.c_str());
-      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_in_vel.c_str());
-      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_in_fvel.c_str());
-      if ( isHeatProblem() )
-      {
-        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_in_temp.c_str());
-      }
-      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_Pressure.c_str());
-      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_Velocity.c_str());
-      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_Fvelocity.c_str());
-      if ( isHeatProblem() )
-      {
-        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_Temperature.c_str());
-      }
-    }
-    
-  }
-  
-  // 異なる並列数からリスタート
-  if ( Start == restart_different_proc )
-  {
-    if ( FIO.IOmode == IO_GATHER )
-    {
-      fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          Pressure                 :   %s\n", f_Pressure.c_str());
-      fprintf(fp,"\t          Velocity                 :   %s\n", f_Velocity.c_str());
-      if ( isHeatProblem() )
-      {
-        fprintf(fp,"\t          Temperature              :   %s\n", f_Temperature.c_str());
-      }
-    }
-    else
-    {
-      fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_in_prs.c_str());
-      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_in_vel.c_str());
-      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_in_fvel.c_str());
-      if ( isHeatProblem() )
-      {
-        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_in_temp.c_str());
-      }
-      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_Pressure.c_str());
-      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_Velocity.c_str());
-      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_Fvelocity.c_str());
-      if ( isHeatProblem() )
-      {
-        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_Temperature.c_str());
-      }
-    }
-    
   }
 
   

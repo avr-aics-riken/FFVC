@@ -786,11 +786,11 @@ private:
   
   
   // リスタート時の瞬時値ファイル読み込み
-  void Restart_std(FILE* fp, double& flop);
+  void Restart_instantaneous(FILE* fp, double& flop);
   
   
   // リスタート時の平均値ファイル読み込み
-  void Restart_avrerage (FILE* fp, double& flop);
+  void Restart_avrerage(FILE* fp, double& flop);
   
   
   // リスタートの最大値と最小値の表示

@@ -433,9 +433,10 @@ enum Kind_of_vars {
 /// スタート指定
 enum start_type {
   initial_start=0,
-  restart,
-  restart_refinement,
-  restart_different_proc
+  restart_sameDiv_sameRes,
+  restart_sameDiv_refinement,
+  restart_diffDiv_sameRes,
+  restart_diffDiv_refinement
 };
 
 /// 圧力単位

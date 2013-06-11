@@ -30,7 +30,7 @@ protected:
   int div_domain[3];     ///< 全計算領域のノード分割数
   int procGrp;           ///< プロセスグループ（デフォルト0）
   int guide;             ///< ガイドセル数
-  int start_type;        ///< セッションのスタートモード（initial_start=0, restart=1, restart_refinement=2, restart_different_proc=3）
+  int start_type;        ///< セッションのスタートモード
   int* head;             ///< bboxの開始インデクス(C index) [3*Num_Node]
   int* tail;             ///< bboxの終端インデクス(C index) [3*Num_Node]
   REAL_TYPE RefLength;   ///< 代表長さ
