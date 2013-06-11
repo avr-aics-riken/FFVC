@@ -31,6 +31,7 @@ void FFV::Restart(FILE* fp)
   
   switch (C.Start)
   {
+    case initial_start:
     // 初期スタートのステップ，時間を設定する case initial_start:
       Session_StartStep = CurrentStep = 0;
       Session_StartTime = CurrentTime = 0.0;
