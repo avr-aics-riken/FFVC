@@ -1029,124 +1029,100 @@ void Control::get_FileIO()
   
   // 出力DFIファイル名
   label = "/Steer/FileIO/Output/DFIfiles/Pressure";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_prs = "prs.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_prs = str.c_str();
   }
+  if ( f_dfi_out_prs.empty() == true ) f_dfi_out_prs = "prs";
+
   
   label = "/Steer/FileIO/Output/DFIfiles/Velocity";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_vel = "vel.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_vel = str.c_str();
   }
+  if ( f_dfi_out_vel.empty() == true ) f_dfi_out_vel = "vel";
+  
   
   label = "/Steer/FileIO/Output/DFIfiles/Temperature";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_temp = "tmp.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_temp = str.c_str();
   }
+  if ( f_dfi_out_temp.empty() == true ) f_dfi_out_temp = "tmp";
+  
   
   label = "/Steer/FileIO/Output/DFIfiles/Fvelocity";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_fvel = "fvel.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_fvel = str.c_str();
   }
+  if ( f_dfi_out_fvel.empty() == true ) f_dfi_out_fvel = "fvel";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/AveragedPressure";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_prsa = "prsa.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_prsa = str.c_str();
   }
+  if ( f_dfi_out_prsa.empty() == true ) f_dfi_out_prsa = "prsa";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/AveragedVelocity";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_vela = "vela.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_vela = str.c_str();
   }
+  if ( f_dfi_out_vela.empty() == true ) f_dfi_out_vela = "vela";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/AveragedTemperature";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_tempa = "tmpa.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_tempa = str.c_str();
   }
+  if ( f_dfi_out_tempa.empty() == true ) f_dfi_out_tempa = "tmpa";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/Divergence";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_div = "div.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_div = str.c_str();
   }
+  if ( f_dfi_out_div.empty() == true ) f_dfi_out_div = "div";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/Vorticity";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_vrt = "vrt.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_vrt = str.c_str();
   }
+  if ( f_dfi_out_vrt.empty() == true ) f_dfi_out_vrt = "vrt";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/Helicity";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_hlt = "hlt.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_hlt = str.c_str();
   }
+  if ( f_dfi_out_hlt.empty() == true ) f_dfi_out_hlt = "hlt";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/TotalPressure";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_tp = "tp.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_tp = str.c_str();
   }
+  if ( f_dfi_out_tp.empty() == true ) f_dfi_out_tp = "tp";
+    
   
   label = "/Steer/FileIO/Output/DFIfiles/2ndInvariantOfVGT";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    f_dfi_out_i2vgt = "i2vgt.dfi";
-  }
-  else
+  if ( tpCntl->GetValue(label, &str ) )
   {
     f_dfi_out_i2vgt = str.c_str();
   }
+  if ( f_dfi_out_i2vgt.empty() == true ) f_dfi_out_i2vgt = "i2vgt";
+  
   
   
   /* 20130611 PLOT3D Option
@@ -2133,7 +2109,7 @@ void Control::get_start_condition()
     }
     Restart_step = ct;
     
-    if ( C.Mode.Average == ON )
+    if ( Mode.Average == ON )
     {
       label="/Steer/StartCondition/Restart/AverageStep";
       
@@ -3593,29 +3569,29 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     if ( FIO.IOmode == IO_GATHER )
     {
       fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          Pressure                 :   %s\n", f_dfi_prfx_prs.c_str());
-      fprintf(fp,"\t          Velocity                 :   %s\n", f_dfi_prfx_vel.c_str());
+      fprintf(fp,"\t          Pressure                 :   %s\n", f_Pressure.c_str());
+      fprintf(fp,"\t          Velocity                 :   %s\n", f_Velocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Temperature              :   %s\n", f_dfi_prfx_temp.c_str());
+        fprintf(fp,"\t          Temperature              :   %s\n", f_Temperature.c_str());
       }
     }
     else
     {
       fprintf(fp,"\t     with Coarse Initial data files\n");
-      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_prs.c_str());
-      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_vel.c_str());
-      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_fvel.c_str());
+      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_in_prs.c_str());
+      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_in_vel.c_str());
+      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_in_fvel.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_temp.c_str());
+        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_in_temp.c_str());
       }
-      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_dfi_prfx_prs.c_str());
-      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_dfi_prfx_vel.c_str());
-      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_dfi_prfx_fvel.c_str());
+      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_Pressure.c_str());
+      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_Velocity.c_str());
+      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_Fvelocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_dfi_prfx_temp.c_str());
+        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_Temperature.c_str());
       }
     }
     
@@ -3627,29 +3603,29 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     if ( FIO.IOmode == IO_GATHER )
     {
       fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          Pressure                 :   %s\n", f_different_nproc_pressure.c_str());
-      fprintf(fp,"\t          Velocity                 :   %s\n", f_different_nproc_velocity.c_str());
+      fprintf(fp,"\t          Pressure                 :   %s\n", f_Pressure.c_str());
+      fprintf(fp,"\t          Velocity                 :   %s\n", f_Velocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Temperature              :   %s\n", f_different_nproc_temperature.c_str());
+        fprintf(fp,"\t          Temperature              :   %s\n", f_Temperature.c_str());
       }
     }
     else
     {
       fprintf(fp,"\t     with different_nproc Initial data files\n");
-      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_prs.c_str());
-      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_vel.c_str());
-      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_fvel.c_str());
+      fprintf(fp,"\t          DFI file of Pressure     :   %s\n", f_dfi_in_prs.c_str());
+      fprintf(fp,"\t          DFI file of Velocity     :   %s\n", f_dfi_in_vel.c_str());
+      fprintf(fp,"\t          DFI file of Face Velocity:   %s\n", f_dfi_in_fvel.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_temp.c_str());
+        fprintf(fp,"\t          DFI file of Temperature  :   %s\n", f_dfi_in_temp.c_str());
       }
-      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_different_nproc_pressure.c_str());
-      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_different_nproc_velocity.c_str());
-      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_different_nproc_fvelocity.c_str());
+      fprintf(fp,"\t          Prefix of Pressure       :   %s\n", f_Pressure.c_str());
+      fprintf(fp,"\t          Prefix of Velocity       :   %s\n", f_Velocity.c_str());
+      fprintf(fp,"\t          Prefix of Face Velocity  :   %s\n", f_Fvelocity.c_str());
       if ( isHeatProblem() )
       {
-        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_different_nproc_temperature.c_str());
+        fprintf(fp,"\t          Prefix of Temp.          :   %s\n", f_Temperature.c_str());
       }
     }
     

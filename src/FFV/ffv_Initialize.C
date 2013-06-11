@@ -681,6 +681,10 @@ int FFV::Initialize(int argc, char **argv)
   */
 
   
+  // 出力ファイルの初期化
+  init_FileOut();
+  
+
   // セッションを開始したときに、初期値をファイル出力  リスタートと性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
@@ -710,7 +714,7 @@ int FFV::Initialize(int argc, char **argv)
      */
   }
 
-  
+
   // SOR2SMA
   switch (IC[ItrCtl::ic_prs_pr].get_LS())
   {
@@ -2367,11 +2371,11 @@ void FFV::init_FileOut()
   
   if ( sizeof(REAL_TYPE) == 4 )
   {
-    datatype=cio_DFI::E_CIO_FLOAT32;
+    datatype = cio_DFI::E_CIO_FLOAT32;
   }
   else if ( sizeof(REAL_TYPE) == 8 )
   {
-    datatype=cio_DFI::E_CIO_FLOAT64;
+    datatype = cio_DFI::E_CIO_FLOAT64;
   }
   else
   {
@@ -2422,7 +2426,7 @@ void FFV::init_FileOut()
   // make output directory
   std::string path = C.FIO.OutDirPath;
   cio_DFI::MakeDirectory(path);
-  
+
   
   // タイムスライス出力オプション
   cio_DFI::E_CIO_ONOFF TimeSliceDir;
@@ -2471,6 +2475,7 @@ void FFV::init_FileOut()
     }
   }
   
+
   
   // Pressure
   dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs);
@@ -2787,7 +2792,7 @@ void FFV::init_FileOut()
     // Temperature
     if ( C.isHeatProblem() )
     {
-      dfi_name = "./"+cio_DFI::Generate_DFI_Name(f_dfi_out_tempa);
+      dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_tempa);
       comp = 1;
       DFI_OUT_TEMPA = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                          dfi_name,

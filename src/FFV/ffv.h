@@ -437,6 +437,10 @@ private:
   int get_DomainInfo(TPControl* tp_dom);
   
   
+  // 出力ファイルの初期化
+  void init_FileOut();
+  
+  
   // インターバルの初期化
   void init_Interval();
   
