@@ -28,55 +28,53 @@ void FFV::Restart(FILE* fp)
   double flop_task;
   double g[4];
   
-  
+  // 初期スタートのステップ，時間を設定する
+  if ( C.Start == initial_start )
+  {
+    Session_StartStep = CurrentStep = 0;
+    Session_StartTime = CurrentTime = 0.0;
+    
+    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
+    if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
+    else                      RF.setV00(CurrentTime);
+    
+    RF.copyV00(g);
+    for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
+    
+    return;
+  }
+
   switch (C.Start)
   {
-    case initial_start:
-    // 初期スタートのステップ，時間を設定する case initial_start:
-      Session_StartStep = CurrentStep = 0;
-      Session_StartTime = CurrentTime = 0.0;
-      
-      // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-      if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
-      else                      RF.setV00(CurrentTime);
-      
-      RF.copyV00(g);
-      for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
-      break;
       
     // 同一解像度・同一分割数のリスタート
     case restart_sameDiv_sameRes: 
       Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and same num. of division\n\n");
       Hostonly_ fprintf(fp, "\t>> Restart with same resolution and same num. of division\n\n");
-      flop_task = 0.0;
-      Restart_instantaneous(fp, flop_task);
       break;
       
     case restart_sameDiv_refinement: // 同一分割数・リファインメント
       Hostonly_ fprintf(stdout, "\t>> Restart with refinemnt and same num. of division\n\n");
       Hostonly_ fprintf(fp, "\t>> Restart with refinemnt and same num. of division\n\n");
-      flop_task = 0.0;
-      Restart_instantaneous(fp, flop_task);
       break;
       
     case restart_diffDiv_sameRes:    // 異なる分割数・同一解像度
       Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and different division\n\n");
       Hostonly_ fprintf(fp, "\t>> Restart with same resolution and different division\n\n");
-      flop_task = 0.0;
-      Restart_instantaneous(fp, flop_task);
       break;
       
     case restart_diffDiv_refinement: // 異なる分割数・リファインメント
       Hostonly_ fprintf(stdout, "\t>> Restart with refinement and different division\n\n");
       Hostonly_ fprintf(fp, "\t>> Restart with refinement and different division\n\n");
-      flop_task = 0.0;
-      Restart_instantaneous(fp, flop_task);
       break;
       
     default:
       Exit(0);
       break;
   }
+  
+  flop_task = 0.0;
+  Restart_instantaneous(fp, flop_task);
   
 }
 

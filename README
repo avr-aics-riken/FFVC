@@ -1,39 +1,56 @@
------
-FFV : Frontflow / Violet Cartesian
+READ ME
+=======
 
-Kenji Ono 	keno@riken.jp
-AICS, RIKEN
-October 2012
------
+FFV-C : Frontflow / violet Cartesian
 
+Kenji Ono, AICS, RIKEN, keno@riken.jp
 
 
---- Ingredients
 
-BUILD		How to compilation
-COPYING		Copyright
-README		This file
-RELEASE		Release Note
+Ingredients
+===========
 
-bin/           ffvc : Executable module
+BUILD		 How to compilation
+CONTRIBUTORS    List of contributors
+COPYING		 Copyright
+LICENSE         License to apply
+NEWS            Release note
+README		 This file
 
-doc/		Documents
 
-doxygen/       Doxygen files
+bin/            Executable modules
+
+doc/            Documents
+
+doxygen/        Doxygen files
 	
-example/	example files
+example/        Example files
 	
-src/		source files
-	Cutlib-x.x.x    cut information library
-	F_CORE          f90 subroutines in ffvc
-	F_VOF		VOF routines
-	FB		base class
-	FFV		ffvc class
-	IP		intrinsic problems
-	PMlib-x.x	performance measurement library
-	Polylib-x.x	polygon data management library
+src/		 Source files
+   Cutlib-x.x   Cut information library
+   F_CORE       f90 subroutines in ffvc
+   F_VOF        VOF routines
+   FB           flow base class
+   FFV          ffvc class
+   IP           Intrinsic problems
+   PLOT3D       Plot3d routines
+   PMlib-x.x    Performance measurement library
+   Polylib-x.x  Polygon data management library
+   Util_Combsph 
 
 
---- 　Comments & Known Problems
 
-2012-12-25 流出境界条件としてFAR_FIELDを使うと，計算初期に流出ベクトルが振動する．流れが発達し，一様流速に近づくと振動は小さくなる．
+Prerequisite
+============
+
+- MPI library
+- CPM library
+- TextParser library
+- CIO library
+
+
+
+Comments & Known Problems
+=========================
+
+See also ffvc-ug.pdf

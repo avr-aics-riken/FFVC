@@ -1,11 +1,11 @@
------
+
 Release Note
+============
 
-FFV : Frontflow / Violet Cartesian
+FFV-C : Frontflow / Violet Cartesian
 
-Kenji Ono 	keno@riken.jp
-AICS, RIKEN
-October 2012
+Kenji Ono,  AICS, RIKEN,  keno@riken.jp
+
 
 -----
 ffvc-0.9.2.tar.gz   2012-10-04   FFV ver. 0.8.6 / FlowBase ver. 1.0.2

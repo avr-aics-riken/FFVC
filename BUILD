@@ -1,10 +1,6 @@
------
-Compilation of FFV-C
 
-Kenji Ono 	keno@riken.jp
-AICS, RIKEN
-October 2012
------
+Compilation of FFV-C
+====================
 
 
 インストールの詳細は，docディレクトリにあるffvc_ug.pdfをご覧ください．
@@ -75,6 +71,7 @@ $ make
 ----------------------------------
 
 Direction of compile
+====================
 
 Please find a ffvc_ug.pdf file in document directory and see how to install in detail.
 
