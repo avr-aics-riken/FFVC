@@ -48,7 +48,6 @@ void FFV::Restart(FILE* fp)
     case restart_sameDiv_sameRes: 
       Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and same num. of division\n\n");
       Hostonly_ fprintf(fp, "\t>> Restart with same resolution and same num. of division\n\n");
-      
       flop_task = 0.0;
       Restart_instantaneous(fp, flop_task);
       break;
@@ -91,8 +90,8 @@ void FFV::Restart(FILE* fp)
  */
 void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
-  Hostonly_ fprintf(stdout, "\tNon-dimensional value\n");
-  Hostonly_ fprintf(fp, "\tNon-dimensional value\n");
+  Hostonly_ fprintf(stdout, "\n\tNon-dimensional value\n");
+  Hostonly_ fprintf(fp, "\n\tNon-dimensional value\n");
   REAL_TYPE f_min, f_max, min_tmp, max_tmp;
   
   // Velocity
@@ -475,7 +474,7 @@ void FFV::selectRestartMode()
   bool isSameDiv = true; // 同一分割数
   bool isSameRes = true; // 同一解像度
   
-  // 前セッションと分割数が異なる場合
+  // 前セッションと領域分割数が異なる場合
   for (int i=0; i<3; i++ )
   {
     if ( gdiv[i] != DFI_IN_PRS->DFI_Domain.GlobalDivision[i] )
@@ -484,7 +483,7 @@ void FFV::selectRestartMode()
     }
   }
   
-  // 前セッションと分割数が異なる場合 >>  @todo 2倍のチェックが必要？
+  // 前セッションとボクセル数が異なる場合 >>  @todo 2倍のチェックが必要？
   for (int i=0; i<3; i++ )
   {
     if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i] )
@@ -492,73 +491,47 @@ void FFV::selectRestartMode()
       isSameRes = false;
     }
   }
-  
+
   
   // モード判定と登録
   if ( isSameDiv )
   {
     if ( isSameRes ) // 同一解像度、同一分割数
     {
-      DFI_IN_PRS->m_start_type = restart_sameDiv_sameRes;
-      DFI_IN_VEL->m_start_type = restart_sameDiv_sameRes;
-      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_sameDiv_sameRes;
-      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_sameDiv_sameRes;
-      
-      if ( C.Mode.Average == ON )
-      {
-        DFI_IN_PRSA->m_start_type = restart_sameDiv_sameRes;
-        DFI_IN_VELA->m_start_type = restart_sameDiv_sameRes;
-        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_sameDiv_sameRes;
-      }
+      C.Start = restart_sameDiv_sameRes;
     }
     else // Refinement、同一分割数
     {
-      DFI_IN_PRS->m_start_type = restart_sameDiv_refinement;
-      DFI_IN_VEL->m_start_type = restart_sameDiv_refinement;
-      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_sameDiv_refinement;
-      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_sameDiv_refinement;
-      
-      if ( C.Mode.Average == ON )
-      {
-        DFI_IN_PRSA->m_start_type = restart_sameDiv_refinement;
-        DFI_IN_VELA->m_start_type = restart_sameDiv_refinement;
-        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_sameDiv_refinement;
-      }
+      C.Start = restart_sameDiv_refinement;
     }
   }
   else
   {
     if ( isSameRes ) // 同一解像度、異なる分割数
     {
-      DFI_IN_PRS->m_start_type = restart_diffDiv_sameRes;
-      DFI_IN_VEL->m_start_type = restart_diffDiv_sameRes;
-      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_diffDiv_sameRes;
-      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_diffDiv_sameRes;
-      
-      if ( C.Mode.Average == ON )
-      {
-        DFI_IN_PRSA->m_start_type = restart_diffDiv_sameRes;
-        DFI_IN_VELA->m_start_type = restart_diffDiv_sameRes;
-        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_diffDiv_sameRes;
-      }
+      C.Start = restart_diffDiv_sameRes;
     }
     else // Refinement、異なる分割数
     {
-      DFI_IN_PRS->m_start_type = restart_diffDiv_refinement;
-      DFI_IN_VEL->m_start_type = restart_diffDiv_refinement;
-      if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = restart_diffDiv_refinement;
-      if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = restart_diffDiv_refinement;
-      
-      if ( C.Mode.Average == ON )
-      {
-        DFI_IN_PRSA->m_start_type = restart_diffDiv_refinement;
-        DFI_IN_VELA->m_start_type = restart_diffDiv_refinement;
-        if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = restart_diffDiv_refinement;
-      }
+      C.Start = restart_diffDiv_refinement;
     }
   }
   
-
+  // 登録
+  int c = C.Start;
+  
+  DFI_IN_PRS->m_start_type = c;
+  DFI_IN_VEL->m_start_type = c;
+  if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = c;
+  if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = c;
+  
+  if ( C.Mode.Average == ON )
+  {
+    DFI_IN_PRSA->m_start_type = c;
+    DFI_IN_VELA->m_start_type = c;
+    if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = c;
+  }
+  
 }
 
 

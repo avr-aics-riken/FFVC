@@ -296,6 +296,9 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
   printSteerConditions(mp, IC, DT, RF, FP3DW);
   printSteerConditions(fp, IC, DT, RF, FP3DW);
    */
+  
+  printSteerConditions(mp, IC, DT, RF);
+  printSteerConditions(fp, IC, DT, RF);
   printParaConditions(mp, mat);
   printParaConditions(fp, mat);
   printInitValues(mp);
