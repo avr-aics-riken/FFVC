@@ -3,7 +3,6 @@ READ ME
 
 FFV-C : Frontflow / violet Cartesian
 
-Kenji Ono, AICS, RIKEN, keno@riken.jp
 
 
 
@@ -16,7 +15,6 @@ COPYING		 Copyright
 LICENSE         License to apply
 NEWS            Release note
 README		 This file
-
 
 bin/            Executable modules
 

@@ -3,23 +3,33 @@
  * Frontflow / violet Cartesian
  *
  *
- * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. All rights reserved.
+ * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+ * All rights reserved.
  *
- * Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. All rights reserved.
+ * Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+ * All rights reserved.
  *
- * Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. All rights reserved.
+ * Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+ * All rights reserved.
  *
  */
 
 
- Contributors : Kenji Ono (keno@{riken, iis.u-tokyo.ac}.jp)
-                Masako Iwata
-                Kei Akasaka
-                Jyunya Onishi
-                Ken Uzawa
-                Tsuyoshi Tamaki
-                Yasuhiro Kawashima
-                Soichiro Suzuki
+Contributors List 
+=================
+
+
+First       Last
+-------     ------
+
+Kenji       Ono          keno@{riken, iis.u-tokyo.ac}.jp
+Masako      Iwata
+Kei         Akasaka
+Jyunya      Onishi
+Ken         Uzawa
+Tsuyoshi    Tamaki
+Yasuhiro    Kawashima
+Soichiro    Suzuki
 
 
 

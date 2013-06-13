@@ -1,15 +1,12 @@
 #####################################################################################
 #
-#  Cutlib （単体ビルド用）
+#  Cutlib 
 #  -----------------------
 #
-#  環境に合わせて、make_settingマクロを編集後、make
-#
+#  At first, edit a make_setting.* file for an each environment, then make
+#  If Cutlib is placed inside the directory of FFVC solver, this makefile is ignored.
 #
 #####################################################################################
-
-#  At first, edit a make_setting.* file, then make
-#  If Cutlib is placed inside the directory of FFVC solver, this makefile is ignored.
 
 
 # Default environment
