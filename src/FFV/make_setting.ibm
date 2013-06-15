@@ -17,11 +17,11 @@ RANLIB      = ranlib
 RM          = \rm -f
 MPI_DIR     = /bgsys/drivers/ppcfloor/comm
 CPM_DIR     = /hoge
+CIO_DIR     = /bar/CIOlib
 TP_DIR      = /funya
 POLYLIB_DIR = ../Polylib-2.4
 CUTLIB_DIR  = ../Cutlib-2.0.5
-PMLIB_DIR   = ../PMlib-1.7
-CIOLIB_DIR  = ../CIOlib-1.0
+PMLIB_DIR   = /foo/PMlib
 OMP_FLAGS   = -qsmp=omp
 UDEF_OPT    = -WF,-D__ARCH_BG
 CC          = mpixlc_r

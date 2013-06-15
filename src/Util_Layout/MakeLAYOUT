@@ -41,7 +41,7 @@ clean:
 	(cd ../../bin; $(RM) $(TARGET) )
 
 depend:
-	makedepend -I. -I../FB -I$(PMLIB_DIR) -Y $(CXXSRCS)
+	makedepend -I. -I../FB -Y $(CXXSRCS)
 
 # DO NOT DELETE
 

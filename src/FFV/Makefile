@@ -61,15 +61,15 @@ UDEF_LIB_PATH=-L$(POLYLIB_DIR)/lib \
               -L$(MPI_DIR)/lib
 
               
-UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
+UDEF_LIBS = -lmpi -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lPM -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
 
-UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
+UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB -lPM -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
 
 
-#UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lpmlib -lTextParser_mpi -lcpmlib \
+#UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVcore -lMPIPolylib -lcutlib -lPM -lTextParser_mpi -lcpmlib \
 #            $(UDEF_LIBS_SPEC)
 
-#UDEF_LIBS_UTIL = -lmpi -lFB -lpmlib -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
+#UDEF_LIBS_UTIL = -lmpi -lFB -lPM -lTextParser_mpi -lcpmlib $(UDEF_LIBS_SPEC)
 
 
 #####
@@ -98,17 +98,6 @@ all:
 		RM='$(RM)' \
 		TP_DIR='$(TP_DIR)' \
 		POLYLIB_DIR='$(POLYLIB_DIR)' \
-	)
-
-	( \
-	cd $(PMLIB_DIR)/src; \
-	make \
-		CXX='$(CXX)' \
-		CXXFLAGS='$(CXXFLAGS)' \
-		AR='$(AR)' \
-		RANLIB='$(RANLIB)' \
-		RM='$(RM)' \
-		UDEF_INC_PATH='$(UDEF_INC_PATH)' \
 	)
 
 	( \
@@ -241,7 +230,6 @@ clean:
 mostlyclean: clean
 	(cd $(POLYLIB_DIR)/src; make clean)
 	(cd $(CUTLIB_DIR)/src; make clean)
-	(cd $(PMLIB_DIR)/src; make clean)
 
 allclean: mostlyclean
 	(cd ../Util_Combsph; make -f MakeCOMB clean)
@@ -250,7 +238,6 @@ allclean: mostlyclean
 depend:
 	(cd $(POLYLIB_DIR)/src; make depend)
 	(cd $(CUTLIB_DIR)/src; make depend)
-	(cd $(PMLIB_DIR)/src; make depend)
 	(cd ../IP; make depend)
 	(cd ../FB; make depend)
 	(cd ../F_CORE; make depend)

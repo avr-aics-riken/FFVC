@@ -11,15 +11,6 @@
 include ../FFV/make_setting
 
 all:
-	( \
-	cd $(PMLIB_DIR)/src; \
-	make \
-		CXX='$(CXX)' \
-		AR='$(AR)' \
-		RANLIB='$(RANLIB)' \
-		RM='$(RM)' \
-		MPI_DIR='$(MPI_DIR)' \
-	)
 
 	( \
 	cd ../FB; \
@@ -57,10 +48,8 @@ clean:
   
 allclean: clean
 	(cd ../FB; make clean)
-	(cd $(PMLIB_DIR)/src; make clean)
 
 depend:
-	(cd $(PMLIB_DIR)/src; make depend)
 	(cd ../FB; make depend)
 	(make -f MakeCOMB depend)
 
