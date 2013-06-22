@@ -1,9 +1,0 @@
-#! /bin/bash
-platex ffvc_ug
-pbibtex ffvc_ug
-platex ffvc_ug
-platex ffvc_ug
-mendex -s myindex ffvc_ug.idx
-platex ffvc_ug
-dvipdfmx ffvc_ug
-open ffvc_ug.pdf

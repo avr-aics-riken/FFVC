@@ -1,9 +1,0 @@
-#! /bin/bash
-platex inside_ffvc
-pbibtex inside_ffvc
-platex inside_ffvc
-platex inside_ffvc
-mendex -s myindex inside_ffvc.idx
-platex inside_ffvc
-dvipdfmx inside_ffvc
-open inside_ffvc.pdf
