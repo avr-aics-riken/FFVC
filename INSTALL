@@ -1,7 +1,34 @@
+/*
+ * FFV-C
+ * Frontflow / violet Cartesian
+ *
+ *
+ * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+ * All rights reserved.
+ *
+ * Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+ * All rights reserved.
+ *
+ * Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+ * All rights reserved.
+ *
+ */
 
-Compilation of FFV-C
-====================
 
+PREREQUISITE
+============
+- MPI library
+- Cartesian partition library
+- Text parser library
+- Cartesian I/O library
+- Performance monitor library
+- Polygon management library
+- Cut information library
+
+
+
+HOW TO BUILD
+============
 
 インストールの詳細は，docディレクトリにあるffvc_ug.pdfをご覧ください．
 

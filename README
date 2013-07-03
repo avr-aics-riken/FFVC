@@ -1,54 +1,56 @@
-READ ME
+/*
+ * FFV-C
+ * Frontflow / violet Cartesian
+ *
+ *
+ * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+ * All rights reserved.
+ *
+ * Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+ * All rights reserved.
+ *
+ * Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+ * All rights reserved.
+ *
+ */
+
+
+OUTLINE
 =======
 
-FFV-C : Frontflow / violet Cartesian
+Frontflow/violet Cartesian is a three-dimensional unsteady incompressible thermal flow
+simulator on a Cartesian grid system. This solver is designed so as to assist practical 
+design in industry fields by powerful voxel based approach and to achieve higher parallel
+performance on massively parallel computers.
 
 
 
-
-Ingredients
+INGREDIENTS
 ===========
 
-BUILD		 How to compilation
-CONTRIBUTORS    List of contributors
-COPYING		 Copyright
+AUTHORS         Contributors
+ChangeLog       History of development
+COPYING         Copyright
+INSTALL         Description of how to install
 LICENSE         License to apply
 NEWS            Release note
-README		 This file
-
-bin/            Executable modules
-
+README          This document
 doc/            Documents
-
 doxygen/        Doxygen files
-	
 example/        Example files
-	
 src/		 Source files
-   Cutlib-x.x   Cut information library
    F_CORE       f90 subroutines in ffvc
    F_VOF        VOF routines
    FB           flow base class
    FFV          ffvc class
    IP           Intrinsic problems
    PLOT3D       Plot3d routines
-   PMlib-x.x    Performance measurement library
-   Polylib-x.x  Polygon data management library
    Util_Combsph 
 
 
 
-Prerequisite
-============
 
-- MPI library
-- CPM library
-- TextParser library
-- CIO library
+COMMENTS & KNOWN ISSUES
+=======================
 
-
-
-Comments & Known Problems
-=========================
-
-See also ffvc-ug.pdf
+See doc/ffvc-ug.pdf

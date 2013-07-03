@@ -1,4 +1,0 @@
-pushd  src/  ; make ; popd;mpicxx -o test_mpi test_mpi.cxx -I/usr/local/TextParser/include -I./include/ -L/usr/local/TextParser/lib -L./lib/ -lTextParser_mpi -lPolylib -lMPIPolylib -std=c++0x 
-pushd  src/  ; make ; popd;mpicxx -o test_mpi2 test_mpi2.cxx -I/usr/local/TextParser/include -I./include/ -L/usr/local/TextParser/lib -L./lib/ -lTextParser_mpi -lPolylib -lMPIPolylib -std=c++0x 
-pushd  src/  ; make ; popd;g++ -o test test.cxx -I/usr/local/TextParser/include -I./include/ -L/usr/local/TextParser/lib -L./lib/ -lTextParser -lPolylib -std=c++0x 
- pushd  src/  ; make ; popd;mpicxx -o test_mpi test_mpi.cxx CarGroup.cxx MyGroupFactory.cxx -I/usr/local/TextParser/include -I./include/ -L/usr/local/TextParser/lib -L./lib/ -lTextParser_mpi -lPolylib -lMPIPolylib -std=c++0x 

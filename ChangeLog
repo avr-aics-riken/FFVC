@@ -1,0 +1,99 @@
+/*
+ * FFV-C
+ * Frontflow / violet Cartesian
+ *
+ *
+ * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+ * All rights reserved.
+ *
+ * Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+ * All rights reserved.
+ *
+ * Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+ * All rights reserved.
+ *
+ */
+
+
+UPDATE HISTORY
+==============
+
+--------------------------------------------------------------
+Version 2.6.4  2013-06-27
+ - Change configure.ac
+  - TP_CFLAGS=`$TP_DIR/bin/tp-config --cflags`
+  - TP_LDFLAGS=`$TP_DIR/bin/tp-config --libs`
+  - remove TP_LIBS from configure.ac & polylib-config.in
+
+--------------------------------------------------------------
+Version 2.6.3  2013-06-27
+ - polylib-config修正
+ - configure optionのバグ修正　並列/非並列のアーカイブとライブラリパスの整合性
+
+--------------------------------------------------------------
+Version 2.6.2  2013-06-26
+ - configure optionを簡素化
+ - 並列時にはlibMPIPOLY.a, 逐次ではlibPOLY.aを選択的に生成
+
+--------------------------------------------------------------
+Version 2.6.1  2013-06-25
+ - READMEなど加筆修正
+ - パッケージリビジョンを3桁に変更
+
+--------------------------------------------------------------
+Version 2.6    2013-06-24
+ - autotools version
+ - examples/test_mpi?.cxxのバグを修正
+
+--------------------------------------------------------------
+Version 2.5    2013-06-17
+ - int Triangle::m_shellとgetter/setterを追加
+ - 初期化ファイルでポリゴングループIDが指定されている場合、その値を
+   ポリゴングループ配下のTriangle::m_exidに設定する処理を追加
+ - エラーメッセージ行頭に PL: を付加
+
+--------------------------------------------------------------
+Version 2.4    2013-05-08
+ - コンパイル方法の変更
+
+--------------------------------------------------------------
+Version 2.3    2013-03-26
+ - 環境によって生じるヘッダのインクルードエラーに対処
+
+--------------------------------------------------------------
+Version 2.2    2012-11-27
+ - Polylib::search_nearest_polygon()の追加
+ - ドキュメント類を整備。
+
+--------------------------------------------------------------
+Version 2.1    2012-08-31
+ - TextParser形式初期化ファイルに対応(XML形式は廃止)
+ - 初期化ファイルのPolygonGroup属性に「ユーザ定義ラベル」(label=)を追加
+ - Fxgen形式の境界条件ID付きバイナリSTLのread/writeに対応。
+ - ドキュメント類は未整備。v2.2で整備予定。
+
+--------------------------------------------------------------
+Version 2.0.3  2010-11-29
+ - MPIPolylib::save_parallel()で引数extendが指定されない場合、
+   出力ファイル名に日付が付与されない不具合を修正
+
+--------------------------------------------------------------
+Version 2.0.2  2010-11-09
+ - MPIPolylib::save_parallel()およびload_parallel()に引数id_format
+   を追加。三角形IDファイルの形式をユーザプログラム側で選択可能とした。
+
+--------------------------------------------------------------
+Version 2.0.1  2010-10-29
+ - Polylib::get group( std::string ) をpublic メソッドに変更
+ - Polylib::show group hierarchy() に引数FILE *fp を追加
+ - 三角形ID ファイルについてバイナリ形式での入出力に対応
+ - 自ランク内に三角形ポリゴンを持たないPolygonGroup については
+   STL ファイル・三角形IDファイルを出力しないこととした
+ - 初期化ファイルParam タグにユーザ定義id 属性を設定可能にした
+
+--------------------------------------------------------------
+Version 2.0.0  2010-07-30
+ - XML 形式初期化ファイルに対応
+ - マイグレート機能を追加
+ - ポリゴン座標移動機能を追加
+ - ポリゴンデータの保存、再読み込み機能を追加
