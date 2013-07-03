@@ -1,15 +1,20 @@
 #ifndef _FFV_H_
 #define _FFV_H_
 
-// #################################################################
+//##################################################################################
 //
-// FFV : Frontflow / violet Cartesian
+// FFV-C : Frontflow / violet Cartesian
 //
-// Copyright (c) 2012-2013  All right reserved.
+// Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+// All rights reserved.
 //
-// Institute of Industrial Science, University of Tokyo, Japan. 
+// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// All rights reserved.
 //
-// #################################################################
+// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// All rights reserved.
+//
+//##################################################################################
 //
 // 以下のマクロはcpm_Define.hで定義されている
 //   REAL_TYPE
