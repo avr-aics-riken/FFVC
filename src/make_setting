@@ -1,0 +1,195 @@
+###################################################################################
+#
+# FFV : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+# All rights reserved.
+#
+# Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+# All rights reserved.
+#
+# Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+# All rights reserved. 
+#
+###################################################################################
+
+########################
+# Common setting
+########################
+
+CPM_DIR  = /usr/local/CPMlib
+CIO_DIR  = /usr/local/CIOlib
+TP_DIR   = /usr/local/TextParser
+POLY_DIR = /usr/local/Polylib
+CUT_DIR  = /usr/local/Cutlib
+PM_DIR   = /usr/local/PMlib
+
+
+########################
+# Architecture assignment
+ARCH=intel
+########################
+
+
+########################
+# For each architecture
+########################
+
+ifeq ($(ARCH),gnu)
+  AR          = ar cru
+  RANLIB      = ranlib
+  RM          = \rm -f
+  MPI_DIR     = /opt/openmpi
+  OMP_FLAGS   = -fopenmp 
+  UDEF_OPT    =
+  CC          = mpicc
+  CFLAGS      = -O3
+  CXX         = mpicxx
+  CXXFLAGS    = -O3 $(OMP_FLAGS)
+  FC          = mpif90
+  FCFLAGS     = -O3 -ffree-form
+  F90         = mpif90
+  F90FLAGS    = -O3 -cpp $(OMP_FLAGS) -ffree-form
+  LDFLAGS     = 
+  LIBS        = -lgfortran
+  UDEF_LIB_PATH_SPEC =
+  UDEF_LIBS_SPEC     =
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += 
+#F90FLAGS   += 
+
+endif
+
+
+########################
+ifeq ($(ARCH),fx)
+  AR          = ar cr
+  RANLIB      = ranlib
+  RM          = \rm -f
+  MPI_DIR     =
+  OMP_FLAGS   =
+  UDEF_OPT    = -D__K_FPCOLL -D__ARCH_FX
+  CC          =  mpifccpx
+  CFLAGS      = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
+  CXX         = mpiFCCpx
+  CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+  FC          = mpifrtpx
+  FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
+  F90         = mpifrtpx
+  F90FLAGS    = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
+  LDFLAGS     = --linkfortran
+  LIBS        =
+  UDEF_LIB_PATH_SPEC =
+  UDEF_LIBS_SPEC     =
+
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += -CcdRR8
+#F90FLAGS   += -CcdRR8
+
+endif
+
+
+########################
+ifeq ($(ARCH),ibm)
+  AR          = ar crv
+  RANLIB      = ranlib
+  RM          = \rm -f
+  MPI_DIR     = /opt/openmpi
+  OMP_FLAGS   = -qsmp=omp
+  UDEF_OPT    = -WF,-D__ARCH_BG
+  CC          = mpixlc_r
+  CFLAGS      = -O3 -qarch=450d -qtune=450
+  CXX         = mpixlcxx_r
+  CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+  FC          = mpixlf90_r
+  FCFLAGS     = -O3 -qarch=450d -qtune=450 -qextname
+  F90         = mpixlf90_r
+  F90FLAGS    = -O3 -qarch=450d -qtune=450 -qextname -qsuffix=f=f90:cpp=f90 $(OMP_FLAGS)
+  LDFLAGS     =
+  LIBS        =
+  UDEF_LIB_PATH_SPEC = -L/soft/apps/ibmcmp/xlf/bg/11.1/bglib
+  UDEF_LIBS_SPEC     = -lxlopt -lxl -lxlf90 -lxlfmath
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += 
+#F90FLAGS   += 
+
+endif
+
+
+########################
+ifeq ($(ARCH),intel)
+  AR          = ar cru
+  RANLIB      = ranlib
+  RM          = \rm -f
+  MPI_DIR     = /opt/openmpi
+  OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
+  UDEF_OPT    =
+  CC          = icc
+  CFLAGS      = -O3
+  CXX         = icpc
+  CXXFLAGS    = -O3 $(OMP_FLAGS)
+  FC          = ifort
+  FCFLAGS     = -O3
+  F90         = ifort
+  F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS)
+  LDFLAGS     = -L/opt/intel/composerxe/lib
+  LIBS        = -lifport -lifcore
+  UDEF_LIB_PATH_SPEC =
+  UDEF_LIBS_SPEC     =
+
+#LDFLAGS     = -L/opt/intel/composerxe/lib -lmpi_cxx // Linux
+## iff double
+#CFLAGS     += -D_REAL_IS_DOUBLE_
+#CXXFLAGS   += -D_REAL_IS_DOUBLE_
+#FCFLAGS    += 
+#F90FLAGS   += 
+
+endif
+
+
+########################
+
+UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
+              `$(PM_DIR)/bin/pm-config --cflags` \
+              `$(POLY_DIR)/bin/polylib-config --cflags` \
+              `$(CUT_DIR)/bin/cut-config --cflags` \
+              `$(CPM_DIR)/bin/cpm-config --cflags` \
+              `$(CIO_DIR)/bin/cio-config --cflags` \
+              -I. \
+              -I../FB \
+              -I../IP \
+              -I../F_CORE \
+              -I../PLOT3D \
+              -I$(MPI_DIR)/include
+
+              
+UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
+              -L../FB \
+              -L../IP \
+              -L../F_CORE \
+              -L../PLOT3D \
+              `$(TP_DIR)/bin/tp-config --libs`  \
+              `$(PM_DIR)/bin/pm-config --libs` \
+              `$(POLY_DIR)/bin/polylib-config --libs` \
+              `$(CUT_DIR)/bin/cut-config --libs` \
+              `$(CPM_DIR)/bin/cpm-config --libs` \
+              `$(CIO_DIR)/bin/cio-config --libs`
+              
+              
+
+              
+UDEF_LIBS = -lmpi -lFB -lIP -lFFVC $(UDEF_LIBS_SPEC)
+
+UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB $(UDEF_LIBS_SPEC)
+
+
+#UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVC -lMPIPOLY -lCUT -lPM -lTP -lCPM -lCIO \
+#            $(UDEF_LIBS_SPEC)
+
+#UDEF_LIBS_UTIL = -lmpi -lFB -lPM -lTP -lCPM $(UDEF_LIBS_SPEC)
