@@ -18,82 +18,121 @@
 UPDATE HISTORY
 ==============
 
---------------------------------------------------------------
-Version 2.6.4  2013-06-27
- - Change configure.ac
-  - TP_CFLAGS=`$TP_DIR/bin/tp-config --cflags`
-  - TP_LDFLAGS=`$TP_DIR/bin/tp-config --libs`
-  - remove TP_LIBS from configure.ac & polylib-config.in
+-------------
+Version 1.1.8    2013-07-04
+  - パッケージ形式をautotoolsを利用したインストールに合わせて変更開始
+  - Cutlib-3.1.1対応のため，GridAccessorクラスを用いたインターフェイスに変更
+    setup_Polygon2CutInfo()でpoly_org, poly_dxをdoubleへ変更
 
---------------------------------------------------------------
-Version 2.6.3  2013-06-27
- - polylib-config修正
- - configure optionのバグ修正　並列/非並列のアーカイブとライブラリパスの整合性
+-------------
+Version 1.1.7    2013-06-15
+  - PMlibを外部ライブラリとしてパッケージを構成
+  - CIOlib導入による修正
+    リスタート関連のメソッドをコメントアウト ffv_Restart.C
+    DFIはCIOlibでハンドリングしているので，既存のDFIクラスをインクルードから外す
+    Plot3Dクラスはメンテできていないのでコメントアウト　20130611のラベル
+    MakefileからもPLOT3D関連のビルドを外す > UDEF_LIBSからPLT3Dへのリンクを外すだけ
+    DFI_OUT_DIVを追加
+  - 分割ポリシーのバグ修正
+  - CIOlibを外部ライブラリとしてリンク, CIOlib-1.1をテスト実装
 
---------------------------------------------------------------
-Version 2.6.2  2013-06-26
- - configure optionを簡素化
- - 並列時にはlibMPIPOLY.a, 逐次ではlibPOLY.aを選択的に生成
+-------------
+Version 1.1.4    2013-05-08
+  - リスタート時のインターバル不正のバグ修正
 
---------------------------------------------------------------
-Version 2.6.1  2013-06-25
- - READMEなど加筆修正
- - パッケージリビジョンを3桁に変更
+-------------
+Version 1.1.3    2013-04-26
+  - 周期境界のバグ修正
+  - OBC_OUTFLOWを値指定方式に変更
+  - OBC_FAR_FIELDを値指定のノイマン条件実装に変更
+  - OBC_SYMMETRICを値指定実装
+  - vobc_face_drchletの配列領域侵害のバグを修正
+  - FaceVelocity出力をオプションに変更
+  - CIOlib導入
+  - C.Tscale, time周りをdoubleに修正
+  
+-------------
+Version 1.0.8    2013-03-31
+  - /Steer/FIleIO/IOmode >> distributed is default
+  - 領域分割時　G_Region = G_Voxel * G_Pitch でない場合のバグを修正 (get_DomainInfo)
+    分割のポリシー
+      G_regionは必須
+      G_voxelとG_pitchでは，G_voxelが優先．
+      両方が指定されている場合には，エラー
+      G_pitchが指定されている場合には，割り切れない場合，
+       G_voxel = (int)ceil(G_region/G_pitch)
+       G_region = G_pitch * G_voxel
+  - OBC_FAR_FIELDのノイマン条件実装
+  - Polylib 2.3 対応
+  - OBC_TRC_FREE再実装
+  - 初期化ルーチン再構築 >> setupDomain()
 
---------------------------------------------------------------
-Version 2.6    2013-06-24
- - autotools version
- - examples/test_mpi?.cxxのバグを修正
+-------------
+Version 1.0.3    2013-02-17
+  - PLOT3D出力の様式変更への対応 >> ffv_Initialize.C, ffv_Loop.C
+ 
+-------------
+Version 1.0.2    2013-01-26
+  - ベクトルのファイル出力フォーマットを V(i,j,k,3) -> V(3,i,j,k)に戻す
+  - ファイル出力タイミングの修正
+  - DFIフォーマットの変更、新フォーマットに対応するまでplot3d出力は使えない（PLOT3Dディレクトリのソースを修正のこと）
+  - リスタートのパラメータ指定を変更
+  - シグナルイベントハンドラを実装 FFV_TerminateCtrlクラス
+  - 外部境界条件で部分的に流速を与える（ガイドセルに固体IDを入れておきマスクする）
+      vobc_pv_specv_(), vobc_div_drchlt_()
 
---------------------------------------------------------------
-Version 2.5    2013-06-17
- - int Triangle::m_shellとgetter/setterを追加
- - 初期化ファイルでポリゴングループIDが指定されている場合、その値を
-   ポリゴングループ配下のTriangle::m_exidに設定する処理を追加
- - エラーメッセージ行頭に PL: を付加
+-------------
+Version 0.9.7    2012-12-01
+  - Polylib-2.2, TextParser-1.2対応
 
---------------------------------------------------------------
-Version 2.4    2013-05-08
- - コンパイル方法の変更
+-------------
+Version 0.9.6    2012-11-16
+  - PLOT3D関連ソースをPLOT3Dディレクトリに移動
+  - 反復解法に PCG, PBiCGSTAB, RBGSを追加
+  - セルフェイス速度d_vf
+  - 速度を V(3,i,j,k) -> V(i,j,k,3)
+  - makeの方法を変更．コマンドラインでマクロを指定し，分岐
+      $ make FFVC=intel     << intel
+      $ make FFVC=gnu       << gnu
+      $ make FFVC=fx        << FX10, K
+      $ make FFVC=ibm       << IBM BG
+      あるいは，makefileの先頭にマクロを定義する
+  - OpenMPのDOループはSTATICに固定
+  - パラメータをアンダースコア区切りから，大文字小文字区切りへ変更, ex.) Time_Control >> TimeControl
 
---------------------------------------------------------------
-Version 2.3    2013-03-26
- - 環境によって生じるヘッダのインクルードエラーに対処
+-------------
+Version 0.8.9    2012-10-18
+  - リスタートパラメータの指定を変更．ステージングオプション
+  - ビルドを一括で行う >> Polylib-2.1.2, CUtlib-2.0.5, PMlib-1.5, TextParser-1.1
+  - ファイル出力のディレクトリ対応
+  - 入力ファイルをひとつにする
+  - plot3d関連修正
+  - Util_Combsph, Util_Layoutを追加
 
---------------------------------------------------------------
-Version 2.2    2012-11-27
- - Polylib::search_nearest_polygon()の追加
- - ドキュメント類を整備。
+-------------
+Version 0.8.4    2012-09-30
+  - 反復法のプロセスを変更
+  - Gmres追加
+  - coarse restartの特殊版getCoraseResult2
+  - ポリゴンのスケーリング機能 >> Hidden
+  - 温度計算組み込み
 
---------------------------------------------------------------
-Version 2.1    2012-08-31
- - TextParser形式初期化ファイルに対応(XML形式は廃止)
- - 初期化ファイルのPolygonGroup属性に「ユーザ定義ラベル」(label=)を追加
- - Fxgen形式の境界条件ID付きバイナリSTLのread/writeに対応。
- - ドキュメント類は未整備。v2.2で整備予定。
+-------------
+Version 0.7.2    2012-08-25
+  - CPMlib-1.0.6対応
+  - 領域情報関連の浮動小数点変数はdoubleのインターフェイス
+  - domain.tpにlength_of_unitパラメータを導入
+  - dfi対応
+  - textparser 1.1対応
 
---------------------------------------------------------------
-Version 2.0.3  2010-11-29
- - MPIPolylib::save_parallel()で引数extendが指定されない場合、
-   出力ファイル名に日付が付与されない不具合を修正
+-------------
+Version 0.6.0    2012-07-30
+  - Polylib-2.1_Dev_b対応
+  - PLOT3Dフォーマット導入
+  - SOR2SMAのCPMlib実装
+  - データクラスをポインタへ置換
 
---------------------------------------------------------------
-Version 2.0.2  2010-11-09
- - MPIPolylib::save_parallel()およびload_parallel()に引数id_format
-   を追加。三角形IDファイルの形式をユーザプログラム側で選択可能とした。
-
---------------------------------------------------------------
-Version 2.0.1  2010-10-29
- - Polylib::get group( std::string ) をpublic メソッドに変更
- - Polylib::show group hierarchy() に引数FILE *fp を追加
- - 三角形ID ファイルについてバイナリ形式での入出力に対応
- - 自ランク内に三角形ポリゴンを持たないPolygonGroup については
-   STL ファイル・三角形IDファイルを出力しないこととした
- - 初期化ファイルParam タグにユーザ定義id 属性を設定可能にした
-
---------------------------------------------------------------
-Version 2.0.0  2010-07-30
- - XML 形式初期化ファイルに対応
- - マイグレート機能を追加
- - ポリゴン座標移動機能を追加
- - ポリゴンデータの保存、再読み込み機能を追加
+-------------
+Version 0.2.0    2013-06-30
+  - 関数名を再構築
+  - CPMライブラリを用いて並列管理テスト

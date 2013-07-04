@@ -4362,17 +4362,17 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
 void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
   unsigned poly_gc[3];
-  float poly_org[3];
-  float poly_dx[3];
+  double poly_org[3];
+  double poly_dx[3];
   poly_gc[0]  = poly_gc[1] = poly_gc[2] = (unsigned)guide;
   
   // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
-  poly_dx[0]  = (float)pitch[0] *C.RefLength;
-  poly_dx[1]  = (float)pitch[1] *C.RefLength;
-  poly_dx[2]  = (float)pitch[2] *C.RefLength;
-  poly_org[0] = (float)origin[0]*C.RefLength;
-  poly_org[1] = (float)origin[1]*C.RefLength;
-  poly_org[2] = (float)origin[2]*C.RefLength;
+  poly_dx[0]  = (double)(pitch[0] * C.RefLength);
+  poly_dx[1]  = (double)(pitch[1] * C.RefLength);
+  poly_dx[2]  = (double)(pitch[2] * C.RefLength);
+  poly_org[0] = (double)(origin[0]* C.RefLength);
+  poly_org[1] = (double)(origin[1]* C.RefLength);
+  poly_org[2] = (double)(origin[2]* C.RefLength);
   
   Hostonly_
   {
@@ -4393,10 +4393,10 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // Polylib: 並列計算領域情報を設定
   poly_stat = PL->init_parallel_info( MPI_COMM_WORLD,
-                                     poly_org,        // 自ランクの基点座標
-                                     (unsigned*)size, // 自ランクの分割数
-                                     poly_gc,         // ガイドセル数
-                                     poly_dx          // 格子幅
+                                     (float*)poly_org, // 自ランクの基点座標
+                                     (unsigned*)size,  // 自ランクの分割数
+                                     poly_gc,          // ガイドセル数
+                                     (float*)poly_dx   // 格子幅
                                      );
   if ( poly_stat != PLSTAT_OK )
   {
@@ -4425,6 +4425,10 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
     Exit(0);
   }
+  
+  // ポリゴンの修正
+  //RepairPolygonData(PL);
+  
   
   /* スケーリングする場合のみ表示
   if ( C.Scaling_Factor != 1.0 )
@@ -4611,6 +4615,9 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 // ##########  
   
   
+  
+  
+  
   // Cutlib
   Hostonly_
   {
@@ -4622,10 +4629,24 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   size_t n_cell[3];
 
+  /*
+   
+     Outer < | > Inner
+        +----+----+--
+      0 |    |    |
+        |    |    |
+        +----+----+--
+        ^ 0    1    2   ...
+   
+   グリッド情報アクセッサクラスCell(const double org[3], const double pitch[3])
+   のコンストラクタに渡す引数
+     org[]はインデクス空間で(0,0,0)のセルの最小位置（上図の^の部分）
+   
+   */
   
   for ( int i=0; i<3; i++) {
-    n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル両側
-    poly_org[i] -= poly_dx[i]*(float)guide;  // ガイドセル分だけシフト
+    n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
+    poly_org[i] -= poly_dx[i];  // (0,0,0)へはセル1つ分だけシフト
   }
   
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
@@ -4643,12 +4664,26 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
-  cutPos = new CutPos32Array(n_cell); // 6*(float)
-  cutBid = new CutBid5Array(n_cell);  // (int32_t)
+  int sx, sy, sz;
+  int ex, ey, ez;
+  sx = sy = sz = 1-guide;
+  ex = size[0];
+  ey = size[1];
+  ez = size[2];
+  //cutPos = new CutPos32Array(n_cell); // 6*(float)
+  //cutBid = new CutBid5Array(n_cell);  // (int32_t)
+  cutPos = new CutPos32Array(sx, sy, sz, ex, ey, ez); // 6*(float)
+  cutBid = new CutBid5Array (sx, sy, sz, ex, ey, ez);  // (int32_t)
   TIMING_stop(tm_init_alloc);
   
+  
+  // グリッド情報アクセッサクラス
+  GridAccessor* GRID = new Cell(poly_org, poly_dx);
+  
+  
+  // 交点計算
   TIMING_start(tm_cutinfo);
-  CutInfoCell(poly_org, poly_dx, PL, cutPos, cutBid); // ガイドセルを含む全領域で交点を計算
+  CalcCutInfo(GRID, PL, cutPos, cutBid);
   TIMING_stop(tm_cutinfo);
   
   

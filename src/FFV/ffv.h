@@ -99,6 +99,7 @@
 
 // Cutlib
 #include "Cutlib.h"
+#include "GridAccessor/Cell.h"
 
 // CIOlib
 #include "cio_DFI.h"
