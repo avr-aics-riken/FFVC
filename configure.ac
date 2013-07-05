@@ -1,0 +1,381 @@
+###################################################################################
+#
+# FFV-C : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+# All rights reserved.
+#
+# Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+# All rights reserved.
+#
+# Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+# All rights reserved. 
+#
+###################################################################################
+#
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ([2.69])
+AC_INIT([ffvc], [1.2.0], [keno@riken.jp], [ffvc])
+AM_INIT_AUTOMAKE()
+AC_CONFIG_SRCDIR([src/FB/Alloc.C])
+AC_CONFIG_HEADERS([config.h])
+
+#
+# revision No.
+#
+FFVC_REVISION="20130705_1700"
+AC_SUBST(FFVC_REVISION)
+
+
+#
+# platform
+#
+FFVC_DEVICE="$($SHELL ./chk-uname)"
+AC_SUBST(FFVC_DEVICE)
+
+
+#
+# FORTRAN API
+#
+enable_fapi="yes"
+
+# FFVC_FAPI is true, if measure timing
+AC_SUBST(FFVC_FAPI)
+AM_CONDITIONAL([FFVC_FAPI], [test x"${enable_fapi}" = x"yes"])
+FC=$F90
+FCFLAGS=$F90FLAGS
+
+
+
+#
+# compiler libs   // Fortranのコンパイルのためのオプション
+#
+AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ)],[Specify Compiler type])], , with_comp=none)
+AC_SUBST(COMPILER_LIBS)
+case "$with_comp" in
+  "INTEL") COMPILER_LIBS="-lifport -lifcore" ;;
+  "FJ")    COMPILER_LIBS="--linkfortran" ;;
+esac
+
+
+
+#
+# REAL environment for Fortran90
+#
+AC_ARG_WITH(f90real, [AC_HELP_STRING([--with-f90real=(4|8)],[Specify Fortran90 REAL size [4byte]])], , with_f90real=4)
+AC_SUBST(REALOPT)
+AC_SUBST(FREALOPT)
+if test "$with_f90real" = "8" ; then
+  REALOPT=-D_REAL_IS_DOUBLE_
+  if test "$with_comp" = "INTEL" ; then
+    FREALOPT="-r8"
+  elif test "$with_comp" = "FJ" ; then
+    FREALOPT="-CcdRR8"
+  fi
+else
+  REALOPT=
+fi
+
+
+
+# MPI setting
+enable_mpi="none"
+
+
+#
+# MPICH environment  // mpichが指定されていれば変数をセット
+#
+AC_SUBST(MPICH_DIR)
+AC_SUBST(MPICH_CFLAGS)
+AC_SUBST(MPICH_LDFLAGS)
+AC_SUBST(MPICH_LIBS)
+AC_SUBST(MPICH_FCLIBS)
+AC_ARG_WITH(mpich, [AC_HELP_STRING([--with-mpich=dir],[Specify MPICH install directory])], , with_mpich=none)
+if test "$with_mpich" != "none" ; then
+  MPICH_DIR=$with_mpich;
+  MPICH_CFLAGS=-I$MPICH_DIR/include
+  MPICH_LDFLAGS=-L$MPICH_DIR/lib
+  enable_mpi="mpich"
+fi
+
+#
+# OpenMPI environment  // mpichが指定されておらず，かつ，ompが指定されていれば変数をセット
+#
+if test "$with_mpich" = "none" ; then
+  AC_ARG_WITH(ompi, [AC_HELP_STRING([--with-ompi=dir],[Specify OpenMPI install directory])], , with_ompi=none)
+  if test "$with_ompi" != "none" ; then
+    MPICH_DIR=$with_ompi;
+    MPICH_CFLAGS=-I$MPICH_DIR/include
+    MPICH_LDFLAGS=-L$MPICH_DIR/lib
+    enable_mpi="ompi"
+  fi
+fi
+
+
+
+#
+# MPI Library  // Fortran用のライブラリ
+#
+
+if test "$with_comp" = "FJ" ; then
+  MPICH_LIBS=""
+  case "$host" in
+    sparc*) MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90" ;;
+  esac
+elif test "$enable_mpi" = "mpich" ; then
+  MPICH_LIBS="-lmpich"
+  MPICH_FCLIBS="$MPICH_LIBS"" -lfmpich"
+  case "$CPM_DEVICE" in
+    "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
+  esac
+elif test "$enable_mpi" = "ompi" ; then
+  MPICH_LIBS="-lmpi"
+  MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90"
+  case "$CPM_DEVICE" in
+    "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
+  esac
+fi
+
+
+if test "$enable_mpi" = "none" ; then
+  echo "  Warning: Neither MPICH nor OpenMPI library is not specified."
+  echo "           If compilation error occurs about MPI, specify --with-mpich or --with-ompi option."
+fi
+
+
+#
+# default prefix setting
+#
+AC_PREFIX_DEFAULT([/usr/local/FFVC])
+if test "$prefix" = "NONE" ; then
+  FFVC_INST_DIR=/usr/local/FFVC
+else
+  FFVC_INST_DIR="$prefix"
+fi
+
+
+
+#
+# CPMlib
+#
+AC_ARG_WITH(cpm, [AC_HELP_STRING([--with-cpm=dir],[Specify CPMlib installed directory])], , with_cpm=none)
+AC_SUBST(CPM_DIR)
+AC_SUBST(CPM_CFLAGS)
+AC_SUBST(CPM_LDFLAGS)
+if test "$with_cpm" != "none" ; then
+  CPM_DIR=$with_cpm;
+  CPM_CFLAGS=`$CPM_DIR/bin/cpm-config --cflags`
+  CPM_LDFLAGS=`$CPM_DIR/bin/cpm-config --libs`
+else
+  echo "  Error: CPM library is not specified."
+  echo "         Specify --with-cpm option."
+  exit 1
+fi
+
+
+
+#
+# CIOlib
+#
+AC_ARG_WITH(cio, [AC_HELP_STRING([--with-cio=dir],[Specify CIOlib installed directory])], , with_cio=none)
+AC_SUBST(CIO_DIR)
+AC_SUBST(CIO_CFLAGS)
+AC_SUBST(CIO_LDFLAGS)
+if test "$with_cio" != "none" ; then
+  CIO_DIR=$with_cio;
+  CIO_CFLAGS=`$CIO_DIR/bin/cio-config --cflags`
+  CIO_LDFLAGS=`$CIO_DIR/bin/cio-config --libs`
+else
+  echo "  Error: CIO library is not specified."
+  echo "         Specify --with-cio option."
+  exit 1
+fi
+
+
+
+
+#
+# TextParser
+#
+AC_ARG_WITH(parser, [AC_HELP_STRING([--with-parser=dir],[Specify TextParser install directory])], , with_parser=none)
+AC_SUBST(TP_DIR)
+AC_SUBST(TP_CFLAGS)
+AC_SUBST(TP_LDFLAGS)
+if test "$with_parser" != "none" ; then
+  TP_DIR=$with_parser;
+  TP_CFLAGS=`$TP_DIR/bin/tp-config --cflags`
+  TP_LDFLAGS=`$TP_DIR/bin/tp-config --libs`
+else
+  echo "  Error: TextParser library is not specified."
+  echo "         Specify --with-parser option."
+  exit 1
+fi
+
+
+
+#
+# PMlib
+#
+AC_SUBST(PM_DIR)
+AC_SUBST(PM_CFLAGS)
+AC_ARG_WITH(pm, [AC_HELP_STRING([--with-pm=dir],[Specify PMlib install directory])], , with_pm=none)
+AC_SUBST(PM_LDFLAGS)
+
+if test "$with_pm" != "none" ; then
+  PM_DIR=$with_pm;
+  PM_CFLAGS=`$PM_DIR/bin/pm-config --cflags`
+  PM_LDFLAGS=`$PM_DIR/bin/pm-config --libs`
+else
+  echo "  Error: PM library is not specified."
+  echo "         Specify --with-pm option."
+  exit 1
+fi
+
+
+
+#
+# Polylib
+#
+AC_ARG_WITH(polylib, [AC_HELP_STRING([--with-polylib=dir],[Specify Polylib install directory])], , with_polylib=none)
+AC_SUBST(PL_DIR)
+AC_SUBST(PL_CFLAGS)
+AC_SUBST(PL_LDFLAGS)
+
+if test "$with_polylib" != "none" ; then
+  PL_DIR=$with_polylib;
+  PL_CFLAGS=`$PL_DIR/bin/polylib-config --cflags`
+  PL_LDFLAGS=`$PL_DIR/bin/polylib-config --libs`
+else
+  echo "  Error: Polylib is not specified."
+  echo "         Specify --with-polylib option."
+  exit 1
+fi
+
+
+
+#
+# Cutlib
+#
+AC_ARG_WITH(cut, [AC_HELP_STRING([--with-cut=dir],[Specify Cutlib install directory])], , with_cut=none)
+AC_SUBST(CUT_DIR)
+AC_SUBST(CUT_CFLAGS)
+AC_SUBST(CUT_LDFLAGS)
+
+if test "$with_cut" != "none" ; then
+  CUT_DIR=$with_cut;
+  CUT_CFLAGS=`$CUT_DIR/bin/cut-config --cflags`
+  CUT_LDFLAGS=`$CUT_DIR/bin/cut-config --libs`
+else
+  echo "  Error: Cutlib is not specified."
+  echo "         Specify --with-cut option."
+  exit 1
+fi
+
+
+
+#
+# Special flags
+#
+
+FFVC_CXX="$CXX"
+AC_SUBST(FFVC_CXX)
+
+# if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
+# wrappers like mpicxx, mpicc, mpiCC, mpic++, mpiFCCpx are taking into consideration, if not add in case.
+
+case "$FFVC_CXX" in
+  mpicxx)   enable_mpi="mpi" ;;
+  mpicc)    enable_mpi="mpi" ;;
+  mpiCC)    enable_mpi="mpi" ;;
+  mpic++)   enable_mpi="mpi" ;;
+  mpiFCCpx) enable_mpi="mpi" ;;
+esac
+
+
+if test "$enable_mpi" = "none" ; then
+  FFVC_LIBS=""
+else
+  FFVC_LIBS=""
+fi
+AC_SUBST(FFVC_LIBS)
+
+
+
+FFVC_FC="$FC"
+AC_SUBST(FFVC_FC)
+
+if test x"${enable_fapi}" = x"yes" ; then
+  FFVC_FC_LD="$FC"
+  if test "$with_comp" = "FJ"; then
+    FFVC_FC_LD="$CXX"" --linkfortran"
+  else
+    FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
+  fi
+  AC_SUBST(FFVC_FC_LD)
+fi
+
+
+
+#
+# MAKE_SUB_DIRS
+#
+AC_SUBST(MAKE_SUB_DIRS)
+MAKE_SUB_DIRS="src doc"
+
+
+
+#
+# Checks for programs.
+#
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_F77
+AC_PROG_FC
+AC_PROG_RANLIB
+
+
+
+#
+# Checks for libraries.
+#
+
+
+
+#
+# Checks for header files.
+#
+AC_CHECK_HEADERS([fcntl.h float.h stdlib.h string.h strings.h sys/param.h unistd.h])
+
+
+
+#
+# Checks for typedefs, structures, and compiler characteristics.
+#
+AC_CHECK_HEADER_STDBOOL
+AC_C_INLINE
+AC_TYPE_INT32_T
+AC_TYPE_MODE_T
+AC_TYPE_SIZE_T
+
+
+#
+# Checks for library functions.
+#
+AC_FUNC_MALLOC
+AC_CHECK_FUNCS([floor memset mkdir pow realpath sqrt strcasecmp strchr strdup strerror])
+
+
+
+AC_CONFIG_FILES([doc/Makefile \
+                 src/F_CORE/Makefile \
+                 src/FB/Makefile \
+                 src/FFV/Makefile \
+                 src/IP/Makefile \
+                 src/PLOT3D/Makefile \
+                 src/Util_Combsph/Makefile \
+                 src/Util_Layout/Makefile \
+                ])
+
+AC_OUTPUT

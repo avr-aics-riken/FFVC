@@ -30,87 +30,166 @@ PREREQUISITE
 HOW TO BUILD
 ============
 
-インストールの詳細は，docディレクトリにあるffvc_ug.pdfをご覧ください．
+1. with configure
 
-
-1. TextParserのインストール
-TextParser-x.x.tar.gzを展開し，トップディレクトリのconfig_tp.shを実行．
-
-$ configure_tp.sh /usr/local/TextParser
+$ ./configure [options]
 $ make
-$ sudo make install または make install
-$ make distclean
+$ make install
+
+
+Configure options:
+
+ --host=hostname
+    Specify in case of cross-compilation.
+
+ --prefix=INSTALL_DIR
+    Specify a directory to be installed. The default directory is /usr/local/FFVC
+
+ --with-cio=CIOLIB_DIR
+    Specify the directory path that is installed CIO library.
+
+ --with-comp=(INTEL|FJ)
+    If Intel compiler is used, choose INTEL, and if Fujitsu compiler, specify FJ. 
+    This option is mandatory when using both compilers.
+
+ --with-cpm=CPMLIB_DIR
+    Specify the directory path that is installed CPM library.
+
+ --with-cut=CUTLIB_DIR
+    Specify the directory path that Cut information library is installed.
+
+ --with-f90real=(4|8)
+    Specify the REAL macro by selecting 4(float) or 8(double). If this option is 
+    omitted, float type will be used.
+
+ --with-mpich=MPICH_DIR
+    If you will use a MPICH library, specify the directory that MPICH library is
+    installed. Either --with-mpich of --with-ompi option will be required except. 
+    If the wrapper compiler, e.g., mpic++ or mpicxx is used to compile, both options 
+    can be eliminated.
+
+ --with-ompi=OPENMPI_DIR
+    If you will use an OpenMPI library, specify the directory path of OpenMPI.
+
+ --with-parser=TEXTPARSER_PATH
+    Specify the directory path that is installed TextParser library.
+
+ --with-pm=PMLIB_DIR
+    Specify the directory path that Performance Monitor library is installed. This 
+    option is required if only you need a performance report.
+
+ --with-polylib=POLYLIB_DIR
+    Specify the directory path that Polygon management library is installed.
+
+
+ CC=C_COMPILER
+    Specify a C compiler.
+
+ CFLAGS=C_OPTIONS
+    Specify compiler options.
+
+ CXX=CXX_COMPILER
+    Specify a C++ compiler, e.g., g++, icpc, xlc++ or others.
+
+ CXXFLAGS=CXX_OPTIONS
+    Specify compiler options.
+
+ FC=FORTRAN90_COMPILER
+    Specify a fortran compiler.
+
+ FCFLAGS=FORTRAN_OPTIONS
+    Specify compiler options.
+
+ F90=FORTRAN90_COMPILER
+    Specify a fortran90 compiler.
+
+ F90FLAGS=FORTRAN90_OPTIONS
+    Specify compiler options.
+
+ LDFLAGS=LD_OPTIONS
+    Specify directory path for Fortran libraries.
 
 
 
-2.　CPMlibのインストール
+Here is examples.
 
-CPMlib-x.x.x.tar.gzを展開し，トップディレクトリのconfig_cpm.shを実行．
+## for GNU compiler and MPICH.
 
-$ configure_cpm.sh /usr/local/cpm
-$ make
-$ sudo make install または make install
-$ make distclean
-
-configureがうまくいかない場合は，Makefile_handを使い，コンパイルする．
-
-$ make -f Makefile_hand mpi
-
-
-
-3.　FFV-Cのコンパイル
-
-3-1. 一括コンパイル
-Polylib, Cutlib, PMlibがFFVディレクトリと同じ階層に配置されていること
-
-$ make depend
-$ make
-
-
-3-2. 個別にコンパイル
-以下の順序でコンパイルを行う．コンパイルをやり直す場合には，make clean, make allclean を実行．
-
-3-2-1. Polylib
-Makefileのマクロ変数を指定し，コンパイルする．
-
-$ make depend
-$ make
-
-3-2-2. Cutlib
-Makefileのマクロ変数を指定し，コンパイルする．
-
-$ make depend
-$ make
-
-3-2-3. PMlib
-Makefileのマクロ変数を指定し，コンパイルする．
-
-$ make depend
-$ make
-
-3-2-4. FFV-C
-make_settingのマクロ変数を指定し，コンパイルする．
-
-$ make depend
-$ make
+  $ ./configure \
+      --prefix=/usr/local/FFVC \
+      --with-cpm=/usr/local/CPMlib \
+      --with-cio=/usr/local/CIOlib \
+      --with-cut=/usr/local/Cutlib \
+      --with-pm=/usr/local/PMlib \
+      --with-polylib=/usr/local/Polylib \
+      --with-parser=/usr/local/TextParser \
+      CC=mpicc \
+      CFLAGS=-O3 \
+      CXX=mpicxx \
+      CXXFLAGS="-O3 -fopenmp" \
+      FC=mpif90 \
+      FCFLAGS="-O3 -ffree-form" \
+      F90=mpif90 \
+      F90FLAGS="-O3 -cpp -fopenmp -ffree-form" \
+      LIBS=-lgfortran \
+      LDFLAGS=
 
 
-----------------------------------
+## for OpenMPI compiled by INTEL compile, wrapper compiler, double precision, openmp.
 
-Direction of compile
-====================
+  $ ./configure \
+      --with-cpm=/usr/local/CPMlib \
+      --with-cio=/usr/local/CIOlib \
+      --with-cut=/usr/local/Cutlib \
+      --with-pm=/usr/local/PMlib \
+      --with-polylib=/usr/local/Polylib \
+      --with-parser=/usr/local/TextParser \
+      --with-comp=INTEL \
+      --with-f90real=8 \
+      CC=mpicc \
+      CFLAGS=-O3 \
+      CXX=mpicxx \
+      CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
+      FC=mpif90 \
+      FCFLAGS=-O3 \
+      F90=mpif90 \
+      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2" \
+      LIBS="-lifport -lifcore" \
+      LDFLAGS=-L/opt/intel/composerxe/lib
 
-Please find a ffvc_ug.pdf file in document directory and see how to install in detail.
-
-$ tar xvfz ffvc-x.x.x.tar.gz
-
-$ cd ffvc-x.x.x/src/FFV
-
-$ make depend
-
-$ make
 
 
+## for K-computer.
+
+  $ ./configure \
+      --prefix=/home/foo/FFVC \
+      --with-cpm=/home/foo/CPMlib \
+      --with-cio=/home/foo/CIOlib \
+      --with-cut=/home/foo/Cutlib \
+      --with-pm=/home/foo/PMlib \
+      --with-polylib=/home/foo/Polylib \
+      --with-parser=/home/foo/TextParser \
+      --with-comp=FJ \
+      --host=sparc64-unknown-linux-gnu \
+      CC=mpifccpx \
+      CFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc" \
+      CXX=mpiFCCpx \
+      CXXFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc"
+      FC="mpifrtpx" \
+      FCFLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
+      F90=mpifrtpx \
+      F90FLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
+      LDFLAGS="--linkfortran" \
+      LIBS=
+
+
+
+
+
+2. Hand compile
+
+If a provided configure does not work, use Makefile_hand to build this library. At first,
+edit a make_setting file to tell your machine environment.
 
 	
 

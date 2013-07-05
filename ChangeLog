@@ -111,17 +111,9 @@ Version 0.7.2    2012-08-25
   - dfi対応
   - textparser 1.1対応
 
--------------
-Version 0.6.0    2012-07-30
-  - Polylib-2.1_Dev_b対応
-  - PLOT3Dフォーマット導入
-  - SOR2SMAのCPMlib実装
-  - データクラスをポインタへ置換
 
--------------
-Version 0.2.0    2013-06-30
-  - 関数名を再構築
-  - CPMライブラリを用いて並列管理テスト
+
+
 
 
   
@@ -1402,1039 +1394,1303 @@ Date:    Aug 1 17:56:43 2012
 
     r699 replace allreduce int to ulong in Compo
 
+----------------------------
 Date:    Jul 31 23:44:12 2012 
 
     r698 fill
-
+      
+----------------------------
 Date:    Jul 30 16:35:16 2012 
 
     r697 snapshot PM
 
+----------------------------
 Date:    Jul 30 14:42:52 2012 
 
     r696 update polylib
+    - Polylib-2.1_Dev_b対応
 
+----------------------------
 Date:    Jul 30 12:53:23 2012 
 
     r695 openmp?
 
+----------------------------
 Date:    Jul 30 00:08:07 2012 
 
     r694 check cut
 
+----------------------------
 Date:    Jul 29 19:20:00 2012 
 
     r693 polylib working
 
+----------------------------
 Date:    Jul 29 14:02:04 2012 
 
     r692 polylib
 
+----------------------------
 Date:    Jul 28 19:48:12 2012 
 
     r691 modify r690 by hamaguchi
 
+----------------------------
 Date:    Jul 23 16:10:49 2012 
 
     r690 add PMlib1.3
 
+----------------------------
 Date:    Jul 23 16:04:50 2012 
 
     r689 FB92/FFV50
 
+----------------------------
 Date:    Jul 23 14:37:34 2012 
 
     r688 fix cutlib include
 
+----------------------------
 Date:    Jul 23 12:24:24 2012 
 
     r687 rm Polylib_203
 
+----------------------------
 Date:    Jul 23 12:16:57 2012 
 
     r686 modified r683 compiled
 
+----------------------------
 Date:    Jul 23 11:23:32 2012 
 
     r685 modify hamaguchi r683
 
+----------------------------
 Date:    Jul 21 18:50:03 2012 
 
     r684 working r683 plot3d
+    - PLOT3Dフォーマット導入
 
+----------------------------
 Date:    Jul 17 19:55:47 2012 
 
     r683 p average
 
+----------------------------
 Date:    Jul 17 00:13:09 2012 
 
     r682 working
 
+----------------------------
 Date:    Jul 16 18:39:30 2012 
 
     r681 sma comm
 
+----------------------------
 Date:    Jul 16 10:28:49 2012 
 
     r680 sma?
+    - SOR2SMAのCPMlib実装
 
+----------------------------
 Date:    Jul 14 18:05:21 2012 
 
     r679 modify voxel init
 
+----------------------------
 Date:    Jul 14 16:39:00 2012 
 
     r678 fix domainflux
 
+----------------------------
 Date:    Jul 14 15:12:04 2012 
 
     r677 fix sync bug
 
+----------------------------
 Date:    Jul 11 20:32:27 2012 
 
     r676 FB090/FFV040
 
+----------------------------
 Date:    Jul 11 20:28:53 2012 
 
     r675 PMlib 1.2
 
+----------------------------
 Date:    Jul 11 18:16:16 2012 
 
     r674 comm
 
+----------------------------
 Date:    Jul 10 17:38:31 2012 
 
     r673 sma comm
 
+----------------------------
 Date:    Jul 10 11:40:46 2012 
 
     r672 parseBC cmp
 
+----------------------------
 Date:    Jul 10 00:41:02 2012 
 
     r671 comm sor
 
+----------------------------
 Date:    Jul 9 19:28:22 2012 
 
     r670 rm class pointer
 
+----------------------------
 Date:    Jul 9 14:51:31 2012 
 
     r699 run
 
+----------------------------
 Date:    Jul 9 11:53:59 2012 
 
     r698 LS
 
+----------------------------
 Date:    Jul 8 22:45:51 2012 
 
     r697 sor2sma thinking
 
+----------------------------
 Date:    Jul 8 07:52:27 2012 
 
     r696 binary
 
+----------------------------
 Date:    Jul 7 18:35:47 2012 
 
     r695 NS_binary
 
+----------------------------
 Date:    Jul 7 16:30:02 2012 
 
     r694 timestamp
 
+----------------------------
 Date:    Jul 7 14:45:51 2012 
 
     r693 initilize
 
+----------------------------
 Date:    Jul 7 13:44:37 2012 
 
     r692 init compile
 
+----------------------------
 Date:    Jul 6 19:01:59 2012 
 
     r692 working
 
+----------------------------
 Date:    Jul 5 19:58:17 2012 
 
     r691 update CPMlib 103
+    - データクラスをポインタへ置換
 
+----------------------------
 Date:    Jul 3 23:37:28 2012 
 
     r690 compiling
 
+----------------------------
 Date:    Jul 3 20:16:53 2012 
 
     r689 add ffv_Restart.C
 
+----------------------------
 Date:    Jul 3 18:05:58 2012 
 
     r688 initilize
 
+----------------------------
 Date:    Jul 2 22:44:05 2012 
 
     r687 restart
 
+----------------------------
 Date:    Jul 2 18:28:44 2012 
 
     r686 dfi
 
+----------------------------
 Date:    Jul 2 16:55:32 2012 
 
     r685 2d alloc
 
+----------------------------
 Date:    Jul 2 12:40:12 2012 
 
     r684 voxencode
 
+----------------------------
 Date:    Jul 2 10:14:11 2012 
 
     r683 INDEX
 
+----------------------------
 Date:    Jul 1 11:05:31 2012 
 
     r682 /day morning
 
+----------------------------
 Date:    Jul 1 01:41:04 2012 
 
     r681 indexing
 
+----------------------------
 Date:    Jun 30 18:27:29 2012 
 
     r680 CompoFraction
 
+----------------------------
 Date:    Jun 30 16:52:18 2012 
 
     r679 medium ok
 
+----------------------------
 Date:    Jun 30 14:07:51 2012 
 
     r678 ffv20/fb80
 
+----------------------------
 Date:    Jun 30 14:01:30 2012 
 
     r677 compiled
 
+----------------------------
 Date:    Jun 30 12:36:01 2012 
 
     r676 rename fortran routines
+    - 関数名を再構築
 
+----------------------------
 Date:    Jun 29 18:19:48 2012 
 
     r675 allreduce error
 
+----------------------------
 Date:    Jun 29 17:43:48 2012 
 
     r674 add SetBC3D
 
+----------------------------
 Date:    Jun 29 17:42:56 2012 
 
     r673 working
 
+----------------------------
 Date:    Jun 29 14:11:46 2012 
 
     r672 rm IP_Users
 
+----------------------------
 Date:    Jun 29 14:08:47 2012 
 
     r671 rm IP::setControlVars
 
+----------------------------
 Date:    Jun 29 13:26:46 2012 
 
     r670 add polylib 2.1.0-dev-a
 
+----------------------------
 Date:    Jun 29 13:03:35 2012 
 
     r669 check 1
 
+----------------------------
 Date:    Jun 29 00:55:09 2012 
 
     r668 working
 
+----------------------------
 Date:    Jun 28 20:02:56 2012 
 
     r667 domaininfo
 
+----------------------------
 Date:    Jun 28 00:26:16 2012 
 
     r666 polylib 2.1.0 dev
 
+----------------------------
 Date:    Jun 27 20:05:39 2012 
 
     r665 working
 
+----------------------------
 Date:    Jun 27 10:17:38 2012 
 
     r664 change uint 2 int
 
+----------------------------
 Date:    Jun 27 01:00:29 2012 
 
     r663 vinfo int
 
+----------------------------
 Date:    Jun 26 21:33:29 2012 
 
     r662 shinkansen
 
+----------------------------
 Date:    Jun 26 08:47:46 2012 
 
     r661 working
 
+----------------------------
 Date:    Jun 25 23:02:41 2012 
 
     r660 working
 
+----------------------------
 Date:    Jun 25 19:12:25 2012 
 
     r659 load medium
 
+----------------------------
 Date:    Jun 25 18:57:40 2012 
 
     r658 laod aprameters
 
+----------------------------
 Date:    Jun 24 23:14:40 2012 
 
     r657 compiling...
 
+----------------------------
 Date:    Jun 23 22:18:30 2012 
 
     r656 compiling
 
+----------------------------
 Date:    Jun 23 18:18:12 2012 
 
     r655 working
 
+----------------------------
 Date:    Jun 23 16:16:28 2012 
 
     r654 move new Makefile
 
+----------------------------
 Date:    Jun 23 16:11:07 2012 
 
     r653 working make
 
+----------------------------
 Date:    Jun 23 15:32:35 2012 
 
     r652 change make
 
+----------------------------
 Date:    Jun 23 14:56:59 2012 
 
     r651 rm parallel_info.h
 
+----------------------------
 Date:    Jun 23 13:16:37 2012 
 
     r650 add bin
 
+----------------------------
 Date:    Jun 22 19:33:54 2012 
 
     r649 ffv class
 
+----------------------------
 Date:    Jun 22 16:27:41 2012 
 
     r648 run cpmlib
 
+----------------------------
 Date:    Jun 22 14:22:26 2012 
 
     r647 rm CPMlib
 
+----------------------------
 Date:    Jun 22 13:41:38 2012 
 
     r646 add cpm
 
+----------------------------
 Date:    Jun 21 23:37:50 2012 
 
     r645 working
 
+----------------------------
 Date:    Jun 21 00:00:18 2012 
 
     r644 outerbc alias
 
+----------------------------
 Date:    Jun 20 14:00:15 2012 
 
     r643 working
 
+----------------------------
 Date:    Jun 18 19:46:04 2012 
 
     r642 working
 
+----------------------------
 Date:    Jun 18 18:09:01 2012 
 
     r641 working
 
+----------------------------
 Date:    Jun 16 18:52:36 2012 
 
     r640 rm IDtable.h
 
+----------------------------
 Date:    Jun 16 13:41:09 2012 
 
     r639 rm textparser0.9
 
+----------------------------
 Date:    Jun 16 11:51:50 2012 
 
     r638 change initialize
 
+----------------------------
 Date:    Jun 11 19:15:22 2012 
 
     r637 IP
 
+----------------------------
 Date:    Jun 11 08:29:15 2012 
 
     r636 working
 
+----------------------------
 Date:    Jun 7 20:21:45 2012 
 
     r635 parser changing
 
+----------------------------
 Date:    Jun 7 12:14:03 2012 
 
     r634 compile ok
 
+----------------------------
 Date:    Jun 7 11:27:36 2012 
 
     r633 build cpmlib, tplib
 
+----------------------------
 Date:    Jun 7 00:09:17 2012 
 
     r632 add CPMlib in project_local_settings
 
+----------------------------
 Date:    Jun 7 00:03:50 2012 
 
     r631 build CPMlib
 
+----------------------------
 Date:    Jun 6 23:53:44 2012 
 
     r630 add CPMlib
+    - CPMライブラリを用いて並列管理テスト
 
+----------------------------
 Date:    Jun 6 23:48:29 2012 
 
     r629 change TP in project_local_setting
 
+----------------------------
 Date:    Jun 6 23:40:25 2012 
 
     r628 add TP/include
 
+----------------------------
 Date:    Jun 6 23:20:07 2012 
 
     r627 add tp & TPControl class
 
+----------------------------
 Date:    Jun 3 18:16:11 2012 
 
     r626 caeru branch compile option
 
+----------------------------
 Date:    Jun 3 17:25:55 2012 
 
     r625 add FX/K compile option
 
+----------------------------
 Date:    Jun 3 16:55:14 2012 
 
     r624 modify min -> if
 
+----------------------------
 Date:    Jun 2 18:56:10 2012 
 
     r623 fix min_distance
 
+----------------------------
 Date:    May 29 19:51:13 2012 
 
     r622 cutinfo check
 
+----------------------------
 Date:    May 29 16:55:21 2012 
 
     r621 modify ulong
 
+----------------------------
 Date:    May 29 16:21:38 2012 
 
     r620 change ulong
 
+----------------------------
 Date:    May 26 15:57:18 2012 
 
     r619 gather has problem
 
+----------------------------
 Date:    May 26 14:26:52 2012 
 
     r618 sphere ok
 
+----------------------------
 Date:    May 26 00:02:41 2012 
 
     r617 u-nn
 
+----------------------------
 Date:    May 25 17:23:25 2012 
 
     r616 change scancell algorithm
 
+----------------------------
 Date:    May 24 21:38:58 2012 
 
     r615 int_array_allreduce
 
+----------------------------
 Date:    May 24 20:20:30 2012 
 
     r614 ghost mpi allreduce
 
+----------------------------
 Date:    May 24 15:08:50 2012 
 
     r613 change MPI-comm in Voxinfo
 
+----------------------------
 Date:    May 24 11:05:41 2012 
 
     r612 modify cbc_helicity & avr/rms
 
+----------------------------
 Date:    May 23 21:07:24 2012 
 
     r611 unsigned
 
+----------------------------
 Date:    May 23 19:55:02 2012 
 
     r610 char(dim)
 
+----------------------------
 Date:    May 23 15:49:09 2012 
 
     r609 add cbc_force
 
+----------------------------
 Date:    May 23 15:02:14 2012 
 
     r608 id_sph
 
+----------------------------
 Date:    May 22 22:29:44 2012 
 
     r607 PMT silent
 
+----------------------------
 Date:    May 22 22:08:16 2012 
 
     r606 modify write index
 
+----------------------------
 Date:    May 22 20:07:29 2012 
 
     r605 coarse restart ok
 
+----------------------------
 Date:    May 21 17:56:18 2012 
 
     r604 coarse git l5
 
+----------------------------
 Date:    May 21 13:32:12 2012 
 
     r603 166/260
 
+----------------------------
 Date:    May 21 13:23:53 2012 
 
     r602 coarse restart
 
+----------------------------
 Date:    May 21 00:16:40 2012 
 
     r601 still
 
+----------------------------
 Date:    May 20 23:16:32 2012 
 
     r600 coarse problem
 
+----------------------------
 Date:    May 20 18:34:37 2012 
 
     r598 still restart problem
 
+----------------------------
 Date:    May 20 14:45:51 2012 
 
     r598 restart
 
+----------------------------
 Date:    May 20 00:34:13 2012 
 
     r597 dfi bug aruyo
 
+----------------------------
 Date:    May 19 22:05:24 2012 
 
     r596 add FB/dfi
 
+----------------------------
 Date:    May 19 22:04:40 2012 
 
     r595 mv dfi to FB
 
+----------------------------
 Date:    May 19 19:14:16 2012 
 
     r594 dfi working
 
+----------------------------
 Date:    May 19 18:18:35 2012 
 
     r593 dfi vsph free
 
+----------------------------
 Date:    May 19 13:49:13 2012 
 
     r592 dfi class
 
+----------------------------
 Date:    May 19 11:28:05 2012 
 
     r591 rm Control_Rect
 
+----------------------------
 Date:    May 18 20:07:18 2012 
 
     r590 dfi working
 
+----------------------------
 Date:    May 17 15:00:28 2012 
 
     r589 add dfi func
 
+----------------------------
 Date:    May 16 15:20:55 2012 
 
     r588 modify dfi load
 
+----------------------------
 Date:    May 16 10:24:09 2012 
 
     r587 rough restart serial ok
 
+----------------------------
 Date:    May 16 00:51:00 2012 
 
     r586 rough working
 
+----------------------------
 Date:    May 15 20:02:40 2012 
 
     r585 working
 
+----------------------------
 Date:    May 15 14:51:22 2012 
 
     r584 restart change
 
+----------------------------
 Date:    May 15 08:59:57 2012 
 
     r583 working
 
+----------------------------
 Date:    May 14 20:03:54 2012 
 
     r582 change file io on the way
 
+----------------------------
 Date:    May 14 14:22:14 2012 
 
     r581 seg fault
 
+----------------------------
 Date:    May 12 08:26:59 2012 
 
     r580 check_fill is modified to mpi
 
+----------------------------
 Date:    May 11 15:57:32 2012 
 
     r579 modify 1/h
 
+----------------------------
 Date:    May 10 20:05:05 2012 
 
     r578 working
 
+----------------------------
 Date:    May 10 17:11:58 2012 
 
     r577 fill mpi parallel ok
 
+----------------------------
 Date:    May 9 22:53:11 2012 
 
     r576 cal. force
 
+----------------------------
 Date:    May 8 14:12:57 2012 
 
     r575 cds upwinding neighboring to solid
 
+----------------------------
 Date:    May 7 22:38:22 2012 
 
     r574 rough interpolation ok
 
+----------------------------
 Date:    May 7 19:26:37 2012 
 
     r573 rough check
 
+----------------------------
 Date:    May 7 17:26:05 2012 
 
     r572 rough load
 
+----------------------------
 Date:    May 7 14:31:17 2012 
 
     r571 test SZ
 
+----------------------------
 Date:    May 6 23:56:29 2012 
 
     r570 move doc
 
+----------------------------
 Date:    May 6 18:28:43 2012 
 
     r569 rough interpolation
 
+----------------------------
 Date:    May 4 16:57:15 2012 
 
     r568 filled
 
+----------------------------
 Date:    May 2 19:59:52 2012 
 
     r567 fill cut
 
+----------------------------
 Date:    May 2 16:13:22 2012 
 
     r566 update PMlib doc
 
+----------------------------
 Date:    May 1 19:23:48 2012 
 
     r565 fill....
 
+----------------------------
 Date:    May 1 07:23:51 2012 
 
     r564 till working fill
 
+----------------------------
 Date:    Apr 29 22:47:19 2012 
 
     r563 working fill
 
+----------------------------
 Date:    Apr 28 19:04:28 2012 
 
     r562 working fill
 
+----------------------------
 Date:    Apr 28 15:07:18 2012 
 
     r561 PMlib manual
 
+----------------------------
 Date:    Apr 28 13:46:14 2012 
 
     r560 independent PMlib
 
+----------------------------
 Date:    Apr 27 00:57:25 2012 
 
     r559 alternate c++ omp ruduction min
 
+----------------------------
 Date:    Apr 24 07:26:18 2012 
 
     r558 working fill
 
+----------------------------
 Date:    Apr 22 10:58:44 2012 
 
     r557 Polylib/Cutlib 2.0.3
 
+----------------------------
 Date:    Apr 21 23:07:30 2012 
 
     r556 modify viscous term
 
+----------------------------
 Date:    Apr 21 19:05:34 2012 
 
     r555 check
 
+----------------------------
 Date:    Apr 20 20:18:42 2012 
 
      r554 cut-binary
 
+----------------------------
 Date:    Apr 20 19:39:58 2012 
 
     r553 BCvec bug fix
 
+----------------------------
 Date:    Apr 20 18:53:41 2012 
 
     r552 modify intrinsic class treatment
 
+----------------------------
 Date:    Apr 19 18:54:39 2012 
 
     r551 K cimpiler option & fb_util.f90
 
+----------------------------
 Date:    Apr 18 18:04:47 2012 
 
     r550 modify buffer
 
+----------------------------
 Date:    Apr 18 16:39:30 2012 
 
     r549 fapp
 
+----------------------------
 Date:    Apr 18 15:20:09 2012 
 
     r548 pre release 150
 
+----------------------------
 Date:    Apr 15 16:39:08 2012 
 
     r547 fix getFindex3Dex in Sampling.h
 
+----------------------------
 Date:    Apr 15 15:46:45 2012 
 
     r546 unit ocnversion
 
+----------------------------
 Date:    Apr 15 15:12:31 2012 
 
     r545 fix average
 
+----------------------------
 Date:    Apr 15 15:04:53 2012 
 
     r544 itor test
 
+----------------------------
 Date:    Apr 15 11:10:06 2012 
 
     r543 debug func
 
+----------------------------
 Date:    Apr 15 10:02:20 2012 
 
     r542 stil working itor
 
+----------------------------
 Date:    Apr 14 18:39:10 2012 
 
     r541 bug! itor
 
+----------------------------
 Date:    Apr 13 10:12:52 2012 
 
     r540 fix para_mode
 
+----------------------------
 Date:    Apr 12 23:28:20 2012 
 
     r539 add parallel mode to PM class
 
+----------------------------
 Date:    Apr 12 19:14:15 2012 
 
     r538 pressure shift
 
+----------------------------
 Date:    Apr 12 15:21:24 2012 
 
     r537 BCvec_cc openMP
 
+----------------------------
 Date:    Apr 9 19:02:34 2012 
 
     r536 neumann BC
 
+----------------------------
 Date:    Apr 8 23:04:30 2012 
 
     r535 tfree for fluid face
 
+----------------------------
 Date:    Apr 8 17:43:22 2012 
 
     r534 tfree bug
 
+----------------------------
 Date:    Apr 7 18:57:11 2012 
 
     r533 working cds
 
+----------------------------
 Date:    Apr 7 15:35:48 2012 
 
     r532 change torelance of cut
 
+----------------------------
 Date:    Apr 1 17:55:45 2012 
 
     r531 div?
 
+----------------------------
 Date:    Apr 1 14:26:45 2012 
 
     r530 take cut effect into velocity at cell face
 
+----------------------------
 Date:    Apr 1 12:13:56 2012 
 
     r529 intro CompoList::bc_dir
 
+----------------------------
 Date:    Mar 31 17:40:43 2012 
 
     r528 working vspec
 
+----------------------------
 Date:    Mar 31 16:57:32 2012 
 
     r527 add func to Polylib
 
+----------------------------
 Date:    Mar 30 16:16:42 2012 
 
     r526 encVbit_IBC_Cut() working
 
+----------------------------
 Date:    Mar 30 15:53:41 2012 
 
     r525 CDS vspec
 
+----------------------------
 Date:    Mar 29 16:56:25 2012 
 
     r524 working
 
+----------------------------
 Date:    Mar 29 13:44:44 2012 
 
     r523 singleton
 
+----------------------------
 Date:    Mar 28 23:58:25 2012 
 
     r522 some classes are merged in Control
 
+----------------------------
 Date:    Mar 27 19:22:29 2012 
 
     r521 singleton parseMat
 
+----------------------------
 Date:    Mar 27 18:59:20 2012 
 
     r520 singleton Control class
 
+----------------------------
 Date:    Mar 25 18:22:55 2012 
 
     r519 stil step issue
 
+----------------------------
 Date:    Mar 25 09:18:07 2012 
 
     r517 check
 
+----------------------------
 Date:    Mar 24 18:58:01 2012 
 
     r516 sphere ok?
 
+----------------------------
 Date:    Mar 22 18:52:02 2012 
 
     r515 cut
 
+----------------------------
 Date:    Mar 21 23:37:05 2012 
 
     r514 modify parabolic solution
 
+----------------------------
 Date:    Mar 21 19:24:20 2012 
 
     r513 working
 
+----------------------------
 Date:    Mar 21 11:52:08 2012 
 
     r512 introduce IP_Sphere
 
+----------------------------
 Date:    Mar 20 16:43:37 2012 
 
     r511 cds_vector
 
+----------------------------
 Date:    Mar 20 13:01:08 2012 
 
     r510 cds working
 
+----------------------------
 Date:    Mar 18 18:03:33 2012 
 
     r509 cds working
 
+----------------------------
 Date:    Mar 18 14:07:23 2012 
 
     done component array
 
+----------------------------
 Date:    Mar 18 09:52:50 2012 
 
     r507 working component array
 
+----------------------------
 Date:    Mar 17 18:25:31 2012 
 
     r506 introducing component array
 
+----------------------------
 Date:    Mar 17 17:31:43 2012 
 
     r505 forcing...
 
+----------------------------
 Date:    Mar 16 18:17:24 2012 
 
     r504 forcing modify
 
+----------------------------
 Date:    Mar 15 19:40:23 2012 
 
     r503 forcing
 
+----------------------------
 Date:    Mar 15 14:48:04 2012 
 
     r502 add tm_prj_vec_bc_comm
 
+----------------------------
 Date:    Mar 15 12:16:41 2012 
 
     openmp static
 
+----------------------------
 Date:    Mar 11 17:13:34 2012 
 
     r500 omp pokayoke
 
+----------------------------
 Date:    Mar 11 08:02:10 2012 
 
     r499 omp
 
+----------------------------
 Date:    Mar 7 17:52:01 2012 
 
     r498 omp static test
 
+----------------------------
 Date:    Mar 7 00:20:27 2012 
 
     r497 rm omp*.h
 
+----------------------------
 Date:    Mar 6 19:45:10 2012 
 
     introduce omp_head/tail
 
+----------------------------
 Date:    Mar 3 18:10:19 2012 
 
     add unused.f90
 
+----------------------------
 Date:    Mar 3 17:03:16 2012 
 
     r494 reduce index function
 
+----------------------------
 Date:    Mar 3 12:03:16 2012 
 
     r493 complete component VF
 
+----------------------------
 Date:    Mar 3 00:08:13 2012 
 
     r492 under construction
 
+----------------------------
 Date:    Mar 2 18:19:37 2012 
 
     r491 compo rad/fan modify
 
+----------------------------
 Date:    Mar 1 17:27:10 2012 
 
     r490 shape min/max
 
+----------------------------
 Date:    Feb 29 14:01:31 2012 
 
     r489 IBC outflow requires nv
 
+----------------------------
 Date:    Feb 28 19:21:33 2012 
 
     r484 Hex Parser
 
+----------------------------
 Date:    Feb 28 11:08:47 2012 
 
     r483 CompoFraction OK
 
+----------------------------
 Date:    Feb 27 21:35:59 2012 
 
     r482 rotate + translation
 
+----------------------------
 Date:    Feb 27 19:27:59 2012 
 
     r481 try & error geometry
 
+----------------------------
 Date:    Feb 26 22:46:34 2012 
 
     r480 modify judge_cylinder()
 
+----------------------------
 Date:    Feb 26 18:24:48 2012 
 
     add center in CompoFraction class
 
+----------------------------
 Date:    Feb 24 19:43:08 2012 
 
     assert(0) >> Exit(0)
 
+----------------------------
 Date:    Feb 22 18:13:45 2012 
 
     r476 remove Skl.h from FB class
 
+----------------------------
 Date:    Feb 22 17:28:46 2012 
 
     r457 change SKL_REAL to REAL_TYPE
 
+----------------------------
 Date:    Feb 22 10:35:28 2012 
 
     r474 move shiftVin/out to FileIO class
 
+----------------------------
 Date:    Feb 22 00:19:07 2012 
 
     r473 component VF implementation
 
+----------------------------
 Date:    Feb 20 18:58:06 2012 
 
     r472 add CompoFraction class
 
+----------------------------
 Date:    Feb 20 08:47:50 2012 
 
     r471 flop counting update
 
+----------------------------
 Date:    Feb 16 09:59:17 2012 
 
     r470 remove Core_Util class -> fb_util.f90 and FBUtility class
 
+----------------------------
 Date:    Feb 15 19:03:43 2012 
 
     r469 cbc_util
 
+----------------------------
 Date:    Feb 15 18:40:52 2012 
 
     r468 fb_util
 
+----------------------------
 Date:    Feb 15 18:16:01 2012 
 
     r467 mv cbc_f_params.h
 
+----------------------------
 Date:    Feb 14 18:06:17 2012 
 
     r466 add false to tm_statistic
 
-Merge: 6015955 1ef64bd
+----------------------------
 Date:    Feb 14 16:04:47 2012 
 
     Merge branch '3DEx'
@@ -2442,62 +2698,77 @@ Date:    Feb 14 16:04:47 2012
     Conflicts:
     	src/PRJ_CBC/CBC/SklSolverCBC.C
 
+----------------------------
 Date:    Feb 14 15:52:01 2012 
 
     r464 SklVector3D to SklVector3DEx
 
+----------------------------
 Date:    Feb 14 09:06:10 2012 
 
     r463 add tm_statistic
 
+----------------------------
 Date:    Feb 13 11:45:17 2012 
 
     replace constant u_bc_ref2 in cbc_pvec_vobc_wall
 
+----------------------------
 Date:    Feb 13 11:24:35 2012 
 
     r461 enhance muscl by replacing constant
 
+----------------------------
 Date:    Feb 13 00:21:49 2012 
 
     r460 change counting cbc_ee, vobc_wall, muscl
 
+----------------------------
 Date:    Feb 12 17:38:01 2012 
 
     r459 replace version 151-247 of PMT
 
+----------------------------
 Date:    Feb 12 17:30:29 2012 
 
     add empty directory
 
+----------------------------
 Date:    Feb 12 17:28:35 2012 
 
     recount flop based on PA info on K
 
+----------------------------
 Date:    Feb 9 22:47:36 2012 
 
     r456 re-count flops
 
+----------------------------
 Date:    Feb 8 17:57:40 2012 
 
     r455 add pm_3840.xml
 
+----------------------------
 Date:    Feb 8 17:52:38 2012 
 
     Merge branch 'master' of ssh://hpcpf-dev.iis.u-tokyo.ac.jp/home/keno/cbc_git
 
+----------------------------
 Date:    Feb 8 17:52:12 2012 
 
     change label cbc_norm_v_div_max
 
+----------------------------
 Date:    Feb 3 19:30:39 2012 
 
     r453 change remark of cbc_norm_vmax_div
 
+----------------------------
 Date:    Feb 2 22:15:04 2012 
 
     r452
 
+----------------------------
 Date:    Feb 1 15:07:28 2012 
 
     r451 change

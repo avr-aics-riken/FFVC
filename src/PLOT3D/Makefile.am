@@ -1,0 +1,48 @@
+###################################################################################
+#
+# FFV-C : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+# All rights reserved.
+#
+# Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+# All rights reserved.
+#
+# Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+# All rights reserved. 
+#
+###################################################################################
+
+lib_LIBRARIES = libPLT3D.a libPLT3DF.a
+
+
+libPLT3D_a_CXXFLAGS = \
+  -I. \
+  -I../FB \
+  @MPICH_CFLAGS@ \
+  @REALOPT@ 
+
+libPLT3D_a_SOURCES = \
+  PLOT3D.C \
+  PLOT3D.h \
+  PLOT3D_read.C \
+  PLOT3D_read.h \
+  PLOT3D_write.C \
+  PLOT3D_write.h \
+  ffv_PLOT3D.C
+
+
+
+libPLT3DF_a_FCFLAGS = \
+  -I. \
+  -I../FB \
+  @MPICH_CFLAGS@ \
+  @FREALOPT@ 
+
+libPLT3DF_a_SOURCES = \
+  PLT3D.f90 \
+  PLT3D_read.f90 \
+  PLT3D_write.f90
+
+
+EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_PLT3D.txt

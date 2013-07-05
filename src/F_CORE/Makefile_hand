@@ -15,7 +15,7 @@
 
 include ../make_setting
 
-TARGET = libFFVC.a
+TARGET = libFCORE.a
 
 CSRCS =
 
