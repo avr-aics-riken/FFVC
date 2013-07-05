@@ -69,10 +69,10 @@ $(TARGET):$(OBJS)
 clean:
 	$(RM) $(OBJS) $(TARGET)
 
-depend: $(OBJS:.o=.C.f90)
+depend: $(CXXOBJS:.o=.C)
 	@ rm -rf depend.inc
 	@ for i in $^; do\
-		$(CXX) $(CXXFLAGS) -MM $$i >> depend.inc;\
+		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -MM $$i >> depend.inc;\
 	done
 
 -include depend.inc

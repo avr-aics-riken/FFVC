@@ -135,6 +135,9 @@ Version 0.2.0    2013-06-30
   
 ----------------------------
 2013-07-05
+    r991 r991 modify Makefile_hand to suppress depend target for f90
+    - Makefile_handでf90ターゲットのdependを抑制
+    
 
     r990 modify for CIOlib 1.3.x
     - CIOlib 1.3.x以降への対応

@@ -25,10 +25,11 @@ CUT_DIR  = /usr/local/Cutlib
 PM_DIR   = /usr/local/PMlib
 
 
-########################
+#########################
 # Architecture assignment
+#########################
+
 ARCH=intel
-########################
 
 
 ########################

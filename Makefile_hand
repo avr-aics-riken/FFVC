@@ -13,9 +13,9 @@
 #
 ###################################################################################
 
-.PHONY: ffvc
+.PHONY: depend clean
 
-ffvc:
+all:
 	cd src && make -f Makefile_hand
 
 depend:

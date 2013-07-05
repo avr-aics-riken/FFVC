@@ -46,7 +46,7 @@ clean:
 depend: $(OBJS:.o=.C)
 	@ rm -rf depend.inc
 	@ for i in $^; do\
-		$(CXX) $(CXXFLAGS) -MM $$i >> depend.inc;\
+		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -MM $$i >> depend.inc;\
 	done
 
 -include depend.inc
