@@ -67,7 +67,10 @@ int main( int argc, char **argv )
   }
   
   // CIO lib version
-  cio_DFI::VersionInfo(std::cout);
+  if (cpm_ParaManager::get_instance()->GetMyRankID()==0)
+  {
+    cio_DFI::VersionInfo(std::cout);
+  }
   
   
   // 引数チェック

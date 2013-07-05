@@ -136,7 +136,15 @@ Version 0.2.0    2013-06-30
 ----------------------------
 2013-07-05
 
-    r989 
+    r990 modify for CIOlib 1.3.x
+    - CIOlib 1.3.x以降への対応
+      FB/dbwrite.f90の追加
+      ffv.C  CIOlib debug
+      ffv_Initializa.C dfiクラスの代替
+      ffv_REstart.C 解像度が2倍のチェック
+
+
+    r989 modify srcs by ffvc-mini app's comment
     - ffvc-mini app.の整備過程で発見した修正
       NS_FS_E_Binary.C
         res_initがsqrtされていない
@@ -244,46 +252,57 @@ Date:    Jun 10 08:11:32 2013
 
     r970 fix comment
 
+----------------------------
 Date:    Jun 8 17:52:49 2013 
 
     r969 CIOlib-1.1 compiled
 
+----------------------------
 Date:    Jun 8 17:35:12 2013 
 
     r968 CIOlib-1.1 & modify from r963 by FE, but ambigious
 
+----------------------------
 Date:    Jun 8 12:38:56 2013 
 
     r967 Modify division policy again
 
+----------------------------
 Date:    Jun 8 12:38:08 2013 
 
     r966 Modify division policy
 
+----------------------------
 Date:    Jun 6 08:24:33 2013 
 
     r965 check >> Both global voxel and pitch...
 
+----------------------------
 Date:    Jun 3 23:00:55 2013 
 
     r964 Jet dimension
 
+----------------------------
 Date:    May 14 18:10:35 2013 
 
     r963 PPLT2D
 
+----------------------------
 Date:    May 9 09:23:20 2013 
 
     r962 Makefile modify
 
+----------------------------
 Date:    May 8 20:43:25 2013 
 
     r961 Polylib-2.4
 
+----------------------------
 Date:    May 8 17:38:02 2013 
 
     r960 CIO Lisence
 
+----------------------------
 Date:    May 8 17:37:25 2013 
 
     r959 PMlib-1.7 kai & CIOlib update

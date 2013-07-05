@@ -2419,7 +2419,6 @@ void FFV::init_FileOut()
   
   // make output directory
   std::string path = C.FIO.OutDirPath;
-  cio_DFI::MakeDirectory(path);
 
   
   // タイムスライス出力オプション
@@ -2442,7 +2441,7 @@ void FFV::init_FileOut()
   // Divergence for Debug
   if ( C.FIO.Div_Debug == ON )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_div);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_div);
     DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                      dfi_name,
                                      path,
@@ -2472,7 +2471,7 @@ void FFV::init_FileOut()
 
   
   // Pressure
-  dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs);
+  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs);
   DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                    dfi_name,
                                    path,
@@ -2562,8 +2561,11 @@ void FFV::init_FileOut()
   DiffPrs = (double)C.RefDensity * (double)C.RefVelocity * (double)C.RefVelocity;
   DFI_OUT_PRS->SetUnitPres(true, UnitP, (double)C.BasePrs, DiffPrs);
   
+  cio_DFI::MakeDirectory(CIO::cioPath_DirName(dfi_name));
+  std::string processdir = CIO::cioPath_DirName(dfi_name)+"/"+CIO::cioPath_FileName(process,".dfi");
+  
   DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD,
-                                process,
+                                processdir,
                                 G_size,
                                 cio_div,
                                 head,
@@ -2575,7 +2577,7 @@ void FFV::init_FileOut()
   
   
   // Velocity
-  dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_vel);
+  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vel);
   comp = 3;
   DFI_OUT_VEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                    dfi_name,
@@ -2618,7 +2620,7 @@ void FFV::init_FileOut()
   // Fvelocity
   if (C.Mode.FaceV == ON )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel);
     comp = 3;
     DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                       dfi_name,
@@ -2662,7 +2664,7 @@ void FFV::init_FileOut()
   // Temperature
   if ( C.isHeatProblem() )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_temp);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_temp);
     comp = 1;
     DFI_OUT_TEMP = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                       dfi_name,
@@ -2706,7 +2708,7 @@ void FFV::init_FileOut()
   if ( C.Mode.Average == ON ) {
     
     // Pressure
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_prsa);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prsa);
     comp = 1;
     DFI_OUT_PRSA = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                       dfi_name,
@@ -2745,7 +2747,7 @@ void FFV::init_FileOut()
     DFI_OUT_PRSA->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
     
     // Velocity
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_vela);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vela);
     comp = 3;
     DFI_OUT_VELA = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                       dfi_name,
@@ -2786,7 +2788,7 @@ void FFV::init_FileOut()
     // Temperature
     if ( C.isHeatProblem() )
     {
-      dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_tempa);
+      dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_tempa);
       comp = 1;
       DFI_OUT_TEMPA = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                          dfi_name,
@@ -2830,7 +2832,7 @@ void FFV::init_FileOut()
   // Total Pressure
   if (C.Mode.TP == ON )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_tp);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_tp);
     comp = 1;
     DFI_OUT_TP = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                     dfi_name,
@@ -2872,7 +2874,7 @@ void FFV::init_FileOut()
   // Vorticity
   if (C.Mode.VRT == ON )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_vrt);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vrt);
     comp = 3;
     DFI_OUT_VRT = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                      dfi_name,
@@ -2914,7 +2916,7 @@ void FFV::init_FileOut()
   // 2nd Invariant of VGT
   if (C.Mode.I2VGT == ON )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_i2vgt);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_i2vgt);
     comp = 1;
     DFI_OUT_I2VGT = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                        dfi_name,
@@ -2956,7 +2958,7 @@ void FFV::init_FileOut()
   // Helicity
   if (C.Mode.Helicity == ON )
   {
-    dfi_name = "./"+cio_DFI::Generate_DFI_Name(C.f_dfi_out_hlt);
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_hlt);
     comp = 1;
     DFI_OUT_HLT = cio_DFI::WriteInit(MPI_COMM_WORLD,
                                      dfi_name,
@@ -3017,6 +3019,9 @@ void FFV::init_Interval()
     }
   }
   
+  // debug
+  //printf("tg_instant start_step : %d\n",C.Interval[Interval_Manager::tg_instant].getStartStep());
+  //printf("tg_average start_step : %d\n",C.Interval[Interval_Manager::tg_average].getStartStep());
   
   // 入力モードが有次元の場合に，無次元に変換
   if ( C.Unit.Param == DIMENSIONAL )

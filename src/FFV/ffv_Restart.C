@@ -382,7 +382,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   int Dmode = C.Unit.File;
 
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  REAL_TYPE scale = (false == true) ? 1.0 : (REAL_TYPE)step_avr;
+  REAL_TYPE scale = (REAL_TYPE)step_avr;
   REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
@@ -486,7 +486,7 @@ void FFV::selectRestartMode()
     }
   }
   
-  // 前セッションとボクセル数が異なる場合 >>  @todo 2倍のチェックが必要？
+  // 前セッションとボクセル数が異なる場合
   for (int i=0; i<3; i++ )
   {
     if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i] )
@@ -495,6 +495,19 @@ void FFV::selectRestartMode()
     }
   }
 
+  //  ボクセル数が2倍のチェック
+  if ( !isSameRes )
+  {
+    for(int i=0; i<3; i++)
+    {
+      if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i]*2 )
+      {
+        printf("\tDimension size error (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+        Exit(0);
+      }
+    }
+  }
+  
   
   // モード判定と登録
   if ( isSameDiv )

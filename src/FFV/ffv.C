@@ -836,6 +836,10 @@ void FFV::FileOutput(double& flop, const bool refinement)
     minmax[0] = f_min;
     minmax[1] = f_max;
 
+// CIOlib debug
+//  int IUNIT=m_step+10;
+//  nv3dwrite_(&IUNIT,d_wo,size,&guide);
+    
     DFI_OUT_FVEL->WriteData(m_step,
                             guide,
                             &m_time,

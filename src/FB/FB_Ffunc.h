@@ -230,6 +230,17 @@ extern "C" {
                            int* avs,
                            int* step_avr, 
                            REAL_TYPE* time_avr);
+  
+  // for CIOlib debugging
+  void v3dwrite_          (int* ID,
+                           REAL_TYPE* v,
+                           int* sz,
+                           int* g);
+  
+  void nv3dwrite_         (int* ID,
+                           REAL_TYPE* v,
+                           int* sz,
+                           int* g);
 }
 
 #endif // _FB_F_FUNC_H_
