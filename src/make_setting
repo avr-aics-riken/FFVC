@@ -185,12 +185,11 @@ UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
               
 
               
-UDEF_LIBS = -lmpi -lFB -lIP -lFFVC $(UDEF_LIBS_SPEC)
+#UDEF_LIBS = -lmpi -lFB -lIP -lFFVC $(UDEF_LIBS_SPEC)
 
-UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB $(UDEF_LIBS_SPEC)
+#UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB $(UDEF_LIBS_SPEC)
 
 
-#UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVC -lMPIPOLY -lCUT -lPM -lTP -lCPM -lCIO \
-#            $(UDEF_LIBS_SPEC)
+UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFFVC $(UDEF_LIBS_SPEC)
 
-#UDEF_LIBS_UTIL = -lmpi -lFB -lPM -lTP -lCPM $(UDEF_LIBS_SPEC)
+UDEF_LIBS_UTIL = -lmpi -lFB $(UDEF_LIBS_SPEC)

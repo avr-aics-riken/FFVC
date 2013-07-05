@@ -56,7 +56,7 @@ $(TARGET):$(OBJS)
 clean:
 	$(RM) $(OBJS) $(TARGET)
 
-depend: $(CXXOBJS:.o=.C)
+depend:
 	@ rm -rf depend.inc
 	@ for i in $^; do\
 		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH)-MM $$i >> depend.inc;\
